@@ -1,0 +1,2209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#16281E">
+<title>Idle Golf</title>
+<style>
+:root{
+  --turf:#1E3A2B;
+  --turf-deep:#16281E;
+  --turf-line:#2F5540;
+  --card:#EDE6D2;
+  --card-dim:#C9C0A6;
+  --chalk:#DCE8D8;
+  --chalk-dim:#8FA893;
+  --flag:#E2483C;
+  --brass:#D9A441;
+  --sky:#8FC6E0;
+
+  --mono:ui-monospace,"SF Mono",Menlo,Consolas,"Roboto Mono",monospace;
+  --sans:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+
+  --cell:1px solid var(--turf-line);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{
+  background:var(--turf-deep);
+  color:var(--chalk);
+  font-family:var(--sans);
+  font-variant-numeric:tabular-nums;
+  -webkit-font-smoothing:antialiased;
+  -webkit-tap-highlight-color:transparent;
+  overscroll-behavior:none;
+  touch-action:manipulation;
+  display:flex;justify-content:center;
+  overflow:hidden;
+}
+#app{
+  width:100%;max-width:640px;
+  height:100%;
+  display:flex;flex-direction:column;
+  border-left:var(--cell);border-right:var(--cell);
+  background:var(--turf);
+}
+/* the fairway must never be squeezed by whatever the open panel happens to
+   contain, so the chrome is fixed and the panel list is the only scroller */
+#board,#round,#stage,#strip,#tabs,#matchLine{flex:0 0 auto}
+/* stop double-tap zoom and the long-press callout when tapping buy buttons fast */
+button{
+  touch-action:manipulation;
+  user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;
+}
+
+/* ---------- eyebrow / label type ---------- */
+.eyebrow{
+  font-size:9px;letter-spacing:.18em;text-transform:uppercase;
+  color:var(--chalk-dim);font-weight:600;
+}
+
+/* ---------- scoreboard strip ---------- */
+#board{
+  display:grid;grid-template-columns:1fr 1fr 1fr;
+  border-bottom:var(--cell);
+  background:var(--turf-deep);
+}
+.bcell{padding:8px 10px;border-right:var(--cell)}
+.bcell:last-child{border-right:0;text-align:right}
+.bcell:nth-child(2){text-align:center}
+.bval{
+  font-family:var(--mono);font-size:20px;font-weight:700;
+  letter-spacing:-.02em;line-height:1.1;margin-top:2px;
+}
+#holeVal{font-size:26px}
+#moneyVal{color:var(--brass)}
+#trophyVal{color:var(--card)}
+body.tourney #board{background:#3A1714}
+body.tourney #holeVal{color:var(--flag)}
+
+/* ---------- fairway ---------- */
+/* ---- the round: 18 boxes, the way a scorecard actually reads ---------- */
+#card18{
+  display:grid;grid-template-columns:repeat(18,1fr);
+  background:var(--turf-deep);border-bottom:var(--cell);
+}
+#card18 b{
+  display:block;text-align:center;padding:4px 0 3px;
+  font-family:var(--mono);font-size:8px;font-weight:600;
+  border-right:var(--cell);color:var(--chalk-dim);line-height:1.15;
+}
+#card18 b i{display:block;font-style:normal;font-size:7px;opacity:.55}
+#card18 b.under{background:#3E2C10;color:var(--brass)}
+#card18 b.over{background:#33201C;color:#E58A7C}
+#card18 b:last-child{border-right:0}
+#card18 b.done{background:#233B2C;color:var(--chalk)}
+#card18 b.boss{color:var(--flag)}
+#card18 b.now{background:var(--chalk);color:var(--turf-deep);font-weight:700}
+#card18 b.now.boss{background:var(--flag);color:#fff}
+body.sunday #roundBand{background:var(--flag);color:#fff}
+
+#stage{
+  position:relative;background:#0E1A13;
+  display:flex;justify-content:center;align-items:center;
+  border-bottom:var(--cell);overflow:hidden;
+  touch-action:manipulation;cursor:pointer;user-select:none;
+}
+#fairway{display:block;image-rendering:pixelated;image-rendering:crisp-edges}
+#stage::after{
+  content:"";position:absolute;inset:0;pointer-events:none;
+  box-shadow:inset 0 0 0 2px transparent;transition:box-shadow .18s;
+}
+body.tourney #stage::after{box-shadow:inset 0 0 0 2px var(--flag)}
+#timer{
+  position:absolute;top:6px;left:50%;transform:translateX(-50%);
+  font-family:var(--mono);font-size:13px;font-weight:700;
+  background:var(--flag);color:#fff;padding:2px 10px;
+  letter-spacing:.06em;display:none;
+}
+body.tourney #timer{display:block}
+#toast{
+  position:absolute;bottom:8px;left:50%;transform:translateX(-50%);
+  font-size:11px;letter-spacing:.06em;text-transform:uppercase;font-weight:700;
+  background:rgba(14,26,19,.92);border:1px solid var(--turf-line);
+  color:var(--card);padding:5px 12px;opacity:0;transition:opacity .25s;
+  pointer-events:none;white-space:nowrap;max-width:90%;overflow:hidden;
+}
+#toast.show{opacity:1}
+
+/* ---------- yardage strip ---------- */
+#strip{padding:9px 10px;border-bottom:var(--cell);background:var(--turf-deep)}
+#striphead{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px}
+#yards{font-family:var(--mono);font-size:12px;color:var(--chalk)}
+#bar{
+  height:12px;background:#0E1A13;border:1px solid var(--turf-line);
+  position:relative;overflow:hidden;
+}
+#fill{
+  position:absolute;inset:0 100% 0 0;background:var(--chalk);
+  transition:right .09s linear;
+}
+body.tourney #fill{background:var(--flag)}
+/* gradation ticks: the scorecard tell */
+#bar::after{
+  content:"";position:absolute;inset:0;pointer-events:none;
+  background:repeating-linear-gradient(90deg,transparent 0 19px,var(--turf-line) 19px 20px);
+  opacity:.5;
+}
+
+/* ---------- tabs ---------- */
+#tabs{display:grid;grid-template-columns:repeat(5,1fr);background:var(--card)}
+.tab{
+  appearance:none;border:0;border-right:1px solid var(--card-dim);
+  background:transparent;color:#6A6450;
+  font-family:var(--sans);font-size:9px;font-weight:700;
+  letter-spacing:.10em;text-transform:uppercase;
+  padding:9px 1px;cursor:pointer;position:relative;
+}
+.tab:last-child{border-right:0}
+.tab[aria-selected="true"]{background:var(--turf-deep);color:var(--card)}
+.tab .dot{
+  display:inline-block;width:5px;height:5px;background:var(--brass);
+  border-radius:50%;margin-left:4px;vertical-align:middle;visibility:hidden;
+}
+.tab.ready .dot{visibility:visible}
+.tab:focus-visible{outline:2px solid var(--brass);outline-offset:-2px}
+
+/* ---------- panels ---------- */
+#panels{
+  flex:1 1 auto;min-height:0;
+  overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;
+  background:var(--turf-deep);
+  padding-bottom:calc(24px + env(safe-area-inset-bottom));
+}
+.panel{display:none}
+.panel.on{display:block}
+
+.row{
+  display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;
+  padding:9px 10px;border-bottom:var(--cell);
+}
+.row.locked{opacity:.38}
+.row.maxed .rmeta b{color:var(--brass)}
+.rname{font-size:13px;font-weight:600;letter-spacing:-.01em}
+.rmeta{font-family:var(--mono);font-size:10px;color:var(--chalk-dim);margin-top:2px}
+.rmeta b{color:var(--sky);font-weight:600}
+.rmeta i{font-style:normal;color:var(--card)}
+
+.buy{
+  appearance:none;border:1px solid var(--turf-line);background:#0E1A13;
+  color:var(--chalk);font-family:var(--mono);font-size:11px;font-weight:700;
+  padding:7px 9px;min-width:104px;text-align:center;cursor:pointer;
+  line-height:1.35;
+}
+.buy .amt{display:block;font-size:9px;color:var(--chalk-dim);letter-spacing:.08em}
+.buy.can{border-color:var(--brass);color:var(--brass)}
+.buy.can .amt{color:var(--brass);opacity:.7}
+.buy:disabled{cursor:default;opacity:.5}
+.buy:focus-visible{outline:2px solid var(--brass);outline-offset:1px}
+
+/* ---------- section headers = scorecard bands ---------- */
+.band{
+  background:var(--card);color:#4A4534;
+  padding:5px 10px;font-size:9px;font-weight:700;
+  letter-spacing:.18em;text-transform:uppercase;
+  display:flex;justify-content:space-between;align-items:center;
+}
+.band span{font-family:var(--mono);letter-spacing:.04em;white-space:nowrap}
+.band b{font-weight:700;letter-spacing:.14em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+#roundBand{gap:8px}
+#roundBand.major{background:var(--brass);color:#2A2313}
+
+/* ---------- buy multiplier ---------- */
+#mult{display:flex;border-bottom:var(--cell)}
+#mult button{
+  flex:1;appearance:none;border:0;border-right:var(--cell);
+  background:transparent;color:var(--chalk-dim);
+  font-family:var(--mono);font-size:11px;font-weight:700;padding:8px 0;cursor:pointer;
+}
+#mult button:last-child{border-right:0}
+#mult button[aria-pressed="true"]{background:var(--turf);color:var(--chalk)}
+
+/* ---------- tour panel ---------- */
+.pad{padding:12px 10px;border-bottom:var(--cell)}
+.big{
+  font-family:var(--mono);font-size:30px;font-weight:700;
+  letter-spacing:-.03em;color:var(--brass);line-height:1;margin:4px 0 2px;
+}
+.note{font-size:11px;color:var(--chalk-dim);line-height:1.5;margin-top:6px}
+.wide{
+  width:100%;appearance:none;border:1px solid var(--brass);background:transparent;
+  color:var(--brass);font-family:var(--sans);font-size:12px;font-weight:700;
+  letter-spacing:.14em;text-transform:uppercase;padding:12px;cursor:pointer;margin-top:10px;
+}
+.wide:disabled{border-color:var(--turf-line);color:var(--chalk-dim);cursor:default}
+.wide.danger{border-color:var(--flag);color:var(--flag)}
+.stat{display:flex;justify-content:space-between;padding:6px 10px;border-bottom:var(--cell);font-size:12px}
+.sched{display:grid;grid-template-columns:auto 1fr auto;gap:8px;align-items:baseline;
+  padding:7px 10px;border-bottom:var(--cell);font-size:12px}
+.sched em{font-style:normal;font-family:var(--mono);font-size:9px;color:var(--chalk-dim);letter-spacing:.06em}
+.sched b{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sched i{font-style:normal;font-family:var(--mono);font-size:10px;color:var(--chalk-dim)}
+.sched.now{background:#233B2C}
+.sched.now b{color:var(--brass)}
+.sched.done{opacity:.45}
+.lb{display:grid;grid-template-columns:26px 1fr auto;gap:8px;
+  padding:5px 10px;border-bottom:var(--cell);font-size:12px}
+.lb em{font-style:normal;font-family:var(--mono);font-size:10px;color:var(--chalk-dim)}
+.lb i{font-style:normal;font-family:var(--mono);font-weight:600}
+.lb.me{background:#233B2C}
+.lb.me b,.lb.me i{color:var(--brass)}
+#matchLine{padding:7px 10px;border-bottom:var(--cell);background:#233B2C;
+  font-family:var(--mono);font-size:11px;display:none;justify-content:space-between}
+body.matchplay #matchLine{display:flex}
+#matchLine b{color:var(--brass)}
+.stat b{font-family:var(--mono);font-weight:600;color:var(--chalk)}
+.stat span{color:var(--chalk-dim)}
+
+/* ---------- blimp ---------- */
+#blimp{
+  position:absolute;width:44px;height:22px;cursor:pointer;display:none;
+  background:transparent;border:0;padding:0;
+}
+#blimp canvas{width:100%;height:100%;image-rendering:pixelated;display:block}
+
+/* ---------- modal ---------- */
+#modal{
+  position:fixed;inset:0;background:rgba(8,16,11,.86);
+  display:none;align-items:center;justify-content:center;padding:20px;z-index:20;
+}
+#modal.on{display:flex}
+#modalBox{
+  background:var(--turf);border:1px solid var(--turf-line);
+  max-width:340px;width:100%;
+}
+#modalBody{padding:14px;font-size:13px;line-height:1.55}
+#modalBody h3{font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--brass);margin-bottom:8px}
+#modalBtns{display:grid;grid-template-columns:1fr 1fr;border-top:var(--cell)}
+#modalBtns button{
+  appearance:none;border:0;border-right:var(--cell);background:transparent;
+  color:var(--chalk);font-size:11px;font-weight:700;letter-spacing:.14em;
+  text-transform:uppercase;padding:13px;cursor:pointer;
+}
+#modalBtns button:last-child{border-right:0}
+#modalBtns button.go{color:var(--brass)}
+
+@media (prefers-reduced-motion: reduce){
+  *{transition:none!important;animation:none!important}
+}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <div id="board">
+    <div class="bcell">
+      <div class="eyebrow">Hole</div>
+      <div class="bval" id="holeVal">1</div>
+    </div>
+    <div class="bcell">
+      <div class="eyebrow">Purse</div>
+      <div class="bval" id="moneyVal">$0</div>
+    </div>
+    <div class="bcell">
+      <div class="eyebrow">Trophies</div>
+      <div class="bval" id="trophyVal">0</div>
+    </div>
+  </div>
+
+  <div id="round">
+    <div class="band" id="roundBand"><b id="eventLabel">The Coastal Classic</b><span id="dayLabel">Thu &middot; Fair &middot; E</span></div>
+    <div id="card18"></div>
+  </div>
+
+  <div id="stage">
+    <canvas id="fairway" width="320" height="180"></canvas>
+    <div id="timer">0.0s</div>
+    <button id="blimp" aria-label="Collect sponsor blimp"><canvas width="44" height="22"></canvas></button>
+    <div id="toast"></div>
+  </div>
+
+  <div id="matchLine"><span id="matchRound">Round of 16</span><b id="matchState">All square</b></div>
+
+  <div id="strip">
+    <div id="striphead">
+      <div class="eyebrow" id="stripLabel">To the pin</div>
+      <div id="yards">40 / 40 yd</div>
+    </div>
+    <div id="bar"><div id="fill"></div></div>
+  </div>
+
+  <div id="tabs" role="tablist">
+    <button class="tab" role="tab" aria-selected="true" data-panel="clubs">Clubs<span class="dot"></span></button>
+    <button class="tab" role="tab" aria-selected="false" data-panel="caddies">Caddies<span class="dot"></span></button>
+    <button class="tab" role="tab" aria-selected="false" data-panel="season">Cup<span class="dot"></span></button>
+    <button class="tab" role="tab" aria-selected="false" data-panel="tour">Tour<span class="dot"></span></button>
+    <button class="tab" role="tab" aria-selected="false" data-panel="card">Card</button>
+  </div>
+
+  <div id="panels">
+    <div class="panel on" id="p-clubs">
+      <div id="mult">
+        <button data-buy="1" aria-pressed="true">x1</button>
+        <button data-buy="10" aria-pressed="false">x10</button>
+        <button data-buy="100" aria-pressed="false">x100</button>
+        <button data-buy="max" aria-pressed="false">MAX</button>
+      </div>
+      <div class="band">Swing <span id="dpNow">5 yd</span></div>
+      <div id="clubRows"></div>
+    </div>
+
+    <div class="panel" id="p-caddies">
+      <div class="band">Roster <span id="idleNow">0 yd/s</span></div>
+      <div id="caddieRows"></div>
+    </div>
+
+    <div class="panel" id="p-tour">
+      <div class="pad">
+        <div class="eyebrow">Trophies if you retire now</div>
+        <div class="big" id="prestigeGain">0</div>
+        <div class="eyebrow" id="prestigeRate">&mdash;</div>
+        <button class="wide" id="prestigeBtn" disabled>Retire to Pro Tour</button>
+        <div class="note" id="prestigeNote"></div>
+      </div>
+      <div class="band">Artifacts <span id="artSpend">0 held</span></div>
+      <div id="artRows"></div>
+    </div>
+
+    <div class="panel" id="p-season">
+      <div class="pad">
+        <div class="eyebrow">Cup points this season</div>
+        <div class="big" id="cupPts">0</div>
+        <div class="eyebrow" id="cupRank">&mdash;</div>
+      </div>
+      <div class="band">Schedule <span id="seasonNo">Season 1</span></div>
+      <div id="schedRows"></div>
+      <div class="band">Leaderboard <span id="lbEvent">&mdash;</span></div>
+      <div id="lbRows"></div>
+      <div class="band">Cups <span id="cupCount">0 held</span></div>
+      <div class="pad">
+        <div class="note" id="cupNote"></div>
+      </div>
+    </div>
+
+    <div class="panel" id="p-card">
+      <div class="band">This run</div>
+      <div id="statRows"></div>
+      <div class="band">Settings</div>
+      <div class="pad">
+        <button class="wide" id="muteBtn">Sound: On</button>
+        <button class="wide" id="exportBtn">Copy save code</button>
+        <button class="wide" id="importBtn">Paste save code</button>
+        <button class="wide danger" id="wipeBtn">Erase everything</button>
+        <div class="note">Saves to this browser every 15 seconds and whenever you leave. Offline caddies bank up to 12 hours, and stop at any tournament hole.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="modal"><div id="modalBox">
+  <div id="modalBody"></div>
+  <div id="modalBtns"><button id="mNo">Cancel</button><button id="mYes" class="go">Confirm</button></div>
+</div></div>
+<script>
+/* =========================================================================
+   BALANCE START
+   Pure functions + constants. No DOM, no state mutation.
+   The headless harness (sim.js) extracts this block verbatim and runs it,
+   so the numbers being tuned are literally the numbers being shipped.
+
+   NUMBER TYPE SEAM: everything below is plain float64. Peak magnitude inside
+   the designed play range (~hole 900) is about 1e62, which float64 holds at
+   full relative precision. A mantissa/exponent Decimal is 120 lines solving a
+   problem that does not occur until roughly hole 1650, where 1.13^h overflows.
+   If a second prestige layer ever pushes past that, every big-number op is
+   confined to this block and swapping the type is contained here.
+   ========================================================================= */
+
+const B = {
+  Y0: 40, A1: 1.21, H_BREAK: 60, A2: 1.13,
+
+  // A round is 18 holes. A tournament is four rounds, Thursday to Sunday.
+  // The 18th hole of every round is the boss; Sunday's is worth twice the rest.
+  ROUND: 18, DAYS: 4,
+  DAY_NAMES: ['Thursday','Friday','Saturday','Sunday'],
+
+  // Real par-72 layouts: four par 3s, ten par 4s, four par 5s, 36 out and 36 in.
+  // A hole's yardage scales by par/4, so a round still totals exactly 18 units
+  // and the whole balance curve is untouched.
+  PAR_LAYOUTS: [
+    [4,5,4,3,4,4,5,3,4, 4,4,3,5,4,4,3,4,5],
+    [4,4,3,5,4,3,4,5,4, 4,3,5,4,4,3,4,4,5],
+    [5,4,3,4,4,4,3,5,4, 3,4,5,4,4,3,4,5,4]
+  ],
+
+  // Conditions are drawn per round and average out to 1.00
+  WEATHER: [
+    {n:'Calm',    m:0.90}, {n:'Fair',   m:0.98},
+    {n:'Breezy',  m:1.04}, {n:'Gusting',m:1.08}
+  ],
+
+  // Scoring. Par is calibrated to what YOU should manage on this hole at your
+  // current power tapping at a steady tempo, exactly the way real par is
+  // calibrated to a professional. Absolute clock time cannot work: a player
+  // eight prestiges deep clears a hole a thousand times faster and would card
+  // an albatross on all eighteen. Measured this way the score reads execution,
+  // so crits and quieted hecklers earn birdies and idling cards bogeys.
+  EXPECT_TAPS: 3.0,
+  SEC_PER_STROKE: 2.5,
+  SCORE_PAY: [2.0, 2.0, 1.6, 1.3, 1.0, 0.9, 0.8, 0.8],   // indexed by diff+4, clamped
+  CUT_LINE: 6, CUT_BONUS: 1.6,
+
+  // A season is six tournaments: two open events, the match play bracket, the
+  // season's major, then two closing events. The last one awards a Cup.
+  SEASON: 6,
+  SLOTS: ['event','event','match','major','playoff','finale'],
+  EVENTS: ['The Coastal Classic','Sandbelt Invitational','The Highlands Open',
+           'Blackwater Classic','The Dunes Invitational','The Palmetto Open',
+           'Ironbark Championship','The Riverbend Classic','Windrow Invitational',
+           'The Saltmarsh Open','Foxglen Championship','The Kettle Bay Open'],
+  MAJORS: ['The Azalea Invitational','The National Championship',
+           'The Seaside Open','The Autumn Classic'],
+  MATCH_NAME: 'The Match Play Championship',
+  PLAYOFF_NAME: 'The Ascent Invitational',
+  FINALE_NAME: 'The Meridian Championship',
+  MAJOR_PURSE: 1.5, MAJOR_BOSS: 1.4,
+  PLAYOFF_PURSE: 1.8, FINALE_PURSE: 2.6, FINALE_BOSS: 1.8,
+
+  // Cup points, awarded on finishing position in the field
+  CUP_BASE: { event:500, match:550, major:750, playoff:750, finale:1000 },
+  POINT_DECAY: 0.855, POINT_FLOOR: 0.012,
+
+  // The field. Skill is fixed per rival; the field as a whole toughens as you
+  // climb, which is what moving up the tour actually feels like.
+  FIELD_SIZE: 30, FIELD_MEAN: 1.5, FIELD_SLOPE: -0.9, FIELD_SPREAD: 0.85, FIELD_NOISE: 3.5,
+  RIVALS: ['Marcus Vale','Soren Halvard','Kepler Nash','Idris Vane','Matteo Falco',
+           'Dane Corrigan','Emil Bergqvist','Rafael Duarte','Otto Lindqvist',
+           'Cyrus Bellweather','Tobias Reyn','Hugo Marchetti','Callum Rhodes',
+           'Anders Groenveld','Nico Ferreira','Jasper Quill','Lars Vondrak',
+           'Diego Alcott','Finn Ashgrove','Milo Sandoval','Rune Alvestad',
+           'Theo Kestrel','Auggie Braithe','Paulo Restrepo','Kian Doherty',
+           'Vikram Rao','Sam Okonkwo','Yuto Ishimura','Beau Lachance','Elias Warrick'],
+
+  // Match play: four rounds, four opponents, one bracket
+  MATCH_ROUNDS: ['Round of 16','Quarterfinal','Semifinal','Final'],
+  MATCH_OPP: [0.35, 0.0, -0.45, -0.95],   // opponent's average score per hole
+  MATCH_PURSE: 2.2,
+
+  // Cups are the ascension layer. Trophy gain is polynomial in depth, so
+  // without something exponential on top every prestige buys fewer holes than
+  // the last and the game converges. Cups multiply trophy gain, which makes
+  // artifact power exponential in the number of Cups held.
+  CUP_MULT: 1.15,
+  BOSS_MULT: 8.0, SUNDAY_X: 2.0, T_SECONDS: 40,
+
+  PAY: 0.42, PAY_SLOPE: 0.008, PAY_TOURNEY: 6, PAY_SUNDAY: 12,
+
+  DP_BASE: 5,
+
+  // Only 'drive' is uncapped. A second uncapped multiplicative line would add
+  // its exponent to the first and leave no wall to prestige against, so every
+  // other line is capped: they shift the curve, they do not tilt it.
+  //
+  // The capped lines are SEQUENCED, not parallel. Each is a short ladder that
+  // fills over roughly thirty holes, and the next one's entry price starts near
+  // where the previous one topped out. Four parallel ladders all spanning the
+  // whole run would force cost to badly outrun effect on every single step,
+  // which is what makes an upgrade feel like a rip-off.
+  UPG: [
+    {id:'drive',  kind:'mulTap',  cap:0,  base:15,    r:1.07, g:1.0528,
+     name:'Drive Power',       desc:'Every swing carries further'},
+    {id:'face',   kind:'crit',    cap:30, base:2.0e5, r:1.350, g:1,
+     name:'Face Milling',      desc:'Chance of a perfect strike'},
+    {id:'ball',   kind:'mulAll',  cap:8,  base:8.0e5, r:1.900, g:1.2437,
+     name:'Ball Construction', desc:'Swing and caddie yardage'},
+    {id:'shaft',  kind:'mulTap',  cap:8,  base:6.0e7, r:1.900, g:1.2312,
+     name:'Shaft Flex',        desc:'Swing yardage'},
+    {id:'finder', kind:'mulIdle', cap:8,  base:4.0e9, r:1.900, g:1.2168,
+     name:'Laser Rangefinder', desc:'Caddie yardage'},
+    {id:'sweet',  kind:'critPow', cap:10, base:3.0e11, r:1.700, g:1.1205,
+     name:'Sweet Spot',        desc:'Perfect strike payoff'},
+    {id:'rope',   kind:'calm',    cap:10, base:5.0e6, r:1.900, g:1,
+     name:'Gallery Rope',      desc:'Softens crowd distractions'}
+  ],
+  FACE_ADD: 0.004,
+  ROPE_REDUCE: 0.8878,
+
+  // Crowd distractions, closing holes only
+  DIST_MIN: 5, DIST_MAX: 10, DIST_WARN: 1.5, DIST_LINGER: 1.6, DIST_SETBACK: 0.055,
+
+  CAD_R: 1.055, CAD_G: 1.0405,
+  CAD_HOLE:  [1,    8,     20,    40,     70,     110,    160,     220],
+  CAD_COST:  [26,   104,   5.6e3, 2.9e5,  5.2e7,  8.6e9,  4.6e12,  8.6e15],
+  CAD_YPS:   [3.3,  12.7,  125,   5.6e3,  8.7e5,  1.2e8,  5.2e10,  7.9e13],
+  CAD_NAME:  ["Junior Looper","Range Hand","Tour Caddie","Yardage Book Reader",
+              "Launch Monitor Tech","Green Reading AI","Wind Tunnel Crew","Tectonic Groundskeeper"],
+
+  MS_EVERY: 10, MS_MULT: 1.03,
+
+  PRESTIGE_HOLE: 72, TROPHY_K: 0.35, TROPHY_EXP: 1.75,
+
+  ART_COST: 4, ART_R: 1.60,
+  ART: [
+    {id:"putter",  name:"SG: Off the Tee",           g:1.50, desc:"swing yardage"},
+    {id:"dimple",  name:"SG: Approach",              g:1.45, desc:"all yardage"},
+    {id:"cart",    name:"SG: Around the Green",      g:1.55, desc:"prize money"},
+    {id:"chrono",  name:"Tour Chronometer",         g:1.00, desc:"tournament clock"},
+    {id:"glove",   name:"SG: Putting",               g:1.40, desc:"perfect strikes"}
+  ],
+  CHRONO_SECONDS: 2.5, CHRONO_CAP: 14,
+
+  CRIT_BASE: 0.02, CRIT_MIN: 10, CRIT_MAX: 50, CRIT_CAP: 0.20,
+
+  BLIMP_MIN: 45, BLIMP_MAX: 120, BLIMP_FLIGHT: 13,
+
+  OFFLINE_CAP: 12*3600,
+  FF_PER_FRAME: 60
+};
+
+/* ---- calendar -------------------------------------------------------- */
+// h is the absolute hole counter and drives every formula. Everything the
+// player reads is derived from it.
+const holeInRound  = h => ((h - 1) % B.ROUND) + 1;
+const dayIndex     = h => Math.floor((h - 1) / B.ROUND) % B.DAYS;
+const dayOf        = h => dayIndex(h) + 1;
+const dayName      = h => B.DAY_NAMES[dayIndex(h)];
+const tournamentOf = h => Math.floor((h - 1) / (B.ROUND * B.DAYS)) + 1;
+const isSunday     = h => dayIndex(h) === B.DAYS - 1;
+const isFinalHole  = h => holeInRound(h) === B.ROUND;
+const roundIndex   = h => Math.floor((h - 1) / B.ROUND);
+
+/* ---- the card: par, conditions, event ---------------------------------- */
+function hash32(n){
+  n = Math.imul(n ^ (n >>> 15), 0x2c1b3c6d); n ^= n >>> 12;
+  n = Math.imul(n, 0x297a2d39); n ^= n >>> 15;
+  return n >>> 0;
+}
+const parOf = h =>
+  B.PAR_LAYOUTS[(tournamentOf(h) - 1) % B.PAR_LAYOUTS.length][holeInRound(h) - 1];
+const weatherOf = h => B.WEATHER[hash32(roundIndex(h) + 1) % B.WEATHER.length];
+
+/* ---- the season ------------------------------------------------------- */
+const seasonOf   = t => Math.floor((t - 1) / B.SEASON) + 1;
+const slotOf     = t => B.SLOTS[(t - 1) % B.SEASON];
+const isMajor    = t => slotOf(t) === 'major';
+const isMatch    = t => slotOf(t) === 'match';
+const isFinale   = t => slotOf(t) === 'finale';
+const isPlayoff  = t => slotOf(t) === 'playoff' || isFinale(t);
+// limited fields play no cut, same as the tour's invitationals
+const hasCut     = t => slotOf(t) === 'event' || isMajor(t);
+
+function eventName(t){
+  const slot = slotOf(t);
+  if(slot === 'match')   return B.MATCH_NAME;
+  if(slot === 'playoff') return B.PLAYOFF_NAME;
+  if(slot === 'finale')  return B.FINALE_NAME;
+  if(slot === 'major')   return B.MAJORS[(seasonOf(t) - 1) % B.MAJORS.length];
+  const n = t - 1 - Math.floor((t - 1) / B.SEASON) * 4;   // two open events a season
+  return B.EVENTS[n % B.EVENTS.length];
+}
+function purseMult(t){
+  const slot = slotOf(t);
+  if(slot === 'major')   return B.MAJOR_PURSE;
+  if(slot === 'playoff') return B.PLAYOFF_PURSE;
+  if(slot === 'finale')  return B.FINALE_PURSE;
+  if(slot === 'match')   return B.MATCH_PURSE;
+  return 1;
+}
+
+/* ---- the field --------------------------------------------------------- */
+// Deterministic: the same rival posts the same number in the same event every
+// time, so the leaderboard is a fact about the world, not a dice roll per frame.
+function rivalScore(t, i){
+  const n = hash32(t * 7919 + i * 104729);
+  const noise = ((n % 2001) / 1000 - 1) * B.FIELD_NOISE;
+  const skill = (i - (B.FIELD_SIZE - 1) / 2) * B.FIELD_SPREAD;
+  const strength = B.FIELD_MEAN + B.FIELD_SLOPE * Math.log2(t + 1);
+  return Math.round(strength + skill + noise);
+}
+function fieldScores(t){
+  const out = [];
+  for(let i = 0; i < B.FIELD_SIZE; i++) out.push({ name: B.RIVALS[i], score: rivalScore(t, i) });
+  return out.sort((a, b) => a.score - b.score);
+}
+// ties finish level, so beating the number matters and matching it does not
+function positionIn(t, myScore){
+  let better = 0;
+  for(let i = 0; i < B.FIELD_SIZE; i++) if(rivalScore(t, i) < myScore) better++;
+  return better + 1;
+}
+function cupPoints(t, position){
+  const base = B.CUP_BASE[slotOf(t)];
+  const share = Math.max(B.POINT_FLOOR, Math.pow(B.POINT_DECAY, position - 1));
+  return Math.round(base * share);
+}
+
+/* ---- match play -------------------------------------------------------- */
+const matchRoundName = h => B.MATCH_ROUNDS[dayIndex(h)];
+// opponent's score on this hole, fixed for this bracket slot
+function matchOppDiff(t, day, hole){
+  const n = hash32(t * 31337 + day * 613 + hole * 17);
+  const avg = B.MATCH_OPP[day];
+  const roll = (n % 1000) / 1000;
+  const jitter = roll < 0.18 ? -1 : roll < 0.72 ? 0 : roll < 0.93 ? 1 : 2;
+  return Math.round(avg) + jitter + (avg < 0 && roll < 0.45 ? -1 : 0);
+}
+const matchLabel = up => up === 0 ? 'All square' : (up > 0 ? up + ' up' : Math.abs(up) + ' down');
+
+/* ---- scoring ----------------------------------------------------------- */
+function expectedDps(s){
+  const cc = critChance(s);
+  const avgCrit = 1 + cc * ((B.CRIT_MIN + B.CRIT_MAX) / 2 * kindMult(s,'critPow') - 1);
+  return idleYps(s) + B.EXPECT_TAPS * drivePower(s) * avgCrit;
+}
+function expectedSeconds(s, hole){
+  const dps = expectedDps(s);
+  return dps > 0 ? yardageFor(hole) / dps : Infinity;
+}
+// Log-symmetric on purpose. Clear times are multiplicative, so scoring on the
+// raw ratio caps the good side at -3 while the bad side runs to +4 and every
+// card drifts over par. In log space, halving your time is worth exactly what
+// doubling it costs.
+function strokesFor(par, seconds, expected){
+  if(!(expected > 0) || !isFinite(expected) || !(seconds > 0)) return par;
+  // round away from zero: Math.round sends -1.5 to -1 but +1.5 to +2, which
+  // quietly costs half a stroke on every hole that lands on a half
+  const r = par / 2 * Math.log2(seconds / expected);
+  const n = par + Math.sign(r) * Math.round(Math.abs(r));
+  return Math.max(1, Math.min(par + 4, n));
+}
+function scoreName(par, strokes){
+  const d = strokes - par;
+  if(strokes === 1) return 'Hole in one';
+  if(d <= -3) return 'Albatross';
+  if(d === -2) return 'Eagle';
+  if(d === -1) return 'Birdie';
+  if(d === 0)  return 'Par';
+  if(d === 1)  return 'Bogey';
+  if(d === 2)  return 'Double bogey';
+  return 'Triple bogey';
+}
+const scorePay = d => B.SCORE_PAY[Math.max(0, Math.min(7, d + 4))];
+const toPar = d => d === 0 ? 'E' : (d > 0 ? '+' + d : '\u2212' + Math.abs(d));
+
+/* ---- yardage --------------------------------------------------------- */
+function tourneyMult(h){
+  if(!isFinalHole(h)) return 1;
+  const t = tournamentOf(h);
+  let m = isSunday(h) ? B.BOSS_MULT * B.SUNDAY_X : B.BOSS_MULT;
+  if(isSunday(h)){
+    if(isMajor(t))  m *= B.MAJOR_BOSS;
+    if(isFinale(t)) m *= B.FINALE_BOSS;
+  }
+  return m;
+}
+const isTourney = h => tourneyMult(h) > 1;
+
+function baseYardage(h){
+  return h <= B.H_BREAK
+    ? B.Y0 * Math.pow(B.A1, h - 1)
+    : B.Y0 * Math.pow(B.A1, B.H_BREAK - 1) * Math.pow(B.A2, h - B.H_BREAK);
+}
+const yardageFor = h =>
+  baseYardage(h) * (parOf(h) / 4) * weatherOf(h).m * tourneyMult(h);
+
+/* ---- money ----------------------------------------------------------- */
+function payoutFor(h, moneyMult){
+  const bonus = !isTourney(h) ? 1 : (isSunday(h) ? B.PAY_SUNDAY : B.PAY_TOURNEY);
+  return baseYardage(h) * (parOf(h) / 4) * B.PAY * (1 + B.PAY_SLOPE * h)
+       * bonus * purseMult(tournamentOf(h)) * moneyMult;
+}
+
+/* ---- costs ----------------------------------------------------------- */
+const costOf = (base, r, owned) => base * Math.pow(r, owned);
+
+function costBulk(base, r, owned, k){
+  if(k <= 0) return 0;
+  const c = base * Math.pow(r, owned) * (Math.pow(r, k) - 1) / (r - 1);
+  return isFinite(c) ? c : Infinity;
+}
+
+// Inverted geometric sum. Never loop level-by-level: at 10k owned that is a
+// frame drop on every button repaint.
+function maxAffordable(base, r, owned, cash){
+  const unit = base * Math.pow(r, owned);
+  if(!(cash > 0) || !isFinite(unit) || unit <= 0) return 0;
+  const arg = 1 + cash * (r - 1) / unit;
+  if(!(arg > 1) || !isFinite(arg)) return 0;
+  const k = Math.floor(Math.log(arg) / Math.log(r));
+  return Math.max(0, Math.min(k, 1e7));
+}
+
+/* ---- upgrades -------------------------------------------------------- */
+const upgDef = id => B.UPG.find(u => u.id === id);
+const upgLv  = (s, id) => (s.upg && s.upg[id]) || 0;
+
+function kindMult(s, kind){
+  let m = 1;
+  for(const u of B.UPG) if(u.kind === kind) m *= Math.pow(u.g, upgLv(s, u.id));
+  return m;
+}
+// respects the cap, so Buy Max can never overshoot into levels that do not exist
+function buyableCount(s, u, want, cash){
+  const lv = upgLv(s, u.id);
+  const room = u.cap ? Math.max(0, u.cap - lv) : Infinity;
+  const k = want === 'max' ? maxAffordable(u.base, u.r, lv, cash) : want;
+  return Math.max(0, Math.min(k, room));
+}
+
+/* ---- multipliers ----------------------------------------------------- */
+function artLevel(art, id){ return art[id] || 0; }
+function artMult(art, id){
+  const a = B.ART.find(x => x.id === id);
+  return Math.pow(a.g, artLevel(art, id));
+}
+const artCost = lvl => B.ART_COST * Math.pow(B.ART_R, lvl);
+
+const milestoneMult = clears => Math.pow(B.MS_MULT, Math.floor(clears / B.MS_EVERY));
+
+function globalMult(s){
+  return artMult(s.art,"dimple") * milestoneMult(s.clears);
+}
+function drivePower(s){
+  return B.DP_BASE * kindMult(s,'mulTap') * kindMult(s,'mulAll')
+       * artMult(s.art,"putter") * globalMult(s) * (s.surge || 1);
+}
+function caddieYps(s, i){
+  const lv = s.caddies[i];
+  if(!lv) return 0;
+  return B.CAD_YPS[i] * Math.pow(B.CAD_G, lv);
+}
+function idleYps(s){
+  let t = 0;
+  for(let i = 0; i < B.CAD_YPS.length; i++) t += caddieYps(s, i);
+  return t * kindMult(s,'mulIdle') * kindMult(s,'mulAll')
+           * globalMult(s) * (s.surge || 1);
+}
+// Making the cut on Friday pays through the weekend, which is exactly what it
+// does in real life: miss it and you go home without a cheque.
+const moneyMult = s => artMult(s.art,"cart")
+  * (s.madeCut && hasCut(tournamentOf(s.hole)) && dayIndex(s.hole) >= 2 ? B.CUT_BONUS : 1);
+const critChance = s => Math.min(B.CRIT_CAP,
+  (B.CRIT_BASE + upgLv(s,'face') * B.FACE_ADD) * artMult(s.art,"glove"));
+function critMult(s, rnd){
+  const boost = artMult(s.art,"glove");
+  return (B.CRIT_MIN + rnd * (B.CRIT_MAX - B.CRIT_MIN))
+       * Math.sqrt(boost) * kindMult(s,'critPow');
+}
+
+/* ---- crowd distractions ---------------------------------------------- */
+// Scaled off the hole's own yardage, so a heckle costs the same share of the
+// climb at hole 18 as it does at hole 900.
+function distractSetback(s, hole){
+  return yardageFor(hole) * B.DIST_SETBACK * Math.pow(B.ROPE_REDUCE, upgLv(s,'rope'));
+}
+const tourneySeconds = s =>
+  B.T_SECONDS + Math.min(B.CHRONO_CAP, artLevel(s.art,"chrono") * B.CHRONO_SECONDS);
+
+/* ---- prestige -------------------------------------------------------- */
+function trophiesFor(maxHole, cups){
+  if(maxHole <= B.PRESTIGE_HOLE) return 0;
+  const base = B.TROPHY_K * Math.pow(maxHole - B.PRESTIGE_HOLE, B.TROPHY_EXP);
+  return Math.floor(base * Math.pow(B.CUP_MULT, cups || 0));
+}
+const cupMult = cups => Math.pow(B.CUP_MULT, cups || 0);
+
+/* ---- offline --------------------------------------------------------- */
+// Yardage per hole is exponential, so elapsed*dps massively overpays. Holes
+// cleared is O(log(t*dps)); the iteration cap is a seatbelt, not the mechanism.
+// The tournament break is load-bearing: if offline walks through timed DPS
+// checks, the checks do not exist.
+function simulateOffline(s, seconds){
+  const out = { holes:0, money:0, stopped:null, seconds:0 };
+  let left = Math.min(seconds, B.OFFLINE_CAP);
+  out.seconds = left;
+  const dps = idleYps(s);
+  if(!(dps > 0)) return out;
+
+  let guard = 0;
+  while(left > 0 && guard++ < 10000){
+    if(isTourney(s.hole)){ out.stopped = "tournament"; break; }
+    const t = s.yard / dps;
+    if(!isFinite(t)){ out.stopped = "stalled"; break; }
+    if(t > left){ s.yard -= dps * left; left = 0; break; }
+    left -= t;
+    const pay = payoutFor(s.hole, moneyMult(s));
+    s.money += pay; out.money += pay; out.holes++;
+    s.clears++; s.hole++;
+    if(s.hole > s.maxHole) s.maxHole = s.hole;
+    s.yard = yardageFor(s.hole);
+  }
+  if(guard >= 10000) out.stopped = "capped";
+  return out;
+}
+/* BALANCE END */
+</script>
+<script>
+/* ============================ presentation ============================= */
+const $ = id => document.getElementById(id);
+const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/* ---- number formatting ---- */
+const TIERS = ['','K','M','B','T','aa','ab','ac','ad','ae','af'];
+function fmt(n){
+  if(n === Infinity) return '\u221E';
+  if(!isFinite(n)) return '0';
+  if(n < 0) return '-' + fmt(-n);
+  if(n < 1000) return n < 10 ? (Math.round(n*10)/10).toString() : Math.floor(n).toString();
+  const tier = Math.floor(Math.log10(n)/3);
+  if(tier >= TIERS.length) return n.toExponential(2).replace('e+','e');
+  const v = n / Math.pow(10, tier*3);
+  return (v < 10 ? v.toFixed(2) : v < 100 ? v.toFixed(1) : Math.floor(v)) + TIERS[tier];
+}
+const money = n => '$' + fmt(n);
+const yd = n => fmt(n) + ' yd';
+
+/* ---- seeded noise, so a hole always looks like itself ---- */
+function mulberry32(a){
+  return function(){
+    a |= 0; a = a + 0x6D2B79F5 | 0;
+    let t = Math.imul(a ^ a >>> 15, 1 | a);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+}
+
+/* ---- sprite baking: rows of chars -> cached offscreen canvas ---- */
+const PAL = {
+  '.':null,
+  k:'#14200F', s:'#E8B487', c:'#E2483C', w:'#F2F0E4', p:'#2F4F7A',
+  g:'#B9C0BF', n:'#6A5A3A', d:'#2E5236', l:'#4E7F45', y:'#D9A441',
+  a:'#FFFFFF', b:'#AAAAAA', o:'#000000', t:'#C8AE7A', e:'#7A5F33',
+  h:'#4A3B2A', v:'#C86A4E', m:'#5A2A2A', u:'#3E5F8A', z:'#2A2A2A'
+};
+function bake(rows){
+  const w = Math.max(...rows.map(r => r.length)), h = rows.length;
+  const cv = document.createElement('canvas');
+  cv.width = w; cv.height = h;
+  const c = cv.getContext('2d');
+  for(let y = 0; y < h; y++){
+    const row = rows[y];
+    for(let x = 0; x < row.length; x++){
+      const col = PAL[row[x]];
+      if(col){ c.fillStyle = col; c.fillRect(x, y, 1, 1); }
+    }
+  }
+  return cv;
+}
+
+const SPR = {};
+SPR.golfer = bake([
+  '   kkkkk',
+  '  kccccck',
+  '  kssssk',
+  '  kssssk',
+  '   kssk',
+  '  kwwwwk',
+  ' kwwwwwwk',
+  ' kwwwwwwk',
+  '  kwwwwk',
+  '  kppppk',
+  '  kppppk',
+  '  kpk kpk',
+  '  kpk kpk',
+  ' kkk  kkk'
+]);
+SPR.ball = bake([
+  '..oooo..',
+  '.oaaaao.',
+  'oaaaabbo',
+  'oaabaabo',
+  'oaaababo',
+  'oabaabbo',
+  '.obbbbo.',
+  '..oooo..'
+]);
+SPR.flag = bake([
+  ' occc',
+  ' occccc',
+  ' occcc',
+  ' occ',
+  ' o',
+  ' o',
+  ' o',
+  ' o',
+  ' o',
+  ' o',
+  ' o',
+  ' o',
+  ' o',
+  'ooo'
+]);
+SPR.tree = bake([
+  '    ddd',
+  '   ddddd',
+  '  ddlllddd',
+  ' ddllllldd',
+  ' dlllllldd',
+  'ddlllllldd',
+  ' ddllllldd',
+  '  ddlllddd',
+  '   ddddd',
+  '    ded',
+  '    ede',
+  '    ede',
+  '   eeee'
+]);
+// crowd
+// 10x17 so a clean 2x blit lands them larger than the golfer
+SPR.heckler = bake([
+  '   kkkk',
+  '  khhhhk',
+  '  kssssk',
+  '  kszzsk',
+  '  kssssk',
+  '   kmmk',
+  '  kkkkkk',
+  ' kvvvvvvk',
+  'kvvvvvvvvk',
+  'kvvvvvvvvk',
+  'kvvvvvvvvk',
+  'kvvvvvvvvk',
+  'kvvvvvvvvk',
+  'kvvvvvvvvk',
+  'kvvvvvvvvk',
+  'kvvvvvvvvk',
+  'kvvvvvvvvk'
+]);
+SPR.photog = bake([
+  '   kkkk',
+  '  khhhhk',
+  '  kssssk',
+  ' kzzzzzzk',
+  ' kzzaazzk',
+  '  kssssk',
+  '  kkkkkk',
+  ' kuuuuuuk',
+  'kuuuuuuuuk',
+  'kuuuuuuuuk',
+  'kuuuuuuuuk',
+  'kuuuuuuuuk',
+  'kuuuuuuuuk',
+  'kuuuuuuuuk',
+  'kuuuuuuuuk',
+  'kuuuuuuuuk',
+  'kuuuuuuuuk'
+]);
+SPR.cup = bake([
+  'kaaak',
+  'kccck',
+  'kaaak',
+  ' kak',
+  '  k'
+]);
+
+SPR.bushy = bake([
+  '  lll',
+  ' llddl',
+  'ldllldl',
+  ' ddlld'
+]);
+
+/* ---- blimp sprite (drawn into its own DOM canvas) ---- */
+try{ (function(){
+  const spr = bake([
+    '   ooooooo',
+    '  oyyyyyyyo',
+    ' oyycccyyyo',
+    'oyyccccccyyo',
+    ' oyycccyyyo',
+    '  oyyyyyyyo',
+    '    ooooo',
+    '    ogggo',
+    '     ooo'
+  ]);
+  const cv = document.querySelector('#blimp canvas');
+  const c = cv.getContext('2d');
+  c.imageSmoothingEnabled = false;
+  c.drawImage(spr, 0, 0, cv.width, cv.height);
+})(); }catch(e){ /* decorative only: never let it take the rest of the file down */ }
+
+/* ---- canvas scaling: integer factors only ---- */
+const cv = $('fairway'), ctx = cv.getContext('2d');
+ctx.imageSmoothingEnabled = false;
+function fitCanvas(){
+  const avail = $('stage').clientWidth || 320;
+  const dpr = window.devicePixelRatio || 1;
+  // Integer scaling is what keeps `image-rendering: pixelated` honest, but on a
+  // 390px phone that pins the fairway to 320px with dead bars either side.
+  // On dense screens the device pixel grid is 2-3x finer than CSS pixels, so a
+  // fractional scale lands sprite edges within a fraction of a real pixel and
+  // filling the width is the better trade.
+  // also cap by height so a short screen (landscape, or a webview with chrome)
+  // leaves room for the panels instead of eating the whole shell
+  const maxH = Math.max(110, (window.innerHeight || 640) * 0.40);
+  const scale = dpr >= 2
+    ? Math.min(avail / 320, maxH / 180, 4)
+    : Math.max(1, Math.min(4, Math.floor(avail / 320), Math.floor(maxH / 180)));
+  cv.style.width  = (320 * scale) + 'px';
+  cv.style.height = (180 * scale) + 'px';
+}
+addEventListener('resize', fitCanvas);
+addEventListener('orientationchange', () => setTimeout(fitCanvas, 120));
+
+/* ---- audio: created inside a gesture, voice-capped ---- */
+const Audio_ = {
+  ctx:null, master:null, wind:null, voices:0, muted:false,
+  init(){
+    if(this.ctx) return;
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if(!AC) return;
+    this.ctx = new AC();
+    this.master = this.ctx.createGain();
+    this.master.gain.value = this.muted ? 0 : 0.5;
+    this.master.connect(this.ctx.destination);
+    this.startWind();
+  },
+  resume(){ if(this.ctx && this.ctx.state === 'suspended') this.ctx.resume(); },
+  setMuted(m){ this.muted = m; if(this.master) this.master.gain.value = m ? 0 : 0.5; },
+  // one buffer, generated once at init, not per playback
+  startWind(){
+    const c = this.ctx, len = c.sampleRate * 2;
+    const buf = c.createBuffer(1, len, c.sampleRate);
+    const d = buf.getChannelData(0);
+    for(let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
+    const src = c.createBufferSource();
+    src.buffer = buf; src.loop = true;
+    const f = c.createBiquadFilter();
+    f.type = 'bandpass'; f.frequency.value = 480; f.Q.value = 0.6;
+    const g = c.createGain(); g.gain.value = 0.05;
+    src.connect(f).connect(g).connect(this.master);
+    src.start(); this.wind = g;
+  },
+  blip(type, f0, f1, dur, vol){
+    if(!this.ctx || this.voices > 12) return;   // tap-spam guard
+    const c = this.ctx, t = c.currentTime;
+    const o = c.createOscillator(), g = c.createGain();
+    o.type = type;
+    o.frequency.setValueAtTime(f0, t);
+    if(f1 !== f0) o.frequency.exponentialRampToValueAtTime(Math.max(1, f1), t + dur);
+    // exponentialRamp cannot touch zero, and an instant attack clicks the
+    // same way an instant stop does
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(vol, t + 0.008);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    o.connect(g).connect(this.master);
+    this.voices++;
+    o.onended = () => this.voices--;
+    o.start(t); o.stop(t + dur);
+  },
+  swing(){ this.blip('square', 150, 40, 0.10, 0.22); },
+  crit(){  this.blip('square', 420, 90, 0.16, 0.28); },
+  clear(){ this.blip('triangle', 330, 660, 0.12, 0.22); },
+  win(){ [523,659,784,1046].forEach((f,i) => setTimeout(() => this.blip('triangle', f, f, 0.11, 0.24), i*70)); },
+  fail(){ this.blip('sawtooth', 220, 55, 0.45, 0.20); },
+  chime(){ [784,1046,1318].forEach((f,i) => setTimeout(() => this.blip('triangle', f, f, 0.16, 0.24), i*55)); }
+};
+
+/* ---- save: hash + base64. No compression: the state is scalars under 3KB
+   against a 5MB quota, so LZ solves a problem that does not exist. ---- */
+function fnv1a(str){
+  let h = 0x811c9dc5;
+  for(let i = 0; i < str.length; i++){
+    h ^= str.charCodeAt(i);
+    h = Math.imul(h, 0x01000193) >>> 0;
+  }
+  return h.toString(16).padStart(8,'0');
+}
+const SALT = 'fairway.v1';
+const b64e = s => btoa(unescape(encodeURIComponent(s)));
+const b64d = s => decodeURIComponent(escape(atob(s)));
+function encodeSave(state){
+  const json = JSON.stringify(state);
+  return b64e(fnv1a(json + SALT) + '|' + json);
+}
+function decodeSave(blob){
+  const raw = b64d(blob);
+  const cut = raw.indexOf('|');
+  if(cut !== 8) throw new Error('malformed');
+  const hash = raw.slice(0, 8), json = raw.slice(9);
+  if(fnv1a(json + SALT) !== hash) throw new Error('checksum');
+  return JSON.parse(json);
+}
+</script>
+<script>
+/* ============================== game ================================== */
+const KEY = 'idlegolf.save.v1';
+const STEP = 1/30;
+const GROUND = 150;
+
+const freshUpg = () => B.UPG.reduce((o, u) => (o[u.id] = 0, o), {});
+
+function freshState(){
+  return {
+    v:4, hole:1, maxHole:1, maxHoleEver:1,
+    yard: yardageFor(1), money:0, clears:0,
+    upg: freshUpg(), caddies:[0,0,0,0,0,0,0,0],
+    art:{}, trophies:0, trophiesEver:0, prestiges:0,
+    surge:1, surgeT:0,
+    timer:0,
+    taps:0, crits:0, bestCrit:0, dodges:0, heckles:0, sawHint:false,
+    holeT:0, holeExp:0, card:new Array(18).fill(null), matchCard:new Array(18).fill(0),
+    priorRounds:0, tourScore:0, madeCut:false,
+    birdies:0, eagles:0, aces:0, cutsMade:0, cutsMissed:0, majors:0, bestRound:null,
+    cups:0, cupPoints:0, wins:0, matchUp:0, matchWins:0, bracket:0,
+    lastFinish:null, bestFinish:null, cupsEver:0,
+    runStart: Date.now(), lastSeen: Date.now(),
+    muted:false, buy:'1'
+  };
+}
+let S = freshState();
+
+/* ---- migration: the first balance patch that adds a field would white-screen
+   every existing save without this ---- */
+function migrate(raw){
+  const base = freshState();
+  if(typeof raw !== 'object' || raw === null) return base;
+  const out = Object.assign(base, raw);
+  const num = (v, d) => (typeof v === 'number' && isFinite(v) && v >= 0) ? v : d;
+  out.hole = Math.max(1, Math.floor(num(out.hole, 1)));
+  out.maxHole = Math.max(out.hole, Math.floor(num(out.maxHole, out.hole)));
+  out.maxHoleEver = Math.max(out.maxHole, Math.floor(num(out.maxHoleEver, out.maxHole)));
+  out.money = num(out.money, 0);
+  out.trophies = num(out.trophies, 0);
+  out.clears = Math.floor(num(out.clears, 0));
+  // v1 kept a single `dp` counter; fold it into the upgrade map
+  if(typeof out.upg !== 'object' || !out.upg) out.upg = {};
+  for(const u of B.UPG){
+    let lv = Math.floor(num(out.upg[u.id], 0));
+    if(u.id === 'drive' && typeof raw.dp === 'number') lv = Math.max(lv, Math.floor(num(raw.dp, 0)));
+    out.upg[u.id] = u.cap ? Math.min(lv, u.cap) : lv;
+  }
+  delete out.dp;
+  out.caddies = Array.isArray(out.caddies) ? out.caddies.slice(0,8) : [];
+  for(let i = 0; i < 8; i++) out.caddies[i] = Math.floor(num(out.caddies[i], 0));
+  if(typeof out.art !== 'object' || !out.art) out.art = {};
+  for(const a of B.ART) out.art[a.id] = Math.floor(num(out.art[a.id], 0));
+  out.yard = num(out.yard, yardageFor(out.hole));
+  if(out.yard <= 0 || out.yard > yardageFor(out.hole)) out.yard = yardageFor(out.hole);
+  out.surge = 1; out.surgeT = 0;
+  out.card = Array.isArray(out.card) && out.card.length === 18 ? out.card : new Array(18).fill(null);
+  out.matchCard = Array.isArray(out.matchCard) && out.matchCard.length === 18 ? out.matchCard : new Array(18).fill(0);
+  out.priorRounds = (typeof out.priorRounds === 'number' && isFinite(out.priorRounds)) ? out.priorRounds : 0;
+  out.tourScore = Math.round(num(out.tourScore, 0) * 0 + (typeof out.tourScore === 'number' && isFinite(out.tourScore) ? out.tourScore : 0));
+  out.holeT = num(out.holeT, 0);
+  out.madeCut = !!out.madeCut;
+  out.cups = Math.floor(num(out.cups, 0));
+  out.cupsEver = Math.max(out.cups, Math.floor(num(out.cupsEver, 0)));
+  out.cupPoints = Math.floor(num(out.cupPoints, 0));
+  out.matchUp = (typeof out.matchUp === 'number' && isFinite(out.matchUp)) ? out.matchUp : 0;
+  out.bracket = Math.max(0, Math.min(4, Math.floor(num(out.bracket, 0))));
+  out.v = 4;
+  return out;
+}
+
+function save(){
+  S.lastSeen = Date.now();
+  try{ localStorage.setItem(KEY, encodeSave(S)); }catch(e){}
+}
+function load(){
+  let blob;
+  try{ blob = localStorage.getItem(KEY); }catch(e){ return false; }
+  if(!blob) return false;
+  try{
+    S = migrate(decodeSave(blob));
+    return true;
+  }catch(e){
+    // a corrupt save should cost progress, not the ability to open the page
+    toast('Save was damaged. Started a fresh card.');
+    S = freshState();
+    return false;
+  }
+}
+
+/* ---- toast ---- */
+let toastT = 0;
+function toast(msg){
+  const el = $('toast');
+  el.textContent = msg; el.classList.add('show'); toastT = 3.2;
+}
+
+/* ---- modal ---- */
+let modalResolve = null;
+function ask(title, body, confirmLabel, single){
+  $('modalBody').innerHTML = '<h3>' + title + '</h3>' + body;
+  $('mYes').textContent = confirmLabel || 'Confirm';
+  $('mNo').style.display = single ? 'none' : '';
+  $('modalBtns').style.gridTemplateColumns = single ? '1fr' : '1fr 1fr';
+  $('modal').classList.add('on');
+  return new Promise(r => { modalResolve = r; });
+}
+const note = (t, b, l) => ask(t, b, l || 'Got it', true);
+$('mYes').onclick = () => { $('modal').classList.remove('on'); modalResolve && modalResolve(true); };
+$('mNo').onclick  = () => { $('modal').classList.remove('on'); modalResolve && modalResolve(false); };
+
+/* ---- hole flow ---- */
+const inTourney = () => isTourney(S.hole);
+
+function enterHole(keepYard){
+  // keepYard preserves partial progress banked by the offline simulation;
+  // resetting it there would quietly delete real earned yardage
+  if(!keepYard || !(S.yard > 0) || S.yard > yardageFor(S.hole)) S.yard = yardageFor(S.hole);
+  S.holeT = 0;
+  S.holeExp = expectedSeconds(S, S.hole);
+  const t = tournamentOf(S.hole);
+  if(holeInRound(S.hole) === 1){
+    // bank the round just finished, then start a clean card. Everything is
+    // derived from the card so that replaying a hole after a failed closing
+    // hole overwrites its score instead of adding a second copy.
+    S.priorRounds = dayIndex(S.hole) === 0 ? 0 : S.priorRounds + sumCard();
+    S.card = new Array(18).fill(null);
+    S.matchCard = new Array(18).fill(0);
+    S.matchUp = 0;
+    if(dayIndex(S.hole) === 0){
+      S.tourScore = 0; S.madeCut = false;
+      if(isMatch(t) && dayIndex(S.hole) === 0) S.bracket = 0;
+      if(slotOf(t) === 'event' && (t - 1) % B.SEASON === 0) S.cupPoints = 0;   // new season
+    }
+  }
+  S.timer = inTourney() ? tourneySeconds(S) : 0;
+  document.body.classList.toggle('tourney', inTourney());
+  document.body.classList.toggle('sunday', isSunday(S.hole));
+  view.sceneryHole = -1;
+  distReset();
+}
+function clearHole(ff){
+  const won = inTourney();
+  const par = parOf(S.hole);
+  // A hole handed to you by fast-forward, by the caddies overnight, or gone in
+  // less time than a single stroke is conceded: you take your par and move on.
+  // Without this a blitz cards an ace on every hole and maxes the score bonus
+  // exactly when you are already running away with it.
+  const conceded = ff || S.holeT < 0.35;
+  const strokes = conceded ? par : strokesFor(par, S.holeT, S.holeExp);
+  const diff = strokes - par;
+  const name = conceded ? 'Par' : scoreName(par, strokes);
+
+  S.card[holeInRound(S.hole) - 1] = diff;
+  S.tourScore = S.priorRounds + sumCard();
+  if(diff === -1) S.birdies++;
+  if(diff === -2) S.eagles++;
+  if(strokes === 1 && !conceded) S.aces++;
+
+  S.money += payoutFor(S.hole, moneyMult(S)) * scorePay(diff);
+  S.clears++;
+  if(!conceded && diff !== 0) addFloat(name, diff < 0 ? 'good' : 'bad');
+
+  // match play is decided hole by hole against the bracket opponent
+  const tour = tournamentOf(S.hole);
+  if(isMatch(tour)){
+    const opp = matchOppDiff(tour, dayIndex(S.hole), holeInRound(S.hole));
+    S.matchCard[holeInRound(S.hole) - 1] = diff < opp ? 1 : diff > opp ? -1 : 0;
+    S.matchUp = S.matchCard.reduce((a, b) => a + b, 0);
+  }
+
+  // Friday's closing hole is the cut, but only where the event plays one
+  if(hasCut(tour) && dayIndex(S.hole) === 1 && isFinalHole(S.hole)) applyCut();
+  if(isMatch(tour) && isFinalHole(S.hole)) resolveMatch();
+  if(won){
+    Audio_.win();
+    if(isSunday(S.hole)){
+      finishTournament();
+    } else {
+      toast(dayName(S.hole) + ' round complete at ' + toPar(S.tourScore));
+    }
+  }
+  else Audio_.clear();
+  S.hole++;
+  if(S.hole > S.maxHole) S.maxHole = S.hole;
+  if(S.hole > S.maxHoleEver) S.maxHoleEver = S.hole;
+  enterHole();
+}
+function failTournament(){
+  Audio_.fail();
+  toast('Missed the cut. Back to hole ' + holeInRound(Math.max(1, S.hole - 1)));
+  S.hole = Math.max(1, S.hole - 1);
+  enterHole();
+  view.shake = REDUCED ? 0 : 0.4;
+}
+
+function swing(){
+  const crit = Math.random() < critChance(S);
+  const mult = crit ? critMult(S, Math.random()) : 1;
+  const dmg = drivePower(S) * mult;
+  S.yard -= dmg;
+  S.taps++;
+  if(crit){ S.crits++; if(mult > S.bestCrit) S.bestCrit = mult; }
+  view.swingT = 0.001;
+  spawnBall(crit);
+  addFloat(fmt(dmg), crit ? 'crit' : 'hit');
+  crit ? Audio_.crit() : Audio_.swing();
+  drain(false);
+}
+const sumCard = () => S.card.reduce((a, b) => a + (b || 0), 0);
+
+function resolveMatch(){
+  const t = tournamentOf(S.hole);
+  const round = matchRoundName(S.hole);
+  if(S.matchUp > 0){
+    S.matchWins++; S.bracket = dayIndex(S.hole) + 1;
+    toast('Won the ' + round + ', ' + matchLabel(S.matchUp));
+  } else if(S.matchUp === 0){
+    toast(round + ' halved');
+  } else {
+    toast('Lost the ' + round + ', ' + matchLabel(S.matchUp));
+  }
+}
+
+function finishTournament(){
+  const t = tournamentOf(S.hole);
+  const total = S.tourScore;
+  const pos = positionIn(t, total);
+  const pts = cupPoints(t, pos);
+  S.cupPoints += pts;
+  S.lastFinish = pos;
+  if(S.bestFinish === null || pos < S.bestFinish) S.bestFinish = pos;
+  if(pos === 1) S.wins++;
+  if(isMajor(t) && pos === 1) S.majors++;
+  if(S.bestRound === null || total < S.bestRound) S.bestRound = total;
+
+  // finishing position pays, the way a purse actually splits
+  S.money += payoutFor(S.hole, moneyMult(S)) * (12 * Math.pow(0.86, pos - 1));
+
+  if(isFinale(t)){
+    S.cups++; S.cupsEver++;
+    note('Season ' + seasonOf(t) + ' complete',
+      '<p>You finished the ' + eventName(t) + ' in <b>' + ordinal(pos) + '</b> at ' + toPar(total) + '.</p>' +
+      '<p style="margin-top:8px">Cup number <b>' + S.cups + '</b> is yours. Every trophy you ever bank from here is worth <b>x' +
+      fmt(cupMult(S.cups)) + '</b>, and Cups survive retirement.</p>', 'Lift the Cup');
+    Audio_.win();
+  } else {
+    toast(ordinal(pos) + ' at ' + eventName(t) + ' \u00b7 ' + toPar(total) + ' \u00b7 +' + fmt(pts) + ' pts');
+  }
+}
+const ordinal = n => {
+  const s = ['th','st','nd','rd'], v = n % 100;
+  return n + (s[(v - 20) % 10] || s[v] || s[0]);
+};
+
+function applyCut(){
+  S.madeCut = S.tourScore <= B.CUT_LINE;
+  if(S.madeCut){
+    S.cutsMade++;
+    toast('Made the cut at ' + toPar(S.tourScore) + '. Weekend pays ' + B.CUT_BONUS + 'x');
+  } else {
+    S.cutsMissed++;
+    toast('Missed the cut at ' + toPar(S.tourScore) + '. Playing for pride');
+  }
+}
+function drain(ff){
+  let n = 0;
+  while(S.yard <= 0 && n++ < 200) clearHole(ff);
+}
+function fastForward(){
+  // once one swing clears a whole hole, tapping through it is not gameplay
+  let n = 0;
+  while(n++ < B.FF_PER_FRAME && !inTourney() && drivePower(S) >= yardageFor(S.hole)){
+    S.yard = 0; clearHole(true);
+  }
+}
+
+/* ---- crowd distractions, closing holes only ----
+   Each one gives a dodge window before it lands. Tapping the heckler counts as
+   a swing too, so shushing them never costs you tempo. */
+const DIST_KINDS = [
+  { k:'yell',  lines:['GET IN THE HOLE!','MASHED POTATOES!','YOU DA MAN!','SIT DOWN!','BE THE CLUB!'] },
+  { k:'throw', lines:['HEADS UP!','CATCH!','OVER HERE!'] },
+  { k:'flash', lines:['*CLICK*','*CLICK CLICK*'] },
+  { k:'phone', lines:['BRRRING!','SORRY! SORRY!','HELLO? YEAH, I\'M AT THE GOLF'] }
+];
+let dist = null, distNext = 0;
+
+function distReset(){
+  dist = null;
+  distNext = 2.5 + Math.random() * 3;
+}
+function distSpawn(){
+  const kd = DIST_KINDS[Math.floor(Math.random() * DIST_KINDS.length)];
+  dist = {
+    kind: kd.k, text: kd.lines[Math.floor(Math.random() * kd.lines.length)],
+    x: 66 + Math.random() * 214, t: 0, fired:false, dodged:false, flash:0, obj:null
+  };
+  Audio_.blip('square', 260, 300, 0.05, 0.09);
+  if(!S.sawHint){ S.sawHint = true; toast('Tap the crowd to quiet them'); }
+}
+function distFire(){
+  dist.fired = true;
+  S.heckles++;
+  const back = distractSetback(S, S.hole);
+  S.yard = Math.min(yardageFor(S.hole), S.yard + back);
+  addFloat('+' + fmt(back), 'bad');
+  view.shake = REDUCED ? 0 : 0.38;
+  if(dist.kind === 'flash') dist.flash = 0.3;
+  if(dist.kind === 'throw') dist.obj = { x: dist.x, y: 168, vx: (76 - dist.x) * 0.62, vy: -95 };
+  Audio_.fail();
+}
+function distDodge(){
+  dist.dodged = true; dist.fired = true;
+  S.dodges++;
+  addFloat('QUIET', 'good');
+  Audio_.blip('triangle', 880, 1240, 0.09, 0.18);
+}
+function distHit(lx, ly){
+  return !!dist && !dist.fired && ly > 132 && lx > dist.x - 22 && lx < dist.x + 22;
+}
+function distTick(dt){
+  if(!inTourney()){ if(dist) dist = null; return; }
+  if(dist){
+    dist.t += dt;
+    if(dist.flash > 0) dist.flash -= dt;
+    if(!dist.fired && dist.t >= B.DIST_WARN) distFire();
+    if(dist.t >= B.DIST_WARN + B.DIST_LINGER){
+      dist = null;
+      distNext = B.DIST_MIN + Math.random() * (B.DIST_MAX - B.DIST_MIN);
+    }
+    return;
+  }
+  distNext -= dt;
+  if(distNext <= 0) distSpawn();
+}
+
+/* ---- blimp ---- */
+const blimpEl = $('blimp');
+let blimp = { next: 30 + Math.random()*40, t: -1, top: 0 };
+function blimpTick(dt){
+  if(blimp.t >= 0){
+    blimp.t += dt;
+    const p = blimp.t / B.BLIMP_FLIGHT;
+    if(p > 1){ blimp.t = -1; blimpEl.style.display = 'none'; return; }
+    const w = $('stage').clientWidth;
+    blimpEl.style.display = 'block';
+    blimpEl.style.left = Math.round(-50 + p * (w + 100)) + 'px';
+    blimpEl.style.top  = Math.round(blimp.top + Math.sin(blimp.t*1.6)*5) + 'px';
+    return;
+  }
+  blimp.next -= dt;
+  if(blimp.next <= 0){
+    blimp.t = 0;
+    blimp.top = 12 + Math.random()*40;
+    blimp.next = B.BLIMP_MIN + Math.random()*(B.BLIMP_MAX - B.BLIMP_MIN);
+  }
+}
+blimpEl.onclick = e => {
+  e.stopPropagation();
+  if(blimp.t < 0) return;
+  blimp.t = -1; blimpEl.style.display = 'none';
+  Audio_.chime();
+  const roll = Math.random();
+  if(roll < 0.55){
+    const cash = payoutFor(S.hole, moneyMult(S)) * (20 + Math.random()*40);
+    S.money += cash;
+    toast('Sponsor payout ' + money(cash));
+  } else if(roll < 0.9){
+    S.surge = 5; S.surgeT = 20;
+    toast('Sponsor surge: 5x for 20s');
+  } else {
+    const t = Math.max(1, Math.floor(trophiesFor(S.maxHole) * 0.04) + 1);
+    S.trophies += t; S.trophiesEver += t;
+    toast('Sponsor trophy bonus +' + t);
+  }
+};
+
+/* ---- prestige ---- */
+async function prestige(){
+  const gain = trophiesFor(S.maxHole, S.cups);
+  if(gain <= 0) return;
+  const okGo = await ask('Retire to Pro Tour',
+    '<p>You bank <b>' + fmt(gain) + '</b> trophies and keep every artifact.</p>' +
+    (S.cups ? '<p style="margin-top:8px">Your <b>' + S.cups + '</b> Cup' + (S.cups > 1 ? 's are' : ' is') +
+      ' multiplying that by <b>x' + fmt(cupMult(S.cups)) + '</b>, and stay with you.</p>' : '') +
+    '<p style="margin-top:8px;color:#8FA893">Holes, purse, swing and the whole caddie roster reset to zero.</p>',
+    'Retire');
+  if(!okGo) return;
+  S.trophies += gain; S.trophiesEver += gain; S.prestiges++;
+  S.cupPoints = 0; S.matchUp = 0; S.bracket = 0; S.lastFinish = null;
+  S.hole = 1; S.maxHole = 1; S.money = 0; S.clears = 0;
+  S.upg = freshUpg(); S.caddies = [0,0,0,0,0,0,0,0];
+  S.card = new Array(18).fill(null); S.matchCard = new Array(18).fill(0);
+  S.priorRounds = 0; S.tourScore = 0; S.madeCut = false;
+  S.surge = 1; S.surgeT = 0; S.runStart = Date.now();
+  enterHole(); save(); buildRows(); buildCard(); lastSched = -1; lastLb = -1;
+  toast('Retired with ' + fmt(gain) + ' trophies');
+}
+
+/* ---- offline catch-up ---- */
+function catchUp(seconds, announce){
+  if(seconds < 20) return;
+  const r = simulateOffline(S, seconds);
+  S.card = new Array(18).fill(null); S.matchCard = new Array(18).fill(0);
+  S.priorRounds = 0; S.tourScore = 0;
+  if(S.hole > S.maxHoleEver) S.maxHoleEver = S.hole;
+  enterHole(true);
+  if(announce && (r.holes > 0 || r.money > 0)){
+    const hrs = (r.seconds/3600);
+    note('While you were away',
+      '<p>' + (hrs < 1 ? Math.round(r.seconds/60) + ' minutes' : hrs.toFixed(1) + ' hours') +
+      ' of caddie work.</p><p style="margin-top:8px">Holes cleared <b>' + r.holes +
+      '</b><br>Purse earned <b>' + money(r.money) + '</b></p>' +
+      (r.stopped === 'tournament' ? '<p style="margin-top:8px;color:#D9A441">Stopped at ' + posLabel(S.hole) + '. Closing holes need you at the tee.</p>' : ''),
+      'Collect');
+  }
+}
+</script>
+<script>
+/* ============================= renderer =============================== */
+const view = {
+  swingT: 0, balls: [], floats: [], shake: 0,
+  clouds: [{x:40,y:22,w:34},{x:160,y:14,w:46},{x:250,y:30,w:28}],
+  scenery: null, sceneryHole: -1, flagX: 300, club: -2.1
+};
+
+// pixel-grid ellipse. ctx.ellipse antialiases, which puts soft edges on a
+// canvas whose entire point is hard ones.
+function pxEllipse(g, cx, cy, rx, ry, color){
+  g.fillStyle = color;
+  const y0 = Math.round(cy - ry), y1 = Math.round(cy + ry);
+  for(let y = y0; y <= y1; y++){
+    const t = (y + 0.5 - cy) / ry;
+    if(Math.abs(t) > 1) continue;
+    const half = Math.round(rx * Math.sqrt(1 - t*t));
+    if(half <= 0) continue;
+    g.fillRect(Math.round(cx) - half, y, half*2, 1);
+  }
+}
+
+function buildScenery(hole){
+  const rnd = mulberry32(hole * 2654435761);
+  const trees = [], bunkers = [];
+  const n = 3 + Math.floor(rnd()*3);
+  for(let i = 0; i < n; i++){
+    const x = 78 + rnd()*228;            // keep the tee box and the swing clear
+    trees.push({ x, s: rnd() < 0.55 ? 2 : 1, y: 126 + Math.floor(rnd()*3) });
+  }
+  const m = 1 + Math.floor(rnd()*3);
+  for(let i = 0; i < m; i++)
+    bunkers.push({ x: 84 + rnd()*212, y: 156 + rnd()*16, w: 16 + rnd()*24, h: 5 + rnd()*4 });
+  const bushes = [];
+  for(let i = 0; i < 5; i++) bushes.push({ x: rnd()*312, y: 112 + rnd()*12 });
+  const tufts = [];
+  for(let i = 0; i < 26; i++) tufts.push({ x: rnd()*320, y: 132 + rnd()*46 });
+  view.scenery = { trees, bunkers, bushes, tufts };
+  view.sceneryHole = hole;
+}
+
+function spawnBall(crit){
+  if(REDUCED) return;
+  view.balls.push({ x:70, y:143, vx: 105 + Math.random()*70, vy: -(78 + Math.random()*40), crit });
+  if(view.balls.length > 14) view.balls.shift();
+}
+const FLOAT_COLOR = { hit:'#F2F0E4', crit:'#F0C14E', bad:'#F08A7A', good:'#9FE3A8' };
+function addFloat(txt, kind){
+  if(REDUCED) return;
+  if(typeof txt === 'number') txt = fmt(txt);   // never leak a raw float onto the canvas
+  view.floats.push({ x: 74 + Math.random()*20, y: 132, txt, kind: kind || 'hit', life: 1 });
+  if(view.floats.length > 16) view.floats.shift();
+}
+
+function render(dt){
+  const g = ctx;
+  const total = yardageFor(S.hole);
+  const prog = Math.max(0, Math.min(1, 1 - S.yard / total));
+  view.flagX += ((300 - prog * 214) - view.flagX) * Math.min(1, dt * 8);
+  if(view.sceneryHole !== S.hole) buildScenery(S.hole);
+
+  let sx = 0;
+  if(view.shake > 0){ view.shake -= dt; sx = (Math.random()*2 - 1) * 2; }
+
+  g.save();
+  g.translate(Math.round(sx), 0);
+
+  // sky. Tournaments swap the palette outright rather than washing a tint over
+  // it, which just desaturates blue into fog.
+  const T = inTourney();
+  g.fillStyle = T ? '#8E4436' : '#6FA8CF'; g.fillRect(-4,  0, 328, 44);
+  g.fillStyle = T ? '#BC6144' : '#89BCDD'; g.fillRect(-4, 44, 328, 32);
+  g.fillStyle = T ? '#E2A166' : '#A8D2E8'; g.fillRect(-4, 76, 328, 26);
+
+  // clouds
+  g.fillStyle = T ? '#F0D3B4' : '#E8F2F7';
+  for(const c of view.clouds){
+    c.x += dt * 3; if(c.x > 340) c.x = -50;
+    g.fillRect(Math.round(c.x), c.y, c.w, 4);
+    g.fillRect(Math.round(c.x) + 6, c.y - 3, c.w - 14, 3);
+  }
+
+  // hills
+  g.fillStyle = T ? '#2C4A38' : '#3E6B4B';
+  for(let x = -4; x < 324; x++){
+    const h = 12 + Math.sin(x * 0.031) * 7 + Math.sin(x * 0.011 + 2) * 5;
+    g.fillRect(x, 102 - h, 1, h + 2);
+  }
+
+  // rough + fairway
+  g.fillStyle = '#2E5236'; g.fillRect(-4, 102, 328, 26);
+  g.fillStyle = '#4E7F45'; g.fillRect(-4, 128, 328, 52);
+  g.fillStyle = '#5A8F4F'; g.fillRect(-4, 136, 328, 22);
+
+  const sc = view.scenery;
+  g.fillStyle = '#457A3E';
+  for(const t of sc.tufts) g.fillRect(Math.round(t.x), Math.round(t.y), 2, 1);
+  for(const b of sc.bushes) g.drawImage(SPR.bushy, Math.round(b.x), Math.round(b.y));
+  for(const b of sc.bunkers){
+    pxEllipse(g, b.x, b.y, b.w/2, b.h/2, '#D8C08A');
+    pxEllipse(g, b.x, b.y - 1, b.w/2 - 2, b.h/2 - 1, '#E7D6A8');
+  }
+  for(const t of sc.trees){
+    const w = SPR.tree.width * t.s, h = SPR.tree.height * t.s;
+    g.drawImage(SPR.tree, Math.round(t.x), t.y - h, w, h);
+  }
+
+  // pin, walking toward the tee as yardage falls
+  const fw = SPR.flag.width * 2, fh = SPR.flag.height * 2;
+  pxEllipse(g, view.flagX + 2, GROUND + 2, 9, 3, '#3F6B44');
+  g.drawImage(SPR.flag, Math.round(view.flagX) - 2, GROUND - fh, fw, fh);
+
+  // golfer
+  const gw = SPR.golfer.width * 2, gh = SPR.golfer.height * 2;
+  pxEllipse(g, 48, GROUND + 2, 13, 3, '#3F6B44');
+  g.drawImage(SPR.golfer, 36, GROUND - gh, gw, gh);
+
+  // club, rasterized from an animated angle.
+  // Angles: 0 points right, positive rotates downward on screen.
+  //   ADDRESS  head resting on the turf just behind the ball
+  //   TOP      swept back low, then up behind the golfer
+  //   FINISH   up and over the front shoulder, past impact
+  if(view.swingT > 0){
+    view.swingT += dt / 0.26;
+    if(view.swingT >= 1) view.swingT = 0;
+  }
+  const ADDRESS = 0.719, TOP = 3.93, FINISH = -1.95, CLUB = 21;
+  const t01 = view.swingT;
+  let ang;
+  if(t01 <= 0){
+    ang = ADDRESS + Math.sin(Date.now()/900) * 0.03;   // idle waggle
+  } else if(t01 < 0.30){
+    const u = t01 / 0.30;
+    ang = ADDRESS + (TOP - ADDRESS) * (1 - (1-u)*(1-u));      // takeaway, decelerating
+  } else if(t01 < 0.72){
+    const u = (t01 - 0.30) / 0.42;
+    ang = TOP + (FINISH - TOP) * (u*u);                        // downswing, accelerating
+  } else {
+    const u = (t01 - 0.72) / 0.28;
+    ang = FINISH + (ADDRESS - FINISH) * (1 - (1-u)*(1-u));     // return to address
+  }
+  view.club = ang;
+  const hx = 52, hy = GROUND - 14;   // at the golfer's hands, not floating beside him
+  const cs = Math.cos(ang), sn = Math.sin(ang);
+  g.fillStyle = '#C9CFCE';
+  for(let i = 0; i <= CLUB - 1; i++)
+    g.fillRect(Math.round(hx + cs*i), Math.round(hy + sn*i), 1, 1);
+  g.fillStyle = '#EDEDED';
+  g.fillRect(Math.round(hx + cs*CLUB) - 1, Math.round(hy + sn*CLUB) - 1, 3, 3);
+
+  // balls in flight
+  for(let i = view.balls.length - 1; i >= 0; i--){
+    const b = view.balls[i];
+    b.vy += 190 * dt; b.x += b.vx * dt; b.y += b.vy * dt;
+    if(b.y > GROUND - 2 || b.x > 330){ view.balls.splice(i, 1); continue; }
+    if(b.crit){ g.globalAlpha = 0.45; pxEllipse(g, b.x + 4, b.y + 4, 8, 8, '#F0C14E'); g.globalAlpha = 1; }
+    g.drawImage(SPR.ball, Math.round(b.x), Math.round(b.y));
+  }
+  // ball at rest on the tee
+  if(!view.balls.length) g.drawImage(SPR.ball, 70, 143);
+
+  // crowd distraction
+  if(dist) drawDistraction(g, dist, dt);
+
+  // floating yardage
+  g.font = 'bold 10px ui-monospace, monospace';
+  g.textAlign = 'left';
+  for(let i = view.floats.length - 1; i >= 0; i--){
+    const f = view.floats[i];
+    f.life -= dt * 1.3; f.y -= dt * 26;
+    if(f.life <= 0){ view.floats.splice(i, 1); continue; }
+    g.globalAlpha = Math.min(1, f.life * 1.6);
+    g.fillStyle = FLOAT_COLOR[f.kind] || FLOAT_COLOR.hit;
+    g.fillText((f.kind === 'crit' ? '\u2605 ' : '') + f.txt, f.x, f.y);
+    g.globalAlpha = 1;
+  }
+  g.textAlign = 'left';
+  g.restore();
+}
+
+function drawDistraction(g, d, dt){
+  // thrown object keeps arcing after it lands on you
+  if(d.obj){
+    d.obj.vy += 210 * dt;
+    d.obj.x += d.obj.vx * dt; d.obj.y += d.obj.vy * dt;
+    if(d.obj.y < GROUND) g.drawImage(SPR.cup, Math.round(d.obj.x), Math.round(d.obj.y));
+  }
+
+  // drawn larger than the golfer so the crowd reads as foreground rather than
+  // as someone standing in the middle of the fairway
+  const rise = Math.min(1, d.t / 0.20);
+  const py = 180 - Math.round(34 * rise);
+  const spr = d.kind === 'flash' ? SPR.photog : SPR.heckler;
+  g.drawImage(spr, Math.round(d.x) - 10, py, 20, 34);
+
+  g.font = 'bold 8px ui-monospace, monospace';
+  g.textAlign = 'left';
+  const label = d.dodged ? 'sorry.' : d.text;
+  const w = Math.ceil(g.measureText(label).width) + 9;
+  const bx = Math.max(2, Math.min(316 - w, Math.round(d.x) - Math.round(w/2)));
+  const by = py - 20;
+  const bg = d.dodged ? '#2E5236' : d.fired ? '#8E4436' : '#F2F0E4';
+  g.fillStyle = bg;
+  g.fillRect(bx, by, w, 13);
+  g.fillRect(bx + Math.round(w/2) - 2, by + 13, 4, 3);
+  g.fillStyle = '#14200F';
+  g.fillRect(bx, by, w, 1); g.fillRect(bx, by + 12, w, 1);
+  g.fillRect(bx, by, 1, 13); g.fillRect(bx + w - 1, by, 1, 13);
+  g.fillStyle = (d.dodged || d.fired) ? '#F2F0E4' : '#1A2A1E';
+  g.fillText(label, bx + 4, by + 10);
+
+  // the dodge window, drawn as a draining bar so it is a decision and not a coin flip
+  if(!d.fired){
+    const left = Math.max(0, 1 - d.t / B.DIST_WARN);
+    g.fillStyle = '#14200F'; g.fillRect(bx, by - 4, w, 3);
+    g.fillStyle = left > 0.4 ? '#D9A441' : '#E2483C';
+    g.fillRect(bx + 1, by - 3, Math.round((w - 2) * left), 1);
+  }
+  if(d.flash > 0){
+    g.globalAlpha = Math.min(0.85, d.flash * 3);
+    g.fillStyle = '#FFFFFF'; g.fillRect(-4, 0, 328, 180);
+    g.globalAlpha = 1;
+  }
+}
+
+/* =============================== UI ================================== */
+const el = {};
+function rowHTML(name, meta){
+  return '<div><div class="rname">' + name + '</div><div class="rmeta">' + meta + '</div></div>';
+}
+function makeRow(parent, name){
+  const d = document.createElement('div');
+  d.className = 'row';
+  d.innerHTML = rowHTML(name, '') + '<button class="buy"><span class="lbl"></span><span class="amt"></span></button>';
+  parent.appendChild(d);
+  return { root:d, meta:d.querySelector('.rmeta'), btn:d.querySelector('.buy'),
+           lbl:d.querySelector('.lbl'), amt:d.querySelector('.amt') };
+}
+
+function buyCount(base, r, owned){
+  if(S.buy === 'max') return maxAffordable(base, r, owned, S.money);
+  return parseInt(S.buy, 10);
+}
+
+// "Tournament 3, Sunday, hole 12" - the absolute counter is machinery, this is
+// what the player actually navigates by
+const posLabel = h =>
+  'Tournament ' + tournamentOf(h) + ', ' + dayName(h) + ', hole ' + holeInRound(h);
+const posShort = h => 'T' + tournamentOf(h) + ' \u00b7 ' + dayName(h) + ' \u00b7 ' + holeInRound(h);
+
+let cardCells = [], lastRound = -1, lastScore = null;
+function buildCard(){
+  const wrap = $('card18');
+  wrap.innerHTML = ''; cardCells = [];
+  for(let i = 1; i <= B.ROUND; i++){
+    const b = document.createElement('b');
+    b.innerHTML = i + '<i></i>';
+    if(i === B.ROUND) b.className = 'boss';
+    wrap.appendChild(b); cardCells.push(b);
+  }
+}
+
+function effectLabel(u, lv){
+  if(u.id === 'face')  return '+' + (lv * B.FACE_ADD * 100).toFixed(1) + '% crit chance';
+  if(u.id === 'rope')  return lv ? '-' + ((1 - Math.pow(B.ROPE_REDUCE, lv)) * 100).toFixed(0) + '% crowd setback'
+                                 : 'no reduction yet';
+  return 'x' + fmt(Math.pow(u.g, lv)) + ' ' + u.desc.toLowerCase();
+}
+
+function buildRows(){
+  el.upg = []; el.cads = []; el.arts = [];
+  $('clubRows').innerHTML = ''; $('caddieRows').innerHTML = ''; $('artRows').innerHTML = '';
+
+  for(const u of B.UPG){
+    const r = makeRow($('clubRows'), u.name);
+    r.btn.onclick = () => {
+      const k = buyableCount(S, u, S.buy === 'max' ? 'max' : parseInt(S.buy, 10), S.money);
+      if(k <= 0) return;
+      const c = costBulk(u.base, u.r, upgLv(S, u.id), k);
+      if(c > S.money) return;
+      S.money -= c; S.upg[u.id] = upgLv(S, u.id) + k;
+      Audio_.blip('square', 660, 880, 0.06, 0.14);
+    };
+    el.upg.push({ r, u });
+  }
+
+  for(let i = 0; i < 8; i++){
+    const r = makeRow($('caddieRows'), B.CAD_NAME[i]);
+    r.btn.onclick = () => {
+      if(S.maxHoleEver < B.CAD_HOLE[i]) return;
+      const k = buyCount(B.CAD_COST[i], B.CAD_R, S.caddies[i]);
+      const c = costBulk(B.CAD_COST[i], B.CAD_R, S.caddies[i], k);
+      if(k <= 0 || c > S.money) return;
+      S.money -= c; S.caddies[i] += k; Audio_.blip('square', 520, 700, 0.06, 0.14);
+    };
+    el.cads.push(r);
+  }
+
+  for(const a of B.ART){
+    const r = makeRow($('artRows'), a.name);
+    r.btn.onclick = () => {
+      const c = artCost(S.art[a.id] || 0);
+      if(c > S.trophies) return;
+      S.trophies -= c; S.art[a.id] = (S.art[a.id] || 0) + 1;
+      Audio_.blip('triangle', 700, 1000, 0.10, 0.18);
+    };
+    el.arts.push({ r, a });
+  }
+}
+
+const SLOT_TAG = { event:'EVT', match:'MATCH', major:'MAJOR', playoff:'PLAYOFF', finale:'FINALE' };
+let lastSched = -1, lastLb = -1;
+
+function paintSeason(){
+  const t = tournamentOf(S.hole), season = seasonOf(t), first = (season - 1) * B.SEASON + 1;
+
+  $('cupPts').textContent = fmt(S.cupPoints);
+  $('cupRank').textContent = S.lastFinish
+    ? 'Last start: ' + ordinal(S.lastFinish) + ' of ' + (B.FIELD_SIZE + 1)
+    : 'No finishes yet this run';
+  $('seasonNo').textContent = 'Season ' + season;
+  $('cupCount').textContent = fmt(S.cups) + ' held';
+  $('cupNote').innerHTML = S.cups
+    ? 'Every trophy you bank is multiplied by <b style="color:var(--brass)">x' + fmt(cupMult(S.cups)) +
+      '</b>. Cups survive retirement, so each one you lift moves the ceiling permanently.'
+    : 'Win ' + B.FINALE_NAME + ' at the end of a season to lift a Cup. Cups multiply every trophy you ever bank and they survive retirement.';
+
+  if(lastSched !== t){
+    lastSched = t;
+    $('schedRows').innerHTML = '';
+    for(let i = 0; i < B.SEASON; i++){
+      const e = first + i, d = document.createElement('div');
+      d.className = 'sched' + (e === t ? ' now' : e < t ? ' done' : '');
+      d.innerHTML = '<em>' + SLOT_TAG[slotOf(e)] + '</em><b>' + eventName(e) + '</b><i>' +
+        (e < t ? 'done' : 'x' + purseMult(e)) + '</i>';
+      $('schedRows').appendChild(d);
+    }
+  }
+  if(lastLb !== t || S.tourScore !== lastScore){
+    lastLb = t;
+    $('lbEvent').textContent = eventName(t);
+    const rows = fieldScores(t).slice(0, 9)
+      .map(r => ({ name: r.name, score: r.score, me: false }));
+    rows.push({ name: 'You', score: S.tourScore, me: true });
+    rows.sort((a, b) => a.score - b.score);
+    $('lbRows').innerHTML = rows.map(r => {
+      const pos = r.me ? positionIn(t, S.tourScore) : positionIn(t, r.score);
+      return '<div class="lb' + (r.me ? ' me' : '') + '"><em>' + pos + '</em><b>' +
+             r.name + '</b><i>' + toPar(r.score) + '</i></div>';
+    }).join('');
+  }
+}
+
+let uiClock = 0;
+function paint(dt){
+  const total = yardageFor(S.hole);
+  const prog = Math.max(0, Math.min(1, 1 - S.yard / total));
+
+  $('holeVal').textContent = holeInRound(S.hole);
+  $('moneyVal').textContent = money(S.money);
+  $('trophyVal').textContent = fmt(S.trophies);
+  $('fill').style.right = ((1 - prog) * 100).toFixed(2) + '%';
+  $('yards').textContent = fmt(Math.max(0, S.yard)) + ' / ' + fmt(total) + ' yd';
+  $('stripLabel').textContent = inTourney()
+    ? (dayIndex(S.hole) === 1 ? 'The cut' : dayName(S.hole) + ' finish')
+      + ' \u00b7 ' + tourneyMult(S.hole).toFixed(0) + 'x'
+    : (S.surgeT > 0 ? 'Sponsor surge active'
+       : 'Par ' + parOf(S.hole) + (S.madeCut && dayIndex(S.hole) >= 2 ? ' \u00b7 cut made, ' + B.CUT_BONUS + 'x purse' : ''));
+
+  const hr = holeInRound(S.hole);
+  const t = tournamentOf(S.hole);
+  if(lastRound !== S.hole || lastScore !== S.tourScore){
+    lastRound = S.hole; lastScore = S.tourScore;
+    $('eventLabel').textContent = eventName(t);
+    $('roundBand').classList.toggle('major', isMajor(t));
+    $('dayLabel').textContent =
+      dayName(S.hole).slice(0,3) + ' \u00b7 ' + weatherOf(S.hole).n + ' \u00b7 ' + toPar(S.tourScore);
+    for(let i = 0; i < cardCells.length; i++){
+      const c = cardCells[i], n = i + 1, d = S.card[i];
+      c.classList.toggle('done', n < hr);
+      c.classList.toggle('now', n === hr);
+      c.classList.toggle('under', d !== null && d < 0);
+      c.classList.toggle('over', d !== null && d > 0);
+      c.firstChild.nodeValue = n;
+      c.querySelector("i").textContent = d === null ? parOf(S.hole - hr + 1 + i) : toPar(d);
+    }
+  }
+  if(inTourney()) $('timer').textContent = Math.max(0, S.timer).toFixed(1) + 's';
+
+  // match play status
+  const inMatch = isMatch(tournamentOf(S.hole));
+  document.body.classList.toggle('matchplay', inMatch);
+  if(inMatch){
+    $('matchRound').textContent = matchRoundName(S.hole) + ' \u00b7 thru ' + (hr - 1);
+    $('matchState').textContent = matchLabel(S.matchUp);
+  }
+
+  uiClock -= dt;
+  if(uiClock > 0) return;
+  uiClock = 0.1;
+  paintSeason();
+
+  const dp = drivePower(S), idle = idleYps(S);
+  const _ = 0;
+  $('dpNow').textContent = fmt(dp) + ' yd \u00b7 ' + (critChance(S)*100).toFixed(1) + '% crit';
+  $('idleNow').textContent = fmt(idle) + ' yd/s';
+
+  // gear
+  for(const { r, u } of el.upg){
+    const lv = upgLv(S, u.id);
+    const maxed = !!u.cap && lv >= u.cap;
+    r.meta.innerHTML = 'Lv <i>' + lv + (u.cap ? '/' + u.cap : '') + '</i> \u00b7 <b>' + effectLabel(u, lv) + '</b>';
+    if(maxed){
+      r.lbl.textContent = 'Maxed'; r.amt.textContent = '';
+      r.btn.classList.remove('can'); r.btn.disabled = true;
+      r.root.classList.add('maxed');
+      continue;
+    }
+    r.root.classList.remove('maxed');
+    const k = buyableCount(S, u, S.buy === 'max' ? 'max' : parseInt(S.buy, 10), S.money);
+    const c = costBulk(u.base, u.r, lv, Math.max(1, k));
+    const can = k > 0 && c <= S.money;
+    r.lbl.textContent = money(c);
+    r.amt.textContent = '+' + k;
+    r.btn.classList.toggle('can', can);
+    r.btn.disabled = !can;
+  }
+
+  // caddies
+  for(let i = 0; i < 8; i++){
+    const r = el.cads[i], lockedBy = B.CAD_HOLE[i];
+    const locked = S.maxHoleEver < lockedBy;
+    r.root.classList.toggle('locked', locked);
+    if(locked){
+      r.meta.textContent = 'Unlocks at hole ' + lockedBy;
+      r.lbl.textContent = 'Locked'; r.amt.textContent = '';
+      r.btn.classList.remove('can'); r.btn.disabled = true; continue;
+    }
+    const k = buyCount(B.CAD_COST[i], B.CAD_R, S.caddies[i]);
+    const c = costBulk(B.CAD_COST[i], B.CAD_R, S.caddies[i], Math.max(1, k));
+    const can = k > 0 && c <= S.money;
+    const out = caddieYps(S, i) * globalMult(S) * (S.surge || 1);
+    r.meta.innerHTML = 'Lv <i>' + S.caddies[i] + '</i> \u00b7 <b>' + fmt(out) + '</b> yd/s';
+    r.lbl.textContent = money(c);
+    r.amt.textContent = '+' + k;
+    r.btn.classList.toggle('can', can);
+    r.btn.disabled = !can;
+  }
+  // artifacts
+  for(const { r, a } of el.arts){
+    const lv = S.art[a.id] || 0, c = artCost(lv), can = c <= S.trophies;
+    const eff = a.id === 'chrono'
+      ? '+' + Math.min(B.CHRONO_CAP, lv * B.CHRONO_SECONDS).toFixed(1) + 's clock'
+      : 'x' + fmt(Math.pow(a.g, lv)) + ' ' + a.desc;
+    r.meta.innerHTML = 'Lv <i>' + lv + '</i> \u00b7 <b>' + eff + '</b>';
+    r.lbl.textContent = fmt(c) + ' \u{1F3C6}';
+    r.amt.textContent = '+1';
+    r.btn.classList.toggle('can', can);
+    r.btn.disabled = !can;
+  }
+  $('artSpend').textContent = fmt(S.trophies) + ' held';
+
+  // tour
+  const gain = trophiesFor(S.maxHole, S.cups);
+  const hrs = Math.max(1/60, (Date.now() - S.runStart) / 3600000);
+  $('prestigeGain').textContent = fmt(gain);
+  $('prestigeRate').textContent = gain > 0 ? fmt(gain / hrs) + ' per hour \u00b7 peaks then falls' : '\u2014';
+  $('prestigeBtn').disabled = gain <= 0;
+  $('prestigeNote').textContent = gain > 0
+    ? 'Retiring wipes holes, purse, swing and caddies. Artifacts and trophies stay.'
+    : 'Win Tournament 1 by clearing all four rounds through Sunday to earn your first trophies. Deeper runs pay disproportionately more.';
+
+  $('statRows').innerHTML = [
+    ['Furthest this run', posShort(S.maxHole)],
+    ['Furthest ever', posShort(S.maxHoleEver)],
+    ['Holes cleared this run', S.clears],
+
+    ['Swings taken', fmt(S.taps)],
+    ['Perfect swings', fmt(S.crits) + (S.bestCrit ? '  (best x' + S.bestCrit.toFixed(0) + ')' : '')],
+    ['Hecklers quieted', fmt(S.dodges || 0) + ' of ' + fmt((S.dodges || 0) + (S.heckles || 0))],
+    ['Birdies / eagles / aces', fmt(S.birdies||0) + ' / ' + fmt(S.eagles||0) + ' / ' + fmt(S.aces||0)],
+    ['Cuts made', fmt(S.cutsMade||0) + ' of ' + fmt((S.cutsMade||0) + (S.cutsMissed||0))],
+    ['Tournaments won', fmt(S.wins||0)],
+    ['Majors won', fmt(S.majors||0)],
+    ['Match play rounds won', fmt(S.matchWins||0)],
+    ['Best finish', S.bestFinish ? ordinal(S.bestFinish) : '\u2014'],
+    ['Cups lifted', fmt(S.cupsEver||0) + (S.cups ? '  (x' + fmt(cupMult(S.cups)) + ' trophies)' : '')],
+    ['Best tournament score', S.bestRound === null ? '\u2014' : toPar(S.bestRound)],
+    ['Idle yardage', fmt(idleYps(S)) + ' yd/s'],
+    ['Milestone bonus', 'x' + fmt(milestoneMult(S.clears))],
+    ['Retirements', S.prestiges],
+    ['Trophies earned lifetime', fmt(S.trophiesEver)]
+  ].map(([k, v]) => '<div class="stat"><span>' + k + '</span><b>' + v + '</b></div>').join('');
+
+  for(const t of document.querySelectorAll('.tab')) t.classList.remove('ready');
+  if(el.upg.some(x => x.r.btn.classList.contains('can'))) document.querySelector('[data-panel=clubs]').classList.add('ready');
+  if(el.cads.some(r => r.btn.classList.contains('can'))) document.querySelector('[data-panel=caddies]').classList.add('ready');
+  if(el.arts.some(x => x.r.btn.classList.contains('can')) || gain > 0)
+    document.querySelector('[data-panel=tour]').classList.add('ready');
+
+  if(toastT > 0){ toastT -= 0.1; if(toastT <= 0) $('toast').classList.remove('show'); }
+}
+</script>
+<script>
+/* ============================ loop + boot ============================= */
+function tick(dt){
+  S.holeT += dt;
+  if(!(S.holeExp > 0)) S.holeExp = expectedSeconds(S, S.hole);
+  const dps = idleYps(S);
+  if(dps > 0) S.yard -= dps * dt;
+  drain(false);
+  fastForward();
+
+  if(S.surgeT > 0){
+    S.surgeT -= dt;
+    if(S.surgeT <= 0){ S.surgeT = 0; S.surge = 1; toast('Sponsor surge ended'); }
+  }
+  if(inTourney()){
+    S.timer -= dt;
+    if(S.timer <= 0) failTournament();
+  }
+  blimpTick(dt);
+  distTick(dt);
+}
+
+let acc = 0, last = performance.now(), autoT = 0;
+function frame(now){
+  let dt = (now - last) / 1000;
+  last = now;
+  if(dt > 0.25) dt = 0.25;      // no death spiral after a stall
+  acc += dt;
+  let guard = 0;
+  while(acc >= STEP && guard++ < 12){ tick(STEP); acc -= STEP; }
+  render(dt);
+  paint(dt);
+  autoT += dt;
+  if(autoT > 15){ autoT = 0; save(); }
+  requestAnimationFrame(frame);
+}
+
+/* rAF is throttled or halted in a background tab, which would silently stop an
+   idle game. Treat the gap as an offline delta on the way back. */
+document.addEventListener('visibilitychange', () => {
+  if(document.hidden){ save(); }
+  else {
+    const gap = (Date.now() - S.lastSeen) / 1000;
+    last = performance.now(); acc = 0;
+    if(gap > 5) catchUp(gap, gap > 120);
+  }
+});
+addEventListener('pagehide', save);
+addEventListener('blur', save);
+
+/* ---- input ---- */
+function armAudio(){
+  Audio_.init(); Audio_.resume();
+  removeEventListener('pointerdown', armAudio);
+}
+addEventListener('pointerdown', armAudio);
+
+$('stage').addEventListener('pointerdown', e => {
+  if(e.target.closest('#blimp')) return;
+  e.preventDefault();
+  // map the tap into the 320x180 logical grid so hitboxes survive any scale
+  const r = cv.getBoundingClientRect();
+  const lx = (e.clientX - r.left) / (r.width / 320);
+  const ly = (e.clientY - r.top) / (r.height / 180);
+  if(distHit(lx, ly)) distDodge();
+  swing();
+});
+addEventListener('keydown', e => {
+  if(e.code === 'Space' || e.code === 'Enter'){
+    if(document.activeElement && document.activeElement.tagName === 'BUTTON') return;
+    e.preventDefault(); swing();
+  }
+});
+
+/* ---- tabs ---- */
+for(const t of document.querySelectorAll('.tab')){
+  t.onclick = () => {
+    for(const o of document.querySelectorAll('.tab')) o.setAttribute('aria-selected', String(o === t));
+    for(const p of document.querySelectorAll('.panel')) p.classList.remove('on');
+    $('p-' + t.dataset.panel).classList.add('on');
+  };
+}
+for(const b of document.querySelectorAll('#mult button')){
+  b.onclick = () => {
+    S.buy = b.dataset.buy; uiClock = 0;
+    for(const o of document.querySelectorAll('#mult button'))
+      o.setAttribute('aria-pressed', String(o === b));
+  };
+}
+
+/* ---- settings ---- */
+$('prestigeBtn').onclick = prestige;
+$('muteBtn').onclick = () => {
+  S.muted = !S.muted; Audio_.setMuted(S.muted);
+  $('muteBtn').textContent = 'Sound: ' + (S.muted ? 'Off' : 'On');
+};
+$('exportBtn').onclick = async () => {
+  save();
+  const code = localStorage.getItem(KEY) || '';
+  try{
+    await navigator.clipboard.writeText(code);
+    toast('Save code copied');
+  }catch(e){
+    note('Save code', '<textarea readonly style="width:100%;height:120px;font-size:10px;background:#0E1A13;color:#DCE8D8;border:1px solid #2F5540">' + code + '</textarea>');
+  }
+};
+$('importBtn').onclick = async () => {
+  const okGo = await ask('Paste save code',
+    '<textarea id="impBox" style="width:100%;height:110px;font-size:10px;background:#0E1A13;color:#DCE8D8;border:1px solid #2F5540"></textarea>',
+    'Load');
+  if(!okGo) return;
+  const txt = ($('impBox') && $('impBox').value || '').trim();
+  try{
+    S = migrate(decodeSave(txt));
+    enterHole(); buildCard(); buildRows(); save();
+    toast('Save loaded');
+  }catch(e){ toast('That code did not check out'); }
+};
+$('wipeBtn').onclick = async () => {
+  const okGo = await ask('Erase everything',
+    '<p>Every hole, trophy and artifact is deleted. There is no undo.</p>', 'Erase');
+  if(!okGo) return;
+  try{ localStorage.removeItem(KEY); }catch(e){}
+  S = freshState(); enterHole(); buildCard(); buildRows(); save();
+  toast('Card wiped. Back to the first tee.');
+};
+
+/* ---- debug handle: the headless harness drives the real page through this,
+   so the code under test is the code that ships ---- */
+window.GOLF = {
+  get S(){ return S; }, set S(v){ S = v; },
+  get B(){ return B; },
+  swing, save, load, migrate, decodeSave, encodeSave, buildRows, enterHole,
+  tick, paint, prestige, drain, moneyMult, fmt, money, idleYps, drivePower, critChance,
+  trophiesFor, simulateOffline, isTourney, yardageFor, costBulk, maxAffordable,
+  holeInRound, dayOf, dayName, tournamentOf, isSunday, buildCard,
+  parOf, weatherOf, isMajor, eventName, strokesFor, scoreName, scorePay, toPar, applyCut,
+  seasonOf, slotOf, isMatch, isFinale, hasCut, positionIn, cupPoints, fieldScores,
+  matchOppDiff, matchLabel, matchRoundName, cupMult, expectedSeconds, finishTournament, resolveMatch, sumCard,
+  upgLv, kindMult, buyableCount, distractSetback, distTick, distHit, distDodge, distSpawn, distFire,
+  get dist(){ return dist; }, get view(){ return view; }, freshUpg
+};
+
+/* ---- boot ---- */
+(function boot(){
+  const had = load();
+  Audio_.muted = !!S.muted;
+  $('muteBtn').textContent = 'Sound: ' + (S.muted ? 'Off' : 'On');
+  for(const b of document.querySelectorAll('#mult button'))
+    b.setAttribute('aria-pressed', String(b.dataset.buy === S.buy));
+  fitCanvas();
+  buildCard();
+  buildRows();
+  enterHole();
+  if(had){
+    const away = (Date.now() - S.lastSeen) / 1000;
+    if(away > 60) catchUp(away, true);
+  }
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>
