@@ -3698,14 +3698,51 @@ const Scene = {
     out[n-1] = out[n-1]*0.5 + out[0]*0.5;
     return out;
   },
-  hAt(){ return 0; },
+  // ---- the ground is not a plane ----
+  // Height along the hole, in the same units the lateral scale uses. One screen
+  // row maps to one world distance in this renderer, so the ground can rise and
+  // fall ALONG the hole but cannot tilt across it. That is the trade the
+  // scanline technique makes in exchange for seam-free, pixel-exact
+  // perspective, and it is why a bunker still gets its depth from its rim
+  // rather than from the terrain.
+  hAt(d){
+    const A = this.roll === undefined ? 1 : this.roll;
+    if(A <= 0) return 0;
+    const k = this.seed || 0;
+    // Periods are set against the length of a HOLE, not against some arbitrary
+    // world scale: at a wavelength of three hundred units a sixty unit hole
+    // only ever sees part of one cycle, which is a ramp rather than rolling
+    // ground. These give roughly one long rise and a couple of lesser ones
+    // between the tee and the green.
+    let h = Math.sin(d*0.085 + k)*4.60
+          + Math.sin(d*0.170 + k*1.7)*2.00
+          + Math.sin(d*0.310 + k*0.6)*0.70;
+    h *= clamp(d/7, 0, 1);                       // the tee is cut level
+    const g = clamp(1 - Math.abs(d - LEN)/10, 0, 1);
+    return (h*(1 - g) + (this.greenH || 0)*g) * A;   // the green on its own shelf
+  },
+  // Ground height relative to what the camera is standing on, eased in over
+  // the first few units ahead of him. The camera sits very close, so s is huge
+  // in the near field: a gradient steep enough to read out at the green is far
+  // too steep at his feet, and the ground drops clean out of frame leaving him
+  // standing on terrain a hole away. Easing it in keeps the ground he is on
+  // level and lets the shape develop with distance, where it is legible.
+  groundH(d){
+    const t = clamp((d - this.camD) / 11, 0, 1);
+    return (this.hAt(d) - (this.camH || 0)) * (t*t*(3 - 2*t));
+  },
   holeLen(){ return LEN; },
   proj(d, lat, lift){
     if(!isFinite(this.camD)) this.camD = 0;
     const rel = Math.max(0.6, d - this.camD + CAM_BACK);
     const s = K_PROJ / rel;
+    // Measured against the ground under the camera, so the view rides the
+    // terrain rather than the whole scene heaving as he walks over a rise.
+    // lift stays what it was: height ABOVE the ground, which is what a ball
+    // in flight wants.
+    const h = this.groundH(d) + (lift || 0);
     return { x: Math.round(CX + (lat - CAM_LAT) * LAT * s),
-             y: Math.round(HORIZON + GROUND*s - (lift||0) * LAT * s * 0.55),
+             y: Math.round(HORIZON + GROUND*s - h * LAT * s * 0.55),
              s };
   },
 
@@ -3713,6 +3750,8 @@ const Scene = {
     this.hole = h; this.tier = tier;
     const rnd = seeded(h*7919 + tier*104729);
     this.seed = rnd() * 1000;
+    this.roll = 1;
+    this.greenH = (rnd()*2 - 1) * 3.4;   // uphill or downhill to the green
     const ch = S.chaos ? S.chaos.n : 'Fair';
     this.night  = /Night/.test(ch);
     this.aurora = /Aurora|Ley|Mythic/.test(ch);
@@ -3762,6 +3801,8 @@ const Scene = {
     this.rain = false;
     const rnd = seeded(hash32(R.floor*7919 + dg.length*104729 + 13));
     this.seed = rnd() * 1000;
+    this.roll = 0.42;                    // a cellar floor does not roll like links
+    this.greenH = (rnd()*2 - 1) * 1.4;
     this.hole = R.floor + 1;
 
     this.layHazards(rnd, {
@@ -3958,8 +3999,12 @@ Object.assign(Scene, {
     const g = cv.getContext('2d');
     g.clearRect(0, 0, VW, VH);
     g.fillStyle = T.sky[4];
-    for(let y = HORIZON; y < VH; y++){
-      const sc = (y - HORIZON) / GROUND;
+    // Starts ABOVE the horizon. With a height field a rise can stand higher
+    // than the horizon line, and haze that began at the line left that ground
+    // as a hard, fully saturated slab sitting on top of the mountains.
+    const top = Math.max(0, HORIZON - Math.round(VH*0.13));
+    for(let y = top; y < VH; y++){
+      const sc = Math.max(0, (y - HORIZON) / GROUND);
       const rel = K_PROJ / Math.max(0.0001, sc);
       const a = clamp((rel - 16) / 90, 0, 1) * 0.62;
       if(a <= 0.004) continue;
@@ -3985,15 +4030,52 @@ Object.assign(Scene, {
       T._fw = expandC(T.fw, 48); T._rg = expandC(T.rg, 48);
       T._gr = expandC(T.gr, 40); T._sd = expandC(T.sd, 40); T._wt = expandC(T.wt, 40);
     }
-    for(let y = HORIZON + 1; y < VH; y++){
-      const s = (y - HORIZON) / GROUND;
-      const rel = K_PROJ / s;
-      const d = cam + rel - CAM_BACK;
-      const near = clamp(1 - rel/110, 0, 1);
+    // March outward from the camera rather than down the screen. With a height
+    // field one screen row no longer means one world distance -- a rise can
+    // hide everything behind it -- so slices are walked near to far and a slice
+    // is only painted where it stands above everything drawn already. That one
+    // clip is what makes a ridge occlude the ground beyond it.
+    const SKY = HORIZON - Math.round(VH*0.10);   // how far a rise may break the skyline
+    let maxy = VH, d = cam - CAM_BACK + 0.62, guard = 0;
+    let prevD = d, prevH = this.hAt(d);
+    while(d < cam + 300 && maxy > SKY && guard++ < 6000){
+      const rel = Math.max(0.6, d - cam + CAM_BACK);
+      const s = K_PROJ / rel;
+      const gh = this.groundH(d);
+      const y = Math.round(HORIZON + GROUND*s - gh * LAT * s * 0.55);
+      // Step so the projection advances about half a row: fine enough that a
+      // steep face cannot tear, coarse enough that the loop stays bounded.
+      const step = Math.max(0.03, rel*rel / (GROUND*K_PROJ) * 0.5);
+      if(y < maxy){
+        // Light the ground by the way it tilts. This is the whole payoff for
+        // having a height field: without it every slice at a given distance is
+        // the same flat tone and the field reads as paper, however good the
+        // outlines on it are.
+        const slope = (gh - prevH) / Math.max(1e-4, d - prevD);
+        this.groundSlice(c, T, d, s, rel, y, maxy - y, clamp(slope*0.42, -0.15, 0.15));
+        maxy = y;
+      }
+      prevD = d; prevH = gh;
+      d += step;
+    }
+    // whatever is left between the furthest slice and the horizon
+    if(maxy > HORIZON){
+      c.fillStyle = pickC(T._rg, 0);
+      c.fillRect(0, HORIZON, VW, maxy - HORIZON);
+    }
+    const hz = this.night ? 'rgba(40,70,90,.40)' : 'rgba(190,215,215,.30)';
+    for(let i = 0; i < 3; i++){ c.fillStyle = hz; c.fillRect(0, HORIZON + 1 + i*2, VW, 1); }
+  },
 
-      c.fillStyle = pickC(T._rg, near);
-      c.fillRect(0, y, VW, 1);
-      if(rel < 1.2) continue;
+  // One band of ground, at one distance. Everything here was a single scanline
+  // before; it now fills hgt rows, because a slice covers however much screen
+  // the terrain gives it.
+  groundSlice(c, T, d, s, rel, y, hgt, litIn){
+    const near = clamp(1 - rel/110, 0, 1);
+    const lit = litIn || 0;
+      c.fillStyle = pickC(T._rg, near + lit);
+      c.fillRect(0, y, VW, hgt);
+      if(rel < 1.2) return;
 
       const C0 = Math.round(CX - CAM_LAT * LAT * s);
 
@@ -4001,9 +4083,9 @@ Object.assign(Scene, {
         const tw = Math.round(1.75 * LAT * s);
         if(tw > 0){
           c.fillStyle = pickC(T._gr, d > -3.0 && d < 2.2 ? 0.75 : 0.45);
-          c.fillRect(C0 - tw, y, tw*2, 1);
+          c.fillRect(C0 - tw, y, tw*2, hgt);
           c.fillStyle = T.edge;
-          c.fillRect(C0 - tw - 1, y, 1, 1); c.fillRect(C0 + tw, y, 1, 1);
+          c.fillRect(C0 - tw - 1, y, 1, hgt); c.fillRect(C0 + tw, y, 1, hgt);
         }
       }
 
@@ -4014,27 +4096,27 @@ Object.assign(Scene, {
           // the camera a single stripe covered a large band of the screen and
           // slid up it as he walked: a dark shape moving with the player rather
           // than ground he was moving over.
-          const ft = near*0.60;
+          const ft = near*0.60 + lit;
           c.fillStyle = pickC(T._fw, ft);
-          c.fillRect(C0 - hw, y, hw*2, 1);
+          c.fillRect(C0 - hw, y, hw*2, hgt);
           if(hw > 5){
             const iw = Math.round(hw*0.55);
             c.fillStyle = pickC(T._fw, ft + 0.12);
-            c.fillRect(C0 - iw, y, iw*2, 1);
+            c.fillRect(C0 - iw, y, iw*2, hgt);
           }
           if(hw > 9){
             const ew = Math.round(hw*0.86);
             c.fillStyle = pickC(T._fw, ft - 0.12);
-            c.fillRect(C0 - hw, y, hw - ew, 1);
-            c.fillRect(C0 + ew, y, hw - ew, 1);
+            c.fillRect(C0 - hw, y, hw - ew, hgt);
+            c.fillRect(C0 + ew, y, hw - ew, hgt);
           }
           // a cut collar either side, two solid steps rather than a ragged
           // scatter of pixels into the rough
           const cw = hw > 14 ? 2 : 1;
           c.fillStyle = T.apron;
-          c.fillRect(C0 - hw - cw, y, cw, 1); c.fillRect(C0 + hw, y, cw, 1);
+          c.fillRect(C0 - hw - cw, y, cw, hgt); c.fillRect(C0 + hw, y, cw, hgt);
           c.fillStyle = T._arim[1];
-          c.fillRect(C0 - hw - cw - 1, y, 1, 1); c.fillRect(C0 + hw + cw, y, 1, 1);
+          c.fillRect(C0 - hw - cw - 1, y, 1, hgt); c.fillRect(C0 + hw + cw, y, 1, hgt);
         }
       }
 
@@ -4053,15 +4135,15 @@ Object.assign(Scene, {
         // so it describes the bowl instead of banding across it.
         const lipW = Math.max(1, Math.round(0.30 * LAT * s));
         c.fillStyle = T.lip;
-        c.fillRect(xl, y, w, 1);
+        c.fillRect(xl, y, w, hgt);
         const sl = xl + lipW, sr = xr - lipW;
         if(sr > sl){
           c.fillStyle = pickC(T._sd, 0.44 + near*0.22);
-          c.fillRect(sl, y, sr - sl, 1);
+          c.fillRect(sl, y, sr - sl, hgt);
           const iw = (sr - sl) - lipW*2;
           if(iw > 1){
             c.fillStyle = pickC(T._sd, 0.74 + near*0.20);
-            c.fillRect(sl + lipW, y, iw, 1);
+            c.fillRect(sl + lipW, y, iw, hgt);
           }
         }
       }
@@ -4079,21 +4161,21 @@ Object.assign(Scene, {
             // fairway instead of being painted onto it.
             const bankW = Math.max(1, Math.round(0.42 * LAT * s));
             c.fillStyle = T.bank;
-            c.fillRect(xl, y, w, 1);
+            c.fillRect(xl, y, w, hgt);
             const wl = xl + bankW, wr = xr - bankW;
             if(wr > wl){
               c.fillStyle = pickC(T._wt, 0.64 + near*0.14);
-              c.fillRect(wl, y, wr - wl, 1);
+              c.fillRect(wl, y, wr - wl, hgt);
               const dw = (wr - wl) - bankW*2;
               if(dw > 1){
                 c.fillStyle = pickC(T._wt, 0.28 + near*0.10);
-                c.fillRect(wl + bankW, y, dw, 1);
+                c.fillRect(wl + bankW, y, dw, hgt);
               }
               // ripples kept to the open water, so they never cross the bank
               if(dw > 5 && ((y + Math.floor(this.t*5)) % 7) === 0){
                 const rw = Math.round(dw * (0.34 + 0.28*Math.abs(Math.sin(y*0.7 + this.t))));
                 c.fillStyle = pickC(T._wt, 0.60);
-                c.fillRect(wl + bankW + Math.round((dw - rw)/2), y, rw, 1);
+                c.fillRect(wl + bankW + Math.round((dw - rw)/2), y, rw, hgt);
               }
             }
           }
@@ -4106,35 +4188,32 @@ Object.assign(Scene, {
         const ga = Math.round(3.05*lobe * Math.sqrt(Math.max(0, 1 - (gd/8.6)*(gd/8.6))) * LAT * s);
         if(ga > 0){
           c.fillStyle = T.apron;
-          c.fillRect(C0 - ga, y, ga*2, 1);
+          c.fillRect(C0 - ga, y, ga*2, hgt);
           c.fillStyle = T._arim[0];
-          c.fillRect(C0 - ga - 1, y, 1, 1); c.fillRect(C0 + ga, y, 1, 1);
+          c.fillRect(C0 - ga - 1, y, 1, hgt); c.fillRect(C0 + ga, y, 1, hgt);
           c.fillStyle = T._arim[1];
-          c.fillRect(C0 - ga - 2, y, 1, 1); c.fillRect(C0 + ga + 1, y, 1, 1);
+          c.fillRect(C0 - ga - 2, y, 1, hgt); c.fillRect(C0 + ga + 1, y, 1, hgt);
         }
         if(gd > -7.5 && gd < 7.5){
           const gh = Math.round(2.35*lobe * Math.sqrt(Math.max(0, 1 - (gd/7.5)*(gd/7.5))) * LAT * s);
           if(gh > 0){
             const gt = 0.40 + near*0.36;
             c.fillStyle = pickC(T._gr, gt);
-            c.fillRect(C0 - gh, y, gh*2, 1);
+            c.fillRect(C0 - gh, y, gh*2, hgt);
             if(gh > 7){
               c.fillStyle = pickC(T._gr, gt + 0.18);
               const iw = Math.round(gh*0.46);
-              c.fillRect(C0 - iw, y, iw*2, 1);
+              c.fillRect(C0 - iw, y, iw*2, hgt);
             }
             // three graded pixels into the apron, so the rim is a gradient
             for(let k = 0; k < 3 && gh > k + 1; k++){
               c.fillStyle = T._rim[k];
-              c.fillRect(C0 - gh + (2 - k), y, 1, 1);
-              c.fillRect(C0 + gh - 3 + k, y, 1, 1);
+              c.fillRect(C0 - gh + (2 - k), y, 1, hgt);
+              c.fillRect(C0 + gh - 3 + k, y, 1, hgt);
             }
           }
         }
       }
-    }
-    const hz = this.night ? 'rgba(40,70,90,.40)' : 'rgba(190,215,215,.30)';
-    for(let i = 0; i < 3; i++){ c.fillStyle = hz; c.fillRect(0, HORIZON + 1 + i*2, VW, 1); }
   },
 
   // The ranges do not move with the camera and do not animate, so they are
@@ -4510,6 +4589,8 @@ Object.assign(Scene, {
   draw(dt, D){
     this.t += dt;
     if(!this.b) return;
+    if(!isFinite(this.camD)) this.camD = 0;
+    this.camH = this.hAt(this.camD);
     const c = this.b;
 
     if(this.swingT > 0){
