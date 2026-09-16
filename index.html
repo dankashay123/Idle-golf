@@ -3077,58 +3077,140 @@ const THEMES = {
 THEMES.vault.wt = ['#1A3A2A','#224A34','#2A5A3E','#346E4A','#408858'];
 
 const PINE_ROWS = [
-    '.......3.......',
-    '......323......',
-    '......323......',
-    '.....32123.....',
-    '.....32123.....',
-    '....3221123....',
-    '....3221123....',
-    '...322111123...',
-    '...322111123...',
-    '..32211111123..',
-    '..32211111123..',
-    '.3221111111123.',
-    '.3221111111123.',
-    '322111111111123',
-    '.....32123.....',
-    '....3221123....',
-    '...322111123...',
-    '..32211111123..',
-    '.3221111111123.',
-    '......tTt......',
-    '......tTt......',
-    '......tTt......',
-    '.....tTTTt.....',
-    '....ttTTTtt....'
+    '............3............',
+    '...........323...........',
+    '..........32123..........',
+    '..........32123..........',
+    '.........3221123.........',
+    '.........3221123.........',
+    '........322111123........',
+    '.......32211111123.......',
+    '..........32123..........',
+    '.........3221123.........',
+    '........322111123........',
+    '.......32211111123.......',
+    '......3221111111123......',
+    '.....322111111111123.....',
+    '..........32123..........',
+    '.........3221123.........',
+    '........322111123........',
+    '.......32211111123.......',
+    '......3221111111123......',
+    '.....322111111111123.....',
+    '....32211111111111123....',
+    '...3221111111111111123...',
+    '..........32123..........',
+    '.........3221123.........',
+    '........322111123........',
+    '.......32211111123.......',
+    '......3221111111123......',
+    '.....322111111111123.....',
+    '....32211111111111123....',
+    '...3221111111111111123...',
+    '..322111111111111111123..',
+    '...........tTt...........',
+    '...........tTt...........',
+    '..........ttTTt..........',
+    '.........tttTTtt.........'
 ];
 const OAK_ROWS = [
-    '.....322222.....',
-    '...3322222222...',
-    '..332222222211..',
-    '.33222222222211.',
-    '.33222221122211.',
-    '3322222111222111',
-    '3222221111122211',
-    '3222211111112211',
-    '.32221111111121.',
-    '.32211111111111.',
-    '..331111111111..',
-    '...3311111111...',
-    '....31111111....',
-    '.....111111.....',
-    '......1111......',
-    '.......tT.......',
-    '.......tT.......',
-    '.......tT.......',
-    '......ttTT......',
-    '......ttTT......',
-    '.....tttTTT.....',
-    '....tttTTTTt....'
+    '..........3.3333...........',
+    '........3333333333.........',
+    '......333312122223333......',
+    '.....33311111222223333.....',
+    '....3311111112222223333....',
+    '...331111111112222233333...',
+    '..33111111111122223333333..',
+    '..33111111111122223333333..',
+    '.3311111111111222233333333.',
+    '.3321111111122222233333333.',
+    '.3321111111122222333333333.',
+    '.3221111112122223333333333.',
+    '.3222122222222223333333333.',
+    '332222222222222223333333333',
+    '.3322222222222333333333333.',
+    '.3322222222223333333333333.',
+    '.3333223223233333333333333.',
+    '..33333323333333333333333..',
+    '..33333333333333333333333..',
+    '...333333333333333333333...',
+    '...33333333333333333333....',
+    '....3333333333333333333....',
+    '......333333333333333......',
+    '........33333333333........',
+    '..........33.3.3...........',
+    '............tT.............',
+    '............tT.............',
+    '............tT.............',
+    '...........ttTT............',
+    '...........ttTTt...........',
+    '..........tttTTtt..........'
 ];
 const TREE_DEFAULT = { 1:'#16391F', 2:'#1F4E29', 3:'#2C6634', t:'#4A3A24', T:'#2E2416' };
 
 /* ---- the cast ---- */
+/* ---- the gallery ----
+   Drawn as three flat rectangles before, which at any size above about ten
+   pixels read as a stack of bricks rather than a person. Authored here in
+   generic tones and baked per crowd colour, so a spectator keeps a head, a
+   collar and a pair of legs while still being whatever colour he was. */
+const SPECT_A = [
+  '............',
+  '....hhhh....',
+  '...hhhhhh...',
+  '...hkkkkh...',
+  '...kkkkkk...',
+  '...kkkkkk...',
+  '....kkkk....',
+  '.....kk.....',
+  '..bbbbbbbb..',
+  '.bbbbbbbbbb.',
+  '.bbbbbbbbbB.',
+  '.bbbbbbbbbB.',
+  '.bbbbbbbbbB.',
+  '.kbbbbbbbBk.',
+  '.kbbbbbbbBk.',
+  '..pppppppp..',
+  '..pppppppp..',
+  '..ppp..ppp..',
+  '..ppp..ppp..',
+  '..PPP..PPP..',
+  '..PPP..PPP..',
+  '.oooo..oooo.'
+];
+const SPECT_B = [
+  '............',
+  '....hhhh....',
+  '...hhhhhh...',
+  '...hkkkkh...',
+  '...kkkkkk...',
+  '...kkkkkk...',
+  '....kkkk....',
+  '.....kk.....',
+  '..bbbbbbbb..',
+  'kbbbbbbbbbbk',
+  'kbbbbbbbbbBk',
+  '.bbbbbbbbbB.',
+  '.bbbbbbbbbB.',
+  '.bbbbbbbbbB.',
+  '.bbbbbbbbbB.',
+  '..pppppppp..',
+  '..pppppppp..',
+  '..ppp..ppp..',
+  '..ppp..ppp..',
+  '..PPP..PPP..',
+  '..PPP..PPP..',
+  '.oooo..oooo.'
+];
+const SPECT_CACHE = {};
+function spectSpr(ci, pose, night){
+  const key = ci + '|' + pose + '|' + (night ? 1 : 0);
+  if(SPECT_CACHE[key]) return SPECT_CACHE[key];
+  const body = night ? PX.crowdDk[ci] : PX.crowd[ci];
+  const map = { h:'#2A2018', k: night ? PX.skin2 : PX.skin, b:body, B:PX.crowdDk[ci],
+                p: night ? '#1C2937' : '#39434E', P:'#232B34', o:PX.shoe };
+  return SPECT_CACHE[key] = makeSprite(pose ? SPECT_B : SPECT_A, map);
+}
 const SPRITE = {};
 function buildSprites(){
   // Side-on at address, facing the target: bent at the hips, spine tilted, hips
@@ -3139,76 +3221,108 @@ function buildSprites(){
   const GMAP = { c:PX.cap, C:PX.cap2, k:PX.skin, K:PX.skin2, s:PX.shirt, S:PX.shirt2,
                  b:'#2A2018', p:PX.pant, P:PX.pant2, o:PX.shoe };
   SPRITE.gAddr = makeSprite([
-    '..................',
-    '..........cccccc..',
-    '.........ccccccccc',
-    '.........cccccccCC',
-    '.........kkkkkkC..',
-    '.........kkkkkk...',
-    '........skkkkk....',
-    '.......sssssk.....',
-    '......ssssssS.....',
-    '.....ssssssS......',
-    '....ssssssS.......',
-    '....sssssS........',
-    '...sssssS.........',
-    '...bbbbb..........',
-    '...ppppp..........',
-    '...ppppp..........',
-    '...ppppp..........',
-    '...pppp...........',
-    '...pp.pp..........',
-    '...pp.pp..........',
-    '...pp.pp..........',
-    '...PP.PP..........',
-    '...PP.PP..........',
-    '...PP.PP..........',
-    '..ooo.ooo.........',
-    '..ooo.ooo.........'
+    '..........................',
+    '.............ccccc........',
+    '...........ccccccccc......',
+    '..........ccccccccccc.....',
+    '..........cccccccccccC....',
+    '..........cccccccccCCC....',
+    '..........CCCCCCCCCC......',
+    '.........kkkkkkkkkK.......',
+    '.........kkkkkkkkkK.......',
+    '.........kkkkkkkkK........',
+    '.........kkkkkkkK.........',
+    '..........kkkkkK..........',
+    '........sssskkK...........',
+    '.......ssssssK............',
+    '......sssssssS............',
+    '......sssssssS............',
+    '.....ssssssssS............',
+    '.....ssssssssS............',
+    '....ssssssssS.............',
+    '....ssssssssS.............',
+    '....sssssssS..............',
+    '...ssssssssS..............',
+    '...sssssssS...............',
+    '...bbbbbbbb...............',
+    '...bbbbbbbb...............',
+    '...pppppppp...............',
+    '...pppppppp...............',
+    '...pppppppp...............',
+    '...ppppppPP...............',
+    '...ppp.ppp................',
+    '...ppp.ppp................',
+    '...ppp.ppp................',
+    '...ppP.ppP................',
+    '...ppP.ppP................',
+    '...PPP.PPP................',
+    '...PPP.PPP................',
+    '..ooooo.ooooo.............',
+    '..oooo..oooo..............'
   ], GMAP);
   // Finish: up out of the posture, chest turned through, weight on the lead
   // side with the trail foot dragged up on its toe.
   SPRITE.gFinish = makeSprite([
-    '..........cccccc..',
-    '.........ccccccc..',
-    '.........cccccCC..',
-    '.........kkkkkC...',
-    '.........kkkkk....',
-    '..........kkk.....',
-    '.........sssss....',
-    '........ssssss....',
-    '........ssssss....',
-    '........sssssS....',
-    '........sssssS....',
-    '........ssssS.....',
-    '........ssssS.....',
-    '........bbbb......',
-    '........pppp......',
-    '........pppp......',
-    '.......ppppp......',
-    '.......ppp.pp.....',
-    '......pppp.pp.....',
-    '......ppp..pp.....',
-    '.....PPP...PP.....',
-    '.....PP....PP.....',
-    '....PPP....PP.....',
-    '....PP.....PP.....',
-    '...ooo.....ooo....',
-    '...oo......ooo....'
+    '..........................',
+    '............ccccc.........',
+    '..........ccccccccc.......',
+    '.........cccccccccc.......',
+    '.........ccccccccccC......',
+    '.........cccccccccCC......',
+    '.........CCCCCCCCC........',
+    '..........kkkkkkkK........',
+    '..........kkkkkkkK........',
+    '..........kkkkkkK.........',
+    '...........kkkkK..........',
+    '..........ssssss..........',
+    '.........ssssssss.........',
+    '........ssssssssS.........',
+    '........ssssssssS.........',
+    '........ssssssssS.........',
+    '........ssssssssS.........',
+    '........sssssssS..........',
+    '........sssssssS..........',
+    '........ssssssS...........',
+    '........ssssssS...........',
+    '........bbbbbb............',
+    '........bbbbbb............',
+    '........pppppp............',
+    '.......ppppppp............',
+    '.......ppppppp............',
+    '......ppppp.pp............',
+    '......pppp..pp............',
+    '.....ppppp..pp............',
+    '.....pppp...pP............',
+    '....pppp....pP............',
+    '....PPP.....PP............',
+    '...PPPP.....PP............',
+    '...PPP......PP............',
+    '..PPPP......PP............',
+    '..PPP.......PP............',
+    '.ooooo.....oooo...........',
+    '.ooooo......ooo...........'
   ], GMAP);
 
   SPRITE.pine = makeSprite(PINE_ROWS, TREE_DEFAULT);
 
   SPRITE.oak = makeSprite(OAK_ROWS, TREE_DEFAULT);
 
-  const fmap = { p:PX.bone, f:PX.flag, F:PX.flag2 };
+  // Cloth only. The stick is drawn as a line in drawFlagstick, because as one
+  // column of a sprite it rounded away to nothing at any distance.
+  const fmap = { f:PX.flag, F:PX.flag2 };
   SPRITE.flagA = makeSprite([
-    '.pffff.', '.pfffff', '.pFffff', '.pFFff.', '.p.....', '.p.....', '.p.....',
-    '.p.....', '.p.....', '.p.....', '.p.....', '.p.....', '.p.....', '.p.....'
+    'fffffff..',
+    'ffffffff.',
+    'fffffffff',
+    'FFFFffff.',
+    'FFFFFff..'
   ], fmap);
   SPRITE.flagB = makeSprite([
-    '.pfff..', '.pfffff', '.pfFfff', '.pFFFf.', '.p.....', '.p.....', '.p.....',
-    '.p.....', '.p.....', '.p.....', '.p.....', '.p.....', '.p.....', '.p.....'
+    'ffffff...',
+    'fffffff..',
+    'ffffffff.',
+    'fffffffff',
+    'FFFFFFff.'
   ], fmap);
 }
 
@@ -3275,6 +3389,11 @@ const B_LANE = 0.85;
 // A golf ball is about 1:42 against a golfer. It was drawn at 3.08 world units
 // against his 12, which is nearer 1:4 - a beach ball.
 const B_BALL = 0.9;
+// A flagstick is seven feet against a six foot golfer. Drawn at 34 against his
+// 12 it came out nearly three times his height, which is only ever obvious once
+// you walk up on it: at the far end of the hole the scale factor hides it, and
+// on the approach the pin filled half the frame.
+const B_FLAG = 14;
 let VW = 344, VH = 200, HORIZON = 80, CX = 172, GROUND = 36, LAT = 8.8, US = 0.63;
 // Stage text is authored on a 5x7 grid, so its size is set in whole buffer
 // pixels. Raising the buffer resolution therefore HALVES how big a line of HUD
@@ -3854,27 +3973,13 @@ Object.assign(Scene, {
                    Math.round(w*0.68), Math.max(1, Math.round(h*0.035)));
         blit(c, spr, pr.x - w/2, pr.y - h, w, h);
       }else{
-        // a spectator: head, body, legs, and a slow shift of weight
-        const h = Math.max(2, Math.round(11 * pr.s * US));
-        if(pr.x < -3 || pr.x > VW + 3) continue;
-        const w = Math.max(1, Math.round(h*0.38));
-        const sway = Math.sin(this.t*0.9 + p.p) > 0 ? 0 : 1;
-        const body = night ? PX.crowdDk[p.c] : PX.crowd[p.c];
-        const dark = PX.crowdDk[p.c];
-        const x0 = pr.x - Math.round(w/2), y0 = pr.y - h;
+        const h = Math.max(3, Math.round(12 * pr.s * US));
+        if(pr.x < -6 || pr.x > VW + 6) continue;
+        const spr = spectSpr(p.c, Math.sin(this.t*0.9 + p.p) > 0 ? 0 : 1, night);
+        const w = Math.max(1, Math.round(h * spr.w / spr.h));
         c.fillStyle = 'rgba(8,16,10,.26)';
-        c.fillRect(x0, pr.y - 1, w, 1);
-        if(h >= 5){
-          c.fillStyle = dark;
-          c.fillRect(x0, pr.y - Math.round(h*0.30), w, Math.round(h*0.30));
-          c.fillStyle = body;
-          c.fillRect(x0, y0 + Math.round(h*0.28), w, Math.round(h*0.44));
-          c.fillStyle = night ? PX.skin2 : PX.skin;
-          c.fillRect(x0 + sway, y0, Math.max(1, w - 1), Math.round(h*0.28));
-        }else{
-          c.fillStyle = body;
-          c.fillRect(x0, y0, w, h);
-        }
+        c.fillRect(pr.x - Math.round(w/2), pr.y - 1, w, 1);
+        blit(c, spr, pr.x - w/2, pr.y - h, w, h);
       }
     }
   },
@@ -4245,14 +4350,16 @@ Object.assign(Scene, {
     const c = this.b;
     const p = this.proj(LEN, 0);
     if(p.s < 0.05) return;
-    const spr = (Math.floor(this.t*3) & 1) ? SPRITE.flagA : SPRITE.flagB;
-    const h = Math.max(4, Math.round(34 * US * p.s));
-    const w = Math.max(2, Math.round(h * spr.w / spr.h));
-    // cup
-    c.fillStyle = '#132215';
+    const h = Math.max(4, Math.round(B_FLAG * US * p.s));
+    const pw = Math.max(1, Math.round(h*0.05));
     const cr = Math.max(1, Math.round(1.6*p.s*US));
+    c.fillStyle = '#132215';
     c.fillRect(p.x - cr, p.y - 1, cr*2, Math.max(1, Math.round(cr*0.8)));
-    blit(c, spr, p.x - Math.round(w*0.14), p.y - h, w, h);
+    c.fillStyle = PX.bone;
+    c.fillRect(p.x, p.y - h, pw, h);
+    const spr = (Math.floor(this.t*3) & 1) ? SPRITE.flagA : SPRITE.flagB;
+    const fh = Math.max(2, Math.round(h*0.30));
+    blit(c, spr, p.x + pw, p.y - h, Math.max(2, Math.round(fh * spr.w / spr.h)), fh);
   }
 });
 
