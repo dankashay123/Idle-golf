@@ -1611,25 +1611,34 @@ function derive(){
   // Elemental contribution to expected damage, which depends entirely on what
   // ball is in the bag. This is the whole reason to care which one you carry.
   const ball = S.equip.ball;
-  let elemRaw = 0;
+  // Every affinity earns its keep down one channel: four of them add yardage,
+  // verdant adds purse. Both are metered against the same ELEM_CAP. An uncapped
+  // multiplier on the purse channel defeats the ladder faster than one on the
+  // damage channel, because gold is the exact thing TIER_G sitting under TIER_Y
+  // is meant to starve, and affinity power is a growth axis that has no
+  // business feeding income at all.
+  let elemRaw = 0, elemPays = false;
   if(ball && ball.el){
     const v = B.ELEM_VAL[ball.el] * elem;
     if(ball.el === 'ember')   elemRaw = proc * v;
     if(ball.el === 'frost')   elemRaw = proc * v;
     if(ball.el === 'storm')   elemRaw = proc * v * 2;
     if(ball.el === 'void')    elemRaw = proc * v * 30;
+    if(ball.el === 'verdant'){ elemRaw = proc * v; elemPays = true; }
   }
-  const elemDmg = Math.min(elemRaw, B.ELEM_CAP);
+  const elemCapped = Math.min(elemRaw, B.ELEM_CAP);
+  // Verdant pays the purse and never moves the ball, so it must stay out of
+  // carry: counted here it would inflate every figure read off dps, from the
+  // vitals panel to the Depths endurance floor.
+  const elemDmg = elemPays ? 0 : elemCapped;
   // The cap has to bite on the swings that are actually simulated, not only on
-  // this summary figure. doSwings settles as expected value above ten swings a
+  // these summary figures. doSwings settles as expected value above ten swings a
   // frame, but SPEED_CAP against TICK_MAX puts the real ceiling at 3.5, so in
   // ordinary play every swing goes through applyAffinity instead. Handing that
   // path an affinity multiplier scaled by however much the cap held back keeps
   // the two on the same number; left raw, the live one ignored ELEM_CAP
   // entirely and affinity was the cheapest way out of the ladder.
-  // A verdant ball contributes no damage, so elemRaw is 0 and it passes
-  // through untouched: a damage cap has no business trimming a purse effect.
-  const elemEff = elemRaw > 0 ? elem * (elemDmg / elemRaw) : elem;
+  const elemEff = elemRaw > 0 ? elem * (elemCapped / elemRaw) : elem;
   const god = S.godmode ? 1e12 : 1;
   const swingDps = pow * spd * (1 + crit*(cpw-1)) * (1 + elemDmg) * (1 + mst*B.MST_DMG) * god;
   const C = career();
