@@ -3731,6 +3731,18 @@ const Scene = {
     const t = clamp((d - this.camD) / 11, 0, 1);
     return (this.hAt(d) - (this.camH || 0)) * (t*t*(3 - 2*t));
   },
+  // The lowest screen row still open at a given distance. Anything standing
+  // out there whose base falls below this is behind a crest.
+  clipAt(d){
+    const n = this._clipN | 0;
+    if(!n) return VH;
+    const cd = this._clipD, cy = this._clipY;
+    if(d <= cd[0]) return cy[0];
+    if(d >= cd[n-1]) return cy[n-1];
+    let lo = 0, hi = n - 1;
+    while(hi - lo > 1){ const m = (lo + hi) >> 1; if(cd[m] <= d) lo = m; else hi = m; }
+    return cy[lo];
+  },
   holeLen(){ return LEN; },
   proj(d, lat, lift){
     if(!isFinite(this.camD)) this.camD = 0;
@@ -4036,6 +4048,18 @@ Object.assign(Scene, {
     // is only painted where it stands above everything drawn already. That one
     // clip is what makes a ridge occlude the ground beyond it.
     const SKY = HORIZON - Math.round(VH*0.10);   // how far a rise may break the skyline
+    // The march already knows what each crest hides; props need the same
+    // answer. Every step records the clip level in front of that distance, so
+    // anything standing further out can be cut against it instead of being
+    // painted straight over the hill in front of it.
+    const cd = this._clipD || (this._clipD = new Float32Array(6400));
+    const cy = this._clipY || (this._clipY = new Float32Array(6400));
+    let cn = 0;
+    // Each hazard remembers the depth it was sunk to on the previous, nearer
+    // slice. Where the bowl shallows out again the next slice sits higher than
+    // the one in front of it and leaves a gap, which stripes the sand.
+    for(const bk of this.bunkers) bk._pz = 0;
+    if(this.water) this.water._pz = 0;
     let maxy = VH, d = cam - CAM_BACK + 0.62, guard = 0;
     let prevD = d, prevH = this.hAt(d);
     while(d < cam + 300 && maxy > SKY && guard++ < 6000){
@@ -4046,6 +4070,7 @@ Object.assign(Scene, {
       // Step so the projection advances about half a row: fine enough that a
       // steep face cannot tear, coarse enough that the loop stays bounded.
       const step = Math.max(0.03, rel*rel / (GROUND*K_PROJ) * 0.5);
+      if(cn < 6400){ cd[cn] = d; cy[cn] = maxy; cn++; }
       if(y < maxy){
         // Light the ground by the way it tilts. This is the whole payoff for
         // having a height field: without it every slice at a given distance is
@@ -4058,6 +4083,7 @@ Object.assign(Scene, {
       prevD = d; prevH = gh;
       d += step;
     }
+    this._clipN = cn;
     // whatever is left between the furthest slice and the horizon
     if(maxy > HORIZON){
       c.fillStyle = pickC(T._rg, 0);
@@ -4134,16 +4160,25 @@ Object.assign(Scene, {
         // where the ends are. Shading follows the rim rather than the scanline,
         // so it describes the bowl instead of banding across it.
         const lipW = Math.max(1, Math.round(0.30 * LAT * s));
+        // Sunk, not painted on. Ground below the camera projects further DOWN
+        // the screen, so the floor of a pit is drawn at y + dz while the ground
+        // around it stays at y, and the band between the two is the inner wall
+        // you are looking across. The bowl goes to nothing at both ends of the
+        // shape, so the rim closes over it with no step.
+        const tt = clamp((d - (bk.d - bk.rd)) / (bk.rd*2), 0, 1);
+        const dz = Math.round(0.62 * Math.sin(Math.PI*tt) * LAT * s * 0.55);
+        const grow = Math.max(0, (bk._pz || 0) - dz);
+        bk._pz = dz;
         c.fillStyle = T.lip;
-        c.fillRect(xl, y, w, hgt);
+        c.fillRect(xl, y, w, hgt + dz + grow);
         const sl = xl + lipW, sr = xr - lipW;
         if(sr > sl){
           c.fillStyle = pickC(T._sd, 0.44 + near*0.22);
-          c.fillRect(sl, y, sr - sl, hgt);
+          c.fillRect(sl, y + dz, sr - sl, hgt + grow);
           const iw = (sr - sl) - lipW*2;
           if(iw > 1){
             c.fillStyle = pickC(T._sd, 0.74 + near*0.20);
-            c.fillRect(sl + lipW, y, iw, hgt);
+            c.fillRect(sl + lipW, y + dz, iw, hgt + grow);
           }
         }
       }
@@ -4160,22 +4195,29 @@ Object.assign(Scene, {
             // world width as the bunker rim, so the pond sits below the
             // fairway instead of being painted onto it.
             const bankW = Math.max(1, Math.round(0.42 * LAT * s));
+            // Same trick as the bunker, dug deeper: the surface sits below the
+            // bank all the way round, so the pond holds water instead of
+            // lying on the grass.
+            const wt = clamp((d - (this.water.d - this.water.rd)) / (this.water.rd*2), 0, 1);
+            const wz = Math.round(0.95 * Math.sin(Math.PI*wt) * LAT * s * 0.55);
+            const wgrow = Math.max(0, (this.water._pz || 0) - wz);
+            this.water._pz = wz;
             c.fillStyle = T.bank;
-            c.fillRect(xl, y, w, hgt);
+            c.fillRect(xl, y, w, hgt + wz + wgrow);
             const wl = xl + bankW, wr = xr - bankW;
             if(wr > wl){
               c.fillStyle = pickC(T._wt, 0.64 + near*0.14);
-              c.fillRect(wl, y, wr - wl, hgt);
+              c.fillRect(wl, y + wz, wr - wl, hgt + wgrow);
               const dw = (wr - wl) - bankW*2;
               if(dw > 1){
                 c.fillStyle = pickC(T._wt, 0.28 + near*0.10);
-                c.fillRect(wl + bankW, y, dw, hgt);
+                c.fillRect(wl + bankW, y + wz, dw, hgt + wgrow);
               }
               // ripples kept to the open water, so they never cross the bank
               if(dw > 5 && ((y + Math.floor(this.t*5)) % 7) === 0){
                 const rw = Math.round(dw * (0.34 + 0.28*Math.abs(Math.sin(y*0.7 + this.t))));
                 c.fillStyle = pickC(T._wt, 0.60);
-                c.fillRect(wl + bankW + Math.round((dw - rw)/2), y, rw, hgt);
+                c.fillRect(wl + bankW + Math.round((dw - rw)/2), y + wz, rw, hgt);
               }
             }
           }
@@ -4295,26 +4337,40 @@ Object.assign(Scene, {
       if(p.d < this.camD - 5) continue;
       const pr = this.proj(p.d, p.x);
       if(pr.s < 0.05) continue;
-      if(p.kind === 0){
-        const TS = this.treeSpr || SPRITE;
-        const spr = p.k ? TS.oak : TS.pine;
-        const h = Math.round(p.s * 46 * pr.s * US);
-        if(h < 3) continue;
-        const w = Math.round(h * spr.w / spr.h);
-        if(pr.x + w < -4 || pr.x - w > VW + 4) continue;
-        c.fillStyle = 'rgba(8,16,10,.30)';
-        c.fillRect(pr.x - Math.round(w*0.34), pr.y - 1,
-                   Math.round(w*0.68), Math.max(1, Math.round(h*0.035)));
-        blit(c, spr, pr.x - w/2, pr.y - h, w, h);
-      }else{
-        const h = Math.max(3, Math.round(12 * pr.s * US));
-        if(pr.x < -6 || pr.x > VW + 6) continue;
-        const spr = spectSpr(p.c, Math.sin(this.t*0.9 + p.p) > 0 ? 0 : 1, night);
-        const w = Math.max(1, Math.round(h * spr.w / spr.h));
-        c.fillStyle = 'rgba(8,16,10,.26)';
-        c.fillRect(pr.x - Math.round(w/2), pr.y - 1, w, 1);
-        blit(c, spr, pr.x - w/2, pr.y - h, w, h);
+      // Ground is drawn with occlusion but props were not, so a tree standing
+      // behind a rise painted straight over the fairway in front of it.
+      const cut = this.clipAt(p.d);
+      if(pr.y > cut + 1){
+        // its feet are behind the crest: draw only what stands above it
+        c.save(); c.beginPath(); c.rect(0, 0, VW, Math.max(0, cut)); c.clip();
+        this.drawProp(c, T, night, p, pr);
+        c.restore();
+        continue;
       }
+      this.drawProp(c, T, night, p, pr);
+    }
+  },
+
+  drawProp(c, T, night, p, pr){
+    if(p.kind === 0){
+      const TS = this.treeSpr || SPRITE;
+      const spr = p.k ? TS.oak : TS.pine;
+      const h = Math.round(p.s * 46 * pr.s * US);
+      if(h < 3) return;
+      const w = Math.round(h * spr.w / spr.h);
+      if(pr.x + w < -4 || pr.x - w > VW + 4) return;
+      c.fillStyle = 'rgba(8,16,10,.30)';
+      c.fillRect(pr.x - Math.round(w*0.34), pr.y - 1,
+                 Math.round(w*0.68), Math.max(1, Math.round(h*0.035)));
+      blit(c, spr, pr.x - w/2, pr.y - h, w, h);
+    }else{
+      const h = Math.max(3, Math.round(12 * pr.s * US));
+      if(pr.x < -6 || pr.x > VW + 6) return;
+      const spr = spectSpr(p.c, Math.sin(this.t*0.9 + p.p) > 0 ? 0 : 1, night);
+      const w = Math.max(1, Math.round(h * spr.w / spr.h));
+      c.fillStyle = 'rgba(8,16,10,.26)';
+      c.fillRect(pr.x - Math.round(w/2), pr.y - 1, w, 1);
+      blit(c, spr, pr.x - w/2, pr.y - h, w, h);
     }
   },
 
@@ -4396,7 +4452,9 @@ Object.assign(Scene, {
       for(let k = 5; k >= 0; k--){
         const uu = u - k*0.055;
         if(uu < 0) continue;
-        const p = this.proj(b.d0 + b.dist*uu, b.lat, Math.sin(uu*Math.PI)*2.6);
+        const bd = b.d0 + b.dist*uu;
+        const p = this.proj(bd, b.lat, Math.sin(uu*Math.PI)*2.6);
+        if(p.y > this.clipAt(bd) + 1) continue;   // dropped behind a rise
         const r = Math.max(1, Math.round(B_BALL * p.s * US));
         if(k === 0){
           c.fillStyle = b.crit ? PX.brass : col;
@@ -4686,6 +4744,18 @@ Object.assign(Scene, {
     const c = this.b;
     const p = this.proj(LEN, 0);
     if(p.s < 0.05) return;
+    const cut = this.clipAt(LEN);
+    if(p.y > cut + 1){
+      // the green is over a rise: only the top of the pin shows
+      c.save(); c.beginPath(); c.rect(0, 0, VW, Math.max(0, cut)); c.clip();
+      this.pinBody(c, p);
+      c.restore();
+      return;
+    }
+    this.pinBody(c, p);
+  },
+
+  pinBody(c, p){
     const h = Math.max(4, Math.round(B_FLAG * US * p.s));
     const pw = Math.max(1, Math.round(h*0.05));
     const cr = Math.max(1, Math.round(1.6*p.s*US));
