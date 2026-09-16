@@ -2753,65 +2753,73 @@ const PX = {
   crowdDk:['#8A3A2A','#28508E','#9A8748','#3E6640','#6B3F78','#9A958A']
 };
 
-/* ---- 5x7 bitmap font ----
+/* ---- 6x9 bitmap font ----
    Antialiased system text over pixel art breaks the illusion faster than any
-   other single thing, so every character on the stage is drawn from this. */
+   other single thing, so every character on the stage is drawn from this.
+
+   Authored at 6x9 rather than the 5x7 this replaced. At the buffer resolution
+   the stage now runs at, a 5x7 glyph had to be blown up eight times to stay
+   readable, and no amount of redrawing saves a letterform magnified that far:
+   the staircase on a diagonal is as wide as the stem. Six by nine carries the
+   same line of text at the same size on the glass while resolving twice the
+   detail, which is the whole reason for raising the buffer in the first place.
+   Cap height is rows 0-6; rows 7-8 carry descenders. */
 const GLYPH = {
-  '0':['.###.','#...#','#..##','#.#.#','##..#','#...#','.###.'],
-  '1':['..#..','.##..','..#..','..#..','..#..','..#..','.###.'],
-  '2':['.###.','#...#','....#','...#.','..#..','.#...','#####'],
-  '3':['#####','...#.','..##.','....#','....#','#...#','.###.'],
-  '4':['...#.','..##.','.#.#.','#..#.','#####','...#.','...#.'],
-  '5':['#####','#....','####.','....#','....#','#...#','.###.'],
-  '6':['..##.','.#...','#....','####.','#...#','#...#','.###.'],
-  '7':['#####','....#','...#.','..#..','.#...','.#...','.#...'],
-  '8':['.###.','#...#','#...#','.###.','#...#','#...#','.###.'],
-  '9':['.###.','#...#','#...#','.####','....#','...#.','.##..'],
-  'A':['.###.','#...#','#...#','#####','#...#','#...#','#...#'],
-  'B':['####.','#...#','#...#','####.','#...#','#...#','####.'],
-  'C':['.###.','#...#','#....','#....','#....','#...#','.###.'],
-  'D':['###..','#..#.','#...#','#...#','#...#','#..#.','###..'],
-  'E':['#####','#....','#....','####.','#....','#....','#####'],
-  'F':['#####','#....','#....','####.','#....','#....','#....'],
-  'G':['.###.','#...#','#....','#.###','#...#','#...#','.###.'],
-  'H':['#...#','#...#','#...#','#####','#...#','#...#','#...#'],
-  'I':['.###.','..#..','..#..','..#..','..#..','..#..','.###.'],
-  'J':['..###','...#.','...#.','...#.','...#.','#..#.','.##..'],
-  'K':['#...#','#..#.','#.#..','##...','#.#..','#..#.','#...#'],
-  'L':['#....','#....','#....','#....','#....','#....','#####'],
-  'M':['#...#','##.##','#.#.#','#.#.#','#...#','#...#','#...#'],
-  'N':['#...#','##..#','#.#.#','#..##','#...#','#...#','#...#'],
-  'O':['.###.','#...#','#...#','#...#','#...#','#...#','.###.'],
-  'P':['####.','#...#','#...#','####.','#....','#....','#....'],
-  'Q':['.###.','#...#','#...#','#...#','#.#.#','#..#.','.##.#'],
-  'R':['####.','#...#','#...#','####.','#.#..','#..#.','#...#'],
-  'S':['.####','#....','#....','.###.','....#','....#','####.'],
-  'T':['#####','..#..','..#..','..#..','..#..','..#..','..#..'],
-  'U':['#...#','#...#','#...#','#...#','#...#','#...#','.###.'],
-  'V':['#...#','#...#','#...#','#...#','#...#','.#.#.','..#..'],
-  'W':['#...#','#...#','#...#','#.#.#','#.#.#','##.##','#...#'],
-  'X':['#...#','#...#','.#.#.','..#..','.#.#.','#...#','#...#'],
-  'Y':['#...#','#...#','.#.#.','..#..','..#..','..#..','..#..'],
-  'Z':['#####','....#','...#.','..#..','.#...','#....','#####'],
-  ' ':['.....','.....','.....','.....','.....','.....','.....'],
-  '.':['.....','.....','.....','.....','.....','.....','..#..'],
-  ',':['.....','.....','.....','.....','.....','..#..','.#...'],
-  ':':['.....','..#..','..#..','.....','..#..','..#..','.....'],
-  '/':['....#','....#','...#.','..#..','.#...','#....','#....'],
-  '+':['.....','..#..','..#..','#####','..#..','..#..','.....'],
-  '-':['.....','.....','.....','#####','.....','.....','.....'],
-  '%':['#...#','#..#.','...#.','..#..','.#...','.#..#','#...#'],
-  '(':['...#.','..#..','.#...','.#...','.#...','..#..','...#.'],
-  ')':['.#...','..#..','...#.','...#.','...#.','..#..','.#...'],
-  "'":['..#..','..#..','.....','.....','.....','.....','.....'],
-  '!':['..#..','..#..','..#..','..#..','..#..','.....','..#..'],
-  '?':['.###.','#...#','....#','...#.','..#..','.....','..#..'],
-  '*':['.....','#.#.#','.###.','#####','.###.','#.#.#','.....'],
-  '=':['.....','.....','#####','.....','#####','.....','.....'],
-  '<':['...#.','..#..','.#...','#....','.#...','..#..','...#.'],
-  '>':['.#...','..#..','...#.','....#','...#.','..#..','.#...']
+  '0':['.####.','#....#','#...##','#..#.#','##...#','#....#','.####.','......','......'],
+  '1':['..##..','.#.#..','...#..','...#..','...#..','...#..','.#####','......','......'],
+  '2':['.####.','#....#','.....#','..###.','.#....','#.....','######','......','......'],
+  '3':['.####.','#....#','.....#','..###.','.....#','#....#','.####.','......','......'],
+  '4':['...##.','..#.#.','.#..#.','#...#.','######','....#.','....#.','......','......'],
+  '5':['######','#.....','#####.','.....#','.....#','#....#','.####.','......','......'],
+  '6':['..###.','.#....','#.....','#####.','#....#','#....#','.####.','......','......'],
+  '7':['######','.....#','....#.','...#..','..##..','..##..','..##..','......','......'],
+  '8':['.####.','#....#','#....#','.####.','#....#','#....#','.####.','......','......'],
+  '9':['.####.','#....#','#....#','.#####','.....#','....#.','.###..','......','......'],
+  'A':['..##..','.#..#.','#....#','#....#','######','#....#','#....#','......','......'],
+  'B':['#####.','#....#','#....#','#####.','#....#','#....#','#####.','......','......'],
+  'C':['.####.','#....#','#.....','#.....','#.....','#....#','.####.','......','......'],
+  'D':['####..','#...#.','#....#','#....#','#....#','#...#.','####..','......','......'],
+  'E':['######','#.....','#.....','#####.','#.....','#.....','######','......','......'],
+  'F':['######','#.....','#.....','#####.','#.....','#.....','#.....','......','......'],
+  'G':['.####.','#....#','#.....','#..###','#....#','#....#','.####.','......','......'],
+  'H':['#....#','#....#','#....#','######','#....#','#....#','#....#','......','......'],
+  'I':['######','..##..','..##..','..##..','..##..','..##..','######','......','......'],
+  'J':['....##','.....#','.....#','.....#','#....#','#....#','.####.','......','......'],
+  'K':['#....#','#...#.','#..#..','###...','#..#..','#...#.','#....#','......','......'],
+  'L':['#.....','#.....','#.....','#.....','#.....','#.....','######','......','......'],
+  'M':['#....#','##..##','#.##.#','#....#','#....#','#....#','#....#','......','......'],
+  'N':['#....#','##...#','#.#..#','#..#.#','#...##','#....#','#....#','......','......'],
+  'O':['.####.','#....#','#....#','#....#','#....#','#....#','.####.','......','......'],
+  'P':['#####.','#....#','#....#','#####.','#.....','#.....','#.....','......','......'],
+  'Q':['.####.','#....#','#....#','#....#','#..#.#','#...#.','.###.#','......','......'],
+  'R':['#####.','#....#','#....#','#####.','#..#..','#...#.','#....#','......','......'],
+  'S':['.####.','#....#','#.....','.####.','.....#','#....#','.####.','......','......'],
+  'T':['######','..##..','..##..','..##..','..##..','..##..','..##..','......','......'],
+  'U':['#....#','#....#','#....#','#....#','#....#','#....#','.####.','......','......'],
+  'V':['#....#','#....#','#....#','#....#','.#..#.','.#..#.','..##..','......','......'],
+  'W':['#....#','#....#','#....#','#.##.#','#.##.#','##..##','#....#','......','......'],
+  'X':['#....#','.#..#.','..##..','..##..','..##..','.#..#.','#....#','......','......'],
+  'Y':['#....#','.#..#.','..##..','..##..','..##..','..##..','..##..','......','......'],
+  'Z':['######','.....#','....#.','..##..','.#....','#.....','######','......','......'],
+  ' ':['......','......','......','......','......','......','......','......','......'],
+  '.':['......','......','......','......','......','..##..','..##..','......','......'],
+  ',':['......','......','......','......','......','..##..','..##..','.##...','......'],
+  ':':['......','..##..','..##..','......','..##..','..##..','......','......','......'],
+  '/':['.....#','....#.','....#.','..##..','.#....','#.....','#.....','......','......'],
+  '+':['......','..##..','..##..','######','######','..##..','..##..','......','......'],
+  '-':['......','......','......','######','######','......','......','......','......'],
+  '%':['##...#','##..#.','...#..','..##..','.#....','#..###','#..###','......','......'],
+  '(':['...##.','..##..','.##...','.##...','.##...','..##..','...##.','......','......'],
+  ')':['.##...','..##..','...##.','...##.','...##.','..##..','.##...','......','......'],
+  "'":['..##..','..##..','..##..','......','......','......','......','......','......'],
+  '!':['..##..','..##..','..##..','..##..','..##..','......','..##..','......','......'],
+  '?':['.####.','#....#','.....#','...##.','..##..','......','..##..','......','......'],
+  '*':['......','#..#.#','.####.','..##..','.####.','#..#.#','......','......','......'],
+  '=':['......','......','######','......','######','......','......','......','......'],
+  '<':['....#.','...#..','..#...','.#....','..#...','...#..','....#.','......','......'],
+  '>':['.#....','..#...','...#..','....#.','...#..','..#...','.#....','......','......']
 };
-const FW = 5, FH = 7, FGAP = 1;
+const FW = 6, FH = 9, FGAP = 2;
 const textW = (s, sc) => s.length * (FW + FGAP) * (sc || 1) - FGAP * (sc || 1);
 // Drawing a glyph as rectangles costs about fourteen fills; a screen of HUD
 // text was most of the frame budget. Each glyph is baked once per colour and
@@ -2866,8 +2874,13 @@ function ditherRow(c, x, y, w, colA, colB, t){
   c.fillRect(x, y, w, 1);
   if(lvl <= 0 || lvl >= 16) return;
   c.fillStyle = colB;
+  // The matrix column has to advance once per CELL, not once per pixel. Indexing
+  // it by the pixel while stepping two at a time only ever reached the even
+  // columns, so a row's thresholds came from {0,2} or {12,14} depending on its
+  // parity: alternate rows filled almost never and almost always, and every
+  // ramp in the game came out as hard horizontal stripes instead of a dither.
   for(let i = 0; i < w; i += 2)
-    if(BAYER[y & 3][(x + i) & 3] < lvl) c.fillRect(x + i, y, 2, 1);
+    if(BAYER[y & 3][((x + i) >> 1) & 3] < lvl) c.fillRect(x + i, y, 2, 1);
 }
 function ditherBand(c, x, y, w, h, colA, colB){
   for(let i = 0; i < h; i++) ditherRow(c, x, y + i, w, colA, colB, (i + 0.5) / h);
@@ -3242,15 +3255,20 @@ function pixIcon(id, size, col){
 // against DEVICE pixels instead lands one art pixel on one CSS pixel, which is
 // not pixel art at all, just a small picture. 2.2 is the point where a 5x7
 // font is still legible on a phone and a diagonal still reads as a staircase.
-const PX_CSS = 2.2, K_PROJ = 22.4, LEN = 60, B_GOLFER = 12;
+const PX_CSS = 1.45, K_PROJ = 22.4, LEN = 60, B_GOLFER = 12;
 // How far behind the golfer the camera sits, in world units. Small numbers put
 // you over his shoulder with the hole falling away hard; large numbers flatten
-// it into a diagram. GROUND is tied to it so his feet stay in frame.
-const CAM_BACK = 5;
-// The camera stands a little right of the line, which is what puts the golfer
-// left of frame in the reference photo. Offsetting the CAMERA rather than the
-// golfer means he still walks the middle of his own fairway.
-const CAM_LAT = 0.90;
+// it into a diagram. GROUND is derived from it below, so his feet stay put.
+const CAM_BACK = 3.2;
+// The camera sits ON the line of play, so the centre of the fairway projects to
+// a vertical line down the middle of the frame and the hole runs dead away from
+// you. Offset laterally the centreline sweeps sideways as it comes toward the
+// camera, which reads as standing off to one side of the hole squinting across
+// it rather than playing down it.
+const CAM_LAT = 0;
+// Where the golfer's feet sit, as a fraction of frame height. Everything about
+// the camera is solved back from this so the two cannot drift apart.
+const FEET_AT = 0.86, HORIZON_AT = 0.40;
 // Half-width of the lane the golfer walks, in world lateral units. He is about
 // 0.6 wide, so this leaves him clearance on both sides.
 const B_LANE = 0.85;
@@ -3258,13 +3276,28 @@ const B_LANE = 0.85;
 // against his 12, which is nearer 1:4 - a beach ball.
 const B_BALL = 0.9;
 let VW = 344, VH = 200, HORIZON = 80, CX = 172, GROUND = 36, LAT = 8.8, US = 0.63;
+// Stage text is authored on a 5x7 grid, so its size is set in whole buffer
+// pixels. Raising the buffer resolution therefore HALVES how big a line of HUD
+// text looks, which is the one thing that gets worse when you add detail. TSC
+// tracks the buffer so a caption keeps the same apparent size on the glass
+// however finely the world behind it is drawn.
+let TSC = 1, LH = 8;
 function setViewport(bw, bh){
   VW = bw; VH = bh; CX = Math.round(bw / 2);
   const k = VW / 344;
   US = 0.63 * k;
   LAT = 8.8 * k;
-  HORIZON = Math.round(VH * 0.40);
-  GROUND = 0.100 * VH;   // keeps the golfer's feet at ~85% down the frame
+  HORIZON = Math.round(VH * HORIZON_AT);
+  // Solved, not tuned by hand. The golfer stands at rel = CAM_BACK, so his
+  // scale is K_PROJ/CAM_BACK, and his feet land at HORIZON + GROUND*scale.
+  // Pinning that to FEET_AT gives GROUND directly, which means CAM_BACK can be
+  // moved to taste and the framing follows it instead of sliding off the bottom.
+  GROUND = VH * (FEET_AT - HORIZON_AT) * CAM_BACK / K_PROJ;
+  // Tuned so one character advance stays a constant fraction of frame width.
+  // The divisor tracks the font's own advance, so it has to move with it: the
+  // 6x9 set steps eight buffer pixels a character where the 5x7 stepped six.
+  TSC = clamp(Math.round(VW / 300), 1, 4);
+  LH = (FH + 2) * TSC;
 }
 
 const Scene = {
@@ -3542,18 +3575,30 @@ const Scene = {
       }
     }
     if(!this.night && !this.rain){
-      for(let i = 0; i < 4; i++){
-        const cx = Math.floor(rnd()*VW), cy = Math.floor(H*0.12 + rnd()*H*0.4);
-        const w = Math.round(VW*(0.09 + rnd()*0.10));
-        for(let k = 0; k < 4; k++){
-          const ox = Math.round((k - 1.5) * w * 0.42);
-          const rr = Math.max(2, Math.round(w*(0.30 + (k===1||k===2 ? .16 : 0))));
-          pxCircle(g, cx + ox, cy + (k===1||k===2 ? -1 : 1), rr, 'rgba(255,255,255,.30)');
+      // Opaque, in three flat tones. Stacked translucent circles darkened
+      // wherever two overlapped, so a cloud read as a clump of discs rather
+      // than one body, and whatever was behind it showed through every seam.
+      const body = lite(ramp[0], 0.80), lit = lite(ramp[0], 0.96),
+            shade = lite(ramp[0], 0.56);
+      for(let i = 0; i < 5; i++){
+        const cx = Math.floor(rnd()*VW), cy = Math.floor(H*0.12 + rnd()*H*0.38);
+        const w = Math.round(VW*(0.10 + rnd()*0.11));
+        const lobes = [];
+        const n = 4 + Math.floor(rnd()*3);
+        for(let k = 0; k < n; k++){
+          const t = n === 1 ? 0.5 : k/(n-1);
+          // fattest in the middle, tapering to each end, and a flat base
+          const hump = Math.sin(t*Math.PI);
+          lobes.push({ ox: Math.round((t - 0.5)*w*1.5),
+                       oy: -Math.round(hump*w*0.16) + Math.round((rnd()-0.5)*2),
+                       r: Math.max(2, Math.round(w*(0.17 + hump*0.20))) });
         }
-        for(let k = 0; k < 3; k++){
-          const ox = Math.round((k - 1) * w * 0.40);
-          pxCircle(g, cx + ox, cy - 1, Math.max(2, Math.round(w*0.26)), 'rgba(255,255,255,.42)');
-        }
+        // shadowed underside first, then the body lifted off it, then a rim
+        for(const L of lobes) pxCircle(g, cx + L.ox, cy + L.oy + Math.max(1, w*0.05|0), L.r, shade);
+        for(const L of lobes) pxCircle(g, cx + L.ox, cy + L.oy, L.r, body);
+        for(const L of lobes)
+          if(L.r > 3) pxCircle(g, cx + L.ox, cy + L.oy - Math.max(1, L.r*0.30|0),
+                               Math.max(2, Math.round(L.r*0.62)), lit);
       }
     }
     this.sky = c;
@@ -3953,13 +3998,13 @@ Object.assign(Scene, {
       // sprite height rather than guessed
       const gh = Math.max(6, Math.round(B_GOLFER * US * gp.s));
       drawTextS(c, (n.crit ? '*' : '') + fmt(n.v), gp.x + n.x*US,
-                gp.y - gh - 5 - Math.round(n.t*20),
-                n.crit ? PX.brass : PX.bone, 1, 'c');
+                gp.y - gh - 5 - Math.round(n.t*20*TSC),
+                n.crit ? PX.brass : PX.bone, TSC, 'c');
     }
     for(let i = this.casts.length - 1; i >= 0; i--){
       const k = this.casts[i]; k.t += dt;
       if(k.t > 1.05){ this.casts.splice(i, 1); continue; }
-      drawTextS(c, k.g, 6, VH - 34 - Math.round(k.t*14), PX.aur, 1, 'l');
+      drawTextS(c, k.g, 6, VH - LH*4 - Math.round(k.t*14*TSC), PX.aur, TSC, 'l');
     }
     if(this.banner){
       const b = this.banner; b.t += dt;
@@ -3967,7 +4012,7 @@ Object.assign(Scene, {
       else{
         const col = b.d <= -3 ? PX.myth : b.d <= -2 ? PX.brass : b.d === -1 ? PX.aur
                   : b.d === 0 ? PX.bone : PX.flag;
-        let sc = 3;
+        let sc = 3*TSC;
         while(sc > 1 && textW(b.n, sc) > VW - 10) sc--;
         drawTextS(c, b.n, CX, HORIZON - 6 - sc*4 - Math.round(b.t*6), col, sc, 'c');
       }
@@ -4001,7 +4046,7 @@ Object.assign(Scene, {
       x += sz + 4;
     }
     if((S.tickets || 0) > 0 && live.length < 5)
-      drawTextS(c, 'x' + S.tickets, x + 1, y + 1, PX.grey, 1);
+      drawTextS(c, 'x' + S.tickets, x + 1, y + 1, PX.grey, TSC);
   },
 
   /* ---- the shot book, on the field ---- */
@@ -4054,18 +4099,22 @@ Object.assign(Scene, {
   // belongs to the world rather than the interface.
   drawHud(D){
     const c = this.b;
-    let ly = VH - 8;
+    // The buffer is ceil(device/scale) wide, so up to one buffer column is
+    // blitted past the right edge of the canvas and clipped. Anything aligned
+    // hard right has to clear that column as well as its own drop shadow.
+    const R = VW - 4*TSC - 1;
+    let ly = VH - LH - 2;
     if(S.armor > 0){
-      drawTextS(c, isSunday(S.hole) ? 'CHAMPIONSHIP' : 'SIGNATURE', VW - 3, ly, PX.flag, 1, 'r');
-      ly -= 8;
+      drawTextS(c, isSunday(S.hole) ? 'CHAMPIONSHIP' : 'SIGNATURE', R, ly, PX.flag, TSC, 'r');
+      ly -= LH;
     }
     if(S.courseEl){
       const e = B.ELEM.find(x => x.id === S.courseEl);
       drawTextS(c, e.n.toUpperCase() + (D.reson > 1 ? '+' : D.reson < 1 ? '-' : ''),
-                VW - 3, ly, PX[S.courseEl] || PX.bone, 1, 'r');
-      ly -= 8;
+                R, ly, PX[S.courseEl] || PX.bone, TSC, 'r');
+      ly -= LH;
     }
-    drawTextS(c, (S.chaos ? S.chaos.n : 'FAIR'), VW - 3, ly, PX.grey, 1, 'r');
+    drawTextS(c, (S.chaos ? S.chaos.n : 'FAIR'), R, ly, PX.grey, TSC, 'r');
   },
 
   /* ---- the Depths ---- */
@@ -4074,20 +4123,27 @@ Object.assign(Scene, {
     const pal = B.DGN_PAL[R.id] || {};
     const glow = pal.glow || PX.brass;
     if(R.evt && R.evtT > 0){
-      const bad = R.evt.bad, w = textW(R.evt.n, 1) + 8, y = Math.round(VH*0.34);
-      panel(c, Math.round(CX - w/2), y, w, 11, 'rgba(6,10,8,.88)', bad ? PX.flag : PX.verdant);
-      drawText(c, R.evt.n, CX, y + 2, bad ? PX.flag : PX.verdant, 1, 'c');
+      const bad = R.evt.bad, w = textW(R.evt.n, TSC) + 8, y = Math.round(VH*0.34);
+      panel(c, Math.round(CX - w/2), y, w, FH*TSC + 4, 'rgba(6,10,8,.88)',
+            bad ? PX.flag : PX.verdant);
+      drawText(c, R.evt.n, CX, y + 2, bad ? PX.flag : PX.verdant, TSC, 'c');
     }
+    // All of this stacks up the RIGHT edge. Along the bottom left it ran under
+    // the shot book icons, which are drawn from the same corner.
+    const RX = VW - 4*TSC - 1;
+    let dy = VH - LH - 2;
     let nm = dg.n.toUpperCase();
-    while(textW(nm, 1) > VW - 8 && nm.length > 4) nm = nm.slice(0, -1);
-    drawTextS(c, nm, VW - 3, VH - 9, glow, 1, 'r');
-    let px2 = VW - 4;
+    while(textW(nm, TSC) > VW - 8 && nm.length > 4) nm = nm.slice(0, -1);
+    drawTextS(c, nm, RX, dy, glow, TSC, 'r');
+    dy -= LH;
+    drawTextS(c, 'COURSE PAUSED', RX, dy, PX.dim, TSC, 'r');
+    dy -= 7;
+    let px2 = RX;
     for(let i = 0; i < Math.min(12, R.cleared); i++){
       c.fillStyle = PX.verdant;
-      c.fillRect(px2, VH - 18, 1, 5); c.fillRect(px2 - 2, VH - 18, 3, 2);
+      c.fillRect(px2, dy, 1, 5); c.fillRect(px2 - 2, dy, 3, 2);
       px2 -= 4;
     }
-    drawTextS(c, 'COURSE PAUSED', 3, VH - 9, PX.dim, 1);
   },
 
   /* ---- the frame ---- */
