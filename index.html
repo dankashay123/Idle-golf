@@ -325,8 +325,8 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
 #honIcon,#perkIcon{display:block;width:100%;height:100%;object-fit:contain;
   image-rendering:pixelated;image-rendering:crisp-edges}
 #honBtn:active,#perkBtn:active{transform:translateY(1px)}
-@keyframes hpulse{0%,100%{opacity:1}50%{opacity:.4}}
-#honBtn.new,#perkBtn.ready{animation:hpulse 1.1s ease-in-out infinite}
+@keyframes hpulse{0%,100%{opacity:1}50%{opacity:.62}}
+#honBtn.new,#perkBtn.ready{animation:hpulse 4.6s ease-in-out infinite}
 #perkDot{position:absolute;top:-6%;right:-6%;width:34%;height:34%;border-radius:50%;
   background:var(--aurora);display:none}
 #perkBtn.live #perkDot{display:block}
@@ -3031,6 +3031,11 @@ function buildTheme(cs, mode){
     // The collar the fairway and the green sit in, so neither meets what is
     // around it on a single hard pixel.
     apron: mixC(t(cs.turf), t(cs.rough), 0.42),
+    // The ground a hazard is cut into. A bunker and a pond both sit BELOW the
+    // fairway, and without a band of bare earth around the rim they read as
+    // coloured paint on a flat field rather than as something dug out.
+    lip:  mixC(dark(t(cs.sand), 0.62), t(cs.rough), 0.26),
+    bank: mixC(dark(t(cs.rough), 0.34), t(cs.water), 0.22),
     tl:   dark(t(cs.tree[1]), 0.12),
     tl2:  dark(t(cs.tree[1]), 0.34)
   };
@@ -3118,6 +3123,8 @@ for(const k in THEMES){
   if(!T.snow)  T.snow  = lite(T.rk[4], 0.55);
   if(!T.apron) T.apron = mixC(T.fw[3], T.rg[5], 0.42);
   if(!T.tl2)   T.tl2   = dark(T.tl, 0.26);
+  if(!T.lip)   T.lip   = mixC(dark(T.sd[1], 0.56), T.rg[3], 0.26);
+  if(!T.bank)  T.bank  = mixC(dark(T.rg[3], 0.30), T.wt[2], 0.22);
 }
 
 const PINE_ROWS = [
@@ -4038,16 +4045,25 @@ Object.assign(Scene, {
         const xr = Math.round(C0 + (bk.x) * LAT * s + sp.r * LAT * s);
         const w = xr - xl;
         if(w <= 0) continue;
-        // Flat sand, shaded only by how far down the hole it is, the same way
-        // the fairway and the rough are. Shading it by position WITHIN the
-        // bunker stepped the far quarter of every one of them down by nearly
-        // sixty levels, and because that band is fixed in world space it slid
-        // across the sand as he walked up on it.
-        c.fillStyle = pickC(T._sd, 0.52 + near*0.30);
+        // A bunker is a hole in the ground, so it is drawn as one: a rim of
+        // bare earth of constant WORLD width, then sand inset inside it. Where
+        // the shape tapers to its ends the rim meets itself and the row comes
+        // out all earth, which closes the ring without anything having to know
+        // where the ends are. Shading follows the rim rather than the scanline,
+        // so it describes the bowl instead of banding across it.
+        const lipW = Math.max(1, Math.round(0.30 * LAT * s));
+        c.fillStyle = T.lip;
         c.fillRect(xl, y, w, 1);
-        // the lip that overhangs it
-        c.fillStyle = pickC(T._sd, 0.06);
-        c.fillRect(xl, y, 1, 1); c.fillRect(xr - 1, y, 1, 1);
+        const sl = xl + lipW, sr = xr - lipW;
+        if(sr > sl){
+          c.fillStyle = pickC(T._sd, 0.44 + near*0.22);
+          c.fillRect(sl, y, sr - sl, 1);
+          const iw = (sr - sl) - lipW*2;
+          if(iw > 1){
+            c.fillStyle = pickC(T._sd, 0.74 + near*0.20);
+            c.fillRect(sl + lipW, y, iw, 1);
+          }
+        }
       }
 
       if(this.water){
@@ -4057,20 +4073,29 @@ Object.assign(Scene, {
           const xr = Math.round(C0 + this.water.x * LAT * s + sp.r * LAT * s);
           const w = xr - xl;
           if(w > 0){
-            const t = clamp((d - (this.water.d - this.water.rd)) / (this.water.rd*2), 0, 1);
-            // deep through the middle, shelving up to both banks
-            const depth = Math.min(t, 1 - t) * 2;
-            c.fillStyle = pickC(T._wt, 0.86 - depth*0.60 + near*0.10);
+            // The ground falls away into it: a bank of bare earth right round
+            // the rim, then a shallow shelf, then open water. Same constant
+            // world width as the bunker rim, so the pond sits below the
+            // fairway instead of being painted onto it.
+            const bankW = Math.max(1, Math.round(0.42 * LAT * s));
+            c.fillStyle = T.bank;
             c.fillRect(xl, y, w, 1);
-            // Ripples as clean lines across part of the span. Scattered pixels
-            // of a lighter blue read as grit on the surface rather than water.
-            if(w > 6 && ((y + Math.floor(this.t*5)) % 7) === 0){
-              const rw = Math.round(w * (0.30 + 0.30*Math.abs(Math.sin(y*0.7 + this.t))));
-              c.fillStyle = pickC(T.wt, 0.92);
-              c.fillRect(xl + Math.round((w - rw)/2), y, rw, 1);
+            const wl = xl + bankW, wr = xr - bankW;
+            if(wr > wl){
+              c.fillStyle = pickC(T._wt, 0.64 + near*0.14);
+              c.fillRect(wl, y, wr - wl, 1);
+              const dw = (wr - wl) - bankW*2;
+              if(dw > 1){
+                c.fillStyle = pickC(T._wt, 0.28 + near*0.10);
+                c.fillRect(wl + bankW, y, dw, 1);
+              }
+              // ripples kept to the open water, so they never cross the bank
+              if(dw > 5 && ((y + Math.floor(this.t*5)) % 7) === 0){
+                const rw = Math.round(dw * (0.34 + 0.28*Math.abs(Math.sin(y*0.7 + this.t))));
+                c.fillStyle = pickC(T._wt, 0.60);
+                c.fillRect(wl + bankW + Math.round((dw - rw)/2), y, rw, 1);
+              }
             }
-            c.fillStyle = pickC(T.wt, 0.04);
-            c.fillRect(xl, y, 1, 1); c.fillRect(xr - 1, y, 1, 1);
           }
         }
       }
