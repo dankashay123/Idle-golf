@@ -2870,7 +2870,10 @@ function ditherBand(c, x, y, w, h, colA, colB){
 // Solid bands, enough of them that the joins disappear at this buffer size.
 // The ordered dither this replaced put a speckled seam across every sky.
 function smoothRamp(c, x, y, w, h, cols){
-  const steps = clamp(Math.round(h/3), 8, 64);
+  // One step per row. Three rows to a step put a visible stair every dozen
+  // units of colour across a sky that is mostly one slow gradient, and this
+  // is rasterised once and cached, so the finer ramp costs nothing per frame.
+  const steps = clamp(Math.round(h), 8, 400);
   for(let i = 0; i < steps; i++){
     const y0 = Math.round(y + h*i/steps), y1 = Math.round(y + h*(i+1)/steps);
     c.fillStyle = lerpCols(cols, (i + 0.5)/steps);
@@ -3909,6 +3912,45 @@ const Scene = {
   },
 
   /* ---- sky: dithered bands, never a gradient ---- */
+  // The moon used to be a pale disc with a sky-coloured disc painted over it
+  // to make the crescent. That only works while the sky behind it is exactly
+  // that one colour -- against a gradient the bite showed as a flat patch of
+  // the wrong blue, sitting a shade off whatever it was covering. Built on its
+  // own layer and BITTEN out instead, so what shows through the crescent is
+  // the sky itself, whatever the sky happens to be doing there.
+  drawMoon(g, mx, my, r){
+    // A little air around it. Stacked discs one pixel apart rather than four
+    // fat ones: four read as four rings drawn round the moon, which is not
+    // what a halo is.
+    const G = Math.max(4, Math.round(r*2.2));
+    for(let i = G; i >= 1; i--){
+      const t = i/G;
+      g.globalAlpha = 0.030 * (1 - t) * (1 - t);
+      pxCircle(g, mx, my, r + i, '#CFDCF2');
+    }
+    g.globalAlpha = 1;
+    const n = r*2 + 3, c0 = r + 1;
+    const cv = document.createElement('canvas');
+    cv.width = cv.height = n;
+    const m = cv.getContext('2d');
+    pxCircle(m, c0, c0, r, '#DCE2D2');
+    // the lit limb, and a brighter core inside it
+    pxCircle(m, c0 - Math.round(r*0.22), c0 - Math.round(r*0.20), Math.round(r*0.82), '#EDF1E3');
+    pxCircle(m, c0 - Math.round(r*0.40), c0 - Math.round(r*0.34), Math.round(r*0.46), '#F8FAF0');
+    // maria: flat grey seas, not a scatter of single pixels
+    const mr = seeded(0x5EA51);
+    for(let i = 0; i < 6; i++){
+      const a = mr()*Math.PI*2, rad = Math.sqrt(mr())*r*0.66;
+      pxCircle(m, c0 + Math.round(Math.cos(a)*rad), c0 + Math.round(Math.sin(a)*rad),
+               Math.max(1, Math.round(r*(0.09 + mr()*0.15))),
+               i & 1 ? '#C2CAB8' : '#CED6C4');
+    }
+    m.globalCompositeOperation = 'destination-out';
+    pxCircle(m, c0 + Math.round(r*0.66), c0 - Math.round(r*0.36), r, '#000');
+    m.globalCompositeOperation = 'source-over';
+    g.drawImage(cv, mx - c0, my - c0);
+  },
+
   buildSky(){
     // Dithering a sky is thousands of single-pixel writes. It only depends on
     // the conditions and the frame size, so it is cached against those and not
@@ -3926,15 +3968,25 @@ const Scene = {
 
     const rnd = seeded(hash32(key.length*7919 + VW*31 + (this.night?3:0) + (this.aurora?7:0)));
     if(this.night){
-      for(let i = 0; i < 60; i++){
-        const x = Math.floor(rnd()*VW), y = Math.floor(rnd()*H*0.85);
-        g.fillStyle = rnd() < .3 ? '#8FA6C4' : '#DDE6F2';
+      // A field of one tone at one brightness reads as dust on the screen.
+      // Three tiers, thinning towards the horizon where the air thickens, and
+      // a few bright enough to throw a glint.
+      for(let i = 0; i < 130; i++){
+        const x = Math.floor(rnd()*VW);
+        const y = Math.floor(Math.pow(rnd(), 1.35) * H * 0.92);
+        const v = rnd();
+        g.globalAlpha = (0.30 + v*0.70) * clamp(1.15 - y/(H*0.92), 0.25, 1);
+        g.fillStyle = v < 0.34 ? '#8FA6C4' : v < 0.86 ? '#C6D2E6' : '#F2F6FF';
         g.fillRect(x, y, 1, 1);
+        if(v > 0.965){
+          g.globalAlpha *= 0.42;
+          g.fillRect(x - 1, y, 1, 1); g.fillRect(x + 1, y, 1, 1);
+          g.fillRect(x, y - 1, 1, 1); g.fillRect(x, y + 1, 1, 1);
+        }
       }
-      const mx = Math.floor(VW*0.78), my = Math.floor(H*0.24), mr = Math.max(4, Math.round(VW*0.030));
-      pxCircle(g, mx, my, mr, '#EEF2E2');
-      pxCircle(g, mx + Math.round(mr*0.5), my - Math.round(mr*0.3), mr, ramp[1]);
-      pxCircle(g, mx - Math.round(mr*0.35), my + Math.round(mr*0.25), 1, '#C9D2C0');
+      g.globalAlpha = 1;
+      this.drawMoon(g, Math.round(VW*0.775), Math.round(H*0.23),
+                    Math.max(5, Math.round(VW*0.055)));
     }
     if(this.aurora){
       // Two thin ribbons with a bright core and a short dithered falloff.
@@ -4077,11 +4129,23 @@ Object.assign(Scene, {
     // Starts ABOVE the horizon. With a height field a rise can stand higher
     // than the horizon line, and haze that began at the line left that ground
     // as a hard, fully saturated slab sitting on top of the mountains.
-    const top = Math.max(0, HORIZON - Math.round(VH*0.13));
+    //
+    // It has to ARRIVE there gradually as well. Above the line there is no
+    // ground to measure a distance against, so the strength saturated and the
+    // layer came in at full alpha on its very first row: an opaque bar ruled
+    // straight across the sky. Faded in over the run-up instead, so the only
+    // thing it does up there is take the edge off a crest that breaks the
+    // skyline.
+    const top  = Math.max(0, HORIZON - Math.round(VH*0.13));
+    const full = HORIZON + Math.round(VH*0.14);
     for(let y = top; y < VH; y++){
       const sc = Math.max(0, (y - HORIZON) / GROUND);
       const rel = K_PROJ / Math.max(0.0001, sc);
-      const a = clamp((rel - 16) / 90, 0, 1) * 0.62;
+      // One monotone ceiling from nothing at the top edge to full strength a
+      // little below the line. Nothing steps anywhere along it, and the wood
+      // on the skyline keeps enough of itself to still be a wood.
+      const u = clamp((y - top) / (full - top), 0, 1);
+      const a = Math.min(clamp((rel - 16) / 90, 0, 1), u*u*(3 - 2*u)) * 0.62;
       if(a <= 0.004) continue;
       g.globalAlpha = a;
       g.fillRect(0, y, VW, 1);
@@ -4158,9 +4222,16 @@ Object.assign(Scene, {
     if(maxy > HORIZON){
       c.fillStyle = pickC(T._rg, 0);
       c.fillRect(0, HORIZON, VW, maxy - HORIZON);
+      maxy = HORIZON;
     }
-    const hz = this.night ? 'rgba(40,70,90,.40)' : 'rgba(190,215,215,.30)';
-    for(let i = 0; i < 3; i++){ c.fillStyle = hz; c.fillRect(0, HORIZON + 1 + i*2, VW, 1); }
+    // and the wood at the back of it, standing on whatever the march left as
+    // the skyline rather than on the horizon line
+    this.buildWood();
+    if(this.wood) c.drawImage(this.wood, 0, maxy - this.woodBase);
+    // Three ruled lines of haze used to be blended in just under the horizon
+    // to soften the join. The haze layer now ramps THROUGH the line instead of
+    // starting at it, so the join is soft on its own and all the lines did was
+    // draw themselves across the top of the field.
   },
 
   // One band of ground, at one distance. Everything here was a single scanline
@@ -4316,61 +4387,145 @@ Object.assign(Scene, {
     const g = cv.getContext('2d');
     const rnd = seeded(hash32(this.hole*7919 + 17));
 
-    for(let L = 2; L >= 0; L--){
-      const amp  = (0.050 + L*0.040) * VH;
-      const base = HORIZON - Math.round(VH*(0.050 - L*0.021));
-      // farther ranges sit closer to the sky colour, which is what reads as air
-      const haze = (2 - L) * 0.24;
-      const body  = mixC(T.rk[L === 2 ? 1 : L === 1 ? 2 : 3], T.sky[4], haze);
-      const lit   = mixC(T.rk[4], T.sky[4], haze);
-      const shade = mixC(T.rk[0], T.sky[4], haze);
-      const snow  = mixC(T.snow,  T.sky[4], haze * 0.6);
-      const p1 = 22 + L*15, p2 = 8.5 + L*3.5, p3 = 3.6 + L*1.4;
-      const a1 = rnd()*99, a2 = rnd()*99, a3 = rnd()*99;
+    // Four ranges, back to front. Distance is carried by haze: the range at
+    // the back is mixed furthest toward the sky colour and the foothills in
+    // front are nearly their own rock. It used to run the other way round,
+    // which washed out the nearest ridge and left the far peaks reading as
+    // the ones close enough to touch.
+    const LAYERS = [
+      { amp: 0.150, base: 0.040, haze: 0.66, snow: 0.52, p: 26 },
+      { amp: 0.108, base: 0.030, haze: 0.46, snow: 0.62, p: 21 },
+      { amp: 0.072, base: 0.019, haze: 0.27, snow: 0,    p: 16 },
+      { amp: 0.045, base: 0.007, haze: 0.11, snow: 0,    p: 12 }
+    ];
+    for(let L = 0; L < LAYERS.length; L++){
+      const Y = LAYERS[L];
+      const amp  = Y.amp * VH;
+      const base = HORIZON - Math.round(VH*Y.base);
+      const body  = mixC(T.rk[2], T.sky[4], Y.haze);
+      const lit   = mixC(T.rk[4], T.sky[4], Y.haze);
+      const shade = mixC(T.rk[0], T.sky[4], Y.haze);
+      const foot  = mixC(body,    T.sky[4], 0.52);
+      const snow  = mixC(T.snow,  T.sky[4], Y.haze * 0.55);
+      const snowL = mixC(lite(T.snow, 0.35), T.sky[4], Y.haze * 0.45);
+      const snowS = mixC(mixC(T.snow, T.rk[1], 0.34), T.sky[4], Y.haze * 0.55);
+      const p1 = Y.p, p2 = Y.p*0.38, p3 = Y.p*0.16;
+      const a1 = rnd()*99, a2 = rnd()*99, a3 = rnd()*99, a4 = rnd()*99;
       // three octaves, so a peak has shoulders and scree rather than being a sine
       const topAt = x => base - amp*(0.42
         + 0.36*Math.sin(x/p1 + a1)
         + 0.15*Math.sin(x/p2 + a2)
         + 0.07*Math.sin(x/p3 + a3));
-      const snowY = base - amp*0.62;
+      // The snowline follows the weather, not a ruler. Cut straight across it
+      // read as a sheet of paper laid over the peaks.
+      const snowAt = x => base - amp*(Y.snow + 0.075*Math.sin(x/(p2*1.7) + a4));
       let prev = topAt(-1);
       for(let x = 0; x < VW; x++){
         const top = Math.round(topAt(x));
         g.fillStyle = body;
         g.fillRect(x, top, 1, H - top);
+        // the foot of a range stands in the haze of the valley in front of it
+        const fh = Math.max(2, Math.round(amp*0.30));
+        g.fillStyle = foot;
+        g.fillRect(x, H - fh, 1, fh);
         const slope = top - prev;
         if(slope !== 0){
           // rising toward the light is a lit face, falling away is in shadow
           g.fillStyle = slope < 0 ? lit : shade;
           g.fillRect(x, top, 1, Math.min(4, Math.abs(slope) + 1));
         }
-        if(L > 0 && top < snowY){
-          const capH = Math.min(5, Math.round((snowY - top) * 0.6));
-          if(capH > 0){ g.fillStyle = snow; g.fillRect(x, top, 1, capH); }
+        if(Y.snow){
+          const sy = snowAt(x);
+          if(top < sy){
+            const capH = Math.min(Math.round(amp*0.30), Math.round((sy - top) * 0.75));
+            if(capH > 0){
+              // A cap shaded like the rock under it, rather than one flat
+              // sheet of white laid over the peaks.
+              g.fillStyle = slope > 0 ? snowS : snow;
+              g.fillRect(x, top, 1, capH);
+              if(slope < 0){ g.fillStyle = snowL; g.fillRect(x, top, 1, Math.min(capH, 2)); }
+              // it thins out as it runs down into the rock
+              g.fillStyle = mixC(snow, body, 0.55);
+              g.fillRect(x, top + capH - Math.max(1, capH >> 2), 1, Math.max(1, capH >> 2));
+            }
+          }
         }
         prev = top;
       }
     }
 
-    // Treeline: clumped canopies with a second tone behind them. Keyed to the
-    // hole, not to camD -- tied to the camera the whole distant wood crawled
-    // sideways every time he took a step.
-    let x = -6;
-    while(x < VW + 6){
-      const w = 5 + Math.floor(rnd()*10), h = 3 + Math.floor(rnd()*6);
-      const back = rnd() < 0.45;
-      g.fillStyle = back ? T.tl2 : T.tl;
-      g.fillRect(x, HORIZON - h, w, h + 4);
-      const cw = Math.max(2, w - 2 - Math.floor(rnd()*2));
-      g.fillRect(x + 1 + Math.floor(rnd()*2), HORIZON - h - 1 - Math.floor(rnd()*3), cw, 4);
-      x += Math.max(2, w - 2 - Math.floor(rnd()*2));
-    }
+    // Treeline. A wood at that distance is one dark mass with a broken top
+    // edge, so it is drawn as a band with conifers standing out of it. Built
+    // from two rows of boxes before, which is what it looked like. Keyed to
+    // the hole, not to camD -- tied to the camera the whole distant wood
+    // crawled sideways every time he took a step.
     this.ridge = cv;
   },
 
   drawRidge(){
     this.buildRidge();
     if(this.ridge) this.b.drawImage(this.ridge, 0, 0);
+  },
+
+  // The wood at the back of the course sits on the SKYLINE, and with a height
+  // field that is not the horizon line: a rise in the middle distance stands
+  // well above the line, and every slice of ground is full width, so its crest
+  // is a ruled horizontal cut straight across the frame. A treeline pinned to
+  // the horizon was simply painted over by that cut, which is why the far edge
+  // of the course was a bare edge with nothing standing on it. Built once and
+  // blitted to wherever the march actually ended up.
+  buildWood(){
+    const key = [this.themeId, this.hole, VW, VH].join('|');
+    if(this.woodKey === key && this.wood) return;
+    this.woodKey = key;
+    const T = this.theme || THEMES.day;
+    const mist = Math.max(4, Math.round(VH*0.048));
+    const band = Math.max(2, Math.round(VH*0.016));
+    const tall = Math.round(VH*0.055);
+    // It stands at the back of the course, so it carries its own air. Drawn on
+    // the skyline it is above most of the haze layer, and left in its own
+    // colour it came out as a black wall with the ranges behind it gone.
+    const air  = c => mixC(c, T.sky[4], 0.34);
+    const base = mist + tall;                 // where the ground line falls
+    const cv = document.createElement('canvas');
+    cv.width = Math.max(2, VW); cv.height = base + 3;
+    const g = cv.getContext('2d');
+    const rnd = seeded(hash32(this.hole*7919 + 41));
+
+    // A pale bar of haze lying in the valley behind it. A dark wood in front
+    // of a dark range is a smudge; in front of this it is a silhouette, which
+    // is the whole reason a treeline is worth drawing.
+    g.fillStyle = T.sky[4];
+    for(let k = 0; k < mist; k++){
+      g.globalAlpha = 0.12 + 0.42 * (k/(mist - 1));
+      g.fillRect(0, base - mist + k, VW, 1);
+    }
+    g.globalAlpha = 1;
+    g.fillStyle = air(T.tl2);
+    g.fillRect(0, base - band, VW, cv.height - base + band);
+    for(let pass = 0; pass < 2; pass++){
+      const back = pass === 0;
+      const col  = back ? mixC(T.tl2, T.sky[4], 0.46) : air(T.tl);
+      const foot = base - (back ? Math.round(band*0.70) : 0);
+      let x = -8;
+      while(x < VW + 8){
+        // Squared, so most of the canopy is even and a few stand well clear of
+        // it. Width follows height, or a tall one comes out as a fence post
+        // rather than as a tree.
+        const t = rnd();
+        const h = 2 + Math.round(VH*(back ? 0.010 : 0.016) * (0.40 + t*t*1.9));
+        const w = Math.max(3, Math.round(h * (0.55 + rnd()*0.28)));
+        const steps = Math.max(2, Math.round(h/2));
+        g.fillStyle = col;
+        for(let k = 0; k < steps; k++){
+          const ww = Math.max(1, Math.round(w*(1 - k/steps*0.78)));
+          const yy = foot - Math.round(h*(k+1)/steps);
+          g.fillRect(x + ((w - ww) >> 1), yy, ww, Math.max(1, Math.round(h/steps)) + 1);
+        }
+        x += Math.max(2, Math.round(w*0.55) - Math.floor(rnd()*2));
+      }
+    }
+    this.wood = cv; this.woodBase = base;
   },
 
   // One back-to-front pass over everything standing beside the hole.
