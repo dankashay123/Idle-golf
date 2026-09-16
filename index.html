@@ -638,7 +638,6 @@ const B = {
   // would stop paying anything on the course. Sublinear, so climbing a card is
   // still worth more than sitting on one and out-hitting it.
   HCP: 0.34, HCP_PAY: 0.60,
-  TAX_POW: 0, TAX_CAP: 500,
   CRIT_ADD: { face:0.00132, simul:0.00108 },
   CPW_ADD: 0.0174, DROP_ADD: 0.000675, PROC_ADD: 0.00099, DGN_ADD: 0.00315,
   MST_ADD: { provis:0.0018, second:0.0022 },
@@ -692,7 +691,7 @@ const B = {
   ELEM: [
     { ic:'flame', id:'ember',   n:'Ember',   v:'--ember',   d:'Cinders burn the fairway for 65% of the strike over 3s' },
     { ic:'snow', id:'frost',   n:'Frost',   v:'--frost',   d:'Frostline: the next swing lands for 190% more' },
-    { ic:'bolt', id:'storm',   n:'Storm',   v:'--storm',   d:'Chain lightning fires two more swings at 55%' },
+    { ic:'bolt', id:'storm',   n:'Storm',   v:'--storm',   d:'Chain lightning fires two more swings at 35%' },
     { ic:'leaf', id:'verdant', n:'Verdant', v:'--verdant', d:'Fairway bloom pays 190% more on the strike' },
     { ic:'ring', id:'void',    n:'Void',    v:'--void',    d:'Voidwalk erases 1.2% of the yardage left' }
   ],
@@ -1276,20 +1275,6 @@ function chaosFor(h, tier){
    STATE
    ========================================================================= */
 const KEY = 'mythic-mulligan-v1';
-function freshRun(keepMeta){
-  const seedTier = Math.min(B.TIER_MAX, (S && S.relic && S.relic.chrono) || 0);
-  const r = {
-    gold: 0, tier: seedTier, hole: 1, elapsed: 0, holeGold: 0,
-    upg: {}, equip: {}, bag: [],
-    skillLv: {}, carry: [], cd: {},
-    form: 0, fieldBase: 0, tourScore: 0, tourStart: 1,
-    swingT: 0, frost: 0, burn: 0, burnT: 0, buff: {},
-    scores: []
-  };
-  B.UPG.forEach(u => r.upg[u.id] = 0);
-  B.SLOTS.forEach(s => r.equip[s.id] = null);
-  return r;
-}
 function defaultState(){ return {
   ver: 1, t: Date.now()/1000,
   gold: 0, tier: 0, hole: 1, elapsed: 0,
@@ -1302,7 +1287,7 @@ function defaultState(){ return {
   tickets: 0, perkOn: {}, perkUsed: 0,
   tally: {}, achDone: {},
   para: 0, paraXp: 0, paraPts: {}, paraSpent: {},
-  form: 0, fieldBase: 0, tourScore: 0,
+  tourScore: 0,
   bestTier: 0, tierMax: 0, tierEvents: {}, eventsPlayed: 0, goldPeak: 0,
   totalHoles: 0, bestScore: 0, aces: 0,
   swingT: 0, frost: 0, burn: 0, burnT: 0, buff: {},
@@ -1396,7 +1381,12 @@ function load(){
   if(!raw) return false;
   try{
     const o = JSON.parse(raw);
-    if(!o || o.ver !== 1) return false;
+    if(!o) return false;
+    // migrate() already drops anything this build no longer defines, so an
+    // unfamiliar version number is something to migrate rather than a reason to
+    // silently erase the save. Rejecting it here meant the day ver became 2
+    // every player lost everything.
+    if(typeof o.ver !== 'number') return false;
     Object.assign(S, o);
     return true;
   }catch(e){ return false; }
@@ -1707,17 +1697,6 @@ function addXp(n){
   }
 }
 
-/* ---- the handicap ---- */
-// How far ahead of the current card your bag is, expressed as a cost multiplier
-// on Range upgrades.
-function courseTax(D){
-  if(!S.yardsMax || !S.parTime) return 1;
-  D = D || derive();
-  const secs = Math.max(S.walkMin || B.WALK_MIN, S.yardsMax / Math.max(1e-9, D.dps));
-  const ratio = secs / S.parTime;
-  if(ratio >= 1) return 1;
-  return Math.min(B.TAX_CAP, Math.pow(1/ratio, B.TAX_POW));
-}
 
 /* ---- costs ---- */
 const costOf = (base, r, owned) => base * Math.pow(r, owned);
@@ -2628,7 +2607,7 @@ function retire(){
   S.gold = Math.pow(B.SEED_MULT, relLv('seed')) > 1
     ? B.G0 * Math.pow(B.TIER_G, Math.min(6, relLv('seed'))) * 40 : 0;
   S.tier = Math.min(B.TIER_MAX, relLv('chrono'));
-  S.hole = 1; S.scores = []; S.tourScore = 0; S.form = 0; S.streak = 0;
+  S.hole = 1; S.scores = []; S.tourScore = 0; S.streak = 0;
   const keepUpg = relLv('vault') * B.VAULT_UPG;
   B.UPG.forEach(u => S.upg[u.id] = Math.min(capOf(u), keepUpg));
   S.tierEvents = {}; S.tierMax = Math.min(B.TIER_MAX, relLv('chrono'));
@@ -2888,6 +2867,16 @@ function ditherBand(c, x, y, w, h, colA, colB){
 // A vertical ramp: solid bands with a dithered seam between each pair, rather
 // than dithering every row. Cheaper by more than half, and it is how the era
 // actually did skies — flat colour with a speckled join, not a smooth blend.
+// Solid bands, enough of them that the joins disappear at this buffer size.
+// The ordered dither this replaced put a speckled seam across every sky.
+function smoothRamp(c, x, y, w, h, cols){
+  const steps = clamp(Math.round(h/3), 8, 64);
+  for(let i = 0; i < steps; i++){
+    const y0 = Math.round(y + h*i/steps), y1 = Math.round(y + h*(i+1)/steps);
+    c.fillStyle = lerpCols(cols, (i + 0.5)/steps);
+    c.fillRect(x, y0, w, Math.max(1, y1 - y0));
+  }
+}
 function ditherRamp(c, x, y, w, h, cols){
   const n = cols.length - 1, seg = h / n;
   for(let k = 0; k < n; k++){
@@ -2980,6 +2969,30 @@ function mixC(a, b, t){
   return rgbToHx(A[0] + (B2[0]-A[0])*t, A[1] + (B2[1]-A[1])*t, A[2] + (B2[2]-A[2])*t);
 }
 const lite = (c, t) => mixC(c, '#FFFFFF', t);
+// Sample a colour list as a continuous ramp, and resample one to a new length.
+// Terrain tones are indexed by a 0..1 depth rather than by a hand-written
+// integer, so a ramp can be made finer without rewriting every call site.
+function lerpCols(cols, t){
+  const u = clamp(t, 0, 1) * (cols.length - 1);
+  const i = Math.min(cols.length - 2, Math.floor(u));
+  return mixC(cols[i], cols[i+1], u - i);
+}
+const pickC = (cols, t) => cols[clamp(Math.round(clamp(t,0,1)*(cols.length-1)), 0, cols.length-1)];
+function expandC(cols, n){
+  if(cols.length >= n) return cols;
+  const out = [];
+  for(let i = 0; i < n; i++) out.push(lerpCols(cols, i/(n-1)));
+  return out;
+}
+// Smooth between shape control points instead of snapping to the nearest one.
+// Flooring to an index is what made every hazard outline step in and out in
+// hard blocks: fourteen samples became fourteen visible facets.
+function shapeAt(sh, u){
+  const n = sh.length, x = clamp(u, 0, 1) * (n - 1);
+  const i = Math.floor(x), f = x - i;
+  const a = sh[i], b = sh[Math.min(n - 1, i + 1)];
+  return a + (b - a) * (f*f*(3 - 2*f));
+}
 const dark = (c, t) => mixC(c, '#000000', t);
 function ramp(c, n, lo, hi){
   const out = [];
@@ -3003,11 +3016,13 @@ function buildTheme(cs, mode){
   return THEME_CACHE[key] = {
     id: cs.id,
     sky: skyRamp(t(cs.sky[0]), t(cs.sky[1]), 5),
-    fw:  ramp(t(cs.turf),  5, -0.30, 0.16),
-    rg:  ramp(t(cs.rough), 3, -0.25, 0.05),
-    gr:  ramp(t(lite(cs.turf, 0.14)), 3, -0.08, 0.14),
-    sd:  ramp(t(cs.sand),  4, -0.30, 0.10),
-    wt:  ramp(t(cs.water), 5, -0.40, 0.22),
+    // Long ramps rather than dithered short ones. Enough steps that the bands
+    // are invisible, which is what the speckle was there to hide.
+    fw:  ramp(t(cs.turf),  9, -0.30, 0.16),
+    rg:  ramp(t(cs.rough), 7, -0.25, 0.07),
+    gr:  ramp(t(lite(cs.turf, 0.14)), 6, -0.10, 0.14),
+    sd:  ramp(t(cs.sand),  7, -0.30, 0.12),
+    wt:  ramp(t(cs.water), 8, -0.40, 0.22),
     // Five rock steps, not three: a ridge shaded by which way its face turns
     // needs a lit tone and a shadow tone either side of the body colour.
     rk:  ramp(t(cs.rock),  5, -0.30, 0.20),
@@ -3098,8 +3113,10 @@ for(const k in THEMES){
     const r = T.rk || ['#31434F','#425A66','#587280'];
     T.rk = [dark(r[0], 0.32), r[0], r[1], r[2], lite(r[2], 0.26)];
   }
+  T.fw = expandC(T.fw, 9); T.rg = expandC(T.rg, 7);
+  T.gr = expandC(T.gr, 6); T.sd = expandC(T.sd, 7); T.wt = expandC(T.wt, 8);
   if(!T.snow)  T.snow  = lite(T.rk[4], 0.55);
-  if(!T.apron) T.apron = mixC(T.fw[1], T.rg[2], 0.42);
+  if(!T.apron) T.apron = mixC(T.fw[3], T.rg[5], 0.42);
   if(!T.tl2)   T.tl2   = dark(T.tl, 0.26);
 }
 
@@ -3604,7 +3621,7 @@ const Scene = {
     if(cfg.water){
       for(let a = 0; a < 20; a++){
         const w = { d: cfg.wd(rnd), x: cfg.wx(rnd), rd: cfg.wrd(rnd), rx: cfg.wrx(rnd),
-                    shape: this.blob(rnd, .24) };
+                    shape: this.blob(rnd, .24), shape2: this.blob(rnd, .24) };
         if(Math.abs(w.x) - w.rx < B_LANE) continue;     // keep it off the lane he walks
         this.water = w; break;
       }
@@ -3612,7 +3629,7 @@ const Scene = {
     for(let i = 0; i < cfg.nb; i++){
       for(let a = 0; a < 24; a++){
         const b = { d: cfg.bd(rnd), x: cfg.bx(rnd), rd: cfg.brd(rnd), rx: cfg.brx(rnd),
-                    shape: this.blob(rnd, .30) };
+                    shape: this.blob(rnd, .26), shape2: this.blob(rnd, .26) };
         // Bunkers only checked each other before, so one could sit straight on
         // the middle of the hole and he would walk through it every time.
         if(Math.abs(b.x) - b.rx < B_LANE) continue;
@@ -3663,9 +3680,14 @@ const Scene = {
     this.props = put;
   },
 
+  // A closed outline, smoothed so neighbouring control points cannot differ
+  // enough to show as a facet once shapeAt runs between them.
   blob(rnd, amp){
-    const n = 14, out = [];
-    for(let i = 0; i < n; i++) out.push(1 + (rnd()*2 - 1)*amp);
+    const n = 22, raw = [];
+    for(let i = 0; i < n; i++) raw.push(1 + (rnd()*2 - 1)*amp);
+    const out = [];
+    for(let i = 0; i < n; i++)
+      out.push((raw[(i-1+n)%n] + raw[i]*2 + raw[(i+1)%n]) / 4);
     out[n-1] = out[n-1]*0.5 + out[0]*0.5;
     return out;
   },
@@ -3777,7 +3799,7 @@ const Scene = {
     const g = c.getContext('2d');
     g.imageSmoothingEnabled = false;
     const ramp = (this.theme || THEMES.day).sky;
-    ditherRamp(g, 0, 0, VW, H, ramp);
+    smoothRamp(g, 0, 0, VW, H, ramp);
 
     const rnd = seeded(hash32(key.length*7919 + VW*31 + (this.night?3:0) + (this.aurora?7:0)));
     if(this.night){
@@ -3841,7 +3863,15 @@ const Scene = {
   },
 
   /* ---- events from the sim ---- */
-  swing(dmg, crit, el){ this.swingT = this.swingDur; this.pendingBall = { crit, el, dmg }; },
+  swing(dmg, crit, el){
+    // A visual swing takes swingDur to play, and launch() only fires as it
+    // crosses its halfway point. Restarting it before then means that crossing
+    // never happens, so past about five swings a second the ball, the damage
+    // number and the crit spark all stopped appearing while the sim carried on
+    // hitting. Above that rate the eye cannot follow individual swings anyway.
+    if(this.swingT > this.swingDur*0.5) return;
+    this.swingT = this.swingDur; this.pendingBall = { crit, el, dmg };
+  },
   // A shot at something in particular: the pin, or the water beside it.
   aimed(dmg, el, targetD, lat, crit){
     this.swingT = this.swingDur;
@@ -3858,7 +3888,7 @@ const Scene = {
                       lat: p.lat !== undefined ? p.lat : -0.15 + (Math.random()-.5)*0.30 });
     if(this.nums.length < 12 && p.dmg > 0)
       this.nums.push({ t:0, v:p.dmg, crit:p.crit, x:(Math.random()-.5)*14 });
-    if(p.crit) this.sparks.push({ t:0, k:'crit' });
+    if(p.crit && this.sparks.length < 20) this.sparks.push({ t:0, k:'crit' });
   },
   spark(el){ if(this.sparks.length < 20) this.sparks.push({ t:0, k:el }); },
   burst(id){ if(this.sparks.length < 20) this.sparks.push({ t:0, k:'skill', id }); },
@@ -3895,13 +3925,16 @@ Object.assign(Scene, {
     const L = this.land || { fw:3.10, taper:0.85 };
     return L.fw - (L.taper || 0.85)*t*(L.fw/3.10) + Math.sin(d*0.05 + this.seed)*0.22;
   },
-  // half-extent of a blob hazard across the hole at world distance d
+  // Left and right extent of a blob hazard at world distance d. Two outlines
+  // rather than one mirrored half: a bunker with the same silhouette either
+  // side of its own centre line reads as a stamped shape, not as dug ground.
   hazSpan(hz, d){
     const t = (d - hz.d) / hz.rd;
-    if(t <= -1 || t >= 1) return 0;
-    const ang = Math.acos(clamp(t, -1, 1)) / Math.PI;
-    const i = Math.min(hz.shape.length - 1, Math.floor(ang * (hz.shape.length - 1)));
-    return hz.rx * Math.sqrt(1 - t*t) * hz.shape[i];
+    if(t <= -1 || t >= 1) return null;
+    const u = Math.acos(clamp(t, -1, 1)) / Math.PI;
+    const base = hz.rx * Math.sqrt(1 - t*t);
+    return { l: base * shapeAt(hz.shape, u),
+             r: base * shapeAt(hz.shape2 || hz.shape, u) };
   },
 
   /* ---- terrain, one scanline at a time ---- */
@@ -3932,28 +3965,21 @@ Object.assign(Scene, {
 
   drawGround(){
     const c = this.b, cam = this.camD, T = this.theme || THEMES.day;
-    const nz = (a, b) => hash32((a*73856093) ^ (b*19349663));
+    // Rim ramps, built once per theme. The green feathers by tone rather than
+    // by scattering pixels of the neighbouring colour, which read as grit.
+    if(!T._rim){
+      T._rim = [mixC(T.gr[3], T.apron, 0.30), mixC(T.gr[3], T.apron, 0.60),
+                mixC(T.gr[3], T.apron, 0.84)];
+      T._arim = [mixC(T.apron, T.fw[5], 0.45), mixC(T.apron, T.fw[5], 0.78)];
+    }
     for(let y = HORIZON + 1; y < VH; y++){
       const s = (y - HORIZON) / GROUND;
       const rel = K_PROJ / s;
       const d = cam + rel - CAM_BACK;
       const near = clamp(1 - rel/110, 0, 1);
 
-      const ri = Math.min(2, Math.floor(near*2.7));
-      c.fillStyle = T.rg[ri];
+      c.fillStyle = pickC(T.rg, near);
       c.fillRect(0, y, VW, 1);
-      // Grain in the rough as scattered tufts. It used to paint a full width
-      // row of the next tone up every fourth scanline, which is exactly a hard
-      // line drawn across the whole field, and at this buffer size you can see
-      // every one of them.
-      if(near > 0.22 && ri < 2){
-        const n = 3 + (near*8 | 0);
-        c.fillStyle = T.rg[ri + 1];
-        for(let k = 0; k < n; k++){
-          const hx = nz(y*31 + k, (d*0.6) | 0) % VW;
-          c.fillRect(hx, y, 2 + (k & 1), 1);
-        }
-      }
       if(rel < 1.2) continue;
 
       const C0 = Math.round(CX - CAM_LAT * LAT * s);
@@ -3961,7 +3987,7 @@ Object.assign(Scene, {
       if(d > -3.2 && d < 2.4){
         const tw = Math.round(1.75 * LAT * s);
         if(tw > 0){
-          c.fillStyle = T.gr[d > -3.0 && d < 2.2 ? 2 : 1];
+          c.fillStyle = pickC(T.gr, d > -3.0 && d < 2.2 ? 0.75 : 0.45);
           c.fillRect(C0 - tw, y, tw*2, 1);
           c.fillStyle = T.edge;
           c.fillRect(C0 - tw - 1, y, 1, 1); c.fillRect(C0 + tw, y, 1, 1);
@@ -3972,127 +3998,107 @@ Object.assign(Scene, {
         const hw = Math.round(this.fwWidth(d) * LAT * s);
         if(hw > 0){
           const per = 3.2 + rel*0.22;
-          const stripe = (rel < 46 && (Math.floor(d/per) & 1)) ? 1 : 0;
-          const base = clamp(Math.floor(near*2.2) + stripe, 0, 4);
-          c.fillStyle = T.fw[base];
+          const stripe = (rel < 46 && (Math.floor(d/per) & 1)) ? 0.11 : 0;
+          const ft = near*0.60 + stripe;
+          c.fillStyle = pickC(T.fw, ft);
           c.fillRect(C0 - hw, y, hw*2, 1);
           if(hw > 5){
             const iw = Math.round(hw*0.55);
-            c.fillStyle = T.fw[clamp(base + 1, 0, 4)];
+            c.fillStyle = pickC(T.fw, ft + 0.12);
             c.fillRect(C0 - iw, y, iw*2, 1);
           }
           if(hw > 9){
             const ew = Math.round(hw*0.86);
-            c.fillStyle = T.fw[clamp(base - 1, 0, 4)];
+            c.fillStyle = pickC(T.fw, ft - 0.12);
             c.fillRect(C0 - hw, y, hw - ew, 1);
             c.fillRect(C0 + ew, y, hw - ew, 1);
           }
-          // A cut collar either side instead of a single hard pixel, with the
-          // semi-rough ragged against the rough so the boundary is a mown line
-          // rather than a drawn one.
+          // a cut collar either side, two solid steps rather than a ragged
+          // scatter of pixels into the rough
           const cw = hw > 14 ? 2 : 1;
           c.fillStyle = T.apron;
           c.fillRect(C0 - hw - cw, y, cw, 1); c.fillRect(C0 + hw, y, cw, 1);
-          if(hw > 8 && (nz(y, (d*0.7)|0) & 3) === 0){
-            c.fillRect(C0 - hw - cw - 1, y, 1, 1); c.fillRect(C0 + hw + cw, y, 1, 1);
-          }
+          c.fillStyle = T._arim[1];
+          c.fillRect(C0 - hw - cw - 1, y, 1, 1); c.fillRect(C0 + hw + cw, y, 1, 1);
         }
       }
 
       for(const bk of this.bunkers){
         const sp = this.hazSpan(bk, d);
-        if(sp <= 0) continue;
-        const w = Math.round(sp * LAT * s), cxp = Math.round(C0 + bk.x * LAT * s);
+        if(!sp) continue;
+        const xl = Math.round(C0 + (bk.x) * LAT * s - sp.l * LAT * s);
+        const xr = Math.round(C0 + (bk.x) * LAT * s + sp.r * LAT * s);
+        const w = xr - xl;
         if(w <= 0) continue;
-        c.fillStyle = T.sd[clamp(Math.floor(near*2.6) + 1, 0, 3)];
-        c.fillRect(cxp - w, y, w*2, 1);
-        // Rake marks as short dashes. A full width row of a lighter tone every
-        // other scanline was striping every bunker on the course.
-        if(w > 3){
-          c.fillStyle = T.sd[3];
-          const n = 1 + (w/7 | 0);
-          for(let k = 0; k < n; k++){
-            const rx = cxp - w + 2 + (nz(y*7 + k, bk.d|0) % Math.max(1, w*2 - 4));
-            c.fillRect(rx, y, 2, 1);
-          }
+        // Dug ground, not a beige patch: the far wall is in shadow, the floor
+        // takes the light, and the near lip catches it hardest.
+        const tt = clamp((d - (bk.d - bk.rd)) / (bk.rd*2), 0, 1);
+        const wall = tt < 0.26, front = tt > 0.80;
+        c.fillStyle = pickC(T.sd, wall ? 0.12 : front ? 0.88 : 0.40 + near*0.30);
+        c.fillRect(xl, y, w, 1);
+        if(w > 4 && !wall){
+          c.fillStyle = pickC(T.sd, 0.72 + near*0.20);
+          const iw = Math.round(w*0.62);
+          c.fillRect(xl + ((w - iw) >> 1), y, iw, 1);
         }
-        // a shaded lip at the back of the pit, catching light on the near wall
-        const lip = (d < bk.d) ? T.sd[0] : T.sd[3];
-        c.fillStyle = lip;
-        c.fillRect(cxp - w, y, 1, 1); c.fillRect(cxp + w - 1, y, 1, 1);
+        // the grass lip that overhangs it
+        c.fillStyle = wall ? T.edge : pickC(T.sd, 0.06);
+        c.fillRect(xl, y, 1, 1); c.fillRect(xr - 1, y, 1, 1);
       }
 
       if(this.water){
         const sp = this.hazSpan(this.water, d);
-        if(sp > 0){
-          const w = Math.round(sp * LAT * s), cxp = Math.round(C0 + this.water.x * LAT * s);
+        if(sp){
+          const xl = Math.round(C0 + this.water.x * LAT * s - sp.l * LAT * s);
+          const xr = Math.round(C0 + this.water.x * LAT * s + sp.r * LAT * s);
+          const w = xr - xl;
           if(w > 0){
             const t = clamp((d - (this.water.d - this.water.rd)) / (this.water.rd*2), 0, 1);
-            // deep in the middle, shallower at both shores
-            const shallow = Math.min(t, 1 - t) < 0.16;
-            c.fillStyle = shallow ? T.wt[3] : T.wt[clamp(1 + Math.floor(near*2), 1, 2)];
-            c.fillRect(cxp - w, y, w*2, 1);
-            if(w > 2){
-              const n = 1 + (w/6 | 0);
-              c.fillStyle = T.wt[3];
-              for(let k = 0; k < n; k++){
-                const wx = cxp - w + (nz(y*13 + k, ((this.t*3)|0) + k) % Math.max(1, w*2));
-                c.fillRect(wx, y, 2 + (k & 1), 1);
-              }
-              // a moving glint, and foam where the water meets the bank
-              if(((y*3 + Math.floor(this.t*7)) % 9) === 0){
-                c.fillStyle = T.wt[4];
-                c.fillRect(cxp - w + 1 + ((y*5) % Math.max(1, w)), y, Math.min(w, 3), 1);
-              }
+            // deep through the middle, shelving up to both banks
+            const depth = Math.min(t, 1 - t) * 2;
+            c.fillStyle = pickC(T.wt, 0.86 - depth*0.60 + near*0.10);
+            c.fillRect(xl, y, w, 1);
+            // Ripples as clean lines across part of the span. Scattered pixels
+            // of a lighter blue read as grit on the surface rather than water.
+            if(w > 6 && ((y + Math.floor(this.t*5)) % 7) === 0){
+              const rw = Math.round(w * (0.30 + 0.30*Math.abs(Math.sin(y*0.7 + this.t))));
+              c.fillStyle = pickC(T.wt, 0.92);
+              c.fillRect(xl + Math.round((w - rw)/2), y, rw, 1);
             }
-            c.fillStyle = T.wt[0];
-            c.fillRect(cxp - w, y, 1, 1); c.fillRect(cxp + w - 1, y, 1, 1);
+            c.fillStyle = pickC(T.wt, 0.04);
+            c.fillRect(xl, y, 1, 1); c.fillRect(xr - 1, y, 1, 1);
           }
         }
       }
 
-      // The green, last, so a hazard cannot paint over it. Apron first and the
-      // putting surface inside it: the surface used to be laid straight onto
-      // the fairway with a hard rim, and its tone was flipped by distance with
-      // a parity test, which banded the one part of the hole that has to read
-      // as flat.
       const gd = d - LEN;
-      // a green is not a circle: a slow wobble on the radius keeps it from
-      // reading as a stamped ellipse without making the putting surface lumpy
       const lobe = 1 + 0.085*Math.sin(gd*0.85 + this.seed);
       if(gd > -8.6 && gd < 8.6){
         const ga = Math.round(3.05*lobe * Math.sqrt(Math.max(0, 1 - (gd/8.6)*(gd/8.6))) * LAT * s);
         if(ga > 0){
           c.fillStyle = T.apron;
           c.fillRect(C0 - ga, y, ga*2, 1);
-          // feather the apron into whatever it is sitting on
-          const af = Math.max(1, Math.round(ga*0.12));
-          for(let k = 0; k < af; k++){
-            if(nz(y*11 + k, ga) & 1) continue;
-            c.fillRect(C0 - ga - 1 - k, y, 1, 1);
-            c.fillRect(C0 + ga + k, y, 1, 1);
-          }
+          c.fillStyle = T._arim[0];
+          c.fillRect(C0 - ga - 1, y, 1, 1); c.fillRect(C0 + ga, y, 1, 1);
+          c.fillStyle = T._arim[1];
+          c.fillRect(C0 - ga - 2, y, 1, 1); c.fillRect(C0 + ga + 1, y, 1, 1);
         }
         if(gd > -7.5 && gd < 7.5){
           const gh = Math.round(2.35*lobe * Math.sqrt(Math.max(0, 1 - (gd/7.5)*(gd/7.5))) * LAT * s);
           if(gh > 0){
-            const gi = clamp(1 + Math.floor(near*1.3), 0, 2);
-            c.fillStyle = T.gr[gi];
+            const gt = 0.40 + near*0.36;
+            c.fillStyle = pickC(T.gr, gt);
             c.fillRect(C0 - gh, y, gh*2, 1);
             if(gh > 7){
-              c.fillStyle = T.gr[Math.min(2, gi + 1)];
+              c.fillStyle = pickC(T.gr, gt + 0.18);
               const iw = Math.round(gh*0.46);
               c.fillRect(C0 - iw, y, iw*2, 1);
             }
-            // Dithered fringe. A solid rim pixel drew a clean arc around the
-            // whole green, which is the one shape on the hole your eye follows,
-            // so it read as an outline rather than as grass cut shorter.
-            const gf = Math.max(1, Math.round(gh*0.13));
-            c.fillStyle = T.apron;
-            for(let k = 0; k < gf; k++){
-              if(nz(y*5 + k, gh) & 1) continue;
-              c.fillRect(C0 - gh + k, y, 1, 1);
-              c.fillRect(C0 + gh - 1 - k, y, 1, 1);
+            // three graded pixels into the apron, so the rim is a gradient
+            for(let k = 0; k < 3 && gh > k + 1; k++){
+              c.fillStyle = T._rim[k];
+              c.fillRect(C0 - gh + (2 - k), y, 1, 1);
+              c.fillRect(C0 + gh - 3 + k, y, 1, 1);
             }
           }
         }
@@ -4587,7 +4593,6 @@ Object.assign(Scene, {
    INTERFACE
    ========================================================================= */
 const MULTS = [1, 10, 25, 'Max'];
-let UPG_TAX = 1;
 // The in-world readouts moved onto the canvas in the pixel font, so these ids
 // are gone from the DOM. A tolerant getter keeps the writers harmless rather
 // than scattering null checks through them.
@@ -4851,7 +4856,6 @@ function buildUpg(){
   });
 }
 function bulkFor(base, r, owned, cap){
-  base *= UPG_TAX;
   let k = S.mult === 'Max' ? maxAffordable(base, r, owned, S.gold) : S.mult;
   if(isFinite(cap)) k = Math.min(k, Math.max(0, cap - owned));
   return Math.max(S.mult === 'Max' ? 0 : 1, k);
@@ -4872,8 +4876,6 @@ function refreshUpg(){
   // looked like the game losing your upgrades.
   let owned = 0;
   for(const r of UPGREF) if(upgLv(r.u.id) > 0) owned++;
-  const tax = courseTax();
-  UPG_TAX = tax;
   const stretch = (S.carded > 0 && S.yardsMax > S.carded) ? S.yardsMax/S.carded : 1;
   const band = $('upgCount');
   if(band) band.textContent = owned + ' of ' + B.UPG.length + ' started';
@@ -4888,7 +4890,7 @@ function refreshUpg(){
     const u = r.u, lv = upgLv(u.id), cap = capOf(u);
     const maxed = lv >= cap;
     const k = maxed ? 0 : bulkFor(u.base, u.r, lv, cap);
-    const c = maxed ? 0 : costBulk(u.base*tax, u.r, lv, k);
+    const c = maxed ? 0 : costBulk(u.base, u.r, lv, k);
     r.mt.innerHTML = 'Lv <i>' + lv + (isFinite(cap) ? '/' + cap : '') + '</i> \u00b7 <b>'
       + effectLabel(u) + '</b>';
     if(maxed){
@@ -4904,10 +4906,8 @@ function refreshUpg(){
 function buyUpg(u){
   const lv = upgLv(u.id), cap = capOf(u);
   if(lv >= cap) return;
-  const tax = courseTax();
-  UPG_TAX = tax;
   const k = bulkFor(u.base, u.r, lv, cap);
-  const c = costBulk(u.base*tax, u.r, lv, k);
+  const c = costBulk(u.base, u.r, lv, k);
   if(k <= 0 || S.gold < c) return;
   S.gold -= c; S.upg[u.id] = lv + k;
   refreshUpg(); renderVitals();
@@ -5687,7 +5687,6 @@ function achReward(a){
                elm:'affinity power', dgn:'Depths haul' }[r.k] || r.k;
   return '+' + Math.round(r.v*100) + '% ' + nm;
 }
-function careerHonours(w){ S.honSeen = achCount(); honRows(w); renderHonBtn(); }
 function careerParagon(w){
   if(!atMax() && !(S.para > 0)){
     w.innerHTML = '<div class="empty">Paragon opens at career level ' + B.LV_MAX + '.<br>'
