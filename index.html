@@ -703,6 +703,16 @@ const B = {
   // now a capped multiplier: strong enough to define a build, structurally
   // unable to outrun the ladder.
   ELEM_CAP: 24,
+  // The most a single Voidwalk may take out of what is left of a hole.
+  // ELEM_CAP cannot police this one on its own: it scores void as proc * v * 30,
+  // a rough estimate of what a percentage-of-remaining effect is worth, and that
+  // estimate is generous enough that the cap does not engage until the affinity
+  // multiplier is past 800. The mechanic itself saturates far earlier -- at a
+  // multiplier of 125, well inside a normal build, 1.2% of the yardage left had
+  // become 100% of it and every proc holed out from wherever the ball lay. A
+  // fraction of what remains needs its own ceiling, because the damage cap is
+  // denominated in swings and this effect is not.
+  VOID_MAX_SHARE: 0.20,
   PREFIX: ['Worn','Tour','Forged','Gilded','Runed','Storm-Cut','Ley-Bound','Ancestral','Eclipse','Mythwrought'],
   SUFFIX: ['of the Links','of the Sandbelt','of Long Carry','of the Ninth Green','of Still Air',
            'of the Ley Line','of the Broken Tee','of Sunday Nerve','of the Old Course','of the Mulligan'],
@@ -1813,7 +1823,7 @@ function applyAffinity(D, dmg){
   else if(el === 'storm'){ damage(dmg * v, D); damage(dmg * v, D); Scene.spark('storm'); }
   else if(el === 'verdant'){ const g = (dmg/S.yardsMax)*S.purse*B.SWING_SHARE*v;
                              S.gold += g; S.holeGold += g; Meter.add(g); Scene.spark('verdant'); }
-  else if(el === 'void'){ damage(S.yards * v, D); Scene.spark('void'); }
+  else if(el === 'void'){ damage(S.yards * Math.min(v, B.VOID_MAX_SHARE), D); Scene.spark('void'); }
   if(el === 'ember') Scene.spark('ember');
   if(el === 'frost') Scene.spark('frost');
 }
