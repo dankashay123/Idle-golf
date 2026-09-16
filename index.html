@@ -720,6 +720,14 @@ const B = {
     { ic:'coins', id:'windfall',n:'Sponsor Windfall',cd:40, cost:36, g:'W', d:'+{v}% purse for 12 seconds',           b:150, s:22 }
   ],
   SKILL_LV_COST: 4, SKILL_LV_R: 1.55, SKILL_LV_MAX: 20,
+  // No single strike from the book may take more than this share of a hole.
+  // Thunder Drive is priced in SWINGS, but a hole is swings TIMES tempo, so at
+  // the opening tempo of 0.85 its ten swings were the whole hole: it came off
+  // cooldown onto a fresh tee and carded an Ace nobody had earned, roughly one
+  // hole in four, which taught a new player that the scorecard is weather. The
+  // cap only binds while tempo is low and stops mattering by itself as tempo
+  // climbs toward SPEED_CAP and a hole grows to hundreds of swings long.
+  SKILL_BURST_CAP: 0.45,
 
   /* ---- sponsor perks ----
      The one place an idle game hands the player a decision: things you hold and
@@ -1170,7 +1178,10 @@ const B = {
   RIFT_MIN_WAIT: 0.25,
   VAULT_UPG: 50,
 
-  OFFLINE_CAP: 12 * 3600, OFFLINE_RATE: 0.55, TICK_MAX: 0.25
+  // OFFLINE_RATE is how much of your pace the caddie keeps, OFFLINE_PURSE what
+  // a hole pays while he does. Everything a catch-up awards goes through both,
+  // events included, or the discount only applies to the part that is reported.
+  OFFLINE_CAP: 12 * 3600, OFFLINE_RATE: 0.55, OFFLINE_PURSE: 0.62, TICK_MAX: 0.25
 };
 
 /* =========================================================================
@@ -1600,19 +1611,29 @@ function derive(){
   // Elemental contribution to expected damage, which depends entirely on what
   // ball is in the bag. This is the whole reason to care which one you carry.
   const ball = S.equip.ball;
-  let elemDmg = 0;
+  let elemRaw = 0;
   if(ball && ball.el){
     const v = B.ELEM_VAL[ball.el] * elem;
-    if(ball.el === 'ember')   elemDmg = proc * v;
-    if(ball.el === 'frost')   elemDmg = proc * v;
-    if(ball.el === 'storm')   elemDmg = proc * v * 2;
-    if(ball.el === 'void')    elemDmg = proc * v * 30;
+    if(ball.el === 'ember')   elemRaw = proc * v;
+    if(ball.el === 'frost')   elemRaw = proc * v;
+    if(ball.el === 'storm')   elemRaw = proc * v * 2;
+    if(ball.el === 'void')    elemRaw = proc * v * 30;
   }
-  elemDmg = Math.min(elemDmg, B.ELEM_CAP);
+  const elemDmg = Math.min(elemRaw, B.ELEM_CAP);
+  // The cap has to bite on the swings that are actually simulated, not only on
+  // this summary figure. doSwings settles as expected value above ten swings a
+  // frame, but SPEED_CAP against TICK_MAX puts the real ceiling at 3.5, so in
+  // ordinary play every swing goes through applyAffinity instead. Handing that
+  // path an affinity multiplier scaled by however much the cap held back keeps
+  // the two on the same number; left raw, the live one ignored ELEM_CAP
+  // entirely and affinity was the cheapest way out of the ladder.
+  // A verdant ball contributes no damage, so elemRaw is 0 and it passes
+  // through untouched: a damage cap has no business trimming a purse effect.
+  const elemEff = elemRaw > 0 ? elem * (elemDmg / elemRaw) : elem;
   const god = S.godmode ? 1e12 : 1;
   const swingDps = pow * spd * (1 + crit*(cpw-1)) * (1 + elemDmg) * (1 + mst*B.MST_DMG) * god;
   const C = career();
-  return { pow: pow*god, spd, spdRaw, crit, cpw, elem, proc, procRaw, gold, drop, dgnY, mst,
+  return { pow: pow*god, spd, spdRaw, crit, cpw, elem, elemEff, proc, procRaw, gold, drop, dgnY, mst,
            elemDmg, reson, C, dps: swingDps, ball };
 }
 
@@ -1777,7 +1798,7 @@ function damage(amt, D, soft){
 
 function applyAffinity(D, dmg){
   const el = D.ball && D.ball.el; if(!el) return;
-  const v = B.ELEM_VAL[el] * D.elem;
+  const v = B.ELEM_VAL[el] * D.elemEff;
   if(el === 'ember'){ S.burn = dmg * v / 3; S.burnT = 3; }
   else if(el === 'frost'){ S.frost = 1; }
   else if(el === 'storm'){ damage(dmg * v, D); damage(dmg * v, D); Scene.spark('storm'); }
@@ -1790,7 +1811,7 @@ function applyAffinity(D, dmg){
 
 function oneSwing(D, visual){
   let dmg = D.pow;
-  if(S.frost > 0){ dmg *= 1 + B.ELEM_VAL.frost * D.elem; S.frost = 0; }
+  if(S.frost > 0){ dmg *= 1 + B.ELEM_VAL.frost * D.elemEff; S.frost = 0; }
   const crit = Math.random() < D.crit;
   if(crit) dmg *= D.cpw;
   let big = false;
@@ -1845,7 +1866,8 @@ function addBuff(id, v, t){ S.buff[id] = { v, t }; }
 function fireSkill(def, D){
   const lv = S.skillLv[def.id] || 1, v = skillVal(def, lv);
   switch(def.id){
-    case 'thunder':  damage(D.pow * v * (1 + D.elemDmg), D); Scene.burst('thunder'); break;
+    case 'thunder':  damage(Math.min(D.pow * v * (1 + D.elemDmg),
+                       S.yardsMax * B.SKILL_BURST_CAP), D); Scene.burst('thunder'); break;
     case 'chain':    doSwings(Math.round(v), D); Scene.burst('chain'); break;
     case 'gale':     addBuff('gale', v, 8); Scene.burst('gale'); break;
     case 'ace':      addBuff('ace', v, 6); Scene.burst('ace'); break;
@@ -2391,6 +2413,9 @@ const Meter = {
 // While catching up we replay thousands of holes. Every sheet and toast they
 // would have raised is swallowed: the summary at the end says what happened.
 let QUIET = false;
+// Set while a catch-up is replaying holes, so anything that pays out can tell
+// the difference between a round that was played and one that was fast-forwarded.
+let OFFLINE = false;
 function toast(html, cls){
   if(QUIET) return;
   const el = document.createElement('div');
@@ -2467,13 +2492,21 @@ function endTournament(){
   const beat = score <= target;
   const share = payShare(score, target);
   const D = derive();
-  const cash = purseFor(S.hole - 1, S.tier, D.gold) * B.PLACE_PURSE * share;
-  const pts = cupPoints(t, share);
+  // An event that resolves during a catch-up is paid at the same discount as
+  // the holes that fed it. At full rate these were worth more than four times
+  // the hole purse the away summary reported, so most of an offline session's
+  // income was arriving off the books.
+  const rate = OFFLINE ? B.OFFLINE_RATE * B.OFFLINE_PURSE : 1;
+  const cash = purseFor(S.hole - 1, S.tier, D.gold) * B.PLACE_PURSE * share * rate;
+  const pts = Math.round(cupPoints(t, share) * rate);
   S.points += pts; S.gold += cash; Meter.add(cash);
-  grantTickets(B.TICK_EVENT + (beat ? B.TICK_WIN : 0), 'event finish');
+  grantTickets(Math.round((B.TICK_EVENT + (beat ? B.TICK_WIN : 0)) * rate), 'event finish');
   if(beat) S.cups++;
   S.wins = (S.wins || 0) + (beat ? 1 : 0);
-  if(score < (S.bestRound === undefined ? 1e9 : S.bestRound)) S.bestRound = score;
+  // A catch-up never accumulates a score, so every event it resolves finishes on
+  // level par. Posted as a card that reads as a personal best of E on a save
+  // that has not yet finished a round in anger.
+  if(!OFFLINE && score < (S.bestRound === undefined ? 1e9 : S.bestRound)) S.bestRound = score;
 
   const fm = n => n === 0 ? 'E' : n > 0 ? '+' + n : String(n);
   showSheet('<h3>' + eventName(t) + '</h3>'
@@ -2607,13 +2640,17 @@ function offline(){
   // Play the holes out rather than estimating a rate: the round advances, the
   // card fills, events finish and the schedule moves on, all at a discount.
   const holes = Math.min(20000, Math.floor(dt * B.OFFLINE_RATE / secs));
-  const g = purse * holes * 0.62;
-  S.gold += g;
 
-  const startHoleNo = S.hole, startEvents = S.eventsPlayed || 0, startLv = S.lv;
+  // Measured rather than assumed: the loop below resolves events as it goes,
+  // and those pay too. Reporting only the hole purse had the summary claiming
+  // 31K on a twelve hour return that actually banked 174K.
+  const goldBefore = S.gold;
+  S.gold += purse * holes * B.OFFLINE_PURSE;
+
+  const startEvents = S.eventsPlayed || 0, startLv = S.lv;
   const startCard = S.tierMax || 0, startCups = S.cups || 0;
   let gear = 0;
-  QUIET = true;
+  QUIET = true; OFFLINE = true;
   for(let i = 0; i < holes; i++){
     S.totalHoles++;
     addXp(B.XP_HOLE * Math.pow(1 + S.tier, B.XP_TIER) * 1.2 * (parOf(S.hole)/4) * 0.6);
@@ -2622,9 +2659,10 @@ function offline(){
     }
     advanceHole();
   }
-  QUIET = false;
+  OFFLINE = false; QUIET = false;
   startHole();
 
+  const g = S.gold - goldBefore;
   const rows = [
     ['Away for', hms(dt)],
     ['Holes played', fmt(holes, 0)],
