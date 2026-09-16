@@ -4038,19 +4038,15 @@ Object.assign(Scene, {
         const xr = Math.round(C0 + (bk.x) * LAT * s + sp.r * LAT * s);
         const w = xr - xl;
         if(w <= 0) continue;
-        // Dug ground, not a beige patch: the far wall is in shadow, the floor
-        // takes the light, and the near lip catches it hardest.
-        const tt = clamp((d - (bk.d - bk.rd)) / (bk.rd*2), 0, 1);
-        const wall = tt < 0.26, front = tt > 0.80;
-        c.fillStyle = pickC(T._sd, wall ? 0.12 : front ? 0.88 : 0.40 + near*0.30);
+        // Flat sand, shaded only by how far down the hole it is, the same way
+        // the fairway and the rough are. Shading it by position WITHIN the
+        // bunker stepped the far quarter of every one of them down by nearly
+        // sixty levels, and because that band is fixed in world space it slid
+        // across the sand as he walked up on it.
+        c.fillStyle = pickC(T._sd, 0.52 + near*0.30);
         c.fillRect(xl, y, w, 1);
-        if(w > 4 && !wall){
-          c.fillStyle = pickC(T._sd, 0.72 + near*0.20);
-          const iw = Math.round(w*0.62);
-          c.fillRect(xl + ((w - iw) >> 1), y, iw, 1);
-        }
-        // the grass lip that overhangs it
-        c.fillStyle = wall ? T.edge : pickC(T.sd, 0.06);
+        // the lip that overhangs it
+        c.fillStyle = pickC(T._sd, 0.06);
         c.fillRect(xl, y, 1, 1); c.fillRect(xr - 1, y, 1, 1);
       }
 
