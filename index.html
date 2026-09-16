@@ -3971,6 +3971,12 @@ Object.assign(Scene, {
       T._rim = [mixC(T.gr[3], T.apron, 0.30), mixC(T.gr[3], T.apron, 0.60),
                 mixC(T.gr[3], T.apron, 0.84)];
       T._arim = [mixC(T.apron, T.fw[5], 0.45), mixC(T.apron, T.fw[5], 0.78)];
+      // The authored ramps are short enough to read, but a short ramp across a
+      // whole field is a handful of visible steps. Resampled once to something
+      // finer than the eye resolves, distance shading becomes continuous: no
+      // bands to see, and nothing that needs dithering to hide them.
+      T._fw = expandC(T.fw, 48); T._rg = expandC(T.rg, 48);
+      T._gr = expandC(T.gr, 40); T._sd = expandC(T.sd, 40); T._wt = expandC(T.wt, 40);
     }
     for(let y = HORIZON + 1; y < VH; y++){
       const s = (y - HORIZON) / GROUND;
@@ -3978,7 +3984,7 @@ Object.assign(Scene, {
       const d = cam + rel - CAM_BACK;
       const near = clamp(1 - rel/110, 0, 1);
 
-      c.fillStyle = pickC(T.rg, near);
+      c.fillStyle = pickC(T._rg, near);
       c.fillRect(0, y, VW, 1);
       if(rel < 1.2) continue;
 
@@ -3987,7 +3993,7 @@ Object.assign(Scene, {
       if(d > -3.2 && d < 2.4){
         const tw = Math.round(1.75 * LAT * s);
         if(tw > 0){
-          c.fillStyle = pickC(T.gr, d > -3.0 && d < 2.2 ? 0.75 : 0.45);
+          c.fillStyle = pickC(T._gr, d > -3.0 && d < 2.2 ? 0.75 : 0.45);
           c.fillRect(C0 - tw, y, tw*2, 1);
           c.fillStyle = T.edge;
           c.fillRect(C0 - tw - 1, y, 1, 1); c.fillRect(C0 + tw, y, 1, 1);
@@ -3997,19 +4003,21 @@ Object.assign(Scene, {
       if(d < LEN + 7){
         const hw = Math.round(this.fwWidth(d) * LAT * s);
         if(hw > 0){
-          const per = 3.2 + rel*0.22;
-          const stripe = (rel < 46 && (Math.floor(d/per) & 1)) ? 0.11 : 0;
-          const ft = near*0.60 + stripe;
-          c.fillStyle = pickC(T.fw, ft);
+          // No mowing stripes. Their period is set in world units, so close to
+          // the camera a single stripe covered a large band of the screen and
+          // slid up it as he walked: a dark shape moving with the player rather
+          // than ground he was moving over.
+          const ft = near*0.60;
+          c.fillStyle = pickC(T._fw, ft);
           c.fillRect(C0 - hw, y, hw*2, 1);
           if(hw > 5){
             const iw = Math.round(hw*0.55);
-            c.fillStyle = pickC(T.fw, ft + 0.12);
+            c.fillStyle = pickC(T._fw, ft + 0.12);
             c.fillRect(C0 - iw, y, iw*2, 1);
           }
           if(hw > 9){
             const ew = Math.round(hw*0.86);
-            c.fillStyle = pickC(T.fw, ft - 0.12);
+            c.fillStyle = pickC(T._fw, ft - 0.12);
             c.fillRect(C0 - hw, y, hw - ew, 1);
             c.fillRect(C0 + ew, y, hw - ew, 1);
           }
@@ -4034,10 +4042,10 @@ Object.assign(Scene, {
         // takes the light, and the near lip catches it hardest.
         const tt = clamp((d - (bk.d - bk.rd)) / (bk.rd*2), 0, 1);
         const wall = tt < 0.26, front = tt > 0.80;
-        c.fillStyle = pickC(T.sd, wall ? 0.12 : front ? 0.88 : 0.40 + near*0.30);
+        c.fillStyle = pickC(T._sd, wall ? 0.12 : front ? 0.88 : 0.40 + near*0.30);
         c.fillRect(xl, y, w, 1);
         if(w > 4 && !wall){
-          c.fillStyle = pickC(T.sd, 0.72 + near*0.20);
+          c.fillStyle = pickC(T._sd, 0.72 + near*0.20);
           const iw = Math.round(w*0.62);
           c.fillRect(xl + ((w - iw) >> 1), y, iw, 1);
         }
@@ -4056,7 +4064,7 @@ Object.assign(Scene, {
             const t = clamp((d - (this.water.d - this.water.rd)) / (this.water.rd*2), 0, 1);
             // deep through the middle, shelving up to both banks
             const depth = Math.min(t, 1 - t) * 2;
-            c.fillStyle = pickC(T.wt, 0.86 - depth*0.60 + near*0.10);
+            c.fillStyle = pickC(T._wt, 0.86 - depth*0.60 + near*0.10);
             c.fillRect(xl, y, w, 1);
             // Ripples as clean lines across part of the span. Scattered pixels
             // of a lighter blue read as grit on the surface rather than water.
@@ -4087,10 +4095,10 @@ Object.assign(Scene, {
           const gh = Math.round(2.35*lobe * Math.sqrt(Math.max(0, 1 - (gd/7.5)*(gd/7.5))) * LAT * s);
           if(gh > 0){
             const gt = 0.40 + near*0.36;
-            c.fillStyle = pickC(T.gr, gt);
+            c.fillStyle = pickC(T._gr, gt);
             c.fillRect(C0 - gh, y, gh*2, 1);
             if(gh > 7){
-              c.fillStyle = pickC(T.gr, gt + 0.18);
+              c.fillStyle = pickC(T._gr, gt + 0.18);
               const iw = Math.round(gh*0.46);
               c.fillRect(C0 - iw, y, iw*2, 1);
             }
