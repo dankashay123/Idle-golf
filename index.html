@@ -3743,6 +3743,69 @@ const Scene = {
     while(hi - lo > 1){ const m = (lo + hi) >> 1; if(cd[m] <= d) lo = m; else hi = m; }
     return cy[lo];
   },
+  // Depth profile across a hazard: flat floor, walls ramping at the rim.
+  // A smooth bowl makes both ends of the pit identical, which is why it read
+  // as an outline. A pit you are looking INTO shows its far wall as a thick
+  // band and hides the near one behind its own lip, and that asymmetry is the
+  // whole of the effect.
+  hazDepth(tt, e0, e1){
+    if(e1 === undefined) e1 = e0;
+    const r = clamp(tt < e0 ? tt/e0 : tt > 1 - e1 ? (1 - tt)/e1 : 1, 0, 1);
+    return r*r*(3 - 2*r);
+  },
+  // A hazard is a hole in the ground, so it gets marched like one. The sunk
+  // surface carries its OWN occlusion clip, exactly as the terrain above it
+  // does: while the pit is deepening the floor falls faster than the ground
+  // rises, every slice lands below the clip and nothing is drawn at all --
+  // that is the near wall hiding behind its own lip, which is what you
+  // actually see standing at the edge of a bunker. Coming back up the far
+  // side the floor climbs past the clip and the whole span that has been
+  // accumulating gets painted in one go: the thick far wall. Depth here is
+  // geometry, not a dark ring painted round the edge, and nothing is keyed to
+  // world position so nothing slides about as the camera moves.
+  hazBand(hz, depth, e0, e1, d, s, y, hgt, xl, xr){
+    const tt = clamp((d - (hz.d - hz.rd)) / (hz.rd*2), 0, 1);
+    const dz = depth * this.hazDepth(tt, e0, e1) * LAT * s * 0.55;
+    if(hz._cz === undefined) hz._cz = y + hgt;
+    // The band bridges two slices, so it carries both their widths and gets
+    // filled as the tapering quad it actually is. Squaring it off to one
+    // rectangle is what turned a bunker into a stepped pyramid: near the far
+    // rim a single band covers a lot of screen, and the shape narrows across
+    // all of it.
+    const pl = hz._pr > hz._pl ? hz._pl : xl;
+    const pr = hz._pr > hz._pl ? hz._pr : xr;
+    hz._pl = xl; hz._pr = xr;
+    // How far up the far wall this slice sits: 0 at the foot of it, 1 where it
+    // comes back out level with the turf. Read straight off the profile, in
+    // world terms. Anything derived from the last slice's pixel height instead
+    // -- how tall the band came out, how much the depth moved between slices --
+    // alternates by a row, because a slice is a whole number of rows and the
+    // depth is not, and stripes whatever is shaded by it.
+    const rim = tt <= 1 - e1 ? 0 : clamp((tt - (1 - e1)) / e1, 0, 1);
+    const yf = y + dz;
+    if(yf >= hz._cz - 0.35) return null;      // still hidden behind the near lip
+    const top = Math.round(yf), bot = Math.round(hz._cz);
+    hz._cz = yf;
+    if(bot <= top || xr <= xl) return null;
+    return { top, bot, l: xl, r: xr, pl, pr, h: bot - top, rim };
+  },
+  // One hazard band, filled row by row so the taper is a slope rather than a
+  // step. Straight to a single rect where the two ends are the same width,
+  // which is almost every band -- only the tall ones near a rim taper at all.
+  bandFill(c, bd, inset, style){
+    c.fillStyle = style;
+    const l0 = bd.l + inset, r0 = bd.r - inset, l1 = bd.pl + inset, r1 = bd.pr - inset;
+    if(Math.abs(l1 - l0) < 1 && Math.abs(r1 - r0) < 1){
+      if(r0 > l0) c.fillRect(l0, bd.top, r0 - l0, bd.h);
+      return;
+    }
+    const n = bd.h > 1 ? bd.h - 1 : 1;
+    for(let i = 0; i < bd.h; i++){
+      const u = i/n;                       // 0 at the far edge, 1 at the near one
+      const l = Math.round(l0 + (l1 - l0)*u), r = Math.round(r0 + (r1 - r0)*u);
+      if(r > l) c.fillRect(l, bd.top + i, r - l, 1);
+    }
+  },
   holeLen(){ return LEN; },
   proj(d, lat, lift){
     if(!isFinite(this.camD)) this.camD = 0;
@@ -4041,6 +4104,12 @@ Object.assign(Scene, {
       // bands to see, and nothing that needs dithering to hide them.
       T._fw = expandC(T.fw, 48); T._rg = expandC(T.rg, 48);
       T._gr = expandC(T.gr, 40); T._sd = expandC(T.sd, 40); T._wt = expandC(T.wt, 40);
+      // The bank of a pond read top to bottom: turf at the rim, bare earth
+      // where the ground was cut, wet mud at the waterline. Drawn as a ramp so
+      // the far side of the water is a slope you are looking at rather than a
+      // flat grey card stood up behind it.
+      T._bk = expandC([mixC(T.rg[4], T.bank, 0.34), T.bank,
+                       dark(mixC(T.bank, T.wt[1], 0.40), 0.22)], 20);
     }
     // March outward from the camera rather than down the screen. With a height
     // field one screen row no longer means one world distance -- a rise can
@@ -4055,11 +4124,12 @@ Object.assign(Scene, {
     const cd = this._clipD || (this._clipD = new Float32Array(6400));
     const cy = this._clipY || (this._clipY = new Float32Array(6400));
     let cn = 0;
-    // Each hazard remembers the depth it was sunk to on the previous, nearer
-    // slice. Where the bowl shallows out again the next slice sits higher than
-    // the one in front of it and leaves a gap, which stripes the sand.
-    for(const bk of this.bunkers) bk._pz = 0;
-    if(this.water) this.water._pz = 0;
+    // Every hazard is marched as its own sunk surface, with its own clip and
+    // its own record of where the previous slice put it. Cleared here so the
+    // pit starts again from the near rim on each frame.
+    const hzClear = hz => { hz._cz = undefined; hz._pl = 0; hz._pr = 0; };
+    for(const bk of this.bunkers) hzClear(bk);
+    if(this.water) hzClear(this.water);
     let maxy = VH, d = cam - CAM_BACK + 0.62, guard = 0;
     let prevD = d, prevH = this.hAt(d);
     while(d < cam + 300 && maxy > SKY && guard++ < 6000){
@@ -4149,37 +4219,22 @@ Object.assign(Scene, {
       for(const bk of this.bunkers){
         const sp = this.hazSpan(bk, d);
         if(!sp) continue;
-        const xl = Math.round(C0 + (bk.x) * LAT * s - sp.l * LAT * s);
-        const xr = Math.round(C0 + (bk.x) * LAT * s + sp.r * LAT * s);
-        const w = xr - xl;
-        if(w <= 0) continue;
-        // A bunker is a hole in the ground, so it is drawn as one: a rim of
-        // bare earth of constant WORLD width, then sand inset inside it. Where
-        // the shape tapers to its ends the rim meets itself and the row comes
-        // out all earth, which closes the ring without anything having to know
-        // where the ends are. Shading follows the rim rather than the scanline,
-        // so it describes the bowl instead of banding across it.
-        const lipW = Math.max(1, Math.round(0.30 * LAT * s));
-        // Sunk, not painted on. Ground below the camera projects further DOWN
-        // the screen, so the floor of a pit is drawn at y + dz while the ground
-        // around it stays at y, and the band between the two is the inner wall
-        // you are looking across. The bowl goes to nothing at both ends of the
-        // shape, so the rim closes over it with no step.
-        const tt = clamp((d - (bk.d - bk.rd)) / (bk.rd*2), 0, 1);
-        const dz = Math.round(0.62 * Math.sin(Math.PI*tt) * LAT * s * 0.55);
-        const grow = Math.max(0, (bk._pz || 0) - dz);
-        bk._pz = dz;
-        c.fillStyle = T.lip;
-        c.fillRect(xl, y, w, hgt + dz + grow);
-        const sl = xl + lipW, sr = xr - lipW;
-        if(sr > sl){
-          c.fillStyle = pickC(T._sd, 0.44 + near*0.22);
-          c.fillRect(sl, y + dz, sr - sl, hgt + grow);
-          const iw = (sr - sl) - lipW*2;
-          if(iw > 1){
-            c.fillStyle = pickC(T._sd, 0.74 + near*0.20);
-            c.fillRect(sl + lipW, y + dz, iw, hgt + grow);
-          }
+        const xl = Math.round(C0 + bk.x * LAT * s - sp.l * LAT * s);
+        const xr = Math.round(C0 + bk.x * LAT * s + sp.r * LAT * s);
+        if(xr <= xl) continue;
+        const bd = this.hazBand(bk, 0.95, 0.55, 0.22, d, s, y, hgt, xl, xr);
+        if(!bd) continue;
+        // The whole band is sand -- the face of a bunker is sand too, just
+        // stood up and turned out of the light. Earth shows as the cut lip
+        // where the turf was broken, and it is only broken along the FAR wall:
+        // the near lip you are standing on keeps its grass. That asymmetry is
+        // what tells you which way is down.
+        const lipW = Math.max(1, Math.round(0.24 * LAT * s));
+        this.bandFill(c, bd, 0, T.lip);
+        if(bd.rim < 0.62){
+          const ft = 0.94 - bd.rim*0.62 + near*0.05;
+          this.bandFill(c, bd, lipW, pickC(T._sd, ft - 0.30));
+          this.bandFill(c, bd, lipW*2, pickC(T._sd, ft));
         }
       }
 
@@ -4188,36 +4243,24 @@ Object.assign(Scene, {
         if(sp){
           const xl = Math.round(C0 + this.water.x * LAT * s - sp.l * LAT * s);
           const xr = Math.round(C0 + this.water.x * LAT * s + sp.r * LAT * s);
-          const w = xr - xl;
-          if(w > 0){
-            // The ground falls away into it: a bank of bare earth right round
-            // the rim, then a shallow shelf, then open water. Same constant
-            // world width as the bunker rim, so the pond sits below the
-            // fairway instead of being painted onto it.
-            const bankW = Math.max(1, Math.round(0.42 * LAT * s));
-            // Same trick as the bunker, dug deeper: the surface sits below the
-            // bank all the way round, so the pond holds water instead of
-            // lying on the grass.
-            const wt = clamp((d - (this.water.d - this.water.rd)) / (this.water.rd*2), 0, 1);
-            const wz = Math.round(0.95 * Math.sin(Math.PI*wt) * LAT * s * 0.55);
-            const wgrow = Math.max(0, (this.water._pz || 0) - wz);
-            this.water._pz = wz;
-            c.fillStyle = T.bank;
-            c.fillRect(xl, y, w, hgt + wz + wgrow);
-            const wl = xl + bankW, wr = xr - bankW;
-            if(wr > wl){
-              c.fillStyle = pickC(T._wt, 0.64 + near*0.14);
-              c.fillRect(wl, y + wz, wr - wl, hgt + wgrow);
-              const dw = (wr - wl) - bankW*2;
-              if(dw > 1){
-                c.fillStyle = pickC(T._wt, 0.28 + near*0.10);
-                c.fillRect(wl + bankW, y + wz, dw, hgt + wgrow);
-              }
-              // ripples kept to the open water, so they never cross the bank
-              if(dw > 5 && ((y + Math.floor(this.t*5)) % 7) === 0){
-                const rw = Math.round(dw * (0.34 + 0.28*Math.abs(Math.sin(y*0.7 + this.t))));
-                c.fillStyle = pickC(T._wt, 0.60);
-                c.fillRect(wl + bankW + Math.round((dw - rw)/2), y + wz, rw, hgt);
+          if(xr > xl){
+            // A pond surface is LEVEL, so it climbs the screen at the ground's
+            // own rate, and the rim is the one place that stops being true. The
+            // far bank, where the ground comes back up out of the water, is the
+            // band that gives the pond its hollow.
+            const wd = this.hazBand(this.water, 1.35, 0.50, 0.11, d, s, y, hgt, xl, xr);
+            if(wd){
+              const bankW = Math.max(1, Math.round(0.34 * LAT * s));
+              this.bandFill(c, wd, 0, T.bank);
+              if(wd.rim > 0){
+                // turf at the top of the bank, cut earth below it, wet mud at
+                // the waterline
+                this.bandFill(c, wd, 0, pickC(T._bk, 1 - wd.rim));
+              } else {
+                this.bandFill(c, wd, bankW, pickC(T._wt, 0.62 + near*0.16));
+                this.bandFill(c, wd, bankW*2, pickC(T._wt, 0.26 + near*0.10));
+                if(wd.r - wd.l > bankW*5 && ((wd.top + Math.floor(this.t*5)) % 7) === 0)
+                  this.bandFill(c, wd, Math.round((wd.r - wd.l)*0.36), pickC(T._wt, 0.58));
               }
             }
           }
