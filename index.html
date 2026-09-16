@@ -3008,9 +3008,16 @@ function buildTheme(cs, mode){
     gr:  ramp(t(lite(cs.turf, 0.14)), 3, -0.08, 0.14),
     sd:  ramp(t(cs.sand),  4, -0.30, 0.10),
     wt:  ramp(t(cs.water), 5, -0.40, 0.22),
-    rk:  ramp(t(cs.rock),  3, -0.22, 0.12),
+    // Five rock steps, not three: a ridge shaded by which way its face turns
+    // needs a lit tone and a shadow tone either side of the body colour.
+    rk:  ramp(t(cs.rock),  5, -0.30, 0.20),
+    snow: lite(t(cs.rock), 0.60),
     edge: dark(t(cs.rough), 0.28),
-    tl:   dark(t(cs.tree[1]), 0.12)
+    // The collar the fairway and the green sit in, so neither meets what is
+    // around it on a single hard pixel.
+    apron: mixC(t(cs.turf), t(cs.rough), 0.42),
+    tl:   dark(t(cs.tree[1]), 0.12),
+    tl2:  dark(t(cs.tree[1]), 0.34)
   };
 }
 // Trees are rebuilt in the course's own colours, so the Autumn Classic is
@@ -3079,6 +3086,22 @@ const THEMES = {
     edge:'#17351F', tl:'#123020', rk:['#2A4A30','#3E5C3C','#5A7A54'], trees:0.8, kind:1 }
 };
 THEMES.vault.wt = ['#1A3A2A','#224A34','#2A5A3E','#346E4A','#408858'];
+
+// buildTheme derives a course palette, but the Depths and the fallbacks are
+// authored as literal tables, so they only carry what the renderer needed on
+// the day they were written. Anything added since has to be filled in for them
+// too: the shaded ridge asks for five rock tones and a snow colour, and reading
+// past the end of a three entry array took the Depths down on the first frame.
+for(const k in THEMES){
+  const T = THEMES[k];
+  if(!T.rk || T.rk.length < 5){
+    const r = T.rk || ['#31434F','#425A66','#587280'];
+    T.rk = [dark(r[0], 0.32), r[0], r[1], r[2], lite(r[2], 0.26)];
+  }
+  if(!T.snow)  T.snow  = lite(T.rk[4], 0.55);
+  if(!T.apron) T.apron = mixC(T.fw[1], T.rg[2], 0.42);
+  if(!T.tl2)   T.tl2   = dark(T.tl, 0.26);
+}
 
 const PINE_ROWS = [
   '.............................',
@@ -3909,26 +3932,32 @@ Object.assign(Scene, {
 
   drawGround(){
     const c = this.b, cam = this.camD, T = this.theme || THEMES.day;
+    const nz = (a, b) => hash32((a*73856093) ^ (b*19349663));
     for(let y = HORIZON + 1; y < VH; y++){
       const s = (y - HORIZON) / GROUND;
       const rel = K_PROJ / s;
       const d = cam + rel - CAM_BACK;
       const near = clamp(1 - rel/110, 0, 1);
 
-      let ri = Math.min(2, Math.floor(near*2.7));
+      const ri = Math.min(2, Math.floor(near*2.7));
       c.fillStyle = T.rg[ri];
       c.fillRect(0, y, VW, 1);
-      // a little grain in the rough so the three tones do not read as bands
-      if(ri < 2 && ((y + (d*0.7 | 0)) & 3) === 0){
+      // Grain in the rough as scattered tufts. It used to paint a full width
+      // row of the next tone up every fourth scanline, which is exactly a hard
+      // line drawn across the whole field, and at this buffer size you can see
+      // every one of them.
+      if(near > 0.22 && ri < 2){
+        const n = 3 + (near*8 | 0);
         c.fillStyle = T.rg[ri + 1];
-        c.fillRect(0, y, VW, 1);
+        for(let k = 0; k < n; k++){
+          const hx = nz(y*31 + k, (d*0.6) | 0) % VW;
+          c.fillRect(hx, y, 2 + (k & 1), 1);
+        }
       }
       if(rel < 1.2) continue;
 
-      // screen x of the middle of the hole at this row, with the camera offset
       const C0 = Math.round(CX - CAM_LAT * LAT * s);
 
-      // the tee: a closely mown box you actually start on
       if(d > -3.2 && d < 2.4){
         const tw = Math.round(1.75 * LAT * s);
         if(tw > 0){
@@ -3942,15 +3971,11 @@ Object.assign(Scene, {
       if(d < LEN + 7){
         const hw = Math.round(this.fwWidth(d) * LAT * s);
         if(hw > 0){
-          // Mowing stripes used to flip every two world units. Far up the hole
-          // that is several flips per scanline, which shimmers. The period now
-          // opens out with distance and stops entirely once it would alias.
           const per = 3.2 + rel*0.22;
           const stripe = (rel < 46 && (Math.floor(d/per) & 1)) ? 1 : 0;
           const base = clamp(Math.floor(near*2.2) + stripe, 0, 4);
           c.fillStyle = T.fw[base];
           c.fillRect(C0 - hw, y, hw*2, 1);
-          // a crowned fairway: the middle catches the light, the flanks fall away
           if(hw > 5){
             const iw = Math.round(hw*0.55);
             c.fillStyle = T.fw[clamp(base + 1, 0, 4)];
@@ -3962,10 +3987,18 @@ Object.assign(Scene, {
             c.fillRect(C0 - hw, y, hw - ew, 1);
             c.fillRect(C0 + ew, y, hw - ew, 1);
           }
-          c.fillStyle = T.edge;
-          c.fillRect(C0 - hw - 1, y, 1, 1); c.fillRect(C0 + hw, y, 1, 1);
+          // A cut collar either side instead of a single hard pixel, with the
+          // semi-rough ragged against the rough so the boundary is a mown line
+          // rather than a drawn one.
+          const cw = hw > 14 ? 2 : 1;
+          c.fillStyle = T.apron;
+          c.fillRect(C0 - hw - cw, y, cw, 1); c.fillRect(C0 + hw, y, cw, 1);
+          if(hw > 8 && (nz(y, (d*0.7)|0) & 3) === 0){
+            c.fillRect(C0 - hw - cw - 1, y, 1, 1); c.fillRect(C0 + hw + cw, y, 1, 1);
+          }
         }
       }
+
       for(const bk of this.bunkers){
         const sp = this.hazSpan(bk, d);
         if(sp <= 0) continue;
@@ -3973,33 +4006,95 @@ Object.assign(Scene, {
         if(w <= 0) continue;
         c.fillStyle = T.sd[clamp(Math.floor(near*2.6) + 1, 0, 3)];
         c.fillRect(cxp - w, y, w*2, 1);
-        c.fillStyle = T.sd[0];
+        // Rake marks as short dashes. A full width row of a lighter tone every
+        // other scanline was striping every bunker on the course.
+        if(w > 3){
+          c.fillStyle = T.sd[3];
+          const n = 1 + (w/7 | 0);
+          for(let k = 0; k < n; k++){
+            const rx = cxp - w + 2 + (nz(y*7 + k, bk.d|0) % Math.max(1, w*2 - 4));
+            c.fillRect(rx, y, 2, 1);
+          }
+        }
+        // a shaded lip at the back of the pit, catching light on the near wall
+        const lip = (d < bk.d) ? T.sd[0] : T.sd[3];
+        c.fillStyle = lip;
         c.fillRect(cxp - w, y, 1, 1); c.fillRect(cxp + w - 1, y, 1, 1);
-        if(w > 3 && (y & 1) === 0){ c.fillStyle = T.sd[2]; c.fillRect(cxp - w + 2, y, w*2 - 4, 1); }
       }
+
       if(this.water){
         const sp = this.hazSpan(this.water, d);
         if(sp > 0){
           const w = Math.round(sp * LAT * s), cxp = Math.round(C0 + this.water.x * LAT * s);
           if(w > 0){
             const t = clamp((d - (this.water.d - this.water.rd)) / (this.water.rd*2), 0, 1);
-            ditherRow(c, cxp - w, y, w*2, T.wt[1], T.wt[3], 1 - t*0.85);
-            if(t < 0.10){ c.fillStyle = T.wt[4]; c.fillRect(cxp - w, y, w*2, 1); }
-            if(((y*3 + Math.floor(this.t*7)) % 11) === 0 && w > 2){
-              c.fillStyle = T.wt[4];
-              c.fillRect(cxp - w + 1 + ((y*5) % Math.max(1, w)), y, Math.min(w, 3), 1);
+            // deep in the middle, shallower at both shores
+            const shallow = Math.min(t, 1 - t) < 0.16;
+            c.fillStyle = shallow ? T.wt[3] : T.wt[clamp(1 + Math.floor(near*2), 1, 2)];
+            c.fillRect(cxp - w, y, w*2, 1);
+            if(w > 2){
+              const n = 1 + (w/6 | 0);
+              c.fillStyle = T.wt[3];
+              for(let k = 0; k < n; k++){
+                const wx = cxp - w + (nz(y*13 + k, ((this.t*3)|0) + k) % Math.max(1, w*2));
+                c.fillRect(wx, y, 2 + (k & 1), 1);
+              }
+              // a moving glint, and foam where the water meets the bank
+              if(((y*3 + Math.floor(this.t*7)) % 9) === 0){
+                c.fillStyle = T.wt[4];
+                c.fillRect(cxp - w + 1 + ((y*5) % Math.max(1, w)), y, Math.min(w, 3), 1);
+              }
             }
+            c.fillStyle = T.wt[0];
+            c.fillRect(cxp - w, y, 1, 1); c.fillRect(cxp + w - 1, y, 1, 1);
           }
         }
       }
-      // The green goes on last. Painted before the water, a moat around it
-      // simply covered it over and there was no island.
+
+      // The green, last, so a hazard cannot paint over it. Apron first and the
+      // putting surface inside it: the surface used to be laid straight onto
+      // the fairway with a hard rim, and its tone was flipped by distance with
+      // a parity test, which banded the one part of the hole that has to read
+      // as flat.
       const gd = d - LEN;
-      if(gd > -7.5 && gd < 7.5){
-        const gh = Math.round(2.35 * Math.sqrt(1 - (gd/7.5)*(gd/7.5)) * LAT * s);
-        if(gh > 0){
-          c.fillStyle = T.gr[clamp(Math.floor(near*2.2) + ((Math.floor(d*1.1) & 1) ? 1 : 0), 0, 2)];
-          c.fillRect(C0 - gh, y, gh*2, 1);
+      // a green is not a circle: a slow wobble on the radius keeps it from
+      // reading as a stamped ellipse without making the putting surface lumpy
+      const lobe = 1 + 0.085*Math.sin(gd*0.85 + this.seed);
+      if(gd > -8.6 && gd < 8.6){
+        const ga = Math.round(3.05*lobe * Math.sqrt(Math.max(0, 1 - (gd/8.6)*(gd/8.6))) * LAT * s);
+        if(ga > 0){
+          c.fillStyle = T.apron;
+          c.fillRect(C0 - ga, y, ga*2, 1);
+          // feather the apron into whatever it is sitting on
+          const af = Math.max(1, Math.round(ga*0.12));
+          for(let k = 0; k < af; k++){
+            if(nz(y*11 + k, ga) & 1) continue;
+            c.fillRect(C0 - ga - 1 - k, y, 1, 1);
+            c.fillRect(C0 + ga + k, y, 1, 1);
+          }
+        }
+        if(gd > -7.5 && gd < 7.5){
+          const gh = Math.round(2.35*lobe * Math.sqrt(Math.max(0, 1 - (gd/7.5)*(gd/7.5))) * LAT * s);
+          if(gh > 0){
+            const gi = clamp(1 + Math.floor(near*1.3), 0, 2);
+            c.fillStyle = T.gr[gi];
+            c.fillRect(C0 - gh, y, gh*2, 1);
+            if(gh > 7){
+              c.fillStyle = T.gr[Math.min(2, gi + 1)];
+              const iw = Math.round(gh*0.46);
+              c.fillRect(C0 - iw, y, iw*2, 1);
+            }
+            // Dithered fringe. A solid rim pixel drew a clean arc around the
+            // whole green, which is the one shape on the hole your eye follows,
+            // so it read as an outline rather than as grass cut shorter.
+            const gf = Math.max(1, Math.round(gh*0.13));
+            c.fillStyle = T.apron;
+            for(let k = 0; k < gf; k++){
+              if(nz(y*5 + k, gh) & 1) continue;
+              c.fillRect(C0 - gh + k, y, 1, 1);
+              c.fillRect(C0 + gh - 1 - k, y, 1, 1);
+            }
+          }
         }
       }
     }
@@ -4007,45 +4102,76 @@ Object.assign(Scene, {
     for(let i = 0; i < 3; i++){ c.fillStyle = hz; c.fillRect(0, HORIZON + 1 + i*2, VW, 1); }
   },
 
-  drawRidge(){
-    const c = this.b;
-    for(let L = 0; L < 2; L++){
-      const pts = this.hills[L] || [0.5];
-      const amp = (L ? 0.115 : 0.075) * VH;
-      const base = HORIZON - (L ? 0 : Math.round(VH*0.035));
-      // Fixed to the hole, not to the camera. You are walking straight down the
-      // fairway, so distant ground has no reason to translate sideways; it was
-      // scrolling because the offset was keyed to camD.
-      const off = (this.seed * (L ? 0.7 : 0.3)) % pts.length;
-      const T = this.theme || THEMES.day;
-      const col = L ? T.rk[1] : T.rk[0];
-      const rim = L ? T.rk[2] : T.rk[1];
-      // emit runs of equal height rather than a rect per column
-      let runX = 0, runTop = null;
-      for(let x = 0; x <= VW; x++){
-        let top = null;
-        if(x < VW){
-          const u = (x / VW) * (pts.length - 1) + off;
-          const i = Math.floor(u), f = u - i;
-          const v = pts[i % pts.length]*(1-f) + pts[(i+1) % pts.length]*f;
-          top = Math.round(base - v*amp);
+  // The ranges do not move with the camera and do not animate, so they are
+  // rasterised once per hole and blitted. That buys enough budget to shade
+  // every column by which way its face turns, instead of stamping flat
+  // silhouettes and a row of random two pixel columns for the trees.
+  buildRidge(){
+    const key = [this.themeId, this.hole, VW, VH, HORIZON].join('|');
+    if(this.ridgeKey === key && this.ridge) return;
+    this.ridgeKey = key;
+    const T = this.theme || THEMES.day;
+    const H = Math.max(4, HORIZON + 6);
+    const cv = document.createElement('canvas');
+    cv.width = Math.max(2, VW); cv.height = H;
+    const g = cv.getContext('2d');
+    const rnd = seeded(hash32(this.hole*7919 + 17));
+
+    for(let L = 2; L >= 0; L--){
+      const amp  = (0.050 + L*0.040) * VH;
+      const base = HORIZON - Math.round(VH*(0.050 - L*0.021));
+      // farther ranges sit closer to the sky colour, which is what reads as air
+      const haze = (2 - L) * 0.24;
+      const body  = mixC(T.rk[L === 2 ? 1 : L === 1 ? 2 : 3], T.sky[4], haze);
+      const lit   = mixC(T.rk[4], T.sky[4], haze);
+      const shade = mixC(T.rk[0], T.sky[4], haze);
+      const snow  = mixC(T.snow,  T.sky[4], haze * 0.6);
+      const p1 = 22 + L*15, p2 = 8.5 + L*3.5, p3 = 3.6 + L*1.4;
+      const a1 = rnd()*99, a2 = rnd()*99, a3 = rnd()*99;
+      // three octaves, so a peak has shoulders and scree rather than being a sine
+      const topAt = x => base - amp*(0.42
+        + 0.36*Math.sin(x/p1 + a1)
+        + 0.15*Math.sin(x/p2 + a2)
+        + 0.07*Math.sin(x/p3 + a3));
+      const snowY = base - amp*0.62;
+      let prev = topAt(-1);
+      for(let x = 0; x < VW; x++){
+        const top = Math.round(topAt(x));
+        g.fillStyle = body;
+        g.fillRect(x, top, 1, H - top);
+        const slope = top - prev;
+        if(slope !== 0){
+          // rising toward the light is a lit face, falling away is in shadow
+          g.fillStyle = slope < 0 ? lit : shade;
+          g.fillRect(x, top, 1, Math.min(4, Math.abs(slope) + 1));
         }
-        if(top !== runTop){
-          if(runTop !== null){
-            c.fillStyle = col; c.fillRect(runX, runTop, x - runX, HORIZON - runTop + 2);
-            c.fillStyle = rim; c.fillRect(runX, runTop, x - runX, 1);
-          }
-          runTop = top; runX = x;
+        if(L > 0 && top < snowY){
+          const capH = Math.min(5, Math.round((snowY - top) * 0.6));
+          if(capH > 0){ g.fillStyle = snow; g.fillRect(x, top, 1, capH); }
         }
+        prev = top;
       }
     }
-    // a treeline sitting on the horizon
-    const tl = (this.theme || THEMES.day).tl;
-    c.fillStyle = tl;
-    for(let x = 0; x < VW; x += 2){
-      const n = hash32(Math.floor(x*0.5) + Math.floor(this.camD*0.4) + this.hole) % 5;
-      c.fillRect(x, HORIZON - n - 1, 2, n + 3);
+
+    // Treeline: clumped canopies with a second tone behind them. Keyed to the
+    // hole, not to camD -- tied to the camera the whole distant wood crawled
+    // sideways every time he took a step.
+    let x = -6;
+    while(x < VW + 6){
+      const w = 5 + Math.floor(rnd()*10), h = 3 + Math.floor(rnd()*6);
+      const back = rnd() < 0.45;
+      g.fillStyle = back ? T.tl2 : T.tl;
+      g.fillRect(x, HORIZON - h, w, h + 4);
+      const cw = Math.max(2, w - 2 - Math.floor(rnd()*2));
+      g.fillRect(x + 1 + Math.floor(rnd()*2), HORIZON - h - 1 - Math.floor(rnd()*3), cw, 4);
+      x += Math.max(2, w - 2 - Math.floor(rnd()*2));
     }
+    this.ridge = cv;
+  },
+
+  drawRidge(){
+    this.buildRidge();
+    if(this.ridge) this.b.drawImage(this.ridge, 0, 0);
   },
 
   // One back-to-front pass over everything standing beside the hole.
