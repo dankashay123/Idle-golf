@@ -18,7 +18,13 @@ module.exports = {
         slot:     B.SLOTS.map(s => [s.n, s.ic]),
         element:  B.ELEM.map(e => [e.n, e.ic]),
         set:      B.SETS.map(s => [s.n, s.ic]),
-        perk:     (B.PERKS || []).map(p => [p.n, p.ic])
+        perk:     (B.PERKS || []).map(p => [p.n, p.ic]),
+        sovpack:  (B.SOV_PACKS || []).map(p => [p.n, p.ic]),
+        bag:      (B.BAGS || []).map(b2 => [b2.n, b2.ic]),
+        bench:    (B.PERM || []).map(u => [u.n, u.ic]),
+        // the shop button and the three offers, which have no table of their own
+        shop:     [['Pro shop', 'proshop'], ['Starter Pack', 'starter'],
+                   ['Club Membership', 'member'], ['Double Purse', 'boost']]
       };
       const seen = {}, missing = [], shared = [];
       let total = 0;

@@ -365,6 +365,33 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
 .mtx b{color:var(--chalk)}
 .mile.on .mtx b{color:var(--brass)}
 .mtx i{font-style:normal;color:var(--dim)}
+/* the pro shop */
+.shopnav{display:flex;gap:0;margin:-4px -16px 10px;border-bottom:1px solid var(--line)}
+.shopnav button{flex:1 1 0;padding:9px 2px;background:none;border:0;border-bottom:2px solid transparent;
+  color:var(--dim);font-size:var(--f0);letter-spacing:.12em;text-transform:uppercase;font-weight:700}
+.shopnav button.on{color:var(--brass);border-bottom-color:var(--brass)}
+.freebar{border:1px solid var(--r5);background:rgba(166,107,245,.10);padding:7px 9px;margin-bottom:10px;
+  font-size:var(--f1);color:var(--chalk);line-height:1.5}
+.freebar b{color:var(--r5)}
+.shoprow{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--line)}
+.shoprow:last-child{border-bottom:0}
+.shoprow .sic{width:30px;height:30px;flex:0 0 auto;image-rendering:pixelated}
+.shoprow .sbody{flex:1 1 auto;min-width:0}
+.shoprow .snm{font-size:var(--f2);color:var(--chalk);font-weight:600}
+.shoprow .sds,.shopnote{font-size:var(--f0);color:var(--dim);line-height:1.45;margin-top:2px}
+.shopnote{display:block;margin:0 0 8px}
+.shoprow .sbonus{color:var(--aurora);font-weight:700}
+.price{flex:0 0 auto;min-width:74px;padding:8px 6px;border:1px solid var(--brass-dk);background:var(--raise2);
+  color:var(--brass);border-radius:0;text-align:center;font-weight:700;font-size:var(--f1);line-height:1.25}
+.price.no{border-color:var(--line);color:var(--dim);background:transparent}
+.price.max{border-color:var(--line);color:var(--faint);background:transparent}
+.price small{display:block;font-size:var(--f0);letter-spacing:.06em;color:var(--faint);font-weight:400}
+.pips{display:flex;gap:2px;margin-top:4px}
+.pips i{width:8px;height:3px;background:#17301F}
+.pips i.on{background:var(--brass)}
+.sovline{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px;
+  font-size:var(--f1);color:var(--dim)}
+.sovline b{font-family:var(--mono);font-size:var(--f4);color:var(--r5)}
 .rstrip i{flex:1 1 0;min-width:1px;height:2px;background:#162C22;transition:height .12s linear}
 .rstrip i.lit{background:#2E4A3C}
 .rstrip i.on{background:var(--rc,var(--brass))}
@@ -372,6 +399,16 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
 
 /* the honours shelf, on the stage under the hole readout */
 /* two stage buttons, drawn from the same pixel grid as the game */
+/* The shop sits bottom left, the far corner from the two stage buttons and
+   clear of the shot book icons the renderer draws up from that edge. */
+#shopBtn{position:absolute;left:2.5%;bottom:3%;width:8.4%;aspect-ratio:1/1;z-index:31;
+  background:none;border:0;padding:0;display:flex;align-items:center;justify-content:center;
+  filter:drop-shadow(0 1px 2px rgba(0,0,0,.9))}
+#shopIcon{display:block;width:100%;height:100%;object-fit:contain;
+  image-rendering:pixelated;image-rendering:crisp-edges}
+#shopBtn:active{transform:translateY(1px)}
+#shopDot{position:absolute;top:-8%;right:-8%;width:32%;height:32%;background:var(--r5);display:none}
+#shopBtn.new #shopDot{display:block}
 #honBtn,#perkBtn{position:absolute;right:2.5%;width:6.2%;aspect-ratio:1/1;z-index:31;
   background:none;border:0;padding:0;display:flex;align-items:center;justify-content:center;
   filter:drop-shadow(0 1px 2px rgba(0,0,0,.9))}
@@ -443,6 +480,7 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
 
   <div id="stage">
     <canvas id="hole" width="720" height="440"></canvas>
+    <button id="shopBtn" aria-label="Pro shop"><img id="shopIcon" alt=""><span id="shopDot"></span></button>
     <button id="honBtn" aria-label="Achievements"><img id="honIcon" alt=""></button>
     <button id="perkBtn" aria-label="Sponsor perks"><img id="perkIcon" alt=""><span id="perkDot"></span></button>
     <div id="readout">
@@ -627,6 +665,28 @@ const B = {
   //
   //   X main   x shade   o deep   w highlight   . clear
   PX12: {
+    sov1: ['............','............','....XXXX....','...XwwwXx...','...XwXXXx...','...XwXXXx...','...XxXXXx...','....XXXx....','.....Xx.....','............','............','............'],
+    sov2: ['............','...XXXXXX...','..XwwwwwXx..','..XwXXXXXx..','..XwXXXXXx..','..XwXXXXXx..','..XxXXXXXx..','...XXXXXx...','....XXXx....','.....Xx.....','............','............'],
+    sov3: ['..XXXXXXXX..','.XwwwwwwwXx.','.XwXXXXXXXx.','.XwXXXXXXXx.','.XwXXXXXXXx.','.XwXXXXXXXx.','.XxXXXXXXXx.','..XXXXXXXx..','...XXXXXx...','....XXXx....','.....Xx.....','............'],
+    sov4: ['..XXXX..XXXX','.XwwXx.XwwXx','.XwXXx.XwXXx','.XxXXx.XxXXx','..XXXx..XXXx','...Xx....Xx.','....XXXX....','...XwwwXx...','...XwXXXx...','...XxXXXx...','....XXXx....','.....Xx.....'],
+    sov5: ['.XXXX..XXXX.','XwwXx.XwwXx.','XwXXx.XwXXx.','XxXXx.XxXXx.','.XXXx..XXXx.','...XXXXXX...','..XwwwwwXx..','..XwXXXXXx..','..XwXXXXXx..','..XxXXXXXx..','...XXXXXx...','....XXXx....'],
+    sov6: ['XXXX.XXXX.XX','wXXx.wXXx.wX','xXXx.xXXx.xX','.XXx..XXx..X','XXXXXXXXXXXX','XwwwwwwwwwXx','XwXXXXXXXXXx','XwXXXXXXXXXx','XxXXXXXXXXXx','.XXXXXXXXXx.','..XXXXXXXx..','....XXXx....'],
+    bagrange: ['............','.....X......','....XXx.....','.....X......','...XXXXX....','..XwXXXXx...','..XwXXXXx...','..XwXXXXx...','..XwXXXXx...','..XwXXXXx...','..XxXXXXx...','...XXXXx....'],
+    bagtour: ['...X....X...','..XXx..XXx..','...X....X...','..XXXXXXX...','.XwXXXXXXx..','.XwXXXXXXx..','.XwXoooXXx..','.XwXXXXXXx..','.XwXXXXXXx..','.XwXXXXXXx..','.XxXXXXXXx..','..XXXXXXx...'],
+    bagchamp: ['.X...X...X..','XXx.XXx.XXx.','.X...X...X..','XXXXXXXXXX..','XwXXXXXXXXx.','XwXXXXXXXXx.','XwXoowwooXx.','XwXoowwooXx.','XwXXXXXXXXx.','XwXXXXXXXXx.','XxXXXXXXXXx.','.XXXXXXXXx..'],
+    baglegend: ['X..X..X..X.X','Xx.Xx.Xx.XxX','X..X..X..X.X','XXXXXXXXXXXX','wwwwwwwwwwwX','XXXXXXXXXXXX','XoowwwwwwooX','XoowwwwwwooX','XXXXXXXXXXXX','XXXXXXXXXXXX','xxxxxxxxxxxx','.XXXXXXXXXx.'],
+    contract: ['.XXXXXXXXX..','.XwwwwwwwXx.','.XwXXXXXwXx.','.XwXXXXXwXx.','.XwXXXXXwXx.','.XwXXXXXwXx.','.XwXXXXXwXx.','.XwwwwwwwXx.','.XxXXXXXxXx.','.XXXXXXXXXx.','....XXXX....','...XwwwwXx..'],
+    locker2: ['XXXXXX.XXXXX','XwXXXx.XwXXX','XwXoXx.XwXoX','XwXXXx.XwXXX','XXXXXX.XXXXX','XwXXXx.XwXXX','XwXoXx.XwXoX','XwXXXx.XwXXX','XXXXXX.XXXXX','XwXXXx.XwXXX','XwXoXx.XwXoX','XxXXXx.XxXXX'],
+    teetime: ['....XXXX....','..XXwwwwXX..','.XwX.XX.XXx.','XwX..XX..Xx.','Xw...XX...Xx','Xw...XXXX.Xx','Xw........Xx','.Xx......Xx.','..XXx..xXX..','....XXXX....','.....XX.....','....XXXX....'],
+    scout: ['.....XX.....','...XXwwXX...','..XwX..XwX..','.XwX....XwX.','.XwX.XX.XwX.','.XwX.XX.XwX.','.XwX....XwX.','..XwX..XwX..','...XXwwXX...','.....XX.....','....XXx.....','...XXx......'],
+    van2: ['............','..XXXXXXX...','.XwwwwwwXx..','.XwXXXXXXx..','XXXXXXXXXXx.','XwXXXXXXXXx.','XwXXXXXXXXx.','XXXXXXXXXXx.','.XXx....XXx.','.XoXx..XoXx.','.XXx....XXx.','............'],
+    sigirons: ['..X.....X...','..Xx....Xx..','..X.....X...','..X..X..X...','..X..Xx.X...','..X..X..X...','.XXXXXXXXx..','XwwwwwwwwXx.','XwXoXoXoXXx.','XwXXXXXXXXx.','XxXXXXXXXXx.','.XXXXXXXXx..'],
+    sponsor: ['XXXXXXXXXXXX','XwwwwwwwwwXx','XwXXXXXXXXXx','XwXoooooXXXx','XwXXXXXXXXXx','XwXoooooXXXx','XwXXXXXXXXXx','XxXXXXXXXXXx','XXXXXXXXXXXx','..XXx..XXx..','..XXx..XXx..','..XXx..XXx..'],
+    autograph: ['XXXXXXXXXX..','XwwwwwwwwXx.','XwXXXXXXXXx.','XwXoXXoXXXx.','XwXXoXXoXXx.','XwXoXXoXXXx.','XwXXXXXXXXx.','XxXXXXXXXXx.','XXXXXXXXXXx.','.........XXx','........XXx.','.......XXx..'],
+    proshop: ['.XXXXXXXXXX.','XwwwwwwwwwwX','XwXXXXXXXXwX','XwXoooooooXX','XwXXXXXXXXXX','XwXoooooooXX','XwXXXXXXXXXX','XwXoooooooXX','XwXXXXXXXXXX','XxXXXXXXXXXX','XXXXXXXXXXXX','.XXx....XXx.'],
+    starter: ['............','...XX..XX...','..XwXXXXwX..','.XXXXXXXXXX.','.XwXXXXXXwX.','.XXXXXXXXXX.','.XwXXXXXXwX.','.XwXXXXXXwX.','.XwXXXXXXwX.','.XxXXXXXXxX.','.XXXXXXXXXX.','............'],
+    member: ['....XXXX....','...XwwwwX...','..XwXXXXwX..','..XwXooowX..','..XwXXXXwX..','...XwwwwX...','....XXXX....','...XXXXXX...','..XXx.XXx...','.XXx...XXx..','XXx.....XXx.','Xx.......Xx.'],
+    boost: ['.....XX.....','....XXXx....','...XXXXx....','..XXXXXXx...','.XXXXXXXXx..','XXXXXXXXXXx.','..XwwwwXx...','..XwXXXXx...','..XwXXXXx...','..XxXXXXx...','...XXXXx....','....XXx.....'],
     bolt:   ['....XXXX....','...XXXXx....','..XXXXx.....','..XXXx......',
              '.XXXXXXXXx..','.xxXXXXXXx..','....XXXXx...','...XXXXx....',
              '...XXXx.....','..XXXx......','..XXx.......','.XXx........'],
@@ -2360,7 +2420,82 @@ const B = {
   // OFFLINE_RATE is how much of your pace the caddie keeps, OFFLINE_PURSE what
   // a hole pays while he does. Everything a catch-up awards goes through both,
   // events included, or the discount only applies to the part that is reported.
-  OFFLINE_CAP: 12 * 3600, OFFLINE_RATE: 0.55, OFFLINE_PURSE: 0.62, TICK_MAX: 0.25
+  OFFLINE_CAP: 12 * 3600, OFFLINE_RATE: 0.55, OFFLINE_PURSE: 0.62, TICK_MAX: 0.25,
+
+  /* =======================================================================
+     THE PRO SHOP
+     A sovereign is the old gold coin a members' club would have struck its
+     own. The header bar is already called the crest, so the currency is not:
+     two meanings of one word in one file is a trap somebody walks into later.
+     It is the one currency the game never pays out, which is the whole point
+     of a premium currency and the reason every price in here is quoted in
+     them rather than in dollars. NOTHING IS CHARGED. Every pack grants on the
+     press and says so on the card; there is no card entry, no receipt and no
+     payment path of any kind, and there is not going to be one until somebody
+     wires a real store to it.
+
+     The shop sells time, room and convenience, which is what these shops
+     actually sell and what no other system in the game offers. Two of the
+     eight permanent lines sell power outright, because that is the honest
+     temptation in a shop like this, and both are multipliers so they sit
+     beside the trophy room rather than on top of the Range.
+     ======================================================================= */
+  SOV: 'Sovereigns',
+  // The usual ladder: a base rate at the bottom and a fatter bonus the higher
+  // you go, so the biggest pack is always the best value per dollar.
+  SOV_PACKS: [
+    { id:'p1', ic:'sov1', n:'Sleeve',           c:120,  usd:1.99  },
+    { id:'p2', ic:'sov2', n:'Box',              c:340,  usd:4.99  },
+    { id:'p3', ic:'sov3', n:'Caddie Bag',       c:740,  usd:9.99  },
+    { id:'p4', ic:'sov4', n:'Tour Case',        c:1600, usd:19.99 },
+    { id:'p5', ic:'sov5', n:"Champion's Trunk", c:4300, usd:49.99 },
+    { id:'p6', ic:'sov6', n:"Founder's Vault",  c:9400, usd:99.99 }
+  ],
+
+  // Gacha. A bag is a bag of clubs, which is what it hands you.
+  // n: how many clubs. floor: the worst rarity any of them can be.
+  // top: the best one is guaranteed to be at least this.
+  BAGS: [
+    { id:'range',  ic:'bagrange',  n:'Range Bag',      c:90,   num:3, floor:1, top:2,
+      d:'Three clubs, Uncommon or better, one of them Rare or better.' },
+    { id:'tour',   ic:'bagtour',   n:'Tour Bag',       c:320,  num:5, floor:2, top:3,
+      d:'Five clubs, Rare or better, one of them Epic or better.' },
+    { id:'champ',  ic:'bagchamp',  n:"Champion's Bag", c:900,  num:7, floor:3, top:4,
+      d:'Seven clubs, Epic or better, one of them Legendary or better.' },
+    { id:'legend', ic:'baglegend', n:'Legend Bag',     c:2400, num:9, floor:4, top:5,
+      d:'Nine clubs, Legendary or better, and a Mythic every single time.' }
+  ],
+  // Bags opened without a Mythic before the next one is guaranteed to be one.
+  // Every shop like this has one of these; most of them do not admit it.
+  BAG_PITY: 15,
+  // Clubs out of a bag are fitted to where you are, not to where you started.
+  BAG_ILVL: 2,
+
+  /* ---- permanent, and capped at ten ---- */
+  PERM_MAX: 10,
+  PERM: [
+    { id:'contract', ic:'contract', n:'Caddie Contract', base:180, r:1.42, v:2,
+      d:'+2 hours of away time banked, a level',  s:'h' },
+    { id:'locker',   ic:'locker2',  n:'Second Locker',   base:150, r:1.38, v:12,
+      d:'+12 places in the locker, a level',      s:'' },
+    { id:'teetime',  ic:'teetime',  n:'Standing Tee Time', base:240, r:1.45, v:0.05,
+      d:'wager entries come back 5% faster, a level', s:'%' },
+    { id:'scout',    ic:'scout',    n:'Club Scout',      base:220, r:1.44, v:0.04,
+      d:'+4pp gear luck, a level',                s:'pp' },
+    { id:'van',      ic:'van2',     n:'Tour Van',        base:260, r:1.46, v:0.03,
+      d:'3% off every Range price, a level',      s:'%' },
+    { id:'irons',    ic:'sigirons', n:'Signature Irons', base:300, r:1.50, v:1.05,
+      d:'x1.05 swing power, a level',             s:'x' },
+    { id:'sponsor',  ic:'sponsor',  n:'Title Sponsor',   base:300, r:1.50, v:1.06,
+      d:'x1.06 prize money, a level',             s:'x' },
+    { id:'book',     ic:'autograph',n:'Autograph Book',  base:200, r:1.40, v:0.08,
+      d:'+8% career experience, a level',         s:'%' }
+  ],
+
+  /* ---- the offers rail ---- */
+  STARTER_C: 600, STARTER_USD: 4.99,
+  MEMBER_USD: 9.99, MEMBER_DAILY: 60, MEMBER_GOLD: 0.25, MEMBER_KEYS: 1,
+  BOOST_C: 200, BOOST_HOURS: 24, BOOST_MULT: 2
 };
 
 /* =========================================================================
@@ -2451,6 +2586,11 @@ function defaultState(){ return {
   upg: {}, equip: {}, bag: [], uid: 1,
   skillLv: {}, carry: [], cd: {},
   grit: 0, shard: 0, scroll: 0,
+  // the shop. sov is the premium currency, perm the permanent upgrades,
+  // pity counts bags opened without a Mythic, and spent is a running total the
+  // shop shows back to you because a shop that hides it is doing it on purpose
+  sov: 0, perm: {}, bagsOpened: 0, pity: 0, sovSpent: 0, packsTaken: {},
+  member: 0, memberT: 0, starter: 0, boostT: 0,
   dgnKeys: {}, dgnKeyT: {}, dgnFloor: {}, dgnBest: {}, dgnRun: null, islandBank: 5,
   legacy: 0, relic: {}, retires: 0, cups: 0, points: 0,
   lv: 1, xp: 0, statPts: 0, talPts: 0, stat: {}, tal: {},
@@ -2475,6 +2615,19 @@ function initState(){
   // longest run of greens, the most chips dropped, the deepest floor. One
   // number in four places read as four copies of one contest.
   if(!S.dgnBest) S.dgnBest = {};
+  // the shop, on a save written before there was one
+  if(!(S.sov >= 0)) S.sov = 0;
+  if(!(S.sovSpent >= 0)) S.sovSpent = 0;
+  if(!(S.bagsOpened >= 0)) S.bagsOpened = 0;
+  if(!(S.pity >= 0)) S.pity = 0;
+  if(!S.perm) S.perm = {};
+  if(!S.packsTaken) S.packsTaken = {};
+  if(!(S.member >= 0)) S.member = 0;
+  if(!(S.memberT >= 0)) S.memberT = 0;
+  if(!(S.starter >= 0)) S.starter = 0;
+  if(!(S.boostT >= 0)) S.boostT = 0;
+  B.PERM.forEach(u => { S.perm[u.id] = clamp(Math.round(S.perm[u.id] || 0), 0, B.PERM_MAX); });
+  for(const k in S.perm) if(!B.PERM.some(u => u.id === k)) delete S.perm[k];
   B.DGN.forEach(d => {
     if(S.dgnKeys[d.id] === undefined) S.dgnKeys[d.id] = d.cap;
     if(S.dgnKeyT[d.id] === undefined) S.dgnKeyT[d.id] = 0;
@@ -2780,7 +2933,8 @@ function derive(){
   const G = gearStats();
   const ch = S.chaos || { y:1, g:1, s:1, c:0, p:0, dl:0 };
 
-  let pow = B.BASE_POWER * upgMult('pow') * (1 + G.pow) * relMult('pow') * perkMult('pow');
+  let pow = B.BASE_POWER * upgMult('pow') * (1 + G.pow) * relMult('pow') * perkMult('pow')
+          * permMult('irons');
 
   const spdRaw = B.BASE_SPEED * upgMult('spd') * (1 + G.spd) * relMult('spd') * ch.s
     * (1 + buffVal('gale')/100) * perkMult('spd');
@@ -2803,9 +2957,11 @@ function derive(){
   const proc = Math.min(B.PROC_CAP, procRaw);
 
   const gold = upgMult('gld') * (1 + G.gld) * relMult('gld')
-    * ch.g * (1 + buffVal('windfall')/100) * perkMult('gold');
+    * ch.g * (1 + buffVal('windfall')/100) * perkMult('gold')
+    * permMult('sponsor') * (isMember() ? 1 + B.MEMBER_GOLD : 1)
+    * (boostOn() ? B.BOOST_MULT : 1);
   const drop = clamp((B.DROP_BASE + upgLv('marker')*B.DROP_ADD + G.drp + ch.dl
-    + relLv('sun')*B.SUN_ADD + perkAdd('drop')) * relMult('drp'), 0, 1);
+    + relLv('sun')*B.SUN_ADD + perkAdd('drop') + permAdd('scout')) * relMult('drp'), 0, 1);
   const dgnY = (1 + upgLv('lantern')*B.DGN_ADD + G.dgn) * relMult('dgn');
 
   // Provisional: the chance a swing plays a second ball. Whole numbers are
@@ -2875,7 +3031,7 @@ function awardParagonPoint(){
 }
 function addXp(n){
   if(!(n > 0)) return;
-  n *= 1 + career().xp;
+  n *= 1 + career().xp + permAdd('book');
   if(!atMax()){
     S.xp += n;
     let gained = 0;
@@ -2905,14 +3061,18 @@ function addXp(n){
 }
 
 
-/* ---- costs ---- */
-const costOf = (base, r, owned) => base * Math.pow(r, owned);
+/* ---- costs ----
+   Only the Range is priced off these, so the Tour Van's discount lives here
+   rather than at the three call sites: the price you are shown, the price you
+   are charged and the count a Max buy works out all have to be the same
+   number, and the surest way to get that is for there to be only one. */
+const costOf = (base, r, owned) => base * Math.pow(r, owned) * vanOff();
 function costBulk(base, r, owned, k){
   if(k <= 1) return costOf(base, r, owned);
-  return base * Math.pow(r, owned) * (Math.pow(r, k) - 1) / (r - 1);
+  return base * Math.pow(r, owned) * (Math.pow(r, k) - 1) / (r - 1) * vanOff();
 }
 function maxAffordable(base, r, owned, cash){
-  const unit = base * Math.pow(r, owned);
+  const unit = base * Math.pow(r, owned) * vanOff();
   if(cash < unit) return 0;
   const k = Math.floor(Math.log(1 + cash*(r-1)/unit) / Math.log(r));
   return Math.max(0, k);
@@ -3153,7 +3313,7 @@ function usePerk(id){
     S.yards = 0; S.elapsed = S.parTime * 0.40;
     toast('<b>' + p.n + '</b> \u00b7 driven to the green');
   }else if(p.k === 'keys'){
-    B.DGN.forEach(d => S.dgnKeys[d.id] = d.cap);
+    B.DGN.forEach(d => S.dgnKeys[d.id] = entryCap(d));
     toast('<b>' + p.n + '</b> \u00b7 every entry refilled');
     renderDgn();
   }
@@ -3206,9 +3366,9 @@ function bagAdd(it){
   if(it.rar >= 4) bump('legend');
   if(it.rar >= 5) bump('myth');
   S.bag.push(it);
-  if(S.bag.length > B.BAG_CAP){
+  if(S.bag.length > bagCap()){
     S.bag.sort((a,b) => itemScore(b) - itemScore(a));
-    const cut = S.bag.splice(B.BAG_CAP);
+    const cut = S.bag.splice(bagCap());
     let sh = 0; cut.forEach(x => sh += scrapValue(x));
     S.shard += sh;
     if(sh) toast('Locker was full, so I scrapped ' + cut.length + ' for <b>' + sh + '</b> shards');
@@ -3305,13 +3465,13 @@ function keyInterval(d){ const C = career();
   // floored, or a deep Riftkey means keys arrive instantly and the Depths stop
   // being a limited resource at all
   return d.regen * Math.max(B.RIFT_MIN_WAIT, Math.pow(B.RIFT_REGEN, relLv('rift')))
-    * (C.sharp ? 0.6 : 1); }
+    * (C.sharp ? 0.6 : 1) * (1 - Math.min(0.60, permAdd('teetime'))); }
 function regenKeys(dt){
   for(const d of B.DGN){
     if(S.dgnKeys[d.id] >= d.cap){ S.dgnKeyT[d.id] = 0; continue; }
     S.dgnKeyT[d.id] += dt;
     const iv = keyInterval(d);
-    while(S.dgnKeyT[d.id] >= iv && S.dgnKeys[d.id] < d.cap){
+    while(S.dgnKeyT[d.id] >= iv && S.dgnKeys[d.id] < entryCap(d)){
       S.dgnKeyT[d.id] -= iv; S.dgnKeys[d.id]++;
     }
   }
@@ -3867,6 +4027,256 @@ function climb(n, quiet, force){
 }
 
 /* =========================================================================
+   THE PRO SHOP
+   Nothing here is charged. Every pack grants on the press: there is no card
+   entry, no receipt and no payment path, and the shop says so at the top of
+   itself rather than in a comment nobody reads.
+   ========================================================================= */
+const permLv  = id => clamp(Math.round(S.perm && S.perm[id] || 0), 0, B.PERM_MAX);
+const permDef = id => B.PERM.find(u => u.id === id);
+// Flat lines add v a level; the two multiplying lines compound, so they read
+// the way the trophy room reads rather than the way the Range reads.
+const permAdd  = id => { const u = permDef(id); return u ? u.v * permLv(id) : 0; };
+const permMult = id => { const u = permDef(id); return u ? Math.pow(u.v, permLv(id)) : 1; };
+const permCost = u => Math.round(u.base * Math.pow(u.r, permLv(u.id)));
+// Read in three places, so it is a function and not a constant plus two bugs.
+const bagCap = () => B.BAG_CAP + permAdd('locker');
+// A member holds one more entry for every wager in the book.
+const entryCap = d => d.cap + (isMember() ? B.MEMBER_KEYS : 0);
+// What the Tour Van takes off a Range price.
+const vanOff = () => 1 - Math.min(0.60, permAdd('van'));
+const isMember = () => !!S.member;
+// Sovereign counts top out in the tens of thousands and are a price you are
+// comparing against another price, so they are written out in full rather
+// than run through the K/M shortener the purse uses.
+const sovFmt = n => Math.round(n || 0).toLocaleString('en-US');
+const boostOn  = () => (S.boostT || 0) > 0;
+
+function grantSov(n, why){
+  n = Math.round(n);
+  if(n <= 0) return;
+  S.sov = (S.sov || 0) + n;
+  toast('+' + sovFmt(n) + ' ' + B.SOV + (why ? ' \u00b7 ' + why : ''));
+  renderVitals();
+}
+function spendSov(n){
+  if((S.sov || 0) < n){ toast('Not enough ' + B.SOV.toLowerCase()); return false; }
+  S.sov -= n; S.sovSpent = (S.sovSpent || 0) + n;
+  return true;
+}
+
+// A pack. In a shipping build this is where the store call would go; here the
+// press IS the purchase, which is the whole of the difference.
+function buyPack(pk){
+  S.packsTaken[pk.id] = (S.packsTaken[pk.id] || 0) + 1;
+  grantSov(pk.c, pk.n + ' \u00b7 nothing charged');
+  renderShop();
+}
+
+// A bag of clubs. The floor is what the worst one can be and top what the best
+// one is guaranteed to reach, so a bag is never a bag of nothing.
+function openBag(bg){
+  if(!spendSov(bg.c)) return;
+  S.bagsOpened = (S.bagsOpened || 0) + 1;
+  S.pity = (S.pity || 0) + 1;
+  const D = derive();
+  const top = B.RARITY.length - 1;
+  const duePity = S.pity >= B.BAG_PITY;
+  const got = [];
+  for(let i = 0; i < bg.num; i++){
+    // the last club in the bag is the one carrying the guarantee
+    const last = i === bg.num - 1;
+    let floor = bg.floor;
+    if(last) floor = Math.max(floor, duePity ? top : bg.top);
+    const it = makeItem(S.tier + B.BAG_ILVL, D.drop + 0.5, floor);
+    if(it.rar >= top) S.pity = 0;
+    bagAdd(it);
+    got.push(it);
+  }
+  got.sort((a, b) => b.rar - a.rar || itemScore(b) - itemScore(a));
+  const line = it => '<li><span style="color:' + RC(it.rar) + '">'
+    + B.RARITY[it.rar].n + '</span> \u00b7 ' + it.name + '</li>';
+  showSheet('<h3>' + bg.n + '</h3>'
+    + '<p>' + bg.num + ' clubs, straight into the locker.</p>'
+    + '<ul>' + got.map(line).join('') + '</ul>'
+    + (S.pity === 0 ? '<p style="color:var(--r5)">A Mythic. The counter resets.</p>'
+       : '<p>' + (B.BAG_PITY - S.pity) + ' more bags and the next one is a guaranteed Mythic.</p>')
+    + '<button class="act" onclick="hideSheet();openShop(\'bags\')">Back to the shop</button>'
+    + '<button class="act ghost" onclick="hideSheet()">Done</button>');
+  renderBag(); renderVitals();
+}
+
+function buyPerm(u){
+  if(permLv(u.id) >= B.PERM_MAX){ toast(u.n + ' is at ten'); return; }
+  if(!spendSov(permCost(u))) return;
+  S.perm[u.id] = permLv(u.id) + 1;
+  toast('<b>' + u.n + '</b> \u00b7 level ' + S.perm[u.id]);
+  renderShop(); renderVitals(); renderAll();
+}
+
+function buyStarter(){
+  if(S.starter){ toast('You have had that one'); return; }
+  S.starter = 1;
+  grantSov(B.STARTER_C, 'starter pack');
+  const bg = B.DGN && B.BAGS[1];
+  S.sov += bg.c; openBag(bg);            // the bag it comes with, on the house
+  S.boostT = Math.max(S.boostT || 0, B.BOOST_HOURS * 3600);
+  renderShop();
+}
+function buyMember(){
+  if(isMember()){ toast('You are already a member'); return; }
+  S.member = 1; S.memberT = 0;
+  grantSov(B.MEMBER_DAILY, 'first day of membership');
+  toast('<b>Club Membership</b> \u00b7 welcome in');
+  renderShop(); renderAll();
+}
+function buyBoost(){
+  if(!spendSov(B.BOOST_C)) return;
+  S.boostT = (S.boostT || 0) + B.BOOST_HOURS * 3600;
+  toast('<b>Double Purse</b> \u00b7 ' + hms(S.boostT));
+  renderShop(); renderVitals();
+}
+
+// Membership pays a daily allowance and the boost burns down, both on the same
+// clock the rest of the game runs on.
+function tickShop(dt){
+  if(S.boostT > 0){
+    S.boostT -= dt;
+    if(S.boostT <= 0){ S.boostT = 0; toast('Double Purse has run out'); }
+  }
+  if(!isMember()) return;
+  S.memberT = (S.memberT || 0) + dt;
+  while(S.memberT >= 86400){
+    S.memberT -= 86400;
+    grantSov(B.MEMBER_DAILY, 'members\u2019 allowance');
+  }
+}
+
+/* ---- the shop, on screen ---- */
+let shopSub = 'offers';
+function openShop(sub){ if(sub) shopSub = sub; renderShop(); }
+
+function shopRow(ic, col, nm, ds, priceHtml, cls, onclick, extra){
+  return '<div class="shoprow">'
+    + '<img class="sic" src="' + pixUrl(ic, col) + '" alt="">'
+    + '<div class="sbody"><div class="snm">' + nm + '</div>'
+    + '<div class="sds">' + ds + '</div>' + (extra || '') + '</div>'
+    + '<button class="price' + (cls ? ' ' + cls : '') + '" data-do="' + onclick + '">'
+    + priceHtml + '</button></div>';
+}
+
+function renderShop(){
+  const C = sovFmt(S.sov);
+  const tabs = [['offers','Offers'], ['buy','Buy'], ['bags','Bags'], ['perm','Bench']];
+  let h = '<h3>The Pro Shop</h3>'
+    + '<div class="shopnav">' + tabs.map(([id, t]) =>
+        '<button data-sub="' + id + '"' + (shopSub === id ? ' class="on"' : '') + '>' + t
+        + '</button>').join('') + '</div>'
+    + '<div class="sovline"><span>You hold</span><b>' + C + ' ' + B.SOV + '</b></div>'
+    + '<div class="freebar"><b>Nothing here is charged.</b> The store is not wired up, so every '
+    + 'pack lands the moment you press it and the prices are only there to show what they '
+    + 'would be. No card, no receipt, nothing leaves the device.</div>';
+
+  const gbp = sovFmt;
+
+  if(shopSub === 'buy'){
+    const rate = B.SOV_PACKS[0].c / B.SOV_PACKS[0].usd;
+    for(const pk of B.SOV_PACKS){
+      const bonus = Math.round((pk.c / (pk.usd * rate) - 1) * 100);
+      const taken = S.packsTaken[pk.id] || 0;
+      h += shopRow(pk.ic, '#C68BFF', pk.n + ' \u00b7 ' + gbp(pk.c) + ' ' + B.SOV,
+        (bonus > 0 ? '<span class="sbonus">+' + bonus + '% more than the smallest pack</span>'
+                   : 'the base rate everything else is measured against')
+        + (taken ? ' \u00b7 taken ' + taken + '\u00d7' : ''),
+        '$' + pk.usd.toFixed(2) + '<small>free</small>', '', 'pack:' + pk.id);
+    }
+  }
+
+  if(shopSub === 'bags'){
+    h += '<div class="shopnote" style="margin-bottom:8px" class="shopnote">A bag is a bag of clubs, fitted '
+      + B.BAG_ILVL + ' item levels above your card. ' + (B.BAG_PITY - (S.pity || 0))
+      + ' more bags and the next one holds a guaranteed Mythic, whichever bag it is.</div>';
+    for(const bg of B.BAGS){
+      const ok = (S.sov || 0) >= bg.c;
+      h += shopRow(bg.ic, RC(Math.min(5, bg.top)), bg.n, bg.d,
+        gbp(bg.c) + '<small>' + B.SOV.toLowerCase() + '</small>',
+        ok ? '' : 'no', 'bag:' + bg.id);
+    }
+    h += '<div class="shopnote" style="margin-top:8px" class="shopnote">Opened so far: ' + sovFmt(S.bagsOpened)
+      + '.</div>';
+  }
+
+  if(shopSub === 'perm'){
+    h += '<div class="shopnote" style="margin-bottom:8px" class="shopnote">Ten levels each, kept through every '
+      + 'retirement. The bench sells time, room and convenience \u2014 the things the rest of '
+      + 'the game makes you wait for \u2014 and two sets of clubs.</div>';
+    for(const u of B.PERM){
+      const lv = permLv(u.id), maxed = lv >= B.PERM_MAX, c = permCost(u);
+      const ok = (S.sov || 0) >= c;
+      let pips = '<div class="pips">';
+      for(let i = 0; i < B.PERM_MAX; i++) pips += '<i' + (i < lv ? ' class="on"' : '') + '></i>';
+      pips += '</div>';
+      const now = u.s === 'x' ? 'now \u00d7' + permMult(u.id).toFixed(2)
+                : u.s === '%' ? 'now +' + Math.round(permAdd(u.id)*100) + '%'
+                : u.s === 'pp' ? 'now +' + Math.round(permAdd(u.id)*100) + 'pp'
+                : u.s === 'h' ? 'now +' + permAdd(u.id) + ' hours'
+                : 'now +' + permAdd(u.id);
+      h += shopRow(u.ic, '#E3B457', u.n + ' <span class="sbonus">' + lv + '/' + B.PERM_MAX + '</span>',
+        u.d + (lv ? ' \u00b7 ' + now : ''),
+        maxed ? 'MAX' : gbp(c) + '<small>' + B.SOV.toLowerCase() + '</small>',
+        maxed ? 'max' : ok ? '' : 'no', 'perm:' + u.id, pips);
+    }
+  }
+
+  if(shopSub === 'offers'){
+    h += shopRow('starter', '#7ADB86', 'Starter Pack',
+      S.starter ? 'Taken. One to a career.'
+        : gbp(B.STARTER_C) + ' ' + B.SOV.toLowerCase() + ', a Tour Bag and a day of Double '
+          + 'Purse. Once only, and worth about four times what it asks.',
+      S.starter ? 'TAKEN' : '$' + B.STARTER_USD.toFixed(2) + '<small>free</small>',
+      S.starter ? 'max' : '', 'starter:1');
+
+    h += shopRow('member', '#E3B457', 'Club Membership',
+      isMember()
+        ? 'A member. +' + Math.round(B.MEMBER_GOLD*100) + '% purse, +' + B.MEMBER_KEYS
+          + ' entry on every wager, ' + B.MEMBER_DAILY + ' ' + B.SOV.toLowerCase()
+          + ' a day. Next allowance in ' + hms(86400 - (S.memberT || 0)) + '.'
+        : '+' + Math.round(B.MEMBER_GOLD*100) + '% purse for good, +' + B.MEMBER_KEYS
+          + ' entry on every wager, and ' + B.MEMBER_DAILY + ' ' + B.SOV.toLowerCase()
+          + ' every day you play.',
+      isMember() ? 'MEMBER' : '$' + B.MEMBER_USD.toFixed(2) + '<small>free</small>',
+      isMember() ? 'max' : '', 'member:1');
+
+    h += shopRow('boost', '#F2D75E', 'Double Purse',
+      boostOn() ? 'Running \u00b7 ' + hms(S.boostT) + ' left. Buying again adds to it.'
+        : 'Everything the course pays, doubled, for ' + B.BOOST_HOURS + ' hours.',
+      gbp(B.BOOST_C) + '<small>' + B.SOV.toLowerCase() + '</small>',
+      (S.sov || 0) >= B.BOOST_C ? '' : 'no', 'boost:1');
+
+    h += '<div class="shopnote" style="margin-top:10px" class="shopnote">Spent so far: ' + sovFmt(S.sovSpent)
+      + ' ' + B.SOV.toLowerCase() + '.</div>';
+  }
+
+  h += '<button class="act ghost" onclick="hideSheet()">Back to the round</button>';
+  showSheet(h);
+
+  const sheet = $('sheet');
+  sheet.querySelectorAll('.shopnav button').forEach(b =>
+    b.onclick = () => { shopSub = b.dataset.sub; renderShop(); });
+  sheet.querySelectorAll('.price[data-do]').forEach(b => {
+    const [kind, id] = b.dataset.do.split(':');
+    b.onclick = () => {
+      if(kind === 'pack') buyPack(B.SOV_PACKS.find(x => x.id === id));
+      else if(kind === 'bag') openBag(B.BAGS.find(x => x.id === id));
+      else if(kind === 'perm') buyPerm(B.PERM.find(x => x.id === id));
+      else if(kind === 'starter') buyStarter();
+      else if(kind === 'member') buyMember();
+      else if(kind === 'boost') buyBoost();
+    };
+  });
+}
+
+/* =========================================================================
    RETIREMENT
    ========================================================================= */
 function legacyGain(){
@@ -3938,7 +4348,8 @@ function retire(){
    OFFLINE
    ========================================================================= */
 function offline(){
-  const dt = clamp(Date.now()/1000 - (S.t || Date.now()/1000), 0, B.OFFLINE_CAP);
+  const dt = clamp(Date.now()/1000 - (S.t || Date.now()/1000), 0,
+                   B.OFFLINE_CAP + permAdd('contract')*3600);
   if(dt < 60){ regenKeys(dt); return; }
   regenKeys(dt);
   const D = derive();
@@ -3970,7 +4381,7 @@ function offline(){
   for(let i = 0; i < holes; i++){
     S.totalHoles++;
     addXp(B.XP_HOLE * Math.pow(1 + S.tier, B.XP_TIER) * 1.2 * (parOf(S.hole)/4) * 0.6);
-    if(isClosing(S.hole) && S.bag.length < B.BAG_CAP && Math.random() < 0.5){
+    if(isClosing(S.hole) && S.bag.length < bagCap() && Math.random() < 0.5){
       bagAdd(makeItem(S.tier, D.drop, 0)); gear++;
     }
     advanceHole();
@@ -6697,6 +7108,16 @@ function renderHonBtn(){
     p.classList.toggle('live', live);
     p.classList.toggle('ready', can && !live);
   }
+  const sh = $('shopBtn');
+  if(sh){
+    if(!sh._built){
+      sh._built = 1;
+      $('shopIcon').src = pixUrl('proshop', '#C68BFF');
+      sh.onclick = () => openShop();
+    }
+    // the dot is for the one-time offer, not for everything in the shop
+    sh.classList.toggle('new', !S.starter);
+  }
 }
 function renderXp(){
   const max = atMax();
@@ -7220,8 +7641,8 @@ function renderDgn(){
     const el = document.createElement('div');
     el.className = 'dgn';
     let keyHtml = '';
-    for(let i=0;i<d.cap;i++) keyHtml += '<span class="key' + (i < keys ? ' on' : '') + '"></span>';
-    const nextIn = keys >= d.cap ? 'full' : hms(keyInterval(d) - (S.dgnKeyT[d.id]||0));
+    for(let i=0;i<entryCap(d);i++) keyHtml += '<span class="key' + (i < keys ? ' on' : '') + '"></span>';
+    const nextIn = keys >= entryCap(d) ? 'full' : hms(keyInterval(d) - (S.dgnKeyT[d.id]||0));
 
     // what your bag is actually bringing to this particular contest
     // A best is only a best in the units the contest is played in. All four
@@ -7887,6 +8308,7 @@ function step(dt, D){
     if(S.buff[k].t <= 0) delete S.buff[k];
   }
   tickPerks(dt);
+  tickShop(dt);
   regenKeys(dt);
   Meter.tick(dt);
 
