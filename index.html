@@ -4690,6 +4690,9 @@ const PX_CSS = 1.1, K_PROJ = 22.4, LEN = 60, B_GOLFER = 12;
 // you over his shoulder with the hole falling away hard; large numbers flatten
 // it into a diagram. GROUND is derived from it below, so his feet stay put.
 const CAM_BACK = 3.2;
+// Nearest the gallery rope is projected from. Inside this the 1/distance
+// projection hits its clamp and a span whips sideways across the frame.
+const ROPE_REL = 1.4;
 // The camera sits ON the line of play, so the centre of the fairway projects to
 // a vertical line down the middle of the frame and the hole runs dead away from
 // you. Offset laterally the centreline sweeps sideways as it comes toward the
@@ -5813,7 +5816,11 @@ Object.assign(Scene, {
   drawProps(){
     const c = this.b, T = this.theme || THEMES.day, night = this.night;
     for(const p of (this.props || [])){
-      if(p.d < this.camD - 5) continue;
+      // A rope post is culled on the far end of the span it carries, not on
+      // itself: the post the span starts from goes behind the camera while the
+      // rope is still crossing the bottom of the frame.
+      const back = p.kind === 2 && p.nd !== undefined ? p.nd : p.d;
+      if(back < this.camD - 5) continue;
       const pr = this.proj(p.d, p.x);
       if(pr.s < 0.05) continue;
       // Ground is drawn with occlusion but props were not, so a tree standing
@@ -5830,6 +5837,39 @@ Object.assign(Scene, {
     }
   },
 
+  // One span of gallery rope, from this post to the next one along its side.
+  // Nearer than ROPE_REL the projection clamps at its minimum and the span
+  // whips across the screen, so a span that starts behind that line is walked
+  // forward in WORLD space to where it crosses it and drawn from there. That
+  // keeps the rope running off the bottom of the frame instead of ending at
+  // whichever post happened to survive the cull.
+  drawRope(c, p, night){
+    const near = this.camD - CAM_BACK + ROPE_REL;
+    if(p.nd <= near) return;
+    let d0 = p.d, x0 = p.x;
+    if(d0 < near){
+      const u = (near - d0) / (p.nd - d0);
+      x0 += (p.nx - x0) * u; d0 = near;
+    }
+    const a = this.proj(d0, x0), b = this.proj(p.nd, p.nx);
+    if((a.x < -2 && b.x < -2) || (a.x > VW + 2 && b.x > VW + 2)) return;
+    const ah = Math.max(2, Math.round(6 * a.s * US));
+    const bh = Math.max(2, Math.round(6 * b.s * US));
+    const y0 = a.y - ah + 1, y1 = b.y - bh + 1;
+    if(y0 < 0 && y1 < 0) return;
+    const sag = Math.max(1, Math.round(ah * 0.34));
+    const steps = Math.min(400, Math.max(2, Math.abs(b.x - a.x) + Math.abs(y1 - y0)));
+    c.fillStyle = night ? '#6E6A5C' : '#B9B2A0';
+    for(let i = 0; i <= steps; i++){
+      const u = i/steps;
+      const xx = Math.round(a.x + (b.x - a.x)*u);
+      if(xx < 0 || xx >= VW) continue;
+      const yy = Math.round(y0 + (y1 - y0)*u + Math.sin(u*Math.PI)*sag);
+      if(yy < 0 || yy >= VH) continue;
+      c.fillRect(xx, yy, 1, 1);
+    }
+  },
+
   drawProp(c, T, night, p, pr){
     if(p.kind === 0){
       const TS = this.treeSpr || SPRITE;
@@ -5843,26 +5883,19 @@ Object.assign(Scene, {
                  Math.round(w*0.68), Math.max(1, Math.round(h*0.035)));
       blit(c, spr, pr.x - w/2, pr.y - h, w, h);
     }else if(p.kind === 2){
+      // The rope goes down first, and before any cull on the post, because the
+      // two posts either side of the camera swing right out of frame while the
+      // rope strung between them is still crossing the bottom of it. Culling
+      // the span along with its post made the gallery stop dead at the
+      // golfer's feet and pick up again in front of him.
+      if(p.nd !== undefined) this.drawRope(c, p, night);
       // A gallery rope post: waist high on a spectator, not over their heads.
       // The old pillars were 17 against a spectator's 12, which is why they
       // read as poles looming out of the fairway rather than as furniture.
+      if(p.d < this.camD - CAM_BACK + ROPE_REL) return;
       const h = Math.max(2, Math.round(6 * pr.s * US));
       if(pr.x < -8 || pr.x > VW + 8) return;
       const w = Math.max(1, Math.round(h * 0.22));
-      // the rope first, so the post it leaves stands in front of it
-      if(p.nd !== undefined && p.nd > this.camD - 2){
-        const q = this.proj(p.nd, p.nx);
-        const qh = Math.max(2, Math.round(6 * q.s * US));
-        const x0 = pr.x, y0 = pr.y - h + 1, x1 = q.x, y1 = q.y - qh + 1;
-        const steps = Math.min(64, Math.max(2, Math.abs(x1 - x0) + Math.abs(y1 - y0)));
-        const sag = Math.max(1, Math.round(h * 0.34));
-        c.fillStyle = night ? '#6E6A5C' : '#B9B2A0';
-        for(let i = 0; i <= steps; i++){
-          const u = i/steps;
-          const yy = Math.round(y0 + (y1 - y0)*u + Math.sin(u*Math.PI)*sag);
-          c.fillRect(Math.round(x0 + (x1 - x0)*u), yy, 1, 1);
-        }
-      }
       c.fillStyle = 'rgba(8,16,10,.26)';
       c.fillRect(pr.x - (w>>1), pr.y - 1, Math.max(1, w), 1);
       c.fillStyle = '#1A2A20';

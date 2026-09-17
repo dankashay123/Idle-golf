@@ -26,6 +26,11 @@
  * they cut through the spectators standing in front of them. Anything standing
  * on the ground down here belongs in the one depth-sorted list.
  *
+ * And that a rope span outlives the post it hangs from. Each span is drawn by
+ * the post at its near end, so once that post went behind the camera the span
+ * went with it and the gallery stopped dead at the golfer's feet while the
+ * rope was still crossing the bottom of the frame.
+ *
  * And that the four are four. They shared one readout template and one "best
  * floor N" line, so a drive contest and an endurance crawl differed by the
  * words in them and nothing else. Each now reports in its own units and fills
@@ -183,6 +188,28 @@ module.exports = {
                                 && posts.every((v, i) => v === after[i]) });
         S.dgnRun = null;
       }
+      // ---- 6. the rope reaches the bottom of the frame ---------------------
+      // Walk the camera a third of the way down a Vault floor, so the nearest
+      // posts are behind it, and count rope on the lower half of the stage.
+      S.dgnRun = null; S.dgnKeys.vault = 1;
+      startDgn(B.DGN.find(x => x.id === 'vault'));
+      tickDgn(0.1, derive());
+      Scene.newDepthsHole(S.dgnRun);
+      Scene.camD = LEN * 0.34;
+      Scene.b.clearRect(0, 0, VW, VH);
+      Scene.drawProps();
+      {
+        const px = Scene.b.getImageData(0, 0, VW, VH).data;
+        let low = 0, high = 0;
+        for (let y = 0; y < VH; y++) for (let x = 0; x < VW; x++) {
+          const i = (y*VW + x)*4;
+          // the rope colour, day palette
+          if (px[i] === 0xB9 && px[i+1] === 0xB2 && px[i+2] === 0xA0)
+            (y > VH*0.5 ? low++ : high++, 0);
+        }
+        out.rope = { low, high, camD: Scene.camD };
+      }
+      S.dgnRun = null;
       return out;
     }, RUNS);
 
@@ -249,7 +276,14 @@ module.exports = {
       throw new Error('two contests post the same kind of best: ' + bests.join(' / ')
         + '. A best is only a best in the units the contest is played in.');
 
-    // 6. furniture is laid, not painted on
+    // 6. the gallery does not stop at the golfer
+    if (!(r.rope.low > 12))
+      throw new Error('with the camera ' + r.rope.camD.toFixed(0) + ' down the hole there are '
+        + r.rope.low + ' rope pixels on the near half of the stage against ' + r.rope.high
+        + ' on the far half. The span is being culled with the post it hangs from, so the '
+        + 'gallery ends at the golfer instead of running out of frame.');
+
+    // 7. furniture is laid, not painted on
     const vault = r.props.find(x => x.id === 'vault');
     const cellar = r.props.find(x => x.id === 'cellar');
     if (!(vault.kinds['2'] > 0))
@@ -268,7 +302,8 @@ module.exports = {
           + 'the camera, so it slides along with the player instead of being passed.');
     }
 
-    return ['ropes ' + vault.kinds['2'] + ' + gallery ' + vault.kinds['1']
+    return ['rope near/far ' + r.rope.low + '/' + r.rope.high
+      + ', ropes ' + vault.kinds['2'] + ' + gallery ' + vault.kinds['1']
       + ', lamps ' + cellar.kinds['3'] + ', all sorted and world fixed'
       + ', four strips ' + shapes.join('/') + ', four kinds of best'
       + ', floor ' + r.floorFirst + '->' + r.floorLast + ' under a ceiling of '
