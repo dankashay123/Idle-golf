@@ -36,7 +36,7 @@ the failure is silent. Always play it over http.
 
 | check | what would break without it |
 | --- | --- |
-| `smoke` | The game boots, earns, cards holes, survives every tab, and runs a Depths contest end to end. If this fails nothing below it means anything. |
+| `smoke` | The only check that asserts on the game as a whole: `derive()` returns finite non-negative numbers, the canvas paints something and keeps changing, all ten screens render the row counts their data tables say they should, the loop earns and cards a hole, a Depths contest starts and pays, and the result reaches the save. If this fails nothing below it means anything. |
 | `render` | Every course in every weather and every Depths floor draws, and the ground pass stays in budget. Themes are authored as literal tables in places, so a colour the renderer newly depends on can be missing on exactly one course — which is how the Depths went down on its first frame once. |
 | `hazards` | No bunker or pond touches a putting surface, and no hole is left without a bunker. Both are rejections that have to keep working, and they pull against each other. |
 | `icons` | Every icon id a list asks for exists, every drawing is 12×12, and no two things in the game share one. Icons were once keyed off the stat each thing moved, so one golf ball stood for seventeen different things. |

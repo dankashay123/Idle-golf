@@ -10,9 +10,8 @@ module.exports = {
       QUIET = true; DEV.gold(500); DEV.upg(6); DEV.set(3); DEV.skills(); QUIET = false; hideSheet();
       const gold = S.gold, lv = S.lv, upg = S.upg.drive, bag = S.bag.length;
       save();
-      const raw = JSON.parse(localStorage.getItem(Object.keys(localStorage)
-        .find(k => /mulligan|golf|mm/i.test(k)) || ''));
-      if (!raw) return { skip: 'could not find the save key' };
+      const raw = JSON.parse(localStorage.getItem(KEY) || 'null');
+      if (!raw) return { skip: 'nothing under ' + KEY };
 
       // rough it up the way an older build would have left it
       raw.upg.aRungThatWasRemoved = 40;
@@ -23,8 +22,7 @@ module.exports = {
       raw.bag.push({ uid: 999, slot: 'ball', rar: 99, ilvl: -3, enh: 'x', aff: null });
       delete raw.tal;                                   // a field a later build added
 
-      const key = Object.keys(localStorage).find(k => /mulligan|golf|mm/i.test(k));
-      localStorage.setItem(key, JSON.stringify(raw));
+      localStorage.setItem(KEY, JSON.stringify(raw));
       Object.keys(S).forEach(k => delete S[k]);
       Object.assign(S, defaultState());
       load(); initState(); migrate();
