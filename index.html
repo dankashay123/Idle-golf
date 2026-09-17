@@ -354,6 +354,17 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
 /* a class selector beats the user agent rule for [hidden], so without this
    the strip from the last wager stayed on the readout all round */
 .rstrip[hidden]{display:none}
+/* the milestone an attribute is working toward */
+.mile{margin-top:6px;opacity:.72}
+.mile.on{opacity:1}
+.mbar{height:2px;background:#12251C;overflow:hidden}
+.mbar i{display:block;height:100%;background:var(--dim)}
+.mile.on .mbar i{background:var(--brass)}
+.mtx{font-size:var(--f0);letter-spacing:.02em;color:var(--faint);margin-top:3px}
+.mile.on .mtx{color:var(--brass)}
+.mtx b{color:var(--chalk)}
+.mile.on .mtx b{color:var(--brass)}
+.mtx i{font-style:normal;color:var(--dim)}
 .rstrip i{flex:1 1 0;min-width:1px;height:2px;background:#162C22;transition:height .12s linear}
 .rstrip i.lit{background:#2E4A3C}
 .rstrip i.on{background:var(--rc,var(--brass))}
@@ -1999,14 +2010,28 @@ const B = {
   XP_EVENT: 2000, XP_EVENT_P: 1.3,
   PARA_BASE: 1.2e5, PARA_P: 1.15,
 
+  /* ---- ATTRIBUTES ----
+     Four lines that each add a percent to a stat you can also buy on the Range,
+     take as a talent and find as a trophy. Sixty levels of sprinkling a
+     percentage over four bars is not a build, and there is nothing in it to aim
+     at. Each one now carries a MILESTONE: pour enough into it and it does
+     something none of the other systems can do. The gates are deliberately past
+     what a career can buy in all four: sixty levels pay 180 attribute points
+     and the four gates want 240 between them, so three is the most anyone gets
+     and taking the third costs every loose point you have. ---- */
   STATS: [
-    { id:'drive',   n:'Drive',   ic:'muscle', d:'yardage on every swing',        v:'+1.2% swing power' },
-    { id:'tempo',   n:'Tempo',   ic:'beat',   d:'swings per second',             v:'+0.30% tempo' },
-    { id:'touch',   n:'Touch',   ic:'touch', d:'contact off the middle',        v:'+0.10pp pure, +0.03x payoff' },
-    { id:'fortune', n:'Fortune', ic:'coins',  d:'what the week is worth',        v:'+0.7% purse, +0.08pp luck' }
+    { id:'drive',   n:'Drive',   ic:'muscle', d:'yardage on every swing',  v:'+1.2% swing power',
+      mile:{ at:60, n:'Off The Tee', d:'the first swing of every hole lands for triple' } },
+    { id:'tempo',   n:'Tempo',   ic:'beat',   d:'swings per second',       v:'+0.30% tempo',
+      mile:{ at:60, n:'Quick Play', d:'no walk between holes worth speaking of' } },
+    { id:'touch',   n:'Touch',   ic:'touch',  d:'contact off the middle',  v:'+0.10pp pure, +0.03x payoff',
+      mile:{ at:60, n:'Flush', d:'a pure strike goes straight through armour' } },
+    { id:'fortune', n:'Fortune', ic:'coins',  d:'what the week is worth',  v:'+0.7% purse, +0.08pp luck',
+      mile:{ at:60, n:'Appearance Fee', d:'every hole banks a tenth of its purse the moment you tee it' } }
   ],
   STAT_V: { drive:{pow:0.012}, tempo:{spd:0.0030}, touch:{crt:0.0010, cpw:0.03},
             fortune:{gld:0.007, drp:0.0008} },
+  MILE_TEE: 3, MILE_FEE: 0.10,
 
   // Three trees. Depth gates are points spent IN THAT TREE, so going deep
   // means committing; the capstones are 22-point commitments and mutually
@@ -2045,28 +2070,62 @@ const B = {
   ],
   TREE_GATES: [0, 5, 12, 22],
 
-  // Paragon. cap 0 means uncapped: those are the two Core primaries.
+  /* ---- PARAGON ----
+     Sixteen lines that each added a percent to one of the same ten stats the
+     Range sells, the attributes grant, the talents grant and the trophies
+     grant. Four systems saying "+1.5% swing power" is one system with four
+     front doors, and there is nothing to look forward to in any of them.
+     Paragon is the endless one, so it gets the part of the game the others
+     cannot reach: the card, the wager book, the locker and the long game.
+     Nothing here moves a swing. Everything here makes a system pay better.
+     cap 0 means uncapped, and Core keeps the two primaries because a point
+     owed to a full category falls through to Core and has to land somewhere. */
   PARAGON: [
     { id:'core', n:'Core', v:'--brass', a:[
-      { id:'pow', n:'Swing Power',   k:'pow', v:0.015,   cap:0,   s:'%' },
-      { id:'elm', n:'Affinity Power',k:'elm', v:0.008,   cap:0,   s:'%' },
-      { id:'spd', n:'Swing Tempo',   k:'spd', v:0.00045, cap:500, s:'%' },
-      { id:'mst', n:'Provisional',   k:'mst', v:0.00120, cap:500, s:'pp' } ] },
-    { id:'off', n:'Offense', v:'--flag', a:[
-      { id:'crt', n:'Pure Strike',   k:'crt', v:0.00021, cap:500, s:'pp' },
-      { id:'cpw', n:'Strike Payoff', k:'cpw', v:0.00900, cap:500, s:'x' },
-      { id:'prc', n:'Affinity Chance',k:'prc',v:0.00015, cap:500, s:'pp' },
-      { id:'cdr', n:'Shot Recovery', k:'cdr', v:0.00024, cap:500, s:'%' } ] },
-    { id:'comp', n:'Composure', v:'--aurora', a:[
-      { id:'pierce', n:'Armour Pierce', k:'pierce', v:0.00105, cap:500, s:'%' },
-      { id:'clutch', n:'Clutch',        k:'clutch', v:0.00075, cap:500, s:'%' },
-      { id:'cond',   n:'Condition Grip',k:'cond',   v:0.00045, cap:500, s:'%' },
-      { id:'walk',   n:'Pace of Play',  k:'walk',   v:0.00030, cap:500, s:'%' } ] },
-    { id:'fort', n:'Fortune', v:'--myth', a:[
-      { id:'gld', n:'Purse',        k:'gld', v:0.00150, cap:500, s:'%' },
-      { id:'drp', n:'Gear Luck',    k:'drp', v:0.00030, cap:500, s:'pp' },
-      { id:'dgn', n:'Wager Haul',   k:'dgn', v:0.00120, cap:500, s:'%' },
-      { id:'xp',  n:'Career XP',    k:'xp',  v:0.00150, cap:500, s:'%' } ] }
+      { id:'pow', n:'Swing Power',   k:'pow', v:0.015, cap:0, s:'%',
+        d:'yardage on every swing' },
+      { id:'elm', n:'Affinity Power',k:'elm', v:0.008, cap:0, s:'%',
+        d:'what the ball in your bag is worth' } ] },
+
+    { id:'card', n:'The Card', v:'--flag', a:[
+      { id:'pay',   n:'Scoring',     k:'pay',   v:0.00160, cap:500, s:'%',
+        d:'what a good card is worth when the hole is signed' },
+      { id:'place', n:'Prize Money', k:'place', v:0.00200, cap:500, s:'%',
+        d:'the cheque at the end of an event' },
+      { id:'nine',  n:'Nine Goals',  k:'nine',  v:0.00240, cap:500, s:'%',
+        d:'what the front and back nine pay out' },
+      { id:'tick',  n:'Sponsorship', k:'tick',  v:0.00120, cap:500, s:'%',
+        d:'sponsor tickets, wherever they come from' } ] },
+
+    { id:'book', n:'The Wager Book', v:'--aurora', a:[
+      { id:'wdrive',  n:'Long Drive',     k:'wdrive',  v:0.00300, cap:500, s:'%',
+        d:'how far the longest drive of the day measures' },
+      { id:'wisland', n:'Island Nerve',   k:'wisland', v:0.00018, cap:500, s:'pp',
+        d:'your chance of holding the green' },
+      { id:'wchip',   n:'Floodlit Touch', k:'wchip',   v:0.00020, cap:500, s:'pp',
+        d:'your chance a chip drops' },
+      { id:'wvault',  n:'Endurance',      k:'wvault',  v:0.00060, cap:500, s:'%',
+        d:'less work in every Vault floor' } ] },
+
+    { id:'lock', n:'The Locker', v:'--myth', a:[
+      { id:'reforge', n:'Steady Hands', k:'reforge', v:0.00040, cap:500, s:'pp',
+        d:'your chance a reforge takes' },
+      { id:'attune',  n:'Attunement',   k:'attune',  v:0.00070, cap:500, s:'%',
+        d:'off the shard price of a re-attune or an ascension' },
+      { id:'scrap',   n:'Scrap Value',  k:'scrap',   v:0.00200, cap:500, s:'%',
+        d:'more shards out of everything you scrap' },
+      { id:'fit',     n:'Club Fitting', k:'fit',     v:0.00600, cap:500, s:'lv',
+        d:'item levels on everything that drops' } ] },
+
+    { id:'long', n:'The Long Game', v:'--verdant', a:[
+      { id:'plegacy', n:'Legacy',    k:'plegacy', v:0.00200, cap:500, s:'%',
+        d:'legacy banked when you sign the last card' },
+      { id:'pdisc',   n:'Collector', k:'pdisc',   v:0.00060, cap:500, s:'%',
+        d:'off the cost of turning up a new trophy' },
+      { id:'pcurate', n:'Curator',   k:'pcurate', v:0.00050, cap:500, s:'%',
+        d:'off the cost of raising one you have' },
+      { id:'paway',   n:'Caddie',    k:'paway',   v:0.00070, cap:500, s:'%',
+        d:'more of your pace kept while you are away' } ] }
   ],
   WALK_MIN_FLOOR: 0.55, ONESWING_EVERY: 12, ONESWING_MULT: 8,
 
@@ -2231,48 +2290,69 @@ const B = {
   DISC_COST: 6, DISC_R: 1.215,
   // Cost has to outrun gain, or every level is cheaper per unit of power than
   // the one before and buying is infinitely profitable. The four multiplying
-  // trophies were at 1.45-1.50 gain against a 1.34 cost step, so their exponent
-  // was BELOW one: a straight runaway. Multipliers now pay a steeper ladder
-  // than the flat ones, and every trophy has a ceiling so nothing can be walked
-  // out to nonsense.
-  TR_COST: 3, TR_R: 1.42, TR_R_MULT: 1.85, TR_MAX: 250,
+  // trophies were once at 1.45-1.50 gain against a 1.34 cost step, so their
+  // exponent was BELOW one: a straight runaway. That was held by two constants
+  // that had to stay in the right order by hand, and only worked while exactly
+  // four trophies multiplied. Now every trophy pays a ladder of its OWN gain
+  // raised to TR_POW, so the margin is the same on all thirty and cannot be
+  // broken by adding another. TR_R is what a mechanic trophy pays, having no
+  // gain of its own to price against. Every trophy has a ceiling as well, so
+  // nothing can be walked out to nonsense.
+  TR_COST: 3, TR_R: 1.42, TR_MAX: 250,
   TR_TIER: { B:{ n:'Bronze', m:1.00, w:60, v:'--r1' },
              A:{ n:'Silver', m:1.65, w:30, v:'--r2' },
              S:{ n:'Gold',   m:2.70, w:10, v:'--r4' } },
+  /* ---- THE TROPHY ROOM ----
+     Twenty of the thirty were flat adds: "+12% swing power", which is a Range
+     upgrade bought in a different shop and dressed up as a discovery. Every
+     trophy COMPOUNDS now, so the room is the one permanent multiplying layer
+     in the game and a level anywhere in it is worth having. Each carries its
+     own gain, and its cost ladder is that gain raised to TR_POW, so cost
+     outruns gain by the same margin on all thirty and no trophy can be walked
+     out into a runaway. Between them they cover the ten stats a swing and a
+     purse are made of, twice each, which leaves the conditional family --
+     armour, clutch, cooldowns, pace, conditions, resonance, experience --
+     entirely to the talent trees. ---- */
   TROPHY: [
-    // the originals, mechanics unchanged
-    { id:'heart',  t:'S', n:'Persimmon Heart',   k:'*pow',  d:'yardage on every swing' },
-    { id:'ley',    t:'S', n:'Ley Line Grip',     k:'*mst',  d:'your chance of a provisional' },
-    { id:'gilded', t:'S', n:'Gilded Card',       k:'*gld',  d:'prize money' },
-    { id:'oath',   t:'A', n:'Oathstone',         k:'*elm',  d:'power of ball affinities' },
+    // the four originals, still the biggest multipliers in the room
+    { id:'heart',  t:'S', n:'Persimmon Heart',   k:'*pow',  g:1.45, d:'yardage on every swing' },
+    { id:'ley',    t:'S', n:'Ley Line Grip',     k:'*mst',  g:1.30, d:'your chance of a provisional' },
+    { id:'gilded', t:'S', n:'Gilded Card',       k:'*gld',  g:1.50, d:'prize money' },
+    { id:'oath',   t:'A', n:'Oathstone',         k:'*elm',  g:1.40, d:'power of ball affinities' },
+    // the six that change how a run is played, mechanics unchanged
     { id:'sun',    t:'A', n:'Sunstone Marker',   k:'@sun',  d:'gear luck, +9pp a level' },
     { id:'chrono', t:'S', n:'Chronoglass',       k:'@chrono', d:'start each run one Tour Card higher' },
     { id:'seed',   t:'B', n:'Signing Bonus',     k:'@seed', d:'start each run with a purse' },
     { id:'rift',   t:'A', n:'Standing Invitation', k:'@rift', d:'entries come back faster, wagers start deeper' },
     { id:'ember',  t:'A', n:'Mythic Ember',      k:'@ember', d:'affinity chance, +2.5pp a level' },
     { id:'vault',  t:'S', n:"Founder's Locker",  k:'@vault', d:'keep fifty levels of every Range upgrade through retirement' },
-    // found in the room
-    { id:'hickory',t:'B', n:'Hickory Shaft',     k:'pow', v:0.12,  d:'+12% swing power' },
-    { id:'gutta',  t:'B', n:'Gutta Percha',      k:'pow', v:0.09,  d:'+9% swing power' },
-    { id:'mythtee',t:'S', n:'Mythril Tee',       k:'pow', v:0.22,  d:'+22% swing power' },
-    { id:'feath',  t:'A', n:'Featherie',         k:'elm', v:0.18,  d:'+18% affinity power' },
-    { id:'compass',t:'B', n:'Ley Compass',       k:'elm', v:0.11,  d:'+11% affinity power' },
-    { id:'brassie',t:'B', n:'Brassie',           k:'crt', v:0.008, d:'+0.8pp pure strike' },
-    { id:'niblick',t:'A', n:'Niblick',           k:'cpw', v:0.26,  d:'+0.26x strike payoff' },
-    { id:'spikes', t:'B', n:'Steel Spikes',      k:'spd', v:0.016, d:'+1.6% tempo' },
-    { id:'whistle',t:'B', n:'Practice Swing',    k:'mst', v:0.020, d:'+2pp provisional chance' },
-    { id:'yardage',t:'A', n:'Yardage Book',      k:'xp',  v:0.13,  d:'+13% career experience' },
-    { id:'glass',  t:'A', n:'Storm Glass',       k:'prc', v:0.012, d:'+1.2pp affinity chance' },
-    { id:'divot',  t:'A', n:'Divot Tool',        k:'pierce', v:0.045, d:'ignore 4.5% more armour' },
-    { id:'sunday', t:'S', n:'Sunday Bag',        k:'clutch', v:0.07, d:'+7% on signature holes' },
-    { id:'reader', t:'S', n:'Green Reader',      k:'reson', v:0.05, d:'+0.05 to a damped affinity' },
-    { id:'clock',  t:'A', n:'Pace Clock',        k:'walk', v:0.02, d:'-2% walk-in time' },
-    { id:'deepwdg',t:'A', n:"Gambler's Wedge",  k:'dgn', v:0.15,  d:'+15% wager haul' },
-    { id:'marker', t:'B', n:'Lucky Marker',      k:'drp', v:0.014, d:'+1.4pp gear luck' },
-    { id:'token',  t:'B', n:'Range Token',       k:'gld', v:0.12,  d:'+12% purse' },
-    { id:'watch',  t:'A', n:'Pocket Watch',      k:'cdr', v:0.03,  d:'-3% shot cooldowns' },
-    { id:'sock',   t:'B', n:'Wind Sock',         k:'cond', v:0.025, d:'softens punishing conditions' }
+    // and twenty more, two to a stat: one you will turn up early and one worth
+    // building a room around
+    { id:'hickory',t:'B', n:'Hickory Shaft',     k:'*pow', g:1.09, d:'yardage on every swing' },
+    { id:'mythtee',t:'S', n:'Mythril Tee',       k:'*pow', g:1.26, d:'yardage on every swing' },
+    { id:'spikes', t:'B', n:'Steel Spikes',      k:'*spd', g:1.05, d:'swings per second' },
+    { id:'clock',  t:'A', n:'Pace Clock',        k:'*spd', g:1.15, d:'swings per second' },
+    { id:'brassie',t:'B', n:'Brassie',           k:'*crt', g:1.05, d:'your chance of a pure strike' },
+    { id:'sunday', t:'S', n:'Sunday Bag',        k:'*crt', g:1.16, d:'your chance of a pure strike' },
+    { id:'gutta',  t:'B', n:'Gutta Percha',      k:'*cpw', g:1.07, d:'what a pure strike pays' },
+    { id:'niblick',t:'A', n:'Niblick',           k:'*cpw', g:1.18, d:'what a pure strike pays' },
+    { id:'compass',t:'B', n:'Ley Compass',       k:'*elm', g:1.08, d:'power of ball affinities' },
+    { id:'feath',  t:'A', n:'Featherie',         k:'*elm', g:1.19, d:'power of ball affinities' },
+    { id:'sock',   t:'B', n:'Wind Sock',         k:'*prc', g:1.06, d:'your chance an affinity triggers' },
+    { id:'glass',  t:'A', n:'Storm Glass',       k:'*prc', g:1.14, d:'your chance an affinity triggers' },
+    { id:'token',  t:'B', n:'Range Token',       k:'*gld', g:1.09, d:'prize money' },
+    { id:'reader', t:'S', n:'Gate Receipts',     k:'*gld', g:1.20, d:'prize money' },
+    { id:'marker', t:'B', n:'Lucky Marker',      k:'*drp', g:1.05, d:'your chance a hole drops gear' },
+    { id:'divot',  t:'A', n:'Divot Tool',        k:'*drp', g:1.12, d:'your chance a hole drops gear' },
+    { id:'whistle',t:'B', n:"Caddie's Ledger",   k:'*dgn', g:1.07, d:'your take from the wager book' },
+    { id:'deepwdg',t:'A', n:"Gambler's Wedge",   k:'*dgn', g:1.16, d:'your take from the wager book' },
+    { id:'watch',  t:'B', n:'Practice Swing',    k:'*mst', g:1.06, d:'your chance of a provisional' },
+    { id:'yardage',t:'A', n:'Yardage Book',      k:'*mst', g:1.15, d:'your chance of a provisional' }
   ],
+  // A trophy's cost ladder is its own gain raised to this. Above one, so cost
+  // outruns gain on every trophy in the room by construction rather than by a
+  // pair of constants somebody has to keep checking against each other.
+  TR_POW: 1.35,
   SUN_ADD: 0.09, EMBER_ADD: 0.025, SEED_MULT: 2.4, RIFT_FLOOR: 1.5, RIFT_REGEN: 0.86,
   RIFT_MIN_WAIT: 0.25,
   VAULT_UPG: 50,
@@ -2450,12 +2530,24 @@ function migrate(){
   for(const k in S.perkOn)  if(!B.PERKS.some(p => p.id === k)) delete S.perkOn[k];
   if(S.dgnRun && !B.DGN.some(d => d.id === S.dgnRun.id && d.mode === S.dgnRun.mode)) S.dgnRun = null;
   for(const k in S.achDone) if(!B.ACH.some(a => a.id === k)) delete S.achDone[k];
+  // Paragon lines and whole categories have changed shape, and a point spent on
+  // a line that no longer exists belongs to the player, not to the line. They
+  // come back as unspent points, dealt round the surviving categories the same
+  // way paragon deals them in the first place. Deleting them silently is how a
+  // save loses four hundred levels of work to a balance patch.
+  let orphan = 0;
   for(const k in S.paraSpent){
     const [ci, ai] = k.split('.');
     const cat = B.PARAGON.find(x => x.id === ci);
-    if(!cat || !cat.a.some(x => x.id === ai)) delete S.paraSpent[k];
+    if(!cat || !cat.a.some(x => x.id === ai)){ orphan += S.paraSpent[k] || 0; delete S.paraSpent[k]; }
   }
-  for(const k in S.paraPts) if(!B.PARAGON.some(c => c.id === k)) delete S.paraPts[k];
+  for(const k in S.paraPts)
+    if(!B.PARAGON.some(c => c.id === k)){ orphan += S.paraPts[k] || 0; delete S.paraPts[k]; }
+  for(let i = 0; i < orphan; i++){
+    const cat = B.PARAGON[i % B.PARAGON.length];
+    S.paraPts[cat.id] = (S.paraPts[cat.id] || 0) + 1;
+  }
+  if(orphan > 0) S.paraRefund = (S.paraRefund || 0) + orphan;
 
   S.carry = (S.carry || []).filter(id => B.SKILL.some(s => s.id === id));
   if(!S.carry.length) S.carry = ['thunder'];
@@ -2504,6 +2596,11 @@ const upgMult = k => B.UPG.reduce((a,u) => u.k === k && u.g ? a * Math.pow(u.g, 
    folded into gear stats so every downstream system already understands them;
    the rest are read by the systems they belong to.
    ========================================================================= */
+// Has this attribute been taken far enough to earn its milestone?
+const mileOn = id => {
+  const st = B.STATS.find(x => x.id === id);
+  return !!(st && st.mile && (S.stat[id] || 0) >= st.mile.at);
+};
 const talLv = id => S.tal[id] || 0;
 const paraLv = (c, a) => S.paraSpent[c + '.' + a] || 0;
 const treeSpent = tree => tree.t.reduce((n, x) => n + talLv(x.id), 0);
@@ -2513,15 +2610,24 @@ const paraTotal = () => Object.keys(S.paraSpent).reduce((n, k) => n + S.paraSpen
 const trophyDef = id => B.TROPHY.find(t => t.id === id);
 const found = id => (S.relic[id] || 0) > 0;
 const trophiesFound = () => B.TROPHY.reduce((n, t) => n + (found(t.id) ? 1 : 0), 0);
-// Everything a trophy grants that is not one of the ten special mechanics.
-function trophyBonus(){
-  const o = {};
-  for(const t of B.TROPHY){
-    if(t.k[0] === '*' || t.k[0] === '@') continue;
+// What the room multiplies, keyed by stat and built once. Every trophy either
+// multiplies a stat or runs a mechanic, so there is nothing additive left to
+// collect: trophyBonus used to walk all thirty every frame to return an empty
+// object.
+const TR_MULT = {};
+for(const t of B.TROPHY){
+  if(!t.g || t.k[0] !== '*') continue;
+  (TR_MULT[t.k.slice(1)] = TR_MULT[t.k.slice(1)] || []).push(t);
+}
+function relMult(k){
+  const list = TR_MULT[k];
+  if(!list) return 1;
+  let m = 1;
+  for(const t of list){
     const n = S.relic[t.id] || 0;
-    if(n) o[t.k] = (o[t.k] || 0) + t.v * n;
+    if(n) m *= Math.pow(t.g, n);
   }
-  return o;
+  return m;
 }
 /* ---- honours ---- */
 const tally = k => S.tally[k] || 0;
@@ -2563,7 +2669,13 @@ function achBonus(){
 function career(){
   const o = { pow:0, spd:0, crt:0, cpw:0, elm:0, prc:0, gld:0, drp:0, dgn:0, mst:0,
               pierce:0, boss:0, clutch:0, cdr:0, xp:0, reson:0, dfloor:0, walk:0,
-              cond:0, sharp:0, dbl:0, onesw:0 };
+              cond:0, sharp:0, dbl:0, onesw:0,
+              // paragon's own territory: none of these touch a swing, and none
+              // of them are sold anywhere else in the game
+              pay:0, place:0, nine:0, tick:0,
+              wdrive:0, wisland:0, wchip:0, wvault:0,
+              reforge:0, attune:0, scrap:0, fit:0,
+              plegacy:0, pdisc:0, pcurate:0, paway:0 };
   for(const s of B.STATS){
     const n = S.stat[s.id] || 0; if(!n) continue;
     const v = B.STAT_V[s.id];
@@ -2579,8 +2691,6 @@ function career(){
       const n = paraLv(cat.id, a.id); if(!n) continue;
       o[a.k] += a.v * n;
     }
-  const T = trophyBonus();
-  for(const k in T) if(o[k] !== undefined) o[k] += T[k];
   const A = achBonus();
   for(const k in A) if(o[k] !== undefined) o[k] += A[k];
   return o;
@@ -2670,38 +2780,39 @@ function derive(){
   const G = gearStats();
   const ch = S.chaos || { y:1, g:1, s:1, c:0, p:0, dl:0 };
 
-  let pow = B.BASE_POWER * upgMult('pow') * (1 + G.pow) * Math.pow(1.45, relLv('heart')) * perkMult('pow');
+  let pow = B.BASE_POWER * upgMult('pow') * (1 + G.pow) * relMult('pow') * perkMult('pow');
 
-  const spdRaw = B.BASE_SPEED * upgMult('spd') * (1 + G.spd) * ch.s * (1 + buffVal('gale')/100) * perkMult('spd');
+  const spdRaw = B.BASE_SPEED * upgMult('spd') * (1 + G.spd) * relMult('spd') * ch.s
+    * (1 + buffVal('gale')/100) * perkMult('spd');
   const spd = Math.min(B.SPEED_CAP, spdRaw);
   if(spdRaw > B.SPEED_CAP) pow *= 1 + (spdRaw/B.SPEED_CAP - 1) * B.SPEED_OVERFLOW;
 
-  const crit = Math.min(B.CRIT_CAP, B.CRIT_BASE
+  const crit = Math.min(B.CRIT_CAP, (B.CRIT_BASE
     + upgLv('face')*B.CRIT_ADD.face + upgLv('simul')*B.CRIT_ADD.simul
-    + G.crt + ch.c + buffVal('ace'));
-  const cpw = B.CRIT_MULT + upgLv('sweet')*B.CPW_ADD + G.cpw;
+    + G.crt + ch.c + buffVal('ace')) * relMult('crt'));
+  const cpw = (B.CRIT_MULT + upgLv('sweet')*B.CPW_ADD + G.cpw) * relMult('cpw');
 
   const ball0 = S.equip.ball;
   const reson = resonance(ball0 && ball0.el);
-  const elem = upgMult('elm') * (1 + G.elm) * Math.pow(1.40, relLv('oath')) * reson;
+  const elem = upgMult('elm') * (1 + G.elm) * relMult('elm') * reson;
   // Affinity chance is capped on the course, but the raw figure is kept: the
   // Floodlit Green reads the uncapped value, so over-investing in affinity has
   // somewhere to pay off.
-  const procRaw = B.PROC_BASE + upgLv('groove')*B.PROC_ADD
-    + G.prc + ch.p + relLv('ember')*B.EMBER_ADD;
+  const procRaw = (B.PROC_BASE + upgLv('groove')*B.PROC_ADD
+    + G.prc + ch.p + relLv('ember')*B.EMBER_ADD) * relMult('prc');
   const proc = Math.min(B.PROC_CAP, procRaw);
 
-  const gold = upgMult('gld') * (1 + G.gld) * Math.pow(1.50, relLv('gilded'))
+  const gold = upgMult('gld') * (1 + G.gld) * relMult('gld')
     * ch.g * (1 + buffVal('windfall')/100) * perkMult('gold');
-  const drop = clamp(B.DROP_BASE + upgLv('marker')*B.DROP_ADD + G.drp + ch.dl
-    + relLv('sun')*B.SUN_ADD + perkAdd('drop'), 0, 1);
-  const dgnY = (1 + upgLv('lantern')*B.DGN_ADD + G.dgn);
+  const drop = clamp((B.DROP_BASE + upgLv('marker')*B.DROP_ADD + G.drp + ch.dl
+    + relLv('sun')*B.SUN_ADD + perkAdd('drop')) * relMult('drp'), 0, 1);
+  const dgnY = (1 + upgLv('lantern')*B.DGN_ADD + G.dgn) * relMult('dgn');
 
   // Provisional: the chance a swing plays a second ball. Whole numbers are
   // guaranteed extra balls, the remainder is a roll.
   let mst = upgLv('provis')*B.MST_ADD.provis + upgLv('second')*B.MST_ADD.second
     + G.mst + buffVal('rally')/100;
-  mst *= Math.pow(1.30, relLv('ley'));
+  mst *= relMult('mst');
   mst = clamp(mst, 0, B.MST_CAP);
 
   // Elemental contribution to expected damage, which depends entirely on what
@@ -2866,17 +2977,24 @@ function startHole(){
   // a strike from a golfer at the tempo cap clearing this hole in par time
   const refSwing = S.yardsMax / (S.parTime * B.SPEED_CAP);
   S.armor = isClosing(S.hole) ? refSwing * B.ARMOR_MULT * (isSunday(S.hole) ? 1.45 : 1) : 0;
-  S.walkMin = Math.max(B.WALK_MIN_FLOOR, B.WALK_MIN * (1 - Math.min(0.45, D.C.walk)));
+  S.walkMin = mileOn('tempo') ? 0.05
+            : Math.max(B.WALK_MIN_FLOOR, B.WALK_MIN * (1 - Math.min(0.45, D.C.walk)));
   S.elapsed = 0; S.holeGold = 0; S.frost = 0; S.burn = 0; S.burnT = 0;
   S.swingT = 0;
+  // Off The Tee has to know which swing is the first one on this hole.
+  S.holeSwings = 0;
+  if(mileOn('fortune')){
+    const fee = S.purse * B.MILE_FEE;
+    S.gold += fee; S.holeGold += fee; Meter.add(fee);
+  }
   Scene.newHole(S.hole, S.tier);
 }
 
 // soft=true for continuous sources like burn, which armour taxes as a
 // flat share instead of biting each tick to nothing.
-function damage(amt, D, soft){
+function damage(amt, D, soft, through){
   if(amt <= 0 || S.yards <= 0) return 0;
-  if(S.armor > 0){
+  if(S.armor > 0 && !through){
     const C = D && D.C ? D.C : career();
     const armor = S.armor * Math.max(0, 1 - C.pierce);
     amt *= 1 + C.boss + C.clutch;
@@ -2905,6 +3023,8 @@ function applyAffinity(D, dmg){
 
 function oneSwing(D, visual){
   let dmg = D.pow;
+  S.holeSwings = (S.holeSwings || 0) + 1;
+  if(S.holeSwings === 1 && mileOn('drive')) dmg *= B.MILE_TEE;
   if(S.frost > 0){ dmg *= 1 + B.ELEM_VAL.frost * D.elemEff; S.frost = 0; }
   const crit = Math.random() < D.crit;
   if(crit) dmg *= D.cpw;
@@ -2917,7 +3037,8 @@ function oneSwing(D, visual){
     applyAffinity(D, dmg);
     if(D.C.dbl) applyAffinity(D, dmg);
   }
-  let dealt = damage(dmg, D);
+  // Flush: a pure strike is not what armour is for
+  let dealt = damage(dmg, D, false, crit && mileOn('touch'));
   // the provisional: whole numbers are guaranteed, the remainder is a roll
   let extra = Math.floor(D.mst) + (Math.random() < (D.mst % 1) ? 1 : 0);
   while(extra-- > 0 && S.yards > 0){
@@ -3008,6 +3129,7 @@ function checkAch(){
 }
 
 function grantTickets(n, why){
+  n = Math.round(n * (1 + career().tick));
   if(n <= 0) return;
   S.tickets = Math.min(B.TICK_CAP, (S.tickets || 0) + n);
   if(why) toast('+' + n + ' sponsor ticket' + (n > 1 ? 's' : '') + ' \u00b7 ' + why);
@@ -3067,7 +3189,8 @@ function makeItem(ilvl, luck, floorRar, slotId){
     aff.push({ k:d.id, roll: d.lo + Math.random()*(d.hi - d.lo) });
   }
   const it = {
-    uid: S.uid++, slot: sl.id, rar, ilvl: Math.max(0, Math.round(ilvl)), enh: 0, aff,
+    uid: S.uid++, slot: sl.id, rar,
+    ilvl: Math.max(0, Math.round(ilvl + career().fit)), enh: 0, aff,
     el: sl.id === 'ball' ? B.ELEM[Math.floor(Math.random()*B.ELEM.length)].id : null
   };
   it.name = nameItem(it, sl);
@@ -3086,7 +3209,7 @@ function bagAdd(it){
   if(S.bag.length > B.BAG_CAP){
     S.bag.sort((a,b) => itemScore(b) - itemScore(a));
     const cut = S.bag.splice(B.BAG_CAP);
-    let sh = 0; cut.forEach(x => sh += 1 + x.rar);
+    let sh = 0; cut.forEach(x => sh += scrapValue(x));
     S.shard += sh;
     if(sh) toast('Locker was full, so I scrapped ' + cut.length + ' for <b>' + sh + '</b> shards');
   }
@@ -3098,8 +3221,15 @@ function equipItem(it){
   if(cur) S.bag.push(cur);
   renderBag(); renderVitals();
 }
+// What a club is worth broken up. One function, because it is read from the
+// locker, from the bulk scrap and from the overflow when the bag is full, and
+// Scrap Value has to reach all three.
+function scrapValue(it){
+  return Math.max(1, Math.round((1 + it.rar*1.8) * (1 + it.enh*0.35)
+    * (1 + career().scrap)));
+}
 function salvageItem(it){
-  const v = Math.round((1 + it.rar*1.8) * (1 + it.enh*0.35));
+  const v = scrapValue(it);
   S.shard += v;
   S.bag = S.bag.filter(x => x.uid !== it.uid);
   toast('Scrapped for <b>' + v + '</b> shards');
@@ -3109,7 +3239,8 @@ function enhCost(it){
   return Math.round(B.ENH_BASE * Math.pow(B.ENH_R, it.enh) * Math.pow(1.12, it.ilvl) * (1 + it.rar*0.5));
 }
 function enhChance(it){
-  return it.enh < B.ENH_SAFE ? 1 : clamp(1 - (it.enh - B.ENH_SAFE + 1)*0.072, 0.22, 1);
+  return it.enh < B.ENH_SAFE ? 1
+       : clamp(1 - (it.enh - B.ENH_SAFE + 1)*0.072 + career().reforge, 0.22, 1);
 }
 function enhance(it){
   if(it.enh >= B.ENH_MAX) return;
@@ -3125,7 +3256,8 @@ const lockCount = it => (it.aff || []).filter(a => a.lock).length;
 function rerollCost(it){
   const n = lockCount(it);
   const base = 6 + it.rar*5 + it.ilvl;
-  return Math.ceil(base * (n ? B.LOCK_MULT * Math.pow(B.LOCK_EACH, n - 1) : 1));
+  return Math.ceil(base * (n ? B.LOCK_MULT * Math.pow(B.LOCK_EACH, n - 1) : 1)
+    * (1 - Math.min(0.60, career().attune)));
 }
 function toggleLock(it, i){
   const a = it.aff[i]; if(!a) return;
@@ -3151,7 +3283,8 @@ function rerollItem(it){
   toast(kept.length ? 'Re-attuned around ' + kept.length + ' locked' : 'Re-attuned');
   renderBag(); renderVitals();
 }
-function ascendCost(it){ return Math.round((26 + it.ilvl*3) * Math.pow(2.35, it.rar)); }
+function ascendCost(it){ return Math.max(1, Math.round((26 + it.ilvl*3) * Math.pow(2.35, it.rar)
+  * (1 - Math.min(0.60, career().attune)))); }
 function ascendItem(it){
   if(it.rar >= B.RARITY.length-1){ toast('It is already Mythic'); return; }
   const c = ascendCost(it);
@@ -3184,7 +3317,10 @@ function regenKeys(dt){
   }
 }
 const dgnStartFloor = id => Math.max(0, Math.floor((S.dgnFloor[id] - 3) + relLv('rift')*B.RIFT_FLOOR + career().dfloor));
-const floorWork = f => B.DGN_WORK * Math.pow(B.DGN_WORK_STEP, f);
+// Endurance takes work off the floor itself, so it is felt on every rung
+// rather than only on the one you happen to die on.
+const floorWork = f => B.DGN_WORK * Math.pow(B.DGN_WORK_STEP, f)
+  * (1 - Math.min(0.60, career().wvault));
 // turn any number into an equivalent depth, so a long drive and a deep floor
 // can be paid on the same scale
 const asFloor = v => Math.max(0, Math.log(Math.max(1, v / B.DGN_WORK)) / Math.log(B.DGN_WORK_STEP));
@@ -3244,8 +3380,10 @@ function swingRoll(D){
   return dmg;
 }
 const islandChance = (D, made) => clamp(
-  B.ISLAND_BASE + D.crit*B.ISLAND_CRIT - made*B.ISLAND_DECAY, B.ISLAND_MIN, B.ISLAND_MAX);
-const chipChance = D => clamp((D.procRaw !== undefined ? D.procRaw : D.proc) * B.CHIP_PROC, 0.05, 0.88);
+  B.ISLAND_BASE + D.crit*B.ISLAND_CRIT + (D.C ? D.C.wisland : 0) - made*B.ISLAND_DECAY,
+  B.ISLAND_MIN, B.ISLAND_MAX);
+const chipChance = D => clamp((D.procRaw !== undefined ? D.procRaw : D.proc) * B.CHIP_PROC
+  + (D.C ? D.C.wchip : 0), 0.05, 0.88);
 
 function startDgn(d){
   if(S.dgnRun){ toast('One wager at a time'); return; }
@@ -3379,7 +3517,7 @@ function endDgn(d, R, D){
   if(R.mode === 'drive'){
     const log = R.log || [];
     const avg = log.length ? log.reduce((a,b) => a+b, 0)/log.length : 0;
-    fe = R.best > 0 ? asFloor(R.best) : -1;
+    fe = R.best > 0 ? asFloor(R.best * (1 + D.C.wdrive)) : -1;
     head = R.best > 0 ? 'Longest drive of the day: ' + fmt(R.best) + ' yards.'
                       : 'Not one of them found the fairway.';
     stats.push(['Drives hit', log.length + ' of ' + B.DRIVE_SHOTS]);
@@ -3540,14 +3678,16 @@ function resolveNine(){
   const bits = [];
   if(won){
     const r = p.goal.r;
-    if(r.k === 'purse'){ const g = hole*r.v; S.gold += g; Meter.add(g); bits.push(fmt(g) + ' purse'); }
+    const nine = 1 + D.C.nine;
+    if(r.k === 'purse'){ const g = hole*r.v*nine; S.gold += g; Meter.add(g); bits.push(fmt(g) + ' purse'); }
     else if(r.k === 'tick'){ grantTickets(r.v); bits.push(r.v + ' ticket' + (r.v>1?'s':'')); }
-    else { S[r.k] += r.v; bits.push(r.v + ' ' + (r.k === 'shard' ? 'shards' : r.k)); }
+    else { const v = Math.round(r.v*nine); S[r.k] += v;
+           bits.push(v + ' ' + (r.k === 'shard' ? 'shards' : r.k)); }
     S.ninesWon = (S.ninesWon || 0) + 1;
   }
   if(best){
     S.bestNine = N.total;
-    const g = hole * B.NINE_BEST_PAY; S.gold += g; Meter.add(g);
+    const g = hole * B.NINE_BEST_PAY * (1 + D.C.nine); S.gold += g; Meter.add(g);
     bits.push('best nine, ' + fmt(g));
   }
   const fm = n => n === 0 ? 'E' : n > 0 ? '+' + n : String(n);
@@ -3593,7 +3733,7 @@ function toast(html, cls){
 function finishHole(D){
   const ratio = S.elapsed / S.parTime;
   const sc = scoreFor(ratio);
-  const pay = S.purse * (1 - B.SWING_SHARE) * sc.pay;
+  const pay = S.purse * (1 - B.SWING_SHARE) * sc.pay * (1 + D.C.pay);
   S.gold += pay; Meter.add(pay);
 
   const idx = holeInRound(S.hole) - 1;
@@ -3660,7 +3800,8 @@ function endTournament(){
   // the hole purse the away summary reported, so most of an offline session's
   // income was arriving off the books.
   const rate = OFFLINE ? B.OFFLINE_RATE * B.OFFLINE_PURSE : 1;
-  const cash = purseFor(S.hole - 1, S.tier, D.gold) * B.PLACE_PURSE * share * rate;
+  const cash = purseFor(S.hole - 1, S.tier, D.gold) * B.PLACE_PURSE * share * rate
+              * (1 + D.C.place);
   const pts = Math.round(cupPoints(t, share) * rate);
   S.points += pts; S.gold += cash; Meter.add(cash);
   grantTickets(Math.round((B.TICK_EVENT + (beat ? B.TICK_WIN : 0)) * rate), 'event finish');
@@ -3730,13 +3871,19 @@ function climb(n, quiet, force){
    ========================================================================= */
 function legacyGain(){
   if((S.eventsPlayed || 0) < B.RETIRE_EVENTS) return 0;
-  return Math.floor(B.LEGACY_K * Math.pow(S.tier + 1, B.LEGACY_EXP) * Math.pow(B.CUP_MULT, S.cups));
+  return Math.floor(B.LEGACY_K * Math.pow(S.tier + 1, B.LEGACY_EXP) * Math.pow(B.CUP_MULT, S.cups)
+    * (1 + career().plegacy));
 }
-const discoverCost = () => Math.ceil(B.DISC_COST * Math.pow(B.DISC_R, trophiesFound()));
+const discoverCost = () => Math.max(1, Math.ceil(B.DISC_COST * Math.pow(B.DISC_R, trophiesFound())
+  * (1 - Math.min(0.60, career().pdisc))));
 const trophyMult = t => t.k && t.k[0] === '*';
-const trophyRatio = t => trophyMult(t) ? B.TR_R_MULT : B.TR_R;
-const upgradeCost = t => Math.ceil(B.TR_COST * B.TR_TIER[t.t].m
-  * Math.pow(trophyRatio(t), S.relic[t.id] || 0));
+// Each multiplying trophy pays its own ladder, priced off its own gain, so the
+// invariant that cost has to outrun gain holds for all thirty at once instead
+// of resting on two constants staying in the right order.
+const trophyRatio = t => t.g ? Math.pow(t.g, B.TR_POW) : B.TR_R;
+const upgradeCost = t => Math.max(1, Math.ceil(B.TR_COST * B.TR_TIER[t.t].m
+  * Math.pow(trophyRatio(t), S.relic[t.id] || 0)
+  * (1 - Math.min(0.50, career().pcurate))));
 function discover(){
   const pool = B.TROPHY.filter(t => !found(t.id));
   if(!pool.length){ toast('Every trophy is in the room'); return; }
@@ -3808,7 +3955,7 @@ function offline(){
 
   // Play the holes out rather than estimating a rate: the round advances, the
   // card fills, events finish and the schedule moves on, all at a discount.
-  const holes = Math.min(20000, Math.floor(dt * B.OFFLINE_RATE / secs));
+  const holes = Math.min(20000, Math.floor(dt * B.OFFLINE_RATE * (1 + Math.min(1, D.C.paway)) / secs));
 
   // Measured rather than assumed: the loop below resolves events as it goes,
   // and those pay too. Reporting only the hole purse had the summary claiming
@@ -7267,7 +7414,7 @@ function renderLegacy(){
     const col = 'var(' + tier.v + ')';
     // every figure goes through fmt, and anything the game clamps is shown
     // clamped: a trophy that reads +5.05 into a stat that stops at 1.00 is a lie
-    const M = { '*pow':1.45, '*mst':1.30, '*gld':1.50, '*elm':1.40 }[t.k];
+    const M = t.g;
     let eff;
     if(M) eff = '\u00d7' + fmt(Math.pow(M, lv));
     else if(t.k === '@sun') eff = '+' + fmt(lv*B.SUN_ADD*100) + 'pp';
@@ -7279,18 +7426,7 @@ function renderLegacy(){
       eff = '\u2212' + Math.round((1-w)*100) + '% wait' + (w <= B.RIFT_MIN_WAIT ? ' (max)' : ''); }
     else if(t.k === '@seed') eff = 'start with ' + Math.min(6, lv) + ' cards of purse'
       + (lv >= 6 ? ' (max)' : '');
-    else if(t.k === 'reson') eff = 'damped affinity ' + Math.min(1, B.DAMPEN + t.v*lv).toFixed(2)
-      + (B.DAMPEN + t.v*lv >= 1 ? ' (full)' : '');
-    else if(t.k === 'pierce') eff = Math.round(Math.min(1, t.v*lv)*100) + '% of armour'
-      + (t.v*lv >= 1 ? ' (all)' : '');
-    else if(t.k === 'walk') eff = '\u2212' + Math.round(Math.min(0.45, t.v*lv)*100) + '% walk'
-      + (t.v*lv >= 0.45 ? ' (max)' : '');
-    else if(t.k === 'cdr') eff = '\u2212' + Math.round(Math.min(0.75, t.v*lv)*100) + '% cooldown'
-      + (t.v*lv >= 0.75 ? ' (max)' : '');
-    else if(t.k === 'mst') eff = '+' + fmt(t.v*lv*100) + 'pp';
-    else if(t.k === 'crt' || t.k === 'prc' || t.k === 'drp') eff = '+' + fmt(t.v*lv*100) + 'pp';
-    else if(t.k === 'cpw') eff = '+' + fmt(t.v*lv) + 'x';
-    else eff = '+' + fmt(t.v*lv*100) + '%';
+    else eff = '\u2014';
     const capped = lv >= B.TR_MAX;
 
     const d = rowShell(idIcon(TROPHY_IC, t.id, t.k, 'ric', col));
@@ -7535,14 +7671,24 @@ function renderCareer(){
 function careerStats(w, C){
   w.innerHTML = '<div class="hint">'
     + (S.statPts ? '<b style="color:var(--brass)">' + S.statPts + ' to spend.</b> ' : '')
-    + 'Kept through retirement, and free to move.</div>';
+    + 'Kept through retirement, and free to move. A career is '
+    + (B.LV_MAX * B.LV_STAT) + ' points and each milestone wants '
+    + B.STATS[0].mile.at + ', so you will not see all four.</div>';
   for(const s of B.STATS){
     const n = S.stat[s.id] || 0;
     const d = document.createElement('div');
     d.className = 'row';
+    const m = s.mile, on = m && n >= m.at;
+    const bar = m
+      ? '<div class="mile' + (on ? ' on' : '') + '">'
+        + '<div class="mbar"><i style="width:' + clamp(n/m.at, 0, 1)*100 + '%"></i></div>'
+        + '<div class="mtx">' + (on ? '\u25c6 ' : '')
+        + '<b>' + m.n + '</b> \u00b7 ' + m.d
+        + (on ? '' : ' \u00b7 <i>' + (m.at - n) + ' more</i>') + '</div></div>'
+      : '';
     d.innerHTML = '<div><div class="nm">' + svgIcon(s.ic, 'tic') + s.n + '</div>'
       + '<div class="ds">' + s.d + ' \u00b7 ' + s.v + ' each</div>'
-      + '<div class="mt">Placed <i>' + n + '</i></div></div>'
+      + '<div class="mt">Placed <i>' + n + '</i></div>' + bar + '</div>'
       + '<div class="btnrow"><button class="mini' + (S.statPts ? ' go' : ' dim') + '">+1</button>'
       + '<button class="mini' + (S.statPts >= 10 ? ' go' : ' dim') + '">+10</button></div>';
     const bs = d.querySelectorAll('button');
@@ -7653,16 +7799,23 @@ function achReward(a){
   return '+' + Math.round(r.v*100) + '% ' + nm;
 }
 function careerParagon(w){
+  if(S.paraRefund > 0){
+    toast('Paragon was rebuilt \u00b7 <b>' + fmt(S.paraRefund, 0)
+      + '</b> points came back to spend');
+    S.paraRefund = 0;
+  }
   if(!atMax() && !(S.para > 0)){
     w.innerHTML = '<div class="empty">Paragon opens at career level ' + B.LV_MAX + '.<br>'
       + 'You are level ' + S.lv + '. After 60 the bar keeps filling and every paragon level '
       + 'hands you a point, forever.</div>';
     return;
   }
-  w.innerHTML = '<div class="hint">Points come round in order: Core, Offense, Composure, Fortune. '
-    + 'You cannot shift them between categories. Every line caps at 50 except the top two Core lines, '
-    + 'which keep going forever. Next point goes to <b style="color:var(--brass)">'
-    + B.PARAGON[(S.para) % B.PARAGON.length].n + '</b>.</div>';
+  w.innerHTML = '<div class="hint">Nothing here moves a swing. Paragon buys the game '
+    + 'around it: the card, the wager book, the locker and the long game. Points come round '
+    + 'in order \u2014 ' + B.PARAGON.map(c => c.n).join(', ') + ' \u2014 and cannot shift '
+    + 'between categories. Every line caps at ' + (B.PARAGON[1].a[0].cap)
+    + ' except the two Core lines, which keep going forever. Next point goes to '
+    + '<b style="color:var(--brass)">' + B.PARAGON[(S.para) % B.PARAGON.length].n + '</b>.</div>';
   for(const cat of B.PARAGON){
     const pool = S.paraPts[cat.id] || 0;
     const col = 'var(' + cat.v + ')';
@@ -7676,12 +7829,15 @@ function careerParagon(w){
       const capped = a.cap > 0 && n >= a.cap;
       const val = a.v * n;
       const txt = a.s === 'pp' ? '+' + (val*100).toFixed(1) + 'pp'
-                : a.s === 'x' ? '+' + val.toFixed(2) + 'x' : '+' + fmt(val*100) + '%';
+                : a.s === 'x'  ? '+' + val.toFixed(2) + 'x'
+                : a.s === 'lv' ? '+' + val.toFixed(1) + ' item levels'
+                : '+' + fmt(val*100) + '%';
       const d = document.createElement('div');
       d.className = 'row';
       d.innerHTML = '<div><div class="nm">' + a.n
         + (a.cap === 0 ? ' <span class="pill" style="border-color:' + col + ';color:' + col + '">no cap</span>' : '')
-        + '</div><div class="ds">' + txt + ' at ' + fmt(n, 0)
+        + '</div>' + (a.d ? '<div class="ds">' + a.d + '</div>' : '')
+        + '<div class="mt">' + txt + ' at ' + fmt(n, 0)
         + (a.cap ? ' / ' + a.cap : '') + ' points</div></div>'
         + '<div class="btnrow"><button class="mini' + (pool && !capped ? ' go' : ' dim') + '">+1</button>'
         + '<button class="mini' + (pool >= 10 && !capped ? ' go' : ' dim') + '">+10</button></div>';
@@ -7856,7 +8012,7 @@ function boot(){
     });
     if(!doomed.length){ toast('Nothing spare to scrap'); return; }
     let sh = 0;
-    doomed.forEach(it => { sh += Math.round((1 + it.rar*1.8)*(1 + it.enh*0.35)); });
+    doomed.forEach(it => { sh += scrapValue(it); });
     S.bag = S.bag.filter(it => !doomed.includes(it));
     S.shard += sh;
     toast('Scrapped ' + doomed.length + ' for <b>' + sh + '</b> shards');
