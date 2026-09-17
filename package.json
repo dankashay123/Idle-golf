@@ -1,0 +1,13 @@
+{
+  "name": "mythic-mulligan",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Mythic Mulligan -- an idle golf game in a single HTML file.",
+  "scripts": {
+    "test": "node test/run.js",
+    "start": "node test/serve.js"
+  },
+  "devDependencies": {
+    "playwright": "^1.56.1"
+  }
+}

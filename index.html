@@ -53,7 +53,8 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
   padding:calc(env(safe-area-inset-top) + 8px) 12px 8px;border-bottom:var(--hair);
   background:linear-gradient(180deg,#0B1811,#0C1A13)}
 #crest{padding:calc(env(safe-area-inset-top) + 6px) 12px 6px}
-#eventLine{font-family:var(--disp);font-size:var(--f4);letter-spacing:.02em;line-height:1.1;color:var(--chalk)}
+#eventLine{font-family:var(--disp);font-size:var(--f4);letter-spacing:.02em;line-height:1.1;color:var(--chalk);
+  user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
 #sub{font-size:var(--f0);letter-spacing:.16em;text-transform:uppercase;color:var(--faint);margin-top:2px}
 #gold{font-size:var(--f4)}
 #purse{text-align:right}
@@ -7373,7 +7374,7 @@ function frame(now){
     if(!frameErr){
       frameErr = 1;
       console.error(e);
-      toast('Something went wrong in a frame. Tap the event name for the dev menu.');
+      toast('Something went wrong in a frame. Hold the event name for the dev menu.');
     }
   }
   requestAnimationFrame(frame);
@@ -7480,7 +7481,26 @@ function boot(){
     if(!big) Scene.resize();
   };
   $('veil').onclick = e => { if(e.target === $('veil')) hideSheet(); };
-  $('eventLine').onclick = () => DEV.open();
+  // The dev menu writes straight to state with no cost, no gate and no undo,
+  // and it used to open on a single tap of the most prominent text on screen.
+  // One mis-tap on the course name and a save is finished. Held open instead:
+  // a second and a half, cancelled by lifting or by moving a finger, so it
+  // cannot happen by accident and no tap ever reaches it.
+  (() => {
+    const el = $('eventLine');
+    let timer = null, sx = 0, sy = 0;
+    const stop = () => { if(timer){ clearTimeout(timer); timer = null; } };
+    el.addEventListener('pointerdown', e => {
+      sx = e.clientX; sy = e.clientY;
+      stop();
+      timer = setTimeout(() => { timer = null; DEV.open(); }, 1500);
+    });
+    el.addEventListener('pointermove', e => {
+      if(timer && Math.hypot(e.clientX - sx, e.clientY - sy) > 10) stop();
+    });
+    ['pointerup', 'pointercancel', 'pointerleave'].forEach(ev => el.addEventListener(ev, stop));
+    el.addEventListener('contextmenu', e => e.preventDefault());
+  })();
 
   startNine();
   startHole();
