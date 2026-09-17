@@ -71,10 +71,13 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
   transition:width .25s ease-out}
 #xpStrip.para #xpFill{background:linear-gradient(90deg,#8E4FD0,var(--myth))}
 #xpNum{font-family:var(--mono);font-size:var(--f0);color:var(--faint);white-space:nowrap}
-#xpStrip.ready #xpNum{color:var(--aurora)}
+/* Points waiting are the only reason to press this, so they get a chip rather
+   than another run of small grey text alongside everything else. */
+#xpStrip.ready #xpNum{color:var(--brass);border:1px solid var(--brass-dk);
+  padding:2px 7px;background:#16120A;font-weight:600;letter-spacing:.04em}
 
 /* ---------- scorecard strip ---------- */
-#card{display:grid;grid-template-columns:repeat(18,1fr);border-bottom:var(--hair);background:#0A170F}
+#card{display:grid;grid-template-columns:repeat(18,1fr);background:#0A170F}
 .cell{aspect-ratio:1/0.94;border-right:1px solid #14291C;display:flex;align-items:center;
   justify-content:center;position:relative;font-family:var(--mono);font-size:var(--f1);color:var(--faint)}
 .cell:last-child{border-right:0}
@@ -85,6 +88,7 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
 .cell.s-1{color:var(--aurora)} .cell.s0{color:var(--chalk)}
 .cell.s1{color:var(--dim)} .cell.s2,.cell.s3,.cell.s4{color:var(--flag)}
 .cell i{position:absolute;top:2px;left:3px;font-size:var(--f0);font-style:normal;color:var(--faint)}
+.cell.done i{display:none}
 
 /* the nine: a goal and a running total, so the round has a shape you can see */
 #nineBar{display:grid;grid-template-columns:auto 1fr auto;gap:9px;align-items:center;
@@ -96,6 +100,21 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
 #nineGoal b{color:var(--aurora);font-weight:600}
 #nineGoal.done{color:var(--aurora)}
 #nineScore{font-family:var(--mono);color:var(--brass);white-space:nowrap}
+
+/* the pull tab: a notch on the corner of the menu, and the one thing in the
+   layout allowed to sit outside its own box */
+#vitals{position:relative}
+#drawer{position:absolute;top:-18px;right:10px;width:44px;height:18px;padding:0;
+  background:var(--panel);border:var(--hair);border-bottom:0;border-top:2px solid var(--brass);
+  z-index:12;display:flex;align-items:center;justify-content:center;
+  box-shadow:0 -2px 6px rgba(0,0,0,.45)}
+#drawer:active{background:var(--raise)}
+/* pulled up, the tab sits over the nine, so the nine gets out of its way */
+#app.big #nineBar{padding-right:62px}
+#drawer img{width:12px;height:12px;image-rendering:pixelated;image-rendering:crisp-edges;
+  transition:transform .16s ease-out}
+#app.big #drawer img{transform:scaleY(-1)}
+#app.big #stage{display:none}
 
 /* ---------- stage ---------- */
 /* the field takes half the app, and the canvas fills whatever shape that is */
@@ -412,6 +431,10 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
   </div>
 
   <div id="vitals">
+    <!-- A tab on the corner of the menu. Up pulls it over the hole, down puts
+         the hole back. It lives on the vitals rather than in the stage so it
+         is still there once the stage is gone. -->
+    <button id="drawer" aria-label="Expand the menu"><img id="drawerIc" alt=""></button>
     <div class="vital"><div class="k">Swing</div><div class="v" id="vPower">0</div></div>
     <div class="vital"><div class="k">Tempo</div><div class="v" id="vSpeed">0/s</div></div>
     <div class="vital"><div class="k">Carry</div><div class="v" id="vDps">0</div></div>
@@ -1596,7 +1619,19 @@ const B = {
              '.oo..oo..oo.',
              '..oo..oo..o.',
              '.oo..oo..oo.',
-             '..oo..oo..o.']
+             '..oo..oo..o.'],
+    caret:   ['............',
+             '.....XX.....',
+             '....XXXX....',
+             '...XXXXXX...',
+             '..XXXXXXXX..',
+             '.XXXXXXXXXX.',
+             'XXXXXXXXXXXX',
+             '............',
+             '............',
+             '............',
+             '............',
+             '............']
   },
 
   /* ---- upgrades bought with gold ---- */
@@ -4667,6 +4702,10 @@ const Scene = {
     }
   },
   resize(){
+    // With the menu pulled up the stage is display:none, so the canvas reports
+    // nothing. Rebuilding against a guess would throw away a good buffer and
+    // rebuild it wrong; better to keep what we have until it is back.
+    if(this.buf && (!this.cv.clientWidth || !this.cv.clientHeight)) return;
     const w = this.cv.clientWidth || 360;
     const h = this.cv.clientHeight || Math.round(w * 0.58);
     const dpr = Math.min(3, window.devicePixelRatio || 1);
@@ -5879,7 +5918,8 @@ Object.assign(Scene, {
     // blitted past the right edge of the canvas and clipped. Anything aligned
     // hard right has to clear that column as well as its own drop shadow.
     const R = VW - 4*TSC - 1;
-    let ly = VH - LH - 2;
+    // The pull tab sits in this corner, so the stack starts above it.
+    let ly = VH - LH - 2 - Math.round(VH*0.045);
     if(S.armor > 0){
       drawTextS(c, isSunday(S.hole) ? 'CHAMPIONSHIP' : 'SIGNATURE', R, ly, PX.flag, TSC, 'r');
       ly -= LH;
@@ -6084,7 +6124,7 @@ function renderCard(){
   const now = holeInRound(S.hole) - 1;
   for(let i=0;i<B.ROUND;i++){
     const c = cells[i], s = S.scores[i];
-    c.className = 'cell' + (i === now ? ' now' : '') + (s ? ' s' + s.d : '');
+    c.className = 'cell' + (i === now ? ' now' : '') + (s ? ' done s' + s.d : '');
     c.children[0].textContent = parOf(S.hole - now + i);
     c.children[1].textContent = s ? (s.d === 0 ? 'E' : s.d > 0 ? '+'+s.d : s.d) : (i === now ? '\u2022' : '');
   }
@@ -6196,7 +6236,7 @@ function renderXp(){
   const pp2 = B.PARAGON.reduce((n,c) => n + (S.paraPts[c.id]||0), 0);
   if(pp2) bits.push(pp2 + ' paragon');
   $('xpNum').textContent = unspent
-    ? bits.join(', ') + ' to spend'
+    ? bits.join(' \u00b7 ')
     : fmt(have) + ' / ' + fmt(need) + ' xp';
   if(careerTab) careerTab.classList.toggle('alert', unspent > 0);
 }
@@ -7346,7 +7386,9 @@ function frameBody(now){
 
   const D = derive();
   step(dt, D);
-  Scene.draw(dt, D);
+  // No point painting the hole while the menu is over it. The sim runs on
+  // regardless; only the drawing stops.
+  if(!$('app').classList.contains('big')) Scene.draw(dt, D);
   renderLive();
 
   slowT += dt;
@@ -7430,6 +7472,13 @@ function boot(){
     renderBag();
   };
   $('xpStrip').onclick = () => setView('career');
+  $('drawerIc').src = pixUrl('caret', '#E3B457');
+  $('drawer').onclick = () => {
+    const big = $('app').classList.toggle('big');
+    $('drawer').setAttribute('aria-label', big ? 'Shrink the menu' : 'Expand the menu');
+    // the canvas has no box while it is away, so let it keep the one it had
+    if(!big) Scene.resize();
+  };
   $('veil').onclick = e => { if(e.target === $('veil')) hideSheet(); };
   $('eventLine').onclick = () => DEV.open();
 
