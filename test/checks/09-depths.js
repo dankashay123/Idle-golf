@@ -1,0 +1,185 @@
+/* The Depths reward model, and the away model that shares the course with it.
+ *
+ * Three things went wrong here and all three had the same shape: a reward
+ * priced off the RAW floor number. The floor number climbs about two rungs per
+ * Tour Card for a carry that is merely keeping pace, so anything priced off it
+ * drifts against the ladder it is supposed to sit beside -- and two of the four
+ * modes were anchored to their own last recorded floor, which is not a drift
+ * but a loop.
+ *
+ *   1. The Island Green and the Floodlit Green scored themselves from
+ *      dgnStartFloor, the LAST floor they recorded minus three. Both of their
+ *      gates are capped (94% make, 88% drop), so past the caps each run
+ *      recorded a deeper floor than the one before on nothing at all. Measured
+ *      on Tour Card I with a full bag: nine floors a run, forever.
+ *   2. Every Depths run paid floor/8 sponsor tickets. A Sponsor Exemption costs
+ *      six and refills every key down here, which is twelve more runs, so past
+ *      about card twenty five the Depths bought their own keys.
+ *   3. offline() sized an away hole off the CARDED yardage while the live game
+ *      sizes it off the handicapped yardage, so an away session ignored the
+ *      floor that pins a live hole at HCP of par time however hard you hit it.
+ *
+ * These assert on shape, not on tuning: floors settle, currencies come in
+ * linearly, the away hole matches the live hole. Retuning the payout numbers
+ * should not move any of them.
+ */
+'use strict';
+
+const RUNS = 24;
+
+module.exports = {
+  name: 'depths',
+  async run(page) {
+    const r = await page.evaluate(RUNS => {
+      const out = {};
+
+      // Drive one run of a mode to its end without the animation frame loop.
+      const runDgn = id => {
+        const d = B.DGN.find(x => x.id === id);
+        S.dgnRun = null; S.dgnKeys[id] = 1;
+        startDgn(d);
+        let guard = 0;
+        while (S.dgnRun && guard++ < 6000) tickDgn(0.1, derive());
+        try { hideSheet(); } catch (e) {}
+        return guard < 6000;
+      };
+
+      // ---- 1. the same bag, run and run again -------------------------------
+      // Crit and affinity chance pinned at their caps, so nothing the run does
+      // can make the next one go better. The floors must settle and the
+      // currencies must come in at a flat rate.
+      DEV.maxCapped(); DEV.set(4); DEV.enhAll(); DEV.ach(); DEV.lv(60); DEV.para(400);
+      try { hideSheet(); } catch (e) {}
+      S.dgnFloor = {}; B.DGN.forEach(d => S.dgnFloor[d.id] = 0);
+      S.scroll = 0; S.shard = 0; S.tickets = 0;
+
+      const floors = [], scroll = [], tickets = [];
+      for (let i = 0; i < RUNS; i++) {
+        if (!runDgn('cellar')) out.stuck = 'cellar';
+        if (!runDgn('water')) out.stuck = 'water';
+        floors.push(S.dgnFloor.cellar || 0);
+        scroll.push(S.scroll);
+        tickets.push(S.tickets);
+      }
+      const half = RUNS >> 1;
+      out.floorFirst = floors[half - 1];
+      out.floorLast = floors[RUNS - 1];
+      // What the bag alone is worth, and the most a single run can add on top
+      // of it. A best-ever is the running maximum of a random draw, so it
+      // creeps; it can never pass this. A run scored off its own last run can,
+      // on its second lap.
+      out.carry = carryFloor(derive());
+      out.ceiling = out.carry + B.CHIP_SHOTS * B.CHIP_STEP;
+      // a straight line doubles over the second half; an exponent does not
+      out.scrollFirstHalf = scroll[half - 1];
+      out.scrollSecondHalf = scroll[RUNS - 1] - scroll[half - 1];
+      out.ticketsFirstHalf = tickets[half - 1];
+      out.ticketsSecondHalf = tickets[RUNS - 1] - tickets[half - 1];
+      out.exemptCost = B.PERKS.find(p => p.id === 'exempt').cost;
+      out.keysPerExemption = B.DGN.reduce((n, d) => n + d.cap, 0);
+
+      // ---- 2. the same run, two hundred cards apart -------------------------
+      // A bag exactly on the pace line its card asks for. What one run is worth
+      // has to be the same amount of progress at either end of the ladder.
+      const onPaceYield = T => {
+        S.tier = T; S.tierMax = Math.max(S.tierMax, T); S.hole = 2; S.retires = 0;
+        S.relic = {};
+        B.SLOTS.forEach(sl => S.equip[sl.id] = makeItem(T, 0, 3, sl.id));
+        startHole();
+        const ch = { y:1, g:1, s:1, c:0, p:0, dl:0 };
+        const pace = yardageFor(S.hole, S.tier, ch) / (parTimeFor(S.hole) * B.HCP);
+        const setL = L => B.UPG.forEach(u => S.upg[u.id] = Math.min(capOf(u), Math.round(L)));
+        let lo = 0, hi = 20000;
+        while (hi - lo > 1) {
+          const mid = (lo + hi) >> 1; setL(mid);
+          if (derive().dps < pace) lo = mid; else hi = mid;
+        }
+        setL(lo); startHole();
+        const D = derive(), d = B.DGN.find(x => x.id === 'sand');
+        // priced in the thing the currency buys, which is what has to stay put
+        return yieldAt(carryFloor(D), D, d) / shopPrice('grit');
+      };
+      out.yieldEarly = onPaceYield(5);
+      out.yieldLate = onPaceYield(200);
+
+      // ---- 3. away holes against live holes ---------------------------------
+      const away = [];
+      for (const k of [1, 10, 1000]) {
+        S.tier = 25; S.hole = 2; S.relic = {}; S.equip = {};
+        B.UPG.forEach(u => S.upg[u.id] = 0);
+        startHole();
+        const ch = { y:1, g:1, s:1, c:0, p:0, dl:0 };
+        const pace = yardageFor(S.hole, S.tier, ch) / (parTimeFor(S.hole) * B.HCP);
+        let lo = 0, hi = 40000;
+        while (hi - lo > 1) {
+          const mid = (lo + hi) >> 1; S.upg.drive = mid;
+          if (derive().dps < pace * k) lo = mid; else hi = mid;
+        }
+        S.upg.drive = lo; startHole();
+        const live = Math.max(S.walkMin, S.yardsMax / derive().dps);
+        const h0 = S.totalHoles;
+        QUIET = true; S.t = Date.now() / 1000 - 3600; offline(); QUIET = false;
+        try { hideSheet(); } catch (e) {}
+        const holes = S.totalHoles - h0;
+        away.push({ k, live: +live.toFixed(2),
+                    awaySecs: +(3600 * B.OFFLINE_RATE / holes).toFixed(2) });
+      }
+      out.away = away;
+      return out;
+    }, RUNS);
+
+    if (r.stuck) throw new Error('a ' + r.stuck + ' run never ended');
+
+    // 1. the floor is bounded by the bag plus one perfect run, whatever the
+    // dice do. A best-ever creeps toward that ceiling; a loop walks past it.
+    if (r.floorLast > r.ceiling + 1)
+      throw new Error('after ' + RUNS + ' runs the Floodlit Green floor is ' + r.floorLast
+        + ', past the ' + r.ceiling.toFixed(1) + ' this bag can reach with every one of '
+        + 25 + ' chips dropping (carry floor ' + r.carry.toFixed(1)
+        + '). It is scoring itself off its own last run.');
+
+    // 1b. and so does what it pays: linear, not exponential
+    const ratio = r.scrollSecondHalf / Math.max(1, r.scrollFirstHalf);
+    if (!(ratio > 0.5 && ratio < 2.5))
+      throw new Error('the same bag earned ' + r.scrollFirstHalf + ' scrolls over its first '
+        + (RUNS >> 1) + ' runs and ' + r.scrollSecondHalf + ' over the next '
+        + (RUNS >> 1) + ', a factor of ' + ratio.toFixed(1) + '. A flat bag pays a flat rate.');
+
+    // 2. tickets cannot buy the keys that earned them
+    const perRun = r.ticketsSecondHalf / (RUNS >> 1) / 2;   // two dungeons a lap
+    const sustains = r.exemptCost / r.keysPerExemption;     // tickets a run to break even
+    if (perRun >= sustains)
+      throw new Error('the Depths pay ' + perRun.toFixed(2) + ' tickets a run at a depth '
+        + 'already reached, and a Sponsor Exemption is ' + r.exemptCost + ' tickets for '
+        + r.keysPerExemption + ' runs, so ' + sustains.toFixed(2)
+        + ' a run sustains itself. The keys are unlimited.');
+
+    // 3. two hundred cards apart, a run buys the same progress
+    const drift = r.yieldLate / r.yieldEarly;
+    // Wide on purpose. Pinning the number would make this a tuning test; what
+    // it is for is the drift, and the drift was twenty orders of magnitude.
+    // The slack absorbs the integer step of the upgrade ladder the bag is
+    // pinned with, which is coarse at card 5 and fine at card 200.
+    if (!(drift > 0.1 && drift < 10))
+      throw new Error('an on-pace run pays ' + r.yieldEarly.toPrecision(3)
+        + ' of a purchase at card 5 and ' + r.yieldLate.toPrecision(3)
+        + ' at card 200, a factor of ' + drift.toPrecision(3)
+        + '. Depths rewards are drifting against the ladder.');
+
+    // 4. the away hole is the live hole
+    for (const a of r.away) {
+      const f = a.awaySecs / a.live;
+      if (!(f > 0.8 && f < 1.25))
+        throw new Error('at ' + a.k + 'x the power its card asks for, a live hole takes '
+          + a.live + 's and an away hole ' + a.awaySecs + 's. The away model is ignoring '
+          + 'the handicap floor that pins the live one.');
+    }
+
+    return ['floor ' + r.floorFirst + '->' + r.floorLast + ' under a ceiling of '
+      + r.ceiling.toFixed(0)
+      + ', pay flat to ' + ratio.toFixed(2) + 'x, ' + perRun.toFixed(2)
+      + ' tickets/run against ' + sustains.toFixed(2) + ' self-sustaining'
+      + ', card 5 vs 200 within ' + drift.toPrecision(2) + 'x'
+      + ', away hole ' + r.away.map(a => a.awaySecs + '/' + a.live).join(' ')];
+  }
+};

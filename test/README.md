@@ -43,6 +43,7 @@ the failure is silent. Always play it over http.
 | `economy` | The affinity cap holds on **both** channels. Affinity feeds damage and prize money, and the cap was once applied to only one of them, so a stacked build multiplied gold without limit. |
 | `menus` | Five tabs, both sub-navs, the folds, the pull tab, and the skill cooldown bars. The shot book and trophy room lost their own tabs, so the old view names still have to route — and the cooldown bars are driven off the view name, which is exactly how they stopped ticking when the shot book moved. |
 | `devmenu` | The dev menu writes straight to state with no cost and no undo. It must not be reachable by a tap: the course name is the most prominent text on screen and the easiest thing on it to hit by accident. |
+| `depths` | Every reward in the Depths is priced off how far past its Tour Card a run gets, never off the raw floor number. The raw number climbs about two rungs a card on its own, and two of the four modes used to score themselves off their own last run, which is a loop rather than a drift. Also holds the away model to the live one: an away hole has to take as long as a live hole, handicap and all. |
 | `save` | A save written by an older build still loads. `migrate()` is the only thing between a format change and somebody's progress, so it gets a save with junk in it, keys that no longer exist, and keys that never did. |
 
 ## Adding one

@@ -1810,7 +1810,7 @@ const B = {
   ],
   // where tickets come from
   TICK_EVENT: 2, TICK_WIN: 3, TICK_TOP5: 1, TICK_LEVEL: 2,
-  TICK_DEPTH_EVERY: 8, TICK_SUNDAY: 1, TICK_CAP: 99,
+  TICK_DEPTH: 1, TICK_SUNDAY: 1, TICK_CAP: 99,
 
   /* ---- the Depths ---- */
   // Each of the four is worth running for a different reason. Differentiating
@@ -1823,19 +1823,19 @@ const B = {
   // different part of the build, so a bag that wins one can lose another.
   DGN: [
     { id:'sand', ic:'grit', mode:'drive', n:'The Long Drive', cur:'grit', cn:'Grit',
-      regen:660, cap:4, run:16, ym:2.4, gear:0.22, floorRar:0,
+      regen:660, cap:4, run:16, pay:0.046, gear:0.22, floorRar:0,
       d:'One swing, as hard as you can hit it. Six goes, the longest counts.',
       how:'Tempo is worth nothing here. It all rides on a single strike, so power, pure strike, payoff, affinity and provisionals are the whole game.' },
     { id:'water', ic:'island', mode:'island', n:'The Island Green', cur:'shard', cn:'Shards',
-      regen:840, cap:3, run:70, ym:1.0, gear:0.40, floorRar:2,
+      regen:840, cap:3, run:70, pay:0.028, gear:0.40, floorRar:2,
       d:'Land it or lose it. The first one is a gimme, then every green you hit doubles the pot. Miss and you keep a quarter.',
       how:'The make chance is 56% plus your pure strike chance, and it drops 3.5 points for every green you have already hit. You decide how greedy to be before you go in.' },
     { id:'cellar', ic:'flood', mode:'chip', n:'The Floodlit Green', cur:'scroll', cn:'Scrolls',
-      regen:1080, cap:3, run:46, ym:0.55, gear:0.20, floorRar:1,
+      regen:1080, cap:3, run:46, pay:0.019, gear:0.20, floorRar:1,
       d:'Twenty five chips under the lights. Every one that drops is worth more than the last.',
       how:'Runs on affinity chance, not power, and it reads the raw figure rather than the capped one. A bag that never procs will chip all night for nothing.' },
     { id:'vault', ic:'vault', mode:'floor', n:'The Clubhouse Vault', cur:'gold', cn:'Purse',
-      regen:900, cap:2, run:56, ym:1.0, gear:0.62, floorRar:1,
+      regen:900, cap:2, run:56, pay:1, gear:0.62, floorRar:1,
       d:'Members only. Floor after floor, each one more work than the one before.',
       how:'Straight endurance. How deep your carry drags you before the clock runs out.' }
   ],
@@ -1850,7 +1850,19 @@ const B = {
   // The endurance floor: each one is a piece of work, deeper floors are more of
   // it, and a floor still takes a moment even when you are far too strong.
   DGN_WORK: 26, DGN_WORK_STEP: 1.55, DGN_MIN_FLOOR: 0.45,
-  DGN_YIELD: 3.4, DGN_YIELD_STEP: 1.16,
+  DGN_YIELD_STEP: 1.16,
+  // CARRY_FLOOR_T is read as seconds of carry: the floor a bag can chew
+  // through in that long, which is roughly where a Vault run settles. It is
+  // what the Island Green and the Floodlit Green are anchored to now.
+  // PACE_STEP is log(TIER_Y)/log(DGN_WORK_STEP), which is how many floors a
+  // carry gains per Tour Card by merely keeping up with the course. Rewards
+  // are measured from that line rather than from the raw floor number, or
+  // every one of them drifts against the ladder it is supposed to sit beside.
+  // and how far past that line a run can still be paid for. Twelve floors is
+  // a carry roughly two hundred times what the card asks; past that the bonus
+  // stops compounding, or parking on a low card and out-buying it pays better
+  // than climbing, which is the one thing the ladder exists to prevent.
+  CARRY_FLOOR_T: 20, DGN_PACE_0: 5.4, DGN_PACE_STEP: 1.95, DGN_PACE_MAX: 12,
 
   // Things that happen between floors. Mostly they cost you.
   DGN_EVENT_CHANCE: 0.38,
@@ -1870,7 +1882,11 @@ const B = {
   // behind the course economy completely: over half an hour it produced 1.8M
   // against the course's 4.7T, or 0% of income. It is now priced in HOLES OF
   // PURSE, so it tracks whatever the course is paying automatically.
-  VAULT_HOLES: 6, VAULT_PER_MARK: 1.5,
+  // An on-pace run is worth VAULT_HOLES holes of purse, about a tenth of what
+  // the course pays in the hour the two keys take to come back, and every floor
+  // past what the card expects is worth another. A carry ten times ahead of its
+  // card settles five floors past pace, which roughly doubles the run.
+  VAULT_HOLES: 40, VAULT_PER_MARK: 8,
   DGN_GEAR_CHANCE: 0.30,
 
   /* ---- chaotic courses, drawn each round ---- */
@@ -3136,12 +3152,52 @@ function regenKeys(dt){
 }
 const dgnStartFloor = id => Math.max(0, Math.floor((S.dgnFloor[id] - 3) + relLv('rift')*B.RIFT_FLOOR + career().dfloor));
 const floorWork = f => B.DGN_WORK * Math.pow(B.DGN_WORK_STEP, f);
-// what a given depth is worth, shared by every mode so rewards stay comparable
-const yieldAt = (f, D, d) => B.DGN_YIELD * Math.pow(B.DGN_YIELD_STEP, Math.max(0, f))
-  * D.dgnY * (d.ym || 1);
 // turn any number into an equivalent depth, so a long drive and a deep floor
 // can be paid on the same scale
 const asFloor = v => Math.max(0, Math.log(Math.max(1, v / B.DGN_WORK)) / Math.log(B.DGN_WORK_STEP));
+
+// Where a carry belongs down here, read off the carry itself rather than off
+// how deep it has already been. The Vault earns its floor by chewing through
+// floorWork and the Long Drive by the yardage it actually strikes, so those two
+// were always anchored to the bag. The Island Green and the Floodlit Green were
+// anchored to dgnStartFloor instead, which is the LAST floor they recorded
+// minus three, so each run recorded a deeper floor than the one before and fed
+// it straight back in. Both of their gates are capped - the make chance tops
+// out at 94% and the drop chance at 88% - so past the caps the loop ran on
+// nothing at all. Measured on Tour Card I with a full bag and no upgrades
+// bought: the Floodlit Green gained nine floors a run forever, scrolls climbed
+// twenty two orders of magnitude in forty runs, and one run paid for eight
+// Sponsor Exemptions, which refill every key in the Depths. The Depths were an
+// unlimited resource, and the Vault's purse rides on the same keys.
+const carryFloor = D => asFloor(Math.max(1, D.dps) * B.CARRY_FLOOR_T)
+  + relLv('rift')*B.RIFT_FLOOR + (D.C ? D.C.dfloor : career().dfloor);
+
+// The floor a carry that is exactly keeping pace with its Tour Card reaches.
+// Depth is paid from HERE, not from the raw floor number: the number climbs
+// about two rungs a card all by itself, so a reward priced off it drifts
+// against the ladder. Being deeper than your card expects is the thing worth
+// paying for, and that is the same achievement on every card.
+const dgnPace = tier => B.DGN_PACE_0 + B.DGN_PACE_STEP * tierProgress(tier);
+
+// What one purchase in a currency's shop costs today. Every reward down here is
+// priced in these, the way the Vault is priced in holes of purse, so a run buys
+// the same amount of PROGRESS on card four hundred as on card four. Paying a
+// flat number and letting the floor number multiply it was the drift: the shops
+// price off item level, item level is the Tour Card, and the floor number runs
+// ahead of both. Measured before this: grit went from one reforged item per two
+// hundred hours on the first card to twenty seven an hour by card fifty.
+function shopPrice(cur){
+  const t = tierProgress();
+  // a fresh Rare taken the whole way to +15
+  if(cur === 'grit')  return B.ENH_BASE * Math.pow(1.12, t) * 2.5
+    * (Math.pow(B.ENH_R, B.ENH_MAX) - 1) / (B.ENH_R - 1);
+  if(cur === 'shard') return (26 + t*3) * Math.pow(2.35, 3);   // one ascension of a Rare
+  return B.SKILL_LV_COST * Math.pow(B.SKILL_LV_R, 10);         // a level mid shot book
+}
+// what a given depth is worth, shared by every mode so rewards stay comparable
+const pastPace = f => clamp(f - dgnPace(), 0, B.DGN_PACE_MAX);
+const yieldAt = (f, D, d) => shopPrice(d.cur) * (d.pay || 1)
+  * Math.pow(B.DGN_YIELD_STEP, pastPace(f)) * D.dgnY;
 
 // A single swing resolved in full: crit, provisionals and an affinity roll.
 // This is what the Long Drive measures.
@@ -3162,15 +3218,18 @@ function startDgn(d){
   if(S.dgnRun){ toast('There is already a caddie down there'); return; }
   if(S.dgnKeys[d.id] < 1){ toast('No keys left for ' + d.n); return; }
   S.dgnKeys[d.id]--; bump('runs');
-  const f0 = dgnStartFloor(d.id);
+  const D0 = derive();
+  // The Vault has to earn its way back down, so it starts where it left off.
+  // The other two are scored against the bag instead, or they feed themselves.
+  const f0 = dgnStartFloor(d.id), fc = carryFloor(D0);
   const dur = d.run * (career().sharp ? 1.4 : 1);
   const R = { id:d.id, mode:d.mode, t:0, dur, dead:false, evt:null, evtT:0, next:0 };
   if(d.mode === 'drive'){ R.shots = 0; R.best = 0; R.last = 0; R.wind = 1; R.next = 1.2; }
   else if(d.mode === 'island'){
-    R.made = 0; R.pot = yieldAt(f0, derive(), d); R.chance = 0; R.banked = false;
+    R.made = 0; R.pot = yieldAt(fc, D0, d); R.chance = 0; R.banked = false;
     R.target = B.BANK_OPTS.includes(S.islandBank) ? S.islandBank : 5; R.next = 1.4;
   }
-  else if(d.mode === 'chip'){ R.shot = 0; R.made = 0; R.pot = 0; R.f0 = f0; R.next = 1.2; }
+  else if(d.mode === 'chip'){ R.shot = 0; R.made = 0; R.pot = 0; R.f0 = fc; R.next = 1.2; }
   else { R.floor = f0; R.cleared = 0; R.work = floorWork(f0); R.full = R.work; R.fT = 0; R.mod = 1; }
   S.dgnRun = R;
   toast('Entered <b>' + d.n + '</b>');
@@ -3293,7 +3352,7 @@ function endDgn(d, R, D){
 
   }else if(R.mode === 'island'){
     if(R.made > 0){
-      pot = R.pot; fe = dgnStartFloor(d.id) + R.made*1.1;
+      pot = R.pot; fe = carryFloor(D) + R.made*1.1;
       head = R.dead
         ? 'Wet on number ' + (R.made + 1) + '. You walked off with a quarter of the pot.'
         : 'Banked clean on ' + R.made + '. Nerve held.';
@@ -3330,16 +3389,26 @@ function endDgn(d, R, D){
   const rewards = [];
   if(fe >= 0){
     Scene.depthsFlash((B.DGN_PAL[d.id] || {}).glow || '#57E0BE');
-    if(fe > (S.dgnFloor[d.id] || 0)){ S.dgnFloor[d.id] = Math.round(fe); rewards.push(['New best', 'yes']); }
+    const deeper = fe > (S.dgnFloor[d.id] || 0);
+    if(deeper){ S.dgnFloor[d.id] = Math.round(fe); rewards.push(['New best', 'yes']); }
     const xp = B.XP_FLOOR * Math.pow(1 + fe, B.XP_FLOOR_P) * (1 + fe*0.2);
     addXp(xp);
-    const tk = Math.floor(fe / B.TICK_DEPTH_EVERY);
-    if(tk > 0) grantTickets(tk);
+    // A ticket for a new personal best, never a rate. Any per-run faucet closes
+    // a loop here: a Sponsor Exemption costs six and refills every key in the
+    // Depths, which is twelve more runs, so anything over half a ticket a run
+    // and the Depths buy their own keys forever. A best only moves when the bag
+    // does, and a refill full of runs at a depth you have already been pays
+    // nothing at all.
+    if(deeper) grantTickets(B.TICK_DEPTH, 'a new best in the Depths');
 
     const yield_ = pot > 0 ? pot : yieldAt(fe, D, d);
     if(d.cur === 'gold'){
-      // priced in holes of purse, so it never falls behind the course
-      const holes = B.VAULT_HOLES + fe * B.VAULT_PER_MARK;
+      // Priced in holes of purse so it tracks the course, and in floors past
+      // what the card expects so it cannot outgrow it. Off the raw floor number
+      // the Vault passed the entire course's income at card forty five and
+      // reached eight times it by card four hundred, because that number climbs
+      // two rungs a card on its own while the purse climbs one card's worth.
+      const holes = B.VAULT_HOLES + pastPace(fe) * B.VAULT_PER_MARK;
       const g2 = purseFor(S.hole, S.tier, D.gold) * holes;
       S.gold += g2;
       rewards.push(['Purse', fmt(g2) + ' (' + Math.round(holes) + ' holes worth)']);
@@ -3348,10 +3417,9 @@ function endDgn(d, R, D){
       S[d.cur] += n; rewards.push([d.cn, '+' + fmt(n, 0)]);
     }
     rewards.push(['Experience', '+' + fmt(xp)]);
-    if(tk > 0) rewards.push(['Sponsor tickets', '+' + tk]);
+    if(deeper) rewards.push(['Sponsor tickets', '+' + B.TICK_DEPTH]);
     // a new personal best always comes home with something
-    const newBest = rewards.some(r => r[0] === 'New best');
-    if(newBest || Math.random() < (d.gear !== undefined ? d.gear : B.DGN_GEAR_CHANCE) + relLv('rift')*0.05){
+    if(deeper || Math.random() < (d.gear !== undefined ? d.gear : B.DGN_GEAR_CHANCE) + relLv('rift')*0.05){
       const floorRar = Math.max(d.floorRar || 0, Math.min(2, Math.floor(fe/8)));
       const it = makeItem(S.tier + Math.min(3, Math.floor(fe/5)), D.drop + 0.35, floorRar);
       bagAdd(it);
@@ -3678,7 +3746,13 @@ function offline(){
   regenKeys(dt);
   const D = derive();
   const ch = chaosFor(S.hole, S.tier);
-  const y = yardageFor(S.hole, S.tier, ch);
+  // The same hole the live game would set, handicap and all. Reading the
+  // CARDED yardage here instead let an away session ignore the handicap floor
+  // that pins a live hole at HCP of par time however hard you hit it: a bag ten
+  // times ahead of its card played away holes in the 0.9s walk minimum, five
+  // and a half times the live rate, and took the schedule, the card and the
+  // experience along with it.
+  const y = Math.max(yardageFor(S.hole, S.tier, ch), D.dps * parTimeFor(S.hole) * B.HCP);
   const secs = Math.max(S.walkMin || B.WALK_MIN, y / Math.max(1e-9, D.dps));
   const purse = purseFor(S.hole, S.tier, D.gold);
 
@@ -6600,7 +6674,7 @@ function renderPerks(){
   const live = B.PERKS.filter(p => perkLeft(p.id) > 0);
   w.innerHTML = '<div class="hint">You are holding <b style="color:var(--brass)">'
     + fmt(S.tickets || 0, 0) + '</b> tickets. They turn up when you finish an event, close out '
-    + 'a Sunday, gain a career level or get deep in the Depths, and you cannot buy them. '
+    + 'a Sunday, gain a career level or set a new best in the Depths, and you cannot buy them. '
     + (live.length ? '<b style="color:var(--aurora)">' + live.length + ' running right now.</b>' : '') + '</div>';
   for(const p of B.PERKS){
     const left = perkLeft(p.id), can = (S.tickets || 0) >= p.cost;
