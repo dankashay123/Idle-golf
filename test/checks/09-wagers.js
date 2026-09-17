@@ -1,4 +1,4 @@
-/* The Depths reward model, and the away model that shares the course with it.
+/* The wager reward model, and the away model that shares the course with it.
  *
  * Three things went wrong here and all three had the same shape: a reward
  * priced off the RAW floor number. The floor number climbs about two rungs per
@@ -13,11 +13,16 @@
  *      recorded a deeper floor than the one before on nothing at all. Measured
  *      on Tour Card I with a full bag: nine floors a run, forever.
  *   2. Every Depths run paid floor/8 sponsor tickets. A Sponsor Exemption costs
- *      six and refills every key down here, which is twelve more runs, so past
- *      about card twenty five the Depths bought their own keys.
+ *      six and refills every entry in the book, which is twelve more runs, so past
+ *      about card twenty five the wagers bought their own entries.
  *   3. offline() sized an away hole off the CARDED yardage while the live game
  *      sizes it off the handicapped yardage, so an away session ignored the
  *      floor that pins a live hole at HCP of par time however hard you hit it.
+ *
+ * And that the four are four. They shared one readout template and one "best
+ * floor N" line, so a drive contest and an endurance crawl differed by the
+ * words in them and nothing else. Each now reports in its own units and fills
+ * the readout strip with its own shape.
  *
  * These assert on shape, not on tuning: floors settle, currencies come in
  * linearly, the away hole matches the live hole. Retuning the payout numbers
@@ -28,7 +33,7 @@
 const RUNS = 24;
 
 module.exports = {
-  name: 'depths',
+  name: 'wagers',
   async run(page) {
     const r = await page.evaluate(RUNS => {
       const out = {};
@@ -125,6 +130,29 @@ module.exports = {
                     awaySecs: +(3600 * B.OFFLINE_RATE / holes).toFixed(2) });
       }
       out.away = away;
+
+      // ---- 4. four contests, or one contest four times ----------------------
+      S.tier = 20; S.hole = 2; startHole();
+      renderDgn();
+      out.rows = Array.from(document.querySelectorAll('#dgnRows .dgn'))
+        .map(el => {
+          const line = Array.from(el.querySelectorAll('.dm'))
+            .map(x => x.textContent).join(' | ');
+          return line;
+        });
+      out.strips = [];
+      for (const d of B.DGN) {
+        S.dgnRun = null; S.dgnKeys[d.id] = 1;
+        startDgn(d);
+        for (let i = 0; i < 40 && S.dgnRun; i++) tickDgn(0.1, derive());
+        try { hideSheet(); } catch (e) {}
+        renderReadout(derive());
+        const st = document.getElementById('rStrip');
+        out.strips.push({ id: d.id, hidden: !!st.hidden, cells: st.children.length });
+        S.dgnRun = null;
+      }
+      renderReadout(derive());
+      out.stripOffCourse = !!document.getElementById('rStrip').hidden;
       return out;
     }, RUNS);
 
@@ -175,7 +203,24 @@ module.exports = {
           + 'the handicap floor that pins the live one.');
     }
 
-    return ['floor ' + r.floorFirst + '->' + r.floorLast + ' under a ceiling of '
+    // 5. the four read as four
+    const shapes = r.strips.map(x => x.cells);
+    if (new Set(shapes).size !== shapes.length)
+      throw new Error('the readout strip is the same shape for '
+        + r.strips.map(x => x.id + ':' + x.cells).join(', ')
+        + '. Two contests are drawing the same picture.');
+    if (r.strips.some(x => x.hidden || x.cells === 0))
+      throw new Error('a running wager left the readout strip empty: '
+        + JSON.stringify(r.strips));
+    if (!r.stripOffCourse)
+      throw new Error('the wager strip is still on the readout out on the course');
+    const bests = r.rows.map(t => (t.match(/\u00b7 ([^\u00b7]+?) \u00b7/) || [,''])[1].trim());
+    if (new Set(bests).size !== bests.length)
+      throw new Error('two contests post the same kind of best: ' + bests.join(' / ')
+        + '. A best is only a best in the units the contest is played in.');
+
+    return ['four strips ' + shapes.join('/') + ', four kinds of best'
+      + ', floor ' + r.floorFirst + '->' + r.floorLast + ' under a ceiling of '
       + r.ceiling.toFixed(0)
       + ', pay flat to ' + ratio.toFixed(2) + 'x, ' + perRun.toFixed(2)
       + ' tickets/run against ' + sustains.toFixed(2) + ' self-sustaining'

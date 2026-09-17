@@ -345,7 +345,19 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
 .rsp{flex:1 1 auto;min-width:8px}
 #rTag{font-size:var(--f0);letter-spacing:.12em;text-transform:uppercase;font-weight:700;white-space:nowrap}
 .rbar{height:2px;background:#12251C;border-radius:0;margin-top:5px;overflow:hidden}
-.rbar i{display:block;height:100%;width:0;background:var(--brass);transition:width .12s linear}
+.rbar i{display:block;height:100%;width:0;background:var(--rc,var(--brass));transition:width .12s linear}
+/* The wager strip. One readout template served all four contests, so a drive
+   contest and an endurance crawl differed by the words in them and nothing
+   else. Each contest fills this with its own shape: six balls on the tee, a
+   ladder of greens, a rack of twenty five chips, a flight of floors. */
+.rstrip{display:flex;align-items:flex-end;gap:1px;height:10px;margin-top:5px}
+/* a class selector beats the user agent rule for [hidden], so without this
+   the strip from the last wager stayed on the readout all round */
+.rstrip[hidden]{display:none}
+.rstrip i{flex:1 1 0;min-width:1px;height:2px;background:#162C22;transition:height .12s linear}
+.rstrip i.lit{background:#2E4A3C}
+.rstrip i.on{background:var(--rc,var(--brass))}
+.rstrip i.hi{background:var(--chalk);box-shadow:0 0 0 1px var(--rc,var(--brass))}
 
 /* the honours shelf, on the stage under the hole readout */
 /* two stage buttons, drawn from the same pixel grid as the game */
@@ -427,6 +439,7 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
       <div class="rmain"><b id="rBig">0</b><span class="ru" id="rUnit">yds</span>
         <span class="rsp"></span><span id="rTag"></span></div>
       <div class="rbar"><i id="rFill"></i></div>
+      <div class="rstrip" id="rStrip" hidden></div>
     </div>
     <div id="toasts"></div>
   </div>
@@ -450,7 +463,7 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
   <div id="tabs">
     <button class="tab on" data-v="upg">Range<span class="dot"></span></button>
     <button class="tab" data-v="bag">Bag<span class="dot"></span></button>
-    <button class="tab" data-v="dgn">Depths<span class="dot"></span></button>
+    <button class="tab" data-v="dgn">Wagers<span class="dot"></span></button>
     <button class="tab" data-v="tour">Tour<span class="dot"></span></button>
     <button class="tab" data-v="career">Career<span class="dot"></span></button>
   </div>
@@ -484,7 +497,7 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
     </div>
 
     <div class="view" id="v-dgn">
-      <div class="band"><span class="eyebrow">The Depths</span><span class="note" id="dgnNote"></span></div>
+      <div class="band"><span class="eyebrow">The Wager Book</span><span class="note" id="dgnNote"></span></div>
       <div id="dgnRows"></div>
     </div>
 
@@ -1658,7 +1671,7 @@ const B = {
     { id:'groove',  k:'prc',  cap:500, base:4.0e8,  r:1.0251, g:0,       n:'Groove Sharpening',  d:'Chance an affinity triggers' },
     { id:'van',     k:'pow',  cap:500, base:1.4e9,  r:1.0341, g:1.00631, n:'Tour Van',           d:'Yardage on every swing' },
     { id:'second',  k:'mst',  cap:500, base:8.0e9,  r:1.0330, g:0,       n:'Second Serve',       d:'Chance to play a second ball on a swing' },
-    { id:'lantern', k:'dgn',  cap:500, base:8.0e10, r:1.0231, g:0,       n:'Caddie Lantern',     d:'Haul from the Depths' },
+    { id:'lantern', k:'dgn',  cap:500, base:8.0e10, r:1.0231, g:0,       n:"Caddie's Cut",       d:'Your take from the wager book' },
     { id:'forged',  k:'pow',  cap:500, base:1.2e12, r:1.0348, g:1.00652, n:'Forged Blades',      d:'Yardage on every swing' },
     { id:'simul',   k:'crt',  cap:500, base:9.0e13, r:1.0370, g:0,       n:'Swing Simulator',    d:'Chance of a pure strike' },
     { id:'windbook',k:'spd',  cap:500, base:6.0e15, r:1.0290, g:1.00249, n:'Wind Book',          d:'Swings per second' },
@@ -1733,7 +1746,7 @@ const B = {
     { id:'drp', n:'Gear Luck',      sc:false, lo:0.03, hi:0.16, sfx:'%' },
     { id:'prc', n:'Affinity Chance',sc:false, lo:0.010,hi:0.055, sfx:'pp' },
     { id:'mst', n:'Provisional',    sc:false, lo:0.010, hi:0.055, sfx:'pp' },
-    { id:'dgn', n:'Depths Haul',    sc:false, lo:0.06, hi:0.35, sfx:'%' }
+    { id:'dgn', n:'Wager Haul',     sc:false, lo:0.06, hi:0.35, sfx:'%' }
   ],
   ELEM: [
     { ic:'flame', id:'ember',   n:'Ember',   v:'--ember',   d:'Cinders burn the fairway for 65% of the strike over 3s' },
@@ -1806,13 +1819,17 @@ const B = {
     { id:'cart',   n:'Cart Ride',         ic:'cart',  cost:2, dur:0,   k:'holeout', v:0,
       d:'Hole out immediately, carded as an eagle' },
     { id:'exempt', n:'Sponsor Exemption', ic:'scroll',  cost:6, dur:0,   k:'keys', v:0,
-      d:'Refill every key in the Depths' }
+      d:'Refill every entry in the wager book' }
   ],
   // where tickets come from
   TICK_EVENT: 2, TICK_WIN: 3, TICK_TOP5: 1, TICK_LEVEL: 2,
   TICK_DEPTH: 1, TICK_SUNDAY: 1, TICK_CAP: 99,
 
-  /* ---- the Depths ---- */
+  /* ---- THE WAGER BOOK ----
+     Four contests played off the card, each for a different stake and each
+     testing a different part of the bag. The internal prefix is dgn, which is
+     what these were called before they were wagers; those keys are in every
+     save ever written, so the name changed and the prefix did not. ---- */
   // Each of the four is worth running for a different reason. Differentiating
   // them by cooldown alone just meant the slowest one never got a key spent on
   // it, so the difference now lives in the reward: Sand pays the bulk currency
@@ -1907,7 +1924,7 @@ const B = {
   CHAOS_SECOND_TIER: 4,   // a second condition starts being drawn at Tour Card V
 
 
-  /* ---- what the Depths look like ---- */
+  /* ---- what each wager looks like ---- */
   DGN_PAL: {
     sand:   { st:'sand', sky:['#2A1E0E','#4A3618','#6B4E22'], wall:'#3A2A12', floor:'#7A5C28', floor2:'#674C1F',
               lip:'#E8CE96', deep:'#241A09', glow:'#E0B15A', mote:'#D9C08A', word:'grains' },
@@ -2015,13 +2032,13 @@ const B = {
         { id:'through', n:'Follow Through', req:12, max:5, k:'mst',   v:0.030, d:'+3pp provisional chance' },
         { id:'perfect', n:'Perfect Tempo',  req:22, max:1, k:'dbl',   v:1,     d:'affinity fires twice' }
       ] },
-    { id:'card', n:'The Card', ic:'coins', d:'Money, gear luck, and the Depths.',
+    { id:'card', n:'The Card', ic:'coins', d:'Money, gear luck, and the wager book.',
       t:[
         { id:'endorse', n:'Endorsements',  req:0,  max:5, k:'gld',    v:0.08,  d:'+8% purse' },
         { id:'eye',     n:'Sponsor Eye',   req:0,  max:5, k:'drp',    v:0.012, d:'+1.2pp gear luck' },
-        { id:'lantern', n:'Deep Lantern',  req:5,  max:5, k:'dgn',    v:0.12,  d:'+12% Depths haul' },
+        { id:'lantern', n:'Bigger Cut',    req:5,  max:5, k:'dgn',    v:0.12,  d:'+12% wager haul' },
         { id:'walker',  n:'Fast Walker',   req:5,  max:5, k:'walk',   v:0.04,  d:'-4% walk-in time' },
-        { id:'delve',   n:'Deep Delve',    req:12, max:3, k:'dfloor', v:1,     d:'enter the Depths one floor deeper' },
+        { id:'delve',   n:'Head Start',    req:12, max:3, k:'dfloor', v:1,     d:'every wager starts a rung deeper' },
         { id:'school',  n:'Tour School',   req:12, max:5, k:'xp',     v:0.10,  d:'+10% career experience' },
         { id:'sharp',   n:'Card Sharp',    req:22, max:1, k:'sharp',  v:1,     d:'keys return 40% faster, runs last 40% longer' }
       ] }
@@ -2048,7 +2065,7 @@ const B = {
     { id:'fort', n:'Fortune', v:'--myth', a:[
       { id:'gld', n:'Purse',        k:'gld', v:0.00150, cap:500, s:'%' },
       { id:'drp', n:'Gear Luck',    k:'drp', v:0.00030, cap:500, s:'pp' },
-      { id:'dgn', n:'Depths Haul',  k:'dgn', v:0.00120, cap:500, s:'%' },
+      { id:'dgn', n:'Wager Haul',   k:'dgn', v:0.00120, cap:500, s:'%' },
       { id:'xp',  n:'Career XP',    k:'xp',  v:0.00150, cap:500, s:'%' } ] }
   ],
   WALK_MIN_FLOOR: 0.55, ONESWING_EVERY: 12, ONESWING_MULT: 8,
@@ -2081,7 +2098,17 @@ const B = {
      hat: it told you nothing you did not already know. You now play the course.
      Every event has a target, the target hardens with each cup you hold, and
      the purse follows how far under it you finish. ---- */
-  TARGET_BASE: -86, TARGET_PER_CUP: -9, TARGET_FLOOR: -260,
+  // An Ace on all seventy two holes is the best card that exists, and the target
+  // closes on it by this share of whatever is left each time you take a cup, so
+  // the next cup is always harder than the last and the number is never free
+  // twice. It used to harden by a flat nine a cup and then stop dead at -260,
+  // which is inside what a maxed shot book can card: past about nineteen cups a
+  // card that beat the number once beat it forever, and cups feed retirement
+  // legacy at 1.16 a cup. Held to 0.968 rather than anything steeper because
+  // Dynasty asks for fifty cups: at 0.968 the fiftieth asks for -248, which is
+  // a hard card and not an impossible one, and the fiftieth is still six shots
+  // harder than the flat floor ever got.
+  TARGET_BASE: -86, TARGET_CLOSE: 0.968,
   PAY_SPAN: 130, PAY_MIN: 0.30, PAY_MAX: 3.20,
   SEASON: 6,
   SLOTS_SEASON: ['event','event','major','event','event','finale'],
@@ -2176,7 +2203,7 @@ const B = {
     { id:'myth',   n:'Mythwrought',      d:'Find a Mythic',               m:'myth',   v:1,     r:{k:'elm', v:0.05} },
     { id:'enh',    n:'Reforged',         d:'Take a piece to +15',         m:'enh15',  v:1,     r:{k:'pow', v:0.06} },
     { id:'set6',   n:'Matched',          d:'Six pieces at Rare or better', m:'set6',  v:6,     r:{k:'pow', v:0.05} },
-    { id:'dg25',   n:'Spelunker',        d:'Make 25 Depths runs',         m:'runs',   v:25,    r:{k:'grit', v:200} },
+    { id:'dg25',   n:'Regular',           d:'Play 25 wagers',              m:'runs',   v:25,    r:{k:'grit', v:200} },
     { id:'f25',    n:'Deep Water',       d:'Reach mark 25 anywhere',      m:'floor',  v:25,    r:{k:'dgn', v:0.10} },
     { id:'f60',    n:'The Abyss',        d:'Reach mark 60 anywhere',      m:'floor',  v:60,    r:{k:'dgn', v:0.20} },
     { id:'all4',   n:'Every Door',       d:'Reach mark 10 in all four',   m:'all4',   v:1,     r:{k:'tick', v:3} },
@@ -2221,7 +2248,7 @@ const B = {
     { id:'sun',    t:'A', n:'Sunstone Marker',   k:'@sun',  d:'gear luck, +9pp a level' },
     { id:'chrono', t:'S', n:'Chronoglass',       k:'@chrono', d:'start each run one Tour Card higher' },
     { id:'seed',   t:'B', n:'Signing Bonus',     k:'@seed', d:'start each run with a purse' },
-    { id:'rift',   t:'A', n:'Riftkey',           k:'@rift', d:'Depths keys return faster, runs start deeper' },
+    { id:'rift',   t:'A', n:'Standing Invitation', k:'@rift', d:'entries come back faster, wagers start deeper' },
     { id:'ember',  t:'A', n:'Mythic Ember',      k:'@ember', d:'affinity chance, +2.5pp a level' },
     { id:'vault',  t:'S', n:"Founder's Locker",  k:'@vault', d:'keep fifty levels of every Range upgrade through retirement' },
     // found in the room
@@ -2240,7 +2267,7 @@ const B = {
     { id:'sunday', t:'S', n:'Sunday Bag',        k:'clutch', v:0.07, d:'+7% on signature holes' },
     { id:'reader', t:'S', n:'Green Reader',      k:'reson', v:0.05, d:'+0.05 to a damped affinity' },
     { id:'clock',  t:'A', n:'Pace Clock',        k:'walk', v:0.02, d:'-2% walk-in time' },
-    { id:'deepwdg',t:'A', n:'Wedge of the Deep', k:'dgn', v:0.15,  d:'+15% Depths haul' },
+    { id:'deepwdg',t:'A', n:"Gambler's Wedge",  k:'dgn', v:0.15,  d:'+15% wager haul' },
     { id:'marker', t:'B', n:'Lucky Marker',      k:'drp', v:0.014, d:'+1.4pp gear luck' },
     { id:'token',  t:'B', n:'Range Token',       k:'gld', v:0.12,  d:'+12% purse' },
     { id:'watch',  t:'A', n:'Pocket Watch',      k:'cdr', v:0.03,  d:'-3% shot cooldowns' },
@@ -2344,7 +2371,7 @@ function defaultState(){ return {
   upg: {}, equip: {}, bag: [], uid: 1,
   skillLv: {}, carry: [], cd: {},
   grit: 0, shard: 0, scroll: 0,
-  dgnKeys: {}, dgnKeyT: {}, dgnFloor: {}, dgnRun: null, islandBank: 5,
+  dgnKeys: {}, dgnKeyT: {}, dgnFloor: {}, dgnBest: {}, dgnRun: null, islandBank: 5,
   legacy: 0, relic: {}, retires: 0, cups: 0, points: 0,
   lv: 1, xp: 0, statPts: 0, talPts: 0, stat: {}, tal: {},
   tickets: 0, perkOn: {}, perkUsed: 0,
@@ -2363,10 +2390,16 @@ function initState(){
   B.SLOTS.forEach(s => { if(S.equip[s.id] === undefined) S.equip[s.id] = null; });
   B.SKILL.forEach(k => { if(S.skillLv[k.id] === undefined) S.skillLv[k.id] = k.cost === 0 ? 1 : 0;
                          if(S.cd[k.id] === undefined) S.cd[k.id] = 0; });
+  // dgnFloor is the scoring number every wager is paid off. dgnBest is what
+  // the contest is actually FOR, in its own units: the longest drive, the
+  // longest run of greens, the most chips dropped, the deepest floor. One
+  // number in four places read as four copies of one contest.
+  if(!S.dgnBest) S.dgnBest = {};
   B.DGN.forEach(d => {
     if(S.dgnKeys[d.id] === undefined) S.dgnKeys[d.id] = d.cap;
     if(S.dgnKeyT[d.id] === undefined) S.dgnKeyT[d.id] = 0;
     if(S.dgnFloor[d.id] === undefined) S.dgnFloor[d.id] = 0;
+    if(!(S.dgnBest[d.id] >= 0)) S.dgnBest[d.id] = 0;
   });
   B.TROPHY.forEach(r => { if(S.relic[r.id] === undefined) S.relic[r.id] = 0;
     else S.relic[r.id] = Math.min(B.TR_MAX, S.relic[r.id]); });
@@ -2968,7 +3001,7 @@ function checkAch(){
     else if(r.k === 'legacy'){ S.legacy += r.v; got = '+' + r.v + ' legacy'; }
     else if(r.k === 'crt' || r.k === 'drp' || r.k === 'prc') got = '+' + (r.v*100).toFixed(1) + 'pp ' + r.k;
     else got = '+' + Math.round(r.v*100) + '% ' + ({ pow:'swing power', gld:'purse', spd:'tempo',
-      mst:'provisional chance', elm:'affinity', dgn:'Depths haul' }[r.k] || r.k);
+      mst:'provisional chance', elm:'affinity', dgn:'wager haul' }[r.k] || r.k);
     toast('<span class="achk">Achievement unlocked</span>' + a.n + ' \u00b7 <b>' + got + '</b>', 'ach');
     if(typeof renderCareer === 'function') renderCareer();
   }
@@ -2999,7 +3032,7 @@ function usePerk(id){
     toast('<b>' + p.n + '</b> \u00b7 driven to the green');
   }else if(p.k === 'keys'){
     B.DGN.forEach(d => S.dgnKeys[d.id] = d.cap);
-    toast('<b>' + p.n + '</b> \u00b7 every key refilled');
+    toast('<b>' + p.n + '</b> \u00b7 every entry refilled');
     renderDgn();
   }
   renderPerks(); renderVitals();
@@ -3215,8 +3248,8 @@ const islandChance = (D, made) => clamp(
 const chipChance = D => clamp((D.procRaw !== undefined ? D.procRaw : D.proc) * B.CHIP_PROC, 0.05, 0.88);
 
 function startDgn(d){
-  if(S.dgnRun){ toast('There is already a caddie down there'); return; }
-  if(S.dgnKeys[d.id] < 1){ toast('No keys left for ' + d.n); return; }
+  if(S.dgnRun){ toast('One wager at a time'); return; }
+  if(S.dgnKeys[d.id] < 1){ toast('No entries left for ' + d.n); return; }
   S.dgnKeys[d.id]--; bump('runs');
   const D0 = derive();
   // The Vault has to earn its way back down, so it starts where it left off.
@@ -3250,7 +3283,10 @@ function rollDgnEvent(R){
     R.work = floorWork(R.floor); R.full = R.work; R.fT = 0;
   }
   R.evt = pick; R.evtT = 2.4;
-  toast((pick.bad ? '' : '<b>') + pick.n + (pick.bad ? '' : '</b>'));
+  // The stage already calls it out in the middle of the screen. A toast on top
+  // of that made three copies of one event: two stacked in the corner and one
+  // over the hole, all saying LOST BALL.
+  R.evtT = 2.4;
 }
 
 function tickDgn(dt, D){
@@ -3312,6 +3348,7 @@ function tickDgn(dt, D){
       // every chip finishes on the green; the good ones finish in the hole
       Scene.aimed(D.pow, D.ball && D.ball.el, Scene.holeLen(),
                   inHole ? 0 : (Math.random()-0.5)*2.6, inHole);
+      (R.drops = R.drops || [])[R.shot - 1] = inHole ? 1 : 0;
       if(inHole){
         R.made++;
         R.pot += yieldAt(R.f0 + R.made*B.CHIP_STEP, D, d);
@@ -3389,6 +3426,11 @@ function endDgn(d, R, D){
   const rewards = [];
   if(fe >= 0){
     Scene.depthsFlash((B.DGN_PAL[d.id] || {}).glow || '#57E0BE');
+    const mine = R.mode === 'drive' ? R.best
+               : R.mode === 'island' ? R.made
+               : R.mode === 'chip'   ? R.made
+               : Math.max(0, R.floor);
+    if(mine > (S.dgnBest[d.id] || 0)) S.dgnBest[d.id] = mine;
     const deeper = fe > (S.dgnFloor[d.id] || 0);
     if(deeper){ S.dgnFloor[d.id] = Math.round(fe); rewards.push(['New best', 'yes']); }
     const xp = B.XP_FLOOR * Math.pow(1 + fe, B.XP_FLOOR_P) * (1 + fe*0.2);
@@ -3399,7 +3441,7 @@ function endDgn(d, R, D){
     // and the Depths buy their own keys forever. A best only moves when the bag
     // does, and a refill full of runs at a depth you have already been pays
     // nothing at all.
-    if(deeper) grantTickets(B.TICK_DEPTH, 'a new best in the Depths');
+    if(deeper) grantTickets(B.TICK_DEPTH, 'a new best in the wager book');
 
     const yield_ = pot > 0 ? pot : yieldAt(fe, D, d);
     if(d.cur === 'gold'){
@@ -3444,8 +3486,16 @@ function endDgn(d, R, D){
    ========================================================================= */
 // The number to beat this week. Each cup already on the shelf makes it harder,
 // so a cup is always the same distance away no matter how strong you are.
-const eventTarget = () => Math.max(B.TARGET_FLOOR,
-  B.TARGET_BASE + B.TARGET_PER_CUP * (S.cups || 0));
+// Kept exact rather than rounded to whole shots. Rounded, the step falls under
+// half a shot around the fiftieth cup and the number stops moving eighteen
+// shots short of a perfect card, which is the flat floor again with more
+// arithmetic in front of it: a card that beat it once would beat it forever.
+// Exact, it only ever stops at a card of nothing but Aces, and the display
+// rounds at the two places a player reads it.
+const perfectCard = () => B.ROUND * B.DAYS * B.SCORE[0].d;   // an Ace on every hole
+const eventTarget = () => perfectCard()
+  + (B.TARGET_BASE - perfectCard()) * Math.pow(B.TARGET_CLOSE, S.cups || 0);
+const targetShown = () => Math.round(eventTarget());
 // How the purse follows the card: at target you take the base, and every shot
 // under it pays more, to a ceiling.
 const payShare = (score, target) =>
@@ -3626,13 +3676,13 @@ function endTournament(){
     + '<p>' + (beat ? 'You beat the number.' : 'Card signed and posted.')
     + ' Four rounds, seventy two holes.</p>'
     + '<div class="big">' + fm(score) + '</div>'
-    + '<ul><li>Target: ' + fm(target) + (beat ? ' \u2014 <b style="color:var(--brass)">beaten</b>'
-        : ' \u2014 missed by ' + (score - target)) + '</li>'
+    + '<ul><li>Target: ' + fm(Math.round(target)) + (beat ? ' \u2014 <b style="color:var(--brass)">beaten</b>'
+        : ' \u2014 missed by ' + Math.ceil(score - target)) + '</li>'
     + '<li>Best card: ' + fm(S.bestRound) + '</li>'
     + '<li>Prize money: ' + fmt(cash) + ' (' + share.toFixed(2) + 'x)</li>'
     + '<li>Cup points: ' + fmt(pts) + '</li>'
     + '<li>Cups held: ' + S.cups + (beat ? ' <b style="color:var(--brass)">(new)</b>' : '')
-    + ' \u00b7 next target ' + fm(eventTarget()) + '</li></ul>'
+    + ' \u00b7 next target ' + fm(targetShown()) + '</li></ul>'
     + '<button class="act" onclick="hideSheet()">Next event</button>');
 
   S.eventsPlayed = (S.eventsPlayed || 0) + 1;
@@ -4181,7 +4231,7 @@ function courseTrees(cs, mode){
 }
 
 /* ---- themes ----
-   Every colour the terrain uses, in one table. The Depths reuse the course
+   Every colour the terrain uses, in one table. The wagers reuse the course
    renderer with a different theme rather than inventing a second view: a floor
    down there is a hole you play, so it should look like a hole. ---- */
 const THEMES = {
@@ -5124,10 +5174,19 @@ const Scene = {
     // The Island Green earns the name: a moat centred on the green itself,
     // wide enough that the fairway runs out and the putting surface sits alone
     // in the middle of it.
+    // The green has to sit ALONE in the water or the name is a lie. At a
+    // radius of a quarter the hole the moat started well past the camera and
+    // there was a fairway running all the way to it, which is a par three
+    // over a pond. It now opens at the golfer's feet and runs past the green.
     if(R.mode === 'island')
-      this.water = { d: LEN, x: 0, rd: LEN*0.26, rx: 5.6, shape: this.blob(rnd, 0.16) };
-    this.layProps(rnd, { trees: (30 + rnd()*12) * this.theme.trees,
-                         kind: this.theme.kind, crowd: dg === 'vault' ? 18 : 6 });
+      this.water = { d: LEN, x: 0, rd: LEN*0.30, rx: 6.0, shape: this.blob(rnd, 0.14) };
+    // Trees were planted from the same table everywhere, so the Island Green
+    // grew a copse in the middle of its lake and the Vault had a forest
+    // indoors.
+    const trees = dg === 'water' ? 3 : dg === 'vault' ? 0
+                : dg === 'cellar' ? 11 : (30 + rnd()*12) * this.theme.trees;
+    this.layProps(rnd, { trees, kind: this.theme.kind,
+                         crowd: dg === 'vault' ? 18 : dg === 'water' ? 0 : 6 });
 
     this.hills = [[], []];
     for(let L = 0; L < 2; L++) for(let i = 0; i <= 40; i++) this.hills[L].push(rnd());
@@ -5291,7 +5350,15 @@ const Scene = {
                       lat0: lat0,
                       lat: p.lat !== undefined ? p.lat : -0.15 + (Math.random()-.5)*0.30 });
     if(this.nums.length < 12 && p.dmg > 0)
-      this.nums.push({ t:0, v:p.dmg, crit:p.crit, x:(Math.random()-.5)*14 });
+      // Nudged clear of whatever is already floating there. A random spread of
+      // fourteen pixels puts two numbers on top of each other often enough that
+      // the Vault, which swings continuously, read as a smear.
+      {
+        let nx = (Math.random()-.5)*14, ny = 0;
+        for(const q of this.nums)
+          if(q.t < 0.22 && Math.abs((q.x||0) - nx) < 9){ nx += 11; ny -= 7; }
+        this.nums.push({ t:0, v:p.dmg, crit:p.crit, x:nx, y:ny });
+      }
     if(p.crit && this.sparks.length < 20) this.sparks.push({ t:0, k:'crit' });
   },
   spark(el){ if(this.sparks.length < 20) this.sparks.push({ t:0, k:el }); },
@@ -5816,6 +5883,129 @@ Object.assign(Scene, {
 
   // Two markers on the tee. Skipped once the camera has walked past them,
   // or the projection clamp blows them up across the bottom of the screen.
+  /* ---- what makes each wager its own place ----
+     Four palettes on one hole read as one contest painted four ways, which is
+     exactly what these were: same fairway, same green, same flag, different
+     hue. Each one now has furniture of its own, built from the same projection
+     the terrain uses so it sits in the world rather than on top of it. ---- */
+  drawWagerStage(R){
+    if(R.mode === 'drive') this.drawRange(R);
+    else if(R.mode === 'chip') this.drawPylons();
+    else if(R.mode === 'floor') this.drawVaultHall();
+  },
+
+  // A long drive contest is a measured range, not a hole: plates down both
+  // sides, and a peg where each of the six finished with the longest flagged.
+  // Everything here is placed relative to the CAMERA rather than at a fraction
+  // of the hole. A fraction puts the same prop eleven units away in one contest
+  // and behind the camera in the next, and the projection is 1/distance, so the
+  // difference between those two is a prop forty pixels tall and one that never
+  // appears at all.
+  drawRange(R){
+    const c = this.b;
+    for(const off of [7, 15, 26, 41]){
+      const d = this.camD + off;
+      for(const sx of [-1, 1]){
+        const p = this.proj(d, sx * (this.fwWidth(d) + 0.4));
+        if(p.y < HORIZON + 1 || p.y > VH + 4 || p.y > this.clipAt(d)) continue;
+        const h = Math.max(2, Math.round(11 * US * p.s));
+        const w = Math.max(1, Math.round(h * 0.55));
+        c.fillStyle = PX.ink;   c.fillRect(p.x - (w>>1), p.y - h, w, h);
+        c.fillStyle = PX.brass; c.fillRect(p.x - (w>>1), p.y - h, w, Math.max(1, Math.round(h*0.55)));
+        c.fillStyle = PX.brass2; c.fillRect(p.x - (w>>1), p.y - 1, w, 1);
+      }
+    }
+    const log = R.log || [];
+    if(!log.length) return;
+    // A pure strike is worth four times a normal one and a provisional adds
+    // more on top, so six drives can span three orders of magnitude. Placed on
+    // a linear scale five of them pile up on the tee. Placed on a log scale
+    // between the shortest and the longest, all six are legible.
+    let lo = Infinity, hi = 0;
+    for(const v of log){ if(v > 0){ lo = Math.min(lo, v); hi = Math.max(hi, v); } }
+    if(!(hi > 0)) return;
+    const span = Math.log(hi / Math.max(lo, hi*1e-6)) || 1;
+    for(let i = 0; i < log.length; i++){
+      if(!(log[i] > 0)) continue;
+      const u = 0.18 + 0.74 * (Math.log(log[i] / lo) / span);
+      const d = this.camD + 4 + u * 46;
+      const best = log[i] >= hi - 1e-9;
+      // fanned across the fairway so six pegs do not stack into one
+      const p = this.proj(d, (i - (B.DRIVE_SHOTS - 1)/2) * 0.62);
+      if(p.y < HORIZON + 1 || p.y > VH + 4 || p.y > this.clipAt(d)) continue;
+      const h = Math.max(3, Math.round((best ? 20 : 9) * US * p.s));
+      const pw = Math.max(1, Math.round(h * 0.12));
+      c.fillStyle = PX.ink;  c.fillRect(p.x - (pw>>1) + 1, p.y - h + 1, Math.max(1, pw), h);
+      c.fillStyle = best ? PX.white : PX.bone;
+      c.fillRect(p.x - (pw>>1), p.y - h, Math.max(1, pw), h);
+      const fw = Math.max(2, Math.round(h * (best ? 0.5 : 0.34)));
+      const fh = Math.max(1, Math.round(h * (best ? 0.34 : 0.24)));
+      c.fillStyle = best ? PX.brass : PX.grey;
+      c.fillRect(p.x + (pw>>1), p.y - h, fw, fh);
+    }
+  },
+
+  // The Floodlit Green is played under lights. Four pylons round the green,
+  // each throwing a pool for the night palette to bite on.
+  drawPylons(){
+    const c = this.b;
+    for(const [d, sx] of [[LEN - 3, -1], [LEN - 3, 1], [LEN + 7, -1], [LEN + 7, 1]]){
+      const p = this.proj(d, sx * (this.fwWidth(Math.min(d, LEN)) + 2.2));
+      if(p.y > VH + 4) continue;
+      const h = Math.max(8, Math.round(46 * US * p.s));
+      const w = Math.max(1, Math.round(h * 0.07));
+      const hw = Math.max(3, Math.round(h * 0.26)), hh = Math.max(2, Math.round(h * 0.09));
+      // The beam first, so the mast stands in front of its own light rather
+      // than behind it. It leans in toward the green: four lamps all shining
+      // straight down read as four street lights, not as a lit green.
+      const gp = this.proj(LEN, 0);
+      const top = p.y - h, reach = Math.max(8, gp.y - top);
+      for(let k = 1; k <= 9; k++){
+        const u = k/9;
+        c.globalAlpha = 0.085 * (1 - u*0.55);
+        c.fillStyle = '#CBAAFF';
+        const sw = Math.max(1, Math.round(hw * (0.9 + u*5.5)));
+        const cx = Math.round(p.x + (gp.x - p.x) * u * 0.85);
+        c.fillRect(cx - (sw>>1), top + Math.round(reach*(u - 1/9)), sw, Math.ceil(reach/9));
+      }
+      c.globalAlpha = 1;
+      c.fillStyle = '#241A33';
+      c.fillRect(p.x - (w>>1), p.y - h, Math.max(1, w), h);
+      // the lattice, two cross braces so it is a pylon and not a post
+      for(const t of [0.36, 0.62]){
+        const bw = Math.max(2, Math.round(h * 0.11));
+        c.fillRect(p.x - (bw>>1), p.y - Math.round(h*t), bw, 1);
+      }
+      c.fillStyle = '#4C3A68';
+      c.fillRect(p.x - (hw>>1), p.y - h - hh, hw, hh);
+      c.fillStyle = '#F2E6FF';
+      c.fillRect(p.x - (hw>>1) + 1, p.y - h - hh + 1, Math.max(1, hw - 2), Math.max(1, hh - 2));
+    }
+  },
+
+  // The Vault is a hall, not a links. Pillars down both sides, banded in
+  // brass, marching away from the camera the way the floors do.
+  drawVaultHall(){
+    const c = this.b;
+    for(const off of [3, 7, 12, 18, 25, 33, 42, 52]){
+      const d = this.camD + off;
+      for(const sx of [-1, 1]){
+        const p = this.proj(d, sx * (this.fwWidth(Math.min(d, LEN)) + 1.0));
+        if(p.y > VH + 4) continue;
+        const h = Math.max(4, Math.round(17 * US * p.s));
+        const w = Math.max(1, Math.round(h * 0.22));
+        if(p.y - h > VH) continue;
+        c.fillStyle = '#0A1A10'; c.fillRect(p.x - (w>>1), p.y - h, w, h);
+        c.fillStyle = '#16301E'; c.fillRect(p.x - (w>>1), p.y - h, Math.max(1, w>>1), h);
+        c.fillStyle = PX.brass2;
+        c.fillRect(p.x - (w>>1), p.y - h, w, 1);
+        c.fillRect(p.x - (w>>1), p.y - Math.round(h*0.58), w, 1);
+        c.fillStyle = PX.brass;
+        c.fillRect(p.x - (w>>1), p.y - Math.max(1, Math.round(h*0.04)) , w, 1);
+      }
+    }
+  },
+
   drawTee(){
     if(0.2 - this.camD + CAM_BACK < 1.2) return;
     const c = this.b;
@@ -5888,7 +6078,7 @@ Object.assign(Scene, {
       // sprite height rather than guessed
       const gh = Math.max(6, Math.round(B_GOLFER * US * gp.s));
       drawTextS(c, (n.crit ? '*' : '') + fmt(n.v), gp.x + n.x*US,
-                gp.y - gh - 5 - Math.round(n.t*20*TSC),
+                gp.y - gh - 5 + (n.y || 0) - Math.round(n.t*20*TSC),
                 n.crit ? PX.brass : PX.bone, TSC, 'c');
     }
     for(let i = this.casts.length - 1; i >= 0; i--){
@@ -6008,7 +6198,7 @@ Object.assign(Scene, {
     drawTextS(c, (S.chaos ? S.chaos.n : 'FAIR'), R, ly, PX.grey, TSC, 'r');
   },
 
-  /* ---- the Depths ---- */
+  /* ---- the wager stage ---- */
   drawDepthsHud(D, R, dg){
     const c = this.b;
     const pal = B.DGN_PAL[R.id] || {};
@@ -6020,11 +6210,16 @@ Object.assign(Scene, {
       drawText(c, R.evt.n, CX, y + 2, bad ? PX.flag : PX.verdant, TSC, 'c');
     }
     // All of this stacks up the RIGHT edge. Along the bottom left it ran under
-    // the shot book icons, which are drawn from the same corner.
+    // the shot book icons, which are drawn from the same corner. The pull tab
+    // sits in this corner too, and the name ran straight under it and then off
+    // the edge of the buffer: the budget below is what is left beside the tab,
+    // not the width of the stage.
     const RX = VW - 4*TSC - 1;
-    let dy = VH - LH - 2;
+    let dy = VH - LH - 2 - Math.round(VH*0.045);
+    const budget = Math.round(VW * 0.56);
     let nm = dg.n.toUpperCase();
-    while(textW(nm, TSC) > VW - 8 && nm.length > 4) nm = nm.slice(0, -1);
+    if(textW(nm, TSC) > budget && /^THE /.test(nm)) nm = nm.slice(4);
+    while(textW(nm, TSC) > budget && nm.length > 4) nm = nm.slice(0, -1);
     drawTextS(c, nm, RX, dy, glow, TSC, 'r');
     dy -= LH;
     drawTextS(c, 'COURSE PAUSED', RX, dy, PX.dim, TSC, 'r');
@@ -6069,7 +6264,7 @@ Object.assign(Scene, {
       // The chipper stands SHORT of the green: at 0.90 he was standing on it,
       // which is not chipping. The island shot is played from across the water.
       const within = R.mode === 'drive' ? 0.03
-                   : R.mode === 'island' ? 0.56
+                   : R.mode === 'island' ? 0.60
                    : R.mode === 'chip' ? 0.76
                    : clamp(1 - R.work/Math.max(1e-9, R.full), 0, 1);
       this.camD += (within*LEN - this.camD) * Math.min(1, dt*4.5);
@@ -6094,7 +6289,11 @@ Object.assign(Scene, {
       this.buildHaze();
       if(this.haze) c.drawImage(this.haze, 0, 0);
       this.drawTee();
-      this.drawFlagstick();
+      // No flag on the Long Drive. It is a measured range with no hole in it,
+      // and a pin at the far end was the single thing that made it read as
+      // another par four in a different colour.
+      if(R.mode !== 'drive') this.drawFlagstick();
+      this.drawWagerStage(R);
       this.drawGolfer(D);
       this.drawBalls(dt);
       if(this.themeId === 'cellar' && Math.sin(this.t*1.9) > 0.988){
@@ -6315,10 +6514,13 @@ function renderXp(){
     : fmt(have) + ' / ' + fmt(need) + ' xp';
   if(careerTab) careerTab.classList.toggle('alert', unspent > 0);
 }
-// One readout for both the course and the Depths, so they read the same way.
+// One readout for the course and for a wager, but a wager fills the strip under
+// it with a shape of its own, so the four do not read as one contest in four
+// colours. The whole panel also takes the contest's own accent.
 function renderReadout(D){
   const R = S.dgnRun;
   let top, topR, big, unit, tag, tagCol, frac, barCol = 'var(--brass)';
+  let strip = null, accent = null;
   if(R){
     const left = Math.max(0, R.dur - R.t);
     topR = left.toFixed(1) + 's';
@@ -6328,24 +6530,52 @@ function renderReadout(D){
       big = fmt(R.best); unit = 'best'; frac = R.shots / B.DRIVE_SHOTS;
       tag = 'Wind ' + R.wind.toFixed(2) + 'x';
       tagCol = R.wind >= 1 ? 'var(--verdant)' : 'var(--flag)';
+      // six balls on the tee, each as tall as it went beside the longest
+      const log = R.log || [];
+      strip = [];
+      for(let i = 0; i < B.DRIVE_SHOTS; i++){
+        const v = log[i];
+        if(v === undefined){ strip.push(['', 2]); continue; }
+        const u = R.best > 0 ? clamp(v / R.best, 0, 1) : 0;
+        strip.push([v >= R.best - 1e-9 ? 'hi' : 'on', 2 + Math.round(u*8)]);
+      }
     }else if(R.mode === 'island'){
       top = 'Green ' + R.made + ' of ' + R.target;
       const ch = R.chance || islandChance(D, R.made);
       big = fmt(R.pot); unit = 'pot'; frac = ch;
       tag = Math.round(ch*100) + '% make';
       tagCol = ch > 0.6 ? 'var(--aurora)' : ch > 0.35 ? 'var(--brass)' : 'var(--flag)';
-      barCol = tagCol;
+      // a ladder to the bank: each rung doubles what is on it, the last is the
+      // one you walk off with
+      strip = [];
+      const n = Math.min(25, R.target);
+      for(let i = 0; i < n; i++)
+        strip.push([i < R.made ? (i === n-1 ? 'hi' : 'on') : '', 3 + Math.round(i/(n-1||1)*7)]);
     }else if(R.mode === 'chip'){
       top = 'Chip ' + R.shot + ' of ' + B.CHIP_SHOTS;
       big = fmt(R.pot); unit = 'pot'; frac = R.shot / B.CHIP_SHOTS;
       tag = R.made + ' dropped'; tagCol = 'var(--verdant)';
+      // the rack: twenty five balls, lit as they are played, filled if dropped
+      strip = [];
+      const drops = R.drops || [];
+      for(let i = 0; i < B.CHIP_SHOTS; i++)
+        strip.push([i >= R.shot ? '' : drops[i] ? 'on' : 'lit', drops[i] ? 9 : 3]);
     }else{
       top = 'Floor ' + (R.floor + 1) + ' \u00b7 ' + R.cleared + ' banked';
       big = fmt(Math.max(0, R.work)); unit = 'left';
       frac = clamp(1 - R.work/Math.max(1e-9, R.full), 0, 1);
       tag = R.dead ? 'Turned back' : R.mod < 1 ? 'Slowed' : R.mod > 1 ? 'Running hot' : 'Digging';
       tagCol = R.dead || R.mod < 1 ? 'var(--flag)' : R.mod > 1 ? 'var(--verdant)' : 'var(--dim)';
+      // a flight of stairs going down, the one underfoot filling as you dig
+      strip = [];
+      const show = 14, from = Math.max(0, R.cleared - show + 1);
+      for(let i = from; i < from + show; i++){
+        if(i > R.cleared){ strip.push(['', 2]); continue; }
+        const h = 10 - Math.round((i - from)/(show-1)*7);
+        strip.push([i === R.cleared ? 'hi' : 'on', i === R.cleared ? Math.max(2, Math.round(h*frac)) : h]);
+      }
     }
+    accent = (B.DGN_PAL[R.id] || {}).glow || null;
     if(left < 8) topR = '<span style="color:var(--flag)">' + topR + '</span>';
   }else{
     const ratio = S.elapsed / S.parTime, sc = scoreFor(ratio);
@@ -6367,6 +6597,26 @@ function renderReadout(D){
   const fl = $$('rFill');
   fl.style.width = clamp(frac, 0, 1)*100 + '%';
   fl.style.background = barCol;
+
+  const ro = $$('readout'), st = $$('rStrip');
+  ro.style.setProperty('--rc', accent || 'var(--brass)');
+  ro.style.borderColor = accent ? accent + '55' : '';
+  $$('rBig').style.color = accent || '';
+  if(!strip){ st.hidden = true; return; }
+  st.hidden = false;
+  // Rebuilt only when the cell COUNT changes; twenty five nodes thrown away
+  // and remade every frame is the sort of thing that shows up as jitter on a
+  // phone long before it shows up in a profile.
+  if(st.children.length !== strip.length){
+    st.innerHTML = '';
+    for(let i = 0; i < strip.length; i++) st.appendChild(document.createElement('i'));
+  }
+  for(let i = 0; i < strip.length; i++){
+    const el = st.children[i];
+    if(el.className !== strip[i][0]) el.className = strip[i][0];
+    const h = strip[i][1] + 'px';
+    if(el.style.height !== h) el.style.height = h;
+  }
 }
 function renderNine(){
   if(!S.nine) startNine();
@@ -6592,7 +6842,7 @@ function renderBag(){
   const w = $('bagList'); w.innerHTML = '';
   if(!S.bag.length){
     w.innerHTML = '<div class="empty">Nothing spare in here yet. Closing holes always drop something, '
-      + 'and the Depths hand out gear too.</div>';
+      + 'and the wager book hands out gear too.</div>';
     return;
   }
   const sorted = S.bag.slice().sort((a,b) => itemScore(b) - itemScore(a));
@@ -6674,7 +6924,7 @@ function renderPerks(){
   const live = B.PERKS.filter(p => perkLeft(p.id) > 0);
   w.innerHTML = '<div class="hint">You are holding <b style="color:var(--brass)">'
     + fmt(S.tickets || 0, 0) + '</b> tickets. They turn up when you finish an event, close out '
-    + 'a Sunday, gain a career level or set a new best in the Depths, and you cannot buy them. '
+    + 'a Sunday, gain a career level or post a new best in the wager book, and you cannot buy them. '
     + (live.length ? '<b style="color:var(--aurora)">' + live.length + ' running right now.</b>' : '') + '</div>';
   for(const p of B.PERKS){
     const left = perkLeft(p.id), can = (S.tickets || 0) >= p.cost;
@@ -6749,7 +6999,7 @@ function renderSkills(){
   }
 }
 
-/* ---- the Depths ---- */
+/* ---- the wager book ---- */
 // Which contests have their notes folded down. Kept out here because the
 // Depths redraw on the key timer, and a class on the element is gone the next
 // time they do.
@@ -6758,8 +7008,8 @@ let cardHintOpen = false;
 function renderDgn(){
   const w = $('dgnRows'); w.innerHTML = '';
   const D = derive();
-  $('dgnNote').textContent = S.dgnRun ? 'Run is on the stage \u00b7 the round is paused'
-    : 'Four contests, four different tests';
+  $('dgnNote').textContent = S.dgnRun ? 'On the stage \u00b7 the round is paused'
+    : 'Four stakes, four different tests';
   for(const d of B.DGN){
     const run = S.dgnRun && S.dgnRun.id === d.id ? S.dgnRun : null;
     const keys = S.dgnKeys[d.id] || 0;
@@ -6770,6 +7020,15 @@ function renderDgn(){
     const nextIn = keys >= d.cap ? 'full' : hms(keyInterval(d) - (S.dgnKeyT[d.id]||0));
 
     // what your bag is actually bringing to this particular contest
+    // A best is only a best in the units the contest is played in. All four
+    // reported the same scoring floor, which is how four different games came
+    // to look like one game with four hats on.
+    const bv = S.dgnBest ? (S.dgnBest[d.id] || 0) : 0;
+    const best = d.mode === 'drive'  ? 'longest ' + (bv > 0 ? fmt(bv) : '\u2014')
+               : d.mode === 'island' ? 'best run ' + bv + ' green' + (bv === 1 ? '' : 's')
+               : d.mode === 'chip'   ? 'best ' + bv + ' of ' + B.CHIP_SHOTS + ' dropped'
+               :                       'deepest floor ' + (bv + 1);
+
     let reads;
     if(d.mode === 'drive') reads = 'Your best case swing lands around ' + fmt(D.pow * D.cpw * (1 + D.mst*B.MST_DMG));
     else if(d.mode === 'island') reads = 'First green ' + Math.round(islandChance(D, 0)*100)
@@ -6785,8 +7044,8 @@ function renderDgn(){
       + '<div class="dd">' + d.d + '</div>'
       + '<div class="dd fold" style="color:var(--faint);margin-top:4px">' + d.how + '</div>'
       + '<div class="dm">' + reads + '</div>'
-      + '<div class="dm">Pays ' + d.cn + ' \u00b7 best ' + ((S.dgnFloor[d.id]||0)+1)
-      + ' \u00b7 ' + Math.round(d.run) + 's \u00b7 key in ' + nextIn + '</div>'
+      + '<div class="dm">Pays ' + d.cn + ' \u00b7 ' + best
+      + ' \u00b7 ' + Math.round(d.run) + 's \u00b7 entry in ' + nextIn + '</div>'
       + '<div class="bar"><i style="width:' + (run ? clamp(run.t/run.dur,0,1)*100 : 0) + '%"></i></div>'
       + '<div class="btnrow" style="margin-top:8px"></div>';
     el.classList.toggle('open', !!dgnOpen[d.id]);
@@ -6819,7 +7078,7 @@ function renderDgn(){
         : 'On the stage \u00b7 floor ' + (run.floor+1);
     }else{
       b.className = 'mini' + (keys > 0 && !S.dgnRun ? ' go' : ' dim');
-      b.textContent = S.dgnRun ? 'Caddie is out' : keys > 0 ? 'Play it' : 'No keys';
+      b.textContent = S.dgnRun ? 'One at a time' : keys > 0 ? 'Play it' : 'No entry';
       b.onclick = () => startDgn(d);
     }
     br.appendChild(b);
@@ -6855,7 +7114,7 @@ function renderTour(){
     + '<span class="lbl">Climb</span><span class="amt">'
     + (cardUnlocked(S.tier+1) ? '+1' : eventsToNext() + ' left') + '</span></button></div>'
     + '<div class="row"><div><div class="nm">Drop back</div>'
-    + '<div class="ds">Drop to something easier and farm it for gear and Depths currency.</div></div>'
+    + '<div class="ds">Drop to something easier and farm it for gear and wager stakes.</div></div>'
     + '<button class="buy" id="dropBtn"><span class="lbl">Drop</span><span class="amt">\u22121</span></button></div>'
     + '<div class="row"><div><div class="nm">Climb on form</div>'
     + '<div class="ds">Moves up on its own once the next card is unlocked and you are carding eagles.</div></div>'
@@ -6884,7 +7143,7 @@ function renderTour(){
     + '<span class="s" style="color:' + (onPace ? 'var(--aurora)' : 'var(--flag)') + '">'
     + fm(proj) + '</span></div>'
     + '<div class="lb"><span class="p"></span><span>Target</span>'
-    + '<span class="s" style="color:var(--brass)">' + fm(target) + '</span></div>'
+    + '<span class="s" style="color:var(--brass)">' + fm(Math.round(target)) + '</span></div>'
     + '<div class="lb"><span class="p"></span><span>Best card posted</span>'
     + '<span class="s">' + (S.bestRound === undefined ? '\u2014' : fm(S.bestRound)) + '</span></div>'
     + '<div class="lb"><span class="p"></span><span>Purse if it holds</span>'
@@ -6910,7 +7169,7 @@ function renderLegacy(){
   $('legNote').textContent = fmt(S.legacy) + ' legacy held';
   $('legBox').innerHTML = gain > 0
     ? '<div class="hint">Retiring clears out your purse and all your range work. '
-      + 'Your bag, your shot book, everything you have found in the Depths and all your currencies '
+      + 'Your bag, your shot book, everything the wager book has paid you and all your currencies '
       + 'come with you.</div>'
       + '<div class="row"><div><div class="nm">Sign the card</div>'
       + '<div class="ds">Tour Card ' + roman(S.tier) + ' with ' + S.cups + ' cups banked.</div></div>'
@@ -7085,7 +7344,7 @@ const DEV = {
     h += row('Ball affinity', B.ELEM.map(e => b(e.n, 'DEV.ball("' + e.id + '")')).join('')
       + b('none', 'DEV.ball("")'));
 
-    h += row('The Depths', B.DGN.map(d =>
+    h += row('The Wager Book', B.DGN.map(d =>
       b(d.mode, 'DEV.depth("' + d.id + '")')).join('')
       + b('all keys', 'DEV.keys()') + b('marks +10', 'DEV.floors(10)'));
 
@@ -7333,7 +7592,7 @@ function achReward(a){
   if(r.k === 'legacy') return '+' + r.v + ' legacy';
   if(r.k === 'crt' || r.k === 'drp' || r.k === 'prc') return '+' + (r.v*100).toFixed(1) + 'pp';
   const nm = { pow:'swing power', gld:'purse', spd:'tempo', mst:'provisional chance',
-               elm:'affinity power', dgn:'Depths haul' }[r.k] || r.k;
+               elm:'affinity power', dgn:'wager haul' }[r.k] || r.k;
   return '+' + Math.round(r.v*100) + '% ' + nm;
 }
 function careerParagon(w){
@@ -7513,7 +7772,7 @@ function intro(){
     + '<li>Closing holes always drop a club. Whichever ball is in the bag decides '
     + 'what your shots actually do.</li>'
     + '<li>Each Tour Card stretches the holes faster than it fattens the purse. '
-    + 'Gear, shots, the Depths and trophies are how you keep up.</li></ul>'
+    + 'Gear, shots, the wager book and trophies are how you keep up.</li></ul>'
     + '<button class="act" onclick="hideSheet()">Play away</button>');
 }
 function boot(){
