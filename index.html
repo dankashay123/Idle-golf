@@ -3572,7 +3572,10 @@ const P_SAND = {
   D: 0.50, eu: 0.50, e0: 0.44, e1: 0.15,
   tone(T, f, ndl, near, steep){
     if(f < 0.03) return T.lip;                       // the cut edge of the turf
-    return pickC(T._sdb, 0.78 + (ndl - HZ_LZ)*2.3 - steep*0.16 + near*0.04);
+    // Enough contrast to describe the bowl, not enough to read as a hole in
+    // the ground with something burnt in the bottom of it. Sand in shade is
+    // still sand.
+    return pickC(T._sdb, 0.80 + (ndl - HZ_LZ)*1.85 - steep*0.11 + near*0.04);
   }
 };
 const P_WATER = {
@@ -4274,7 +4277,7 @@ Object.assign(Scene, {
       // The authored ramp spans about a third of a stop either side of the
       // course colour, which is right for haze and nowhere near enough for one
       // wall of a pit being in shadow while the opposite one faces the sun.
-      T._sdb = expandC([dark(T.sd[0], 0.30), dark(T.sd[0], 0.13), T.sd[1],
+      T._sdb = expandC([dark(T.sd[0], 0.13), dark(T.sd[0], 0.04), T.sd[1],
                         T.sd[3], T.sd[5], lite(T.sd[6], 0.10)], 44);
     }
     // March outward from the camera rather than down the screen. With a height
