@@ -115,8 +115,8 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
 .vital .v{font-family:var(--mono);font-size:12.5px;font-weight:600;margin-top:2px}
 
 /* ---------- tabs ---------- */
-#tabs{display:grid;grid-template-columns:repeat(7,1fr);border-bottom:var(--hair);background:#0A170F}
-.tab{padding:9px 1px 8px;font-size:8.5px;letter-spacing:.1em;text-transform:uppercase;
+#tabs{display:grid;grid-template-columns:repeat(5,1fr);border-bottom:var(--hair);background:#0A170F}
+.tab{padding:10px 2px 9px;font-size:10px;letter-spacing:.1em;text-transform:uppercase;
   color:var(--faint);font-weight:700;border-right:1px solid #14291C;position:relative}
 .tab:last-child{border-right:0}
 .tab.on{color:var(--brass);background:var(--panel)}
@@ -227,9 +227,9 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
 .lvsub{font-size:10px;color:var(--dim);margin-top:2px}
 .lvxp{font-family:var(--mono);font-size:10.5px;color:var(--faint)}
 #lvBox .bar{margin-top:8px;height:5px}
-#sklNav,#careerNav{display:flex;overflow-x:auto;gap:0;background:var(--panel);border-bottom:var(--hair);
+#bagNav,#careerNav{display:flex;overflow-x:auto;gap:0;background:var(--panel);border-bottom:var(--hair);
   -webkit-overflow-scrolling:touch;scrollbar-width:none}
-#sklNav::-webkit-scrollbar,#careerNav::-webkit-scrollbar{display:none}
+#bagNav::-webkit-scrollbar,#careerNav::-webkit-scrollbar{display:none}
 .sub{flex:0 0 auto;padding:9px 13px;font-size:10px;letter-spacing:.08em;text-transform:uppercase;
   color:var(--faint);font-weight:700;white-space:nowrap;border-bottom:2px solid transparent}
 .sub.on{color:var(--brass);border-bottom-color:var(--brass)}
@@ -345,6 +345,17 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
 
 .empty{padding:26px 16px;text-align:center;color:var(--faint);font-size:12px;line-height:1.6}
 .hint{padding:9px 12px;font-size:10.5px;color:var(--faint);line-height:1.5;border-bottom:1px solid #12261A}
+/* Detail that is worth having but not worth reading every time. Folded away
+   behind a tap rather than deleted: the screens were three paragraphs deep
+   before you got to anything you could press. */
+.fold{display:none}
+.open .fold{display:block}
+.foldhead{display:flex;align-items:flex-start;gap:6px}
+.foldhead>span{flex:1}
+.qm{flex:0 0 auto;width:17px;height:17px;border-radius:50%;border:1px solid var(--line-soft);
+  color:var(--faint);font-size:10px;line-height:15px;text-align:center;font-weight:700;
+  background:none;padding:0;margin-left:6px}
+.open .qm{color:var(--brass);border-color:var(--brass-dk)}
 @media (prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;transition-duration:.01ms!important}}
 </style>
 </head>
@@ -396,14 +407,16 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
     <div class="vital"><div class="k">Prov</div><div class="v" id="vMst">0%</div></div>
   </div>
 
-  <div id="tabs" class="t7">
+  <!-- Five destinations, not seven. Skills are part of what you take out on
+       the hole, so they sit with the bag; retirement and the trophy room are
+       long-run progress, so they sit with the rest of it in Career. Seven
+       labels across a phone left no room to read any of them. -->
+  <div id="tabs">
     <button class="tab on" data-v="upg">Range<span class="dot"></span></button>
     <button class="tab" data-v="bag">Bag<span class="dot"></span></button>
-    <button class="tab" data-v="skl">Skills<span class="dot"></span></button>
     <button class="tab" data-v="dgn">Depths<span class="dot"></span></button>
     <button class="tab" data-v="tour">Tour<span class="dot"></span></button>
     <button class="tab" data-v="career">Career<span class="dot"></span></button>
-    <button class="tab" data-v="leg">Legacy<span class="dot"></span></button>
   </div>
 
   <div id="panel">
@@ -416,21 +429,22 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
     </div>
 
     <div class="view" id="v-bag">
-      <div class="band"><span class="eyebrow">The Bag</span><span class="note" id="bagPower">Set bonus none</span></div>
-      <div id="bagGrid"></div>
-      <div id="purseStrip"></div>
-      <div class="band"><span class="eyebrow">Sets and affinity</span></div>
-      <div id="setBox"></div>
-      <div class="band"><span class="eyebrow">Locker</span><div class="btnrow">
-        <button class="mini" id="sortBtn">Sort</button>
-        <button class="mini" id="scrapBtn">Scrap dupes</button>
-      </div></div>
-      <div id="bagList"></div>
-    </div>
-
-    <div class="view" id="v-skl">
-      <div class="band"><span class="eyebrow" id="sklHead">Shot Book</span><span class="note" id="sklNote">0 / 3 carried</span></div>
-      <div id="sklRows"></div>
+      <div id="bagNav"></div>
+      <div id="bagGear">
+        <div id="bagGrid"></div>
+        <div id="purseStrip"></div>
+        <div class="band"><span class="eyebrow">Sets and affinity</span><span class="note" id="bagPower"></span></div>
+        <div id="setBox"></div>
+        <div class="band"><span class="eyebrow">Locker</span><div class="btnrow">
+          <button class="mini" id="sortBtn">Sort</button>
+          <button class="mini" id="scrapBtn">Scrap dupes</button>
+        </div></div>
+        <div id="bagList"></div>
+      </div>
+      <div id="bagShots" hidden>
+        <div class="band"><span class="eyebrow" id="sklHead">Shot Book</span><span class="note" id="sklNote">0 / 3 carried</span></div>
+        <div id="sklRows"></div>
+      </div>
     </div>
 
     <div class="view" id="v-dgn">
@@ -451,13 +465,12 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
       <div id="lvBox"></div>
       <div id="careerNav"></div>
       <div id="careerBody"></div>
-    </div>
-
-    <div class="view" id="v-leg">
-      <div class="band"><span class="eyebrow">Retirement</span><span class="note" id="legNote"></span></div>
-      <div id="legBox"></div>
-      <div class="band"><span class="eyebrow">Trophy Room</span><span class="note" id="relicNote"></span></div>
-      <div id="relicRows"></div>
+      <div id="legWrap" hidden>
+        <div class="band"><span class="eyebrow">Retirement</span><span class="note" id="legNote"></span></div>
+        <div id="legBox"></div>
+        <div class="band"><span class="eyebrow">Trophy Room</span><span class="note" id="relicNote"></span></div>
+        <div id="relicRows"></div>
+      </div>
     </div>
 
   </div>
@@ -5316,10 +5329,8 @@ function refreshUpg(){
   if(band) band.textContent = owned + ' of ' + B.UPG.length + ' started';
   const note = $('upgTax');
   if(note) note.innerHTML = stretch > 1.05
-    ? 'Your bag has outgrown Tour Card ' + roman(S.tier) + ', so the course is playing you off a '
-      + 'handicap and stretching every hole <b>' + fmt(stretch) + 'x</b>. The extra yards pay, '
-      + 'so power still earns, but climbing a card pays better than out-hitting one.'
-    : 'You are playing the card as it lies. Out-hit it and the course will stretch to meet you.';
+    ? 'Holes stretched <b>' + fmt(stretch) + 'x</b> off your handicap \u00b7 climbing a card beats out-hitting one'
+    : 'Playing the card as it lies';
 
   for(const r of UPGREF){
     const u = r.u, lv = upgLv(u.id), cap = capOf(u);
@@ -5348,21 +5359,27 @@ function buyUpg(u){
   refreshUpg(); renderVitals();
 }
 /* ---- the bag ---- */
-function affLine(it){
-  return it.aff.filter(a => B.AFFIX.some(x => x.id === a.k)).map(a => {
+function affLine(it, max){
+  const out = it.aff.filter(a => B.AFFIX.some(x => x.id === a.k)).map(a => {
     const d = B.AFFIX.find(x => x.id === a.k);
     const v = affixValue(it, a);
     const s = d.sfx === 'pp' ? '+' + (v*100).toFixed(1) + 'pp'
             : d.sfx === 'x' ? '+' + v.toFixed(2) + 'x'
             : '+' + (v*100 >= 1000 ? fmt(v*100) : (v*100).toFixed(0)) + '%';
     return d.n + ' ' + s;
-  }).join(' \u00b7 ');
+  });
+  // A five affix roll wrapped to four lines of mono and nobody read any of it.
+  // The top few, then a count; the item sheet has the rest.
+  return max && out.length > max
+    ? out.slice(0, max).join(' \u00b7 ') + ' \u00b7 +' + (out.length - max) + ' more'
+    : out.join(' \u00b7 ');
 }
 function itemHead(it){
   const r = B.RARITY[it.rar];
   return '<span style="color:' + RC(it.rar) + '">' + it.name + (it.enh ? ' +' + it.enh : '') + '</span>';
 }
 function renderBag(){
+  renderBagNav();
   const g = $('bagGrid'); g.innerHTML = '';
   for(const sl of B.SLOTS){
     const it = S.equip[sl.id];
@@ -5411,8 +5428,8 @@ function renderBag(){
           })[k]).join(', ');
         return '<div class="row"><div><div class="nm">' + svgIcon(set.ic, 'tic', a.tier ? 'var(--brass)' : '')
           + set.n + ' <span class="pill">' + a.n + '/6</span></div>'
-          + '<div class="ds">' + set.d + '. '
-          + (a.tier ? '<b style="color:var(--aurora)">Active: ' + eff(a.tier) + '</b>' : 'Inactive')
+          + '<div class="ds">'
+          + (a.tier ? '<b style="color:var(--aurora)">' + eff(a.tier) + '</b>' : set.d)
           + (next ? ' \u00b7 ' + next.n + ' pieces: ' + eff(next) : '') + '</div></div></div>';
       }).join('');
 
@@ -5432,7 +5449,7 @@ function renderBag(){
     d.innerHTML = '<div class="iwrap">' + svgIcon(B.SLOTS.find(s=>s.id===it.slot).ic, 'lic', RC(it.rar))
       + (it.el ? svgIcon(elemOf(it.el).ic, 'lel', elemColor(it.el)) : '') + '</div>'
       + '<div><div class="in">' + itemHead(it) + '</div>'
-      + '<div class="ia">' + (affLine(it) || 'no affixes') + '</div>'
+      + '<div class="ia">' + (affLine(it, 3) || 'no affixes') + '</div>'
       + '<div class="ib">' + B.RARITY[it.rar].n + ' ' + B.SLOTS.find(s=>s.id===it.slot).n
       + ' \u00b7 ilvl ' + it.ilvl + (better ? ' \u00b7 <span style="color:var(--aurora)">upgrade</span>' : '') + '</div></div>'
       + '<div class="btnrow"><button class="mini' + (better ? ' go' : '') + '">Equip</button></div>';
@@ -5577,6 +5594,11 @@ function renderSkills(){
 }
 
 /* ---- the Depths ---- */
+// Which contests have their notes folded down. Kept out here because the
+// Depths redraw on the key timer, and a class on the element is gone the next
+// time they do.
+const dgnOpen = {};
+let cardHintOpen = false;
 function renderDgn(){
   const w = $('dgnRows'); w.innerHTML = '';
   const D = derive();
@@ -5601,14 +5623,21 @@ function renderDgn(){
     else if(d.mode === 'chip') reads = 'About ' + Math.round(chipChance(D)*100) + '% of your chips would drop';
     else reads = 'Carry ' + fmt(D.dps) + ' a second against floors that keep growing';
 
-    el.innerHTML = '<div class="dh"><span class="dn">' + d.n + '</span><span class="keys">' + keyHtml + '</span></div>'
+    el.innerHTML = '<div class="dh"><span class="dn">' + d.n + '</span><span class="keys">' + keyHtml + '</span>'
+      + '<button class="qm" aria-label="How it works">?</button></div>'
       + '<div class="dd">' + d.d + '</div>'
-      + '<div class="dd" style="color:var(--faint);margin-top:4px">' + d.how + '</div>'
+      + '<div class="dd fold" style="color:var(--faint);margin-top:4px">' + d.how + '</div>'
       + '<div class="dm">' + reads + '</div>'
       + '<div class="dm">Pays ' + d.cn + ' \u00b7 best ' + ((S.dgnFloor[d.id]||0)+1)
       + ' \u00b7 ' + Math.round(d.run) + 's \u00b7 key in ' + nextIn + '</div>'
       + '<div class="bar"><i style="width:' + (run ? clamp(run.t/run.dur,0,1)*100 : 0) + '%"></i></div>'
       + '<div class="btnrow" style="margin-top:8px"></div>';
+    el.classList.toggle('open', !!dgnOpen[d.id]);
+    el.querySelector('.qm').onclick = e => {
+      e.stopPropagation();
+      dgnOpen[d.id] = !dgnOpen[d.id];
+      el.classList.toggle('open', !!dgnOpen[d.id]);
+    };
     const br = el.querySelector('.btnrow');
 
     // the Island Green is the one with a decision in it, so it gets a dial
@@ -5654,12 +5683,14 @@ function renderTour(){
   const nextR = projectedRatio(S.tier + 1), hereR = projectedRatio(S.tier);
   const nm = r => scoreFor(r).n;
   $('tierBox').innerHTML =
-    '<div class="hint">Every card makes holes \u00d7' + B.TIER_Y + ' longer but only pays \u00d7' + B.TIER_G
-    + ' more, and the clock stays where it is. You earn the next card by playing <b>'
-    + B.EVENTS_PER_CARD + ' events</b> on your highest one. Highest so far is <b>'
-    + roman(S.tierMax || 0) + '</b>, with <b>' + eventsOn(S.tierMax || 0) + ' of '
-    + B.EVENTS_PER_CARD + '</b> played on it. The course grows across those five events, '
-    + 'so a card you have just taken plays short and the same card plays long by the end of it.</div>'
+    '<div class="hint" id="cardHint"><div class="foldhead">'
+    + '<span>Card <b>' + roman(S.tierMax || 0) + '</b> is your highest \u00b7 <b>'
+    + eventsOn(S.tierMax || 0) + ' of ' + B.EVENTS_PER_CARD + '</b> events played on it</span>'
+    + '<button class="qm" aria-label="How cards work">?</button></div>'
+    + '<div class="fold" style="margin-top:6px">Every card makes holes \u00d7' + B.TIER_Y
+    + ' longer but only pays \u00d7' + B.TIER_G + ' more, and the clock stays where it is. '
+    + 'The course grows across the five events, so a card you have just taken plays short '
+    + 'and the same card plays long by the end of it.</div></div>'
     + '<div class="row"><div><div class="nm">Card ' + roman(S.tier+1) + '</div>'
     + '<div class="ds">On this hole you would card about <b style="color:var(--chalk)">' + nm(nextR) + '</b>'
     + ' (' + nextR.toFixed(2) + '\u00d7 par). Here: ' + nm(hereR) + '.</div></div>'
@@ -5677,13 +5708,19 @@ function renderTour(){
   $('dropBtn').onclick = () => climb(-1);
   $('autoBtn').onclick = () => { S.autoClimb = !S.autoClimb; renderTour(); };
 
+  const ch = $('tierBox').querySelector('#cardHint .qm');
+  if(ch){
+    $('cardHint').classList.toggle('open', cardHintOpen);
+    ch.onclick = () => { cardHintOpen = !cardHintOpen; $('cardHint').classList.toggle('open', cardHintOpen); };
+  }
+
   // the card: you against the number, not against a made-up field
   const onPace = proj <= target;
   $('cardNote').textContent = played + ' of ' + (B.ROUND*B.DAYS) + ' holes';
   $('cardBox').innerHTML =
     '<div class="row"><div><div class="nm">' + eventName(t) + '</div>'
     + '<div class="ds">' + dayName(S.hole) + ' \u00b7 hole ' + holeInRound(S.hole)
-    + '. Beat the number and the cup is yours. Each one you win makes the next a bit harder.</div></div></div>'
+    + ' \u00b7 beat the target and the cup is yours</div></div></div>'
     + '<div class="lb"><span class="p"></span><span>Through ' + played + '</span>'
     + '<span class="s">' + fm(S.tourScore) + '</span></div>'
     + '<div class="lb"><span class="p"></span><span>On this pace</span>'
@@ -5799,17 +5836,33 @@ function renderLegacy(){
 }
 
 /* ---- tabs + full render ---- */
+let bagSub = 'gear';
+// The shot book and the trophy room no longer have tabs of their own, so the
+// old names route to where they live now. Anything that used to ask for them
+// by name still lands in the right place.
 function setView(v){
+  if(v === 'skl'){ bagSub = 'shots'; v = 'bag'; }
+  if(v === 'leg'){ careerSub = 'leg'; v = 'career'; }
   view = v;
   document.querySelectorAll('.tab').forEach(t => t.classList.toggle('on', t.dataset.v === v));
   document.querySelectorAll('.view').forEach(e => e.classList.toggle('on', e.id === 'v-' + v));
-  if(v === 'bag') renderBag();
-  if(v === 'skl') renderSkillsTab();
+  if(v === 'bag'){ renderBag(); renderSkillsTab(); }
   if(v === 'dgn') renderDgn();
   if(v === 'tour') renderTour();
-  if(v === 'leg') renderLegacy();
-  if(v === 'career') renderCareer();
+  if(v === 'career'){ renderLegacy(); renderCareer(); }
   $('panel').scrollTop = 0;
+}
+// Gear or shots: both are what you carry onto the hole.
+function renderBagNav(){
+  const subs = [['gear','Gear'], ['shots','Shots']];
+  const n = $('bagNav');
+  if(!n) return;
+  n.innerHTML = subs.map(([id, t]) =>
+    '<button class="sub' + (bagSub === id ? ' on' : '') + '" data-s="' + id + '">' + t + '</button>').join('');
+  n.querySelectorAll('.sub').forEach(b =>
+    b.onclick = () => { bagSub = b.dataset.s; renderBagNav(); $('panel').scrollTop = 0; });
+  $('bagGear').hidden  = bagSub !== 'gear';
+  $('bagShots').hidden = bagSub !== 'shots';
 }
 function renderAll(){
   renderCard(); renderVitals(); refreshUpg(); renderBag(); renderSkills();
@@ -5991,21 +6044,23 @@ function renderCareer(){
     + '<div class="bar"><i style="width:' + clamp(have/need,0,1)*100 + '%;background:'
     + (max ? 'var(--myth)' : 'var(--brass)') + '"></i></div>';
 
-  const subs = [['stat','Attributes'], ['tal','Talents'], ['para','Paragon']];
+  const subs = [['stat','Attributes'], ['tal','Talents'], ['para','Paragon'], ['leg','Legacy']];
   $('careerNav').innerHTML = subs.map(([id,n]) =>
     '<button class="sub' + (careerSub === id ? ' on' : '') + '" data-s="' + id + '">' + n + '</button>').join('');
   $('careerNav').querySelectorAll('.sub').forEach(b =>
     b.onclick = () => { careerSub = b.dataset.s; renderCareer(); });
 
   const w = $('careerBody'); w.innerHTML = '';
+  $('legWrap').hidden = careerSub !== 'leg';
+  if(careerSub === 'leg') return;
   if(careerSub === 'stat') return careerStats(w, C);
   if(careerSub === 'para') return careerParagon(w);
   careerTalents(w);
 }
 function careerStats(w, C){
-  w.innerHTML = '<div class="hint">Attributes stay with you through retirement. '
-    + (S.statPts ? '<b style="color:var(--brass)">' + S.statPts + ' waiting to be spent.</b>' : 'Nothing waiting.')
-    + ' Moving them around is free, so experiment.</div>';
+  w.innerHTML = '<div class="hint">'
+    + (S.statPts ? '<b style="color:var(--brass)">' + S.statPts + ' to spend.</b> ' : '')
+    + 'Kept through retirement, and free to move.</div>';
   for(const s of B.STATS){
     const n = S.stat[s.id] || 0;
     const d = document.createElement('div');
@@ -6257,7 +6312,7 @@ function frameBody(now){
     checkAch();
     if(view === 'upg') refreshUpg();
     else if(view === 'dgn') renderDgn();
-    else if(view === 'skl' && S.carry.length) renderSkills();
+    else if(view === 'bag' && bagSub === 'shots' && S.carry.length) renderSkills();
   }
   saveT += dt;
   if(saveT >= 12){ saveT = 0; save(); }
