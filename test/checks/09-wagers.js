@@ -19,6 +19,13 @@
  *      sizes it off the handicapped yardage, so an away session ignored the
  *      floor that pins a live hole at HCP of par time however hard you hit it.
  *
+ * And that a wager's furniture lives in the prop list. The gallery ropes and
+ * the floodlights were first drawn in an overlay after the props, at distances
+ * measured from the camera, which is two bugs at once: anchored to the camera
+ * they slide along with you instead of being passed, and drawn after the props
+ * they cut through the spectators standing in front of them. Anything standing
+ * on the ground down here belongs in the one depth-sorted list.
+ *
  * And that the four are four. They shared one readout template and one "best
  * floor N" line, so a drive contest and an endurance crawl differed by the
  * words in them and nothing else. Each now reports in its own units and fills
@@ -153,6 +160,29 @@ module.exports = {
       }
       renderReadout(derive());
       out.stripOffCourse = !!document.getElementById('rStrip').hidden;
+
+      // ---- 5. furniture stands on the ground, in the one sorted list --------
+      out.props = [];
+      for (const d of B.DGN) {
+        S.dgnRun = null; S.dgnKeys[d.id] = 1;
+        startDgn(d);
+        tickDgn(0.1, derive());
+        Scene.newDepthsHole(S.dgnRun);
+        const kinds = {};
+        for (const p of Scene.props) kinds[p.kind] = (kinds[p.kind] || 0) + 1;
+        let sorted = true;
+        for (let i = 1; i < Scene.props.length; i++)
+          if (Scene.props[i].d > Scene.props[i - 1].d + 1e-9) sorted = false;
+        // a post's place in the world cannot depend on where the camera is
+        const posts = Scene.props.filter(p => p.kind === 2).map(p => p.d);
+        Scene.camD = LEN * 0.6;
+        const after = Scene.props.filter(p => p.kind === 2).map(p => p.d);
+        Scene.camD = 0;
+        out.props.push({ id: d.id, kinds, sorted,
+                         fixed: posts.length === after.length
+                                && posts.every((v, i) => v === after[i]) });
+        S.dgnRun = null;
+      }
       return out;
     }, RUNS);
 
@@ -219,7 +249,28 @@ module.exports = {
       throw new Error('two contests post the same kind of best: ' + bests.join(' / ')
         + '. A best is only a best in the units the contest is played in.');
 
-    return ['four strips ' + shapes.join('/') + ', four kinds of best'
+    // 6. furniture is laid, not painted on
+    const vault = r.props.find(x => x.id === 'vault');
+    const cellar = r.props.find(x => x.id === 'cellar');
+    if (!(vault.kinds['2'] > 0))
+      throw new Error('the Vault has no gallery ropes in its prop list, so they are being '
+        + 'painted on after the props and will cut through the crowd');
+    if (!(vault.kinds['1'] > 0))
+      throw new Error('the Vault has ropes but nobody behind them');
+    if (!(cellar.kinds['3'] > 0))
+      throw new Error('the Floodlit Green has no floodlights in its prop list');
+    for (const x of r.props) {
+      if (!x.sorted)
+        throw new Error(x.id + ' props are not sorted far to near, so they will draw '
+          + 'through each other');
+      if (!x.fixed)
+        throw new Error(x.id + ' furniture moved when the camera did. It is anchored to '
+          + 'the camera, so it slides along with the player instead of being passed.');
+    }
+
+    return ['ropes ' + vault.kinds['2'] + ' + gallery ' + vault.kinds['1']
+      + ', lamps ' + cellar.kinds['3'] + ', all sorted and world fixed'
+      + ', four strips ' + shapes.join('/') + ', four kinds of best'
       + ', floor ' + r.floorFirst + '->' + r.floorLast + ' under a ceiling of '
       + r.ceiling.toFixed(0)
       + ', pay flat to ' + ratio.toFixed(2) + 'x, ' + perRun.toFixed(2)
