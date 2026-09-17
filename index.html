@@ -22,6 +22,12 @@
   --sans:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
   --mono:ui-monospace,"SF Mono",Menlo,Consolas,"Roboto Mono",monospace;
   --hair:1px solid var(--line-soft);
+
+  /* One type scale, whole pixels, seven steps. There were eighteen sizes in
+     here, several of them half a pixel apart, which no grid can land on and
+     nobody can tell apart. */
+  --f0:9px;   --f1:10px;  --f2:11px;  --f3:13px;
+  --f4:15px;  --f5:20px;  --f6:24px;
 }
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{height:100%;overflow:hidden}
@@ -39,7 +45,7 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
 #stage{flex:0 0 50%;min-height:0}
 #panel{flex:1 1 auto;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
 
-.eyebrow{font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:var(--faint);font-weight:700}
+.eyebrow{font-size:var(--f0);letter-spacing:.2em;text-transform:uppercase;color:var(--faint);font-weight:700}
 .mono{font-family:var(--mono)}
 
 /* ---------- crest bar ---------- */
@@ -47,30 +53,30 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
   padding:calc(env(safe-area-inset-top) + 8px) 12px 8px;border-bottom:var(--hair);
   background:linear-gradient(180deg,#0B1811,#0C1A13)}
 #crest{padding:calc(env(safe-area-inset-top) + 6px) 12px 6px}
-#eventLine{font-family:var(--disp);font-size:14px;letter-spacing:.02em;line-height:1.1;color:var(--chalk)}
-#sub{font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:var(--faint);margin-top:2px}
-#gold{font-size:17px}
+#eventLine{font-family:var(--disp);font-size:var(--f4);letter-spacing:.02em;line-height:1.1;color:var(--chalk)}
+#sub{font-size:var(--f0);letter-spacing:.16em;text-transform:uppercase;color:var(--faint);margin-top:2px}
+#gold{font-size:var(--f4)}
 #purse{text-align:right}
-#gold{font-family:var(--mono);font-size:19px;font-weight:600;color:var(--brass);line-height:1}
-#rate{font-size:10px;color:var(--dim);margin-top:2px;font-family:var(--mono)}
+#gold{font-family:var(--mono);font-size:var(--f5);font-weight:600;color:var(--brass);line-height:1}
+#rate{font-size:var(--f1);color:var(--dim);margin-top:2px;font-family:var(--mono)}
 
 /* ---------- experience strip ---------- */
 #xpStrip{display:grid;grid-template-columns:auto 1fr auto;gap:9px;align-items:center;
   width:100%;padding:6px 12px 7px;background:#0A170F;border-bottom:var(--hair);text-align:left}
-#xpLv{font-family:var(--mono);font-size:10.5px;font-weight:600;letter-spacing:.06em;
+#xpLv{font-family:var(--mono);font-size:var(--f1);font-weight:600;letter-spacing:.06em;
   color:var(--brass);white-space:nowrap}
 #xpStrip.para #xpLv{color:var(--myth)}
-#xpTrack{height:4px;border-radius:2px;background:#0D1D14;overflow:hidden;position:relative}
+#xpTrack{height:4px;border-radius:0;background:#0D1D14;overflow:hidden;position:relative}
 #xpFill{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--brass),#F3DFA6);
   transition:width .25s ease-out}
 #xpStrip.para #xpFill{background:linear-gradient(90deg,#8E4FD0,var(--myth))}
-#xpNum{font-family:var(--mono);font-size:9.5px;color:var(--faint);white-space:nowrap}
+#xpNum{font-family:var(--mono);font-size:var(--f0);color:var(--faint);white-space:nowrap}
 #xpStrip.ready #xpNum{color:var(--aurora)}
 
 /* ---------- scorecard strip ---------- */
 #card{display:grid;grid-template-columns:repeat(18,1fr);border-bottom:var(--hair);background:#0A170F}
 .cell{aspect-ratio:1/0.94;border-right:1px solid #14291C;display:flex;align-items:center;
-  justify-content:center;position:relative;font-family:var(--mono);font-size:10px;color:var(--faint)}
+  justify-content:center;position:relative;font-family:var(--mono);font-size:var(--f1);color:var(--faint)}
 .cell:last-child{border-right:0}
 .cell.now{background:#17301F;color:var(--chalk)}
 .cell.now::after{content:"";position:absolute;left:0;right:0;bottom:0;height:2px;background:var(--brass)}
@@ -78,15 +84,15 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
 .cell.s-3,.cell.s-4{color:var(--myth)} .cell.s-2{color:var(--brass)}
 .cell.s-1{color:var(--aurora)} .cell.s0{color:var(--chalk)}
 .cell.s1{color:var(--dim)} .cell.s2,.cell.s3,.cell.s4{color:var(--flag)}
-.cell i{position:absolute;top:2px;left:3px;font-size:7px;font-style:normal;color:var(--faint)}
+.cell i{position:absolute;top:2px;left:3px;font-size:var(--f0);font-style:normal;color:var(--faint)}
 
 /* the nine: a goal and a running total, so the round has a shape you can see */
 #nineBar{display:grid;grid-template-columns:auto 1fr auto;gap:9px;align-items:center;
   padding:4px 12px 5px;background:#0A170F;border-bottom:var(--hair);
-  font-size:9px;letter-spacing:.1em;text-transform:uppercase;font-weight:700}
+  font-size:var(--f0);letter-spacing:.1em;text-transform:uppercase;font-weight:700}
 #nineWhich{color:var(--faint);white-space:nowrap}
 #nineGoal{color:var(--dim);text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
-  letter-spacing:.06em;text-transform:none;font-weight:400;font-size:10px}
+  letter-spacing:.06em;text-transform:none;font-weight:400;font-size:var(--f1)}
 #nineGoal b{color:var(--aurora);font-weight:600}
 #nineGoal.done{color:var(--aurora)}
 #nineScore{font-family:var(--mono);color:var(--brass);white-space:nowrap}
@@ -98,12 +104,12 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
 #hud{position:absolute;inset:0;pointer-events:none;padding:7px 9px;display:flex;
   flex-direction:column;justify-content:space-between}
 .hudrow{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
-.plate{background:rgba(6,16,12,.72);border:1px solid rgba(87,224,190,.16);border-radius:3px;
+.plate{background:rgba(6,16,12,.72);border:1px solid rgba(87,224,190,.16);border-radius:0;
   padding:4px 7px;backdrop-filter:blur(3px)}
-.plate .k{font-size:8px;letter-spacing:.16em;text-transform:uppercase;color:var(--faint)}
-.plate .v{font-family:var(--mono);font-size:13px;font-weight:600;line-height:1.15}
-#chaosTag{font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--myth)}
-#yardBar{height:3px;background:#0D1D14;border-radius:2px;overflow:hidden;margin-top:5px}
+.plate .k{font-size:var(--f0);letter-spacing:.16em;text-transform:uppercase;color:var(--faint)}
+.plate .v{font-family:var(--mono);font-size:var(--f3);font-weight:600;line-height:1.15}
+#chaosTag{font-size:var(--f0);letter-spacing:.1em;text-transform:uppercase;color:var(--myth)}
+#yardBar{height:3px;background:#0D1D14;border-radius:0;overflow:hidden;margin-top:5px}
 #yardFill{height:100%;width:100%;background:linear-gradient(90deg,var(--brass),#F3DFA6);
   transition:width .12s linear}
 
@@ -111,17 +117,17 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
 #vitals{display:grid;grid-template-columns:repeat(5,1fr);border-bottom:var(--hair);background:#0A170F}
 .vital{padding:6px 4px;text-align:center;border-right:1px solid #14291C}
 .vital:last-child{border-right:0}
-.vital .k{font-size:8px;letter-spacing:.14em;text-transform:uppercase;color:var(--faint)}
-.vital .v{font-family:var(--mono);font-size:12.5px;font-weight:600;margin-top:2px}
+.vital .k{font-size:var(--f0);letter-spacing:.14em;text-transform:uppercase;color:var(--faint)}
+.vital .v{font-family:var(--mono);font-size:var(--f3);font-weight:600;margin-top:2px}
 
 /* ---------- tabs ---------- */
 #tabs{display:grid;grid-template-columns:repeat(5,1fr);border-bottom:var(--hair);background:#0A170F}
-.tab{padding:10px 2px 9px;font-size:10px;letter-spacing:.1em;text-transform:uppercase;
+.tab{padding:10px 2px 9px;font-size:var(--f1);letter-spacing:.1em;text-transform:uppercase;
   color:var(--faint);font-weight:700;border-right:1px solid #14291C;position:relative}
 .tab:last-child{border-right:0}
 .tab.on{color:var(--brass);background:var(--panel)}
 .tab.on::after{content:"";position:absolute;left:0;right:0;top:0;height:2px;background:var(--brass)}
-.tab .dot{position:absolute;top:5px;right:8px;width:5px;height:5px;border-radius:50%;
+.tab .dot{position:absolute;top:5px;right:8px;width:5px;height:5px;border-radius:0;
   background:var(--aurora);display:none}
 .tab.alert .dot{display:block}
 
@@ -132,59 +138,64 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
   padding:9px 12px 7px;background:#0A170F;border-top:var(--hair);border-bottom:var(--hair);
   position:sticky;top:0;z-index:3}
 .band .eyebrow{color:var(--dim)}
-.band .note{font-size:10px;color:var(--faint);font-family:var(--mono)}
+.band .note{font-size:var(--f1);color:var(--faint);font-family:var(--mono)}
 
-.row{display:grid;grid-template-columns:1fr auto;gap:9px;align-items:center;
+/* Flex, not a two column grid: rows carry an icon now, and some carry two
+   buttons, so the shape is icon / body / action rather than a fixed pair. */
+.row{display:flex;gap:9px;align-items:center;
   padding:9px 12px;border-bottom:1px solid #12261A}
+.row > div{flex:1;min-width:0}
+.row > img,.row > button{flex:0 0 auto}
 /* Not scoped to .row: the Skills and Perks rows use .sk-row, so scoping these
    left their text completely unstyled and falling back to browser defaults. */
-.nm{font-size:13px;font-weight:600;letter-spacing:-.01em}
-.ds{font-size:10.5px;color:var(--dim);margin-top:2px;line-height:1.35}
-.mt{font-size:10.5px;color:var(--faint);margin-top:3px;font-family:var(--mono)}
+.ric{width:24px;height:24px;flex:0 0 auto;margin-top:1px}
+.nm{font-family:var(--disp);font-size:var(--f3);letter-spacing:.01em}
+.ds{font-size:var(--f1);color:var(--dim);margin-top:2px;line-height:1.35}
+.mt{font-size:var(--f1);color:var(--faint);margin-top:3px;font-family:var(--mono)}
 .mt b{color:var(--aurora);font-weight:600}
 .mt i{color:var(--chalk);font-style:normal}
 
-.buy{min-width:96px;background:var(--raise);border:1px solid var(--line);border-radius:4px;
+.buy{min-width:96px;background:var(--raise);border:1px solid var(--line);border-radius:0;
   padding:7px 8px;text-align:center;line-height:1.2}
-.buy .lbl{display:block;font-size:8.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--dim)}
-.buy .amt{display:block;font-family:var(--mono);font-size:12px;font-weight:600;color:var(--brass);margin-top:2px}
+.buy .lbl{display:block;font-size:var(--f0);letter-spacing:.12em;text-transform:uppercase;color:var(--dim)}
+.buy .amt{display:block;font-family:var(--mono);font-size:var(--f3);font-weight:600;color:var(--brass);margin-top:2px}
 .buy.ok{background:var(--raise2);border-color:var(--brass-dk)}
 .buy.ok .amt{color:#FFD98A}
 .buy:disabled,.buy.no{opacity:.34}
 .buy.max{background:#12241A;border-color:var(--line-soft)}
 .buy.max .amt{color:var(--faint)}
 
-.pill{display:inline-block;font-size:9px;letter-spacing:.1em;text-transform:uppercase;
-  padding:2px 6px;border-radius:99px;border:1px solid var(--line);color:var(--dim)}
+.pill{display:inline-block;font-size:var(--f0);letter-spacing:.1em;text-transform:uppercase;
+  padding:2px 6px;border-radius:0;border:1px solid var(--line);color:var(--dim)}
 
 /* ---------- multiplier switch ---------- */
 #multBar{display:flex;gap:6px}
-.mbtn{font-family:var(--mono);font-size:11px;padding:3px 9px;border:1px solid var(--line);
-  border-radius:3px;color:var(--dim)}
+.mbtn{font-family:var(--mono);font-size:var(--f2);padding:3px 9px;border:1px solid var(--line);
+  border-radius:0;color:var(--dim)}
 .mbtn.on{background:var(--raise2);border-color:var(--brass-dk);color:var(--brass)}
 
 /* ---------- currency strip ---------- */
 #purseStrip{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:#12261A}
 .cur{background:#0A170F;padding:7px 6px;text-align:center}
-.cur .k{font-size:8px;letter-spacing:.12em;text-transform:uppercase;color:var(--faint)}
-.cur .v{font-family:var(--mono);font-size:12px;font-weight:600;margin-top:2px}
+.cur .k{font-size:var(--f0);letter-spacing:.12em;text-transform:uppercase;color:var(--faint)}
+.cur .v{font-family:var(--mono);font-size:var(--f3);font-weight:600;margin-top:2px}
 
 /* ---------- gear ---------- */
 #bagGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:#12261A;padding:1px 0}
 .slot{background:var(--panel);padding:8px 7px;min-height:74px;display:flex;flex-direction:column;
   justify-content:space-between;border-left:2px solid transparent}
-.slot .sk{font-size:8px;letter-spacing:.12em;text-transform:uppercase;color:var(--faint)}
-.slot .sn{font-size:11px;font-weight:600;margin-top:4px;line-height:1.25}
-.slot .sv{font-family:var(--mono);font-size:10px;color:var(--dim);margin-top:3px}
+.slot .sk{font-size:var(--f0);letter-spacing:.12em;text-transform:uppercase;color:var(--faint)}
+.slot .sn{font-family:var(--disp);font-size:var(--f2);margin-top:4px;line-height:1.25}
+.slot .sv{font-family:var(--mono);font-size:var(--f1);color:var(--dim);margin-top:3px}
 .slot.empty .sn{color:var(--faint);font-weight:400;font-style:italic}
 
 .item{padding:9px 12px;border-bottom:1px solid #12261A;display:grid;
   grid-template-columns:1fr auto;gap:9px;align-items:center;border-left:2px solid transparent}
-.item .in{font-size:12.5px;font-weight:600}
-.item .ia{font-size:10px;color:var(--dim);margin-top:3px;line-height:1.45;font-family:var(--mono)}
-.item .ib{font-size:9px;color:var(--faint);margin-top:2px}
-.tag{font-size:8.5px;letter-spacing:.1em;text-transform:uppercase;font-weight:700}
-.mini{border:1px solid var(--line);border-radius:3px;padding:5px 9px;font-size:10px;
+.item .in{font-family:var(--disp);font-size:var(--f3);letter-spacing:.01em}
+.item .ia{font-size:var(--f1);color:var(--dim);margin-top:3px;line-height:1.45;font-family:var(--mono)}
+.item .ib{font-size:var(--f0);color:var(--faint);margin-top:2px}
+.tag{font-size:var(--f0);letter-spacing:.1em;text-transform:uppercase;font-weight:700}
+.mini{border:1px solid var(--line);border-radius:0;padding:5px 9px;font-size:var(--f1);
   letter-spacing:.08em;text-transform:uppercase;color:var(--dim);background:var(--raise)}
 .mini.go{border-color:var(--brass-dk);color:var(--brass)}
 .mini.dim{opacity:.35}
@@ -194,8 +205,8 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
 .sk-row.live{background:#16301F}
 .sk-row{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center;
   padding:9px 12px;border-bottom:1px solid #12261A}
-.glyph{width:34px;height:34px;border-radius:5px;background:var(--raise);border:1px solid var(--line);
-  display:flex;align-items:center;justify-content:center;font-family:var(--disp);font-size:16px;
+.glyph{width:34px;height:34px;border-radius:0;background:var(--raise);border:1px solid var(--line);
+  display:flex;align-items:center;justify-content:center;font-family:var(--disp);font-size:var(--f4);
   color:var(--aurora);position:relative;overflow:hidden}
 .glyph .cd{position:absolute;left:0;bottom:0;width:100%;background:rgba(87,224,190,.18)}
 .glyph.eq{border-color:var(--aurora)}
@@ -203,54 +214,55 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
 
 /* ---------- dungeons ---------- */
 .dgn{padding:10px 12px;border-bottom:1px solid #12261A}
-.dgn .dh{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
-.dgn .dn{font-family:var(--disp);font-size:15px;letter-spacing:.01em}
-.dgn .dd{font-size:10.5px;color:var(--dim);margin-top:3px;line-height:1.4}
-.dgn .dm{font-size:10px;color:var(--faint);margin-top:5px;font-family:var(--mono)}
-.bar{height:4px;background:#0D1D14;border-radius:2px;overflow:hidden;margin-top:7px}
+.dgn .dh{display:flex;align-items:center;gap:7px}
+.dgn .dn{flex:1}
+.dgn .keys{flex:0 0 auto}
+.dgn .dn{font-family:var(--disp);font-size:var(--f4);letter-spacing:.01em}
+.dgn .dd{font-size:var(--f1);color:var(--dim);margin-top:3px;line-height:1.4}
+.dgn .dm{font-size:var(--f1);color:var(--faint);margin-top:5px;font-family:var(--mono)}
+.bar{height:4px;background:#0D1D14;border-radius:0;overflow:hidden;margin-top:7px}
 .bar i{display:block;height:100%;background:var(--aurora);width:0}
 .keys{display:flex;gap:3px;align-items:center}
-.key{width:7px;height:7px;border-radius:50%;border:1px solid var(--line)}
+.key{width:7px;height:7px;border-radius:0;border:1px solid var(--line)}
 .key.on{background:var(--aurora);border-color:var(--aurora)}
 
 /* ---------- leaderboard ---------- */
-.lb{display:grid;grid-template-columns:26px 1fr auto;gap:8px;padding:6px 12px;font-size:11.5px;
+.lb{display:grid;grid-template-columns:26px 1fr auto;gap:8px;padding:6px 12px;font-size:var(--f2);
   border-bottom:1px solid #12261A}
 .lb.me{background:var(--raise);color:var(--brass)}
-.lb .p{font-family:var(--mono);color:var(--faint);font-size:10px}
+.lb .p{font-family:var(--mono);color:var(--faint);font-size:var(--f1)}
 .lb .s{font-family:var(--mono);font-weight:600}
 
 /* ---------- career ---------- */
 #lvBox{padding:11px 12px 12px;background:#0A170F;border-bottom:var(--hair)}
 .lvhead{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
-.lvno{font-family:var(--disp);font-size:19px;letter-spacing:.01em}
-.lvsub{font-size:10px;color:var(--dim);margin-top:2px}
-.lvxp{font-family:var(--mono);font-size:10.5px;color:var(--faint)}
+.lvno{font-family:var(--disp);font-size:var(--f5);letter-spacing:.01em}
+.lvsub{font-size:var(--f1);color:var(--dim);margin-top:2px}
+.lvxp{font-family:var(--mono);font-size:var(--f1);color:var(--faint)}
 #lvBox .bar{margin-top:8px;height:5px}
 #bagNav,#careerNav{display:flex;overflow-x:auto;gap:0;background:var(--panel);border-bottom:var(--hair);
   -webkit-overflow-scrolling:touch;scrollbar-width:none}
 #bagNav::-webkit-scrollbar,#careerNav::-webkit-scrollbar{display:none}
-.sub{flex:0 0 auto;padding:9px 13px;font-size:10px;letter-spacing:.08em;text-transform:uppercase;
+.sub{flex:0 0 auto;padding:9px 13px;font-size:var(--f1);letter-spacing:.08em;text-transform:uppercase;
   color:var(--faint);font-weight:700;white-space:nowrap;border-bottom:2px solid transparent}
 .sub.on{color:var(--brass);border-bottom-color:var(--brass)}
 #talNav{display:grid;grid-template-columns:repeat(3,1fr);background:#0A170F;
   border-bottom:var(--hair)}
-.sub2{padding:9px 4px 8px;font-size:9.5px;letter-spacing:.04em;color:var(--faint);
+.sub2{padding:9px 4px 8px;font-size:var(--f0);letter-spacing:.04em;color:var(--faint);
   font-weight:700;border-right:1px solid #12261A;border-bottom:2px solid transparent;
   display:flex;align-items:center;justify-content:center;gap:4px}
 .sub2:last-child{border-right:0}
 .sub2.on{color:var(--brass);border-bottom-color:var(--brass);background:var(--panel)}
-.sub2 .tic{width:12px;height:12px;margin:0}
-.tcount{font-family:var(--mono);font-size:9px;color:var(--dim)}
+.sub2 .tcount{font-family:var(--mono);font-size:var(--f0);color:var(--dim)}
 .sub2.on .tcount{color:var(--brass)}
-.tier{padding:7px 12px;font-size:9px;letter-spacing:.16em;text-transform:uppercase;
+.tier{padding:7px 12px;font-size:var(--f0);letter-spacing:.16em;text-transform:uppercase;
   color:var(--faint);background:#0A170F;border-top:1px solid #12261A;border-bottom:1px solid #12261A}
 .tier.open{color:var(--aurora)}
 .row.locked{opacity:.55}
-.hbar{width:44px;height:3px;background:#12261C;border-radius:2px;overflow:hidden}
+.hbar{width:44px;height:3px;background:#12261C;border-radius:0;overflow:hidden}
 .hbar i{display:block;height:100%;background:var(--brass)}
 .pips{display:inline-flex;gap:3px;vertical-align:-1px;margin-right:5px}
-.pip{width:7px;height:7px;border-radius:2px;border:1px solid var(--line);display:block}
+.pip{width:7px;height:7px;border-radius:0;border:1px solid var(--line);display:block}
 .pip.on{background:var(--brass);border-color:var(--brass)}
 
 /* ---------- modal ---------- */
@@ -258,42 +270,42 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
   justify-content:center;padding:18px;z-index:40;backdrop-filter:blur(2px)}
 #veil.on{display:flex}
 #sheet{width:100%;max-width:400px;max-height:82%;overflow-y:auto;background:var(--panel);
-  border:1px solid var(--line);border-radius:6px;padding:16px}
-#sheet h3{font-family:var(--disp);font-size:19px;font-weight:600;margin-bottom:8px;letter-spacing:.01em}
-#sheet p{font-size:12.5px;color:var(--dim);line-height:1.55;margin-bottom:9px}
-#sheet .big{font-family:var(--mono);font-size:26px;color:var(--brass);font-weight:600;margin:6px 0}
-#sheet ul{margin:0 0 10px 15px;font-size:12px;color:var(--dim);line-height:1.6}
-.act{width:100%;padding:11px;border-radius:4px;border:1px solid var(--brass-dk);background:var(--raise2);
-  color:var(--brass);font-size:11px;letter-spacing:.14em;text-transform:uppercase;font-weight:700;margin-top:6px}
+  border:1px solid var(--line);border-radius:0;padding:16px}
+#sheet h3{font-family:var(--disp);font-size:var(--f5);font-weight:600;margin-bottom:8px;letter-spacing:.01em}
+#sheet p{font-size:var(--f3);color:var(--dim);line-height:1.55;margin-bottom:9px}
+#sheet .big{font-family:var(--mono);font-size:var(--f6);color:var(--brass);font-weight:600;margin:6px 0}
+#sheet ul{margin:0 0 10px 15px;font-size:var(--f3);color:var(--dim);line-height:1.6}
+.act{width:100%;padding:11px;border-radius:0;border:1px solid var(--brass-dk);background:var(--raise2);
+  color:var(--brass);font-size:var(--f2);letter-spacing:.14em;text-transform:uppercase;font-weight:700;margin-top:6px}
 .act.ghost{border-color:var(--line);color:var(--dim);background:transparent}
 .act.danger{border-color:#7A2C25;color:var(--flag)}
 
 /* ---------- icons ---------- */
-.ic{display:block;flex:0 0 auto}
-.sic{width:15px;height:15px;color:var(--faint)}
-.eic{width:14px;height:14px;margin-left:auto}
+.ic{display:block;flex:0 0 auto;image-rendering:pixelated;image-rendering:crisp-edges}
+.sic{width:12px;height:12px;color:var(--faint)}
+.eic{width:12px;height:12px;margin-left:auto}
 .skhead{display:flex;align-items:center;gap:5px}
 .slot .sk{margin:0}
-.lic{width:26px;height:26px}
-.lel{width:13px;height:13px;margin-top:3px}
+.lic{width:24px;height:24px}
+.lel{width:12px;height:12px;margin-top:3px}
 .iwrap{display:flex;flex-direction:column;align-items:center;gap:1px;width:28px}
 .item.hasic{grid-template-columns:28px 1fr auto}
-.cic{width:14px;height:14px;margin:0 auto 3px;color:var(--faint)}
-.kic{width:20px;height:20px;position:relative;z-index:2}
-.bic{width:30px;height:30px;flex:0 0 auto}
-.tic{width:14px;height:14px;display:inline-block;vertical-align:-2px;margin-right:5px;color:var(--faint)}
+.cic{width:12px;height:12px;margin:0 auto 3px;color:var(--faint)}
+.kic{width:24px;height:24px;position:relative;z-index:2}
+.bic{width:24px;height:24px;flex:0 0 auto}
+.tic{width:12px;height:12px;display:inline-block;vertical-align:-2px;margin-right:5px}
 #setBox .row{grid-template-columns:1fr auto}
 .sheethead{display:flex;align-items:center;gap:10px;margin-bottom:8px}
 .glyph .cd{background:rgba(6,16,12,.74);z-index:3;transition:height .2s linear}
 
 /* ---------- developer ---------- */
-.devread{font-family:var(--mono);font-size:10px;line-height:1.75;color:var(--dim);
-  background:#0A170F;border:1px solid var(--line);border-radius:4px;padding:8px 9px;margin-bottom:12px}
+.devread{font-family:var(--mono);font-size:var(--f1);line-height:1.75;color:var(--dim);
+  background:#0A170F;border:1px solid var(--line);border-radius:0;padding:8px 9px;margin-bottom:12px}
 .devrow{margin-bottom:11px}
-.devlbl{font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:var(--faint);font-weight:700}
+.devlbl{font-size:var(--f0);letter-spacing:.16em;text-transform:uppercase;color:var(--faint);font-weight:700}
 .devgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin-top:5px}
-.devbtn{border:1px solid var(--line);background:var(--raise);border-radius:3px;padding:7px 3px;
-  font-size:10px;color:var(--chalk);line-height:1.2}
+.devbtn{border:1px solid var(--line);background:var(--raise);border-radius:0;padding:7px 3px;
+  font-size:var(--f1);color:var(--chalk);line-height:1.2}
 .devbtn:active{background:var(--raise2);border-color:var(--brass-dk);color:var(--brass)}
 
 /* ---------- toast ---------- */
@@ -303,16 +315,16 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
    in the pixel font it was legible but bulky, and it could not match anything
    else on screen. */
 #readout{position:absolute;left:2.2%;top:2.5%;min-width:36%;max-width:56%;z-index:29;
-  background:rgba(6,12,9,.74);border:1px solid #1B3A2E;border-radius:4px;
+  background:rgba(6,12,9,.74);border:1px solid #1B3A2E;border-radius:0;
   padding:4px 7px 5px;backdrop-filter:blur(2px);pointer-events:none}
-.rline{display:flex;justify-content:space-between;gap:12px;font-size:8px;letter-spacing:.14em;
+.rline{display:flex;justify-content:space-between;gap:12px;font-size:var(--f0);letter-spacing:.14em;
   text-transform:uppercase;color:var(--faint);font-weight:700;white-space:nowrap}
 .rmain{display:flex;align-items:baseline;gap:3px;margin-top:2px}
-#rBig{font-family:var(--mono);font-size:15px;font-weight:600;color:var(--brass);line-height:1}
-.ru{font-size:8px;letter-spacing:.12em;text-transform:uppercase;color:var(--faint)}
+#rBig{font-family:var(--mono);font-size:var(--f4);font-weight:600;color:var(--brass);line-height:1}
+.ru{font-size:var(--f0);letter-spacing:.12em;text-transform:uppercase;color:var(--faint)}
 .rsp{flex:1 1 auto;min-width:8px}
-#rTag{font-size:8.5px;letter-spacing:.12em;text-transform:uppercase;font-weight:700;white-space:nowrap}
-.rbar{height:2px;background:#12251C;border-radius:1px;margin-top:5px;overflow:hidden}
+#rTag{font-size:var(--f0);letter-spacing:.12em;text-transform:uppercase;font-weight:700;white-space:nowrap}
+.rbar{height:2px;background:#12251C;border-radius:0;margin-top:5px;overflow:hidden}
 .rbar i{display:block;height:100%;width:0;background:var(--brass);transition:width .12s linear}
 
 /* the honours shelf, on the stage under the hole readout */
@@ -327,24 +339,24 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
 #honBtn:active,#perkBtn:active{transform:translateY(1px)}
 @keyframes hpulse{0%,100%{opacity:1}50%{opacity:.62}}
 #honBtn.new,#perkBtn.ready{animation:hpulse 4.6s ease-in-out infinite}
-#perkDot{position:absolute;top:-6%;right:-6%;width:34%;height:34%;border-radius:50%;
+#perkDot{position:absolute;top:-6%;right:-6%;width:34%;height:34%;border-radius:0;
   background:var(--aurora);display:none}
 #perkBtn.live #perkDot{display:block}
 /* Top right corner, clear of the readout on the left and the two stage
    buttons below. Two at a time: any more and they became the view. */
 #toasts{position:absolute;right:2%;top:2%;display:flex;flex-direction:column;
   align-items:flex-end;gap:3px;pointer-events:none;z-index:30;max-width:52%}
-.toast{background:rgba(8,18,12,.9);border:1px solid var(--line);border-radius:5px;
-  padding:3px 8px;font-size:9.5px;line-height:1.3;text-align:right;
+.toast{background:rgba(8,18,12,.9);border:1px solid var(--line);border-radius:0;
+  padding:3px 8px;font-size:var(--f0);line-height:1.3;text-align:right;
   animation:tin .22s ease-out;backdrop-filter:blur(2px)}
 .toast b{color:var(--brass)}
 .toast.ach{border-color:var(--brass-dk);background:rgba(28,20,6,.94);white-space:normal}
-.toast.ach .achk{font-size:8px;letter-spacing:.16em;text-transform:uppercase;color:var(--brass);
+.toast.ach .achk{font-size:var(--f0);letter-spacing:.16em;text-transform:uppercase;color:var(--brass);
   display:block;margin-bottom:1px}
 @keyframes tin{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:none}}
 
-.empty{padding:26px 16px;text-align:center;color:var(--faint);font-size:12px;line-height:1.6}
-.hint{padding:9px 12px;font-size:10.5px;color:var(--faint);line-height:1.5;border-bottom:1px solid #12261A}
+.empty{padding:26px 16px;text-align:center;color:var(--faint);font-size:var(--f3);line-height:1.6}
+.hint{padding:9px 12px;font-size:var(--f1);color:var(--faint);line-height:1.5;border-bottom:1px solid #12261A}
 /* Detail that is worth having but not worth reading every time. Folded away
    behind a tap rather than deleted: the screens were three paragraphs deep
    before you got to anything you could press. */
@@ -352,8 +364,8 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
 .open .fold{display:block}
 .foldhead{display:flex;align-items:flex-start;gap:6px}
 .foldhead>span{flex:1}
-.qm{flex:0 0 auto;width:17px;height:17px;border-radius:50%;border:1px solid var(--line-soft);
-  color:var(--faint);font-size:10px;line-height:15px;text-align:center;font-weight:700;
+.qm{flex:0 0 auto;width:17px;height:17px;border-radius:0;border:1px solid var(--line-soft);
+  color:var(--faint);font-size:var(--f1);line-height:15px;text-align:center;font-weight:700;
   background:none;padding:0;margin-left:6px}
 .open .qm{color:var(--brass);border-color:var(--brass-dk)}
 @media (prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;transition-duration:.01ms!important}}
@@ -556,49 +568,207 @@ const B = {
      the HUD. 'f' paths fill (even-odd, so a hole in a shape is just a second
      subpath), 's' paths stroke.
      ======================================================================= */
-  ICON: {
-    bolt:    { f:['M13.5 1.8 L6.2 13.4 H10.6 L9.4 22.2 L17.8 10.2 H13.2 Z'] },
-    bounce:  { s:['M2.5 20 Q7 6 11.5 14 Q14.4 19.4 19.4 8.6'],
-               f:['M19.8 6.4 a2.1 2.1 0 1 0 .01 0'] },
-    gale:    { s:['M2.5 8 H13.4 a2.6 2.6 0 1 0 -2.6 -2.9',
-                  'M2.5 13 H17.4 a3 3 0 1 1 -3 3.2','M2.5 18 H10.4'] },
-    target:  { s:['M12 2.2 V6','M12 18 V21.8','M2.2 12 H6','M18 12 H21.8',
-                  'M12 5.6 a6.4 6.4 0 1 0 .01 0'],
-               f:['M12 10.2 a1.8 1.8 0 1 0 .01 0'] },
-    bag:     { s:['M9.6 3 V10','M12.6 4.2 V10','M15.6 5.4 V10'],
-               f:['M7.2 9.4 h9.6 a1.6 1.6 0 0 1 1.6 1.6 v8.4 a2.6 2.6 0 0 1 -2.6 2.6 h-7.6 a2.6 2.6 0 0 1 -2.6 -2.6 v-8.4 a1.6 1.6 0 0 1 1.6 -1.6 z'] },
-    rewind:  { s:['M20.4 12.8 A8.4 8.4 0 1 1 17.4 6.2'],
-               f:['M19.6 2 L18.4 8.6 L12.4 6.2 Z'] },
-    eclipse: { f:['M12 2.4 a9.6 9.6 0 1 0 .01 0 M16.6 4.2 a8.4 8.4 0 1 0 .01 0'] },
-    coins:   { s:['M4 7.2 v5.2 a8 3.2 0 0 0 16 0 V7.2','M4 13.4 v4.2 a8 3.2 0 0 0 16 0 v-4.2'],
-               f:['M12 4 a8 3.2 0 1 0 .01 0'] },
-    driver:  { s:['M7.4 2.6 L13.4 13.6'],
-               f:['M12.4 12.8 q5.6 .4 6.6 4.6 q-4.4 3.4 -7.8 .2 z'] },
-    irons:   { s:['M8.6 2.6 L13.2 13.2'], f:['M11.4 12.6 h7.2 l-1.4 5.4 h-7.2 z'] },
-    wedge:   { s:['M9.4 2.6 L13 12.6','M13.2 15 h3.4','M12.6 16.8 h3.2'],
-               f:['M11 12 h7.4 l-2 6.4 h-6.4 z'] },
-    putter:  { s:['M9.6 2.6 L12 13.2'], f:['M6.6 13 h11 v4.2 h-11 z'] },
-    ball:    { s:['M12 3.4 a8.6 8.6 0 1 0 .01 0'],
-               f:['M9.6 9.4 a1 1 0 1 0 .01 0','M14.4 9.4 a1 1 0 1 0 .01 0',
-                  'M12 13.2 a1 1 0 1 0 .01 0','M9.6 16.8 a1 1 0 1 0 .01 0',
-                  'M14.4 16.8 a1 1 0 1 0 .01 0'] },
-    glove:   { s:['M9.4 9.6 V5.2 a1.3 1.3 0 0 1 2.6 0 V9.6','M13 9.6 V6 a1.3 1.3 0 0 1 2.6 0 V9.6',
-                  'M7.6 12.6 L5.2 14.8'],
-               f:['M7.6 9.6 h8.8 a2 2 0 0 1 2 2 v6.2 a3.4 3.4 0 0 1 -3.4 3.4 h-6 a3.4 3.4 0 0 1 -3.4 -3.4 v-6.2 a2 2 0 0 1 2 -2 z'] },
-    flame:   { f:['M12 2.4 c3.4 4.6 5.6 6.6 5.6 10.2 a5.6 5.6 0 0 1 -11.2 0 c0 -2.6 1.6 -3.8 2.8 -5.4 c.8 1.8 1.8 1.8 2.8 .6 z'] },
-    snow:    { s:['M12 2.4 V21.6','M3.8 7.2 L20.2 16.8','M20.2 7.2 L3.8 16.8',
-                  'M9.6 4 L12 6.4 L14.4 4','M9.6 20 L12 17.6 L14.4 20'] },
-    leaf:    { f:['M3.6 20.4 C3.6 10 11.4 3.6 20.4 3.6 C20.4 12.4 13.6 20.4 3.6 20.4 Z'],
-               s:['M4.8 19.2 L16.2 7.8'] },
-    ring:    { s:['M12 3 a9 9 0 1 0 .01 0'], f:['M12 8.4 a3.6 3.6 0 1 0 .01 0'] },
-    grit:    { f:['M5.6 2.6 h12.8 v2 l-4.8 5.4 4.8 5.4 v2 h-12.8 v-2 l4.8 -5.4 -4.8 -5.4 z'] },
-    shard:   { f:['M12 2 L18.4 9.2 L12 22 L5.6 9.2 Z'] },
-    scroll:  { s:['M8.6 8.4 h7.4','M8.6 12 h7.4','M8.6 15.6 h4.8'],
-               f:['M6.2 3 h11.6 v14.4 a3.6 3.6 0 0 1 -3.6 3.6 H6.2 a3.6 3.6 0 0 0 3.6 -3.6 z'] },
-    flag:    { s:['M6.4 2.6 V21.4'], f:['M7.4 3.2 q7 -1.4 10.6 2.2 q-3.6 3.6 -10.6 2.2 z'] },
-    trophy:  { f:['M7.6 2.6 h8.8 v4.6 a4.4 4.4 0 0 1 -8.8 0 z','M8.2 18.6 h7.6 v2.8 h-7.6 z'],
-               s:['M7.6 4.2 H5 a2.6 2.6 0 0 0 2.6 4.4','M16.4 4.2 H19 a2.6 2.6 0 0 1 -2.6 4.4',
-                  'M12 11.6 V15.6','M9.4 15.6 h5.2'] }
+  // Icons, hand drawn on the same twelve pixel grid the course sprites use.
+  //
+  // They were 24px vector line art before: beziers, arcs and a 1.8px round
+  // stroke. In the menus that put smooth modern iconography next to a chunky
+  // pixel course, and in the SCENE it was worse -- the same paths were
+  // rasterised at 16px and alpha-thresholded to fake pixel art, so the crest
+  // icons were machine-mangled curves sitting beside sprites drawn by hand.
+  // One set now, authored at the size it is shown at, used by both.
+  //
+  //   X main   x shade   o deep   w highlight   . clear
+  PX12: {
+    bolt:   ['....XXXX....','...XXXXx....','..XXXXx.....','..XXXx......',
+             '.XXXXXXXXx..','.xxXXXXXXx..','....XXXXx...','...XXXXx....',
+             '...XXXx.....','..XXXx......','..XXx.......','.XXx........'],
+    bounce:   ['............',
+             '.......XXX..',
+             '......XXXXX.',
+             '.......XXX..',
+             '............',
+             '..X......X..',
+             '.X.X....X.X.',
+             'X...X..X...X',
+             '.....XX.....',
+             '............',
+             'XXXXXXXXXXXX',
+             'xxxxxxxxxxxx'],
+    gale:   ['............','..XXXXXXx...','.........XXx','..XXXXXXXXx.',
+             '............','XXXXXXXXXXx.','..........Xx','XXXXXXXXXXx.',
+             '............','..XXXXXXx...','..........Xx','............'],
+    target: ['.....XX.....','.....XX.....','...XXXXXX...','..XX....XX..',
+             '.XX..XX..XX.','XXX.XXXX.XXX','XXX.XXXX.XXX','.XX..XX..XX.',
+             '..XX....XX..','...XXXXXX...','.....XX.....','.....XX.....'],
+    bag:      ['..Xx.X..Xx..',
+             '..XX.X..XX..',
+             '...XXXXXXX..',
+             '..XXXXXXXXx.',
+             '..XoXXXXXXx.',
+             '..XoXXXXXXx.',
+             '..XXXXXXXXx.',
+             '..XXXXXXXXx.',
+             '..XoXXXXXXx.',
+             '..XXXXXXXXx.',
+             '..XXXXXXXXx.',
+             '...XXXXXXx..'],
+    rewind:   ['XXX..XXXX...',
+             'XXXXXX..XXx.',
+             'XXX.......XX',
+             '.XX.......XX',
+             '..........XX',
+             '..........XX',
+             'XX........XX',
+             'XX........Xx',
+             '.XX......XX.',
+             '..XX....XX..',
+             '...XXXXXX...',
+             '............'],
+    eclipse:['....XXXX....','..XXXXXXXx..','.XXXXX..xXx.','XXXXX.....Xx',
+             'XXXX.......X','XXXX.......X','XXXX.......X','XXXX.......X',
+             'XXXXX.....Xx','.XXXXX..xXx.','..XXXXXXXx..','....XXXX....'],
+    coins:    ['............',
+             '...XXXXXX...',
+             '..XwwXXXXx..',
+             '...XXXXXX...',
+             '............',
+             '...XXXXXX...',
+             '..XwwXXXXx..',
+             '...XXXXXX...',
+             '............',
+             '...XXXXXX...',
+             '..XwwXXXXx..',
+             '...XXXXXX...'],
+    driver:   ['.........Xx.',
+             '........Xx..',
+             '........Xx..',
+             '.......Xx...',
+             '.......Xx...',
+             '......Xx....',
+             '......Xx....',
+             '.....Xx.....',
+             '..XXXXx.....',
+             '.XXXXXXx....',
+             '.XXXXXXx....',
+             '..XXXXx.....'],
+    irons:    ['.........Xx.',
+             '........Xx..',
+             '........Xx..',
+             '.......Xx...',
+             '.......Xx...',
+             '......Xx....',
+             '......Xx....',
+             '....XXXx....',
+             '...XXXXx....',
+             '..XXXXXx....',
+             '..XXXXXx....',
+             '..xxxxxx....'],
+    wedge:    ['.........Xx.',
+             '........Xx..',
+             '........Xx..',
+             '.......Xx...',
+             '.......Xx...',
+             '......Xx....',
+             '...XXXXx....',
+             '..XXXXXx....',
+             '..XoXoXx....',
+             '..XXXXXx....',
+             '..XoXoXx....',
+             '..xxxxxx....'],
+    putter:   ['.........Xx.',
+             '........Xx..',
+             '........Xx..',
+             '.......Xx...',
+             '.......Xx...',
+             '......Xx....',
+             '......Xx....',
+             '......Xx....',
+             '......Xx....',
+             '.XXXXXXXXx..',
+             '.XXXXXXXXx..',
+             '..xxxxxxx...'],
+    ball:   ['...XXXXXX...','..XwwXXXXx..','.XwXXoXXXXx.','XXXXXXXXXXXx',
+             'XXoXXXXoXXXx','XXXXXXXXXXXx','XXXXoXXXXXXx','XXXXXXXXXXXx',
+             'XXoXXXXoXXXx','.XXXXXXXXXx.','..XXXXXXXx..','...xxxxxx...'],
+    glove:    ['..X.X.X.....',
+             '..X.X.X.X...',
+             '..XXXXXXX...',
+             '.XXXXXXXXX..',
+             'XXXXXXXXXXx.',
+             'XXXXXXXXXXx.',
+             '.XXXXXXXXXx.',
+             '.XXXXXXXXXx.',
+             '.XXoooXXXXx.',
+             '.XXXXXXXXXx.',
+             '..XXXXXXXx..',
+             '...xxxxx....'],
+    flame:    ['.....X......',
+             '....XXx.....',
+             '....XXx.....',
+             '...XXXXx....',
+             '...XXXXx....',
+             '..XXwXXXx...',
+             '..XXwwXXx...',
+             '.XXXwwXXXx..',
+             '.XXXwwXXXx..',
+             '.XXXwwwXXx..',
+             '..XXXXXXx...',
+             '...xXXXx....'],
+    snow:   ['.X...XX...X.','..X..XX..X..','...XXXXXX...','.XXXXXXXXXX.',
+             '...XXXXXX...','..XXXXXXXX..','..XXXXXXXX..','...XXXXXX...',
+             '.XXXXXXXXXX.','...XXXXXX...','..X..XX..X..','.X...XX...X.'],
+    leaf:    ['.....XX.....',
+             '....XXXX....',
+             '...XXoXXX...',
+             '..XXXoXXXX..',
+             '..XXXoXXXX..',
+             '.XXXXoXXXXX.',
+             '.XXXXoXXXXX.',
+             '..XXXoXXXX..',
+             '..XXXoXXXX..',
+             '...XXoXXX...',
+             '.....o......',
+             '.....o......'],
+    ring:   ['....XXXX....','..XXXXXXXX..','.XXXx..xXXX.','.XXx....xXX.',
+             'XXx......xXX','XXx......xXX','XXx......xXX','XXx......xXX',
+             '.XXx....xXX.','.XXXx..xXXX.','..XXXXXXXX..','....XXXX....'],
+    grit:   ['.XXXXXXXXXX.','.XoooooooXx.','..XXXXXXXx..','...XXXXXx...',
+             '....XXXXx...','.....XXx....','.....XXx....','....XXXXx...',
+             '...XXwwXXx..','..XXwwwwXXx.','.XoooooooXx.','.XXXXXXXXXX.'],
+    shard:    ['.....XX.....',
+             '....XwXx....',
+             '...XXwXXx...',
+             '..XXXwXXXx..',
+             '.XXXXwXXXXx.',
+             '.XXXXwXXXXx.',
+             '..XXXwXXXx..',
+             '..XXXwXXXx..',
+             '...XXwXXx...',
+             '...XXwXXx...',
+             '....XwXx....',
+             '.....Xx.....'],
+    scroll: ['..XXXXXXXX..','.XXXXXXXXXx.','.XXoooooXXx.','.XXXXXXXXXx.',
+             '.XXoooooXXx.','.XXXXXXXXXx.','.XXoooooXXx.','.XXXXXXXXXx.',
+             '.XXoooXXXXx.','.XXXXXXXXXx.','.XXXXXXXXXx.','..XXXXXXXx..'],
+    flag:   ['..XXXXXXx...','..XXXXXXXXx.','..XXXXXXXx..','..XXXXXx....',
+             '..XXx.......','..XX........','..XX........','..XX........',
+             '..XX........','..XX........','.XXXXx......','XXXXXXx.....'],
+    trophy: ['XXXXXXXXXXXX','.XXXXXXXXXX.','oXXXXXXXXXXo','oXXXXXXXXXXo',
+             'oXXXXXXXXXXo','.oXXXXXXXXo.','..oXXXXXXo..','....XXXX....',
+             '.....XX.....','.....XX.....','...XXXXXX...','..XXXXXXXX..']
+ ,
+    star:    ['.....XX.....',
+             '.....XX.....',
+             '....XwwX....',
+             '....XwwX....',
+             'XXXXXwwXXXXx',
+             '.XXXXwwXXXx.',
+             '..XXXwwXXx..',
+             '...XXwwXx...',
+             '..XXXx.xXXx.',
+             '..XXx....XXx',
+             '.XXx......XX',
+             '.Xx........x']
   },
 
   /* ---- upgrades bought with gold ---- */
@@ -3488,35 +3658,36 @@ function buildSprites(){
    fully on or fully off, which turns a smooth vector glyph into a real pixel
    sprite instead of a blurry miniature. */
 const P2D = {}, ICO = {};
-function iconPaths(id){
-  if(P2D[id]) return P2D[id];
-  const ic = B.ICON[id] || {};
-  return P2D[id] = { f:(ic.f||[]).map(d => new Path2D(d)), s:(ic.s||[]).map(d => new Path2D(d)) };
+// Every icon, in one place, built from the twelve pixel grid. The DOM and the
+// scene draw the SAME sprite: before this the menus got smooth vector art and
+// the scene got that art rasterised small and alpha-thresholded, so the two
+// never looked like they came from the same game.
+function pixTones(col){
+  const c = col || '#DFE9DC';
+  return { X:c, x:dark(c, 0.30), o:dark(c, 0.58), w:lite(c, 0.38) };
 }
-function pixIcon(id, size, col){
-  const key = id + ':' + size + ':' + col;
+function pixSprite(id, col){
+  const rows = B.PX12[id]; if(!rows) return null;
+  const key = id + '|' + (col || '');
   if(ICO[key]) return ICO[key];
-  const o = document.createElement('canvas');
-  o.width = size; o.height = size;
-  const g = o.getContext('2d');
-  const p = iconPaths(id), k = size / 24;
-  g.save(); g.scale(k, k);
-  g.fillStyle = '#fff'; g.strokeStyle = '#fff';
-  g.lineWidth = 2.4; g.lineCap = 'round'; g.lineJoin = 'round';
-  for(const q of p.f) g.fill(q, 'evenodd');
-  for(const q of p.s) g.stroke(q);
-  g.restore();
-  try{
-    const im = g.getImageData(0, 0, size, size);
-    const d = im.data;
-    for(let i = 0; i < d.length; i += 4) d[i+3] = d[i+3] > 108 ? 255 : 0;
-    g.putImageData(im, 0, 0);
-  }catch(e){}
-  g.globalCompositeOperation = 'source-in';
-  g.fillStyle = col;
-  g.fillRect(0, 0, size, size);
-  return ICO[key] = { cv:o, w:size, h:size };
+  return ICO[key] = makeSprite(rows, pixTones(col));
 }
+// Scaled to whatever the scene asks for, but only ever by a whole number, so
+// the pixels stay square.
+function pixIcon(id, size, col){
+  const key = id + '@' + size + '|' + col;
+  if(P2D[key]) return P2D[key];
+  const sp = pixSprite(id, col);
+  if(!sp) return null;
+  const k = Math.max(1, Math.round(size / sp.w));
+  const o = document.createElement('canvas');
+  o.width = sp.w * k; o.height = sp.h * k;
+  const g = o.getContext('2d');
+  g.imageSmoothingEnabled = false;
+  g.drawImage(sp.cv, 0, 0, o.width, o.height);
+  return P2D[key] = { cv:o, w:o.width, h:o.height };
+}
+
 
 /* ---- viewport ----
    VW is the buffer width in real pixels, so the sprite and lateral scales are
@@ -5047,14 +5218,11 @@ const MULTS = [1, 10, 25, 'Max'];
 const NOEL = { textContent:'', innerHTML:'', style:{}, className:'', classList:{ toggle(){}, add(){}, remove(){} } };
 const $$ = id => document.getElementById(id) || NOEL;
 // Same path data the canvas uses, emitted as inline SVG for the panels.
+// Same name and same call, so every place that asks for an icon is unchanged.
+// What comes back is now a pixel sprite rather than a piece of line art.
 function svgIcon(id, cls, color){
-  const ic = B.ICON[id]; if(!ic) return '';
-  let p = '';
-  for(const d of (ic.f||[])) p += '<path d="' + d + '" fill="currentColor" fill-rule="evenodd"/>';
-  for(const d of (ic.s||[])) p += '<path d="' + d + '" fill="none" stroke="currentColor" '
-    + 'stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>';
-  return '<svg class="ic ' + (cls||'') + '" viewBox="0 0 24 24"'
-    + (color ? ' style="color:' + color + '"' : '') + '>' + p + '</svg>';
+  const url = pixUrl(id, color);
+  return url ? '<img class="ic ' + (cls||'') + '" alt="" src="' + url + '">' : '';
 }
 const elemOf = id => B.ELEM.find(e => e.id === id);
 const elemColor = id => { const e = elemOf(id); return e
@@ -5109,22 +5277,18 @@ function renderVitals(){
 // pixelated rendering. A smooth vector icon sitting on pixel art reads as a
 // sticker; this does not.
 const DOMSPR = {};
-function domSprite(key, rows, map){
-  if(DOMSPR[key]) return DOMSPR[key];
-  try{ return DOMSPR[key] = makeSprite(rows, map).cv.toDataURL(); }
+// Sprites are baked pixels, so they need a real colour, not a CSS variable.
+const BRASS = '#E3B457';
+function pixUrl(id, col){
+  const key = id + '|' + (col || '');
+  if(DOMSPR[key] !== undefined) return DOMSPR[key];
+  const sp = pixSprite(id, col || '#DFE9DC');
+  try{ return DOMSPR[key] = sp ? sp.cv.toDataURL() : ''; }
   catch(e){ return DOMSPR[key] = ''; }
 }
 // Both 12x12 so they land at identical size in identical square buttons.
 // The trophy was 12x13 and stretched, which is why it looked the larger of
 // the two.
-const TROPHY_PX = [
-  '.gggggggggg.','g.gggggggg.g','g.gggggggg.g','g.GggggggG.g','g..gggggg..g',
-  '.g.gggggg.g.','..G.gggg.G..','.....gg.....','.....gg.....','....GGGG....',
-  '..gggggggg..','..GGGGGGGG..'];
-const STAR_PX = [
-  '.....ss.....','.....ss.....','....ssss....','....ssss....','ssssssssssSS',
-  '.sssssssssS.','..sssssssS..','...ssssSS...','..sss..SSS..','..ss....SS..',
-  '.ss......SS.','............'];
 
 function honRows(w){
   const done = achCount(), tot = B.ACH.length;
@@ -5159,7 +5323,7 @@ function renderHonBtn(){
   const n = achCount();
   if(!b._built){
     b._built = 1;
-    $('honIcon').src = domSprite('trophy', TROPHY_PX, { g:'#E3B457', G:'#A8802F' });
+    $('honIcon').src = pixUrl('trophy', '#E3B457');
     b.onclick = honoursSheet;
   }
   b.classList.toggle('new', n > (S.honSeen || 0));
@@ -5167,7 +5331,7 @@ function renderHonBtn(){
   if(p){
     if(!p._built){
       p._built = 1;
-      $('perkIcon').src = domSprite('star', STAR_PX, { s:'#F2D75E', S:'#C9A63C' });
+      $('perkIcon').src = pixUrl('star', '#F2D75E');
       p.onclick = perksSheet;
     }
     const live = B.PERKS.some(x => perkLeft(x.id) > 0);
@@ -5275,23 +5439,35 @@ function renderLive(){
 }
 
 /* ---- practice range ---- */
-function rowShell(){
+// What each stat looks like. Upgrades, trophies and contests all name a stat
+// or a currency already, so every one of them can carry an icon without a
+// single new field -- and the Range, the trophy room and the Depths stop being
+// the three lists in the game that are just text.
+const STAT_IC = {
+  pow:'driver', spd:'gale', mst:'bounce', crt:'target', cpw:'bolt',
+  elm:'ring', gld:'coins', drop:'flag', dgn:'shard', reson:'leaf',
+  grit:'grit', shard:'shard', scroll:'scroll', gold:'coins', purse:'coins'
+};
+const statIcon = (k, cls, col) => svgIcon(STAT_IC[String(k||'').replace(/^\*/, '')] || 'ball', cls, col);
+
+function rowShell(ic){
   const d = document.createElement('div');
   d.className = 'row';
-  d.innerHTML = '<div><div class="nm"></div><div class="ds"></div><div class="mt"></div></div>'
+  d.innerHTML = (ic || '')
+    + '<div><div class="nm"></div><div class="ds"></div><div class="mt"></div></div>'
     + '<button class="buy"><span class="lbl"></span><span class="amt"></span></button>';
   return d;
 }
 function buildUpg(){
   const w = $('upgRows'); w.innerHTML = ''; UPGREF = [];
   for(const u of B.UPG){
-    const d = rowShell();
-    d.children[0].children[0].textContent = u.n;
-    d.children[0].children[1].textContent = u.d;
-    const btn = d.children[1];
+    const d = rowShell(statIcon(u.k, 'ric'));
+    const body = d.children[1], btn = d.children[2];
+    body.children[0].textContent = u.n;
+    body.children[1].textContent = u.d;
     btn.onclick = () => buyUpg(u);
     w.appendChild(d);
-    UPGREF.push({ u, el:d, mt:d.children[0].children[2], btn,
+    UPGREF.push({ u, el:d, mt:body.children[2], btn,
                   lbl:btn.children[0], amt:btn.children[1] });
   }
   const mb = $('multBar'); mb.innerHTML = '';
@@ -5426,7 +5602,7 @@ function renderBag(){
             pow:'+' + Math.round(t[k]*100) + '% swing', crt:'+' + (t[k]*100).toFixed(0) + 'pp pure',
             cpw:'+' + t[k].toFixed(1) + 'x payoff', elm:'+' + Math.round(t[k]*100) + '% affinity'
           })[k]).join(', ');
-        return '<div class="row"><div><div class="nm">' + svgIcon(set.ic, 'tic', a.tier ? 'var(--brass)' : '')
+        return '<div class="row"><div><div class="nm">' + svgIcon(set.ic, 'tic', a.tier ? BRASS : '')
           + set.n + ' <span class="pill">' + a.n + '/6</span></div>'
           + '<div class="ds">'
           + (a.tier ? '<b style="color:var(--aurora)">' + eff(a.tier) + '</b>' : set.d)
@@ -5623,7 +5799,8 @@ function renderDgn(){
     else if(d.mode === 'chip') reads = 'About ' + Math.round(chipChance(D)*100) + '% of your chips would drop';
     else reads = 'Carry ' + fmt(D.dps) + ' a second against floors that keep growing';
 
-    el.innerHTML = '<div class="dh"><span class="dn">' + d.n + '</span><span class="keys">' + keyHtml + '</span>'
+    el.innerHTML = '<div class="dh">' + statIcon(d.cur, 'ric') + '<span class="dn">' + d.n + '</span>'
+      + '<span class="keys">' + keyHtml + '</span>'
       + '<button class="qm" aria-label="How it works">?</button></div>'
       + '<div class="dd">' + d.d + '</div>'
       + '<div class="dd fold" style="color:var(--faint);margin-top:4px">' + d.how + '</div>'
@@ -5772,7 +5949,8 @@ function renderLegacy(){
   const dc = discoverCost(), n = trophiesFound(), tot = B.TROPHY.length;
   $('relicNote').textContent = n + ' / ' + tot + ' found';
   const rows = $('relicRows');
-  rows.innerHTML = '<div class="row"><div><div class="nm">Discover a trophy</div>'
+  rows.innerHTML = '<div class="row">' + svgIcon('trophy', 'ric', BRASS)
+    + '<div><div class="nm">Discover a trophy</div>'
     + '<div class="ds">' + (n >= tot ? 'That is the lot. Every trophy is on the shelf.'
         : (tot - n) + ' still out there somewhere. The gold ones turn up least often.') + '</div>'
     + '<div class="mt">Found <i>' + n + '</i> of ' + tot + '</div></div>'
@@ -5819,14 +5997,15 @@ function renderLegacy(){
     else eff = '+' + fmt(t.v*lv*100) + '%';
     const capped = lv >= B.TR_MAX;
 
-    const d = rowShell();
+    const d = rowShell(statIcon(t.k, 'ric', col));
     d.style.borderLeft = '2px solid ' + col;
-    d.children[0].children[0].innerHTML = t.n
+    const body = d.children[1];
+    body.children[0].innerHTML = t.n
       + ' <span class="pill" style="border-color:' + col + ';color:' + col + '">' + tier.n + '</span>';
-    d.children[0].children[1].textContent = t.d;
-    d.children[0].children[2].innerHTML = 'Lv <i>' + lv + '</i>'
+    body.children[1].textContent = t.d;
+    body.children[2].innerHTML = 'Lv <i>' + lv + '</i>'
       + (capped ? '/' + B.TR_MAX : '') + ' \u00b7 <b>' + eff + '</b>';
-    const btn = d.children[1];
+    const btn = d.children[2];
     btn.className = 'buy' + (capped ? ' max' : S.legacy >= c2 ? ' ok' : ' no');
     btn.children[0].textContent = capped ? 'Capped' : 'Raise';
     btn.children[1].textContent = capped ? '\u2014' : fmt(c2);
