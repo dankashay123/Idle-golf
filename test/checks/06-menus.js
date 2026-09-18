@@ -3,10 +3,11 @@
  * have to keep routing; and the skill cooldown bars are driven off the view
  * name, which is exactly how they stopped ticking when the shot book moved.
  *
- * And the locker groups by club. It used to be one run of everything, best
- * first, so finding the wedge you just picked up meant reading past nine
- * drivers. Every club has to sit under a band for its own slot, the bands have
- * to come in bag order, and the best of each group has to head its group. */
+ * And the locker is tabbed by club. It used to be one run of everything, best
+ * first, so finding the wedge you picked up two holes ago meant reading past
+ * nine drivers. There is a tile per slot which both shows what you are
+ * carrying there and picks what the list below shows, and the list shows that
+ * slot and nothing else, carried club at the top. */
 'use strict';
 module.exports = {
   name: 'menus',
@@ -61,44 +62,61 @@ module.exports = {
       throw new Error('the render buffer changed over the pull tab: ' + before.buf + ' -> ' + back.buf);
 
     const grew = (up.panel[1] - up.panel[0]) - (before.panel[1] - before.panel[0]);
-    // the locker, grouped by club
+    // the locker, tabbed by club
     const lk = await page.evaluate(() => {
-      S.bagSort = 'slot';
-      S.bag = [];
-      // two of every slot, deliberately out of order and out of rank
+      S.bag = []; S.equip = {};
+      // two of every slot, deliberately out of order, and one carried
       for (const sl of [...B.SLOTS].reverse())
         for (const rar of [1, 4]) S.bag.push(makeItem(10, 0, rar, sl.id));
+      S.equip.wedge = makeItem(10, 0, 2, 'wedge');
+      S.bagSlot = B.SLOTS[0].id;
       renderBag();
-      const kids = [...document.getElementById('bagList').children];
-      const bands = [], order = [];
-      let cur = null, bad = null, ranks = [];
-      for (const el of kids) {
-        if (el.classList.contains('slotband')) {
-          if (ranks.length > 1 && ranks[0] < ranks[ranks.length - 1]) bad = bad || cur + ' not best first';
-          ranks = [];
-          cur = el.querySelector('.sbn').textContent;
-          bands.push(cur); order.push(cur);
-        } else {
-          const nm = el.querySelector('.ib').textContent;
-          if (cur && nm.indexOf(cur) < 0) bad = bad || (nm + ' is filed under ' + cur);
-          ranks.push([...B.RARITY].findIndex(r => nm.indexOf(r.n) === 0));
-        }
+
+      const tabs = [...document.getElementById('bagGrid').children];
+      const out = { tabs: tabs.map(t => t.querySelector('.sk').textContent),
+                    want: B.SLOTS.map(s2 => s2.n), bad: null, badges: {} };
+      for (const t of tabs) {
+        const c = t.querySelector('.sct');
+        out.badges[t.querySelector('.sk').textContent] = c ? +c.textContent : 0;
       }
-      // and score order is still available
-      S.bagSort = 'score'; renderBag();
-      const flat = [...document.getElementById('bagList').children]
-        .filter(e => e.classList.contains('slotband')).length;
-      S.bagSort = 'slot';
-      return { bands, bad, flat, want: B.SLOTS.map(s2 => s2.n) };
+
+      // every tab shows its own slot and nothing else
+      for (let i = 0; i < B.SLOTS.length; i++) {
+        tabs[i].onclick();
+        const sl = B.SLOTS[i];
+        const rows = [...document.getElementById('bagList').children]
+          .filter(e => e.classList.contains('card2'));
+        if (!rows.length) { out.bad = out.bad || (sl.n + ' tab drew nothing'); continue; }
+        for (const r of rows) {
+          const t = r.querySelector('.ib').textContent;
+          if (t.indexOf(sl.n) !== 0) out.bad = out.bad || (sl.n + ' tab listed "' + t + '"');
+        }
+        const first = rows[0].querySelector('.ib').textContent;
+        const carried = /carrying/.test(first);
+        if (sl.id === 'wedge' && !carried)
+          out.bad = out.bad || 'the carried wedge is not at the top of its own tab';
+        if (sl.id !== 'wedge' && carried)
+          out.bad = out.bad || (sl.n + ' says it is carrying something it is not');
+        if (sl.id === 'wedge') out.wornBtn = rows[0].querySelector('.equipbtn').textContent.trim();
+      }
+      // the header counts the whole locker against the cap
+      out.head = document.getElementById('lkHead').textContent;
+      out.cap = bagCap(); out.held = S.bag.length;
+      return out;
     });
-    if (lk.bad) throw new Error('the locker is grouped wrong: ' + lk.bad);
-    if (lk.bands.join() !== lk.want.join())
-      throw new Error('locker bands read ' + lk.bands.join('/') + ', bag order is '
-        + lk.want.join('/'));
-    if (lk.flat !== 0)
-      throw new Error('sorting by score still drew ' + lk.flat + ' club bands');
+    if (lk.bad) throw new Error('the locker is filtering wrong: ' + lk.bad);
+    if (lk.tabs.join() !== lk.want.join())
+      throw new Error('locker tabs read ' + lk.tabs.join('/') + ', bag order is ' + lk.want.join('/'));
+    for (const n in lk.badges)
+      if (lk.badges[n] !== 2)
+        throw new Error(n + ' tab badges ' + lk.badges[n] + ' spares, there are 2');
+    if (lk.wornBtn !== 'Equipped')
+      throw new Error('the carried club offers "' + lk.wornBtn + '" rather than saying it is worn');
+    if (lk.head.indexOf(lk.held + ' / ' + lk.cap) < 0)
+      throw new Error('the locker header does not say ' + lk.held + ' / ' + lk.cap
+        + ': "' + lk.head + '"');
 
     return ['5 tabs, both sub navs, folds, cooldowns; pull tab gains ' + grew + 'px',
-      'locker banded ' + lk.bands.join('/') + ', flat by score'];
+      'locker tabbed ' + lk.tabs.join('/') + ', ' + lk.held + '/' + lk.cap + ' held'];
   }
 };

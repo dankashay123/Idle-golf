@@ -210,19 +210,56 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
 .cur .v{font-family:var(--mono);font-size:var(--f3);font-weight:600;margin-top:2px}
 
 /* ---------- gear ---------- */
-#bagGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:#12261A;padding:1px 0}
-.slot{background:var(--panel);padding:8px 7px;min-height:74px;display:flex;flex-direction:column;
-  justify-content:space-between;border-left:2px solid transparent}
-.slot .sk{font-size:var(--f0);letter-spacing:.12em;text-transform:uppercase;color:var(--faint)}
-.slot .sn{font-family:var(--disp);font-size:var(--f2);margin-top:4px;line-height:1.25}
-.slot .sv{font-family:var(--mono);font-size:var(--f1);color:var(--dim);margin-top:3px}
-.slot.empty .sn{color:var(--faint);font-weight:400;font-style:italic}
+/* The slot strip is the rack AND the filter: each tile shows what you are
+   carrying in that slot and picks the slot the locker below is showing. Two
+   jobs in one row, which is why there is no separate grid of equipped gear any
+   more and no band headings in the list. */
+#bagGrid{display:grid;grid-template-columns:repeat(6,1fr);gap:3px;padding:7px 8px 8px;
+  background:var(--panel);border-bottom:1px solid var(--line)}
+.slot{position:relative;background:#0D1D14;border:1px solid var(--line);padding:5px 2px 4px;
+  display:flex;flex-direction:column;align-items:center;gap:2px;border-radius:0}
+.slot .sic{width:22px;height:22px}
+.slot .sk{font-size:8px;letter-spacing:.04em;text-transform:uppercase;color:var(--faint);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.slot.on{background:#16301F;border-color:var(--brass)}
+.slot.on .sk{color:var(--brass)}
+.slot.empty .sic{opacity:.3}
+.slot .sct{position:absolute;top:0;right:0;min-width:13px;height:13px;line-height:13px;
+  background:var(--raise2);border:1px solid var(--line);color:var(--chalk);font-size:8px;
+  font-weight:700;text-align:center;padding:0 2px}
+.slot .sct.up{background:var(--aurora);border-color:var(--aurora);color:#04150F}
+/* top left, out of the way of the label along the bottom */
+.slot .sel{position:absolute;top:1px;left:1px;width:9px;height:9px}
+
+/* the locker header: how full it is, and what the tab is showing */
+.lkhead{display:flex;align-items:baseline;gap:8px;padding:8px 12px 6px}
+.lkhead .lkn{font-family:var(--disp);font-size:var(--f3);color:var(--chalk)}
+.lkhead .lkc{margin-left:auto;font-family:var(--mono);font-size:var(--f1);color:var(--faint)}
+.lkhead .lkc b{color:var(--brass)}
 
 .item{padding:9px 12px;border-bottom:1px solid #12261A;display:grid;
   grid-template-columns:1fr auto;gap:9px;align-items:center;border-left:2px solid transparent}
 .item .in{font-family:var(--disp);font-size:var(--f3);letter-spacing:.01em}
 .item .ia{font-size:var(--f1);color:var(--dim);margin-top:3px;line-height:1.45;font-family:var(--mono)}
 .item .ib{font-size:var(--f0);color:var(--faint);margin-top:2px}
+/* a club in the locker: framed art, the rarity said out loud beside the name,
+   and one button you can hit without aiming */
+.item.card2{grid-template-columns:44px 1fr auto;gap:10px;align-items:start}
+.item.worn{background:#12241A}
+.thumb{position:relative;width:44px;height:44px;display:flex;align-items:center;justify-content:center;
+  background:#08130D;border:1px solid var(--line)}
+.thumb img{width:30px;height:30px;image-rendering:pixelated;image-rendering:crisp-edges}
+.thumb .tel{position:absolute;bottom:-1px;right:-1px;width:13px;height:13px;background:#08130D;
+  border:1px solid var(--line);padding:1px}
+.irow{display:flex;align-items:baseline;gap:8px}
+.irow .in{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.irow .irar{flex:0 0 auto;font-size:var(--f0);letter-spacing:.1em;text-transform:uppercase;font-weight:700}
+.equipbtn{min-width:88px;padding:9px 6px;border:1px solid var(--brass-dk);background:var(--raise2);
+  color:var(--brass);border-radius:0;font-size:var(--f1);letter-spacing:.1em;text-transform:uppercase;
+  font-weight:700;display:flex;align-items:center;justify-content:center;gap:5px}
+.equipbtn img{width:13px;height:13px;image-rendering:pixelated}
+.equipbtn.up{border-color:var(--aurora);color:var(--aurora);background:rgba(87,224,190,.10)}
+.equipbtn.worn{border-color:var(--line);color:var(--faint);background:transparent}
 .tag{font-size:var(--f0);letter-spacing:.1em;text-transform:uppercase;font-weight:700}
 .mini{border:1px solid var(--line);border-radius:0;padding:5px 9px;font-size:var(--f1);
   letter-spacing:.08em;text-transform:uppercase;color:var(--dim);background:var(--raise)}
@@ -313,7 +350,6 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
 .ic{display:block;flex:0 0 auto;image-rendering:pixelated;image-rendering:crisp-edges}
 .sic{width:12px;height:12px;color:var(--faint)}
 .eic{width:12px;height:12px;margin-left:auto}
-.skhead{display:flex;align-items:center;gap:5px}
 .slot .sk{margin:0}
 .lic{width:24px;height:24px}
 .lel{width:12px;height:12px;margin-top:3px}
@@ -374,14 +410,6 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
 .mtx b{color:var(--chalk)}
 .mile.on .mtx b{color:var(--brass)}
 .mtx i{font-style:normal;color:var(--dim)}
-/* one band per club type in the locker */
-.slotband{display:flex;align-items:center;gap:7px;padding:7px 12px 5px;
-  background:linear-gradient(90deg,rgba(227,180,87,.07),transparent);
-  border-top:1px solid var(--line);border-bottom:1px solid #12261A;position:sticky;top:0;z-index:2}
-.slotband .sbic{width:16px;height:16px;flex:0 0 auto}
-.slotband .sbn{font-family:var(--disp);font-size:var(--f2);color:var(--chalk)}
-.slotband .sbc{margin-left:auto;font-size:var(--f0);color:var(--faint);letter-spacing:.04em}
-.slotband .sbc b{color:var(--flag);font-weight:600}
 /* the pro shop */
 .shopnav{display:flex;gap:0;margin:-4px -16px 10px;border-bottom:1px solid var(--line)}
 .shopnav button{flex:1 1 0;padding:9px 2px;background:none;border:0;border-bottom:2px solid transparent;
@@ -570,9 +598,9 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
         <div class="band"><span class="eyebrow">Sets and affinity</span><span class="note" id="bagPower"></span></div>
         <div id="setBox"></div>
         <div class="band"><span class="eyebrow">Locker</span><div class="btnrow">
-          <button class="mini" id="sortBtn">Sort</button>
           <button class="mini" id="scrapBtn">Scrap dupes</button>
         </div></div>
+        <div class="lkhead" id="lkHead"></div>
         <div id="bagList"></div>
       </div>
       <div id="bagShots" hidden>
@@ -2636,7 +2664,7 @@ function defaultState(){ return {
   sov: 0, perm: {}, bagsOpened: 0, pity: 0, sovSpent: 0, packsTaken: {}, freeT: 0,
   member: 0, memberT: 0, starter: 0, boostT: 0,
   dgnKeys: {}, dgnKeyT: {}, dgnFloor: {}, dgnBest: {}, dgnRun: null, islandBank: 5,
-  bagSort: 'slot',
+  bagSlot: 'driver',
   legacy: 0, relic: {}, retires: 0, cups: 0, points: 0,
   lv: 1, xp: 0, statPts: 0, talPts: 0, stat: {}, tal: {},
   tickets: 0, perkOn: {}, perkUsed: 0,
@@ -7493,21 +7521,21 @@ function itemHead(it){
 }
 function renderBag(){
   renderBagNav();
+  if(!B.SLOTS.some(sl => sl.id === S.bagSlot)) S.bagSlot = B.SLOTS[0].id;
   const g = $('bagGrid'); g.innerHTML = '';
   for(const sl of B.SLOTS){
     const it = S.equip[sl.id];
+    const spare = S.bag.filter(x => x.slot === sl.id);
+    const up = spare.some(x => !it || itemScore(x) > itemScore(it));
     const d = document.createElement('div');
-    d.className = 'slot' + (it ? '' : ' empty');
-    if(it) d.style.borderLeftColor = RC(it.rar);
+    d.className = 'slot' + (it ? '' : ' empty') + (S.bagSlot === sl.id ? ' on' : '');
+    if(it) d.style.borderColor = S.bagSlot === sl.id ? '' : RC(it.rar);
     const el = it && it.el ? elemOf(it.el) : null;
-    d.innerHTML = '<div class="skhead">' + svgIcon(sl.ic, 'sic', it ? RC(it.rar) : '')
+    d.innerHTML = svgIcon(sl.ic, 'sic', it ? RC(it.rar) : '')
       + '<span class="sk">' + sl.n + '</span>'
-      + (el ? svgIcon(el.ic, 'eic', elemColor(el.id)) : '') + '</div>'
-      + '<div class="sn">' + (it ? itemHead(it) : 'empty') + '</div>'
-      + '<div class="sv">' + (it ? (sl.p === 'elm' ? '+' + fmt(itemPrimary(it)*100) + '% affinity'
-                                                   : '+' + fmt(itemPrimary(it)*100) + '% power') : '\u2014')
-      + (el ? ' <span style="color:' + elemColor(el.id) + '">' + el.n + '</span>' : '') + '</div>';
-    if(it) d.onclick = () => itemSheet(it, true);
+      + (spare.length ? '<span class="sct' + (up ? ' up' : '') + '">' + spare.length + '</span>' : '')
+      + (el ? svgIcon(el.ic, 'sel', elemColor(el.id)) : '');
+    d.onclick = () => { S.bagSlot = sl.id; renderBag(); };
     g.appendChild(d);
   }
   const D = derive();
@@ -7546,60 +7574,80 @@ function renderBag(){
           + (next ? ' \u00b7 ' + next.n + ' pieces: ' + eff(next) : '') + '</div></div></div>';
       }).join('');
 
-  const sb = $('sortBtn');
-  if(sb) sb.textContent = S.bagSort === 'score' ? 'By score' : 'By club';
-  const w = $('bagList'); w.innerHTML = '';
-  if(!S.bag.length){
-    w.innerHTML = '<div class="empty">Nothing spare in here yet. Closing holes always drop something, '
-      + 'and the wager book hands out gear too.</div>';
-    return;
-  }
-  // The locker used to be one run of everything, best first, so finding the
-  // wedge you just picked up meant reading past nine drivers. It is grouped by
-  // what the club IS, in bag order, with the best of each group at the top of
-  // its own group. Score order is still there for anyone who wants the whole
-  // locker ranked; the header says which one you are looking at.
-  const bySlot = S.bagSort !== 'score';
-  const groups = bySlot
-    ? B.SLOTS.map(sl => ({ sl, items: S.bag.filter(it => it.slot === sl.id) }))
-             .filter(g => g.items.length)
-    : [{ sl: null, items: S.bag.slice() }];
-  for(const g of groups) g.items.sort((a,b) => itemScore(b) - itemScore(a));
+  const sl = B.SLOTS.find(x => x.id === S.bagSlot);
+  const worn = S.equip[S.bagSlot];
+  const spare = S.bag.filter(it => it.slot === S.bagSlot)
+                     .sort((a, b) => itemScore(b) - itemScore(a));
 
-  for(const g of groups){
-    if(g.sl){
-      const eq = S.equip[g.sl.id];
-      const h = document.createElement('div');
-      h.className = 'slotband';
-      h.innerHTML = svgIcon(g.sl.ic, 'sbic', eq ? RC(eq.rar) : '')
-        + '<span class="sbn">' + g.sl.n + '</span>'
-        + '<span class="sbc">' + g.items.length + ' spare'
-        + (eq ? ' \u00b7 carrying <span style="color:' + RC(eq.rar) + '">'
-                + B.RARITY[eq.rar].n + '</span>' : ' \u00b7 <b>nothing carried</b>') + '</span>';
-      w.appendChild(h);
-    }
-    for(const it of g.items) w.appendChild(bagRow(it));
+  const hd = $('lkHead');
+  if(hd) hd.innerHTML = '<span class="lkn">' + sl.n + '</span>'
+    + '<span class="lkc"><b>' + S.bag.length + '</b> / ' + bagCap() + ' in the locker'
+    + (spare.length ? ' \u00b7 ' + spare.length + ' spare ' + sl.n.toLowerCase() : '') + '</span>';
+
+  const w = $('bagList'); w.innerHTML = '';
+  if(worn) w.appendChild(bagRow(worn, true));
+  for(const it of spare) w.appendChild(bagRow(it, false));
+
+  if(!worn && !spare.length){
+    w.innerHTML = '<div class="empty">No ' + sl.n.toLowerCase() + ' yet. Closing holes always drop '
+      + 'something, and the wager book hands out clubs by the bagful.</div>';
+  }
+  if(spare.length > 1){
+    const r = document.createElement('div');
+    r.className = 'item';
+    r.innerHTML = '<div><div class="in">Scrap the spare ' + sl.n.toLowerCase() + '</div>'
+      + '<div class="ib">' + spare.length + ' of them, everything but the best one</div></div>';
+    const btn = document.createElement('button');
+    btn.className = 'equipbtn';
+    btn.textContent = 'Scrap ' + (spare.length - 1);
+    btn.onclick = () => {
+      const doomed = spare.slice(1);
+      let sh = 0;
+      doomed.forEach(it => { sh += scrapValue(it); });
+      S.bag = S.bag.filter(it => !doomed.includes(it));
+      S.shard += sh;
+      toast('Scrapped ' + doomed.length + ' for <b>' + sh + '</b> shards');
+      renderBag(); renderVitals();
+    };
+    r.appendChild(btn);
+    w.appendChild(r);
   }
 }
-// One club in the locker.
-function bagRow(it){
-  {
-    const cur = S.equip[it.slot];
-    const better = !cur || itemScore(it) > itemScore(cur);
-    const d = document.createElement('div');
-    d.className = 'item hasic';
-    d.style.borderLeftColor = RC(it.rar);
-    d.innerHTML = '<div class="iwrap">' + svgIcon(B.SLOTS.find(s=>s.id===it.slot).ic, 'lic', RC(it.rar))
-      + (it.el ? svgIcon(elemOf(it.el).ic, 'lel', elemColor(it.el)) : '') + '</div>'
-      + '<div><div class="in">' + itemHead(it) + '</div>'
-      + '<div class="ia">' + (affLine(it, 3) || 'no affixes') + '</div>'
-      + '<div class="ib">' + B.RARITY[it.rar].n + ' ' + B.SLOTS.find(s=>s.id===it.slot).n
-      + ' \u00b7 ilvl ' + it.ilvl + (better ? ' \u00b7 <span style="color:var(--aurora)">upgrade</span>' : '') + '</div></div>'
-      + '<div class="btnrow"><button class="mini' + (better ? ' go' : '') + '">Equip</button></div>';
-    d.querySelector('button').onclick = e => { e.stopPropagation(); equipItem(it); };
-    d.onclick = () => itemSheet(it, false);
-    return d;
-  }
+
+// One club, the way the reference reads it: framed art, the rarity said out
+// loud beside the name, what it is worth on its own line, and one button.
+function bagRow(it, isWorn){
+  const cur = S.equip[it.slot];
+  const better = !isWorn && (!cur || itemScore(it) > itemScore(cur));
+  const sl = B.SLOTS.find(s => s.id === it.slot);
+  const col = RC(it.rar);
+  const el = it.el ? elemOf(it.el) : null;
+  const d = document.createElement('div');
+  d.className = 'item card2' + (isWorn ? ' worn' : '');
+  d.style.borderLeftColor = col;
+
+  const primary = (sl.p === 'elm' || it.slot === 'ball' ? 'affinity power' : 'swing power');
+  d.innerHTML = '<div class="thumb" style="border-color:' + col + '">'
+      + '<img src="' + pixUrl(sl.ic, col) + '" alt="">'
+      + (el ? '<span class="tel">' + svgIcon(el.ic, 'lel', elemColor(el.id)) + '</span>' : '')
+    + '</div>'
+    + '<div><div class="irow"><span class="in">' + itemHead(it) + '</span>'
+      + '<span class="irar" style="color:' + col + '">' + B.RARITY[it.rar].n + '</span></div>'
+    + '<div class="ib">' + sl.n + ' \u00b7 item level ' + it.ilvl
+      + (it.enh ? ' \u00b7 +' + it.enh : '')
+      + (isWorn ? ' \u00b7 <span style="color:var(--brass)">carrying</span>' : '') + '</div>'
+    + '<div class="ia">\u00d7' + fmt(1 + itemPrimary(it)) + ' ' + primary + '</div>'
+    + '<div class="ia">' + (affLine(it, 3) || 'no affixes') + '</div></div>';
+
+  const btn = document.createElement('button');
+  btn.className = 'equipbtn' + (isWorn ? ' worn' : better ? ' up' : '');
+  btn.innerHTML = isWorn ? 'Equipped'
+    : '<img src="' + pixUrl(sl.ic, better ? '#57E0BE' : '#E3B457') + '" alt="">'
+      + (better ? 'Upgrade' : 'Equip');
+  btn.onclick = e => { e.stopPropagation(); if(!isWorn) equipItem(it); };
+  d.appendChild(btn);
+  d.onclick = () => itemSheet(it, isWorn);
+  return d;
 }
 function itemSheet(it, equipped){
   const el = it.el ? B.ELEM.find(e => e.id === it.el) : null;
@@ -8537,10 +8585,6 @@ function boot(){
     t.onclick = () => setView(t.dataset.v);
     if(t.dataset.v === 'career') careerTab = t;
   });
-  $('sortBtn').onclick = () => {
-    S.bagSort = S.bagSort === 'score' ? 'slot' : 'score';
-    renderBag();
-  };
   $('scrapBtn').onclick = () => {
     const keep = {}, doomed = [];
     S.bag.slice().sort((a,b) => itemScore(b) - itemScore(a)).forEach(it => {
