@@ -47,6 +47,14 @@ module.exports = {
         out.inputs = out.inputs.concat(
           [...sheet.querySelectorAll('input,form,iframe,[type=password]')].map(e => sub + ':' + e.tagName));
         out.banner[sub] = !!sheet.querySelector('.freebar');
+        // a shop is a rack you choose from, so every tab is tiles with a price
+        // on each rather than a list you read top to bottom
+        const cards = [...sheet.querySelectorAll('.card')];
+        out.tiles = (out.tiles || {});
+        out.tiles[sub] = { cards: cards.length,
+          priced: cards.filter(c => c.querySelector('.price')).length,
+          art: cards.filter(c => c.querySelector('.cart img')).length,
+          rows: sheet.querySelectorAll('.shoprow').length };
       }
 
       // 3. a pack grants and takes nothing
@@ -111,6 +119,17 @@ module.exports = {
       if (!r.banner[sub])
         throw new Error('the ' + sub + ' tab does not say that nothing is charged');
 
+    for (const sub in r.tiles) {
+      const t = r.tiles[sub];
+      if (!(t.cards > 0))
+        throw new Error('the ' + sub + ' tab has no tiles on it');
+      if (t.priced !== t.cards || t.art !== t.cards)
+        throw new Error('the ' + sub + ' tab has ' + t.cards + ' tiles, ' + t.priced
+          + ' with a price and ' + t.art + ' with art. Every tile needs both.');
+      if (t.rows)
+        throw new Error('the ' + sub + ' tab still draws ' + t.rows + ' list rows');
+    }
+
     if (r.pack.got !== r.pack.want)
       throw new Error('a pack granted ' + r.pack.got + ' of ' + r.pack.want);
     if (r.pack.goldMoved || r.pack.spent)
@@ -147,29 +166,28 @@ module.exports = {
         + (unwired.length > 1 ? ' are' : ' is') + ' sold and never read. Ten levels of '
         + 'nothing is the worst thing a shop can sell.');
 
-    // 8. and the currency stays premium: every line that ADDS to the balance has
-    //    to live inside the shop. Anywhere else and the shop is no longer the
-    //    only way to get one, which is the assumption every price here rests on.
+    // 8. and the currency has exactly one source. Not "the shop is the only
+    //    place", because the free rail pays for climbing a Tour Card and that
+    //    happens out on the course -- but every one of those routes through
+    //    grantSov, so the full list of faucets in the game is one grep long and
+    //    none of them can be opened by accident.
     const lines = src.split('\n');
-    const shopFrom = lines.findIndex(l => /THE PRO SHOP$/.test(l.trim()));
-    const shopTo = lines.findIndex((l, i) => i > shopFrom && /RETIREMENT$/.test(l.trim()));
-    if (shopFrom < 0 || shopTo < 0)
-      throw new Error('cannot find the shop section in index.html to bound this check');
-    const adds = lines
+    const made = lines
       .map((l, i) => [i + 1, l])
-      .filter(([, l]) => /\bS\.sov\s*(\+=|=[^=])/.test(l) && !/S\.sov\s*=\s*0\b/.test(l))
-      .filter(([n]) => n < shopFrom + 1 || n > shopTo + 1);
-    if (adds.length)
-      throw new Error('sovereigns are handed out outside the shop, at index.html:'
-        + adds.map(([n]) => n).join(', ') + '. A premium currency the game pays out '
-        + 'anywhere else is not premium, and every price in the shop is quoted against '
-        + 'the assumption that it is.');
+      .filter(([, l]) => /\bS\.sov\s*(\+=|=[^=])/.test(l))
+      .filter(([, l]) => !/S\.sov\s*(-=|=\s*0\b)/.test(l));
+    if (made.length !== 1)
+      throw new Error('sovereigns are created in ' + made.length + ' places (index.html:'
+        + made.map(([n]) => n).join(', ') + '). There has to be exactly one, or the faucets '
+        + 'stop being greppable and a premium currency stops being premium.');
+    const faucets = lines.filter(l => /grantSov\(/.test(l) && !/function grantSov/.test(l)).length;
 
-    return ['button bottom left, four tabs, no input of any kind, banner on all four',
+    return ['button bottom left, no input of any kind, banner on all four',
+      'tiles ' + Object.keys(r.tiles).map(k => k + ' ' + r.tiles[k].cards).join('/'),
       'packs ' + r.rates.map(x => x.toFixed(0)).join('/') + ' per dollar, rising',
       r.bags.map(b => b.id + ' ' + b.got + ' clubs >=' + b.worst).join(', '),
       'pity paid at ' + r.pity.sawAt + ' of ' + r.pity.promised
       + ', bench caps at ' + r.capped + ', all ' + r.permKeys.length + ' wired',
-      'nothing pays sovereigns outside the shop'];
+      'one place makes sovereigns, ' + faucets + ' call it'];
   }
 };

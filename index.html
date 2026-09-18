@@ -171,17 +171,26 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
 .ric{width:24px;height:24px;flex:0 0 auto;margin-top:1px}
 .nm{font-family:var(--disp);font-size:var(--f3);letter-spacing:.01em}
 .ds{font-size:var(--f1);color:var(--dim);margin-top:2px;line-height:1.35}
-.mt{font-size:var(--f1);color:var(--faint);margin-top:3px;font-family:var(--mono)}
-.mt b{color:var(--aurora);font-weight:600}
-.mt i{color:var(--chalk);font-style:normal}
+.mt{font-size:var(--f1);color:var(--faint);margin-top:4px;font-family:var(--mono);
+  letter-spacing:.02em}
+.mt b{color:var(--aurora);font-weight:700}
+.mt i{color:var(--chalk);font-style:normal;font-weight:600}
 
-.buy{min-width:96px;background:var(--raise);border:1px solid var(--line);border-radius:0;
-  padding:7px 8px;text-align:center;line-height:1.2}
-.buy .lbl{display:block;font-size:var(--f0);letter-spacing:.12em;text-transform:uppercase;color:var(--dim)}
-.buy .amt{display:block;font-family:var(--mono);font-size:var(--f3);font-weight:600;color:var(--brass);margin-top:2px}
+/* The price on top, what it does underneath, the way a shop till reads. It was
+   the other way round and both halves were the same weight, so the one number
+   you are actually comparing across twenty rows was the small grey one.
+   The spans are re-ordered in CSS rather than in the DOM: half a dozen places
+   reach for children[0] and children[1] by index. */
+.buy{display:flex;flex-direction:column;min-width:104px;background:var(--raise);
+  border:1px solid var(--line);border-radius:0;padding:0;overflow:hidden;text-align:center;line-height:1.2}
+.buy .amt{order:1;display:block;font-family:var(--mono);font-size:var(--f3);font-weight:700;
+  color:var(--brass);padding:6px 7px 5px}
+.buy .lbl{order:2;display:block;font-size:var(--f0);letter-spacing:.1em;text-transform:uppercase;
+  color:var(--dim);background:rgba(255,255,255,.03);border-top:1px solid var(--line);padding:4px 7px}
 .buy.ok{background:var(--raise2);border-color:var(--brass-dk)}
 .buy.ok .amt{color:#FFD98A}
-.buy:disabled,.buy.no{opacity:.34}
+.buy.ok .lbl{color:var(--chalk);background:rgba(227,180,87,.13);border-top-color:var(--brass-dk)}
+.buy:disabled,.buy.no{opacity:.4}
 .buy.max{background:#12241A;border-color:var(--line-soft)}
 .buy.max .amt{color:var(--faint)}
 
@@ -365,6 +374,14 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
 .mtx b{color:var(--chalk)}
 .mile.on .mtx b{color:var(--brass)}
 .mtx i{font-style:normal;color:var(--dim)}
+/* one band per club type in the locker */
+.slotband{display:flex;align-items:center;gap:7px;padding:7px 12px 5px;
+  background:linear-gradient(90deg,rgba(227,180,87,.07),transparent);
+  border-top:1px solid var(--line);border-bottom:1px solid #12261A;position:sticky;top:0;z-index:2}
+.slotband .sbic{width:16px;height:16px;flex:0 0 auto}
+.slotband .sbn{font-family:var(--disp);font-size:var(--f2);color:var(--chalk)}
+.slotband .sbc{margin-left:auto;font-size:var(--f0);color:var(--faint);letter-spacing:.04em}
+.slotband .sbc b{color:var(--flag);font-weight:600}
 /* the pro shop */
 .shopnav{display:flex;gap:0;margin:-4px -16px 10px;border-bottom:1px solid var(--line)}
 .shopnav button{flex:1 1 0;padding:9px 2px;background:none;border:0;border-bottom:2px solid transparent;
@@ -373,22 +390,41 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
 .freebar{border:1px solid var(--r5);background:rgba(166,107,245,.10);padding:7px 9px;margin-bottom:10px;
   font-size:var(--f1);color:var(--chalk);line-height:1.5}
 .freebar b{color:var(--r5)}
-.shoprow{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--line)}
-.shoprow:last-child{border-bottom:0}
-.shoprow .sic{width:30px;height:30px;flex:0 0 auto;image-rendering:pixelated}
-.shoprow .sbody{flex:1 1 auto;min-width:0}
-.shoprow .snm{font-size:var(--f2);color:var(--chalk);font-weight:600}
-.shoprow .sds,.shopnote{font-size:var(--f0);color:var(--dim);line-height:1.45;margin-top:2px}
-.shopnote{display:block;margin:0 0 8px}
-.shoprow .sbonus{color:var(--aurora);font-weight:700}
-.price{flex:0 0 auto;min-width:74px;padding:8px 6px;border:1px solid var(--brass-dk);background:var(--raise2);
-  color:var(--brass);border-radius:0;text-align:center;font-weight:700;font-size:var(--f1);line-height:1.25}
-.price.no{border-color:var(--line);color:var(--dim);background:transparent}
-.price.max{border-color:var(--line);color:var(--faint);background:transparent}
-.price small{display:block;font-size:var(--f0);letter-spacing:.06em;color:var(--faint);font-weight:400}
-.pips{display:flex;gap:2px;margin-top:4px}
-.pips i{width:8px;height:3px;background:#17301F}
-.pips i.on{background:var(--brass)}
+.shopnote{display:block;font-size:var(--f0);color:var(--dim);line-height:1.45;margin:0 0 9px}
+/* A shop is a rack of things you are choosing between, not a list you read
+   top to bottom, so the tiles carry the art and the price and nothing else. */
+.srib{display:flex;align-items:center;gap:8px;margin:12px 0 8px}
+.srib span{font-family:var(--disp);font-size:var(--f2);letter-spacing:.06em;color:var(--brass);
+  text-transform:uppercase;white-space:nowrap}
+.srib:before,.srib:after{content:"";flex:1 1 auto;height:1px;background:var(--brass-dk);opacity:.5}
+.sgrid{display:grid;gap:7px}
+.sgrid.c3{grid-template-columns:repeat(3,1fr)}
+.sgrid.c2{grid-template-columns:repeat(2,1fr)}
+.card{display:flex;flex-direction:column;border:1px solid var(--line);background:var(--raise);
+  border-radius:0;overflow:hidden;text-align:center}
+.card.on{border-color:var(--brass-dk)}
+.card .chd{padding:5px 4px;background:var(--raise2);border-bottom:1px solid var(--line);
+  font-size:var(--f1);font-weight:700;color:var(--chalk);letter-spacing:.02em;line-height:1.25}
+.card .cart{position:relative;flex:1 1 auto;display:flex;align-items:center;justify-content:center;
+  padding:10px 4px;background:radial-gradient(circle at 50% 42%,rgba(255,255,255,.07),transparent 66%)}
+.card .cart img{width:46px;height:46px;image-rendering:pixelated;image-rendering:crisp-edges}
+.sgrid.c3 .cart img{width:38px;height:38px}
+.card .csub{padding:0 5px 6px;font-size:var(--f0);color:var(--dim);line-height:1.35}
+.card .csub b{color:var(--aurora)}
+.card .pips{display:flex;gap:2px;justify-content:center;padding:0 5px 6px}
+.card .pips i{width:7px;height:3px;background:#17301F}
+.card .pips i.on{background:var(--brass)}
+.price{display:block;width:100%;padding:8px 4px;border:0;border-top:1px solid var(--brass-dk);
+  background:var(--raise2);color:var(--brass);border-radius:0;text-align:center;
+  font-weight:700;font-size:var(--f2);line-height:1.2;font-family:var(--mono)}
+.price.no{border-top-color:var(--line);color:var(--dim);background:transparent}
+.price.max{border-top-color:var(--line);color:var(--faint);background:transparent}
+.price small{display:block;font-size:var(--f0);letter-spacing:.08em;color:var(--faint);
+  font-weight:400;font-family:var(--sans);text-transform:uppercase;margin-top:1px}
+/* On the art, not on the header: over the header it sat on top of the number,
+   and a bonus badge that hides the amount it is a bonus on is worse than none. */
+.badge{position:absolute;top:2px;right:2px;background:var(--r5);color:#120A1E;font-size:var(--f0);
+  font-weight:700;padding:1px 4px;letter-spacing:.04em;z-index:2}
 .sovline{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px;
   font-size:var(--f1);color:var(--dim)}
 .sovline b{font-family:var(--mono);font-size:var(--f4);color:var(--r5)}
@@ -665,6 +701,9 @@ const B = {
   //
   //   X main   x shade   o deep   w highlight   . clear
   PX12: {
+    freegift: ['............','...XXXXXX...','..XwwwwwwX..','..XXXXXXXX..','.XXXXXXXXXX.','.XwXXoXXXwX.','.XwXXoXXXwX.','.XwXXoXXXwX.','.XwXXoXXXwX.','.XxXXoXXXxX.','.XXXXXXXXXX.','............'],
+    freeday: ['....XXXX....','..XXwwwwXX..','.XwX.XX.XXx.','XwX..XX..Xx.','Xw...XXXX.Xx','Xw........Xx','Xw..XXXX..Xx','.Xx.X..X.Xx.','..XXx..xXX..','....XXXX....','............','............'],
+    freecard: ['XXXXXXXXXXXX','XwwwwwwwwwXx','XwXXXXXXXXXx','XwXooXXooXXx','XwXXXXXXXXXx','XwXooooXXXXx','XwXXXXXXXXXx','XxXXXXXXXXXx','XXXXXXXXXXXx','..XX....XX..','...XXXXXX...','............'],
     sov1: ['............','............','....XXXX....','...XwwwXx...','...XwXXXx...','...XwXXXx...','...XxXXXx...','....XXXx....','.....Xx.....','............','............','............'],
     sov2: ['............','...XXXXXX...','..XwwwwwXx..','..XwXXXXXx..','..XwXXXXXx..','..XwXXXXXx..','..XxXXXXXx..','...XXXXXx...','....XXXx....','.....Xx.....','............','............'],
     sov3: ['..XXXXXXXX..','.XwwwwwwwXx.','.XwXXXXXXXx.','.XwXXXXXXXx.','.XwXXXXXXXx.','.XwXXXXXXXx.','.XxXXXXXXXx.','..XXXXXXXx..','...XXXXXx...','....XXXx....','.....Xx.....','............'],
@@ -2427,9 +2466,10 @@ const B = {
      A sovereign is the old gold coin a members' club would have struck its
      own. The header bar is already called the crest, so the currency is not:
      two meanings of one word in one file is a trap somebody walks into later.
-     It is the one currency the game never pays out, which is the whole point
-     of a premium currency and the reason every price in here is quoted in
-     them rather than in dollars. NOTHING IS CHARGED. Every pack grants on the
+     Sovereigns are created in exactly one function, grantSov, so every faucet
+     in the game is one grep away and none of them can be opened by accident.
+     The free rail pays for turning up and for climbing a Tour Card; everything
+     else is bought. NOTHING IS CHARGED. Every pack grants on the
      press and says so on the card; there is no card entry, no receipt and no
      payment path of any kind, and there is not going to be one until somebody
      wires a real store to it.
@@ -2495,7 +2535,11 @@ const B = {
   /* ---- the offers rail ---- */
   STARTER_C: 600, STARTER_USD: 4.99,
   MEMBER_USD: 9.99, MEMBER_DAILY: 60, MEMBER_GOLD: 0.25, MEMBER_KEYS: 1,
-  BOOST_C: 200, BOOST_HOURS: 24, BOOST_MULT: 2
+  BOOST_C: 200, BOOST_HOURS: 24, BOOST_MULT: 2,
+  // Every shop like this has a free rail, and hiding it behind a social follow
+  // is the part of the pattern worth leaving out: this one pays for turning up
+  // and for climbing, which the game can check for itself.
+  FREE_GIFT: 25, FREE_EVERY: 8 * 3600, FREE_CARD: 40
 };
 
 /* =========================================================================
@@ -2589,9 +2633,10 @@ function defaultState(){ return {
   // the shop. sov is the premium currency, perm the permanent upgrades,
   // pity counts bags opened without a Mythic, and spent is a running total the
   // shop shows back to you because a shop that hides it is doing it on purpose
-  sov: 0, perm: {}, bagsOpened: 0, pity: 0, sovSpent: 0, packsTaken: {},
+  sov: 0, perm: {}, bagsOpened: 0, pity: 0, sovSpent: 0, packsTaken: {}, freeT: 0,
   member: 0, memberT: 0, starter: 0, boostT: 0,
   dgnKeys: {}, dgnKeyT: {}, dgnFloor: {}, dgnBest: {}, dgnRun: null, islandBank: 5,
+  bagSort: 'slot',
   legacy: 0, relic: {}, retires: 0, cups: 0, points: 0,
   lv: 1, xp: 0, statPts: 0, talPts: 0, stat: {}, tal: {},
   tickets: 0, perkOn: {}, perkUsed: 0,
@@ -2626,6 +2671,7 @@ function initState(){
   if(!(S.memberT >= 0)) S.memberT = 0;
   if(!(S.starter >= 0)) S.starter = 0;
   if(!(S.boostT >= 0)) S.boostT = 0;
+  if(!(S.freeT >= 0)) S.freeT = 0;
   B.PERM.forEach(u => { S.perm[u.id] = clamp(Math.round(S.perm[u.id] || 0), 0, B.PERM_MAX); });
   for(const k in S.perm) if(!B.PERM.some(u => u.id === k)) delete S.perm[k];
   B.DGN.forEach(d => {
@@ -3992,6 +4038,7 @@ function endTournament(){
      && (S.tierMax || 0) < B.TIER_MAX){
     S.tierMax = (S.tierMax || 0) + 1;
     toast('Tour Card <b>' + roman(S.tierMax) + '</b> unlocked');
+    grantSov(B.FREE_CARD, 'Tour Card ' + roman(S.tierMax));
   }
   S.tourScore = 0;
 }function ordinal(n){
@@ -4051,6 +4098,7 @@ const isMember = () => !!S.member;
 // than run through the K/M shortener the purse uses.
 const sovFmt = n => Math.round(n || 0).toLocaleString('en-US');
 const boostOn  = () => (S.boostT || 0) > 0;
+const freeReady = () => (S.freeT || 0) >= B.FREE_EVERY;
 
 function grantSov(n, why){
   n = Math.round(n);
@@ -4075,8 +4123,8 @@ function buyPack(pk){
 
 // A bag of clubs. The floor is what the worst one can be and top what the best
 // one is guaranteed to reach, so a bag is never a bag of nothing.
-function openBag(bg){
-  if(!spendSov(bg.c)) return;
+function openBag(bg, free){
+  if(!free && !spendSov(bg.c)) return;
   S.bagsOpened = (S.bagsOpened || 0) + 1;
   S.pity = (S.pity || 0) + 1;
   const D = derive();
@@ -4118,8 +4166,7 @@ function buyStarter(){
   if(S.starter){ toast('You have had that one'); return; }
   S.starter = 1;
   grantSov(B.STARTER_C, 'starter pack');
-  const bg = B.DGN && B.BAGS[1];
-  S.sov += bg.c; openBag(bg);            // the bag it comes with, on the house
+  openBag(B.BAGS[1], true);              // the bag it comes with, on the house
   S.boostT = Math.max(S.boostT || 0, B.BOOST_HOURS * 3600);
   renderShop();
 }
@@ -4129,6 +4176,12 @@ function buyMember(){
   grantSov(B.MEMBER_DAILY, 'first day of membership');
   toast('<b>Club Membership</b> \u00b7 welcome in');
   renderShop(); renderAll();
+}
+function claimFree(){
+  if(!freeReady()){ toast('Not ready yet'); return; }
+  S.freeT = 0;
+  grantSov(B.FREE_GIFT, 'for turning up');
+  renderShop();
 }
 function buyBoost(){
   if(!spendSov(B.BOOST_C)) return;
@@ -4140,6 +4193,7 @@ function buyBoost(){
 // Membership pays a daily allowance and the boost burns down, both on the same
 // clock the rest of the game runs on.
 function tickShop(dt){
+  if(!freeReady()) S.freeT = (S.freeT || 0) + dt;
   if(S.boostT > 0){
     S.boostT -= dt;
     if(S.boostT <= 0){ S.boostT = 0; toast('Double Purse has run out'); }
@@ -4156,104 +4210,127 @@ function tickShop(dt){
 let shopSub = 'offers';
 function openShop(sub){ if(sub) shopSub = sub; renderShop(); }
 
-function shopRow(ic, col, nm, ds, priceHtml, cls, onclick, extra){
-  return '<div class="shoprow">'
-    + '<img class="sic" src="' + pixUrl(ic, col) + '" alt="">'
-    + '<div class="sbody"><div class="snm">' + nm + '</div>'
-    + '<div class="sds">' + ds + '</div>' + (extra || '') + '</div>'
-    + '<button class="price' + (cls ? ' ' + cls : '') + '" data-do="' + onclick + '">'
-    + priceHtml + '</button></div>';
+// One tile on the rack: what it is, the art, a line about it, and the price.
+function shopCard(o){
+  return '<div class="card' + (o.on ? ' on' : '') + '">'
+    + '<div class="chd">' + o.head + '</div>'
+    + '<div class="cart">' + (o.badge ? '<span class="badge">' + o.badge + '</span>' : '')
+    + '<img src="' + pixUrl(o.ic, o.col) + '" alt=""></div>'
+    + (o.sub ? '<div class="csub">' + o.sub + '</div>' : '')
+    + (o.pips !== undefined ? pipRow(o.pips, B.PERM_MAX) : '')
+    + '<button class="price' + (o.cls ? ' ' + o.cls : '') + '" data-do="' + o.act + '">'
+    + o.price + (o.note ? '<small>' + o.note + '</small>' : '') + '</button></div>';
 }
+function pipRow(n, of){
+  let h = '<div class="pips">';
+  for(let i = 0; i < of; i++) h += '<i' + (i < n ? ' class="on"' : '') + '></i>';
+  return h + '</div>';
+}
+const ribbon = t => '<div class="srib"><span>' + t + '</span></div>';
 
 function renderShop(){
-  const C = sovFmt(S.sov);
   const tabs = [['offers','Offers'], ['buy','Buy'], ['bags','Bags'], ['perm','Bench']];
   let h = '<h3>The Pro Shop</h3>'
     + '<div class="shopnav">' + tabs.map(([id, t]) =>
         '<button data-sub="' + id + '"' + (shopSub === id ? ' class="on"' : '') + '>' + t
         + '</button>').join('') + '</div>'
-    + '<div class="sovline"><span>You hold</span><b>' + C + ' ' + B.SOV + '</b></div>'
+    + '<div class="sovline"><span>You hold</span><b>' + sovFmt(S.sov) + ' ' + B.SOV + '</b></div>'
     + '<div class="freebar"><b>Nothing here is charged.</b> The store is not wired up, so every '
     + 'pack lands the moment you press it and the prices are only there to show what they '
     + 'would be. No card, no receipt, nothing leaves the device.</div>';
 
-  const gbp = sovFmt;
-
   if(shopSub === 'buy'){
     const rate = B.SOV_PACKS[0].c / B.SOV_PACKS[0].usd;
-    for(const pk of B.SOV_PACKS){
+    h += ribbon(B.SOV) + '<div class="sgrid c3">' + B.SOV_PACKS.map(pk => {
       const bonus = Math.round((pk.c / (pk.usd * rate) - 1) * 100);
       const taken = S.packsTaken[pk.id] || 0;
-      h += shopRow(pk.ic, '#C68BFF', pk.n + ' \u00b7 ' + gbp(pk.c) + ' ' + B.SOV,
-        (bonus > 0 ? '<span class="sbonus">+' + bonus + '% more than the smallest pack</span>'
-                   : 'the base rate everything else is measured against')
-        + (taken ? ' \u00b7 taken ' + taken + '\u00d7' : ''),
-        '$' + pk.usd.toFixed(2) + '<small>free</small>', '', 'pack:' + pk.id);
-    }
+      return shopCard({ ic: pk.ic, col: '#C68BFF', on: bonus >= 40,
+        badge: bonus > 0 ? '+' + bonus + '%' : '',
+        head: sovFmt(pk.c),
+        sub: pk.n + (taken ? '<br><b>taken ' + taken + '\u00d7</b>' : ''),
+        price: '$' + pk.usd.toFixed(2), note: 'free', act: 'pack:' + pk.id });
+    }).join('') + '</div>';
+
+    const ready = freeReady();
+    h += ribbon('Free ' + B.SOV) + '<div class="sgrid c3">'
+      + shopCard({ ic: 'freegift', col: '#7ADB86', on: ready, head: '+' + B.FREE_GIFT,
+          sub: 'on the house', price: ready ? 'CLAIM' : hms(B.FREE_EVERY - (S.freeT || 0)),
+          note: ready ? 'free' : 'wait', cls: ready ? '' : 'no', act: 'free:1' })
+      + shopCard({ ic: 'freeday', col: '#57E0BE', head: '+' + B.MEMBER_DAILY,
+          sub: 'members, daily', price: isMember() ? 'ACTIVE' : 'JOIN',
+          note: isMember() ? 'on' : 'offers', cls: isMember() ? 'max' : '',
+          act: isMember() ? 'nothing:1' : 'member:1' })
+      + shopCard({ ic: 'freecard', col: '#E3B457', head: '+' + B.FREE_CARD,
+          sub: 'every Tour Card you win', price: 'AUTO', note: 'free', cls: 'max',
+          act: 'nothing:1' })
+      + '</div>';
   }
 
   if(shopSub === 'bags'){
-    h += '<div class="shopnote" style="margin-bottom:8px" class="shopnote">A bag is a bag of clubs, fitted '
-      + B.BAG_ILVL + ' item levels above your card. ' + (B.BAG_PITY - (S.pity || 0))
-      + ' more bags and the next one holds a guaranteed Mythic, whichever bag it is.</div>';
-    for(const bg of B.BAGS){
-      const ok = (S.sov || 0) >= bg.c;
-      h += shopRow(bg.ic, RC(Math.min(5, bg.top)), bg.n, bg.d,
-        gbp(bg.c) + '<small>' + B.SOV.toLowerCase() + '</small>',
-        ok ? '' : 'no', 'bag:' + bg.id);
-    }
-    h += '<div class="shopnote" style="margin-top:8px" class="shopnote">Opened so far: ' + sovFmt(S.bagsOpened)
-      + '.</div>';
+    h += '<div class="shopnote">A bag is a bag of clubs, fitted ' + B.BAG_ILVL
+      + ' item levels above your card. ' + (B.BAG_PITY - (S.pity || 0))
+      + ' more bags and the next one holds a guaranteed Mythic, whichever bag it is. '
+      + 'Opened so far: ' + sovFmt(S.bagsOpened) + '.</div>'
+      + ribbon('Bags') + '<div class="sgrid c2">' + B.BAGS.map(bg =>
+        shopCard({ ic: bg.ic, col: RC(Math.min(5, bg.top)), on: bg.top >= 4,
+          badge: B.RARITY[bg.top].n,
+          head: bg.n, sub: bg.d,
+          price: sovFmt(bg.c), note: B.SOV.toLowerCase(),
+          cls: (S.sov || 0) >= bg.c ? '' : 'no', act: 'bag:' + bg.id })).join('') + '</div>';
   }
 
   if(shopSub === 'perm'){
-    h += '<div class="shopnote" style="margin-bottom:8px" class="shopnote">Ten levels each, kept through every '
-      + 'retirement. The bench sells time, room and convenience \u2014 the things the rest of '
-      + 'the game makes you wait for \u2014 and two sets of clubs.</div>';
-    for(const u of B.PERM){
-      const lv = permLv(u.id), maxed = lv >= B.PERM_MAX, c = permCost(u);
-      const ok = (S.sov || 0) >= c;
-      let pips = '<div class="pips">';
-      for(let i = 0; i < B.PERM_MAX; i++) pips += '<i' + (i < lv ? ' class="on"' : '') + '></i>';
-      pips += '</div>';
-      const now = u.s === 'x' ? 'now \u00d7' + permMult(u.id).toFixed(2)
-                : u.s === '%' ? 'now +' + Math.round(permAdd(u.id)*100) + '%'
-                : u.s === 'pp' ? 'now +' + Math.round(permAdd(u.id)*100) + 'pp'
-                : u.s === 'h' ? 'now +' + permAdd(u.id) + ' hours'
-                : 'now +' + permAdd(u.id);
-      h += shopRow(u.ic, '#E3B457', u.n + ' <span class="sbonus">' + lv + '/' + B.PERM_MAX + '</span>',
-        u.d + (lv ? ' \u00b7 ' + now : ''),
-        maxed ? 'MAX' : gbp(c) + '<small>' + B.SOV.toLowerCase() + '</small>',
-        maxed ? 'max' : ok ? '' : 'no', 'perm:' + u.id, pips);
-    }
+    h += '<div class="shopnote">Ten levels each, kept through every retirement. The bench sells '
+      + 'time, room and convenience \u2014 the things the rest of the game makes you wait for '
+      + '\u2014 and two sets of clubs.</div>'
+      + ribbon('The Bench') + '<div class="sgrid c2">' + B.PERM.map(u => {
+        const lv = permLv(u.id), maxed = lv >= B.PERM_MAX, c = permCost(u);
+        const now = u.s === 'x' ? '\u00d7' + permMult(u.id).toFixed(2)
+                  : u.s === 'h' ? '+' + permAdd(u.id) + 'h'
+                  : u.s === 'pp' ? '+' + Math.round(permAdd(u.id)*100) + 'pp'
+                  : u.s === '%' ? '+' + Math.round(permAdd(u.id)*100) + '%'
+                  : '+' + permAdd(u.id);
+        return shopCard({ ic: u.ic, col: '#E3B457', on: lv > 0,
+          badge: lv ? lv + '/' + B.PERM_MAX : '',
+          head: u.n, sub: u.d + (lv ? '<br><b>now ' + now + '</b>' : ''), pips: lv,
+          price: maxed ? 'MAX' : sovFmt(c), note: maxed ? 'done' : B.SOV.toLowerCase(),
+          cls: maxed ? 'max' : (S.sov || 0) >= c ? '' : 'no', act: 'perm:' + u.id });
+      }).join('') + '</div>';
   }
 
   if(shopSub === 'offers'){
-    h += shopRow('starter', '#7ADB86', 'Starter Pack',
-      S.starter ? 'Taken. One to a career.'
-        : gbp(B.STARTER_C) + ' ' + B.SOV.toLowerCase() + ', a Tour Bag and a day of Double '
-          + 'Purse. Once only, and worth about four times what it asks.',
-      S.starter ? 'TAKEN' : '$' + B.STARTER_USD.toFixed(2) + '<small>free</small>',
-      S.starter ? 'max' : '', 'starter:1');
-
-    h += shopRow('member', '#E3B457', 'Club Membership',
-      isMember()
-        ? 'A member. +' + Math.round(B.MEMBER_GOLD*100) + '% purse, +' + B.MEMBER_KEYS
-          + ' entry on every wager, ' + B.MEMBER_DAILY + ' ' + B.SOV.toLowerCase()
-          + ' a day. Next allowance in ' + hms(86400 - (S.memberT || 0)) + '.'
-        : '+' + Math.round(B.MEMBER_GOLD*100) + '% purse for good, +' + B.MEMBER_KEYS
-          + ' entry on every wager, and ' + B.MEMBER_DAILY + ' ' + B.SOV.toLowerCase()
-          + ' every day you play.',
-      isMember() ? 'MEMBER' : '$' + B.MEMBER_USD.toFixed(2) + '<small>free</small>',
-      isMember() ? 'max' : '', 'member:1');
-
-    h += shopRow('boost', '#F2D75E', 'Double Purse',
-      boostOn() ? 'Running \u00b7 ' + hms(S.boostT) + ' left. Buying again adds to it.'
-        : 'Everything the course pays, doubled, for ' + B.BOOST_HOURS + ' hours.',
-      gbp(B.BOOST_C) + '<small>' + B.SOV.toLowerCase() + '</small>',
-      (S.sov || 0) >= B.BOOST_C ? '' : 'no', 'boost:1');
-
-    h += '<div class="shopnote" style="margin-top:10px" class="shopnote">Spent so far: ' + sovFmt(S.sovSpent)
+    h += ribbon('One Time') + '<div class="sgrid c2">'
+      + shopCard({ ic:'starter', col:'#7ADB86', on: !S.starter, badge: S.starter ? '' : 'BEST VALUE',
+          head:'Starter Pack',
+          sub: S.starter ? 'Taken. One to a career.'
+            : sovFmt(B.STARTER_C) + ' ' + B.SOV.toLowerCase() + ', a Tour Bag and a day of '
+              + 'Double Purse. <b>About four times what it asks.</b>',
+          price: S.starter ? 'TAKEN' : '$' + B.STARTER_USD.toFixed(2),
+          note: S.starter ? 'done' : 'free', cls: S.starter ? 'max' : '', act:'starter:1' })
+      + shopCard({ ic:'member', col:'#E3B457', on: !isMember(), badge: isMember() ? 'MEMBER' : '',
+          head:'Club Membership',
+          sub: isMember()
+            ? '+' + Math.round(B.MEMBER_GOLD*100) + '% purse, +' + B.MEMBER_KEYS
+              + ' entry, ' + B.MEMBER_DAILY + ' a day.<br><b>Next in ' + hms(86400 - (S.memberT||0)) + '</b>'
+            : '+' + Math.round(B.MEMBER_GOLD*100) + '% purse for good, +' + B.MEMBER_KEYS
+              + ' entry on every wager, ' + B.MEMBER_DAILY + ' ' + B.SOV.toLowerCase() + ' a day.',
+          price: isMember() ? 'ACTIVE' : '$' + B.MEMBER_USD.toFixed(2),
+          note: isMember() ? 'joined' : 'free', cls: isMember() ? 'max' : '', act:'member:1' })
+      + '</div>'
+      + ribbon('Boosts') + '<div class="sgrid c2">'
+      + shopCard({ ic:'boost', col:'#F2D75E', on: boostOn(), badge: boostOn() ? 'ON' : '',
+          head:'Double Purse',
+          sub: boostOn() ? '<b>' + hms(S.boostT) + ' left.</b> Buying again adds to it.'
+            : 'Everything the course pays, doubled, for ' + B.BOOST_HOURS + ' hours.',
+          price: sovFmt(B.BOOST_C), note: B.SOV.toLowerCase(),
+          cls: (S.sov || 0) >= B.BOOST_C ? '' : 'no', act:'boost:1' })
+      + shopCard({ ic:'freegift', col:'#7ADB86', head:'Free ' + B.SOV,
+          sub:'A handful every ' + Math.round(B.FREE_EVERY/3600) + ' hours, for turning up.',
+          price: freeReady() ? 'CLAIM' : hms(B.FREE_EVERY - (S.freeT || 0)),
+          note: freeReady() ? '+' + B.FREE_GIFT : 'wait',
+          cls: freeReady() ? '' : 'no', act:'free:1' })
+      + '</div>'
+      + '<div class="shopnote" style="margin-top:10px">Spent so far: ' + sovFmt(S.sovSpent)
       + ' ' + B.SOV.toLowerCase() + '.</div>';
   }
 
@@ -4272,6 +4349,7 @@ function renderShop(){
       else if(kind === 'starter') buyStarter();
       else if(kind === 'member') buyMember();
       else if(kind === 'boost') buyBoost();
+      else if(kind === 'free') claimFree();
     };
   });
 }
@@ -6996,7 +7074,11 @@ function svgIcon(id, cls, color){
 const elemOf = id => B.ELEM.find(e => e.id === id);
 const elemColor = id => { const e = elemOf(id); return e
   ? getComputedStyle(document.documentElement).getPropertyValue(e.v).trim() : '#DFE9DC'; };
-const RC = i => getComputedStyle(document.documentElement).getPropertyValue(B.RARITY[i].v).trim();
+// Resolve a CSS custom property to the hex behind it. The pixel icons are
+// rasterised on a canvas, and a canvas cannot read "var(--r4)": handed one it
+// paints black, which is why every Gold trophy in the room had a black icon.
+const cssVar = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim() || '#E3B457';
+const RC = i => cssVar(B.RARITY[i].v);
 let UPGREF = [], view = 'upg';
 
 /* ---- scorecard ---- */
@@ -7464,14 +7546,44 @@ function renderBag(){
           + (next ? ' \u00b7 ' + next.n + ' pieces: ' + eff(next) : '') + '</div></div></div>';
       }).join('');
 
+  const sb = $('sortBtn');
+  if(sb) sb.textContent = S.bagSort === 'score' ? 'By score' : 'By club';
   const w = $('bagList'); w.innerHTML = '';
   if(!S.bag.length){
     w.innerHTML = '<div class="empty">Nothing spare in here yet. Closing holes always drop something, '
       + 'and the wager book hands out gear too.</div>';
     return;
   }
-  const sorted = S.bag.slice().sort((a,b) => itemScore(b) - itemScore(a));
-  for(const it of sorted){
+  // The locker used to be one run of everything, best first, so finding the
+  // wedge you just picked up meant reading past nine drivers. It is grouped by
+  // what the club IS, in bag order, with the best of each group at the top of
+  // its own group. Score order is still there for anyone who wants the whole
+  // locker ranked; the header says which one you are looking at.
+  const bySlot = S.bagSort !== 'score';
+  const groups = bySlot
+    ? B.SLOTS.map(sl => ({ sl, items: S.bag.filter(it => it.slot === sl.id) }))
+             .filter(g => g.items.length)
+    : [{ sl: null, items: S.bag.slice() }];
+  for(const g of groups) g.items.sort((a,b) => itemScore(b) - itemScore(a));
+
+  for(const g of groups){
+    if(g.sl){
+      const eq = S.equip[g.sl.id];
+      const h = document.createElement('div');
+      h.className = 'slotband';
+      h.innerHTML = svgIcon(g.sl.ic, 'sbic', eq ? RC(eq.rar) : '')
+        + '<span class="sbn">' + g.sl.n + '</span>'
+        + '<span class="sbc">' + g.items.length + ' spare'
+        + (eq ? ' \u00b7 carrying <span style="color:' + RC(eq.rar) + '">'
+                + B.RARITY[eq.rar].n + '</span>' : ' \u00b7 <b>nothing carried</b>') + '</span>';
+      w.appendChild(h);
+    }
+    for(const it of g.items) w.appendChild(bagRow(it));
+  }
+}
+// One club in the locker.
+function bagRow(it){
+  {
     const cur = S.equip[it.slot];
     const better = !cur || itemScore(it) > itemScore(cur);
     const d = document.createElement('div');
@@ -7486,7 +7598,7 @@ function renderBag(){
       + '<div class="btnrow"><button class="mini' + (better ? ' go' : '') + '">Equip</button></div>';
     d.querySelector('button').onclick = e => { e.stopPropagation(); equipItem(it); };
     d.onclick = () => itemSheet(it, false);
-    w.appendChild(d);
+    return d;
   }
 }
 function itemSheet(it, equipped){
@@ -7832,7 +7944,7 @@ function renderLegacy(){
   }
   for(const t of mine){
     const lv = S.relic[t.id] || 0, c2 = upgradeCost(t), tier = B.TR_TIER[t.t];
-    const col = 'var(' + tier.v + ')';
+    const col = cssVar(tier.v);
     // every figure goes through fmt, and anything the game clamps is shown
     // clamped: a trophy that reads +5.05 into a stat that stops at 1.00 is a lie
     const M = t.g;
@@ -8425,7 +8537,10 @@ function boot(){
     t.onclick = () => setView(t.dataset.v);
     if(t.dataset.v === 'career') careerTab = t;
   });
-  $('sortBtn').onclick = () => { S.bag.sort((a,b) => itemScore(b) - itemScore(a)); renderBag(); };
+  $('sortBtn').onclick = () => {
+    S.bagSort = S.bagSort === 'score' ? 'slot' : 'score';
+    renderBag();
+  };
   $('scrapBtn').onclick = () => {
     const keep = {}, doomed = [];
     S.bag.slice().sort((a,b) => itemScore(b) - itemScore(a)).forEach(it => {
