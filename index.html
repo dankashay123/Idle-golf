@@ -5122,9 +5122,14 @@ function offline(){
   // Worth keeping rather than counting: the best thing the caddie found is the
   // only one of these you will actually go and look at.
   let gear = 0, best = null;
+  // Straight into the bag: the equip sweep and the overflow trim run once at
+  // the end rather than once a drop. bagAdd did both every time, which is what
+  // the comment by the sweep below said it was avoiding.
   const bagAddOff = it => {
     if(!best || itemScore(it) > itemScore(best)) best = it;
-    bagAdd(it); gear++;
+    if(it.rar >= 4) bump('legend');
+    if(it.rar >= 5) bump('myth');
+    S.bag.push(it); gear++;
   };
   QUIET = true; OFFLINE = true;
   // The events this loop resolves are paid through purseFor as well, and it
@@ -5143,7 +5148,11 @@ function offline(){
       S.courseEl = courseElFor(S.hole, S.tier);
       S.totalHoles++;
       addXp(B.XP_HOLE * Math.pow(1 + S.tier, B.XP_TIER) * 1.2 * (parOf(S.hole)/4) * 0.6);
-      if(isClosing(S.hole) && S.bag.length < bagCap() && Math.random() < 0.5)
+      // No "while there is room": live play scraps the worst club for shards
+      // when the locker overflows, and the away session gated drops on the
+      // locker instead -- so once it filled, a twelve hour absence found no
+      // clubs and paid no shards for any of them.
+      if(isClosing(S.hole) && Math.random() < 0.5)
         bagAddOff(dropItem(S.tier, A.drop, 0));
       advanceHole();
     }
@@ -5156,6 +5165,15 @@ function offline(){
   // One sweep for the whole session rather than one per drop: the loop above
   // can land a thousand clubs and the sweep costs a derive() per candidate.
   const swapped = autoEquipSweep().length;
+  let scrapped = 0, scrapSh = 0;
+  if(S.bag.length > bagCap()){
+    S.bag.sort((a,b) => itemScore(b) - itemScore(a));
+    const cut = S.bag.splice(bagCap());
+    cut.forEach(x => scrapSh += scrapValue(x));
+    S.shard += scrapSh; scrapped = cut.length;
+    // the pick of the drops can still be worse than sixty clubs already kept
+    if(cut.includes(best)) best = null;
+  }
   startHole();
 
   const g = S.gold - goldBefore;
@@ -5195,6 +5213,7 @@ function offline(){
   if(paras > 0) marks.push(['Paragon', '+' + paras]);
   if(sov > 0) marks.push([B.SOV, '+' + sovFmt(sov)]);
   if(swapped > 0) marks.push(['Auto equipped', swapped + ' club' + (swapped > 1 ? 's' : '')]);
+  if(scrapped > 0) marks.push(['Locker full \u00b7 scrapped ' + scrapped, '+' + fmt(scrapSh, 0) + ' shards']);
   if(entries > 0) marks.push(['Wager entries back', '+' + entries]);
   if(marks.length) h += '<div class="awband">What came of it</div>'
     + marks.map(([k, v]) => line(k, v)).join('');

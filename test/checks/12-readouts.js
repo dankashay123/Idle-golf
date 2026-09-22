@@ -119,6 +119,19 @@ module.exports = {
       };
       try { hideSheet(); } catch (e) {}
 
+      // a full locker and twelve hours away: live play scraps the worst club for
+      // shards when the locker overflows, and the away session used to stop
+      // dropping clubs altogether instead, so a full locker meant no clubs and
+      // no shards for the whole absence
+      while (S.bag.length < bagCap()) S.bag.push(makeItem(S.tier, 0, 0));
+      const sh0 = S.shard, cap = bagCap();
+      S.t = Date.now()/1000 - 12 * 3600;
+      offline();
+      out.fullLocker = { gear: +((document.querySelector('#sheet .awst:nth-child(3) .awv') || {}).textContent || 0),
+                         shards: S.shard - sh0, bag: S.bag.length, cap,
+                         line: /scrapped \d+/i.test(document.getElementById('sheet').textContent) };
+      try { hideSheet(); } catch (e) {}
+
       // away far longer than the caddie is good for: the card has to own up to
       // both numbers, not quietly report the cap as the whole absence
       out.awayCap = B.OFFLINE_CAP + permAdd('contract') * 3600;
@@ -270,6 +283,15 @@ module.exports = {
     if (!a.best)
       throw new Error('nine hours away found no club worth showing, so the best-of block '
         + 'never rendered and this check is not testing it');
+
+    const FL = r.fullLocker;
+    if (!(FL.gear > 0) || !(FL.shards > 0))
+      throw new Error('twelve hours away with a full locker found ' + FL.gear + ' clubs and paid '
+        + FL.shards + ' shards. Live play scraps the worst club for shards when the locker '
+        + 'overflows; an away session that stops dropping instead loses all of it.');
+    if (FL.bag !== FL.cap)
+      throw new Error('the locker ended the away session at ' + FL.bag + ' of ' + FL.cap);
+    if (!FL.line) throw new Error('the away card never says clubs were scrapped for shards');
 
     // nine days away, a caddie good for twelve hours: both numbers or neither
     const capTxt = (h => h + 'h')(Math.floor(r.awayCap / 3600));
@@ -464,7 +486,9 @@ module.exports = {
     return ['preview held the bag over ' + p.tried + ' looks and through a throw, '
       + p.changed + ' moved the carry',
       'away card: ' + a.tiles + ' tiles, ' + a.bands.length + ' bands, '
-      + a.lines.length + ' lines and not one of them zero; nine days away reads "'
+      + a.lines.length + ' lines and not one of them zero; a full locker away 12h found '
+      + r.fullLocker.gear + ' clubs and scrapped the overflow for ' + r.fullLocker.shards
+      + ' shards; nine days away reads "'
       + (r.awayLong.match(/[^.]*away[^.]*/) || [''])[0].trim() + '"',
       'range: ' + r.rngBroke.filter(x => x.note).length + ' of ' + r.rngBroke.length
       + ' rungs say when on an empty purse ("' + (r.rngBroke.find(x => x.note) || {}).note
