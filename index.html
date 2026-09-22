@@ -2562,7 +2562,17 @@ const B = {
   // OFFLINE_RATE is how much of your pace the caddie keeps, OFFLINE_PURSE what
   // a hole pays while he does. Everything a catch-up awards goes through both,
   // events included, or the discount only applies to the part that is reported.
-  OFFLINE_CAP: 12 * 3600, OFFLINE_RATE: 0.55, OFFLINE_PURSE: 0.62, TICK_MAX: 0.25,
+  // OFFLINE_PURSE was 0.62 while the away model read its pace and its purse off
+  // whichever hole you were standing on. Averaging those over the round cost a
+  // measured 2.7 per cent of a twelve hour return -- thirty six before-and-after
+  // sweeps, twelve Tour Cards at three bag strengths, every one of the seventy
+  // two parked holes on the old side because the four closing holes were the
+  // best of them and skipping those moved the answer further than the thing
+  // being measured. 0.64 is 0.62 x 1.032, which is that 2.7 per cent back and
+  // nothing else: it is a correction, not a raise. The two knobs stay separate
+  // on purpose -- RATE is how fast the caddie plays, PURSE is what it is worth
+  // -- and only the second one is a payout.
+  OFFLINE_CAP: 12 * 3600, OFFLINE_RATE: 0.55, OFFLINE_PURSE: 0.64, TICK_MAX: 0.25,
 
   /* =======================================================================
      THE PRO SHOP
