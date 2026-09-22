@@ -2948,6 +2948,16 @@ function achMetric(m){
 }
 const achDone = id => !!S.achDone[id];
 const achCount = () => B.ACH.reduce((n, a) => n + (achDone(a.id) ? 1 : 0), 0);
+// Every row already works out have and need to draw its own progress bar, and
+// then throws the ratio away for ordering, so the one you are at 97% on sits
+// wherever it happened to be typed. It is the only ordering the list wants.
+const achRatio = a => clamp(achMetric(a.m) / (a.v || 1), 0, 1);
+// Decorated before the sort: achMetric('mst') calls derive(), and a comparator
+// that asks for it on every comparison turns a thirty row list into a hundred
+// and fifty derives four times a second.
+const achNear = n => B.ACH.filter(a => !achDone(a.id))
+  .map(a => ({ a, r: achRatio(a) }))
+  .sort((x, y) => y.r - x.r).slice(0, n).map(x => x.a);
 // Permanent bonuses from honours already earned.
 function achBonus(){
   const o = {};
@@ -4541,13 +4551,48 @@ function renderShop(){
 /* =========================================================================
    RETIREMENT
    ========================================================================= */
+// Every term in the legacy formula is something you actively control, so the
+// only question that matters -- is one more Tour Card worth more than retiring
+// now -- needs the slope as well as the figure. legacyFor answers for any card
+// and any cup count, which is what lets the screen show both.
+const legacyFor = (tier, cups) => Math.floor(B.LEGACY_K * Math.pow(tier + 1, B.LEGACY_EXP)
+  * Math.pow(B.CUP_MULT, cups) * (1 + career().plegacy));
 function legacyGain(){
   if((S.eventsPlayed || 0) < B.RETIRE_EVENTS) return 0;
-  return Math.floor(B.LEGACY_K * Math.pow(S.tier + 1, B.LEGACY_EXP) * Math.pow(B.CUP_MULT, S.cups)
-    * (1 + career().plegacy));
+  return legacyFor(S.tier, S.cups);
 }
-const discoverCost = () => Math.max(1, Math.ceil(B.DISC_COST * Math.pow(B.DISC_R, trophiesFound())
+const discoverCostAt = n => Math.max(1, Math.ceil(B.DISC_COST * Math.pow(B.DISC_R, n)
   * (1 - Math.min(0.60, career().pdisc))));
+const discoverCost = () => discoverCostAt(trophiesFound());
+// What a purse of legacy is actually FOR. The discovery price is exponential in
+// how full the room already is, so "buys two trophies" is a figure you can
+// weigh against one more card in a way that a bare legacy total is not.
+function discoveriesFor(legacy){
+  let n = trophiesFound(), k = 0;
+  while(n < B.TROPHY.length && legacy >= discoverCostAt(n)){ legacy -= discoverCostAt(n); n++; k++; }
+  return k;
+}
+// and how far short of the next one it leaves you, so a retirement that buys
+// nothing still says what it would take.
+function discoveryGap(legacy){
+  let n = trophiesFound();
+  while(n < B.TROPHY.length && legacy >= discoverCostAt(n)){ legacy -= discoverCostAt(n); n++; }
+  return n >= B.TROPHY.length ? 0 : discoverCostAt(n) - legacy;
+}
+// The whole retirement decision on one object: what the card is worth now, what
+// each of the two things that move it would add, and what the result buys.
+function legacyPreview(){
+  const now = legacyFor(S.tier, S.cups);
+  return {
+    now,
+    ready: (S.eventsPlayed || 0) >= B.RETIRE_EVENTS,
+    card: legacyFor(Math.min(B.TIER_MAX, S.tier + 1), S.cups) - now,
+    cup:  legacyFor(S.tier, S.cups + 1) - now,
+    held: discoveriesFor(S.legacy),
+    after: discoveriesFor(S.legacy + now),
+    left: B.TROPHY.length - trophiesFound()
+  };
+}
 const trophyMult = t => t.k && t.k[0] === '*';
 // Each multiplying trophy pays its own ladder, priced off its own gain, so the
 // invariant that cost has to outrun gain holds for all thirty at once instead
@@ -7412,9 +7457,16 @@ function honRows(w){
   const done = achCount(), tot = B.ACH.length;
   const A = achBonus();
   const live = Object.keys(A).map(k => achReward({ r:{ k, v:A[k] } })).join(' \u00b7 ');
+  const near = achNear(3);
   let h = '<div class="hint">' + done + ' of ' + tot + ' done. They tick over by themselves, so there is nothing to come and claim. Right now you are getting: '
     + (live ? '<b style="color:var(--aurora)">' + live + '</b>' : 'none yet') + '.</div>';
-  const rows = B.ACH.slice().sort((a,b) => (achDone(b.id)?1:0) - (achDone(a.id)?1:0));
+  if(near.length) h += '<div class="hint">Closest: '
+    + near.map(a => '<b>' + a.n + '</b> ' + fmt(Math.min(achMetric(a.m), a.v), 0) + '/' + fmt(a.v, 0))
+        .join(' \u00b7 ') + '.</div>';
+  // Nearest first, then the shelf. A checklist sorted by what you have already
+  // done tells you nothing about what to go and play for.
+  const rows = B.ACH.map(a => ({ a, done: achDone(a.id) ? 1 : 0, r: achRatio(a) }))
+    .sort((x, y) => x.done - y.done || y.r - x.r).map(x => x.a);
   for(const a of rows){
     const got = achDone(a.id), have = achMetric(a.m), need = a.v;
     h += '<div class="row' + (got ? '' : ' locked') + '"><div>'
@@ -7445,6 +7497,14 @@ function renderHonBtn(){
     b.onclick = honoursSheet;
   }
   b.classList.toggle('new', n > (S.honSeen || 0));
+  // The button is a 12x12 sprite with no room for words, so the words go where
+  // a long press and a screen reader both find them: the nearest one by name,
+  // rather than a tally of the ones already won.
+  const nx = achNear(1)[0];
+  const lbl = nx ? 'Honours \u00b7 closest: ' + nx.n + ' ' + fmt(Math.min(achMetric(nx.m), nx.v), 0)
+                   + ' of ' + fmt(nx.v, 0)
+                 : 'Honours \u00b7 all ' + B.ACH.length + ' done';
+  if(b._lbl !== lbl){ b._lbl = lbl; b.title = lbl; b.setAttribute('aria-label', lbl); }
   const p = $('perkBtn');
   if(p){
     if(!p._built){
@@ -8299,23 +8359,42 @@ function renderTour(){
 }
 
 /* ---- legacy ---- */
+// What a retirement is worth, what would make it worth more, and what the
+// result buys. The figure used to appear in one place -- the +N on the button,
+// and only once the first event was in the book -- so the actual decision,
+// one more Tour Card against signing now, could not be read off the screen.
+function legacyBuys(P){
+  if(P.left <= 0) return 'every trophy is already on the shelf';
+  const more = P.after - P.held;
+  if(more > 0) return more + (more === 1 ? ' more trophy' : ' more trophies') + ' out of the room';
+  return fmt(discoveryGap(S.legacy + P.now)) + ' short of the next trophy';
+}
 function renderLegacy(){
-  const gain = legacyGain();
+  const P = legacyPreview(), gain = P.ready ? P.now : 0;
   $('legNote').textContent = fmt(S.legacy) + ' legacy held';
-  $('legBox').innerHTML = gain > 0
-    ? '<div class="hint">Retiring clears out your purse and all your range work. '
+  const lb = (k, v, col) => '<div class="lb"><span class="p"></span><span>' + k + '</span>'
+    + '<span class="s"' + (col ? ' style="color:var(' + col + ')"' : '') + '>' + v + '</span></div>';
+  const capped = S.tier >= B.TIER_MAX;
+  $('legBox').innerHTML = '<div class="hint">Retiring clears out your purse and all your range work. '
       + 'Your bag, your shot book, everything the wager book has paid you and all your currencies '
       + 'come with you.</div>'
-      + '<div class="row"><div><div class="nm">Sign the card</div>'
-      + '<div class="ds">Tour Card ' + roman(S.tier) + ' with ' + S.cups + ' cups banked.</div></div>'
-      + '<button class="buy ok" id="retireBtn"><span class="lbl">Retire</span><span class="amt">+'
-      + fmt(gain) + '</span></button></div>'
-    : '<div class="empty">Play one full event and retirement opens up.<br>'
-      + 'Through ' + holesPlayed(S.hole) + ' of ' + (B.ROUND*B.DAYS) + ' holes.</div>';
+    + lb('Legacy on the card', fmt(P.now), '--brass')
+    + lb('One more Tour Card', capped ? '\u2014' : '+' + fmt(P.card))
+    + lb('One more cup', '+' + fmt(P.cup))
+    + lb('It buys', legacyBuys(P))
+    + (P.ready
+      ? '<div class="row"><div><div class="nm">Sign the card</div>'
+        + '<div class="ds">Tour Card ' + roman(S.tier) + ' with ' + S.cups + ' cups banked.</div></div>'
+        + '<button class="buy ok" id="retireBtn"><span class="lbl">Retire</span><span class="amt">+'
+        + fmt(gain) + '</span></button></div>'
+      : '<div class="empty">Play one full event and retirement opens up.<br>'
+        + 'Through ' + holesPlayed(S.hole) + ' of ' + (B.ROUND*B.DAYS) + ' holes \u00b7 the figure above '
+        + 'is what the card is already worth.</div>');
   if(gain > 0) $('retireBtn').onclick = () => showSheet(
     '<h3>Sign the card?</h3><p>You bank ' + fmt(gain) + ' legacy and start again from Tour Card '
-    + roman(relLv('chrono')) + '.</p><p>Every capped upgrade ladder gains ' + B.CAP_PER_LEGACY
-    + ' more levels, permanently.</p>'
+    + roman(relLv('chrono')) + '.</p><p>That is ' + legacyBuys(P) + '. One more Tour Card first '
+    + 'would add ' + fmt(P.card) + ', one more cup ' + fmt(P.cup) + '.</p>'
+    + '<p>Every capped upgrade ladder gains ' + B.CAP_PER_LEGACY + ' more levels, permanently.</p>'
     + '<button class="act" onclick="hideSheet();retire()">Retire</button>'
     + '<button class="act ghost" onclick="hideSheet()">Keep playing</button>');
 
