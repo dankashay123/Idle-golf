@@ -285,7 +285,7 @@ module.exports = {
       out.buysNames = Object.keys(DGN_BUYS);
       renderDgn();
       out.shown = Array.from(document.querySelectorAll('#dgnRows .dgn'))
-        .map(e => /One entry is worth about/.test(e.textContent));
+        .map(e => /An entry is worth/.test(e.textContent));
 
       // ---- 4. four contests, or one contest four times ----------------------
       S.tier = 20; S.hole = 2; startHole();

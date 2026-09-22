@@ -11,6 +11,10 @@ the styles and the script. There is no build step — open the file and it runs.
 - **Explain changes in plain language.** Assume the reader is not a coder: no
   function names, no file paths, no jargon in the summary. Say what changed on
   screen and why it is better.
+- **Keep the text on screen short.** Necessary information only. No paragraphs
+  explaining the game to someone who is already playing it; put anything that
+  really needs saying behind a `?` fold. Prefer "%" to "per cent" and bind a
+  figure to the unit it carries, so a narrow column cannot break them apart.
 
 ## Checks
 

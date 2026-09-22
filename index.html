@@ -2093,19 +2093,19 @@ const B = {
   DGN: [
     { id:'sand', ic:'grit', mode:'drive', n:'The Long Drive', cur:'grit', cn:'Grit',
       regen:660, cap:4, run:16, pay:0.046, gear:0.22, floorRar:0,
-      d:'One swing, as hard as you can hit it. Six goes, the longest counts.',
+      d:'Six swings, the longest counts.',
       how:'Tempo is worth nothing here. It all rides on a single strike, so power, pure strike, payoff, affinity and provisionals are the whole game.' },
     { id:'water', ic:'island', mode:'island', n:'The Island Green', cur:'shard', cn:'Shards',
       regen:840, cap:3, run:70, pay:0.028, gear:0.40, floorRar:2,
-      d:'Land it or lose it. The first one is a gimme, then every green you hit doubles the pot. Miss and you keep a quarter.',
+      d:'Every green doubles the pot. Miss and you keep a quarter.',
       how:'The make chance is 56% plus your pure strike chance, and it drops 3.5 points for every green you have already hit. You decide how greedy to be before you go in.' },
     { id:'cellar', ic:'flood', mode:'chip', n:'The Floodlit Green', cur:'scroll', cn:'Scrolls',
       regen:1080, cap:3, run:46, pay:0.019, gear:0.20, floorRar:1,
-      d:'Twenty five chips under the lights. Every one that drops is worth more than the last.',
+      d:'Twenty five chips. Each one that drops is worth more than the last.',
       how:'Runs on affinity chance, not power, and it reads the raw figure rather than the capped one. A bag that never procs will chip all night for nothing.' },
     { id:'vault', ic:'vault', mode:'floor', n:'The Clubhouse Vault', cur:'gold', cn:'Purse',
       regen:900, cap:2, run:56, pay:1, gear:0.62, floorRar:1,
-      d:'Members only. Floor after floor, each one more work than the one before.',
+      d:'Floor after floor, each one harder than the last.',
       how:'Straight endurance. How deep your carry drags you before the clock runs out.' }
   ],
   DRIVE_SHOTS: 6, DRIVE_GAP: 2.0, DRIVE_WIND: [0.72, 1.38],
@@ -2776,6 +2776,11 @@ function seeded(seed){
   return () => { s ^= s << 13; s ^= s >>> 17; s ^= s << 5; s >>>= 0; return s / 4294967296; };
 }
 const roman = t => t < B.TIER_ROMAN.length ? B.TIER_ROMAN[t] : (t+1).toString();
+// A number and the unit it carries do not get to sit on separate lines: "55 per
+// cent" broke after "55 per", and "+1.2% swing power" after "+1.2%". One hard
+// space, between the figure and the word it measures, and no further -- the
+// rest of the line wraps as it likes.
+const nb = t => String(t).replace(/([\d][\d.,]*\s*(?:%|pp|x|\u00d7)?)\s+(?=[A-Za-z])/g, '$1\u00a0');
 
 /* ---- the calendar ---- */
 const holeInRound  = h => ((h-1) % B.ROUND) + 1;
@@ -4050,7 +4055,7 @@ function dgnPayout(d, D){
   }
   const deepest = cleared > 0 ? f - 1 : 0;
   return { buys: (B.VAULT_HOLES + pastPace(deepest) * B.VAULT_PER_MARK) * featM,
-           note: cleared + ' floor' + (cleared === 1 ? '' : 's') + ' deep', floors: cleared };
+           note: cleared + '\u00a0floor' + (cleared === 1 ? '' : 's') + ' deep', floors: cleared };
 }
 
 function startDgn(d){
@@ -4714,10 +4719,9 @@ function renderShop(){
     + '<div class="shopnav">' + tabs.map(([id, t]) =>
         '<button data-sub="' + id + '"' + (shopSub === id ? ' class="on"' : '') + '>' + t
         + '</button>').join('') + '</div>'
-    + '<div class="sovline"><span>You hold</span><b>' + sovFmt(S.sov) + ' ' + B.SOV + '</b></div>'
-    + '<div class="freebar"><b>Nothing here is charged.</b> The store is not wired up, so every '
-    + 'pack lands the moment you press it and the prices are only there to show what they '
-    + 'would be. No card, no receipt, nothing leaves the device.</div>';
+    + '<div class="sovline"><span>You hold</span><b>' + sovFmt(S.sov) + '\u00a0' + B.SOV + '</b></div>'
+    + '<div class="freebar"><b>Nothing here is charged.</b> Prices are for show \u2014 '
+    + 'every pack is free.</div>';
 
   if(shopSub === 'buy'){
     const rate = B.SOV_PACKS[0].c / B.SOV_PACKS[0].usd;
@@ -4747,10 +4751,9 @@ function renderShop(){
   }
 
   if(shopSub === 'bags'){
-    h += '<div class="shopnote">A bag is a bag of clubs, fitted ' + B.BAG_ILVL
-      + ' item levels above your card. ' + (B.BAG_PITY - (S.pity || 0))
-      + ' more bags and the next one holds a guaranteed Mythic, whichever bag it is. '
-      + 'Opened so far: ' + sovFmt(S.bagsOpened) + '.</div>'
+    h += '<div class="shopnote">' + nb('Clubs fitted ' + B.BAG_ILVL
+      + ' levels above your card \u00b7 guaranteed Mythic in ' + (B.BAG_PITY - (S.pity || 0))
+      + ' bags \u00b7 ' + sovFmt(S.bagsOpened) + ' opened') + '</div>'
       + ribbon('Bags') + '<div class="sgrid c2">' + B.BAGS.map(bg =>
         shopCard({ ic: bg.ic, col: RC(Math.min(5, bg.top)), on: bg.top >= 4,
           badge: B.RARITY[bg.top].n,
@@ -4760,9 +4763,7 @@ function renderShop(){
   }
 
   if(shopSub === 'perm'){
-    h += '<div class="shopnote">Ten levels each, kept through every retirement. The bench sells '
-      + 'time, room and convenience \u2014 the things the rest of the game makes you wait for '
-      + '\u2014 and two sets of clubs.</div>'
+    h += '<div class="shopnote">Ten levels each, kept through retirement.</div>'
       + ribbon('The Bench') + '<div class="sgrid c2">' + B.PERM.map(u => {
         const lv = permLv(u.id), maxed = lv >= B.PERM_MAX, c = permCost(u);
         const now = u.s === 'x' ? '\u00d7' + permMult(u.id).toFixed(2)
@@ -4772,7 +4773,7 @@ function renderShop(){
                   : '+' + permAdd(u.id);
         return shopCard({ ic: u.ic, col: '#E3B457', on: lv > 0,
           badge: lv ? lv + '/' + B.PERM_MAX : '',
-          head: u.n, sub: u.d + (lv ? '<br><b>now ' + now + '</b>' : ''), pips: lv,
+          head: u.n, sub: nb(u.d) + (lv ? '<br><b>now ' + now + '</b>' : ''), pips: lv,
           price: maxed ? 'MAX' : sovFmt(c), note: maxed ? 'done' : B.SOV.toLowerCase(),
           cls: maxed ? 'max' : (S.sov || 0) >= c ? '' : 'no', act: 'perm:' + u.id });
       }).join('') + '</div>';
@@ -4783,8 +4784,8 @@ function renderShop(){
       + shopCard({ ic:'starter', col:'#7ADB86', on: !S.starter, badge: S.starter ? '' : 'BEST VALUE',
           head:'Starter Pack',
           sub: S.starter ? 'Taken. One to a career.'
-            : sovFmt(B.STARTER_C) + ' ' + B.SOV.toLowerCase() + ', a Tour Bag and a day of '
-              + 'Double Purse. <b>About four times what it asks.</b>',
+            : sovFmt(B.STARTER_C) + ' ' + B.SOV.toLowerCase() + ', a Tour Bag, a day of '
+              + 'Double Purse.',
           price: S.starter ? 'TAKEN' : '$' + B.STARTER_USD.toFixed(2),
           note: S.starter ? 'done' : 'free', cls: S.starter ? 'max' : '', act:'starter:1' })
       + shopCard({ ic:'member', col:'#E3B457', on: !isMember(), badge: isMember() ? 'MEMBER' : '',
@@ -4792,8 +4793,8 @@ function renderShop(){
           sub: isMember()
             ? '+' + Math.round(B.MEMBER_GOLD*100) + '% purse, +' + B.MEMBER_KEYS
               + ' entry, ' + B.MEMBER_DAILY + ' a day.<br><b>Next in ' + hms(86400 - (S.memberT||0)) + '</b>'
-            : '+' + Math.round(B.MEMBER_GOLD*100) + '% purse for good, +' + B.MEMBER_KEYS
-              + ' entry on every wager, ' + B.MEMBER_DAILY + ' ' + B.SOV.toLowerCase() + ' a day.',
+            : '+' + Math.round(B.MEMBER_GOLD*100) + '% purse, +' + B.MEMBER_KEYS
+              + ' wager entry, ' + B.MEMBER_DAILY + ' a day. For good.',
           price: isMember() ? 'ACTIVE' : '$' + B.MEMBER_USD.toFixed(2),
           note: isMember() ? 'joined' : 'free', cls: isMember() ? 'max' : '', act:'member:1' })
       + '</div>'
@@ -4801,11 +4802,11 @@ function renderShop(){
       + shopCard({ ic:'boost', col:'#F2D75E', on: boostOn(), badge: boostOn() ? 'ON' : '',
           head:'Double Purse',
           sub: boostOn() ? '<b>' + hms(S.boostT) + ' left.</b> Buying again adds to it.'
-            : 'Everything the course pays, doubled, for ' + B.BOOST_HOURS + ' hours.',
+            : 'Everything doubled for ' + B.BOOST_HOURS + ' hours.',
           price: sovFmt(B.BOOST_C), note: B.SOV.toLowerCase(),
           cls: (S.sov || 0) >= B.BOOST_C ? '' : 'no', act:'boost:1' })
       + shopCard({ ic:'freegift', col:'#7ADB86', head:'Free ' + B.SOV,
-          sub:'A handful every ' + Math.round(B.FREE_EVERY/3600) + ' hours, for turning up.',
+          sub:'A handful every ' + Math.round(B.FREE_EVERY/3600) + ' hours.',
           price: freeReady() ? 'CLAIM' : hms(B.FREE_EVERY - (S.freeT || 0)),
           note: freeReady() ? '+' + B.FREE_GIFT : 'wait',
           cls: freeReady() ? '' : 'no', act:'free:1' })
@@ -5140,10 +5141,10 @@ function offline(){
 
   let h = '<h3>While you were away</h3>'
     + '<p>' + (away > dt + 60
-        ? spanTxt(away) + ' away, and the caddie is good for ' + hms(dt) + ' of it'
-        : hms(dt) + ' away') + '. The caddie kept the group moving at '
+        ? spanTxt(away) + ' away \u00b7 the caddie played the last ' + hms(dt)
+        : hms(dt) + ' away') + ' at '
     + Math.round(B.OFFLINE_RATE * (1 + Math.min(1, D.C.paway)) * 100)
-    + ' per cent of your live pace.</p>'
+    + '% pace.</p>'
     + '<div class="awgrid">'
       + stat('purse', fmt(g), 'big')
       + stat('holes', fmt(holes, 0))
@@ -7890,7 +7891,7 @@ function honRows(w){
     const got = achDone(a.id), have = achMetric(a.m), need = a.v;
     h += '<div class="row' + (got ? '' : ' locked') + '"><div>'
       + '<div class="nm">' + (got ? '\u2713 ' : '') + a.n + '</div>'
-      + '<div class="ds">' + a.d + '</div>'
+      + '<div class="ds">' + nb(a.d) + '</div>'
       + '<div class="mt">' + (got ? '<b>' + achReward(a) + '</b>'
           : '<i>' + fmt(Math.min(have, need), 0) + '</i> / ' + fmt(need, 0)
             + ' \u00b7 ' + achReward(a)) + '</div></div>'
@@ -8188,10 +8189,10 @@ function effectLabel(u){
   return '\u00d7' + Math.pow(u.g, lv).toFixed(2);
 }
 // hms is happy to print "222222222222222200h 13m", and the deepest rungs cost
-// that much at a starting purse. Anything past a day is one phrase: the exact
-// figure is not information, and a row of digits that long is the clutter this
-// was meant to clear.
-const untilTxt = w => w >= 86400 ? 'over a day' : hms(Math.max(1, w));
+// that much at a starting purse. Past a day the wait is not something you sit
+// out, so it says nothing at all: "over a day" on nine rungs running was nine
+// lines of the same non-answer.
+const untilTxt = w => w >= 86400 ? '' : hms(Math.max(1, w));
 function refreshUpg(){
   // Every rung is on show from the first minute. Hiding them made the ladder
   // look shorter than it is, and rows that came and went with your balance
@@ -8226,7 +8227,8 @@ function refreshUpg(){
     const wait = (!maxed && !ok && rate > 0) ? (c - S.gold) / rate : Infinity;
     r.mt.innerHTML = 'Lv <i>' + lv + (isFinite(cap) ? '/' + cap : '') + '</i> \u00b7 <b>'
       + effectLabel(u) + '</b>'
-      + (isFinite(wait) ? ' \u00b7\u00a0<u>unlocks in ' + untilTxt(wait) + '</u>' : '');
+      + (isFinite(wait) && untilTxt(wait) ? ' \u00b7\u00a0<u>unlocks in '
+          + untilTxt(wait) + '</u>' : '');
     if(maxed){
       r.btn.className = 'buy max'; r.lbl.textContent = 'Capped'; r.amt.textContent = '\u2014';
     }else{
@@ -8324,8 +8326,8 @@ function renderBag(){
         return '<div class="row"><div><div class="nm">' + svgIcon(set.ic, 'tic', a.tier ? BRASS : '')
           + set.n + ' <span class="pill">' + a.n + '/6</span></div>'
           + '<div class="ds">'
-          + (a.tier ? '<b style="color:var(--aurora)">' + eff(a.tier) + '</b>' : set.d)
-          + (next ? ' \u00b7 ' + next.n + ' pieces: ' + eff(next) : '') + '</div></div></div>';
+          + (a.tier ? '<b style="color:var(--aurora)">' + nb(eff(a.tier)) + '</b>' : set.d)
+          + (next ? ' \u00b7 ' + next.n + '\u00a0pieces: ' + nb(eff(next)) : '') + '</div></div></div>';
       }).join('');
 
   const sl = B.SLOTS.find(x => x.id === S.bagSlot);
@@ -8360,8 +8362,7 @@ function renderBag(){
   for(const it of spare) w.appendChild(bagRow(it, false));
 
   if(!worn && !spare.length){
-    w.innerHTML = '<div class="empty">No ' + sl.n.toLowerCase() + ' yet. Closing holes always drop '
-      + 'something, and the wager book hands out clubs by the bagful.</div>';
+    w.innerHTML = '<div class="empty">No ' + sl.n.toLowerCase() + ' yet.</div>';
   }
   if(spare.length > 1){
     const r = document.createElement('div');
@@ -8497,8 +8498,8 @@ function itemSheet(it, equipped){
   h += '<button class="act ghost" onclick="doReroll(' + it.uid + ')">Re-attune '
     + (lk ? 'the other ' + (it.aff.length - lk) : 'affixes') + ' \u2014 '
     + fmt(rerollCost(it), 0) + ' shards</button>'
-    + (it.aff.length > 1 ? '<p style="font-size:11px;margin-top:6px">Locking a roll keeps it through '
-      + 'the re-attune. Each lock makes the next one dearer.</p>' : '');
+    + (it.aff.length > 1 ? '<p style="font-size:11px;margin-top:6px">A lock keeps that roll. '
+      + 'Each lock costs more.</p>' : '');
   if(it.rar < B.RARITY.length-1)
     h += '<button class="act ghost" onclick="doAscend(' + it.uid + ')">Ascend to '
       + B.RARITY[it.rar+1].n + ' \u2014 ' + ascendCost(it) + ' shards</button>';
@@ -8541,7 +8542,7 @@ function renderPerks(){
     d.innerHTML = '<div class="glyph' + (left ? ' eq' : '') + '">' + svgIcon(p.ic, 'kic')
       + (left ? '<div class="cd" style="height:' + (1 - left/p.dur)*100 + '%"></div>' : '') + '</div>'
       + '<div><div class="nm">' + p.n + (p.dur ? '' : ' <span class="pill">one shot</span>') + '</div>'
-      + '<div class="ds">' + p.d + '</div>'
+      + '<div class="ds">' + nb(p.d) + '</div>'
       + '<div class="mt">' + (left ? '<b>' + hms(left) + ' left</b>'
           : p.cost + ' ticket' + (p.cost > 1 ? 's' : '')) + '</div></div>'
       + '<div class="btnrow"><button class="mini' + (left ? ' dim' : can ? ' go' : ' dim') + '">'
@@ -8554,7 +8555,7 @@ function renderPerks(){
 /* ---- shot book ---- */
 function renderSkills(){
   const w = $('sklRows'); w.innerHTML = '';
-  $('sklNote').textContent = S.carry.length + ' / ' + B.SKILL_SLOTS + ' carried \u00b7 ' + fmt(S.scroll) + ' scrolls';
+  $('sklNote').textContent = S.carry.length + ' / ' + B.SKILL_SLOTS + ' carried \u00b7 ' + fmt(S.scroll) + '\u00a0scrolls';
   for(const k of B.SKILL){
     const lv = S.skillLv[k.id] || 0;
     const owned = lv > 0;
@@ -8567,7 +8568,7 @@ function renderSkills(){
     d.innerHTML = '<div class="glyph' + (carried ? ' eq' : '') + (owned ? '' : ' lock') + '">'
       + svgIcon(k.ic, 'kic') + '<div class="cd" style="height:' + (1-frac)*100 + '%"></div></div>'
       + '<div><div class="nm">' + k.n + '</div>'
-      + '<div class="ds">' + skillLabel(k, owned ? lv : 1) + '</div>'
+      + '<div class="ds">' + nb(skillLabel(k, owned ? lv : 1)) + '</div>'
       + '<div class="mt">' + (owned ? 'Lv <i>' + lv + '</i> \u00b7 ' + k.cd + 's cooldown'
                                     : 'Not learned yet \u00b7 costs ' + k.cost + ' scrolls') + '</div></div>'
       + '<div class="btnrow"></div>';
@@ -8617,7 +8618,7 @@ function renderDgn(){
   const w = $('dgnRows'); w.innerHTML = '';
   const D = derive();
   $('dgnNote').textContent = S.dgnRun ? 'On the stage \u00b7 the round is paused'
-    : 'Four stakes, four different tests';
+    : '';
   const feat = featWager();
   const fb = $('dgnFeat');
   if(fb) fb.innerHTML = '<span class="fn">' + feat.n + '</span>'
@@ -8638,18 +8639,17 @@ function renderDgn(){
     // to look like one game with four hats on.
     const bv = S.dgnBest ? (S.dgnBest[d.id] || 0) : 0;
     const best = d.mode === 'drive'  ? 'longest ' + (bv > 0 ? fmt(bv) : '\u2014')
-               : d.mode === 'island' ? 'best run ' + bv + ' green' + (bv === 1 ? '' : 's')
+               : d.mode === 'island' ? 'best run ' + bv + '\u00a0green' + (bv === 1 ? '' : 's')
                : d.mode === 'chip'   ? 'best ' + bv + ' of ' + Math.max(B.CHIP_SHOTS, bv) + ' dropped'
                :                       'deepest floor ' + (bv + 1);
 
     let reads;
-    if(d.mode === 'drive') reads = 'Your best case swing lands around ' + fmt(D.pow * D.cpw * (1 + D.mst*B.MST_DMG));
-    else if(d.mode === 'island') reads = 'First green ' + Math.round(islandChance(D, 0)*100)
-      + '% (56 base + ' + Math.round(D.crit*B.ISLAND_CRIT*100) + ' from pure strike), then '
-      + Math.round(islandChance(D, 4)*100) + '% by the fifth and '
-      + Math.round(islandChance(D, 9)*100) + '% by the tenth';
-    else if(d.mode === 'chip') reads = 'About ' + Math.round(chipChance(D)*100) + '% of your chips would drop';
-    else reads = 'Carry ' + fmt(D.dps) + ' a second against floors that keep growing';
+    if(d.mode === 'drive') reads = 'Best swing about ' + fmt(D.pow * D.cpw * (1 + D.mst*B.MST_DMG));
+    else if(d.mode === 'island') reads = 'Greens ' + Math.round(islandChance(D, 0)*100)
+      + '% \u2192 ' + Math.round(islandChance(D, 4)*100)
+      + '% \u2192 ' + Math.round(islandChance(D, 9)*100) + '% by the tenth';
+    else if(d.mode === 'chip') reads = Math.round(chipChance(D)*100) + '% of chips drop';
+    else reads = 'Carry ' + fmt(D.dps) + '/sec against growing floors';
     const P = dgnPayout(d, D);
 
     el.innerHTML = '<div class="dh">' + svgIcon(d.ic || STAT_IC[d.cur] || 'ball', 'ric') + '<span class="dn">' + d.n + '</span>'
@@ -8659,7 +8659,7 @@ function renderDgn(){
       + '<div class="dd">' + d.d + '</div>'
       + '<div class="dd fold" style="color:var(--faint);margin-top:4px">' + d.how + '</div>'
       + '<div class="dm">' + reads + '</div>'
-      + '<div class="dm" style="color:var(--brass)">One entry is worth about <b>'
+      + '<div class="dm" style="color:var(--brass)">An entry is worth <b>'
       + fmt(P.buys, P.buys < 10 ? undefined : 0) + '</b> ' + DGN_BUYS[d.cur]
       + ' \u00b7 ' + P.note + '</div>'
       + '<div class="dm">Pays ' + d.cn + ' \u00b7 ' + best
@@ -8750,32 +8750,30 @@ function renderTour(){
     + 'on your highest.</div></div>'
     + unlockLine
     + (atTop || top >= B.TIER_MAX ? ''
-       : '<div class="hint" style="color:var(--flag)">You are below your highest card, so no new '
-         + 'cards are unlocking. Climb back to Card ' + roman(top) + ' to start that again.</div>')
+       : '<div class="hint" style="color:var(--flag)">No new cards unlock below Card '
+         + roman(top) + '.</div>')
     + climbLines()
     + (maxed
       ? '<div class="row"><div><div class="nm">Card ' + roman(S.tier) + '</div>'
-        + '<div class="ds">The last card. There is nothing above this one.</div></div></div>'
+        + '<div class="ds">The last card.</div></div></div>'
       : '<div class="row"><div><div class="nm">Climb to Card ' + roman(nextT) + '</div>'
         + '<div class="ds">' + (cardUnlocked(nextT)
-            ? 'On this hole you would card about <b style="color:var(--chalk)">' + nm(nextR)
-              + '</b>, where you card <b style="color:var(--chalk)">' + nm(hereR) + '</b> now.'
-            : 'Locked. ' + eventsToNext() + ' more event' + (eventsToNext() === 1 ? '' : 's')
-              + ' on Card ' + roman(top) + ' unlocks it.') + '</div></div>'
+            ? 'This hole: <b style="color:var(--chalk)">' + nm(hereR)
+              + '</b> now, <b style="color:var(--chalk)">' + nm(nextR) + '</b> there.'
+            : 'Locked \u00b7 ' + eventsToNext() + ' more event' + (eventsToNext() === 1 ? '' : 's')
+              + ' on Card ' + roman(top)) + '</div></div>'
         + '<button class="buy' + (cardUnlocked(nextT) ? ' ok' : ' no') + '" id="climbBtn">'
         + '<span class="lbl">Climb</span><span class="amt">'
         + (cardUnlocked(nextT) ? '+1' : eventsToNext() + ' to go') + '</span></button></div>')
     + '<div class="row"><div><div class="nm">'
     + (S.tier > 0 ? 'Drop back to Card ' + roman(S.tier - 1) : 'Drop back') + '</div>'
     + '<div class="ds">' + (S.tier > 0
-        ? 'Shorter holes for a smaller purse. Worth it to farm gear and wager stakes, and you can '
-          + 'climb back any time — but new cards stop unlocking while you are below your highest.'
-        : 'You are on the first card. There is nothing below it.') + '</div></div>'
+        ? 'Shorter holes, smaller purse. No new cards unlock below your highest.'
+        : 'The first card.') + '</div></div>'
     + '<button class="buy' + (S.tier > 0 ? '' : ' no') + '" id="dropBtn">'
     + '<span class="lbl">Drop</span><span class="amt">−1</span></button></div>'
     + '<div class="row"><div><div class="nm">Climb on form</div>'
-    + '<div class="ds">Moves up on its own once the next card is unlocked and you are carding '
-    + 'eagles five holes running.</div></div>'
+    + '<div class="ds">Climbs on its own after five eagles running.</div></div>'
     + '<button class="buy' + (S.autoClimb ? ' ok' : '') + '" id="autoBtn"><span class="lbl">Auto</span>'
     + '<span class="amt">' + (S.autoClimb ? 'On' : 'Off') + '</span></button></div>';
   const cb = $('climbBtn'); if(cb) cb.onclick = () => climb(1);
@@ -8790,11 +8788,11 @@ function renderTour(){
 
   // the card: you against the number, not against a made-up field
   const onPace = proj <= target;
-  $('cardNote').textContent = played + ' of ' + (B.ROUND*B.DAYS) + ' holes';
+  $('cardNote').textContent = played + ' of ' + (B.ROUND*B.DAYS) + '\u00a0holes';
   $('cardBox').innerHTML =
     '<div class="row"><div><div class="nm">' + eventName(t) + '</div>'
     + '<div class="ds">' + dayName(S.hole) + ' \u00b7 hole ' + holeInRound(S.hole)
-    + ' \u00b7 beat the target and the cup is yours</div></div></div>'
+    + '</div></div></div>'
     + '<div class="lb"><span class="p"></span><span>Through ' + played + '</span>'
     + '<span class="s">' + fm(S.tourScore) + '</span></div>'
     + '<div class="lb"><span class="p"></span><span>On this pace</span>'
@@ -8844,22 +8842,18 @@ function climbLines(){
   // one. That state put "climbing costs nothing" directly above x0.94 and
   // x1.98 longer.
   const say = C.dProg < 0.02
-    ? 'The next card is no further grown than this one, so the holes and the purse do not move '
-      + 'at all. Climbing costs nothing.'
+    ? 'Nothing moves. Climbing costs nothing.'
     : near(C.len)
-      ? 'Your bag already outdrives this card on ' + Math.round(C.bound*100) + '% of holes, so the '
-        + 'next one is no longer than this one and the purse still goes up. This is as cheap as '
-        + 'climbing gets.'
+      ? 'Your bag outdrives this card on ' + Math.round(C.bound*100)
+        + '% of holes. As cheap as climbing gets.'
       : C.pay >= 1
-        ? 'The holes get longer, but you are far enough ahead of the card that the purse more than '
-          + 'keeps up.'
         // The "play it out first" advice only exists while there is something
         // left to play out. Said to someone whose card is already at 5 of 5 it
         // is an instruction they cannot follow.
-        : 'The course grows faster than the purse does, so until your bag catches up this is a pay '
-          + 'cut.' + (eventsOn(S.tier) < B.EVENTS_PER_CARD
-            ? ' Playing out this card first closes the gap: it grows to full length either way.'
-            : ' This card is played out, so the gap closes by your bag getting longer, not by waiting.');
+        ? 'Longer holes, but your bag is ahead enough that the purse keeps up.'
+        : 'A pay cut until your bag catches up.' + (eventsOn(S.tier) < B.EVENTS_PER_CARD
+            ? ' Play this card out first to close the gap.'
+            : ' This card is played out \u2014 the gap closes as your bag grows.');
   // Said plainly when the button underneath cannot be pressed yet: these are a
   // preview of a climb that is not offered, and reading "as cheap as climbing
   // gets" over a greyed out button is a nudge towards nothing.
@@ -8888,9 +8882,8 @@ function renderLegacy(){
   const lb = (k, v, col) => '<div class="lb"><span class="p"></span><span>' + k + '</span>'
     + '<span class="s"' + (col ? ' style="color:var(' + col + ')"' : '') + '>' + v + '</span></div>';
   const capped = S.tier >= B.TIER_MAX;
-  $('legBox').innerHTML = '<div class="hint">Retiring clears out your purse and all your range work. '
-      + 'Your bag, your shot book, everything the wager book has paid you and all your currencies '
-      + 'come with you.</div>'
+  $('legBox').innerHTML = '<div class="hint">Clears your purse and your range work. '
+      + 'Bag, shot book and currencies stay.</div>'
     + lb('Legacy on the card', fmt(P.now), '--brass')
     + lb('One more Tour Card', capped ? '\u2014' : '+' + fmt(P.card))
     + lb('One more cup', '+' + fmt(P.cup))
@@ -8901,7 +8894,7 @@ function renderLegacy(){
         + '<button class="buy ok" id="retireBtn"><span class="lbl">Retire</span><span class="amt">+'
         + fmt(gain) + '</span></button></div>'
       : '<div class="empty">Play one full event and retirement opens up.<br>'
-        + 'Through ' + holesPlayed(S.hole) + ' of ' + (B.ROUND*B.DAYS) + ' holes \u00b7 the figure above '
+        + 'Through ' + holesPlayed(S.hole) + ' of ' + (B.ROUND*B.DAYS) + '\u00a0holes \u00b7 the figure above '
         + 'is what the card is already worth.</div>');
   if(gain > 0) $('retireBtn').onclick = () => showSheet(
     '<h3>Sign the card?</h3><p>You bank ' + fmt(gain) + ' legacy and start again from Tour Card '
@@ -8917,8 +8910,8 @@ function renderLegacy(){
   const rows = $('relicRows');
   rows.innerHTML = '<div class="row">' + svgIcon('trophy', 'ric', BRASS)
     + '<div><div class="nm">Discover a trophy</div>'
-    + '<div class="ds">' + (n >= tot ? 'That is the lot. Every trophy is on the shelf.'
-        : (tot - n) + ' still out there somewhere. The gold ones turn up least often.') + '</div>'
+    + '<div class="ds">' + (n >= tot ? 'Every trophy is on the shelf.'
+        : (tot - n) + ' still out there \u00b7 gold ones are rarest.') + '</div>'
     + '<div class="mt">Found <i>' + n + '</i> of ' + tot + '</div></div>'
     + '<button class="buy' + (S.legacy >= dc && n < tot ? ' ok' : ' no') + '" id="discBtn">'
     + '<span class="lbl">Discover</span><span class="amt">' + (n >= tot ? '\u2014' : fmt(dc)) + '</span></button></div>';
@@ -8929,8 +8922,7 @@ function renderLegacy(){
     .sort((a,b) => order[a.t] - order[b.t] || a.n.localeCompare(b.n));
   if(!mine.length){
     rows.insertAdjacentHTML('beforeend',
-      '<div class="empty">Nothing on the shelves yet. Retire, bank some legacy, '
-      + 'and go and find the first one.</div>');
+      '<div class="empty">Nothing on the shelves yet.</div>');
   }
   for(const t of mine){
     const lv = S.relic[t.id] || 0, c2 = upgradeCost(t), tier = B.TR_TIER[t.t];
@@ -9174,7 +9166,7 @@ function renderCareer(){
 
   $('lvBox').innerHTML =
     '<div class="lvhead"><div><div class="lvno">' + (max ? 'Paragon ' + fmt(S.para, 0) : 'Level ' + S.lv)
-    + '</div><div class="lvsub">' + (max ? 'career level 60 \u00b7 ' + fmt(paraTotal(), 0) + ' points placed'
+    + '</div><div class="lvsub">' + (max ? 'career level 60 \u00b7 ' + fmt(paraTotal(), 0) + '\u00a0points placed'
         : 'to 60 \u00b7 ' + fmt(S.talPts, 0) + ' talent, ' + fmt(S.statPts, 0) + ' attribute unspent') + '</div></div>'
     + '<div class="lvxp">' + fmt(have) + ' / ' + fmt(need) + '</div></div>'
     + '<div class="bar"><i style="width:' + clamp(have/need,0,1)*100 + '%;background:'
@@ -9196,9 +9188,7 @@ function renderCareer(){
 function careerStats(w, C){
   w.innerHTML = '<div class="hint">'
     + (S.statPts ? '<b style="color:var(--brass)">' + S.statPts + ' to spend.</b> ' : '')
-    + 'Kept through retirement, and free to move. A career is '
-    + (B.LV_MAX * B.LV_STAT) + ' points and each milestone wants '
-    + B.STATS[0].mile.at + ', so you will not see all four.</div>';
+    + 'Kept through retirement, free to move.</div>';
   for(const s of B.STATS){
     const n = S.stat[s.id] || 0;
     const d = document.createElement('div');
@@ -9212,7 +9202,7 @@ function careerStats(w, C){
         + (on ? '' : ' \u00b7 <i>' + (m.at - n) + ' more</i>') + '</div></div>'
       : '';
     d.innerHTML = '<div><div class="nm">' + svgIcon(s.ic, 'tic') + s.n + '</div>'
-      + '<div class="ds">' + s.d + ' \u00b7 ' + s.v + ' each</div>'
+      + '<div class="ds">' + s.d + ' \u00b7 ' + nb(s.v) + ' each</div>'
       + '<div class="mt">Placed <i>' + n + '</i></div>' + bar + '</div>'
       + '<div class="btnrow"><button class="mini' + (S.statPts ? ' go' : ' dim') + '">+1</button>'
       + '<button class="mini' + (S.statPts >= 10 ? ' go' : ' dim') + '">+10</button></div>';
@@ -9223,8 +9213,7 @@ function careerStats(w, C){
   }
   const r = document.createElement('div');
   r.className = 'row';
-  r.innerHTML = '<div><div class="nm">Respec attributes</div>'
-    + '<div class="ds">Take them all back and start over.</div></div>'
+  r.innerHTML = '<div><div class="nm">Respec attributes</div></div>'
     + '<div class="btnrow"><button class="mini">Reset</button></div>';
   r.querySelector('button').onclick = () => {
     let n = 0; B.STATS.forEach(s => { n += S.stat[s.id]||0; S.stat[s.id] = 0; });
@@ -9255,9 +9244,8 @@ function careerTalents(w){
   const tree = B.TREES.find(t => t.id === talSub);
   const hint = document.createElement('div');
   hint.className = 'hint';
-  hint.innerHTML = tree.d + ' You have <b style="color:var(--brass)">' + S.talPts
-    + '</b> points spare and <b>' + treeSpent(tree) + '</b> in this tree. '
-    + 'The lower rows want points in <i>this</i> tree, not just any tree.';
+  hint.innerHTML = tree.d + ' <b style="color:var(--brass)">' + S.talPts
+    + '</b> spare, <b>' + treeSpent(tree) + '</b> in this tree.';
   w.appendChild(hint);
   careerTree(w, tree, true);
 }
@@ -9277,14 +9265,14 @@ function careerTree(w, tree, bare){
       lastReq = t.req;
       const h = document.createElement('div');
       h.className = 'tier' + (spent >= t.req ? ' open' : '');
-      h.textContent = t.req === 0 ? 'Open' : t.req + ' points in ' + tree.n;
+      h.textContent = t.req === 0 ? 'Open' : t.req + '\u00a0points in ' + tree.n;
       w.appendChild(h);
     }
     const n = talLv(t.id), locked = spent < t.req, maxed = n >= t.max;
     const d = document.createElement('div');
     d.className = 'row' + (locked ? ' locked' : '');
     d.innerHTML = '<div><div class="nm">' + t.n + (t.max === 1 ? ' <span class="pill">capstone</span>' : '') + '</div>'
-      + '<div class="ds">' + t.d + (t.max > 1 ? ' per rank' : '') + '</div>'
+      + '<div class="ds">' + nb(t.d) + (t.max > 1 ? ' per rank' : '') + '</div>'
       + '<div class="mt">' + pipRow(n, t.max) + ' <i>' + n + '/' + t.max + '</i>'
       + (n ? ' \u00b7 <b>now ' + talDesc(t, n) + '</b>' : '') + '</div></div>'
       + '<div class="btnrow"><button class="mini' + (!locked && !maxed && S.talPts ? ' go' : ' dim') + '">'
@@ -9298,8 +9286,7 @@ function careerTree(w, tree, bare){
   }
   const r = document.createElement('div');
   r.className = 'row';
-  r.innerHTML = '<div><div class="nm">Reset ' + tree.n + '</div>'
-    + '<div class="ds">Take back everything you put into this tree.</div></div>'
+  r.innerHTML = '<div><div class="nm">Reset ' + tree.n + '</div></div>'
     + '<div class="btnrow"><button class="mini">Reset</button></div>';
   r.querySelector('button').onclick = () => {
     let n = 0; tree.t.forEach(t => { n += talLv(t.id); S.tal[t.id] = 0; });
@@ -9338,17 +9325,14 @@ function careerParagon(w){
     S.paraRefund = 0;
   }
   if(!atMax() && !(S.para > 0)){
-    w.innerHTML = '<div class="empty">Paragon opens at career level ' + B.LV_MAX + '.<br>'
-      + 'You are level ' + S.lv + '. After 60 the bar keeps filling and every paragon level '
-      + 'hands you a point, forever.</div>';
+    w.innerHTML = '<div class="empty">Paragon opens at level ' + B.LV_MAX
+      + '. You are ' + S.lv + '.</div>';
     return;
   }
-  w.innerHTML = '<div class="hint">Nothing here moves a swing. Paragon buys the game '
-    + 'around it: the card, the wager book, the locker and the long game. Points come round '
-    + 'in order \u2014 ' + B.PARAGON.map(c => c.n).join(', ') + ' \u2014 and cannot shift '
-    + 'between categories. Every line caps at ' + (B.PARAGON[1].a[0].cap)
-    + ' except the two Core lines, which keep going forever. Next point goes to '
-    + '<b style="color:var(--brass)">' + B.PARAGON[(S.para) % B.PARAGON.length].n + '</b>.</div>';
+  w.innerHTML = '<div class="hint">Points come round in order and cannot move between '
+    + 'categories. Every line caps at ' + (B.PARAGON[1].a[0].cap)
+    + ' but the two Core lines. Next point: <b style="color:var(--brass)">'
+    + B.PARAGON[(S.para) % B.PARAGON.length].n + '</b>.</div>';
   for(const cat of B.PARAGON){
     const pool = S.paraPts[cat.id] || 0;
     const col = 'var(' + cat.v + ')';
@@ -9369,9 +9353,9 @@ function careerParagon(w){
       d.className = 'row';
       d.innerHTML = '<div><div class="nm">' + a.n
         + (a.cap === 0 ? ' <span class="pill" style="border-color:' + col + ';color:' + col + '">no cap</span>' : '')
-        + '</div>' + (a.d ? '<div class="ds">' + a.d + '</div>' : '')
-        + '<div class="mt">' + txt + ' at ' + fmt(n, 0)
-        + (a.cap ? ' / ' + a.cap : '') + ' points</div></div>'
+        + '</div>' + (a.d ? '<div class="ds">' + nb(a.d) + '</div>' : '')
+        + '<div class="mt">' + nb(txt) + ' at ' + fmt(n, 0)
+        + (a.cap ? ' / ' + a.cap : '') + '\u00a0points</div></div>'
         + '<div class="btnrow"><button class="mini' + (pool && !capped ? ' go' : ' dim') + '">+1</button>'
         + '<button class="mini' + (pool >= 10 && !capped ? ' go' : ' dim') + '">+10</button></div>';
       const bs = d.querySelectorAll('button');
@@ -9513,13 +9497,11 @@ function reallyWipe(){
 function intro(){
   showSheet('<h3>Mythic Mulligan</h3>'
     + '<p>Your golfer plays on his own. Your job is to make him better.</p>'
-    + '<ul><li>Every shot pays a little. Holing out pays properly.</li>'
-    + '<li>The clock is your scorecard. A par 3 gives you ten seconds, a par 4 fifteen, '
-    + 'a par 5 twenty. Finish quicker and you card better.</li>'
-    + '<li>Closing holes always drop a club. Whichever ball is in the bag decides '
-    + 'what your shots actually do.</li>'
-    + '<li>Each Tour Card stretches the holes faster than it fattens the purse. '
-    + 'Gear, shots, the wager book and trophies are how you keep up.</li></ul>'
+    + '<ul><li>Every shot pays. Holing out pays properly.</li>'
+    + '<li>The clock is your scorecard: ten seconds a par 3, fifteen a par 4, twenty a par 5.</li>'
+    + '<li>Closing holes drop a club. The ball in your bag decides what your shots do.</li>'
+    + '<li>Each Tour Card stretches the holes faster than the purse. Gear, shots, wagers and '
+    + 'trophies keep you up.</li></ul>'
     + '<button class="act" onclick="hideSheet()">Play away</button>');
 }
 function boot(){

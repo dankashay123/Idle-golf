@@ -145,8 +145,10 @@ module.exports = {
       out.rngMults = MULTS.length;
       // what the note claims, read back through the same clock the rest of the
       // game prints times with
-      out.rngWant = out.rngBroke.map(r2 => r2.maxed ? ''
+      // past a day the row says nothing on purpose, so that is what is wanted
+      out.rngWant = out.rngBroke.map(r2 => (r2.maxed || !untilTxt(r2.cost / 100)) ? ''
         : 'unlocks in ' + untilTxt(r2.cost / 100));
+      out.rngFar = out.rngBroke.filter((r2, i) => !r2.maxed && !out.rngWant[i]).length;
       // and the button charges for what it says it sells, at every multiplier
       DEV.clearUpg();
       out.rngBuy = [];
@@ -290,11 +292,20 @@ module.exports = {
         + ' purse/sec, not the 100 it was set to, so the times mean nothing');
     if (!(r.rngBroke.length > 10))
       throw new Error('only ' + r.rngBroke.length + ' rungs on the range to look at');
-    const missing = r.rngBroke.filter(x => !x.maxed && !x.note);
+    const missing = r.rngBroke.filter((x, i) => r.rngWant[i] && !x.note);
     if (missing.length)
-      throw new Error(missing.length + ' rung(s) you cannot afford say nothing about when '
-        + 'you can: ' + missing.slice(0, 4).map(x => x.n).join(', ')
+      throw new Error(missing.length + ' rung(s) within a day of affordable say nothing about '
+        + 'when: ' + missing.slice(0, 4).map(x => x.n).join(', ')
         + '. With the line at the top gone, a grey button with no wait on it is a dead end.');
+    // and past a day it says nothing, because "over a day" is not an answer you
+    // can sit out -- it was nine rungs running saying the same non-answer
+    const noisy = r.rngBroke.filter((x, i) => !x.maxed && !r.rngWant[i] && x.note);
+    if (noisy.length)
+      throw new Error(noisy.length + ' rung(s) more than a day out still carry a wait: '
+        + noisy[0].n + ' says "' + noisy[0].note + '"');
+    if (!(r.rngFar > 3))
+      throw new Error('only ' + r.rngFar + ' rung(s) are more than a day out, so the quiet case '
+        + 'is barely tested');
     const wrong = r.rngBroke.map((x, i) => [x, r.rngWant[i]])
       .filter(([x, want]) => !x.maxed && x.note !== want);
     if (wrong.length)
@@ -458,7 +469,8 @@ module.exports = {
       'range: ' + r.rngBroke.filter(x => x.note).length + ' of ' + r.rngBroke.length
       + ' rungs say when on an empty purse ("' + (r.rngBroke.find(x => x.note) || {}).note
       + '" ... "' + (r.rngBroke.filter(x => x.note).pop() || {}).note
-      + '"), none do with it full, none when capped; ' + r.rngBuy.length
+      + '"), the ' + r.rngFar + ' past a day say nothing, none do with the purse full, '
+      + 'none when capped; ' + r.rngBuy.length
       + ' buy buttons across ' + r.rngMults + ' multipliers all charge for what they name',
       'retirement before the first event: ' + P.now + ' legacy, +' + P.card + ' a card, +'
       + P.cup + ' a cup, buys ' + r.buys.join('/') + ' at ' + r.discSteps.join('/'),
