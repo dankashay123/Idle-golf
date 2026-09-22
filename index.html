@@ -11,7 +11,11 @@
 :root{
   --ink:#06100C; --pine:#0C1A13; --panel:#112318; --raise:#17301F; --raise2:#1D3B28;
   --line:#22462F; --line-soft:#1A3524;
-  --chalk:#DFE9DC; --dim:#82A08B; --faint:#5B7864;
+  /* --faint was 3.4:1 on the panel and 2.5:1 on a raised button, and it is
+     the colour of every caption, unit and inactive tab: hard going on a phone
+     in daylight. Lifted to 4.2-5:1 against where text actually sits, and --dim
+     moved up the same step so the three shades stay three shades. */
+  --chalk:#DFE9DC; --dim:#8BA793; --faint:#6B8874;
   --brass:#E3B457; --brass-dk:#8A6A26;
   --flag:#E4574A; --aurora:#57E0BE; --myth:#C68BFF;
 
@@ -88,7 +92,7 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
 .cell.s-3,.cell.s-4{color:var(--myth)} .cell.s-2{color:var(--brass)}
 .cell.s-1{color:var(--aurora)} .cell.s0{color:var(--chalk)}
 .cell.s1{color:var(--dim)} .cell.s2,.cell.s3,.cell.s4{color:var(--flag)}
-.cell i{position:absolute;top:2px;left:3px;font-size:var(--f0);font-style:normal;color:var(--faint)}
+.cell i{position:absolute;top:2px;left:3px;font-size:var(--f0);font-style:normal;color:var(--dim)}
 .cell.done i{display:none}
 
 /* the nine: a goal and a running total, so the round has a shape you can see */
@@ -105,7 +109,7 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
 /* the pull tab: a notch on the corner of the menu, and the one thing in the
    layout allowed to sit outside its own box */
 #vitals{position:relative}
-#drawer{position:absolute;top:-18px;right:10px;width:44px;height:18px;padding:0;
+#drawer{position:absolute;top:-24px;right:10px;width:48px;height:24px;padding:0;
   background:var(--panel);border:var(--hair);border-bottom:0;border-top:2px solid var(--brass);
   z-index:12;display:flex;align-items:center;justify-content:center;
   box-shadow:0 -2px 6px rgba(0,0,0,.45)}
@@ -203,7 +207,7 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
 
 /* ---------- multiplier switch ---------- */
 #multBar{display:flex;gap:6px}
-.mbtn{font-family:var(--mono);font-size:var(--f2);padding:3px 9px;border:1px solid var(--line);
+.mbtn{font-family:var(--mono);font-size:var(--f2);padding:3px 9px;min-height:24px;border:1px solid var(--line);
   border-radius:0;color:var(--dim)}
 .mbtn.on{background:var(--raise2);border-color:var(--brass-dk);color:var(--brass)}
 
@@ -224,7 +228,7 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
   min-height:52px;display:flex;flex-direction:column;align-items:center;justify-content:center;
   gap:3px;border-radius:0}
 .slot .sic{width:24px;height:24px}   /* 2x of 12, not 22 */
-.slot .sk{font-size:8px;letter-spacing:.04em;text-transform:uppercase;color:var(--faint);
+.slot .sk{font-size:8px;letter-spacing:.04em;text-transform:uppercase;color:var(--dim);
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
 .slot.on{background:#16301F;border-color:var(--brass)}
 .slot.on .sk{color:var(--brass)}
@@ -243,7 +247,7 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
 .lkhead .lkc b{color:var(--brass)}
 .lkhead .lkauto{border:1px solid var(--line);border-radius:0;background:transparent;
   color:var(--faint);font-size:var(--f0);letter-spacing:.09em;text-transform:uppercase;
-  padding:3px 7px;cursor:pointer;flex:0 0 auto}
+  padding:3px 7px;min-height:24px;cursor:pointer;flex:0 0 auto}
 .lkhead .lkauto.on{border-color:var(--brass-dk);color:var(--brass);background:rgba(227,180,87,.09)}
 
 .item{padding:9px 12px;border-bottom:1px solid #12261A;display:grid;
@@ -279,7 +283,7 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
 .equipbtn.up{border-color:var(--aurora);color:var(--aurora);background:rgba(87,224,190,.10)}
 .equipbtn.worn{border-color:var(--line);color:var(--faint);background:transparent}
 .tag{font-size:var(--f0);letter-spacing:.1em;text-transform:uppercase;font-weight:700}
-.mini{border:1px solid var(--line);border-radius:0;padding:5px 9px;font-size:var(--f1);
+.mini{border:1px solid var(--line);border-radius:0;padding:5px 9px;min-height:24px;font-size:var(--f1);
   letter-spacing:.08em;text-transform:uppercase;color:var(--dim);background:var(--raise)}
 .mini.go{border-color:var(--brass-dk);color:var(--brass)}
 .mini.dim{opacity:.35}
@@ -337,7 +341,7 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
   -webkit-overflow-scrolling:touch;scrollbar-width:none}
 #bagNav::-webkit-scrollbar,#careerNav::-webkit-scrollbar{display:none}
 .sub{flex:0 0 auto;padding:9px 13px;font-size:var(--f1);letter-spacing:.08em;text-transform:uppercase;
-  color:var(--faint);font-weight:700;white-space:nowrap;border-bottom:2px solid transparent}
+  color:var(--dim);font-weight:700;white-space:nowrap;border-bottom:2px solid transparent}
 .sub.on{color:var(--brass);border-bottom-color:var(--brass)}
 #talNav{display:grid;grid-template-columns:repeat(3,1fr);background:#0A170F;
   border-bottom:var(--hair)}
@@ -514,8 +518,8 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
   background:var(--raise2);color:var(--brass);border-radius:0;text-align:center;
   font-weight:700;font-size:var(--f2);line-height:1.2;font-family:var(--mono)}
 .price.no{border-top-color:var(--line);color:var(--dim);background:transparent}
-.price.max{border-top-color:var(--line);color:var(--faint);background:transparent}
-.price small{display:block;font-size:var(--f0);letter-spacing:.08em;color:var(--faint);
+.price.max{border-top-color:var(--line);color:var(--dim);background:transparent}
+.price small{display:block;font-size:var(--f0);letter-spacing:.08em;color:var(--dim);
   font-weight:400;font-family:var(--sans);text-transform:uppercase;margin-top:1px}
 /* On the art, not on the header: over the header it sat on top of the number,
    and a bonus badge that hides the amount it is a bonus on is worse than none.
@@ -616,8 +620,8 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
 .open .fold{display:block}
 .foldhead{display:flex;align-items:flex-start;gap:6px}
 .foldhead>span{flex:1}
-.qm{flex:0 0 auto;width:17px;height:17px;border-radius:0;border:1px solid var(--line-soft);
-  color:var(--faint);font-size:var(--f1);line-height:15px;text-align:center;font-weight:700;
+.qm{flex:0 0 auto;width:24px;height:24px;border-radius:0;border:1px solid var(--line-soft);
+  color:var(--faint);font-size:var(--f1);line-height:22px;text-align:center;font-weight:700;
   background:none;padding:0;margin-left:6px}
 .open .qm{color:var(--brass);border-color:var(--brass-dk)}
 @media (prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;transition-duration:.01ms!important}}
