@@ -2914,12 +2914,20 @@ function migrate(){
       .filter(a => a && typeof a.roll === 'number')
       .map(a => okAff.has(a.k) ? a : { k:'mst', roll:a.roll });
     if(it.el && !okEl.has(it.el)) it.el = B.ELEM[0].id;
-    if(!(it.rar >= 0)) it.rar = 0;
+    // "at least zero" let a rarity of 99 through, and B.RARITY[99] is nothing:
+    // the save loaded, and the first thing to score that club threw. A whole
+    // number inside the table, or the bottom of it.
+    it.rar = clamp(Math.floor(it.rar) || 0, 0, B.RARITY.length - 1);
     if(!(it.ilvl >= 0)) it.ilvl = 0;
     if(!(it.enh >= 0)) it.enh = 0;
   };
-  B.SLOTS.forEach(s => fix(S.equip[s.id]));
+  B.SLOTS.forEach(s => {
+    const it = S.equip[s.id];
+    if(it){ fix(it); it.slot = s.id; }   // it is worn in this slot, so it is this slot's
+  });
   if(!Array.isArray(S.bag)) S.bag = [];
+  // a club for a slot this build does not have cannot be worn or scored
+  S.bag = S.bag.filter(it => it && B.SLOTS.some(sl => sl.id === it.slot));
   S.bag.forEach(fix);
 
   for(const k in S.upg)     if(!B.UPG.some(u => u.id === k)) delete S.upg[k];
@@ -2968,26 +2976,47 @@ function migrate(){
 // Reloading fires pagehide, which fires save, which wrote the state straight
 // back over the file we had just deleted. Erasing has to switch saving off.
 let WIPED = false;
+// A second copy, written a minute behind the first. One unreadable save used to
+// be the end of a career: boot could not parse it, started a fresh game, and
+// twelve seconds later the fresh game saved straight over it.
+const BAK = KEY + ':bak';
+let saveN = 0, saveWarned = false;
 function save(){
   if(WIPED) return;
   S.t = Date.now()/1000;
-  try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){}
-}
-function load(){
-  let raw = null;
-  try{ raw = localStorage.getItem(KEY); }catch(e){ return false; }
-  if(!raw) return false;
   try{
-    const o = JSON.parse(raw);
-    if(!o) return false;
+    const raw = JSON.stringify(S);
+    localStorage.setItem(KEY, raw);
+    if(!(saveN++ % 5)) localStorage.setItem(BAK, raw);
+  }catch(e){
+    // Private browsing and a full disk both land here, and it used to be
+    // swallowed: hours of play, then nothing on the next visit and no word why.
+    if(!saveWarned){ saveWarned = true; toast('This browser is not letting the game save'); }
+  }
+}
+function readSave(k){
+  try{
+    const o = JSON.parse(localStorage.getItem(k) || 'null');
     // migrate() already drops anything this build no longer defines, so an
     // unfamiliar version number is something to migrate rather than a reason to
     // silently erase the save. Rejecting it here meant the day ver became 2
     // every player lost everything.
-    if(typeof o.ver !== 'number') return false;
-    Object.assign(S, o);
-    return true;
-  }catch(e){ return false; }
+    return o && typeof o.ver === 'number' ? o : null;
+  }catch(e){ return null; }
+}
+function load(){
+  let o = readSave(KEY);
+  if(!o){
+    o = readSave(BAK);
+    if(!o) return false;
+    // Kept rather than overwritten, in case there is anything in it to rescue.
+    try{
+      const bad = localStorage.getItem(KEY);
+      if(bad) localStorage.setItem(KEY + ':unreadable', bad);
+    }catch(e){}
+  }
+  Object.assign(S, o);
+  return true;
 }
 
 /* =========================================================================
@@ -9483,7 +9512,8 @@ function wipe(){
 }
 function reallyWipe(){
   WIPED = true;
-  try{ localStorage.removeItem(KEY); }catch(e){}
+  // the backup too, or the next boot restores the save you just erased
+  try{ localStorage.removeItem(KEY); localStorage.removeItem(BAK); }catch(e){}
   // Rebuilt in place rather than reloaded: a reload in an embedded browser is
   // not guaranteed, and the old path relied on one.
   Object.keys(S).forEach(k => delete S[k]);

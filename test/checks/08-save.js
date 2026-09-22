@@ -27,6 +27,8 @@ module.exports = {
       raw.equip.irons.el = 'notAnElement';
       raw.equip.wedge.rar = undefined;
       raw.bag.push({ uid: 999, slot: 'ball', rar: 99, ilvl: -3, enh: 'x', aff: null });
+      raw.bag.push({ uid: 998, slot: 'caddieBib', rar: 2, ilvl: 5, enh: 0, aff: [] });
+      raw.bag.push({ uid: 997, slot: 'glove', rar: 1.5, ilvl: 5, enh: 0, aff: [] });
 
       // the ten flat-stat talents as an older build wrote them, plus one that
       // never existed at all, and one that is still in the table
@@ -42,6 +44,15 @@ module.exports = {
       Object.assign(S, defaultState());
       load(); initState(); migrate();
       const D = derive();
+      // Loading clean is not the same as being usable. The roughed-up club
+      // above sat in the bag through every assertion here while a rarity of 99
+      // waited for the first thing to score it -- which threw. Every club that
+      // survives migrate has to score to a real number.
+      const unscorable = [];
+      for (const it of S.bag.concat(Object.values(S.equip).filter(Boolean))) {
+        try { const v = itemScore(it); if (!isFinite(v)) unscorable.push(it.uid + ' scores ' + v); }
+        catch (e) { unscorable.push(it.uid + ' throws ' + e.message); }
+      }
       return {
         gold, lv, upg, bag,
         after: { gold: S.gold, lv: S.lv, upg: S.upg.drive, bag: S.bag.length,
@@ -54,7 +65,8 @@ module.exports = {
                  ghostTalent: S.tal.persimmon,
                  talKeys: Object.keys(S.tal).filter(k => S.tal[k] > 0) },
         treeIds: [].concat.apply([], B.TREES.map(t => t.t.map(x => x.id))),
-        oldSpent, oldKept: raw.tal.bane
+        oldSpent, oldKept: raw.tal.bane, unscorable,
+        strayKept: S.bag.some(it => it.uid === 998)
       };
     });
     if (r.skip) throw new Error(r.skip);
@@ -69,6 +81,11 @@ module.exports = {
 
     if (a.ghostTalent !== undefined)
       throw new Error('a talent the tree no longer has survived migrate()');
+    if (r.unscorable.length)
+      throw new Error('clubs survived migrate that cannot be scored: ' + r.unscorable.join('; ')
+        + '. The save loads, and then the first sort of the locker throws.');
+    if (r.strayKept)
+      throw new Error('a club for a slot this build does not have survived migrate');
     if (a.keptTalent !== r.oldKept)
       throw new Error('a talent that is still in the tree came back as ' + a.keptTalent
         + ' instead of ' + r.oldKept);
@@ -151,7 +168,60 @@ module.exports = {
         + tab.again.played.toFixed(2) + 's played, ' + tab.again.holes + ' holes, '
         + tab.again.gold + ' purse. Claiming the time has to move the clock.');
 
+    // ---- a save that cannot be read, and a browser that will not save ----
+    const bak = await page.evaluate(() => {
+      const out = {};
+      try { hideSheet(); } catch (e) {}
+      QUIET = true; DEV.gold(50); QUIET = false;
+      saveN = 0; save();                       // first save of a run writes the backup too
+      const goldSaved = S.gold, lvSaved = S.lv;
+      out.hasBak = !!localStorage.getItem(BAK);
+
+      // the main slot comes back unreadable: half a write, a bad byte, anything
+      localStorage.setItem(KEY, '{"ver":3,"gold":12');
+      Object.keys(S).forEach(k => delete S[k]);
+      Object.assign(S, defaultState());
+      out.loaded = load();
+      out.gold = S.gold; out.lv = S.lv; out.goldSaved = goldSaved; out.lvSaved = lvSaved;
+      out.keptBad = localStorage.getItem(KEY + ':unreadable') === '{"ver":3,"gold":12';
+      initState(); migrate();
+
+      // erasing has to take the backup with it, or the next boot restores it
+      reallyWipe();
+      out.bakAfterWipe = localStorage.getItem(BAK);
+      out.mainAfterWipe = localStorage.getItem(KEY);
+      out.loadAfterWipe = load();
+
+      // and a browser that refuses to store anything says so, once
+      const realSet = Storage.prototype.setItem;
+      const shown = [];
+      const realToast = window.toast;
+      window.toast = (m, c) => { shown.push(String(m)); };
+      Storage.prototype.setItem = function () { throw new Error('QuotaExceededError'); };
+      try { saveWarned = false; save(); save(); save(); }
+      finally { Storage.prototype.setItem = realSet; window.toast = realToast; }
+      out.warned = shown.filter(m => /not letting the game save/i.test(m)).length;
+      return out;
+    });
+    if (!bak.hasBak) throw new Error('the first save of a session wrote no backup copy');
+    if (!bak.loaded || bak.gold !== bak.goldSaved || bak.lv !== bak.lvSaved)
+      throw new Error('with the main save unreadable the game came back with ' + bak.gold
+        + ' purse at level ' + bak.lv + ' instead of ' + bak.goldSaved + ' at ' + bak.lvSaved
+        + '. Boot starts fresh when it cannot read a save, and twelve seconds later the fresh '
+        + 'game writes over it: the backup is the only thing between that and a lost career.');
+    if (!bak.keptBad)
+      throw new Error('the unreadable save was not kept aside, so whatever was in it is gone');
+    if (bak.bakAfterWipe || bak.mainAfterWipe || bak.loadAfterWipe)
+      throw new Error('erasing the save left ' + (bak.bakAfterWipe ? 'the backup' : 'the save')
+        + ' behind, so the next boot brings back what the player asked to erase');
+    if (bak.warned !== 1)
+      throw new Error('a browser that refuses every save raised ' + bak.warned + ' warning(s); '
+        + 'it has to say so once. Private browsing and a full disk both land here, and '
+        + 'swallowing it means hours of play and nothing on the next visit.');
+
     return ['a roughed-up save loads clean, carry ' + Math.round(a.carry),
+      'main save unreadable: restored from the backup and the bad copy kept aside; erasing '
+      + 'takes both; a browser that will not save says so once',
       'back from another tab: 30s played out at full pace (' + tab.short.played.toFixed(2)
       + 's), 2h raised the away card (' + tab.long.holes + ' holes), and a second return '
       + 'straight after paid nothing',
