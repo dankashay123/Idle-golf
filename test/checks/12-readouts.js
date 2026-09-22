@@ -132,6 +132,40 @@ module.exports = {
                          line: /scrapped \d+/i.test(document.getElementById('sheet').textContent) };
       try { hideSheet(); } catch (e) {}
 
+      // ---- what is running when you leave ---------------------------------
+      // derive() reads whatever is live, so a twelve-second skill buff fired on
+      // the way out paid 2.5x on twelve hours away, an eight-minute Hot Streak
+      // 5x, and one hour of Double Purse doubled all twelve. And the calendar
+      // timers -- the free gift, the members' daily -- only counted time with
+      // the game open.
+      {
+        try { hideSheet(); } catch (e) {}
+        const snap = JSON.stringify(S);
+        const run = (setup, hours) => {
+          Object.keys(S).forEach(k => delete S[k]); Object.assign(S, JSON.parse(snap));
+          setup(); const g = S.gold, sov = S.sov || 0;
+          S.t = Date.now()/1000 - (hours || 12) * 3600; offline();
+          try { hideSheet(); } catch (e) {}
+          return { gold: S.gold - g, sov: (S.sov || 0) - sov };
+        };
+        const hotId = B.PERKS.find(x => /hot streak/i.test(x.n)).id;
+        const base = run(() => {}).gold;
+        let hotLeft = 0;
+        const hot = run(() => { S.perkOn = { [hotId]: 480 }; }).gold;
+        hotLeft = perkLeft(hotId);
+        const wind = run(() => { S.buff = { windfall: { t: 12, v: 150 } }; }).gold;
+        const boost1 = run(() => { S.boostT = 3600; }).gold;
+        const boost1Left = S.boostT;
+        const boost24 = run(() => { S.boostT = 24 * 3600; }).gold;
+        const boost24Left = S.boostT;
+        const free = (run(() => { S.freeT = 0; }, 9), freeReady());
+        const dues = run(() => { S.member = 1; S.memberT = 0; }, 3 * 24 + 1).sov;
+        out.timed = { base, hot, hotLeft, wind, boost1, boost1Left, boost24, boost24Left, free, dues,
+                      daily: B.MEMBER_DAILY, dt: Math.min(12 * 3600, B.OFFLINE_CAP + permAdd('contract') * 3600),
+                      boostMult: B.BOOST_MULT };
+        Object.keys(S).forEach(k => delete S[k]); Object.assign(S, JSON.parse(snap));
+      }
+
       // away far longer than the caddie is good for: the card has to own up to
       // both numbers, not quietly report the cap as the whole absence
       out.awayCap = B.OFFLINE_CAP + permAdd('contract') * 3600;
@@ -221,7 +255,14 @@ module.exports = {
       const climbCase = (k, events, nextEvents) => {
         DEV.tierSet(20); try { hideSheet(); } catch (e) {}
         S.relic = {}; B.UPG.forEach(u => S.upg[u.id] = 0);
-        B.SLOTS.forEach(sl => { S.equip[sl.id] = makeItem(14, 0, 2, sl.id); });
+        // Plain clubs: no element and no affixes. Rolled at random, a club
+        // whose element matched the course lifted the bag on some holes, so the
+        // bag tuned to sit at 0.6 of the card on hole 2 outdrove it elsewhere
+        // and the "behind" case read 2.30-2.34 instead of 2.35 -- measured on
+        // 6 runs in 40, and a check failing one run in ten. The game was right;
+        // the setup was not the setup it said it was.
+        B.SLOTS.forEach(sl => { const it = makeItem(14, 0, 2, sl.id);
+          it.el = null; it.aff = []; S.equip[sl.id] = it; });
         S.hole = 2; startHole();
         const ch = { y:1, g:1, s:1, c:0, p:0, dl:0 };
         const pace = yardageFor(S.hole, S.tier, ch) / (parTimeFor(S.hole) * B.HCP);
@@ -292,6 +333,33 @@ module.exports = {
     if (FL.bag !== FL.cap)
       throw new Error('the locker ended the away session at ' + FL.bag + ' of ' + FL.cap);
     if (!FL.line) throw new Error('the away card never says clubs were scrapped for shards');
+
+    const T = r.timed, x = v => (v / T.base).toFixed(2);
+    if (Math.abs(T.hot / T.base - 1) > 0.01)
+      throw new Error('an eight-minute Hot Streak left running paid x' + x(T.hot) + ' on twelve '
+        + 'hours away. A perk is for playing; it has to sit the absence out.');
+    if (Math.abs(T.hotLeft - 480) > 1)
+      throw new Error('Hot Streak came back with ' + Math.round(T.hotLeft) + 's left of 480. It sat '
+        + 'the absence out, so it has to pick up where it left off.');
+    if (Math.abs(T.wind / T.base - 1) > 0.01)
+      throw new Error('a twelve-second Sponsor Windfall paid x' + x(T.wind) + ' on twelve hours away');
+    const want1 = 1 + (T.boostMult - 1) * 3600 / T.dt;
+    if (Math.abs(T.boost1 / T.base - want1) > 0.01)
+      throw new Error('one hour of Double Purse left on twelve hours away paid x' + x(T.boost1)
+        + ', where the hour it covered is worth x' + want1.toFixed(2));
+    if (T.boost1Left !== 0)
+      throw new Error('one hour of Double Purse is still running after twelve hours away ('
+        + T.boost1Left + 's). It is sold as hours, so it runs on the clock.');
+    if (Math.abs(T.boost24 / T.base - T.boostMult) > 0.01 || Math.abs(T.boost24Left - 12 * 3600) > 5)
+      throw new Error('a full day of Double Purse on twelve hours away paid x' + x(T.boost24)
+        + ' and left ' + Math.round(T.boost24Left / 3600) + 'h; it should double all of it and '
+        + 'leave 12h');
+    if (!T.free)
+      throw new Error('nine hours away and the free gift that comes every eight is not ready: '
+        + 'it was only counting time with the game open');
+    if (T.dues !== 3 * T.daily)
+      throw new Error('a member away three days was paid ' + T.dues + ' sovereigns in dailies, not '
+        + (3 * T.daily) + '. It is sold as a daily, so it runs on the calendar.');
 
     // nine days away, a caddie good for twelve hours: both numbers or neither
     const capTxt = (h => h + 'h')(Math.floor(r.awayCap / 3600));
@@ -427,6 +495,9 @@ module.exports = {
 
     // ---- climbing a Tour Card -----------------------------------------
     const B_ = r.behind, A_ = r.ahead, P_ = r.played;
+    if (B_.bound > 0)
+      throw new Error('the "behind" setup has the handicap floor setting ' + Math.round(B_.bound * 100)
+        + '% of holes, so it is not behind its card and cannot test that case');
     // behind the card: the hole is the card's, so it grows by exactly TIER_Y
     // and the purse by exactly TIER_G. Any other number and the two sides are
     // being walked under different weather again.
@@ -501,7 +572,10 @@ module.exports = {
       'away card: ' + a.tiles + ' tiles, ' + a.bands.length + ' bands, '
       + a.lines.length + ' lines and not one of them zero; a full locker away 12h found '
       + r.fullLocker.gear + ' clubs and scrapped the overflow for ' + r.fullLocker.shards
-      + ' shards; nine days away reads "'
+      + ' shards; left running on 12h away, Hot Streak x' + (r.timed.hot / r.timed.base).toFixed(2)
+      + ' (and resumes), Windfall x' + (r.timed.wind / r.timed.base).toFixed(2) + ', 1h of Double '
+      + 'Purse x' + (r.timed.boost1 / r.timed.base).toFixed(2) + '; free gift ready after 9h, 3 days '
+      + 'a member paid ' + r.timed.dues + '; nine days away reads "'
       + (r.awayLong.match(/[^.]*away[^.]*/) || [''])[0].trim() + '"',
       'range: ' + r.rngBroke.filter(x => x.note).length + ' of ' + r.rngBroke.length
       + ' rungs say when on an empty purse ("' + (r.rngBroke.find(x => x.note) || {}).note

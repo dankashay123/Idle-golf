@@ -5123,8 +5123,23 @@ function offline(){
   // save until the next one, and a second catch-up inside that window -- a
   // reload, or a return from another tab -- pays the same absence twice.
   S.t = Date.now()/1000;
-  if(dt < 60){ regenKeys(dt); return; }
+  if(dt < 60){ regenKeys(dt); tickShop(away); return; }
   regenKeys(dt);
+
+  // Anything with a timer pays for as long as it lasts, not for the whole
+  // absence. derive() reads whatever is live, so a Sponsor Windfall fired on
+  // the way out -- +150% purse for twelve seconds -- paid 2.5x on twelve hours
+  // away, an eight-minute Hot Streak paid 5x on all of it, and an hour of
+  // Double Purse doubled the lot. Skill buffs have long run out by the time you
+  // are back. Perks are for playing: they sit out the absence and pick up
+  // where they left off. Double Purse runs on the clock -- it is sold as 24
+  // hours -- and pays for the part of the session it actually covered.
+  S.buff = {};
+  const perkHold = S.perkOn; S.perkOn = {};
+  const boostLeft = S.boostT || 0;
+  const boostAll = boostLeft >= dt;
+  if(!boostAll) S.boostT = 0;
+
   const D = derive();
   const A = roundRate(S.tier);
   const secs = A.secs, purse = A.purse;
@@ -5186,7 +5201,19 @@ function offline(){
     // the away discount for the rest of the session, because nothing reset
     // these on the way out.
     OFFLINE = false; QUIET = false;
+    S.perkOn = perkHold; S.boostT = boostLeft;
   }
+  // Double Purse that ran out part way pays on its share of everything the
+  // session earned, event cheques included, not only on the hole purse
+  if(!boostAll && boostLeft > 0)
+    S.gold += (S.gold - goldBefore) * (B.BOOST_MULT - 1) * boostLeft / dt;
+  // The calendar kept running while the caddie played. The free gift every
+  // eight hours and the members' daily only ever counted time with the game
+  // open, so a member dropping in for twenty minutes a day was paid their
+  // "daily" about once a season. They read the whole absence, not the capped
+  // part the caddie plays -- a week away is seven dailies.
+  QUIET = true;
+  try{ tickShop(away); }finally{ QUIET = false; }
   // One sweep for the whole session rather than one per drop: the loop above
   // can land a thousand clubs and the sweep costs a derive() per candidate.
   const swapped = autoEquipSweep().length;
