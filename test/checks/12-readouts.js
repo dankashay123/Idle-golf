@@ -71,10 +71,21 @@ module.exports = {
       out.preview = { moved, changed, nulls, tried: S.bag.length, threw,
                       equipHeld: snap() === beforeEquip, bagHeld: bagSnap() === beforeBag };
 
-      // the sheet shows it for a spare and not for what you are carrying
+      // The sheet shows it for a spare and not for what you are carrying.
+      // Which slot is being carried is not something the setup above decides:
+      // it equips the worst club in each slot THAT THE BAGS HAPPENED TO DROP,
+      // and three bags is fifteen clubs over six slots, so the driver comes up
+      // empty about one run in fifteen -- (5/6)^15. Asking for B.SLOTS[0] by
+      // position was a one-in-fifteen crash inside the check dressed up as a
+      // flake. Take a slot that is actually worn, and say so if none is.
+      if (!S.bag.length) throw new Error('the bags dropped nothing, so there is no spare to open');
       itemSheet(S.bag[0], false);
       out.sheetSpare = !!document.querySelector('#sheet .swap');
-      itemSheet(S.equip[B.SLOTS[0].id], true);
+      const wornSlot = B.SLOTS.find(sl => S.equip[sl.id]);
+      if (!wornSlot) throw new Error('no club is being carried in any slot, so the sheet '
+        + 'for a worn club cannot be tested');
+      out.wornSlot = wornSlot.id;
+      itemSheet(S.equip[wornSlot.id], true);
       out.sheetWorn = !!document.querySelector('#sheet .swap');
       try { hideSheet(); } catch (e) {}
 
@@ -167,6 +178,7 @@ module.exports = {
         + (p.nulls > 0 ? p.nulls + ' spare clubs returned nothing' : 'and ' + (-p.nulls)
           + ' carried ones offered a preview'));
     if (!r.sheetSpare) throw new Error('the item sheet shows no preview for a spare club');
+    if (!r.wornSlot) throw new Error('the check never found a worn slot to test');
     if (r.sheetWorn) throw new Error('the item sheet previews the club you are already carrying');
 
     const a = r.away;

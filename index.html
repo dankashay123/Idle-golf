@@ -121,9 +121,10 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
 /* the field takes half the app, and the canvas fills whatever shape that is */
 #stage{position:relative;background:#080D0A;border-bottom:var(--hair);overflow:hidden}
 #hole{display:block;width:100%;height:100%;image-rendering:pixelated;image-rendering:crisp-edges}
-#hud{position:absolute;inset:0;pointer-events:none;padding:7px 9px;display:flex;
-  flex-direction:column;justify-content:space-between}
-.hudrow{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+/* The old stage HUD is gone: nothing carries id="hud" or class="hudrow" any
+   more, and #hud with inset:0 sat here waiting to stretch the next element to
+   take the name over the whole stage, which is exactly what it did. Two class
+   name collisions have cost this file a day each already. */
 .plate{background:rgba(6,16,12,.72);border:1px solid rgba(87,224,190,.16);border-radius:0;
   padding:4px 7px;backdrop-filter:blur(3px)}
 .plate .k{font-size:var(--f0);letter-spacing:.16em;text-transform:uppercase;color:var(--faint)}
@@ -392,7 +393,7 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
 /* The readout, in the same type as the rest of the chrome. Drawn on the canvas
    in the pixel font it was legible but bulky, and it could not match anything
    else on screen. */
-#readout{position:absolute;left:2.2%;top:2.5%;min-width:36%;max-width:56%;z-index:29;
+#readout{position:relative;min-width:64%;max-width:100%;
   background:rgba(6,12,9,.74);border:1px solid #1B3A2E;border-radius:0;
   padding:4px 7px 5px;backdrop-filter:blur(2px);pointer-events:none}
 .rline{display:flex;justify-content:space-between;gap:12px;font-size:var(--f0);letter-spacing:.14em;
@@ -516,7 +517,24 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
 /* two stage buttons, drawn from the same pixel grid as the game */
 /* The shop sits bottom left, the far corner from the two stage buttons and
    clear of the shot book icons the renderer draws up from that edge. */
-#shopBtn{position:absolute;left:2.5%;bottom:3%;width:8.4%;aspect-ratio:1/1;z-index:31;
+/* Under the readout rather than down in the corner, and the size of the other
+   two stage buttons rather than half again bigger than them.
+   It sits in a column with the readout rather than at a percentage of the
+   stage, because the readout is built out of fixed pixel type: it is about
+   45px tall whatever the screen, which is 14% of a short stage and 9% of a tall
+   one. Any single top% is wrong on one of them, and a calc() off 45px is a
+   guess that the next line added to the readout would break. In the column it
+   just follows whatever the readout turns out to be.
+   The percentages inside #hudLeft are rebased on its 56%: the readout's old
+   min-width of 36% of the stage is 64% of this, and its old max-width of 56%
+   is all of it, so it still sizes to its text between the same two bounds. */
+/* 29, which is what the readout carried on its own: below #toasts at 30, so a
+   toast still paints over the readout rather than under it. Toasts are
+   pointer-events:none, so the button underneath stays pressable either way. */
+#hudLeft{position:absolute;left:2.2%;top:2.5%;width:56%;z-index:29;
+  display:flex;flex-direction:column;align-items:flex-start;gap:4px;
+  pointer-events:none}
+#shopBtn{position:relative;width:11%;aspect-ratio:1/1;flex:0 0 auto;pointer-events:auto;
   background:none;border:0;padding:0;display:flex;align-items:center;justify-content:center;
   filter:drop-shadow(0 1px 2px rgba(0,0,0,.9))}
 #shopIcon{display:block;width:100%;height:100%;object-fit:contain;
@@ -595,15 +613,17 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
 
   <div id="stage">
     <canvas id="hole" width="720" height="440"></canvas>
-    <button id="shopBtn" aria-label="Pro shop"><img id="shopIcon" alt=""><span id="shopDot"></span></button>
     <button id="honBtn" aria-label="Achievements"><img id="honIcon" alt=""></button>
     <button id="perkBtn" aria-label="Sponsor perks"><img id="perkIcon" alt=""><span id="perkDot"></span></button>
+    <div id="hudLeft">
     <div id="readout">
       <div class="rline"><span id="rTop">Hole 1 &middot; Par 4</span><span id="rTopR">0.0 / 15s</span></div>
       <div class="rmain"><b id="rBig">0</b><span class="ru" id="rUnit">yds</span>
         <span class="rsp"></span><span id="rTag"></span></div>
       <div class="rbar"><i id="rFill"></i></div>
       <div class="rstrip" id="rStrip" hidden></div>
+    </div>
+    <button id="shopBtn" aria-label="Pro shop"><img id="shopIcon" alt=""><span id="shopDot"></span></button>
     </div>
     <div id="toasts"></div>
   </div>
@@ -803,7 +823,10 @@ const B = {
     sigirons: ['..X.....X...','..Xx....Xx..','..X.....X...','..X..X..X...','..X..Xx.X...','..X..X..X...','.XXXXXXXXx..','XwwwwwwwwXx.','XwXoXoXoXXx.','XwXXXXXXXXx.','XxXXXXXXXXx.','.XXXXXXXXx..'],
     sponsor: ['XXXXXXXXXXXX','XwwwwwwwwwXx','XwXXXXXXXXXx','XwXoooooXXXx','XwXXXXXXXXXx','XwXoooooXXXx','XwXXXXXXXXXx','XxXXXXXXXXXx','XXXXXXXXXXXx','..XXx..XXx..','..XXx..XXx..','..XXx..XXx..'],
     autograph: ['XXXXXXXXXX..','XwwwwwwwwXx.','XwXXXXXXXXx.','XwXoXXoXXXx.','XwXXoXXoXXx.','XwXoXXoXXXx.','XwXXXXXXXXx.','XxXXXXXXXXx.','XXXXXXXXXXx.','.........XXx','........XXx.','.......XXx..'],
-    proshop: ['.XXXXXXXXXX.','XwwwwwwwwwwX','XwXXXXXXXXwX','XwXoooooooXX','XwXXXXXXXXXX','XwXoooooooXX','XwXXXXXXXXXX','XwXoooooooXX','XwXXXXXXXXXX','XxXXXXXXXXXX','XXXXXXXXXXXX','.XXx....XXx.'],
+    // A shop front: sign, striped awning with a fringe on it, window and door.
+    // The old drawing was a three shelf cabinet, which is what is INSIDE a shop
+    // rather than what a shop looks like from the path.
+    proshop: ['...XXXXXX...','..XwwwwwwX..','.XXXXXXXXXX.','XoXXoXXoXXoX','XxXxXxXxXxXx','.XXXXXXXXXX.','.XwwwXXoooX.','.XwwwXXoooX.','.XwwwXXoooX.','.XXXXXXoooX.','.XXXXXXoooX.','.XXXXXXXXXX.'],
     starter: ['............','...XX..XX...','..XwXXXXwX..','.XXXXXXXXXX.','.XwXXXXXXwX.','.XXXXXXXXXX.','.XwXXXXXXwX.','.XwXXXXXXwX.','.XwXXXXXXwX.','.XxXXXXXXxX.','.XXXXXXXXXX.','............'],
     member: ['....XXXX....','...XwwwwX...','..XwXXXXwX..','..XwXooowX..','..XwXXXXwX..','...XwwwwX...','....XXXX....','...XXXXXX...','..XXx.XXx...','.XXx...XXx..','XXx.....XXx.','Xx.......Xx.'],
     boost: ['.....XX.....','....XXXx....','...XXXXx....','..XXXXXXx...','.XXXXXXXXx..','XXXXXXXXXXx.','..XwwwwXx...','..XwXXXXx...','..XwXXXXx...','..XxXXXXx...','...XXXXx....','....XXx.....'],

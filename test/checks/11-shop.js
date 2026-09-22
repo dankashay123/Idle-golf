@@ -21,16 +21,33 @@ module.exports = {
   async run(page) {
     const src = fs.readFileSync(path.join(__dirname, '..', '..', 'index.html'), 'utf8');
 
-    // 1. the button is on the stage, bottom left, and opens the shop
+    // 1. the button is on the stage, under the readout on the left, no bigger
+    //    than the other two stage buttons, and it opens the shop
     const btn = await page.$('#shopBtn');
     if (!btn) throw new Error('there is no shop button on the stage');
     const box = await btn.boundingBox();
     const stage = await (await page.$('#stage')).boundingBox();
-    const cx = box.x + box.width/2, cy = box.y + box.height/2;
+    const read = await (await page.$('#readout')).boundingBox();
+    const hon = await (await page.$('#honBtn')).boundingBox();
+    const cx = box.x + box.width/2;
     if (!(cx < stage.x + stage.width*0.35))
       throw new Error('the shop button is not on the left of the stage');
-    if (!(cy > stage.y + stage.height*0.6))
-      throw new Error('the shop button is not near the bottom of the stage');
+    // It lives in a column with the readout, which is built out of fixed pixel
+    // type: about 45px tall whatever the screen, which is 14 per cent of a
+    // short stage and 9 per cent of a tall one. So the check is that it is
+    // under the readout and clear of it, not that it is at some percentage.
+    if (!(box.y >= read.y + read.height))
+      throw new Error('the shop button overlaps the readout: it starts at '
+        + box.y.toFixed(0) + ' and the readout ends at ' + (read.y + read.height).toFixed(0));
+    if (!(box.y - (read.y + read.height) < stage.height * 0.06))
+      throw new Error('the shop button is ' + (box.y - read.y - read.height).toFixed(0)
+        + 'px below the readout, which is not underneath it');
+    if (!(box.x < read.x + read.width))
+      throw new Error('the shop button is not under the readout horizontally');
+    if (!(box.width <= hon.width * 1.05))
+      throw new Error('the shop button is ' + box.width.toFixed(0) + 'px against '
+        + hon.width.toFixed(0) + 'px for the honours button: it is the loudest thing '
+        + 'on the stage and it is the one asking for money');
     await btn.click();
     if (!await page.$('#sheet .shopnav'))
       throw new Error('pressing the shop button did not open the shop');
@@ -182,7 +199,7 @@ module.exports = {
         + 'stop being greppable and a premium currency stops being premium.');
     const faucets = lines.filter(l => /grantSov\(/.test(l) && !/function grantSov/.test(l)).length;
 
-    return ['button bottom left, no input of any kind, banner on all four',
+    return ['button under the readout, no input of any kind, banner on all four',
       'tiles ' + Object.keys(r.tiles).map(k => k + ' ' + r.tiles[k].cards).join('/'),
       'packs ' + r.rates.map(x => x.toFixed(0)).join('/') + ' per dollar, rising',
       r.bags.map(b => b.id + ' ' + b.got + ' clubs >=' + b.worst).join(', '),
