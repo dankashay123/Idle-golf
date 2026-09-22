@@ -3914,6 +3914,110 @@ const islandChance = (D, made) => clamp(
 const chipChance = D => clamp((D.procRaw !== undefined ? D.procRaw : D.proc) * B.CHIP_PROC
   + (D.C ? D.C.wchip : 0), 0.05, 0.88);
 
+// What one entry is actually worth, worked out the way the contest itself pays.
+//
+// Every reward down here is priced through yieldAt, which starts from
+// shopPrice(currency) -- what ONE purchase in that currency's shop costs today
+// -- and then multiplies it away into a raw number. Divide it back out and a
+// run is worth "about two shot book levels" or "about one ascension", which is
+// a thing you can weigh against the other three. Four contests reported in four
+// different units, one in yards, one in per cent of greens, one in per cent of
+// chips and one in carry a second, cannot be compared at all, and the entries
+// are the scarce thing.
+//
+// The Vault is the exception and stays in its own unit: it pays the purse, so
+// holes of purse is what it is worth, and holes of purse is already the scale
+// the rest of the game is priced in.
+const DGN_BUYS = { grit:'clubs taken to +15', shard:'ascensions',
+                   scroll:'shot book levels', gold:'holes of purse' };
+// What the rub of the green costs a Vault run, read off the event table itself
+// rather than measured once and written down: weights change, this follows.
+// A time event moves the clock directly; a work event scales the floor you are
+// on; a mod event scales your rate for the next one, so it costs 1/v; a gust
+// takes a floor back, which is a floor's time thrown away.
+function dgnEventDrag(){
+  let tot = 0; for(const e of B.DGN_EVENTS) tot += e.w;
+  const p = B.DGN_EVENT_CHANCE;
+  let addS = 0, wWork = 0, eWork = 0, wMod = 0, eMod = 0, wBack = 0;
+  for(const e of B.DGN_EVENTS){
+    const pe = p * e.w / tot;
+    if(e.k === 'time'){ addS += pe * e.v; }
+    else if(e.k === 'work'){ wWork += pe; eWork += pe * e.v; }
+    else if(e.k === 'mod'){ wMod += pe; eMod += pe / e.v; }
+    else if(e.k === 'back'){ wBack += pe; }
+  }
+  const mult = (1 + eWork - wWork) * (1 + eMod - wMod) / Math.max(0.5, 1 - wBack);
+  return { mult, addS };
+}
+function dgnPayout(d, D){
+  const featM = isFeat(d) ? B.DGN_FEAT_MULT * (1 + D.C.wfeat) : 1;
+  const fc = carryFloor(D);
+  // yieldAt in units of one purchase, which is what it was built out of
+  const per = f => yieldAt(f, D, d) / Math.max(1e-9, shopPrice(d.cur));
+
+  if(d.mode === 'drive'){
+    // The payout rides the LONGEST of six, so the projection has to as well.
+    // The wind is drawn per shot, and the expected largest of six draws from a
+    // flat range is lo + (hi-lo) * 6/7. The swing itself is taken at its
+    // expectation rather than at a best case, so this reads a little under
+    // rather than a little over.
+    const wind = B.DRIVE_WIND[0] + (B.DRIVE_WIND[1] - B.DRIVE_WIND[0]) * 6/7;
+    const swing = D.pow * (1 + D.crit*(D.cpw-1)) * (1 + D.mst*B.MST_DMG)
+                * (1 + D.proc*Math.min(D.elemDmg, B.ELEM_CAP));
+    return { buys: per(asFloor(swing * wind * (1 + D.C.wdrive))) * featM,
+             note: 'longest of ' + B.DRIVE_SHOTS };
+  }
+  if(d.mode === 'island'){
+    // NOT what banking on your target pays. The make chance decays 3.5 points
+    // a green and a miss costs three quarters of the pot, so "the pot at your
+    // target" was promising five to six times what runs actually paid --
+    // measured, which is the only reason I know. This walks the real tree: the
+    // first green is a gimme, then each one either carries the pot on or ends
+    // the run at a quarter of it.
+    const target = B.BANK_OPTS.includes(S.islandBank) ? S.islandBank : 5;
+    const pot0 = per(fc);
+    let reach = 1, ev = 0;                       // reach = P(still dry after m)
+    for(let m = 1; m < target; m++){
+      const q = islandChance(D, m);
+      ev += reach * (1 - q) * Math.pow(B.ISLAND_MULT, m) * B.ISLAND_SALVAGE;
+      reach *= q;
+    }
+    ev += reach * Math.pow(B.ISLAND_MULT, target);
+    return { buys: pot0 * ev * featM,
+             note: 'banking on ' + target + ', ' + Math.round(reach*100) + '% of the time' };
+  }
+  if(d.mode === 'chip'){
+    // Rounding the number of drops and summing to it read 14% under, because
+    // the pot is a sum over a binomial rather than a sum to its mean. The
+    // expectation is the same sum weighted by the chance of getting that far.
+    const q = chipChance(D), n = B.CHIP_SHOTS;
+    let pmf = Math.pow(1 - q, n), tail = 1, sum = 0;   // tail = P(M >= i)
+    for(let i = 1; i <= n; i++){
+      tail -= pmf;                                     // drop P(M == i-1)
+      pmf *= (q / (1 - q)) * (n - i + 1) / i;
+      sum += Math.max(0, tail) * per(fc + i*B.CHIP_STEP);
+    }
+    return { buys: sum * featM,
+             note: Math.round(n*q) + ' of ' + n + ' dropping' };
+  }
+  // The Vault earns its floor by chewing through floorWork, so the projection
+  // chews through it too: the same clock, the same carry, the same floor that
+  // still takes a moment when you are far too strong for it -- and the same
+  // rub of the green, which is not optional. An event fires on 38% of floors
+  // and the table is weighted against you; ignoring them read 24% deep.
+  const drag = dgnEventDrag();
+  let f = dgnStartFloor(d.id), t = d.run * (D.C.sharp ? 1.4 : 1), cleared = 0;
+  while(cleared < 500){
+    const need = Math.max(B.DGN_MIN_FLOOR, floorWork(f) / Math.max(1e-9, D.dps))
+               * drag.mult + drag.addS;
+    if(need > t) break;
+    t -= need; f++; cleared++;
+  }
+  const deepest = cleared > 0 ? f - 1 : 0;
+  return { buys: (B.VAULT_HOLES + pastPace(deepest) * B.VAULT_PER_MARK) * featM,
+           note: cleared + ' floor' + (cleared === 1 ? '' : 's') + ' deep', floors: cleared };
+}
+
 function startDgn(d){
   if(S.dgnRun){ toast('One wager at a time'); return; }
   if(S.dgnKeys[d.id] < 1){ toast('No entries left for ' + d.n); return; }
@@ -8510,6 +8614,7 @@ function renderDgn(){
       + Math.round(islandChance(D, 9)*100) + '% by the tenth';
     else if(d.mode === 'chip') reads = 'About ' + Math.round(chipChance(D)*100) + '% of your chips would drop';
     else reads = 'Carry ' + fmt(D.dps) + ' a second against floors that keep growing';
+    const P = dgnPayout(d, D);
 
     el.innerHTML = '<div class="dh">' + svgIcon(d.ic || STAT_IC[d.cur] || 'ball', 'ric') + '<span class="dn">' + d.n + '</span>'
       + (d.id === feat.id ? '<span class="fstar">' + B.DGN_FEAT_MULT + '\u00d7 today</span>' : '')
@@ -8518,6 +8623,9 @@ function renderDgn(){
       + '<div class="dd">' + d.d + '</div>'
       + '<div class="dd fold" style="color:var(--faint);margin-top:4px">' + d.how + '</div>'
       + '<div class="dm">' + reads + '</div>'
+      + '<div class="dm" style="color:var(--brass)">One entry is worth about <b>'
+      + fmt(P.buys, P.buys < 10 ? undefined : 0) + '</b> ' + DGN_BUYS[d.cur]
+      + ' \u00b7 ' + P.note + '</div>'
       + '<div class="dm">Pays ' + d.cn + ' \u00b7 ' + best
       + ' \u00b7 ' + Math.round(d.run) + 's \u00b7 entry in ' + nextIn + '</div>'
       + '<div class="bar"><i style="width:' + (run ? clamp(run.t/run.dur,0,1)*100 : 0) + '%"></i></div>'

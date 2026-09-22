@@ -43,6 +43,18 @@
  * words in them and nothing else. Each now reports in its own units and fills
  * the readout strip with its own shape.
  *
+ * Which left the opposite problem: four contests reported in four units --
+ * yards, per cent of greens, per cent of chips, carry a second -- cannot be
+ * compared, and the entries are the scarce thing. Each now also says what one
+ * entry is worth in what that currency BUYS, off the shopPrice scale yieldAt
+ * is already built on. A projection is only worth showing if the game keeps
+ * it, so the check below plays each contest out and compares.
+ *
+ * The first version of that projection was 5 to 6 times over on the Island
+ * Green, because it priced the pot at the bank target as though you always got
+ * there. You do not: the make chance decays 3.5 points a green and a miss
+ * costs three quarters of the pot. Only playing it out caught that.
+ *
  * These assert on shape, not on tuning: floors settle, currencies come in
  * linearly, the away hole matches the live hole. Retuning the payout numbers
  * should not move any of them.
@@ -202,6 +214,60 @@ module.exports = {
 
       S.hole = 2; startHole();
 
+      // ---- 3c. what one entry is worth, against what one entry pays --------
+      const payRows = [];
+      {
+        S.tier = 20; S.hole = 2; S.relic = {}; S.equip = {};
+        B.UPG.forEach(u => S.upg[u.id] = 0);
+        B.SLOTS.forEach(sl => { S.equip[sl.id] = makeItem(14, 0, 2, sl.id); });
+        S.autoEquip = 0; startNine(); startHole();
+        // A bag four times what its card asks, because the Vault's payout is
+        // flat until you get past what the card expects -- floor 44 at this
+        // tier. A weaker bag sits on that floor and the projection cannot be
+        // wrong there, which is a check that passes without checking.
+        {
+          const ch0 = { y:1, g:1, s:1, c:0, p:0, dl:0 };
+          const pace = yardageFor(S.hole, S.tier, ch0) / (parTimeFor(S.hole) * B.HCP);
+          let lo = 0, hi = 60000;
+          while (hi - lo > 1) { const m = (lo + hi) >> 1; S.upg.drive = m;
+            if (derive().dps < pace * 4) lo = m; else hi = m; }
+          S.upg.drive = lo; startHole();
+        }
+        FEAT_FORCE = '__none__';                 // no stake of the day in the comparison
+        const SNAP = JSON.stringify(S);
+        for (const d of B.DGN) {
+          const proj = dgnPayout(d, derive());
+          // The Island Green needs far more runs than the others: about one in
+          // ten banks, and that one carries the whole average. The rest settle
+          // in a hundred.
+          let tot = 0; const N = d.mode === 'island' ? 700 : 120;
+          for (let i = 0; i < N; i++) {
+            Object.keys(S).forEach(x => delete S[x]); Object.assign(S, JSON.parse(SNAP));
+            S.dgnRun = null; S.dgnKeys[d.id] = 1;
+            const before = d.cur === 'gold' ? S.gold : S[d.cur];
+            startDgn(d);
+            const D = derive();
+            for (let j = 0; j < 8000 && S.dgnRun; j++) tickDgn(0.1, D);
+            try { hideSheet(); } catch (e) {}
+            const got = (d.cur === 'gold' ? S.gold : S[d.cur]) - before;
+            tot += d.cur === 'gold'
+              ? got / Math.max(1e-9, purseFor(S.hole, S.tier, D.gold))
+              : got / Math.max(1e-9, shopPrice(d.cur));
+          }
+          payRows.push({ id: d.id, cur: d.cur, proj: proj.buys, actual: tot / N, n: N,
+                         note: proj.note, floors: proj.floors || 0,
+                         pastPace: proj.floors ? pastPace(dgnStartFloor(d.id) + proj.floors - 1) : 0 });
+        }
+        FEAT_FORCE = null;
+        Object.keys(S).forEach(x => delete S[x]); Object.assign(S, JSON.parse(SNAP));
+        startHole();
+      }
+      out.pay = payRows;
+      out.buysNames = Object.keys(DGN_BUYS);
+      renderDgn();
+      out.shown = Array.from(document.querySelectorAll('#dgnRows .dgn'))
+        .map(e => /One entry is worth about/.test(e.textContent));
+
       // ---- 4. four contests, or one contest four times ----------------------
       S.tier = 20; S.hole = 2; startHole();
       renderDgn();
@@ -350,6 +416,45 @@ module.exports = {
       throw new Error('one hole of purse is only ' + r.parkSpread.toFixed(2) + 'x another, '
         + 'so there was never anything to park on and this check is not testing it');
 
+    // 4c. the projection is kept. A wide bound on purpose -- these are averages
+    //     over runs whose payout is dominated by the rare long one -- but wide
+    //     enough to pass a 5x lie is not a check, and the first cut of the
+    //     Island Green was exactly 5x.
+    // and the Vault has to be past what its card expects, or its payout is the
+    // flat floor and nothing about the projection is being tested
+    const vaultPay = r.pay.find(q => q.id === 'vault');
+    if (!(vaultPay && vaultPay.floors > 0 && vaultPay.pastPace > 0))
+      throw new Error('the Vault sample never got past what its card expects, so its '
+        + 'projection is being checked against a flat number');
+    // The bound is per contest, because the four have nothing like the same
+    // spread, and every one of these came off running the check repeatedly
+    // rather than off a guess:
+    //
+    //   sand   1.00 every time          six swings, averaged, settles at once
+    //   vault  0.92-0.95 over 5 runs    a clock and a carry, near enough exact
+    //   cellar 0.94-1.13 over 5 runs    twenty five binomial chips
+    //   water  0.87-1.07 over 5 runs    at 700 samples; at 120 it swung 0.81-1.58
+    //
+    // A single loose bound is a check that catches nothing: dropping the
+    // Vault's event drag reads 1.23x, which 0.6-1.4 waves straight through.
+    const BOUND = { sand:[0.85,1.15], vault:[0.85,1.15], cellar:[0.8,1.3], water:[0.7,1.35] };
+    for (const q of r.pay) {
+      if (!(q.actual > 0))
+        throw new Error(q.id + ' paid nothing over the sample, so there is nothing to check');
+      const f = q.proj / q.actual, bd = BOUND[q.id] || [0.6, 1.4];
+      if (!(f > bd[0] && f < bd[1]))
+        throw new Error('the wager book says one entry in ' + q.id + ' is worth '
+          + q.proj.toPrecision(3) + ' but ' + q.n + ' runs of it paid ' + q.actual.toPrecision(3)
+          + ' on average, a factor of ' + f.toFixed(2) + ' against a bound of '
+          + bd[0] + '-' + bd[1] + '. A number on the screen that is out by that much is '
+          + 'worse than no number.');
+    }
+    if (r.shown.length !== 4 || r.shown.some(x => !x))
+      throw new Error('only ' + r.shown.filter(Boolean).length + ' of the four contests say '
+        + 'what an entry is worth');
+    if (r.buysNames.length !== 4)
+      throw new Error('DGN_BUYS names ' + r.buysNames.length + ' currencies, not four');
+
     // 5. the four read as four
     const shapes = r.strips.map(x => x.cells);
     if (new Set(shapes).size !== shapes.length)
@@ -403,6 +508,8 @@ module.exports = {
       + ', card 5 vs 200 within ' + drift.toPrecision(2) + 'x'
       + ', away hole ' + r.away.map(a => a.awaySecs + '/' + a.live).join(' '),
       'away rate identical from all ' + r.park.length + ' holes of an event, across '
-      + r.parkSpread.toFixed(1) + 'x of single-hole purse'];
+      + r.parkSpread.toFixed(1) + 'x of single-hole purse',
+      'entry worth vs the runs: ' + r.pay.map(q =>
+        q.id + ' ' + (q.proj / q.actual).toFixed(2) + 'x').join(', ')];
   }
 };
