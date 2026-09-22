@@ -483,7 +483,20 @@ module.exports = {
       throw new Error('the climb projection is worked out while another screen is on show; '
         + 'it walks 144 holes and finishHole calls renderTour on every hole');
 
-    return ['preview held the bag over ' + p.tried + ' looks and through a throw, '
+    // ---- numbers read the right length at every unit boundary -------------
+    // The unit used to be chosen before rounding, so a purse of 999,950 read
+    // "1000K", 9,996 read "10.00K" and 99,960 read "100.0K" -- one digit too
+    // long at every boundary in the game -- and NaN printed as infinity.
+    const F = await page.evaluate(() => {
+      const want = [[999.4, '999'], [999.6, '1.00K'], [9994, '9.99K'], [9996, '10.0K'],
+        [99949, '99.9K'], [99960, '100K'], [999449, '999K'], [999950, '1.00M'],
+        [1234567, '1.23M'], [999.96e33, '1.00aa'], [-999950, '\u22121.00M'], [NaN, '\u2014']];
+      return want.filter(([n, w]) => fmt(n) !== w).map(([n, w]) => n + ' reads "' + fmt(n) + '", not "' + w + '"');
+    });
+    if (F.length) throw new Error('numbers read wrong at a unit boundary: ' + F.join('; '));
+
+    return ['every unit boundary reads right: 999,950 is 1.00M, 99,960 is 100K',
+      'preview held the bag over ' + p.tried + ' looks and through a throw, '
       + p.changed + ' moved the carry',
       'away card: ' + a.tiles + ' tiles, ' + a.bands.length + ' bands, '
       + a.lines.length + ' lines and not one of them zero; a full locker away 12h found '
