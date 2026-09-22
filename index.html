@@ -5062,6 +5062,10 @@ function offline(){
   // a week away and it said "12h away", which is not where the week went.
   const away = Math.max(0, Date.now()/1000 - (S.t || Date.now()/1000));
   const dt = Math.min(away, B.OFFLINE_CAP + permAdd('contract')*3600);
+  // Stamped the moment the time is claimed. Otherwise it stays at the last
+  // save until the next one, and a second catch-up inside that window -- a
+  // reload, or a return from another tab -- pays the same absence twice.
+  S.t = Date.now()/1000;
   if(dt < 60){ regenKeys(dt); return; }
   regenKeys(dt);
   const D = derive();
@@ -9494,6 +9498,20 @@ function reallyWipe(){
   hideSheet();
   toast('Save erased. Back to the first tee.');
 }
+// The browser stops the frame loop while the game is out of sight, and the
+// first frame back clamps its step to TICK_MAX -- so ten minutes in another app
+// used to be worth a quarter of a second, and the away card only ever turned up
+// if the phone happened to throw the page away and reload it. A return now
+// credits what a reload would have.
+function catchUp(){
+  const away = Math.max(0, Date.now()/1000 - (S.t || Date.now()/1000));
+  last = 0;
+  if(away >= 60){ offline(); return; }
+  // Under a minute the away card is not worth raising: the round just carries
+  // on from where it was, at full pace, as though it had never stopped.
+  for(let t = away; t > 1e-6; t -= B.TICK_MAX) step(Math.min(B.TICK_MAX, t), derive());
+  S.t = Date.now()/1000;
+}
 function intro(){
   showSheet('<h3>Mythic Mulligan</h3>'
     + '<p>Your golfer plays on his own. Your job is to make him better.</p>'
@@ -9571,7 +9589,9 @@ function boot(){
 
   if(had) offline(); else intro();
 
-  document.addEventListener('visibilitychange', () => { if(document.hidden) save(); });
+  document.addEventListener('visibilitychange', () => {
+    if(document.hidden) save(); else catchUp();
+  });
   window.addEventListener('pagehide', save);
   requestAnimationFrame(frame);
 }

@@ -84,7 +84,77 @@ module.exports = {
       if (r.treeIds.indexOf(k) < 0)
         throw new Error('S.tal still carries "' + k + '", which is in no tree');
 
+    // ---- coming back from another tab or app ---------------------------
+    // The browser stops the frame loop while the page is out of sight, and the
+    // first frame back clamps its step to a quarter of a second. So ten minutes
+    // in another app was worth 0.25s of golf, and the away card only turned up
+    // if the phone happened to throw the page away and reload it.
+    const tab = await page.evaluate(() => {
+      try { hideSheet(); } catch (e) {}
+      const vis = hidden => {
+        Object.defineProperty(document, 'hidden', { configurable: true, get: () => hidden });
+        document.dispatchEvent(new Event('visibilitychange'));
+      };
+      let played = 0, caught = 0;
+      const realStep = window.step, realOff = window.offline;
+      window.step = function (dt, D) { played += dt; return realStep.call(this, dt, D); };
+      window.offline = function () { caught++; return realOff.apply(this, arguments); };
+      const out = {};
+      try {
+        // hiding stamps the clock, so the return has something to measure from
+        S.t = 0; vis(true); out.stamped = Math.abs(S.t - Date.now()/1000) < 2;
+
+        // half a minute away: played out at full pace, no card raised
+        S.t = Date.now()/1000 - 30; played = 0; caught = 0;
+        vis(false);
+        // a sheet is up when the veil is; the sheet keeps its last page underneath
+        const up = () => document.getElementById('veil').classList.contains('on');
+        out.short = { played, caught, sheet: up() && /while you were away/i.test(
+          document.getElementById('sheet').textContent) };
+
+        // two hours away: the same away card a reload would have raised
+        try { hideSheet(); } catch (e) {}
+        const holes0 = S.totalHoles;
+        S.t = Date.now()/1000 - 2*3600; played = 0; caught = 0;
+        vis(false);
+        out.long = { caught, holes: S.totalHoles - holes0,
+                     sheet: document.getElementById('veil').classList.contains('on')
+                            && /while you were away/i.test(document.getElementById('sheet').textContent) };
+        try { hideSheet(); } catch (e) {}
+
+        // and straight back again: nothing left to claim, so nothing is paid twice
+        const holes1 = S.totalHoles, gold1 = S.gold; played = 0; caught = 0;
+        vis(false);
+        out.again = { played, caught, holes: S.totalHoles - holes1, gold: S.gold - gold1 };
+      } finally {
+        window.step = realStep; window.offline = realOff;
+        delete document.hidden;
+      }
+      return out;
+    });
+    if (!tab.stamped)
+      throw new Error('hiding the page did not stamp the save clock, so a return has nothing '
+        + 'to measure from');
+    if (Math.abs(tab.short.played - 30) > 0.5)
+      throw new Error('thirty seconds in another tab played ' + tab.short.played.toFixed(2)
+        + 's of golf on the way back. The frame loop stops while the page is hidden and '
+        + 'the first frame back clamps to a quarter second, so anything not caught up here '
+        + 'is simply lost.');
+    if (tab.short.caught || tab.short.sheet)
+      throw new Error('half a minute away raised the away card, which is not worth a sheet');
+    if (tab.long.caught !== 1 || !tab.long.sheet || !(tab.long.holes > 0))
+      throw new Error('two hours in another tab came back with ' + tab.long.holes + ' holes '
+        + 'played and ' + (tab.long.sheet ? 'an' : 'no') + ' away card. A reload credits '
+        + 'that time; a return has to credit it the same way.');
+    if (tab.again.played > 0.5 || tab.again.holes || tab.again.gold > 0)
+      throw new Error('a second return straight after the first paid again: '
+        + tab.again.played.toFixed(2) + 's played, ' + tab.again.holes + ' holes, '
+        + tab.again.gold + ' purse. Claiming the time has to move the clock.');
+
     return ['a roughed-up save loads clean, carry ' + Math.round(a.carry),
+      'back from another tab: 30s played out at full pace (' + tab.short.played.toFixed(2)
+      + 's), 2h raised the away card (' + tab.long.holes + ' holes), and a second return '
+      + 'straight after paid nothing',
       owed + ' points off retired talents came back unspent, ' + a.keptTalent
       + ' left where they were'];
   }
