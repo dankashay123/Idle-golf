@@ -61,7 +61,12 @@
  */
 'use strict';
 
-const RUNS = 24;
+// Sixty rather than twenty four. The ticket rate below is counted over the
+// back half of these, and tickets only land on a new personal best, so at
+// twelve runs the figure came back anywhere from 0.00 to 0.33 against a
+// threshold of 0.50 -- close enough to the line to be luck, and a printed
+// number nobody can read a direction off.
+const RUNS = 60;
 
 module.exports = {
   name: 'wagers',
@@ -111,6 +116,11 @@ module.exports = {
       out.scrollSecondHalf = scroll[RUNS - 1] - scroll[half - 1];
       out.ticketsFirstHalf = tickets[half - 1];
       out.ticketsSecondHalf = tickets[RUNS - 1] - tickets[half - 1];
+      // A ticket only lands on a new personal best, so this figure is a count
+      // of rare events and not a rate: usually none over the back half, now and
+      // then a short streak. Printing it as "0.22 a run" reads like a
+      // measurement of something steady. The count is what it actually is.
+      out.bestsSecondHalf = out.ticketsSecondHalf;
       out.exemptCost = B.PERKS.find(p => p.id === 'exempt').cost;
       out.keysPerExemption = B.DGN.reduce((n, d) => n + d.cap, 0);
 
@@ -120,7 +130,16 @@ module.exports = {
       const onPaceYield = T => {
         S.tier = T; S.tierMax = Math.max(S.tierMax, T); S.hole = 2; S.retires = 0;
         S.relic = {};
-        B.SLOTS.forEach(sl => S.equip[sl.id] = makeItem(T, 0, 3, sl.id));
+        // Built by hand rather than rolled. makeItem picks the rarity and the
+        // affixes at random, and one of those affixes is wager haul: whether it
+        // turned up decided the answer, so this number came back anywhere from
+        // 1.0x to 3.7x on identical code. The ladder is tuned to pace just
+        // below, so plain clubs cost nothing and leave the CARD as the only
+        // thing that differs between the two ends.
+        B.SLOTS.forEach((sl, i) => S.equip[sl.id] = {
+          uid: 90000 + i, slot: sl.id, rar: 0, ilvl: T, enh: 0, aff: [],
+          el: sl.id === 'ball' ? 'ember' : null, name: 'probe'
+        });
         startHole();
         const ch = { y:1, g:1, s:1, c:0, p:0, dl:0 };
         const pace = yardageFor(S.hole, S.tier, ch) / (parTimeFor(S.hole) * B.HCP);
@@ -366,11 +385,13 @@ module.exports = {
 
     // 3. two hundred cards apart, a run buys the same progress
     const drift = r.yieldLate / r.yieldEarly;
-    // Wide on purpose. Pinning the number would make this a tuning test; what
-    // it is for is the drift, and the drift was twenty orders of magnitude.
-    // The slack absorbs the integer step of the upgrade ladder the bag is
-    // pinned with, which is coarse at card 5 and fine at card 200.
-    if (!(drift > 0.1 && drift < 10))
+    // It reads 2.1x, the same 2.1x on every run now that the probe bag is built
+    // rather than rolled. It used to come back anywhere from 1.0 to 3.7 on
+    // identical code, which is why the bound was 0.1 to 10: a number that moves
+    // by four can only be fenced by a factor of a hundred, and a fence that
+    // wide catches nothing. The slack left here absorbs the integer step of the
+    // upgrade ladder the bag is pinned with, coarse at card 5 and fine at 200.
+    if (!(drift > 0.5 && drift < 4))
       throw new Error('an on-pace run pays ' + r.yieldEarly.toPrecision(3)
         + ' of a purchase at card 5 and ' + r.yieldLate.toPrecision(3)
         + ' at card 200, a factor of ' + drift.toPrecision(3)
@@ -504,7 +525,8 @@ module.exports = {
       + ', floor ' + r.floorFirst + '->' + r.floorLast + ' under a ceiling of '
       + r.ceiling.toFixed(0)
       + ', pay flat to ' + ratio.toFixed(2) + 'x, ' + perRun.toFixed(2)
-      + ' tickets/run against ' + sustains.toFixed(2) + ' self-sustaining'
+      + ' tickets/run (' + r.bestsSecondHalf + ' new bests over the back ' + (RUNS >> 1)
+      + ' runs) against ' + sustains.toFixed(2) + ' self-sustaining'
       + ', card 5 vs 200 within ' + drift.toPrecision(2) + 'x'
       + ', away hole ' + r.away.map(a => a.awaySecs + '/' + a.live).join(' '),
       'away rate identical from all ' + r.park.length + ' holes of an event, across '

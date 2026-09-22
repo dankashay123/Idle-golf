@@ -43,38 +43,60 @@ module.exports = {
       out.settled = autoEquipSweep().length;
 
       // ---- 3. never a regression on either axis ------------------------
-      // a hundred and twenty drops, one at a time, the way a round delivers
-      S.bag = []; B.SLOTS.forEach(s => S.equip[s.id] = null);
-      const a0 = derive();
+      // A hundred and twenty drops, one at a time, the way a round delivers --
+      // and then that whole locker thrown away and done again, eight times.
+      //
+      // One locker was enough for the assertion and useless for the figure
+      // beside it. A drop is random in slot, rarity and affix, and a pow affix
+      // at item level is worth 1.27^ilvl, so the printed "carry x424" was
+      // "carry x111" on the next run and "x810" on the one after. Worse, the
+      // greedy comparison changed SIGN run to run: greedy came out 136% ahead
+      // on carry one time and 64% behind the next, off the same code. A line
+      // that reports the deal at random teaches nothing about which way the
+      // change moved, which is the only reason the line is printed.
+      const REPS = 24;
       let worse = 0, moves = 0, greedyMoves = 0;
-      for (let i = 0; i < 120; i++) {
-        const it = makeItem(S.tier, 0.3, 0);
-        const cur = S.equip[it.slot];
-        if (!cur || itemScore(it) > itemScore(cur)) greedyMoves++;
-        const was = ids(), pre = derive();
-        bagAdd(it);
-        if (ids() !== was) {
-          moves++;
-          const post = derive();
-          if (post.dps < pre.dps * 0.99999 || post.gold < pre.gold * 0.99999) worse++;
+      const gains = [], purses = [], gCarry = [], gPurse = [];
+      for (let r2 = 0; r2 < REPS; r2++) {
+        S.bag = []; B.SLOTS.forEach(s => S.equip[s.id] = null);
+        const a0 = derive();
+        for (let i = 0; i < 120; i++) {
+          const it = makeItem(S.tier, 0.3, 0);
+          const cur = S.equip[it.slot];
+          if (!cur || itemScore(it) > itemScore(cur)) greedyMoves++;
+          const was = ids(), pre = derive();
+          bagAdd(it);
+          if (ids() !== was) {
+            moves++;
+            const post = derive();
+            if (post.dps < pre.dps * 0.99999 || post.gold < pre.gold * 0.99999) worse++;
+          }
         }
-      }
-      const a1 = derive();
-      out.moves = moves; out.greedyMoves = greedyMoves; out.worse = worse;
-      out.carryGain = a1.dps / Math.max(1e-9, a0.dps);
-      out.purseGain = a1.gold / Math.max(1e-9, a0.gold);
+        const a1 = derive();
+        gains.push(a1.dps / Math.max(1e-9, a0.dps));
+        purses.push(a1.gold / Math.max(1e-9, a0.gold));
 
-      // what the greedy version would have done from the same locker
-      const snapEq = Object.assign({}, S.equip), snapBag = S.bag.slice();
-      for (const sl of B.SLOTS) {
-        let best = S.equip[sl.id];
-        for (const it of S.bag) if (it.slot === sl.id && (!best || itemScore(it) > itemScore(best))) best = it;
-        if (best) S.equip[sl.id] = best;
+        // what the greedy version would have done from the same locker
+        const snapEq = Object.assign({}, S.equip), snapBag = S.bag.slice();
+        for (const sl of B.SLOTS) {
+          let best = S.equip[sl.id];
+          for (const it of S.bag) if (it.slot === sl.id && (!best || itemScore(it) > itemScore(best))) best = it;
+          if (best) S.equip[sl.id] = best;
+        }
+        const g = derive();
+        S.equip = snapEq; S.bag = snapBag;
+        gCarry.push(g.dps / a1.dps);
+        gPurse.push(g.gold / a1.gold);
       }
-      const g = derive();
-      S.equip = snapEq; S.bag = snapBag;
-      out.greedyCarry = g.dps / a1.dps;
-      out.greedyPurse = g.gold / a1.gold;
+      // ratios, so the middle of them is the geometric mean
+      const gm = a => Math.exp(a.reduce((x, y) => x + Math.log(Math.max(1e-12, y)), 0) / a.length);
+      const lo = a => Math.min.apply(null, a), hi = a => Math.max.apply(null, a);
+      out.reps = REPS; out.drops = REPS * 120;
+      out.moves = moves; out.greedyMoves = greedyMoves; out.worse = worse;
+      out.carryGain = gm(gains); out.purseGain = gm(purses);
+      out.greedyCarry = gm(gCarry); out.greedyPurse = gm(gPurse);
+      out.greedyCarrySpread = [lo(gCarry), hi(gCarry)];
+      out.greedyPurseSpread = [lo(gPurse), hi(gPurse)];
 
       // ---- 4. a straight trade-off stays on the bench -------------------
       let trades = 0, tookTrade = 0;
@@ -201,8 +223,18 @@ module.exports = {
     if (!r.noDup) f('a club ended up worn and in the bag at the same time');
     if (r.settled !== 0) f('the sweep never settles: a second pass took ' + r.settled);
     if (r.worse !== 0) f(r.worse + ' of ' + r.moves + ' auto swaps left a stat lower');
-    if (!(r.moves > 0)) f('120 drops and auto-equip never moved');
-    if (!(r.carryGain > 2)) f('120 drops only moved the carry ' + r.carryGain.toFixed(2) + 'x');
+    if (!(r.moves > 0)) f(r.drops + ' drops and auto-equip never moved');
+    if (!(r.carryGain > 2)) f(r.drops + ' drops only moved the carry ' + r.carryGain.toFixed(2) + 'x');
+    // Now that the figure is an average over two dozen lockers instead of one,
+    // it is steady enough to be a claim rather than a note. Over four runs at
+    // this size the greedy sort key came out 9 to 14 per cent behind on the
+    // purse and 6 to 17 behind on the carry, every time; at one locker it
+    // changed sign between runs and could not have been asserted at all.
+    if (!(r.greedyPurse < 0.97))
+      f('the greedy sort key came out ' + ((r.greedyPurse - 1) * 100).toFixed(0)
+        + '% on the purse over ' + r.reps + ' lockers. Taking the higher itemScore is '
+        + 'supposed to cost you there -- that is the whole reason auto-equip asks derive() '
+        + 'instead.');
     if (!(r.trades >= 10)) f('only ' + r.trades + ' trade-off clubs to test against');
     if (r.tookTrade !== 0) f('auto-equip took ' + r.tookTrade + ' of ' + r.trades
       + ' clubs that bought one stat with another');
@@ -249,11 +281,15 @@ module.exports = {
     if (!/auto/i.test(r.btnText)) f('the toggle reads "' + r.btnText + '"');
 
     return [
-      'auto took ' + r.moves + ' of 120 drops where the sort key would take '
-        + r.greedyMoves + ', carry x' + r.carryGain.toFixed(1)
-        + ' purse x' + r.purseGain.toFixed(2),
-      'greedy from the same locker: carry ' + ((r.greedyCarry - 1) * 100).toFixed(0)
-        + '% purse ' + ((r.greedyPurse - 1) * 100).toFixed(0) + '%, and '
+      'auto took ' + r.moves + ' of ' + r.drops + ' drops over ' + r.reps
+        + ' lockers where the sort key would take ' + r.greedyMoves
+        + ', carry x' + r.carryGain.toFixed(1) + ' purse x' + r.purseGain.toFixed(2),
+      'greedy from the same lockers: carry ' + ((r.greedyCarry - 1) * 100).toFixed(0)
+        + '% (' + ((r.greedyCarrySpread[0] - 1) * 100).toFixed(0) + ' to '
+        + ((r.greedyCarrySpread[1] - 1) * 100).toFixed(0) + ') purse '
+        + ((r.greedyPurse - 1) * 100).toFixed(0) + '% ('
+        + ((r.greedyPurseSpread[0] - 1) * 100).toFixed(0) + ' to '
+        + ((r.greedyPurseSpread[1] - 1) * 100).toFixed(0) + '), and '
         + r.trades + ' trade-offs all left on the bench',
       'rotation of ' + r.cycleLen + ' reaches all four, today is ' + r.live
         + ', Vault paid ' + r.vaultRatio.toFixed(2) + 'x featured, Floodlit '
