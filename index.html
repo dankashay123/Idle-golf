@@ -151,6 +151,13 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
 .tab .dot{position:absolute;top:5px;right:8px;width:5px;height:5px;border-radius:0;
   background:var(--aurora);display:none}
 .tab.alert .dot{display:block}
+/* A card you have unlocked and not been to see. The dot says there is
+   something; the flash is what makes you look. It stops the moment the Tour
+   screen is opened, and it never runs on the tab you are already on. */
+@keyframes tabflash{0%,100%{color:var(--faint)}50%{color:var(--brass)}}
+.tab.flash{animation:tabflash 1.5s ease-in-out infinite}
+.tab.flash.on{animation:none}
+@media (prefers-reduced-motion:reduce){.tab.flash{animation:none}}
 
 /* ---------- panel ---------- */
 .view{display:none;padding:0 0 calc(env(safe-area-inset-bottom) + 22px)}
@@ -4373,11 +4380,23 @@ function endTournament(){
 const eventsOn = tier => S.tierEvents[tier] || 0;
 const cardUnlocked = tier => tier <= (S.tierMax || 0);
 const eventsToNext = () => Math.max(0, B.EVENTS_PER_CARD - eventsOn(S.tierMax || 0));
-function projectedRatio(tier){
+// What this hole would take, as a share of par time, if it were on `tier`.
+//
+// Two things were wrong with it. chaosFor hashes on the tier, so asking about
+// the next card drew the next card's weather and compared it against this
+// one's -- a purse and yardage swing of its own, mixed into an answer that is
+// supposed to be about the card. wx pins both sides to the weather overhead.
+//
+// And it read the CARDED yardage, while the hole you actually play is never
+// shorter than what your bag clears in HCP of par time. So a bag well ahead of
+// its card was promised an Ace at 0.07x par on a hole that cannot come in under
+// 0.34x, which is three score bands out. The floor is applied here the way
+// startHole applies it.
+function projectedRatio(tier, wx){
   const D = derive();
-  const ch = chaosFor(S.hole, tier);
+  const ch = chaosFor(S.hole, wx === undefined ? tier : wx);
   const y = yardageFor(S.hole, tier, ch);
-  return (y / Math.max(1e-9, D.dps)) / parTimeFor(S.hole);
+  return Math.max(B.HCP, (y / Math.max(1e-9, D.dps)) / parTimeFor(S.hole));
 }
 function climb(n, quiet, force){
   let to = clamp(S.tier + n, 0, B.TIER_MAX);
@@ -4880,11 +4899,17 @@ function roundRate(tier, wx){
 function climbPreview(){
   const here = roundRate(S.tier, S.tier);
   const next = roundRate(Math.min(B.TIER_MAX, S.tier + 1), S.tier);
+  const nextT = Math.min(B.TIER_MAX, S.tier + 1);
   return { here, next,
     pay:  next.rate / Math.max(1e-9, here.rate),
     len:  next.yardsMax / Math.max(1e-9, here.yardsMax),
     secs: next.secs / Math.max(1e-9, here.secs),
-    bound: here.bound };
+    bound: here.bound,
+    // How much further along the growth curve the next card starts. Zero means
+    // the hole does not change at all. It is NOT the same as "this card is
+    // played out": climb, play, drop back, and the card above you has events on
+    // it too, so it starts grown and the step is a full one again.
+    dProg: tierProgress(nextT) - tierProgress(S.tier) };
 }
 
 function offline(){
@@ -7790,6 +7815,17 @@ function renderXp(){
     ? bits.join(' \u00b7 ')
     : fmt(have) + ' / ' + fmt(need) + ' xp';
   if(careerTab) careerTab.classList.toggle('alert', unspent > 0);
+  renderTourTab();
+}
+// A card you have unlocked and not looked at yet. The marker is the highest
+// card you have SEEN on the Tour screen, the same shape as S.honSeen, so it
+// clears by going and looking rather than by a timer.
+const cardWaiting = () => (S.tierMax || 0) > (S.cardSeen || 0);
+function renderTourTab(){
+  if(!tourTab) return;
+  const w = cardWaiting();
+  tourTab.classList.toggle('alert', w);
+  tourTab.classList.toggle('flash', w);
 }
 // One readout for the course and for a wager, but a wager fills the strip under
 // it with a shape of its own, so the four do not read as one contest in four
@@ -8534,32 +8570,71 @@ function renderTour(){
   const fm = n => n === 0 ? 'E' : n > 0 ? '+' + n : String(n);
   $('tierNote').textContent = 'Card ' + roman(S.tier) + ' \u00b7 best ' + roman(S.bestTier);
 
-  const nextR = projectedRatio(S.tier + 1), hereR = projectedRatio(S.tier);
+  // The card you are ON and the card that is your HIGHEST are two different
+  // things, and this panel used to name both in one sentence while the button
+  // under it named a third. Read top to bottom now: where you are, how the next
+  // one unlocks, what climbing does to the money, then the three buttons.
+  const nextT = Math.min(B.TIER_MAX, S.tier + 1);
+  const top = S.tierMax || 0;
+  // Both sides under the weather overhead: the question is what the CARD does.
+  const nextR = projectedRatio(nextT, S.tier), hereR = projectedRatio(S.tier, S.tier);
   const nm = r => scoreFor(r).n;
+  const atTop = S.tier >= top, maxed = S.tier >= B.TIER_MAX;
+  const lb = (k, v, col) => '<div class="lb"><span class="p"></span><span>' + k + '</span>'
+    + '<span class="s"' + (col ? ' style="color:var(' + col + ')"' : '') + '>' + v + '</span></div>';
+
+  const unlockLine = top >= B.TIER_MAX
+    ? lb('Cards unlocked', 'all of them')
+    : atTop
+      ? lb('Events on Card ' + roman(top),
+           eventsOn(top) + ' of ' + B.EVENTS_PER_CARD,
+           eventsToNext() === 0 ? '--aurora' : '')
+      : lb('Events on Card ' + roman(top), eventsOn(top) + ' of ' + B.EVENTS_PER_CARD, '--flag');
+
   $('tierBox').innerHTML =
     '<div class="hint" id="cardHint"><div class="foldhead">'
-    + '<span>Card <b>' + roman(S.tierMax || 0) + '</b> is your highest \u00b7 <b>'
-    + eventsOn(S.tierMax || 0) + ' of ' + B.EVENTS_PER_CARD + '</b> events played on it</span>'
-    + '<button class="qm" aria-label="How cards work">?</button></div>'
-    + '<div class="fold" style="margin-top:6px">Every card makes holes \u00d7' + B.TIER_Y
-    + ' longer but only pays \u00d7' + B.TIER_G + ' more, and the clock stays where it is. '
-    + 'The course grows across the five events, so a card you have just taken plays short '
-    + 'and the same card plays long by the end of it.</div></div>'
+    + '<span>You are playing <b>Card ' + roman(S.tier) + '</b>'
+    + (atTop ? ', the highest you have unlocked' : ' · your highest is <b>Card '
+        + roman(top) + '</b>') + '</span>'
+    + '<button class="qm" aria-label="How Tour Cards work">?</button></div>'
+    + '<div class="fold" style="margin-top:6px">A Tour Card is the difficulty you are playing at. '
+    + 'Each one up makes the holes ×' + B.TIER_Y + ' longer and pays ×' + B.TIER_G
+    + ' more, and the clock you are scored against does not move. A card also grows across its '
+    + B.EVENTS_PER_CARD + ' events, so one you have just taken plays short and the same card plays '
+    + 'long by the end of it — which is why climbing costs least when you have played one out. '
+    + 'You unlock the next card by playing ' + B.EVENTS_PER_CARD + ' events on your highest, and only '
+    + 'on your highest.</div></div>'
+    + unlockLine
+    + (atTop || top >= B.TIER_MAX ? ''
+       : '<div class="hint" style="color:var(--flag)">You are below your highest card, so no new '
+         + 'cards are unlocking. Climb back to Card ' + roman(top) + ' to start that again.</div>')
     + climbLines()
-    + '<div class="row"><div><div class="nm">Card ' + roman(S.tier+1) + '</div>'
-    + '<div class="ds">On this hole you would card about <b style="color:var(--chalk)">' + nm(nextR) + '</b>'
-    + ' (' + nextR.toFixed(2) + '\u00d7 par). Here: ' + nm(hereR) + '.</div></div>'
-    + '<button class="buy' + (cardUnlocked(S.tier+1) ? ' ok' : ' no') + '" id="climbBtn">'
-    + '<span class="lbl">Climb</span><span class="amt">'
-    + (cardUnlocked(S.tier+1) ? '+1' : eventsToNext() + ' left') + '</span></button></div>'
-    + '<div class="row"><div><div class="nm">Drop back</div>'
-    + '<div class="ds">Drop to something easier and farm it for gear and wager stakes.</div></div>'
-    + '<button class="buy" id="dropBtn"><span class="lbl">Drop</span><span class="amt">\u22121</span></button></div>'
+    + (maxed
+      ? '<div class="row"><div><div class="nm">Card ' + roman(S.tier) + '</div>'
+        + '<div class="ds">The last card. There is nothing above this one.</div></div></div>'
+      : '<div class="row"><div><div class="nm">Climb to Card ' + roman(nextT) + '</div>'
+        + '<div class="ds">' + (cardUnlocked(nextT)
+            ? 'On this hole you would card about <b style="color:var(--chalk)">' + nm(nextR)
+              + '</b>, where you card <b style="color:var(--chalk)">' + nm(hereR) + '</b> now.'
+            : 'Locked. ' + eventsToNext() + ' more event' + (eventsToNext() === 1 ? '' : 's')
+              + ' on Card ' + roman(top) + ' unlocks it.') + '</div></div>'
+        + '<button class="buy' + (cardUnlocked(nextT) ? ' ok' : ' no') + '" id="climbBtn">'
+        + '<span class="lbl">Climb</span><span class="amt">'
+        + (cardUnlocked(nextT) ? '+1' : eventsToNext() + ' to go') + '</span></button></div>')
+    + '<div class="row"><div><div class="nm">'
+    + (S.tier > 0 ? 'Drop back to Card ' + roman(S.tier - 1) : 'Drop back') + '</div>'
+    + '<div class="ds">' + (S.tier > 0
+        ? 'Shorter holes for a smaller purse. Worth it to farm gear and wager stakes, and you can '
+          + 'climb back any time — but new cards stop unlocking while you are below your highest.'
+        : 'You are on the first card. There is nothing below it.') + '</div></div>'
+    + '<button class="buy' + (S.tier > 0 ? '' : ' no') + '" id="dropBtn">'
+    + '<span class="lbl">Drop</span><span class="amt">−1</span></button></div>'
     + '<div class="row"><div><div class="nm">Climb on form</div>'
-    + '<div class="ds">Moves up on its own once the next card is unlocked and you are carding eagles.</div></div>'
+    + '<div class="ds">Moves up on its own once the next card is unlocked and you are carding '
+    + 'eagles five holes running.</div></div>'
     + '<button class="buy' + (S.autoClimb ? ' ok' : '') + '" id="autoBtn"><span class="lbl">Auto</span>'
     + '<span class="amt">' + (S.autoClimb ? 'On' : 'Off') + '</span></button></div>';
-  $('climbBtn').onclick = () => climb(1);
+  const cb = $('climbBtn'); if(cb) cb.onclick = () => climb(1);
   $('dropBtn').onclick = () => climb(-1);
   $('autoBtn').onclick = () => { S.autoClimb = !S.autoClimb; renderTour(); };
 
@@ -8616,24 +8691,40 @@ function climbLines(){
   const near = x => Math.abs(x - 1) < 0.02;
   const pay = near(C.pay) ? 'unchanged' : '\u00d7' + C.pay.toFixed(2);
   const len = near(C.len) ? 'the same' : '\u00d7' + C.len.toFixed(2) + ' longer';
-  // The number is not the answer. The answer is whether to press the button,
-  // and there are three cases -- told apart by what CAUSES them, not by which
-  // of the two figures happens to read as 1.00. A card played out and a bag
-  // miles ahead both leave the hole length alone, and saying "your bag
-  // outdrives this card on 0% of holes" to the first of them is a lie the
-  // symptom test told.
-  const say = eventsOn(S.tier) >= B.EVENTS_PER_CARD
-    ? 'The card you are on has grown to its full length over its ' + B.EVENTS_PER_CARD
-      + ' events, so the next one starts where this one ended. Climbing costs nothing.'
-    : C.bound > 0.5
+  // The number is not the answer. The answer is whether to press the button.
+  // Which sentence that is comes off dProg -- how much further along the growth
+  // curve the next card starts -- and then off the figures themselves, so it
+  // can never contradict the two lines above it. Reading "this card is played
+  // out" as the cause was wrong: climb, play, drop back, and the card above you
+  // has five events on it as well, so it starts grown and the step is a full
+  // one. That state put "climbing costs nothing" directly above x0.94 and
+  // x1.98 longer.
+  const say = C.dProg < 0.02
+    ? 'The next card is no further grown than this one, so the holes and the purse do not move '
+      + 'at all. Climbing costs nothing.'
+    : near(C.len)
       ? 'Your bag already outdrives this card on ' + Math.round(C.bound*100) + '% of holes, so the '
         + 'next one is no longer than this one and the purse still goes up. This is as cheap as '
         + 'climbing gets.'
-      : 'The course grows faster than the purse does, so until your bag catches up this is a pay '
-        + 'cut. Playing out the card first closes the gap: it grows to full length either way.';
-  return lb('Purse per second after', pay, near(C.pay) ? '' : C.pay >= 1 ? '--aurora' : '--flag')
-    + lb('Hole length after', len, near(C.len) ? '' : '--brass')
-    + '<div class="hint">' + say + '</div>';
+      : C.pay >= 1
+        ? 'The holes get longer, but you are far enough ahead of the card that the purse more than '
+          + 'keeps up.'
+        // The "play it out first" advice only exists while there is something
+        // left to play out. Said to someone whose card is already at 5 of 5 it
+        // is an instruction they cannot follow.
+        : 'The course grows faster than the purse does, so until your bag catches up this is a pay '
+          + 'cut.' + (eventsOn(S.tier) < B.EVENTS_PER_CARD
+            ? ' Playing out this card first closes the gap: it grows to full length either way.'
+            : ' This card is played out, so the gap closes by your bag getting longer, not by waiting.');
+  // Said plainly when the button underneath cannot be pressed yet: these are a
+  // preview of a climb that is not offered, and reading "as cheap as climbing
+  // gets" over a greyed out button is a nudge towards nothing.
+  const locked = !cardUnlocked(Math.min(B.TIER_MAX, S.tier + 1));
+  return lb((locked ? 'Purse per second if you climb' : 'Purse per second after'), pay,
+            near(C.pay) ? '' : C.pay >= 1 ? '--aurora' : '--flag')
+    + lb((locked ? 'Hole length if you climb' : 'Hole length after'), len,
+         near(C.len) ? '' : '--brass')
+    + '<div class="hint">' + (locked ? 'When it unlocks: ' : '') + say + '</div>';
 }
 
 /* ---- legacy ---- */
@@ -8747,7 +8838,8 @@ function setView(v){
   document.querySelectorAll('.view').forEach(e => e.classList.toggle('on', e.id === 'v-' + v));
   if(v === 'bag'){ renderBag(); renderSkillsTab(); }
   if(v === 'dgn') renderDgn();
-  if(v === 'tour') renderTour();
+  // Looking at it is what clears the flash on the tab.
+  if(v === 'tour'){ S.cardSeen = S.tierMax || 0; renderTour(); renderTourTab(); }
   if(v === 'career'){ renderLegacy(); renderCareer(); }
   $('panel').scrollTop = 0;
 }
@@ -8925,7 +9017,7 @@ const DEV = {
    THE CAREER PANEL
    ========================================================================= */
 let careerSub = 'stat';
-let careerTab = null;
+let careerTab = null, tourTab = null;
 function pipRow(n, max){
   let s = '';
   for(let i=0;i<max;i++) s += '<i class="pip' + (i < n ? ' on' : '') + '"></i>';
@@ -9300,6 +9392,7 @@ function boot(){
   document.querySelectorAll('.tab').forEach(t => {
     t.onclick = () => setView(t.dataset.v);
     if(t.dataset.v === 'career') careerTab = t;
+    if(t.dataset.v === 'tour') tourTab = t;
   });
   $('scrapBtn').onclick = () => {
     const keep = {}, doomed = [];

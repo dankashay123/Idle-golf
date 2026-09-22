@@ -177,7 +177,7 @@ module.exports = {
 
       // ---- 6. what climbing a Tour Card does to the money --------------
       setView('tour');
-      const climbCase = (k, events) => {
+      const climbCase = (k, events, nextEvents) => {
         DEV.tierSet(20); try { hideSheet(); } catch (e) {}
         S.relic = {}; B.UPG.forEach(u => S.upg[u.id] = 0);
         B.SLOTS.forEach(sl => { S.equip[sl.id] = makeItem(14, 0, 2, sl.id); });
@@ -189,6 +189,7 @@ module.exports = {
           if (derive().dps < pace * k) lo = m; else hi = m; }
         S.upg.drive = lo;
         S.tierEvents = {}; S.tierEvents[S.tier] = events;
+        if (nextEvents) S.tierEvents[S.tier + 1] = nextEvents;
         startHole();
         renderTour();
         const C = climbPreview();
@@ -198,6 +199,10 @@ module.exports = {
       out.behind = climbCase(0.6, 0);      // the card sets the hole
       out.ahead  = climbCase(12, 0);       // the bag sets the hole
       out.played = climbCase(1, B.EVENTS_PER_CARD);   // the card is full grown
+      // climbed, played, dropped back: the card ABOVE you has events on it too,
+      // so it starts grown and the step is a full one again. This is the state
+      // that put "climbing costs nothing" over x0.94 pay and x1.98 longer holes.
+      out.dropped = climbCase(0.8, B.EVENTS_PER_CARD, B.EVENTS_PER_CARD);
       out.tierY = B.TIER_Y; out.tierG = B.TIER_G;
       // and the panel says nothing at all when it is not the panel on show
       setView('upg'); renderTour();
@@ -340,10 +345,23 @@ module.exports = {
     // not whichever sentence the two figures happen to match. A card played out
     // and a bag miles ahead both leave the hole length alone; only one of them
     // is "your bag outdrives this card".
+    // a card above you that is already grown is not a free climb
+    const D_ = r.dropped;
+    if (Math.abs(D_.len - 1) < 0.05)
+      throw new Error('with the card above already played, the holes should still step up, '
+        + 'but the length reads ' + D_.len.toFixed(3));
+    if (/costs nothing/.test(D_.text))
+      throw new Error('the screen says climbing costs nothing while showing holes x'
+        + D_.len.toFixed(2) + ' and pay x' + D_.pay.toFixed(2) + '. The verdict is being read '
+        + 'off "this card is played out" rather than off how far the next one has grown.');
     const wants = { behind: /pay cut/, ahead: /outdrives this card/, played: /costs nothing/ };
     for (const [k, c] of [['behind', B_], ['ahead', A_], ['played', P_]]) {
       if (c.text.indexOf('Purse per second') < 0)
         throw new Error('the Tour screen shows no purse line in the ' + k + ' case');
+      // advice you cannot follow is worse than none
+      if (/played out/.test(c.text) && /Playing out this card first/.test(c.text))
+        throw new Error('the ' + k + ' case tells a player whose card is already played out '
+          + 'to play it out first');
       if (!wants[k].test(c.text))
         throw new Error('in the ' + k + ' case the Tour screen does not say ' + wants[k]
           + '. It says: ' + (c.text.match(/(The course grows[^]*?|Your bag already[^]*?|This card has grown[^]*?)(?:Card|$)/) || ['(no verdict at all)'])[0].slice(0, 140));
@@ -367,6 +385,7 @@ module.exports = {
       + '%, not "' + r.honTableFirst + '"; ' + lockedPct.length + ' locked in order',
       'climb: behind the card x' + B_.pay.toFixed(2) + ' pay on x' + B_.len.toFixed(2)
       + ' holes, ahead of it x' + A_.pay.toFixed(2) + ' on the same holes, played out x'
-      + P_.pay.toFixed(2)];
+      + P_.pay.toFixed(2) + ', dropped back x' + D_.pay.toFixed(2) + ' on x'
+      + D_.len.toFixed(2) + ' holes'];
   }
 };

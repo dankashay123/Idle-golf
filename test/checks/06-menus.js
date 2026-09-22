@@ -7,7 +7,12 @@
  * first, so finding the wedge you picked up two holes ago meant reading past
  * nine drivers. There is a tile per slot which both shows what you are
  * carrying there and picks what the list below shows, and the list shows that
- * slot and nothing else, carried club at the top. */
+ * slot and nothing else, carried club at the top.
+ *
+ * And the Tour tab flashes when a card you have not seen is unlocked, and
+ * stops when you go and look. The marker is the highest card SEEN rather than
+ * a timer, so it has to survive a reload and it has to come back if another
+ * card unlocks after that. */
 'use strict';
 module.exports = {
   name: 'menus',
@@ -155,7 +160,46 @@ module.exports = {
       throw new Error('the locker header does not say ' + lk.held + ' / ' + lk.cap
         + ': "' + lk.head + '"');
 
+    // ---- the Tour tab flashes for a card you have not seen ---------------
+    const tourState = () => page.evaluate(() => {
+      const t = document.querySelector('.tab[data-v="tour"]');
+      return { flash: t.classList.contains('flash'), dot: t.classList.contains('alert'),
+               seen: S.cardSeen, max: S.tierMax,
+               anim: getComputedStyle(t).animationName };
+    });
+    await page.click('.tab[data-v="upg"]');
+    await page.evaluate(() => { S.tierMax = 4; S.cardSeen = 4; renderTourTab(); });
+    const quiet = await tourState();
+    if (quiet.flash || quiet.dot)
+      throw new Error('the Tour tab is flashing with nothing new unlocked');
+
+    await page.evaluate(() => { S.tierMax = 5; renderTourTab(); });
+    const lit = await tourState();
+    if (!lit.flash || !lit.dot)
+      throw new Error('a newly unlocked card does not light the Tour tab');
+    if (lit.anim === 'none')
+      throw new Error('the Tour tab carries the class but no animation, so nothing flashes');
+
+    // going to look is what clears it
+    await page.click('.tab[data-v="tour"]');
+    await page.waitForTimeout(150);
+    const looked = await tourState();
+    if (looked.flash || looked.dot)
+      throw new Error('the Tour tab is still flashing after the Tour screen was opened');
+    if (looked.seen !== 5)
+      throw new Error('opening the Tour screen left the seen marker at ' + looked.seen
+        + ' rather than the unlocked card 5, so it would flash again on reload');
+
+    // and it comes back for the next one
+    await page.click('.tab[data-v="upg"]');
+    await page.evaluate(() => { S.tierMax = 6; renderTourTab(); });
+    if (!(await tourState()).flash)
+      throw new Error('the Tour tab does not light again for the card after that');
+    await page.click('.tab[data-v="tour"]');
+    await page.waitForTimeout(150);
+
     return ['5 tabs, both sub navs, folds, cooldowns; pull tab gains ' + grew + 'px',
+      'tour tab flashes on a new card and clears on the visit',
       'locker tabbed ' + lk.tabs.join('/') + ', ' + lk.held + '/' + lk.cap + ' held',
       'six identical tiles, ' + lk.geom[0].h + 'px, centred'];
   }
