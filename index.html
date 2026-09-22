@@ -120,6 +120,23 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
   transition:transform .16s ease-out}
 #app.big #drawer img{transform:scaleY(-1)}
 #app.big #stage{display:none}
+/* A phone on its side is 360-430px tall. The column gave the field half of
+   that and pushed the tabs off the bottom, so the menu could only be reached
+   through the pull tab -- not something anyone would guess. With the width to
+   spare, the field and the menu sit side by side instead, and the pull tab has
+   nothing left to do. */
+@media (orientation:landscape) and (max-height:560px){
+  #app{max-width:1180px;display:grid;
+    grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);
+    grid-template-rows:auto auto auto auto minmax(0,1fr) auto;
+    grid-template-areas:"crest tabs" "xp panel" "card panel" "nine panel" "stage panel" "vitals panel"}
+  #crest{grid-area:crest} #xpStrip{grid-area:xp} #card{grid-area:card} #nineBar{grid-area:nine}
+  #stage{grid-area:stage} #vitals{grid-area:vitals} #tabs{grid-area:tabs}
+  #panel{grid-area:panel;min-height:0;border-left:var(--hair)}
+  #tabs{border-left:var(--hair);align-self:stretch}
+  #drawer{display:none}
+  #app.big #stage{display:block}
+}
 
 /* ---------- stage ---------- */
 /* the field takes half the app, and the canvas fills whatever shape that is */
@@ -580,7 +597,12 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
    worst of those with room, rather than clearing the one screen I happened to
    measure first. */
 #honBtn{top:37%}
-#perkBtn{top:48.5%}
+/* One button and a gap below the first, rather than 11.5% further down. The
+   buttons are sized off the stage's width and the gap was a share of its
+   height, so on a phone on its side -- a stage 400 wide and 207 tall -- the two
+   overlapped by two pixels. A margin's percentage reads the WIDTH, the same
+   thing the buttons are sized from, so the gap now tracks the buttons. */
+#perkBtn{top:37%;margin-top:calc(max(24px, 6.2%) + max(8px, 4%))}
 #honIcon,#perkIcon{display:block;width:24px;height:24px;object-fit:contain;
   image-rendering:pixelated;image-rendering:crisp-edges}
 #honBtn:active,#perkBtn:active{transform:translateY(1px)}
@@ -9510,7 +9532,7 @@ function frameBody(now){
   step(dt, D);
   // No point painting the hole while the menu is over it. The sim runs on
   // regardless; only the drawing stops.
-  if(!$('app').classList.contains('big')) Scene.draw(dt, D);
+  if(!$('app').classList.contains('big') || (SIDEWAYS && SIDEWAYS.matches)) Scene.draw(dt, D);
   renderLive();
 
   slowT += dt;
@@ -9588,6 +9610,18 @@ function setIcons(){
     if(rel === 'icon') l.type = 'image/png';
     document.head.appendChild(l);
   }
+}
+// Side by side there is no pulled-up menu, only a field and a menu. Coming
+// into that layout with the menu pulled up would leave the field showing but
+// the frame loop still skipping it -- a frozen picture -- so the flag goes.
+const SIDEWAYS = window.matchMedia ? matchMedia('(orientation:landscape) and (max-height:560px)') : null;
+function sideways(){
+  if(!SIDEWAYS || !SIDEWAYS.matches) return;
+  if($('app').classList.contains('big')){
+    $('app').classList.remove('big');
+    $('drawer').setAttribute('aria-label', 'Expand the menu');
+  }
+  Scene.resize();
 }
 function intro(){
   showSheet('<h3>Mythic Mulligan</h3>'
@@ -9673,6 +9707,11 @@ function boot(){
 
   if(had) offline(); else intro();
 
+  if(SIDEWAYS){
+    if(SIDEWAYS.addEventListener) SIDEWAYS.addEventListener('change', sideways);
+    else if(SIDEWAYS.addListener) SIDEWAYS.addListener(sideways);
+    sideways();
+  }
   document.addEventListener('visibilitychange', () => {
     if(document.hidden) save(); else catchUp();
   });

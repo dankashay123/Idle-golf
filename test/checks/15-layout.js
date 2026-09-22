@@ -105,7 +105,7 @@ module.exports = {
 
     // ---- the stage and the vitals bar, at three widths ------------------
     const hud = [];
-    for (const [w, h] of [[320, 568], [400, 860], [768, 1024]]) {
+    for (const [w, h] of [[320, 568], [400, 860], [768, 1024], [740, 360], [844, 390]]) {
       await page.setViewportSize({ width: w, height: h });
       await page.waitForTimeout(200);
       hud.push(await page.evaluate(([w]) => {
@@ -174,6 +174,45 @@ module.exports = {
         return o;
       }, [w]));
     }
+    // ---- a phone on its side ------------------------------------------------
+    // The column gave the field half of a 360px-tall screen and pushed the tabs
+    // off the bottom, so the menu could only be reached through the pull tab.
+    // Side by side, every tab has to be on screen with room to use the panel.
+    const side = [];
+    // turned with the menu pulled up: the field comes back, and it has to be drawn.
+    // Pulled up in portrait, because the pull tab is not there on its side.
+    await page.setViewportSize({ width: 400, height: 860 });
+    await page.waitForTimeout(150);
+    await page.evaluate(() => document.getElementById('drawer').click());
+    for (const [w, h] of [[740, 360], [844, 390], [932, 430]]) {
+      await page.setViewportSize({ width: w, height: h });
+      await page.waitForTimeout(200);
+      side.push(await page.evaluate(([w, h]) => {
+        try { hideSheet(); } catch (e) {}
+        const r = id => document.getElementById(id).getBoundingClientRect();
+        const tabs = [...document.querySelectorAll('#tabs .tab')].map(t => t.getBoundingClientRect());
+        const st = r('stage'), pn = r('panel');
+        return { w, h, tabsOn: tabs.length === 5 && tabs.every(t => t.top >= 0 && t.bottom <= h + 0.5 && t.height >= 24),
+                 panelH: Math.round(pn.height), stage: [Math.round(st.width), Math.round(st.height)],
+                 overlap: Math.max(0, Math.min(st.right, pn.right) - Math.max(st.left, pn.left))
+                          * Math.max(0, Math.min(st.bottom, pn.bottom) - Math.max(st.top, pn.top)),
+                 scroll: document.documentElement.scrollHeight > h + 1,
+                 drawing: !document.getElementById('app').classList.contains('big') };
+      }, [w, h]));
+    }
+    for (const o of side) {
+      const at = ' on a ' + o.w + 'x' + o.h + ' phone on its side';
+      if (!o.tabsOn) throw new Error('the tabs are not all on screen' + at + ', so the menu is '
+        + 'only reachable through the pull tab');
+      if (o.panelH < 200) throw new Error('the menu is ' + o.panelH + 'px tall' + at);
+      if (!(o.stage[1] >= 150)) throw new Error('the field is ' + o.stage.join('x') + at);
+      if (o.overlap > 0) throw new Error('the field and the menu overlap' + at);
+      if (o.scroll) throw new Error('the page scrolls' + at + '; the field and menu should fit');
+      if (!o.drawing) throw new Error('the field is showing but the frame loop is skipping it' + at);
+    }
+    await page.setViewportSize({ width: 400, height: 860 });
+    await page.waitForTimeout(150);
+
     // ---- a number and its unit stay on one line --------------------------
     // "The caddie kept the group moving at 55 per cent of your live pace" broke
     // after "55 per", leaving "cent" alone on the next line: a single unit
@@ -300,8 +339,10 @@ module.exports = {
     return [r.looked + ' boxes measured across five screens, four shop tabs and three sheets, '
       + 'none past its edge',
       'away card: three tiles, captions on one line, all three centred',
-      'stage and vitals at 320/400/768: nothing off the stage, no HUD element on another '
+      'stage and vitals at 320/400/768 and on its side at 740/844: nothing off the stage, no HUD element on another '
       + 'with the tallest toasts up, five equal cells holding a maxed golfer\'s numbers',
+      'on its side at ' + side.map(o => o.w + 'x' + o.h).join('/') + ': field and menu side by '
+      + 'side, all five tabs on screen, menu ' + side.map(o => o.panelH).join('/') + 'px tall',
       splits.looked + ' pieces of text read across every screen and sub-tab: no two-word unit '
       + 'anywhere, and every figure bound to the unit it carries'];
   }
