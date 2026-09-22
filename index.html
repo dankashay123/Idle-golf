@@ -222,7 +222,7 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
 .slot{position:relative;background:#0D1D14;border:1px solid var(--line);padding:6px 2px;
   min-height:52px;display:flex;flex-direction:column;align-items:center;justify-content:center;
   gap:3px;border-radius:0}
-.slot .sic{width:22px;height:22px}
+.slot .sic{width:24px;height:24px}   /* 2x of 12, not 22 */
 .slot .sk{font-size:8px;letter-spacing:.04em;text-transform:uppercase;color:var(--faint);
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
 .slot.on{background:#16301F;border-color:var(--brass)}
@@ -252,11 +252,17 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
 .item .ib{font-size:var(--f0);color:var(--faint);margin-top:2px}
 /* a club in the locker: framed art, the rarity said out loud beside the name,
    and one button you can hit without aiming */
-.item.card2{grid-template-columns:44px 1fr auto;gap:10px;align-items:start}
+/* minmax(0,1fr) and not 1fr. A grid item will not shrink below its own
+   min-content unless it is told it may, so a club with a long name pushed the
+   middle column to 231px where only 222 was free: the row overran its own
+   right padding and squeezed the button down to its min-width, which clipped
+   the word UPGRADE in half. The name already knows how to ellipsis; it was
+   never being given the chance. */
+.item.card2{grid-template-columns:44px minmax(0,1fr) auto;gap:10px;align-items:start}
 .item.worn{background:#12241A}
 .thumb{position:relative;width:44px;height:44px;display:flex;align-items:center;justify-content:center;
   background:#08130D;border:1px solid var(--line)}
-.thumb img{width:30px;height:30px;image-rendering:pixelated;image-rendering:crisp-edges}
+.thumb img{width:36px;height:36px;image-rendering:pixelated;image-rendering:crisp-edges}
 .thumb .tel{position:absolute;bottom:-1px;right:-1px;width:13px;height:13px;background:#08130D;
   border:1px solid var(--line);padding:1px}
 .irow{display:flex;align-items:baseline;gap:8px}
@@ -265,7 +271,10 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
 .equipbtn{min-width:88px;padding:9px 6px;border:1px solid var(--brass-dk);background:var(--raise2);
   color:var(--brass);border-radius:0;font-size:var(--f1);letter-spacing:.1em;text-transform:uppercase;
   font-weight:700;display:flex;align-items:center;justify-content:center;gap:5px}
-.equipbtn img{width:13px;height:13px;image-rendering:pixelated}
+/* flex:0 0 auto or the button squeezes it: measured at 7.8x13 and 8.8x13 in
+   the locker, which is a 12x12 drawing rendered two thirds as wide as it is
+   tall. The other half of it is that 13 was never a whole multiple of 12. */
+.equipbtn img{width:12px;height:12px;flex:0 0 auto;image-rendering:pixelated}
 .equipbtn.up{border-color:var(--aurora);color:var(--aurora);background:rgba(87,224,190,.10)}
 .equipbtn.worn{border-color:var(--line);color:var(--faint);background:transparent}
 .tag{font-size:var(--f0);letter-spacing:.1em;text-transform:uppercase;font-weight:700}
@@ -445,8 +454,15 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
 /* the away card */
 .awgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--line);
   border:1px solid var(--line);margin:4px 0 10px}
-.awst{background:var(--raise);padding:9px 4px;text-align:center}
-.awv{font-family:var(--mono);font-size:var(--f4);font-weight:600;color:var(--chalk);line-height:1}
+/* Three tiles, one of them in a bigger face. Left to flow from the top, the
+   big one set the row height and the other two sat above their own middles,
+   with the three captions on three different lines. The tile centres its
+   content, and the value sits in a box the height of the BIGGEST face, so the
+   captions land on one line across all three whatever is in them. */
+.awst{background:var(--raise);padding:9px 4px;text-align:center;
+  display:flex;flex-direction:column;align-items:center;justify-content:center}
+.awv{font-family:var(--mono);font-size:var(--f4);font-weight:600;color:var(--chalk);line-height:1;
+  min-height:var(--f5);display:flex;align-items:center;justify-content:center}
 .awst.big .awv{color:var(--brass);font-size:var(--f5)}
 .awk{font-size:var(--f0);letter-spacing:.14em;text-transform:uppercase;color:var(--faint);margin-top:4px}
 .awband{font-size:var(--f0);letter-spacing:.14em;text-transform:uppercase;color:var(--brass);
@@ -489,8 +505,8 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
   font-size:var(--f1);font-weight:700;color:var(--chalk);letter-spacing:.02em;line-height:1.25}
 .card .cart{position:relative;flex:1 1 auto;display:flex;align-items:center;justify-content:center;
   padding:10px 4px;background:radial-gradient(circle at 50% 42%,rgba(255,255,255,.07),transparent 66%)}
-.card .cart img{width:46px;height:46px;image-rendering:pixelated;image-rendering:crisp-edges}
-.sgrid.c3 .cart img{width:38px;height:38px}
+.card .cart img{width:48px;height:48px;image-rendering:pixelated;image-rendering:crisp-edges}
+.sgrid.c3 .cart img{width:36px;height:36px}
 .card .csub{padding:0 5px 6px;font-size:var(--f0);color:var(--dim);line-height:1.35}
 .card .csub b{color:var(--aurora)}
 .card .pips{display:flex;gap:2px;justify-content:center;padding:0 5px 6px}
@@ -504,9 +520,15 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
 .price small{display:block;font-size:var(--f0);letter-spacing:.08em;color:var(--faint);
   font-weight:400;font-family:var(--sans);text-transform:uppercase;margin-top:1px}
 /* On the art, not on the header: over the header it sat on top of the number,
-   and a bonus badge that hides the amount it is a bonus on is worse than none. */
+   and a bonus badge that hides the amount it is a bonus on is worse than none.
+   A short one like "+40%" tucks into the corner, but "BEST VALUE" is half the
+   width of the card and was lying across the top of the drawing. The art makes
+   room for it instead, and only when there is one: .cart takes the spare height
+   in the card, so pushing the icon down does not move the price under it or
+   leave this card taller than the one beside it. */
 .badge{position:absolute;top:2px;right:2px;background:var(--r5);color:#120A1E;font-size:var(--f0);
   font-weight:700;padding:1px 4px;letter-spacing:.04em;z-index:2}
+.card .cart.hasbadge{padding-top:22px}
 .sovline{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px;
   font-size:var(--f1);color:var(--dim)}
 .sovline b{font-family:var(--mono);font-size:var(--f4);color:var(--r5)}
@@ -539,7 +561,10 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
 #shopBtn{position:relative;width:11%;aspect-ratio:1/1;flex:0 0 auto;pointer-events:auto;
   background:none;border:0;padding:0;display:flex;align-items:center;justify-content:center;
   filter:drop-shadow(0 1px 2px rgba(0,0,0,.9))}
-#shopIcon{display:block;width:100%;height:100%;object-fit:contain;
+/* The button is a share of the stage so the tap target grows with the screen;
+   the sprite inside is a fixed 24, which is 2x of 12. At 100% of the button it
+   landed on 24.5 and 24.7 and the pixels came out in uneven widths. */
+#shopIcon{display:block;width:24px;height:24px;object-fit:contain;
   image-rendering:pixelated;image-rendering:crisp-edges}
 #shopBtn:active{transform:translateY(1px)}
 #shopDot{position:absolute;top:-8%;right:-8%;width:32%;height:32%;background:var(--r5);display:none}
@@ -549,7 +574,7 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
   filter:drop-shadow(0 1px 2px rgba(0,0,0,.9))}
 #honBtn{top:24%}
 #perkBtn{top:35.5%}
-#honIcon,#perkIcon{display:block;width:100%;height:100%;object-fit:contain;
+#honIcon,#perkIcon{display:block;width:24px;height:24px;object-fit:contain;
   image-rendering:pixelated;image-rendering:crisp-edges}
 #honBtn:active,#perkBtn:active{transform:translateY(1px)}
 @keyframes hpulse{0%,100%{opacity:1}50%{opacity:.62}}
@@ -4653,7 +4678,8 @@ function openShop(sub){ if(sub) shopSub = sub; renderShop(); }
 function shopCard(o){
   return '<div class="card' + (o.on ? ' on' : '') + '">'
     + '<div class="chd">' + o.head + '</div>'
-    + '<div class="cart">' + (o.badge ? '<span class="badge">' + o.badge + '</span>' : '')
+    + '<div class="cart' + (o.badge ? ' hasbadge' : '') + '">'
+    + (o.badge ? '<span class="badge">' + o.badge + '</span>' : '')
     + '<img src="' + pixUrl(o.ic, o.col) + '" alt=""></div>'
     + (o.sub ? '<div class="csub">' + o.sub + '</div>' : '')
     + (o.pips !== undefined ? pipRow(o.pips, B.PERM_MAX) : '')
@@ -7483,14 +7509,18 @@ Object.assign(Scene, {
     const live = [];
     for(const id in S.perkOn) if(S.perkOn[id] > 0) live.push(id);
     if(!live.length) return;
-    const c = this.b, sz = 9;
+    // 12, and pixIcon asked for 12, so the sprite is rasterised at exactly the
+    // size it is drawn at. It used to be baked at 16 -- which pixIcon rounds to
+    // a whole 1x, so 12 -- and then squeezed into 9, which drops three rows and
+    // three columns of a twelve pixel drawing wherever they happen to fall.
+    const c = this.b, sz = 12;
     let x = 3;                          // the buttons moved right, so this side is free
     const y = Math.round(VH*0.24);
     for(const id of live.slice(0, 5)){
       const p = perkDef(id), f = clamp(S.perkOn[id] / p.dur, 0, 1);
       c.fillStyle = 'rgba(6,12,9,.72)';
       c.fillRect(x - 1, y - 1, sz + 2, sz + 4);
-      blit(c, pixIcon(p.ic, 16, PX.brass), x, y, sz, sz);
+      blit(c, pixIcon(p.ic, sz, PX.brass), x, y, sz, sz);
       c.fillStyle = '#2A2418'; c.fillRect(x, y + sz + 1, sz, 1);
       c.fillStyle = PX.brass; c.fillRect(x, y + sz + 1, Math.max(1, Math.round(sz*f)), 1);
       x += sz + 4;
@@ -7503,7 +7533,11 @@ Object.assign(Scene, {
   drawShots(){
     if(!S.carry || !S.carry.length) return;
     const c = this.b;
-    const sz = Math.max(8, Math.round(VW*0.050));
+    // Snapped to a whole multiple of twelve rather than to whatever 5% of the
+    // buffer comes to. It was baked at 20 -- which pixIcon rounds up to 2x, so
+    // 24 -- and then drawn at 17, resampling a sprite that had already been
+    // resampled. Asking pixIcon for the size it is drawn at makes it 1:1.
+    const sz = Math.max(12, Math.round(VW*0.050/12)*12);
     const pad = 2, step = sz + pad*2 + 3;
     let x = 3;
     const y = VH - sz - pad - 2;
@@ -7517,13 +7551,13 @@ Object.assign(Scene, {
 
       panel(c, x - pad, y - pad, sz + pad*2, sz + pad*2, 'rgba(8,14,10,.70)',
             ready ? (blink ? PX.aur : '#2E6B5E') : '#1C3A31');
-      blit(c, pixIcon(def.ic, 20, PX.dim), x, y, sz, sz);
+      blit(c, pixIcon(def.ic, sz, PX.dim), x, y, sz, sz);
       // vertical wipe: pixel-exact where a wedge clip would fur the diagonal
       const fillH = Math.round(sz * frac);
       if(fillH > 0){
         c.save();
         c.beginPath(); c.rect(x, y + sz - fillH, sz, fillH); c.clip();
-        blit(c, pixIcon(def.ic, 20, ready ? PX.aur : '#3FA890'), x, y, sz, sz);
+        blit(c, pixIcon(def.ic, sz, ready ? PX.aur : '#3FA890'), x, y, sz, sz);
         c.restore();
       }
       x += step;

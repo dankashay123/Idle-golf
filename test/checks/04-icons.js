@@ -6,7 +6,16 @@
  * And the colour reaches the drawing. Icons are rasterised on a canvas, and a
  * canvas cannot read "var(--r4)": handed one it paints black. Every Gold trophy
  * in the room had a black icon for exactly that reason, and the bug is
- * invisible in the source because the string looks like a colour. */
+ * invisible in the source because the string looks like a colour.
+ *
+ * And every drawing reaches the screen at the size it was drawn. They are all
+ * 12x12, so a box of 12, 24, 36 or 48 gives every source pixel the same number
+ * of screen pixels and anything else does not: at 13 one column in twelve is
+ * doubled, at 46 two are, at 22 two are dropped. Measured across the interface
+ * there were seven such sizes in use, and two of them were not even square --
+ * the locker's equip button squeezed its sprite to 7.8 wide by 13 tall, because
+ * the button is a flex row and the image had nothing holding its width. A 12x12
+ * drawing two thirds as wide as it is tall is not a rendering subtlety. */
 'use strict';
 module.exports = {
   name: 'icons',
@@ -79,7 +88,61 @@ module.exports = {
     if (r.black.length)
       throw new Error('a ' + r.black.join(' and ') + ' trophy icon rasterises to nothing but '
         + 'dark pixels, which is what a CSS var looks like once a canvas has had it.');
+    // ---- every sprite box is square and a whole multiple of 12 ----------
+    const boxes = await page.evaluate(() => {
+      QUIET = true; DEV.gold(400); DEV.skills(); DEV.keys(); DEV.tierSet(12);
+      DEV.relics(2); QUIET = false;
+      try { hideSheet(); } catch (e) {}
+      S.sov = 99999; for (let i = 0; i < 3; i++) openBag(B.BAGS[1]);
+      try { hideSheet(); } catch (e) {}
+      const seen = {};
+      const where = e => { const a = []; let n = e;
+        while (n && n !== document.body) {
+          a.unshift(n.tagName.toLowerCase() + (n.id ? '#' + n.id : '')
+            + (typeof n.className === 'string' && n.className.trim()
+               ? '.' + n.className.trim().split(/\s+/).join('.') : ''));
+          n = n.parentElement; }
+        return a.slice(-3).join(' > '); };
+      const sweep = () => {
+        for (const img of document.querySelectorAll('img')) {
+          const b = img.getBoundingClientRect();
+          if (!b.width || !b.height) continue;
+          if (!/pixelated|crisp/.test(getComputedStyle(img).imageRendering)) continue;
+          const w = +b.width.toFixed(2), h = +b.height.toFixed(2);
+          if (Math.abs(w - h) < 0.01 && w % 12 === 0) continue;
+          seen[where(img) + '|' + w + 'x' + h] = { w, h, at: where(img) };
+        }
+      };
+      let looked = 0;
+      for (const v of ['upg', 'bag', 'dgn', 'tour', 'career']) {
+        setView(v); sweep(); looked += document.querySelectorAll('img').length;
+      }
+      for (const sub of ['offers', 'buy', 'bags', 'perm']) { openShop(sub); sweep(); }
+      try { hideSheet(); } catch (e) {}
+      if (S.bag[0]) { itemSheet(S.bag[0], false); sweep(); try { hideSheet(); } catch (e) {} }
+      setView('upg'); sweep();
+      return { bad: Object.values(seen), looked,
+               equip: document.querySelectorAll('.equipbtn img').length };
+    });
+    // the sweep has to have had something to look at, or it passes by seeing nothing
+    if (!(boxes.looked > 100))
+      throw new Error('the sprite sweep only saw ' + boxes.looked + ' images, so it is not '
+        + 'reaching the screens it thinks it is');
+    if (!(boxes.equip > 0))
+      throw new Error('the locker had no equip buttons in it, which is where the squashed '
+        + 'sprite was, so this proves nothing');
+    if (boxes.bad.length) {
+      const squashed = boxes.bad.filter(b => Math.abs(b.w - b.h) >= 0.01);
+      throw new Error(boxes.bad.length + ' sprite box(es) are not a square whole multiple of 12: '
+        + boxes.bad.slice(0, 5).map(b => b.w + 'x' + b.h + ' at ' + b.at).join('; ')
+        + (squashed.length ? ' -- ' + squashed.length + ' of them NOT SQUARE, a 12x12 drawing '
+            + 'stretched out of shape' : '')
+        + '. Every drawing is 12x12, so only 12, 24, 36 and 48 give each source pixel the '
+        + 'same number of screen pixels.');
+    }
+
     return [r.total + ' things, ' + r.distinct + ' distinct icons, ' + r.drawn
-      + ' drawn, no reuse, every tier colour reaches the canvas'];
+      + ' drawn, no reuse, every tier colour reaches the canvas',
+      'every sprite box square and on the 12px grid, across five screens and four shop tabs'];
   }
 };
