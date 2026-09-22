@@ -41,9 +41,18 @@ module.exports = {
     // the Depths notes fold, and survive the redraw the key timer forces
     await page.evaluate(() => setView('dgn'));
     await page.waitForTimeout(200);
-    const shut = await page.$eval('.dgn .fold', e => getComputedStyle(e).display);
+    // Queried and read inside one evaluate. renderDgn() replaces these rows on
+    // every slow tick, and $eval resolves the selector in one round trip and
+    // reads the style in the next: land a redraw between the two and the style
+    // comes off a node that is no longer in the document, which reads as the
+    // empty string rather than as a display. That is what "( -> block)" was.
+    const foldDisplay = () => page.evaluate(() => {
+      const e = document.querySelector('.dgn .fold');
+      return e ? getComputedStyle(e).display : 'no fold in the wager book';
+    });
+    const shut = await foldDisplay();
     await page.click('.dgn .qm'); await page.waitForTimeout(1400);
-    const open = await page.$eval('.dgn .fold', e => getComputedStyle(e).display);
+    const open = await foldDisplay();
     if (shut !== 'none' || open === 'none') throw new Error('the Depths fold does not open (' + shut + ' -> ' + open + ')');
 
     // the pull tab takes the menu to the underside of the scorecard and back
