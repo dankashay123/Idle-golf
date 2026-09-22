@@ -219,7 +219,42 @@ module.exports = {
         + 'it has to say so once. Private browsing and a full disk both land here, and '
         + 'swallowing it means hours of play and nothing on the next visit.');
 
+    // ---- a reload in the middle of a nine and the middle of a hole -------
+    // Boot used to call startNine() and startHole() whatever the save said. The
+    // nine's counts went back to zero -- so "all nine under par" could never
+    // complete once a phone had reloaded the tab mid-nine -- and the hole you
+    // were on started again from the tee.
+    const before = await page.evaluate(() => {
+      try { hideSheet(); } catch (e) {}
+      QUIET = true; DEV.tierSet(30); QUIET = false;
+      try { hideSheet(); } catch (e) {}
+      S.hole = 5 + 18 * 3;                      // hole 5 of the fourth round: the front nine
+      startNine(); startHole();
+      Object.assign(S.nine, { n: 4, total: -3, birdie: 2 });
+      S.yards = S.yardsMax * 0.4; S.elapsed = 6;
+      save();
+      return { hole: S.hole, nine: JSON.stringify(S.nine), yards: S.yards, yardsMax: S.yardsMax };
+    });
+    await page.reload();
+    await page.waitForFunction(() => typeof Scene !== 'undefined' && !!Scene.buf, null, { timeout: 15000 });
+    const after = await page.evaluate(() => ({ hole: S.hole, nine: JSON.stringify(S.nine),
+      yards: S.yards, yardsMax: S.yardsMax }));
+    if (after.hole !== before.hole)
+      throw new Error('a reload moved the golfer from hole ' + before.hole + ' to ' + after.hole);
+    if (after.nine !== before.nine)
+      throw new Error('a reload rewrote the nine in progress: ' + before.nine + ' became '
+        + after.nine + '. Its counts are what the nine goal is judged on, so a reload mid-nine '
+        + 'used to make "all nine under par" impossible for that nine.');
+    if (after.yardsMax !== before.yardsMax || !(after.yards <= before.yards)
+        || !(after.yards > before.yards * 0.5))
+      throw new Error('a reload restarted the hole in progress: ' + Math.round(before.yards)
+        + ' of ' + Math.round(before.yardsMax) + ' yards left became ' + Math.round(after.yards)
+        + ' of ' + Math.round(after.yardsMax));
+
     return ['a roughed-up save loads clean, carry ' + Math.round(a.carry),
+      'a reload keeps the nine in progress (' + JSON.parse(after.nine).n + ' holes, '
+      + JSON.parse(after.nine).birdie + ' birdies) and the hole in progress ('
+      + Math.round(100 * after.yards / after.yardsMax) + '% left)',
       'main save unreadable: restored from the backup and the bad copy kept aside; erasing '
       + 'takes both; a browser that will not save says so once',
       'back from another tab: 30s played out at full pace (' + tab.short.played.toFixed(2)

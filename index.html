@@ -9614,8 +9614,14 @@ function boot(){
     el.addEventListener('contextmenu', e => e.preventDefault());
   })();
 
-  startNine();
-  startHole();
+  // A reload used to throw away the nine you were halfway through and start
+  // the hole you were on again. The nine's counts went back to zero, so "all
+  // nine under par" was gone for good the moment a phone reloaded the tab, and
+  // Appearance Fee paid out again on every reload. Both are in the save; only
+  // the scenery has to be rebuilt.
+  if(!S.nine || S.nine.idx !== nineIndex(S.hole)) startNine();
+  if(had && S.yardsMax > 0 && isFinite(S.yards) && S.yards <= S.yardsMax) Scene.newHole(S.hole, S.tier);
+  else startHole();
   renderAll();
   setView('upg');
 
