@@ -4818,11 +4818,24 @@ function retire(){
 // schedule, the card and the experience with it. The floor is applied per hole
 // below, the way startHole applies it.
 const awayFirstHole = h => (tournamentOf(h) - 1) * B.ROUND * B.DAYS + 1;
-function awayRound(){
+// Walks the tournament you are standing in and reports what a hole of it is
+// worth and how long it takes, for ANY Tour Card rather than only the one you
+// are on. The away model asks for the card you are on; the Tour screen asks for
+// the next one too, which is the only honest way to answer "what does climbing
+// do to my money" -- both sides priced by the same functions the course uses.
+// wx is the card the WEATHER is drawn off, which is not always the card being
+// priced. chaosFor and courseElFor both hash on the tier, so asking what the
+// next card pays with its own weather compares this card's four draws against
+// four different ones -- and the purse multiplier alone runs from 0.8 to 2.3.
+// The climb question is "what does the CARD do", so both sides are walked under
+// the weather you are standing in.
+function roundRate(tier, wx){
+  if(tier === undefined) tier = S.tier;
+  if(wx === undefined) wx = tier;
   const n = B.ROUND * B.DAYS, first = awayFirstHole(S.hole);
   const h0 = S.hole, chaos0 = S.chaos, el0 = S.courseEl, str0 = S.stretched;
   const carded0 = S.carded, yards0 = S.yardsMax;
-  let secs = 0, purse = 0, drop = 0, card = 0, yards = 0;
+  let secs = 0, purse = 0, drop = 0, card = 0, yards = 0, bound = 0;
   // It walks the golfer over seventy two holes to measure them, so it puts him
   // back whichever way it leaves: a throw in derive() that stranded him on hole
   // forty of an event he is not playing would be silent and permanent.
@@ -4830,19 +4843,21 @@ function awayRound(){
     for(let i = 0; i < n; i++){
       const h = first + i;
       S.hole = h;
-      S.chaos = chaosFor(h, S.tier);
+      S.chaos = chaosFor(h, wx);
       S.stretched = S.chaos.y > 1;
-      S.courseEl = courseElFor(h, S.tier);
+      S.courseEl = courseElFor(h, wx);
       const D = derive();
-      const carded = yardageFor(h, S.tier, S.chaos);
-      const y = Math.max(carded, D.dps * parTimeFor(h) * B.HCP);
+      const carded = yardageFor(h, tier, S.chaos);
+      const floor = D.dps * parTimeFor(h) * B.HCP;
+      const y = Math.max(carded, floor);
+      if(floor > carded) bound++;
       // purseFor reads the live hole's yardage for the stretch it pays on the
       // handicap, so the hole being priced has to be the hole in the globals.
       // It is the game's own pricing function or it is a second one to keep in
       // step with the first.
       S.carded = carded; S.yardsMax = y;
       secs  += Math.max(S.walkMin || B.WALK_MIN, y / Math.max(1e-9, D.dps));
-      purse += purseFor(h, S.tier, D.gold);
+      purse += purseFor(h, tier, D.gold);
       drop  += D.drop;
       card  += carded; yards += y;
     }
@@ -4851,7 +4866,25 @@ function awayRound(){
     S.carded = carded0; S.yardsMax = yards0;
   }
   return { secs: secs/n, purse: purse/n, drop: drop/n,
-           carded: card/n, yardsMax: yards/n };
+           carded: card/n, yardsMax: yards/n,
+           rate: purse/Math.max(1e-9, secs),   // what a second on this card pays
+           bound: bound/n };                   // share of holes your bag sets, not the card
+}
+
+// What climbing actually does. The fold on this screen has always said a card
+// makes holes x2.35 longer and pays x2.16 more, which reads as a flat loss and
+// is not one: the hole is never shorter than what your bag clears in HCP of par
+// time, so while you are ahead of your card the length does not move at all and
+// the purse does. And a card grows across its five events, so climbing one you
+// have finished is free -- tierProgress is already tier+1 by then.
+function climbPreview(){
+  const here = roundRate(S.tier, S.tier);
+  const next = roundRate(Math.min(B.TIER_MAX, S.tier + 1), S.tier);
+  return { here, next,
+    pay:  next.rate / Math.max(1e-9, here.rate),
+    len:  next.yardsMax / Math.max(1e-9, here.yardsMax),
+    secs: next.secs / Math.max(1e-9, here.secs),
+    bound: here.bound };
 }
 
 function offline(){
@@ -4860,7 +4893,7 @@ function offline(){
   if(dt < 60){ regenKeys(dt); return; }
   regenKeys(dt);
   const D = derive();
-  const A = awayRound();
+  const A = roundRate(S.tier);
   const secs = A.secs, purse = A.purse;
 
   // Play the holes out rather than estimating a rate: the round advances, the
@@ -8512,6 +8545,7 @@ function renderTour(){
     + ' longer but only pays \u00d7' + B.TIER_G + ' more, and the clock stays where it is. '
     + 'The course grows across the five events, so a card you have just taken plays short '
     + 'and the same card plays long by the end of it.</div></div>'
+    + climbLines()
     + '<div class="row"><div><div class="nm">Card ' + roman(S.tier+1) + '</div>'
     + '<div class="ds">On this hole you would card about <b style="color:var(--chalk)">' + nm(nextR) + '</b>'
     + ' (' + nextR.toFixed(2) + '\u00d7 par). Here: ' + nm(hereR) + '.</div></div>'
@@ -8566,6 +8600,40 @@ function renderTour(){
     ['Purse per second', fmt(Meter.rate())],
     ['Total carry', fmt(D.dps) + ' yds/s']
   ].map(([k,v]) => '<div class="lb"><span class="p"></span><span>' + k + '</span><span class="s">' + v + '</span></div>').join('');
+}
+
+// The three figures a climb actually turns on, which the screen has never shown:
+// what a second pays after it, whether the holes get any longer, and how far
+// ahead of the card your bag already is. Only worked out while the Tour screen
+// is the one on show -- it walks seventy two holes twice and finishHole calls
+// renderTour on every hole, so off-screen it would be two hundred derives a
+// hole for a panel nobody is looking at.
+function climbLines(){
+  if(view !== 'tour' || S.tier >= B.TIER_MAX) return '';
+  const C = climbPreview();
+  const lb = (k, v, col) => '<div class="lb"><span class="p"></span><span>' + k + '</span>'
+    + '<span class="s"' + (col ? ' style="color:var(' + col + ')"' : '') + '>' + v + '</span></div>';
+  const near = x => Math.abs(x - 1) < 0.02;
+  const pay = near(C.pay) ? 'unchanged' : '\u00d7' + C.pay.toFixed(2);
+  const len = near(C.len) ? 'the same' : '\u00d7' + C.len.toFixed(2) + ' longer';
+  // The number is not the answer. The answer is whether to press the button,
+  // and there are three cases -- told apart by what CAUSES them, not by which
+  // of the two figures happens to read as 1.00. A card played out and a bag
+  // miles ahead both leave the hole length alone, and saying "your bag
+  // outdrives this card on 0% of holes" to the first of them is a lie the
+  // symptom test told.
+  const say = eventsOn(S.tier) >= B.EVENTS_PER_CARD
+    ? 'The card you are on has grown to its full length over its ' + B.EVENTS_PER_CARD
+      + ' events, so the next one starts where this one ended. Climbing costs nothing.'
+    : C.bound > 0.5
+      ? 'Your bag already outdrives this card on ' + Math.round(C.bound*100) + '% of holes, so the '
+        + 'next one is no longer than this one and the purse still goes up. This is as cheap as '
+        + 'climbing gets.'
+      : 'The course grows faster than the purse does, so until your bag catches up this is a pay '
+        + 'cut. Playing out the card first closes the gap: it grows to full length either way.';
+  return lb('Purse per second after', pay, near(C.pay) ? '' : C.pay >= 1 ? '--aurora' : '--flag')
+    + lb('Hole length after', len, near(C.len) ? '' : '--brass')
+    + '<div class="hint">' + say + '</div>';
 }
 
 /* ---- legacy ---- */

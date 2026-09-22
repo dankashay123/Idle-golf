@@ -1,4 +1,4 @@
-/* The five places the game explains itself.
+/* The six places the game explains itself.
  *
  * The equip preview answers the only question the item sheet gets opened to
  * ask. It works by putting the club in, asking derive(), and putting the old
@@ -27,6 +27,21 @@
  * in the order the table happened to be typed. Every row already works out how
  * far along it is to draw its own bar; the list is now ordered on it, and the
  * nearest few are named at the top and on the button.
+ *
+ * The Tour screen said what you would SCORE on the next card and nothing about
+ * what you would earn, while the fold under it said a card makes holes x2.35
+ * longer and pays x2.16 more -- which reads as a flat pay cut and is not one.
+ * The hole is never shorter than what your bag clears in HCP of par time, so
+ * while you are ahead of your card the length does not move and the purse does;
+ * and a card grows across its five events, so one you have played out is
+ * already at the next card's length. Three cases, and the screen now names
+ * which one you are in. The checks below pin all three.
+ *
+ * They also pin the weather. chaosFor and courseElFor hash on the TIER, so
+ * pricing the next card under its own weather compares four draws against four
+ * different ones, on a purse multiplier that runs 0.8x to 2.3x. Both sides are
+ * walked under the weather you are standing in, and the test for that is that
+ * a bag behind its card sees exactly TIER_Y -- 2.35 and not 3.07.
  */
 'use strict';
 module.exports = {
@@ -159,6 +174,35 @@ module.exports = {
       out.honNear = achNear(3).map(a => a.n);
       renderHonBtn();
       out.honBtnLabel = $('honBtn').getAttribute('aria-label');
+
+      // ---- 6. what climbing a Tour Card does to the money --------------
+      setView('tour');
+      const climbCase = (k, events) => {
+        DEV.tierSet(20); try { hideSheet(); } catch (e) {}
+        S.relic = {}; B.UPG.forEach(u => S.upg[u.id] = 0);
+        B.SLOTS.forEach(sl => { S.equip[sl.id] = makeItem(14, 0, 2, sl.id); });
+        S.hole = 2; startHole();
+        const ch = { y:1, g:1, s:1, c:0, p:0, dl:0 };
+        const pace = yardageFor(S.hole, S.tier, ch) / (parTimeFor(S.hole) * B.HCP);
+        let lo = 0, hi = 60000;
+        while (hi - lo > 1) { const m = (lo + hi) >> 1; S.upg.drive = m;
+          if (derive().dps < pace * k) lo = m; else hi = m; }
+        S.upg.drive = lo;
+        S.tierEvents = {}; S.tierEvents[S.tier] = events;
+        startHole();
+        renderTour();
+        const C = climbPreview();
+        return { k, events, pay: C.pay, len: C.len, bound: C.bound,
+                 text: $('tierBox').textContent };
+      };
+      out.behind = climbCase(0.6, 0);      // the card sets the hole
+      out.ahead  = climbCase(12, 0);       // the bag sets the hole
+      out.played = climbCase(1, B.EVENTS_PER_CARD);   // the card is full grown
+      out.tierY = B.TIER_Y; out.tierG = B.TIER_G;
+      // and the panel says nothing at all when it is not the panel on show
+      setView('upg'); renderTour();
+      out.quietOffScreen = $('tierBox').textContent.indexOf('Purse per second') < 0;
+      setView('tour');
       return out;
     });
 
@@ -266,6 +310,51 @@ module.exports = {
       throw new Error('the honours button says "' + r.honBtnLabel + '" instead of naming '
         + 'the nearest honour');
 
+    // ---- climbing a Tour Card -----------------------------------------
+    const B_ = r.behind, A_ = r.ahead, P_ = r.played;
+    // behind the card: the hole is the card's, so it grows by exactly TIER_Y
+    // and the purse by exactly TIER_G. Any other number and the two sides are
+    // being walked under different weather again.
+    if (Math.abs(B_.len - r.tierY) > 0.02)
+      throw new Error('a bag behind its card sees the next one ' + B_.len.toFixed(2)
+        + 'x longer, not TIER_Y ' + r.tierY + 'x. The two cards are being priced under '
+        + 'different weather.');
+    if (Math.abs(B_.pay - r.tierG / r.tierY) > 0.03)
+      throw new Error('behind the card, climbing pays ' + B_.pay.toFixed(3) + ' where '
+        + 'TIER_G/TIER_Y is ' + (r.tierG / r.tierY).toFixed(3));
+    if (!(B_.pay < 1))
+      throw new Error('climbing while behind your card is not shown as a pay cut');
+    // ahead of it: your bag sets the hole, so the length cannot move
+    if (Math.abs(A_.len - 1) > 0.02)
+      throw new Error('a bag twelve times its card still sees holes ' + A_.len.toFixed(2)
+        + 'x longer. The handicap floor already sets them, so climbing cannot lengthen them.');
+    if (!(A_.pay > 1.1) || !(A_.bound > 0.9))
+      throw new Error('ahead of the card, climbing pays ' + A_.pay.toFixed(2) + ' with '
+        + Math.round(A_.bound * 100) + '% of holes set by the bag: it should be a clear gain');
+    // played out: tierProgress is already tier+1, so nothing moves
+    if (Math.abs(P_.len - 1) > 0.02 || Math.abs(P_.pay - 1) > 0.02)
+      throw new Error('a card played out ' + B.EVENTS_PER_CARD + ' events still moves on a '
+        + 'climb: length ' + P_.len.toFixed(3) + ', pay ' + P_.pay.toFixed(3)
+        + '. tierProgress is already the next card by then.');
+    // and it answers rather than just printing -- with the answer for THAT case,
+    // not whichever sentence the two figures happen to match. A card played out
+    // and a bag miles ahead both leave the hole length alone; only one of them
+    // is "your bag outdrives this card".
+    const wants = { behind: /pay cut/, ahead: /outdrives this card/, played: /costs nothing/ };
+    for (const [k, c] of [['behind', B_], ['ahead', A_], ['played', P_]]) {
+      if (c.text.indexOf('Purse per second') < 0)
+        throw new Error('the Tour screen shows no purse line in the ' + k + ' case');
+      if (!wants[k].test(c.text))
+        throw new Error('in the ' + k + ' case the Tour screen does not say ' + wants[k]
+          + '. It says: ' + (c.text.match(/(The course grows[^]*?|Your bag already[^]*?|This card has grown[^]*?)(?:Card|$)/) || ['(no verdict at all)'])[0].slice(0, 140));
+      if (/outdrives this card on 0% of holes/.test(c.text))
+        throw new Error('the ' + k + ' case tells the player their bag outdrives the card on '
+          + 'none of it, which is the symptom test picking the wrong sentence');
+    }
+    if (!r.quietOffScreen)
+      throw new Error('the climb projection is worked out while another screen is on show; '
+        + 'it walks 144 holes and finishHole calls renderTour on every hole');
+
     return ['preview held the bag over ' + p.tried + ' looks and through a throw, '
       + p.changed + ' moved the carry',
       'away card: ' + a.tiles + ' tiles, ' + a.bands.length + ' bands, '
@@ -275,6 +364,9 @@ module.exports = {
       'retirement before the first event: ' + P.now + ' legacy, +' + P.card + ' a card, +'
       + P.cup + ' a cup, buys ' + r.buys.join('/') + ' at ' + r.discSteps.join('/'),
       'honours open on "' + r.honFirstName + '" at ' + (r.honPct[0] || 0).toFixed(0)
-      + '%, not "' + r.honTableFirst + '"; ' + lockedPct.length + ' locked in order'];
+      + '%, not "' + r.honTableFirst + '"; ' + lockedPct.length + ' locked in order',
+      'climb: behind the card x' + B_.pay.toFixed(2) + ' pay on x' + B_.len.toFixed(2)
+      + ' holes, ahead of it x' + A_.pay.toFixed(2) + ' on the same holes, played out x'
+      + P_.pay.toFixed(2)];
   }
 };

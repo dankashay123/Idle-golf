@@ -173,7 +173,7 @@ module.exports = {
       const first2 = awayFirstHole(S.hole);
       for (let i = 0; i < B.ROUND * B.DAYS; i++) {
         S.hole = first2 + i; startHole();
-        const a = awayRound();
+        const a = roundRate();
         park.push({ h: S.hole, close: isClosing(S.hole), sun: isSunday(S.hole),
                     par: parOf(S.hole), weather: S.chaos.g,
                     rate: a.purse / a.secs, secs: a.secs, drop: a.drop });
@@ -191,11 +191,11 @@ module.exports = {
       const here = () => JSON.stringify([S.hole, S.chaos, S.courseEl, S.stretched,
                                          S.carded, S.yardsMax]);
       const parkedAt = here();
-      awayRound();
+      roundRate();
       out.awayHeld = here() === parkedAt;
       let threw = false;
       const ogSets = window.activeSets;
-      try { window.activeSets = () => { throw new Error('boom'); }; awayRound(); }
+      try { window.activeSets = () => { throw new Error("boom"); }; roundRate(); }
       catch (e) { threw = true; } finally { window.activeSets = ogSets; }
       out.awayThrew = threw;
       out.awayHeldThrow = here() === parkedAt;
