@@ -326,7 +326,6 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
 /* ---------- leaderboard ---------- */
 .lb{display:grid;grid-template-columns:26px 1fr auto;gap:8px;padding:6px 12px;font-size:var(--f2);
   border-bottom:1px solid #12261A}
-.lb.me{background:var(--raise);color:var(--brass)}
 .lb .p{font-family:var(--mono);color:var(--faint);font-size:var(--f1)}
 .lb .s{font-family:var(--mono);font-weight:600}
 
@@ -380,11 +379,7 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
 /* ---------- icons ---------- */
 .ic{display:block;flex:0 0 auto;image-rendering:pixelated;image-rendering:crisp-edges}
 .sic{width:12px;height:12px;color:var(--faint)}
-.eic{width:12px;height:12px;margin-left:auto}
-.lic{width:24px;height:24px}
 .lel{width:12px;height:12px;margin-top:3px}
-.iwrap{display:flex;flex-direction:column;align-items:center;gap:1px;width:28px}
-.item.hasic{grid-template-columns:28px 1fr auto}
 .cic{width:12px;height:12px;margin:0 auto 3px;color:var(--faint)}
 .kic{width:24px;height:24px;position:relative;z-index:2}
 .bic{width:24px;height:24px;flex:0 0 auto}
@@ -4933,7 +4928,6 @@ function legacyPreview(){
     left: B.TROPHY.length - trophiesFound()
   };
 }
-const trophyMult = t => t.k && t.k[0] === '*';
 // Each multiplying trophy pays its own ladder, priced off its own gain, so the
 // invariant that cost has to outrun gain holds for all thirty at once instead
 // of resting on two constants staying in the right order.
@@ -8268,7 +8262,7 @@ function refreshUpg(){
   if(band) band.textContent = owned + ' of ' + B.UPG.length + ' started';
   const note = $('upgTax');
   if(note) note.innerHTML = stretch > 1.05
-    ? 'Holes stretched <b>' + fmt(stretch) + 'x</b> off your handicap \u00b7 climbing a card beats out-hitting one'
+    ? 'Holes stretched <b>' + fmt(stretch) + 'x</b> by your handicap \u00b7 climb a card'
     : 'Playing the card as it lies';
 
   // The range used to carry a line of its own at the top naming the cheapest

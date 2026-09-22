@@ -88,6 +88,25 @@ module.exports = {
         + 'frame does not die on it, which means this writes into nothing every time it runs '
         + 'and will keep doing so.');
 
+    // 2b. the same for classes. .lb.me, .eic, .lic, .iwrap and .item.hasic
+    // were rules for things that had been taken out -- a highlighted "you"
+    // row on a made-up leaderboard, an older item layout -- and each was one
+    // className away from styling something new by accident. A class counts
+    // as used if its name appears anywhere outside the stylesheet: in markup,
+    // in a template string, in a classList call.
+    const bodyless = styles.replace(/\/\*[\s\S]*?\*\//g, ' ').replace(/\{[^}]*\}/g, '{}');
+    const classes = new Set((bodyless.match(/\.([A-Za-z][\w-]*)/g) || []).map(x => x.slice(1)));
+    const outside = src.replace(/<style[^>]*>[\s\S]*?<\/style>/g, ' ');
+    // built by concatenation ('s' + score), so no scan of the source can see them
+    const BUILT = new Set(['s-1', 's-2', 's-3', 's-4', 's0', 's1', 's2', 's3', 's4']);
+    const deadClasses = [...classes].filter(c => !BUILT.has(c)
+      && !new RegExp('(^|[^\\w-])' + c.replace(/[-]/g, '\\-') + '([^\\w-]|$)').test(outside));
+    if (classes.size < 100) throw new Error('only found ' + classes.size + ' classes, so the scan is wrong');
+    if (deadClasses.length)
+      throw new Error('the stylesheet styles ' + deadClasses.map(x => '.' + x).join(', ')
+        + ', which nothing outside it ever names. Same trap as an orphaned #id: the rule is '
+        + 'waiting for the next element that happens to take the name.');
+
     // 3. and the live document agrees: no id on two elements at once
     const dupes = await page.evaluate(() => {
       const seen = {}, out = [];
@@ -102,6 +121,7 @@ module.exports = {
 
     return ['ids: ' + exists.size + ' carried, ' + styled.size + ' styled, ' + asked.size
       + ' asked for by name, none orphaned and none missing',
+      classes.size + ' classes styled, every one named somewhere outside the stylesheet',
       'no id on two elements in the live document'];
   }
 };
