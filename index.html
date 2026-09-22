@@ -4724,22 +4724,75 @@ function retire(){
 /* =========================================================================
    OFFLINE
    ========================================================================= */
+// What the next seventy two holes are worth and how long they take, walked one
+// at a time and averaged, rather than read off the hole you happened to park on.
+//
+// Every figure the away model needs carries the same three multipliers -- the
+// par, the closing hole and Sunday -- and the weather on top of them. Read off
+// one hole they are all whatever that hole happened to be: a closing Sunday
+// hole pays 3.2x for the close and 1.4x for the Sunday before a talent touches
+// it, and the weather swings the purse from 0.8x to 2.3x on its own. Park there
+// and every away hole for twelve hours is paid as one.
+//
+// The window is the tournament you are standing in: seventy two holes, every
+// hole-in-round position once and every day once, so each multiplier appears
+// exactly as often as it really does. The mean purse over the total time is the
+// rate the session would actually run at, which is what "the away model is the
+// live model" has to mean. Anchoring it to the tournament rather than to "the
+// next seventy two from here" is what makes it parking-proof: every hole of an
+// event gives the identical rate, so there is no hole worth walking to before
+// you close the tab.
+//
+// Reading the CARDED yardage here rather than the handicapped one was the older
+// bug in the same function: a bag ten times ahead of its card played away holes
+// in the 0.9s walk minimum, five and a half times the live rate, and took the
+// schedule, the card and the experience with it. The floor is applied per hole
+// below, the way startHole applies it.
+const awayFirstHole = h => (tournamentOf(h) - 1) * B.ROUND * B.DAYS + 1;
+function awayRound(){
+  const n = B.ROUND * B.DAYS, first = awayFirstHole(S.hole);
+  const h0 = S.hole, chaos0 = S.chaos, el0 = S.courseEl, str0 = S.stretched;
+  const carded0 = S.carded, yards0 = S.yardsMax;
+  let secs = 0, purse = 0, drop = 0, card = 0, yards = 0;
+  // It walks the golfer over seventy two holes to measure them, so it puts him
+  // back whichever way it leaves: a throw in derive() that stranded him on hole
+  // forty of an event he is not playing would be silent and permanent.
+  try{
+    for(let i = 0; i < n; i++){
+      const h = first + i;
+      S.hole = h;
+      S.chaos = chaosFor(h, S.tier);
+      S.stretched = S.chaos.y > 1;
+      S.courseEl = courseElFor(h, S.tier);
+      const D = derive();
+      const carded = yardageFor(h, S.tier, S.chaos);
+      const y = Math.max(carded, D.dps * parTimeFor(h) * B.HCP);
+      // purseFor reads the live hole's yardage for the stretch it pays on the
+      // handicap, so the hole being priced has to be the hole in the globals.
+      // It is the game's own pricing function or it is a second one to keep in
+      // step with the first.
+      S.carded = carded; S.yardsMax = y;
+      secs  += Math.max(S.walkMin || B.WALK_MIN, y / Math.max(1e-9, D.dps));
+      purse += purseFor(h, S.tier, D.gold);
+      drop  += D.drop;
+      card  += carded; yards += y;
+    }
+  }finally{
+    S.hole = h0; S.chaos = chaos0; S.courseEl = el0; S.stretched = str0;
+    S.carded = carded0; S.yardsMax = yards0;
+  }
+  return { secs: secs/n, purse: purse/n, drop: drop/n,
+           carded: card/n, yardsMax: yards/n };
+}
+
 function offline(){
   const dt = clamp(Date.now()/1000 - (S.t || Date.now()/1000), 0,
                    B.OFFLINE_CAP + permAdd('contract')*3600);
   if(dt < 60){ regenKeys(dt); return; }
   regenKeys(dt);
   const D = derive();
-  const ch = chaosFor(S.hole, S.tier);
-  // The same hole the live game would set, handicap and all. Reading the
-  // CARDED yardage here instead let an away session ignore the handicap floor
-  // that pins a live hole at HCP of par time however hard you hit it: a bag ten
-  // times ahead of its card played away holes in the 0.9s walk minimum, five
-  // and a half times the live rate, and took the schedule, the card and the
-  // experience along with it.
-  const y = Math.max(yardageFor(S.hole, S.tier, ch), D.dps * parTimeFor(S.hole) * B.HCP);
-  const secs = Math.max(S.walkMin || B.WALK_MIN, y / Math.max(1e-9, D.dps));
-  const purse = purseFor(S.hole, S.tier, D.gold);
+  const A = awayRound();
+  const secs = A.secs, purse = A.purse;
 
   // Play the holes out rather than estimating a rate: the round advances, the
   // card fills, events finish and the schedule moves on, all at a discount.
@@ -4764,14 +4817,32 @@ function offline(){
     bagAdd(it); gear++;
   };
   QUIET = true; OFFLINE = true;
-  for(let i = 0; i < holes; i++){
-    S.totalHoles++;
-    addXp(B.XP_HOLE * Math.pow(1 + S.tier, B.XP_TIER) * 1.2 * (parOf(S.hole)/4) * 0.6);
-    if(isClosing(S.hole) && S.bag.length < bagCap() && Math.random() < 0.5)
-      bagAddOff(dropItem(S.tier, D.drop, 0));
-    advanceHole();
+  // The events this loop resolves are paid through purseFor as well, and it
+  // reads the live hole's yardage for the stretch it pays on the handicap.
+  // Left at whatever was under you when you closed the tab, every cheque in the
+  // session was stretched by that one hole. The averages stand in until
+  // startHole below puts the real ones back.
+  S.carded = A.carded; S.yardsMax = A.yardsMax;
+  try{
+    for(let i = 0; i < holes; i++){
+      // The weather moves with the schedule too. Frozen, every event cheque was
+      // paid at one hole's gold multiplier -- and endTournament calls derive()
+      // itself, so there was no other way for it to find out.
+      S.chaos = chaosFor(S.hole, S.tier);
+      S.stretched = S.chaos.y > 1;
+      S.courseEl = courseElFor(S.hole, S.tier);
+      S.totalHoles++;
+      addXp(B.XP_HOLE * Math.pow(1 + S.tier, B.XP_TIER) * 1.2 * (parOf(S.hole)/4) * 0.6);
+      if(isClosing(S.hole) && S.bag.length < bagCap() && Math.random() < 0.5)
+        bagAddOff(dropItem(S.tier, A.drop, 0));
+      advanceHole();
+    }
+  }finally{
+    // A throw in here used to leave the game muted and paying event cheques at
+    // the away discount for the rest of the session, because nothing reset
+    // these on the way out.
+    OFFLINE = false; QUIET = false;
   }
-  OFFLINE = false; QUIET = false;
   // One sweep for the whole session rather than one per drop: the loop above
   // can land a thousand clubs and the sweep costs a derive() per candidate.
   const swapped = autoEquipSweep().length;

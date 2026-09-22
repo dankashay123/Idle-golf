@@ -18,6 +18,13 @@
  *   3. offline() sized an away hole off the CARDED yardage while the live game
  *      sizes it off the handicapped yardage, so an away session ignored the
  *      floor that pins a live hole at HCP of par time however hard you hit it.
+ *      It then read both the pace AND the purse off the single hole you parked
+ *      on, and every one of those figures carries the par, the closing hole and
+ *      the Sunday multipliers with the weather on top: park on a closing Sunday
+ *      hole in a Mythic Pin and twelve hours were paid as that hole. Both are
+ *      now walked over seventy two holes -- one full cycle of positions, days
+ *      and weathers -- so the away hole is compared here against the same
+ *      average rather than against whichever hole the check happened to pick.
  *
  * And that a wager's furniture lives in the prop list. The gallery ropes and
  * the floodlights were first drawn in an overlay after the props, at distances
@@ -133,7 +140,18 @@ module.exports = {
           if (derive().dps < pace * k) lo = mid; else hi = mid;
         }
         S.upg.drive = lo; startHole();
-        const live = Math.max(S.walkMin, S.yardsMax / derive().dps);
+        // The live hole, averaged over the same seventy two the away model
+        // averages over. One hole carries its own par, close and Sunday
+        // multipliers and is not the rate either model runs at.
+        const cycle = B.ROUND * B.DAYS;
+        const parked = S.hole, first = awayFirstHole(parked);
+        let live = 0;
+        for (let i = 0; i < cycle; i++) {
+          S.hole = first + i; startHole();
+          live += Math.max(S.walkMin, S.yardsMax / derive().dps);
+        }
+        live /= cycle;
+        S.hole = parked; startHole();
         const h0 = S.totalHoles;
         QUIET = true; S.t = Date.now() / 1000 - 3600; offline(); QUIET = false;
         try { hideSheet(); } catch (e) {}
@@ -142,6 +160,47 @@ module.exports = {
                     awaySecs: +(3600 * B.OFFLINE_RATE / holes).toFixed(2) });
       }
       out.away = away;
+
+      // ---- 3b. and it is the same hole whichever one you parked on ---------
+      // The purse, the pace and the drop rate all carried the par, the closing
+      // hole, the Sunday and the weather of whatever hole was under you when
+      // you closed the tab. Every hole of an event has to give the same rate or
+      // there is a hole worth walking to before going away.
+      S.tier = 25; S.hole = 2; S.relic = {}; S.equip = {};
+      B.UPG.forEach(u => S.upg[u.id] = 20);
+      startHole();
+      const park = [];
+      const first2 = awayFirstHole(S.hole);
+      for (let i = 0; i < B.ROUND * B.DAYS; i++) {
+        S.hole = first2 + i; startHole();
+        const a = awayRound();
+        park.push({ h: S.hole, close: isClosing(S.hole), sun: isSunday(S.hole),
+                    par: parOf(S.hole), weather: S.chaos.g,
+                    rate: a.purse / a.secs, secs: a.secs, drop: a.drop });
+      }
+      out.park = park;
+      // what the single parked hole USED to set the rate to, for the report
+      const hi = park.reduce((m, x) => Math.max(m, purseFor(x.h, S.tier, 1)), 0);
+      const lo2 = park.reduce((m, x) => Math.min(m, purseFor(x.h, S.tier, 1)), Infinity);
+      out.parkSpread = hi / lo2;
+
+      // and it puts the golfer back. It walks him over seventy two holes to
+      // measure them, so a leak here would leave him standing on a hole of an
+      // event he is not playing, in weather that is not overhead.
+      S.hole = 40; startHole();
+      const here = () => JSON.stringify([S.hole, S.chaos, S.courseEl, S.stretched,
+                                         S.carded, S.yardsMax]);
+      const parkedAt = here();
+      awayRound();
+      out.awayHeld = here() === parkedAt;
+      let threw = false;
+      const ogSets = window.activeSets;
+      try { window.activeSets = () => { throw new Error('boom'); }; awayRound(); }
+      catch (e) { threw = true; } finally { window.activeSets = ogSets; }
+      out.awayThrew = threw;
+      out.awayHeldThrow = here() === parkedAt;
+
+      S.hole = 2; startHole();
 
       // ---- 4. four contests, or one contest four times ----------------------
       S.tier = 20; S.hole = 2; startHole();
@@ -255,10 +314,41 @@ module.exports = {
     for (const a of r.away) {
       const f = a.awaySecs / a.live;
       if (!(f > 0.8 && f < 1.25))
-        throw new Error('at ' + a.k + 'x the power its card asks for, a live hole takes '
-          + a.live + 's and an away hole ' + a.awaySecs + 's. The away model is ignoring '
-          + 'the handicap floor that pins the live one.');
+        throw new Error('at ' + a.k + 'x the power its card asks for, the average live hole '
+          + 'takes ' + a.live + 's and an away hole ' + a.awaySecs + 's. The away model is '
+          + 'ignoring the handicap floor that pins the live one, or reading its pace off a '
+          + 'single hole instead of a round.');
     }
+
+    // 4b. and no hole is worth parking on
+    const rates = r.park.map(x => x.rate);
+    const spread = Math.max.apply(null, rates) / Math.min.apply(null, rates);
+    if (!(spread < 1.0001)) {
+      const worst = r.park.reduce((a, b) => (b.rate > a.rate ? b : a));
+      throw new Error('the away rate runs from ' + Math.min.apply(null, rates).toExponential(3)
+        + ' to ' + Math.max.apply(null, rates).toExponential(3) + ' depending on which hole '
+        + 'you parked on, a spread of ' + spread.toFixed(3) + 'x. The best of them is hole '
+        + worst.h + ' (par ' + worst.par + (worst.close ? ', closing' : '')
+        + (worst.sun ? ', Sunday' : '') + '), which is a hole worth walking to before '
+        + 'closing the tab.');
+    }
+    if (!r.awayHeld)
+      throw new Error('measuring the round left the golfer on a different hole');
+    if (!r.awayThrew)
+      throw new Error('the throw mid-measure never happened, so the restore is untested');
+    if (!r.awayHeldThrow)
+      throw new Error('a throw part way through measuring the round left the golfer on a '
+        + 'hole of an event he is not playing, in weather that is not overhead');
+    const drops = r.park.map(x => x.drop);
+    if (!(Math.max.apply(null, drops) / Math.min.apply(null, drops) < 1.0001))
+      throw new Error('the away drop rate still depends on the weather over the hole you '
+        + 'parked on');
+    if (!(r.park.some(x => x.close) && r.park.some(x => x.sun)))
+      throw new Error('the parking sweep never covered a closing hole and a Sunday, so it '
+        + 'proves nothing');
+    if (!(r.parkSpread > 2))
+      throw new Error('one hole of purse is only ' + r.parkSpread.toFixed(2) + 'x another, '
+        + 'so there was never anything to park on and this check is not testing it');
 
     // 5. the four read as four
     const shapes = r.strips.map(x => x.cells);
@@ -311,6 +401,8 @@ module.exports = {
       + ', pay flat to ' + ratio.toFixed(2) + 'x, ' + perRun.toFixed(2)
       + ' tickets/run against ' + sustains.toFixed(2) + ' self-sustaining'
       + ', card 5 vs 200 within ' + drift.toPrecision(2) + 'x'
-      + ', away hole ' + r.away.map(a => a.awaySecs + '/' + a.live).join(' ')];
+      + ', away hole ' + r.away.map(a => a.awaySecs + '/' + a.live).join(' '),
+      'away rate identical from all ' + r.park.length + ' holes of an event, across '
+      + r.parkSpread.toFixed(1) + 'x of single-hole purse'];
   }
 };
