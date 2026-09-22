@@ -216,14 +216,15 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
    more and no band headings in the list. */
 #bagGrid{display:grid;grid-template-columns:repeat(6,1fr);gap:3px;padding:7px 8px 8px;
   background:var(--panel);border-bottom:1px solid var(--line)}
-.slot{position:relative;background:#0D1D14;border:1px solid var(--line);padding:5px 2px 4px;
-  display:flex;flex-direction:column;align-items:center;gap:2px;border-radius:0}
+.slot{position:relative;background:#0D1D14;border:1px solid var(--line);padding:6px 2px;
+  min-height:52px;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:3px;border-radius:0}
 .slot .sic{width:22px;height:22px}
 .slot .sk{font-size:8px;letter-spacing:.04em;text-transform:uppercase;color:var(--faint);
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
 .slot.on{background:#16301F;border-color:var(--brass)}
 .slot.on .sk{color:var(--brass)}
-.slot.empty .sic{opacity:.3}
+.slot.bare .sic{opacity:.3}
 .slot .sct{position:absolute;top:0;right:0;min-width:13px;height:13px;line-height:13px;
   background:var(--raise2);border:1px solid var(--line);color:var(--chalk);font-size:8px;
   font-weight:700;text-align:center;padding:0 2px}
@@ -350,7 +351,6 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
 .ic{display:block;flex:0 0 auto;image-rendering:pixelated;image-rendering:crisp-edges}
 .sic{width:12px;height:12px;color:var(--faint)}
 .eic{width:12px;height:12px;margin-left:auto}
-.slot .sk{margin:0}
 .lic{width:24px;height:24px}
 .lel{width:12px;height:12px;margin-top:3px}
 .iwrap{display:flex;flex-direction:column;align-items:center;gap:1px;width:28px}
@@ -6126,22 +6126,55 @@ Object.assign(Scene, {
     // straight across the sky. Faded in over the run-up instead, so the only
     // thing it does up there is take the edge off a crest that breaks the
     // skyline.
-    const top  = Math.max(0, HORIZON - Math.round(VH*0.13));
-    const full = HORIZON + Math.round(VH*0.14);
+    // ONE hump, and both halves of it measured in screen space.
+    //
+    // It used to fade IN over a fraction of the buffer height and fade OUT over
+    // a WORLD distance, through K_PROJ and GROUND. Those two do not scale
+    // together: on the short buffer it was written against, the fade-out spanned
+    // a fifth of the frame and read as depth, and on a tall one it collapsed to
+    // seven per cent of it and read as a bar ruled across the middle of the
+    // screen, through the trees and everything else, because the haze goes down
+    // after the props. Screen space either side keeps the band the same shape at
+    // any buffer size, and the horizon is where it peaks because that is where
+    // the far ground actually is.
+    const top  = Math.max(0, HORIZON - Math.round(VH*0.18));
+    const deep = HORIZON + Math.round((VH - HORIZON) * 0.55);
+    const ss   = t => t*t*(3 - 2*t);
     for(let y = top; y < VH; y++){
-      const sc = Math.max(0, (y - HORIZON) / GROUND);
-      const rel = K_PROJ / Math.max(0.0001, sc);
-      // One monotone ceiling from nothing at the top edge to full strength a
-      // little below the line. Nothing steps anywhere along it, and the wood
-      // on the skyline keeps enough of itself to still be a wood.
-      const u = clamp((y - top) / (full - top), 0, 1);
-      const a = Math.min(clamp((rel - 16) / 90, 0, 1), u*u*(3 - 2*u)) * 0.62;
+      const u = clamp((y - top) / Math.max(1, HORIZON - top), 0, 1);
+      const v = clamp((y - HORIZON) / Math.max(1, deep - HORIZON), 0, 1);
+      const a = ss(u) * (1 - ss(v)) * 0.34;
       if(a <= 0.004) continue;
       g.globalAlpha = a;
       g.fillRect(0, y, VW, 1);
     }
     g.globalAlpha = 1;
     this.haze = cv; this.hazeKey = key;
+  },
+
+  // The ground's first row is the far end of the world and it arrives at full
+  // saturation, while the sky's last row directly above it is sky: a hard line
+  // ruled across the frame at the horizon, one buffer row thick and two or
+  // three on screen once the blit has scaled it. This lays the sky colour back
+  // over the top of the ground, strong at the line and gone within a few per
+  // cent of the frame, so the two actually meet. It goes down with the GROUND,
+  // under the props, so unlike the haze it can never cut a tree in half.
+  drawFarFade(){
+    const c = this.b;
+    // Blended toward whatever is actually up there rather than toward the sky
+    // colour: at the horizon that is usually the far treeline, not sky, and
+    // painting sky over the ground instead put a bar back twice as bright as
+    // the one it was closing. The row above is drawn back over the first few
+    // ground rows at a decaying alpha, so the two meet whatever they are.
+    const n = Math.max(3, Math.round(VH * 0.032));
+    for(let i = 0; i < n; i++){
+      const t = i / n;
+      const a = (1 - t) * (1 - t) * 0.85;
+      if(a <= 0.01) continue;
+      c.globalAlpha = a;
+      c.drawImage(this.buf, 0, HORIZON - 1, VW, 1, 0, HORIZON + i, VW, 1);
+    }
+    c.globalAlpha = 1;
   },
 
   drawGround(){
@@ -7006,6 +7039,7 @@ Object.assign(Scene, {
       if(this.sky) c.drawImage(this.sky, 0, 0);
       this.drawRidge();
       this.drawGround();
+      this.drawFarFade();
       this.drawProps();
       this.buildHaze();
       if(this.haze) c.drawImage(this.haze, 0, 0);
@@ -7034,6 +7068,7 @@ Object.assign(Scene, {
       if(this.sky) c.drawImage(this.sky, 0, 0);
       this.drawRidge();
       this.drawGround();
+      this.drawFarFade();
       this.drawProps();
       this.buildHaze();
       if(this.haze) c.drawImage(this.haze, 0, 0);
@@ -7528,7 +7563,11 @@ function renderBag(){
     const spare = S.bag.filter(x => x.slot === sl.id);
     const up = spare.some(x => !it || itemScore(x) > itemScore(it));
     const d = document.createElement('div');
-    d.className = 'slot' + (it ? '' : ' empty') + (S.bagSlot === sl.id ? ' on' : '');
+    // "bare", not "empty": .empty is the full width "nothing here yet"
+    // placeholder, declared later in the sheet at the same specificity, so it
+    // won and put 26px of padding on every slot that had nothing in it. Six
+    // tiles, two paddings, and the row stretched to the taller one.
+    d.className = 'slot' + (it ? '' : ' bare') + (S.bagSlot === sl.id ? ' on' : '');
     if(it) d.style.borderColor = S.bagSlot === sl.id ? '' : RC(it.rar);
     const el = it && it.el ? elemOf(it.el) : null;
     d.innerHTML = svgIcon(sl.ic, 'sic', it ? RC(it.rar) : '')

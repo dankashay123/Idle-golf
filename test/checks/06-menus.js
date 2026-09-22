@@ -99,6 +99,22 @@ module.exports = {
           out.bad = out.bad || (sl.n + ' says it is carrying something it is not');
         if (sl.id === 'wedge') out.wornBtn = rows[0].querySelector('.equipbtn').textContent.trim();
       }
+      // every tile is the same tile, whatever is or is not in that slot. The
+      // modifier used to be called "empty", which is also the class on the
+      // full width "nothing here yet" placeholder, declared later in the sheet
+      // at the same specificity: it won, and put 26px of padding on every slot
+      // with nothing in it while the ones with a club kept 5.
+      S.equip = {}; S.equip.driver = makeItem(10, 0, 3, 'driver');
+      setView('bag'); bagSub = 'gear'; renderBagNav(); renderBag();
+      out.geom = [...document.getElementById('bagGrid').children].map(t => {
+        const b = t.getBoundingClientRect();
+        const i = t.querySelector('.sic').getBoundingClientRect();
+        const l = t.querySelector('.sk').getBoundingClientRect();
+        return { n: t.querySelector('.sk').textContent, h: Math.round(b.height),
+                 icon: Math.round(i.top - b.top), lab: Math.round(l.top - b.top),
+                 mid: Math.round((i.top + l.bottom)/2 - b.top - b.height/2) };
+      });
+
       // the header counts the whole locker against the cap
       out.head = document.getElementById('lkHead').textContent;
       out.cap = bagCap(); out.held = S.bag.length;
@@ -112,11 +128,26 @@ module.exports = {
         throw new Error(n + ' tab badges ' + lk.badges[n] + ' spares, there are 2');
     if (lk.wornBtn !== 'Equipped')
       throw new Error('the carried club offers "' + lk.wornBtn + '" rather than saying it is worn');
+    const g0 = lk.geom[0];
+    if (!(g0.h > 20))
+      throw new Error('the slot tiles measured ' + g0.h + 'px tall, so nothing below was '
+        + 'actually measured');
+    for (const g of lk.geom) {
+      if (g.h !== g0.h || g.icon !== g0.icon || g.lab !== g0.lab)
+        throw new Error('the ' + g.n + ' tile is laid out differently from the ' + g0.n
+          + ' one: height ' + g.h + ' v ' + g0.h + ', icon at ' + g.icon + ' v ' + g0.icon
+          + ', label at ' + g.lab + ' v ' + g0.lab
+          + '. Every slot tile is the same tile whatever is in it.');
+      if (Math.abs(g.mid) > 3)
+        throw new Error('the ' + g.n + ' tile sits ' + g.mid + 'px off centre');
+    }
+
     if (lk.head.indexOf(lk.held + ' / ' + lk.cap) < 0)
       throw new Error('the locker header does not say ' + lk.held + ' / ' + lk.cap
         + ': "' + lk.head + '"');
 
     return ['5 tabs, both sub navs, folds, cooldowns; pull tab gains ' + grew + 'px',
-      'locker tabbed ' + lk.tabs.join('/') + ', ' + lk.held + '/' + lk.cap + ' held'];
+      'locker tabbed ' + lk.tabs.join('/') + ', ' + lk.held + '/' + lk.cap + ' held',
+      'six identical tiles, ' + lk.geom[0].h + 'px, centred'];
   }
 };
