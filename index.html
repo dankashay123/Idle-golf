@@ -410,6 +410,44 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
 .mtx b{color:var(--chalk)}
 .mile.on .mtx b{color:var(--brass)}
 .mtx i{font-style:normal;color:var(--dim)}
+/* what a club would do if you carried it */
+.swap{border:1px solid var(--brass-dk);background:rgba(227,180,87,.05);padding:8px 9px;margin:10px 0 4px}
+.swhead{font-size:var(--f0);letter-spacing:.1em;text-transform:uppercase;color:var(--faint);
+  margin-bottom:6px}
+.swhead b{color:var(--chalk);letter-spacing:.02em;text-transform:none;font-size:var(--f1)}
+.swrow{display:flex;align-items:baseline;gap:6px;font-family:var(--mono);font-size:var(--f1);
+  padding:2px 0}
+.swk{flex:0 0 46px;color:var(--faint);font-family:var(--sans);font-size:var(--f0);
+  letter-spacing:.08em;text-transform:uppercase}
+.swa{color:var(--dim)}
+.swar{color:var(--faint)}
+.swb{font-weight:700}
+.swd{margin-left:auto;font-weight:700}
+.swset{font-size:var(--f0);margin-top:5px;letter-spacing:.04em}
+.swset.ok{color:var(--aurora)}
+.swset.no{color:var(--flag)}
+/* the away card */
+.awgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--line);
+  border:1px solid var(--line);margin:4px 0 10px}
+.awst{background:var(--raise);padding:9px 4px;text-align:center}
+.awv{font-family:var(--mono);font-size:var(--f4);font-weight:600;color:var(--chalk);line-height:1}
+.awst.big .awv{color:var(--brass);font-size:var(--f5)}
+.awk{font-size:var(--f0);letter-spacing:.14em;text-transform:uppercase;color:var(--faint);margin-top:4px}
+.awband{font-size:var(--f0);letter-spacing:.14em;text-transform:uppercase;color:var(--brass);
+  margin:12px 0 4px;padding-bottom:3px;border-bottom:1px solid var(--brass-dk)}
+.awbest{display:flex;align-items:center;gap:9px;border:1px solid var(--line);border-left-width:2px;
+  background:var(--raise);padding:8px 9px}
+.awbest img{width:28px;height:28px;image-rendering:pixelated;flex:0 0 auto}
+.awbn{font-family:var(--disp);font-size:var(--f3);line-height:1.2}
+.awbs{font-size:var(--f0);color:var(--faint);margin-top:2px}
+/* the next rung on the range */
+.nextstep{padding:8px 12px;font-size:var(--f1);line-height:1.45;border-bottom:1px solid #12261A;
+  border-left:2px solid transparent;color:var(--dim)}
+.nextstep b{color:var(--chalk);font-weight:700}
+.nextstep.go{border-left-color:var(--brass);color:var(--dim)}
+.nextstep.go b{color:var(--brass)}
+.nextstep.wait{border-left-color:var(--line-soft)}
+.nextstep.done{border-left-color:var(--aurora);color:var(--faint)}
 /* the pro shop */
 .shopnav{display:flex;gap:0;margin:-4px -16px 10px;border-bottom:1px solid var(--line)}
 .shopnav button{flex:1 1 0;padding:9px 2px;background:none;border:0;border-bottom:2px solid transparent;
@@ -587,6 +625,7 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
       <div class="band"><span class="eyebrow">Practice Range</span><span class="note" id="upgCount"></span></div>
       <div class="band" style="top:auto"><div id="multBar"></div></div>
       <div class="hint" id="upgTax"></div>
+      <div class="nextstep" id="upgStep"></div>
       <div id="upgRows"></div>
     </div>
 
@@ -4482,38 +4521,82 @@ function offline(){
 
   const startEvents = S.eventsPlayed || 0, startLv = S.lv;
   const startCard = S.tierMax || 0, startCups = S.cups || 0;
-  let gear = 0;
+  const startPara = S.para || 0, startSov = S.sov || 0;
+  const startEntries = {};
+  B.DGN.forEach(dg => startEntries[dg.id] = S.dgnKeys[dg.id] || 0);
+  // Worth keeping rather than counting: the best thing the caddie found is the
+  // only one of these you will actually go and look at.
+  let gear = 0, best = null;
+  const bagAddOff = it => {
+    if(!best || itemScore(it) > itemScore(best)) best = it;
+    bagAdd(it); gear++;
+  };
   QUIET = true; OFFLINE = true;
   for(let i = 0; i < holes; i++){
     S.totalHoles++;
     addXp(B.XP_HOLE * Math.pow(1 + S.tier, B.XP_TIER) * 1.2 * (parOf(S.hole)/4) * 0.6);
-    if(isClosing(S.hole) && S.bag.length < bagCap() && Math.random() < 0.5){
-      bagAdd(makeItem(S.tier, D.drop, 0)); gear++;
-    }
+    if(isClosing(S.hole) && S.bag.length < bagCap() && Math.random() < 0.5)
+      bagAddOff(makeItem(S.tier, D.drop, 0));
     advanceHole();
   }
   OFFLINE = false; QUIET = false;
   startHole();
 
   const g = S.gold - goldBefore;
-  const rows = [
-    ['Away for', hms(dt)],
-    ['Holes played', fmt(holes, 0)],
-    ['Purse earned', fmt(g)],
-    ['Events finished', String((S.eventsPlayed || 0) - startEvents)],
-    ['Career levels', String(S.lv - startLv)],
-    ['Cups won', String((S.cups || 0) - startCups)],
-    ['Gear found', String(gear)]
-  ];
-  if((S.tierMax || 0) > startCard) rows.push(['Tour Card unlocked', roman(S.tierMax)]);
-  rows.push(['Now playing', eventName(tournamentOf(S.hole)) + ', ' + dayName(S.hole)]);
+  const events = (S.eventsPlayed || 0) - startEvents;
+  const levels = S.lv - startLv, cups = (S.cups || 0) - startCups;
+  const paras = (S.para || 0) - startPara, sov = (S.sov || 0) - startSov;
+  const cards = (S.tierMax || 0) - startCard;
+  let entries = 0;
+  B.DGN.forEach(dg => entries += Math.max(0, (S.dgnKeys[dg.id] || 0) - startEntries[dg.id]));
 
-  showSheet('<h3>While you were away</h3>'
-    + '<p>The caddie kept the group moving. Everything below happened at '
-    + Math.round(B.OFFLINE_RATE*100) + ' per cent of your live pace.</p>'
-    + rows.map(([k, v]) => '<div class="lb"><span class="p"></span><span>' + k
-        + '</span><span class="s">' + v + '</span></div>').join('')
-    + '<button class="act" onclick="hideSheet()">Play on</button>');
+  // The card, not the number. A return used to read "away 6h, purse 4.1M" and
+  // the rest as a flat list of zeroes; what earns the next session is seeing
+  // what the caddie actually did with the time, and only the lines that have
+  // something on them.
+  const stat = (k, v, cls) => '<div class="awst' + (cls ? ' ' + cls : '') + '">'
+    + '<div class="awv">' + v + '</div><div class="awk">' + k + '</div></div>';
+  const line = (k, v) => '<div class="lb"><span class="p"></span><span>' + k
+    + '</span><span class="s">' + v + '</span></div>';
+
+  let h = '<h3>While you were away</h3>'
+    + '<p>' + hms(dt) + ' away. The caddie kept the group moving at '
+    + Math.round(B.OFFLINE_RATE * (1 + Math.min(1, D.C.paway)) * 100)
+    + ' per cent of your live pace.</p>'
+    + '<div class="awgrid">'
+      + stat('purse', fmt(g), 'big')
+      + stat('holes', fmt(holes, 0))
+      + stat('clubs', String(gear))
+    + '</div>';
+
+  const marks = [];
+  if(cards > 0) marks.push(['Tour Card', roman(S.tierMax) + (cards > 1 ? ' (+' + cards + ')' : '')]);
+  if(events > 0) marks.push(['Events finished', String(events)]);
+  if(cups > 0) marks.push(['Cups won', String(cups)]);
+  if(levels > 0) marks.push(['Career levels', '+' + levels]);
+  if(paras > 0) marks.push(['Paragon', '+' + paras]);
+  if(sov > 0) marks.push([B.SOV, '+' + sovFmt(sov)]);
+  if(entries > 0) marks.push(['Wager entries back', '+' + entries]);
+  if(marks.length) h += '<div class="awband">What came of it</div>'
+    + marks.map(([k, v]) => line(k, v)).join('');
+
+  if(best){
+    const sl = B.SLOTS.find(x => x.id === best.slot);
+    const cur = S.equip[best.slot];
+    const up = !cur || itemScore(best) > itemScore(cur);
+    h += '<div class="awband">Best thing in the bag</div>'
+      + '<div class="awbest" style="border-color:' + RC(best.rar) + '">'
+      + '<img src="' + pixUrl(sl.ic, RC(best.rar)) + '" alt="">'
+      + '<div><div class="awbn" style="color:' + RC(best.rar) + '">' + best.name + '</div>'
+      + '<div class="awbs">' + B.RARITY[best.rar].n + ' ' + sl.n + ' \u00b7 item level ' + best.ilvl
+      + (up ? ' \u00b7 <span style="color:var(--aurora)">beats what you are carrying</span>' : '')
+      + '</div></div></div>';
+  }
+
+  h += '<div class="awband">Back on the tee</div>'
+    + line('Now playing', eventName(tournamentOf(S.hole)) + ', ' + dayName(S.hole))
+    + '<button class="act" onclick="hideSheet()">Play on</button>';
+  showSheet(h);
 }
 
 /* ---- modal ---- */
@@ -7508,6 +7591,38 @@ function refreshUpg(){
     ? 'Holes stretched <b>' + fmt(stretch) + 'x</b> off your handicap \u00b7 climbing a card beats out-hitting one'
     : 'Playing the card as it lies';
 
+  // Twenty one rungs, most of them grey, and nothing anywhere saying which one
+  // is within reach. A wall of numbers you cannot afford is not a ladder, so
+  // the next step gets said out loud: what you can take now, or what is closest
+  // and roughly how long the purse needs.
+  const step = $('upgStep');
+  if(step){
+    let afford = 0, cheapest = null, nearest = null;
+    for(const r of UPGREF){
+      const u = r.u, lv = upgLv(u.id);
+      if(lv >= capOf(u)) continue;
+      const c = costOf(u.base, u.r, lv);
+      if(c <= S.gold){ afford++; if(!cheapest || c < cheapest.c) cheapest = { u, c }; }
+      else if(!nearest || c < nearest.c) nearest = { u, c };
+    }
+    const rate = Meter.rate();
+    if(!cheapest && !nearest){
+      step.innerHTML = 'Every rung on the range is capped.';
+      step.className = 'nextstep done';
+    }else if(cheapest){
+      step.innerHTML = '<b>' + afford + '</b> within reach \u00b7 cheapest is '
+        + '<b>' + cheapest.u.n + '</b> at ' + fmt(cheapest.c)
+        + (nearest ? ' \u00b7 next up ' + nearest.u.n + ' at ' + fmt(nearest.c) : '');
+      step.className = 'nextstep go';
+    }else{
+      const wait = rate > 0 ? (nearest.c - S.gold) / rate : Infinity;
+      step.innerHTML = 'Nothing in reach \u00b7 <b>' + nearest.u.n + '</b> at '
+        + fmt(nearest.c) + (isFinite(wait) && wait > 0.5
+          ? ' \u00b7 about ' + hms(wait) + ' away' : '');
+      step.className = 'nextstep wait';
+    }
+  }
+
   for(const r of UPGREF){
     const u = r.u, lv = upgLv(u.id), cap = capOf(u);
     const maxed = lv >= cap;
@@ -7688,6 +7803,44 @@ function bagRow(it, isWorn){
   d.onclick = () => itemSheet(it, isWorn);
   return d;
 }
+// What the bag would look like carrying this instead. derive() reads S.equip
+// and nothing else about the swap, and it has no side effects, so the honest
+// way to answer "what does this do" is to put the club in, ask, and put the
+// old one back. Restored in a finally, because a throw in here would otherwise
+// leave you carrying something you never equipped.
+function previewSwap(it){
+  const slot = it.slot, had = S.equip[slot];
+  if(had && had.uid === it.uid) return null;
+  const before = derive(), beforeSets = activeSets().filter(x => x.tier)
+    .map(x => x.set.n + ' ' + x.tier.n);
+  let after, afterSets;
+  try {
+    S.equip[slot] = it;
+    after = derive();
+    afterSets = activeSets().filter(x => x.tier).map(x => x.set.n + ' ' + x.tier.n);
+  } finally {
+    if(had) S.equip[slot] = had; else delete S.equip[slot];
+  }
+  const gained = afterSets.filter(x => beforeSets.indexOf(x) < 0);
+  const lost   = beforeSets.filter(x => afterSets.indexOf(x) < 0);
+  return { before, after, gained, lost, had };
+}
+
+// One line of it: the old number, the new one, and the change said plainly.
+function swapLine(label, a, b, fmtv, higherIsBetter){
+  const up = b > a, same = Math.abs(b - a) < Math.abs(a) * 1e-9;
+  const good = same ? null : (up === (higherIsBetter !== false));
+  const pct = a > 0 ? (b / a - 1) * 100 : (b > 0 ? 100 : 0);
+  const col = good === null ? 'var(--faint)' : good ? 'var(--aurora)' : 'var(--flag)';
+  return '<div class="swrow"><span class="swk">' + label + '</span>'
+    + '<span class="swa">' + fmtv(a) + '</span>'
+    + '<span class="swar">\u2192</span>'
+    + '<span class="swb" style="color:' + col + '">' + fmtv(b) + '</span>'
+    + '<span class="swd" style="color:' + col + '">'
+    + (same ? 'same' : (pct > 0 ? '+' : '') + (Math.abs(pct) >= 10 ? Math.round(pct)
+        : pct.toFixed(1)) + '%') + '</span></div>';
+}
+
 function itemSheet(it, equipped){
   const el = it.el ? B.ELEM.find(e => e.id === it.el) : null;
   const canEnh = it.enh < B.ENH_MAX;
@@ -7707,6 +7860,20 @@ function itemSheet(it, equipped){
   });
   if(el) h += '<li style="color:' + elemColor(el.id) + '">' + el.n + ': ' + el.d + '</li>';
   h += '</ul>';
+  // What carrying it would actually do. Directly under the stats, because it is
+  // the question the sheet gets opened to answer and it used to sit below three
+  // buttons about reforging.
+  if(!equipped){
+    const sw = previewSwap(it);
+    if(sw) h += '<div class="swap"><div class="swhead">Carrying this instead of '
+      + (sw.had ? '<b>' + sw.had.name + '</b>' : '<b>nothing</b>') + '</div>'
+      + swapLine('Carry',  sw.before.dps,  sw.after.dps,  v => fmt(v))
+      + swapLine('Swing',  sw.before.pow,  sw.after.pow,  v => fmt(v))
+      + swapLine('Purse',  sw.before.gold, sw.after.gold, v => '\u00d7' + fmt(v))
+      + (sw.gained.length ? '<div class="swset ok">Completes ' + sw.gained.join(', ') + '</div>' : '')
+      + (sw.lost.length ? '<div class="swset no">Breaks ' + sw.lost.join(', ') + '</div>' : '')
+      + '</div>';
+  }
   if(canEnh) h += '<button class="act" onclick="doEnh(' + it.uid + ')">Reforge to +' + (it.enh+1)
     + ' \u2014 ' + fmt(enhCost(it)) + ' grit, ' + Math.round(enhChance(it)*100) + '%</button>';
   const lk = lockCount(it);
