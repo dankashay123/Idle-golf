@@ -119,6 +119,14 @@ module.exports = {
       };
       try { hideSheet(); } catch (e) {}
 
+      // away far longer than the caddie is good for: the card has to own up to
+      // both numbers, not quietly report the cap as the whole absence
+      out.awayCap = B.OFFLINE_CAP + permAdd('contract') * 3600;
+      S.t = Date.now()/1000 - 9 * 86400;          // nine days
+      offline();
+      out.awayLong = document.getElementById('sheet').textContent;
+      try { hideSheet(); } catch (e) {}
+
       // ---- 3. the Range says when each rung unlocks --------------------
       DEV.clearUpg(); try { hideSheet(); } catch (e) {}
       S.mult = 1;
@@ -134,11 +142,26 @@ module.exports = {
       S.gold = 1e30;  out.rngRich  = rows();
       DEV.maxCapped(); S.gold = 0; out.rngCapped = rows();
       out.rngRate = Meter.rate();
+      out.rngMults = MULTS.length;
       // what the note claims, read back through the same clock the rest of the
       // game prints times with
       out.rngWant = out.rngBroke.map(r2 => r2.maxed ? ''
         : 'unlocks in ' + untilTxt(r2.cost / 100));
+      // and the button charges for what it says it sells, at every multiplier
       DEV.clearUpg();
+      out.rngBuy = [];
+      for (const m of MULTS) {
+        S.mult = m; S.gold = 100; refreshUpg();
+        for (const r2 of UPGREF) {
+          const u = r2.u, lv = upgLv(u.id), cap = capOf(u);
+          if (lv >= cap) continue;
+          const said = Number(r2.lbl.textContent.replace('\u00d7', ''));
+          out.rngBuy.push({ n: u.n, mult: String(m), said,
+                            amt: r2.amt.textContent,
+                            want: fmt(costBulk(u.base, u.r, lv, said)) });
+        }
+      }
+      S.mult = 1; DEV.clearUpg();
 
       // ---- 4. the retirement preview -----------------------------------
       S.cups = 4; S.legacy = 400; S.eventsPlayed = 0; S.relic = {};
@@ -246,6 +269,16 @@ module.exports = {
       throw new Error('nine hours away found no club worth showing, so the best-of block '
         + 'never rendered and this check is not testing it');
 
+    // nine days away, a caddie good for twelve hours: both numbers or neither
+    const capTxt = (h => h + 'h')(Math.floor(r.awayCap / 3600));
+    if (r.awayLong.indexOf('9 days') < 0)
+      throw new Error('back from nine days away and the card never says so. It reads: "'
+        + r.awayLong.slice(0, 120).replace(/\s+/g, ' ') + '"');
+    if (r.awayLong.indexOf(capTxt) < 0)
+      throw new Error('back from nine days away and the card never says how much of it the '
+        + 'caddie actually played (' + capTxt + '). It reads: "'
+        + r.awayLong.slice(0, 120).replace(/\s+/g, ' ') + '"');
+
     // ---- the Range rows carry their own wait --------------------------
     // The summary line above the list is gone, so the thing it used to say --
     // which rung is next and how long the purse needs -- has to be on the rows
@@ -280,6 +313,21 @@ module.exports = {
     if (r.rngRich.filter(x => !x.maxed && !x.lit).length)
       throw new Error('a rung you can plainly afford is not lit, so the rich case is not '
         + 'the rich case');
+    // A buy button is a price tag on a quantity. "x0" over a price of 1.20K is
+    // an offer to buy nothing for twelve hundred, which is what Max showed on
+    // every rung you could not afford: bulkFor floors at zero there while
+    // costBulk quotes the price of one regardless.
+    const zeroBuy = r.rngBuy.filter(x => !(x.said >= 1));
+    if (zeroBuy.length)
+      throw new Error(zeroBuy.length + ' buy button(s) offer to sell none of something at a '
+        + 'real price: ' + zeroBuy.slice(0, 3).map(x => x.n + ' on ' + x.mult + ' says "x'
+        + x.said + '" for ' + x.amt).join('; '));
+    const mispriced = r.rngBuy.filter(x => x.amt !== x.want);
+    if (mispriced.length)
+      throw new Error(mispriced.length + ' buy button(s) charge for a different number than '
+        + 'they name: ' + mispriced.slice(0, 3).map(x => x.n + ' on ' + x.mult + ' says "x'
+        + x.said + '" at ' + x.amt + ', but x' + x.said + ' costs ' + x.want).join('; '));
+
     const cappedNote = r.rngCapped.filter(x => x.maxed && x.note);
     if (!r.rngCapped.some(x => x.maxed))
       throw new Error('nothing got capped, so the capped case proves nothing');
@@ -405,11 +453,13 @@ module.exports = {
     return ['preview held the bag over ' + p.tried + ' looks and through a throw, '
       + p.changed + ' moved the carry',
       'away card: ' + a.tiles + ' tiles, ' + a.bands.length + ' bands, '
-      + a.lines.length + ' lines and not one of them zero',
+      + a.lines.length + ' lines and not one of them zero; nine days away reads "'
+      + (r.awayLong.match(/[^.]*away[^.]*/) || [''])[0].trim() + '"',
       'range: ' + r.rngBroke.filter(x => x.note).length + ' of ' + r.rngBroke.length
       + ' rungs say when on an empty purse ("' + (r.rngBroke.find(x => x.note) || {}).note
       + '" ... "' + (r.rngBroke.filter(x => x.note).pop() || {}).note
-      + '"), none do with it full, none when capped',
+      + '"), none do with it full, none when capped; ' + r.rngBuy.length
+      + ' buy buttons across ' + r.rngMults + ' multipliers all charge for what they name',
       'retirement before the first event: ' + P.now + ' legacy, +' + P.card + ' a card, +'
       + P.cup + ' a cup, buys ' + r.buys.join('/') + ' at ' + r.discSteps.join('/'),
       'honours open on "' + r.honFirstName + '" at ' + (r.honPct[0] || 0).toFixed(0)

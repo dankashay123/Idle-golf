@@ -2763,7 +2763,7 @@ const pp  = v => '+' + (v*100).toFixed(1) + 'pp';
 function hms(s){
   s = Math.max(0, Math.round(s));
   const h = Math.floor(s/3600), m = Math.floor(s%3600/60), q = s%60;
-  return h ? h+'h '+m+'m' : m ? m+'m '+q+'s' : q+'s';
+  return h ? (m ? h+'h '+m+'m' : h+'h') : m ? (q ? m+'m '+q+'s' : m+'m') : q+'s';
 }
 function hash32(n){
   n = (n ^ 61) ^ (n >>> 16); n = n + (n << 3); n = n ^ (n >>> 4);
@@ -5052,9 +5052,15 @@ function climbPreview(){
     dProg: tierProgress(nextT) - tierProgress(S.tier) };
 }
 
+// hms stops at hours, which reads badly once a return is measured in days:
+// "168h 0m" is a week.
+const spanTxt = s => s >= 172800 ? Math.floor(s/86400) + ' days' : hms(s);
 function offline(){
-  const dt = clamp(Date.now()/1000 - (S.t || Date.now()/1000), 0,
-                   B.OFFLINE_CAP + permAdd('contract')*3600);
+  // What the clock says, and what the caddie is good for. They are not the same
+  // number past the cap, and the card used only the second one: come back from
+  // a week away and it said "12h away", which is not where the week went.
+  const away = Math.max(0, Date.now()/1000 - (S.t || Date.now()/1000));
+  const dt = Math.min(away, B.OFFLINE_CAP + permAdd('contract')*3600);
   if(dt < 60){ regenKeys(dt); return; }
   regenKeys(dt);
   const D = derive();
@@ -5133,7 +5139,9 @@ function offline(){
     + '</span><span class="s">' + v + '</span></div>';
 
   let h = '<h3>While you were away</h3>'
-    + '<p>' + hms(dt) + ' away. The caddie kept the group moving at '
+    + '<p>' + (away > dt + 60
+        ? spanTxt(away) + ' away, and the caddie is good for ' + hms(dt) + ' of it'
+        : hms(dt) + ' away') + '. The caddie kept the group moving at '
     + Math.round(B.OFFLINE_RATE * (1 + Math.min(1, D.C.paway)) * 100)
     + ' per cent of your live pace.</p>'
     + '<div class="awgrid">'
@@ -8222,8 +8230,12 @@ function refreshUpg(){
     if(maxed){
       r.btn.className = 'buy max'; r.lbl.textContent = 'Capped'; r.amt.textContent = '\u2014';
     }else{
+      // On Max, bulkFor hands back 0 when you cannot afford even one, while
+      // costBulk hands back the price of one regardless -- so the button read
+      // "x0" over a real number, which is an offer to buy nothing for 1,200.
+      // The price is what one costs, so the label says one.
       r.btn.className = 'buy' + (ok ? ' ok' : ' no');
-      r.lbl.textContent = '\u00d7' + k;
+      r.lbl.textContent = '\u00d7' + Math.max(1, k);
       r.amt.textContent = fmt(c);
     }
   }
