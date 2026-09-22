@@ -9563,6 +9563,29 @@ function catchUp(){
   for(let t = away; t > 1e-6; t -= B.TICK_MAX) step(Math.min(B.TICK_MAX, t), derive());
   S.t = Date.now()/1000;
 }
+// The page carried no icon at all, so the tab showed the browser's blank page
+// and a home screen shortcut on a phone was a screenshot of whatever was on
+// the stage. Drawn from the game's own flag at a whole-number scale, on the
+// same dark ground as the game.
+function setIcons(){
+  const rows = B.PX12.flag; if(!rows) return;
+  const make = size => {
+    const cv = document.createElement('canvas'); cv.width = cv.height = size;
+    const c = cv.getContext('2d');
+    c.fillStyle = '#06100C'; c.fillRect(0, 0, size, size);
+    const sp = pixSprite('flag', '#E3B457'); if(!sp) return '';
+    const k = Math.floor(size * 0.75 / 12), o = Math.round((size - k * 12) / 2);
+    c.imageSmoothingEnabled = false;
+    c.drawImage(sp.cv, 0, 0, sp.cv.width, sp.cv.height, o, o, k * 12, k * 12);
+    try{ return cv.toDataURL('image/png'); }catch(e){ return ''; }
+  };
+  for(const [rel, size] of [['icon', 32], ['apple-touch-icon', 180]]){
+    const url = make(size); if(!url) continue;
+    const l = document.createElement('link'); l.rel = rel; l.href = url;
+    if(rel === 'icon') l.type = 'image/png';
+    document.head.appendChild(l);
+  }
+}
 function intro(){
   showSheet('<h3>Mythic Mulligan</h3>'
     + '<p>Your golfer plays on his own. Your job is to make him better.</p>'
@@ -9581,6 +9604,7 @@ function boot(){
   if(S.autoClimb === undefined) S.autoClimb = false;
 
   Scene.init();
+  setIcons();
   buildCard();
   buildUpg();
 
