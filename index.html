@@ -3356,7 +3356,7 @@ function addXp(n){
     if(gained){
       toast('Level <b>' + S.lv + '</b> \u00b7 +' + gained*B.LV_TALENT + ' talent, +'
         + gained*B.LV_STAT + ' attribute');
-      if(atMax()) toast('Career level 60. <b>Paragon</b> begins.');
+      if(atMax()) toast('Level 60 \u00b7 <b>Paragon</b> begins');
       if(typeof renderCareer === 'function') renderCareer();
     }
     if(!atMax()) return;
@@ -3728,7 +3728,7 @@ function bagAdd(it){
     const cut = S.bag.splice(bagCap());
     let sh = 0; cut.forEach(x => sh += scrapValue(x));
     S.shard += sh;
-    if(sh) toast('Locker was full, so I scrapped ' + cut.length + ' for <b>' + sh + '</b> shards');
+    if(sh) toast('Locker full \u00b7 scrapped ' + cut.length + ' for <b>' + sh + '</b> shards');
   }
 }
 function equipItem(it){
@@ -3826,7 +3826,7 @@ function enhance(it){
   S.grit -= c;
   if(Math.random() < enhChance(it)){ it.enh++; if(it.enh >= B.ENH_MAX) bump('enh15');
     toast(it.name + ' \u2192 <b>+' + it.enh + '</b>'); }
-  else toast('It did not take. Still +' + it.enh + ' and the grit is gone.');
+  else toast('Reforge failed \u00b7 still +' + it.enh);
   renderBag(); renderVitals();
 }
 const lockCount = it => (it.aff || []).filter(a => a.lock).length;
@@ -3839,7 +3839,7 @@ function rerollCost(it){
 function toggleLock(it, i){
   const a = it.aff[i]; if(!a) return;
   if(!a.lock && lockCount(it) >= it.aff.length - 1){
-    toast('Leave at least one roll for the re-attune to change'); return;
+    toast('Leave one roll unlocked'); return;
   }
   a.lock = !a.lock;
   renderBag();
@@ -4521,8 +4521,7 @@ function endTournament(){
 
   const fm = n => n === 0 ? 'E' : n > 0 ? '+' + n : String(n);
   showSheet('<h3>' + eventName(t) + '</h3>'
-    + '<p>' + (beat ? 'You beat the number.' : 'Card signed and posted.')
-    + ' Four rounds, seventy two holes.</p>'
+    + '<p>' + (beat ? 'You beat the number.' : 'Card posted.') + '</p>'
     + '<div class="big">' + fm(score) + '</div>'
     + '<ul><li>Target: ' + fm(Math.round(target)) + (beat ? ' \u2014 <b style="color:var(--brass)">beaten</b>'
         : ' \u2014 missed by ' + Math.ceil(score - target)) + '</li>'
@@ -4575,7 +4574,7 @@ function climb(n, quiet, force){
   let to = clamp(S.tier + n, 0, B.TIER_MAX);
   if(!force && to > (S.tierMax || 0)){
     if(!quiet) toast('Tour Card ' + roman((S.tierMax||0) + 1) + ' needs '
-      + eventsToNext() + ' more event' + (eventsToNext() === 1 ? '' : 's') + ' on this card');
+      + eventsToNext() + ' more event' + (eventsToNext() === 1 ? '' : 's'));
     return;
   }
   if(to === S.tier) return;
@@ -4687,7 +4686,7 @@ function buyMember(){
   if(isMember()){ toast('You are already a member'); return; }
   S.member = 1; S.memberT = 0;
   grantSov(B.MEMBER_DAILY, 'first day of membership');
-  toast('<b>Club Membership</b> \u00b7 welcome in');
+  toast('<b>Club Membership</b> active');
   renderShop(); renderAll();
 }
 function claimFree(){
@@ -4972,10 +4971,10 @@ function retire(){
   // level, attributes, talents and paragon are the golfer, not the run: untouched.
 
   startHole();
-  showSheet('<h3>Retired</h3><p>Card signed. The money and the range work are gone, but the bag came with you.</p>'
+  showSheet('<h3>Retired</h3>'
     + '<div class="big">+' + fmt(gain) + ' legacy</div>'
-    + '<p>Every capped upgrade ladder opens ' + B.CAP_PER_LEGACY + ' further levels. Retirements: '
-    + S.retires + '.</p><button class="act" onclick="hideSheet()">Back to the tee</button>');
+    + '<p>Capped upgrades gain ' + B.CAP_PER_LEGACY + '\u00a0levels \u00b7 retirement '
+    + S.retires + '</p><button class="act" onclick="hideSheet()">Back to the tee</button>');
   renderAll();
 }
 
@@ -8384,7 +8383,7 @@ function renderBag(){
       const took = autoEquipSweep();
       if(took.length) toast('Auto equipped <b>' + took.length + '</b> club'
         + (took.length > 1 ? 's' : ''));
-      else if(S.autoEquip) toast('Nothing on the bench beats what you are carrying');
+      else if(S.autoEquip) toast('Nothing better on the bench');
       renderBag(); renderVitals();
     };
     hd.appendChild(ab);
@@ -8564,10 +8563,10 @@ function renderPerks(){
   const w = $('perkSheet'); if(!w) return;
   w.innerHTML = '';
   const live = B.PERKS.filter(p => perkLeft(p.id) > 0);
-  w.innerHTML = '<div class="hint">You are holding <b style="color:var(--brass)">'
-    + fmt(S.tickets || 0, 0) + '</b> tickets. They turn up when you finish an event, close out '
-    + 'a Sunday, gain a career level or post a new best in the wager book, and you cannot buy them. '
-    + (live.length ? '<b style="color:var(--aurora)">' + live.length + ' running right now.</b>' : '') + '</div>';
+  w.innerHTML = '<div class="hint"><b style="color:var(--brass)">'
+    + fmt(S.tickets || 0, 0) + '</b>\u00a0tickets \u00b7 earned from events, Sundays, levels and '
+    + 'wager bests' + (live.length ? ' \u00b7 <b style="color:var(--aurora)">' + live.length
+    + ' running</b>' : '') + '</div>';
   for(const p of B.PERKS){
     const left = perkLeft(p.id), can = (S.tickets || 0) >= p.cost;
     const d = document.createElement('div');
@@ -8926,14 +8925,13 @@ function renderLegacy(){
         + '<div class="ds">Tour Card ' + roman(S.tier) + ' with ' + S.cups + ' cups banked.</div></div>'
         + '<button class="buy ok" id="retireBtn"><span class="lbl">Retire</span><span class="amt">+'
         + fmt(gain) + '</span></button></div>'
-      : '<div class="empty">Play one full event and retirement opens up.<br>'
-        + 'Through ' + holesPlayed(S.hole) + ' of ' + (B.ROUND*B.DAYS) + '\u00a0holes \u00b7 the figure above '
-        + 'is what the card is already worth.</div>');
+      : '<div class="empty">Opens after your first event \u00b7 '
+        + holesPlayed(S.hole) + ' of ' + (B.ROUND*B.DAYS) + '\u00a0holes</div>');
   if(gain > 0) $('retireBtn').onclick = () => showSheet(
-    '<h3>Sign the card?</h3><p>You bank ' + fmt(gain) + ' legacy and start again from Tour Card '
-    + roman(relLv('chrono')) + '.</p><p>That is ' + legacyBuys(P) + '. One more Tour Card first '
-    + 'would add ' + fmt(P.card) + ', one more cup ' + fmt(P.cup) + '.</p>'
-    + '<p>Every capped upgrade ladder gains ' + B.CAP_PER_LEGACY + ' more levels, permanently.</p>'
+    '<h3>Sign the card?</h3><p>Bank <b>' + fmt(gain) + '</b> legacy and restart from Card '
+    + roman(relLv('chrono')) + '.</p><p>' + legacyBuys(P).charAt(0).toUpperCase()
+    + legacyBuys(P).slice(1) + '.</p>'
+    + '<p>Wait a card: +' + fmt(P.card) + ' \u00b7 wait a cup: +' + fmt(P.cup) + '</p>'
     + '<button class="act" onclick="hideSheet();retire()">Retire</button>'
     + '<button class="act ghost" onclick="hideSheet()">Keep playing</button>');
 
@@ -9471,7 +9469,7 @@ function frame(now){
     if(!frameErr){
       frameErr = 1;
       console.error(e);
-      toast('Something went wrong in a frame. Hold the event name for the dev menu.');
+      toast('Something went wrong \u00b7 the game carried on');
     }
   }
   requestAnimationFrame(frame);
@@ -9506,7 +9504,7 @@ function frameBody(now){
    BOOT
    ========================================================================= */
 function wipe(){
-  showSheet('<h3>Burn the card?</h3><p>This erases the save completely. Legacy, relics, the bag, all of it.</p>'
+  showSheet('<h3>Erase the save?</h3><p>Everything goes. This cannot be undone.</p>'
     + '<button class="act danger" onclick="reallyWipe()">Erase everything</button>'
     + '<button class="act ghost" onclick="hideSheet()">Cancel</button>');
 }
