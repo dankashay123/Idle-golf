@@ -17,6 +17,20 @@
  * be wired to something (a line in a table that nothing reads is a line that
  * silently does nothing), and every trophy must cost more per level than it
  * gains.
+ *
+ * The talent trees predated that rule and were not held to it: ten of the
+ * twenty sold a flat percentage of a stat the Range sells on a five hundred
+ * rung ladder, which is the same complaint with a different table. They are
+ * held to it here now, both ways round -- a talent may not name a sold stat,
+ * and every talent key has to be read somewhere outside its own table. The
+ * second half of that caught `cond`, a career key that startHole read every
+ * hole and that nothing in the game had granted since the trees were written.
+ *
+ * And no two tables may share an id. `compress`, `infuse` and `lantern` each
+ * existed in B.UPG and B.TREES at once. It was never live -- S.upg and S.tal
+ * are separate stores and migrate() prunes each against its own table -- but
+ * this file has been bitten twice by name collisions already, and any future
+ * code that reads a level by bare id would cross the wires silently.
  */
 'use strict';
 const fs = require('fs');
@@ -37,6 +51,30 @@ module.exports = {
       out.statKeys = [];
       for (const s of B.STATS) for (const k in B.STAT_V[s.id]) out.statKeys.push(k);
       out.trophyKeys = B.TROPHY.filter(t => t.g).map(t => t.k.slice(1));
+      out.talKeys = [];
+      for (const tree of B.TREES) for (const t of tree.t) out.talKeys.push(t.k);
+      out.talents = B.TREES.reduce((n, tr) => n + tr.t.length, 0);
+      // every key career() hands out, so a reader with no writer shows up too
+      out.careerKeys = Object.keys(career());
+      // honours land in the same table, so they count as a source
+      out.achKeys = B.ACH.map(a => a.r.k);
+      // the ten stats a swing and a purse are made of. career() carries a slot
+      // for each because gearStats folds them in alongside the locker, so one
+      // of them sitting at zero is a table with nothing in it today rather than
+      // a reader with no writer.
+      out.gearKeys = Object.keys(gearStats());
+
+      // ids, by the table that owns them
+      out.ids = {
+        'B.UPG':     B.UPG.map(u => u.id),
+        'B.TREES':   [].concat.apply([], B.TREES.map(t => t.t.map(x => x.id))),
+        'B.TROPHY':  B.TROPHY.map(t => t.id),
+        'B.SKILL':   B.SKILL.map(k => k.id),
+        'B.STATS':   B.STATS.map(x => x.id),
+        'B.PERKS':   B.PERKS.map(x => x.id),
+        'B.DGN':     B.DGN.map(d => d.id),
+        'B.ACH':     B.ACH.map(a => a.id)
+      };
       out.cats = B.PARAGON.map(c => ({ id: c.id, n: c.n, lines: c.a.length,
                                        uncapped: c.a.filter(a => a.cap === 0).length }));
 
@@ -91,6 +129,74 @@ module.exports = {
       }
       zero();
       out.moved = moved;
+
+      // ---- and the talents, measured the same way ----------------------
+      // Each of the ten new ones names a moment rather than a stat, so the
+      // probe has to put the golfer in that moment: a par five, a hole the
+      // weather stretched, a Sunday, a ball that matches the course, a pure
+      // strike that lands on armour.
+      const findHole = f => { for (let h = 1; h <= B.ROUND*B.DAYS; h++) if (f(h)) return h; return 1; };
+      const h5   = findHole(h => parOf(h) === 5 && !isClosing(h));
+      const h4   = findHole(h => parOf(h) === 4 && !isClosing(h));
+      const hSun = findHole(h => isSunday(h));
+      const talZero = () => { for (const tr of B.TREES) for (const x of tr.t) S.tal[x.id] = 0; };
+      const fair = { y:1, g:1, s:1, c:0, p:0, dl:0 };
+
+      // the middle of 400 drops with no Sponsor Eye. Rolling twice and keeping
+      // the better must put three quarters of the next 400 above that line
+      // instead of half, whatever the shape of the distribution underneath --
+      // which is a binomial to assert on rather than a heavy-tailed mean.
+      const dropScores = n => { const a = [];
+        for (let i = 0; i < n; i++) a.push(itemScore(dropItem(10, 0, 3, 'driver')));
+        return a; };
+
+      function probeTal(){
+        S.chaos = fair; S.stretched = false;
+        S.hole = h4; const p4 = derive().pow;
+        S.hole = h5; const p5 = derive().pow;
+        S.hole = h4; S.stretched = true; const pw = derive().pow; S.stretched = false;
+        S.courseEl = 'ember';
+        const o = { par5: p5 / p4, windy: pw / p4, surge: resonance('ember'),
+                    cast: skillVal(B.SKILL[0], 1),
+                    sunday: purseFor(hSun, 10, 1) };
+        // a pure strike landing on armour, with the armour set by hand so the
+        // figure is the talent and not the hole
+        S.hole = h4; startHole();
+        S.armor = 1000; S.armor0 = 1000; S.yards = 1e12; S.yardsMax = 1e12; S.purse = 0;
+        const Da = derive(); Da.crit = 1;
+        oneSwing(Da, false);
+        o.shave = S.armor;
+        // a ball that leaves a mark, with the affinity roll turned off: the
+        // only thing that can set frost here is Sweet Contact reading the crit
+        S.equip.ball = { uid: 99, slot:'ball', rar:3, ilvl:0, enh:0, aff:[], el:'frost' };
+        const Dc = derive(); Dc.crit = 1; Dc.proc = 0;
+        let fired = 0;
+        for (let i = 0; i < 400; i++){
+          S.yards = 1e12; S.yardsMax = 1e12; S.purse = 0; S.armor = 0; S.frost = 0;
+          oneSwing(Dc, false);
+          if (S.frost > 0) fired++;
+        }
+        o.critproc = fired;
+        return o;
+      }
+      talZero(); const tBase = probeTal();
+      const base400 = dropScores(400).sort((a,b) => a-b);
+      const mid = base400[200];
+      const tMoved = {};
+      for (const tr of B.TREES) for (const x of tr.t){
+        if (tBase[x.k] === undefined) continue;
+        talZero(); S.tal[x.id] = x.max;
+        const v = probeTal()[x.k];
+        tMoved[x.k] = { base: tBase[x.k], maxed: v, changed: v !== tBase[x.k] };
+      }
+      // Sponsor Eye on its own scale
+      talZero();
+      out.dropMid = dropScores(400).filter(v => v > mid).length;
+      const eye = B.TREES.find(t => t.id === 'card').t.find(x => x.k === 'look2');
+      talZero(); S.tal[eye.id] = 9;                       // look2 past 1, so it always rolls twice
+      out.dropEye = dropScores(400).filter(v => v > mid).length;
+      talZero();
+      out.talMoved = tMoved;
       return out;
     });
 
@@ -109,6 +215,37 @@ module.exports = {
       throw new Error('Core has no uncapped line, so a point owed to a full category '
         + 'has nowhere to go');
 
+    // 1b. and neither does a talent. The trees own the conditional family --
+    //     a moment on the course, or a rule change -- and nothing that is a
+    //     percentage of a number on the vitals panel.
+    const talClash = r.talKeys.filter(k => sold.has(k));
+    if (talClash.length)
+      throw new Error('talent' + (talClash.length > 1 ? 's sell ' : ' sells ')
+        + talClash.join(', ') + ', which the Range, the attributes or the trophy room '
+        + 'already sells on a ladder. A talent point and a rung bought the same sentence.');
+
+    // 1c. no id lives in two tables at once. Five do, and every one of them is
+    //     a key in somebody's save -- S.upg.drive, S.relic.marker, S.dgnFloor
+    //     .vault -- so moving one costs a migration to buy nothing that is
+    //     broken today. They are listed rather than forgiven: the list is the
+    //     record, and a collision that is not on it fails.
+    const KNOWN = ['marker B.UPG/B.TROPHY', 'drive B.UPG/B.STATS', 'tempo B.UPG/B.STATS',
+                   'ley B.TROPHY/B.PERKS', 'vault B.TROPHY/B.DGN'];
+    const seen = {}, dupes = [];
+    for (const table in r.ids) for (const id of r.ids[table]) {
+      if (seen[id]) dupes.push(id + ' ' + seen[id] + '/' + table);
+      else seen[id] = table;
+    }
+    const fresh = dupes.filter(d => KNOWN.indexOf(d) < 0);
+    if (fresh.length)
+      throw new Error('the same id is in two tables: ' + fresh.join('; ')
+        + '. Nothing reads a level by bare id today, and the day something does '
+        + 'it will cross the two silently.');
+    const gone = KNOWN.filter(k => dupes.indexOf(k) < 0);
+    if (gone.length)
+      throw new Error('the known-collision list still carries ' + gone.join('; ')
+        + ', which no longer collide. A stale exception is one that hides the next one.');
+
     // 2. every paragon line is wired to something
     const unwired = [];
     for (const k of r.paraKeys) {
@@ -122,11 +259,44 @@ module.exports = {
         + 'the game. A line nothing reads is a line that silently does nothing when you '
         + 'spend on it.');
 
+    // 2b. every talent key is read somewhere outside the table, and every key
+    //     career() hands out has something that hands it out. A reader with no
+    //     writer is dead weight that looks live; a writer with no reader is a
+    //     talent point that buys nothing.
+    const talUnwired = [];
+    for (const k of r.talKeys) {
+      if (sold.has(k)) continue;                    // folded into gear stats, read everywhere
+      if (!new RegExp('(?:C|career\\(\\))\\.' + k + '\\b').test(src)) talUnwired.push(k);
+    }
+    if (talUnwired.length)
+      throw new Error('talent key' + (talUnwired.length > 1 ? 's ' : ' ') + talUnwired.join(', ')
+        + (talUnwired.length > 1 ? ' appear' : ' appears') + ' in the tree and nowhere else '
+        + 'in the game.');
+    const granted = new Set([].concat(r.talKeys, r.paraKeys, r.statKeys, r.achKeys, r.gearKeys));
+    const ungranted = r.careerKeys.filter(k => !granted.has(k));
+    if (ungranted.length)
+      throw new Error('career() carries ' + ungranted.join(', ') + ', which no attribute, '
+        + 'talent or paragon line grants. Something reads it every hole and it is '
+        + 'always zero.');
+
     // 3. and the measurable ones actually move
     const dead = Object.keys(r.moved).filter(k => !r.moved[k].changed);
     if (dead.length)
       throw new Error('spending every point on ' + dead.join(', ') + ' changed nothing: '
         + dead.map(k => k + ' ' + r.moved[k].base + ' -> ' + r.moved[k].maxed).join('; '));
+
+    // 3b. and so do the talents that can be put in front of a function
+    const talDead = Object.keys(r.talMoved).filter(k => !r.talMoved[k].changed);
+    if (talDead.length)
+      throw new Error('maxing ' + talDead.join(', ') + ' changed nothing: '
+        + talDead.map(k => k + ' ' + r.talMoved[k].base + ' -> ' + r.talMoved[k].maxed).join('; '));
+    // Sponsor Eye rolls twice and keeps the better, so three quarters of its
+    // drops should clear the line half of a plain run clears. Binomial on 400,
+    // so the honest floor is well clear of 200 and well short of 300.
+    if (!(r.dropEye > 240))
+      throw new Error('Sponsor Eye put ' + r.dropEye + ' of 400 drops above the plain median '
+        + 'against ' + r.dropMid + ' without it. Rolling twice and keeping the better should '
+        + 'put about three hundred there.');
 
     // 4. every trophy compounds, or runs a mechanic, and none of them is a
     //    cheaper source of power at level two hundred than at level one
@@ -157,6 +327,11 @@ module.exports = {
 
     return ['paragon ' + r.cats.length + ' categories, ' + r.paraKeys.length
       + ' lines, none sold elsewhere, all wired',
+      r.talents + ' talents, none sold elsewhere, all wired; '
+      + Object.keys(r.talMoved).length + ' measured live, Sponsor Eye ' + r.dropEye
+      + '/400 over the plain median against ' + r.dropMid,
+      Object.keys(r.ids).length + ' tables, ' + Object.keys(seen).length + ' ids, '
+      + dupes.length + ' known collisions and no new ones',
       Object.keys(r.moved).length + ' measured live; '
       + r.trophies.filter(t => t.g).length + ' trophies compound, '
       + r.trophies.filter(t => t.mech).length + ' are mechanics',

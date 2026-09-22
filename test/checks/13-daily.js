@@ -156,6 +156,7 @@ module.exports = {
 
       const c0 = runOnce('cellar', false, w0), c1 = runOnce('cellar', true, w0);
       out.cellarRatio = c0.scroll > 0 ? c1.scroll / c0.scroll : 0;
+      out.cellarScroll = [c0.scroll, c1.scroll];
       out.cellarGear = [c0.gear, c1.gear];
 
       restore(w0);
@@ -218,8 +219,17 @@ module.exports = {
     if (!(r.vaultPlain > 0)) f('the plain Vault run paid nothing, so there is nothing to compare');
     if (Math.abs(r.vaultRatio - want) > 0.02) f('a featured Vault paid ' + r.vaultRatio.toFixed(3)
       + 'x, not ' + want + 'x (' + r.vaultPlain.toExponential(2) + ' -> ' + r.vaultFeat.toExponential(2) + ')');
-    if (r.cellarRatio && Math.abs(r.cellarRatio - want) > 0.02)
-      f('a featured Floodlit Green paid ' + r.cellarRatio.toFixed(3) + 'x, not ' + want + 'x');
+    // Scrolls are whole things: the till rounds, so the ratio of two counts
+    // cannot land on the multiplier exactly and a flat tolerance is measuring
+    // the size of the pot rather than the size of the bonus. A run that paid
+    // twenty scrolls can be half a scroll out at each end, which is 1.5/20 of
+    // the ratio before anything is wrong. That slack is what the bound allows,
+    // and nothing more.
+    const slack = 0.02 + (r.cellarScroll[0] > 0 ? 1.5 / r.cellarScroll[0] : 0);
+    if (r.cellarRatio && Math.abs(r.cellarRatio - want) > slack)
+      f('a featured Floodlit Green paid ' + r.cellarRatio.toFixed(3) + 'x, not ' + want + 'x'
+        + ' (' + r.cellarScroll[0] + ' -> ' + r.cellarScroll[1] + ' scrolls, slack '
+        + slack.toFixed(3) + ')');
     if (r.vaultGear[0] !== r.vaultGear[1]) f('a featured Vault dropped '
       + r.vaultGear[1] + ' clubs against ' + r.vaultGear[0] + ': the gear roll is not untouched');
     if (r.cellarGear[0] !== r.cellarGear[1]) f('a featured Floodlit Green dropped '
@@ -246,7 +256,8 @@ module.exports = {
         + '% purse ' + ((r.greedyPurse - 1) * 100).toFixed(0) + '%, and '
         + r.trades + ' trade-offs all left on the bench',
       'rotation of ' + r.cycleLen + ' reaches all four, today is ' + r.live
-        + ', Vault paid ' + r.vaultRatio.toFixed(2) + 'x featured'
+        + ', Vault paid ' + r.vaultRatio.toFixed(2) + 'x featured, Floodlit '
+        + r.cellarRatio.toFixed(2) + 'x on ' + r.cellarScroll[0] + ' scrolls'
     ];
   }
 };

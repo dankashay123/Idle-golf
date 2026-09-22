@@ -2229,36 +2229,45 @@ const B = {
   // Three trees. Depth gates are points spent IN THAT TREE, so going deep
   // means committing; the capstones are 22-point commitments and mutually
   // exclusive in practice because 59 points cannot buy two of them plus width.
+  //
+  // Half of these used to be a flat percentage of a stat the Range already
+  // sells on a five hundred rung ladder: +6% swing power, +2.5% tempo, +8%
+  // purse. A talent point and a rung on the ladder bought the same sentence,
+  // which is the same complaint the paragon rebuild answered and the same rule
+  // the progression check now holds this table to. Every line below is
+  // conditional or mechanical: it names a moment on the course -- a par five, a
+  // hole the weather stretched, a pure strike, a Sunday, the stake of the day
+  // -- rather than a number on the vitals panel.
   TREES: [
     { id:'long', n:'The Long Game', ic:'driver', d:'Heavy strikes, and what they do to armour.',
       t:[
-        { id:'persimmon', n:'Persimmon Core',  req:0,  max:5, k:'pow',    v:0.06,  d:'+6% swing power' },
-        { id:'loaded',    n:'Loaded Face',     req:0,  max:5, k:'crt',    v:0.012, d:'+1.2pp pure strike' },
-        { id:'compress',  n:'Compression',     req:5,  max:5, k:'cpw',    v:0.35,  d:'+0.35x strike payoff' },
-        { id:'bane',      n:"Marshal's Bane",  req:5,  max:5, k:'boss',   v:0.12,  d:'+12% damage on armoured holes' },
-        { id:'pierce',    n:'Piercing Grooves',req:12, max:5, k:'pierce', v:0.12,  d:'ignore 12% of armour' },
-        { id:'nerve',     n:'Sunday Nerve',    req:12, max:5, k:'clutch', v:0.10,  d:'+10% swing power on closing holes' },
-        { id:'oneswing',  n:'One Swing',       req:22, max:1, k:'onesw',  v:1,     d:'every 12th strike lands for 800%' }
+        { id:'reach',    n:'Reachable in Two', req:0,  max:5, k:'par5',   v:0.22,  d:'+22% swing power on par fives' },
+        { id:'shave',    n:'Loaded Face',      req:0,  max:5, k:'shave',  v:0.05,  d:'a pure strike shaves 5% off the armour left on the hole' },
+        { id:'punch',    n:'Punch Shot',       req:5,  max:5, k:'windy',  v:0.11,  d:'+11% swing power on a hole the weather has stretched' },
+        { id:'bane',     n:"Marshal's Bane",   req:5,  max:5, k:'boss',   v:0.12,  d:'+12% damage on armoured holes' },
+        { id:'pierce',   n:'Piercing Grooves', req:12, max:5, k:'pierce', v:0.12,  d:'ignore 12% of armour' },
+        { id:'nerve',    n:'Sunday Nerve',     req:12, max:5, k:'clutch', v:0.10,  d:'+10% swing power on closing holes' },
+        { id:'oneswing', n:'One Swing',        req:22, max:1, k:'onesw',  v:1,     d:'every 12th strike lands for 800%' }
       ] },
     { id:'short', n:'The Short Game', ic:'wedge', d:'Tempo, affinity, and reading the course.',
       t:[
-        { id:'hands',   n:'Quick Hands',    req:0,  max:5, k:'spd',   v:0.025, d:'+2.5% tempo' },
-        { id:'contact', n:'Sweet Contact',  req:0,  max:5, k:'prc',   v:0.020, d:'+2pp affinity chance' },
-        { id:'infuse',  n:'Infusion',       req:5,  max:5, k:'elm',   v:0.14,  d:'+14% affinity power' },
-        { id:'ley',     n:'Ley Reader',     req:5,  max:5, k:'reson', v:0.09,  d:'+0.09 to a damped affinity' },
-        { id:'rhythm',  n:'Rhythm',         req:12, max:5, k:'cdr',   v:0.06,  d:'-6% shot cooldowns' },
-        { id:'through', n:'Follow Through', req:12, max:5, k:'mst',   v:0.030, d:'+3pp provisional chance' },
-        { id:'perfect', n:'Perfect Tempo',  req:22, max:1, k:'dbl',   v:1,     d:'affinity fires twice' }
+        { id:'quick',   n:'Quick Hands',    req:0,  max:5, k:'cast',     v:0.10,  d:'+10% out of every shot in the book' },
+        { id:'strike',  n:'Sweet Contact',  req:0,  max:5, k:'critproc', v:0.14,  d:'+14pp affinity chance on a pure strike' },
+        { id:'tune',    n:'In Tune',        req:5,  max:5, k:'surge',    v:0.10,  d:'+10% affinity power when your ball matches the course' },
+        { id:'leyread', n:'Ley Reader',     req:5,  max:5, k:'reson',    v:0.09,  d:'+0.09 to a damped affinity' },
+        { id:'rhythm',  n:'Rhythm',         req:12, max:5, k:'cdr',      v:0.06,  d:'-6% shot cooldowns' },
+        { id:'follow',  n:'Follow Through', req:12, max:5, k:'mstcrit',  v:0.20,  d:'20% chance a provisional off a pure strike is pure too' },
+        { id:'perfect', n:'Perfect Tempo',  req:22, max:1, k:'dbl',      v:1,     d:'affinity fires twice' }
       ] },
     { id:'card', n:'The Card', ic:'coins', d:'Money, gear luck, and the wager book.',
       t:[
-        { id:'endorse', n:'Endorsements',  req:0,  max:5, k:'gld',    v:0.08,  d:'+8% purse' },
-        { id:'eye',     n:'Sponsor Eye',   req:0,  max:5, k:'drp',    v:0.012, d:'+1.2pp gear luck' },
-        { id:'lantern', n:'Bigger Cut',    req:5,  max:5, k:'dgn',    v:0.12,  d:'+12% wager haul' },
-        { id:'walker',  n:'Fast Walker',   req:5,  max:5, k:'walk',   v:0.04,  d:'-4% walk-in time' },
-        { id:'delve',   n:'Head Start',    req:12, max:3, k:'dfloor', v:1,     d:'every wager starts a rung deeper' },
-        { id:'school',  n:'Tour School',   req:12, max:5, k:'xp',     v:0.10,  d:'+10% career experience' },
-        { id:'sharp',   n:'Card Sharp',    req:22, max:1, k:'sharp',  v:1,     d:'keys return 40% faster, runs last 40% longer' }
+        { id:'gallery', n:'Sunday Gallery', req:0,  max:5, k:'sunday', v:0.14,  d:'+14% purse on Sunday holes' },
+        { id:'spotter', n:'Sponsor Eye',    req:0,  max:5, k:'look2',  v:0.12,  d:'12% chance a club that drops is rolled twice and the better one kept' },
+        { id:'home',    n:'Home Fixture',   req:5,  max:5, k:'wfeat',  v:0.12,  d:'+12% on the stake of the day' },
+        { id:'walker',  n:'Fast Walker',    req:5,  max:5, k:'walk',   v:0.04,  d:'-4% walk-in time' },
+        { id:'delve',   n:'Head Start',     req:12, max:3, k:'dfloor', v:1,     d:'every wager starts a rung deeper' },
+        { id:'school',  n:'Tour School',    req:12, max:5, k:'xp',     v:0.10,  d:'+10% career experience' },
+        { id:'sharp',   n:'Card Sharp',     req:22, max:1, k:'sharp',  v:1,     d:'keys return 40% faster, runs last 40% longer' }
       ] }
   ],
   TREE_GATES: [0, 5, 12, 22],
@@ -2818,7 +2827,17 @@ function migrate(){
 
   for(const k in S.upg)     if(!B.UPG.some(u => u.id === k)) delete S.upg[k];
   for(const k in S.relic)   if(!B.TROPHY.some(t => t.id === k)) delete S.relic[k];
-  for(const k in S.tal)     if(!B.TREES.some(t => t.t.some(x => x.id === k))) delete S.tal[k];
+  // Ten talents stopped being a flat percentage of a Range stat and became
+  // conditions on the course, which changes what a point in them buys. A point
+  // spent on a line that no longer exists is the player's, not the line's, so
+  // it comes back unspent -- the same way the paragon rebuild handed its
+  // points back rather than deleting four hundred levels of work.
+  for(const k in S.tal)
+    if(!B.TREES.some(t => t.t.some(x => x.id === k))){
+      const n = S.tal[k] || 0;
+      if(n > 0){ S.talPts = (S.talPts || 0) + n; S.talRefund = (S.talRefund || 0) + n; }
+      delete S.tal[k];
+    }
   for(const k in S.skillLv) if(!B.SKILL.some(s => s.id === k)) delete S.skillLv[k];
   for(const k in S.stat)    if(!B.STATS.some(s => s.id === k)) delete S.stat[k];
   for(const k in S.perkOn)  if(!B.PERKS.some(p => p.id === k)) delete S.perkOn[k];
@@ -2972,8 +2991,12 @@ function achBonus(){
 
 function career(){
   const o = { pow:0, spd:0, crt:0, cpw:0, elm:0, prc:0, gld:0, drp:0, dgn:0, mst:0,
+              // the talent trees' own ground: a condition on the course or a
+              // rule change, never a percentage of a stat the Range sells
               pierce:0, boss:0, clutch:0, cdr:0, xp:0, reson:0, dfloor:0, walk:0,
-              cond:0, sharp:0, dbl:0, onesw:0,
+              sharp:0, dbl:0, onesw:0,
+              par5:0, shave:0, windy:0, cast:0, critproc:0, surge:0, mstcrit:0,
+              sunday:0, look2:0, wfeat:0,
               // paragon's own territory: none of these touch a swing, and none
               // of them are sold anywhere else in the game
               pay:0, place:0, nine:0, tick:0,
@@ -3050,9 +3073,12 @@ function gearStats(){
 // How the course treats the ball you are carrying today.
 function resonance(el){
   if(!el || !S.courseEl) return 1;
-  if(perkLeft('ley') > 0) return B.RESONATE;
-  if(el === S.courseEl) return B.RESONATE;
-  if(B.DAMPS[S.courseEl] === el) return Math.min(1, B.DAMPEN + career().reson);
+  const C = career();
+  // Ley Reader lifts the floor under your worst matchup, In Tune sharpens the
+  // best one. Two ends of the same decision, both in the Short Game.
+  if(perkLeft('ley') > 0) return B.RESONATE * (1 + C.surge);
+  if(el === S.courseEl) return B.RESONATE * (1 + C.surge);
+  if(B.DAMPS[S.courseEl] === el) return Math.min(1, B.DAMPEN + C.reson);
   return 1;
 }
 const perkDef = id => B.PERKS.find(p => p.id === id);
@@ -3081,11 +3107,19 @@ function buffVal(id){
   return b && b.t > 0 ? b.v : 0;
 }
 function derive(){
+  const C = career();
   const G = gearStats();
   const ch = S.chaos || { y:1, g:1, s:1, c:0, p:0, dl:0 };
 
   let pow = B.BASE_POWER * upgMult('pow') * (1 + G.pow) * relMult('pow') * perkMult('pow')
           * permMult('irons');
+  // Two talents that pay on the hole you are standing on rather than on every
+  // swing everywhere. They belong here for the same reason the weather does:
+  // ch.s and ch.c already ride into the tempo and the pure strike from this
+  // hole's conditions, so every reader of derive() -- the vitals panel, the
+  // handicap, the away model -- sees the same golfer the course does.
+  if(C.par5 && parOf(S.hole) === 5) pow *= 1 + C.par5;
+  if(C.windy && S.stretched) pow *= 1 + C.windy;
 
   const spdRaw = B.BASE_SPEED * upgMult('spd') * (1 + G.spd) * relMult('spd') * ch.s
     * (1 + buffVal('gale')/100) * perkMult('spd');
@@ -3155,7 +3189,6 @@ function derive(){
   const elemEff = elemRaw > 0 ? elem * (elemCapped / elemRaw) : elem;
   const god = S.godmode ? 1e12 : 1;
   const swingDps = pow * spd * (1 + crit*(cpw-1)) * (1 + elemDmg) * (1 + mst*B.MST_DMG) * god;
-  const C = career();
   return { pow: pow*god, spd, spdRaw, crit, cpw, elem, elemEff, proc, procRaw, gold, drop, dgnY, mst,
            elemDmg, reson, C, dps: swingDps, ball };
 }
@@ -3256,8 +3289,10 @@ function purseFor(h, tier, goldMult){
   // pay for the yards actually being played, not just the yards on the card
   const stretch = (S.carded > 0 && S.yardsMax > S.carded)
     ? Math.pow(S.yardsMax / S.carded, B.HCP_PAY) : 1;
+  // Sunday Gallery rides the Sunday multiplier rather than the purse itself:
+  // a quarter of the round, at the end of it, and nothing at all on a Thursday.
   return B.G0 * Math.pow(B.TIER_G, tierProgress(tier)) * (parOf(h)/4) * goldMult * stretch
-       * (isClosing(h) ? 3.2 : 1) * (isSunday(h) ? 1.4 : 1)
+       * (isClosing(h) ? 3.2 : 1) * (isSunday(h) ? 1.4 * (1 + career().sunday) : 1)
        * purseMult(tournamentOf(h));
 }
 function scoreFor(ratio){
@@ -3273,10 +3308,9 @@ function startHole(){
   S.courseEl = courseElFor(S.hole, S.tier);
   const D = derive();
   S.chaos = chaosFor(S.hole, S.tier);
-  // Condition Grip only ever pulls a punishing course back toward fair; it
-  // never turns a generous one MORE generous.
-  if(D.C.cond > 0 && S.chaos.y > 1)
-    S.chaos.y = Math.max(1, S.chaos.y * (1 - Math.min(0.6, D.C.cond)));
+  // Punch Shot asks whether the weather lengthened this hole, which is one
+  // flag rather than a reader picking through the chaos table every swing.
+  S.stretched = S.chaos.y > 1;
   S.parTime = parTimeFor(S.hole);
   // the card sets the hole, your bag sets the floor under it
   const carded = yardageFor(S.hole, S.tier, S.chaos);
@@ -3288,6 +3322,7 @@ function startHole(){
   // a strike from a golfer at the tempo cap clearing this hole in par time
   const refSwing = S.yardsMax / (S.parTime * B.SPEED_CAP);
   S.armor = isClosing(S.hole) ? refSwing * B.ARMOR_MULT * (isSunday(S.hole) ? 1.45 : 1) : 0;
+  S.armor0 = S.armor;                       // Loaded Face shaves off this, not off nothing
   S.walkMin = mileOn('tempo') ? 0.05
             : Math.max(B.WALK_MIN_FLOOR, B.WALK_MIN * (1 - Math.min(0.45, D.C.walk)));
   S.elapsed = 0; S.holeGold = 0; S.frost = 0; S.burn = 0; S.burnT = 0;
@@ -3339,23 +3374,36 @@ function oneSwing(D, visual){
   if(S.frost > 0){ dmg *= 1 + B.ELEM_VAL.frost * D.elemEff; S.frost = 0; }
   const crit = Math.random() < D.crit;
   if(crit) dmg *= D.cpw;
+  // Sweet Contact reads the strike, not the stat: a ball off the middle of the
+  // face is likelier to take the affinity. Metered against the same PROC_CAP
+  // the Range is held to, or a talent would be the cheap way past the ceiling.
+  const pr = crit && D.C.critproc > 0 ? Math.min(B.PROC_CAP, D.proc + D.C.critproc) : D.proc;
   let big = false;
   if(D.C.onesw){
     S.swCount = (S.swCount || 0) + 1;
     if(S.swCount % B.ONESWING_EVERY === 0){ dmg *= B.ONESWING_MULT; big = true; Scene.spark('crit'); }
   }
-  if(D.ball && D.ball.el && Math.random() < D.proc){
+  if(D.ball && D.ball.el && Math.random() < pr){
     applyAffinity(D, dmg);
     if(D.C.dbl) applyAffinity(D, dmg);
   }
+  // Loaded Face: armour belongs to the hole, not to the swing, so a pure strike
+  // takes a bite out of it that lasts the rest of the hole. Floored at a tenth
+  // of what it started at, or five ranks of this is full pierce by another name.
+  if(crit && D.C.shave > 0 && S.armor > 0)
+    S.armor = Math.max((S.armor0 || S.armor) * 0.1, S.armor * (1 - Math.min(0.9, D.C.shave)));
   // Flush: a pure strike is not what armour is for
   let dealt = damage(dmg, D, false, crit && mileOn('touch'));
   // the provisional: whole numbers are guaranteed, the remainder is a roll
   let extra = Math.floor(D.mst) + (Math.random() < (D.mst % 1) ? 1 : 0);
   while(extra-- > 0 && S.yards > 0){
     let e = D.pow * B.MST_DMG;
-    if(Math.random() < D.crit) e *= D.cpw;
-    if(D.ball && D.ball.el && Math.random() < D.proc) applyAffinity(D, e);
+    // Follow Through: the provisional comes off the same swing as the ball that
+    // played it, so a pure strike can carry it. Guarded rather than folded into
+    // the roll below, so a golfer with no points in it draws what it always did.
+    if(crit && D.C.mstcrit > 0 && Math.random() < D.C.mstcrit) e *= D.cpw;
+    else if(Math.random() < D.crit) e *= D.cpw;
+    if(D.ball && D.ball.el && Math.random() < pr) applyAffinity(D, e);
     dealt += damage(e, D);
   }
   if(visual) Scene.swing(dealt, crit || big, D.ball && D.ball.el);
@@ -3379,7 +3427,9 @@ function doSwings(n, D){
    THE SHOT BOOK
    ========================================================================= */
 const skillDef = id => B.SKILL.find(k => k.id === id);
-const skillVal = (def, lv) => def.b + def.s * Math.max(0, lv-1);
+// Quick Hands is folded in here rather than at the point each shot fires, so
+// the shot book screen reads the number the shot will actually land for.
+const skillVal = (def, lv) => (def.b + def.s * Math.max(0, lv-1)) * (1 + career().cast);
 function skillLabel(def, lv){
   const v = skillVal(def, lv);
   // whole numbers should read as whole numbers, and pp() already carries a sign
@@ -3505,6 +3555,19 @@ function makeItem(ilvl, luck, floorRar, slotId){
     el: sl.id === 'ball' ? B.ELEM[Math.floor(Math.random()*B.ELEM.length)].id : null
   };
   it.name = nameItem(it, sl);
+  return it;
+}
+// A club that FALLS is rolled by this; a club you buy is not. Sponsor Eye
+// rolls it a second time and keeps the better of the two, which is a different
+// animal to a higher drop rate: it never hands you more clubs, only better
+// ones, so it cannot move how fast the locker fills or what scrapping pays.
+function dropItem(ilvl, luck, floorRar, slotId){
+  const it = makeItem(ilvl, luck, floorRar, slotId);
+  const look = career().look2;
+  if(look > 0 && Math.random() < Math.min(1, look)){
+    const b = makeItem(ilvl, luck, floorRar, slotId);
+    if(itemScore(b) > itemScore(it)) return b;
+  }
   return it;
 }
 function nameItem(it, sl){
@@ -3767,10 +3830,17 @@ const featLeft = () => 86400 - (Date.now()/1000) % 86400;
 // This is what the Long Drive measures.
 function swingRoll(D){
   let dmg = D.pow;
-  if(Math.random() < D.crit) dmg *= D.cpw;
+  const crit = Math.random() < D.crit;
+  if(crit) dmg *= D.cpw;
   let extra = Math.floor(D.mst) + (Math.random() < (D.mst % 1) ? 1 : 0);
-  while(extra-- > 0) dmg += D.pow * B.MST_DMG * (Math.random() < D.crit ? D.cpw : 1);
-  if(D.ball && D.ball.el && Math.random() < D.proc)
+  while(extra-- > 0){
+    let e = D.pow * B.MST_DMG;
+    if(crit && D.C.mstcrit > 0 && Math.random() < D.C.mstcrit) e *= D.cpw;
+    else if(Math.random() < D.crit) e *= D.cpw;
+    dmg += e;
+  }
+  const pr = crit && D.C.critproc > 0 ? Math.min(B.PROC_CAP, D.proc + D.C.critproc) : D.proc;
+  if(D.ball && D.ball.el && Math.random() < pr)
     dmg *= 1 + Math.min(D.elemDmg, B.ELEM_CAP);
   return dmg;
 }
@@ -3979,7 +4049,7 @@ function endDgn(d, R, D){
     // nothing at all.
     if(deeper) grantTickets(B.TICK_DEPTH, 'a new best in the wager book');
 
-    const featM = R.feat ? B.DGN_FEAT_MULT : 1;
+    const featM = R.feat ? B.DGN_FEAT_MULT * (1 + D.C.wfeat) : 1;
     const yield_ = (pot > 0 ? pot : yieldAt(fe, D, d)) * featM;
     if(d.cur === 'gold'){
       // Priced in holes of purse so it tracks the course, and in floors past
@@ -3995,13 +4065,13 @@ function endDgn(d, R, D){
       const n = Math.max(1, Math.round(yield_));
       S[d.cur] += n; rewards.push([d.cn, '+' + fmt(n, 0)]);
     }
-    if(R.feat) rewards.push(['Stake of the day', B.DGN_FEAT_MULT + '\u00d7 on the payout']);
+    if(R.feat) rewards.push(['Stake of the day', fmt(featM) + '\u00d7 on the payout']);
     rewards.push(['Experience', '+' + fmt(xp)]);
     if(deeper) rewards.push(['Sponsor tickets', '+' + B.TICK_DEPTH]);
     // a new personal best always comes home with something
     if(deeper || Math.random() < (d.gear !== undefined ? d.gear : B.DGN_GEAR_CHANCE) + relLv('rift')*0.05){
       const floorRar = Math.max(d.floorRar || 0, Math.min(2, Math.floor(fe/8)));
-      const it = makeItem(S.tier + Math.min(3, Math.floor(fe/5)), D.drop + 0.35, floorRar);
+      const it = dropItem(S.tier + Math.min(3, Math.floor(fe/5)), D.drop + 0.35, floorRar);
       bagAdd(it);
       rewards.push(['Gear', B.RARITY[it.rar].n + ' ' + B.SLOTS.find(s => s.id === it.slot).n]);
     }
@@ -4161,11 +4231,11 @@ function finishHole(D){
   const luck = D.drop;
   if(isClosing(S.hole) && isSunday(S.hole)) grantTickets(B.TICK_SUNDAY, 'Sunday finish');
   if(isClosing(S.hole)){
-    const it = makeItem(S.tier, luck + 0.15, isSunday(S.hole) ? 1 : 0);
+    const it = dropItem(S.tier, luck + 0.15, isSunday(S.hole) ? 1 : 0);
     bagAdd(it);
     toast('<b>' + B.RARITY[it.rar].n + '</b> ' + it.name);
   }else if(Math.random() < luck){
-    const it = makeItem(S.tier, luck, 0);
+    const it = dropItem(S.tier, luck, 0);
     bagAdd(it);
     if(it.rar >= 2) toast('<b>' + B.RARITY[it.rar].n + '</b> ' + it.name);
   }
@@ -4698,7 +4768,7 @@ function offline(){
     S.totalHoles++;
     addXp(B.XP_HOLE * Math.pow(1 + S.tier, B.XP_TIER) * 1.2 * (parOf(S.hole)/4) * 0.6);
     if(isClosing(S.hole) && S.bag.length < bagCap() && Math.random() < 0.5)
-      bagAddOff(makeItem(S.tier, D.drop, 0));
+      bagAddOff(dropItem(S.tier, D.drop, 0));
     advanceHole();
   }
   OFFLINE = false; QUIET = false;
@@ -8722,6 +8792,11 @@ function careerStats(w, C){
 // past twenty rows before you knew a third tree existed.
 let talSub = 'long';
 function careerTalents(w){
+  if(S.talRefund > 0){
+    toast('The trees were rebuilt \u00b7 <b>' + fmt(S.talRefund, 0)
+      + '</b> points came back to spend');
+    S.talRefund = 0;
+  }
   if(!B.TREES.some(t => t.id === talSub)) talSub = B.TREES[0].id;
   const nav = document.createElement('div');
   nav.id = 'talNav';
@@ -8791,10 +8866,13 @@ function careerTree(w, tree, bare){
 function talDesc(t, n){
   const v = t.v * n;
   if(t.max === 1) return 'active';
-  if(t.k === 'crt' || t.k === 'prc' || t.k === 'drp' || t.k === 'mst') return '+' + (v*100).toFixed(1) + 'pp';
-  if(t.k === 'cpw') return '+' + v.toFixed(2) + 'x';
+  if(t.k === 'critproc') return '+' + (v*100).toFixed(1) + 'pp';
   if(t.k === 'dfloor') return '+' + v + ' floors';
   if(t.k === 'reson') return '+' + v.toFixed(2);
+  // Three of these take something away. Printing them with a plus was a lie
+  // the row's own description ("-6% shot cooldowns") contradicted one line up.
+  if(t.k === 'shave' || t.k === 'cdr' || t.k === 'walk')
+    return '\u2212' + Math.round(v*100) + '%';
   return '+' + Math.round(v*100) + '%';
 }
 function achReward(a){
