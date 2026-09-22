@@ -237,6 +237,10 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
 .lkhead .lkn{font-family:var(--disp);font-size:var(--f3);color:var(--chalk)}
 .lkhead .lkc{margin-left:auto;font-family:var(--mono);font-size:var(--f1);color:var(--faint)}
 .lkhead .lkc b{color:var(--brass)}
+.lkhead .lkauto{border:1px solid var(--line);border-radius:0;background:transparent;
+  color:var(--faint);font-size:var(--f0);letter-spacing:.09em;text-transform:uppercase;
+  padding:3px 7px;cursor:pointer;flex:0 0 auto}
+.lkhead .lkauto.on{border-color:var(--brass-dk);color:var(--brass);background:rgba(227,180,87,.09)}
 
 .item{padding:9px 12px;border-bottom:1px solid #12261A;display:grid;
   grid-template-columns:1fr auto;gap:9px;align-items:center;border-left:2px solid transparent}
@@ -280,6 +284,15 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
 .glyph.lock{color:var(--faint);border-style:dashed}
 
 /* ---------- dungeons ---------- */
+.featbar{display:flex;align-items:baseline;gap:8px;padding:7px 12px;
+  border-bottom:1px solid #12261A;background:rgba(227,180,87,.06);
+  border-left:2px solid var(--brass-dk)}
+.featbar .fn{font-family:var(--disp);font-size:var(--f2);color:var(--brass)}
+.featbar .fd{font-size:var(--f1);color:var(--dim)}
+.featbar .ft{margin-left:auto;font-family:var(--mono);font-size:var(--f1);color:var(--faint)}
+.dgn.feat{background:rgba(227,180,87,.05);border-left:2px solid var(--brass-dk)}
+.dgn .fstar{font-family:var(--mono);font-size:var(--f0);letter-spacing:.1em;
+  text-transform:uppercase;color:#0C1A12;background:var(--brass);padding:1px 5px;white-space:nowrap}
 .dgn{padding:10px 12px;border-bottom:1px solid #12261A}
 .dgn .dh{display:flex;align-items:center;gap:7px}
 .dgn .dn{flex:1}
@@ -650,6 +663,7 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
 
     <div class="view" id="v-dgn">
       <div class="band"><span class="eyebrow">The Wager Book</span><span class="note" id="dgnNote"></span></div>
+      <div class="featbar" id="dgnFeat"></div>
       <div id="dgnRows"></div>
     </div>
 
@@ -2039,6 +2053,19 @@ const B = {
   // A miss costs you the pot, but not the walk in. Without this the maths says
   // you lose better than nine runs in ten and the mode is just a slot machine.
   ISLAND_SALVAGE: 0.25,
+  // The stake of the day. One of the four pays double, on a strict rotation so
+  // every contest gets its turn and you can bank entries for the one you want.
+  // A multiplier rather than something in each contest's own idiom, and that is
+  // measured rather than taste: every reward down here is paid through yieldAt,
+  // which reads a LOG of how far the run got. Two extra swings on the Long
+  // Drive move the longest one about eight per cent, which is log(1.08)/
+  // log(1.55) of a floor, which is under three per cent of a payout. Half again
+  // as long in the Vault is the best of the four and still only fifteen. A
+  // bonus you cannot see in the reward is not a bonus.
+  // Doubling one of four, one day in four, lifts the whole wager channel 1.25x.
+  // Currency and purse only: the gear roll is untouched, or the featured day
+  // becomes the only day worth opening the book at all.
+  DGN_FEAT_MULT: 2,
   BANK_OPTS: [3, 5, 7, 10, 15, 25],
   CHIP_SHOTS: 25, CHIP_GAP: 1.65, CHIP_PROC: 0.90, CHIP_STEP: 0.78,
   // The endurance floor: each one is a piece of work, deeper floors are more of
@@ -2703,7 +2730,7 @@ function defaultState(){ return {
   sov: 0, perm: {}, bagsOpened: 0, pity: 0, sovSpent: 0, packsTaken: {}, freeT: 0,
   member: 0, memberT: 0, starter: 0, boostT: 0,
   dgnKeys: {}, dgnKeyT: {}, dgnFloor: {}, dgnBest: {}, dgnRun: null, islandBank: 5,
-  bagSlot: 'driver',
+  bagSlot: 'driver', autoEquip: 0,
   legacy: 0, relic: {}, retires: 0, cups: 0, points: 0,
   lv: 1, xp: 0, statPts: 0, talPts: 0, stat: {}, tal: {},
   tickets: 0, perkOn: {}, perkUsed: 0,
@@ -2764,6 +2791,7 @@ function initState(){
   if(S.tierMax === undefined) S.tierMax = 0;
   if(S.eventsPlayed === undefined) S.eventsPlayed = 0;
   if(!S.achDone) S.achDone = {};
+  if(S.autoEquip === undefined) S.autoEquip = 0;
 }
 /* =========================================================================
    MIGRATION
@@ -3479,6 +3507,16 @@ function bagAdd(it){
   if(it.rar >= 4) bump('legend');
   if(it.rar >= 5) bump('myth');
   S.bag.push(it);
+  // Swap first, trim second. The club the sweep pulls out of the locker may be
+  // the very one the trim was about to scrap, and the club it puts back may be
+  // the worst thing in there. The other order leaves the locker one over its
+  // cap until the next drop lands.
+  const took = autoEquipSweep();
+  if(took.length){
+    toast(took.length === 1 ? 'Auto equipped <b>' + took[0].name + '</b>'
+                            : 'Auto equipped <b>' + took.length + '</b> clubs');
+    renderVitals();
+  }
   if(S.bag.length > bagCap()){
     S.bag.sort((a,b) => itemScore(b) - itemScore(a));
     const cut = S.bag.splice(bagCap());
@@ -3493,6 +3531,66 @@ function equipItem(it){
   S.bag = S.bag.filter(x => x.uid !== it.uid);
   if(cur) S.bag.push(cur);
   renderBag(); renderVitals();
+}
+
+// Auto-equip, measured rather than guessed. itemScore is a SORT KEY: it weighs
+// the affixes it cannot price at a flat 0.35 and it knows nothing at all about
+// sets, so the club at the top of the list can be the one that drops you off
+// Tour Issue 4 and leaves you carrying less than you were. This asks derive()
+// the way the item sheet's preview does, and takes a swap only when it is
+// better on the carry or the purse and worse on NEITHER. That is deliberately
+// timid: a club that buys carry with purse is a decision, and a toggle should
+// not be quietly making your decisions. Those stay on the bench for you.
+// Measured on a fresh Tour Card X locker fed a hundred and twenty drops, over
+// several runs: this swaps on roughly half the drops the sort key would, and
+// the ones it passes on are worth between sixteen and twenty two per cent of
+// the purse multiplier. The greedy version ends ahead on carry for it, by
+// anything from seventeen to sixty odd per cent. That is a real trade and it
+// may well be the right one -- but it is a rebuild, not an upgrade, and the
+// regret is not symmetric. Nobody minds a toggle that missed a better driver.
+// Everybody minds one that quietly cut their prize money while they were out.
+// The item sheet prices the same swap to two decimal places; take it there.
+function autoPick(slot){
+  const cands = S.bag.filter(it => it.slot === slot);
+  if(!cands.length) return null;
+  const had = S.equip[slot], base = derive();
+  let best = null, bestGain = 0;
+  for(const it of cands){
+    if(had && had.uid === it.uid) continue;
+    let after;
+    S.equip[slot] = it;
+    try { after = derive(); } finally { S.equip[slot] = had; }
+    const dps = after.dps - base.dps, gold = after.gold - base.gold;
+    if(dps < -1e-9 || gold < -1e-9) continue;
+    if(dps <= 1e-9 && gold <= 1e-9) continue;
+    const gain = dps/Math.max(1e-9, base.dps) + gold/Math.max(1e-9, base.gold);
+    if(gain > bestGain){ bestGain = gain; best = it; }
+  }
+  return best;
+}
+// Over every slot, and again while anything still moves: taking the driver can
+// complete a set that makes a bench wedge worth taking too, and the second club
+// is invisible on the pass that took the first. Capped both ways, because a
+// cycle in here hangs the frame rather than merely equipping the wrong wedge.
+// Never during an away session: that loop drops thousands of clubs, and the
+// sweep costs a derive() per candidate. offline() runs one at the end instead.
+function autoEquipSweep(){
+  const took = [];
+  if(!S.autoEquip || OFFLINE) return took;
+  for(let pass = 0; pass < B.SLOTS.length && took.length < 40; pass++){
+    let moved = false;
+    for(const sl of B.SLOTS){
+      const pick = autoPick(sl.id);
+      if(!pick) continue;
+      const cur = S.equip[sl.id];
+      S.equip[sl.id] = pick;
+      S.bag = S.bag.filter(x => x.uid !== pick.uid);
+      if(cur) S.bag.push(cur);
+      took.push(pick); moved = true;
+    }
+    if(!moved) break;
+  }
+  return took;
 }
 // What a club is worth broken up. One function, because it is read from the
 // locker, from the bulk scrap and from the overflow when the bag is full, and
@@ -3641,6 +3739,20 @@ const pastPace = f => clamp(f - dgnPace(), 0, B.DGN_PACE_MAX);
 const yieldAt = (f, D, d) => shopPrice(d.cur) * (d.pay || 1)
   * Math.pow(B.DGN_YIELD_STEP, pastPace(f)) * D.dgnY;
 
+// The stake of the day, read off the wall clock and nothing in the save: put it
+// in the save and a reload is a reroll, and the one thing a daily has to be is
+// the same daily all day. A strict rotation rather than a hash, so the Vault
+// comes round every fourth day whether or not you were there for the last one,
+// and a contest you are saving entries for has a date on it.
+let FEAT_FORCE = null;
+const featDay  = () => Math.floor(Date.now() / 86400000);
+const featOf   = day => B.DGN[((day % B.DGN.length) + B.DGN.length) % B.DGN.length];
+const featWager = () => FEAT_FORCE
+  ? (B.DGN.find(d => d.id === FEAT_FORCE) || B.DGN[0]) : featOf(featDay());
+const isFeat   = d => featWager().id === d.id;
+// seconds until it turns over, for the countdown on the card
+const featLeft = () => 86400 - (Date.now()/1000) % 86400;
+
 // A single swing resolved in full: crit, provisionals and an affinity roll.
 // This is what the Long Drive measures.
 function swingRoll(D){
@@ -3667,7 +3779,10 @@ function startDgn(d){
   // The other two are scored against the bag instead, or they feed themselves.
   const f0 = dgnStartFloor(d.id), fc = carryFloor(D0);
   const dur = d.run * (career().sharp ? 1.4 : 1);
-  const R = { id:d.id, mode:d.mode, t:0, dur, dead:false, evt:null, evtT:0, next:0 };
+  // Captured at the tee, not read at the till. A run started at 23:59 is paid
+  // on the stake it was entered under, whatever the clock says when it lands.
+  const R = { id:d.id, mode:d.mode, t:0, dur, dead:false, evt:null, evtT:0, next:0,
+              feat: isFeat(d) };
   if(d.mode === 'drive'){ R.shots = 0; R.best = 0; R.last = 0; R.wind = 1; R.next = 1.2; }
   else if(d.mode === 'island'){
     R.made = 0; R.pot = yieldAt(fc, D0, d); R.chance = 0; R.banked = false;
@@ -3854,14 +3969,15 @@ function endDgn(d, R, D){
     // nothing at all.
     if(deeper) grantTickets(B.TICK_DEPTH, 'a new best in the wager book');
 
-    const yield_ = pot > 0 ? pot : yieldAt(fe, D, d);
+    const featM = R.feat ? B.DGN_FEAT_MULT : 1;
+    const yield_ = (pot > 0 ? pot : yieldAt(fe, D, d)) * featM;
     if(d.cur === 'gold'){
       // Priced in holes of purse so it tracks the course, and in floors past
       // what the card expects so it cannot outgrow it. Off the raw floor number
       // the Vault passed the entire course's income at card forty five and
       // reached eight times it by card four hundred, because that number climbs
       // two rungs a card on its own while the purse climbs one card's worth.
-      const holes = B.VAULT_HOLES + pastPace(fe) * B.VAULT_PER_MARK;
+      const holes = (B.VAULT_HOLES + pastPace(fe) * B.VAULT_PER_MARK) * featM;
       const g2 = purseFor(S.hole, S.tier, D.gold) * holes;
       S.gold += g2;
       rewards.push(['Purse', fmt(g2) + ' (' + Math.round(holes) + ' holes worth)']);
@@ -3869,6 +3985,7 @@ function endDgn(d, R, D){
       const n = Math.max(1, Math.round(yield_));
       S[d.cur] += n; rewards.push([d.cn, '+' + fmt(n, 0)]);
     }
+    if(R.feat) rewards.push(['Stake of the day', B.DGN_FEAT_MULT + '\u00d7 on the payout']);
     rewards.push(['Experience', '+' + fmt(xp)]);
     if(deeper) rewards.push(['Sponsor tickets', '+' + B.TICK_DEPTH]);
     // a new personal best always comes home with something
@@ -4540,6 +4657,9 @@ function offline(){
     advanceHole();
   }
   OFFLINE = false; QUIET = false;
+  // One sweep for the whole session rather than one per drop: the loop above
+  // can land a thousand clubs and the sweep costs a derive() per candidate.
+  const swapped = autoEquipSweep().length;
   startHole();
 
   const g = S.gold - goldBefore;
@@ -4576,6 +4696,7 @@ function offline(){
   if(levels > 0) marks.push(['Career levels', '+' + levels]);
   if(paras > 0) marks.push(['Paragon', '+' + paras]);
   if(sov > 0) marks.push([B.SOV, '+' + sovFmt(sov)]);
+  if(swapped > 0) marks.push(['Auto equipped', swapped + ' club' + (swapped > 1 ? 's' : '')]);
   if(entries > 0) marks.push(['Wager entries back', '+' + entries]);
   if(marks.length) h += '<div class="awband">What came of it</div>'
     + marks.map(([k, v]) => line(k, v)).join('');
@@ -7734,9 +7855,26 @@ function renderBag(){
                      .sort((a, b) => itemScore(b) - itemScore(a));
 
   const hd = $('lkHead');
-  if(hd) hd.innerHTML = '<span class="lkn">' + sl.n + '</span>'
-    + '<span class="lkc"><b>' + S.bag.length + '</b> / ' + bagCap() + ' in the locker'
-    + (spare.length ? ' \u00b7 ' + spare.length + ' spare ' + sl.n.toLowerCase() : '') + '</span>';
+  if(hd){
+    hd.innerHTML = '<span class="lkn">' + sl.n + '</span>'
+      + '<span class="lkc"><b>' + S.bag.length + '</b> / ' + bagCap() + ' in the locker'
+      + (spare.length ? ' \u00b7 ' + spare.length + ' spare ' + sl.n.toLowerCase() : '') + '</span>';
+    const ab = document.createElement('button');
+    ab.className = 'lkauto' + (S.autoEquip ? ' on' : '');
+    ab.id = 'autoEqBtn';
+    ab.textContent = 'Auto ' + (S.autoEquip ? 'on' : 'off');
+    ab.title = 'Equips a club that drops when it is better on the carry or the '
+      + 'purse and worse on neither. Trade-offs stay on the bench.';
+    ab.onclick = () => {
+      S.autoEquip = S.autoEquip ? 0 : 1;
+      const took = autoEquipSweep();
+      if(took.length) toast('Auto equipped <b>' + took.length + '</b> club'
+        + (took.length > 1 ? 's' : ''));
+      else if(S.autoEquip) toast('Nothing on the bench beats what you are carrying');
+      renderBag(); renderVitals();
+    };
+    hd.appendChild(ab);
+  }
 
   const w = $('bagList'); w.innerHTML = '';
   if(worn) w.appendChild(bagRow(worn, true));
@@ -8001,11 +8139,16 @@ function renderDgn(){
   const D = derive();
   $('dgnNote').textContent = S.dgnRun ? 'On the stage \u00b7 the round is paused'
     : 'Four stakes, four different tests';
+  const feat = featWager();
+  const fb = $('dgnFeat');
+  if(fb) fb.innerHTML = '<span class="fn">' + feat.n + '</span>'
+    + '<span class="fd">pays ' + B.DGN_FEAT_MULT + '\u00d7 today</span>'
+    + '<span class="ft">turns over in ' + hms(featLeft()) + '</span>';
   for(const d of B.DGN){
     const run = S.dgnRun && S.dgnRun.id === d.id ? S.dgnRun : null;
     const keys = S.dgnKeys[d.id] || 0;
     const el = document.createElement('div');
-    el.className = 'dgn';
+    el.className = 'dgn' + (d.id === feat.id ? ' feat' : '');
     let keyHtml = '';
     for(let i=0;i<entryCap(d);i++) keyHtml += '<span class="key' + (i < keys ? ' on' : '') + '"></span>';
     const nextIn = keys >= entryCap(d) ? 'full' : hms(keyInterval(d) - (S.dgnKeyT[d.id]||0));
@@ -8017,7 +8160,7 @@ function renderDgn(){
     const bv = S.dgnBest ? (S.dgnBest[d.id] || 0) : 0;
     const best = d.mode === 'drive'  ? 'longest ' + (bv > 0 ? fmt(bv) : '\u2014')
                : d.mode === 'island' ? 'best run ' + bv + ' green' + (bv === 1 ? '' : 's')
-               : d.mode === 'chip'   ? 'best ' + bv + ' of ' + B.CHIP_SHOTS + ' dropped'
+               : d.mode === 'chip'   ? 'best ' + bv + ' of ' + Math.max(B.CHIP_SHOTS, bv) + ' dropped'
                :                       'deepest floor ' + (bv + 1);
 
     let reads;
@@ -8030,6 +8173,7 @@ function renderDgn(){
     else reads = 'Carry ' + fmt(D.dps) + ' a second against floors that keep growing';
 
     el.innerHTML = '<div class="dh">' + svgIcon(d.ic || STAT_IC[d.cur] || 'ball', 'ric') + '<span class="dn">' + d.n + '</span>'
+      + (d.id === feat.id ? '<span class="fstar">' + B.DGN_FEAT_MULT + '\u00d7 today</span>' : '')
       + '<span class="keys">' + keyHtml + '</span>'
       + '<button class="qm" aria-label="How it works">?</button></div>'
       + '<div class="dd">' + d.d + '</div>'
@@ -8359,6 +8503,7 @@ const DEV = {
   zeroGold(){ S.gold = 0; this.re(); },
   cur(k, n){ S[k] = (S[k]||0) + n; this.re(); },
   keys(){ B.DGN.forEach(d => S.dgnKeys[d.id] = d.cap); this.re(); },
+  feat(id){ FEAT_FORCE = id || null; this.re(); },
   floors(n){ B.DGN.forEach(d => S.dgnFloor[d.id] = (S.dgnFloor[d.id]||0) + n); this.re(); },
   tier(n){ S.tier = clamp(S.tier + n, 0, B.TIER_MAX);
            S.tierMax = Math.max(S.tierMax || 0, S.tier);
