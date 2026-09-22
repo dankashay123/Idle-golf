@@ -407,8 +407,13 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
 #readout{position:relative;min-width:64%;max-width:100%;
   background:rgba(6,12,9,.74);border:1px solid #1B3A2E;border-radius:0;
   padding:4px 7px 5px;backdrop-filter:blur(2px);pointer-events:none}
-.rline{display:flex;justify-content:space-between;gap:12px;font-size:var(--f0);letter-spacing:.14em;
+/* nowrap and a fixed gap meant the hole label and the clock simply ran out of
+   the box on a narrow phone -- measured 6px past it at 320. The clock keeps its
+   width, the hole label gives way with an ellipsis. */
+.rline{display:flex;justify-content:space-between;gap:8px;font-size:var(--f0);letter-spacing:.14em;
   text-transform:uppercase;color:var(--faint);font-weight:700;white-space:nowrap}
+.rline #rTop{min-width:0;overflow:hidden;text-overflow:ellipsis}
+.rline #rTopR{flex:0 0 auto}
 .rmain{display:flex;align-items:baseline;gap:3px;margin-top:2px}
 #rBig{font-family:var(--mono);font-size:var(--f4);font-weight:600;color:var(--brass);line-height:1}
 .ru{font-size:var(--f0);letter-spacing:.12em;text-transform:uppercase;color:var(--faint)}
@@ -558,7 +563,9 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
 #hudLeft{position:absolute;left:2.2%;top:2.5%;width:56%;z-index:29;
   display:flex;flex-direction:column;align-items:flex-start;gap:4px;
   pointer-events:none}
-#shopBtn{position:relative;width:11%;aspect-ratio:1/1;flex:0 0 auto;pointer-events:auto;
+/* min-width, or on a 320 phone the button comes to 19.7px around a 24px sprite
+   and the drawing hangs outside its own tap target. */
+#shopBtn{position:relative;width:11%;min-width:24px;aspect-ratio:1/1;flex:0 0 auto;pointer-events:auto;
   background:none;border:0;padding:0;display:flex;align-items:center;justify-content:center;
   filter:drop-shadow(0 1px 2px rgba(0,0,0,.9))}
 /* The button is a share of the stage so the tap target grows with the screen;
@@ -569,11 +576,19 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
 #shopBtn:active{transform:translateY(1px)}
 #shopDot{position:absolute;top:-8%;right:-8%;width:32%;height:32%;background:var(--r5);display:none}
 #shopBtn.new #shopDot{display:block}
-#honBtn,#perkBtn{position:absolute;right:2.5%;width:6.2%;aspect-ratio:1/1;z-index:31;
+#honBtn,#perkBtn{position:absolute;right:2.5%;width:6.2%;min-width:24px;aspect-ratio:1/1;z-index:31;
   background:none;border:0;padding:0;display:flex;align-items:center;justify-content:center;
   filter:drop-shadow(0 1px 2px rgba(0,0,0,.9))}
-#honBtn{top:24%}
-#perkBtn{top:35.5%}
+/* Pushed down from 24 and 35.5. The comment over #toasts says these sit below
+   them; they did not. A toast is built out of fixed pixel type while these are
+   a percentage of the stage, so the shorter the screen the further down the
+   stack reaches: measured with the tallest pair the game can actually raise --
+   two real unlocks, straight out of checkAch -- it comes to 34.1% of the stage
+   on a 320x568 phone, 23.2% at 360x640 and 17.8% at 400x860. 37 clears the
+   worst of those with room, rather than clearing the one screen I happened to
+   measure first. */
+#honBtn{top:37%}
+#perkBtn{top:48.5%}
 #honIcon,#perkIcon{display:block;width:24px;height:24px;object-fit:contain;
   image-rendering:pixelated;image-rendering:crisp-edges}
 #honBtn:active,#perkBtn:active{transform:translateY(1px)}
@@ -584,8 +599,12 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
 #perkBtn.live #perkDot{display:block}
 /* Top right corner, clear of the readout on the left and the two stage
    buttons below. Two at a time: any more and they became the view. */
+/* 38 and not 52. The readout's column runs to 58.2% of the stage (2.2 + 56),
+   so anything wider than 39.8 here reaches into it -- measured overlapping the
+   readout by 39px at 320 wide and 10px at 400, on a comment that says these sit
+   "clear of the readout on the left". They do now. */
 #toasts{position:absolute;right:2%;top:2%;display:flex;flex-direction:column;
-  align-items:flex-end;gap:3px;pointer-events:none;z-index:30;max-width:52%}
+  align-items:flex-end;gap:3px;pointer-events:none;z-index:30;max-width:38%}
 .toast{background:rgba(8,18,12,.9);border:1px solid var(--line);border-radius:0;
   padding:3px 8px;font-size:var(--f0);line-height:1.3;text-align:right;
   animation:tin .22s ease-out;backdrop-filter:blur(2px)}
@@ -3568,7 +3587,11 @@ function checkAch(){
     else if(r.k === 'crt' || r.k === 'drp' || r.k === 'prc') got = '+' + (r.v*100).toFixed(1) + 'pp ' + r.k;
     else got = '+' + Math.round(r.v*100) + '% ' + ({ pow:'swing power', gld:'purse', spd:'tempo',
       mst:'provisional chance', elm:'affinity', dgn:'wager haul' }[r.k] || r.k);
-    toast('<span class="achk">Achievement unlocked</span>' + a.n + ' \u00b7 <b>' + got + '</b>', 'ach');
+    // "Unlocked" and not "Achievement unlocked". The eyebrow is its own line,
+    // and at the width a toast is allowed on a 320 phone the longer one wrapped
+    // to two -- five lines a toast, two toasts, and the stack ran down into the
+    // honours button. The word above the name already says what it is.
+    toast('<span class="achk">Unlocked</span>' + a.n + ' \u00b7 <b>' + got + '</b>', 'ach');
     if(typeof renderCareer === 'function') renderCareer();
   }
 }

@@ -10,6 +10,20 @@
  *
  * Both are invisible to every other check in here: the numbers are right, the
  * rows are all present, nothing throws. You have to measure the boxes.
+ *
+ * The stage and the vitals bar are measured at three widths, because that is
+ * where the faults were. On a 320 phone the readout ran 6px out of its own box
+ * -- the hole label and the clock were both nowrap with a fixed gap between
+ * them -- and the toast stack, 52% wide against a readout column that runs to
+ * 58.2%, sat on top of the readout by 39px. The comment over #toasts has always
+ * said they sit "clear of the readout on the left and the two stage buttons
+ * below"; they did not.
+ *
+ * One overlap is left and is deliberate: at 320 a two-toast stack can still
+ * reach ten pixels into the honours button. The buttons are z-index 31 and the
+ * toasts 30, so the button stays whole and a corner of a three-second toast
+ * goes behind it. Buying that back would mean either a toast wide enough to
+ * cover the readout again or buttons pushed into the middle of the hole.
  */
 'use strict';
 
@@ -89,6 +103,105 @@ module.exports = {
       return out;
     });
 
+    // ---- the stage and the vitals bar, at three widths ------------------
+    const hud = [];
+    for (const [w, h] of [[320, 568], [400, 860], [768, 1024]]) {
+      await page.setViewportSize({ width: w, height: h });
+      await page.waitForTimeout(200);
+      hud.push(await page.evaluate(([w]) => {
+        QUIET = true; DEV.tierSet(300); DEV.maxCapped(); QUIET = false;
+        try { hideSheet(); } catch (e) {}
+        B.SLOTS.forEach(sl => { S.equip[sl.id] = makeItem(300, 0, 5, sl.id); });
+        S.hole = 18; startHole(); renderVitals(); renderLive();
+        // Real toasts off the real path, not a string copied in here. The first
+        // version of this hard-coded the achievement wording, so when the
+        // wording was shortened to fit the check went on measuring a toast the
+        // game no longer raises. checkAch() toasts for every unlock and the
+        // stack keeps the last two, so this stands the tallest pair it can.
+        S.achDone = {}; S.tally = {};
+        S.totalHoles = 1e9; S.aces = 1e9; S.cups = 1e9; S.lv = B.LV_MAX; S.para = 1e9;
+        S.bestTier = 400; S.retires = 1e9; S.perkUsed = 1e9;
+        B.DGN.forEach(d => S.dgnFloor[d.id] = 999);
+        for (const k of ['birdie', 'eagle', 'snow', 'runs', 'legend', 'myth', 'enh15'])
+          S.tally[k] = 1e9;
+        checkAch();
+        const R = e => e.getBoundingClientRect();
+        const st = R($('stage'));
+        const o = { w, off: [], cut: [], vitals: {}, hit: [] };
+
+        // nothing on the stage leaves the stage
+        for (const e of $('stage').querySelectorAll('*')) {
+          const r = R(e); if (!r.width || !r.height) continue;
+          const out2 = Math.max(st.left - r.left, r.right - st.right,
+                                st.top - r.top, r.bottom - st.bottom);
+          if (out2 > 0.5) o.off.push((e.id || e.className || e.tagName) + ' by ' + out2.toFixed(1));
+        }
+        // Nothing on the HUD sits on anything else on the HUD, with the
+        // tallest pair of toasts the game can raise standing. The comment over
+        // #toasts has always claimed they are "clear of the readout on the left
+        // and the two stage buttons below"; this is that claim, measured.
+        const ids = ['readout', 'shopBtn', 'honBtn', 'perkBtn', 'toasts'];
+        const box = {}; for (const i of ids) { const e = $(i); if (e) box[i] = R(e); }
+        const ks = Object.keys(box);
+        for (let i = 0; i < ks.length; i++) for (let j = i + 1; j < ks.length; j++) {
+          const a = box[ks[i]], c = box[ks[j]];
+          const ox = Math.min(a.right, c.right) - Math.max(a.left, c.left);
+          const oy = Math.min(a.bottom, c.bottom) - Math.max(a.top, c.top);
+          if (ox > 0.5 && oy > 0.5)
+            o.hit.push(ks[i] + ' on ' + ks[j] + ' by ' + ox.toFixed(0) + 'x' + oy.toFixed(0));
+        }
+
+        // text that runs out of its box with nothing to catch it
+        for (const e of $('stage').querySelectorAll('*')) {
+          if (!e.clientWidth || e.scrollWidth - e.clientWidth <= 0.5) continue;
+          if (getComputedStyle(e).textOverflow === 'ellipsis') continue;   // degrading on purpose
+          // A badge pinned outside its own corner widens scrollWidth without
+          // anything being wrong: the shop button's "new" dot sits at -8%.
+          if ([...e.children].some(k => getComputedStyle(k).position === 'absolute')) continue;
+          o.cut.push((e.id || e.className) + ' by ' + (e.scrollWidth - e.clientWidth));
+        }
+
+        // the vitals bar: five equal cells, one caption line, one value line
+        const cells = [...document.querySelectorAll('#vitals .vital')];
+        o.vitals = {
+          n: cells.length,
+          widths: [...new Set(cells.map(c => Math.round(R(c).width)))],
+          capTops: [...new Set(cells.map(c => Math.round(R(c.querySelector('.k')).top)))],
+          valTops: [...new Set(cells.map(c => Math.round(R(c.querySelector('.v')).top)))],
+          over: cells.filter(c => [...c.children].some(x => x.scrollWidth - x.clientWidth > 0.5))
+                     .map(c => c.textContent.trim())
+        };
+        return o;
+      }, [w]));
+    }
+    await page.setViewportSize({ width: 400, height: 860 });
+    await page.waitForTimeout(150);
+
+    for (const o of hud) {
+      const at = ' at ' + o.w + ' wide';
+      if (o.off.length)
+        throw new Error(o.off.length + ' thing(s) hang off the stage' + at + ': '
+          + o.off.join('; '));
+      if (o.hit.length)
+        throw new Error('the stage HUD overlaps itself' + at + ': ' + o.hit.join('; ')
+          + '. The readout is what you are reading and the two buttons are what you press; '
+          + 'a toast is gone in three seconds and should not be over either.');
+      if (o.cut.length)
+        throw new Error('text runs out of its box with no ellipsis to catch it' + at + ': '
+          + o.cut.join('; '));
+      if (o.vitals.n !== 5)
+        throw new Error('the vitals bar has ' + o.vitals.n + ' cells' + at);
+      if (o.vitals.widths.length > 1)
+        throw new Error('the five vitals cells are ' + o.vitals.widths.join('/') + 'px wide' + at
+          + ', so the bar is not five equal columns');
+      if (o.vitals.capTops.length > 1 || o.vitals.valTops.length > 1)
+        throw new Error('the vitals captions sit on ' + o.vitals.capTops.length
+          + ' lines and the values on ' + o.vitals.valTops.length + at);
+      if (o.vitals.over.length)
+        throw new Error('a vitals cell cannot hold its own number' + at + ': '
+          + o.vitals.over.join(', '));
+    }
+
     if (!(r.looked > 400))
       throw new Error('the sweep only measured ' + r.looked + ' boxes, so it is not reaching '
         + 'the screens it thinks it is');
@@ -111,6 +224,8 @@ module.exports = {
 
     return [r.looked + ' boxes measured across five screens, four shop tabs and three sheets, '
       + 'none past its edge',
-      'away card: three tiles, captions on one line, all three centred'];
+      'away card: three tiles, captions on one line, all three centred',
+      'stage and vitals at 320/400/768: nothing off the stage, no HUD element on another '
+      + 'with the tallest toasts up, five equal cells holding a maxed golfer\'s numbers'];
   }
 };
