@@ -93,8 +93,19 @@ module.exports = {
       QUIET = true; DEV.gold(400); DEV.skills(); DEV.keys(); DEV.tierSet(12);
       DEV.relics(2); QUIET = false;
       try { hideSheet(); } catch (e) {}
-      S.sov = 99999; for (let i = 0; i < 3; i++) openBag(B.BAGS[1]);
+      // The locker shows one slot at a time, and the equip button -- the thing
+      // this rule exists for -- is only drawn on a club you are NOT carrying.
+      // Three bags and whatever slot the save happened to be left on is a coin
+      // toss: auto-equip takes the drops, that slot ends up holding nothing but
+      // the club on your back, and the sweep finds no equip button at all. Seen
+      // failing about one run in ten. Open enough bags to be sure of a spare,
+      // then turn the locker to the slot that has the most of them.
+      S.sov = 99999; for (let i = 0; i < 8; i++) openBag(B.BAGS[1]);
       try { hideSheet(); } catch (e) {}
+      const spares = {};
+      for (const it of S.bag) spares[it.slot] = (spares[it.slot] || 0) + 1;
+      const fullest = Object.keys(spares).sort((a, b) => spares[b] - spares[a])[0];
+      if (fullest) S.bagSlot = fullest;
       const seen = {};
       const where = e => { const a = []; let n = e;
         while (n && n !== document.body) {
@@ -121,7 +132,7 @@ module.exports = {
       try { hideSheet(); } catch (e) {}
       if (S.bag[0]) { itemSheet(S.bag[0], false); sweep(); try { hideSheet(); } catch (e) {} }
       setView('upg'); sweep();
-      return { bad: Object.values(seen), looked,
+      return { bad: Object.values(seen), looked, spares,
                equip: document.querySelectorAll('.equipbtn img').length };
     });
     // the sweep has to have had something to look at, or it passes by seeing nothing
@@ -130,7 +141,8 @@ module.exports = {
         + 'reaching the screens it thinks it is');
     if (!(boxes.equip > 0))
       throw new Error('the locker had no equip buttons in it, which is where the squashed '
-        + 'sprite was, so this proves nothing');
+        + 'sprite was, so this proves nothing. Spare clubs by slot: '
+        + (JSON.stringify(boxes.spares) || '{}'));
     if (boxes.bad.length) {
       const squashed = boxes.bad.filter(b => Math.abs(b.w - b.h) >= 0.01);
       throw new Error(boxes.bad.length + ' sprite box(es) are not a square whole multiple of 12: '

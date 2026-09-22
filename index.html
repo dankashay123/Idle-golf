@@ -178,6 +178,7 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
   letter-spacing:.02em}
 .mt b{color:var(--aurora);font-weight:700}
 .mt i{color:var(--chalk);font-style:normal;font-weight:600}
+.mt u{color:var(--dim);text-decoration:none}
 
 /* The price on top, what it does underneath, the way a shop till reads. It was
    the other way round and both halves were the same weight, so the one number
@@ -477,14 +478,6 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
 .awbest img{width:28px;height:28px;image-rendering:pixelated;flex:0 0 auto}
 .awbn{font-family:var(--disp);font-size:var(--f3);line-height:1.2}
 .awbs{font-size:var(--f0);color:var(--faint);margin-top:2px}
-/* the next rung on the range */
-.nextstep{padding:8px 12px;font-size:var(--f1);line-height:1.45;border-bottom:1px solid #12261A;
-  border-left:2px solid transparent;color:var(--dim)}
-.nextstep b{color:var(--chalk);font-weight:700}
-.nextstep.go{border-left-color:var(--brass);color:var(--dim)}
-.nextstep.go b{color:var(--brass)}
-.nextstep.wait{border-left-color:var(--line-soft)}
-.nextstep.done{border-left-color:var(--aurora);color:var(--faint)}
 /* the pro shop */
 .shopnav{display:flex;gap:0;margin:-4px -16px 10px;border-bottom:1px solid var(--line)}
 .shopnav button{flex:1 1 0;padding:9px 2px;background:none;border:0;border-bottom:2px solid transparent;
@@ -704,7 +697,6 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
       <div class="band"><span class="eyebrow">Practice Range</span><span class="note" id="upgCount"></span></div>
       <div class="band" style="top:auto"><div id="multBar"></div></div>
       <div class="hint" id="upgTax"></div>
-      <div class="nextstep" id="upgStep"></div>
       <div id="upgRows"></div>
     </div>
 
@@ -8187,6 +8179,11 @@ function effectLabel(u){
   if(u.k === 'mst') return '+' + (lv*B.MST_ADD[u.id]*100).toFixed(1) + 'pp';
   return '\u00d7' + Math.pow(u.g, lv).toFixed(2);
 }
+// hms is happy to print "222222222222222200h 13m", and the deepest rungs cost
+// that much at a starting purse. Anything past a day is one phrase: the exact
+// figure is not information, and a row of digits that long is the clutter this
+// was meant to clear.
+const untilTxt = w => w >= 86400 ? 'over a day' : hms(Math.max(1, w));
 function refreshUpg(){
   // Every rung is on show from the first minute. Hiding them made the ladder
   // look shorter than it is, and rows that came and went with your balance
@@ -8201,49 +8198,30 @@ function refreshUpg(){
     ? 'Holes stretched <b>' + fmt(stretch) + 'x</b> off your handicap \u00b7 climbing a card beats out-hitting one'
     : 'Playing the card as it lies';
 
-  // Twenty one rungs, most of them grey, and nothing anywhere saying which one
-  // is within reach. A wall of numbers you cannot afford is not a ladder, so
-  // the next step gets said out loud: what you can take now, or what is closest
-  // and roughly how long the purse needs.
-  const step = $('upgStep');
-  if(step){
-    let afford = 0, cheapest = null, nearest = null;
-    for(const r of UPGREF){
-      const u = r.u, lv = upgLv(u.id);
-      if(lv >= capOf(u)) continue;
-      const c = costOf(u.base, u.r, lv);
-      if(c <= S.gold){ afford++; if(!cheapest || c < cheapest.c) cheapest = { u, c }; }
-      else if(!nearest || c < nearest.c) nearest = { u, c };
-    }
-    const rate = Meter.rate();
-    if(!cheapest && !nearest){
-      step.innerHTML = 'Every rung on the range is capped.';
-      step.className = 'nextstep done';
-    }else if(cheapest){
-      step.innerHTML = '<b>' + afford + '</b> within reach \u00b7 cheapest is '
-        + '<b>' + cheapest.u.n + '</b> at ' + fmt(cheapest.c)
-        + (nearest ? ' \u00b7 next up ' + nearest.u.n + ' at ' + fmt(nearest.c) : '');
-      step.className = 'nextstep go';
-    }else{
-      const wait = rate > 0 ? (nearest.c - S.gold) / rate : Infinity;
-      step.innerHTML = 'Nothing in reach \u00b7 <b>' + nearest.u.n + '</b> at '
-        + fmt(nearest.c) + (isFinite(wait) && wait > 0.5
-          ? ' \u00b7 about ' + hms(wait) + ' away' : '');
-      step.className = 'nextstep wait';
-    }
-  }
+  // The range used to carry a line of its own at the top naming the cheapest
+  // rung in reach and the next one after it. Two sentences of prose over a list
+  // that was already telling you the same thing one row at a time, and it read
+  // as clutter. The one part the list could not say goes on the row it is about
+  // instead: a rung whose button is grey says how long the purse needs to light
+  // it. Not what it costs -- the button has that, so "at 73.2M" would only be
+  // the same number twice.
+  const rate = Meter.rate();
 
   for(const r of UPGREF){
     const u = r.u, lv = upgLv(u.id), cap = capOf(u);
     const maxed = lv >= cap;
     const k = maxed ? 0 : bulkFor(u.base, u.r, lv, cap);
     const c = maxed ? 0 : costBulk(u.base, u.r, lv, k);
+    // The wait is to the price the button is actually asking for, so it tracks
+    // the multiplier: on x10 it is how long until ten of them, not one.
+    const ok = !maxed && S.gold >= c && k > 0;
+    const wait = (!maxed && !ok && rate > 0) ? (c - S.gold) / rate : Infinity;
     r.mt.innerHTML = 'Lv <i>' + lv + (isFinite(cap) ? '/' + cap : '') + '</i> \u00b7 <b>'
-      + effectLabel(u) + '</b>';
+      + effectLabel(u) + '</b>'
+      + (isFinite(wait) ? ' \u00b7\u00a0<u>unlocks in ' + untilTxt(wait) + '</u>' : '');
     if(maxed){
       r.btn.className = 'buy max'; r.lbl.textContent = 'Capped'; r.amt.textContent = '\u2014';
     }else{
-      const ok = S.gold >= c && k > 0;
       r.btn.className = 'buy' + (ok ? ' ok' : ' no');
       r.lbl.textContent = '\u00d7' + k;
       r.amt.textContent = fmt(c);

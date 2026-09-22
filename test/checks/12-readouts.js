@@ -119,23 +119,26 @@ module.exports = {
       };
       try { hideSheet(); } catch (e) {}
 
-      // ---- 3. the Range line ------------------------------------------
+      // ---- 3. the Range says when each rung unlocks --------------------
       DEV.clearUpg(); try { hideSheet(); } catch (e) {}
-      const step = () => { refreshUpg(); const e = document.getElementById('upgStep');
-        return { cls: e.className, txt: e.textContent }; };
-      S.gold = 0;    out.broke = step();
-      S.gold = 1e6;  out.rich  = step();
-      // and what it names has to be a real rung at a price you can meet
-      const names = B.UPG.map(u => u.n);
-      out.richNames = names.filter(n => out.rich.txt.indexOf(n) >= 0);
-      let cheapest = null;
-      for (const u of B.UPG) {
-        const lv = upgLv(u.id);
-        if (lv >= capOf(u)) continue;
-        const c = costOf(u.base, u.r, lv);
-        if (c <= S.gold && (!cheapest || c < cheapest.c)) cheapest = { n: u.n, c };
-      }
-      out.trueCheapest = cheapest;
+      S.mult = 1;
+      Meter.buf = [{ g: 100, t: 1 }];          // a flat 100 purse a second
+      const rows = () => { refreshUpg(); return UPGREF.map(r => {
+        const u = r.u, lv = upgLv(u.id), cap = capOf(u), maxed = lv >= cap;
+        const k = maxed ? 0 : bulkFor(u.base, u.r, lv, cap);
+        const el = r.mt.querySelector('u');
+        return { n: u.n, maxed, cost: maxed ? 0 : costBulk(u.base, u.r, lv, k),
+                 note: el ? el.textContent : '', lit: / ok\b/.test(r.btn.className) };
+      }); };
+      S.gold = 0;     out.rngBroke = rows();
+      S.gold = 1e30;  out.rngRich  = rows();
+      DEV.maxCapped(); S.gold = 0; out.rngCapped = rows();
+      out.rngRate = Meter.rate();
+      // what the note claims, read back through the same clock the rest of the
+      // game prints times with
+      out.rngWant = out.rngBroke.map(r2 => r2.maxed ? ''
+        : 'unlocks in ' + untilTxt(r2.cost / 100));
+      DEV.clearUpg();
 
       // ---- 4. the retirement preview -----------------------------------
       S.cups = 4; S.legacy = 400; S.eventsPlayed = 0; S.relic = {};
@@ -243,20 +246,46 @@ module.exports = {
       throw new Error('nine hours away found no club worth showing, so the best-of block '
         + 'never rendered and this check is not testing it');
 
-    for (const [k, v] of [['broke', r.broke], ['rich', r.rich]]) {
-      if (!/^nextstep (go|wait|done)$/.test(v.cls))
-        throw new Error('the Range line is in no state at all when ' + k + ': "' + v.cls + '"');
-      if (!v.txt.trim()) throw new Error('the Range line is blank when ' + k);
-    }
-    if (r.broke.cls !== 'nextstep wait')
-      throw new Error('with no purse the Range says "' + r.broke.txt + '"');
-    if (r.rich.cls !== 'nextstep go')
-      throw new Error('with a purse in hand the Range says "' + r.rich.txt + '"');
-    if (!r.trueCheapest)
-      throw new Error('nothing was affordable in the rich case, so it proves nothing');
-    if (r.rich.txt.indexOf(r.trueCheapest.n) < 0)
-      throw new Error('the Range calls the cheapest rung "' + r.richNames.join('/')
-        + '" when it is ' + r.trueCheapest.n);
+    // ---- the Range rows carry their own wait --------------------------
+    // The summary line above the list is gone, so the thing it used to say --
+    // which rung is next and how long the purse needs -- has to be on the rows
+    // or it is nowhere. Three states: grey rungs say when, lit rungs say
+    // nothing because you can buy them now, capped rungs say nothing because
+    // there is nothing left to wait for.
+    if (r.rngRate !== 100)
+      throw new Error('the clock this is measured against reads ' + r.rngRate
+        + ' purse/sec, not the 100 it was set to, so the times mean nothing');
+    if (!(r.rngBroke.length > 10))
+      throw new Error('only ' + r.rngBroke.length + ' rungs on the range to look at');
+    const missing = r.rngBroke.filter(x => !x.maxed && !x.note);
+    if (missing.length)
+      throw new Error(missing.length + ' rung(s) you cannot afford say nothing about when '
+        + 'you can: ' + missing.slice(0, 4).map(x => x.n).join(', ')
+        + '. With the line at the top gone, a grey button with no wait on it is a dead end.');
+    const wrong = r.rngBroke.map((x, i) => [x, r.rngWant[i]])
+      .filter(([x, want]) => !x.maxed && x.note !== want);
+    if (wrong.length)
+      throw new Error(wrong.length + ' rung(s) print the wrong wait: '
+        + wrong.slice(0, 3).map(([x, want]) => x.n + ' says "' + x.note
+          + '" for ' + Math.round(x.cost) + ' purse at 100/sec, which is "' + want + '"')
+          .join('; '));
+    const lit = r.rngBroke.filter(x => x.lit);
+    if (lit.length)
+      throw new Error(lit.length + ' rung(s) are lit up as buyable on an empty purse');
+    const stillWaiting = r.rngRich.filter(x => x.note);
+    if (stillWaiting.length)
+      throw new Error(stillWaiting.length + ' rung(s) still say "unlocks in" with the purse '
+        + 'big enough to buy every one of them: ' + stillWaiting[0].n + ' says "'
+        + stillWaiting[0].note + '"');
+    if (r.rngRich.filter(x => !x.maxed && !x.lit).length)
+      throw new Error('a rung you can plainly afford is not lit, so the rich case is not '
+        + 'the rich case');
+    const cappedNote = r.rngCapped.filter(x => x.maxed && x.note);
+    if (!r.rngCapped.some(x => x.maxed))
+      throw new Error('nothing got capped, so the capped case proves nothing');
+    if (cappedNote.length)
+      throw new Error(cappedNote.length + ' capped rung(s) promise to unlock: '
+        + cappedNote[0].n + ' says "' + cappedNote[0].note + '"');
 
     // ---- the retirement preview ---------------------------------------
     const P = r.legPreview, H = r.legHand;
@@ -377,8 +406,10 @@ module.exports = {
       + p.changed + ' moved the carry',
       'away card: ' + a.tiles + ' tiles, ' + a.bands.length + ' bands, '
       + a.lines.length + ' lines and not one of them zero',
-      'range line: "' + r.broke.txt.trim().slice(0, 44) + '" / "'
-      + r.rich.txt.trim().slice(0, 44) + '"',
+      'range: ' + r.rngBroke.filter(x => x.note).length + ' of ' + r.rngBroke.length
+      + ' rungs say when on an empty purse ("' + (r.rngBroke.find(x => x.note) || {}).note
+      + '" ... "' + (r.rngBroke.filter(x => x.note).pop() || {}).note
+      + '"), none do with it full, none when capped',
       'retirement before the first event: ' + P.now + ' legacy, +' + P.card + ' a card, +'
       + P.cup + ' a cup, buys ' + r.buys.join('/') + ' at ' + r.discSteps.join('/'),
       'honours open on "' + r.honFirstName + '" at ' + (r.honPct[0] || 0).toFixed(0)
