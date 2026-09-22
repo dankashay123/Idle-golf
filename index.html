@@ -121,18 +121,13 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
 /* the field takes half the app, and the canvas fills whatever shape that is */
 #stage{position:relative;background:#080D0A;border-bottom:var(--hair);overflow:hidden}
 #hole{display:block;width:100%;height:100%;image-rendering:pixelated;image-rendering:crisp-edges}
-/* The old stage HUD is gone: nothing carries id="hud" or class="hudrow" any
-   more, and #hud with inset:0 sat here waiting to stretch the next element to
-   take the name over the whole stage, which is exactly what it did. Two class
-   name collisions have cost this file a day each already. */
-.plate{background:rgba(6,16,12,.72);border:1px solid rgba(87,224,190,.16);border-radius:0;
-  padding:4px 7px;backdrop-filter:blur(3px)}
-.plate .k{font-size:var(--f0);letter-spacing:.16em;text-transform:uppercase;color:var(--faint)}
-.plate .v{font-family:var(--mono);font-size:var(--f3);font-weight:600;line-height:1.15}
-#chaosTag{font-size:var(--f0);letter-spacing:.1em;text-transform:uppercase;color:var(--myth)}
-#yardBar{height:3px;background:#0D1D14;border-radius:0;overflow:hidden;margin-top:5px}
-#yardFill{height:100%;width:100%;background:linear-gradient(90deg,var(--brass),#F3DFA6);
-  transition:width .12s linear}
+/* The old stage HUD is gone, and so are its styles. #hud, .hudrow, .plate,
+   #chaosTag, #yardBar and #yardFill all outlived the markup they dressed, and
+   #hud had inset:0 on it: it did nothing at all until a new left-hand column
+   took the name, inherited right:0 and bottom:0 and stretched itself over the
+   whole stage. A rule with nothing under it is not dead weight, it is the name
+   waiting for whatever takes it next. test/checks/14-names.js fails on the
+   next one. */
 
 /* ---------- vitals ---------- */
 #vitals{display:grid;grid-template-columns:repeat(5,1fr);border-bottom:var(--hair);background:#0A170F}
@@ -7793,16 +7788,11 @@ function renderVitals(){
   $('vDps').textContent = fmt(D.dps);
   $$('vMst').textContent = Math.round(D.mst*100) + '%';
   $('vCrit').textContent = pct(D.crit);
-  $$('tierNo').textContent = roman(S.tier);
-  $$('parTime').textContent = S.parTime ? S.parTime.toFixed(0) : '15';
-  $$('holeNo').textContent = holeInRound(S.hole);
-  $$('parNo').textContent = parOf(S.hole);
-  const ce2 = S.courseEl ? elemOf(S.courseEl) : null;
-  $$('chaosTag').innerHTML = (S.chaos ? S.chaos.n : 'Fair')
-    + (ce2 ? ' <span style="color:' + elemColor(ce2.id) + '">' + ce2.n + '</span>' : '')
-    + (S.armor > 0 ? '<br><span style="color:var(--flag)">'
-        + (isSunday(S.hole) ? 'Championship' : 'Signature') + ' hole \u00b7 armour ' + fmt(S.armor)
-        + '</span>' : '');
+  // The card, the par time, the hole number, the par, the weather, the course
+  // affinity and the armour warning were all built here and written to elements
+  // that went out with the old stage HUD. $$ hands back a stub for a missing
+  // element so a frame cannot die on one, which is exactly what kept it quiet.
+  // The canvas draws every one of them over the hole itself now.
   const t = tournamentOf(S.hole);
   $('eventName').textContent = eventName(t);
   $('dayName').textContent = dayName(S.hole);
@@ -8053,11 +8043,10 @@ function renderLive(){
   renderHonBtn();
   $('gold').textContent = fmt(S.gold);
   $('rate').textContent = fmt(Meter.rate()) + ' purse/sec';
-  $$('yardLeft').textContent = S.yards <= 0 ? 'walking in' : fmt(Math.max(0, S.yards));
-  $$('yardFill').style.width = clamp(S.yards/S.yardsMax, 0, 1)*100 + '%';
-  $$('clock').textContent = S.elapsed.toFixed(1);
-  const r = S.elapsed / S.parTime;
-  $$('clock').style.color = r <= 0.77 ? 'var(--aurora)' : r <= 1.16 ? 'var(--chalk)' : 'var(--flag)';
+  // The yardage, the bar and the clock used to be written here as well, into
+  // three more elements the old stage HUD took with it. This runs every frame,
+  // so that was four lookups, a clamp and two string builds at sixty a second
+  // to set properties on a stub. The readout over the hole carries all three.
 }
 
 /* ---- practice range ---- */
