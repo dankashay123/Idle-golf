@@ -163,7 +163,7 @@ module.exports = {
         // tallest pair of toasts the game can raise standing. The comment over
         // #toasts has always claimed they are "clear of the readout on the left
         // and the two stage buttons below"; this is that claim, measured.
-        const ids = ['readout', 'shopBtn', 'honBtn', 'perkBtn', 'toasts'];
+        const ids = ['readout', 'shopBtn', 'setBtn', 'honBtn', 'perkBtn', 'toasts'];
         const box = {}; for (const i of ids) { const e = $(i); if (e) box[i] = R(e); }
         const ks = Object.keys(box);
         for (let i = 0; i < ks.length; i++) for (let j = i + 1; j < ks.length; j++) {
@@ -236,7 +236,7 @@ module.exports = {
         await new Promise(r => setTimeout(r, 120));
         const W = innerWidth, inL = edge === '--sal';
         const clear = [];
-        for (const id of ['stage', 'hole', 'readout', 'shopBtn', 'nineBar', 'honBtn', 'perkBtn',
+        for (const id of ['stage', 'hole', 'readout', 'shopBtn', 'setBtn', 'nineBar', 'honBtn', 'perkBtn',
                           'toasts', 'crest', 'vitals', 'tabs', 'panel']) {
           const e = document.getElementById(id); if (!e) continue;
           const r = e.getBoundingClientRect(); if (!r.width) continue;

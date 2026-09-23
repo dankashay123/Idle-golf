@@ -35,6 +35,7 @@
 }
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{height:100%;overflow:hidden}
+html{height:var(--appH, 100%)}
 body{
   background:var(--ink);color:var(--chalk);font-family:var(--sans);
   font-variant-numeric:tabular-nums;-webkit-font-smoothing:antialiased;
@@ -65,10 +66,8 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
    about half as far again -- and the course name and the purse sat right in
    that fade, reading as out of focus on a Pro Max. Scaled off the inset, so a
    phone without one, a desktop, and a phone on its side (inset 0) keep 6px.
-   From the Home Screen there is no frost, and the page may already start below
-   the status bar while still reporting the inset -- which put the top bar a
-   whole status bar lower again. fitTop() measures which it is and sets
-   --topPad for that case. */
+   From the Home Screen there is no frost, so fitTop() sets --topPad to the
+   inset alone. */
 #crest{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;
   padding:var(--topPad, calc(env(safe-area-inset-top) * 1.5 + 6px)) 12px 6px;border-bottom:var(--hair);
   background:linear-gradient(180deg,#0B1811,#0C1A13)}
@@ -734,8 +733,8 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
       <div class="rbar"><i id="rFill"></i></div>
       <div class="rstrip" id="rStrip" hidden></div>
     </div>
-    <button id="shopBtn" aria-label="Pro shop"><img id="shopIcon" alt=""><span id="shopDot"></span></button>
     <button id="setBtn" aria-label="Settings"><img id="setIcon" alt=""></button>
+    <button id="shopBtn" aria-label="Pro shop"><img id="shopIcon" alt=""><span id="shopDot"></span></button>
     </div>
     <div id="toasts"></div>
   </div>
@@ -10341,10 +10340,6 @@ function sideways(){
   }
   Scene.resize();
 }
-// Home Screen apps only. Measured, because the two cases report the same
-// inset: if the page runs the full height of the screen it sits under the
-// status bar and needs the inset; if it is shorter by about a status bar, the
-// system has already put it below, and the inset would be a second gap.
 // what the phone says about itself, for the developer menu: the top bar's
 // spacing depends on all of it and none of it can be seen from here
 function screenLine(){
@@ -10356,14 +10351,22 @@ function screenLine(){
   probe.remove();
   return 'screen ' + screen.width + 'x' + screen.height + '  ·  view ' + innerWidth + 'x' + innerHeight
     + '  ·  inset ' + top + '/' + left + '  ·  ' + (isStandalone() ? 'home screen' : 'browser')
-    + '  ·  top ' + (getComputedStyle(document.documentElement).getPropertyValue('--topPad') || 'default');
+    + '  ·  top ' + (getComputedStyle(document.documentElement).getPropertyValue('--topPad') || 'default')
+    + '  ·  height ' + (getComputedStyle(document.documentElement).getPropertyValue('--appH') || 'window');
 }
+// Home Screen apps only. The page is drawn from the top of the glass, under the
+// status bar, so the top bar always needs the inset. But the phone can report
+// a window one status bar shorter than the screen while still drawing from the
+// top: the page then stopped a status bar short and left a black band along
+// the bottom. When it comes up short, the page is stretched to the screen.
 function fitTop(){
   const r = document.documentElement;
-  if(!isStandalone()){ r.style.removeProperty('--topPad'); return; }
+  if(!isStandalone()){ r.style.removeProperty('--topPad'); r.style.removeProperty('--appH'); return; }
   const upright = innerHeight >= innerWidth;
   const full = upright ? Math.max(screen.width, screen.height) : Math.min(screen.width, screen.height);
-  r.style.setProperty('--topPad', innerHeight >= full - 2 ? 'calc(env(safe-area-inset-top) + 6px)' : '6px');
+  r.style.setProperty('--topPad', 'calc(env(safe-area-inset-top) + 6px)');
+  if(innerHeight < full - 2) r.style.setProperty('--appH', full + 'px');
+  else r.style.removeProperty('--appH');
 }
 function intro(){
   showSheet('<h3>Mythic Mulligan</h3>'

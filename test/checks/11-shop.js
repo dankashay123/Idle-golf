@@ -36,12 +36,18 @@ module.exports = {
     // type: about 45px tall whatever the screen, which is 14 per cent of a
     // short stage and 9 per cent of a tall one. So the check is that it is
     // under the readout and clear of it, not that it is at some percentage.
-    if (!(box.y >= read.y + read.height))
-      throw new Error('the shop button overlaps the readout: it starts at '
-        + box.y.toFixed(0) + ' and the readout ends at ' + (read.y + read.height).toFixed(0));
-    if (!(box.y - (read.y + read.height) < stage.height * 0.06))
-      throw new Error('the shop button is ' + (box.y - read.y - read.height).toFixed(0)
-        + 'px below the readout, which is not underneath it');
+    // The settings gear sits between the two, so the shop is measured from the
+    // bottom of whichever is directly above it.
+    const gear = await (await page.$('#setBtn')).boundingBox();
+    if (!(gear.y >= read.y + read.height && gear.y - (read.y + read.height) < stage.height * 0.06))
+      throw new Error('the settings button is not directly under the readout');
+    const above = gear.y + gear.height;
+    if (!(box.y >= above))
+      throw new Error('the shop button overlaps the settings button above it: it starts at '
+        + box.y.toFixed(0) + ' and that ends at ' + above.toFixed(0));
+    if (!(box.y - above < stage.height * 0.06))
+      throw new Error('the shop button is ' + (box.y - above).toFixed(0)
+        + 'px below the settings button, which is not underneath it');
     if (!(box.x < read.x + read.width))
       throw new Error('the shop button is not under the readout horizontally');
     if (!(box.width <= hon.width * 1.05))
