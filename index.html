@@ -8896,6 +8896,10 @@ const Scene = {
 
 
     this.camD = 0; this.restBall = null; this.walkTo = 0;
+    // A swing still playing when the last hole ended belonged to that hole: it
+    // finished it. Carried over, it hit a ball a yard off the new tee that
+    // counted for nothing, and he stood and hit again.
+    this.swingT = 0; this.pendingBall = null; this.queued = null;
     this.balls.length = 0; this.nums.length = 0; this.sparks.length = 0;
     this.buildSky();
   },
@@ -8961,6 +8965,10 @@ const Scene = {
     this.hills = [[], []];
     for(let L = 0; L < 2; L++) for(let i = 0; i <= 40; i++) this.hills[L].push(rnd());
     this.camD = 0; this.restBall = null; this.walkTo = 0;
+    // A swing still playing when the last hole ended belonged to that hole: it
+    // finished it. Carried over, it hit a ball a yard off the new tee that
+    // counted for nothing, and he stood and hit again.
+    this.swingT = 0; this.pendingBall = null; this.queued = null;
     this.balls.length = 0; this.nums.length = 0; this.sparks.length = 0;
     this.buildSky();
   },
@@ -9099,7 +9107,21 @@ const Scene = {
     // number and the crit spark all stopped appearing while the sim carried on
     // hitting. Above that rate the eye cannot follow individual swings anyway.
     if(this.swingT > this.swingDur*0.5) return;
+    // On the course he does not hit again until he has walked up to the ball
+    // that is lying out there: the swing waits, gathering whatever the round
+    // does meanwhile, and goes off when he gets there -- one shot, flying as
+    // far as all of it went. He used to swing again from where he stood with
+    // his last ball still lying ahead of him.
+    if(!S.dgnRun && this.walking2ball()){
+      const q = this.queued || (this.queued = { crit: false, el, dmg: 0 });
+      q.dmg += dmg || 0; q.crit = q.crit || crit; q.el = el || q.el;
+      return;
+    }
     this.swingT = this.swingDur; this.pendingBall = { crit, el, dmg };
+  },
+  // still on his way to where his last ball came down
+  walking2ball(){
+    return !!this.restBall || this.balls.length > 0 || (this.walkTo || 0) - this.camD > 0.4;
   },
   // A shot at something in particular: the pin, or the water beside it.
   aimed(dmg, el, targetD, lat, crit){
@@ -10090,7 +10112,7 @@ Object.assign(Scene, {
     this.teeLat = (bx - p.x) / Math.max(0.001, LAT * p.s);
     if((this.swingT === 0 && !this.restBall && !this.walkOn) || (this.swingT > 0 && ph < 0.5)){
       const bs = h > 30 ? 2 : 1;
-      drawLyingBall(c, bx + bs / 2, Math.round(p.y - bs / 2), Math.max(1, bs / 2 + 0.5), this.t);
+      drawLyingBall(c, bx + bs / 2, Math.round(p.y - bs), Math.max(1.5, bs * 0.8 + 0.5), this.t);
     }
   },
 
@@ -10182,7 +10204,8 @@ Object.assign(Scene, {
       else{
         const p = this.proj(R.d, R.lat);
         if(p.y <= this.clipAt(R.d) + 1 && p.s > 0.05){
-          const r = Math.max(1, Math.round(B_BALL * p.s * US));
+          // drawn larger than true, so a ball lying out there can be found
+          const r = Math.max(2, Math.round(B_BALL * p.s * US * 1.7));
           drawLyingBall(c, p.x, p.y - r, r, this.t);
         }
       }
@@ -10552,6 +10575,11 @@ Object.assign(Scene, {
       const v = dt > 0 ? (this.camD - cam0) / dt : 0;
       this.walkOn = this.swingT === 0 && v > 0.8 && v < 200;
       if(this.walkOn) this.walkPh = (this.walkPh || 0) + dt * clamp(1.4 + v * 0.08, 1.4, 2.6);
+      // there: the swing that waited for him goes off now
+      if(this.queued && this.swingT === 0 && !this.walking2ball()){
+        const q = this.queued; this.queued = null;
+        this.swingT = this.swingDur; this.pendingBall = q;
+      }
       if(this.sky) c.drawImage(this.sky, 0, 0);
       this.drawRidge();
       this.drawGround();

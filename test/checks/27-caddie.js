@@ -18,6 +18,10 @@
  *     1.5 units as much as a drive of 38 -- lies where it came down, and he
  *     sets off after it only once it is down, and walks to it. It
  *     flew a flat 14-23 units whatever it did, and he walked a step
+ *   - he does not hit again until he has walked up to his last ball: the
+ *     swings that come due meanwhile wait, add up, and go off when he gets
+ *     there; and a swing still playing when a hole ends is dropped with the
+ *     hole (it hit a ball a yard off the new tee that counted for nothing)
  *   - Lost Ball Scout's luck lasts until the next hole ends, and is spent
  *     there
  *   - he does not glide: while a swing is still going, the camera holds,
@@ -110,6 +114,22 @@ module.exports = {
           o.walk.push({ from, to, land: +land.toFixed(2), rest: rest && +rest.toFixed(2), camAtLand: camAtLand && +camAtLand.toFixed(2), end: +Scene.camD.toFixed(2) });
         }
 
+        // ---- he does not hit again until he reaches his ball ------------------
+        {
+          Scene.newHole(S.hole, S.tier); Scene.camD = 10; Scene.balls.length = 0; Scene.swingT = 0;
+          S.yardsMax = 1000; S.yards = 1000 * (1 - 30 / LEN);
+          Scene.restBall = { d: 30, lat: 0 }; Scene.walkTo = 30;         // his ball lies 20 ahead
+          Scene.swing(5, false, null); Scene.swing(7, false, null);
+          o.held = { swinging: Scene.swingT > 0, queued: Scene.queued ? Scene.queued.dmg : 0 };
+          let firedAt = null;
+          for (let i = 0; i < 400 && firedAt === null; i++) { Scene.draw(0.016, D); if (Scene.swingT > 0) firedAt = Scene.camD; }
+          o.held.firedAt = firedAt;
+          // and a swing still going when a hole ends does not follow him onto the next tee
+          Scene.swingT = Scene.swingDur * 0.7; Scene.pendingBall = { dmg: 3 }; Scene.queued = { dmg: 2 };
+          Scene.newHole(S.hole, S.tier);
+          o.held.carried = Scene.swingT + ' ' + !!Scene.pendingBall + ' ' + !!Scene.queued;
+        }
+
         // ---- Lost Ball Scout: armed until the next hole ends -----------------
         S.cperkOwn = { scout: 1 }; S.cperk = 'scout'; S.buff = {}; S.cperkT = B.CPERK_EVERY - 0.1;
         QUIET = false; tickCaddie(0.5); QUIET = true;
@@ -145,6 +165,10 @@ module.exports = {
         throw new Error('he was already ' + (w.camAtLand - w.from).toFixed(1) + ' of ' + (w.to - w.from) + ' units down the hole when the ball landed');
       if (Math.abs(w.end - w.to) > 0.1) throw new Error('he walked to ' + w.end + ', the ball came down at ' + w.to);
     }
+    if (r.held.swinging) throw new Error('he swung again with his last ball still lying 20 units ahead of him');
+    if (r.held.queued !== 12) throw new Error('the waiting swings were not kept: ' + r.held.queued + ' of 12');
+    if (r.held.firedAt === null || r.held.firedAt < 29) throw new Error('the waiting swing went off at ' + r.held.firedAt + ', not when he reached his ball at 30');
+    if (r.held.carried !== '0 false false') throw new Error('a swing from the last hole carried onto the new tee: ' + r.held.carried);
     if (!r.scoutArmed) throw new Error('Lost Ball Scout lapsed before the hole ended');
     if (!r.scoutSpent) throw new Error('Lost Ball Scout was still armed after the hole it was for');
     if (!(r.after > 1)) throw new Error('after the swing the camera did not move on: ' + r.after.toFixed(2));
@@ -152,6 +176,7 @@ module.exports = {
       r.n + ' perks: bought once, one worn, free to change; +20% tempo for 8s every ' + r.every + 's, none in a catch-up',
       'no gliding: the camera holds through the swing and walks on after (' + r.after.toFixed(1) + ' units)',
       'every shot flies as far as it went (' + r.walk.map(w => (w.to - w.from).toFixed(1)).join(', ') + ' units) and he walks to where it came down',
+      'he does not hit again until he reaches his ball (the waiting swing goes off at ' + r.held.firedAt.toFixed(1) + ' of 30); a new hole drops a swing still going',
       'Lost Ball Scout holds its luck until the next hole ends, then it is spent'];
   }
 };
