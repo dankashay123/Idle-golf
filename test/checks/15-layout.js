@@ -72,6 +72,19 @@ module.exports = {
           const over = b.right - rb.right;
           if (over > 0.5) out.over.push({ at: tag + ' ' + where(e), over: +over.toFixed(1) });
         }
+        // A row of buttons is a div, and ".row > div{flex:1}" once gave every
+        // one of them half its row: the +1/+10 pair sat mid-row with empty space
+        // to its right while the words beside it wrapped. It should be no wider
+        // than the buttons in it.
+        for (const br of root.querySelectorAll('.row > .btnrow')) {
+          const b = br.getBoundingClientRect(); if (!b.width) continue;
+          const kids = [...br.children].map(k => k.getBoundingClientRect()).filter(k => k.width);
+          if (!kids.length) continue;
+          const used = Math.max(...kids.map(k => k.right)) - Math.min(...kids.map(k => k.left));
+          out.btnrows = (out.btnrows || 0) + 1;
+          if (b.width - used > 4) out.wide = (out.wide || []).concat(tag + ' ' + Math.round(b.width)
+            + 'px around ' + Math.round(used) + 'px of buttons');
+        }
       };
 
       for (const v of ['upg', 'bag', 'dgn', 'tour', 'career']) { setView(v); sweep('panel', v); }
@@ -348,6 +361,10 @@ module.exports = {
     if (!(r.looked > 400))
       throw new Error('the sweep only measured ' + r.looked + ' boxes, so it is not reaching '
         + 'the screens it thinks it is');
+    if (r.wide && r.wide.length)
+      throw new Error(r.wide.length + ' button row(s) are wider than their buttons, squeezing the '
+        + 'words beside them: ' + r.wide.slice(0, 3).join('; '));
+    if (!(r.btnrows > 10)) throw new Error('only ' + r.btnrows + ' button rows measured');
     if (r.over.length) {
       const worst = r.over.slice().sort((a, b) => b.over - a.over).slice(0, 5);
       throw new Error(r.over.length + ' element(s) stick out past the edge they are inside, '

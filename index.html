@@ -201,6 +201,10 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
   padding:9px 12px;border-bottom:1px solid #12261A}
 .row > div{flex:1;min-width:0}
 .row > img,.row > button{flex:0 0 auto}
+/* A row of buttons is a div too, and ".row > div{flex:1}" gave it half the row:
+   the +1/+10 pair sat mid-row with nothing to its right while the words beside
+   it wrapped into two lines. It takes the width its buttons need. */
+.row > .btnrow{flex:0 0 auto}
 /* Not scoped to .row: the Skills and Perks rows use .sk-row, so scoping these
    left their text completely unstyled and falling back to browser defaults. */
 .ric{width:24px;height:24px;flex:0 0 auto;margin-top:1px}
@@ -352,9 +356,11 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
 .key.on{background:var(--aurora);border-color:var(--aurora)}
 
 /* ---------- leaderboard ---------- */
-.lb{display:grid;grid-template-columns:26px 1fr auto;gap:8px;padding:6px 12px;font-size:var(--f2);
+/* The first column held a place on the made-up leaderboard the card replaced,
+   and has been an empty 26px indent on every stat row since. */
+.lb{display:grid;grid-template-columns:1fr auto;gap:8px;padding:6px 12px;font-size:var(--f2);
   border-bottom:1px solid #12261A}
-.lb .p{font-family:var(--mono);color:var(--faint);font-size:var(--f1)}
+.lb .p{display:none}
 .lb .s{font-family:var(--mono);font-weight:600}
 /* a repeating honour: no pip column, the name and its step, then progress */
 .lb.rep{grid-template-columns:1fr auto;padding:5px 0}
@@ -3673,7 +3679,10 @@ function fireSkill(def, D){
     case 'eclipse':  damage(S.yards * v/100, D); Scene.burst('eclipse'); break;
     case 'windfall': addBuff('windfall', v, 12); Scene.burst('windfall'); break;
   }
-  Scene.cast(def.g);
+  // The shot's name, not its one-letter glyph: a lone cyan "T" rising off the
+  // left of the field said nothing about Thunder Drive having just fired.
+  Scene.cast(def.n.replace(/^(Sponsor|Caddie) /, '').replace(/ (Drive|Chain|Force|Putt)$/, '')
+    .toUpperCase());
 }
 function autoCast(D, dt){
   for(const id of S.carry){
@@ -8814,7 +8823,8 @@ function itemSheet(it, equipped){
       + B.RARITY[it.rar+1].n + ' \u2014 ' + ascendCost(it) + ' shards</button>';
   if(!equipped){
     h += '<button class="act" onclick="doEquip(' + it.uid + ')">Put in the bag</button>';
-    h += '<button class="act danger" onclick="doSalvage(' + it.uid + ')">Scrap for shards</button>';
+    h += '<button class="act danger" onclick="doSalvage(' + it.uid + ')">Scrap for '
+      + scrapValue(it) + ' ' + plural(scrapValue(it), 'shards') + '</button>';
   }
   h += '<button class="act ghost" onclick="hideSheet()">Close</button>';
   showSheet(h);
