@@ -9,9 +9,14 @@ module.exports = {
     const r = await page.evaluate(() => {
       let holes = 0, hazards = 0, onGreen = 0, worst = 0, noBunker = 0, withWater = 0;
       for (let ci = 0; ci < B.COURSE.length; ci++) {
+        // Forty holes of THAT course: DEV.course pins it to one event, and a
+        // hole number outside that event is on whatever the calendar says.
+        // Walking holes 1 to 40 checked the first event's course 32 times.
         DEV.course(ci); hideSheet();
-        for (let h = 1; h <= 40; h++) {
-          S.hole = h; startHole(); holes++;
+        const base = S.hole;
+        for (let h = 0; h < 40; h++) {
+          S.hole = base + h; startHole(); holes++;
+          if (Scene.course.id !== B.COURSE[ci].id) throw new Error('hole ' + S.hole + ' is not on ' + B.COURSE[ci].id);
           if (!Scene.bunkers.length) noBunker++;
           if (Scene.water) withWater++;
           for (const z of [].concat(Scene.water || [], Scene.bunkers)) {

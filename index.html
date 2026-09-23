@@ -833,6 +833,8 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
       <div id="tierBox"></div>
       <div class="band"><span class="eyebrow">The Card</span><span class="note" id="cardNote"></span></div>
       <div id="cardBox"></div>
+      <div class="band"><span class="eyebrow">Major of the Week</span><span class="note" id="majNote"></span></div>
+      <div id="majBox"></div>
       <div class="band"><span class="eyebrow">Season</span><span class="note" id="cupNote"></span></div>
       <div id="statRows"></div>
     </div>
@@ -2655,6 +2657,9 @@ const B = {
   PAY_SPAN: 130, PAY_MIN: 0.30, PAY_MAX: 3.20,
   SEASON: 6,
   SLOTS_SEASON: ['event','event','major','event','event','finale'],
+  // the major of the week: what winning it pays besides the jacket, and what
+  // playing it through pays
+  WEEK_WIN_SOV: 60, WEEK_PLAY_SOV: 10,
   PURSE_MAJOR: 1.5, PURSE_FINALE: 2.4,
   CUP_BASE: { event:500, major:800, finale:1200 },
 
@@ -2735,7 +2740,76 @@ const B = {
     { id:'meridian', slot:'finale', n:'The Meridian Championship', sig:'Nobody agrees where it is. The light is wrong all week.',
       sky:['#1A1A48','#8ED0C0'], turf:'#3E8A5E', rough:'#1E3A46', sand:'#D8CCE8',
       water:'#4A5AA8', rock:'#4A4A7A', tree:['#3E7A76','#245450'],
-      land:{ fw:2.60, taper:0.90, trees:1.00, kind:2, nb:4, bsize:1.2, water:0.50, wsize:1.3, crowd:1.6 } }
+      land:{ fw:2.60, taper:0.90, trees:1.00, kind:2, nb:4, bsize:1.2, water:0.50, wsize:1.3, crowd:1.6 } },
+
+    /* Home courses. Every Tour Card has one, and it has a landmark you can see
+       from every hole: the mill, the lighthouse, the castle. Played the first
+       event after you arrive on the card, and to open every season on it. Ten
+       of them, so Card XI is home at Willow Creek again. lm is the landmark,
+       lmc its three colours. */
+    { id:'willow', slot:'home', n:'Willow Creek', lm:'windmill', lmc:['#EAE2CE','#8A3E2E','#6A4A30'],
+      sky:['#2A70A8','#D2E8EE'], turf:'#52A04E', rough:'#2E6A36', sand:'#EEE2C0',
+      water:'#2E8EB0', rock:'#7A8C98', tree:['#6AA05A','#3E7040'],
+      land:{ fw:3.20, taper:0.85, trees:0.90, kind:1, nb:3, bsize:1.1, water:0.60, wsize:1.3, crowd:1.0 } },
+    { id:'harbour', slot:'home', n:'Harbour Lights Links', lm:'lighthouse', lmc:['#F2F0E8','#D8453A','#FFE08A'],
+      sky:['#1A6090','#C4E2EA'], turf:'#62A052', rough:'#86904E', sand:'#EEE2BE',
+      water:'#1E80A8', rock:'#8496A2', tree:['#4A7A4E','#2E5A38'],
+      land:{ fw:3.40, taper:0.72, trees:0.30, kind:0, nb:5, bsize:1.3, water:0.55, wsize:1.4, crowd:1.1 } },
+    { id:'castledunes', slot:'home', n:'Castle Dunes', lm:'castle', lmc:['#A29C90','#6E695F','#C8423A'],
+      sky:['#34607E','#D0D8D2'], turf:'#7A9A52', rough:'#9A9658', sand:'#E6D6AA',
+      water:'#3A6E8A', rock:'#8A8E88', tree:['#56744A','#384E30'],
+      land:{ fw:3.50, taper:0.72, trees:0.15, kind:0, nb:8, bsize:1.15, water:0.25, wsize:1.0, crowd:1.0 } },
+    { id:'stonehollow', slot:'home', n:'Stonehollow', lm:'stones', lmc:['#9A9C96','#62645F','#C0C2BA'],
+      sky:['#44586C','#BCC4C8'], turf:'#5A8448', rough:'#5E4A66', sand:'#D6CAA6',
+      water:'#4A6A7A', rock:'#6E7478', tree:['#4E6048','#303E2C'],
+      land:{ fw:3.00, taper:0.82, trees:0.35, kind:0, nb:6, bsize:0.95, water:0.30, wsize:1.0, crowd:0.8 } },
+    { id:'redarch', slot:'home', n:'Red Arch Canyon', lm:'arch', lmc:['#BC643C','#86422A','#E0986A'],
+      sky:['#3A6AA0','#F2D4A8'], turf:'#8E9848', rough:'#A65C3C', sand:'#F6E2BC',
+      water:'#3A8AA0', rock:'#B0603E', tree:['#6A7A46','#44502A'],
+      land:{ fw:3.10, taper:0.78, trees:0.18, kind:0, nb:7, bsize:1.6, water:0.10, wsize:0.9, crowd:0.8 } },
+    { id:'jadepagoda', slot:'home', n:'Jade Pagoda', lm:'pagoda', lmc:['#C8423A','#2E6A4E','#E3B457'],
+      sky:['#3E7AA8','#EADCDC'], turf:'#4E9E56', rough:'#2E6A40', sand:'#F2E8D2',
+      water:'#3A9EB0', rock:'#7E948E', tree:['#D88AA8','#9A5A78'],
+      land:{ fw:2.90, taper:0.85, trees:1.10, kind:1, nb:3, bsize:1.0, water:0.75, wsize:1.3, crowd:1.0 } },
+    { id:'fjordheim', slot:'home', n:'Fjordheim', lm:'tower', lmc:['#6E5442','#3A2A22','#E4EEF2'],
+      sky:['#2E5E8A','#DCE8EE'], turf:'#4A8656', rough:'#2E5040', sand:'#E0DCCC',
+      water:'#2A6A8E', rock:'#9AAAB6', tree:['#2A5842','#16362A'],
+      land:{ fw:2.50, taper:0.92, trees:1.40, kind:0, nb:2, bsize:0.9, water:0.65, wsize:1.4, crowd:0.7 } },
+    { id:'emberpeak', slot:'home', n:'Ember Peak', lm:'volcano', lmc:['#4E3C38','#2E2422','#FF7A2A'],
+      sky:['#3A4A66','#E0B89A'], turf:'#5E8A44', rough:'#3A3A2E', sand:'#5A504C',
+      water:'#2E5A6A', rock:'#4E4442', tree:['#4E6A3A','#2E4224'],
+      land:{ fw:2.80, taper:0.85, trees:0.60, kind:0, nb:5, bsize:1.2, water:0.20, wsize:1.0, crowd:0.8 } },
+    { id:'skyward', slot:'home', n:'Skyward Observatory', lm:'dome', lmc:['#ECEFF0','#A4ACB4','#3A4450'],
+      sky:['#1E4E86','#C8DCEC'], turf:'#4A8A52', rough:'#34563E', sand:'#E2DECE',
+      water:'#4A9ACA', rock:'#9CAAB8', tree:['#2E5A44','#1A3A2C'],
+      land:{ fw:2.40, taper:0.95, trees:1.10, kind:0, nb:3, bsize:0.95, water:0.40, wsize:1.1, crowd:0.7 } },
+    { id:'mythicspire', slot:'home', n:'The Mythic Spire', lm:'spire', lmc:['#C68BFF','#6E44A0','#57E0BE'],
+      sky:['#221A4E','#9ED8C8'], turf:'#3E8A62', rough:'#23404A', sand:'#DCCCEC',
+      water:'#4A5AB0', rock:'#4E4A80', tree:['#46887E','#285852'],
+      land:{ fw:2.70, taper:0.88, trees:1.00, kind:2, nb:4, bsize:1.2, water:0.55, wsize:1.3, crowd:1.2 } },
+
+    /* The majors of the week, one a real week in turn. Win one on your highest
+       card and its jacket is yours: nothing else in the game unlocks it. */
+    { id:'masters', slot:'weekly', n:'The Mythic Masters', lm:'clock', lmc:['#F0ECE0','#3E7A46','#E3B457'],
+      prize:'mjMasters', short:'Masters',
+      sky:['#2A78A8','#DCEEE8'], turf:'#3EA046', rough:'#1E6A2E', sand:'#FFF6E0',
+      water:'#2A96B4', rock:'#7E9EA0', tree:['#D06A9A','#8A3E68'],
+      land:{ fw:3.00, taper:0.85, trees:1.10, kind:1, nb:4, bsize:1.2, water:0.55, wsize:1.2, crowd:1.6 } },
+    { id:'crown', slot:'weekly', n:'The Crown Open', lm:'castle', lmc:['#949086','#62605A','#E3B457'],
+      prize:'mjClaret', short:'Crown',
+      sky:['#2E5A7E','#D0DCDA'], turf:'#76984E', rough:'#96965A', sand:'#E8DAB2',
+      water:'#2E6A8A', rock:'#868A86', tree:['#56744A','#384E30'],
+      land:{ fw:3.40, taper:0.72, trees:0.20, kind:0, nb:8, bsize:1.2, water:0.35, wsize:1.1, crowd:1.6 } },
+    { id:'sovereign', slot:'weekly', n:'The Sovereign Championship', lm:'obelisk', lmc:['#DCD6C8','#9A9488','#FFD66B'],
+      prize:'mjSovereign', short:'Sovereign',
+      sky:['#1E4A7E','#E6DCC4'], turf:'#4A924A', rough:'#24502C', sand:'#F2E6C4',
+      water:'#2A7AA4', rock:'#8A8478', tree:['#3E7040','#244A28'],
+      land:{ fw:2.40, taper:0.92, trees:1.30, kind:2, nb:6, bsize:1.2, water:0.45, wsize:1.2, crowd:1.6 } },
+    { id:'starfall', slot:'weekly', n:'The Starfall Invitational', lm:'spire', lmc:['#BFE6FA','#6FB2D8','#FFFFFF'],
+      prize:'mjStarfall', short:'Starfall',
+      sky:['#161A44','#A8B8E0'], turf:'#3E8A66', rough:'#1E3A4A', sand:'#D4D0EC',
+      water:'#4A62B8', rock:'#4A5080', tree:['#4A7E90','#284E5E'],
+      land:{ fw:2.80, taper:0.88, trees:1.00, kind:2, nb:4, bsize:1.2, water:0.55, wsize:1.3, crowd:1.6 } }
   ],
 
   /* ---- honours ----
@@ -2753,6 +2827,7 @@ const B = {
     { id:'cup1',   n:'First Cup',        d:'Beat an event target',        m:'cups',   v:1,     r:{k:'tick', v:3}, sov:5 },
     { id:'cup10',  n:'The Cabinet',      d:'Hold 10 cups',                m:'cups',   v:10,    r:{k:'gld', v:0.08}, sov:10 },
     { id:'cup50',  n:'Dynasty',          d:'Hold 50 cups',                m:'cups',   v:50,    r:{k:'gld', v:0.15}, sov:100 },
+    { id:'slam',   n:'Grand Slam',       d:'Win all four majors of the week', m:'slam', v:4, r:{k:'pow', v:0.05}, sov:100 },
     { id:'rec',    n:'Course Record',    d:'Post a card of -200 or better', m:'best', v:200,   r:{k:'drp', v:0.05}, sov:100 },
     { id:'lv10',   n:'Rookie',           d:'Reach career level 10',       m:'lv',     v:10,    r:{k:'tick', v:2}, sov:5 },
     { id:'lv60',   n:'Tour Pro',         d:'Reach career level 60',       m:'lv',     v:60,    r:{k:'pow', v:0.10}, sov:100 },
@@ -3061,7 +3136,16 @@ const B = {
       cap:'#FFD86B', cap2:'#C99A2E', shirt:'#F0C04A', shirt2:'#C9962C', shirt3:'#8F6A1E', pant:'#D9A83A', pant2:'#9E7424',
       skin:'#F2C75C', skin2:'#B8862A', shoe:'#7A5818', belt:'#8F6A1E' },
     { id:'divine',  n:'Divine',          cost:3000, fx:'divine', cat:'skin', top:1,
-      cap:'#FFD66B', cap2:'#C99A2E', shirt:'#FFF8E6', shirt2:'#F1D98F', shirt3:'#C9A24A', pant:'#F4E7C2', pant2:'#D8C18A', shoe:'#B98A2E' }
+      cap:'#FFD66B', cap2:'#C99A2E', shirt:'#FFF8E6', shirt2:'#F1D98F', shirt3:'#C9A24A', pant:'#F4E7C2', pant2:'#D8C18A', shoe:'#B98A2E' },
+    // Won, never bought: one for each major of the week, and its caddie with it.
+    { id:'mjMasters',   n:'Masters Jacket',   cost:0, cat:'major', major:'masters',
+      cap:'#F4F4EC', cap2:'#C8C8BE', shirt:'#2E7A3E', shirt2:'#236030', shirt3:'#174A22', pant:'#E8E0C8', pant2:'#C4BA9E' },
+    { id:'mjClaret',    n:'Claret Jacket',    cost:0, cat:'major', major:'crown',
+      cap:'#E3B457', cap2:'#A8802F', shirt:'#8A2234', shirt2:'#6A1828', shirt3:'#48101C', pant:'#2A2E33', pant2:'#181B1F' },
+    { id:'mjSovereign', n:'Sovereign Blazer', cost:0, cat:'major', major:'sovereign',
+      cap:'#FFD66B', cap2:'#C99A2E', shirt:'#24367A', shirt2:'#1A285C', shirt3:'#101A3E', pant:'#F0EEE6', pant2:'#C8C4B8' },
+    { id:'mjStarfall',  n:'Starfall Coat',    cost:0, cat:'major', major:'starfall',
+      cap:'#DDF3FF', cap2:'#A9D4EE', shirt:'#2E2862', shirt2:'#201C48', shirt3:'#141030', pant:'#C8D8F0', pant2:'#9AAAC8' }
   ],
   // Caddie perks: one worn at a time, bought with sovereigns. Every
   // CPERK_EVERY seconds on the course the caddie gives him a short lift.
@@ -3177,7 +3261,8 @@ const roundIndex   = h => Math.floor((h-1) / B.ROUND);
 const tournamentOf = h => Math.floor((h-1) / (B.ROUND*B.DAYS)) + 1;
 const holesPlayed  = h => dayIndex(h)*B.ROUND + (holeInRound(h)-1);
 const parOf = h => B.PAR_LAYOUTS[hash32(roundIndex(h)+7) % B.PAR_LAYOUTS.length][holeInRound(h)-1];
-const slotOfEvent = t => B.SLOTS_SEASON[(t-1) % B.SEASON];
+// the major of the week plays for a major's purse and a major's points
+const slotOfEvent = t => S && S.weekly && S.weekly.t === t ? 'major' : B.SLOTS_SEASON[(t-1) % B.SEASON];
 const COURSE_EVT = B.COURSE.filter(c => c.slot === 'event');
 const COURSE_MAJ = B.COURSE.filter(c => c.slot === 'major');
 const COURSE_FIN = B.COURSE.find(c => c.slot === 'finale');
@@ -3193,16 +3278,58 @@ function regularIndex(t){
   for(let i = 0; i < pos; i++) if(B.SLOTS_SEASON[i] === 'event') before++;
   return season * EVT_PER_SEASON + before;
 }
-function courseFor(t){
-  const s = slotOfEvent(t);
+// what the calendar alone would put on at event t
+function calendarCourse(t){
+  const s = B.SLOTS_SEASON[(t-1) % B.SEASON];
   if(s === 'finale') return COURSE_FIN;
   if(s === 'major')  return COURSE_MAJ[Math.floor((t-1)/B.SEASON) % COURSE_MAJ.length];
   return COURSE_EVT[regularIndex(t) % COURSE_EVT.length];
 }
+const COURSE_HOME = B.COURSE.filter(c => c.slot === 'home');
+const COURSE_WEEK = B.COURSE.filter(c => c.slot === 'weekly');
+const courseById = id => B.COURSE.find(c => c.id === id);
+const homeFor = tier => COURSE_HOME[tier % COURSE_HOME.length];
+// Real weeks, Monday to Sunday: day 0 of the clock was a Thursday.
+const weekNow = () => Math.floor((dayNow() + 3) / 7);
+const weekMajor = wk => COURSE_WEEK[((wk % COURSE_WEEK.length) + COURSE_WEEK.length) % COURSE_WEEK.length];
+// seconds until the next Monday
+const weekLeft = () => ((weekNow() + 1) * 7 - 3) * 86400 - Date.now()/1000;
+// The course of event t. Two things can take a regular stop over, decided
+// once as the event tees off and written down, so a climb or a reload in the
+// middle of it never moves you to another course.
+function courseFor(t){
+  if(S && S.evCourse && S.evCourse.t === t){ const c = courseById(S.evCourse.id); if(c) return c; }
+  return calendarCourse(t);
+}
+const isWeekMajor = t => !!(S && S.weekly && S.weekly.t === t);
 const eventName = t => courseFor(t).n;
 function purseMult(t){
   const s = slotOfEvent(t);
   return s === 'finale' ? B.PURSE_FINALE : s === 'major' ? B.PURSE_MAJOR : 1;
+}
+// Called as each hole starts; does anything only on the first hole of an event.
+//  - The major of the week takes the first event you tee off in a week, live:
+//    not in a catch-up, and not before your first event is in the book.
+//  - Otherwise a regular stop is your card's home course when you have just
+//    arrived on the card, and always as the season opens.
+// A save loaded mid-event keeps the calendar's course.
+function openEvent(){
+  const t = tournamentOf(S.hole);
+  if(S.evCourse && S.evCourse.t === t) return;
+  let id = calendarCourse(t).id;
+  if(holesPlayed(S.hole) === 0){
+    const wk = weekNow(), W = S.weekly;
+    const open = !W || W.wk !== wk || (!W.t && !W.done);
+    if(open && !OFFLINE && !QUIET && !S.dgnRun && (S.eventsPlayed || 0) >= 1){
+      id = weekMajor(wk).id;
+      S.weekly = { wk, t, id, done: 0, won: 0 };
+    }else if(calendarCourse(t).slot === 'event'
+             && ((t-1) % B.SEASON === 0 || (!OFFLINE && S.homeSeen !== S.tier))){
+      id = homeFor(S.tier).id;
+      S.homeSeen = S.tier;
+    }
+  }
+  S.evCourse = { t, id };
 }
 
 /* ---- chaotic conditions, drawn per round ---- */
@@ -3249,7 +3376,8 @@ function defaultState(){ return {
   scores: [], mult: 1,
   nine: null, bestNine: undefined, ninesWon: 0,
   styleOwn: {}, outfit: 'classic', trail: 'plain',
-  rival: null, form: undefined
+  rival: null, form: undefined,
+  evCourse: null, weekly: null, majorWins: {}
 }; }
 let S = defaultState();
 function initState(){
@@ -3301,6 +3429,13 @@ function initState(){
   if(S.rival && (typeof S.rival !== 'object' || !isFinite(S.rival.total)
      || B.RIVALS.indexOf(S.rival.n) < 0)) S.rival = null;
   if(S.form !== undefined && !isFinite(S.form)) S.form = undefined;
+  // the course an event was opened on, and this week's major
+  if(S.evCourse && (typeof S.evCourse !== 'object' || !courseById(S.evCourse.id)
+     || !(S.evCourse.t >= 1))) S.evCourse = null;
+  if(S.weekly && (typeof S.weekly !== 'object' || !isFinite(S.weekly.wk)
+     || !COURSE_WEEK.some(c => c.id === S.weekly.id))) S.weekly = null;
+  if(!S.majorWins || typeof S.majorWins !== 'object') S.majorWins = {};
+  for(const k in S.majorWins) if(!COURSE_WEEK.some(c => c.id === k) || !(S.majorWins[k] > 0)) delete S.majorWins[k];
   if(!S.styleOwn || typeof S.styleOwn !== 'object') S.styleOwn = {};
   if(!styleOwned('o', S.outfit)) S.outfit = 'classic';
   if(!styleOwned('t', S.trail)) S.trail = 'plain';
@@ -3503,6 +3638,7 @@ function achMetric(m){
     case 'perks':  return S.perkUsed || 0;
     case 'nines':  return S.ninesWon || 0;
     case 'events': return S.eventsPlayed || 0;
+    case 'slam':   return Object.keys(S.majorWins || {}).length;
     case 'troph':  return trophiesFound();
     case 'mst':    return derive().mst;
     case 'set6e':  return B.SLOTS.reduce((n, s) => n + (S.equip[s.id] && S.equip[s.id].rar >= 3 ? 1 : 0), 0);
@@ -3880,9 +4016,13 @@ function announceCourse(){
   const cs = courseFor(t);
   // in the stage's own type, which has no apostrophes or dots in the middle
   const fit = str => [...str.toUpperCase()].map(ch => GLYPH[ch] || ch === ' ' ? ch : ' ').join('').replace(/ +/g, ' ').trim();
-  Scene.announce = { name: fit(cs.n), sub: fit('Tour Card ' + roman(S.tier) + ' - Event ' + t), t: 0, dur: 4.2 };
+  const sub = isWeekMajor(t) ? 'Major of the Week'
+            : cs.slot === 'home' ? 'Home of Tour Card ' + roman(S.tier)
+            : 'Tour Card ' + roman(S.tier) + ' - Event ' + t;
+  Scene.announce = { name: fit(cs.n), sub: fit(sub), t: 0, dur: 4.2, gold: isWeekMajor(t) };
 }
 function startHole(){
+  openEvent();         // which course this event is on, fixed from its first hole
   rivalNow();          // the event's rival exists from its first hole, seen or not
   S.courseEl = courseElFor(S.hole, S.tier);
   const D = derive();
@@ -5355,9 +5495,28 @@ function endTournament(){
     S.form = S.form === undefined ? score : S.form * (1 - B.RIVAL_FORM) + score * B.RIVAL_FORM;
   }
 
+  // The major of the week. Won on your highest card, its jacket is yours the
+  // first time; played through, a little for turning up. One that resolves in
+  // a catch-up was never played, so it waits for the next event you tee off.
+  let Wk = null;
+  if(isWeekMajor(t) && !S.weekly.done){
+    const W = S.weekly, cs = courseById(W.id);
+    if(OFFLINE) W.t = 0;
+    else{
+      W.done = 1; W.won = beat ? 1 : 0;
+      const first = beat && !S.majorWins[W.id];
+      if(beat) S.majorWins[W.id] = (S.majorWins[W.id] || 0) + 1;
+      if(first){ S.styleOwn['o:' + cs.prize] = 1; S.styleOwn['c:' + cs.prize] = 1; }
+      const sov = beat ? B.WEEK_WIN_SOV : B.WEEK_PLAY_SOV;
+      grantSov(sov, null, true);
+      Wk = { beat, first, sov, prize: styleDef('o', cs.prize) };
+    }
+  }
+
   const fm = n => n === 0 ? 'E' : n > 0 ? '+' + n : String(n);
   showSheet('<h3>' + eventName(t) + '</h3>'
-    + '<p>' + (beat ? 'You beat the number.' : 'Card posted.') + '</p>'
+    + (Wk ? '<div class="eyebrow" style="color:var(--brass)">Major of the Week</div>' : '')
+    + '<p>' + (Wk && Wk.beat ? 'Champion.' : beat ? 'You beat the number.' : 'Card posted.') + '</p>'
     + '<div class="big">' + fm(score) + '</div>'
     + '<ul><li>Target: ' + fm(Math.round(target)) + (beat ? ' \u2014 <b style="color:var(--brass)">beaten</b>'
         : ' \u2014 missed by ' + Math.ceil(score - target)) + '</li>'
@@ -5368,7 +5527,11 @@ function endTournament(){
     + '<li>Prize money: ' + fmt(cash) + ' (' + share.toFixed(2) + 'x)</li>'
     + '<li>Cup points: ' + fmt(pts) + '</li>'
     + '<li>Cups held: ' + S.cups + (beat ? ' <b style="color:var(--brass)">(new)</b>' : '')
-    + ' \u00b7 next target ' + fm(targetShown()) + '</li></ul>'
+    + ' \u00b7 next target ' + fm(targetShown()) + '</li>'
+    + (Wk ? '<li>Major: <b style="color:var(--brass)">+' + Wk.sov + sovIc() + '</b>'
+        + (Wk.first ? ' \u00b7 <b style="color:var(--brass)">' + Wk.prize.n + '</b> won' : '')
+        + (Wk.beat || onTop ? '' : ' \u00b7 wins only count on Card ' + roman(S.tierMax || 0)) + '</li>' : '')
+    + '</ul>'
     + '<button class="act" onclick="hideSheet()">Next event</button>');
 
   S.eventsPlayed = (S.eventsPlayed || 0) + 1;
@@ -5604,8 +5767,9 @@ B.CADDIES = [{ id:'bib', n:'Caddie Bib', cost:0,
   .concat(B.OUTFITS.map(o => Object.assign({}, o, { n: o.n + ' Caddie', of: o.id,
     cost: Math.round(o.cost / 3 / 5) * 5 })));
 const styleDef = (k, id) => (k === 'o' ? B.OUTFITS : k === 'c' ? B.CADDIES : k === 'k' ? B.CLUBS : B.TRAILS).find(x => x.id === id);
+// A major's jacket costs nothing and is not free: it is won.
 const styleOwned = (k, id) => { const d = styleDef(k, id);
-  return !!d && (d.cost === 0 || !!(S.styleOwn && S.styleOwn[k + ':' + id])); };
+  return !!d && ((d.cost === 0 && !d.major) || !!(S.styleOwn && S.styleOwn[k + ':' + id])); };
 // "Try it": a look worn for ten seconds without buying it. Never saved.
 let PREVIEW = null;
 const previewOf = k => PREVIEW && PREVIEW.k === k && Date.now() < PREVIEW.until ? styleDef(k, PREVIEW.id) : null;
@@ -5626,6 +5790,10 @@ function previewTick(){
 }
 function styleBuy(k, id){
   const d = styleDef(k, id); if(!d) return;
+  if(!styleOwned(k, id) && d.major){
+    toast('Win <b>' + courseById(d.major).n + '</b> to wear it');
+    return;
+  }
   if(!styleOwned(k, id)){
     if(!spendSov(d.cost)) return;
     S.styleOwn[k + ':' + id] = 1;
@@ -5843,11 +6011,13 @@ function renderShop(){
     const card = (k, d, img) => {
       const own = styleOwned(k, d.id);
       const worn = (k === 'o' ? S.outfit : k === 'c' ? (S.caddie || 'bib') : k === 'k' ? (S.club || 'steel') : S.trail) === d.id;
-      return shopCard({ img, on: worn || !!d.top, badge: worn ? 'WORN' : d.top ? 'LEGENDARY' : '', head: d.n,
+      // a major's jacket is won, not bought: it names the major instead of a price
+      const won = d.major ? courseById(d.major) : null;
+      return shopCard({ img, on: worn || !!d.top || (!!won && own), badge: worn ? 'WORN' : d.top ? 'LEGENDARY' : won && own ? 'CHAMPION' : '', head: d.n,
         sub: own ? '' : '<button class="mini try" data-try="' + k + '.' + d.id + '">Try it</button>',
-        price: worn ? 'WORN' : own ? 'WEAR' : sovFmt(d.cost),
-        note: worn || own ? '' : B.SOV.toLowerCase(),
-        cls: worn ? 'max' : own || (S.sov || 0) >= d.cost ? '' : 'no', act: 'style:' + k + '.' + d.id });
+        price: worn ? 'WORN' : own ? 'WEAR' : won ? 'WIN IT' : sovFmt(d.cost),
+        note: worn || own ? '' : won ? won.short : B.SOV.toLowerCase(),
+        cls: worn ? 'max' : own || (!won && (S.sov || 0) >= d.cost) ? '' : 'no', act: 'style:' + k + '.' + d.id });
     };
     const shelf = (title, k, list, url) => list.length
       ? ribbon(title) + '<div class="sgrid c3">'
@@ -5861,11 +6031,13 @@ function renderShop(){
       h += shelf('Skins', 'o', B.OUTFITS.filter(o => o.cat === 'skin'), outfitUrl)
         // the funny ones and the plain shirts are all outfits: one shelf, the
         // funny ones first
-        + shelf('Outfits', 'o', B.OUTFITS.filter(o => o.cat === 'fun').concat(B.OUTFITS.filter(o => !o.cat)), outfitUrl);
+        + shelf('Outfits', 'o', B.OUTFITS.filter(o => o.cat === 'fun').concat(B.OUTFITS.filter(o => !o.cat)), outfitUrl)
+        + shelf('Major Winners', 'o', B.OUTFITS.filter(o => o.cat === 'major'), outfitUrl);
     else if(styleCat === 'caddie')
       // in the same order as the golfer's looks: skins, then the rest
       h += shelf('Caddie Skins', 'c', B.CADDIES.filter(d => d.cat === 'skin'), caddieUrl)
-        + shelf('Caddie Outfits', 'c', B.CADDIES.filter(d => d.cat !== 'skin'), caddieUrl);
+        + shelf('Caddie Outfits', 'c', B.CADDIES.filter(d => d.cat !== 'skin' && d.cat !== 'major'), caddieUrl)
+        + shelf('Major Winners', 'c', B.CADDIES.filter(d => d.cat === 'major'), caddieUrl);
     else if(styleCat === 'clubs')
       h += shelf('Clubs', 'k', B.CLUBS.filter(d => d.cat !== 'fun'), clubUrl)
         + shelf('Just for Fun', 'k', B.CLUBS.filter(d => d.cat === 'fun'), clubUrl);
@@ -6072,6 +6244,10 @@ function retire(){
     ? B.G0 * Math.pow(B.TIER_G, Math.min(6, relLv('seed'))) * 40 : 0;
   S.tier = land;
   S.hole = 1; S.scores = []; S.tourScore = 0; S.streak = 0;
+  // A new career tees off event 1 afresh: at home, and a major walked away
+  // from half played is still there to be played this week.
+  S.evCourse = null; S.homeSeen = undefined;
+  if(S.weekly && !S.weekly.done) S.weekly.t = 0;
   const keepUpg = relLv('vault') * B.VAULT_UPG;
   B.UPG.forEach(u => S.upg[u.id] = Math.min(capOf(u), keepUpg));
   S.tierEvents = {}; S.tierMax = land;
@@ -6718,8 +6894,152 @@ function buildTheme(cs, mode){
     lip:  mixC(dark(t(cs.sand), 0.62), t(cs.rough), 0.26),
     bank: mixC(dark(t(cs.rough), 0.34), t(cs.water), 0.22),
     tl:   dark(t(cs.tree[1]), 0.12),
-    tl2:  dark(t(cs.tree[1]), 0.34)
+    tl2:  dark(t(cs.tree[1]), 0.34),
+    // the landmark on the skyline, lit like everything else on the course
+    lm:   cs.lm ? { kind: cs.lm, cols: cs.lmc.map(t), lamp: mode === 'night' } : null
   };
+}
+
+/* ---- landmarks ----
+   What a home course or a major is known by, standing on the skyline behind
+   every hole of it. Drawn once into the cached ridge, so it costs nothing a
+   frame. Units are pixels at the phone's size: about thirty tall, x across
+   from the middle, y up from the foot. m is the main colour, b the second,
+   a the accent; sh and dk are the main and second in shadow. */
+function drawLandmark(g, L, cx, by, s, haze, hz){
+  const H = c => mixC(c, haze, hz);
+  const m = H(L.cols[0]), b = H(L.cols[1]), a = H(L.cols[2]);
+  const sh = H(dark(L.cols[0], 0.26)), dk = H(dark(L.cols[1], 0.45));
+  const X = x => Math.round(cx + x*s), Y = y => Math.round(by - y*s);
+  const R = (x, y, w, h, col) => { g.fillStyle = col;
+    const x0 = X(x), y1 = Y(y);
+    g.fillRect(x0, Y(y + h), Math.max(1, X(x + w) - x0), Math.max(1, y1 - Y(y + h))); };
+  // a tapering block, row by row: w0 wide at the foot, w1 at the top
+  const T = (x, y, w0, w1, h, col) => { const n = Math.max(1, Math.round(h*s));
+    g.fillStyle = col;
+    for(let i = 0; i < n; i++){
+      const w = (w0 + (w1 - w0) * (n === 1 ? 0 : i/(n-1))) * s;
+      g.fillRect(Math.round(cx + x*s - w/2), Y(y) - 1 - i, Math.max(1, Math.round(w)), 1);
+    } };
+  const Ln = (x0, y0, x1, y1, col, th) => pxLine(g, cx + x0*s, by - y0*s, cx + x1*s, by - y1*s, col, th);
+  const glow = (x, y, r, col) => { g.globalAlpha = 0.35; pxCircle(g, X(x), Y(y), Math.max(1, r*s), col); g.globalAlpha = 1; };
+  switch(L.kind){
+    case 'windmill':
+      T(0, 0, 9, 5, 20, m); T(2.2, 0, 4.4, 2.4, 20, sh);
+      T(0, 20, 7, 2, 4, b);
+      R(-1, 0, 2, 4, dk); R(-0.6, 11, 1.2, 2, dk);
+      for(const ang of [0.35, 1.92, 3.49, 5.06]){
+        const ex = Math.cos(ang) * 13, ey = 20 + Math.sin(ang) * 13;
+        Ln(0, 20, ex, ey, a, Math.max(1, Math.round(s)));
+        Ln(Math.cos(ang + 0.16) * 4, 20 + Math.sin(ang + 0.16) * 4,
+           Math.cos(ang + 0.11) * 13, 20 + Math.sin(ang + 0.11) * 13, m, Math.max(1, Math.round(s)));
+      }
+      R(-0.8, 19.2, 1.6, 1.6, dk);
+      break;
+    case 'lighthouse':
+      T(0, 0, 18, 11, 3, H(dark(L.cols[0], 0.55)));
+      T(0, 3, 7, 4.5, 22, m);
+      for(const y of [3, 11, 19]){ const w = 7 - 2.5 * (y - 3) / 22;
+        T(0, y, w, w - 0.45, 4, b); }
+      T(1.6, 3, 2.2, 1.4, 22, H(mixC(dark(L.cols[0], 0.2), L.cols[1], 0.2)));
+      R(-3.5, 25, 7, 1, dk); R(-1.5, 26, 3, 3, a); T(0, 29, 5, 1, 2, dk);
+      glow(0, 27.5, 4, L.cols[2]);
+      if(L.lamp){ g.globalAlpha = 0.22; g.fillStyle = L.cols[2];
+        g.beginPath(); g.moveTo(X(0), Y(27.5)); g.lineTo(X(-40), Y(24)); g.lineTo(X(-40), Y(31)); g.fill();
+        g.globalAlpha = 1; }
+      break;
+    case 'castle':
+      R(-7, 0, 14, 14, m); R(2.5, 0, 4.5, 14, sh);
+      for(let x = -7; x < 7; x += 3) R(x, 14, 2, 2, x > 1 ? sh : m);
+      R(-12, 0, 5, 19, m); R(7, 0, 5, 19, sh);
+      for(const x of [-12, -9.5]) R(x, 19, 1.5, 2, m);
+      for(const x of [7, 10.5]) R(x, 19, 1.5, 2, sh);
+      R(-2.5, 14, 5, 9, m); R(1, 14, 1.5, 9, sh);
+      R(-2.5, 23, 1.5, 1.6, m); R(1, 23, 1.5, 1.6, sh);
+      R(-0.3, 24, 0.7, 6, dk); R(0.4, 27, 4, 2.4, a);
+      R(-2, 0, 4, 5, dk);
+      { const w = L.lamp ? H('#FFD66B') : dk;
+        R(-10, 13, 1, 2, w); R(9, 13, 1, 2, w); R(-0.5, 17, 1, 2, w); R(-4.5, 8, 1, 2, w); }
+      break;
+    case 'stones':
+      [[-13, 9], [-8, 11], [-2.5, 11.5], [3, 11.5], [8.5, 10]].forEach(([x, h]) => {
+        R(x, 0, 3.4, h, m); R(x + 2.2, 0, 1.2, h, sh); R(x, h - 1, 3.4, 1, a); });
+      R(-3.2, 11.5, 10, 2.2, m); R(-3.2, 13, 10, 0.8, a); R(4, 11.5, 2.8, 2.2, sh);
+      R(12.5, 0, 6, 2, sh); R(-18, 0, 3, 5, sh);
+      break;
+    case 'arch':
+      T(0, 0, 36, 30, 4, sh);
+      T(-9, 4, 7, 5, 18, m); T(9, 4, 7, 5, 18, sh);
+      R(-12, 21, 24, 6, m); R(-7, 20, 14, 1, m); R(-4.5, 19, 9, 1, m); R(4, 19, 8, 8, sh);
+      R(-12, 26.2, 24, 0.9, a);
+      break;
+    case 'pagoda':
+      for(let i = 0; i < 5; i++){
+        const y = i * 5.2, bw = 10 - i * 1.6, rw = bw + 5;
+        R(-bw/2, y, bw, 3.5, m); R(bw/2 - bw*0.3, y, bw*0.3, 3.5, sh);
+        R(-0.6, y + 0.4, 1.2, 1.8, dk);
+        T(0, y + 3.5, rw, bw + 1.5, 1.7, b);
+        R(-rw/2 - 0.8, y + 4.2, 1, 1, b); R(rw/2 - 0.2, y + 4.2, 1, 1, b);
+      }
+      R(-0.5, 26, 1, 6, a); R(-1, 30.5, 2, 1.5, a);
+      break;
+    case 'tower':
+      T(0, 0, 7.5, 6, 20, m); T(1.9, 0, 3, 2.4, 20, sh);
+      R(-0.5, 6, 1, 2.4, dk); R(-0.5, 13, 1, 2.4, dk); R(-1.2, 0, 2.4, 3.5, dk);
+      T(0, 20, 10, 0.6, 10, b); T(-1.4, 21, 3, 0.4, 7, a);
+      R(-0.3, 30, 0.6, 2, dk);
+      if(L.lamp) R(-0.5, 13, 1, 2.4, H('#FFD66B'));
+      break;
+    case 'volcano':
+      T(0, 0, 52, 9, 20, m); T(8, 0, 26, 3, 20, sh);
+      R(-4.5, 19.5, 9, 1, dk); R(-3, 19.2, 6, 1, a);
+      g.globalAlpha = 0.85;
+      Ln(-1, 19, -6, 8, a, 1); Ln(2, 19, 5, 11, a, 1); Ln(0, 19, 1, 14, a, 1);
+      g.globalAlpha = 1;
+      glow(0, 20, 5, L.cols[2]);
+      g.globalAlpha = 0.7;
+      [[1, 24, 2.5], [-1.5, 28, 3.2], [2.5, 32.5, 3.8], [6.5, 36, 4]].forEach(([x, y, r], i) =>
+        pxCircle(g, X(x), Y(y), Math.max(1, r*s), H(mixC('#8A8480', '#D8D4CE', i/4))));
+      g.globalAlpha = 1;
+      break;
+    case 'dome':
+      // it sits on a summit of its own, or the trees hide all but the top
+      T(0, 0, 34, 14, 10, sh); T(6, 0, 14, 5, 10, H(dark(L.cols[0], 0.4)));
+      by -= Math.round(10*s);
+      R(-9, 0, 18, 6, b); R(4, 0, 5, 6, H(dark(L.cols[1], 0.2)));
+      for(let yy = 0; yy <= 7; yy++){
+        const w = Math.sqrt(Math.max(0, 49 - yy*yy));
+        R(-w, 6 + yy, w*2, 1, m); R(w*0.35, 6 + yy, w*0.65, 1, sh);
+      }
+      R(-0.8, 7, 1.6, 6.5, a); Ln(0.6, 12, 5, 16, a, 1);
+      R(-7, 2, 1.2, 2, a); R(-4, 2, 1.2, 2, a); R(5.5, 2, 1.2, 2, a);
+      if(L.lamp) R(-0.8, 7, 1.6, 3, H('#FFD66B'));
+      break;
+    case 'spire':
+      T(-6, 0, 3.4, 0, 15, sh); T(6, 0, 3.6, 0, 18, m);
+      T(0, 0, 6.5, 0, 33, m); T(1.4, 0, 3.4, 0, 31, b);
+      R(-0.4, 12, 0.8, 16, a);
+      glow(0, 30, 4, L.cols[2]);
+      g.fillStyle = L.cols[2];
+      [[-4, 26], [5, 29], [-2, 35], [3, 23]].forEach(([x, y]) => g.fillRect(X(x), Y(y), 1, 1));
+      break;
+    case 'clock':
+      R(-15, 0, 30, 7, m); R(8, 0, 7, 7, sh);
+      T(0, 7, 32, 26, 2.2, b);
+      for(let x = -13; x < 12; x += 3.5) R(x, 2, 1.4, 2.6, L.lamp ? H('#FFD66B') : dk);
+      R(-1.2, 0, 2.4, 3.6, dk);
+      R(-3, 9, 6, 13, m); R(1.4, 9, 1.6, 13, sh);
+      pxCircle(g, X(0), Y(17.5), Math.max(1, 1.8*s), a);
+      g.fillStyle = dk; g.fillRect(X(0), Y(18.6), 1, Math.max(1, Math.round(s)));
+      T(0, 22, 7, 0.6, 7, b); R(-0.3, 29, 0.6, 2.5, a);
+      break;
+    case 'obelisk':
+      R(-5.5, 0, 11, 3, b); R(2.5, 0, 3, 3, dk);
+      T(0, 3, 4.6, 2.4, 25, m); T(1, 3, 2.2, 1.1, 25, sh);
+      T(0, 28, 2.6, 0.3, 3.4, a);
+      glow(0, 29.5, 3, L.cols[2]);
+      break;
+  }
 }
 // Trees are rebuilt in the course's own colours, so the Autumn Classic is
 // actually orange and the Azalea is actually in flower.
@@ -8694,9 +9014,16 @@ const Scene = {
     c.fillRect(0, y0 - 5 * TSC, VW, bandH);
     c.globalAlpha = a; c.fillStyle = PX.brass;
     const lw = Math.round(VW * 0.5 * Math.min(1, u / 0.25));
-    c.fillRect(CX - lw, y0 - 5 * TSC, lw * 2, 1); c.fillRect(CX - lw, y0 - 5 * TSC + bandH - 1, lw * 2, 1);
+    const rule = A.gold ? 2 : 1;
+    c.fillRect(CX - lw, y0 - 5 * TSC, lw * 2, rule); c.fillRect(CX - lw, y0 - 5 * TSC + bandH - rule, lw * 2, rule);
+    // a major gets glints running along its rules
+    if(A.gold) for(let i = 0; i < 6; i++){
+      const x = Math.round(CX - lw + ((i * 0.37 + A.t * 0.22) % 1) * lw * 2);
+      c.fillStyle = '#FFF6D8';
+      c.fillRect(x, y0 - 5 * TSC + (i & 1 ? bandH - rule : 0), 2, rule);
+    }
     drawTextS(c, A.name, CX, y0, PX.brass, big, 'c');
-    drawTextS(c, A.sub, CX, y0 + lh + 2 * TSC, PX.bone, TSC, 'c');
+    drawTextS(c, A.sub, CX, y0 + lh + 2 * TSC, A.gold ? '#FFE9A8' : PX.bone, TSC, 'c');
     c.globalAlpha = 1;
   },
   // The caddie is a fairy now: a third of the golfer's height, on little
@@ -9812,6 +10139,14 @@ Object.assign(Scene, {
       }
     }
 
+    // The landmark, standing on the near foothills. Where it stands moves
+    // hole to hole, the way a real one would as the holes turn about it.
+    if(T.lm){
+      const lr = seeded(hash32(this.hole*131 + 7));
+      drawLandmark(g, T.lm, Math.round(VW*(0.24 + lr()*0.52)), HORIZON - Math.round(VH*0.03),
+                   Math.max(1, VH/215), T.sky[4], 0.22);
+    }
+
     // Treeline. A wood at that distance is one dark mass with a broken top
     // edge, so it is drawn as a band with conifers standing out of it. Built
     // from two rows of boxes before, which is what it looked like. Keyed to
@@ -9883,6 +10218,15 @@ Object.assign(Scene, {
         x += Math.max(2, Math.round(w*0.55) - Math.floor(rnd()*2));
       }
     }
+    // The foot of the wood runs down into the field in front of it. Cut off
+    // square, a wood in a colour the grass is not -- the Blossom's cherry
+    // trees -- was a ruled line straight across the frame on a flat hole.
+    g.fillStyle = air(T.rg[0]);
+    for(let k = 0; k < 5; k++){
+      g.globalAlpha = (k + 1) / 6;
+      g.fillRect(0, base - 2 + k, VW, 1);
+    }
+    g.globalAlpha = 1;
     this.wood = cv; this.woodBase = base;
   },
 
@@ -11530,7 +11874,7 @@ function renderSkills(){
 // Depths redraw on the key timer, and a class on the element is gone the next
 // time they do.
 const dgnOpen = {};
-let cardHintOpen = false;
+let cardHintOpen = false, majHintOpen = false;
 function renderDgn(){
   const w = $('dgnRows'); w.innerHTML = '';
   const D = derive();
@@ -11718,7 +12062,9 @@ function renderTour(){
   $('cardNote').textContent = played + ' of ' + (B.ROUND*B.DAYS) + '\u00a0holes';
   $('cardBox').innerHTML =
     '<div class="row"><div><div class="nm">' + eventName(t) + '</div>'
-    + '<div class="ds">' + dayName(S.hole) + ' \u00b7 hole ' + holeInRound(S.hole)
+    + '<div class="ds">' + (isWeekMajor(t) ? '<b style="color:var(--brass)">Major of the Week</b> \u00b7 '
+        : courseFor(t).slot === 'home' ? 'Home course \u00b7 ' : '')
+    + dayName(S.hole) + ' \u00b7 hole ' + holeInRound(S.hole)
     + '</div></div></div>'
     + '<div class="lb"><span class="p"></span><span>Through ' + played + '</span>'
     + '<span class="s">' + fm(S.tourScore) + '</span></div>'
@@ -11738,6 +12084,7 @@ function renderTour(){
     + '<div class="lb"><span class="p"></span><span>Purse if it holds</span>'
     + '<span class="s">' + payShare(proj, target).toFixed(2) + 'x</span></div>';
 
+  renderMajor();
   $('cupNote').textContent = 'Season ' + (Math.floor((t-1)/B.SEASON)+1);
   $('statRows').innerHTML = [
     ['Cups won', fmt(S.cups)],
@@ -11750,6 +12097,40 @@ function renderTour(){
     ['Purse per second', fmt(Meter.rate())],
     ['Total carry', fmt(D.dps) + ' yds/s']
   ].map(([k,v]) => '<div class="lb"><span class="p"></span><span>' + k + '</span><span class="s">' + v + '</span></div>').join('');
+}
+
+// This week's major: which it is, where it stands, what it pays, how long is
+// left. The rules are behind the ?.
+function majorState(){
+  const wk = weekNow(), W = S.weekly && S.weekly.wk === wk ? S.weekly : null;
+  const cs = W ? courseById(W.id) : weekMajor(wk);
+  const st = W && W.done ? (W.won ? 'won' : 'played')
+    : W && W.t && W.t === tournamentOf(S.hole) ? 'live'
+    : (S.eventsPlayed || 0) < 1 ? 'early' : 'next';
+  return { cs, st, prize: styleDef('o', cs.prize) };
+}
+function renderMajor(){
+  const box = $('majBox'); if(!box) return;
+  const M = majorState(), got = styleOwned('o', M.cs.prize);
+  const lb = (k, v, col) => '<div class="lb"><span class="p"></span><span>' + k + '</span>'
+    + '<span class="s"' + (col ? ' style="color:var(' + col + ')"' : '') + '>' + v + '</span></div>';
+  const say = { won: '<b style="color:var(--brass)">Won</b>', played: 'Played this week',
+                live: '<b style="color:var(--aurora)">In play now</b>', next: 'Your next event',
+                early: 'After your first event' }[M.st];
+  const left = weekLeft();
+  $('majNote').textContent = 'new in ' + (left > 86400
+    ? Math.floor(left/86400) + 'd ' + Math.floor(left%86400/3600) + 'h' : hms(left));
+  box.innerHTML = '<div class="hint" id="majHint"><div class="foldhead">'
+    + '<span><b>' + M.cs.n + '</b> \u00b7 ' + say + '</span>'
+    + '<button class="qm" aria-label="How the major works">?</button></div>'
+    + '<div class="fold" style="margin-top:6px">One a week, Monday to Sunday: it takes the first event you tee '
+    + 'off that week. Beat the target on your highest card to win its jacket, for you and your caddie. '
+    + 'Win all four for the Grand Slam.</div></div>'
+    + lb('Prize', M.prize.n + (got ? ' \u00b7 yours' : '') + ' \u00b7 +' + B.WEEK_WIN_SOV + sovIc(), '--brass')
+    + lb('Majors won', Object.keys(S.majorWins || {}).length + ' of ' + COURSE_WEEK.length);
+  const q = box.querySelector('#majHint .qm');
+  $('majHint').classList.toggle('open', majHintOpen);
+  q.onclick = () => { majHintOpen = !majHintOpen; $('majHint').classList.toggle('open', majHintOpen); };
 }
 
 // The three figures a climb actually turns on, which the screen has never shown:
@@ -12027,7 +12408,9 @@ const DEV = {
     // every course by name, events first, then the majors and the finale
     const cBtn = c => b(c.n.replace(/^The /, '').split(' ')[0], 'DEV.course(' + B.COURSE.indexOf(c) + ')');
     h += row('Course', B.COURSE.filter(c => c.slot === 'event').map(cBtn).join(''));
-    h += row('Majors and finale', B.COURSE.filter(c => c.slot !== 'event').map(cBtn).join(''));
+    h += row('Majors and finale', B.COURSE.filter(c => c.slot === 'major' || c.slot === 'finale').map(cBtn).join(''));
+    h += row('Home courses', B.COURSE.filter(c => c.slot === 'home').map(cBtn).join(''));
+    h += row('Majors of the week', B.COURSE.filter(c => c.slot === 'weekly').map(cBtn).join(''));
 
     h += row('Conditions', b('reroll', 'DEV.chaos()') + b('night', 'DEV.weather(3)')
       + b('crosswind', 'DEV.weather(1)') + b('fair', 'DEV.weather(0)')
@@ -12104,8 +12487,14 @@ const DEV = {
   cards(n){ S.tierMax = clamp((S.tierMax||0) + n, 0, B.TIER_MAX); this.re(); },
   course(i){ const cs = B.COURSE[i]; if(!cs) return;
     // walk the schedule forward to the next event on that course
+    // the calendar never names a home course or a major of the week, so for
+    // those the next event is simply put on there
+    let at = 0;
     for(let t = tournamentOf(S.hole); t < tournamentOf(S.hole) + 40; t++)
-      if(courseFor(t).id === cs.id){ S.hole = (t-1)*B.ROUND*B.DAYS + 1; break; }
+      if(calendarCourse(t).id === cs.id){ at = t; break; }
+    if(!at) at = tournamentOf(S.hole) + 1;
+    S.hole = (at-1)*B.ROUND*B.DAYS + 1;
+    S.evCourse = { t: at, id: cs.id };
     S.scores = []; S.tourScore = 0; Scene.dFloor = -1; startHole(); this.re(); },
   weather(i){ S.chaosBump = (S.chaosBump||0); 
     for(let k=0;k<60;k++){ S.chaosBump++; if(chaosFor(S.hole,S.tier).n === B.CHAOS[i].n) break; }

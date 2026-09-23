@@ -333,8 +333,10 @@ module.exports = {
     // played. Over a long run of the schedule, every course has to come up,
     // and the regular ones about equally often.
     const sched = await page.evaluate(() => {
-      const c = {}; B.COURSE.forEach(x => c[x.id] = 0);
-      for (let t = 1; t <= 60 * B.SEASON; t++) c[courseFor(t).id]++;
+      // the calendar's own courses; home courses and the majors of the week
+      // are put on by the player's card and the clock, and checked in majors
+      const c = {}; B.COURSE.filter(x => x.slot !== 'home' && x.slot !== 'weekly').forEach(x => c[x.id] = 0);
+      for (let t = 1; t <= 60 * B.SEASON; t++) c[calendarCourse(t).id]++;
       const reg = B.COURSE.filter(x => x.slot === 'event').map(x => c[x.id]);
       return { never: Object.keys(c).filter(k => !c[k]), regMin: Math.min(...reg), regMax: Math.max(...reg),
                n: B.COURSE.length };

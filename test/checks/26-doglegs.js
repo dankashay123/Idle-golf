@@ -104,9 +104,10 @@ module.exports = {
             S.elapsed = 5; finishHole(derive()); return Scene.announce ? Scene.announce.name : null; };
           QUIET = false;
           S.courseSeen = tournamentOf(72);
-          o.ann = { next: at(73), again: at(74) };
+          o.ann = { next: at(73) };
+          o.ann.want = courseFor(tournamentOf(73)).n;   // whatever that event opened on
+          o.ann.again = at(74);
           QUIET = true; o.ann.quiet = at(145); QUIET = false;
-          o.ann.want = courseFor(tournamentOf(73)).n;
           o.ann.fly = typeof Scene.flyStart;
           QUIET = true; S.courseSeen = seen; S.hole = keepH; startHole();
         }
