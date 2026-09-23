@@ -8833,11 +8833,6 @@ function effectLabel(u){
   if(u.k === 'mst') return '+' + (lv*B.MST_ADD[u.id]*100).toFixed(1) + 'pp';
   return '\u00d7' + Math.pow(u.g, lv).toFixed(2);
 }
-// hms is happy to print "222222222222222200h 13m", and the deepest rungs cost
-// that much at a starting purse. Past a day the wait is not something you sit
-// out, so it says nothing at all: "over a day" on nine rungs running was nine
-// lines of the same non-answer.
-const untilTxt = w => w >= 86400 ? '' : hms(Math.max(1, w));
 function refreshUpg(){
   // Every rung is on show from the first minute. Hiding them made the ladder
   // look shorter than it is, and rows that came and went with your balance
@@ -8859,13 +8854,10 @@ function refreshUpg(){
     : 'Playing the card as it lies';
 
   // The range used to carry a line of its own at the top naming the cheapest
-  // rung in reach and the next one after it. Two sentences of prose over a list
-  // that was already telling you the same thing one row at a time, and it read
-  // as clutter. The one part the list could not say goes on the row it is about
-  // instead: a rung whose button is grey says how long the purse needs to light
-  // it. Not what it costs -- the button has that, so "at 73.2M" would only be
-  // the same number twice.
-  const rate = Meter.rate();
+  // rung in reach. That goes on the row it is about instead: a rung whose
+  // button is grey says what purse lights it. It said how long the purse
+  // needed, but an estimate off the current income moves every second and
+  // read as a lock with a timer on it; the price is the actual condition.
 
   for(const r of UPGREF){
     const u = r.u, lv = upgLv(u.id), cap = capOf(u);
@@ -8875,11 +8867,9 @@ function refreshUpg(){
     // The wait is to the price the button is actually asking for, so it tracks
     // the multiplier: on x10 it is how long until ten of them, not one.
     const ok = !maxed && S.gold >= c && k > 0;
-    const wait = (!maxed && !ok && rate > 0) ? (c - S.gold) / rate : Infinity;
     r.mt.innerHTML = 'Lv <i>' + lv + (isFinite(cap) ? '/' + cap : '') + '</i> \u00b7 <b>'
       + effectLabel(u) + '</b>'
-      + (isFinite(wait) && untilTxt(wait) ? ' \u00b7\u00a0<u>unlocks in '
-          + untilTxt(wait) + '</u>' : '');
+      + (!maxed && !ok ? ' \u00b7\u00a0<u>unlocks when you have\u00a0' + fmt(c) + '</u>' : '');
     if(maxed){
       r.btn.className = 'buy max'; r.lbl.textContent = 'Capped'; r.amt.textContent = '\u2014';
     }else{

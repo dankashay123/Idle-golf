@@ -205,14 +205,12 @@ module.exports = {
       S.gold = 0;     out.rngBroke = rows();
       S.gold = 1e30;  out.rngRich  = rows();
       DEV.maxCapped(); S.gold = 0; out.rngCapped = rows();
-      out.rngRate = Meter.rate();
       out.rngMults = MULTS.length;
       // what the note claims, read back through the same clock the rest of the
       // game prints times with
-      // past a day the row says nothing on purpose, so that is what is wanted
-      out.rngWant = out.rngBroke.map(r2 => (r2.maxed || !untilTxt(r2.cost / 100)) ? ''
-        : 'unlocks in ' + untilTxt(r2.cost / 100));
-      out.rngFar = out.rngBroke.filter((r2, i) => !r2.maxed && !out.rngWant[i]).length;
+      // the purse that lights the button, at the price the button asks
+      out.rngWant = out.rngBroke.map(r2 => r2.maxed ? ''
+        : 'unlocks when you have\u00a0' + fmt(r2.cost));
       // and the button charges for what it says it sells, at every multiplier
       DEV.clearUpg();
       out.rngBuy = [];
@@ -392,41 +390,30 @@ module.exports = {
     // ---- the Range rows carry their own wait --------------------------
     // The summary line above the list is gone, so the thing it used to say --
     // which rung is next and how long the purse needs -- has to be on the rows
-    // or it is nowhere. Three states: grey rungs say when, lit rungs say
-    // nothing because you can buy them now, capped rungs say nothing because
-    // there is nothing left to wait for.
-    if (r.rngRate !== 100)
-      throw new Error('the clock this is measured against reads ' + r.rngRate
-        + ' purse/sec, not the 100 it was set to, so the times mean nothing');
+    // or it is nowhere. Three states: grey rungs say what purse lights them,
+    // lit rungs say nothing because you can buy them now, capped rungs say
+    // nothing because there is nothing left to wait for. It used to be a time
+    // off the current income, which moved every second and read as a lock
+    // with a countdown on it.
     if (!(r.rngBroke.length > 10))
       throw new Error('only ' + r.rngBroke.length + ' rungs on the range to look at');
     const missing = r.rngBroke.filter((x, i) => r.rngWant[i] && !x.note);
     if (missing.length)
-      throw new Error(missing.length + ' rung(s) within a day of affordable say nothing about '
-        + 'when: ' + missing.slice(0, 4).map(x => x.n).join(', ')
-        + '. With the line at the top gone, a grey button with no wait on it is a dead end.');
-    // and past a day it says nothing, because "over a day" is not an answer you
-    // can sit out -- it was nine rungs running saying the same non-answer
-    const noisy = r.rngBroke.filter((x, i) => !x.maxed && !r.rngWant[i] && x.note);
-    if (noisy.length)
-      throw new Error(noisy.length + ' rung(s) more than a day out still carry a wait: '
-        + noisy[0].n + ' says "' + noisy[0].note + '"');
-    if (!(r.rngFar > 3))
-      throw new Error('only ' + r.rngFar + ' rung(s) are more than a day out, so the quiet case '
-        + 'is barely tested');
+      throw new Error(missing.length + ' rung(s) you cannot afford say nothing about when they '
+        + 'unlock: ' + missing.slice(0, 4).map(x => x.n).join(', '));
     const wrong = r.rngBroke.map((x, i) => [x, r.rngWant[i]])
       .filter(([x, want]) => !x.maxed && x.note !== want);
     if (wrong.length)
       throw new Error(wrong.length + ' rung(s) print the wrong wait: '
         + wrong.slice(0, 3).map(([x, want]) => x.n + ' says "' + x.note
-          + '" for ' + Math.round(x.cost) + ' purse at 100/sec, which is "' + want + '"')
+          + '" for a price of ' + Math.round(x.cost) + ', which is "' + want + '"')
           .join('; '));
     const lit = r.rngBroke.filter(x => x.lit);
     if (lit.length)
       throw new Error(lit.length + ' rung(s) are lit up as buyable on an empty purse');
     const stillWaiting = r.rngRich.filter(x => x.note);
     if (stillWaiting.length)
-      throw new Error(stillWaiting.length + ' rung(s) still say "unlocks in" with the purse '
+      throw new Error(stillWaiting.length + ' rung(s) still say "unlocks when" with the purse '
         + 'big enough to buy every one of them: ' + stillWaiting[0].n + ' says "'
         + stillWaiting[0].note + '"');
     if (r.rngRich.filter(x => !x.maxed && !x.lit).length)
@@ -609,7 +596,7 @@ module.exports = {
       'range: ' + r.rngBroke.filter(x => x.note).length + ' of ' + r.rngBroke.length
       + ' rungs say when on an empty purse ("' + (r.rngBroke.find(x => x.note) || {}).note
       + '" ... "' + (r.rngBroke.filter(x => x.note).pop() || {}).note
-      + '"), the ' + r.rngFar + ' past a day say nothing, none do with the purse full, '
+      + '"), none do with the purse full, '
       + 'none when capped; ' + r.rngBuy.length
       + ' buy buttons across ' + r.rngMults + ' multipliers all charge for what they name',
       'retirement before the first event: ' + P.now + ' legacy, +' + P.card + ' a card, +'
