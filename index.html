@@ -2721,9 +2721,27 @@ const B = {
     { id:'runs',   m:'runs',   v:3,   d:'Play 3 wagers' },
     { id:'nines',  m:'nines',  v:2,   d:'Win 2 nine goals' },
     { id:'eagle',  m:'eagle',  v:15,  d:'Card 15 eagles or better', lv:15 },
-    { id:'perk',   m:'perks',  v:1,   d:'Use a sponsor perk', lv:15 }
+    { id:'perk',   m:'perks',  v:1,   d:'Use a sponsor perk', lv:15 },
+    { id:'rival',  m:'rivals', v:1,   d:'Beat your rival' }
   ],
   DAILY_SOV: 8, DAILY_ALL: 20, DAILY_STREAK: 5, DAILY_STREAK_MAX: 6,
+
+  /* ---- the rival ----
+     One named golfer per event, playing the same four days. Their total is
+     set when the event starts, off your own recent form -- the average of
+     your last few finished cards, a little better or a little worse -- so they
+     are there to be beaten about half the time whatever card you are on. They
+     play it out hole by hole alongside you. Beating them pays sovereigns.
+     Measured over eight seeds of three hours played for real (192 events):
+     centred on form alone they were beaten 35% of the time, because a card's
+     holes grow across its events and each card tends to score worse than the
+     last. RIVAL_EASE leans them 3% softer, which lands at 52% overall; by
+     seed it runs from about a quarter for a player falling behind the card
+     to four in five for one pulling away, which is the point of a rival. */
+  RIVALS: ['Hamish Kerr', 'Ines Duarte', 'Tomas Lindqvist', 'Nell Okafor', 'Callum Reid',
+           'Priya Nair', 'Rafael Soto', 'Freya Holm', 'Kwame Asante', 'Lena Vogel',
+           'Owen Pryce', 'Sofia Marchetti'],
+  RIVAL_SPREAD: 0.08, RIVAL_SOV: 10, RIVAL_FORM: 0.5, RIVAL_EASE: 0.03,
   ACH_REP: [
     { id:'rHoles', n:'Steady Hand',    d:'every 100 holes', m:'holes',  step:100, sov:2 },
     { id:'rBird',  n:'Birdie Watch',   d:'every 50 birdies', m:'birdie', step:50,  sov:2 },
@@ -3075,7 +3093,8 @@ function defaultState(){ return {
   swingT: 0, frost: 0, burn: 0, burnT: 0, buff: {},
   scores: [], mult: 1,
   nine: null, bestNine: undefined, ninesWon: 0,
-  styleOwn: {}, outfit: 'classic', trail: 'plain'
+  styleOwn: {}, outfit: 'classic', trail: 'plain',
+  rival: null, form: undefined
 }; }
 let S = defaultState();
 function initState(){
@@ -3124,6 +3143,9 @@ function initState(){
   if(S.daily && (typeof S.daily !== 'object' || !Array.isArray(S.daily.picks)
      || S.daily.picks.length !== 3 || !S.daily.picks.every(dailyDef)
      || !Array.isArray(S.daily.done) || !S.daily.base)) delete S.daily;
+  if(S.rival && (typeof S.rival !== 'object' || !isFinite(S.rival.total)
+     || B.RIVALS.indexOf(S.rival.n) < 0)) S.rival = null;
+  if(S.form !== undefined && !isFinite(S.form)) S.form = undefined;
   if(!S.styleOwn || typeof S.styleOwn !== 'object') S.styleOwn = {};
   if(!styleOwned('o', S.outfit)) S.outfit = 'classic';
   if(!styleOwned('t', S.trail)) S.trail = 'plain';
@@ -3692,6 +3714,7 @@ const courseElFor = (h, tier) => {
   return n % 5 === 4 ? null : B.ELEM[n % B.ELEM.length].id;   // one round in five plays neutral
 };
 function startHole(){
+  rivalNow();          // the event's rival exists from its first hole, seen or not
   S.courseEl = courseElFor(S.hole, S.tier);
   const D = derive();
   S.chaos = chaosFor(S.hole, S.tier);
@@ -5013,6 +5036,20 @@ function advanceHole(){
     S.scores = [];
   }
 }
+// This event's rival, made the first time anyone asks during it. Seeded by the
+// event, so a reload is the same golfer on the same total. Form is the running
+// average of your finished cards; before you have one, the event's target.
+function rivalNow(){
+  const t = tournamentOf(S.hole);
+  if(S.rival && S.rival.t === t) return S.rival;
+  const rnd = seeded(hash32(t * 6151 + 29));
+  const form = S.form !== undefined ? S.form : eventTarget();
+  const f = (1 + (rnd() * 2 - 1) * B.RIVAL_SPREAD) * (1 - B.RIVAL_EASE);
+  return S.rival = { t, n: B.RIVALS[hash32(t * 131 + 7) % B.RIVALS.length],
+                     total: Math.round(form * f) };
+}
+// where they stand after the same number of holes you have played
+const rivalThru = (R, played) => Math.round(R.total * played / (B.ROUND * B.DAYS));
 function endTournament(){
   const t = tournamentOf(S.hole - 1);
   const score = S.tourScore, target = eventTarget();
@@ -5036,12 +5073,24 @@ function endTournament(){
   // that has not yet finished a round in anger.
   if(!OFFLINE && score < (S.bestRound === undefined ? 1e9 : S.bestRound)) S.bestRound = score;
 
+  // The rival. A catch-up posts level par for every event it resolves, so
+  // there is no card to hold against them and no form to learn from.
+  const Rv = S.rival && S.rival.t === t ? S.rival : null;
+  const rivalBeat = !OFFLINE && Rv && score < Rv.total;
+  if(!OFFLINE){
+    if(rivalBeat){ bump('rivals'); grantSov(B.RIVAL_SOV, null, true); }
+    S.form = S.form === undefined ? score : S.form * (1 - B.RIVAL_FORM) + score * B.RIVAL_FORM;
+  }
+
   const fm = n => n === 0 ? 'E' : n > 0 ? '+' + n : String(n);
   showSheet('<h3>' + eventName(t) + '</h3>'
     + '<p>' + (beat ? 'You beat the number.' : 'Card posted.') + '</p>'
     + '<div class="big">' + fm(score) + '</div>'
     + '<ul><li>Target: ' + fm(Math.round(target)) + (beat ? ' \u2014 <b style="color:var(--brass)">beaten</b>'
         : ' \u2014 missed by ' + Math.ceil(score - target)) + '</li>'
+    + (Rv && !OFFLINE ? '<li>' + Rv.n + ': ' + fm(Rv.total) + (rivalBeat
+        ? ' \u2014 <b style="color:var(--brass)">beaten, +' + B.RIVAL_SOV + sovIc() + '</b>'
+        : score === Rv.total ? ' \u2014 tied' : ' \u2014 lost by ' + (score - Rv.total)) + '</li>' : '')
     + '<li>Best card: ' + fm(S.bestRound) + '</li>'
     + '<li>Prize money: ' + fmt(cash) + ' (' + share.toFixed(2) + 'x)</li>'
     + '<li>Cup points: ' + fmt(pts) + '</li>'
@@ -9582,6 +9631,12 @@ function renderTour(){
     + fm(proj) + '</span></div>'
     + '<div class="lb"><span class="p"></span><span>Target</span>'
     + '<span class="s" style="color:var(--brass)">' + fm(Math.round(target)) + '</span></div>'
+    + (() => { const Rv = rivalNow(), rt = rivalThru(Rv, played), ahead = S.tourScore < rt;
+        return '<div class="lb"><span class="p"></span><span>' + Rv.n + ' \u00b7 rival</span>'
+          + '<span class="s">' + fm(rt) + ' \u00b7 <b style="color:'
+          + (S.tourScore === rt ? 'var(--chalk)">level' : ahead ? 'var(--aurora)">up\u00a0' + (rt - S.tourScore)
+                                 : 'var(--flag)">down\u00a0' + (S.tourScore - rt))
+          + '</b></span></div>'; })()
     + '<div class="lb"><span class="p"></span><span>Best card posted</span>'
     + '<span class="s">' + (S.bestRound === undefined ? '\u2014' : fm(S.bestRound)) + '</span></div>'
     + '<div class="lb"><span class="p"></span><span>Purse if it holds</span>'
