@@ -10,6 +10,12 @@
  *   - "Try it" wears a look for ten seconds without buying it: nothing is
  *     spent, nothing is saved, and when it runs out he is back in his own
  *   - the shop lists every look exactly once, each with its own picture
+ *   - every trail and ball can be seen: one in flight has to paint at least
+ *     four times the pixels the plain ball does, and draw in under 0.5ms.
+ *     The colour trails were three one-pixel dots behind the ball; the
+ *     Rainbow painted about as much as the plain ball and nobody could tell
+ *     it was on. Its six bands were then stacked down the screen, along a
+ *     flight that runs up it, and landed on one line.
  */
 'use strict';
 module.exports = {
@@ -48,6 +54,31 @@ module.exports = {
           } catch (e) { o.errs.push(d.id + ': ' + e.message); }
         }
         S.trail = 'plain'; Scene.balls.length = 0;
+
+        // ---- a trail you can see, at a price you can afford ------------------
+        // pixels painted by one ball in flight, a third of the way out, and
+        // the time to draw it, for every look against the plain ball
+        o.paint = {}; o.tcost = {};
+        {
+          const real = Math.random;
+          const painted = () => { const g = Scene.b.getImageData(0, 0, VW, VH).data; let n = 0;
+            for (let i = 3; i < g.length; i += 4) if (g[i]) n++; return n; };
+          for (const d of B.TRAILS) {
+            S.styleOwn['t:' + d.id] = 1; S.trail = d.id;
+            let n = 0;
+            for (const u of [0.2, 0.3, 0.4]) {
+              Scene.balls.length = 0; Scene.pendingBall = { crit: false, el: null, dmg: 5 };
+              Math.random = () => 0.5; Scene.launch(); Math.random = real;
+              Scene.balls.forEach(b => { b.t = b.dur * u; });
+              Scene.b.clearRect(0, 0, VW, VH); Scene.t = 2 + u; Scene.drawBalls(0); n += painted();
+            }
+            o.paint[d.id] = n / 3;
+            const t0 = performance.now();
+            for (let i = 0; i < 200; i++) { Scene.balls.forEach(b => { b.t = b.dur * 0.3; }); Scene.t += 0.016; Scene.drawBalls(0); }
+            o.tcost[d.id] = (performance.now() - t0) / 200;
+          }
+          S.trail = 'plain'; Scene.balls.length = 0;
+        }
 
         // ---- none is expensive -----------------------------------------------
         o.cost = {};
@@ -104,9 +135,18 @@ module.exports = {
     if (r.noPic || r.samePic) throw new Error(r.noPic + ' looks have no picture and ' + r.samePic + ' share one');
     if (r.tries < r.want - 2) throw new Error('only ' + r.tries + ' looks offer "Try it"');
 
+    const faint = Object.entries(r.paint).filter(([k, v]) => k !== 'plain' && !(v >= r.paint.plain * 4));
+    if (faint.length) throw new Error('these trails are hard to see: ' + faint.map(([k, v]) => k + ' paints '
+      + Math.round(v) + ' pixels').join(', ') + ' against ' + Math.round(r.paint.plain) + ' for the plain ball; a look has to be at least four times that');
+    const tslow = Object.entries(r.tcost).filter(([, v]) => v > 0.5);
+    if (tslow.length) throw new Error('trails over 0.5ms a ball: ' + tslow.map(([k, v]) => k + ' ' + v.toFixed(2) + 'ms').join(', '));
     const worst = Object.entries(r.cost).sort((a, b) => b[1] - a[1])[0];
+    const dim = Object.entries(r.paint).filter(([k]) => k !== 'plain').sort((a, b) => a[1] - b[1])[0];
+    const tw = Object.entries(r.tcost).sort((a, b) => b[1] - a[1])[0];
     return ['every effect skin and ball draws something its colours alone do not',
       'dearest per frame ' + worst[0] + ' at ' + worst[1].toFixed(2) + 'ms (budget 1.5ms)',
+      'every trail and ball at least 4x the plain ball on screen (faintest ' + dim[0] + ' at '
+        + (dim[1] / r.paint.plain).toFixed(1) + 'x), dearest ' + tw[0] + ' at ' + tw[1].toFixed(2) + 'ms a ball',
       '"Try it" wears a look for ten seconds, spends nothing, saves nothing, and takes it off',
       'the Style tab lists all ' + r.want + ' looks once, each with its own picture'];
   }

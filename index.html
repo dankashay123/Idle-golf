@@ -3036,11 +3036,13 @@ const B = {
   ],
   TRAILS: [
     { id:'plain',   n:'Plain',   cost:0,    cols:['#F4F6EF'] },
-    { id:'gold',    n:'Gold',    cost:150,  cols:['#E3B457'] },
-    { id:'aurora',  n:'Aurora',  cost:250,  cols:['#57E0BE'] },
-    { id:'ember',   n:'Ember',   cost:250,  cols:['#F07A3A'] },
-    { id:'mythic',  n:'Mythic',  cost:500,  cols:['#C68BFF'] },
-    { id:'rainbow', n:'Rainbow', cost:1000, cols:['#E4574A', '#E3B457', '#7ADB86', '#57A5C2', '#C68BFF'] },
+    // trails: a ribbon behind the ball, which keeps its affinity's colour
+    { id:'gold',    n:'Gold',    cost:150,  fx:'tGold',    cols:['#E3B457'] },
+    { id:'aurora',  n:'Aurora',  cost:250,  fx:'tAurora',  cols:['#57E0BE'] },
+    { id:'ember',   n:'Ember',   cost:250,  fx:'tEmber',   cols:['#F07A3A'] },
+    { id:'mythic',  n:'Mythic',  cost:500,  fx:'tMythic',  cols:['#C68BFF'] },
+    { id:'rainbow', n:'Rainbow', cost:1000, fx:'tRainbow', cols:['#E4574A', '#E3B457', '#7ADB86', '#57A5C2', '#C68BFF'] },
+    { id:'seraph',  n:'Seraph Wake', cost:2000, fx:'tSeraph', cols:['#FFF6D8', '#FFD66B'], top:1 },
     // balls: more than a colour
     { id:'duck',     n:'Rubber Duck', cost:400,  fx:'duck',      cat:'ball', cols:['#FFD84A'] },
     { id:'hearts',   n:'Hearts',      cost:500,  fx:'hearts',    cat:'ball', cols:['#FF4F7A'] },
@@ -5501,6 +5503,9 @@ function outfitUrl(o){
 }
 // the balls with an effect get a picture of their own
 const BALL_ICON = {
+  tSeraph:  { rows:['....YYYY....','...Y....Y...','....YYYY....','.WWW....WWW.','WWwW.BB.WwWW','.WW..BB..WW.',
+                    '....o.......','...o....F...','..o.........','.o.....F....','o...........','............'],
+              map:{ Y:'#FFD66B', W:'#FFFFFF', w:'#E8DCC0', B:'#FFF6D8', o:'#FFE7A3', F:'#FFFFFF' } },
   godlight: { rows:['......Y.....','.....YWY....','......Y.....','.....o......','....o.......','...o........','..o.........','.o..........','o...........','............','............','............'],
               map:{ Y:'#FFD66B', W:'#FFFFFF', o:'#E3B457' } },
   comet:    { rows:['............','........WW..','.......WWYY.','......YYOO..','.....OOR....','....ORR.....','...RR.......','..R.........','.r..........','............','............','............'],
@@ -5524,12 +5529,20 @@ function trailUrl(t){
     try{ return DOMSPR[key] = makeSprite(BALL_ICON[t.fx].rows, BALL_ICON[t.fx].map).cv.toDataURL(); }
     catch(e){ return DOMSPR[key] = ''; }
   }
+  // A ribbon two pixels thick, or one band per colour stacked like the trail
+  // itself. It was a one-pixel dotted line, as hard to see as the trail was.
   try{
     const cv = document.createElement('canvas'); cv.width = cv.height = 12;
-    const g = cv.getContext('2d');
-    const path = [[1,10],[2,8],[3,6],[4,5],[5,4],[6,3],[7,3],[8,3]];
-    path.forEach(([x, y], i) => { g.fillStyle = t.cols[i % t.cols.length]; g.fillRect(x, y, 1, 1); });
-    g.fillStyle = '#F4F6EF'; g.fillRect(9, 2, 2, 2);
+    const g = cv.getContext('2d'), n = t.cols.length;
+    if(n > 2){
+      const path = [[0,7],[1,6],[2,6],[3,5],[4,5],[5,4],[6,4],[7,3],[8,3]];
+      path.forEach(([x, y]) => t.cols.forEach((col, k) => { g.fillStyle = col; g.fillRect(x, y + k, 1, 1); }));
+      g.fillStyle = '#F4F6EF'; g.fillRect(9, 4, 2, 2);
+    }else{
+      const path = [[0,10],[1,9],[2,8],[3,7],[4,6],[5,5],[6,4],[7,4],[8,3]];
+      path.forEach(([x, y]) => { g.fillStyle = t.cols[0]; g.fillRect(x, y, 2, 2); });
+      g.fillStyle = '#F4F6EF'; g.fillRect(9, 2, 2, 2);
+    }
     return DOMSPR[key] = cv.toDataURL();
   }catch(e){ return DOMSPR[key] = ''; }
 }
@@ -7630,9 +7643,158 @@ const STYLEFX = {
   }
 };
 
+// The trails. They were three one-pixel dots a few frames behind the ball --
+// the Rainbow put one of its five colours on each, and nobody could tell it
+// was on. Each is a ribbon now, the ball's width or more, drawn through the
+// same path as the balls below, with something of its own on top. The ball
+// keeps its affinity's colour: that is information, the trail is taste.
+function trailBall(c, b, p, r){
+  c.globalAlpha = 1;
+  c.fillStyle = b.crit ? PX.brass : b.el ? (PX[b.el] || PX.white) : PX.white;
+  c.fillRect(Math.round(p.x - r), Math.round(p.y - r), r * 2, r * 2);
+  if(r > 1){ c.fillStyle = PX.white; c.fillRect(Math.round(p.x - r), Math.round(p.y - r), 1, 1); }
+}
+// Across the flight, not down the screen: a ball goes away from the camera,
+// so its path runs up the screen, and bands stacked vertically all landed on
+// the same line -- the Rainbow's six read as one.
+function trailNormal(path){
+  const a = path[0], z = path[path.length - 1];
+  const dx = a.x - z.x, dy = a.y - z.y, L = Math.hypot(dx, dy);
+  return L < 0.5 ? { x: 0, y: 1 } : { x: -dy / L, y: dx / L };
+}
+// tail to head, fading toward the tail; col and off (a distance across the
+// flight) may be functions of the point's index
+function trailRibbon(c, path, w, col, a, off){
+  const n = path.length, half = w >> 1, N = off ? trailNormal(path) : null;
+  for(let i = n - 1; i >= 1; i--){
+    const p0 = path[i], p1 = path[i - 1], f = i / n;
+    const o0 = off ? off(i) : 0, o1 = off ? off(i - 1) : 0;
+    c.globalAlpha = a * (1 - f * 0.8);
+    pxLine(c, p0.x + (N ? N.x * o0 : 0) - half, p0.y + (N ? N.y * o0 : 0) - half,
+              p1.x + (N ? N.x * o1 : 0) - half, p1.y + (N ? N.y * o1 : 0) - half,
+           typeof col === 'function' ? col(i, f) : col, w);
+  }
+}
+// a four-point twinkle
+function trailStar(c, x, y, core, arm, a){
+  fxDot(c, x, y, 1, core, a);
+  if(a > 0.6) for(const [dx, dy] of [[-1, 0], [1, 0], [0, -1], [0, 1]]) fxDot(c, x + dx, y + dy, 1, arm, a * 0.8);
+}
+const WING = [['....X', '...XX', '..XXw', 'XXXw.'], ['.....', 'XXXww', '.XXXw', '..XX.']];
+
 // A ball effect is drawn instead of the plain trail: path is the ball's last
 // few positions (0 is the ball itself), r its size, t the scene clock.
 const BALLFX = {
+  /* ---- Gold: a gilded ribbon that glints ---- */
+  tGold(c, b, path, r, t){
+    const w = Math.max(2, r + 1);
+    trailRibbon(c, path, w, i => i < 3 ? '#FFE7A3' : i < 8 ? '#E3B457' : '#A8812F', 1);
+    trailRibbon(c, path.slice(0, 5), 1, '#FFF6D8', 0.9);
+    for(let i = 2; i < path.length; i += 2){
+      const tw = Math.sin(t * 10 + i * 1.7 + b.seed);
+      const N = trailNormal(path), side = (i & 2 ? 1 : -1) * (w + 1);
+      if(tw > 0.45) trailStar(c, path[i].x + N.x * side, path[i].y + N.y * side, '#FFFFFF', '#FFE7A3', tw);
+    }
+    trailBall(c, b, path[0], r);
+  },
+  /* ---- Aurora: bands of northern light, rippling ---- */
+  tAurora(c, b, path, r, t){
+    const w = Math.max(3, r + 1), wave = i => Math.round(Math.sin(t * 7 - i * 0.8) * 2);
+    trailRibbon(c, path, 1, '#C68BFF', 0.55, i => wave(i) - w);
+    trailRibbon(c, path, w, i => (i + Math.floor(t * 6)) % 4 < 2 ? '#57E0BE' : '#9FF5DD', 1, wave);
+    trailRibbon(c, path, 1, '#7ADB86', 0.8, i => wave(i) + w);
+    trailBall(c, b, path[0], r);
+  },
+  /* ---- Ember: burning from white to cinder, sparks lifting off it ---- */
+  tEmber(c, b, path, r, t){
+    const cols = ['#FFF3B0', '#FFD06A', '#FFB43A', '#F07A3A', '#C8401E', '#6A2A1E'];
+    trailRibbon(c, path, Math.max(2, r + 1), (i, f) => cols[Math.min(cols.length - 1, Math.floor(f * cols.length))], 1);
+    for(let i = 2; i < path.length; i++){
+      const rise = (t * 2.5 + hr(i, b.seed)) % 1, p = path[i];
+      fxDot(c, p.x + (hr(b.seed, i) - 0.5) * 6 + Math.sin(t * 9 + i) * 1.5, p.y - 2 - rise * 11, 1,
+            rise < 0.4 ? '#FFE08A' : '#F07A3A', 1 - rise);
+    }
+    // smoke off the cold end
+    for(let i = path.length - 3; i < path.length; i++){
+      if(i < 1) continue;
+      const p = path[i], rise = (t * 1.2 + i * 0.3) % 1;
+      fxDot(c, p.x, p.y - 2 - rise * 6, 2, '#5A5250', 0.35 * (1 - rise));
+    }
+    trailBall(c, b, path[0], r);
+  },
+  /* ---- Mythic: a violet ribbon scattering stars ---- */
+  tMythic(c, b, path, r, t){
+    const w = Math.max(3, r + 1);
+    trailRibbon(c, path, w, i => i < 4 ? '#E3C8FF' : '#C68BFF', 1);
+    trailRibbon(c, path.slice(0, 6), 1, '#FFFFFF', 0.7);
+    for(let i = 1; i < path.length; i++){
+      const tw = Math.sin(t * 8 + i * 2.1 + b.seed);
+      if(tw < 0.3) continue;
+      const p = path[i], ox = (hr(i, b.seed) - 0.5) * (w * 6 + 6), oy = (hr(b.seed, i) - 0.5) * (w * 5 + 5);
+      trailStar(c, p.x + ox, p.y + oy, '#FFFFFF', '#C68BFF', tw);
+    }
+    trailBall(c, b, path[0], r);
+  },
+  /* ---- Rainbow: every colour, stacked, with a bounce in it ---- */
+  tRainbow(c, b, path, r, t){
+    const cols = ['#E4574A', '#F0A03C', '#E3D457', '#7ADB86', '#57A5C2', '#C68BFF'];
+    const bt = Math.max(1, r), top = -Math.round(cols.length * bt / 2), N = trailNormal(path);
+    const hop = i => ((i + Math.floor(t * 10)) & 2) ? 1 : 0;
+    cols.forEach((col, k) => trailRibbon(c, path, bt, col, 1, i => top + k * bt + hop(i) + (bt >> 1)));
+    for(let i = 3; i < path.length; i += 3){
+      const tw = Math.sin(t * 12 + i + b.seed), side = (i & 1 ? 1 : -1) * (-top + 3);
+      if(tw > 0.5) trailStar(c, path[i].x + N.x * side, path[i].y + N.y * side, '#FFFFFF', '#FFE14A', tw);
+    }
+    trailBall(c, b, path[0], r);
+  },
+  /* ---- Seraph Wake: a river of light, feathers falling from it, and the
+     ball carried on wings under a halo ---- */
+  tSeraph(c, b, path, r, t, u){
+    const w = Math.max(2, r + 1);
+    trailRibbon(c, path, w + 3, '#FFD66B', 0.30);
+    trailRibbon(c, path, w + 1, i => i < 5 ? '#FFFFFF' : '#FFF6D8', 0.9);
+    trailRibbon(c, path.slice(0, 7), 1, '#FFFFFF', 1);
+    // feathers, swaying down off the trail
+    for(let i = 2; i < path.length; i += 2){
+      const fall = (t * 0.8 + hr(i, b.seed)) % 1, p = path[i];
+      const x = p.x + Math.sin(t * 3 + i) * 4, y = p.y + 2 + fall * 14, a = 1 - fall;
+      const flip = (Math.floor(t * 4 + i) & 1) ? 1 : -1;
+      fxDot(c, x, y, 1, '#FFFFFF', a); fxDot(c, x + flip, y, 1, '#FFFFFF', a);
+      fxDot(c, x + flip * 2, y + 1, 1, '#E8DCC0', a);
+    }
+    // motes of gold rising off it
+    for(let i = 1; i < path.length; i += 2){
+      const rise = (t * 1.6 + hr(b.seed, i)) % 1, p = path[i];
+      fxDot(c, p.x + (hr(i, b.seed + 3) - 0.5) * 8, p.y - 2 - rise * 9, 1, '#FFD66B', 1 - rise);
+    }
+    const h0 = path[0], pulse = 0.5 + 0.5 * Math.sin(t * 6 + b.seed);
+    drawGlow(c, h0.x, h0.y, r * 3 + 4, r * 3 + 3, [[0.6, '#E3B457', 1], [0.3, '#FFE39A', 2], [0, '#FFF6D8', 3]], Math.floor(t * 8) & 3, 0.8);
+    // wings, beating
+    const s = Math.max(1, Math.round(r * 0.8)), fr = WING[Math.floor(t * 9) & 1];
+    fr.forEach((row, yy) => [...row].forEach((ch, xx) => {
+      if(ch === '.') return;
+      const col = ch === 'X' ? '#FFFFFF' : '#E8DCC0', y = Math.round(h0.y - (fr.length - 1) * s + yy * s);
+      c.globalAlpha = 1; c.fillStyle = col;
+      c.fillRect(Math.round(h0.x + r + xx * s), y, s, s);
+      c.fillRect(Math.round(h0.x - r - (xx + 1) * s), y, s, s);
+    }));
+    // the halo, hovering over it
+    const hy = Math.round(h0.y - r - 3 * s - 2 - pulse), hw = Math.max(2, r + 1);
+    c.globalAlpha = 0.95; c.fillStyle = '#FFD66B';
+    c.fillRect(Math.round(h0.x - hw), hy, hw * 2, 1);
+    c.fillRect(Math.round(h0.x - hw - 1), hy + 1, 1, 1); c.fillRect(Math.round(h0.x + hw), hy + 1, 1, 1);
+    c.fillRect(Math.round(h0.x - hw), hy + 2, hw * 2, 1);
+    // and where it lands, a burst of feathers
+    if(u > 0.85){
+      const q = (u - 0.85) / 0.15;
+      for(let i = 0; i < 10; i++){
+        const a = i / 10 * Math.PI * 2 + b.seed;
+        fxDot(c, h0.x + Math.cos(a) * (2 + q * 12), h0.y + Math.sin(a) * (1 + q * 5), 1, i & 1 ? '#FFFFFF' : '#FFD66B', 1 - q);
+      }
+    }
+    fxDot(c, h0.x - r, h0.y - r, r * 2, '#FFFFFF', 1);
+    c.globalAlpha = 1;
+  },
   /* ---- Comet: a blazing head and a long burning tail ---- */
   comet(c, b, path, r, t, u){
     const cols = ['#FFFFFF', '#FFF3B0', '#FFB43A', '#F0612A', '#B8341C', '#5A2A20'];
@@ -9151,7 +9313,7 @@ Object.assign(Scene, {
           // the trail is the one thing the player picks; the ball itself keeps
           // its affinity's colour, which is information
           const tc = trailNow().cols;
-          c.fillStyle = S.trail === 'plain' ? col : tc[(k >> 1) % tc.length];
+          c.fillStyle = trailNow().id === 'plain' ? col : tc[(k >> 1) % tc.length];
           c.fillRect(p.x, p.y, Math.max(1, r - 1), Math.max(1, r - 1));
         }
       }
