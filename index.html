@@ -7127,8 +7127,8 @@ const CADDIE_ROWS = [
 ];
 // Walking away from us, between shots: the golfer and his caddie from
 // behind, from the belt up. The golfer's right hand hangs at his side with
-// the club in it; the caddie's bag rides on his right shoulder, its strap
-// across his back. Legs, again, are drawn in code.
+// the club in it; the caddie is cut from the same rows, and his bag, slung
+// across his back, is drawn in code (drawBagBack), as are the legs.
 const G_BACK_ROWS = [
     '........................................',
     '........................................',
@@ -7161,40 +7161,6 @@ const G_BACK_ROWS = [
     '..........kk.sssssssSSSSSST..kkK........',
     '..........k..TTTTTTTTTTTTTT..kkK........',
     '.............bbbbbbbbbbbbbb...kk........',
-    '.............bbbbbbbbbbbbbb.............',
-];
-const CADDIE_BACK_ROWS = [
-    '........................................',
-    '........................................',
-    '.................cccccc..........i.i....',
-    '...............cccccccccc.......iii.i...',
-    '..............cccccccccccc.....yyyyyyy..',
-    '..............ccccCCCCcccc.....yYYYYYy..',
-    '..............CCCChhhhCCCC.....yYYYYYy..',
-    '...............hhhhhhhhhh......yYYYYYy..',
-    '...............hhhhhhhhhh......yYYYYYy..',
-    '................hhhhhhhh.......yYYYYYy..',
-    '.................kkkkkK........yYYYYYy..',
-    '..............srrssssssssS.....yYYYYYy..',
-    '...........sssssrrssssssssSS...yYYYYYy..',
-    '..........ssssssssrrsssssssSS..yYYYYYy..',
-    '.........ssssssssssrrsssssssSS.yYYYYYy..',
-    '.........sssssssssssrrssssssSSryYYYYYy..',
-    '.........ssS.sssssssrrsssssS.SryYYYYYy..',
-    '.........kkK.ssssssssrrssssS.kryyyyyyy..',
-    '.........kkK.sssssssssrrsssS.kKyYYYYYy..',
-    '.........kkK.ssssssssssrrssS.kKyYYYYYy..',
-    '.........kkK.sssssssssssrrsS.kKyYYYYYy..',
-    '.........kkK.ssssssssssssrrS.kKyYYYYYy..',
-    '.........kkK.sssssssssssSSrr.kKyYYYYYy..',
-    '.........kkK.ssssssssssSSSS.rkKyYYYYYy..',
-    '.........kkK.ssssssssssSSSS..kKyYYYYYy..',
-    '.........kkK.sssssssssSSSSS..kKyYYYYYy..',
-    '.........kkK.sssssssssSSSSS..kKyyyyyyy..',
-    '.........kkk.ssssssssSSSSSS..kkK.yyyyy..',
-    '..........kk.sssssssSSSSSSS..kkK........',
-    '..........k..ssssssssssssSS...kK........',
-    '.............bbbbbbbbbbbbbb.............',
     '.............bbbbbbbbbbbbbb.............',
 ];
 const HAIR = '#3A2A1E';
@@ -7249,7 +7215,7 @@ function buildSprites(){
   SPRITE.gBack = patterned(makeSprite(G_BACK_ROWS.concat(pad), Object.assign({}, GMAP, { h: OUT.hair || (OUT.skin ? OUT.skin2 : HAIR) })), OUT);
   const CD = caddieNow();
   SPRITE.caddie = patterned(makeSprite(CADDIE_ROWS.concat(G_FIN_ROWS.slice(32).map(() => blank)), caddieMap(CD)), CD);
-  SPRITE.caddieBack = patterned(makeSprite(CADDIE_BACK_ROWS.concat(pad),
+  SPRITE.caddieBack = patterned(makeSprite(G_BACK_ROWS.concat(pad),
     Object.assign(caddieMap(CD), { h: CD.hair || (CD.skin ? CD.skin2 : HAIR) })), CD);
 
   SPRITE.pine = makeSprite(PINE_ROWS, TREE_DEFAULT);
@@ -7533,7 +7499,7 @@ function capBox(rows){
 }
 const CAP_ADDR = capBox(G_ADDR_ROWS), CAP_FIN = capBox(G_FIN_ROWS);
 const PAD58 = rows => rows.concat(new Array(58 - rows.length).fill('.'.repeat(40)));
-const CAP_BACK = capBox(PAD58(G_BACK_ROWS)), CAP_CBACK = capBox(PAD58(CADDIE_BACK_ROWS));
+const CAP_BACK = capBox(PAD58(G_BACK_ROWS)), CAP_CBACK = CAP_BACK;
 // A glow in the stage's own terms: solid colours in a dither that thins toward
 // the edge, rather than a see-through wash, which on a green fairway blends
 // gold into lime. bands are [edge share, colour, density 1-4 of 4], outside in.
@@ -8621,6 +8587,14 @@ const Scene = {
   },
 
   holeLen(){ return LEN; },
+  // on a hazard, by its outline: the span across it at this distance, padded
+  inHazard(d, x, pad){
+    for(const hz of this.water ? this.bunkers.concat([this.water]) : this.bunkers){
+      const sp = this.hazSpan(hz, d);
+      if(sp && x > hz.x - sp.l - pad && x < hz.x + sp.r + pad) return true;
+    }
+    return false;
+  },
   // The course, announced across the field when a new one begins: its name
   // large, the card small, faded in and out over a few seconds.
   drawAnnounce(dt){
@@ -8639,8 +8613,27 @@ const Scene = {
     drawTextS(c, A.sub, CX, y0 + lh + 2 * TSC, PX.bone, TSC, 'c');
     c.globalAlpha = 1;
   },
+  // Where the caddie stands: a stride to the golfer's left if that is clear
+  // ground, else nearer or wider on that side, else across on his right --
+  // never in a bunker or the water. He walks to a new spot rather than
+  // jumping to it.
+  caddieLat(){
+    const d = this.camD + 0.25, dt = clamp(this.t - (this._cadT || this.t), 0, 0.1);
+    this._cadT = this.t;
+    // measured against the real outline of each hazard, not its bounding box,
+    // across the ground his feet cover and a step ahead
+    const clear = x => [-0.2, 0, 0.3, 0.7].every(dd => !this.inHazard(d + dd, x, 0.35));
+    let want = null;
+    // his own side first, nearer or wider, before crossing behind the golfer;
+    // at a squeeze, right in by the golfer's elbow, where no hazard ever is
+    for(const x of [-1.45, -1.1, -1.85, 1.45, 1.8, 2.2, -0.95, 0.95]) if(clear(x)){ want = x; break; }
+    if(want === null) want = -0.95;
+    if(this._cadLat === undefined || this._cadHole !== this.hole){ this._cadLat = want; this._cadHole = this.hole; }
+    this._cadLat += (want - this._cadLat) * Math.min(1, dt * 3);
+    return this._cadLat;
+  },
   drawCaddie(c, gh, walking){
-    const p = this.proj(this.camD + 0.25, -1.45);
+    const p = this.proj(this.camD + 0.25, this.caddieLat());
     const back = walking && SPRITE.caddieBack;
     const h = Math.max(6, Math.round(gh * 0.93)), spr = back ? SPRITE.caddieBack : SPRITE.caddie, CD = caddieNow();
     const w = Math.max(4, Math.round(h * spr.w / spr.h));
@@ -8667,6 +8660,7 @@ const Scene = {
     else drawLegs(c, x + w*0.55, y + h*(32/58), h*(25/58), w, null, CD.pant, CD.pant2 || CD.pant, CD.shoe || PX.shoe);
     if(FX && FX.shearMod) blitShear(c, spr, x, y, w, h, f => FX.shearMod(f, g));
     else c.drawImage(spr.cv, x, y, w, h);
+    if(back) drawBagBack(c, x, y, w, h, CD, Math.sin((this.walkPh + 0.25) * Math.PI * 4));
     // side on, an arm hanging at his side (from behind, the sprite has both)
     if(!back){
       const sx = x + w*0.60, sy = y + h*0.30;
@@ -9157,6 +9151,36 @@ const CLUBFX = {
     trail(c, arc, th){ arcTrail(c, arc, th + 2, ['#FFD66B'], 0.35); arcTrail(c, arc, th, ['#FFFFFF', '#FFF3C8'], 0.8); }
   }
 };
+// The caddie's bag from behind, slung the way a carry bag is: across the
+// small of his back, the foot low on his left, the mouth high on his right
+// with the club heads and a head cover sticking out by his hand, and the
+// straps running up over both shoulders. bob nudges it with his step.
+function drawBagBack(c, x, y, w, h, d, bob){
+  const P = (fx, fy) => [x + w * fx, y + h * fy + bob * h * 0.006];
+  const th = Math.max(2, Math.round(w * 0.15));
+  const [ax, ay] = P(0.10, 0.63), [bx, by] = P(0.80, 0.44);
+  const main = d.bag || d.cap, dark = d.bag2 || d.cap2;
+  // the straps first, so the bag sits over their ends
+  const st = Math.max(1, Math.round(w * 0.035));
+  pxLine(c, ...P(0.36, 0.20), ...P(0.46, 0.53), '#2A2420', st);
+  pxLine(c, ...P(0.62, 0.21), ...P(0.66, 0.47), '#2A2420', st);
+  // the body: its underside in shade, its top lit, a trim line down it
+  pxLine(c, ax - th/2, ay - th/2 + 1, bx - th/2, by - th/2 + 1, dark, th);
+  pxLine(c, ax - th/2, ay - th/2, bx - th/2, by - th/2, main, th - 1);
+  pxLine(c, ax - th/2, ay - th/2, bx - th/2, by - th/2, lite(main, 0.22), 1);
+  pxLine(c, ...P(0.18, 0.60), ...P(0.62, 0.48), dark, 1);
+  // the foot of the bag, and its stand's leg sticking out below it
+  c.fillStyle = dark; c.fillRect(Math.round(ax - th/2 - 1), Math.round(ay - th/2), Math.max(2, Math.round(th*0.5)), th);
+  pxLine(c, ax - th*0.2, ay + th*0.5, ax - th*0.6, ay + th*1.4, '#1A1A1A', 1);
+  // out of the mouth: three club heads and a head cover, by his right hand
+  const k = Math.max(1, Math.round(w * 0.03));
+  [[0.84, 0.40], [0.88, 0.43], [0.86, 0.46]].forEach(([fx, fy]) => {
+    const [hx, hy] = P(fx, fy); c.fillStyle = '#C9D1D6'; c.fillRect(Math.round(hx), Math.round(hy), k * 2, k);
+  });
+  const [cx0, cy0] = P(0.83, 0.36);
+  c.fillStyle = '#EDE6D2'; c.fillRect(Math.round(cx0), Math.round(cy0), k * 3, k * 2);
+  c.fillStyle = '#C8302A'; c.fillRect(Math.round(cx0 + k), Math.round(cy0), k, k * 2);
+}
 // Two legs from behind, walking away: side by side, the one stepping off
 // lifted at the heel with the sole of its shoe showing, the planted one
 // straight. ph as for drawLegs.
