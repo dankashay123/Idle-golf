@@ -3924,7 +3924,6 @@ function oneSwing(D, visual){
 }
 function doSwings(n, D){
   if(n <= 0) return;
-  Sfx.play('swing');
   if(n <= 10){ for(let i=0;i<n && S.yards>0;i++) oneSwing(D, i < 4); return; }
   // Past ten swings in a frame, resolving each one individually is wasted
   // work nobody can see. Fire four for the eyes, settle the rest as expected
@@ -5002,11 +5001,13 @@ let QUIET = false;
 let OFFLINE = false;
 
 /* ---- sound --------------------------------------------------------------
-   The game was silent. Everything here is synthesised, so there is nothing to
-   load: a soft click for a swing, a chime for a hole that climbs one note for
-   every shot under par, and a short phrase for an honour, a level and a cup.
-   Nothing plays while a catch-up replays holes, while the page is hidden, or
-   with sound switched off in Settings. */
+   Everything here is synthesised, so there is nothing to load and the game
+   stays one file. The course sounds like a course: the whoosh and crack of a
+   driver, the ball dropping into the cup and rattling round it, the gallery
+   applauding a birdie and roaring an eagle, and birds in the trees on a fine
+   day. The menus keep their chimes. Nothing plays while a catch-up replays
+   holes, while the page is hidden, or with sound switched off in Settings,
+   and on an iPhone it follows the silent switch. */
 const Sfx = {
   ctx: null, master: null, lastSwing: 0, hold: 0,
   on(){ return S.sound !== 0 && !QUIET && !this.hold && !document.hidden; },
@@ -5037,6 +5038,75 @@ const Sfx = {
     o.connect(g); g.connect(this.master);
     o.start(t0); o.stop(t0 + dur + 0.03);
   },
+  // one second of white noise, cut into by everything that needs air
+  noise(){
+    if(this._nz) return this._nz;
+    const c = this.ctx, n = c.sampleRate, b = c.createBuffer(1, n, n), d = b.getChannelData(0);
+    for(let i = 0; i < n; i++) d[i] = Math.random() * 2 - 1;
+    return this._nz = b;
+  },
+  // a burst of filtered noise: t0 start, dur length, f centre, q sharpness,
+  // f2 where the filter ends up
+  hiss(t0, dur, f, q, vol, f2, type){
+    const c = this.ctx, src = c.createBufferSource(), bp = c.createBiquadFilter(), g = c.createGain();
+    src.buffer = this.noise();
+    bp.type = type || 'bandpass'; bp.Q.value = q || 1;
+    bp.frequency.setValueAtTime(f, t0);
+    if(f2) bp.frequency.exponentialRampToValueAtTime(f2, t0 + dur);
+    g.gain.setValueAtTime(0.0001, t0);
+    g.gain.exponentialRampToValueAtTime(vol, t0 + Math.min(0.012, dur * 0.3));
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+    src.connect(bp); bp.connect(g); g.connect(this.master);
+    src.start(t0, Math.random() * 0.8); src.stop(t0 + dur + 0.02);
+  },
+  // The driver: the swoosh of the club coming down, then the crack of the face
+  // -- a click of bright noise with a hard metallic ring in it and a thump
+  // under it. A pure strike rings higher and louder.
+  strike(t, pure){
+    this.hiss(t, 0.16, 500, 0.9, 0.05, 2600);                  // the swoosh
+    const hit = t + 0.15;
+    this.hiss(hit, 0.035, 3800, 0.7, pure ? 0.55 : 0.4);       // the crack
+    this.tone(pure ? 2650 : 2300, hit, 0.09, 'sine', pure ? 0.07 : 0.045);
+    this.tone(pure ? 4100 : 3700, hit, 0.06, 'sine', 0.03);
+    this.tone(160, hit, 0.07, 'sine', 0.12, 70);               // the thump
+  },
+  // In the cup: the ball drops, knocks against the plastic and rattles round.
+  cup(t){
+    this.tone(1050, t, 0.07, 'triangle', 0.09, 700);
+    this.tone(640, t, 0.09, 'sine', 0.08, 420);
+    [0.09, 0.15, 0.19, 0.22].forEach((dt, i) => this.hiss(t + dt, 0.025, 2200 + i * 300, 3, 0.10 / (i + 1)));
+  },
+  // The gallery: claps, each a short crack of noise at a pitch of its own,
+  // thick at the start and thinning out. n people, over len seconds.
+  applause(t, n, len, vol){
+    for(let i = 0; i < n; i++){
+      const u = Math.random(), at = t + Math.pow(u, 1.6) * len;
+      const fade = 1 - (at - t) / (len + 0.2);
+      this.hiss(at, 0.012 + Math.random() * 0.02, 900 + Math.random() * 1800, 1.4, vol * (0.4 + Math.random() * 0.6) * fade);
+    }
+  },
+  // A cheer: a swell of voices, noise pushed through a band where voices sit.
+  cheer(t, len, vol){
+    this.hiss(t, len, 520, 2.2, vol, 780);
+    this.hiss(t + 0.05, len * 0.9, 900, 3, vol * 0.6, 1200);
+  },
+  // Birds in the trees, now and then, on a fine day: a quick rising chirp, or
+  // two falling ones.
+  chirp(t){
+    const f = 2800 + Math.random() * 1800;
+    if(Math.random() < 0.5) this.tone(f, t, 0.07, 'sine', 0.018, f * 1.35);
+    else { this.tone(f * 1.2, t, 0.05, 'sine', 0.016, f); this.tone(f * 1.2, t + 0.09, 0.05, 'sine', 0.014, f * 0.9); }
+  },
+  tick(dt){
+    if(!this.on() || !this.ctx || this.ctx.state !== 'running') return;
+    if(S.dgnRun || Scene.night || Scene.rain) return;
+    this.birdT = (this.birdT || 3 + Math.random() * 6) - dt;
+    if(this.birdT <= 0){
+      this.birdT = 4 + Math.random() * 9;
+      const t = this.ctx.currentTime + 0.02, k = 1 + (Math.random() * 3 | 0);
+      for(let i = 0; i < k; i++) this.chirp(t + i * 0.22);
+    }
+  },
   notes(list, type, vol, gap){
     const t = this.ctx.currentTime + 0.01;
     list.forEach((f, i) => this.tone(f, t + i * gap, 0.24, type, vol));
@@ -5046,21 +5116,27 @@ const Sfx = {
     const c = this.init();
     if(!c || c.state !== 'running') return;
     const t = c.currentTime;
-    if(k === 'swing'){
-      // a fast bag swings several times a second: one click every 0.16s at most
-      if(t - this.lastSwing < 0.16) return;
+    if(k === 'strike'){
+      // a fast bag swings several times a second: one strike every 0.2s at most
+      if(t - this.lastSwing < 0.2) return;
       this.lastSwing = t;
-      this.tone(1400, t, 0.05, 'square', 0.03, 500);
+      this.strike(t, !!arg);
     }else if(k === 'hole'){
+      // Holed: the ball in the cup, then the gallery by the score -- polite
+      // for a par, warm for a birdie, a roar for an eagle and better.
       const d = arg || 0;
-      if(d >= 1) this.tone(330, t, 0.18, 'triangle', 0.08, 262);
-      else this.notes([523.25, 659.25, 783.99, 1046.5, 1318.5].slice(0, Math.min(5, 1 - d)),
-                      'triangle', 0.11, 0.07);
+      this.cup(t);
+      const a = t + 0.3;
+      if(d <= -3){ this.applause(a, 90, 2.6, 0.16); this.cheer(a, 2.0, 0.07); }
+      else if(d === -2){ this.applause(a, 60, 2.0, 0.14); this.cheer(a, 1.3, 0.045); }
+      else if(d === -1) this.applause(a, 34, 1.5, 0.12);
+      else if(d === 0) this.applause(a, 10, 0.8, 0.08);
     }
     else if(k === 'ach')   this.notes([659.25, 783.99, 987.77, 1318.5], 'square', 0.05, 0.08);
     else if(k === 'coin')  this.notes([1318.5, 1760], 'square', 0.045, 0.06);
     else if(k === 'level') this.notes([587.33, 880], 'triangle', 0.11, 0.1);
-    else if(k === 'cup')   this.notes([523.25, 659.25, 783.99, 1046.5, 783.99, 1046.5], 'triangle', 0.14, 0.11);
+    else if(k === 'cup'){  this.notes([523.25, 659.25, 783.99, 1046.5, 783.99, 1046.5], 'triangle', 0.14, 0.11);
+                           this.applause(t + 0.1, 120, 3.2, 0.15); this.cheer(t + 0.1, 2.6, 0.07); }
     else if(k === 'buy')   this.tone(880, t, 0.06, 'square', 0.045, 1320);
   }
 };
@@ -8691,6 +8767,8 @@ const Scene = {
   launch(){
     const p = this.pendingBall || { crit:false, el:null, dmg:0 };
     this.pendingBall = null;
+    // the sound of the strike, on the frame the club meets the ball
+    Sfx.play('strike', p.crit);
     // Off the face, not out of the middle of the screen: it leaves from where
     // the clubhead is and drifts across to wherever it is going.
     const lat0 = this.teeLat === undefined ? 0.42 : this.teeLat;
@@ -11790,6 +11868,7 @@ function frameBody(now){
   // No point painting the hole while the menu is over it. The sim runs on
   // regardless; only the drawing stops.
   if(!$('app').classList.contains('big') || (SIDEWAYS && SIDEWAYS.matches)) Scene.draw(dt, D);
+  Sfx.tick(dt);
   renderLive();
 
   slowT += dt;

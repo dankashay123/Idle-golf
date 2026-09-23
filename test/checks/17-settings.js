@@ -11,6 +11,9 @@
  *   - the settings button opens the sheet; sound switches off and stays off
  *   - no sound plays switched off, during a catch-up, or while muted by QUIET,
  *     and every sound plays without throwing once audio is running
+ *   - the course sounds like a course: a strike is a swoosh, a crack, a ring
+ *     and a thump; an eagle brings the gallery in far more than a par does;
+ *     and the birds sing on a fine day
  *   - the Home Screen tip turns up once, on an iPhone, after a real session
  */
 'use strict';
@@ -68,10 +71,17 @@ module.exports = {
       await (Sfx.ctx && Sfx.ctx.resume ? Sfx.ctx.resume().catch(() => {}) : null);
       o.running = !!Sfx.ctx && Sfx.ctx.state === 'running';
       // count what reaches the speaker
-      let n = 0; const real = Sfx.tone.bind(Sfx);
+      // tones and bursts of noise both, since the course sounds are mostly air
+      let n = 0; const real = Sfx.tone.bind(Sfx), realH = Sfx.hiss.bind(Sfx);
       Sfx.tone = function () { n++; return real.apply(null, arguments); };
-      const all = () => { n = 0; for (const k of ['swing', 'hole', 'ach', 'coin', 'level', 'cup', 'buy'])
-        { Sfx.lastSwing = -1; Sfx.play(k, -2); } return n; };
+      Sfx.hiss = function () { n++; return realH.apply(null, arguments); };
+      const all = () => { n = 0; for (const k of ['strike', 'hole', 'ach', 'coin', 'level', 'cup', 'buy'])
+        { Sfx.lastSwing = -1; Sfx.play(k, -2); } Sfx.birdT = 0.001; Sfx.tick(0.01); return n; };
+      // what each course sound is made of, with sound on
+      const count = f => { n = 0; f(); return n; };
+      o.parts = { strike: count(() => { Sfx.lastSwing = -1; Sfx.play('strike'); }),
+                  eagle: count(() => Sfx.play('hole', -2)), par: count(() => Sfx.play('hole', 0)),
+                  birds: count(() => { Scene.night = false; Scene.rain = false; Sfx.birdT = 0.001; Sfx.tick(0.01); }) };
       o.errs = [];
       try { o.onCount = all(); } catch (e) { o.errs.push(e.message); }
       toggleSound(); o.offFlag = S.sound; o.offCount = all();
@@ -79,12 +89,15 @@ module.exports = {
       toggleSound(); o.backOn = S.sound;
       QUIET = true; o.quietCount = all(); QUIET = false;
       Sfx.hold++; o.holdCount = all(); Sfx.hold--;
-      Sfx.tone = real;
+      Sfx.tone = real; Sfx.hiss = realH;
       try { hideSheet(); } catch (e) {}
       return o;
     });
     if (!snd.open) throw new Error('the settings button did not open the settings sheet');
     if (snd.errs.length) throw new Error('playing a sound threw: ' + snd.errs.join('; '));
+    if (snd.running && !(snd.parts.strike >= 4 && snd.parts.eagle > snd.parts.par * 3 && snd.parts.birds >= 1))
+      throw new Error('the course sounds are not all there: ' + JSON.stringify(snd.parts)
+        + ' (a strike is a swoosh, a crack, a ring and a thump; an eagle brings the gallery a par does not; birds sing)');
     if (snd.running && !(snd.onCount >= 7))
       throw new Error('with audio running only ' + snd.onCount + ' notes reached the speaker for 7 sounds');
     if (snd.offFlag !== 0 || snd.offCount || snd.savedOff !== 0)
