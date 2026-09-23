@@ -44,7 +44,14 @@ body{
 button{font:inherit;color:inherit;background:none;border:0;touch-action:manipulation;
   user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;cursor:pointer}
 #app{width:100%;max-width:660px;height:100%;display:flex;flex-direction:column;
-  background:var(--pine);border-left:var(--hair);border-right:var(--hair);position:relative}
+  background:var(--pine);border-left:var(--hair);border-right:var(--hair);position:relative;
+  /* A phone on its side puts the Dynamic Island on one edge, over the middle
+     of the field: the readout, the nine, the shop button and the start of any
+     big word on the stage sat under it. The phone says how wide that edge is;
+     this keeps everything off it, and it is zero upright. The variables are
+     there so a check can stand in for a phone that has an island. */
+  padding-left:var(--sal, env(safe-area-inset-left, 0px));
+  padding-right:var(--sar, env(safe-area-inset-right, 0px))}
 #crest,#vitals,#tabs,#card,#xpStrip{flex:0 0 auto}
 #stage{flex:0 0 50%;min-height:0}
 #panel{flex:1 1 auto;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}

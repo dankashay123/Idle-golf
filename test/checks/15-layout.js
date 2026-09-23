@@ -210,6 +210,38 @@ module.exports = {
                  drawing: !document.getElementById('app').classList.contains('big') };
       }, [w, h]));
     }
+    // and the Dynamic Island, which on its side sits on one edge over the middle
+    // of the field. A browser here has no island, so the app's inset variables
+    // stand in for one: 62px, an iPhone 17 Pro Max's, on the left and then on
+    // the right, the way the phone reports it for each way it can be turned.
+    const island = [];
+    await page.setViewportSize({ width: 956, height: 440 });
+    await page.waitForTimeout(150);
+    for (const edge of ['--sal', '--sar']) {
+      island.push(await page.evaluate(async (edge) => {
+        document.documentElement.style.setProperty(edge, '62px');
+        await new Promise(r => setTimeout(r, 120));
+        const W = innerWidth, inL = edge === '--sal';
+        const clear = [];
+        for (const id of ['stage', 'hole', 'readout', 'shopBtn', 'nineBar', 'honBtn', 'perkBtn',
+                          'toasts', 'crest', 'vitals', 'tabs', 'panel']) {
+          const e = document.getElementById(id); if (!e) continue;
+          const r = e.getBoundingClientRect(); if (!r.width) continue;
+          if (inL ? r.left < 62 - 0.5 : r.right > W - 62 + 0.5)
+            clear.push(id + ' at ' + Math.round(inL ? r.left : W - r.right) + 'px from the edge');
+        }
+        const scroll = document.documentElement.scrollWidth > W + 1;
+        document.documentElement.style.removeProperty(edge);
+        return { edge, clear, scroll };
+      }, edge));
+    }
+    for (const o of island) {
+      const side2 = o.edge === '--sal' ? 'left' : 'right';
+      if (o.clear.length)
+        throw new Error('with the island on the ' + side2 + ' edge of a phone on its side, these sit '
+          + 'under it: ' + o.clear.join('; '));
+      if (o.scroll) throw new Error('keeping clear of the island on the ' + side2 + ' made the page scroll');
+    }
     for (const o of side) {
       const at = ' on a ' + o.w + 'x' + o.h + ' phone on its side';
       if (!o.tabsOn) throw new Error('the tabs are not all on screen' + at + ', so the menu is '
@@ -352,7 +384,8 @@ module.exports = {
       'stage and vitals at 320/400/768 and on its side at 740/844: nothing off the stage, no HUD element on another '
       + 'with the tallest toasts up, five equal cells holding a maxed golfer\'s numbers',
       'on its side at ' + side.map(o => o.w + 'x' + o.h).join('/') + ': field and menu side by '
-      + 'side, all five tabs on screen, menu ' + side.map(o => o.panelH).join('/') + 'px tall',
+      + 'side, all five tabs on screen, menu ' + side.map(o => o.panelH).join('/') + 'px tall'
+      + '; the field and HUD clear a 62px island on either edge',
       splits.looked + ' pieces of text read across every screen and sub-tab: no two-word unit '
       + 'anywhere, and every figure bound to the unit it carries'];
   }
