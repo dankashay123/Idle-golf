@@ -16,6 +16,8 @@
  *   - he walks away from us between shots, from behind, club in hand
  *   - every special club draws more than its colours -- at address and
  *     through the swing, where the arc it leaves shows -- inside 1.5ms
+ *   - the ball at rest -- teed up, or lying where it came down -- is the
+ *     ball he has on: every ball with a look of its own draws it on the grass
  *   - the shop lists every look exactly once across its four racks (Golfer,
  *     Caddie, Clubs, Balls, picked along the top), each with its own picture
  *   - every trail and ball can be seen: one in flight has to paint at least
@@ -96,6 +98,16 @@ module.exports = {
           } catch (e) { o.errs.push(d.id + ': ' + e.message); }
         }
         S.trail = 'plain'; Scene.balls.length = 0;
+
+        // ---- the ball at rest is the ball he has on --------------------------
+        o.restSame = [];
+        { S.trail = 'plain'; Scene.b.clearRect(0, 0, VW, VH); drawLyingBall(Scene.b, 60, 60, 2, 1.23); const plain = shot();
+          for (const d of B.TRAILS.filter(x => x.cat === 'ball' || x.id === 'seraph')) {
+            S.styleOwn['t:' + d.id] = 1; S.trail = d.id;
+            Scene.b.clearRect(0, 0, VW, VH); drawLyingBall(Scene.b, 60, 60, 2, 1.23);
+            if (shot() === plain) o.restSame.push(d.id);
+          }
+          S.trail = 'plain'; }
 
         // ---- a trail you can see, at a price you can afford ------------------
         // pixels painted by one ball in flight, a third of the way out, and
@@ -216,6 +228,7 @@ module.exports = {
     const cslow = Object.entries(r.clubCost).filter(([, v]) => v > 1.5);
     if (cslow.length) throw new Error('clubs over 1.5ms a frame: ' + cslow.map(([k, v]) => k + ' ' + v.toFixed(2) + 'ms').join(', '));
     if (r.cats.some(c => /missing|\b0$/.test(c))) throw new Error('a rack on the Style tab is missing or empty: ' + r.cats.join(', '));
+    if (r.restSame.length) throw new Error('these balls lie on the ground as a plain white ball: ' + r.restSame.join(', '));
     if (r.walkSame.length) throw new Error('these looks do not stride when he walks: ' + r.walkSame.join(', '));
     const wslow = Object.entries(r.walkCost).filter(([, v]) => v > 1.5);
     if (wslow.length) throw new Error('walking over 1.5ms a frame: ' + wslow.map(([k, v]) => k + ' ' + v.toFixed(2) + 'ms').join(', '));

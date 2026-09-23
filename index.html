@@ -8018,6 +8018,66 @@ function trailStar(c, x, y, core, arm, a){
 }
 const WING = [['....X', '...XX', '..XXw', 'XXXw.'], ['.....', 'XXXww', '.XXXw', '..XX.']];
 
+// The ball at rest -- teed up at his feet, or lying where it came down -- in
+// the ball he has on, not a plain white one. cx, cy its centre, r its size.
+// The coloured trails leave the ball itself white, as in flight.
+function drawLyingBall(c, cx, cy, r, t){
+  const fx = trailNow().fx, k = Math.max(1, Math.round(r));
+  const x = Math.round(cx - r), y = Math.round(cy - r), d = Math.max(1, Math.round(r * 2));
+  const dot = (px, py, s, col, a) => fxDot(c, px, py, s, col, a === undefined ? 1 : a);
+  switch(fx){
+    case 'duck': {                                   // a rubber duck sitting there
+      const DUCK = ['..YY..', '.YYYO.', 'YYYYY.', '.YYY..'], s = Math.max(1, Math.round(r * 0.8));
+      const ox = Math.round(cx - 3 * s), oy = Math.round(cy - 3 * s);
+      DUCK.forEach((row, yy) => [...row].forEach((ch, xx) => { if(ch === '.') return;
+        c.fillStyle = ch === 'O' ? '#FF8A2A' : '#FFD84A'; c.fillRect(ox + xx * s, oy + yy * s, s, s); }));
+      c.fillStyle = '#1A1A1A'; c.fillRect(ox + 3 * s, oy + s, 1, 1);
+      break;
+    }
+    case 'hearts': {                                 // a little heart, beating
+      const H = ['.X.X.', 'XXXXX', '.XXX.', '..X..'], s = Math.max(1, Math.round(r * 0.7)) + (Math.sin(t * 10) > 0.6 ? 1 : 0);
+      const ox = Math.round(cx - 2.5 * s), oy = Math.round(cy - 2 * s);
+      H.forEach((row, yy) => [...row].forEach((ch, xx) => { if(ch !== 'X') return;
+        c.fillStyle = yy === 0 ? '#FFC2D4' : '#FF2F66'; c.fillRect(ox + xx * s, oy + yy * s, s, s); }));
+      break;
+    }
+    case 'bubbles':                                  // the ball in its bubble
+      dot(x, y, d, '#FFFFFF');
+      c.globalAlpha = 0.9; pxRing(c, Math.round(cx), Math.round(cy), r + 2 + k, '#BFE6FA');
+      dot(cx - r - 1, cy - r - 1, 1, '#FFFFFF');
+      break;
+    case 'confetti':                                 // a few bits still falling round it
+      dot(x, y, d, '#FFFFFF');
+      ['#FF4FB8', '#3FE0FF', '#FFE14A', '#7CFF6A'].forEach((col, i) => {
+        const a = t * 2 + i * 1.6; dot(cx + Math.cos(a) * (r + 3), cy - r - 1 + ((t * 3 + i * 0.4) % 1) * (r + 3), 1, col); });
+      break;
+    case 'comet':                                    // still smouldering
+      drawGlow(c, cx, cy, r + 3, r + 3, [[0.5, '#F0612A', 1], [0, '#FFB43A', 2]], Math.floor(t * 10) & 3, 0.8);
+      dot(x, y, d, '#FFF3B0');
+      if(Math.sin(t * 7) > 0.2) dot(cx + Math.sin(t * 3) * 2, cy - r - 2 - ((t * 2) % 1) * 4, 1, '#FFB43A', 0.8);
+      break;
+    case 'blackhole':                                // a dark core with its ring
+      for(let i = 0; i < 10; i++){ const a = t * 5 + i / 10 * Math.PI * 2;
+        dot(cx + Math.cos(a) * (r + 2), cy + Math.sin(a) * (r + 2) * 0.4, 1, i % 3 ? '#C68BFF' : '#FFFFFF', Math.sin(a) > 0 ? 1 : 0.5); }
+      dot(x, y, d, '#050308');
+      break;
+    case 'godlight':                                 // haloed, glowing gold
+      drawGlow(c, cx, cy, r + 3, r + 3, [[0.6, '#E3B457', 1], [0, '#FFE39A', 2]], Math.floor(t * 8) & 3, 0.8);
+      dot(x, y, d, '#FFFFFF');
+      c.globalAlpha = 0.9; c.fillStyle = '#FFD66B';
+      c.fillRect(Math.round(cx - r - 1), Math.round(cy - r - 3), d + 2, 1);
+      break;
+    case 'tSeraph':                                  // resting under its halo
+      dot(x, y, d, '#FFF6D8');
+      c.globalAlpha = 0.95; c.fillStyle = '#FFD66B';
+      c.fillRect(Math.round(cx - r - 1), Math.round(cy - r - 3 - (Math.sin(t * 3) > 0 ? 1 : 0)), d + 2, 1);
+      break;
+    default:
+      dot(x, y, d, '#FFFFFF');
+      if(r > 1) dot(x, y, 1, '#FFFFFF');
+  }
+  c.globalAlpha = 1;
+}
 // A ball effect is drawn instead of the plain trail: path is the ball's last
 // few positions (0 is the ball itself), r its size, t the scene clock.
 const BALLFX = {
@@ -10030,8 +10090,7 @@ Object.assign(Scene, {
     this.teeLat = (bx - p.x) / Math.max(0.001, LAT * p.s);
     if((this.swingT === 0 && !this.restBall && !this.walkOn) || (this.swingT > 0 && ph < 0.5)){
       const bs = h > 30 ? 2 : 1;
-      c.fillStyle = PX.white;
-      c.fillRect(bx, Math.round(p.y - bs), bs, bs);
+      drawLyingBall(c, bx + bs / 2, Math.round(p.y - bs / 2), Math.max(1, bs / 2 + 0.5), this.t);
     }
   },
 
@@ -10124,7 +10183,7 @@ Object.assign(Scene, {
         const p = this.proj(R.d, R.lat);
         if(p.y <= this.clipAt(R.d) + 1 && p.s > 0.05){
           const r = Math.max(1, Math.round(B_BALL * p.s * US));
-          c.fillStyle = PX.white; c.fillRect(p.x - r, p.y - r * 2, r * 2, r * 2);
+          drawLyingBall(c, p.x, p.y - r, r, this.t);
         }
       }
     }
