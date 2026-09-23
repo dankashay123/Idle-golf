@@ -153,8 +153,39 @@ module.exports = {
         + 'same number of screen pixels.');
     }
 
+    // The home screen icon: 180 square, an actual picture, and crisp. It is
+    // painted on a 36 grid and scaled by exactly 5, so every 5x5 block is one
+    // colour; smoothing, or a size that is not a whole multiple, blends the
+    // edges and every block stops being flat.
+    const home = await page.evaluate(async () => {
+      const l = [...document.querySelectorAll('link[rel="apple-touch-icon"]')].pop();
+      if (!l) return null;
+      const img = new Image(); img.src = l.href; await img.decode();
+      const cv = document.createElement('canvas'); cv.width = img.width; cv.height = img.height;
+      const c = cv.getContext('2d'); c.drawImage(img, 0, 0);
+      const d = c.getImageData(0, 0, img.width, img.height).data, W = img.width;
+      const cols = new Set(); let mixed = 0;
+      for (let by = 0; by < img.height; by += 5) for (let bx = 0; bx < W; bx += 5) {
+        const at = (x, y) => { const i = (y * W + x) * 4; return d[i] + ',' + d[i + 1] + ',' + d[i + 2]; };
+        const first = at(bx, by); cols.add(first);
+        let flat = true;
+        for (let y = by; y < by + 5 && flat; y++) for (let x = bx; x < bx + 5; x++) if (at(x, y) !== first) { flat = false; break; }
+        if (!flat) mixed++;
+      }
+      return { w: img.width, h: img.height, colours: cols.size, mixed };
+    });
+    if (!home) throw new Error('there is no home screen icon');
+    if (home.w !== 180 || home.h !== 180)
+      throw new Error('the home screen icon is ' + home.w + 'x' + home.h + ', not 180x180');
+    if (home.colours < 12)
+      throw new Error('the home screen icon has ' + home.colours + ' colours in it: that is not a picture');
+    if (home.mixed)
+      throw new Error(home.mixed + ' of the icon\'s 5x5 pixel blocks are blended: it has been smoothed '
+        + 'or scaled by something other than a whole multiple of its 36 pixel grid');
+
     return [r.total + ' things, ' + r.distinct + ' distinct icons, ' + r.drawn
       + ' drawn, no reuse, every tier colour reaches the canvas',
-      'every sprite box square and on the 12px grid, across five screens and four shop tabs'];
+      'every sprite box square and on the 12px grid, across five screens and four shop tabs',
+      'home screen icon 180x180, ' + home.colours + ' colours, every pixel square'];
   }
 };
