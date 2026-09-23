@@ -827,7 +827,7 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
    An idle auto-battler. The golfer swings on his own; you build the golfer.
 
    THE THREE CURVES, and why they are set where they are:
-     TIER_Y  yardage per Tour Card step        2.35
+     TIER_Y  yardage per Tour Card step        4
      TIER_G  purse per Tour Card step          2.16
      gear    ILVL_STEP per item level          1.27
    Purse sits deliberately BELOW yardage. Gold upgrades alone therefore lose
@@ -835,14 +835,27 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
    relics are for. Set TIER_G at or above TIER_Y and the run never walls,
    which means retirement never has anything to push against.
 
-   Par is an ABSOLUTE clock: par 3 is ten seconds, par 4 fifteen, par 5 twenty,
-   at every tier forever. A Tour Card step multiplies yardage but not the
-   clock, so climbing always drops you back to bogey golf and the whole ladder
-   has to be re-earned. Climbing is a choice, never automatic.
+   Par is an ABSOLUTE clock: par 3 is 6.5 seconds, par 4 9.8, par 5 13, at
+   every tier forever. A Tour Card step multiplies yardage but not the clock,
+   and holes are fixed to their card, so a golfer gets stronger on a card, sees
+   it in the score, and moves up; climbing drops you back a few bands.
    ========================================================================= */
 const B = {
   /* ---- the ladder ---- */
-  TIER_Y: 2.35, TIER_G: 2.16, Y0: 60, G0: 14, TIER_MAX: 400,
+  // Each card's holes are 4x the one below and pay 2.16x. Holes are fixed to
+  // their card: a card's purse buys about 4.6x the carry in upgrades, so at
+  // 2.35x a card a golfer outran every card (card 30 and level 60 inside three
+  // hours, nearly all aces), which the course used to hide by stretching every
+  // hole to the golfer. At 4x, eight seeds of eight hours climb 7-10 cards in
+  // the first hour while ahead, then one or two an hour; 3x ran away to card
+  // 50 and 3.5x to card 16 in three hours.
+  TIER_Y: 4, TIER_G: 2.16, Y0: 60, G0: 14, TIER_MAX: 400,
+  // Retiring starts you on the highest card where a fresh par four would
+  // still come in at this share of par time (a birdie), on the golfer you are
+  // once the range resets -- never above the best card you had reached.
+  RETIRE_FIT: 0.77,
+  // a round averaging this many under par a hole opens the next card at once
+  ROUND_OPEN: -2.5,
   // Two thirds of what they were (10/15/20), with the handicap raised from
   // 0.34 to 0.52 to match: a golfer ahead of the card plays exactly the same
   // hole in exactly the same time, but it now reads as a birdie rather than
@@ -2041,12 +2054,9 @@ const B = {
   // A hole stretched by your handicap pays for the extra yards, or buying power
   // would stop paying anything on the course. Sublinear, so climbing a card is
   // still worth more than sitting on one and out-hitting it.
-  // The floor was 0.34 of par time, which is an Eagle: a golfer ahead of the
-  // card carded eagles on 58% of holes and albatrosses on 16%, so score said
-  // nothing. At 0.52 with par times cut to match, the same golfer cards
-  // birdies on about 62%, eagles 24%, pars 11%, albatrosses 2%, over eight
-  // seeds of three hours; pace and hole length are unchanged.
-  HCP: 0.52, HCP_PAY: 0.60,
+  // (The handicap that stretched every hole to the golfer's power is gone:
+  // holes are fixed to their card, and a golfer ahead of it moves up instead.
+  // See TIER_Y.)
   CRIT_ADD: { face:0.00132, simul:0.00108 },
   CPW_ADD: 0.0174, DROP_ADD: 0.000675, PROC_ADD: 0.00099, DGN_ADD: 0.00315,
   MST_ADD: { provis:0.0018, second:0.0022 },
@@ -2260,7 +2270,10 @@ const B = {
   // a carry roughly two hundred times what the card asks; past that the bonus
   // stops compounding, or parking on a low card and out-buying it pays better
   // than climbing, which is the one thing the ladder exists to prevent.
-  CARRY_FLOOR_T: 20, DGN_PACE_0: 5.4, DGN_PACE_STEP: 1.95, DGN_PACE_MAX: 12,
+  // PACE_STEP is worked out from TIER_Y (see dgnPace), not written down: it was
+  // written down as 1.95 for a TIER_Y of 2.35, and when the card step became 4
+  // an on-pace run paid 6.3x more at card 200 than at card 5.
+  CARRY_FLOOR_T: 20, DGN_PACE_0: 5.4, DGN_PACE_MAX: 12,
 
   // Things that happen between floors. Mostly they cost you.
   DGN_EVENT_CHANCE: 0.38,
@@ -2380,7 +2393,7 @@ const B = {
      The anchor is a golfer at the tempo cap clearing in par time: armour eats
      ARMOR_MULT of that swing, and proportionally less of a slower, heavier one,
      which is the whole point. */
-  ARMOR_MULT: 0.35, ARMOR_IDLE: 0.58, ARMOR_FLOOR: 0.10,
+  ARMOR_MULT: 0.35, ARMOR_IDLE: 0.58, ARMOR_FLOOR: 0.10, ARMOR_CAP: 0.5,
 
   /* ---- what finishing an event actually pays ---- */
   PLACE_PURSE: 46, PLACE_DECAY: 0.88, PLACE_FLOOR: 0.04,
@@ -3134,6 +3147,7 @@ function chaosFor(h, tier){
    ========================================================================= */
 const KEY = 'mythic-mulligan-v1';
 function defaultState(){ return {
+  holesFixed: 1,
   ver: 1, t: Date.now()/1000,
   gold: 0, tier: 0, hole: 1, elapsed: 0,
   upg: {}, equip: {}, bag: [], uid: 1,
@@ -3338,7 +3352,7 @@ function load(){
     }catch(e){}
   }
   Object.assign(S, o);
-  return true;
+  return o;
 }
 
 /* =========================================================================
@@ -3741,15 +3755,14 @@ function maxAffordable(base, r, owned, cash){
 const isClosing = h => holeInRound(h) === B.ROUND;
 const isSunday  = h => dayIndex(h) === B.DAYS - 1;
 
-// How far into the ladder you actually are. A Tour Card takes five events, and
-// the course grows across those five rather than sitting still: you arrive on a
-// new card carding bogeys and leave it carding aces. Without this you spend the
-// whole card massively overpowered and every hole is an Ace, which makes score
-// meaningless. Climbing is exactly neutral, because five events of growth is
-// precisely one card step.
+// How far up the ladder a card sits. A card is fixed: it used to grow across
+// its five events, which only made sense while every hole was stretched to the
+// golfer. With holes fixed to their card, growth turned each card into a
+// treadmill that you aced on arrival and bogeyed by the fifth event; eight
+// seeds of three hours carded 13% bogeys with it and 9% without. You get
+// stronger on a card and your scores show it, then you move up.
 function tierProgress(tier){
-  const t = tier === undefined ? S.tier : tier;
-  return t + Math.min(1, (S.tierEvents && S.tierEvents[t] || 0) / B.EVENTS_PER_CARD);
+  return tier === undefined ? S.tier : tier;
 }
 function yardageFor(h, tier, ch){
   return B.Y0 * Math.pow(B.TIER_Y, tierProgress(tier)) * (parOf(h)/4) * ch.y
@@ -3759,12 +3772,9 @@ function parTimeFor(h){
   return B.PAR_TIME[parOf(h)] * (isClosing(h) ? 1.6 : 1) * (isSunday(h) ? 1.15 : 1);
 }
 function purseFor(h, tier, goldMult){
-  // pay for the yards actually being played, not just the yards on the card
-  const stretch = (S.carded > 0 && S.yardsMax > S.carded)
-    ? Math.pow(S.yardsMax / S.carded, B.HCP_PAY) : 1;
   // Sunday Gallery rides the Sunday multiplier rather than the purse itself:
   // a quarter of the round, at the end of it, and nothing at all on a Thursday.
-  return B.G0 * Math.pow(B.TIER_G, tierProgress(tier)) * (parOf(h)/4) * goldMult * stretch
+  return B.G0 * Math.pow(B.TIER_G, tierProgress(tier)) * (parOf(h)/4) * goldMult
        * (isClosing(h) ? 3.2 : 1) * (isSunday(h) ? 1.4 * (1 + career().sunday) : 1)
        * purseMult(tournamentOf(h));
 }
@@ -3786,16 +3796,22 @@ function startHole(){
   // flag rather than a reader picking through the chaos table every swing.
   S.stretched = S.chaos.y > 1;
   S.parTime = parTimeFor(S.hole);
-  // the card sets the hole, your bag sets the floor under it
+  // the card sets the hole, and only the card
   const carded = yardageFor(S.hole, S.tier, S.chaos);
-  const handicap = D.dps * S.parTime * B.HCP;
-  S.yardsMax = Math.max(carded, handicap);
+  S.yardsMax = carded;
   S.carded = carded;
   S.yards = S.yardsMax;
   S.purse = purseFor(S.hole, S.tier, D.gold);
   // a strike from a golfer at the tempo cap clearing this hole in par time
   const refSwing = S.yardsMax / (S.parTime * B.SPEED_CAP);
-  S.armor = isClosing(S.hole) ? refSwing * B.ARMOR_MULT * (isSunday(S.hole) ? 1.45 : 1) : 0;
+  // Never more than ARMOR_CAP of one of your swings. Sized off the card alone,
+  // a golfer a little behind it with a quick, light swing met armour bigger
+  // than the swing, every strike went in at the 10% floor, and the closing hole
+  // took a hundred seconds: forty minutes of 0% par or better, on a seed that
+  // was playing properly. The stretched holes used to hide this, since armour
+  // followed the golfer.
+  S.armor = isClosing(S.hole)
+    ? Math.min(refSwing * B.ARMOR_MULT * (isSunday(S.hole) ? 1.45 : 1), D.pow * B.ARMOR_CAP) : 0;
   S.armor0 = S.armor;                       // Loaded Face shaves off this, not off nothing
   S.walkMin = mileOn('tempo') ? 0.05
             : Math.max(B.WALK_MIN_FLOOR, B.WALK_MIN * (1 - Math.min(0.45, D.C.walk)));
@@ -3965,7 +3981,7 @@ function checkAch(){
     let got;
     if(r.k === 'tick'){ grantTickets(r.v); got = '+' + r.v + ' ' + plural(r.v, 'tickets'); }
     else if(r.k === 'grit'){ S.grit += r.v; got = '+' + r.v + ' grit'; }
-    else if(r.k === 'shard'){ S.shard += r.v; got = '+' + r.v + ' ' + plural(r.v, 'shards'); }
+    else if(r.k === 'shard'){ S.shard += r.v; got = '+' + r.v + '\u00a0' + plural(r.v, 'shards'); }
     else if(r.k === 'scroll'){ S.scroll += r.v; got = '+' + r.v + ' ' + plural(r.v, 'scrolls'); }
     else if(r.k === 'legacy'){ S.legacy += r.v; got = '+' + r.v + ' legacy'; }
     else if(r.k === 'crt' || r.k === 'drp' || r.k === 'prc') got = '+' + (r.v*100).toFixed(1) + 'pp ' + r.k;
@@ -4317,7 +4333,8 @@ const carryFloor = D => asFloor(Math.max(1, D.dps) * B.CARRY_FLOOR_T)
 // about two rungs a card all by itself, so a reward priced off it drifts
 // against the ladder. Being deeper than your card expects is the thing worth
 // paying for, and that is the same achievement on every card.
-const dgnPace = tier => B.DGN_PACE_0 + B.DGN_PACE_STEP * tierProgress(tier);
+const dgnPace = tier => B.DGN_PACE_0
+  + Math.log(B.TIER_Y) / Math.log(B.DGN_WORK_STEP) * tierProgress(tier);
 
 // What one purchase in a currency's shop costs today. Every reward down here is
 // priced in these, the way the Vault is priced in holes of purse, so a run buys
@@ -4923,7 +4940,7 @@ function resolveNine(){
     if(r.k === 'purse'){ const g = hole*r.v*nine; S.gold += g; Meter.add(g); bits.push(fmt(g) + ' purse'); }
     else if(r.k === 'tick'){ grantTickets(r.v); bits.push(r.v + ' ticket' + (r.v>1?'s':'')); }
     else { const v = Math.round(r.v*nine); S[r.k] += v;
-           bits.push(v + ' ' + (r.k === 'shard' ? 'shards' : r.k)); }
+           bits.push(v + '\u00a0' + (r.k === 'shard' ? 'shards' : r.k)); }
     S.ninesWon = (S.ninesWon || 0) + 1;
   }
   if(best){
@@ -5083,10 +5100,12 @@ function finishHole(D){
   }
 
   // auto-climb: five straight eagles means this Tour Card is finished
-  // "on form": five birdies or better running, which is what a golfer ahead
-  // of the card cards now; it was five eagles when eagles were the floor
+  // Climbs when the next card is open and your bag would still birdie it.
+  // It used to climb on a run of good scores, which on fixed holes put a
+  // golfer onto a card four times longer the moment they were ahead.
   S.streak = ratio <= 0.77 ? (S.streak||0) + 1 : 0;
-  if(S.autoClimb && S.streak >= 5 && S.tier < B.TIER_MAX){ S.streak = 0; climb(1, true); }
+  if(S.autoClimb && S.tier < B.TIER_MAX && cardUnlocked(S.tier + 1)
+     && roundRatio(S.tier + 1) <= B.RETIRE_FIT) climb(1, true);
 
   advanceHole();
   startHole();
@@ -5099,6 +5118,16 @@ function advanceHole(){
   S.hole++;
   if(holeInRound(S.hole) === 1 || holeInRound(S.hole) === 10) startNine();
   if(wasClosing){
+    // A round at albatross pace on your highest card opens the next one at the
+    // end of the day: a golfer that far ahead should not have to sit out a
+    // whole event, carding albatrosses, to be let up. It was the source of a
+    // quarter of all holes being albatross or better.
+    const round = S.scores.reduce((t, x) => t + (x ? x.d : 0), 0);
+    if(round <= B.ROUND * B.ROUND_OPEN && S.tier >= (S.tierMax || 0) && (S.tierMax || 0) < B.TIER_MAX){
+      S.tierMax = (S.tierMax || 0) + 1;
+      toast('Tour Card <b>' + roman(S.tierMax) + '</b> unlocked \u00b7 too good for this one');
+      grantSov(B.FREE_CARD, 'Tour Card ' + roman(S.tierMax));
+    }
     if(wasSunday) endTournament();
     S.scores = [];
   }
@@ -5120,7 +5149,10 @@ const rivalThru = (R, played) => Math.round(R.total * played / (B.ROUND * B.DAYS
 function endTournament(){
   const t = tournamentOf(S.hole - 1);
   const score = S.tourScore, target = eventTarget();
-  const beat = score <= target;
+  // Cups are only up for grabs on your highest card: an easy card is a place
+  // to earn, not a place to farm the ladder.
+  const onTop = S.tier >= (S.tierMax || 0);
+  const beat = score <= target && onTop;
   const share = payShare(score, target);
   const D = derive();
   // An event that resolves during a catch-up is paid at the same discount as
@@ -5167,7 +5199,10 @@ function endTournament(){
 
   S.eventsPlayed = (S.eventsPlayed || 0) + 1;
   S.tierEvents[S.tier] = eventsOn(S.tier) + 1;
-  if(S.tier >= (S.tierMax || 0) && eventsOn(S.tier) >= eventsToUnlock(S.tier)
+  // The next card opens after enough events on your highest, or at once when
+  // you win its cup: a golfer who is well ahead of the card moves up at the
+  // pace of their game, not of the calendar.
+  if(S.tier >= (S.tierMax || 0) && (beat || eventsOn(S.tier) >= eventsToUnlock(S.tier))
      && (S.tierMax || 0) < B.TIER_MAX){
     S.tierMax = (S.tierMax || 0) + 1;
     toast('Tour Card <b>' + roman(S.tierMax) + '</b> unlocked');
@@ -5190,7 +5225,7 @@ const cardUnlocked = tier => tier <= (S.tierMax || 0);
 // long time to look at "0 of 5" in a player's first sitting. 2, 3 and 4 open
 // them at 21-24, 45-50 and 74-82 minutes over the same three careers, with
 // cups won and events played unchanged. From the fourth card on it is 5. A
-// card still GROWS across EVENTS_PER_CARD events -- this is only the door.
+// card is fixed once you are on it -- this is only the door.
 const eventsToUnlock = tier => [2, 3, 4][tier] || B.EVENTS_PER_CARD;
 const eventsToNext = () => Math.max(0, eventsToUnlock(S.tierMax || 0) - eventsOn(S.tierMax || 0));
 // What this hole would take, as a share of par time, if it were on `tier`.
@@ -5200,16 +5235,28 @@ const eventsToNext = () => Math.max(0, eventsToUnlock(S.tierMax || 0) - eventsOn
 // one's -- a purse and yardage swing of its own, mixed into an answer that is
 // supposed to be about the card. wx pins both sides to the weather overhead.
 //
-// And it read the CARDED yardage, while the hole you actually play is never
-// shorter than what your bag clears in HCP of par time. So a bag well ahead of
-// its card was promised an Ace at 0.07x par on a hole that cannot come in under
-// 0.34x, which is three score bands out. The floor is applied here the way
-// startHole applies it.
+// The same, averaged over the eighteen holes of a round in still air: one hole
+// carries its own par, close and Sunday, and auto-climb judged a card off hole
+// two alone, then met closing holes 2.2x as long up there. And in still air,
+// because the weather is drawn afresh every round and moves a round's average
+// from 0.14 to 1.72 of par on the same card: judged in a calm round, a golfer
+// climbed and then carded pars and bogeys for forty minutes of ordinary
+// weather. One derive, eighteen yardages, cheap enough for every hole.
+const STILL = { y:1, g:1, s:1, c:0, p:0, dl:0 };
+function roundRatio(tier){
+  const D = derive(), dps = Math.max(1e-9, D.dps), base = S.hole - holeInRound(S.hole) + 1;
+  let sum = 0;
+  for(let i = 0; i < B.ROUND; i++){
+    const h = base + i;
+    sum += yardageFor(h, tier, STILL) / dps / parTimeFor(h);
+  }
+  return sum / B.ROUND;
+}
 function projectedRatio(tier, wx){
   const D = derive();
   const ch = chaosFor(S.hole, wx === undefined ? tier : wx);
   const y = yardageFor(S.hole, tier, ch);
-  return Math.max(B.HCP, (y / Math.max(1e-9, D.dps)) / parTimeFor(S.hole));
+  return (y / Math.max(1e-9, D.dps)) / parTimeFor(S.hole);
 }
 function climb(n, quiet, force){
   let to = clamp(S.tier + n, 0, B.TIER_MAX);
@@ -5718,6 +5765,40 @@ function upgradeTrophy(id){
   S.legacy -= c; S.relic[id]++;
   renderLegacy(); renderVitals();
 }
+// The highest card where a fresh par four comes in at RETIRE_FIT of par time.
+function matchedCard(D){
+  const c = Math.floor(Math.log(Math.max(1e-9, B.RETIRE_FIT * D.dps * B.PAR_TIME[4] / B.Y0)) / Math.log(B.TIER_Y));
+  return clamp(c, 0, B.TIER_MAX);
+}
+// Where a retirement puts you, worked out on the golfer you will be once the
+// range resets, not the one signing the card. The Chronoglass is a floor under
+// it, and the best card you have reached is a ceiling over it.
+function retireCard(){
+  const keep = relLv('vault') * B.VAULT_UPG, saved = Object.assign({}, S.upg), buff = S.buff;
+  B.UPG.forEach(u => S.upg[u.id] = Math.min(capOf(u), keep)); S.buff = {};
+  let c = 0;
+  try{ c = matchedCard(derive()); } finally { Object.assign(S.upg, saved); S.buff = buff; }
+  const best = Math.max(S.bestTier || 0, S.tierMax || 0, S.tier || 0);
+  return Math.min(B.TIER_MAX, Math.max(relLv('chrono'), Math.min(c, best)));
+}
+// A save from before holes were fixed to their card sits on a card number from
+// the old ladder, where each card was 2.35x the last rather than 4x and every
+// hole was stretched to the golfer anyway: Card 8 was 930x Card I, and is
+// 65,000x now. Loaded as it stood, such a golfer would meet holes seventy
+// times longer than yesterday. Once, on load, they are put on the card that
+// matches them, the same rule a retirement uses, with that card open. Cups,
+// legacy and everything else stay as they were.
+// Read off the save as it came in, not off S: S starts from the defaults,
+// which mark a game as fixed, and a wipe or reset lays those back down.
+function fixHoles(o){
+  if(!o || typeof o !== 'object' || o.holesFixed) return;
+  S.holesFixed = 1;
+  const c = matchedCard(derive());
+  S.tier = c; S.tierMax = c; S.tierEvents = {};
+  S.bestTier = Math.max(S.bestTier || 0, c);
+  S.scores = []; S.tourScore = 0;
+  S.hole = (tournamentOf(S.hole) - 1) * B.ROUND * B.DAYS + 1;
+}
 function retire(){
   const gain = legacyGain();
   if(gain <= 0) return;
@@ -5725,13 +5806,14 @@ function retire(){
 
   // The bag is yours. Clubs you found do not evaporate because you signed a
   // card; what resets is the money, the range work and the ladder.
+  const land = retireCard();
   S.gold = Math.pow(B.SEED_MULT, relLv('seed')) > 1
     ? B.G0 * Math.pow(B.TIER_G, Math.min(6, relLv('seed'))) * 40 : 0;
-  S.tier = Math.min(B.TIER_MAX, relLv('chrono'));
+  S.tier = land;
   S.hole = 1; S.scores = []; S.tourScore = 0; S.streak = 0;
   const keepUpg = relLv('vault') * B.VAULT_UPG;
   B.UPG.forEach(u => S.upg[u.id] = Math.min(capOf(u), keepUpg));
-  S.tierEvents = {}; S.tierMax = Math.min(B.TIER_MAX, relLv('chrono'));
+  S.tierEvents = {}; S.tierMax = land;
   S.buff = {}; B.SKILL.forEach(k => S.cd[k.id] = 0); S.swCount = 0;
   // level, attributes, talents and paragon are the golfer, not the run: untouched.
 
@@ -5788,7 +5870,7 @@ function roundRate(tier, wx){
   const n = B.ROUND * B.DAYS, first = awayFirstHole(S.hole);
   const h0 = S.hole, chaos0 = S.chaos, el0 = S.courseEl, str0 = S.stretched;
   const carded0 = S.carded, yards0 = S.yardsMax;
-  let secs = 0, purse = 0, drop = 0, card = 0, yards = 0, bound = 0;
+  let secs = 0, purse = 0, drop = 0, card = 0, yards = 0, par = 0;
   // It walks the golfer over seventy two holes to measure them, so it puts him
   // back whichever way it leaves: a throw in derive() that stranded him on hole
   // forty of an event he is not playing would be silent and permanent.
@@ -5801,15 +5883,11 @@ function roundRate(tier, wx){
       S.courseEl = courseElFor(h, wx);
       const D = derive();
       const carded = yardageFor(h, tier, S.chaos);
-      const floor = D.dps * parTimeFor(h) * B.HCP;
-      const y = Math.max(carded, floor);
-      if(floor > carded) bound++;
-      // purseFor reads the live hole's yardage for the stretch it pays on the
-      // handicap, so the hole being priced has to be the hole in the globals.
-      // It is the game's own pricing function or it is a second one to keep in
-      // step with the first.
+      const y = carded;
+      // priced as the hole in the globals, by the game's own pricing function
       S.carded = carded; S.yardsMax = y;
       secs  += Math.max(S.walkMin || B.WALK_MIN, y / Math.max(1e-9, D.dps));
+      par   += parTimeFor(h);
       purse += purseFor(h, tier, D.gold);
       drop  += D.drop;
       card  += carded; yards += y;
@@ -5821,7 +5899,7 @@ function roundRate(tier, wx){
   return { secs: secs/n, purse: purse/n, drop: drop/n,
            carded: card/n, yardsMax: yards/n,
            rate: purse/Math.max(1e-9, secs),   // what a second on this card pays
-           bound: bound/n };                   // share of holes your bag sets, not the card
+           ratio: secs / Math.max(1e-9, par) };   // average share of par time a hole takes
 }
 
 // What climbing actually does. The fold on this screen has always said a card
@@ -5838,12 +5916,7 @@ function climbPreview(){
     pay:  next.rate / Math.max(1e-9, here.rate),
     len:  next.yardsMax / Math.max(1e-9, here.yardsMax),
     secs: next.secs / Math.max(1e-9, here.secs),
-    bound: here.bound,
-    // How much further along the growth curve the next card starts. Zero means
-    // the hole does not change at all. It is NOT the same as "this card is
-    // played out": climb, play, drop back, and the card above you has events on
-    // it too, so it starts grown and the step is a full one again.
-    dProg: tierProgress(nextT) - tierProgress(S.tier) };
+    ratio: next.ratio };
 }
 
 // hms stops at hours, which reads badly once a return is measured in days:
@@ -6001,7 +6074,7 @@ function offline(){
   if(paras > 0) marks.push(['Paragon', '+' + paras]);
   if(sov > 0) marks.push([B.SOV, '+' + sovFmt(sov)]);
   if(swapped > 0) marks.push(['Auto equipped', swapped + ' club' + (swapped > 1 ? 's' : '')]);
-  if(scrapped > 0) marks.push(['Locker full \u00b7 scrapped ' + scrapped, '+' + fmt(scrapSh, 0) + ' ' + plural(scrapSh, 'shards')]);
+  if(scrapped > 0) marks.push(['Locker full \u00b7 scrapped ' + scrapped, '+' + fmt(scrapSh, 0) + '\u00a0' + plural(scrapSh, 'shards')]);
   if(entries > 0) marks.push(['Wager entries back', '+' + entries]);
   if(marks.length) h += '<div class="awband">What came of it</div>'
     + marks.map(([k, v]) => line(k, v)).join('');
@@ -9849,18 +9922,15 @@ function refreshUpg(){
   // looked like the game losing your upgrades.
   let owned = 0;
   for(const r of UPGREF) if(upgLv(r.u.id) > 0) owned++;
-  const stretch = (S.carded > 0 && S.yardsMax > S.carded) ? S.yardsMax/S.carded : 1;
+  // an albatross or better on this card is a golfer who belongs on the next
+  const ahead = S.tier < B.TIER_MAX && projectedRatio(S.tier) <= 0.27;
   const band = $('upgCount');
   if(band) band.textContent = owned + ' of ' + B.UPG.length + ' started';
   const note = $('upgTax');
-  if(note) note.innerHTML = stretch > 1.05
-    // "Holes stretched 25.1Kx" late on: a real figure that tells nobody
-    // anything. What it means is the bag has outgrown the card, and what to do
-    // about it depends on whether the next card is open yet.
-    ? (cardUnlocked(S.tier + 1) && S.tier < B.TIER_MAX
+  if(note) note.innerHTML = ahead
+    ? (cardUnlocked(S.tier + 1)
         ? 'Your bag outdrives this card \u00b7 <b>climb</b> on the Tour tab'
-        : 'Your bag outdrives this card \u00b7 next card in <b>' + eventsToNext() + '</b> '
-          + plural(eventsToNext(), 'events'))
+        : 'Your bag outdrives this card \u00b7 win its <b>cup</b> to move up')
     : 'Playing the card as it lies';
 
   // The range used to carry a line of its own at the top naming the cheapest
@@ -10151,12 +10221,12 @@ function itemSheet(it, equipped){
   const lk = lockCount(it);
   h += '<button class="act ghost" onclick="doReroll(' + it.uid + ')">Re-attune '
     + (lk ? 'the other ' + (it.aff.length - lk) : 'affixes') + ' \u2014 '
-    + fmt(rerollCost(it), 0) + ' shards</button>'
+    + fmt(rerollCost(it), 0) + '\u00a0shards</button>'
     + (it.aff.length > 1 ? '<p style="font-size:11px;margin-top:6px">A lock keeps that roll. '
       + 'Each lock costs more.</p>' : '');
   if(it.rar < B.RARITY.length-1)
     h += '<button class="act ghost" onclick="doAscend(' + it.uid + ')">Ascend to '
-      + B.RARITY[it.rar+1].n + ' \u2014 ' + ascendCost(it) + ' shards</button>';
+      + B.RARITY[it.rar+1].n + ' \u2014 ' + ascendCost(it) + '\u00a0shards</button>';
   if(!equipped){
     h += '<button class="act" onclick="doEquip(' + it.uid + ')">Put in the bag</button>';
     h += '<button class="act danger" onclick="doSalvage(' + it.uid + ')">Scrap for '
@@ -10409,13 +10479,10 @@ function renderTour(){
     + '<span>Playing <b>Card ' + roman(S.tier) + '</b>'
     + (atTop ? '' : ' · highest <b>Card ' + roman(top) + '</b>') + '</span>'
     + '<button class="qm" aria-label="How Tour Cards work">?</button></div>'
-    + '<div class="fold" style="margin-top:6px">A Tour Card is the difficulty you are playing at. '
-    + 'Each one up makes the holes ×' + B.TIER_Y + ' longer and pays ×' + B.TIER_G
-    + ' more, and the clock you are scored against does not move. A card also grows across its '
-    + B.EVENTS_PER_CARD + ' events, so one you have just taken plays short and the same card plays '
-    + 'long by the end of it — which is why climbing costs least when you have played one out. '
-    + 'You unlock the next card by playing ' + eventsToUnlock(top) + ' events on your highest'
-    + (top < 3 ? ' (5 from Card ' + roman(3) + ' on)' : '') + ', and only on your highest.</div></div>'
+    + '<div class="fold" style="margin-top:6px">Each card up has holes \u00d7' + B.TIER_Y + ' longer that pay \u00d7'
+    + B.TIER_G + ' more. Win the cup on your '
+    + 'highest card to open the next at once, or play ' + eventsToUnlock(top) + ' events there. Cups only '
+    + 'count on your highest card. Retiring starts you on the highest card your golfer can birdie.</div></div>'
     + unlockLine
     + (atTop || top >= B.TIER_MAX ? ''
        : '<div class="hint" style="color:var(--flag)">No unlocks below Card '
@@ -10428,8 +10495,8 @@ function renderTour(){
         + '<div class="ds">' + (cardUnlocked(nextT)
             ? 'This hole: <b style="color:var(--chalk)">' + nm(hereR)
               + '</b> now, <b style="color:var(--chalk)">' + nm(nextR) + '</b> there.'
-            : 'Locked \u00b7 ' + eventsToNext() + '\u00a0more event' + (eventsToNext() === 1 ? '' : 's')
-              + ' on Card ' + roman(top)) + '</div></div>'
+            : 'Locked \u00b7 win the cup on Card ' + roman(top) + ', or play ' + eventsToNext()
+              + '\u00a0more event' + (eventsToNext() === 1 ? '' : 's')) + '</div></div>'
         + '<button class="buy' + (cardUnlocked(nextT) ? ' ok' : ' no') + '" id="climbBtn">'
         + '<span class="lbl">Climb</span><span class="amt">'
         + (cardUnlocked(nextT) ? '+1' : eventsToNext() + '\u00a0to go') + '</span></button></div>')
@@ -10441,7 +10508,7 @@ function renderTour(){
     + '<button class="buy' + (S.tier > 0 ? '' : ' no') + '" id="dropBtn">'
     + '<span class="lbl">Drop</span><span class="amt">−1</span></button></div>'
     + '<div class="row"><div><div class="nm">Climb on form</div>'
-    + '<div class="ds">After 5 birdies in a row</div></div>'
+    + '<div class="ds">When you can birdie the next card</div></div>'
     + '<button class="buy' + (S.autoClimb ? ' ok' : '') + '" id="autoBtn"><span class="lbl">Auto</span>'
     + '<span class="amt">' + (S.autoClimb ? 'On' : 'Off') + '</span></button></div>';
   const cb = $('climbBtn'); if(cb) cb.onclick = () => climb(1);
@@ -10507,26 +10574,13 @@ function climbLines(){
   const near = x => Math.abs(x - 1) < 0.02;
   const pay = near(C.pay) ? 'unchanged' : '\u00d7' + C.pay.toFixed(2);
   const len = near(C.len) ? 'the same' : '\u00d7' + C.len.toFixed(2) + ' longer';
-  // The number is not the answer. The answer is whether to press the button.
-  // Which sentence that is comes off dProg -- how much further along the growth
-  // curve the next card starts -- and then off the figures themselves, so it
-  // can never contradict the two lines above it. Reading "this card is played
-  // out" as the cause was wrong: climb, play, drop back, and the card above you
-  // has five events on it as well, so it starts grown and the step is a full
-  // one. That state put "climbing costs nothing" directly above x0.94 and
-  // x1.98 longer.
-  const say = C.dProg < 0.02
-    ? 'Climbing costs nothing.'
-    : near(C.len)
-      ? 'Your bag outdrives this card on ' + Math.round(C.bound*100)
-        + '% of holes.'
-      : C.pay >= 1
-        // The "play it out first" advice only exists while there is something
-        // left to play out. Said to someone whose card is already at 5 of 5 it
-        // is an instruction they cannot follow.
-        ? 'Longer holes, but the purse keeps up.'
-        : 'A pay cut until your bag catches up.' + (eventsOn(S.tier) < B.EVENTS_PER_CARD
-            ? ' Finish this card first.' : '');
+  // The number is not the answer. The answer is whether to press the button:
+  // birdies or better up there, the purse keeping up, or a pay cut.
+  const say = C.next.ratio <= 0.77
+    ? 'Your bag outdrives this card: birdies or better up there too.'
+    : C.pay >= 1
+      ? 'Longer holes, but the purse keeps up.'
+      : 'A pay cut until your bag catches up.';
   // Said plainly when the button underneath cannot be pressed yet: these are a
   // preview of a climb that is not offered, and reading "as cheap as climbing
   // gets" over a greyed out button is a nudge towards nothing.
@@ -10568,8 +10622,8 @@ function renderLegacy(){
       : '<div class="empty">Opens after your first event \u00b7 '
         + holesPlayed(S.hole) + ' of ' + (B.ROUND*B.DAYS) + '\u00a0holes</div>');
   if(gain > 0) $('retireBtn').onclick = () => showSheet(
-    '<h3>Sign the card?</h3><p>Bank <b>' + fmt(gain) + '</b> legacy and restart from Card '
-    + roman(relLv('chrono')) + '.</p><p>' + legacyBuys(P).charAt(0).toUpperCase()
+    '<h3>Sign the card?</h3><p>Bank <b>' + fmt(gain) + '</b> legacy and restart on Card '
+    + roman(retireCard()) + '.</p><p>' + legacyBuys(P).charAt(0).toUpperCase()
     + legacyBuys(P).slice(1) + '.</p>'
     + '<p>Wait a card: +' + fmt(P.card) + ' \u00b7 wait a cup: +' + fmt(P.cup) + '</p>'
     + '<button class="act" onclick="hideSheet();retire()">Retire</button>'
@@ -10605,7 +10659,7 @@ function renderLegacy(){
     if(M) eff = '\u00d7' + fmt(Math.pow(M, lv));
     else if(t.k === '@sun') eff = '+' + fmt(lv*B.SUN_ADD*100) + 'pp';
     else if(t.k === '@ember') eff = '+' + fmt(lv*B.EMBER_ADD*100) + 'pp';
-    else if(t.k === '@chrono') eff = 'retire onto Tour Card ' + roman(Math.min(B.TIER_MAX, lv));
+    else if(t.k === '@chrono') eff = 'retire onto Card ' + roman(Math.min(B.TIER_MAX, lv)) + ' or higher';
     else if(t.k === '@vault'){ const kp = Math.min(500, lv*B.VAULT_UPG);
       eff = fmt(kp, 0) + ' levels kept' + (kp >= 500 ? ' (all)' : ''); }
     else if(t.k === '@rift'){ const w = Math.max(B.RIFT_MIN_WAIT, Math.pow(B.RIFT_REGEN, lv));
@@ -11011,7 +11065,7 @@ function achReward(a){
   const r = a.r;
   if(r.k === 'tick') return '+' + r.v + ' ' + plural(r.v, 'tickets');
   if(r.k === 'grit') return '+' + r.v + ' grit';
-  if(r.k === 'shard') return '+' + r.v + ' ' + plural(r.v, 'shards');
+  if(r.k === 'shard') return '+' + r.v + '\u00a0' + plural(r.v, 'shards');
   if(r.k === 'scroll') return '+' + r.v + ' ' + plural(r.v, 'scrolls');
   if(r.k === 'legacy') return '+' + r.v + ' legacy';
   if(r.k === 'crt' || r.k === 'drp' || r.k === 'prc') return '+' + (r.v*100).toFixed(1) + 'pp';
@@ -11272,6 +11326,7 @@ function loadSaveObject(o){
   Object.keys(S).forEach(k => delete S[k]);
   Object.assign(S, defaultState(), o);
   initState(); migrate();
+  fixHoles(o);                      // a code from before holes were fixed moves once, like a load
   S.t = Date.now()/1000;            // a code carries no away time with it
   S.dgnRun = null; S.buff = {};
   Scene.dFloor = -1; Scene.skyKey = null; Scene.dBgKey = null;
@@ -11480,7 +11535,9 @@ function boot(){
   initState();
   migrate();
   if(S.mult === undefined) S.mult = 1;
-  if(S.autoClimb === undefined) S.autoClimb = false;
+  // on for a new golfer: on fixed holes, moving up when you can is the game
+  if(S.autoClimb === undefined) S.autoClimb = true;
+  fixHoles(had);                    // a save from before holes were fixed moves once
 
   Scene.init();
   setIcons();

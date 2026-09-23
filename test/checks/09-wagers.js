@@ -15,7 +15,9 @@
  *   2. Every Depths run paid floor/8 sponsor tickets. A Sponsor Exemption costs
  *      six and refills every entry in the book, which is twelve more runs, so past
  *      about card twenty five the wagers bought their own entries.
- *   3. offline() sized an away hole off the CARDED yardage while the live game
+ *   3. (Written when holes were stretched to the golfer by a handicap; they
+ *      are fixed to their card now, and the rule below still holds.)
+ *      offline() sized an away hole off the CARDED yardage while the live game
  *      sizes it off the handicapped yardage, so an away session ignored the
  *      floor that pins a live hole at HCP of par time however hard you hit it.
  *      It then read both the pace AND the purse off the single hole you parked
@@ -142,7 +144,9 @@ module.exports = {
         });
         startHole();
         const ch = { y:1, g:1, s:1, c:0, p:0, dl:0 };
-        const pace = yardageFor(S.hole, S.tier, ch) / (parTimeFor(S.hole) * B.HCP);
+        // the power that clears this card's hole in par time; holes are fixed
+        // to their card now, so k is simply how far ahead of the card you are
+        const pace = yardageFor(S.hole, S.tier, ch) / parTimeFor(S.hole);
         const setL = L => B.UPG.forEach(u => S.upg[u.id] = Math.min(capOf(u), Math.round(L)));
         let lo = 0, hi = 20000;
         while (hi - lo > 1) {
@@ -164,7 +168,7 @@ module.exports = {
         B.UPG.forEach(u => S.upg[u.id] = 0);
         startHole();
         const ch = { y:1, g:1, s:1, c:0, p:0, dl:0 };
-        const pace = yardageFor(S.hole, S.tier, ch) / (parTimeFor(S.hole) * B.HCP);
+        const pace = yardageFor(S.hole, S.tier, ch) / parTimeFor(S.hole);
         let lo = 0, hi = 40000;
         while (hi - lo > 1) {
           const mid = (lo + hi) >> 1; S.upg.drive = mid;
@@ -257,7 +261,9 @@ module.exports = {
         // wrong there, which is a check that passes without checking.
         {
           const ch0 = { y:1, g:1, s:1, c:0, p:0, dl:0 };
-          const pace = yardageFor(S.hole, S.tier, ch0) / (parTimeFor(S.hole) * B.HCP);
+          // the strength that cards a birdie on this card (0.52 of par time,
+          // where the old handicap floor pinned a golfer ahead of the card)
+          const pace = yardageFor(S.hole, S.tier, ch0) / (parTimeFor(S.hole) * 0.52);
           let lo = 0, hi = 60000;
           while (hi - lo > 1) { const m = (lo + hi) >> 1; S.upg.drive = m;
             if (derive().dps < pace * 4) lo = m; else hi = m; }
@@ -426,8 +432,8 @@ module.exports = {
       if (!(f > 0.8 && f < 1.25))
         throw new Error('at ' + a.k + 'x the power its card asks for, the average live hole '
           + 'takes ' + a.live + 's and an away hole ' + a.awaySecs + 's. The away model is '
-          + 'ignoring the handicap floor that pins the live one, or reading its pace off a '
-          + 'single hole instead of a round.');
+          + 'reading its pace off a single hole instead of a round, or off a different '
+          + 'hole length than the live game plays.');
     }
 
     // 4b. and no hole is worth parking on

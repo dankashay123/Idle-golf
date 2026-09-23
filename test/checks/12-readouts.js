@@ -31,11 +31,13 @@
  * The Tour screen said what you would SCORE on the next card and nothing about
  * what you would earn, while the fold under it said a card makes holes x2.35
  * longer and pays x2.16 more -- which reads as a flat pay cut and is not one.
- * The hole is never shorter than what your bag clears in HCP of par time, so
- * while you are ahead of your card the length does not move and the purse does;
- * and a card grows across its five events, so one you have played out is
- * already at the next card's length. Three cases, and the screen now names
- * which one you are in. The checks below pin all three.
+ * Holes are fixed to their card now (they used to be stretched to the golfer
+ * by a handicap, and a card grew across its events), so a climb is always
+ * TIER_Y longer holes for TIER_G more purse. What that does to the purse per
+ * SECOND depends on where you stand: behind the card it is a pay cut of
+ * exactly TIER_G/TIER_Y; far ahead of it, where a hole is only as quick as
+ * the walk to the next tee, the longer holes cost nothing and the purse is a
+ * clear gain. The screen names which, and the Range says when to go.
  *
  * They also pin the weather. chaosFor and courseElFor hash on the TIER, so
  * pricing the next card under its own weather compares four draws against four
@@ -280,7 +282,9 @@ module.exports = {
           it.el = null; it.aff = []; S.equip[sl.id] = it; });
         S.hole = 2; startHole();
         const ch = { y:1, g:1, s:1, c:0, p:0, dl:0 };
-        const pace = yardageFor(S.hole, S.tier, ch) / (parTimeFor(S.hole) * B.HCP);
+        // the strength that cards a birdie on this card (0.52 of par time,
+        // where the old handicap floor pinned a golfer ahead of the card)
+        const pace = yardageFor(S.hole, S.tier, ch) / (parTimeFor(S.hole) * 0.52);
         let lo = 0, hi = 60000;
         while (hi - lo > 1) { const m = (lo + hi) >> 1; S.upg.drive = m;
           if (derive().dps < pace * k) lo = m; else hi = m; }
@@ -291,16 +295,17 @@ module.exports = {
         renderTour();
         const C = climbPreview();
         refreshUpg();
-        return { k, events, pay: C.pay, len: C.len, bound: C.bound,
+        return { k, events, pay: C.pay, len: C.len, ratio: C.ratio,
                  text: $('tierBox').textContent, rangeLine: $('upgTax').textContent };
       };
-      out.behind = climbCase(0.6, 0);      // the card sets the hole
-      out.ahead  = climbCase(12, 0);       // the bag sets the hole
-      out.played = climbCase(1, B.EVENTS_PER_CARD);   // the card is full grown
-      // climbed, played, dropped back: the card ABOVE you has events on it too,
-      // so it starts grown and the step is a full one again. This is the state
-      // that put "climbing costs nothing" over x0.94 pay and x1.98 longer holes.
-      out.dropped = climbCase(0.8, B.EVENTS_PER_CARD, B.EVENTS_PER_CARD);
+      out.behind  = climbCase(0.6, 0);     // slower than a birdie here, and far slower up there
+      // so far ahead that holes on both cards are only as quick as the walk to
+      // the next tee: only then is a climb a gain a second. At 12x the next
+      // card's holes already take 2.3x as long and it reads 0.95x -- the purse
+      // steps TIER_G against TIER_Y, and what a climb buys is gear, experience
+      // and legacy, not a faster purse.
+      out.ahead   = climbCase(60, 0);
+      out.matched = climbCase(1, 0);       // birdies here, double bogeys up there
       out.tierY = B.TIER_Y; out.tierG = B.TIER_G;
       // and the panel says nothing at all when it is not the panel on show
       setView('upg'); renderTour();
@@ -499,7 +504,7 @@ module.exports = {
         + 'the nearest honour');
 
     // ---- climbing a Tour Card -----------------------------------------
-    const B_ = r.behind, A_ = r.ahead, P_ = r.played;
+    const B_ = r.behind, A_ = r.ahead, M_ = r.matched;
     // a bag ahead of its card: the Range says what that means, not "stretched 25.1Kx"
     if (!/outdrives this card/.test(A_.rangeLine) || /stretched|\dx\b/i.test(A_.rangeLine))
       throw new Error('with the bag ahead of its card the Range reads "' + A_.rangeLine
@@ -509,48 +514,28 @@ module.exports = {
         + 'and paid ' + r.lockShards + ' shards; it should say so once and still pay for every one');
     if (r.lockLater.length !== 2 || !/scrapped \d+/.test(r.lockLater[1]))
       throw new Error('a minute later the locker did not report the clubs scrapped since');
-    if (B_.bound > 0)
-      throw new Error('the "behind" setup has the handicap floor setting ' + Math.round(B_.bound * 100)
-        + '% of holes, so it is not behind its card and cannot test that case');
-    // behind the card: the hole is the card's, so it grows by exactly TIER_Y
-    // and the purse by exactly TIER_G. Any other number and the two sides are
-    // being walked under different weather again.
-    if (Math.abs(B_.len - r.tierY) > 0.02)
-      throw new Error('a bag behind its card sees the next one ' + B_.len.toFixed(2)
-        + 'x longer, not TIER_Y ' + r.tierY + 'x. The two cards are being priced under '
-        + 'different weather.');
+    // Either way the next card's holes are exactly TIER_Y longer; any other
+    // number and the two sides are being walked under different weather.
+    for (const [k, c] of [['behind', B_], ['ahead', A_], ['matched', M_]])
+      if (Math.abs(c.len - r.tierY) > 0.02)
+        throw new Error('a bag ' + k + ' of its card sees the next one ' + c.len.toFixed(2)
+          + 'x longer, not TIER_Y ' + r.tierY + 'x. The two cards are being priced under '
+          + 'different weather.');
+    // behind the card: time scales with the hole, so the purse per second is TIER_G/TIER_Y
     if (Math.abs(B_.pay - r.tierG / r.tierY) > 0.03)
       throw new Error('behind the card, climbing pays ' + B_.pay.toFixed(3) + ' where '
         + 'TIER_G/TIER_Y is ' + (r.tierG / r.tierY).toFixed(3));
     if (!(B_.pay < 1))
       throw new Error('climbing while behind your card is not shown as a pay cut');
-    // ahead of it: your bag sets the hole, so the length cannot move
-    if (Math.abs(A_.len - 1) > 0.02)
-      throw new Error('a bag twelve times its card still sees holes ' + A_.len.toFixed(2)
-        + 'x longer. The handicap floor already sets them, so climbing cannot lengthen them.');
-    if (!(A_.pay > 1.1) || !(A_.bound > 0.9))
-      throw new Error('ahead of the card, climbing pays ' + A_.pay.toFixed(2) + ' with '
-        + Math.round(A_.bound * 100) + '% of holes set by the bag: it should be a clear gain');
-    // played out: tierProgress is already tier+1, so nothing moves
-    if (Math.abs(P_.len - 1) > 0.02 || Math.abs(P_.pay - 1) > 0.02)
-      throw new Error('a card played out ' + B.EVENTS_PER_CARD + ' events still moves on a '
-        + 'climb: length ' + P_.len.toFixed(3) + ', pay ' + P_.pay.toFixed(3)
-        + '. tierProgress is already the next card by then.');
-    // and it answers rather than just printing -- with the answer for THAT case,
-    // not whichever sentence the two figures happen to match. A card played out
-    // and a bag miles ahead both leave the hole length alone; only one of them
-    // is "your bag outdrives this card".
-    // a card above you that is already grown is not a free climb
-    const D_ = r.dropped;
-    if (Math.abs(D_.len - 1) < 0.05)
-      throw new Error('with the card above already played, the holes should still step up, '
-        + 'but the length reads ' + D_.len.toFixed(3));
-    if (/costs nothing/.test(D_.text))
-      throw new Error('the screen says climbing costs nothing while showing holes x'
-        + D_.len.toFixed(2) + ' and pay x' + D_.pay.toFixed(2) + '. The verdict is being read '
-        + 'off "this card is played out" rather than off how far the next one has grown.');
-    const wants = { behind: /pay cut/, ahead: /outdrives this card/, played: /costs nothing/ };
-    for (const [k, c] of [['behind', B_], ['ahead', A_], ['played', P_]]) {
+    // far ahead: the walk sets the pace here, so longer holes are nearly free
+    if (!(A_.pay > 1.05))
+      throw new Error('sixty times ahead of the card, climbing pays ' + A_.pay.toFixed(2)
+        + ' a second: holes this far ahead are only as quick as the walk on both cards, so it should be a gain');
+    if (/outdrives this card/.test(M_.text))
+      throw new Error('a golfer carding birdies here is told their bag outdrives this card, '
+        + 'with holes four times longer above: ' + M_.text.slice(0, 160));
+    const wants = { behind: /pay cut/, ahead: /outdrives this card/ };
+    for (const [k, c] of [['behind', B_], ['ahead', A_]]) {
       if (c.text.indexOf('Purse per second') < 0)
         throw new Error('the Tour screen shows no purse line in the ' + k + ' case');
       // advice you cannot follow is worse than none
@@ -603,9 +588,7 @@ module.exports = {
       + P.cup + ' a cup, buys ' + r.buys.join('/') + ' at ' + r.discSteps.join('/'),
       'honours open on "' + r.honFirstName + '" at ' + (r.honPct[0] || 0).toFixed(0)
       + '%, not "' + r.honTableFirst + '"; ' + lockedPct.length + ' locked in order',
-      'climb: behind the card x' + B_.pay.toFixed(2) + ' pay on x' + B_.len.toFixed(2)
-      + ' holes, ahead of it x' + A_.pay.toFixed(2) + ' on the same holes, played out x'
-      + P_.pay.toFixed(2) + ', dropped back x' + D_.pay.toFixed(2) + ' on x'
-      + D_.len.toFixed(2) + ' holes'];
+      'climb: holes x' + B_.len.toFixed(2) + ' longer every time; purse a second x' + B_.pay.toFixed(2)
+      + ' behind the card, x' + A_.pay.toFixed(2) + ' far ahead of it, x' + M_.pay.toFixed(2) + ' when matched'];
   }
 };

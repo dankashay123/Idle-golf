@@ -9,8 +9,9 @@
  *     the form nothing (a catch-up posts level par for every event)
  *   - a mangled rival in a save is thrown away and rebuilt
  *   - and they are beatable about half the time: eight seeds of three hours
- *     played for real must land between 40% and 65% overall. Centred on form
- *     alone it was 35%, because a card grows across its events.
+ *     played for real must land between 40% and 65% overall (48% with holes
+ *     fixed to their card; 35% once, centred on form alone, while a card's
+ *     holes grew across its events).
  */
 'use strict';
 module.exports = {
@@ -54,15 +55,14 @@ module.exports = {
         for (const sd of [1, 2, 3, 4, 5, 6, 7, 8]) {
           Object.keys(S).forEach(k => delete S[k]); Object.assign(S, defaultState()); initState(); migrate(); startHole();
           let seed = sd * 7919 + 1; Math.random = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
-          S.autoEquip = 1;
+          S.autoEquip = 1; S.autoClimb = true;   // the game's own climbing, as a player gets it
           const shop = () => {
             for (let g = 0; g < 400; g++) { let best = null, bc = Infinity;
               for (const u of B.UPG) { const lv = upgLv(u.id); if (lv >= capOf(u)) continue;
                 const c = costBulk(u.base, u.r, lv, 1); if (c < bc) { bc = c; best = u; } }
               if (!best || S.gold < bc) break; S.gold -= bc; S.upg[best.id] = upgLv(best.id) + 1; }
             if (S.statPts > 0) { S.stat.drive = (S.stat.drive || 0) + S.statPts; S.statPts = 0; }
-            if (cardUnlocked(S.tier + 1) && S.tier < S.tierMax) climb(1, true);
-          };
+            };
           let t = 0;
           while (t < 3 * 3600) { step(B.TICK_MAX, derive()); t += B.TICK_MAX; if ((t % 20) < B.TICK_MAX) shop(); }
           events += S.eventsPlayed; beaten += S.tally.rivals || 0;
