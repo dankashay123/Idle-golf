@@ -37,7 +37,7 @@ module.exports = {
         bag:      (B.BAGS || []).map(b2 => [b2.n, b2.ic]),
         bench:    (B.PERM || []).map(u => [u.n, u.ic]),
         // the shop button and the three offers, which have no table of their own
-        shop:     [['Pro shop', 'proshop'], ['Starter Pack', 'starter'],
+        shop:     [['Settings', 'gear'], ['Pro shop', 'proshop'], ['Starter Pack', 'starter'],
                    ['Club Membership', 'member'], ['Double Purse', 'boost'],
                    ['Free gift', 'freegift'], ['Members daily', 'freeday'],
                    ['Tour Card bounty', 'freecard']]
