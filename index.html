@@ -3250,6 +3250,7 @@ function initState(){
   if(!S.styleOwn || typeof S.styleOwn !== 'object') S.styleOwn = {};
   if(!styleOwned('o', S.outfit)) S.outfit = 'classic';
   if(!styleOwned('t', S.trail)) S.trail = 'plain';
+  if(!styleOwned('c', S.caddie)) S.caddie = 'bib';
   if(!B.BANK_OPTS.includes(S.islandBank)) S.islandBank = 5;
   if(!S.tierEvents) S.tierEvents = {};
   if(S.tierMax === undefined) S.tierMax = 0;
@@ -5523,7 +5524,15 @@ function openShop(sub){ if(sub) shopSub = sub; renderShop(); }
 
 // One tile on the rack: what it is, the art, a line about it, and the price.
 // style: owned when free, or when bought; worn is what the save says
-const styleDef = (k, id) => (k === 'o' ? B.OUTFITS : B.TRAILS).find(x => x.id === id);
+// Caddies: the plain bib, and one to match every outfit and skin the golfer
+// can wear, at a third of its price. A matching caddie carries the outfit's
+// colours, its pattern and its effect, so the Divine caddie glows too.
+B.CADDIES = [{ id:'bib', n:'Caddie Bib', cost:0,
+  cap:'#2E6B3A', cap2:'#1F4A28', shirt:'#E8ECE4', shirt2:'#BFC7BC', shirt3:'#9AA39A',
+  pant:'#3A3F4A', pant2:'#2A2E36', shoe:'#1E1A16', bag:'#B23A3A', bag2:'#8A2A2A' }]
+  .concat(B.OUTFITS.map(o => Object.assign({}, o, { n: o.n + ' Caddie', of: o.id,
+    cost: Math.round(o.cost / 3 / 5) * 5 })));
+const styleDef = (k, id) => (k === 'o' ? B.OUTFITS : k === 'c' ? B.CADDIES : B.TRAILS).find(x => x.id === id);
 const styleOwned = (k, id) => { const d = styleDef(k, id);
   return !!d && (d.cost === 0 || !!(S.styleOwn && S.styleOwn[k + ':' + id])); };
 // "Try it": a look worn for ten seconds without buying it. Never saved.
@@ -5531,16 +5540,17 @@ let PREVIEW = null;
 const previewOf = k => PREVIEW && PREVIEW.k === k && Date.now() < PREVIEW.until ? styleDef(k, PREVIEW.id) : null;
 const outfitNow = () => previewOf('o') || styleDef('o', S.outfit) || B.OUTFITS[0];
 const trailNow  = () => previewOf('t') || styleDef('t', S.trail) || B.TRAILS[0];
+const caddieNow = () => previewOf('c') || styleDef('c', S.caddie) || B.CADDIES[0];
 function styleTry(k, id){
   const d = styleDef(k, id); if(!d) return;
   PREVIEW = { k, id, until: Date.now() + 10000 };
-  if(k === 'o') buildSprites();
+  if(k === 'o' || k === 'c') buildSprites();
   hideSheet();
   toast('Trying <b>' + d.n + '</b> \u00b7 10s');
 }
 // called every frame: when a try runs out, put his own clothes back on
 function previewTick(){
-  if(PREVIEW && Date.now() >= PREVIEW.until){ const k = PREVIEW.k; PREVIEW = null; if(k === 'o') buildSprites(); }
+  if(PREVIEW && Date.now() >= PREVIEW.until){ const k = PREVIEW.k; PREVIEW = null; if(k === 'o' || k === 'c') buildSprites(); }
 }
 function styleBuy(k, id){
   const d = styleDef(k, id); if(!d) return;
@@ -5551,6 +5561,7 @@ function styleBuy(k, id){
     Sfx.play('buy');
   }
   if(k === 'o'){ S.outfit = id; buildSprites(); }
+  else if(k === 'c'){ S.caddie = id; buildSprites(); }
   else S.trail = id;
   renderShop(); renderVitals();
 }
@@ -5583,6 +5594,23 @@ function outfitUrl(o){
       const g = sp.cv.getContext('2d');
       [[0, 3], [11, 3], [10, 0], [1, 0], [0, 9], [11, 9], [1, 11], [10, 11]].forEach(([x, y], i) => {
         g.fillStyle = acc[i & 1]; g.fillRect(x, y, 1, 1); });
+    }
+    return DOMSPR[key] = sp.cv.toDataURL();
+  }catch(e){ return DOMSPR[key] = ''; }
+}
+// The shop's picture of a caddie: him in his cap and bib, his bag beside him.
+const CADDIE_ICON = ['..cccc......', '.cccccCC....', '..kkkk...i.i', '..kkk....iii', '.ssssss.YYYy',
+                     'sssssSS.YyYy', 'ssssssS.YyYy', 'ssssssS.YyYy', '.ssssS..YyYy', '.pppPP..yyyy',
+                     '.pp.PP......', '.oo.oo......'];
+function caddieUrl(d){
+  const key = 'caddie|' + d.id;
+  if(DOMSPR[key] !== undefined) return DOMSPR[key];
+  try{
+    const sp = patterned(makeSprite(CADDIE_ICON, caddieMap(d)), d);
+    const acc = SKIN_ACCENT[d.fx];
+    if(acc){
+      const g = sp.cv.getContext('2d');
+      [[0, 3], [11, 1], [7, 0], [0, 9], [11, 11], [7, 11]].forEach(([x, y], i) => { g.fillStyle = acc[i & 1]; g.fillRect(x, y, 1, 1); });
     }
     return DOMSPR[key] = sp.cv.toDataURL();
   }catch(e){ return DOMSPR[key] = ''; }
@@ -5718,7 +5746,7 @@ function renderShop(){
 
   if(shopSub === 'style'){
     const card = (k, d, img) => {
-      const own = styleOwned(k, d.id), worn = (k === 'o' ? S.outfit : S.trail) === d.id;
+      const own = styleOwned(k, d.id), worn = (k === 'o' ? S.outfit : k === 'c' ? (S.caddie || 'bib') : S.trail) === d.id;
       return shopCard({ img, on: worn || !!d.top, badge: worn ? 'WORN' : d.top ? 'LEGENDARY' : '', head: d.n,
         sub: own ? '' : '<button class="mini try" data-try="' + k + '.' + d.id + '">Try it</button>',
         price: worn ? 'WORN' : own ? 'WEAR' : sovFmt(d.cost),
@@ -5734,7 +5762,9 @@ function renderShop(){
       // the funny ones and the plain shirts are all outfits: one shelf, the
       // funny ones first
       + shelf('Outfits', 'o', B.OUTFITS.filter(o => o.cat === 'fun').concat(B.OUTFITS.filter(o => !o.cat)), outfitUrl)
-      + shelf('Ball Trails', 't', B.TRAILS.filter(t => !t.cat), trailUrl);
+      + shelf('Ball Trails', 't', B.TRAILS.filter(t => !t.cat), trailUrl)
+      // caddies in the same order as the golfer's looks: skins, then the rest
+      + shelf('Caddies', 'c', B.CADDIES.filter(d => d.cat === 'skin').concat(B.CADDIES.filter(d => d.cat !== 'skin')), caddieUrl);
   }
 
   if(shopSub === 'offers'){
@@ -6991,40 +7021,42 @@ const G_FIN_ROWS = [
 const CADDIE_ROWS = [
     '........................................',
     '........................................',
-    '.......................gggg.............',
-    '.....................gggggggg...........',
-    '.....................ggggggggG..........',
-    '......................ggggggGGGG........',
+    '.......................cccc.............',
+    '.....................cccccccc...........',
+    '.....................ccccccccC..........',
+    '......................ccccccCCCC........',
     '......................kkkkkbKk..........',
     '......................kkkkkKK...........',
     '.......................kkkKKK...........',
     '........................kKK.............',
-    '..........i.i..........wwwww............',
-    '..........iii.i.......wWWWWWw...........',
-    '.........yyyyyy......wwWWWWWWw..........',
-    '.........yYYYYy.....wwwWWWWWWw..........',
-    '.........yYYYYy...wwwwWWWWWWW...........',
-    '.........yYYYYy.rrwwwwWWWWWW............',
-    '.........yYYYYyrr.wwwWWWWWWW............',
-    '.........yYYYYy...wwwWWWWWW.............',
-    '.........yYYYYy...wwwWWWWWW.............',
-    '.........yYYYYy...wwwWWWWWW.............',
-    '.........yYYYYy...wwwWWWWWW.............',
-    '.........yYYYYy...wwwWWWWWW.............',
-    '.........yYYYYy...wwwWWWWWW.............',
-    '.........yyyyyy...wwwWWWWWW.............',
-    '.........yYYYYy...wwwWWWWWW.............',
-    '.........yYYYYy...wwwWWWWWW.............',
-    '.........yYYYYy...wwwWWWWWW.............',
-    '.........yYYYYy...wwwWWWWWW.............',
-    '.........yyyyyy...wwwWWWWWW.............',
-    '..........yyyy....wwwWWWWWW.............',
-    '..................wwwWWWWWW.............',
+    '..........i.i..........sssss............',
+    '..........iii.i.......sSSSSSs...........',
+    '.........yyyyyy......ssSSSSSSs..........',
+    '.........yYYYYy.....sssSSSSSSs..........',
+    '.........yYYYYy...ssssSSSSSSS...........',
+    '.........yYYYYy.rrssssSSSSSS............',
+    '.........yYYYYyrr.sssSSSSSSS............',
+    '.........yYYYYy...sssSSSSSS.............',
+    '.........yYYYYy...sssSSSSSS.............',
+    '.........yYYYYy...sssSSSSSS.............',
+    '.........yYYYYy...sssSSSSSS.............',
+    '.........yYYYYy...sssSSSSSS.............',
+    '.........yYYYYy...sssSSSSSS.............',
+    '.........yyyyyy...sssSSSSSS.............',
+    '.........yYYYYy...sssSSSSSS.............',
+    '.........yYYYYy...sssSSSSSS.............',
+    '.........yYYYYy...sssSSSSSS.............',
+    '.........yYYYYy...sssSSSSSS.............',
+    '.........yyyyyy...sssSSSSSS.............',
+    '..........yyyy....sssSSSSSS.............',
+    '..................sssSSSSSS.............',
     '..................bbbbbbbb..............'
 ];
-const CADDIE_MAP = { g:'#2E6B3A', G:'#1F4A28', k:PX.skin, K:PX.skin2, b:'#2A2018', w:'#E8ECE4', W:'#BFC7BC',
-                     y:'#8A2A2A', Y:'#B23A3A', i:'#C9D1D6', r:'#5A3A20' };
-const CADDIE_LEGS = ['#3A3F4A', '#2A2E36', '#1E1A16'];
+// A caddie look is dressed like a golfer's outfit -- cap, shirt (his bib),
+// trousers, shoes -- plus the colours of his bag. The map is the golfer's,
+// so patterns and skins carry over unchanged.
+const caddieMap = d => Object.assign(golferMap(d), { y: d.bag2 || d.cap2, Y: d.bag || d.cap, i:'#C9D1D6', r:'#5A3A20' });
+const CAP_CADDIE = capBox(CADDIE_ROWS.concat(new Array(26).fill('.'.repeat(40))));
 // Patterned shirts and caps, painted over the plain sprite: anything that came
 // out in the shirt's (or cap's) colours takes the pattern's colour instead.
 const PATTERNS = {
@@ -7067,7 +7099,8 @@ function buildSprites(){
   // below it -- the legs stride in code.
   const blank = '.'.repeat(40);
   SPRITE.gWalk = patterned(makeSprite(G_FIN_ROWS.slice(0, 32).concat(G_FIN_ROWS.slice(32).map(() => blank)), GMAP), OUT);
-  SPRITE.caddie = makeSprite(CADDIE_ROWS.concat(G_FIN_ROWS.slice(32).map(() => blank)), CADDIE_MAP);
+  const CD = caddieNow();
+  SPRITE.caddie = patterned(makeSprite(CADDIE_ROWS.concat(G_FIN_ROWS.slice(32).map(() => blank)), caddieMap(CD)), CD);
 
   SPRITE.pine = makeSprite(PINE_ROWS, TREE_DEFAULT);
 
@@ -7305,6 +7338,22 @@ function tinted(spr, col){
 // stamped, it is a handful of drawImage calls.
 const SIL = {};
 function silhouette(g, col){
+  // A figure that never leans (the caddie) has the same outline frame after
+  // frame, so it is cut once per sprite, size and colour and reused.
+  if(g.still){
+    const key = 'still|' + col, P = 4;
+    const o = SIL[key] || (SIL[key] = { cv: document.createElement('canvas') });
+    if(o.spr !== g.spr || o.w !== g.w || o.h !== g.h){
+      o.spr = g.spr; o.w = g.w; o.h = g.h;
+      o.cv.width = g.w + P * 2; o.cv.height = g.h + P * 2;
+      const x = o.cv.getContext('2d');
+      x.imageSmoothingEnabled = false;
+      x.drawImage(g.spr.cv, P, P, g.w, g.h);
+      x.globalCompositeOperation = 'source-in'; x.fillStyle = col; x.fillRect(0, 0, o.cv.width, o.cv.height);
+      x.globalCompositeOperation = 'source-over';
+    }
+    return { cv: o.cv, ox: g.x - P, oy: g.y - P };
+  }
   const o = SIL[col] || (SIL[col] = { cv: document.createElement('canvas') });
   const P = 4, W = g.w + P * 2 + Math.ceil(g.w * 0.4), H = g.h + P * 2;
   if(o.cv.width !== W || o.cv.height !== H){ o.cv.width = W; o.cv.height = H; }
@@ -7375,8 +7424,10 @@ const STYLEFX = {
       const phase = Math.floor(t * 6) & 3;
       // a column of light from the top of the sky down onto him, a touch
       // wider at his feet, with a brighter spine and a slow flicker
+      // (not round his caddie: one beam from the sky is a blessing, two is
+      // a queue, and it is the dearest thing in the frame)
       const top = 0, span = bot - top;
-      for(let yy = top; yy < bot; yy += 1){
+      if(!g.minor) for(let yy = top; yy < bot; yy += 1){
         const f = (yy - top) / span;
         const hw = Math.round(w * (0.42 + 0.30 * f));
         c.globalAlpha = 0.07 + 0.05 * f + 0.02 * breathe;
@@ -7385,7 +7436,7 @@ const STYLEFX = {
         c.fillRect(Math.round(cx - hw * 0.35), yy, Math.round(hw * 0.7), 1);
       }
       // dust turning in the beam
-      for(let i = 0; i < 14; i++){
+      if(!g.minor) for(let i = 0; i < 14; i++){
         const life = (t * 0.12 + hr(i, 7)) % 1;
         const yy = top + life * span, xx = cx + Math.sin(t * 0.7 + i * 2.3) * w * 0.45;
         fxDot(c, xx, yy, 1, '#FFFFFF', 0.25 + 0.5 * Math.max(0, Math.sin(t * 3 + i)));
@@ -8421,20 +8472,34 @@ const Scene = {
   flyStart(){ this.fly = { t: 0, dur: 3.4, to: LEN - 13 }; },
   drawCaddie(c, gh, walking){
     const p = this.proj(this.camD + 0.25, -1.45);
-    const h = Math.max(6, Math.round(gh * 0.93)), spr = SPRITE.caddie;
+    const h = Math.max(6, Math.round(gh * 0.93)), spr = SPRITE.caddie, CD = caddieNow();
     const w = Math.max(4, Math.round(h * spr.w / spr.h));
+    const FX = STYLEFX[CD.fx] || null;
     const x = p.x - Math.round(w*0.42);
     const up = walking && (Math.floor(this.walkPh * 4 + 1) & 1) ? Math.max(1, Math.round(h / 40)) : 0;
-    const y = p.y - h - up;
+    const y = p.y - h - up - (FX && FX.bob ? Math.round(2 + Math.sin(this.t * 2.2 + 1) * 2) : 0);
     c.fillStyle = 'rgba(8,16,10,.30)';
     c.fillRect(x + Math.round(w*0.25), p.y - 1, Math.round(w*0.45), Math.max(1, Math.round(h*0.045)));
+    // his outfit's effect, if it has one, laid round him the way it is round
+    // the golfer: its back half, then him, then its front half
+    const g = { x, y, w, h, cx: x + w*0.55, cy: y + h*0.53, bot: p.y, t: this.t + 0.7, ph: 0, minor: true,
+                still: !(FX && FX.shearMod),
+                k: Math.max(1, Math.round(h / 40)), spr, shear: () => 0,
+                head: { x: x + w*CAP_CADDIE.x, y: y + h*CAP_CADDIE.y, w: w*CAP_CADDIE.w, hh: h*CAP_CADDIE.h } };
+    if(FX && FX.back) FX.back(c, g);
+    if(FX && FX.outline) outlineAt(c, g, FX.outline, RING1, FX.outlineA * (0.8 + 0.2 * Math.sin(this.t * 3)));
+    if(FX && FX.alpha) c.globalAlpha = FX.alpha;
     // a half step out of time with him, so the two do not march
     drawLegs(c, x + w*0.55, y + h*(32/58), h*(25/58), w, walking ? this.walkPh + 0.25 : null,
-             CADDIE_LEGS[0], CADDIE_LEGS[1], CADDIE_LEGS[2]);
-    c.drawImage(spr.cv, x, y, w, h);
+             CD.pant, CD.pant2 || CD.pant, CD.shoe || PX.shoe);
+    if(FX && FX.shearMod) blitShear(c, spr, x, y, w, h, f => FX.shearMod(f, g));
+    else c.drawImage(spr.cv, x, y, w, h);
     // an arm hanging at his side, swinging a little as he goes
     const sx = x + w*0.60, sy = y + h*0.30, sw = walking ? Math.sin((this.walkPh + 0.25) * Math.PI * 2) * 0.35 : 0;
-    pxLine(c, sx, sy, sx + Math.sin(sw) * h*0.22, sy + Math.cos(sw) * h*0.22, PX.skin2, h > 34 ? 2 : 1);
+    pxLine(c, sx, sy, sx + Math.sin(sw) * h*0.22, sy + Math.cos(sw) * h*0.22, CD.skin2 || PX.skin2, h > 34 ? 2 : 1);
+    c.globalAlpha = 1;
+    if(FX && FX.front) FX.front(c, g);
+    c.globalAlpha = 1; c.globalCompositeOperation = 'source-over';
   },
   // Where a ball is across the hole a fraction u of the way through its
   // flight: off the face, eased onto its line, and carried downwind while it
@@ -11549,8 +11614,9 @@ const DEV = {
   ach(){ B.ACH.forEach(a => S.achDone[a.id] = 1); this.re(); },
   ach0(){ S.achDone = {}; S.achRep = {}; this.re(); },
   style(){ B.OUTFITS.forEach(o => S.styleOwn['o:' + o.id] = 1); B.TRAILS.forEach(t => S.styleOwn['t:' + t.id] = 1);
+    B.CADDIES.forEach(d => S.styleOwn['c:' + d.id] = 1);
            this.re(); },
-  style0(){ S.styleOwn = {}; S.outfit = 'classic'; S.trail = 'plain'; buildSprites(); this.re(); },
+  style0(){ S.styleOwn = {}; S.outfit = 'classic'; S.trail = 'plain'; S.caddie = 'bib'; buildSprites(); this.re(); },
   // today's challenges done the honest way: the counter is moved back so the
   // target is met, and the normal check pays it
   daily(n){ dailyTick(); const Dy = S.daily; let k = 0;

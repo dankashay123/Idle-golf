@@ -10,8 +10,9 @@
  *   - "Try it" wears a look for ten seconds without buying it: nothing is
  *     spent, nothing is saved, and when it runs out he is back in his own
  *   - he walks between shots: every look strides (two phases of the walk
- *     differ from each other and from him standing), under the same 1.5ms,
- *     and his caddie is drawn beside him
+ *     differ from each other and from him standing), under the same 1.5ms
+ *     with his caddie in the matching look beside him, and a caddie in a
+ *     skin draws its effect as the golfer's does
  *   - the shop lists every look exactly once, each with its own picture
  *   - every trail and ball can be seen: one in flight has to paint at least
  *     fifteen times the pixels the plain ball does, and draw in under 0.5ms.
@@ -49,6 +50,16 @@ module.exports = {
           } catch (e) { o.errs.push(d.id + ': ' + e.message); }
         }
         S.outfit = 'classic'; buildSprites();
+        // a caddie in a skin carries its effect too
+        for (const d of B.CADDIES.filter(x => x.fx)) {
+          S.styleOwn['c:' + d.id] = 1; S.caddie = d.id; buildSprites();
+          try {
+            Scene.t = 1.23; frame(); const on = shot();
+            const fx = d.fx; d.fx = undefined; Scene.t = 1.23; frame(); const off = shot(); d.fx = fx;
+            if (on === off) o.blank.push('caddie ' + d.id);
+          } catch (e) { o.errs.push('caddie ' + d.id + ': ' + e.message); }
+        }
+        S.caddie = 'bib'; buildSprites();
         for (const d of B.TRAILS.filter(x => x.fx)) {
           S.styleOwn['t:' + d.id] = 1; S.trail = d.id;
           try {
@@ -103,7 +114,8 @@ module.exports = {
         // ---- walking: every look strides, and the caddie walks with him ------
         o.walkSame = []; o.walkCost = {};
         for (const d of B.OUTFITS) {
-          S.styleOwn['o:' + d.id] = 1; S.outfit = d.id; buildSprites();
+          // the golfer and his matching caddie together: the dearest frame there is
+          S.styleOwn['o:' + d.id] = 1; S.outfit = d.id; S.styleOwn['c:' + d.id] = 1; S.caddie = d.id; buildSprites();
           Scene.swingT = 0; Scene.t = 1.23;
           Scene.walkOn = false; Scene.b.clearRect(0, 0, VW, VH); Scene.drawGolfer(D); const stand = shot();
           Scene.walkOn = true; Scene.walkPh = 0.2; Scene.b.clearRect(0, 0, VW, VH); Scene.drawGolfer(D); const a = shot();
@@ -116,7 +128,7 @@ module.exports = {
         { const keep = SPRITE.caddie; Scene.walkOn = false; Scene.b.clearRect(0, 0, VW, VH); Scene.drawGolfer(D); const w1 = shot();
           SPRITE.caddie = null; Scene.b.clearRect(0, 0, VW, VH); Scene.drawGolfer(D); const w0 = shot(); SPRITE.caddie = keep;
           o.caddie = w1 !== w0; }
-        Scene.walkOn = false; S.outfit = 'classic'; buildSprites();
+        Scene.walkOn = false; S.outfit = 'classic'; S.caddie = 'bib'; buildSprites();
 
         // ---- try it ------------------------------------------------------------
         S.styleOwn = {}; S.outfit = 'classic'; S.sov = 0;
@@ -133,7 +145,8 @@ module.exports = {
         const sheet = document.getElementById('sheet');
         const acts = [...sheet.querySelectorAll('.price[data-do^="style:"]')].map(b => b.dataset.do);
         o.listed = acts.length; o.dupes = acts.length - new Set(acts).size;
-        o.want = B.OUTFITS.length + B.TRAILS.length;
+        o.want = B.OUTFITS.length + B.TRAILS.length + B.CADDIES.length;
+        o.free = B.OUTFITS.concat(B.TRAILS, B.CADDIES).filter(d => d.cost === 0).length;   // owned from the start: nothing to try
         const imgs = [...sheet.querySelectorAll('.card img')].map(i => i.src);
         o.noPic = imgs.filter(x => !x || x.length < 50).length;
         o.samePic = imgs.length - new Set(imgs).size;
@@ -182,7 +195,7 @@ module.exports = {
     if (r.listed !== r.want || r.dupes) throw new Error('the Style tab lists ' + r.listed + ' looks with '
       + r.dupes + ' twice; there are ' + r.want);
     if (r.noPic || r.samePic) throw new Error(r.noPic + ' looks have no picture and ' + r.samePic + ' share one');
-    if (r.tries < r.want - 2) throw new Error('only ' + r.tries + ' looks offer "Try it"');
+    if (r.tries < r.want - r.free) throw new Error('only ' + r.tries + ' looks offer "Try it", of ' + (r.want - r.free) + ' not owned');
 
     const faint = Object.entries(r.paint).filter(([k, v]) => k !== 'plain' && !(v >= r.paint.plain * 15));
     if (faint.length) throw new Error('these trails are hard to see: ' + faint.map(([k, v]) => k + ' paints '
