@@ -8056,7 +8056,7 @@ function honRows(w){
     + B.ACH_REP.map(a => {
         const have = achMetric(a.m) % a.step;
         return '<div class="lb rep"><span>' + a.n + ' <i>\u00b7 ' + nb(a.d) + '</i></span>'
-          + '<span class="s">' + fmt(have, 0) + '/' + fmt(a.step, 0) + ' \u00b7 +' + a.sov + '</span></div>';
+          + '<span class="s">' + fmt(have, 0) + '/' + fmt(a.step, 0) + ' \u00b7 +' + a.sov + sovIc() + '</span></div>';
       }).join('')
     + '<div class="eyebrow" style="margin:12px 0 4px">Once</div>';
   // Nearest first, then the shelf. A checklist sorted by what you have already
@@ -8071,7 +8071,7 @@ function honRows(w){
       + '<div class="mt">' + (got ? '<b>' + achReward(a) + '</b>'
           : '<i>' + fmt(Math.min(have, need), 0) + '</i> / ' + fmt(need, 0)
             + ' \u00b7 ' + achReward(a))
-        + (a.sov ? ' \u00b7 +' + a.sov + '\u00a0' + B.SOV.toLowerCase() : '') + '</div></div>'
+        + (a.sov ? ' \u00b7 +' + a.sov + sovIc() : '') + '</div></div>'
       + (got ? '' : '<div class="hbar"><i style="width:' + clamp(have/need,0,1)*100 + '%"></i></div>')
       + '</div>';
   }
