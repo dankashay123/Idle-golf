@@ -4379,8 +4379,6 @@ function endDgn(d, R, D){
     stats.push(['Finished', R.dead ? 'in the water' : 'banked']);
     stats.push(['Make chance at the start', Math.round((R.startChance||0)*100) + '%']);
     stats.push(['Make chance on the last one', Math.round((R.chance||0)*100) + '%']);
-    stats.push(['Why', '56 base + ' + Math.round(D.crit*B.ISLAND_CRIT*100)
-      + ' pure strike, minus ' + Math.round(B.ISLAND_DECAY*100*R.made) + ' for greens hit']);
     stats.push(['Pot', fmt(R.pot) + (R.dead && R.made ? ' after salvage' : '')]);
 
   }else if(R.mode === 'chip'){
@@ -4402,7 +4400,8 @@ function endDgn(d, R, D){
     stats.push(['Carry', fmt(D.dps) + ' /s']);
     if(R.evts && R.evts.length) stats.push(['What happened', R.evts.join(', ')]);
   }
-  stats.push(['Time on the clock', R.t.toFixed(1) + 's of ' + Math.round(R.dur) + 's']);
+  // the last step can land a fraction past the clock; "46.3s of 46s" read as a bug
+  stats.push(['Time on the clock', Math.min(R.t, R.dur).toFixed(1) + 's of ' + Math.round(R.dur) + 's']);
 
   const rewards = [];
   if(fe >= 0){
