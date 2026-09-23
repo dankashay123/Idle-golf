@@ -60,10 +60,11 @@ module.exports = {
     const open = await foldDisplay();
     if (shut !== 'none' || open === 'none') throw new Error('the Depths fold does not open (' + shut + ' -> ' + open + ')');
 
-    // the pull tab takes the menu to the underside of the scorecard and back
+    // the pull tab takes the menu (its top is the tabs now the vitals live in the
+    // Range) to the underside of the scorecard and back
     const box = () => page.evaluate(() => {
       const r = id => { const b = document.getElementById(id).getBoundingClientRect(); return [Math.round(b.top), Math.round(b.bottom)]; };
-      return { nine: r('nineBar'), vitals: r('vitals'), panel: r('panel'), buf: [Scene.buf.width, Scene.buf.height] };
+      return { nine: r('nineBar'), vitals: r('tabs'), panel: r('panel'), buf: [Scene.buf.width, Scene.buf.height] };
     });
     const before = await box();
     await page.click('#drawer'); await page.waitForTimeout(400);

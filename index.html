@@ -52,7 +52,7 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
      there so a check can stand in for a phone that has an island. */
   padding-left:var(--sal, env(safe-area-inset-left, 0px));
   padding-right:var(--sar, env(safe-area-inset-right, 0px))}
-#crest,#vitals,#tabs,#card,#xpStrip{flex:0 0 auto}
+#crest,#tabs,#card,#xpStrip{flex:0 0 auto}
 #stage{flex:0 0 50%;min-height:0}
 #panel{flex:1 1 auto;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
 
@@ -60,13 +60,17 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
 .mono{font-family:var(--mono)}
 
 /* ---------- crest bar ---------- */
-/* The status bar's inset is not the end of the blur. Newer iPhones frost the
+/* In Safari the status bar's inset is not the end of the blur. Newer iPhones frost the
    page behind the status bar and let the frost fade out well past the inset --
    about half as far again -- and the course name and the purse sat right in
    that fade, reading as out of focus on a Pro Max. Scaled off the inset, so a
-   phone without one, a desktop, and a phone on its side (inset 0) keep 6px. */
+   phone without one, a desktop, and a phone on its side (inset 0) keep 6px.
+   From the Home Screen there is no frost, and the page may already start below
+   the status bar while still reporting the inset -- which put the top bar a
+   whole status bar lower again. fitTop() measures which it is and sets
+   --topPad for that case. */
 #crest{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;
-  padding:calc(env(safe-area-inset-top) * 1.5 + 6px) 12px 6px;border-bottom:var(--hair);
+  padding:var(--topPad, calc(env(safe-area-inset-top) * 1.5 + 6px)) 12px 6px;border-bottom:var(--hair);
   background:linear-gradient(180deg,#0B1811,#0C1A13)}
 #eventLine{font-family:var(--disp);font-size:var(--f4);letter-spacing:.02em;line-height:1.1;color:var(--chalk);
   user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
@@ -75,6 +79,9 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
 #purse{text-align:right}
 #gold{font-family:var(--mono);font-size:var(--f5);font-weight:600;color:var(--brass);line-height:1}
 #rate{font-size:var(--f1);color:var(--dim);margin-top:2px;font-family:var(--mono)}
+#sovLine{display:flex;align-items:center;justify-content:flex-end;gap:3px;margin-top:2px;
+  font-family:var(--mono);font-size:var(--f1);color:var(--brass)}
+#sovIcon{width:12px;height:12px;image-rendering:pixelated;image-rendering:crisp-edges}
 
 /* ---------- experience strip ---------- */
 #xpStrip{display:grid;grid-template-columns:auto 1fr auto;gap:9px;align-items:center;
@@ -119,7 +126,7 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
 
 /* the pull tab: a notch on the corner of the menu, and the one thing in the
    layout allowed to sit outside its own box */
-#vitals{position:relative}
+#tabs{position:relative}
 #drawer{position:absolute;top:-24px;right:10px;width:48px;height:24px;padding:0;
   background:var(--panel);border:var(--hair);border-bottom:0;border-top:2px solid var(--brass);
   z-index:12;display:flex;align-items:center;justify-content:center;
@@ -139,10 +146,10 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
 @media (orientation:landscape) and (max-height:560px){
   #app{max-width:1180px;display:grid;
     grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);
-    grid-template-rows:auto auto auto auto minmax(0,1fr) auto;
-    grid-template-areas:"crest tabs" "xp panel" "card panel" "nine panel" "stage panel" "vitals panel"}
+    grid-template-rows:auto auto auto auto minmax(0,1fr);
+    grid-template-areas:"crest tabs" "xp panel" "card panel" "nine panel" "stage panel"}
   #crest{grid-area:crest} #xpStrip{grid-area:xp} #card{grid-area:card} #nineBar{grid-area:nine}
-  #stage{grid-area:stage} #vitals{grid-area:vitals} #tabs{grid-area:tabs}
+  #stage{grid-area:stage} #tabs{grid-area:tabs}
   #panel{grid-area:panel;min-height:0;border-left:var(--hair)}
   #tabs{border-left:var(--hair);align-self:stretch}
   #drawer{display:none}
@@ -161,7 +168,10 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
    waiting for whatever takes it next. test/checks/14-names.js fails on the
    next one. */
 
-/* ---------- vitals ---------- */
+/* ---------- vitals ----------
+   They sat in a bar of their own between the field and the tabs, on every
+   screen. They are the Range's numbers -- what the rungs you buy move -- so
+   they live at the top of the Range, and the menu gets their height back. */
 #vitals{display:grid;grid-template-columns:repeat(5,1fr);border-bottom:var(--hair);background:#0A170F}
 .vital{padding:6px 4px;text-align:center;border-right:1px solid #14291C}
 .vital:last-child{border-right:0}
@@ -695,6 +705,7 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
     <div id="purse">
       <div id="gold">0</div>
       <div id="rate">0/s</div>
+      <div id="sovLine"><span id="sovNum">0</span><img id="sovIcon" alt="Sovereigns"></div>
     </div>
   </div>
 
@@ -729,23 +740,16 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
     <div id="toasts"></div>
   </div>
 
-  <div id="vitals">
-    <!-- A tab on the corner of the menu. Up pulls it over the hole, down puts
-         the hole back. It lives on the vitals rather than in the stage so it
-         is still there once the stage is gone. -->
-    <button id="drawer" aria-label="Expand the menu"><img id="drawerIc" alt=""></button>
-    <div class="vital"><div class="k">Swing</div><div class="v" id="vPower">0</div></div>
-    <div class="vital"><div class="k">Tempo</div><div class="v" id="vSpeed">0/s</div></div>
-    <div class="vital"><div class="k">Carry</div><div class="v" id="vDps">0</div></div>
-    <div class="vital"><div class="k">Pure</div><div class="v" id="vCrit">0%</div></div>
-    <div class="vital"><div class="k">Prov</div><div class="v" id="vMst">0%</div></div>
-  </div>
 
   <!-- Five destinations, not seven. Skills are part of what you take out on
        the hole, so they sit with the bag; retirement and the trophy room are
        long-run progress, so they sit with the rest of it in Career. Seven
        labels across a phone left no room to read any of them. -->
   <div id="tabs">
+    <!-- A tab on the corner of the menu. Up pulls it over the hole, down puts
+         the hole back. It lives on the tabs so it is still there once the stage
+         is gone. -->
+    <button id="drawer" aria-label="Expand the menu"><img id="drawerIc" alt=""></button>
     <button class="tab on" data-v="upg">Range<span class="dot"></span></button>
     <button class="tab" data-v="bag">Bag<span class="dot"></span></button>
     <button class="tab" data-v="dgn">Wagers<span class="dot"></span></button>
@@ -756,6 +760,13 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
   <div id="panel">
 
     <div class="view on" id="v-upg">
+      <div id="vitals">
+        <div class="vital"><div class="k">Swing</div><div class="v" id="vPower">0</div></div>
+        <div class="vital"><div class="k">Tempo</div><div class="v" id="vSpeed">0/s</div></div>
+        <div class="vital"><div class="k">Carry</div><div class="v" id="vDps">0</div></div>
+        <div class="vital"><div class="k">Pure</div><div class="v" id="vCrit">0%</div></div>
+        <div class="vital"><div class="k">Prov</div><div class="v" id="vMst">0%</div></div>
+      </div>
       <div class="band"><span class="eyebrow">Practice Range</span><span class="note" id="upgCount"></span></div>
       <div class="band" style="top:auto"><div id="multBar"></div></div>
       <div class="hint" id="upgTax"></div>
@@ -8411,6 +8422,7 @@ function renderLive(){
   renderHonBtn();
   $('gold').textContent = fmt(S.gold);
   $('rate').textContent = fmt(Meter.rate()) + ' purse/sec';
+  $('sovNum').textContent = sovFmt(S.sov);
   // The yardage, the bar and the clock used to be written here as well, into
   // three more elements the old stage HUD took with it. This runs every frame,
   // so that was four lookups, a clamp and two string builds at sixty a second
@@ -9335,6 +9347,7 @@ const DEV = {
       + 'gear pow +' + fmt(G.pow*100) + '%  ·  pierce ' + pct(C.pierce) + '  ·  cdr ' + pct(C.cdr) + '<br>'
       + 'card ' + roman(S.tier) + ' of ' + roman(S.tierMax || 0) + ' unlocked  ·  '
       + eventsOn(S.tierMax || 0) + '/' + eventsToUnlock(S.tierMax || 0) + ' events on it<br>'
+      + screenLine() + '<br>'
       + 'lv ' + S.lv + '  ·  paragon ' + fmt(S.para, 0) + '  ·  talents ' + talentsUsed()
       + '  ·  honours ' + achCount() + '/' + B.ACH.length + '<br>'
       + 'trophies ' + trophiesFound() + '/' + B.TROPHY.length + '  ·  tickets ' + fmt(S.tickets||0, 0)
@@ -9990,6 +10003,30 @@ function sideways(){
   }
   Scene.resize();
 }
+// Home Screen apps only. Measured, because the two cases report the same
+// inset: if the page runs the full height of the screen it sits under the
+// status bar and needs the inset; if it is shorter by about a status bar, the
+// system has already put it below, and the inset would be a second gap.
+// what the phone says about itself, for the developer menu: the top bar's
+// spacing depends on all of it and none of it can be seen from here
+function screenLine(){
+  const probe = document.createElement('div');
+  probe.style.cssText = 'position:fixed;visibility:hidden;padding-top:env(safe-area-inset-top);'
+    + 'padding-left:env(safe-area-inset-left)';
+  document.body.appendChild(probe);
+  const cs = getComputedStyle(probe), top = cs.paddingTop, left = cs.paddingLeft;
+  probe.remove();
+  return 'screen ' + screen.width + 'x' + screen.height + '  ·  view ' + innerWidth + 'x' + innerHeight
+    + '  ·  inset ' + top + '/' + left + '  ·  ' + (isStandalone() ? 'home screen' : 'browser')
+    + '  ·  top ' + (getComputedStyle(document.documentElement).getPropertyValue('--topPad') || 'default');
+}
+function fitTop(){
+  const r = document.documentElement;
+  if(!isStandalone()){ r.style.removeProperty('--topPad'); return; }
+  const upright = innerHeight >= innerWidth;
+  const full = upright ? Math.max(screen.width, screen.height) : Math.min(screen.width, screen.height);
+  r.style.setProperty('--topPad', innerHeight >= full - 2 ? 'calc(env(safe-area-inset-top) + 6px)' : '6px');
+}
 function intro(){
   showSheet('<h3>Mythic Mulligan</h3>'
     + '<p>Your golfer plays on his own. Your job is to make him better.</p>'
@@ -10009,6 +10046,8 @@ function boot(){
 
   Scene.init();
   setIcons();
+  fitTop();
+  window.addEventListener('resize', fitTop);
   buildCard();
   buildUpg();
 
@@ -10033,6 +10072,7 @@ function boot(){
   };
   $('xpStrip').onclick = () => setView('career');
   $('drawerIc').src = pixUrl('caret', '#E3B457');
+  $('sovIcon').src = pixUrl('sov2', '#E3B457');
   $('drawer').onclick = () => {
     const big = $('app').classList.toggle('big');
     $('drawer').setAttribute('aria-label', big ? 'Shrink the menu' : 'Expand the menu');
