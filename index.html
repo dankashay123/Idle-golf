@@ -7798,10 +7798,11 @@ const BALLFX = {
   /* ---- Comet: a blazing head and a long burning tail ---- */
   comet(c, b, path, r, t, u){
     const cols = ['#FFFFFF', '#FFF3B0', '#FFB43A', '#F0612A', '#B8341C', '#5A2A20'];
+    trailRibbon(c, path, r + 5, '#F0612A', 0.28);
     for(let i = path.length - 1; i >= 1; i--){
-      const p0 = path[i], p1 = path[i - 1], f = i / path.length;
+      const p0 = path[i], p1 = path[i - 1], f = i / path.length, w = Math.max(2, r + 3 - (i >> 2)), h = w >> 1;
       c.globalAlpha = 1 - f * 0.8;
-      pxLine(c, p0.x, p0.y, p1.x, p1.y, cols[Math.min(cols.length - 1, Math.floor(f * cols.length))], Math.max(1, r + (i < 4 ? 1 : 0)));
+      pxLine(c, p0.x - h, p0.y - h, p1.x - h, p1.y - h, cols[Math.min(cols.length - 1, Math.floor(f * cols.length))], w);
     }
     // embers falling off the tail
     for(let i = 2; i < path.length; i++){
@@ -7809,15 +7810,16 @@ const BALLFX = {
       fxDot(c, p.x + (hr(i, b.seed) - 0.5) * 6, p.y + fall * 8, 1, fall < 0.5 ? '#FFB43A' : '#F0612A', 1 - fall);
     }
     const h0 = path[0];
-    drawGlow(c, h0.x, h0.y, r * 2 + 3, r * 2 + 3, [[0.5, '#F0612A', 1], [0, '#FFB43A', 2]], Math.floor(t * 12) & 3);
-    fxDot(c, h0.x - r, h0.y - r, r * 2, '#FFFFFF', 1);
+    drawGlow(c, h0.x, h0.y, r * 3 + 5, r * 3 + 5, [[0.5, '#F0612A', 1], [0, '#FFB43A', 2]], Math.floor(t * 12) & 3);
+    fxDot(c, h0.x - r - 1, h0.y - r - 1, r * 2 + 2, '#FFFFFF', 1);
     c.globalAlpha = 1;
   },
   /* ---- Black Hole: a dark core with a disc of light turning round it ---- */
   blackhole(c, b, path, r, t, u){
     for(let i = path.length - 1; i >= 1; i--){
       const p0 = path[i], p1 = path[i - 1];
-      c.globalAlpha = 0.8 * (1 - i / path.length); pxLine(c, p0.x, p0.y, p1.x, p1.y, i < 4 ? '#6E44A0' : '#3A1E5A', Math.max(2, r + 1));
+      const w = Math.max(3, r + 2), h = w >> 1;
+      c.globalAlpha = 0.85 * (1 - i / path.length); pxLine(c, p0.x - h, p0.y - h, p1.x - h, p1.y - h, i < 4 ? '#6E44A0' : '#3A1E5A', w);
     }
     const h0 = path[0], R = Math.max(6, r * 3 + 4);
     drawGlow(c, h0.x, h0.y, R * 1.2, R * 0.9, [[0.6, '#3A1E5A', 1], [0, '#6E44A0', 2]], Math.floor(t * 10) & 3, 0.8);
@@ -7836,52 +7838,71 @@ const BALLFX = {
   /* ---- Confetti: it is a party ---- */
   confetti(c, b, path, r, t, u){
     const cols = ['#FF4FB8', '#3FE0FF', '#FFE14A', '#7CFF6A', '#FF7A3A', '#B08BFF'];
+    trailRibbon(c, path, 2, '#FF4FB8', 1, i => Math.round(Math.sin(t * 9 - i * 0.9) * 3) - 2);
+    trailRibbon(c, path, 2, '#3FE0FF', 1, i => Math.round(Math.sin(t * 9 - i * 0.9 + Math.PI) * 3) + 2);
     for(let i = 1; i < path.length; i++){
       const p = path[i];
       for(let j = 0; j < 5; j++){
         const s = i * 5 + j, fall = i * 2 + hr(s, b.seed) * 6;
-        const x = p.x + (hr(s, b.seed + 1) - 0.5) * 18 + Math.sin(t * 5 + s) * 2, y = p.y + fall;
-        const flip = ((t * 8 + s) | 0) & 1, big = i < 5 ? 1 : 0;
+        const x = p.x + (hr(s, b.seed + 1) - 0.5) * 24 + Math.sin(t * 5 + s) * 2, y = p.y + fall;
+        const flip = ((t * 8 + s) | 0) & 1, big = i < 7 ? 2 : 1;
         c.globalAlpha = 1 - i / path.length * 0.5; c.fillStyle = cols[s % cols.length];
         c.fillRect(Math.round(x), Math.round(y), (flip ? 2 : 1) + big, (flip ? 1 : 2) + big);
       }
     }
-    fxDot(c, path[0].x - r, path[0].y - r, r * 2, '#FFFFFF', 1);
+    fxDot(c, path[0].x - r - 1, path[0].y - r - 1, r * 2 + 2, '#FFFFFF', 1);
     c.globalAlpha = 1;
   },
   /* ---- Bubbles: it leaves a trail of them, rising and popping ---- */
   bubbles(c, b, path, r, t, u){
-    for(let i = 1; i < path.length; i++){
-      const p = path[i], rise = i * 1.8, R = 1 + ((i + (b.seed | 0)) % 3);
-      const x = p.x + Math.sin(t * 4 + i) * 2, y = p.y - rise;
+    trailRibbon(c, path, Math.max(2, r + 1), i => i & 1 ? '#BFE6FA' : '#E6D8FF', 0.55);
+    for(let q = 0; q < path.length * 2 - 2; q++){
+      const i = 1 + (q >> 1), side = q & 1 ? 1 : -1;
+      const p = path[i], rise = i * 1.8, R = 2 + ((q + (b.seed | 0)) % 3);
+      const x = p.x + side * (3 + hr(q, b.seed) * 5) + Math.sin(t * 4 + q) * 2, y = p.y - rise;
       if(i > path.length - 3){ // popping: a ring of dots
         for(const [dx, dy] of [[-R - 1, 0], [R + 1, 0], [0, -R - 1], [0, R + 1]]) fxDot(c, x + dx, y + dy, 1, '#DFF4FF', 0.6);
         continue;
       }
-      c.globalAlpha = 0.85; pxRing(c, Math.round(x), Math.round(y), R, '#BFE6FA');
-      fxDot(c, x - R + 1, y - R + 1, 1, '#FFFFFF', 0.95);
+      c.globalAlpha = 0.95; pxRing(c, Math.round(x), Math.round(y), R, (q & 3) === 1 ? '#E6D8FF' : '#BFE6FA');
+      fxDot(c, x - R + 1, y - R + 1, R > 2 ? 2 : 1, '#FFFFFF', 0.95);
     }
+    // the ball rides in a bubble of its own
+    const h0 = path[0], BR = r + 3;
+    c.globalAlpha = 0.9; pxRing(c, Math.round(h0.x), Math.round(h0.y), BR, '#BFE6FA');
+    fxDot(c, h0.x - BR + 1, h0.y - BR + 1, 2, '#FFFFFF', 1);
     fxDot(c, path[0].x - r, path[0].y - r, r * 2, '#FFFFFF', 1);
     c.globalAlpha = 1;
   },
   /* ---- Hearts: a little love for every shot ---- */
   hearts(c, b, path, r, t, u){
     const HEART = ['.X.X.', 'XXXXX', '.XXX.', '..X..'];
+    trailRibbon(c, path, Math.max(2, r + 1), i => i & 2 ? '#FF9AB8' : '#FF4F7A', 0.7);
     for(let i = 1; i < path.length; i++){
-      const p = path[i], sc = i < 5 ? 2 : 1;
+      const p = path[i], sc = i < 8 ? 2 : 1;
       const x = Math.round(p.x - 2.5 * sc + Math.sin(t * 3 + i) * 3), y = Math.round(p.y - 2 * sc - i * 1.5);
       c.globalAlpha = 1 - i / path.length * 0.6; c.fillStyle = i % 3 === 1 ? '#FF4F7A' : i % 3 ? '#FF9AB8' : '#FFFFFF';
       HEART.forEach((row, yy) => [...row].forEach((ch, xx) => { if(ch === 'X') c.fillRect(x + xx * sc, y + yy * sc, sc, sc); }));
     }
-    fxDot(c, path[0].x - r, path[0].y - r, r * 2, '#FFFFFF', 1);
+    // the ball is a heart, beating
+    const h0 = path[0], hs = Math.max(2, r) + (Math.sin(t * 14) > 0.3 ? 1 : 0);
+    const hx = Math.round(h0.x - 2.5 * hs), hy = Math.round(h0.y - 2 * hs);
+    c.globalAlpha = 1;
+    HEART.forEach((row, yy) => [...row].forEach((ch, xx) => { if(ch !== 'X') return;
+      c.fillStyle = yy === 0 || (yy === 1 && xx === 1) ? '#FFC2D4' : '#FF2F66'; c.fillRect(hx + xx * hs, hy + yy * hs, hs, hs); }));
     c.globalAlpha = 1;
   },
   /* ---- Rubber Duck: the ball is a duck ---- */
   duck(c, b, path, r, t, u){
-    for(let i = 2; i < path.length; i += 2)
-      fxDot(c, path[i].x, path[i].y + ((t * 6 + i) % 3), 1, '#7FC8F0', 0.8 - i / path.length * 0.6);
+    // a wake: water behind it, foam on the water, drops flicked off it
+    trailRibbon(c, path, Math.max(3, r + 2), i => i & 1 ? '#7FC8F0' : '#5AAEE0', 0.8);
+    trailRibbon(c, path, 1, '#FFFFFF', 0.9, i => (i & 1 ? 1 : -1) * 2);
+    for(let i = 2; i < path.length; i += 2){
+      const fall = (t * 2 + hr(i, b.seed)) % 1;
+      fxDot(c, path[i].x + (hr(b.seed, i) - 0.5) * 8, path[i].y - 2 + fall * 7, 1, '#DFF4FF', 1 - fall);
+    }
     const DUCK = ['..YY..', '.YYYO.', 'YYYYY.', '.YYY..'];
-    const s = Math.max(2, r), h0 = path[0], bob = Math.round(Math.sin(t * 20) * 0.6);
+    const s = Math.max(3, r + 1), h0 = path[0], bob = Math.round(Math.sin(t * 20) * 0.6);
     const x = Math.round(h0.x - 3 * s), y = Math.round(h0.y - 2 * s + bob);
     c.globalAlpha = 1;
     DUCK.forEach((row, yy) => [...row].forEach((ch, xx) => {
@@ -7890,17 +7911,18 @@ const BALLFX = {
       c.fillRect(x + xx * s, y + yy * s, s, s);
     }));
     c.fillStyle = '#1A1A1A'; c.fillRect(x + 3 * s, y + s, 1, 1);
+    const n = Math.floor((t + b.seed) / 2.5);
+    if(hr(n, 7) > 0.4 && ((t + b.seed) / 2.5) % 1 < 0.35)
+      drawTextS(c, 'quack', Math.round(h0.x + 3 * s), Math.round(y - 7), '#FFD84A', 1, 'l');
+    c.globalAlpha = 1;
   },
   /* ---- Godlight: a haloed ball on a ribbon of light, shedding stars ---- */
   godlight(c, b, path, r, t, u){
     // the ribbon: a continuous stroke through the path, gold fading to warm
     // white at the ball, with a white spine
-    for(let i = path.length - 1; i >= 1; i--){
-      const p0 = path[i], p1 = path[i - 1], f = 1 - i / path.length;
-      c.globalAlpha = 0.30 + f * 0.6;
-      pxLine(c, p0.x, p0.y, p1.x, p1.y, i < 4 ? '#FFE7A3' : '#E3B457', Math.max(1, r));
-      if(i < 5){ c.globalAlpha = 0.7 * f; pxLine(c, p0.x, p0.y, p1.x, p1.y, '#FFFFFF', 1); }
-    }
+    trailRibbon(c, path, r + 5, '#FFD66B', 0.25);
+    trailRibbon(c, path, Math.max(2, r + 1), i => i < 4 ? '#FFE7A3' : '#E3B457', 1);
+    trailRibbon(c, path.slice(0, 6), 1, '#FFFFFF', 0.9);
     // stars shed along the way, each twinkling on its own beat
     for(let i = 1; i < path.length; i++){
       const p = path[i];
@@ -7915,7 +7937,7 @@ const BALLFX = {
     }
     // the halo round the ball, breathing, and a cross of light through it
     const h0 = path[0], pulse = 0.5 + 0.5 * Math.sin(t * 8 + b.seed);
-    const hr0 = Math.max(4, r * 3) + pulse * 1.5;
+    const hr0 = Math.max(6, r * 3 + 2) + pulse * 1.5;
     drawGlow(c, h0.x, h0.y, hr0, hr0, [[0.7, '#E3B457', 1], [0.35, '#FFE39A', 2], [0, '#FFF6D8', 3]], Math.floor(t * 8) & 3);
     const arm = Math.round(hr0 + 2 + pulse * 2);
     c.globalAlpha = 0.9; c.fillStyle = '#FFFFFF';

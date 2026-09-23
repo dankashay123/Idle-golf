@@ -11,7 +11,10 @@
  *     spent, nothing is saved, and when it runs out he is back in his own
  *   - the shop lists every look exactly once, each with its own picture
  *   - every trail and ball can be seen: one in flight has to paint at least
- *     four times the pixels the plain ball does, and draw in under 0.5ms.
+ *     fifteen times the pixels the plain ball does, and draw in under 0.5ms.
+ *     It was four times at first, and the Rubber Duck -- a small duck and a
+ *     few blue dots -- passed at 10.7x while being hard to spot; with a wake
+ *     under it the faintest look is 27x.
  *     The colour trails were three one-pixel dots behind the ball; the
  *     Rainbow painted about as much as the plain ball and nobody could tell
  *     it was on. Its six bands were then stacked down the screen, along a
@@ -135,9 +138,9 @@ module.exports = {
     if (r.noPic || r.samePic) throw new Error(r.noPic + ' looks have no picture and ' + r.samePic + ' share one');
     if (r.tries < r.want - 2) throw new Error('only ' + r.tries + ' looks offer "Try it"');
 
-    const faint = Object.entries(r.paint).filter(([k, v]) => k !== 'plain' && !(v >= r.paint.plain * 4));
+    const faint = Object.entries(r.paint).filter(([k, v]) => k !== 'plain' && !(v >= r.paint.plain * 15));
     if (faint.length) throw new Error('these trails are hard to see: ' + faint.map(([k, v]) => k + ' paints '
-      + Math.round(v) + ' pixels').join(', ') + ' against ' + Math.round(r.paint.plain) + ' for the plain ball; a look has to be at least four times that');
+      + Math.round(v) + ' pixels').join(', ') + ' against ' + Math.round(r.paint.plain) + ' for the plain ball; a look has to be at least fifteen times that');
     const tslow = Object.entries(r.tcost).filter(([, v]) => v > 0.5);
     if (tslow.length) throw new Error('trails over 0.5ms a ball: ' + tslow.map(([k, v]) => k + ' ' + v.toFixed(2) + 'ms').join(', '));
     const worst = Object.entries(r.cost).sort((a, b) => b[1] - a[1])[0];
@@ -145,7 +148,7 @@ module.exports = {
     const tw = Object.entries(r.tcost).sort((a, b) => b[1] - a[1])[0];
     return ['every effect skin and ball draws something its colours alone do not',
       'dearest per frame ' + worst[0] + ' at ' + worst[1].toFixed(2) + 'ms (budget 1.5ms)',
-      'every trail and ball at least 4x the plain ball on screen (faintest ' + dim[0] + ' at '
+      'every trail and ball at least 15x the plain ball on screen (faintest ' + dim[0] + ' at '
         + (dim[1] / r.paint.plain).toFixed(1) + 'x), dearest ' + tw[0] + ' at ' + tw[1].toFixed(2) + 'ms a ball',
       '"Try it" wears a look for ten seconds, spends nothing, saves nothing, and takes it off',
       'the Style tab lists all ' + r.want + ' looks once, each with its own picture'];
