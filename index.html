@@ -35,7 +35,11 @@
 }
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{height:100%;overflow:hidden}
-body{
+/* Pinned, not just unscrollable. Turning an iPhone on its side and back left
+   the document scrolled by a status bar's height -- overflow:hidden does not
+   stop Safari scrolling it -- so the top bar sat under the clock and a black
+   band ran along the bottom. A fixed body has nothing to scroll. */
+body{position:fixed;inset:0;
   background:var(--ink);color:var(--chalk);font-family:var(--sans);
   font-variant-numeric:tabular-nums;-webkit-font-smoothing:antialiased;
   -webkit-tap-highlight-color:transparent;overscroll-behavior:none;touch-action:manipulation;
@@ -613,11 +617,12 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
    landed on 24.5 and 24.7 and the pixels came out in uneven widths. */
 #shopIcon{display:block;width:24px;height:24px;object-fit:contain;
   image-rendering:pixelated;image-rendering:crisp-edges}
-#shopBtn:active,#setBtn:active{transform:translateY(1px)}
-#setBtn{position:relative;width:24px;height:24px;flex:0 0 auto;pointer-events:auto;
+#shopBtn:active,#setBtn:active,#hudClimb:active{transform:translateY(1px)}
+#setBtn,#hudClimb{position:relative;width:24px;height:24px;flex:0 0 auto;pointer-events:auto;
   background:none;border:0;padding:0;display:flex;align-items:center;justify-content:center;
   filter:drop-shadow(0 0 1px #000) drop-shadow(0 0 1px #000) drop-shadow(0 1px 2px rgba(0,0,0,.9))}
-#setIcon{display:block;width:24px;height:24px;image-rendering:pixelated;image-rendering:crisp-edges}
+#hudClimb.off{opacity:.55}
+#setIcon,#hudClimbIcon{display:block;width:24px;height:24px;image-rendering:pixelated;image-rendering:crisp-edges}
 /* settings sheet */
 .setrow{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;padding:9px 0;
   border-bottom:1px solid var(--line-soft)}
@@ -733,6 +738,7 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
     </div>
     <button id="setBtn" aria-label="Settings"><img id="setIcon" alt=""></button>
     <button id="shopBtn" aria-label="Pro shop"><img id="shopIcon" alt=""><span id="shopDot"></span></button>
+    <button id="hudClimb" aria-label="Auto-climb"><img id="hudClimbIcon" alt=""></button>
     </div>
     <div id="toasts"></div>
   </div>
@@ -967,6 +973,9 @@ const B = {
              '.....Xx.....','.....Xx.....','.....Xx.....','.....Xx.....','....XXxx....','....xxxx....'],
     chevrons: ['.....XX.....','....XwwX....','...XwXXxX...','..XwX..XxX..','.XwX....XxX.','.....XX.....',
                '....XwwX....','...XwXXxX...','..XwX..XxX..','.XwX....XxX.','............','............'],
+    // a ladder with an arrow up it: the stage button that climbs for you
+    autoclimb: ['.X..X...X...','.X..X..XwX..','.XwwX.XwwwX.','.X..X.XXwXX.','.X..X..XwX..','.XwwX..XwX..',
+                '.X..X..XwX..','.X..X..XwX..','.XwwX..XwX..','.X..X..XwX..','.X..X..XwX..','.XwwX..XxX..'],
     satchel: ['....XXXX....','...X....X...','...X....X...','.XXXXXXXXXX.','.XwwwwwwwwXx','.XwXXXXXXXXx',
               '.XwXXwwXXXXx','.XwXXxxXXXXx','.XwXXXXXXXXx','.XxxxxxxxxXx','..xxxxxxxxx.','............'],
     proshop: ['...XXXXXX...','..XwwwwwwX..','.XXXXXXXXXX.','XoXXoXXoXXoX','XxXxXxXxXxXx','.XXXXXXXXXX.','.XwwwXXoooX.','.XwwwXXoooX.','.XwwwXXoooX.','.XXXXXXoooX.','.XXXXXXoooX.','.XXXXXXXXXX.'],
@@ -2940,7 +2949,7 @@ const B = {
   BAG_ILVL: 2,
 
   /* ---- permanent, and capped at ten ---- */
-  PERM_MAX: 10,
+  PERM_MAX: 10, PERM_SOFT: 3, PERM_EASE: 0.1,
   PERM: [
     { id:'contract', ic:'contract', n:'Caddie Contract', base:180, r:1.42, v:2,
       d:'+2 hours of away time banked, a level',  s:'h' },
@@ -5285,7 +5294,15 @@ const permDef = id => B.PERM.find(u => u.id === id);
 // the way the trophy room reads rather than the way the Range reads.
 const permAdd  = id => { const u = permDef(id); return u ? u.v * permLv(id) : 0; };
 const permMult = id => { const u = permDef(id); return u ? Math.pow(u.v, permLv(id)) : 1; };
-const permCost = u => Math.round(u.base * Math.pow(u.r, permLv(u.id)));
+// The last PERM_SOFT levels stop compounding: each is PERM_EASE of the price
+// before them more, not r times it. Compounding all ten, Signature Irons ran
+// 5.1K, 7.7K and 11.5K sovereigns for its last three -- $50 to $120 of packs
+// for 5% swing power each.
+const permCost = u => {
+  const lv = permLv(u.id), soft = B.PERM_MAX - B.PERM_SOFT;
+  if(lv < soft) return Math.round(u.base * Math.pow(u.r, lv));
+  return Math.round(u.base * Math.pow(u.r, soft - 1) * (1 + B.PERM_EASE * (lv - soft + 1)));
+};
 // Read in three places, so it is a function and not a constant plus two bugs.
 const bagCap = () => B.BAG_CAP + permAdd('locker');
 // A member holds one more entry for every wager in the book.
@@ -5610,9 +5627,10 @@ function renderShop(){
     h += '<div class="shopnote">Looks only. Nothing here changes a stat.</div>'
       + shelf('Skins', 'o', B.OUTFITS.filter(o => o.cat === 'skin'), outfitUrl)
       + shelf('Balls', 't', B.TRAILS.filter(t => t.cat === 'ball'), trailUrl)
-      + shelf('Just for fun', 'o', B.OUTFITS.filter(o => o.cat === 'fun'), outfitUrl)
-      + shelf('Outfits', 'o', B.OUTFITS.filter(o => !o.cat), outfitUrl)
-      + shelf('Ball trails', 't', B.TRAILS.filter(t => !t.cat), trailUrl);
+      // the funny ones and the plain shirts are all outfits: one shelf, the
+      // funny ones first
+      + shelf('Outfits', 'o', B.OUTFITS.filter(o => o.cat === 'fun').concat(B.OUTFITS.filter(o => !o.cat)), outfitUrl)
+      + shelf('Ball Trails', 't', B.TRAILS.filter(t => !t.cat), trailUrl);
   }
 
   if(shopSub === 'offers'){
@@ -6054,7 +6072,7 @@ function offline(){
   const line = (k, v) => '<div class="lb"><span class="p"></span><span>' + k
     + '</span><span class="s">' + v + '</span></div>';
 
-  let h = '<h3>While you were away</h3>'
+  let h = '<h3>While You Were Away</h3>'
     + '<p>' + (away > dt + 60
         ? spanTxt(away) + ' away \u00b7 the caddie played the last ' + hms(dt)
         : hms(dt) + ' away') + ' at '
@@ -9650,6 +9668,25 @@ function renderHonBtn(){
     $('setIcon').src = pixUrl('gear', '#DFE9DC');
     sb.onclick = () => settingsSheet();
   }
+  const cb = $('hudClimb');
+  if(cb){
+    if(!cb._built){
+      cb._built = 1;
+      cb.onclick = () => {
+        S.autoClimb = !S.autoClimb;
+        toast('Auto-climb <b>' + (S.autoClimb ? 'on' : 'off') + '</b>');
+        if(view === 'tour') renderTour();
+        renderHonBtn();
+      };
+    }
+    const on = !!S.autoClimb;
+    if(cb._on !== on){
+      cb._on = on;
+      $('hudClimbIcon').src = pixUrl('autoclimb', on ? '#57E0BE' : '#8BA793');
+      cb.classList.toggle('off', !on);
+      cb.setAttribute('aria-label', 'Auto-climb ' + (on ? 'on' : 'off'));
+    }
+  }
 }
 function renderXp(){
   const max = atMax();
@@ -10035,7 +10072,7 @@ function renderBag(){
     : rz < 1 ? 'Your ' + elemOf(ball.el).n + ' ball is weak here, \u00d7' + rz.toFixed(2) + '\u00a0power'
     : 'Your ' + elemOf(ball.el).n + ' ball plays normally here';
   $('setBox').innerHTML =
-    '<div class="row"><div><div class="nm">' + (ce ? ce.n + ' course' : 'Neutral course') + '</div>'
+    '<div class="row"><div><div class="nm">' + (ce ? ce.n + ' Course' : 'Neutral Course') + '</div>'
     + '<div class="ds">' + verdict + (ce ? '. ' + elemOf(B.DAMPS[ce.id]).n + ' balls are weak here.' : '.') + '</div></div>'
     + (ce ? svgIcon(ce.ic, 'bic', elemColor(ce.id)) : '') + '</div>'
     // A named set gets a row once a piece of it has turned up, equipped or in
@@ -10501,19 +10538,19 @@ function renderTour(){
         + '<span class="lbl">Climb</span><span class="amt">'
         + (cardUnlocked(nextT) ? '+1' : eventsToNext() + '\u00a0to go') + '</span></button></div>')
     + '<div class="row"><div><div class="nm">'
-    + (S.tier > 0 ? 'Drop back to Card ' + roman(S.tier - 1) : 'Drop back') + '</div>'
+    + (S.tier > 0 ? 'Drop Back to Card ' + roman(S.tier - 1) : 'Drop Back') + '</div>'
     + '<div class="ds">' + (S.tier > 0
         ? 'Shorter holes, smaller purse.'
         : 'The first card.') + '</div></div>'
     + '<button class="buy' + (S.tier > 0 ? '' : ' no') + '" id="dropBtn">'
     + '<span class="lbl">Drop</span><span class="amt">−1</span></button></div>'
-    + '<div class="row"><div><div class="nm">Climb on form</div>'
-    + '<div class="ds">When you can birdie the next card</div></div>'
+    + '<div class="row"><div><div class="nm">Climb on Form</div>'
+    + '<div class="ds">Moves you up a card on its own once your golfer is strong enough to score birdies on the next card\'s holes.</div></div>'
     + '<button class="buy' + (S.autoClimb ? ' ok' : '') + '" id="autoBtn"><span class="lbl">Auto</span>'
     + '<span class="amt">' + (S.autoClimb ? 'On' : 'Off') + '</span></button></div>';
   const cb = $('climbBtn'); if(cb) cb.onclick = () => climb(1);
   $('dropBtn').onclick = () => climb(-1);
-  $('autoBtn').onclick = () => { S.autoClimb = !S.autoClimb; renderTour(); };
+  $('autoBtn').onclick = () => { S.autoClimb = !S.autoClimb; renderTour(); renderHonBtn(); };
 
   const ch = $('tierBox').querySelector('#cardHint .qm');
   if(ch){
@@ -10615,14 +10652,14 @@ function renderLegacy(){
     + lb('One more cup', '+' + fmt(P.cup))
     + lb('It buys', legacyBuys(P))
     + (P.ready
-      ? '<div class="row"><div><div class="nm">Sign the card</div>'
+      ? '<div class="row"><div><div class="nm">Sign the Card</div>'
         + '<div class="ds">Tour Card ' + roman(S.tier) + ' with ' + S.cups + ' cups banked.</div></div>'
         + '<button class="buy ok" id="retireBtn"><span class="lbl">Retire</span><span class="amt">+'
         + fmt(gain) + '</span></button></div>'
       : '<div class="empty">Opens after your first event \u00b7 '
         + holesPlayed(S.hole) + ' of ' + (B.ROUND*B.DAYS) + '\u00a0holes</div>');
   if(gain > 0) $('retireBtn').onclick = () => showSheet(
-    '<h3>Sign the card?</h3><p>Bank <b>' + fmt(gain) + '</b> legacy and restart on Card '
+    '<h3>Sign the Card?</h3><p>Bank <b>' + fmt(gain) + '</b> legacy and restart on Card '
     + roman(retireCard()) + '.</p><p>' + legacyBuys(P).charAt(0).toUpperCase()
     + legacyBuys(P).slice(1) + '.</p>'
     + '<p>Wait a card: +' + fmt(P.card) + ' \u00b7 wait a cup: +' + fmt(P.cup) + '</p>'
@@ -10634,7 +10671,7 @@ function renderLegacy(){
   $('relicNote').textContent = n + ' / ' + tot + ' found';
   const rows = $('relicRows');
   rows.innerHTML = '<div class="row">' + svgIcon('trophy', 'ric', BRASS)
-    + '<div><div class="nm">Discover a trophy</div>'
+    + '<div><div class="nm">Discover a Trophy</div>'
     + '<div class="ds">' + (n >= tot ? 'Every trophy is on the shelf.'
         : 'Gold ones are rarest.') + '</div>'
     + '<div class="mt">Found <i>' + n + '</i> of ' + tot + '</div></div>'
@@ -10977,7 +11014,7 @@ function careerStats(w, C){
   }
   const r = document.createElement('div');
   r.className = 'row';
-  r.innerHTML = '<div><div class="nm">Respec attributes</div></div>'
+  r.innerHTML = '<div><div class="nm">Respec Attributes</div></div>'
     + '<div class="btnrow"><button class="mini">Reset</button></div>';
   r.querySelector('button').onclick = () => {
     let n = 0; B.STATS.forEach(s => { n += S.stat[s.id]||0; S.stat[s.id] = 0; });
@@ -11119,7 +11156,7 @@ function careerParagon(w){
   }
   const r = document.createElement('div');
   r.className = 'row';
-  r.innerHTML = '<div><div class="nm">Respec paragon</div></div>'
+  r.innerHTML = '<div><div class="nm">Respec Paragon</div></div>'
     + '<div class="btnrow"><button class="mini">Reset</button></div>';
   r.querySelector('button').onclick = () => {
     for(const cat of B.PARAGON) for(const a of cat.a){
@@ -11238,15 +11275,15 @@ function settingsSheet(){
   showSheet('<h3>Settings</h3>'
     + row('Sound', '', '<button class="mini' + (S.sound !== 0 ? ' go' : '') + '" onclick="toggleSound()">'
         + (S.sound !== 0 ? 'On' : 'Off') + '</button>')
-    + row('Back up your save', 'A code you can keep, or load on another device',
+    + row('Back Up Your Save', 'A code you can keep, or load on another device',
         '<button class="mini go" onclick="exportSheet()">Export</button>')
-    + row('Load a save', 'Paste a code from Export',
+    + row('Load a Save', 'Paste a code from Export',
         '<button class="mini" onclick="importSheet()">Import</button>')
     + (isIOS() && !isStandalone()
         ? row('Add to Home Screen', 'Safari clears a website’s save after 7 days away. '
             + 'From the Home Screen it never does: tap Share, then Add to Home Screen.', '')
         : '')
-    + row('Erase save', 'Start again from nothing',
+    + row('Erase Save', 'Start again from nothing',
         '<button class="mini" onclick="wipe()">Erase</button>')
     + '<button class="act ghost" onclick="hideSheet()">Close</button>');
 }
@@ -11285,7 +11322,7 @@ async function readCode(code){
 async function exportSheet(){
   save();
   const code = await saveCode();
-  showSheet('<h3>Back up your save</h3>'
+  showSheet('<h3>Back Up Your Save</h3>'
     + '<textarea id="saveCode" readonly>' + code + '</textarea>'
     + '<div class="setbtns"><button class="mini go" id="copyCode">Copy</button>'
     + '<button class="mini" id="fileCode">Save as file</button></div>'
@@ -11304,7 +11341,7 @@ async function exportSheet(){
   };
 }
 function importSheet(){
-  showSheet('<h3>Load a save</h3>'
+  showSheet('<h3>Load a Save</h3>'
     + '<textarea id="saveCode" placeholder="Paste a save code"></textarea>'
     + '<div class="setbtns"><button class="mini go" id="loadCode">Load</button></div>'
     + '<button class="act ghost" onclick="settingsSheet()">Back</button>');
@@ -11312,7 +11349,7 @@ function importSheet(){
     let o;
     try{ o = await readCode($('saveCode').value); }
     catch(e){ toast(e.message || 'That code would not load'); return; }
-    showSheet('<h3>Replace this save?</h3><p>Level ' + (o.lv || 1) + ' · Tour Card '
+    showSheet('<h3>Replace This Save?</h3><p>Level ' + (o.lv || 1) + ' · Tour Card '
       + roman(o.tier || 0) + ' · ' + fmt(o.gold || 0) + ' purse</p>'
       + '<button class="act danger" id="doImport">Load it</button>'
       + '<button class="act ghost" onclick="settingsSheet()">Cancel</button>');
@@ -11345,14 +11382,14 @@ function loadSaveObject(o){
 function homeTip(){
   if(S.homeTip || !isIOS() || isStandalone() || (S.totalHoles || 0) < 90) return;
   S.homeTip = 1;
-  showSheet('<h3>Keep your save safe</h3>'
+  showSheet('<h3>Keep Your Save Safe</h3>'
     + '<p>Safari clears a website’s save after 7 days away. Added to the Home Screen, '
     + 'the game keeps it for good.</p><p>Tap <b>Share</b>, then <b>Add to Home Screen</b>.</p>'
     + '<button class="act" onclick="hideSheet()">Got it</button>');
 }
 
 function wipe(){
-  showSheet('<h3>Erase the save?</h3><p>Everything goes. This cannot be undone.</p>'
+  showSheet('<h3>Erase the Save?</h3><p>Everything goes. This cannot be undone.</p>'
     + '<button class="act danger" onclick="reallyWipe()">Erase everything</button>'
     + '<button class="act ghost" onclick="hideSheet()">Cancel</button>');
 }
@@ -11543,6 +11580,14 @@ function boot(){
   setIcons();
   fitTop();
   window.addEventListener('resize', fitTop);
+  // belt to the fixed body's braces: Safari settles a rotation over several
+  // frames, so the page is put back at the top on each step of it
+  const pin = () => { if(window.scrollX || window.scrollY) window.scrollTo(0, 0);
+    document.documentElement.scrollTop = 0; document.body.scrollTop = 0; };
+  window.addEventListener('scroll', pin);
+  window.addEventListener('resize', pin);
+  window.addEventListener('orientationchange', () => [0, 150, 400, 800].forEach(ms => setTimeout(pin, ms)));
+  if(window.visualViewport) visualViewport.addEventListener('resize', pin);
   buildCard();
   buildUpg();
 
