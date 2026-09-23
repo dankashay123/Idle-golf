@@ -21,9 +21,9 @@
  *     taken the spot); the trees crowd the inside, so cutting the corner is
  *     the gamble
  *   - the hole map is shown on an upright phone and marks the golfer
- *   - the first hole of each round opens with a fly-over: never another
- *     hole, never with it off in Settings or during a catch-up; the round
- *     plays on under it and a tap on the field ends it
+ *   - a new event announces its course across the field, once: not again
+ *     on the next hole, and not during a catch-up (the flyover this
+ *     replaced is gone)
  *   - the wind carries a ball downwind while it is up and moves neither end
  *     of its flight, so it still lands on the fairway; a wager is calm
  *   - a wager is played dead straight
@@ -96,24 +96,19 @@ module.exports = {
           const [mx, my] = Scene.mapXY(Scene.camD, -0.30), px = mc.getContext('2d').getImageData(Math.round(mx) - 1, Math.round(my) - 1, 1, 1).data;
           o.map.marker = px[0] + ',' + px[1] + ',' + px[2];
         }
-        // the fly-over: the first hole of a round, and only that; not with it
-        // switched off or during a catch-up; a tap ends it; play goes on
+        // the course announcement: when play reaches a new event, once; not
+        // on the next hole, not during a catch-up
         {
-          const keepH = S.hole, fo = S.flyover;
-          // reached the way the game reaches it, by finishing the hole before
-          const at = (h, set) => { Scene.fly = null; S.flyover = set; S.hole = h - 1; startHole();
-            S.elapsed = 5; finishHole(derive()); return !!Scene.fly; };
+          const keepH = S.hole, seen = S.courseSeen;
+          const at = h => { Scene.announce = null; S.hole = h - 1; startHole();
+            S.elapsed = 5; finishHole(derive()); return Scene.announce ? Scene.announce.name : null; };
           QUIET = false;
-          o.fly = { first: at(19, 1), second: at(20, 1), off: at(37, 0) };
-          QUIET = true; o.fly.quiet = at(55, 1); QUIET = false;
-          at(19, 1); const y0 = S.yards;
-          for (let i = 0; i < 40; i++) { step(0.05, derive()); Scene.draw(0.05, derive()); }
-          o.fly.played = S.yards < y0 || S.hole !== 19;
-          o.fly.still = !!Scene.fly;
-          document.getElementById('stage').dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }));
-          o.fly.tapped = !Scene.fly;
-          o.fly.load = (() => { Scene.fly = null; S.hole = 37; startHole(); return !!Scene.fly; })();
-          QUIET = true; S.flyover = fo; S.hole = keepH; startHole();
+          S.courseSeen = tournamentOf(72);
+          o.ann = { next: at(73), again: at(74) };
+          QUIET = true; o.ann.quiet = at(145); QUIET = false;
+          o.ann.want = courseFor(tournamentOf(73)).n;
+          o.ann.fly = typeof Scene.flyStart;
+          QUIET = true; S.courseSeen = seen; S.hole = keepH; startHole();
         }
         // the wind: a bow downwind, and the ball still lands where it was going
         {
@@ -150,14 +145,12 @@ module.exports = {
     if (!(r.tIn > r.tOut * 1.5)) throw new Error('the trees round a corner are not on its inside: ' + r.tIn + ' inside, ' + r.tOut + ' outside');
     if (!r.map.shown || !(r.map.w >= 20 && r.map.h >= 30)) throw new Error('the hole map is not shown on an upright phone: ' + JSON.stringify(r.map));
     if (!/^(255,214,107|26,31,26)$/.test(r.map.marker)) throw new Error('the hole map does not mark the golfer: ' + r.map.marker);
-    const F = r.fly;
-    if (!F.first) throw new Error('the first hole of a round opened without a fly-over');
-    if (F.second) throw new Error('a fly-over ran on the second hole of a round');
-    if (F.off) throw new Error('a fly-over ran with it switched off in Settings');
-    if (F.quiet) throw new Error('a fly-over ran during a catch-up');
-    if (F.load) throw new Error('a fly-over ran on a load or a climb, not a round played into');
-    if (!F.played) throw new Error('the round stood still during the fly-over');
-    if (!F.still || !F.tapped) throw new Error('a tap did not end the fly-over (running ' + F.still + ', ended ' + F.tapped + ')');
+    const A = r.ann;
+    if (!A.next || A.next.replace(/ /g, '') !== A.want.toUpperCase().replace(/[^A-Z0-9]/g, ''))
+      throw new Error('reaching a new event did not announce its course: ' + A.next + ' for ' + A.want);
+    if (A.again) throw new Error('the course was announced again on the next hole: ' + A.again);
+    if (A.quiet) throw new Error('a catch-up announced a course: ' + A.quiet);
+    if (A.fly !== 'undefined') throw new Error('the flyover is still in the game');
     const W = r.wind;
     if (W.ends > 1e-9) throw new Error('the wind moved where the ball leaves the club or lands, by ' + W.ends.toFixed(3));
     if (!(W.bowR > 0.3 && W.bowL < -0.3)) throw new Error('the wind does not carry the ball downwind mid-flight: ' + W.bowR.toFixed(2) + ' / ' + W.bowL.toFixed(2));
@@ -171,7 +164,7 @@ module.exports = {
         + ', trees ' + r.tIn + ' inside to ' + r.tOut + ' outside',
       'hole map ' + r.map.w + 'x' + r.map.h + ' shown, golfer marked',
       'wind carries the ball ' + W.bowR.toFixed(2) + ' downwind mid-flight and moves neither end of it; calm on wagers',
-      'flyover on the first hole of a round only, not when off or catching up; play goes on under it, a tap ends it',
+      'a new event announces its course once, on the field; not on the next hole or in a catch-up',
       'wagers play straight'];
   }
 };

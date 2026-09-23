@@ -3811,6 +3811,19 @@ const courseElFor = (h, tier) => {
   const n = hash32(roundIndex(h)*7717 + tier*131 + (S.chaosBump||0)*17);
   return n % 5 === 4 ? null : B.ELEM[n % B.ELEM.length].id;   // one round in five plays neutral
 };
+// A new course is announced once, on the field, when play reaches it -- the
+// first time the game is opened, and at the start of every event after.
+// A catch-up does not announce the courses it passed through.
+function announceCourse(){
+  const t = tournamentOf(S.hole);
+  if(S.courseSeen === t) return;
+  if(QUIET || OFFLINE || S.dgnRun) return;
+  S.courseSeen = t;
+  const cs = courseFor(t);
+  // in the stage's own type, which has no apostrophes or dots in the middle
+  const fit = str => [...str.toUpperCase()].map(ch => GLYPH[ch] || ch === ' ' ? ch : ' ').join('').replace(/ +/g, ' ').trim();
+  Scene.announce = { name: fit(cs.n), sub: fit('Tour Card ' + roman(S.tier) + ' - Event ' + t), t: 0, dur: 4.2 };
+}
 function startHole(){
   rivalNow();          // the event's rival exists from its first hole, seen or not
   S.courseEl = courseElFor(S.hole, S.tier);
@@ -5209,9 +5222,7 @@ function finishHole(D){
 
   advanceHole();
   startHole();
-  // A round played into opens with a look down its first hole. Only here,
-  // where one hole hands over to the next: not on a load, not on a climb.
-  if(holeInRound(S.hole) === 1 && S.flyover !== 0 && !QUIET && !OFFLINE && !S.dgnRun) Scene.flyStart();
+  announceCourse();
   renderCard(); renderTour();
 }
 
@@ -8149,8 +8160,6 @@ const Scene = {
 
   init(){
     this.cv = $('hole');
-    // a tap anywhere on the field ends a fly-over
-    $('stage').addEventListener('pointerdown', () => { if(this.fly) this.fly = null; });
     this.ctx = this.cv.getContext('2d');
     buildSprites();
     this.resize();
@@ -8469,7 +8478,24 @@ const Scene = {
   },
 
   holeLen(){ return LEN; },
-  flyStart(){ this.fly = { t: 0, dur: 3.4, to: LEN - 13 }; },
+  // The course, announced across the field when a new one begins: its name
+  // large, the card small, faded in and out over a few seconds.
+  drawAnnounce(dt){
+    const A = this.announce; A.t += dt;
+    if(A.t >= A.dur){ this.announce = null; return; }
+    const c = this.b, u = A.t / A.dur;
+    const a = u < 0.12 ? u / 0.12 : u > 0.82 ? (1 - u) / 0.18 : 1;
+    const big = textW(A.name, TSC * 2) <= VW * 0.9 ? TSC * 2 : TSC;
+    const lh = (FH + 2) * big, y0 = Math.round(VH * 0.27), bandH = lh + LH + 10 * TSC;
+    c.globalAlpha = 0.72 * a; c.fillStyle = '#08120C';
+    c.fillRect(0, y0 - 5 * TSC, VW, bandH);
+    c.globalAlpha = a; c.fillStyle = PX.brass;
+    const lw = Math.round(VW * 0.5 * Math.min(1, u / 0.25));
+    c.fillRect(CX - lw, y0 - 5 * TSC, lw * 2, 1); c.fillRect(CX - lw, y0 - 5 * TSC + bandH - 1, lw * 2, 1);
+    drawTextS(c, A.name, CX, y0, PX.brass, big, 'c');
+    drawTextS(c, A.sub, CX, y0 + lh + 2 * TSC, PX.bone, TSC, 'c');
+    c.globalAlpha = 1;
+  },
   drawCaddie(c, gh, walking){
     const p = this.proj(this.camD + 0.25, -1.45);
     const h = Math.max(6, Math.round(gh * 0.93)), spr = SPRITE.caddie, CD = caddieNow();
@@ -10095,21 +10121,6 @@ Object.assign(Scene, {
       const v = dt > 0 ? (this.camD - cam0) / dt : 0;
       this.walkOn = this.swingT === 0 && v > 0.8 && v < 200;
       if(this.walkOn) this.walkPh = (this.walkPh || 0) + dt * clamp(1.4 + v * 0.08, 1.4, 2.6);
-      // The fly-over borrows the camera: it rides down the hole to look at
-      // the green and comes back, while the round carries on underneath. The
-      // golfer and his shots are left out of the frames it has.
-      let camKeep = null;
-      if(this.fly){
-        const f = this.fly; f.t += dt;
-        if(f.t >= f.dur || document.hidden) this.fly = null;
-        else{
-          const u = f.t / f.dur, ss = x => x*x*(3 - 2*x);
-          const out = u < 0.55 ? ss(u / 0.55) : u < 0.72 ? 1 : 1 - ss((u - 0.72) / 0.28);
-          camKeep = this.camD;
-          this.camD = camKeep + (f.to - camKeep) * out;
-          this.camH = this.hAt(this.camD);
-        }
-      }
       if(this.sky) c.drawImage(this.sky, 0, 0);
       this.drawRidge();
       this.drawGround();
@@ -10119,19 +10130,14 @@ Object.assign(Scene, {
       if(this.haze) c.drawImage(this.haze, 0, 0);
       this.drawTee();
       this.drawFlagstick();
-      if(camKeep === null){ this.drawGolfer(D); this.drawBalls(dt); }
-      else for(const b of this.balls) b.t += dt;      // still flying, just not in this shot
+      this.drawGolfer(D);
+      this.drawBalls(dt);
       this.drawWeather();
       this.drawHud(D);
       this.drawPerks();
       this.drawShots();
-      if(camKeep === null) this.drawFx(dt);
-      if(camKeep !== null){
-        // a strip across the top says what this is, and that a tap ends it
-        drawTextS(c, 'HOLE ' + holeInRound(S.hole) + '  PAR ' + parOf(S.hole), CX, Math.round(VH*0.30), PX.bone, TSC, 'c');
-        drawTextS(c, 'TAP TO SKIP', CX, Math.round(VH*0.30) + LH, PX.grey, TSC, 'c');
-        this.camD = camKeep; this.camH = this.hAt(camKeep);
-      }
+      this.drawFx(dt);
+      if(this.announce) this.drawAnnounce(dt);
       this.drawMap();
     }
 
@@ -11967,9 +11973,6 @@ function settingsSheet(){
   showSheet('<h3>Settings</h3>'
     + row('Sound', '', '<button class="mini' + (S.sound !== 0 ? ' go' : '') + '" onclick="toggleSound()">'
         + (S.sound !== 0 ? 'On' : 'Off') + '</button>')
-    + row('Hole Flyover', 'A look down the first hole of each round',
-        '<button class="mini' + (S.flyover !== 0 ? ' go' : '') + '" onclick="S.flyover = S.flyover === 0 ? 1 : 0; settingsSheet()">'
-        + (S.flyover !== 0 ? 'On' : 'Off') + '</button>')
     + row('Back Up Your Save', 'A code you can keep, or load on another device',
         '<button class="mini go" onclick="exportSheet()">Export</button>')
     + row('Load a Save', 'Paste a code from Export',
@@ -12346,6 +12349,7 @@ function boot(){
   else startHole();
   renderAll();
   setView('upg');
+  announceCourse();
 
   if(had) offline(); else intro();
   try{ if(navigator.storage && navigator.storage.persist) navigator.storage.persist(); }catch(e){}
