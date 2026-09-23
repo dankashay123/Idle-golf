@@ -5644,7 +5644,7 @@ function renderShop(){
         + list.slice().sort((a, b) => (b.top || 0) - (a.top || 0)).map(d => card(k, d, url(d))).join('') + '</div>' : '';
     h += '<div class="shopnote">Looks only. Nothing here changes a stat.</div>'
       + shelf('Skins', 'o', B.OUTFITS.filter(o => o.cat === 'skin'), outfitUrl)
-      + shelf('Auras', 't', B.TRAILS.filter(t => t.cat === 'ball'), trailUrl)
+      + shelf('Balls', 't', B.TRAILS.filter(t => t.cat === 'ball'), trailUrl)
       // the funny ones and the plain shirts are all outfits: one shelf, the
       // funny ones first
       + shelf('Outfits', 'o', B.OUTFITS.filter(o => o.cat === 'fun').concat(B.OUTFITS.filter(o => !o.cat)), outfitUrl)
