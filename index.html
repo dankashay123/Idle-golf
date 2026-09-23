@@ -2598,6 +2598,22 @@ const B = {
       sky:['#2A6E9E','#CBE2E8'], turf:'#4A8E48', rough:'#2E5A34', sand:'#EADCAE',
       water:'#2E86A8', rock:'#6E8494', tree:['#3E8046','#265A2E'],
       land:{ fw:3.10, taper:0.85, trees:1.00, kind:1, nb:3, bsize:1.1, water:0.60, wsize:1.4, crowd:1.0 } },
+    { id:'mesa', slot:'event', n:'The Mesa Open', sig:'Red rock, white sand, and a sky that goes on forever.',
+      sky:['#3A6A9E','#F0D2A8'], turf:'#8A9446', rough:'#A0583A', sand:'#F6E6C4',
+      water:'#3A8AA0', rock:'#B0603E', tree:['#6A7A46','#44502A'],
+      land:{ fw:3.20, taper:0.75, trees:0.18, kind:0, nb:7, bsize:1.70, water:0.08, wsize:0.9, crowd:0.8 } },
+    { id:'snowline', slot:'event', n:'The Snowline Classic', sig:'Played in the thaw, under peaks that never lose their snow.',
+      sky:['#3A6A96','#E4EEF2'], turf:'#4E8A56', rough:'#3A5A44', sand:'#E4E0D0',
+      water:'#5AA6C8', rock:'#A8B8C4', tree:['#2E5A44','#1A3A2C'],
+      land:{ fw:2.60, taper:0.90, trees:1.35, kind:0, nb:3, bsize:1.0, water:0.55, wsize:1.3, crowd:0.8 } },
+    { id:'blossom', slot:'event', n:'The Blossom Invitational', sig:'Cherry trees in flower and ponds as still as glass.',
+      sky:['#4A7AAE','#F2DCE4'], turf:'#58A052', rough:'#3E7A44', sand:'#F4EAD6',
+      water:'#4A9EBE', rock:'#8E9AA8', tree:['#CA789C','#8E5070'],
+      land:{ fw:3.00, taper:0.85, trees:1.00, kind:1, nb:3, bsize:1.1, water:0.65, wsize:1.2, crowd:1.1 } },
+    { id:'moorland', slot:'event', n:'The Moorland Classic', sig:'Purple heather, grey skies, and pot bunkers you can stand up in.',
+      sky:['#46566A','#B8BEC6'], turf:'#56804A', rough:'#6A4A70', sand:'#D8CCA8',
+      water:'#4A6A7A', rock:'#6E7478', tree:['#4E6048','#303E2C'],
+      land:{ fw:3.10, taper:0.80, trees:0.30, kind:0, nb:9, bsize:0.80, water:0.20, wsize:1.0, crowd:0.9 } },
     { id:'azalea', slot:'major', n:'The Azalea Invitational', sig:'Not a blade out of place, and the shrubs are in flower.',
       sky:['#2A78A8','#DCEEE8'], turf:'#3EA046', rough:'#1E6A2E', sand:'#FFF4DC',
       water:'#2A96B4', rock:'#7E9EA0', tree:['#D06A9A','#8A3E68'],
@@ -2614,6 +2630,10 @@ const B = {
       sky:['#3A5A78','#E2D2B8'], turf:'#5E8A44', rough:'#5A4A2E', sand:'#E8D4A4',
       water:'#3A6E86', rock:'#7E6E5E', tree:['#D08A3A','#8A4E20'],
       land:{ fw:2.80, taper:0.85, trees:1.40, kind:2, nb:3, bsize:1.1, water:0.35, wsize:1.1, crowd:1.1 } },
+    { id:'oldlinks', slot:'major', n:'The Old Links Championship', sig:'The oldest course there is. Firm, fast, and the wind decides.',
+      sky:['#3A5E7E','#D4DCD6'], turf:'#7A9A52', rough:'#9A9A5A', sand:'#E6D8B0',
+      water:'#3A6E8A', rock:'#8A8E88', tree:['#56744A','#384E30'],
+      land:{ fw:3.60, taper:0.70, trees:0.15, kind:0, nb:8, bsize:1.05, water:0.30, wsize:1.0, crowd:1.5 } },
     { id:'meridian', slot:'finale', n:'The Meridian Championship', sig:'Nobody agrees where it is. The light is wrong all week.',
       sky:['#1A1A48','#8ED0C0'], turf:'#3E8A5E', rough:'#1E3A46', sand:'#D8CCE8',
       water:'#4A5AA8', rock:'#4A4A7A', tree:['#3E7A76','#245450'],
@@ -2922,11 +2942,23 @@ const slotOfEvent = t => B.SLOTS_SEASON[(t-1) % B.SEASON];
 const COURSE_EVT = B.COURSE.filter(c => c.slot === 'event');
 const COURSE_MAJ = B.COURSE.filter(c => c.slot === 'major');
 const COURSE_FIN = B.COURSE.find(c => c.slot === 'finale');
+// Regular stops are counted among regular stops. Indexed off the event number
+// itself, any list whose length shared a factor with the season's slot pattern
+// skipped courses for good: a season is event, event, major, event, event,
+// finale, so every third number is taken, and with twelve regular courses four
+// of them landed on those numbers every time and were never played.
+const EVT_PER_SEASON = B.SLOTS_SEASON.filter(x => x === 'event').length;
+function regularIndex(t){
+  const season = Math.floor((t-1) / B.SEASON), pos = (t-1) % B.SEASON;
+  let before = 0;
+  for(let i = 0; i < pos; i++) if(B.SLOTS_SEASON[i] === 'event') before++;
+  return season * EVT_PER_SEASON + before;
+}
 function courseFor(t){
   const s = slotOfEvent(t);
   if(s === 'finale') return COURSE_FIN;
   if(s === 'major')  return COURSE_MAJ[Math.floor((t-1)/B.SEASON) % COURSE_MAJ.length];
-  return COURSE_EVT[(t-1) % COURSE_EVT.length];
+  return COURSE_EVT[regularIndex(t) % COURSE_EVT.length];
 }
 const eventName = t => courseFor(t).n;
 function purseMult(t){

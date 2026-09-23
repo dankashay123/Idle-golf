@@ -326,6 +326,25 @@ module.exports = {
       throw new Error('all four milestones cost ' + total + ' points and a career is '
         + r.career + '. If you can have all four there is no choice in it.');
 
+    // ---- every course is on the schedule ------------------------------------
+    // Regular stops used to be picked off the event number, so a list whose
+    // length shared a factor with the season (event, event, major, event,
+    // event, finale) skipped courses for ever: at twelve, four were never
+    // played. Over a long run of the schedule, every course has to come up,
+    // and the regular ones about equally often.
+    const sched = await page.evaluate(() => {
+      const c = {}; B.COURSE.forEach(x => c[x.id] = 0);
+      for (let t = 1; t <= 60 * B.SEASON; t++) c[courseFor(t).id]++;
+      const reg = B.COURSE.filter(x => x.slot === 'event').map(x => c[x.id]);
+      return { never: Object.keys(c).filter(k => !c[k]), regMin: Math.min(...reg), regMax: Math.max(...reg),
+               n: B.COURSE.length };
+    });
+    if (sched.never.length)
+      throw new Error('these courses never come up on the schedule: ' + sched.never.join(', '));
+    if (sched.regMax - sched.regMin > 1)
+      throw new Error('regular stops come up between ' + sched.regMin + ' and ' + sched.regMax
+        + ' times over the same schedule; they should rotate evenly');
+
     // ---- honours pay sovereigns, once each or every time ---------------
     const H = await page.evaluate(() => {
       const o = {};
@@ -375,7 +394,8 @@ module.exports = {
         + '250 Steady Hands');
     if (H.backAgain) throw new Error('the back pay was paid a second time: +' + H.backAgain);
 
-    return ['honours pay sovereigns: one-offs 5/10/100, ' + 'repeating 2-10 every step, back pay ' + H.backPay + ' once, nothing for counting from zero',
+    return ['all ' + sched.n + ' courses on the schedule, regular stops within one of each other',
+      'honours pay sovereigns: one-offs 5/10/100, ' + 'repeating 2-10 every step, back pay ' + H.backPay + ' once, nothing for counting from zero',
       'paragon ' + r.cats.length + ' categories, ' + r.paraKeys.length
       + ' lines, none sold elsewhere, all wired',
       r.talents + ' talents, none sold elsewhere, all wired; '
