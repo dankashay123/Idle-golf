@@ -5644,7 +5644,7 @@ function renderShop(){
         + list.slice().sort((a, b) => (b.top || 0) - (a.top || 0)).map(d => card(k, d, url(d))).join('') + '</div>' : '';
     h += '<div class="shopnote">Looks only. Nothing here changes a stat.</div>'
       + shelf('Skins', 'o', B.OUTFITS.filter(o => o.cat === 'skin'), outfitUrl)
-      + shelf('Balls', 't', B.TRAILS.filter(t => t.cat === 'ball'), trailUrl)
+      + shelf('Auras', 't', B.TRAILS.filter(t => t.cat === 'ball'), trailUrl)
       // the funny ones and the plain shirts are all outfits: one shelf, the
       // funny ones first
       + shelf('Outfits', 'o', B.OUTFITS.filter(o => o.cat === 'fun').concat(B.OUTFITS.filter(o => !o.cat)), outfitUrl)
@@ -9307,6 +9307,10 @@ Object.assign(Scene, {
           const uu = u - k*0.028;
           if(uu < 0) break;
           const bd = b.d0 + b.dist*uu, lu = uu*uu*(3 - 2*uu);
+          // The camera walks on while the ball is up, so the tee it left is
+          // soon behind him, and the tail reached back past his feet as if the
+          // shot came from behind him. Nothing is drawn nearer than he is.
+          if(k > 0 && bd < this.camD + 0.05) break;
           const lt = b.lat0 === undefined ? b.lat : b.lat0 + (b.lat - b.lat0)*lu;
           const p = this.proj(bd, lt, Math.sin(uu*Math.PI)*2.6);
           if(p.y > this.clipAt(bd) + 1){ if(k === 0) break; continue; }
@@ -9321,6 +9325,7 @@ Object.assign(Scene, {
         const uu = u - k*0.055;
         if(uu < 0) continue;
         const bd = b.d0 + b.dist*uu;
+        if(k > 0 && bd < this.camD + 0.05) continue;   // behind him now: see above
         // eased across, so it leaves the face on the line the club sent it
         const lu = uu*uu*(3 - 2*uu);
         const lt = b.lat0 === undefined ? b.lat : b.lat0 + (b.lat - b.lat0)*lu;

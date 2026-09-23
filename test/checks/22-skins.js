@@ -15,6 +15,9 @@
  *     It was four times at first, and the Rubber Duck -- a small duck and a
  *     few blue dots -- passed at 10.7x while being hard to spot; with a wake
  *     under it the faintest look is 27x.
+ *   - and none reaches back behind him: the camera walks on while the ball
+ *     is up, and the tail used to run back to the tee he had left, below his
+ *     feet, as if the shot came from behind him.
  *     The colour trails were three one-pixel dots behind the ball; the
  *     Rainbow painted about as much as the plain ball and nobody could tell
  *     it was on. Its six bands were then stacked down the screen, along a
@@ -122,6 +125,24 @@ module.exports = {
       return o;
     });
 
+    // ---- nothing behind him ------------------------------------------------
+    // Played live, because it takes the camera walking on while the ball is
+    // up: a launch set up by hand and frozen never showed it. Every point a
+    // trail projects is compared with his feet, frame by frame.
+    const behind = await page.evaluate(() => new Promise(done => {
+      const keep = S.trail, db = Scene.drawBalls, pj = Scene.proj;
+      let inB = false, maxY = -1e9, worst = -1e9, frames = 0;
+      QUIET = true; DEV.gold(8); QUIET = false; S.trail = 'seraph';
+      Scene.proj = function(d, lat, lift){ const q = pj.call(this, d, lat, lift); if (inB) maxY = Math.max(maxY, q.y); return q; };
+      Scene.drawBalls = function(dt){ maxY = -1e9; inB = true;
+        try { return db.call(this, dt); } finally { inB = false;
+          if (this.balls.length){ frames++; worst = Math.max(worst, maxY - pj.call(this, this.camD, -0.30).y); } } };
+      setTimeout(() => { Scene.drawBalls = db; Scene.proj = pj; S.trail = keep; done({ worst, frames }); }, 8000);
+    }));
+    if (!(behind.frames > 60)) throw new Error('only ' + behind.frames + ' frames with a ball in the air in eight seconds');
+    if (behind.worst > 1) throw new Error('a trail reached ' + behind.worst + 'px below his feet, back to the tee he had '
+      + 'walked on from: the shot looks as if it came from behind him');
+
     if (r.errs.length) throw new Error('effects threw: ' + r.errs.join('; '));
     if (r.blank.length) throw new Error('these draw nothing their colours do not: ' + r.blank.join(', '));
     const slow = Object.entries(r.cost).filter(([, v]) => v > 1.5);
@@ -150,6 +171,7 @@ module.exports = {
       'dearest per frame ' + worst[0] + ' at ' + worst[1].toFixed(2) + 'ms (budget 1.5ms)',
       'every trail and ball at least 15x the plain ball on screen (faintest ' + dim[0] + ' at '
         + (dim[1] / r.paint.plain).toFixed(1) + 'x), dearest ' + tw[0] + ' at ' + tw[1].toFixed(2) + 'ms a ball',
+      'nothing drawn behind him: ' + behind.frames + ' frames of flight, the lowest ' + (-behind.worst) + 'px above his feet',
       '"Try it" wears a look for ten seconds, spends nothing, saves nothing, and takes it off',
       'the Style tab lists all ' + r.want + ' looks once, each with its own picture'];
   }
