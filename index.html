@@ -2449,33 +2449,33 @@ const B = {
   TREES: [
     { id:'long', n:'The Long Game', ic:'driver',
       t:[
-        { id:'reach',    n:'Reachable in Two', req:0,  max:5, k:'par5',   v:0.22,  d:'+22% swing power on par fives' },
-        { id:'shave',    n:'Loaded Face',      req:0,  max:5, k:'shave',  v:0.05,  d:'Pure strikes shave 5% off the armour left' },
-        { id:'punch',    n:'Punch Shot',       req:5,  max:5, k:'windy',  v:0.11,  d:'+11% swing power on a hole the weather has stretched' },
-        { id:'bane',     n:"Marshal's Bane",   req:5,  max:5, k:'boss',   v:0.12,  d:'+12% damage on armoured holes' },
-        { id:'pierce',   n:'Piercing Grooves', req:12, max:5, k:'pierce', v:0.12,  d:'Ignore 12% of armour' },
-        { id:'nerve',    n:'Sunday Nerve',     req:12, max:5, k:'clutch', v:0.10,  d:'+10% swing power on closing holes' },
-        { id:'oneswing', n:'One Swing',        req:22, max:1, k:'onesw',  v:1,     d:'Every 12th strike hits for 800%' }
+        { id:'reach',    n:'Reachable in Two', req:0,  max:5, k:'par5',   v:0.22,  d:'+22% power on par 5s' },
+        { id:'shave',    n:'Loaded Face',      req:0,  max:5, k:'shave',  v:0.05,  d:'Pure strikes break 5% of a hole\'s armour' },
+        { id:'punch',    n:'Punch Shot',       req:5,  max:5, k:'windy',  v:0.11,  d:'+11% power when the weather makes a hole longer' },
+        { id:'bane',     n:"Marshal's Bane",   req:5,  max:5, k:'boss',   v:0.12,  d:'+12% power on armoured holes' },
+        { id:'pierce',   n:'Piercing Grooves', req:12, max:5, k:'pierce', v:0.12,  d:'Swings ignore 12% of armour' },
+        { id:'nerve',    n:'Sunday Nerve',     req:12, max:5, k:'clutch', v:0.10,  d:'+10% power on closing holes' },
+        { id:'oneswing', n:'One Swing',        req:22, max:1, k:'onesw',  v:1,     d:'Every 12th swing goes 8\u00d7 as far' }
       ] },
     { id:'short', n:'The Short Game', ic:'wedge',
       t:[
-        { id:'quick',   n:'Quick Hands',    req:0,  max:5, k:'cast',     v:0.10,  d:'+10% out of every shot in the book' },
-        { id:'strike',  n:'Sweet Contact',  req:0,  max:5, k:'critproc', v:0.14,  d:'+14pp affinity chance on a pure strike' },
-        { id:'tune',    n:'In Tune',        req:5,  max:5, k:'surge',    v:0.10,  d:'+10% affinity power when your ball matches the course' },
-        { id:'leyread', n:'Ley Reader',     req:5,  max:5, k:'reson',    v:0.09,  d:'+0.09 to a damped affinity' },
-        { id:'rhythm',  n:'Rhythm',         req:12, max:5, k:'cdr',      v:0.06,  d:'-6% shot cooldowns' },
-        { id:'follow',  n:'Follow Through', req:12, max:5, k:'mstcrit',  v:0.20,  d:'20% chance a provisional off a pure strike is pure too' },
-        { id:'perfect', n:'Perfect Tempo',  req:22, max:1, k:'dbl',      v:1,     d:'Affinity fires twice' }
+        { id:'quick',   n:'Quick Hands',    req:0,  max:5, k:'cast',     v:0.10,  d:'Your shots are 10% stronger' },
+        { id:'strike',  n:'Sweet Contact',  req:0,  max:5, k:'critproc', v:0.14,  d:'Pure strikes are 14% more likely to trigger your ball' },
+        { id:'tune',    n:'In Tune',        req:5,  max:5, k:'surge',    v:0.10,  d:'+10% ball power when your ball suits the course' },
+        { id:'leyread', n:'Ley Reader',     req:5,  max:5, k:'reson',    v:0.09,  d:'A ball that clashes with the course keeps 9% more power' },
+        { id:'rhythm',  n:'Rhythm',         req:12, max:5, k:'cdr',      v:0.06,  d:'Shots recharge 6% faster' },
+        { id:'follow',  n:'Follow Through', req:12, max:5, k:'mstcrit',  v:0.20,  d:'After a pure strike, your second ball has a 20% chance to be pure too' },
+        { id:'perfect', n:'Perfect Tempo',  req:22, max:1, k:'dbl',      v:1,     d:'Your ball triggers twice' }
       ] },
     { id:'card', n:'The Card', ic:'coins',
       t:[
         { id:'gallery', n:'Sunday Gallery', req:0,  max:5, k:'sunday', v:0.14,  d:'+14% purse on Sunday holes' },
-        { id:'spotter', n:'Sponsor Eye',    req:0,  max:5, k:'look2',  v:0.12,  d:'12% chance a club that drops is rolled twice and the better one kept' },
-        { id:'home',    n:'Home Fixture',   req:5,  max:5, k:'wfeat',  v:0.12,  d:'+12% on the stake of the day' },
-        { id:'walker',  n:'Fast Walker',    req:5,  max:5, k:'walk',   v:0.04,  d:'-4% walk-in time' },
-        { id:'delve',   n:'Head Start',     req:12, max:3, k:'dfloor', v:1,     d:'Every wager starts a rung deeper' },
-        { id:'school',  n:'Tour School',    req:12, max:5, k:'xp',     v:0.10,  d:'+10% career experience' },
-        { id:'sharp',   n:'Card Sharp',     req:22, max:1, k:'sharp',  v:1,     d:'Entries 40% faster, runs 40% longer' }
+        { id:'spotter', n:'Sponsor Eye',    req:0,  max:5, k:'look2',  v:0.12,  d:'12% chance a new club rolls twice and you keep the better one' },
+        { id:'home',    n:'Home Fixture',   req:5,  max:5, k:'wfeat',  v:0.12,  d:'+12% from the stake of the day' },
+        { id:'walker',  n:'Fast Walker',    req:5,  max:5, k:'walk',   v:0.04,  d:'Walk between holes 4% faster' },
+        { id:'delve',   n:'Head Start',     req:12, max:3, k:'dfloor', v:1,     d:'Wagers start one level further in' },
+        { id:'school',  n:'Tour School',    req:12, max:5, k:'xp',     v:0.10,  d:'+10% experience' },
+        { id:'sharp',   n:'Card Sharp',     req:22, max:1, k:'sharp',  v:1,     d:'Wager entries refill 40% faster and runs last 40% longer' }
       ] }
   ],
   TREE_GATES: [0, 5, 12, 22],
@@ -8961,12 +8961,12 @@ function renderBag(){
   const ce = S.courseEl ? elemOf(S.courseEl) : null;
   const rz = D.reson;
   const verdict = !ball || !ball.el ? 'No ball in the bag'
-    : rz > 1 ? 'Your ' + elemOf(ball.el).n + ' ball resonates, ' + rz.toFixed(2) + 'x affinity'
-    : rz < 1 ? 'The course damps your ' + elemOf(ball.el).n + ' ball, ' + rz.toFixed(2) + 'x affinity'
-    : 'Your ' + elemOf(ball.el).n + ' ball plays neutral here';
+    : rz > 1 ? 'Your ' + elemOf(ball.el).n + ' ball suits it, \u00d7' + rz.toFixed(2) + '\u00a0power'
+    : rz < 1 ? 'Your ' + elemOf(ball.el).n + ' ball is weak here, \u00d7' + rz.toFixed(2) + '\u00a0power'
+    : 'Your ' + elemOf(ball.el).n + ' ball plays normally here';
   $('setBox').innerHTML =
     '<div class="row"><div><div class="nm">' + (ce ? ce.n + ' course' : 'Neutral course') + '</div>'
-    + '<div class="ds">' + verdict + (ce ? '. It damps ' + elemOf(B.DAMPS[ce.id]).n + '.' : '.') + '</div></div>'
+    + '<div class="ds">' + verdict + (ce ? '. ' + elemOf(B.DAMPS[ce.id]).n + ' balls are weak here.' : '.') + '</div></div>'
     + (ce ? svgIcon(ce.ic, 'bic', elemColor(ce.id)) : '') + '</div>'
     // A named set gets a row once a piece of it has turned up, equipped or in
     // the locker; before that, four rows of 0/6 would be four lines of nothing.
@@ -9925,7 +9925,7 @@ function careerTree(w, tree){
     const d = document.createElement('div');
     d.className = 'row' + (locked ? ' locked' : '');
     d.innerHTML = '<div><div class="nm">' + t.n + (t.max === 1 ? ' <span class="pill">capstone</span>' : '') + '</div>'
-      + '<div class="ds">' + nb(t.d) + (t.max > 1 ? ' per rank' : '') + '</div>'
+      + '<div class="ds">' + nb(t.d) + '</div>'
       + '<div class="mt">' + pipRow(n, t.max) + ' <i>' + n + '/' + t.max + '</i>'
       + (n ? ' \u00b7 <b>now ' + talDesc(t, n) + '</b>' : '') + '</div></div>'
       + '<div class="btnrow"><button class="mini' + (!locked && !maxed && S.talPts ? ' go' : ' dim') + '">'
@@ -9950,13 +9950,11 @@ function careerTree(w, tree){
 function talDesc(t, n){
   const v = t.v * n;
   if(t.max === 1) return 'active';
-  if(t.k === 'critproc') return '+' + (v*100).toFixed(1) + 'pp';
-  if(t.k === 'dfloor') return '+' + v + ' floors';
-  if(t.k === 'reson') return '+' + v.toFixed(2);
-  // Three of these take something away. Printing them with a plus was a lie
-  // the row's own description ("-6% shot cooldowns") contradicted one line up.
-  if(t.k === 'shave' || t.k === 'cdr' || t.k === 'walk')
-    return '\u2212' + Math.round(v*100) + '%';
+  if(t.k === 'critproc') return '+' + (v*100).toFixed(1) + '%';
+  if(t.k === 'dfloor') return '+' + v + ' ' + plural(v, 'levels');
+  // Worded as the row's own description reads, so the total never argues
+  // with the line above it.
+  if(t.k === 'cdr' || t.k === 'walk') return Math.round(v*100) + '%\u00a0faster';
   return '+' + Math.round(v*100) + '%';
 }
 function achReward(a){
