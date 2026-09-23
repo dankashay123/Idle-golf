@@ -9682,6 +9682,8 @@ const DEV = {
       + screenLine() + '<br>'
       + 'lv ' + S.lv + '  ·  paragon ' + fmt(S.para, 0) + '  ·  talents ' + talentsUsed()
       + '  ·  honours ' + achCount() + '/' + B.ACH.length + '<br>'
+      + 'sovereigns ' + fmt(S.sov || 0, 0) + '  ·  dailies '
+      + (S.daily ? S.daily.done.filter(Boolean).length : 0) + '/3  ·  streak ' + dailyStreak() + '<br>'
       + 'trophies ' + trophiesFound() + '/' + B.TROPHY.length + '  ·  tickets ' + fmt(S.tickets||0, 0)
       + '  ·  perks live ' + Object.keys(S.perkOn||{}).length + '<br>'
       + 'course ' + cs.n + '  ·  hole ' + fmt(S.yardsMax) + ' yds  ·  purse '
@@ -9693,17 +9695,20 @@ const DEV = {
       + b('+10k', 'DEV.gold(1e4)') + b('x1000', 'DEV.mulGold(1e3)')
       + b('x1e9', 'DEV.mulGold(1e9)') + b('zero', 'DEV.zeroGold()'));
 
+    h += row('Sovereigns', b('+100', 'DEV.sov(100)') + b('+1k', 'DEV.sov(1e3)')
+      + b('zero', 'DEV.sov0()'));
+
     h += row('Range', b('+10 all', 'DEV.upg(10)') + b('+100 all', 'DEV.upg(100)')
       + b('max every rung', 'DEV.maxCapped()') + b('wipe range', 'DEV.clearUpg()'));
 
     h += row('Tour Card', b('+1', 'DEV.tier(1)') + b('+5', 'DEV.tier(5)') + b('+25', 'DEV.tier(25)')
-      + b('-5', 'DEV.tier(-5)') + b('unlock +3 cards', 'DEV.cards(3)')
-      + b('finish 5 events', 'DEV.event(5)'));
+      + b('-5', 'DEV.tier(-5)') + b('back to Card I', 'DEV.tierSet(0)')
+      + b('unlock +3 cards', 'DEV.cards(3)') + b('finish 5 events', 'DEV.event(5)'));
 
-    h += row('Course', B.COURSE.slice(0, 6).map((c, i) =>
-      b(c.n.replace(/^The /, '').split(' ')[0], 'DEV.course(' + i + ')')).join(''));
-    h += row('Course, more', B.COURSE.slice(6).map((c, i) =>
-      b(c.n.replace(/^The /, '').split(' ')[0], 'DEV.course(' + (i+6) + ')')).join(''));
+    // every course by name, events first, then the majors and the finale
+    const cBtn = c => b(c.n.replace(/^The /, '').split(' ')[0], 'DEV.course(' + B.COURSE.indexOf(c) + ')');
+    h += row('Course', B.COURSE.filter(c => c.slot === 'event').map(cBtn).join(''));
+    h += row('Majors and finale', B.COURSE.filter(c => c.slot !== 'event').map(cBtn).join(''));
 
     h += row('Conditions', b('reroll', 'DEV.chaos()') + b('night', 'DEV.weather(3)')
       + b('crosswind', 'DEV.weather(1)') + b('fair', 'DEV.weather(0)')
@@ -9713,15 +9718,24 @@ const DEV = {
       + b('Mythic set', 'DEV.set(5)') + b('Legendary set', 'DEV.set(4)')
       + b('+15 all', 'DEV.enhAll()') + b('empty locker', 'DEV.clearBag()'));
 
-    h += row('Ball affinity', B.ELEM.map(e => b(e.n, 'DEV.ball("' + e.id + '")')).join('')
-      + b('none', 'DEV.ball("")'));
+    h += row('Named sets', B.SETS.filter(x => x.named).map(x => b(x.mk.replace(/\u2019s$|'s$/, ''),
+      'DEV.named(\'' + x.id + '\')')).join(''));
+
+    h += row('Ball affinity', B.ELEM.map(e => b(e.n, 'DEV.ball(\'' + e.id + '\')')).join('')
+      + b('none', 'DEV.ball(\'\')'));
 
     h += row('The Wager Book', B.DGN.map(d =>
-      b(d.mode, 'DEV.depth("' + d.id + '")')).join('')
+      b(d.mode, 'DEV.depth(\'' + d.id + '\')')).join('')
       + b('all keys', 'DEV.keys()') + b('marks +10', 'DEV.floors(10)'));
 
-    h += row('Currencies', b('+1k grit', 'DEV.cur("grit",1e3)') + b('+1k shard', 'DEV.cur("shard",1e3)')
-      + b('+1k scroll', 'DEV.cur("scroll",1e3)') + b('+20 tickets', 'DEV.tick(20)')
+    h += row('Stake of the day' + (FEAT_FORCE ? ' \u00b7 forced' : ''), B.DGN.map(d =>
+      b(d.mode, 'DEV.feat(\'' + d.id + '\')')).join('') + b('by the date', 'DEV.feat()'));
+
+    h += row('Daily challenges', b('finish one', 'DEV.daily(1)') + b('finish all', 'DEV.daily(3)')
+      + b('streak +1', 'DEV.streak()') + b('streak 0', 'DEV.streak0()'));
+
+    h += row('Currencies', b('+1k grit', 'DEV.cur(\'grit\',1e3)') + b('+1k shard', 'DEV.cur(\'shard\',1e3)')
+      + b('+1k scroll', 'DEV.cur(\'scroll\',1e3)') + b('+20 tickets', 'DEV.tick(20)')
       + b('+5k legacy', 'DEV.legacy(5e3)'));
 
     h += row('Career', b('+1 level', 'DEV.lv(1)') + b('+10 levels', 'DEV.lv(10)')
@@ -9733,11 +9747,14 @@ const DEV = {
       + b('run all perks', 'DEV.perks()') + b('clear perks', 'DEV.perks0()'));
 
     h += row('Trophy Room', b('find 5', 'DEV.disc(5)') + b('find all', 'DEV.disc(99)')
-      + b('+2 levels each', 'DEV.relics(2)') + b('unlock honours', 'DEV.ach()')
-      + b('+5 cups', 'DEV.cups(5)') + b('force retire', 'DEV.retire()'));
+      + b('+2 levels each', 'DEV.relics(2)') + b('max all found', 'DEV.relics(B.TR_MAX)')
+      + b('clear trophies', 'DEV.relics0()') + b('force retire', 'DEV.retire()'));
+
+    h += row('Honours', b('unlock all', 'DEV.ach()') + b('clear all', 'DEV.ach0()')
+      + b('+5 cups', 'DEV.cups(5)'));
 
     h += row('Simulate away', b('1 hour', 'DEV.away(3600)') + b('6 hours', 'DEV.away(6*3600)')
-      + b('12 hours', 'DEV.away(12*3600)'));
+      + b('12 hours', 'DEV.away(12*3600)') + b('3 days', 'DEV.away(3*86400)'));
 
     h += row('Godmode', b((S.godmode ? 'ON' : 'off'), 'DEV.god()'));
 
@@ -9749,6 +9766,8 @@ const DEV = {
   gold(n){ S.gold += purseFor(S.hole, S.tier, derive().gold) * n; this.re(); },
   mulGold(n){ S.gold = Math.max(1, S.gold) * n; this.re(); },
   zeroGold(){ S.gold = 0; this.re(); },
+  sov(n){ grantSov(n, null, true); this.re(); },
+  sov0(){ S.sov = 0; this.re(); },
   cur(k, n){ S[k] = (S[k]||0) + n; this.re(); },
   keys(){ B.DGN.forEach(d => S.dgnKeys[d.id] = d.cap); this.re(); },
   feat(id){ FEAT_FORCE = id || null; this.re(); },
@@ -9781,6 +9800,9 @@ const DEV = {
   set(rar){ B.SLOTS.forEach(sl => { S.equip[sl.id] = makeItem(S.tier, 0, rar, sl.id); }); this.re(); },
   enhAll(){ B.SLOTS.forEach(sl => { const it = S.equip[sl.id]; if(it) it.enh = B.ENH_MAX; }); this.re(); },
   clearBag(){ S.bag = []; this.re(); },
+  // six pieces of one named set, Rare, one in every slot
+  named(id){ B.SLOTS.forEach(sl => { const it = makeItem(S.tier, 0, 2, sl.id);
+    it.set = id; it.name = nameItem(it, sl); S.equip[sl.id] = it; }); this.re(); },
   ball(el){ const it = S.equip.ball || makeItem(S.tier, 0, 3, 'ball');
             it.el = el; S.equip.ball = it; this.re(); },
   skills(){ B.SKILL.forEach(k => { if(!S.skillLv[k.id]) S.skillLv[k.id] = 1; }); this.re(); },
@@ -9798,9 +9820,22 @@ const DEV = {
   perks(){ B.PERKS.forEach(p => { if(p.dur) S.perkOn[p.id] = p.dur; }); this.re(); },
   perks0(){ S.perkOn = {}; this.re(); },
   ach(){ B.ACH.forEach(a => S.achDone[a.id] = 1); this.re(); },
+  ach0(){ S.achDone = {}; S.achRep = {}; this.re(); },
+  // today's challenges done the honest way: the counter is moved back so the
+  // target is met, and the normal check pays it
+  daily(n){ dailyTick(); const Dy = S.daily; let k = 0;
+    Dy.picks.forEach((id, i) => { const c = dailyDef(id);
+      if(c && !Dy.done[i] && k < n){ Dy.base[c.m] = achMetric(c.m) - c.v; k++; } });
+    checkAch(); this.re(); },
+  streak(){ const day = dayNow();
+    if(S.dailyLastAll !== day){ S.dailyStreak = dailyStreak() + 1; S.dailyLastAll = day - 1; }
+    else S.dailyStreak = (S.dailyStreak || 0) + 1;
+    this.re(); },
+  streak0(){ S.dailyStreak = 0; delete S.dailyLastAll; this.re(); },
   legacy(n){ S.legacy += n; this.re(); },
   relics(n){ B.TROPHY.forEach(r => { if((S.relic[r.id]||0) > 0)
     S.relic[r.id] = Math.min(B.TR_MAX, S.relic[r.id] + n); }); this.re(); },
+  relics0(){ B.TROPHY.forEach(r => S.relic[r.id] = 0); this.re(); },
   disc(n){ const pool = B.TROPHY.filter(t => !found(t.id));
     for(let i = 0; i < n && i < pool.length; i++) S.relic[pool[i].id] = 1; this.re(); },
   cups(n){ S.cups += n; this.re(); },
