@@ -40,7 +40,8 @@ module.exports = {
         shop:     [['Settings', 'gear'], ['Pro shop', 'proshop'], ['Starter Pack', 'starter'],
                    ['Club Membership', 'member'], ['Double Purse', 'boost'],
                    ['Free gift', 'freegift'], ['Members daily', 'freeday'],
-                   ['Tour Card bounty', 'freecard'], ['Auto-climb', 'autoclimb']]
+                   ['Tour Card bounty', 'freecard'], ['Auto-climb', 'autoclimb']],
+        cperk:    (B.CPERKS || []).map(p => [p.n, p.ic])
       };
       const seen = {}, missing = [], shared = [];
       let total = 0;

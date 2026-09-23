@@ -54,7 +54,13 @@ module.exports = {
       // on carry one time and 64% behind the next, off the same code. A line
       // that reports the deal at random teaches nothing about which way the
       // change moved, which is the only reason the line is printed.
-      const REPS = 24;
+      // Seeded, and twice the lockers. Unseeded at 24 the purse figure ran
+      // anywhere from -2% to -22% run to run -- the claim below failed once
+      // at -2% on code that had not touched gear at all. A fixed sample of 48
+      // lockers is the same measurement every time, and still an average.
+      const REPS = 48;
+      const rnd0 = Math.random; let sx = (window.__DAILY_SEED || 20240917) >>> 0;
+      Math.random = () => { sx = (sx * 1103515245 + 12345) & 0x7fffffff; return sx / 0x7fffffff; };
       let worse = 0, moves = 0, greedyMoves = 0;
       const gains = [], purses = [], gCarry = [], gPurse = [];
       for (let r2 = 0; r2 < REPS; r2++) {
@@ -88,6 +94,7 @@ module.exports = {
         gCarry.push(g.dps / a1.dps);
         gPurse.push(g.gold / a1.gold);
       }
+      Math.random = rnd0;
       // ratios, so the middle of them is the geometric mean
       const gm = a => Math.exp(a.reduce((x, y) => x + Math.log(Math.max(1e-12, y)), 0) / a.length);
       const lo = a => Math.min.apply(null, a), hi = a => Math.max.apply(null, a);

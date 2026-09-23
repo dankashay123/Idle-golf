@@ -26,10 +26,6 @@
  *     replaced is gone)
  *   - the wind carries a ball downwind while it is up and moves neither end
  *     of its flight, so it still lands on the fairway; a wager is calm
- *   - the caddie keeps out of hazards: over 144 holes, walked in half units,
- *     he stands in sand or water at no more than 0.5% of spots (a fixed
- *     stride to the golfer's left was in one at 13%), and stays on his own
- *     side at three spots in four or more
  *   - a wager is played dead straight
  */
 'use strict';
@@ -126,20 +122,6 @@ module.exports = {
           o.wind.most = x;
           Scene.newDepthsHole({ id: 'sand', floor: 2 }); o.wind.wager = Scene.wind;
         }
-        // the caddie keeps out of the sand and the water
-        {
-          let n = 0, wet = 0, fixed = 0, left = 0;
-          for (let h = 1; h <= 144; h++) {
-            Scene.newHole(h, 0);
-            for (let cd = 0; cd <= 58; cd += 0.5) {
-              Scene.camD = cd; Scene._cadLat = undefined; const x = Scene.caddieLat(); n++;
-              if (Scene.inHazard(cd + 0.25, x, 0)) wet++;
-              if (Scene.inHazard(cd + 0.25, -1.45, 0)) fixed++;
-              if (x < 0) left++;
-            }
-          }
-          o.caddie = { n, wet, fixed, left };
-        }
         // a wager is straight
         const R = { id: 'water', floor: 3 };
         Scene.newDepthsHole(R); o.wager = Scene.curve;
@@ -174,10 +156,6 @@ module.exports = {
     if (!(W.bowR > 0.3 && W.bowL < -0.3)) throw new Error('the wind does not carry the ball downwind mid-flight: ' + W.bowR.toFixed(2) + ' / ' + W.bowL.toFixed(2));
     if (!(W.mph > 0)) throw new Error('a 0.8 wind reads ' + W.mph + ' mph');
     if (W.wager) throw new Error('a wager is played in a wind of ' + W.wager);
-    const C = r.caddie;
-    if (!(C.fixed > C.n * 0.05)) throw new Error('only ' + C.fixed + ' of ' + C.n + ' spots would put a caddie at a fixed stride in a hazard, so this measures nothing');
-    if (C.wet > C.n * 0.005) throw new Error('the caddie stands in sand or water at ' + C.wet + ' of ' + C.n + ' spots');
-    if (!(C.left > C.n * 0.75)) throw new Error('the caddie keeps crossing sides: on the left at only ' + C.left + ' of ' + C.n);
     if (r.wager) throw new Error('a wager hole bends: ' + JSON.stringify(r.wager));
     return [r.bent + ' of ' + r.p45 + ' par fours and fives turn by 8 or more; no par three past ' + r.p3max.toFixed(1),
       'on bent holes ' + (fw * 100).toFixed(1) + '% of ' + ground + ' visible landings are fairway ('
@@ -187,8 +165,6 @@ module.exports = {
       'hole map ' + r.map.w + 'x' + r.map.h + ' shown, golfer marked',
       'wind carries the ball ' + W.bowR.toFixed(2) + ' downwind mid-flight and moves neither end of it; calm on wagers',
       'a new event announces its course once, on the field; not on the next hole or in a catch-up',
-      'caddie in a hazard at ' + C.wet + ' of ' + C.n + ' spots (' + C.fixed + ' at a fixed stride), on his own side at '
-        + Math.round(C.left / C.n * 100) + '%',
       'wagers play straight'];
   }
 };

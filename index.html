@@ -389,9 +389,12 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
 .lvno{font-family:var(--disp);font-size:var(--f5);letter-spacing:.01em}
 .lvxp{font-family:var(--mono);font-size:var(--f1);color:var(--faint)}
 #lvBox .bar{margin-top:8px;height:5px}
-#bagNav,#careerNav{display:flex;overflow-x:auto;gap:0;background:var(--panel);border-bottom:var(--hair);
+#bagNav,#careerNav,#rangeNav{display:flex;overflow-x:auto;gap:0;background:var(--panel);border-bottom:var(--hair);
   -webkit-overflow-scrolling:touch;scrollbar-width:none}
-#bagNav::-webkit-scrollbar,#careerNav::-webkit-scrollbar{display:none}
+#bagNav::-webkit-scrollbar,#careerNav::-webkit-scrollbar,#rangeNav::-webkit-scrollbar{display:none}
+/* the caddie's timer, under his perk's row: how long to the next lift */
+.cadbar{height:3px;background:#0D1D14;margin-top:5px;overflow:hidden}
+.cadbar i{display:block;height:100%;background:var(--aurora)}
 .sub{flex:0 0 auto;padding:9px 13px;font-size:var(--f1);letter-spacing:.08em;text-transform:uppercase;
   color:var(--dim);font-weight:700;white-space:nowrap;border-bottom:2px solid transparent}
 .sub.on{color:var(--brass);border-bottom-color:var(--brass)}
@@ -787,10 +790,17 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
         <div class="vital"><div class="k">Pure</div><div class="v" id="vCrit">0%</div></div>
         <div class="vital"><div class="k">Prov</div><div class="v" id="vMst">0%</div></div>
       </div>
+      <div id="rangeNav"></div>
+      <div id="rangeUpg">
       <div class="band"><span class="eyebrow">Practice Range</span><span class="note" id="upgCount"></span></div>
       <div class="band" style="top:auto"><div id="multBar"></div></div>
       <div class="hint" id="upgTax"></div>
       <div id="upgRows"></div>
+      </div>
+      <div id="rangeCad" hidden>
+      <div class="band"><span class="eyebrow">Caddie Perks</span><span class="note" id="cadNote"></span></div>
+      <div id="cadRows"></div>
+      </div>
     </div>
 
     <div class="view" id="v-bag">
@@ -990,6 +1000,13 @@ const B = {
              '.....Xx.....','.....Xx.....','.....Xx.....','.....Xx.....','....XXxx....','....xxxx....'],
     chevrons: ['.....XX.....','....XwwX....','...XwXXxX...','..XwX..XxX..','.XwX....XxX.','.....XX.....',
                '....XwwX....','...XwXXxX...','..XwX..XxX..','.XwX....XxX.','............','............'],
+    // the caddie's perks
+    cpbook: ['............','XXXXX..XXXXX','XwwwwXXwwwwX','XwxxxXXxxxwX','XwwwwXXwwwwX','XwxxxXXxxxwX','XwwwwXXwwwwX','XwxxxXXxxxwX','XwwwwXXwwwwX','XXXXXXXXXXXX','.....XX.....','............'],
+    cptempo: ['.....X......','....XwX..X..','....XwX.X...','...XwwwXX...','...XwwwX....','..XwwwXwX...','..XwwXwwwX..','.XwwXwwwwwX.','.XwXwwwwwwX.','XwwwwwwwwwwX','XXXXXXXXXXXX','XxxxxxxxxxxX'],
+    cpread: ['......X.....','......XXX...','......XXXX..','......XX....','......X.....','......X.....','..w...X.....','...w..X.....','.XXXwXXXXX..','XwwwwwwwwwX.','.XXXXXXXXX..','............'],
+    cptowel: ['..XXXXXXXX..','..XwwwwwwX..','..XxxxxxxX..','..XwwwwwwX..','..XwwwwwwX..','..XxxxxxxX..','..XwwwwwwX..','..XwwwwwwX..','..XxxxxxxX..','..XwwwwwwX..','..X.X.X.XX..','..X.X.X.X...'],
+    cpscout: ['............','.XXX....XXX.','.XwX....XwX.','.XwXXXXXXwX.','XXXXXwwXXXXX','XwwwX..XwwwX','XwwwX..XwwwX','XwxwX..XwxwX','XwwwX..XwwwX','XXXXX..XXXXX','.xxx....xxx.','............'],
+    cpchat: ['.XXXXXXXXXX.','XwwwwwwwwwwX','XwwwwXwwwwwX','XwwwXXXwwwwX','XwwwXwwwwwwX','XwwwwXXwwwwX','XwwwwwwXwwwX','XwwwXXXwwwwX','XwwwwXwwwwwX','.XXXXXXXXXX.','..XXX.......','..XX........'],
     // a ladder with an arrow up it: the stage button that climbs for you
     autoclimb: ['.X..X...X...','.X..X..XwX..','.XwwX.XwwwX.','.X..X.XXwXX.','.X..X..XwX..','.XwwX..XwX..',
                 '.X..X..XwX..','.X..X..XwX..','.XwwX..XwX..','.X..X..XwX..','.X..X..XwX..','.XwwX..XxX..'],
@@ -3046,6 +3063,18 @@ const B = {
     { id:'divine',  n:'Divine',          cost:3000, fx:'divine', cat:'skin', top:1,
       cap:'#FFD66B', cap2:'#C99A2E', shirt:'#FFF8E6', shirt2:'#F1D98F', shirt3:'#C9A24A', pant:'#F4E7C2', pant2:'#D8C18A', shoe:'#B98A2E' }
   ],
+  // Caddie perks: one worn at a time, bought with sovereigns. Every
+  // CPERK_EVERY seconds on the course the caddie gives him a short lift.
+  // Small on purpose: up for a quarter of the time, and never stacked.
+  CPERK_EVERY: 30,
+  CPERKS: [
+    { id:'book',   ic:'cpbook',  n:'Yardage Book',    cost:150, k:'cPow',  v:15,   t:8,  w:'POWER',  d:'+15% swing power for 8s' },
+    { id:'tempo',  ic:'cptempo', n:'Tempo Call',      cost:200, k:'cSpd',  v:20,   t:8,  w:'TEMPO',  d:'+20% tempo for 8s' },
+    { id:'read',   ic:'cpread',  n:'Green Reader',    cost:250, k:'cCrt',  v:0.08, t:8,  w:'PURE',   d:'+8% pure strike chance for 8s' },
+    { id:'towel',  ic:'cptowel', n:'Towel Service',   cost:300, k:'cMst',  v:25,   t:8,  w:'PROV',   d:'+25% provisional chance for 8s' },
+    { id:'scout',  ic:'cpscout', n:'Lost Ball Scout', cost:350, k:'cDrop', v:0.10, t:10, w:'GEAR',   d:'+10% gear luck for 10s' },
+    { id:'chat',   ic:'cpchat',  n:'Sponsor Chat',    cost:450, k:'cGold', v:25,   t:8,  w:'PURSE',  d:'+25% prize money for 8s' }
+  ],
   // Clubs: the one he swings and carries. shaft/shaft2 near and far, head
   // and its lit edge, the grip; fx for the ones that do more than colour.
   CLUBS: [
@@ -3275,6 +3304,9 @@ function initState(){
   if(!styleOwned('t', S.trail)) S.trail = 'plain';
   if(!styleOwned('c', S.caddie)) S.caddie = 'bib';
   if(!styleOwned('k', S.club)) S.club = 'steel';
+  if(!S.cperkOwn || typeof S.cperkOwn !== 'object') S.cperkOwn = {};
+  if(S.cperk && (!cperkDef(S.cperk) || !S.cperkOwn[S.cperk])) S.cperk = null;
+  if(!isFinite(S.cperkT) || S.cperkT < 0) S.cperkT = 0;
   if(!B.BANK_OPTS.includes(S.islandBank)) S.islandBank = 5;
   if(!S.tierEvents) S.tierEvents = {};
   if(S.tierMax === undefined) S.tierMax = 0;
@@ -3646,7 +3678,7 @@ function derive(){
   const ch = S.chaos || { y:1, g:1, s:1, c:0, p:0, dl:0 };
 
   let pow = B.BASE_POWER * upgMult('pow') * (1 + G.pow) * relMult('pow') * perkMult('pow')
-          * permMult('irons');
+          * permMult('irons') * (1 + buffVal('cPow')/100);
   // Two talents that pay on the hole you are standing on rather than on every
   // swing everywhere. They belong here for the same reason the weather does:
   // ch.s and ch.c already ride into the tempo and the pure strike from this
@@ -3656,13 +3688,13 @@ function derive(){
   if(C.windy && S.stretched) pow *= 1 + C.windy;
 
   const spdRaw = B.BASE_SPEED * upgMult('spd') * (1 + G.spd) * relMult('spd') * ch.s
-    * (1 + buffVal('gale')/100) * perkMult('spd');
+    * (1 + buffVal('gale')/100) * (1 + buffVal('cSpd')/100) * perkMult('spd');
   const spd = Math.min(B.SPEED_CAP, spdRaw);
   if(spdRaw > B.SPEED_CAP) pow *= 1 + (spdRaw/B.SPEED_CAP - 1) * B.SPEED_OVERFLOW;
 
   const crit = Math.min(B.CRIT_CAP, (B.CRIT_BASE
     + upgLv('face')*B.CRIT_ADD.face + upgLv('simul')*B.CRIT_ADD.simul
-    + G.crt + ch.c + buffVal('ace')) * relMult('crt'));
+    + G.crt + ch.c + buffVal('ace') + buffVal('cCrt')) * relMult('crt'));
   const cpw = (B.CRIT_MULT + upgLv('sweet')*B.CPW_ADD + G.cpw) * relMult('cpw');
 
   const ball0 = S.equip.ball;
@@ -3676,17 +3708,17 @@ function derive(){
   const proc = Math.min(B.PROC_CAP, procRaw);
 
   const gold = upgMult('gld') * (1 + G.gld) * relMult('gld')
-    * ch.g * (1 + buffVal('windfall')/100) * perkMult('gold')
+    * ch.g * (1 + buffVal('windfall')/100) * (1 + buffVal('cGold')/100) * perkMult('gold')
     * permMult('sponsor') * (isMember() ? 1 + B.MEMBER_GOLD : 1)
     * (boostOn() ? B.BOOST_MULT : 1);
   const drop = clamp((B.DROP_BASE + upgLv('marker')*B.DROP_ADD + G.drp + ch.dl
-    + relLv('sun')*B.SUN_ADD + perkAdd('drop') + permAdd('scout')) * relMult('drp'), 0, 1);
+    + relLv('sun')*B.SUN_ADD + perkAdd('drop') + permAdd('scout') + buffVal('cDrop')) * relMult('drp'), 0, 1);
   const dgnY = (1 + upgLv('lantern')*B.DGN_ADD + G.dgn) * relMult('dgn');
 
   // Provisional: the chance a swing plays a second ball. Whole numbers are
   // guaranteed extra balls, the remainder is a roll.
   let mst = upgLv('provis')*B.MST_ADD.provis + upgLv('second')*B.MST_ADD.second
-    + G.mst + buffVal('rally')/100;
+    + G.mst + buffVal('rally')/100 + buffVal('cMst')/100;
   mst *= relMult('mst');
   mst = clamp(mst, 0, B.MST_CAP);
 
@@ -7126,9 +7158,8 @@ const CADDIE_ROWS = [
     '..................bbbbbbbb..............'
 ];
 // Walking away from us, between shots: the golfer and his caddie from
-// behind, from the belt up. The golfer's right hand hangs at his side with
-// the club in it; the caddie is cut from the same rows, and his bag, slung
-// across his back, is drawn in code (drawBagBack), as are the legs.
+// behind, from the belt up, his right hand hanging at his side with the club
+// in it. Legs are drawn in code.
 const G_BACK_ROWS = [
     '........................................',
     '........................................',
@@ -7215,8 +7246,6 @@ function buildSprites(){
   SPRITE.gBack = patterned(makeSprite(G_BACK_ROWS.concat(pad), Object.assign({}, GMAP, { h: OUT.hair || (OUT.skin ? OUT.skin2 : HAIR) })), OUT);
   const CD = caddieNow();
   SPRITE.caddie = patterned(makeSprite(CADDIE_ROWS.concat(G_FIN_ROWS.slice(32).map(() => blank)), caddieMap(CD)), CD);
-  SPRITE.caddieBack = patterned(makeSprite(G_BACK_ROWS.concat(pad),
-    Object.assign(caddieMap(CD), { h: CD.hair || (CD.skin ? CD.skin2 : HAIR) })), CD);
 
   SPRITE.pine = makeSprite(PINE_ROWS, TREE_DEFAULT);
 
@@ -7499,7 +7528,7 @@ function capBox(rows){
 }
 const CAP_ADDR = capBox(G_ADDR_ROWS), CAP_FIN = capBox(G_FIN_ROWS);
 const PAD58 = rows => rows.concat(new Array(58 - rows.length).fill('.'.repeat(40)));
-const CAP_BACK = capBox(PAD58(G_BACK_ROWS)), CAP_CBACK = CAP_BACK;
+const CAP_BACK = capBox(PAD58(G_BACK_ROWS));
 // A glow in the stage's own terms: solid colours in a dither that thins toward
 // the edge, rather than a see-through wash, which on a green fairway blends
 // gold into lime. bands are [edge share, colour, density 1-4 of 4], outside in.
@@ -8587,14 +8616,7 @@ const Scene = {
   },
 
   holeLen(){ return LEN; },
-  // on a hazard, by its outline: the span across it at this distance, padded
-  inHazard(d, x, pad){
-    for(const hz of this.water ? this.bunkers.concat([this.water]) : this.bunkers){
-      const sp = this.hazSpan(hz, d);
-      if(sp && x > hz.x - sp.l - pad && x < hz.x + sp.r + pad) return true;
-    }
-    return false;
-  },
+
   // The course, announced across the field when a new one begins: its name
   // large, the card small, faded in and out over a few seconds.
   drawAnnounce(dt){
@@ -8613,62 +8635,81 @@ const Scene = {
     drawTextS(c, A.sub, CX, y0 + lh + 2 * TSC, PX.bone, TSC, 'c');
     c.globalAlpha = 1;
   },
-  // Where the caddie stands: a stride to the golfer's left if that is clear
-  // ground, else nearer or wider on that side, else across on his right --
-  // never in a bunker or the water. He walks to a new spot rather than
-  // jumping to it.
-  caddieLat(){
-    const d = this.camD + 0.25, dt = clamp(this.t - (this._cadT || this.t), 0, 0.1);
-    this._cadT = this.t;
-    // measured against the real outline of each hazard, not its bounding box,
-    // across the ground his feet cover and a step ahead
-    const clear = x => [-0.2, 0, 0.3, 0.7].every(dd => !this.inHazard(d + dd, x, 0.35));
-    let want = null;
-    // his own side first, nearer or wider, before crossing behind the golfer;
-    // at a squeeze, right in by the golfer's elbow, where no hazard ever is
-    for(const x of [-1.45, -1.1, -1.85, 1.45, 1.8, 2.2, -0.95, 0.95]) if(clear(x)){ want = x; break; }
-    if(want === null) want = -0.95;
-    if(this._cadLat === undefined || this._cadHole !== this.hole){ this._cadLat = want; this._cadHole = this.hole; }
-    this._cadLat += (want - this._cadLat) * Math.min(1, dt * 3);
-    return this._cadLat;
-  },
-  drawCaddie(c, gh, walking){
-    const p = this.proj(this.camD + 0.25, this.caddieLat());
-    const back = walking && SPRITE.caddieBack;
-    const h = Math.max(6, Math.round(gh * 0.93)), spr = back ? SPRITE.caddieBack : SPRITE.caddie, CD = caddieNow();
-    const w = Math.max(4, Math.round(h * spr.w / spr.h));
-    const FX = STYLEFX[CD.fx] || null;
-    const x = back ? p.x - Math.round(w*0.5) + Math.round(Math.sin((this.walkPh + 0.25) * Math.PI * 2) * w * 0.02)
-                   : p.x - Math.round(w*0.42);
-    const up = walking && (Math.floor(this.walkPh * 4 + 1) & 1) ? Math.max(1, Math.round(h / 40)) : 0;
-    const y = p.y - h - up - (FX && FX.bob ? Math.round(2 + Math.sin(this.t * 2.2 + 1) * 2) : 0);
-    c.fillStyle = 'rgba(8,16,10,.30)';
-    c.fillRect(x + Math.round(w*0.25), p.y - 1, Math.round(w*0.45), Math.max(1, Math.round(h*0.045)));
-    // his outfit's effect, if it has one, laid round him the way it is round
-    // the golfer: its back half, then him, then its front half
-    const cbx = back ? CAP_CBACK : CAP_CADDIE;
-    const g = { x, y, w, h, cx: x + w*(back ? 0.5 : 0.55), cy: y + h*0.53, bot: p.y, t: this.t + 0.7, ph: 0, minor: true, back,
-                still: !(FX && FX.shearMod),
-                k: Math.max(1, Math.round(h / 40)), spr, shear: () => 0,
-                head: { x: x + w*cbx.x, y: y + h*cbx.y, w: w*cbx.w, hh: h*cbx.h } };
-    if(FX && FX.back) FX.back(c, g);
-    if(FX && FX.outline) outlineAt(c, g, FX.outline, RING1, FX.outlineA * (0.8 + 0.2 * Math.sin(this.t * 3)));
-    if(FX && FX.alpha) c.globalAlpha = FX.alpha;
-    // a half step out of time with him, so the two do not march
-    if(back) drawLegsBack(c, x + w*0.5, y + h*(31/58), h*(26/58), w, this.walkPh + 0.25,
-                          CD.pant, CD.pant2 || CD.pant, CD.shoe || PX.shoe);
-    else drawLegs(c, x + w*0.55, y + h*(32/58), h*(25/58), w, null, CD.pant, CD.pant2 || CD.pant, CD.shoe || PX.shoe);
-    if(FX && FX.shearMod) blitShear(c, spr, x, y, w, h, f => FX.shearMod(f, g));
-    else c.drawImage(spr.cv, x, y, w, h);
-    if(back) drawBagBack(c, x, y, w, h, CD, Math.sin((this.walkPh + 0.25) * Math.PI * 4));
-    // side on, an arm hanging at his side (from behind, the sprite has both)
-    if(!back){
-      const sx = x + w*0.60, sy = y + h*0.30;
-      pxLine(c, sx, sy, sx, sy + h*0.22, CD.skin2 || PX.skin2, h > 34 ? 2 : 1);
+  // The caddie is a fairy now: a third of the golfer's height, on little
+  // wings, hovering off his left shoulder at the height of his head. He was a
+  // man on the ground, and a man on the ground walked into bunkers, ponds and
+  // the golfer himself. Placed off the golfer's own box -- beyond where the
+  // top of the backswing puts the club -- so he never overlaps him.
+  // gx is where the golfer stands at address, whatever pose he is in, so the
+  // fairy does not jump when he turns to walk. The club on its way up is the
+  // furthest left any of him reaches -- not at the top, but where the shaft
+  // lies flat on the way there -- found once from the same rig that draws
+  // it, and the fairy keeps clear of it.
+  fairyBox(gx, gy, gw, gh){
+    const h = Math.max(8, Math.round(gh * 0.36)), w = Math.max(5, Math.round(h * 40 / 58));
+    if(this._reach === undefined){
+      let m = 0;
+      for(let a = -2.5; a <= 0.5; a += 0.02) m = Math.min(m, Math.sin(a * 0.55) * 0.30 + Math.sin(a) * 0.60);
+      this._reach = m;
     }
+    const clubTip = gx + gw * 0.66 + this._reach * gh;
+    const edge = Math.min(gx, clubTip) - gw * 0.18 - 2;
+    const drift = (1 + Math.sin(this.t * 0.9)) * 0.5 * gw * 0.10;       // only ever further left
+    const x = Math.round(edge - w - drift);
+    const y = Math.round(gy + gh * 0.02 + Math.sin(this.t * 2.2) * gh * 0.035);
+    return { x, y, w, h };
+  },
+  drawCaddie(c, gx, gy, gw, gh){
+    const spr = SPRITE.caddie, CD = caddieNow(), FX = STYLEFX[CD.fx] || null;
+    const { x, y, w, h } = this.fairyBox(gx, gy, gw, gh);
+    this._fairy = { x, y, w, h };
+    // wings, flickering, behind him
+    const beat = Math.sin(this.t * 22), wy = y + h * 0.30, span = w * (0.55 + 0.25 * beat);
+    c.globalAlpha = 0.55;
+    c.fillStyle = '#DFF4FF';
+    for(let i = 0; i < Math.max(2, Math.round(h * 0.28)); i++){
+      const f = i / Math.max(2, Math.round(h * 0.28)), ww = Math.round(span * (1 - f * 0.7));
+      c.fillRect(Math.round(x + w * 0.35 - ww), Math.round(wy - h * 0.10 + i), ww, 1);
+    }
+    c.globalAlpha = 0.35; c.fillStyle = '#FFFFFF';
+    c.fillRect(Math.round(x + w * 0.35 - span * 0.7), Math.round(wy - h * 0.08), Math.round(span * 0.5), 1);
+    c.globalAlpha = 1;
+    // fairy dust drifting down off him
+    for(let i = 0; i < 5; i++){
+      const life = (this.t * 0.8 + i / 5) % 1;
+      fxDot(c, x + w * (0.3 + 0.4 * hr(i, 3)) + Math.sin(this.t * 3 + i) * 2, y + h * (0.8 + life * 0.9), 1,
+            i & 1 ? '#FFF6D8' : '#BFE6FA', (1 - life) * 0.8);
+    }
+    c.globalAlpha = 1;
+    // his outfit's effect, if it has one, at his size
+    const g = { x, y, w, h, cx: x + w*0.55, cy: y + h*0.53, bot: y + h, t: this.t + 0.7, ph: 0, minor: true,
+                still: !(FX && FX.shearMod), k: 1, spr, shear: () => 0,
+                head: { x: x + w*CAP_CADDIE.x, y: y + h*CAP_CADDIE.y, w: w*CAP_CADDIE.w, hh: h*CAP_CADDIE.h } };
+    if(FX && FX.back) FX.back(c, g);
+    if(FX && FX.alpha) c.globalAlpha = FX.alpha;
+    // legs dangling, a little swing to them
+    drawLegs(c, x + w*0.55, y + h*(32/58), h*(25/58), w, Math.sin(this.t * 1.7) * 0.08,
+             CD.pant, CD.pant2 || CD.pant, CD.shoe || PX.shoe);
+    c.drawImage(spr.cv, x, y, w, h);
     c.globalAlpha = 1;
     if(FX && FX.front) FX.front(c, g);
     c.globalAlpha = 1; c.globalCompositeOperation = 'source-over';
+    // the caddie's perk, going off: a spark round him and its word over him
+    const F = this.fairyCast;
+    if(F){
+      if(F.t0 === undefined) F.t0 = this.t;
+      F.t = this.t - F.t0;
+      if(F.t > 1.4) this.fairyCast = null;
+      else{
+        const q = F.t / 1.4;
+        for(let i = 0; i < 10; i++){
+          const a = i / 10 * Math.PI * 2 + F.t * 3, R = w * (0.6 + q * 1.2);
+          fxDot(c, x + w / 2 + Math.cos(a) * R, y + h / 2 + Math.sin(a) * R * 0.7, 1, i & 1 ? '#FFFFFF' : '#FFD66B', 1 - q);
+        }
+        c.globalAlpha = 1;
+        drawTextS(c, F.word, Math.round(x + w / 2), Math.round(y - LH - q * 6 * TSC), PX.brass, TSC, 'c');
+      }
+    }
   },
   // Where a ball is across the hole a fraction u of the way through its
   // flight: off the face, eased onto its line, and carried downwind while it
@@ -9151,36 +9192,6 @@ const CLUBFX = {
     trail(c, arc, th){ arcTrail(c, arc, th + 2, ['#FFD66B'], 0.35); arcTrail(c, arc, th, ['#FFFFFF', '#FFF3C8'], 0.8); }
   }
 };
-// The caddie's bag from behind, slung the way a carry bag is: across the
-// small of his back, the foot low on his left, the mouth high on his right
-// with the club heads and a head cover sticking out by his hand, and the
-// straps running up over both shoulders. bob nudges it with his step.
-function drawBagBack(c, x, y, w, h, d, bob){
-  const P = (fx, fy) => [x + w * fx, y + h * fy + bob * h * 0.006];
-  const th = Math.max(2, Math.round(w * 0.15));
-  const [ax, ay] = P(0.10, 0.63), [bx, by] = P(0.80, 0.44);
-  const main = d.bag || d.cap, dark = d.bag2 || d.cap2;
-  // the straps first, so the bag sits over their ends
-  const st = Math.max(1, Math.round(w * 0.035));
-  pxLine(c, ...P(0.36, 0.20), ...P(0.46, 0.53), '#2A2420', st);
-  pxLine(c, ...P(0.62, 0.21), ...P(0.66, 0.47), '#2A2420', st);
-  // the body: its underside in shade, its top lit, a trim line down it
-  pxLine(c, ax - th/2, ay - th/2 + 1, bx - th/2, by - th/2 + 1, dark, th);
-  pxLine(c, ax - th/2, ay - th/2, bx - th/2, by - th/2, main, th - 1);
-  pxLine(c, ax - th/2, ay - th/2, bx - th/2, by - th/2, lite(main, 0.22), 1);
-  pxLine(c, ...P(0.18, 0.60), ...P(0.62, 0.48), dark, 1);
-  // the foot of the bag, and its stand's leg sticking out below it
-  c.fillStyle = dark; c.fillRect(Math.round(ax - th/2 - 1), Math.round(ay - th/2), Math.max(2, Math.round(th*0.5)), th);
-  pxLine(c, ax - th*0.2, ay + th*0.5, ax - th*0.6, ay + th*1.4, '#1A1A1A', 1);
-  // out of the mouth: three club heads and a head cover, by his right hand
-  const k = Math.max(1, Math.round(w * 0.03));
-  [[0.84, 0.40], [0.88, 0.43], [0.86, 0.46]].forEach(([fx, fy]) => {
-    const [hx, hy] = P(fx, fy); c.fillStyle = '#C9D1D6'; c.fillRect(Math.round(hx), Math.round(hy), k * 2, k);
-  });
-  const [cx0, cy0] = P(0.83, 0.36);
-  c.fillStyle = '#EDE6D2'; c.fillRect(Math.round(cx0), Math.round(cy0), k * 3, k * 2);
-  c.fillStyle = '#C8302A'; c.fillRect(Math.round(cx0 + k), Math.round(cy0), k, k * 2);
-}
 // Two legs from behind, walking away: side by side, the one stepping off
 // lifted at the heel with the sole of its shoe showing, the planted one
 // straight. ph as for drawLegs.
@@ -9931,8 +9942,6 @@ Object.assign(Scene, {
     const stepUp = walking && (Math.floor(this.walkPh * 4) & 1) ? Math.max(1, Math.round(h / 40)) : 0;
     const y = p.y - h - stepUp - (FX && FX.bob ? Math.round(2 + Math.sin(this.t * 2.2) * 2) : 0);
 
-    // his caddie, a stride to his left and a touch behind, walking when he does
-    if(atCam === undefined && SPRITE.caddie) this.drawCaddie(c, h, walking);
 
     c.fillStyle = 'rgba(8,16,10,.34)';
     c.fillRect(x + Math.round(w*0.05), p.y - 1, Math.round(w*0.62), Math.max(1, Math.round(h*0.045)));
@@ -9972,6 +9981,7 @@ Object.assign(Scene, {
       c.globalAlpha = 1;
       if(FX && FX.front) FX.front(c, g);
       c.globalAlpha = 1; c.globalCompositeOperation = 'source-over';
+      if(atCam === undefined && SPRITE.caddie) this.drawCaddie(c, p.x - Math.round(w*0.42), y, w, h);
       return;
     }
     blitShear(c, spr, x, y, w, h, shear);
@@ -9994,6 +10004,7 @@ Object.assign(Scene, {
     c.globalAlpha = 1;
     if(FX && FX.front) FX.front(c, g);
     c.globalAlpha = 1; c.globalCompositeOperation = 'source-over';
+    if(atCam === undefined && SPRITE.caddie) this.drawCaddie(c, p.x - Math.round(w*0.42), y, w, h);
 
     // the ball waits out in front, on the ground, where he is looking
     const bx = Math.round(x + w*1.19);
@@ -10432,7 +10443,14 @@ Object.assign(Scene, {
       }
       const prog = clamp(1 - S.yards / S.yardsMax, 0, 1);
       const cam0 = this.camD;
-      this.camD += (prog*LEN - this.camD) * Math.min(1, dt*4.5);
+      // He stays where he is until the swing is through: the purse and the
+      // yardage move the moment the simulation swings, and the camera chasing
+      // them carried him forward in his backswing. Only a camera that has
+      // fallen a long way behind (a fast bag swinging without a break) is
+      // let go on through a swing.
+      const swingPh = this.swingT > 0 ? 1 - this.swingT / this.swingDur : 1;
+      if(swingPh >= 0.85 || prog*LEN - this.camD > LEN * 0.3)
+        this.camD += (prog*LEN - this.camD) * Math.min(1, dt*4.5);
       // walking: the camera is carrying him on and he is not mid-swing. A new
       // hole puts the camera back on the tee, which is not a walk.
       const v = dt > 0 ? (this.camD - cam0) / dt : 0;
@@ -11748,6 +11766,7 @@ function setView(v){
   document.querySelectorAll('.tab').forEach(t => t.classList.toggle('on', t.dataset.v === v));
   document.querySelectorAll('.view').forEach(e => e.classList.toggle('on', e.id === 'v-' + v));
   if(v === 'bag'){ renderBag(); renderSkillsTab(); }
+  if(v === 'upg') renderRangeNav();
   if(v === 'dgn') renderDgn();
   // Looking at it is what clears the flash on the tab.
   if(v === 'tour'){ S.cardSeen = S.tierMax || 0; renderTour(); renderTourTab(); }
@@ -11755,6 +11774,69 @@ function setView(v){
   $('panel').scrollTop = 0;
 }
 // Gear or shots: both are what you carry onto the hole.
+// The Range has two racks: the upgrades, and the caddie's perks.
+let rangeSub = 'upg';
+function renderRangeNav(){
+  const n = $('rangeNav'); if(!n) return;
+  n.innerHTML = [['upg', 'Upgrades'], ['cad', 'Caddie']].map(([id, t]) =>
+    '<button class="sub' + (rangeSub === id ? ' on' : '') + '" data-s="' + id + '">' + t + '</button>').join('');
+  n.querySelectorAll('.sub').forEach(b =>
+    b.onclick = () => { rangeSub = b.dataset.s; renderRangeNav(); $('panel').scrollTop = 0; });
+  $('rangeUpg').hidden = rangeSub !== 'upg';
+  $('rangeCad').hidden = rangeSub !== 'cad';
+  if(rangeSub === 'cad') renderCadPerks();
+}
+const cperkDef = id => B.CPERKS.find(x => x.id === id);
+function renderCadPerks(){
+  const w = $('cadRows'); if(!w) return;
+  $('cadNote').textContent = 'every ' + B.CPERK_EVERY + 's \u00b7 one at a time';
+  w.innerHTML = '';
+  for(const pk of B.CPERKS){
+    const own = !!(S.cperkOwn && S.cperkOwn[pk.id]), on = S.cperk === pk.id;
+    const d = rowShell('<img class="ric" src="' + pixUrl(pk.ic, '#57E0BE') + '" alt="">');
+    const body = d.children[1], btn = d.children[2];
+    body.children[0].textContent = pk.n;
+    body.children[1].textContent = pk.d;
+    if(on) body.children[2].innerHTML = '<div class="cadbar"><i style="width:'
+      + Math.round(clamp((S.cperkT || 0) / B.CPERK_EVERY, 0, 1) * 100) + '%"></i></div>';
+    btn.className = 'buy' + (on ? ' ok' : own || (S.sov || 0) >= pk.cost ? '' : ' no');
+    btn.children[0].textContent = on ? 'Worn' : own ? 'Wear' : B.SOV;
+    btn.children[1].textContent = on ? '\u2713' : own ? 'Free' : sovFmt(pk.cost);
+    btn.onclick = () => cperkPick(pk.id);
+    w.appendChild(d);
+  }
+}
+function cperkPick(id){
+  const pk = cperkDef(id); if(!pk) return;
+  S.cperkOwn = S.cperkOwn || {};
+  if(!S.cperkOwn[id]){
+    if(!spendSov(pk.cost)) return;
+    S.cperkOwn[id] = 1;
+    toast('<b>' + pk.n + '</b> is yours');
+    Sfx.play('buy');
+  }
+  if(S.cperk !== id){ S.cperk = id; S.cperkT = 0; }
+  renderCadPerks(); renderVitals();
+}
+// Every CPERK_EVERY seconds of play on the course, the worn perk goes off.
+// Not during a wager, not in a catch-up: like every other buff, it sits the
+// absence out.
+function tickCaddie(dt){
+  const pk = S.cperk && cperkDef(S.cperk);
+  if(!pk || S.dgnRun || QUIET || OFFLINE) return;
+  S.cperkT = (S.cperkT || 0) + dt;
+  if(S.cperkT >= B.CPERK_EVERY){
+    S.cperkT -= B.CPERK_EVERY;
+    addBuff(pk.k, pk.v, pk.t);
+    Scene.fairyCast = { t: 0, word: pk.w };
+    Sfx.play('coin');
+  }
+  if(view === 'upg' && rangeSub === 'cad' && (S.cperkT * 4 | 0) !== (tickCaddie._q || 0)){
+    tickCaddie._q = S.cperkT * 4 | 0;
+    const bar = document.querySelector('#cadRows .cadbar i');
+    if(bar) bar.style.width = Math.round(S.cperkT / B.CPERK_EVERY * 100) + '%';
+  }
+}
 function renderBagNav(){
   const subs = [['gear','Gear'], ['shots','Shots']];
   const n = $('bagNav');
@@ -12207,6 +12289,7 @@ function step(dt, D){
     if(S.buff[k].t <= 0) delete S.buff[k];
   }
   tickPerks(dt);
+  tickCaddie(dt);
   tickShop(dt);
   regenKeys(dt);
   Meter.tick(dt);
@@ -12605,6 +12688,7 @@ function boot(){
   if(window.visualViewport) visualViewport.addEventListener('resize', pin);
   buildCard();
   buildUpg();
+  renderRangeNav();
 
   document.querySelectorAll('.tab').forEach(t => {
     t.onclick = () => setView(t.dataset.v);
