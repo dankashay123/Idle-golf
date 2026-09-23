@@ -8259,6 +8259,37 @@ const Scene = {
   },
 
   holeLen(){ return LEN; },
+  // ---- the hole bends ----
+  // Every hole used to run dead straight from tee to green. It has a centre
+  // line now -- a dogleg on most par fours, an S on a par five, a drift on a
+  // par three -- and everything on the hole is laid out ACROSS that line: the
+  // fairway, the hazards, the trees, the gallery, the green, and the ball. A
+  // ball's lateral position is measured from the centre line, so a shot aimed
+  // down the fairway follows the fairway round the corner and lands on it,
+  // wherever the corner is.
+  curveAt(d){
+    const C = this.curve;
+    if(!C) return 0;
+    let x = C.sway * Math.sin(d * 0.06 + C.ph) * clamp(d / 10, 0, 1);
+    for(const g of C.segs){
+      const t = clamp((d - (g.c - g.w)) / (g.w * 2), 0, 1);
+      x += g.a * t * t * (3 - 2 * t);
+    }
+    return x;
+  },
+  // How far off the camera's line of sight the centre line is at distance d.
+  // The camera stands on the line and looks along it, so the ground at his
+  // feet is always square to him and a bend opens up ahead as he walks into
+  // it -- the way a road bends in a racing game.
+  bendOff(d){
+    if(!this.curve) return 0;
+    if(this._bcD !== this.camD){
+      this._bcD = this.camD;
+      this._bc = this.curveAt(this.camD);
+      this._bh = (this.curveAt(this.camD + 0.5) - this.curveAt(this.camD - 0.5));
+    }
+    return this.curveAt(d) - this._bc - this._bh * (d - this.camD);
+  },
   proj(d, lat, lift){
     if(!isFinite(this.camD)) this.camD = 0;
     const rel = Math.max(0.6, d - this.camD + CAM_BACK);
@@ -8268,7 +8299,7 @@ const Scene = {
     // lift stays what it was: height ABOVE the ground, which is what a ball
     // in flight wants.
     const h = this.groundH(d) + (lift || 0);
-    return { x: Math.round(CX + (lat - CAM_LAT) * LAT * s),
+    return { x: Math.round(CX + (lat + this.bendOff(d) - CAM_LAT) * LAT * s),
              y: Math.round(HORIZON + GROUND*s - h * LAT * s * 0.55),
              s };
   },
@@ -8308,6 +8339,23 @@ const Scene = {
     for(let L = 0; L < 2; L++)
       for(let i = 0; i <= 40; i++) this.hills[L].push(rnd());
 
+    // The bend, off its own stream so the hazards and trees of every hole
+    // stay where they were. a: how far the line moves across, c: where the
+    // corner is, w: half the length of the turn.
+    {
+      const cr = seeded(h*7919 + tier*104729 + 31337), par = parOf(h);
+      const side = cr() < 0.5 ? -1 : 1, segs = [];
+      if(par === 4 && cr() < 0.8)
+        segs.push({ a: side*(11 + cr()*8), c: LEN*(0.40 + cr()*0.20), w: LEN*(0.14 + cr()*0.08) });
+      else if(par === 5){
+        segs.push({ a: side*(8 + cr()*6), c: LEN*(0.28 + cr()*0.10), w: LEN*(0.11 + cr()*0.05) });
+        segs.push({ a: (cr() < 0.6 ? -side : side)*(9 + cr()*7), c: LEN*(0.64 + cr()*0.10), w: LEN*(0.11 + cr()*0.05) });
+      }else if(par === 3 && cr() < 0.5)
+        segs.push({ a: side*(2 + cr()*3), c: LEN*0.5, w: LEN*0.3 });
+      this.curve = { segs, sway: 0.6 + cr()*1.2, ph: cr()*6.28 };
+      this._bcD = null;
+    }
+
     this.camD = 0;
     this.balls.length = 0; this.nums.length = 0; this.sparks.length = 0;
     this.buildSky();
@@ -8318,6 +8366,7 @@ const Scene = {
   // was never going to read as golf, because it was not golf.
   newDepthsHole(R){
     const dg = R.id;
+    this.curve = null; this._bcD = null;      // a wager is played dead straight
     this.themeId = dg;
     this.theme = THEMES[dg] || THEMES.day;
     this.treeSpr = null;
@@ -8771,7 +8820,7 @@ Object.assign(Scene, {
       c.fillRect(0, y, VW, hgt);
       if(rel < 1.2) return;
 
-      const C0 = Math.round(CX - CAM_LAT * LAT * s);
+      const C0 = Math.round(CX + (this.bendOff(d) - CAM_LAT) * LAT * s);
 
       if(d > -3.2 && d < 2.4){
         const tw = Math.round(1.75 * LAT * s);
@@ -9306,7 +9355,8 @@ Object.assign(Scene, {
         for(let k = 0; k <= 12; k++){
           const uu = u - k*0.028;
           if(uu < 0) break;
-          const bd = b.d0 + b.dist*uu, lu = uu*uu*(3 - 2*uu);
+          // the ball itself is held level with him until it is out ahead
+          const bd = k === 0 ? Math.max(this.camD, b.d0 + b.dist*uu) : b.d0 + b.dist*uu, lu = uu*uu*(3 - 2*uu);
           // The camera walks on while the ball is up, so the tee it left is
           // soon behind him, and the tail reached back past his feet as if the
           // shot came from behind him. Nothing is drawn nearer than he is.
@@ -9324,7 +9374,7 @@ Object.assign(Scene, {
       for(let k = 5; k >= 0; k--){
         const uu = u - k*0.055;
         if(uu < 0) continue;
-        const bd = b.d0 + b.dist*uu;
+        const bd = k === 0 ? Math.max(this.camD, b.d0 + b.dist*uu) : b.d0 + b.dist*uu;
         if(k > 0 && bd < this.camD + 0.05) continue;   // behind him now: see above
         // eased across, so it leaves the face on the line the club sent it
         const lu = uu*uu*(3 - 2*uu);
