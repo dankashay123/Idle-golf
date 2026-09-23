@@ -2954,7 +2954,39 @@ const B = {
     { id:'aurora',  n:'Aurora',          cost:700,
       cap:'#1E3A4A', cap2:'#12262F', shirt:'#57E0BE', shirt2:'#3AAE92', shirt3:'#2A7E6A', pant:'#16303A', pant2:'#0E2028' },
     { id:'mythic',  n:'Mythic',          cost:1200,
-      cap:'#E3B457', cap2:'#A8802F', shirt:'#C68BFF', shirt2:'#9A62D6', shirt3:'#6E44A0', pant:'#2A1E3E', pant2:'#1C142A' }
+      cap:'#E3B457', cap2:'#A8802F', shirt:'#C68BFF', shirt2:'#9A62D6', shirt3:'#6E44A0', pant:'#2A1E3E', pant2:'#1C142A' },
+    // skins: more than a colour
+    { id:'blacktie', n:'Black Tie',      cost:450,
+      cap:'#15151A', cap2:'#0A0A0D', shirt:'#24242A', shirt2:'#18181D', shirt3:'#0E0E11', pant:'#1A1A1F', pant2:'#101013' },
+    // funny ones
+    { id:'banana',  n:'Banana Suit',     cost:500, fx:'banana', cat:'fun',
+      cap:'#F6D84A', cap2:'#C9A92A', shirt:'#F6D84A', shirt2:'#E0BC2E', shirt3:'#B8961E', pant:'#F2D040', pant2:'#D8B42A', shoe:'#8A6A20' },
+    { id:'dad',     n:'Dad on Holiday',  cost:600, fx:'dad', cat:'fun', pattern:'hawaii',
+      cap:'#E8D18A', cap2:'#BFA35C', shirt:'#2FA7C9', shirt2:'#228AA8', shirt3:'#186A82', pant:'#D8C79A', pant2:'#B5A276', shoe:'#F4F4F0' },
+    { id:'clown',   n:'Clown',           cost:800, fx:'clown', cat:'fun', pattern:'polka', capPattern:'rainbow',
+      cap:'#E4302A', cap2:'#B0201C', shirt:'#E4302A', shirt2:'#B8241F', shirt3:'#861A16', pant:'#2A6FD8', pant2:'#1E52A6', shoe:'#E4302A' },
+    { id:'ghost',   n:'Ghost',           cost:1000, fx:'ghost', cat:'fun',
+      cap:'#F4F7FF', cap2:'#C9D2EE', shirt:'#EEF2FF', shirt2:'#C9D2EE', shirt3:'#A5B0D6', pant:'#EEF2FF', pant2:'#C9D2EE',
+      skin:'#F4F7FF', skin2:'#C9D2EE', shoe:'#C9D2EE', belt:'#C9D2EE' },
+    // skins: more than a colour
+    { id:'disco',   n:'Disco',           cost:1200, fx:'disco', cat:'skin',
+      cap:'#F4F4F4', cap2:'#C8C8C8', shirt:'#FFFFFF', shirt2:'#D8D8E0', shirt3:'#A8A8B8', pant:'#F4F4F4', pant2:'#C8C8D0', shoe:'#1A1A1A' },
+    { id:'glitch',  n:'Glitch',          cost:1400, fx:'glitch', cat:'skin',
+      cap:'#0A0F0A', cap2:'#050805', shirt:'#29E07A', shirt2:'#1AA457', shirt3:'#107038', pant:'#0F1A12', pant2:'#08100A' },
+    { id:'frost',   n:'Frostborn',       cost:1600, fx:'frostborn', cat:'skin',
+      cap:'#DDF3FF', cap2:'#A9D4EE', shirt:'#9FD6F2', shirt2:'#6FB2D8', shirt3:'#4A86AE', pant:'#E8F6FF', pant2:'#B8D8EA', shoe:'#6FB2D8' },
+    { id:'inferno', n:'Inferno',         cost:1800, fx:'inferno', cat:'skin',
+      cap:'#2A1410', cap2:'#150A08', shirt:'#C2361C', shirt2:'#8E2412', shirt3:'#5E170C', pant:'#2B1B17', pant2:'#170E0C' },
+    { id:'storm',   n:'Stormcaller',     cost:1800, fx:'stormcaller', cat:'skin',
+      cap:'#1C2433', cap2:'#10151E', shirt:'#2E3A55', shirt2:'#222B40', shirt3:'#161C2B', pant:'#1A2130', pant2:'#10151F' },
+    { id:'void',    n:'Void Walker',     cost:2200, fx:'void', cat:'skin',
+      cap:'#1A1024', cap2:'#0D0814', shirt:'#23142F', shirt2:'#170C20', shirt3:'#0E0714', pant:'#140B1C', pant2:'#0A0610',
+      skin:'#3A2A4A', skin2:'#2A1E36' },
+    { id:'midas',   n:'Midas',           cost:2500, fx:'midas', cat:'skin',
+      cap:'#FFD86B', cap2:'#C99A2E', shirt:'#F0C04A', shirt2:'#C9962C', shirt3:'#8F6A1E', pant:'#D9A83A', pant2:'#9E7424',
+      skin:'#F2C75C', skin2:'#B8862A', shoe:'#7A5818', belt:'#8F6A1E' },
+    { id:'divine',  n:'Divine',          cost:3000, fx:'divine', cat:'skin', top:1,
+      cap:'#FFD66B', cap2:'#C99A2E', shirt:'#FFF8E6', shirt2:'#F1D98F', shirt3:'#C9A24A', pant:'#F4E7C2', pant2:'#D8C18A', shoe:'#B98A2E' }
   ],
   TRAILS: [
     { id:'plain',   n:'Plain',   cost:0,    cols:['#F4F6EF'] },
@@ -2962,7 +2994,15 @@ const B = {
     { id:'aurora',  n:'Aurora',  cost:250,  cols:['#57E0BE'] },
     { id:'ember',   n:'Ember',   cost:250,  cols:['#F07A3A'] },
     { id:'mythic',  n:'Mythic',  cost:500,  cols:['#C68BFF'] },
-    { id:'rainbow', n:'Rainbow', cost:1000, cols:['#E4574A', '#E3B457', '#7ADB86', '#57A5C2', '#C68BFF'] }
+    { id:'rainbow', n:'Rainbow', cost:1000, cols:['#E4574A', '#E3B457', '#7ADB86', '#57A5C2', '#C68BFF'] },
+    // balls: more than a colour
+    { id:'duck',     n:'Rubber Duck', cost:400,  fx:'duck',      cat:'ball', cols:['#FFD84A'] },
+    { id:'hearts',   n:'Hearts',      cost:500,  fx:'hearts',    cat:'ball', cols:['#FF4F7A'] },
+    { id:'bubbles',  n:'Bubbles',     cost:600,  fx:'bubbles',   cat:'ball', cols:['#BFE6FA'] },
+    { id:'confetti', n:'Confetti',    cost:700,  fx:'confetti',  cat:'ball', cols:['#FF4FB8', '#3FE0FF', '#FFE14A', '#7CFF6A'] },
+    { id:'comet',    n:'Comet',       cost:1000, fx:'comet',     cat:'ball', cols:['#FFB43A', '#F0612A'] },
+    { id:'blackhole',n:'Black Hole',  cost:1300, fx:'blackhole', cat:'ball', cols:['#C68BFF', '#3A1E5A'] },
+    { id:'godlight', n:'Godlight',    cost:1500, fx:'godlight',  cat:'ball', cols:['#FFD66B'], top:1 }
   ]
 };
 
@@ -5307,8 +5347,22 @@ function openShop(sub){ if(sub) shopSub = sub; renderShop(); }
 const styleDef = (k, id) => (k === 'o' ? B.OUTFITS : B.TRAILS).find(x => x.id === id);
 const styleOwned = (k, id) => { const d = styleDef(k, id);
   return !!d && (d.cost === 0 || !!(S.styleOwn && S.styleOwn[k + ':' + id])); };
-const outfitNow = () => styleDef('o', S.outfit) || B.OUTFITS[0];
-const trailNow  = () => styleDef('t', S.trail) || B.TRAILS[0];
+// "Try it": a look worn for ten seconds without buying it. Never saved.
+let PREVIEW = null;
+const previewOf = k => PREVIEW && PREVIEW.k === k && Date.now() < PREVIEW.until ? styleDef(k, PREVIEW.id) : null;
+const outfitNow = () => previewOf('o') || styleDef('o', S.outfit) || B.OUTFITS[0];
+const trailNow  = () => previewOf('t') || styleDef('t', S.trail) || B.TRAILS[0];
+function styleTry(k, id){
+  const d = styleDef(k, id); if(!d) return;
+  PREVIEW = { k, id, until: Date.now() + 10000 };
+  if(k === 'o') buildSprites();
+  hideSheet();
+  toast('Trying <b>' + d.n + '</b> \u00b7 10s');
+}
+// called every frame: when a try runs out, put his own clothes back on
+function previewTick(){
+  if(PREVIEW && Date.now() >= PREVIEW.until){ const k = PREVIEW.k; PREVIEW = null; if(k === 'o') buildSprites(); }
+}
 function styleBuy(k, id){
   const d = styleDef(k, id); if(!d) return;
   if(!styleOwned(k, id)){
@@ -5336,16 +5390,49 @@ const OUTFIT_ICON = ['...cccc.....',
                      '...sssssSS..',
                      '...pppppPP..',
                      '...ppP.pPP..'];
+// a skin with an effect gets sparks of its colours in the corners of its tile
+const SKIN_ACCENT = { divine:['#FFD66B', '#FFFFFF'], inferno:['#FFB43A', '#F0612A'], frostborn:['#FFFFFF', '#9FD6F2'],
+  stormcaller:['#8FD0FF', '#FFFFFF'], void:['#C68BFF', '#6E44A0'], glitch:['#FF2A6D', '#2AE0FF'],
+  midas:['#FFFFFF', '#FFD86B'], disco:['#FF4FB8', '#3FE0FF'], ghost:['#EEF2FF', '#A5B0D6'] };
 function outfitUrl(o){
   const key = 'outfit|' + o.id;
   if(DOMSPR[key] !== undefined) return DOMSPR[key];
-  try{ return DOMSPR[key] = makeSprite(OUTFIT_ICON, golferMap(o)).cv.toDataURL(); }
-  catch(e){ return DOMSPR[key] = ''; }
+  try{
+    const sp = patterned(makeSprite(OUTFIT_ICON, golferMap(o)), o);
+    const acc = SKIN_ACCENT[o.fx];
+    if(acc){
+      const g = sp.cv.getContext('2d');
+      [[0, 3], [11, 3], [10, 0], [1, 0], [0, 9], [11, 9], [1, 11], [10, 11]].forEach(([x, y], i) => {
+        g.fillStyle = acc[i & 1]; g.fillRect(x, y, 1, 1); });
+    }
+    return DOMSPR[key] = sp.cv.toDataURL();
+  }catch(e){ return DOMSPR[key] = ''; }
 }
+// the balls with an effect get a picture of their own
+const BALL_ICON = {
+  godlight: { rows:['......Y.....','.....YWY....','......Y.....','.....o......','....o.......','...o........','..o.........','.o..........','o...........','............','............','............'],
+              map:{ Y:'#FFD66B', W:'#FFFFFF', o:'#E3B457' } },
+  comet:    { rows:['............','........WW..','.......WWYY.','......YYOO..','.....OOR....','....ORR.....','...RR.......','..R.........','.r..........','............','............','............'],
+              map:{ W:'#FFFFFF', Y:'#FFF3B0', O:'#FFB43A', R:'#F0612A', r:'#8A2A14' } },
+  blackhole:{ rows:['............','............','....PPPP....','..PP....PP..','.P..KKKK..P.','P..KKKKKK..W','W..KKKKKK..P','.P..KKKK..P.','..PP....PP..','....PPPP....','............','............'],
+              map:{ P:'#C68BFF', K:'#050308', W:'#FFFFFF' } },
+  confetti: { rows:['.a....b.....','......b..c..','..c.........','.......a....','.d..b.......','.....W....d.','...a....c...','..........b.','.b...d......','......a.....','..c......d..','............'],
+              map:{ a:'#FF4FB8', b:'#3FE0FF', c:'#FFE14A', d:'#7CFF6A', W:'#FFFFFF' } },
+  bubbles:  { rows:['.......BB...','......B..B..','......Bw.B..','.......BB...','..BB........','.B.wB.......','.B..B.......','..BB....B...','.......BwB..','........B...','............','............'],
+              map:{ B:'#BFE6FA', w:'#FFFFFF' } },
+  hearts:   { rows:['............','..RR.RR.....','.RRRRRRR....','.RRRRRRR....','..RRRRR..p.p','...RRR..ppppp','....R....ppp.','..........p..','............','............','............','............'],
+              map:{ R:'#FF4F7A', p:'#FF9AB8' } },
+  duck:     { rows:['............','............','.....YYY....','....YYKYO...','....YYYYOO..','.Y..YYYY....','.YYYYYYYY...','.YYYYYYYY...','..YYYYYY....','...YYYY.....','.bbbbbbbbb..','............'],
+              map:{ Y:'#FFD84A', K:'#1A1A1A', O:'#FF8A2A', b:'#7FC8F0' } }
+};
 // and of a trail: a ball arcing up out of the bottom left, its trail behind it
 function trailUrl(t){
   const key = 'trail|' + t.id;
   if(DOMSPR[key] !== undefined) return DOMSPR[key];
+  if(BALL_ICON[t.fx]){
+    try{ return DOMSPR[key] = makeSprite(BALL_ICON[t.fx].rows, BALL_ICON[t.fx].map).cv.toDataURL(); }
+    catch(e){ return DOMSPR[key] = ''; }
+  }
   try{
     const cv = document.createElement('canvas'); cv.width = cv.height = 12;
     const g = cv.getContext('2d');
@@ -5442,16 +5529,21 @@ function renderShop(){
   if(shopSub === 'style'){
     const card = (k, d, img) => {
       const own = styleOwned(k, d.id), worn = (k === 'o' ? S.outfit : S.trail) === d.id;
-      return shopCard({ img, on: worn, badge: worn ? 'WORN' : '', head: d.n,
+      return shopCard({ img, on: worn || !!d.top, badge: worn ? 'WORN' : d.top ? 'LEGENDARY' : '', head: d.n,
+        sub: own ? '' : '<button class="mini try" data-try="' + k + '.' + d.id + '">Try it</button>',
         price: worn ? 'WORN' : own ? 'WEAR' : sovFmt(d.cost),
         note: worn || own ? '' : B.SOV.toLowerCase(),
         cls: worn ? 'max' : own || (S.sov || 0) >= d.cost ? '' : 'no', act: 'style:' + k + '.' + d.id });
     };
+    const shelf = (title, k, list, url) => list.length
+      ? ribbon(title) + '<div class="sgrid c3">'
+        + list.slice().sort((a, b) => (b.top || 0) - (a.top || 0)).map(d => card(k, d, url(d))).join('') + '</div>' : '';
     h += '<div class="shopnote">Looks only. Nothing here changes a stat.</div>'
-      + ribbon('Outfits') + '<div class="sgrid c3">'
-      + B.OUTFITS.map(o => card('o', o, outfitUrl(o))).join('') + '</div>'
-      + ribbon('Ball trails') + '<div class="sgrid c3">'
-      + B.TRAILS.map(t => card('t', t, trailUrl(t))).join('') + '</div>';
+      + shelf('Skins', 'o', B.OUTFITS.filter(o => o.cat === 'skin'), outfitUrl)
+      + shelf('Balls', 't', B.TRAILS.filter(t => t.cat === 'ball'), trailUrl)
+      + shelf('Just for fun', 'o', B.OUTFITS.filter(o => o.cat === 'fun'), outfitUrl)
+      + shelf('Outfits', 'o', B.OUTFITS.filter(o => !o.cat), outfitUrl)
+      + shelf('Ball trails', 't', B.TRAILS.filter(t => !t.cat), trailUrl);
   }
 
   if(shopSub === 'offers'){
@@ -5496,6 +5588,10 @@ function renderShop(){
   const sheet = $('sheet');
   sheet.querySelectorAll('.shopnav button').forEach(b =>
     b.onclick = () => { shopSub = b.dataset.sub; renderShop(); });
+  sheet.querySelectorAll('.try[data-try]').forEach(b => {
+    const [k, id] = b.dataset.try.split('.');
+    b.onclick = () => styleTry(k, id);
+  });
   sheet.querySelectorAll('.price[data-do]').forEach(b => {
     const [kind, id] = b.dataset.do.split(':');
     b.onclick = () => {
@@ -6672,8 +6768,32 @@ const G_FIN_ROWS = [
     '.............oooooooo......PPPPPP.......',
     '.............bbbbbbbb......bbbbbb.......'
 ];
-const golferMap = o => ({ c:o.cap, C:o.cap2, k:PX.skin, K:PX.skin2, s:o.shirt, S:o.shirt2, T:o.shirt3,
-                          b:'#2A2018', p:o.pant, P:o.pant2, o:PX.shoe });
+// Patterned shirts and caps, painted over the plain sprite: anything that came
+// out in the shirt's (or cap's) colours takes the pattern's colour instead.
+const PATTERNS = {
+  hawaii: (x, y) => (x * 3 + y * 5) % 9 === 0 ? '#FF6FA8' : (x * 5 + y * 3) % 13 === 0 ? '#FFE14A'
+                  : (x + y * 2) % 11 === 0 ? '#FFFFFF' : null,
+  polka:  (x, y) => ((x & 3) === 1 && (y & 3) === 1) ? '#FFFFFF' : ((x & 3) === 3 && (y & 3) === 3) ? '#FFE14A' : null,
+  rainbow:(x, y) => ['#E4302A', '#FF9A2A', '#FFE14A', '#4FD86A', '#3F8AFF', '#B04FFF'][(x + y) % 6]
+};
+function patterned(sp, o){
+  if(!o.pattern && !o.capPattern) return sp;
+  const g = sp.cv.getContext('2d'), d = g.getImageData(0, 0, sp.w, sp.h);
+  const hex = v => v.toLowerCase();
+  const shirt = [o.shirt, o.shirt2, o.shirt3].map(hex), cap = [o.cap, o.cap2].map(hex);
+  for(let y = 0; y < sp.h; y++) for(let x = 0; x < sp.w; x++){
+    const i = (y * sp.w + x) * 4; if(!d.data[i + 3]) continue;
+    const c0 = '#' + [d.data[i], d.data[i + 1], d.data[i + 2]].map(v => v.toString(16).padStart(2, '0')).join('');
+    const pat = shirt.includes(c0) && o.pattern ? PATTERNS[o.pattern](x, y)
+              : cap.includes(c0) && o.capPattern ? PATTERNS[o.capPattern](x, y) : null;
+    if(!pat) continue;
+    d.data[i] = parseInt(pat.slice(1, 3), 16); d.data[i + 1] = parseInt(pat.slice(3, 5), 16); d.data[i + 2] = parseInt(pat.slice(5, 7), 16);
+  }
+  g.putImageData(d, 0, 0);
+  return sp;
+}
+const golferMap = o => ({ c:o.cap, C:o.cap2, k:o.skin || PX.skin, K:o.skin2 || PX.skin2, s:o.shirt, S:o.shirt2,
+                          T:o.shirt3, b:o.belt || '#2A2018', p:o.pant, P:o.pant2, o:o.shoe || PX.shoe });
 const SPRITE = {};
 function buildSprites(){
   // Side-on at address, facing the target: bent at the hips, spine tilted, hips
@@ -6681,11 +6801,11 @@ function buildSprites(){
   // camera" at twenty-six pixels because it is symmetrical and has no silhouette
   // to speak of; a profile has a posture you can recognise instantly.
   // Arms and club stay procedural so the swing arc is exact at any tempo.
-  const GMAP = golferMap(outfitNow());
-  SPRITE.gAddr = makeSprite(G_ADDR_ROWS, GMAP);
+  const OUT = outfitNow(), GMAP = golferMap(OUT);
+  SPRITE.gAddr = patterned(makeSprite(G_ADDR_ROWS, GMAP), OUT);
   // Finish: up out of the posture, chest turned through, weight on the lead
   // side with the trail foot dragged up on its toe.
-  SPRITE.gFinish = makeSprite(G_FIN_ROWS, GMAP);
+  SPRITE.gFinish = patterned(makeSprite(G_FIN_ROWS, GMAP), OUT);
 
   SPRITE.pine = makeSprite(PINE_ROWS, TREE_DEFAULT);
 
@@ -6879,6 +6999,660 @@ function setViewport(bw, bh){
   TSC = clamp(Math.round(VW / 300), 1, 4);
   LH = (FH + 2) * TSC;
 }
+
+/* =========================================================================
+   STYLE EFFECTS
+   What a skin or a ball does beyond its colours. Everything here is drawn in
+   the stage's own pixels, at a size taken from the golfer's height, so it
+   reads the same on a phone and a desktop and never smooths. Nothing here
+   reads or writes a stat: a look is a look.
+
+   A golfer effect may have: back(c, g) drawn before him, front(c, g) after
+   his arms and club, alpha (he is drawn see-through), bob (he floats), and
+   echo/split/glitch/shine handled in drawGolfer itself. g carries his box,
+   his head, the scene clock and the swing phase.
+   ========================================================================= */
+// cheap deterministic noise, so an effect needs no state of its own
+const hr = (a, b) => { const v = Math.sin(a * 127.1 + b * 311.7) * 43758.5453; return v - Math.floor(v); };
+function fxDot(c, x, y, s, col, a){
+  c.globalAlpha = a; c.fillStyle = col; c.fillRect(Math.round(x), Math.round(y), s, s);
+}
+function fxEllipse(c, cx, cy, rx, ry, col, a){
+  if(rx < 1 || ry < 1) return;
+  c.globalAlpha = a; c.fillStyle = col;
+  for(let dy = -Math.floor(ry); dy <= Math.floor(ry); dy++){
+    const hw = Math.round(rx * Math.sqrt(Math.max(0, 1 - (dy*dy) / (ry*ry))));
+    if(hw > 0) c.fillRect(Math.round(cx - hw), Math.round(cy + dy), hw * 2, 1);
+  }
+}
+// A sprite painted one flat colour, for outlines, echoes and shines.
+const TINT = {};
+function tinted(spr, col){
+  const key = (spr.key || (spr.key = 's' + Math.random().toString(36).slice(2))) + col;
+  if(TINT[key]) return TINT[key];
+  const cv = document.createElement('canvas'); cv.width = spr.w; cv.height = spr.h;
+  const g = cv.getContext('2d');
+  g.drawImage(spr.cv, 0, 0);
+  g.globalCompositeOperation = 'source-in'; g.fillStyle = col; g.fillRect(0, 0, spr.w, spr.h);
+  return TINT[key] = { cv, w: spr.w, h: spr.h };
+}
+// An outline or glow round him, stamped from one silhouette. Drawing the
+// sheared sprite strip by strip at every offset cost the Divine skin 2.3ms a
+// frame (twelve copies of 58 strips); drawn once into a spare canvas and
+// stamped, it is a handful of drawImage calls.
+const SIL = {};
+function silhouette(g, col){
+  const o = SIL[col] || (SIL[col] = { cv: document.createElement('canvas') });
+  const P = 4, W = g.w + P * 2 + Math.ceil(g.w * 0.4), H = g.h + P * 2;
+  if(o.cv.width !== W || o.cv.height !== H){ o.cv.width = W; o.cv.height = H; }
+  const x = o.cv.getContext('2d');
+  x.clearRect(0, 0, W, H); x.globalCompositeOperation = 'source-over'; x.globalAlpha = 1;
+  blitShear(x, g.spr, P + Math.ceil(g.w * 0.2), P, g.w, g.h, g.shear);
+  x.globalCompositeOperation = 'source-in'; x.fillStyle = col; x.fillRect(0, 0, W, H);
+  x.globalCompositeOperation = 'source-over';
+  return { cv: o.cv, ox: g.x - P - Math.ceil(g.w * 0.2), oy: g.y - P };
+}
+function outlineAt(c, g, col, offsets, alpha){
+  const S0 = silhouette(g, col);
+  c.globalAlpha = alpha;
+  for(const [dx, dy] of offsets) c.drawImage(S0.cv, S0.ox + dx, S0.oy + dy);
+  c.globalAlpha = 1;
+}
+const RING1 = [[-1, 0], [1, 0], [0, -1], [0, 1]];
+const RING2 = [[-2, 0], [2, 0], [0, -2], [0, 2], [-1, -1], [1, -1], [-1, 1], [1, 1]];
+// where the cap is, as a share of the sprite, found once from the rows
+function capBox(rows){
+  let x0 = 1e9, x1 = -1, y0 = 1e9, y1 = -1;
+  rows.forEach((r, y) => [...r].forEach((ch, x) => {
+    if(ch === 'c' || ch === 'C'){ x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); y1 = Math.max(y1, y); }
+  }));
+  const W = rows[0].length, H = rows.length;
+  return { x: (x0 + x1 + 1) / 2 / W, y: y0 / H, w: (x1 - x0 + 1) / W, h: (y1 - y0 + 1) / H };
+}
+const CAP_ADDR = capBox(G_ADDR_ROWS), CAP_FIN = capBox(G_FIN_ROWS);
+// A glow in the stage's own terms: solid colours in a dither that thins toward
+// the edge, rather than a see-through wash, which on a green fairway blends
+// gold into lime. bands are [edge share, colour, density 1-4 of 4], outside in.
+// Pre-drawn per size and per shimmer phase, so a frame pays one drawImage.
+const GLOWC = {};
+function glowCanvas(rx, ry, bands, phase){
+  rx = Math.max(2, Math.round(rx)); ry = Math.max(2, Math.round(ry));
+  const key = rx + 'x' + ry + '|' + phase + '|' + bands.map(b => b.join()).join(';');
+  if(GLOWC[key]) return GLOWC[key];
+  const cv = document.createElement('canvas'); cv.width = rx * 2 + 1; cv.height = ry * 2 + 1;
+  const g = cv.getContext('2d');
+  // Bayer 2x2 thresholds, shifted by phase so the pattern crawls
+  const BAY = [0, 2, 3, 1];
+  for(let y = -ry; y <= ry; y++) for(let x = -rx; x <= rx; x++){
+    const d = Math.sqrt((x*x)/(rx*rx) + (y*y)/(ry*ry));
+    if(d > 1) continue;
+    let band = null;
+    for(const b of bands) if(d >= b[0]){ band = b; break; }
+    if(!band) continue;
+    const th = BAY[(((x + phase) & 1) << 1) | ((y + (phase >> 1)) & 1)];
+    if(th >= band[2]) continue;
+    g.fillStyle = band[1]; g.fillRect(x + rx, y + ry, 1, 1);
+  }
+  const keys = Object.keys(GLOWC); if(keys.length > 160) delete GLOWC[keys[0]];
+  return GLOWC[key] = { cv, rx, ry };
+}
+function drawGlow(c, cx, cy, rx, ry, bands, phase, a){
+  const G = glowCanvas(rx, ry, bands, phase);
+  c.globalAlpha = a === undefined ? 1 : a;
+  c.drawImage(G.cv, Math.round(cx - G.rx), Math.round(cy - G.ry));
+  c.globalAlpha = 1;
+}
+
+const STYLEFX = {
+  /* ---- Divine: a golden aura, a halo, turning rays, orbiting wisps ---- */
+  divine: {
+    back(c, g){
+      const { cx, cy, w, h, t, k, bot, x, spr } = g;
+      const breathe = 0.5 + 0.5 * Math.sin(t * 1.6);
+      const phase = Math.floor(t * 6) & 3;
+      // a column of light from the top of the sky down onto him, a touch
+      // wider at his feet, with a brighter spine and a slow flicker
+      const top = 0, span = bot - top;
+      for(let yy = top; yy < bot; yy += 1){
+        const f = (yy - top) / span;
+        const hw = Math.round(w * (0.42 + 0.30 * f));
+        c.globalAlpha = 0.07 + 0.05 * f + 0.02 * breathe;
+        c.fillStyle = '#FFF6D8'; c.fillRect(Math.round(cx - hw), yy, hw * 2, 1);
+        c.globalAlpha = 0.06 + 0.06 * f;
+        c.fillRect(Math.round(cx - hw * 0.35), yy, Math.round(hw * 0.7), 1);
+      }
+      // dust turning in the beam
+      for(let i = 0; i < 14; i++){
+        const life = (t * 0.12 + hr(i, 7)) % 1;
+        const yy = top + life * span, xx = cx + Math.sin(t * 0.7 + i * 2.3) * w * 0.45;
+        fxDot(c, xx, yy, 1, '#FFFFFF', 0.25 + 0.5 * Math.max(0, Math.sin(t * 3 + i)));
+      }
+      // light pooling on the ground at his feet
+      drawGlow(c, cx, bot, w * (1.05 + 0.08 * breathe), Math.max(2, h * 0.10),
+               [[0.75, '#B98A2E', 1], [0.45, '#E3B457', 2], [0, '#FFE39A', 3]], phase, 0.9);
+      // rays fanning up from behind him
+      for(let i = 0; i < 7; i++){
+        const a = -Math.PI / 2 + (i - 3) * 0.36 + Math.sin(t * 0.4 + i * 0.9) * 0.08;
+        const L = h * (0.75 + 0.2 * Math.sin(t * 1.1 + i * 2.1));
+        c.globalAlpha = 0.10 + 0.14 * Math.max(0, Math.sin(t * 1.7 + i * 1.9));
+        pxLine(c, cx, cy, cx + Math.cos(a) * L, cy + Math.sin(a) * L, '#FFE7A3', Math.max(1, k));
+      }
+      // he radiates: a soft gold edge two pixels out, a bright one one pixel out
+      outlineAt(c, g, '#E3B457', RING2, 0.30 + 0.15 * breathe);
+      outlineAt(c, g, '#FFF6D8', RING1, 0.75 + 0.2 * breathe);
+      this.wisps(c, g, false);
+    },
+    front(c, g){
+      const { cx, w, h, t, k, head, bot } = g;
+      c.globalCompositeOperation = 'lighter';
+      // the halo: a ring over the cap, with a glint running round it
+      const hx = head.x, hy = head.y - Math.max(2, h * 0.07) + Math.sin(t * 2) * k * 0.6;
+      const rx = Math.max(3, head.w * 0.62), ry = Math.max(1, rx * 0.30);
+      const steps = Math.max(18, Math.round(rx * 5));
+      for(let i = 0; i < steps; i++){
+        const a = i / steps * Math.PI * 2;
+        const glint = Math.cos(a - t * 3) > 0.9;
+        fxDot(c, hx + Math.cos(a) * rx, hy + Math.sin(a) * ry, k, glint ? '#FFFFFF' : i & 1 ? '#FFC940' : '#F2B32E', 1);
+      }
+      // motes rising from his feet, fading as they go
+      for(let i = 0; i < 12; i++){
+        const life = (t * 0.45 + hr(i, 1)) % 1;
+        const x = cx + (hr(i, 2) - 0.5) * w * 1.2 + Math.sin(t * 2 + i) * k * 1.5;
+        const y = bot - life * h * 1.25;
+        fxDot(c, x, y, k, life < 0.5 ? '#FFF6D8' : '#FFD66B', (1 - life) * 0.8);
+      }
+      c.globalCompositeOperation = 'source-over';
+      this.wisps(c, g, true);
+      c.globalAlpha = 1;
+    },
+    // Seven wisps on an orbit round his middle, each riding up and down on
+    // its own slow wave. The half of the orbit behind him is drawn before him,
+    // dimmer; the half in front after him. Each leaves a short fading tail
+    // along the path it came by.
+    wisps(c, g, front){
+      const { cx, cy, w, h, t, k } = g;
+      const N = 6, TAIL = 11;
+      for(let i = 0; i < N; i++){
+        for(let s = TAIL; s >= 0; s--){
+          const tt = t - s * 0.035;
+          const a = tt * 1.05 + i * Math.PI * 2 / N;
+          const depth = Math.sin(a);
+          if((depth > 0) !== front) continue;
+          const x = cx + Math.cos(a) * w * 0.78;
+          const y = cy + Math.sin(tt * 0.75 + i * 1.7) * h * 0.42 + depth * h * 0.05;
+          const dim = front ? 1 : 0.6;
+          if(s === 0){
+            // the orb: a white core in a cross of gold
+            const r = k + (depth > 0 ? 1 : 0);
+            fxDot(c, x - r, y, r, '#FFD66B', 0.8 * dim); fxDot(c, x + r, y, r, '#FFD66B', 0.8 * dim);
+            fxDot(c, x, y - r, r, '#FFD66B', 0.8 * dim); fxDot(c, x, y + r, r, '#FFD66B', 0.8 * dim);
+            fxDot(c, x, y, r, '#FFFFFF', dim);
+          }else{
+            fxDot(c, x, y, k, s < 4 ? '#FFF1C4' : s < 8 ? '#FFD66B' : '#C99A2E', (0.85 - s * 0.07) * dim);
+          }
+        }
+      }
+      c.globalAlpha = 1;
+    }
+  },
+
+  /* ---- Inferno: he is on fire, and does not mind ---- */
+  inferno: {
+    outline: '#F0612A', outlineA: 0.5,
+    flames(c, g, front){
+      const { cx, w, h, t, k, bot } = g;
+      // tongues of flame: each licks up from somewhere on him, hot and wide at
+      // the root, thinning and reddening as it rises, and gone as smoke
+      for(let i = front ? 1 : 0; i < 64; i += 2){
+        const life = (t * 1.7 + hr(i, 1)) % 1;
+        const along = hr(i, 3);
+        const sx = cx + (hr(i, 2) - 0.5) * w * (0.55 + 0.35 * along), sy = bot - along * h * 0.9;
+        const x = sx + Math.sin(t * 9 + i * 1.3) * k * (1 + life), y = sy - life * h * 0.30;
+        const col = life < 0.18 ? '#FFFBE0' : life < 0.38 ? '#FFD34A' : life < 0.6 ? '#FF8A24' : life < 0.8 ? '#E8401C' : '#4A2420';
+        // a tongue, taller than it is wide, narrowing as it burns out
+        const sw = life < 0.3 ? k + 1 : k, sh = life < 0.3 ? k * 3 + 1 : life < 0.6 ? k * 2 + 1 : k;
+        c.globalAlpha = life < 0.8 ? 0.95 : 0.35; c.fillStyle = col;
+        c.fillRect(Math.round(x - (sw >> 1)), Math.round(y - sh), sw, sh);
+      }
+    },
+    back(c, g){
+      const { cx, bot, w, h, t } = g;
+      drawGlow(c, cx, bot, w * 0.95, Math.max(2, h * 0.09),
+               [[0.7, '#7A2A14', 1], [0.4, '#F0612A', 2], [0, '#FFB43A', 3]], Math.floor(t * 10) & 3, 0.9);
+      this.flames(c, g, false);
+      // embers drifting well above him
+      for(let i = 0; i < 8; i++){
+        const life = (t * 0.5 + hr(i, 9)) % 1;
+        fxDot(c, cx + (hr(i, 8) - 0.5) * w * 1.4 + Math.sin(t * 2 + i) * 3, bot - h * 0.4 - life * h * 0.9, 1,
+              '#FFB43A', (1 - life) * 0.9);
+      }
+    },
+    front(c, g){ this.flames(c, g, true); }
+  },
+
+  /* ---- Frostborn: snow falls round him and the ground freezes ---- */
+  frostborn: {
+    outline: '#CFF1FF', outlineA: 0.6,
+    back(c, g){
+      const { cx, bot, w, h, t } = g;
+      drawGlow(c, cx, bot, w * 1.1, Math.max(2, h * 0.10),
+               [[0.7, '#6FB2D8', 1], [0.35, '#BFE6FA', 2], [0, '#F2FBFF', 3]], Math.floor(t * 3) & 3, 0.9);
+      this.snow(c, g, false);
+    },
+    front(c, g){
+      const { cx, cy, w, h, t } = g;
+      this.snow(c, g, true);
+      // glints of frost catching the light on him
+      for(let i = 0; i < 5; i++){
+        const n = Math.floor(t * 2.5) + i * 7, tw = (t * 2.5) % 1;
+        const x = cx + (hr(n, 1) - 0.5) * w * 0.5, y = cy + (hr(n, 2) - 0.5) * h * 0.8;
+        const a = Math.sin(tw * Math.PI);
+        fxDot(c, x, y, 1, '#FFFFFF', a);
+        if(a > 0.6) for(const [dx, dy] of [[-1, 0], [1, 0], [0, -1], [0, 1]]) fxDot(c, x + dx, y + dy, 1, '#CFF1FF', a * 0.7);
+      }
+    },
+    snow(c, g, front){
+      const { cx, w, h, t, k, y: top, bot } = g;
+      for(let i = front ? 1 : 0; i < 30; i += 2){
+        const life = (t * 0.22 + hr(i, 5)) % 1;
+        const x = cx + (hr(i, 4) - 0.5) * w * 2.2 + Math.sin(t * 1.3 + i * 1.7) * k * 2.5;
+        const y = top - h * 0.3 + life * (bot - top + h * 0.3);
+        const big = hr(i, 6) > 0.7;
+        fxDot(c, x, y, 1, '#FFFFFF', 0.9);
+        if(big) for(const [dx, dy] of [[-1, 0], [1, 0], [0, -1], [0, 1]]) fxDot(c, x + dx, y + dy, 1, '#DFF4FF', 0.7);
+      }
+    }
+  },
+
+  /* ---- Stormcaller: lightning crawls over him ---- */
+  stormcaller: {
+    // his own storm: a dark cloud that follows him, raining, and every few
+    // seconds a strike from it into him, with the whole of him lit white
+    strike(t){ const n = Math.floor(t / 2.2), f = (t / 2.2) % 1; return hr(n, 9) > 0.35 && f < 0.12 ? n : -1; },
+    cloud(c, g){
+      const { head, w, h, t, k } = g;
+      const cx = head.x - w * 0.1, cy = head.y - h * 0.38;
+      const lit = this.strike(t) >= 0;
+      for(const [dx, dy, r] of [[-0.35, 0.05, 0.16], [-0.1, -0.06, 0.22], [0.18, 0.0, 0.18], [0.38, 0.06, 0.12], [0.0, 0.08, 0.20]])
+        fxEllipse(c, cx + dx * w * 1.2 + Math.sin(t * 0.8 + dx * 5) * k, cy + dy * h * 0.3, r * w * 1.3, r * h * 0.32,
+                  lit ? '#6A7A96' : dy < 0 ? '#3A4458' : '#262D3C', 0.95);
+      // rain from it, slanting a little
+      c.globalAlpha = 0.6; c.fillStyle = '#8FB4D8';
+      for(let i = 0; i < 14; i++){
+        const life = (t * 2.4 + hr(i, 13)) % 1;
+        const rx = cx + (hr(i, 14) - 0.5) * w * 1.1 - life * 3, ry = cy + h * 0.06 + life * h * 0.9;
+        c.fillRect(Math.round(rx), Math.round(ry), 1, Math.max(2, k * 2));
+      }
+      c.globalAlpha = 1;
+      return { cx, cy };
+    },
+    back(c, g){
+      const { cx, bot, w, h, t, spr, x, y } = g;
+      drawGlow(c, cx, bot, w * 0.9, Math.max(2, h * 0.08), [[0.6, '#2A4A7A', 1], [0, '#5A8AD8', 2]], Math.floor(t * 12) & 3, 0.8);
+      // the charge on him flickers
+      const on = hr(Math.floor(t * 14), 3);
+      outlineAt(c, g, '#8FD0FF', RING1, 0.25 + on * 0.5);
+    },
+    front(c, g){
+      const { cx, cy, w, h, t, k, spr, x, y } = g;
+      const cl = this.cloud(c, g);
+      const sn = this.strike(t);
+      if(sn >= 0){
+        // the strike: a jagged bolt from the cloud down into his cap, and him
+        // lit white for a moment
+        let px = cl.cx, py = cl.cy + h * 0.05;
+        const ex = g.head.x, ey = g.head.y;
+        for(let s = 1; s <= 5; s++){
+          const qx = s === 5 ? ex : px + (ex - px) / (6 - s) + (hr(sn * 3 + s, 1) - 0.5) * w * 0.3;
+          const qy = s === 5 ? ey : py + (ey - py) / (6 - s);
+          c.globalAlpha = 1; pxLine(c, px, py, qx, qy, '#BFE9FF', k + 1); pxLine(c, px, py, qx, qy, '#FFFFFF', 1);
+          px = qx; py = qy;
+        }
+        c.globalAlpha = 0.65; blitShear(c, tinted(spr, '#F2FAFF'), x, y, w, h, g.shear);
+        c.globalAlpha = 1;
+      }
+      // bolts: a few times a second, one jumps between him and the air
+      for(let j = 0; j < 2; j++){
+        const n = Math.floor(t * 3 + j * 0.5), f = (t * 3 + j * 0.5) % 1;
+        if(hr(n, 1 + j) < 0.35 || f > 0.28) continue;
+        const a0 = hr(n, 4 + j) * Math.PI * 2;
+        let px = cx + Math.cos(a0) * w * 0.25, py = cy + Math.sin(a0) * h * 0.35;
+        const ex = cx + Math.cos(a0) * w * 1.1, ey = cy + Math.sin(a0) * h * 0.7;
+        const fade = 1 - f / 0.28;
+        for(let s = 1; s <= 5; s++){
+          const qx = px + (ex - px) / (6 - s) + (hr(n * 7 + s, j) - 0.5) * w * 0.35;
+          const qy = py + (ey - py) / (6 - s) + (hr(n * 5 + s, j + 3) - 0.5) * h * 0.2;
+          c.globalAlpha = fade; pxLine(c, px, py, qx, qy, '#9FDCFF', k + 1);
+          c.globalAlpha = fade; pxLine(c, px, py, qx, qy, '#FFFFFF', 1);
+          px = qx; py = qy;
+        }
+      }
+      // static crawling round him
+      for(let i = 0; i < 6; i++){
+        const a = t * 4 + i * 1.05;
+        fxDot(c, cx + Math.cos(a) * w * 0.55, cy + Math.sin(a * 1.7) * h * 0.4, 1, '#BFE9FF', hr(Math.floor(t * 20), i) > 0.4 ? 1 : 0.2);
+      }
+      c.globalAlpha = 1;
+    }
+  },
+
+  /* ---- Void Walker: two echoes follow him, and the light falls in ---- */
+  void: {
+    outline: '#9A62D6', outlineA: 0.55,
+    back(c, g){
+      const { cx, cy, w, h, t, spr, x, y, k } = g;
+      // the echoes: two of him, drifting a step behind
+      for(const [off, col, a] of [[2.2, '#3A1E5A', 0.28], [1.1, '#6E44A0', 0.40]]){
+        const dx = -Math.round((off + Math.sin(t * 1.8) * 0.6) * k * 3), dy = Math.round(Math.sin(t * 2.4 + off) * k);
+        c.globalAlpha = a; blitShear(c, tinted(spr, col), x + dx, y + dy, w, h, g.shear);
+      }
+      c.globalAlpha = 1;
+      // motes spiralling in toward him and vanishing
+      for(let i = 0; i < 14; i++){
+        const life = (t * 0.5 + hr(i, 11)) % 1, R = (1 - life) * w * 1.3;
+        const a = hr(i, 12) * Math.PI * 2 + life * 5;
+        fxDot(c, cx + Math.cos(a) * R, cy + Math.sin(a) * R * 1.3, 1, life < 0.5 ? '#C68BFF' : '#1C0F2A', 0.3 + life * 0.6);
+      }
+    }
+  },
+
+  /* ---- Glitch: he does not render properly ---- */
+  glitch: {
+    burst(t){ const n = Math.floor(t * 2.2); return hr(n, 3) > 0.45 && (t * 2.2) % 1 < 0.22 ? n : -1; },
+    // rows slide sideways in bands while a burst is on
+    shearMod(f, g){
+      const n = this.burst(g.t); if(n < 0) return 0;
+      const band = Math.floor(f * 7);
+      return hr(n, band) > 0.6 ? (hr(band, n) - 0.5) * g.w * 0.5 : 0;
+    },
+    back(c, g){
+      const { spr, x, y, w, h, t } = g;
+      const jig = this.burst(t) >= 0 ? 2 : 1;
+      c.globalAlpha = 0.55; blitShear(c, tinted(spr, '#FF2A6D'), x - jig, y, w, h, g.shear);
+      blitShear(c, tinted(spr, '#2AE0FF'), x + jig, y, w, h, g.shear);
+      c.globalAlpha = 1;
+    },
+    front(c, g){
+      const { cx, cy, w, h, t } = g;
+      const n = this.burst(t); if(n < 0) return;
+      // stray blocks and a scanline
+      for(let i = 0; i < 5; i++)
+        fxDot(c, cx + (hr(n, i + 20) - 0.5) * w * 1.4, cy + (hr(i + 20, n) - 0.5) * h, 1 + (i & 1) * 2,
+              ['#FF2A6D', '#2AE0FF', '#29E07A', '#FFFFFF'][i & 3], 0.9);
+      c.globalAlpha = 0.25; c.fillStyle = '#FFFFFF';
+      c.fillRect(Math.round(cx - w), Math.round(cy + (hr(n, 40) - 0.5) * h), Math.round(w * 2), 1);
+      c.globalAlpha = 1;
+    }
+  },
+
+  /* ---- Midas: solid gold, with a shine that sweeps across him ---- */
+  midas: {
+    back(c, g){
+      // gold throws a little gold on the ground round it
+      drawGlow(c, g.cx, g.bot, g.w * 0.8, Math.max(2, g.h * 0.07),
+               [[0.6, '#8F6A1E', 1], [0, '#F0C04A', 2]], Math.floor(g.t * 3) & 3, 0.8);
+    },
+    front(c, g){
+      const { spr, x, y, w, h, t, cx, cy } = g;
+      const cyc = (t % 2.6) / 2.6;
+      if(cyc < 0.35){
+        const q = cyc / 0.35, bx = x - w * 0.3 + q * w * 1.6;
+        c.save(); c.beginPath();
+        c.moveTo(bx, y); c.lineTo(bx + w * 0.18, y); c.lineTo(bx + w * 0.18 - h * 0.35, y + h); c.lineTo(bx - h * 0.35, y + h);
+        c.closePath(); c.clip();
+        c.globalAlpha = 0.75; blitShear(c, tinted(spr, '#FFFBE8'), x, y, w, h, g.shear);
+        c.restore();
+      }
+      // a star glint that pops on him now and then
+      const n = Math.floor(t * 1.5), f = (t * 1.5) % 1;
+      if(f < 0.4){
+        const a = Math.sin(f / 0.4 * Math.PI), gx = cx + (hr(n, 1) - 0.5) * w * 0.4, gy = cy + (hr(n, 2) - 0.5) * h * 0.7;
+        const L = Math.round(1 + a * 3);
+        c.globalAlpha = a; c.fillStyle = '#FFFFFF';
+        c.fillRect(Math.round(gx - L), Math.round(gy), L * 2 + 1, 1); c.fillRect(Math.round(gx), Math.round(gy - L), 1, L * 2 + 1);
+      }
+      c.globalAlpha = 1;
+    }
+  },
+
+  /* ---- Disco: a mirror ball over his head and the floor lit up ---- */
+  disco: {
+    back(c, g){
+      const { cx, bot, w, h, t } = g;
+      const cols = ['#FF4FB8', '#3FE0FF', '#FFE14A', '#7CFF6A'];
+      for(let i = 0; i < 4; i++){
+        const a = t * 1.3 + i * Math.PI / 2;
+        drawGlow(c, cx + Math.cos(a) * w * 0.8, bot + Math.sin(a) * h * 0.05, w * 0.32, Math.max(2, h * 0.05),
+                 [[0, cols[i], 2]], (Math.floor(t * 8) + i) & 3, 0.8);
+      }
+      // beams from the ball to the floor, sweeping
+      const bx = g.head.x, by = g.head.y - h * 0.32;
+      for(let i = 0; i < 4; i++){
+        const a = t * 1.3 + i * Math.PI / 2;
+        c.globalAlpha = 0.16; pxLine(c, bx, by, cx + Math.cos(a) * w * 0.8, bot, cols[i], 1);
+      }
+      c.globalAlpha = 1;
+    },
+    front(c, g){
+      const { h, t, k } = g;
+      const bx = g.head.x, by = g.head.y - h * 0.32, R = Math.max(2, Math.round(h * 0.07));
+      // the string, the ball, and glints running round it
+      c.globalAlpha = 0.7; c.fillStyle = '#C9D2DA'; c.fillRect(Math.round(bx), 0, 1, Math.round(by - R));
+      for(let yy = -R; yy <= R; yy++) for(let xx = -R; xx <= R; xx++){
+        if(xx*xx + yy*yy > R*R) continue;
+        const lit = ((xx + yy + Math.floor(t * 8)) & 3) === 0;
+        fxDot(c, bx + xx, by + yy, 1, lit ? '#FFFFFF' : (xx + yy) & 1 ? '#AEB8C4' : '#7C8894', 1);
+      }
+      c.globalAlpha = 1;
+    }
+  },
+
+  /* ---- Ghost: see-through, floating, and occasionally says so ---- */
+  ghost: {
+    alpha: 0.55, bob: 1,
+    back(c, g){
+      const { cx, bot, w, h, t } = g;
+      drawGlow(c, cx, bot, w * 0.7, Math.max(2, h * 0.06), [[0.5, '#A5B0D6', 1], [0, '#EEF2FF', 2]], Math.floor(t * 4) & 3, 0.5);
+    },
+    front(c, g){
+      const { cx, w, h, t, k, head, y } = g;
+      // eyes, two dark pixels where his face is
+      const ex = head.x - head.w * 0.08, ey = head.y + head.hh + k;
+      fxDot(c, ex, ey, k, '#1A1F2E', 0.9); fxDot(c, ex + k * 2 + 1, ey, k, '#1A1F2E', 0.9);
+      // wisps curling up off him
+      for(let i = 0; i < 6; i++){
+        const life = (t * 0.6 + hr(i, 21)) % 1;
+        fxDot(c, cx + Math.sin(t * 2 + i * 1.3) * w * 0.4, y + h * 0.9 - life * h * 1.1, 1, '#EEF2FF', (1 - life) * 0.6);
+      }
+      // now and then, a small "boo"
+      const n = Math.floor(t / 5), f = (t / 5) % 1;
+      if(hr(n, 22) > 0.5 && f < 0.3)
+        drawTextS(c, 'boo', Math.round(head.x + w * 0.4), Math.round(head.y - f * 30), '#EEF2FF', 1, 'l');
+      c.globalAlpha = 1;
+    }
+  },
+
+  /* ---- Banana Suit: a stem on top ---- */
+  banana: {
+    back(c, g){
+      // his lunch, dropped behind him
+      const PEEL = ['..Y...Y..', '.YY.Y.YY.', 'YyYYYYYyY', '.yyyyyyy.'];
+      const k = g.k, px0 = Math.round(g.x - g.w * 0.05), py0 = Math.round(g.bot - 4 * k);
+      PEEL.forEach((row, yy) => [...row].forEach((ch, xx) => {
+        if(ch === '.') return; c.fillStyle = ch === 'Y' ? '#F6D84A' : '#B8961E'; c.fillRect(px0 + xx * k, py0 + yy * k, k, k); }));
+    },
+    front(c, g){
+      const { head, k } = g;
+      fxDot(c, head.x - k, head.y - k * 2, k, '#5A3A1A', 1);
+      fxDot(c, head.x - k * 2, head.y - k * 3, k, '#3A2410', 1);
+      c.globalAlpha = 1;
+    }
+  },
+
+  /* ---- Dad on Holiday: sunglasses ---- */
+  dad: {
+    front(c, g){
+      const { head, k } = g;
+      const ex = head.x - head.w * 0.14, ey = head.y + head.hh;
+      c.globalAlpha = 1; c.fillStyle = '#101418';
+      c.fillRect(Math.round(ex), Math.round(ey), Math.max(3, Math.round(head.w * 0.40)), k + 1);
+      fxDot(c, ex + head.w * 0.28, ey, 1, '#FFFFFF', 0.9);
+      c.globalAlpha = 1;
+    }
+  },
+
+  /* ---- Clown: a red nose ---- */
+  clown: {
+    front(c, g){
+      const { head, k } = g;
+      fxDot(c, head.x + head.w * 0.18, head.y + head.hh + k * 2, k + 1, '#E4302A', 1);
+      fxDot(c, head.x + head.w * 0.18, head.y + head.hh + k * 2, 1, '#FF9A90', 1);
+      c.globalAlpha = 1;
+    }
+  }
+};
+
+// A ball effect is drawn instead of the plain trail: path is the ball's last
+// few positions (0 is the ball itself), r its size, t the scene clock.
+const BALLFX = {
+  /* ---- Comet: a blazing head and a long burning tail ---- */
+  comet(c, b, path, r, t, u){
+    const cols = ['#FFFFFF', '#FFF3B0', '#FFB43A', '#F0612A', '#B8341C', '#5A2A20'];
+    for(let i = path.length - 1; i >= 1; i--){
+      const p0 = path[i], p1 = path[i - 1], f = i / path.length;
+      c.globalAlpha = 1 - f * 0.8;
+      pxLine(c, p0.x, p0.y, p1.x, p1.y, cols[Math.min(cols.length - 1, Math.floor(f * cols.length))], Math.max(1, r + (i < 4 ? 1 : 0)));
+    }
+    // embers falling off the tail
+    for(let i = 2; i < path.length; i++){
+      const p = path[i], fall = ((t * 3 + i * 0.37 + b.seed) % 1);
+      fxDot(c, p.x + (hr(i, b.seed) - 0.5) * 6, p.y + fall * 8, 1, fall < 0.5 ? '#FFB43A' : '#F0612A', 1 - fall);
+    }
+    const h0 = path[0];
+    drawGlow(c, h0.x, h0.y, r * 2 + 3, r * 2 + 3, [[0.5, '#F0612A', 1], [0, '#FFB43A', 2]], Math.floor(t * 12) & 3);
+    fxDot(c, h0.x - r, h0.y - r, r * 2, '#FFFFFF', 1);
+    c.globalAlpha = 1;
+  },
+  /* ---- Black Hole: a dark core with a disc of light turning round it ---- */
+  blackhole(c, b, path, r, t, u){
+    for(let i = path.length - 1; i >= 1; i--){
+      const p0 = path[i], p1 = path[i - 1];
+      c.globalAlpha = 0.8 * (1 - i / path.length); pxLine(c, p0.x, p0.y, p1.x, p1.y, i < 4 ? '#6E44A0' : '#3A1E5A', Math.max(2, r + 1));
+    }
+    const h0 = path[0], R = Math.max(6, r * 3 + 4);
+    drawGlow(c, h0.x, h0.y, R * 1.2, R * 0.9, [[0.6, '#3A1E5A', 1], [0, '#6E44A0', 2]], Math.floor(t * 10) & 3, 0.8);
+    for(let i = 0; i < 22; i++){
+      const a = t * 6 + i / 22 * Math.PI * 2, front = Math.sin(a) > 0;
+      fxDot(c, h0.x + Math.cos(a) * R, h0.y + Math.sin(a) * R * 0.35, front ? 2 : 1, i % 3 ? '#C68BFF' : '#FFFFFF', front ? 1 : 0.5);
+    }
+    // light bending in toward it
+    for(let i = 0; i < 6; i++){
+      const life = (t * 2 + hr(i, b.seed)) % 1, a = hr(b.seed, i) * Math.PI * 2 + life * 3, D = (1 - life) * R * 2.2;
+      fxDot(c, h0.x + Math.cos(a) * D, h0.y + Math.sin(a) * D * 0.6, 1, '#E8D8FF', life);
+    }
+    fxDot(c, h0.x - r - 1, h0.y - r - 1, r * 2 + 2, '#050308', 1);
+    c.globalAlpha = 1;
+  },
+  /* ---- Confetti: it is a party ---- */
+  confetti(c, b, path, r, t, u){
+    const cols = ['#FF4FB8', '#3FE0FF', '#FFE14A', '#7CFF6A', '#FF7A3A', '#B08BFF'];
+    for(let i = 1; i < path.length; i++){
+      const p = path[i];
+      for(let j = 0; j < 5; j++){
+        const s = i * 5 + j, fall = i * 2 + hr(s, b.seed) * 6;
+        const x = p.x + (hr(s, b.seed + 1) - 0.5) * 18 + Math.sin(t * 5 + s) * 2, y = p.y + fall;
+        const flip = ((t * 8 + s) | 0) & 1, big = i < 5 ? 1 : 0;
+        c.globalAlpha = 1 - i / path.length * 0.5; c.fillStyle = cols[s % cols.length];
+        c.fillRect(Math.round(x), Math.round(y), (flip ? 2 : 1) + big, (flip ? 1 : 2) + big);
+      }
+    }
+    fxDot(c, path[0].x - r, path[0].y - r, r * 2, '#FFFFFF', 1);
+    c.globalAlpha = 1;
+  },
+  /* ---- Bubbles: it leaves a trail of them, rising and popping ---- */
+  bubbles(c, b, path, r, t, u){
+    for(let i = 1; i < path.length; i++){
+      const p = path[i], rise = i * 1.8, R = 1 + ((i + (b.seed | 0)) % 3);
+      const x = p.x + Math.sin(t * 4 + i) * 2, y = p.y - rise;
+      if(i > path.length - 3){ // popping: a ring of dots
+        for(const [dx, dy] of [[-R - 1, 0], [R + 1, 0], [0, -R - 1], [0, R + 1]]) fxDot(c, x + dx, y + dy, 1, '#DFF4FF', 0.6);
+        continue;
+      }
+      c.globalAlpha = 0.85; pxRing(c, Math.round(x), Math.round(y), R, '#BFE6FA');
+      fxDot(c, x - R + 1, y - R + 1, 1, '#FFFFFF', 0.95);
+    }
+    fxDot(c, path[0].x - r, path[0].y - r, r * 2, '#FFFFFF', 1);
+    c.globalAlpha = 1;
+  },
+  /* ---- Hearts: a little love for every shot ---- */
+  hearts(c, b, path, r, t, u){
+    const HEART = ['.X.X.', 'XXXXX', '.XXX.', '..X..'];
+    for(let i = 1; i < path.length; i++){
+      const p = path[i], sc = i < 5 ? 2 : 1;
+      const x = Math.round(p.x - 2.5 * sc + Math.sin(t * 3 + i) * 3), y = Math.round(p.y - 2 * sc - i * 1.5);
+      c.globalAlpha = 1 - i / path.length * 0.6; c.fillStyle = i % 3 === 1 ? '#FF4F7A' : i % 3 ? '#FF9AB8' : '#FFFFFF';
+      HEART.forEach((row, yy) => [...row].forEach((ch, xx) => { if(ch === 'X') c.fillRect(x + xx * sc, y + yy * sc, sc, sc); }));
+    }
+    fxDot(c, path[0].x - r, path[0].y - r, r * 2, '#FFFFFF', 1);
+    c.globalAlpha = 1;
+  },
+  /* ---- Rubber Duck: the ball is a duck ---- */
+  duck(c, b, path, r, t, u){
+    for(let i = 2; i < path.length; i += 2)
+      fxDot(c, path[i].x, path[i].y + ((t * 6 + i) % 3), 1, '#7FC8F0', 0.8 - i / path.length * 0.6);
+    const DUCK = ['..YY..', '.YYYO.', 'YYYYY.', '.YYY..'];
+    const s = Math.max(2, r), h0 = path[0], bob = Math.round(Math.sin(t * 20) * 0.6);
+    const x = Math.round(h0.x - 3 * s), y = Math.round(h0.y - 2 * s + bob);
+    c.globalAlpha = 1;
+    DUCK.forEach((row, yy) => [...row].forEach((ch, xx) => {
+      if(ch === '.') return;
+      c.fillStyle = ch === 'O' ? '#FF8A2A' : yy === 0 && xx === 3 ? '#1A1A1A' : '#FFD84A';
+      c.fillRect(x + xx * s, y + yy * s, s, s);
+    }));
+    c.fillStyle = '#1A1A1A'; c.fillRect(x + 3 * s, y + s, 1, 1);
+  },
+  /* ---- Godlight: a haloed ball on a ribbon of light, shedding stars ---- */
+  godlight(c, b, path, r, t, u){
+    // the ribbon: a continuous stroke through the path, gold fading to warm
+    // white at the ball, with a white spine
+    for(let i = path.length - 1; i >= 1; i--){
+      const p0 = path[i], p1 = path[i - 1], f = 1 - i / path.length;
+      c.globalAlpha = 0.30 + f * 0.6;
+      pxLine(c, p0.x, p0.y, p1.x, p1.y, i < 4 ? '#FFE7A3' : '#E3B457', Math.max(1, r));
+      if(i < 5){ c.globalAlpha = 0.7 * f; pxLine(c, p0.x, p0.y, p1.x, p1.y, '#FFFFFF', 1); }
+    }
+    // stars shed along the way, each twinkling on its own beat
+    for(let i = 1; i < path.length; i++){
+      const p = path[i];
+      for(let j = 0; j < 2; j++){
+        const tw = Math.sin(t * 9 + i * 2.3 + j * 4.1 + b.seed);
+        if(tw < 0.2) continue;
+        const ox = (hr(i + j * 31, b.seed) - 0.5) * (r * 6 + 6), oy = (hr(b.seed, i + j * 17) - 0.5) * (r * 5 + 5);
+        fxDot(c, p.x + ox, p.y + oy, 1, '#FFFFFF', tw);
+        if(tw > 0.8) for(const [dx, dy] of [[-1, 0], [1, 0], [0, -1], [0, 1]])
+          fxDot(c, p.x + ox + dx, p.y + oy + dy, 1, '#FFD66B', 0.7);
+      }
+    }
+    // the halo round the ball, breathing, and a cross of light through it
+    const h0 = path[0], pulse = 0.5 + 0.5 * Math.sin(t * 8 + b.seed);
+    const hr0 = Math.max(4, r * 3) + pulse * 1.5;
+    drawGlow(c, h0.x, h0.y, hr0, hr0, [[0.7, '#E3B457', 1], [0.35, '#FFE39A', 2], [0, '#FFF6D8', 3]], Math.floor(t * 8) & 3);
+    const arm = Math.round(hr0 + 2 + pulse * 2);
+    c.globalAlpha = 0.9; c.fillStyle = '#FFFFFF';
+    c.fillRect(Math.round(h0.x - arm), Math.round(h0.y), arm * 2 + 1, 1);
+    c.fillRect(Math.round(h0.x), Math.round(h0.y - arm), 1, arm * 2 + 1);
+    // as it comes down, a ring of gold sparks opening out where it lands
+    if(u > 0.8){
+      const q = (u - 0.8) / 0.2, R = 2 + q * 10;
+      for(let i = 0; i < 12; i++){
+        const a = i / 12 * Math.PI * 2 + b.seed;
+        fxDot(c, h0.x + Math.cos(a) * R, h0.y + Math.sin(a) * R * 0.45, 1, i & 1 ? '#FFFFFF' : '#FFD66B', 1 - q);
+      }
+    }
+    fxDot(c, h0.x - r, h0.y - r, r * 2, b.crit ? '#FFD66B' : '#FFFFFF', 1);
+    c.globalAlpha = 1;
+  }
+};
 
 const Scene = {
   cv:null, ctx:null, buf:null, b:null, scale:3,
@@ -7451,7 +8225,7 @@ const Scene = {
                       // an aimed shot flies to the point it was aimed at
                       dist: p.target !== undefined ? Math.max(3, p.target - this.camD)
                                                    : 14 + Math.random()*9,
-                      t:0, dur:.55 + Math.random()*.14, el:p.el, crit:p.crit,
+                      t:0, dur:.55 + Math.random()*.14, el:p.el, crit:p.crit, seed: Math.random()*100,
                       lat0: lat0,
                       lat: p.lat !== undefined ? p.lat : -0.15 + (Math.random()-.5)*0.30 });
     if(this.nums.length < 12 && p.dmg > 0){
@@ -8063,6 +8837,7 @@ Object.assign(Scene, {
   },
 
   drawGolfer(D, atCam){
+    previewTick();
     const c = this.b;
     const p = this.proj(atCam === undefined ? this.camD : atCam, 0);
     const ph = this.swingT > 0 ? 1 - this.swingT/this.swingDur : 0;
@@ -8074,7 +8849,9 @@ Object.assign(Scene, {
     // number is his world height in the same units the lateral scale uses.
     const h = Math.max(6, Math.round(B_GOLFER * US * p.s));
     const w = Math.max(4, Math.round(h * spr.w / spr.h));
-    const x = p.x - Math.round(w*0.42), y = p.y - h;
+    const FX = STYLEFX[outfitNow().fx] || null;
+    const x = p.x - Math.round(w*0.42);
+    const y = p.y - h - (FX && FX.bob ? Math.round(2 + Math.sin(this.t * 2.2) * 2) : 0);
 
     c.fillStyle = 'rgba(8,16,10,.34)';
     c.fillRect(x + Math.round(w*0.05), p.y - 1, Math.round(w*0.62), Math.max(1, Math.round(h*0.045)));
@@ -8089,7 +8866,19 @@ Object.assign(Scene, {
     else if(ph < 0.55){ const t = (ph - 0.36)/0.19; arm = TOP + (ADDR - TOP)*t; coil = -(1-t)*0.5; }
     else { const t = (ph - 0.55)/0.45; arm = ADDR + (FIN - ADDR)*t; coil = t*0.7; }
 
-    blitShear(c, spr, x, y, w, h, f => coil * (1 - f) * w * 0.16);
+    // the skin's effect, if it has one: its back half now, its front half
+    // after the arms and club, so wisps pass both behind him and in front
+    const cb = spr === SPRITE.gFinish ? CAP_FIN : CAP_ADDR;
+    const g = { x, y, w, h, cx: x + w*0.55, cy: y + h*0.53, bot: p.y, t: this.t, ph,
+                k: Math.max(1, Math.round(h / 40)), spr,
+                head: { x: x + w*cb.x, y: y + h*cb.y, w: w*cb.w, hh: h*cb.h } };
+    const shear0 = f => coil * (1 - f) * w * 0.16;
+    const shear = FX && FX.shearMod ? f => shear0(f) + FX.shearMod(f, g) : shear0;
+    g.shear = shear0;
+    if(FX && FX.back) FX.back(c, g);
+    if(FX && FX.outline) outlineAt(c, g, FX.outline, RING1, FX.outlineA * (0.8 + 0.2 * Math.sin(this.t * 3)));
+    if(FX && FX.alpha) c.globalAlpha = FX.alpha;
+    blitShear(c, spr, x, y, w, h, shear);
 
     const sx = x + w*(spr.ax || 0.66), sy = y + h*(spr.ay || 0.30);
     const al = h*0.30, cl = h*0.60;
@@ -8103,6 +8892,9 @@ Object.assign(Scene, {
     pxLine(c, hx, hy, tx, ty, h > 26 ? PX.club : PX.club2, th);
     c.fillStyle = PX.club3;
     c.fillRect(Math.round(tx) - th, Math.round(ty) - 1, th*2 + 1, th + 1);
+    c.globalAlpha = 1;
+    if(FX && FX.front) FX.front(c, g);
+    c.globalAlpha = 1; c.globalCompositeOperation = 'source-over';
 
     // the ball waits out in front, on the ground, where he is looking
     const bx = Math.round(x + w*1.19);
@@ -8205,6 +8997,24 @@ Object.assign(Scene, {
       const u = b.t / b.dur;
       if(u >= 1){ this.balls.splice(i, 1); continue; }
       const col = b.el ? (PX[b.el] || PX.white) : PX.white;
+      const BF = BALLFX[trailNow().fx];
+      if(BF){
+        // a ball effect gets the flight as a path, ball first
+        const path = []; let rr = 1;
+        for(let k = 0; k <= 12; k++){
+          const uu = u - k*0.028;
+          if(uu < 0) break;
+          const bd = b.d0 + b.dist*uu, lu = uu*uu*(3 - 2*uu);
+          const lt = b.lat0 === undefined ? b.lat : b.lat0 + (b.lat - b.lat0)*lu;
+          const p = this.proj(bd, lt, Math.sin(uu*Math.PI)*2.6);
+          if(p.y > this.clipAt(bd) + 1){ if(k === 0) break; continue; }
+          if(k === 0) rr = Math.max(1, Math.round(B_BALL * p.s * US));
+          path.push(p);
+        }
+        if(path.length) BF(c, b, path, rr, this.t, u);
+        c.globalAlpha = 1; c.globalCompositeOperation = 'source-over';
+        continue;
+      }
       for(let k = 5; k >= 0; k--){
         const uu = u - k*0.055;
         if(uu < 0) continue;

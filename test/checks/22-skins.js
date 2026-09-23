@@ -1,0 +1,113 @@
+/* Skins and balls that do more than change a colour.
+ *
+ *   - every one draws, and draws something: the stage with the effect on has
+ *     to differ from the same colours with the effect taken off, or a 3000
+ *     sovereign skin is a recolour
+ *   - none is expensive: each skin's golfer is drawn 300 times and must
+ *     average under 1.5ms. The Divine skin first measured 2.3ms, stamping its
+ *     glow by redrawing him strip by strip twelve times; it now stamps one
+ *     silhouette and measures under 1ms
+ *   - "Try it" wears a look for ten seconds without buying it: nothing is
+ *     spent, nothing is saved, and when it runs out he is back in his own
+ *   - the shop lists every look exactly once, each with its own picture
+ */
+'use strict';
+module.exports = {
+  name: 'skins',
+  async run(page) {
+    const r = await page.evaluate(() => {
+      const o = {}; const SNAP = JSON.stringify(S);
+      hideSheet(); QUIET = true;
+      const D = derive();
+      const shot = () => { const g = Scene.b.getImageData(0, 0, VW, VH).data; let h = 0;
+        for (let i = 0; i < g.length; i += 4) h = (h * 31 + g[i] + g[i + 1] * 3 + g[i + 2] * 7) | 0; return h; };
+      const frame = () => { Scene.b.clearRect(0, 0, VW, VH); Scene.drawGolfer(D); Scene.drawBalls(0); };
+      try {
+        // ---- every effect draws something ---------------------------------
+        o.blank = []; o.errs = [];
+        for (const d of B.OUTFITS.filter(x => x.fx)) {
+          S.styleOwn['o:' + d.id] = 1; S.outfit = d.id; buildSprites();
+          try {
+            Scene.t = 1.23; frame(); const on = shot();
+            const fx = d.fx; d.fx = undefined; Scene.t = 1.23; frame(); const off = shot(); d.fx = fx;
+            if (on === off) o.blank.push('skin ' + d.id);
+          } catch (e) { o.errs.push(d.id + ': ' + e.message); }
+        }
+        S.outfit = 'classic'; buildSprites();
+        for (const d of B.TRAILS.filter(x => x.fx)) {
+          S.styleOwn['t:' + d.id] = 1; S.trail = d.id;
+          try {
+            const launch = () => { Scene.balls.length = 0; Scene.swingT = 0;
+              Scene.pendingBall = { crit: false, el: null, dmg: 5 }; Math.random = () => 0.5; Scene.launch();
+              Scene.balls.forEach(b => { b.t = b.dur * 0.4; }); };
+            const real = Math.random;
+            launch(); Scene.t = 2.0; Scene.b.clearRect(0, 0, VW, VH); Scene.drawBalls(0); const on = shot();
+            S.trail = 'plain'; launch(); Scene.t = 2.0; Scene.b.clearRect(0, 0, VW, VH); Scene.drawBalls(0); const off = shot();
+            Math.random = real;
+            if (on === off) o.blank.push('ball ' + d.id);
+          } catch (e) { o.errs.push(d.id + ': ' + e.message); }
+        }
+        S.trail = 'plain'; Scene.balls.length = 0;
+
+        // ---- none is expensive -----------------------------------------------
+        o.cost = {};
+        for (const d of B.OUTFITS) {
+          S.outfit = d.id; buildSprites();
+          for (let i = 0; i < 30; i++) { Scene.t += 0.016; Scene.drawGolfer(D); }
+          const t0 = performance.now();
+          for (let i = 0; i < 300; i++) { Scene.t += 0.016; Scene.drawGolfer(D); }
+          o.cost[d.id] = (performance.now() - t0) / 300;
+        }
+        S.outfit = 'classic'; buildSprites();
+
+        // ---- try it ------------------------------------------------------------
+        S.styleOwn = {}; S.outfit = 'classic'; S.sov = 0;
+        styleTry('o', 'divine');
+        o.tryWorn = outfitNow().id; o.trySaved = S.outfit; o.trySov = S.sov;
+        o.tryInSave = JSON.stringify(S).indexOf('divine') >= 0;
+        PREVIEW.until = Date.now() - 1; previewTick();
+        o.tryAfter = outfitNow().id;
+        styleTry('t', 'godlight'); o.tryBall = trailNow().id; PREVIEW.until = Date.now() - 1; previewTick();
+        o.tryBallAfter = trailNow().id;
+
+        // ---- the shop lists every look once, each with its own picture --------
+        S.sov = 0; QUIET = false; openShop('style');
+        const sheet = document.getElementById('sheet');
+        const acts = [...sheet.querySelectorAll('.price[data-do^="style:"]')].map(b => b.dataset.do);
+        o.listed = acts.length; o.dupes = acts.length - new Set(acts).size;
+        o.want = B.OUTFITS.length + B.TRAILS.length;
+        const imgs = [...sheet.querySelectorAll('.card img')].map(i => i.src);
+        o.noPic = imgs.filter(x => !x || x.length < 50).length;
+        o.samePic = imgs.length - new Set(imgs).size;
+        o.tries = sheet.querySelectorAll('.try[data-try]').length;
+        hideSheet();
+      } finally {
+        QUIET = false; PREVIEW = null;
+        Object.keys(S).forEach(k => delete S[k]); Object.assign(S, JSON.parse(SNAP)); buildSprites();
+      }
+      return o;
+    });
+
+    if (r.errs.length) throw new Error('effects threw: ' + r.errs.join('; '));
+    if (r.blank.length) throw new Error('these draw nothing their colours do not: ' + r.blank.join(', '));
+    const slow = Object.entries(r.cost).filter(([, v]) => v > 1.5);
+    if (slow.length) throw new Error('skins over 1.5ms a frame: ' + slow.map(([k, v]) => k + ' ' + v.toFixed(2) + 'ms').join(', '));
+    if (r.tryWorn !== 'divine') throw new Error('"Try it" did not put the Divine skin on: ' + r.tryWorn);
+    if (r.trySaved !== 'classic' || r.trySov !== 0 || r.tryInSave)
+      throw new Error('"Try it" changed the save: wearing ' + r.trySaved + ', ' + r.trySov + ' sovereigns'
+        + (r.tryInSave ? ', and the try is written into it' : ''));
+    if (r.tryAfter !== 'classic' || r.tryBallAfter !== 'plain')
+      throw new Error('after the try ran out he was still in ' + r.tryAfter + ' with a ' + r.tryBallAfter + ' ball');
+    if (r.tryBall !== 'godlight') throw new Error('"Try it" on a ball did not put it on: ' + r.tryBall);
+    if (r.listed !== r.want || r.dupes) throw new Error('the Style tab lists ' + r.listed + ' looks with '
+      + r.dupes + ' twice; there are ' + r.want);
+    if (r.noPic || r.samePic) throw new Error(r.noPic + ' looks have no picture and ' + r.samePic + ' share one');
+    if (r.tries < r.want - 2) throw new Error('only ' + r.tries + ' looks offer "Try it"');
+
+    const worst = Object.entries(r.cost).sort((a, b) => b[1] - a[1])[0];
+    return ['every effect skin and ball draws something its colours alone do not',
+      'dearest per frame ' + worst[0] + ' at ' + worst[1].toFixed(2) + 'ms (budget 1.5ms)',
+      '"Try it" wears a look for ten seconds, spends nothing, saves nothing, and takes it off',
+      'the Style tab lists all ' + r.want + ' looks once, each with its own picture'];
+  }
+};
