@@ -203,10 +203,15 @@ Line numbers are approximate and drift. Search for the name instead.
 
 ## 7. Environment notes
 
-- The environment's network policy **blocks** the free sound sites
-  (freesound, opengameart, kenney, pixabay). All sound is synthesised. If the
-  user wants recorded sounds, they add `opengameart.org` / `kenney.nl` under
-  the environment's Network access settings (both have CC0 packs).
+- **Sound sites: the user has now set up network access for the new
+  session's environment**, so it should be able to reach the free sound
+  sites. The old session's environment blocked freesound, opengameart, kenney
+  and pixabay. Check first with a quick `curl -sI https://opengameart.org`
+  and `curl -sI https://kenney.nl`. If they are still blocked, tell the user
+  plainly which address was refused, rather than working around it. Only
+  use sounds with a CC0 licence (Kenney's packs are all CC0), and record in
+  the file where each came from. All sound in the game today is
+  synthesised.
 - There is no `gh` CLI. Use the GitHub MCP tools if GitHub is ever needed.
   Pushing straight to `main` has worked every time.
 
@@ -219,9 +224,9 @@ their original numbers:
 
 3. **Real recorded golf sounds.** Today every sound is synthesised by the
    game. Recorded ones would be a club strike, the ball dropping in the cup
-   and crowd applause. **Blocked until the user allows the sound sites**:
-   they add `opengameart.org` and `kenney.nl` under the environment's Network
-   access settings. Both have CC0 packs, so no credit is needed. See §7. The
+   and crowd applause. **Now unblocked**: the user has set up network access
+   for the new session (verify it first, see §7). Kenney and OpenGameArt
+   both have CC0 packs, so no credit is needed. The
    sounds would then have to be embedded in `index.html` (for example as
    base64), because the game is a single file. Keep the iPhone silent-switch
    behaviour, and keep sound quiet during a catch-up (the `settings` check
