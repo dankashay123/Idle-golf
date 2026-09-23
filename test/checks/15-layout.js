@@ -395,13 +395,47 @@ module.exports = {
       if (Math.abs(d) > 0.6)
         throw new Error('an away tile\'s content sits ' + d + 'px off the middle of its box');
 
+    // The numbers over the golfer's head. At a billion yards a swing and a
+    // fast tempo they were drawn on top of one another: six hundred swings
+    // put 13,252 overlapping pairs on screen. Driven here at a flat-out pace
+    // with numbers from a million to a few billion, and every pair of live
+    // numbers measured at its real text width.
+    const nums = await page.evaluate(() => {
+      const lab = n => (n.crit ? '*' : '') + fmt(n.v);
+      let seed = 7; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+      const real = Math.random; Math.random = rnd;
+      let overlaps = 0, drawn = 0; const N = 600; Scene.nums.length = 0;
+      try {
+        for (let i = 0; i < N; i++) {
+          Scene.pendingBall = { dmg: Math.pow(10, 6 + rnd() * 3.5), crit: rnd() < 0.3, el: null };
+          const before = Scene.nums.length; Scene.launch();
+          if (Scene.nums.length > before) drawn++;
+          const dt = 0.03 + rnd() * 0.12;
+          for (let k = Scene.nums.length - 1; k >= 0; k--) {
+            const n = Scene.nums[k]; n.t += dt; if (n.t > .95) Scene.nums.splice(k, 1); }
+          const bs = Scene.nums.map(n => { const w = textW(lab(n), TSC), x = (n.x || 0) * US,
+            y = (n.y || 0) - n.t * 20 * TSC; return { l: x - w / 2, r: x + w / 2, t: y - FH * TSC, b: y }; });
+          for (let a = 0; a < bs.length; a++) for (let c = a + 1; c < bs.length; c++)
+            if (bs[a].l < bs[c].r && bs[c].l < bs[a].r && bs[a].t < bs[c].b && bs[c].t < bs[a].b) overlaps++;
+        }
+      } finally { Math.random = real; Scene.nums.length = 0; Scene.pendingBall = null; }
+      return { overlaps, drawn, N };
+    });
+    if (nums.overlaps)
+      throw new Error(nums.overlaps + ' overlapping pairs of floating numbers over ' + nums.N
+        + ' fast swings: they are drawn on top of one another');
+    if (nums.drawn < nums.N * 0.6)
+      throw new Error('only ' + nums.drawn + ' of ' + nums.N + ' swings showed a number: kept apart '
+        + 'by showing almost none of them');
+
     return [r.looked + ' boxes measured across five screens, four shop tabs and three sheets, '
       + 'none past its edge',
       'away card: three tiles, captions on one line, all three centred',
       'stage and vitals at 320/400/768 and on its side at 740/844: nothing off the stage, no HUD element on another '
       + 'with the tallest toasts up, five equal cells holding a maxed golfer\'s numbers',
       'on its side at ' + side.map(o => o.w + 'x' + o.h).join('/') + ': field and menu side by '
-      + 'side, all five tabs on screen, menu ' + side.map(o => o.panelH).join('/') + 'px tall'
+      + 'side, all five tabs on screen, menu ' + side.map(o => o.panelH).join('/') + 'px tall',
+      'floating numbers: ' + nums.drawn + ' of ' + nums.N + ' fast swings shown, none on top of another'
       + '; the field and HUD clear a 62px island on either edge',
       splits.looked + ' pieces of text read across every screen and sub-tab: no two-word unit '
       + 'anywhere, and every figure bound to the unit it carries'];

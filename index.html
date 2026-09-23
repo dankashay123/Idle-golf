@@ -7293,16 +7293,27 @@ const Scene = {
                       t:0, dur:.55 + Math.random()*.14, el:p.el, crit:p.crit,
                       lat0: lat0,
                       lat: p.lat !== undefined ? p.lat : -0.15 + (Math.random()-.5)*0.30 });
-    if(this.nums.length < 12 && p.dmg > 0)
-      // Nudged clear of whatever is already floating there. A random spread of
-      // fourteen pixels puts two numbers on top of each other often enough that
-      // the Vault, which swings continuously, read as a smear.
-      {
-        let nx = (Math.random()-.5)*14, ny = 0;
-        for(const q of this.nums)
-          if(q.t < 0.22 && Math.abs((q.x||0) - nx) < 9){ nx += 11; ny -= 7; }
-        this.nums.push({ t:0, v:p.dmg, crit:p.crit, x:nx, y:ny });
+    if(this.nums.length < 12 && p.dmg > 0){
+      // Kept clear of whatever is already floating there, measured in the
+      // numbers' real widths. They all rise at the same speed, so a number
+      // placed clear stays clear. The old nudge assumed short numbers and only
+      // looked at the newest ones; at a billion yards a swing and a fast tempo
+      // they piled on top of each other. No room within a few lines and the
+      // number is skipped rather than drawn over another.
+      const lab = n => (n.crit ? '*' : '') + fmt(n.v);
+      const me = { t:0, v:p.dmg, crit:p.crit, x:(Math.random()-.5)*10, y:0 };
+      const w = textW(lab(me), TSC), line = (FH + 3) * TSC;
+      let tries = 0, hit = true;
+      while(hit && tries++ < 5){
+        hit = false;
+        for(const q of this.nums){
+          const qy = (q.y || 0) - q.t*20*TSC;
+          const gapX = Math.abs((q.x || 0) - me.x) * US, reach = (textW(lab(q), TSC) + w) / 2 + TSC;
+          if(gapX < reach && Math.abs(qy - me.y) < line){ me.y = qy - line; hit = true; }
+        }
       }
+      if(!hit) this.nums.push(me);
+    }
     if(p.crit && this.sparks.length < 20) this.sparks.push({ t:0, k:'crit' });
   },
   spark(el){ if(this.sparks.length < 20) this.sparks.push({ t:0, k:el }); },
