@@ -198,7 +198,33 @@ module.exports = {
     await page.click('.tab[data-v="tour"]');
     await page.waitForTimeout(150);
 
-    return ['5 tabs, both sub navs, folds, cooldowns; pull tab gains ' + grew + 'px',
+    // ---- the first cards open sooner ---------------------------------------
+    // Five events a card had a new player looking at "0 of 5" for 47-49 minutes
+    // before the first one opened. 2, 3 and 4 for the first three, then 5.
+    const doors = await page.evaluate(() => {
+      const o = { need: [0, 1, 2, 3, 10].map(t => eventsToUnlock(t)) };
+      S.tier = 0; S.tierMax = 0; S.tierEvents = {}; S.hole = 72; S.cardSeen = 0;
+      QUIET = true;
+      try {
+        S.hole = 73; endTournament(); o.after1 = S.tierMax;
+        S.hole = 145; endTournament(); o.after2 = S.tierMax;
+      } finally { QUIET = false; }
+      setView('tour');
+      o.line = (document.getElementById('tierBox').textContent.match(/Events on Card [IVXL]+\s*\d+ of \d+/) || [''])[0];
+      try { hideSheet(); } catch (e) {}
+      return o;
+    });
+    if (doors.need.join() !== '2,3,4,5,5')
+      throw new Error('events to open the next card read ' + doors.need.join('/') + ', not 2/3/4/5/5');
+    if (doors.after1 !== 0 || doors.after2 !== 1)
+      throw new Error('Card II opened after ' + (doors.after1 ? 1 : doors.after2 ? 2 : 'more than 2')
+        + ' events on Card I, not 2');
+    // tier 0 is "Card I", so the first card to open is Card II
+    if (!/Card II\s*0 of 3/.test(doors.line))
+      throw new Error('with Card II open the Tour panel reads "' + doors.line + '", not "Card II 0 of 3"');
+
+    return ['the first three cards open after 2, 3 and 4 events, then 5',
+      '5 tabs, both sub navs, folds, cooldowns; pull tab gains ' + grew + 'px',
       'tour tab flashes on a new card and clears on the visit',
       'locker tabbed ' + lk.tabs.join('/') + ', ' + lk.held + '/' + lk.cap + ' held',
       'six identical tiles, ' + lk.geom[0].h + 'px, centred'];

@@ -4733,7 +4733,7 @@ function endTournament(){
 
   S.eventsPlayed = (S.eventsPlayed || 0) + 1;
   S.tierEvents[S.tier] = eventsOn(S.tier) + 1;
-  if(S.tier >= (S.tierMax || 0) && eventsOn(S.tier) >= B.EVENTS_PER_CARD
+  if(S.tier >= (S.tierMax || 0) && eventsOn(S.tier) >= eventsToUnlock(S.tier)
      && (S.tierMax || 0) < B.TIER_MAX){
     S.tierMax = (S.tierMax || 0) + 1;
     toast('Tour Card <b>' + roman(S.tierMax) + '</b> unlocked');
@@ -4750,7 +4750,15 @@ function endTournament(){
    ========================================================================= */
 const eventsOn = tier => S.tierEvents[tier] || 0;
 const cardUnlocked = tier => tier <= (S.tierMax || 0);
-const eventsToNext = () => Math.max(0, B.EVENTS_PER_CARD - eventsOn(S.tierMax || 0));
+// How many events on your highest card open the next one. Five, except on the
+// first three cards: measured over three fresh careers, the first new card
+// took 47-49 minutes to open and the one after that another 38, which is a
+// long time to look at "0 of 5" in a player's first sitting. 2, 3 and 4 open
+// them at 21-24, 45-50 and 74-82 minutes over the same three careers, with
+// cups won and events played unchanged. From the fourth card on it is 5. A
+// card still GROWS across EVENTS_PER_CARD events -- this is only the door.
+const eventsToUnlock = tier => [2, 3, 4][tier] || B.EVENTS_PER_CARD;
+const eventsToNext = () => Math.max(0, eventsToUnlock(S.tierMax || 0) - eventsOn(S.tierMax || 0));
 // What this hole would take, as a share of par time, if it were on `tier`.
 //
 // Two things were wrong with it. chaosFor hashes on the tier, so asking about
@@ -9032,9 +9040,10 @@ function renderTour(){
     ? lb('Cards unlocked', 'all of them')
     : atTop
       ? lb('Events on Card ' + roman(top),
-           eventsOn(top) + ' of ' + B.EVENTS_PER_CARD,
+           Math.min(eventsOn(top), eventsToUnlock(top)) + ' of ' + eventsToUnlock(top),
            eventsToNext() === 0 ? '--aurora' : '')
-      : lb('Events on Card ' + roman(top), eventsOn(top) + ' of ' + B.EVENTS_PER_CARD, '--flag');
+      : lb('Events on Card ' + roman(top), Math.min(eventsOn(top), eventsToUnlock(top)) + ' of '
+           + eventsToUnlock(top), '--flag');
 
   $('tierBox').innerHTML =
     '<div class="hint" id="cardHint"><div class="foldhead">'
@@ -9047,8 +9056,8 @@ function renderTour(){
     + ' more, and the clock you are scored against does not move. A card also grows across its '
     + B.EVENTS_PER_CARD + ' events, so one you have just taken plays short and the same card plays '
     + 'long by the end of it — which is why climbing costs least when you have played one out. '
-    + 'You unlock the next card by playing ' + B.EVENTS_PER_CARD + ' events on your highest, and only '
-    + 'on your highest.</div></div>'
+    + 'You unlock the next card by playing ' + eventsToUnlock(top) + ' events on your highest'
+    + (top < 3 ? ' (5 from Card ' + roman(3) + ' on)' : '') + ', and only on your highest.</div></div>'
     + unlockLine
     + (atTop || top >= B.TIER_MAX ? ''
        : '<div class="hint" style="color:var(--flag)">No new cards unlock below Card '
@@ -9316,7 +9325,7 @@ const DEV = {
       + 'proc ' + pct(D.proc) + ' capped / ' + pct(D.procRaw) + ' raw  ·  luck ' + pct(D.drop) + '<br>'
       + 'gear pow +' + fmt(G.pow*100) + '%  ·  pierce ' + pct(C.pierce) + '  ·  cdr ' + pct(C.cdr) + '<br>'
       + 'card ' + roman(S.tier) + ' of ' + roman(S.tierMax || 0) + ' unlocked  ·  '
-      + eventsOn(S.tierMax || 0) + '/' + B.EVENTS_PER_CARD + ' events on it<br>'
+      + eventsOn(S.tierMax || 0) + '/' + eventsToUnlock(S.tierMax || 0) + ' events on it<br>'
       + 'lv ' + S.lv + '  ·  paragon ' + fmt(S.para, 0) + '  ·  talents ' + talentsUsed()
       + '  ·  honours ' + achCount() + '/' + B.ACH.length + '<br>'
       + 'trophies ' + trophiesFound() + '/' + B.TROPHY.length + '  ·  tickets ' + fmt(S.tickets||0, 0)
