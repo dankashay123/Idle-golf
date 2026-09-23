@@ -57,7 +57,10 @@ module.exports = {
       const o = {};
       setView('upg');    await sleep(120); o.upg    = [n('upgRows'),   B.UPG.length];
       setView('bag');    await sleep(120); o.slots  = [n('bagGrid'),   B.SLOTS.length];
-                                           o.sets   = [n('setBox'),    B.SETS.length + 1];
+                                           // the course, the rarity sets, the named sets you hold a piece
+                                           // of, and a hint line until you hold one
+                                           o.sets   = [n('setBox'), 1 + B.SETS.filter(x => !x.named || x.id in ownedSets()).length
+                                                                    + (Object.keys(ownedSets()).length ? 0 : 1)];
                                            o.purse  = [n('purseStrip'), 4];
       setView('skl');    await sleep(120); o.shots  = [n('sklRows'),   B.SKILL.length];
       setView('dgn');    await sleep(120); o.depths = [n('dgnRows'),   B.DGN.length];

@@ -943,6 +943,14 @@ const B = {
              'XwwXXxXwwXXx','XwXXXxXwXXXx','XXXXXxXXXXXx','.xxxx..xxxx.','............','............'],
     dusk: ['.......XXX..','.....XXw....','.....Xw.....','.....Xw.....','.....XXw....','.......XXX..',
            '..X.........','..XXXX......','..XXXXXX....','..XXXX......','..X.........','.xxxxxx.....'],
+    shield: ['.XXXXXXXXXX.','.XwwwwwwwwX.','.XwXXXXXXxX.','.XwX.XX.XxX.','.XwXXXXXXxX.','.XwX.XX.XxX.',
+             '.XwXXXXXXxX.','..XwXXXXxX..','..XxXXXXxX..','...XxXXxX...','....XxxX....','.....XX.....'],
+    hammer: ['..XXXXXXX...','.XwwwwwwXx..','.XwXXXXXXx..','..xxxXxxx...','.....Xx.....','.....Xx.....',
+             '.....Xx.....','.....Xx.....','.....Xx.....','.....Xx.....','....XXxx....','....xxxx....'],
+    chevrons: ['.....XX.....','....XwwX....','...XwXXxX...','..XwX..XxX..','.XwX....XxX.','.....XX.....',
+               '....XwwX....','...XwXXxX...','..XwX..XxX..','.XwX....XxX.','............','............'],
+    satchel: ['....XXXX....','...X....X...','...X....X...','.XXXXXXXXXX.','.XwwwwwwwwXx','.XwXXXXXXXXx',
+              '.XwXXwwXXXXx','.XwXXxxXXXXx','.XwXXXXXXXXx','.XxxxxxxxxXx','..xxxxxxxxx.','............'],
     proshop: ['...XXXXXX...','..XwwwwwwX..','.XXXXXXXXXX.','XoXXoXXoXXoX','XxXxXxXxXxXx','.XXXXXXXXXX.','.XwwwXXoooX.','.XwwwXXoooX.','.XwwwXXoooX.','.XXXXXXoooX.','.XXXXXXoooX.','.XXXXXXXXXX.'],
     starter: ['............','...XX..XX...','..XwXXXXwX..','.XXXXXXXXXX.','.XwXXXXXXwX.','.XXXXXXXXXX.','.XwXXXXXXwX.','.XwXXXXXXwX.','.XwXXXXXXwX.','.XxXXXXXXxX.','.XXXXXXXXXX.','............'],
     member: ['....XXXX....','...XwwwwX...','..XwXXXXwX..','..XwXooowX..','..XwXXXXwX..','...XwwwwX...','....XXXX....','...XXXXXX...','..XXx.XXx...','.XXx...XXx..','XXx.....XXx.','Xx.......Xx.'],
@@ -2322,8 +2330,27 @@ const B = {
       tiers:[ {n:3, crt:0.05, cpw:0.7}, {n:5, crt:0.11, cpw:1.8} ] },
     { id:'myth', n:'Mythwrought', rar:5, ic:'myth',
       d:'pieces at Mythic',
-      tiers:[ {n:2, elm:0.60}, {n:4, elm:1.80}, {n:6, elm:4.50} ] }
+      tiers:[ {n:2, elm:0.60}, {n:4, elm:1.80}, {n:6, elm:4.50} ] },
+    // Named sets. The three above count any clubs at a rarity; these count
+    // clubs that dropped as part of the set, which a Rare or better club
+    // sometimes does (SET_CHANCE). Each pays in something the rarity sets do
+    // not touch, so collecting one is a different decision from climbing
+    // rarity: purse, tempo, provisionals, gear luck and the wager book.
+    { id:'heritage', n:'Old Course Heritage', mk:'Heritage', ic:'shield', named:true,
+      d:'A purse set',
+      tiers:[ {n:2, gld:0.15}, {n:4, gld:0.40}, {n:6, gld:1.00} ] },
+    { id:'stormforge', n:'Stormforge', mk:'Stormforge', ic:'hammer', named:true,
+      d:'A tempo set',
+      tiers:[ {n:2, spd:0.06}, {n:4, spd:0.15}, {n:6, spd:0.30} ] },
+    { id:'twinline', n:'Twinline', mk:'Twinline', ic:'chevrons', named:true,
+      d:'A provisionals set',
+      tiers:[ {n:2, mst:0.10}, {n:4, mst:0.30}, {n:6, mst:0.70} ] },
+    { id:'caddie', n:"Caddie's Kit", mk:"Caddie's", ic:'satchel', named:true,
+      d:'A gear luck and wager set',
+      tiers:[ {n:2, drp:0.02}, {n:4, drp:0.02, dgn:0.20}, {n:6, drp:0.05, dgn:0.50} ] }
   ],
+  // the chance a club of each rarity drops as part of a named set
+  SET_CHANCE: [0, 0, 0.12, 0.20, 0.30, 0.40],
 
   /* ---- course affinity ----
      Every round the course itself runs an affinity. Carry the matching ball and
@@ -3079,6 +3106,7 @@ function migrate(){
     // the save loaded, and the first thing to score that club threw. A whole
     // number inside the table, or the bottom of it.
     it.rar = clamp(Math.floor(it.rar) || 0, 0, B.RARITY.length - 1);
+    if(it.set && !setDef(it.set)) delete it.set;
     if(!(it.ilvl >= 0)) it.ilvl = 0;
     if(!(it.enh >= 0)) it.enh = 0;
   };
@@ -3339,11 +3367,27 @@ function itemScore(it){
   }
   return s;
 }
+// what a set tier gives, in words
+const setEffect = t => Object.keys(t).filter(k => k !== 'n').map(k => ({
+    pow:'+' + Math.round(t[k]*100) + '% swing', crt:'+' + (t[k]*100).toFixed(0) + 'pp pure',
+    cpw:'+' + t[k].toFixed(1) + 'x payoff', elm:'+' + Math.round(t[k]*100) + '% affinity',
+    gld:'+' + Math.round(t[k]*100) + '% purse', spd:'+' + Math.round(t[k]*100) + '% tempo',
+    mst:'+' + Math.round(t[k]*100) + 'pp provisional', drp:'+' + Math.round(t[k]*100) + 'pp gear luck',
+    dgn:'+' + Math.round(t[k]*100) + '% wager haul'
+  })[k]).join(', ');
+// the named sets with at least one piece anywhere, equipped or in the locker
+function ownedSets(){
+  const o = {};
+  for(const it of S.bag.concat(B.SLOTS.map(sl => S.equip[sl.id]))) if(it && it.set) o[it.set] = 1;
+  return o;
+}
+const inSet = (it, set) => !!it && (set.named ? it.set === set.id : it.rar >= set.rar);
+const setDef = id => B.SETS.find(x => x.id === id && x.named);
 function activeSets(){
   const out = [];
   for(const set of B.SETS){
     let n = 0;
-    for(const sl of B.SLOTS){ const it = S.equip[sl.id]; if(it && it.rar >= set.rar) n++; }
+    for(const sl of B.SLOTS) if(inSet(S.equip[sl.id], set)) n++;
     let best = null;
     for(const t of set.tiers) if(n >= t.n) best = t;
     out.push({ set, n, tier: best });
@@ -3359,7 +3403,7 @@ function gearStats(){
   }
   for(const s of activeSets()){
     if(!s.tier) continue;
-    for(const k of ['pow','crt','cpw','elm']) if(s.tier[k]) g[k] += s.tier[k];
+    for(const k in s.tier) if(k !== 'n' && g[k] !== undefined) g[k] += s.tier[k];
   }
   const C = career();
   for(const k of ['pow','spd','crt','cpw','elm','prc','gld','drp','dgn','mst']) g[k] += C[k];
@@ -3887,6 +3931,10 @@ function makeItem(ilvl, luck, floorRar, slotId){
     ilvl: Math.max(0, Math.round(ilvl + career().fit)), enh: 0, aff,
     el: sl.id === 'ball' ? B.ELEM[Math.floor(Math.random()*B.ELEM.length)].id : null
   };
+  if(rar >= 2 && Math.random() < (B.SET_CHANCE[rar] || 0)){
+    const named = B.SETS.filter(x => x.named);
+    it.set = named[Math.floor(Math.random() * named.length)].id;
+  }
   it.name = nameItem(it, sl);
   return it;
 }
@@ -3904,7 +3952,9 @@ function dropItem(ilvl, luck, floorRar, slotId){
   return it;
 }
 function nameItem(it, sl){
-  const p = B.PREFIX[clamp(Math.floor(it.rar*1.7 + Math.random()*2), 0, B.PREFIX.length-1)];
+  // a set piece carries its maker's name in place of the usual prefix
+  const p = it.set && setDef(it.set) ? setDef(it.set).mk
+    : B.PREFIX[clamp(Math.floor(it.rar*1.7 + Math.random()*2), 0, B.PREFIX.length-1)];
   let n = p + ' ' + sl.n;
   if(it.rar >= 2) n += ' ' + B.SUFFIX[hash32(it.uid*7919) % B.SUFFIX.length];
   return n;
@@ -8838,19 +8888,20 @@ function renderBag(){
     '<div class="row"><div><div class="nm">' + (ce ? ce.n + ' course' : 'Neutral course') + '</div>'
     + '<div class="ds">' + verdict + (ce ? '. It damps ' + elemOf(B.DAMPS[ce.id]).n + '.' : '.') + '</div></div>'
     + (ce ? svgIcon(ce.ic, 'bic', elemColor(ce.id)) : '') + '</div>'
-    + B.SETS.map(set => {
+    // A named set gets a row once a piece of it has turned up, equipped or in
+    // the locker; before that, four rows of 0/6 would be four lines of nothing.
+    + B.SETS.filter(set => !set.named || set.id in ownedSets()).map(set => {
         const a = activeSets().find(x => x.set.id === set.id);
         const next = set.tiers.find(t => t.n > a.n);
-        const eff = t => Object.keys(t).filter(k => k !== 'n').map(k => ({
-            pow:'+' + Math.round(t[k]*100) + '% swing', crt:'+' + (t[k]*100).toFixed(0) + 'pp pure',
-            cpw:'+' + t[k].toFixed(1) + 'x payoff', elm:'+' + Math.round(t[k]*100) + '% affinity'
-          })[k]).join(', ');
+        const eff = setEffect;
         return '<div class="row"><div><div class="nm">' + svgIcon(set.ic, 'tic', a.tier ? BRASS : '')
           + set.n + ' <span class="pill">' + a.n + '/6</span></div>'
           + '<div class="ds">'
           + (a.tier ? '<b style="color:var(--aurora)">' + nb(eff(a.tier)) + '</b>' : set.d)
           + (next ? ' \u00b7 ' + next.n + '\u00a0pieces: ' + nb(eff(next)) : '') + '</div></div></div>';
-      }).join('');
+      }).join('')
+    + (Object.keys(ownedSets()).length ? '' : '<div class="hint">Rare and better clubs can drop '
+      + 'as part of a named set: Heritage, Stormforge, Twinline or Caddie\u2019s.</div>');
 
   const sl = B.SLOTS.find(x => x.id === S.bagSlot);
   const worn = S.equip[S.bagSlot];
@@ -8928,6 +8979,7 @@ function bagRow(it, isWorn){
     + '<div><div class="irow"><span class="in">' + itemHead(it) + '</span>'
       + '<span class="irar" style="color:' + col + '">' + B.RARITY[it.rar].n + '</span></div>'
     + '<div class="ib">' + sl.n + ' \u00b7 item level ' + it.ilvl
+      + (it.set && setDef(it.set) ? ' \u00b7 <span style="color:var(--aurora)">' + setDef(it.set).n + '</span>' : '')
       + (it.enh ? ' \u00b7 +' + it.enh : '')
       + (isWorn ? ' \u00b7 <span style="color:var(--brass)">carrying</span>' : '') + '</div>'
     + '<div class="ia">\u00d7' + fmt(1 + itemPrimary(it)) + ' ' + primary + '</div>'
@@ -8986,7 +9038,8 @@ function itemSheet(it, equipped){
   const canEnh = it.enh < B.ENH_MAX;
   let h = '<div class="sheethead">' + svgIcon(B.SLOTS.find(s=>s.id===it.slot).ic, 'bic', RC(it.rar))
     + '<h3 style="color:' + RC(it.rar) + ';margin:0">' + it.name + (it.enh ? ' +' + it.enh : '') + '</h3></div>';
-  h += '<p>' + B.RARITY[it.rar].n + ' ' + B.SLOTS.find(s=>s.id===it.slot).n + ' \u00b7 item level ' + it.ilvl + '</p>';
+  h += '<p>' + B.RARITY[it.rar].n + ' ' + B.SLOTS.find(s=>s.id===it.slot).n + ' \u00b7 item level ' + it.ilvl
+    + (it.set && setDef(it.set) ? ' \u00b7 <span style="color:var(--aurora)">' + setDef(it.set).n + ' set</span>' : '') + '</p>';
   h += '<ul><li>Primary: +' + fmt(itemPrimary(it)*100) + '% '
      + (it.slot === 'ball' ? 'affinity power' : 'swing power') + '</li>';
   it.aff.forEach((a, i) => {
