@@ -656,6 +656,12 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
    overlapped by two pixels. A margin's percentage reads the WIDTH, the same
    thing the buttons are sized from, so the gap now tracks the buttons. */
 #perkBtn{top:37%;margin-top:calc(max(24px, 6.2%) + max(8px, 4%))}
+/* The hole from above, under the two stage buttons and above the weather.
+   Placed by placeMap(), which measures both, and left out when the stage is
+   too short to hold it. Each map pixel is two screen pixels. */
+#holeMap{position:absolute;right:2.5%;z-index:28;display:none;pointer-events:none;
+  image-rendering:pixelated;image-rendering:crisp-edges;
+  box-shadow:0 0 0 1px rgba(0,0,0,.55),0 2px 6px rgba(0,0,0,.45)}
 #honIcon,#perkIcon{display:block;width:24px;height:24px;object-fit:contain;
   image-rendering:pixelated;image-rendering:crisp-edges}
 #honBtn:active,#perkBtn:active{transform:translateY(1px)}
@@ -733,6 +739,7 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
     <canvas id="hole" width="720" height="440"></canvas>
     <button id="honBtn" aria-label="Achievements"><img id="honIcon" alt=""></button>
     <button id="perkBtn" aria-label="Sponsor perks"><img id="perkIcon" alt=""><span id="perkDot"></span></button>
+    <canvas id="holeMap" aria-hidden="true"></canvas>
     <div id="hudLeft">
     <div id="readout">
       <div class="rline"><span id="rTop">Hole 1 &middot; Par 4</span><span id="rTopR">0.0 / 15s</span></div>
@@ -8002,6 +8009,7 @@ const Scene = {
     this.ctx.imageSmoothingQuality = 'low';
     setViewport(bw, bh);
     this.buildSky();
+    this.mapOn = false; this._mapTry = null;   // the hole map is placed again
   },
 
   // World-space overlap test. Hazards were placed by pure rejection-free random
@@ -8032,18 +8040,28 @@ const Scene = {
   // placed. Water goes first because it is the biggest.
   layHazards(rnd, cfg){
     this.water = null; this.bunkers = [];
+    const cn = cfg.corners || [];
     if(cfg.water){
       for(let a = 0; a < 40; a++){
-        const w = { d: cfg.wd(rnd), x: cfg.wx(rnd), rd: cfg.wrd(rnd), rx: cfg.wrx(rnd),
+        // the first tries go on the outside of the biggest corner, just past
+        // the elbow, where the straight shot runs out
+        const k = a < 20 && cn[0];
+        const w = { d: k ? k.d + (rnd() - 0.2) * k.w : cfg.wd(rnd),
+                    x: k ? k.out * (2.7 + rnd()*1.2) : cfg.wx(rnd), rd: cfg.wrd(rnd), rx: cfg.wrx(rnd),
                     shape: this.blob(rnd, .24), shape2: this.blob(rnd, .24) };
         if(Math.abs(w.x) - w.rx < B_LANE) continue;     // keep it off the lane he walks
         if(this.hitsGreen(w)) continue;
         this.water = w; break;
       }
     }
-    for(let i = 0; i < cfg.nb; i++){
+    // one bunker on the outside of every corner, then one tucked into the
+    // inside of the first, then wherever they fall
+    const plan = cn.map(k => ({ k, side: k.out })).concat(cn.length ? [{ k: cn[0], side: -cn[0].out, pull: 1 }] : []);
+    for(let i = 0; i < Math.max(cfg.nb, Math.min(plan.length, cfg.nb + 1)); i++){
       for(let a = 0; a < 40; a++){
-        const b = { d: cfg.bd(rnd), x: cfg.bx(rnd), rd: cfg.brd(rnd), rx: cfg.brx(rnd),
+        const pl = a < 20 && plan[i];
+        const b = { d: pl ? pl.k.d + (rnd() - 0.5) * pl.k.w * (pl.pull ? 0.6 : 0.9) - (pl.pull ? pl.k.w * 0.4 : 0) : cfg.bd(rnd),
+                    x: pl ? pl.side * (1.7 + rnd()*1.3) : cfg.bx(rnd), rd: cfg.brd(rnd), rx: cfg.brx(rnd),
                     shape: this.blob(rnd, .26), shape2: this.blob(rnd, .26) };
         // Bunkers only checked each other before, so one could sit straight on
         // the middle of the hole and he would walk through it every time.
@@ -8067,6 +8085,20 @@ const Scene = {
         put.push({ kind:0, d, x, s:.78 + rnd()*.55,
                    k: cfg.kind === 2 ? (rnd() < .42 ? 1 : 0) : cfg.kind });
         break;
+      }
+    }
+    // A stand of trees on the inside of each corner: the line that cuts it
+    // flies over them.
+    for(const k of (cfg.corners || [])){
+      const n = Math.round((7 + rnd()*5) * Math.max(0.6, cfg.trees / 36));
+      for(let i = 0; i < n; i++){
+        for(let a = 0; a < 18; a++){
+          const d = k.d + (rnd() - 0.5) * k.w * 1.8, x = -k.out * (3.7 + rnd()*2.6);
+          if(this.hitsHazard(d, x, 0.7) || this.onPlay(d, x, 0.5) || clash(d, x, 1.3)) continue;
+          put.push({ kind:0, d, x, s:.85 + rnd()*.5,
+                     k: cfg.kind === 2 ? (rnd() < .42 ? 1 : 0) : cfg.kind });
+          break;
+        }
       }
     }
     // gallery down both sides, just off the fairway, inside the treeline
@@ -8323,25 +8355,9 @@ const Scene = {
     this.theme = buildTheme(cs, mode);
     this.treeSpr = courseTrees(cs, mode);
 
-    const L = cs.land;
-    this.layHazards(rnd, {
-      water: rnd() < L.water,
-      wd: r => LEN*0.26 + r()*LEN*0.48, wx: r => (r()<.5?-1:1)*(2.6 + r()*1.3),
-      wrd: r => (LEN*0.09 + r()*LEN*0.10) * L.wsize, wrx: r => (1.0 + r()*0.8) * L.wsize,
-      nb: Math.max(1, Math.round(L.nb * (0.7 + rnd()*0.6))),
-      bd: r => LEN*0.18 + r()*LEN*0.74, bx: r => (r()<.5?-1:1)*(1.6 + r()*1.6),
-      brd: r => (LEN*0.035 + r()*LEN*0.045) * L.bsize, brx: r => (.5 + r()*.55) * L.bsize
-    });
-    this.layProps(rnd, { trees: (30 + rnd()*14) * L.trees, kind: L.kind,
-                         crowd: (26 + rnd()*14) * L.crowd });
-
-    this.hills = [[], []];
-    for(let L = 0; L < 2; L++)
-      for(let i = 0; i <= 40; i++) this.hills[L].push(rnd());
-
-    // The bend, off its own stream so the hazards and trees of every hole
-    // stay where they were. a: how far the line moves across, c: where the
-    // corner is, w: half the length of the turn.
+    // The bend, off its own stream. a: how far the line moves across, c:
+    // where the corner is, w: half the length of the turn. Laid down before
+    // the hazards, which are placed by it.
     {
       const cr = seeded(h*7919 + tier*104729 + 31337), par = parOf(h);
       const side = cr() < 0.5 ? -1 : 1, segs = [];
@@ -8355,6 +8371,30 @@ const Scene = {
       this.curve = { segs, sway: 0.6 + cr()*1.2, ph: cr()*6.28 };
       this._bcD = null;
     }
+    // Each corner, and which side of it is the outside: the side a shot
+    // hit straight on would run out through. That is where a designer puts
+    // the water and the sand; the trees crowd the inside, so cutting the
+    // corner is the gamble it is on a real course.
+    const corners = this.curve.segs.filter(g => Math.abs(g.a) >= 6)
+      .map(g => ({ d: g.c, w: g.w, out: g.a > 0 ? -1 : 1 }))
+      .sort((p, q) => q.w - p.w);
+    const L = cs.land;
+    this.layHazards(rnd, {
+      corners,
+      water: rnd() < L.water,
+      wd: r => LEN*0.26 + r()*LEN*0.48, wx: r => (r()<.5?-1:1)*(2.6 + r()*1.3),
+      wrd: r => (LEN*0.09 + r()*LEN*0.10) * L.wsize, wrx: r => (1.0 + r()*0.8) * L.wsize,
+      nb: Math.max(1, Math.round(L.nb * (0.7 + rnd()*0.6))),
+      bd: r => LEN*0.18 + r()*LEN*0.74, bx: r => (r()<.5?-1:1)*(1.6 + r()*1.6),
+      brd: r => (LEN*0.035 + r()*LEN*0.045) * L.bsize, brx: r => (.5 + r()*.55) * L.bsize
+    });
+    this.layProps(rnd, { trees: (30 + rnd()*14) * L.trees, kind: L.kind, corners,
+                         crowd: (26 + rnd()*14) * L.crowd });
+
+    this.hills = [[], []];
+    for(let L = 0; L < 2; L++)
+      for(let i = 0; i <= 40; i++) this.hills[L].push(rnd());
+
 
     this.camD = 0;
     this.balls.length = 0; this.nums.length = 0; this.sparks.length = 0;
@@ -8631,7 +8671,117 @@ function panel(c, x, y, w, h, fill, border){
   }
 }
 
+/* ---- the hole from above ----
+   From the tee the rolling ground hides most of a dogleg, so a small map of
+   the hole sits on the stage: fairway, sand, water, trees, the green and the
+   flag, with the golfer and any ball in the air on it. The hole is drawn once
+   when it changes; each frame only lays the markers over that. */
 Object.assign(Scene, {
+  placeMap(){
+    const cv = $('holeMap'), st = $('stage'), pk = $('perkBtn');
+    if(!cv || !st || !pk || !this.cv) return;
+    const SW = st.clientWidth, SH = st.clientHeight;
+    const top = pk.offsetTop + pk.offsetHeight + Math.max(8, Math.round(SW * 0.03));
+    // the weather lines are drawn in the frame, up to three of them, above
+    // the pull tab's corner: measured in buffer rows and scaled to the screen
+    const k = SH / Math.max(1, VH);
+    const floor = Math.round((VH - LH*3 - 2 - VH*0.045) * k) - 6;
+    const W = clamp(Math.round(SW * 0.16 / 2) * 2, 40, 92);
+    const room = floor - top;
+    if(room < W * 1.15 || S.dgnRun){ cv.style.display = 'none'; this.mapOn = false; return; }
+    const H = Math.min(Math.round(W * 1.7 / 2) * 2, Math.floor(room / 2) * 2);
+    const mw = W / 2, mh = H / 2;
+    if(cv.width !== mw || cv.height !== mh){ cv.width = mw; cv.height = mh; this.mapKey = null; }
+    cv.style.width = W + 'px'; cv.style.height = H + 'px'; cv.style.top = top + 'px';
+    cv.style.display = 'block'; this.mapOn = true;
+  },
+  // world (distance d, lateral x from the centre line) to map pixels
+  mapXY(d, x){
+    const M = this.mapM;
+    return [M.ox + (this.curveAt(d) + x - M.cx) * M.kx, M.oy - (d - M.d0) * M.k];
+  },
+  buildMap(mw, mh){
+    const T = this.theme || THEMES.day;
+    const key = [this.hole, this.tier, this.themeId, mw, mh].join('|');
+    if(this.mapKey === key && this.mapStatic) return;
+    this.mapKey = key;
+    const d0 = -3, d1 = LEN + 11;
+    let lo = Infinity, hi = -Infinity;
+    for(let d = d0; d <= d1; d += 1){ const c = this.curveAt(d); lo = Math.min(lo, c); hi = Math.max(hi, c); }
+    lo -= 5; hi += 5;
+    // Drawn wider than it is, the way a course guide is: at true scale a
+    // fairway six wide and seventy long is a two-pixel thread.
+    const k = Math.min((mw - 2) / (hi - lo), (mh - 2) / (d1 - d0));
+    const kx = Math.min((mw - 2) / (hi - lo), k * 2.4);
+    this.mapM = { k, kx, d0, cx: (lo + hi) / 2, ox: mw / 2, oy: mh - 1 - ((mh - 2) - (d1 - d0) * k) / 2 };
+    const cv = this.mapStatic || (this.mapStatic = document.createElement('canvas'));
+    cv.width = mw; cv.height = mh;
+    const g = cv.getContext('2d');
+    g.fillStyle = T.rg[2]; g.fillRect(0, 0, mw, mh);
+    // Every row of the map is a distance down the hole, and each shape is
+    // its width across the hole at that distance -- the same measure the
+    // view uses, so a bunker beside the fairway out there is beside it here.
+    // Walked at half a row so a corner, where the hole runs across the map,
+    // has no gaps in it.
+    const span = (d, x0, x1, col, striped) => {
+      const [a, y] = this.mapXY(d, x0), [b] = this.mapXY(d, x1);
+      const l = Math.round(Math.min(a, b)), r = Math.round(Math.max(a, b)), yy = Math.round(y);
+      g.fillStyle = striped ? ((yy >> 1) & 1 ? col[0] : col[1]) : col;
+      g.fillRect(l, yy, Math.max(1, r - l), 1);
+    };
+    const step = 0.5 / k;
+    for(let d = d0; d <= d1; d += step){
+      if(d > -0.5 && d < LEN + 7){ const hw = this.fwWidth(d); span(d, -hw, hw, [T.fw[4], T.fw[5]], true); }
+      const gd = d - LEN;
+      if(Math.abs(gd) < 8.6){ const a = 3.05 * Math.sqrt(1 - (gd/8.6)*(gd/8.6)); span(d, -a, a, T.apron); }
+      if(Math.abs(gd) < 7.5){ const a = 2.35 * Math.sqrt(1 - (gd/7.5)*(gd/7.5)); span(d, -a, a, T.gr[4]); }
+      for(const hz of this.bunkers){ const sp = this.hazSpan(hz, d); if(sp) span(d, hz.x - sp.l, hz.x + sp.r, T.sd[4]); }
+      if(this.water){ const sp = this.hazSpan(this.water, d); if(sp) span(d, this.water.x - sp.l, this.water.x + sp.r, T.wt[3]); }
+    }
+    // the tee
+    { const [x, y] = this.mapXY(0, 0); g.fillStyle = T.gr[3]; g.fillRect(Math.round(x) - 1, Math.round(y) - 1, 3, 2); }
+    // trees, as dark clumps
+    for(const p of (this.props || [])){
+      if(p.kind !== 0 || p.d < d0 || p.d > d1) continue;
+      const [x, y] = this.mapXY(p.d, p.x);
+      if(x < 0 || x >= mw || y < 0 || y >= mh) continue;
+      g.fillStyle = T.tl2; g.fillRect(Math.round(x), Math.round(y), 2, 2);
+      g.fillStyle = T.tl;  g.fillRect(Math.round(x), Math.round(y), 1, 1);
+    }
+    // the flag
+    { const [x, y] = this.mapXY(LEN, 0), fx = Math.round(x), fy = Math.round(y);
+      g.fillStyle = '#F4F6EF'; g.fillRect(fx, fy - 3, 1, 4);
+      g.fillStyle = '#E4574A'; g.fillRect(fx + 1, fy - 3, 2, 1); }
+    // a frame, one pixel of the rough's own dark
+    g.fillStyle = T.rg[0];
+    g.fillRect(0, 0, mw, 1); g.fillRect(0, mh - 1, mw, 1); g.fillRect(0, 0, 1, mh); g.fillRect(mw - 1, 0, 1, mh);
+  },
+  drawMap(){
+    if(!this.mapOn){
+      // placed on the first frame, and again whenever the stage changes shape
+      if(this._mapTry !== VW + 'x' + VH){ this._mapTry = VW + 'x' + VH; this.placeMap(); }
+      if(!this.mapOn) return;
+    }
+    const cv = $('holeMap'), mw = cv.width, mh = cv.height;
+    // ten times a second is plenty for a map
+    if(this.t - (this._mapT || 0) < 0.1 && this.mapKey) return;
+    this._mapT = this.t;
+    this.buildMap(mw, mh);
+    const g = cv.getContext('2d');
+    g.drawImage(this.mapStatic, 0, 0);
+    // balls in the air, as a white pixel each
+    g.fillStyle = '#FFFFFF';
+    for(const b of this.balls){
+      const u = clamp(b.t / b.dur, 0, 1), lu = u*u*(3 - 2*u);
+      const lt = b.lat0 === undefined ? b.lat : b.lat0 + (b.lat - b.lat0)*lu;
+      const [x, y] = this.mapXY(b.d0 + b.dist*u, lt);
+      g.fillRect(Math.round(x), Math.round(y), 1, 1);
+    }
+    // the golfer, blinking
+    const [x, y] = this.mapXY(this.camD, -0.30);
+    g.fillStyle = (this.t * 2.5) % 1 < 0.6 ? '#FFD66B' : '#1A1F1A';
+    g.fillRect(Math.round(x) - 1, Math.round(y) - 1, 2, 2);
+  },
   fwWidth(d){
     const t = clamp(d/LEN, 0, 1);
     const L = this.land || { fw:3.10, taper:0.85 };
@@ -9661,6 +9811,7 @@ Object.assign(Scene, {
         c.fillStyle = 'rgba(214,180,255,.18)'; c.fillRect(0, 0, VW, VH);
       }
       this.drawDepthsHud(D, R, dg);
+      if(this.mapOn || this._mapTry){ this.mapOn = false; this._mapTry = null; $('holeMap').style.display = 'none'; }
       this.drawPerks();
       this.drawShots();
       this.drawFx(dt);
@@ -9687,6 +9838,7 @@ Object.assign(Scene, {
       this.drawPerks();
       this.drawShots();
       this.drawFx(dt);
+      this.drawMap();
     }
 
     const g = this.ctx;

@@ -15,6 +15,12 @@
  *     standing nearer), at least 98% have to be fairway. It measured 99.4%;
  *     the rest are a pond's edge at a sharp corner. Take the bend out of the
  *     ball's projection but leave it on the ground and it falls to about 30%.
+ *   - corners are designed: water at a corner sits on its outside, where a
+ *     shot hit straight runs out, and the outside holds water or sand on
+ *     nine corners in ten (the first bunker goes there, unless the pond has
+ *     taken the spot); the trees crowd the inside, so cutting the corner is
+ *     the gamble
+ *   - the hole map is shown on an upright phone and marks the golfer
  *   - a wager is played dead straight
  */
 'use strict';
@@ -61,6 +67,30 @@ module.exports = {
             }
           }
         }
+        // designed corners: water and the first bunker outside, trees inside
+        o.wOut = 0; o.wAll = 0; o.bOut = 0; o.bAll = 0; o.tIn = 0; o.tOut = 0;
+        for (let h = 1; h <= 72; h++) {
+          Scene.newHole(h, 0);
+          const g = Scene.curve.segs.filter(q => Math.abs(q.a) >= 6).sort((p, q) => q.w - p.w)[0];
+          if (!g) continue;
+          const out = g.a > 0 ? -1 : 1, near = d => Math.abs(d - g.c) < g.w * 1.2;
+          if (Scene.water && near(Scene.water.d)) { o.wAll++; if (Math.sign(Scene.water.x) === out) o.wOut++; }
+          // the outside holds the water or, where there is none, the first bunker
+          o.bAll++;
+          if ((Scene.water && near(Scene.water.d) && Math.sign(Scene.water.x) === out)
+              || Scene.bunkers.some(b => Math.sign(b.x) === out && near(b.d))) o.bOut++;
+          for (const p of Scene.props) if (p.kind === 0 && near(p.d) && Math.abs(p.x) < 7.5)
+            Math.sign(p.x) === -out ? o.tIn++ : o.tOut++;
+        }
+        // the map: shown on a phone upright, and it marks where he is
+        Scene.newHole(S.hole, S.tier); Scene.mapOn = false; Scene._mapTry = null; Scene.t += 1; Scene.drawMap();
+        const mc = document.getElementById('holeMap');
+        o.map = { shown: getComputedStyle(mc).display !== 'none', w: mc.width, h: mc.height };
+        if (o.map.shown) {
+          Scene.t += 1; Scene.drawMap();
+          const [mx, my] = Scene.mapXY(Scene.camD, -0.30), px = mc.getContext('2d').getImageData(Math.round(mx) - 1, Math.round(my) - 1, 1, 1).data;
+          o.map.marker = px[0] + ',' + px[1] + ',' + px[2];
+        }
         // a wager is straight
         const R = { id: 'water', floor: 3 };
         Scene.newDepthsHole(R); o.wager = Scene.curve;
@@ -79,10 +109,18 @@ module.exports = {
     if (!(ground > 200)) throw new Error('only ' + ground + ' landings showed ground, so this measured nothing');
     if (!(fw >= 0.98)) throw new Error('on bent holes only ' + Math.round(fw * 1000) / 10 + '% of landings are on the fairway ('
       + JSON.stringify(r.cls) + '): the ball is not following the hole round the corner');
+    if (!(r.wOut >= r.wAll * 0.8)) throw new Error('water at a corner sits on its outside on only ' + r.wOut + ' of ' + r.wAll + ' holes');
+    if (!(r.bOut >= r.bAll * 0.9)) throw new Error('the outside of the corner holds water or sand on only ' + r.bOut + ' of ' + r.bAll + ' holes');
+    if (!(r.tIn > r.tOut * 1.5)) throw new Error('the trees round a corner are not on its inside: ' + r.tIn + ' inside, ' + r.tOut + ' outside');
+    if (!r.map.shown || !(r.map.w >= 20 && r.map.h >= 30)) throw new Error('the hole map is not shown on an upright phone: ' + JSON.stringify(r.map));
+    if (!/^(255,214,107|26,31,26)$/.test(r.map.marker)) throw new Error('the hole map does not mark the golfer: ' + r.map.marker);
     if (r.wager) throw new Error('a wager hole bends: ' + JSON.stringify(r.wager));
     return [r.bent + ' of ' + r.p45 + ' par fours and fives turn by 8 or more; no par three past ' + r.p3max.toFixed(1),
       'on bent holes ' + (fw * 100).toFixed(1) + '% of ' + ground + ' visible landings are fairway ('
         + Object.entries(r.cls).map(([k, v]) => k + ' ' + v).join(', ') + '; ' + r.hidden + ' behind a rise)',
+      'corners designed: water outside on ' + r.wOut + '/' + r.wAll + ', water or sand outside on ' + r.bOut + '/' + r.bAll
+        + ', trees ' + r.tIn + ' inside to ' + r.tOut + ' outside',
+      'hole map ' + r.map.w + 'x' + r.map.h + ' shown, golfer marked',
       'wagers play straight'];
   }
 };
