@@ -6909,6 +6909,46 @@ const G_FIN_ROWS = [
     '.............oooooooo......PPPPPP.......',
     '.............bbbbbbbb......bbbbbb.......'
 ];
+// The caddie, from the belt up: a green cap, the white bib, and the bag
+// slung behind him with the club heads showing. His legs, like the golfer's
+// when he walks, are drawn in code so they can stride.
+const CADDIE_ROWS = [
+    '........................................',
+    '........................................',
+    '.......................gggg.............',
+    '.....................gggggggg...........',
+    '.....................ggggggggG..........',
+    '......................ggggggGGGG........',
+    '......................kkkkkbKk..........',
+    '......................kkkkkKK...........',
+    '.......................kkkKKK...........',
+    '........................kKK.............',
+    '..........i.i..........wwwww............',
+    '..........iii.i.......wWWWWWw...........',
+    '.........yyyyyy......wwWWWWWWw..........',
+    '.........yYYYYy.....wwwWWWWWWw..........',
+    '.........yYYYYy...wwwwWWWWWWW...........',
+    '.........yYYYYy.rrwwwwWWWWWW............',
+    '.........yYYYYyrr.wwwWWWWWWW............',
+    '.........yYYYYy...wwwWWWWWW.............',
+    '.........yYYYYy...wwwWWWWWW.............',
+    '.........yYYYYy...wwwWWWWWW.............',
+    '.........yYYYYy...wwwWWWWWW.............',
+    '.........yYYYYy...wwwWWWWWW.............',
+    '.........yYYYYy...wwwWWWWWW.............',
+    '.........yyyyyy...wwwWWWWWW.............',
+    '.........yYYYYy...wwwWWWWWW.............',
+    '.........yYYYYy...wwwWWWWWW.............',
+    '.........yYYYYy...wwwWWWWWW.............',
+    '.........yYYYYy...wwwWWWWWW.............',
+    '.........yyyyyy...wwwWWWWWW.............',
+    '..........yyyy....wwwWWWWWW.............',
+    '..................wwwWWWWWW.............',
+    '..................bbbbbbbb..............'
+];
+const CADDIE_MAP = { g:'#2E6B3A', G:'#1F4A28', k:PX.skin, K:PX.skin2, b:'#2A2018', w:'#E8ECE4', W:'#BFC7BC',
+                     y:'#8A2A2A', Y:'#B23A3A', i:'#C9D1D6', r:'#5A3A20' };
+const CADDIE_LEGS = ['#3A3F4A', '#2A2E36', '#1E1A16'];
 // Patterned shirts and caps, painted over the plain sprite: anything that came
 // out in the shirt's (or cap's) colours takes the pattern's colour instead.
 const PATTERNS = {
@@ -6947,6 +6987,11 @@ function buildSprites(){
   // Finish: up out of the posture, chest turned through, weight on the lead
   // side with the trail foot dragged up on its toe.
   SPRITE.gFinish = patterned(makeSprite(G_FIN_ROWS, GMAP), OUT);
+  // Walking: the finish pose from the belt up, standing tall, and nothing
+  // below it -- the legs stride in code.
+  const blank = '.'.repeat(40);
+  SPRITE.gWalk = patterned(makeSprite(G_FIN_ROWS.slice(0, 32).concat(G_FIN_ROWS.slice(32).map(() => blank)), GMAP), OUT);
+  SPRITE.caddie = makeSprite(CADDIE_ROWS.concat(G_FIN_ROWS.slice(32).map(() => blank)), CADDIE_MAP);
 
   SPRITE.pine = makeSprite(PINE_ROWS, TREE_DEFAULT);
 
@@ -6960,6 +7005,7 @@ function buildSprites(){
   // growing out of his chest at the finish.
   SPRITE.gAddr.ax = 0.66; SPRITE.gAddr.ay = 0.300;
   SPRITE.gFinish.ax = 0.60; SPRITE.gFinish.ay = 0.266;
+  SPRITE.gWalk.ax = 0.58; SPRITE.gWalk.ay = 0.266;
   SPRITE.flagA = makeSprite([
     'fffffff..',
     'ffffffff.',
@@ -8297,6 +8343,23 @@ const Scene = {
 
   holeLen(){ return LEN; },
   flyStart(){ this.fly = { t: 0, dur: 3.4, to: LEN - 13 }; },
+  drawCaddie(c, gh, walking){
+    const p = this.proj(this.camD + 0.25, -1.45);
+    const h = Math.max(6, Math.round(gh * 0.93)), spr = SPRITE.caddie;
+    const w = Math.max(4, Math.round(h * spr.w / spr.h));
+    const x = p.x - Math.round(w*0.42);
+    const up = walking && (Math.floor(this.walkPh * 4 + 1) & 1) ? Math.max(1, Math.round(h / 40)) : 0;
+    const y = p.y - h - up;
+    c.fillStyle = 'rgba(8,16,10,.30)';
+    c.fillRect(x + Math.round(w*0.25), p.y - 1, Math.round(w*0.45), Math.max(1, Math.round(h*0.045)));
+    // a half step out of time with him, so the two do not march
+    drawLegs(c, x + w*0.55, y + h*(32/58), h*(25/58), w, walking ? this.walkPh + 0.25 : null,
+             CADDIE_LEGS[0], CADDIE_LEGS[1], CADDIE_LEGS[2]);
+    c.drawImage(spr.cv, x, y, w, h);
+    // an arm hanging at his side, swinging a little as he goes
+    const sx = x + w*0.60, sy = y + h*0.30, sw = walking ? Math.sin((this.walkPh + 0.25) * Math.PI * 2) * 0.35 : 0;
+    pxLine(c, sx, sy, sx + Math.sin(sw) * h*0.22, sy + Math.cos(sw) * h*0.22, PX.skin2, h > 34 ? 2 : 1);
+  },
   // Where a ball is across the hole a fraction u of the way through its
   // flight: off the face, eased onto its line, and carried downwind while it
   // is up. The wind's push is a bow, nothing at either end, so the ball
@@ -8668,6 +8731,25 @@ const Scene = {
   depthsFlash(col){ this.flash = 1; this.flashCol = col; }
 };
 
+// Two legs from the hip: the far one first, in the darker cloth, then the
+// near one, each ending in a shoe. ph is the stride phase (a whole number is
+// a full cycle of two steps); null stands them straight. Each leg bends at
+// the knee as it swings through, so the stride is not a pair of compasses.
+function drawLegs(c, hx, hy, len, w, ph, near, far, shoe){
+  const th = Math.max(1, Math.round(w * 0.09)), fw = Math.max(2, Math.round(th * 2.2));
+  const leg = (swing, col, dx) => {
+    const a = swing * 0.42, lift = Math.max(0, -Math.cos(ph * Math.PI * 2 + (dx > 0 ? 0 : Math.PI))) * 0.25;
+    const kx = hx + dx + Math.sin(a) * len * 0.5, ky = hy + Math.cos(a) * len * 0.5;
+    const b = a - (ph === null ? 0 : lift);
+    const fx = kx + Math.sin(b) * len * 0.5, fy = ky + Math.cos(b) * len * 0.5;
+    pxLine(c, hx + dx, hy, kx, ky, col, th);
+    pxLine(c, kx, ky, fx, fy, col, th);
+    c.fillStyle = shoe; c.fillRect(Math.round(fx - th * 0.3), Math.round(fy), fw, Math.max(1, th));
+  };
+  const s = ph === null ? 0 : Math.sin(ph * Math.PI * 2);
+  leg(-s, far, -th * 0.4);
+  leg(s, near, th * 0.6);
+}
 function pxRing(c, cx, cy, r, col){
   c.fillStyle = col;
   const n = Math.max(10, Math.round(r*4.2));
@@ -9360,9 +9442,12 @@ Object.assign(Scene, {
     const c = this.b;
     const p = this.proj(atCam === undefined ? this.camD : atCam, 0);
     const ph = this.swingT > 0 ? 1 - this.swingT/this.swingDur : 0;
+    // Between shots, while the camera carries him on to the ball, he walks:
+    // upright, the club on his shoulder, his legs striding.
+    const walking = ph === 0 && !!this.walkOn;
     // Past the ball he comes up out of the posture, so the silhouette changes
     // rather than the same bent figure sliding around.
-    const spr = ph > 0.60 ? SPRITE.gFinish : SPRITE.gAddr;
+    const spr = walking ? SPRITE.gWalk : ph > 0.60 ? SPRITE.gFinish : SPRITE.gAddr;
     // He stood 1:2.9 against the fairway. Real golf is nearer 1:17; a figure
     // that small is unreadable in pixel art, so 1:7 is the compromise. The
     // number is his world height in the same units the lateral scale uses.
@@ -9370,7 +9455,11 @@ Object.assign(Scene, {
     const w = Math.max(4, Math.round(h * spr.w / spr.h));
     const FX = STYLEFX[outfitNow().fx] || null;
     const x = p.x - Math.round(w*0.42);
-    const y = p.y - h - (FX && FX.bob ? Math.round(2 + Math.sin(this.t * 2.2) * 2) : 0);
+    const stepUp = walking && (Math.floor(this.walkPh * 4) & 1) ? Math.max(1, Math.round(h / 40)) : 0;
+    const y = p.y - h - stepUp - (FX && FX.bob ? Math.round(2 + Math.sin(this.t * 2.2) * 2) : 0);
+
+    // his caddie, a stride to his left and a touch behind, walking when he does
+    if(atCam === undefined && SPRITE.caddie) this.drawCaddie(c, h, walking);
 
     c.fillStyle = 'rgba(8,16,10,.34)';
     c.fillRect(x + Math.round(w*0.05), p.y - 1, Math.round(w*0.62), Math.max(1, Math.round(h*0.045)));
@@ -9380,7 +9469,8 @@ Object.assign(Scene, {
     // over the lead shoulder.
     const ADDR = 0.50, TOP = -2.50, FIN = 2.60;
     let arm, coil = 0;
-    if(ph === 0) arm = ADDR;
+    if(walking) arm = -2.8;                  // resting on his shoulder
+    else if(ph === 0) arm = ADDR;
     else if(ph < 0.36){ const t = ph/0.36; arm = ADDR + (TOP - ADDR)*t; coil = -t*0.5; }
     else if(ph < 0.55){ const t = (ph - 0.36)/0.19; arm = TOP + (ADDR - TOP)*t; coil = -(1-t)*0.5; }
     else { const t = (ph - 0.55)/0.45; arm = ADDR + (FIN - ADDR)*t; coil = t*0.7; }
@@ -9397,6 +9487,10 @@ Object.assign(Scene, {
     if(FX && FX.back) FX.back(c, g);
     if(FX && FX.outline) outlineAt(c, g, FX.outline, RING1, FX.outlineA * (0.8 + 0.2 * Math.sin(this.t * 3)));
     if(FX && FX.alpha) c.globalAlpha = FX.alpha;
+    if(walking){
+      const O = outfitNow();
+      drawLegs(c, x + w*0.52, y + h*(32/58), h*(25/58), w, this.walkPh, O.pant || '#2B3B4F', O.pant2 || O.pant || '#1C2937', O.shoe || PX.shoe);
+    }
     blitShear(c, spr, x, y, w, h, shear);
 
     const sx = x + w*(spr.ax || 0.66), sy = y + h*(spr.ay || 0.30);
@@ -9787,6 +9881,7 @@ Object.assign(Scene, {
     c.clearRect(0, 0, VW, VH);
 
     if(S.dgnRun){
+      this.walkOn = false;
       const R = S.dgnRun, dg = B.DGN.find(x => x.id === R.id);
       if(R.floor !== this.dFloor || this.themeId !== R.id){
         this.dFloor = R.floor; this.newDepthsHole(R);
@@ -9850,7 +9945,13 @@ Object.assign(Scene, {
         this.dFloor = -1; this.newHole(S.hole, S.tier);   // back up top
       }
       const prog = clamp(1 - S.yards / S.yardsMax, 0, 1);
+      const cam0 = this.camD;
       this.camD += (prog*LEN - this.camD) * Math.min(1, dt*4.5);
+      // walking: the camera is carrying him on and he is not mid-swing. A new
+      // hole puts the camera back on the tee, which is not a walk.
+      const v = dt > 0 ? (this.camD - cam0) / dt : 0;
+      this.walkOn = this.swingT === 0 && v > 0.8 && v < 200;
+      if(this.walkOn) this.walkPh = (this.walkPh || 0) + dt * clamp(1.4 + v * 0.08, 1.4, 2.6);
       // The fly-over borrows the camera: it rides down the hole to look at
       // the green and comes back, while the round carries on underneath. The
       // golfer and his shots are left out of the frames it has.
