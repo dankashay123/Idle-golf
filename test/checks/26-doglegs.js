@@ -24,6 +24,8 @@
  *   - the first hole of each round opens with a fly-over: never another
  *     hole, never with it off in Settings or during a catch-up; the round
  *     plays on under it and a tap on the field ends it
+ *   - the wind carries a ball downwind while it is up and moves neither end
+ *     of its flight, so it still lands on the fairway; a wager is calm
  *   - a wager is played dead straight
  */
 'use strict';
@@ -113,6 +115,18 @@ module.exports = {
           o.fly.load = (() => { Scene.fly = null; S.hole = 37; startHole(); return !!Scene.fly; })();
           QUIET = true; S.flyover = fo; S.hole = keepH; startHole();
         }
+        // the wind: a bow downwind, and the ball still lands where it was going
+        {
+          const b = { lat0: 0.42, lat: -0.15, dist: 18 };
+          Scene.wind = 0; const calm = [0, 0.5, 1].map(u => Scene.ballLat(b, u));
+          Scene.wind = 0.8; const right = [0, 0.5, 1].map(u => Scene.ballLat(b, u));
+          Scene.wind = -0.8; const left = [0, 0.5, 1].map(u => Scene.ballLat(b, u));
+          o.wind = { ends: Math.max(Math.abs(right[0] - calm[0]), Math.abs(right[2] - calm[2]), Math.abs(left[2] - calm[2])),
+                     bowR: right[1] - calm[1], bowL: left[1] - calm[1], mph: (Scene.wind = 0.8, Scene.windMph()) };
+          let x = 0; for (let h = 1; h <= 72; h++) { Scene.newHole(h, 0); x = Math.max(x, Math.abs(Scene.wind)); }
+          o.wind.most = x;
+          Scene.newDepthsHole({ id: 'sand', floor: 2 }); o.wind.wager = Scene.wind;
+        }
         // a wager is straight
         const R = { id: 'water', floor: 3 };
         Scene.newDepthsHole(R); o.wager = Scene.curve;
@@ -144,6 +158,11 @@ module.exports = {
     if (F.load) throw new Error('a fly-over ran on a load or a climb, not a round played into');
     if (!F.played) throw new Error('the round stood still during the fly-over');
     if (!F.still || !F.tapped) throw new Error('a tap did not end the fly-over (running ' + F.still + ', ended ' + F.tapped + ')');
+    const W = r.wind;
+    if (W.ends > 1e-9) throw new Error('the wind moved where the ball leaves the club or lands, by ' + W.ends.toFixed(3));
+    if (!(W.bowR > 0.3 && W.bowL < -0.3)) throw new Error('the wind does not carry the ball downwind mid-flight: ' + W.bowR.toFixed(2) + ' / ' + W.bowL.toFixed(2));
+    if (!(W.mph > 0)) throw new Error('a 0.8 wind reads ' + W.mph + ' mph');
+    if (W.wager) throw new Error('a wager is played in a wind of ' + W.wager);
     if (r.wager) throw new Error('a wager hole bends: ' + JSON.stringify(r.wager));
     return [r.bent + ' of ' + r.p45 + ' par fours and fives turn by 8 or more; no par three past ' + r.p3max.toFixed(1),
       'on bent holes ' + (fw * 100).toFixed(1) + '% of ' + ground + ' visible landings are fairway ('
@@ -151,7 +170,8 @@ module.exports = {
       'corners designed: water outside on ' + r.wOut + '/' + r.wAll + ', water or sand outside on ' + r.bOut + '/' + r.bAll
         + ', trees ' + r.tIn + ' inside to ' + r.tOut + ' outside',
       'hole map ' + r.map.w + 'x' + r.map.h + ' shown, golfer marked',
-      'fly-over on the first hole of a round only, not when off or catching up; play goes on under it, a tap ends it',
+      'wind carries the ball ' + W.bowR.toFixed(2) + ' downwind mid-flight and moves neither end of it; calm on wagers',
+      'flyover on the first hole of a round only, not when off or catching up; play goes on under it, a tap ends it',
       'wagers play straight'];
   }
 };
