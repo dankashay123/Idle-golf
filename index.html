@@ -3072,7 +3072,9 @@ const B = {
     { id:'tempo',  ic:'cptempo', n:'Tempo Call',      cost:150, k:'cSpd',  v:20,   t:8,  w:'TEMPO',  d:'+20% tempo for 8s' },
     { id:'read',   ic:'cpread',  n:'Green Reader',    cost:150, k:'cCrt',  v:0.08, t:8,  w:'PURE',   d:'+8% pure strike chance for 8s' },
     { id:'towel',  ic:'cptowel', n:'Towel Service',   cost:150, k:'cMst',  v:25,   t:8,  w:'PROV',   d:'+25% provisional chance for 8s' },
-    { id:'scout',  ic:'cpscout', n:'Lost Ball Scout', cost:150, k:'cDrop', v:0.10, t:10, w:'GEAR',   d:'+10% gear luck for 10s' },
+    // gear luck is only read when a hole ends, so this one waits for that:
+    // armed when it goes off, spent on the next hole finished
+    { id:'scout',  ic:'cpscout', n:'Lost Ball Scout', cost:150, k:'cDrop', v:0.10, t:1e6, w:'GEAR', next:1, d:'+10% gear luck on the next hole you finish' },
     { id:'chat',   ic:'cpchat',  n:'Sponsor Chat',    cost:150, k:'cGold', v:25,   t:8,  w:'PURSE',  d:'+25% prize money for 8s' }
   ],
   // Clubs: the one he swings and carries. shaft/shaft2 near and far, head
@@ -5257,6 +5259,8 @@ function finishHole(D){
 
   // gear drops: the closing hole always gives one up
   const luck = D.drop;
+  // a luck that lasts until the next hole ends has now had its hole
+  for(const pk of B.CPERKS) if(pk.next && S.buff[pk.k]) delete S.buff[pk.k];
   if(isClosing(S.hole) && isSunday(S.hole)) grantTickets(B.TICK_SUNDAY, 'Sunday finish');
   if(isClosing(S.hole)){
     const it = dropItem(S.tier, luck + 0.15, isSunday(S.hole) ? 1 : 0);
@@ -8722,6 +8726,9 @@ const Scene = {
     return lt + (this.wind || 0) * 1.3 * Math.sin(Math.PI * u) * clamp(b.dist / 18, 0.4, 1.4);
   },
   windMph(){ return Math.round(Math.abs(this.wind || 0) * 18); },
+  // how high a ball is a fraction u of the way: a chip stays low, a drive
+  // climbs to the old full height
+  ballLift(b, u){ return Math.sin(u * Math.PI) * clamp(b.dist * 0.17, 0.25, 2.6); },
   // ---- the hole bends ----
   // Every hole used to run dead straight from tee to green. It has a centre
   // line now -- a dogleg on most par fours, an S on a par five, a drift on a
@@ -8828,7 +8835,7 @@ const Scene = {
       for(let i = 0; i <= 40; i++) this.hills[L].push(rnd());
 
 
-    this.camD = 0;
+    this.camD = 0; this.restBall = null; this.walkTo = 0;
     this.balls.length = 0; this.nums.length = 0; this.sparks.length = 0;
     this.buildSky();
   },
@@ -8893,7 +8900,7 @@ const Scene = {
 
     this.hills = [[], []];
     for(let L = 0; L < 2; L++) for(let i = 0; i <= 40; i++) this.hills[L].push(rnd());
-    this.camD = 0;
+    this.camD = 0; this.restBall = null; this.walkTo = 0;
     this.balls.length = 0; this.nums.length = 0; this.sparks.length = 0;
     this.buildSky();
   },
@@ -9047,11 +9054,20 @@ const Scene = {
     // Off the face, not out of the middle of the screen: it leaves from where
     // the clubhead is and drifts across to wherever it is going.
     const lat0 = this.teeLat === undefined ? 0.42 : this.teeLat;
-    this.balls.push({ d0:this.camD,
-                      // an aimed shot flies to the point it was aimed at
-                      dist: p.target !== undefined ? Math.max(3, p.target - this.camD)
-                                                   : 14 + Math.random()*9,
-                      t:0, dur:.55 + Math.random()*.14, el:p.el, crit:p.crit, seed: Math.random()*100,
+    // On the course a shot flies exactly as far as it took him down the hole:
+    // from where he stands to where the yardage now says he is, and that is
+    // where he walks to. It used to fly a flat 14 to 23 units whatever it did,
+    // so a big hit could land far past the spot he then walked a step toward.
+    // A wager's floor shots, which move nothing, keep their old carry.
+    const reach = S.dgnRun || !(S.yardsMax > 0) ? null
+                : clamp(1 - S.yards / S.yardsMax, 0, 1) * LEN - this.camD;
+    const dist = p.target !== undefined ? Math.max(3, p.target - this.camD)   // an aimed shot flies to its mark
+               : reach !== null ? Math.max(0.6, reach)
+               : 14 + Math.random()*9;
+    this.balls.push({ d0:this.camD, dist,
+                      // a short one is quick and low, a long one hangs
+                      t:0, dur: 0.34 + Math.min(0.32, dist * 0.016) + Math.random()*0.08,
+                      el:p.el, crit:p.crit, seed: Math.random()*100,
                       lat0: lat0,
                       lat: p.lat !== undefined ? p.lat : -0.15 + (Math.random()-.5)*0.30 });
     if(this.nums.length < 12 && p.dmg > 0){
@@ -10012,7 +10028,7 @@ Object.assign(Scene, {
     // ball used to be launched from the middle of the lane, so every shot
     // appeared out of thin air a body's width away from the face.
     this.teeLat = (bx - p.x) / Math.max(0.001, LAT * p.s);
-    if(this.swingT === 0 || ph < 0.5){
+    if((this.swingT === 0 && !this.restBall && !this.walkOn) || (this.swingT > 0 && ph < 0.5)){
       const bs = h > 30 ? 2 : 1;
       c.fillStyle = PX.white;
       c.fillRect(bx, Math.round(p.y - bs), bs, bs);
@@ -10101,11 +10117,27 @@ Object.assign(Scene, {
 
   drawBalls(dt){
     const c = this.b;
+    const R = this.restBall;
+    if(R){
+      if(R.d < this.camD + 0.6) this.restBall = null;          // he has reached it
+      else{
+        const p = this.proj(R.d, R.lat);
+        if(p.y <= this.clipAt(R.d) + 1 && p.s > 0.05){
+          const r = Math.max(1, Math.round(B_BALL * p.s * US));
+          c.fillStyle = PX.white; c.fillRect(p.x - r, p.y - r * 2, r * 2, r * 2);
+        }
+      }
+    }
     for(let i = this.balls.length - 1; i >= 0; i--){
       const b = this.balls[i];
       b.t += dt;
       const u = b.t / b.dur;
-      if(u >= 1){ this.balls.splice(i, 1); continue; }
+      if(u >= 1){
+        // it lies where it came down until he walks up to it
+        if(!S.dgnRun){ this.restBall = { d: b.d0 + b.dist, lat: this.ballLat(b, 1) };
+                       this.walkTo = Math.max(this.walkTo || 0, b.d0 + b.dist); }
+        this.balls.splice(i, 1); continue;
+      }
       const col = b.el ? (PX[b.el] || PX.white) : PX.white;
       const BF = BALLFX[trailNow().fx];
       if(BF){
@@ -10121,7 +10153,7 @@ Object.assign(Scene, {
           // shot came from behind him. Nothing is drawn nearer than he is.
           if(k > 0 && bd < this.camD + 0.05) break;
           const lt = this.ballLat(b, uu);
-          const p = this.proj(bd, lt, Math.sin(uu*Math.PI)*2.6);
+          const p = this.proj(bd, lt, this.ballLift(b, uu));
           if(p.y > this.clipAt(bd) + 1){ if(k === 0) break; continue; }
           if(k === 0) rr = Math.max(1, Math.round(B_BALL * p.s * US));
           path.push(p);
@@ -10138,7 +10170,7 @@ Object.assign(Scene, {
         // eased across, so it leaves the face on the line the club sent it
         const lu = uu*uu*(3 - 2*uu);
         const lt = this.ballLat(b, uu);
-        const p = this.proj(bd, lt, Math.sin(uu*Math.PI)*2.6);
+        const p = this.proj(bd, lt, this.ballLift(b, uu));
         if(p.y > this.clipAt(bd) + 1) continue;   // dropped behind a rise
         const r = Math.max(1, Math.round(B_BALL * p.s * US));
         if(k === 0){
@@ -10448,9 +10480,14 @@ Object.assign(Scene, {
       // them carried him forward in his backswing. Only a camera that has
       // fallen a long way behind (a fast bag swinging without a break) is
       // let go on through a swing.
+      // And he walks to where his ball came down, once it is down: the ball
+      // shows where he is going, then he goes. Only a golfer swinging without
+      // a break on a very fast bag, who has fallen far behind the yardage, is
+      // carried on through a swing.
       const swingPh = this.swingT > 0 ? 1 - this.swingT / this.swingDur : 1;
-      if(swingPh >= 0.85 || prog*LEN - this.camD > LEN * 0.3)
-        this.camD += (prog*LEN - this.camD) * Math.min(1, dt*4.5);
+      const goal = Math.min(prog*LEN, this.walkTo === undefined ? prog*LEN : this.walkTo);
+      if(swingPh >= 0.85) this.camD += Math.max(0, goal - this.camD) * Math.min(1, dt*4.5);
+      else if(prog*LEN - this.camD > LEN * 0.4) this.camD += (prog*LEN - this.camD) * Math.min(1, dt*4.5);
       // walking: the camera is carrying him on and he is not mid-swing. A new
       // hole puts the camera back on the tee, which is not a walk.
       const v = dt > 0 ? (this.camD - cam0) / dt : 0;

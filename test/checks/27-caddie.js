@@ -14,6 +14,12 @@
  *   - a save wearing a perk it does not own, or one that does not exist,
  *     loads with none
  *   - the Range has a Caddie rack with a row for every perk
+ *   - a shot flies exactly as far as it took him down the hole -- a chip of
+ *     1.5 units as much as a drive of 38 -- lies where it came down, and he
+ *     sets off after it only once it is down, and walks to it. It
+ *     flew a flat 14-23 units whatever it did, and he walked a step
+ *   - Lost Ball Scout's luck lasts until the next hole ends, and is spent
+ *     there
  *   - he does not glide: while a swing is still going, the camera holds,
  *     however far the yardage has already moved (it chased the yardage the
  *     moment the simulation swung, and carried him on in his backswing)
@@ -88,6 +94,31 @@ module.exports = {
         o.glide = moved;
         Scene.swingT = 0; for (let i = 0; i < 60; i++) Scene.draw(0.016, D);
         o.after = Scene.camD - c0;
+
+        // ---- the ball goes as far as the shot, and he walks to it -----------
+        o.walk = [];
+        for (const [from, to] of [[10, 11.5], [10, 34], [20, 58]]) {
+          Scene.newHole(S.hole, S.tier); Scene.camD = from; Scene.balls.length = 0; Scene.swingT = 0;
+          S.yardsMax = 1000; S.yards = 1000 * (1 - to / LEN);
+          Scene.pendingBall = { crit: false, el: null, dmg: 1 }; Scene.launch();
+          const b = Scene.balls[0], land = b.d0 + b.dist;
+          let rest = null, camAtLand = null;
+          for (let i = 0; i < 400 && (Scene.balls.length || Scene.camD < to - 0.05); i++) {
+            Scene.draw(0.016, D);
+            if (!Scene.balls.length && camAtLand === null) { camAtLand = Scene.camD; rest = Scene.restBall && Scene.restBall.d; }
+          }
+          o.walk.push({ from, to, land: +land.toFixed(2), rest: rest && +rest.toFixed(2), camAtLand: camAtLand && +camAtLand.toFixed(2), end: +Scene.camD.toFixed(2) });
+        }
+
+        // ---- Lost Ball Scout: armed until the next hole ends -----------------
+        S.cperkOwn = { scout: 1 }; S.cperk = 'scout'; S.buff = {}; S.cperkT = B.CPERK_EVERY - 0.1;
+        QUIET = false; tickCaddie(0.5); QUIET = true;
+        // forty seconds go by with no hole finished: the buff timers run down
+        // the way step() runs them, and the luck is still there
+        for (const k in S.buff) S.buff[k].t -= 40;
+        o.scoutArmed = buffVal('cDrop') > 0;
+        S.elapsed = 5; S.hole = S.hole; finishHole(derive());
+        o.scoutSpent = !S.buff.cDrop;
       } finally {
         QUIET = false; OFFLINE = false; SPRITE.caddie = SPRITE.caddie || null;
         Object.keys(S).forEach(k => delete S[k]); Object.assign(S, JSON.parse(SNAP)); buildSprites(); startHole();
@@ -108,9 +139,19 @@ module.exports = {
     if (r.unowned !== null || r.unknown !== null) throw new Error('a save wearing an unowned or unknown perk loaded with ' + r.unowned + ' / ' + r.unknown);
     if (r.rows !== r.n || r.navs !== 'Upgrades/Caddie') throw new Error('the Range shows ' + r.rows + ' perk rows of ' + r.n + ' under ' + r.navs);
     if (r.glide > 0.001) throw new Error('the camera moved ' + r.glide.toFixed(2) + ' units while he was still swinging');
+    for (const w of r.walk) {
+      if (Math.abs(w.land - w.to) > 0.01) throw new Error('a shot from ' + w.from + ' that took him to ' + w.to + ' flew to ' + w.land);
+      if (w.camAtLand !== null && w.camAtLand > w.from + 0.05)
+        throw new Error('he was already ' + (w.camAtLand - w.from).toFixed(1) + ' of ' + (w.to - w.from) + ' units down the hole when the ball landed');
+      if (Math.abs(w.end - w.to) > 0.1) throw new Error('he walked to ' + w.end + ', the ball came down at ' + w.to);
+    }
+    if (!r.scoutArmed) throw new Error('Lost Ball Scout lapsed before the hole ended');
+    if (!r.scoutSpent) throw new Error('Lost Ball Scout was still armed after the hole it was for');
     if (!(r.after > 1)) throw new Error('after the swing the camera did not move on: ' + r.after.toFixed(2));
     return ['the fairy stays clear of the golfer in all ' + r.poses + ' poses, club and all',
       r.n + ' perks: bought once, one worn, free to change; +20% tempo for 8s every ' + r.every + 's, none in a catch-up',
-      'no gliding: the camera holds through the swing and walks on after (' + r.after.toFixed(1) + ' units)'];
+      'no gliding: the camera holds through the swing and walks on after (' + r.after.toFixed(1) + ' units)',
+      'every shot flies as far as it went (' + r.walk.map(w => (w.to - w.from).toFixed(1)).join(', ') + ' units) and he walks to where it came down',
+      'Lost Ball Scout holds its luck until the next hole ends, then it is spent'];
   }
 };

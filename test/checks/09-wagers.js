@@ -369,6 +369,11 @@ module.exports = {
       tickDgn(0.1, derive());
       Scene.newDepthsHole(S.dgnRun);
       Scene.camD = LEN * 0.34;
+      // the ground first: props are cut against the crests the ground march
+      // records, and without it they were cut against whatever the live
+      // frame had last drawn -- another hole, from another spot
+      Scene.camH = Scene.hAt(Scene.camD);
+      Scene.drawGround();
       Scene.b.clearRect(0, 0, VW, VH);
       Scene.drawProps();
       {
