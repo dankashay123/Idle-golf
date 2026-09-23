@@ -2712,6 +2712,21 @@ const B = {
   // every hole and a curated trophy room an ace on most of them, so a step of
   // ten eagles would pay every minute or two. Paid in sovereigns, 2-4 for the
   // everyday ones and 5-10 for an event, a cup or a big club.
+  // Three a day from this pool, the same three for everyone that day. Each
+  // is measured from where you stood when the day began. lv gates the two
+  // that a new golfer cannot do yet: eagles need a bag that outdrives its
+  // card, and a perk needs tickets.
+  DAILY_POOL: [
+    { id:'holes',  m:'holes',  v:120, d:'Play 120 holes' },
+    { id:'birdie', m:'birdie', v:30,  d:'Card 30 birdies or better' },
+    { id:'events', m:'events', v:2,   d:'Finish 2 events' },
+    { id:'rare',   m:'rare',   v:5,   d:'Find 5 Rare or better clubs' },
+    { id:'runs',   m:'runs',   v:3,   d:'Play 3 wagers' },
+    { id:'nines',  m:'nines',  v:2,   d:'Win 2 nine goals' },
+    { id:'eagle',  m:'eagle',  v:15,  d:'Card 15 eagles or better', lv:15 },
+    { id:'perk',   m:'perks',  v:1,   d:'Use a sponsor perk', lv:15 }
+  ],
+  DAILY_SOV: 8, DAILY_ALL: 20, DAILY_STREAK: 5, DAILY_STREAK_MAX: 6,
   ACH_REP: [
     { id:'rHoles', n:'Steady Hand',    d:'every 100 holes', m:'holes',  step:100, sov:2 },
     { id:'rBird',  n:'Birdie Watch',   d:'every 50 birdies', m:'birdie', step:50,  sov:2 },
@@ -3080,6 +3095,9 @@ function initState(){
   if(!S.perkOn) S.perkOn = {};
   if(!S.tally) S.tally = {};
   if(!S.achRep || typeof S.achRep !== 'object') S.achRep = {};
+  if(S.daily && (typeof S.daily !== 'object' || !Array.isArray(S.daily.picks)
+     || S.daily.picks.length !== 3 || !S.daily.picks.every(dailyDef)
+     || !Array.isArray(S.daily.done) || !S.daily.base)) delete S.daily;
   if(!B.BANK_OPTS.includes(S.islandBank)) S.islandBank = 5;
   if(!S.tierEvents) S.tierEvents = {};
   if(S.tierMax === undefined) S.tierMax = 0;
@@ -3814,6 +3832,7 @@ function autoCast(D, dt){
    ========================================================================= */
 const bump = (k, n) => { S.tally[k] = (S.tally[k] || 0) + (n || 1); };
 function checkAch(){
+  dailyTick();
   // Honours earned before they paid sovereigns are paid once, in one go. The
   // flag is not in defaultState on purpose: a save from before it has none,
   // and a fresh game has nothing done, so both land here and only one pays.
@@ -3961,6 +3980,7 @@ function nameItem(it, sl){
 }
 let lockN = 0, lockSh = 0, lockT = -Infinity;
 function bagAdd(it){
+  if(it.rar >= 2) bump('rare');
   if(it.rar >= 4) bump('legend');
   if(it.rar >= 5) bump('myth');
   S.bag.push(it);
@@ -4216,6 +4236,53 @@ const featWager = () => FEAT_FORCE
 const isFeat   = d => featWager().id === d.id;
 // seconds until it turns over, for the countdown on the card
 const featLeft = () => 86400 - (Date.now()/1000) % 86400;
+
+/* ---- daily challenges ---------------------------------------------------
+   Three a day, off the same clock as the stake of the day so the two turn
+   over together. Each pays DAILY_SOV sovereigns the moment it is done; all
+   three pay DAILY_ALL, plus DAILY_STREAK for every day running you have
+   finished all three, up to DAILY_STREAK_MAX days. Paid automatically, like
+   the honours: an idle game should not make you come and collect. */
+let DAY_FORCE = null;
+const dayNow = () => DAY_FORCE !== null ? DAY_FORCE : featDay();
+const dailyDef = id => B.DAILY_POOL.find(c => c.id === id);
+function dailyStart(day){
+  const pool = B.DAILY_POOL.filter(c => !c.lv || (S.lv || 1) >= c.lv);
+  const rnd = seeded(hash32(day * 7919 + 17));
+  const a = pool.slice();
+  for(let i = a.length - 1; i > 0; i--){ const j = Math.floor(rnd() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; }
+  const base = {};
+  for(const c of B.DAILY_POOL) base[c.m] = achMetric(c.m);
+  S.daily = { day, picks: a.slice(0, 3).map(c => c.id), base, done: [0, 0, 0], all: 0 };
+}
+// the streak as it stands today: one missed day and it is gone
+const dailyStreak = () => (S.dailyLastAll !== undefined && S.dailyLastAll >= dayNow() - 1)
+  ? (S.dailyStreak || 0) : 0;
+const dailyHave = (c, i) => S.daily.done[i] ? c.v
+  : Math.max(0, Math.min(c.v, achMetric(c.m) - (S.daily.base[c.m] || 0)));
+function dailyTick(){
+  const day = dayNow();
+  if(!S.daily || S.daily.day !== day) dailyStart(day);
+  const Dy = S.daily;
+  Dy.picks.forEach((id, i) => {
+    const c = dailyDef(id);
+    if(Dy.done[i] || !c || dailyHave(c, i) < c.v) return;
+    Dy.done[i] = 1;
+    grantSov(B.DAILY_SOV, null, true);
+    toast('<span class="achk">Daily +' + B.DAILY_SOV + sovIc() + '</span>' + c.d, 'ach');
+    Sfx.play('coin');
+  });
+  if(!Dy.all && Dy.done.every(Boolean)){
+    Dy.all = 1;
+    S.dailyStreak = (S.dailyLastAll === day - 1 ? (S.dailyStreak || 0) : 0) + 1;
+    S.dailyLastAll = day;
+    const bonus = B.DAILY_ALL + B.DAILY_STREAK * Math.min(B.DAILY_STREAK_MAX, S.dailyStreak);
+    grantSov(bonus, null, true);
+    toast('<span class="achk">All three +' + bonus + sovIc() + '</span>'
+      + (S.dailyStreak > 1 ? S.dailyStreak + ' days running' : 'Done for today'), 'ach');
+    Sfx.play('ach');
+  }
+}
 
 // A single swing resolved in full: crit, provisionals and an affinity roll.
 // This is what the Long Drive measures.
@@ -8406,6 +8473,22 @@ function honRows(w){
   if(near.length) h += '<div class="hint">Closest: '
     + near.map(a => '<b>' + a.n + '</b> ' + fmt(Math.min(achMetric(a.m), a.v), 0) + '/' + fmt(a.v, 0))
         .join(' \u00b7 ') + '.</div>';
+  // Today's three, first: they turn over, the rest wait.
+  if(S.daily){
+    const Dy = S.daily, st = dailyStreak();
+    const bonus = B.DAILY_ALL + B.DAILY_STREAK * Math.min(B.DAILY_STREAK_MAX, st + (Dy.all ? 0 : 1));
+    h = '<div class="eyebrow" style="margin:6px 0 4px">Today \u00b7 new in ' + hms(featLeft())
+        + (st ? ' \u00b7 ' + st + '-day streak' : '') + '</div>'
+      + Dy.picks.map((id, i) => {
+          const c = dailyDef(id); if(!c) return '';
+          return '<div class="lb rep"><span>' + (Dy.done[i] ? '\u2713 ' : '') + nb(c.d) + '</span>'
+            + '<span class="s">' + fmt(dailyHave(c, i), 0) + '/' + fmt(c.v, 0) + ' \u00b7 +'
+            + B.DAILY_SOV + sovIc() + '</span></div>';
+        }).join('')
+      + '<div class="lb rep"><span><i>' + (Dy.all ? '\u2713 All three' : 'All three') + '</i></span>'
+      + '<span class="s">+' + bonus + sovIc() + '</span></div>'
+      + h;
+  }
   // The ones that come round again, one line each: how far to the next, and
   // what it pays. Not .row, so the first row in the sheet is still the nearest
   // one-off.

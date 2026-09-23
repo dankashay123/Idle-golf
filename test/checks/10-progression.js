@@ -351,8 +351,10 @@ module.exports = {
       o.bands = B.ACH.filter(a => [5, 10, 100].indexOf(a.sov) < 0).map(a => a.id + '=' + a.sov);
       o.rep = B.ACH_REP.filter(a => !(a.step > 0) || !(a.sov >= 2 && a.sov <= 10)).map(a => a.id);
       o.repMetrics = B.ACH_REP.filter(a => !isFinite(achMetric(a.m))).map(a => a.id + ':' + a.m);
+      // today's dailies are marked done, or reaching 250 holes would also pay
+      // a "play 120 holes" daily and this would be counting two things at once
       const fresh = () => { Object.keys(S).forEach(k => delete S[k]); Object.assign(S, defaultState());
-        initState(); migrate(); };
+        initState(); migrate(); dailyStart(dayNow()); S.daily.done = [1, 1, 1]; S.daily.all = 1; };
       QUIET = true;
       try {
         // a new career: nothing back-paid, nothing paid for counting from zero
