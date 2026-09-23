@@ -388,6 +388,10 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
 .row.locked{opacity:.55}
 .hbar{width:44px;height:3px;background:#12261C;border-radius:0;overflow:hidden}
 .hbar i{display:block;height:100%;background:var(--brass)}
+/* the bar was a flex child like the words beside it, so it took half the row
+   and squeezed the text into the other half; it goes underneath instead */
+#honSheetRows .row{flex-wrap:wrap}
+#honSheetRows .row > .hbar{flex:0 0 100%;width:100%;margin-top:-2px}
 .pips{display:inline-flex;gap:3px;vertical-align:-1px;margin-right:5px}
 .pip{width:7px;height:7px;border-radius:0;border:1px solid var(--line);display:block}
 .pip.on{background:var(--brass);border-color:var(--brass)}
@@ -3826,6 +3830,7 @@ function nameItem(it, sl){
   if(it.rar >= 2) n += ' ' + B.SUFFIX[hash32(it.uid*7919) % B.SUFFIX.length];
   return n;
 }
+let lockN = 0, lockSh = 0, lockT = -Infinity;
 function bagAdd(it){
   if(it.rar >= 4) bump('legend');
   if(it.rar >= 5) bump('myth');
@@ -3845,7 +3850,14 @@ function bagAdd(it){
     const cut = S.bag.splice(bagCap());
     let sh = 0; cut.forEach(x => sh += scrapValue(x));
     S.shard += sh;
-    if(sh) toast('Locker full \u00b7 scrapped ' + cut.length + ' for <b>' + sh + '</b> ' + plural(sh, 'shards'));
+    // Late on a closing hole fills the locker every time it drops, and this
+    // said so after nearly every one. Once a minute now, with the total since.
+    lockN += cut.length; lockSh += sh;
+    const now = performance.now();
+    if(lockSh && now - lockT >= 60000){
+      toast('Locker full \u00b7 scrapped ' + lockN + ' for <b>' + lockSh + '</b> ' + plural(lockSh, 'shards'));
+      lockN = 0; lockSh = 0; lockT = now;
+    }
   }
 }
 function equipItem(it){
@@ -8486,7 +8498,13 @@ function refreshUpg(){
   if(band) band.textContent = owned + ' of ' + B.UPG.length + ' started';
   const note = $('upgTax');
   if(note) note.innerHTML = stretch > 1.05
-    ? 'Holes stretched <b>' + fmt(stretch) + 'x</b> by your handicap \u00b7 climb a card'
+    // "Holes stretched 25.1Kx" late on: a real figure that tells nobody
+    // anything. What it means is the bag has outgrown the card, and what to do
+    // about it depends on whether the next card is open yet.
+    ? (cardUnlocked(S.tier + 1) && S.tier < B.TIER_MAX
+        ? 'Your bag outdrives this card \u00b7 <b>climb</b> on the Tour tab'
+        : 'Your bag outdrives this card \u00b7 next card in <b>' + eventsToNext() + '</b> '
+          + plural(eventsToNext(), 'events'))
     : 'Playing the card as it lies';
 
   // The range used to carry a line of its own at the top naming the cheapest

@@ -174,6 +174,23 @@ module.exports = {
       out.awayLong = document.getElementById('sheet').textContent;
       try { hideSheet(); } catch (e) {}
 
+      // ---- a full locker says so once a minute, not once a club ---------
+      {
+        const shown = []; const realToast = window.toast;
+        window.toast = (m, c) => { shown.push(String(m)); };
+        try {
+          lockT = -Infinity; lockN = 0; lockSh = 0;
+          while (S.bag.length < bagCap()) S.bag.push(makeItem(S.tier, 0, 0));
+          const sh0 = S.shard;
+          for (let i = 0; i < 12; i++) bagAdd(makeItem(0, 0, 0));
+          out.lockToasts = shown.filter(m => /Locker full/.test(m)).length;
+          out.lockShards = S.shard - sh0;
+          out.lockBag = S.bag.length; out.lockCap = bagCap();
+          lockT -= 61000; bagAdd(makeItem(0, 0, 0));
+          out.lockLater = shown.filter(m => /Locker full/.test(m));
+        } finally { window.toast = realToast; }
+      }
+
       // ---- 3. the Range says when each rung unlocks --------------------
       DEV.clearUpg(); try { hideSheet(); } catch (e) {}
       S.mult = 1;
@@ -275,8 +292,9 @@ module.exports = {
         startHole();
         renderTour();
         const C = climbPreview();
+        refreshUpg();
         return { k, events, pay: C.pay, len: C.len, bound: C.bound,
-                 text: $('tierBox').textContent };
+                 text: $('tierBox').textContent, rangeLine: $('upgTax').textContent };
       };
       out.behind = climbCase(0.6, 0);      // the card sets the hole
       out.ahead  = climbCase(12, 0);       // the bag sets the hole
@@ -495,6 +513,15 @@ module.exports = {
 
     // ---- climbing a Tour Card -----------------------------------------
     const B_ = r.behind, A_ = r.ahead, P_ = r.played;
+    // a bag ahead of its card: the Range says what that means, not "stretched 25.1Kx"
+    if (!/outdrives this card/.test(A_.rangeLine) || /stretched|\dx\b/i.test(A_.rangeLine))
+      throw new Error('with the bag ahead of its card the Range reads "' + A_.rangeLine
+        + '". A stretch of thousands of times is a real figure and tells nobody anything.');
+    if (r.lockToasts !== 1 || !(r.lockShards > 0) || r.lockBag !== r.lockCap)
+      throw new Error('twelve clubs into a full locker raised ' + r.lockToasts + ' locker message(s) '
+        + 'and paid ' + r.lockShards + ' shards; it should say so once and still pay for every one');
+    if (r.lockLater.length !== 2 || !/scrapped \d+/.test(r.lockLater[1]))
+      throw new Error('a minute later the locker did not report the clubs scrapped since');
     if (B_.bound > 0)
       throw new Error('the "behind" setup has the handicap floor setting ' + Math.round(B_.bound * 100)
         + '% of holes, so it is not behind its card and cannot test that case');
@@ -567,6 +594,8 @@ module.exports = {
     if (F.length) throw new Error('numbers read wrong at a unit boundary: ' + F.join('; '));
 
     return ['every unit boundary reads right: 999,950 is 1.00M, 99,960 is 100K',
+      'bag ahead of its card: "' + r.ahead.rangeLine + '"; a full locker speaks once a minute: "'
+      + r.lockLater[1].replace(/<[^>]+>/g, '') + '"',
       'preview held the bag over ' + p.tried + ' looks and through a throw, '
       + p.changed + ' moved the carry',
       'away card: ' + a.tiles + ' tiles, ' + a.bands.length + ' bands, '
