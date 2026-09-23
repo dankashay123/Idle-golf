@@ -3136,6 +3136,9 @@ function relMult(k){
 }
 /* ---- honours ---- */
 const tally = k => S.tally[k] || 0;
+// "scrapped 1 for 1 shards" -- a one-club locker overflow is the common case,
+// so the singular turns up constantly
+const plural = (n, w) => (Math.round(n) === 1 ? w.replace(/s$/, '') : w);
 function achMetric(m){
   switch(m){
     case 'holes':  return S.totalHoles || 0;
@@ -3681,10 +3684,10 @@ function checkAch(){
     S.achDone[a.id] = 1;
     const r = a.r;
     let got;
-    if(r.k === 'tick'){ grantTickets(r.v); got = '+' + r.v + ' tickets'; }
+    if(r.k === 'tick'){ grantTickets(r.v); got = '+' + r.v + ' ' + plural(r.v, 'tickets'); }
     else if(r.k === 'grit'){ S.grit += r.v; got = '+' + r.v + ' grit'; }
-    else if(r.k === 'shard'){ S.shard += r.v; got = '+' + r.v + ' shards'; }
-    else if(r.k === 'scroll'){ S.scroll += r.v; got = '+' + r.v + ' scrolls'; }
+    else if(r.k === 'shard'){ S.shard += r.v; got = '+' + r.v + ' ' + plural(r.v, 'shards'); }
+    else if(r.k === 'scroll'){ S.scroll += r.v; got = '+' + r.v + ' ' + plural(r.v, 'scrolls'); }
     else if(r.k === 'legacy'){ S.legacy += r.v; got = '+' + r.v + ' legacy'; }
     else if(r.k === 'crt' || r.k === 'drp' || r.k === 'prc') got = '+' + (r.v*100).toFixed(1) + 'pp ' + r.k;
     else got = '+' + Math.round(r.v*100) + '% ' + ({ pow:'swing power', gld:'purse', spd:'tempo',
@@ -3823,7 +3826,7 @@ function bagAdd(it){
     const cut = S.bag.splice(bagCap());
     let sh = 0; cut.forEach(x => sh += scrapValue(x));
     S.shard += sh;
-    if(sh) toast('Locker full \u00b7 scrapped ' + cut.length + ' for <b>' + sh + '</b> shards');
+    if(sh) toast('Locker full \u00b7 scrapped ' + cut.length + ' for <b>' + sh + '</b> ' + plural(sh, 'shards'));
   }
 }
 function equipItem(it){
@@ -3904,7 +3907,7 @@ function salvageItem(it){
   const v = scrapValue(it);
   S.shard += v;
   S.bag = S.bag.filter(x => x.uid !== it.uid);
-  toast('Scrapped for <b>' + v + '</b> shards');
+  toast('Scrapped for <b>' + v + '</b> ' + plural(v, 'shards'));
   renderBag();
 }
 function enhCost(it){
@@ -5331,7 +5334,7 @@ function offline(){
   if(paras > 0) marks.push(['Paragon', '+' + paras]);
   if(sov > 0) marks.push([B.SOV, '+' + sovFmt(sov)]);
   if(swapped > 0) marks.push(['Auto equipped', swapped + ' club' + (swapped > 1 ? 's' : '')]);
-  if(scrapped > 0) marks.push(['Locker full \u00b7 scrapped ' + scrapped, '+' + fmt(scrapSh, 0) + ' shards']);
+  if(scrapped > 0) marks.push(['Locker full \u00b7 scrapped ' + scrapped, '+' + fmt(scrapSh, 0) + ' ' + plural(scrapSh, 'shards')]);
   if(entries > 0) marks.push(['Wager entries back', '+' + entries]);
   if(marks.length) h += '<div class="awband">What came of it</div>'
     + marks.map(([k, v]) => line(k, v)).join('');
@@ -8562,7 +8565,7 @@ function renderBag(){
       doomed.forEach(it => { sh += scrapValue(it); });
       S.bag = S.bag.filter(it => !doomed.includes(it));
       S.shard += sh;
-      toast('Scrapped ' + doomed.length + ' for <b>' + sh + '</b> shards');
+      toast('Scrapped ' + doomed.length + ' for <b>' + sh + '</b> ' + plural(sh, 'shards'));
       renderBag(); renderVitals();
     };
     r.appendChild(btn);
@@ -9491,10 +9494,10 @@ function talDesc(t, n){
 }
 function achReward(a){
   const r = a.r;
-  if(r.k === 'tick') return '+' + r.v + ' tickets';
+  if(r.k === 'tick') return '+' + r.v + ' ' + plural(r.v, 'tickets');
   if(r.k === 'grit') return '+' + r.v + ' grit';
-  if(r.k === 'shard') return '+' + r.v + ' shards';
-  if(r.k === 'scroll') return '+' + r.v + ' scrolls';
+  if(r.k === 'shard') return '+' + r.v + ' ' + plural(r.v, 'shards');
+  if(r.k === 'scroll') return '+' + r.v + ' ' + plural(r.v, 'scrolls');
   if(r.k === 'legacy') return '+' + r.v + ' legacy';
   if(r.k === 'crt' || r.k === 'drp' || r.k === 'prc') return '+' + (r.v*100).toFixed(1) + 'pp';
   const nm = { pow:'swing power', gld:'purse', spd:'tempo', mst:'provisional chance',
@@ -9765,7 +9768,7 @@ function boot(){
     doomed.forEach(it => { sh += scrapValue(it); });
     S.bag = S.bag.filter(it => !doomed.includes(it));
     S.shard += sh;
-    toast('Scrapped ' + doomed.length + ' for <b>' + sh + '</b> shards');
+    toast('Scrapped ' + doomed.length + ' for <b>' + sh + '</b> ' + plural(sh, 'shards'));
     renderBag();
   };
   $('xpStrip').onclick = () => setView('career');
