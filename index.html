@@ -35,6 +35,11 @@
 }
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{height:100%;overflow:hidden}
+/* Safari on an iPhone enlarges text it thinks is too small to read when the
+   phone turns sideways, and does not always put it back on the way upright:
+   the Range's names and captions came back half again their size. Every size
+   here is chosen, so it may not adjust any of them. */
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
 /* Pinned, not just unscrollable. Turning an iPhone on its side and back left
    the document scrolled by a status bar's height -- overflow:hidden does not
    stop Safari scrolling it -- so the top bar sat under the clock and a black
