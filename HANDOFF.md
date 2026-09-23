@@ -10,8 +10,11 @@ check is for.
 
 - Everything is committed and pushed to `main`. Nothing is half-built.
 - `node test/run.js` passes all **28 checks** (about 4–5 minutes for the full run).
-- The user's last request, "do 1 and 2", is finished: a home course for every
+- The user's last request, "do 1 and 2 for now", is finished: a home course for every
   Tour Card, and the Major of the Week. Details are in §5.
+- **Outstanding: items 3, 4, 5 and 6 from the menu the user was given**
+  (real sounds, phone performance pass, more for the fairy caddie,
+  achievements). See §8.
 - The user usually ends a task by asking **"What's next?"** Reply with a short
   plain-language menu, give a recommendation, and wait for them to choose.
   Open ideas are listed in §8.
@@ -207,22 +210,41 @@ Line numbers are approximate and drift. Search for the name instead.
 - There is no `gh` CLI. Use the GitHub MCP tools if GitHub is ever needed.
   Pushing straight to `main` has worked every time.
 
-## 8. Open ideas to offer when asked "What's next?"
+## 8. Still to do: items 3, 4, 5 and 6 from the user's menu
 
-1. **Phone performance / battery pass**: measure frame cost and idle CPU and
-   cut waste. Players never see it but feel it. It was recommended last time
-   and not taken yet.
-2. **Real recorded golf sounds**, once network access is allowed (see §7).
-3. **More for the fairy caddie**: extra perks, and small reactions (a cheer
-   on a birdie, a sigh at a bogey, the occasional one-liner).
-4. **Achievements for the new features**: drives landed round a dogleg,
-   holing out in strong wind, a matching golfer/caddie/ball set, visiting all
-   ten home courses.
-5. **Signature holes on home courses**, such as an island-green par 3. Be
-   careful: shots are drawn landing where the yardage says, so an island
-   hole needs landing positions that are never in the water. The Depths
-   "island" mode has a moat you can study.
-6. **A trophy cabinet view** for the majors won and the jackets, and a season
-   calendar showing which course is coming up.
-7. Home course variety past Card X (they repeat every ten cards). Could add
-   more home courses, or vary the palette of later repeats.
+The user was offered a menu of six items and chose **"1 and 2 for now"**. Those
+two are done (§5). **Items 3, 4, 5 and 6 are still outstanding.** The user has
+already seen them, so when they ask "What's next?", offer them first under
+their original numbers:
+
+3. **Real recorded golf sounds.** Today every sound is synthesised by the
+   game. Recorded ones would be a club strike, the ball dropping in the cup
+   and crowd applause. **Blocked until the user allows the sound sites**:
+   they add `opengameart.org` and `kenney.nl` under the environment's Network
+   access settings. Both have CC0 packs, so no credit is needed. See §7. The
+   sounds would then have to be embedded in `index.html` (for example as
+   base64), because the game is a single file. Keep the iPhone silent-switch
+   behaviour, and keep sound quiet during a catch-up (the `settings` check
+   enforces this).
+4. **Phone battery and smoothness pass.** Measure frame cost and idle CPU on
+   a phone-sized page and cut waste. Players don't see it but feel it. This
+   was the recommended one.
+5. **More for the fairy caddie.** A few more perks (stay in the spirit of
+   "nothing overpowered", 150 each, one worn at a time). Small reactions
+   too: a cheer on a birdie, a sigh at a bogey, the occasional one-line quip,
+   kept short on screen.
+6. **Achievements for the new features.** For example: land 10 drives round
+   a dogleg, hole out in a strong wind, or wear a matching golfer, caddie and
+   ball set. Now there are also home courses and majors, so "play all ten
+   home courses" fits too.
+
+### Further ideas, not yet offered to the user
+
+- **Signature holes on home courses**, such as an island-green par 3. Be
+  careful: shots are drawn landing where the yardage says, so an island hole
+  needs landing positions that are never in the water. The Depths "island"
+  mode has a moat you can study.
+- **A trophy cabinet view** for the majors won and the jackets, and a season
+  calendar showing which course is coming up.
+- **Home course variety past Card X** (they repeat every ten cards). Could
+  add more home courses, or vary the palette of later repeats.
