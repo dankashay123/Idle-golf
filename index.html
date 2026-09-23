@@ -53,10 +53,14 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
 .mono{font-family:var(--mono)}
 
 /* ---------- crest bar ---------- */
+/* The status bar's inset is not the end of the blur. Newer iPhones frost the
+   page behind the status bar and let the frost fade out well past the inset --
+   about half as far again -- and the course name and the purse sat right in
+   that fade, reading as out of focus on a Pro Max. Scaled off the inset, so a
+   phone without one, a desktop, and a phone on its side (inset 0) keep 6px. */
 #crest{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;
-  padding:calc(env(safe-area-inset-top) + 8px) 12px 8px;border-bottom:var(--hair);
+  padding:calc(env(safe-area-inset-top) * 1.5 + 6px) 12px 6px;border-bottom:var(--hair);
   background:linear-gradient(180deg,#0B1811,#0C1A13)}
-#crest{padding:calc(env(safe-area-inset-top) + 6px) 12px 6px}
 #eventLine{font-family:var(--disp);font-size:var(--f4);letter-spacing:.02em;line-height:1.1;color:var(--chalk);
   user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
 #sub{font-size:var(--f0);letter-spacing:.16em;text-transform:uppercase;color:var(--faint);margin-top:2px}
@@ -345,6 +349,9 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
   border-bottom:1px solid #12261A}
 .lb .p{font-family:var(--mono);color:var(--faint);font-size:var(--f1)}
 .lb .s{font-family:var(--mono);font-weight:600}
+/* a repeating honour: no pip column, the name and its step, then progress */
+.lb.rep{grid-template-columns:1fr auto;padding:5px 0}
+.lb.rep i{font-style:normal;color:var(--dim)}
 
 /* ---------- career ---------- */
 #lvBox{padding:11px 12px 12px;background:#0A170F;border-bottom:var(--hair)}
@@ -623,8 +630,12 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
   padding:3px 8px;font-size:var(--f0);line-height:1.3;text-align:right;
   animation:tin .22s ease-out;backdrop-filter:blur(2px)}
 .toast b{color:var(--brass)}
+/* the sovereign coin, in place of the word: "sovereigns" in a toast made the
+   stack tall enough to reach the honours button on a phone on its side */
+.tsov{display:inline-block;width:12px;height:12px;vertical-align:middle;margin:-3px 0 -3px 2px;
+  image-rendering:pixelated;image-rendering:crisp-edges}
 .toast.ach{border-color:var(--brass-dk);background:rgba(28,20,6,.94);white-space:normal}
-.toast.ach .achk{font-size:var(--f0);letter-spacing:.16em;text-transform:uppercase;color:var(--brass);
+.toast.ach .achk{font-size:var(--f0);letter-spacing:.1em;text-transform:uppercase;color:var(--brass);
   display:block;margin-bottom:1px}
 @keyframes tin{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:none}}
 
@@ -2543,41 +2554,58 @@ const B = {
      Every counter the game already keeps, given a reason to exist. Unlocks are
      automatic: an idle game should not make you come and collect. ---- */
   ACH: [
-    { id:'h100',   n:'Fairway Found',    d:'Play 100 holes',              m:'holes',  v:100,   r:{k:'tick', v:2} },
-    { id:'h2500',  n:'Card Sharp',       d:'Play 2,500 holes',            m:'holes',  v:2500,  r:{k:'gld', v:0.05} },
-    { id:'h25k',   n:'Tour Veteran',     d:'Play 25,000 holes',           m:'holes',  v:25000, r:{k:'gld', v:0.10} },
-    { id:'bird',   n:'Birdie Hunter',    d:'Card 250 birdies or better',  m:'birdie', v:250,   r:{k:'pow', v:0.04} },
-    { id:'eagle',  n:'Eagle Eye',        d:'Card 500 eagles or better',   m:'eagle',  v:500,   r:{k:'pow', v:0.06} },
-    { id:'ace1',   n:'Hole In One',      d:'Card your first ace',         m:'ace',    v:1,     r:{k:'tick', v:3} },
-    { id:'ace100', n:'Ace Collector',    d:'Card 100 aces',               m:'ace',    v:100,   r:{k:'pow', v:0.08} },
-    { id:'snow',   n:'It Happens',       d:'Card a snowman',              m:'snow',   v:1,     r:{k:'tick', v:1} },
-    { id:'cup1',   n:'First Cup',        d:'Beat an event target',        m:'cups',   v:1,     r:{k:'tick', v:3} },
-    { id:'cup10',  n:'The Cabinet',      d:'Hold 10 cups',                m:'cups',   v:10,    r:{k:'gld', v:0.08} },
-    { id:'cup50',  n:'Dynasty',          d:'Hold 50 cups',                m:'cups',   v:50,    r:{k:'gld', v:0.15} },
-    { id:'rec',    n:'Course Record',    d:'Post a card of -200 or better', m:'best', v:200,   r:{k:'drp', v:0.05} },
-    { id:'lv10',   n:'Rookie',           d:'Reach career level 10',       m:'lv',     v:10,    r:{k:'tick', v:2} },
-    { id:'lv60',   n:'Tour Pro',         d:'Reach career level 60',       m:'lv',     v:60,    r:{k:'pow', v:0.10} },
-    { id:'p25',    n:'Paragon',          d:'Reach paragon 25',            m:'para',   v:25,    r:{k:'spd', v:0.05} },
-    { id:'p250',   n:'Ascendant',        d:'Reach paragon 250',           m:'para',   v:250,   r:{k:'pow', v:0.20} },
-    { id:'t10',    n:'Climbing',         d:'Reach Tour Card X',           m:'tier',   v:9,     r:{k:'pow', v:0.03} },
-    { id:'t25',    n:'Thin Air',         d:'Reach Tour Card XXV',         m:'tier',   v:24,    r:{k:'pow', v:0.06} },
-    { id:'t50',    n:'Mythic Air',       d:'Reach Tour Card L',           m:'tier',   v:49,    r:{k:'pow', v:0.12} },
-    { id:'kit',    n:'Kitted Out',       d:'Fill all six bag slots',      m:'slots',  v:6,     r:{k:'tick', v:2} },
-    { id:'leg',    n:'Rare Air',         d:'Find a Legendary',            m:'legend', v:1,     r:{k:'shard', v:100} },
-    { id:'myth',   n:'Mythwrought',      d:'Find a Mythic',               m:'myth',   v:1,     r:{k:'elm', v:0.05} },
-    { id:'enh',    n:'Reforged',         d:'Take a piece to +15',         m:'enh15',  v:1,     r:{k:'pow', v:0.06} },
-    { id:'set6',   n:'Matched',          d:'Six pieces at Rare or better', m:'set6',  v:6,     r:{k:'pow', v:0.05} },
-    { id:'dg25',   n:'Regular',           d:'Play 25 wagers',              m:'runs',   v:25,    r:{k:'grit', v:200} },
-    { id:'f25',    n:'Deep Water',       d:'Reach mark 25 anywhere',      m:'floor',  v:25,    r:{k:'dgn', v:0.10} },
-    { id:'f60',    n:'The Abyss',        d:'Reach mark 60 anywhere',      m:'floor',  v:60,    r:{k:'dgn', v:0.20} },
-    { id:'all4',   n:'Every Door',       d:'Reach mark 10 in all four',   m:'all4',   v:1,     r:{k:'tick', v:3} },
-    { id:'prov1',  n:'Second Ball',      d:'Reach 50% provisional chance',  m:'mst', v:0.50, r:{k:'pow', v:0.08} },
-    { id:'prov2',  n:'Both Barrels',     d:'Reach 150% provisional chance', m:'mst', v:1.50, r:{k:'mst', v:0.10} },
-    { id:'kitE',   n:'Well Stocked',     d:'Six pieces at Epic or better',  m:'set6e', v:6,   r:{k:'pow', v:0.08} },
-    { id:'perk50', n:'Sponsored',        d:'Use 50 sponsor perks',        m:'perks',  v:50,    r:{k:'gld', v:0.06} },
-    { id:'tr15',   n:'Curator',          d:'Find 15 trophies',            m:'troph',  v:15,    r:{k:'pow', v:0.06} },
-    { id:'tr30',   n:'The Whole Room',   d:'Find every trophy',           m:'troph',  v:30,    r:{k:'pow', v:0.25} },
-    { id:'ret1',   n:'Signed Off',       d:'Retire once',                 m:'retire', v:1,     r:{k:'tick', v:2} }
+    { id:'h100',   n:'Fairway Found',    d:'Play 100 holes',              m:'holes',  v:100,   r:{k:'tick', v:2}, sov:5 },
+    { id:'h2500',  n:'Card Sharp',       d:'Play 2,500 holes',            m:'holes',  v:2500,  r:{k:'gld', v:0.05}, sov:10 },
+    { id:'h25k',   n:'Tour Veteran',     d:'Play 25,000 holes',           m:'holes',  v:25000, r:{k:'gld', v:0.10}, sov:100 },
+    { id:'bird',   n:'Birdie Hunter',    d:'Card 250 birdies or better',  m:'birdie', v:250,   r:{k:'pow', v:0.04}, sov:10 },
+    { id:'eagle',  n:'Eagle Eye',        d:'Card 500 eagles or better',   m:'eagle',  v:500,   r:{k:'pow', v:0.06}, sov:10 },
+    { id:'ace1',   n:'Hole In One',      d:'Card your first ace',         m:'ace',    v:1,     r:{k:'tick', v:3}, sov:5 },
+    { id:'ace100', n:'Ace Collector',    d:'Card 100 aces',               m:'ace',    v:100,   r:{k:'pow', v:0.08}, sov:100 },
+    { id:'snow',   n:'It Happens',       d:'Card a snowman',              m:'snow',   v:1,     r:{k:'tick', v:1}, sov:5 },
+    { id:'cup1',   n:'First Cup',        d:'Beat an event target',        m:'cups',   v:1,     r:{k:'tick', v:3}, sov:5 },
+    { id:'cup10',  n:'The Cabinet',      d:'Hold 10 cups',                m:'cups',   v:10,    r:{k:'gld', v:0.08}, sov:10 },
+    { id:'cup50',  n:'Dynasty',          d:'Hold 50 cups',                m:'cups',   v:50,    r:{k:'gld', v:0.15}, sov:100 },
+    { id:'rec',    n:'Course Record',    d:'Post a card of -200 or better', m:'best', v:200,   r:{k:'drp', v:0.05}, sov:100 },
+    { id:'lv10',   n:'Rookie',           d:'Reach career level 10',       m:'lv',     v:10,    r:{k:'tick', v:2}, sov:5 },
+    { id:'lv60',   n:'Tour Pro',         d:'Reach career level 60',       m:'lv',     v:60,    r:{k:'pow', v:0.10}, sov:100 },
+    { id:'p25',    n:'Paragon',          d:'Reach paragon 25',            m:'para',   v:25,    r:{k:'spd', v:0.05}, sov:100 },
+    { id:'p250',   n:'Ascendant',        d:'Reach paragon 250',           m:'para',   v:250,   r:{k:'pow', v:0.20}, sov:100 },
+    { id:'t10',    n:'Climbing',         d:'Reach Tour Card X',           m:'tier',   v:9,     r:{k:'pow', v:0.03}, sov:10 },
+    { id:'t25',    n:'Thin Air',         d:'Reach Tour Card XXV',         m:'tier',   v:24,    r:{k:'pow', v:0.06}, sov:100 },
+    { id:'t50',    n:'Mythic Air',       d:'Reach Tour Card L',           m:'tier',   v:49,    r:{k:'pow', v:0.12}, sov:100 },
+    { id:'kit',    n:'Kitted Out',       d:'Fill all six bag slots',      m:'slots',  v:6,     r:{k:'tick', v:2}, sov:5 },
+    { id:'leg',    n:'Rare Air',         d:'Find a Legendary',            m:'legend', v:1,     r:{k:'shard', v:100}, sov:5 },
+    { id:'myth',   n:'Mythwrought',      d:'Find a Mythic',               m:'myth',   v:1,     r:{k:'elm', v:0.05}, sov:10 },
+    { id:'enh',    n:'Reforged',         d:'Take a piece to +15',         m:'enh15',  v:1,     r:{k:'pow', v:0.06}, sov:10 },
+    { id:'set6',   n:'Matched',          d:'Six pieces at Rare or better', m:'set6',  v:6,     r:{k:'pow', v:0.05}, sov:10 },
+    { id:'dg25',   n:'Regular',           d:'Play 25 wagers',              m:'runs',   v:25,    r:{k:'grit', v:200}, sov:10 },
+    { id:'f25',    n:'Deep Water',       d:'Reach mark 25 anywhere',      m:'floor',  v:25,    r:{k:'dgn', v:0.10}, sov:10 },
+    { id:'f60',    n:'The Abyss',        d:'Reach mark 60 anywhere',      m:'floor',  v:60,    r:{k:'dgn', v:0.20}, sov:100 },
+    { id:'all4',   n:'Every Door',       d:'Reach mark 10 in all four',   m:'all4',   v:1,     r:{k:'tick', v:3}, sov:10 },
+    { id:'prov1',  n:'Second Ball',      d:'Reach 50% provisional chance',  m:'mst', v:0.50, r:{k:'pow', v:0.08}, sov:5 },
+    { id:'prov2',  n:'Both Barrels',     d:'Reach 150% provisional chance', m:'mst', v:1.50, r:{k:'mst', v:0.10}, sov:100 },
+    { id:'kitE',   n:'Well Stocked',     d:'Six pieces at Epic or better',  m:'set6e', v:6,   r:{k:'pow', v:0.08}, sov:10 },
+    { id:'perk50', n:'Sponsored',        d:'Use 50 sponsor perks',        m:'perks',  v:50,    r:{k:'gld', v:0.06}, sov:10 },
+    { id:'tr15',   n:'Curator',          d:'Find 15 trophies',            m:'troph',  v:15,    r:{k:'pow', v:0.06}, sov:10 },
+    { id:'tr30',   n:'The Whole Room',   d:'Find every trophy',           m:'troph',  v:30,    r:{k:'pow', v:0.25}, sov:100 },
+    { id:'ret1',   n:'Signed Off',       d:'Retire once',                 m:'retire', v:1,     r:{k:'tick', v:2}, sov:10 }
+  ],
+  // Honours that come round again. Steps are set off how fast each thing turns
+  // up late in a career, not early: a floor-bound bag cards an eagle on nearly
+  // every hole and a curated trophy room an ace on most of them, so a step of
+  // ten eagles would pay every minute or two. Paid in sovereigns, 2-4 for the
+  // everyday ones and 5-10 for an event, a cup or a big club.
+  ACH_REP: [
+    { id:'rHoles', n:'Steady Hand',    d:'every 100 holes', m:'holes',  step:100, sov:2 },
+    { id:'rBird',  n:'Birdie Watch',   d:'every 50 birdies', m:'birdie', step:50,  sov:2 },
+    { id:'rEagle', n:'Eagle Nest',     d:'every 50 eagles', m:'eagle',  step:50,  sov:3 },
+    { id:'rNine',  n:'Front and Back', d:'every 3 nine goals', m:'nines',  step:3,   sov:3 },
+    { id:'rRuns',  n:'Regular Punter', d:'every 10 wagers', m:'runs',   step:10,  sov:3 },
+    { id:'rAce',   n:'Ace Shelf',      d:'every 50 aces', m:'ace',    step:50,  sov:4 },
+    { id:'rEvent', n:'Weekly Grind',   d:'every event', m:'events', step:1,   sov:5 },
+    { id:'rLeg',   n:'Legendary Haul', d:'every 3 Legendaries', m:'legend', step:3,   sov:6 },
+    { id:'rCup',   n:'Silverware',     d:'every cup', m:'cups',   step:1,   sov:10 },
+    { id:'rMyth',  n:'Mythic Haul',    d:'every Mythic', m:'myth',   step:1,   sov:10 }
   ],
 
   /* ---- retirement ---- */
@@ -2870,7 +2898,7 @@ function defaultState(){ return {
   legacy: 0, relic: {}, retires: 0, cups: 0, points: 0,
   lv: 1, xp: 0, statPts: 0, talPts: 0, stat: {}, tal: {},
   tickets: 0, perkOn: {}, perkUsed: 0,
-  tally: {}, achDone: {},
+  tally: {}, achDone: {}, achRep: {},
   para: 0, paraXp: 0, paraPts: {}, paraSpent: {},
   tourScore: 0,
   bestTier: 0, tierMax: 0, tierEvents: {}, eventsPlayed: 0, goldPeak: 0,
@@ -2922,6 +2950,7 @@ function initState(){
   if(!S.carry.length) S.carry = ['thunder'];
   if(!S.perkOn) S.perkOn = {};
   if(!S.tally) S.tally = {};
+  if(!S.achRep || typeof S.achRep !== 'object') S.achRep = {};
   if(!B.BANK_OPTS.includes(S.islandBank)) S.islandBank = 5;
   if(!S.tierEvents) S.tierEvents = {};
   if(S.tierMax === undefined) S.tierMax = 0;
@@ -3110,6 +3139,8 @@ function achMetric(m){
     case 'tier':   return S.bestTier || 0;
     case 'retire': return S.retires || 0;
     case 'perks':  return S.perkUsed || 0;
+    case 'nines':  return S.ninesWon || 0;
+    case 'events': return S.eventsPlayed || 0;
     case 'troph':  return trophiesFound();
     case 'mst':    return derive().mst;
     case 'set6e':  return B.SLOTS.reduce((n, s) => n + (S.equip[s.id] && S.equip[s.id].rar >= 3 ? 1 : 0), 0);
@@ -3629,6 +3660,14 @@ function autoCast(D, dt){
    ========================================================================= */
 const bump = (k, n) => { S.tally[k] = (S.tally[k] || 0) + (n || 1); };
 function checkAch(){
+  // Honours earned before they paid sovereigns are paid once, in one go. The
+  // flag is not in defaultState on purpose: a save from before it has none,
+  // and a fresh game has nothing done, so both land here and only one pays.
+  if(!S.achSov){
+    S.achSov = 1;
+    const owed = B.ACH.reduce((t, a) => t + (achDone(a.id) ? a.sov || 0 : 0), 0);
+    if(owed) grantSov(owed, 'honours already earned');
+  }
   for(const a of B.ACH){
     if(S.achDone[a.id]) continue;
     if(achMetric(a.m) < a.v) continue;
@@ -3647,8 +3686,27 @@ function checkAch(){
     // and at the width a toast is allowed on a 320 phone the longer one wrapped
     // to two -- five lines a toast, two toasts, and the stack ran down into the
     // honours button. The word above the name already says what it is.
-    toast('<span class="achk">Unlocked</span>' + a.n + ' \u00b7 <b>' + got + '</b>', 'ach');
+    grantSov(a.sov || 0, null, true);
+    // The coins ride on the eyebrow, which has room to spare: on the body line
+    // they wrapped it, and a taller pair of toasts reached the honours button.
+    // Tighter tracking and no middot, or at 320 wide "UNLOCKED · +100" wraps too.
+    toast('<span class="achk">Unlocked' + (a.sov ? ' +' + a.sov + sovIc() : '') + '</span>'
+      + a.n + ' \u00b7 <b>' + got + '</b>', 'ach');
     if(typeof renderCareer === 'function') renderCareer();
+  }
+  // The repeating ones. A save that predates them starts counting from where
+  // it is rather than being paid for every hundred holes it ever played: the
+  // one-offs above are back-paid because there are thirty-five of them, and
+  // twenty-five thousand holes is two hundred and fifty of these.
+  for(const a of B.ACH_REP){
+    const have = achMetric(a.m), got = Math.floor(have / a.step);
+    if(S.achRep[a.id] === undefined){ S.achRep[a.id] = got; continue; }
+    const k = got - S.achRep[a.id];
+    if(k <= 0) continue;
+    S.achRep[a.id] = got;
+    grantSov(k * a.sov, null, true);
+    toast('<span class="achk">Honours +' + fmt(k * a.sov, 0) + sovIc() + '</span>'
+      + a.n + (k > 1 ? ' \u00d7' + fmt(k, 0) : ''), 'ach');
   }
 }
 
@@ -4639,14 +4697,15 @@ const isMember = () => !!S.member;
 // comparing against another price, so they are written out in full rather
 // than run through the K/M shortener the purse uses.
 const sovFmt = n => Math.round(n || 0).toLocaleString('en-US');
+const sovIc = () => '<img class="tsov" src="' + pixUrl('sov2', '#E3B457') + '" alt="' + B.SOV + '">';
 const boostOn  = () => (S.boostT || 0) > 0;
 const freeReady = () => (S.freeT || 0) >= B.FREE_EVERY;
 
-function grantSov(n, why){
+function grantSov(n, why, quiet){
   n = Math.round(n);
   if(n <= 0) return;
   S.sov = (S.sov || 0) + n;
-  toast('+' + sovFmt(n) + ' ' + B.SOV + (why ? ' \u00b7 ' + why : ''));
+  if(!quiet) toast('+' + sovFmt(n) + ' ' + B.SOV + (why ? ' \u00b7 ' + why : ''));
   renderVitals();
 }
 function spendSov(n){
@@ -7985,11 +8044,21 @@ function honRows(w){
   const A = achBonus();
   const live = Object.keys(A).map(k => achReward({ r:{ k, v:A[k] } })).join(' \u00b7 ');
   const near = achNear(3);
-  let h = '<div class="hint">' + done + ' of ' + tot + ' done. They tick over by themselves, so there is nothing to come and claim. Right now you are getting: '
-    + (live ? '<b style="color:var(--aurora)">' + live + '</b>' : 'none yet') + '.</div>';
+  let h = '<div class="hint"><b>' + done + '</b> of ' + tot + ' done'
+    + (live ? ' \u00b7 earning <b style="color:var(--aurora)">' + live + '</b>' : '') + '</div>';
   if(near.length) h += '<div class="hint">Closest: '
     + near.map(a => '<b>' + a.n + '</b> ' + fmt(Math.min(achMetric(a.m), a.v), 0) + '/' + fmt(a.v, 0))
         .join(' \u00b7 ') + '.</div>';
+  // The ones that come round again, one line each: how far to the next, and
+  // what it pays. Not .row, so the first row in the sheet is still the nearest
+  // one-off.
+  h += '<div class="eyebrow" style="margin:10px 0 4px">Every time</div>'
+    + B.ACH_REP.map(a => {
+        const have = achMetric(a.m) % a.step;
+        return '<div class="lb rep"><span>' + a.n + ' <i>\u00b7 ' + nb(a.d) + '</i></span>'
+          + '<span class="s">' + fmt(have, 0) + '/' + fmt(a.step, 0) + ' \u00b7 +' + a.sov + '</span></div>';
+      }).join('')
+    + '<div class="eyebrow" style="margin:12px 0 4px">Once</div>';
   // Nearest first, then the shelf. A checklist sorted by what you have already
   // done tells you nothing about what to go and play for.
   const rows = B.ACH.map(a => ({ a, done: achDone(a.id) ? 1 : 0, r: achRatio(a) }))
@@ -8001,7 +8070,8 @@ function honRows(w){
       + '<div class="ds">' + nb(a.d) + '</div>'
       + '<div class="mt">' + (got ? '<b>' + achReward(a) + '</b>'
           : '<i>' + fmt(Math.min(have, need), 0) + '</i> / ' + fmt(need, 0)
-            + ' \u00b7 ' + achReward(a)) + '</div></div>'
+            + ' \u00b7 ' + achReward(a))
+        + (a.sov ? ' \u00b7 +' + a.sov + '\u00a0' + B.SOV.toLowerCase() : '') + '</div></div>'
       + (got ? '' : '<div class="hbar"><i style="width:' + clamp(have/need,0,1)*100 + '%"></i></div>')
       + '</div>';
   }

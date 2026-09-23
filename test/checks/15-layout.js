@@ -124,6 +124,16 @@ module.exports = {
         B.DGN.forEach(d => S.dgnFloor[d.id] = 999);
         for (const k of ['birdie', 'eagle', 'snow', 'runs', 'legend', 'myth', 'enh15'])
           S.tally[k] = 1e9;
+        // The repeating honours count from where they were, so pushing every
+        // counter to a billion would have them pay a hundred million times over
+        // -- a jump no catch-up can make (it plays at most twenty thousand
+        // holes) -- and push the one-offs out of the stack. Pinned at the most
+        // one return can pay, two hundred steps, and run first, so the last two
+        // toasts standing are still the tallest real pair: two one-offs.
+        B.ACH_REP.forEach(a => S.achRep[a.id] = Math.floor(achMetric(a.m) / a.step) - 200);
+        S.achSov = 1;
+        S.achDone = {}; const keep = B.ACH; B.ACH = [];
+        try { checkAch(); } finally { B.ACH = keep; }
         checkAch();
         const R = e => e.getBoundingClientRect();
         const st = R($('stage'));

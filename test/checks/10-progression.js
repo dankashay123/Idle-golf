@@ -73,7 +73,8 @@ module.exports = {
         'B.STATS':   B.STATS.map(x => x.id),
         'B.PERKS':   B.PERKS.map(x => x.id),
         'B.DGN':     B.DGN.map(d => d.id),
-        'B.ACH':     B.ACH.map(a => a.id)
+        'B.ACH':     B.ACH.map(a => a.id),
+        'B.ACH_REP': B.ACH_REP.map(a => a.id)
       };
       out.cats = B.PARAGON.map(c => ({ id: c.id, n: c.n, lines: c.a.length,
                                        uncapped: c.a.filter(a => a.cap === 0).length }));
@@ -325,7 +326,57 @@ module.exports = {
       throw new Error('all four milestones cost ' + total + ' points and a career is '
         + r.career + '. If you can have all four there is no choice in it.');
 
-    return ['paragon ' + r.cats.length + ' categories, ' + r.paraKeys.length
+    // ---- honours pay sovereigns, once each or every time ---------------
+    const H = await page.evaluate(() => {
+      const o = {};
+      o.bands = B.ACH.filter(a => [5, 10, 100].indexOf(a.sov) < 0).map(a => a.id + '=' + a.sov);
+      o.rep = B.ACH_REP.filter(a => !(a.step > 0) || !(a.sov >= 2 && a.sov <= 10)).map(a => a.id);
+      o.repMetrics = B.ACH_REP.filter(a => !isFinite(achMetric(a.m))).map(a => a.id + ':' + a.m);
+      const fresh = () => { Object.keys(S).forEach(k => delete S[k]); Object.assign(S, defaultState());
+        initState(); migrate(); };
+      QUIET = true;
+      try {
+        // a new career: nothing back-paid, nothing paid for counting from zero
+        fresh(); checkAch(); o.freshPaid = S.sov || 0;
+        // 250 holes: Fairway Found once, and Steady Hand twice
+        S.totalHoles = 250; const s0 = S.sov || 0; checkAch();
+        o.at250 = (S.sov || 0) - s0;
+        const s1 = S.sov; checkAch(); o.again = S.sov - s1;
+        // a save from before honours paid: what it had already earned is paid
+        // once, and the repeating ones start counting from where it stands
+        fresh(); delete S.achSov; S.achRep = {};
+        S.achDone = { h100: 1, lv60: 1 }; S.totalHoles = 25000; S.tally.birdie = 9000;
+        checkAch(); o.backPay = S.sov || 0;
+        const s2 = S.sov; checkAch(); o.backAgain = S.sov - s2;
+        o.want = B.ACH.find(a => a.id === 'h100').sov + B.ACH.find(a => a.id === 'lv60').sov
+          + B.ACH.filter(a => a.m === 'holes' && a.v <= 25000 && a.id !== 'h100').reduce((t, a) => t + a.sov, 0)
+          + B.ACH.filter(a => a.m === 'birdie' && a.v <= 9000).reduce((t, a) => t + a.sov, 0);
+        o.hSteady = B.ACH_REP.find(a => a.id === 'rHoles').sov;
+        o.hFair = B.ACH.find(a => a.id === 'h100').sov;
+      } finally { QUIET = false; }
+      fresh();
+      return o;
+    });
+    if (H.bands.length)
+      throw new Error('one-off honours outside the 5 / 10 / 100 sovereign bands: ' + H.bands.join(', '));
+    if (H.rep.length)
+      throw new Error('repeating honours with no step or a payout outside 2-10: ' + H.rep.join(', '));
+    if (H.repMetrics.length)
+      throw new Error('repeating honours read a counter the game does not keep: ' + H.repMetrics.join(', '));
+    if (H.freshPaid)
+      throw new Error('a brand new career was paid ' + H.freshPaid + ' sovereigns before doing anything');
+    if (H.at250 !== H.hFair + 2 * H.hSteady)
+      throw new Error('250 holes paid ' + H.at250 + ' sovereigns; Fairway Found (' + H.hFair
+        + ') and two Steady Hands (' + (2 * H.hSteady) + ') is ' + (H.hFair + 2 * H.hSteady));
+    if (H.again) throw new Error('checking again straight after paid ' + H.again + ' more');
+    if (H.backPay !== H.want)
+      throw new Error('a save from before honours paid got ' + H.backPay + ' sovereigns back; what it '
+        + 'had already earned comes to ' + H.want + ', and its 25,000 holes must not be paid as '
+        + '250 Steady Hands');
+    if (H.backAgain) throw new Error('the back pay was paid a second time: +' + H.backAgain);
+
+    return ['honours pay sovereigns: one-offs 5/10/100, ' + 'repeating 2-10 every step, back pay ' + H.backPay + ' once, nothing for counting from zero',
+      'paragon ' + r.cats.length + ' categories, ' + r.paraKeys.length
       + ' lines, none sold elsewhere, all wired',
       r.talents + ' talents, none sold elsewhere, all wired; '
       + Object.keys(r.talMoved).length + ' measured live, Sponsor Eye ' + r.dropEye
