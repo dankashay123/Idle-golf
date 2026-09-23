@@ -153,6 +153,22 @@ module.exports = {
         + 'same number of screen pixels.');
     }
 
+    // The shot book's icons sit in square boxes on the field and in the list,
+    // and the box is centred on the 12x12 grid -- so a drawing that is not
+    // centred in its own grid sits off-centre in its box. Thunder Drive's bolt
+    // lived in the top-left five columns with a ball tucked under it.
+    const offC = await page.evaluate(() => B.SKILL.map(k => {
+      const rows = B.PX12[k.ic]; if (!rows) return k.id + ': no drawing';
+      const xs = [], ys = [];
+      rows.forEach((r, y) => [...r].forEach((ch, x) => { if (ch !== '.') { xs.push(x); ys.push(y); } }));
+      const L = Math.min(...xs), R = 11 - Math.max(...xs), T = Math.min(...ys), Bm = 11 - Math.max(...ys);
+      return (Math.abs(L - R) > 1 || Math.abs(T - Bm) > 1)
+        ? k.n + ' (' + k.ic + ') margins left ' + L + ' right ' + R + ' top ' + T + ' bottom ' + Bm : '';
+    }).filter(Boolean));
+    if (offC.length)
+      throw new Error('shot icons drawn off-centre in their 12x12 grid, so off-centre in their boxes: '
+        + offC.join('; '));
+
     // The home screen icon: 180 square, an actual picture, and crisp. It is
     // painted on a 36 grid and scaled by exactly 5, so every 5x5 block is one
     // colour; smoothing, or a size that is not a whole multiple, blends the
@@ -186,6 +202,7 @@ module.exports = {
     return [r.total + ' things, ' + r.distinct + ' distinct icons, ' + r.drawn
       + ' drawn, no reuse, every tier colour reaches the canvas',
       'every sprite box square and on the 12px grid, across five screens and four shop tabs',
-      'home screen icon 180x180, ' + home.colours + ' colours, every pixel square'];
+      'home screen icon 180x180, ' + home.colours + ' colours, every pixel square',
+      'all 8 shot icons centred in their grid to within a pixel'];
   }
 };
