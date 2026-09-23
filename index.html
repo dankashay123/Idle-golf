@@ -939,6 +939,10 @@ const B = {
     // rather than what a shop looks like from the path.
     gear: ['.....XX.....','..X.XXXX.X..','.XXXXwwXXXX.','..XXw..wXX..','.XXw....wXX.','XXXw....wXXX',
            'XXXx....xXXX','.XXx....xXX.','..XXx..xXX..','.XXXXxxXXXX.','..X.XXXX.X..','.....XX.....'],
+    balls3: ['............','....XXXX....','...XwwXXx...','...XwXXXx...','....xxxx....','.XXXX..XXXX.',
+             'XwwXXxXwwXXx','XwXXXxXwXXXx','XXXXXxXXXXXx','.xxxx..xxxx.','............','............'],
+    dusk: ['.......XXX..','.....XXw....','.....Xw.....','.....Xw.....','.....XXw....','.......XXX..',
+           '..X.........','..XXXX......','..XXXXXX....','..XXXX......','..X.........','.xxxxxx.....'],
     proshop: ['...XXXXXX...','..XwwwwwwX..','.XXXXXXXXXX.','XoXXoXXoXXoX','XxXxXxXxXxXx','.XXXXXXXXXX.','.XwwwXXoooX.','.XwwwXXoooX.','.XwwwXXoooX.','.XXXXXXoooX.','.XXXXXXoooX.','.XXXXXXXXXX.'],
     starter: ['............','...XX..XX...','..XwXXXXwX..','.XXXXXXXXXX.','.XwXXXXXXwX.','.XXXXXXXXXX.','.XwXXXXXXwX.','.XwXXXXXXwX.','.XwXXXXXXwX.','.XxXXXXXXxX.','.XXXXXXXXXX.','............'],
     member: ['....XXXX....','...XwwwwX...','..XwXXXXwX..','..XwXooowX..','..XwXXXXwX..','...XwwwwX...','....XXXX....','...XXXXXX...','..XXx.XXx...','.XXx...XXx..','XXx.....XXx.','Xx.......Xx.'],
@@ -2145,7 +2149,12 @@ const B = {
       d:'Bank two and a half minutes of purse at your current rate' },
     { id:'cart',   n:'Cart Ride',         ic:'cart',  cost:2, dur:0,   k:'holeout', v:0,
       d:'Hole out immediately, carded as an eagle' },
-    { id:'exempt', n:'Sponsor Exemption', ic:'scroll',  cost:6, dur:0,   k:'keys', v:0,
+    // Priced off what it refills. Six tickets bought twelve entries across four
+    // wagers; with six wagers it refills eighteen, and at six tickets the runs
+    // it buys could now and then earn their own next refill -- the wagers check
+    // caught 0.38 tickets a run against a break-even of 0.33. Nine puts it back
+    // at half a ticket an entry, where it was.
+    { id:'exempt', n:'Sponsor Exemption', ic:'scroll',  cost:9, dur:0,   k:'keys', v:0,
       d:'Refill every entry in the wager book' }
   ],
   // where tickets come from
@@ -2181,7 +2190,19 @@ const B = {
     { id:'vault', ic:'vault', mode:'floor', n:'The Clubhouse Vault', cur:'gold', cn:'Purse',
       regen:900, cap:2, run:56, pay:1, gear:0.62, floorRar:1,
       d:'Floor after floor, each one harder than the last.',
-      how:'Straight endurance. How deep your carry drags you before the clock runs out.' }
+      how:'Straight endurance. How deep your carry drags you before the clock runs out.' },
+    // Two more, each on a stat none of the first four is about. The Scramble
+    // is provisionals: every ball you carry is another look at the hole. The
+    // Twilight Putt is tempo: the quicker you swing, the more putts you get in
+    // before the light goes.
+    { id:'scramble', ic:'balls3', mode:'scramble', n:'The Scramble', cur:'grit', cn:'Grit',
+      regen:780, cap:3, run:24, pay:0.05, gear:0.30, floorRar:1,
+      d:'Nine holes, every ball you carry. Hole any of them and the hole is yours.',
+      how:'Runs on provisionals: one ball plus one for every whole point of provisional chance, and a chance at one more. More balls, more holes.' },
+    { id:'twilight', ic:'dusk', mode:'twilight', n:'The Twilight Putt', cur:'scroll', cn:'Scrolls',
+      regen:960, cap:3, run:30, pay:0.018, gear:0.25, floorRar:1,
+      d:'Putts until the light goes. Each one that drops is worth more than the last.',
+      how:'Runs on tempo: the quicker you swing, the more putts you get before dark. Half of them drop, whatever the bag.' }
   ],
   DRIVE_SHOTS: 6, DRIVE_GAP: 2.0, DRIVE_WIND: [0.72, 1.38],
   ISLAND_GAP: 2.8, ISLAND_BASE: 0.56, ISLAND_CRIT: 0.42, ISLAND_DECAY: 0.035,
@@ -2204,6 +2225,8 @@ const B = {
   DGN_FEAT_MULT: 2,
   BANK_OPTS: [3, 5, 7, 10, 15, 25],
   CHIP_SHOTS: 25, CHIP_GAP: 1.65, CHIP_PROC: 0.90, CHIP_STEP: 0.78,
+  SCRAMBLE_HOLES: 9, SCRAMBLE_GAP: 2.2, SCRAMBLE_P: 0.24, SCRAMBLE_STEP: 1.1,
+  TWI_GAP: 2.4, TWI_GAP_MIN: 0.5, TWI_LEAD: 1.4, TWI_Q: 0.5, TWI_STEP: 0.3,
   // The endurance floor: each one is a piece of work, deeper floors are more of
   // it, and a floor still takes a moment even when you are far too strong.
   DGN_WORK: 26, DGN_WORK_STEP: 1.55, DGN_MIN_FLOOR: 0.45,
@@ -2273,7 +2296,11 @@ const B = {
     cellar: { st:'cellar', sky:['#140A20','#2A1240','#3E1C5E'], wall:'#1C0E2C', floor:'#4A3520', floor2:'#382717',
               lip:'#6E5030', deep:'#0C0614', glow:'#C68BFF', mote:'#E2C6FF', word:'sparks' },
     vault:  { st:'vault', sky:['#0A1A10','#123020','#1B4A2E'], wall:'#0E2416', floor:'#C9C4B4', floor2:'#A8A392',
-              lip:'#E3B457', deep:'#050F09', glow:'#E3B457', mote:'#F3DFA6', word:'dust' }
+              lip:'#E3B457', deep:'#050F09', glow:'#E3B457', mote:'#F3DFA6', word:'dust' },
+    scramble: { st:'scramble', sky:['#10301E','#1E4A2E','#2E6A40'], wall:'#12301C', floor:'#6AAA48', floor2:'#5A9A3E',
+              lip:'#EFDDAE', deep:'#08180E', glow:'#7ADB86', mote:'#C6F2B0', word:'balls' },
+    twilight: { st:'twilight', sky:['#1A1030','#4A2A50','#C0604A'], wall:'#1A1426', floor:'#3E6A48', floor2:'#34583C',
+              lip:'#F2B06A', deep:'#0C0816', glow:'#F29A5E', mote:'#FFD2A0', word:'fireflies' }
   },
   // The old view was a perspective corridor with a gate per floor. Every floor
   // more than two ahead projected to within a few pixels of the vanishing
@@ -2624,7 +2651,7 @@ const B = {
     { id:'dg25',   n:'Regular',           d:'Play 25 wagers',              m:'runs',   v:25,    r:{k:'grit', v:200}, sov:10 },
     { id:'f25',    n:'Deep Water',       d:'Reach mark 25 anywhere',      m:'floor',  v:25,    r:{k:'dgn', v:0.10}, sov:10 },
     { id:'f60',    n:'The Abyss',        d:'Reach mark 60 anywhere',      m:'floor',  v:60,    r:{k:'dgn', v:0.20}, sov:100 },
-    { id:'all4',   n:'Every Door',       d:'Reach mark 10 in all four',   m:'all4',   v:1,     r:{k:'tick', v:3}, sov:10 },
+    { id:'all4',   n:'Every Door',       d:'Reach mark 10 in every wager', m:'all4',   v:1,     r:{k:'tick', v:3}, sov:10 },
     { id:'prov1',  n:'Second Ball',      d:'Reach 50% provisional chance',  m:'mst', v:0.50, r:{k:'pow', v:0.08}, sov:5 },
     { id:'prov2',  n:'Both Barrels',     d:'Reach 150% provisional chance', m:'mst', v:1.50, r:{k:'mst', v:0.10}, sov:100 },
     { id:'kitE',   n:'Well Stocked',     d:'Six pieces at Epic or better',  m:'set6e', v:6,   r:{k:'pow', v:0.08}, sov:10 },
@@ -4131,6 +4158,28 @@ const islandChance = (D, made) => clamp(
   B.ISLAND_MIN, B.ISLAND_MAX);
 const chipChance = D => clamp((D.procRaw !== undefined ? D.procRaw : D.proc) * B.CHIP_PROC
   + (D.C ? D.C.wchip : 0), 0.05, 0.88);
+// The Scramble plays 1 + floor(provisional) balls a hole, and one more on the
+// fractional part; a hole is won if any of them drops. This is the chance of
+// winning a hole, averaged over whether that last ball turns up.
+const scrambleBalls = D => { const m = clamp(D.mst || 0, 0, B.MST_CAP); return { fl: Math.floor(m), fr: m % 1 }; };
+const scrambleChance = D => {
+  const b = scrambleBalls(D), p = B.SCRAMBLE_P;
+  return (1 - b.fr) * (1 - Math.pow(1 - p, 1 + b.fl)) + b.fr * (1 - Math.pow(1 - p, 2 + b.fl));
+};
+// The Twilight Putt: a putt every gap seconds, the gap shrinking with tempo.
+const twilightGap = D => clamp(B.TWI_GAP / (0.5 + 0.5 * Math.max(0.1, D.spd)), B.TWI_GAP_MIN, B.TWI_GAP);
+const twilightPutts = (D, dur) => Math.max(3, Math.floor((dur - B.TWI_LEAD) / twilightGap(D)));
+// The pot a run of n tries at q each builds, when the i-th success pays at mark
+// fc + i*step: a sum over a binomial, weighted by the chance of getting that far.
+function binomPot(n, q, fc, step, per){
+  let pmf = Math.pow(1 - q, n), tail = 1, sum = 0;
+  for(let i = 1; i <= n; i++){
+    tail -= pmf;
+    pmf *= (q / (1 - q)) * (n - i + 1) / i;
+    sum += Math.max(0, tail) * per(fc + i * step);
+  }
+  return sum;
+}
 
 // What one entry is actually worth, worked out the way the contest itself pays.
 //
@@ -4218,6 +4267,16 @@ function dgnPayout(d, D){
     return { buys: sum * featM,
              note: Math.round(n*q) + ' of ' + n + ' dropping' };
   }
+  if(d.mode === 'scramble'){
+    const q = scrambleChance(D), n = B.SCRAMBLE_HOLES;
+    return { buys: binomPot(n, q, fc, B.SCRAMBLE_STEP, per) * featM,
+             note: Math.round(n*q) + ' of ' + n + ' holed' };
+  }
+  if(d.mode === 'twilight'){
+    const n = twilightPutts(D, d.run * (D.C.sharp ? 1.4 : 1));
+    return { buys: binomPot(n, B.TWI_Q, fc, B.TWI_STEP, per) * featM,
+             note: n + ' putts before dark' };
+  }
   // The Vault earns its floor by chewing through floorWork, so the projection
   // chews through it too: the same clock, the same carry, the same floor that
   // still takes a moment when you are far too strong for it -- and the same
@@ -4255,6 +4314,12 @@ function startDgn(d){
     R.target = B.BANK_OPTS.includes(S.islandBank) ? S.islandBank : 5; R.next = 1.4;
   }
   else if(d.mode === 'chip'){ R.shot = 0; R.made = 0; R.pot = 0; R.f0 = fc; R.next = 1.2; }
+  else if(d.mode === 'scramble'){ R.shot = 0; R.made = 0; R.pot = 0; R.f0 = fc; R.next = 1.2; R.log = []; }
+  else if(d.mode === 'twilight'){
+    // the tempo you walk on with sets the pace of the whole run
+    R.shot = 0; R.made = 0; R.pot = 0; R.f0 = fc; R.next = B.TWI_LEAD; R.log = [];
+    R.gap = twilightGap(D0); R.n = twilightPutts(D0, dur);
+  }
   else { R.floor = f0; R.cleared = 0; R.work = floorWork(f0); R.full = R.work; R.fT = 0; R.mod = 1; }
   S.dgnRun = R;
   toast('Entered <b>' + d.n + '</b>');
@@ -4351,6 +4416,43 @@ function tickDgn(dt, D){
     }
     if(R.t >= R.dur) R.settle = 1.2;
 
+  }else if(R.mode === 'scramble'){
+    if(R.next <= 0){
+      if(R.shot >= B.SCRAMBLE_HOLES){ R.settle = 1.2; return; }
+      R.shot++;
+      const b = scrambleBalls(D), balls = 1 + b.fl + (Math.random() < b.fr ? 1 : 0);
+      let won = false;
+      for(let i = 0; i < balls; i++) if(Math.random() < B.SCRAMBLE_P){ won = true; break; }
+      R.log.push({ balls, won });
+      Scene.aimed(D.pow, D.ball && D.ball.el, Scene.holeLen(),
+                  won ? 0 : (Math.random()-0.5)*2.4, won);
+      if(won){
+        R.made++;
+        R.pot += yieldAt(R.f0 + R.made*B.SCRAMBLE_STEP, D, d);
+        Scene.holed({ n: balls > 1 ? 'SCRAMBLED' : 'HOLED', d:-3 });
+        Scene.spark('verdant');
+      }
+      R.next = B.SCRAMBLE_GAP;
+    }
+    if(R.t >= R.dur) R.settle = 1.2;
+
+  }else if(R.mode === 'twilight'){
+    if(R.next <= 0){
+      if(R.shot >= R.n){ R.settle = 1.2; return; }
+      R.shot++;
+      const drop = Math.random() < B.TWI_Q;
+      R.log.push(drop ? 1 : 0);
+      Scene.aimed(D.pow * 0.25, D.ball && D.ball.el, Scene.holeLen(),
+                  drop ? 0 : (Math.random()-0.5)*1.6, drop);
+      if(drop){
+        R.made++;
+        R.pot += yieldAt(R.f0 + R.made*B.TWI_STEP, D, d);
+        if(R.made % 5 === 0) Scene.holed({ n: R.made + ' DOWN', d:-2 });
+      }
+      R.next = R.gap;
+    }
+    if(R.t >= R.dur) R.settle = 1.2;
+
   }else{
     R.fT += dt;
     R.work -= D.dps * (R.mod || 1) * dt;
@@ -4402,6 +4504,25 @@ function endDgn(d, R, D){
     stats.push(['Strike rate', R.shot ? Math.round(R.made/R.shot*100) + '%' : '0%']);
     stats.push(['Drop chance', Math.round((R.chance||0)*100) + '%']);
 
+  }else if(R.mode === 'scramble'){
+    if(R.made > 0){
+      pot = R.pot; fe = R.f0 + R.made*B.SCRAMBLE_STEP;
+      head = R.made + ' of ' + R.shot + ' holes won.';
+    }else head = 'Nine holes, every ball, and not one dropped.';
+    const balls = (R.log || []).reduce((t, h) => t + h.balls, 0);
+    stats.push(['Holes won', R.made + ' of ' + B.SCRAMBLE_HOLES]);
+    stats.push(['Balls played', String(balls)]);
+    stats.push(['Win chance a hole', Math.round(scrambleChance(D)*100) + '%']);
+
+  }else if(R.mode === 'twilight'){
+    if(R.made > 0){
+      pot = R.pot; fe = R.f0 + R.made*B.TWI_STEP;
+      head = R.made + ' of ' + R.shot + ' putts dropped before dark.';
+    }else head = 'Not one dropped before the light went.';
+    stats.push(['Putts', R.shot + ' of ' + R.n]);
+    stats.push(['Dropped', String(R.made)]);
+    stats.push(['A putt every', R.gap.toFixed(1) + 's']);
+
   }else{
     const deepest = R.floor - 1;
     if(R.cleared > 0){ fe = deepest; head = 'Down to floor ' + (deepest + 1) + ' before the clock went.'; }
@@ -4419,7 +4540,7 @@ function endDgn(d, R, D){
     Scene.depthsFlash((B.DGN_PAL[d.id] || {}).glow || '#57E0BE');
     const mine = R.mode === 'drive' ? R.best
                : R.mode === 'island' ? R.made
-               : R.mode === 'chip'   ? R.made
+               : R.mode === 'chip' || R.mode === 'scramble' || R.mode === 'twilight' ? R.made
                : Math.max(0, R.floor);
     if(mine > (S.dgnBest[d.id] || 0)) S.dgnBest[d.id] = mine;
     const deeper = fe > (S.dgnFloor[d.id] || 0);
@@ -5906,6 +6027,18 @@ const THEMES = {
     sd:['#4A3520','#5C4428','#6E5030','#806040'],
     wt:['#0E1830','#142240','#1A2C50','#223868','#2E4880'],
     edge:'#141C18', tl:'#0E1614', rk:['#1C0E2C','#2A1240','#3E1C5E'], trees:1.3, kind:0 },
+  scramble: { sky:['#1C5C86','#2E7FA4','#63A8C6','#A9D2DC','#E4EEE0'],
+    fw:['#3E7C41','#468A46','#4E984C','#58A654','#62B45C'],
+    rg:['#2A5A2E','#306634','#36723A'], gr:['#5CAC55','#6BBC60','#7ACB6C'],
+    sd:['#B39A63','#CBB076','#E0C68C','#F2DCA8'],
+    wt:['#143F63','#1C5885','#2A79A4','#3E90B6','#57A5C2'],
+    edge:'#2A5A2E', tl:'#244E28', rk:['#4A6A56','#5A7E66','#6E9278'], trees:0.8, kind:1 },
+  twilight: { sky:['#150C28','#2E1A44','#5A2E56','#A04E52','#E08A5A'],
+    fw:['#1C3A28','#22462E','#285234','#2E5E3A','#346A40'],
+    rg:['#10221A','#142A1E','#183222'], gr:['#2E6A3E','#367848','#3E8652'],
+    sd:['#6A5238','#806440','#96764C','#AC8A5C'],
+    wt:['#140E2A','#1E1638','#2A2048','#3A2C5A','#50406E'],
+    edge:'#142A1E', tl:'#10221A', rk:['#2A1E36','#3A2A48','#4A385A'], trees:1.1, kind:2 },
   vault: { sky:['#0A1A10','#123020','#1B4A2E','#2E6A40','#C9A64E'],
     fw:['#1E5A32','#246A3A','#2A7A44','#328A4C','#3A9A56'],
     rg:['#12301C','#173A22','#1C4428'], gr:['#4EAA5E','#5CBA6A','#6ACA76'],
@@ -6805,7 +6938,8 @@ const Scene = {
     this.themeId = dg;
     this.theme = THEMES[dg] || THEMES.day;
     this.treeSpr = null;
-    this.land = { fw: dg === 'water' ? 1.55 : dg === 'sand' ? 2.30 : dg === 'cellar' ? 2.60 : 3.10,
+    this.land = { fw: dg === 'water' ? 1.55 : dg === 'sand' ? 2.30 : dg === 'cellar' ? 2.60
+                    : dg === 'scramble' ? 3.30 : dg === 'twilight' ? 2.80 : 3.10,
                   taper: 0.85 };
     this.night = dg === 'cellar';
     this.aurora = false;
@@ -7998,6 +8132,9 @@ Object.assign(Scene, {
       const within = R.mode === 'drive' ? 0.03
                    : R.mode === 'island' ? 0.60
                    : R.mode === 'chip' ? 0.76
+                   // the Scramble is played from the approach, the putts on the green
+                   : R.mode === 'scramble' ? 0.70
+                   : R.mode === 'twilight' ? 0.90
                    : clamp(1 - R.work/Math.max(1e-9, R.full), 0, 1);
       this.camD += (within*LEN - this.camD) * Math.min(1, dt*4.5);
       // The round is paused, so no swing ever reaches the renderer from the
@@ -8346,6 +8483,30 @@ function renderReadout(D){
       const drops = R.drops || [];
       for(let i = 0; i < B.CHIP_SHOTS; i++)
         strip.push([i >= R.shot ? '' : drops[i] ? 'on' : 'lit', drops[i] ? 9 : 3]);
+    }else if(R.mode === 'scramble'){
+      top = 'Hole ' + R.shot + ' of ' + B.SCRAMBLE_HOLES;
+      big = fmt(R.pot); unit = 'pot'; frac = R.shot / B.SCRAMBLE_HOLES;
+      tag = R.made + ' holed'; tagCol = 'var(--verdant)';
+      // nine flags: grey to play, dim for a hole lost, lit for a hole won --
+      // taller for the holes where more balls went out
+      strip = [];
+      const log = R.log || [];
+      for(let i = 0; i < B.SCRAMBLE_HOLES; i++){
+        const h = log[i];
+        strip.push(!h ? ['', 2] : [h.won ? 'on' : 'lit', 3 + Math.min(6, h.balls * 2)]);
+      }
+    }else if(R.mode === 'twilight'){
+      top = 'Putt ' + R.shot + ' of ' + R.n;
+      big = fmt(R.pot); unit = 'pot'; frac = R.n ? R.shot / R.n : 0;
+      tag = R.made + ' dropped'; tagCol = 'var(--verdant)';
+      // the last twenty putts, the light going as the run goes on -- twenty,
+      // not the chips' twenty five, so the two do not draw the same picture
+      strip = [];
+      const log = R.log || [], from = Math.max(0, log.length - 20);
+      for(let i = from; i < from + 20; i++){
+        const v = log[i];
+        strip.push(v === undefined ? ['', 2] : [v ? 'on' : 'lit', v ? 9 - Math.round(5 * i / Math.max(1, R.n)) : 3]);
+      }
     }else{
       top = 'Floor ' + (R.floor + 1) + ' \u00b7 ' + R.cleared + ' banked';
       big = fmt(Math.max(0, R.work)); unit = 'left';
@@ -8971,6 +9132,8 @@ function renderDgn(){
     const best = d.mode === 'drive'  ? 'longest ' + (bv > 0 ? fmt(bv) : '\u2014')
                : d.mode === 'island' ? 'best run ' + bv + '\u00a0green' + (bv === 1 ? '' : 's')
                : d.mode === 'chip'   ? 'best ' + bv + ' of ' + Math.max(B.CHIP_SHOTS, bv) + ' dropped'
+               : d.mode === 'scramble' ? 'best ' + bv + ' of ' + B.SCRAMBLE_HOLES + ' holed'
+               : d.mode === 'twilight' ? 'best ' + bv + ' dropped'
                :                       'deepest floor ' + (bv + 1);
 
     let reads;
@@ -8979,6 +9142,12 @@ function renderDgn(){
       + '% \u2192 ' + Math.round(islandChance(D, 4)*100)
       + '% \u2192 ' + Math.round(islandChance(D, 9)*100) + '% by the tenth';
     else if(d.mode === 'chip') reads = Math.round(chipChance(D)*100) + '% of chips drop';
+    else if(d.mode === 'scramble'){
+      const b = scrambleBalls(D);
+      reads = (1 + b.fl + b.fr).toFixed(1) + ' balls a hole \u00b7 ' + Math.round(scrambleChance(D)*100) + '% of holes won';
+    }
+    else if(d.mode === 'twilight') reads = 'A putt every ' + twilightGap(D).toFixed(1) + 's \u00b7 '
+      + twilightPutts(D, d.run * (D.C.sharp ? 1.4 : 1)) + ' before dark';
     else reads = 'Carry ' + fmt(D.dps) + '/sec against growing floors';
     const P = dgnPayout(d, D);
 
@@ -9022,7 +9191,8 @@ function renderDgn(){
       b.className = 'mini go';
       b.textContent = run.mode === 'drive' ? 'On the tee \u00b7 drive ' + run.shots + '/' + B.DRIVE_SHOTS
         : run.mode === 'island' ? 'On the stage \u00b7 ' + run.made + ' greens'
-        : run.mode === 'chip' ? 'On the stage \u00b7 ' + run.made + ' dropped'
+        : run.mode === 'chip' || run.mode === 'twilight' ? 'On the stage \u00b7 ' + run.made + ' dropped'
+        : run.mode === 'scramble' ? 'On the stage \u00b7 ' + run.made + ' holed'
         : 'On the stage \u00b7 floor ' + (run.floor+1);
     }else{
       b.className = 'mini' + (keys > 0 && !S.dgnRun ? ' go' : ' dim');

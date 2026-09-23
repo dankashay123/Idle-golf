@@ -240,6 +240,17 @@ module.exports = {
         B.UPG.forEach(u => S.upg[u.id] = 0);
         B.SLOTS.forEach(sl => { S.equip[sl.id] = makeItem(14, 0, 2, sl.id); });
         S.autoEquip = 0; startNine(); startHole();
+        // Tempo first, so the carry search below still lands the bag where it
+        // should: at the tempo a fresh bag has the Twilight Putt fits about a
+        // dozen putts in whatever it thinks, and a projection that ignored
+        // tempo altogether passed. Three swings a second is twenty odd putts.
+        {
+          const su = B.UPG.find(u => u.k === 'spd');
+          let lo = 0, hi = Math.min(capOf(su), 4000);
+          while (hi - lo > 1) { const m = (lo + hi) >> 1; S.upg[su.id] = m;
+            if (derive().spd < 3) lo = m; else hi = m; }
+          S.upg[su.id] = hi; startHole();
+        }
         // A bag four times what its card asks, because the Vault's payout is
         // flat until you get past what the card expects -- floor 44 at this
         // tier. A weaker bag sits on that floor and the projection cannot be
@@ -251,6 +262,17 @@ module.exports = {
           while (hi - lo > 1) { const m = (lo + hi) >> 1; S.upg.drive = m;
             if (derive().dps < pace * 4) lo = m; else hi = m; }
           S.upg.drive = lo; startHole();
+        }
+        // And provisionals, or the Scramble's whole mechanic -- one ball a hole
+        // for every whole point, and a chance at another -- is never used: at
+        // zero it plays one ball, and a projection that ignored provisionals
+        // entirely passed. 1.6 exercises both the whole ball and the fraction.
+        {
+          const mu = B.UPG.find(u => u.k === 'mst');
+          let lo = 0, hi = capOf(mu);
+          while (hi - lo > 1) { const m = (lo + hi) >> 1; S.upg[mu.id] = m;
+            if (derive().mst < 1.6) lo = m; else hi = m; }
+          S.upg[mu.id] = hi; startHole();
         }
         FEAT_FORCE = '__none__';                 // no stake of the day in the comparison
         const SNAP = JSON.stringify(S);
@@ -284,6 +306,7 @@ module.exports = {
       out.pay = payRows;
       out.buysNames = Object.keys(DGN_BUYS);
       renderDgn();
+      out.nDgn = B.DGN.length;
       out.shown = Array.from(document.querySelectorAll('#dgnRows .dgn'))
         .map(e => /An entry is worth/.test(e.textContent));
 
@@ -455,10 +478,13 @@ module.exports = {
     //   vault  0.92-0.95 over 5 runs    a clock and a carry, near enough exact
     //   cellar 0.94-1.13 over 5 runs    twenty five binomial chips
     //   water  0.87-1.07 over 5 runs    at 700 samples; at 120 it swung 0.81-1.58
+    //   scramble 0.93-1.03 over 4 runs  nine holes, a binomial on provisionals
+    //   twilight 0.96-1.01 over 4 runs  a binomial over putts set by tempo
     //
     // A single loose bound is a check that catches nothing: dropping the
     // Vault's event drag reads 1.23x, which 0.6-1.4 waves straight through.
-    const BOUND = { sand:[0.85,1.15], vault:[0.85,1.15], cellar:[0.8,1.3], water:[0.7,1.35] };
+    const BOUND = { sand:[0.85,1.15], vault:[0.85,1.15], cellar:[0.8,1.3], water:[0.7,1.35],
+                    scramble:[0.8,1.25], twilight:[0.8,1.25] };
     for (const q of r.pay) {
       if (!(q.actual > 0))
         throw new Error(q.id + ' paid nothing over the sample, so there is nothing to check');
@@ -470,13 +496,13 @@ module.exports = {
           + bd[0] + '-' + bd[1] + '. A number on the screen that is out by that much is '
           + 'worse than no number.');
     }
-    if (r.shown.length !== 4 || r.shown.some(x => !x))
-      throw new Error('only ' + r.shown.filter(Boolean).length + ' of the four contests say '
+    if (r.shown.length !== r.nDgn || r.shown.some(x => !x))
+      throw new Error('only ' + r.shown.filter(Boolean).length + ' of the ' + r.nDgn + ' contests say '
         + 'what an entry is worth');
     if (r.buysNames.length !== 4)
       throw new Error('DGN_BUYS names ' + r.buysNames.length + ' currencies, not four');
 
-    // 5. the four read as four
+    // 5. the contests read as different contests
     const shapes = r.strips.map(x => x.cells);
     if (new Set(shapes).size !== shapes.length)
       throw new Error('the readout strip is the same shape for '
@@ -521,7 +547,7 @@ module.exports = {
     return ['rope near/far ' + r.rope.low + '/' + r.rope.high
       + ', ropes ' + vault.kinds['2'] + ' + gallery ' + vault.kinds['1']
       + ', lamps ' + cellar.kinds['3'] + ', all sorted and world fixed'
-      + ', four strips ' + shapes.join('/') + ', four kinds of best'
+      + ', ' + shapes.length + ' strips ' + shapes.join('/') + ', ' + shapes.length + ' kinds of best'
       + ', floor ' + r.floorFirst + '->' + r.floorLast + ' under a ceiling of '
       + r.ceiling.toFixed(0)
       + ', pay flat to ' + ratio.toFixed(2) + 'x, ' + perRun.toFixed(2)
