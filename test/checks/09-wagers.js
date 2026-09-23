@@ -308,7 +308,7 @@ module.exports = {
       renderDgn();
       out.nDgn = B.DGN.length;
       out.shown = Array.from(document.querySelectorAll('#dgnRows .dgn'))
-        .map(e => /An entry is worth/.test(e.textContent));
+        .map(e => /an entry/.test(e.textContent));
 
       // ---- 4. four contests, or one contest four times ----------------------
       S.tier = 20; S.hole = 2; startHole();

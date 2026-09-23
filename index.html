@@ -4341,7 +4341,7 @@ function binomPot(n, q, fc, step, per){
 // The Vault is the exception and stays in its own unit: it pays the purse, so
 // holes of purse is what it is worth, and holes of purse is already the scale
 // the rest of the game is priced in.
-const DGN_BUYS = { grit:'clubs taken to +15', shard:'ascensions',
+const DGN_BUYS = { grit:'clubs to +15', shard:'ascensions',
                    scroll:'shot book levels', gold:'holes of purse' };
 // What the rub of the green costs a Vault run, read off the event table itself
 // rather than measured once and written down: weights change, this follows.
@@ -4397,7 +4397,7 @@ function dgnPayout(d, D){
     }
     ev += reach * Math.pow(B.ISLAND_MULT, target);
     return { buys: pot0 * ev * featM,
-             note: 'banking on ' + target + ', ' + Math.round(reach*100) + '% of the time' };
+             note: target + '\u00a0greens ' + Math.round(reach*100) + '% of the time' };
   }
   if(d.mode === 'chip'){
     // Rounding the number of drops and summing to it read 14% under, because
@@ -9316,8 +9316,10 @@ function renderDgn(){
     }
     else if(d.mode === 'twilight') reads = 'A putt every ' + twilightGap(D).toFixed(1) + 's \u00b7 '
       + twilightPutts(D, d.run * (D.C.sharp ? 1.4 : 1)) + ' before dark';
-    else reads = 'Carry ' + fmt(D.dps) + '/sec against growing floors';
+    else reads = 'Carry ' + fmt(D.dps) + '/sec';
     const P = dgnPayout(d, D);
+    // the one note that helps a choice: how often the bank you picked is reached
+    if(d.mode === 'island') reads += ' \u00b7 ' + P.note;
 
     el.innerHTML = '<div class="dh">' + svgIcon(d.ic || STAT_IC[d.cur] || 'ball', 'ric') + '<span class="dn">' + d.n + '</span>'
       + (d.id === feat.id ? '<span class="fstar">' + B.DGN_FEAT_MULT + '\u00d7 today</span>' : '')
@@ -9326,11 +9328,13 @@ function renderDgn(){
       + '<div class="dd">' + d.d + '</div>'
       + '<div class="dd fold" style="color:var(--faint);margin-top:4px">' + d.how + '</div>'
       + '<div class="dm">' + reads + '</div>'
-      + '<div class="dm" style="color:var(--brass)">An entry is worth <b>'
-      + fmt(P.buys, P.buys < 10 ? undefined : 0) + '</b> ' + DGN_BUYS[d.cur]
-      + ' \u00b7 ' + P.note + '</div>'
-      + '<div class="dm">Pays ' + d.cn + ' \u00b7 ' + best
-      + ' \u00b7 ' + Math.round(d.run) + 's \u00b7 entry in ' + nextIn + '</div>'
+      // what one entry pays, in what the currency buys; the basis of the
+      // projection is the odds line above it, so it is not said twice
+      + '<div class="dm" style="color:var(--brass)">Pays ' + d.cn + ' \u00b7 '
+      + (P.buys < 0.1 ? 'under <b>0.1' : 'about <b>' + fmt(P.buys, P.buys < 10 ? undefined : 0)) + '</b>\u00a0'
+      + DGN_BUYS[d.cur] + ' an entry</div>'
+      + '<div class="dm">' + best.charAt(0).toUpperCase() + best.slice(1) + ' \u00b7 '
+      + Math.round(d.run) + 's \u00b7 ' + (nextIn === 'full' ? 'entries full' : 'next entry ' + nextIn) + '</div>'
       + '<div class="bar"><i style="width:' + (run ? clamp(run.t/run.dur,0,1)*100 : 0) + '%"></i></div>'
       + '<div class="btnrow" style="margin-top:8px"></div>';
     el.classList.toggle('open', !!dgnOpen[d.id]);
