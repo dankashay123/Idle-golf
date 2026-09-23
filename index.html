@@ -843,7 +843,11 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
 const B = {
   /* ---- the ladder ---- */
   TIER_Y: 2.35, TIER_G: 2.16, Y0: 60, G0: 14, TIER_MAX: 400,
-  PAR_TIME: { 3: 10, 4: 15, 5: 20 },
+  // Two thirds of what they were (10/15/20), with the handicap raised from
+  // 0.34 to 0.52 to match: a golfer ahead of the card plays exactly the same
+  // hole in exactly the same time, but it now reads as a birdie rather than
+  // an eagle. See HCP.
+  PAR_TIME: { 3: 6.5, 4: 9.8, 5: 13 },
   TIER_ROMAN: ['I','II','III','IV','V','VI','VII','VIII','IX','X','XI','XII','XIII','XIV','XV',
                'XVI','XVII','XVIII','XIX','XX','XXI','XXII','XXIII','XXIV','XXV'],
 
@@ -856,17 +860,21 @@ const B = {
     [5,4,3,4,4,4,3,5,4, 3,4,5,4,4,3,4,5,4]
   ],
 
-  /* ---- scoring, read off the clock ---- */
+  /* ---- scoring, read off the clock ----
+     pay is 1.27x what it was when a golfer ahead of the card carded eagles:
+     the same round now reads a band worse (mostly birdies), and the same
+     round should pay what it did. Measured over 24 hours of play, the typical
+     hole's pay rate fell from 1.95 to 1.53 without it. */
   SCORE: [
-    { r:0.10, d:-4, n:'Ace',       pay:3.4 },
-    { r:0.27, d:-3, n:'Albatross', pay:2.4 },
-    { r:0.47, d:-2, n:'Eagle',     pay:1.9 },
-    { r:0.77, d:-1, n:'Birdie',    pay:1.45 },
-    { r:1.16, d: 0, n:'Par',       pay:1.0 },
-    { r:1.85, d: 1, n:'Bogey',     pay:0.82 },
-    { r:2.95, d: 2, n:'Double',    pay:0.68 },
-    { r:4.70, d: 3, n:'Triple',    pay:0.58 },
-    { r:1e18, d: 4, n:'Snowman',   pay:0.50 }
+    { r:0.10, d:-4, n:'Ace',       pay:4.3 },
+    { r:0.27, d:-3, n:'Albatross', pay:3.05 },
+    { r:0.47, d:-2, n:'Eagle',     pay:2.4 },
+    { r:0.77, d:-1, n:'Birdie',    pay:1.85 },
+    { r:1.16, d: 0, n:'Par',       pay:1.27 },
+    { r:1.85, d: 1, n:'Bogey',     pay:1.04 },
+    { r:2.95, d: 2, n:'Double',    pay:0.86 },
+    { r:4.70, d: 3, n:'Triple',    pay:0.74 },
+    { r:1e18, d: 4, n:'Snowman',   pay:0.64 }
   ],
   // A hole pays this fraction of its purse out swing by swing, credited in
   // proportion to damage dealt. Tying the trickle to damage rather than to a
@@ -2033,7 +2041,12 @@ const B = {
   // A hole stretched by your handicap pays for the extra yards, or buying power
   // would stop paying anything on the course. Sublinear, so climbing a card is
   // still worth more than sitting on one and out-hitting it.
-  HCP: 0.34, HCP_PAY: 0.60,
+  // The floor was 0.34 of par time, which is an Eagle: a golfer ahead of the
+  // card carded eagles on 58% of holes and albatrosses on 16%, so score said
+  // nothing. At 0.52 with par times cut to match, the same golfer cards
+  // birdies on about 62%, eagles 24%, pars 11%, albatrosses 2%, over eight
+  // seeds of three hours; pace and hole length are unchanged.
+  HCP: 0.52, HCP_PAY: 0.60,
   CRIT_ADD: { face:0.00132, simul:0.00108 },
   CPW_ADD: 0.0174, DROP_ADD: 0.000675, PROC_ADD: 0.00099, DGN_ADD: 0.00315,
   MST_ADD: { provis:0.0018, second:0.0022 },
@@ -2546,7 +2559,7 @@ const B = {
   NINE_BEST_PAY: 26,
   // Goals come in bands. A bag that aces every hole gets asked for aces, not
   // birdies, so "three birdies" cannot stay a formality forever.
-  NINE_BAND: [-1.9, -3.4],
+  NINE_BAND: [-1.4, -2.0],
   NINE_GOALS: [
     { t:0, id:'b3',  n:'Three birdies or better', k:'birdie',   v:3, r:{ k:'purse', v:14 } },
     { t:0, id:'nb',  n:'Not a single bogey',      k:'nobogey',  v:1, r:{ k:'purse', v:16 } },
@@ -2555,10 +2568,11 @@ const B = {
     { t:1, id:'e2',  n:'Two eagles or better',    k:'eagle',    v:2, r:{ k:'purse', v:22 } },
     { t:1, id:'all', n:'Every hole under par',    k:'allunder', v:1, r:{ k:'shard', v:25 } },
     { t:1, id:'p5',  n:'An eagle on a par five',  k:'par5eagle',v:1, r:{ k:'grit',  v:120 } },
-    { t:2, id:'a3',  n:'Three aces',              k:'ace',      v:3, r:{ k:'tick',  v:2 } },
-    { t:2, id:'e7',  n:'Seven eagles or better',  k:'eagle',    v:7, r:{ k:'purse', v:30 } },
-    { t:2, id:'e9',  n:'Nothing worse than an eagle', k:'eagle', v:9, r:{ k:'grit', v:260 } },
-    { t:2, id:'a9',  n:'Nine aces',               k:'ace',      v:9, r:{ k:'tick',  v:4 } }
+    // the hardest band: hard but possible now that an eagle is an event
+    { t:2, id:'e4',  n:'Four eagles or better',   k:'eagle',    v:4, r:{ k:'purse', v:30 } },
+    { t:2, id:'alb', n:'An albatross or better',  k:'alb',      v:1, r:{ k:'tick',  v:2 } },
+    { t:2, id:'b8',  n:'Eight birdies or better', k:'birdie',   v:8, r:{ k:'grit',  v:260 } },
+    { t:2, id:'a1',  n:'An ace',                  k:'ace',      v:1, r:{ k:'tick',  v:4 } }
   ],
 
   /* ---- the card ----
@@ -2577,7 +2591,11 @@ const B = {
   // Dynasty asks for fifty cups: at 0.968 the fiftieth asks for -248, which is
   // a hard card and not an impossible one, and the fiftieth is still six shots
   // harder than the flat floor ever got.
-  TARGET_BASE: -86, TARGET_CLOSE: 0.968,
+  // Set for the birdie-level scoring: a golfer ahead of the card posts about
+  // -83 over four days, so the first cup asks -55 and the ladder closes on a
+  // perfect card at 0.985 a cup. Eight seeds of three hours win 11.8 cups
+  // (13.3 under the old eagle-level scoring against -86 and 0.968).
+  TARGET_BASE: -55, TARGET_CLOSE: 0.985,
   PAY_SPAN: 130, PAY_MIN: 0.30, PAY_MAX: 3.20,
   SEASON: 6,
   SLOTS_SEASON: ['event','event','major','event','event','finale'],
@@ -2714,8 +2732,9 @@ const B = {
   // that a new golfer cannot do yet: eagles need a bag that outdrives its
   // card, and a perk needs tickets.
   // Sized to about half an hour of play each. Measured per hour of real play
-  // over four seeds: ~600 holes, ~600 birdies, ~450 eagles, 8 events, 60 nine
-  // goals, 20-30 Rare clubs, 4 rivals beaten. The first pool was sized by eye
+  // over four seeds: ~600 holes, ~520 birdies or better, ~140 eagles, 8 events,
+  // ~37 nine goals, 20-30 Rare clubs, 4 rivals beaten (eagles and nine goals
+  // re-measured after scoring moved from eagle-level to birdie-level). The first pool was sized by eye
   // and a brand-new save cleared 'Card 30 birdies' in three and a half minutes.
   // Wagers and the perk are taken by hand, so those stay small.
   DAILY_POOL: [
@@ -2724,8 +2743,8 @@ const B = {
     { id:'events', m:'events', v:4,   d:'Finish 4 events' },
     { id:'rare',   m:'rare',   v:12,  d:'Find 12 Rare or better clubs' },
     { id:'runs',   m:'runs',   v:3,   d:'Play 3 wagers' },
-    { id:'nines',  m:'nines',  v:25,  d:'Win 25 nine goals' },
-    { id:'eagle',  m:'eagle',  v:200, d:'Card 200 eagles or better', lv:15 },
+    { id:'nines',  m:'nines',  v:20,  d:'Win 20 nine goals' },
+    { id:'eagle',  m:'eagle',  v:70,  d:'Card 70 eagles or better', lv:15 },
     { id:'perk',   m:'perks',  v:1,   d:'Use a sponsor perk', lv:15 },
     { id:'rival',  m:'rivals', v:2,   d:'Beat your rival twice' }
   ],
@@ -4880,7 +4899,7 @@ function nineGoalFor(h){
 }
 function startNine(){
   S.nine = { idx: nineIndex(S.hole), n: 0, total: 0, birdie:0, eagle:0, ace:0,
-             bogey:0, allUnder:true, par5eagle:0, goal: nineGoalFor(S.hole).id };
+             bogey:0, allUnder:true, par5eagle:0, alb:0, goal: nineGoalFor(S.hole).id };
 }
 function nineProgress(){
   const N = S.nine; if(!N) return { have:0, need:1, goal:null };
@@ -5038,6 +5057,7 @@ function finishHole(D){
   if(sc.d <= -1) N.birdie++;
   if(sc.d <= -2){ N.eagle++; if(parOf(S.hole) === 5) N.par5eagle++; }
   if(sc.d === -4) N.ace++;
+  if(sc.d <= -3) N.alb = (N.alb || 0) + 1;
   if(sc.d >= 1) N.bogey++;
   if(sc.d >= 0) N.allUnder = false;
   if(N.n >= 9) resolveNine();
@@ -5063,7 +5083,9 @@ function finishHole(D){
   }
 
   // auto-climb: five straight eagles means this Tour Card is finished
-  S.streak = ratio <= 0.47 ? (S.streak||0) + 1 : 0;
+  // "on form": five birdies or better running, which is what a golfer ahead
+  // of the card cards now; it was five eagles when eagles were the floor
+  S.streak = ratio <= 0.77 ? (S.streak||0) + 1 : 0;
   if(S.autoClimb && S.streak >= 5 && S.tier < B.TIER_MAX){ S.streak = 0; climb(1, true); }
 
   advanceHole();
@@ -10419,7 +10441,7 @@ function renderTour(){
     + '<button class="buy' + (S.tier > 0 ? '' : ' no') + '" id="dropBtn">'
     + '<span class="lbl">Drop</span><span class="amt">−1</span></button></div>'
     + '<div class="row"><div><div class="nm">Climb on form</div>'
-    + '<div class="ds">After 5 eagles in a row</div></div>'
+    + '<div class="ds">After 5 birdies in a row</div></div>'
     + '<button class="buy' + (S.autoClimb ? ' ok' : '') + '" id="autoBtn"><span class="lbl">Auto</span>'
     + '<span class="amt">' + (S.autoClimb ? 'On' : 'Off') + '</span></button></div>';
   const cb = $('climbBtn'); if(cb) cb.onclick = () => climb(1);

@@ -11,8 +11,12 @@
  * For that player, over two hours:
  *   - the pace holds: holes per twenty minutes never fall below half the
  *     first twenty minutes
- *   - the scoring holds: at least 60% of holes birdie or better in every
- *     window
+ *   - the scoring holds: at least 60% of holes par or better in every
+ *     window. It was birdie or better while a golfer ahead of the card
+ *     carded eagles; scoring moved a band (the floor is a birdie now), and
+ *     the same rule failed on it at 42-52% for an eager climber behind the
+ *     card -- pars, not a stall, since the pace rule held. One band down is
+ *     the same rule.
  *   - the ladder moves: at least three Tour Cards open
  *
  * Not tighter than that, on purpose. This player climbs the moment a card
@@ -57,15 +61,23 @@ module.exports = {
           if (S.statPts > 0) { S.stat.drive = (S.stat.drive || 0) + S.statPts; S.statPts = 0; }
           if (cardUnlocked(S.tier + 1) && S.tier < S.tierMax) climb(1, true);
         };
-        const rows = []; let t = 0, last = { h: 0, b: 0 };
+        const rows = []; let t = 0, last = { h: 0, b: 0, p: 0 };
+        // counted once per finished hole, from the hole's own lookup: the Tour
+        // tab's climb preview reads the same table and can be redrawn from
+        // inside a hole that opens a card, which counted 2% of holes twice
+        let parOrBetter = 0, inHole = false; const rs = window.scoreFor, rf = window.finishHole;
+        window.scoreFor = ratio => { const sc = rs(ratio); if (inHole){ inHole = false; if (sc.d <= 0) parOrBetter++; } return sc; };
+        window.finishHole = D => { inHole = true; try { return rf(D); } finally { inHole = false; } };
         for (let w = 1; w <= 6; w++) {
           const end = w * 1200;
           while (t < end) { step(B.TICK_MAX, derive()); t += B.TICK_MAX;
                             if (active && (t % 20) < B.TICK_MAX) shop(); }
           const h = S.totalHoles, bd = S.tally.birdie || 0;
-          rows.push({ holes: h - last.h, birdie: (bd - last.b) / Math.max(1, h - last.h) });
-          last = { h, b: bd };
+          rows.push({ holes: h - last.h, birdie: (bd - last.b) / Math.max(1, h - last.h),
+                      par: (parOrBetter - last.p) / Math.max(1, h - last.h) });
+          last = { h, b: bd, p: parOrBetter };
         }
+        window.scoreFor = rs; window.finishHole = rf;
         return { rows, cards: (S.tierMax || 0) + 1 };
       };
       const out = { active: [], idle: null };
@@ -86,8 +98,8 @@ module.exports = {
       run.rows.forEach((w, j) => {
         if (w.holes < first * 0.5) bad.push('seed ' + (i + 1) + ' played ' + w.holes + ' holes in minutes '
           + (j * 20) + '-' + (j * 20 + 20) + ' against ' + first + ' in the first twenty');
-        if (w.birdie < 0.6) bad.push('seed ' + (i + 1) + ' carded birdie or better on '
-          + Math.round(w.birdie * 100) + '% of holes in minutes ' + (j * 20) + '-' + (j * 20 + 20));
+        if (w.par < 0.6) bad.push('seed ' + (i + 1) + ' carded par or better on '
+          + Math.round(w.par * 100) + '% of holes in minutes ' + (j * 20) + '-' + (j * 20 + 20));
       });
       if (run.cards < 4) bad.push('seed ' + (i + 1) + ' opened only ' + (run.cards - 1) + ' Tour Cards in two hours');
     });
@@ -102,10 +114,11 @@ module.exports = {
         + 'standing still has stopped costing anything');
 
     const all = r.active.flatMap(x => x.rows);
-    const holes = all.map(w => w.holes), bird = all.map(w => w.birdie);
+    const holes = all.map(w => w.holes), bird = all.map(w => w.birdie), par = all.map(w => w.par);
     return ['8 seeds x 2 hours of a player who plays: ' + Math.min(...holes) + '-' + Math.max(...holes)
-      + ' holes per 20 minutes, birdie or better on ' + Math.round(Math.min(...bird) * 100) + '-'
-      + Math.round(Math.max(...bird) * 100) + '% of holes, ' + r.active.map(x => x.cards - 1).join('/') + ' cards opened',
+      + ' holes per 20 minutes, par or better on ' + Math.round(Math.min(...par) * 100) + '-'
+      + Math.round(Math.max(...par) * 100) + '% of holes (birdie or better ' + Math.round(Math.min(...bird) * 100) + '-'
+      + Math.round(Math.max(...bird) * 100) + '%), ' + r.active.map(x => x.cards - 1).join('/') + ' cards opened',
       'buying nothing falls behind: ' + Math.round(idleLast * 100) + '% birdie or better by hour two'];
   }
 };

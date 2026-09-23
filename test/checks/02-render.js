@@ -27,8 +27,13 @@ module.exports = {
           window.__t.push(performance.now() - t0); return r;
         };
       }
-      const take = () => { const a = window.__t.slice(-16); window.__t = [];
-        return a.length ? Math.max.apply(null, a) : 0; };
+      // The second slowest of the last sixteen frames, not the slowest. The
+      // slowest failed once at 12.9ms on sandbelt/rain against a worst of
+      // 3-3.6ms on reruns: one browser pause landing in one of 960 samples.
+      // A ground that is slow every frame still fails on the second slowest;
+      // a single stall no longer does.
+      const take = () => { const a = window.__t.slice(-16).sort((x, y) => y - x); window.__t = [];
+        return a.length ? (a[1] !== undefined ? a[1] : a[0]) : 0; };
       const out = [];
       for (let i = 0; i < B.COURSE.length; i++) {
         DEV.course(i); hideSheet();
