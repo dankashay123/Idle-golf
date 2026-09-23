@@ -5132,6 +5132,9 @@ function finishHole(D){
 
   advanceHole();
   startHole();
+  // A round played into opens with a look down its first hole. Only here,
+  // where one hole hands over to the next: not on a load, not on a climb.
+  if(holeInRound(S.hole) === 1 && S.flyover !== 0 && !QUIET && !OFFLINE && !S.dgnRun) Scene.flyStart();
   renderCard(); renderTour();
 }
 
@@ -7973,6 +7976,8 @@ const Scene = {
 
   init(){
     this.cv = $('hole');
+    // a tap anywhere on the field ends a fly-over
+    $('stage').addEventListener('pointerdown', () => { if(this.fly) this.fly = null; });
     this.ctx = this.cv.getContext('2d');
     buildSprites();
     this.resize();
@@ -8291,6 +8296,7 @@ const Scene = {
   },
 
   holeLen(){ return LEN; },
+  flyStart(){ this.fly = { t: 0, dur: 3.4, to: LEN - 13 }; },
   // ---- the hole bends ----
   // Every hole used to run dead straight from tee to green. It has a centre
   // line now -- a dogleg on most par fours, an S on a par five, a drift on a
@@ -9822,6 +9828,21 @@ Object.assign(Scene, {
       }
       const prog = clamp(1 - S.yards / S.yardsMax, 0, 1);
       this.camD += (prog*LEN - this.camD) * Math.min(1, dt*4.5);
+      // The fly-over borrows the camera: it rides down the hole to look at
+      // the green and comes back, while the round carries on underneath. The
+      // golfer and his shots are left out of the frames it has.
+      let camKeep = null;
+      if(this.fly){
+        const f = this.fly; f.t += dt;
+        if(f.t >= f.dur || document.hidden) this.fly = null;
+        else{
+          const u = f.t / f.dur, ss = x => x*x*(3 - 2*x);
+          const out = u < 0.55 ? ss(u / 0.55) : u < 0.72 ? 1 : 1 - ss((u - 0.72) / 0.28);
+          camKeep = this.camD;
+          this.camD = camKeep + (f.to - camKeep) * out;
+          this.camH = this.hAt(this.camD);
+        }
+      }
       if(this.sky) c.drawImage(this.sky, 0, 0);
       this.drawRidge();
       this.drawGround();
@@ -9831,13 +9852,19 @@ Object.assign(Scene, {
       if(this.haze) c.drawImage(this.haze, 0, 0);
       this.drawTee();
       this.drawFlagstick();
-      this.drawGolfer(D);
-      this.drawBalls(dt);
+      if(camKeep === null){ this.drawGolfer(D); this.drawBalls(dt); }
+      else for(const b of this.balls) b.t += dt;      // still flying, just not in this shot
       this.drawWeather();
       this.drawHud(D);
       this.drawPerks();
       this.drawShots();
-      this.drawFx(dt);
+      if(camKeep === null) this.drawFx(dt);
+      if(camKeep !== null){
+        // a strip across the top says what this is, and that a tap ends it
+        drawTextS(c, 'HOLE ' + holeInRound(S.hole) + '  PAR ' + parOf(S.hole), CX, Math.round(VH*0.30), PX.bone, TSC, 'c');
+        drawTextS(c, 'TAP TO SKIP', CX, Math.round(VH*0.30) + LH, PX.grey, TSC, 'c');
+        this.camD = camKeep; this.camH = this.hAt(camKeep);
+      }
       this.drawMap();
     }
 
@@ -11671,6 +11698,9 @@ function settingsSheet(){
   showSheet('<h3>Settings</h3>'
     + row('Sound', '', '<button class="mini' + (S.sound !== 0 ? ' go' : '') + '" onclick="toggleSound()">'
         + (S.sound !== 0 ? 'On' : 'Off') + '</button>')
+    + row('Hole Flyover', 'A look down the first hole of each round',
+        '<button class="mini' + (S.flyover !== 0 ? ' go' : '') + '" onclick="S.flyover = S.flyover === 0 ? 1 : 0; settingsSheet()">'
+        + (S.flyover !== 0 ? 'On' : 'Off') + '</button>')
     + row('Back Up Your Save', 'A code you can keep, or load on another device',
         '<button class="mini go" onclick="exportSheet()">Export</button>')
     + row('Load a Save', 'Paste a code from Export',

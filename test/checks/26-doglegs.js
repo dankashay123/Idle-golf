@@ -21,6 +21,9 @@
  *     taken the spot); the trees crowd the inside, so cutting the corner is
  *     the gamble
  *   - the hole map is shown on an upright phone and marks the golfer
+ *   - the first hole of each round opens with a fly-over: never another
+ *     hole, never with it off in Settings or during a catch-up; the round
+ *     plays on under it and a tap on the field ends it
  *   - a wager is played dead straight
  */
 'use strict';
@@ -91,6 +94,25 @@ module.exports = {
           const [mx, my] = Scene.mapXY(Scene.camD, -0.30), px = mc.getContext('2d').getImageData(Math.round(mx) - 1, Math.round(my) - 1, 1, 1).data;
           o.map.marker = px[0] + ',' + px[1] + ',' + px[2];
         }
+        // the fly-over: the first hole of a round, and only that; not with it
+        // switched off or during a catch-up; a tap ends it; play goes on
+        {
+          const keepH = S.hole, fo = S.flyover;
+          // reached the way the game reaches it, by finishing the hole before
+          const at = (h, set) => { Scene.fly = null; S.flyover = set; S.hole = h - 1; startHole();
+            S.elapsed = 5; finishHole(derive()); return !!Scene.fly; };
+          QUIET = false;
+          o.fly = { first: at(19, 1), second: at(20, 1), off: at(37, 0) };
+          QUIET = true; o.fly.quiet = at(55, 1); QUIET = false;
+          at(19, 1); const y0 = S.yards;
+          for (let i = 0; i < 40; i++) { step(0.05, derive()); Scene.draw(0.05, derive()); }
+          o.fly.played = S.yards < y0 || S.hole !== 19;
+          o.fly.still = !!Scene.fly;
+          document.getElementById('stage').dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }));
+          o.fly.tapped = !Scene.fly;
+          o.fly.load = (() => { Scene.fly = null; S.hole = 37; startHole(); return !!Scene.fly; })();
+          QUIET = true; S.flyover = fo; S.hole = keepH; startHole();
+        }
         // a wager is straight
         const R = { id: 'water', floor: 3 };
         Scene.newDepthsHole(R); o.wager = Scene.curve;
@@ -114,6 +136,14 @@ module.exports = {
     if (!(r.tIn > r.tOut * 1.5)) throw new Error('the trees round a corner are not on its inside: ' + r.tIn + ' inside, ' + r.tOut + ' outside');
     if (!r.map.shown || !(r.map.w >= 20 && r.map.h >= 30)) throw new Error('the hole map is not shown on an upright phone: ' + JSON.stringify(r.map));
     if (!/^(255,214,107|26,31,26)$/.test(r.map.marker)) throw new Error('the hole map does not mark the golfer: ' + r.map.marker);
+    const F = r.fly;
+    if (!F.first) throw new Error('the first hole of a round opened without a fly-over');
+    if (F.second) throw new Error('a fly-over ran on the second hole of a round');
+    if (F.off) throw new Error('a fly-over ran with it switched off in Settings');
+    if (F.quiet) throw new Error('a fly-over ran during a catch-up');
+    if (F.load) throw new Error('a fly-over ran on a load or a climb, not a round played into');
+    if (!F.played) throw new Error('the round stood still during the fly-over');
+    if (!F.still || !F.tapped) throw new Error('a tap did not end the fly-over (running ' + F.still + ', ended ' + F.tapped + ')');
     if (r.wager) throw new Error('a wager hole bends: ' + JSON.stringify(r.wager));
     return [r.bent + ' of ' + r.p45 + ' par fours and fives turn by 8 or more; no par three past ' + r.p3max.toFixed(1),
       'on bent holes ' + (fw * 100).toFixed(1) + '% of ' + ground + ' visible landings are fairway ('
@@ -121,6 +151,7 @@ module.exports = {
       'corners designed: water outside on ' + r.wOut + '/' + r.wAll + ', water or sand outside on ' + r.bOut + '/' + r.bAll
         + ', trees ' + r.tIn + ' inside to ' + r.tOut + ' outside',
       'hole map ' + r.map.w + 'x' + r.map.h + ' shown, golfer marked',
+      'fly-over on the first hole of a round only, not when off or catching up; play goes on under it, a tap ends it',
       'wagers play straight'];
   }
 };
