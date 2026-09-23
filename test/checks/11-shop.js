@@ -218,8 +218,10 @@ module.exports = {
         for (const d of B.OUTFITS) { styleBuy('o', d.id); if (snap() !== base) o.moved.push('outfit ' + d.id); }
         for (const d of B.TRAILS)  { styleBuy('t', d.id); if (snap() !== base) o.moved.push('trail ' + d.id); }
         for (const d of B.CADDIES) { styleBuy('c', d.id); if (snap() !== base) o.moved.push('caddie ' + d.id); }
+        for (const d of B.CLUBS)   { styleBuy('k', d.id); if (snap() !== base) o.moved.push('club ' + d.id); }
         o.spent = 1e6 - S.sov;
-        o.want = B.OUTFITS.concat(B.TRAILS, B.CADDIES).reduce((t, d) => t + d.cost, 0);
+        o.want = B.OUTFITS.concat(B.TRAILS, B.CADDIES, B.CLUBS).reduce((t, d) => t + d.cost, 0);
+        o.clubWorn = S.club; o.clubLast = B.CLUBS[B.CLUBS.length - 1].id;
         // a caddie for every look, at a third of its price
         o.caddieMiss = B.OUTFITS.filter(x => !B.CADDIES.some(c => c.of === x.id)).map(x => x.id);
         o.caddiePrice = B.CADDIES.filter(c => c.of && Math.abs(c.cost - styleDef('o', c.of).cost / 3) > 3).map(c => c.id + ' ' + c.cost);
@@ -246,9 +248,9 @@ module.exports = {
         S.styleOwn = {}; S.outfit = 'classic'; S.sov = 10;
         styleBuy('o', 'mythic'); o.poor = S.outfit + ' ' + S.sov + ' ' + !!S.styleOwn['o:mythic'];
         // a save wearing something it does not own, or that does not exist
-        S.outfit = 'mythic'; S.trail = 'nope'; S.caddie = 'divine'; initState();
-        o.repaired = S.outfit + '/' + S.trail + '/' + S.caddie;
-      } finally { QUIET = false; S.outfit = 'classic'; S.trail = 'plain'; S.caddie = 'bib'; buildSprites(); hideSheet(); }
+        S.outfit = 'mythic'; S.trail = 'nope'; S.caddie = 'divine'; S.club = 'saber'; initState();
+        o.repaired = S.outfit + '/' + S.trail + '/' + S.caddie + '/' + S.club;
+      } finally { QUIET = false; S.outfit = 'classic'; S.trail = 'plain'; S.caddie = 'bib'; S.club = 'steel'; buildSprites(); hideSheet(); }
       return o;
     });
     if (st.moved.length) throw new Error('a look changed a stat: ' + st.moved.join(', '));
@@ -259,7 +261,8 @@ module.exports = {
       + st.shirtPx + ' red shirt pixels, ' + st.classicPx + ' white');
     if (!(st.foldPx > 5)) throw new Error('the shirt\'s darkest fold is still see-through: ' + st.foldPx + ' pixels');
     if (st.poor !== 'classic 10 false') throw new Error('ten sovereigns bought the Mythic outfit: ' + st.poor);
-    if (st.repaired !== 'classic/plain/bib') throw new Error('a save wearing an unowned or unknown look loaded as ' + st.repaired);
+    if (st.clubWorn !== st.clubLast) throw new Error('buying a club did not put it in his hands: ' + st.clubWorn);
+    if (st.repaired !== 'classic/plain/bib/steel') throw new Error('a save wearing an unowned or unknown look loaded as ' + st.repaired);
     if (st.caddieMiss.length) throw new Error('these looks have no caddie to match: ' + st.caddieMiss.join(', '));
     if (st.caddiePrice.length) throw new Error('these caddies are not a third of their look: ' + st.caddiePrice.join(', '));
     if (!(st.caddieShirt > 20)) throw new Error('the Sunday Red caddie does not wear its red: ' + st.caddieShirt + ' pixels of it');

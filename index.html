@@ -539,6 +539,11 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
 .shopnav button{flex:1 1 0;padding:9px 2px;background:none;border:0;border-bottom:2px solid transparent;
   color:var(--dim);font-size:var(--f0);letter-spacing:.12em;text-transform:uppercase;font-weight:700}
 .shopnav button.on{color:var(--brass);border-bottom-color:var(--brass)}
+/* the Style tab's racks: four pills along the top */
+.catnav{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:0 0 10px}
+.catnav button{min-height:30px;padding:6px 2px;border:1px solid var(--line);background:var(--raise);
+  color:var(--dim);font-size:var(--f1);letter-spacing:.08em;text-transform:uppercase;font-weight:700}
+.catnav button.on{color:var(--ink);background:var(--brass);border-color:var(--brass)}
 .freebar{border:1px solid var(--r5);background:rgba(166,107,245,.10);padding:7px 9px;margin-bottom:10px;
   font-size:var(--f1);color:var(--chalk);line-height:1.5}
 .freebar b{color:var(--r5)}
@@ -3041,6 +3046,24 @@ const B = {
     { id:'divine',  n:'Divine',          cost:3000, fx:'divine', cat:'skin', top:1,
       cap:'#FFD66B', cap2:'#C99A2E', shirt:'#FFF8E6', shirt2:'#F1D98F', shirt3:'#C9A24A', pant:'#F4E7C2', pant2:'#D8C18A', shoe:'#B98A2E' }
   ],
+  // Clubs: the one he swings and carries. shaft/shaft2 near and far, head
+  // and its lit edge, the grip; fx for the ones that do more than colour.
+  CLUBS: [
+    { id:'steel',     n:'Tour Steel',     cost:0,    shaft:'#CBD2D7', shaft2:'#8C959C', head:'#5E666C', head2:'#AEB6BC', grip:'#20242A' },
+    { id:'graphite',  n:'Graphite',       cost:120,  shaft:'#4A5058', shaft2:'#2E3238', head:'#1C1F23', head2:'#6A727C', grip:'#B8292F' },
+    { id:'persimmon', n:'Persimmon',      cost:200,  shaft:'#CBD2D7', shaft2:'#8C959C', head:'#8A4F22', head2:'#C07A3A', grip:'#6A4A2A', big:1 },
+    { id:'rose',      n:'Rose Gold',      cost:350,  shaft:'#E8A48C', shaft2:'#B97A64', head:'#D98B70', head2:'#FFD0BC', grip:'#3A2A26' },
+    { id:'candy',     n:'Candy Cane',     cost:400,  fx:'candy',    cat:'fun', shaft:'#FFFFFF', shaft2:'#E8E8E8', head:'#E4302A', head2:'#FFFFFF', grip:'#2E8B3A' },
+    { id:'baguette',  n:'Baguette',       cost:450,  fx:'baguette', cat:'fun', shaft:'#D9A45A', shaft2:'#B98434', head:'#C88A3A', head2:'#F2D08A' },
+    { id:'gold',      n:'Gold Plated',    cost:500,  fx:'glint',    shaft:'#E3B457', shaft2:'#A8802F', head:'#FFD66B', head2:'#FFF3B0', grip:'#1A1A1A' },
+    { id:'chicken',   n:'Rubber Chicken', cost:550,  fx:'chicken',  cat:'fun', shaft:'#F6D84A', shaft2:'#D8B42A', head:'#F6D84A' },
+    { id:'neon',      n:'Neon',           cost:650,  fx:'neon',     shaft:'#3FFFB0', shaft2:'#20C080', head:'#3FFFB0', head2:'#CFFFEA', grip:'#101418', glow:'#3FFFB0' },
+    { id:'ice',       n:'Icebreaker',     cost:800,  fx:'ice',      shaft:'#BFE6FA', shaft2:'#8CC4E6', head:'#DFF4FF', head2:'#FFFFFF', grip:'#2A4A66', glow:'#9FD6F2' },
+    { id:'magma',     n:'Magma',          cost:900,  fx:'magma',    shaft:'#3A2420', shaft2:'#241612', head:'#3A1E14', head2:'#FF7A2A', grip:'#0E0A08', glow:'#FF7A2A' },
+    { id:'prism',     n:'Prism',          cost:1000, fx:'prism',    shaft:'#FFFFFF', shaft2:'#DDDDDD', head:'#FFFFFF', head2:'#FFFFFF', grip:'#202020' },
+    { id:'saber',     n:'Light Saber',    cost:1200, fx:'saber',    shaft:'#E8FFFF', shaft2:'#9FFFFF', head:'#E8FFFF', grip:'#3A3F46', glow:'#3FE0FF' },
+    { id:'divine',    n:'Divine Driver',  cost:2000, fx:'divine',   top:1, shaft:'#FFF3C8', shaft2:'#E3B457', head:'#FFD66B', head2:'#FFFFFF', grip:'#8A6A26', glow:'#FFD66B' }
+  ],
   TRAILS: [
     { id:'plain',   n:'Plain',   cost:0,    cols:['#F4F6EF'] },
     // trails: a ribbon behind the ball, which keeps its affinity's colour
@@ -3251,6 +3274,7 @@ function initState(){
   if(!styleOwned('o', S.outfit)) S.outfit = 'classic';
   if(!styleOwned('t', S.trail)) S.trail = 'plain';
   if(!styleOwned('c', S.caddie)) S.caddie = 'bib';
+  if(!styleOwned('k', S.club)) S.club = 'steel';
   if(!B.BANK_OPTS.includes(S.islandBank)) S.islandBank = 5;
   if(!S.tierEvents) S.tierEvents = {};
   if(S.tierMax === undefined) S.tierMax = 0;
@@ -5530,7 +5554,7 @@ function tickShop(dt){
 }
 
 /* ---- the shop, on screen ---- */
-let shopSub = 'offers';
+let shopSub = 'offers', styleCat = 'golfer';
 function openShop(sub){ if(sub) shopSub = sub; renderShop(); }
 
 // One tile on the rack: what it is, the art, a line about it, and the price.
@@ -5543,7 +5567,7 @@ B.CADDIES = [{ id:'bib', n:'Caddie Bib', cost:0,
   pant:'#3A3F4A', pant2:'#2A2E36', shoe:'#1E1A16', bag:'#B23A3A', bag2:'#8A2A2A' }]
   .concat(B.OUTFITS.map(o => Object.assign({}, o, { n: o.n + ' Caddie', of: o.id,
     cost: Math.round(o.cost / 3 / 5) * 5 })));
-const styleDef = (k, id) => (k === 'o' ? B.OUTFITS : k === 'c' ? B.CADDIES : B.TRAILS).find(x => x.id === id);
+const styleDef = (k, id) => (k === 'o' ? B.OUTFITS : k === 'c' ? B.CADDIES : k === 'k' ? B.CLUBS : B.TRAILS).find(x => x.id === id);
 const styleOwned = (k, id) => { const d = styleDef(k, id);
   return !!d && (d.cost === 0 || !!(S.styleOwn && S.styleOwn[k + ':' + id])); };
 // "Try it": a look worn for ten seconds without buying it. Never saved.
@@ -5552,6 +5576,7 @@ const previewOf = k => PREVIEW && PREVIEW.k === k && Date.now() < PREVIEW.until 
 const outfitNow = () => previewOf('o') || styleDef('o', S.outfit) || B.OUTFITS[0];
 const trailNow  = () => previewOf('t') || styleDef('t', S.trail) || B.TRAILS[0];
 const caddieNow = () => previewOf('c') || styleDef('c', S.caddie) || B.CADDIES[0];
+const clubNow   = () => previewOf('k') || styleDef('k', S.club) || B.CLUBS[0];
 function styleTry(k, id){
   const d = styleDef(k, id); if(!d) return;
   PREVIEW = { k, id, until: Date.now() + 10000 };
@@ -5573,6 +5598,7 @@ function styleBuy(k, id){
   }
   if(k === 'o'){ S.outfit = id; buildSprites(); }
   else if(k === 'c'){ S.caddie = id; buildSprites(); }
+  else if(k === 'k') S.club = id;
   else S.trail = id;
   renderShop(); renderVitals();
 }
@@ -5607,6 +5633,28 @@ function outfitUrl(o){
         g.fillStyle = acc[i & 1]; g.fillRect(x, y, 1, 1); });
     }
     return DOMSPR[key] = sp.cv.toDataURL();
+  }catch(e){ return DOMSPR[key] = ''; }
+}
+// The shop's picture of a club: the shaft from top left, grip first, down to
+// the head at the bottom right; the odd ones get their own shape.
+function clubUrl(d){
+  const key = 'club|' + d.id;
+  if(DOMSPR[key] !== undefined) return DOMSPR[key];
+  try{
+    const cv = document.createElement('canvas'); cv.width = cv.height = 12;
+    const g = cv.getContext('2d'), P = (x, y, col) => { g.fillStyle = col; g.fillRect(x, y, 1, 1); };
+    const pts = [[2,1],[3,2],[3,3],[4,4],[5,5],[5,6],[6,7],[7,8],[7,9]];
+    if(d.glow) pts.forEach(([x, y]) => { g.globalAlpha = 0.45; P(x - 1, y, d.glow); P(x + 1, y, d.glow); g.globalAlpha = 1; });
+    const R = ['#E4574A', '#F0A03C', '#E3D457', '#7ADB86', '#57A5C2', '#C68BFF'];
+    pts.forEach(([x, y], i) => P(x, y, i < 2 && d.grip ? d.grip : d.fx === 'candy' ? (i & 1 ? '#E4302A' : '#FFFFFF')
+      : d.fx === 'prism' ? R[i % 6] : d.fx === 'magma' && i % 3 === 0 ? '#FF7A2A' : d.shaft));
+    if(d.fx === 'baguette') pts.forEach(([x, y]) => P(x + 1, y, d.shaft2));
+    if(d.fx === 'chicken'){ g.fillStyle = '#F6D84A'; g.fillRect(7, 8, 3, 3); P(7, 7, '#E4302A'); P(8, 7, '#E4302A'); P(10, 9, '#FF8A2A'); P(9, 9, '#1A1A1A'); }
+    else if(d.fx === 'saber'){ P(7, 10, d.shaft); P(8, 10, d.glow); }
+    else{ g.fillStyle = d.head; g.fillRect(7, 9, d.big ? 4 : 3, d.big ? 3 : 2); if(d.head2){ g.fillStyle = d.head2; g.fillRect(7, 9, d.big ? 4 : 3, 1); } }
+    const acc = { divine:['#FFD66B', '#FFFFFF'], ice:['#FFFFFF', '#9FD6F2'], neon:['#3FFFB0', '#CFFFEA'], gold:['#FFFFFF', '#FFE39A'] }[d.fx === 'glint' ? 'gold' : d.fx];
+    if(acc) [[10, 1], [1, 10], [11, 4], [4, 11]].forEach(([x, y], i) => P(x, y, acc[i & 1]));
+    return DOMSPR[key] = cv.toDataURL();
   }catch(e){ return DOMSPR[key] = ''; }
 }
 // The shop's picture of a caddie: him in his cap and bib, his bag beside him.
@@ -5757,7 +5805,8 @@ function renderShop(){
 
   if(shopSub === 'style'){
     const card = (k, d, img) => {
-      const own = styleOwned(k, d.id), worn = (k === 'o' ? S.outfit : k === 'c' ? (S.caddie || 'bib') : S.trail) === d.id;
+      const own = styleOwned(k, d.id);
+      const worn = (k === 'o' ? S.outfit : k === 'c' ? (S.caddie || 'bib') : k === 'k' ? (S.club || 'steel') : S.trail) === d.id;
       return shopCard({ img, on: worn || !!d.top, badge: worn ? 'WORN' : d.top ? 'LEGENDARY' : '', head: d.n,
         sub: own ? '' : '<button class="mini try" data-try="' + k + '.' + d.id + '">Try it</button>',
         price: worn ? 'WORN' : own ? 'WEAR' : sovFmt(d.cost),
@@ -5767,15 +5816,26 @@ function renderShop(){
     const shelf = (title, k, list, url) => list.length
       ? ribbon(title) + '<div class="sgrid c3">'
         + list.slice().sort((a, b) => (b.top || 0) - (a.top || 0)).map(d => card(k, d, url(d))).join('') + '</div>' : '';
-    h += '<div class="shopnote">Looks only. Nothing here changes a stat.</div>'
-      + shelf('Skins', 'o', B.OUTFITS.filter(o => o.cat === 'skin'), outfitUrl)
-      + shelf('Balls', 't', B.TRAILS.filter(t => t.cat === 'ball'), trailUrl)
-      // the funny ones and the plain shirts are all outfits: one shelf, the
-      // funny ones first
-      + shelf('Outfits', 'o', B.OUTFITS.filter(o => o.cat === 'fun').concat(B.OUTFITS.filter(o => !o.cat)), outfitUrl)
-      + shelf('Ball Trails', 't', B.TRAILS.filter(t => !t.cat), trailUrl)
-      // caddies in the same order as the golfer's looks: skins, then the rest
-      + shelf('Caddies', 'c', B.CADDIES.filter(d => d.cat === 'skin').concat(B.CADDIES.filter(d => d.cat !== 'skin')), caddieUrl);
+    // one rack at a time, picked along the top
+    const cats = [['golfer', 'Golfer'], ['caddie', 'Caddie'], ['clubs', 'Clubs'], ['balls', 'Balls']];
+    h += '<div class="catnav">' + cats.map(([id, t]) => '<button data-cat="' + id + '"'
+        + (styleCat === id ? ' class="on"' : '') + '>' + t + '</button>').join('') + '</div>'
+      + '<div class="shopnote">Looks only. Nothing here changes a stat.</div>';
+    if(styleCat === 'golfer')
+      h += shelf('Skins', 'o', B.OUTFITS.filter(o => o.cat === 'skin'), outfitUrl)
+        // the funny ones and the plain shirts are all outfits: one shelf, the
+        // funny ones first
+        + shelf('Outfits', 'o', B.OUTFITS.filter(o => o.cat === 'fun').concat(B.OUTFITS.filter(o => !o.cat)), outfitUrl);
+    else if(styleCat === 'caddie')
+      // in the same order as the golfer's looks: skins, then the rest
+      h += shelf('Caddie Skins', 'c', B.CADDIES.filter(d => d.cat === 'skin'), caddieUrl)
+        + shelf('Caddie Outfits', 'c', B.CADDIES.filter(d => d.cat !== 'skin'), caddieUrl);
+    else if(styleCat === 'clubs')
+      h += shelf('Clubs', 'k', B.CLUBS.filter(d => d.cat !== 'fun'), clubUrl)
+        + shelf('Just for Fun', 'k', B.CLUBS.filter(d => d.cat === 'fun'), clubUrl);
+    else
+      h += shelf('Balls', 't', B.TRAILS.filter(t => t.cat === 'ball'), trailUrl)
+        + shelf('Ball Trails', 't', B.TRAILS.filter(t => !t.cat), trailUrl);
   }
 
   if(shopSub === 'offers'){
@@ -5820,6 +5880,8 @@ function renderShop(){
   const sheet = $('sheet');
   sheet.querySelectorAll('.shopnav button').forEach(b =>
     b.onclick = () => { shopSub = b.dataset.sub; renderShop(); });
+  sheet.querySelectorAll('.catnav button').forEach(b =>
+    b.onclick = () => { styleCat = b.dataset.cat; renderShop(); });
   sheet.querySelectorAll('.try[data-try]').forEach(b => {
     const [k, id] = b.dataset.try.split('.');
     b.onclick = () => styleTry(k, id);
@@ -7063,6 +7125,79 @@ const CADDIE_ROWS = [
     '..................sssSSSSSS.............',
     '..................bbbbbbbb..............'
 ];
+// Walking away from us, between shots: the golfer and his caddie from
+// behind, from the belt up. The golfer's right hand hangs at his side with
+// the club in it; the caddie's bag rides on his right shoulder, its strap
+// across his back. Legs, again, are drawn in code.
+const G_BACK_ROWS = [
+    '........................................',
+    '........................................',
+    '.................cccccc.................',
+    '...............cccccccccc...............',
+    '..............cccccccccccc..............',
+    '..............ccccCCCCcccc..............',
+    '..............CCCChhhhCCCC..............',
+    '...............hhhhhhhhhh...............',
+    '...............hhhhhhhhhh...............',
+    '................hhhhhhhh................',
+    '.................kkkkkK.................',
+    '..............sssssssssssS..............',
+    '...........ssssssssssssssssSS...........',
+    '..........ssssssssssssssssssSS..........',
+    '.........sssssssssssssssssssSSS.........',
+    '.........sssssssssssssssssssSSS.........',
+    '.........ssS.sssssssssssssS.SSS.........',
+    '.........kkK.ssssssssssssSS.kKK.........',
+    '.........kkK.ssssssssssssSS.kKK.........',
+    '.........kkK.ssssssssssssSS.kKK.........',
+    '.........kkK.ssssssssssssSS.kKK.........',
+    '.........kkK.sssssssssssSSS.kKK.........',
+    '.........kkK.sssssssssssSSS.kKK.........',
+    '.........kkK.ssssssssssSSSS.kKK.........',
+    '.........kkK.ssssssssssSSSS.kKK.........',
+    '.........kkK.sssssssssSSSSS.kKK.........',
+    '.........kkK.sssssssssSSSSS..kKK........',
+    '.........kkk.ssssssssSSSSSS..kKK........',
+    '..........kk.sssssssSSSSSST..kkK........',
+    '..........k..TTTTTTTTTTTTTT..kkK........',
+    '.............bbbbbbbbbbbbbb...kk........',
+    '.............bbbbbbbbbbbbbb.............',
+];
+const CADDIE_BACK_ROWS = [
+    '........................................',
+    '........................................',
+    '.................cccccc..........i.i....',
+    '...............cccccccccc.......iii.i...',
+    '..............cccccccccccc.....yyyyyyy..',
+    '..............ccccCCCCcccc.....yYYYYYy..',
+    '..............CCCChhhhCCCC.....yYYYYYy..',
+    '...............hhhhhhhhhh......yYYYYYy..',
+    '...............hhhhhhhhhh......yYYYYYy..',
+    '................hhhhhhhh.......yYYYYYy..',
+    '.................kkkkkK........yYYYYYy..',
+    '..............srrssssssssS.....yYYYYYy..',
+    '...........sssssrrssssssssSS...yYYYYYy..',
+    '..........ssssssssrrsssssssSS..yYYYYYy..',
+    '.........ssssssssssrrsssssssSS.yYYYYYy..',
+    '.........sssssssssssrrssssssSSryYYYYYy..',
+    '.........ssS.sssssssrrsssssS.SryYYYYYy..',
+    '.........kkK.ssssssssrrssssS.kryyyyyyy..',
+    '.........kkK.sssssssssrrsssS.kKyYYYYYy..',
+    '.........kkK.ssssssssssrrssS.kKyYYYYYy..',
+    '.........kkK.sssssssssssrrsS.kKyYYYYYy..',
+    '.........kkK.ssssssssssssrrS.kKyYYYYYy..',
+    '.........kkK.sssssssssssSSrr.kKyYYYYYy..',
+    '.........kkK.ssssssssssSSSS.rkKyYYYYYy..',
+    '.........kkK.ssssssssssSSSS..kKyYYYYYy..',
+    '.........kkK.sssssssssSSSSS..kKyYYYYYy..',
+    '.........kkK.sssssssssSSSSS..kKyyyyyyy..',
+    '.........kkk.ssssssssSSSSSS..kkK.yyyyy..',
+    '..........kk.sssssssSSSSSSS..kkK........',
+    '..........k..ssssssssssssSS...kK........',
+    '.............bbbbbbbbbbbbbb.............',
+    '.............bbbbbbbbbbbbbb.............',
+];
+const HAIR = '#3A2A1E';
 // A caddie look is dressed like a golfer's outfit -- cap, shirt (his bib),
 // trousers, shoes -- plus the colours of his bag. The map is the golfer's,
 // so patterns and skins carry over unchanged.
@@ -7110,8 +7245,12 @@ function buildSprites(){
   // below it -- the legs stride in code.
   const blank = '.'.repeat(40);
   SPRITE.gWalk = patterned(makeSprite(G_FIN_ROWS.slice(0, 32).concat(G_FIN_ROWS.slice(32).map(() => blank)), GMAP), OUT);
+  const pad = G_FIN_ROWS.slice(32).map(() => blank);
+  SPRITE.gBack = patterned(makeSprite(G_BACK_ROWS.concat(pad), Object.assign({}, GMAP, { h: OUT.hair || (OUT.skin ? OUT.skin2 : HAIR) })), OUT);
   const CD = caddieNow();
   SPRITE.caddie = patterned(makeSprite(CADDIE_ROWS.concat(G_FIN_ROWS.slice(32).map(() => blank)), caddieMap(CD)), CD);
+  SPRITE.caddieBack = patterned(makeSprite(CADDIE_BACK_ROWS.concat(pad),
+    Object.assign(caddieMap(CD), { h: CD.hair || (CD.skin ? CD.skin2 : HAIR) })), CD);
 
   SPRITE.pine = makeSprite(PINE_ROWS, TREE_DEFAULT);
 
@@ -7393,6 +7532,8 @@ function capBox(rows){
   return { x: (x0 + x1 + 1) / 2 / W, y: y0 / H, w: (x1 - x0 + 1) / W, h: (y1 - y0 + 1) / H };
 }
 const CAP_ADDR = capBox(G_ADDR_ROWS), CAP_FIN = capBox(G_FIN_ROWS);
+const PAD58 = rows => rows.concat(new Array(58 - rows.length).fill('.'.repeat(40)));
+const CAP_BACK = capBox(PAD58(G_BACK_ROWS)), CAP_CBACK = capBox(PAD58(CADDIE_BACK_ROWS));
 // A glow in the stage's own terms: solid colours in a dither that thins toward
 // the edge, rather than a see-through wash, which on a green fairway blends
 // gold into lime. bands are [edge share, colour, density 1-4 of 4], outside in.
@@ -7781,9 +7922,9 @@ const STYLEFX = {
     },
     front(c, g){
       const { cx, w, h, t, k, head, y } = g;
-      // eyes, two dark pixels where his face is
+      // eyes, two dark pixels where his face is (not on the back of his head)
       const ex = head.x - head.w * 0.08, ey = head.y + head.hh + k;
-      fxDot(c, ex, ey, k, '#1A1F2E', 0.9); fxDot(c, ex + k * 2 + 1, ey, k, '#1A1F2E', 0.9);
+      if(!g.back){ fxDot(c, ex, ey, k, '#1A1F2E', 0.9); fxDot(c, ex + k * 2 + 1, ey, k, '#1A1F2E', 0.9); }
       // wisps curling up off him
       for(let i = 0; i < 6; i++){
         const life = (t * 0.6 + hr(i, 21)) % 1;
@@ -7817,6 +7958,7 @@ const STYLEFX = {
   /* ---- Dad on Holiday: sunglasses ---- */
   dad: {
     front(c, g){
+      if(g.back) return;                   // sunglasses are worn on the front
       const { head, k } = g;
       const ex = head.x - head.w * 0.14, ey = head.y + head.hh;
       c.globalAlpha = 1; c.fillStyle = '#101418';
@@ -7829,6 +7971,7 @@ const STYLEFX = {
   /* ---- Clown: a red nose ---- */
   clown: {
     front(c, g){
+      if(g.back) return;                   // and so is a nose
       const { head, k } = g;
       fxDot(c, head.x + head.w * 0.18, head.y + head.hh + k * 2, k + 1, '#E4302A', 1);
       fxDot(c, head.x + head.w * 0.18, head.y + head.hh + k * 2, 1, '#FF9A90', 1);
@@ -8498,31 +8641,37 @@ const Scene = {
   },
   drawCaddie(c, gh, walking){
     const p = this.proj(this.camD + 0.25, -1.45);
-    const h = Math.max(6, Math.round(gh * 0.93)), spr = SPRITE.caddie, CD = caddieNow();
+    const back = walking && SPRITE.caddieBack;
+    const h = Math.max(6, Math.round(gh * 0.93)), spr = back ? SPRITE.caddieBack : SPRITE.caddie, CD = caddieNow();
     const w = Math.max(4, Math.round(h * spr.w / spr.h));
     const FX = STYLEFX[CD.fx] || null;
-    const x = p.x - Math.round(w*0.42);
+    const x = back ? p.x - Math.round(w*0.5) + Math.round(Math.sin((this.walkPh + 0.25) * Math.PI * 2) * w * 0.02)
+                   : p.x - Math.round(w*0.42);
     const up = walking && (Math.floor(this.walkPh * 4 + 1) & 1) ? Math.max(1, Math.round(h / 40)) : 0;
     const y = p.y - h - up - (FX && FX.bob ? Math.round(2 + Math.sin(this.t * 2.2 + 1) * 2) : 0);
     c.fillStyle = 'rgba(8,16,10,.30)';
     c.fillRect(x + Math.round(w*0.25), p.y - 1, Math.round(w*0.45), Math.max(1, Math.round(h*0.045)));
     // his outfit's effect, if it has one, laid round him the way it is round
     // the golfer: its back half, then him, then its front half
-    const g = { x, y, w, h, cx: x + w*0.55, cy: y + h*0.53, bot: p.y, t: this.t + 0.7, ph: 0, minor: true,
+    const cbx = back ? CAP_CBACK : CAP_CADDIE;
+    const g = { x, y, w, h, cx: x + w*(back ? 0.5 : 0.55), cy: y + h*0.53, bot: p.y, t: this.t + 0.7, ph: 0, minor: true, back,
                 still: !(FX && FX.shearMod),
                 k: Math.max(1, Math.round(h / 40)), spr, shear: () => 0,
-                head: { x: x + w*CAP_CADDIE.x, y: y + h*CAP_CADDIE.y, w: w*CAP_CADDIE.w, hh: h*CAP_CADDIE.h } };
+                head: { x: x + w*cbx.x, y: y + h*cbx.y, w: w*cbx.w, hh: h*cbx.h } };
     if(FX && FX.back) FX.back(c, g);
     if(FX && FX.outline) outlineAt(c, g, FX.outline, RING1, FX.outlineA * (0.8 + 0.2 * Math.sin(this.t * 3)));
     if(FX && FX.alpha) c.globalAlpha = FX.alpha;
     // a half step out of time with him, so the two do not march
-    drawLegs(c, x + w*0.55, y + h*(32/58), h*(25/58), w, walking ? this.walkPh + 0.25 : null,
-             CD.pant, CD.pant2 || CD.pant, CD.shoe || PX.shoe);
+    if(back) drawLegsBack(c, x + w*0.5, y + h*(31/58), h*(26/58), w, this.walkPh + 0.25,
+                          CD.pant, CD.pant2 || CD.pant, CD.shoe || PX.shoe);
+    else drawLegs(c, x + w*0.55, y + h*(32/58), h*(25/58), w, null, CD.pant, CD.pant2 || CD.pant, CD.shoe || PX.shoe);
     if(FX && FX.shearMod) blitShear(c, spr, x, y, w, h, f => FX.shearMod(f, g));
     else c.drawImage(spr.cv, x, y, w, h);
-    // an arm hanging at his side, swinging a little as he goes
-    const sx = x + w*0.60, sy = y + h*0.30, sw = walking ? Math.sin((this.walkPh + 0.25) * Math.PI * 2) * 0.35 : 0;
-    pxLine(c, sx, sy, sx + Math.sin(sw) * h*0.22, sy + Math.cos(sw) * h*0.22, CD.skin2 || PX.skin2, h > 34 ? 2 : 1);
+    // side on, an arm hanging at his side (from behind, the sprite has both)
+    if(!back){
+      const sx = x + w*0.60, sy = y + h*0.30;
+      pxLine(c, sx, sy, sx, sy + h*0.22, CD.skin2 || PX.skin2, h > 34 ? 2 : 1);
+    }
     c.globalAlpha = 1;
     if(FX && FX.front) FX.front(c, g);
     c.globalAlpha = 1; c.globalCompositeOperation = 'source-over';
@@ -8918,6 +9067,135 @@ function drawLegs(c, hx, hy, len, w, ph, near, far, shoe){
   const s = ph === null ? 0 : Math.sin(ph * Math.PI * 2);
   leg(-s, far, -th * 0.4);
   leg(s, near, th * 0.6);
+}
+// What the special clubs do beyond their colours. under: drawn beneath the
+// shaft (a glow); shaft: replaces the plain line; head: replaces the plain
+// head; over: on top (sparkle); trail: the arc the head leaves in a swing.
+const clubPts = (hx, hy, tx, ty, n) => { const o = []; for(let i = 0; i <= n; i++) o.push([hx + (tx - hx) * i / n, hy + (ty - hy) * i / n]); return o; };
+const glowLine = (c, hx, hy, tx, ty, th, col, a) => { c.globalAlpha = a; pxLine(c, hx - 1, hy - 1, tx - 1, ty - 1, col, th + 2); c.globalAlpha = 1; };
+const arcTrail = (c, arc, th, cols, a) => {
+  for(let i = 1; i < arc.length; i++){
+    const f = i / arc.length;
+    c.globalAlpha = a * f; pxLine(c, arc[i-1][0], arc[i-1][1], arc[i][0], arc[i][1], cols[i % cols.length], Math.max(1, th + (f > 0.6 ? 1 : 0)));
+  }
+  c.globalAlpha = 1;
+};
+const CLUBFX = {
+  candy: { shaft(c, hx, hy, tx, ty, th, h, t, K){
+    const n = Math.max(4, Math.round(Math.hypot(tx - hx, ty - hy) / (th * 2 + 1)));
+    const P = clubPts(hx, hy, tx, ty, n);
+    for(let i = 1; i < P.length; i++) pxLine(c, P[i-1][0], P[i-1][1], P[i][0], P[i][1], i & 1 ? '#E4302A' : '#FFFFFF', th);
+  } },
+  baguette: {
+    shaft(c, hx, hy, tx, ty, th, h, t, K){
+      pxLine(c, hx, hy, tx, ty, K.shaft, th + 1);
+      for(const [x, y] of clubPts(hx, hy, tx, ty, 5).slice(1, 5)){ c.fillStyle = '#F2D08A'; c.fillRect(Math.round(x), Math.round(y), th + 1, 1); }
+    },
+    head(c, tx, ty, th, h, turn, t, K){ c.fillStyle = K.head; c.fillRect(Math.round(tx) - th - 1, Math.round(ty) - 1, th*2 + 3, th + 2);
+      c.fillStyle = K.head2; c.fillRect(Math.round(tx) - th, Math.round(ty) - 1, th*2 + 1, 1); }
+  },
+  glint: { over(c, hx, hy, tx, ty, th, h, t){
+    const u = (t * 0.9) % 1.6; if(u > 1) return;
+    fxDot(c, hx + (tx - hx) * u, hy + (ty - hy) * u, th, '#FFFFFF', 0.95); c.globalAlpha = 1;
+  }, trail(c, arc, th){ arcTrail(c, arc, th, ['#FFE39A'], 0.35); } },
+  chicken: {
+    // floppy: the shaft sags in the middle, and the head is a chicken's
+    shaft(c, hx, hy, tx, ty, th, h, t, K){
+      const mx = (hx + tx) / 2 + (ty - hy) * 0.10 * Math.sin(t * 9), my = (hy + ty) / 2 - (tx - hx) * 0.10;
+      pxLine(c, hx, hy, mx, my, K.shaft, th + 1); pxLine(c, mx, my, tx, ty, K.shaft2, th + 1);
+    },
+    head(c, tx, ty, th, h, turn, t){
+      const k = Math.max(1, th), x = Math.round(tx) - k, y = Math.round(ty) - k * 2;
+      c.fillStyle = '#F6D84A'; c.fillRect(x, y, k * 3, k * 3);
+      c.fillStyle = '#E4302A'; c.fillRect(x, y - k, k * 2, k);                  // the comb
+      c.fillStyle = '#FF8A2A'; c.fillRect(x + (turn < 0 ? -k : k * 3), y + k, k, k);   // the beak
+      c.fillStyle = '#1A1A1A'; c.fillRect(x + (turn < 0 ? 0 : k * 2), y + k, 1, 1);
+    }
+  },
+  neon: { under(c, hx, hy, tx, ty, th, h, t, K){ glowLine(c, hx, hy, tx, ty, th, K.glow, 0.28 + 0.1 * Math.sin(t * 8)); },
+          trail(c, arc, th){ arcTrail(c, arc, th + 1, ['#3FFFB0', '#CFFFEA'], 0.6); } },
+  ice: { under(c, hx, hy, tx, ty, th, h, t, K){ glowLine(c, hx, hy, tx, ty, th, K.glow, 0.22); },
+         over(c, hx, hy, tx, ty, th, h, t){
+           for(let i = 0; i < 3; i++){ const u = (t * 0.7 + i / 3) % 1, tw = Math.sin(t * 7 + i * 2);
+             if(tw > 0.3) fxDot(c, hx + (tx - hx) * u + (i - 1) * 2, hy + (ty - hy) * u - 1, 1, '#FFFFFF', tw); }
+           c.globalAlpha = 1; },
+         trail(c, arc, th){ arcTrail(c, arc, th, ['#DFF4FF', '#9FD6F2'], 0.55);
+           for(let i = 1; i < arc.length; i += 2) fxDot(c, arc[i][0] + 2, arc[i][1] - 2, 1, '#FFFFFF', 0.8); c.globalAlpha = 1; } },
+  magma: {
+    shaft(c, hx, hy, tx, ty, th, h, t, K){
+      pxLine(c, hx, hy, tx, ty, K.shaft, th);
+      clubPts(hx, hy, tx, ty, 8).forEach(([x, y], i) => { if((i + Math.floor(t * 6)) % 3 === 0) fxDot(c, x, y, th, '#FF7A2A', 0.9); });
+      c.globalAlpha = 1;
+    },
+    under(c, hx, hy, tx, ty, th, h, t, K){ glowLine(c, hx, hy, tx, ty, th, '#C8401E', 0.18); },
+    trail(c, arc, th, t){ arcTrail(c, arc, th, ['#FF7A2A', '#FFB43A', '#C8401E'], 0.65);
+      for(let i = 1; i < arc.length; i++){ const f = (t * 3 + i * 0.3) % 1; fxDot(c, arc[i][0], arc[i][1] + f * 6, 1, '#FFB43A', 1 - f); } c.globalAlpha = 1; }
+  },
+  prism: {
+    shaft(c, hx, hy, tx, ty, th, h, t){
+      const R = ['#E4574A', '#F0A03C', '#E3D457', '#7ADB86', '#57A5C2', '#C68BFF'], P = clubPts(hx, hy, tx, ty, 6);
+      for(let i = 1; i < P.length; i++) pxLine(c, P[i-1][0], P[i-1][1], P[i][0], P[i][1], R[(i + Math.floor(t * 8)) % 6], th);
+    },
+    trail(c, arc, th){ arcTrail(c, arc, th + 1, ['#E4574A', '#F0A03C', '#E3D457', '#7ADB86', '#57A5C2', '#C68BFF'], 0.7); }
+  },
+  saber: {
+    under(c, hx, hy, tx, ty, th, h, t, K){
+      glowLine(c, hx, hy, tx, ty, th + 2, K.glow, 0.25 + 0.08 * Math.sin(t * 20));
+      glowLine(c, hx, hy, tx, ty, th, K.glow, 0.55);
+    },
+    head(){ },                                                   // it is all blade
+    trail(c, arc, th){ arcTrail(c, arc, th + 2, ['#3FE0FF'], 0.45); arcTrail(c, arc, th, ['#E8FFFF'], 0.7); }
+  },
+  divine: {
+    under(c, hx, hy, tx, ty, th, h, t, K){ glowLine(c, hx, hy, tx, ty, th + 1, K.glow, 0.30 + 0.12 * Math.sin(t * 3)); },
+    over(c, hx, hy, tx, ty, th, h, t){
+      for(let i = 0; i < 4; i++){ const u = (t * 0.5 + i / 4) % 1, tw = Math.sin(t * 6 + i * 1.7);
+        if(tw > 0.2){ const x = hx + (tx - hx) * u + Math.sin(t * 2 + i) * 3, y = hy + (ty - hy) * u;
+          fxDot(c, x, y, 1, '#FFFFFF', tw); if(tw > 0.8) for(const [dx, dy] of [[-1,0],[1,0],[0,-1],[0,1]]) fxDot(c, x + dx, y + dy, 1, '#FFD66B', 0.7); } }
+      c.globalAlpha = 1;
+    },
+    trail(c, arc, th){ arcTrail(c, arc, th + 2, ['#FFD66B'], 0.35); arcTrail(c, arc, th, ['#FFFFFF', '#FFF3C8'], 0.8); }
+  }
+};
+// Two legs from behind, walking away: side by side, the one stepping off
+// lifted at the heel with the sole of its shoe showing, the planted one
+// straight. ph as for drawLegs.
+function drawLegsBack(c, cx, hy, len, w, ph, near, far, shoe){
+  const th = Math.max(1, Math.round(w * 0.11)), gap = w * 0.085;
+  for(let i = 0; i < 2; i++){
+    const q = ph * Math.PI * 2 + i * Math.PI, lift = Math.max(0, Math.sin(q));
+    const lx = Math.round(cx + (i ? gap : -gap) - th / 2);
+    const L = len * (1 - 0.14 * lift), fy = Math.round(hy + L);
+    c.fillStyle = i ? far : near;
+    c.fillRect(lx, Math.round(hy), th, fy - Math.round(hy));
+    // the calf, a shade darker where it turns away
+    c.fillStyle = far; c.fillRect(lx + th - 1, Math.round(hy + L * 0.5), 1, Math.round(L * 0.5));
+    const sh = Math.max(1, Math.round(th * 0.45));
+    c.fillStyle = lift > 0.35 ? '#B8AE9C' : shoe;            // a lifted heel shows its sole
+    c.fillRect(lx - (lift > 0.35 ? 0 : 1), fy, th + (lift > 0.35 ? 0 : 1), sh);
+  }
+}
+// A golf club: the shaft from the grip to the head, and the head. turn is
+// which way the face points (1 toward the target, -1 back, 0 end on).
+// Everything a club skin changes goes through here.
+function drawClub(c, hx, hy, tx, ty, th, h, turn, t){
+  const K = clubNow(), fx = CLUBFX[K.fx];
+  if(fx && fx.under) fx.under(c, hx, hy, tx, ty, th, h, t, K);
+  if(fx && fx.shaft) fx.shaft(c, hx, hy, tx, ty, th, h, t, K);
+  else pxLine(c, hx, hy, tx, ty, h > 26 ? K.shaft : K.shaft2, th);
+  // the grip, the top fifth of the shaft, in its own colour
+  if(K.grip && h > 18){
+    const gx = hx + (tx - hx) * 0.18, gy = hy + (ty - hy) * 0.18;
+    pxLine(c, hx, hy, gx, gy, K.grip, th);
+  }
+  if(fx && fx.head) fx.head(c, tx, ty, th, h, turn, t, K);
+  else{
+    c.fillStyle = K.head;
+    const hw = th*2 + 1 + (K.big ? th*2 : 0), hh = th + 1 + (K.big ? th : 0);
+    c.fillRect(Math.round(tx) - (turn < 0 ? hw - th : th), Math.round(ty) - 1, hw, hh);
+    if(K.head2 && hw > 3){ c.fillStyle = K.head2; c.fillRect(Math.round(tx) - (turn < 0 ? hw - th : th), Math.round(ty) - 1, hw, 1); }
+  }
+  if(fx && fx.over) fx.over(c, hx, hy, tx, ty, th, h, t, K);
 }
 function pxRing(c, cx, cy, r, col){
   c.fillStyle = col;
@@ -9616,14 +9894,16 @@ Object.assign(Scene, {
     const walking = ph === 0 && !!this.walkOn;
     // Past the ball he comes up out of the posture, so the silhouette changes
     // rather than the same bent figure sliding around.
-    const spr = walking ? SPRITE.gWalk : ph > 0.60 ? SPRITE.gFinish : SPRITE.gAddr;
+    const spr = walking ? SPRITE.gBack : ph > 0.60 ? SPRITE.gFinish : SPRITE.gAddr;
     // He stood 1:2.9 against the fairway. Real golf is nearer 1:17; a figure
     // that small is unreadable in pixel art, so 1:7 is the compromise. The
     // number is his world height in the same units the lateral scale uses.
     const h = Math.max(6, Math.round(B_GOLFER * US * p.s));
     const w = Math.max(4, Math.round(h * spr.w / spr.h));
     const FX = STYLEFX[outfitNow().fx] || null;
-    const x = p.x - Math.round(w*0.42);
+    // from behind he is centred on his line, and sways a pixel as he steps
+    const x = walking ? p.x - Math.round(w*0.5) + Math.round(Math.sin(this.walkPh * Math.PI * 2) * w * 0.02)
+                      : p.x - Math.round(w*0.42);
     const stepUp = walking && (Math.floor(this.walkPh * 4) & 1) ? Math.max(1, Math.round(h / 40)) : 0;
     const y = p.y - h - stepUp - (FX && FX.bob ? Math.round(2 + Math.sin(this.t * 2.2) * 2) : 0);
 
@@ -9646,8 +9926,8 @@ Object.assign(Scene, {
 
     // the skin's effect, if it has one: its back half now, its front half
     // after the arms and club, so wisps pass both behind him and in front
-    const cb = spr === SPRITE.gFinish ? CAP_FIN : CAP_ADDR;
-    const g = { x, y, w, h, cx: x + w*0.55, cy: y + h*0.53, bot: p.y, t: this.t, ph,
+    const cb = spr === SPRITE.gFinish ? CAP_FIN : spr === SPRITE.gBack ? CAP_BACK : CAP_ADDR;
+    const g = { x, y, w, h, cx: x + w*(walking ? 0.5 : 0.55), cy: y + h*0.53, bot: p.y, t: this.t, ph, back: walking,
                 k: Math.max(1, Math.round(h / 40)), spr,
                 head: { x: x + w*cb.x, y: y + h*cb.y, w: w*cb.w, hh: h*cb.h } };
     const shear0 = f => coil * (1 - f) * w * 0.16;
@@ -9658,7 +9938,17 @@ Object.assign(Scene, {
     if(FX && FX.alpha) c.globalAlpha = FX.alpha;
     if(walking){
       const O = outfitNow();
-      drawLegs(c, x + w*0.52, y + h*(32/58), h*(25/58), w, this.walkPh, O.pant || '#2B3B4F', O.pant2 || O.pant || '#1C2937', O.shoe || PX.shoe);
+      drawLegsBack(c, x + w*0.5, y + h*(31/58), h*(26/58), w, this.walkPh, O.pant || '#2B3B4F', O.pant2 || O.pant || '#1C2937', O.shoe || PX.shoe);
+      c.drawImage(spr.cv, x, y, w, h);
+      // The club in his right hand, hanging at his side, the head down by
+      // his foot and turned out -- swinging a little with his arm.
+      const hx = x + w*(30.5/40), hy = y + h*(29.5/58);
+      const a = 0.14 + Math.sin(this.walkPh * Math.PI * 2) * 0.07, L = h * 0.49;
+      drawClub(c, hx, hy, hx + Math.sin(a) * L, hy + Math.cos(a) * L, h > 34 ? 2 : 1, h, 1, this.t);
+      c.globalAlpha = 1;
+      if(FX && FX.front) FX.front(c, g);
+      c.globalAlpha = 1; c.globalCompositeOperation = 'source-over';
+      return;
     }
     blitShear(c, spr, x, y, w, h, shear);
 
@@ -9671,9 +9961,12 @@ Object.assign(Scene, {
     pxLine(c, sx, sy, hx, hy, PX.skin, th);
     pxLine(c, sx - w*0.10, sy + 1, hx, hy, PX.skin2, th);
     if(h > 22){ c.fillStyle = outfitNow().shirt; c.fillRect(Math.round(hx) - 1, Math.round(hy) - 1, th + 1, th + 1); }
-    pxLine(c, hx, hy, tx, ty, h > 26 ? PX.club : PX.club2, th);
-    c.fillStyle = PX.club3;
-    c.fillRect(Math.round(tx) - th, Math.round(ty) - 1, th*2 + 1, th + 1);
+    // the arc the head cuts through a swing, for the clubs that leave one
+    const arc = this.clubArc || (this.clubArc = []);
+    if(ph > 0){ arc.push([tx, ty]); if(arc.length > 9) arc.shift(); } else arc.length = 0;
+    const CF = CLUBFX[clubNow().fx];
+    if(CF && CF.trail && arc.length > 1) CF.trail(c, arc, th, this.t);
+    drawClub(c, hx, hy, tx, ty, th, h, arm > FIN - 0.3 || arm < TOP + 0.3 ? 0 : (arm > ADDR ? 1 : -1), this.t);
     c.globalAlpha = 1;
     if(FX && FX.front) FX.front(c, g);
     c.globalAlpha = 1; c.globalCompositeOperation = 'source-over';
@@ -11620,9 +11913,9 @@ const DEV = {
   ach(){ B.ACH.forEach(a => S.achDone[a.id] = 1); this.re(); },
   ach0(){ S.achDone = {}; S.achRep = {}; this.re(); },
   style(){ B.OUTFITS.forEach(o => S.styleOwn['o:' + o.id] = 1); B.TRAILS.forEach(t => S.styleOwn['t:' + t.id] = 1);
-    B.CADDIES.forEach(d => S.styleOwn['c:' + d.id] = 1);
+    B.CADDIES.forEach(d => S.styleOwn['c:' + d.id] = 1); B.CLUBS.forEach(d => S.styleOwn['k:' + d.id] = 1);
            this.re(); },
-  style0(){ S.styleOwn = {}; S.outfit = 'classic'; S.trail = 'plain'; S.caddie = 'bib'; buildSprites(); this.re(); },
+  style0(){ S.styleOwn = {}; S.outfit = 'classic'; S.trail = 'plain'; S.caddie = 'bib'; S.club = 'steel'; buildSprites(); this.re(); },
   // today's challenges done the honest way: the counter is moved back so the
   // target is met, and the normal check pays it
   daily(n){ dailyTick(); const Dy = S.daily; let k = 0;

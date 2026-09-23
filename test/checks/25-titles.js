@@ -46,6 +46,7 @@ module.exports = { name: 'titles', async run(page) {
     setView('career');
     for (const sub of ['stat', 'tal', 'para', 'leg']) { const b = [...document.querySelectorAll('#careerNav button')].find(x => x.dataset.s === sub); if (b) { b.click(); sweep('career/' + sub); } }
     for (const sub of ['offers', 'buy', 'bags', 'perm', 'style']) { openShop(sub); sweep('shop/' + sub); }
+    for (const cat of ['caddie', 'clubs', 'balls']) { styleCat = cat; openShop('style'); sweep('shop/style/' + cat); } styleCat = 'golfer';
     settingsSheet(); sweep('settings'); importSheet(); sweep('import');
     honoursSheet(); sweep('honours'); perksSheet(); sweep('perks');
     try { hideSheet(); } catch (e) {}

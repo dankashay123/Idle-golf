@@ -94,6 +94,7 @@ module.exports = {
         careerSub = sub; setView('career'); renderCareer(); sweep('panel', 'career/' + sub);
       }
       for (const sub of ['offers', 'buy', 'bags', 'perm', 'style']) { openShop(sub); sweep('sheet', 'shop/' + sub); }
+      for (const cat of ['caddie', 'clubs', 'balls']) { styleCat = cat; openShop('style'); sweep('sheet', 'shop/style/' + cat); } styleCat = 'golfer';
       try { hideSheet(); } catch (e) {}
       honoursSheet(); sweep('sheet', 'honours'); try { hideSheet(); } catch (e) {}
       perksSheet(); sweep('sheet', 'perks'); try { hideSheet(); } catch (e) {}
@@ -323,6 +324,7 @@ module.exports = {
         if (btn) { btn.click(); scan(); }
       }
       for (const sub of ['offers', 'buy', 'bags', 'perm', 'style']) { openShop(sub); scan(); }
+      for (const cat of ['caddie', 'clubs', 'balls']) { styleCat = cat; openShop('style'); scan(); } styleCat = 'golfer';
       try { hideSheet(); } catch (e) {}
       S.t = Date.now()/1000 - 3*3600; offline(); scan();
       try { hideSheet(); } catch (e) {}

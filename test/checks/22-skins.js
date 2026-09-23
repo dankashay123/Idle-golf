@@ -13,7 +13,11 @@
  *     differ from each other and from him standing), under the same 1.5ms
  *     with his caddie in the matching look beside him, and a caddie in a
  *     skin draws its effect as the golfer's does
- *   - the shop lists every look exactly once, each with its own picture
+ *   - he walks away from us between shots, from behind, club in hand
+ *   - every special club draws more than its colours -- at address and
+ *     through the swing, where the arc it leaves shows -- inside 1.5ms
+ *   - the shop lists every look exactly once across its four racks (Golfer,
+ *     Caddie, Clubs, Balls, picked along the top), each with its own picture
  *   - every trail and ball can be seen: one in flight has to paint at least
  *     fifteen times the pixels the plain ball does, and draw in under 0.5ms.
  *     It was four times at first, and the Rubber Duck -- a small duck and a
@@ -35,6 +39,7 @@ module.exports = {
       const o = {}; const SNAP = JSON.stringify(S);
       hideSheet(); QUIET = true;
       const D = derive();
+      Scene.walkOn = false;           // at address: the faces the skins draw on are on the front
       const shot = () => { const g = Scene.b.getImageData(0, 0, VW, VH).data; let h = 0;
         for (let i = 0; i < g.length; i += 4) h = (h * 31 + g[i] + g[i + 1] * 3 + g[i + 2] * 7) | 0; return h; };
       const frame = () => { Scene.b.clearRect(0, 0, VW, VH); Scene.drawGolfer(D); Scene.drawBalls(0); };
@@ -60,6 +65,23 @@ module.exports = {
           } catch (e) { o.errs.push('caddie ' + d.id + ': ' + e.message); }
         }
         S.caddie = 'bib'; buildSprites();
+        // a special club draws what its colours alone do not, at address and
+        // mid-swing (where the arc it leaves shows)
+        o.clubCost = {};
+        for (const d of B.CLUBS.filter(x => x.fx)) {
+          S.styleOwn['k:' + d.id] = 1; S.club = d.id;
+          try {
+            const pose = () => { Scene.clubArc = []; Scene.swingT = Scene.swingDur * 0.5; Scene.b.clearRect(0, 0, VW, VH);
+              for (let i = 0; i < 6; i++) { Scene.swingT -= Scene.swingDur * 0.05; Scene.drawGolfer(D); } };
+            Scene.t = 1.23; pose(); const on = shot();
+            const fx = d.fx; d.fx = undefined; Scene.t = 1.23; pose(); const off = shot(); d.fx = fx;
+            if (on === off) o.blank.push('club ' + d.id);
+            const t0 = performance.now();
+            for (let i = 0; i < 100; i++) { Scene.t += 0.016; pose(); }
+            o.clubCost[d.id] = (performance.now() - t0) / 600;
+          } catch (e) { o.errs.push('club ' + d.id + ': ' + e.message); }
+        }
+        S.club = 'steel'; Scene.swingT = 0; Scene.clubArc = [];
         for (const d of B.TRAILS.filter(x => x.fx)) {
           S.styleOwn['t:' + d.id] = 1; S.trail = d.id;
           try {
@@ -141,16 +163,26 @@ module.exports = {
         o.tryBallAfter = trailNow().id;
 
         // ---- the shop lists every look once, each with its own picture --------
+        // one rack at a time, picked along the top: all four, through their buttons
         S.sov = 0; QUIET = false; openShop('style');
         const sheet = document.getElementById('sheet');
-        const acts = [...sheet.querySelectorAll('.price[data-do^="style:"]')].map(b => b.dataset.do);
+        let acts = [], imgs = []; o.tries = 0; o.cats = [];
+        for (const cat of ['golfer', 'caddie', 'clubs', 'balls']) {
+          const btn = [...sheet.querySelectorAll('.catnav button')].find(b => b.dataset.cat === cat);
+          if (!btn) { o.cats.push(cat + ' missing'); continue; }
+          btn.click();
+          const here = [...sheet.querySelectorAll('.price[data-do^="style:"]')].map(b => b.dataset.do);
+          o.cats.push(cat + ' ' + here.length);
+          acts = acts.concat(here);
+          imgs = imgs.concat([...sheet.querySelectorAll('.card img')].map(i => i.src));
+          o.tries += sheet.querySelectorAll('.try[data-try]').length;
+        }
         o.listed = acts.length; o.dupes = acts.length - new Set(acts).size;
-        o.want = B.OUTFITS.length + B.TRAILS.length + B.CADDIES.length;
-        o.free = B.OUTFITS.concat(B.TRAILS, B.CADDIES).filter(d => d.cost === 0).length;   // owned from the start: nothing to try
-        const imgs = [...sheet.querySelectorAll('.card img')].map(i => i.src);
+        o.want = B.OUTFITS.length + B.TRAILS.length + B.CADDIES.length + B.CLUBS.length;
+        o.free = B.OUTFITS.concat(B.TRAILS, B.CADDIES, B.CLUBS).filter(d => d.cost === 0).length;   // owned from the start: nothing to try
         o.noPic = imgs.filter(x => !x || x.length < 50).length;
         o.samePic = imgs.length - new Set(imgs).size;
-        o.tries = sheet.querySelectorAll('.try[data-try]').length;
+        styleCat = 'golfer';
         hideSheet();
       } finally {
         QUIET = false; PREVIEW = null;
@@ -181,6 +213,9 @@ module.exports = {
     if (r.blank.length) throw new Error('these draw nothing their colours do not: ' + r.blank.join(', '));
     const slow = Object.entries(r.cost).filter(([, v]) => v > 1.5);
     if (slow.length) throw new Error('skins over 1.5ms a frame: ' + slow.map(([k, v]) => k + ' ' + v.toFixed(2) + 'ms').join(', '));
+    const cslow = Object.entries(r.clubCost).filter(([, v]) => v > 1.5);
+    if (cslow.length) throw new Error('clubs over 1.5ms a frame: ' + cslow.map(([k, v]) => k + ' ' + v.toFixed(2) + 'ms').join(', '));
+    if (r.cats.some(c => /missing|\b0$/.test(c))) throw new Error('a rack on the Style tab is missing or empty: ' + r.cats.join(', '));
     if (r.walkSame.length) throw new Error('these looks do not stride when he walks: ' + r.walkSame.join(', '));
     const wslow = Object.entries(r.walkCost).filter(([, v]) => v > 1.5);
     if (wslow.length) throw new Error('walking over 1.5ms a frame: ' + wslow.map(([k, v]) => k + ' ' + v.toFixed(2) + 'ms').join(', '));
@@ -213,6 +248,7 @@ module.exports = {
         + (dim[1] / r.paint.plain).toFixed(1) + 'x), dearest ' + tw[0] + ' at ' + tw[1].toFixed(2) + 'ms a ball',
       'nothing drawn behind him: ' + behind.frames + ' frames of flight, the lowest ' + (-behind.worst) + 'px above his feet',
       '"Try it" wears a look for ten seconds, spends nothing, saves nothing, and takes it off',
-      'the Style tab lists all ' + r.want + ' looks once, each with its own picture'];
+      'the Style tab lists all ' + r.want + ' looks once across its racks (' + r.cats.join(', ') + '), each with its own picture',
+      'every special club draws more than its colours; dearest ' + Object.entries(r.clubCost).sort((a, b) => b[1] - a[1])[0].map((v, i) => i ? v.toFixed(2) + 'ms' : v).join(' at ')];
   }
 };

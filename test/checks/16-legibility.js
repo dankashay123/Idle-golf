@@ -80,6 +80,7 @@ module.exports = {
         if (b) { b.click(); sweep('career/' + sub); }
       }
       for (const sub of ['offers', 'buy', 'bags', 'perm', 'style']) { openShop(sub); sweep('shop/' + sub); }
+      for (const cat of ['caddie', 'clubs', 'balls']) { styleCat = cat; openShop('style'); sweep('shop/style/' + cat); } styleCat = 'golfer';
       settingsSheet(); sweep('settings');
       importSheet(); sweep('settings/import');
       try { hideSheet(); } catch (e) {}
