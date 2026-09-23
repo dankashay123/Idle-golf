@@ -2912,7 +2912,35 @@ const B = {
   // Every shop like this has a free rail, and hiding it behind a social follow
   // is the part of the pattern worth leaving out: this one pays for turning up
   // and for climbing, which the game can check for itself.
-  FREE_GIFT: 25, FREE_EVERY: 8 * 3600, FREE_CARD: 40
+  FREE_GIFT: 25, FREE_EVERY: 8 * 3600, FREE_CARD: 40,
+
+  /* ---- style ----
+     Something to spend sovereigns on that changes nothing but the look. An
+     outfit repaints the golfer; a trail repaints the ball's flight. Neither
+     touches a stat, which the shop check proves by comparing derive() before
+     and after wearing every one. The first of each is free and always owned. */
+  OUTFITS: [
+    { id:'classic', n:'Tour Classic',    cost:0,
+      cap:'#3E76C8', cap2:'#28508E', shirt:'#EDF1E8', shirt2:'#BCC7BD', shirt3:'#8D9A90', pant:'#2B3B4F', pant2:'#1C2937' },
+    { id:'sunday',  n:'Sunday Red',      cost:200,
+      cap:'#2A2E33', cap2:'#181B1F', shirt:'#D8453A', shirt2:'#A8322A', shirt3:'#7A241E', pant:'#2A2E33', pant2:'#181B1F' },
+    { id:'tweed',   n:'Old Tweed',       cost:300,
+      cap:'#7A5A3A', cap2:'#5A4028', shirt:'#E8DCC0', shirt2:'#C4B48E', shirt3:'#9A8A66', pant:'#6A5438', pant2:'#4A3A26' },
+    { id:'green',   n:'Clubhouse Green', cost:450,
+      cap:'#F0F0E8', cap2:'#C8C8BE', shirt:'#3E8A4E', shirt2:'#2E6A3A', shirt3:'#1F4A28', pant:'#C8B88A', pant2:'#A09068' },
+    { id:'aurora',  n:'Aurora',          cost:700,
+      cap:'#1E3A4A', cap2:'#12262F', shirt:'#57E0BE', shirt2:'#3AAE92', shirt3:'#2A7E6A', pant:'#16303A', pant2:'#0E2028' },
+    { id:'mythic',  n:'Mythic',          cost:1200,
+      cap:'#E3B457', cap2:'#A8802F', shirt:'#C68BFF', shirt2:'#9A62D6', shirt3:'#6E44A0', pant:'#2A1E3E', pant2:'#1C142A' }
+  ],
+  TRAILS: [
+    { id:'plain',   n:'Plain',   cost:0,    cols:['#F4F6EF'] },
+    { id:'gold',    n:'Gold',    cost:150,  cols:['#E3B457'] },
+    { id:'aurora',  n:'Aurora',  cost:250,  cols:['#57E0BE'] },
+    { id:'ember',   n:'Ember',   cost:250,  cols:['#F07A3A'] },
+    { id:'mythic',  n:'Mythic',  cost:500,  cols:['#C68BFF'] },
+    { id:'rainbow', n:'Rainbow', cost:1000, cols:['#E4574A', '#E3B457', '#7ADB86', '#57A5C2', '#C68BFF'] }
+  ]
 };
 
 /* =========================================================================
@@ -3046,7 +3074,8 @@ function defaultState(){ return {
   totalHoles: 0, bestScore: 0, aces: 0,
   swingT: 0, frost: 0, burn: 0, burnT: 0, buff: {},
   scores: [], mult: 1,
-  nine: null, bestNine: undefined, ninesWon: 0
+  nine: null, bestNine: undefined, ninesWon: 0,
+  styleOwn: {}, outfit: 'classic', trail: 'plain'
 }; }
 let S = defaultState();
 function initState(){
@@ -3095,6 +3124,9 @@ function initState(){
   if(S.daily && (typeof S.daily !== 'object' || !Array.isArray(S.daily.picks)
      || S.daily.picks.length !== 3 || !S.daily.picks.every(dailyDef)
      || !Array.isArray(S.daily.done) || !S.daily.base)) delete S.daily;
+  if(!S.styleOwn || typeof S.styleOwn !== 'object') S.styleOwn = {};
+  if(!styleOwned('o', S.outfit)) S.outfit = 'classic';
+  if(!styleOwned('t', S.trail)) S.trail = 'plain';
   if(!B.BANK_OPTS.includes(S.islandBank)) S.islandBank = 5;
   if(!S.tierEvents) S.tierEvents = {};
   if(S.tierMax === undefined) S.tierMax = 0;
@@ -5217,12 +5249,64 @@ let shopSub = 'offers';
 function openShop(sub){ if(sub) shopSub = sub; renderShop(); }
 
 // One tile on the rack: what it is, the art, a line about it, and the price.
+// style: owned when free, or when bought; worn is what the save says
+const styleDef = (k, id) => (k === 'o' ? B.OUTFITS : B.TRAILS).find(x => x.id === id);
+const styleOwned = (k, id) => { const d = styleDef(k, id);
+  return !!d && (d.cost === 0 || !!(S.styleOwn && S.styleOwn[k + ':' + id])); };
+const outfitNow = () => styleDef('o', S.outfit) || B.OUTFITS[0];
+const trailNow  = () => styleDef('t', S.trail) || B.TRAILS[0];
+function styleBuy(k, id){
+  const d = styleDef(k, id); if(!d) return;
+  if(!styleOwned(k, id)){
+    if(!spendSov(d.cost)) return;
+    S.styleOwn[k + ':' + id] = 1;
+    toast('<b>' + d.n + '</b> is yours');
+    Sfx.play('buy');
+  }
+  if(k === 'o'){ S.outfit = id; buildSprites(); }
+  else S.trail = id;
+  renderShop(); renderVitals();
+}
+// The shop's picture of an outfit: its cap over its shirt, on the same 12x12
+// grid as every other shop icon so it scales by a whole number. The whole
+// golfer is 58 pixels tall and cannot be shown crisp in a 36 pixel tile.
+const OUTFIT_ICON = ['...cccc.....',
+                     '..ccccCC....',
+                     '..ccccCCCC..',
+                     '............',
+                     '.ssssTTssss.',
+                     'sssssTTsssss',
+                     'ssssssssssSS',
+                     'SSs.sssss.SS',
+                     '...ssssssS..',
+                     '...sssssSS..',
+                     '...pppppPP..',
+                     '...ppP.pPP..'];
+function outfitUrl(o){
+  const key = 'outfit|' + o.id;
+  if(DOMSPR[key] !== undefined) return DOMSPR[key];
+  try{ return DOMSPR[key] = makeSprite(OUTFIT_ICON, golferMap(o)).cv.toDataURL(); }
+  catch(e){ return DOMSPR[key] = ''; }
+}
+// and of a trail: a ball arcing up out of the bottom left, its trail behind it
+function trailUrl(t){
+  const key = 'trail|' + t.id;
+  if(DOMSPR[key] !== undefined) return DOMSPR[key];
+  try{
+    const cv = document.createElement('canvas'); cv.width = cv.height = 12;
+    const g = cv.getContext('2d');
+    const path = [[1,10],[2,8],[3,6],[4,5],[5,4],[6,3],[7,3],[8,3]];
+    path.forEach(([x, y], i) => { g.fillStyle = t.cols[i % t.cols.length]; g.fillRect(x, y, 1, 1); });
+    g.fillStyle = '#F4F6EF'; g.fillRect(9, 2, 2, 2);
+    return DOMSPR[key] = cv.toDataURL();
+  }catch(e){ return DOMSPR[key] = ''; }
+}
 function shopCard(o){
   return '<div class="card' + (o.on ? ' on' : '') + '">'
     + '<div class="chd">' + o.head + '</div>'
     + '<div class="cart' + (o.badge ? ' hasbadge' : '') + '">'
     + (o.badge ? '<span class="badge">' + o.badge + '</span>' : '')
-    + '<img src="' + pixUrl(o.ic, o.col) + '" alt=""></div>'
+    + '<img src="' + (o.img || pixUrl(o.ic, o.col)) + '" alt=""></div>'
     + (o.sub ? '<div class="csub">' + o.sub + '</div>' : '')
     + (o.pips !== undefined ? pipRow(o.pips, B.PERM_MAX) : '')
     + '<button class="price' + (o.cls ? ' ' + o.cls : '') + '" data-do="' + o.act + '">'
@@ -5236,7 +5320,7 @@ function pipRow(n, of){
 const ribbon = t => '<div class="srib"><span>' + t + '</span></div>';
 
 function renderShop(){
-  const tabs = [['offers','Offers'], ['buy','Buy'], ['bags','Bags'], ['perm','Bench']];
+  const tabs = [['offers','Offers'], ['buy','Buy'], ['bags','Bags'], ['perm','Bench'], ['style','Style']];
   let h = '<h3>The Pro Shop</h3>'
     + '<div class="shopnav">' + tabs.map(([id, t]) =>
         '<button data-sub="' + id + '"' + (shopSub === id ? ' class="on"' : '') + '>' + t
@@ -5301,6 +5385,21 @@ function renderShop(){
       }).join('') + '</div>';
   }
 
+  if(shopSub === 'style'){
+    const card = (k, d, img) => {
+      const own = styleOwned(k, d.id), worn = (k === 'o' ? S.outfit : S.trail) === d.id;
+      return shopCard({ img, on: worn, badge: worn ? 'WORN' : '', head: d.n,
+        price: worn ? 'WORN' : own ? 'WEAR' : sovFmt(d.cost),
+        note: worn || own ? '' : B.SOV.toLowerCase(),
+        cls: worn ? 'max' : own || (S.sov || 0) >= d.cost ? '' : 'no', act: 'style:' + k + '.' + d.id });
+    };
+    h += '<div class="shopnote">Looks only. Nothing here changes a stat.</div>'
+      + ribbon('Outfits') + '<div class="sgrid c3">'
+      + B.OUTFITS.map(o => card('o', o, outfitUrl(o))).join('') + '</div>'
+      + ribbon('Ball trails') + '<div class="sgrid c3">'
+      + B.TRAILS.map(t => card('t', t, trailUrl(t))).join('') + '</div>';
+  }
+
   if(shopSub === 'offers'){
     h += ribbon('One Time') + '<div class="sgrid c2">'
       + shopCard({ ic:'starter', col:'#7ADB86', on: !S.starter, badge: S.starter ? '' : 'BEST VALUE',
@@ -5353,6 +5452,7 @@ function renderShop(){
       else if(kind === 'member') buyMember();
       else if(kind === 'boost') buyBoost();
       else if(kind === 'free') claimFree();
+      else if(kind === 'style'){ const [k, sid] = id.split('.'); styleBuy(k, sid); }
     };
   });
 }
@@ -6394,16 +6494,11 @@ function spectSpr(ci, pose, night){
                 p: night ? '#1C2937' : '#39434E', P:'#232B34', o:PX.shoe };
   return SPECT_CACHE[key] = makeSprite(pose ? SPECT_B : SPECT_A, map);
 }
-const SPRITE = {};
-function buildSprites(){
-  // Side-on at address, facing the target: bent at the hips, spine tilted, hips
-  // pushed back left, head down over the ball. A back view reads as "facing the
-  // camera" at twenty-six pixels because it is symmetrical and has no silhouette
-  // to speak of; a profile has a posture you can recognise instantly.
-  // Arms and club stay procedural so the swing arc is exact at any tempo.
-  const GMAP = { c:PX.cap, C:PX.cap2, k:PX.skin, K:PX.skin2, s:PX.shirt, S:PX.shirt2,
-                 b:'#2A2018', p:PX.pant, P:PX.pant2, o:PX.shoe };
-  SPRITE.gAddr = makeSprite([
+// The golfer, side on: at address, and at the finish. Kept out of
+// buildSprites so the shop can paint the same figure in an outfit it is
+// selling. T is the shirt's darkest fold; it had no colour in the map, so
+// those pixels were see-through and the back of the shirt had holes in it.
+const G_ADDR_ROWS = [
     '........................................',
     '........................................',
     '........................................',
@@ -6462,10 +6557,8 @@ function buildSprites(){
     '........oooooooo..PPPPPPP...............',
     '........oooooooo..PPPPPPP...............',
     '........bbbbbbbb..bbbbbbb...............'
-  ], GMAP);
-  // Finish: up out of the posture, chest turned through, weight on the lead
-  // side with the trail foot dragged up on its toe.
-  SPRITE.gFinish = makeSprite([
+];
+const G_FIN_ROWS = [
     '........................................',
     '........................................',
     '.......................cccc.............',
@@ -6524,7 +6617,21 @@ function buildSprites(){
     '.............oooooooo......PPPPPP.......',
     '.............oooooooo......PPPPPP.......',
     '.............bbbbbbbb......bbbbbb.......'
-  ], GMAP);
+];
+const golferMap = o => ({ c:o.cap, C:o.cap2, k:PX.skin, K:PX.skin2, s:o.shirt, S:o.shirt2, T:o.shirt3,
+                          b:'#2A2018', p:o.pant, P:o.pant2, o:PX.shoe });
+const SPRITE = {};
+function buildSprites(){
+  // Side-on at address, facing the target: bent at the hips, spine tilted, hips
+  // pushed back left, head down over the ball. A back view reads as "facing the
+  // camera" at twenty-six pixels because it is symmetrical and has no silhouette
+  // to speak of; a profile has a posture you can recognise instantly.
+  // Arms and club stay procedural so the swing arc is exact at any tempo.
+  const GMAP = golferMap(outfitNow());
+  SPRITE.gAddr = makeSprite(G_ADDR_ROWS, GMAP);
+  // Finish: up out of the posture, chest turned through, weight on the lead
+  // side with the trail foot dragged up on its toe.
+  SPRITE.gFinish = makeSprite(G_FIN_ROWS, GMAP);
 
   SPRITE.pine = makeSprite(PINE_ROWS, TREE_DEFAULT);
 
@@ -7938,7 +8045,7 @@ Object.assign(Scene, {
     const th = h > 34 ? 2 : 1;
     pxLine(c, sx, sy, hx, hy, PX.skin, th);
     pxLine(c, sx - w*0.10, sy + 1, hx, hy, PX.skin2, th);
-    if(h > 22){ c.fillStyle = PX.shirt; c.fillRect(Math.round(hx) - 1, Math.round(hy) - 1, th + 1, th + 1); }
+    if(h > 22){ c.fillStyle = outfitNow().shirt; c.fillRect(Math.round(hx) - 1, Math.round(hy) - 1, th + 1, th + 1); }
     pxLine(c, hx, hy, tx, ty, h > 26 ? PX.club : PX.club2, th);
     c.fillStyle = PX.club3;
     c.fillRect(Math.round(tx) - th, Math.round(ty) - 1, th*2 + 1, th + 1);
@@ -8059,7 +8166,10 @@ Object.assign(Scene, {
           c.fillRect(p.x - r, p.y - r, r*2, r*2);
           if(r > 1){ c.fillStyle = PX.white; c.fillRect(p.x - r, p.y - r, 1, 1); }
         }else if(k % 2 === 0){
-          c.fillStyle = col;
+          // the trail is the one thing the player picks; the ball itself keeps
+          // its affinity's colour, which is information
+          const tc = trailNow().cols;
+          c.fillStyle = S.trail === 'plain' ? col : tc[(k >> 1) % tc.length];
           c.fillRect(p.x, p.y, Math.max(1, r - 1), Math.max(1, r - 1));
         }
       }
@@ -9757,6 +9867,8 @@ const DEV = {
       + b('+2 levels each', 'DEV.relics(2)') + b('max all found', 'DEV.relics(B.TR_MAX)')
       + b('clear trophies', 'DEV.relics0()') + b('force retire', 'DEV.retire()'));
 
+    h += row('Style', b('own every look', 'DEV.style()') + b('back to plain', 'DEV.style0()'));
+
     h += row('Honours', b('unlock all', 'DEV.ach()') + b('clear all', 'DEV.ach0()')
       + b('+5 cups', 'DEV.cups(5)'));
 
@@ -9828,6 +9940,9 @@ const DEV = {
   perks0(){ S.perkOn = {}; this.re(); },
   ach(){ B.ACH.forEach(a => S.achDone[a.id] = 1); this.re(); },
   ach0(){ S.achDone = {}; S.achRep = {}; this.re(); },
+  style(){ B.OUTFITS.forEach(o => S.styleOwn['o:' + o.id] = 1); B.TRAILS.forEach(t => S.styleOwn['t:' + t.id] = 1);
+           this.re(); },
+  style0(){ S.styleOwn = {}; S.outfit = 'classic'; S.trail = 'plain'; buildSprites(); this.re(); },
   // today's challenges done the honest way: the counter is moved back so the
   // target is met, and the normal check pays it
   daily(n){ dailyTick(); const Dy = S.daily; let k = 0;

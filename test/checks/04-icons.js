@@ -128,7 +128,7 @@ module.exports = {
       for (const v of ['upg', 'bag', 'dgn', 'tour', 'career']) {
         setView(v); sweep(); looked += document.querySelectorAll('img').length;
       }
-      for (const sub of ['offers', 'buy', 'bags', 'perm']) { openShop(sub); sweep(); }
+      for (const sub of ['offers', 'buy', 'bags', 'perm', 'style']) { openShop(sub); sweep(); }
       try { hideSheet(); } catch (e) {}
       if (S.bag[0]) { itemSheet(S.bag[0], false); sweep(); try { hideSheet(); } catch (e) {} }
       setView('upg'); sweep();

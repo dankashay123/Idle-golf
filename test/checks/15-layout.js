@@ -93,7 +93,7 @@ module.exports = {
       for (const sub of ['stats', 'tal', 'para', 'leg']) {
         careerSub = sub; setView('career'); renderCareer(); sweep('panel', 'career/' + sub);
       }
-      for (const sub of ['offers', 'buy', 'bags', 'perm']) { openShop(sub); sweep('sheet', 'shop/' + sub); }
+      for (const sub of ['offers', 'buy', 'bags', 'perm', 'style']) { openShop(sub); sweep('sheet', 'shop/' + sub); }
       try { hideSheet(); } catch (e) {}
       honoursSheet(); sweep('sheet', 'honours'); try { hideSheet(); } catch (e) {}
       perksSheet(); sweep('sheet', 'perks'); try { hideSheet(); } catch (e) {}
@@ -322,7 +322,7 @@ module.exports = {
           .find(x => x.dataset.s === sub);
         if (btn) { btn.click(); scan(); }
       }
-      for (const sub of ['offers', 'buy', 'bags', 'perm']) { openShop(sub); scan(); }
+      for (const sub of ['offers', 'buy', 'bags', 'perm', 'style']) { openShop(sub); scan(); }
       try { hideSheet(); } catch (e) {}
       S.t = Date.now()/1000 - 3*3600; offline(); scan();
       try { hideSheet(); } catch (e) {}

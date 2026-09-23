@@ -79,7 +79,7 @@ module.exports = {
         const b = [...document.querySelectorAll('#careerNav button')].find(x => x.dataset.s === sub);
         if (b) { b.click(); sweep('career/' + sub); }
       }
-      for (const sub of ['offers', 'buy', 'bags', 'perm']) { openShop(sub); sweep('shop/' + sub); }
+      for (const sub of ['offers', 'buy', 'bags', 'perm', 'style']) { openShop(sub); sweep('shop/' + sub); }
       settingsSheet(); sweep('settings');
       importSheet(); sweep('settings/import');
       try { hideSheet(); } catch (e) {}

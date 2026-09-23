@@ -64,7 +64,7 @@ module.exports = {
       // 2. nothing in the shop asks for payment details, on any tab
       out.inputs = [];
       out.banner = {};
-      for (const sub of ['offers', 'buy', 'bags', 'perm']) {
+      for (const sub of ['offers', 'buy', 'bags', 'perm', 'style']) {
         openShop(sub);
         const sheet = document.getElementById('sheet');
         out.inputs = out.inputs.concat(
@@ -205,7 +205,55 @@ module.exports = {
         + 'stop being greppable and a premium currency stops being premium.');
     const faucets = lines.filter(l => /grantSov\(/.test(l) && !/function grantSov/.test(l)).length;
 
-    return ['button under the readout, no input of any kind, banner on all four',
+    // ---- style: looks only, paid once, repaired on load ----------------
+    const st = await page.evaluate(() => {
+      const o = {}; QUIET = true;
+      const snap = () => { const D = derive(); return [D.dps, D.pow, D.spd, D.gold, D.crit, D.mst, D.drop].join(','); };
+      try {
+        S.styleOwn = {}; S.outfit = 'classic'; S.trail = 'plain'; buildSprites();
+        const base = snap();
+        // a stat changed by any look is a look that is not only a look
+        o.moved = [];
+        S.sov = 1e6;
+        for (const d of B.OUTFITS) { styleBuy('o', d.id); if (snap() !== base) o.moved.push('outfit ' + d.id); }
+        for (const d of B.TRAILS)  { styleBuy('t', d.id); if (snap() !== base) o.moved.push('trail ' + d.id); }
+        o.spent = 1e6 - S.sov;
+        o.want = B.OUTFITS.concat(B.TRAILS).reduce((t, d) => t + d.cost, 0);
+        // wearing one you own again costs nothing
+        const s1 = S.sov; styleBuy('o', 'sunday'); styleBuy('t', 'gold'); o.again = s1 - S.sov;
+        o.worn = S.outfit + '/' + S.trail;
+        // the outfit reaches the golfer: his shirt is the outfit's shirt
+        const px = (spr, col) => { const g = spr.cv.getContext('2d'), d = g.getImageData(0, 0, spr.cv.width, spr.cv.height).data;
+          const hex = col.toLowerCase(); let n = 0;
+          for (let i = 0; i < d.length; i += 4)
+            if (d[i+3] && '#' + [d[i], d[i+1], d[i+2]].map(v => v.toString(16).padStart(2, '0')).join('') === hex) n++;
+          return n; };
+        o.shirtPx = px(SPRITE.gAddr, styleDef('o', 'sunday').shirt);
+        o.classicPx = px(SPRITE.gAddr, styleDef('o', 'classic').shirt);
+        // T, the shirt's darkest fold, has a colour now
+        o.foldPx = px(SPRITE.gAddr, styleDef('o', 'sunday').shirt3);
+        // not enough sovereigns: nothing bought, nothing worn
+        S.styleOwn = {}; S.outfit = 'classic'; S.sov = 10;
+        styleBuy('o', 'mythic'); o.poor = S.outfit + ' ' + S.sov + ' ' + !!S.styleOwn['o:mythic'];
+        // a save wearing something it does not own, or that does not exist
+        S.outfit = 'mythic'; S.trail = 'nope'; initState();
+        o.repaired = S.outfit + '/' + S.trail;
+      } finally { QUIET = false; S.outfit = 'classic'; S.trail = 'plain'; buildSprites(); hideSheet(); }
+      return o;
+    });
+    if (st.moved.length) throw new Error('a look changed a stat: ' + st.moved.join(', '));
+    if (st.spent !== st.want) throw new Error('buying every look cost ' + st.spent + ', the price list says ' + st.want);
+    if (st.again) throw new Error('wearing a look already owned charged ' + st.again + ' again');
+    if (st.worn !== 'sunday/gold') throw new Error('wearing an owned look did not put it on: ' + st.worn);
+    if (!(st.shirtPx > 20) || st.classicPx) throw new Error('the Sunday Red outfit did not reach the golfer: '
+      + st.shirtPx + ' red shirt pixels, ' + st.classicPx + ' white');
+    if (!(st.foldPx > 5)) throw new Error('the shirt\'s darkest fold is still see-through: ' + st.foldPx + ' pixels');
+    if (st.poor !== 'classic 10 false') throw new Error('ten sovereigns bought the Mythic outfit: ' + st.poor);
+    if (st.repaired !== 'classic/plain') throw new Error('a save wearing an unowned or unknown look loaded as ' + st.repaired);
+
+    return ['button under the readout, no input of any kind, banner on all five',
+      'style: every outfit and trail changes no stat, each paid once (' + st.want
+      + ' sovereigns for all), owned ones free to wear, a save wearing one it does not own repaired',
       'tiles ' + Object.keys(r.tiles).map(k => k + ' ' + r.tiles[k].cards).join('/'),
       'packs ' + r.rates.map(x => x.toFixed(0)).join('/') + ' per dollar, rising',
       r.bags.map(b => b.id + ' ' + b.got + ' clubs >=' + b.worst).join(', '),
