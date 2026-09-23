@@ -11,6 +11,7 @@
  *   - finishing all three on consecutive days builds a streak that raises the
  *     bonus up to its cap; one day missed and it starts again
  *   - a mangled daily in a save is thrown away and rebuilt, not trusted
+ *   - none of them falls in the first five minutes of a brand-new save
  */
 'use strict';
 module.exports = {
@@ -74,6 +75,23 @@ module.exports = {
           if (S.daily) o.mangled.push(JSON.stringify(bad));
           else { dailyTick(); if (!S.daily || S.daily.picks.length !== 3) o.mangled.push('not rebuilt after ' + JSON.stringify(bad)); }
         }
+        // ---- none of them is a freebie ---------------------------------------
+        // Five minutes of a brand-new save, playing: no daily done. The first
+        // pool was sized by eye and 'Card 30 birdies' fell in three and a half.
+        {
+          const keep = JSON.stringify(S), realR = Math.random;
+          Object.keys(S).forEach(k => delete S[k]); Object.assign(S, defaultState()); initState(); migrate(); startHole();
+          let seed = 11; Math.random = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+          S.autoEquip = 1; S.lv = 30;
+          const start = {}; for (const c of B.DAILY_POOL) start[c.m] = achMetric(c.m);
+          let t = 0;
+          while (t < 300) { step(B.TICK_MAX, derive()); t += B.TICK_MAX;
+            if ((t % 10) < B.TICK_MAX) for (const u of B.UPG) buyUpg(u); }
+          o.quick = B.DAILY_POOL.filter(c => c.m !== 'runs' && c.m !== 'perks'
+            && achMetric(c.m) - start[c.m] >= c.v).map(c => c.d);
+          Math.random = realR;
+          Object.keys(S).forEach(k => delete S[k]); Object.assign(S, JSON.parse(keep));
+        }
         o.honours = (() => { try { const w = document.createElement('div'); honRows(w); return w.innerHTML.indexOf('Today') >= 0; } catch (e) { return 'threw ' + e.message; } })();
       } finally { QUIET = false; DAY_FORCE = null; }
       o.pool = B.DAILY_POOL.length; o.B = { sov: B.DAILY_SOV, all: B.DAILY_ALL, step: B.DAILY_STREAK, max: B.DAILY_STREAK_MAX };
@@ -103,6 +121,8 @@ module.exports = {
       throw new Error('after a missed day the streak is ' + r.streakAfterGap + ' and paid ' + r.afterGap
         + '; it should start again at 1 and pay ' + (3 * Bc.sov + Bc.all + Bc.step));
     if (r.mangled.length) throw new Error('a mangled daily survived a load: ' + r.mangled.join('; '));
+    if (r.quick.length) throw new Error('a brand-new save cleared these in five minutes: ' + r.quick.join('; ')
+      + '. A daily is a goal for the day, not a freebie.');
     if (r.honours !== true) throw new Error('the honours sheet does not show today\'s three: ' + r.honours);
 
     return ['same three all day, all ' + r.pool + ' come round in a month, level gate held',

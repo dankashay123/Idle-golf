@@ -2713,16 +2713,21 @@ const B = {
   // is measured from where you stood when the day began. lv gates the two
   // that a new golfer cannot do yet: eagles need a bag that outdrives its
   // card, and a perk needs tickets.
+  // Sized to about half an hour of play each. Measured per hour of real play
+  // over four seeds: ~600 holes, ~600 birdies, ~450 eagles, 8 events, 60 nine
+  // goals, 20-30 Rare clubs, 4 rivals beaten. The first pool was sized by eye
+  // and a brand-new save cleared 'Card 30 birdies' in three and a half minutes.
+  // Wagers and the perk are taken by hand, so those stay small.
   DAILY_POOL: [
-    { id:'holes',  m:'holes',  v:120, d:'Play 120 holes' },
-    { id:'birdie', m:'birdie', v:30,  d:'Card 30 birdies or better' },
-    { id:'events', m:'events', v:2,   d:'Finish 2 events' },
-    { id:'rare',   m:'rare',   v:5,   d:'Find 5 Rare or better clubs' },
+    { id:'holes',  m:'holes',  v:300, d:'Play 300 holes' },
+    { id:'birdie', m:'birdie', v:250, d:'Card 250 birdies or better' },
+    { id:'events', m:'events', v:4,   d:'Finish 4 events' },
+    { id:'rare',   m:'rare',   v:12,  d:'Find 12 Rare or better clubs' },
     { id:'runs',   m:'runs',   v:3,   d:'Play 3 wagers' },
-    { id:'nines',  m:'nines',  v:2,   d:'Win 2 nine goals' },
-    { id:'eagle',  m:'eagle',  v:15,  d:'Card 15 eagles or better', lv:15 },
+    { id:'nines',  m:'nines',  v:25,  d:'Win 25 nine goals' },
+    { id:'eagle',  m:'eagle',  v:200, d:'Card 200 eagles or better', lv:15 },
     { id:'perk',   m:'perks',  v:1,   d:'Use a sponsor perk', lv:15 },
-    { id:'rival',  m:'rivals', v:1,   d:'Beat your rival' }
+    { id:'rival',  m:'rivals', v:2,   d:'Beat your rival twice' }
   ],
   DAILY_SOV: 8, DAILY_ALL: 20, DAILY_STREAK: 5, DAILY_STREAK_MAX: 6,
 
@@ -10632,12 +10637,10 @@ function fitTop(){
 }
 function intro(){
   showSheet('<h3>Mythic Mulligan</h3>'
-    + '<p>Your golfer plays on his own. Your job is to make him better.</p>'
-    + '<ul><li>Every shot pays. Holing out pays properly.</li>'
-    + '<li>The clock is your scorecard: ten seconds a par 3, fifteen a par 4, twenty a par 5.</li>'
-    + '<li>Closing holes drop a club. The ball in your bag decides what your shots do.</li>'
-    + '<li>Each Tour Card stretches the holes faster than the purse. Gear, shots, wagers and '
-    + 'trophies keep you up.</li></ul>'
+    + '<p>The golf plays itself. Your job is to make your golfer better.</p>'
+    + '<ul><li>Buy upgrades on the Range.</li>'
+    + '<li>Beat the clock on each hole for a better score.</li>'
+    + '<li>Clubs drop as you play. The best go in your bag.</li></ul>'
     + '<button class="act" onclick="hideSheet()">Play away</button>');
 }
 function boot(){
