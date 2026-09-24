@@ -906,6 +906,15 @@ const B = {
   // still come in at this share of par time (a birdie), on the golfer you are
   // once the range resets -- never above the best card you had reached.
   RETIRE_FIT: 0.77,
+  // Auto-climb goes once the next card, judged in still air on a course with
+  // no affinity for your ball, would come in at this share of par time. It
+  // borrowed RETIRE_FIT (0.77) while it judged the next card by this round's
+  // weather and affinity, and that luck made it climb early on average, and
+  // strand a golfer at four times par when the luck was big. Judged fairly,
+  // 0.77 kept a strong golfer on albatrosses (25-29% of holes, swept over 32
+  // two-hour careers); 0.95 let weather strand him again. 0.90 held both:
+  // albatross or better 19-23%, and no twenty minutes below 56% par or better.
+  CLIMB_FIT: 0.90,
   // a round averaging this many under par a hole opens the next card at once
   ROUND_OPEN: -2.5,
   // Two thirds of what they were (10/15/20), with the handicap raised from
@@ -1025,6 +1034,9 @@ const B = {
     cpread: ['......X.....','......XXX...','......XXXX..','......XX....','......X.....','......X.....','..w...X.....','...w..X.....','.XXXwXXXXX..','XwwwwwwwwwX.','.XXXXXXXXX..','............'],
     cptowel: ['..XXXXXXXX..','..XwwwwwwX..','..XxxxxxxX..','..XwwwwwwX..','..XwwwwwwX..','..XxxxxxxX..','..XwwwwwwX..','..XwwwwwwX..','..XxxxxxxX..','..XwwwwwwX..','..X.X.X.XX..','..X.X.X.X...'],
     cpscout: ['............','.XXX....XXX.','.XwX....XwX.','.XwXXXXXXwX.','XXXXXwwXXXXX','XwwwX..XwwwX','XwwwX..XwwwX','XwxwX..XwxwX','XwwwX..XwwwX','XXXXX..XXXXX','.xxx....xxx.','............'],
+    cpnotes: ['.X.X.X.X.X..','XXXXXXXXXXX.','XwwwwwwwwwX.','XwXXXXXXwwX.','XwwwwwwwwwX.','XwXXXXXwwwX.','XwwwwwwwwwX.','XwXXXXXXwwX.','XwwwwwwwwwX.','XwwwwwwwwxX.','XxxxxxxxxxX.','XXXXXXXXXXX.'],
+    cpclub: ['..........Xx','.........Xx.','........Xx..','.......Xx...','......Xx....','.....Xx.....','....Xx......','...Xx.......','.XXXX.......','XwwwwX......','XwwwxX......','.XXXX.......'],
+    cpready: ['....XXXX....','.....XX..X..','...XXXXXXX..','..XwwwwwwX..','.XwwwwXwwwX.','.XwwwwXwwwX.','.XwwwwXXXwX.','.XwwwwwwwwX.','.XwwwwwwwxX.','..XxwwwwxX..','...XXXXXX...','............'],
     cpchat: ['.XXXXXXXXXX.','XwwwwwwwwwwX','XwwwwXwwwwwX','XwwwXXXwwwwX','XwwwXwwwwwwX','XwwwwXXwwwwX','XwwwwwwXwwwX','XwwwXXXwwwwX','XwwwwXwwwwwX','.XXXXXXXXXX.','..XXX.......','..XX........'],
     // a ladder with an arrow up it: the stage button that climbs for you
     autoclimb: ['.X..X...X...','.X..X..XwX..','.XwwX.XwwwX.','.X..X.XXwXX.','.X..X..XwX..','.XwwX..XwX..',
@@ -3176,8 +3188,28 @@ const B = {
     // gear luck is only read when a hole ends, so this one waits for that:
     // armed when it goes off, spent on the next hole finished
     { id:'scout',  ic:'cpscout', n:'Lost Ball Scout', cost:150, k:'cDrop', v:0.10, t:1e6, w:'GEAR', next:1, d:'+10% gear luck on the next hole you finish' },
-    { id:'chat',   ic:'cpchat',  n:'Sponsor Chat',    cost:150, k:'cGold', v:25,   t:8,  w:'PURSE',  d:'+25% prize money for 8s' }
+    { id:'chat',   ic:'cpchat',  n:'Sponsor Chat',    cost:150, k:'cGold', v:25,   t:8,  w:'PURSE',  d:'+25% prize money for 8s' },
+    { id:'notes',  ic:'cpnotes', n:'Course Notes',    cost:150, k:'cXp',   v:30,   t:8,  w:'XP',     d:'+30% xp for 8s' },
+    { id:'club',   ic:'cpclub',  n:'Club Selection',  cost:150, k:'cCpw',  v:20,   t:8,  w:'CRACK',  d:'+20% pure strike power for 8s' },
+    // not a lift that lasts: the clock is simply wound back, once, there and then
+    { id:'ready',  ic:'cpready', n:'Ready Golf',      cost:150, k:'clock', v:1,    t:0,  w:'-1S',    now:1, d:'1s off the hole clock' }
   ],
+  // What the fairy says: when a hole is holed, by the score, and now and then
+  // on the course (quip), with a line for the conditions when they call for one.
+  FAIRY_SAY: {
+    huge:   ['UNREAL!', 'LEGEND!', 'NO WAY!'],
+    eagle:  ['WOW!', 'SUPERB!', 'WHAT A HOLE!'],
+    birdie: ['NICE!', 'YES!', 'LOVELY!', 'GOOD ONE!'],
+    bogey:  ['OOF', 'HMM', 'SIGH'],
+    worse:  ['OH DEAR', 'OUCH', 'NEXT HOLE...'],
+    quip:   ['KEEP IT LOW', 'SMOOTH TEMPO', 'TRUST YOUR LINE', 'EYES ON THE BALL',
+             'FAIRWAYS, PLEASE', 'NICE AND EASY', 'FINISH HIGH', 'ONE AT A TIME'],
+    wind:   ['MIND THE WIND', 'AIM INTO IT'],
+    rain:   ['BRING A BROLLY', 'SOGGY OUT HERE'],
+    night:  ['SPOOKY OUT HERE', 'LIGHTS, PLEASE!'],
+    home:   ['HOME SWEET HOME', 'HOME TURF!'],
+    major:  ['BIG ONE TODAY', 'CROWD IS IN!']
+  },
   // Clubs: the one he swings and carries. shaft/shaft2 near and far, head
   // and its lit edge, the grip; fx for the ones that do more than colour.
   CLUBS: [
@@ -3857,7 +3889,7 @@ function derive(){
   const crit = Math.min(B.CRIT_CAP, (B.CRIT_BASE
     + upgLv('face')*B.CRIT_ADD.face + upgLv('simul')*B.CRIT_ADD.simul
     + G.crt + ch.c + buffVal('ace') + buffVal('cCrt')) * relMult('crt'));
-  const cpw = (B.CRIT_MULT + upgLv('sweet')*B.CPW_ADD + G.cpw) * relMult('cpw');
+  const cpw = (B.CRIT_MULT + upgLv('sweet')*B.CPW_ADD + G.cpw) * relMult('cpw') * (1 + buffVal('cCpw')/100);
 
   const ball0 = S.equip.ball;
   const reson = resonance(ball0 && ball0.el);
@@ -3943,7 +3975,7 @@ function awardParagonPoint(){
 }
 function addXp(n){
   if(!(n > 0)) return;
-  n *= 1 + career().xp + permAdd('book');
+  n *= 1 + career().xp + permAdd('book') + buffVal('cXp')/100;
   if(!atMax()){
     S.xp += n;
     let gained = 0;
@@ -5485,7 +5517,7 @@ function finishHole(D){
   // golfer onto a card four times longer the moment they were ahead.
   S.streak = ratio <= 0.77 ? (S.streak||0) + 1 : 0;
   if(S.autoClimb && S.tier < B.TIER_MAX && cardUnlocked(S.tier + 1)
-     && roundRatio(S.tier + 1) <= B.RETIRE_FIT) climb(1, true);
+     && roundRatio(S.tier + 1) <= B.CLIMB_FIT) climb(1, true);
 
   advanceHole();
   startHole();
@@ -5647,8 +5679,20 @@ const eventsToNext = () => Math.max(0, eventsToUnlock(S.tierMax || 0) - eventsOn
 // climbed and then carded pars and bogeys for forty minutes of ordinary
 // weather. One derive, eighteen yardages, cheap enough for every hole.
 const STILL = { y:1, g:1, s:1, c:0, p:0, dl:0 };
+// And the golfer on the other side of it has to be in still air too, on a
+// course with no affinity for his ball: the weather and the course's affinity
+// are drawn again for the next card, so judging him by this round's made him
+// whatever this round's luck made him. A frost ball on a frost course read
+// four times his strength; the game climbed him on it, and he then took four
+// times par on every hole of the card for the rest of the session.
+function deriveStill(){
+  const ch = S.chaos, el = S.courseEl;
+  S.chaos = STILL; S.courseEl = null;
+  try{ return derive(); }
+  finally{ S.chaos = ch; S.courseEl = el; }
+}
 function roundRatio(tier){
-  const D = derive(), dps = Math.max(1e-9, D.dps), base = S.hole - holeInRound(S.hole) + 1;
+  const D = deriveStill(), dps = Math.max(1e-9, D.dps), base = S.hole - holeInRound(S.hole) + 1;
   let sum = 0;
   for(let i = 0; i < B.ROUND; i++){
     const h = base + i;
@@ -9205,15 +9249,56 @@ const Scene = {
     const edge = Math.min(gx, clubTip) - gw * 0.18 - 2;
     const drift = (1 + Math.sin(this.t * 0.9)) * 0.5 * gw * 0.10;       // only ever further left
     const x = Math.round(edge - w - drift);
-    const y = Math.round(gy + gh * 0.02 + Math.sin(this.t * 2.2) * gh * 0.035);
+    const y = Math.round(gy + gh * 0.02 + Math.sin(this.t * 2.2) * gh * 0.035) + this.fairyDy(h);
     return { x, y, w, h };
+  },
+  // What he is saying, if anything, and how far through it he is (0..1).
+  fairyNow(){
+    const F = this.fairySay;
+    if(!F) return null;
+    const q = (this.t - F.t0) / F.dur;
+    if(!(q >= 0 && q < 1)){ this.fairySay = null; return null; }
+    return { F, q };
+  },
+  // A reaction lifts or drops him: a few hops for a good score, a droop for a
+  // bad one. Only ever up or down, never toward the golfer and his club.
+  fairyDy(h){
+    const N = this.fairyNow();
+    if(!N) return 0;
+    const q = N.q;
+    if(N.F.kind === 'cheer') return -Math.round(Math.abs(Math.sin(q * Math.PI * 3)) * (1 - q) * h * 0.30);
+    if(N.F.kind === 'sigh') return Math.round(Math.sin(Math.min(1, q * 2.5) * Math.PI * 0.5) * (1 - q * q) * h * 0.14);
+    return 0;
+  },
+  fairyReact(kind, word, dur){
+    if(QUIET || OFFLINE || S.dgnRun) return;
+    this.fairySay = { kind, word, t0: this.t, dur: dur || 1.3 };
+  },
+  // Now and then, on the course, a word from him: about the conditions when
+  // there is something to say about them, and otherwise a tip.
+  tickQuip(dt){
+    if(this.quipT === undefined) this.quipT = 35 + Math.random() * 35;
+    if(this.fairyNow() || this.fairyCast || this.swingT > 0) return;
+    this.quipT -= dt;
+    if(this.quipT > 0) return;
+    this.quipT = 50 + Math.random() * 60;
+    const SAY = B.FAIRY_SAY, cs = this.course || {}, t = tournamentOf(S.hole);
+    const ctx = [];
+    if(this.windMph() >= 12) ctx.push(SAY.wind);
+    if(this.rain) ctx.push(SAY.rain);
+    if(this.night) ctx.push(SAY.night);
+    if(cs.slot === 'home') ctx.push(SAY.home);
+    if(isWeekMajor(t)) ctx.push(SAY.major);
+    const list = ctx.length && Math.random() < 0.6 ? ctx[Math.random() * ctx.length | 0] : SAY.quip;
+    this.fairyReact('quip', list[Math.random() * list.length | 0], 2.4);
   },
   drawCaddie(c, gx, gy, gw, gh){
     const spr = SPRITE.caddie, CD = caddieNow(), FX = STYLEFX[CD.fx] || null;
     const { x, y, w, h } = this.fairyBox(gx, gy, gw, gh);
     this._fairy = { x, y, w, h };
     // wings, flickering, behind him
-    const beat = Math.sin(this.t * 22), wy = y + h * 0.30, span = w * (0.55 + 0.25 * beat);
+    const say = this.fairyNow();
+    const beat = Math.sin(this.t * (say && say.F.kind === 'sigh' ? 8 : 22)), wy = y + h * 0.30, span = w * (0.55 + 0.25 * beat);
     c.globalAlpha = 0.55;
     c.fillStyle = '#DFF4FF';
     for(let i = 0; i < Math.max(2, Math.round(h * 0.28)); i++){
@@ -9258,6 +9343,16 @@ const Scene = {
         c.globalAlpha = 1;
         drawTextS(c, F.word, Math.round(x + w / 2), Math.round(y - LH - q * 6 * TSC), PX.brass, TSC, 'c');
       }
+    }
+    // what he says: kept on the screen, over him, and never over a perk's word
+    if(say && !this.fairyCast){
+      const { F: Fs, q } = say, half = textW(Fs.word, TSC) / 2;
+      const col = Fs.kind === 'cheer' ? '#57E0BE' : Fs.kind === 'sigh' ? '#9FB3A6' : '#F4F6EF';
+      const tx = clamp(Math.round(x + w / 2), Math.ceil(half) + 2, VW - Math.ceil(half) - 2);
+      const ty = Math.round(y - LH - (Fs.kind === 'cheer' ? q * 4 * TSC : 0));
+      if(q > 0.85) c.globalAlpha = (1 - q) / 0.15;
+      drawTextS(c, Fs.word, tx, Math.max(1, ty), col, TSC, 'c');
+      c.globalAlpha = 1;
     }
   },
   // Where a ball is across the hole a fraction u of the way through its
@@ -9665,7 +9760,16 @@ const Scene = {
   spark(el){ if(this.sparks.length < 20) this.sparks.push({ t:0, k:el }); },
   burst(id){ if(this.sparks.length < 20) this.sparks.push({ t:0, k:'skill', id }); },
   cast(g){ this.casts.push({ t:0, g }); if(this.casts.length > 4) this.casts.shift(); },
-  holed(sc){ this.banner = { t:0, n:sc.n, d:sc.d }; },
+  holed(sc){
+    this.banner = { t:0, n:sc.n, d:sc.d };
+    // and the fairy's say on it: pleased with a birdie or better, glum at a
+    // bogey or worse, nothing for a par
+    const SAY = B.FAIRY_SAY, d = sc.d, one = l => l[Math.random() * l.length | 0];
+    if(d <= -1) this.fairyReact('cheer', one(d <= -3 ? SAY.huge : d === -2 ? SAY.eagle : SAY.birdie));
+    else if(d >= 1) this.fairyReact('sigh', one(d >= 2 ? SAY.worse : SAY.bogey));
+    // no tip straight after he has had his say
+    this.quipT = Math.max(this.quipT || 0, 10);
+  },
   depthsFlash(col){ this.flash = 1; this.flashCol = col; }
 };
 
@@ -11129,6 +11233,7 @@ Object.assign(Scene, {
       this.drawGolfer(D);
       this.drawBalls(dt);
       this.drawWeather();
+      this.tickQuip(dt);
       this.drawHud(D);
       this.drawPerks();
       this.drawShots();
@@ -12533,7 +12638,8 @@ function tickCaddie(dt){
   S.cperkT = (S.cperkT || 0) + dt;
   if(S.cperkT >= B.CPERK_EVERY){
     S.cperkT -= B.CPERK_EVERY;
-    addBuff(pk.k, pk.v, pk.t);
+    if(pk.now) S.elapsed = Math.max(0, (S.elapsed || 0) - pk.v);
+    else addBuff(pk.k, pk.v, pk.t);
     Scene.fairyCast = { t: 0, word: pk.w };
     Sfx.play('coin');
   }

@@ -8,7 +8,8 @@
  *
  *   birdie 20-45%, eagle 20-45%, par 8-30%, albatross or better 5-25%,
  *   bogey or worse under 12%, no single score over 45%, nine goals won
- *   25-75%. Eight seeds of two hours read about 31/31/16/15/7, nines 42%.
+ *   25-75%. Eight seeds of two hours read about 28/32/13/23/4, nines 50%,
+ *   since the auto-climb judges the next card in still air (CLIMB_FIT).
  *
  * What it guards against, both measured: the old handicap floor, which
  * stretched every hole to the golfer and made 67% of holes eagles; and the

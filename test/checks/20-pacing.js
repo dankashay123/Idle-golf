@@ -4,8 +4,12 @@
  * first hour to 12 an hour after it. That run bought nothing, so standing
  * still fell behind -- which is the design, not a stall. What matters is someone who plays: buys
  * the cheapest Range rung whenever it can, lets clubs auto-equip, puts
- * attribute points somewhere and climbs when a card opens. Swept over eight
- * seeds, because weather and gear rolls make any one run noise.
+ * attribute points somewhere and climbs when a card opens. Swept over sixteen
+ * seeds, because weather and gear rolls make any one run noise -- and eight
+ * were not enough: they passed while three other sets of eight each held a
+ * player taking four times par for twenty minutes (0% par or better). The
+ * auto-climb judged the next card by this round's weather and course
+ * affinity, and climbed a golfer on luck that the next card did not repeat.
  *
  * For that player, over two hours:
  *   - the pace holds: at least 60 holes in every twenty minutes, twenty
@@ -85,7 +89,7 @@ module.exports = {
       const out = { active: [], idle: null };
       QUIET = true;
       try {
-        for (const sd of [1, 2, 3, 4, 5, 6, 7, 8]) out.active.push(play(sd, true));
+        for (let sd = 1; sd <= 16; sd++) out.active.push(play(sd, true));
         out.idle = play(1, false);
       } finally {
         Math.random = real; QUIET = false;
@@ -119,7 +123,7 @@ module.exports = {
         + 'who plays on Card ' + (minActive + 1) + ': standing still has stopped costing anything');
     const all = r.active.flatMap(x => x.rows);
     const holes = all.map(w => w.holes), bird = all.map(w => w.birdie), par = all.map(w => w.par);
-    return ['8 seeds x 2 hours of a player who plays: ' + Math.min(...holes) + '-' + Math.max(...holes)
+    return [r.active.length + ' seeds x 2 hours of a player who plays: ' + Math.min(...holes) + '-' + Math.max(...holes)
       + ' holes per 20 minutes, par or better on ' + Math.round(Math.min(...par) * 100) + '-'
       + Math.round(Math.max(...par) * 100) + '% of holes (birdie or better ' + Math.round(Math.min(...bird) * 100) + '-'
       + Math.round(Math.max(...bird) * 100) + '%), ' + r.active.map(x => x.cards - 1).join('/') + ' cards opened',

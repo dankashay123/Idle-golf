@@ -55,9 +55,15 @@ module.exports = {
           if (g && f && f.x + f.w > g.x0 && f.x < g.x1 && f.y + f.h > g.y0 && f.y < g.y1)
             o.hits.push((walking ? 'walking' : 'swing ' + ph.toFixed(2)) + ': fairy ' + f.x + '-' + (f.x + f.w) + ', golfer from ' + g.x0);
         };
+        // and hopping for a birdie or drooping at a bogey, at every point of it
         for (const outfit of ['classic', 'divine']) {
           S.styleOwn['o:' + outfit] = 1; S.outfit = outfit; buildSprites();
-          for (let ph = 0; ph <= 1.0001; ph += 0.02) pose(false, ph);
+          for (const say of [null, 'cheer', 'sigh'])
+            for (let ph = 0; ph <= 1.0001; ph += 0.02) {
+              Scene.fairySay = say && { kind: say, word: 'X', t0: Scene.t - ph * 1.3, dur: 1.3 };
+              pose(false, ph);
+            }
+          Scene.fairySay = null;
           pose(true, 0);
         }
         S.outfit = 'classic'; buildSprites(); Scene.walkOn = false; Scene.swingT = 0;
@@ -78,7 +84,31 @@ module.exports = {
         o.spdUp = derive().spd / spd0;
         QUIET = true; S.buff = {}; S.cperkT = 0; tickCaddie(B.CPERK_EVERY * 2); o.quiet = !!S.buff.cSpd; QUIET = false;
         S.cperk = null; S.cperkT = 0; tickCaddie(B.CPERK_EVERY * 2); o.none = Object.keys(S.buff).length;
+        // the newer ones: xp, pure strike power, and a second off the clock
+        const fire = id => { S.cperkOwn[id] = 1; S.cperk = id; S.buff = {}; S.cperkT = B.CPERK_EVERY - 0.01; tickCaddie(0.02); };
+        // a crumb of xp, so no level is gained to muddle the count
+        const xpNow = () => (S.xp || 0) + (S.paraXp || 0), xp0 = xpNow();
+        S.buff = {}; addXp(1e-3); const plain = xpNow() - xp0;
+        fire('notes'); const xp1 = xpNow(); addXp(1e-3); o.xpUp = (xpNow() - xp1) / plain;
+        S.buff = {}; const cpw0 = derive().cpw; fire('club'); o.cpwUp = derive().cpw / cpw0;
+        S.elapsed = 5; fire('ready'); o.clock = +S.elapsed.toFixed(3) + ' ' + Object.keys(S.buff).length;
+        S.elapsed = 0.4; fire('ready'); o.clock0 = S.elapsed;
+        S.cperk = null;
         QUIET = true; S.buff = {};
+
+        // ---- the fairy has his say -------------------------------------------
+        QUIET = false; Scene.fairySay = null;
+        const said = d => { Scene.fairySay = null; Scene.holed(scoreFor(d)); return Scene.fairySay ? Scene.fairySay.kind : 'none'; };
+        o.react = [0.3, 0.55, 0.85, 1.0, 1.4, 2.2].map(r => scoreFor(r).d + ':' + said(r)).join(' ');
+        QUIET = true; Scene.fairySay = null; Scene.holed(scoreFor(0.3)); o.reactQuiet = !!Scene.fairySay; QUIET = false;
+        // a quip comes round on the course, and every line he has fits the font
+        Scene.fairySay = null; Scene.fairyCast = null; Scene.swingT = 0; Scene.quipT = 0.01;
+        Scene.tickQuip(0.05); o.quip = Scene.fairySay ? Scene.fairySay.kind + ':' + Scene.fairySay.word : null;
+        Scene.fairySay = null;
+        o.badLines = [];
+        for (const [k, l] of Object.entries(B.FAIRY_SAY)) for (const w of l)
+          if (w.length > 16 || [...w].some(ch => !GLYPH[ch])) o.badLines.push(k + ': ' + w);
+        QUIET = true;
 
         // ---- repaired on load ------------------------------------------------
         S.cperkOwn = {}; S.cperk = 'chat'; initState(); o.unowned = S.cperk;
@@ -156,6 +186,20 @@ module.exports = {
     if (!(r.spdUp > 1.15)) throw new Error('with Tempo Call live the tempo moved by x' + r.spdUp.toFixed(3));
     if (r.quiet) throw new Error('the perk went off during a catch-up');
     if (r.none) throw new Error('with no perk worn, ' + r.none + ' buffs went off');
+    if (!(r.xpUp > 1.29 && r.xpUp < 1.31)) throw new Error('Course Notes moved xp by x' + (r.xpUp || 0).toFixed(3) + ', not x1.30');
+    if (!(r.cpwUp > 1.19 && r.cpwUp < 1.21)) throw new Error('Club Selection moved pure strike power by x' + (r.cpwUp || 0).toFixed(3));
+    if (r.clock !== '4 0') throw new Error('Ready Golf left the clock at ' + r.clock + ' (want 4, and no lasting buff)');
+    if (r.clock0 !== 0) throw new Error('Ready Golf wound the clock back past zero: ' + r.clock0);
+    const want = ['-4:cheer', '-2:cheer', '-1:cheer', '0:none', '1:sigh', '2:sigh'];
+    const got = r.react.split(' ');
+    for (let i = 0; i < got.length; i++) {
+      const [d, k] = got[i].split(':'), need = +d <= -1 ? 'cheer' : +d >= 1 ? 'sigh' : 'none';
+      if (k !== need) throw new Error('the fairy said "' + k + '" to a ' + d + ' (want ' + need + '): ' + r.react);
+    }
+    if (!/cheer/.test(r.react) || !/sigh/.test(r.react)) throw new Error('the scores tried never reached a cheer and a sigh: ' + r.react);
+    if (r.reactQuiet) throw new Error('the fairy had his say during a catch-up');
+    if (!r.quip || !/^quip:/.test(r.quip)) throw new Error('no quip came round when it was due: ' + r.quip);
+    if (r.badLines.length) throw new Error('lines the fairy cannot say on the field (16 at most, in the font): ' + r.badLines.join('; '));
     if (r.unowned !== null || r.unknown !== null) throw new Error('a save wearing an unowned or unknown perk loaded with ' + r.unowned + ' / ' + r.unknown);
     if (r.rows !== r.n || r.navs !== 'Upgrades/Caddie') throw new Error('the Range shows ' + r.rows + ' perk rows of ' + r.n + ' under ' + r.navs);
     if (r.glide > 0.001) throw new Error('the camera moved ' + r.glide.toFixed(2) + ' units while he was still swinging');
@@ -173,7 +217,10 @@ module.exports = {
     if (!r.scoutSpent) throw new Error('Lost Ball Scout was still armed after the hole it was for');
     if (!(r.after > 1)) throw new Error('after the swing the camera did not move on: ' + r.after.toFixed(2));
     return ['the fairy stays clear of the golfer in all ' + r.poses + ' poses, club and all',
-      r.n + ' perks: bought once, one worn, free to change; +20% tempo for 8s every ' + r.every + 's, none in a catch-up',
+      r.n + ' perks: bought once, one worn, free to change; +20% tempo for 8s every ' + r.every + 's, none in a catch-up;'
+        + ' Course Notes x' + r.xpUp.toFixed(2) + ' xp, Club Selection x' + r.cpwUp.toFixed(2) + ' pure power, Ready Golf 1s off',
+      'the fairy cheers a birdie or better, sighs at a bogey or worse, keeps quiet at par and in a catch-up (' + r.react + '),'
+        + ' and a quip comes round ("' + r.quip.slice(5) + '")',
       'no gliding: the camera holds through the swing and walks on after (' + r.after.toFixed(1) + ' units)',
       'every shot flies as far as it went (' + r.walk.map(w => (w.to - w.from).toFixed(1)).join(', ') + ' units) and he walks to where it came down',
       'he does not hit again until he reaches his ball (the waiting swing goes off at ' + r.held.firedAt.toFixed(1) + ' of 30); a new hole drops a swing still going',
