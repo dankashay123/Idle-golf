@@ -70,8 +70,12 @@ module.exports = {
         && /Settings/.test(document.getElementById('sheet').textContent);
       await (Sfx.ctx && Sfx.ctx.resume ? Sfx.ctx.resume().catch(() => {}) : null);
       o.running = !!Sfx.ctx && Sfx.ctx.state === 'running';
-      // the recordings decode in the background once audio has started
-      for (let i = 0; i < 40 && o.running && !(Sfx.recs.strike && Sfx.recs.cup && Sfx.recs.music); i++)
+      // the recordings decode in the background once audio has started: the
+      // strike, the cup and both music tracks. This waited for three and then
+      // asked for exactly three, so it failed whenever the second track
+      // happened to finish decoding first.
+      const want = ['strike', 'cup', 'music', 'music2'];
+      for (let i = 0; i < 80 && o.running && !want.every(k => Sfx.recs[k]); i++)
         await new Promise(r => setTimeout(r, 50));
       o.recs = Object.keys(Sfx.recs).filter(k => Sfx.recs[k]);
       // count what reaches the speaker: tones, bursts of noise and recordings,
@@ -109,8 +113,9 @@ module.exports = {
     });
     if (!snd.open) throw new Error('the settings button did not open the settings sheet');
     if (snd.errs.length) throw new Error('playing a sound threw: ' + snd.errs.join('; '));
-    if (snd.running && snd.recs.join() !== 'strike,cup,music')
-      throw new Error('the recordings that decoded were ' + JSON.stringify(snd.recs) + ', not the strike, the cup and the music');
+    if (snd.running && snd.recs.join() !== 'strike,cup,music,music2')
+      throw new Error('the recordings that decoded were ' + JSON.stringify(snd.recs)
+        + ', not the strike, the cup and the two music tracks');
     // and no gallery: a fast bag holes out every few seconds, and the
     // applause after each hole never stopped. A holed ball is the cup alone.
     if (snd.running && !(snd.parts.strikeRec.join() === 'strike'
