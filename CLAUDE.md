@@ -19,6 +19,17 @@ Update it at the end of any sizeable piece of work.
   explaining the game to someone who is already playing it; put anything that
   really needs saying behind a `?` fold. Prefer "%" to "per cent" and bind a
   figure to the unit it carries, so a narrow column cannot break them apart.
+- **The user plays on an iPhone** and often sends screenshots. Check anything
+  on screen at phone widths (320 to 440, and on its side) before calling it
+  done, and screenshot it yourself.
+- **Use the game's own words.** Clubs are *scrapped* (not salvaged); the
+  legacy finds are *heirlooms*; the medal on the course opens the *Trophy
+  Room*. Row titles are Title Case.
+- **Ask when a request can be read two ways**, but act on the likely reading
+  when the user has asked for action, and say which reading you took.
+- **End a finished task ready for "What's next?"**: the user usually asks it.
+  Answer with a short plain menu and a recommendation (ideas in `HANDOFF.md`).
+- Never put a model name in a commit, a code comment or a file.
 
 ## Checks
 
@@ -34,4 +45,8 @@ Two rules that have cost real time here:
   silently compares two different weather sequences. Pin the weather on both
   sides of any before/after.
 
-A check that fails once is not a flake. Chase it.
+A check that fails once is not a flake. Chase it: twice it has been the
+check's own random setup, and that needs fixing as much as a game bug does.
+
+Every new check gets a negative test: break the game on purpose, watch the
+check fail, put it back. `HANDOFF.md` §4 has the harness and its gotchas.

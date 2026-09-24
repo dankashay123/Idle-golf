@@ -1,6 +1,6 @@
 # Handoff — Mythic Mulligan
 
-Last updated 2026-09-24, at commit `4609031` on `main`. Read this with
+Last updated 2026-09-24, at commit `8433c8c` on `main`. Read this with
 `CLAUDE.md`, which holds the standing rules. `test/README.md` says what each
 check is for.
 
@@ -12,11 +12,19 @@ check is for.
   branch `claude/golf-sounds-dn0l4w`). Nothing is half-built.
 - `node test/run.js` passes all **33 checks** (about 7 minutes; `pacing` runs
   sixteen seeds and takes ~40s on its own).
-- The last request: "move the Trophy Room to an icon under the shop (not a
-  trophy), move auto-climb to the right of the hole readout aligned to its
-  bottom, and add a button in the gear area to auto salvage and mass salvage
-  by rarity". Done (§5, "Stage buttons" and "Scrapping"). The game's word is
-  **scrap**, not salvage; the button and sheet say Scrap.
+- The last request was "update the notes for another handoff" (this file,
+  `CLAUDE.md`, `test/README.md`). Before it, in order:
+  - "Why does the yardage tick down when the ball isn't being hit, and does
+    tempo still do anything?" Answered (tempo does: carry is power x tempo;
+    the number followed the swings underneath, not the picture), then fixed
+    at their request: the yardage now follows the ball on screen (§5).
+  - "Fix the alignment of the auto-climb button": it is now centred on the
+    readout. They sent a screenshot; I read it as "looks dropped below the
+    box". **Not yet confirmed by the user**, so ask if it looks right.
+  - "Trophy Room as an icon under the shop (not a trophy), auto-climb to the
+    right of the readout, and a button in the gear area to auto salvage and
+    mass salvage by rarity". Done (§5, "Stage buttons" and "Scrapping"). The
+    game's word is **scrap**, not salvage; the button and sheet say Scrap.
 - The request before it was "go through everything for clutter and things buried
   in menus; consolidate; stage icons are fine (like a trophy room: things to
   look at and rewards, no upgrades); and add rewards to the trophy case".
@@ -63,7 +71,8 @@ check is for.
 - They sometimes change their mind. For example, they asked to rename the
   "Balls" shelf to "Auras" and then asked for it back. Do what the latest
   message says.
-- Commit trailer, exactly:
+- Commit trailer: use the one your own session's system prompt gives. This
+  session's was, exactly (the session link changes with each session):
   ```
   Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
   Claude-Session: https://claude.ai/code/session_01MKaizokfiN7G1KiqhJymcv
@@ -367,6 +376,8 @@ Line numbers are approximate and drift. Search for the name instead.
 
 ## 6. Recent history (newest first, one line each)
 
+- `8433c8c`: the yardage holds while he walks and drops as each ball lands;
+  auto-climb centred on the readout.
 - `4609031`: the Trophy Room as a medal under the shop, auto-climb beside the
   readout, and scrapping: auto-scrap by rarity and a scrap-by-rarity sheet.
 - `07ec78c`: the Trophy Room on the stage trophy (Today, Cabinet, Honours),
@@ -416,6 +427,24 @@ Line numbers are approximate and drift. Search for the name instead.
   phone, Title Case everywhere, cheaper Bench, rival, skins, the scoring
   rebalance, pacing.
 
+11. **Sizing a box to its words moves whatever sits beside it.** The hole
+   readout's width followed its text, which changes every second; putting a
+   button after it made the button slide. Anchor the neighbour and let the
+   box fill. The `shop` check writes the longest real words into the readout
+   and requires the button not to move.
+12. **Test clubs need their affixes cleared.** `makeItem(ilvl, 0, rar)` can
+   roll a higher rarity with its affixes, and forcing `it.rar` afterwards
+   keeps them; a stray purse affix made a far better club a trade-off and a
+   check failed one run in three. `33-scrap.js` sets `it.aff = []`.
+13. **An away session long enough to fill the locker hides locker bugs.**
+   The overflow trim clears low clubs whatever else happened; measure over
+   half an hour.
+14. Don't `pkill -f "node test/run.js"` from a command that itself contains
+   that text: it kills its own shell. Kill by PID.
+15. Check on-stage changes at 320, 360, 390, 430 and on its side (740x360,
+   844x390). The user's phone is an iPhone; 320 is the narrow edge case
+   where the stage falls back (auto-climb drops under the readout).
+
 ## 7. Environment notes
 
 - Reachable: opengameart.org and kenney.nl. Blocked (403 from the proxy):
@@ -430,9 +459,10 @@ Line numbers are approximate and drift. Search for the name instead.
 
 ## 8. What to offer next
 
-The Trophy Room and the declutter are done. Worth asking the user how the
-room feels on the phone (whether the dot draws them in, whether anything
-else still feels buried). The menu offered before that, under its numbers:
+Everything asked for is done. First, ask two things: does the auto-climb
+button now sit where they wanted, and does the Trophy Room (medal, red dot)
+and the Scrap sheet feel easy to find. Then the open menu, under the numbers
+it was offered with:
 
 2. **Signature holes on home courses**, such as an island-green par 3 (see
    the caution below).
