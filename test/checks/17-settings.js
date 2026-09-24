@@ -71,7 +71,7 @@ module.exports = {
       await (Sfx.ctx && Sfx.ctx.resume ? Sfx.ctx.resume().catch(() => {}) : null);
       o.running = !!Sfx.ctx && Sfx.ctx.state === 'running';
       // the recordings decode in the background once audio has started
-      for (let i = 0; i < 40 && o.running && !(Sfx.recs.strike && Sfx.recs.cup); i++)
+      for (let i = 0; i < 40 && o.running && !(Sfx.recs.strike && Sfx.recs.cup && Sfx.recs.music); i++)
         await new Promise(r => setTimeout(r, 50));
       o.recs = Object.keys(Sfx.recs).filter(k => Sfx.recs[k]);
       // count what reaches the speaker: tones, bursts of noise and recordings,
@@ -109,8 +109,8 @@ module.exports = {
     });
     if (!snd.open) throw new Error('the settings button did not open the settings sheet');
     if (snd.errs.length) throw new Error('playing a sound threw: ' + snd.errs.join('; '));
-    if (snd.running && snd.recs.join() !== 'strike,cup')
-      throw new Error('the recordings that decoded were ' + JSON.stringify(snd.recs) + ', not the strike and the cup');
+    if (snd.running && snd.recs.join() !== 'strike,cup,music')
+      throw new Error('the recordings that decoded were ' + JSON.stringify(snd.recs) + ', not the strike, the cup and the music');
     // and no gallery: a fast bag holes out every few seconds, and the
     // applause after each hole never stopped. A holed ball is the cup alone.
     if (snd.running && !(snd.parts.strikeRec.join() === 'strike'
@@ -126,6 +126,40 @@ module.exports = {
     if (snd.backOn !== 1) throw new Error('sound would not switch back on');
     if (snd.quietCount || snd.holdCount)
       throw new Error('sound played during a catch-up (' + snd.quietCount + ' / ' + snd.holdCount + ' notes)');
+
+    // ---- the music -------------------------------------------------------------
+    const mus = await page.evaluate(async () => {
+      const o = {};
+      await (Sfx.ctx && Sfx.ctx.resume ? Sfx.ctx.resume().catch(() => {}) : null);
+      o.running = !!Sfx.ctx && Sfx.ctx.state === 'running';
+      for (let i = 0; i < 60 && o.running && !Sfx.recs.music; i++) await new Promise(r => setTimeout(r, 50));
+      o.len = Sfx.recs.music ? +Sfx.recs.music.duration.toFixed(1) : 0;
+      const n = () => Sfx.mus.length;
+      S.sound = 1; S.music = 1; Sfx.mus = []; Sfx.musicTick(); o.on = n();
+      Sfx.musicTick(); o.again = n();                              // one play at a time, not one a frame
+      // near its end the next play goes in, overlapping it
+      const m = Sfx.mus[0]; if (m) { m.end = Sfx.ctx.currentTime + Sfx.MUS_XF + 0.5; Sfx.musicTick(); } o.looped = n();
+      toggleMusic(); o.offFlag = S.music; o.off = n();
+      toggleMusic(); o.backOn = n();
+      S.sound = 0; Sfx.musicTick(); o.soundOff = n(); S.sound = 1; Sfx.musicTick();
+      QUIET = true; Sfx.musicTick(); o.quiet = n(); QUIET = false;
+      Sfx.hold++; Sfx.musicTick(); o.hold = n(); Sfx.hold--;
+      save(); o.saved = JSON.parse(localStorage.getItem(KEY)).music;
+      S.music = 'loud'; initState(); o.repaired = S.music;
+      S.music = 0; Sfx.musicTick(); S.music = 1;
+      o.row = /Music/.test((settingsSheet(), document.getElementById('sheet').textContent)); try { hideSheet(); } catch (e) {}
+      return o;
+    });
+    if (mus.running) {
+      if (!(mus.len > 60)) throw new Error('the music did not decode (' + mus.len + 's)');
+      if (mus.on !== 1 || mus.again !== 1) throw new Error('the music started ' + mus.on + ' plays, then ' + mus.again);
+      if (mus.looped !== 2) throw new Error('near the end of the track the next play did not go in under it (' + mus.looped + ')');
+      if (mus.offFlag !== 0 || mus.off !== 0 || mus.backOn !== 1) throw new Error('the Music switch: ' + JSON.stringify(mus));
+      if (mus.soundOff || mus.quiet || mus.hold)
+        throw new Error('music played with sound off, or through a catch-up: ' + JSON.stringify(mus));
+    }
+    if (!mus.row) throw new Error('Settings has no Music switch');
+    if (mus.repaired !== undefined) throw new Error('a save with music set to junk loaded as ' + mus.repaired);
 
     // ---- waking audio the way an iPhone allows ------------------------------
     // An iPhone only lets a tap start sound once the finger lifts (touchend
@@ -177,6 +211,7 @@ module.exports = {
       'settings opens from its button; sound ' + (snd.running ? 'plays ' + snd.onCount + ' notes, the '
         + snd.recs.length + ' recordings among them, ' : '')
       + 'goes off and stays off, and is silent through a catch-up',
+      'the music plays, loops by overlapping itself, and stops with music or sound off and through a catch-up',
       'a tap wakes audio the way an iPhone needs: on touchend and click, from interrupted and suspended',
       'the Home Screen tip shows once, on an iPhone, after a real session'];
   }

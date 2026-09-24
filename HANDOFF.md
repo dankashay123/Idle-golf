@@ -19,6 +19,12 @@ check is for.
 - The user usually ends a task by asking **"What's next?"** Reply with a short
   plain-language menu, give a recommendation, and wait for them to choose.
   Open ideas are listed in §8.
+- **Background music**: "Town Theme RPG" by cynicmusic (CC0, OpenGameArt),
+  mono 40 kbps, embedded as `rec-music` (~650 KB of the file). `Sfx.musicTick`
+  loops it by overlapping plays by `MUS_XF`; volume `MUS_VOL` 0.14. Its own
+  Music switch in Settings (`S.music`). Chosen unheard; ask the user if it
+  fits. Other CC0 candidates: Meadow Thoughts, The Field Of Dreams, Summer
+  Park 8bit, Apple Cider, Sunset Plains.
 - **Applause removed** at the user's request (it never stopped when holes
   end every few seconds). Only the strike and cup recordings remain; an event
   win keeps its fanfare. Don't bring a crowd back without asking.
