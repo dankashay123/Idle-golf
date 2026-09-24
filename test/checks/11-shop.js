@@ -22,13 +22,14 @@ module.exports = {
     const src = fs.readFileSync(path.join(__dirname, '..', '..', 'index.html'), 'utf8');
 
     // 1. the button is on the stage, under the readout on the left, no bigger
-    //    than the other two stage buttons, and it opens the shop
+    //    than the other stage buttons, and it opens the shop; the Trophy Room
+    //    under it, and auto-climb beside the readout
     const btn = await page.$('#shopBtn');
     if (!btn) throw new Error('there is no shop button on the stage');
     const box = await btn.boundingBox();
     const stage = await (await page.$('#stage')).boundingBox();
     const read = await (await page.$('#readout')).boundingBox();
-    const hon = await (await page.$('#honBtn')).boundingBox();
+    const room = await (await page.$('#roomBtn')).boundingBox();
     const cx = box.x + box.width/2;
     if (!(cx < stage.x + stage.width*0.35))
       throw new Error('the shop button is not on the left of the stage');
@@ -50,10 +51,48 @@ module.exports = {
         + 'px below the settings button, which is not underneath it');
     if (!(box.x < read.x + read.width))
       throw new Error('the shop button is not under the readout horizontally');
-    if (!(box.width <= hon.width * 1.05))
+    if (!(box.width <= room.width * 1.05))
       throw new Error('the shop button is ' + box.width.toFixed(0) + 'px against '
-        + hon.width.toFixed(0) + 'px for the honours button: it is the loudest thing '
+        + room.width.toFixed(0) + 'px for the Trophy Room button: it is the loudest thing '
         + 'on the stage and it is the one asking for money');
+    // The Trophy Room is the next button down the same column, under the shop,
+    // and it is not drawn as a trophy (the user asked for that: the heirlooms
+    // and the cabinet keep the trophy).
+    if (!(room.y >= box.y + box.height && room.y - (box.y + box.height) < stage.height * 0.06
+          && Math.abs(room.x - box.x) < 1))
+      throw new Error('the Trophy Room button is not directly under the shop button: shop at '
+        + box.x.toFixed(0) + ',' + box.y.toFixed(0) + ', room at ' + room.x.toFixed(0) + ',' + room.y.toFixed(0));
+    const roomIc = await page.evaluate(() => {
+      const src = document.getElementById('roomIcon').src;
+      return Object.keys(B.PX12).filter(k => pixUrl(k, '#E3B457') === src);
+    });
+    if (roomIc.join() !== 'medal') throw new Error('the Trophy Room button draws ' + (roomIc.join() || 'nothing known') + ', not the medal');
+    // Auto-climb sits to the right of the readout, level with its foot, and
+    // stays put however the words in the readout change: the readout's width
+    // used to follow its words, which change every second.
+    const climb = async () => (await (await page.$('#hudClimb')).boundingBox());
+    const cb = await climb();
+    if (!(cb.x >= read.x + read.width - 0.5 && cb.x - (read.x + read.width) < 12))
+      throw new Error('the auto-climb button is not just right of the readout: readout ends at '
+        + (read.x + read.width).toFixed(1) + ', the button starts at ' + cb.x.toFixed(1));
+    if (Math.abs((cb.y + cb.height) - (read.y + read.height)) > 0.75)
+      throw new Error('the auto-climb button\'s foot is at ' + (cb.y + cb.height).toFixed(1)
+        + ' and the readout\'s at ' + (read.y + read.height).toFixed(1));
+    const moved = [];
+    // the longest the readout says, on the course, walking in, and in a wager
+    for (const [tag, big, unit, top] of [['Albatross', '999.9bw', 'yds', 'Hole 18 \u00b7 Par 5'],
+        ['Albatross', '\u2014', 'walking in', 'Hole 18 \u00b7 Par 5'], ['Running hot', '1.23Qa', 'left', 'Floor 188 \u00b7 1,204 banked'],
+        ['Par', '1', 'yds', 'Hole 1 \u00b7 Par 3']]) {
+      await page.evaluate(([tag, big, unit, top]) => {
+        for (const [id, t] of [['rTag', tag], ['rBig', big], ['rUnit', unit], ['rTop', top]]) document.getElementById(id).textContent = t;
+      }, [tag, big, unit, top]);
+      const c2 = await climb();
+      if (Math.abs(c2.x - cb.x) > 0.5 || Math.abs(c2.y - cb.y) > 0.5) moved.push(tag + ': ' + (c2.x - cb.x).toFixed(1) + ',' + (c2.y - cb.y).toFixed(1));
+    }
+    // written round the change-only writers, so they are told to write again
+    await page.evaluate(() => { for (const id of ['rTag', 'rBig', 'rUnit', 'rTop']) {
+      const e = document.getElementById(id); e._tx = e._hx = undefined; } renderLive(); });
+    if (moved.length) throw new Error('the auto-climb button moves when the readout\'s words change: ' + moved.join('; '));
     await btn.click();
     if (!await page.$('#sheet .shopnav'))
       throw new Error('pressing the shop button did not open the shop');
@@ -267,7 +306,7 @@ module.exports = {
     if (st.caddiePrice.length) throw new Error('these caddies are not a third of their look: ' + st.caddiePrice.join(', '));
     if (!(st.caddieShirt > 20)) throw new Error('the Sunday Red caddie does not wear its red: ' + st.caddieShirt + ' pixels of it');
 
-    return ['button under the readout, no input of any kind, banner on all four',
+    return ['shop and Trophy Room under the readout, auto-climb level with its foot and still; no input of any kind, banner on all four',
       'style: every outfit and trail changes no stat, each paid once (' + st.want
       + ' sovereigns for all), owned ones free to wear, a save wearing one it does not own repaired',
       'tiles ' + Object.keys(r.tiles).map(k => k + ' ' + r.tiles[k].cards).join('/'),

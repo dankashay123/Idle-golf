@@ -521,7 +521,7 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
 /* The readout, in the same type as the rest of the chrome. Drawn on the canvas
    in the pixel font it was legible but bulky, and it could not match anything
    else on screen. */
-#readout{position:relative;min-width:64%;max-width:100%;
+#readout{position:relative;flex:1 1 auto;min-width:0;
   background:rgba(6,12,9,.74);border:1px solid #1B3A2E;border-radius:0;
   padding:4px 7px 5px;backdrop-filter:blur(2px);pointer-events:none}
 /* nowrap and a fixed gap meant the hole label and the clock simply ran out of
@@ -533,9 +533,15 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
 .rline #rTopR{flex:0 0 auto}
 .rmain{display:flex;align-items:baseline;gap:3px;margin-top:2px}
 #rBig{font-family:var(--mono);font-size:var(--f4);font-weight:600;color:var(--brass);line-height:1}
-.ru{font-size:var(--f0);letter-spacing:.12em;text-transform:uppercase;color:var(--faint)}
+.ru{font-size:var(--f0);letter-spacing:.12em;text-transform:uppercase;color:var(--faint);white-space:nowrap}
 .rsp{flex:1 1 auto;min-width:8px}
-#rTag{font-size:var(--f0);letter-spacing:.12em;text-transform:uppercase;font-weight:700;white-space:nowrap}
+/* With the auto-climb button beside it the box is a button narrower, and late
+   on, a pot of 1.23Qa with "Running hot" beside it ran 27px out of the box on
+   a 360 phone and "walking in" went onto two lines and made the box taller.
+   The call gives way with an ellipsis, as the hole label above it does, and
+   the unit keeps to one line. */
+#rTag{font-size:var(--f0);letter-spacing:.12em;text-transform:uppercase;font-weight:700;white-space:nowrap;
+  min-width:0;overflow:hidden;text-overflow:ellipsis}
 .rbar{height:2px;background:#12251C;border-radius:0;margin-top:5px;overflow:hidden}
 .rbar i{display:block;height:100%;width:0;background:var(--rc,var(--brass));transition:width .12s linear}
 /* The wager strip. One readout template served all four contests, so a drive
@@ -604,6 +610,7 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
 .catnav button{min-height:30px;padding:6px 2px;border:1px solid var(--line);background:var(--raise);
   color:var(--dim);font-size:var(--f1);letter-spacing:.08em;text-transform:uppercase;font-weight:700}
 .catnav button.on{color:var(--ink);background:var(--brass);border-color:var(--brass)}
+.catnav.c3{grid-template-columns:repeat(3,1fr)}
 .freebar{border:1px solid var(--r5);background:rgba(166,107,245,.10);padding:7px 9px;margin-bottom:10px;
   font-size:var(--f1);color:var(--chalk);line-height:1.5}
 .freebar b{color:var(--r5)}
@@ -668,11 +675,11 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
 .rstrip i.hi{background:var(--chalk);box-shadow:0 0 0 1px var(--rc,var(--brass))}
 
 /* the honours shelf, on the stage under the hole readout */
-/* two stage buttons, drawn from the same pixel grid as the game */
+/* the stage buttons, drawn from the same pixel grid as the game */
 /* The shop sits bottom left, the far corner from the two stage buttons and
    clear of the shot book icons the renderer draws up from that edge. */
 /* Under the readout rather than down in the corner, and the size of the other
-   two stage buttons rather than half again bigger than them.
+   stage buttons rather than half again bigger than them.
    It sits in a column with the readout rather than at a percentage of the
    stage, because the readout is built out of fixed pixel type: it is about
    45px tall whatever the screen, which is 14% of a short stage and 9% of a tall
@@ -687,18 +694,31 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
    pointer-events:none, so the button underneath stays pressable either way. */
 #hudLeft{position:absolute;left:2.2%;top:2.5%;width:56%;z-index:29;
   display:flex;flex-direction:column;align-items:flex-start;gap:12px;
-  pointer-events:none}
+  pointer-events:none;container-type:inline-size}
+/* The readout with the auto-climb button beside it, level with its foot. The
+   readout's words change every second (the clock, the yards, the call), and
+   it used to be as wide as they were, so a button placed straight after it
+   would slide about under your thumb. The readout fills the row up to the
+   button instead and the button stays put. Capped, or on a tablet the box ran
+   most of the way across the field. */
+#rRow{align-self:stretch;max-width:300px;display:flex;align-items:flex-end;gap:6px;pointer-events:none}
+/* A column under 200 (a stage under about 357) is all the readout needs, so
+   there the button goes under it rather than squeezing it. */
+@container (max-width:199.5px){
+  #rRow{flex-wrap:wrap;row-gap:12px}
+  #rRow #readout{flex-basis:100%}
+}
 /* min-width, or on a 320 phone the button comes to 19.7px around a 24px sprite
    and the drawing hangs outside its own tap target. */
-#shopBtn{position:relative;width:11%;min-width:24px;aspect-ratio:1/1;flex:0 0 auto;pointer-events:auto;
+#shopBtn,#roomBtn{position:relative;width:11%;min-width:24px;aspect-ratio:1/1;flex:0 0 auto;pointer-events:auto;
   background:none;border:0;padding:0;display:flex;align-items:center;justify-content:center;
   filter:drop-shadow(0 1px 2px rgba(0,0,0,.9))}
 /* The button is a share of the stage so the tap target grows with the screen;
    the sprite inside is a fixed 24, which is 2x of 12. At 100% of the button it
    landed on 24.5 and 24.7 and the pixels came out in uneven widths. */
-#shopIcon{display:block;width:24px;height:24px;object-fit:contain;
+#shopIcon,#roomIcon{display:block;width:24px;height:24px;object-fit:contain;
   image-rendering:pixelated;image-rendering:crisp-edges}
-#shopBtn:active,#setBtn:active,#hudClimb:active{transform:translateY(1px)}
+#shopBtn:active,#setBtn:active,#hudClimb:active,#roomBtn:active{transform:translateY(1px)}
 #setBtn,#hudClimb{position:relative;width:24px;height:24px;flex:0 0 auto;pointer-events:auto;
   background:none;border:0;padding:0;display:flex;align-items:center;justify-content:center;
   filter:drop-shadow(0 0 1px #000) drop-shadow(0 0 1px #000) drop-shadow(0 1px 2px rgba(0,0,0,.9))}
@@ -714,7 +734,11 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
 .setbtns{display:flex;gap:6px;flex-wrap:wrap}
 #shopDot{position:absolute;top:-8%;right:-8%;width:32%;height:32%;background:var(--r5);display:none}
 #shopBtn.new #shopDot{display:block}
-#honBtn,#perkBtn{position:absolute;right:2.5%;width:6.2%;min-width:24px;aspect-ratio:1/1;z-index:31;
+/* something waiting to be collected in the Trophy Room: the same red dot the
+   shop's offer carries, so a dot on a stage button always means "for you" */
+#roomDot{position:absolute;top:-8%;right:-8%;width:32%;height:32%;background:var(--r5);display:none}
+#roomBtn.ready #roomDot{display:block}
+#perkBtn{position:absolute;right:2.5%;width:6.2%;min-width:24px;aspect-ratio:1/1;z-index:31;
   background:none;border:0;padding:0;display:flex;align-items:center;justify-content:center;
   filter:drop-shadow(0 1px 2px rgba(0,0,0,.9))}
 /* Pushed down from 24 and 35.5. The comment over #toasts says these sit below
@@ -724,32 +748,23 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
    two real unlocks, straight out of checkAch -- it comes to 34.1% of the stage
    on a 320x568 phone, 23.2% at 360x640 and 17.8% at 400x860. 37 clears the
    worst of those with room, rather than clearing the one screen I happened to
-   measure first. */
-#honBtn{top:37%}
-/* One button and a gap below the first, rather than 11.5% further down. The
-   buttons are sized off the stage's width and the gap was a share of its
-   height, so on a phone on its side -- a stage 400 wide and 207 tall -- the two
-   overlapped by two pixels. A margin's percentage reads the WIDTH, the same
-   thing the buttons are sized from, so the gap now tracks the buttons. */
-#perkBtn{top:37%;margin-top:calc(max(24px, 6.2%) + max(8px, 4%))}
-/* The hole from above, under the two stage buttons and above the weather.
-   Placed by placeMap(), which measures both, and left out when the stage is
+   measure first. (There were two buttons here; the Trophy Room's moved to the
+   column on the left, under the shop, and the perks took the top place.) */
+#perkBtn{top:37%}
+/* The hole from above, under the perks button and above the weather.
+   Placed by placeMap(), which measures it, and left out when the stage is
    too short to hold it. Each map pixel is two screen pixels. */
 #holeMap{position:absolute;right:2.5%;z-index:28;display:none;pointer-events:none;
   image-rendering:pixelated;image-rendering:crisp-edges;
   box-shadow:0 0 0 1px rgba(0,0,0,.55),0 2px 6px rgba(0,0,0,.45)}
-#honIcon,#perkIcon{display:block;width:24px;height:24px;object-fit:contain;
+#perkIcon{display:block;width:24px;height:24px;object-fit:contain;
   image-rendering:pixelated;image-rendering:crisp-edges}
-#honBtn:active,#perkBtn:active{transform:translateY(1px)}
+#perkBtn:active{transform:translateY(1px)}
 @keyframes hpulse{0%,100%{opacity:1}50%{opacity:.62}}
-#honBtn.new,#perkBtn.ready{animation:hpulse 4.6s ease-in-out infinite}
+#roomBtn.new,#perkBtn.ready{animation:hpulse 4.6s ease-in-out infinite}
 #perkDot{position:absolute;top:-6%;right:-6%;width:34%;height:34%;border-radius:0;
   background:var(--aurora);display:none}
 #perkBtn.live #perkDot{display:block}
-/* something waiting to be collected in the Trophy Room: the same red dot the
-   shop's offer carries, so a dot on a stage button always means "for you" */
-#honDot{position:absolute;top:-6%;right:-6%;width:34%;height:34%;background:var(--r5);display:none}
-#honBtn.ready #honDot{display:block}
 /* Top right corner, clear of the readout on the left and the two stage
    buttons below. Two at a time: any more and they became the view. */
 /* 38 and not 52. The readout's column runs to 58.2% of the stage (2.2 + 56),
@@ -763,7 +778,7 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
   animation:tin .22s ease-out;backdrop-filter:blur(2px)}
 .toast b{color:var(--brass)}
 /* the sovereign coin, in place of the word: "sovereigns" in a toast made the
-   stack tall enough to reach the honours button on a phone on its side */
+   stack tall enough to reach the button under it on a phone on its side */
 .tsov{display:inline-block;width:12px;height:12px;vertical-align:middle;margin:-3px 0 -3px 2px;
   image-rendering:pixelated;image-rendering:crisp-edges}
 .toast.ach{border-color:var(--brass-dk);background:rgba(28,20,6,.94);white-space:normal}
@@ -817,10 +832,10 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
 
   <div id="stage">
     <canvas id="hole" width="720" height="440"></canvas>
-    <button id="honBtn" aria-label="Trophy Room"><img id="honIcon" alt=""><span id="honDot"></span></button>
     <button id="perkBtn" aria-label="Sponsor perks"><img id="perkIcon" alt=""><span id="perkDot"></span></button>
     <canvas id="holeMap" aria-hidden="true"></canvas>
     <div id="hudLeft">
+    <div id="rRow">
     <div id="readout">
       <div class="rline"><span id="rTop">Hole 1 &middot; Par 4</span><span id="rTopR">0.0 / 15s</span></div>
       <div class="rmain"><b id="rBig">0</b><span class="ru" id="rUnit">yds</span>
@@ -828,9 +843,11 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
       <div class="rbar"><i id="rFill"></i></div>
       <div class="rstrip" id="rStrip" hidden></div>
     </div>
+    <button id="hudClimb" aria-label="Auto-climb"><img id="hudClimbIcon" alt=""></button>
+    </div>
     <button id="setBtn" aria-label="Settings"><img id="setIcon" alt=""></button>
     <button id="shopBtn" aria-label="Pro shop"><img id="shopIcon" alt=""><span id="shopDot"></span></button>
-    <button id="hudClimb" aria-label="Auto-climb"><img id="hudClimbIcon" alt=""></button>
+    <button id="roomBtn" aria-label="Trophy Room"><img id="roomIcon" alt=""><span id="roomDot"></span></button>
     </div>
     <div id="toasts"></div>
   </div>
@@ -883,7 +900,7 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
         <div class="band"><span class="eyebrow">Sets and affinity</span><span class="note" id="bagPower"></span></div>
         <div id="setBox"></div>
         <div class="band"><span class="eyebrow">Locker</span><div class="btnrow">
-          <button class="mini" id="scrapBtn">Scrap dupes</button>
+          <button class="mini" id="scrapBtn">Scrap</button>
         </div></div>
         <div class="lkhead" id="lkHead"></div>
         <div id="bagList"></div>
@@ -1304,6 +1321,11 @@ const B = {
              'oXXXXXXXXXXo','.oXXXXXXXXo.','..oXXXXXXo..','....XXXX....',
              '.....XX.....','.....XX.....','...XXXXXX...','..XXXXXXXX..']
  ,
+    // the Trophy Room's button on the stage: a medal on its ribbon, so the
+    // trophy stays the heirlooms' and the cabinet's own
+    medal:  ['.ooo....ooo.','..ooo..ooo..','...oooooo...','....oooo....',
+             '.....XX.....','....XXXX....','...XwwXXX...','..XwXXXXxX..',
+             '..XwXXXXxX..','..XXXXXXxX..','...XXxxxX...','....XXXX....'],
     star:    ['.....XX.....',
              '.....XX.....',
              '....XXXX....',
@@ -3523,6 +3545,8 @@ function defaultState(){ return {
   member: 0, memberT: 0, starter: 0, boostT: 0,
   dgnKeys: {}, dgnKeyT: {}, dgnFloor: {}, dgnBest: {}, dgnRun: null, islandBank: 5,
   bagSlot: 'driver', autoEquip: 0,
+  // scrap new drops this rare or less as they land (-1 is off)
+  autoScrap: -1,
   legacy: 0, relic: {}, retires: 0, cups: 0, points: 0,
   lv: 1, xp: 0, statPts: 0, talPts: 0, stat: {}, tal: {},
   tickets: 0, perkOn: {}, perkUsed: 0,
@@ -3625,6 +3649,7 @@ function initState(){
   if(S.eventsPlayed === undefined) S.eventsPlayed = 0;
   if(!S.achDone) S.achDone = {};
   if(S.autoEquip === undefined) S.autoEquip = 0;
+  if(!(Number.isInteger(S.autoScrap) && S.autoScrap >= -1 && S.autoScrap <= autoScrapTop())) S.autoScrap = -1;
 }
 /* =========================================================================
    MIGRATION
@@ -3840,7 +3865,7 @@ const achAmt = (a, x) => a.m === 'mst' ? Math.round(x * 100) + '%' : fmt(x, 0);
 // Decorated before the sort: achMetric('mst') calls derive(), and a comparator
 // that asks for it on every comparison turns a thirty row list into a hundred
 // and fifty derives four times a second. Measured: 0.052ms against 0.164ms for
-// the naive comparator, 3.1x, and the two return the same order. renderHonBtn
+// the naive comparator, 3.1x, and the two return the same order. renderStageBtns
 // as a whole costs about 0.2ms per second of frame time at the 4.5 calls a
 // second the slow tick makes, which is what buys the button its label.
 const achNear = n => B.ACH.filter(a => !achDone(a.id))
@@ -4414,10 +4439,10 @@ function checkAch(){
     // "Unlocked" and not "Achievement unlocked". The eyebrow is its own line,
     // and at the width a toast is allowed on a 320 phone the longer one wrapped
     // to two -- five lines a toast, two toasts, and the stack ran down into the
-    // honours button. The word above the name already says what it is.
+    // button under it. The word above the name already says what it is.
     grantSov(a.sov || 0, null, true);
     // The coins ride on the eyebrow, which has room to spare: on the body line
-    // they wrapped it, and a taller pair of toasts reached the honours button.
+    // they wrapped it, and a taller pair of toasts reached the button under them.
     // Tighter tracking and no middot, or at 320 wide "UNLOCKED · +100" wraps too.
     toast('<span class="achk">Unlocked' + (a.sov ? ' +' + a.sov + sovIc() : '') + '</span>'
       + a.n + ' \u00b7 <b>' + got + '</b>', 'ach');
@@ -4535,6 +4560,9 @@ function nameItem(it, sl){
   return n;
 }
 let lockN = 0, lockSh = 0, lockT = -Infinity;
+let autoScrapN = 0, autoScrapSh = 0, autoScrapT = -Infinity;
+// Into the locker. Says whether he still has it: false when auto-scrap broke
+// it up on arrival.
 function bagAdd(it){
   if(it.rar >= 2) bump('rare');
   if(it.rar >= 4) bump('legend');
@@ -4550,6 +4578,19 @@ function bagAdd(it){
                             : 'Auto equipped <b>' + took.length + '</b> clubs');
     renderVitals();
   }
+  // after the sweep, which may have put it on, or put on a better one it is
+  // now measured against; once a minute to say so, like the full locker
+  let held = true;
+  if(S.bag.includes(it) && autoScraps(it)){
+    S.bag.splice(S.bag.indexOf(it), 1); held = false;
+    const v = scrapValue(it); S.shard += v;
+    autoScrapN++; autoScrapSh += v;
+    const now = performance.now();
+    if(now - autoScrapT >= 60000){
+      toast('Auto-scrapped ' + autoScrapN + ' for <b>' + autoScrapSh + '</b> ' + plural(autoScrapSh, 'shards'));
+      autoScrapN = 0; autoScrapSh = 0; autoScrapT = now;
+    }
+  }
   if(S.bag.length > bagCap()){
     S.bag.sort((a,b) => itemScore(b) - itemScore(a));
     const cut = S.bag.splice(bagCap());
@@ -4564,6 +4605,7 @@ function bagAdd(it){
       lockN = 0; lockSh = 0; lockT = now;
     }
   }
+  return held;
 }
 function equipItem(it){
   const cur = S.equip[it.slot];
@@ -4638,6 +4680,43 @@ function autoEquipSweep(){
 function scrapValue(it){
   return Math.max(1, Math.round((1 + it.rar*1.8) * (1 + it.enh*0.35)
     * (1 + career().scrap)));
+}
+// Auto-scrap: a club that drops this rare or less is broken up on arrival (a
+// Mythic never is). Not a piece of a named set, and not the best club in the
+// locker for its slot when it beats the one he carries there, the one the
+// Upgrade button points at: the setting is for the clubs he would scrap by
+// hand, and he would keep those. Scrapping by rarity keeps the same ones.
+// Only the best upgrade: with nothing worn in a slot every club for it beats
+// nothing, and the first version kept every one of them.
+// best, when the caller keeps it: the top score among the other clubs in each
+// slot. The away session lands a thousand clubs and asks once for each.
+const autoScrapTop = () => B.RARITY.length - 2;
+function scrapKeeps(it, best){
+  if(it.set) return true;
+  const sc = itemScore(it), worn = S.equip[it.slot];
+  if(worn && sc <= itemScore(worn)) return false;
+  const top = best ? best[it.slot]
+    : S.bag.reduce((m, x) => x !== it && x.slot === it.slot ? Math.max(m, itemScore(x)) : m, -Infinity);
+  return sc >= top;
+}
+const autoScraps = (it, best) => S.autoScrap >= 0 && it.rar <= S.autoScrap && !scrapKeeps(it, best);
+// break up a list of locker clubs, and say so
+function scrapList(list){
+  let sh = 0;
+  list.forEach(it => { sh += scrapValue(it); });
+  S.bag = S.bag.filter(it => !list.includes(it));
+  S.shard += sh;
+  if(list.length) toast('Scrapped ' + list.length + ' for <b>' + sh + '</b> ' + plural(sh, 'shards'));
+  return sh;
+}
+// everything past the best two in each slot, set pieces aside
+function sparesPastTwo(){
+  const keep = {}, out = [];
+  S.bag.slice().sort((a,b) => itemScore(b) - itemScore(a)).forEach(it => {
+    keep[it.slot] = (keep[it.slot] || 0) + 1;
+    if(keep[it.slot] > 2 && !it.set) out.push(it);
+  });
+  return out;
 }
 function salvageItem(it){
   const v = scrapValue(it);
@@ -5284,8 +5363,9 @@ function endDgn(d, R, D){
     if(deeper || Math.random() < (d.gear !== undefined ? d.gear : B.DGN_GEAR_CHANCE) + relLv('rift')*0.05){
       const floorRar = Math.max(d.floorRar || 0, Math.min(2, Math.floor(fe/8)));
       const it = dropItem(S.tier + Math.min(3, Math.floor(fe/5)), D.drop + 0.35, floorRar);
-      bagAdd(it);
-      rewards.push(['Gear', B.RARITY[it.rar].n + ' ' + B.SLOTS.find(s => s.id === it.slot).n]);
+      const kept = bagAdd(it);
+      rewards.push(['Gear', B.RARITY[it.rar].n + ' ' + B.SLOTS.find(s => s.id === it.slot).n
+        + (kept ? '' : ' \u00b7 scrapped')]);
     }
   }else{
     Scene.depthsFlash('#E4574A');
@@ -5678,12 +5758,10 @@ function finishHole(D){
   if(isClosing(S.hole) && isSunday(S.hole)) grantTickets(B.TICK_SUNDAY, 'Sunday finish');
   if(isClosing(S.hole)){
     const it = dropItem(S.tier, luck + 0.15, isSunday(S.hole) ? 1 : 0);
-    bagAdd(it);
-    toast('<b>' + B.RARITY[it.rar].n + '</b> ' + it.name);
+    if(bagAdd(it)) toast('<b>' + B.RARITY[it.rar].n + '</b> ' + it.name);
   }else if(Math.random() < luck){
     const it = dropItem(S.tier, luck, 0);
-    bagAdd(it);
-    if(it.rar >= 2) toast('<b>' + B.RARITY[it.rar].n + '</b> ' + it.name);
+    if(bagAdd(it) && it.rar >= 2) toast('<b>' + B.RARITY[it.rar].n + '</b> ' + it.name);
   }
 
   // auto-climb: five straight eagles means this Tour Card is finished
@@ -5984,7 +6062,7 @@ function openBag(bg, free){
   const D = derive();
   const top = B.RARITY.length - 1;
   const duePity = S.pity >= B.BAG_PITY;
-  const got = [];
+  const got = [], gone = new Set();
   for(let i = 0; i < bg.num; i++){
     // the last club in the bag is the one carrying the guarantee
     const last = i === bg.num - 1;
@@ -5992,14 +6070,14 @@ function openBag(bg, free){
     if(last) floor = Math.max(floor, duePity ? top : bg.top);
     const it = makeItem(S.tier + B.BAG_ILVL, D.drop + 0.5, floor);
     if(it.rar >= top) S.pity = 0;
-    bagAdd(it);
+    if(!bagAdd(it)) gone.add(it);
     got.push(it);
   }
   got.sort((a, b) => b.rar - a.rar || itemScore(b) - itemScore(a));
   const line = it => '<li><span style="color:' + RC(it.rar) + '">'
-    + B.RARITY[it.rar].n + '</span> \u00b7 ' + it.name + '</li>';
+    + B.RARITY[it.rar].n + '</span> \u00b7 ' + it.name + (gone.has(it) ? ' \u00b7 <i>scrapped</i>' : '') + '</li>';
   showSheet('<h3>' + bg.n + '</h3>'
-    + '<p>' + bg.num + ' clubs, straight into the locker.</p>'
+    + '<p>' + (gone.size ? bg.num + ' clubs \u00b7 ' + gone.size + ' auto-scrapped.' : bg.num + ' clubs, straight into the locker.') + '</p>'
     + '<ul>' + got.map(line).join('') + '</ul>'
     + (S.pity === 0 ? '<p style="color:var(--r5)">A Mythic. The counter resets.</p>'
        : '<p>' + (B.BAG_PITY - S.pity) + '\u00a0more bags and the next one is a guaranteed Mythic.</p>')
@@ -6715,11 +6793,18 @@ function offline(){
   // Straight into the bag: the equip sweep and the overflow trim run once at
   // the end rather than once a drop. bagAdd did both every time, which is what
   // the comment by the sweep below said it was avoiding.
+  let autoOff = 0, autoOffSh = 0;
+  const bestOff = {};
+  B.SLOTS.forEach(sl => { bestOff[sl.id] = -Infinity; });
+  S.bag.forEach(x => { bestOff[x.slot] = Math.max(bestOff[x.slot], itemScore(x)); });
   const bagAddOff = it => {
-    if(!best || itemScore(it) > itemScore(best)) best = it;
     if(it.rar >= 4) bump('legend');
     if(it.rar >= 5) bump('myth');
-    S.bag.push(it); gear++;
+    gear++;
+    if(autoScraps(it, bestOff)){ const v = scrapValue(it); S.shard += v; autoOff++; autoOffSh += v; return; }
+    bestOff[it.slot] = Math.max(bestOff[it.slot], itemScore(it));
+    if(!best || itemScore(it) > itemScore(best)) best = it;
+    S.bag.push(it);
   };
   QUIET = true; OFFLINE = true;
   // The events this loop resolves are paid through purseFor as well, and it
@@ -6815,6 +6900,7 @@ function offline(){
   if(paras > 0) marks.push(['Paragon', '+' + paras]);
   if(sov > 0) marks.push([B.SOV, '+' + sovFmt(sov)]);
   if(swapped > 0) marks.push(['Auto equipped', swapped + ' club' + (swapped > 1 ? 's' : '')]);
+  if(autoOff > 0) marks.push(['Auto-scrapped ' + autoOff, '+' + fmt(autoOffSh, 0) + '\u00a0' + plural(autoOffSh, 'shards')]);
   if(scrapped > 0) marks.push(['Locker full \u00b7 scrapped ' + scrapped, '+' + fmt(scrapSh, 0) + '\u00a0' + plural(scrapSh, 'shards')]);
   if(entries > 0) marks.push(['Wager entries back', '+' + entries]);
   if(marks.length) h += '<div class="awband">What came of it</div>'
@@ -11652,7 +11738,7 @@ function collect(id){
   S.caseGot = S.caseGot || {};
   if(id !== 'free') for(const x of casePending()) if(!id || x.c.id === id){ n += x.c.sov[x.i]; S.caseGot[x.c.id] = x.i + 1; }
   if(n){ grantSov(n, 'collected'); Sfx.play('coin'); }
-  renderHonBtn();
+  renderStageBtns();
   return n;
 }
 function trophyRoom(tab){
@@ -11670,7 +11756,7 @@ function trophyRoom(tab){
   else if(roomTab === 'case') roomCase(w);
   else{ S.honSeen = achCount(); honRows(w); }
   sh.querySelectorAll('[data-collect]').forEach(b => b.onclick = () => { collect(b.dataset.collect); trophyRoom(); });
-  renderHonBtn();
+  renderStageBtns();
 }
 // older callers asked for the honours on their own
 const honoursSheet = () => trophyRoom('hon');
@@ -11736,12 +11822,14 @@ function caseTrack(id){
   return '<div class="ctrack"><span>Next: ' + what + ' <i>(' + fmt(Math.min(have, at), 0) + '/' + at + ')</i></span>'
     + '<span class="s">+' + c.sov[got] + sovIc() + '</span></div>';
 }
-function renderHonBtn(live){
-  const b = $('honBtn'); if(!b) return;
+// The buttons on the stage: the Trophy Room's, the perks, the shop, the
+// settings and auto-climb.
+function renderStageBtns(live){
+  const b = $('roomBtn'); if(!b) return;
   const n = achCount();
   if(!b._built){
     b._built = 1;
-    $('honIcon').src = pixUrl('trophy', '#E3B457');
+    $('roomIcon').src = pixUrl('medal', '#E3B457');
     // to whatever is calling: the dot's rewards, else a new honour, else where he was
     b.onclick = () => trophyRoom(roomWaiting() ? 'today' : achCount() > (S.honSeen || 0) ? 'hon' : undefined);
   }
@@ -11799,7 +11887,7 @@ function renderHonBtn(live){
         S.autoClimb = !S.autoClimb;
         toast('Auto-climb <b>' + (S.autoClimb ? 'on' : 'off') + '</b>');
         if(view === 'tour') renderTour();
-        renderHonBtn();
+        renderStageBtns();
       };
     }
     const on = !!S.autoClimb;
@@ -11986,7 +12074,7 @@ function renderLive(D){
   renderXp();
   renderNine();
   renderReadout(D || derive());
-  renderHonBtn(true);
+  renderStageBtns(true);
   setText($('gold'), fmt(S.gold));
   setText($('rate'), fmt(Meter.rate()) + ' purse/sec');
   setText($('sovNum'), sovFmt(S.sov));
@@ -12220,13 +12308,16 @@ function renderBag(){
 
   const hd = $('lkHead');
   if(hd){
+    // "Auto on" sat beside a Scrap button that has an auto of its own, so it
+    // says which it is; the words it gave up were "in the locker", which the
+    // band over it already says
     hd.innerHTML = '<span class="lkn">' + sl.n + '</span>'
-      + '<span class="lkc"><b>' + S.bag.length + '</b> / ' + bagCap() + ' in the locker'
-      + (spare.length ? ' \u00b7 ' + spare.length + '\u00a0spare\u00a0' + sl.n.toLowerCase() : '') + '</span>';
+      + '<span class="lkc"><b>' + S.bag.length + '</b> / ' + bagCap()
+      + (spare.length ? ' \u00b7 ' + spare.length + '\u00a0spare' : '') + '</span>';
     const ab = document.createElement('button');
     ab.className = 'lkauto' + (S.autoEquip ? ' on' : '');
     ab.id = 'autoEqBtn';
-    ab.textContent = 'Auto ' + (S.autoEquip ? 'on' : 'off');
+    ab.textContent = 'Auto-equip ' + (S.autoEquip ? 'on' : 'off');
     ab.title = 'Equips a club that drops when it is better on the carry or the '
       + 'purse and worse on neither. Trade-offs stay on the bench.';
     ab.onclick = () => {
@@ -12239,6 +12330,9 @@ function renderBag(){
     };
     hd.appendChild(ab);
   }
+
+  const sb = $('scrapBtn');
+  if(sb){ setText(sb, S.autoScrap >= 0 ? 'Scrap \u00b7 auto' : 'Scrap'); sb.classList.toggle('go', S.autoScrap >= 0); }
 
   const w = $('bagList'); w.innerHTML = '';
   if(worn) w.appendChild(bagRow(worn, true));
@@ -12255,18 +12349,62 @@ function renderBag(){
     const btn = document.createElement('button');
     btn.className = 'equipbtn';
     btn.textContent = 'Scrap ' + (spare.length - 1);
-    btn.onclick = () => {
-      const doomed = spare.slice(1);
-      let sh = 0;
-      doomed.forEach(it => { sh += scrapValue(it); });
-      S.bag = S.bag.filter(it => !doomed.includes(it));
-      S.shard += sh;
-      toast('Scrapped ' + doomed.length + ' for <b>' + sh + '</b> ' + plural(sh, 'shards'));
-      renderBag(); renderVitals();
-    };
+    btn.onclick = () => { scrapList(spare.slice(1)); renderBag(); renderVitals(); };
     r.appendChild(btn);
     w.appendChild(r);
   }
+}
+
+// Scrapping, in one place: auto-scrap for what drops from now on, and the
+// locker cleared by rarity now. Both keep upgrades and set pieces.
+function scrapSheet(){
+  const lvl = S.autoScrap, top = autoScrapTop();
+  const pills = [-1];
+  for(let r = 0; r <= top; r++) pills.push(r);
+  let h = '<h3>Scrap Clubs</h3>'
+    + '<div class="hint">' + S.bag.length + ' / ' + bagCap() + ' in the locker \u00b7 ' + fmt(S.shard) + ' shards</div>'
+    + '<div class="eyebrow" style="margin:10px 0 6px">Auto-Scrap New Clubs</div>'
+    + '<div class="catnav c3">' + pills.map(r => '<button data-auto="' + r + '"' + (lvl === r ? ' class="on"' : '') + '>'
+        + (r < 0 ? 'Off' : B.RARITY[r].n) + '</button>').join('') + '</div>'
+    + '<div class="hint">' + (lvl < 0 ? 'Every club that drops is kept.'
+        : B.RARITY[lvl].n + (lvl ? ' and below are' : ' clubs are') + ' scrapped as they drop.') + ' Set pieces, and the best upgrade for each slot, are kept.</div>'
+    + '<div class="eyebrow" style="margin:12px 0 0">Scrap Now</div>';
+  const rows = [];
+  for(let r = 0; r < B.RARITY.length; r++){
+    const all = S.bag.filter(it => it.rar === r); if(!all.length) continue;
+    const go = all.filter(it => !scrapKeeps(it)), kept = all.length - go.length;
+    let sh = 0; go.forEach(it => { sh += scrapValue(it); });
+    rows.push('<div class="row"><div><div class="nm" style="color:' + RC(r) + '">' + B.RARITY[r].n + '</div>'
+      + '<div class="ds">' + nb(all.length + ' ' + plural(all.length, 'clubs')) + (go.length ? ' \u00b7 ' + nb('+' + fmt(sh, 0) + ' ' + plural(sh, 'shards')) : '')
+      + (kept ? ' \u00b7 ' + kept + '\u00a0kept' : '') + '</div></div>'
+      + (go.length ? '<button class="mini go" data-scrap="' + r + '"' + (r >= 4 ? ' data-sure="1"' : '') + '>Scrap ' + go.length + '</button>'
+                   : '<button class="mini dim" disabled>Kept</button>') + '</div>');
+  }
+  const dup = sparesPastTwo();
+  if(dup.length){
+    let sh = 0; dup.forEach(it => { sh += scrapValue(it); });
+    rows.push('<div class="row"><div><div class="nm">Spares</div><div class="ds">Past the best two in each slot \u00b7 '
+      + nb('+' + fmt(sh, 0) + ' ' + plural(sh, 'shards')) + '</div></div>'
+      + '<button class="mini go" data-scrap="spare">Scrap ' + dup.length + '</button></div>');
+  }
+  h += rows.length ? rows.join('') : '<div class="empty">The locker is empty.</div>';
+  showSheet(h + '<button class="act ghost" onclick="hideSheet()">Close</button>');
+  const sh = $('sheet');
+  if(!sh) return;
+  sh.querySelectorAll('[data-auto]').forEach(b => b.onclick = () => {
+    S.autoScrap = +b.dataset.auto; scrapSheet(); renderBag();
+  });
+  sh.querySelectorAll('[data-scrap]').forEach(b => b.onclick = () => {
+    // Legendary and Mythic take a second tap: nothing scrapped comes back
+    if(b.dataset.sure && !b._armed){
+      b._armed = 1; b._txt = b.textContent; b.textContent = 'Tap again';
+      setTimeout(() => { if(b.isConnected){ b._armed = 0; b.textContent = b._txt; } }, 4000);
+      return;
+    }
+    const k = b.dataset.scrap;
+    scrapList(k === 'spare' ? sparesPastTwo() : S.bag.filter(it => it.rar === +k && !scrapKeeps(it)));
+    scrapSheet(); renderBag(); renderVitals();
+  });
 }
 
 // One club, the way the reference reads it: framed art, the rarity said out
@@ -12674,7 +12812,7 @@ function renderTour(){
     + '<span class="amt">' + (S.autoClimb ? 'On' : 'Off') + '</span></button></div>';
   const cb = $('climbBtn'); if(cb) cb.onclick = () => climb(1);
   $('dropBtn').onclick = () => climb(-1);
-  $('autoBtn').onclick = () => { S.autoClimb = !S.autoClimb; renderTour(); renderHonBtn(); };
+  $('autoBtn').onclick = () => { S.autoClimb = !S.autoClimb; renderTour(); renderStageBtns(); };
 
   const ch = $('tierBox').querySelector('#cardHint .qm');
   if(ch){
@@ -13169,7 +13307,7 @@ const DEV = {
     h += row('Frame', b('frame times ' + (DEV_FPS ? 'on' : 'off'), 'DEV.fps()')
       + b('ground by ' + (Scene.pixGround === false ? 'rects' : 'pixels'), 'DEV.ground()'));
 
-    h += row('Gear', b('drop 1', 'DEV.gear(0)') + b('drop 10', 'DEV.gearN(10)')
+    h += row('Gear', b('drop 1', 'DEV.gear(0)') + b('drop 10', 'DEV.gearN(10)') + b('drop 30 mixed', 'DEV.gearMix()')
       + b('Mythic set', 'DEV.set(5)') + b('Legendary set', 'DEV.set(4)')
       + b('+15 all', 'DEV.enhAll()') + b('empty locker', 'DEV.clearBag()'));
 
@@ -13265,6 +13403,9 @@ const DEV = {
   clearUpg(){ B.UPG.forEach(u => S.upg[u.id] = 0); this.re(); },
   gear(rar){ bagAdd(makeItem(S.tier, derive().drop, rar)); this.re(); },
   gearN(n){ for(let i=0;i<n;i++) bagAdd(makeItem(S.tier, derive().drop + 0.4, 1)); this.re(); },
+  // every rarity, mostly the low ones, the way drops come: something for the
+  // scrap sheet to sort, and for auto-scrap to take as they land
+  gearMix(){ for(let i = 0; i < 30; i++) bagAdd(makeItem(S.tier, 0, [0,0,0,0,1,1,1,2,2,3,4,5][i % 12])); this.re(); },
   set(rar){ B.SLOTS.forEach(sl => { S.equip[sl.id] = makeItem(S.tier, 0, rar, sl.id); }); this.re(); },
   enhAll(){ B.SLOTS.forEach(sl => { const it = S.equip[sl.id]; if(it) it.enh = B.ENH_MAX; }); this.re(); },
   clearBag(){ S.bag = []; this.re(); },
@@ -14052,20 +14193,7 @@ function boot(){
     if(t.dataset.v === 'career') careerTab = t;
     if(t.dataset.v === 'tour') tourTab = t;
   });
-  $('scrapBtn').onclick = () => {
-    const keep = {}, doomed = [];
-    S.bag.slice().sort((a,b) => itemScore(b) - itemScore(a)).forEach(it => {
-      keep[it.slot] = (keep[it.slot] || 0) + 1;
-      if(keep[it.slot] > 2) doomed.push(it);
-    });
-    if(!doomed.length){ toast('Nothing spare to scrap'); return; }
-    let sh = 0;
-    doomed.forEach(it => { sh += scrapValue(it); });
-    S.bag = S.bag.filter(it => !doomed.includes(it));
-    S.shard += sh;
-    toast('Scrapped ' + doomed.length + ' for <b>' + sh + '</b> ' + plural(sh, 'shards'));
-    renderBag();
-  };
+  $('scrapBtn').onclick = () => scrapSheet();
   $('xpStrip').onclick = () => setView('career');
   $('drawerIc').src = pixUrl('caret', '#E3B457');
   $('sovIcon').src = pixUrl('sov2', '#E3B457');

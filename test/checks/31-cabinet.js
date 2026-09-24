@@ -92,13 +92,13 @@ module.exports = {
 
         // ---- the case's rewards: at each step, paid once, never lost ---------------
         hideSheet(); S.caseGot = {}; S.majorWins = {}; S.cups = 0; S.bestRound = undefined; S.freeT = 0;
-        const dot = () => { renderHonBtn(); return document.getElementById('honBtn').classList.contains('ready'); };
+        const dot = () => { renderStageBtns(); return document.getElementById('roomBtn').classList.contains('ready'); };
         o.dotIdle = dot();
         S.cups = 5;                                           // steps at 1 and 5
         o.cupPend = casePending().map(x => x.c.id + x.i).join(',');
         o.dotWaiting = dot();
         // the trophy opens on what its dot is for, wherever the room was left
-        roomTab = 'hon'; document.getElementById('honBtn').click();
+        roomTab = 'hon'; document.getElementById('roomBtn').click();
         o.opensToday = roomTab + '/' + !!document.querySelector('#roomBody [data-collect="cup"]'); hideSheet();
         const sov0 = S.sov || 0; collect('cup'); o.cupPaid = (S.sov || 0) - sov0;
         o.cupAgain = casePending().length; o.cupPaidAgain = (collect('cup'), (S.sov || 0) - sov0);

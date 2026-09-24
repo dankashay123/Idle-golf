@@ -100,6 +100,7 @@ module.exports = {
       for (const t of ['today', 'case', 'hon']) { trophyRoom(t); sweep('sheet', 'room/' + t); }
       try { hideSheet(); } catch (e) {}
       perksSheet(); sweep('sheet', 'perks'); try { hideSheet(); } catch (e) {}
+      scrapSheet(); sweep('sheet', 'scrap'); try { hideSheet(); } catch (e) {}
       if (S.bag[0]) { itemSheet(S.bag[0], false); sweep('sheet', 'item'); try { hideSheet(); } catch (e) {} }
 
       // the away card's three tiles: captions on one line, content centred
@@ -171,7 +172,7 @@ module.exports = {
         // tallest pair of toasts the game can raise standing. The comment over
         // #toasts has always claimed they are "clear of the readout on the left
         // and the two stage buttons below"; this is that claim, measured.
-        const ids = ['readout', 'shopBtn', 'setBtn', 'hudClimb', 'honBtn', 'perkBtn', 'holeMap', 'toasts'];
+        const ids = ['readout', 'shopBtn', 'setBtn', 'hudClimb', 'roomBtn', 'perkBtn', 'holeMap', 'toasts'];
         const box = {}; for (const i of ids) { const e = $(i); if (e) box[i] = R(e); }
         const ks = Object.keys(box);
         for (let i = 0; i < ks.length; i++) for (let j = i + 1; j < ks.length; j++) {
@@ -244,7 +245,7 @@ module.exports = {
         await new Promise(r => setTimeout(r, 120));
         const W = innerWidth, inL = edge === '--sal';
         const clear = [];
-        for (const id of ['stage', 'hole', 'readout', 'shopBtn', 'setBtn', 'hudClimb', 'nineBar', 'honBtn', 'perkBtn', 'holeMap',
+        for (const id of ['stage', 'hole', 'readout', 'shopBtn', 'setBtn', 'hudClimb', 'nineBar', 'roomBtn', 'perkBtn', 'holeMap',
                           'toasts', 'crest', 'vitals', 'tabs', 'panel']) {
           const e = document.getElementById(id); if (!e) continue;
           const r = e.getBoundingClientRect(); if (!r.width) continue;
@@ -437,7 +438,7 @@ module.exports = {
       throw new Error('only ' + nums.drawn + ' of ' + nums.N + ' swings showed a number: kept apart '
         + 'by showing almost none of them');
 
-    return [r.looked + ' boxes measured across five screens, four shop tabs, the Trophy Room\'s three pages and two sheets, '
+    return [r.looked + ' boxes measured across five screens, four shop tabs, the Trophy Room\'s three pages and three sheets, '
       + 'none past its edge',
       'away card: three tiles, captions on one line, all three centred',
       'stage and vitals at 320/400/768 and on its side at 740/844: nothing off the stage, no HUD element on another '

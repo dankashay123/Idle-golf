@@ -264,8 +264,8 @@ module.exports = {
       out.honTableFirst = B.ACH[0].n;
       out.honHints = Array.from(hw.querySelectorAll('.hint')).map(e => e.textContent);
       out.honNear = achNear(3).map(a => a.n);
-      renderHonBtn();
-      out.honBtnLabel = $('honBtn').getAttribute('aria-label');
+      renderStageBtns();
+      out.honBtnLabel = $('roomBtn').getAttribute('aria-label');
 
       // ---- 6. what climbing a Tour Card does to the money --------------
       setView('tour');
@@ -500,7 +500,7 @@ module.exports = {
       throw new Error('the honours sheet never names the nearest one: '
         + JSON.stringify(r.honHints));
     if (r.honBtnLabel.indexOf(r.honNear[0]) < 0)
-      throw new Error('the honours button says "' + r.honBtnLabel + '" instead of naming '
+      throw new Error('the Trophy Room button says "' + r.honBtnLabel + '" instead of naming '
         + 'the nearest honour');
 
     // ---- climbing a Tour Card -----------------------------------------

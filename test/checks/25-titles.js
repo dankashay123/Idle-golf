@@ -51,6 +51,8 @@ module.exports = { name: 'titles', async run(page) {
     S.freeT = B.FREE_EVERY; S.cups = Math.max(S.cups || 0, 6);
     for (const t of ['today', 'case', 'hon']) { trophyRoom(t); sweep('room/' + t); }
     perksSheet(); sweep('perks');
+    for (let r = 0; r < B.RARITY.length; r++) { const it = makeItem(S.tier, 0, r); it.rar = r; S.bag.push(it); }
+    scrapSheet(); sweep('scrap');
     try { hideSheet(); } catch (e) {}
     try { setView('career'); careerSub = 'leg'; renderLegacy(); $('retireBtn').onclick(); sweep('retire'); hideSheet(); } catch (e) {}
     try { itemSheet(S.bag[0] || Object.values(S.equip)[0], false); sweep('item'); hideSheet(); } catch (e) {}

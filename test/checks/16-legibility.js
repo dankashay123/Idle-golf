@@ -87,6 +87,9 @@ module.exports = {
       S.freeT = B.FREE_EVERY; S.cups = Math.max(S.cups || 0, 6); S.majorWins = { masters: 1 };
       for (const t of ['today', 'case', 'hon']) { trophyRoom(t); sweep('room/' + t); }
       perksSheet(); sweep('perks');
+      // a club of every rarity in the locker, so each coloured row is read
+      for (let r = 0; r < B.RARITY.length; r++) { const it = makeItem(S.tier, 0, r); it.rar = r; S.bag.push(it); }
+      scrapSheet(); sweep('scrap');
       try { hideSheet(); } catch (e) {}
       setView('upg');
       return { small, noname, lowc, buttons, texts };

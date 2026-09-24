@@ -36,10 +36,10 @@ module.exports = {
         sovpack:  (B.SOV_PACKS || []).map(p => [p.n, p.ic]),
         bag:      (B.BAGS || []).map(b2 => [b2.n, b2.ic]),
         bench:    (B.PERM || []).map(u => [u.n, u.ic]),
-        // the shop button and the three offers, which have no table of their own
+        // the stage buttons and the three offers, which have no table of their own
         shop:     [['Settings', 'gear'], ['Pro shop', 'proshop'], ['Starter Pack', 'starter'],
                    ['Club Membership', 'member'], ['Double Purse', 'boost'],
-                   ['Auto-climb', 'autoclimb']],
+                   ['Auto-climb', 'autoclimb'], ['Trophy Room', 'medal']],
         cperk:    (B.CPERKS || []).map(p => [p.n, p.ic]),
         // the trophy cabinet: a trophy for each major of the week, the jacket, the cups, the Grand Slam
         cabinet:  B.COURSE.filter(c => c.slot === 'weekly').map(c => [c.n + ' trophy', c.trophy])
