@@ -90,8 +90,54 @@ module.exports = {
     if (fx.feat !== 'twilight' || fx.featBack !== null)
       throw new Error('the stake of the day override did not take, or did not let go');
 
+    // the buttons for the newer parts of the game do what they say
+    const nw = await page.evaluate(() => {
+      const o = {}, SNAP = JSON.stringify(S);
+      QUIET = false; S.dgnRun = null;
+      // the sweep above pressed every switch once; put the switches back first
+      if (DEV._recs) DEV.synth();
+      if (DEV_FPS) DEV.fps();
+      Scene.pixGround = true;
+      try {
+        DEV.majorNext(); const t = tournamentOf(S.hole);
+        o.majorNext = isWeekMajor(t) && courseFor(t).slot === 'weekly' && holesPlayed(S.hole) === 0;
+        DEV.major0(); DEV.majorWin(1);
+        const wk = S.weekly && courseById(S.weekly.id);
+        o.majorWin = !!wk && S.majorWins[wk.id] >= 1 && styleOwned('o', wk.prize) && S.weekly.won === 1;
+        DEV.majorWin(4); o.majorAll = COURSE_WEEK.every(c => S.majorWins[c.id] >= 1 && styleOwned('o', c.prize));
+        S.outfit = COURSE_WEEK[0].prize; DEV.major0();
+        o.major0 = !Object.keys(S.majorWins).length && !COURSE_WEEK.some(c => styleOwned('o', c.prize)) && S.outfit === 'classic';
+        const i = B.COURSE.findIndex(c => c.slot === 'weekly'); DEV.course(i);
+        o.coursePlaysMajor = isWeekMajor(tournamentOf(S.hole)) && courseFor(tournamentOf(S.hole)).id === B.COURSE[i].id;
+        const t0 = tournamentOf(S.hole); DEV.nextEvent(1); o.nextEvent = tournamentOf(S.hole) === t0 + 1 && holesPlayed(S.hole) === 0;
+        DEV.nextSeason(); o.nextSeason = (tournamentOf(S.hole) - 1) % B.SEASON === 0;
+        DEV.nextEvent(2); DEV.cabinet(1);
+        o.cabFill = COURSE_WEEK.every(c => S.majorWins[c.id] >= 1) && S.cups >= 12 && S.bestCards.length === 5
+          && S.evLog.filter(x => seasonOf(x.t) === seasonOf(tournamentOf(S.hole))).length === 2;
+        DEV.cabinet(0); o.cabEmpty = !Object.keys(S.majorWins).length && !S.cups && !S.bestCards.length && !S.evLog.length;
+        Scene.fairySay = null; DEV.say('cheer'); o.cheer = Scene.fairySay && Scene.fairySay.kind;
+        Scene.fairySay = null; DEV.say('quip'); o.quip = Scene.fairySay && Scene.fairySay.kind;
+        S.cperkOwn = { tempo: 1 }; S.cperk = 'tempo'; S.buff = {}; DEV.cperkNow(); o.perkNow = !!S.buff.cSpd;
+        DEV.cperks(1); o.allPerks = B.CPERKS.every(p => S.cperkOwn[p.id]); DEV.cperks(0); o.noPerks = !S.cperk && !Object.keys(S.cperkOwn).length;
+        const had = Object.keys(Sfx.recs).length; DEV.synth(); o.synthOff = !Object.keys(Sfx.recs).length; DEV.synth();
+        o.synthBack = Object.keys(Sfx.recs).length === had;
+        DEV.fps(); o.fpsOn = !!document.getElementById('devFps'); DEV.fps(); o.fpsOff = !document.getElementById('devFps');
+        DEV.ground(); o.rects = Scene.pixGround === false; DEV.ground(); o.pixels = Scene.pixGround !== false;
+        DEV.hon('homes'); o.homes = achMetric('homes');
+        o.read = /climb check/.test(document.getElementById('sheet').textContent) && /audio /.test(document.getElementById('sheet').textContent);
+      } finally {
+        QUIET = false; hideSheet();
+        Object.keys(S).forEach(k => delete S[k]); Object.assign(S, JSON.parse(SNAP)); startHole();
+      }
+      return o;
+    });
+    const wrong = Object.entries(nw).filter(([k, v]) => k === 'homes' ? v !== 10 : k === 'cheer' ? v !== 'cheer'
+      : k === 'quip' ? v !== 'quip' : v !== true).map(([k, v]) => k + '=' + v);
+    if (wrong.length) throw new Error('newer dev buttons did not do what they say: ' + wrong.join(', '));
+
     return ['tap ignored, drag ignored, 1.5s hold opens it',
       'all ' + press.n + ' dev buttons pressed without an error; dailies, named sets, trophy and honours '
-      + 'resets, Card I, sovereigns and the stake override all do what they say'];
+      + 'resets, Card I, sovereigns and the stake override all do what they say',
+      'and the newer ones: the major of the week, the season, the cabinet, the fairy, caddie perks, sound, the frame readout'];
   }
 };

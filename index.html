@@ -9414,6 +9414,9 @@ const Scene = {
     this.quipT -= dt;
     if(this.quipT > 0) return;
     this.quipT = 50 + Math.random() * 60;
+    this.fairyReact('quip', this.quipLine(), 2.4);
+  },
+  quipLine(){
     const SAY = B.FAIRY_SAY, cs = this.course || {}, t = tournamentOf(S.hole);
     const ctx = [];
     if(this.windMph() >= 12) ctx.push(SAY.wind);
@@ -9422,7 +9425,7 @@ const Scene = {
     if(cs.slot === 'home') ctx.push(SAY.home);
     if(isWeekMajor(t)) ctx.push(SAY.major);
     const list = ctx.length && Math.random() < 0.6 ? ctx[Math.random() * ctx.length | 0] : SAY.quip;
-    this.fairyReact('quip', list[Math.random() * list.length | 0], 2.4);
+    return list[Math.random() * list.length | 0];
   },
   drawCaddie(c, gx, gy, gw, gh){
     const spr = SPRITE.caddie, CD = caddieNow(), FX = STYLEFX[CD.fx] || null;
@@ -12924,7 +12927,14 @@ const DEV = {
       + 'course ' + cs.n + '  ·  hole ' + fmt(S.yardsMax) + ' yds  ·  purse '
       + fmt(purseFor(S.hole, S.tier, D.gold)) + '<br>'
       + 'clear ' + (S.yardsMax/Math.max(1e-9, D.dps)).toFixed(2) + 's of ' + S.parTime.toFixed(1)
-      + 's  ·  ' + scoreFor((S.yardsMax/Math.max(1e-9, D.dps))/S.parTime).n + '</div>';
+      + 's  ·  ' + scoreFor((S.yardsMax/Math.max(1e-9, D.dps))/S.parTime).n + '<br>'
+      // what auto-climb is judging, and what the audio is doing: the two
+      // questions nothing else on screen can answer
+      + 'climb check ' + (S.tier < B.TIER_MAX ? roundRatio(S.tier + 1).toFixed(2) + ' of par on Card '
+          + roman(S.tier + 1) + ', climbs at ' + B.CLIMB_FIT.toFixed(2) + (cardUnlocked(S.tier + 1) ? '' : ' (locked)') : 'top card') + '<br>'
+      + 'audio ' + (Sfx.ctx ? Sfx.ctx.state : 'not started') + '  ·  recordings '
+      + (['strike', 'cup', 'music'].filter(k => Sfx.recs[k]).join(', ') || 'none') + (DEV._recs ? ' (off)' : '')
+      + '  ·  music ' + (S.music === 0 ? 'off' : Sfx.mus.length ? 'playing' : 'waiting') + '</div>';
 
     h += row('Purse', b('+1 hole', 'DEV.gold(1)') + b('+100', 'DEV.gold(100)')
       + b('+10k', 'DEV.gold(1e4)') + b('x1000', 'DEV.mulGold(1e3)')
@@ -12950,6 +12960,26 @@ const DEV = {
     h += row('Conditions', b('reroll', 'DEV.chaos()') + b('night', 'DEV.weather(3)')
       + b('crosswind', 'DEV.weather(1)') + b('fair', 'DEV.weather(0)')
       + b('skip hole', 'DEV.skip()') + b('skip round', 'DEV.skipN(18)'));
+
+    h += row('Major of the week', b('play it next', 'DEV.majorNext()') + b('win this one', 'DEV.majorWin(1)')
+      + b('win all four', 'DEV.majorWin(4)') + b('clear wins', 'DEV.major0()'));
+
+    h += row('Season', b('next event', 'DEV.nextEvent(1)') + b('next season', 'DEV.nextSeason()')
+      + b('finish event', 'DEV.event(1)'));
+
+    h += row('Trophy cabinet', b('fill it', 'DEV.cabinet(1)') + b('empty it', 'DEV.cabinet(0)'));
+
+    h += row('Sound', b('strike', 'DEV.snd(\'strike\')') + b('pure strike', 'DEV.snd(\'strike\', 1)')
+      + b('cup', 'DEV.snd(\'hole\')') + b('coin', 'DEV.snd(\'coin\')') + b('honour', 'DEV.snd(\'ach\')')
+      + b('event won', 'DEV.snd(\'cup\')') + b('music ' + (S.music === 0 ? 'off' : 'on'), 'DEV.music()')
+      + b('restart music', 'DEV.music(1)') + b(DEV._recs ? 'recordings off' : 'recordings on', 'DEV.synth()'));
+
+    h += row('Fairy caddie', b('cheer', 'DEV.say(\'cheer\')') + b('sigh', 'DEV.say(\'sigh\')')
+      + b('quip', 'DEV.say(\'quip\')') + b('perk now', 'DEV.cperkNow()')
+      + b('own all perks', 'DEV.cperks(1)') + b('no perks', 'DEV.cperks(0)'));
+
+    h += row('Frame', b('frame times ' + (DEV_FPS ? 'on' : 'off'), 'DEV.fps()')
+      + b('ground by ' + (Scene.pixGround === false ? 'rects' : 'pixels'), 'DEV.ground()'));
 
     h += row('Gear', b('drop 1', 'DEV.gear(0)') + b('drop 10', 'DEV.gearN(10)')
       + b('Mythic set', 'DEV.set(5)') + b('Legendary set', 'DEV.set(4)')
@@ -12990,7 +13020,8 @@ const DEV = {
     h += row('Style', b('own every look', 'DEV.style()') + b('back to plain', 'DEV.style0()'));
 
     h += row('Honours', b('unlock all', 'DEV.ach()') + b('clear all', 'DEV.ach0()')
-      + b('+5 cups', 'DEV.cups(5)'));
+      + b('+5 cups', 'DEV.cups(5)') + b('doglegs +50', 'DEV.hon(\'dogleg\')')
+      + b('wind birdies +25', 'DEV.hon(\'windBird\')') + b('every home course', 'DEV.hon(\'homes\')'));
 
     h += row('Simulate away', b('1 hour', 'DEV.away(3600)') + b('6 hours', 'DEV.away(6*3600)')
       + b('12 hours', 'DEV.away(12*3600)') + b('3 days', 'DEV.away(3*86400)'));
@@ -13030,6 +13061,9 @@ const DEV = {
     if(!at) at = tournamentOf(S.hole) + 1;
     S.hole = (at-1)*B.ROUND*B.DAYS + 1;
     S.evCourse = { t: at, id: cs.id };
+    // a major of the week put on here is played as the major, for its purse
+    // and its jacket; it used to be put on as an ordinary stop
+    if(cs.slot === 'weekly') S.weekly = { wk: weekNow(), t: at, id: cs.id, done: 0, won: 0 };
     S.scores = []; S.tourScore = 0; Scene.dFloor = -1; startHole(); this.re(); },
   weather(i){ S.chaosBump = (S.chaosBump||0); 
     for(let k=0;k<60;k++){ S.chaosBump++; if(chaosFor(S.hole,S.tier).n === B.CHAOS[i].n) break; }
@@ -13093,8 +13127,89 @@ const DEV = {
           advanceHole(); startHole(); this.re(); },
   skipN(n){ for(let i=0;i<n;i++){ advanceHole(); } startHole(); this.re(); },
   chaos(){ S.chaosBump = (S.chaosBump||0) + 1; startHole(); this.re(); },
-  god(){ S.godmode = !S.godmode; this.re(); }
+  god(){ S.godmode = !S.godmode; this.re(); },
+  // ---- the major of the week, the season and the cabinet ----
+  // to the first hole of event t + n, with nothing of the one left behind
+  nextEvent(n){ const t = tournamentOf(S.hole);
+    S.hole = (t + Math.max(1, n || 1) - 1) * B.ROUND * B.DAYS + 1; S.evCourse = null;
+    S.scores = []; S.tourScore = 0; Scene.dFloor = -1; startHole(); this.re(); },
+  nextSeason(){ const t = tournamentOf(S.hole); this.nextEvent((seasonOf(t) + 1) * B.SEASON + 1 - t); },
+  // this week's major, still to be claimed, and the next event tees off on it
+  majorNext(){ S.weekly = null; S.eventsPlayed = Math.max(1, S.eventsPlayed || 0); this.nextEvent(1); },
+  majorWin(n){ const wk = weekNow();
+    const list = n >= COURSE_WEEK.length ? COURSE_WEEK
+      : [(S.weekly && S.weekly.wk === wk && courseById(S.weekly.id)) || weekMajor(wk)];
+    for(const cs of list){ S.majorWins[cs.id] = (S.majorWins[cs.id] || 0) + 1;
+      S.styleOwn['o:' + cs.prize] = 1; S.styleOwn['c:' + cs.prize] = 1; }
+    if(list.length === 1) S.weekly = { wk, t: 0, id: list[0].id, done: 1, won: 1 };
+    checkAch(); this.re(); },
+  major0(){ S.majorWins = {}; S.weekly = null;
+    COURSE_WEEK.forEach(cs => { delete S.styleOwn['o:' + cs.prize]; delete S.styleOwn['c:' + cs.prize]; });
+    if(!styleOwned('o', S.outfit)) S.outfit = 'classic';
+    if(!styleOwned('c', S.caddie)) S.caddie = 'bib';
+    buildSprites(); this.re(); },
+  cabinet(fill){
+    if(fill){
+      COURSE_WEEK.forEach((cs, i) => { S.majorWins[cs.id] = Math.max(S.majorWins[cs.id] || 0, i + 1);
+        S.styleOwn['o:' + cs.prize] = 1; S.styleOwn['c:' + cs.prize] = 1; });
+      S.cups = Math.max(S.cups || 0, 12);
+      // this season, played up to now, and five best cards on real courses
+      const t = tournamentOf(S.hole), first = seasonOf(t) * B.SEASON + 1;
+      S.evLog = (S.evLog || []).filter(x => x.t < first);
+      for(let e = first; e < t; e++)
+        S.evLog.push({ t: e, id: calendarCourse(e).id, s: -20 - (e % 7) * 9, b: e % 2, w: 0, c: S.tier });
+      S.bestCards = [-212, -180, -151, -120, -96].map((sc, i) =>
+        ({ t: 1 + i, id: B.COURSE[(i * 7) % B.COURSE.length].id, s: sc, c: Math.max(0, S.tier - i) }));
+      if(S.bestRound === undefined || S.bestRound > -212) S.bestRound = -212;
+      if(S.bestNine === undefined || S.bestNine > -31) S.bestNine = -31;
+    }else{
+      S.majorWins = {}; S.cups = 0; S.evLog = []; S.bestCards = [];
+      S.bestRound = undefined; S.bestNine = undefined;
+    }
+    checkAch(); this.re(); },
+  hon(k){ if(k === 'homes') COURSE_HOME.forEach(c => { S.homes[c.id] = 1; });
+    else bump(k, k === 'dogleg' ? 50 : 25);
+    checkAch(); this.re(); },
+  // ---- sound, the fairy, the frame ----
+  snd(k, a){ Sfx.unlock(); Sfx.lastSwing = -1; Sfx.play(k, k === 'hole' ? -1 : a); },
+  music(restart){
+    if(restart){ Sfx.mus.forEach(m => { try{ m.src.stop(); }catch(e){} }); Sfx.mus = []; Sfx.unlock(); Sfx.musicTick(); }
+    else toggleMusic();
+    this.open(); },
+  // hear the stand-ins: the recordings put aside, and back
+  synth(){ if(this._recs){ Sfx.recs = this._recs; this._recs = null; } else { this._recs = Sfx.recs; Sfx.recs = {}; }
+    Sfx.musicTick(); this.open(); },
+  say(kind){
+    if(kind === 'quip') Scene.fairyReact('quip', Scene.quipLine(), 2.4);
+    else { const l = kind === 'cheer' ? B.FAIRY_SAY.birdie : B.FAIRY_SAY.bogey;
+           Scene.fairyReact(kind, l[Math.random() * l.length | 0]); }
+    hideSheet(); },
+  cperkNow(){ if(!S.cperk || !cperkDef(S.cperk)){ const p = B.CPERKS[0];
+      S.cperkOwn = S.cperkOwn || {}; S.cperkOwn[p.id] = 1; S.cperk = p.id; }
+    S.cperkT = B.CPERK_EVERY; tickCaddie(0); hideSheet(); },
+  cperks(on){ S.cperkOwn = {}; if(on) B.CPERKS.forEach(p => { S.cperkOwn[p.id] = 1; });
+    else S.cperk = null;
+    this.re(); },
+  fps(){
+    if(DEV_FPS){ DEV_FPS.el.remove(); DEV_FPS = null; }
+    else{ const el = document.createElement('div'); el.id = 'devFps';
+      el.style.cssText = 'position:absolute;left:4px;bottom:4px;z-index:9;font:10px var(--mono);color:#DFE9DC;'
+        + 'background:rgba(6,16,12,.85);padding:2px 5px;pointer-events:none';
+      el.textContent = '\u2026'; $('stage').appendChild(el);
+      DEV_FPS = { el, n: 0, ms: 0, t0: performance.now() }; }
+    this.open(); },
+  ground(){ Scene.pixGround = Scene.pixGround === false; this.open(); }
 };
+// The developer menu's frame readout: frames a second, and what one costs.
+let DEV_FPS = null;
+function devFpsTick(ms){
+  const F = DEV_FPS; F.n++; F.ms += ms;
+  const now = performance.now();
+  if(now - F.t0 >= 1000){
+    F.el.textContent = Math.round(F.n * 1000 / (now - F.t0)) + ' fps \u00b7 ' + (F.ms / F.n).toFixed(1) + ' ms';
+    F.n = 0; F.ms = 0; F.t0 = now;
+  }
+}
 
 /* =========================================================================
    THE CAREER PANEL
@@ -13365,6 +13480,7 @@ function step(dt, D){
 let last = 0, slowT = 0, saveT = 0;
 let frameErr = 0;
 function frame(now){
+  const f0 = DEV_FPS ? performance.now() : 0;
   try{ frameBody(now); }
   catch(e){
     // One bad frame used to kill the loop outright: no redraw, no input, black
@@ -13375,6 +13491,7 @@ function frame(now){
       toast('Something went wrong \u00b7 the game carried on');
     }
   }
+  if(DEV_FPS) devFpsTick(performance.now() - f0);
   requestAnimationFrame(frame);
 }
 function frameBody(now){

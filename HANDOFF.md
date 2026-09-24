@@ -105,7 +105,7 @@ Line numbers are approximate and drift. Search for the name instead.
 | Caddie perks (nine; `now:1` means instant, e.g. Ready Golf) | `tickCaddie`, `cperkPick`, `renderCadPerks` |
 | Daily challenges | `dailyStart`, `dailyTick`, `dayNow` (`DAY_FORCE` overrides it in tests) |
 | Tour tab | `renderTour`, `renderMajor` |
-| Developer menu (tap the title) | `const DEV = {`. `DEV.course(i)` pins any course to the next event |
+| Developer menu (hold the course name still for 1.5s) | `const DEV = {`. `DEV.course(i)` pins any course to the next event (a major of the week is set up as the major). The read panel shows the audio state and the auto-climb judgement; rows for the major of the week, the season, the cabinet, sound and music, the fairy, caddie perks, the new honours, and a frame-time readout (`DEV_FPS`) |
 | Main loop | `step()` |
 
 ### Globals worth knowing
