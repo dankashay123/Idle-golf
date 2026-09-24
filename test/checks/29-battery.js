@@ -91,6 +91,20 @@ module.exports = {
         finally { for (const k in orig) P[k] = orig[k]; }
         o.calls = calls;
 
+        // words on the field are baked whole and laid down in one; the same
+        // picture as setting them a letter at a time, shadow and all
+        const byLetter = (cx, str, x, y, col, sc, shadow) => {
+          const put = (c2, x0, y0) => { for (let i = 0; i < str.length; i++) if (str[i] !== ' ')
+            cx.drawImage(glyphCv(str[i], c2, sc), x0 + i * (FW + FGAP) * sc, y0); };
+          if (shadow) put('rgba(8,13,10,.75)', x + sc, y + sc); put(col, x, y); };
+        const tc = document.createElement('canvas'); tc.width = 240; tc.height = 40; const tg = tc.getContext('2d');
+        const px = f => { tg.fillStyle = '#3A7A40'; tg.fillRect(0, 0, 240, 40); f(); return tg.getImageData(0, 0, 240, 40).data; };
+        o.text = 0; o.textN = 0;
+        for (const [str, col, sc, sh] of [['8 MPH >>', '#F4F6EF', 1, 1], ['LEY SURGE', '#E3B457', 2, 1], ['NICE!', '#57E0BE', 1, 0], ['-1S', '#FFD66B', 3, 1]]) {
+          const a = px(() => byLetter(tg, str, 4, 4, col, sc, sh)), bb = px(() => (sh ? drawTextS : drawText)(tg, str, 4, 4, col, sc));
+          o.textN++; for (let k = 0; k < a.length; k++) if (a[k] !== bb[k]) { o.text++; break; }
+        }
+
         // the canvas on the page
         const cv = $('hole'), dpr = devicePixelRatio;
         o.canvas = { w: cv.width, h: cv.height, VW, VH, css: cv.getBoundingClientRect().width, scale: Scene.scale, dpr,
@@ -117,6 +131,7 @@ module.exports = {
     if (!(r.calls > 50 && r.calls < MAX_CALLS))
       throw new Error('a frame on the course made ' + r.calls + ' canvas calls (the field is meant to go in one stamp; '
         + 'under ' + MAX_CALLS + ')');
+    if (r.text) throw new Error(r.text + ' of ' + r.textN + ' words baked whole differ from the same words set a letter at a time');
     const C = r.canvas;
     if (C.w !== C.VW || C.h !== C.VH)
       throw new Error('the canvas on the page is ' + C.w + 'x' + C.h + ' for a ' + C.VW + 'x' + C.VH + ' picture');

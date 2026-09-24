@@ -95,6 +95,12 @@ module.exports = {
         o.awarded = ids.filter(id => S.achDone[id]);
         o.staffV = B.ACH.find(a => a.id === 'staff').v; o.perks = B.CPERKS.length;
 
+        // ---- an honour counted as a share reads as one -----------------------------
+        const sb = B.ACH.find(a => a.m === 'mst'); delete S.achDone[sb.id];
+        const hw = document.createElement('div'); honRows(hw);
+        const row = [...hw.querySelectorAll('.row')].find(e => e.querySelector('.nm').textContent.indexOf(sb.n) >= 0);
+        o.share = row ? row.querySelector('.mt').textContent : '';
+
         // ---- a save with junk in it ---------------------------------------------
         S.homes = { willow: 1, nowhere: 1, masters: 1 }; initState(); o.repaired = Object.keys(S.homes).join(',');
         S.homes = 'x'; initState(); o.repaired2 = typeof S.homes + ':' + Object.keys(S.homes).length;
@@ -119,6 +125,7 @@ module.exports = {
     if (!/^0 /.test(r.calNoted)) throw new Error('an event on a calendar course was noted as a home course: ' + r.calNoted);
     if (r.awarded.length !== 6) throw new Error('only ' + r.awarded.join(', ') + ' were awarded once reached');
     if (r.staffV !== r.perks) throw new Error('Full Staff asks for ' + r.staffV + ' perks and there are ' + r.perks);
+    if (!/^\d+% \/ \d+%/.test(r.share)) throw new Error('an honour counted as a share reads "' + r.share + '"');
     if (r.repaired !== 'willow' || r.repaired2 !== 'object:0') throw new Error('a save with junk home courses loaded as ' + r.repaired + ' / ' + r.repaired2);
     return ['round a dogleg: only a shot from short of the corner to past it (bend ' + d.bend + ')',
       'a birdie in ' + w.mph + ' mph of wind counts, a birdie in a breeze or a par in a gale does not',

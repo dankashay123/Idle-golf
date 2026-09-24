@@ -415,6 +415,8 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
 .cabn img{width:36px;height:36px;image-rendering:pixelated;image-rendering:crisp-edges}
 .cabn .big{font-family:var(--mono);font-size:var(--f5);font-weight:600;color:var(--brass);line-height:1}
 .cabn .cn{font-size:var(--f1);color:var(--dim);margin-top:2px}
+.cabn.no img{opacity:.45}
+.cabn.no .big{color:var(--faint)}
 .plaque{padding:8px 10px 9px}
 .plaque .ph{font-family:var(--disp);font-size:var(--f3);color:var(--brass);margin-bottom:4px}
 .plaque .pr{display:grid;grid-template-columns:auto 1fr;gap:10px;align-items:baseline;padding:2px 0;font-size:var(--f2)}
@@ -3795,6 +3797,9 @@ const achCount = () => B.ACH.reduce((n, a) => n + (achDone(a.id) ? 1 : 0), 0);
 // then throws the ratio away for ordering, so the one you are at 97% on sits
 // wherever it happened to be typed. It is the only ordering the list wants.
 const achRatio = a => clamp(achMetric(a.m) / (a.v || 1), 0, 1);
+// An honour's progress as it is counted: provisional chance is a share, and
+// read to the nearest whole number it said "Second Ball 0/1" for 22% of 50%.
+const achAmt = (a, x) => a.m === 'mst' ? Math.round(x * 100) + '%' : fmt(x, 0);
 // Decorated before the sort: achMetric('mst') calls derive(), and a comparator
 // that asks for it on every comparison turns a thirty row list into a hundred
 // and fifty derives four times a second. Measured: 0.052ms against 0.164ms for
@@ -6946,21 +6951,39 @@ function glyphCv(ch, col, sc){
   }
   return GCACHE[k] = cv;
 }
-function drawText(c, str, x, y, col, sc, align){
+// Whole words, baked once: the field's labels are the same few strings frame
+// after frame, and blitting them a letter at a time (twice over, with the
+// shadow) was a hundred copies a frame. A baked string is laid down in one.
+// Kept to a few hundred; past that it starts again, which costs a re-bake.
+const TCACHE = new Map();
+function textCv(str, col, sc, shadow){
+  const k = str + '|' + col + '|' + sc + (shadow ? '|s' : '');
+  let cv = TCACHE.get(k);
+  if(cv) return cv;
+  if(TCACHE.size > 400) TCACHE.clear();
+  const o = shadow ? sc : 0;
+  cv = document.createElement('canvas');
+  cv.width = Math.max(1, textW(str, sc) + o); cv.height = FH*sc + o;
+  const g = cv.getContext('2d');
+  const put = (c2, x0, y0) => { for(let i = 0; i < str.length; i++)
+    if(str[i] !== ' ') g.drawImage(glyphCv(str[i], c2, sc), x0 + i*(FW + FGAP)*sc, y0); };
+  if(shadow) put('rgba(8,13,10,.75)', o, o);
+  put(col, 0, 0);
+  TCACHE.set(k, cv);
+  return cv;
+}
+function drawText(c, str, x, y, col, sc, align, shadow){
   sc = sc || 1;
   str = String(str).toUpperCase();
+  if(!str.trim()) return;
   if(align === 'c') x -= Math.floor(textW(str, sc) / 2);
   else if(align === 'r') x -= textW(str, sc);
-  x = Math.round(x); y = Math.round(y);
-  for(let i = 0; i < str.length; i++){
-    if(str[i] === ' ') continue;
-    c.drawImage(glyphCv(str[i], col, sc), x + i*(FW + FGAP)*sc, y);
-  }
+  c.drawImage(textCv(str, col, sc, shadow), Math.round(x), Math.round(y));
 }
-// a shadowed variant, for text sitting over busy terrain
+// a shadowed variant, for text sitting over busy terrain: the shadow one
+// pixel down and right, baked in with the words
 function drawTextS(c, str, x, y, col, sc, align){
-  drawText(c, str, x + (sc||1), y + (sc||1), 'rgba(8,13,10,.75)', sc, align);
-  drawText(c, str, x, y, col, sc, align);
+  drawText(c, str, x, y, col, sc, align, true);
 }
 
 /* ---- ordered dithering ----
@@ -10706,6 +10729,11 @@ Object.assign(Scene, {
       // Ground is drawn with occlusion but props were not, so a tree standing
       // behind a rise painted straight over the fairway in front of it.
       const cut = this.clipAt(p.d);
+      // A tree wholly behind the crest shows nothing, so nothing is drawn: it
+      // was fenced off and drawn anyway. Trees only, the plentiful kind and a
+      // plain sprite as tall as it stands; a rope runs on to the next post and
+      // a floodlight throws its beam, so those still go through the fence.
+      if(p.kind === 0 && pr.y - Math.round(p.s * 46 * pr.s * US) > cut + 1) continue;
       if(pr.y > cut + 1){
         // its feet are behind the crest: draw only what stands above it
         c.save(); c.beginPath(); c.rect(0, 0, VW, Math.max(0, cut)); c.clip();
@@ -11531,7 +11559,7 @@ function honRows(w){
   let h = '<div class="hint"><b>' + done + '</b> of ' + tot + ' done'
     + (live ? ' \u00b7 earning <b style="color:var(--aurora)">' + live + '</b>' : '') + '</div>';
   if(near.length) h += '<div class="hint">Closest: '
-    + near.map(a => '<b>' + a.n + '</b> ' + fmt(Math.min(achMetric(a.m), a.v), 0) + '/' + fmt(a.v, 0))
+    + near.map(a => '<b>' + a.n + '</b> ' + achAmt(a, Math.min(achMetric(a.m), a.v)) + '/' + achAmt(a, a.v))
         .join(' \u00b7 ') + '.</div>';
   // Today's three, first: they turn over, the rest wait.
   if(S.daily){
@@ -11569,7 +11597,7 @@ function honRows(w){
       + '<div class="nm">' + (got ? '\u2713 ' : '') + a.n + '</div>'
       + '<div class="ds">' + nb(a.d) + '</div>'
       + '<div class="mt">' + (got ? '<b>' + achReward(a) + '</b>'
-          : '<i>' + fmt(Math.min(have, need), 0) + '</i> / ' + fmt(need, 0)
+          : '<i>' + achAmt(a, Math.min(have, need)) + '</i> / ' + achAmt(a, need)
             + ' \u00b7 ' + achReward(a))
         + (a.sov ? ' \u00b7 +' + a.sov + sovIc() : '') + '</div></div>'
       + (got ? '' : '<div class="hbar"><i style="width:' + clamp(have/need,0,1)*100 + '%"></i></div>')
@@ -11604,8 +11632,8 @@ function renderHonBtn(live){
   if(!live || !(now - (b._lt || -1e9) < 250)){
     b._lt = now;
     const nx = achNear(1)[0];
-    const lbl = nx ? 'Honours \u00b7 closest: ' + nx.n + ' ' + fmt(Math.min(achMetric(nx.m), nx.v), 0)
-                     + ' of ' + fmt(nx.v, 0)
+    const lbl = nx ? 'Honours \u00b7 closest: ' + nx.n + ' ' + achAmt(nx, Math.min(achMetric(nx.m), nx.v))
+                     + ' of ' + achAmt(nx, nx.v)
                    : 'Honours \u00b7 all ' + B.ACH.length + ' done';
     if(b._lbl !== lbl){ b._lbl = lbl; b.title = lbl; b.setAttribute('aria-label', lbl); }
   }
@@ -12672,10 +12700,13 @@ function renderCabinet(){
     return cell('cabJacket', o.shirt, got, o.n, got ? (S.outfit === o.id ? 'Wearing' : 'Yours') : 'Not yet'); }).join('');
   const now = seasonOf(tournamentOf(S.hole));
   const thisSeason = (S.evLog || []).filter(x => x.b && seasonOf(x.t) === now).length;
-  const cups = '<div class="cabn"><img src="' + pixUrl('cabCup', '#E3B457') + '" alt=""><div><div class="big">'
+  // lit once there is something to show, like everything else in the case
+  const cups = '<div class="cabn' + (S.cups ? '' : ' no') + '"><img src="' + pixUrl('cabCup', S.cups ? '#E3B457' : DIM)
+    + '" alt=""><div><div class="big">'
     + fmt(S.cups, 0) + '</div><div class="cn">' + (S.cups === 1 ? 'Cup' : 'Cups')
     + (thisSeason ? ' \u00b7 ' + thisSeason + ' this season' : '') + '</div></div></div>';
-  const slam = '<div class="cabn"><img src="' + pixUrl('cabSlam', won === COURSE_WEEK.length ? '#E3B457' : '#7ADB86')
+  const slam = '<div class="cabn' + (won ? '' : ' no') + '"><img src="'
+    + pixUrl('cabSlam', !won ? DIM : won === COURSE_WEEK.length ? '#E3B457' : '#7ADB86')
     + '" alt=""><div><div class="big">' + won + '/' + COURSE_WEEK.length + '</div>'
     + '<div class="cn">Grand Slam</div></div></div>';
   // the best cards, with where they were posted; a best card from before the
@@ -13073,6 +13104,7 @@ const DEV = {
            S.tierMax = Math.max(S.tierMax || 0, S.tier);
            if(S.tier > S.bestTier) S.bestTier = S.tier; startHole(); this.re(); },
   tierSet(n){ S.tier = clamp(n, 0, B.TIER_MAX); S.tierMax = Math.max(S.tierMax||0, S.tier);
+              if(S.tier > S.bestTier) S.bestTier = S.tier;
               startHole(); this.re(); },
   event(n){ QUIET = true;
     for(let i=0;i<n;i++){ S.hole = tournamentOf(S.hole)*B.ROUND*B.DAYS + 1; endTournament(); }
