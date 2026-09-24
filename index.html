@@ -726,6 +726,13 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
   background:none;border:0;padding:0;display:flex;align-items:center;justify-content:center;
   filter:drop-shadow(0 0 1px #000) drop-shadow(0 0 1px #000) drop-shadow(0 1px 2px rgba(0,0,0,.9))}
 #hudClimb.off{opacity:.55}
+/* The caddie perk that is running, by the cog: its line in its own colour,
+   counting down, no box behind it, fading out as it runs out. */
+#setRow{position:relative;display:flex;align-items:center;pointer-events:none}
+#buffTip{position:absolute;left:32px;top:50%;transform:translateY(-50%);max-width:calc(100vw - 90px);font-family:var(--mono);font-size:var(--f2);font-weight:600;white-space:nowrap;
+  overflow:hidden;text-overflow:ellipsis;min-width:0;
+  text-shadow:0 0 2px #000,0 1px 2px #000,0 0 1px #000;opacity:0;transition:opacity .25s}
+#buffTip.on{opacity:1}
 #setIcon,#hudClimbIcon{display:block;width:24px;height:24px;image-rendering:pixelated;image-rendering:crisp-edges}
 /* settings sheet */
 .setrow{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;padding:9px 0;
@@ -863,7 +870,7 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
     </div>
     <button id="hudClimb" aria-label="Auto-climb"><img id="hudClimbIcon" alt=""></button>
     </div>
-    <button id="setBtn" aria-label="Settings"><img id="setIcon" alt=""></button>
+    <div id="setRow"><button id="setBtn" aria-label="Settings"><img id="setIcon" alt=""></button><span id="buffTip" aria-live="polite"></span></div>
     <button id="shopBtn" aria-label="Pro shop"><img id="shopIcon" alt=""><span id="shopDot"></span></button>
     <button id="roomBtn" aria-label="Trophy Room"><img id="roomIcon" alt=""><span id="roomDot"></span></button>
     <button id="perkBtn" aria-label="Sponsor perks"><img id="perkIcon" alt=""><span id="perkDot"></span></button>
@@ -3347,19 +3354,21 @@ const B = {
   // Small on purpose: up for a quarter of the time, and never stacked.
   CPERK_EVERY: 30,
   CPERKS: [
-    { id:'book',   ic:'cpbook',  n:'Yardage Book',    cost:150, k:'cPow',  v:15,   t:8,  w:'POWER',  d:'+15% swing power for 8s' },
-    { id:'tempo',  ic:'cptempo', n:'Tempo Call',      cost:150, k:'cSpd',  v:20,   t:8,  w:'TEMPO',  d:'+20% tempo for 8s' },
-    { id:'read',   ic:'cpread',  n:'Green Reader',    cost:150, k:'cCrt',  v:0.08, t:8,  w:'PURE',   d:'+8% pure strike chance for 8s' },
-    { id:'towel',  ic:'cptowel', n:'Towel Service',   cost:150, k:'cMst',  v:25,   t:8,  w:'PROV',   d:'+25% provisional chance for 8s' },
+    { id:'book',   ic:'cpbook', col:'#FFB347', s:'+15% power', n:'Yardage Book',    cost:150, k:'cPow',  v:15,   t:8,  w:'POWER',  d:'+15% swing power for 8s' },
+    { id:'tempo',  ic:'cptempo', col:'#57E0BE', s:'+20% tempo', n:'Tempo Call',      cost:150, k:'cSpd',  v:20,   t:8,  w:'TEMPO',  d:'+20% tempo for 8s' },
+    { id:'read',   ic:'cpread', col:'#9BE66B',  s:'+8% pure strike', n:'Green Reader',    cost:150, k:'cCrt',  v:0.08, t:8,  w:'PURE',   d:'+8% pure strike chance for 8s' },
+    { id:'towel',  ic:'cptowel', col:'#8FD3FF', s:'+25% provisional', n:'Towel Service',   cost:150, k:'cMst',  v:25,   t:8,  w:'PROV',   d:'+25% provisional chance for 8s' },
     // gear luck is only read when a hole ends, so this one waits for that:
     // armed when it goes off, spent on the next hole finished
-    { id:'scout',  ic:'cpscout', n:'Lost Ball Scout', cost:150, k:'cDrop', v:0.10, t:1e6, w:'GEAR', next:1, d:'+10% gear luck on the next hole you finish' },
-    { id:'chat',   ic:'cpchat',  n:'Sponsor Chat',    cost:150, k:'cGold', v:25,   t:8,  w:'PURSE',  d:'+25% prize money for 8s' },
-    { id:'notes',  ic:'cpnotes', n:'Course Notes',    cost:150, k:'cXp',   v:30,   t:8,  w:'XP',     d:'+30% xp for 8s' },
-    { id:'club',   ic:'cpclub',  n:'Club Selection',  cost:150, k:'cCpw',  v:20,   t:8,  w:'CRACK',  d:'+20% pure strike power for 8s' },
+    { id:'scout',  ic:'cpscout', col:'#C68BFF', s:'+10% gear luck next hole', n:'Lost Ball Scout', cost:150, k:'cDrop', v:0.10, t:1e6, w:'GEAR', next:1, d:'+10% gear luck on the next hole you finish' },
+    { id:'chat',   ic:'cpchat', col:'#FFD66B',  s:'+25% prize money', n:'Sponsor Chat',    cost:150, k:'cGold', v:25,   t:8,  w:'PURSE',  d:'+25% prize money for 8s' },
+    { id:'notes',  ic:'cpnotes', col:'#F28AD0', s:'+30% xp', n:'Course Notes',    cost:150, k:'cXp',   v:30,   t:8,  w:'XP',     d:'+30% xp for 8s' },
+    { id:'club',   ic:'cpclub', col:'#FF7A5C',  s:'+20% strike power', n:'Club Selection',  cost:150, k:'cCpw',  v:20,   t:8,  w:'CRACK',  d:'+20% pure strike power for 8s' },
     // not a lift that lasts: the clock is simply wound back, once, there and then
-    { id:'ready',  ic:'cpready', n:'Ready Golf',      cost:150, k:'clock', v:1,    t:0,  w:'-1S',    now:1, d:'1s off the hole clock' }
+    { id:'ready',  ic:'cpready', col:'#F4F6EF', s:'\u22121s hole clock', n:'Ready Golf',      cost:150, k:'clock', v:1,    t:0,  w:'-1S',    now:1, d:'1s off the hole clock' }
   ],
+  // (col: the colour of the blessing each one sends down on the golfer, and
+  // of its line by the settings cog while it lasts)
   // What the fairy says: when a hole is holed, by the score, and now and then
   // on the course (quip), with a line for the conditions when they call for one.
   FAIRY_SAY: {
@@ -9997,6 +10006,13 @@ const Scene = {
              CD.pant, CD.pant2 || CD.pant, CD.shoe || PX.shoe);
     c.drawImage(spr.cv, x, y, w, h);
     c.globalAlpha = 1;
+    // Casting: both arms up over his head, for as long as the spark lasts
+    if(this.fairyCast && (this.fairyCast.t || 0) < 1.1){
+      const up = Math.min(1, (this.fairyCast.t || 0) / 0.15), th = Math.max(1, Math.round(h / 22));
+      const sy = y + h * 0.34, ty = sy - h * (0.20 + 0.28 * up);
+      pxLine(c, x + w * 0.30, sy, x + w * (0.30 - 0.14 * up), ty, CD.skin || PX.skin, th);
+      pxLine(c, x + w * 0.78, sy, x + w * (0.78 + 0.14 * up), ty, CD.skin || PX.skin, th);
+    }
     if(FX && FX.front) FX.front(c, g);
     c.globalAlpha = 1; c.globalCompositeOperation = 'source-over';
     // the caddie's perk, going off: a spark round him and its word over him
@@ -11548,6 +11564,7 @@ Object.assign(Scene, {
       const x = p.x - Math.round(w * 0.5), y = p.y - h - lift;
       paintHeli(c, x, y, w, h, this.t, p.y);
       if(atCam === undefined && SPRITE.caddie) this.drawCaddie(c, p.x - Math.round(w*0.42), y, w, h);
+      if(atCam === undefined) this.drawBless(c, x, y, w, h, p.y);
       return;
     }
     // Between shots, while the camera carries him on to the ball, he walks:
@@ -11574,6 +11591,7 @@ Object.assign(Scene, {
 
     paintGolfer(c, x, y, w, h, ph, this.t, p.y, walking, this.walkPh, spr, this.clubArc || (this.clubArc = []));
     if(atCam === undefined && SPRITE.caddie) this.drawCaddie(c, p.x - Math.round(w*0.42), y, w, h);
+    if(atCam === undefined) this.drawBless(c, x, y, w, h, p.y);
     if(walking) return;
 
     // the ball waits out in front, on the ground, where he is looking
@@ -11588,6 +11606,42 @@ Object.assign(Scene, {
     }
   },
 
+  // A caddie perk's blessing: a column of the perk's own light comes down
+  // from the top of the view onto the golfer, lands in a ring at his feet
+  // and fades, with motes of it drifting down; about a second in all.
+  drawBless(c, x, y, w, h, bot){
+    const B2 = this.bless;
+    if(!B2) return;
+    if(B2.t0 === undefined) B2.t0 = this.t;
+    const t = this.t - B2.t0, DUR = 1.5;
+    if(t > DUR){ this.bless = null; return; }
+    const cx = x + w * 0.5, half = Math.max(3, Math.round(w * 0.75));
+    const fall = Math.min(1, t / 0.30);                 // the front of it coming down
+    const fade = t < 0.30 ? 1 : 1 - (t - 0.30) / (DUR - 0.30);
+    const front = Math.round(bot * fall);
+    // the column: brightest down the middle and at its falling front
+    for(let yy = 0; yy < front; yy += 2){
+      const near = 1 - Math.min(1, (front - yy) / Math.max(8, bot * 0.5));
+      const a = (0.10 + 0.22 * near) * fade;
+      c.globalAlpha = a; c.fillStyle = B2.col;
+      c.fillRect(Math.round(cx - half), yy, half * 2, 2);
+      c.globalAlpha = Math.min(1, a * 1.6); c.fillStyle = '#FFFFFF';
+      c.fillRect(Math.round(cx - half * 0.25), yy, Math.max(1, Math.round(half * 0.5)), 2);
+    }
+    // motes drifting down inside it
+    for(let i = 0; i < 12; i++){
+      const u = (t * 0.9 + hr(i, 7)) % 1, mx = cx + (hr(i, 11) - 0.5) * half * 1.8;
+      fxDot(c, mx, u * bot * fall, 1, i & 1 ? '#FFFFFF' : B2.col, fade * (0.5 + 0.5 * Math.sin(t * 9 + i)));
+    }
+    // landed: a ring spreading out round his feet
+    if(t > 0.28){
+      const q = Math.min(1, (t - 0.28) / 0.5), rx = half * (0.8 + q * 1.4), ry = Math.max(1, rx * 0.22);
+      c.globalAlpha = (1 - q) * 0.9; c.fillStyle = B2.col;
+      for(let k = 0; k < 28; k++){ const an = k / 28 * Math.PI * 2;
+        c.fillRect(Math.round(cx + Math.cos(an) * rx), Math.round(bot - 1 + Math.sin(an) * ry), 1, 1); }
+    }
+    c.globalAlpha = 1;
+  },
   // Two markers on the tee. Skipped once the camera has walked past them,
   // or the projection clamp blows them up across the bottom of the screen.
   /* ---- what makes each wager its own place ----
@@ -13870,7 +13924,32 @@ function cperkPick(id){
 // Every CPERK_EVERY seconds of play on the course, the worn perk goes off.
 // Not during a wager, not in a catch-up: like every other buff, it sits the
 // absence out.
+// The line by the cog: the perk that went off, in its own colour, its seconds
+// read straight off the buff so it cannot drift from what is really running.
+// A perk that lasts till the next hole says so; one that acts at once (Ready
+// Golf) shows for two seconds. It fades over its last second.
+let cperkShow = null;
+function buffTip(dt){
+  const el = $('buffTip'); if(!el) return;
+  let txt = '', a = 0, col = '';
+  const pk = cperkShow && cperkDef(cperkShow.id);
+  if(pk){
+    const b = !pk.now && S.buff[pk.k];
+    if(pk.now){ cperkShow.left -= dt; if(cperkShow.left > 0){ txt = pk.s; a = Math.min(1, cperkShow.left); } }
+    else if(b && pk.next){ txt = pk.s; a = 1; }
+    else if(b){ txt = pk.s + ' for ' + Math.ceil(b.t - 1e-6) + 's'; a = Math.min(1, b.t); }
+    if(!txt) cperkShow = null;
+    col = pk.col || '';
+  }
+  if(el.textContent !== txt) el.textContent = txt;
+  if(el.style.color !== col && col) el.style.color = col;
+  const on = a > 0;
+  if(el.classList.contains('on') !== on) el.classList.toggle('on', on);
+  const op = on ? String(Math.round(a * 20) / 20) : '';
+  if(el.style.opacity !== op) el.style.opacity = op;
+}
 function tickCaddie(dt){
+  buffTip(dt);
   const pk = S.cperk && cperkDef(S.cperk);
   if(!pk || S.dgnRun || QUIET || OFFLINE) return;
   S.cperkT = (S.cperkT || 0) + dt;
@@ -13882,6 +13961,10 @@ function tickCaddie(dt){
     if(pk.now){ if(S.yards > 0) S.elapsed = Math.max(0, (S.elapsed || 0) - pk.v); }
     else addBuff(pk.k, pk.v, pk.t);
     Scene.fairyCast = { t: 0, word: pk.w };
+    // and the blessing: his arms go up and the perk's own light comes down
+    // on the golfer (see Scene.drawBless); its line by the cog counts it down
+    Scene.bless = { col: pk.col || '#FFD66B' };
+    if(!pk.now || S.yards > 0) cperkShow = { id: pk.id, left: 2 };
     Sfx.play('coin');
   }
   if(view === 'upg' && rangeSub === 'cad' && (S.cperkT * 4 | 0) !== (tickCaddie._q || 0)){
