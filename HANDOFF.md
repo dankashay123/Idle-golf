@@ -10,9 +10,12 @@ check is for.
 
 - Everything is committed and pushed to `main` (and mirrored on the session
   branch `claude/funny-davinci-7ik9ge`). Nothing is half-built.
-- `node test/run.js` passes all **36 checks** (about 7 minutes; `pacing` runs
+- `node test/run.js` passes all **38 checks** (about 7 minutes; `pacing` runs
   sixteen seeds and takes ~40s on its own).
-- Latest: **"the trophy icon is still missing"** turned out to mean the empty
+- Latest: **"do 2b; and rework the pixel text, condensed, so the wind and
+  course lines in the bottom right take less room"**. Done (§5, "Canyon
+  carry" and "The small pixel face"). Not yet seen by the user.
+- Before: **"the trophy icon is still missing" turned out to mean the empty
   space on the right between the star and the map. I started putting a
   trophy back there (opening the honours); the user stopped it: honours stay
   in the medal, and **the star moves to the left column under the medal**.
@@ -250,6 +253,30 @@ Line numbers are approximate and drift. Search for the name instead.
    never flew. Play anything tied to the end of a hole in real frames too.
 
 ## 5. What the last features do (for debugging them)
+
+### The small pixel face (user asked)
+- `GLYPH_S`: a proportional face, mostly 4 px wide with a 1 px gap (the bold
+  `GLYPH` is 6 + 2), 7 rows of caps and a descender row (`FHS` 8). Text at
+  the base size (`sc <= TSC`) uses it; anything larger keeps the bold face
+  (`faceOf`), so scores and course names on the banner stay chunky.
+  `textW`, `glyphCv`, `textCv` all go through `faceOf`; `LH` is now
+  (FHS + 2) * TSC. The weather lines come out at about 61% of their old
+  width. `font` checks it.
+
+### Canyon carry (option 2b, the second signature hole)
+- `isCanyon(h)`: the last par five of each round on a home course (one a
+  round, four an event). Toast "Signature Hole · Canyon Carry". Dev menu:
+  "this hole a canyon" (`CANYON_FORCE`).
+- The gorge is the hole's `water` with `canyon: 1`: d = 0.52 LEN, rd 4.2,
+  rx 40 (wider than the view, so it cuts right across), drawn with
+  `P_CANYON` (deep, walls from `T._cn`, a ramp of the course's rock into the
+  dark). The hole is straight. `Scene.isle` holds its rims (`fly: 0`), so
+  `spot`, the camera, the hold and the checks work as for the island: the
+  crossing moves at `B_BRIDGE` (4.2/s, about 2.2s) and he walks it.
+  `Scene.crossing` is how far across; `Scene.heli` is only the island's.
+- `drawBridge`: a solid deck of alternating planks with seams, sagging to the
+  middle, posts at the corners, hand-ropes that thicken nearer the camera,
+  all swaying a little; drawn after the tee, before the flag and golfer.
 
 ### Home course seasons (option 3, "home course variety past Card X")
 - Ten home courses, one per card, so they repeat every ten cards. Now each
@@ -617,7 +644,7 @@ questions are still unanswered: does the auto-climb button sit where they
 wanted, and are the Trophy Room (medal, red dot) and the Scrap sheet easy to
 find. The open menu, under the numbers it was offered with:
 
-2. **More signature holes**: the island is the first. Others could follow
+2. **More signature holes**: the island and the canyon are in. Others could follow
    the same pattern (a hole flag in `newHole`, `spot` for where balls may
    lie): a par 5 over a canyon, a green on a plateau, a hole along the
    shore. A whirring sound for the flight is also still to do.

@@ -93,9 +93,13 @@ module.exports = {
 
         // words on the field are baked whole and laid down in one; the same
         // picture as setting them a letter at a time, shadow and all
+        // each letter where the one before it ends: the small face is
+        // proportional, so a letter's place is the sum of those before it
         const byLetter = (cx, str, x, y, col, sc, shadow) => {
+          const f = faceOf(sc);
+          const adv = i => { let w = 0; for (let j = 0; j < i; j++) w += glyphW(str[j], f) + faceGap(f); return w; };
           const put = (c2, x0, y0) => { for (let i = 0; i < str.length; i++) if (str[i] !== ' ')
-            cx.drawImage(glyphCv(str[i], c2, sc), x0 + i * (FW + FGAP) * sc, y0); };
+            cx.drawImage(glyphCv(str[i], c2, sc), x0 + adv(i) * sc, y0); };
           if (shadow) put('rgba(8,13,10,.75)', x + sc, y + sc); put(col, x, y); };
         const tc = document.createElement('canvas'); tc.width = 240; tc.height = 40; const tg = tc.getContext('2d');
         const px = f => { tg.fillStyle = '#3A7A40'; tg.fillRect(0, 0, 240, 40); f(); return tg.getImageData(0, 0, 240, 40).data; };
