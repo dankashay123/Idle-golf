@@ -3569,6 +3569,16 @@ const SEASONS = [null,
 let SEASON_FORCE = -1;
 const homeSeason = (cs, tier) => !cs || cs.slot !== 'home' ? 0
   : SEASON_FORCE >= 0 ? SEASON_FORCE : Math.floor(tier / COURSE_HOME.length) % SEASONS.length;
+// The regular stops in a temperate climate turn with the real calendar
+// instead: autumn from September, winter from December, blossom from March,
+// and as built through the summer. The desert, the tropics and the courses
+// that are their season all year (Snowline, Blossom) stay as they are, as do
+// the majors, the finale and the majors of the week.
+const CAL_SEASONED = ['coastal', 'sandbelt', 'highlands', 'blackwater', 'riverbend', 'moorland'];
+const MONTH_SEASON = [2, 2, 3, 3, 3, 0, 0, 0, 1, 1, 1, 2];
+const monthNow = () => new Date(dayNow() * 86400000).getUTCMonth();
+const courseSeason = (cs, tier) => !cs ? 0 : cs.slot === 'home' ? homeSeason(cs, tier)
+  : !CAL_SEASONED.includes(cs.id) ? 0 : SEASON_FORCE >= 0 ? SEASON_FORCE : MONTH_SEASON[monthNow()];
 const LOOK_CACHE = {};
 // the course as it looks in season s: its own colours turned, and its own id
 // with the season on it, so the palettes and trees built from it are kept apart
@@ -4355,9 +4365,8 @@ function announceCourse(){
   // in the stage's own type, which has no apostrophes or dots in the middle
   const fit = str => [...str.toUpperCase()].map(ch => GLYPH[ch] || ch === ' ' ? ch : ' ').join('').replace(/ +/g, ' ').trim();
   const sub = isWeekMajor(t) ? 'Major of the Week'
-            : cs.slot === 'home' ? (homeSeason(cs, S.tier) ? SEASONS[homeSeason(cs, S.tier)].n + ' - ' : '')
-                                   + 'Home of Tour Card ' + roman(S.tier)
-            : 'Tour Card ' + roman(S.tier) + ' - Event ' + t;
+            : (courseSeason(cs, S.tier) ? SEASONS[courseSeason(cs, S.tier)].n + ' - ' : '')
+              + (cs.slot === 'home' ? 'Home of Tour Card ' + roman(S.tier) : 'Tour Card ' + roman(S.tier) + ' - Event ' + t);
   Scene.announce = { name: fit(cs.n), sub: fit(sub), t: 0, dur: 4.2, gold: isWeekMajor(t) };
 }
 function startHole(){
@@ -10153,7 +10162,7 @@ const Scene = {
     const cs = courseFor(tournamentOf(h));
     const mode = this.night ? 'night' : this.rain ? 'rain' : 'day';
     this.course = cs;
-    const look = seasonLook(cs, homeSeason(cs, tier));
+    const look = seasonLook(cs, courseSeason(cs, tier));
     this.look = look;
     this.land = look.land;
     this.themeId = look.id + '|' + mode;

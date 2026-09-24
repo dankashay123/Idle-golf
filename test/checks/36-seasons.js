@@ -13,6 +13,10 @@
  *     (Castle Dunes is built with the two close, so this is relative)
  *   - winter snows, unless it is raining; the other seasons do not
  *   - the banner names the season
+ *   - the regular stops with seasons of their own turn with the real month
+ *     instead (autumn from September, winter from December, blossom from
+ *     March, as built in the summer); the desert, the tropics, Snowline and
+ *     Blossom, the majors and the finale never do; their banner names it too
  *   - the sounds: wind gusting in autumn; in winter a hush, the birds quiet
  *     and only a thin breath of air; more birdsong in blossom (played for
  *     five minutes through a stand-in audio context, with a fixed random)
@@ -37,6 +41,8 @@ module.exports = {
       const N = COURSE_HOME.length;
       try {
         QUIET = true;
+        // midsummer, so the regular stops that turn with the month hold still
+        DAY_FORCE = Math.floor(Date.UTC(2026, 6, 15) / 864e5);
         for (let ci = 0; ci < B.COURSE.length; ci++) {
           const cs = B.COURSE[ci];
           DEV.course(ci); hideSheet();
@@ -90,6 +96,38 @@ module.exports = {
           if (want ? sub.indexOf(want + ' ') !== 0 : /AUTUMN|WINTER|BLOSSOM/.test(sub)) o.banner.push('card ' + (tier + 1) + ': "' + sub + '"');
           if (!/HOME OF TOUR CARD/.test(sub)) o.banner.push('card ' + (tier + 1) + ' lost its home line: "' + sub + '"');
         }
+        // ---- the calendar ---------------------------------------------------
+        const MONTH = ['Winter', 'Winter', 'Blossom', 'Blossom', 'Blossom', null, null, null, 'Autumn', 'Autumn', 'Autumn', 'Winter'];
+        const TURN = ['coastal', 'sandbelt', 'highlands', 'blackwater', 'riverbend', 'moorland'];
+        o.cal = []; o.calSeen = {};
+        for (let m = 0; m < 12; m++) for (const day of [1, 28]) {
+          DAY_FORCE = Math.floor(Date.UTC(2027, m, day) / 864e5);
+          for (let ci = 0; ci < B.COURSE.length; ci++) {
+            const cs = B.COURSE[ci];
+            if (cs.slot === 'home') continue;
+            DEV.course(ci); hideSheet(); Scene.newHole(S.hole, S.tier);
+            const want = TURN.includes(cs.id) ? MONTH[m] : null, got = Scene.look.season || null;
+            if (got !== want) o.cal.push(cs.id + ' on ' + (m + 1) + '/' + day + ' is ' + got + ', not ' + want);
+            if (got) o.calSeen[got] = (o.calSeen[got] || 0) + 1;
+            if (want === 'Winter' && Scene.snow !== !Scene.rain) o.cal.push(cs.id + ' in winter snow ' + Scene.snow);
+          }
+        }
+        // and on them too the fairway still stands out from the rough
+        for (const id of TURN) for (let s = 1; s < 4; s++) for (const mode of ['day', 'night', 'rain']) {
+          const cs = courseById(id), T0 = buildTheme(cs, mode), T = buildTheme(seasonLook(cs, s), mode);
+          const d0 = dist(mid(T0.fw), mid(T0.rg)), d = dist(mid(T.fw), mid(T.rg));
+          if (d < Math.min(20, d0 * 0.6)) o.faint.push(id + ' ' + SEASONS[s].n + ' ' + mode + ' ' + d + ' (built ' + d0 + ')');
+        }
+        // the banner on a regular stop, and today's month read off the real clock
+        QUIET = false;
+        DAY_FORCE = Math.floor(Date.UTC(2027, 9, 10) / 864e5);
+        DEV.course(B.COURSE.findIndex(c => c.id === 'coastal')); hideSheet();
+        S.courseSeen = -1; announceCourse();
+        o.calBanner = Scene.announce ? Scene.announce.sub : '';
+        DAY_FORCE = null;
+        o.today = { want: MONTH[new Date().getUTCMonth()], got: seasonLook(courseById('coastal'), courseSeason(courseById('coastal'), 0)).season || null };
+        QUIET = true;
+
         // a frozen pond: drawn as ice, and nothing rippling on it
         SEASON_FORCE = 2; DEV.course(home); hideSheet();
         for (let i = 0; i < 80 && !(Scene.water && !Scene.water.lake && !Scene.water.canyon && !Scene.water.river); i++) { S.hole++; Scene.newHole(S.hole, S.tier); }
@@ -102,7 +140,7 @@ module.exports = {
           o.iceRips = (Scene._rips || []).length;
         } else o.iceP = 'no pond';
       } finally {
-        SEASON_FORCE = -1;
+        SEASON_FORCE = -1; DAY_FORCE = null;
         Object.keys(S).forEach(k => delete S[k]); Object.assign(S, JSON.parse(SNAP));
         QUIET = false; OFFLINE = false; Scene.announce = null; startHole();
       }
@@ -148,7 +186,12 @@ module.exports = {
     if (r.snow.length) f('weather in the wrong season: ' + r.snow.slice(0, 4).join('; '));
     if (r.iceP !== true || r.iceRips) f('a pond in winter: drawn as ice ' + r.iceP + ', ripples ' + r.iceRips);
     if (r.banner.length) f('the banner: ' + r.banner.join('; '));
-    return [r.homes + ' home courses in four seasons each, all different, round again after blossom; other courses unchanged',
+    if (r.cal.length) f('the regular stops by the month: ' + r.cal.slice(0, 4).join('; '));
+    if (Object.keys(r.calSeen).length !== 3) f('over a year the regular stops showed ' + JSON.stringify(r.calSeen));
+    if (!/^AUTUMN - TOUR CARD/.test(r.calBanner)) f('a regular stop in October has the banner "' + r.calBanner + '"');
+    if (r.today.want !== r.today.got) f('today the Coastal Classic is ' + r.today.got + ', not ' + r.today.want);
+    return [r.homes + ' home courses in four seasons each, all different, round again after blossom; other courses unchanged by the card',
+      'six regular stops turn with the month (' + Object.entries(r.calSeen).map(([k, v]) => k + ' ' + v).join(', ') + ' over a year), the rest never; the banner says so',
       'sounds over five minutes: autumn ' + autumn.gust + ' gusts; winter ' + winter.hush + ' breaths and no birds; blossom ' + bloom.chirp + ' chirps to ' + built.chirp,
       'hazards stay put; the fairway stands out as well as it does as built; snow and ice in winter, leaves in autumn, petals in blossom; the banner names the season'];
   }
