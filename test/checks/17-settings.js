@@ -132,6 +132,31 @@ module.exports = {
     if (snd.quietCount || snd.holdCount)
       throw new Error('sound played during a catch-up (' + snd.quietCount + ' / ' + snd.holdCount + ' notes)');
 
+    // ---- waking audio the way an iPhone allows ------------------------------
+    // An iPhone only lets a tap start sound once the finger lifts (touchend
+    // or click), hands the audio back 'interrupted' after the app has been
+    // away, and wakes it fully only if something plays inside the tap. The
+    // game listened on pointerdown alone and resumed only 'suspended', so it
+    // never made a sound on one. A stand-in context counts what each tap did.
+    const wake = await page.evaluate(() => {
+      const real = Sfx.ctx, out = {};
+      const fake = state => ({ state, resumes: 0, played: 0,
+        resume(){ this.resumes++; return Promise.resolve(); },
+        createBuffer(){ return {}; }, destination: {},
+        createBufferSource(){ const f = this; return { connect(){}, start(){ f.played++; } }; } });
+      try {
+        for (const [ev, state] of [['touchend', 'interrupted'], ['click', 'suspended'], ['touchend', 'running']]) {
+          const f = fake(state); Sfx.ctx = f;
+          document.body.dispatchEvent(new Event(ev, { bubbles: true }));
+          out[ev + '/' + state] = f.resumes + '/' + f.played;
+        }
+      } finally { Sfx.ctx = real; }
+      return out;
+    });
+    if (wake['touchend/interrupted'] !== '1/1' || wake['click/suspended'] !== '1/1')
+      throw new Error('a tap did not wake the audio the way an iPhone needs (resumes/silent plays): ' + JSON.stringify(wake));
+    if (wake['touchend/running'] !== '0/0') throw new Error('a tap poked audio that was already running: ' + JSON.stringify(wake));
+
     // ---- the Home Screen tip ----------------------------------------------
     const tip = await page.evaluate(() => {
       const ua = Object.getOwnPropertyDescriptor(Navigator.prototype, 'userAgent');
@@ -157,6 +182,7 @@ module.exports = {
       'settings opens from its button; sound ' + (snd.running ? 'plays ' + snd.onCount + ' notes, the '
         + snd.recs.length + ' recordings among them, ' : '')
       + 'goes off and stays off, and is silent through a catch-up',
+      'a tap wakes audio the way an iPhone needs: on touchend and click, from interrupted and suspended',
       'the Home Screen tip shows once, on an iPhone, after a real session'];
   }
 };

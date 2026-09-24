@@ -19,6 +19,13 @@ check is for.
 - The user usually ends a task by asking **"What's next?"** Reply with a short
   plain-language menu, give a recommendation, and wait for them to choose.
   Open ideas are listed in §8.
+- **Sound had never worked on the user's iPhone** (Home Screen app). Audio was
+  only unlocked on pointerdown, which iOS does not count, and an
+  'interrupted' context was never resumed. Fixed in the commit after
+  `52f0f86`: unlock on touchend/click too, resume any non-running state, and
+  play a silent sample in the tap. Unverified on a real iPhone; ask whether
+  they hear it now. If not, next suspects: `navigator.audioSession.type =
+  'ambient'` in a Home Screen app, and MP3 decoding.
 - **Ask the user how the sounds sound.** The sessions cannot listen to audio:
   the recordings were chosen by measuring and by looking at spectrograms,
   and the levels were matched by rendering. If any sounds wrong on the

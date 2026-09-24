@@ -5344,8 +5344,22 @@ const Sfx = {
     src.start(t); src.stop(end + 0.02);
     return true;
   },
-  // browsers only start audio from a tap, so every tap offers it the chance
-  unlock(){ const c = this.init(); if(c && c.state === 'suspended') c.resume().catch(() => {}); },
+  // Browsers only start audio from a tap, so every tap offers it the chance.
+  // On an iPhone it has to be the END of a tap (touchend or click: a finger
+  // coming down does not count), the context comes back 'interrupted' rather
+  // than 'suspended' after the app has been away, and it only really wakes
+  // once something has played inside the tap -- so a silent sample goes out
+  // with every tap until it is running. It listened on pointerdown alone and
+  // only resumed 'suspended', and an iPhone never made a sound.
+  unlock(){
+    const c = this.init(); if(!c || c.state === 'running' || c.state === 'closed') return;
+    try{ const r = c.resume(); if(r && r.catch) r.catch(() => {}); }catch(e){}
+    try{
+      const src = c.createBufferSource();
+      src.buffer = c.createBuffer(1, 1, 22050);
+      src.connect(c.destination); src.start(0);
+    }catch(e){}
+  },
   tone(f, t0, dur, type, vol, f2){
     const c = this.ctx, o = c.createOscillator(), g = c.createGain();
     o.type = type || 'triangle';
@@ -13599,7 +13613,8 @@ function boot(){
 
   if(had) offline(); else intro();
   try{ if(navigator.storage && navigator.storage.persist) navigator.storage.persist(); }catch(e){}
-  document.addEventListener('pointerdown', () => Sfx.unlock(), { passive: true });
+  for(const ev of ['pointerdown', 'touchend', 'click', 'keydown'])
+    document.addEventListener(ev, () => Sfx.unlock(), { passive: true, capture: true });
 
   if(SIDEWAYS){
     if(SIDEWAYS.addEventListener) SIDEWAYS.addEventListener('change', sideways);
