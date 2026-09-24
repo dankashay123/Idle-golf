@@ -711,9 +711,11 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
 }
 /* min-width, or on a 320 phone the button comes to 19.7px around a 24px sprite
    and the drawing hangs outside its own tap target. */
+/* Outlined in black like the settings cog: on a night course the medal's gold
+   and ribbon sank into the dark hills and it could not be found. */
 #shopBtn,#roomBtn{position:relative;width:11%;min-width:24px;aspect-ratio:1/1;flex:0 0 auto;pointer-events:auto;
   background:none;border:0;padding:0;display:flex;align-items:center;justify-content:center;
-  filter:drop-shadow(0 1px 2px rgba(0,0,0,.9))}
+  filter:drop-shadow(0 0 1px #000) drop-shadow(0 0 1px #000) drop-shadow(0 1px 2px rgba(0,0,0,.9))}
 /* The button is a share of the stage so the tap target grows with the screen;
    the sprite inside is a fixed 24, which is 2x of 12. At 100% of the button it
    landed on 24.5 and 24.7 and the pixels came out in uneven widths. */
@@ -762,7 +764,11 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
   image-rendering:pixelated;image-rendering:crisp-edges}
 #perkBtn:active{transform:translateY(1px)}
 @keyframes hpulse{0%,100%{opacity:1}50%{opacity:.62}}
-#roomBtn.new,#perkBtn.ready{animation:hpulse 4.6s ease-in-out infinite}
+#perkBtn.ready{animation:hpulse 4.6s ease-in-out infinite}
+/* A new honour makes the medal glint rather than fade: fading, it spent half
+   its time too dim to see at night. */
+@keyframes rglint{0%,100%{filter:brightness(1)}50%{filter:brightness(1.55)}}
+#roomBtn.new #roomIcon{animation:rglint 2.6s ease-in-out infinite}
 #perkDot{position:absolute;top:-6%;right:-6%;width:34%;height:34%;border-radius:0;
   background:var(--aurora);display:none}
 #perkBtn.live #perkDot{display:block}
@@ -10441,12 +10447,16 @@ Object.assign(Scene, {
     const cv = $('holeMap'), st = $('stage'), pk = $('perkBtn');
     if(!cv || !st || !pk || !this.cv) return;
     const SW = st.clientWidth, SH = st.clientHeight;
-    const top = pk.offsetTop + pk.offsetHeight + Math.max(8, Math.round(SW * 0.03));
-    // the weather lines are drawn in the frame, up to four of them, above
-    // the pull tab's corner: measured in buffer rows and scaled to the screen
+    // One button's place further down than the star: where it sat while the
+    // Trophy Room's button was above the star, and where it is looked for.
+    // Where that leaves no room (a 320 phone, or on its side) it goes up under
+    // the star rather than away.
+    const gap = Math.max(8, Math.round(SW * 0.03));
     const k = SH / Math.max(1, VH);
     const floor = Math.round((VH - LH*4 - 2 - VH*0.045) * k) - 6;
     const W = clamp(Math.round(SW * 0.16 / 2) * 2, 40, 92);
+    let top = pk.offsetTop + pk.offsetHeight * 2 + Math.max(8, Math.round(SW * 0.04)) + gap;
+    if(floor - top < W * 1.15) top = pk.offsetTop + pk.offsetHeight + gap;
     const room = floor - top;
     if(room < W * 1.15 || S.dgnRun){ cv.style.display = 'none'; this.mapOn = false; return; }
     const H = Math.min(Math.round(W * 1.7 / 2) * 2, Math.floor(room / 2) * 2);

@@ -183,6 +183,13 @@ module.exports = {
             o.hit.push(ks[i] + ' on ' + ks[j] + ' by ' + ox.toFixed(0) + 'x' + oy.toFixed(0));
         }
 
+        // The map keeps a button's place free under the star where the stage
+        // has room: it slid up under the star when the Trophy Room's button
+        // left that spot, and the player took it for the map having moved.
+        const pm = box.perkBtn, mp = box.holeMap;
+        if (w === 400 && mp && mp.height && mp.top - pm.bottom < pm.height)
+          o.hit.push('the map ' + (mp.top - pm.bottom).toFixed(0) + 'px under the star, not a button\'s place below it');
+
         // text that runs out of its box with nothing to catch it
         for (const e of $('stage').querySelectorAll('*')) {
           if (!e.clientWidth || e.scrollWidth - e.clientWidth <= 0.5) continue;

@@ -12,7 +12,16 @@ check is for.
   branch `claude/funny-davinci-7ik9ge`). Nothing is half-built.
 - `node test/run.js` passes all **35 checks** (about 7 minutes; `pacing` runs
   sixteen seeds and takes ~40s on its own).
-- The last message was a bug report: **"the hole finishes on the shot to the
+- The user confirmed the island works, then said **"the minimap got moved up
+  and I can't see the trophy icon anymore; fix that and start on 3"**. Read
+  as: the map slid up under the star when the Trophy Room's button left the
+  right side (commit 4609031), and the medal that replaced it was too dim at
+  night (it faded in and out for a new honour, with no outline). Fixed: the
+  map is a button's place lower again (up under the star only where there is
+  no room, e.g. 320), the medal and shop have the cog's black outline, and a
+  new honour makes the medal glint instead of fade. `layout` holds the map's
+  place at 400. Then 3 (home course variety) was started.
+- Earlier, a bug report: **"the hole finishes on the shot to the
   green, so the golfer never makes it to the green."** True: a par three is
   often done with the tee shot, and the next hole started before he flew.
   Fixed (§5, "Island greens", the hold). Ask them to look again.
