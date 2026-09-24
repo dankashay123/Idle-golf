@@ -10,11 +10,12 @@ check is for.
 
 - Everything is committed and pushed to `main` (and mirrored on the session
   branch `claude/funny-davinci-7ik9ge`). Nothing is half-built.
-- `node test/run.js` passes all **38 checks** (about 7 minutes; `pacing` runs
+- `node test/run.js` passes all **39 checks** (about 7 minutes; `pacing` runs
   sixteen seeds and takes ~40s on its own).
 - Latest: **"sounds for the signature holes, more seasonal touches, a second
   music track, then the third signature hole"**. Sounds and seasons done
-  (§5 under "Canyon carry" and "Home course seasons"); music next.
+  (§5 under "Canyon carry" and "Home course seasons"); the second music
+  track is in (§1 below). The third signature hole is what they want next.
 - Before: **"do 2b; and rework the pixel text, condensed, so the wind and
   course lines in the bottom right take less room"**. Done (§5, "Canyon
   carry" and "The small pixel face"). Not yet seen by the user.
@@ -96,6 +97,14 @@ check is for.
   0.09, pure 0.12, cup 0.15). Keep them subtle.
 - **Applause was removed** at the user's request (it never stopped when holes
   end every few seconds). Don't bring a crowd back without asking.
+- **Second music track**: "Meadow Thoughts" by ecrivain (CC0, OpenGameArt),
+  its first two minutes, mono 40 kbps, `rec-music2` (~800 KB of base64; the
+  file is now ~2.2 MB). Picked unheard by measurement from four CC0
+  candidates as the calmest short one (fewest onsets a second, soft); Sunset
+  Plains was calmer but 5.5 minutes. `Sfx.musicTrack()` plays it on night
+  rounds and in wagers (`MUS_GAIN` 0.85, a shade under the town theme; both
+  measured at about -15 LUFS); a change fades the old one over 2s
+  (`musicFade`). **Ask the user whether it fits.** `music` checks it.
 - **Background music**: "Town Theme RPG" by cynicmusic (CC0, OpenGameArt),
   mono 40 kbps, `rec-music` (~650 KB of the file). `Sfx.musicTick` loops it by
   overlapping plays by `MUS_XF`; volume `MUS_VOL` 0.14; its own Music switch
