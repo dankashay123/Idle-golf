@@ -12,7 +12,10 @@ check is for.
   branch `claude/funny-davinci-7ik9ge`). Nothing is half-built.
 - `node test/run.js` passes all **38 checks** (about 7 minutes; `pacing` runs
   sixteen seeds and takes ~40s on its own).
-- Latest: **"do 2b; and rework the pixel text, condensed, so the wind and
+- Latest: **"sounds for the signature holes, more seasonal touches, a second
+  music track, then the third signature hole"**. Sounds and seasons done
+  (§5 under "Canyon carry" and "Home course seasons"); music next.
+- Before: **"do 2b; and rework the pixel text, condensed, so the wind and
   course lines in the bottom right take less room"**. Done (§5, "Canyon
   carry" and "The small pixel face"). Not yet seen by the user.
 - Before: **"the trophy icon is still missing" turned out to mean the empty
@@ -274,6 +277,12 @@ Line numbers are approximate and drift. Search for the name instead.
   `spot`, the camera, the hold and the checks work as for the island: the
   crossing moves at `B_BRIDGE` (4.2/s, about 2.2s) and he walks it.
   `Scene.crossing` is how far across; `Scene.heli` is only the island's.
+- Sounds (synthesised, levels measured through an OfflineAudioContext):
+  `Sfx.rotor` (a low whup with a thump, every 0.11s while `Scene.heli`,
+  louder at the top of the flight, about -54 dB against the strike's -48)
+  and `Sfx.plank` (a wooden knock on each bridge step off `walkPh`, a creak
+  one step in three, about -55 dB). Both from `Sfx.tick`. `canyon` checks
+  they play, through a stand-in audio context.
 - `drawBridge`: a solid deck of alternating planks with seams, sagging to the
   middle, posts at the corners, hand-ropes that thicken nearer the camera,
   all swaying a little; drawn after the tee, before the flag and golfer.
@@ -291,6 +300,10 @@ Line numbers are approximate and drift. Search for the name instead.
   crowd and falling snow (`Scene.snow`, not in rain). A course already the
   season's tree colour takes its `alt` (Jade Pagoda: white blossom).
 - The banner reads e.g. "Winter - Home of Tour Card XXIII".
+- Touches: autumn blows leaves across with the wind, blossom lets petals
+  sink (`Scene.fall`, `Scene.fallCols`, drawn in `drawWeather`, none in
+  rain); winter ponds are ice (`Scene.ice`, `P_ICE`, ramp `T._ic`, no
+  ripples). `seasons` checks all three.
 - Possible follow-ups: more home courses outright, or season touches beyond
   colour (frozen ponds, leaves blowing, blossom petals falling).
 

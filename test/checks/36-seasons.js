@@ -47,7 +47,7 @@ module.exports = {
             Scene.newHole(S.hole, S.tier);
             looks.push({ fw: mid(Scene.theme.fw), tree: Scene.look.tree.join(), sky: Scene.theme.sky.join(),
                          haz: JSON.stringify([Scene.water && [Scene.water.d, Scene.water.x], Scene.bunkers.map(b => [b.d, b.x])]),
-                         snow: Scene.snow, rain: Scene.rain, id: Scene.course.id });
+                         snow: Scene.snow, rain: Scene.rain, id: Scene.course.id, fall: Scene.fall, ice: Scene.ice });
             if (cs.slot === 'home') for (const mode of ['day', 'night', 'rain']) {
               const T0 = buildTheme(cs, mode), T = buildTheme(seasonLook(cs, s), mode);
               const d0 = dist(mid(T0.fw), mid(T0.rg)), d = dist(mid(T.fw), mid(T.rg));
@@ -63,6 +63,12 @@ module.exports = {
               o.same.push(cs.id + ' ' + SEASONS[s].n + ' trees barely change (' + cs.tree[0] + ' to ' + seasonLook(cs, s).tree[0] + ')');
             if (new Set(looks.map(l => l.haz)).size > 1) o.moved.push(cs.id + ' hazards moved with the season');
             looks.forEach((l, s) => { if (l.snow !== (s === 2 && !l.rain)) o.snow.push(cs.id + ' season ' + s + ' snow ' + l.snow); });
+            // leaves blowing in autumn, petals in blossom, ponds frozen in winter
+            const wantFall = [null, 'leaves', null, 'petals'];
+            looks.forEach((l, s) => {
+              if (l.fall !== (l.rain ? null : wantFall[s])) o.snow.push(cs.id + ' season ' + s + ' falling ' + l.fall);
+              if (l.ice !== (s === 2)) o.snow.push(cs.id + ' season ' + s + ' ice ' + l.ice);
+            });
             // which season a card is: as built on I to X, then a season a pass,
             // and round again after blossom
             SEASON_FORCE = -1;
@@ -81,6 +87,17 @@ module.exports = {
           if (want ? sub.indexOf(want + ' ') !== 0 : /AUTUMN|WINTER|BLOSSOM/.test(sub)) o.banner.push('card ' + (tier + 1) + ': "' + sub + '"');
           if (!/HOME OF TOUR CARD/.test(sub)) o.banner.push('card ' + (tier + 1) + ' lost its home line: "' + sub + '"');
         }
+        // a frozen pond: drawn as ice, and nothing rippling on it
+        SEASON_FORCE = 2; DEV.course(home); hideSheet();
+        for (let i = 0; i < 80 && !(Scene.water && !Scene.water.lake && !Scene.water.canyon); i++) { S.hole++; Scene.newHole(S.hole, S.tier); }
+        if (Scene.water && !Scene.water.lake) {
+          Scene.camD = Math.max(0, Scene.water.d - 14); Scene.gGen++; Scene._rips = [];
+          const used = []; const h0 = Scene.hazSlice;
+          Scene.hazSlice = function(c, T, hz, P){ if (hz === Scene.water) used.push(P); return h0.apply(this, arguments); };
+          Scene.drawGround(); Scene.hazSlice = h0;
+          o.iceP = used.length > 0 && used.every(P => P === P_ICE);
+          o.iceRips = (Scene._rips || []).length;
+        } else o.iceP = 'no pond';
       } finally {
         SEASON_FORCE = -1;
         Object.keys(S).forEach(k => delete S[k]); Object.assign(S, JSON.parse(SNAP));
@@ -94,9 +111,10 @@ module.exports = {
     if (r.other.length) f('courses that are not home courses changed with the card: ' + r.other.join(', '));
     if (r.moved.length) f(r.moved.slice(0, 3).join('; '));
     if (r.faint.length) f('a season where the fairway sinks into the rough: ' + r.faint.slice(0, 4).join('; '));
-    if (r.snow.length) f('snow in the wrong season: ' + r.snow.slice(0, 4).join('; '));
+    if (r.snow.length) f('weather in the wrong season: ' + r.snow.slice(0, 4).join('; '));
+    if (r.iceP !== true || r.iceRips) f('a pond in winter: drawn as ice ' + r.iceP + ', ripples ' + r.iceRips);
     if (r.banner.length) f('the banner: ' + r.banner.join('; '));
     return [r.homes + ' home courses in four seasons each, all different, round again after blossom; other courses unchanged',
-      'hazards stay put; the fairway stands out as well as it does as built; snow in winter only; the banner names the season'];
+      'hazards stay put; the fairway stands out as well as it does as built; snow and ice in winter, leaves in autumn, petals in blossom; the banner names the season'];
   }
 };

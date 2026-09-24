@@ -119,7 +119,31 @@ module.exports = {
       }
     });
 
+    // The sounds: the rotor while he flies to an island, a knock on a plank
+    // for every step over the canyon, and neither otherwise. Played through a
+    // stand-in for the audio (a check's browser may not start real sound).
+    const snd = await page.evaluate(() => {
+      const keep = { ctx: Sfx.ctx, rotor: Sfx.rotor, plank: Sfx.plank, chirp: Sfx.chirp, mt: Sfx.musicTick, heli: Scene.heli, crossing: Scene.crossing, ph: Scene.walkPh, sound: S.sound };
+      const n = { rotor: 0, plank: 0 };
+      try {
+        S.sound = 1; QUIET = false;
+        Sfx.ctx = { state: 'running', currentTime: 1 };
+        Sfx.rotor = () => { n.rotor++; }; Sfx.plank = () => { n.plank++; }; Sfx.chirp = () => {}; Sfx.musicTick = () => {};
+        const run = (heli, crossing, secs) => { const a = { ...n };
+          Scene.heli = heli; Scene.crossing = crossing;
+          for (let t = 0; t < secs; t += 0.05) { Scene.walkPh = (Scene.walkPh || 0) + 0.05 * 1.8; Sfx.tick(0.05); }
+          return { rotor: n.rotor - a.rotor, plank: n.plank - a.plank }; };
+        return { fly: run(0.5, 0.5, 2), bridge: run(0, 0.5, 2), walk: run(0, 0, 2) };
+      } finally {
+        Sfx.ctx = keep.ctx; Sfx.rotor = keep.rotor; Sfx.plank = keep.plank; Sfx.chirp = keep.chirp; Sfx.musicTick = keep.mt;
+        Scene.heli = keep.heli; Scene.crossing = keep.crossing; Scene.walkPh = keep.ph; S.sound = keep.sound;
+      }
+    });
+
     const f = m => { throw new Error(m); };
+    if (!(snd.fly.rotor >= 10) || snd.fly.plank) f('flying for 2s played ' + snd.fly.rotor + ' rotor beats and ' + snd.fly.plank + ' plank steps');
+    if (!(snd.bridge.plank >= 5) || snd.bridge.rotor) f('crossing the bridge for 2s played ' + snd.bridge.plank + ' plank steps and ' + snd.bridge.rotor + ' rotor beats');
+    if (snd.walk.rotor || snd.walk.plank) f('walking on the grass played ' + JSON.stringify(snd.walk));
     if (r.bad.length) f('canyons on the wrong holes: ' + r.bad.slice(0, 4).join('; '));
     if (r.away) f(r.away + ' canyons away from the home courses');
     if (r.home !== r.homes * 4) f(r.home + ' canyons over ' + r.homes + ' home events, not ' + r.homes * 4 + ' (one a round)');
@@ -136,6 +160,7 @@ module.exports = {
     if (!live.moved) f('a canyon hole finished by its tee shot never moved on');
     if (live.cam < live.land - 0.1 || !live.over) f('a canyon hole finished by its tee shot moved on before he crossed (stood at ' + live.cam + ' of ' + live.land + ')');
     return [r.home + ' canyons over ' + r.homes + ' home events, the last par five of each round, none elsewhere',
+      'sounds: ' + snd.fly.rotor + ' rotor beats in 2s of flight, ' + snd.bridge.plank + ' plank steps in 2s on the bridge, none on the grass',
       'no ball in the gorge; he crossed in ' + r.crossed.toFixed(1) + 's at the bridge pace on planks all the way; a hole done early waits for him'];
   }
 };

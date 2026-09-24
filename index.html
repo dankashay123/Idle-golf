@@ -3517,12 +3517,12 @@ const homeFor = tier => COURSE_HOME[tier % COURSE_HOME.length];
 // turn. Each pair is a colour and how far the course's own goes toward it.
 const SEASONS = [null,
   { n:'Autumn', turf:['#A09A3E',0.42], rough:['#7A5230',0.55], tree:['#E48A34','#A8402A'],
-    sky1:['#F2C69A',0.35], water:['#2A5A6C',0.25] },
+    sky1:['#F2C69A',0.35], water:['#2A5A6C',0.25], fall:'leaves' },
   { n:'Winter', turf:['#A6BCAE',0.50], rough:['#E6EDF0',0.82], tree:['#EEF3F5','#46605A'],
     sky0:['#5A7088',0.45], sky1:['#E6ECF0',0.50], water:['#80AEC2',0.45], rock:['#CDD4DA',0.45],
-    sand:['#EEF0F0',0.35], snow:1, crowd:0.6 },
+    sand:['#EEF0F0',0.35], snow:1, ice:1, crowd:0.6 },
   { n:'Blossom', turf:['#62BA5A',0.35], rough:['#3E8C4A',0.40], tree:['#F6B6D2','#C4628E'],
-    alt:['#F6F2EA','#8EA89A'], sky1:['#F6DCEA',0.30] }
+    alt:['#F6F2EA','#8EA89A'], sky1:['#F6DCEA',0.30], fall:'petals' }
 ];
 // SEASON_FORCE (the developer menu) shows a home course in any season
 let SEASON_FORCE = -1;
@@ -3541,7 +3541,7 @@ function seasonLook(cs, s){
   const rgb = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16));
   const near = (a, b) => rgb(a).reduce((t, v, i) => t + Math.abs(v - rgb(b)[i]), 0) < 150;
   const tr = Z.alt && near(cs.tree[0], Z.tree[0]) ? Z.alt : Z.tree;
-  return LOOK_CACHE[k] = Object.assign({}, cs, { id: k, season: Z.n, snowfall: !!Z.snow,
+  return LOOK_CACHE[k] = Object.assign({}, cs, { id: k, season: Z.n, snowfall: !!Z.snow, ice: !!Z.ice, fall: Z.fall || null,
     turf: m(cs.turf, Z.turf), rough: m(cs.rough, Z.rough), sand: m(cs.sand, Z.sand),
     water: m(cs.water, Z.water), rock: m(cs.rock, Z.rock),
     sky: [m(cs.sky[0], Z.sky0), m(cs.sky[1], Z.sky1)],
@@ -5705,6 +5705,19 @@ const Sfx = {
     this.tone(640, t, 0.09, 'sine', 0.08, 420);
     [0.09, 0.15, 0.19, 0.22].forEach((dt, i) => this.hiss(t + dt, 0.025, 2200 + i * 300, 3, 0.10 / (i + 1)));
   },
+  // The signature holes. Flying to an island: the club spun over his head
+  // goes whup-whup, a low puff of air with a thump in it, nine to the second.
+  rotor(t, v){
+    this.hiss(t, 0.075, 190, 0.8, 0.052 * v, 110, 'lowpass');
+    this.tone(72, t, 0.06, 'sine', 0.035 * v, 52);
+  },
+  // Over the canyon: each step a knock on a wooden plank, and now and then
+  // the bridge creaks under him.
+  plank(t, creak){
+    this.hiss(t, 0.045, 760, 2.2, 0.055);
+    this.tone(230, t, 0.055, 'triangle', 0.05, 150);
+    if(creak) this.tone(170, t + 0.04, 0.34, 'triangle', 0.022, 128);
+  },
   // Birds in the trees, now and then, on a fine day: a quick rising chirp, or
   // two falling ones.
   chirp(t){
@@ -5760,6 +5773,17 @@ const Sfx = {
   tick(dt){
     this.musicTick();
     if(!this.on() || !this.ctx || this.ctx.state !== 'running') return;
+    // the rotor while he flies, strongest at the top of the flight
+    const now = this.ctx.currentTime;
+    if(Scene.heli > 0){
+      this.rotT = (this.rotT || 0) - dt;
+      if(this.rotT <= 0){ this.rotT = 0.11; this.rotor(now + 0.01, 0.55 + 0.45 * Math.sin(Math.PI * Scene.heli)); }
+    }else this.rotT = 0;
+    // a knock for every step on the bridge
+    if(Scene.crossing > 0 && !Scene.heli){
+      const st = Math.floor((Scene.walkPh || 0) * 2);
+      if(st !== this.stepK){ this.stepK = st; this.plank(now + 0.01, Math.random() < 0.3); }
+    }
     if(S.dgnRun || Scene.night || Scene.rain) return;
     this.birdT = (this.birdT || 3 + Math.random() * 6) - dt;
     if(this.birdT <= 0){
@@ -8316,6 +8340,14 @@ const P_WATER = {
     return pickC(T._wt, 0.46 + (ndl - HZ_LZ)*1.1 - steep*0.3 + near*0.16);
   }
 };
+// A pond in a winter season is frozen: the same banks, then ice where the
+// water was, and nothing moving on it.
+const P_ICE = Object.assign({}, P_WATER, { rip: 0,
+  tone(T, f, ndl, near, steep){
+    if(f < 0.80) return P_WATER.tone(T, f, ndl, near, steep);
+    return pickC(T._ic, 0.46 + (ndl - HZ_LZ)*1.1 - steep*0.3 + near*0.16);
+  }
+});
 // An island's lake is level with the ground round it. Sunk like a pond, a
 // lake that size put its far water lower on the screen than the green in
 // front of it, and painted the green out.
@@ -9943,6 +9975,12 @@ const Scene = {
     this.theme = buildTheme(look, mode);
     this.treeSpr = courseTrees(look, mode);
     this.snow = !!look.snowfall && !this.rain;
+    // petals in blossom and leaves in autumn, drifting across; ponds frozen
+    // in winter
+    this.fall = !this.rain ? look.fall || null : null;
+    this.fallCols = look.fall === 'petals' ? [lite(look.tree[0], 0.25), look.tree[0], '#FFF4F8']
+                  : look.fall === 'leaves' ? [look.tree[0], look.tree[1], mixC(look.tree[0], '#F2D060', 0.5)] : null;
+    this.ice = !!look.ice;
 
     // The bend, off its own stream. a: how far the line moves across, c:
     // where the corner is, w: half the length of the turn. Laid down before
@@ -10835,6 +10873,8 @@ Object.assign(Scene, {
       // wall of a pit being in shadow while the opposite one faces the sun.
       T._sdb = expandC([dark(T.sd[0], 0.13), dark(T.sd[0], 0.04), T.sd[1],
                         T.sd[3], T.sd[5], lite(T.sd[6], 0.10)], 44);
+      // ice: the water's own colour whitened, darkest where it is deepest
+      T._ic = expandC([mixC(T.wt[1], '#CFE4EE', 0.55), mixC(T.wt[3], '#E4F0F6', 0.70), '#F2F8FA'], 30);
       // a canyon's walls: turf at the lip, the course's rock, then darkness
       // (read off the ends of the rock ramp, which is three long on a wager)
       const rk = u => pickC(T.rk, u);
@@ -10860,7 +10900,7 @@ Object.assign(Scene, {
     // The colours count too, as the ramps themselves: a palette can be
     // recoloured in place without becoming a new palette.
     const now = [this.gGen, this.theme, this.themeId, VW, VH, cam, this.camH, this.pixGround !== false,
-                 T._fw, T._rg, T._gr, T._sd, T._sdb, T._wt, T._bk, T._cn, T._rim, T._arim, T.apron, T.edge, T.lip];
+                 T._fw, T._rg, T._gr, T._sd, T._sdb, T._wt, T._bk, T._cn, T._ic, this.ice, T._rim, T._arim, T.apron, T.edge, T.lip];
     let same = this.pixGround !== false && key.length === now.length;
     for(let i = 0; same && i < now.length; i++) if(key[i] !== now[i]) same = false;
     if(same){
@@ -10980,7 +11020,7 @@ Object.assign(Scene, {
       }
 
       for(const bk of this.bunkers) this.hazSlice(c, T, bk, P_SAND, d, s, y, hgt, near, C0);
-      if(this.water) this.hazSlice(c, T, this.water, this.water.canyon ? P_CANYON : this.water.lake ? P_LAKE : P_WATER, d, s, y, hgt, near, C0);
+      if(this.water) this.hazSlice(c, T, this.water, this.water.canyon ? P_CANYON : this.water.lake ? P_LAKE : this.ice ? P_ICE : P_WATER, d, s, y, hgt, near, C0);
 
       const gd = d - LEN;
       const lobe = 1 + 0.085*Math.sin(gd*0.85 + this.seed);
@@ -11576,6 +11616,21 @@ Object.assign(Scene, {
   },
 
   drawWeather(){
+    if(this.fall){
+      // Blossom petals sink slowly, turning; autumn leaves are blown across
+      // with the wind, tumbling. A few dozen, and each keeps to its own lane.
+      const c = this.b, w = this.wind || 0, P = this.fall === 'petals', C = this.fallCols;
+      for(let i = 0; i < 40; i++){
+        const sp = P ? 9 + (i % 4) * 3 : 16 + (i % 3) * 6;
+        const drift = P ? this.t * (4 + w * 10) : this.t * (22 + Math.abs(w) * 30) * (w < 0 ? -1 : 1);
+        const x = Math.round((((i*71 + drift + Math.sin(this.t*1.6 + i*1.9)*(P ? 7 : 4)) % (VW + 20)) + VW + 20) % (VW + 20) - 10);
+        const y = Math.round((i*37 + this.t*sp + Math.sin(this.t*2.3 + i)*3) % VH);
+        const turn = Math.sin(this.t*(P ? 3 : 7) + i*2.1) > 0;
+        c.fillStyle = C[i % C.length];
+        c.fillRect(x, y, turn ? 3 : 2, turn ? 2 : 3);
+        if(!P && turn){ c.fillStyle = C[(i + 1) % C.length]; c.fillRect(x + 1, y, 1, 1); }
+      }
+    }
     if(this.snow && !this.rain){
       // a home course in winter: slow flakes, drifting with the wind
       const c = this.b, w = this.wind || 0;
