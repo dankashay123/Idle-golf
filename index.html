@@ -384,6 +384,44 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
 .lb.rep{grid-template-columns:1fr auto;padding:5px 0}
 .lb.rep i{font-style:normal;color:var(--dim)}
 
+/* ---------- the season, one row an event ---------- */
+.cal{display:grid;grid-template-columns:16px 1fr auto;gap:10px;align-items:center;
+  padding:7px 12px;border-bottom:1px solid #12261A;font-size:var(--f2)}
+.cal .n{font-family:var(--mono);font-size:var(--f1);color:var(--faint);text-align:right}
+.cal .c{min-width:0}
+.cal .c .nm{display:block}
+.cal .t{display:block;font-size:var(--f1);color:var(--dim);margin-top:1px}
+.cal .s{font-family:var(--mono);font-weight:600;text-align:right;white-space:nowrap}
+.cal.now{background:#132A1C;box-shadow:inset 3px 0 0 var(--brass)}
+.cal.now .n{color:var(--dim)}
+.cal.done .nm{color:var(--dim)}
+
+/* ---------- the trophy cabinet ----------
+   A glass case in a wooden frame: the four majors of the week on the top
+   shelf, their jackets under them, the cups, then the best cards on a plaque.
+   Pixel drawings at 36px, three whole pixels to one of theirs. */
+.cab{margin:10px 12px 12px;background:#0C1812;border:3px solid #5B3A1E;border-radius:3px;
+  box-shadow:inset 0 0 0 1px #2A1B0E,0 1px 0 #08110C}
+.shelf{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;padding:10px 6px 6px}
+.shelf.two{grid-template-columns:1fr 1fr}
+.plank{height:5px;background:#6B4424;border-top:1px solid #8A5A30;border-bottom:1px solid #3A2512}
+.ci{text-align:center;min-width:0}
+.ci img{width:36px;height:36px;image-rendering:pixelated;image-rendering:crisp-edges;display:block;margin:0 auto 3px}
+.ci.no img{opacity:.45}
+.ci .cn{font-size:var(--f1);color:var(--chalk);line-height:1.25}
+.ci .cc{font-family:var(--mono);font-size:var(--f1);color:var(--brass);margin-top:1px}
+.ci.no .cn,.ci.no .cc{color:var(--faint)}
+.cabn{display:flex;gap:8px;align-items:center;justify-content:center}
+.cabn img{width:36px;height:36px;image-rendering:pixelated;image-rendering:crisp-edges}
+.cabn .big{font-family:var(--mono);font-size:var(--f5);font-weight:600;color:var(--brass);line-height:1}
+.cabn .cn{font-size:var(--f1);color:var(--dim);margin-top:2px}
+.plaque{padding:8px 10px 9px}
+.plaque .ph{font-family:var(--disp);font-size:var(--f3);color:var(--brass);margin-bottom:4px}
+.plaque .pr{display:grid;grid-template-columns:auto 1fr;gap:10px;align-items:baseline;padding:2px 0;font-size:var(--f2)}
+.plaque .ps{font-family:var(--mono);font-weight:600;color:var(--chalk);min-width:4ch;text-align:right}
+.plaque .pc{color:var(--dim);min-width:0}
+.plaque .pe{font-size:var(--f1);color:var(--dim)}
+
 /* ---------- career ---------- */
 #lvBox{padding:11px 12px 12px;background:#0A170F;border-bottom:var(--hair)}
 .lvhead{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
@@ -834,9 +872,13 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
       <div id="tierBox"></div>
       <div class="band"><span class="eyebrow">The Card</span><span class="note" id="cardNote"></span></div>
       <div id="cardBox"></div>
+      <div class="band"><span class="eyebrow" id="seasonHead">Season</span><span class="note" id="seasonNote"></span></div>
+      <div id="seasonBox"></div>
       <div class="band"><span class="eyebrow">Major of the Week</span><span class="note" id="majNote"></span></div>
       <div id="majBox"></div>
-      <div class="band"><span class="eyebrow">Season</span><span class="note" id="cupNote"></span></div>
+      <div class="band"><span class="eyebrow">Trophy Cabinet</span><span class="note" id="cabNote"></span></div>
+      <div id="cabBox"></div>
+      <div class="band"><span class="eyebrow">Record</span><span class="note" id="cupNote"></span></div>
       <div id="statRows"></div>
     </div>
 
@@ -1031,6 +1073,14 @@ const B = {
              '.....Xx.....','.....Xx.....','.....Xx.....','.....Xx.....','....XXxx....','....xxxx....'],
     chevrons: ['.....XX.....','....XwwX....','...XwXXxX...','..XwX..XxX..','.XwX....XxX.','.....XX.....',
                '....XwwX....','...XwXXxX...','..XwX..XxX..','.XwX....XxX.','............','............'],
+    // the trophy cabinet: the four majors of the week, a jacket, a cup
+    tpMasters: ['............','..XXXXXXXX..','XXXwwwwwxXXX','X.XwwwwwxX.X','X.XwwwwwxX.X','.XXwwwwwxXX.','...XwwwxX...','....XwxX....','.....XX.....','....XXXX....','...XxxxxX...','..XXXXXXXX..'],
+    tpCrown: ['.....XX.....','....XXXX....','...XwwwwX...','XXXwwwwwxX..','.XwwwwwwxXXX','..XwwwwwxX.X','..XwwwwwxX.X','..XwwwwwxXXX','...XwwwxX...','....XxxX....','...XXXXXX...','..XXXXXXXX..'],
+    tpSovereign: ['..X..XX..X..','..XX.XX.XX..','..XXXXXXXX..','..XwXwwXwX..','..XXXXXXXX..','.XwwwwwwwxX.','.XwwwwwwwxX.','..XwwwwwxX..','...XXwxXX...','.....XX.....','....XxxX....','...XXXXXX...'],
+    tpStarfall: ['.....XX.....','....XwwX....','XXXXXwwXXXXX','.XwwwwwwwxX.','..XwwwwwxX..','...XwwwxX...','..XwwXXwxX..','..XwX..XxX..','.XXX....XXX.','.....XX.....','....XxxX....','...XXXXXX...'],
+    cabJacket: ['...XX..XX...','..XwXwwXwX..','.XwwXwwXwwX.','XwwwwXXwwwwX','XwwwwXXwwwxX','XwwwwXxwwwxX','XwXwwXxwwXxX','XwwwwXxwwwxX','XwwwwXxwwwxX','XwwwwXxwwwxX','XxxxxXxxxxxX','XXXXXXXXXXXX'],
+    cabSlam: ['...X....X...','..XX....XX..','.XwX....XwX.','.XX......XX.','XwX......XwX','XX........XX','XwX......XwX','.XX......XX.','.XwX....XwX.','..XXX..XXX..','....XXXX....','.....XX.....'],
+    cabCup: ['............','............','.XXXXXXXXXX.','.XwwwwwwwxX.','.XwwwwwwwxX.','..XwwwwwxX..','...XwwwxX...','....XwxX....','.....XX.....','.....XX.....','...XXXXXX...','..XxxxxxxX..'],
     // the caddie's perks
     cpbook: ['............','XXXXX..XXXXX','XwwwwXXwwwwX','XwxxxXXxxxwX','XwwwwXXwwwwX','XwxxxXXxxxwX','XwwwwXXwwwwX','XwxxxXXxxxwX','XwwwwXXwwwwX','XXXXXXXXXXXX','.....XX.....','............'],
     cptempo: ['.....X......','....XwX..X..','....XwX.X...','...XwwwXX...','...XwwwX....','..XwwwXwX...','..XwwXwwwX..','.XwwXwwwwwX.','.XwXwwwwwwX.','XwwwwwwwwwwX','XXXXXXXXXXXX','XxxxxxxxxxxX'],
@@ -2823,22 +2873,22 @@ const B = {
     /* The majors of the week, one a real week in turn. Win one on your highest
        card and its jacket is yours: nothing else in the game unlocks it. */
     { id:'masters', slot:'weekly', n:'The Mythic Masters', lm:'clock', lmc:['#F0ECE0','#3E7A46','#E3B457'],
-      prize:'mjMasters', short:'Masters',
+      prize:'mjMasters', short:'Masters', trophy:'tpMasters', trophyCol:'#DDE3E6',
       sky:['#2A78A8','#DCEEE8'], turf:'#3EA046', rough:'#1E6A2E', sand:'#FFF6E0',
       water:'#2A96B4', rock:'#7E9EA0', tree:['#D06A9A','#8A3E68'],
       land:{ fw:3.00, taper:0.85, trees:1.10, kind:1, nb:4, bsize:1.2, water:0.55, wsize:1.2, crowd:1.6 } },
     { id:'crown', slot:'weekly', n:'The Crown Open', lm:'castle', lmc:['#949086','#62605A','#E3B457'],
-      prize:'mjClaret', short:'Crown',
+      prize:'mjClaret', short:'Crown', trophy:'tpCrown', trophyCol:'#E8C872',
       sky:['#2E5A7E','#D0DCDA'], turf:'#76984E', rough:'#96965A', sand:'#E8DAB2',
       water:'#2E6A8A', rock:'#868A86', tree:['#56744A','#384E30'],
       land:{ fw:3.40, taper:0.72, trees:0.20, kind:0, nb:8, bsize:1.2, water:0.35, wsize:1.1, crowd:1.6 } },
     { id:'sovereign', slot:'weekly', n:'The Sovereign Championship', lm:'obelisk', lmc:['#DCD6C8','#9A9488','#FFD66B'],
-      prize:'mjSovereign', short:'Sovereign',
+      prize:'mjSovereign', short:'Sovereign', trophy:'tpSovereign', trophyCol:'#F2C94C',
       sky:['#1E4A7E','#E6DCC4'], turf:'#4A924A', rough:'#24502C', sand:'#F2E6C4',
       water:'#2A7AA4', rock:'#8A8478', tree:['#3E7040','#244A28'],
       land:{ fw:2.40, taper:0.92, trees:1.30, kind:2, nb:6, bsize:1.2, water:0.45, wsize:1.2, crowd:1.6 } },
     { id:'starfall', slot:'weekly', n:'The Starfall Invitational', lm:'spire', lmc:['#BFE6FA','#6FB2D8','#FFFFFF'],
-      prize:'mjStarfall', short:'Starfall',
+      prize:'mjStarfall', short:'Starfall', trophy:'tpStarfall', trophyCol:'#BFE6FA',
       sky:['#161A44','#A8B8E0'], turf:'#3E8A66', rough:'#1E3A4A', sand:'#D4D0EC',
       water:'#4A62B8', rock:'#4A5080', tree:['#4A7E90','#284E5E'],
       land:{ fw:2.80, taper:0.88, trees:1.00, kind:2, nb:4, bsize:1.2, water:0.55, wsize:1.3, crowd:1.6 } }
@@ -3449,7 +3499,10 @@ function defaultState(){ return {
   nine: null, bestNine: undefined, ninesWon: 0,
   styleOwn: {}, outfit: 'classic', trail: 'plain',
   rival: null, form: undefined,
-  evCourse: null, weekly: null, majorWins: {}, homes: {}
+  evCourse: null, weekly: null, majorWins: {}, homes: {},
+  // what each event came to (the season calendar), and the best cards
+  // ever posted with where they were posted (the trophy cabinet)
+  evLog: [], bestCards: []
 }; }
 let S = defaultState();
 function initState(){
@@ -3509,6 +3562,11 @@ function initState(){
   if(!S.majorWins || typeof S.majorWins !== 'object') S.majorWins = {};
   for(const k in S.majorWins) if(!COURSE_WEEK.some(c => c.id === k) || !(S.majorWins[k] > 0)) delete S.majorWins[k];
   if(!S.homes || typeof S.homes !== 'object') S.homes = {};
+  // the season's results and the best cards: kept only where they make sense
+  const rec = x => x && typeof x === 'object' && x.t >= 1 && isFinite(x.t) && !!courseById(x.id);
+  S.evLog = Array.isArray(S.evLog) ? S.evLog.filter(x => rec(x) && (x.s === null || isFinite(x.s))).slice(-24) : [];
+  S.bestCards = Array.isArray(S.bestCards) ? S.bestCards.filter(x => rec(x) && isFinite(x.s))
+    .sort((a, b) => a.s - b.s).slice(0, 5) : [];
   if(S.music !== undefined && S.music !== 0 && S.music !== 1) delete S.music;
   for(const k in S.homes){ const c = courseById(k); if(!c || c.slot !== 'home') delete S.homes[k]; }
   if(!S.styleOwn || typeof S.styleOwn !== 'object') S.styleOwn = {};
@@ -5641,6 +5699,20 @@ function endTournament(){
   // level par. Posted as a card that reads as a personal best of E on a save
   // that has not yet finished a round in anger.
   if(!OFFLINE && score < (S.bestRound === undefined ? 1e9 : S.bestRound)) S.bestRound = score;
+  // For the season calendar and the trophy cabinet: what this event came to,
+  // on which course, and the best five cards ever posted. An event resolved
+  // in a catch-up has no card to show (it was never played), so it is logged
+  // as away and never posts a best card.
+  const csT = courseFor(t);
+  S.evLog = S.evLog || [];
+  S.evLog.push({ t, id: csT.id, s: OFFLINE ? null : score, b: beat ? 1 : 0, w: isWeekMajor(t) ? 1 : 0, c: S.tier });
+  if(S.evLog.length > 24) S.evLog.splice(0, S.evLog.length - 24);
+  if(!OFFLINE){
+    S.bestCards = S.bestCards || [];
+    S.bestCards.push({ t, id: csT.id, s: score, c: S.tier });
+    S.bestCards.sort((a, b) => a.s - b.s);
+    if(S.bestCards.length > 5) S.bestCards.length = 5;
+  }
 
   // The rival. A catch-up posts level par for every event it resolves, so
   // there is no card to hold against them and no form to learn from.
@@ -6415,6 +6487,9 @@ function retire(){
   // A new career tees off event 1 afresh: at home, and a major walked away
   // from half played is still there to be played this week.
   S.evCourse = null; S.homeSeen = undefined;
+  // the calendar starts again at event one, so the season's results go with
+  // the old card; the best cards are the career's and stay in the cabinet
+  S.evLog = [];
   if(S.weekly && !S.weekly.done) S.weekly.t = 0;
   const keepUpg = relLv('vault') * B.VAULT_UPG;
   B.UPG.forEach(u => S.upg[u.id] = Math.min(capOf(u), keepUpg));
@@ -12454,9 +12529,11 @@ function renderTour(){
     + '<span class="s">' + payShare(proj, target).toFixed(2) + 'x</span></div>';
 
   renderMajor();
-  $('cupNote').textContent = 'Season ' + (Math.floor((t-1)/B.SEASON)+1);
+  renderSeason();
+  renderCabinet();
+  // the cups are in the cabinet now; this is the rest of the record
+  $('cupNote').textContent = '';
   $('statRows').innerHTML = [
-    ['Cups won', fmt(S.cups)],
     ['Cup points', fmt(S.points)],
     ['Holes played', fmt(S.totalHoles, 0)],
     ['Best hole', S.bestScore <= -4 ? 'Ace' : (B.SCORE.find(x=>x.d===S.bestScore) || {n:'Par'}).n],
@@ -12500,6 +12577,94 @@ function renderMajor(){
   const q = box.querySelector('#majHint .qm');
   $('majHint').classList.toggle('open', majHintOpen);
   q.onclick = () => { majHintOpen = !majHintOpen; $('majHint').classList.toggle('open', majHintOpen); };
+}
+
+/* ---- the season and the trophy cabinet ---- */
+const seasonOf = t => Math.floor((t-1) / B.SEASON);
+const scoreTxt = n => n === 0 ? 'E' : n > 0 ? '+' + n : String(n);
+// What will be played at event e, later than the event on now (t). The rules
+// openEvent follows as each event tees off, read without writing anything
+// down: the major of the week takes the next event while it is still to be
+// claimed this week, and a card you have just arrived on plays its home
+// course at its next regular stop. After that, the calendar.
+function upcomingCourse(e, t){
+  const M = majorState();
+  const majorNext = M.st === 'next' || M.st === 'early';
+  if(majorNext && e === t + 1) return { cs: M.cs, weekly: 1 };
+  if(S.homeSeen !== S.tier){
+    for(let k = t + 1; k <= e; k++){
+      if(majorNext && k === t + 1) continue;
+      if(calendarCourse(k).slot === 'event'){ if(k === e) return { cs: homeFor(S.tier), weekly: 0 }; break; }
+    }
+  }
+  return { cs: calendarCourse(e), weekly: 0 };
+}
+// The six events of this season: what each came to, the one on now, and
+// what is coming, with the courses named.
+function renderSeason(){
+  const box = $('seasonBox'); if(!box) return;
+  const t = tournamentOf(S.hole), first = seasonOf(t) * B.SEASON + 1;
+  setText($$('seasonHead'), 'Season ' + (seasonOf(t) + 1));
+  setText($$('seasonNote'), 'event ' + (t - first + 1) + ' of ' + B.SEASON);
+  let h = '';
+  for(let e = first; e < first + B.SEASON; e++){
+    const slot = B.SLOTS_SEASON[(e-1) % B.SEASON];
+    let cs, weekly = 0, st = '', cls = 'cal';
+    if(e < t){
+      const L = (S.evLog || []).filter(x => x.t === e).pop();
+      cs = (L && courseById(L.id)) || calendarCourse(e); weekly = L ? L.w : 0; cls += ' done';
+      st = !L ? '' : L.s === null ? '<span style="color:var(--faint)">away</span>'
+         : scoreTxt(L.s) + (L.b ? ' <b style="color:var(--brass)">won</b>' : '');
+    }else if(e === t){
+      cs = courseFor(e); weekly = isWeekMajor(e) ? 1 : 0; cls += ' now';
+      st = '<b style="color:var(--aurora)">Now</b>';
+    }else{
+      const U = upcomingCourse(e, t); cs = U.cs; weekly = U.weekly;
+      if(e === t + 1) st = '<span style="color:var(--dim)">Next</span>';
+    }
+    const tag = weekly ? '<span style="color:var(--brass)">Major of the Week</span>'
+      : cs.slot === 'home' ? 'Home course' : slot === 'major' ? 'Major' : slot === 'finale' ? 'Finale' : 'Tour event';
+    h += '<div class="' + cls + '"><span class="n">' + (e - first + 1) + '</span>'
+      + '<span class="c"><span class="nm">' + cs.n + '</span><span class="t">' + tag + '</span></span>'
+      + '<span class="s">' + st + '</span></div>';
+  }
+  setHTML(box, h);
+}
+// The trophy cabinet: a trophy for each major of the week you have won, the
+// jackets that came with them, the cups, and the best cards you have posted.
+function renderCabinet(){
+  const box = $('cabBox'); if(!box) return;
+  const W = S.majorWins || {}, won = COURSE_WEEK.filter(c => W[c.id] > 0).length, DIM = '#55655B';
+  setText($$('cabNote'), won + ' of ' + COURSE_WEEK.length + ' majors \u00b7 ' + fmt(S.cups, 0)
+    + '\u00a0' + (S.cups === 1 ? 'cup' : 'cups'));
+  const cell = (ic, col, on, name, sub) => '<div class="ci' + (on ? '' : ' no') + '"><img src="'
+    + pixUrl(ic, on ? col : DIM) + '" alt=""><div class="cn">' + name + '</div><div class="cc">' + sub + '</div></div>';
+  const trophies = COURSE_WEEK.map(cs => { const n = W[cs.id] || 0;
+    return cell(cs.trophy, cs.trophyCol, n > 0, cs.short, n > 1 ? '\u00d7' + n : n ? 'Won' : 'Not yet'); }).join('');
+  const jackets = COURSE_WEEK.map(cs => { const o = styleDef('o', cs.prize), got = styleOwned('o', cs.prize);
+    return cell('cabJacket', o.shirt, got, o.n, got ? (S.outfit === o.id ? 'Wearing' : 'Yours') : 'Not yet'); }).join('');
+  const now = seasonOf(tournamentOf(S.hole));
+  const thisSeason = (S.evLog || []).filter(x => x.b && seasonOf(x.t) === now).length;
+  const cups = '<div class="cabn"><img src="' + pixUrl('cabCup', '#E3B457') + '" alt=""><div><div class="big">'
+    + fmt(S.cups, 0) + '</div><div class="cn">' + (S.cups === 1 ? 'Cup' : 'Cups')
+    + (thisSeason ? ' \u00b7 ' + thisSeason + ' this season' : '') + '</div></div></div>';
+  const slam = '<div class="cabn"><img src="' + pixUrl('cabSlam', won === COURSE_WEEK.length ? '#E3B457' : '#7ADB86')
+    + '" alt=""><div><div class="big">' + won + '/' + COURSE_WEEK.length + '</div>'
+    + '<div class="cn">Grand Slam</div></div></div>';
+  // the best cards, with where they were posted; a best card from before the
+  // cabinet kept them has no course to name, so it heads the plaque on its own
+  const line = (sc, what) => '<div class="pr"><span class="ps">' + scoreTxt(sc) + '</span><span class="pc">' + what + '</span></div>';
+  const bc = (S.bestCards || []).slice(0, 3);
+  let rows = '';
+  if(S.bestRound !== undefined && (!bc.length || S.bestRound < bc[0].s)) rows += line(S.bestRound, 'Best card');
+  rows += bc.slice(0, rows ? 2 : 3).map(x => { const cs = courseById(x.id);
+    return line(x.s, (cs ? cs.n : '') + ' \u00b7 Card ' + roman(x.c)); }).join('');
+  if(S.bestNine !== undefined) rows += line(S.bestNine, 'Best nine');
+  const plaque = '<div class="plaque"><div class="ph">Best Cards</div>'
+    + (rows || '<div class="pe">Finish an event to post one here.</div>') + '</div>';
+  setHTML(box, '<div class="cab"><div class="shelf">' + trophies + '</div><div class="plank"></div>'
+    + '<div class="shelf">' + jackets + '</div><div class="plank"></div>'
+    + '<div class="shelf two">' + cups + slam + '</div><div class="plank"></div>' + plaque + '</div>');
 }
 
 // The three figures a climb actually turns on, which the screen has never shown:

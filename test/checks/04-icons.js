@@ -41,7 +41,10 @@ module.exports = {
                    ['Club Membership', 'member'], ['Double Purse', 'boost'],
                    ['Free gift', 'freegift'], ['Members daily', 'freeday'],
                    ['Tour Card bounty', 'freecard'], ['Auto-climb', 'autoclimb']],
-        cperk:    (B.CPERKS || []).map(p => [p.n, p.ic])
+        cperk:    (B.CPERKS || []).map(p => [p.n, p.ic]),
+        // the trophy cabinet: a trophy for each major of the week, the jacket, the cups, the Grand Slam
+        cabinet:  B.COURSE.filter(c => c.slot === 'weekly').map(c => [c.n + ' trophy', c.trophy])
+                    .concat([['Major jacket', 'cabJacket'], ['Cups', 'cabCup'], ['Grand Slam', 'cabSlam']])
       };
       const seen = {}, missing = [], shared = [];
       let total = 0;
