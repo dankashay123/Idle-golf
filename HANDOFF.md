@@ -1,6 +1,6 @@
 # Handoff — Mythic Mulligan
 
-Last updated 2026-09-24, at commit `eba1392` on `main`. Read this with
+Last updated 2026-09-24, at commit `07ec78c` on `main`. Read this with
 `CLAUDE.md`, which holds the standing rules. `test/README.md` says what each
 check is for.
 
@@ -12,11 +12,16 @@ check is for.
   branch `claude/golf-sounds-dn0l4w`). Nothing is half-built.
 - `node test/run.js` passes all **32 checks** (about 7 minutes; `pacing` runs
   sixteen seeds and takes ~40s on its own).
-- The last request was "the trophy cabinet, then optimise and perfect what we
-  have, and check what the dev menu needs". All three are done (§5): the
-  cabinet and a season calendar on the Tour tab, a polish pass (a second
-  review, a soak test, a screenshot tour, fixes), and a dev menu that covers
-  everything added lately.
+- The last request was "go through everything for clutter and things buried
+  in menus; consolidate; stage icons are fine (like a trophy room: things to
+  look at and rewards, no upgrades); and add rewards to the trophy case".
+  Done (§5, "The Trophy Room"): the trophy on the course opens a **Trophy
+  Room** (Today, Cabinet, Honours) with a red dot when something is waiting,
+  the case pays sovereigns, the free sovereigns and today's challenges moved
+  there, the shop lost its Buy tab, the old legacy "Trophy Room" is now
+  **Heirlooms**, and the Career tab points at retiring when it is worth it.
+- Before that: the trophy cabinet and season calendar, a polish pass and the
+  dev menu rows (§5).
 - The user usually ends a task by asking **"What's next?"** Reply with a short
   plain-language menu, give a recommendation, and wait for them to choose.
   Open ideas are listed in §8.
@@ -62,7 +67,7 @@ check is for.
 
 ## 3. The project
 
-- **The whole game is `index.html`** (about 13.6k lines, 770 KB with the sounds): markup, CSS and one
+- **The whole game is `index.html`** (about 14.1k lines, 1.4 MB with the sounds and the music): markup, CSS and one
   classic script. There is no build step.
 - Play it over http (`npm start`, then http://localhost:8080). Opening the
   file straight from disk blocks `localStorage`, so it never saves.
@@ -86,7 +91,10 @@ Line numbers are approximate and drift. Search for the name instead.
 | Hole lifecycle | `startHole` → `finishHole` → `advanceHole` → `endTournament` |
 | Course announcement banner | `announceCourse`, `Scene.drawAnnounce` |
 | Tour Cards | `climb`, `eventsToUnlock`, `roundRatio`, `projectedRatio`, `climbLines` |
-| Shop (sovereigns, style racks) | `renderShop`, `styleDef`, `styleOwned`, `styleBuy`, `styleTry` |
+| Shop: four tabs, Offers (one-time offers, Double Purse as a wide tile, sovereign packs), Bags, Bench, Style. An old caller asking for `'buy'` gets Offers | `renderShop`, `shopCard` (`wide`), `styleDef`, `styleOwned`, `styleBuy`, `styleTry` |
+| **Trophy Room** (the trophy on the course): Today, Cabinet, Honours; the case's rewards | `trophyRoom(tab)`, `roomToday`, `dailyBlock`, `roomCase`, `honRows`, `collect(id)`, `casePending`, `caseTrack`, `B.CASE`, `S.caseGot`, `roomWaiting`, `renderHonBtn` |
+| Heirlooms (Career > Legacy). **The code still calls them trophies** (`B.TROPHY`, `S.relic`, `discover`, `trophiesFound`); only the words on screen changed | `renderLegacy` |
+| The Career tab's dot for "retiring now finds an heirloom" | `retireWorth` (worked out once a second), `renderXp`, `renderCareer` |
 | Retirement | `retireCard`, `retire` |
 | Offline catch-up (`OFFLINE` flag) | `offline()` |
 | Sound: recordings `rec-strike`, `rec-cup` and `rec-music` (base64 MP3 near the top of the body; the applause was removed) with the synthesised sounds as stand-ins | `const Sfx`, `Sfx.rec`, `Sfx.load`, `Sfx.musicTick` |
@@ -99,7 +107,7 @@ Line numbers are approximate and drift. Search for the name instead.
 | Renderer | `const Scene = {`. Key members: `newHole`, `newDepthsHole`, `proj`, `curveAt`/`bendOff` (doglegs), `layHazards`, `layProps`, `buildSky`, `buildRidge`, `buildWood`, `drawGround`, `drawGolfer`, `fairyBox`/`drawCaddie`, `swing`/`walking2ball`/`launch`, `drawBalls`, `drawLyingBall`, `drawMap` |
 | Caddie perks (nine; `now:1` means instant, e.g. Ready Golf) | `tickCaddie`, `cperkPick`, `renderCadPerks` |
 | Daily challenges | `dailyStart`, `dailyTick`, `dayNow` (`DAY_FORCE` overrides it in tests) |
-| Tour tab | `renderTour`, `renderMajor` |
+| Tour tab: Tour Card, The Card, Season, Major of the Week | `renderTour`, `renderSeason`, `renderMajor` |
 | Developer menu (hold the course name still for 1.5s) | `const DEV = {`. `DEV.course(i)` pins any course to the next event (a major of the week is set up as the major). The read panel shows the audio state and the auto-climb judgement; rows for the major of the week, the season, the cabinet, sound and music, the fairy, caddie perks, the new honours, and a frame-time readout (`DEV_FPS`) |
 | Main loop | `step()` |
 
@@ -157,11 +165,47 @@ Line numbers are approximate and drift. Search for the name instead.
 
 ## 5. What the last features do (for debugging them)
 
-### Trophy cabinet and season calendar (Tour tab)
+### The Trophy Room, and the declutter
+- **Why.** An audit found three different "trophy" things in three places
+  (the honours on the stage, the cabinet at the foot of the Tour tab, the
+  legacy Trophy Room in Career), today's challenges at the top of the
+  honours list where nobody looks, the free sovereigns in the shop twice
+  with nothing to say they were ready, three shop tiles that sold nothing,
+  and nothing anywhere pointing at retiring.
+- **The room.** The trophy on the stage opens `trophyRoom()`: **Today**
+  (a Collect button per thing waiting and Collect all when there are two or
+  more; the free sovereigns every 8 hours; today's three challenges; this
+  week's major and the wager of the day, and the Membership's daily when a
+  member), **Cabinet** (the cabinet, with a reward line under the trophies, the
+  cups and the best cards, and the Record rows under it), **Honours** (as before, minus the challenges).
+  Nothing in it is bought or upgraded. `QUIET` shows nothing. The trophy
+  carries a red dot (`#honDot`, class `ready`) while `roomWaiting()`, and a
+  tap opens Today when it does, the honours when a new one is done, else the
+  last page.
+- **The case's rewards** (`B.CASE`): three tracks, majors won (1 to 52),
+  cups won (1 to 500) and best card (25 to 288 under, a perfect card). Each
+  step waits in `casePending()` until collected, pays once, never expires.
+  `S.caseGot[track]` is the number of steps taken, clamped on load.
+  `collect('free')`, `collect('<track>')`, or `collect()` for everything.
+- **Moved.** Cabinet and Record left the Tour tab. The free sovereigns left
+  the shop (claimed only in the room now; `claimFree` is gone). The shop's
+  Buy tab merged into Offers; the three tiles that sold nothing (free gift,
+  members daily, Tour Card bounty) went, with their icons. The Career >
+  Legacy band "Trophy Room" is **Heirlooms** in every word on screen, along
+  with the honours "Find 15 heirlooms" and "The Whole Collection".
+- **Retiring.** The Career tab's dot, and a dot on its Legacy sub-tab, show
+  when `retireWorth()`: retiring is open and would find at least one more
+  heirloom.
+- Checks: `cabinet` (the rewards, the dot, the free button taking only the
+  free sovereigns, Today opening on a dot, the retire dot), `challenges`
+  (today's three by name on Today), and the room's three pages are swept by
+  `layout`, `legibility` and `titles`.
+
+### Trophy cabinet and season calendar
 - Bands on the Tour tab: Tour Card, The Card, **Season N** (`renderSeason`),
-  Major of the Week, **Trophy Cabinet** (`renderCabinet`), Record (the old
-  stats, minus cups). Both render through `setHTML`, so a hole that changes
-  nothing touches nothing.
+  Major of the Week. The **cabinet** (`renderCabinet`) and the Record
+  (`renderRecord`) are in the Trophy Room's Cabinet page. They render
+  through `setHTML`, so a hole that changes nothing touches nothing.
 - Records: `S.evLog` (last 24 events: `{t, id, s, b, w, c}`, `s` null when
   resolved away) and `S.bestCards` (best five, `{t, id, s, c}`), written in
   `endTournament`, repaired in `initState`; retiring clears `evLog` (the
@@ -272,6 +316,10 @@ Line numbers are approximate and drift. Search for the name instead.
 
 ## 6. Recent history (newest first, one line each)
 
+- `07ec78c`: the Trophy Room on the stage trophy (Today, Cabinet, Honours),
+  rewards in the trophy case, free sovereigns and the challenges moved into
+  it, shop Buy merged into Offers, legacy trophies renamed Heirlooms, and a
+  dot for when retiring is worth it.
 - `eba1392`: words on the field baked whole, hidden trees skipped, share
   honours as %, the cabinet's cup and slam unlit until won.
 - `6337ec1`: fixes from the second review (frozen field at 300 wide, climb on
@@ -329,8 +377,9 @@ Line numbers are approximate and drift. Search for the name instead.
 
 ## 8. What to offer next
 
-The trophy cabinet (item 1 of the last menu) is done. Still on that menu,
-under their numbers there:
+The Trophy Room and the declutter are done. Worth asking the user how the
+room feels on the phone (whether the dot draws them in, whether anything
+else still feels buried). The menu offered before that, under its numbers:
 
 2. **Signature holes on home courses**, such as an island-green par 3 (see
    the caution below).
