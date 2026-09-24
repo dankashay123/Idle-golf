@@ -1,6 +1,6 @@
 # Handoff — Mythic Mulligan
 
-Last updated 2026-09-23, at commit `eaa4caa` on `main`. Read this with
+Last updated 2026-09-24, at commit `b0e7b8f` on `main`. Read this with
 `CLAUDE.md`, which holds the standing rules. `test/README.md` says what each
 check is for.
 
@@ -8,16 +8,21 @@ check is for.
 
 ## 1. Where things stand
 
-- Everything is committed and pushed to `main`. Nothing is half-built.
-- `node test/run.js` passes all **28 checks** (about 4–5 minutes for the full run).
-- The user's last request, "do 1 and 2 for now", is finished: a home course for every
-  Tour Card, and the Major of the Week. Details are in §5.
-- **Outstanding: items 3, 4, 5 and 6 from the menu the user was given**
-  (real sounds, phone performance pass, more for the fairy caddie,
-  achievements). See §8.
+- Everything is committed and pushed to `main` (and mirrored on the session
+  branch `claude/golf-sounds-dn0l4w`). Nothing is half-built.
+- `node test/run.js` passes all **30 checks** (about 6 minutes; `pacing` now
+  runs sixteen seeds and takes ~40s on its own).
+- The user asked for **items 3, 4, 5 and 6** of the menu. All four are done:
+  recorded sounds, the battery pass, more for the fairy caddie, and six new
+  honours. Details are in §5. Along the way a real auto-climb stall was found
+  and fixed (§5, "Auto-climb").
 - The user usually ends a task by asking **"What's next?"** Reply with a short
   plain-language menu, give a recommendation, and wait for them to choose.
   Open ideas are listed in §8.
+- **Ask the user how the sounds sound.** The sessions cannot listen to audio:
+  the recordings were chosen by measuring and by looking at spectrograms,
+  and the levels were matched by rendering. If any sounds wrong on the
+  iPhone, §5 lists the other candidates.
 
 ## 2. Working with this user
 
@@ -38,13 +43,13 @@ check is for.
 - Commit trailer, exactly:
   ```
   Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
-  Claude-Session: https://claude.ai/code/session_01EUmZfotZvYS3BWjEFzg2M8
+  Claude-Session: https://claude.ai/code/session_01MKaizokfiN7G1KiqhJymcv
   ```
   Never put a model name in a commit, a code comment or any file.
 
 ## 3. The project
 
-- **The whole game is `index.html`** (about 12.9k lines): markup, CSS and one
+- **The whole game is `index.html`** (about 13.6k lines, 770 KB with the sounds): markup, CSS and one
   classic script. There is no build step.
 - Play it over http (`npm start`, then http://localhost:8080). Opening the
   file straight from disk blocks `localStorage`, so it never saves.
@@ -71,11 +76,15 @@ Line numbers are approximate and drift. Search for the name instead.
 | Shop (sovereigns, style racks) | `renderShop`, `styleDef`, `styleOwned`, `styleBuy`, `styleTry` |
 | Retirement | `retireCard`, `retire` |
 | Offline catch-up (`OFFLINE` flag) | `offline()` |
-| Sound (synthesised, no files) | `const Sfx` |
+| Sound: three recordings (`rec-strike`, `rec-cup`, `rec-applause`, base64 MP3 near the top of the body) with the synthesised sounds as stand-ins | `const Sfx`, `Sfx.rec`, `Sfx.load` |
+| Ground painted by the pixel, reused while the camera is still | `const PixPaint`, `drawGround` (`_gKey`, `gGen`), `ripples`, `groundTail` |
+| Live numbers written only when they change | `setText`, `setHTML`, `setCls`, `setSty` |
+| Fairy reactions and quips | `fairyReact`, `fairyNow`, `fairyDy`, `tickQuip`, `Scene.holed`, `B.FAIRY_SAY` |
+| Auto-climb judgement | `deriveStill`, `roundRatio`, `B.CLIMB_FIT` |
 | Palettes built from a course | `buildTheme`, `courseTrees` |
 | **Landmarks** | `drawLandmark` (called from `Scene.buildRidge`) |
 | Renderer | `const Scene = {`. Key members: `newHole`, `newDepthsHole`, `proj`, `curveAt`/`bendOff` (doglegs), `layHazards`, `layProps`, `buildSky`, `buildRidge`, `buildWood`, `drawGround`, `drawGolfer`, `fairyBox`/`drawCaddie`, `swing`/`walking2ball`/`launch`, `drawBalls`, `drawLyingBall`, `drawMap` |
-| Caddie perks | `tickCaddie`, `cperkPick`, `renderCadPerks` |
+| Caddie perks (nine; `now:1` means instant, e.g. Ready Golf) | `tickCaddie`, `cperkPick`, `renderCadPerks` |
 | Daily challenges | `dailyStart`, `dailyTick`, `dayNow` (`DAY_FORCE` overrides it in tests) |
 | Tour tab | `renderTour`, `renderMajor` |
 | Developer menu (tap the title) | `const DEV = {`. `DEV.course(i)` pins any course to the next event |
@@ -115,65 +124,118 @@ Line numbers are approximate and drift. Search for the name instead.
    an HTML page of `<img>` tags and screenshot it with Playwright. There are
    example scripts in the session scratchpad, but it is not kept, so rewrite
    them as needed.
-7. To take a screenshot, open `file://…/index.html` in Playwright (fine when
+7. **Eight seeds can be lucky.** `pacing` passed on its eight seeds while
+   three other sets of eight each held a player stuck at four times par.
+   When a balance check passes, try it once with the seed offset changed
+   (`seedN * 7919 + 1` in the check) before trusting it. Also: cosmetic code
+   that calls `Math.random` inside the simulation (for example the fairy's
+   word choice in `Scene.holed`) shifts the seeded sequence those checks use.
+8. **Negative-test harness gotcha.** If you patch with a `python3 -c` split
+   on a separator, pick one that cannot appear in code (`@@@`, not `|`): a
+   `||` in the pattern silently wrote broken code and the page never loaded,
+   which looked like a flaky timeout.
+9. **Playwright version.** `npm install` fetches a newer Playwright whose
+   browser is not installed here. Use `npm install --no-save
+   playwright@1.56.1` (it matches `/opt/pw-browsers/chromium-1194`), and do
+   not commit a `package-lock.json`.
+10. To take a screenshot, open `file://…/index.html` in Playwright (fine when
    no saves are needed), call `hideSheet()`, use `DEV.course(i)` to change
    course, and clip to `#stage`.
 
-## 5. What the last feature does (for debugging it)
+## 5. What the last features do (for debugging them)
 
-### Home courses
+### Recorded sounds
+- Three CC0 recordings from OpenGameArt, cut and mixed with a static ffmpeg
+  (from the `imageio-ffmpeg` pip wheel; there is no system ffmpeg), saved as
+  32 kHz mono MP3 and embedded as base64 in `<script type="text/plain"
+  id="rec-…">` blocks just above the main script. An HTML comment there says
+  where each came from. Total about 76 KB.
+  - strike: "Thwack Sounds" thwack-01 over "Swishes Sound Pack" swish-9
+  - cup: "100 CC0 SFX" other_01 (a small ball bouncing to rest) pitched to
+    0.72, with a low-passed thwack-02 for the knock
+  - applause: "Applause in a large hall or church", its first 2.6s crossfaded
+    into its last 4.8s (the natural swell and dying away)
+- Other CC0 candidates already found, if the user wants a change: Kenney
+  "Impact Sounds" (impactMetal_light, impactGeneric_light), Kenney "Casino
+  Audio" (die-throw-2 is a good rattle), "100 CC0 SFX" (hit_01, metal_02),
+  OpenGameArt "OoOoOoOoOoOoOo" (a crowd "ooh"), "Park ambiences" (birds).
+  Freesound, Pixabay, Wikimedia and archive.org are still blocked by the
+  network policy; only OpenGameArt and Kenney are reachable.
+- `Sfx.load` decodes them once the audio context exists; `Sfx.rec(k, t, vol,
+  rate, len)` plays one and returns false if it is not ready, so every call
+  falls back to the synthesised sound. Each play varies speed by ±5%.
+- Levels were matched by rendering both through an OfflineAudioContext
+  (loudest 300ms window): strike about -39 dB, cup -40, applause -48 (par)
+  to -35 (albatross), against the old synth's chimes at about -45.
 
-- There are ten courses in `B.COURSE` with `slot:'home'`. Each has `lm`, the
-  landmark kind, and `lmc`, its three colours. The home course for card N is
-  `homeFor(tier) = COURSE_HOME[tier % 10]`.
-- `openEvent()` runs at the top of every `startHole()`. It acts only on the
-  **first hole of an event**, writing `S.evCourse = {t, id}` so the course
-  never changes mid-event. A save loaded mid-event keeps the calendar course.
-- It picks, in this order:
-  1. The weekly major, if it is still unclaimed this week.
-  2. A home course, if the calendar slot is a regular `'event'` **and** either
-     it is the season opener (`(t-1) % B.SEASON === 0`) or you have arrived on
-     a new card (`S.homeSeen !== S.tier`; this one is skipped during a
-     catch-up).
-  3. Otherwise the calendar course.
-- Calendar majors and finales are never replaced.
-- `courseFor(t)` returns the pinned course if `S.evCourse.t === t`, and
-  `calendarCourse(t)` otherwise.
-- Landmarks are drawn once into the cached ridge canvas, so they cost nothing
-  per frame. Their position is seeded per hole. At night `L.lamp` lights the
-  windows and the lighthouse beam.
-- There are 12 landmark kinds: windmill, lighthouse, castle, stones, arch,
-  pagoda, tower, volcano, dome, spire, clock and obelisk.
+### Battery pass
+- Measured on 390x844 at 3x, eight courses. At full speed the main thread
+  was busy 74% of the time and is now 29%; with the CPU slowed 4x it went
+  from 14 to 42 frames a second. What changed:
+  - `PixPaint`: the ground march (~2,600 fillRects) writes into a Uint32
+    buffer and is stamped once. `drawGround` reuses it while nothing in
+    `_gKey` has changed (camera, size, theme and its colour ramps, `gGen`,
+    which `newHole`, `newDepthsHole`, `layHazards` and `resize` bump). Pond
+    ripples are recorded during the march and drawn live by `ripples`.
+  - The page canvas is the picture's own size and the browser scales it by
+    whole pixels (`#stage > #hole` is absolutely placed; its last part-pixel
+    hangs over the stage edge and is clipped; `layout` allows exactly that).
+    The resize observer watches `#stage`, not the canvas.
+  - `drawFarFade` lifts one row into a 1-row canvas instead of drawing the
+    canvas onto itself.
+  - Live DOM numbers use `setText`/`setHTML`/`setSty`; the honours button
+    label is worked out four times a second (`renderHonBtn(true)` from the
+    frame); `renderLive(D)` reuses the frame's `derive()`.
+- The `battery` check holds all of this (pixel identity of the two ground
+  paths, fresh and reused, a canvas-call cap, the canvas size, no DOM writes
+  when nothing changed).
 
-### Major of the Week
+### Fairy caddie
+- Three perks: Course Notes (`cXp`, +30% xp 8s), Club Selection (`cCpw`,
+  +20% pure strike power 8s), Ready Golf (`now:1`, 1s off `S.elapsed`,
+  never below zero). New 12x12 icons `cpnotes`, `cpclub`, `cpready`.
+- Reactions: `Scene.holed` calls `fairyReact('cheer'|'sigh', word)` for a
+  birdie or better / bogey or worse. `fairyDy` makes him hop or droop
+  (vertical only, so he never reaches the golfer). `tickQuip` (course only,
+  every 50-110s, not mid-swing) picks a line, 60% of the time a contextual one
+  when there is context (wind 12 mph+, rain, night, home course, weekly
+  major). Lines live in `B.FAIRY_SAY`; the `caddie` check holds them to 16
+  characters in the pixel font.
 
-- There are four courses with `slot:'weekly'`: masters, crown, sovereign and
-  starfall. Each has a `prize` (an outfit id) and a `short` name.
-- Weeks run Monday to Sunday: `weekNow() = floor((dayNow()+3)/7)`, and
-  `weekMajor(wk)` rotates through the four.
-- `S.weekly = {wk, t, id, done, won}`.
-- **When it is claimed:** at a fresh event start, only if the game is not
-  offline, not `QUIET` and not in a wager, and `S.eventsPlayed >= 1`.
-  `slotOfEvent(t)` then returns `'major'`, so it pays a major's purse
-  (×1.5) and a major's cup points.
-- **How it is settled, in `endTournament`:**
-  - Resolved offline: `W.t = 0`, which releases it to be claimed again.
-  - Won (target beaten on the highest card): the jacket unlocks as
-    `o:<prize>` and `c:<prize>`, plus `WEEK_WIN_SOV = 60` and
-    `S.majorWins[id]++`.
-  - Otherwise: `WEEK_PLAY_SOV = 10`.
-- **Jackets:** they are the outfits with `cat:'major', major:<id>, cost:0`.
-  `styleOwned` treats `cost:0 && major` as *not* free, and `styleBuy` refuses
-  them. The shop shows them on a "Major Winners" shelf with "WIN IT".
-- **Grand Slam:** an honour (`id:'slam'`, metric `slam` = number of distinct
-  majors won).
-- **Retirement:** `retire()` clears `evCourse` and `homeSeen`, and releases an
-  unfinished major.
-- **Save repair:** `initState` validates `evCourse`, `weekly` and
-  `majorWins`.
-- **Check:** `test/checks/28-majors.js` covers all of the above.
+### Auto-climb (a real stall, now fixed)
+- `roundRatio` judged the next card with this round's weather and course
+  affinity in the golfer's strength. A frost ball on a frost course read
+  four times his strength, he was climbed on it, and then took ~4x par for
+  the rest of a session. Now `deriveStill()` judges him in still air with no
+  course affinity, against `B.CLIMB_FIT = 0.90` (it used to borrow
+  `RETIRE_FIT`). Swept over 32 careers: albatross or better 19-23%, and no
+  twenty minutes below 56% par or better (was 0%). The sweep script is easy
+  to rewrite: run the `scoring` player for 8 seeds at several seed offsets
+  and several `CLIMB_FIT` values.
+
+### Honours
+- Six new ones at the end of `B.ACH`: `dogleg` (tally bumped in
+  `Scene.launch`, not in `QUIET`), `windy` (tally `windBird`, bumped in
+  `finishHole` when `Scene.windMph() >= 15`; only Crosswind rounds get
+  there), `twin`, `homes` (`S.homes`, noted in `openEvent`), `major1`,
+  `staff` (its `v` is written as 9, and the `honours` check fails if the
+  number of caddie perks changes without it).
+
+### Earlier: home courses and the Major of the Week
+- See commit `eaa4caa`. `openEvent()` picks the course at the first hole of
+  an event: the weekly major if unclaimed, else a home course on a season
+  opener or a new card, else the calendar course. `S.weekly = {wk, t, id,
+  done, won}`; majors are settled in `endTournament`. `majors` covers it.
 
 ## 6. Recent history (newest first, one line each)
+
+- `b0e7b8f`: six honours for doglegs, wind, the matching pair, home
+  courses, majors and caddie perks.
+- `298b5ee`: three caddie perks, the fairy's reactions and quips; auto-climb
+  judged in still air (`CLIMB_FIT`), `pacing` on sixteen seeds.
+- `8de0110`: battery pass (pixel-painted, reused ground; picture-sized canvas;
+  change-only DOM writes). New `battery` check.
+- `42e86b4`: real recorded strike, cup and applause.
 
 - `eaa4caa`: home courses with landmarks and the Major of the Week. Also:
   Blossom's far treeline now fades into the grass, and the hazards check
@@ -203,45 +265,32 @@ Line numbers are approximate and drift. Search for the name instead.
 
 ## 7. Environment notes
 
-- **Sound sites: the user has now set up network access for the new
-  session's environment**, so it should be able to reach the free sound
-  sites. The old session's environment blocked freesound, opengameart, kenney
-  and pixabay. Check first with a quick `curl -sI https://opengameart.org`
-  and `curl -sI https://kenney.nl`. If they are still blocked, tell the user
-  plainly which address was refused, rather than working around it. Only
-  use sounds with a CC0 licence (Kenney's packs are all CC0), and record in
-  the file where each came from. All sound in the game today is
-  synthesised.
+- Reachable: opengameart.org and kenney.nl. Blocked (403 from the proxy):
+  freesound.org, pixabay.com, commons.wikimedia.org, upload.wikimedia.org,
+  archive.org, bigsoundbank.com, zapsplat.com, mixkit.co, sonniss.com. Only
+  use CC0 sounds, and record where each came from beside the data.
+- No system ffmpeg. `pip3 download imageio-ffmpeg --no-deps`, unzip the
+  wheel, and its `imageio_ffmpeg/binaries/ffmpeg-*` is a static ffmpeg with
+  libmp3lame. Keep it in the scratchpad, never in the repo.
 - There is no `gh` CLI. Use the GitHub MCP tools if GitHub is ever needed.
   Pushing straight to `main` has worked every time.
 
-## 8. Still to do: items 3, 4, 5 and 6 from the user's menu
+## 8. What to offer next
 
-The user was offered a menu of six items and chose **"1 and 2 for now"**. Those
-two are done (§5). **Items 3, 4, 5 and 6 are still outstanding.** The user has
-already seen them, so when they ask "What's next?", offer them first under
-their original numbers:
+Items 1-6 of the last menu are all done. When the user asks "What's next?",
+offer a fresh short menu. Candidates, in rough order of value:
 
-3. **Real recorded golf sounds.** Today every sound is synthesised by the
-   game. Recorded ones would be a club strike, the ball dropping in the cup
-   and crowd applause. **Now unblocked**: the user has set up network access
-   for the new session (verify it first, see §7). Kenney and OpenGameArt
-   both have CC0 packs, so no credit is needed. The
-   sounds would then have to be embedded in `index.html` (for example as
-   base64), because the game is a single file. Keep the iPhone silent-switch
-   behaviour, and keep sound quiet during a catch-up (the `settings` check
-   enforces this).
-4. **Phone battery and smoothness pass.** Measure frame cost and idle CPU on
-   a phone-sized page and cut waste. Players don't see it but feel it. This
-   was the recommended one.
-5. **More for the fairy caddie.** A few more perks (stay in the spirit of
-   "nothing overpowered", 150 each, one worn at a time). Small reactions
-   too: a cheer on a birdie, a sigh at a bogey, the occasional one-line quip,
-   kept short on screen.
-6. **Achievements for the new features.** For example: land 10 drives round
-   a dogleg, hole out in a strong wind, or wear a matching golfer, caddie and
-   ball set. Now there are also home courses and majors, so "play all ten
-   home courses" fits too.
+1. **Tune the sounds by ear.** Ask how the strike, the cup and the applause
+   sound on the phone; swap in another candidate from §5 if one is off. A
+   recorded "ooh" for a near miss and recorded birdsong are both available.
+2. **A trophy cabinet** for the majors won and the jackets, and a season
+   calendar showing which course is coming up.
+3. **Signature holes on home courses**, such as an island-green par 3 (see
+   the caution below).
+4. **Home course variety past Card X** (they repeat every ten cards).
+5. **A battery saver setting** that halves the frame rate when the phone is
+   left idle (the game still runs 60 frames a second; this would roughly
+   halve what is left).
 
 ### Further ideas, not yet offered to the user
 
