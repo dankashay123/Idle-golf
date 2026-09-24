@@ -183,12 +183,15 @@ module.exports = {
             o.hit.push(ks[i] + ' on ' + ks[j] + ' by ' + ox.toFixed(0) + 'x' + oy.toFixed(0));
         }
 
-        // The map keeps a button's place free under the star where the stage
-        // has room: it slid up under the star when the Trophy Room's button
-        // left that spot, and the player took it for the map having moved.
-        const pm = box.perkBtn, mp = box.holeMap;
-        if (w === 400 && mp && mp.height && mp.top - pm.bottom < pm.height)
-          o.hit.push('the map ' + (mp.top - pm.bottom).toFixed(0) + 'px under the star, not a button\'s place below it');
+        // The left column, top to bottom: settings, shop, the medal, the star.
+        // The star stood alone on the right over the map until the user asked
+        // for it under the medal.
+        const pm = box.perkBtn, rm = box.roomBtn, mp = box.holeMap;
+        if (!(pm.top >= rm.bottom - 0.5) || Math.abs(pm.left - rm.left) > 1.5)
+          o.hit.push('the star is not under the medal (star ' + pm.left.toFixed(0) + ',' + pm.top.toFixed(0)
+            + ', medal ' + rm.left.toFixed(0) + ',' + rm.bottom.toFixed(0) + ')');
+        if (mp && mp.height && mp.top < st.top + st.height * 0.36)
+          o.hit.push('the map reaches up into the toasts\' corner');
 
         // The words in the bottom right corner are drawn on the field, over
         // which the menu's pull tab sits: the lowest line has to end above it.

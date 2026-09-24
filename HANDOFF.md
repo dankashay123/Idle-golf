@@ -12,7 +12,15 @@ check is for.
   branch `claude/funny-davinci-7ik9ge`). Nothing is half-built.
 - `node test/run.js` passes all **36 checks** (about 7 minutes; `pacing` runs
   sixteen seeds and takes ~40s on its own).
-- Latest: **"fix the text where it says aurora front and the wind speed, cut
+- Latest: **"the trophy icon is still missing"** turned out to mean the empty
+  space on the right between the star and the map. I started putting a
+  trophy back there (opening the honours); the user stopped it: honours stay
+  in the medal, and **the star moves to the left column under the medal**.
+  Done: the left column is settings, shop, medal, star (`#perkBtn` is in
+  `#hudLeft` now); the map sits on the right at a fixed 37% (clear of the
+  toasts), since there is nothing above it. `layout` checks the star is
+  under the medal and the map stays out of the toasts' corner.
+- Before: **"fix the text where it says aurora front and the wind speed, cut
   off behind the menu expand button."** The corner stack started 4.5% of the
   picture up from the bottom, which on a tall phone is less than the pull
   tab's 24 screen px. `Scene.tabR` (worked out in `resize` from the tab's
@@ -144,7 +152,7 @@ Line numbers are approximate and drift. Search for the name instead.
 | Tour Cards | `climb`, `eventsToUnlock`, `roundRatio`, `projectedRatio`, `climbLines` |
 | Shop: four tabs, Offers (one-time offers, Double Purse as a wide tile, sovereign packs), Bags, Bench, Style. An old caller asking for `'buy'` gets Offers | `renderShop`, `shopCard` (`wide`), `styleDef`, `styleOwned`, `styleBuy`, `styleTry` |
 | **Trophy Room** (the medal under the shop): Today, Cabinet, Honours; the case's rewards | `trophyRoom(tab)`, `roomToday`, `dailyBlock`, `roomCase`, `honRows`, `collect(id)`, `casePending`, `caseTrack`, `B.CASE`, `S.caseGot`, `roomWaiting` |
-| Stage buttons (Trophy Room `#roomBtn`, perks, shop, settings, auto-climb): one renderer | `renderStageBtns` (was `renderHonBtn`); markup `#hudLeft` > `#rRow` (readout + `#hudClimb`), `#setBtn`, `#shopBtn`, `#roomBtn`; `#perkBtn` alone on the right |
+| Stage buttons (Trophy Room `#roomBtn`, perks, shop, settings, auto-climb): one renderer | `renderStageBtns` (was `renderHonBtn`); markup `#hudLeft` > `#rRow` (readout + `#hudClimb`), `#setBtn`, `#shopBtn`, `#roomBtn`, `#perkBtn`; the map alone on the right at 37% |
 | **Scrapping**: the locker's Scrap button and sheet, auto-scrap on arrival | `scrapSheet`, `scrapKeeps`, `autoScraps`, `autoScrapTop`, `scrapList`, `sparesPastTwo`, `S.autoScrap` (-1 off, else a rarity); applied in `bagAdd` (which now returns whether the club was kept) and in `offline`'s `bagAddOff` |
 | Heirlooms (Career > Legacy). **The code still calls them trophies** (`B.TROPHY`, `S.relic`, `discover`, `trophiesFound`); only the words on screen changed | `renderLegacy` |
 | The Career tab's dot for "retiring now finds an heirloom" | `retireWorth` (worked out once a second), `renderXp`, `renderCareer` |

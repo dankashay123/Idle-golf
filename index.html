@@ -741,20 +741,13 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
    shop's offer carries, so a dot on a stage button always means "for you" */
 #roomDot{position:absolute;top:-8%;right:-8%;width:32%;height:32%;background:var(--r5);display:none}
 #roomBtn.ready #roomDot{display:block}
-#perkBtn{position:absolute;right:2.5%;width:6.2%;min-width:24px;aspect-ratio:1/1;z-index:31;
+/* The perks' star, last in the left column under the medal (it stood alone
+   on the right, over the map, until the user asked for it here). */
+#perkBtn{position:relative;width:11%;min-width:24px;aspect-ratio:1/1;flex:0 0 auto;pointer-events:auto;
   background:none;border:0;padding:0;display:flex;align-items:center;justify-content:center;
-  filter:drop-shadow(0 1px 2px rgba(0,0,0,.9))}
-/* Pushed down from 24 and 35.5. The comment over #toasts says these sit below
-   them; they did not. A toast is built out of fixed pixel type while these are
-   a percentage of the stage, so the shorter the screen the further down the
-   stack reaches: measured with the tallest pair the game can actually raise --
-   two real unlocks, straight out of checkAch -- it comes to 34.1% of the stage
-   on a 320x568 phone, 23.2% at 360x640 and 17.8% at 400x860. 37 clears the
-   worst of those with room, rather than clearing the one screen I happened to
-   measure first. (There were two buttons here; the Trophy Room's moved to the
-   column on the left, under the shop, and the perks took the top place.) */
-#perkBtn{top:37%}
-/* The hole from above, under the perks button and above the weather.
+  filter:drop-shadow(0 0 1px #000) drop-shadow(0 0 1px #000) drop-shadow(0 1px 2px rgba(0,0,0,.9))}
+/* The hole from above, on the right under where the toasts reach (37%; see
+   the note on toasts) and above the weather.
    Placed by placeMap(), which measures it, and left out when the stage is
    too short to hold it. Each map pixel is two screen pixels. */
 #holeMap{position:absolute;right:2.5%;z-index:28;display:none;pointer-events:none;
@@ -858,7 +851,6 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
 
   <div id="stage">
     <canvas id="hole" width="720" height="440"></canvas>
-    <button id="perkBtn" aria-label="Sponsor perks"><img id="perkIcon" alt=""><span id="perkDot"></span></button>
     <canvas id="holeMap" aria-hidden="true"></canvas>
     <div id="hudLeft">
     <div id="rRow">
@@ -874,6 +866,7 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
     <button id="setBtn" aria-label="Settings"><img id="setIcon" alt=""></button>
     <button id="shopBtn" aria-label="Pro shop"><img id="shopIcon" alt=""><span id="shopDot"></span></button>
     <button id="roomBtn" aria-label="Trophy Room"><img id="roomIcon" alt=""><span id="roomDot"></span></button>
+    <button id="perkBtn" aria-label="Sponsor perks"><img id="perkIcon" alt=""><span id="perkDot"></span></button>
     </div>
     <div id="toasts"></div>
   </div>
@@ -10494,21 +10487,17 @@ function panel(c, x, y, w, h, fill, border){
    when it changes; each frame only lays the markers over that. */
 Object.assign(Scene, {
   placeMap(){
-    const cv = $('holeMap'), st = $('stage'), pk = $('perkBtn');
-    if(!cv || !st || !pk || !this.cv) return;
+    const cv = $('holeMap'), st = $('stage');
+    if(!cv || !st || !this.cv) return;
     const SW = st.clientWidth, SH = st.clientHeight;
-    // One button's place further down than the star: where it sat while the
-    // Trophy Room's button was above the star, and where it is looked for.
-    // Where that leaves no room (a 320 phone) it goes up under the star
-    // rather than away. Where it sits depends on the size of the stage only,
-    // so it never jumps from hole to hole; its height is this hole's, since
-    // the lines under it (see hudLines) come and go.
-    const gap = Math.max(8, Math.round(SW * 0.03));
+    // Where the star stood before it moved to the left column: clear of the
+    // tallest pair of toasts on the shortest phone (37%). Fixed by the size of
+    // the stage, so it never jumps from hole to hole; its height is this
+    // hole's, since the lines under it (see hudLines) come and go.
     const k = SH / Math.max(1, VH);
     const floorAt = n => Math.round((VH - LH*n - 2 - this.tabRows()) * k) - 6;
     const W = clamp(Math.round(SW * 0.16 / 2) * 2, 40, 92);
-    let top = pk.offsetTop + pk.offsetHeight * 2 + Math.max(8, Math.round(SW * 0.04)) + gap;
-    if(floorAt(3) - top < W * 1.15) top = pk.offsetTop + pk.offsetHeight + gap;
+    const top = Math.round(SH * 0.37);
     const room = floorAt(this.hudLines()) - top;
     if(room < W * 0.8 || S.dgnRun){ cv.style.display = 'none'; this.mapOn = false; return; }
     const H = Math.min(Math.round(W * 1.7 / 2) * 2, Math.floor(room / 2) * 2);
