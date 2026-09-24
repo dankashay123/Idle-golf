@@ -19,6 +19,8 @@ check is for.
 - The user usually ends a task by asking **"What's next?"** Reply with a short
   plain-language menu, give a recommendation, and wait for them to choose.
   Open ideas are listed in §8.
+- **Strike and cup turned right down** at the user's request (strike 0.09,
+  pure 0.12, cup 0.15, about a third of before). Keep them subtle.
 - **Background music**: "Town Theme RPG" by cynicmusic (CC0, OpenGameArt),
   mono 40 kbps, embedded as `rec-music` (~650 KB of the file). `Sfx.musicTick`
   loops it by overlapping plays by `MUS_XF`; volume `MUS_VOL` 0.14. Its own

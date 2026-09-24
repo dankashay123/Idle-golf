@@ -5485,13 +5485,14 @@ const Sfx = {
       // a fast bag swings several times a second: one strike every 0.2s at most
       if(t - this.lastSwing < 0.2) return;
       this.lastSwing = t;
-      // a pure strike cracks a little higher and louder
-      if(!this.rec('strike', t, arg ? 0.37 : 0.27, (arg ? 1.08 : 1) * vary())) this.strike(t, !!arg);
+      // a pure strike cracks a little higher and louder. Both are kept well
+      // down, under the music: at full level they were too loud to live with.
+      if(!this.rec('strike', t, arg ? 0.12 : 0.09, (arg ? 1.08 : 1) * vary())) this.strike(t, !!arg);
     }else if(k === 'hole'){
       // Holed: the ball in the cup, and that is all. There was a gallery
       // clapping by the score, but a fast bag holes out every few seconds
       // and the applause never stopped.
-      if(!this.rec('cup', t, 0.45, vary())) this.cup(t);
+      if(!this.rec('cup', t, 0.15, vary())) this.cup(t);
     }
     else if(k === 'ach')   this.notes([659.25, 783.99, 987.77, 1318.5], 'square', 0.05, 0.08);
     else if(k === 'coin')  this.notes([1318.5, 1760], 'square', 0.045, 0.06);
