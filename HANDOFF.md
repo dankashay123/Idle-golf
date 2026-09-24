@@ -12,7 +12,11 @@ check is for.
   branch `claude/funny-davinci-7ik9ge`). Nothing is half-built.
 - `node test/run.js` passes all **40 checks** (about 7 minutes; `pacing` runs
   sixteen seeds and takes ~40s on its own).
-- Latest: **"all of those please"** to the menu: a signature hole on the
+- Latest: **"move the minimap down to the top of the bottom menus, above the
+  expand arrow, and put the wind and course text on top of it"**. Done: the
+  right side is, from the bottom up, the pull tab, the hole map, the words
+  (§5, "The corner"). Not yet seen by the user.
+- Before: **"all of those please"** to the menu: a signature hole on the
   other courses, honours for the signature holes, sounds for the seasons, and
   a settings switch for the second track. All four done (§5: "Signature holes
   everywhere", "Signature honours", the seasons' sounds, Night Music).
@@ -292,6 +296,23 @@ Line numbers are approximate and drift. Search for the name instead.
   `textW`, `glyphCv`, `textCv` all go through `faceOf`; `LH` is now
   (FHS + 2) * TSC. The weather lines come out at about 61% of their old
   width. `font` checks it.
+
+### The corner: pull tab, map, words (user asked)
+- `placeMap` puts the map at the foot of the field on the right, its bottom
+  a small gap above the pull tab (`#drawer`), its height what is left
+  between the words above it and 37% of the stage (the toasts' corner), up
+  to its full shape; under 0.8 of its width it is not shown. Placed again
+  on every hole (`newHole` calls `mapHide`), since the lines above it
+  (`hudLines`) change; `drawHud` places it before drawing the words, so they
+  never stand on a stale map. Conversions use the canvas's exact scale.
+- `hudBase()` / `hudRight()`: the words' lowest line stands on the map's top
+  edge and lines up with its right edge; with no map they sit above the tab
+  as before. `hudRoom()` is the room right of the golfer and the ball at his
+  feet (it was 62% of the picture, which on its side ran a long forecast
+  across him); a longer two-part forecast splits onto two lines.
+- `layout` draws one real frame, requires the map on a 400 phone, and holds:
+  words above the map, map just above the tab (within 24px), right edges in
+  line, words above the tab when there is no map.
 
 ### Signature holes everywhere, and their honours
 - `sigHole(h, kind, par, homeNine)` decides all three (`isIsland`,

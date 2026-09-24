@@ -152,9 +152,12 @@ module.exports = {
         S.achDone = {}; const keep = B.ACH; B.ACH = [];
         try { checkAch(); } finally { B.ACH = keep; }
         checkAch();
+        // one frame of the field as the game draws it: that is when the map
+        // is placed for the hole, and the words stand on it
+        Scene.draw(0.016, derive());
         const R = e => e.getBoundingClientRect();
         const st = R($('stage'));
-        const o = { w, off: [], cut: [], vitals: {}, hit: [] };
+        const o = { w, off: [], cut: [], vitals: {}, hit: [], mapOn: getComputedStyle($('holeMap')).display !== 'none' };
 
         // nothing on the stage leaves the stage
         for (const e of $('stage').querySelectorAll('*')) {
@@ -193,17 +196,26 @@ module.exports = {
         if (mp && mp.height && mp.top < st.top + st.height * 0.36)
           o.hit.push('the map reaches up into the toasts\' corner');
 
-        // The words in the bottom right corner are drawn on the field, over
-        // which the menu's pull tab sits: the lowest line has to end above it.
-        // It ran a few pixels behind the tab on a tall phone.
+        // The bottom right corner, from the bottom up: the menu's pull tab, the
+        // hole map just above it, and the weather words standing on the map
+        // (the user asked for them there). The words are drawn on the field,
+        // so they are measured in its pixels: the lowest line has to end above
+        // the map, or above the tab when there is no map (it once ran a few
+        // pixels behind the tab on a tall phone), and their right-hand ends
+        // line up with the map's.
         {
-          const dr = $('drawer'), sr = $('stage').getBoundingClientRect();
-          if (dr && dr.offsetParent) {
-            const per = Scene.scale / devicePixelRatio;
-            const low = VH - LH - 2 - Scene.tabRows() + FH * TSC + 1;
-            const over = sr.top + low * per - dr.getBoundingClientRect().top;
-            if (over > 0.5) o.hit.push('the weather words ' + over.toFixed(1) + 'px behind the pull tab');
-          }
+          const dr = $('drawer'), sr = $('stage').getBoundingClientRect(), mpE = $('holeMap');
+          const per = Scene.scale / Math.min(3, devicePixelRatio);
+          const low = sr.top + (Scene.hudBase() + FHS * TSC + 1) * per;
+          const mapOn = mpE && getComputedStyle(mpE).display !== 'none', mr = mapOn && mpE.getBoundingClientRect();
+          const tabTop = dr && dr.offsetParent ? dr.getBoundingClientRect().top : sr.bottom;
+          if (mapOn) {
+            if (low > mr.top + 0.5) o.hit.push('the weather words run ' + (low - mr.top).toFixed(1) + 'px down behind the map');
+            if (mr.bottom > tabTop + 0.5) o.hit.push('the map runs ' + (mr.bottom - tabTop).toFixed(1) + 'px down behind the pull tab');
+            if (tabTop - mr.bottom > 24) o.hit.push('the map stands ' + (tabTop - mr.bottom).toFixed(0) + 'px above the pull tab, not just over it');
+            const right = sr.left + (Scene.hudRight() + 1) * per;
+            if (Math.abs(right - mr.right) > per * 2 + 1) o.hit.push('the weather words end at ' + right.toFixed(0) + ' and the map at ' + mr.right.toFixed(0));
+          } else if (low > tabTop + 0.5) o.hit.push('the weather words ' + (low - tabTop).toFixed(1) + 'px behind the pull tab');
         }
 
         // text that runs out of its box with nothing to catch it
@@ -366,6 +378,9 @@ module.exports = {
     await page.setViewportSize({ width: 400, height: 860 });
     await page.waitForTimeout(150);
 
+    // the map's rules above are only tested with the map up: on a phone it is
+    const phone = hud.find(o => o.w === 400);
+    if (!phone || !phone.mapOn) throw new Error('no hole map on a 400 wide phone, so where it sits went untested');
     for (const o of hud) {
       const at = ' at ' + o.w + ' wide';
       if (o.off.length)

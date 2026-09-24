@@ -746,8 +746,8 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
 #perkBtn{position:relative;width:11%;min-width:24px;aspect-ratio:1/1;flex:0 0 auto;pointer-events:auto;
   background:none;border:0;padding:0;display:flex;align-items:center;justify-content:center;
   filter:drop-shadow(0 0 1px #000) drop-shadow(0 0 1px #000) drop-shadow(0 1px 2px rgba(0,0,0,.9))}
-/* The hole from above, on the right under where the toasts reach (37%; see
-   the note on toasts) and above the weather.
+/* The hole from above, at the foot of the field on the right: just above
+   the menu's pull tab, with the weather words standing on it.
    Placed by placeMap(), which measures it, and left out when the stage is
    too short to hold it. Each map pixel is two screen pixels. */
 #holeMap{position:absolute;right:2.5%;z-index:28;display:none;pointer-events:none;
@@ -9554,6 +9554,7 @@ const Scene = {
     this.gGen = (this.gGen || 0) + 1;
     this.buildSky();
     this.mapOn = false; this._mapTry = null;   // the hole map is placed again
+    this.mapHide();
   },
 
   // World-space overlap test. Hazards were placed by pure rejection-free random
@@ -10176,8 +10177,8 @@ const Scene = {
     // counted for nothing, and he stood and hit again.
     this.swingT = 0; this.pendingBall = null; this.queued = null;
     this.balls.length = 0; this.nums.length = 0; this.sparks.length = 0;
-    // placed again: the lines under it are this hole's
-    this.mapOn = false; this._mapTry = null;
+    // placed again: the lines above it are this hole's
+    this.mapOn = false; this._mapTry = null; this.mapHide();
     this.buildSky();
   },
 
@@ -10764,21 +10765,42 @@ Object.assign(Scene, {
     const cv = $('holeMap'), st = $('stage');
     if(!cv || !st || !this.cv) return;
     const SW = st.clientWidth, SH = st.clientHeight;
-    // Where the star stood before it moved to the left column: clear of the
-    // tallest pair of toasts on the shortest phone (37%). Fixed by the size of
-    // the stage, so it never jumps from hole to hole; its height is this
-    // hole's, since the lines under it (see hudLines) come and go.
-    const k = SH / Math.max(1, VH);
-    const floorAt = n => Math.round((VH - LH*n - 2 - this.tabRows()) * k) - 6;
+    // At the foot of the field on the right, just above the menu's pull tab,
+    // with the weather words standing on top of it (see drawHud): the user
+    // asked for it there. Its height is what is left between the words and
+    // the toasts' corner (37% down, clear of the tallest pair on the shortest
+    // phone), up to its full shape. Where too little is left it is not shown
+    // and the words sit down by the tab. It is placed again on each hole,
+    // since the lines above it (hudLines) come and go.
+    // screen pixels to a pixel of the picture, exactly: the picture is shown
+    // whole pixels at a time, and its last part-pixel hangs off the stage
+    const k = (parseFloat(this.cv.style.height) || SH) / Math.max(1, VH);
     const W = clamp(Math.round(SW * 0.16 / 2) * 2, 40, 92);
-    const top = Math.round(SH * 0.37);
-    const room = floorAt(this.hudLines()) - top;
+    const dr = $('drawer'), tab = dr && dr.offsetParent ? dr.offsetHeight : 0;
+    const gap = Math.max(6, Math.round(SW * 0.02));
+    const bottom = SH - tab - gap;
+    const words = Math.ceil((LH * this.hudLines() + 3) * k);
+    const room = bottom - words - gap - Math.round(SH * 0.37);
+    this.mapTopR = null;
     if(room < W * 0.8 || S.dgnRun){ cv.style.display = 'none'; this.mapOn = false; return; }
     const H = Math.min(Math.round(W * 1.7 / 2) * 2, Math.floor(room / 2) * 2);
+    const top = bottom - H;
     const mw = W / 2, mh = H / 2;
     if(cv.width !== mw || cv.height !== mh){ cv.width = mw; cv.height = mh; this.mapKey = null; }
     cv.style.width = W + 'px'; cv.style.height = H + 'px'; cv.style.top = top + 'px';
     cv.style.display = 'block'; this.mapOn = true;
+    // where the words stand, in rows of the picture: on the map's top edge,
+    // and lined up with its right-hand one
+    this.mapTopR = Math.floor((top - 2) / k);
+    this.mapRightR = Math.floor((SW - SW * 0.025) / k);
+  },
+  // Out of sight until it is placed again, so the page never shows a map
+  // where the words above it no longer think it is (they fall back to the
+  // tab while it is away). Placed again before the next frame is drawn.
+  mapHide(){
+    this.mapTopR = null;
+    const cv = typeof document !== 'undefined' && document.getElementById('holeMap');
+    if(cv && cv.style.display !== 'none') cv.style.display = 'none';
   },
   // world (distance d, lateral x from the centre line) to map pixels
   mapXY(d, x){
@@ -11930,26 +11952,41 @@ Object.assign(Scene, {
 
   // rows kept clear at the bottom for the pull tab (see resize)
   tabRows(){ return this.tabR || Math.round(VH*0.045); },
-  // how wide a line in that corner may run: clear of the golfer
-  hudRoom(){ return VW * 0.62; },
-  // How many lines the corner holds on this hole, so the map above it can
+  // How wide a line in that corner may run: from the right-hand edge the
+  // words line up on to just short of the golfer and the ball at his feet.
+  // It was a fixed 62% of the picture, which on its side ran "Aurora Front +
+  // Night Round" straight across him. (The right edge is taken as the map's
+  // whether or not the map is up, so the lines counted to place the map are
+  // the lines drawn on it.)
+  hudRoom(){
+    const p = this.proj(this.camD, 0), h = Math.max(6, Math.round(B_GOLFER * US * p.s)), w = Math.round(h * 40 / 58);
+    const right = Math.min(VW - 4*TSC - 1, Math.floor(VW * 0.975) - 1);
+    return Math.max(VW * 0.34, right - (p.x + Math.round(w * 0.8) + 3));
+  },
+  // How many lines the corner holds on this hole, so the map under them can
   // leave exactly that room: the weather (two lines when it is a long pair on
-  // a narrow picture), the wind, the course's affinity, the closing hole.
+  // a narrow picture), the wind, the course's affinity, a signature hole's
+  // name, the closing hole.
   hudLines(){
     const cn = S.chaos ? S.chaos.n : 'FAIR';
     return 1 + (textW(cn, TSC) > this.hudRoom() && cn.indexOf(' + ') > 0 ? 1 : 0)
       + (this.windMph() > 0 ? 1 : 0) + (S.courseEl ? 1 : 0) + (S.armor > 0 ? 1 : 0) + (sigKind(S.hole) ? 1 : 0);
   },
+  // Where the words in the bottom right corner stand: the top row of their
+  // lowest line, and the column their right-hand ends line up on. On the
+  // hole map where it is shown; else just above the pull tab, and clear of
+  // the last buffer column, which is blitted past the canvas edge and
+  // clipped, and of the words' own drop shadow.
+  hudBase(){ return this.mapOn && this.mapTopR != null ? this.mapTopR - LH : VH - LH - 2 - this.tabRows(); },
+  hudRight(){ return this.mapOn && this.mapRightR != null ? Math.min(VW - 4*TSC - 1, this.mapRightR - 1) : VW - 4*TSC - 1; },
   // The panel lives in the DOM now. What stays on the canvas is the stuff that
   // belongs to the world rather than the interface.
   drawHud(D){
     const c = this.b;
-    // The buffer is ceil(device/scale) wide, so up to one buffer column is
-    // blitted past the right edge of the canvas and clipped. Anything aligned
-    // hard right has to clear that column as well as its own drop shadow.
-    const R = VW - 4*TSC - 1;
-    // The pull tab sits in this corner, so the stack starts above it.
-    let ly = VH - LH - 2 - this.tabRows();
+    // the map first: the words stand on it
+    if(!this.mapOn && this._mapTry !== VW + 'x' + VH){ this._mapTry = VW + 'x' + VH; this.placeMap(); }
+    const R = this.hudRight();
+    let ly = this.hudBase();
     // The round's last hole plays harder. It was called SIGNATURE here, which
     // the signature holes needed for themselves: it is the closing hole now,
     // and a signature hole says which one it is.
