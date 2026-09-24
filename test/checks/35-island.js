@@ -5,7 +5,8 @@
  * island needs landing places that are never in the water, and the golfer
  * crosses to it on his club, spun over his head like a rotor.
  *
- *   - which holes: par threes, the last of their nine, on home courses only
+ *   - which holes: par threes, the last of their nine, on home courses (but
+ *     Harbour Lights' front nine, which closes on its sea stack instead)
  *   - no ball ever comes down in the water, and where one lies only ever moves
  *     on down the hole
  *   - he walks to the bank and flies the rest, at the flight's pace, and never
@@ -37,7 +38,9 @@ module.exports = {
           DEV.course(ci); hideSheet();
           const cs = B.COURSE[ci], t = tournamentOf(S.hole), first = (t - 1) * B.ROUND * B.DAYS + 1;
           const home = cs.slot === 'home', mine = !home && B.SIG_HOLE[cs.id] === 'island';
-          if (!home && !['island', 'canyon', 'stones'].includes(B.SIG_HOLE[cs.id])) o.noKind.push(cs.id);
+          if (!home && !['island', 'canyon', 'stones', 'pier'].includes(B.SIG_HOLE[cs.id])) o.noKind.push(cs.id);
+          // Harbour Lights closes its front nine on the sea stack instead
+          const pierFront = home && cs.id === 'harbour';
           let n = 0;
           for (let h = first; h < first + B.ROUND * B.DAYS; h++) {
             if (courseFor(tournamentOf(h)).id !== cs.id) throw new Error('hole ' + h + ' is not on ' + cs.id);
@@ -45,6 +48,7 @@ module.exports = {
             n++;
             if (home) o.home++; else o.away++;
             const r0 = holeInRound(h), end = home && r0 <= 9 ? 9 : 18;
+            if (pierFront && r0 <= 9) o.bad.push(cs.id + ' hole ' + r0 + ' is an island, on the nine that closes on its sea stack');
             let later = 0; for (let k = r0 + 1; k <= end; k++) if (parOf(h + k - r0) === 3) later++;
             if (parOf(h) !== 3 || later) o.bad.push(cs.id + ' hole ' + r0 + ' par ' + parOf(h) + (later ? ', not the last par three of its ' + (home ? 'nine' : 'round') : ''));
           }
@@ -158,8 +162,9 @@ module.exports = {
     if (r.noKind.length) f('courses with no signature hole of their own: ' + r.noKind.join(', '));
     if (r.wrongCount.length) f('island greens on the other courses: ' + r.wrongCount.slice(0, 4).join('; '));
     if (!r.islandCourses) f('no course but the home courses has an island green');
-    if (r.home !== r.homes * B_ISLANDS_PER_EVENT) f(r.home + ' island greens over ' + r.homes + ' home events, not '
-      + (r.homes * B_ISLANDS_PER_EVENT) + ' (the last par three of each nine)');
+    const wantHome = r.homes * B_ISLANDS_PER_EVENT - 4;   // Harbour Lights' front nine has the sea stack
+    if (r.home !== wantHome) f(r.home + ' island greens over ' + r.homes + ' home events, not '
+      + wantHome + ' (the last par three of each nine, but Harbour Lights\' front)');
     if (!r.isle) f('a forced island hole has no lake');
     if (r.wetSpot.length) f('balls come down in the water: ' + r.wetSpot.slice(0, 4).join(', '));
     if (r.back) f('where a ball lies went back up the hole ' + r.back + ' times');

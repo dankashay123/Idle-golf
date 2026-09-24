@@ -112,10 +112,14 @@ module.exports = {
           S.autoClimb = 0;
           // the time that cards each score, read off the scoring itself
           const at = d => { for (let q = 0.01; q < 4; q += 0.005) if (scoreFor(q).d === d) return q; return null; };
-          const play = (h, d) => { S.hole = h; startHole(); S.elapsed = S.parTime * at(d); S.doneT = null; S.yards = 0; finishHole(derive()); };
+          // and the Trophy Room's record of them, kept alongside
+          const mine = {};
+          const play = (h, d) => { const k = sigKind(h);
+            if (k) { const m = mine[k] || (mine[k] = { n: 0, b: null }); m.n++; if (m.b === null || d < m.b) m.b = d; }
+            S.hole = h; startHole(); S.elapsed = S.parTime * at(d); S.doneT = null; S.yards = 0; finishHole(derive()); };
           const T = () => ({ is: tally('sigIsle'), cn: tally('sigCanyon'), st: tally('sigStones'), rd: tally('sigRound'), ace: tally('isleAce') });
           for (const k of ['sigIsle', 'sigCanyon', 'sigStones', 'sigRound', 'isleAce']) S.tally[k] = 0;
-          delete S.sigRound;
+          delete S.sigRound; delete S.sigRec; S.tally.sigPier = 0;
           const home = B.COURSE.findIndex(c => c.slot === 'home');
           DEV.course(home); hideSheet();
           const t = tournamentOf(S.hole), first = (t - 1) * B.ROUND * B.DAYS + 1;
@@ -140,12 +144,33 @@ module.exports = {
           const aw = []; for (let h = f2; h < f2 + B.ROUND * B.DAYS; h++) if (sigKind(h)) aw.push(h);
           o.awayN = aw.length;
           aw.forEach(h => play(h, 0)); play(aw[0], -1); o.sigAway = T();
+          // Harbour Lights' sea stack, eagled
+          DEV.course(B.COURSE.findIndex(c => c.id === 'harbour')); hideSheet();
+          const t3 = tournamentOf(S.hole), f3 = (t3 - 1) * B.ROUND * B.DAYS + 1;
+          let ph = f3; while (sigKind(ph) !== 'pier' && ph < f3 + B.ROUND) ph++;
+          play(ph, -2); o.pierBird = tally('sigPier');
+          // the record: a row for each kind, what was played and the best card
+          o.recWant = mine; o.recGot = JSON.parse(JSON.stringify(S.sigRec || {}));
+          const rw = document.createElement('div'); rw.id = 'statRows'; document.body.appendChild(rw);
+          renderRecord();
+          o.recRows = {};
+          for (const l of rw.querySelectorAll('.lb')) o.recRows[l.children[1].textContent] = l.children[2].textContent;
+          rw.remove();
+          const keepRec = S.sigRec; delete S.sigRec;
+          const rw2 = document.createElement('div'); rw2.id = 'statRows'; document.body.appendChild(rw2);
+          renderRecord(); o.recNone = [...rw2.querySelectorAll('.lb')].filter(l => /Island|Canyon|Stepping|Sea Stack/.test(l.children[1].textContent)).map(l => l.children[2].textContent);
+          rw2.remove(); S.sigRec = keepRec;
           checkAch();
           o.sigDone = ['sig4', 'sigIs', 'sigCn', 'sigSt', 'isleAce'].filter(id => S.achDone[id]).join(',');
           // junk in the round being counted
           o.sigRepair = [];
           for (const v of ['x', 5, { r: 'a', n: 1 }, { r: 3, n: 9, ok: 1 }]) { S.sigRound = v; initState(); if (S.sigRound !== undefined) o.sigRepair.push(JSON.stringify(v)); }
           S.sigRound = { r: 4, n: 2, ok: 1 }; initState(); if (!S.sigRound || S.sigRound.n !== 2) o.sigRepair.push('a good one was dropped');
+          for (const v of ['x', [], { moat: { n: 1, b: 0 } }, { island: { n: 0, b: 0 } }, { canyon: { n: 2, b: 'x' } }, { stones: null }]) {
+            S.sigRec = v; initState();
+            if (S.sigRec !== undefined && Object.keys(S.sigRec).length) o.sigRepair.push('record ' + JSON.stringify(v) + ' loaded as ' + JSON.stringify(S.sigRec)); }
+          S.sigRec = { pier: { n: 3.7, b: -9 } }; initState();
+          if (!S.sigRec || !S.sigRec.pier || S.sigRec.pier.n !== 3 || S.sigRec.pier.b !== -4) o.sigRepair.push('a good record loaded as ' + JSON.stringify(S.sigRec));
         }
 
         // ---- a save with junk in it ---------------------------------------------
@@ -183,11 +208,20 @@ module.exports = {
     if (J(r.sigPlain) !== J(r.sigAce)) f2('a birdie on an ordinary hole counted: ' + J(r.sigPlain));
     if (r.awayN !== 4 || r.sigAway.rd !== 1 || r.sigAway.cn !== r.sigPlain.cn + 1) f2('a canyon course (' + r.awayN + ' signature holes an event): ' + J(r.sigAway) + ' (want one more canyon birdie and no signature round)');
     if (r.sigDone !== 'sig4,isleAce') f2('signature honours awarded: ' + (r.sigDone || 'none') + ' (want Signature Round and Ace on the Island)');
+    if (r.pierBird !== 1) f2('an eagle on a sea stack counted ' + r.pierBird + ' sea stack birdies');
+    if (J(r.recGot) !== J(r.recWant)) f2('the signature record kept ' + J(r.recGot) + ', not ' + J(r.recWant));
+    const nm = d => d <= -4 ? 'Ace' : { '-3': 'Albatross', '-2': 'Eagle', '-1': 'Birdie', 0: 'Par', 1: 'Bogey' }[d];
+    for (const [k, t] of [['island', 'Island Green'], ['canyon', 'Canyon Carry'], ['stones', 'Stepping Stones'], ['pier', 'Sea Stack']]) {
+      const w = r.recWant[k], want = w.n + '\u00a0played \u00b7 best ' + nm(w.b);
+      if (r.recRows[t] !== want) f2('the Trophy Room\'s ' + t + ' row reads "' + r.recRows[t] + '", not "' + want + '"');
+    }
+    if (r.recNone.length !== 4 || r.recNone.some(x => x !== '\u2014')) f2('with none played the record reads ' + J(r.recNone));
     if (r.sigRepair.length) f2('a save with junk in its signature round: ' + r.sigRepair.join('; '));
     if (r.repaired !== 'willow' || r.repaired2 !== 'object:0') throw new Error('a save with junk home courses loaded as ' + r.repaired + ' / ' + r.repaired2);
     return ['round a dogleg: only a shot from short of the corner to past it (bend ' + d.bend + ')',
       'a birdie in ' + w.mph + ' mph of wind counts, a birdie in a breeze or a par in a gale does not',
       'the matching pair, all ' + r.homesNeed + ' home courses, a major and every caddie perk: all six awarded',
-      'signature holes: birdies counted by kind, an island ace, a home round of par or better once, spoilt by a bogey, never on a course with one'];
+      'signature holes: birdies counted by kind, an island ace, a home round of par or better once, spoilt by a bogey, never on a course with one',
+      'the Trophy Room records each kind: ' + Object.entries(r.recGot).map(([k, v]) => k + ' ' + v.n + ' best ' + v.b).join(', ')];
   }
 };

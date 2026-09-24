@@ -10,9 +10,18 @@ check is for.
 
 - Everything is committed and pushed to `main` (and mirrored on the session
   branch `claude/funny-davinci-7ik9ge`). Nothing is half-built.
-- `node test/run.js` passes all **40 checks** (about 7 minutes; `pacing` runs
+- `node test/run.js` passes all **44 checks** (about 7 minutes; `pacing` runs
   sixteen seeds and takes ~40s on its own).
-- Latest: **"move the minimap down to the top of the bottom menus, above the
+- Latest: **"the canyon bridge is clipping through the hill; add an effect
+  when the caddie's perk goes off (arms up, an aura per buff coming down on
+  the golfer like a blessing) and a countdown right of the cog, no box,
+  '+20% tempo for Xs', fading out; and go ahead with everything you
+  suggested; no clipping or visual bugs on new holes"**. All done, not yet
+  seen by the user: the bridge fix (`pxLineClip`/`fillClip`, check
+  `sigview`), the blessing and countdown (§5 "Caddie blessing"), volume
+  sliders, seasons on six regular stops by the real month, the fourth
+  signature hole **Sea Stack**, and the Trophy Room record rows (§5).
+- Before: **"move the minimap down to the top of the bottom menus, above the
   expand arrow, and put the wind and course text on top of it"**. Done: the
   right side is, from the bottom up, the pull tab, the hole map, the words
   (§5, "The corner"). Not yet seen by the user.
@@ -287,6 +296,46 @@ Line numbers are approximate and drift. Search for the name instead.
    never flew. Play anything tied to the end of a hole in real frames too.
 
 ## 5. What the last features do (for debugging them)
+
+### Caddie blessing and the countdown (user asked)
+
+- Each caddie perk (`B.CPERKS`) has `col` (its colour) and `s` (its short
+  line). When one goes off, `tickCaddie` sets `Scene.fairyCast` (the caddie's
+  arms go up for 1.1s in `drawCaddie`) and `Scene.bless`; `Scene.drawBless`
+  drops a column of that colour on the golfer (white core, motes, a ring at
+  his feet), 1.5s in all.
+- The line right of the cog is `#buffTip` in `#setRow`, absolutely placed so
+  it never widens `#hudLeft` (the layout check caught that). `buffTip(dt)`
+  runs every step from `tickCaddie`; it reads the seconds straight off
+  `S.buff[pk.k].t`, so nothing extra is saved. The next-hole perk (Lost Ball
+  Scout) says "next hole" and stays; Ready Golf shows 2s via `cperkShow`,
+  and not at all if the hole was already down. Fades over the last second.
+- Check `bless`.
+
+### Volume sliders, calendar seasons, Sea Stack, record rows
+
+- **Volume**: `Sfx.out` (0.35) -> destination; `Sfx.master` (effects: every
+  sound but music, as before) and `Sfx.musBus` (music) feed it. `S.volFx`,
+  `S.volMus` 0..1, left out at full; gain is the square. `setVol` rewrites
+  only the % figure while dragging (a redraw drops the drag). Check `volume`.
+- **Calendar seasons**: `CAL_SEASONED` (coastal, sandbelt, highlands,
+  blackwater, riverbend, moorland) take `MONTH_SEASON[monthNow()]` (UTC month
+  of `dayNow()`, so `DAY_FORCE` moves it); `courseSeason` replaces
+  `homeSeason` at the two call sites. `SEASON_FORCE` also applies to them.
+  The suite was run with the month pinned to Jan, Apr, Jul and Oct: only
+  the "today" line of `seasons` moves. Check `seasons`.
+- **Sea Stack** (`pier`): the Coastal Classic, the Seaside Open (both
+  were island/canyon) and Harbour Lights' front nine (`HOME_PIER`; its back
+  nine keeps the island). Laid out as an island (same lake, `spot`, hold),
+  with `isle.pier = 1, fly = 0`: he walks at `B_BRIDGE`, planks knock.
+  `drawPier`: deck a hand above the water, posts and a rail (drawn in short
+  lengths, each cut at its own farther clip), and rocks round the green with
+  a gap for the pier; rocks within 2.5 of the near cut are skipped (up close
+  they filled the corners). `PIER_FORCE`, dev "sea stack". Honour Sea Legs
+  (`sigPier`). Checks `pier`, `sigview` (now covers it), `island`.
+- **Record rows**: `S.sigRec[kind] = {n, b}` from `sigScore`; `renderRecord`
+  shows one row per kind ("12 played · best Eagle", or a dash). Check
+  `honours`.
 
 ### The small pixel face (user asked)
 - `GLYPH_S`: a proportional face, mostly 4 px wide with a 1 px gap (the bold
@@ -661,6 +710,11 @@ Line numbers are approximate and drift. Search for the name instead.
 
 ## 6. Recent history (newest first, one line each)
 
+- Caddie blessing and countdown; volume sliders; six regular stops turn
+  with the real month; Sea Stack, the fourth signature hole; Trophy Room
+  record rows per signature kind; canyon bridge no longer shows through a
+  hill.
+
 - Home course seasons: every ten cards a home course comes back in autumn,
   winter (with snow) or blossom. The map is back a button's place below the
   star, and the medal is outlined so it shows at night.
@@ -736,16 +790,14 @@ Line numbers are approximate and drift. Search for the name instead.
 ## 8. What to offer next
 
 Everything asked for is done. Ask how the latest land on the phone: the
-signature holes on every course (and the sounds), the seasons (they start at
-Card XI; dev menu "Home season"), the calm night tune (Settings has Night
-Music), the new honours, and the condensed text in the corner. Older
-unanswered: does the 2 min battery saver wait suit.
+blessing and the countdown by the cog, the sliders, the autumn on the
+regular stops, and the Sea Stack (Coastal Classic, Seaside Open, Harbour
+Lights hole 7ish).
 
 Ideas not yet offered:
-1. **Signature holes in the Trophy Room**: a Record row for each kind (played,
-   best score), so there is somewhere to see them.
-2. **A fourth signature hole**: a green out on a sea stack reached along a
-   pier, for the seaside and harbour courses.
-3. **Seasons past the home courses**: the regular stops turning with the real
-   calendar month.
-4. **A volume control** for music and effects, rather than on and off.
+1. **A signature hole of the week**: one kind picked each week pays double
+   and is marked on the map.
+2. **Seasonal music**: a short sting when a course's season changes.
+3. **Caddie perk upgrades**: longer or stronger blessings bought with
+   sovereigns.
+4. **Weather on the pier**: spray over the deck in a crosswind, gulls.

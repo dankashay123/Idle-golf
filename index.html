@@ -2987,12 +2987,13 @@ const B = {
      automatic: an idle game should not make you come and collect. ---- */
   // Each course's own signature hole (the home courses have all three): an
   // island where there is water to spare, a canyon in rock and sand, the
-  // stepping stones where a river or a burn runs through.
+  // stepping stones where a river or a burn runs through, and on the coast a
+  // green on a sea stack at the end of a pier.
   SIG_HOLE: {
-    coastal:'island', blackwater:'island', palmetto:'island', blossom:'island',
+    coastal:'pier', blackwater:'island', palmetto:'island', blossom:'island',
     highlands:'canyon', dunes:'canyon', ironbark:'canyon', mesa:'canyon',
     sandbelt:'stones', riverbend:'stones', snowline:'stones', moorland:'stones',
-    azalea:'island', national:'canyon', seaside:'canyon', autumn:'stones', oldlinks:'stones',
+    azalea:'island', national:'canyon', seaside:'pier', autumn:'stones', oldlinks:'stones',
     meridian:'island',
     masters:'stones', crown:'stones', sovereign:'island', starfall:'canyon'
   },
@@ -3049,6 +3050,7 @@ const B = {
     { id:'sigIs',  n:'Island Hopper',    d:'Birdie 25 island greens',     m:'sigIsle',   v:25,  r:{k:'tick', v:2}, sov:10 },
     { id:'sigCn',  n:'Rope Walker',      d:'Birdie 10 canyon holes',      m:'sigCanyon', v:10,  r:{k:'tick', v:2}, sov:10 },
     { id:'sigSt',  n:'Sure-Footed',      d:'Birdie 10 stepping-stone holes', m:'sigStones', v:10, r:{k:'tick', v:2}, sov:10 },
+    { id:'sigPr',  n:'Sea Legs',         d:'Birdie 10 sea stack holes',   m:'sigPier',   v:10,  r:{k:'tick', v:2}, sov:10 },
     { id:'isleAce', n:'Ace on the Island', d:'Card an ace on an island green', m:'isleAce', v:1,  r:{k:'tick', v:3}, sov:10 }
   ],
   // The trophy case pays for what goes in it, collected by hand in the Trophy
@@ -3501,7 +3503,10 @@ const parOf = h => B.PAR_LAYOUTS[hash32(roundIndex(h)+7) % B.PAR_LAYOUTS.length]
 // on its last par four. Every other course has one of its own (B.SIG_HOLE),
 // once a round, on the round's last hole of that par. The *_FORCE values
 // (the developer menu) make one hole that kind and none of the others.
-let ISLE_FORCE = 0, CANYON_FORCE = 0, STONES_FORCE = 0;
+// Harbour Lights, on the coast, closes its front nine on the sea stack instead
+// of an island.
+let ISLE_FORCE = 0, CANYON_FORCE = 0, STONES_FORCE = 0, PIER_FORCE = 0;
+const HOME_PIER = { harbour: 1 };
 // the last hole of a par in its round, or in its nine
 function lastOfPar(h, par, nine){
   if(parOf(h) !== par) return false;
@@ -3510,20 +3515,26 @@ function lastOfPar(h, par, nine){
   return true;
 }
 function sigHole(h, kind, par, homeNine){
-  const F = { island: ISLE_FORCE, canyon: CANYON_FORCE, stones: STONES_FORCE };
+  const F = { island: ISLE_FORCE, canyon: CANYON_FORCE, stones: STONES_FORCE, pier: PIER_FORCE };
   if(h === F[kind]) return true;
   for(const k in F) if(k !== kind && h === F[k]) return false;
   const cs = courseFor(tournamentOf(h));
   if(!cs) return false;
-  if(cs.slot === 'home') return lastOfPar(h, par, homeNine);
+  if(cs.slot === 'home'){
+    const front = HOME_PIER[cs.id] && holeInRound(h) <= 9;
+    if(kind === 'pier') return !!front && lastOfPar(h, 3, true);
+    if(kind === 'island' && front) return false;
+    return lastOfPar(h, par, homeNine);
+  }
   return B.SIG_HOLE[cs.id] === kind && lastOfPar(h, par, false);
 }
 function isIsland(h){ return sigHole(h, 'island', 3, true); }
 function isCanyon(h){ return sigHole(h, 'canyon', 5, false); }
 function isStones(h){ return sigHole(h, 'stones', 4, false); }
-const SIG_NAME = { island: 'Island Green', canyon: 'Canyon Carry', stones: 'Stepping Stones' };
+function isPier(h){ return sigHole(h, 'pier', 3, false); }
+const SIG_NAME = { island: 'Island Green', canyon: 'Canyon Carry', stones: 'Stepping Stones', pier: 'Sea Stack' };
 // which signature hole h is, if it is one
-const sigKind = h => isIsland(h) ? 'island' : isCanyon(h) ? 'canyon' : isStones(h) ? 'stones' : null;
+const sigKind = h => isIsland(h) ? 'island' : isPier(h) ? 'pier' : isCanyon(h) ? 'canyon' : isStones(h) ? 'stones' : null;
 // the major of the week plays for a major's purse and a major's points
 const slotOfEvent = t => S && S.weekly && S.weekly.t === t ? 'major' : B.SLOTS_SEASON[(t-1) % B.SEASON];
 const COURSE_EVT = B.COURSE.filter(c => c.slot === 'event');
@@ -3772,6 +3783,12 @@ function initState(){
     if(!c || !(S.caseGot[k] >= 0)) delete S.caseGot[k]; else S.caseGot[k] = Math.min(c.at.length, Math.floor(S.caseGot[k])); }
   if(S.music !== undefined && S.music !== 0 && S.music !== 1) delete S.music;
   if(S.music2 !== undefined && S.music2 !== 0 && S.music2 !== 1) delete S.music2;
+  if(S.sigRec !== undefined){
+    if(!S.sigRec || typeof S.sigRec !== 'object' || Array.isArray(S.sigRec)) delete S.sigRec;
+    else for(const k in S.sigRec){ const R = S.sigRec[k];
+      if(!SIG_NAME[k] || !R || typeof R !== 'object' || !(R.n >= 1) || !isFinite(R.n) || typeof R.b !== 'number' || !isFinite(R.b)) delete S.sigRec[k];
+      else { R.n = Math.floor(R.n); R.b = Math.max(-4, Math.min(4, Math.round(R.b))); } }
+  }
   for(const k of ['volFx', 'volMus']) if(S[k] !== undefined){
     if(typeof S[k] !== 'number' || !isFinite(S[k]) || S[k] < 0 || S[k] >= 1) delete S[k];
     else S[k] = Math.round(S[k] * 10) / 10; }
@@ -5994,7 +6011,11 @@ function toast(html, cls){
 function sigScore(sc){
   const sk = sigKind(S.hole);
   if(!sk) return;
-  if(sc.d <= -1) bump(sk === 'island' ? 'sigIsle' : sk === 'canyon' ? 'sigCanyon' : 'sigStones');
+  // the Trophy Room's record: how many of each kind, and the best score on one
+  S.sigRec = S.sigRec || {};
+  const K = S.sigRec[sk] || (S.sigRec[sk] = { n: 0, b: null });
+  K.n++; if(K.b === null || sc.d < K.b) K.b = sc.d;
+  if(sc.d <= -1) bump({ island: 'sigIsle', canyon: 'sigCanyon', stones: 'sigStones', pier: 'sigPier' }[sk]);
   if(sk === 'island' && sc.d === -4) bump('isleAce');
   const ri = roundIndex(S.hole);
   if(!S.sigRound || S.sigRound.r !== ri) S.sigRound = { r: ri, n: 0, ok: 1 };
@@ -10189,7 +10210,7 @@ const Scene = {
         segs.push({ a: (cr() < 0.6 ? -side : side)*(9 + cr()*7), c: LEN*(0.64 + cr()*0.10), w: LEN*(0.11 + cr()*0.05) });
       }else if(par === 3 && cr() < 0.5)
         segs.push({ a: side*(2 + cr()*3), c: LEN*0.5, w: LEN*0.3 });
-      if(isIsland(h) || isCanyon(h) || isStones(h)) segs.length = 0;   // a signature hole is played dead straight
+      if(sigKind(h)) segs.length = 0;   // a signature hole is played dead straight
       this.curve = { segs, sway: 0.6 + cr()*1.2, ph: cr()*6.28 };
       this._bcD = null;
     }
@@ -10204,7 +10225,9 @@ const Scene = {
     // The signature hole: the green alone in a lake that opens a little over
     // halfway from the tee and runs on past the pin. No shot comes down in it
     // (see spot), and he crosses it on his club (see the camera).
-    const isle = isIsland(h);
+    // The sea stack is laid out the same, the lake the sea round the rock, and
+    // he walks out to it along a pier (see drawPier).
+    const pier = isPier(h), isle = pier || isIsland(h);
     if(isle) this.roll = 0;                     // a lake lies on level ground
     // The canyon: a gorge right across the hole a little past half way, far
     // wider than the view, so it reads as a cut through the land rather than
@@ -10237,7 +10260,7 @@ const Scene = {
       const wet = d => { const sp = this.hazSpan(moat, d); return !!sp && sp.l > 0.8 && sp.r > 0.8; };
       let d = 0;
       while(d < LEN && !wet(d)) d += 0.1;
-      if(moat.lake) this.isle = { bank: d - 1.2, land: LEN - 6, fly: 1 };
+      if(moat.lake) this.isle = pier ? { bank: d - 1.2, land: LEN - 6, fly: 0, pier: 1 } : { bank: d - 1.2, land: LEN - 6, fly: 1 };
       else{
         let e = d; while(e < LEN && wet(e)) e += 0.1;
         this.isle = { bank: d - 0.6, land: e + 0.6, fly: 0, hop: moat.river ? 1 : 0 };
@@ -11823,6 +11846,88 @@ Object.assign(Scene, {
     }
   },
 
+  // The pier out to the sea stack: a boardwalk a hand above the water, planks
+  // across it far to near with a seam between, posts along both sides with a
+  // rail between their tops and a fleck of foam where each meets the sea; and
+  // round the green the rocks of the stack, with a gap where the pier comes
+  // in. Everything stands on the water or above it and keeps to the ground's
+  // clip line (see Scene.clipAt).
+  drawPier(){
+    const I = this.isle;
+    if(!I || !I.pier) return;
+    const c = this.b, T = this.theme, near = this.camD - CAM_BACK + 0.7;
+    const a = I.bank + 0.5, b = LEN - 8.3, hw = 0.55, up = 0.12;
+    const PL = ['#A07C56', '#8A6A48'], SEAM = '#5A4230', POST = '#4A3626', RAIL = '#BFA27A', FOAM = '#EAF4F6';
+    // the rocks of the stack: far side first, then the near side over them
+    const rk = [];
+    for(let k = 0; k < 40; k++){
+      const an = k / 40 * Math.PI * 2, d = LEN + Math.cos(an) * 8.9, x = Math.sin(an) * 3.35;
+      if(Math.cos(an) < 0 && Math.abs(x) < 1.0) continue;         // the pier comes in here
+      rk.push({ d, x, k });
+    }
+    rk.sort((p, q) => q.d - p.d);
+    const rTop = pickC(T.rk, 0.8), rSide = pickC(T.rk, 0.3);
+    // (the ones right beside him are left out: that close they filled the
+    // corners of the view)
+    const rock = r => {
+      if(r.d < near + 2.5) return;
+      const p = this.proj(r.d, r.x), clip = this.clipAt(r.d);
+      if(p.y - 1 > clip) return;
+      const w = Math.max(2, Math.min(14, Math.round((0.30 + hr(r.k, 3) * 0.2) * LAT * p.s))), hh = Math.max(2, Math.round(w * (0.55 + hr(r.k, 5) * 0.4)));
+      for(let yy = 0; yy < hh; yy++){
+        const k = Math.sqrt(Math.max(0, 1 - Math.pow((hh - yy) / hh, 2) * 0.85));
+        const ww = Math.max(1, Math.round(w * k));
+        c.fillStyle = yy < hh * 0.45 ? rTop : rSide;
+        fillClip(c, p.x - ww, p.y - hh + yy, ww * 2, 1, clip);
+      }
+      c.fillStyle = FOAM; fillClip(c, p.x - w - 1, p.y, w * 2 + 2, 1, clip);
+    };
+    // the deck, far to near
+    const n = Math.max(4, Math.round((b - a) / 0.3));
+    const at = i => { const d = b - (b - a) * i / n; return { d, L: this.proj(d, -hw, up), R: this.proj(d, hw, up), G: this.proj(d, -hw, 0) }; };
+    const farRocks = rk.filter(r => r.d > b), nearRocks = rk.filter(r => r.d <= b);
+    farRocks.forEach(rock);
+    let far = at(0);
+    for(let i = 1; i <= n; i++){
+      const q = at(i);
+      if(q.d >= near){
+        const clip = this.clipAt(q.d);
+        const top = Math.min(far.L.y, q.L.y - 1), h = Math.max(1, q.L.y - top);
+        const x0 = Math.min(q.L.x, far.L.x), x1 = Math.max(q.R.x, far.R.x);
+        c.fillStyle = PL[i & 1]; fillClip(c, x0, top, Math.max(1, x1 - x0), h, clip);
+        c.fillStyle = SEAM; fillClip(c, x0, q.L.y, Math.max(1, x1 - x0), Math.max(1, q.G.y - q.L.y), clip);
+      }
+      far = q;
+    }
+    nearRocks.forEach(rock);
+    // posts and rails, far to near
+    const step = 2.4, posts = [];
+    for(let d = b; d >= a - 0.01; d -= step) posts.push(d);
+    for(const side of [-1, 1]){
+      let prev = null;
+      for(const d of posts){
+        if(d < near){ prev = null; continue; }
+        const g = this.proj(d, side * hw, 0), t = this.proj(d, side * hw, 0.75), clip = this.clipAt(d);
+        const th = Math.max(1, Math.round(g.s * 0.10));
+        c.fillStyle = FOAM; fillClip(c, g.x - th, g.y, th * 2 + 1, 1, clip);
+        pxLineClip(c, g.x, g.y, t.x, t.y, POST, th, clip);
+        // the rail to the post beyond, in short lengths each cut at its own
+        // farther end's clip: cut in one length at the far post's, the near
+        // half of it fell below that line and was lost
+        if(prev !== null){
+          const k = Math.max(1, Math.round((prev - d) / 0.3));
+          let q0 = this.proj(prev, side * hw, 0.7);
+          for(let j = 1; j <= k; j++){
+            const dj = prev - (prev - d) * j / k, q1 = this.proj(dj, side * hw, 0.7);
+            if(dj >= near) pxLineClip(c, q0.x, q0.y, q1.x, q1.y, RAIL, Math.max(1, Math.min(2, Math.round(q1.s * 0.05))), this.clipAt(prev - (prev - d) * (j - 1) / k));
+            q0 = q1;
+          }
+        }
+        prev = d;
+      }
+    }
+  },
+
   drawTee(){
     if(0.2 - this.camD + CAM_BACK < 1.2) return;
     const c = this.b;
@@ -12320,6 +12425,7 @@ Object.assign(Scene, {
       this.drawTee();
       this.drawBridge();
       this.drawStones();
+      this.drawPier();
       this.drawFlagstick();
       this.drawGolfer(D);
       this.drawBalls(dt);
@@ -13634,18 +13740,22 @@ function renderTour(){
   renderSeason();
 }
 // The record, in the Trophy Room under the cabinet.
+const scoreName = d => d <= -4 ? 'Ace' : (B.SCORE.find(x => x.d === d) || { n: 'Par' }).n;
 function renderRecord(){
   const el = $('statRows'); if(!el) return;
   const D = derive();
   el.innerHTML = [
     ['Cup points', fmt(S.points)],
     ['Holes played', fmt(S.totalHoles, 0)],
-    ['Best hole', S.bestScore <= -4 ? 'Ace' : (B.SCORE.find(x=>x.d===S.bestScore) || {n:'Par'}).n],
+    ['Best hole', scoreName(S.bestScore)],
     ['Aces', fmt(S.aces, 0)],
     ['Perks used', fmt(S.perkUsed || 0, 0)],
     ['Retirements', fmt(S.retires, 0)],
     ['Purse per second', fmt(Meter.rate())],
-    ['Total carry', fmt(D.dps) + ' yds/s']
+    ['Total carry', fmt(D.dps) + ' yds/s'],
+    // each kind of signature hole: played, and the best card on one
+    ...Object.keys(SIG_NAME).map(k => { const R = (S.sigRec || {})[k];
+      return [SIG_NAME[k], R && R.n ? fmt(R.n, 0) + '\u00a0played \u00b7 best ' + scoreName(R.b) : '\u2014']; })
   ].map(([k,v]) => '<div class="lb"><span class="p"></span><span>' + k + '</span><span class="s">' + v + '</span></div>').join('');
 }
 
@@ -14113,7 +14223,7 @@ const DEV = {
       + b('restart music', 'DEV.music(1)') + b(DEV._recs ? 'recordings off' : 'recordings on', 'DEV.synth()'));
 
     h += row('Signature hole', b('this hole an island', 'DEV.isle()') + b('this hole a canyon', 'DEV.canyon()')
-      + b('stepping stones', 'DEV.stones()'));
+      + b('stepping stones', 'DEV.stones()') + b('sea stack', 'DEV.pier()'));
 
     h += row('Home season', b('by the card', 'DEV.season(-1)') + b('as built', 'DEV.season(0)')
       + b('autumn', 'DEV.season(1)') + b('winter', 'DEV.season(2)') + b('blossom', 'DEV.season(3)'));
@@ -14169,7 +14279,7 @@ const DEV = {
       + b('+5 cups', 'DEV.cups(5)') + b('doglegs +50', 'DEV.hon(\'dogleg\')')
       + b('wind birdies +25', 'DEV.hon(\'windBird\')') + b('every home course', 'DEV.hon(\'homes\')')
       + b('island birdies +25', 'DEV.hon(\'sigIsle\')') + b('canyon birdies +25', 'DEV.hon(\'sigCanyon\')')
-      + b('stone birdies +25', 'DEV.hon(\'sigStones\')') + b('a signature round', 'DEV.hon(\'sigRound\')')
+      + b('stone birdies +25', 'DEV.hon(\'sigStones\')') + b('sea stack birdies +25', 'DEV.hon(\'sigPier\')') + b('a signature round', 'DEV.hon(\'sigRound\')')
       + b('an island ace', 'DEV.hon(\'isleAce\')'));
 
     h += row('Simulate away', b('1 hour', 'DEV.away(3600)') + b('6 hours', 'DEV.away(6*3600)')
@@ -14328,11 +14438,12 @@ const DEV = {
   // a home course in any season (play one first: Home course, or DEV.course)
   season(k){ SEASON_FORCE = k; Scene.newHole(S.hole, S.tier); hideSheet(); },
   // the hole in play crosses a river on stepping stones, from the tee
-  stones(){ STONES_FORCE = S.hole; ISLE_FORCE = 0; CANYON_FORCE = 0; S.yards = S.yardsMax; Scene.newHole(S.hole, S.tier); hideSheet(); },
+  pier(){ PIER_FORCE = S.hole; STONES_FORCE = 0; ISLE_FORCE = 0; CANYON_FORCE = 0; S.yards = S.yardsMax; Scene.newHole(S.hole, S.tier); hideSheet(); },
+  stones(){ STONES_FORCE = S.hole; ISLE_FORCE = 0; CANYON_FORCE = 0; PIER_FORCE = 0; S.yards = S.yardsMax; Scene.newHole(S.hole, S.tier); hideSheet(); },
   // the hole in play becomes a canyon, from the tee
-  canyon(){ CANYON_FORCE = S.hole; ISLE_FORCE = 0; STONES_FORCE = 0; S.yards = S.yardsMax; Scene.newHole(S.hole, S.tier); hideSheet(); },
+  canyon(){ CANYON_FORCE = S.hole; ISLE_FORCE = 0; STONES_FORCE = 0; PIER_FORCE = 0; S.yards = S.yardsMax; Scene.newHole(S.hole, S.tier); hideSheet(); },
   // the hole in play becomes an island green, from the tee
-  isle(){ ISLE_FORCE = S.hole; CANYON_FORCE = 0; STONES_FORCE = 0; S.yards = S.yardsMax; Scene.newHole(S.hole, S.tier); hideSheet(); },
+  isle(){ ISLE_FORCE = S.hole; CANYON_FORCE = 0; STONES_FORCE = 0; PIER_FORCE = 0; S.yards = S.yardsMax; Scene.newHole(S.hole, S.tier); hideSheet(); },
   // as if nobody had touched the phone for the whole wait, bar five seconds
   saverSoon(){
     hideSheet(); SAVER_AUTO = true;

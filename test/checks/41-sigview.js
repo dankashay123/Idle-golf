@@ -1,12 +1,12 @@
 /* Nothing on a signature hole shows through the ground in front of it.
  *
- * A canyon's rope bridge and a river's stepping stones are drawn over the
- * field, after the ground. The ground itself hides whatever a crest stands in
+ * A canyon's rope bridge, a river's stepping stones and the pier out to a sea
+ * stack (with the stack's rocks) are drawn over the field, after the ground. The ground itself hides whatever a crest stands in
  * front of, row by row (Scene.clipAt), and anything drawn afterwards has to
  * keep to the same line: the bridge's posts and hand-ropes were drawn on top
  * of a hill that hid the gorge itself, on a rolling course seen from the tee.
  *
- * Every course with a canyon or stones is played (the home courses and the
+ * Every course with a canyon, stones or a sea stack is played (the home courses and the
  * others, rolling ground included): two holes of each kind, and on each the
  * camera stands at eight places, from the tee to past the crossing. The frame
  * is drawn with and without the bridge or the stones, and every pixel they
@@ -20,17 +20,17 @@ module.exports = {
   async run(page) {
     const r = await page.evaluate(() => {
       const SNAP = JSON.stringify(S), o = { frames: 0, seen: 0, bad: [], holes: 0 };
-      const keep = { bridge: Scene.drawBridge, stones: Scene.drawStones, step: window.step };
+      const keep = { bridge: Scene.drawBridge, stones: Scene.drawStones, pier: Scene.drawPier, step: window.step };
       try {
         hideSheet(); QUIET = true; window.step = () => {};
         S.outfit = 'classic'; S.caddie = 'classic'; buildSprites();
         const D = derive(), c = Scene.b;
         for (let ci = 0; ci < B.COURSE.length; ci++) {
           const cs = B.COURSE[ci];
-          if (cs.slot !== 'home' && !['canyon', 'stones'].includes(B.SIG_HOLE[cs.id])) continue;
+          if (cs.slot !== 'home' && !['canyon', 'stones', 'pier'].includes(B.SIG_HOLE[cs.id])) continue;
           DEV.course(ci); hideSheet();
           const t = tournamentOf(S.hole), first = (t - 1) * B.ROUND * B.DAYS + 1;
-          const want = { canyon: 2, stones: 2 };
+          const want = { canyon: 2, stones: 2, pier: 2 };
           for (let h = first; h < first + B.ROUND * B.DAYS; h++) {
             const k = sigKind(h);
             if (!want[k]) continue;
@@ -42,9 +42,9 @@ module.exports = {
               Scene.camD = cam; Scene.walkTo = cam; S.yards = S.yardsMax * (1 - Math.min(0.999, cam / LEN));
               Scene.draw(0, D);
               const a = c.getImageData(0, 0, VW, VH).data;
-              Scene.drawBridge = () => {}; Scene.drawStones = () => {};
+              Scene.drawBridge = () => {}; Scene.drawStones = () => {}; Scene.drawPier = () => {};
               Scene.draw(0, D);
-              Scene.drawBridge = keep.bridge; Scene.drawStones = keep.stones;
+              Scene.drawBridge = keep.bridge; Scene.drawStones = keep.stones; Scene.drawPier = keep.pier;
               const b = c.getImageData(0, 0, VW, VH).data;
               const limit = Scene.clipAt(Math.max(I.bank - 0.2, cam - CAM_BACK + 0.7)) + 1;
               let n = 0, low = 0, worst = 0;
@@ -61,15 +61,15 @@ module.exports = {
           }
         }
       } finally {
-        Scene.drawBridge = keep.bridge; Scene.drawStones = keep.stones; window.step = keep.step;
+        Scene.drawBridge = keep.bridge; Scene.drawStones = keep.stones; Scene.drawPier = keep.pier; window.step = keep.step;
         QUIET = false; OFFLINE = false;
         Object.keys(S).forEach(k => delete S[k]); Object.assign(S, JSON.parse(SNAP)); buildSprites(); startHole();
       }
       return o;
     });
-    if (r.bad.length) throw new Error(r.bad.length + ' frames with a bridge or stones drawn through the ground: ' + r.bad.slice(0, 4).join('; '));
-    if (r.seen < r.frames * 0.4) throw new Error('the bridge or stones were seen in only ' + r.seen + ' of ' + r.frames + ' frames');
-    return [r.holes + ' canyon and stepping-stone holes over every course that has them, ' + r.frames + ' views from the tee to past the crossing',
-      'the bridge or stones in view in ' + r.seen + ' of them, and never a pixel below the ground in front'];
+    if (r.bad.length) throw new Error(r.bad.length + ' frames with a bridge, stones or pier drawn through the ground: ' + r.bad.slice(0, 4).join('; '));
+    if (r.seen < r.frames * 0.4) throw new Error('the bridge, stones or pier were seen in only ' + r.seen + ' of ' + r.frames + ' frames');
+    return [r.holes + ' canyon, stepping-stone and sea stack holes over every course that has them, ' + r.frames + ' views from the tee to past the crossing',
+      'the bridge, stones or pier in view in ' + r.seen + ' of them, and never a pixel below the ground in front'];
   }
 };
