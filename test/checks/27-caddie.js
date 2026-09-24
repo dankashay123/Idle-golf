@@ -93,6 +93,9 @@ module.exports = {
         S.buff = {}; const cpw0 = derive().cpw; fire('club'); o.cpwUp = derive().cpw / cpw0;
         S.elapsed = 5; fire('ready'); o.clock = +S.elapsed.toFixed(3) + ' ' + Object.keys(S.buff).length;
         S.elapsed = 0.4; fire('ready'); o.clock0 = S.elapsed;
+        // once the hole is cleared he is walking in: winding the clock back then
+        // only made the hole wait out its minimum again
+        const y0 = S.yards; S.yards = 0; S.elapsed = 0.5; fire('ready'); o.clockWalk = S.elapsed; S.yards = y0;
         S.cperk = null;
         QUIET = true; S.buff = {};
 
@@ -190,6 +193,7 @@ module.exports = {
     if (!(r.cpwUp > 1.19 && r.cpwUp < 1.21)) throw new Error('Club Selection moved pure strike power by x' + (r.cpwUp || 0).toFixed(3));
     if (r.clock !== '4 0') throw new Error('Ready Golf left the clock at ' + r.clock + ' (want 4, and no lasting buff)');
     if (r.clock0 !== 0) throw new Error('Ready Golf wound the clock back past zero: ' + r.clock0);
+    if (r.clockWalk !== 0.5) throw new Error('Ready Golf wound the clock back while he walked in off a cleared hole: ' + r.clockWalk);
     const want = ['-4:cheer', '-2:cheer', '-1:cheer', '0:none', '1:sigh', '2:sigh'];
     const got = r.react.split(' ');
     for (let i = 0; i < got.length; i++) {

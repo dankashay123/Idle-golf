@@ -3432,9 +3432,13 @@ function purseMult(t){
 //  - Otherwise a regular stop is your card's home course when you have just
 //    arrived on the card, and always as the season opens.
 // A save loaded mid-event keeps the calendar's course.
+function noteHome(id){
+  const cs = courseById(id);
+  if(cs && cs.slot === 'home'){ S.homes = S.homes || {}; S.homes[id] = 1; }
+}
 function openEvent(){
   const t = tournamentOf(S.hole);
-  if(S.evCourse && S.evCourse.t === t) return;
+  if(S.evCourse && S.evCourse.t === t){ noteHome(S.evCourse.id); return; }
   let id = calendarCourse(t).id;
   if(holesPlayed(S.hole) === 0){
     const wk = weekNow(), W = S.weekly;
@@ -3450,8 +3454,7 @@ function openEvent(){
   }
   S.evCourse = { t, id };
   // the home courses you have played an event on, for Home Tour
-  const cs = courseById(id);
-  if(cs && cs.slot === 'home'){ S.homes = S.homes || {}; S.homes[id] = 1; }
+  noteHome(id);
 }
 
 /* ---- chaotic conditions, drawn per round ---- */
@@ -3774,7 +3777,7 @@ function achMetric(m){
     case 'slam':   return Object.keys(S.majorWins || {}).length;
     case 'homes':  return Object.keys(S.homes || {}).length;
     case 'cperks': return B.CPERKS.filter(p => S.cperkOwn && S.cperkOwn[p.id]).length;
-    case 'twin':   return S.caddie === S.outfit && styleOwned('c', S.caddie) ? 1 : 0;
+    case 'twin':   return S.caddie === S.outfit && S.outfit !== 'classic' && styleOwned('c', S.caddie) ? 1 : 0;
     case 'troph':  return trophiesFound();
     case 'mst':    return derive().mst;
     case 'set6e':  return B.SLOTS.reduce((n, s) => n + (S.equip[s.id] && S.equip[s.id].rar >= 3 ? 1 : 0), 0);
@@ -3958,7 +3961,7 @@ function derive(){
   // ch.s and ch.c already ride into the tempo and the pure strike from this
   // hole's conditions, so every reader of derive() -- the vitals panel, the
   // handicap, the away model -- sees the same golfer the course does.
-  if(C.par5 && parOf(S.hole) === 5) pow *= 1 + C.par5;
+  if(C.par5 && (PAR_JUDGE || parOf(S.hole)) === 5) pow *= 1 + C.par5;
   if(C.windy && S.stretched) pow *= 1 + C.windy;
 
   const spdRaw = B.BASE_SPEED * upgMult('spd') * (1 + G.spd) * relMult('spd') * ch.s
@@ -4228,7 +4231,15 @@ function applyAffinity(D, dmg){
   if(el === 'frost') Scene.spark('frost');
 }
 
+// A shot from short of a designed corner (a bend of 8 or more) to past it.
+// Counted where the shot is played, so it counts with the menu pulled up
+// over the field too; it used to be counted where the shot was drawn.
+function roundsCorner(d0, d1){
+  const cv = Scene.curve;
+  return !!cv && cv.segs.some(g => Math.abs(g.a) >= 8 && d0 <= g.c - g.w*0.5 && d1 >= g.c + g.w*0.5);
+}
 function oneSwing(D, visual){
+  const at0 = S.yardsMax > 0 ? (1 - S.yards / S.yardsMax) * LEN : 0;
   let dmg = D.pow;
   S.holeSwings = (S.holeSwings || 0) + 1;
   if(S.holeSwings === 1 && mileOn('drive')) dmg *= B.MILE_TEE;
@@ -4267,6 +4278,7 @@ function oneSwing(D, visual){
     if(D.ball && D.ball.el && Math.random() < pr) applyAffinity(D, e);
     dealt += damage(e, D);
   }
+  if(!S.dgnRun && S.yardsMax > 0 && roundsCorner(at0, (1 - S.yards / S.yardsMax) * LEN)) bump('dogleg');
   if(visual) Scene.swing(dealt, crit || big, D.ball && D.ball.el);
   return dealt;
 }
@@ -5492,8 +5504,14 @@ const Sfx = {
       if(this.mus.length && c){
         const t = c.currentTime;
         for(const m of this.mus){
-          try{ m.g.gain.cancelScheduledValues(t); m.g.gain.setValueAtTime(m.g.gain.value, t);
-               m.g.gain.linearRampToValueAtTime(0.0001, t + 0.5); m.src.stop(t + 0.55); }catch(e){}
+          try{
+            // one that has not started yet is stopped before it does: its gain
+            // reads 1 until then, and faded from there it came in far too loud
+            if(m.at > t){ m.src.stop(t); continue; }
+            const v = Math.min(this.MUS_VOL, m.g.gain.value);
+            m.g.gain.cancelScheduledValues(t); m.g.gain.setValueAtTime(v, t);
+            m.g.gain.linearRampToValueAtTime(0.0001, t + 0.5); m.src.stop(t + 0.55);
+          }catch(e){}
         }
         this.mus = [];
       }
@@ -5515,7 +5533,7 @@ const Sfx = {
     g.gain.linearRampToValueAtTime(0.0001, end);
     src.connect(g); g.connect(this.master);
     src.start(at); src.stop(end + 0.05);
-    this.mus.push({ src, g, end });
+    this.mus.push({ src, g, end, at });
   },
   tick(dt){
     this.musicTick();
@@ -5814,18 +5832,26 @@ const STILL = { y:1, g:1, s:1, c:0, p:0, dl:0 };
 // whatever this round's luck made him. A frost ball on a frost course read
 // four times his strength; the game climbed him on it, and he then took four
 // times par on every hole of the card for the rest of the session.
-function deriveStill(){
-  const ch = S.chaos, el = S.courseEl;
-  S.chaos = STILL; S.courseEl = null;
+// Nor by anything that only lasts a while: a sponsor perk, a skill, a caddie
+// perk or a punch into the wind all lifted him for seconds, and a climb taken
+// on one left him at twice par for the rest of the card. And by the par of
+// each hole, since Reachable in Two pays on par fives only: judged off one
+// par five it paid on all eighteen.
+let PAR_JUDGE = 0;
+function deriveStill(par){
+  const ch = S.chaos, el = S.courseEl, bf = S.buff, pk = S.perkOn, st = S.stretched;
+  S.chaos = STILL; S.courseEl = null; S.buff = {}; S.perkOn = {}; S.stretched = false; PAR_JUDGE = par || 0;
   try{ return derive(); }
-  finally{ S.chaos = ch; S.courseEl = el; }
+  finally{ S.chaos = ch; S.courseEl = el; S.buff = bf; S.perkOn = pk; S.stretched = st; PAR_JUDGE = 0; }
 }
 function roundRatio(tier){
-  const D = deriveStill(), dps = Math.max(1e-9, D.dps), base = S.hole - holeInRound(S.hole) + 1;
+  const base = S.hole - holeInRound(S.hole) + 1;
+  const dps = Math.max(1e-9, deriveStill(4).dps);
+  const dps5 = career().par5 ? Math.max(1e-9, deriveStill(5).dps) : dps;
   let sum = 0;
   for(let i = 0; i < B.ROUND; i++){
     const h = base + i;
-    sum += yardageFor(h, tier, STILL) / dps / parTimeFor(h);
+    sum += yardageFor(h, tier, STILL) / (parOf(h) === 5 ? dps5 : dps) / parTimeFor(h);
   }
   return sum / B.ROUND;
 }
@@ -9016,12 +9042,14 @@ const Scene = {
     // With the menu pulled up the stage is display:none, so the canvas reports
     // nothing. Rebuilding against a guess would throw away a good buffer and
     // rebuild it wrong; better to keep what we have until it is back.
-    const st = this.cv.parentNode;
-    if(this.buf && (!st.clientWidth || !st.clientHeight)) return;
-    const w = st.clientWidth || 360;
-    const h = st.clientHeight || Math.round(w * 0.58);
+    // Its true size, not clientWidth: that rounds, sometimes down, and a stage
+    // 459.27 wide got a 459 wide picture and a sliver of dark down one edge.
+    const st = this.cv.parentNode, R = st.getBoundingClientRect();
+    if(this.buf && (!R.width || !R.height)) return;
+    const w = R.width || 360;
+    const h = R.height || Math.round(w * 0.58);
     const dpr = Math.min(3, window.devicePixelRatio || 1);
-    const dw = Math.max(120, Math.round(w * dpr)), dh = Math.max(80, Math.round(h * dpr));
+    const dw = Math.max(120, Math.ceil(w * dpr - 0.01)), dh = Math.max(80, Math.ceil(h * dpr - 0.01));
     // integer upscale only: fractional scaling makes some pixels wider than
     // others, which is the fastest way to make pixel art look cheap
     const sc = clamp(Math.round(dpr * PX_CSS), 2, 8);
@@ -9863,12 +9891,6 @@ const Scene = {
     const dist = p.target !== undefined ? Math.max(3, p.target - this.camD)   // an aimed shot flies to its mark
                : reach !== null ? Math.max(0.6, reach)
                : 14 + Math.random()*9;
-    // round a dogleg: from short of a designed corner to past it, in one
-    if(reach !== null && p.target === undefined && this.curve && !QUIET){
-      const d1 = this.camD + dist;
-      if(this.curve.segs.some(g => Math.abs(g.a) >= 8 && this.camD <= g.c - g.w*0.5 && d1 >= g.c + g.w*0.5))
-        bump('dogleg');
-    }
     this.balls.push({ d0:this.camD, dist,
                       // a short one is quick and low, a long one hangs
                       t:0, dur: 0.34 + Math.min(0.32, dist * 0.016) + Math.random()*0.08,
@@ -10280,7 +10302,9 @@ Object.assign(Scene, {
     // and that was the dearest thing in the frame.
     const n = Math.max(3, Math.round(VH * 0.032));
     const row = this._fadeRow || (this._fadeRow = document.createElement('canvas'));
-    if(row.width !== VW){ row.width = VW; row.height = 1; row._c = row.getContext('2d'); }
+    // (a new canvas is 300 wide, so a 300 wide picture never got its context
+    // and every frame threw)
+    if(!row._c || row.width !== VW){ row.width = VW; row.height = 1; row._c = row.getContext('2d'); }
     row._c.clearRect(0, 0, VW, 1);
     row._c.drawImage(this.buf, 0, HORIZON - 1, VW, 1, 0, 0, VW, 1);
     for(let i = 0; i < n; i++){
@@ -11333,8 +11357,8 @@ Object.assign(Scene, {
       this.drawShots();
       this.drawFx(dt);
     }else{
-      if(this.themeId === 'sand' || this.themeId === 'water'
-         || this.themeId === 'cellar' || this.themeId === 'vault'){
+      // after any wager: the Scramble and Twilight left their scene up
+      if(B.DGN.some(d => d.id === this.themeId)){
         this.dFloor = -1; this.newHole(S.hole, S.tier);   // back up top
       }
       const prog = clamp(1 - S.yards / S.yardsMax, 0, 1);
@@ -12491,7 +12515,7 @@ function renderTour(){
     + '<button class="buy' + (S.tier > 0 ? '' : ' no') + '" id="dropBtn">'
     + '<span class="lbl">Drop</span><span class="amt">−1</span></button></div>'
     + '<div class="row"><div><div class="nm">Climb on Form</div>'
-    + '<div class="ds">Moves you up a card on its own once your golfer is strong enough to score birdies on the next card\'s holes.</div></div>'
+    + '<div class="ds">Moves you up a card on its own once your golfer is strong enough for the next card\'s holes.</div></div>'
     + '<button class="buy' + (S.autoClimb ? ' ok' : '') + '" id="autoBtn"><span class="lbl">Auto</span>'
     + '<span class="amt">' + (S.autoClimb ? 'On' : 'Off') + '</span></button></div>';
   const cb = $('climbBtn'); if(cb) cb.onclick = () => climb(1);
@@ -12869,7 +12893,10 @@ function tickCaddie(dt){
   S.cperkT = (S.cperkT || 0) + dt;
   if(S.cperkT >= B.CPERK_EVERY){
     S.cperkT -= B.CPERK_EVERY;
-    if(pk.now) S.elapsed = Math.max(0, (S.elapsed || 0) - pk.v);
+    // only while the hole is in play: once it is cleared the golfer is walking
+    // in, and winding the clock back then just made the hole wait out its
+    // minimum again, for no better score
+    if(pk.now){ if(S.yards > 0) S.elapsed = Math.max(0, (S.elapsed || 0) - pk.v); }
     else addBuff(pk.k, pk.v, pk.t);
     Scene.fairyCast = { t: 0, word: pk.w };
     Sfx.play('coin');
@@ -13538,7 +13565,7 @@ function settingsSheet(){
   showSheet('<h3>Settings</h3>'
     + row('Sound', '', '<button class="mini' + (S.sound !== 0 ? ' go' : '') + '" onclick="toggleSound()">'
         + (S.sound !== 0 ? 'On' : 'Off') + '</button>')
-    + row('Music', '', '<button class="mini' + (S.music !== 0 ? ' go' : '') + '" onclick="toggleMusic()">'
+    + row('Music', S.sound === 0 ? 'Needs Sound on' : '', '<button class="mini' + (S.music !== 0 ? ' go' : '') + '" onclick="toggleMusic()">'
         + (S.music !== 0 ? 'On' : 'Off') + '</button>')
     + row('Back Up Your Save', 'A code you can keep, or load on another device',
         '<button class="mini go" onclick="exportSheet()">Export</button>')
@@ -13930,7 +13957,9 @@ function boot(){
     sideways();
   }
   document.addEventListener('visibilitychange', () => {
-    if(document.hidden) save(); else catchUp();
+    // the music is faded out here: a desktop or Android browser stops the
+    // frames of a hidden page but not its audio, so it played on
+    if(document.hidden){ save(); Sfx.musicTick(); } else catchUp();
   });
   window.addEventListener('pagehide', save);
   requestAnimationFrame(frame);

@@ -146,6 +146,13 @@ module.exports = {
       Sfx.hold++; Sfx.musicTick(); o.hold = n(); Sfx.hold--;
       save(); o.saved = JSON.parse(localStorage.getItem(KEY)).music;
       S.music = 'loud'; initState(); o.repaired = S.music;
+      // the app going away fades the music there and then, whether or not
+      // the page keeps getting frames
+      Sfx.musicTick(); const was = n();
+      Object.defineProperty(document, 'hidden', { configurable: true, get: () => true });
+      document.dispatchEvent(new Event('visibilitychange'));
+      o.hidden = was + '/' + n();
+      delete document.hidden;
       S.music = 0; Sfx.musicTick(); S.music = 1;
       o.row = /Music/.test((settingsSheet(), document.getElementById('sheet').textContent)); try { hideSheet(); } catch (e) {}
       return o;
@@ -158,6 +165,7 @@ module.exports = {
       if (mus.soundOff || mus.quiet || mus.hold)
         throw new Error('music played with sound off, or through a catch-up: ' + JSON.stringify(mus));
     }
+    if (mus.running && mus.hidden !== '1/0') throw new Error('the music played on with the app away (' + mus.hidden + ')');
     if (!mus.row) throw new Error('Settings has no Music switch');
     if (mus.repaired !== undefined) throw new Error('a save with music set to junk loaded as ' + mus.repaired);
 

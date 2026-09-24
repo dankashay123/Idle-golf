@@ -123,11 +123,36 @@ module.exports = {
     if (Math.abs(C.css - C.w * C.scale / C.dpr) > 0.01 || C.css < C.stage - 0.01)
       throw new Error('the picture is shown ' + C.css + 'px wide: not ' + C.scale + ' device pixels to one of its own, '
         + 'or short of the ' + C.stage + 'px stage');
+    // a picture exactly 300 wide, the width a new canvas starts at, from its
+    // first frame: the fade row never got its context and every frame threw
+    await page.setViewportSize({ width: 302, height: 700 });
+    await page.waitForTimeout(250);
+    const w300 = await page.evaluate(async () => {
+      Scene._fadeRow = null; frameErr = 0;
+      await new Promise(r => setTimeout(r, 300));
+      return { VW, err: frameErr };
+    });
+    if (w300.VW !== 300) throw new Error('the 300 wide case came out ' + w300.VW + ' wide, so it measured nothing');
+    if (w300.err) throw new Error('with a picture 300 wide the frame threw');
+    // and the picture covers the stage when the stage is a fraction of a
+    // pixel wide, as it is on a phone on its side
+    await page.setViewportSize({ width: 844, height: 390 });
+    await page.waitForTimeout(300);
+    const cover = await page.evaluate(() => {
+      const c = $('hole').getBoundingClientRect(), st = $('stage').getBoundingClientRect();
+      return { right: +(c.right - st.right).toFixed(3), bottom: +(c.bottom - st.bottom).toFixed(3), stage: st.width };
+    });
+    if (cover.right < -0.01 || cover.bottom < -0.01)
+      throw new Error('on its side the picture stops short of the ' + cover.stage + 'px stage by '
+        + (-cover.right) + 'px on the right and ' + (-cover.bottom) + 'px at the bottom: a sliver of dark shows');
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.waitForTimeout(150);
     if (r.muts.length) throw new Error('writing the live numbers again, with nothing changed, touched the page '
       + r.muts.length + ' times: ' + r.muts.slice(0, 6).join('; '));
     return [r.scenes + ' scenes: the ground painted by the pixel matches it painted rect by rect, fresh and reused',
       'a frame makes ' + r.calls + ' canvas calls; the page canvas is the ' + C.w + 'x' + C.h + ' picture, shown at '
         + C.scale + ' device pixels a pixel',
-      'writing unchanged numbers touches the page 0 times'];
+      'writing unchanged numbers touches the page 0 times',
+      'a 300 wide picture draws, and on its side the picture covers the ' + cover.stage + 'px stage'];
   }
 };

@@ -94,7 +94,7 @@ Line numbers are approximate and drift. Search for the name instead.
 | Shop (sovereigns, style racks) | `renderShop`, `styleDef`, `styleOwned`, `styleBuy`, `styleTry` |
 | Retirement | `retireCard`, `retire` |
 | Offline catch-up (`OFFLINE` flag) | `offline()` |
-| Sound: three recordings (`rec-strike`, `rec-cup`, `rec-applause`, base64 MP3 near the top of the body) with the synthesised sounds as stand-ins | `const Sfx`, `Sfx.rec`, `Sfx.load` |
+| Sound: recordings `rec-strike`, `rec-cup` and `rec-music` (base64 MP3 near the top of the body; the applause was removed) with the synthesised sounds as stand-ins | `const Sfx`, `Sfx.rec`, `Sfx.load`, `Sfx.musicTick` |
 | Ground painted by the pixel, reused while the camera is still | `const PixPaint`, `drawGround` (`_gKey`, `gGen`), `ripples`, `groundTail` |
 | Live numbers written only when they change | `setText`, `setHTML`, `setCls`, `setSty` |
 | Fairy reactions and quips | `fairyReact`, `fairyNow`, `fairyDy`, `tickQuip`, `Scene.holed`, `B.FAIRY_SAY` |
