@@ -15,6 +15,12 @@
  *     owned (its target is written as a number, so a new perk must move it)
  *   - each is awarded by the honours pass once reached, and a save carrying
  *     junk in the home courses played loads clean
+ *   - the signature holes: a birdie or better counts on each kind (island,
+ *     canyon, stones) and a par does not; an ace on an island counts; par or
+ *     better on all four of a home round's counts once, a bogey on one of
+ *     them spoils the round, and the one signature hole of any other course
+ *     never makes a signature round; an ordinary hole counts for none; a save
+ *     with junk in the round being counted loads clean
  */
 'use strict';
 module.exports = {
@@ -101,6 +107,47 @@ module.exports = {
         const row = [...hw.querySelectorAll('.row')].find(e => e.querySelector('.nm').textContent.indexOf(sb.n) >= 0);
         o.share = row ? row.querySelector('.mt').textContent : '';
 
+        // ---- the signature holes ------------------------------------------------
+        {
+          S.autoClimb = 0;
+          // the time that cards each score, read off the scoring itself
+          const at = d => { for (let q = 0.01; q < 4; q += 0.005) if (scoreFor(q).d === d) return q; return null; };
+          const play = (h, d) => { S.hole = h; startHole(); S.elapsed = S.parTime * at(d); S.doneT = null; S.yards = 0; finishHole(derive()); };
+          const T = () => ({ is: tally('sigIsle'), cn: tally('sigCanyon'), st: tally('sigStones'), rd: tally('sigRound'), ace: tally('isleAce') });
+          for (const k of ['sigIsle', 'sigCanyon', 'sigStones', 'sigRound', 'isleAce']) S.tally[k] = 0;
+          delete S.sigRound;
+          const home = B.COURSE.findIndex(c => c.slot === 'home');
+          DEV.course(home); hideSheet();
+          const t = tournamentOf(S.hole), first = (t - 1) * B.ROUND * B.DAYS + 1;
+          const round = r0 => { const a = []; for (let h = r0; h < r0 + B.ROUND; h++) if (sigKind(h)) a.push(h); return a; };
+          const r1 = round(first), r2 = round(first + B.ROUND), r3 = round(first + 2 * B.ROUND);
+          o.sigPer = r1.map(sigKind).join(',');
+          // round one: par on all four -- a signature round, and no birdies
+          r1.forEach(h => play(h, 0)); o.sigPar = T();
+          // round two: birdies on all four but a bogey on the last -- birdies
+          // counted on each kind, no round
+          r2.forEach((h, i) => play(h, i === r2.length - 1 ? 1 : -1)); o.sigBogey = T();
+          // round three: an ace on an island
+          play(r3.find(h => sigKind(h) === 'island'), -4); o.sigAce = T();
+          // an ordinary hole with a birdie
+          const plain = (() => { for (let h = first; h < first + B.ROUND; h++) if (!sigKind(h)) return h; })();
+          play(plain, -1); o.sigPlain = T();
+          // a course with one signature hole: four rounds of par on it are
+          // never a signature round
+          const away = B.COURSE.findIndex(c => c.slot !== 'home' && B.SIG_HOLE[c.id] === 'canyon');
+          DEV.course(away); hideSheet();
+          const t2 = tournamentOf(S.hole), f2 = (t2 - 1) * B.ROUND * B.DAYS + 1;
+          const aw = []; for (let h = f2; h < f2 + B.ROUND * B.DAYS; h++) if (sigKind(h)) aw.push(h);
+          o.awayN = aw.length;
+          aw.forEach(h => play(h, 0)); play(aw[0], -1); o.sigAway = T();
+          checkAch();
+          o.sigDone = ['sig4', 'sigIs', 'sigCn', 'sigSt', 'isleAce'].filter(id => S.achDone[id]).join(',');
+          // junk in the round being counted
+          o.sigRepair = [];
+          for (const v of ['x', 5, { r: 'a', n: 1 }, { r: 3, n: 9, ok: 1 }]) { S.sigRound = v; initState(); if (S.sigRound !== undefined) o.sigRepair.push(JSON.stringify(v)); }
+          S.sigRound = { r: 4, n: 2, ok: 1 }; initState(); if (!S.sigRound || S.sigRound.n !== 2) o.sigRepair.push('a good one was dropped');
+        }
+
         // ---- a save with junk in it ---------------------------------------------
         S.homes = { willow: 1, nowhere: 1, masters: 1 }; initState(); o.repaired = Object.keys(S.homes).join(',');
         S.homes = 'x'; initState(); o.repaired2 = typeof S.homes + ':' + Object.keys(S.homes).length;
@@ -110,6 +157,7 @@ module.exports = {
       }
       return o;
     });
+    const f2 = m => { throw new Error(m); };
     const d = r.dog;
     if (d.round !== 1) throw new Error('a shot from short of the corner to past it counted ' + d.round + ' times round a dogleg (bend ' + d.bend + ')');
     if (d.short || d.past || d.aimed)
@@ -126,9 +174,20 @@ module.exports = {
     if (r.awarded.length !== 6) throw new Error('only ' + r.awarded.join(', ') + ' were awarded once reached');
     if (r.staffV !== r.perks) throw new Error('Full Staff asks for ' + r.staffV + ' perks and there are ' + r.perks);
     if (!/^\d+% \/ \d+%/.test(r.share)) throw new Error('an honour counted as a share reads "' + r.share + '"');
+    const J = x => JSON.stringify(x);
+    if (r.sigPer.split(',').sort().join(',') !== 'canyon,island,island,stones') f2('a home round\'s signature holes are ' + r.sigPer);
+    if (J(r.sigPar) !== J({ is: 0, cn: 0, st: 0, rd: 1, ace: 0 })) f2('par on all four of a home round counted ' + J(r.sigPar) + ' (want one signature round, no birdies)');
+    if (J(r.sigBogey) !== J({ is: 2, cn: 1, st: 0, rd: 1, ace: 0 }) && J(r.sigBogey) !== J({ is: 1, cn: 1, st: 1, rd: 1, ace: 0 }) && J(r.sigBogey) !== J({ is: 2, cn: 0, st: 1, rd: 1, ace: 0 }))
+      f2('birdies on three and a bogey on the last counted ' + J(r.sigBogey) + ' (want a birdie on each kind birdied, no new round)');
+    if (r.sigAce.ace !== 1 || r.sigAce.is !== r.sigBogey.is + 1) f2('an ace on an island counted ' + J(r.sigAce));
+    if (J(r.sigPlain) !== J(r.sigAce)) f2('a birdie on an ordinary hole counted: ' + J(r.sigPlain));
+    if (r.awayN !== 4 || r.sigAway.rd !== 1 || r.sigAway.cn !== r.sigPlain.cn + 1) f2('a canyon course (' + r.awayN + ' signature holes an event): ' + J(r.sigAway) + ' (want one more canyon birdie and no signature round)');
+    if (r.sigDone !== 'sig4,isleAce') f2('signature honours awarded: ' + (r.sigDone || 'none') + ' (want Signature Round and Ace on the Island)');
+    if (r.sigRepair.length) f2('a save with junk in its signature round: ' + r.sigRepair.join('; '));
     if (r.repaired !== 'willow' || r.repaired2 !== 'object:0') throw new Error('a save with junk home courses loaded as ' + r.repaired + ' / ' + r.repaired2);
     return ['round a dogleg: only a shot from short of the corner to past it (bend ' + d.bend + ')',
       'a birdie in ' + w.mph + ' mph of wind counts, a birdie in a breeze or a par in a gale does not',
-      'the matching pair, all ' + r.homesNeed + ' home courses, a major and every caddie perk: all six awarded'];
+      'the matching pair, all ' + r.homesNeed + ' home courses, a major and every caddie perk: all six awarded',
+      'signature holes: birdies counted by kind, an island ace, a home round of par or better once, spoilt by a bogey, never on a course with one'];
   }
 };

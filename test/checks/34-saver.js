@@ -78,18 +78,22 @@ module.exports = {
       return { name: it.name };
     });
     await wait(1300);
-    const shown = await page.evaluate(() => {
+    // The tally is rewritten once a second while the round keeps earning, so
+    // it is read, and what it should say worked out, in the same instant:
+    // read a moment apart the two differed by a hole's purse, one run in forty.
+    const both = await page.evaluate(() => {
+      saverStats();
       const el = $('saverStats');
       const tile = k => { const t = [...el.querySelectorAll('.awst')].find(x => x.querySelector('.awk').textContent === k);
         return t ? t.querySelector('.awv').textContent : null; };
       const row = k => { const r = [...el.querySelectorAll('.lb')].find(x => x.children[1].textContent === k);
         return r ? r.children[2].textContent : null; };
-      return { purse: tile('purse'), holes: tile('holes'), clubs: tile('clubs'), lv: row('Career Levels'),
-               cups: row('Cups Won'), best: row('Best Club'), since: $('saverFor').textContent };
+      const V = SAVER;
+      return { shown: { purse: tile('purse'), holes: tile('holes'), clubs: tile('clubs'), lv: row('Career Levels'),
+                        cups: row('Cups Won'), best: row('Best Club'), since: $('saverFor').textContent },
+               purse: { want: fmt(Math.max(0, S.gold - V.gold)), holes: fmt(S.totalHoles - V.holes, 0) } };
     });
-    const purse = await page.evaluate(() => {
-      const V = SAVER; return { want: fmt(Math.max(0, S.gold - V.gold)), holes: fmt(S.totalHoles - V.holes, 0) };
-    });
+    const shown = both.shown, purse = both.purse;
     if (shown.purse !== '+' + purse.want) f('the tally says ' + shown.purse + ' purse, not +' + purse.want);
     if (shown.holes !== purse.holes || !(parseInt(shown.holes) >= 7)) f('the tally says ' + shown.holes + ' holes, not ' + purse.holes);
     if (shown.clubs !== '1' || shown.best !== tally.name) f('a club found shows as ' + shown.clubs + ' clubs, best "' + shown.best + '"');

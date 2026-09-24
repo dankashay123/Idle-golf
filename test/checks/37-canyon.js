@@ -18,21 +18,25 @@ module.exports = {
   name: 'canyon',
   async run(page) {
     const r = await page.evaluate(() => {
-      const SNAP = JSON.stringify(S), o = { bad: [], home: 0, away: 0 };
+      const SNAP = JSON.stringify(S), o = { bad: [], home: 0, away: 0, wrongCount: [], mineCourses: 0 };
       const inGorge = d => { const w = Scene.water, sp = w && w.canyon && Scene.hazSpan(w, d);
         return !!sp && sp.l > 0.8 && sp.r > 0.8; };
       try {
         for (let ci = 0; ci < B.COURSE.length; ci++) {
           DEV.course(ci); hideSheet();
           const cs = B.COURSE[ci], t = tournamentOf(S.hole), first = (t - 1) * B.ROUND * B.DAYS + 1;
+          const home = cs.slot === 'home', mine = !home && B.SIG_HOLE[cs.id] === 'canyon';
+          let n = 0;
           for (let h = first; h < first + B.ROUND * B.DAYS; h++) {
             if (!isCanyon(h)) continue;
-            if (cs.slot !== 'home') { o.away++; continue; }
-            o.home++;
+            n++;
+            if (home) o.home++; else o.away++;
             const r0 = holeInRound(h);
             let later = 0; for (let k = r0 + 1; k <= B.ROUND; k++) if (parOf(h + k - r0) === 5) later++;
-            if (parOf(h) !== 5 || later || isIsland(h)) o.bad.push(cs.id + ' hole ' + r0 + ' par ' + parOf(h));
+            if (parOf(h) !== 5 || later || sigKind(h) !== 'canyon') o.bad.push(cs.id + ' hole ' + r0 + ' par ' + parOf(h));
           }
+          if (!home && n !== (mine ? B.DAYS : 0)) o.wrongCount.push(cs.id + ' has ' + n + (mine ? ', not one a round' : ', but its signature is not this'));
+          if (mine) o.mineCourses++;
         }
         o.homes = B.COURSE.filter(c => c.slot === 'home').length;
 
@@ -145,7 +149,8 @@ module.exports = {
     if (!(snd.bridge.plank >= 5) || snd.bridge.rotor) f('crossing the bridge for 2s played ' + snd.bridge.plank + ' plank steps and ' + snd.bridge.rotor + ' rotor beats');
     if (snd.walk.rotor || snd.walk.plank) f('walking on the grass played ' + JSON.stringify(snd.walk));
     if (r.bad.length) f('canyons on the wrong holes: ' + r.bad.slice(0, 4).join('; '));
-    if (r.away) f(r.away + ' canyons away from the home courses');
+    if (r.wrongCount.length) f('canyons on the other courses: ' + r.wrongCount.slice(0, 4).join('; '));
+    if (!r.mineCourses) f('no course but the home courses has canyons');
     if (r.home !== r.homes * 4) f(r.home + ' canyons over ' + r.homes + ' home events, not ' + r.homes * 4 + ' (one a round)');
     if (!r.laid) f('a forced canyon hole has no gorge');
     if (!r.rims) f('the bridge does not run from rim to rim over the gorge');
@@ -159,7 +164,7 @@ module.exports = {
     if (!/Canyon Carry/.test(r.toast)) f('the tee of a canyon hole said "' + r.toast + '"');
     if (!live.moved) f('a canyon hole finished by its tee shot never moved on');
     if (live.cam < live.land - 0.1 || !live.over) f('a canyon hole finished by its tee shot moved on before he crossed (stood at ' + live.cam + ' of ' + live.land + ')');
-    return [r.home + ' canyons over ' + r.homes + ' home events, the last par five of each round, none elsewhere',
+    return [r.home + ' canyons over ' + r.homes + ' home events and ' + r.away + ' on the ' + r.mineCourses + ' other courses whose signature it is, the last par five of each round',
       'sounds: ' + snd.fly.rotor + ' rotor beats in 2s of flight, ' + snd.bridge.plank + ' plank steps in 2s on the bridge, none on the grass',
       'no ball in the gorge; he crossed in ' + r.crossed.toFixed(1) + 's at the bridge pace on planks all the way; a hole done early waits for him'];
   }

@@ -14,8 +14,8 @@ check is for.
   sixteen seeds and takes ~40s on its own).
 - Latest: **"all of those please"** to the menu: a signature hole on the
   other courses, honours for the signature holes, sounds for the seasons, and
-  a settings switch for the second track. Switch and season sounds done
-  (below); the other two in progress.
+  a settings switch for the second track. All four done (§5: "Signature holes
+  everywhere", "Signature honours", the seasons' sounds, Night Music).
 - Before: **"sounds for the signature holes, more seasonal touches, a second
   music track, then the third signature hole"**. Sounds and seasons done
   (§5 under "Canyon carry" and "Home course seasons"); the second music
@@ -272,6 +272,11 @@ Line numbers are approximate and drift. Search for the name instead.
    1.3ms; a browser pause put it over one run in three, on old code as much
    as new (measured over eight runs each). It now takes the quickest of five
    blocks, and still fails when a skin is made 0.4ms dearer.
+18. **Read a live number and its expectation in the same instant.** The
+   saver check read the tally, then worked out what it should say in a
+   second call; the round kept earning in between and the two differed by a
+   hole's purse one run in forty. Anything the running game changes is
+   compared inside one `page.evaluate`.
 16. **A check that freezes the round cannot see how a hole ends.** The
    island's first check stopped the round to film the flight, so the hole
    could never end early; in real play it ended with the tee shot and he
@@ -287,6 +292,24 @@ Line numbers are approximate and drift. Search for the name instead.
   `textW`, `glyphCv`, `textCv` all go through `faceOf`; `LH` is now
   (FHS + 2) * TSC. The weather lines come out at about 61% of their old
   width. `font` checks it.
+
+### Signature holes everywhere, and their honours
+- `sigHole(h, kind, par, homeNine)` decides all three (`isIsland`,
+  `isCanyon`, `isStones` call it; `lastOfPar` finds the last hole of a par
+  in its round or nine). A home course has all three kinds, four holes a
+  round; every other course has the one kind in `B.SIG_HOLE` (islands where
+  there is water, canyons in rock and sand, stones where a river runs),
+  once a round on the round's last hole of that par. `sigKind(h)` says which,
+  `SIG_NAME` names it.
+- The round's closing hole was labelled SIGNATURE in the corner (it plays
+  harder: `S.armor`); it now reads CLOSING HOLE (CHAMPIONSHIP on Sunday),
+  and a signature hole names itself there in brass (`hudLines` counts it).
+- Honours (`sigScore`, called from `finishHole`): Signature Round (`sig4`,
+  par or better on all four of a home round's signature holes, counted in
+  `S.sigRound` as they are played; a bogey spoils it), Island Hopper (25
+  island birdies), Rope Walker (10 canyon birdies), Sure-Footed (10 stone
+  birdies), Ace on the Island. All pay tickets and sovereigns, nothing that
+  moves the balance. Dev menu: Honours row buttons for each.
 
 ### Stepping Stones (the third signature hole)
 - `isStones(h)`: the last par four of each round on a home course (one a
@@ -691,22 +714,17 @@ Line numbers are approximate and drift. Search for the name instead.
 
 ## 8. What to offer next
 
-Everything asked for is done. Ask how the island hole and the flight look
-on the phone (they come round twice a round on a home course; the dev menu
-can make any hole one), and how the battery saver feels (is 2 min the right
-default wait; is the tally what they wanted). Two older
-questions are still unanswered: does the auto-climb button sit where they
-wanted, and are the Trophy Room (medal, red dot) and the Scrap sheet easy to
-find. The open menu, under the numbers it was offered with:
+Everything asked for is done. Ask how the latest land on the phone: the
+signature holes on every course (and the sounds), the seasons (they start at
+Card XI; dev menu "Home season"), the calm night tune (Settings has Night
+Music), the new honours, and the condensed text in the corner. Older
+unanswered: does the 2 min battery saver wait suit.
 
-2. **More signature holes**: island, canyon and stepping stones are in. Others could follow
-   the same pattern (a hole flag in `newHole`, `spot` for where balls may
-   lie): a par 5 over a canyon, a green on a plateau, a hole along the
-   shore. A whirring sound for the flight is also still to do.
-3. **More home course variety**: seasons are in (§5). Next could be
-   touches beyond colour (petals, leaves, a frozen pond), or new courses.
-5. **A second music track**: a calmer one for night rounds, another for
-   wagers. Ask first whether the current track fits.
-
-Also worth offering: a short tour of what the Season list shows, if the user
-seems unsure what "Next" means there.
+Ideas not yet offered:
+1. **Signature holes in the Trophy Room**: a Record row for each kind (played,
+   best score), so there is somewhere to see them.
+2. **A fourth signature hole**: a green out on a sea stack reached along a
+   pier, for the seaside and harbour courses.
+3. **Seasons past the home courses**: the regular stops turning with the real
+   calendar month.
+4. **A volume control** for music and effects, rather than on and off.

@@ -2974,6 +2974,17 @@ const B = {
   /* ---- honours ----
      Every counter the game already keeps, given a reason to exist. Unlocks are
      automatic: an idle game should not make you come and collect. ---- */
+  // Each course's own signature hole (the home courses have all three): an
+  // island where there is water to spare, a canyon in rock and sand, the
+  // stepping stones where a river or a burn runs through.
+  SIG_HOLE: {
+    coastal:'island', blackwater:'island', palmetto:'island', blossom:'island',
+    highlands:'canyon', dunes:'canyon', ironbark:'canyon', mesa:'canyon',
+    sandbelt:'stones', riverbend:'stones', snowline:'stones', moorland:'stones',
+    azalea:'island', national:'canyon', seaside:'canyon', autumn:'stones', oldlinks:'stones',
+    meridian:'island',
+    masters:'stones', crown:'stones', sovereign:'island', starfall:'canyon'
+  },
   ACH: [
     { id:'h100',   n:'Fairway Found',    d:'Play 100 holes',              m:'holes',  v:100,   r:{k:'tick', v:2}, sov:5 },
     { id:'h2500',  n:'Card Sharp',       d:'Play 2,500 holes',            m:'holes',  v:2500,  r:{k:'gld', v:0.05}, sov:10 },
@@ -3020,7 +3031,14 @@ const B = {
     { id:'twin',   n:'Matching Pair',    d:'Dress your caddie to match you', m:'twin',  v:1,     r:{k:'tick', v:2}, sov:5 },
     { id:'homes',  n:'Home Tour',        d:'Play all ten home courses',   m:'homes',  v:10,    r:{k:'gld', v:0.05}, sov:10 },
     { id:'major1', n:'Major Winner',     d:'Win a major of the week',     m:'slam',   v:1,     r:{k:'tick', v:3}, sov:10 },
-    { id:'staff',  n:'Full Staff',       d:'Own every caddie perk',       m:'cperks', v:9,     r:{k:'gld', v:0.04}, sov:10 }
+    { id:'staff',  n:'Full Staff',       d:'Own every caddie perk',       m:'cperks', v:9,     r:{k:'gld', v:0.04}, sov:10 },
+    // the signature holes: a home round has four (two island greens, the
+    // canyon and the stepping stones), any other course one of its own
+    { id:'sig4',   n:'Signature Round',  d:'Par or better on every signature hole of a home round', m:'sigRound', v:1, r:{k:'tick', v:3}, sov:10 },
+    { id:'sigIs',  n:'Island Hopper',    d:'Birdie 25 island greens',     m:'sigIsle',   v:25,  r:{k:'tick', v:2}, sov:10 },
+    { id:'sigCn',  n:'Rope Walker',      d:'Birdie 10 canyon holes',      m:'sigCanyon', v:10,  r:{k:'tick', v:2}, sov:10 },
+    { id:'sigSt',  n:'Sure-Footed',      d:'Birdie 10 stepping-stone holes', m:'sigStones', v:10, r:{k:'tick', v:2}, sov:10 },
+    { id:'isleAce', n:'Ace on the Island', d:'Card an ace on an island green', m:'isleAce', v:1,  r:{k:'tick', v:3}, sov:10 }
   ],
   // The trophy case pays for what goes in it, collected by hand in the Trophy
   // Room: once for each step reached, and nothing waiting there runs out. The
@@ -3465,39 +3483,34 @@ const roundIndex   = h => Math.floor((h-1) / B.ROUND);
 const tournamentOf = h => Math.floor((h-1) / (B.ROUND*B.DAYS)) + 1;
 const holesPlayed  = h => dayIndex(h)*B.ROUND + (holeInRound(h)-1);
 const parOf = h => B.PAR_LAYOUTS[hash32(roundIndex(h)+7) % B.PAR_LAYOUTS.length][holeInRound(h)-1];
-// A home course's signature hole: the last par three of each nine is played to
-// an island green. ISLE_FORCE (the developer menu) makes one hole an island.
+// Signature holes. A home course has all three: an island green to close
+// each nine, the canyon on the round's last par five and the stepping stones
+// on its last par four. Every other course has one of its own (B.SIG_HOLE),
+// once a round, on the round's last hole of that par. The *_FORCE values
+// (the developer menu) make one hole that kind and none of the others.
 let ISLE_FORCE = 0, CANYON_FORCE = 0, STONES_FORCE = 0;
-function isIsland(h){
-  if(h === ISLE_FORCE) return true;
-  if(h === CANYON_FORCE || h === STONES_FORCE) return false;
-  if(parOf(h) !== 3) return false;
-  const r = holeInRound(h), end = r <= 9 ? 9 : 18;
-  for(let k = r + 1; k <= end; k++) if(parOf(h + k - r) === 3) return false;
-  const cs = courseFor(tournamentOf(h));
-  return !!cs && cs.slot === 'home';
+// the last hole of a par in its round, or in its nine
+function lastOfPar(h, par, nine){
+  if(parOf(h) !== par) return false;
+  const r = holeInRound(h), end = nine && r <= 9 ? 9 : B.ROUND;
+  for(let k = r + 1; k <= end; k++) if(parOf(h + k - r) === par) return false;
+  return true;
 }
-// The third: the last par four of the round on a home course crosses a river
-// on stepping stones. STONES_FORCE (the developer menu) makes one hole it.
-function isStones(h){
-  if(h === STONES_FORCE) return true;
-  if(h === ISLE_FORCE || h === CANYON_FORCE || parOf(h) !== 4) return false;
-  const r = holeInRound(h);
-  for(let k = r + 1; k <= B.ROUND; k++) if(parOf(h + k - r) === 4) return false;
+function sigHole(h, kind, par, homeNine){
+  const F = { island: ISLE_FORCE, canyon: CANYON_FORCE, stones: STONES_FORCE };
+  if(h === F[kind]) return true;
+  for(const k in F) if(k !== kind && h === F[k]) return false;
   const cs = courseFor(tournamentOf(h));
-  return !!cs && cs.slot === 'home';
+  if(!cs) return false;
+  if(cs.slot === 'home') return lastOfPar(h, par, homeNine);
+  return B.SIG_HOLE[cs.id] === kind && lastOfPar(h, par, false);
 }
-// The other signature hole: the last par five of the round on a home course
-// is played over a canyon, crossed on a rope bridge. CANYON_FORCE (the
-// developer menu) makes one hole a canyon.
-function isCanyon(h){
-  if(h === CANYON_FORCE) return true;
-  if(h === ISLE_FORCE || h === STONES_FORCE || parOf(h) !== 5) return false;
-  const r = holeInRound(h);
-  for(let k = r + 1; k <= B.ROUND; k++) if(parOf(h + k - r) === 5) return false;
-  const cs = courseFor(tournamentOf(h));
-  return !!cs && cs.slot === 'home';
-}
+function isIsland(h){ return sigHole(h, 'island', 3, true); }
+function isCanyon(h){ return sigHole(h, 'canyon', 5, false); }
+function isStones(h){ return sigHole(h, 'stones', 4, false); }
+const SIG_NAME = { island: 'Island Green', canyon: 'Canyon Carry', stones: 'Stepping Stones' };
+// which signature hole h is, if it is one
+const sigKind = h => isIsland(h) ? 'island' : isCanyon(h) ? 'canyon' : isStones(h) ? 'stones' : null;
 // the major of the week plays for a major's purse and a major's points
 const slotOfEvent = t => S && S.weekly && S.weekly.t === t ? 'major' : B.SLOTS_SEASON[(t-1) % B.SEASON];
 const COURSE_EVT = B.COURSE.filter(c => c.slot === 'event');
@@ -3730,6 +3743,8 @@ function initState(){
   S.bestCards = Array.isArray(S.bestCards) ? S.bestCards.filter(x => rec(x) && isFinite(x.s))
     .sort((a, b) => a.s - b.s).slice(0, 5) : [];
   if(!S.caseGot || typeof S.caseGot !== 'object') S.caseGot = {};
+  if(S.sigRound !== undefined && !(S.sigRound && typeof S.sigRound === 'object' && isFinite(S.sigRound.r)
+     && S.sigRound.n >= 0 && S.sigRound.n <= 4)) delete S.sigRound;
   for(const k in S.caseGot){ const c = B.CASE.find(x => x.id === k);
     if(!c || !(S.caseGot[k] >= 0)) delete S.caseGot[k]; else S.caseGot[k] = Math.min(c.at.length, Math.floor(S.caseGot[k])); }
   if(S.music !== undefined && S.music !== 0 && S.music !== 1) delete S.music;
@@ -4367,9 +4382,8 @@ function startHole(){
     S.gold += fee; S.holeGold += fee; Meter.add(fee);
   }
   Scene.newHole(S.hole, S.tier);
-  if(!QUIET && !OFFLINE && isIsland(S.hole)) toast('Signature Hole \u00b7 <b>Island Green</b>');
-  else if(!QUIET && !OFFLINE && isCanyon(S.hole)) toast('Signature Hole \u00b7 <b>Canyon Carry</b>');
-  else if(!QUIET && !OFFLINE && isStones(S.hole)) toast('Signature Hole \u00b7 <b>Stepping Stones</b>');
+  const sk = !QUIET && !OFFLINE && sigKind(S.hole);
+  if(sk) toast('Signature Hole \u00b7 <b>' + SIG_NAME[sk] + '</b>');
 }
 
 // soft=true for continuous sources like burn, which armour taxes as a
@@ -5919,6 +5933,23 @@ function toast(html, cls){
   while(kids.length > 2) kids[0].remove();
 }
 
+// The signature holes' honours: a birdie or better on each kind, an ace on an
+// island, and par or better on all four of a home round's. The round's are
+// counted as they are played, so one caught up away, or a round begun before
+// a reload that lost them, simply does not add up to four.
+function sigScore(sc){
+  const sk = sigKind(S.hole);
+  if(!sk) return;
+  if(sc.d <= -1) bump(sk === 'island' ? 'sigIsle' : sk === 'canyon' ? 'sigCanyon' : 'sigStones');
+  if(sk === 'island' && sc.d === -4) bump('isleAce');
+  const ri = roundIndex(S.hole);
+  if(!S.sigRound || S.sigRound.r !== ri) S.sigRound = { r: ri, n: 0, ok: 1 };
+  const R = S.sigRound;
+  R.n++;
+  if(sc.d > 0) R.ok = 0;
+  const cs = courseFor(tournamentOf(S.hole));
+  if(R.n === 4 && R.ok && cs && cs.slot === 'home') bump('sigRound');
+}
 // The hole's time: when the ball was down, not when the hole moved on. They
 // differ only on an island, where the hole waits for him to fly across.
 const holeTime = () => S.doneT != null ? S.doneT : S.elapsed;
@@ -5946,6 +5977,7 @@ function finishHole(D){
   if(sc.d === -4) S.aces++;
   if(sc.d <= -1) bump('birdie');
   if(sc.d <= -1 && Scene.windMph() >= 15) bump('windBird');
+  sigScore(sc);
   if(sc.d <= -2) bump('eagle');
   if(sc.d >= 4) bump('snow');
   if(sc.d < S.bestScore) S.bestScore = sc.d;
@@ -11906,7 +11938,7 @@ Object.assign(Scene, {
   hudLines(){
     const cn = S.chaos ? S.chaos.n : 'FAIR';
     return 1 + (textW(cn, TSC) > this.hudRoom() && cn.indexOf(' + ') > 0 ? 1 : 0)
-      + (this.windMph() > 0 ? 1 : 0) + (S.courseEl ? 1 : 0) + (S.armor > 0 ? 1 : 0);
+      + (this.windMph() > 0 ? 1 : 0) + (S.courseEl ? 1 : 0) + (S.armor > 0 ? 1 : 0) + (sigKind(S.hole) ? 1 : 0);
   },
   // The panel lives in the DOM now. What stays on the canvas is the stuff that
   // belongs to the world rather than the interface.
@@ -11918,8 +11950,16 @@ Object.assign(Scene, {
     const R = VW - 4*TSC - 1;
     // The pull tab sits in this corner, so the stack starts above it.
     let ly = VH - LH - 2 - this.tabRows();
+    // The round's last hole plays harder. It was called SIGNATURE here, which
+    // the signature holes needed for themselves: it is the closing hole now,
+    // and a signature hole says which one it is.
     if(S.armor > 0){
-      drawTextS(c, isSunday(S.hole) ? 'CHAMPIONSHIP' : 'SIGNATURE', R, ly, PX.flag, TSC, 'r');
+      drawTextS(c, isSunday(S.hole) ? 'CHAMPIONSHIP' : 'CLOSING HOLE', R, ly, PX.flag, TSC, 'r');
+      ly -= LH;
+    }
+    const sk = sigKind(S.hole);
+    if(sk){
+      drawTextS(c, SIG_NAME[sk].toUpperCase(), R, ly, PX.brass, TSC, 'r');
       ly -= LH;
     }
     if(S.courseEl){
@@ -13935,7 +13975,10 @@ const DEV = {
 
     h += row('Honours', b('unlock all', 'DEV.ach()') + b('clear all', 'DEV.ach0()')
       + b('+5 cups', 'DEV.cups(5)') + b('doglegs +50', 'DEV.hon(\'dogleg\')')
-      + b('wind birdies +25', 'DEV.hon(\'windBird\')') + b('every home course', 'DEV.hon(\'homes\')'));
+      + b('wind birdies +25', 'DEV.hon(\'windBird\')') + b('every home course', 'DEV.hon(\'homes\')')
+      + b('island birdies +25', 'DEV.hon(\'sigIsle\')') + b('canyon birdies +25', 'DEV.hon(\'sigCanyon\')')
+      + b('stone birdies +25', 'DEV.hon(\'sigStones\')') + b('a signature round', 'DEV.hon(\'sigRound\')')
+      + b('an island ace', 'DEV.hon(\'isleAce\')'));
 
     h += row('Simulate away', b('1 hour', 'DEV.away(3600)') + b('6 hours', 'DEV.away(6*3600)')
       + b('12 hours', 'DEV.away(12*3600)') + b('3 days', 'DEV.away(3*86400)'));
@@ -14086,7 +14129,7 @@ const DEV = {
     }
     checkAch(); this.re(); },
   hon(k){ if(k === 'homes') COURSE_HOME.forEach(c => { S.homes[c.id] = 1; });
-    else bump(k, k === 'dogleg' ? 50 : 25);
+    else bump(k, k === 'dogleg' ? 50 : k === 'sigRound' || k === 'isleAce' ? 1 : 25);
     checkAch(); this.re(); },
   // ---- sound, the fairy, the frame ----
   snd(k, a){ Sfx.unlock(); Sfx.lastSwing = -1; Sfx.play(k, k === 'hole' ? -1 : a); },

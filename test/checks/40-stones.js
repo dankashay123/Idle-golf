@@ -18,21 +18,25 @@ module.exports = {
   name: 'stones',
   async run(page) {
     const r = await page.evaluate(() => {
-      const SNAP = JSON.stringify(S), o = { bad: [], home: 0, away: 0 };
+      const SNAP = JSON.stringify(S), o = { bad: [], home: 0, away: 0, wrongCount: [], mineCourses: 0 };
       const inGorge = d => { const w = Scene.water, sp = w && w.river && Scene.hazSpan(w, d);
         return !!sp && sp.l > 0.8 && sp.r > 0.8; };
       try {
         for (let ci = 0; ci < B.COURSE.length; ci++) {
           DEV.course(ci); hideSheet();
           const cs = B.COURSE[ci], t = tournamentOf(S.hole), first = (t - 1) * B.ROUND * B.DAYS + 1;
+          const home = cs.slot === 'home', mine = !home && B.SIG_HOLE[cs.id] === 'stones';
+          let n = 0;
           for (let h = first; h < first + B.ROUND * B.DAYS; h++) {
             if (!isStones(h)) continue;
-            if (cs.slot !== 'home') { o.away++; continue; }
-            o.home++;
+            n++;
+            if (home) o.home++; else o.away++;
             const r0 = holeInRound(h);
             let later = 0; for (let k = r0 + 1; k <= B.ROUND; k++) if (parOf(h + k - r0) === 4) later++;
-            if (parOf(h) !== 4 || later || isIsland(h) || isCanyon(h)) o.bad.push(cs.id + ' hole ' + r0 + ' par ' + parOf(h));
+            if (parOf(h) !== 4 || later || sigKind(h) !== 'stones') o.bad.push(cs.id + ' hole ' + r0 + ' par ' + parOf(h));
           }
+          if (!home && n !== (mine ? B.DAYS : 0)) o.wrongCount.push(cs.id + ' has ' + n + (mine ? ', not one a round' : ', but its signature is not this'));
+          if (mine) o.mineCourses++;
         }
         o.homes = B.COURSE.filter(c => c.slot === 'home').length;
 
@@ -140,7 +144,8 @@ module.exports = {
     const f = m => { throw new Error(m); };
     if (snd.hop !== 5 || snd.plank) f('hopping five stones\' worth played ' + snd.hop + ' splashes and ' + snd.plank + ' plank knocks');
     if (r.bad.length) f('stepping stones on the wrong holes: ' + r.bad.slice(0, 4).join('; '));
-    if (r.away) f(r.away + ' stepping-stone holes away from the home courses');
+    if (r.wrongCount.length) f('stepping-stone holes on the other courses: ' + r.wrongCount.slice(0, 4).join('; '));
+    if (!r.mineCourses) f('no course but the home courses has stepping-stone holes');
     if (r.home !== r.homes * 4) f(r.home + ' stepping-stone holes over ' + r.homes + ' home events, not ' + r.homes * 4 + ' (one a round)');
     if (!r.laid) f('a forced stepping-stones hole has no river');
     if (!r.rims) f('the crossing does not run from bank to bank over the river');
@@ -155,7 +160,7 @@ module.exports = {
     if (!/Stepping Stones/.test(r.toast)) f('the tee of a stepping-stones hole said "' + r.toast + '"');
     if (!live.moved) f('a stepping-stones hole finished by its tee shot never moved on');
     if (live.cam < live.land - 0.1 || !live.over) f('a stepping-stones hole finished by its tee shot moved on before he crossed (stood at ' + live.cam + ' of ' + live.land + ')');
-    return [r.home + ' stepping-stone holes over ' + r.homes + ' home events, the last par four of each round, none elsewhere',
+    return [r.home + ' stepping-stone holes over ' + r.homes + ' home events and ' + r.away + ' on the ' + r.mineCourses + ' other courses whose signature it is, the last par four of each round',
       r.stones + ' stones, all in the water, gaps ' + r.gaps.join(' ') + '; a splash on each of 5 stones',
       'no ball in the river; he crossed in ' + r.crossed.toFixed(1) + 's at the hop pace; a hole done early waits for him'];
   }

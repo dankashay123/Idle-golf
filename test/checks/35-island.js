@@ -30,18 +30,26 @@ module.exports = {
         return !!sp && x > w.x - sp.l && x < w.x + sp.r && gd * gd + gx * gx >= 1; };
       try {
         // ---- which holes ----------------------------------------------------
-        o.bad = []; o.home = 0; o.away = 0;
+        // a home course: the last par three of each nine; any other course
+        // whose own signature is the island: the last par three of the round
+        o.bad = []; o.home = 0; o.away = 0; o.wrongCount = []; o.noKind = []; o.islandCourses = 0;
         for (let ci = 0; ci < B.COURSE.length; ci++) {
           DEV.course(ci); hideSheet();
           const cs = B.COURSE[ci], t = tournamentOf(S.hole), first = (t - 1) * B.ROUND * B.DAYS + 1;
+          const home = cs.slot === 'home', mine = !home && B.SIG_HOLE[cs.id] === 'island';
+          if (!home && !['island', 'canyon', 'stones'].includes(B.SIG_HOLE[cs.id])) o.noKind.push(cs.id);
+          let n = 0;
           for (let h = first; h < first + B.ROUND * B.DAYS; h++) {
             if (courseFor(tournamentOf(h)).id !== cs.id) throw new Error('hole ' + h + ' is not on ' + cs.id);
             if (!isIsland(h)) continue;
-            if (cs.slot === 'home') o.home++; else { o.away++; continue; }
-            const r0 = holeInRound(h), end = r0 <= 9 ? 9 : 18;
+            n++;
+            if (home) o.home++; else o.away++;
+            const r0 = holeInRound(h), end = home && r0 <= 9 ? 9 : 18;
             let later = 0; for (let k = r0 + 1; k <= end; k++) if (parOf(h + k - r0) === 3) later++;
-            if (parOf(h) !== 3 || later) o.bad.push(cs.id + ' hole ' + r0 + ' par ' + parOf(h) + (later ? ', not the last par three of its nine' : ''));
+            if (parOf(h) !== 3 || later) o.bad.push(cs.id + ' hole ' + r0 + ' par ' + parOf(h) + (later ? ', not the last par three of its ' + (home ? 'nine' : 'round') : ''));
           }
+          if (!home && n !== (mine ? B.DAYS : 0)) o.wrongCount.push(cs.id + ' has ' + n + (mine ? ', not one a round' : ', but its signature is not the island'));
+          if (mine) o.islandCourses++;
         }
         o.homes = B.COURSE.filter(c => c.slot === 'home').length;
 
@@ -147,7 +155,9 @@ module.exports = {
     if (!V.moved || (V.doneT != null && V.el - V.doneT > 0.3)) f('behind the battery saver an island hole '
       + (V.moved ? 'waited ' + (V.el - V.doneT).toFixed(2) + 's for a flight nobody could see' : 'never moved on'));
     if (r.bad.length) f('island greens on the wrong holes: ' + r.bad.slice(0, 4).join('; '));
-    if (r.away) f(r.away + ' island greens away from the home courses');
+    if (r.noKind.length) f('courses with no signature hole of their own: ' + r.noKind.join(', '));
+    if (r.wrongCount.length) f('island greens on the other courses: ' + r.wrongCount.slice(0, 4).join('; '));
+    if (!r.islandCourses) f('no course but the home courses has an island green');
     if (r.home !== r.homes * B_ISLANDS_PER_EVENT) f(r.home + ' island greens over ' + r.homes + ' home events, not '
       + (r.homes * B_ISLANDS_PER_EVENT) + ' (the last par three of each nine)');
     if (!r.isle) f('a forced island hole has no lake');
@@ -160,7 +170,8 @@ module.exports = {
     if (r.end < r.land) f('he ended the shot at ' + r.end + ', short of the island at ' + r.land);
     if (r.greenWet || r.greenBlue) f('the lake is drawn over the green by the flag (' + r.greenPx + ')');
     if (!/Signature Hole/.test(r.toast) || !/Island Green/.test(r.toast)) f('the tee of an island hole said "' + r.toast + '"');
-    return [r.home + ' island greens over ' + r.homes + ' home events, none elsewhere, each the last par three of its nine',
+    return [r.home + ' island greens over ' + r.homes + ' home events, the last par three of each nine; ' + r.away + ' on the '
+      + r.islandCourses + ' other courses whose signature it is, one a round; every course has a signature hole',
       'a tee shot that finishes it waits for him to land (' + (L.el - L.doneT).toFixed(1) + 's, scored from the ball) and not behind the saver',
       'no ball lands wet; he flew ' + r.flew.toFixed(1) + 's at the flight pace and never stood on the water; green by the flag ' + r.greenPx];
   }
