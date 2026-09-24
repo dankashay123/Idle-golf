@@ -738,6 +738,10 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
 .setrow{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;padding:9px 0;
   border-bottom:1px solid var(--line-soft)}
 .setrow .ds{margin-top:2px}
+.vol{display:flex;align-items:center;gap:8px;margin-top:4px;font-family:var(--mono);font-size:var(--f1)}
+.vol input{flex:1 1 auto;min-width:0;max-width:180px;height:24px;margin:0;accent-color:var(--aurora)}
+.vol span{flex:0 0 4ch;text-align:right}
+.vol.off{opacity:.45}
 #saveCode{width:100%;height:86px;margin:8px 0 6px;background:var(--ink);color:var(--chalk);
   border:1px solid var(--line);font-family:var(--mono);font-size:var(--f0);padding:6px;resize:none;
   word-break:break-all}
@@ -3758,6 +3762,9 @@ function initState(){
     if(!c || !(S.caseGot[k] >= 0)) delete S.caseGot[k]; else S.caseGot[k] = Math.min(c.at.length, Math.floor(S.caseGot[k])); }
   if(S.music !== undefined && S.music !== 0 && S.music !== 1) delete S.music;
   if(S.music2 !== undefined && S.music2 !== 0 && S.music2 !== 1) delete S.music2;
+  for(const k of ['volFx', 'volMus']) if(S[k] !== undefined){
+    if(typeof S[k] !== 'number' || !isFinite(S[k]) || S[k] < 0 || S[k] >= 1) delete S[k];
+    else S[k] = Math.round(S[k] * 10) / 10; }
   if(S.saver !== undefined && !SAVER_MINS.includes(S.saver)) delete S.saver;
   for(const k in S.homes){ const c = courseById(k); if(!c || c.slot !== 'home') delete S.homes[k]; }
   if(!S.styleOwn || typeof S.styleOwn !== 'object') S.styleOwn = {};
@@ -5641,9 +5648,17 @@ const Sfx = {
       // mixes with whatever else is playing and follows an iPhone's silent switch
       if(navigator.audioSession) navigator.audioSession.type = 'ambient';
       this.ctx = new AC();
+      // everything goes out through one gain; the effects (master, which
+      // every sound but the music is wired to) and the music each have a
+      // gain of their own ahead of it, set by the sliders in Settings
+      this.out = this.ctx.createGain();
+      this.out.gain.value = 0.35;
+      this.out.connect(this.ctx.destination);
       this.master = this.ctx.createGain();
-      this.master.gain.value = 0.35;
-      this.master.connect(this.ctx.destination);
+      this.master.connect(this.out);
+      this.musBus = this.ctx.createGain();
+      this.musBus.connect(this.out);
+      this.setVol();
       this.load();
     }catch(e){ this.ctx = null; }
     return this.ctx;
@@ -5796,6 +5811,17 @@ const Sfx = {
   // over a bird, the winter breath under one
   SEASON_VOL: { gust: 0.035, hush: 0.008 },
   mus: [],
+  // a slider's 0 to 1, heard as loudness: squared, so the middle of the
+  // slider sounds like the middle rather than nearly full
+  volOf(k){ const v = S[k]; return v === undefined ? 1 : v; },
+  setVol(){
+    if(!this.ctx) return;
+    const t = this.ctx.currentTime;
+    for(const [bus, k] of [[this.master, 'volFx'], [this.musBus, 'volMus']]){
+      const v = this.volOf(k);
+      try{ bus.gain.cancelScheduledValues(t); bus.gain.setTargetAtTime(v * v, t, 0.03); }catch(e){ bus.gain.value = v * v; }
+    }
+  },
   musicWanted(){ return this.on() && S.music !== 0 && !!this.ctx && this.ctx.state === 'running' && !!this.recs.music; },
   // Two tracks: the town theme by day, and a calmer one for night rounds and
   // the wagers (music2), a shade quieter. A change of track fades the one
@@ -5838,7 +5864,7 @@ const Sfx = {
     const end = at + b.duration;
     g.gain.setValueAtTime(V, end - X);
     g.gain.linearRampToValueAtTime(0.0001, end);
-    src.connect(g); g.connect(this.master);
+    src.connect(g); g.connect(this.musBus);
     src.start(at); src.stop(end + 0.05);
     this.mus.push({ src, g, end, at, key });
   },
@@ -5925,6 +5951,16 @@ function toggleMusic2(){
   S.music2 = S.music2 === 0 ? 1 : 0;
   Sfx.musicTick();
   settingsSheet();
+}
+// The volume sliders, 0 to 10 in the sheet and 0 to 1 in the save (left out
+// at full). Moving one does not redraw the sheet, or the drag would be lost:
+// only its figure is rewritten. Effects give a blip to hear the level by.
+function setVol(k, v){
+  v = clamp(Math.round(+v) / 10, 0, 1);
+  if(v === 1) delete S[k]; else S[k] = v;
+  const el = $(k + 'Pct'); if(el) el.textContent = Math.round(v * 100) + '%';
+  Sfx.setVol();
+  if(k === 'volFx' && performance.now() - (setVol._t || 0) > 120){ setVol._t = performance.now(); Sfx.play('buy'); }
 }
 function toggleSound(){
   S.sound = S.sound === 0 ? 1 : 0;
@@ -14835,10 +14871,14 @@ const isStandalone = () => navigator.standalone === true
 function settingsSheet(){
   const row = (nm, ds, btn) => '<div class="setrow"><div><div class="nm">' + nm + '</div>'
     + (ds ? '<div class="ds">' + ds + '</div>' : '') + '</div>' + btn + '</div>';
+  const vol = (k, off) => { const v = Sfx.volOf(k);
+    return '<span class="vol' + (off ? ' off' : '') + '"><input type="range" min="0" max="10" step="1" value="' + Math.round(v * 10)
+      + '" aria-label="' + (k === 'volFx' ? 'Sound' : 'Music') + ' volume" oninput="setVol(\'' + k + '\', this.value)">'
+      + '<span id="' + k + 'Pct">' + Math.round(v * 100) + '%</span></span>'; };
   showSheet('<h3>Settings</h3>'
-    + row('Sound', '', '<button class="mini' + (S.sound !== 0 ? ' go' : '') + '" onclick="toggleSound()">'
+    + row('Sound', vol('volFx', S.sound === 0), '<button class="mini' + (S.sound !== 0 ? ' go' : '') + '" onclick="toggleSound()">'
         + (S.sound !== 0 ? 'On' : 'Off') + '</button>')
-    + row('Music', S.sound === 0 ? 'Needs Sound on' : '', '<button class="mini' + (S.music !== 0 ? ' go' : '') + '" onclick="toggleMusic()">'
+    + row('Music', S.sound === 0 ? 'Needs Sound on' : vol('volMus', S.music === 0), '<button class="mini' + (S.music !== 0 ? ' go' : '') + '" onclick="toggleMusic()">'
         + (S.music !== 0 ? 'On' : 'Off') + '</button>')
     + row('Night Music', S.music === 0 || S.sound === 0 ? 'Needs Music on' : 'A calmer tune at night and in wagers',
         '<button class="mini' + (S.music2 !== 0 ? ' go' : '') + '" onclick="toggleMusic2()">'
