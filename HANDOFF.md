@@ -12,7 +12,16 @@ check is for.
   branch `claude/funny-davinci-7ik9ge`). Nothing is half-built.
 - `node test/run.js` passes all **36 checks** (about 7 minutes; `pacing` runs
   sixteen seeds and takes ~40s on its own).
-- The user confirmed the island works, then said **"the minimap got moved up
+- Latest: **"fix the text where it says aurora front and the wind speed, cut
+  off behind the menu expand button."** The corner stack started 4.5% of the
+  picture up from the bottom, which on a tall phone is less than the pull
+  tab's 24 screen px. `Scene.tabR` (worked out in `resize` from the tab's
+  real height) now sets where it starts (`tabRows()`); on a narrow picture a
+  two-part forecast goes on two lines (`hudRoom`); the map is placed per
+  hole with room for that hole's lines (`hudLines`), at a position fixed per
+  stage size so it never jumps, only shortens (or hides if under 0.8 of its
+  width). `layout` checks the lowest line ends above the tab.
+- Before that, the user confirmed the island works, then said **"the minimap got moved up
   and I can't see the trophy icon anymore; fix that and start on 3"**. Read
   as: the map slid up under the star when the Trophy Room's button left the
   right side (commit 4609031), and the medal that replaced it was too dim at

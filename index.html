@@ -9310,6 +9310,13 @@ const Scene = {
     this.ctx.imageSmoothingEnabled = false;
     this.ctx.imageSmoothingQuality = 'low';
     setViewport(bw, bh);
+    // The menu's pull tab is 24 screen pixels tall at every size, and the
+    // words in the bottom right corner stack up from above it. A share of
+    // the picture's height (4.5%) came out shorter than the tab on a tall
+    // phone, and the lowest line ran behind it.
+    const dr = $('drawer'), cssPer = sc / dpr;
+    this.tabR = Math.max(Math.round(bh * 0.045),
+      dr && dr.offsetParent ? Math.ceil((dr.offsetHeight + 3) / cssPer) : 0);
     this.gGen = (this.gGen || 0) + 1;
     this.buildSky();
     this.mapOn = false; this._mapTry = null;   // the hole map is placed again
@@ -9904,6 +9911,8 @@ const Scene = {
     // counted for nothing, and he stood and hit again.
     this.swingT = 0; this.pendingBall = null; this.queued = null;
     this.balls.length = 0; this.nums.length = 0; this.sparks.length = 0;
+    // placed again: the lines under it are this hole's
+    this.mapOn = false; this._mapTry = null;
     this.buildSky();
   },
 
@@ -10490,16 +10499,18 @@ Object.assign(Scene, {
     const SW = st.clientWidth, SH = st.clientHeight;
     // One button's place further down than the star: where it sat while the
     // Trophy Room's button was above the star, and where it is looked for.
-    // Where that leaves no room (a 320 phone, or on its side) it goes up under
-    // the star rather than away.
+    // Where that leaves no room (a 320 phone) it goes up under the star
+    // rather than away. Where it sits depends on the size of the stage only,
+    // so it never jumps from hole to hole; its height is this hole's, since
+    // the lines under it (see hudLines) come and go.
     const gap = Math.max(8, Math.round(SW * 0.03));
     const k = SH / Math.max(1, VH);
-    const floor = Math.round((VH - LH*4 - 2 - VH*0.045) * k) - 6;
+    const floorAt = n => Math.round((VH - LH*n - 2 - this.tabRows()) * k) - 6;
     const W = clamp(Math.round(SW * 0.16 / 2) * 2, 40, 92);
     let top = pk.offsetTop + pk.offsetHeight * 2 + Math.max(8, Math.round(SW * 0.04)) + gap;
-    if(floor - top < W * 1.15) top = pk.offsetTop + pk.offsetHeight + gap;
-    const room = floor - top;
-    if(room < W * 1.15 || S.dgnRun){ cv.style.display = 'none'; this.mapOn = false; return; }
+    if(floorAt(3) - top < W * 1.15) top = pk.offsetTop + pk.offsetHeight + gap;
+    const room = floorAt(this.hudLines()) - top;
+    if(room < W * 0.8 || S.dgnRun){ cv.style.display = 'none'; this.mapOn = false; return; }
     const H = Math.min(Math.round(W * 1.7 / 2) * 2, Math.floor(room / 2) * 2);
     const mw = W / 2, mh = H / 2;
     if(cv.width !== mw || cv.height !== mh){ cv.width = mw; cv.height = mh; this.mapKey = null; }
@@ -11561,6 +11572,18 @@ Object.assign(Scene, {
     drawText(c, lefts[lefts.length - 1], 5, y, lcol, 1);
   },
 
+  // rows kept clear at the bottom for the pull tab (see resize)
+  tabRows(){ return this.tabR || Math.round(VH*0.045); },
+  // how wide a line in that corner may run: clear of the golfer
+  hudRoom(){ return VW * 0.62; },
+  // How many lines the corner holds on this hole, so the map above it can
+  // leave exactly that room: the weather (two lines when it is a long pair on
+  // a narrow picture), the wind, the course's affinity, the closing hole.
+  hudLines(){
+    const cn = S.chaos ? S.chaos.n : 'FAIR';
+    return 1 + (textW(cn, TSC) > this.hudRoom() && cn.indexOf(' + ') > 0 ? 1 : 0)
+      + (this.windMph() > 0 ? 1 : 0) + (S.courseEl ? 1 : 0) + (S.armor > 0 ? 1 : 0);
+  },
   // The panel lives in the DOM now. What stays on the canvas is the stuff that
   // belongs to the world rather than the interface.
   drawHud(D){
@@ -11570,7 +11593,7 @@ Object.assign(Scene, {
     // hard right has to clear that column as well as its own drop shadow.
     const R = VW - 4*TSC - 1;
     // The pull tab sits in this corner, so the stack starts above it.
-    let ly = VH - LH - 2 - Math.round(VH*0.045);
+    let ly = VH - LH - 2 - this.tabRows();
     if(S.armor > 0){
       drawTextS(c, isSunday(S.hole) ? 'CHAMPIONSHIP' : 'SIGNATURE', R, ly, PX.flag, TSC, 'r');
       ly -= LH;
@@ -11581,7 +11604,15 @@ Object.assign(Scene, {
                 R, ly, PX[S.courseEl] || PX.bone, TSC, 'r');
       ly -= LH;
     }
-    drawTextS(c, (S.chaos ? S.chaos.n : 'FAIR'), R, ly, PX.grey, TSC, 'r');
+    // Two conditions at once can be wider than a narrow picture: "Aurora
+    // Front + Night Round" ran behind the golfer and off the left edge on a
+    // 320 phone. There the pair goes on two lines.
+    const cn = S.chaos ? S.chaos.n : 'FAIR';
+    const parts = textW(cn, TSC) > this.hudRoom() && cn.indexOf(' + ') > 0 ? cn.split(' + ') : [cn];
+    for(let i = parts.length - 1; i >= 0; i--){
+      drawTextS(c, parts[i] + (i < parts.length - 1 ? ' +' : ''), R, ly, PX.grey, TSC, 'r');
+      if(i) ly -= LH;
+    }
     // the wind, pointing the way it blows
     const mph = this.windMph();
     if(mph > 0){
@@ -11609,7 +11640,7 @@ Object.assign(Scene, {
     // the edge of the buffer: the budget below is what is left beside the tab,
     // not the width of the stage.
     const RX = VW - 4*TSC - 1;
-    let dy = VH - LH - 2 - Math.round(VH*0.045);
+    let dy = VH - LH - 2 - this.tabRows();
     const budget = Math.round(VW * 0.56);
     let nm = dg.n.toUpperCase();
     if(textW(nm, TSC) > budget && /^THE /.test(nm)) nm = nm.slice(4);

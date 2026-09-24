@@ -190,6 +190,19 @@ module.exports = {
         if (w === 400 && mp && mp.height && mp.top - pm.bottom < pm.height)
           o.hit.push('the map ' + (mp.top - pm.bottom).toFixed(0) + 'px under the star, not a button\'s place below it');
 
+        // The words in the bottom right corner are drawn on the field, over
+        // which the menu's pull tab sits: the lowest line has to end above it.
+        // It ran a few pixels behind the tab on a tall phone.
+        {
+          const dr = $('drawer'), sr = $('stage').getBoundingClientRect();
+          if (dr && dr.offsetParent) {
+            const per = Scene.scale / devicePixelRatio;
+            const low = VH - LH - 2 - Scene.tabRows() + FH * TSC + 1;
+            const over = sr.top + low * per - dr.getBoundingClientRect().top;
+            if (over > 0.5) o.hit.push('the weather words ' + over.toFixed(1) + 'px behind the pull tab');
+          }
+        }
+
         // text that runs out of its box with nothing to catch it
         for (const e of $('stage').querySelectorAll('*')) {
           if (!e.clientWidth || e.scrollWidth - e.clientWidth <= 0.5) continue;
