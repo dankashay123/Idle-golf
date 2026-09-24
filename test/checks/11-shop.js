@@ -75,9 +75,9 @@ module.exports = {
     if (!(cb.x >= read.x + read.width - 0.5 && cb.x - (read.x + read.width) < 12))
       throw new Error('the auto-climb button is not just right of the readout: readout ends at '
         + (read.x + read.width).toFixed(1) + ', the button starts at ' + cb.x.toFixed(1));
-    if (Math.abs((cb.y + cb.height) - (read.y + read.height)) > 0.75)
-      throw new Error('the auto-climb button\'s foot is at ' + (cb.y + cb.height).toFixed(1)
-        + ' and the readout\'s at ' + (read.y + read.height).toFixed(1));
+    if (Math.abs((cb.y + cb.height / 2) - (read.y + read.height / 2)) > 0.75)
+      throw new Error('the auto-climb button\'s middle is at ' + (cb.y + cb.height / 2).toFixed(1)
+        + ' and the readout\'s at ' + (read.y + read.height / 2).toFixed(1));
     const moved = [];
     // the longest the readout says, on the course, walking in, and in a wager
     for (const [tag, big, unit, top] of [['Albatross', '999.9bw', 'yds', 'Hole 18 \u00b7 Par 5'],
@@ -306,7 +306,7 @@ module.exports = {
     if (st.caddiePrice.length) throw new Error('these caddies are not a third of their look: ' + st.caddiePrice.join(', '));
     if (!(st.caddieShirt > 20)) throw new Error('the Sunday Red caddie does not wear its red: ' + st.caddieShirt + ' pixels of it');
 
-    return ['shop and Trophy Room under the readout, auto-climb level with its foot and still; no input of any kind, banner on all four',
+    return ['shop and Trophy Room under the readout, auto-climb centred beside it and still; no input of any kind, banner on all four',
       'style: every outfit and trail changes no stat, each paid once (' + st.want
       + ' sovereigns for all), owned ones free to wear, a save wearing one it does not own repaired',
       'tiles ' + Object.keys(r.tiles).map(k => k + ' ' + r.tiles[k].cards).join('/'),

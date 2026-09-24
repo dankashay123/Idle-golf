@@ -565,7 +565,31 @@ module.exports = {
     });
     if (F.length) throw new Error('numbers read wrong at a unit boundary: ' + F.join('; '));
 
-    return ['every unit boundary reads right: 999,950 is 1.00M, 99,960 is 100K',
+    // The yardage follows the ball on screen: it holds while he walks and
+    // drops when a shot lands. It used to follow the swings underneath, which
+    // run several a second, so it ran down while he walked with nothing in
+    // the air.
+    const yd = await page.evaluate(() => {
+      const SNAP = JSON.stringify(S), o = {};
+      try {
+        hideSheet(); startHole();
+        const read = () => { renderLive(); return document.getElementById('rBig').textContent; };
+        const Y = S.yardsMax;
+        Scene.walkTo = 0; S.yards = Y * 0.6; o.walking = read(); o.full = fmt(Y);
+        Scene.walkTo = LEN * 0.3; o.landed = read(); o.landedWant = fmt(Y * 0.7);
+        Scene.walkTo = LEN * 0.9; o.ahead = read(); o.aheadWant = fmt(Y * 0.6);
+        S.yards = 0; o.done = read();
+      } finally {
+        Object.keys(S).forEach(k => delete S[k]); Object.assign(S, JSON.parse(SNAP)); startHole();
+      }
+      return o;
+    });
+    if (yd.walking !== yd.full) throw new Error('with no ball down yet the yardage read ' + yd.walking + ', not the hole\'s ' + yd.full);
+    if (yd.landed !== yd.landedWant) throw new Error('with a ball down 30% of the way the yardage read ' + yd.landed + ', not ' + yd.landedWant);
+    if (yd.ahead !== yd.aheadWant) throw new Error('the yardage read ' + yd.ahead + ', past what the swings have taken (' + yd.aheadWant + ')');
+    if (yd.done !== '\u2014') throw new Error('a finished hole reads ' + yd.done);
+
+    return ['every unit boundary reads right: 999,950 is 1.00M, 99,960 is 100K; the yardage holds while he walks and drops as each ball lands',
       'bag ahead of its card: "' + r.ahead.rangeLine + '"; a full locker speaks once a minute: "'
       + r.lockLater[1].replace(/<[^>]+>/g, '') + '"',
       'preview held the bag over ' + p.tried + ' looks and through a throw, '

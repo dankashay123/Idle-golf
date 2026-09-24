@@ -172,9 +172,16 @@ Line numbers are approximate and drift. Search for the name instead.
 
 ## 5. What the last features do (for debugging them)
 
+### The yardage follows the ball (user asked)
+- The readout's yards come from `shownYards()`: what was left when the last
+  ball landed (`Scene.walkTo`), never less than the real `S.yards`. The sim
+  still swings `D.spd` times a second and ends and pays the hole as before;
+  only the number shown changed. Tempo still matters: carry is power x tempo.
+  `readouts` checks it holds while walking and drops on landing.
+
 ### Stage buttons (moved at the user's request)
 - Left column, top to bottom: the readout with **auto-climb** to its right
-  (`#rRow`, bottom-aligned), then settings, the shop, and the **Trophy Room**
+  (`#rRow`, centred on it: bottom-aligned looked dropped on the phone), then settings, the shop, and the **Trophy Room**
   as a medal (`medal` sprite; the trophy sprite stays with the heirlooms).
   The perks star is alone on the right at 37%, and the hole map sits under it.
 - The readout **fills its row up to the button** instead of sizing to its

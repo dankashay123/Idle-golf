@@ -695,13 +695,14 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
 #hudLeft{position:absolute;left:2.2%;top:2.5%;width:56%;z-index:29;
   display:flex;flex-direction:column;align-items:flex-start;gap:12px;
   pointer-events:none;container-type:inline-size}
-/* The readout with the auto-climb button beside it, level with its foot. The
+/* The readout with the auto-climb button beside it, centred on it (level with
+   its foot, it read as dropped below the box on the phone). The
    readout's words change every second (the clock, the yards, the call), and
    it used to be as wide as they were, so a button placed straight after it
    would slide about under your thumb. The readout fills the row up to the
    button instead and the button stays put. Capped, or on a tablet the box ran
    most of the way across the field. */
-#rRow{align-self:stretch;max-width:300px;display:flex;align-items:flex-end;gap:6px;pointer-events:none}
+#rRow{align-self:stretch;max-width:300px;display:flex;align-items:center;gap:6px;pointer-events:none}
 /* A column under 200 (a stage under about 357) is all the readout needs, so
    there the button goes under it rather than squeezing it. */
 @container (max-width:199.5px){
@@ -4269,6 +4270,17 @@ function startHole(){
 
 // soft=true for continuous sources like burn, which armour taxes as a
 // flat share instead of biting each tick to nothing.
+// The yardage as the picture has it: what was left when his last ball came
+// down. The game swings several times a second and each swing takes yards off
+// at once, but the golfer on screen hits one shot, walks to it, then swings
+// again with everything gathered meanwhile, so the number ran down while he
+// walked with no ball in the air. It holds still now and drops as each shot
+// lands; the hole still ends, and pays, exactly when the swings say.
+function shownYards(){
+  if(S.yards <= 0 || !(S.yardsMax > 0) || S.dgnRun) return Math.max(0, S.yards);
+  const landed = S.yardsMax * (1 - clamp((Scene.walkTo || 0) / LEN, 0, 1));
+  return Math.max(S.yards, landed);
+}
 function damage(amt, D, soft, through){
   if(amt <= 0 || S.yards <= 0) return 0;
   if(S.armor > 0 && !through){
@@ -12021,9 +12033,10 @@ function renderReadout(D){
     const ratio = S.elapsed / S.parTime, sc = scoreFor(ratio);
     top = 'Hole ' + holeInRound(S.hole) + ' \u00b7 Par ' + parOf(S.hole);
     topR = S.elapsed.toFixed(1) + ' / ' + Math.round(S.parTime) + 's';
-    big = S.yards <= 0 ? '\u2014' : fmt(Math.max(0, S.yards));
-    unit = S.yards <= 0 ? 'walking in' : 'yds';
-    frac = clamp(S.yards/S.yardsMax, 0, 1);
+    const ly = shownYards();
+    big = ly <= 0 ? '\u2014' : fmt(ly);
+    unit = ly <= 0 ? 'walking in' : 'yds';
+    frac = clamp(ly/S.yardsMax, 0, 1);
     tag = sc.n;
     tagCol = sc.d <= -3 ? 'var(--myth)' : sc.d <= -2 ? 'var(--brass)' : sc.d === -1 ? 'var(--aurora)'
            : sc.d === 0 ? 'var(--chalk)' : 'var(--flag)';
