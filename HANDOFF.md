@@ -1,6 +1,6 @@
 # Handoff — Mythic Mulligan
 
-Last updated 2026-09-24, at commit `8433c8c` on `main`. Read this with
+Last updated 2026-09-24 on `main`. Read this with
 `CLAUDE.md`, which holds the standing rules. `test/README.md` says what each
 check is for.
 
@@ -9,10 +9,15 @@ check is for.
 ## 1. Where things stand
 
 - Everything is committed and pushed to `main` (and mirrored on the session
-  branch `claude/golf-sounds-dn0l4w`). Nothing is half-built.
+  branch `claude/funny-davinci-7ik9ge`). Nothing is half-built.
 - `node test/run.js` passes all **33 checks** (about 7 minutes; `pacing` runs
   sixteen seeds and takes ~40s on its own).
-- The last request was "update the notes for another handoff" (this file,
+- The latest session only picked up: it read the notes, ran every check,
+  screenshotted the auto-climb button at 320, 360, 390, 430 and on its side
+  (centred on the readout everywhere but 320, where it drops under it by
+  design), moved five stray rules back into §4, and asked the user the two
+  questions in §8. **Their answers are still to come.**
+- The last request before that was "update the notes for another handoff" (this file,
   `CLAUDE.md`, `test/README.md`). Before it, in order:
   - "Why does the yardage tick down when the ball isn't being hit, and does
     tempo still do anything?" Answered (tempo does: carry is power x tempo;
@@ -178,6 +183,23 @@ Line numbers are approximate and drift. Search for the name instead.
 10. To take a screenshot, open `file://…/index.html` in Playwright (fine when
    no saves are needed), call `hideSheet()`, use `DEV.course(i)` to change
    course, and clip to `#stage`.
+11. **Sizing a box to its words moves whatever sits beside it.** The hole
+   readout's width followed its text, which changes every second; putting a
+   button after it made the button slide. Anchor the neighbour and let the
+   box fill. The `shop` check writes the longest real words into the readout
+   and requires the button not to move.
+12. **Test clubs need their affixes cleared.** `makeItem(ilvl, 0, rar)` can
+   roll a higher rarity with its affixes, and forcing `it.rar` afterwards
+   keeps them; a stray purse affix made a far better club a trade-off and a
+   check failed one run in three. `33-scrap.js` sets `it.aff = []`.
+13. **An away session long enough to fill the locker hides locker bugs.**
+   The overflow trim clears low clubs whatever else happened; measure over
+   half an hour.
+14. Don't `pkill -f "node test/run.js"` from a command that itself contains
+   that text: it kills its own shell. Kill by PID.
+15. Check on-stage changes at 320, 360, 390, 430 and on its side (740x360,
+   844x390). The user's phone is an iPhone; 320 is the narrow edge case
+   where the stage falls back (auto-climb drops under the readout).
 
 ## 5. What the last features do (for debugging them)
 
@@ -296,7 +318,8 @@ Line numbers are approximate and drift. Search for the name instead.
   (from the `imageio-ffmpeg` pip wheel; there is no system ffmpeg), saved as
   32 kHz mono MP3 and embedded as base64 in `<script type="text/plain"
   id="rec-…">` blocks just above the main script. An HTML comment there says
-  where each came from. Total about 76 KB.
+  where each came from. The applause has since been removed at the user's
+  request; its notes stay below in case they ask for a crowd again.
   - strike: "Thwack Sounds" thwack-01 over "Swishes Sound Pack" swish-9
   - cup: "100 CC0 SFX" other_01 (a small ball bouncing to rest) pitched to
     0.72, with a low-passed thwack-02 for the knock
@@ -427,24 +450,6 @@ Line numbers are approximate and drift. Search for the name instead.
   phone, Title Case everywhere, cheaper Bench, rival, skins, the scoring
   rebalance, pacing.
 
-11. **Sizing a box to its words moves whatever sits beside it.** The hole
-   readout's width followed its text, which changes every second; putting a
-   button after it made the button slide. Anchor the neighbour and let the
-   box fill. The `shop` check writes the longest real words into the readout
-   and requires the button not to move.
-12. **Test clubs need their affixes cleared.** `makeItem(ilvl, 0, rar)` can
-   roll a higher rarity with its affixes, and forcing `it.rar` afterwards
-   keeps them; a stray purse affix made a far better club a trade-off and a
-   check failed one run in three. `33-scrap.js` sets `it.aff = []`.
-13. **An away session long enough to fill the locker hides locker bugs.**
-   The overflow trim clears low clubs whatever else happened; measure over
-   half an hour.
-14. Don't `pkill -f "node test/run.js"` from a command that itself contains
-   that text: it kills its own shell. Kill by PID.
-15. Check on-stage changes at 320, 360, 390, 430 and on its side (740x360,
-   844x390). The user's phone is an iPhone; 320 is the narrow edge case
-   where the stage falls back (auto-climb drops under the readout).
-
 ## 7. Environment notes
 
 - Reachable: opengameart.org and kenney.nl. Blocked (403 from the proxy):
@@ -459,27 +464,22 @@ Line numbers are approximate and drift. Search for the name instead.
 
 ## 8. What to offer next
 
-Everything asked for is done. First, ask two things: does the auto-climb
-button now sit where they wanted, and does the Trophy Room (medal, red dot)
-and the Scrap sheet feel easy to find. Then the open menu, under the numbers
-it was offered with:
+Everything asked for is done. The two questions put to the user (answers
+still to come): does the auto-climb button now sit where they wanted, and are
+the Trophy Room (medal, red dot) and the Scrap sheet easy to find. The open
+menu, under the numbers it was offered with:
 
-2. **Signature holes on home courses**, such as an island-green par 3 (see
-   the caution below).
-3. **Home course variety past Card X** (they repeat every ten cards).
+2. **Signature holes on home courses**, such as an island-green par 3. Be
+   careful: shots are drawn landing where the yardage says, so an island hole
+   needs landing positions that are never in the water. The Depths "island"
+   mode has a moat you can study.
+3. **Home course variety past Card X** (they repeat every ten cards). Could
+   add more home courses, or vary the palette of later repeats.
 4. **A battery saver setting** that runs the field at a lower frame rate
-   when the phone is left idle.
+   when the phone is left idle. Recommended in the latest session: an idle
+   game spends most of its life running untouched on the phone.
 5. **A second music track**: a calmer one for night rounds, another for
    wagers. Ask first whether the current track fits.
 
 Also worth offering: a short tour of what the Season list shows, if the user
 seems unsure what "Next" means there.
-
-### Further ideas, not yet offered to the user
-
-- **Signature holes on home courses**, such as an island-green par 3. Be
-  careful: shots are drawn landing where the yardage says, so an island hole
-  needs landing positions that are never in the water. The Depths "island"
-  mode has a moat you can study.
-- **Home course variety past Card X** (they repeat every ten cards). Could
-  add more home courses, or vary the palette of later repeats.
