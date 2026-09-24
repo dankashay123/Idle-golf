@@ -10,13 +10,17 @@ check is for.
 
 - Everything is committed and pushed to `main` (and mirrored on the session
   branch `claude/funny-davinci-7ik9ge`). Nothing is half-built.
-- `node test/run.js` passes all **33 checks** (about 7 minutes; `pacing` runs
+- `node test/run.js` passes all **34 checks** (about 7 minutes; `pacing` runs
   sixteen seeds and takes ~40s on its own).
-- The latest session only picked up: it read the notes, ran every check,
-  screenshotted the auto-climb button at 320, 360, 390, 430 and on its side
-  (centred on the readout everywhere but 320, where it drops under it by
-  design), moved five stray rules back into §4, and asked the user the two
-  questions in §8. **Their answers are still to come.**
+- The last request was **"do 4, the battery saver"**: after a while
+  untouched, a black screen saying battery saver is on, with everything that
+  happened meanwhile (holes, purse and so on) and a little golfer in the
+  equipped look hitting balls from left to right. Mid-task they added: **a
+  setting to force it on**. Done (§5, "Battery saver"). Offered as a
+  recommendation and asked for, but not yet seen on their phone.
+- Before it, the session opened by screenshotting the auto-climb button and
+  asking the two questions in §8; **they did not answer them**, so ask again
+  if it fits.
 - The last request before that was "update the notes for another handoff" (this file,
   `CLAUDE.md`, `test/README.md`). Before it, in order:
   - "Why does the yardage tick down when the ball isn't being hit, and does
@@ -129,6 +133,8 @@ Line numbers are approximate and drift. Search for the name instead.
 | Caddie perks (nine; `now:1` means instant, e.g. Ready Golf) | `tickCaddie`, `cperkPick`, `renderCadPerks` |
 | Daily challenges | `dailyStart`, `dailyTick`, `dayNow` (`DAY_FORCE` overrides it in tests) |
 | Tour tab: Tour Card, The Card, Season, Major of the Week | `renderTour`, `renderSeason`, `renderMajor` |
+| **Battery saver** | `saverOn`, `saverOff`, `saverDue`, `saverDraw`, `saverStats`, `saverFrame`, `saverClub`, `SAVER`, `S.saver`, `SAVER_AUTO`, `touchedAt`; the loop's switch is in `frame`/`frameBody`; markup `#saver` |
+| Golfer drawn at any size in the equipped look (the course and the saver share it) | `paintGolfer` |
 | Developer menu (hold the course name still for 1.5s) | `const DEV = {`. `DEV.course(i)` pins any course to the next event (a major of the week is set up as the major). The read panel shows the audio state and the auto-climb judgement; rows for the major of the week, the season, the cabinet, sound and music, the fairy, caddie perks, the new honours, and a frame-time readout (`DEV_FPS`) |
 | Main loop | `step()` |
 
@@ -202,6 +208,40 @@ Line numbers are approximate and drift. Search for the name instead.
    where the stage falls back (auto-climb drops under the readout).
 
 ## 5. What the last features do (for debugging them)
+
+### Battery saver (user asked)
+- Settings row **Battery Saver**: a button cycling Off / 1 / 2 / 5 min
+  (`S.saver`, default 2 when unset; junk repaired in `initState`) and
+  **Start**, which turns it on now (`saverNow`). Dev menu: "Battery saver"
+  row, start now or in 5s.
+- `touchedAt` is reset by any pointerdown, touchstart, keydown or wheel, and
+  by the page coming back into view. The slow tick in `frameBody` calls
+  `saverOn()` when `saverDue()`.
+- While on, `frame` schedules itself by `setTimeout` every 100ms instead of
+  `requestAnimationFrame`, and `frameBody` plays the gap out in `TICK_MAX`
+  steps (up to 1s), skips `Scene.draw`, `renderLive` and `renderVitals`, and
+  draws the saver instead. Measured: main thread busy about **3%** against
+  about 31% on the course (390x844 at 3x). The strike sound is played by the
+  scene, so the saver is silent apart from the music.
+- **Hidden page**: timers keep firing when hidden where frames stop, so the
+  saver skips stepping when `document.hidden` and leaves the time to
+  `catchUp`; otherwise the same time would be paid twice.
+- The tally is `S` now minus a snapshot taken when it came on (purse, holes,
+  events, cups, levels, Tour Card, sovereigns, paragon), so it includes a
+  catch-up paid while it was up. Clubs are counted by `saverClub` in
+  `bagAdd` and the away loop's `bagAddOff`.
+- The picture is a 96x36 canvas at a whole-number scale (`saverSize`, again
+  on resize). `paintGolfer` is the course's own golfer drawing, pulled out of
+  `Scene.drawGolfer` (138 outfit and pose combinations compared pixel for
+  pixel against the old code: identical), so outfit effects, club looks and
+  ball trails all match. The box drifts a few pixels every 30s against
+  burn-in. On its side the picture and the tally sit in two columns.
+- It wakes on **click**, not pointerdown: gone on the touch, the click after
+  it landed on the button underneath (only a touch screen shows this; the
+  check taps with one).
+- `SAVER_AUTO` is off when `navigator.webdriver` (every Playwright page), or
+  a long check would drop into the saver part way; the `saver` check turns
+  it on.
 
 ### The yardage follows the ball (user asked)
 - The readout's yards come from `shownYards()`: what was left when the last
@@ -399,6 +439,9 @@ Line numbers are approximate and drift. Search for the name instead.
 
 ## 6. Recent history (newest first, one line each)
 
+- Battery saver: black screen with a tally and a little golfer after a
+  while untouched, a setting for the wait and a Start button; the golfer's
+  drawing shared between the course and the saver (`paintGolfer`).
 - `8433c8c`: the yardage holds while he walks and drops as each ball lands;
   auto-climb centred on the readout.
 - `4609031`: the Trophy Room as a medal under the shop, auto-climb beside the
@@ -464,10 +507,11 @@ Line numbers are approximate and drift. Search for the name instead.
 
 ## 8. What to offer next
 
-Everything asked for is done. The two questions put to the user (answers
-still to come): does the auto-climb button now sit where they wanted, and are
-the Trophy Room (medal, red dot) and the Scrap sheet easy to find. The open
-menu, under the numbers it was offered with:
+Everything asked for is done. Ask how the battery saver feels on the phone
+(is 2 min the right default wait; is the tally what they wanted). Two older
+questions are still unanswered: does the auto-climb button sit where they
+wanted, and are the Trophy Room (medal, red dot) and the Scrap sheet easy to
+find. The open menu, under the numbers it was offered with:
 
 2. **Signature holes on home courses**, such as an island-green par 3. Be
    careful: shots are drawn landing where the yardage says, so an island hole
@@ -475,9 +519,6 @@ menu, under the numbers it was offered with:
    mode has a moat you can study.
 3. **Home course variety past Card X** (they repeat every ten cards). Could
    add more home courses, or vary the palette of later repeats.
-4. **A battery saver setting** that runs the field at a lower frame rate
-   when the phone is left idle. Recommended in the latest session: an idle
-   game spends most of its life running untouched on the phone.
 5. **A second music track**: a calmer one for night rounds, another for
    wagers. Ask first whether the current track fits.
 

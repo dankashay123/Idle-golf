@@ -772,6 +772,25 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
    so anything wider than 39.8 here reaches into it -- measured overlapping the
    readout by 39px at 320 wide and 10px at 400, on a comment that says these sit
    "clear of the readout on the left". They do now. */
+/* Battery saver: black, which an iPhone's screen spends almost nothing on,
+   over everything, with a small golfer and what the round has done since. */
+#saver{position:fixed;inset:0;z-index:100;background:#000;display:none;align-items:center;
+  justify-content:center;padding:16px;text-align:center;cursor:pointer;touch-action:none}
+#saver.on{display:flex}
+#saverBox{width:100%;max-width:340px;display:flex;flex-direction:column;align-items:center;gap:14px;
+  transition:transform 3s ease-in-out}
+.svCol{width:100%;display:flex;flex-direction:column;align-items:center;gap:12px}
+#saverCv{display:block;image-rendering:pixelated;image-rendering:crisp-edges}
+.svT{font-size:var(--f1);letter-spacing:.2em;text-transform:uppercase;color:var(--aurora);font-weight:700}
+.svFor{font-family:var(--mono);font-size:var(--f1);color:var(--faint);margin-top:4px}
+#saverStats{width:100%;text-align:left}
+#saverStats .awgrid{margin:0}
+#saverStats .lb{padding:5px 4px}
+.svWake{font-size:var(--f1);color:var(--faint)}
+@media (orientation:landscape) and (max-height:520px){
+  #saverBox{max-width:660px;flex-direction:row;align-items:center;gap:24px}
+  .svCol{flex:1 1 0;min-width:0}
+}
 #toasts{position:absolute;right:2%;top:2%;display:flex;flex-direction:column;
   align-items:flex-end;gap:3px;pointer-events:none;z-index:30;max-width:38%}
 .toast{background:rgba(8,18,12,.9);border:1px solid var(--line);border-radius:0;
@@ -944,6 +963,12 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
   </div>
 
   <div id="veil"><div id="sheet"></div></div>
+</div>
+<div id="saver" role="button" aria-label="Battery saver on. Tap to wake">
+  <div id="saverBox">
+    <div class="svCol"><canvas id="saverCv" width="96" height="36"></canvas>
+      <div><div class="svT">Battery Saver On</div><div class="svFor" id="saverFor"></div></div></div>
+    <div class="svCol"><div id="saverStats"></div><div class="svWake">Tap to wake</div></div></div>
 </div>
 <!--
   Recorded sounds. All are CC0 (public domain): no credit is needed, but here
@@ -3635,6 +3660,7 @@ function initState(){
   for(const k in S.caseGot){ const c = B.CASE.find(x => x.id === k);
     if(!c || !(S.caseGot[k] >= 0)) delete S.caseGot[k]; else S.caseGot[k] = Math.min(c.at.length, Math.floor(S.caseGot[k])); }
   if(S.music !== undefined && S.music !== 0 && S.music !== 1) delete S.music;
+  if(S.saver !== undefined && !SAVER_MINS.includes(S.saver)) delete S.saver;
   for(const k in S.homes){ const c = courseById(k); if(!c || c.slot !== 'home') delete S.homes[k]; }
   if(!S.styleOwn || typeof S.styleOwn !== 'object') S.styleOwn = {};
   if(!styleOwned('o', S.outfit)) S.outfit = 'classic';
@@ -4576,6 +4602,7 @@ let autoScrapN = 0, autoScrapSh = 0, autoScrapT = -Infinity;
 // Into the locker. Says whether he still has it: false when auto-scrap broke
 // it up on arrival.
 function bagAdd(it){
+  saverClub(it);
   if(it.rar >= 2) bump('rare');
   if(it.rar >= 4) bump('legend');
   if(it.rar >= 5) bump('myth');
@@ -6812,7 +6839,7 @@ function offline(){
   const bagAddOff = it => {
     if(it.rar >= 4) bump('legend');
     if(it.rar >= 5) bump('myth');
-    gear++;
+    gear++; saverClub(it);
     if(autoScraps(it, bestOff)){ const v = scrapValue(it); S.shard += v; autoOff++; autoOffSh += v; return; }
     bestOff[it.slot] = Math.max(bestOff[it.slot], itemScore(it));
     if(!best || itemScore(it) > itemScore(best)) best = it;
@@ -10216,6 +10243,72 @@ function drawLegsBack(c, cx, hy, len, w, ph, near, far, shoe){
 // A golf club: the shaft from the grip to the head, and the head. turn is
 // which way the face points (1 toward the target, -1 back, 0 end on).
 // Everything a club skin changes goes through here.
+/* One golfer, at any size, in the look he is wearing: the course draws him
+   through this and so does the battery saver, so the two always match. ph is
+   the swing, 0 at address; walking draws him from behind, striding. arc keeps
+   the club head's last few places for the clubs that leave a trail. */
+function paintGolfer(c, x, y, w, h, ph, t, bot, walking, walkPh, spr, arc){
+  const FX = STYLEFX[outfitNow().fx] || null;
+  c.fillStyle = 'rgba(8,16,10,.34)';
+  c.fillRect(x + Math.round(w*0.05), bot - 1, Math.round(w*0.62), Math.max(1, Math.round(h*0.045)));
+
+  // Club angle: 0 is straight down, positive swings toward the target.
+  // Address, up and behind the head, back down through the ball, and up
+  // over the lead shoulder.
+  const ADDR = 0.50, TOP = -2.50, FIN = 2.60;
+  let arm, coil = 0;
+  if(walking) arm = -2.8;                  // resting on his shoulder
+  else if(ph === 0) arm = ADDR;
+  else if(ph < 0.36){ const t = ph/0.36; arm = ADDR + (TOP - ADDR)*t; coil = -t*0.5; }
+  else if(ph < 0.55){ const t = (ph - 0.36)/0.19; arm = TOP + (ADDR - TOP)*t; coil = -(1-t)*0.5; }
+  else { const t = (ph - 0.55)/0.45; arm = ADDR + (FIN - ADDR)*t; coil = t*0.7; }
+
+  // the skin's effect, if it has one: its back half now, its front half
+  // after the arms and club, so wisps pass both behind him and in front
+  const cb = spr === SPRITE.gFinish ? CAP_FIN : spr === SPRITE.gBack ? CAP_BACK : CAP_ADDR;
+  const g = { x, y, w, h, cx: x + w*(walking ? 0.5 : 0.55), cy: y + h*0.53, bot: bot, t: t, ph, back: walking,
+              k: Math.max(1, Math.round(h / 40)), spr,
+              head: { x: x + w*cb.x, y: y + h*cb.y, w: w*cb.w, hh: h*cb.h } };
+  const shear0 = f => coil * (1 - f) * w * 0.16;
+  const shear = FX && FX.shearMod ? f => shear0(f) + FX.shearMod(f, g) : shear0;
+  g.shear = shear0;
+  if(FX && FX.back) FX.back(c, g);
+  if(FX && FX.outline) outlineAt(c, g, FX.outline, RING1, FX.outlineA * (0.8 + 0.2 * Math.sin(t * 3)));
+  if(FX && FX.alpha) c.globalAlpha = FX.alpha;
+  if(walking){
+    const O = outfitNow();
+    drawLegsBack(c, x + w*0.5, y + h*(31/58), h*(26/58), w, walkPh, O.pant || '#2B3B4F', O.pant2 || O.pant || '#1C2937', O.shoe || PX.shoe);
+    c.drawImage(spr.cv, x, y, w, h);
+    // The club in his right hand, hanging at his side, the head down by
+    // his foot and turned out -- swinging a little with his arm.
+    const hx = x + w*(30.5/40), hy = y + h*(29.5/58);
+    const a = 0.14 + Math.sin(walkPh * Math.PI * 2) * 0.07, L = h * 0.49;
+    drawClub(c, hx, hy, hx + Math.sin(a) * L, hy + Math.cos(a) * L, h > 34 ? 2 : 1, h, 1, t);
+    c.globalAlpha = 1;
+    if(FX && FX.front) FX.front(c, g);
+    c.globalAlpha = 1; c.globalCompositeOperation = 'source-over';
+    return;
+  }
+  blitShear(c, spr, x, y, w, h, shear);
+
+  const sx = x + w*(spr.ax || 0.66), sy = y + h*(spr.ay || 0.30);
+  const al = h*0.30, cl = h*0.60;
+  const armH = arm * 0.55;
+  const hx = sx + Math.sin(armH)*al, hy = sy + Math.cos(armH)*al*0.85;
+  const tx = hx + Math.sin(arm)*cl, ty = hy + Math.cos(arm)*cl*0.90;
+  const th = h > 34 ? 2 : 1;
+  pxLine(c, sx, sy, hx, hy, PX.skin, th);
+  pxLine(c, sx - w*0.10, sy + 1, hx, hy, PX.skin2, th);
+  if(h > 22){ c.fillStyle = outfitNow().shirt; c.fillRect(Math.round(hx) - 1, Math.round(hy) - 1, th + 1, th + 1); }
+  // the arc the head cuts through a swing, for the clubs that leave one
+  if(ph > 0){ arc.push([tx, ty]); if(arc.length > 9) arc.shift(); } else arc.length = 0;
+  const CF = CLUBFX[clubNow().fx];
+  if(CF && CF.trail && arc.length > 1) CF.trail(c, arc, th, t);
+  drawClub(c, hx, hy, tx, ty, th, h, arm > FIN - 0.3 || arm < TOP + 0.3 ? 0 : (arm > ADDR ? 1 : -1), t);
+  c.globalAlpha = 1;
+  if(FX && FX.front) FX.front(c, g);
+  c.globalAlpha = 1; c.globalCompositeOperation = 'source-over';
+}
 function drawClub(c, hx, hy, tx, ty, th, h, turn, t){
   const K = clubNow(), fx = CLUBFX[K.fx];
   if(fx && fx.under) fx.under(c, hx, hy, tx, ty, th, h, t, K);
@@ -11003,68 +11096,9 @@ Object.assign(Scene, {
     const y = p.y - h - stepUp - (FX && FX.bob ? Math.round(2 + Math.sin(this.t * 2.2) * 2) : 0);
 
 
-    c.fillStyle = 'rgba(8,16,10,.34)';
-    c.fillRect(x + Math.round(w*0.05), p.y - 1, Math.round(w*0.62), Math.max(1, Math.round(h*0.045)));
-
-    // Club angle: 0 is straight down, positive swings toward the target.
-    // Address, up and behind the head, back down through the ball, and up
-    // over the lead shoulder.
-    const ADDR = 0.50, TOP = -2.50, FIN = 2.60;
-    let arm, coil = 0;
-    if(walking) arm = -2.8;                  // resting on his shoulder
-    else if(ph === 0) arm = ADDR;
-    else if(ph < 0.36){ const t = ph/0.36; arm = ADDR + (TOP - ADDR)*t; coil = -t*0.5; }
-    else if(ph < 0.55){ const t = (ph - 0.36)/0.19; arm = TOP + (ADDR - TOP)*t; coil = -(1-t)*0.5; }
-    else { const t = (ph - 0.55)/0.45; arm = ADDR + (FIN - ADDR)*t; coil = t*0.7; }
-
-    // the skin's effect, if it has one: its back half now, its front half
-    // after the arms and club, so wisps pass both behind him and in front
-    const cb = spr === SPRITE.gFinish ? CAP_FIN : spr === SPRITE.gBack ? CAP_BACK : CAP_ADDR;
-    const g = { x, y, w, h, cx: x + w*(walking ? 0.5 : 0.55), cy: y + h*0.53, bot: p.y, t: this.t, ph, back: walking,
-                k: Math.max(1, Math.round(h / 40)), spr,
-                head: { x: x + w*cb.x, y: y + h*cb.y, w: w*cb.w, hh: h*cb.h } };
-    const shear0 = f => coil * (1 - f) * w * 0.16;
-    const shear = FX && FX.shearMod ? f => shear0(f) + FX.shearMod(f, g) : shear0;
-    g.shear = shear0;
-    if(FX && FX.back) FX.back(c, g);
-    if(FX && FX.outline) outlineAt(c, g, FX.outline, RING1, FX.outlineA * (0.8 + 0.2 * Math.sin(this.t * 3)));
-    if(FX && FX.alpha) c.globalAlpha = FX.alpha;
-    if(walking){
-      const O = outfitNow();
-      drawLegsBack(c, x + w*0.5, y + h*(31/58), h*(26/58), w, this.walkPh, O.pant || '#2B3B4F', O.pant2 || O.pant || '#1C2937', O.shoe || PX.shoe);
-      c.drawImage(spr.cv, x, y, w, h);
-      // The club in his right hand, hanging at his side, the head down by
-      // his foot and turned out -- swinging a little with his arm.
-      const hx = x + w*(30.5/40), hy = y + h*(29.5/58);
-      const a = 0.14 + Math.sin(this.walkPh * Math.PI * 2) * 0.07, L = h * 0.49;
-      drawClub(c, hx, hy, hx + Math.sin(a) * L, hy + Math.cos(a) * L, h > 34 ? 2 : 1, h, 1, this.t);
-      c.globalAlpha = 1;
-      if(FX && FX.front) FX.front(c, g);
-      c.globalAlpha = 1; c.globalCompositeOperation = 'source-over';
-      if(atCam === undefined && SPRITE.caddie) this.drawCaddie(c, p.x - Math.round(w*0.42), y, w, h);
-      return;
-    }
-    blitShear(c, spr, x, y, w, h, shear);
-
-    const sx = x + w*(spr.ax || 0.66), sy = y + h*(spr.ay || 0.30);
-    const al = h*0.30, cl = h*0.60;
-    const armH = arm * 0.55;
-    const hx = sx + Math.sin(armH)*al, hy = sy + Math.cos(armH)*al*0.85;
-    const tx = hx + Math.sin(arm)*cl, ty = hy + Math.cos(arm)*cl*0.90;
-    const th = h > 34 ? 2 : 1;
-    pxLine(c, sx, sy, hx, hy, PX.skin, th);
-    pxLine(c, sx - w*0.10, sy + 1, hx, hy, PX.skin2, th);
-    if(h > 22){ c.fillStyle = outfitNow().shirt; c.fillRect(Math.round(hx) - 1, Math.round(hy) - 1, th + 1, th + 1); }
-    // the arc the head cuts through a swing, for the clubs that leave one
-    const arc = this.clubArc || (this.clubArc = []);
-    if(ph > 0){ arc.push([tx, ty]); if(arc.length > 9) arc.shift(); } else arc.length = 0;
-    const CF = CLUBFX[clubNow().fx];
-    if(CF && CF.trail && arc.length > 1) CF.trail(c, arc, th, this.t);
-    drawClub(c, hx, hy, tx, ty, th, h, arm > FIN - 0.3 || arm < TOP + 0.3 ? 0 : (arm > ADDR ? 1 : -1), this.t);
-    c.globalAlpha = 1;
-    if(FX && FX.front) FX.front(c, g);
-    c.globalAlpha = 1; c.globalCompositeOperation = 'source-over';
+    paintGolfer(c, x, y, w, h, ph, this.t, p.y, walking, this.walkPh, spr, this.clubArc || (this.clubArc = []));
     if(atCam === undefined && SPRITE.caddie) this.drawCaddie(c, p.x - Math.round(w*0.42), y, w, h);
+    if(walking) return;
 
     // the ball waits out in front, on the ground, where he is looking
     const bx = Math.round(x + w*1.19);
@@ -13313,6 +13347,8 @@ const DEV = {
       + b('event won', 'DEV.snd(\'cup\')') + b('music ' + (S.music === 0 ? 'off' : 'on'), 'DEV.music()')
       + b('restart music', 'DEV.music(1)') + b(DEV._recs ? 'recordings off' : 'recordings on', 'DEV.synth()'));
 
+    h += row('Battery saver', b('start now', 'saverNow()') + b('in 5s', 'DEV.saverSoon()'));
+
     h += row('Fairy caddie', b('cheer', 'DEV.say(\'cheer\')') + b('sigh', 'DEV.say(\'sigh\')')
       + b('quip', 'DEV.say(\'quip\')') + b('perk now', 'DEV.cperkNow()')
       + b('own all perks', 'DEV.cperks(1)') + b('no perks', 'DEV.cperks(0)'));
@@ -13515,6 +13551,12 @@ const DEV = {
     checkAch(); this.re(); },
   // ---- sound, the fairy, the frame ----
   snd(k, a){ Sfx.unlock(); Sfx.lastSwing = -1; Sfx.play(k, k === 'hole' ? -1 : a); },
+  // as if nobody had touched the phone for the whole wait, bar five seconds
+  saverSoon(){
+    hideSheet(); SAVER_AUTO = true;
+    touchedAt = performance.now() - Math.max(1, saverMins()) * 60000 + 5000;
+    if(!saverMins()) S.saver = 1;
+  },
   music(restart){
     if(restart){ Sfx.mus.forEach(m => { try{ m.src.stop(); }catch(e){} }); Sfx.mus = []; Sfx.unlock(); Sfx.musicTick(); }
     else toggleMusic();
@@ -13821,6 +13863,159 @@ function step(dt, D){
   if(S.yards <= 0 && S.elapsed >= (S.walkMin || B.WALK_MIN)) finishHole(D);
 }
 
+/* ---- battery saver ----------------------------------------------------
+   Left untouched for a while, the screen goes black: the round plays on at
+   full pace, but nothing draws except a small golfer hitting balls, ten times
+   a second instead of sixty, and a tally of what the round has done since.
+   A tap wakes it. S.saver is the wait in minutes (0 is never on its own); the
+   settings can also start it at once. */
+const SAVER_MINS = [0, 1, 2, 5], SAVER_MS = 100, SAVER_W = 96, SAVER_H = 36;
+let SAVER = null;
+let touchedAt = performance.now();
+// Playwright drives the page with no touches at all, so a long check would
+// fall into the saver part way through. The saver check turns this back on.
+let SAVER_AUTO = !navigator.webdriver;
+const saverMins = () => S.saver === undefined ? 2 : S.saver;
+function saverOn(){
+  if(SAVER || QUIET) return;
+  SAVER = { t: 0, since: Date.now(), gold: S.gold, holes: S.totalHoles || 0, ev: S.eventsPlayed || 0,
+            cups: S.cups || 0, lv: S.lv, card: S.tierMax || 0, sov: S.sov || 0, para: S.para || 0,
+            clubs: 0, best: null, balls: [], rest: [], arc: [], statT: 1, moveT: 0, html: '' };
+  $('saver').classList.add('on');
+  saverSize();
+  $('saverBox').style.transform = '';
+  save();
+  saverFrame(0);
+}
+// the golfer's picture at a whole number of screen pixels to each of his,
+// as wide as fits; again when the phone turns
+function saverSize(){
+  const cv = $('saverCv');
+  cv.style.width = '';
+  const k = Math.max(1, Math.floor(Math.min(340, cv.parentNode.clientWidth || innerWidth - 32) / SAVER_W));
+  cv.style.width = SAVER_W * k + 'px'; cv.style.height = SAVER_H * k + 'px';
+}
+function saverOff(){
+  if(!SAVER) return;
+  SAVER = null;
+  touchedAt = performance.now();
+  $('saver').classList.remove('on');
+}
+function saverClub(it){
+  if(!SAVER) return;
+  SAVER.clubs++;
+  if(!SAVER.best || itemScore(it) > itemScore(SAVER.best)) SAVER.best = it;
+}
+function saverDue(){
+  const m = saverMins();
+  return SAVER_AUTO && m > 0 && !SAVER && !QUIET && !document.hidden
+    && performance.now() - touchedAt > m * 60000;
+}
+// The golfer on the left, side on as he is on the course and in whatever he
+// is wearing, hitting one ball after another at a flag on the right.
+function saverDraw(dt){
+  const V = SAVER, c = $('saverCv').getContext('2d');
+  V.t += dt;
+  const W = SAVER_W, H = SAVER_H, G = H - 3;
+  c.fillStyle = '#000'; c.fillRect(0, 0, W, H);
+  c.fillStyle = '#12301C'; c.fillRect(0, G, W, 1);
+  c.fillStyle = '#0C1F13'; c.fillRect(0, G + 1, W, 2);
+  c.fillStyle = '#24512C'; c.fillRect(70, G, 24, 1);
+  // the flag
+  const fx = 84;
+  c.fillStyle = '#8C959C'; c.fillRect(fx, G - 16, 1, 16);
+  c.fillStyle = Math.floor(V.t * 2) & 1 ? PX.flag : PX.flag2; c.fillRect(fx + 1, G - 16, 5, 3);
+  c.fillStyle = '#000'; c.fillRect(fx - 1, G, 3, 1);
+
+  // one shot every 2.5s: address, the swing, then he holds his finish
+  const CYC = 2.5, SW0 = 0.8, SWD = 0.9, u = V.t % CYC, n = Math.floor(V.t / CYC);
+  const ph = u < SW0 ? 0 : u < SW0 + SWD ? (u - SW0) / SWD : 1;
+  const h = 26, w = Math.round(h * 40 / 58), x = 5;
+  const spr = ph > 0.60 ? SPRITE.gFinish : SPRITE.gAddr;
+  const O = STYLEFX[outfitNow().fx];
+  const y = G - h - (O && O.bob ? Math.round(1 + Math.sin(V.t * 2.2)) : 0);
+  const bx = Math.round(x + w * 1.19);
+  if(ph >= 0.5 && V.shot !== n){
+    V.shot = n;
+    const r = hash32(n + 7) / 4294967296;
+    V.balls.push({ t: 0, dur: 1.1 + r * 0.3, x0: bx, x1: 70 + Math.round(r * 20), top: 17 + r * 8,
+                   seed: r * 100, el: null, crit: false });
+  }
+  if(ph === 0 || ph < 0.5) drawLyingBall(c, bx + 0.5, G - 1, 1.3, V.t);
+  paintGolfer(c, x, y, w, h, ph === 1 ? 0.999 : ph, V.t, G, false, 0, spr, V.arc);
+
+  // balls that came down sit by the flag a few seconds, then go
+  for(let i = V.rest.length - 1; i >= 0; i--){
+    const b = V.rest[i]; b.t += dt;
+    if(b.t > 4){ V.rest.splice(i, 1); continue; }
+    drawLyingBall(c, b.x, G - 1, 1.3, V.t);
+  }
+  const at = (b, q) => ({ x: b.x0 + (b.x1 - b.x0) * q, y: G - 1 - b.top * 4 * q * (1 - q), s: 1 });
+  const BF = BALLFX[trailNow().fx];
+  for(let i = V.balls.length - 1; i >= 0; i--){
+    const b = V.balls[i]; b.t += dt;
+    const q = b.t / b.dur;
+    if(q >= 1){ V.balls.splice(i, 1); V.rest.push({ x: b.x1, t: 0 }); continue; }
+    if(BF){
+      const path = [];
+      for(let k = 0; k <= 12 && q - k * 0.028 >= 0; k++) path.push(at(b, q - k * 0.028));
+      BF(c, b, path, 1, V.t, q);
+      c.globalAlpha = 1; c.globalCompositeOperation = 'source-over';
+      continue;
+    }
+    const tc = trailNow().cols;
+    for(let k = 5; k >= 0; k--){
+      const qq = q - k * 0.055;
+      if(qq < 0) continue;
+      const p = at(b, qq);
+      if(k === 0){ c.fillStyle = PX.white; c.fillRect(Math.round(p.x) - 1, Math.round(p.y) - 1, 2, 2); }
+      else if(k % 2 === 0){ c.fillStyle = trailNow().id === 'plain' ? PX.white : tc[(k >> 1) % tc.length];
+                            c.fillRect(Math.round(p.x), Math.round(p.y), 1, 1); }
+    }
+  }
+}
+function saverStats(){
+  const V = SAVER;
+  const stat = (k, v, cls) => '<div class="awst' + (cls ? ' ' + cls : '') + '">'
+    + '<div class="awv">' + v + '</div><div class="awk">' + k + '</div></div>';
+  const line = (k, v, col) => '<div class="lb"><span class="p"></span><span>' + k
+    + '</span><span class="s"' + (col ? ' style="color:' + col + '"' : '') + '>' + v + '</span></div>';
+  const g = Math.max(0, S.gold - V.gold), holes = (S.totalHoles || 0) - V.holes;
+  const ev = (S.eventsPlayed || 0) - V.ev, cups = (S.cups || 0) - V.cups, lv = S.lv - V.lv;
+  const card = (S.tierMax || 0) - V.card, sov = (S.sov || 0) - V.sov, para = (S.para || 0) - V.para;
+  let h = '<div class="awgrid">' + stat('purse', '+' + fmt(g), 'big') + stat('holes', fmt(holes, 0))
+    + stat('clubs', String(V.clubs)) + '</div>';
+  if(card > 0) h += line('Tour Card', roman(S.tierMax));
+  if(ev > 0) h += line('Events Finished', String(ev));
+  if(cups > 0) h += line('Cups Won', String(cups));
+  if(lv > 0) h += line('Career Levels', '+' + lv);
+  if(para > 0) h += line('Paragon', '+' + para);
+  if(sov > 0) h += line(B.SOV, '+' + sovFmt(sov));
+  if(V.best) h += line('Best Club', V.best.name, RC(V.best.rar));
+  if(h !== V.html){ V.html = h; $('saverStats').innerHTML = h; }
+  setText($('saverFor'), 'For ' + hms((Date.now() - V.since) / 1000));
+}
+function saverFrame(dt){
+  saverDraw(dt);
+  SAVER.statT += dt;
+  if(SAVER.statT >= 1){ SAVER.statT = 0; saverStats(); }
+  // A few pixels somewhere else every half minute, so nothing sits on the
+  // same spot of the screen for hours.
+  SAVER.moveT += dt;
+  if(SAVER.moveT >= 30){
+    SAVER.moveT = 0;
+    $('saverBox').style.transform = 'translate(' + Math.round((Math.random() - 0.5) * 20) + 'px,'
+      + Math.round((Math.random() - 0.5) * 30) + 'px)';
+  }
+}
+function saverCycle(){
+  const i = SAVER_MINS.indexOf(saverMins());
+  S.saver = SAVER_MINS[(i + 1) % SAVER_MINS.length];
+  touchedAt = performance.now();
+  save(); settingsSheet();
+}
+function saverNow(){ hideSheet(); saverOn(); }
+
 let last = 0, slowT = 0, saveT = 0;
 let frameErr = 0;
 function frame(now){
@@ -13836,26 +14031,42 @@ function frame(now){
     }
   }
   if(DEV_FPS) devFpsTick(performance.now() - f0);
-  requestAnimationFrame(frame);
+  // The saver asks for ten frames a second rather than the screen's sixty.
+  if(SAVER) setTimeout(() => frame(performance.now()), SAVER_MS);
+  else requestAnimationFrame(frame);
 }
 function frameBody(now){
   now /= 1000;
+  // A hidden page stops its frames, but not the saver's timer. Out of sight
+  // it plays nothing: the return is paid by catchUp, as it is for any page.
+  if(SAVER && document.hidden){ last = 0; return; }
   if(!last) last = now;
-  const dt = Math.min(B.TICK_MAX, Math.max(0, now - last));
+  // The saver's frames are a tenth of a second apart, or more when a phone
+  // slows its timers, so it plays the gap out in steps a frame may take.
+  const dt = Math.min(SAVER ? 1 : B.TICK_MAX, Math.max(0, now - last));
   last = now;
 
-  const D = derive();
-  step(dt, D);
-  // No point painting the hole while the menu is over it. The sim runs on
-  // regardless; only the drawing stops.
-  if(!$('app').classList.contains('big') || (SIDEWAYS && SIDEWAYS.matches)) Scene.draw(dt, D);
+  let D = derive();
+  if(SAVER){
+    for(let t = dt; t > 1e-6; t -= B.TICK_MAX){
+      step(Math.min(B.TICK_MAX, t), D);
+      if(t > B.TICK_MAX) D = derive();
+    }
+    if(SAVER) saverFrame(dt);
+  }else{
+    step(dt, D);
+    // No point painting the hole while the menu is over it. The sim runs on
+    // regardless; only the drawing stops.
+    if(!$('app').classList.contains('big') || (SIDEWAYS && SIDEWAYS.matches)) Scene.draw(dt, D);
+    renderLive(D);
+  }
   Sfx.tick(dt);
-  renderLive(D);
 
   slowT += dt;
   if(slowT >= 0.22){
     slowT = 0;
-    renderVitals();
+    if(saverDue()) saverOn();
+    if(!SAVER) renderVitals();
     checkAch();
     if(!$('veil').classList.contains('on')) homeTip();
     if(view === 'upg') refreshUpg();
@@ -13884,6 +14095,10 @@ function settingsSheet(){
         + (S.sound !== 0 ? 'On' : 'Off') + '</button>')
     + row('Music', S.sound === 0 ? 'Needs Sound on' : '', '<button class="mini' + (S.music !== 0 ? ' go' : '') + '" onclick="toggleMusic()">'
         + (S.music !== 0 ? 'On' : 'Off') + '</button>')
+    + row('Battery Saver', saverMins() ? 'After ' + saverMins() + '\u00a0min untouched' : 'Only when started',
+        '<div class="setbtns"><button class="mini' + (saverMins() ? ' go' : '') + '" onclick="saverCycle()">'
+        + (saverMins() ? saverMins() + '\u00a0min' : 'Off') + '</button>'
+        + '<button class="mini go" onclick="saverNow()">Start</button></div>')
     + row('Back Up Your Save', 'A code you can keep, or load on another device',
         '<button class="mini go" onclick="exportSheet()">Export</button>')
     + row('Load a Save', 'Paste a code from Export',
@@ -14254,6 +14469,13 @@ function boot(){
   try{ if(navigator.storage && navigator.storage.persist) navigator.storage.persist(); }catch(e){}
   for(const ev of ['pointerdown', 'touchend', 'click', 'keydown'])
     document.addEventListener(ev, () => Sfx.unlock(), { passive: true, capture: true });
+  // Any touch at all counts as someone there, and puts the saver's wait back
+  for(const ev of ['pointerdown', 'touchstart', 'keydown', 'wheel'])
+    document.addEventListener(ev, () => { touchedAt = performance.now(); }, { passive: true, capture: true });
+  // Woken on the click, not the touch: taken away on the touch, the click that
+  // follows it would land on whatever was underneath.
+  $('saver').addEventListener('click', e => { e.stopPropagation(); saverOff(); });
+  window.addEventListener('resize', () => { if(SAVER) saverSize(); });
 
   if(SIDEWAYS){
     if(SIDEWAYS.addEventListener) SIDEWAYS.addEventListener('change', sideways);
@@ -14263,7 +14485,7 @@ function boot(){
   document.addEventListener('visibilitychange', () => {
     // the music is faded out here: a desktop or Android browser stops the
     // frames of a hidden page but not its audio, so it played on
-    if(document.hidden){ save(); Sfx.musicTick(); } else catchUp();
+    if(document.hidden){ save(); Sfx.musicTick(); } else { touchedAt = performance.now(); catchUp(); }
   });
   window.addEventListener('pagehide', save);
   requestAnimationFrame(frame);
