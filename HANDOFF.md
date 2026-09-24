@@ -10,12 +10,14 @@ check is for.
 
 - Everything is committed and pushed to `main` (and mirrored on the session
   branch `claude/funny-davinci-7ik9ge`). Nothing is half-built.
-- `node test/run.js` passes all **39 checks** (about 7 minutes; `pacing` runs
+- `node test/run.js` passes all **40 checks** (about 7 minutes; `pacing` runs
   sixteen seeds and takes ~40s on its own).
 - Latest: **"sounds for the signature holes, more seasonal touches, a second
   music track, then the third signature hole"**. Sounds and seasons done
   (§5 under "Canyon carry" and "Home course seasons"); the second music
-  track is in (§1 below). The third signature hole is what they want next.
+  track is in (§1 below), and the third signature hole, **Stepping Stones**
+  (§5), is in. The plateau green was set aside: the ground near the camera
+  is eased flat on purpose (`groundH`), so a cliff up close barely shows.
 - Before: **"do 2b; and rework the pixel text, condensed, so the wind and
   course lines in the bottom right take less room"**. Done (§5, "Canyon
   carry" and "The small pixel face"). Not yet seen by the user.
@@ -259,6 +261,11 @@ Line numbers are approximate and drift. Search for the name instead.
 15. Check on-stage changes at 320, 360, 390, 430 and on its side (740x360,
    844x390). The user's phone is an iPhone; 320 is the narrow edge case
    where the stage falls back (auto-climb drops under the readout).
+17. **Frame-time checks time the quickest of several blocks.** `skins`
+   averaged 300 frames against a 1.5ms budget with the typical frame at
+   1.3ms; a browser pause put it over one run in three, on old code as much
+   as new (measured over eight runs each). It now takes the quickest of five
+   blocks, and still fails when a skin is made 0.4ms dearer.
 16. **A check that freezes the round cannot see how a hole ends.** The
    island's first check stopped the round to film the flight, so the hole
    could never end early; in real play it ended with the tee shot and he
@@ -274,6 +281,20 @@ Line numbers are approximate and drift. Search for the name instead.
   `textW`, `glyphCv`, `textCv` all go through `faceOf`; `LH` is now
   (FHS + 2) * TSC. The weather lines come out at about 61% of their old
   width. `font` checks it.
+
+### Stepping Stones (the third signature hole)
+- `isStones(h)`: the last par four of each round on a home course (one a
+  round). Toast "Signature Hole · Stepping Stones"; dev menu "stepping
+  stones" (`STONES_FORCE`). The three `*_FORCE` values exclude each other.
+- A `river: 1` water band across the hole (d 0.44 LEN, rd 2.9, rx 40),
+  drawn level with `P_LAKE` (frozen in winter: `P_ICEL`), on gentler ground
+  (`roll` 0.5). `Scene.isle` has `hop: 1`, `stones` (evenly bank to bank)
+  and `hopLen`; the crossing moves at `B_HOP` (2.6/s); `drawGolfer` lifts him
+  by sin(pi x hop phase); `drawStones` draws flat rock tops with a foam line;
+  `Sfx.hop` (a knock and a splash, no splash on ice) on each stone.
+- Fixed on the way, for all three: `isleWait` now also waits while
+  `Scene.crossing` is set; the last hundredth of a step before the far side
+  used to read as neither and let the hole go. `ISLE_HOLD` is 8s.
 
 ### Canyon carry (option 2b, the second signature hole)
 - `isCanyon(h)`: the last par five of each round on a home course (one a
@@ -666,7 +687,7 @@ questions are still unanswered: does the auto-climb button sit where they
 wanted, and are the Trophy Room (medal, red dot) and the Scrap sheet easy to
 find. The open menu, under the numbers it was offered with:
 
-2. **More signature holes**: the island and the canyon are in. Others could follow
+2. **More signature holes**: island, canyon and stepping stones are in. Others could follow
    the same pattern (a hole flag in `newHole`, `spot` for where balls may
    lie): a par 5 over a canyon, a green on a plateau, a hole along the
    shore. A whirring sound for the flight is also still to do.

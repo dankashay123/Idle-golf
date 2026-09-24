@@ -38,6 +38,14 @@ module.exports = {
   name: 'skins',
   async run(page) {
     const r = await page.evaluate(() => {
+      // Time per call of fn over n calls, as the quickest of five blocks: the
+      // drawing's own cost, not whatever else the machine was doing. One
+      // average over the lot let a pause in the browser tip a look over its
+      // budget one run in three, on this code and on the code before it
+      // alike, and the middle block still did one run in eight.
+      const timed = (n, fn) => { const k = Math.max(1, Math.round(n / 5)), t = [];
+        for (let b = 0; b < 5; b++) { const t0 = performance.now(); for (let i = 0; i < k; i++) fn(); t.push((performance.now() - t0) / k); }
+        return Math.min(...t); };
       const o = {}; const SNAP = JSON.stringify(S);
       hideSheet(); QUIET = true;
       const D = derive();
@@ -78,9 +86,7 @@ module.exports = {
             Scene.t = 1.23; pose(); const on = shot();
             const fx = d.fx; d.fx = undefined; Scene.t = 1.23; pose(); const off = shot(); d.fx = fx;
             if (on === off) o.blank.push('club ' + d.id);
-            const t0 = performance.now();
-            for (let i = 0; i < 100; i++) { Scene.t += 0.016; pose(); }
-            o.clubCost[d.id] = (performance.now() - t0) / 600;
+            o.clubCost[d.id] = timed(100, () => { Scene.t += 0.016; pose(); }) / 6;
           } catch (e) { o.errs.push('club ' + d.id + ': ' + e.message); }
         }
         S.club = 'steel'; Scene.swingT = 0; Scene.clubArc = [];
@@ -127,9 +133,7 @@ module.exports = {
               Scene.b.clearRect(0, 0, VW, VH); Scene.t = 2 + u; Scene.drawBalls(0); n += painted();
             }
             o.paint[d.id] = n / 3;
-            const t0 = performance.now();
-            for (let i = 0; i < 200; i++) { Scene.balls.forEach(b => { b.t = b.dur * 0.3; }); Scene.t += 0.016; Scene.drawBalls(0); }
-            o.tcost[d.id] = (performance.now() - t0) / 200;
+            o.tcost[d.id] = timed(200, () => { Scene.balls.forEach(b => { b.t = b.dur * 0.3; }); Scene.t += 0.016; Scene.drawBalls(0); });
           }
           S.trail = 'plain'; Scene.balls.length = 0;
         }
@@ -139,9 +143,7 @@ module.exports = {
         for (const d of B.OUTFITS) {
           S.outfit = d.id; buildSprites();
           for (let i = 0; i < 30; i++) { Scene.t += 0.016; Scene.drawGolfer(D); }
-          const t0 = performance.now();
-          for (let i = 0; i < 300; i++) { Scene.t += 0.016; Scene.drawGolfer(D); }
-          o.cost[d.id] = (performance.now() - t0) / 300;
+          o.cost[d.id] = timed(300, () => { Scene.t += 0.016; Scene.drawGolfer(D); });
         }
         S.outfit = 'classic'; buildSprites();
 
@@ -155,9 +157,7 @@ module.exports = {
           Scene.walkOn = true; Scene.walkPh = 0.2; Scene.b.clearRect(0, 0, VW, VH); Scene.drawGolfer(D); const a = shot();
           Scene.walkPh = 0.7; Scene.b.clearRect(0, 0, VW, VH); Scene.drawGolfer(D); const b2 = shot();
           if (a === stand || a === b2) o.walkSame.push(d.id);
-          const t0 = performance.now();
-          for (let i = 0; i < 200; i++) { Scene.t += 0.016; Scene.walkPh += 0.03; Scene.drawGolfer(D); }
-          o.walkCost[d.id] = (performance.now() - t0) / 200;
+          o.walkCost[d.id] = timed(200, () => { Scene.t += 0.016; Scene.walkPh += 0.03; Scene.drawGolfer(D); });
         }
         { const keep = SPRITE.caddie; Scene.walkOn = false; Scene.b.clearRect(0, 0, VW, VH); Scene.drawGolfer(D); const w1 = shot();
           SPRITE.caddie = null; Scene.b.clearRect(0, 0, VW, VH); Scene.drawGolfer(D); const w0 = shot(); SPRITE.caddie = keep;

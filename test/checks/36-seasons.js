@@ -89,7 +89,7 @@ module.exports = {
         }
         // a frozen pond: drawn as ice, and nothing rippling on it
         SEASON_FORCE = 2; DEV.course(home); hideSheet();
-        for (let i = 0; i < 80 && !(Scene.water && !Scene.water.lake && !Scene.water.canyon); i++) { S.hole++; Scene.newHole(S.hole, S.tier); }
+        for (let i = 0; i < 80 && !(Scene.water && !Scene.water.lake && !Scene.water.canyon && !Scene.water.river); i++) { S.hole++; Scene.newHole(S.hole, S.tier); }
         if (Scene.water && !Scene.water.lake) {
           Scene.camD = Math.max(0, Scene.water.d - 14); Scene.gGen++; Scene._rips = [];
           const used = []; const h0 = Scene.hazSlice;

@@ -1081,7 +1081,7 @@ const B = {
   // outruns the cost of the next card forever and the ladder never walls.
   // Nine tenths of a second is also the shortest a hole can be and still be
   // worth watching, and it is what makes an Ace the genuine ceiling it should be.
-  WALK_MIN: 0.9, ISLE_HOLD: 6,
+  WALK_MIN: 0.9, ISLE_HOLD: 8,
 
   /* ---- the swing ---- */
   BASE_POWER: 6, BASE_SPEED: 0.85,
@@ -3467,12 +3467,23 @@ const holesPlayed  = h => dayIndex(h)*B.ROUND + (holeInRound(h)-1);
 const parOf = h => B.PAR_LAYOUTS[hash32(roundIndex(h)+7) % B.PAR_LAYOUTS.length][holeInRound(h)-1];
 // A home course's signature hole: the last par three of each nine is played to
 // an island green. ISLE_FORCE (the developer menu) makes one hole an island.
-let ISLE_FORCE = 0, CANYON_FORCE = 0;
+let ISLE_FORCE = 0, CANYON_FORCE = 0, STONES_FORCE = 0;
 function isIsland(h){
   if(h === ISLE_FORCE) return true;
+  if(h === CANYON_FORCE || h === STONES_FORCE) return false;
   if(parOf(h) !== 3) return false;
   const r = holeInRound(h), end = r <= 9 ? 9 : 18;
   for(let k = r + 1; k <= end; k++) if(parOf(h + k - r) === 3) return false;
+  const cs = courseFor(tournamentOf(h));
+  return !!cs && cs.slot === 'home';
+}
+// The third: the last par four of the round on a home course crosses a river
+// on stepping stones. STONES_FORCE (the developer menu) makes one hole it.
+function isStones(h){
+  if(h === STONES_FORCE) return true;
+  if(h === ISLE_FORCE || h === CANYON_FORCE || parOf(h) !== 4) return false;
+  const r = holeInRound(h);
+  for(let k = r + 1; k <= B.ROUND; k++) if(parOf(h + k - r) === 4) return false;
   const cs = courseFor(tournamentOf(h));
   return !!cs && cs.slot === 'home';
 }
@@ -3481,7 +3492,7 @@ function isIsland(h){
 // developer menu) makes one hole a canyon.
 function isCanyon(h){
   if(h === CANYON_FORCE) return true;
-  if(h === ISLE_FORCE || parOf(h) !== 5) return false;
+  if(h === ISLE_FORCE || h === STONES_FORCE || parOf(h) !== 5) return false;
   const r = holeInRound(h);
   for(let k = r + 1; k <= B.ROUND; k++) if(parOf(h + k - r) === 5) return false;
   const cs = courseFor(tournamentOf(h));
@@ -4357,6 +4368,7 @@ function startHole(){
   Scene.newHole(S.hole, S.tier);
   if(!QUIET && !OFFLINE && isIsland(S.hole)) toast('Signature Hole \u00b7 <b>Island Green</b>');
   else if(!QUIET && !OFFLINE && isCanyon(S.hole)) toast('Signature Hole \u00b7 <b>Canyon Carry</b>');
+  else if(!QUIET && !OFFLINE && isStones(S.hole)) toast('Signature Hole \u00b7 <b>Stepping Stones</b>');
 }
 
 // soft=true for continuous sources like burn, which armour taxes as a
@@ -5722,6 +5734,11 @@ const Sfx = {
     this.tone(230, t, 0.055, 'triangle', 0.05, 150);
     if(creak) this.tone(170, t + 0.04, 0.34, 'triangle', 0.022, 128);
   },
+  // On the stepping stones: a knock of a shoe on stone and a little splash.
+  hop(t, ice){
+    this.tone(420, t, 0.05, 'triangle', 0.045, 260);
+    if(!ice) this.hiss(t + 0.01, 0.12, 1400, 0.9, 0.035, 700);
+  },
   // Birds in the trees, now and then, on a fine day: a quick rising chirp, or
   // two falling ones.
   chirp(t){
@@ -5791,8 +5808,14 @@ const Sfx = {
       this.rotT = (this.rotT || 0) - dt;
       if(this.rotT <= 0){ this.rotT = 0.11; this.rotor(now + 0.01, 0.55 + 0.45 * Math.sin(Math.PI * Scene.heli)); }
     }else this.rotT = 0;
+    // a knock and a splash for every stone he lands on
+    const SI = Scene.isle;
+    if(Scene.crossing > 0 && SI && SI.hop){
+      const st = Math.floor((Scene.camD - SI.bank) / SI.hopLen);
+      if(st !== this.stepK){ this.stepK = st; this.hop(now + 0.01, Scene.ice); }
+    }
     // a knock for every step on the bridge
-    if(Scene.crossing > 0 && !Scene.heli){
+    else if(Scene.crossing > 0 && !Scene.heli){
       const st = Math.floor((Scene.walkPh || 0) * 2);
       if(st !== this.stepK){ this.stepK = st; this.plank(now + 0.01, Math.random() < 0.3); }
     }
@@ -8270,7 +8293,7 @@ function pixIcon(id, size, col){
 // against DEVICE pixels instead lands one art pixel on one CSS pixel, which is
 // not pixel art at all, just a small picture. 2.2 is the point where a 5x7
 // font is still legible on a phone and a diagonal still reads as a staircase.
-const PX_CSS = 1.1, K_PROJ = 22.4, LEN = 60, B_GOLFER = 12, B_FLY = 11, B_BRIDGE = 4.2;
+const PX_CSS = 1.1, K_PROJ = 22.4, LEN = 60, B_GOLFER = 12, B_FLY = 11, B_BRIDGE = 4.2, B_HOP = 2.6;
 // How far behind the golfer the camera sits, in world units. Small numbers put
 // you over his shoulder with the hole falling away hard; large numbers flatten
 // it into a diagram. GROUND is derived from it below, so his feet stay put.
@@ -8364,6 +8387,8 @@ const P_ICE = Object.assign({}, P_WATER, { rip: 0,
 // lake that size put its far water lower on the screen than the green in
 // front of it, and painted the green out.
 const P_LAKE = Object.assign({}, P_WATER, { D: 0, eu: 0.08, e0: 0.035, e1: 0.03 });
+// a river frozen over, in a winter season: level like the lake, ice like a pond
+const P_ICEL = Object.assign({}, P_LAKE, { rip: 0, tone: P_ICE.tone });
 // A canyon: deep, with walls of the course's own rock going down into the
 // dark. Deep enough that its near rim
 // hides the floor and what you see is the far wall, which is what a gorge
@@ -10007,7 +10032,7 @@ const Scene = {
         segs.push({ a: (cr() < 0.6 ? -side : side)*(9 + cr()*7), c: LEN*(0.64 + cr()*0.10), w: LEN*(0.11 + cr()*0.05) });
       }else if(par === 3 && cr() < 0.5)
         segs.push({ a: side*(2 + cr()*3), c: LEN*0.5, w: LEN*0.3 });
-      if(isIsland(h) || isCanyon(h)) segs.length = 0;   // a signature hole is played dead straight
+      if(isIsland(h) || isCanyon(h) || isStones(h)) segs.length = 0;   // a signature hole is played dead straight
       this.curve = { segs, sway: 0.6 + cr()*1.2, ph: cr()*6.28 };
       this._bcD = null;
     }
@@ -10028,7 +10053,12 @@ const Scene = {
     // wider than the view, so it reads as a cut through the land rather than
     // a hole in it. Crossed on a rope bridge (see drawBridge).
     const canyon = !isle && isCanyon(h);
-    const moat = isle ? { lake: 1, d: LEN + 4, x: 0, rd: 30, rx: 6.4, shape: this.blob(rnd, 0.10), shape2: this.blob(rnd, 0.10) }
+    // The river: a band of level water right across, a little short of half
+    // way, crossed on a line of stones (see drawStones).
+    const river = !isle && !canyon && isStones(h);
+    if(river) this.roll = 0.5;                  // gentler ground, so the water lies level
+    const moat = river ? { river: 1, d: LEN * 0.44, x: 0, rd: 2.9, rx: 40, shape: this.blob(rnd, 0.16), shape2: this.blob(rnd, 0.16) }
+               : isle ? { lake: 1, d: LEN + 4, x: 0, rd: 30, rx: 6.4, shape: this.blob(rnd, 0.10), shape2: this.blob(rnd, 0.10) }
                : canyon ? { canyon: 1, d: LEN * 0.52, x: 0, rd: 4.2, rx: 40, shape: this.blob(rnd, 0.22), shape2: this.blob(rnd, 0.22) }
                : null;
     this.layHazards(rnd, {
@@ -10053,7 +10083,14 @@ const Scene = {
       if(moat.lake) this.isle = { bank: d - 1.2, land: LEN - 6, fly: 1 };
       else{
         let e = d; while(e < LEN && wet(e)) e += 0.1;
-        this.isle = { bank: d - 0.6, land: e + 0.6, fly: 0 };
+        this.isle = { bank: d - 0.6, land: e + 0.6, fly: 0, hop: moat.river ? 1 : 0 };
+        // the stones, evenly from bank to bank, one hop apart
+        if(moat.river){
+          const n = Math.max(3, Math.round((e - d + 1.2) / 1.25));
+          this.isle.stones = [];
+          for(let i = 1; i < n; i++) this.isle.stones.push(this.isle.bank + (this.isle.land - this.isle.bank) * i / n);
+          this.isle.hopLen = (this.isle.land - this.isle.bank) / n;
+        }
       }
     }
 
@@ -10304,7 +10341,9 @@ const Scene = {
     const I = this.isle;
     if(!I || QUIET || OFFLINE || S.dgnRun || this.hole !== S.hole) return false;
     if(performance.now() - (this.drawnAt || 0) > 250) return false;
-    if(this.camD < I.land - 0.05) return true;
+    // (still crossing counts: the last hundredth of a step before the far
+    // side read as neither across nor on the way, and let the hole go)
+    if(this.crossing || this.camD < I.land - 0.05) return true;
     return this.t - (this.landT || 0) < 0.4;          // a moment on the green
   },
   // still on his way to where his last ball came down
@@ -11032,7 +11071,7 @@ Object.assign(Scene, {
       }
 
       for(const bk of this.bunkers) this.hazSlice(c, T, bk, P_SAND, d, s, y, hgt, near, C0);
-      if(this.water) this.hazSlice(c, T, this.water, this.water.canyon ? P_CANYON : this.water.lake ? P_LAKE : this.ice ? P_ICE : P_WATER, d, s, y, hgt, near, C0);
+      if(this.water) this.hazSlice(c, T, this.water, this.water.canyon ? P_CANYON : this.water.river ? (this.ice ? P_ICEL : P_LAKE) : this.water.lake ? P_LAKE : this.ice ? P_ICE : P_WATER, d, s, y, hgt, near, C0);
 
       const gd = d - LEN;
       const lobe = 1 + 0.085*Math.sin(gd*0.85 + this.seed);
@@ -11410,7 +11449,10 @@ Object.assign(Scene, {
     const x = walking ? p.x - Math.round(w*0.5) + Math.round(Math.sin(this.walkPh * Math.PI * 2) * w * 0.02)
                       : p.x - Math.round(w*0.42);
     const stepUp = walking && (Math.floor(this.walkPh * 4) & 1) ? Math.max(1, Math.round(h / 40)) : 0;
-    const y = p.y - h - stepUp - (FX && FX.bob ? Math.round(2 + Math.sin(this.t * 2.2) * 2) : 0);
+    // on the stepping stones he hops from one to the next
+    const I = this.isle, hop = walking && this.crossing && I && I.hop
+      ? Math.round(Math.sin(Math.PI * ((((this.camD - I.bank) / I.hopLen) % 1) + 1) % 1) * h * 0.3) : 0;
+    const y = p.y - h - stepUp - hop - (FX && FX.bob ? Math.round(2 + Math.sin(this.t * 2.2) * 2) : 0);
 
 
     paintGolfer(c, x, y, w, h, ph, this.t, p.y, walking, this.walkPh, spr, this.clubArc || (this.clubArc = []));
@@ -11535,6 +11577,30 @@ Object.assign(Scene, {
         if(prev) pxLine(c, prev.x, prev.y, p.x, p.y, ROPE, Math.max(1, Math.min(3, Math.round(prev.s * 0.05))));
         prev = p;
       }
+    }
+  },
+
+  // The river's stepping stones: flat grey tops in the course's rock, a
+  // darker side under them and a line of white water where they meet the
+  // river. Far to near.
+  drawStones(){
+    const I = this.isle;
+    if(!I || !I.stones) return;
+    const c = this.b, T = this.theme, near = this.camD - CAM_BACK + 0.7;
+    const top = pickC(T.rk, 0.85), side = pickC(T.rk, 0.25), foam = this.ice ? null : '#EAF4F6';
+    for(let i = I.stones.length - 1; i >= 0; i--){
+      const d = I.stones[i];
+      if(d < near) continue;
+      const p = this.proj(d, 0);
+      if(p.y > this.clipAt(d) + 1) continue;
+      const w = Math.max(2, Math.round(0.62 * LAT * p.s)), hh = Math.max(1, Math.round(w * 0.30));
+      for(let r = 0; r < hh; r++){
+        const k = Math.sqrt(1 - Math.pow((r - hh / 2 + 0.5) / (hh / 2 + 0.5), 2));
+        const ww = Math.max(1, Math.round(w * k));
+        c.fillStyle = r < hh * 0.6 ? top : side;
+        c.fillRect(p.x - ww, p.y - hh + r, ww * 2, 1);
+      }
+      if(foam){ c.fillStyle = foam; c.fillRect(p.x - w - 1, p.y, w * 2 + 2, 1); }
     }
   },
 
@@ -11976,7 +12042,7 @@ Object.assign(Scene, {
       if(I && goal > I.bank + 0.5 && cam0 >= I.bank - 0.05 && cam0 < I.land && (swingPh >= 0.85 || this.crossing)){
         // Across the water on his club, spun over his head like a rotor, or
         // over the canyon on its bridge: at a steady pace, so it can be seen.
-        this.camD = Math.min(goal, Math.max(cam0, I.bank) + (I.fly ? B_FLY : B_BRIDGE) * dt);
+        this.camD = Math.min(goal, Math.max(cam0, I.bank) + (I.fly ? B_FLY : I.hop ? B_HOP : B_BRIDGE) * dt);
       }else{
         if(swingPh >= 0.85) this.camD += Math.max(0, goal - this.camD) * Math.min(1, dt*4.5);
         // (not on an island: the hole waits for him there, and carried on
@@ -12011,6 +12077,7 @@ Object.assign(Scene, {
       if(this.haze) c.drawImage(this.haze, 0, 0);
       this.drawTee();
       this.drawBridge();
+      this.drawStones();
       this.drawFlagstick();
       this.drawGolfer(D);
       this.drawBalls(dt);
@@ -13774,7 +13841,8 @@ const DEV = {
       + b('event won', 'DEV.snd(\'cup\')') + b('music ' + (S.music === 0 ? 'off' : 'on'), 'DEV.music()')
       + b('restart music', 'DEV.music(1)') + b(DEV._recs ? 'recordings off' : 'recordings on', 'DEV.synth()'));
 
-    h += row('Signature hole', b('this hole an island', 'DEV.isle()') + b('this hole a canyon', 'DEV.canyon()'));
+    h += row('Signature hole', b('this hole an island', 'DEV.isle()') + b('this hole a canyon', 'DEV.canyon()')
+      + b('stepping stones', 'DEV.stones()'));
 
     h += row('Home season', b('by the card', 'DEV.season(-1)') + b('as built', 'DEV.season(0)')
       + b('autumn', 'DEV.season(1)') + b('winter', 'DEV.season(2)') + b('blossom', 'DEV.season(3)'));
@@ -13985,10 +14053,12 @@ const DEV = {
   snd(k, a){ Sfx.unlock(); Sfx.lastSwing = -1; Sfx.play(k, k === 'hole' ? -1 : a); },
   // a home course in any season (play one first: Home course, or DEV.course)
   season(k){ SEASON_FORCE = k; Scene.newHole(S.hole, S.tier); hideSheet(); },
+  // the hole in play crosses a river on stepping stones, from the tee
+  stones(){ STONES_FORCE = S.hole; ISLE_FORCE = 0; CANYON_FORCE = 0; S.yards = S.yardsMax; Scene.newHole(S.hole, S.tier); hideSheet(); },
   // the hole in play becomes a canyon, from the tee
-  canyon(){ CANYON_FORCE = S.hole; ISLE_FORCE = 0; S.yards = S.yardsMax; Scene.newHole(S.hole, S.tier); hideSheet(); },
+  canyon(){ CANYON_FORCE = S.hole; ISLE_FORCE = 0; STONES_FORCE = 0; S.yards = S.yardsMax; Scene.newHole(S.hole, S.tier); hideSheet(); },
   // the hole in play becomes an island green, from the tee
-  isle(){ ISLE_FORCE = S.hole; CANYON_FORCE = 0; S.yards = S.yardsMax; Scene.newHole(S.hole, S.tier); hideSheet(); },
+  isle(){ ISLE_FORCE = S.hole; CANYON_FORCE = 0; STONES_FORCE = 0; S.yards = S.yardsMax; Scene.newHole(S.hole, S.tier); hideSheet(); },
   // as if nobody had touched the phone for the whole wait, bar five seconds
   saverSoon(){
     hideSheet(); SAVER_AUTO = true;
