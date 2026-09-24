@@ -3507,6 +3507,43 @@ const COURSE_HOME = B.COURSE.filter(c => c.slot === 'home');
 const COURSE_WEEK = B.COURSE.filter(c => c.slot === 'weekly');
 const courseById = id => B.COURSE.find(c => c.id === id);
 const homeFor = tier => COURSE_HOME[tier % COURSE_HOME.length];
+// A home course comes round again every ten cards, and each time round in a
+// new season: as it was built, then autumn, winter and blossom. The course,
+// its holes and its landmark stay; the turf, the trees, the sky and the water
+// turn. Each pair is a colour and how far the course's own goes toward it.
+const SEASONS = [null,
+  { n:'Autumn', turf:['#A09A3E',0.42], rough:['#7A5230',0.55], tree:['#E48A34','#A8402A'],
+    sky1:['#F2C69A',0.35], water:['#2A5A6C',0.25] },
+  { n:'Winter', turf:['#A6BCAE',0.50], rough:['#E6EDF0',0.82], tree:['#EEF3F5','#46605A'],
+    sky0:['#5A7088',0.45], sky1:['#E6ECF0',0.50], water:['#80AEC2',0.45], rock:['#CDD4DA',0.45],
+    sand:['#EEF0F0',0.35], snow:1, crowd:0.6 },
+  { n:'Blossom', turf:['#62BA5A',0.35], rough:['#3E8C4A',0.40], tree:['#F6B6D2','#C4628E'],
+    alt:['#F6F2EA','#8EA89A'], sky1:['#F6DCEA',0.30] }
+];
+// SEASON_FORCE (the developer menu) shows a home course in any season
+let SEASON_FORCE = -1;
+const homeSeason = (cs, tier) => !cs || cs.slot !== 'home' ? 0
+  : SEASON_FORCE >= 0 ? SEASON_FORCE : Math.floor(tier / COURSE_HOME.length) % SEASONS.length;
+const LOOK_CACHE = {};
+// the course as it looks in season s: its own colours turned, and its own id
+// with the season on it, so the palettes and trees built from it are kept apart
+function seasonLook(cs, s){
+  if(!s) return cs;
+  const k = cs.id + '~' + s;
+  if(LOOK_CACHE[k]) return LOOK_CACHE[k];
+  const Z = SEASONS[s], m = (c, p) => p ? mixC(c, p[0], p[1]) : c;
+  // a course whose trees are already that colour (Jade Pagoda is in blossom
+  // all year) takes the season's other one, or the season would not show
+  const rgb = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16));
+  const near = (a, b) => rgb(a).reduce((t, v, i) => t + Math.abs(v - rgb(b)[i]), 0) < 150;
+  const tr = Z.alt && near(cs.tree[0], Z.tree[0]) ? Z.alt : Z.tree;
+  return LOOK_CACHE[k] = Object.assign({}, cs, { id: k, season: Z.n, snowfall: !!Z.snow,
+    turf: m(cs.turf, Z.turf), rough: m(cs.rough, Z.rough), sand: m(cs.sand, Z.sand),
+    water: m(cs.water, Z.water), rock: m(cs.rock, Z.rock),
+    sky: [m(cs.sky[0], Z.sky0), m(cs.sky[1], Z.sky1)],
+    tree: [mixC(cs.tree[0], tr[0], 0.85), mixC(cs.tree[1], tr[1], 0.85)],
+    land: Z.crowd ? Object.assign({}, cs.land, { crowd: cs.land.crowd * Z.crowd }) : cs.land });
+}
 // Real weeks, Monday to Sunday: day 0 of the clock was a Thursday.
 const weekNow = () => Math.floor((dayNow() + 3) / 7);
 const weekMajor = wk => COURSE_WEEK[((wk % COURSE_WEEK.length) + COURSE_WEEK.length) % COURSE_WEEK.length];
@@ -4267,7 +4304,8 @@ function announceCourse(){
   // in the stage's own type, which has no apostrophes or dots in the middle
   const fit = str => [...str.toUpperCase()].map(ch => GLYPH[ch] || ch === ' ' ? ch : ' ').join('').replace(/ +/g, ' ').trim();
   const sub = isWeekMajor(t) ? 'Major of the Week'
-            : cs.slot === 'home' ? 'Home of Tour Card ' + roman(S.tier)
+            : cs.slot === 'home' ? (homeSeason(cs, S.tier) ? SEASONS[homeSeason(cs, S.tier)].n + ' - ' : '')
+                                   + 'Home of Tour Card ' + roman(S.tier)
             : 'Tour Card ' + roman(S.tier) + ' - Event ' + t;
   Scene.announce = { name: fit(cs.n), sub: fit(sub), t: 0, dur: 4.2, gold: isWeekMajor(t) };
 }
@@ -9797,10 +9835,13 @@ const Scene = {
     const cs = courseFor(tournamentOf(h));
     const mode = this.night ? 'night' : this.rain ? 'rain' : 'day';
     this.course = cs;
-    this.land = cs.land;
-    this.themeId = cs.id + '|' + mode;
-    this.theme = buildTheme(cs, mode);
-    this.treeSpr = courseTrees(cs, mode);
+    const look = seasonLook(cs, homeSeason(cs, tier));
+    this.look = look;
+    this.land = look.land;
+    this.themeId = look.id + '|' + mode;
+    this.theme = buildTheme(look, mode);
+    this.treeSpr = courseTrees(look, mode);
+    this.snow = !!look.snowfall && !this.rain;
 
     // The bend, off its own stream. a: how far the line moves across, c:
     // where the corner is, w: half the length of the turn. Laid down before
@@ -9826,7 +9867,7 @@ const Scene = {
     const corners = this.curve.segs.filter(g => Math.abs(g.a) >= 6)
       .map(g => ({ d: g.c, w: g.w, out: g.a > 0 ? -1 : 1 }))
       .sort((p, q) => q.w - p.w);
-    const L = cs.land;
+    const L = look.land;
     // The signature hole: the green alone in a lake that opens a little over
     // halfway from the tee and runs on past the pin. No shot comes down in it
     // (see spot), and he crosses it on his club (see the camera).
@@ -11372,6 +11413,17 @@ Object.assign(Scene, {
   },
 
   drawWeather(){
+    if(this.snow && !this.rain){
+      // a home course in winter: slow flakes, drifting with the wind
+      const c = this.b, w = this.wind || 0;
+      c.fillStyle = 'rgba(244,248,250,.85)';
+      for(let i = 0; i < 36; i++){
+        const x = Math.round((((i*67 + Math.sin(this.t*0.8 + i)*5 + this.t*w*14) % (VW + 20)) + VW + 20) % (VW + 20) - 10);
+        const y = Math.round((i*41 + this.t*(14 + (i % 3)*5)) % VH);
+        c.fillRect(x, y, i % 4 ? 1 : 2, i % 4 ? 1 : 2);
+      }
+      return;
+    }
     if(!this.rain) return;
     const c = this.b;
     c.fillStyle = 'rgba(198,222,232,.36)';
@@ -13472,6 +13524,9 @@ const DEV = {
 
     h += row('Signature hole', b('this hole an island', 'DEV.isle()'));
 
+    h += row('Home season', b('by the card', 'DEV.season(-1)') + b('as built', 'DEV.season(0)')
+      + b('autumn', 'DEV.season(1)') + b('winter', 'DEV.season(2)') + b('blossom', 'DEV.season(3)'));
+
     h += row('Battery saver', b('start now', 'saverNow()') + b('in 5s', 'DEV.saverSoon()'));
 
     h += row('Fairy caddie', b('cheer', 'DEV.say(\'cheer\')') + b('sigh', 'DEV.say(\'sigh\')')
@@ -13676,6 +13731,8 @@ const DEV = {
     checkAch(); this.re(); },
   // ---- sound, the fairy, the frame ----
   snd(k, a){ Sfx.unlock(); Sfx.lastSwing = -1; Sfx.play(k, k === 'hole' ? -1 : a); },
+  // a home course in any season (play one first: Home course, or DEV.course)
+  season(k){ SEASON_FORCE = k; Scene.newHole(S.hole, S.tier); hideSheet(); },
   // the hole in play becomes an island green, from the tee
   isle(){ ISLE_FORCE = S.hole; S.yards = S.yardsMax; Scene.newHole(S.hole, S.tier); hideSheet(); },
   // as if nobody had touched the phone for the whole wait, bar five seconds

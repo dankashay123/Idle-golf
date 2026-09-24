@@ -10,7 +10,7 @@ check is for.
 
 - Everything is committed and pushed to `main` (and mirrored on the session
   branch `claude/funny-davinci-7ik9ge`). Nothing is half-built.
-- `node test/run.js` passes all **35 checks** (about 7 minutes; `pacing` runs
+- `node test/run.js` passes all **36 checks** (about 7 minutes; `pacing` runs
   sixteen seeds and takes ~40s on its own).
 - The user confirmed the island works, then said **"the minimap got moved up
   and I can't see the trophy icon anymore; fix that and start on 3"**. Read
@@ -20,7 +20,9 @@ check is for.
   map is a button's place lower again (up under the star only where there is
   no room, e.g. 320), the medal and shop have the cog's black outline, and a
   new honour makes the medal glint instead of fade. `layout` holds the map's
-  place at 400. Then 3 (home course variety) was started.
+  place at 400. Then 3 (home course variety): done as **seasons** (§5).
+  Not yet seen by the user: they are on Card V, and the first season comes
+  at Card XI. The dev menu's "Home season" row shows any.
 - Earlier, a bug report: **"the hole finishes on the shot to the
   green, so the golfer never makes it to the green."** True: a par three is
   often done with the tee shot, and the next hole started before he flew.
@@ -150,6 +152,7 @@ Line numbers are approximate and drift. Search for the name instead.
 | Caddie perks (nine; `now:1` means instant, e.g. Ready Golf) | `tickCaddie`, `cperkPick`, `renderCadPerks` |
 | Daily challenges | `dailyStart`, `dailyTick`, `dayNow` (`DAY_FORCE` overrides it in tests) |
 | Tour tab: Tour Card, The Card, Season, Major of the Week | `renderTour`, `renderSeason`, `renderMajor` |
+| **Home course seasons** | `SEASONS`, `homeSeason`, `seasonLook`, `LOOK_CACHE`, `SEASON_FORCE`, `Scene.look`, `Scene.snow` (drawn in `drawWeather`), the banner in `announceCourse` |
 | **Island greens** (signature holes) | `isIsland`, `ISLE_FORCE`, `Scene.isle` (`bank`, `land`), `Scene.spot`, `Scene.heli`, `B_FLY`, `paintHeli`, `P_LAKE`, the `moat` in `newHole` and `layHazards` |
 | **Battery saver** | `saverOn`, `saverOff`, `saverDue`, `saverDraw`, `saverStats`, `saverFrame`, `saverClub`, `SAVER`, `S.saver`, `SAVER_AUTO`, `touchedAt`; the loop's switch is in `frame`/`frameBody`; markup `#saver` |
 | Golfer drawn at any size in the equipped look (the course and the saver share it) | `paintGolfer` |
@@ -230,6 +233,22 @@ Line numbers are approximate and drift. Search for the name instead.
    never flew. Play anything tied to the end of a hole in real frames too.
 
 ## 5. What the last features do (for debugging them)
+
+### Home course seasons (option 3, "home course variety past Card X")
+- Ten home courses, one per card, so they repeat every ten cards. Now each
+  pass is a season: `homeSeason(cs, tier)` = floor(tier / 10) mod 4: as
+  built (I-X), Autumn (XI-XX), Winter (XXI-XXX), Blossom (XXXI-XL), round
+  again. Only home courses; the season is read from the card being played.
+- `seasonLook(cs, s)` is a copy of the course with its colours mixed toward
+  the season's (turf, rough, sand, water, rock, sky, trees) and its id
+  suffixed `~s`, so `buildTheme`/`courseTrees` cache it apart. `Scene.course`
+  stays the real course (ids, honours, cabinet and checks see no change);
+  `Scene.look` and `Scene.land` are the season's. Winter has 60% of the
+  crowd and falling snow (`Scene.snow`, not in rain). A course already the
+  season's tree colour takes its `alt` (Jade Pagoda: white blossom).
+- The banner reads e.g. "Winter - Home of Tour Card XXIII".
+- Possible follow-ups: more home courses outright, or season touches beyond
+  colour (frozen ponds, leaves blowing, blossom petals falling).
 
 ### Island greens (user asked; the flight was their idea)
 - `isIsland(h)`: on a home course, the last par three of each nine (two a
@@ -499,6 +518,9 @@ Line numbers are approximate and drift. Search for the name instead.
 
 ## 6. Recent history (newest first, one line each)
 
+- Home course seasons: every ten cards a home course comes back in autumn,
+  winter (with snow) or blossom. The map is back a button's place below the
+  star, and the medal is outlined so it shows at night.
 - Island greens: the last par three of each nine on a home course, a level
   lake round the green, balls never land wet, and he flies across on his
   spinning club.
@@ -582,8 +604,8 @@ find. The open menu, under the numbers it was offered with:
    the same pattern (a hole flag in `newHole`, `spot` for where balls may
    lie): a par 5 over a canyon, a green on a plateau, a hole along the
    shore. A whirring sound for the flight is also still to do.
-3. **Home course variety past Card X** (they repeat every ten cards). Could
-   add more home courses, or vary the palette of later repeats.
+3. **More home course variety**: seasons are in (§5). Next could be
+   touches beyond colour (petals, leaves, a frozen pond), or new courses.
 5. **A second music track**: a calmer one for night rounds, another for
    wagers. Ask first whether the current track fits.
 
