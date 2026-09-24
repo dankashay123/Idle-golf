@@ -19,6 +19,9 @@ check is for.
 - The user usually ends a task by asking **"What's next?"** Reply with a short
   plain-language menu, give a recommendation, and wait for them to choose.
   Open ideas are listed in §8.
+- **Applause removed** at the user's request (it never stopped when holes
+  end every few seconds). Only the strike and cup recordings remain; an event
+  win keeps its fanfare. Don't bring a crowd back without asking.
 - **Sound had never worked on the user's iPhone** (Home Screen app). Audio was
   only unlocked on pointerdown, which iOS does not count, and an
   'interrupted' context was never resumed. Fixed in the commit after
@@ -288,8 +291,8 @@ Items 1-6 of the last menu are all done. When the user asks "What's next?",
 offer a fresh short menu. Candidates, in rough order of value:
 
 1. **Tune the sounds by ear.** Ask how the strike, the cup and the applause
-   sound on the phone; swap in another candidate from §5 if one is off. A
-   recorded "ooh" for a near miss and recorded birdsong are both available.
+   sound on the phone; swap in another candidate from §5 if one is off.
+   Recorded birdsong is available. (No crowd sounds: the user removed them.)
 2. **A trophy cabinet** for the majors won and the jackets, and a season
    calendar showing which course is coming up.
 3. **Signature holes on home courses**, such as an island-green par 3 (see

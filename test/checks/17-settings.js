@@ -12,7 +12,7 @@
  *   - no sound plays switched off, during a catch-up, or while muted by QUIET,
  *     and every sound plays without throwing once audio is running
  *   - the course sounds like a course: a strike is a swoosh, a crack, a ring
- *     and a thump; an eagle brings the gallery in far more than a par does;
+ *     and a thump; a holed ball is the cup alone, with no gallery;
  *     and the birds sing on a fine day
  *   - the Home Screen tip turns up once, on an iPhone, after a real session
  */
@@ -71,35 +71,30 @@ module.exports = {
       await (Sfx.ctx && Sfx.ctx.resume ? Sfx.ctx.resume().catch(() => {}) : null);
       o.running = !!Sfx.ctx && Sfx.ctx.state === 'running';
       // the recordings decode in the background once audio has started
-      for (let i = 0; i < 40 && o.running && !(Sfx.recs.strike && Sfx.recs.cup && Sfx.recs.applause); i++)
+      for (let i = 0; i < 40 && o.running && !(Sfx.recs.strike && Sfx.recs.cup); i++)
         await new Promise(r => setTimeout(r, 50));
       o.recs = Object.keys(Sfx.recs).filter(k => Sfx.recs[k]);
       // count what reaches the speaker: tones, bursts of noise and recordings,
-      // and how much gallery there is (applause loudness times its length)
-      let n = 0, crowd = 0; const played = [];
+      let n = 0; const played = [];
       const real = Sfx.tone.bind(Sfx), realH = Sfx.hiss.bind(Sfx), realR = Sfx.rec.bind(Sfx);
       Sfx.tone = function () { n++; return real.apply(null, arguments); };
       Sfx.hiss = function () { n++; return realH.apply(null, arguments); };
       Sfx.rec = function (k, t, vol, rate, len) {
         const ok = realR.apply(null, arguments);
-        if (ok) { n++; played.push(k); if (k === 'applause') crowd += vol * (len || Sfx.recs[k].duration); }
+        if (ok) { n++; played.push(k); }
         return ok;
       };
-      const applause = Sfx.applause.bind(Sfx);
-      Sfx.applause = function (t, k, len, vol) { crowd += k * vol * len / 20; return applause.apply(null, arguments); };
       const all = () => { n = 0; for (const k of ['strike', 'hole', 'ach', 'coin', 'level', 'cup', 'buy'])
         { Sfx.lastSwing = -1; Sfx.play(k, -2); } Sfx.birdT = 0.001; Sfx.tick(0.01); return n; };
       // what each course sound is made of, with sound on
       const count = f => { n = 0; played.length = 0; f(); return n; };
-      const gallery = f => { crowd = 0; f(); return +crowd.toFixed(3); };
       o.parts = { strike: count(() => { Sfx.lastSwing = -1; Sfx.play('strike'); }), strikeRec: played.slice(),
                   holedRec: (count(() => Sfx.play('hole', -1)), played.slice()),
-                  eagle: gallery(() => Sfx.play('hole', -2)), par: gallery(() => Sfx.play('hole', 0)),
                   birds: count(() => { Scene.night = false; Scene.rain = false; Sfx.birdT = 0.001; Sfx.tick(0.01); }) };
       // and the synthesised sounds still stand in for any recording that cannot decode
       const keep = Sfx.recs; Sfx.recs = {};
       o.synth = { strike: count(() => { Sfx.lastSwing = -1; Sfx.play('strike'); }),
-                  eagle: gallery(() => Sfx.play('hole', -2)), par: gallery(() => Sfx.play('hole', 0)) };
+                  holed: count(() => Sfx.play('hole', -2)) };
       Sfx.recs = keep;
       o.errs = [];
       try { o.onCount = all(); } catch (e) { o.errs.push(e.message); }
@@ -108,21 +103,21 @@ module.exports = {
       toggleSound(); o.backOn = S.sound;
       QUIET = true; o.quietCount = all(); QUIET = false;
       Sfx.hold++; o.holdCount = all(); Sfx.hold--;
-      Sfx.tone = real; Sfx.hiss = realH; Sfx.rec = realR; Sfx.applause = applause;
+      Sfx.tone = real; Sfx.hiss = realH; Sfx.rec = realR;
       try { hideSheet(); } catch (e) {}
       return o;
     });
     if (!snd.open) throw new Error('the settings button did not open the settings sheet');
     if (snd.errs.length) throw new Error('playing a sound threw: ' + snd.errs.join('; '));
-    if (snd.running && snd.recs.length !== 3)
-      throw new Error('only ' + JSON.stringify(snd.recs) + ' of the three recordings decoded');
+    if (snd.running && snd.recs.join() !== 'strike,cup')
+      throw new Error('the recordings that decoded were ' + JSON.stringify(snd.recs) + ', not the strike and the cup');
+    // and no gallery: a fast bag holes out every few seconds, and the
+    // applause after each hole never stopped. A holed ball is the cup alone.
     if (snd.running && !(snd.parts.strikeRec.join() === 'strike'
-        && snd.parts.holedRec.join() === 'cup,applause'
-        && snd.parts.par > 0 && snd.parts.eagle > snd.parts.par * 3 && snd.parts.birds >= 1))
-      throw new Error('the course sounds are not all there: ' + JSON.stringify(snd.parts)
-        + ' (a strike is the recorded crack; a holed ball drops in the cup and the gallery claps,'
-        + ' far more for an eagle than a par; birds sing)');
-    if (snd.running && !(snd.synth.strike >= 4 && snd.synth.par > 0 && snd.synth.eagle > snd.synth.par * 3))
+        && snd.parts.holedRec.join() === 'cup' && snd.parts.birds >= 1))
+      throw new Error('the course sounds are not right: ' + JSON.stringify(snd.parts)
+        + ' (a strike is the recorded crack; a holed ball is the cup and nothing else; birds sing)');
+    if (snd.running && !(snd.synth.strike >= 4 && snd.synth.holed >= 1 && snd.synth.holed <= 8))
       throw new Error('without the recordings the stand-in sounds are not all there: ' + JSON.stringify(snd.synth));
     if (snd.running && !(snd.onCount >= 7))
       throw new Error('with audio running only ' + snd.onCount + ' notes reached the speaker for 7 sounds');
