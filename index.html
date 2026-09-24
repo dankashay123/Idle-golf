@@ -2880,7 +2880,17 @@ const B = {
     { id:'perk50', n:'Sponsored',        d:'Use 50 sponsor perks',        m:'perks',  v:50,    r:{k:'gld', v:0.06}, sov:10 },
     { id:'tr15',   n:'Curator',          d:'Find 15 trophies',            m:'troph',  v:15,    r:{k:'pow', v:0.06}, sov:10 },
     { id:'tr30',   n:'The Whole Room',   d:'Find every trophy',           m:'troph',  v:30,    r:{k:'pow', v:0.25}, sov:100 },
-    { id:'ret1',   n:'Signed Off',       d:'Retire once',                 m:'retire', v:1,     r:{k:'tick', v:2}, sov:10 }
+    { id:'ret1',   n:'Signed Off',       d:'Retire once',                 m:'retire', v:1,     r:{k:'tick', v:2}, sov:10 },
+    // the newer things on the course: doglegs, the wind, the fairy, home
+    // courses and the majors of the week
+    // sized off half an hour of real play: about 100 shots round a corner, and
+    // 18 birdies in one crosswind round and none in the next five
+    { id:'dogleg', n:'Round the Corner', d:'Carry 250 shots round a dogleg', m:'dogleg', v:250, r:{k:'tick', v:2}, sov:10 },
+    { id:'windy',  n:'Wind Cheater',     d:'Birdie 100 holes in 15\u00a0mph of wind', m:'windBird', v:100, r:{k:'pow', v:0.03}, sov:10 },
+    { id:'twin',   n:'Matching Pair',    d:'Dress your caddie to match you', m:'twin',  v:1,     r:{k:'tick', v:2}, sov:5 },
+    { id:'homes',  n:'Home Tour',        d:'Play all ten home courses',   m:'homes',  v:10,    r:{k:'gld', v:0.05}, sov:10 },
+    { id:'major1', n:'Major Winner',     d:'Win a major of the week',     m:'slam',   v:1,     r:{k:'tick', v:3}, sov:10 },
+    { id:'staff',  n:'Full Staff',       d:'Own every caddie perk',       m:'cperks', v:9,     r:{k:'gld', v:0.04}, sov:10 }
   ],
   // Honours that come round again. Steps are set off how fast each thing turns
   // up late in a career, not early: a floor-bound bag cards an eagle on nearly
@@ -3386,6 +3396,9 @@ function openEvent(){
     }
   }
   S.evCourse = { t, id };
+  // the home courses you have played an event on, for Home Tour
+  const cs = courseById(id);
+  if(cs && cs.slot === 'home'){ S.homes = S.homes || {}; S.homes[id] = 1; }
 }
 
 /* ---- chaotic conditions, drawn per round ---- */
@@ -3433,7 +3446,7 @@ function defaultState(){ return {
   nine: null, bestNine: undefined, ninesWon: 0,
   styleOwn: {}, outfit: 'classic', trail: 'plain',
   rival: null, form: undefined,
-  evCourse: null, weekly: null, majorWins: {}
+  evCourse: null, weekly: null, majorWins: {}, homes: {}
 }; }
 let S = defaultState();
 function initState(){
@@ -3492,6 +3505,8 @@ function initState(){
      || !COURSE_WEEK.some(c => c.id === S.weekly.id))) S.weekly = null;
   if(!S.majorWins || typeof S.majorWins !== 'object') S.majorWins = {};
   for(const k in S.majorWins) if(!COURSE_WEEK.some(c => c.id === k) || !(S.majorWins[k] > 0)) delete S.majorWins[k];
+  if(!S.homes || typeof S.homes !== 'object') S.homes = {};
+  for(const k in S.homes){ const c = courseById(k); if(!c || c.slot !== 'home') delete S.homes[k]; }
   if(!S.styleOwn || typeof S.styleOwn !== 'object') S.styleOwn = {};
   if(!styleOwned('o', S.outfit)) S.outfit = 'classic';
   if(!styleOwned('t', S.trail)) S.trail = 'plain';
@@ -3695,6 +3710,9 @@ function achMetric(m){
     case 'nines':  return S.ninesWon || 0;
     case 'events': return S.eventsPlayed || 0;
     case 'slam':   return Object.keys(S.majorWins || {}).length;
+    case 'homes':  return Object.keys(S.homes || {}).length;
+    case 'cperks': return B.CPERKS.filter(p => S.cperkOwn && S.cperkOwn[p.id]).length;
+    case 'twin':   return S.caddie === S.outfit && styleOwned('c', S.caddie) ? 1 : 0;
     case 'troph':  return trophiesFound();
     case 'mst':    return derive().mst;
     case 'set6e':  return B.SLOTS.reduce((n, s) => n + (S.equip[s.id] && S.equip[s.id].rar >= 3 ? 1 : 0), 0);
@@ -5490,6 +5508,7 @@ function finishHole(D){
   if(N.n >= 9) resolveNine();
   if(sc.d === -4) S.aces++;
   if(sc.d <= -1) bump('birdie');
+  if(sc.d <= -1 && Scene.windMph() >= 15) bump('windBird');
   if(sc.d <= -2) bump('eagle');
   if(sc.d >= 4) bump('snow');
   if(sc.d < S.bestScore) S.bestScore = sc.d;
@@ -9728,6 +9747,12 @@ const Scene = {
     const dist = p.target !== undefined ? Math.max(3, p.target - this.camD)   // an aimed shot flies to its mark
                : reach !== null ? Math.max(0.6, reach)
                : 14 + Math.random()*9;
+    // round a dogleg: from short of a designed corner to past it, in one
+    if(reach !== null && p.target === undefined && this.curve && !QUIET){
+      const d1 = this.camD + dist;
+      if(this.curve.segs.some(g => Math.abs(g.a) >= 8 && this.camD <= g.c - g.w*0.5 && d1 >= g.c + g.w*0.5))
+        bump('dogleg');
+    }
     this.balls.push({ d0:this.camD, dist,
                       // a short one is quick and low, a long one hangs
                       t:0, dur: 0.34 + Math.min(0.32, dist * 0.016) + Math.random()*0.08,
