@@ -9,7 +9,8 @@ Update it at the end of any sizeable piece of work.
 
 ## Standing instructions
 
-- **Work on `main`.** Commit and push without asking.
+- **Work on `main`.** Commit and push without asking. If the session names a
+  branch of its own, push there as well.
 - **Fix what needs fixing.** If something comes up mid-task that is broken or
   wrong, fix it then and there rather than reporting it and waiting.
 - **Explain changes in plain language.** Assume the reader is not a coder: no
@@ -29,6 +30,10 @@ Update it at the end of any sizeable piece of work.
   when the user has asked for action, and say which reading you took.
 - **End a finished task ready for "What's next?"**: the user usually asks it.
   Answer with a short plain menu and a recommendation (ideas in `HANDOFF.md`).
+- **New scenery must never show through the ground or float.** The user
+  looks closely and asked for "no clipping anywhere and no visual bugs".
+  Screenshot every new thing on the course from several places down the
+  hole, and extend the `sigview` check to anything drawn over the field.
 - Never put a model name in a commit, a code comment or a file.
 
 ## Checks
@@ -36,7 +41,11 @@ Update it at the end of any sizeable piece of work.
 `node test/run.js` runs all of them; `node test/run.js <name>` runs one.
 `test/README.md` says what each one is for and what bug it was written after.
 
-Two rules that have cost real time here:
+Setup: `npm install --no-save playwright@1.56.1` (it matches the Chromium
+already installed; never run `playwright install`). A full run takes about
+eight minutes, so start it in the background.
+
+Rules that have cost real time here:
 
 - **Measure across a sweep, never one sample.** Weather, gear rolls and Tour
   Cards all vary, and a single run reports noise as a result. Compare many
@@ -44,6 +53,9 @@ Two rules that have cost real time here:
 - **`chaosFor` and `courseElFor` hash on the tier.** Comparing two tiers
   silently compares two different weather sequences. Pin the weather on both
   sides of any before/after.
+- **Some regular courses follow the real month's season.** A change to
+  seasons or colours can pass today and fail in December: run the suite with
+  the month pinned to each season (`HANDOFF.md` §4, rule 20).
 
 A check that fails once is not a flake. Chase it: twice it has been the
 check's own random setup, and that needs fixing as much as a game bug does.

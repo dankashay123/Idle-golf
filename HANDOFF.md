@@ -8,133 +8,55 @@ check is for.
 
 ## 1. Where things stand
 
-- Everything is committed and pushed to `main` (and mirrored on the session
+- Everything is committed and pushed to `main` (mirrored on the session
   branch `claude/funny-davinci-7ik9ge`). Nothing is half-built.
-- `node test/run.js` passes all **44 checks** (about 7 minutes; `pacing` runs
-  sixteen seeds and takes ~40s on its own).
-- Latest: **"the canyon bridge is clipping through the hill; add an effect
-  when the caddie's perk goes off (arms up, an aura per buff coming down on
-  the golfer like a blessing) and a countdown right of the cog, no box,
-  '+20% tempo for Xs', fading out; and go ahead with everything you
-  suggested; no clipping or visual bugs on new holes"**. All done, not yet
-  seen by the user: the bridge fix (`pxLineClip`/`fillClip`, check
-  `sigview`), the blessing and countdown (§5 "Caddie blessing"), volume
-  sliders, seasons on six regular stops by the real month, the fourth
-  signature hole **Sea Stack**, and the Trophy Room record rows (§5).
-- Before: **"move the minimap down to the top of the bottom menus, above the
-  expand arrow, and put the wind and course text on top of it"**. Done: the
-  right side is, from the bottom up, the pull tab, the hole map, the words
-  (§5, "The corner"). Not yet seen by the user.
-- Before: **"all of those please"** to the menu: a signature hole on the
-  other courses, honours for the signature holes, sounds for the seasons, and
-  a settings switch for the second track. All four done (§5: "Signature holes
-  everywhere", "Signature honours", the seasons' sounds, Night Music).
-- Before: **"sounds for the signature holes, more seasonal touches, a second
-  music track, then the third signature hole"**. Sounds and seasons done
-  (§5 under "Canyon carry" and "Home course seasons"); the second music
-  track is in (§1 below), and the third signature hole, **Stepping Stones**
-  (§5), is in. The plateau green was set aside: the ground near the camera
-  is eased flat on purpose (`groundH`), so a cliff up close barely shows.
-- Before: **"do 2b; and rework the pixel text, condensed, so the wind and
-  course lines in the bottom right take less room"**. Done (§5, "Canyon
-  carry" and "The small pixel face"). Not yet seen by the user.
-- Before: **"the trophy icon is still missing" turned out to mean the empty
-  space on the right between the star and the map. I started putting a
-  trophy back there (opening the honours); the user stopped it: honours stay
-  in the medal, and **the star moves to the left column under the medal**.
-  Done: the left column is settings, shop, medal, star (`#perkBtn` is in
-  `#hudLeft` now); the map sits on the right at a fixed 37% (clear of the
-  toasts), since there is nothing above it. `layout` checks the star is
-  under the medal and the map stays out of the toasts' corner.
-- Before: **"fix the text where it says aurora front and the wind speed, cut
-  off behind the menu expand button."** The corner stack started 4.5% of the
-  picture up from the bottom, which on a tall phone is less than the pull
-  tab's 24 screen px. `Scene.tabR` (worked out in `resize` from the tab's
-  real height) now sets where it starts (`tabRows()`); on a narrow picture a
-  two-part forecast goes on two lines (`hudRoom`); the map is placed per
-  hole with room for that hole's lines (`hudLines`), at a position fixed per
-  stage size so it never jumps, only shortens (or hides if under 0.8 of its
-  width). `layout` checks the lowest line ends above the tab.
-- Before that, the user confirmed the island works, then said **"the minimap got moved up
-  and I can't see the trophy icon anymore; fix that and start on 3"**. Read
-  as: the map slid up under the star when the Trophy Room's button left the
-  right side (commit 4609031), and the medal that replaced it was too dim at
-  night (it faded in and out for a new honour, with no outline). Fixed: the
-  map is a button's place lower again (up under the star only where there is
-  no room, e.g. 320), the medal and shop have the cog's black outline, and a
-  new honour makes the medal glint instead of fade. `layout` holds the map's
-  place at 400. Then 3 (home course variety): done as **seasons** (§5).
-  Not yet seen by the user: they are on Card V, and the first season comes
-  at Card XI. The dev menu's "Home season" row shows any.
-- Earlier, a bug report: **"the hole finishes on the shot to the
-  green, so the golfer never makes it to the green."** True: a par three is
-  often done with the tee shot, and the next hole started before he flew.
-  Fixed (§5, "Island greens", the hold). Ask them to look again.
-- Before it: **"do 2, signature holes"**, with the user's own idea:
-  to reach an island green the golfer flies over the water, spinning his
-  club over his head like a helicopter. Done (§5, "Island greens"). Not yet
-  seen on their phone.
-- Before it: **"do 4, the battery saver": after a while
-  untouched, a black screen saying battery saver is on, with everything that
-  happened meanwhile (holes, purse and so on) and a little golfer in the
-  equipped look hitting balls from left to right. Mid-task they added: **a
-  setting to force it on**. Done (§5, "Battery saver"). Offered as a
-  recommendation and asked for, but not yet seen on their phone.
-- Before it, the session opened by screenshotting the auto-climb button and
-  asking the two questions in §8; **they did not answer them**, so ask again
-  if it fits.
-- The last request before that was "update the notes for another handoff" (this file,
-  `CLAUDE.md`, `test/README.md`). Before it, in order:
-  - "Why does the yardage tick down when the ball isn't being hit, and does
-    tempo still do anything?" Answered (tempo does: carry is power x tempo;
-    the number followed the swings underneath, not the picture), then fixed
-    at their request: the yardage now follows the ball on screen (§5).
-  - "Fix the alignment of the auto-climb button": it is now centred on the
-    readout. They sent a screenshot; I read it as "looks dropped below the
-    box". **Not yet confirmed by the user**, so ask if it looks right.
-  - "Trophy Room as an icon under the shop (not a trophy), auto-climb to the
-    right of the readout, and a button in the gear area to auto salvage and
-    mass salvage by rarity". Done (§5, "Stage buttons" and "Scrapping"). The
-    game's word is **scrap**, not salvage; the button and sheet say Scrap.
-- The request before it was "go through everything for clutter and things buried
-  in menus; consolidate; stage icons are fine (like a trophy room: things to
-  look at and rewards, no upgrades); and add rewards to the trophy case".
-  Done (§5, "The Trophy Room"): the trophy on the course opens a **Trophy
-  Room** (Today, Cabinet, Honours) with a red dot when something is waiting,
-  the case pays sovereigns, the free sovereigns and today's challenges moved
-  there, the shop lost its Buy tab, the old legacy "Trophy Room" is now
-  **Heirlooms**, and the Career tab points at retiring when it is worth it.
-- Before that: the trophy cabinet and season calendar, a polish pass and the
-  dev menu rows (§5).
-- The user usually ends a task by asking **"What's next?"** Reply with a short
-  plain-language menu, give a recommendation, and wait for them to choose.
-  Open ideas are listed in §8.
-- **Sound works on the user's iPhone now** (they confirmed). It had never
-  worked: audio was only unlocked on pointerdown, which iOS does not count,
-  and an 'interrupted' context was never resumed.
-- **Strike and cup are turned right down** at the user's request (strike
-  0.09, pure 0.12, cup 0.15). Keep them subtle.
-- **Applause was removed** at the user's request (it never stopped when holes
+- `node test/run.js` passes all **44 checks** (about 8 minutes).
+- **Last request**: "the canyon bridge is clipping through the hill; when the
+  caddie's perk goes off, arms up and an aura per buff coming down on the
+  golfer like a blessing; a countdown right of the cog, no box, '+20% tempo
+  for Xs', fading out; and go ahead with everything you suggested; no
+  clipping or visual bugs on new holes". All done:
+  - the bridge fix (every signature hole now checked by `sigview`)
+  - the blessing and countdown (§5 "Caddie blessing")
+  - volume sliders, seasons on six regular stops by the real month, the
+    fourth signature hole **Sea Stack**, and signature rows in the Trophy
+    Room's Record (§5 "Volume sliders, calendar seasons, Sea Stack")
+  - The user was sent screenshots but has **not yet seen these on the
+    phone**. I offered the §8 menu, recommending the signature hole of the
+    week; no answer yet.
+- **Waiting on the user** (ask when it fits, one or two at a time):
+  - Does the second music track (night and wagers) fit? Does the town theme?
+  - Does the 2 min battery saver wait suit?
+  - Is the auto-climb button's alignment right?
+  - They are on about Card V, so they have not seen a home course season
+    (from Card XI); the regular stops are in autumn now (September).
+- The user usually ends a task by asking **"What's next?"**: a short plain
+  menu with a recommendation (§8), then wait for the choice.
+
+### Things the user asked for that must stay
+
+- **Honours stay in the medal** (left column: settings, shop, medal, star).
+  They stopped me putting a trophy back on the right.
+- The right side, from the bottom up: pull tab, hole map, then the wind and
+  weather words standing on the map.
+- **Strike and cup sounds are turned right down** (strike 0.09, pure 0.12,
+  cup 0.15). Keep them subtle.
+- **No applause**: removed at their request (it never stopped when holes
   end every few seconds). Don't bring a crowd back without asking.
-- **Second music track**: "Meadow Thoughts" by ecrivain (CC0, OpenGameArt),
-  its first two minutes, mono 40 kbps, `rec-music2` (~800 KB of base64; the
-  file is now ~2.2 MB). Picked unheard by measurement from four CC0
-  candidates as the calmest short one (fewest onsets a second, soft); Sunset
-  Plains was calmer but 5.5 minutes. `Sfx.musicTrack()` plays it on night
-  rounds and in wagers (`MUS_GAIN` 0.85, a shade under the town theme; both
-  measured at about -15 LUFS); a change fades the old one over 2s
-  (`musicFade`). **Ask the user whether it fits.** Settings has a **Night
-  Music** switch (`S.music2`, 0 is off: the town theme all the time,
-  `toggleMusic2`). `music` checks both.
-- **Background music**: "Town Theme RPG" by cynicmusic (CC0, OpenGameArt),
-  mono 40 kbps, `rec-music` (~650 KB of the file). `Sfx.musicTick` loops it by
-  overlapping plays by `MUS_XF`; volume `MUS_VOL` 0.14; its own Music switch
-  (`S.music`). Chosen unheard; the user has not said whether it fits. Other
-  CC0 candidates: Meadow Thoughts, The Field Of Dreams, Summer Park 8bit,
-  Apple Cider, Sunset Plains.
-- **The sessions cannot listen to audio.** Pick by measuring (spectrograms
-  via the static ffmpeg, levels by rendering through an OfflineAudioContext)
-  and ask the user.
+- The island crossing (flying on the spinning club) was **their idea**.
+- The word is **scrap**, not salvage; old legacy finds are **heirlooms**.
+
+### Sound and music
+
+- Sound works on the iPhone (unlocked on touchend/click, an 'interrupted'
+  context resumed).
+- Music: "Town Theme RPG" by cynicmusic (`rec-music`) by day; "Meadow
+  Thoughts" by ecrivain (`rec-music2`, first two minutes) at night and in
+  wagers. Both CC0 from OpenGameArt, mono 40 kbps base64 (the file is
+  ~2.2 MB because of them). Switches: Sound, Music, Night Music; sliders
+  under Sound and Music.
+- **Sessions cannot listen to audio.** Pick by measuring (spectrograms via a
+  static ffmpeg, levels through an OfflineAudioContext) and ask the user.
 
 ## 2. Working with this user
 
@@ -152,17 +74,13 @@ check is for.
 - They sometimes change their mind. For example, they asked to rename the
   "Balls" shelf to "Auras" and then asked for it back. Do what the latest
   message says.
-- Commit trailer: use the one your own session's system prompt gives. This
-  session's was, exactly (the session link changes with each session):
-  ```
-  Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
-  Claude-Session: https://claude.ai/code/session_01MKaizokfiN7G1KiqhJymcv
-  ```
-  Never put a model name in a commit, a code comment or any file.
+- Commit trailer: use exactly the one your own session's system prompt
+  gives (it changes with each session). Never copy a model name into a code
+  comment or any file, this one included.
 
 ## 3. The project
 
-- **The whole game is `index.html`** (about 14.1k lines, 1.4 MB with the sounds and the music): markup, CSS and one
+- **The whole game is `index.html`** (about 15k lines, 2.2 MB with the sounds and the music): markup, CSS and one
   classic script. There is no build step.
 - Play it over http (`npm start`, then http://localhost:8080). Opening the
   file straight from disk blocks `localStorage`, so it never saves.
@@ -202,11 +120,14 @@ Line numbers are approximate and drift. Search for the name instead.
 | Palettes built from a course | `buildTheme`, `courseTrees` |
 | **Landmarks** | `drawLandmark` (called from `Scene.buildRidge`) |
 | Renderer | `const Scene = {`. Key members: `newHole`, `newDepthsHole`, `proj`, `curveAt`/`bendOff` (doglegs), `layHazards`, `layProps`, `buildSky`, `buildRidge`, `buildWood`, `drawGround`, `drawGolfer`, `fairyBox`/`drawCaddie`, `swing`/`walking2ball`/`launch`, `drawBalls`, `drawLyingBall`, `drawMap` |
-| Caddie perks (nine; `now:1` means instant, e.g. Ready Golf) | `tickCaddie`, `cperkPick`, `renderCadPerks` |
+| Caddie perks (nine; `now:1` means instant, e.g. Ready Golf); each has `col` and a short line `s` | `tickCaddie`, `cperkPick`, `renderCadPerks`; the blessing `Scene.drawBless`, the countdown `buffTip` (`#buffTip` in `#setRow`) |
+| Clipping to the ground in front | `Scene.clipAt(d)`, `fillClip`, `pxLineClip` |
+| Volume | `Sfx.out`, `Sfx.master` (effects), `Sfx.musBus`, `Sfx.setVol`, `setVol`, `S.volFx`, `S.volMus` |
 | Daily challenges | `dailyStart`, `dailyTick`, `dayNow` (`DAY_FORCE` overrides it in tests) |
 | Tour tab: Tour Card, The Card, Season, Major of the Week | `renderTour`, `renderSeason`, `renderMajor` |
-| **Home course seasons** | `SEASONS`, `homeSeason`, `seasonLook`, `LOOK_CACHE`, `SEASON_FORCE`, `Scene.look`, `Scene.snow` (drawn in `drawWeather`), the banner in `announceCourse` |
-| **Island greens** (signature holes) | `isIsland`, `ISLE_FORCE`, `Scene.isle` (`bank`, `land`), `Scene.spot`, `Scene.heli`, `B_FLY`, `paintHeli`, `P_LAKE`, the `moat` in `newHole` and `layHazards` |
+| **Seasons**: home courses by the card, six regular stops by the real month | `SEASONS`, `homeSeason`, `courseSeason`, `CAL_SEASONED`, `MONTH_SEASON`, `monthNow`, `seasonLook`, `LOOK_CACHE`, `SEASON_FORCE`, `Scene.look`, `Scene.snow` (drawn in `drawWeather`), the banner in `announceCourse` |
+| **Signature holes** (island, canyon, stones, sea stack) | `sigHole`, `sigKind`, `SIG_NAME`, `B.SIG_HOLE`, `HOME_PIER`, the `*_FORCE` values, `drawBridge`, `drawStones`, `drawPier`, `isleWait` (the hold), `sigScore` (honours and `S.sigRec`), `renderRecord` |
+| Island greens in particular | `isIsland`, `ISLE_FORCE`, `Scene.isle` (`bank`, `land`), `Scene.spot`, `Scene.heli`, `B_FLY`, `paintHeli`, `P_LAKE`, the `moat` in `newHole` and `layHazards` |
 | **Battery saver** | `saverOn`, `saverOff`, `saverDue`, `saverDraw`, `saverStats`, `saverFrame`, `saverClub`, `SAVER`, `S.saver`, `SAVER_AUTO`, `touchedAt`; the loop's switch is in `frame`/`frameBody`; markup `#saver` |
 | Golfer drawn at any size in the equipped look (the course and the saver share it) | `paintGolfer` |
 | Developer menu (hold the course name still for 1.5s) | `const DEV = {`. `DEV.course(i)` pins any course to the next event (a major of the week is set up as the major). The read panel shows the audio state and the auto-climb judgement; rows for the major of the week, the season, the cabinet, sound and music, the fairy, caddie perks, the new honours, and a frame-time readout (`DEV_FPS`) |
@@ -280,6 +201,10 @@ Line numbers are approximate and drift. Search for the name instead.
 15. Check on-stage changes at 320, 360, 390, 430 and on its side (740x360,
    844x390). The user's phone is an iPhone; 320 is the narrow edge case
    where the stage falls back (auto-climb drops under the readout).
+16. **A check that freezes the round cannot see how a hole ends.** The
+   island's first check stopped the round to film the flight, so the hole
+   could never end early; in real play it ended with the tee shot and he
+   never flew. Play anything tied to the end of a hole in real frames too.
 17. **Frame-time checks time the quickest of several blocks.** `skins`
    averaged 300 frames against a 1.5ms budget with the typical frame at
    1.3ms; a browser pause put it over one run in three, on old code as much
@@ -290,10 +215,21 @@ Line numbers are approximate and drift. Search for the name instead.
    second call; the round kept earning in between and the two differed by a
    hole's purse one run in forty. Anything the running game changes is
    compared inside one `page.evaluate`.
-16. **A check that freezes the round cannot see how a hole ends.** The
-   island's first check stopped the round to film the flight, so the hole
-   could never end early; in real play it ended with the tee shot and he
-   never flew. Play anything tied to the end of a hole in real frames too.
+19. **Anything drawn over the field keeps to the ground's clip line.** The
+   bridge, stones, pier and rocks are drawn after the ground, so a hill in
+   front does not hide them by itself. Use `fillClip` / `pxLineClip` with
+   `Scene.clipAt(d)` of the thing's own distance; a long line (a rope, a
+   rail) is drawn in short lengths, each cut at its own farther end, or its
+   near half is lost. `sigview` diffs every such hole with and without them.
+20. **The regular stops' season follows the real month**, so a check that
+   draws them can pass in September and fail in December. After touching
+   seasons or anything they colour, run the suite with `monthNow` pinned to
+   January, April, July and October (a temporary patch); only the "today"
+   line of `seasons` should move. Checks pin `DAY_FORCE` to be sure.
+21. **The suite picks up any check file present when it reaches it**: don't
+   write a new check while a full run is going, or it runs half-built.
+22. **Some checks count rows** (`smoke` counts the Record's): adding a row
+   to a sheet means updating that count.
 
 ## 5. What the last features do (for debugging them)
 
@@ -789,15 +725,19 @@ Line numbers are approximate and drift. Search for the name instead.
 
 ## 8. What to offer next
 
-Everything asked for is done. Ask how the latest land on the phone: the
-blessing and the countdown by the cog, the sliders, the autumn on the
+Everything asked for is done. First ask how the latest look on the phone:
+the blessing and the countdown by the cog, the sliders, autumn on the
 regular stops, and the Sea Stack (Coastal Classic, Seaside Open, Harbour
-Lights hole 7ish).
+Lights' front nine; dev menu "sea stack" forces one).
 
-Ideas not yet offered:
-1. **A signature hole of the week**: one kind picked each week pays double
-   and is marked on the map.
-2. **Seasonal music**: a short sting when a course's season changes.
-3. **Caddie perk upgrades**: longer or stronger blessings bought with
+The menu last offered (the user has not picked yet):
+1. **Signature hole of the week** (recommended): one kind pays double for
+   the week and is marked on the map.
+2. **Caddie perk upgrades**: longer or stronger blessings, bought with
    sovereigns.
-4. **Weather on the pier**: spray over the deck in a crosswind, gulls.
+3. **Life on the pier**: sea spray over the deck in a crosswind, and gulls.
+4. **A short chime when a course's season turns.**
+
+Other ideas: a fifth signature hole (a plateau green was set aside: the
+ground near the camera is eased flat, so a cliff barely shows); a Record row
+for seasons seen.
