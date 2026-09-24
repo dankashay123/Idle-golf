@@ -10,9 +10,13 @@ check is for.
 
 - Everything is committed and pushed to `main` (and mirrored on the session
   branch `claude/funny-davinci-7ik9ge`). Nothing is half-built.
-- `node test/run.js` passes all **34 checks** (about 7 minutes; `pacing` runs
+- `node test/run.js` passes all **35 checks** (about 7 minutes; `pacing` runs
   sixteen seeds and takes ~40s on its own).
-- The last request was **"do 4, the battery saver"**: after a while
+- The last request was **"do 2, signature holes"**, with the user's own idea:
+  to reach an island green the golfer flies over the water, spinning his
+  club over his head like a helicopter. Done (§5, "Island greens"). Not yet
+  seen on their phone.
+- Before it: **"do 4, the battery saver": after a while
   untouched, a black screen saying battery saver is on, with everything that
   happened meanwhile (holes, purse and so on) and a little golfer in the
   equipped look hitting balls from left to right. Mid-task they added: **a
@@ -133,6 +137,7 @@ Line numbers are approximate and drift. Search for the name instead.
 | Caddie perks (nine; `now:1` means instant, e.g. Ready Golf) | `tickCaddie`, `cperkPick`, `renderCadPerks` |
 | Daily challenges | `dailyStart`, `dailyTick`, `dayNow` (`DAY_FORCE` overrides it in tests) |
 | Tour tab: Tour Card, The Card, Season, Major of the Week | `renderTour`, `renderSeason`, `renderMajor` |
+| **Island greens** (signature holes) | `isIsland`, `ISLE_FORCE`, `Scene.isle` (`bank`, `land`), `Scene.spot`, `Scene.heli`, `B_FLY`, `paintHeli`, `P_LAKE`, the `moat` in `newHole` and `layHazards` |
 | **Battery saver** | `saverOn`, `saverOff`, `saverDue`, `saverDraw`, `saverStats`, `saverFrame`, `saverClub`, `SAVER`, `S.saver`, `SAVER_AUTO`, `touchedAt`; the loop's switch is in `frame`/`frameBody`; markup `#saver` |
 | Golfer drawn at any size in the equipped look (the course and the saver share it) | `paintGolfer` |
 | Developer menu (hold the course name still for 1.5s) | `const DEV = {`. `DEV.course(i)` pins any course to the next event (a major of the week is set up as the major). The read panel shows the audio state and the auto-climb judgement; rows for the major of the week, the season, the cabinet, sound and music, the fairy, caddie perks, the new honours, and a frame-time readout (`DEV_FPS`) |
@@ -208,6 +213,33 @@ Line numbers are approximate and drift. Search for the name instead.
    where the stage falls back (auto-climb drops under the readout).
 
 ## 5. What the last features do (for debugging them)
+
+### Island greens (user asked; the flight was their idea)
+- `isIsland(h)`: on a home course, the last par three of each nine (two a
+  round, eight an event). The tee toasts "Signature Hole · Island Green".
+  Dev menu: "Signature hole" > this hole an island (`ISLE_FORCE`).
+- `newHole` on an island: no bend, level ground (`roll = 0`), one `lake`
+  water centred at LEN+4 (rd 30, rx 6.4) passed to `layHazards` as `moat`.
+  `Scene.isle = { bank, land }`: bank is the last dry ground on his line,
+  land is LEN-6 on the green.
+- **The lake is drawn level** (`P_LAKE`, depth 0, short banks). Sunk like a
+  pond, far water lands lower on the screen than nearer ground, and at this
+  size it painted the green out entirely. The green is drawn over the lake by
+  the ground pass (it comes after hazards), and so is the hole map now (it
+  used to draw the green first). Ripples skip the green.
+- **Where balls lie**: `Scene.spot(progress)` is the drawn distance. On an
+  island a spot inside the water snaps to the bank (first half) or the island
+  (second half). Used for the shot's length in `launch` and the camera's goal.
+  `shownYards` is unchanged: it can read a little long while a ball sits on
+  the bank, and holds the real yardage while one sits on the island early.
+- **The flight**: the camera stops at the bank, then while the goal is past
+  it moves at a steady `B_FLY` (11 units/s, about 1.9s across) instead of
+  easing. `Scene.heli` is how far across (0 when not flying);
+  `drawGolfer` draws `paintHeli` instead: from behind, legs hanging, arms up,
+  the club flat and spinning with a faint ring, a shadow on the water, and a
+  lift of sin(pi x heli). The fairy flies alongside. No sound for it yet.
+- The `hazards` check allows the lake and requires water all round the
+  green; the `island` check holds the rest.
 
 ### Battery saver (user asked)
 - Settings row **Battery Saver**: a button cycling Off / 1 / 2 / 5 min
@@ -439,6 +471,9 @@ Line numbers are approximate and drift. Search for the name instead.
 
 ## 6. Recent history (newest first, one line each)
 
+- Island greens: the last par three of each nine on a home course, a level
+  lake round the green, balls never land wet, and he flies across on his
+  spinning club.
 - Battery saver: black screen with a tally and a little golfer after a
   while untouched, a setting for the wait and a Start button; the golfer's
   drawing shared between the course and the saver (`paintGolfer`).
@@ -507,16 +542,18 @@ Line numbers are approximate and drift. Search for the name instead.
 
 ## 8. What to offer next
 
-Everything asked for is done. Ask how the battery saver feels on the phone
-(is 2 min the right default wait; is the tally what they wanted). Two older
+Everything asked for is done. Ask how the island hole and the flight look
+on the phone (they come round twice a round on a home course; the dev menu
+can make any hole one), and how the battery saver feels (is 2 min the right
+default wait; is the tally what they wanted). Two older
 questions are still unanswered: does the auto-climb button sit where they
 wanted, and are the Trophy Room (medal, red dot) and the Scrap sheet easy to
 find. The open menu, under the numbers it was offered with:
 
-2. **Signature holes on home courses**, such as an island-green par 3. Be
-   careful: shots are drawn landing where the yardage says, so an island hole
-   needs landing positions that are never in the water. The Depths "island"
-   mode has a moat you can study.
+2. **More signature holes**: the island is the first. Others could follow
+   the same pattern (a hole flag in `newHole`, `spot` for where balls may
+   lie): a par 5 over a canyon, a green on a plateau, a hole along the
+   shore. A whirring sound for the flight is also still to do.
 3. **Home course variety past Card X** (they repeat every ten cards). Could
    add more home courses, or vary the palette of later repeats.
 5. **A second music track**: a calmer one for night rounds, another for

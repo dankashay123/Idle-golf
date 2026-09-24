@@ -1,0 +1,119 @@
+/* Signature holes: an island green on the home courses.
+ *
+ * On a home course the last par three of each nine is played to a green
+ * alone in a lake. Shots are drawn landing where the yardage says, so an
+ * island needs landing places that are never in the water, and the golfer
+ * crosses to it on his club, spun over his head like a rotor.
+ *
+ *   - which holes: par threes, the last of their nine, on home courses only
+ *   - no ball ever comes down in the water, and where one lies only ever moves
+ *     on down the hole
+ *   - he walks to the bank and flies the rest, at the flight's pace, and never
+ *     stands or walks on the water
+ *   - the green is drawn on top of its lake (a sunken pond that size painted
+ *     the green out)
+ *   - the tee says it is a signature hole
+ */
+'use strict';
+module.exports = {
+  name: 'island',
+  async run(page) {
+    const r = await page.evaluate(() => {
+      const SNAP = JSON.stringify(S), o = {};
+      // in the lake and not on the green, which is drawn over the lake (the
+      // apron as drawn: an ellipse 8.6 long and 3.05 wide at the pin)
+      const wet = (d, x) => { const w = Scene.water, sp = w && Scene.hazSpan(w, d);
+        const gd = (d - LEN) / 8.6, gx = x / 3.05;
+        return !!sp && x > w.x - sp.l && x < w.x + sp.r && gd * gd + gx * gx >= 1; };
+      try {
+        // ---- which holes ----------------------------------------------------
+        o.bad = []; o.home = 0; o.away = 0;
+        for (let ci = 0; ci < B.COURSE.length; ci++) {
+          DEV.course(ci); hideSheet();
+          const cs = B.COURSE[ci], t = tournamentOf(S.hole), first = (t - 1) * B.ROUND * B.DAYS + 1;
+          for (let h = first; h < first + B.ROUND * B.DAYS; h++) {
+            if (courseFor(tournamentOf(h)).id !== cs.id) throw new Error('hole ' + h + ' is not on ' + cs.id);
+            if (!isIsland(h)) continue;
+            if (cs.slot === 'home') o.home++; else { o.away++; continue; }
+            const r0 = holeInRound(h), end = r0 <= 9 ? 9 : 18;
+            let later = 0; for (let k = r0 + 1; k <= end; k++) if (parOf(h + k - r0) === 3) later++;
+            if (parOf(h) !== 3 || later) o.bad.push(cs.id + ' hole ' + r0 + ' par ' + parOf(h) + (later ? ', not the last par three of its nine' : ''));
+          }
+        }
+        o.homes = B.COURSE.filter(c => c.slot === 'home').length;
+
+        // ---- where balls lie, and the walk ------------------------------------
+        QUIET = true;
+        window.__step = window.step; window.step = () => {};
+        ISLE_FORCE = S.hole; S.yards = S.yardsMax; Scene.newHole(S.hole, S.tier);
+        const I = Scene.isle;
+        o.isle = !!I && !!Scene.water && !!Scene.water.lake;
+        o.wetSpot = []; o.back = 0;
+        let prev = -1;
+        for (let i = 0; i <= 1000; i++) {
+          const d = Scene.spot(i / 1000);
+          if (wet(d, 0) || wet(d, -0.3)) o.wetSpot.push((i / 10) + '% at ' + d.toFixed(1));
+          if (d < prev - 1e-9) o.back++;
+          prev = d;
+        }
+        o.bankDry = !wet(I.bank, 0); o.landDry = !wet(I.land, 0);
+
+        // one shot from the tee onto the island, played out frame by frame
+        const D = derive(), dt = 1 / 30;
+        S.yards = S.yardsMax * 0.06;
+        Scene.swing(1, false, null);
+        let flew = 0, fast = 0, stood = 0, walked = 0, t = 0, last = Scene.camD;
+        for (let f = 0; f < 30 * 9; f++) {
+          Scene.draw(dt, D); t += dt;
+          const c = Scene.camD, v = (c - last) / dt; last = c;
+          const over = c > I.bank + 0.02 && c < I.land - 0.02;
+          if (Scene.heli > 0) flew++;
+          if (over && v > B_FLY * 1.05) fast++;
+          if (over && v < 0.01) stood++;
+          if (over && Scene.walkOn) walked++;
+        }
+        o.flew = flew * dt; o.fast = fast; o.stood = stood; o.walked = walked;
+        o.end = +Scene.camD.toFixed(1); o.land = I.land;
+
+        // the green under the flag, not the lake
+        const p = Scene.proj(LEN - 2.5, 0);
+        const px = Scene.b.getImageData(Math.round(p.x), Math.round(p.y) - 1, 1, 1).data;
+        const hex = '#' + [px[0], px[1], px[2]].map(v => v.toString(16).padStart(2, '0')).join('').toUpperCase();
+        const T = Scene.theme, lake = new Set([].concat(T.wt || [], T._wt || []).map(x => String(x).toUpperCase()));
+        o.greenPx = hex; o.greenWet = lake.has(hex);
+        o.greenBlue = px[2] > px[1] + 10;
+
+        // the tee says so
+        window.step = window.__step;
+        QUIET = false;
+        $('toasts').innerHTML = '';
+        startHole();
+        o.toast = $('toasts').textContent;
+      } finally {
+        window.step = window.__step || window.step;
+        ISLE_FORCE = 0;
+        Object.keys(S).forEach(k => delete S[k]); Object.assign(S, JSON.parse(SNAP));
+        QUIET = false; OFFLINE = false; startHole();
+      }
+      return o;
+    });
+    const f = m => { throw new Error(m); };
+    if (r.bad.length) f('island greens on the wrong holes: ' + r.bad.slice(0, 4).join('; '));
+    if (r.away) f(r.away + ' island greens away from the home courses');
+    if (r.home !== r.homes * B_ISLANDS_PER_EVENT) f(r.home + ' island greens over ' + r.homes + ' home events, not '
+      + (r.homes * B_ISLANDS_PER_EVENT) + ' (the last par three of each nine)');
+    if (!r.isle) f('a forced island hole has no lake');
+    if (r.wetSpot.length) f('balls come down in the water: ' + r.wetSpot.slice(0, 4).join(', '));
+    if (r.back) f('where a ball lies went back up the hole ' + r.back + ' times');
+    if (!r.bankDry || !r.landDry) f('he takes off from ' + (r.bankDry ? 'dry ground' : 'the water') + ' and lands on ' + (r.landDry ? 'dry ground' : 'the water'));
+    if (!(r.flew > 1)) f('he flew for ' + r.flew.toFixed(2) + 's crossing the water');
+    if (r.fast) f('he crossed ' + r.fast + ' frames of water faster than the flight');
+    if (r.stood || r.walked) f('he ' + (r.stood ? 'stood still ' + r.stood : 'walked ' + r.walked) + ' frames on the water');
+    if (r.end < r.land) f('he ended the shot at ' + r.end + ', short of the island at ' + r.land);
+    if (r.greenWet || r.greenBlue) f('the lake is drawn over the green by the flag (' + r.greenPx + ')');
+    if (!/Signature Hole/.test(r.toast) || !/Island Green/.test(r.toast)) f('the tee of an island hole said "' + r.toast + '"');
+    return [r.home + ' island greens over ' + r.homes + ' home events, none elsewhere, each the last par three of its nine',
+      'no ball lands wet; he flew ' + r.flew.toFixed(1) + 's at the flight pace and never stood on the water; green by the flag ' + r.greenPx];
+  }
+};
+const B_ISLANDS_PER_EVENT = 8;   // two a round, four rounds
