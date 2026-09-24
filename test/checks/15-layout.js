@@ -437,7 +437,7 @@ module.exports = {
       throw new Error('only ' + nums.drawn + ' of ' + nums.N + ' swings showed a number: kept apart '
         + 'by showing almost none of them');
 
-    return [r.looked + ' boxes measured across five screens, four shop tabs and three sheets, '
+    return [r.looked + ' boxes measured across five screens, four shop tabs, the Trophy Room\'s three pages and two sheets, '
       + 'none past its edge',
       'away card: three tiles, captions on one line, all three centred',
       'stage and vitals at 320/400/768 and on its side at 740/844: nothing off the stage, no HUD element on another '
