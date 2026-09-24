@@ -156,8 +156,13 @@ module.exports = {
         // nothing on the stage leaves the stage
         for (const e of $('stage').querySelectorAll('*')) {
           const r = R(e); if (!r.width || !r.height) continue;
-          const out2 = Math.max(st.left - r.left, r.right - st.right,
-                                st.top - r.top, r.bottom - st.bottom);
+          let out2 = Math.max(st.left - r.left, r.right - st.right,
+                              st.top - r.top, r.bottom - st.bottom);
+          // The field is shown by whole pixels, so its last part-pixel hangs
+          // over the right and bottom edges, where the stage clips it. Less
+          // than one of its pixels there is how it is meant to be.
+          if (e.id === 'hole' && r.left >= st.left - 0.5 && r.top >= st.top - 0.5
+              && Math.max(r.right - st.right, r.bottom - st.bottom) < Scene.scale / devicePixelRatio) out2 = 0;
           if (out2 > 0.5) o.off.push((e.id || e.className || e.tagName) + ' by ' + out2.toFixed(1));
         }
         // Nothing on the HUD sits on anything else on the HUD, with the

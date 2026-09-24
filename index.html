@@ -167,6 +167,7 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
 /* the field takes half the app, and the canvas fills whatever shape that is */
 #stage{position:relative;background:#080D0A;border-bottom:var(--hair);overflow:hidden}
 #hole{display:block;width:100%;height:100%;image-rendering:pixelated;image-rendering:crisp-edges}
+#stage > #hole{position:absolute;left:0;top:0}
 /* The old stage HUD is gone, and so are its styles. #hud, .hudrow, .plate,
    #chaosTag, #yardBar and #yardFill all outlived the markup they dressed, and
    #hud had inset:0 on it: it did nothing at all until a new left-hand column
@@ -3219,6 +3220,13 @@ const B = {
    NUMBERS AND HELPERS
    ========================================================================= */
 const $ = id => document.getElementById(id);
+// The live numbers are written every frame. Writing a value that has not
+// changed still costs the browser a fresh layout of that text, sixty times a
+// second, so these only touch the page when the value is new.
+function setText(el, v){ v = String(v); if(el._tx !== v){ el._tx = v; el.textContent = v; } }
+function setHTML(el, v){ if(el._hx !== v){ el._hx = v; el.innerHTML = v; } }
+function setCls(el, v){ if(el.className !== v) el.className = v; }
+function setSty(el, k, v){ const m = el._sx || (el._sx = {}); if(m[k] !== v){ m[k] = v; el.style[k] = v; } }
 const clamp = (v,a,b) => v < a ? a : v > b ? b : v;
 const SUF = ['','K','M','B','T','Qa','Qi','Sx','Sp','Oc','No','Dc'];
 function fmt(n, dp){
@@ -8731,6 +8739,79 @@ const BALLFX = {
   }
 };
 
+/* ---- painting the ground by the pixel ----------------------------------
+   The ground march is a few thousand solid, whole-pixel rectangles a frame.
+   Sent to the canvas one by one they were the dearest thing in the frame, so
+   the march paints into this instead: it looks enough like a canvas for the
+   march (fillStyle and fillRect), writes straight into a pixel buffer, and the
+   whole field then goes onto the canvas in one stamp. The picture is the same
+   to the pixel; the render check holds it to that. */
+const PixPaint = {
+  w: 0, h: 0, cur: 0, y0: 0, y1: 0, cache: new Map(),
+  begin(w, h){
+    if(this.w !== w || this.h !== h){
+      this.w = w; this.h = h;
+      this.cv = document.createElement('canvas'); this.cv.width = w; this.cv.height = h;
+      this.cx = this.cv.getContext('2d');
+      this.img = this.cx.createImageData(w, h);
+      this.px = new Uint32Array(this.img.data.buffer);
+    }
+    this.px.fill(0); this.y0 = h; this.y1 = 0;
+    return this;
+  },
+  // a colour as the four bytes the buffer holds, read the way the canvas reads it
+  set fillStyle(s){
+    let v = this.cache.get(s);
+    if(v === undefined){
+      if(/^#[0-9a-f]{6}$/i.test(s)){
+        const n = parseInt(s.slice(1), 16);
+        v = (0xFF000000 | (n & 255) << 16 | (n & 0xFF00) | (n >> 16)) >>> 0;
+      }else{
+        const t = this._one || (this._one = document.createElement('canvas').getContext('2d', { willReadFrequently: true }));
+        t.clearRect(0, 0, 1, 1); t.fillStyle = s; t.fillRect(0, 0, 1, 1);
+        const d = t.getImageData(0, 0, 1, 1).data;
+        v = (d[3] << 24 | d[2] << 16 | d[1] << 8 | d[0]) >>> 0;
+      }
+      if(this.cache.size > 4096) this.cache.clear();
+      this.cache.set(s, v);
+    }
+    this.cur = v;
+  },
+  get fillStyle(){ return this.cur; },
+  fillRect(x, y, w, h){
+    if(w < 0){ x += w; w = -w; }
+    if(h < 0){ y += h; h = -h; }
+    const W = this.w, x0 = Math.max(0, x), x1 = Math.min(W, x + w);
+    const r0 = Math.max(0, y), r1 = Math.min(this.h, y + h);
+    if(x1 <= x0 || r1 <= r0) return;
+    if(r0 < this.y0) this.y0 = r0;
+    if(r1 > this.y1) this.y1 = r1;
+    const px = this.px, v = this.cur, a = v >>> 24;
+    if(a === 255){ for(let r = r0; r < r1; r++) px.fill(v, r*W + x0, r*W + x1); return; }
+    if(!a) return;
+    // not opaque: laid over what is there, as the canvas would
+    const k = a / 255, sr = v & 255, sg = (v >> 8) & 255, sb = (v >> 16) & 255;
+    for(let r = r0; r < r1; r++) for(let i = r*W + x0, e = r*W + x1; i < e; i++){
+      const o = px[i], oa = (o >>> 24) / 255, na = k + oa * (1 - k);
+      const mix = (sc, oc) => Math.round((sc*k + oc*oa*(1 - k)) / na);
+      px[i] = (Math.round(na*255) << 24 | mix(sb, (o >> 16) & 255) << 16
+             | mix(sg, (o >> 8) & 255) << 8 | mix(sr, o & 255)) >>> 0;
+    }
+  },
+  // everything painted since begin, onto the real canvas
+  flush(c){
+    if(this.y1 <= this.y0) return;
+    this.cx.putImageData(this.img, 0, 0, 0, this.y0, this.w, this.y1 - this.y0);
+    this.blit(c);
+  },
+  // the same again, when nothing has changed since
+  blit(c){
+    if(this.y1 <= this.y0) return;
+    const h = this.y1 - this.y0;
+    c.drawImage(this.cv, 0, this.y0, this.w, h, 0, this.y0, this.w, h);
+  }
+};
+
 const Scene = {
   cv:null, ctx:null, buf:null, b:null, scale:3,
   camD:0, dCam:0, hole:1, tier:0, t:0,
@@ -8748,26 +8829,34 @@ const Scene = {
     window.addEventListener('orientationchange', () => setTimeout(() => this.resize(), 120));
     if(window.ResizeObserver){
       let last = 0;
+      const st = this.cv.parentNode;
       new ResizeObserver(() => {
-        const k = this.cv.clientWidth * 10000 + this.cv.clientHeight;
+        const k = st.clientWidth * 10000 + st.clientHeight;
         if(k !== last){ last = k; this.resize(); }
-      }).observe(this.cv);
+      }).observe(st);
     }
   },
   resize(){
     // With the menu pulled up the stage is display:none, so the canvas reports
     // nothing. Rebuilding against a guess would throw away a good buffer and
     // rebuild it wrong; better to keep what we have until it is back.
-    if(this.buf && (!this.cv.clientWidth || !this.cv.clientHeight)) return;
-    const w = this.cv.clientWidth || 360;
-    const h = this.cv.clientHeight || Math.round(w * 0.58);
+    const st = this.cv.parentNode;
+    if(this.buf && (!st.clientWidth || !st.clientHeight)) return;
+    const w = st.clientWidth || 360;
+    const h = st.clientHeight || Math.round(w * 0.58);
     const dpr = Math.min(3, window.devicePixelRatio || 1);
     const dw = Math.max(120, Math.round(w * dpr)), dh = Math.max(80, Math.round(h * dpr));
     // integer upscale only: fractional scaling makes some pixels wider than
     // others, which is the fastest way to make pixel art look cheap
     const sc = clamp(Math.round(dpr * PX_CSS), 2, 8);
     const bw = Math.ceil(dw / sc), bh = Math.ceil(dh / sc);
-    this.cv.width = dw; this.cv.height = dh;
+    // The canvas on the page is the size of the picture, and the phone's
+    // graphics chip blows it up, whole pixels only, to fill the stage. It used
+    // to be as big as the screen, which meant enlarging the picture by hand
+    // every frame into a canvas thirty-odd times its size. The last part-pixel
+    // hangs off the stage's edge, which clips it, as the old drawing did.
+    this.cv.width = bw; this.cv.height = bh;
+    this.cv.style.width = bw * sc / dpr + 'px'; this.cv.style.height = bh * sc / dpr + 'px';
     this.scale = sc;
     if(!this.buf) this.buf = document.createElement('canvas');
     this.buf.width = bw; this.buf.height = bh;
@@ -8776,6 +8865,7 @@ const Scene = {
     this.ctx.imageSmoothingEnabled = false;
     this.ctx.imageSmoothingQuality = 'low';
     setViewport(bw, bh);
+    this.gGen = (this.gGen || 0) + 1;
     this.buildSky();
     this.mapOn = false; this._mapTry = null;   // the hole map is placed again
   },
@@ -8807,6 +8897,7 @@ const Scene = {
   // Hazards laid down one at a time, each rejected if it lands on one already
   // placed. Water goes first because it is the biggest.
   layHazards(rnd, cfg){
+    this.gGen = (this.gGen || 0) + 1;
     this.water = null; this.bunkers = [];
     const cn = cfg.corners || [];
     if(cfg.water){
@@ -9048,13 +9139,21 @@ const Scene = {
     }
     if(run){ c.fillStyle = rc; c.fillRect(rx0, rt, rx1 - rx0, rb - rt); }
     // one broken glint on open water, so the surface is not a dead sheet
-    if(P.rip && w > 10 && gv > 0.9){
-      const yy = Math.round(y + P.D * gv * kz);
-      if(((yy + Math.floor(this.t*4)) % 9) === 0){
-        const rw = Math.round(w * (0.16 + 0.15*Math.abs(Math.sin(yy*0.6 + this.t))));
-        c.fillStyle = pickC(T._wt, 0.88);
-        c.fillRect(xl + ((w - rw) >> 1) + Math.round(Math.sin(yy*0.31)*w*0.14), yy, rw, 1);
-      }
+    // The ripples are the one part of the ground that moves on its own, so
+    // they are noted here and drawn over the finished field (see ripples).
+    // Nothing further out can paint over them, so the picture is the same.
+    if(P.rip && w > 10 && gv > 0.9 && this._rips) this._rips.push(Math.round(y + P.D * gv * kz), xl, w);
+  },
+  ripples(c, T){
+    const R = this._rips;
+    if(!R || !R.length) return;
+    c.fillStyle = pickC(T._wt, 0.88);
+    const ft = Math.floor(this.t*4);
+    for(let i = 0; i < R.length; i += 3){
+      const yy = R[i], xl = R[i+1], w = R[i+2];
+      if(((yy + ft) % 9) !== 0) continue;
+      const rw = Math.round(w * (0.16 + 0.15*Math.abs(Math.sin(yy*0.6 + this.t))));
+      c.fillRect(xl + ((w - rw) >> 1) + Math.round(Math.sin(yy*0.31)*w*0.14), yy, rw, 1);
     }
   },
 
@@ -9221,6 +9320,7 @@ const Scene = {
   },
 
   newHole(h, tier){
+    this.gGen = (this.gGen || 0) + 1;
     this.hole = h; this.tier = tier;
     const rnd = seeded(h*7919 + tier*104729);
     this.seed = rnd() * 1000;
@@ -9294,6 +9394,7 @@ const Scene = {
   // the flag; only the ground you are walking on changes. An abstract shaft
   // was never going to read as golf, because it was not golf.
   newDepthsHole(R){
+    this.gGen = (this.gGen || 0) + 1;
     const dg = R.id;
     this.curve = null; this._bcD = null;      // a wager is played dead straight
     this.wind = 0;                            // and in still air
@@ -9929,13 +10030,20 @@ Object.assign(Scene, {
     // painting sky over the ground instead put a bar back twice as bright as
     // the one it was closing. The row above is drawn back over the first few
     // ground rows at a decaying alpha, so the two meet whatever they are.
+    // The row is lifted out once and stamped from there. Drawing the canvas
+    // onto itself made the browser copy the whole picture for every stamp,
+    // and that was the dearest thing in the frame.
     const n = Math.max(3, Math.round(VH * 0.032));
+    const row = this._fadeRow || (this._fadeRow = document.createElement('canvas'));
+    if(row.width !== VW){ row.width = VW; row.height = 1; row._c = row.getContext('2d'); }
+    row._c.clearRect(0, 0, VW, 1);
+    row._c.drawImage(this.buf, 0, HORIZON - 1, VW, 1, 0, 0, VW, 1);
     for(let i = 0; i < n; i++){
       const t = i / n;
       const a = (1 - t) * (1 - t) * 0.85;
       if(a <= 0.01) continue;
       c.globalAlpha = a;
-      c.drawImage(this.buf, 0, HORIZON - 1, VW, 1, 0, HORIZON + i, VW, 1);
+      c.drawImage(row, 0, HORIZON + i);
     }
     c.globalAlpha = 1;
   },
@@ -9979,6 +10087,24 @@ Object.assign(Scene, {
     // painted straight over the hill in front of it.
     const cd = this._clipD || (this._clipD = new Float32Array(6400));
     const cy = this._clipY || (this._clipY = new Float32Array(6400));
+    // Standing over the ball, nothing the field is drawn from moves: the last
+    // one is stamped again, with the ripples laid over it fresh. Everything
+    // the march reads is in the key; a new hole, floor or size moves gGen.
+    const key = this._gKey || (this._gKey = []);
+    // The colours count too, as the ramps themselves: a palette can be
+    // recoloured in place without becoming a new palette.
+    const now = [this.gGen, this.theme, this.themeId, VW, VH, cam, this.camH, this.pixGround !== false,
+                 T._fw, T._rg, T._gr, T._sd, T._sdb, T._wt, T._bk, T._rim, T._arim, T.apron, T.edge, T.lip];
+    let same = this.pixGround !== false && key.length === now.length;
+    for(let i = 0; same && i < now.length; i++) if(key[i] !== now[i]) same = false;
+    if(same){
+      PixPaint.blit(c);
+      this.ripples(c, T);
+      this.groundTail(c, T, this._gMaxy);
+      return;
+    }
+    key.length = 0; key.push(...now);
+    this._rips = [];
     let cn = 0;
     // Every hazard is marched as its own sunk surface, with its own clip and
     // its own record of where the previous slice put it. Cleared here so the
@@ -9988,6 +10114,7 @@ Object.assign(Scene, {
     if(this.water) hzClear(this.water);
     let maxy = VH, d = cam - CAM_BACK + 0.62, guard = 0;
     let prevD = d, prevH = this.hAt(d);
+    const g = this.pixGround === false ? c : PixPaint.begin(VW, VH);
     while(d < cam + 300 && maxy > SKY && guard++ < 6000){
       const rel = Math.max(0.6, d - cam + CAM_BACK);
       const s = K_PROJ / rel;
@@ -10003,13 +10130,24 @@ Object.assign(Scene, {
         // the same flat tone and the field reads as paper, however good the
         // outlines on it are.
         const slope = (gh - prevH) / Math.max(1e-4, d - prevD);
-        this.groundSlice(c, T, d, s, rel, y, maxy - y, clamp(slope*0.42, -0.15, 0.15));
+        this.groundSlice(g, T, d, s, rel, y, maxy - y, clamp(slope*0.42, -0.15, 0.15));
         maxy = y;
       }
       prevD = d; prevH = gh;
       d += step;
     }
     this._clipN = cn;
+    if(g !== c) PixPaint.flush(c);
+    this.ripples(c, T);
+    this._gMaxy = maxy;
+    this.groundTail(c, T, maxy);
+    // Three ruled lines of haze used to be blended in just under the horizon
+    // to soften the join. The haze layer now ramps THROUGH the line instead of
+    // starting at it, so the join is soft on its own and all the lines did was
+    // draw themselves across the top of the field.
+  },
+
+  groundTail(c, T, maxy){
     // whatever is left between the furthest slice and the horizon
     if(maxy > HORIZON){
       c.fillStyle = pickC(T._rg, 0);
@@ -10020,10 +10158,6 @@ Object.assign(Scene, {
     // the skyline rather than on the horizon line
     this.buildWood();
     if(this.wood) c.drawImage(this.wood, 0, maxy - this.woodBase);
-    // Three ruled lines of haze used to be blended in just under the horizon
-    // to soften the join. The haze layer now ramps THROUGH the line instead of
-    // starting at it, so the join is soft on its own and all the lines did was
-    // draw themselves across the top of the field.
   },
 
   // One band of ground, at one distance. Everything here was a single scanline
@@ -11006,7 +11140,7 @@ Object.assign(Scene, {
     const g = this.ctx;
     g.imageSmoothingEnabled = false;
     g.clearRect(0, 0, this.cv.width, this.cv.height);
-    g.drawImage(this.buf, 0, 0, VW, VH, 0, 0, VW*this.scale, VH*this.scale);
+    g.drawImage(this.buf, 0, 0);
   },
 
   drawFlagstick(){
@@ -11181,7 +11315,7 @@ function honoursSheet(){
   if(t) honRows(t);
   renderHonBtn();
 }
-function renderHonBtn(){
+function renderHonBtn(live){
   const b = $('honBtn'); if(!b) return;
   const n = achCount();
   if(!b._built){
@@ -11193,11 +11327,18 @@ function renderHonBtn(){
   // The button is a 12x12 sprite with no room for words, so the words go where
   // a long press and a screen reader both find them: the nearest one by name,
   // rather than a tally of the ones already won.
-  const nx = achNear(1)[0];
-  const lbl = nx ? 'Honours \u00b7 closest: ' + nx.n + ' ' + fmt(Math.min(achMetric(nx.m), nx.v), 0)
-                   + ' of ' + fmt(nx.v, 0)
-                 : 'Honours \u00b7 all ' + B.ACH.length + ' done';
-  if(b._lbl !== lbl){ b._lbl = lbl; b.title = lbl; b.setAttribute('aria-label', lbl); }
+  // Searching every honour for the nearest is too dear for every frame and
+  // nobody reads a label that fast: from the frame loop (live), four times a
+  // second is plenty.
+  const now = performance.now();
+  if(!live || !(now - (b._lt || -1e9) < 250)){
+    b._lt = now;
+    const nx = achNear(1)[0];
+    const lbl = nx ? 'Honours \u00b7 closest: ' + nx.n + ' ' + fmt(Math.min(achMetric(nx.m), nx.v), 0)
+                     + ' of ' + fmt(nx.v, 0)
+                   : 'Honours \u00b7 all ' + B.ACH.length + ' done';
+    if(b._lbl !== lbl){ b._lbl = lbl; b.title = lbl; b.setAttribute('aria-label', lbl); }
+  }
   const p = $('perkBtn');
   if(p){
     if(!p._built){
@@ -11253,17 +11394,17 @@ function renderXp(){
   const unspent = (S.talPts||0) + (S.statPts||0)
     + B.PARAGON.reduce((n,c) => n + (S.paraPts[c.id]||0), 0);
   const strip = $('xpStrip');
-  strip.className = (max ? 'para' : '') + (unspent ? ' ready' : '');
-  $('xpLv').textContent = max ? 'PARAGON ' + fmt(S.para, 0) : 'LV ' + S.lv;
-  $('xpFill').style.width = clamp(have/need, 0, 1)*100 + '%';
+  setCls(strip, (max ? 'para' : '') + (unspent ? ' ready' : ''));
+  setText($('xpLv'), max ? 'PARAGON ' + fmt(S.para, 0) : 'LV ' + S.lv);
+  setSty($('xpFill'), 'width', (clamp(have/need, 0, 1)*100).toFixed(1) + '%');
   const bits = [];
   if(S.talPts) bits.push(S.talPts + ' talent');
   if(S.statPts) bits.push(S.statPts + ' attribute');
   const pp2 = B.PARAGON.reduce((n,c) => n + (S.paraPts[c.id]||0), 0);
   if(pp2) bits.push(pp2 + ' paragon');
-  $('xpNum').textContent = unspent
+  setText($('xpNum'), unspent
     ? bits.join(' \u00b7 ')
-    : fmt(have) + ' / ' + fmt(need) + ' xp';
+    : fmt(have) + ' / ' + fmt(need) + ' xp');
   if(careerTab) careerTab.classList.toggle('alert', unspent > 0);
   renderTourTab();
 }
@@ -11375,22 +11516,23 @@ function renderReadout(D){
     tagCol = sc.d <= -3 ? 'var(--myth)' : sc.d <= -2 ? 'var(--brass)' : sc.d === -1 ? 'var(--aurora)'
            : sc.d === 0 ? 'var(--chalk)' : 'var(--flag)';
   }
-  $$('rTop').innerHTML = top;
-  $$('rTopR').innerHTML = topR;
-  $$('rBig').textContent = big;
-  $$('rUnit').textContent = unit;
+  setHTML($$('rTop'), top);
+  setHTML($$('rTopR'), topR);
+  setText($$('rBig'), big);
+  setText($$('rUnit'), unit);
   const tg = $$('rTag');
-  tg.textContent = tag; tg.style.color = tagCol;
+  setText(tg, tag); setSty(tg, 'color', tagCol);
   const fl = $$('rFill');
-  fl.style.width = clamp(frac, 0, 1)*100 + '%';
-  fl.style.background = barCol;
+  setSty(fl, 'width', (clamp(frac, 0, 1)*100).toFixed(1) + '%');
+  setSty(fl, 'background', barCol);
 
   const ro = $$('readout'), st = $$('rStrip');
-  ro.style.setProperty('--rc', accent || 'var(--brass)');
-  ro.style.borderColor = accent ? accent + '55' : '';
-  $$('rBig').style.color = accent || '';
-  if(!strip){ st.hidden = true; return; }
-  st.hidden = false;
+  const rc = accent || 'var(--brass)';
+  if(ro._rc !== rc && ro.style.setProperty){ ro._rc = rc; ro.style.setProperty('--rc', rc); }
+  setSty(ro, 'borderColor', accent ? accent + '55' : '');
+  setSty($$('rBig'), 'color', accent || '');
+  if(!strip){ if(!st.hidden) st.hidden = true; return; }
+  if(st.hidden) st.hidden = false;
   // Rebuilt only when the cell COUNT changes; twenty five nodes thrown away
   // and remade every frame is the sort of thing that shows up as jitter on a
   // phone long before it shows up in a profile.
@@ -11409,21 +11551,21 @@ function renderNine(){
   if(!S.nine) startNine();
   const N = S.nine, p = nineProgress();
   const done = p.have >= p.need;
-  $$('nineWhich').textContent = (N.idx === 0 ? 'Front' : 'Back') + ' ' + N.n + '/9';
+  setText($$('nineWhich'), (N.idx === 0 ? 'Front' : 'Back') + ' ' + N.n + '/9');
   const gEl = $$('nineGoal');
-  gEl.innerHTML = p.goal.n + ' <b>' + Math.min(p.have, p.need) + '/' + p.need + '</b>';
-  gEl.className = done ? 'done' : '';
-  $$('nineScore').textContent = (N.total === 0 ? 'E' : N.total > 0 ? '+' + N.total : N.total)
-    + (S.bestNine !== undefined ? '  best ' + (S.bestNine === 0 ? 'E' : S.bestNine) : '');
+  setHTML(gEl, p.goal.n + ' <b>' + Math.min(p.have, p.need) + '/' + p.need + '</b>');
+  setCls(gEl, done ? 'done' : '');
+  setText($$('nineScore'), (N.total === 0 ? 'E' : N.total > 0 ? '+' + N.total : N.total)
+    + (S.bestNine !== undefined ? '  best ' + (S.bestNine === 0 ? 'E' : S.bestNine) : ''));
 }
-function renderLive(){
+function renderLive(D){
   renderXp();
   renderNine();
-  renderReadout(derive());
-  renderHonBtn();
-  $('gold').textContent = fmt(S.gold);
-  $('rate').textContent = fmt(Meter.rate()) + ' purse/sec';
-  $('sovNum').textContent = sovFmt(S.sov);
+  renderReadout(D || derive());
+  renderHonBtn(true);
+  setText($('gold'), fmt(S.gold));
+  setText($('rate'), fmt(Meter.rate()) + ' purse/sec');
+  setText($('sovNum'), sovFmt(S.sov));
   // The yardage, the bar and the clock used to be written here as well, into
   // three more elements the old stage HUD took with it. This runs every frame,
   // so that was four lookups, a clamp and two string builds at sixty a second
@@ -12913,7 +13055,7 @@ function frameBody(now){
   // regardless; only the drawing stops.
   if(!$('app').classList.contains('big') || (SIDEWAYS && SIDEWAYS.matches)) Scene.draw(dt, D);
   Sfx.tick(dt);
-  renderLive();
+  renderLive(D);
 
   slowT += dt;
   if(slowT >= 0.22){
