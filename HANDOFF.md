@@ -12,7 +12,11 @@ check is for.
   branch `claude/funny-davinci-7ik9ge`). Nothing is half-built.
 - `node test/run.js` passes all **35 checks** (about 7 minutes; `pacing` runs
   sixteen seeds and takes ~40s on its own).
-- The last request was **"do 2, signature holes"**, with the user's own idea:
+- The last message was a bug report: **"the hole finishes on the shot to the
+  green, so the golfer never makes it to the green."** True: a par three is
+  often done with the tee shot, and the next hole started before he flew.
+  Fixed (§5, "Island greens", the hold). Ask them to look again.
+- Before it: **"do 2, signature holes"**, with the user's own idea:
   to reach an island green the golfer flies over the water, spinning his
   club over his head like a helicopter. Done (§5, "Island greens"). Not yet
   seen on their phone.
@@ -211,6 +215,10 @@ Line numbers are approximate and drift. Search for the name instead.
 15. Check on-stage changes at 320, 360, 390, 430 and on its side (740x360,
    844x390). The user's phone is an iPhone; 320 is the narrow edge case
    where the stage falls back (auto-climb drops under the readout).
+16. **A check that freezes the round cannot see how a hole ends.** The
+   island's first check stopped the round to film the flight, so the hole
+   could never end early; in real play it ended with the tee shot and he
+   never flew. Play anything tied to the end of a hole in real frames too.
 
 ## 5. What the last features do (for debugging them)
 
@@ -238,8 +246,19 @@ Line numbers are approximate and drift. Search for the name instead.
   `drawGolfer` draws `paintHeli` instead: from behind, legs hanging, arms up,
   the club flat and spinning with a faint ring, a shadow on the water, and a
   lift of sin(pi x heli). The fairy flies alongside. No sound for it yet.
+- **The hold** (after the user found he never got there): when the ball is
+  down, `S.doneT` records the hole's time, and `step` waits while
+  `Scene.isleWait()`: an island, he has not landed (plus 0.4s on the
+  green), and the course was drawn in the last 250ms. Never in `QUIET` or
+  `OFFLINE`, never behind a menu or the saver (nothing drawn), and never past
+  `B.ISLE_HOLD` (6s). The score and the readout use `holeTime()`, so waiting
+  never costs a score. On an island the old "carry a golfer far behind on
+  through his swing" jump is off: it slid him off the tee to the bank
+  mid-swing.
 - The `hazards` check allows the lake and requires water all round the
-  green; the `island` check holds the rest.
+  green; the `island` check holds the rest, including a hole finished by its
+  tee shot played in real frames (the case the first version missed: its
+  test froze the round, so the hole could never end early).
 
 ### Battery saver (user asked)
 - Settings row **Battery Saver**: a button cycling Off / 1 / 2 / 5 min

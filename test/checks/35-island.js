@@ -13,6 +13,9 @@
  *   - the green is drawn on top of its lake (a sunken pond that size painted
  *     the green out)
  *   - the tee says it is a signature hole
+ *   - a hole finished by the tee shot waits for him to fly across and land,
+ *     scored from when the ball was down; behind the battery saver it does
+ *     not wait (the first version never waited, so he never got there)
  */
 'use strict';
 module.exports = {
@@ -97,7 +100,52 @@ module.exports = {
       }
       return o;
     });
+    // ---- the hole waits for him ------------------------------------------------
+    // The ball is often down with the tee shot, and the first version moved on
+    // to the next hole before he had flown: nobody ever saw him reach the
+    // green. Played here in real frames, a hole finished by its first swing.
+    const live = await page.evaluate(async () => {
+      const SNAP = JSON.stringify(S), out = {};
+      const sleep = ms => new Promise(res => setTimeout(res, ms));
+      const once = async hidden => {
+        ISLE_FORCE = S.hole; startHole(); Scene.announce = null;
+        const h0 = S.hole, I = Scene.isle, pt = S.parTime;
+        if (hidden) saverNow();
+        S.yards = S.yardsMax * 0.005;          // the next swing finishes it
+        let heli = 0, cam = 0, doneT = null, el = 0, t0 = performance.now(), moved = false;
+        while (performance.now() - t0 < 12000) {
+          await sleep(40);
+          if (S.hole !== h0) { moved = true; break; }
+          heli = Math.max(heli, Scene.heli || 0); cam = Scene.camD; doneT = S.doneT; el = S.elapsed;
+        }
+        const sc = S.scores[holeInRound(h0) - 1];
+        if (hidden) saverOff();
+        return { moved, heli: +heli.toFixed(2), cam: +cam.toFixed(1), land: I.land, doneT, el: +el.toFixed(2),
+                 scored: sc && sc.d, want: doneT != null ? scoreFor(doneT / pt).d : null };
+      };
+      try {
+        hideSheet(); QUIET = false;
+        out.seen = await once(false);
+        out.saver = await once(true);
+      } finally {
+        ISLE_FORCE = 0;
+        Object.keys(S).forEach(k => delete S[k]); Object.assign(S, JSON.parse(SNAP));
+        QUIET = false; OFFLINE = false; startHole();
+      }
+      return out;
+    });
+
     const f = m => { throw new Error(m); };
+    const L = live.seen;
+    if (!L.moved) f('an island hole finished by the tee shot never moved on');
+    if (!(L.heli > 0.8) || L.cam < L.land - 0.1) f('an island hole finished by the tee shot moved on before he had flown across (flew '
+      + L.heli + ' of the way, stood at ' + L.cam + ' of ' + L.land + ')');
+    if (L.scored !== L.want) f('the island hole was scored ' + L.scored + ', not ' + L.want + ' as at the moment the ball was down');
+    const V = live.saver;
+    // with no wait the hole moves on in the step the ball is down, so that
+    // moment is never seen from here at all
+    if (!V.moved || (V.doneT != null && V.el - V.doneT > 0.3)) f('behind the battery saver an island hole '
+      + (V.moved ? 'waited ' + (V.el - V.doneT).toFixed(2) + 's for a flight nobody could see' : 'never moved on'));
     if (r.bad.length) f('island greens on the wrong holes: ' + r.bad.slice(0, 4).join('; '));
     if (r.away) f(r.away + ' island greens away from the home courses');
     if (r.home !== r.homes * B_ISLANDS_PER_EVENT) f(r.home + ' island greens over ' + r.homes + ' home events, not '
@@ -113,6 +161,7 @@ module.exports = {
     if (r.greenWet || r.greenBlue) f('the lake is drawn over the green by the flag (' + r.greenPx + ')');
     if (!/Signature Hole/.test(r.toast) || !/Island Green/.test(r.toast)) f('the tee of an island hole said "' + r.toast + '"');
     return [r.home + ' island greens over ' + r.homes + ' home events, none elsewhere, each the last par three of its nine',
+      'a tee shot that finishes it waits for him to land (' + (L.el - L.doneT).toFixed(1) + 's, scored from the ball) and not behind the saver',
       'no ball lands wet; he flew ' + r.flew.toFixed(1) + 's at the flight pace and never stood on the water; green by the flag ' + r.greenPx];
   }
 };

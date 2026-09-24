@@ -1078,7 +1078,7 @@ const B = {
   // outruns the cost of the next card forever and the ladder never walls.
   // Nine tenths of a second is also the shortest a hole can be and still be
   // worth watching, and it is what makes an Ace the genuine ceiling it should be.
-  WALK_MIN: 0.9,
+  WALK_MIN: 0.9, ISLE_HOLD: 6,
 
   /* ---- the swing ---- */
   BASE_POWER: 6, BASE_SPEED: 0.85,
@@ -4294,7 +4294,7 @@ function startHole(){
   S.armor0 = S.armor;                       // Loaded Face shaves off this, not off nothing
   S.walkMin = mileOn('tempo') ? 0.05
             : Math.max(B.WALK_MIN_FLOOR, B.WALK_MIN * (1 - Math.min(0.45, D.C.walk)));
-  S.elapsed = 0; S.holeGold = 0; S.frost = 0; S.burn = 0; S.burnT = 0;
+  S.elapsed = 0; S.doneT = null; S.holeGold = 0; S.frost = 0; S.burn = 0; S.burnT = 0;
   S.swingT = 0;
   // Off The Tee has to know which swing is the first one on this hole.
   S.holeSwings = 0;
@@ -5772,8 +5772,11 @@ function toast(html, cls){
   while(kids.length > 2) kids[0].remove();
 }
 
+// The hole's time: when the ball was down, not when the hole moved on. They
+// differ only on an island, where the hole waits for him to fly across.
+const holeTime = () => S.doneT != null ? S.doneT : S.elapsed;
 function finishHole(D){
-  const ratio = S.elapsed / S.parTime;
+  const ratio = holeTime() / S.parTime;
   const sc = scoreFor(ratio);
   Sfx.play('hole', sc.d);
   const pay = S.purse * (1 - B.SWING_SHARE) * sc.pay * (1 + D.C.pay);
@@ -10082,6 +10085,15 @@ const Scene = {
     if(!I || d <= I.bank || d >= I.land) return d;
     return d < (I.bank + I.land) / 2 ? I.bank : I.land;
   },
+  // Still on his way to an island green: only while the course is being
+  // drawn, so the round never waits on a picture nobody can see.
+  isleWait(){
+    const I = this.isle;
+    if(!I || QUIET || OFFLINE || S.dgnRun || this.hole !== S.hole) return false;
+    if(performance.now() - (this.drawnAt || 0) > 250) return false;
+    if(this.camD < I.land - 0.05) return true;
+    return this.t - (this.landT || 0) < 0.4;          // a moment on the green
+  },
   // still on his way to where his last ball came down
   walking2ball(){
     return !!this.restBall || this.balls.length > 0 || (this.walkTo || 0) - this.camD > 0.4;
@@ -11655,12 +11667,17 @@ Object.assign(Scene, {
         this.camD = Math.min(goal, Math.max(cam0, I.bank) + B_FLY * dt);
       }else{
         if(swingPh >= 0.85) this.camD += Math.max(0, goal - this.camD) * Math.min(1, dt*4.5);
-        else if(at - this.camD > LEN * 0.4) this.camD += (at - this.camD) * Math.min(1, dt*4.5);
+        // (not on an island: the hole waits for him there, and carried on
+        // mid-swing he slid off the tee to the water's edge)
+        else if(!I && at - this.camD > LEN * 0.4) this.camD += (at - this.camD) * Math.min(1, dt*4.5);
         // he walks as far as the bank and takes off from there
         if(I && cam0 < I.bank && this.camD > I.bank) this.camD = I.bank;
       }
+      const was = this.heli;
       this.heli = I && this.camD > I.bank + 0.01 && this.camD < I.land - 0.01 && this.camD > cam0
         ? (this.camD - I.bank) / (I.land - I.bank) : 0;
+      if(was && !this.heli) this.landT = this.t;
+      this.drawnAt = performance.now();
       // walking: the camera is carrying him on and he is not mid-swing. A new
       // hole puts the camera back on the tee, which is not a walk.
       const v = dt > 0 ? (this.camD - cam0) / dt : 0;
@@ -12160,9 +12177,9 @@ function renderReadout(D){
     accent = (B.DGN_PAL[R.id] || {}).glow || null;
     if(left < 8) topR = '<span style="color:var(--flag)">' + topR + '</span>';
   }else{
-    const ratio = S.elapsed / S.parTime, sc = scoreFor(ratio);
+    const ratio = holeTime() / S.parTime, sc = scoreFor(ratio);
     top = 'Hole ' + holeInRound(S.hole) + ' \u00b7 Par ' + parOf(S.hole);
-    topR = S.elapsed.toFixed(1) + ' / ' + Math.round(S.parTime) + 's';
+    topR = holeTime().toFixed(1) + ' / ' + Math.round(S.parTime) + 's';
     const ly = shownYards();
     big = ly <= 0 ? '\u2014' : fmt(ly);
     unit = ly <= 0 ? 'walking in' : 'yds';
@@ -13960,7 +13977,15 @@ function step(dt, D){
   const n = Math.floor(S.swingT);
   if(n > 0){ S.swingT -= n; doSwings(n, D); }
 
-  if(S.yards <= 0 && S.elapsed >= (S.walkMin || B.WALK_MIN)) finishHole(D);
+  if(S.yards <= 0 && S.elapsed >= (S.walkMin || B.WALK_MIN)){
+    // On an island the ball is often down with the tee shot, and the next
+    // hole came before he had flown across. The hole waits for him while the
+    // course is on screen, scored from when the ball was down, and never
+    // longer than ISLE_HOLD.
+    if(S.doneT == null) S.doneT = S.elapsed;
+    if(Scene.isleWait() && S.elapsed - S.doneT < B.ISLE_HOLD) return;
+    finishHole(D);
+  }
 }
 
 /* ---- battery saver ----------------------------------------------------
