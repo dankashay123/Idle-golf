@@ -1,6 +1,6 @@
 # Handoff — Mythic Mulligan
 
-Last updated 2026-09-24, at commit `07ec78c` on `main`. Read this with
+Last updated 2026-09-24, at commit `4609031` on `main`. Read this with
 `CLAUDE.md`, which holds the standing rules. `test/README.md` says what each
 check is for.
 
@@ -10,9 +10,14 @@ check is for.
 
 - Everything is committed and pushed to `main` (and mirrored on the session
   branch `claude/golf-sounds-dn0l4w`). Nothing is half-built.
-- `node test/run.js` passes all **32 checks** (about 7 minutes; `pacing` runs
+- `node test/run.js` passes all **33 checks** (about 7 minutes; `pacing` runs
   sixteen seeds and takes ~40s on its own).
-- The last request was "go through everything for clutter and things buried
+- The last request: "move the Trophy Room to an icon under the shop (not a
+  trophy), move auto-climb to the right of the hole readout aligned to its
+  bottom, and add a button in the gear area to auto salvage and mass salvage
+  by rarity". Done (§5, "Stage buttons" and "Scrapping"). The game's word is
+  **scrap**, not salvage; the button and sheet say Scrap.
+- The request before it was "go through everything for clutter and things buried
   in menus; consolidate; stage icons are fine (like a trophy room: things to
   look at and rewards, no upgrades); and add rewards to the trophy case".
   Done (§5, "The Trophy Room"): the trophy on the course opens a **Trophy
@@ -92,7 +97,9 @@ Line numbers are approximate and drift. Search for the name instead.
 | Course announcement banner | `announceCourse`, `Scene.drawAnnounce` |
 | Tour Cards | `climb`, `eventsToUnlock`, `roundRatio`, `projectedRatio`, `climbLines` |
 | Shop: four tabs, Offers (one-time offers, Double Purse as a wide tile, sovereign packs), Bags, Bench, Style. An old caller asking for `'buy'` gets Offers | `renderShop`, `shopCard` (`wide`), `styleDef`, `styleOwned`, `styleBuy`, `styleTry` |
-| **Trophy Room** (the trophy on the course): Today, Cabinet, Honours; the case's rewards | `trophyRoom(tab)`, `roomToday`, `dailyBlock`, `roomCase`, `honRows`, `collect(id)`, `casePending`, `caseTrack`, `B.CASE`, `S.caseGot`, `roomWaiting`, `renderHonBtn` |
+| **Trophy Room** (the medal under the shop): Today, Cabinet, Honours; the case's rewards | `trophyRoom(tab)`, `roomToday`, `dailyBlock`, `roomCase`, `honRows`, `collect(id)`, `casePending`, `caseTrack`, `B.CASE`, `S.caseGot`, `roomWaiting` |
+| Stage buttons (Trophy Room `#roomBtn`, perks, shop, settings, auto-climb): one renderer | `renderStageBtns` (was `renderHonBtn`); markup `#hudLeft` > `#rRow` (readout + `#hudClimb`), `#setBtn`, `#shopBtn`, `#roomBtn`; `#perkBtn` alone on the right |
+| **Scrapping**: the locker's Scrap button and sheet, auto-scrap on arrival | `scrapSheet`, `scrapKeeps`, `autoScraps`, `autoScrapTop`, `scrapList`, `sparesPastTwo`, `S.autoScrap` (-1 off, else a rarity); applied in `bagAdd` (which now returns whether the club was kept) and in `offline`'s `bagAddOff` |
 | Heirlooms (Career > Legacy). **The code still calls them trophies** (`B.TROPHY`, `S.relic`, `discover`, `trophiesFound`); only the words on screen changed | `renderLegacy` |
 | The Career tab's dot for "retiring now finds an heirloom" | `retireWorth` (worked out once a second), `renderXp`, `renderCareer` |
 | Retirement | `retireCard`, `retire` |
@@ -165,6 +172,42 @@ Line numbers are approximate and drift. Search for the name instead.
 
 ## 5. What the last features do (for debugging them)
 
+### Stage buttons (moved at the user's request)
+- Left column, top to bottom: the readout with **auto-climb** to its right
+  (`#rRow`, bottom-aligned), then settings, the shop, and the **Trophy Room**
+  as a medal (`medal` sprite; the trophy sprite stays with the heirlooms).
+  The perks star is alone on the right at 37%, and the hole map sits under it.
+- The readout **fills its row up to the button** instead of sizing to its
+  words: its words change every second, and a button placed after a
+  word-sized box slid about. The call (`#rTag`) now ellipsizes and the unit
+  keeps to one line, or the longest late-game words ran out of the narrower
+  box on a 360 phone.
+- A container query on `#hudLeft` drops the button under the readout when the
+  column is under 200px (a stage under ~357, the 320 phones).
+- The `shop` check holds all of it, including writing the longest words into
+  the readout and requiring the button not to move.
+
+### Scrapping (auto-scrap and scrap by rarity)
+- The locker band's button is **Scrap** (was Scrap dupes; reads "Scrap ·
+  auto" and lights when auto-scrap is on). It opens `scrapSheet`: six choices
+  for auto-scrap (Off, Common … Legendary; never Mythic), then a row per
+  rarity in the locker with Scrap N and what it pays, and Spares (past the
+  best two per slot, the old Scrap dupes). Legendary and Mythic rows take a
+  second tap ("Tap again", 4s).
+- Kept by every bulk path (`scrapKeeps`): set pieces, and the single best club
+  for a slot when it beats the worn one. Not every "upgrade": with nothing
+  worn every club beats nothing, and the first version kept them all.
+- Auto-scrap runs in `bagAdd` after the auto-equip sweep and before the
+  overflow trim, on the new club only; once-a-minute toast like the full
+  locker. A drop scrapped on arrival is not announced; a wager's reward line
+  and the shop bag's reveal mark it "scrapped". Away, `bagAddOff` scraps as the
+  drops land (O(1) each via a best-score-per-slot map) and the card gets an
+  "Auto-scrapped N" line.
+- The auto-equip toggle in the locker head reads **Auto-equip on/off** (it
+  was "Auto on", beside a Scrap button with an auto of its own); the head's
+  count lost the words "in the locker" to make room.
+- Dev menu: Gear > "drop 30 mixed" (`DEV.gearMix`).
+
 ### The Trophy Room, and the declutter
 - **Why.** An audit found three different "trophy" things in three places
   (the honours on the stage, the cabinet at the foot of the Tour tab, the
@@ -172,14 +215,15 @@ Line numbers are approximate and drift. Search for the name instead.
   honours list where nobody looks, the free sovereigns in the shop twice
   with nothing to say they were ready, three shop tiles that sold nothing,
   and nothing anywhere pointing at retiring.
-- **The room.** The trophy on the stage opens `trophyRoom()`: **Today**
+- **The room.** The medal on the stage (it was the trophy on the right until
+  the user asked for it under the shop) opens `trophyRoom()`: **Today**
   (a Collect button per thing waiting and Collect all when there are two or
   more; the free sovereigns every 8 hours; today's three challenges; this
   week's major and the wager of the day, and the Membership's daily when a
   member), **Cabinet** (the cabinet, with a reward line under the trophies, the
   cups and the best cards, and the Record rows under it), **Honours** (as before, minus the challenges).
-  Nothing in it is bought or upgraded. `QUIET` shows nothing. The trophy
-  carries a red dot (`#honDot`, class `ready`) while `roomWaiting()`, and a
+  Nothing in it is bought or upgraded. `QUIET` shows nothing. The button
+  carries a red dot (`#roomDot`, class `ready`) while `roomWaiting()`, and a
   tap opens Today when it does, the honours when a new one is done, else the
   last page.
 - **The case's rewards** (`B.CASE`): three tracks, majors won (1 to 52),
@@ -271,7 +315,7 @@ Line numbers are approximate and drift. Search for the name instead.
   - `drawFarFade` lifts one row into a 1-row canvas instead of drawing the
     canvas onto itself.
   - Live DOM numbers use `setText`/`setHTML`/`setSty`; the honours button
-    label is worked out four times a second (`renderHonBtn(true)` from the
+    label is worked out four times a second (`renderStageBtns(true)` from the
     frame); `renderLive(D)` reuses the frame's `derive()`.
 - The `battery` check holds all of this (pixel identity of the two ground
   paths, fresh and reused, a canvas-call cap, the canvas size, no DOM writes
@@ -316,6 +360,8 @@ Line numbers are approximate and drift. Search for the name instead.
 
 ## 6. Recent history (newest first, one line each)
 
+- `4609031`: the Trophy Room as a medal under the shop, auto-climb beside the
+  readout, and scrapping: auto-scrap by rarity and a scrap-by-rarity sheet.
 - `07ec78c`: the Trophy Room on the stage trophy (Today, Cabinet, Honours),
   rewards in the trophy case, free sovereigns and the challenges moved into
   it, shop Buy merged into Offers, legacy trophies renamed Heirlooms, and a
