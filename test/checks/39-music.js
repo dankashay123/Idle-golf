@@ -8,6 +8,8 @@
  *   - day picks the town theme, a night round or a wager the calm one
  *   - a change of track fades the old one out and starts the new one, and
  *     staying on the same track does not restart it
+ *   - Settings has a Night Music switch: off, the town theme plays at night
+ *     and in wagers too; a save with junk in it loads as on
  * Played through a stand-in audio context: a check's browser may not start
  * real sound.
  */
@@ -26,7 +28,7 @@ module.exports = {
       } else o.secs = 'missing';
 
       const keep = { ctx: Sfx.ctx, master: Sfx.master, recs: Sfx.recs, mus: Sfx.mus, key: Sfx.musKey,
-                     night: Scene.night, dgn: S.dgnRun, sound: S.sound, music: S.music };
+                     night: Scene.night, dgn: S.dgnRun, sound: S.sound, music: S.music, music2: S.music2 };
       try {
         // a stand-in that notes every play started and every fade
         const log = [];
@@ -41,6 +43,18 @@ module.exports = {
         Scene.night = false; o.day = pick();
         Scene.night = true; o.night = pick();
         Scene.night = false; S.dgnRun = { id: 'water' }; o.wager = pick(); S.dgnRun = null;
+        // the switch
+        S.music2 = 0; Scene.night = true; o.offNight = pick(); S.dgnRun = { id: 'water' }; o.offWager = pick(); S.dgnRun = null;
+        S.music2 = 1;
+        o.row = (() => { settingsSheet(); const r = [...document.querySelectorAll('#sheet .setrow')].find(x => x.querySelector('.nm').textContent === 'Night Music');
+          if (!r) return 'missing'; const b = r.querySelector('button'); const was = b.textContent; b.click();
+          const now = S.music2; settingsSheet(); const again = [...document.querySelectorAll('#sheet .setrow')].find(x => x.querySelector('.nm').textContent === 'Night Music').querySelector('button').textContent;
+          toggleMusic2(); hideSheet(); return was + '>' + now + '>' + again + '>' + S.music2; })();
+        o.repair = [];
+        for (const v of ['off', 2, -1, null]) { S.music2 = v; initState(); if (S.music2 !== undefined) o.repair.push(JSON.stringify(v) + ' loaded as ' + S.music2); }
+        S.music2 = 1;
+        // (flipping the switch plays through the stand-in too: start clean)
+        log.length = 0; Sfx.mus = []; Sfx.musKey = null;
 
         Scene.night = false; Sfx.musicTick(); ctx.currentTime += 1; Sfx.musicTick();
         o.dayRun = log.filter(x => x.startsWith('start')).join(',');
@@ -51,15 +65,20 @@ module.exports = {
       } finally {
         Sfx.ctx = keep.ctx; Sfx.master = keep.master; Sfx.recs = keep.recs; Sfx.mus = []; Sfx.musKey = keep.key;
         Scene.night = keep.night; S.dgnRun = keep.dgn; S.sound = keep.sound; S.music = keep.music;
+        if (keep.music2 === undefined) delete S.music2; else S.music2 = keep.music2;
       }
       return o;
     });
     const f = m => { throw new Error(m); };
+    if (r.offNight !== 'music' || r.offWager !== 'music') f('with Night Music off: night ' + r.offNight + ', wager ' + r.offWager + ' (want the town theme)');
+    if (r.row !== 'On>0>Off>1') f('the Night Music switch went ' + r.row + ' (want On, then 0 and Off, then back to 1)');
+    if (r.repair.length) f('a save with junk in its Night Music: ' + r.repair.join('; '));
     if (!(r.secs >= 100 && r.secs <= 140)) f('the calm track: ' + r.secs + ' (want it to decode, about two minutes)');
     if (r.day !== 'music' || r.night !== 'music2' || r.wager !== 'music2') f('tracks picked: day ' + r.day + ', night ' + r.night + ', wager ' + r.wager);
     if (r.dayRun !== 'start music') f('by day the music started ' + (r.dayRun || 'nothing') + ' (want the town theme, once)');
     if (!r.swap.faded || r.swap.started !== 'start music2' || r.playing !== 'music2')
       f('night falling: faded ' + r.swap.faded + ', started ' + (r.swap.started || 'nothing') + ', now playing ' + r.playing);
-    return ['the calm track decodes (' + r.secs + 's); town theme by day, the calm one at night and in wagers, faded across on the change'];
+    return ['the calm track decodes (' + r.secs + 's); town theme by day, the calm one at night and in wagers, faded across on the change',
+      'Night Music off keeps the town theme at night and in wagers; the switch flips and a junk save loads as on'];
   }
 };

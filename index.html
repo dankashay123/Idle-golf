@@ -3733,6 +3733,7 @@ function initState(){
   for(const k in S.caseGot){ const c = B.CASE.find(x => x.id === k);
     if(!c || !(S.caseGot[k] >= 0)) delete S.caseGot[k]; else S.caseGot[k] = Math.min(c.at.length, Math.floor(S.caseGot[k])); }
   if(S.music !== undefined && S.music !== 0 && S.music !== 1) delete S.music;
+  if(S.music2 !== undefined && S.music2 !== 0 && S.music2 !== 1) delete S.music2;
   if(S.saver !== undefined && !SAVER_MINS.includes(S.saver)) delete S.saver;
   for(const k in S.homes){ const c = courseById(k); if(!c || c.slot !== 'home') delete S.homes[k]; }
   if(!S.styleOwn || typeof S.styleOwn !== 'object') S.styleOwn = {};
@@ -5734,6 +5735,22 @@ const Sfx = {
     this.tone(230, t, 0.055, 'triangle', 0.05, 150);
     if(creak) this.tone(170, t + 0.04, 0.34, 'triangle', 0.022, 128);
   },
+  // Air moving: noise under a low-pass filter that opens and closes again, the
+  // loudness rising and falling with it. dur seconds; the filter from lo up
+  // to hi and back.
+  gust(t, dur, vol, lo, hi){
+    const c = this.ctx, src = c.createBufferSource(), f = c.createBiquadFilter(), g = c.createGain();
+    src.buffer = this.noise(); src.loop = true;
+    f.type = 'lowpass'; f.Q.value = 0.7;
+    f.frequency.setValueAtTime(lo, t);
+    f.frequency.linearRampToValueAtTime(hi, t + dur * 0.45);
+    f.frequency.linearRampToValueAtTime(lo, t + dur);
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.linearRampToValueAtTime(vol, t + dur * 0.4);
+    g.gain.linearRampToValueAtTime(0.0001, t + dur);
+    src.connect(f); f.connect(g); g.connect(this.master);
+    src.start(t, Math.random() * 0.5); src.stop(t + dur + 0.05);
+  },
   // On the stepping stones: a knock of a shoe on stone and a little splash.
   hop(t, ice){
     this.tone(420, t, 0.05, 'triangle', 0.045, 260);
@@ -5752,13 +5769,16 @@ const Sfx = {
   // It stops (fading) with sound or music off, through a catch-up, and while
   // the app is away, and comes back in when they are over.
   MUS_VOL: 0.14, MUS_XF: 1.5,
+  // the season's air, set by measure (see the handoff notes): a gust a shade
+  // over a bird, the winter breath under one
+  SEASON_VOL: { gust: 0.035, hush: 0.008 },
   mus: [],
   musicWanted(){ return this.on() && S.music !== 0 && !!this.ctx && this.ctx.state === 'running' && !!this.recs.music; },
   // Two tracks: the town theme by day, and a calmer one for night rounds and
   // the wagers (music2), a shade quieter. A change of track fades the one
   // playing out over two seconds as the other fades in.
   MUS_GAIN: { music: 1, music2: 0.85 },
-  musicTrack(){ return (Scene.night || S.dgnRun) && this.recs.music2 ? 'music2' : 'music'; },
+  musicTrack(){ return (Scene.night || S.dgnRun) && this.recs.music2 && S.music2 !== 0 ? 'music2' : 'music'; },
   musicFade(t, dur){
     for(const m of this.mus){
       try{
@@ -5819,10 +5839,23 @@ const Sfx = {
       const st = Math.floor((Scene.walkPh || 0) * 2);
       if(st !== this.stepK){ this.stepK = st; this.plank(now + 0.01, Math.random() < 0.3); }
     }
-    if(S.dgnRun || Scene.night || Scene.rain) return;
+    // The seasons on a home course: the wind gusting through the leaves in
+    // autumn; in winter the hush of the snow, the birds gone quiet and only a
+    // thin breath of air now and then; in blossom, birdsong more often.
+    const season = !S.dgnRun && Scene.look && Scene.look.season;
+    if(season === 'Autumn' || season === 'Winter'){
+      const fall = season === 'Autumn';
+      this.windT = (this.windT === undefined ? 1.5 + Math.random() * 3 : this.windT) - dt;
+      if(this.windT <= 0){
+        this.windT = fall ? 5 + Math.random() * 7 : 8 + Math.random() * 8;
+        if(fall) this.gust(now + 0.02, 2.2 + Math.random() * 1.4, this.SEASON_VOL.gust, 260, 900);
+        else this.gust(now + 0.02, 3.5 + Math.random() * 2, this.SEASON_VOL.hush, 900, 2200);
+      }
+    }
+    if(S.dgnRun || Scene.night || Scene.rain || season === 'Winter') return;
     this.birdT = (this.birdT || 3 + Math.random() * 6) - dt;
     if(this.birdT <= 0){
-      this.birdT = 4 + Math.random() * 9;
+      this.birdT = season === 'Blossom' ? 2 + Math.random() * 4 : 4 + Math.random() * 9;
       const t = this.ctx.currentTime + 0.02, k = 1 + (Math.random() * 3 | 0);
       for(let i = 0; i < k; i++) this.chirp(t + i * 0.22);
     }
@@ -5861,6 +5894,12 @@ const Sfx = {
 function toggleMusic(){
   S.music = S.music === 0 ? 1 : 0;
   if(S.music) Sfx.unlock();
+  Sfx.musicTick();
+  settingsSheet();
+}
+// the calm night tune, or the town theme all the time
+function toggleMusic2(){
+  S.music2 = S.music2 === 0 ? 1 : 0;
   Sfx.musicTick();
   settingsSheet();
 }
@@ -14611,6 +14650,9 @@ function settingsSheet(){
         + (S.sound !== 0 ? 'On' : 'Off') + '</button>')
     + row('Music', S.sound === 0 ? 'Needs Sound on' : '', '<button class="mini' + (S.music !== 0 ? ' go' : '') + '" onclick="toggleMusic()">'
         + (S.music !== 0 ? 'On' : 'Off') + '</button>')
+    + row('Night Music', S.music === 0 || S.sound === 0 ? 'Needs Music on' : 'A calmer tune at night and in wagers',
+        '<button class="mini' + (S.music2 !== 0 ? ' go' : '') + '" onclick="toggleMusic2()">'
+        + (S.music2 !== 0 ? 'On' : 'Off') + '</button>')
     + row('Battery Saver', saverMins() ? 'After ' + saverMins() + '\u00a0min untouched' : 'Only when started',
         '<div class="setbtns"><button class="mini' + (saverMins() ? ' go' : '') + '" onclick="saverCycle()">'
         + (saverMins() ? saverMins() + '\u00a0min' : 'Off') + '</button>'

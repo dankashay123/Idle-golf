@@ -12,7 +12,11 @@ check is for.
   branch `claude/funny-davinci-7ik9ge`). Nothing is half-built.
 - `node test/run.js` passes all **40 checks** (about 7 minutes; `pacing` runs
   sixteen seeds and takes ~40s on its own).
-- Latest: **"sounds for the signature holes, more seasonal touches, a second
+- Latest: **"all of those please"** to the menu: a signature hole on the
+  other courses, honours for the signature holes, sounds for the seasons, and
+  a settings switch for the second track. Switch and season sounds done
+  (below); the other two in progress.
+- Before: **"sounds for the signature holes, more seasonal touches, a second
   music track, then the third signature hole"**. Sounds and seasons done
   (§5 under "Canyon carry" and "Home course seasons"); the second music
   track is in (§1 below), and the third signature hole, **Stepping Stones**
@@ -106,7 +110,9 @@ check is for.
   Plains was calmer but 5.5 minutes. `Sfx.musicTrack()` plays it on night
   rounds and in wagers (`MUS_GAIN` 0.85, a shade under the town theme; both
   measured at about -15 LUFS); a change fades the old one over 2s
-  (`musicFade`). **Ask the user whether it fits.** `music` checks it.
+  (`musicFade`). **Ask the user whether it fits.** Settings has a **Night
+  Music** switch (`S.music2`, 0 is off: the town theme all the time,
+  `toggleMusic2`). `music` checks both.
 - **Background music**: "Town Theme RPG" by cynicmusic (CC0, OpenGameArt),
   mono 40 kbps, `rec-music` (~650 KB of the file). `Sfx.musicTick` loops it by
   overlapping plays by `MUS_XF`; volume `MUS_VOL` 0.14; its own Music switch
@@ -330,6 +336,12 @@ Line numbers are approximate and drift. Search for the name instead.
   crowd and falling snow (`Scene.snow`, not in rain). A course already the
   season's tree colour takes its `alt` (Jade Pagoda: white blossom).
 - The banner reads e.g. "Winter - Home of Tour Card XXIII".
+- Sounds (`Sfx.gust`, `SEASON_VOL`, in `Sfx.tick` off `Scene.look.season`):
+  autumn gusts through the leaves every 5-12s (about -55 dB, against the
+  music's -45 average and a bird's -63); winter silences the birds and
+  breathes a thin high air every 8-16s (-64 dB), the hush; blossom sings
+  birds every 2-6s instead of 4-13s. `seasons` checks all three over five
+  simulated minutes with a fixed random.
 - Touches: autumn blows leaves across with the wind, blossom lets petals
   sink (`Scene.fall`, `Scene.fallCols`, drawn in `drawWeather`, none in
   rain); winter ponds are ice (`Scene.ice`, `P_ICE`, ramp `T._ic`, no

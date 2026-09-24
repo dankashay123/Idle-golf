@@ -13,6 +13,9 @@
  *     (Castle Dunes is built with the two close, so this is relative)
  *   - winter snows, unless it is raining; the other seasons do not
  *   - the banner names the season
+ *   - the sounds: wind gusting in autumn; in winter a hush, the birds quiet
+ *     and only a thin breath of air; more birdsong in blossom (played for
+ *     five minutes through a stand-in audio context, with a fixed random)
  */
 'use strict';
 module.exports = {
@@ -106,7 +109,38 @@ module.exports = {
       o.homes = N;
       return o;
     });
+    const snd = await page.evaluate(() => {
+      const keep = { ctx: Sfx.ctx, gust: Sfx.gust, chirp: Sfx.chirp, mt: Sfx.musicTick, rnd: Math.random,
+                     look: Scene.look, night: Scene.night, rain: Scene.rain, heli: Scene.heli, crossing: Scene.crossing, sound: S.sound };
+      const out = {};
+      try {
+        S.sound = 1; QUIET = false; S.dgnRun = null; Scene.night = false; Scene.rain = false; Scene.heli = 0; Scene.crossing = 0;
+        Sfx.ctx = { state: 'running', currentTime: 1 }; Sfx.musicTick = () => {};
+        const home = COURSE_HOME[0];
+        for (let s = 0; s < 4; s++) {
+          let seed = 12345;
+          Math.random = () => { seed = (seed * 1103515245 + 12345) & 0x7fffffff; return seed / 0x80000000; };
+          const n = { gust: 0, hush: 0, chirp: 0 };
+          Sfx.gust = (t, dur, vol) => { if (vol === Sfx.SEASON_VOL.gust) n.gust++; else n.hush++; };
+          Sfx.chirp = () => { n.chirp++; };
+          Sfx.windT = undefined; Sfx.birdT = undefined;
+          Scene.look = seasonLook(home, s);
+          for (let t = 0; t < 300; t += 0.1) Sfx.tick(0.1);
+          out[s] = n;
+        }
+      } finally {
+        Math.random = keep.rnd; Sfx.ctx = keep.ctx; Sfx.gust = keep.gust; Sfx.chirp = keep.chirp; Sfx.musicTick = keep.mt;
+        Scene.look = keep.look; Scene.night = keep.night; Scene.rain = keep.rain; Scene.heli = keep.heli; Scene.crossing = keep.crossing; S.sound = keep.sound;
+      }
+      return out;
+    });
+
     const f = m => { throw new Error(m); };
+    const [built, autumn, winter, bloom] = [0, 1, 2, 3].map(k => snd[k]);
+    if (built.gust || built.hush) f('a course as built made season sounds: ' + JSON.stringify(built));
+    if (autumn.gust < 15 || autumn.hush) f('five minutes of autumn: ' + autumn.gust + ' gusts, ' + autumn.hush + ' winter breaths (want 15 or more gusts)');
+    if (winter.chirp || winter.hush < 10 || winter.gust) f('five minutes of winter: ' + winter.chirp + ' birds, ' + winter.hush + ' breaths, ' + winter.gust + ' gusts (want silence from the birds)');
+    if (!(bloom.chirp > built.chirp * 1.5)) f('blossom birdsong ' + bloom.chirp + ' against ' + built.chirp + ' as built (want half as much again)');
     if (r.same.length) f('home course seasons that look alike: ' + r.same.slice(0, 4).join('; '));
     if (r.other.length) f('courses that are not home courses changed with the card: ' + r.other.join(', '));
     if (r.moved.length) f(r.moved.slice(0, 3).join('; '));
@@ -115,6 +149,7 @@ module.exports = {
     if (r.iceP !== true || r.iceRips) f('a pond in winter: drawn as ice ' + r.iceP + ', ripples ' + r.iceRips);
     if (r.banner.length) f('the banner: ' + r.banner.join('; '));
     return [r.homes + ' home courses in four seasons each, all different, round again after blossom; other courses unchanged',
+      'sounds over five minutes: autumn ' + autumn.gust + ' gusts; winter ' + winter.hush + ' breaths and no birds; blossom ' + bloom.chirp + ' chirps to ' + built.chirp,
       'hazards stay put; the fairway stands out as well as it does as built; snow and ice in winter, leaves in autumn, petals in blossom; the banner names the season'];
   }
 };
