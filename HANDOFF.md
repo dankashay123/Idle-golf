@@ -1,6 +1,6 @@
 # Handoff — Mythic Mulligan
 
-Last updated 2026-09-24, at commit `b0e7b8f` on `main`. Read this with
+Last updated 2026-09-24, at commit `eba1392` on `main`. Read this with
 `CLAUDE.md`, which holds the standing rules. `test/README.md` says what each
 check is for.
 
@@ -10,37 +10,32 @@ check is for.
 
 - Everything is committed and pushed to `main` (and mirrored on the session
   branch `claude/golf-sounds-dn0l4w`). Nothing is half-built.
-- `node test/run.js` passes all **30 checks** (about 6 minutes; `pacing` now
-  runs sixteen seeds and takes ~40s on its own).
-- The user asked for **items 3, 4, 5 and 6** of the menu. All four are done:
-  recorded sounds, the battery pass, more for the fairy caddie, and six new
-  honours. Details are in §5. Along the way a real auto-climb stall was found
-  and fixed (§5, "Auto-climb").
+- `node test/run.js` passes all **32 checks** (about 7 minutes; `pacing` runs
+  sixteen seeds and takes ~40s on its own).
+- The last request was "the trophy cabinet, then optimise and perfect what we
+  have, and check what the dev menu needs". All three are done (§5): the
+  cabinet and a season calendar on the Tour tab, a polish pass (a second
+  review, a soak test, a screenshot tour, fixes), and a dev menu that covers
+  everything added lately.
 - The user usually ends a task by asking **"What's next?"** Reply with a short
   plain-language menu, give a recommendation, and wait for them to choose.
   Open ideas are listed in §8.
-- **Strike and cup turned right down** at the user's request (strike 0.09,
-  pure 0.12, cup 0.15, about a third of before). Keep them subtle.
+- **Sound works on the user's iPhone now** (they confirmed). It had never
+  worked: audio was only unlocked on pointerdown, which iOS does not count,
+  and an 'interrupted' context was never resumed.
+- **Strike and cup are turned right down** at the user's request (strike
+  0.09, pure 0.12, cup 0.15). Keep them subtle.
+- **Applause was removed** at the user's request (it never stopped when holes
+  end every few seconds). Don't bring a crowd back without asking.
 - **Background music**: "Town Theme RPG" by cynicmusic (CC0, OpenGameArt),
-  mono 40 kbps, embedded as `rec-music` (~650 KB of the file). `Sfx.musicTick`
-  loops it by overlapping plays by `MUS_XF`; volume `MUS_VOL` 0.14. Its own
-  Music switch in Settings (`S.music`). Chosen unheard; ask the user if it
-  fits. Other CC0 candidates: Meadow Thoughts, The Field Of Dreams, Summer
-  Park 8bit, Apple Cider, Sunset Plains.
-- **Applause removed** at the user's request (it never stopped when holes
-  end every few seconds). Only the strike and cup recordings remain; an event
-  win keeps its fanfare. Don't bring a crowd back without asking.
-- **Sound had never worked on the user's iPhone** (Home Screen app). Audio was
-  only unlocked on pointerdown, which iOS does not count, and an
-  'interrupted' context was never resumed. Fixed in the commit after
-  `52f0f86`: unlock on touchend/click too, resume any non-running state, and
-  play a silent sample in the tap. Unverified on a real iPhone; ask whether
-  they hear it now. If not, next suspects: `navigator.audioSession.type =
-  'ambient'` in a Home Screen app, and MP3 decoding.
-- **Ask the user how the sounds sound.** The sessions cannot listen to audio:
-  the recordings were chosen by measuring and by looking at spectrograms,
-  and the levels were matched by rendering. If any sounds wrong on the
-  iPhone, §5 lists the other candidates.
+  mono 40 kbps, `rec-music` (~650 KB of the file). `Sfx.musicTick` loops it by
+  overlapping plays by `MUS_XF`; volume `MUS_VOL` 0.14; its own Music switch
+  (`S.music`). Chosen unheard; the user has not said whether it fits. Other
+  CC0 candidates: Meadow Thoughts, The Field Of Dreams, Summer Park 8bit,
+  Apple Cider, Sunset Plains.
+- **The sessions cannot listen to audio.** Pick by measuring (spectrograms
+  via the static ffmpeg, levels by rendering through an OfflineAudioContext)
+  and ask the user.
 
 ## 2. Working with this user
 
@@ -162,6 +157,36 @@ Line numbers are approximate and drift. Search for the name instead.
 
 ## 5. What the last features do (for debugging them)
 
+### Trophy cabinet and season calendar (Tour tab)
+- Bands on the Tour tab: Tour Card, The Card, **Season N** (`renderSeason`),
+  Major of the Week, **Trophy Cabinet** (`renderCabinet`), Record (the old
+  stats, minus cups). Both render through `setHTML`, so a hole that changes
+  nothing touches nothing.
+- Records: `S.evLog` (last 24 events: `{t, id, s, b, w, c}`, `s` null when
+  resolved away) and `S.bestCards` (best five, `{t, id, s, c}`), written in
+  `endTournament`, repaired in `initState`; retiring clears `evLog` (the
+  calendar restarts at event 1) and keeps `bestCards`.
+- `upcomingCourse(e, t)` predicts future events with `openEvent`'s rules; the
+  `cabinet` check plays each case through to the next event and compares.
+- The weekly courses carry `trophy` (12x12 sprite id) and `trophyCol`; the
+  cabinet also uses `cabJacket`, `cabCup`, `cabSlam`.
+
+### Second review and polish (fixed)
+- Fade row without a context when the picture is exactly 300 wide (frozen
+  field). `deriveStill` now also clears timed lifts, sponsor perks and
+  `S.stretched`, and `roundRatio` judges par fives with `PAR_JUDGE` (the
+  `climb` check). Music fades on `visibilitychange`; a loop not yet started
+  is stopped, not faded from 1.0. The course scene resets after every wager
+  kind. Round the Corner is counted in `oneSwing` (`roundsCorner`). The canvas
+  is sized from `getBoundingClientRect`, rounded up. Ready Golf only acts
+  while the hole is in play. Matching Pair needs a look other than
+  `classic`. `noteHome` credits a home course on a save that arrives
+  mid-event. Words on the field are baked whole (`textCv`, `TCACHE`); trees
+  wholly behind a crest are skipped. `achAmt` shows share honours as %.
+- Soak: 90 minutes of accelerated play with drawing: heap 6-7 MB flat, ~1,350
+  DOM nodes, save ~19 KB, no errors. Frame at 4x CPU slowdown ~15 ms.
+
+
 ### Recorded sounds
 - Three CC0 recordings from OpenGameArt, cut and mixed with a static ffmpeg
   (from the `imageio-ffmpeg` pip wheel; there is no system ffmpeg), saved as
@@ -247,6 +272,15 @@ Line numbers are approximate and drift. Search for the name instead.
 
 ## 6. Recent history (newest first, one line each)
 
+- `eba1392`: words on the field baked whole, hidden trees skipped, share
+  honours as %, the cabinet's cup and slam unlit until won.
+- `6337ec1`: fixes from the second review (frozen field at 300 wide, climb on
+  a lucky moment, music in a hidden tab, wager scene, sliver, and polish).
+- `3990143`: developer menu rows for everything added lately.
+- `8a89f2c`: trophy cabinet and season calendar on the Tour tab.
+- `42d122b` .. `65435b7`: strike and cup quieter, background music, no
+  applause, sound on the iPhone at last.
+
 - `b0e7b8f`: six honours for doglegs, wind, the matching pair, home
   courses, majors and caddie perks.
 - `298b5ee`: three caddie perks, the fairy's reactions and quips; auto-climb
@@ -295,20 +329,19 @@ Line numbers are approximate and drift. Search for the name instead.
 
 ## 8. What to offer next
 
-Items 1-6 of the last menu are all done. When the user asks "What's next?",
-offer a fresh short menu. Candidates, in rough order of value:
+The trophy cabinet (item 1 of the last menu) is done. Still on that menu,
+under their numbers there:
 
-1. **Tune the sounds by ear.** Ask how the strike, the cup and the applause
-   sound on the phone; swap in another candidate from §5 if one is off.
-   Recorded birdsong is available. (No crowd sounds: the user removed them.)
-2. **A trophy cabinet** for the majors won and the jackets, and a season
-   calendar showing which course is coming up.
-3. **Signature holes on home courses**, such as an island-green par 3 (see
+2. **Signature holes on home courses**, such as an island-green par 3 (see
    the caution below).
-4. **Home course variety past Card X** (they repeat every ten cards).
-5. **A battery saver setting** that halves the frame rate when the phone is
-   left idle (the game still runs 60 frames a second; this would roughly
-   halve what is left).
+3. **Home course variety past Card X** (they repeat every ten cards).
+4. **A battery saver setting** that runs the field at a lower frame rate
+   when the phone is left idle.
+5. **A second music track**: a calmer one for night rounds, another for
+   wagers. Ask first whether the current track fits.
+
+Also worth offering: a short tour of what the Season list shows, if the user
+seems unsure what "Next" means there.
 
 ### Further ideas, not yet offered to the user
 
@@ -316,7 +349,5 @@ offer a fresh short menu. Candidates, in rough order of value:
   careful: shots are drawn landing where the yardage says, so an island hole
   needs landing positions that are never in the water. The Depths "island"
   mode has a moat you can study.
-- **A trophy cabinet view** for the majors won and the jackets, and a season
-  calendar showing which course is coming up.
 - **Home course variety past Card X** (they repeat every ten cards). Could
   add more home courses, or vary the palette of later repeats.
