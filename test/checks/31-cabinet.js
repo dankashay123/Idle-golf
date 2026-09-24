@@ -1,4 +1,5 @@
-/* The trophy cabinet and the season, on the Tour tab.
+/* The trophy cabinet, in the Trophy Room off the trophy on the course, and
+ * the season, on the Tour tab.
  *
  *   - every event finished is logged with its course, card and whether its
  *     cup was won; one resolved in a catch-up is logged as away and posts no
@@ -11,6 +12,16 @@
  *   - the cabinet lights a trophy for each major of the week won (with a
  *     count past one) and the jacket that came with it, shows the cups held
  *     and the best cards with the course they were posted on
+ *   - the case pays for what goes in it: majors won, cups, and the best card
+ *     (to 288 under, a perfect card). A reward waits at each step until it is
+ *     collected in the Trophy Room, pays once, and never goes; Collect all
+ *     takes everything waiting, the free sovereigns too, and is only offered
+ *     when there are two things to take; each other Collect button takes its
+ *     own and nothing else. The trophy on the course carries a dot while
+ *     anything waits and not otherwise, and opens the room on what it is for
+ *   - the Career tab carries its dot when retiring now would find an
+ *     heirloom, and not before retiring opens or once every one is found:
+ *     nothing on screen ever pointed at retiring before
  *   - retiring starts the calendar again, so the season's results go and the
  *     best cards stay; a save with junk in either loads clean
  */
@@ -70,7 +81,7 @@ module.exports = {
         S.majorWins = {}; S.majorWins[W[0].id] = 2; S.majorWins[W[2].id] = 1;
         S.styleOwn['o:' + W[0].prize] = 1; S.styleOwn['o:' + W[2].prize] = 1;
         delete S.styleOwn['o:' + W[1].prize]; delete S.styleOwn['o:' + W[3].prize];
-        S.cups = 17; renderTour();
+        S.cups = 17; trophyRoom('case');
         const shelves = [...document.querySelectorAll('#cabBox .shelf')];
         const lit = sh => [...sh.querySelectorAll('.ci')].map(e => e.classList.contains('no') ? 0 : 1).join('');
         o.trophies = lit(shelves[0]); o.jackets = lit(shelves[1]);
@@ -78,6 +89,57 @@ module.exports = {
         o.cups = document.querySelector('#cabBox .cabn .big').textContent;
         o.plaque = [...document.querySelectorAll('#cabBox .plaque .pr')].map(e => e.textContent).slice(0, 3);
         o.note = document.getElementById('cabNote').textContent;
+
+        // ---- the case's rewards: at each step, paid once, never lost ---------------
+        hideSheet(); S.caseGot = {}; S.majorWins = {}; S.cups = 0; S.bestRound = undefined; S.freeT = 0;
+        const dot = () => { renderHonBtn(); return document.getElementById('honBtn').classList.contains('ready'); };
+        o.dotIdle = dot();
+        S.cups = 5;                                           // steps at 1 and 5
+        o.cupPend = casePending().map(x => x.c.id + x.i).join(',');
+        o.dotWaiting = dot();
+        // the trophy opens on what its dot is for, wherever the room was left
+        roomTab = 'hon'; document.getElementById('honBtn').click();
+        o.opensToday = roomTab + '/' + !!document.querySelector('#roomBody [data-collect="cup"]'); hideSheet();
+        const sov0 = S.sov || 0; collect('cup'); o.cupPaid = (S.sov || 0) - sov0;
+        o.cupAgain = casePending().length; o.cupPaidAgain = (collect('cup'), (S.sov || 0) - sov0);
+        S.cups = 12; S.bestRound = -120; S.majorWins = { masters: 1, crown: 1 };   // cup 10; card 25, 50, 100; majors 1, 2
+        S.freeT = B.FREE_EVERY;
+        trophyRoom('today');
+        o.collectAll = !!document.querySelector('#roomBody [data-collect=""]');
+        const want = casePay(casePending()) + B.FREE_GIFT, sov1 = S.sov || 0;
+        document.querySelector('#roomBody .act[data-collect=""]').click();
+        o.allPaid = (S.sov || 0) - sov1; o.allWant = want;
+        o.afterAll = casePending().length + '/' + (freeReady() ? 'free' : 'none') + '/' + (dot() ? 'dot' : 'clear');
+        // the free sovereigns alone are enough to light the dot
+        S.freeT = B.FREE_EVERY; o.freeDot = dot(); collect(); o.freeGone = !dot();
+        // the free sovereigns' own button takes them and nothing else
+        S.cups = 25; S.freeT = B.FREE_EVERY; trophyRoom('today');       // the cup step at 25 waits too
+        const sov2 = S.sov || 0; document.querySelector('#roomBody [data-collect="free"]').click();
+        o.freeOnly = (S.sov || 0) - sov2 + '/' + casePending().map(x => x.c.id + x.i).join(',');
+        // with one thing waiting there is no Collect all beside its own button
+        o.oneAll = !!document.querySelector('#roomBody .act[data-collect=""]'); o.freeGift = B.FREE_GIFT;
+        collect('cup');
+        // a track collected to its end says so, and a perfect card is the last step
+        S.bestRound = -288; collect('card'); trophyRoom('case');
+        o.cardDone = /every reward collected/.test(document.getElementById('cabBox').textContent);
+        o.cardTop = B.CASE.find(c => c.id === 'card').at.slice(-1)[0];
+        S.caseGot = { cup: 99, card: -3, nope: 2 }; initState(); o.caseRepair = JSON.stringify(S.caseGot);
+        hideSheet();
+        S.cups = 17;                     // as the cabinet above had it: retiring pays off the cups
+
+        // ---- the Career tab says when retiring would find an heirloom -------------
+        const worth = () => { retireWorth._t = -1e9; renderXp(); return retireWorth()
+          && document.querySelector('.tab[data-v="career"]').classList.contains('alert'); };
+        const keepPts = [S.talPts, S.statPts, S.paraPts];
+        S.talPts = 0; S.statPts = 0; S.paraPts = {};
+        // one short of the first heirloom, so this retirement is what finds it
+        const relic0 = S.relic; S.relic = {};
+        S.eventsPlayed = B.RETIRE_EVENTS; S.legacy = discoverCost() - 1;
+        const Pv = legacyPreview(); o.retireFinds = Pv.after > Pv.held;
+        o.worthOn = worth();
+        S.eventsPlayed = 0; o.worthEarly = worth();
+        S.eventsPlayed = B.RETIRE_EVENTS; S.relic = {}; B.TROPHY.forEach(t => S.relic[t.id] = 1); o.worthAll = worth();
+        S.relic = relic0; S.legacy = 0; [S.talPts, S.statPts, S.paraPts] = keepPts;
 
         // ---- retiring, and a roughed-up save ------------------------------------
         const bestBefore = S.bestCards.length;
@@ -108,11 +170,27 @@ module.exports = {
     if (r.cups !== '17') throw new Error('the cabinet shows ' + r.cups + ' cups of 17');
     if (!/^-90/.test(r.plaque[0] || '') || !/Card/.test(r.plaque[0])) throw new Error('the best cards plaque reads ' + JSON.stringify(r.plaque));
     if (!/^2 of 4 majors/.test(r.note)) throw new Error('the cabinet note reads "' + r.note + '"');
+    if (r.dotIdle) throw new Error('the trophy carried its dot with nothing waiting');
+    if (r.cupPend !== 'cup0,cup1' || !r.dotWaiting) throw new Error('five cups left ' + r.cupPend + ' waiting (want the steps at 1 and 5), dot ' + r.dotWaiting);
+    if (r.opensToday !== 'today/true') throw new Error('with a reward waiting the trophy opened the room on ' + r.opensToday);
+    if (r.cupPaid !== 25 || r.cupAgain || r.cupPaidAgain !== 25) throw new Error('collecting the cups paid ' + r.cupPaid + ' then ' + r.cupPaidAgain + ' (want 25 once)');
+    if (!r.collectAll || r.allPaid !== r.allWant) throw new Error('Collect all paid ' + r.allPaid + ' of ' + r.allWant + ' (the case and the free ' + 'sovereigns)');
+    if (r.afterAll !== '0/none/clear') throw new Error('after Collect all: ' + r.afterAll);
+    if (!r.freeDot || !r.freeGone) throw new Error('with only the free sovereigns waiting the trophy\'s dot was ' + r.freeDot + ', and after collecting ' + !r.freeGone);
+    if (r.freeOnly !== r.freeGift + '/cup3') throw new Error('the free sovereigns\' button paid and left ' + r.freeOnly + ' (want ' + r.freeGift + '/cup3)');
+    if (r.oneAll) throw new Error('with one thing to collect the Trophy Room still offered Collect all beside it');
+    if (!r.cardDone || r.cardTop !== 288) throw new Error('the best card track ends at ' + r.cardTop + ' and reads done: ' + r.cardDone);
+    if (r.caseRepair !== JSON.stringify({ cup: 8 })) throw new Error('a save with junk collected steps loaded as ' + r.caseRepair);
+    if (!r.retireFinds) throw new Error('retiring here would find no heirloom, so the Career tab test measured nothing');
+    if (!r.worthOn) throw new Error('retiring would find an heirloom and the Career tab said nothing');
+    if (r.worthEarly || r.worthAll) throw new Error('the Career tab pointed at retiring before it opens, or with every heirloom found');
     if (r.retired !== '0/kept') throw new Error('after retiring the season log and best cards were ' + r.retired + ' (want 0/kept)');
     if (r.repaired !== '1/1' || r.repaired2 !== 'true/true') throw new Error('a save with junk records loaded as ' + r.repaired + ' / ' + r.repaired2);
     return ['every event logged with its course; away events post no card; the best five kept, best first',
       'the season shows six events, and what it names next is what then gets played (' + r.predict.map(x => x.split(':')[0]).join(', ') + ')',
       'the cabinet lights the majors won (x2 past one) and their jackets, holds ' + r.cups + ' cups and the best cards by course',
+      'its rewards wait at each step, pay once and never go; Collect all takes them and the free sovereigns, and the trophy\'s dot goes',
+      'the Career tab points at retiring when it would find an heirloom, and only then',
       'retiring clears the season and keeps the best cards; junk records load clean'];
   }
 };

@@ -64,7 +64,7 @@ module.exports = {
       // 2. nothing in the shop asks for payment details, on any tab
       out.inputs = [];
       out.banner = {};
-      for (const sub of ['offers', 'buy', 'bags', 'perm', 'style']) {
+      for (const sub of ['offers', 'bags', 'perm', 'style']) {
         openShop(sub);
         const sheet = document.getElementById('sheet');
         out.inputs = out.inputs.concat(
@@ -267,7 +267,7 @@ module.exports = {
     if (st.caddiePrice.length) throw new Error('these caddies are not a third of their look: ' + st.caddiePrice.join(', '));
     if (!(st.caddieShirt > 20)) throw new Error('the Sunday Red caddie does not wear its red: ' + st.caddieShirt + ' pixels of it');
 
-    return ['button under the readout, no input of any kind, banner on all five',
+    return ['button under the readout, no input of any kind, banner on all four',
       'style: every outfit and trail changes no stat, each paid once (' + st.want
       + ' sovereigns for all), owned ones free to wear, a save wearing one it does not own repaired',
       'tiles ' + Object.keys(r.tiles).map(k => k + ' ' + r.tiles[k].cards).join('/'),

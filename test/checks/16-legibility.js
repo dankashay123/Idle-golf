@@ -79,10 +79,14 @@ module.exports = {
         const b = [...document.querySelectorAll('#careerNav button')].find(x => x.dataset.s === sub);
         if (b) { b.click(); sweep('career/' + sub); }
       }
-      for (const sub of ['offers', 'buy', 'bags', 'perm', 'style']) { openShop(sub); sweep('shop/' + sub); }
+      for (const sub of ['offers', 'bags', 'perm', 'style']) { openShop(sub); sweep('shop/' + sub); }
       for (const cat of ['caddie', 'clubs', 'balls']) { styleCat = cat; openShop('style'); sweep('shop/style/' + cat); } styleCat = 'golfer';
       settingsSheet(); sweep('settings');
       importSheet(); sweep('settings/import');
+      // the Trophy Room, with something waiting so its Collect buttons are there
+      S.freeT = B.FREE_EVERY; S.cups = Math.max(S.cups || 0, 6); S.majorWins = { masters: 1 };
+      for (const t of ['today', 'case', 'hon']) { trophyRoom(t); sweep('room/' + t); }
+      perksSheet(); sweep('perks');
       try { hideSheet(); } catch (e) {}
       setView('upg');
       return { small, noname, lowc, buttons, texts };

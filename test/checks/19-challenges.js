@@ -12,6 +12,7 @@
  *     bonus up to its cap; one day missed and it starts again
  *   - a mangled daily in a save is thrown away and rebuilt, not trusted
  *   - none of them falls in the first five minutes of a brand-new save
+ *   - today's three are on the Today page of the Trophy Room, each by name
  */
 'use strict';
 module.exports = {
@@ -92,7 +93,14 @@ module.exports = {
           Math.random = realR;
           Object.keys(S).forEach(k => delete S[k]); Object.assign(S, JSON.parse(keep));
         }
-        o.honours = (() => { try { const w = document.createElement('div'); honRows(w); return w.innerHTML.indexOf('Today') >= 0; } catch (e) { return 'threw ' + e.message; } })();
+        // today's three are on the Today page of the Trophy Room, each by name
+        o.honours = (() => { try {
+          QUIET = false; trophyRoom('today');
+          const t = $('roomBody').textContent.replace(/\u00a0/g, ' ');
+          const miss = S.daily.picks.map(dailyDef).filter(c => t.indexOf(c.d) < 0).map(c => c.d);
+          hideSheet();
+          return miss.length ? 'missing ' + miss.join('; ') : /Challenges/.test(t) || 'no Challenges heading';
+        } catch (e) { return 'threw ' + e.message; } })();
       } finally { QUIET = false; DAY_FORCE = null; }
       o.pool = B.DAILY_POOL.length; o.B = { sov: B.DAILY_SOV, all: B.DAILY_ALL, step: B.DAILY_STREAK, max: B.DAILY_STREAK_MAX };
       return o;
@@ -123,7 +131,7 @@ module.exports = {
     if (r.mangled.length) throw new Error('a mangled daily survived a load: ' + r.mangled.join('; '));
     if (r.quick.length) throw new Error('a brand-new save cleared these in five minutes: ' + r.quick.join('; ')
       + '. A daily is a goal for the day, not a freebie.');
-    if (r.honours !== true) throw new Error('the honours sheet does not show today\'s three: ' + r.honours);
+    if (r.honours !== true) throw new Error('the Trophy Room does not show today\'s three: ' + r.honours);
 
     return ['same three all day, all ' + r.pool + ' come round in a month, level gate held',
       'progress counts from the day\'s start; each pays ' + Bc.sov + ' once, all three ' + (Bc.all + Bc.step) + ' up to '

@@ -196,6 +196,9 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
 .tab .dot{position:absolute;top:5px;right:8px;width:5px;height:5px;border-radius:0;
   background:var(--aurora);display:none}
 .tab.alert .dot{display:block}
+/* a sub-tab with something worth going to, the same small square as the tabs */
+.sub.hot{position:relative}
+.sub.hot::after{content:'';position:absolute;top:6px;right:5px;width:5px;height:5px;background:var(--aurora)}
 /* A card you have unlocked and not been to see. The dot says there is
    something; the flash is what makes you look. It stops the moment the Tour
    screen is opened, and it never runs on the tab you are already on. */
@@ -423,6 +426,19 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
 .plaque .ps{font-family:var(--mono);font-weight:600;color:var(--chalk);min-width:4ch;text-align:right}
 .plaque .pc{color:var(--dim);min-width:0}
 .plaque .pe{font-size:var(--f1);color:var(--dim)}
+/* a heading inside a sheet: --faint reads 4.2:1 on the sheet's panel, under
+   the 4.5 small type needs (the honours sheet had it and was never checked) */
+#sheet .eyebrow,#sheet .hint{color:var(--dim)}
+/* An honour still to win is a goal, not a locked door: the list was drawn at
+   55% for everything not yet done, which is most of it, and its progress line
+   in the faintest grey. Its bar says how far along it is. */
+#roomBody .row.locked{opacity:1}
+#sheet .mt{color:var(--dim)}
+/* a reward track under a shelf: the next step and what it pays, or Collect */
+.ctrack{display:flex;justify-content:space-between;align-items:center;gap:8px;
+  padding:0 10px 8px;font-size:var(--f1);color:var(--dim);min-height:24px}
+.ctrack i{font-style:normal;color:var(--faint)}
+.ctrack .s{font-family:var(--mono);color:var(--brass)}
 
 /* ---------- career ---------- */
 #lvBox{padding:11px 12px 12px;background:#0A170F;border-bottom:var(--hair)}
@@ -456,8 +472,8 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
 .hbar i{display:block;height:100%;background:var(--brass)}
 /* the bar was a flex child like the words beside it, so it took half the row
    and squeezed the text into the other half; it goes underneath instead */
-#honSheetRows .row{flex-wrap:wrap}
-#honSheetRows .row > .hbar{flex:0 0 100%;width:100%;margin-top:-2px}
+.row.hrow{flex-wrap:wrap}
+.row.hrow > .hbar{flex:0 0 100%;width:100%;margin-top:-2px}
 .pips{display:inline-flex;gap:3px;vertical-align:-1px;margin-right:5px}
 .pip{width:7px;height:7px;border-radius:0;border:1px solid var(--line);display:block}
 .pip.on{background:var(--brass);border-color:var(--brass)}
@@ -610,6 +626,17 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
   padding:10px 4px;background:radial-gradient(circle at 50% 42%,rgba(255,255,255,.07),transparent 66%)}
 .card .cart img{width:48px;height:48px;image-rendering:pixelated;image-rendering:crisp-edges}
 .sgrid.c3 .cart img{width:36px;height:36px}
+/* A tile alone on its rack takes the whole row, on its side: the art, the
+   words, the price, left to right. Double Purse sat in half a row beside an
+   empty half once the free sovereigns left the shop for the Trophy Room. */
+.card.wide{grid-column:1/-1;display:grid;grid-template-columns:64px minmax(0,1fr) 96px;
+  grid-template-rows:auto 1fr;text-align:left}
+.card.wide .cart{grid-column:1;grid-row:1/3;padding:8px 4px}
+.card.wide .chd{grid-column:2;grid-row:1;background:none;border-bottom:0;padding:9px 6px 3px}
+.card.wide .csub{grid-column:2;grid-row:2;padding:0 6px 9px}
+.card.wide .price{grid-column:3;grid-row:1/3;display:flex;flex-direction:column;justify-content:center;
+  border-top:0;border-left:1px solid var(--brass-dk)}
+.card.wide .price.no,.card.wide .price.max{border-left-color:var(--line)}
 .card .csub{padding:0 5px 6px;font-size:var(--f0);color:var(--dim);line-height:1.35}
 .card .csub b{color:var(--aurora)}
 .card .pips{display:flex;gap:2px;justify-content:center;padding:0 5px 6px}
@@ -719,6 +746,10 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
 #perkDot{position:absolute;top:-6%;right:-6%;width:34%;height:34%;border-radius:0;
   background:var(--aurora);display:none}
 #perkBtn.live #perkDot{display:block}
+/* something waiting to be collected in the Trophy Room: the same red dot the
+   shop's offer carries, so a dot on a stage button always means "for you" */
+#honDot{position:absolute;top:-6%;right:-6%;width:34%;height:34%;background:var(--r5);display:none}
+#honBtn.ready #honDot{display:block}
 /* Top right corner, clear of the readout on the left and the two stage
    buttons below. Two at a time: any more and they became the view. */
 /* 38 and not 52. The readout's column runs to 58.2% of the stage (2.2 + 56),
@@ -786,7 +817,7 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
 
   <div id="stage">
     <canvas id="hole" width="720" height="440"></canvas>
-    <button id="honBtn" aria-label="Achievements"><img id="honIcon" alt=""></button>
+    <button id="honBtn" aria-label="Trophy Room"><img id="honIcon" alt=""><span id="honDot"></span></button>
     <button id="perkBtn" aria-label="Sponsor perks"><img id="perkIcon" alt=""><span id="perkDot"></span></button>
     <canvas id="holeMap" aria-hidden="true"></canvas>
     <div id="hudLeft">
@@ -878,10 +909,6 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
       <div id="seasonBox"></div>
       <div class="band"><span class="eyebrow">Major of the Week</span><span class="note" id="majNote"></span></div>
       <div id="majBox"></div>
-      <div class="band"><span class="eyebrow">Trophy Cabinet</span><span class="note" id="cabNote"></span></div>
-      <div id="cabBox"></div>
-      <div class="band"><span class="eyebrow">Record</span><span class="note" id="cupNote"></span></div>
-      <div id="statRows"></div>
     </div>
 
     <div class="view" id="v-career">
@@ -891,7 +918,7 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
       <div id="legWrap" hidden>
         <div class="band"><span class="eyebrow">Retirement</span><span class="note" id="legNote"></span></div>
         <div id="legBox"></div>
-        <div class="band"><span class="eyebrow">Trophy Room</span><span class="note" id="relicNote"></span></div>
+        <div class="band"><span class="eyebrow">Heirlooms</span><span class="note" id="relicNote"></span></div>
         <div id="relicRows"></div>
       </div>
     </div>
@@ -1039,9 +1066,6 @@ const B = {
   //
   //   X main   x shade   o deep   w highlight   . clear
   PX12: {
-    freegift: ['............','...XXXXXX...','..XwwwwwwX..','..XXXXXXXX..','.XXXXXXXXXX.','.XwXXoXXXwX.','.XwXXoXXXwX.','.XwXXoXXXwX.','.XwXXoXXXwX.','.XxXXoXXXxX.','.XXXXXXXXXX.','............'],
-    freeday: ['....XXXX....','..XXwwwwXX..','.XwX.XX.XXx.','XwX..XX..Xx.','Xw...XXXX.Xx','Xw........Xx','Xw..XXXX..Xx','.Xx.X..X.Xx.','..XXx..xXX..','....XXXX....','............','............'],
-    freecard: ['XXXXXXXXXXXX','XwwwwwwwwwXx','XwXXXXXXXXXx','XwXooXXooXXx','XwXXXXXXXXXx','XwXooooXXXXx','XwXXXXXXXXXx','XxXXXXXXXXXx','XXXXXXXXXXXx','..XX....XX..','...XXXXXX...','............'],
     sov1: ['............','............','....XXXX....','...XwwwXx...','...XwXXXx...','...XwXXXx...','...XxXXXx...','....XXXx....','.....Xx.....','............','............','............'],
     sov2: ['............','...XXXXXX...','..XwwwwwXx..','..XwXXXXXx..','..XwXXXXXx..','..XwXXXXXx..','..XxXXXXXx..','...XXXXXx...','....XXXx....','.....Xx.....','............','............'],
     sov3: ['..XXXXXXXX..','.XwwwwwwwXx.','.XwXXXXXXXx.','.XwXXXXXXXx.','.XwXXXXXXXx.','.XwXXXXXXXx.','.XxXXXXXXXx.','..XXXXXXXx..','...XXXXXx...','....XXXx....','.....Xx.....','............'],
@@ -2686,9 +2710,9 @@ const B = {
       { id:'plegacy', n:'Legacy',    k:'plegacy', v:0.00200, cap:500, s:'%',
         d:'Legacy on retiring' },
       { id:'pdisc',   n:'Collector', k:'pdisc',   v:0.00060, cap:500, s:'%',
-        d:'Off new trophy costs' },
+        d:'Off new heirloom costs' },
       { id:'pcurate', n:'Curator',   k:'pcurate', v:0.00050, cap:500, s:'%',
-        d:'Off trophy upgrades' },
+        d:'Off heirloom upgrades' },
       { id:'paway',   n:'Caddie',    k:'paway',   v:0.00070, cap:500, s:'%',
         d:'Pace kept while away' } ] }
   ],
@@ -2933,8 +2957,8 @@ const B = {
     { id:'prov2',  n:'Both Barrels',     d:'Reach 150% provisional chance', m:'mst', v:1.50, r:{k:'mst', v:0.10}, sov:100 },
     { id:'kitE',   n:'Well Stocked',     d:'Six pieces at Epic or better',  m:'set6e', v:6,   r:{k:'pow', v:0.08}, sov:10 },
     { id:'perk50', n:'Sponsored',        d:'Use 50 sponsor perks',        m:'perks',  v:50,    r:{k:'gld', v:0.06}, sov:10 },
-    { id:'tr15',   n:'Curator',          d:'Find 15 trophies',            m:'troph',  v:15,    r:{k:'pow', v:0.06}, sov:10 },
-    { id:'tr30',   n:'The Whole Room',   d:'Find every trophy',           m:'troph',  v:30,    r:{k:'pow', v:0.25}, sov:100 },
+    { id:'tr15',   n:'Curator',          d:'Find 15 heirlooms',           m:'troph',  v:15,    r:{k:'pow', v:0.06}, sov:10 },
+    { id:'tr30',   n:'The Whole Collection', d:'Find every heirloom',     m:'troph',  v:30,    r:{k:'pow', v:0.25}, sov:100 },
     { id:'ret1',   n:'Signed Off',       d:'Retire once',                 m:'retire', v:1,     r:{k:'tick', v:2}, sov:10 },
     // the newer things on the course: doglegs, the wind, the fairy, home
     // courses and the majors of the week
@@ -2946,6 +2970,14 @@ const B = {
     { id:'homes',  n:'Home Tour',        d:'Play all ten home courses',   m:'homes',  v:10,    r:{k:'gld', v:0.05}, sov:10 },
     { id:'major1', n:'Major Winner',     d:'Win a major of the week',     m:'slam',   v:1,     r:{k:'tick', v:3}, sov:10 },
     { id:'staff',  n:'Full Staff',       d:'Own every caddie perk',       m:'cperks', v:9,     r:{k:'gld', v:0.04}, sov:10 }
+  ],
+  // The trophy case pays for what goes in it, collected by hand in the Trophy
+  // Room: once for each step reached, and nothing waiting there runs out. The
+  // best card stops at 288 under, which is an ace on every hole of an event.
+  CASE: [
+    { id:'maj',  n:'Majors Won', at:[1, 2, 4, 8, 12, 20, 30, 52],          sov:[30, 30, 40, 50, 60, 80, 100, 150] },
+    { id:'cup',  n:'Cups Won',   at:[1, 5, 10, 25, 50, 100, 250, 500],     sov:[10, 15, 25, 40, 60, 100, 150, 250] },
+    { id:'card', n:'Best Card',  at:[25, 50, 100, 150, 200, 240, 270, 288], sov:[5, 10, 20, 30, 40, 60, 80, 120] }
   ],
   // Honours that come round again. Steps are set off how fast each thing turns
   // up late in a career, not early: a floor-bound bag cards an eagle on nearly
@@ -3507,7 +3539,9 @@ function defaultState(){ return {
   evCourse: null, weekly: null, majorWins: {}, homes: {},
   // what each event came to (the season calendar), and the best cards
   // ever posted with where they were posted (the trophy cabinet)
-  evLog: [], bestCards: []
+  evLog: [], bestCards: [],
+  // the trophy case's rewards collected, as steps taken on each of its tracks
+  caseGot: {}
 }; }
 let S = defaultState();
 function initState(){
@@ -3572,6 +3606,9 @@ function initState(){
   S.evLog = Array.isArray(S.evLog) ? S.evLog.filter(x => rec(x) && (x.s === null || isFinite(x.s))).slice(-24) : [];
   S.bestCards = Array.isArray(S.bestCards) ? S.bestCards.filter(x => rec(x) && isFinite(x.s))
     .sort((a, b) => a.s - b.s).slice(0, 5) : [];
+  if(!S.caseGot || typeof S.caseGot !== 'object') S.caseGot = {};
+  for(const k in S.caseGot){ const c = B.CASE.find(x => x.id === k);
+    if(!c || !(S.caseGot[k] >= 0)) delete S.caseGot[k]; else S.caseGot[k] = Math.min(c.at.length, Math.floor(S.caseGot[k])); }
   if(S.music !== undefined && S.music !== 0 && S.music !== 1) delete S.music;
   for(const k in S.homes){ const c = courseById(k); if(!c || c.slot !== 'home') delete S.homes[k]; }
   if(!S.styleOwn || typeof S.styleOwn !== 'object') S.styleOwn = {};
@@ -5994,12 +6031,6 @@ function buyMember(){
   toast('<b>Club Membership</b> active');
   renderShop(); renderAll();
 }
-function claimFree(){
-  if(!freeReady()){ toast('Not ready yet'); return; }
-  S.freeT = 0;
-  grantSov(B.FREE_GIFT, 'for turning up');
-  renderShop();
-}
 function buyBoost(){
   if(!spendSov(B.BOOST_C)) return;
   S.boostT = (S.boostT || 0) + B.BOOST_HOURS * 3600;
@@ -6025,7 +6056,9 @@ function tickShop(dt){
 
 /* ---- the shop, on screen ---- */
 let shopSub = 'offers', styleCat = 'golfer';
-function openShop(sub){ if(sub) shopSub = sub; renderShop(); }
+// (the sovereign packs had a tab of their own, Buy, beside four tiles of
+// Offers; they are one tab now, and an old caller asking for Buy gets it)
+function openShop(sub){ if(sub) shopSub = sub === 'buy' ? 'offers' : sub; renderShop(); }
 
 // One tile on the rack: what it is, the art, a line about it, and the price.
 // style: owned when free, or when bought; worn is what the save says
@@ -6195,7 +6228,7 @@ function trailUrl(t){
   }catch(e){ return DOMSPR[key] = ''; }
 }
 function shopCard(o){
-  return '<div class="card' + (o.on ? ' on' : '') + '">'
+  return '<div class="card' + (o.on ? ' on' : '') + (o.wide ? ' wide' : '') + '">'
     + '<div class="chd">' + o.head + '</div>'
     + '<div class="cart' + (o.badge ? ' hasbadge' : '') + '">'
     + (o.badge ? '<span class="badge">' + o.badge + '</span>' : '')
@@ -6213,7 +6246,8 @@ function pipRow(n, of){
 const ribbon = t => '<div class="srib"><span>' + t + '</span></div>';
 
 function renderShop(){
-  const tabs = [['offers','Offers'], ['buy','Buy'], ['bags','Bags'], ['perm','Bench'], ['style','Style']];
+  if(shopSub === 'buy') shopSub = 'offers';
+  const tabs = [['offers','Offers'], ['bags','Bags'], ['perm','Bench'], ['style','Style']];
   let h = '<h3>The Pro Shop</h3>'
     + '<div class="shopnav">' + tabs.map(([id, t]) =>
         '<button data-sub="' + id + '"' + (shopSub === id ? ' class="on"' : '') + '>' + t
@@ -6221,33 +6255,6 @@ function renderShop(){
     + '<div class="sovline"><span>You hold</span><b>' + sovFmt(S.sov) + '\u00a0' + B.SOV + '</b></div>'
     + '<div class="freebar"><b>Nothing here is charged.</b> Prices are for show \u2014 '
     + 'every pack is free.</div>';
-
-  if(shopSub === 'buy'){
-    const rate = B.SOV_PACKS[0].c / B.SOV_PACKS[0].usd;
-    h += ribbon(B.SOV) + '<div class="sgrid c3">' + B.SOV_PACKS.map(pk => {
-      const bonus = Math.round((pk.c / (pk.usd * rate) - 1) * 100);
-      const taken = S.packsTaken[pk.id] || 0;
-      return shopCard({ ic: pk.ic, col: '#C68BFF', on: bonus >= 40,
-        badge: bonus > 0 ? '+' + bonus + '%' : '',
-        head: sovFmt(pk.c),
-        sub: pk.n + (taken ? '<br><b>taken ' + taken + '\u00d7</b>' : ''),
-        price: '$' + pk.usd.toFixed(2), note: 'free', act: 'pack:' + pk.id });
-    }).join('') + '</div>';
-
-    const ready = freeReady();
-    h += ribbon('Free ' + B.SOV) + '<div class="sgrid c3">'
-      + shopCard({ ic: 'freegift', col: '#7ADB86', on: ready, head: '+' + B.FREE_GIFT,
-          sub: 'On the house', price: ready ? 'CLAIM' : hms(B.FREE_EVERY - (S.freeT || 0)),
-          note: ready ? 'free' : 'wait', cls: ready ? '' : 'no', act: 'free:1' })
-      + shopCard({ ic: 'freeday', col: '#57E0BE', head: '+' + B.MEMBER_DAILY,
-          sub: 'Members, daily', price: isMember() ? 'ACTIVE' : 'JOIN',
-          note: isMember() ? 'on' : 'offers', cls: isMember() ? 'max' : '',
-          act: isMember() ? 'nothing:1' : 'member:1' })
-      + shopCard({ ic: 'freecard', col: '#E3B457', head: '+' + B.FREE_CARD,
-          sub: 'Every Tour Card you win', price: 'AUTO', note: 'free', cls: 'max',
-          act: 'nothing:1' })
-      + '</div>';
-  }
 
   if(shopSub === 'bags'){
     h += '<div class="shopnote">' + nb('Clubs fitted ' + B.BAG_ILVL
@@ -6340,16 +6347,28 @@ function renderShop(){
       + shopCard({ ic:'boost', col:'#F2D75E', on: boostOn(), badge: boostOn() ? 'ON' : '',
           head:'Double Purse',
           sub: boostOn() ? '<b>' + hms(S.boostT) + ' left.</b> Buying again adds to it.'
-            : 'Everything doubled for ' + B.BOOST_HOURS + ' hours.',
+            : nb('Everything doubled for ' + B.BOOST_HOURS + ' hours.'),
           price: sovFmt(B.BOOST_C), note: B.SOV.toLowerCase(),
-          cls: (S.sov || 0) >= B.BOOST_C ? '' : 'no', act:'boost:1' })
-      + shopCard({ ic:'freegift', col:'#7ADB86', head:'Free ' + B.SOV,
-          sub:'A handful every ' + Math.round(B.FREE_EVERY/3600) + ' hours.',
-          price: freeReady() ? 'CLAIM' : hms(B.FREE_EVERY - (S.freeT || 0)),
-          note: freeReady() ? '+' + B.FREE_GIFT : 'wait',
-          cls: freeReady() ? '' : 'no', act:'free:1' })
-      + '</div>'
-      + '<div class="shopnote" style="margin-top:10px">Spent so far: ' + sovFmt(S.sovSpent)
+          cls: (S.sov || 0) >= B.BOOST_C ? '' : 'no', act:'boost:1', wide: 1 })
+      + '</div>';
+  }
+  if(shopSub === 'offers'){
+    // the sovereign packs, and a pointer to the free ones
+    const rate = B.SOV_PACKS[0].c / B.SOV_PACKS[0].usd;
+    h += ribbon(B.SOV) + '<div class="sgrid c3">' + B.SOV_PACKS.map(pk => {
+      const bonus = Math.round((pk.c / (pk.usd * rate) - 1) * 100);
+      const taken = S.packsTaken[pk.id] || 0;
+      return shopCard({ ic: pk.ic, col: '#C68BFF', on: bonus >= 40,
+        badge: bonus > 0 ? '+' + bonus + '%' : '',
+        head: sovFmt(pk.c),
+        sub: pk.n + (taken ? '<br><b>taken ' + taken + '\u00d7</b>' : ''),
+        price: '$' + pk.usd.toFixed(2), note: 'free', act: 'pack:' + pk.id });
+    }).join('') + '</div>';
+
+    // the free ones are collected in the Trophy Room, off the trophy on the course
+    h += '<div class="shopnote" style="margin-top:10px">' + nb('Free ' + B.SOV.toLowerCase() + ' every ' + Math.round(B.FREE_EVERY / 3600)
+      + ' hours are in the Trophy Room.') + '</div>'
+      + '<div class="shopnote">Spent so far: ' + sovFmt(S.sovSpent)
       + ' ' + B.SOV.toLowerCase() + '.</div>';
   }
 
@@ -6374,7 +6393,6 @@ function renderShop(){
       else if(kind === 'starter') buyStarter();
       else if(kind === 'member') buyMember();
       else if(kind === 'boost') buyBoost();
-      else if(kind === 'free') claimFree();
       else if(kind === 'style'){ const [k, sid] = id.split('.'); styleBuy(k, sid); }
     };
   });
@@ -6425,6 +6443,18 @@ function discoveryGap(legacy){
 }
 // The whole retirement decision on one object: what the card is worth now, what
 // each of the two things that move it would add, and what the result buys.
+// Retiring now would find at least one more heirloom: the moment it is worth
+// doing, and the one thing in the Career tab nothing used to point to. Worked
+// out once a second, since the XP strip asks every frame.
+function retireWorth(){
+  const now = performance.now();
+  if(!(now - (retireWorth._t || -1e9) < 1000)){
+    retireWorth._t = now;
+    const P = legacyPreview();
+    retireWorth._v = P.ready && P.left > 0 && P.after > P.held;
+  }
+  return retireWorth._v;
+}
 function legacyPreview(){
   const now = legacyFor(S.tier, S.cups);
   return {
@@ -6446,7 +6476,7 @@ const upgradeCost = t => Math.max(1, Math.ceil(B.TR_COST * B.TR_TIER[t.t].m
   * (1 - Math.min(0.50, career().pcurate))));
 function discover(){
   const pool = B.TROPHY.filter(t => !found(t.id));
-  if(!pool.length){ toast('Every trophy is in the room'); return; }
+  if(!pool.length){ toast('Every heirloom is found'); return; }
   const c = discoverCost();
   if(S.legacy < c){ toast('Not enough legacy'); return; }
   S.legacy -= c;
@@ -6455,7 +6485,7 @@ function discover(){
   for(const t of pool){ x -= B.TR_TIER[t.t].w; if(x <= 0){ pick = t; break; } }
   S.relic[pick.id] = 1;
   showSheet('<h3>' + pick.n + '</h3>'
-    + '<p style="color:var(' + B.TR_TIER[pick.t].v + ')">' + B.TR_TIER[pick.t].n + ' trophy</p>'
+    + '<p style="color:var(' + B.TR_TIER[pick.t].v + ')">' + B.TR_TIER[pick.t].n + ' heirloom</p>'
     + '<p>' + pick.d.charAt(0).toUpperCase() + pick.d.slice(1) + '.</p>'
     + '<div class="big">' + trophiesFound() + ' / ' + B.TROPHY.length + '</div>'
     + '<button class="act" onclick="hideSheet()">To the room</button>');
@@ -11561,22 +11591,6 @@ function honRows(w){
   if(near.length) h += '<div class="hint">Closest: '
     + near.map(a => '<b>' + a.n + '</b> ' + achAmt(a, Math.min(achMetric(a.m), a.v)) + '/' + achAmt(a, a.v))
         .join(' \u00b7 ') + '.</div>';
-  // Today's three, first: they turn over, the rest wait.
-  if(S.daily){
-    const Dy = S.daily, st = dailyStreak();
-    const bonus = B.DAILY_ALL + B.DAILY_STREAK * Math.min(B.DAILY_STREAK_MAX, st + (Dy.all ? 0 : 1));
-    h = '<div class="eyebrow" style="margin:6px 0 4px">Today \u00b7 new in ' + hms(featLeft())
-        + (st ? ' \u00b7 ' + st + '-day streak' : '') + '</div>'
-      + Dy.picks.map((id, i) => {
-          const c = dailyDef(id); if(!c) return '';
-          return '<div class="lb rep"><span>' + (Dy.done[i] ? '\u2713 ' : '') + nb(c.d) + '</span>'
-            + '<span class="s">' + fmt(dailyHave(c, i), 0) + '/' + fmt(c.v, 0) + ' \u00b7 +'
-            + B.DAILY_SOV + sovIc() + '</span></div>';
-        }).join('')
-      + '<div class="lb rep"><span><i>' + (Dy.all ? '\u2713 All three' : 'All three') + '</i></span>'
-      + '<span class="s">+' + bonus + sovIc() + '</span></div>'
-      + h;
-  }
   // The ones that come round again, one line each: how far to the next, and
   // what it pays. Not .row, so the first row in the sheet is still the nearest
   // one-off.
@@ -11593,7 +11607,7 @@ function honRows(w){
     .sort((x, y) => x.done - y.done || y.r - x.r).map(x => x.a);
   for(const a of rows){
     const got = achDone(a.id), have = achMetric(a.m), need = a.v;
-    h += '<div class="row' + (got ? '' : ' locked') + '"><div>'
+    h += '<div class="row hrow' + (got ? '' : ' locked') + '"><div>'
       + '<div class="nm">' + (got ? '\u2713 ' : '') + a.n + '</div>'
       + '<div class="ds">' + nb(a.d) + '</div>'
       + '<div class="mt">' + (got ? '<b>' + achReward(a) + '</b>'
@@ -11605,13 +11619,122 @@ function honRows(w){
   }
   w.innerHTML = h;
 }
-function honoursSheet(){
-  S.honSeen = achCount();
-  showSheet('<h3>Honours</h3><div id="honSheetRows"></div>'
-    + '<button class="act ghost" onclick="hideSheet()">Close</button>');
-  const t = $('honSheetRows');
-  if(t) honRows(t);
+/* ---- the Trophy Room ----
+   Everything there is to look at and collect, in one place, off the trophy on
+   the course: what is waiting today, the cabinet, and the honours. Nothing in
+   it is bought or upgraded. Today's three challenges used to sit at the top of
+   the honours, the free sovereigns in the shop twice over with nothing to say
+   they were ready, and the cabinet and the record at the foot of the Tour
+   tab; the trophy now carries a dot while anything here is waiting. */
+let roomTab = 'today';
+// the trophy case: how far along each of its tracks, and what is waiting
+function caseHave(id){
+  if(id === 'maj') return Object.values(S.majorWins || {}).reduce((t, n) => t + (n > 0 ? n : 0), 0);
+  if(id === 'cup') return S.cups || 0;
+  if(id === 'card') return S.bestRound === undefined ? 0 : Math.max(0, -S.bestRound);
+  return 0;
+}
+function casePending(){
+  const out = [];
+  for(const c of B.CASE){
+    const have = caseHave(c.id);
+    for(let i = (S.caseGot || {})[c.id] || 0; i < c.at.length && have >= c.at[i]; i++) out.push({ c, i });
+  }
+  return out;
+}
+const casePay = list => list.reduce((t, x) => t + x.c.sov[x.i], 0);
+const roomWaiting = () => freeReady() || casePending().length > 0;
+// collect the free sovereigns ('free'), one track of the case, or with no
+// id everything waiting in the room
+function collect(id){
+  let n = 0;
+  if((!id || id === 'free') && freeReady()){ S.freeT = 0; n += B.FREE_GIFT; }
+  S.caseGot = S.caseGot || {};
+  if(id !== 'free') for(const x of casePending()) if(!id || x.c.id === id){ n += x.c.sov[x.i]; S.caseGot[x.c.id] = x.i + 1; }
+  if(n){ grantSov(n, 'collected'); Sfx.play('coin'); }
   renderHonBtn();
+  return n;
+}
+function trophyRoom(tab){
+  if(tab) roomTab = tab;
+  if(QUIET) return;                 // no sheet is shown while the game plays out of sight
+  const tabs = [['today', 'Today'], ['case', 'Cabinet'], ['hon', 'Honours']];
+  showSheet('<h3>Trophy Room</h3><div class="shopnav">' + tabs.map(([id, t]) =>
+      '<button data-room="' + id + '"' + (roomTab === id ? ' class="on"' : '') + '>' + t + '</button>').join('')
+    + '</div><div id="roomBody"></div>'
+    + '<button class="act ghost" onclick="hideSheet()">Close</button>');
+  const sh = $('sheet');
+  sh.querySelectorAll('[data-room]').forEach(b => b.onclick = () => trophyRoom(b.dataset.room));
+  const w = $('roomBody');
+  if(roomTab === 'today') roomToday(w);
+  else if(roomTab === 'case') roomCase(w);
+  else{ S.honSeen = achCount(); honRows(w); }
+  sh.querySelectorAll('[data-collect]').forEach(b => b.onclick = () => { collect(b.dataset.collect); trophyRoom(); });
+  renderHonBtn();
+}
+// older callers asked for the honours on their own
+const honoursSheet = () => trophyRoom('hon');
+const roomLine = (k, v, btn) => '<div class="lb rep"><span>' + k + '</span><span class="s">' + v
+  + (btn || '') + '</span></div>';
+const collectBtn = (id, n) => ' <button class="mini go" data-collect="' + id + '">Collect +' + n + '</button>';
+// Today: what is waiting to be collected, today's three, and what this week holds
+function roomToday(w){
+  const P = casePending(), ready = freeReady(), all = casePay(P) + (ready ? B.FREE_GIFT : 0);
+  // one button for the lot, when there is more than one thing to take
+  const kinds = new Set(P.map(x => x.c.id)).size + (ready ? 1 : 0);
+  let h = kinds > 1 ? '<button class="act" data-collect="">Collect all \u00b7 +' + sovFmt(all) + ' ' + B.SOV + '</button>' : '';
+  h += '<div class="eyebrow" style="margin:6px 0 4px">To Collect</div>'
+    + roomLine('Free ' + B.SOV.toLowerCase() + ' \u00b7 every ' + Math.round(B.FREE_EVERY / 3600) + ' hours',
+        ready ? '' : 'in ' + hms(B.FREE_EVERY - (S.freeT || 0)),
+        ready ? collectBtn('free', B.FREE_GIFT) : '');
+  const byTrack = {};
+  for(const x of P) (byTrack[x.c.id] = byTrack[x.c.id] || []).push(x);
+  for(const c of B.CASE){
+    const list = byTrack[c.id]; if(!list) continue;
+    h += roomLine('Cabinet \u00b7 ' + c.n.toLowerCase(), '', collectBtn(c.id, casePay(list)));
+  }
+  if(!P.length) h += roomLine('Cabinet', '<span style="color:var(--faint)">nothing waiting</span>');
+  h += dailyBlock();
+  // this week, and today's wager: the two things that turn over on a clock
+  const M = majorState(), fw = featWager();
+  const say = { won: 'won', played: 'played', live: 'in play now', next: 'your next event', early: 'after your first event' }[M.st];
+  const wk = weekLeft() > 86400 ? Math.floor(weekLeft() / 86400) + 'd ' + Math.floor(weekLeft() % 86400 / 3600) + 'h' : hms(weekLeft());
+  const row2 = (nm, ds) => '<div class="row"><div><div class="nm">' + nm + '</div><div class="ds">' + ds + '</div></div></div>';
+  h += '<div class="eyebrow" style="margin:12px 0 0">This Week</div>'
+    + row2(M.cs.n, '<b style="color:var(--brass)">Major of the Week</b> \u00b7 ' + say + ' \u00b7 new in\u00a0' + wk)
+    + row2(fw.n, 'Wager of the day \u00b7 pays ' + B.DGN_FEAT_MULT + '\u00d7 \u00b7 new in\u00a0' + hms(featLeft()))
+    + (isMember() ? row2('Club Membership', '+' + B.MEMBER_DAILY + sovIc() + ' a day \u00b7 next in\u00a0' + hms(86400 - (S.memberT || 0))) : '');
+  w.innerHTML = h;
+}
+// today's three, their bonus and the streak
+function dailyBlock(){
+  if(!S.daily) return '';
+  const Dy = S.daily, st = dailyStreak();
+  const bonus = B.DAILY_ALL + B.DAILY_STREAK * Math.min(B.DAILY_STREAK_MAX, st + (Dy.all ? 0 : 1));
+  return '<div class="eyebrow" style="margin:12px 0 4px">Challenges \u00b7 new in ' + hms(featLeft())
+      + (st ? ' \u00b7 ' + st + '-day streak' : '') + '</div>'
+    + Dy.picks.map((id, i) => {
+        const c = dailyDef(id); if(!c) return '';
+        return roomLine((Dy.done[i] ? '\u2713 ' : '') + nb(c.d),
+          fmt(dailyHave(c, i), 0) + '/' + fmt(c.v, 0) + ' \u00b7 +' + B.DAILY_SOV + sovIc());
+      }).join('')
+    + roomLine('<i>' + (Dy.all ? '\u2713 All three' : 'All three') + '</i>', '+' + bonus + sovIc());
+}
+// the cabinet, its rewards, and the record under it
+function roomCase(w){
+  w.innerHTML = '<div class="hint" id="cabNote"></div><div id="cabBox"></div>'
+    + '<div class="eyebrow" style="margin:12px 0 4px">Record</div><div id="statRows"></div>';
+  renderCabinet(); renderRecord();
+}
+// one track of the case, under the shelf it pays for
+function caseTrack(id){
+  const c = B.CASE.find(x => x.id === id), got = (S.caseGot || {})[id] || 0, have = caseHave(id);
+  const list = casePending().filter(x => x.c.id === id);
+  if(list.length) return '<div class="ctrack"><span>' + c.n + ' \u00b7 reward waiting</span>' + collectBtn(id, casePay(list)) + '</div>';
+  if(got >= c.at.length) return '<div class="ctrack"><span>' + c.n + ' \u00b7 every reward collected</span></div>';
+  const at = c.at[got], what = id === 'card' ? 'a card of -' + at : at + (id === 'maj' ? (at === 1 ? ' major' : ' majors') : at === 1 ? ' cup' : ' cups');
+  return '<div class="ctrack"><span>Next: ' + what + ' <i>(' + fmt(Math.min(have, at), 0) + '/' + at + ')</i></span>'
+    + '<span class="s">+' + c.sov[got] + sovIc() + '</span></div>';
 }
 function renderHonBtn(live){
   const b = $('honBtn'); if(!b) return;
@@ -11619,7 +11742,8 @@ function renderHonBtn(live){
   if(!b._built){
     b._built = 1;
     $('honIcon').src = pixUrl('trophy', '#E3B457');
-    b.onclick = honoursSheet;
+    // to whatever is calling: the dot's rewards, else a new honour, else where he was
+    b.onclick = () => trophyRoom(roomWaiting() ? 'today' : achCount() > (S.honSeen || 0) ? 'hon' : undefined);
   }
   b.classList.toggle('new', n > (S.honSeen || 0));
   // The button is a 12x12 sprite with no room for words, so the words go where
@@ -11631,10 +11755,12 @@ function renderHonBtn(live){
   const now = performance.now();
   if(!live || !(now - (b._lt || -1e9) < 250)){
     b._lt = now;
-    const nx = achNear(1)[0];
-    const lbl = nx ? 'Honours \u00b7 closest: ' + nx.n + ' ' + achAmt(nx, Math.min(achMetric(nx.m), nx.v))
-                     + ' of ' + achAmt(nx, nx.v)
-                   : 'Honours \u00b7 all ' + B.ACH.length + ' done';
+    const nx = achNear(1)[0], wait = roomWaiting();
+    b.classList.toggle('ready', wait);
+    const lbl = 'Trophy Room' + (wait ? ' \u00b7 something to collect' : '')
+      + (nx ? ' \u00b7 closest honour: ' + nx.n + ' ' + achAmt(nx, Math.min(achMetric(nx.m), nx.v))
+              + ' of ' + achAmt(nx, nx.v)
+            : ' \u00b7 all ' + B.ACH.length + ' honours done');
     if(b._lbl !== lbl){ b._lbl = lbl; b.title = lbl; b.setAttribute('aria-label', lbl); }
   }
   const p = $('perkBtn');
@@ -11703,7 +11829,7 @@ function renderXp(){
   setText($('xpNum'), unspent
     ? bits.join(' \u00b7 ')
     : fmt(have) + ' / ' + fmt(need) + ' xp');
-  if(careerTab) careerTab.classList.toggle('alert', unspent > 0);
+  if(careerTab) careerTab.classList.toggle('alert', unspent > 0 || retireWorth());
   renderTourTab();
 }
 // A card you have unlocked and not looked at yet. The marker is the highest
@@ -12585,10 +12711,12 @@ function renderTour(){
 
   renderMajor();
   renderSeason();
-  renderCabinet();
-  // the cups are in the cabinet now; this is the rest of the record
-  $('cupNote').textContent = '';
-  $('statRows').innerHTML = [
+}
+// The record, in the Trophy Room under the cabinet.
+function renderRecord(){
+  const el = $('statRows'); if(!el) return;
+  const D = derive();
+  el.innerHTML = [
     ['Cup points', fmt(S.points)],
     ['Holes played', fmt(S.totalHoles, 0)],
     ['Best hole', S.bestScore <= -4 ? 'Ace' : (B.SCORE.find(x=>x.d===S.bestScore) || {n:'Par'}).n],
@@ -12720,9 +12848,10 @@ function renderCabinet(){
   if(S.bestNine !== undefined) rows += line(S.bestNine, 'Best nine');
   const plaque = '<div class="plaque"><div class="ph">Best Cards</div>'
     + (rows || '<div class="pe">Finish an event to post one here.</div>') + '</div>';
-  setHTML(box, '<div class="cab"><div class="shelf">' + trophies + '</div><div class="plank"></div>'
+  setHTML(box, '<div class="cab"><div class="shelf">' + trophies + '</div>' + caseTrack('maj') + '<div class="plank"></div>'
     + '<div class="shelf">' + jackets + '</div><div class="plank"></div>'
-    + '<div class="shelf two">' + cups + slam + '</div><div class="plank"></div>' + plaque + '</div>');
+    + '<div class="shelf two">' + cups + slam + '</div>' + caseTrack('cup') + '<div class="plank"></div>'
+    + plaque + caseTrack('card') + '</div>');
 }
 
 // The three figures a climb actually turns on, which the screen has never shown:
@@ -12763,10 +12892,10 @@ function climbLines(){
 // and only once the first event was in the book -- so the actual decision,
 // one more Tour Card against signing now, could not be read off the screen.
 function legacyBuys(P){
-  if(P.left <= 0) return 'every trophy is already on the shelf';
+  if(P.left <= 0) return 'every heirloom is already found';
   const more = P.after - P.held;
-  if(more > 0) return more + (more === 1 ? ' more trophy' : ' more trophies') + ' out of the room';
-  return fmt(discoveryGap(S.legacy + P.now)) + ' short of the next trophy';
+  if(more > 0) return more + (more === 1 ? ' more heirloom' : ' more heirlooms');
+  return fmt(discoveryGap(S.legacy + P.now)) + ' short of the next heirloom';
 }
 function renderLegacy(){
   const P = legacyPreview(), gain = P.ready ? P.now : 0;
@@ -12794,13 +12923,14 @@ function renderLegacy(){
     + '<button class="act" onclick="hideSheet();retire()">Retire</button>'
     + '<button class="act ghost" onclick="hideSheet()">Keep playing</button>');
 
-  // The Trophy Room
+  // The heirlooms: found and raised with legacy (this was the Trophy Room;
+  // the name went to the showcase off the trophy on the course)
   const dc = discoverCost(), n = trophiesFound(), tot = B.TROPHY.length;
   $('relicNote').textContent = n + ' / ' + tot + ' found';
   const rows = $('relicRows');
   rows.innerHTML = '<div class="row">' + svgIcon('trophy', 'ric', BRASS)
-    + '<div><div class="nm">Discover a Trophy</div>'
-    + '<div class="ds">' + (n >= tot ? 'Every trophy is on the shelf.'
+    + '<div><div class="nm">Discover an Heirloom</div>'
+    + '<div class="ds">' + (n >= tot ? 'Every heirloom is found.'
         : 'Gold ones are rarest.') + '</div>'
     + '<div class="mt">Found <i>' + n + '</i> of ' + tot + '</div></div>'
     + '<button class="buy' + (S.legacy >= dc && n < tot ? ' ok' : ' no') + '" id="discBtn">'
@@ -12812,7 +12942,7 @@ function renderLegacy(){
     .sort((a,b) => order[a.t] - order[b.t] || a.n.localeCompare(b.n));
   if(!mine.length){
     rows.insertAdjacentHTML('beforeend',
-      '<div class="empty">Nothing on the shelves yet.</div>');
+      '<div class="empty">None found yet.</div>');
   }
   for(const t of mine){
     const lv = S.relic[t.id] || 0, c2 = upgradeCost(t), tier = B.TR_TIER[t.t];
@@ -13071,7 +13201,7 @@ const DEV = {
       + b('no cooldowns', 'DEV.nocd()') + b('fire all', 'DEV.fire()')
       + b('run all perks', 'DEV.perks()') + b('clear perks', 'DEV.perks0()'));
 
-    h += row('Trophy Room', b('find 5', 'DEV.disc(5)') + b('find all', 'DEV.disc(99)')
+    h += row('Heirlooms', b('find 5', 'DEV.disc(5)') + b('find all', 'DEV.disc(99)')
       + b('+2 levels each', 'DEV.relics(2)') + b('max all found', 'DEV.relics(B.TR_MAX)')
       + b('clear trophies', 'DEV.relics0()') + b('force retire', 'DEV.retire()'));
 
@@ -13222,7 +13352,7 @@ const DEV = {
       if(S.bestRound === undefined || S.bestRound > -212) S.bestRound = -212;
       if(S.bestNine === undefined || S.bestNine > -31) S.bestNine = -31;
     }else{
-      S.majorWins = {}; S.cups = 0; S.evLog = []; S.bestCards = [];
+      S.majorWins = {}; S.cups = 0; S.evLog = []; S.bestCards = []; S.caseGot = {};
       S.bestRound = undefined; S.bestNine = undefined;
     }
     checkAch(); this.re(); },
@@ -13294,7 +13424,8 @@ function renderCareer(){
 
   const subs = [['stat','Attributes'], ['tal','Talents'], ['para','Paragon'], ['leg','Legacy']];
   $('careerNav').innerHTML = subs.map(([id,n]) =>
-    '<button class="sub' + (careerSub === id ? ' on' : '') + '" data-s="' + id + '">' + n + '</button>').join('');
+    '<button class="sub' + (careerSub === id ? ' on' : '') + (id === 'leg' && retireWorth() ? ' hot' : '')
+    + '" data-s="' + id + '">' + n + '</button>').join('');
   $('careerNav').querySelectorAll('.sub').forEach(b =>
     b.onclick = () => { careerSub = b.dataset.s; renderCareer(); });
 

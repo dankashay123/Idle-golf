@@ -64,8 +64,10 @@ module.exports = {
                                            o.purse  = [n('purseStrip'), 4];
       setView('skl');    await sleep(120); o.shots  = [n('sklRows'),   B.SKILL.length];
       setView('dgn');    await sleep(120); o.depths = [n('dgnRows'),   B.DGN.length];
-      setView('tour');   await sleep(120); o.season = [n('statRows'),  8];
-                                           o.calendar = [n('seasonBox'), B.SEASON];
+      setView('tour');   await sleep(120); o.calendar = [n('seasonBox'), B.SEASON];
+      trophyRoom('case'); await sleep(60);   o.record = [n('statRows'), 8];
+                                           o.cabinet = [document.querySelectorAll('#cabBox .shelf').length, 3];
+      hideSheet();
       setView('career'); await sleep(120); o.subs   = [n('careerNav'), 4];
                                            o.attrs  = [n('careerBody'), B.STATS.length + 1 + (S.statPts ? 1 : 0)];
       setView('leg');    await sleep(120); o.relics = [n('relicRows'), -1];   // grows as you find them

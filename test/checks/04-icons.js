@@ -39,8 +39,7 @@ module.exports = {
         // the shop button and the three offers, which have no table of their own
         shop:     [['Settings', 'gear'], ['Pro shop', 'proshop'], ['Starter Pack', 'starter'],
                    ['Club Membership', 'member'], ['Double Purse', 'boost'],
-                   ['Free gift', 'freegift'], ['Members daily', 'freeday'],
-                   ['Tour Card bounty', 'freecard'], ['Auto-climb', 'autoclimb']],
+                   ['Auto-climb', 'autoclimb']],
         cperk:    (B.CPERKS || []).map(p => [p.n, p.ic]),
         // the trophy cabinet: a trophy for each major of the week, the jacket, the cups, the Grand Slam
         cabinet:  B.COURSE.filter(c => c.slot === 'weekly').map(c => [c.n + ' trophy', c.trophy])
@@ -132,7 +131,7 @@ module.exports = {
       for (const v of ['upg', 'bag', 'dgn', 'tour', 'career']) {
         setView(v); sweep(); looked += document.querySelectorAll('img').length;
       }
-      for (const sub of ['offers', 'buy', 'bags', 'perm', 'style']) { openShop(sub); sweep(); }
+      for (const sub of ['offers', 'bags', 'perm', 'style']) { openShop(sub); sweep(); }
       for (const cat of ['caddie', 'clubs', 'balls']) { styleCat = cat; openShop('style'); sweep(); } styleCat = 'golfer';
       try { hideSheet(); } catch (e) {}
       if (S.bag[0]) { itemSheet(S.bag[0], false); sweep(); try { hideSheet(); } catch (e) {} }

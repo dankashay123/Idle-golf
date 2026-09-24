@@ -93,10 +93,12 @@ module.exports = {
       for (const sub of ['stats', 'tal', 'para', 'leg']) {
         careerSub = sub; setView('career'); renderCareer(); sweep('panel', 'career/' + sub);
       }
-      for (const sub of ['offers', 'buy', 'bags', 'perm', 'style']) { openShop(sub); sweep('sheet', 'shop/' + sub); }
+      for (const sub of ['offers', 'bags', 'perm', 'style']) { openShop(sub); sweep('sheet', 'shop/' + sub); }
       for (const cat of ['caddie', 'clubs', 'balls']) { styleCat = cat; openShop('style'); sweep('sheet', 'shop/style/' + cat); } styleCat = 'golfer';
       try { hideSheet(); } catch (e) {}
-      honoursSheet(); sweep('sheet', 'honours'); try { hideSheet(); } catch (e) {}
+      S.freeT = B.FREE_EVERY; S.cups = Math.max(S.cups || 0, 6);
+      for (const t of ['today', 'case', 'hon']) { trophyRoom(t); sweep('sheet', 'room/' + t); }
+      try { hideSheet(); } catch (e) {}
       perksSheet(); sweep('sheet', 'perks'); try { hideSheet(); } catch (e) {}
       if (S.bag[0]) { itemSheet(S.bag[0], false); sweep('sheet', 'item'); try { hideSheet(); } catch (e) {} }
 
@@ -328,7 +330,7 @@ module.exports = {
           .find(x => x.dataset.s === sub);
         if (btn) { btn.click(); scan(); }
       }
-      for (const sub of ['offers', 'buy', 'bags', 'perm', 'style']) { openShop(sub); scan(); }
+      for (const sub of ['offers', 'bags', 'perm', 'style']) { openShop(sub); scan(); }
       for (const cat of ['caddie', 'clubs', 'balls']) { styleCat = cat; openShop('style'); scan(); } styleCat = 'golfer';
       try { hideSheet(); } catch (e) {}
       S.t = Date.now()/1000 - 3*3600; offline(); scan();
