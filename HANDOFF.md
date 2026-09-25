@@ -11,7 +11,12 @@ check is for.
 - Everything is committed and pushed to `main` (mirrored on the session
   branch `claude/notes-review-dju532`). Nothing is half-built.
 - `node test/run.js` passes all **54 checks** (about 10 minutes).
-- **Last request**: "All 4 please and thank you" (the menu: life on the
+- **Last request**: "Let's get rid of the 'unlocks when you have…' text
+  completely please". Done: it was only on the Range's upgrade rows; each
+  row now reads its level and effect, the price is on the button (grey
+  until affordable). `readouts` now requires that no rung says when it
+  unlocks.
+- **The request before**: "All 4 please and thank you" (the menu: life on the
   other signature holes, a happy dance on a great hole, a Record row for
   seasons seen, a fifth signature hole), and part way through: "Also please
   make sure the hole never ends before the golfer gets to the green". All
@@ -947,6 +952,7 @@ Line numbers are approximate and drift. Search for the name instead.
 
 ## 6. Recent history (newest first, one line each)
 
+- The Range's rows no longer say "unlocks when you have" (user asked).
 - A hole never ends before he is up on the green (while watched; the wait
   is paid for, so watching earns what being away does).
 - The fifth signature hole: the Railway Crossing, with its train.
