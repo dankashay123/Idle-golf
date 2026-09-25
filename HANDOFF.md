@@ -124,7 +124,7 @@ Line numbers are approximate and drift. Search for the name instead.
 | **Landmarks** | `drawLandmark` (called from `Scene.buildRidge`) |
 | Renderer | `const Scene = {`. Key members: `newHole`, `newDepthsHole`, `proj`, `curveAt`/`bendOff` (doglegs), `layHazards`, `layProps`, `buildSky`, `buildRidge`, `buildWood`, `drawGround`, `drawGolfer`, `fairyBox`/`drawCaddie`, `swing`/`walking2ball`/`launch`, `drawBalls`, `drawLyingBall`, `drawMap` |
 | **Caddie perk upgrades** (Lv 1-5) | `B.CPERK_LV_MAX`, `CPERK_LV_T`, `CPERK_LV_V`, `CPERK_LV_COST`, `cperkLv`, `cperkVal`, `cperkDur`, `cperkTxt`, `cperkUp`, `S.cperkLv`, `renderCadPerks` (the worn row's button), honour `headcad`; `DEV.cperkLv` |
-| The caddie's turns (spin, dance, flip, wave, loop) | `FAIRY_MOVES`, `fairyPose`, `Scene.tickMove`, `fairyMoveNow`, `fairyMoveGo`, the offscreen `_fairyCv` in `drawCaddie`; `DEV.move` |
+| The caddie's turns (spin, dance, flip, wave, loop, cartwheel, juggle) | `FAIRY_MOVES`, `fairyPose`, `Scene.tickMove`, `fairyMoveNow`, `fairyMoveGo`, the offscreen `_fairyCv` in `drawCaddie`; `DEV.move` |
 | Caddie perks (nine; `now:1` means instant, e.g. Ready Golf); each has `col` and a short line `s` | `tickCaddie`, `cperkPick`, `renderCadPerks`; the blessing `Scene.drawBless`, the countdown `buffTip` (`#buffTip` in `#setRow`) |
 | Clipping to the ground in front | `Scene.clipAt(d)`, `fillClip`, `pxLineClip` |
 | Volume | `Sfx.out`, `Sfx.master` (effects), `Sfx.musBus`, `Sfx.setVol`, `setVol`, `S.volFx`, `S.volMus` |
@@ -278,7 +278,10 @@ Line numbers are approximate and drift. Search for the name instead.
   down, `gh * 0.035` either way (about 2px on a phone), as before. The
   fairy dust still falls off him.
 - **Turns**: `FAIRY_MOVES` (spin 1.0s, dance 2.6s, flip 0.9s, wave 1.8s,
-  loop 1.4s). `Scene.tickMove` (called with `tickQuip` from the frame)
+  loop 1.4s, cartwheel 1.8s, juggle 2.6s; the last two added on request:
+  over once away from the golfer with arms out and legs split, then a
+  float back; three golf balls hand to hand in arcs that rise out of his
+  hands and sink back at the end, drawn after him in `drawCaddie`). `Scene.tickMove` (called with `tickQuip` from the frame)
   starts one 8-18s after the course is first drawn, then 12-28s after each
   ends, never the same twice running; not while he has his say, while a
   perk goes off (a perk going off also ends one: its arms up come first) or
@@ -775,6 +778,7 @@ Line numbers are approximate and drift. Search for the name instead.
 
 ## 6. Recent history (newest first, one line each)
 
+- The caddie cartwheels and juggles too.
 - Caddie perk upgrades: the worn perk to Lv 5, a second longer and 12.5%
   stronger a level; Head Caddie honour.
 - The caddie's wings gone; he floats, and now and then spins, dances,
