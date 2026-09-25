@@ -957,6 +957,8 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
       <div id="seasonBox"></div>
       <div class="band"><span class="eyebrow">Major of the Week</span><span class="note" id="majNote"></span></div>
       <div id="majBox"></div>
+      <div class="band"><span class="eyebrow">Signature Week</span><span class="note" id="sigNote"></span></div>
+      <div id="sigBox"></div>
     </div>
 
     <div class="view" id="v-career">
@@ -16499,7 +16501,7 @@ function renderSkills(){
 // Depths redraw on the key timer, and a class on the element is gone the next
 // time they do.
 const dgnOpen = {};
-let cardHintOpen = false, majHintOpen = false;
+let cardHintOpen = false, majHintOpen = false, sigHintOpen = false;
 function renderDgn(){
   const w = $('dgnRows'); w.innerHTML = '';
   const D = derive();
@@ -16710,6 +16712,7 @@ function renderTour(){
     + '<span class="s">' + payShare(proj, target).toFixed(2) + 'x</span></div>';
 
   renderMajor();
+  renderSigWeek();
   renderSeason();
 }
 // The record, in the Trophy Room under the cabinet.
@@ -16769,6 +16772,30 @@ function renderMajor(){
   const q = box.querySelector('#majHint .qm');
   $('majHint').classList.toggle('open', majHintOpen);
   q.onclick = () => { majHintOpen = !majHintOpen; $('majHint').classList.toggle('open', majHintOpen); };
+}
+
+// The Signature Week on the Tour tab (the user asked): each kind of signature
+// hole ticked off as it is played this week, the hole of the week marked as
+// paying double, and where to find a sea stack behind the ?.
+function renderSigWeek(){
+  const box = $('sigBox'); if(!box) return;
+  const got = sigWeekKinds(), wk = sigWeek(), all = got.length === SIG_KINDS.length;
+  const lb = (k, v, col) => '<div class="lb"><span class="p"></span><span>' + k + '</span>'
+    + '<span class="s"' + (col ? ' style="color:var(' + col + ')"' : '') + '>' + v + '</span></div>';
+  $('sigNote').textContent = got.length + '\u00a0of ' + SIG_KINDS.length + ' this week';
+  const stacks = B.COURSE.filter(cs => HOME_PIER[cs.id] || B.SIG_HOLE[cs.id] === 'pier').map(cs => cs.n);
+  const won = (S.tally && S.tally.sigWeek) || 0;
+  box.innerHTML = '<div class="hint" id="sigHint"><div class="foldhead">'
+    + '<span>' + (all ? '<b style="color:var(--brass)">\u2713 All five this week</b>' : 'Play all five kinds this week')
+    + (won ? ' \u00b7 won ' + won + '\u00d7' : '') + '</span>'
+    + '<button class="qm" aria-label="How the Signature Week works">?</button></div>'
+    + '<div class="fold" style="margin-top:6px">Monday to Sunday. A home round has four kinds; the sea stack is at '
+    + stacks.join(', ') + '.</div></div>'
+    + SIG_KINDS.map(k => lb(SIG_NAME[k] + (k === wk ? ' \u00b7 pays\u00a0' + B.SIG_WEEK_MULT + '\u00d7' : ''),
+        got.includes(k) ? '\u2713 played' : '\u2014', got.includes(k) ? '--verdant' : null)).join('');
+  const q = box.querySelector('#sigHint .qm');
+  $('sigHint').classList.toggle('open', sigHintOpen);
+  q.onclick = () => { sigHintOpen = !sigHintOpen; $('sigHint').classList.toggle('open', sigHintOpen); };
 }
 
 /* ---- the season and the trophy cabinet ---- */

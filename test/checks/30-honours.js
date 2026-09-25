@@ -186,6 +186,10 @@ module.exports = {
           DAY_FORCE = mon + 1;
           W.none = recRow();
           homeFour().forEach(h => playW(h, 0)); W.four = { t: tally('sigWeek'), row: recRow() };
+          // and on the Tour tab: each kind ticked off as it is played, the
+          // hole of the week marked, the count in the band
+          renderSigWeek();
+          W.tour = { note: $('sigNote').textContent, rows: [...$('sigBox').querySelectorAll('.lb')].map(l => [l.children[1].textContent, l.children[2].textContent]) };
           playW(aPier(), 1); W.five = { t: tally('sigWeek'), row: recRow() };
           // again the same week: once a week
           playW(aPier(), -1); homeFour().forEach(h => playW(h, -1)); W.again = tally('sigWeek');
@@ -244,6 +248,10 @@ module.exports = {
     const W = r.sigWeek;
     if (W.none !== '0\u00a0of 5 this week' || W.four.t || W.four.row !== '4\u00a0of 5 this week' || W.five.t !== 1 || W.five.row !== '5\u00a0of 5 this week')
       f2('the Signature Week: ' + JSON.stringify(W) + ' (none at first, four from a home round and no honour, the sea stack makes five and the honour)');
+    const tr = W.tour;
+    if (tr.note !== '4\u00a0of 5 this week' || tr.rows.length !== 5 || tr.rows.filter(([, v]) => /played/.test(v)).length !== 4
+        || /played/.test(tr.rows.find(([k]) => /Sea Stack/.test(k))[1]) || tr.rows.filter(([k]) => /pays/.test(k)).length !== 1)
+      f2('the Signature Week on the Tour tab: ' + JSON.stringify(tr) + ' (five kinds, the four played ticked, the sea stack not, the hole of the week marked)');
     if (W.again !== 1 || !W.honour) f2('the Signature Week counted again in the same week (' + W.again + '), or not awarded (' + W.honour + ')');
     if (W.nextRow !== '0\u00a0of 5 this week' || W.split.t !== 1 || W.split.row !== '1\u00a0of 5 this week' || W.second !== 2)
       f2('the Signature Week across weeks: ' + JSON.stringify(W) + ' (a new week starts from none; four on a Sunday and the fifth on the Monday is no week; all five the next week is)');
