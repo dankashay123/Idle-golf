@@ -14,7 +14,9 @@
  *     him, and hanging down his back as he walks away; horns; hair of fire
  *     streaming back from his head; a light in his chest; hands in their own
  *     magenta. His caddie, the picture's imp: horns, a flame, green eyes and
- *     a curled tail. Both: eyes that shine, where his eye is
+ *     a curled tail. Both: eyes that shine, where his eye is; walking away,
+ *     the sole of his lifted boot in his belt's colour (it flashed the plain
+ *     tan under the Ascended's cape), while a plain golfer keeps the tan
  *   - his arms in his own skin: they were always the plain tone, so the red
  *     Demonic had peach arms (and the Void Walker, Midas and the Ghost too)
  */
@@ -58,6 +60,20 @@ module.exports = {
           const full = frame();
           F[name] = name === 'wings' ? function () { const w = keep.apply(this, arguments); return { cv: blank, ox: w.ox, oy: w.oy }; } : () => {};
           try { return diff(full, frame()); } finally { F[name] = keep; }
+        };
+        const soles = (golfer, box, h) => {
+          const O = outfitNow(), belt0 = O.belt;
+          if (belt0) { O.belt = '#01FE02'; buildSprites(); }
+          Scene.walkOn = true; Scene.walkPh = 0.2;
+          let all;
+          try { all = golfer(); } finally { Scene.walkOn = false; if (belt0) { O.belt = belt0; buildSprites(); } }
+          const n = { own: 0, tan: 0 };
+          for (let i = 0; i < all.length; i += 4) {
+            if (!all[i + 3]) continue;
+            if (all[i] === 1 && all[i + 1] === 254 && all[i + 2] === 2 && ((i >> 2) / VW | 0) > box.y0 + h * 0.75) n.own++;
+            if (all[i] === 0xB8 && all[i + 1] === 0xAE && all[i + 2] === 0x9C) n.tan++;
+          }
+          return n;
         };
         o.drawn = {};
         for (const id of ['demonic', 'ascended']) {
@@ -113,6 +129,10 @@ module.exports = {
             const hc = hex(outfitNow().hand); d.hand = 0;
             for (let i = 0; i < bare.length; i += 4) if (bare[i + 3] && bare[i] === hc[0] && bare[i + 1] === hc[1] && bare[i + 2] === hc[2]) d.hand++;
           }
+          // walking away, the sole of his lifted boot in his belt's colour, as
+          // it is side-on, not the plain tan (a colour of its own put on the
+          // belt, where he has one, to count it by, below his waist)
+          d.sole = soles(golfer, box, h);
           // and his caddie
           const caddie = () => { c.clearRect(0, 0, VW, VH); Scene.drawCaddie(c, box.x0, box.y0, w, h); return px(); };
           if (id === 'demonic') d.cWings = part(id, 'wings', caddie).length;
@@ -123,6 +143,13 @@ module.exports = {
           d.cTop = part(id, 'horns', caddie).length;
           d.cEyes = part(id, 'eyes', caddie).length;
           d.cadSprite = cad === SPRITE.caddie;
+        }
+        // and a golfer with no belt colour of his own keeps the tan sole
+        {
+          S.outfit = 'classic'; S.caddie = 'bib'; buildSprites();
+          const p = Scene.proj(Scene.camD, 0), h = Math.max(6, Math.round(B_GOLFER * US * p.s));
+          const golfer = () => { const k = SPRITE.caddie; SPRITE.caddie = null; c.clearRect(0, 0, VW, VH); Scene.drawGolfer(D); SPRITE.caddie = k; return px(); };
+          o.plainSole = soles(golfer, { y0: p.y - h }, h);
         }
         // the other skins with a skin of their own have their arms in it too
         o.otherArms = {};
@@ -173,11 +200,16 @@ module.exports = {
       if (d.plain || !(d.own >= 12)) f('the ' + id + ' golfer\'s arms: ' + d.plain + ' pixels of the plain skin tone on him, ' + d.own + ' of his own');
       if (!(d.cTop >= 4 && d.cEyes >= 1)) f('the ' + id + ' caddie: horns ' + d.cTop + ', eyes ' + d.cEyes + ' pixels');
     }
+    for (const id of ['demonic', 'ascended']) {
+      const so = r.drawn[id].sole;
+      if (so.tan || !(so.own >= 1)) f('the ' + id + ' walking away: ' + so.tan + ' pixels of the plain tan sole, ' + so.own + ' of his belt\'s colour on his lifted boot');
+    }
+    if (!(r.plainSole.tan >= 1) || r.plainSole.own) f('the Tour Classic walking away: ' + J(r.plainSole) + ' (the tan sole on his lifted boot, having no belt colour of his own)');
     const oa = Object.entries(r.otherArms).filter(([, n]) => n);
     if (oa.length) f('plain skin tone on skins with their own: ' + oa.map(([k, n]) => k + ' ' + n).join(', '));
     return ['the Demonic at the Divine\'s ' + r.price.demonic + ', the Ascended at ' + r.price.ascended + '; club, trail, ball and caddie for each in the Divine\'s proportion (' + J(r.sets.ascended.cost) + '), Legendary and Mythic',
       'the Demonic: wings reaching ' + dm.reachL + '/' + dm.reachR + 'px past him either side, horns ' + dm.top + ', eyes at his eye; his caddie\'s wings ' + dm.cWings,
       'the Ascended: a cape ' + as.cape + ' (' + as.capeBack + ' down his back walking away), horns ' + as.top + ', hair of fire reaching ' + Math.round(as.hairReach) + 'px back, the light in his chest, magenta hands; the imp\'s tail ' + as.cTail + ', flame ' + as.cFlame + ', green eyes',
-      'his arms in his own skin, on these and on the Void Walker, Midas and the Ghost'];
+      'his arms in his own skin, on these and on the Void Walker, Midas and the Ghost; his soles in his belt\'s colour walking away (' + r.drawn.ascended.sole.own + 'px), a plain golfer\'s tan'];
   }
 };

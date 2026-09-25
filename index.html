@@ -12125,8 +12125,9 @@ const CLUBFX = {
 };
 // Two legs from behind, walking away: side by side, the one stepping off
 // lifted at the heel with the sole of its shoe showing, the planted one
-// straight. ph as for drawLegs.
-function drawLegsBack(c, cx, hy, len, w, ph, near, far, shoe){
+// straight. ph as for drawLegs. An outfit with a belt colour of its own
+// wears it on its soles, as it does side-on.
+function drawLegsBack(c, cx, hy, len, w, ph, near, far, shoe, sole = '#B8AE9C'){
   const th = Math.max(1, Math.round(w * 0.11)), gap = w * 0.085;
   for(let i = 0; i < 2; i++){
     const q = ph * Math.PI * 2 + i * Math.PI, lift = Math.max(0, Math.sin(q));
@@ -12137,7 +12138,7 @@ function drawLegsBack(c, cx, hy, len, w, ph, near, far, shoe){
     // the calf, a shade darker where it turns away
     c.fillStyle = far; c.fillRect(lx + th - 1, Math.round(hy + L * 0.5), 1, Math.round(L * 0.5));
     const sh = Math.max(1, Math.round(th * 0.45));
-    c.fillStyle = lift > 0.35 ? '#B8AE9C' : shoe;            // a lifted heel shows its sole
+    c.fillStyle = lift > 0.35 ? sole : shoe;                 // a lifted heel shows its sole
     c.fillRect(lx - (lift > 0.35 ? 0 : 1), fy, th + (lift > 0.35 ? 0 : 1), sh);
   }
 }
@@ -12179,7 +12180,7 @@ function paintGolfer(c, x, y, w, h, ph, t, bot, walking, walkPh, spr, arc, putt)
   if(FX && FX.alpha) c.globalAlpha = FX.alpha;
   if(walking){
     const O = outfitNow();
-    drawLegsBack(c, x + w*0.5, y + h*(31/58), h*(26/58), w, walkPh, O.pant || '#2B3B4F', O.pant2 || O.pant || '#1C2937', O.shoe || PX.shoe);
+    drawLegsBack(c, x + w*0.5, y + h*(31/58), h*(26/58), w, walkPh, O.pant || '#2B3B4F', O.pant2 || O.pant || '#1C2937', O.shoe || PX.shoe, O.belt);
     c.drawImage(spr.cv, x, y, w, h);
     // The club in his right hand, hanging at his side, the head down by
     // his foot and turned out -- swinging a little with his arm.
@@ -12225,7 +12226,7 @@ function paintHeli(c, x, y, w, h, t, bot){
   c.fillStyle = 'rgba(8,16,10,.30)';
   c.fillRect(Math.round(x + w * 0.5 - sw / 2), bot - 1, sw, Math.max(1, Math.round(h * 0.045)));
   drawLegsBack(c, x + w*0.5, y + h*(31/58), h*(26/58), w, 0.25 + Math.sin(t * 5) * 0.04,
-               O.pant || '#2B3B4F', O.pant2 || O.pant || '#1C2937', O.shoe || PX.shoe);
+               O.pant || '#2B3B4F', O.pant2 || O.pant || '#1C2937', O.shoe || PX.shoe, O.belt);
   c.drawImage(spr.cv, x, y, w, h);
   const th = h > 34 ? 2 : 1;
   const hx = x + w * 0.5, hy = y - h * 0.10;

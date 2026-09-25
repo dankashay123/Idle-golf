@@ -419,10 +419,15 @@ Line numbers are approximate and drift. Search for the name instead.
   `SKIN_ACCENT` in the same colours.
 - Gone with the old look: `lightWing`, the mandala, `crownOf`, `drawOrb`,
   `edged`, the `filigree` pattern.
+- Walking away, the sole of his lifted boot flashed the plain tan under
+  the cape. `drawLegsBack` now takes a `sole`: an outfit's own `belt`
+  colour where it has one (Demonic, Ascended, Midas), as its soles are
+  side-on; everyone else keeps the tan.
 - `legends` holds the cape (behind him, and down his back walking away),
   horns, hair of fire back from his head, the light in his chest, the hands'
-  own magenta, and the imp's horns, flame, green eyes and tail; negative
-  tested nine ways.
+  own magenta, the imp's horns, flame, green eyes and tail, and the soles
+  walking away (a Tour Classic keeps his tan); negative tested nine ways,
+  and three for the soles.
 
 ### The railway among the trees (user saw it)
 
@@ -1167,6 +1172,8 @@ Line numbers are approximate and drift. Search for the name instead.
 
 ## 6. Recent history (newest first, one line each)
 
+- Walking away, a lifted boot shows the outfit's own sole colour (the
+  Ascended's flashed tan).
 - The Ascended restyled after the user's picture: a knight of the void in
   indigo and magenta, his caddie an imp; the skins check times a look
   against the plain golfer.
