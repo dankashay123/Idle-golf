@@ -10,7 +10,7 @@ check is for.
 
 - Everything is committed and pushed to `main` (mirrored on the session
   branch `claude/notes-review-dju532`). Nothing is half-built.
-- `node test/run.js` passes all **55 checks** (about 10 minutes).
+- `node test/run.js` passes all **55 checks** (about nine minutes).
 - **Last request**: "Let's add some aura effects to the skin as well.
   Rotating elements round them, cooler ground effects, make the horns more
   sleek and cool, and add anything else to make this like an ultimate skin
@@ -23,7 +23,9 @@ check is for.
   sigil) was drawn over the pin, the cup and a putt rolling away beyond
   him; it goes down first now (§4 rule 29). On the battery saver the
   golfer stood 5px from the edge and the Demonic's wings (and now the
-  sigil) were cut off; a look with an effect stands further in.
+  sigil) were cut off; a look with an effect stands further in. Then the
+  user asked for these notes and `CLAUDE.md` to be brought up to date for
+  a handoff (done; nothing else changed).
 - **The request before** (with a picture: a dark armoured figure with horns,
   eyes lit white, magenta hair of fire, a cape, spectral hands, a scythe,
   and a little horned imp): "Can you make the ascended skin look more like
@@ -34,54 +36,13 @@ check is for.
   while he waited for a train, and the Demonic (3000) and Ascended (3500)
   sets with a caddie, club, trail and ball each (§5 "The Demonic and the
   Ascended", "The railway among the trees").
-- **The request before** (with a screenshot): "Looks like the sponsor buff is
-  behind the shop icon? Let's move that to the right of the settings icon
-  and have it part of the caddie buff area. Make it so they are one
-  element, when one fades, the other goes to the top". Done (§5 "The
-  stack by the cog").
-- **The request before**: "Let's start with putting out" (the menu's first
-  item). Done (§5 "He putts out"). Asked whether it would need another
-  run with the week pinned: no, it moves no money (the wait's pay was
-  already there); the full suite was run as usual (all 54 pass; `caddie`
-  now expects a shot onto the green to stop a putt short). Sent a GIF of a
-  birdie and an eagle being putted out.
-- Found on the way, from the pinned-week runs: the challenges check leaned
-  on one brand-new save, and "Card 70 eagles" was cleared in five minutes by
-  a third of fast starts in every week. The daily asks for 100 now, and the
-  check judges twelve starts (§5 "Fixed on the way", second list).
-- **The request before**: "Let's get rid of the 'unlocks when you have…' text
-  completely please". Done: it was only on the Range's upgrade rows; each
-  row now reads its level and effect, the price is on the button (grey
-  until affordable). `readouts` now requires that no rung says when it
-  unlocks.
-- **The request before**: "All 4 please and thank you" (the menu: life on the
-  other signature holes, a happy dance on a great hole, a Record row for
-  seasons seen, a fifth signature hole), and part way through: "Also please
-  make sure the hole never ends before the golfer gets to the green". All
-  five done, one commit each (§5, the five newest sections). The fifth
-  signature hole is a **Railway Crossing** (my pick; the user left it open).
-- **The request before**: "All of those please" (caddie perk upgrades, more
-  caddie moves, life on the pier, a season chime). All four done.
-- **The request before**: "get rid of the caddy wings, just have them
-  float up and down a tiny bit; more animation too, like randomly will
-  spin, dance, stuff like that for fun". Done (§5 "The caddie: no wings, a
-  float, and turns").
-- **The request before**: "read the notes and let's continue". Read as:
-  build the item the last menu recommended, the **Signature Hole of the
-  Week** (§5).
-  Also fixed on the way (§5 "Fixed on the way"): the ember ball's burns
-  replacing each other (an ember ball played at half its numbers and stalled
-  players who play; new check `ember`), the first hole of every round being
-  paid at the round before's weather, and the `settings` check's race with
-  the second music track (it failed on untouched code).
-  - The user has **not yet seen** this or the previous session's work
-    (blessing, sliders, autumn on the regular stops, Sea Stack) on the phone.
-- **Waiting on the user** (ask when it fits, one or two at a time):
-  - Does the second music track (night and wagers) fit? Does the town theme?
-  - Does the 2 min battery saver wait suit?
-  - Is the auto-climb button's alignment right?
-  - They are on about Card V, so they have not seen a home course season
-    (from Card XI); the regular stops are in autumn now (September).
+- Older requests are in §6, one line each, with a section of their own in
+  §5 where there is more to know.
+- **Not yet heard back on** (carried from earlier sessions; ask one when it
+  fits, never as a list): whether the second music track (night and wagers)
+  and the town theme fit; whether the 2 min battery saver wait suits;
+  whether the auto-climb button sits right. They were on about Card V a few
+  sessions ago, so may not have seen a home course season (from Card XI).
 - The user usually ends a task by asking **"What's next?"**: a short plain
   menu with a recommendation (§8), then wait for the choice.
 
@@ -128,14 +89,24 @@ check is for.
 - They sometimes change their mind. For example, they asked to rename the
   "Balls" shelf to "Auras" and then asked for it back. Do what the latest
   message says.
-- Commit trailer: use exactly the one your own session's system prompt
-  gives (it changes with each session). Never copy a model name into a code
-  comment or any file, this one included.
+- **Commit trailer**: the lines your session's system prompt gives, with
+  any model name taken out (`CLAUDE.md` says never put one in a commit):
+  the co-author line reads `Co-Authored-By: Claude <noreply@anthropic.com>`,
+  and the session link line stays as given. Commits before 39b6f29 carry a
+  model name in that line; leave history alone. Never put a model name in a
+  code comment or any file, this one included.
+- **Looks**: they like the dearest skins elaborate ("go crazy", "really go
+  nuts") but compact on the screen, and they send reference pictures. Match
+  the picture's colours and shapes, make it read at his size on a phone
+  (§4 rule 27), and send a short clip and close-ups when done.
+- At the end of a session they may ask for these notes and `CLAUDE.md` to
+  be brought up to date "for another handoff".
 
 ## 3. The project
 
-- **The whole game is `index.html`** (about 15k lines, 2.2 MB with the sounds and the music): markup, CSS and one
-  classic script. There is no build step.
+- **The whole game is `index.html`** (about 17.7k lines, 2.4 MB with the
+  sounds and the music): markup, CSS and one classic script. There is no
+  build step.
 - Play it over http (`npm start`, then http://localhost:8080). Opening the
   file straight from disk blocks `localStorage`, so it never saves.
 - Checks are Playwright scripts in `test/checks/NN-name.js`, run by
@@ -209,8 +180,10 @@ Line numbers are approximate and drift. Search for the name instead.
 - `OFFLINE`: true during a catch-up.
 - `DAY_FORCE`: pins the day for dailies and the weekly major.
 - `PREVIEW`: a style being tried on.
-- `VW` / `VH` / `HORIZON` / `CX`: the size of the drawing buffer. It is small,
-  about 199×215 in portrait, and scaled up to fill the screen.
+- `VW` / `VH` / `HORIZON` / `CX`: the size of the drawing buffer, one pixel
+  to a CSS pixel of the stage: 318×284 on a 320 phone, 388×422 at 390,
+  438×478 at 440, 460×261 on its side (844×390). The golfer there is 49,
+  60, 67 and 71px tall (`Scene.proj(Scene.camD, 0)`, `B_GOLFER * US * p.s`).
 
 ## 4. Rules that have cost real time
 
@@ -231,9 +204,28 @@ Line numbers are approximate and drift. Search for the name instead.
    `const SNAP = JSON.stringify(S)` … `finally { Object.keys(S).forEach(k => delete S[k]); Object.assign(S, JSON.parse(SNAP)); startHole(); }`.
    Also reset `QUIET`, `OFFLINE` and `DAY_FORCE` in the `finally`.
 6. There is no Python PIL here. To combine screenshots into one sheet, write
-   an HTML page of `<img>` tags and screenshot it with Playwright. There are
-   example scripts in the session scratchpad, but it is not kept, so rewrite
-   them as needed.
+   an HTML page of `<img>` tags and screenshot it with Playwright. The
+   scratchpad is not kept, so each session rewrites its helpers; these paid
+   for themselves every time (each is a few dozen lines):
+   - **a server**: `python3 -m http.server 8765 --bind 127.0.0.1` from the
+     repo, in the background (saves need http, not `file://`);
+   - **a look in a pose**: a page at the phone size with
+     `deviceScaleFactor: 3`; in `page.evaluate`: `hideSheet()`,
+     `window.requestAnimationFrame = () => 0`, `QUIET = true`, own and wear
+     the look (`S.styleOwn['o:' + id] = 1; S.outfit = id; buildSprites()`),
+     set `Scene.t`, `Scene.swingT = Scene.swingDur * (1 - ph)` or
+     `Scene.walkOn`, then `Scene.draw(0, derive())`; screenshot `#stage`.
+     To see one part alone, stub the others (`STYLEFX.x.part = () => {}`);
+   - **a zoom sheet**: crops of those screenshots in a grid, each an `<img>`
+     offset inside a clipped `<div>`, scaled with
+     `image-rendering: pixelated`;
+   - **the negative-test harness**: copy `index.html` aside; for each break,
+     exact `old -> new` replacements (refuse unless each matches once),
+     run `node test/run.js <check>`, print CAUGHT or MISSED with the first
+     failure line, and put the file back in a `finally`;
+   - **a clip**: Playwright's `recordVideo` for a few seconds of play, then
+     ffmpeg (§7) `crop`, `fps=12`, `scale` with `flags=neighbor` and
+     `palettegen`/`paletteuse` to a GIF of 3-4 MB.
 7. **Eight seeds can be lucky.** `pacing` passed on its eight seeds while
    three other sets of eight each held a player stuck at four times par.
    When a balance check passes, try it once with the seed offset changed
@@ -356,40 +348,6 @@ Line numbers are approximate and drift. Search for the name instead.
 
 ## 5. What the last features do (for debugging them)
 
-### The Demonic and the Ascended (user asked: "go crazy with it")
-
-- Data: outfits `demonic` (3000, `top: 1`, pattern `hellcrack`, red skin,
-  the belt colour `#FF5A1E` is also his eyes and soles) and `ascended`
-  (3500, `top: 2`, pattern `filigree`, pearl and gold); caddies follow from
-  the outfits at a third (1000 and 1165); clubs `demonic` (Demonic Driver,
-  2000) and `ascended` (Ascended Driver, 2350); trails `hellfire` (Hellfire
-  Wake, 2000) and `ascension` (Ascension Wake, 2350); balls `demoneye`
-  (Demon Eye, 1500) and `ascorb` (Ascended Orb, 1750). The Ascended pieces
-  are the Divine's in proportion. `top: 2` sorts first and shows a
-  **MYTHIC** badge (was LEGENDARY for any `top`).
-- **Demonic** (`STYLEFX.demonic`): bat wings beating (12 baked steps,
-  `batWing`: arm, forearm, four fingers, scalloped skin, glowing veins,
-  claws); a pit of lava at his feet with a ring of eight runes turning
-  (`runeRing`), bubbles, brimstone smoke, embers and shadow tendrils; every
-  6.5s the pit erupts for a second (flames round it, the far half behind
-  him); a tail with a spade (in front of him when he walks away); horns
-  (`hornPair`); eyes like coals that flare; the lava cracks on his shirt
-  pulsing upward (`veinsOf`: the pattern's pixels found in each sprite,
-  poured through with `lighter`); three flaming skulls circling him; a
-  smoky outline and a red rim. His caddie (`g.minor`): wings, horns, tail,
-  eyes, cracks, a few embers.
-- **Ascended**: restyled after the user's picture, see the next section.
-- Costs (skins check, against the plain golfer): the Demonic about 3.4
-  standing and 1.6 walking with its caddie; the Divine 3.8 and 2.4 (budget
-  fifteen).
-- His arms now take the outfit's `skin`/`skin2` (`paintGolfer`,
-  `paintHeli`); they were always `PX.skin`.
-- Check `legends` (new): prices and proportions, badges, every piece with
-  an effect; the Demonic's wings either side of him, horns above his cap,
-  eyes at his eye, on him and his caddie, by taking each part away from the
-  same frame; no plain skin tone on the five skins with their own.
-  `skins` also holds the dearest trails' resting balls to their own look.
-
 ### The Ascended, made the ultimate skin (user asked: "really go nuts")
 
 All in `STYLEFX.ascended`, round what the restyle gave him (cape, hair,
@@ -460,9 +418,9 @@ him (about 49px tall on a 320 phone, 71px on its side).
   them every couple of seconds; the light in his chest (`core`, pulsing);
   spectral hands glowing (`hands`, at `g.hand`, which `paintGolfer` now
   sets); a broken chain hanging from his wrist (`chain`); magenta lightning
-  crawling over his armour (`bolts`); magenta fire licking up round him;
-  embers; a dark edge and a magenta rim; void mist at his feet. No longer
-  floats.
+  crawling over his armour (`bolts`); magenta fire licking up round him
+  and void mist at his feet (both since replaced, by the aura and the
+  sigil); embers; a dark edge and a magenta rim. No longer floats.
 - His caddie is the picture's imp (`g.minor`): horns, a magenta flame
   standing up between them (drawn after the horns: behind them it vanished
   at his size), green eyes, a little heart on his chest, a curled tail with
@@ -485,6 +443,43 @@ him (about 49px tall on a 320 phone, 71px on its side).
   own magenta, the imp's horns, flame, green eyes and tail, and the soles
   walking away (a Tour Classic keeps his tan); negative tested nine ways,
   and three for the soles.
+
+### The Demonic and the Ascended (user asked: "go crazy with it")
+
+- Data: outfits `demonic` (3000, `top: 1`, pattern `hellcrack`, red skin,
+  the belt colour `#FF5A1E` is also his eyes and soles) and `ascended`
+  (3500, `top: 2`; pearl and gold at first, the knight of the void since:
+  see the two sections above); caddies follow from the outfits at a third
+  (1000 and 1165); clubs `demonic` (Demonic Driver, 2000) and `ascended`
+  (Ascended Driver, 2350); trails `hellfire` (Hellfire Wake, 2000) and
+  `ascension` (Ascension Wake, 2350); balls `demoneye` (Demon Eye, 1500)
+  and `ascorb` (Ascended Orb, 1750). The Ascended pieces are the Divine's
+  in proportion. `top: 2` sorts first and shows a
+  **MYTHIC** badge (was LEGENDARY for any `top`).
+- **Demonic** (`STYLEFX.demonic`): bat wings beating (12 baked steps,
+  `batWing`: arm, forearm, four fingers, scalloped skin, glowing veins,
+  claws); a pit of lava at his feet with a ring of eight runes turning
+  (`runeRing`), bubbles, brimstone smoke, embers and shadow tendrils; every
+  6.5s the pit erupts for a second (flames round it, the far half behind
+  him); a tail with a spade (in front of him when he walks away); horns
+  (`hornPair`); eyes like coals that flare; the lava cracks on his shirt
+  pulsing upward (`veinsOf`: the pattern's pixels found in each sprite,
+  poured through with `lighter`); three flaming skulls circling him; a
+  smoky outline and a red rim. His caddie (`g.minor`): wings, horns, tail,
+  eyes, cracks, a few embers.
+- **Ascended**: since restyled and made the ultimate skin: see the two
+  sections above.
+- Costs (skins check, against the plain golfer, budget fifteen): the
+  Demonic about 3.4 standing when it was made; everything outlined is
+  cheaper at address since the ultimate Ascended (the check prints the
+  dearest).
+- His arms now take the outfit's `skin`/`skin2` (`paintGolfer`,
+  `paintHeli`); they were always `PX.skin`.
+- Check `legends` (new): prices and proportions, badges, every piece with
+  an effect; the Demonic's wings either side of him, horns above his cap,
+  eyes at his eye, on him and his caddie, by taking each part away from the
+  same frame; no plain skin tone on the five skins with their own.
+  `skins` also holds the dearest trails' resting balls to their own look.
 
 ### The railway among the trees (user saw it)
 
@@ -1025,7 +1020,10 @@ him (about 49px tall on a 320 phone, 71px on its side).
   `Scene.drawGolfer` (138 outfit and pose combinations compared pixel for
   pixel against the old code: identical), so outfit effects, club looks and
   ball trails all match. The box drifts a few pixels every 30s against
-  burn-in. On its side the picture and the tally sit in two columns.
+  burn-in. On its side the picture and the tally sit in two columns. The
+  golfer stands 5px in, or 13px in a look with an effect (the Demonic's
+  wings and the Ascended's sigil were cut off by the edge), and the sigil
+  is two rows deep there, the rows under his feet.
 - It wakes on **click**, not pointerdown: gone on the touch, the click after
   it landed on the button underneath (only a touch screen shows this; the
   check taps with one).
@@ -1339,6 +1337,11 @@ him (about 49px tall on a 320 phone, 71px on its side).
   libmp3lame. Keep it in the scratchpad, never in the repo.
 - There is no `gh` CLI. Use the GitHub MCP tools if GitHub is ever needed.
   Pushing straight to `main` has worked every time.
+- A session may start on its own branch with the local `main` far behind
+  `origin/main`: `git push origin main` then pushes that stale branch and
+  is refused. Commit where you are and push with
+  `git push origin HEAD:main` and `git push -u origin <session branch>`;
+  `git branch -f main origin/main` afterwards tidies the local one.
 
 ## 8. What to offer next
 
