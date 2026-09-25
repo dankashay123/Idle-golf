@@ -273,7 +273,9 @@ module.exports = {
           d.sole = soles(golfer, box, h);
           // and his caddie
           const caddie = () => { c.clearRect(0, 0, VW, VH); Scene.drawCaddie(c, box.x0, box.y0, w, h); return px(); };
-          if (id === 'demonic') d.cWings = part(id, 'wings', caddie).length;
+          // (his wings side on, on his back: the caddie is always seen side on)
+          const cb = Scene.fairyBox(box.x0, box.y0, w, h);
+          if (id === 'demonic') { const cw = part(id, 'wings', caddie); d.cWings = cw.length; d.cWingsBehind = cw.filter(([x]) => x < cb.x + cb.w * 0.5).length; }
           else { d.cTail = part(id, 'tail', caddie).length; d.cFlame = part(id, 'hair', caddie).length;
                  // the imp's eyes are green: the brightest pixel they put down
                  const ce = caddie(), eyes = part(id, 'eyes', caddie);
@@ -292,6 +294,12 @@ module.exports = {
           const head = { x: box.x0 + w * CAP_ADDR.x, y: box.y0 + h * CAP_ADDR.y, w: w * CAP_ADDR.w };
           const cx = box.x0 + w * 0.55, d = o.divine = {};
           d.wing = wingViews('divine', golfer, box, w, h, head);
+          // his caddie's small wings, side on, on his back
+          S.styleOwn['c:divine'] = 1; S.caddie = 'divine'; buildSprites();
+          { const caddie = () => { c.clearRect(0, 0, VW, VH); Scene.drawCaddie(c, box.x0, box.y0, w, h); return px(); };
+            const cb = Scene.fairyBox(box.x0, box.y0, w, h), cw = part('divine', 'wings', caddie);
+            d.cWings = cw.length; d.cWingsBehind = cw.filter(([x]) => x < cb.x + cb.w * 0.5).length; }
+          S.caddie = 'bib'; buildSprites();
           // up off his back through the backswing, and down again at the strike
           const top = ph => { Scene.swingT = ph ? Scene.swingDur * (1 - ph) : 0; const W = part('divine', 'wings', golfer); Scene.swingT = 0; return Math.min(...W.map(([, y]) => y)); };
           d.rise = top(0) - top(0.36); d.sweep = top(0.62) - top(0.36);
@@ -443,7 +451,8 @@ module.exports = {
         if (!(q.n >= 40 && q.behind >= q.n * 0.6 && q.up >= 8) || q.front) f('the ' + nm + ' wings side on (' + k + '): ' + J(q) + ' (on his back behind him and up off it, none in front)'); }
       if (!(V.backL >= 12 && V.backR >= 12)) f('the ' + nm + ' wings walking away: ' + V.backL + ' and ' + V.backR + ' pixels either side of him (spread from behind)');
     }
-    if (!(dm.cWings >= 30)) f('the Demonic caddie\'s wings: ' + dm.cWings + ' pixels');
+    if (!(dm.cWings >= 30 && dm.cWingsBehind >= dm.cWings * 0.6)) f('the Demonic caddie\'s wings: ' + dm.cWings + ' pixels, ' + dm.cWingsBehind + ' of them behind him (side on, on his back)');
+    if (!(r.divine.cWings >= 25 && r.divine.cWingsBehind >= r.divine.cWings * 0.6)) f('the Divine caddie\'s wings: ' + r.divine.cWings + ' pixels, ' + r.divine.cWingsBehind + ' of them behind him (side on, on his back)');
     if (!(as.cape >= 40 && as.capeBehind >= 25 && as.capeBack >= 100))
       f('the Ascended cape: ' + as.cape + ' pixels, ' + as.capeBehind + ' behind him, ' + as.capeBack + ' down his back as he walks away');
     if (!(as.hairBack >= 25 && as.hairReach >= 5)) f('the Ascended hair of fire: ' + as.hairBack + ' pixels back from his head, reaching ' + as.hairReach);

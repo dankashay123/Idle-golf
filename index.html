@@ -9783,7 +9783,7 @@ const STYLEFX = {
     // wings of feathers, seen as he is seen (wingPair), their beat slow; up
     // through the backswing, swept down at the strike, spread on a great hole
     wings(c, g){
-      const L = legendNow(g), ph = g.ph, S = Math.max(9, Math.round(g.h * 0.62)), view = g.back ? 'back' : 'side';
+      const L = legendNow(g), ph = g.ph || 0, S = Math.max(g.minor ? 8 : 9, Math.round(g.h * (g.minor ? 0.8 : 0.62))), view = g.back ? 'back' : 'side';
       let step, up, lift = 0;
       if(L && outBack(L.f, 0.1) > 0.5){ step = 'R'; up = 1.15; }
       else if(ph > 0){ const q = this.charge(ph), st = this.strike(ph);
@@ -9848,8 +9848,9 @@ const STYLEFX = {
         pxLine(c, cx, cy, cx + Math.cos(a) * Lr, cy + Math.sin(a) * Lr, '#FFE7A3', Math.max(1, k));
       }
       c.globalAlpha = 1;
-      // his wings, and a feather coming away now and then
-      if(!g.minor){ const Wg = this.wings(c, g); this._wg = Wg; }
+      // his wings, and a feather coming away now and then (his caddie has
+      // small ones of his own, side on as he always is)
+      if(!g.minor){ const Wg = this.wings(c, g); this._wg = Wg; } else this.wings(c, g);
       // he radiates: a soft gold edge two pixels out, a bright one one pixel out
       outlineAt(c, g, '#E3B457', RING2, 0.30 + 0.15 * breathe);
       outlineAt(c, g, '#FFF6D8', RING1, 0.75 + 0.2 * breathe);
@@ -10019,7 +10020,8 @@ const STYLEFX = {
         this.chains(c, g, false, q);
       }
       // the wings, spread behind him, beating slowly (raised high on a great hole)
-      const W = this.wings(h, minor, t, L && outBack(L.f, 0.1) > 0.5, minor || g.back ? 'back' : 'side'), A = wingAnchor(g);
+      // (his caddie is always seen side on, so his are always side on too)
+      const W = this.wings(h, minor, t, L && outBack(L.f, 0.1) > 0.5, g.back ? 'back' : 'side'), A = wingAnchor(g);
       c.globalAlpha = 1; c.drawImage(W.cv, Math.round(A.x - W.ox), Math.round(A.y - W.oy));
       // his tail (walking away from us it hangs in front of him: see front)
       if(!g.back) this.tail(c, g);
@@ -10115,7 +10117,7 @@ const STYLEFX = {
     // (seen as he is seen: from behind as he walks away and on his caddie,
     // side on at address and through the swing, rising off his back)
     wings(h, minor, t, raised, view){
-      const S = Math.max(8, Math.round(h * (minor ? 0.40 : 0.52))), ph = raised ? 12 : Math.floor(t * 6) % 12;
+      const S = Math.max(8, Math.round(h * (minor ? 0.62 : 0.52))), ph = raised ? 12 : Math.floor(t * 6) % 12;
       const up = raised ? 1.15 : 0.5 + 0.4 * Math.sin(ph / 12 * Math.PI * 2);
       return wingPair('bat', batWing, BAT_PAL, S, view || 'back', ph, up);
     },
