@@ -11,35 +11,21 @@ check is for.
 - Everything is committed and pushed to `main` (mirrored on the session
   branch `claude/loving-archimedes-ct2rpb`). Nothing is half-built.
 - `node test/run.js` passes all **56 checks** (about nine minutes).
-- **Last request**: "let's do 5 for now": a prize for the Signature
-  Week. Done: 25 sovereigns (`B.SIG_WEEK_SOV`) paid with the fifth kind in
-  `sigScore`, with a message, once a week; the Tour tab's line says it.
-- **The request before**: the Signature Week on the Tour tab and the
-  dearest drivers' flourish on a pure strike (§5).
-- **Before that**: the moments cut to half a second on an
-  albatross or an ace, bursting out of him; night on the signature holes;
-  the caddies' wings side on.
-- **Before that**: the Divine made the ultimate skin, wings side on
-  and from behind, and a flourish for the other effect skins.
-- **Before that**: the canyon bridge cut to slats (fixed) and the
-  Signature Week honour.
-- **Before that**: four trains on the railway and weather on the
-  signature holes (§5 "Life on the railway", "Weather on the signature
-  holes").
-- **Before that**: a moment for the legends (eagle or better) and
-  the Demonic made the ultimate skin (§5).
-- **Before that**: the Ascended made the ultimate skin (§5 "The
-  Ascended, made the ultimate skin").
-- **The one before that** (with a picture: a dark armoured figure with horns,
-  eyes lit white, magenta hair of fire, a cape, spectral hands, a scythe,
-  and a little horned imp): "Can you make the ascended skin look more like
-  this, but more intricate. I like the colors too." Done, read as the whole
-  Ascended set, names and prices kept (§5 "The Ascended, restyled"). The
-  skins check now times a look against the plain golfer (§4 rule 28).
-- **Earlier**: the railway clipping through the trees, a hole ending
-  while he waited for a train, and the Demonic (3000) and Ascended (3500)
-  sets with a caddie, club, trail and ball each (§5 "The Demonic and the
-  Ascended", "The railway among the trees").
+- **Last request**: "please update the notes and claude.md files for
+  another handoff". Done (nothing else changed).
+- **This session**, in order (each has a section in §5): a moment for
+  the three top skins on a great hole and the Demonic made the ultimate
+  skin; four trains and weather on the signature holes; the canyon bridge
+  cut to slats (fixed, with the crossing's boards) and the Signature Week
+  honour; the Divine made the ultimate skin, wings side on as he swings,
+  and a flourish for the other effect skins; then, at the user's word, the
+  moments cut to **half a second, only on an albatross or an ace,
+  bursting out from his outline**; night on the signature holes; the
+  caddies' wings side on; the Signature Week on the Tour tab; a flourish
+  on a pure strike for the three dearest drivers; the Signature Week's
+  prize (25 sovereigns).
+- **Turned down**: a station on the railway ("would take up too much
+  time"). Don't offer it again.
 - Older requests are in §6, one line each, with a section of their own in
   §5 where there is more to know.
 - **Not yet heard back on** (carried from earlier sessions; ask one when it
@@ -47,6 +33,8 @@ check is for.
   and the town theme fit; whether the 2 min battery saver wait suits;
   whether the auto-climb button sits right. They were on about Card V a few
   sessions ago, so may not have seen a home course season (from Card XI).
+  From this session: whether the Divine caddie keeps his new wings, and
+  how the pure-strike flourishes feel at a fast tempo.
 - The user usually ends a task by asking **"What's next?"**: a short plain
   menu with a recommendation (§8), then wait for the choice.
 
@@ -62,7 +50,17 @@ check is for.
   end every few seconds). Don't bring a crowd back without asking.
 - The island crossing (flying on the spinning club) was **their idea**.
 - **The caddie has no wings**: he floats, a little up and down, and now and
-  then takes a turn (spin, dance, flip, wave, loop). Their request.
+  then takes a turn (spin, dance, flip, wave, loop). Their request. (That
+  is the default fairy; the Demonic and Divine caddies have wings of their
+  own, side on. The Divine caddie's are new this session: asked whether to
+  keep them, no answer yet.)
+- **The great-hole effects** (the three top skins' moments and every other
+  skin's flourish) come **only on an albatross or an ace, last half a
+  second, and burst out from his outline close about him**. Nothing climbs
+  the sky. On a fast bag acing every hole the long ones never went away.
+- **Wings follow his profile**: side on, on his back, at address and
+  through the swing; spread from behind as he walks away. Wings are
+  feathered or membraned, never a solid shape.
 - The word is **scrap**, not salvage; old legacy finds are **heirlooms**.
 
 ### Sound and music
@@ -108,7 +106,7 @@ check is for.
 
 ## 3. The project
 
-- **The whole game is `index.html`** (about 17.7k lines, 2.4 MB with the
+- **The whole game is `index.html`** (about 18.6k lines, 2.5 MB with the
   sounds and the music): markup, CSS and one classic script. There is no
   build step.
 - Play it over http (`npm start`, then http://localhost:8080). Opening the
@@ -164,7 +162,11 @@ Line numbers are approximate and drift. Search for the name instead.
 | **He putts out** | `Scene.putt`, `puttArm`, `puttBall`, `cupT`, `cupHeard`, `PUTT_HIT`, `PUTT_ROLL`, `PIN_X`, `Scene.pinX`, `putSpot` in `launch`, `Sfx.putt`; `paintGolfer`'s last argument |
 | **The hole waits for him to reach the green** | `Scene.holeWait` (was `isleWait`), `B_GREEN_UP`, `B_GREEN_STAND`, `Scene.upT`, `holeSaid`, `Scene.saidHole`, the `waiting` guard and hold in `step`, `walk` in `finishHole` (the wait paid for) |
 | **A skin's ground** (drawn before the pin) | `FX.ground` (Divine, Demonic, Ascended); `golferG` (what an effect is told about him), `Scene.golferPose`, `Scene.drawGolferGround` (in the frame, before `drawFlagstick`), `Scene.golferGround`, `groundDone`; `paintGolfer`'s `noGround` |
-| **A moment for the legends** (eagle or better) | `Scene.legend`, `Scene.legendGo` (from `happyDance`), `legendNow`, `LEGEND_DUR`/`LEGEND_BIG`, `outBack`; the Ascended's `pillar`, the Demonic's `column`; `Sfx.hellfire`, `Sfx.ascend`, `Sfx.LEGEND_VOL`; cleared in `saverOn`; `DEV.legend(d)` (dev menu row Legends) |
+| **A moment on an albatross or an ace** (the three top skins, and a flourish for the other eleven) | `Scene.legendGo` (from `happyDance`), `Scene.legend` / `legendNow`, `Scene.flourish` / `flourishNow`, `LEGEND_DUR`, `FLOURISH_DUR` (0.5s), `outBack`; `outlineBurst`, `burstStreak`; `FLOURISH_PIECE`, `FLOURISH`; `Sfx.hellfire`, `ascend`, `choir`, `flourishSnd`, `LEGEND_VOL`; both cleared in `saverOn`; `DEV.legend(d)` (dev menu row Legends) |
+| **A pure strike with the three dearest drivers** | `CLUBFX.divine/demonic/ascended.pure`, `Scene.pure` (set in `Scene.launch`), `pureNow`, `PURE_DUR`; `Sfx.pureSnd` |
+| **The ultimate Divine** and wings as he is seen | `STYLEFX.divine` (`wings`, `feathers`, `halo2`, `sparks`, `wave`, `charge`/`strike`), `sunSigil`; `featherWing` (`FEATHER_PAL`), `batWing`, `wingPair(key, paint, pal, S, view, ph, up, shade)` |
+| **Night on the signature holes** | `Scene.nightLamp`, `drawIsleLights` (from `drawDucks`), `drawFireflies` (from `drawStones`), the lanterns in `drawPier`, the bulbs in `drawBridge` |
+| **The Signature Week** | `S.sigWk`, `sigWeekKinds`, the tally `sigWeek`, honour `sigWk`, `B.SIG_WEEK_SOV`; counted in `sigScore`; the Record's row; the Tour tab's band (`renderSigWeek`, `#sigBox`) |
 | **The ultimate Demonic** | `STYLEFX.demonic`: `aura` (the shared `flameAura` with `HELL_FLAME`; the Ascended's uses `VOID_FLAME`), `chains`, `cracks`, `fists`, `blast`, `charge`/`strike` (borrowed from the Ascended), `horns` (`sleekHorns(s, view, true)`, views `dside`/`dback`, colours `HORN_COL.dem`) |
 | **The Demonic and the Ascended** (skins, caddies, clubs, trails, balls) | `STYLEFX.demonic`, `STYLEFX.ascended`; baked stamps `fxBake` (with `crispen`, `FXBAKE`), `batWing`, `runeRing`, `drawSkull`, `sleekHorns` (`hornLine`, `HORN_VIEWS`), `voidCape` (`CAPE_PAL`), `voidSigil`, `drawShard`; the aura's `outlineOf` (`occOf`) and `flameAura`; `veinsOf` (the lava cracks' pulse), `eyeAt` (`EYE_ADDR`, `EYE_FIN`, `EYE_CADDIE`), `wingAnchor`, `g.hand` (set in `paintGolfer`), `blitAs` (a copy of him drawn as he is drawn); patterns `hellcrack`, `voidplate`; the outfit field `hand`; `CLUBFX.demonic`/`ascended`; `BALLFX.tHellfire`, `demoneye`, `tAscension`, `ascorb`, `drawDemonEye`, `demonEye`, `drawVoidOrb`; tiles `ICON_FX`, `BALL_ICON`; the Mythic badge is `top: 2` |
 | **The trains** (four kinds) and waving | dev menu: a button per kind by "railway" (`DEV.train(kind)`); `TRAINS`, `trainKind`, the train's `kind` (none is the steam train), picked in `tickRail`; `drawTrain` (by kind), `driverWave`; `Scene.atLine`, `Scene.railWave` (his arm: `paintGolfer`'s last argument `wave`; his caddie's `wave` move); `Sfx.horn`, `Sfx.whistle(t, low, once)`, the toot in `Sfx.tick` (`tootK`) |
@@ -359,6 +361,29 @@ Line numbers are approximate and drift. Search for the name instead.
    still ran (the later copies won), so it looked like an edit that did
    nothing. Assert the order, and count a name after the edit.
 
+32. **Clip both ways.** Rule 19 stops what is drawn over the field showing
+   through a hill; the opposite also happened: out on the canyon bridge
+   each plank was cut at its own distance, where the ground line is the
+   canyon's rim (the surface, not the sunk floor), leaving slats. Cut
+   anything over a sunk hazard at the ground in front up to its bank;
+   cut a flat thing (a sleeper) at its near end; a reflection on water at
+   a distance nearer than the post it hangs from. `sigview` now also
+   draws each structure with and without its cut from on it.
+33. **The frame last drawn owns the clip line.** A check that calls a
+   `drawX` straight after drawing another hole draws against that hole's
+   ground (the storm's spray read 0 against 0, and a `>=` still passed).
+   Draw a frame of the hole first, and give every comparison a floor.
+34. **A whole-frame diff measures more than the thing.** The night
+   changes the sky and the lights together; a swing's club trail grows
+   each time he is drawn. Count by the thing's own colours in the
+   structure drawn alone, clear `Scene.clubArc` between two frames, or
+   stub the one function (`window.outlineBurst = () => {}` works: the
+   script's function declarations are writable globals).
+35. **The local server dies between long runs.** A screenshot helper that
+   gets "connection refused" needs `python3 -m http.server 8765` started
+   again; one that errors part way may leave its old picture behind, so
+   check the file's time before trusting it.
+
 ## 5. What the last features do (for debugging them)
 
 ### The Signature Week on the Tour tab (user asked, from the menu)
@@ -384,22 +409,22 @@ Line numbers are approximate and drift. Search for the name instead.
   at the end of `paintGolfer`. `Sfx.pureSnd`: a bell, a whoomp, a slice,
   under the strike's crack (0.004 to 0.007 at their loudest).
 
-### The moments, cut back (user asked)
+### The moments, cut back (user asked; read with the two after)
 
-- `legendGo` fires only on an albatross or an ace (`d <= -3`); `big` is an
-  ace. `LEGEND_DUR` and `FLOURISH_DUR` are 0.5s. The column of hellfire,
-  the pillar of light and the heavens are gone, and the Divine's beam no
-  longer brightens for it; the skulls, the shards' ring and the waves on
-  the ground reach only a little past him.
-- Every moment is now a burst from his outline (`outlineBurst(c, g, F, n,
-  reach, piece)`: points round the edge of him from `outlineOf`, thrown out
-  away from his middle, fast then slowing, at most `reach` of his widths;
-  `burstStreak` draws a head and a tail). The legends: hellfire streaks;
-  shards and magenta streaks; light and feathers. The flourishes:
-  `FLOURISH_PIECE[k]` is what each throws (flames, ice and snow, sparks,
-  void fragments, glitch pixels, coins, disco squares, little ghosts,
-  bananas, flashes, confetti); `FLOURISH[k]` wraps it (front layer only).
-- Sounds shortened to under a second (`choir`, `hellfire`).
+- The moment of the three top skins and the flourish of the other eleven
+  come only on an albatross or an ace (`legendGo`: `d <= -3`; `big` is an
+  ace), last half a second (`LEGEND_DUR`, `FLOURISH_DUR`), and are a burst
+  out of him from his outline (`outlineBurst(c, g, F, n, reach, piece)`:
+  points round the edge of him from `outlineOf`, thrown away from his
+  middle, fast then slowing, `reach` of his widths at most; `burstStreak`
+  a head and a tail). The user: "make it so they just quickly surround the
+  golfer for half a second... come outwards from the outline of the
+  golfer kind of like an explosion." The column of hellfire, the pillar
+  of light and the heavens opening (2.8s, from an eagle, up the sky) are
+  gone: on a fast bag acing every hole they never went away.
+- `legends` holds it: nothing on an eagle; the burst itself taken away
+  from the same frame and most of it clear of his box; all of it within
+  1.9 of his width and 0.6 of his height over him; bigger on an ace.
 
 ### Night on the signature holes (user asked, from the menu)
 
@@ -442,32 +467,24 @@ Line numbers are approximate and drift. Search for the name instead.
   (`halo2`); a feather coming away and drifting down now and then
   (`feathers`, many on a great hole); the beam and rays brighter as he
   winds up; a ring of light out over the ground and light off the ball as
-  he strikes (`wave`, `sparks`). On an eagle or better (the moment of the
-  legends, now three): the heavens open (`heavens`: rays fanning down from
-  the top of the sky onto him and a shaft onto his head, solid pixels),
-  wave after wave on the ground, the wings raised, the halo flaring, and
-  `Sfx.choir` (a chord of paired voices a shade apart, a bell; a second
-  chord on an ace), measured at the legends' level.
+  he strikes (`wave`, `sparks`). Its moment (on an albatross or an ace):
+  light and feathers bursting out of him, a ring on the ground, the wings
+  raised, the halo flaring, and `Sfx.choir` (a short chord of paired
+  voices a shade apart and a bell; a second chord on an ace). The Divine
+  caddie has small feathered wings of his own, side on.
 
 ### A flourish for the other effect skins (user asked, from the menu)
 
-- `FLOURISH` (assigned to `STYLEFX[k].flourish`), for the eleven other
-  effect skins; `Scene.flourish` / `flourishNow(g)`, set by `legendGo` on
-  an eagle or better (1.6s, 2s and more on an albatross or ace), cleared
-  by the saver; drawn in three layers: `ground` (from `golferGround`, under
-  the pin), `back` and `front` (in `paintGolfer`). `flourishBurst` throws
-  pieces up and out. Inferno: flames leap round him and a ring of fire;
-  Frostborn: spikes of ice run out over the ground, snow thrown up;
-  Stormcaller: struck by a bolt from the sky, twice; Void Walker: echoes
-  burst out either side; Glitch: red and blue copies and slices jumping;
-  Midas: the grass goes gold round him, coins thrown up; Disco: the floor
-  lights in squares, two spotlights; Ghost: little ghosts circle out;
-  Banana: bananas thrown; Dad: a camera flash every half second, his
-  sunglasses catching it; Clown: confetti, his nose flashing.
+- `FLOURISH_PIECE[k]` is what each of the eleven other effect skins throws
+  out of him (see the moments above): the Inferno flames, the Frostborn
+  ice and snow, the Stormcaller sparks, the Void Walker fragments of the
+  void, the Glitch red and blue pixels, Midas coins, Disco coloured
+  squares, the Ghost little ghosts, the Banana Suit bananas, Dad flashes,
+  the Clown confetti. `FLOURISH[k]` wraps it (drawn over him; the ground
+  and back layers go unused now) and is assigned to `STYLEFX[k].flourish`.
+  `Scene.flourish` / `flourishNow(g)`.
 - `Sfx.flourishSnd(t, fx)`: one small sound each, evened out by measure to
   about the train's whistle (a loudest 100ms window of 0.005 to 0.009).
-- `legends` holds all of it (negative tested six ways for the flourishes,
-  eleven for the Divine and the wings).
 
 ### Cut away where nothing hides it (user saw the bridge)
 
@@ -542,33 +559,26 @@ Line numbers are approximate and drift. Search for the name instead.
   sways more and quicker from 8 mph up to 20 (`gust`), in any weather.
 - `sigview` plays every train kind and the snow and storm in turn.
 
-### A moment for the legends (user asked, from the menu)
+### A moment for the legends (user asked, from the menu; now cut back)
 
-On an eagle or better, in the Demonic or the Ascended, as the ball drops
-(`happyDance` calls `Scene.legendGo`, so it has the dance's guards: none
-while `QUIET`, in a catch-up or a wager). `Scene.legend` holds when it
-began; every effect asks `legendNow(g)` how far through it is (null for
-the caddie). 2.8s, or 3.4s and bigger on an albatross or an ace (`big`).
-`saverOn` clears it (the saver has its own clock).
-- **The Demonic**: a column of hellfire out of the pit behind him (`column`:
-  tongues side by side, the middle tallest, white-hot at the heart, licks
-  breaking off; 1.7 of his height, 2.3 when big; it sinks back into the pit
-  over the last third), the pit's eruption, the ground cracked open out to
-  1.9 of the pit (2.3), his wings raised high (a baked step of their own,
-  `ph` 12), his skulls flung out and up, spinning, and home again (six when
-  big), the flames on his horns taller. A dark smoke over the grass read as
-  holes in it and went.
-- **The Ascended**: a pillar of light up out of the sigil into the sky
-  behind him (`pillar`: a white core, magenta round it, streaks running
-  up, the edge dithered and the upper half a lattice of light so the sky
-  shows through; a solid slab first read as a pink wall), waves after
-  waves running out from the sigil, his shards burst out to 2.4 of their
-  ring (2.9) spinning and come home (six when big), his aura at full.
-- **Sounds** (`Sfx.hellfire`, `Sfx.ascend`): a boom, a rumble, a falling
-  roar and a crackle; a swell into a bright arpeggio over a low bloom.
-  Set by measure (a loudest 100ms window) no louder than the cup: 0.019
-  and 0.016 against its 0.019, with `LEGEND_VOL` 0.03.
-- Dev menu: Legends, eagle / ace (wear the skin first).
+As the ball drops (`happyDance` calls `Scene.legendGo`, so it has the
+dance's guards: none while `QUIET`, in a catch-up or a wager).
+`Scene.legend` holds when it began; every effect asks `legendNow(g)` how
+far through it is (null for the caddie). `saverOn` clears it (the saver
+has its own clock). Now only on an albatross or an ace, half a second (see
+"The moments, cut back").
+- **The Demonic**: hellfire streaks bursting out of him, the pit's
+  eruption, the ground cracked open a little past the pit, his wings
+  raised high (a baked step of their own, `ph` 12), his skulls flung out a
+  little and home again (six on an ace), the flames on his horns taller.
+- **The Ascended**: shards and magenta streaks bursting out of him, a wave
+  out from the sigil, his ring of shards bursting a little wider (six on
+  an ace), his aura at full.
+- **Sounds** (`Sfx.hellfire`, `Sfx.ascend`, and the Divine's `choir`):
+  under a second each, set by measure (a loudest 100ms window) no louder
+  than the cup: about 0.016 to 0.019 against its 0.019, `LEGEND_VOL` 0.03.
+- Dev menu: Legends, eagle / ace (wear the skin first; an eagle now does
+  nothing, which is right).
 
 ### The Demonic, made the ultimate skin too (user asked, with the moment)
 
@@ -1476,31 +1486,24 @@ him (about 49px tall on a 320 phone, 71px on its side).
 ## 6. Recent history (newest first, one line each)
 
 - The Signature Week pays 25 sovereigns each week it is done.
-
 - The Signature Week on the Tour tab; a flourish on a pure strike for the
   Divine, Demonic and Ascended drivers.
-
 - The moments only on an albatross or an ace, half a second, bursting out
   of him; night on the signature holes (lanterns, string lights, lamps,
   fireflies); the caddies' wings side on.
-
 - The Divine made the ultimate skin (feathered wings, a sun, a second
-  halo, the heavens opening); wings side on as he swings and spread from
-  behind as he walks, the Demonic's too; a flourish on an eagle for the
-  eleven other effect skins.
-
+  halo, the heavens opening, since cut back); wings side on as he swings
+  and spread from behind as he walks, the Demonic's too; a flourish on an
+  eagle for the eleven other effect skins (since an albatross or an ace).
 - The canyon bridge solid underfoot (it was cut to slats against the sunk
   rim), the crossing's boards and sleepers whole; the Signature Week
   honour and its Record row.
-
 - Four trains on the railway (steam, goods, express, a night sleeper), and
   waving as one goes by; rain rings on the water, snow on the signature
   holes, a storm at the sea stack, the bridge swaying in a gale.
-
 - A moment for the legends on an eagle or better (a column of hellfire, a
-  pillar of light, with sounds), and the Demonic made the ultimate skin
+  pillar of light, with sounds; since cut back), and the Demonic made the ultimate skin
   (aura, curled horns, chains of fire, cracks at the strike).
-
 - The Ascended made the ultimate skin: a sigil, an aura of flame, a ring of
   shards, sleek horns, powering up through a swing. A skin's ground goes
   down before the pin; the saver's golfer stands clear of the edge.
@@ -1539,7 +1542,6 @@ him (about 49px tall on a 320 phone, 71px on its side).
   with the real month; Sea Stack, the fourth signature hole; Trophy Room
   record rows per signature kind; canyon bridge no longer shows through a
   hill.
-
 - Home course seasons: every ten cards a home course comes back in autumn,
   winter (with snow) or blossom. The map is back a button's place below the
   star, and the medal is outlined so it shows at night.
@@ -1565,7 +1567,6 @@ him (about 49px tall on a 320 phone, 71px on its side).
 - `8a89f2c`: trophy cabinet and season calendar on the Tour tab.
 - `42d122b` .. `65435b7`: strike and cup quieter, background music, no
   applause, sound on the iPhone at last.
-
 - `b0e7b8f`: six honours for doglegs, wind, the matching pair, home
   courses, majors and caddie perks.
 - `298b5ee`: three caddie perks, the fairy's reactions and quips; auto-climb
@@ -1573,7 +1574,6 @@ him (about 49px tall on a 320 phone, 71px on its side).
 - `8de0110`: battery pass (pixel-painted, reused ground; picture-sized canvas;
   change-only DOM writes). New `battery` check.
 - `42e86b4`: real recorded strike, cup and applause.
-
 - `eaa4caa`: home courses with landmarks and the Major of the Week. Also:
   Blossom's far treeline now fades into the grass, and the hazards check
   finally tests every course.

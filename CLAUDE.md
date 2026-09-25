@@ -36,6 +36,14 @@ Update it at the end of any sizeable piece of work.
   looks closely and asked for "no clipping anywhere and no visual bugs".
   Screenshot every new thing on the course from several places down the
   hole, and extend the `sigview` check to anything drawn over the field.
+  It holds both ways: nothing through a hill in front, and nothing on a
+  bridge, pier or crossing cut away while he stands on it (the user saw
+  the canyon bridge as slats).
+- **Effects stay short and close.** A skin's moment on a great hole comes
+  only on an albatross or an ace, lasts half a second and bursts out from
+  his outline; nothing climbs the sky. A fast bag aces every hole, so
+  anything long never goes away. Wings follow his profile (side on as he
+  swings, from behind as he walks) and are never a solid shape.
 - Never put a model name in a commit, a code comment or a file. In a commit
   the co-author line reads `Co-Authored-By: Claude <noreply@anthropic.com>`
   whatever the session suggests; keep its session link line.
@@ -68,6 +76,12 @@ Rules that have cost real time here:
   the ground in `ground`.** A wash of light over the grass turns grey, thin
   edged shapes read as wires at his size, and a ground drawn with him
   covered the pin (`HANDOFF.md` §4, rules 27 to 30).
+- **Measure the thing, not the frame.** A whole-frame before/after picks up
+  whatever else changed (night relights the sky; a swing's trail grows each
+  draw), and a check drawing straight after another hole uses that hole's
+  ground line. Draw the part alone after a frame of its own hole, count by
+  its own colours, and give every comparison a floor (`HANDOFF.md` §4,
+  rules 32 to 34).
 
 A check that fails once is not a flake. Chase it: twice it has been the
 check's own random setup, and that needs fixing as much as a game bug does.
@@ -75,4 +89,6 @@ check's own random setup, and that needs fixing as much as a game bug does.
 Every new check gets a negative test: break the game on purpose, watch the
 check fail, put it back. `HANDOFF.md` §4 has the harness and its gotchas;
 rule 6 there lists the helpers each session rewrites (the scratchpad is not
-kept): a server, a look in a pose, a zoom sheet, the harness, a clip.
+kept): a server, a look in a pose, a zoom sheet, the harness, a clip. The
+local server tends to stop between long runs: restart it when a screenshot
+gets "connection refused", and don't trust a picture older than the run.
