@@ -3675,6 +3675,14 @@ const MONTH_SEASON = [2, 2, 3, 3, 3, 0, 0, 0, 1, 1, 1, 2];
 const monthNow = () => new Date(dayNow() * 86400000).getUTCMonth();
 const courseSeason = (cs, tier) => !cs ? 0 : cs.slot === 'home' ? homeSeason(cs, tier)
   : !CAL_SEASONED.includes(cs.id) ? 0 : SEASON_FORCE >= 0 ? SEASON_FORCE : MONTH_SEASON[monthNow()];
+// A frosty morning (the user asked): an autumn or winter course, or the
+// Snowline, from five to eleven by the player's own clock, on a dry day.
+// FROST_FORCE (the developer menu, the checks) pins it on or off; HOUR_FORCE
+// pins the hour.
+let FROST_FORCE = null, HOUR_FORCE = null;
+const hourNow = () => HOUR_FORCE !== null ? HOUR_FORCE : new Date().getHours();
+const frostFor = (cs, tier) => FROST_FORCE !== null ? !!FROST_FORCE
+  : !!cs && (cs.id === 'snowline' || [1, 2].includes(courseSeason(cs, tier))) && hourNow() >= 5 && hourNow() < 11;
 const LOOK_CACHE = {};
 // the course as it looks in season s: its own colours turned, and its own id
 // with the season on it, so the palettes and trees built from it are kept apart
@@ -8100,26 +8108,28 @@ const THEME_CACHE = {}, TREE_CACHE = {};
 function buildTheme(cs, mode){
   const key = cs.id + '|' + mode;
   if(THEME_CACHE[key]) return THEME_CACHE[key];
-  const tint = mode === 'night' ? ['#0A1424', 0.66] : mode === 'rain' ? ['#54626A', 0.40] : null;
-  const t = c => tint ? mixC(c, tint[0], tint[1]) : c;
+  const tint = mode === 'night' ? ['#0A1424', 0.66] : mode === 'rain' ? ['#54626A', 0.40] : mode === 'frost' ? ['#DCE8EE', 0.14] : null;
+  const t0 = c => tint ? mixC(c, tint[0], tint[1]) : c;
+  // (a frosty morning whitens the grass more than anything else)
+  const t = t0, tg = c => mode === 'frost' ? mixC(t0(c), '#E6EFF3', 0.30) : t0(c);
   return THEME_CACHE[key] = {
     id: cs.id,
     sky: skyRamp(t(cs.sky[0]), t(cs.sky[1]), 5),
     // Long ramps rather than dithered short ones. Enough steps that the bands
     // are invisible, which is what the speckle was there to hide.
-    fw:  ramp(t(cs.turf),  9, -0.30, 0.16),
-    rg:  ramp(t(cs.rough), 7, -0.25, 0.07),
-    gr:  ramp(t(lite(cs.turf, 0.14)), 6, -0.10, 0.14),
+    fw:  ramp(tg(cs.turf),  9, -0.30, 0.16),
+    rg:  ramp(tg(cs.rough), 7, -0.25, 0.07),
+    gr:  ramp(tg(lite(cs.turf, 0.14)), 6, -0.10, 0.14),
     sd:  ramp(t(cs.sand),  7, -0.30, 0.12),
     wt:  ramp(t(cs.water), 8, -0.40, 0.22),
     // Five rock steps, not three: a ridge shaded by which way its face turns
     // needs a lit tone and a shadow tone either side of the body colour.
     rk:  ramp(t(cs.rock),  5, -0.30, 0.20),
     snow: lite(t(cs.rock), 0.60),
-    edge: dark(t(cs.rough), 0.28),
+    edge: dark(tg(cs.rough), 0.28),
     // The collar the fairway and the green sit in, so neither meets what is
     // around it on a single hard pixel.
-    apron: mixC(t(cs.turf), t(cs.rough), 0.42),
+    apron: mixC(tg(cs.turf), tg(cs.rough), 0.42),
     // The ground a hazard is cut into. A bunker and a pond both sit BELOW the
     // fairway, and without a band of bare earth around the rim they read as
     // coloured paint on a flat field rather than as something dug out.
@@ -8278,7 +8288,7 @@ function drawLandmark(g, L, cx, by, s, haze, hz){
 function courseTrees(cs, mode){
   const key = cs.id + '|' + mode;
   if(TREE_CACHE[key]) return TREE_CACHE[key];
-  const tint = mode === 'night' ? ['#0A1424', 0.66] : mode === 'rain' ? ['#54626A', 0.40] : null;
+  const tint = mode === 'night' ? ['#0A1424', 0.66] : mode === 'rain' ? ['#54626A', 0.40] : mode === 'frost' ? ['#DCE8EE', 0.16] : null;
   const t = c => tint ? mixC(c, tint[0], tint[1]) : c;
   const a = t(cs.tree[0]), b = t(cs.tree[1]);
   // Five steps, not three. Foliage generated with gaps in it needs a deep tone
@@ -9878,9 +9888,11 @@ const STYLEFX = {
         fxDot(c, xx, yy, 1, '#FFFFFF', 0.25 + 0.5 * Math.max(0, Math.sin(t * 3 + i)));
       }
       // rays fanning up from behind him
-      for(let i = 0; i < 7; i++){
+      // (on his caddie only those upright or leaning away from the golfer:
+      // leaning his way they reached the club)
+      for(let i = 0; i < (g.minor ? 4 : 7); i++){
         const a = -Math.PI / 2 + (i - 3) * 0.36 + Math.sin(t * 0.4 + i * 0.9) * 0.08;
-        const Lr = h * (0.75 + 0.2 * Math.sin(t * 1.1 + i * 2.1)) * (1 + q * 0.4);
+        const Lr = h * (0.75 + 0.2 * Math.sin(t * 1.1 + i * 2.1)) * (1 + q * 0.4) * (g.minor ? 0.55 : 1);   // (short on his caddie: they reached the club)
         c.globalAlpha = (0.10 + 0.14 * Math.max(0, Math.sin(t * 1.7 + i * 1.9))) * (1 + q);
         pxLine(c, cx, cy, cx + Math.cos(a) * Lr, cy + Math.sin(a) * Lr, '#FFE7A3', Math.max(1, k));
       }
@@ -9908,7 +9920,8 @@ const STYLEFX = {
       // motes rising from his feet, fading as they go
       for(let i = 0; i < 12; i++){
         const life = (t * 0.45 + hr(i, 1)) % 1;
-        const x = cx + (hr(i, 2) - 0.5) * w * 1.2 + Math.sin(t * 2 + i) * k * 1.5;
+        // (on his caddie, on his far side from the golfer: they reached the club)
+        const x = cx + (g.minor ? -hr(i, 2) * 0.6 : hr(i, 2) - 0.5) * w * 1.2 + Math.sin(t * 2 + i) * k * 1.5;
         const y = bot - life * h * 1.25;
         fxDot(c, x, y, k, life < 0.5 ? '#FFF6D8' : '#FFD66B', (1 - life) * 0.8);
       }
@@ -9967,7 +9980,8 @@ const STYLEFX = {
           const a = tt * 1.05 + i * Math.PI * 2 / N;
           const depth = Math.sin(a);
           if((depth > 0) !== front) continue;
-          const x = cx + Math.cos(a) * w * 0.78;
+          // (a tighter circle round his caddie: out wide they reached the club)
+          const x = cx + Math.cos(a) * w * (g.minor ? 0.5 : 0.78);
           const y = cy + Math.sin(tt * 0.75 + i * 1.7) * h * 0.42 + depth * h * 0.05;
           const dim = front ? 1 : 0.6;
           if(s === 0){
@@ -11842,6 +11856,19 @@ const Scene = {
       if(Math.abs(x) > 6.6) continue;
       put.push({ kind: 5, d, x, k: i });
     }
+    // a frosty morning's glints over the fairway and the rough, and a storm's
+    // puddles lying on the fairway (not in a hazard, not on the green)
+    for(let i = 0; i < 180; i++){
+      const d = 2 + hr(this.hole * 41 + i, 305) * (LEN + 2), x = (hr(this.hole * 41 + i, 306) - 0.5) * 2 * (this.fwWidth(d) + 2.5);
+      if(Math.abs(x) > 6.6) continue;
+      put.push({ kind: 6, d, x, k: i });
+    }
+    for(let i = 0; i < 24; i++){
+      const d = 5 + hr(this.hole * 43 + i, 307) * (LEN - 16), x = (hr(this.hole * 43 + i, 308) - 0.5) * 1.2 * this.fwWidth(d);
+      const rd = 0.35 + hr(i, 309) * 0.45, rx = 0.25 + hr(i, 310) * 0.35;
+      if(this.hitsHazard(d, x, 1.2) || put.some(p => p.kind === 7 && Math.abs(p.d - d) < 2.2)) continue;
+      put.push({ kind: 7, d, x, rd, rx, k: i });
+    }
     put.sort((a, b) => b.d - a.d);
     this.props = put;
   },
@@ -11986,21 +12013,51 @@ const Scene = {
   ripples(c, T){
     const R = this._rips;
     if(!R || !R.length) return;
+    const water = this.waterAt(c, T);
     c.fillStyle = pickC(T._wt, 0.88);
     const ft = Math.floor(this.t*4);
     for(let i = 0; i < R.length; i += 3){
       const yy = R[i], xl = R[i+1], w = R[i+2];
       if(((yy + ft) % 9) !== 0) continue;
       const rw = Math.round(w * (0.16 + 0.15*Math.abs(Math.sin(yy*0.6 + this.t))));
-      c.fillRect(xl + ((w - rw) >> 1) + Math.round(Math.sin(yy*0.31)*w*0.14), yy, rw, 1);
+      // (a pixel at a time, and only on the water: the row runs the hazard's
+      // whole width, and a glint was drawn over the bank)
+      const x0 = xl + ((w - rw) >> 1) + Math.round(Math.sin(yy*0.31)*w*0.14);
+      let run = -1;
+      for(let x = Math.max(0, x0); x <= Math.min(VW, x0 + rw); x++){
+        const ok = x < x0 + rw && water(x, yy);
+        if(ok && run < 0) run = x;
+        else if(!ok && run >= 0){ c.fillRect(run, yy, x - run, 1); run = -1; }
+      }
     }
-    if(this.rain && !this.ice) this.rainRings(c, T, R);
+    if(this.rain && !this.ice) this.rainRings(c, T, R, water);
+  },
+  // Whether the ground as painted is water at x, y: read off the pixel
+  // buffer, or (painted rect by rect) off the canvas before anything is drawn
+  // over it, so both ways come out the same.
+  waterAt(c, T){
+    const PP = this.pixGround !== false && PixPaint.px && PixPaint.w === VW && PixPaint.h === VH ? PixPaint : null;
+    if(PP){
+      if(this._wtFor !== T._wt){
+        this._wtFor = T._wt; this._wtSet = new Set();
+        const was = PP.cur;
+        for(const col of T._wt){ PP.fillStyle = col; this._wtSet.add(PP.cur); }
+        PP.cur = was;
+      }
+      const WS = this._wtSet, px = PP.px;
+      return (x, y) => x >= 0 && x < VW && y >= 0 && y < VH && WS.has(px[y * VW + x]);
+    }
+    if(this._wtHexFor !== T._wt){ this._wtHexFor = T._wt; this._wtHex = new Set(T._wt.map(h => h.toUpperCase())); }
+    const IMG = c.getImageData(0, 0, VW, VH).data, WH = this._wtHex;
+    return (x, y) => { if(x < 0 || x >= VW || y < 0 || y >= VH) return false;
+      const i = (y * VW + x) * 4;
+      return WH.has('#' + ((1 << 24) | (IMG[i] << 16) | (IMG[i + 1] << 8) | IMG[i + 2]).toString(16).slice(1).toUpperCase()); };
   },
   // Rain on the water (the user asked for weather on the signature holes):
   // rings spreading where the drops land, bigger the nearer they are, each
   // on a clock of its own. Only ever on the water's own rows, so none spill
   // onto the bank.
-  rainRings(c, T, R){
+  rainRings(c, T, R, water){
     const rows = new Map();
     for(let i = 0; i < R.length; i += 3){ const a = rows.get(R[i]); if(a) a.push(R[i+1], R[i+1] + R[i+2]); else rows.set(R[i], [R[i+1], R[i+1] + R[i+2]]); }
     // (the rows are noted one to a slice of the ground, so a pixel counts as
@@ -12010,14 +12067,7 @@ const Scene = {
     // row runs the width of its hazard, banks and all, and nearer slices
     // paint their banks and the grass over its ends (the user saw drops
     // landing on the grass)
-    const PP = this.pixGround !== false && PixPaint.px && PixPaint.w === VW && PixPaint.h === VH ? PixPaint : null;
-    if(PP && this._wtFor !== T._wt){
-      this._wtFor = T._wt; this._wtSet = new Set();
-      const was = PP.cur;
-      for(const col of T._wt){ PP.fillStyle = col; this._wtSet.add(PP.cur); }
-      PP.cur = was;
-    }
-    const water = (x, y) => !PP || (x >= 0 && x < VW && y >= 0 && y < VH && this._wtSet.has(PP.px[y * VW + x]));
+    water = water || this.waterAt(c, T);
     const wet = (x, y) => water(x, y) && (on(x, y) || (on(x, y - 1) && on(x, y + 1)) || (on(x, y - 1) && on(x, y + 2)) || (on(x, y - 2) && on(x, y + 1)));
     const n = R.length / 3, N = Math.min(70, Math.round(n * 0.8)), c1 = mixC(pickC(T._wt, 0.95), '#FFFFFF', 0.7), c2 = mixC(pickC(T._wt, 0.9), '#FFFFFF', 0.4);
     for(let i = 0; i < N; i++){
@@ -12085,7 +12135,9 @@ const Scene = {
       this._reach = m;
     }
     const clubTip = gx + gw * 0.66 + this._reach * gh;
-    const edge = Math.min(gx, clubTip) - gw * 0.18 - 2;
+    // (a caddie with an effect stands a little further off: the Divine's
+    // rays and sparks reached the club at the top of the backswing)
+    const edge = Math.min(gx, clubTip) - gw * (STYLEFX[caddieNow().fx] ? 0.30 : 0.18) - 2;
     const x = Math.round(edge - w);
     // the float; a reaction's hop or droop sits out one of his turns
     const y = Math.round(gy + gh * 0.02 + Math.sin(this.t * 2.2) * gh * 0.035)
@@ -12120,7 +12172,7 @@ const Scene = {
     this.moveT -= dt;
     if(this.moveT > 0) return;
     this.moveT = 12 + R() * 16;
-    const pool = FAIRY_MOVES.filter(m => m.id !== this._lastMove);
+    const pool = fairyMoves().filter(m => m.id !== this._lastMove);
     this.fairyMoveGo(pool[R() * pool.length | 0].id);
   },
   // A happy dance on a great hole (the user asked): an ace gets two flips
@@ -12160,9 +12212,39 @@ const Scene = {
   },
   fairyMoveGo(id){
     const m = FAIRY_MOVES.find(x => x.id === id);
-    if(!m) return;
+    if(!m || (m.only && m.only !== caddieNow().fx)) return;
     this._lastMove = m.id;
     this.fairyMove = { kind: m.id, t0: this.t, dur: m.dur };
+  },
+  // The Demonic caddie's blaze: tongues of fire in a ring round his feet,
+  // the far half behind him and the near half in front, rising and falling
+  // with q (0..1); solid pixels.
+  caddieFire(c, x, y, w, h, q, T, front){
+    const k = Math.max(1, Math.round(h / 18)), COL = ['#FFF3A0', '#FFD34A', '#FF8A24', '#E8401C', '#8A1A10'];
+    for(let i = 0; i < 14; i++){
+      const a = i / 14 * Math.PI * 2 + T * 5, sn = Math.sin(a);
+      if((sn > 0) !== front) continue;
+      // (reaching well out on his far side, only to his own edge on the golfer's)
+      const fx2 = x + w * 0.5 + Math.cos(a) * w * (Math.cos(a) > 0 ? 0.45 : 0.8), fy2 = y + h + sn * h * 0.12;
+      const tall = h * (0.22 + 0.22 * hr(i, 351 + Math.floor(T * 10))) * q;
+      for(let j = 0; j < tall; j += k){
+        c.fillStyle = COL[Math.min(4, Math.floor(j / Math.max(1, tall) * 5))];
+        c.fillRect(Math.round(fx2 - (j < tall * 0.4 ? k : 0)), Math.round(fy2 - j - k), j < tall * 0.4 ? k * 2 : k, k);
+      }
+    }
+  },
+  // The Ascended caddie's blink: motes of the void swirling in to a point
+  // (open 0) or out from it (open 1) where he stands.
+  caddieSwirl(c, x, y, w, h, open, T){
+    const k = Math.max(1, Math.round(h / 18)), cx = x + w * 0.5, cy = y + h * 0.5;
+    for(let ring = 0; ring < 2; ring++) for(let i = 0; i < 12; i++){
+      const a = i / 12 * Math.PI * 2 + T * (ring ? -12 : 9), R = (0.15 + 0.85 * open) * w * (ring ? 0.4 : 0.7) * (0.7 + 0.3 * hr(i, 361 + ring));
+      c.fillStyle = i % 3 === 0 ? '#FFE0FF' : i % 3 === 1 ? '#F27CFF' : '#B04ACB';
+      c.fillRect(Math.round(cx + Math.cos(a) * R), Math.round(cy + Math.sin(a) * R * 1.2), k + (ring ? 0 : 1), k + (ring ? 0 : 1));
+    }
+    // the tear in the void itself, a dark eye rimmed in magenta
+    c.fillStyle = '#F27CFF'; c.fillRect(Math.round(cx - k * 2), Math.round(cy - k), k * 4, k * 2);
+    c.fillStyle = '#1C0F2A'; c.fillRect(Math.round(cx - k), Math.round(cy - k), k * 2, k * 2);
   },
   // What he is saying, if anything, and how far through it he is (0..1).
   fairyNow(){
@@ -12248,7 +12330,7 @@ const Scene = {
     const cast = this.fairyCast && (this.fairyCast.t || 0) < 1.1 ? Math.min(1, (this.fairyCast.t || 0) / 0.15) : 0;
     // all of him, at bx, by: his outfit's effect, his legs, himself, his arms
     const body = (g0, bx, by) => {
-      const g = { x: bx, y: by, w, h, cx: bx + w*0.55, cy: by + h*0.53, bot: by + h, t: this.t + 0.7, ph: 0, minor: true,
+      const g = { x: bx, y: by, w, h, cx: bx + w*0.55, cy: by + h*0.53, bot: by + h, t: this.t + 0.7 + (P && P.beat ? (P.beat - 1) * M.T : 0), ph: 0, minor: true,
                   still: !(FX && FX.shearMod), k: 1, spr, shear: () => 0,
                   head: { x: bx + w*CAP_CADDIE.x, y: by + h*CAP_CADDIE.y, w: w*CAP_CADDIE.w, hh: h*CAP_CADDIE.h } };
       if(FX && FX.ground) FX.ground(g0, g);
@@ -12269,7 +12351,15 @@ const Scene = {
       if(FX && FX.front) FX.front(g0, g);
       g0.globalAlpha = 1; g0.globalCompositeOperation = 'source-over';
     };
-    if(P && (P.sx !== 1 || P.rot !== 0)){
+    if(P && P.fire) this.caddieFire(c, x, y, w, h, P.fire, M.T, false);
+    if(P && P.hide){
+      // blinking through the void: a swirl where he was and one where he
+      // comes out, closing and opening
+      this.caddieSwirl(c, x - P.dx + P.from, y, w, h, 1 - P.swirl, M.T);
+      this.caddieSwirl(c, x - P.dx + P.to, y, w, h, P.swirl, M.T + 0.5);
+      const x0 = Math.min(x - P.dx + P.from, x - P.dx + P.to) + w * 0.5 - w * 0.75;
+      this._fairy = { x: Math.floor(x0), y: Math.floor(y + h * 0.5 - w * 0.9), w: Math.ceil(Math.abs(P.to - P.from) + w * 1.5) + 2, h: Math.ceil(w * 1.8) + 2 };
+    }else if(P && (P.sx !== 1 || P.rot !== 0)){
       // Turned, for a spin or a flip: drawn whole into a canvas of his own,
       // then laid down squashed, mirrored or rolled about his middle, pixel for
       // pixel. Rolled, he takes more room across; he takes it on the far side
@@ -12298,6 +12388,22 @@ const Scene = {
     }else{
       body(c, x, y);
       this._fairy = { x, y, w, h };
+    }
+    if(P && P.fire) this.caddieFire(c, x, y, w, h, P.fire, M.T, true);
+    // (the room the fire and the feathers take, about him and under him)
+    const grow = (x0, y0, x1, y1) => { const F = this._fairy; const a = Math.min(F.x, Math.floor(x0)), b = Math.min(F.y, Math.floor(y0));
+      this._fairy = { x: a, y: b, w: Math.max(F.x + F.w, Math.ceil(x1)) - a, h: Math.max(F.y + F.h, Math.ceil(y1)) - b }; };
+    if(P && P.fire){ const k = Math.max(1, Math.round(h / 18)); grow(x + w * 0.5 - w * 0.8 - k - 1, y, x + w * 0.5 + w * 0.45 + k * 2 + 1, y + h + h * 0.12 + k + 1); }
+    if(P && P.feathers){ const k = Math.max(1, Math.round(h / 16)); grow(x + w * 0.5 - w * 0.9 - k - 1, y, x + w * 0.5 + k * 2 + 1, y + h * 1.6 + k * 2 + 1); }
+    // soaring: feathers coming away and drifting down under him
+    if(P && P.feathers){
+      const k = Math.max(1, Math.round(h / 16));
+      for(let i = 0; i < 7; i++){
+        const life = (M.T * 1.6 + i / 7) % 1;
+        const fx2 = x + w * 0.5 - hr(i, 341) * w * 0.9 + Math.sin(M.T * 4 + i) * k, fy2 = y + h * 0.7 + life * h * 0.9;   // (drifting off on his far side)
+        c.fillStyle = i & 1 ? '#FFFFFF' : '#FFE39A'; c.fillRect(Math.round(fx2), Math.round(fy2), k, k);
+        if(life < 0.5){ c.fillStyle = '#E3B457'; c.fillRect(Math.round(fx2), Math.round(fy2) + k, k, k); }
+      }
     }
     // juggling: three golf balls going hand to hand over him, in arcs that
     // rise out of his hands as he starts and sink back into them at the end
@@ -12412,7 +12518,8 @@ const Scene = {
     this.wind   = (rnd()*2 - 1) * 0.7;
     if(/Crosswind/.test(ch)) this.wind = (this.wind < 0 ? -1 : 1) * (1.0 + Math.abs(this.wind) * 0.5);
     const cs = courseFor(tournamentOf(h));
-    const mode = this.night ? 'night' : this.rain ? 'rain' : 'day';
+    this.frost = !this.night && !this.rain && frostFor(cs, tier);
+    const mode = this.night ? 'night' : this.rain ? 'rain' : this.frost ? 'frost' : 'day';
     this.course = cs;
     const look = seasonLook(cs, courseSeason(cs, tier));
     this.look = look;
@@ -12925,8 +13032,18 @@ const FAIRY_MOVES = [
   { id:'wave',  dur:1.8 },
   { id:'loop',  dur:1.4 },
   { id:'cartwheel', dur:1.8 },
-  { id:'juggle', dur:2.6 }
+  { id:'juggle', dur:2.6 },
+  // a trick of their own for the three dearest caddies (only: whose it is,
+  // by his look's effect): the Divine soars on quick wingbeats and sheds
+  // feathers, the Demonic stamps up a ring of fire round himself, the
+  // Ascended blinks out through the void and back. Close about him, like
+  // everything else he does.
+  { id:'soar',  dur:1.6, only:'divine' },
+  { id:'blaze', dur:1.3, only:'demonic' },
+  { id:'blink', dur:1.4, only:'ascended' }
 ];
+// the turns this caddie may take: his own trick, if he has one, among the rest
+const fairyMoves = () => { const fx = caddieNow().fx; return FAIRY_MOVES.filter(m => !m.only || m.only === fx); };
 const easeIO = q => q < 0.5 ? 2*q*q : 1 - 2*(1-q)*(1-q);
 function fairyPose(kind, q, T, w, h){
   const P = { dx: 0, dy: 0, sx: 1, rot: 0, armL: 0, armR: 0, waveL: 0, legs: null, juggle: null };
@@ -12958,6 +13075,20 @@ function fairyPose(kind, q, T, w, h){
       P.dx = -w * 1.6 * u; P.rot = -Math.PI * 2 * u; P.dy = -Math.sin(Math.PI * u) * h * 0.15;
       P.armL = P.armR = 1; P.legs = 0.25;                       // arms out, legs split
     }else P.dx = -w * 1.6 * (1 - easeIO((q - 0.55) / 0.45));
+  }else if(kind === 'soar'){                                    // up high on quick wingbeats, and down
+    const u = Math.sin(Math.PI * easeIO(q));
+    P.dy = -u * h * 0.9; P.dx = -u * w * 0.35;
+    P.armL = P.armR = 0.6 * env; P.beat = 4; P.feathers = env;
+  }else if(kind === 'blaze'){                                   // two stamps, and a ring of fire round him
+    P.dy = -Math.abs(Math.sin(Math.PI * q * 2)) * h * 0.16;
+    P.armL = P.armR = env; P.fire = Math.sin(Math.PI * q);
+  }else if(kind === 'blink'){                                   // out through the void, across, and back
+    const out = w * 1.5;
+    P.dx = q < 0.3 ? 0 : q < 0.7 ? -out : 0;
+    // gone for a moment either side of each crossing: a swirl where he was
+    // and where he will be
+    const gap = q > 0.22 && q < 0.38 ? (q - 0.22) / 0.16 : q > 0.62 && q < 0.78 ? (q - 0.62) / 0.16 : -1;
+    if(gap >= 0){ P.hide = 1; P.swirl = gap; P.from = q < 0.5 ? 0 : -out; P.to = q < 0.5 ? -out : 0; }
   }else if(kind === 'juggle'){                                  // three balls, hand to hand
     const beat = T * 1.5;
     P.juggle = { beat, env };
@@ -13219,6 +13350,33 @@ function golferG(x, y, w, h, ph, t, bot, walking, spr){
   return { x, y, w, h, cx: x + w*(walking ? 0.5 : 0.55), cy: y + h*0.53, bot: bot, t: t, ph, back: walking,
            k: Math.max(1, Math.round(h / 40)), spr,
            head: { x: x + w*cb.x, y: y + h*cb.y, w: w*cb.w, hh: h*cb.h } };
+}
+// Night on the course (the user asked): the light the three dearest skins
+// throw on the grass round his feet, [rim, middle, heart], and how it moves
+// (breathe: a slow swell; flicker: fire).
+const NIGHT_GLOW = {
+  divine:   { col: ['#6E6436', '#A8903E', '#E3C46A'], breathe: 1.6 },
+  demonic:  { col: ['#5A2A1A', '#9A3A1C', '#E0602A'], flicker: 1 },
+  ascended: { col: ['#402A5E', '#7A3A96', '#C45AD8'], breathe: 1.1 }
+};
+// A pool of light on the ground at his feet: an ellipse three of his widths
+// across, dithered solid pixels (a wash of light turns grey on grass),
+// denser toward the middle, a little bigger as he swings through.
+function nightPool(c, g, NG){
+  const sw = g.ph > 0 ? Math.sin(Math.PI * Math.min(1, g.ph / 0.55)) : 0;
+  const pulse = NG.flicker ? 0.94 + 0.06 * Math.sin(g.t * 13) * Math.sin(g.t * 7.3) : 0.95 + 0.05 * Math.sin(g.t * NG.breathe);
+  const rx = Math.max(6, g.w * 1.5 * pulse * (1 + 0.12 * sw)), ry = Math.max(2, g.h * 0.16 * pulse * (1 + 0.12 * sw));
+  const X = Math.round(g.cx), Y = Math.round(g.bot), R = Math.ceil(rx), RY = Math.ceil(ry);
+  for(let yy = -RY; yy <= RY; yy++) for(let xx = -R; xx <= R; xx++){
+    const d2 = (xx * xx) / (rx * rx) + (yy * yy) / (ry * ry);
+    if(d2 > 1) continue;
+    const gx = X + xx, gy = Y + yy, par = (gx + gy) & 1;
+    let col = null;
+    if(d2 < 0.25){ if(!par) col = NG.col[2]; else if(d2 < 0.12) col = NG.col[1]; }
+    else if(d2 < 0.6){ if(!par) col = NG.col[1]; }
+    else if(!par && (gy & 1)) col = NG.col[0];
+    if(col){ c.fillStyle = col; c.fillRect(gx, gy, 1, 1); }
+  }
 }
 /* One golfer, at any size, in the look he is wearing: the course draws him
    through this and so does the battery saver, so the two always match. ph is
@@ -14081,7 +14239,7 @@ Object.assign(Scene, {
   drawProps(edge, side){
     const c = this.b, T = this.theme || THEMES.day, night = this.night;
     for(const p of (this.props || [])){
-      if(p.kind >= 4 && (!night || S.dgnRun)) continue;
+      if(p.kind >= 4 && (S.dgnRun || (p.kind <= 5 ? !night : p.kind === 6 ? !this.frost || night || this.rain : !this.rain || this.ice))) continue;
       if(side > 0 && p.d < edge) continue;
       if(side < 0 && p.d >= edge) continue;
       // A rope post is culled on the far end of the span it carries, not on
@@ -14198,6 +14356,58 @@ Object.assign(Scene, {
         c.fillStyle = blink > 0.8 ? '#E8FF8A' : '#9ACB3A'; fillClip(c, f.x, f.y, kk, kk, clip);
       }
 
+    }else if(p.kind === 6){
+      // frost on the grass: a pale speck, and one in four a glint catching
+      // the low sun now and then
+      const k = pr.s > 1.6 ? 2 : 1;
+      if(pr.x < -4 || pr.x > VW + 4) return;
+      c.fillStyle = '#EEF6FA'; c.fillRect(pr.x, pr.y - k, k, k);
+      if(p.k & 3) return;
+      const tw = Math.sin(this.t * (1.4 + hr(p.k, 313)) + p.k * 2.7);
+      if(tw < 0.55) return;
+      const L = tw > 0.85 ? k + 1 : k;
+      c.fillStyle = '#FFFFFF'; c.fillRect(pr.x, pr.y - k, k, k);
+      if(L > k){ c.fillStyle = '#CFE8F4'; c.fillRect(pr.x - L, pr.y - k, L, k); c.fillRect(pr.x + k, pr.y - k, L, k); c.fillRect(pr.x, pr.y - k - L, k, L); }
+
+    }else if(p.kind === 7){
+      // a puddle on the fairway after the rain: flat on the ground, laid row
+      // by row from its far end to its near, each row at the distance it
+      // really shows (walked out from the screen, not a straight share,
+      // which fell behind the ground's line and left rows out) and cut there;
+      // a dark rim, the sky in it, and rain rings in it
+      if(p.d - p.rd < this.camD - CAM_BACK + ROPE_REL) return;
+      const T2 = this.theme, far = this.proj(p.d + p.rd, p.x), near = this.proj(p.d - p.rd, p.x);
+      if(near.x < -30 || near.x > VW + 30 || near.y - far.y < 1) return;
+      const y0 = far.y, y1 = near.y;
+      const at = y => { let lo = p.d - p.rd, hi = p.d + p.rd;
+        for(let i = 0; i < 14; i++){ const m = (lo + hi) / 2; if(this.proj(m, p.x).y > y) lo = m; else hi = m; }
+        const dd = (lo + hi) / 2, v = (dd - p.d) / p.rd, pp = this.proj(dd, p.x);
+        return { dd, x: pp.x, hw: p.rx * LAT * pp.s * Math.sqrt(Math.max(0, 1 - v * v)) }; };
+      const R = [];
+      for(let y = y0; y <= y1; y++){
+        const A = at(y); R.push(A);
+        if(A.hw < 0.5) continue;
+        const clip = this.clipAt(A.dd), xl = Math.round(A.x - A.hw), xr = Math.round(A.x + A.hw);
+        c.fillStyle = pickC(T2._wt, y - y0 < (y1 - y0) * 0.25 ? 0.62 : 0.5); fillClip(c, xl, y, xr - xl, 1, clip);
+        c.fillStyle = pickC(T2._bk || T2._wt, 0.2); fillClip(c, xl - 1, y, 1, 1, clip); fillClip(c, xr, y, 1, 1, clip);
+      }
+      // (its sky: a paler streak across the middle)
+      const my = Math.round((y0 + y1) / 2), M = R[my - y0];
+      if(M && M.hw > 2){ c.fillStyle = pickC(T2._wt, 0.9); fillClip(c, Math.round(M.x - M.hw * 0.6), my, Math.round(M.hw * 0.7), 1, this.clipAt(M.dd)); }
+      // drops landing: a ring or two spreading in it, kept inside
+      c.fillStyle = mixC(pickC(T2._wt, 0.9), '#FFFFFF', 0.5);
+      for(let j = 0; j < 2; j++){
+        const cl = this.t / 0.7 + hr(p.k, 311 + j), m = Math.floor(cl), q = cl - m;
+        const cy = Math.round(y0 + (0.3 + 0.4 * hr(m, p.k + 11 * j)) * (y1 - y0)), C = R[cy - y0];
+        if(!C || C.hw < 3) continue;
+        const cx = C.x + (hr(p.k + 11 * j, m) - 0.5) * C.hw, r = q * C.hw * 0.45, ry = Math.max(0.5, r * 0.3);
+        for(let a2 = 0; a2 < 12; a2++){
+          const X = Math.round(cx + Math.cos(a2 / 12 * 6.283) * r), Y = Math.round(cy + Math.sin(a2 / 12 * 6.283) * ry), E = R[Y - y0];
+          if(!E || Math.abs(X - E.x) > E.hw - 1) continue;
+          fillClip(c, X, Y, 1, 1, this.clipAt(E.dd));
+        }
+      }
+
     }else if(p.kind === 3){
       // A floodlight over the green. Tall on purpose, and the beam is drawn
       // with it so a tree standing in front of the lamp covers its light too.
@@ -14278,6 +14488,10 @@ Object.assign(Scene, {
     const FX = STYLEFX[outfitNow().fx];
     if(G.heli || !FX || !(FX.ground || FX.flourish)) return;
     const g = golferG(G.x, G.y, G.w, G.h, G.ph, this.t, G.p.y, G.walking, G.spr);
+    // at night the three dearest skins light the grass round him in their own
+    // colours, under whatever of their own they lay there
+    const NG = NIGHT_GLOW[outfitNow().fx];
+    if(NG && this.night && !S.dgnRun) nightPool(c, g, NG);
     if(FX.ground) FX.ground(c, g);
     const FL = FX.flourish ? flourishNow(g) : null;
     if(FL){ c.globalAlpha = 1; FX.flourish(c, g, FL, 'ground'); }
@@ -17571,7 +17785,8 @@ const DEV = {
       + ['steam', 'goods', 'express', 'night'].map(k => b(k === 'night' ? 'sleeper' : k, 'DEV.train(\'' + k + '\')')).join(''));
 
     h += row('Signature hole of the week \u00b7 ' + SIG_NAME[sigWeek()] + (SIGWEEK_FORCE ? ' \u00b7 forced' : ''), SIG_KINDS.map(k =>
-      b(SIG_NAME[k].toLowerCase(), 'DEV.sigWeek(\'' + k + '\')')).join('') + b('by the date', 'DEV.sigWeek()'));
+      b(SIG_NAME[k].toLowerCase(), 'DEV.sigWeek(\'' + k + '\')')).join('') + b('by the date', 'DEV.sigWeek()'))
+      + row('Frost (' + (FROST_FORCE === null ? 'by the clock' : FROST_FORCE ? 'on' : 'off') + ')', b('on', 'DEV.frost(1)') + b('off', 'DEV.frost(0)') + b('by the clock', 'DEV.frost(null)'));
 
     h += row('Home season', b('by the card', 'DEV.season(-1)') + b('as built', 'DEV.season(0)')
       + b('autumn', 'DEV.season(1)') + b('winter', 'DEV.season(2)') + b('blossom', 'DEV.season(3)'));
@@ -17802,6 +18017,7 @@ const DEV = {
   sigWeek(k){ SIGWEEK_FORCE = k || null; this.reprice(); this.re(); },
   // a train of that kind setting off now (on a railway hole)
   train(kind){ Scene.train = { t0: Scene.t, dir: Math.random() < 0.5 ? -1 : 1, kind }; Scene.trainNext = Scene.t + 30; hideSheet(); },
+  frost(v){ FROST_FORCE = v; Scene.newHole(S.hole, S.tier); hideSheet(); },
   rail(){ RAIL_FORCE = S.hole; ISLE_FORCE = 0; CANYON_FORCE = 0; STONES_FORCE = 0; PIER_FORCE = 0; S.yards = S.yardsMax; this.reprice(); Scene.newHole(S.hole, S.tier); hideSheet(); },
   isle(){ ISLE_FORCE = S.hole; CANYON_FORCE = 0; STONES_FORCE = 0; PIER_FORCE = 0; RAIL_FORCE = 0; S.yards = S.yardsMax; this.reprice(); Scene.newHole(S.hole, S.tier); hideSheet(); },
   // as if nobody had touched the phone for the whole wait, bar five seconds

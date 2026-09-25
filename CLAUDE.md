@@ -72,6 +72,9 @@ Rules that have cost real time here:
 - **Some regular courses follow the real month's season.** A change to
   seasons or colours can pass today and fail in December: run the suite with
   the month pinned to each season (`HANDOFF.md` §4, rule 20).
+- **Frost follows the player's own clock** (5 to 11 on a cold course).
+  After touching it, run the suite with `HOUR_FORCE` pinned to 8 and to 15
+  in a copy of the game.
 - **Skins: bake the big shapes, draw in solid pixels, and put what lies on
   the ground in `ground`.** A wash of light over the grass turns grey, thin
   edged shapes read as wires at his size, and a ground drawn with him

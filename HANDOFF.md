@@ -10,14 +10,16 @@ check is for.
 
 - Everything is committed and pushed to `main` (mirrored on the session
   branch `claude/notes-claude-review-4cqv98`). Nothing is half-built.
-- `node test/run.js` passes all **59 checks** (about nine minutes).
-- **Last request** (with a screenshot of the Ascended flying over the
-  island's lake as a plain figure): "Keep them [the Divine caddie's
-  wings]. Also can you fix the skins when flying over water... Then do 1.
-  We won't do the photo mode or trail flourishes. Let's do 4 and 5 too."
-  All done, in that order (each has a section in §5): **a skin flies with
-  him**; **night on the ordinary holes**; **the Mythic Favour** (a caddie
-  perk for the three dearest caddies); **the Hole of the Week run**.
+- `node test/run.js` passes all **61 checks** (about ten minutes).
+- **Last request** (two screenshots): "Water drops are showing up on the
+  grass. Also what are the yellow rings next to the golfer? ... please
+  remove it. Let's do 1, 2 and 3 for now as well." Done: rain rings only
+  on water, the stray ring removed, then **night glow for the skins**, **the
+  Mythic caddies' tricks** and **weather on the ordinary holes** (frost,
+  puddles). Each has a section in §5.
+- Earlier this session: a skin flies with him (and his arms up on the club,
+  not hanging), night on the ordinary holes, the Mythic Favour, the Hole of
+  the Week run.
 - The session before (sections in §5 too): the moments for the top skins
   (since cut to half a second on an albatross or an ace), the Demonic and
   the Divine made ultimate skins, four trains, weather and night on the
@@ -34,7 +36,8 @@ check is for.
   whether the auto-climb button sits right. They were on about Card V a few
   sessions ago, so may not have seen a home course season (from Card XI).
   How the pure-strike flourishes feel at a fast tempo; whether the Mythic
-  Favour's price (600) and strength (three lifts of 20%) feel right.
+  Favour's price (600) and strength (three lifts of 20%) feel right;
+  whether frost from five to eleven by their own clock suits.
 - The user usually ends a task by asking **"What's next?"**: a short plain
   menu with a recommendation (§8), then wait for the choice.
 
@@ -167,6 +170,10 @@ Line numbers are approximate and drift. Search for the name instead.
 | **A skin in flight** (over the island's lake, the canyon) | `paintHeli` runs the skin's `back`/`front`/`flourish` with a from-behind `golferG` (`g.fly`, `bot` at his boots); what lies round his feet is skipped on `g.fly` (the glows of the Inferno, Frostborn, Stormcaller, Midas, Ghost; the Disco's floor; the peel; the Demonic's pit smoke, tendrils and eruption) |
 | **Night on the ordinary holes** | `Scene.layNight` (props kind 4, a tee lamp; kind 5, a spot of three fireflies; laid from a hash after `layProps`), drawn in `drawProp` only while `night` and not in a wager; `Scene.clubhouse` (baked into the ridge in `buildRidge`, away from the landmark); the flag's halo and light in `pinBody` (`lit`) |
 | **The Mythic Favour** (caddie perk `myth`) | `B.CPERKS` entry with `myth`, `also`; `MYTH_CADDIES`, `mythOk`, `MYTH_PAL`; in `tickCaddie` (waits without a Mythic caddie; `also` buffs), `renderCadPerks` (`locked`), `cperkPick`; the cast `Scene.drawFavour` (from `drawCaddie`, `fairyCast.myth`); icon `cpmyth`; Full Staff counts only the nine ordinary perks |
+| **Rain rings and ripples** (on water only) | `rainRings`, `ripples`: a pixel is kept only where `waterAt` says the painted ground is one of the theme's water colours (`PixPaint.px` against `_wtSet`, or the canvas against `_wtHex`), as well as on a noted water row |
+| **The dearest skins at night** | `NIGHT_GLOW`, `nightPool` (from `golferGround`, before the skin's own ground) |
+| **The Mythic caddies' tricks** | `FAIRY_MOVES` entries with `only` (soar, blaze, blink), `fairyMoves()` (the pool for this caddie), `fairyPose` (`beat`, `feathers`, `fire`, `hide`/`swirl`), `Scene.caddieFire`, `Scene.caddieSwirl`, the room they take (`grow` in `drawCaddie`); `fairyMoveGo` refuses another caddie's trick |
+| **Frost and puddles** | `frostFor`, `FROST_FORCE`, `HOUR_FORCE`, `hourNow`, `Scene.frost`, mode `'frost'` in `buildTheme` (`tg`) and `courseTrees`; props kind 6 (a frost speck, one in four glinting) and kind 7 (a puddle, rows walked out by distance, rings) laid in `layNight`; dev menu row Frost |
 | **The Hole of the Week run** | `S.hotw = { wk, n }` in `sigScore`, `B.HOTW_RUN`/`HOTW_SOV`, `hotwRun`, `hotwDone`, repaired in `initState`; the Tour band's last row in `renderSigWeek` |
 | **Night on the signature holes** | `Scene.nightLamp`, `drawIsleLights` (from `drawDucks`), `drawFireflies` (from `drawStones`), the lanterns in `drawPier`, the bulbs in `drawBridge` |
 | **The Signature Week** | `S.sigWk`, `sigWeekKinds`, the tally `sigWeek`, honour `sigWk`, `B.SIG_WEEK_SOV`; counted in `sigScore`; the Record's row; the Tour tab's band (`renderSigWeek`, `#sigBox`) |
@@ -388,6 +395,61 @@ Line numbers are approximate and drift. Search for the name instead.
    check the file's time before trusting it.
 
 ## 5. What the last features do (for debugging them)
+
+### Rain on the grass, and the stray ring (user sent screenshots)
+
+- The rain rings were placed on the rows the ground painter notes for a
+  hazard's water, but a row runs the hazard's whole width, banks and all,
+  and nearer slices paint their banks and the grass over its ends; so
+  drops landed on the bank and the grass. Now a ring pixel is also kept
+  only where the painted ground itself is water. A drop's first dot also
+  tested one row and painted the row above. The pond's ripple lines had
+  the same fault and now keep to the water too. Both ask `waterAt`, which
+  reads the pixel buffer, or the canvas before anything is drawn over the
+  ground when it is painted rect by rect (`battery` holds the two the same;
+  it caught the canvas read after the ripples, which read a ripple on a
+  bank as water). `sigweather` now plays a pond
+  too and counts the rings' pale pixels against the painted ground.
+- The "yellow rings": a ring swelled out from a spot off his hip on every
+  pure strike (brass), affinity and skill (green). Gone: `Scene.spark` and
+  `Scene.burst` do nothing now. Check `rings`.
+
+### The dearest skins light the grass at night (user asked, from the menu)
+
+- `nightPool`: on a night round, an ellipse three of his widths across at
+  his feet, dithered solid pixels in the skin's three colours (gold, ember,
+  magenta), breathing (the Demonic's flickers), a little bigger through
+  the swing; drawn in `golferGround` before the skin's own sun, pit or
+  sigil. Not in flight, in a wager or by day.
+
+### The Mythic caddies' tricks (user asked, from the menu)
+
+- One turn each, only for that caddie, among his others: **soar** (the
+  Divine, 1.6s: up and away on quick wingbeats, `beat` 4 eased in from his
+  own clock, feathers drifting off his far side), **blaze** (the Demonic,
+  1.3s: two stamps and a ring of fire round his feet, reaching out on his
+  far side and only to his edge on the golfer's), **blink** (the Ascended,
+  1.4s: a swirl where he stands, out 1.5 of his width, and back).
+- Found on the way: the Divine caddie's wisps, rays and rising motes
+  reached the golfer's club at the top of the backswing even standing
+  still. On the caddie they now keep to his far side and closer in, and
+  every effect caddie stands a little further off (`fairyBox`).
+
+### Weather on the ordinary holes (user asked, from the menu)
+
+- **Frost** (`frostFor`): the Snowline, or an autumn or winter course
+  (`courseSeason` 1 or 2), from 5 to 11 by the player's own clock
+  (`hourNow`), dry and not at night. The palettes are built in mode
+  `'frost'`: everything a touch paler and the grass (`tg`) paler again;
+  180 frost specks laid over the fairway and rough, one in four glinting.
+  **The checks depend on the hour now**: after touching it, run the suite
+  with `HOUR_FORCE` pinned to 8 and to 15 in a copy (as rule 20).
+- **Puddles** (props kind 7, in the rain, not on a frozen course): up to
+  a few a hole on the fairway, clear of hazards and the green; each row's
+  distance is walked out from the screen by bisection (a straight share
+  fell behind the ground's line and left rows out: rule 32 again), a dark
+  rim, a streak of sky and two rain rings spreading in it.
+- Check `weather`.
 
 ### A skin flies with him (user sent a screenshot)
 
@@ -1548,6 +1610,10 @@ him (about 49px tall on a 320 phone, 71px on its side).
 
 ## 6. Recent history (newest first, one line each)
 
+- Rain rings only on water; the stray ring beside him gone; the dearest
+  skins light the grass at night; the Mythic caddies' tricks (soar, blaze,
+  blink); frost on cold mornings and puddles in the rain.
+
 - A skin flies with him over the water, his arms up on the club (not also
   hanging at his sides); night on the ordinary holes
   (tee lamps, fireflies, a lit clubhouse, the flag glowing); the Mythic
@@ -1692,15 +1758,13 @@ Everything asked for is done. Turned down, don't offer again: the railway
 station, a photo mode, trail flourishes.
 
 The menu to offer next:
-1. **Night flourishes for the skins** (recommended): the Divine's halo, the
-   Demonic's cracks and the Ascended's sigil lighting the ground round
-   him at night, now the holes are lit.
-2. **A Mythic caddie's turn of his own**: the three dearest caddies each a
-   turn of their own among the spins and loops (a wingbeat loop, a burst
-   of fire, a blink through the void).
-3. **Weather on the ordinary holes**: puddles with rain rings on the
-   fairway after a storm, frost on the grass in a winter dawn.
-4. **A clubhouse to walk past**: on the last hole of a round, the
-   clubhouse near the green with its terrace and a few of the gallery.
-5. **Season best on the Tour tab**: the best card of each season and the
-   course it came on.
+1. **Walk past the clubhouse** (recommended): on the last hole of a round,
+   the clubhouse near the green with a terrace and a few of the gallery.
+2. **Season bests**: the best card of each season and where it came, on
+   the Tour tab.
+3. **Dawn and dusk**: the sky warming at the edges on a morning or evening
+   round by the player's own clock, now frost follows it.
+4. **A Mythic ball trick**: the three dearest balls do something of their
+   own as they drop in the cup.
+5. **Birds over the ordinary holes**: a flock crossing the sky now and
+   then, scattering off the fairway as a ball lands near.
