@@ -11,7 +11,19 @@ check is for.
 - Everything is committed and pushed to `main` (mirrored on the session
   branch `claude/notes-review-dju532`). Nothing is half-built.
 - `node test/run.js` passes all **55 checks** (about 10 minutes).
-- **Last request** (with a screenshot of a railway hole): "Railway clips
+- **Last request** (with a picture: a dark armoured figure with horns, eyes
+  lit white, magenta hair of fire, a long cape, spectral magenta hands,
+  chains, a scythe, and a little horned imp with green eyes and a heart on
+  its tail): "Can you make the ascended skin look more like this, but more
+  intricate. I like the colors too." Done, read as the whole Ascended set
+  (skin, caddie, driver, trail, ball), names and prices kept: §5 "The
+  Ascended, restyled". On the way: this container ran about twice as slow as
+  the last, and the skins check's bound in milliseconds failed on the
+  untouched Divine; it now measures each look against the plain golfer
+  drawn in the same stretch of time (§4 rule 28), and the Glitch, Void
+  Walker, Midas and Stormcaller copies of him are drawn whole when he walks
+  (they cost the walking Glitch some 230 draws a frame).
+- **The request before** (with a screenshot of a railway hole): "Railway clips
   through the ground / Also as soon as the train gets near the hole ends if
   the yardage was beat already / Can you also create more skins, also the
   same price as the divine one. Let's do a demonic skin, and an Ascended
@@ -184,7 +196,7 @@ Line numbers are approximate and drift. Search for the name instead.
 | **The stack by the cog** (caddie and sponsor perks) | `buffLines`, `buffTip`, `buffOrder`, `buffClock`, `#buffTip .bl`, each timed perk's `s` in `B.PERKS` |
 | **He putts out** | `Scene.putt`, `puttArm`, `puttBall`, `cupT`, `cupHeard`, `PUTT_HIT`, `PUTT_ROLL`, `PIN_X`, `Scene.pinX`, `putSpot` in `launch`, `Sfx.putt`; `paintGolfer`'s last argument |
 | **The hole waits for him to reach the green** | `Scene.holeWait` (was `isleWait`), `B_GREEN_UP`, `B_GREEN_STAND`, `Scene.upT`, `holeSaid`, `Scene.saidHole`, the `waiting` guard and hold in `step`, `walk` in `finishHole` (the wait paid for) |
-| **The Demonic and the Ascended** (skins, caddies, clubs, trails, balls) | `STYLEFX.demonic`, `STYLEFX.ascended`; baked stamps `fxBake` (with `crispen`, `edged`, `FXBAKE`), `batWing`, `lightWing`, `hornPair`, `runeRing`, `crownOf`, `mandalaOuter`, `mandalaInner`, `drawSkull`; `veinsOf` (the lava cracks' pulse), `eyeAt` (`EYE_ADDR`, `EYE_FIN`, `EYE_CADDIE`), `wingAnchor`; patterns `hellcrack`, `filigree`; `CLUBFX.demonic`/`ascended`; `BALLFX.tHellfire`, `demoneye`, `tAscension`, `ascorb`, `drawDemonEye`, `demonEye`, `drawOrb`; tiles `ICON_FX`, `BALL_ICON`; the Mythic badge is `top: 2` |
+| **The Demonic and the Ascended** (skins, caddies, clubs, trails, balls) | `STYLEFX.demonic`, `STYLEFX.ascended`; baked stamps `fxBake` (with `crispen`, `FXBAKE`), `batWing`, `hornPair`, `runeRing`, `drawSkull`, `helmHorns`, `voidCape` (`CAPE_PAL`); `veinsOf` (the lava cracks' pulse), `eyeAt` (`EYE_ADDR`, `EYE_FIN`, `EYE_CADDIE`), `wingAnchor`, `g.hand` (set in `paintGolfer`), `blitAs` (a copy of him drawn as he is drawn); patterns `hellcrack`, `voidplate`; the outfit field `hand`; `CLUBFX.demonic`/`ascended`; `BALLFX.tHellfire`, `demoneye`, `tAscension`, `ascorb`, `drawDemonEye`, `demonEye`, `drawVoidOrb`; tiles `ICON_FX`, `BALL_ICON`; the Mythic badge is `top: 2` |
 | **Railway Crossing** | `isRail`, `RAIL_FORCE`, `P_RAIL`, `Scene.tickRail`, `railAt`, `railHold`, `railLights`, `drawRail`, `drawTrain`, `RAIL_X`/`RAIL_V`/`RAIL_LEN`/`RAIL_MEET`, `railWait` in the camera code, `Sfx.whistle`/`chuff`/`ding`, `SIG_HOME_ROUND`; `DEV.rail` |
 | **Life on the signature holes** | `DUCKS`, `Scene.duckAt`, `drawDucks`, `drawHawk` (from `drawBridge`), `fishAt`, `drawFish` (from `drawStones`), `Sfx.quack`/`hawk`/`plop` |
 | Happy dance, Seasons Seen | `Scene.happyDance`, `fairyQueue`; `S.seasonsGot`, `seasonsSeen`, `seasonsAll` |
@@ -317,15 +329,23 @@ Line numbers are approximate and drift. Search for the name instead.
    every noise burst** (`Sfx.noise` fills its buffer from it). Feed it a
    seeded stream instead.
 27. **A skin's big shapes are baked, not drawn each frame** (`fxBake`): the
-   Demonic's wings, the Ascended's six wings, mandala and crown are painted
-   once per size and animation step with canvas paths, snapped to the
-   look's own colours (`crispen`, every pixel on or off) and stamped with
-   one `drawImage`. Thin shapes each edged in a colour read, at his size
-   (about 55px tall on a phone), as a starburst of wires: the first
-   Ascended wings did. Draw one solid shape and put the detail inside it.
+   Demonic's wings and the Ascended's cape are painted once per size, pose
+   and animation step with canvas paths, snapped to the look's own colours
+   (`crispen`, every pixel on or off) and stamped with one `drawImage`.
+   Thin shapes each edged in a colour read, at his size (about 55px tall on
+   a phone), as a starburst of wires: the first Ascended's wings of light
+   did, and hair drawn as thin fanned strands read as spikes. Draw one solid
+   shape, or strands thick and close together, and put the detail inside.
    The golfer's box is wider than he is, so measure a part by drawing the
    same frame with and without it (`legends` does), not by where his box
-   ends.
+   ends. Something drawn on top of him in a small space (the imp's flame
+   between his horns) can be hidden entirely by what goes on after it.
+28. **Time a look against the plain golfer, not the clock.** The skins
+   check's 1.5ms failed on the untouched Divine the day the container was
+   twice as slow; it now draws forty frames plain and forty in the look,
+   seven times in turn, and holds the middle ratio to fifteen. Keep the
+   caddie still while timing (`Scene.fairyMove = null`, `moveT = 999`):
+   his spins are drawn turned, and one landing in a block swamped it.
 
 ## 5. What the last features do (for debugging them)
 
@@ -351,25 +371,58 @@ Line numbers are approximate and drift. Search for the name instead.
   poured through with `lighter`); three flaming skulls circling him; a
   smoky outline and a red rim. His caddie (`g.minor`): wings, horns, tail,
   eyes, cracks, a few embers.
-- **Ascended** (`STYLEFX.ascended`): he floats (`bob`); behind him a
-  mandala of two rings turning opposite ways (`mandalaOuter`/`Inner`, 32
-  steps each); six wings of light (`lightWing`, 12 steps, a pale edge);
-  a pool of light; four crystals circling him; stars coming and going; a
-  crown of light with a glint running round it (`crownOf`); shining eyes;
-  a cyan and pink sheen sweeping across him every 3.4s; motes of every
-  colour rising; feathers drifting down; every 4.5s a ring of light along
-  the ground and a shaft of it to the sky. His caddie: two wings, crown,
-  eyes, light, motes.
-- Costs (skins check, quickest block): standing 0.78ms Demonic, 0.66ms
-  Ascended; walking with the matching caddie 0.62 and 0.39 (budget 1.5,
-  the Divine 0.93).
+- **Ascended**: restyled after the user's picture, see the next section.
+- Costs (skins check, against the plain golfer): the Demonic about 3.4
+  standing and 1.6 walking with its caddie; the Divine 3.8 and 2.4 (budget
+  fifteen).
 - His arms now take the outfit's `skin`/`skin2` (`paintGolfer`,
   `paintHeli`); they were always `PX.skin`.
 - Check `legends` (new): prices and proportions, badges, every piece with
-  an effect; wings either side of him, horns and crown above his cap, eyes
-  at his eye, on him and his caddie, by taking each part away from the
+  an effect; the Demonic's wings either side of him, horns above his cap,
+  eyes at his eye, on him and his caddie, by taking each part away from the
   same frame; no plain skin tone on the five skins with their own.
   `skins` also holds the dearest trails' resting balls to their own look.
+
+### The Ascended, restyled (user sent a picture: "more like this")
+
+- A knight of the void in the picture's own colours: dark indigo plate
+  (`#393976`, `#4A4A8E`), a near black suit, magenta from `#762889` to
+  `#F27CFF`, pink white `#FFE0FF`. Outfit: cap and shirt indigo (the cap a
+  shade apart so the plate pattern stays off it), pattern `voidplate`
+  (each plate's lower edge lit, a magenta stud here and there), mask and
+  arms `skin` `#2D2D5E`, magenta `belt` (eyes, belt, soles), `hair` magenta
+  (from behind), and a new outfit field **`hand`** (`#E86CF2`): the colour
+  of his hands in `paintGolfer` (was always the shirt's).
+- `STYLEFX.ascended`: a cape (`voidCape`, baked per size, pose and 12 steps:
+  behind him streaming back at address and at the finish, torn hem, folds,
+  its streaming edge lit magenta; walking away it hangs down his back, so it
+  is drawn in front of him then); horns (`helmHorns`: tall, near straight,
+  plate with a magenta rim); hair of fire (seven strands, three pixels
+  thick at the root, streaming back and lifting at the tips; rising like
+  flames from behind); eyes lit white with lightning crackling back out of
+  them every couple of seconds; the light in his chest (`core`, pulsing);
+  spectral hands glowing (`hands`, at `g.hand`, which `paintGolfer` now
+  sets); a broken chain hanging from his wrist (`chain`); magenta lightning
+  crawling over his armour (`bolts`); magenta fire licking up round him;
+  embers; a dark edge and a magenta rim; void mist at his feet. No longer
+  floats.
+- His caddie is the picture's imp (`g.minor`): horns, a magenta flame
+  standing up between them (drawn after the horns: behind them it vanished
+  at his size), green eyes, a little heart on his chest, a curled tail with
+  a heart on the end (`tail`).
+- Ascended Driver: a reaper's driver, a dark shaft wound with chain and a
+  spark running down it, a scythe's blade curving back off the head with
+  its edge lit magenta, magenta fire off it, and a great magenta sweep for
+  its trail. Ascension Wake: magenta fire over void smoke, flames licking
+  up, lightning jumping off it. Ascended Orb (`drawVoidOrb`): a sphere of
+  the void with a burning crack and magenta fire round it. Tiles and
+  `SKIN_ACCENT` in the same colours.
+- Gone with the old look: `lightWing`, the mandala, `crownOf`, `drawOrb`,
+  `edged`, the `filigree` pattern.
+- `legends` holds the cape (behind him, and down his back walking away),
+  horns, hair of fire back from his head, the light in his chest, the hands'
+  own magenta, and the imp's horns, flame, green eyes and tail; negative
+  tested nine ways.
 
 ### The railway among the trees (user saw it)
 
@@ -1114,6 +1167,9 @@ Line numbers are approximate and drift. Search for the name instead.
 
 ## 6. Recent history (newest first, one line each)
 
+- The Ascended restyled after the user's picture: a knight of the void in
+  indigo and magenta, his caddie an imp; the skins check times a look
+  against the plain golfer.
 - The Demonic and Ascended sets (skin, caddie, club, trail, ball each); his
   arms in his own skin tone.
 - The railway sits among the trees; a train no longer ends a hole early.
@@ -1219,15 +1275,16 @@ Line numbers are approximate and drift. Search for the name instead.
 
 ## 8. What to offer next
 
-Everything asked for is done. First ask how the Demonic and the Ascended
-look on the phone ("Try it" in the shop wears one for ten seconds), and
-whether the railway now sits right among the trees.
+Everything asked for is done. First ask how the new Ascended looks next
+to the picture they sent ("Try it" in the shop wears it for ten seconds),
+whether they want it renamed to suit the new look (it kept "Ascended"),
+and how the Demonic looks.
 
 The menu to offer next:
 1. **A moment for the legends** (recommended): the Demonic and Ascended
    do something on a great hole: the pit erupts and the skulls scatter on
-   an eagle, the heavens open (the shaft of light, the wings spread wide)
-   on an ace; and a sound for each (a low rumble, a choir-like chord).
+   an eagle; the Ascended's cape flares, lightning splits from his eyes and
+   magenta fire sweeps the green on an ace; and a sound for each.
 2. **Life on the railway**: other trains now and then (a
    goods train, an express, a night train with glowing windows), and the
    golfer and his caddie wave as it goes by.

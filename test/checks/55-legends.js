@@ -7,10 +7,14 @@
  *     club and a trail two thirds of the skin, a ball half, a caddie a
  *     third); the Demonic's pieces marked Legendary, the Ascended's Mythic
  *   - each piece has an effect of its own, and the shop lists it
- *   - drawn, by pixels, each part taken away in turn from the same frame:
- *     wings spread either side of him above his waist (both skins, and on
- *     their caddies); the Demonic's horns standing up off his cap; the
- *     Ascended's crown over his head; eyes that shine, where his eye is
+ *   - drawn, by pixels, each part taken away in turn from the same frame.
+ *     The Demonic: wings spread either side of him above his waist, on him
+ *     and his caddie; horns standing up off his cap. The Ascended, a knight
+ *     of the void after a picture the user sent: a cape streaming behind
+ *     him, and hanging down his back as he walks away; horns; hair of fire
+ *     streaming back from his head; a light in his chest; hands in their own
+ *     magenta. His caddie, the picture's imp: horns, a flame, green eyes and
+ *     a curled tail. Both: eyes that shine, where his eye is
  *   - his arms in his own skin: they were always the plain tone, so the red
  *     Demonic had peach arms (and the Void Walker, Midas and the Ghost too)
  */
@@ -68,10 +72,25 @@ module.exports = {
           const head = { x: box.x0 + w * CAP_ADDR.x, y: box.y0 + h * CAP_ADDR.y, w: w * CAP_ADDR.w };
           const eye = { x: box.x0 + w * EYE_ADDR.x, y: box.y0 + h * EYE_ADDR.y };
           const d = o.drawn[id] = {};
-          const wings = part(id, 'wings', golfer).filter(([x, y]) => y < box.y0 + h * 0.55);
-          d.wingL = wings.filter(([x]) => x < box.x0 - 2).length; d.wingR = wings.filter(([x]) => x > box.x1 + 2).length;
-          d.reachL = box.x0 - Math.min(...wings.map(([x]) => x)); d.reachR = Math.max(...wings.map(([x]) => x)) - box.x1;
-          const top = part(id, id === 'demonic' ? 'horns' : 'crown', golfer);
+          if (id === 'demonic') {
+            const wings = part(id, 'wings', golfer).filter(([x, y]) => y < box.y0 + h * 0.55);
+            d.wingL = wings.filter(([x]) => x < box.x0 - 2).length; d.wingR = wings.filter(([x]) => x > box.x1 + 2).length;
+            d.reachL = box.x0 - Math.min(...wings.map(([x]) => x)); d.reachR = Math.max(...wings.map(([x]) => x)) - box.x1;
+          } else {
+            // the cape: behind him, out past his legs; walking away, down his back
+            const cape = part(id, 'cape', golfer);
+            d.cape = cape.length; d.capeBehind = cape.filter(([x]) => x < box.x0 + w * 0.25).length;
+            Scene.walkOn = true; Scene.walkPh = 0.2;
+            d.capeBack = part(id, 'cape', golfer).filter(([x, y]) => x >= box.x0 && x <= box.x1 && y > box.y0 + h * 0.3 && y < box.y0 + h * 0.8).length;
+            Scene.walkOn = false;
+            // hair of fire, back from his head
+            const hair = part(id, 'hair', golfer), hl = head.x - head.w / 2;
+            d.hair = hair.length; d.hairBack = hair.filter(([x]) => x < hl).length; d.hairReach = hl - Math.min(...hair.map(([x]) => x));
+            // the light in his chest
+            const core = part(id, 'core', golfer);
+            d.core = core.length; d.coreOff = core.filter(([x, y]) => x < box.x0 || x > box.x1 || y < box.y0 + h * 0.3 || y > box.y0 + h * 0.6).length;
+          }
+          const top = part(id, 'horns', golfer);
           d.top = top.length; d.topAbove = top.filter(([x, y]) => y < head.y).length;
           d.topBelow = top.filter(([x, y]) => y > head.y + h * 0.1).length;
           d.topWide = top.filter(([x]) => Math.abs(x - head.x) > head.w * 1.4).length;
@@ -86,10 +105,22 @@ module.exports = {
             if (tone.some(t => t[0] === all[i] && t[1] === all[i + 1] && t[2] === all[i + 2])) d.plain++;
             if (own.some(t => t[0] === all[i] && t[1] === all[i + 1] && t[2] === all[i + 2])) d.own++;
           }
+          // and hands in their own colour, where the skin has one (counted
+          // with their glow taken off, which lights them)
+          if (outfitNow().hand) {
+            const F = STYLEFX[id], k = F.hands; F.hands = () => {};
+            const bare = golfer(); F.hands = k;
+            const hc = hex(outfitNow().hand); d.hand = 0;
+            for (let i = 0; i < bare.length; i += 4) if (bare[i + 3] && bare[i] === hc[0] && bare[i + 1] === hc[1] && bare[i + 2] === hc[2]) d.hand++;
+          }
           // and his caddie
           const caddie = () => { c.clearRect(0, 0, VW, VH); Scene.drawCaddie(c, box.x0, box.y0, w, h); return px(); };
-          d.cWings = part(id, 'wings', caddie).length;
-          d.cTop = part(id, id === 'demonic' ? 'horns' : 'crown', caddie).length;
+          if (id === 'demonic') d.cWings = part(id, 'wings', caddie).length;
+          else { d.cTail = part(id, 'tail', caddie).length; d.cFlame = part(id, 'hair', caddie).length;
+                 // the imp's eyes are green: the brightest pixel they put down
+                 const ce = caddie(), eyes = part(id, 'eyes', caddie);
+                 d.cGreen = eyes.filter(([x, y]) => { const i = (y * VW + x) * 4; return ce[i + 1] > ce[i] + 30 && ce[i + 1] > ce[i + 2]; }).length; }
+          d.cTop = part(id, 'horns', caddie).length;
           d.cEyes = part(id, 'eyes', caddie).length;
           d.cadSprite = cad === SPRITE.caddie;
         }
@@ -124,22 +155,29 @@ module.exports = {
       if (S2.top.some(t => t !== lv)) f('the ' + id + ' pieces are not all marked ' + (lv > 1 ? 'Mythic' : 'Legendary') + ': ' + J(S2.top));
     }
     if (r.badges.Ascended !== 'MYTHIC' || r.badges.Demonic !== 'LEGENDARY' || r.badges.Divine !== 'LEGENDARY') f('the Style tab\'s badges: ' + J(r.badges));
+    const dm = r.drawn.demonic, as = r.drawn.ascended;
+    // (counted past the box he is drawn in, which is wider than he is)
+    if (!(dm.wingL >= 12 && dm.wingR >= 12 && dm.reachL >= 4 && dm.reachR >= 4))
+      f('the Demonic wings, either side of him above his waist: ' + dm.wingL + ' and ' + dm.wingR + ' pixels, reaching ' + dm.reachL + ' and ' + dm.reachR + ' past him');
+    if (!(dm.cWings >= 30)) f('the Demonic caddie\'s wings: ' + dm.cWings + ' pixels');
+    if (!(as.cape >= 40 && as.capeBehind >= 25 && as.capeBack >= 100))
+      f('the Ascended cape: ' + as.cape + ' pixels, ' + as.capeBehind + ' behind him, ' + as.capeBack + ' down his back as he walks away');
+    if (!(as.hairBack >= 25 && as.hairReach >= 5)) f('the Ascended hair of fire: ' + as.hairBack + ' pixels back from his head, reaching ' + as.hairReach);
+    if (!(as.core >= 10) || as.coreOff) f('the light in the Ascended\'s chest: ' + as.core + ' pixels, ' + as.coreOff + ' of them off his chest');
+    if (!(as.hand >= 2)) f('the Ascended hands in their own magenta: ' + as.hand + ' pixels');
+    if (!(as.cTail >= 5 && as.cFlame >= 4 && as.cGreen >= 1)) f('the imp: tail ' + as.cTail + ', flame ' + as.cFlame + ', green eye ' + as.cGreen + ' pixels');
     for (const id of ['demonic', 'ascended']) {
       const d = r.drawn[id];
-      // (counted past the box he is drawn in, which is wider than he is)
-      if (!(d.wingL >= 12 && d.wingR >= 12 && d.reachL >= 4 && d.reachR >= 4))
-        f('the ' + id + ' wings, either side of him above his waist: ' + d.wingL + ' and ' + d.wingR + ' pixels, reaching ' + d.reachL + ' and ' + d.reachR + ' past him');
-      const what = id === 'demonic' ? 'horns' : 'crown';
-      if (!(d.top >= 12 && d.topAbove >= 6) || d.topBelow || d.topWide) f('the ' + id + ' ' + what + ': ' + J(d) + ' (standing up off his cap, and nowhere else)');
+      if (!(d.top >= 12 && d.topAbove >= 6) || d.topBelow || d.topWide) f('the ' + id + ' horns: ' + J(d) + ' (standing up off his cap, and nowhere else)');
       if (!(d.eyes >= 1) || d.eyesOff) f('the ' + id + ' eyes: ' + d.eyes + ' pixels, ' + d.eyesOff + ' of them away from his eye');
       if (d.plain || !(d.own >= 12)) f('the ' + id + ' golfer\'s arms: ' + d.plain + ' pixels of the plain skin tone on him, ' + d.own + ' of his own');
-      if (!(d.cWings >= 30 && d.cTop >= 4 && d.cEyes >= 1)) f('the ' + id + ' caddie: wings ' + d.cWings + ', ' + what + ' ' + d.cTop + ', eyes ' + d.cEyes + ' pixels');
+      if (!(d.cTop >= 4 && d.cEyes >= 1)) f('the ' + id + ' caddie: horns ' + d.cTop + ', eyes ' + d.cEyes + ' pixels');
     }
     const oa = Object.entries(r.otherArms).filter(([, n]) => n);
     if (oa.length) f('plain skin tone on skins with their own: ' + oa.map(([k, n]) => k + ' ' + n).join(', '));
-    const dm = r.drawn.demonic, as = r.drawn.ascended;
     return ['the Demonic at the Divine\'s ' + r.price.demonic + ', the Ascended at ' + r.price.ascended + '; club, trail, ball and caddie for each in the Divine\'s proportion (' + J(r.sets.ascended.cost) + '), Legendary and Mythic',
-      'drawn: wings reaching ' + dm.reachL + '/' + dm.reachR + ' and ' + as.reachL + '/' + as.reachR + 'px past him either side, horns ' + dm.top + ', crown ' + as.top + ', eyes at his eye; the caddies wings ' + dm.cWings + ' and ' + as.cWings,
+      'the Demonic: wings reaching ' + dm.reachL + '/' + dm.reachR + 'px past him either side, horns ' + dm.top + ', eyes at his eye; his caddie\'s wings ' + dm.cWings,
+      'the Ascended: a cape ' + as.cape + ' (' + as.capeBack + ' down his back walking away), horns ' + as.top + ', hair of fire reaching ' + Math.round(as.hairReach) + 'px back, the light in his chest, magenta hands; the imp\'s tail ' + as.cTail + ', flame ' + as.cFlame + ', green eyes',
       'his arms in his own skin, on these and on the Void Walker, Midas and the Ghost'];
   }
 };

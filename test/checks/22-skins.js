@@ -3,10 +3,16 @@
  *   - every one draws, and draws something: the stage with the effect on has
  *     to differ from the same colours with the effect taken off, or a 3000
  *     sovereign skin is a recolour
- *   - none is expensive: each skin's golfer is drawn 300 times and must
- *     average under 1.5ms. The Divine skin first measured 2.3ms, stamping its
- *     glow by redrawing him strip by strip twelve times; it now stamps one
- *     silhouette and measures under 1ms
+ *   - none is expensive: each skin's golfer costs at most fifteen plain
+ *     golfers a frame, standing, and walking with his caddie in the same
+ *     look, drawn in turn with the plain one in the same stretch of time. It
+ *     was a bound of 1.5ms, and on a machine twice as slow the Divine,
+ *     untouched, took 1.9ms: the bound measured the machine (and the
+ *     caddie's spins, drawn turned, landed in some of its blocks). The
+ *     Divine skin first cost 2.3ms on the fast machine, some forty plain
+ *     golfers, stamping its glow by redrawing him strip by strip twelve
+ *     times; it now stamps one silhouette. The Glitch walking beside its
+ *     caddie was twelve, copying them strip by strip where whole copies do
  *   - "Try it" wears a look for ten seconds without buying it: nothing is
  *     spent, nothing is saved, and when it runs out he is back in his own
  *   - he walks between shots: every look strides (two phases of the walk
@@ -140,11 +146,30 @@ module.exports = {
         }
 
         // ---- none is expensive -----------------------------------------------
+        // A look against the plain golfer, drawn in turn in the same stretch
+        // of time: forty frames of him plain, then forty in the look, seven
+        // times over, and the middle of the seven ratios (the quickest of
+        // either alone swung fourfold on a busy machine: a plain block that
+        // caught a quiet moment against a look's that did not). The caddie
+        // stays still, so a turn of his lands in neither.
+        const block = (k, fn) => { const t0 = performance.now(); for (let i = 0; i < k; i++) fn(); return (performance.now() - t0) / k; };
+        const plainVs = (wear, draw) => {
+          const rs = []; let ms = Infinity;
+          for (let q = 0; q < 7; q++) {
+            S.outfit = 'classic'; S.caddie = 'bib'; buildSprites(); Scene.walkOn = false;
+            const b = block(40, () => { Scene.t += 0.016; Scene.drawGolfer(D); });
+            wear(); const v = block(40, draw);
+            rs.push(v / b); ms = Math.min(ms, v);
+          }
+          rs.sort((a, b) => a - b);
+          return { x: rs[3], ms };
+        };
         o.cost = {};
+        Scene.fairyMove = null; Scene.fairySay = null; Scene.moveT = 999;
         for (const d of B.OUTFITS) {
-          S.outfit = d.id; buildSprites();
-          for (let i = 0; i < 30; i++) { Scene.t += 0.016; Scene.drawGolfer(D); }
-          o.cost[d.id] = timed(300, () => { Scene.t += 0.016; Scene.drawGolfer(D); });
+          const wear = () => { S.outfit = d.id; S.caddie = 'bib'; buildSprites(); Scene.walkOn = false; };
+          wear(); for (let i = 0; i < 30; i++) { Scene.t += 0.016; Scene.drawGolfer(D); }
+          o.cost[d.id] = plainVs(wear, () => { Scene.t += 0.016; Scene.drawGolfer(D); });
         }
         S.outfit = 'classic'; buildSprites();
 
@@ -158,7 +183,8 @@ module.exports = {
           Scene.walkOn = true; Scene.walkPh = 0.2; Scene.b.clearRect(0, 0, VW, VH); Scene.drawGolfer(D); const a = shot();
           Scene.walkPh = 0.7; Scene.b.clearRect(0, 0, VW, VH); Scene.drawGolfer(D); const b2 = shot();
           if (a === stand || a === b2) o.walkSame.push(d.id);
-          o.walkCost[d.id] = timed(200, () => { Scene.t += 0.016; Scene.walkPh += 0.03; Scene.drawGolfer(D); });
+          o.walkCost[d.id] = plainVs(() => { S.outfit = d.id; S.caddie = d.id; buildSprites(); Scene.walkOn = true; },
+                                     () => { Scene.t += 0.016; Scene.walkPh += 0.03; Scene.drawGolfer(D); });
         }
         { const keep = SPRITE.caddie; Scene.walkOn = false; Scene.b.clearRect(0, 0, VW, VH); Scene.drawGolfer(D); const w1 = shot();
           SPRITE.caddie = null; Scene.b.clearRect(0, 0, VW, VH); Scene.drawGolfer(D); const w0 = shot(); SPRITE.caddie = keep;
@@ -224,15 +250,16 @@ module.exports = {
 
     if (r.errs.length) throw new Error('effects threw: ' + r.errs.join('; '));
     if (r.blank.length) throw new Error('these draw nothing their colours do not: ' + r.blank.join(', '));
-    const slow = Object.entries(r.cost).filter(([, v]) => v > 1.5);
-    if (slow.length) throw new Error('skins over 1.5ms a frame: ' + slow.map(([k, v]) => k + ' ' + v.toFixed(2) + 'ms').join(', '));
+    const cost = v => v.x.toFixed(1) + ' plain golfers (' + v.ms.toFixed(2) + 'ms here)';
+    const slow = Object.entries(r.cost).filter(([, v]) => v.x > 15);
+    if (slow.length) throw new Error('skins over fifteen plain golfers a frame: ' + slow.map(([k, v]) => k + ' ' + cost(v)).join(', '));
     const cslow = Object.entries(r.clubCost).filter(([, v]) => v > 1.5);
     if (cslow.length) throw new Error('clubs over 1.5ms a frame: ' + cslow.map(([k, v]) => k + ' ' + v.toFixed(2) + 'ms').join(', '));
     if (r.cats.some(c => /missing|\b0$/.test(c))) throw new Error('a rack on the Style tab is missing or empty: ' + r.cats.join(', '));
     if (r.restSame.length) throw new Error('these balls lie on the ground as a plain white ball: ' + r.restSame.join(', '));
     if (r.walkSame.length) throw new Error('these looks do not stride when he walks: ' + r.walkSame.join(', '));
-    const wslow = Object.entries(r.walkCost).filter(([, v]) => v > 1.5);
-    if (wslow.length) throw new Error('walking over 1.5ms a frame: ' + wslow.map(([k, v]) => k + ' ' + v.toFixed(2) + 'ms').join(', '));
+    const wslow = Object.entries(r.walkCost).filter(([, v]) => v.x > 15);
+    if (wslow.length) throw new Error('walking over fifteen plain golfers a frame: ' + wslow.map(([k, v]) => k + ' ' + cost(v)).join(', '));
     if (!r.caddie) throw new Error('no caddie beside him');
     if (r.tryWorn !== 'divine') throw new Error('"Try it" did not put the Divine skin on: ' + r.tryWorn);
     if (r.trySaved !== 'classic' || r.trySov !== 0 || r.tryInSave)
@@ -251,13 +278,13 @@ module.exports = {
       + Math.round(v) + ' pixels').join(', ') + ' against ' + Math.round(r.paint.plain) + ' for the plain ball; a look has to be at least fifteen times that');
     const tslow = Object.entries(r.tcost).filter(([, v]) => v > 0.5);
     if (tslow.length) throw new Error('trails over 0.5ms a ball: ' + tslow.map(([k, v]) => k + ' ' + v.toFixed(2) + 'ms').join(', '));
-    const worst = Object.entries(r.cost).sort((a, b) => b[1] - a[1])[0];
+    const worst = Object.entries(r.cost).sort((a, b) => b[1].x - a[1].x)[0];
     const dim = Object.entries(r.paint).filter(([k]) => k !== 'plain').sort((a, b) => a[1] - b[1])[0];
     const tw = Object.entries(r.tcost).sort((a, b) => b[1] - a[1])[0];
     return ['every effect skin and ball draws something its colours alone do not',
-      'dearest per frame ' + worst[0] + ' at ' + worst[1].toFixed(2) + 'ms (budget 1.5ms)',
+      'dearest per frame ' + worst[0] + ' at ' + cost(worst[1]) + ' (budget fifteen)',
       'every look strides when he walks, the caddie beside him; dearest walking '
-        + Object.entries(r.walkCost).sort((a, b) => b[1] - a[1])[0].map((v, i) => i ? v.toFixed(2) + 'ms' : v).join(' at '),
+        + Object.entries(r.walkCost).sort((a, b) => b[1].x - a[1].x)[0].map((v, i) => i ? cost(v) : v).join(' at '),
       'every trail and ball at least 15x the plain ball on screen (faintest ' + dim[0] + ' at '
         + (dim[1] / r.paint.plain).toFixed(1) + 'x), dearest ' + tw[0] + ' at ' + tw[1].toFixed(2) + 'ms a ball',
       'nothing drawn behind him: ' + behind.frames + ' frames of flight, the lowest ' + (-behind.worst) + 'px above his feet',
