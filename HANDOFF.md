@@ -11,37 +11,29 @@ check is for.
 - Everything is committed and pushed to `main` (mirrored on the session
   branch `claude/notes-review-dju532`). Nothing is half-built.
 - `node test/run.js` passes all **55 checks** (about 10 minutes).
-- **Last request** (with a picture: a dark armoured figure with horns, eyes
-  lit white, magenta hair of fire, a long cape, spectral magenta hands,
-  chains, a scythe, and a little horned imp with green eyes and a heart on
-  its tail): "Can you make the ascended skin look more like this, but more
-  intricate. I like the colors too." Done, read as the whole Ascended set
-  (skin, caddie, driver, trail, ball), names and prices kept: §5 "The
-  Ascended, restyled". On the way: this container ran about twice as slow as
-  the last, and the skins check's bound in milliseconds failed on the
-  untouched Divine; it now measures each look against the plain golfer
-  drawn in the same stretch of time (§4 rule 28), and the Glitch, Void
-  Walker, Midas and Stormcaller copies of him are drawn whole when he walks
-  (they cost the walking Glitch some 230 draws a frame).
-- **The request before** (with a screenshot of a railway hole): "Railway clips
-  through the ground / Also as soon as the train gets near the hole ends if
-  the yardage was beat already / Can you also create more skins, also the
-  same price as the divine one. Let's do a demonic skin, and an Ascended
-  skin. Ascended would be 3500 sovereign. Make it as intricate as possible,
-  go crazy with it. Also, make a ball, club, ball trail, etc to match the
-  new skins. Make them for the caddy as well." All three done:
-  - The railway was drawn over everything on the hole, so it cut across the
-    trees and spectators in front of it (read as "through the ground"). It
-    now goes down between what is beyond it and what is this side of it,
-    under the haze (§5 "The railway among the trees").
-  - A hole could move on while he waited for a train: the longest wait for
-    a train plus the walk and putt is 8.05s and the stop was 8s. The stop
-    is 20s (`B.ISLE_HOLD`); the wait is paid for, so it costs nothing.
-  - The **Demonic** (3000, the Divine's price) and **Ascended** (3500)
-    sets: skin, caddie, club, trail and ball each (§5 "The Demonic and the
-    Ascended"). Also fixed on the way: his arms were always drawn in the
-    plain skin tone, so the red Demonic (and the Void Walker, Midas and the
-    Ghost) had peach arms.
+- **Last request**: "Let's add some aura effects to the skin as well.
+  Rotating elements round them, cooler ground effects, make the horns more
+  sleek and cool, and add anything else to make this like an ultimate skin
+  that is worth the price. Really really go nuts but not so much that it
+  takes up a ton of space on the screen." Read as the Ascended (the skin
+  just restyled). Done: §5 "The Ascended, made the ultimate skin": a sigil
+  turning on the ground, an aura of flame, a ring of shards round him,
+  sleek swept-back horns, and the whole of it powering up through a swing.
+  On the way: a skin's ground (the Demonic's pit, the Divine's pool, the
+  sigil) was drawn over the pin, the cup and a putt rolling away beyond
+  him; it goes down first now (§4 rule 29). On the battery saver the
+  golfer stood 5px from the edge and the Demonic's wings (and now the
+  sigil) were cut off; a look with an effect stands further in.
+- **The request before** (with a picture: a dark armoured figure with horns,
+  eyes lit white, magenta hair of fire, a cape, spectral hands, a scythe,
+  and a little horned imp): "Can you make the ascended skin look more like
+  this, but more intricate. I like the colors too." Done, read as the whole
+  Ascended set, names and prices kept (§5 "The Ascended, restyled"). The
+  skins check now times a look against the plain golfer (§4 rule 28).
+- **The one before**: the railway clipping through the trees, a hole ending
+  while he waited for a train, and the Demonic (3000) and Ascended (3500)
+  sets with a caddie, club, trail and ball each (§5 "The Demonic and the
+  Ascended", "The railway among the trees").
 - **The request before** (with a screenshot): "Looks like the sponsor buff is
   behind the shop icon? Let's move that to the right of the settings icon
   and have it part of the caddie buff area. Make it so they are one
@@ -196,7 +188,8 @@ Line numbers are approximate and drift. Search for the name instead.
 | **The stack by the cog** (caddie and sponsor perks) | `buffLines`, `buffTip`, `buffOrder`, `buffClock`, `#buffTip .bl`, each timed perk's `s` in `B.PERKS` |
 | **He putts out** | `Scene.putt`, `puttArm`, `puttBall`, `cupT`, `cupHeard`, `PUTT_HIT`, `PUTT_ROLL`, `PIN_X`, `Scene.pinX`, `putSpot` in `launch`, `Sfx.putt`; `paintGolfer`'s last argument |
 | **The hole waits for him to reach the green** | `Scene.holeWait` (was `isleWait`), `B_GREEN_UP`, `B_GREEN_STAND`, `Scene.upT`, `holeSaid`, `Scene.saidHole`, the `waiting` guard and hold in `step`, `walk` in `finishHole` (the wait paid for) |
-| **The Demonic and the Ascended** (skins, caddies, clubs, trails, balls) | `STYLEFX.demonic`, `STYLEFX.ascended`; baked stamps `fxBake` (with `crispen`, `FXBAKE`), `batWing`, `hornPair`, `runeRing`, `drawSkull`, `helmHorns`, `voidCape` (`CAPE_PAL`); `veinsOf` (the lava cracks' pulse), `eyeAt` (`EYE_ADDR`, `EYE_FIN`, `EYE_CADDIE`), `wingAnchor`, `g.hand` (set in `paintGolfer`), `blitAs` (a copy of him drawn as he is drawn); patterns `hellcrack`, `voidplate`; the outfit field `hand`; `CLUBFX.demonic`/`ascended`; `BALLFX.tHellfire`, `demoneye`, `tAscension`, `ascorb`, `drawDemonEye`, `demonEye`, `drawVoidOrb`; tiles `ICON_FX`, `BALL_ICON`; the Mythic badge is `top: 2` |
+| **A skin's ground** (drawn before the pin) | `FX.ground` (Divine, Demonic, Ascended); `golferG` (what an effect is told about him), `Scene.golferPose`, `Scene.drawGolferGround` (in the frame, before `drawFlagstick`), `Scene.golferGround`, `groundDone`; `paintGolfer`'s `noGround` |
+| **The Demonic and the Ascended** (skins, caddies, clubs, trails, balls) | `STYLEFX.demonic`, `STYLEFX.ascended`; baked stamps `fxBake` (with `crispen`, `FXBAKE`), `batWing`, `hornPair`, `runeRing`, `drawSkull`, `sleekHorns` (`hornLine`, `HORN_VIEWS`), `voidCape` (`CAPE_PAL`), `voidSigil`, `drawShard`; the aura's `outlineOf` (`occOf`); `veinsOf` (the lava cracks' pulse), `eyeAt` (`EYE_ADDR`, `EYE_FIN`, `EYE_CADDIE`), `wingAnchor`, `g.hand` (set in `paintGolfer`), `blitAs` (a copy of him drawn as he is drawn); patterns `hellcrack`, `voidplate`; the outfit field `hand`; `CLUBFX.demonic`/`ascended`; `BALLFX.tHellfire`, `demoneye`, `tAscension`, `ascorb`, `drawDemonEye`, `demonEye`, `drawVoidOrb`; tiles `ICON_FX`, `BALL_ICON`; the Mythic badge is `top: 2` |
 | **Railway Crossing** | `isRail`, `RAIL_FORCE`, `P_RAIL`, `Scene.tickRail`, `railAt`, `railHold`, `railLights`, `drawRail`, `drawTrain`, `RAIL_X`/`RAIL_V`/`RAIL_LEN`/`RAIL_MEET`, `railWait` in the camera code, `Sfx.whistle`/`chuff`/`ding`, `SIG_HOME_ROUND`; `DEV.rail` |
 | **Life on the signature holes** | `DUCKS`, `Scene.duckAt`, `drawDucks`, `drawHawk` (from `drawBridge`), `fishAt`, `drawFish` (from `drawStones`), `Sfx.quack`/`hawk`/`plop` |
 | Happy dance, Seasons Seen | `Scene.happyDance`, `fairyQueue`; `S.seasonsGot`, `seasonsSeen`, `seasonsAll` |
@@ -346,6 +339,20 @@ Line numbers are approximate and drift. Search for the name instead.
    seven times in turn, and holds the middle ratio to fifteen. Keep the
    caddie still while timing (`Scene.fairyMove = null`, `moveT = 999`):
    his spins are drawn turned, and one landing in a block swamped it.
+29. **What a skin lays on the ground goes in `ground`, not `back`.** The
+   frame puts it down before the pin, the cup and a putt rolling away
+   (`drawGolferGround`), which stand on it; drawn with him, the Demonic's
+   pit and the Divine's pool covered them. `drawGolfer` draws it itself
+   when the frame did not (the checks draw him alone), before the putt;
+   the saver draws it inside `paintGolfer`. Anything rising off the ground
+   (smoke, flames, glyphs) stays in `back`/`front`.
+30. **A wash of light turns grey over the grass.** `lighter` (or a
+   see-through colour) on his dark armour reads as a glow; on the fairway
+   magenta goes pale grey-green and gold goes lime. Anything that can sit
+   over the course (horn tips, sparks, the aura) is solid pixels, on or
+   off. And `fxDot` leaves `globalAlpha` where it set it: a loop that mixes
+   it with `fillRect` sets the alpha back each time round (the first aura
+   drew every flame after one fading lick at that lick's alpha).
 
 ## 5. What the last features do (for debugging them)
 
@@ -383,6 +390,56 @@ Line numbers are approximate and drift. Search for the name instead.
   same frame; no plain skin tone on the five skins with their own.
   `skins` also holds the dearest trails' resting balls to their own look.
 
+### The Ascended, made the ultimate skin (user asked: "really go nuts")
+
+All in `STYLEFX.ascended`, round what the restyle gave him (cape, hair,
+eyes, core, hands, chain, bolts, embers, the imp). Everything scales with
+him (about 49px tall on a 320 phone, 71px on its side).
+- **The sigil** (`ground`, `voidSigil`, baked per size and 48 steps): a
+  pool of the void in a double ring, a six-pointed star turning one way and
+  twelve marks the other, lit points. Live over it: two lights racing round
+  the rim, the star's points twinkling, and every 4.2s a shockwave running
+  out to 1.3 of the sigil. `sigilSize`: 0.95 of his width across, 0.12 of
+  his height deep (two rows on the saver, where there are two under him).
+- **The aura** (`aura`, `outlineOf`): tongues of flame three pixels wide
+  rising off the top of his outline (helm, shoulders, back), bright at the
+  root and dark at the tip, licks breaking away, a flicker down his sides.
+  The outline is worked out each frame from the sprite's own pixels
+  (`occOf`, once per sprite) and the lean of the swing, so it follows him.
+  Drawn last in `back`, after his dark edge (before it, the edge dimmed
+  the roots). The imp has a little. The first try, his outline grown out
+  and cut by a scrolling flame texture, read as static and hid the horns.
+- **The ring of shards** (`orbit`, `drawShard`): three crystal diamonds on
+  a tilted ring round his middle (0.8 of his width), turning as they go,
+  trails behind; the far half before him (dimmer), the near half after, so
+  they pass behind and in front. Every 2.3s one may throw a bolt into his
+  chest.
+- **The horns** (`sleekHorns`, baked per size): long and swept back off the
+  helm, a solid dark body tapering to a point, a light ridge along the
+  outside of the curve, magenta along the inside to a white-hot tip; the
+  far one just behind; from behind a pair sweeping out and up. Tips twinkle
+  (solid pixels: rule 30), a glint runs up the near one, and from behind a
+  spark leaps between the tips. The first, thin ones read as antennae.
+- **Powering up** (`charge`, `strike`): on the backswing the aura grows
+  (0.8 taller), the sigil's rim lights, its lights and the ring spin a lap
+  faster, motes of light are drawn in to his chest (`motes`); at the strike
+  a bigger shockwave (1.55) runs out and sparks fly up off the ball
+  (`sparks`). Also `glyphs` rising off the sigil and a `surge` of light up
+  his armour every 5.3s. The old `flames` and his mist are gone.
+- Cost against the plain golfer: 2.4 standing, 4.2 through a swing, 5.0
+  walking (the Divine 3.0 / 4.2 / 5.2). The silhouette under the outlines
+  is now cut once while he stands at address too, which made every
+  outlined skin cheaper there.
+- `legends` holds it: the sigil at his feet and nowhere else; the aura
+  close about him and a fifth bigger at the top of the backswing (summed
+  over six frames); the ring round both sides and in front of his middle
+  over a lap; the horns' top a fifth of his helm behind their roots, and a
+  pair either side from behind; sparks near the ball and a shockwave past
+  the sigil at the strike; the frame's order (his ground, the pin, him) and
+  a putt seen over a ground laid solid for the test; and all of it within
+  1.3 of his width either side and 0.4 of his height above him, the most
+  over six seconds. Negative tested eleven ways.
+
 ### The Ascended, restyled (user sent a picture: "more like this")
 
 - A knight of the void in the picture's own colours: dark indigo plate
@@ -396,8 +453,8 @@ Line numbers are approximate and drift. Search for the name instead.
 - `STYLEFX.ascended`: a cape (`voidCape`, baked per size, pose and 12 steps:
   behind him streaming back at address and at the finish, torn hem, folds,
   its streaming edge lit magenta; walking away it hangs down his back, so it
-  is drawn in front of him then); horns (`helmHorns`: tall, near straight,
-  plate with a magenta rim); hair of fire (seven strands, three pixels
+  is drawn in front of him then); horns (then `helmHorns`, since replaced
+  by `sleekHorns`: see above); hair of fire (seven strands, three pixels
   thick at the root, streaming back and lifting at the tips; rising like
   flames from behind); eyes lit white with lightning crackling back out of
   them every couple of seconds; the light in his chest (`core`, pulsing);
@@ -1172,6 +1229,9 @@ Line numbers are approximate and drift. Search for the name instead.
 
 ## 6. Recent history (newest first, one line each)
 
+- The Ascended made the ultimate skin: a sigil, an aura of flame, a ring of
+  shards, sleek horns, powering up through a swing. A skin's ground goes
+  down before the pin; the saver's golfer stands clear of the edge.
 - Walking away, a lifted boot shows the outfit's own sole colour (the
   Ascended's flashed tan).
 - The Ascended restyled after the user's picture: a knight of the void in
@@ -1282,21 +1342,21 @@ Line numbers are approximate and drift. Search for the name instead.
 
 ## 8. What to offer next
 
-Everything asked for is done. First ask how the new Ascended looks next
-to the picture they sent ("Try it" in the shop wears it for ten seconds),
-whether they want it renamed to suit the new look (it kept "Ascended"),
-and how the Demonic looks.
+Everything asked for is done. First ask how the ultimate Ascended feels
+in play ("Try it" in the shop wears it for ten seconds) and whether any
+part is too much or too little.
 
 The menu to offer next:
 1. **A moment for the legends** (recommended): the Demonic and Ascended
    do something on a great hole: the pit erupts and the skulls scatter on
-   an eagle; the Ascended's cape flares, lightning splits from his eyes and
-   magenta fire sweeps the green on an ace; and a sound for each.
-2. **Life on the railway**: other trains now and then (a
-   goods train, an express, a night train with glowing windows), and the
-   golfer and his caddie wave as it goes by.
-3. **Weather on the signature holes**: rain rings on the island's lake,
+   an eagle; the Ascended's sigil flares into a pillar of magenta light and
+   his shards burst out and come back on an ace; a sound for each.
+2. **The Demonic, ultimate too**: the same treatment in hellfire (an aura
+   of flame, sleeker horns, chains of fire circling him, the ground
+   cracking open at the strike).
+3. **Life on the railway**: other trains now and then (a goods train, an
+   express, a night train with glowing windows), and the golfer and his
+   caddie wave as it goes by.
+4. **Weather on the signature holes**: rain rings on the island's lake,
    snow settling on the train and the bridge, spray thicker in a storm.
-4. **A Signature Week honour**: all five kinds played in one real week.
-5. **A read of the green**: now and then a longer putt that breaks, and
-   once in a while a lip-out and a second tap-in.
+5. **A Signature Week honour**: all five kinds played in one real week.

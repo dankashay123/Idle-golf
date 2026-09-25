@@ -19,6 +19,16 @@
  *     tan under the Ascended's cape), while a plain golfer keeps the tan
  *   - his arms in his own skin: they were always the plain tone, so the red
  *     Demonic had peach arms (and the Void Walker, Midas and the Ghost too)
+ *   - the Ascended made the ultimate skin ("really go nuts, but not so much
+ *     that it takes up a ton of the screen"): a sigil on the ground at his
+ *     feet and nowhere else; an aura of flame close about him that swells as
+ *     he winds up; a ring of shards round him both sides, passing in front of
+ *     his middle over a lap; horns swept back off his helm, a pair either
+ *     side from behind; sparks off the ball and a shockwave out past the
+ *     sigil as he strikes; and all of it within 1.3 of his widths either side
+ *     of him and 0.4 of his height over him, the most over six seconds
+ *   - a skin's ground goes down before the pin and a putt rolling away beyond
+ *     him, which stand on it: drawn with him, it covered them
  */
 'use strict';
 module.exports = {
@@ -105,6 +115,60 @@ module.exports = {
             // the light in his chest
             const core = part(id, 'core', golfer);
             d.core = core.length; d.coreOff = core.filter(([x, y]) => x < box.x0 || x > box.x1 || y < box.y0 + h * 0.3 || y > box.y0 + h * 0.6).length;
+            // ---- made the ultimate skin ("go nuts, but not so much that it
+            // takes up a ton of the screen") ----
+            const cx = box.x0 + w * 0.55, [rx, ry] = STYLEFX.ascended.sigilSize({ w, h });
+            // the sigil on the ground under him, and nowhere else
+            const gr = part(id, 'ground', golfer);
+            d.ground = gr.length; d.groundOff = gr.filter(([x, y]) => Math.abs(x - cx) > w + 1 || Math.abs(y - p.y) > h * 0.13 + 1.5).length;
+            // the aura: flames rising off him, close about him
+            const au = part(id, 'aura', golfer);
+            d.aura = au.length; d.auraAbove = au.filter(([x, y]) => y < head.y).length;
+            d.auraOff = au.filter(([x, y]) => x < box.x0 - w * 0.3 || x > box.x1 + w * 0.3 || y < box.y0 - h * 0.3 || y > p.y + 1).length;
+            // the ring of shards, round him both sides and close in; over a
+            // lap, passing in front of his middle
+            const ob = part(id, 'orbit', golfer);
+            d.orbit = ob.length; d.orbitL = ob.filter(([x]) => x < box.x0).length; d.orbitR = ob.filter(([x]) => x > box.x1).length;
+            d.orbitOff = ob.filter(([x, y]) => Math.abs(x - cx) > w * 0.95 || y < box.y0 + h * 0.3 || y > box.y0 + h * 0.8).length;
+            d.orbitFront = 0;
+            for (let k = 0; k < 8; k++) {
+              Scene.t = 1.3 + k * 0.66;
+              d.orbitFront += part(id, 'orbit', golfer).filter(([x, y]) => x > box.x0 + w * 0.35 && x < box.x0 + w * 0.65 && y > box.y0 + h * 0.5 && y < box.y0 + h * 0.65).length;
+            }
+            Scene.t = 1.3;
+            // the horns swept back off his helm: the top third of them well
+            // behind the bottom third
+            const hn = part(id, 'horns', golfer).filter(([x, y]) => y < head.y), ys = hn.map(([, y]) => y);
+            const y0h = Math.min(...ys), y1h = Math.max(...ys), mx = P => P.length ? P.reduce((a, [x]) => a + x, 0) / P.length : 0;
+            d.hornSweep = hn.length ? (mx(hn.filter(([, y]) => y < y0h + (y1h - y0h) / 3)) - mx(hn.filter(([, y]) => y > y1h - (y1h - y0h) / 3))) / head.w : 0;
+            // walking away, a pair either side of his head
+            Scene.walkOn = true; Scene.walkPh = 0.2;
+            const hb = part(id, 'horns', golfer), hx = p.x;
+            d.hornsBack = [hb.filter(([x]) => x < hx - 2).length, hb.filter(([x]) => x > hx + 2).length];
+            Scene.walkOn = false;
+            // all of it, against him bare: how much of the screen it takes,
+            // the most over six seconds of him standing there (its shockwave
+            // and all), and his aura then against at the top of his backswing
+            const bare = () => { const O = outfitNow(), fx = O.fx; O.fx = null; try { return golfer(); } finally { O.fx = fx; } };
+            d.foot = { l: 0, r: 0, up: 0, dn: 0 }; d.auraIdle = 0; d.auraTop = 0;
+            for (let k = 0; k < 14; k++) {
+              Scene.t = 1.3 + k * 0.43;
+              const foot = diff(golfer(), bare());
+              const ext = { l: (cx - Math.min(...foot.map(([x]) => x))) / w, r: (Math.max(...foot.map(([x]) => x)) - cx) / w,
+                            up: (box.y0 - Math.min(...foot.map(([, y]) => y))) / h, dn: (Math.max(...foot.map(([, y]) => y)) - p.y) / h };
+              for (const e in ext) d.foot[e] = Math.max(d.foot[e], +ext[e].toFixed(2));
+              if (k < 6){ d.auraIdle += part(id, 'aura', golfer).length;
+                Scene.swingT = Scene.swingDur * (1 - 0.36); d.auraTop += part(id, 'aura', golfer).length; Scene.swingT = 0; }
+            }
+            Scene.t = 1.3;
+            // at the strike, sparks flying up off the ball, and a shockwave
+            // running out past the sigil
+            Scene.swingT = Scene.swingDur * (1 - 0.62);
+            const bx = box.x0 + w * 1.19, sp = part(id, 'sparks', golfer);
+            d.sparks = sp.length; d.sparksOff = sp.filter(([x, y]) => Math.abs(x - bx) > w * 0.8 || y > p.y + 2 || y < p.y - h * 0.5).length;
+            Scene.swingT = Scene.swingDur * (1 - 0.7);
+            d.waveOut = part(id, 'ground', golfer).filter(([x]) => Math.abs(x - cx) > rx + 2).length;
+            Scene.swingT = 0;
           }
           const top = part(id, 'horns', golfer);
           d.top = top.length; d.topAbove = top.filter(([x, y]) => y < head.y).length;
@@ -143,6 +207,32 @@ module.exports = {
           d.cTop = part(id, 'horns', caddie).length;
           d.cEyes = part(id, 'eyes', caddie).length;
           d.cadSprite = cad === SPRITE.caddie;
+        }
+        // his ground goes down before the pin and a putt rolling away beyond
+        // him, which stand on it (drawn with him, it covered them): the order
+        // of a frame, and the ball seen as the putt is struck over a ground
+        // laid solid for it (his sigil is open where the ball first rolls)
+        {
+          S.outfit = 'ascended'; buildSprites();
+          startHole(); const D2 = derive();
+          S.yards = 0; S.doneT = null;
+          Scene.camD = LEN - B_GREEN_STAND; Scene.walkTo = LEN; Scene.swingT = 0; Scene.walkOn = false; Scene.restBall = null; Scene.balls.length = 0;
+          Scene.upT = Scene.t - 1; Scene.cupT = 0; Scene.fairyMove = null; Scene.moveT = 999;
+          const order = [], keep = {}, cam = [Scene.camD, Scene.walkTo, Scene.upT];
+          for (const k of ['drawGolferGround', 'drawFlagstick', 'drawGolfer']) { keep[k] = Scene[k]; Scene[k] = function () { order.push(k); return keep[k].apply(this, arguments); }; }
+          const F = STYLEFX.ascended, g0 = F.ground;
+          F.ground = function (c, g) { c.globalAlpha = 1; c.fillStyle = '#01FE02'; c.beginPath(); c.ellipse(g.cx, g.bot, g.w * 1.2, g.h * 0.2, 0, 0, Math.PI * 2); c.fill(); };
+          try {
+            const T = PUTT_HIT + 0.01;
+            Scene.putt = { t0: Scene.t - T, d0: Scene.camD, hit: 1 };
+            Scene.draw(0, D2);
+            const q = Scene.puttBall(T), bp = Scene.proj(q.d, q.lat), X = Math.round(bp.x), Y = Math.round(bp.y);
+            const px2 = Scene.b.getImageData(X, Y - 2, 3, 3).data, near = Scene.b.getImageData(X - 5, Y - 6, 12, 10).data;
+            let white = 0, ground = 0;
+            for (let i = 0; i < px2.length; i += 4) if (px2[i] > 225 && px2[i + 1] > 225 && px2[i + 2] > 225) white++;
+            for (let i = 0; i < near.length; i += 4) if (near[i] === 1 && near[i + 1] === 254 && near[i + 2] === 2) ground++;
+            o.layer = { order: order.join(' '), white, inSigil: ground >= 20 };
+          } finally { F.ground = g0; for (const k in keep) Scene[k] = keep[k]; Scene.putt = null; Scene.cupT = 0; [Scene.camD, Scene.walkTo, Scene.upT] = cam; }
         }
         // and a golfer with no belt colour of his own keeps the tan sole
         {
@@ -193,6 +283,19 @@ module.exports = {
     if (!(as.core >= 10) || as.coreOff) f('the light in the Ascended\'s chest: ' + as.core + ' pixels, ' + as.coreOff + ' of them off his chest');
     if (!(as.hand >= 2)) f('the Ascended hands in their own magenta: ' + as.hand + ' pixels');
     if (!(as.cTail >= 5 && as.cFlame >= 4 && as.cGreen >= 1)) f('the imp: tail ' + as.cTail + ', flame ' + as.cFlame + ', green eye ' + as.cGreen + ' pixels');
+    // the ultimate
+    if (!(as.ground >= 120) || as.groundOff) f('the Ascended sigil: ' + as.ground + ' pixels, ' + as.groundOff + ' of them off the ground at his feet');
+    if (!(as.auraIdle >= 120) || as.auraOff) f('the Ascended aura: ' + as.auraIdle + ' pixels over six frames, ' + as.auraOff + ' of them away from him');
+    if (!(as.orbit >= 25 && as.orbitL >= 3 && as.orbitR >= 3 && as.orbitFront >= 5) || as.orbitOff)
+      f('the ring of shards: ' + as.orbit + ' pixels, ' + as.orbitL + '/' + as.orbitR + ' either side of him, ' + as.orbitFront + ' over a lap in front of his middle, ' + as.orbitOff + ' out of place');
+    if (!(as.hornSweep <= -0.2) || !(as.hornsBack[0] >= 5 && as.hornsBack[1] >= 5))
+      f('the horns: their top ' + as.hornSweep.toFixed(2) + ' of his helm behind their roots (swept back is past -0.2); from behind ' + J(as.hornsBack) + ' pixels either side');
+    if (as.foot.l > 1.3 || as.foot.r > 1.3 || as.foot.up > 0.4 || as.foot.dn > 0.2)
+      f('the Ascended takes too much of the screen: ' + J(as.foot) + ' (his widths either side of him, his heights above and below)');
+    if (!(as.auraTop >= as.auraIdle * 1.2)) f('the aura does not swell as he winds up: ' + as.auraTop + ' pixels at the top of his backswing against ' + as.auraIdle + ' at address');
+    if (!(as.sparks >= 6) || as.sparksOff || !(as.waveOut >= 8)) f('the strike: sparks ' + as.sparks + ' (' + as.sparksOff + ' away from the ball), a shockwave ' + as.waveOut + ' pixels out past the sigil');
+    if (r.layer.order !== 'drawGolferGround drawFlagstick drawGolfer' || !r.layer.inSigil || !(r.layer.white >= 1))
+      f('his ground over the pin or the putt: the frame draws ' + r.layer.order + '; the ball on his sigil ' + r.layer.inSigil + ', its white pixels ' + r.layer.white);
     for (const id of ['demonic', 'ascended']) {
       const d = r.drawn[id];
       if (!(d.top >= 12 && d.topAbove >= 6) || d.topBelow || d.topWide) f('the ' + id + ' horns: ' + J(d) + ' (standing up off his cap, and nowhere else)');
@@ -210,6 +313,8 @@ module.exports = {
     return ['the Demonic at the Divine\'s ' + r.price.demonic + ', the Ascended at ' + r.price.ascended + '; club, trail, ball and caddie for each in the Divine\'s proportion (' + J(r.sets.ascended.cost) + '), Legendary and Mythic',
       'the Demonic: wings reaching ' + dm.reachL + '/' + dm.reachR + 'px past him either side, horns ' + dm.top + ', eyes at his eye; his caddie\'s wings ' + dm.cWings,
       'the Ascended: a cape ' + as.cape + ' (' + as.capeBack + ' down his back walking away), horns ' + as.top + ', hair of fire reaching ' + Math.round(as.hairReach) + 'px back, the light in his chest, magenta hands; the imp\'s tail ' + as.cTail + ', flame ' + as.cFlame + ', green eyes',
-      'his arms in his own skin, on these and on the Void Walker, Midas and the Ghost; his soles in his belt\'s colour walking away (' + r.drawn.ascended.sole.own + 'px), a plain golfer\'s tan'];
+      'his arms in his own skin, on these and on the Void Walker, Midas and the Ghost; his soles in his belt\'s colour walking away (' + r.drawn.ascended.sole.own + 'px), a plain golfer\'s tan',
+      'the ultimate Ascended: a sigil at his feet (' + as.ground + 'px), an aura of flame (' + Math.round(as.auraTop / as.auraIdle * 100 - 100) + '% more at the top of the backswing), a ring of shards passing in front of him and behind, horns swept back (their tops ' + (-as.hornSweep).toFixed(2) + ' of his helm behind their roots), sparks and a shockwave as he strikes; ' + as.foot.l + '/' + as.foot.r + ' of his width either side and ' + as.foot.up + ' of his height over him at most',
+      'his ground under the pin and a putt rolling away (' + r.layer.order + ')'];
   }
 };
