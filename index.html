@@ -3831,6 +3831,14 @@ function initState(){
     const cs = courseById(k), v = S.seasonSeen[k];
     if(!cs || (cs.slot !== 'home' && !CAL_SEASONED.includes(k)) || !(Number.isInteger(v) && v >= 0 && v < SEASONS.length)) delete S.seasonSeen[k];
   }
+  // and every season each has been seen in: a bit a season, on courses that
+  // turn; a save from before counts the seasons last seen
+  if(!S.seasonsGot || typeof S.seasonsGot !== 'object' || Array.isArray(S.seasonsGot)) S.seasonsGot = {};
+  for(const k of Object.keys(S.seasonsGot)){
+    const cs = courseById(k), v = S.seasonsGot[k];
+    if(!cs || (cs.slot !== 'home' && !CAL_SEASONED.includes(k)) || !(Number.isInteger(v) && v > 0 && v < (1 << SEASONS.length))) delete S.seasonsGot[k];
+  }
+  for(const k of Object.keys(S.seasonSeen)) S.seasonsGot[k] = (S.seasonsGot[k] | 0) | (1 << S.seasonSeen[k]);
   // perk levels: whole numbers from 2 to the top, on perks that exist and are
   // owned; anything else is Lv 1 and is left out
   if(!S.cperkLv || typeof S.cperkLv !== 'object' || Array.isArray(S.cperkLv)) S.cperkLv = {};
@@ -4430,11 +4438,19 @@ function announceCourse(){
 // as the course comes up with its banner, or on the hole after the month
 // turns under it. Not in a catch-up or a wager, and not the first time a
 // course is seen: it is the turn you see that chimes.
+// how many course-and-season pairs have been played, and how many there are
+const seasonsAll = () => (COURSE_HOME.length + CAL_SEASONED.length) * SEASONS.length;
+const seasonsSeen = () => Object.values(S.seasonsGot || {}).reduce((n, v) => { for(let b = v; b; b >>= 1) n += b & 1; return n; }, 0);
 function seasonTurn(){
-  if(QUIET || OFFLINE || S.dgnRun) return;
+  if(S.dgnRun) return;
   const cs = courseFor(tournamentOf(S.hole));
   if(!cs || (cs.slot !== 'home' && !CAL_SEASONED.includes(cs.id))) return;
   const s = courseSeason(cs, S.tier);
+  // every season each course has been played in, a bit a season, for the
+  // Record's Seasons Seen (a catch-up plays them too)
+  S.seasonsGot = S.seasonsGot || {};
+  S.seasonsGot[cs.id] = (S.seasonsGot[cs.id] | 0) | (1 << s);
+  if(QUIET || OFFLINE) return;
   S.seasonSeen = S.seasonSeen || {};
   const was = S.seasonSeen[cs.id];
   if(was === s) return;
@@ -14085,14 +14101,17 @@ function renderRecord(){
   const el = $('statRows'); if(!el) return;
   const D = derive();
   el.innerHTML = [
-    ['Cup points', fmt(S.points)],
-    ['Holes played', fmt(S.totalHoles, 0)],
-    ['Best hole', scoreName(S.bestScore)],
+    ['Cup Points', fmt(S.points)],
+    ['Holes Played', fmt(S.totalHoles, 0)],
+    ['Best Hole', scoreName(S.bestScore)],
     ['Aces', fmt(S.aces, 0)],
-    ['Perks used', fmt(S.perkUsed || 0, 0)],
+    ['Perks Used', fmt(S.perkUsed || 0, 0)],
     ['Retirements', fmt(S.retires, 0)],
-    ['Purse per second', fmt(Meter.rate())],
-    ['Total carry', fmt(D.dps) + ' yds/s'],
+    ['Purse per Second', fmt(Meter.rate())],
+    ['Total Carry', fmt(D.dps) + ' yds/s'],
+    // a course in each of its seasons: the home courses and the regular
+    // stops that turn with the month, four each
+    ['Seasons Seen', seasonsSeen() + '\u00a0of ' + seasonsAll()],
     // each kind of signature hole: played, and the best card on one
     ...Object.keys(SIG_NAME).map(k => { const R = (S.sigRec || {})[k];
       return [SIG_NAME[k], R && R.n ? fmt(R.n, 0) + '\u00a0played \u00b7 best ' + scoreName(R.b) : '\u2014']; })

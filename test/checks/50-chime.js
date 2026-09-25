@@ -13,6 +13,9 @@
  *   - not in a catch-up or a wager, and a turn not seen there chimes on the
  *     next hole played; a course that never turns is never noted
  *   - junk in the save loads clean
+ *   - Seasons Seen on the Record (the user asked): every season each course
+ *     that turns was played in, a catch-up's too but not a wager's, out of
+ *     64; a save from before counts the seasons it last saw
  *   - each chime about as loud as the coin, under the honour fanfare
  *     (rendered offline and measured)
  */
@@ -28,9 +31,9 @@ module.exports = {
         Sfx.ctx = { state: 'running', currentTime: 1 };
         Sfx.season = s => { heard.push(s); }; Sfx.musicTick = () => {};
         const idx = id => B.COURSE.findIndex(c => c.id === id);
-        const home = COURSE_HOME[0];
+        const home = COURSE_HOME[0]; o.homeId = home.id;
         const took = f => { heard.length = 0; f(); try { hideSheet(); } catch (e) {} return heard.join(',') || 'none'; };
-        S.seasonSeen = {}; DAY_FORCE = null; SEASON_FORCE = -1;
+        S.seasonSeen = {}; S.seasonsGot = {}; DAY_FORCE = null; SEASON_FORCE = -1;
 
         // ---- a home course: as built on Card I, autumn on Card XI ----
         S.tier = 0; S.tierMax = 12;
@@ -64,6 +67,19 @@ module.exports = {
         // a course that never turns
         o.dunes = took(() => DEV.course(idx('dunes')));
         o.dunesNoted = 'dunes' in S.seasonSeen;
+        // every season each was played in, catch-ups too, and none of a wager's
+        const bits = S.seasonsGot;
+        o.got = JSON.stringify([bits[home.id], bits.coastal, 'dunes' in bits]);
+        const n0 = seasonsSeen();
+        SEASON_FORCE = 3; QUIET = true; DEV.course(idx('coastal')); hideSheet(); QUIET = false;
+        o.gotQuiet = S.seasonsGot.coastal; o.nQuiet = seasonsSeen() - n0;
+        S.dgnRun = { id: 'water' }; SEASON_FORCE = 0; startHole(); S.dgnRun = null; SEASON_FORCE = -1;
+        o.gotWager = S.seasonsGot.coastal;
+        trophyRoom('case');
+        const row = [...document.querySelectorAll('#statRows .lb')].find(e => /Seasons Seen/.test(e.textContent));
+        o.row = row ? row.querySelector('.s').textContent : null;
+        o.all = seasonsAll(); o.seen = seasonsSeen();
+        hideSheet();
 
         // ---- sound off: noted, not heard ----
         DAY_FORCE = nov; S.sound = 0;
@@ -74,6 +90,12 @@ module.exports = {
         S.seasonSeen = { coastal: 2, willow: 1.5, dunes: 1, nope: 1, sandbelt: 7, riverbend: '2', [home.id]: 3 };
         initState(); o.repaired = JSON.stringify(Object.keys(S.seasonSeen).sort().map(k => k + ':' + S.seasonSeen[k]));
         S.seasonSeen = [1, 2]; initState(); o.repairedArr = JSON.stringify(S.seasonSeen);
+        // the seasons played: bits on courses that turn; a save from before
+        // counts the season each was last seen in
+        S.seasonSeen = { coastal: 2, [home.id]: 1 };
+        S.seasonsGot = { coastal: 1, willow: 16, dunes: 3, nope: 1, sandbelt: 2.5, riverbend: '3', moorland: 0 };
+        initState(); o.gotRepaired = JSON.stringify(Object.keys(S.seasonsGot).sort().map(k => k + ':' + S.seasonsGot[k]));
+        delete S.seasonsGot; initState(); o.gotFresh = JSON.stringify(S.seasonsGot);
         Sfx.ctx = keep.ctx; Sfx.season = keep.season;
 
         // ---- how loud ----
@@ -114,10 +136,21 @@ module.exports = {
     // last, and a season written as words
     if (r.repaired !== '["coastal:2","willow:3"]') f('junk in the save loaded as ' + r.repaired);
     if (r.repairedArr !== '{}') f('a list for the seasons seen loaded as ' + r.repairedArr);
+    // Seasons Seen on the Record: the home course as built and in autumn (bits
+    // 0 and 1), the Coastal Classic in autumn and winter (1 and 2)
+    if (r.got !== '[3,6,false]') f('the seasons played were kept as ' + r.got + ' (home course, Coastal Classic, Dunes)');
+    if (r.gotQuiet !== 14 || r.nQuiet !== 1) f('a catch-up hole in blossom was not counted: ' + r.gotQuiet + ', ' + r.nQuiet + ' more');
+    if (r.gotWager !== 14) f('a wager counted a season: ' + r.gotWager);
+    if (r.all !== 64 || r.row !== r.seen + '\u00a0of 64') f('the Record reads Seasons Seen "' + r.row + '" with ' + r.seen + ' of ' + r.all + ' seen');
+    const wantRep = JSON.stringify(['coastal:5', r.homeId + ':2'].sort());
+    if (r.gotRepaired !== wantRep) f('junk in the seasons played loaded as ' + r.gotRepaired + ', not ' + wantRep);
+    const fresh = JSON.parse(r.gotFresh);
+    if (Object.keys(fresh).length !== 2 || fresh.coastal !== 4 || fresh[r.homeId] !== 2) f('a save from before the Record row counted ' + r.gotFresh);
     for (let s = 0; s < r.db.length; s++)
       if (Math.abs(r.db[s] - r.coinDb) > 3 || !(r.db[s] < r.achDb)) f('the chime for season ' + s + ' is ' + r.db[s] + ' dB against the coin\'s ' + r.coinDb + ' and the honour\'s ' + r.achDb);
     return ['no chime on a first look or the same season; a home course in autumn, the Coastal Classic into winter and back, and a month turning mid-event each chime once, in their season\'s manner',
       'none in a catch-up or a wager (the next hole hears it), none on a course that never turns, none with the sound off; junk in the save cleaned',
+      'Seasons Seen reads ' + r.row + '; catch-ups count, wagers do not, old saves carried over',
       'loudness ' + r.db.join(' / ') + ' dB, against the coin\'s ' + r.coinDb + ' and the honour\'s ' + r.achDb];
   }
 };
