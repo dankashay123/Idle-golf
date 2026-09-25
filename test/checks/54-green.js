@@ -39,7 +39,8 @@ module.exports = {
           let rec = null, waitingPlays = 0, said = [];
           window.finishHole = function (D) {
             H.push({ h: S.hole, hr: holeInRound(S.hole), par: S.parTime, short: LEN - Scene.camD, done: S.doneT, el: S.elapsed, wait: S.elapsed - S.doneT, cap: S.elapsed - S.doneT >= B.ISLE_HOLD - 0.02,
-                     sig: sigKind(S.hole) || '', said: said.filter(x => x.h === S.hole && B.SCORE.some(z => z.n === x.n)) });
+                     sig: sigKind(S.hole) || '', said: said.filter(x => x.h === S.hole && B.SCORE.some(z => z.n === x.n)),
+                     putt: !!(Scene.putt && Scene.putt.hit), tocks: tocks.filter(x => x === S.hole).length, cup: !!Scene.cupT });
             const res = keep.fh.apply(this, arguments);
             const last = H[H.length - 1];
             last.want = scoreFor(last.done / last.par).d;
@@ -52,7 +53,10 @@ module.exports = {
           window.oneSwing = function () { if (S.doneT != null && S.yards <= 0) waitingPlays++; return keep.os.apply(this, arguments); };
           window.fireSkill = function () { if (S.doneT != null && S.yards <= 0) waitingPlays++; return keep.fs.apply(this, arguments); };
           const saidLate = [];
-          Scene.holed = function (sc) { said.push({ h: S.hole, n: sc.n, d: sc.d, down: S.doneT != null && S.yards <= 0, el: S.elapsed, done: S.doneT }); return keep.holed.apply(this, arguments); };
+          Scene.holed = function (sc) { said.push({ h: S.hole, n: sc.n, d: sc.d, down: S.doneT != null && S.yards <= 0, el: S.elapsed, done: S.doneT,
+            cupAgo: Scene.cupT ? Scene.t - Scene.cupT : null, up: Scene.camD >= LEN - B_GREEN_UP }); return keep.holed.apply(this, arguments); };
+          const tocks = [];
+          Sfx.play = function (k) { if (k === 'putt') tocks.push(S.hole); return keep.play.apply(this, arguments); };
           const dt = 1 / 60;
           for (let i = 0; i < 60 * secs; i++) {
             fake += dt * 1000;
@@ -61,8 +65,8 @@ module.exports = {
             if (watch) Scene.draw(dt, D);
             if (stop && H.length >= stop) break;
           }
-          window.finishHole = keep.fh; window.oneSwing = keep.os; window.fireSkill = keep.fs; Scene.holed = keep.holed;
-          return { H, waitingPlays };
+          window.finishHole = keep.fh; window.oneSwing = keep.os; window.fireSkill = keep.fs; Scene.holed = keep.holed; Sfx.play = keep.play;
+          return { H, waitingPlays, stand: B_GREEN_STAND, up: B_GREEN_UP };
         };
 
         // ---- a normal bag on a home course, watched ----
@@ -123,7 +127,8 @@ module.exports = {
     for (const k of ['normal', 'strong']) {
       const H = r[k].H;
       if (H.length < (k === 'normal' ? 10 : 12)) f('only ' + H.length + ' holes were played with a ' + k + ' bag');
-      const far = H.filter(h => h.short > 1.5 + 1e-6);
+      // where he stands to putt: a little short of the cup, up on the green
+      const far = H.filter(h => h.short > r[k].up + 1e-6 || h.short < r[k].stand - 0.3);
       if (far.length) f('with a ' + k + ' bag ' + far.length + ' of ' + H.length + ' holes moved on with him short of the green: '
         + far.slice(0, 3).map(h => 'hole ' + h.hr + (h.sig ? ' (' + h.sig + ')' : '') + ' ' + h.short.toFixed(1) + ' short').join('; '));
       if (H.some(h => h.cap)) f('with a ' + k + ' bag a hole ran to the wait\'s cap');
@@ -131,12 +136,18 @@ module.exports = {
       // there; a signature hole adds its crossing (a flight, a bridge, the
       // stones, a train going by)
       const plain = H.filter(h => !h.sig), mw = avg(plain.map(h => h.wait));
-      if (!(mw < (k === 'normal' ? 1.5 : 2.5))) f('with a ' + k + ' bag the wait on a plain hole after the ball was down was ' + mw.toFixed(2) + 's on average: '
+      if (!(mw < (k === 'normal' ? 2.6 : 3.2))) f('with a ' + k + ' bag the wait on a plain hole after the ball was down was ' + mw.toFixed(2) + 's on average: '
         + H.map(h => (h.sig ? h.sig + ' ' : '') + h.wait.toFixed(2)).join(', '));
       const bad = H.filter(h => h.carded !== h.want);
       if (bad.length) f('with a ' + k + ' bag ' + bad.length + ' holes were not carded from when the ball was down');
       if (r[k].waitingPlays) f('with a ' + k + ' bag ' + r[k].waitingPlays + ' swings or perks were played on a hole that was waiting');
-      const late = H.filter(h => h.said.length !== 1 || !h.said[0].down || Math.abs(h.said[0].el - h.said[0].done) > 0.02);
+      // the banner once, as the ball dropped into the cup, with him up on the green
+      const late = H.filter(h => h.said.length !== 1 || !h.said[0].down || h.said[0].cupAgo === null || h.said[0].cupAgo > 0.05 || !h.said[0].up);
+      // he putted out every hole but an ace, whose tee shot went in; one
+      // tock of the putter a putt
+      const noPutt = H.filter(h => !h.cup || (h.want <= -4 ? h.putt : !h.putt) || h.tocks !== (h.putt ? 1 : 0));
+      if (noPutt.length) f('with a ' + k + ' bag ' + noPutt.length + ' of ' + H.length + ' holes were not putted out as they should be: '
+        + noPutt.slice(0, 3).map(h => 'hole ' + h.hr + ' (' + h.want + '): putt ' + h.putt + ', in the cup ' + h.cup + ', tocks ' + h.tocks).join('; '));
       if (late.length) f('with a ' + k + ' bag the score\'s banner came ' + (late[0].said.length !== 1 ? late[0].said.length + ' times' : 'late') + ' on ' + late.length + ' holes');
     }
     const sigs = [...new Set(r.normal.H.map(h => h.sig).filter(Boolean))];
@@ -155,6 +166,6 @@ module.exports = {
     return ['a normal bag: ' + N.length + ' holes (' + sigs.join(', ') + ' among them), each moved on with him up by the pin; the wait after the ball was down '
         + pw(N) + 's on a plain hole (at most ' + Math.max(...N.map(h => h.wait)).toFixed(2) + 's, a train going by)',
       'a strong bag: ' + St.length + ' holes, each walked from the tee to the pin; wait ' + pw(St) + 's on a plain hole',
-      'the score and the banner as the ball drops, nothing played while it waits, no wait unwatched; a wait of half the hole pays 1.5x, experience and gear luck alike'];
+      'putted out every hole (' + r.normal.H.filter(h => h.putt).length + ' of ' + N.length + '; aces straight in), the banner as the putt drops, nothing played while it waits, no wait unwatched; a wait of half the hole pays 1.5x, experience and gear luck alike'];
   }
 };

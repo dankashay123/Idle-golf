@@ -11,7 +11,8 @@
  *   - finishing all three on consecutive days builds a streak that raises the
  *     bonus up to its cap; one day missed and it starts again
  *   - a mangled daily in a save is thrown away and rebuilt, not trusted
- *   - none of them falls in the first five minutes of a brand-new save
+ *   - none of them falls in the first five minutes of a brand-new save,
+ *     judged over twelve starts (a lucky start or three is allowed)
  *   - today's three are on the Today page of the Trophy Room, each by name
  */
 'use strict';
@@ -79,18 +80,34 @@ module.exports = {
         // ---- none of them is a freebie ---------------------------------------
         // Five minutes of a brand-new save, playing: no daily done. The first
         // pool was sized by eye and 'Card 30 birdies' fell in three and a half.
+        // Judged over twelve starts, not one: a single start swung with the
+        // dice and with the week (with Island Green pinned the one start found
+        // 12 Rare clubs, which about one start in twenty does), and it hid
+        // 'Card 70 eagles', done in five minutes by a third of starts. A lucky
+        // start or three is allowed; a daily a quarter of starts clear, or that
+        // a typical start is four fifths of the way through, is not.
         {
-          const keep = JSON.stringify(S), realR = Math.random;
-          Object.keys(S).forEach(k => delete S[k]); Object.assign(S, defaultState()); initState(); migrate(); startHole();
-          let seed = 11; Math.random = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
-          S.autoEquip = 1; S.lv = 30;
-          const start = {}; for (const c of B.DAILY_POOL) start[c.m] = achMetric(c.m);
-          let t = 0;
-          while (t < 300) { step(B.TICK_MAX, derive()); t += B.TICK_MAX;
-            if ((t % 10) < B.TICK_MAX) for (const u of B.UPG) buyUpg(u); }
-          o.quick = B.DAILY_POOL.filter(c => c.m !== 'runs' && c.m !== 'perks'
-            && achMetric(c.m) - start[c.m] >= c.v).map(c => c.d);
-          Math.random = realR;
+          const keep = JSON.stringify(S), realR = Math.random, got = {};
+          for (let sd = 0; sd < 12; sd++) {
+            Object.keys(S).forEach(k => delete S[k]); Object.assign(S, defaultState()); initState(); migrate(); startHole();
+            let seed = 11 + sd * 7919; Math.random = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+            S.autoEquip = 1; S.lv = 30;
+            const start = {}; for (const c of B.DAILY_POOL) start[c.m] = achMetric(c.m);
+            let t = 0;
+            while (t < 300) { step(B.TICK_MAX, derive()); t += B.TICK_MAX;
+              if ((t % 10) < B.TICK_MAX) for (const u of B.UPG) buyUpg(u); }
+            for (const c of B.DAILY_POOL) if (c.m !== 'runs' && c.m !== 'perks')
+              (got[c.id] = got[c.id] || []).push((achMetric(c.m) - start[c.m]) / c.v);
+            Math.random = realR;
+          }
+          // (and none that a typical start is most of the way through: a
+          // quarter of starts is the line, and a coin toss away from it)
+          const med0 = a => { const b = a.slice().sort((x, y) => x - y); return (b[5] + b[6]) / 2; };
+          o.quick = B.DAILY_POOL.filter(c => got[c.id] && (got[c.id].filter(x => x >= 1).length > 3 || med0(got[c.id]) >= 0.8))
+            .map(c => c.d + ' (' + got[c.id].filter(x => x >= 1).length + ' of 12 starts, a typical one ' + Math.round(med0(got[c.id]) * 100) + '% of the way)');
+          const med = a => { const b = a.slice().sort((x, y) => x - y); return (b[5] + b[6]) / 2; };
+          o.closest = B.DAILY_POOL.filter(c => got[c.id]).map(c => [c.d, med(got[c.id]), got[c.id].filter(x => x >= 1).length])
+            .sort((a, b) => b[1] - a[1])[0];
           Object.keys(S).forEach(k => delete S[k]); Object.assign(S, JSON.parse(keep));
         }
         // today's three are on the Today page of the Trophy Room, each by name
@@ -129,13 +146,15 @@ module.exports = {
       throw new Error('after a missed day the streak is ' + r.streakAfterGap + ' and paid ' + r.afterGap
         + '; it should start again at 1 and pay ' + (3 * Bc.sov + Bc.all + Bc.step));
     if (r.mangled.length) throw new Error('a mangled daily survived a load: ' + r.mangled.join('; '));
-    if (r.quick.length) throw new Error('a brand-new save cleared these in five minutes: ' + r.quick.join('; ')
+    if (r.quick.length) throw new Error('brand-new saves cleared these in five minutes: ' + r.quick.join('; ')
       + '. A daily is a goal for the day, not a freebie.');
     if (r.honours !== true) throw new Error('the Trophy Room does not show today\'s three: ' + r.honours);
 
     return ['same three all day, all ' + r.pool + ' come round in a month, level gate held',
       'progress counts from the day\'s start; each pays ' + Bc.sov + ' once, all three ' + (Bc.all + Bc.step) + ' up to '
         + (Bc.all + Bc.step * Bc.max) + ' on a streak',
-      'a missed day resets the streak; a mangled daily is rebuilt'];
+      'a missed day resets the streak; a mangled daily is rebuilt',
+      'twelve brand-new saves, five minutes each: no daily cleared by more than three; the closest, ' + r.closest[0] + ', ' + Math.round(r.closest[1] * 100)
+        + '% done in a typical start (' + r.closest[2] + ' of 12 cleared it)'];
   }
 };

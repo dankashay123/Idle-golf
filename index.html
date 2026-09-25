@@ -3088,7 +3088,9 @@ const B = {
     { id:'rare',   m:'rare',   v:12,  d:'Find 12 Rare or better clubs' },
     { id:'runs',   m:'runs',   v:3,   d:'Play 3 wagers' },
     { id:'nines',  m:'nines',  v:20,  d:'Win 20 nine goals' },
-    { id:'eagle',  m:'eagle',  v:70,  d:'Card 70 eagles or better', lv:15 },
+    // (it was 70: a quick player carded that in five minutes about one start in
+    // three; between 16 and 91 in five minutes over forty starts)
+    { id:'eagle',  m:'eagle',  v:100, d:'Card 100 eagles or better', lv:15 },
     { id:'perk',   m:'perks',  v:1,   d:'Use a sponsor perk', lv:15 },
     { id:'rival',  m:'rivals', v:2,   d:'Beat your rival twice' }
   ],
@@ -6142,7 +6144,14 @@ const Sfx = {
     else if(k === 'cup')   this.notes([523.25, 659.25, 783.99, 1046.5, 783.99, 1046.5], 'triangle', 0.14, 0.11);
     else if(k === 'buy')   this.tone(880, t, 0.06, 'square', 0.045, 1320);
     else if(k === 'season') this.season(arg);
+    else if(k === 'putt')  this.putt(t);
   },
+  // The putt out: a soft tock off the putter's face.
+  putt(t){
+    this.tone(1250, t, 0.045, 'triangle', this.PUTT_VOL, 800);
+    this.tone(620, t, 0.07, 'sine', this.PUTT_VOL * 0.6, 420);
+  },
+  PUTT_VOL: 0.03,
   // A course seen in a new season (the user asked for a short chime), in the
   // season's own manner: autumn falls away, winter rings high and thin like
   // frost, blossom climbs, and back to how it was built is two plain notes.
@@ -6223,9 +6232,10 @@ function sigScore(sc){
 // The hole's time: when the ball was down, not when the hole moved on. They
 // differ only on an island, where the hole waits for him to fly across.
 const holeTime = () => S.doneT != null ? S.doneT : S.elapsed;
-// The ball is down on a hole that waits for him to walk up to the green (see
-// Scene.holeWait): the cup's sound, the score's banner, the caddie's word and
-// his happy dance come now, as it drops, rather than when the hole moves on.
+// The ball has dropped on a hole that waits for him to walk up and putt out
+// (see Scene.holeWait): the cup's sound, the score's banner, the caddie's word
+// and his happy dance come now, as it drops, rather than when the hole moves
+// on (a moment later). Called from the Scene; finishHole says it if not.
 function holeSaid(){
   const sc = scoreFor(holeTime() / S.parTime);
   Sfx.play('hole', sc.d);
@@ -8683,9 +8693,11 @@ const PX_CSS = 1.1, K_PROJ = 22.4, LEN = 60, B_GOLFER = 12, B_FLY = 11, B_BRIDGE
 // it runs, and how long it is (engine and two carriages)
 // (and how far out the one that meets him at the line sets off)
 const RAIL_X = 34, RAIL_V = 11, RAIL_LEN = 7.4, RAIL_MEET = 20;
-// the end of a hole: where he stops, short of the cup, and how near it counts
-// as up on the green (see Scene.holeWait)
-const B_GREEN_STAND = 1.0, B_GREEN_UP = 1.5;
+// the end of a hole: where he stops to putt, short of the cup (from there the
+// cup shows above his head), and how near that counts as up on the green (see
+// Scene.holeWait); and the putt (Scene.putt): the stroke's moment of impact
+// and how long the ball rolls, in seconds from when he addresses it
+const B_GREEN_STAND = 2.2, B_GREEN_UP = 2.7, PUTT_HIT = 0.43, PUTT_ROLL = 0.6;
 // How far behind the golfer the camera sits, in world units. Small numbers put
 // you over his shoulder with the hole falling away hard; large numbers flatten
 // it into a diagram. GROUND is derived from it below, so his feet stay put.
@@ -10607,7 +10619,7 @@ const Scene = {
 
     this.camD = 0; this.restBall = null; this.walkTo = 0;
     this.train = null; this.trainMet = 0; this.trainNext = this.t + 8;
-    this.upT = 0; this.saidHole = null;
+    this.upT = 0; this.saidHole = null; this.putt = null; this.cupT = 0;
     // A swing still playing when the last hole ended belonged to that hole: it
     // finished it. Carried over, it hit a ball a yard off the new tee that
     // counted for nothing, and he stood and hit again.
@@ -10859,7 +10871,32 @@ const Scene = {
     // side read as neither across nor on the way, and let the hole go)
     if(I && (this.crossing || this.camD < I.land - 0.05)) return true;
     if(this.camD < LEN - B_GREEN_UP || !this.upT) return true;
-    return this.t - this.upT < 0.25;                   // a moment up there
+    // the ball in the cup (a putt, or an ace straight in), and a moment after
+    if(!this.cupT) return true;
+    return this.t - Math.max(this.upT, this.cupT) < 0.3;
+  },
+  // The putt out (the user asked): once the hole's ball is down he walks up
+  // onto the green, addresses the ball lying a putt short of the cup, and
+  // taps it in. The club goes back and through (puttArm, an angle for
+  // paintGolfer), and the ball rolls out to his right, clear of him, and
+  // curls in (puttBall). cupT is when it dropped: the cup's sound, the
+  // score's banner and the caddie's cheer come then (holeSaid). An ace goes
+  // straight in off the tee shot and needs no putt.
+  puttArm(T){
+    const ADDR = 0.50, e = q => q < 0.5 ? 2*q*q : 1 - 2*(1-q)*(1-q);
+    if(T < 0.15) return ADDR;
+    if(T < 0.38) return ADDR - 0.35 * e((T - 0.15) / 0.23);
+    if(T < 0.48) return ADDR - 0.35 + 0.65 * e((T - 0.38) / 0.10);
+    if(T < 0.90) return ADDR + 0.30;
+    if(T < 1.15) return ADDR + 0.30 * (1 - e((T - 0.90) / 0.25));
+    return ADDR;
+  },
+  puttBall(T){
+    const u = clamp((T - PUTT_HIT) / PUTT_ROLL, 0, 1), L0 = this.teeLat === undefined ? 0.42 : this.teeLat;
+    const q = 1 - (1 - u) * (1 - u);                         // slowing as it goes
+    const sm = x => x <= 0 ? 0 : x >= 1 ? 1 : x * x * (3 - 2 * x);
+    return { u, d: this.putt.d0 + (LEN - this.putt.d0) * q,
+             lat: L0 + 0.25 * Math.sin(Math.PI * q) - L0 * sm((q - 0.55) / 0.45) };
   },
   // still on his way to where his last ball came down
   walking2ball(){
@@ -10883,7 +10920,12 @@ const Scene = {
     // where he walks to. It used to fly a flat 14 to 23 units whatever it did,
     // so a big hit could land far past the spot he then walked a step toward.
     // A wager's floor shots, which move nothing, keep their old carry.
+    // Once the hole's ball is down the shot that did it comes down a putt
+    // short of the cup, for him to walk up and putt out; an ace goes in.
+    const last = !S.dgnRun && S.yardsMax > 0 && S.yards <= 0 && this.hole === S.hole;
+    const ace = last && scoreFor((S.doneT != null ? S.doneT : Math.max(S.elapsed, S.walkMin || B.WALK_MIN)) / S.parTime).d <= -4;
     const reach = S.dgnRun || !(S.yardsMax > 0) ? null
+                : last ? (ace ? LEN : LEN - B_GREEN_STAND - 0.4) - this.camD
                 : this.spot(clamp(1 - S.yards / S.yardsMax, 0, 1)) - this.camD;
     const dist = p.target !== undefined ? Math.max(3, p.target - this.camD)   // an aimed shot flies to its mark
                : reach !== null ? Math.max(0.6, reach)
@@ -10892,8 +10934,8 @@ const Scene = {
                       // a short one is quick and low, a long one hangs
                       t:0, dur: 0.34 + Math.min(0.32, dist * 0.016) + Math.random()*0.08,
                       el:p.el, crit:p.crit, seed: Math.random()*100,
-                      lat0: lat0,
-                      lat: p.lat !== undefined ? p.lat : -0.15 + (Math.random()-.5)*0.30 });
+                      lat0: lat0, cup: ace ? 1 : 0,
+                      lat: ace ? 0 : p.lat !== undefined ? p.lat : -0.15 + (Math.random()-.5)*0.30 });
     if(this.nums.length < 12 && p.dmg > 0){
       // Kept clear of whatever is already floating there, measured in the
       // numbers' real widths. They all rise at the same speed, so a number
@@ -11130,7 +11172,7 @@ function drawLegsBack(c, cx, hy, len, w, ph, near, far, shoe){
    through this and so does the battery saver, so the two always match. ph is
    the swing, 0 at address; walking draws him from behind, striding. arc keeps
    the club head's last few places for the clubs that leave a trail. */
-function paintGolfer(c, x, y, w, h, ph, t, bot, walking, walkPh, spr, arc){
+function paintGolfer(c, x, y, w, h, ph, t, bot, walking, walkPh, spr, arc, putt){
   const FX = STYLEFX[outfitNow().fx] || null;
   c.fillStyle = 'rgba(8,16,10,.34)';
   c.fillRect(x + Math.round(w*0.05), bot - 1, Math.round(w*0.62), Math.max(1, Math.round(h*0.045)));
@@ -11141,6 +11183,7 @@ function paintGolfer(c, x, y, w, h, ph, t, bot, walking, walkPh, spr, arc){
   const ADDR = 0.50, TOP = -2.50, FIN = 2.60;
   let arm, coil = 0;
   if(walking) arm = -2.8;                  // resting on his shoulder
+  else if(putt !== undefined) arm = putt;  // putting out: a short stroke
   else if(ph === 0) arm = ADDR;
   else if(ph < 0.36){ const t = ph/0.36; arm = ADDR + (TOP - ADDR)*t; coil = -t*0.5; }
   else if(ph < 0.55){ const t = (ph - 0.36)/0.19; arm = TOP + (ADDR - TOP)*t; coil = -(1-t)*0.5; }
@@ -12083,7 +12126,14 @@ Object.assign(Scene, {
     const y = p.y - h - stepUp - hop - (FX && FX.bob ? Math.round(2 + Math.sin(this.t * 2.2) * 2) : 0);
 
 
-    paintGolfer(c, x, y, w, h, ph, this.t, p.y, walking, this.walkPh, spr, this.clubArc || (this.clubArc = []));
+    // putting out: the ball rolling away from him to the cup is beyond him,
+    // so it goes down first
+    const PT = atCam === undefined && this.putt && !walking && ph === 0 ? this.t - this.putt.t0 : -1;
+    if(PT >= PUTT_HIT && !this.cupT){
+      const q = this.puttBall(PT), bp = this.proj(q.d, q.lat);
+      if(bp.y <= this.clipAt(q.d) + 1){ const bs = h > 30 ? 2 : 1; drawLyingBall(c, bp.x + bs / 2, Math.round(bp.y - bs), Math.max(1.5, bs * 0.8 + 0.5), this.t); }
+    }
+    paintGolfer(c, x, y, w, h, ph, this.t, p.y, walking, this.walkPh, spr, this.clubArc || (this.clubArc = []), PT >= 0 ? this.puttArm(PT) : undefined);
     if(atCam === undefined && SPRITE.caddie) this.drawCaddie(c, p.x - Math.round(w*0.42), y, w, h);
     if(atCam === undefined) this.drawBless(c, x, y, w, h, p.y);
     if(walking) return;
@@ -12094,7 +12144,9 @@ Object.assign(Scene, {
     // ball used to be launched from the middle of the lane, so every shot
     // appeared out of thin air a body's width away from the face.
     this.teeLat = (bx - p.x) / Math.max(0.001, LAT * p.s);
-    if((this.swingT === 0 && !this.restBall && !this.walkOn) || (this.swingT > 0 && ph < 0.5)){
+    // (not once it is rolling to the cup, or in it)
+    const holed = atCam === undefined && (this.cupT || PT >= PUTT_HIT);
+    if(!holed && ((this.swingT === 0 && !this.restBall && !this.walkOn) || (this.swingT > 0 && ph < 0.5))){
       const bs = h > 30 ? 2 : 1;
       drawLyingBall(c, bx + bs / 2, Math.round(p.y - bs), Math.max(1.5, bs * 0.8 + 0.5), this.t);
     }
@@ -12735,8 +12787,10 @@ Object.assign(Scene, {
       b.t += dt;
       const u = b.t / b.dur;
       if(u >= 1){
-        // it lies where it came down until he walks up to it
-        if(!S.dgnRun){ this.restBall = { d: b.d0 + b.dist, lat: this.ballLat(b, 1) };
+        // it lies where it came down until he walks up to it (an ace is in
+        // the cup)
+        if(!S.dgnRun){ if(b.cup) this.cupT = this.cupT || this.t;
+                       else this.restBall = { d: b.d0 + b.dist, lat: this.ballLat(b, 1) };
                        this.walkTo = Math.max(this.walkTo || 0, b.d0 + b.dist); }
         this.balls.splice(i, 1); continue;
       }
@@ -13188,6 +13242,16 @@ Object.assign(Scene, {
       this.heli = I && I.fly ? this.crossing : 0;
       if(was && !this.crossing) this.landT = this.t;
       if(this.camD >= LEN - B_GREEN_UP && !this.upT) this.upT = this.t;
+      // up on the green with the hole's ball down: he putts out
+      if(up && !this.putt && !this.cupT && this.upT && this.swingT === 0 && !this.balls.length && !this.restBall)
+        this.putt = { t0: this.t, d0: this.camD };
+      if(this.putt && !this.cupT){
+        const T = this.t - this.putt.t0;
+        if(!this.putt.hit && T >= PUTT_HIT){ this.putt.hit = 1; Sfx.play('putt'); }
+        if(T >= PUTT_HIT + PUTT_ROLL) this.cupT = this.t;
+      }
+      // the ball has dropped: the score, its sound and the caddie's cheer
+      if(this.cupT && up && S.doneT != null && this.saidHole !== S.hole) holeSaid();
       this.drawnAt = performance.now();
       // walking: the camera is carrying him on and he is not mid-swing. A new
       // hole puts the camera back on the tee, which is not a walk.
@@ -15623,14 +15687,11 @@ function step(dt, D){
     // The ball is down, and the next hole used to come there and then, with
     // him still out on the fairway (or never off the tee, on a fast bag). The
     // hole waits for him to walk up to the green while the course is on
-    // screen (Scene.holeWait), scored from when the ball was down, and never
-    // longer than ISLE_HOLD; the score, its sound and the caddie's cheer come
-    // as the ball drops.
+    // screen (Scene.holeWait), and putts out, scored from when the ball was
+    // down, and never longer than ISLE_HOLD; the score, its sound and the
+    // caddie's cheer come as the putt drops (holeSaid, from the Scene).
     if(S.doneT == null) S.doneT = S.elapsed;
-    if(Scene.holeWait() && S.elapsed - S.doneT < B.ISLE_HOLD){
-      if(Scene.saidHole !== S.hole) holeSaid();
-      return;
-    }
+    if(Scene.holeWait() && S.elapsed - S.doneT < B.ISLE_HOLD) return;
     finishHole(D);
   }
 }
