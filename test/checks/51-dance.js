@@ -52,6 +52,10 @@ module.exports = {
             if (d <= -2 && S.hole === h0 && Scene.putt && !Scene.cupT && Scene.t - Scene.putt.t0 > PUTT_HIT) Scene.moveT = 0.12;
             const Dn = derive(); step(0.05, Dn); Scene.draw(0.05, Dn);
             if (S.hole !== h0) ended = true;
+            // (only this hole's dance: once a later hole's ball drops, that
+            // hole may earn one of its own; the round plays on unseeded, and
+            // one run in the suite saw the next hole's eagle cartwheel too)
+            if (Scene.saidHole !== undefined && Scene.saidHole !== h0 && S.hole !== h0 && Scene.saidHole === S.hole) break;
             const M = Scene.fairyMove, key = M ? M.kind + '@' + M.t0.toFixed(3) : null;
             if (key && key !== last) seen.push(M.kind);
             last = key;

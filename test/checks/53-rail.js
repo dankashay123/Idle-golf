@@ -178,11 +178,12 @@ module.exports = {
         // without it, where each lot stands on its own, from the tee to the
         // line, with a train and without.
         // (on each course with a railway: the home course and the three away;
-        // the words, the map and the rain printed over the picture left off)
+        // the words, the map, the rain and the numbers floating up, all
+        // printed over the picture, left off)
         {
           const px = () => c.getImageData(0, 0, VW, VH).data;
           const alone = fn => { c.clearRect(0, 0, VW, VH); fn(); return px(); };
-          const dr = Scene.drawRail, over = { drawHud: Scene.drawHud, drawMap: Scene.drawMap, drawWeather: Scene.drawWeather };
+          const dr = Scene.drawRail, over = { drawHud: Scene.drawHud, drawMap: Scene.drawMap, drawWeather: Scene.drawWeather, drawFx: Scene.drawFx, drawShots: Scene.drawShots };
           o.depth = { nearOver: 0, through: 0, farOver: 0, hidden: 0, views: 0, courses: [] };
           try {
             for (const k in over) Scene[k] = () => {};
@@ -198,11 +199,14 @@ module.exports = {
                 view(cam, age, dir); const F1 = px();
                 const near = alone(() => Scene.drawProps(IR.bank, -1)), far = alone(() => Scene.drawProps(IR.bank, 1)), rl = alone(() => dr.call(Scene));
                 Scene.drawRail = () => {}; view(cam, age, dir); const F0 = px(); Scene.drawRail = dr;
+                // (right at the horizon the haze is solid: the line and what
+                // stands beyond it come out the same colour there)
+                const HZ = Scene.haze ? Scene.haze.getContext('2d').getImageData(0, 0, VW, VH).data : null;
                 D1.views++;
                 for (let i = 0; i < F1.length; i += 4) {
                   const differs = F1[i] !== F0[i] || F1[i + 1] !== F0[i + 1] || F1[i + 2] !== F0[i + 2];
                   if (near[i + 3] === 255) { if (rl[i + 3] === 255) D1.nearOver++; if (differs) D1.through++; }
-                  else if (far[i + 3] === 255 && rl[i + 3] === 255) { D1.farOver++; if (!differs) D1.hidden++; }
+                  else if (far[i + 3] === 255 && rl[i + 3] === 255 && !(HZ && HZ[i + 3] >= 250)) { D1.farOver++; if (!differs) D1.hidden++; }
                 }
               }
               D1.courses.push(id + ' ' + (D1.nearOver - n0));

@@ -88,7 +88,7 @@ module.exports = {
         {
           S.chaos = Object.assign({}, NIGHT);
           Scene.newHole(S.hole, S.tier);
-          const a = Scene.props.filter(p => p.kind < 4).map(p => p.kind + ':' + p.d.toFixed(3) + ':' + p.x.toFixed(3)).join('|');
+          const a = Scene.props.filter(p => p.kind < 4 && !p.extra).map(p => p.kind + ':' + p.d.toFixed(3) + ':' + p.x.toFixed(3)).join('|');
           Scene.layNight = function () {};
           Scene.newHole(S.hole, S.tier);
           const b = Scene.props.map(p => p.kind + ':' + p.d.toFixed(3) + ':' + p.x.toFixed(3)).join('|');

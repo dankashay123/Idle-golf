@@ -10,13 +10,16 @@ check is for.
 
 - Everything is committed and pushed to `main` (mirrored on the session
   branch `claude/notes-claude-review-4cqv98`). Nothing is half-built.
-- `node test/run.js` passes all **61 checks** (about ten minutes).
-- **Last request** (two screenshots): "Water drops are showing up on the
-  grass. Also what are the yellow rings next to the golfer? ... please
-  remove it. Let's do 1, 2 and 3 for now as well." Done: rain rings only
-  on water, the stray ring removed, then **night glow for the skins**, **the
-  Mythic caddies' tricks** and **weather on the ordinary holes** (frost,
-  puddles). Each has a section in §5.
+- `node test/run.js` passes all **62 checks** (about ten minutes).
+- **Last request** (a screenshot of Castle Dunes at night): "Please fix
+  the audience as well, they are super far away. Also please add more
+  ambiance to the blank areas to the left right and behind the green so
+  it's not so bare, everywhere." Done: a gallery beside and close behind
+  every green, trees behind every green, and shrubs, tufts and rocks in the
+  rough on every course (§5, "The gallery and the scenery").
+- Before that: rain rings only on water and the stray ring beside him
+  removed; night glow for the dearest skins; the Mythic caddies' tricks;
+  frost and puddles.
 - Earlier this session: a skin flies with him (and his arms up on the club,
   not hanging), night on the ordinary holes, the Mythic Favour, the Hole of
   the Week run.
@@ -173,6 +176,7 @@ Line numbers are approximate and drift. Search for the name instead.
 | **Rain rings and ripples** (on water only) | `rainRings`, `ripples`: a pixel is kept only where `waterAt` says the painted ground is one of the theme's water colours (`PixPaint.px` against `_wtSet`, or the canvas against `_wtHex`), as well as on a noted water row |
 | **The dearest skins at night** | `NIGHT_GLOW`, `nightPool` (from `golferGround`, before the skin's own ground) |
 | **The Mythic caddies' tricks** | `FAIRY_MOVES` entries with `only` (soar, blaze, blink), `fairyMoves()` (the pool for this caddie), `fairyPose` (`beat`, `feathers`, `fire`, `hide`/`swirl`), `Scene.caddieFire`, `Scene.caddieSwirl`, the room they take (`grow` in `drawCaddie`); `fairyMoveGo` refuses another caddie's trick |
+| **The gallery and the scenery** | in `layNight` (all from a hash; tagged `extra`): the gallery round the green (kind 1), trees behind it (kind 0), scenery kind 8 (`sp`: bush, tuft, rock; sprites `BUSH_ROWS`, `TUFT_ROWS`, `ROCK_ROWS` built in `courseTrees`); drawn in `drawProp`, culled early in `drawProps` when hidden or off the view |
 | **Frost and puddles** | `frostFor`, `FROST_FORCE`, `HOUR_FORCE`, `hourNow`, `Scene.frost`, mode `'frost'` in `buildTheme` (`tg`) and `courseTrees`; props kind 6 (a frost speck, one in four glinting) and kind 7 (a puddle, rows walked out by distance, rings) laid in `layNight`; dev menu row Frost |
 | **The Hole of the Week run** | `S.hotw = { wk, n }` in `sigScore`, `B.HOTW_RUN`/`HOTW_SOV`, `hotwRun`, `hotwDone`, repaired in `initState`; the Tour band's last row in `renderSigWeek` |
 | **Night on the signature holes** | `Scene.nightLamp`, `drawIsleLights` (from `drawDucks`), `drawFireflies` (from `drawStones`), the lanterns in `drawPier`, the bulbs in `drawBridge` |
@@ -395,6 +399,26 @@ Line numbers are approximate and drift. Search for the name instead.
    check the file's time before trusting it.
 
 ## 5. What the last features do (for debugging them)
+
+### The gallery and the scenery (user sent a screenshot)
+
+- The only gallery near the green was a bank 8.5 to 17.5 beyond the pin,
+  which from the fairway reads as far off. Now up to fourteen more stand
+  beside the green just off its apron and in a row close behind it. The
+  old bank and the side gallery are unchanged: everything new comes from
+  a hash in `layNight`, never the hole's `rnd`, so the hills and all the
+  hole lays stay as they were.
+- Up to nine trees behind every green (the course's own kind), and 150
+  tries at scenery: shrubs in the trees' colours, tufts of the rough's
+  grass and rocks of the course's stone, down both sides of the rough and
+  behind the green, clear of hazards and the play. Castle Dunes and the
+  other bare courses (trees 0.15 to 0.3) were the ones that looked empty.
+- Cost: they pushed a frame from 520 to 960 canvas calls (the limit is
+  1000): no shadows on tufts and rocks, no mirroring, and scenery wholly
+  behind a crest or off the view skipped before its clip; now about 624.
+- Found on the way: on a railway hole the pin, beyond the line, was drawn
+  after it, and its top stood over a crossing post; short of the line it
+  now goes down before the railway.
 
 ### Rain on the grass, and the stray ring (user sent screenshots)
 
@@ -1610,6 +1634,9 @@ him (about 49px tall on a 320 phone, 71px on its side).
 
 ## 6. Recent history (newest first, one line each)
 
+- The gallery beside and behind every green, trees behind it, shrubs,
+  tufts and rocks in the rough everywhere.
+
 - Rain rings only on water; the stray ring beside him gone; the dearest
   skins light the grass at night; the Mythic caddies' tricks (soar, blaze,
   blink); frost on cold mornings and puddles in the rain.
@@ -1758,13 +1785,13 @@ Everything asked for is done. Turned down, don't offer again: the railway
 station, a photo mode, trail flourishes.
 
 The menu to offer next:
-1. **Walk past the clubhouse** (recommended): on the last hole of a round,
-   the clubhouse near the green with a terrace and a few of the gallery.
-2. **Season bests**: the best card of each season and where it came, on
-   the Tour tab.
-3. **Dawn and dusk**: the sky warming at the edges on a morning or evening
-   round by the player's own clock, now frost follows it.
-4. **A Mythic ball trick**: the three dearest balls do something of their
+1. **Season bests** (recommended): the best card of each season and where
+   it came, on the Tour tab.
+2. **Dawn and dusk**: the sky warming at the edges on a morning or evening
+   round by the player's own clock, as frost follows it.
+3. **A Mythic ball trick**: the three dearest balls do something of their
    own as they drop in the cup.
-5. **Birds over the ordinary holes**: a flock crossing the sky now and
+4. **Birds over the ordinary holes**: a flock crossing the sky now and
    then, scattering off the fairway as a ball lands near.
+5. **A grandstand on the last hole**: a stand of seats behind the
+   eighteenth green, filled on the final day.

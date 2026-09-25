@@ -8285,6 +8285,9 @@ function drawLandmark(g, L, cx, by, s, haze, hz){
 }
 // Trees are rebuilt in the course's own colours, so the Autumn Classic is
 // actually orange and the Azalea is actually in flower.
+const BUSH_ROWS = ['....1221....', '..12332221..', '.1233433321.', '123344433321', '123333433221', '012233332210', '.0112222110.', '..00000000..'];
+const TUFT_ROWS = ['.3...4..3...', '.3..34..3.4.', '23.3.4.33.3.', '2332343.332.', '12232332221.', '.1122222111.'];
+const ROCK_ROWS = ['...3344.....', '..2334443...', '.12233443...', '11222333322.', '.1112222211.'];
 function courseTrees(cs, mode){
   const key = cs.id + '|' + mode;
   if(TREE_CACHE[key]) return TREE_CACHE[key];
@@ -8296,7 +8299,13 @@ function courseTrees(cs, mode){
   // the holes read as damage rather than depth.
   const map = { 0: dark(b, 0.46), 1: dark(b, 0.20), 2: b, 3: a, 4: lite(a, 0.24),
                 t: t('#4A3A24'), T: t('#2E2416') };
-  return TREE_CACHE[key] = { pine: makeSprite(PINE_ROWS, map), oak: makeSprite(OAK_ROWS, map) };
+  // the scenery in the rough (Scene.layNight): a shrub in the trees' own
+  // colours, a tuft of the rough's grass, a rock of the course's stone
+  const g0 = t(cs.rough), r0 = t(cs.rock);
+  const gmap = { 1: dark(g0, 0.42), 2: dark(g0, 0.22), 3: lite(g0, 0.10), 4: lite(g0, 0.28) };
+  const rmap = { 1: dark(r0, 0.40), 2: dark(r0, 0.18), 3: r0, 4: lite(r0, 0.25) };
+  return TREE_CACHE[key] = { pine: makeSprite(PINE_ROWS, map), oak: makeSprite(OAK_ROWS, map),
+    bush: makeSprite(BUSH_ROWS, map), tuft: makeSprite(TUFT_ROWS, gmap), rock: makeSprite(ROCK_ROWS, rmap) };
 }
 
 /* ---- themes ----
@@ -11856,6 +11865,37 @@ const Scene = {
       if(Math.abs(x) > 6.6) continue;
       put.push({ kind: 5, d, x, k: i });
     }
+    // The gallery round the green (the user asked: the bank behind it stood
+    // far off): along both sides of it, just off the apron, and a row close
+    // behind it. From a hash, like everything here, so the hole's own dice
+    // are untouched.
+    const taken = (d, x, r) => put.some(p => (p.kind <= 1 || p.kind === 8) && Math.abs(p.d - d) < r && Math.abs(p.x - x) < r);
+    for(let i = 0, n = 0; i < 48 && n < 14; i++){
+      const u = hr(this.hole * 47 + i, 315), v = hr(this.hole * 47 + i, 316), side = hr(this.hole * 47 + i, 317) < 0.5 ? -1 : 1;
+      const beside = i % 3 !== 2;
+      const d = beside ? LEN - 6.5 + u * 12.5 : LEN + 9.2 + u * 2.4, x = beside ? side * (3.95 + v * 1.3) : (v - 0.5) * 8;
+      if(this.hitsHazard(d, x, 0.45) || this.onPlay(d, x, 0.18) || taken(d, x, 0.85)) continue;
+      n++;
+      put.push({ kind: 1, d, x, c: Math.floor(hr(i, this.hole * 3 + 318) * 6), p: hr(i, 319) * 6.28, extra: 1 });
+    }
+    // trees behind the green, a backdrop for it on every course
+    for(let i = 0, n = 0; i < 24 && n < 9; i++){
+      const d = LEN + 14 + hr(this.hole * 53 + i, 320) * 12, x = (hr(this.hole * 53 + i, 321) - 0.5) * 16;
+      if(this.hitsHazard(d, x, 0.7) || taken(d, x, 1.6)) continue;
+      n++;
+      put.push({ kind: 0, extra: 1, d, x, s: 0.8 + hr(i, 322) * 0.5, k: (this.land && this.land.kind) === 2 ? (hr(i, 323) < 0.42 ? 1 : 0) : (this.land && this.land.kind) || 0 });
+    }
+    // scenery in the rough down both sides and behind the green: shrubs,
+    // tufts of grass and rocks (kind 8), so the ground either side of the
+    // play is not bare
+    for(let i = 0; i < 150; i++){
+      const u = hr(this.hole * 59 + i, 324), v = hr(this.hole * 59 + i, 325), side = hr(this.hole * 59 + i, 326) < 0.5 ? -1 : 1;
+      const behind = i >= 110, d = behind ? LEN + 9 + u * 18 : u * (LEN + 8);
+      const x = behind ? (v - 0.5) * 14 : side * (this.fwWidth(d) + 1.0 + v * 5.5);
+      if(Math.abs(x) > 8 || this.hitsHazard(d, x, 0.5) || this.onPlay(d, x, 0.6) || taken(d, x, 0.7)) continue;
+      const w = hr(i, 327);
+      put.push({ kind: 8, d, x, s: 0.75 + hr(i, 328) * 0.6, sp: w < 0.45 ? 'bush' : w < 0.85 ? 'tuft' : 'rock' });
+    }
     // a frosty morning's glints over the fairway and the rough, and a storm's
     // puddles lying on the fairway (not in a hazard, not on the green)
     for(let i = 0; i < 180; i++){
@@ -14239,7 +14279,7 @@ Object.assign(Scene, {
   drawProps(edge, side){
     const c = this.b, T = this.theme || THEMES.day, night = this.night;
     for(const p of (this.props || [])){
-      if(p.kind >= 4 && (S.dgnRun || (p.kind <= 5 ? !night : p.kind === 6 ? !this.frost || night || this.rain : !this.rain || this.ice))) continue;
+      if(p.kind >= 4 && p.kind <= 7 && (S.dgnRun || (p.kind <= 5 ? !night : p.kind === 6 ? !this.frost || night || this.rain : !this.rain || this.ice))) continue;
       if(side > 0 && p.d < edge) continue;
       if(side < 0 && p.d >= edge) continue;
       // A rope post is culled on the far end of the span it carries, not on
@@ -14257,6 +14297,9 @@ Object.assign(Scene, {
       // plain sprite as tall as it stands; a rope runs on to the next post and
       // a floodlight throws its beam, so those still go through the fence.
       if(p.kind === 0 && pr.y - Math.round(p.s * 46 * pr.s * US) > cut + 1) continue;
+      // (the scenery in the rough likewise, and off the sides of the view:
+      // there are many of them, and each clip is a handful of canvas calls)
+      if(p.kind === 8 && (pr.y - Math.round(p.s * 7 * pr.s * US) > cut + 1 || pr.x < -30 || pr.x > VW + 30)) continue;
       if(pr.y > cut + 1){
         // its feet are behind the crest: draw only what stands above it
         c.save(); c.beginPath(); c.rect(0, 0, VW, Math.max(0, cut)); c.clip();
@@ -14355,6 +14398,18 @@ Object.assign(Scene, {
         if(blink > 0.65){ c.fillStyle = '#4A6A1E'; fillClip(c, f.x - 1, f.y - 1, kk + 2, kk + 2, clip); }
         c.fillStyle = blink > 0.8 ? '#E8FF8A' : '#9ACB3A'; fillClip(c, f.x, f.y, kk, kk, clip);
       }
+
+    }else if(p.kind === 8){
+      // a shrub, a tuft or a rock in the rough, with a little shadow
+      const TS = this.treeSpr || {}, spr = TS[p.sp];
+      if(!spr) return;
+      const h = Math.round(p.s * (p.sp === 'bush' ? 7 : p.sp === 'tuft' ? 5 : 4.5) * pr.s * US);
+      if(h < 2) return;
+      const w = Math.round(h * spr.w / spr.h);
+      if(pr.x + w < -4 || pr.x - w > VW + 4) return;
+      // (one call or two each: there are many of them)
+      if(p.sp === 'bush' && h > 4){ c.fillStyle = 'rgba(8,16,10,.26)'; c.fillRect(pr.x - Math.round(w * 0.4), pr.y - 1, Math.round(w * 0.8), 1); }
+      blit(c, spr, pr.x - w / 2, pr.y - h, w, h);
 
     }else if(p.kind === 6){
       // frost on the grass: a pale speck, and one in four a glint catching
@@ -15836,7 +15891,11 @@ Object.assign(Scene, {
       // it (drawn over them all, it cut across the trees in front; the user
       // saw it). Under the haze, like the ground it lies on.
       const RI = this.isle && this.isle.rail ? this.isle : null;
-      if(RI){ this.drawProps(RI.bank, 1); this.drawRail(); this.drawProps(RI.bank, -1); }
+      // (the pin stands beyond the line: short of it, it goes down before
+      // the railway, which crosses in front of it; drawn after, its top
+      // stood over a crossing post)
+      const pinFirst = !!RI && this.camD < RI.bank;
+      if(RI){ this.drawProps(RI.bank, 1); if(pinFirst) this.drawFlagstick(); this.drawRail(); this.drawProps(RI.bank, -1); }
       else this.drawProps();
       this.buildHaze();
       if(this.haze) c.drawImage(this.haze, 0, 0);
@@ -15846,7 +15905,7 @@ Object.assign(Scene, {
       this.drawPier();
       this.drawDucks();
       this.drawGolferGround();
-      this.drawFlagstick();
+      if(!pinFirst) this.drawFlagstick();
       this.drawGolfer(D);
       this.drawBalls(dt);
       this.drawWeather();
