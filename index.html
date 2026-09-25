@@ -12006,7 +12006,19 @@ const Scene = {
     // (the rows are noted one to a slice of the ground, so a pixel counts as
     // on the water if a row within a pixel or two of it spans it)
     const on = (x, y) => { const a = rows.get(y); if(!a) return false; for(let k = 0; k < a.length; k += 2) if(x >= a[k] + 1 && x < a[k+1] - 1) return true; return false; };
-    const wet = (x, y) => on(x, y) || (on(x, y - 1) && on(x, y + 1)) || (on(x, y - 1) && on(x, y + 2)) || (on(x, y - 2) && on(x, y + 1));
+    // and the pixel itself must be water in the painted ground: a slice's
+    // row runs the width of its hazard, banks and all, and nearer slices
+    // paint their banks and the grass over its ends (the user saw drops
+    // landing on the grass)
+    const PP = this.pixGround !== false && PixPaint.px && PixPaint.w === VW && PixPaint.h === VH ? PixPaint : null;
+    if(PP && this._wtFor !== T._wt){
+      this._wtFor = T._wt; this._wtSet = new Set();
+      const was = PP.cur;
+      for(const col of T._wt){ PP.fillStyle = col; this._wtSet.add(PP.cur); }
+      PP.cur = was;
+    }
+    const water = (x, y) => !PP || (x >= 0 && x < VW && y >= 0 && y < VH && this._wtSet.has(PP.px[y * VW + x]));
+    const wet = (x, y) => water(x, y) && (on(x, y) || (on(x, y - 1) && on(x, y + 1)) || (on(x, y - 1) && on(x, y + 2)) || (on(x, y - 2) && on(x, y + 1)));
     const n = R.length / 3, N = Math.min(70, Math.round(n * 0.8)), c1 = mixC(pickC(T._wt, 0.95), '#FFFFFF', 0.7), c2 = mixC(pickC(T._wt, 0.9), '#FFFFFF', 0.4);
     for(let i = 0; i < N; i++){
       const L = 0.6 + 0.35 * hr(i, 1), clock = this.t / L + hr(i, 2), m = Math.floor(clock), u = clock - m;
@@ -12017,7 +12029,7 @@ const Scene = {
       const cx = x0 + 2 + hr(i, m + 3) * (x1 - x0 - 4), k = clamp((yy - HORIZON) / Math.max(1, VH - HORIZON), 0, 1);
       const r = u * (2.5 + k * 8), ry = Math.max(0.5, r * 0.32);
       c.fillStyle = u < 0.5 ? c1 : c2;
-      if(u < 0.12){ if(wet(Math.round(cx), yy)) c.fillRect(Math.round(cx), yy - 1, 1, 1); continue; }
+      if(u < 0.12){ if(wet(Math.round(cx), yy - 1)) c.fillRect(Math.round(cx), yy - 1, 1, 1); continue; }
       const pts = Math.max(6, Math.round(r * 5));
       for(let q = 0; q < pts; q++){
         const a = q / pts * Math.PI * 2, x = Math.round(cx + Math.cos(a) * r), y = Math.round(yy + Math.sin(a) * ry);
@@ -12848,14 +12860,16 @@ const Scene = {
       }
       if(!hit) this.nums.push(me);
     }
-    if(p.crit && this.sparks.length < 20) this.sparks.push({ t:0, k:'crit' });
     // a pure strike with one of the dearest drivers: its flourish at the ball
     // (the user asked), and a note of its own over the crack
     const CF = CLUBFX[clubNow().fx];
     if(p.crit && CF && CF.pure && !S.dgnRun){ this.pure = { t0: this.t, fx: clubNow().fx }; Sfx.play('pure', clubNow().fx); }
   },
-  spark(el){ if(this.sparks.length < 20) this.sparks.push({ t:0, k:el }); },
-  burst(id){ if(this.sparks.length < 20) this.sparks.push({ t:0, k:'skill', id }); },
+  // (a ring used to swell out beside him on a pure strike, an affinity and a
+  // skill; hanging in the air off his hip, it read as a stray circle, and
+  // the user asked for it gone)
+  spark(el){},
+  burst(id){},
   cast(g){ this.casts.push({ t:0, g }); if(this.casts.length > 4) this.casts.shift(); },
   holed(sc){
     this.banner = { t:0, n:sc.n, d:sc.d };
@@ -15246,12 +15260,6 @@ Object.assign(Scene, {
   drawFx(dt){
     const c = this.b;
     const gp = this.proj(this.camD, -0.30);
-    for(let i = this.sparks.length - 1; i >= 0; i--){
-      const sp = this.sparks[i]; sp.t += dt;
-      if(sp.t > .5){ this.sparks.splice(i, 1); continue; }
-      const col = sp.k === 'crit' ? PX.brass : sp.k === 'skill' ? PX.aur : (PX[sp.k] || PX.aur);
-      pxRing(c, gp.x + 3, gp.y - 10*US*gp.s, (4 + sp.t*42)*US, col);
-    }
     for(let i = this.nums.length - 1; i >= 0; i--){
       const n = this.nums[i]; n.t += dt;
       if(n.t > .95){ this.nums.splice(i, 1); continue; }

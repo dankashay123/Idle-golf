@@ -150,9 +150,10 @@ module.exports = {
 
         // ---- rain on the water ----
         const rings = (dev, cam) => {
-          DEV[dev](); hideSheet(); chaos('Crosswind');
+          if (dev) { DEV[dev](); hideSheet(); }
+          chaos('Crosswind');
           const I2 = Scene.isle, at = cam(I2);
-          let n = 0, off = 0;
+          let n = 0, off = 0, bank = 0;
           for (let k = 0; k < 6; k++) {
             Scene.t = 60 + k * 0.23;
             const a = frame(at, null), R = Scene._rips.slice();
@@ -160,10 +161,31 @@ module.exports = {
             const rows = new Map(); for (let i = 0; i < R.length; i += 3) { const L = rows.get(R[i]) || []; L.push([R[i + 1], R[i + 1] + R[i + 2]]); rows.set(R[i], L); }
             const wet = (x, y) => { for (let dy = -2; dy <= 2; dy++) { const L = rows.get(y + dy); if (L && L.some(([l, rr]) => x >= l && x < rr)) return true; } return false; };
             const d = diff(a, b); n += d.length; off += d.filter(([x, y]) => !wet(x, y)).length;
+            // and on water in the painted ground itself, not a bank or the
+            // grass the row runs under (the user saw drops on the grass)
+            const WS = new Set(Scene.theme._wt.map(h => { PixPaint.fillStyle = h; return PixPaint.cur; }));
+            // (the rings' own pixels: pale, water mixed with white; anything
+            // else that moved between the two frames is not a ring)
+            const pale = ([x, y]) => { const i = (y * VW + x) * 4; return a[i] + a[i + 1] + a[i + 2] > 420; };
+            bank += d.filter(p => pale(p) && !WS.has(PixPaint.px[p[1] * VW + p[0]])).length;
           }
-          return { n, off, rain: Scene.rain };
+          return { n, off, bank, rain: Scene.rain };
         };
         o.rain = { island: rings('isle', I2 => 30), stones: rings('stones', I2 => I2.bank - 4), pier: rings('pier', I2 => I2.bank + 4) };
+        // and an ordinary pond and a river across a hole, looking along
+        // them from short of their middles, banks and grass round them in
+        // view: the first hole of each on the Snowline
+        {
+          DEV.course(B.COURSE.findIndex(c => c.id === 'snowline')); hideSheet();
+          const t = tournamentOf(S.hole), first = (t - 1) * B.ROUND * B.DAYS + 1;
+          for (let h = first; h < first + B.ROUND; h++) {
+            S.hole = h; chaos('Crosswind');
+            const W = Scene.water, k = W && W.river ? 'river' : 'pond';
+            if (!W || W.lake || W.canyon || Scene.isle || o.rain[k]) continue;
+            o.rain[k] = rings(null, () => Math.max(0, W.d - 8));
+          }
+          if (!o.rain.pond) o.rain.pond = { none: 1 };
+        }
         // none out of the rain, none on ice
         {
           DEV.isle(); hideSheet(); chaos('Fair');
@@ -257,7 +279,7 @@ module.exports = {
     if (!(s.steam.whistle === 1 && s.steam['whistle-toot'] === 1)) f('the steam train\'s sounds: ' + J(s.steam));
     if (s.away['whistle-toot'] || s.away['horn-toot']) f('a toot with him not at the line: ' + J(s.away));
     for (const k in r.rain) { const R = r.rain[k];
-      if (!R.rain || !(R.n >= 300) || R.off) f('rain rings on the ' + k + ': ' + J(R) + ' (on the water only)'); }
+      if (!R.rain || !(R.n >= 300) || R.off || R.bank) f('rain rings on the ' + k + ': ' + J(R) + ' (on the water only)'); }
     if (r.dryRings || r.iceRings) f('rain rings out of the rain ' + r.dryRings + ', or on ice ' + r.iceRings);
     for (const k in r.snow) if (!(r.snow[k] >= 30)) f('snow on the ' + k + ': ' + r.snow[k] + ' pixels');
     for (const k in r.lights) if (!(r.lights[k].n >= 20) || r.lights[k].day) f('night on the ' + k + ': ' + J(r.lights[k]) + ' pixels of light at night and by day (lanterns, lights, lamps or fireflies, only at night)');
