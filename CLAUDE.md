@@ -5,7 +5,8 @@ the styles and the script. There is no build step — open the file and it runs.
 
 **Starting a new session? Read `HANDOFF.md` first.** It has where things
 stand, a map of the file, what the recent features do and ideas to offer next.
-Update it at the end of any sizeable piece of work.
+Update it only when the user asks (they said so: "You don't need to update
+the handoff notes until I tell you to").
 
 ## Standing instructions
 
