@@ -3011,6 +3011,10 @@ const B = {
   },
   // what the signature hole of the week (sigWeek) multiplies its holes' purse by
   SIG_WEEK_MULT: 2,
+  // the Signature Week's prize, each week all five kinds are played (the
+  // user asked), on top of the honour: less than a major's win, more than
+  // playing one
+  SIG_WEEK_SOV: 25,
   ACH: [
     { id:'h100',   n:'Fairway Found',    d:'Play 100 holes',              m:'holes',  v:100,   r:{k:'tick', v:2}, sov:5 },
     { id:'h2500',  n:'Card Sharp',       d:'Play 2,500 holes',            m:'holes',  v:2500,  r:{k:'gld', v:0.05}, sov:10 },
@@ -6341,7 +6345,8 @@ function sigScore(sc){
   // the Signature Week: the kinds played this real week (see sigWeekKinds)
   const wk = weekNow();
   if(!S.sigWk || S.sigWk.wk !== wk) S.sigWk = { wk, k: [] };
-  if(!S.sigWk.k.includes(sk)){ S.sigWk.k.push(sk); if(S.sigWk.k.length === SIG_KINDS.length) bump('sigWeek'); }
+  if(!S.sigWk.k.includes(sk)){ S.sigWk.k.push(sk);
+    if(S.sigWk.k.length === SIG_KINDS.length){ bump('sigWeek'); grantSov(B.SIG_WEEK_SOV, 'Signature Week'); } }
   const ri = roundIndex(S.hole);
   if(!S.sigRound || S.sigRound.r !== ri) S.sigRound = { r: ri, n: 0, ok: 1 };
   const R = S.sigRound;
@@ -16859,7 +16864,7 @@ function renderSigWeek(){
   const stacks = B.COURSE.filter(cs => HOME_PIER[cs.id] || B.SIG_HOLE[cs.id] === 'pier').map(cs => cs.n);
   const won = (S.tally && S.tally.sigWeek) || 0;
   box.innerHTML = '<div class="hint" id="sigHint"><div class="foldhead">'
-    + '<span>' + (all ? '<b style="color:var(--brass)">\u2713 All five this week</b>' : 'Play all five kinds this week')
+    + '<span>' + (all ? '<b style="color:var(--brass)">\u2713 All five this week</b>' : 'Play all five kinds this week \u00b7 +' + B.SIG_WEEK_SOV + sovIc())
     + (won ? ' \u00b7 won ' + won + '\u00d7' : '') + '</span>'
     + '<button class="qm" aria-label="How the Signature Week works">?</button></div>'
     + '<div class="fold" style="margin-top:6px">Monday to Sunday. A home round has four kinds; the sea stack is at '

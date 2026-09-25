@@ -185,14 +185,16 @@ module.exports = {
           S.tally.sigWeek = 0; delete S.sigWk; delete S.achDone.sigWk;
           DAY_FORCE = mon + 1;
           W.none = recRow();
-          homeFour().forEach(h => playW(h, 0)); W.four = { t: tally('sigWeek'), row: recRow() };
+          const sov0 = S.sov || 0;
+          homeFour().forEach(h => playW(h, 0)); W.four = { t: tally('sigWeek'), row: recRow(), sov: (S.sov || 0) - sov0 };
           // and on the Tour tab: each kind ticked off as it is played, the
           // hole of the week marked, the count in the band
           renderSigWeek();
           W.tour = { note: $('sigNote').textContent, rows: [...$('sigBox').querySelectorAll('.lb')].map(l => [l.children[1].textContent, l.children[2].textContent]) };
-          playW(aPier(), 1); W.five = { t: tally('sigWeek'), row: recRow() };
+          playW(aPier(), 1); W.five = { t: tally('sigWeek'), row: recRow(), sov: (S.sov || 0) - sov0 };
           // again the same week: once a week
           playW(aPier(), -1); homeFour().forEach(h => playW(h, -1)); W.again = tally('sigWeek');
+          W.againSov = (S.sov || 0) - sov0;
           checkAch(); W.honour = !!S.achDone.sigWk;
           // the next week starts again from none
           DAY_FORCE = mon + 7; W.nextRow = recRow();
@@ -206,7 +208,7 @@ module.exports = {
           for (const v of ['x', 3, { wk: 'a', k: [] }, { wk: 3, k: 'island' }, { wk: 3, k: ['moat'] }, { wk: 3, k: ['pier', 'pier'] }]) { S.sigWk = v; initState(); if (S.sigWk !== undefined) W.repair.push(JSON.stringify(v)); }
           S.sigWk = { wk: 3, k: ['pier', 'rail'] }; initState(); if (!S.sigWk || S.sigWk.k.length !== 2) W.repair.push('a good one was dropped');
           DAY_FORCE = null;
-          o.sigWeek = W;
+          o.sigWeek = W; o.sigWeekSov = B.SIG_WEEK_SOV;
         }
 
         // ---- a save with junk in it ---------------------------------------------
@@ -248,10 +250,11 @@ module.exports = {
     const W = r.sigWeek;
     if (W.none !== '0\u00a0of 5 this week' || W.four.t || W.four.row !== '4\u00a0of 5 this week' || W.five.t !== 1 || W.five.row !== '5\u00a0of 5 this week')
       f2('the Signature Week: ' + JSON.stringify(W) + ' (none at first, four from a home round and no honour, the sea stack makes five and the honour)');
-    const tr = W.tour;
+    const tr = W.tour, B25 = r.sigWeekSov;
     if (tr.note !== '4\u00a0of 5 this week' || tr.rows.length !== 5 || tr.rows.filter(([, v]) => /played/.test(v)).length !== 4
         || /played/.test(tr.rows.find(([k]) => /Sea Stack/.test(k))[1]) || tr.rows.filter(([k]) => /pays/.test(k)).length !== 1)
       f2('the Signature Week on the Tour tab: ' + JSON.stringify(tr) + ' (five kinds, the four played ticked, the sea stack not, the hole of the week marked)');
+    if (W.four.sov || W.five.sov !== B25 || W.againSov !== B25) f2('the Signature Week\'s prize: ' + W.four.sov + ' sovereigns with four kinds, ' + W.five.sov + ' with five, ' + W.againSov + ' after playing on that week (' + B25 + ' once a week)');
     if (W.again !== 1 || !W.honour) f2('the Signature Week counted again in the same week (' + W.again + '), or not awarded (' + W.honour + ')');
     if (W.nextRow !== '0\u00a0of 5 this week' || W.split.t !== 1 || W.split.row !== '1\u00a0of 5 this week' || W.second !== 2)
       f2('the Signature Week across weeks: ' + JSON.stringify(W) + ' (a new week starts from none; four on a Sunday and the fifth on the Monday is no week; all five the next week is)');
@@ -271,7 +274,7 @@ module.exports = {
       'a birdie in ' + w.mph + ' mph of wind counts, a birdie in a breeze or a par in a gale does not',
       'the matching pair, all ' + r.homesNeed + ' home courses, a major and every caddie perk: all six awarded',
       'signature holes: birdies counted by kind, an island ace, a home round of par or better once, spoilt by a bogey, never on a course with one',
-      'the Signature Week: four kinds from a home round, the sea stack the fifth, once a week; four on a Sunday and the fifth on the Monday no week',
+      'the Signature Week: four kinds from a home round, the sea stack the fifth and ' + r.sigWeekSov + ' sovereigns, once a week; four on a Sunday and the fifth on the Monday no week',
       'the Trophy Room records each kind: ' + Object.entries(r.recGot).map(([k, v]) => k + ' ' + v.n + ' best ' + v.b).join(', ')];
   }
 };

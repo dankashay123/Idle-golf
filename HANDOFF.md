@@ -11,12 +11,12 @@ check is for.
 - Everything is committed and pushed to `main` (mirrored on the session
   branch `claude/loving-archimedes-ct2rpb`). Nothing is half-built.
 - `node test/run.js` passes all **56 checks** (about nine minutes).
-- **Last request**: "I think 1 would take up too much time, so let's skip
-  that [the railway station]. let's do 2 and 3": the Signature Week on the
-  Tour tab, and a flourish for the three dearest drivers on a pure strike.
-  Done: §5 "The Signature Week on the Tour tab", "A pure strike with the
-  dearest drivers". The station is off the menu.
-- **The request before**: the moments cut to half a second on an
+- **Last request**: "let's do 5 for now": a prize for the Signature
+  Week. Done: 25 sovereigns (`B.SIG_WEEK_SOV`) paid with the fifth kind in
+  `sigScore`, with a message, once a week; the Tour tab's line says it.
+- **The request before**: the Signature Week on the Tour tab and the
+  dearest drivers' flourish on a pure strike (§5).
+- **Before that**: the moments cut to half a second on an
   albatross or an ace, bursting out of him; night on the signature holes;
   the caddies' wings side on.
 - **Before that**: the Divine made the ultimate skin, wings side on
@@ -368,7 +368,10 @@ Line numbers are approximate and drift. Search for the name instead.
   line saying all five or not and how many weeks won, a `?` fold (Monday
   to Sunday; the courses with a sea stack, worked out from `HOME_PIER` and
   `B.SIG_HOLE`), and a row per kind, "\u2713 played" in green or a dash, the
-  hole of the week's row marked "pays 2\u00d7".
+  hole of the week's row marked "pays 2\u00d7". The prize (`B.SIG_WEEK_SOV`,
+  25 sovereigns, between a major played and a major won) is paid with the
+  fifth kind (`grantSov` in `sigScore`), on top of the honour, and the
+  line says "+25" until the week is done.
 
 ### A pure strike with the dearest drivers (user asked, from the menu)
 
@@ -1472,6 +1475,8 @@ him (about 49px tall on a 320 phone, 71px on its side).
 
 ## 6. Recent history (newest first, one line each)
 
+- The Signature Week pays 25 sovereigns each week it is done.
+
 - The Signature Week on the Tour tab; a flourish on a pure strike for the
   Divine, Demonic and Ascended drivers.
 
@@ -1614,9 +1619,8 @@ him (about 49px tall on a 320 phone, 71px on its side).
 
 ## 8. What to offer next
 
-Everything asked for is done. First ask how the pure-strike flourishes
-feel at their tempo (too often, too small?). The railway station was
-turned down as too big a job: don't offer it again.
+Everything asked for is done. The railway station was turned down as
+too big a job: don't offer it again.
 
 The menu to offer next:
 1. **Night on the ordinary holes** (recommended): lamps by the tee, a lit
@@ -1627,5 +1631,5 @@ The menu to offer next:
    something as an ace drops.
 4. **A Mythic caddie perk**: a perk only the three dearest caddies can
    wear, with an effect of its own.
-5. **Weekly Signature bonus**: the Signature Week pays a small prize of
-   sovereigns each time, on top of the honour.
+5. **The Hole of the Week streak**: a small bonus for playing the
+   signature hole of the week three weeks running.
