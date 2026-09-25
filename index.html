@@ -3361,6 +3361,17 @@ const B = {
       skin:'#F2C75C', skin2:'#B8862A', shoe:'#7A5818', belt:'#8F6A1E' },
     { id:'divine',  n:'Divine',          cost:3000, fx:'divine', cat:'skin', top:1,
       cap:'#FFD66B', cap2:'#C99A2E', shirt:'#FFF8E6', shirt2:'#F1D98F', shirt3:'#C9A24A', pant:'#F4E7C2', pant2:'#D8C18A', shoe:'#B98A2E' },
+    // The user's two: the Demonic, horned and winged, out of a pit of
+    // hellfire, at the Divine's price; and the Ascended, on six wings of
+    // light under a crown, the heavens turning behind him. Each has a
+    // caddie, a club, a trail and a ball to match. (top 2 is a step above
+    // Legendary: Mythic.) The belt's colour is also his eyes and his soles.
+    { id:'demonic', n:'Demonic',         cost:3000, fx:'demonic', cat:'skin', top:1, pattern:'hellcrack',
+      cap:'#1E0E10', cap2:'#0C0406', shirt:'#5C1412', shirt2:'#42100E', shirt3:'#280808', pant:'#1E1214', pant2:'#100A0C',
+      skin:'#B4442E', skin2:'#7C2A1C', shoe:'#140A0A', belt:'#FF5A1E', hair:'#140808' },
+    { id:'ascended', n:'Ascended',       cost:3500, fx:'ascended', cat:'skin', top:2, pattern:'filigree',
+      cap:'#FFFFFF', cap2:'#D6E0F4', shirt:'#FBFCFF', shirt2:'#DCE5F7', shirt3:'#AEBDE0', pant:'#EEF2FB', pant2:'#C2CCE4',
+      skin:'#FFEFD8', skin2:'#E8CDA4', shoe:'#FFD66B', belt:'#FFD66B', hair:'#FFF6DA' },
     // Won, never bought: one for each major of the week, and its caddie with it.
     { id:'mjMasters',   n:'Masters Jacket',   cost:0, cat:'major', major:'masters',
       cap:'#F4F4EC', cap2:'#C8C8BE', shirt:'#2E7A3E', shirt2:'#236030', shirt3:'#174A22', pant:'#E8E0C8', pant2:'#C4BA9E' },
@@ -3429,7 +3440,9 @@ const B = {
     { id:'magma',     n:'Magma',          cost:900,  fx:'magma',    shaft:'#3A2420', shaft2:'#241612', head:'#3A1E14', head2:'#FF7A2A', grip:'#0E0A08', glow:'#FF7A2A' },
     { id:'prism',     n:'Prism',          cost:1000, fx:'prism',    shaft:'#FFFFFF', shaft2:'#DDDDDD', head:'#FFFFFF', head2:'#FFFFFF', grip:'#202020' },
     { id:'saber',     n:'Light Saber',    cost:1200, fx:'saber',    shaft:'#E8FFFF', shaft2:'#9FFFFF', head:'#E8FFFF', grip:'#3A3F46', glow:'#3FE0FF' },
-    { id:'divine',    n:'Divine Driver',  cost:2000, fx:'divine',   top:1, shaft:'#FFF3C8', shaft2:'#E3B457', head:'#FFD66B', head2:'#FFFFFF', grip:'#8A6A26', glow:'#FFD66B' }
+    { id:'divine',    n:'Divine Driver',  cost:2000, fx:'divine',   top:1, shaft:'#FFF3C8', shaft2:'#E3B457', head:'#FFD66B', head2:'#FFFFFF', grip:'#8A6A26', glow:'#FFD66B' },
+    { id:'demonic',   n:'Demonic Driver', cost:2000, fx:'demonic',  top:1, shaft:'#241010', shaft2:'#160A0A', head:'#1A0A0A', head2:'#FF5A1E', grip:'#5A100C', glow:'#E8401C' },
+    { id:'ascended',  n:'Ascended Driver', cost:2350, fx:'ascended', top:2, shaft:'#FFFFFF', shaft2:'#E4ECFF', head:'#F4F8FF', head2:'#FFD66B', grip:'#E3B457', glow:'#BFEFFF' }
   ],
   TRAILS: [
     { id:'plain',   n:'Plain',   cost:0,    cols:['#F4F6EF'] },
@@ -3440,6 +3453,8 @@ const B = {
     { id:'mythic',  n:'Mythic',  cost:500,  fx:'tMythic',  cols:['#C68BFF'] },
     { id:'rainbow', n:'Rainbow', cost:1000, fx:'tRainbow', cols:['#E4574A', '#E3B457', '#7ADB86', '#57A5C2', '#C68BFF'] },
     { id:'seraph',  n:'Seraph Wake', cost:2000, fx:'tSeraph', cols:['#FFF6D8', '#FFD66B'], top:1 },
+    { id:'hellfire',  n:'Hellfire Wake',  cost:2000, fx:'tHellfire',  cols:['#FF5A1E', '#FFD34A'], top:1 },
+    { id:'ascension', n:'Ascension Wake', cost:2350, fx:'tAscension', cols:['#FFFFFF', '#9FE8FF'], top:2 },
     // balls: more than a colour
     { id:'duck',     n:'Rubber Duck', cost:400,  fx:'duck',      cat:'ball', cols:['#FFD84A'] },
     { id:'hearts',   n:'Hearts',      cost:500,  fx:'hearts',    cat:'ball', cols:['#FF4F7A'] },
@@ -3447,7 +3462,9 @@ const B = {
     { id:'confetti', n:'Confetti',    cost:700,  fx:'confetti',  cat:'ball', cols:['#FF4FB8', '#3FE0FF', '#FFE14A', '#7CFF6A'] },
     { id:'comet',    n:'Comet',       cost:1000, fx:'comet',     cat:'ball', cols:['#FFB43A', '#F0612A'] },
     { id:'blackhole',n:'Black Hole',  cost:1300, fx:'blackhole', cat:'ball', cols:['#C68BFF', '#3A1E5A'] },
-    { id:'godlight', n:'Godlight',    cost:1500, fx:'godlight',  cat:'ball', cols:['#FFD66B'], top:1 }
+    { id:'godlight', n:'Godlight',    cost:1500, fx:'godlight',  cat:'ball', cols:['#FFD66B'], top:1 },
+    { id:'demoneye', n:'Demon Eye',   cost:1500, fx:'demoneye',  cat:'ball', cols:['#FF3A1A'], top:1 },
+    { id:'ascorb',   n:'Ascended Orb', cost:1750, fx:'ascorb',   cat:'ball', cols:['#FFFFFF'], top:2 }
   ]
 };
 
@@ -6745,7 +6762,26 @@ const OUTFIT_ICON = ['...cccc.....',
 // a skin with an effect gets sparks of its colours in the corners of its tile
 const SKIN_ACCENT = { divine:['#FFD66B', '#FFFFFF'], inferno:['#FFB43A', '#F0612A'], frostborn:['#FFFFFF', '#9FD6F2'],
   stormcaller:['#8FD0FF', '#FFFFFF'], void:['#C68BFF', '#6E44A0'], glitch:['#FF2A6D', '#2AE0FF'],
-  midas:['#FFFFFF', '#FFD86B'], disco:['#FF4FB8', '#3FE0FF'], ghost:['#EEF2FF', '#A5B0D6'] };
+  midas:['#FFFFFF', '#FFD86B'], disco:['#FF4FB8', '#3FE0FF'], ghost:['#EEF2FF', '#A5B0D6'],
+  demonic:['#FF5A1E', '#FFD34A'], ascended:['#FFFFFF', '#9FE8FF'] };
+// and the dearest two a little more of themselves on their tiles: the
+// Demonic's horns and wings, the Ascended's halo and wings (P paints one
+// pixel; the caddie's tile has his bag where the right wing would go)
+const ICON_FX = {
+  demonic(P, caddie){
+    const W = '#5E1418', V = '#B0301E', H = '#E8DCC8';
+    if(caddie){ P(1, 0, H); P(6, 0, H); P(4, 2, '#FF5A1E'); }
+    else{ P(2, 0, H); P(7, 0, H); P(1, 1, '#3A2420'); P(8, 1, '#3A2420'); }
+    for(const [x, y] of [[0, 1], [0, 2], [1, 2], [0, 3], [1, 3], [0, 4]]){ P(x, y, W); if(!caddie) P(11 - x, y, W); }
+    P(0, 1, V); if(!caddie) P(11, 1, V);
+  },
+  ascended(P, caddie){
+    const Y = '#FFD66B', W = '#FFFFFF', w = '#DCE5F7';
+    if(caddie){ P(1, 0, Y); P(6, 0, Y); P(4, 2, W); }
+    else{ P(1, 0, Y); P(8, 0, Y); P(0, 0, '#FFF1C4'); P(9, 0, '#FFF1C4'); }
+    for(const [x, y] of [[0, 1], [0, 2], [1, 2], [0, 3], [1, 3], [0, 4], [1, 4]]){ P(x, y, y & 1 ? w : W); if(!caddie) P(11 - x, y, y & 1 ? w : W); }
+  }
+};
 function outfitUrl(o){
   const key = 'outfit|' + o.id;
   if(DOMSPR[key] !== undefined) return DOMSPR[key];
@@ -6756,6 +6792,7 @@ function outfitUrl(o){
       const g = sp.cv.getContext('2d');
       [[0, 3], [11, 3], [10, 0], [1, 0], [0, 9], [11, 9], [1, 11], [10, 11]].forEach(([x, y], i) => {
         g.fillStyle = acc[i & 1]; g.fillRect(x, y, 1, 1); });
+      if(ICON_FX[o.fx]) ICON_FX[o.fx]((x, y, col) => { g.fillStyle = col; g.fillRect(x, y, 1, 1); }, false);
     }
     return DOMSPR[key] = sp.cv.toDataURL();
   }catch(e){ return DOMSPR[key] = ''; }
@@ -6772,12 +6809,17 @@ function clubUrl(d){
     if(d.glow) pts.forEach(([x, y]) => { g.globalAlpha = 0.45; P(x - 1, y, d.glow); P(x + 1, y, d.glow); g.globalAlpha = 1; });
     const R = ['#E4574A', '#F0A03C', '#E3D457', '#7ADB86', '#57A5C2', '#C68BFF'];
     pts.forEach(([x, y], i) => P(x, y, i < 2 && d.grip ? d.grip : d.fx === 'candy' ? (i & 1 ? '#E4302A' : '#FFFFFF')
-      : d.fx === 'prism' ? R[i % 6] : d.fx === 'magma' && i % 3 === 0 ? '#FF7A2A' : d.shaft));
+      : d.fx === 'prism' ? R[i % 6] : d.fx === 'magma' && i % 3 === 0 ? '#FF7A2A'
+      : d.fx === 'demonic' && i % 3 === 1 ? '#FF6A1A' : d.fx === 'ascended' && i % 2 ? ['#FFB8EC', '#9FE8FF', '#FFE38A'][i % 3] : d.shaft));
     if(d.fx === 'baguette') pts.forEach(([x, y]) => P(x + 1, y, d.shaft2));
     if(d.fx === 'chicken'){ g.fillStyle = '#F6D84A'; g.fillRect(7, 8, 3, 3); P(7, 7, '#E4302A'); P(8, 7, '#E4302A'); P(10, 9, '#FF8A2A'); P(9, 9, '#1A1A1A'); }
     else if(d.fx === 'saber'){ P(7, 10, d.shaft); P(8, 10, d.glow); }
     else{ g.fillStyle = d.head; g.fillRect(7, 9, d.big ? 4 : 3, d.big ? 3 : 2); if(d.head2){ g.fillStyle = d.head2; g.fillRect(7, 9, d.big ? 4 : 3, 1); } }
-    const acc = { divine:['#FFD66B', '#FFFFFF'], ice:['#FFFFFF', '#9FD6F2'], neon:['#3FFFB0', '#CFFFEA'], gold:['#FFFFFF', '#FFE39A'] }[d.fx === 'glint' ? 'gold' : d.fx];
+    // the Demonic's head burns and has horns; the Ascended's wears a halo
+    if(d.fx === 'demonic'){ P(7, 8, '#E8DCC8'); P(9, 8, '#E8DCC8'); P(10, 9, '#FF8A2A'); P(10, 8, '#FFD34A'); }
+    if(d.fx === 'ascended'){ P(8, 7, '#FFD66B'); P(9, 7, '#FFD66B'); P(10, 7, '#FFD66B'); }
+    const acc = { divine:['#FFD66B', '#FFFFFF'], ice:['#FFFFFF', '#9FD6F2'], neon:['#3FFFB0', '#CFFFEA'], gold:['#FFFFFF', '#FFE39A'],
+                  demonic:['#FF5A1E', '#FFD34A'], ascended:['#FFFFFF', '#9FE8FF'] }[d.fx === 'glint' ? 'gold' : d.fx];
     if(acc) [[10, 1], [1, 10], [11, 4], [4, 11]].forEach(([x, y], i) => P(x, y, acc[i & 1]));
     return DOMSPR[key] = cv.toDataURL();
   }catch(e){ return DOMSPR[key] = ''; }
@@ -6795,6 +6837,7 @@ function caddieUrl(d){
     if(acc){
       const g = sp.cv.getContext('2d');
       [[0, 3], [11, 1], [7, 0], [0, 9], [11, 11], [7, 11]].forEach(([x, y], i) => { g.fillStyle = acc[i & 1]; g.fillRect(x, y, 1, 1); });
+      if(ICON_FX[d.fx]) ICON_FX[d.fx]((x, y, col) => { g.fillStyle = col; g.fillRect(x, y, 1, 1); }, true);
     }
     return DOMSPR[key] = sp.cv.toDataURL();
   }catch(e){ return DOMSPR[key] = ''; }
@@ -6817,7 +6860,15 @@ const BALL_ICON = {
   hearts:   { rows:['............','..RR.RR.....','.RRRRRRR....','.RRRRRRR....','..RRRRR..p.p','...RRR..ppppp','....R....ppp.','..........p..','............','............','............','............'],
               map:{ R:'#FF4F7A', p:'#FF9AB8' } },
   duck:     { rows:['............','............','.....YYY....','....YYKYO...','....YYYYOO..','.Y..YYYY....','.YYYYYYYY...','.YYYYYYYY...','..YYYYYY....','...YYYY.....','.bbbbbbbbb..','............'],
-              map:{ Y:'#FFD84A', K:'#1A1A1A', O:'#FF8A2A', b:'#7FC8F0' } }
+              map:{ Y:'#FFD84A', K:'#1A1A1A', O:'#FF8A2A', b:'#7FC8F0' } },
+  tHellfire:{ rows:['.........F..','........FfF.','.......fWWf.','......fFWWF.','.....oRFFf..','....sRRo....','...sRRr.....','..sRr.......','.ssr........','ss..........','s...........','............'],
+              map:{ W:'#FFFFFF', F:'#FFD34A', f:'#FF8A2A', o:'#FF6A1A', R:'#E8281C', r:'#8A1A0E', s:'#3A2626' } },
+  demoneye: { rows:['............','....KKKK....','..KKRRRRKK..','.KRRooooRRK.','.KRoYYPYoRK.','KRoYYYPYYoRK','KRoYYYPYYoRK','.KRoYYPYoRK.','.KRRooooRRK.','..KKRRRRKK..','....KKKK....','............'],
+              map:{ K:'#2A0606', R:'#C8281C', o:'#FF6A1A', Y:'#FFD34A', P:'#0A0000' } },
+  tAscension:{ rows:['........YYY.','.......Y...Y','........YYY.','.......pWWc.','......gpWWc.','.....bgpcc..','....cbgp....','...cbgp..s..','..cbgp......','.cbgp...s...','cbgp........','bgp.........'],
+              map:{ Y:'#FFD66B', W:'#FFFFFF', p:'#FFB8EC', c:'#9FE8FF', g:'#FFE38A', b:'#B8FFD8', s:'#FFFFFF' } },
+  ascorb:   { rows:['.....W......','.....Y......','.W...Y...W..','..Y.cWc.Y...','...cWWWc....','WYYWWWWWYYW.','...cWWWc....','..Y.cWc.Y...','.W...Y...W..','.....Y......','.....W......','............'],
+              map:{ W:'#FFFFFF', Y:'#FFD66B', c:'#9FE8FF' } }
 };
 // and of a trail: a ball arcing up out of the bottom left, its trail behind it
 function trailUrl(t){
@@ -6908,7 +6959,7 @@ function renderShop(){
       const worn = (k === 'o' ? S.outfit : k === 'c' ? (S.caddie || 'bib') : k === 'k' ? (S.club || 'steel') : S.trail) === d.id;
       // a major's jacket is won, not bought: it names the major instead of a price
       const won = d.major ? courseById(d.major) : null;
-      return shopCard({ img, on: worn || !!d.top || (!!won && own), badge: worn ? 'WORN' : d.top ? 'LEGENDARY' : won && own ? 'CHAMPION' : '', head: d.n,
+      return shopCard({ img, on: worn || !!d.top || (!!won && own), badge: worn ? 'WORN' : d.top ? (d.top > 1 ? 'MYTHIC' : 'LEGENDARY') : won && own ? 'CHAMPION' : '', head: d.n,
         sub: own ? '' : '<button class="mini try" data-try="' + k + '.' + d.id + '">Try it</button>',
         price: worn ? 'WORN' : own ? 'WEAR' : won ? 'WIN IT' : sovFmt(d.cost),
         note: worn || own ? '' : won ? won.short : B.SOV.toLowerCase(),
@@ -8583,7 +8634,29 @@ const PATTERNS = {
   hawaii: (x, y) => (x * 3 + y * 5) % 9 === 0 ? '#FF6FA8' : (x * 5 + y * 3) % 13 === 0 ? '#FFE14A'
                   : (x + y * 2) % 11 === 0 ? '#FFFFFF' : null,
   polka:  (x, y) => ((x & 3) === 1 && (y & 3) === 1) ? '#FFFFFF' : ((x & 3) === 3 && (y & 3) === 3) ? '#FFE14A' : null,
-  rainbow:(x, y) => ['#E4302A', '#FF9A2A', '#FFE14A', '#4FD86A', '#3F8AFF', '#B04FFF'][(x + y) % 6]
+  rainbow:(x, y) => ['#E4302A', '#FF9A2A', '#FFE14A', '#4FD86A', '#3F8AFF', '#B04FFF'][(x + y) % 6],
+  // the Demonic: cracks glowing through dark red, as through a crust on
+  // lava. The edges between the cells of a jittered grid: where the nearest
+  // cell's centre and the next nearest are about as near. (The pulse of
+  // light through them is drawn over the top: see veinsOf.)
+  hellcrack: (x, y) => {
+    const C = 5, gx = Math.floor(x / C), gy = Math.floor(y / C);
+    let d1 = 1e9, d2 = 1e9;
+    for(let j = -1; j <= 1; j++) for(let i = -1; i <= 1; i++){
+      const px = (gx + i + hr(gx + i, gy + j)) * C, py = (gy + j + hr(gy + j + 7, gx + i + 3)) * C;
+      const d = Math.hypot(x + 0.5 - px, y + 0.5 - py);
+      if(d < d1){ d2 = d1; d1 = d; } else if(d < d2) d2 = d;
+    }
+    const e = d2 - d1;
+    return e < 0.7 ? (hr(x + 3, y) > 0.72 ? '#FFD34A' : '#FF8A2A') : e < 1.3 && hr(y, x + 5) > 0.55 ? '#B8321A' : null;
+  },
+  // the Ascended: gold thread worked into white, a lattice of diamonds with
+  // a bead where its lines cross
+  filigree: (x, y) => {
+    const a = (x + y) % 6, b = (x - y + 60) % 6;
+    if(a === 0 && b === 0) return '#FFD66B';
+    return (a === 0 || b === 0) && (x + 2 * y) % 3 ? '#F2DFA4' : null;
+  }
 };
 function patterned(sp, o){
   if(!o.pattern && !o.capPattern) return sp;
@@ -8985,6 +9058,331 @@ function drawGlow(c, cx, cy, rx, ry, bands, phase, a){
   c.globalAlpha = 1;
 }
 
+/* ---- baked stamps, for the dearest looks ----
+   A shape an effect stamps every frame but that takes hundreds of pixels to
+   paint -- a skin's wings, a ring of runes, a crown, the heavens turning --
+   is painted once per size and per step of its animation into a canvas of
+   its own, and stamped after with one drawImage. Shapes painted with the
+   canvas's own paths are then snapped to the look's own colours (pal), each
+   pixel fully on or off, so a stamp is as crisp as the sprite it goes with. */
+const FXBAKE = new Map();
+function fxBake(key, w, h, paint, pal, edge){
+  let cv = FXBAKE.get(key);
+  if(cv) return cv;
+  cv = document.createElement('canvas');
+  cv.width = Math.max(1, Math.ceil(w)); cv.height = Math.max(1, Math.ceil(h));
+  const g = cv.getContext('2d');
+  paint(g);
+  if(pal) crispen(g, cv.width, cv.height, pal);
+  if(edge) edged(g, cv.width, cv.height, edge);
+  if(FXBAKE.size > 800) FXBAKE.delete(FXBAKE.keys().next().value);
+  FXBAKE.set(key, cv);
+  return cv;
+}
+// a one pixel edge in col round a baked shape, so a pale one still reads
+// against a pale sky
+function edged(g, w, h, col){
+  const d = g.getImageData(0, 0, w, h), a = d.data, on = i => a[i * 4 + 3] === 255;
+  const r = parseInt(col.slice(1, 3), 16), gg = parseInt(col.slice(3, 5), 16), b = parseInt(col.slice(5, 7), 16), add = [];
+  for(let y = 0; y < h; y++) for(let x = 0; x < w; x++){
+    const i = y * w + x; if(a[i * 4 + 3]) continue;
+    if((x > 0 && on(i - 1)) || (x < w - 1 && on(i + 1)) || (y > 0 && on(i - w)) || (y < h - 1 && on(i + w))) add.push(i);
+  }
+  for(const i of add){ a[i * 4] = r; a[i * 4 + 1] = gg; a[i * 4 + 2] = b; a[i * 4 + 3] = 255; }
+  g.putImageData(d, 0, 0);
+}
+function crispen(g, w, h, pal){
+  const P = pal.map(s => [parseInt(s.slice(1, 3), 16), parseInt(s.slice(3, 5), 16), parseInt(s.slice(5, 7), 16)]);
+  const d = g.getImageData(0, 0, w, h), a = d.data;
+  for(let i = 0; i < a.length; i += 4){
+    if(a[i + 3] < 110){ a[i + 3] = 0; continue; }
+    let best = 0, bd = 1e9;
+    for(let j = 0; j < P.length; j++){
+      const dr = a[i] - P[j][0], dg = a[i + 1] - P[j][1], db = a[i + 2] - P[j][2], dd = dr * dr + dg * dg + db * db;
+      if(dd < bd){ bd = dd; best = j; }
+    }
+    a[i] = P[best][0]; a[i + 1] = P[best][1]; a[i + 2] = P[best][2]; a[i + 3] = 255;
+  }
+  g.putImageData(d, 0, 0);
+}
+
+// Where his eye is in each sprite, as a share of it: the one belt-coloured
+// pixel in his face. (From behind he has none to show.)
+const eyeOf = rows => {
+  for(let y = 0; y < 16; y++){ const x = rows[y].indexOf('b'); if(x >= 0) return { x: (x + 0.5) / rows[0].length, y: (y + 0.5) / 58 }; }
+  return null;
+};
+const EYE_ADDR = eyeOf(G_ADDR_ROWS), EYE_FIN = eyeOf(G_FIN_ROWS), EYE_CADDIE = eyeOf(CADDIE_ROWS);
+function eyeAt(g){
+  if(g.back) return null;
+  const s = g.spr, E = g.minor ? EYE_CADDIE : s === SPRITE.gFinish || s === SPRITE.gWalk ? EYE_FIN : s === SPRITE.gAddr ? EYE_ADDR : null;
+  if(!E) return null;
+  return { x: g.x + g.w * E.x + (g.shear ? g.shear(E.y) : 0), y: g.y + g.h * E.y };
+}
+// Between his shoulder blades, where wings grow from: bent over the ball at
+// address, standing tall at the finish, from behind as he walks, and on
+// his caddie. Moves with him through the swing.
+function wingAnchor(g){
+  const s = g.spr, f = g.minor ? [0.50, 0.30] : g.back ? [0.50, 0.24]
+    : s === SPRITE.gFinish || s === SPRITE.gWalk ? [0.50, 0.28] : [0.56, 0.31];
+  return { x: g.x + g.w * f[0] + (g.shear ? g.shear(f[1]) : 0), y: g.y + g.h * f[1] };
+}
+
+// The cracks in the Demonic's shirt, lit from inside: its pattern's own
+// pixels, found once in the sprite he is drawn from (the golfer's poses, his
+// back, his caddie) and kept with it, as a mask the light is poured through.
+const HELL_VEINS = ['#FF8A2A', '#FFD34A', '#B8321A'];
+function veinsOf(spr){
+  if(spr._veins !== undefined) return spr._veins;
+  const W = spr.w, H = spr.h, src = spr.cv.getContext('2d').getImageData(0, 0, W, H).data;
+  const cv = document.createElement('canvas'); cv.width = W; cv.height = H;
+  const g = cv.getContext('2d'), d = g.createImageData(W, H);
+  const want = HELL_VEINS.map(h => [parseInt(h.slice(1, 3), 16), parseInt(h.slice(3, 5), 16), parseInt(h.slice(5, 7), 16)]);
+  let r0 = H, r1 = -1;
+  for(let i = 0; i < src.length; i += 4){
+    if(!src[i + 3] || !want.some(w => w[0] === src[i] && w[1] === src[i + 1] && w[2] === src[i + 2])) continue;
+    d.data[i] = 255; d.data[i + 1] = 196; d.data[i + 2] = 84; d.data[i + 3] = 255;
+    const r = (i >> 2) / W | 0; r0 = Math.min(r0, r); r1 = Math.max(r1, r);
+  }
+  g.putImageData(d, 0, 0);
+  return spr._veins = r1 >= 0 ? { cv, w: W, h: H, r0, r1 } : null;
+}
+
+// A demon's wing, out to the right of a shoulder at (0, 0): the arm and the
+// forearm up to the wrist, four long fingers fanning from it, the skin
+// stretched between them with its edge scalloped in toward the wrist, veins
+// glowing in the skin, and a claw at the wrist. up (0..1) is how high it is
+// raised; S its reach in pixels.
+const BAT_PAL = ['#3C0A0E', '#5E1418', '#B0301E', '#1A0608', '#E8DCC8'];
+function batWing(g, S, up){
+  const at = (o, a, L) => ({ x: o.x + Math.cos(a) * L, y: o.y - Math.sin(a) * L });
+  const sh = { x: 0, y: 0 };
+  const a1 = 0.30 + 0.60 * up, el = at(sh, a1, S * 0.28);
+  const a2 = a1 + 0.55, wr = at(el, a2, S * 0.30);
+  const fa = [a2 - 0.10, a2 - 0.72, a2 - 1.32, a2 - 1.92], fl = [0.50, 0.70, 0.62, 0.50];
+  const tip = fa.map((a, i) => at(wr, a, S * fl[i]));
+  const hip = { x: S * 0.02, y: S * 0.40 };
+  const scallop = (p, q, k) => { const m = { x: (p.x + q.x) / 2, y: (p.y + q.y) / 2 };
+    g.quadraticCurveTo(m.x + (wr.x - m.x) * k, m.y + (wr.y - m.y) * k, q.x, q.y); };
+  g.beginPath(); g.moveTo(sh.x, sh.y); g.lineTo(el.x, el.y); g.lineTo(wr.x, wr.y); g.lineTo(tip[0].x, tip[0].y);
+  for(let i = 1; i < tip.length; i++) scallop(tip[i - 1], tip[i], 0.34);
+  scallop(tip[3], hip, 0.28);
+  g.closePath();
+  g.fillStyle = '#3C0A0E'; g.fill();
+  g.lineCap = 'round'; g.lineJoin = 'round';
+  // the skin lit through, a paler band along each finger
+  g.strokeStyle = '#5E1418'; g.lineWidth = Math.max(1.6, S * 0.08);
+  for(const t of tip){ g.beginPath(); g.moveTo(wr.x, wr.y); g.lineTo(wr.x + (t.x - wr.x) * 0.82, wr.y + (t.y - wr.y) * 0.82); g.stroke(); }
+  // veins, glowing, branching out into each panel
+  g.strokeStyle = '#B0301E'; g.lineWidth = 1;
+  for(let i = 0; i < tip.length - 1; i++){
+    const m = { x: (tip[i].x + tip[i + 1].x) / 2, y: (tip[i].y + tip[i + 1].y) / 2 };
+    const v = { x: wr.x + (m.x - wr.x) * 0.62, y: wr.y + (m.y - wr.y) * 0.62 };
+    g.beginPath(); g.moveTo(wr.x + (tip[i].x - wr.x) * 0.25, wr.y + (tip[i].y - wr.y) * 0.25); g.lineTo(v.x, v.y);
+    g.lineTo(v.x + (tip[i].x - v.x) * 0.3, v.y + (tip[i].y - v.y) * 0.3); g.moveTo(v.x, v.y);
+    g.lineTo(v.x + (tip[i + 1].x - v.x) * 0.3, v.y + (tip[i + 1].y - v.y) * 0.3); g.stroke();
+  }
+  // the bones
+  g.strokeStyle = '#1A0608'; g.lineWidth = Math.max(1.5, S * 0.065);
+  g.beginPath(); g.moveTo(sh.x, sh.y); g.lineTo(el.x, el.y); g.lineTo(wr.x, wr.y); g.stroke();
+  g.lineWidth = Math.max(1, S * 0.035);
+  for(const t of tip){ g.beginPath(); g.moveTo(wr.x, wr.y); g.lineTo(t.x, t.y); g.stroke(); }
+  // a hooked claw at the wrist, and a point on each fingertip
+  const cl = at(wr, a2 + 0.45, S * 0.13), cb = at(wr, a2 - 0.4, S * 0.05);
+  g.fillStyle = '#E8DCC8';
+  g.beginPath(); g.moveTo(wr.x, wr.y); g.lineTo(cl.x, cl.y); g.lineTo(cb.x, cb.y); g.closePath(); g.fill();
+  for(const t of tip){ g.beginPath(); g.arc(t.x, t.y, Math.max(0.8, S * 0.025), 0, Math.PI * 2); g.fill(); }
+}
+
+// Two horns, curling out and up, for the Demonic's cap: s tall, their roots
+// sp apart. Dark red at the root to bone and white at the point, with a dark
+// edge down the outside of the curve so they read on any sky.
+function hornPair(s, sp){
+  const W = sp + Math.ceil(s * 1.2) + 4, H = s + 2;
+  return fxBake('horn|' + s + '|' + sp, W, H, g => {
+    for(const side of [-1, 1]){
+      const bx = W / 2 + side * sp / 2;
+      for(let i = 0; i <= s; i++){
+        const u = i / s, x = bx + side * (0.1 + 0.9 * u * u) * s * 0.55, yy = H - 1 - i;
+        const th = Math.max(1, Math.round((1 - u) * s * 0.45 + 0.5)), x0 = Math.round(x - th / 2);
+        g.fillStyle = u > 0.7 ? '#FFF6E6' : u > 0.35 ? '#D8C4A8' : '#8A2A1C'; g.fillRect(x0, yy, th, 1);
+        g.fillStyle = '#2A0A08'; g.fillRect(side > 0 ? x0 + th : x0 - 1, yy, 1, 1);
+      }
+    }
+  });
+}
+
+// Eight runes on a ring round the Demonic's pit, flat on the ground, glowing;
+// step 0..15 turns them on by a sixteenth of the way to the next.
+const RUNES = [['X.X', '.X.', 'X.X'], ['XXX', 'X..', 'XXX'], ['.X.', 'XXX', '.X.'], ['X..', 'XXX', '..X'],
+               ['XX.', '.X.', '.XX'], ['X.X', 'XXX', 'X.X'], ['.XX', 'X..', '.XX'], ['X.X', 'X.X', '.X.']];
+function runeRing(rx, ry, step){
+  return fxBake('rune|' + rx + '|' + ry + '|' + step, rx * 2 + 5, ry * 2 + 5, g => {
+    const ox = rx + 2, oy = ry + 2, n = Math.max(24, Math.round(rx * 4.4));
+    g.fillStyle = '#8A1A10';
+    for(let i = 0; i < n; i++){ if(i % 3 === 0) continue; const a = i / n * Math.PI * 2;
+      g.fillRect(Math.round(ox + Math.cos(a) * rx), Math.round(oy + Math.sin(a) * ry), 1, 1); }
+    for(let j = 0; j < 8; j++){
+      const a = (j + step / 16) / 8 * Math.PI * 2, px = Math.round(ox + Math.cos(a) * rx), py = Math.round(oy + Math.sin(a) * ry);
+      RUNES[j].forEach((row, yy) => [...row].forEach((ch, xx) => { if(ch !== 'X') return;
+        g.fillStyle = xx === 1 && yy === 1 ? '#FFE680' : '#FF7A2A'; g.fillRect(px - 1 + xx, py - 1 + yy, 1, 1); }));
+    }
+  });
+}
+
+// A little skull with a flame on it, in two flickers: the Demonic's orbit,
+// and what shows in the smoke of its trail now and then.
+const SKULL_ROWS = [['..f..', '.fFf.', '.WWW.', 'WEWEW', 'WWWWW', '.W.W.'], ['.f...', '.fFf.', '.WWW.', 'WEWEW', 'WWWWW', '.W.W.']];
+let SKULL_SPR = null;
+function drawSkull(c, x, y, s, a, fr){
+  if(!SKULL_SPR) SKULL_SPR = SKULL_ROWS.map(r => makeSprite(r, { f:'#FF7A2A', F:'#FFD34A', W:'#E8DCC8', E:'#FF3A1A' }));
+  const sp = SKULL_SPR[fr & 1];
+  c.globalAlpha = a;
+  c.drawImage(sp.cv, Math.round(x - 2.5 * s), Math.round(y - 3 * s), 5 * s, 6 * s);
+}
+
+// A wing of light out to the right of a shoulder at (0, 0), raised a (in
+// radians, from level). Broad feathers that run together into one white
+// shape: a row of shorter ones hanging from the arm, the long flight
+// feathers fanned from the wrist with a scalloped edge, pale lines between
+// them, a band of little round ones along the arm, the leading edge in gold
+// and a bead of gold at each tip. (Thin feathers each edged in gold read, at
+// the size he is drawn, as a starburst of wires.)
+const LIGHT_PAL = ['#FFFFFF', '#EEF3FF', '#C9D6F2', '#FFD66B', '#FFE7A3'];
+function lightWing(g, S, a){
+  const at = (o, an, L) => ({ x: o.x + Math.cos(an) * L, y: o.y - Math.sin(an) * L });
+  const sh = { x: 0, y: 0 }, wr = at(sh, a + 0.2, S * 0.42);
+  const leaf = (b, an, L, wd, col) => {
+    const tp = at(b, an, L), mx = (b.x + tp.x) / 2, my = (b.y + tp.y) / 2, nx = Math.sin(an) * wd, ny = Math.cos(an) * wd;
+    g.beginPath(); g.moveTo(b.x, b.y); g.quadraticCurveTo(mx + nx, my + ny, tp.x, tp.y); g.quadraticCurveTo(mx - nx, my - ny, b.x, b.y);
+    g.fillStyle = col; g.fill();
+    return tp;
+  };
+  for(let i = 4; i >= 0; i--) leaf(at(sh, a + 0.2, S * 0.42 * (i + 0.6) / 5), a - 1.2 + i * 0.12, S * (0.32 + i * 0.02), S * 0.10, '#EEF3FF');
+  const tips = [];
+  for(let i = 5; i >= 0; i--) tips.push(leaf(wr, a + 0.45 - i * 0.28, S * (0.60 - Math.abs(i - 1.5) * 0.04), S * 0.11, '#FFFFFF'));
+  g.strokeStyle = '#C9D6F2'; g.lineWidth = 1;
+  for(let i = 1; i < 6; i++){ const e = at(wr, a + 0.45 - (i - 0.5) * 0.28, S * 0.5); g.beginPath(); g.moveTo(wr.x, wr.y); g.lineTo(e.x, e.y); g.stroke(); }
+  for(let i = 0; i < 6; i++){ const b = at(sh, a + 0.2, S * 0.42 * (i + 0.5) / 6);
+    g.beginPath(); g.arc(b.x, b.y + S * 0.03, Math.max(1.2, S * 0.08), 0, Math.PI * 2); g.fillStyle = '#FFFFFF'; g.fill(); }
+  g.strokeStyle = '#FFD66B'; g.lineWidth = Math.max(1, S * 0.05);
+  const t0 = at(wr, a + 0.45, S * 0.56);
+  g.beginPath(); g.moveTo(sh.x, sh.y); g.lineTo(wr.x, wr.y); g.lineTo(t0.x, t0.y); g.stroke();
+  g.fillStyle = '#FFE7A3';
+  for(const tp of tips){ g.beginPath(); g.arc(tp.x, tp.y, Math.max(0.8, S * 0.03), 0, Math.PI * 2); g.fill(); }
+}
+
+// The heavens behind the Ascended, as two rings turning opposite ways. The
+// outer is a dial: a ring, a finer one inside it, twenty-four ticks and
+// twelve beads. The inner is a star of twelve points drawn in one line, round
+// a ring of six small orbs. step 0..31 turns each a thirty-second of the way
+// to its next bead or point, so the turn runs on without a join.
+function mandalaOuter(R, step){
+  return fxBake('mdo|' + R + '|' + step, R * 2 + 3, R * 2 + 3, g => {
+    const o = R + 1, rot = step / 32 * Math.PI * 2 / 12;
+    const dot = (a, r, col) => { g.fillStyle = col; g.fillRect(Math.round(o + Math.cos(a) * r), Math.round(o + Math.sin(a) * r), 1, 1); };
+    const n = Math.round(R * 6.3);
+    for(let i = 0; i < n; i++){ const a = i / n * Math.PI * 2; dot(a, R, '#FFE7A3'); if(i % 2 === 0) dot(a, R - 3, '#FFFFFF'); }
+    for(let j = 0; j < 24; j++){ const a = rot + j / 24 * Math.PI * 2; for(let r = R - (j % 2 ? 2 : 4); r < R; r++) dot(a, r, '#FFF6D8'); }
+    for(let j = 0; j < 12; j++){
+      const a = rot + (j + 0.5) / 12 * Math.PI * 2, px = Math.round(o + Math.cos(a) * (R - 1.5)), py = Math.round(o + Math.sin(a) * (R - 1.5));
+      g.fillStyle = '#9FE8FF'; g.fillRect(px - 1, py - 1, 2, 2); g.fillStyle = '#FFFFFF'; g.fillRect(px - 1, py - 1, 1, 1);
+    }
+  });
+}
+function mandalaInner(R, step){
+  return fxBake('mdi|' + R + '|' + step, R * 2 + 3, R * 2 + 3, g => {
+    const o = R + 1, rot = -step / 32 * Math.PI * 2 / 12, P = [];
+    for(let j = 0; j < 12; j++){ const a = rot + j / 12 * Math.PI * 2; P.push([o + Math.cos(a) * R, o + Math.sin(a) * R]); }
+    for(let j = 0; j < 12; j++){ const A = P[j], Bq = P[(j + 5) % 12]; pxLine(g, A[0], A[1], Bq[0], Bq[1], '#FFE7A3', 1); }
+    const r2 = Math.round(R * 0.42), n = Math.round(r2 * 6.3);
+    g.fillStyle = '#FFFFFF';
+    for(let i = 0; i < n; i++){ const a = i / n * Math.PI * 2; g.fillRect(Math.round(o + Math.cos(a) * r2), Math.round(o + Math.sin(a) * r2), 1, 1); }
+    for(let j = 0; j < 6; j++){ const a = -rot * 2 + j / 6 * Math.PI * 2;
+      g.fillStyle = '#FFB8EC'; g.fillRect(Math.round(o + Math.cos(a) * r2) - 1, Math.round(o + Math.sin(a) * r2) - 1, 2, 2); }
+  });
+}
+
+// The Ascended's crown of light: a ring seen a little from above with seven
+// rays standing on it, each tipped white, a gem at its front, and a glint
+// running round it (step 0..15) that lights each ray as it passes. The far
+// half goes down first and darker. Returned with where the ring's centre is.
+function crownOf(rx, ry, step){
+  const sp = Math.max(2, Math.round(rx * 0.6)), ox = rx + 2, oy = sp + 3 + ry;
+  const cv = fxBake('crown|' + rx + '|' + ry + '|' + step, rx * 2 + 5, sp + ry * 2 + 6, g => {
+    const ga = step / 16 * Math.PI * 2, lit = a => Math.cos(a - ga) > 0.92;
+    const px = (a, r) => [Math.round(ox + Math.cos(a) * r), Math.round(oy + Math.sin(a) * (r * ry / rx))];
+    const ray = (a, far) => {
+      const [bx, by] = px(a, rx), L = far ? sp - 1 : sp;
+      g.fillStyle = lit(a) ? '#FFFFFF' : far ? '#C99A2E' : '#FFD66B'; g.fillRect(bx, by - L, 1, L);
+      g.fillStyle = '#FFFFFF'; g.fillRect(bx, by - L - 1, 1, 1);
+    };
+    const rays = []; for(let j = 0; j < 7; j++) rays.push((j + 0.5) / 7 * Math.PI * 2 + Math.PI / 14);
+    rays.filter(a => Math.sin(a) < 0).forEach(a => ray(a, true));
+    const n = Math.max(20, Math.round(rx * 5));
+    for(const front of [false, true]) for(let i = 0; i < n; i++){
+      const a = i / n * Math.PI * 2; if((Math.sin(a) >= 0) !== front) continue;
+      const [x, y] = px(a, rx);
+      g.fillStyle = lit(a) ? '#FFFFFF' : front ? (i & 1 ? '#FFD66B' : '#FFE7A3') : '#C99A2E'; g.fillRect(x, y, 1, 1);
+    }
+    rays.filter(a => Math.sin(a) >= 0).forEach(a => ray(a, false));
+    const [gx, gy] = px(Math.PI / 2, rx); g.fillStyle = '#9FE8FF'; g.fillRect(gx, gy, 1, 1);
+  });
+  return { cv, ox, oy };
+}
+
+// The Demon Eye: a burning iris round a slit of a pupil, veined in from a
+// dark rim, looking dx, dy (whole pixels); shut, the lid is down.
+function demonEye(R, dx, dy, shut){
+  return fxBake('deye|' + R + '|' + dx + '|' + dy + '|' + shut, R * 2 + 1, R * 2 + 1, g => {
+    for(let y = -R; y <= R; y++) for(let x = -R; x <= R; x++){
+      const d = Math.hypot(x, y) / R;
+      if(d > 1.04) continue;
+      let col;
+      if(shut) col = Math.abs(y) < 1 ? '#1A0404' : d > 0.84 ? '#2A0606' : y < 0 ? '#7A2016' : '#5A1410';
+      else if(d > 0.84) col = '#2A0606';
+      else{
+        const px = x - dx, py = y - dy, pd = Math.hypot(px * 1.6, py) / R;
+        col = Math.abs(px) <= Math.max(0.5, R * 0.1) && Math.abs(py) < R * 0.6 ? '#0A0000'
+            : pd < 0.42 ? '#FFE680' : pd < 0.72 ? '#FFB43A' : d > 0.66 ? '#C8281C' : '#FF6A1A';
+        if(d > 0.55 && hr(x + 11, y + 13) > 0.72) col = '#8A1A10';
+      }
+      g.fillStyle = col; g.fillRect(x + R, y + R, 1, 1);
+    }
+  });
+}
+function drawDemonEye(c, cx, cy, R, lx, ly, t){
+  const shut = (t % 3.3) < 0.16 ? 1 : 0;
+  const dx = clamp(Math.round(lx * R * 0.32), -2, 2), dy = clamp(Math.round(ly * R * 0.32), -2, 2);
+  drawGlow(c, cx, cy, R + 3, R + 3, [[0.6, '#8A1408', 1], [0, '#FF4A1A', 2]], Math.floor(t * 10) & 3, 0.85);
+  c.globalAlpha = 1;
+  c.drawImage(demonEye(R, dx, dy, shut), Math.round(cx - R), Math.round(cy - R));
+  if(!shut) fxDot(c, cx - R * 0.4, cy - R * 0.45, 1, '#FFFFFF', 0.9);
+  c.globalAlpha = 1;
+}
+
+// The Ascended Orb: a white core in a glow, eight rays turning round it long
+// and short, and a tilted ring about it with a spark running on it (the far
+// half of the ring behind the core, the near half in front).
+function drawOrb(c, cx, cy, r, t, big){
+  const R = Math.max(2, Math.round(r * (big ? 1.6 : 1.3) + 1)), pulse = 0.5 + 0.5 * Math.sin(t * 6);
+  drawGlow(c, cx, cy, R + 4 + pulse, R + 4 + pulse, [[0.65, '#9FE8FF', 1], [0.35, '#FFE7F8', 2], [0, '#FFFFFF', 3]], Math.floor(t * 8) & 3, 0.85);
+  const ring = front => { for(let k = 0; k < 22; k++){ const a = k / 22 * Math.PI * 2; if((Math.sin(a) > 0) !== front) continue;
+    fxDot(c, cx + Math.cos(a) * (R + 3), cy + Math.sin(a) * (R + 3) * 0.32, 1, front ? '#FFFFFF' : '#BFEFFF', front ? 0.95 : 0.55); } };
+  ring(false);
+  for(let i = 0; i < 8; i++){
+    const a = t * 1.2 + i * Math.PI / 4, L = i & 1 ? R + 2 : R + 5 + pulse * 2;
+    c.globalAlpha = i & 1 ? 0.8 : 1;
+    pxLine(c, cx + Math.cos(a) * (R - 1), cy + Math.sin(a) * (R - 1), cx + Math.cos(a) * L, cy + Math.sin(a) * L, i & 1 ? '#FFFFFF' : '#FFD66B', 1);
+  }
+  fxEllipse(c, cx, cy, R * 0.85, R * 0.85, '#FFFFFF', 1);
+  fxDot(c, cx - Math.round(R * 0.35), cy - Math.round(R * 0.35), 1, '#DFF6FF', 1);
+  ring(true);
+  const sa = t * 4;
+  if(Math.sin(sa) > 0) fxDot(c, cx + Math.cos(sa) * (R + 3) - 1, cy + Math.sin(sa) * (R + 3) * 0.32 - 1, 2, '#FFB8EC', 1);
+  c.globalAlpha = 1;
+}
+
 const STYLEFX = {
   /* ---- Divine: a golden aura, a halo, turning rays, orbiting wisps ---- */
   divine: {
@@ -9075,6 +9473,330 @@ const STYLEFX = {
             fxDot(c, x, y, k, s < 4 ? '#FFF1C4' : s < 8 ? '#FFD66B' : '#C99A2E', (0.85 - s * 0.07) * dim);
           }
         }
+      }
+      c.globalAlpha = 1;
+    }
+  },
+
+  /* ---- Demonic: horned and winged, out of a pit of hellfire ----
+     Bat wings beating slowly behind him; a pit of lava at his feet with a
+     ring of runes turning round it, bubbling, smoke and embers going up and
+     shadows writhing up out of it; a tail with a spade to it; horns; eyes
+     lit like coals; the cracks in his shirt pulsing with the fire inside;
+     three skulls on fire circling him; and every few seconds the pit
+     erupts. His caddie gets the wings, horns, tail, eyes and cracks. */
+  demonic: {
+    outline: '#E8281C', outlineA: 0.28,
+    // the pit erupts for a second in every six and a half: 0..1 through it, or -1
+    erupt(t){ const f = t % 6.5; return f < 1 ? f : -1; },
+    back(c, g){
+      const { cx, w, h, t, k, bot } = g, minor = !!g.minor;
+      const rx = w * 1.05, ry = Math.max(2, h * 0.10), E = minor ? -1 : this.erupt(t);
+      if(!minor){
+        // brimstone smoke going up off the pit, spreading and thinning
+        for(let i = 0; i < 6; i++){
+          const life = (t * 0.22 + i / 6) % 1, sx = cx + (hr(i, 95) - 0.5) * rx * 1.4 + Math.sin(t * 0.9 + i) * w * 0.15 * life;
+          fxEllipse(c, sx, bot - life * h * 1.2, 1 + life * w * 0.14, 1 + life * w * 0.08, life < 0.3 ? '#3A2A2A' : '#2A2020', 0.35 * (1 - life));
+        }
+        // the pit, and its ring of runes turning
+        drawGlow(c, cx, bot, rx, ry, [[0.82, '#2A0404', 2], [0.58, '#7A1408', 3], [0.3, '#E8401C', 3], [0, E >= 0 ? '#FFF1A0' : '#FFB43A', 4]],
+                 Math.floor(t * 8) & 3, 0.95);
+        const RR = runeRing(Math.round(rx * 1.18), Math.round(ry * 1.3), Math.floor(t * 6) % 16);
+        c.globalAlpha = 0.95; c.drawImage(RR, Math.round(cx - RR.width / 2), Math.round(bot - RR.height / 2));
+        this.bubbles(c, g, rx, ry);
+        this.tendrils(c, g, rx);
+        if(E >= 0) this.eruption(c, g, E, rx, ry, false);
+      }
+      // the wings, spread behind him, beating slowly
+      const W = this.wings(h, minor, t), A = wingAnchor(g);
+      c.globalAlpha = 1; c.drawImage(W.cv, Math.round(A.x - W.ox), Math.round(A.y - W.oy));
+      // his tail (walking away from us it hangs in front of him: see front)
+      if(!g.back) this.tail(c, g);
+      // a shadow round him, smoking
+      outlineAt(c, g, '#140204', RING2, 0.42 + 0.14 * Math.sin(t * 5));
+      // embers going up
+      for(let i = 0; i < (minor ? 4 : 12); i++){
+        const life = (t * 0.55 + hr(i, 31)) % 1;
+        const ex = cx + (hr(i, 32) - 0.5) * rx * 1.8 + Math.sin(t * 2 + i * 1.3) * k * 2, ey = bot - life * h * 1.3;
+        fxDot(c, ex, ey, 1, life < 0.25 ? '#FFE680' : life < 0.55 ? '#FF8A2A' : life < 0.8 ? '#C8281C' : '#3A1A1A', (1 - life) * 0.9);
+      }
+      if(!minor) this.skulls(c, g, false);
+      c.globalAlpha = 1;
+    },
+    front(c, g){
+      if(g.back) this.tail(c, g);
+      this.veins(c, g);
+      this.horns(c, g);
+      this.eyes(c, g);
+      if(!g.minor){
+        this.skulls(c, g, true);
+        const E = this.erupt(g.t);
+        if(E >= 0) this.eruption(c, g, E, g.w * 1.05, Math.max(2, g.h * 0.10), true);
+      }
+      c.globalAlpha = 1; c.globalCompositeOperation = 'source-over';
+    },
+    // twelve steps of a slow beat, baked per size
+    wings(h, minor, t){
+      const S = Math.max(8, Math.round(h * (minor ? 0.40 : 0.52))), ph = Math.floor(t * 6) % 12;
+      const up = 0.5 + 0.4 * Math.sin(ph / 12 * Math.PI * 2);
+      const Wd = Math.ceil(S * 2.5) + 6, Hd = Math.ceil(S * 1.75) + 4, ox = Math.round(Wd / 2), oy = Math.ceil(S * 1.12) + 2;
+      const cv = fxBake('bat|' + S + '|' + ph, Wd, Hd, g2 => {
+        g2.save(); g2.translate(ox + 1, oy); batWing(g2, S, up); g2.restore();
+        g2.save(); g2.translate(ox - 1, oy); g2.scale(-1, 1); batWing(g2, S, up); g2.restore();
+      }, BAT_PAL);
+      return { cv, ox, oy };
+    },
+    // from his hips, curling back and up with a slow wave in it, a spade at the end
+    tail(c, g){
+      const { x, y, w, h, t } = g;
+      const f = g.minor ? [0.50, 0.55] : g.back ? [0.50, 0.56] : g.spr === SPRITE.gFinish ? [0.44, 0.56] : [0.33, 0.57];
+      let px = x + w * f[0] + (g.shear ? g.shear(f[1]) : 0), py = y + h * f[1];
+      const L = h * (g.minor ? 0.42 : 0.55), N = 12, side = g.back ? 1 : -1, th = Math.max(1, Math.round(h / 30));
+      let a = g.back ? Math.PI * 0.5 : Math.PI * 0.78;
+      c.globalAlpha = 1;
+      for(let i = 1; i <= N; i++){
+        a -= side * (0.09 + 0.10 * Math.sin(t * 2.3 - i * 0.5));
+        const nx = px + Math.cos(a) * L / N, ny = py + Math.sin(a) * L / N;
+        pxLine(c, px, py, nx, ny, '#2A0A0C', i < N * 0.5 ? th : 1);
+        if(i & 1){ c.fillStyle = '#7A1E16'; c.fillRect(Math.round(px), Math.round(py) - 1, 1, 1); }
+        px = nx; py = ny;
+      }
+      const SP = ['..X..', '.XXX.', 'XXRXX', '.X.X.'], x0 = Math.round(px) - 2, y0 = Math.round(py) - 2;
+      SP.forEach((row, yy) => [...row].forEach((ch, xx) => { if(ch === '.') return;
+        c.fillStyle = ch === 'R' ? '#C8281C' : '#1A0406'; c.fillRect(x0 + xx, y0 + yy, 1, 1); }));
+    },
+    horns(c, g){
+      const hd = g.head, s = Math.max(4, Math.round(hd.w * 0.75)), sp = Math.max(3, Math.round(hd.w * 0.62));
+      const hx = hd.x + (g.shear ? g.shear(0.1) : 0), hy = hd.y + Math.max(1, Math.round(hd.hh * 0.3));
+      const cv = hornPair(s, sp);
+      c.globalAlpha = 1; c.drawImage(cv, Math.round(hx - cv.width / 2), Math.round(hy - cv.height + 1));
+    },
+    // his eyes like coals, and now and then they flare
+    eyes(c, g){
+      const E = eyeAt(g); if(!E) return;
+      const fl = 0.7 + 0.3 * Math.sin(g.t * 9) * Math.sin(g.t * 5.3);
+      c.globalCompositeOperation = 'lighter';
+      fxDot(c, E.x - 1, E.y - 1, 3, '#FF3A1A', 0.42 * fl);
+      c.globalCompositeOperation = 'source-over';
+      fxDot(c, E.x, E.y, 1, '#FFE680', 1);
+      const n = Math.floor(g.t / 3.7), f = (g.t / 3.7) % 1;
+      if(hr(n, 41) > 0.45 && f < 0.14){
+        c.globalAlpha = 1 - f / 0.14; c.fillStyle = '#FF7A2A';
+        c.fillRect(Math.round(E.x) - 4, Math.round(E.y), 4, 1); c.fillRect(Math.round(E.x) + 1, Math.round(E.y), 2, 1);
+      }
+      c.globalAlpha = 1;
+    },
+    // the cracks in his shirt, lit from inside, a beat of it rising through him
+    veins(c, g){
+      const V = veinsOf(g.spr); if(!V) return;
+      const { x, y, w, h, t } = g, rh = h / V.h;
+      c.globalCompositeOperation = 'lighter';
+      for(let r = V.r0; r <= V.r1; r++){
+        const beat = Math.max(0, Math.sin(t * 3.2 + (r - V.r0) / Math.max(1, V.r1 - V.r0) * 2.4));
+        c.globalAlpha = 0.16 + 0.7 * beat * beat * beat;
+        c.drawImage(V.cv, 0, r, V.w, 1, Math.round(x + (g.shear ? g.shear(r / (V.h - 1)) : 0)), Math.round(y + r * rh),
+                    Math.max(1, Math.round(w)), Math.max(1, Math.ceil(rh)));
+      }
+      c.globalCompositeOperation = 'source-over'; c.globalAlpha = 1;
+    },
+    // three skulls on fire circling him, a trail of embers behind each: the
+    // half of the circle behind him goes down before him, dimmer
+    skulls(c, g, front){
+      const { cx, cy, w, h, t } = g, s = Math.max(1, Math.round(h / 45));
+      for(let i = 0; i < 3; i++) for(let q = 6; q >= 0; q--){
+        const tt = t - q * 0.05, a = tt * 0.9 + i * Math.PI * 2 / 3, depth = Math.sin(a);
+        if((depth > 0) !== front) continue;
+        const px = cx + Math.cos(a) * w * 0.92, py = cy - h * 0.12 + Math.sin(tt * 0.8 + i * 2.1) * h * 0.28 + depth * h * 0.05;
+        const dim = front ? 1 : 0.55;
+        if(q === 0) drawSkull(c, px, py, s, dim, Math.floor(t * 8 + i) & 1);
+        else fxDot(c, px, py, 1, q < 3 ? '#FF8A2A' : '#8A1A0E', (0.8 - q * 0.11) * dim);
+      }
+      c.globalAlpha = 1;
+    },
+    bubbles(c, g, rx, ry){
+      const { cx, bot, t } = g;
+      for(let i = 0; i < 5; i++){
+        const cyc = t * 0.9 + i * 0.37, n = Math.floor(cyc), f = cyc - n;
+        const bx = cx + (hr(n, i + 50) - 0.5) * rx * 1.5, by = bot + (hr(i + 50, n) - 0.5) * ry * 1.1;
+        if(f < 0.8) fxDot(c, bx - (f > 0.4 ? 1 : 0), by - (f > 0.4 ? 1 : 0), f > 0.4 ? 2 : 1, '#FFD34A', 0.9);
+        else for(const [dx, dy] of [[-2, 0], [2, 0], [0, -1], [0, 1]]) fxDot(c, bx + dx, by + dy, 1, '#FF8A2A', (1 - f) * 4);
+      }
+    },
+    // shadows writhing up out of the pit either side of him, fading as they
+    // rise, red at the tips
+    tendrils(c, g, rx){
+      const { cx, bot, h, t } = g;
+      for(let j = 0; j < 4; j++){
+        const side = j & 1 ? 1 : -1, bx = cx + side * rx * (0.5 + 0.35 * (j >> 1));
+        const L = h * (0.24 + 0.1 * (j >> 1)) * (0.8 + 0.2 * Math.sin(t * 1.3 + j));
+        let px = bx, py = bot;
+        for(let i = 1; i <= 8; i++){
+          const f = i / 8, nx = bx + side * (Math.sin(t * 2.1 + j * 1.9 - f * 4) * h * 0.07 * f + f * f * h * 0.08), ny = bot - f * L;
+          c.globalAlpha = 0.8 - f * 0.3;
+          pxLine(c, px, py, nx, ny, f > 0.75 ? '#E8401C' : f > 0.5 ? '#5A0E1A' : '#1C0610', f < 0.35 ? 2 : 1);
+          px = nx; py = ny;
+        }
+      }
+      c.globalAlpha = 1;
+    },
+    // the eruption: flames shooting up all round the pit (the far half behind
+    // him, the near half in front) and a ring of fire thrown out along the ground
+    eruption(c, g, f, rx, ry, front){
+      const { cx, bot, h, t } = g, q = f < 0.2 ? f / 0.2 : 1 - (f - 0.2) / 0.8;
+      for(let i = 0; i < 26; i++){
+        const a = i / 26 * Math.PI * 2; if((Math.sin(a) > 0) !== front) continue;
+        const fx = cx + Math.cos(a) * rx * 0.95, fy = bot + Math.sin(a) * ry * 0.95;
+        const hgt = Math.round(q * h * (0.35 + 0.35 * hr(i, 61)) * (0.75 + 0.25 * Math.sin(t * 17 + i)));
+        if(hgt < 1) continue;
+        c.globalAlpha = 0.9;
+        c.fillStyle = '#FF4A1A'; c.fillRect(Math.round(fx) - 1, Math.round(fy - hgt), 2, hgt);
+        c.fillStyle = '#FFD34A'; c.fillRect(Math.round(fx), Math.round(fy - hgt * 0.6), 1, Math.max(1, Math.round(hgt * 0.6)));
+      }
+      const R = 1 + f * 1.4;
+      for(let i = 0; i < 24; i++){
+        const a = i / 24 * Math.PI * 2; if((Math.sin(a) > 0) !== front) continue;
+        fxDot(c, cx + Math.cos(a) * rx * R, bot + Math.sin(a) * ry * R, 1, i & 1 ? '#FFB43A' : '#FF4A1A', 1 - f);
+      }
+      c.globalAlpha = 1;
+    }
+  },
+
+  /* ---- Ascended: six wings of light, a crown, and the heavens behind him ----
+     He floats. Behind him the heavens turn, two rings of them going opposite
+     ways; six wings of light beat slowly; he stands in light, with stars
+     coming and going round him and crystals circling him. A crown of light
+     turns over his head, his eyes shine, a sheen of every colour sweeps
+     across him, motes of every colour rise off him, and every four and a
+     half seconds light goes out from him along the ground and up to the sky.
+     His caddie gets two wings, the crown, the eyes and the light. */
+  ascended: {
+    bob: 1,
+    back(c, g){
+      const { cx, w, h, t, k, bot, y } = g, minor = !!g.minor, A = wingAnchor(g);
+      if(!minor){
+        const R = Math.max(10, Math.round(h * 0.62)), my = A.y - h * 0.06;
+        c.globalAlpha = 0.36 + 0.16 * Math.sin(t * 1.3);
+        const o1 = mandalaOuter(R, Math.floor(t * 8) % 32), o2 = mandalaInner(Math.round(R * 0.66), Math.floor(t * 11) % 32);
+        c.drawImage(o1, Math.round(A.x - o1.width / 2), Math.round(my - o1.height / 2));
+        c.drawImage(o2, Math.round(A.x - o2.width / 2), Math.round(my - o2.height / 2));
+        c.globalAlpha = 1;
+      }
+      // the light he floats over
+      drawGlow(c, cx, bot, w * (minor ? 0.6 : 1.0), Math.max(2, h * 0.08), [[0.7, '#9FE8FF', 1], [0.4, '#FFF1C4', 2], [0, '#FFFFFF', 3]],
+               Math.floor(t * 5) & 3, 0.85);
+      const W = this.wings(h, minor, t);
+      c.globalAlpha = 0.96; c.drawImage(W.cv, Math.round(A.x - W.ox), Math.round(A.y - W.oy)); c.globalAlpha = 1;
+      if(!minor){ this.shards(c, g, false); this.pulse(c, g, false); }
+      // stars coming and going round him
+      for(let i = 0; i < (minor ? 3 : 7); i++){
+        const u = t * 0.8 + i * 0.29, n = Math.floor(u), f = u - n;
+        trailStar(c, cx + (hr(n, i + 70) - 0.5) * w * 2.4, y - h * 0.2 + hr(i + 70, n) * h * 1.1,
+                  '#FFFFFF', ['#9FE8FF', '#FFB8EC', '#FFE38A'][i % 3], Math.sin(f * Math.PI));
+      }
+      outlineAt(c, g, '#FFF6D8', RING1, 0.5 + 0.25 * Math.sin(t * 2.4));
+      c.globalAlpha = 1;
+    },
+    front(c, g){
+      const { cx, w, h, t, k, bot } = g, minor = !!g.minor;
+      if(!minor) this.sheen(c, g);
+      this.eyes(c, g);
+      this.crown(c, g);
+      c.globalCompositeOperation = 'lighter';
+      for(let i = 0; i < (minor ? 5 : 14); i++){
+        const life = (t * 0.4 + hr(i, 81)) % 1;
+        fxDot(c, cx + (hr(i, 82) - 0.5) * w * 1.3 + Math.sin(t * 1.6 + i) * k * 2, bot - life * h * 1.6, 1,
+              ['#FFFFFF', '#9FE8FF', '#FFB8EC', '#FFE38A', '#B8FFD8'][i % 5], (1 - life) * 0.85);
+      }
+      c.globalCompositeOperation = 'source-over';
+      if(!minor){ this.feathers(c, g); this.shards(c, g, true); this.pulse(c, g, true); }
+      c.globalAlpha = 1;
+    },
+    // feathers of light drifting down off his wings, rocking as they fall
+    feathers(c, g){
+      const { t, h, w } = g, A = wingAnchor(g);
+      for(let i = 0; i < 5; i++){
+        const life = (t * 0.28 + i / 5) % 1, side = i & 1 ? 1 : -1, flip = Math.sin(t * 3 + i) > 0 ? 1 : -1;
+        const fx = A.x + side * w * (0.6 + 0.5 * hr(i, 91)) + Math.sin(t * 2 + i * 1.7) * w * 0.12, fy = A.y - h * 0.2 + life * h * 1.1;
+        const a = life < 0.1 ? life * 10 : 1 - life;
+        fxDot(c, fx, fy, 1, '#FFFFFF', a); fxDot(c, fx + flip, fy - 1, 1, '#FFFFFF', a);
+        fxDot(c, fx + 2 * flip, fy - 1, 1, '#E3ECFF', a); fxDot(c, fx - flip, fy + 1, 1, '#FFD66B', a * 0.8);
+      }
+      c.globalAlpha = 1;
+    },
+    // six wings (his caddie two), in twelve steps of a slow beat, baked per size
+    wings(h, minor, t){
+      const S = Math.max(8, Math.round(h * (minor ? 0.40 : 0.50))), ph = Math.floor(t * 5) % 12, s = Math.sin(ph / 12 * Math.PI * 2);
+      const Wd = Math.ceil(S * 2.7) + 6, Hd = Math.ceil(S * 2.3) + 4, ox = Math.round(Wd / 2), oy = Math.ceil(S * 1.2) + 2;
+      const cv = fxBake('lw|' + S + '|' + ph + '|' + (minor ? 1 : 0), Wd, Hd, g2 => {
+        const pairs = minor ? [[0.30 + 0.14 * s, 1.0]] : [[-0.45 - 0.10 * s, 0.72], [0.98 + 0.12 * s, 0.80], [0.30 + 0.14 * s, 1.0]];
+        for(const [a, sc] of pairs) for(const side of [1, -1]){
+          g2.save(); g2.translate(ox + side, oy); if(side < 0) g2.scale(-1, 1); lightWing(g2, S * sc, a); g2.restore();
+        }
+      }, LIGHT_PAL, '#AEBDE0');
+      return { cv, ox, oy };
+    },
+    crown(c, g){
+      const hd = g.head, rx = Math.max(3, Math.round(hd.w * 0.62)), ry = Math.max(1, Math.round(rx * 0.3));
+      const hx = hd.x + (g.shear ? g.shear(0.08) : 0), hy = hd.y - Math.max(2, g.h * 0.07) + Math.sin(g.t * 2) * g.k * 0.8;
+      const C = crownOf(rx, ry, Math.floor(g.t * 10) % 16);
+      c.globalAlpha = 1; c.drawImage(C.cv, Math.round(hx - C.ox), Math.round(hy - C.oy));
+    },
+    eyes(c, g){
+      const E = eyeAt(g); if(!E) return;
+      c.globalCompositeOperation = 'lighter';
+      fxDot(c, E.x - 1, E.y - 1, 3, '#9FE8FF', 0.32 + 0.14 * Math.sin(g.t * 4));
+      c.globalCompositeOperation = 'source-over';
+      fxDot(c, E.x, E.y, 1, '#FFFFFF', 1);
+      c.globalAlpha = 1;
+    },
+    // a sheen of every colour sweeping across him: two bands, cyan leading pink
+    sheen(c, g){
+      const { spr, x, y, w, h, t } = g, cyc = (t % 3.4) / 3.4;
+      if(cyc > 0.4) return;
+      const q = cyc / 0.4, bx = x - w * 0.4 + q * w * 1.8;
+      for(const [off, bw, col, a] of [[0, 0.10, '#BFF4FF', 0.62], [-0.15, 0.08, '#FFD0F4', 0.55]]){
+        const b0 = bx + off * w;
+        c.save(); c.beginPath();
+        c.moveTo(b0, y); c.lineTo(b0 + w * bw, y); c.lineTo(b0 + w * bw - h * 0.3, y + h); c.lineTo(b0 - h * 0.3, y + h); c.closePath(); c.clip();
+        c.globalAlpha = a;
+        if(g.back) c.drawImage(tinted(spr, col).cv, x, y, w, h);
+        else blitShear(c, tinted(spr, col), x, y, w, h, g.shear);
+        c.restore();
+      }
+    },
+    // four crystals circling him, each trailing sparkles of its own colour
+    shards(c, g, front){
+      const { cx, cy, w, h, t } = g;
+      const cols = [['#9FE8FF', '#E6FBFF'], ['#FFB8EC', '#FFE8F8'], ['#FFE38A', '#FFF8D8'], ['#B8FFD8', '#EAFFF4']];
+      for(let i = 0; i < 4; i++) for(let q = 5; q >= 0; q--){
+        const tt = t - q * 0.06, a = tt * 1.25 + i * Math.PI / 2, depth = Math.sin(a);
+        if((depth > 0) !== front) continue;
+        const px = Math.round(cx + Math.cos(a) * w * 0.95), py = Math.round(cy + h * 0.05 + depth * h * 0.12 + Math.sin(tt * 1.1 + i) * h * 0.08);
+        const dim = front ? 1 : 0.55;
+        if(q === 0){
+          c.globalAlpha = dim; c.fillStyle = cols[i][0];
+          c.fillRect(px, py - 2, 1, 5); c.fillRect(px - 1, py - 1, 3, 3);
+          c.fillStyle = cols[i][1]; c.fillRect(px - 1, py - 1, 1, 1);
+          c.fillStyle = '#FFFFFF'; c.fillRect(px, py - 2, 1, 1);
+        }else fxDot(c, px, py, 1, cols[i][q & 1], (0.7 - q * 0.12) * dim);
+      }
+      c.globalAlpha = 1;
+    },
+    // light going out from him in a ring along the ground (the far half behind
+    // him), and for a moment a shaft of it up to the sky
+    pulse(c, g, front){
+      const { cx, bot, w, h, t } = g, f = t % 4.5;
+      if(f > 1.1) return;
+      const q = f / 1.1, R = w * (0.4 + q * 1.5), ry = Math.max(1.5, h * (0.03 + q * 0.07));
+      for(let i = 0; i < 32; i++){
+        const a = i / 32 * Math.PI * 2; if((Math.sin(a) > 0) !== front) continue;
+        fxDot(c, cx + Math.cos(a) * R, bot + Math.sin(a) * ry, 1, i & 1 ? '#FFFFFF' : '#9FE8FF', (1 - q) * 0.95);
+      }
+      if(!front && f < 0.5){
+        const a0 = (1 - f / 0.5) * 0.32, hw = Math.max(1, Math.round(w * 0.12));
+        c.globalAlpha = a0; c.fillStyle = '#FFFFFF'; c.fillRect(Math.round(cx - hw), 0, hw * 2, Math.round(bot));
+        c.globalAlpha = a0 * 0.7; c.fillStyle = '#BFEFFF';
+        c.fillRect(Math.round(cx - hw * 2), 0, hw, Math.round(bot)); c.fillRect(Math.round(cx + hw), 0, hw, Math.round(bot));
       }
       c.globalAlpha = 1;
     }
@@ -9486,6 +10208,24 @@ function drawLyingBall(c, cx, cy, r, t){
       c.globalAlpha = 0.9; c.fillStyle = '#FFD66B';
       c.fillRect(Math.round(cx - r - 1), Math.round(cy - r - 3), d + 2, 1);
       break;
+    case 'demoneye':                                 // looking about, and blinking
+      drawDemonEye(c, cx, cy - 1, Math.max(3, Math.round(r * 1.6 + 1)), Math.sin(t * 0.7), Math.sin(t * 0.43) * 0.4, t);
+      break;
+    case 'ascorb':                                   // hovering, its rays turning
+      drawOrb(c, cx, cy - 2 - Math.round(1 + Math.sin(t * 2.4)), r, t, false);
+      break;
+    case 'tHellfire':                                // smouldering
+      drawGlow(c, cx, cy, r + 3, r + 2, [[0.55, '#8A1408', 1], [0, '#FF4A1A', 2]], Math.floor(t * 10) & 3, 0.85);
+      dot(x, y, d, '#FFF3B0');
+      for(let i = 0; i < 3; i++){ const f = (t * 1.4 + i / 3) % 1;
+        dot(cx + Math.sin(t * 3 + i * 2) * 2, cy - r - 1 - f * 6, 1, f < 0.4 ? '#FFB43A' : '#5A4444', 1 - f); }
+      break;
+    case 'tAscension':                               // resting in a little light, under its halo
+      drawGlow(c, cx, cy, r + 3, r + 2, [[0.6, '#9FE8FF', 1], [0, '#FFFFFF', 2]], Math.floor(t * 6) & 3, 0.7);
+      dot(x, y, d, '#FFFFFF');
+      c.globalAlpha = 0.95; c.fillStyle = '#FFD66B';
+      c.fillRect(Math.round(cx - r - 1), Math.round(cy - r - 3 - (Math.sin(t * 3) > 0 ? 1 : 0)), d + 2, 1);
+      break;
     case 'tSeraph':                                  // resting under its halo
       dot(x, y, d, '#FFF6D8');
       c.globalAlpha = 0.95; c.fillStyle = '#FFD66B';
@@ -9767,6 +10507,116 @@ const BALLFX = {
       }
     }
     fxDot(c, h0.x - r, h0.y - r, r * 2, b.crit ? '#FFD66B' : '#FFFFFF', 1);
+    c.globalAlpha = 1;
+  },
+  /* ---- Hellfire Wake: fire in a river of smoke, flames licking up off it,
+     embers thrown from it, a skull in the smoke now and then, the ball red
+     hot, and fire where it lands ---- */
+  tHellfire(c, b, path, r, t, u){
+    const w = Math.max(2, r + 1), cols = ['#FFF3B0', '#FFD34A', '#FF8A2A', '#FF4A1A', '#C8281C', '#6A1410'];
+    trailRibbon(c, path, w + 4, '#2A1618', 0.45);
+    trailRibbon(c, path, w + 1, (i, f) => cols[Math.min(cols.length - 1, Math.floor(f * cols.length))], 1);
+    for(let i = 1; i < path.length; i += 2){
+      const p = path[i], life = (t * 3 + hr(i, b.seed)) % 1, hgt = Math.max(1, Math.round((1 - life) * (4 + (path.length - i) * 0.4)));
+      const x = Math.round(p.x + Math.sin(t * 11 + i * 1.7) * 1.5), y0 = Math.round(p.y - w);
+      c.globalAlpha = 0.9 * (1 - i / path.length * 0.6);
+      c.fillStyle = life < 0.35 ? '#FFD34A' : '#FF7A2A'; c.fillRect(x, y0 - hgt, 1, hgt);
+      c.fillStyle = '#E8281C'; c.fillRect(x - 1, y0 - Math.round(hgt * 0.5), 1, Math.max(1, Math.round(hgt * 0.5)));
+    }
+    for(let i = 2; i < path.length; i++){
+      const f = (t * 2.2 + hr(b.seed, i)) % 1, p = path[i];
+      fxDot(c, p.x + (hr(i, b.seed + 5) - 0.5) * 10, p.y + (f - 0.3) * 12, 1, f < 0.5 ? '#FFB43A' : '#C8281C', 1 - f);
+    }
+    const sk = Math.floor(t * 1.5 + b.seed), sf = (t * 1.5 + b.seed) % 1;
+    if(hr(sk, 11) > 0.35 && path.length > 5){
+      const p = path[3 + Math.floor(hr(sk, 12) * (path.length - 5))];
+      drawSkull(c, p.x, p.y - w - 3 - sf * 6, 1, (1 - sf) * 0.85, Math.floor(t * 8) & 1);
+    }
+    const h0 = path[0];
+    drawGlow(c, h0.x, h0.y, r * 2 + 3, r * 2 + 3, [[0.55, '#8A1408', 1], [0, '#FF4A1A', 2]], Math.floor(t * 12) & 3, 0.9);
+    trailBall(c, b, h0, r);
+    if(u > 0.85){
+      const q = (u - 0.85) / 0.15;
+      for(let i = 0; i < 12; i++){ const a = i / 12 * Math.PI * 2 + b.seed;
+        fxDot(c, h0.x + Math.cos(a) * (2 + q * 11), h0.y + Math.sin(a) * (1 + q * 4) - q * 3, 1, i & 1 ? '#FFD34A' : '#FF4A1A', 1 - q); }
+    }
+    c.globalAlpha = 1;
+  },
+  /* ---- Demon Eye: the ball is a burning eye with a slit of a pupil that
+     looks the way it flies and blinks now and then, trailing hellfire ---- */
+  demoneye(c, b, path, r, t, u){
+    trailRibbon(c, path, r + 5, '#2A1618', 0.4);
+    trailRibbon(c, path, Math.max(2, r + 2), i => i < 3 ? '#FFD34A' : i < 7 ? '#FF6A1A' : '#A81E14', 1);
+    for(let i = 2; i < path.length; i++){
+      const f = (t * 2.6 + hr(i, b.seed)) % 1, p = path[i];
+      fxDot(c, p.x + (hr(b.seed, i) - 0.5) * 8, p.y - 2 - f * 8, 1, f < 0.5 ? '#FFB43A' : '#8A1A0E', 1 - f);
+    }
+    const h0 = path[0], p1 = path[Math.min(3, path.length - 1)];
+    const dx = h0.x - p1.x, dy = h0.y - p1.y, L = Math.hypot(dx, dy) || 1;
+    drawDemonEye(c, h0.x, h0.y, Math.max(3, r * 2 + 1), dx / L, dy / L, t + b.seed);
+    if(u > 0.85){
+      const q = (u - 0.85) / 0.15;
+      for(let i = 0; i < 10; i++){ const a = i / 10 * Math.PI * 2 + b.seed;
+        fxDot(c, h0.x + Math.cos(a) * (3 + q * 10), h0.y + Math.sin(a) * (1 + q * 4), 1, i & 1 ? '#FF4A1A' : '#FFB43A', 1 - q); }
+    }
+    c.globalAlpha = 1;
+  },
+  /* ---- Ascension Wake: a river of light, pale bands of every colour
+     rippling either side of a white core, a constellation drawn along it,
+     feathers of light rising off it, and the ball under a halo with a cross
+     of light through it ---- */
+  tAscension(c, b, path, r, t, u){
+    const cols = ['#FFB8EC', '#FFE38A', '#B8FFD8', '#9FE8FF', '#D8C0FF'], bt = Math.max(1, r);
+    for(let k = 0; k < 5; k++)
+      trailRibbon(c, path, bt, i => cols[(k + i + Math.floor(t * 8)) % 5], 0.75,
+                  i => (k - 2) * bt * 1.4 + Math.round(Math.sin(t * 6 - i * 0.7 + k)));
+    trailRibbon(c, path, Math.max(1, r), '#FFFFFF', 1);
+    let prev = null;
+    for(let i = 2; i < path.length; i += 3){
+      const p = path[i], s = { x: p.x + (hr(i, b.seed) - 0.5) * 16, y: p.y + (hr(b.seed, i) - 0.5) * 12 };
+      if(prev){ c.globalAlpha = 0.45 * (1 - i / path.length); pxLine(c, prev.x, prev.y, s.x, s.y, '#DFF6FF', 1); }
+      trailStar(c, s.x, s.y, '#FFFFFF', '#9FE8FF', 0.5 + 0.5 * Math.sin(t * 7 + i * 1.3 + b.seed));
+      prev = s;
+    }
+    for(let i = 2; i < path.length; i += 2){
+      const rise = (t * 0.9 + hr(i, b.seed + 2)) % 1, p = path[i];
+      const x = p.x + Math.sin(t * 3 + i) * 4, y = p.y - 2 - rise * 14, a = 1 - rise;
+      fxDot(c, x, y, 1, '#FFFFFF', a); fxDot(c, x + 1, y - 1, 1, '#FFFFFF', a); fxDot(c, x + 2, y - 1, 1, '#D8E6FF', a);
+    }
+    const h0 = path[0], pulse = 0.5 + 0.5 * Math.sin(t * 7 + b.seed);
+    drawGlow(c, h0.x, h0.y, r * 3 + 4, r * 3 + 3, [[0.6, '#9FE8FF', 1], [0.3, '#FFE7F8', 2], [0, '#FFFFFF', 3]], Math.floor(t * 8) & 3, 0.8);
+    const arm = Math.round(r * 3 + 3 + pulse * 2);
+    c.globalAlpha = 0.9; c.fillStyle = '#FFFFFF';
+    c.fillRect(Math.round(h0.x - arm), Math.round(h0.y), arm * 2 + 1, 1);
+    c.fillRect(Math.round(h0.x), Math.round(h0.y - arm), 1, arm * 2 + 1);
+    const hy = Math.round(h0.y - r - 4 - pulse), hw = Math.max(2, r + 1);
+    c.fillStyle = '#FFD66B'; c.fillRect(Math.round(h0.x - hw), hy, hw * 2 + 1, 1);
+    trailBall(c, b, h0, r);
+    if(u > 0.85){
+      const q = (u - 0.85) / 0.15;
+      for(let i = 0; i < 14; i++){ const a = i / 14 * Math.PI * 2 + b.seed;
+        fxDot(c, h0.x + Math.cos(a) * (2 + q * 12), h0.y + Math.sin(a) * (1 + q * 5) - q * 4, 1, cols[i % 5], 1 - q); }
+    }
+    c.globalAlpha = 1;
+  },
+  /* ---- Ascended Orb: a star of light with a ring round it, on a comet's
+     tail fringed with every colour, shedding sparks ---- */
+  ascorb(c, b, path, r, t, u){
+    const cols = ['#FFB8EC', '#FFE38A', '#B8FFD8', '#9FE8FF', '#D8C0FF'];
+    trailRibbon(c, path, r + 6, '#BFEFFF', 0.22);
+    trailRibbon(c, path, r + 3, i => cols[(i + Math.floor(t * 10)) % 5], 0.6);
+    trailRibbon(c, path, Math.max(2, r + 1), i => i < 4 ? '#FFFFFF' : '#EAF6FF', 1);
+    for(let i = 2; i < path.length; i++){
+      const f = (t * 2.8 + hr(i, b.seed)) % 1, p = path[i], a = hr(b.seed, i) * 6.28;
+      fxDot(c, p.x + Math.cos(a) * f * 8, p.y + Math.sin(a) * f * 6, 1, ['#FFFFFF', '#9FE8FF', '#FFB8EC', '#FFE38A'][i & 3], 1 - f);
+    }
+    const h0 = path[0];
+    drawOrb(c, h0.x, h0.y, r, t + b.seed, true);
+    if(u > 0.85){
+      const q = (u - 0.85) / 0.15;
+      for(let i = 0; i < 12; i++){ const a = i / 12 * Math.PI * 2 + b.seed;
+        fxDot(c, h0.x + Math.cos(a) * (3 + q * 11), h0.y + Math.sin(a) * (1 + q * 4), 1, i & 1 ? '#FFFFFF' : cols[i % 5], 1 - q); }
+    }
     c.globalAlpha = 1;
   }
 };
@@ -11162,6 +12012,72 @@ const CLUBFX = {
       c.globalAlpha = 1;
     },
     trail(c, arc, th){ arcTrail(c, arc, th + 2, ['#FFD66B'], 0.35); arcTrail(c, arc, th, ['#FFFFFF', '#FFF3C8'], 0.8); }
+  },
+  // the Demonic Driver: a black shaft with lava in its cracks, a beat of it
+  // running down to a head that burns, with two horns on it; flames licking
+  // off the head, and a swing that leaves fire in a trail of smoke
+  demonic: {
+    under(c, hx, hy, tx, ty, th, h, t, K){ glowLine(c, hx, hy, tx, ty, th, '#8A1408', 0.28 + 0.14 * Math.max(0, Math.sin(t * 5))); },
+    shaft(c, hx, hy, tx, ty, th, h, t, K){
+      pxLine(c, hx, hy, tx, ty, K.shaft, th);
+      const P = clubPts(hx, hy, tx, ty, 12);
+      for(let i = 2; i < P.length; i++){
+        const beat = ((i - t * 9) % 12 + 12) % 12;
+        if(beat < 2) fxDot(c, P[i][0], P[i][1], th, beat < 1 ? '#FFD34A' : '#FF7A2A', 1);
+        else if(i % 3 === 0) fxDot(c, P[i][0], P[i][1], th, '#8A1A0E', 1);
+      }
+      c.globalAlpha = 1;
+    },
+    head(c, tx, ty, th, h, turn, t, K){
+      const hw = th * 2 + 2, hh = th + 2, x0 = Math.round(tx) - (turn < 0 ? hw - th : th), y0 = Math.round(ty) - 1;
+      c.fillStyle = K.head; c.fillRect(x0, y0, hw, hh);
+      c.fillStyle = K.head2; c.fillRect(x0, y0 + hh - 1, hw, 1);
+      c.fillStyle = Math.sin(t * 7) > 0 ? '#FFD34A' : '#FF8A2A'; c.fillRect(x0 + (turn < 0 ? 0 : hw - 1), y0 + 1, 1, Math.max(1, hh - 2));
+      c.fillStyle = '#E8DCC8'; c.fillRect(x0, y0 - 1, 1, 1); c.fillRect(x0 + hw - 1, y0 - 1, 1, 1);
+    },
+    over(c, hx, hy, tx, ty, th, h, t){
+      for(let i = 0; i < 5; i++){
+        const life = (t * 2.2 + i / 5) % 1;
+        fxDot(c, tx + (hr(i, 3) - 0.5) * 5 + Math.sin(t * 8 + i), ty - 2 - life * 7, 1,
+              life < 0.3 ? '#FFD34A' : life < 0.6 ? '#FF7A2A' : '#8A1A0E', 1 - life);
+      }
+      c.globalAlpha = 1;
+    },
+    trail(c, arc, th, t){
+      arcTrail(c, arc, th + 2, ['#2A1414'], 0.35);
+      arcTrail(c, arc, th + 1, ['#FF4A1A', '#E8281C', '#FF8A2A'], 0.8);
+      arcTrail(c, arc, th, ['#FFD34A'], 0.55);
+      for(let i = 1; i < arc.length; i++){ const f = (t * 3 + i * 0.3) % 1; fxDot(c, arc[i][0], arc[i][1] - f * 6, 1, f < 0.5 ? '#FFB43A' : '#8A1A0E', 1 - f); }
+      c.globalAlpha = 1;
+    }
+  },
+  // the Ascended Driver: pearl and gold, light of every colour running down
+  // the shaft, a halo over the head with sparks circling it, and a swing
+  // that leaves light fringed with every colour
+  ascended: {
+    under(c, hx, hy, tx, ty, th, h, t, K){ glowLine(c, hx, hy, tx, ty, th + 1, K.glow, 0.30 + 0.10 * Math.sin(t * 3)); },
+    shaft(c, hx, hy, tx, ty, th, h, t, K){
+      pxLine(c, hx, hy, tx, ty, K.shaft, th);
+      const R = ['#FFB8EC', '#FFE38A', '#B8FFD8', '#9FE8FF', '#D8C0FF'], P = clubPts(hx, hy, tx, ty, 10), at = (t * 7) % 14;
+      for(let i = 0; i < P.length; i++){ const d = i - at; if(d > -3 && d <= 0) fxDot(c, P[i][0], P[i][1], th, R[(i + Math.floor(t * 6)) % 5], 1); }
+      c.globalAlpha = 1;
+    },
+    head(c, tx, ty, th, h, turn, t, K){
+      const hw = th * 2 + 1, x0 = Math.round(tx) - (turn < 0 ? hw - th : th), y0 = Math.round(ty) - 1;
+      c.fillStyle = K.head; c.fillRect(x0, y0, hw, th + 1);
+      c.fillStyle = K.head2; c.fillRect(x0, y0, hw, 1);
+      c.fillStyle = '#FFD66B'; c.fillRect(x0, y0 - 3 - (Math.sin(t * 4) > 0 ? 1 : 0), hw, 1);
+    },
+    over(c, hx, hy, tx, ty, th, h, t){
+      for(let i = 0; i < 4; i++){ const a = t * 3 + i * Math.PI / 2;
+        fxDot(c, tx + Math.cos(a) * 4, ty - 1 + Math.sin(a) * 2, 1, ['#FFFFFF', '#9FE8FF', '#FFB8EC', '#FFE38A'][i], 0.9); }
+      c.globalAlpha = 1;
+    },
+    trail(c, arc, th){
+      arcTrail(c, arc, th + 3, ['#BFEFFF', '#FFD0F4', '#FFF1C4'], 0.35);
+      arcTrail(c, arc, th + 1, ['#FFFFFF'], 0.85);
+      arcTrail(c, arc, th, ['#FFD66B'], 0.5);
+    }
   }
 };
 // Two legs from behind, walking away: side by side, the one stepping off
@@ -11240,8 +12156,11 @@ function paintGolfer(c, x, y, w, h, ph, t, bot, walking, walkPh, spr, arc, putt)
   const hx = sx + Math.sin(armH)*al, hy = sy + Math.cos(armH)*al*0.85;
   const tx = hx + Math.sin(arm)*cl, ty = hy + Math.cos(arm)*cl*0.90;
   const th = h > 34 ? 2 : 1;
-  pxLine(c, sx, sy, hx, hy, PX.skin, th);
-  pxLine(c, sx - w*0.10, sy + 1, hx, hy, PX.skin2, th);
+  // his arms in his own skin: a red demon's are red (they were always the
+  // plain tone, whatever his face was)
+  const OS = outfitNow();
+  pxLine(c, sx, sy, hx, hy, OS.skin || PX.skin, th);
+  pxLine(c, sx - w*0.10, sy + 1, hx, hy, OS.skin2 || PX.skin2, th);
   if(h > 22){ c.fillStyle = outfitNow().shirt; c.fillRect(Math.round(hx) - 1, Math.round(hy) - 1, th + 1, th + 1); }
   // the arc the head cuts through a swing, for the clubs that leave one
   if(ph > 0){ arc.push([tx, ty]); if(arc.length > 9) arc.shift(); } else arc.length = 0;
@@ -11266,8 +12185,8 @@ function paintHeli(c, x, y, w, h, t, bot){
   const th = h > 34 ? 2 : 1;
   const hx = x + w * 0.5, hy = y - h * 0.10;
   // both arms straight up from the shoulders to the grip
-  pxLine(c, x + w * 0.22, y + h * 0.24, hx - 1, hy, PX.skin2, th);
-  pxLine(c, x + w * 0.78, y + h * 0.24, hx + 1, hy, PX.skin, th);
+  pxLine(c, x + w * 0.22, y + h * 0.24, hx - 1, hy, O.skin2 || PX.skin2, th);
+  pxLine(c, x + w * 0.78, y + h * 0.24, hx + 1, hy, O.skin || PX.skin, th);
   // the blur of the turn, then the club where it is in it, laid flat and seen
   // from a little above, so its circle is a flattened ring
   const L = h * 0.62, a = t * 26;

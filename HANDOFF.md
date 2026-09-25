@@ -10,8 +10,27 @@ check is for.
 
 - Everything is committed and pushed to `main` (mirrored on the session
   branch `claude/notes-review-dju532`). Nothing is half-built.
-- `node test/run.js` passes all **54 checks** (about 10 minutes).
-- **Last request** (with a screenshot): "Looks like the sponsor buff is
+- `node test/run.js` passes all **55 checks** (about 10 minutes).
+- **Last request** (with a screenshot of a railway hole): "Railway clips
+  through the ground / Also as soon as the train gets near the hole ends if
+  the yardage was beat already / Can you also create more skins, also the
+  same price as the divine one. Let's do a demonic skin, and an Ascended
+  skin. Ascended would be 3500 sovereign. Make it as intricate as possible,
+  go crazy with it. Also, make a ball, club, ball trail, etc to match the
+  new skins. Make them for the caddy as well." All three done:
+  - The railway was drawn over everything on the hole, so it cut across the
+    trees and spectators in front of it (read as "through the ground"). It
+    now goes down between what is beyond it and what is this side of it,
+    under the haze (§5 "The railway among the trees").
+  - A hole could move on while he waited for a train: the longest wait for
+    a train plus the walk and putt is 8.05s and the stop was 8s. The stop
+    is 20s (`B.ISLE_HOLD`); the wait is paid for, so it costs nothing.
+  - The **Demonic** (3000, the Divine's price) and **Ascended** (3500)
+    sets: skin, caddie, club, trail and ball each (§5 "The Demonic and the
+    Ascended"). Also fixed on the way: his arms were always drawn in the
+    plain skin tone, so the red Demonic (and the Void Walker, Midas and the
+    Ghost) had peach arms.
+- **The request before** (with a screenshot): "Looks like the sponsor buff is
   behind the shop icon? Let's move that to the right of the settings icon
   and have it part of the caddie buff area. Make it so they are one
   element, when one fades, the other goes to the top". Done (§5 "The
@@ -165,6 +184,7 @@ Line numbers are approximate and drift. Search for the name instead.
 | **The stack by the cog** (caddie and sponsor perks) | `buffLines`, `buffTip`, `buffOrder`, `buffClock`, `#buffTip .bl`, each timed perk's `s` in `B.PERKS` |
 | **He putts out** | `Scene.putt`, `puttArm`, `puttBall`, `cupT`, `cupHeard`, `PUTT_HIT`, `PUTT_ROLL`, `PIN_X`, `Scene.pinX`, `putSpot` in `launch`, `Sfx.putt`; `paintGolfer`'s last argument |
 | **The hole waits for him to reach the green** | `Scene.holeWait` (was `isleWait`), `B_GREEN_UP`, `B_GREEN_STAND`, `Scene.upT`, `holeSaid`, `Scene.saidHole`, the `waiting` guard and hold in `step`, `walk` in `finishHole` (the wait paid for) |
+| **The Demonic and the Ascended** (skins, caddies, clubs, trails, balls) | `STYLEFX.demonic`, `STYLEFX.ascended`; baked stamps `fxBake` (with `crispen`, `edged`, `FXBAKE`), `batWing`, `lightWing`, `hornPair`, `runeRing`, `crownOf`, `mandalaOuter`, `mandalaInner`, `drawSkull`; `veinsOf` (the lava cracks' pulse), `eyeAt` (`EYE_ADDR`, `EYE_FIN`, `EYE_CADDIE`), `wingAnchor`; patterns `hellcrack`, `filigree`; `CLUBFX.demonic`/`ascended`; `BALLFX.tHellfire`, `demoneye`, `tAscension`, `ascorb`, `drawDemonEye`, `demonEye`, `drawOrb`; tiles `ICON_FX`, `BALL_ICON`; the Mythic badge is `top: 2` |
 | **Railway Crossing** | `isRail`, `RAIL_FORCE`, `P_RAIL`, `Scene.tickRail`, `railAt`, `railHold`, `railLights`, `drawRail`, `drawTrain`, `RAIL_X`/`RAIL_V`/`RAIL_LEN`/`RAIL_MEET`, `railWait` in the camera code, `Sfx.whistle`/`chuff`/`ding`, `SIG_HOME_ROUND`; `DEV.rail` |
 | **Life on the signature holes** | `DUCKS`, `Scene.duckAt`, `drawDucks`, `drawHawk` (from `drawBridge`), `fishAt`, `drawFish` (from `drawStones`), `Sfx.quack`/`hawk`/`plop` |
 | Happy dance, Seasons Seen | `Scene.happyDance`, `fairyQueue`; `S.seasonsGot`, `seasonsSeen`, `seasonsAll` |
@@ -296,8 +316,75 @@ Line numbers are approximate and drift. Search for the name instead.
 26. **Measuring a sound with `Math.random` pinned to a constant silences
    every noise burst** (`Sfx.noise` fills its buffer from it). Feed it a
    seeded stream instead.
+27. **A skin's big shapes are baked, not drawn each frame** (`fxBake`): the
+   Demonic's wings, the Ascended's six wings, mandala and crown are painted
+   once per size and animation step with canvas paths, snapped to the
+   look's own colours (`crispen`, every pixel on or off) and stamped with
+   one `drawImage`. Thin shapes each edged in a colour read, at his size
+   (about 55px tall on a phone), as a starburst of wires: the first
+   Ascended wings did. Draw one solid shape and put the detail inside it.
+   The golfer's box is wider than he is, so measure a part by drawing the
+   same frame with and without it (`legends` does), not by where his box
+   ends.
 
 ## 5. What the last features do (for debugging them)
+
+### The Demonic and the Ascended (user asked: "go crazy with it")
+
+- Data: outfits `demonic` (3000, `top: 1`, pattern `hellcrack`, red skin,
+  the belt colour `#FF5A1E` is also his eyes and soles) and `ascended`
+  (3500, `top: 2`, pattern `filigree`, pearl and gold); caddies follow from
+  the outfits at a third (1000 and 1165); clubs `demonic` (Demonic Driver,
+  2000) and `ascended` (Ascended Driver, 2350); trails `hellfire` (Hellfire
+  Wake, 2000) and `ascension` (Ascension Wake, 2350); balls `demoneye`
+  (Demon Eye, 1500) and `ascorb` (Ascended Orb, 1750). The Ascended pieces
+  are the Divine's in proportion. `top: 2` sorts first and shows a
+  **MYTHIC** badge (was LEGENDARY for any `top`).
+- **Demonic** (`STYLEFX.demonic`): bat wings beating (12 baked steps,
+  `batWing`: arm, forearm, four fingers, scalloped skin, glowing veins,
+  claws); a pit of lava at his feet with a ring of eight runes turning
+  (`runeRing`), bubbles, brimstone smoke, embers and shadow tendrils; every
+  6.5s the pit erupts for a second (flames round it, the far half behind
+  him); a tail with a spade (in front of him when he walks away); horns
+  (`hornPair`); eyes like coals that flare; the lava cracks on his shirt
+  pulsing upward (`veinsOf`: the pattern's pixels found in each sprite,
+  poured through with `lighter`); three flaming skulls circling him; a
+  smoky outline and a red rim. His caddie (`g.minor`): wings, horns, tail,
+  eyes, cracks, a few embers.
+- **Ascended** (`STYLEFX.ascended`): he floats (`bob`); behind him a
+  mandala of two rings turning opposite ways (`mandalaOuter`/`Inner`, 32
+  steps each); six wings of light (`lightWing`, 12 steps, a pale edge);
+  a pool of light; four crystals circling him; stars coming and going; a
+  crown of light with a glint running round it (`crownOf`); shining eyes;
+  a cyan and pink sheen sweeping across him every 3.4s; motes of every
+  colour rising; feathers drifting down; every 4.5s a ring of light along
+  the ground and a shaft of it to the sky. His caddie: two wings, crown,
+  eyes, light, motes.
+- Costs (skins check, quickest block): standing 0.78ms Demonic, 0.66ms
+  Ascended; walking with the matching caddie 0.62 and 0.39 (budget 1.5,
+  the Divine 0.93).
+- His arms now take the outfit's `skin`/`skin2` (`paintGolfer`,
+  `paintHeli`); they were always `PX.skin`.
+- Check `legends` (new): prices and proportions, badges, every piece with
+  an effect; wings either side of him, horns and crown above his cap, eyes
+  at his eye, on him and his caddie, by taking each part away from the
+  same frame; no plain skin tone on the five skins with their own.
+  `skins` also holds the dearest trails' resting balls to their own look.
+
+### The railway among the trees (user saw it)
+
+- The frame drew the railway after every prop, so the line and its train
+  cut across the trees and spectators standing in front of it. Now, on a
+  rail hole, `drawProps(edge, side)` draws the props beyond `isle.bank`,
+  then `drawRail`, then the props this side of it, all before the haze
+  (the railway now lies under the haze like the ground).
+- `rail` compares the frame with and without the railway on all four
+  courses with one, pixel by pixel, from the tee to the line (4,700 pixels
+  of trees and gallery in front, none crossed; 1,800 beyond, all covered).
+  The words, map and rain printed over the picture are left off for it.
+- The hole's stop (`B.ISLE_HOLD`) is 20s: a ball down on the tee, the
+  longest wait for a train (one just setting off as he arrives), the
+  crossing, the walk up and the putt came to 8.05s against a stop of 8s.
 
 ### The stack by the cog (user asked, with a screenshot)
 
@@ -1027,6 +1114,9 @@ Line numbers are approximate and drift. Search for the name instead.
 
 ## 6. Recent history (newest first, one line each)
 
+- The Demonic and Ascended sets (skin, caddie, club, trail, ball each); his
+  arms in his own skin tone.
+- The railway sits among the trees; a train no longer ends a hole early.
 - The sponsor perks' lines join the caddie's by the cog, one stack.
 - He putts out on every hole (an ace goes straight in); the pin stands a
   little right of centre so the cup shows.
@@ -1129,19 +1219,20 @@ Line numbers are approximate and drift. Search for the name instead.
 
 ## 8. What to offer next
 
-Everything asked for is done. First ask how the latest look on the phone:
-the railway crossing (home courses' hole 9; the Moorland, Old Links and
-Ironbark), the ducks, hawk and fish, the caddie's happy dance on an eagle,
-Seasons Seen on the Record, and holes now finishing with him up on the
-green. Still unseen before that: the caddie's turns, perk upgrades, the pier
-on a windy day and the season chime.
+Everything asked for is done. First ask how the Demonic and the Ascended
+look on the phone ("Try it" in the shop wears one for ten seconds), and
+whether the railway now sits right among the trees.
 
-The menu to offer next (the putt out is done; the rest of the last menu):
-1. **Life on the railway** (recommended): other trains now and then (a
+The menu to offer next:
+1. **A moment for the legends** (recommended): the Demonic and Ascended
+   do something on a great hole: the pit erupts and the skulls scatter on
+   an eagle, the heavens open (the shaft of light, the wings spread wide)
+   on an ace; and a sound for each (a low rumble, a choir-like chord).
+2. **Life on the railway**: other trains now and then (a
    goods train, an express, a night train with glowing windows), and the
    golfer and his caddie wave as it goes by.
-2. **Weather on the signature holes**: rain rings on the island's lake,
+3. **Weather on the signature holes**: rain rings on the island's lake,
    snow settling on the train and the bridge, spray thicker in a storm.
-3. **A Signature Week honour**: all five kinds played in one real week.
-4. **A read of the green**: now and then a longer putt that breaks, and
+4. **A Signature Week honour**: all five kinds played in one real week.
+5. **A read of the green**: now and then a longer putt that breaks, and
    once in a while a lip-out and a second tap-in.
