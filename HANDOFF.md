@@ -402,6 +402,12 @@ Line numbers are approximate and drift. Search for the name instead.
   Inferno's flames in a column down to the water; `bot` at his boots left
   those glows hanging under him. So each thing that lies on the ground
   checks `g.fly` (list in the map row).
+- His arms: the walking-away picture (`gBack`) has both arms painted
+  hanging at his sides, so the raised pair drawn over it gave him four (the
+  user saw them). He flies as `SPRITE.gFly`, the same picture with the
+  hanging arms taken out below the sleeves; the raised arms are as thick
+  as those were, with his hands on the grip, and drawn after the skin's
+  front half (the Ascended's cape covered them).
 - Check `flight`.
 
 ### Night on the ordinary holes (user asked, from the menu)
@@ -1542,7 +1548,8 @@ him (about 49px tall on a 320 phone, 71px on its side).
 
 ## 6. Recent history (newest first, one line each)
 
-- A skin flies with him over the water; night on the ordinary holes
+- A skin flies with him over the water, his arms up on the club (not also
+  hanging at his sides); night on the ordinary holes
   (tee lamps, fireflies, a lit clubhouse, the flag glowing); the Mythic
   Favour caddie perk; the Hole of the Week run (15 sovereigns from the
   third week running).

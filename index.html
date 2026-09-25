@@ -8818,6 +8818,11 @@ function buildSprites(){
   SPRITE.gWalk = patterned(makeSprite(G_FIN_ROWS.slice(0, 32).concat(G_FIN_ROWS.slice(32).map(() => blank)), GMAP), OUT);
   const pad = G_FIN_ROWS.slice(32).map(() => blank);
   SPRITE.gBack = patterned(makeSprite(G_BACK_ROWS.concat(pad), Object.assign({}, GMAP, { h: OUT.hair || (OUT.skin ? OUT.skin2 : HAIR) })), OUT);
+  // Flying: the same, without the arms hanging at his sides (both are up
+  // over his head holding the club: drawn in code), his sleeves left on
+  SPRITE.gFly = patterned(makeSprite(G_BACK_ROWS.map((r, y) => y < 17 ? r
+    : [...r].map((ch, x) => (x < 12 || x > 27) && (ch === 'k' || ch === 'K') ? '.' : ch).join('')).concat(pad),
+    Object.assign({}, GMAP, { h: OUT.hair || (OUT.skin ? OUT.skin2 : HAIR) })), OUT);
   const CD = caddieNow();
   SPRITE.caddie = patterned(makeSprite(CADDIE_ROWS.concat(G_FIN_ROWS.slice(32).map(() => blank)), caddieMap(CD)), CD);
 
@@ -13196,7 +13201,7 @@ function drawLegsBack(c, cx, hy, len, w, ph, near, far, shoe, sole = '#B8AE9C'){
 // What a skin's effect is told about him: his box, his middle, his feet, the
 // scene clock, the swing, whether he is walking away and where his cap is.
 function golferG(x, y, w, h, ph, t, bot, walking, spr){
-  const cb = spr === SPRITE.gFinish ? CAP_FIN : spr === SPRITE.gBack ? CAP_BACK : CAP_ADDR;
+  const cb = spr === SPRITE.gFinish ? CAP_FIN : spr === SPRITE.gBack || spr === SPRITE.gFly ? CAP_BACK : CAP_ADDR;
   return { x, y, w, h, cx: x + w*(walking ? 0.5 : 0.55), cy: y + h*0.53, bot: bot, t: t, ph, back: walking,
            k: Math.max(1, Math.round(h / 40)), spr,
            head: { x: x + w*cb.x, y: y + h*cb.y, w: w*cb.w, hh: h*cb.h } };
@@ -13290,7 +13295,7 @@ function paintGolfer(c, x, y, w, h, ph, t, bot, walking, walkPh, spr, arc, putt,
 // Flying: seen from behind, legs hanging, both hands up over his head holding
 // the club flat and spinning it like a rotor. Its shadow on the water below.
 function paintHeli(c, x, y, w, h, t, bot){
-  const O = outfitNow(), spr = SPRITE.gBack;
+  const O = outfitNow(), spr = SPRITE.gFly || SPRITE.gBack;
   const up = bot - (y + h);
   const sw = Math.max(2, Math.round(w * 0.7 * (1 - Math.min(0.6, up / (h * 2)))));
   c.fillStyle = 'rgba(8,16,10,.30)';
@@ -13312,9 +13317,18 @@ function paintHeli(c, x, y, w, h, t, bot){
   drawLegsBack(c, x + w*0.5, y + h*(31/58), h*(26/58), w, 0.25 + Math.sin(t * 5) * 0.04,
                O.pant || '#2B3B4F', O.pant2 || O.pant || '#1C2937', O.shoe || PX.shoe, O.belt);
   c.drawImage(spr.cv, x, y, w, h);
-  // both arms straight up from the shoulders to the grip
-  pxLine(c, x + w * 0.22, y + h * 0.24, hx - 1, hy, O.skin2 || PX.skin2, th);
-  pxLine(c, x + w * 0.78, y + h * 0.24, hx + 1, hy, O.skin || PX.skin, th);
+  // the skin's front half (a cape down his back) before the arms: they go
+  // up over it
+  c.globalAlpha = 1;
+  if(FX && FX.front) FX.front(c, g);
+  c.globalAlpha = FX && FX.alpha ? FX.alpha : 1; c.globalCompositeOperation = 'source-over';
+  // both arms up out of his sleeves to the grip, as thick as the arms the
+  // walking picture has hanging at his sides, and his hands on it
+  const ath = Math.max(th, Math.round(h * 0.05));
+  pxLine(c, x + w * 0.27, y + h * 0.27, hx - ath / 2, hy + ath, O.skin2 || PX.skin2, ath);
+  pxLine(c, x + w * 0.70, y + h * 0.27, hx + ath / 2, hy + ath, O.skin || PX.skin, ath);
+  c.fillStyle = O.hand || O.skin || PX.skin;
+  c.fillRect(Math.round(hx - ath), Math.round(hy - 1), ath * 2, ath + 1);
   // the blur of the turn, then the club where it is in it, laid flat and seen
   // from a little above, so its circle is a flattened ring
   const L = h * 0.62, a = t * 26;
@@ -13327,7 +13341,6 @@ function paintHeli(c, x, y, w, h, t, bot){
   const tx = hx + Math.cos(a) * L, ty = hy - 1 + Math.sin(a) * L * 0.22;
   drawClub(c, hx, hy - 1, tx, ty, th, h, Math.cos(a) < 0 ? -1 : 1, t);
   c.globalAlpha = 1; c.globalCompositeOperation = 'source-over';
-  if(FX && FX.front) FX.front(c, g);
   if(FL){ c.globalAlpha = 1; FX.flourish(c, g, FL, 'front'); }
   c.globalAlpha = 1; c.globalCompositeOperation = 'source-over';
 }
