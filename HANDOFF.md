@@ -11,10 +11,15 @@ check is for.
 - Everything is committed and pushed to `main` (mirrored on the session
   branch `claude/notes-review-dju532`). Nothing is half-built.
 - `node test/run.js` passes all **50 checks** (about 9 minutes).
-- **Last request**: "get rid of the caddy wings, just have them float up
-  and down a tiny bit; more animation too, like randomly will spin, dance,
-  stuff like that for fun". Done (§5 "The caddie: no wings, a float, and
-  turns"); sent a zoomed GIF of each turn.
+- **Last request**: "All of those please" (the menu: caddie perk upgrades,
+  more caddie moves, life on the pier, a season chime). All four done and
+  pushed one by one (§5, the four newest sections); sent a GIF of the pier
+  and a screenshot of the upgrade rack. Since the chime reads the seasons,
+  the suite is being run with the day pinned to each season (rule 20).
+- **The request before**: "get rid of the caddy wings, just have them
+  float up and down a tiny bit; more animation too, like randomly will
+  spin, dance, stuff like that for fun". Done (§5 "The caddie: no wings, a
+  float, and turns").
 - **The request before**: "read the notes and let's continue". Read as:
   build the item the last menu recommended, the **Signature Hole of the
   Week** (§5).
@@ -231,9 +236,13 @@ Line numbers are approximate and drift. Search for the name instead.
    near half is lost. `sigview` diffs every such hole with and without them.
 20. **The regular stops' season follows the real month**, so a check that
    draws them can pass in September and fail in December. After touching
-   seasons or anything they colour, run the suite with `monthNow` pinned to
-   January, April, July and October (a temporary patch); only the "today"
-   line of `seasons` should move. Checks pin `DAY_FORCE` to be sure.
+   seasons or anything they colour, run the suite with **`featDay`** (the
+   real day) pinned to a day in January, April, July and October: 20833,
+   20923, 21014, 20741. Patch a copy of the game, not the working file, so
+   runs can overlap and nothing needs restoring. Don't pin `monthNow`:
+   `seasons` and `chime` walk the months by moving `DAY_FORCE`, and a pinned
+   month ignores it (both fail, falsely). Only the "today" line of
+   `seasons` should move.
 21. **The suite picks up any check file present when it reaches it**: don't
    write a new check while a full run is going, or it runs half-built.
 22. **Some checks count rows** (`smoke` counts the Record's): adding a row
@@ -907,22 +916,19 @@ Line numbers are approximate and drift. Search for the name instead.
 
 ## 8. What to offer next
 
-The signature hole of the week is done. First ask how it looks on the phone:
-this week (from Monday 21 September) is the Island Green, then Canyon Carry,
-Stepping Stones and Sea Stack. It shows as a brass frame and a sparkle on the
-hole map, "×2" after the name in the corner, a toast at the tee, and a row
-on the Trophy Room's Today page. Last session's work (the blessing and the
-countdown, the sliders, autumn on the regular stops, Sea Stack) is also
-unseen on the phone.
+Everything asked for is done. First ask how the latest look on the phone:
+the caddie without wings and his turns (spin, dance, flip, wave, loop,
+cartwheel, juggle), perk upgrades on the Range's Caddie tab, the pier on a
+windy day (Coastal Classic, Seaside Open, Harbour Lights' front nine), and
+the chime when a course comes up in a new season (the regular stops turn
+to winter in December; dev menu Sound row plays each chime). Also still
+unseen: the signature hole of the week (Island Green this week).
 
 The menu to offer next:
-1. **Caddie perk upgrades** (recommended): longer or stronger blessings,
-   bought with sovereigns.
-2. **Life on the pier**: sea spray over the deck in a crosswind, and gulls.
-3. **A short chime when a course's season turns.**
-4. **A Record row for seasons seen.**
-
-Other ideas: a fifth signature hole (a plateau green was set aside: the
-ground near the camera is eased flat, so a cliff barely shows). Sea Stack
-weeks are lean (three courses have one); if the user minds, the week's kind
-could also take one hole a round on courses without it.
+1. **Life on the other signature holes** (recommended): ducks on the island
+   lake, a hawk circling the canyon, fish jumping by the stepping stones.
+2. **A happy dance on a great hole**: the caddie's turns chosen by the
+   score now and then (a cartwheel on an eagle, a flip on an ace).
+3. **A Record row for seasons seen.**
+4. **A fifth signature hole** (a plateau green was set aside: the ground
+   near the camera is eased flat, so a cliff barely shows).
