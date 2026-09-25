@@ -9,23 +9,23 @@ check is for.
 ## 1. Where things stand
 
 - Everything is committed and pushed to `main` (mirrored on the session
-  branch `claude/loving-archimedes-ct2rpb`). Nothing is half-built.
-- `node test/run.js` passes all **56 checks** (about nine minutes).
-- **Last request**: "please update the notes and claude.md files for
-  another handoff". Done (nothing else changed).
-- **This session**, in order (each has a section in §5): a moment for
-  the three top skins on a great hole and the Demonic made the ultimate
-  skin; four trains and weather on the signature holes; the canyon bridge
-  cut to slats (fixed, with the crossing's boards) and the Signature Week
-  honour; the Divine made the ultimate skin, wings side on as he swings,
-  and a flourish for the other effect skins; then, at the user's word, the
-  moments cut to **half a second, only on an albatross or an ace,
-  bursting out from his outline**; night on the signature holes; the
-  caddies' wings side on; the Signature Week on the Tour tab; a flourish
-  on a pure strike for the three dearest drivers; the Signature Week's
-  prize (25 sovereigns).
+  branch `claude/notes-claude-review-4cqv98`). Nothing is half-built.
+- `node test/run.js` passes all **59 checks** (about nine minutes).
+- **Last request** (with a screenshot of the Ascended flying over the
+  island's lake as a plain figure): "Keep them [the Divine caddie's
+  wings]. Also can you fix the skins when flying over water... Then do 1.
+  We won't do the photo mode or trail flourishes. Let's do 4 and 5 too."
+  All done, in that order (each has a section in §5): **a skin flies with
+  him**; **night on the ordinary holes**; **the Mythic Favour** (a caddie
+  perk for the three dearest caddies); **the Hole of the Week run**.
+- The session before (sections in §5 too): the moments for the top skins
+  (since cut to half a second on an albatross or an ace), the Demonic and
+  the Divine made ultimate skins, four trains, weather and night on the
+  signature holes, the Signature Week (honour, Tour band, 25 sovereigns),
+  pure-strike flourishes for the three dearest drivers.
 - **Turned down**: a station on the railway ("would take up too much
-  time"). Don't offer it again.
+  time"); **a photo mode** and **trail flourishes** (this session). Don't
+  offer them again.
 - Older requests are in §6, one line each, with a section of their own in
   §5 where there is more to know.
 - **Not yet heard back on** (carried from earlier sessions; ask one when it
@@ -33,8 +33,8 @@ check is for.
   and the town theme fit; whether the 2 min battery saver wait suits;
   whether the auto-climb button sits right. They were on about Card V a few
   sessions ago, so may not have seen a home course season (from Card XI).
-  From this session: whether the Divine caddie keeps his new wings, and
-  how the pure-strike flourishes feel at a fast tempo.
+  How the pure-strike flourishes feel at a fast tempo; whether the Mythic
+  Favour's price (600) and strength (three lifts of 20%) feel right.
 - The user usually ends a task by asking **"What's next?"**: a short plain
   menu with a recommendation (§8), then wait for the choice.
 
@@ -52,8 +52,7 @@ check is for.
 - **The caddie has no wings**: he floats, a little up and down, and now and
   then takes a turn (spin, dance, flip, wave, loop). Their request. (That
   is the default fairy; the Demonic and Divine caddies have wings of their
-  own, side on. The Divine caddie's are new this session: asked whether to
-  keep them, no answer yet.)
+  own, side on. The user said to keep the Divine caddie's.)
 - **The great-hole effects** (the three top skins' moments and every other
   skin's flourish) come **only on an albatross or an ace, last half a
   second, and burst out from his outline close about him**. Nothing climbs
@@ -165,6 +164,10 @@ Line numbers are approximate and drift. Search for the name instead.
 | **A moment on an albatross or an ace** (the three top skins, and a flourish for the other eleven) | `Scene.legendGo` (from `happyDance`), `Scene.legend` / `legendNow`, `Scene.flourish` / `flourishNow`, `LEGEND_DUR`, `FLOURISH_DUR` (0.5s), `outBack`; `outlineBurst`, `burstStreak`; `FLOURISH_PIECE`, `FLOURISH`; `Sfx.hellfire`, `ascend`, `choir`, `flourishSnd`, `LEGEND_VOL`; both cleared in `saverOn`; `DEV.legend(d)` (dev menu row Legends) |
 | **A pure strike with the three dearest drivers** | `CLUBFX.divine/demonic/ascended.pure`, `Scene.pure` (set in `Scene.launch`), `pureNow`, `PURE_DUR`; `Sfx.pureSnd` |
 | **The ultimate Divine** and wings as he is seen | `STYLEFX.divine` (`wings`, `feathers`, `halo2`, `sparks`, `wave`, `charge`/`strike`), `sunSigil`; `featherWing` (`FEATHER_PAL`), `batWing`, `wingPair(key, paint, pal, S, view, ph, up, shade)` |
+| **A skin in flight** (over the island's lake, the canyon) | `paintHeli` runs the skin's `back`/`front`/`flourish` with a from-behind `golferG` (`g.fly`, `bot` at his boots); what lies round his feet is skipped on `g.fly` (the glows of the Inferno, Frostborn, Stormcaller, Midas, Ghost; the Disco's floor; the peel; the Demonic's pit smoke, tendrils and eruption) |
+| **Night on the ordinary holes** | `Scene.layNight` (props kind 4, a tee lamp; kind 5, a spot of three fireflies; laid from a hash after `layProps`), drawn in `drawProp` only while `night` and not in a wager; `Scene.clubhouse` (baked into the ridge in `buildRidge`, away from the landmark); the flag's halo and light in `pinBody` (`lit`) |
+| **The Mythic Favour** (caddie perk `myth`) | `B.CPERKS` entry with `myth`, `also`; `MYTH_CADDIES`, `mythOk`, `MYTH_PAL`; in `tickCaddie` (waits without a Mythic caddie; `also` buffs), `renderCadPerks` (`locked`), `cperkPick`; the cast `Scene.drawFavour` (from `drawCaddie`, `fairyCast.myth`); icon `cpmyth`; Full Staff counts only the nine ordinary perks |
+| **The Hole of the Week run** | `S.hotw = { wk, n }` in `sigScore`, `B.HOTW_RUN`/`HOTW_SOV`, `hotwRun`, `hotwDone`, repaired in `initState`; the Tour band's last row in `renderSigWeek` |
 | **Night on the signature holes** | `Scene.nightLamp`, `drawIsleLights` (from `drawDucks`), `drawFireflies` (from `drawStones`), the lanterns in `drawPier`, the bulbs in `drawBridge` |
 | **The Signature Week** | `S.sigWk`, `sigWeekKinds`, the tally `sigWeek`, honour `sigWk`, `B.SIG_WEEK_SOV`; counted in `sigScore`; the Record's row; the Tour tab's band (`renderSigWeek`, `#sigBox`) |
 | **The ultimate Demonic** | `STYLEFX.demonic`: `aura` (the shared `flameAura` with `HELL_FLAME`; the Ascended's uses `VOID_FLAME`), `chains`, `cracks`, `fists`, `blast`, `charge`/`strike` (borrowed from the Ascended), `horns` (`sleekHorns(s, view, true)`, views `dside`/`dback`, colours `HORN_COL.dem`) |
@@ -385,6 +388,60 @@ Line numbers are approximate and drift. Search for the name instead.
    check the file's time before trusting it.
 
 ## 5. What the last features do (for debugging them)
+
+### A skin flies with him (user sent a screenshot)
+
+- Over the island's lake (and the canyon, where he flies too) he was drawn
+  by `paintHeli` alone, which never asked the skin for anything: the
+  Ascended was an indigo figure with no cape, horns or aura. It now builds
+  a `golferG` seen from behind (`back: true`, as walking away, so wings
+  spread, the cape hangs down his back) with `bot` at his own boots and
+  `g.fly` set, and runs the skin's `back`, `outline`, him, `front` and any
+  flourish. The skin's `ground` (sigil, pit, sun) is not drawn in the air.
+- First tries: `bot` left at the water put every foot-glow and the
+  Inferno's flames in a column down to the water; `bot` at his boots left
+  those glows hanging under him. So each thing that lies on the ground
+  checks `g.fly` (list in the map row).
+- Check `flight`.
+
+### Night on the ordinary holes (user asked, from the menu)
+
+- On a night round (`Scene.night`, not in a wager): a lamp either side of
+  the tee (post, lantern, `nightLamp` glow), eighteen spots of three
+  fireflies in the rough down both sides, a clubhouse far off with its
+  windows lit (baked in the ridge on the foothills, the side away from the
+  landmark, lifted so the treeline does not hide its lower windows), and
+  the flag with a dithered red halo behind the pin and a warm light on top.
+- Lamps and fireflies are props (kinds 4 and 5), so trees and the gallery
+  in front hide them and the hill clip applies; each firefly is also cut
+  at its own drifting distance. They come from a hash, never the hole's
+  `rnd`, so every tree and spectator stays where it was (the `nightholes`
+  check holds that). The right lamp is usually behind the hole map at
+  phone widths; that is fine.
+
+### The Mythic Favour (user asked, from the menu)
+
+- A tenth caddie perk, 600 sovereigns, only for the Divine, Demonic and
+  Ascended caddies (`MYTH_CADDIES`, by `S.caddie`): every 30s +20% power,
+  tempo and prize money for 8s (`k: 'cPow'`, `also: ['cSpd', 'cGold']`;
+  levels as the others). With a plain caddie it cannot be bought or worn;
+  worn then the caddie changed, its clock stands still and its row says
+  "Worn · waits for a Mythic caddie".
+- Its light comes down in the caddie's colour, and the caddie casts it:
+  eighteen pixels in his three colours arcing from his hands to the
+  golfer's chest over 0.42s, then a small burst there, gone by 0.8s
+  (`drawFavour`). Its word is FAVOUR.
+- Full Staff still means the nine ordinary perks.
+
+### The Hole of the Week run (user asked, from the menu)
+
+- `sigScore`: the signature hole of the week (`isSigWeek`) played in a
+  real week sets `S.hotw = { wk, n }`, once a week; the week after last
+  adds one, a gap starts at 1. From the third week running each week pays
+  `B.HOTW_SOV` (15) sovereigns with a toast. The Tour tab's Signature Week
+  band has a last row, "Hole of the Week Run": "n of 3", or "n weeks ·
+  +15" once it pays, a tick when this week's is done; its `?` says how.
+  Only played holes count (not the away catch-up), like the Signature Week.
 
 ### The Signature Week on the Tour tab (user asked, from the menu)
 
@@ -1485,6 +1542,11 @@ him (about 49px tall on a 320 phone, 71px on its side).
 
 ## 6. Recent history (newest first, one line each)
 
+- A skin flies with him over the water; night on the ordinary holes
+  (tee lamps, fireflies, a lit clubhouse, the flag glowing); the Mythic
+  Favour caddie perk; the Hole of the Week run (15 sovereigns from the
+  third week running).
+
 - The Signature Week pays 25 sovereigns each week it is done.
 - The Signature Week on the Tour tab; a flourish on a pure strike for the
   Divine, Demonic and Ascended drivers.
@@ -1619,17 +1681,19 @@ him (about 49px tall on a 320 phone, 71px on its side).
 
 ## 8. What to offer next
 
-Everything asked for is done. The railway station was turned down as
-too big a job: don't offer it again.
+Everything asked for is done. Turned down, don't offer again: the railway
+station, a photo mode, trail flourishes.
 
 The menu to offer next:
-1. **Night on the ordinary holes** (recommended): lamps by the tee, a lit
-   clubhouse far off, the flag glowing, fireflies in the rough.
-2. **A photo mode**: a button that freezes the course and hides the words,
-   to take a clean screenshot of a skin.
-3. **Trail flourishes**: the Seraph, Hellfire and Ascension trails do
-   something as an ace drops.
-4. **A Mythic caddie perk**: a perk only the three dearest caddies can
-   wear, with an effect of its own.
-5. **The Hole of the Week streak**: a small bonus for playing the
-   signature hole of the week three weeks running.
+1. **Night flourishes for the skins** (recommended): the Divine's halo, the
+   Demonic's cracks and the Ascended's sigil lighting the ground round
+   him at night, now the holes are lit.
+2. **A Mythic caddie's turn of his own**: the three dearest caddies each a
+   turn of their own among the spins and loops (a wingbeat loop, a burst
+   of fire, a blink through the void).
+3. **Weather on the ordinary holes**: puddles with rain rings on the
+   fairway after a storm, frost on the grass in a winter dawn.
+4. **A clubhouse to walk past**: on the last hole of a round, the
+   clubhouse near the green with its terrace and a few of the gallery.
+5. **Season best on the Tour tab**: the best card of each season and the
+   course it came on.

@@ -38,7 +38,7 @@ module.exports = {
         // ---- what each level does, going off ----
         o.bad = []; o.lv1 = [];
         const fire = (id, lv) => {
-          S.cperkOwn = { [id]: 1 }; S.cperk = id; S.cperkLv = lv > 1 ? { [id]: lv } : {};
+          S.caddie = cperkDef(id).myth ? 'divine' : 'classic'; S.cperkOwn = { [id]: 1 }; S.cperk = id; S.cperkLv = lv > 1 ? { [id]: lv } : {};
           S.buff = {}; S.yards = S.yardsMax; S.elapsed = 5; S.cperkT = B.CPERK_EVERY - 0.001; tickCaddie(0.01);
         };
         const pct = v => v < 1 ? Math.round(v * 100) : v;
@@ -55,6 +55,9 @@ module.exports = {
               const b = S.buff[pk.k];
               if (!b || Math.abs(b.v - want) > Math.max(0.51, Math.abs(want) * 0.01 + (pk.v < 1 ? 0.0051 : 0)) || b.t !== wantT)
                 o.bad.push(pk.id + ' Lv ' + lv + ' gave ' + (b ? b.v + ' for ' + b.t : 'nothing') + ', not ' + want + ' for ' + wantT);
+              // (the Mythic Favour's other lifts, the same)
+              for (const k of (pk.also || [])) { const b2 = S.buff[k];
+                if (!b2 || !b || b2.v !== b.v || b2.t !== b.t) o.bad.push(pk.id + ' Lv ' + lv + ': its ' + k + ' gave ' + (b2 ? b2.v + ' for ' + b2.t : 'nothing')); }
               // and its words say the same numbers
               const words = cperkTxt(pk.d, pk, lv), num = String(pct(b ? b.v : 0));
               if (words.indexOf(num) < 0 || (!pk.next && words.indexOf(wantT + 's') < 0))

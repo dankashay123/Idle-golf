@@ -29,7 +29,7 @@ module.exports = {
         o.idle = { txt: $('buffTip').textContent, on: $('buffTip').classList.contains('on') };
         const D = derive(), c = Scene.b;
         const seen = new Set();
-        const fire = id => { S.cperkOwn = { [id]: 1 }; S.cperk = id; S.cperkT = B.CPERK_EVERY; S.buff = {};
+        const fire = id => { S.caddie = cperkDef(id).myth ? 'ascended' : 'classic'; S.cperkOwn = { [id]: 1 }; S.cperk = id; S.cperkT = B.CPERK_EVERY; S.buff = {};
           QUIET = false; OFFLINE = false; S.yards = S.yardsMax * 0.5; tickCaddie(0); };
         for (const pk of B.CPERKS) {
           if (!/^#[0-9A-F]{6}$/i.test(pk.col || '')) o.bad.push(pk.id + ' has no colour of its own');

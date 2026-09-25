@@ -1182,6 +1182,7 @@ const B = {
     cpscout: ['............','.XXX....XXX.','.XwX....XwX.','.XwXXXXXXwX.','XXXXXwwXXXXX','XwwwX..XwwwX','XwwwX..XwwwX','XwxwX..XwxwX','XwwwX..XwwwX','XXXXX..XXXXX','.xxx....xxx.','............'],
     cpnotes: ['.X.X.X.X.X..','XXXXXXXXXXX.','XwwwwwwwwwX.','XwXXXXXXwwX.','XwwwwwwwwwX.','XwXXXXXwwwX.','XwwwwwwwwwX.','XwXXXXXXwwX.','XwwwwwwwwwX.','XwwwwwwwwxX.','XxxxxxxxxxX.','XXXXXXXXXXX.'],
     cpclub: ['..........Xx','.........Xx.','........Xx..','.......Xx...','......Xx....','.....Xx.....','....Xx......','...Xx.......','.XXXX.......','XwwwwX......','XwwwxX......','.XXXX.......'],
+    cpmyth: ['............','.....XX.....','....XwwX....','X..XwwwwX..X','XX.XwwwwX.XX','XwXXwxxwXXwX','XwwwwxxwwwwX','.XwwwwwwwwX.','..XXwwwwXX..','....XwwX....','.....XX.....','............'],
     cpready: ['....XXXX....','.....XX..X..','...XXXXXXX..','..XwwwwwwX..','.XwwwwXwwwX.','.XwwwwXwwwX.','.XwwwwXXXwX.','.XwwwwwwwwX.','.XwwwwwwwxX.','..XxwwwwxX..','...XXXXXX...','............'],
     cpchat: ['.XXXXXXXXXX.','XwwwwwwwwwwX','XwwwwXwwwwwX','XwwwXXXwwwwX','XwwwXwwwwwwX','XwwwwXXwwwwX','XwwwwwwXwwwX','XwwwXXXwwwwX','XwwwwXwwwwwX','.XXXXXXXXXX.','..XXX.......','..XX........'],
     // a ladder with an arrow up it: the stage button that climbs for you
@@ -3015,6 +3016,10 @@ const B = {
   // user asked), on top of the honour: less than a major's win, more than
   // playing one
   SIG_WEEK_SOV: 25,
+  // The Hole of the Week run: the signature hole of the week played in
+  // HOTW_RUN real weeks running pays HOTW_SOV sovereigns, and again each
+  // week the run goes on
+  HOTW_RUN: 3, HOTW_SOV: 15,
   ACH: [
     { id:'h100',   n:'Fairway Found',    d:'Play 100 holes',              m:'holes',  v:100,   r:{k:'tick', v:2}, sov:5 },
     { id:'h2500',  n:'Card Sharp',       d:'Play 2,500 holes',            m:'holes',  v:2500,  r:{k:'gld', v:0.05}, sov:10 },
@@ -3408,7 +3413,11 @@ const B = {
     { id:'notes',  ic:'cpnotes', col:'#F28AD0', s:'+30% xp', n:'Course Notes',    cost:150, k:'cXp',   v:30,   t:8,  w:'XP',     d:'+30% xp for 8s' },
     { id:'club',   ic:'cpclub', col:'#FF7A5C',  s:'+20% strike power', n:'Club Selection',  cost:150, k:'cCpw',  v:20,   t:8,  w:'CRACK',  d:'+20% pure strike power for 8s' },
     // not a lift that lasts: the clock is simply wound back, once, there and then
-    { id:'ready',  ic:'cpready', col:'#F4F6EF', s:'\u22121s hole clock', n:'Ready Golf',      cost:150, k:'clock', v:1,    t:0,  w:'-1S',    now:1, d:'1s off the hole clock' }
+    { id:'ready',  ic:'cpready', col:'#F4F6EF', s:'\u22121s hole clock', n:'Ready Golf',      cost:150, k:'clock', v:1,    t:0,  w:'-1S',    now:1, d:'1s off the hole clock' },
+    // the Mythic one: only the three dearest caddies wear it (MYTH_CADDIES).
+    // Three lifts at once, and the caddie casts it into him in his own
+    // colours (Scene.drawFavour); its light comes down in them too
+    { id:'myth',   ic:'cpmyth', col:'#F27CFF',  s:'+20% power, tempo, purse', n:'Mythic Favour', cost:600, k:'cPow', also:['cSpd', 'cGold'], v:20, t:8, w:'FAVOUR', myth:1, d:'+20% power, tempo and prize money for 8s' }
   ],
   // (col: the colour of the blessing each one sends down on the golfer, and
   // of its line by the settings cog while it lasts)
@@ -3605,6 +3614,8 @@ const sigWeek = () => SIGWEEK_FORCE || sigWeekOf(weekNow());
 // the kinds of signature hole played this real week (the Signature Week honour)
 const sigWeekKinds = () => S.sigWk && S.sigWk.wk === weekNow() ? S.sigWk.k : [];
 const isSigWeek = h => { const k = sigKind(h); return !!k && k === sigWeek(); };
+const hotwRun = () => S.hotw && S.hotw.wk >= weekNow() - 1 ? S.hotw.n : 0;
+const hotwDone = () => !!S.hotw && S.hotw.wk === weekNow();
 // A hole's own purse: the card's, doubled on the signature hole of the week.
 // Only the hole is doubled; the event's cheque and the wagers' "holes worth"
 // are priced off purseFor and never move with it.
@@ -3855,6 +3866,7 @@ function initState(){
      && S.sigRound.n >= 0 && S.sigRound.n <= SIG_HOME_ROUND)) delete S.sigRound;
   if(S.sigWk !== undefined && !(S.sigWk && typeof S.sigWk === 'object' && isFinite(S.sigWk.wk) && Array.isArray(S.sigWk.k)
      && S.sigWk.k.every((k, i, a) => SIG_KINDS.includes(k) && a.indexOf(k) === i))) delete S.sigWk;
+  if(S.hotw !== undefined && !(S.hotw && typeof S.hotw === 'object' && isFinite(S.hotw.wk) && S.hotw.n >= 1 && S.hotw.n === Math.floor(S.hotw.n))) delete S.hotw;
   for(const k in S.caseGot){ const c = B.CASE.find(x => x.id === k);
     if(!c || !(S.caseGot[k] >= 0)) delete S.caseGot[k]; else S.caseGot[k] = Math.min(c.at.length, Math.floor(S.caseGot[k])); }
   if(S.music !== undefined && S.music !== 0 && S.music !== 1) delete S.music;
@@ -4097,7 +4109,7 @@ function achMetric(m){
     case 'events': return S.eventsPlayed || 0;
     case 'slam':   return Object.keys(S.majorWins || {}).length;
     case 'homes':  return Object.keys(S.homes || {}).length;
-    case 'cperks': return B.CPERKS.filter(p => S.cperkOwn && S.cperkOwn[p.id]).length;
+    case 'cperks': return B.CPERKS.filter(p => !p.myth && S.cperkOwn && S.cperkOwn[p.id]).length;
     case 'cperkLv': return B.CPERKS.reduce((m2, p) => S.cperkOwn && S.cperkOwn[p.id] ? Math.max(m2, cperkLv(p.id)) : m2, 0);
     case 'twin':   return S.caddie === S.outfit && S.outfit !== 'classic' && styleOwned('c', S.caddie) ? 1 : 0;
     case 'troph':  return trophiesFound();
@@ -6347,6 +6359,10 @@ function sigScore(sc){
   if(!S.sigWk || S.sigWk.wk !== wk) S.sigWk = { wk, k: [] };
   if(!S.sigWk.k.includes(sk)){ S.sigWk.k.push(sk);
     if(S.sigWk.k.length === SIG_KINDS.length){ bump('sigWeek'); grantSov(B.SIG_WEEK_SOV, 'Signature Week'); } }
+  if(isSigWeek(S.hole) && (!S.hotw || S.hotw.wk !== wk)){
+    S.hotw = { wk, n: S.hotw && S.hotw.wk === wk - 1 ? S.hotw.n + 1 : 1 };
+    if(S.hotw.n >= B.HOTW_RUN) grantSov(B.HOTW_SOV, 'Hole of the Week \u00b7 ' + S.hotw.n + ' weeks running');
+  }
   const ri = roundIndex(S.hole);
   if(!S.sigRound || S.sigRound.r !== ri) S.sigRound = { r: ri, n: 0, ok: 1 };
   const R = S.sigRound;
@@ -12174,6 +12190,31 @@ const Scene = {
     const list = ctx.length && Math.random() < 0.6 ? ctx[Math.random() * ctx.length | 0] : SAY.quip;
     return list[Math.random() * list.length | 0];
   },
+  // The Mythic Favour going off: the caddie casts it into him, a stream of
+  // his own colours arcing over from his hands to the golfer's chest in half
+  // a second, and a small burst there as it lands. Solid pixels, close by.
+  drawFavour(c, F, fx, fy, fw, fh, gx, gy, gw, gh){
+    const P = MYTH_PAL[F.myth], t = F.t;
+    if(!P || t > 0.8) return;
+    const k = Math.max(1, Math.round(gh / 30));
+    const sx = fx + fw / 2, sy = fy + fh * 0.1, ex = gx + gw * 0.5, ey = gy + gh * 0.38;
+    for(let i = 0; i < 18; i++){
+      const u = (t - i * 0.015) / 0.42;
+      if(u < 0 || u > 1) continue;
+      const e = u * u * (3 - 2 * u), lift = Math.sin(Math.PI * e) * gh * (0.22 + 0.2 * hr(i, 331));
+      const px = sx + (ex - sx) * e + (hr(i, 332) - 0.5) * gw * 0.5 * Math.sin(Math.PI * e), py = sy + (ey - sy) * e - lift;
+      c.fillStyle = P[2]; c.fillRect(Math.round(px - (ex - sx) * 0.04), Math.round(py + lift * 0.08), k, k);
+      c.fillStyle = P[i % 2]; c.fillRect(Math.round(px), Math.round(py), k, k);
+    }
+    if(t > 0.42){
+      const q = (t - 0.42) / 0.38;
+      for(let j = 0; j < 12; j++){
+        if(hr(j, 333) < q * 0.7) continue;
+        const a = j / 12 * Math.PI * 2 + hr(j, 334), R = gw * (0.2 + 0.55 * Math.sqrt(q));
+        c.fillStyle = P[j % 3]; c.fillRect(Math.round(ex + Math.cos(a) * R), Math.round(ey + Math.sin(a) * R * 0.8), k, k);
+      }
+    }
+  },
   drawCaddie(c, gx, gy, gw, gh){
     const spr = SPRITE.caddie, CD = caddieNow(), FX = STYLEFX[CD.fx] || null;
     const B0 = this.fairyBox(gx, gy, gw, gh), say = this.fairyNow(), M = this.fairyMoveNow();
@@ -12266,6 +12307,7 @@ const Scene = {
           fxDot(c, x + w / 2 + Math.cos(a) * R, y + h / 2 + Math.sin(a) * R * 0.7, 1, i & 1 ? '#FFFFFF' : '#FFD66B', 1 - q);
         }
         c.globalAlpha = 1;
+        if(F.myth) this.drawFavour(c, F, x, y, w, h, gx, gy, gw, gh);
         drawTextS(c, F.word, Math.round(x + w / 2), Math.round(y - LH - q * 6 * TSC), PX.brass, TSC, 'c');
       }
     }
@@ -16971,9 +17013,13 @@ function renderSigWeek(){
     + (won ? ' \u00b7 won ' + won + '\u00d7' : '') + '</span>'
     + '<button class="qm" aria-label="How the Signature Week works">?</button></div>'
     + '<div class="fold" style="margin-top:6px">Monday to Sunday. A home round has four kinds; the sea stack is at '
-    + stacks.join(', ') + '.</div></div>'
+    + stacks.join(', ') + '. Play the hole of the week ' + B.HOTW_RUN + ' weeks running for +' + B.HOTW_SOV
+    + ' ' + B.SOV.toLowerCase() + ', and again each week the run goes on.</div></div>'
     + SIG_KINDS.map(k => lb(SIG_NAME[k] + (k === wk ? ' \u00b7 pays\u00a0' + B.SIG_WEEK_MULT + '\u00d7' : ''),
-        got.includes(k) ? '\u2713 played' : '\u2014', got.includes(k) ? '--verdant' : null)).join('');
+        got.includes(k) ? '\u2713 played' : '\u2014', got.includes(k) ? '--verdant' : null)).join('')
+    + (() => { const n = hotwRun(), on = n >= B.HOTW_RUN;
+        return lb('Hole of the Week Run', (on ? n + '\u00a0weeks \u00b7 +' + B.HOTW_SOV + sovIc() : n + '\u00a0of ' + B.HOTW_RUN)
+          + (hotwDone() ? ' \u2713' : ''), on ? '--brass' : hotwDone() ? '--verdant' : null); })();
   const q = box.querySelector('#sigHint .qm');
   $('sigHint').classList.toggle('open', sigHintOpen);
   q.onclick = () => { sigHintOpen = !sigHintOpen; $('sigHint').classList.toggle('open', sigHintOpen); };
@@ -17231,6 +17277,10 @@ function renderRangeNav(){
   if(rangeSub === 'cad') renderCadPerks();
 }
 const cperkDef = id => B.CPERKS.find(x => x.id === id);
+// the Mythic Favour: worn only with the Divine, Demonic or Ascended caddie
+const MYTH_CADDIES = ['divine', 'demonic', 'ascended'];
+const mythOk = () => MYTH_CADDIES.includes(S.caddie);
+const MYTH_PAL = { divine: ['#FFFFFF', '#FFE39A', '#E3B457'], demonic: ['#FFE680', '#FF8A2A', '#E8401C'], ascended: ['#FFE0FF', '#F27CFF', '#B04ACB'] };
 // A perk's level (1 until upgraded) and what it does there: a second longer
 // and an eighth stronger each level (Ready Golf and Lost Ball Scout only
 // stronger: one acts at once, the other lasts a hole). Its words are its own
@@ -17277,10 +17327,18 @@ function renderCadPerks(){
     body.children[1].textContent = cperkTxt(pk.d, pk, lv);
     // the one he wears: its level and the wait for it to go off again; the
     // others their level, once they have one
-    if(on) body.children[2].innerHTML = 'Worn \u00b7 Lv\u00a0' + lv + '/' + B.CPERK_LV_MAX + '<div class="cadbar"><i style="width:'
+    const locked = pk.myth && !mythOk();
+    if(on && locked) body.children[2].textContent = 'Worn \u00b7 waits for a Mythic caddie';
+    else if(locked) body.children[2].textContent = 'Divine, Demonic or Ascended caddie only';
+    else if(on) body.children[2].innerHTML = 'Worn \u00b7 Lv\u00a0' + lv + '/' + B.CPERK_LV_MAX + '<div class="cadbar"><i style="width:'
       + Math.round(clamp((S.cperkT || 0) / B.CPERK_EVERY, 0, 1) * 100) + '%"></i></div>';
     else if(own && lv > 1) body.children[2].textContent = 'Lv\u00a0' + lv + '/' + B.CPERK_LV_MAX;
-    if(on){
+    if(locked && !on){
+      btn.className = 'buy no';
+      btn.children[0].textContent = own ? 'Wear' : B.SOV;
+      btn.children[1].textContent = own ? 'Free' : sovFmt(pk.cost);
+      btn.onclick = () => toast('The <b>' + pk.n + '</b> needs a Mythic caddie');
+    }else if(on){
       // worn, its button is the upgrade
       const cost = top ? 0 : B.CPERK_LV_COST[lv - 1];
       btn.className = 'buy' + (top ? ' ok' : (S.sov || 0) >= cost ? '' : ' no');
@@ -17299,7 +17357,7 @@ function renderCadPerks(){
   }
 }
 function cperkPick(id){
-  const pk = cperkDef(id); if(!pk) return;
+  const pk = cperkDef(id); if(!pk || (pk.myth && !mythOk())) return;
   S.cperkOwn = S.cperkOwn || {};
   if(!S.cperkOwn[id]){
     if(!spendSov(pk.cost)) return;
@@ -17367,6 +17425,8 @@ function tickCaddie(dt){
   buffTip(dt);
   const pk = S.cperk && cperkDef(S.cperk);
   if(!pk || S.dgnRun || QUIET || OFFLINE) return;
+  // (the Mythic Favour waits while a plainer caddie carries the bag)
+  if(pk.myth && !mythOk()) return;
   S.cperkT = (S.cperkT || 0) + dt;
   if(S.cperkT >= B.CPERK_EVERY){
     S.cperkT -= B.CPERK_EVERY;
@@ -17375,12 +17435,12 @@ function tickCaddie(dt){
     // minimum again, for no better score
     const lv = cperkLv(pk.id);
     if(pk.now){ if(S.yards > 0) S.elapsed = Math.max(0, (S.elapsed || 0) - cperkVal(pk, lv)); }
-    else addBuff(pk.k, cperkVal(pk, lv), cperkDur(pk, lv));
-    Scene.fairyCast = { t: 0, word: pk.w };
+    else{ addBuff(pk.k, cperkVal(pk, lv), cperkDur(pk, lv)); (pk.also || []).forEach(k => addBuff(k, cperkVal(pk, lv), cperkDur(pk, lv))); }
+    Scene.fairyCast = { t: 0, word: pk.w, myth: pk.myth ? S.caddie : null };
     // and the blessing: his arms go up and the perk's own light comes down
     // on the golfer (see Scene.drawBless), brighter at a higher level; its
     // line by the cog counts it down
-    Scene.bless = { col: pk.col || '#FFD66B', lv };
+    Scene.bless = { col: pk.myth && MYTH_PAL[S.caddie] ? MYTH_PAL[S.caddie][1] : pk.col || '#FFD66B', lv };
     if(!pk.now || S.yards > 0) cperkShow = { id: pk.id, left: 2 };
     Sfx.play('coin');
   }
