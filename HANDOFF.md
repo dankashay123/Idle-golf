@@ -10,18 +10,17 @@ check is for.
 
 - Everything is committed and pushed to `main` (mirrored on the session
   branch `claude/loving-archimedes-ct2rpb`). Nothing is half-built.
-- `node test/run.js` passes all **55 checks** (about nine minutes).
-- **Last request**: "Let's do option 1 [a moment for the legends]. Also
-  update the demonic skin to an ultimate skin as well and add things to it
-  please." Done: §5 "A moment for the legends" and "The Demonic, made the
-  ultimate skin too". On an eagle or better the Demonic's pit erupts into a
-  column of hellfire, his wings rise and his skulls scatter; the Ascended's
-  sigil sends up a pillar of light and his shards burst out; both bigger on
-  an albatross or ace, each with a sound. The Demonic got an aura of
-  hellfire, sleek obsidian horns that curl forward, two chains of fire
-  circling him, hands that catch fire on the backswing, the ground cracking
-  and fire flying off the ball at the strike.
-- **The request before**: the Ascended made the ultimate skin (§5 "The
+- `node test/run.js` passes all **56 checks** (about nine minutes).
+- **Last request**: "option 1 and 2" of the menu: life on the railway and
+  weather on the signature holes. Done: §5 "Life on the railway" and
+  "Weather on the signature holes". Four trains now (the steam train, a
+  goods, an express, a sleeper at night); he, his caddie and the driver
+  wave as one goes by, with a toot. Rain rings on the water, snow settling
+  on the train, bridge, stones, pier and crossing, a storm's spray and
+  breakers at the sea stack, the bridge swaying in a gale.
+- **The request before**: a moment for the legends (eagle or better) and
+  the Demonic made the ultimate skin (§5).
+- **Before that**: the Ascended made the ultimate skin (§5 "The
   Ascended, made the ultimate skin").
 - **The one before that** (with a picture: a dark armoured figure with horns,
   eyes lit white, magenta hair of fire, a cape, spectral hands, a scythe,
@@ -160,6 +159,8 @@ Line numbers are approximate and drift. Search for the name instead.
 | **A moment for the legends** (eagle or better) | `Scene.legend`, `Scene.legendGo` (from `happyDance`), `legendNow`, `LEGEND_DUR`/`LEGEND_BIG`, `outBack`; the Ascended's `pillar`, the Demonic's `column`; `Sfx.hellfire`, `Sfx.ascend`, `Sfx.LEGEND_VOL`; cleared in `saverOn`; `DEV.legend(d)` (dev menu row Legends) |
 | **The ultimate Demonic** | `STYLEFX.demonic`: `aura` (the shared `flameAura` with `HELL_FLAME`; the Ascended's uses `VOID_FLAME`), `chains`, `cracks`, `fists`, `blast`, `charge`/`strike` (borrowed from the Ascended), `horns` (`sleekHorns(s, view, true)`, views `dside`/`dback`, colours `HORN_COL.dem`) |
 | **The Demonic and the Ascended** (skins, caddies, clubs, trails, balls) | `STYLEFX.demonic`, `STYLEFX.ascended`; baked stamps `fxBake` (with `crispen`, `FXBAKE`), `batWing`, `runeRing`, `drawSkull`, `sleekHorns` (`hornLine`, `HORN_VIEWS`), `voidCape` (`CAPE_PAL`), `voidSigil`, `drawShard`; the aura's `outlineOf` (`occOf`) and `flameAura`; `veinsOf` (the lava cracks' pulse), `eyeAt` (`EYE_ADDR`, `EYE_FIN`, `EYE_CADDIE`), `wingAnchor`, `g.hand` (set in `paintGolfer`), `blitAs` (a copy of him drawn as he is drawn); patterns `hellcrack`, `voidplate`; the outfit field `hand`; `CLUBFX.demonic`/`ascended`; `BALLFX.tHellfire`, `demoneye`, `tAscension`, `ascorb`, `drawDemonEye`, `demonEye`, `drawVoidOrb`; tiles `ICON_FX`, `BALL_ICON`; the Mythic badge is `top: 2` |
+| **The trains** (four kinds) and waving | `TRAINS`, `trainKind`, the train's `kind` (none is the steam train), picked in `tickRail`; `drawTrain` (by kind), `driverWave`; `Scene.atLine`, `Scene.railWave` (his arm: `paintGolfer`'s last argument `wave`; his caddie's `wave` move); `Sfx.horn`, `Sfx.whistle(t, low, once)`, the toot in `Sfx.tick` (`tootK`) |
+| **Weather on the signature holes** | `Scene.rainRings` (from `ripples`, on the `_rips` rows); snow in `drawBridge`, `drawStones`, `drawPier`, `drawRail`, `drawTrain` (`cap`); the storm in `drawSpray` (`storm`) and the stack's `rock` (breakers); the bridge's `gust` |
 | **Railway Crossing** | `isRail`, `RAIL_FORCE`, `P_RAIL`, `Scene.tickRail`, `railAt`, `railHold`, `railLights`, `drawRail`, `drawTrain`, `RAIL_X`/`RAIL_V`/`RAIL_LEN`/`RAIL_MEET`, `railWait` in the camera code, `Sfx.whistle`/`chuff`/`ding`, `SIG_HOME_ROUND`; `DEV.rail` |
 | **Life on the signature holes** | `DUCKS`, `Scene.duckAt`, `drawDucks`, `drawHawk` (from `drawBridge`), `fishAt`, `drawFish` (from `drawStones`), `Sfx.quack`/`hawk`/`plop` |
 | Happy dance, Seasons Seen | `Scene.happyDance`, `fairyQueue`; `S.seasonsGot`, `seasonsSeen`, `seasonsAll` |
@@ -351,6 +352,48 @@ Line numbers are approximate and drift. Search for the name instead.
    nothing. Assert the order, and count a name after the edit.
 
 ## 5. What the last features do (for debugging them)
+
+### Life on the railway (user asked, from the menu)
+
+- **Four trains** (`TRAINS`: speed and length; a train with no `kind` is
+  the steam train, which is what the older checks make): the steam train
+  (11, 7.4 long), a goods (9, 12.1: a brake van, coal, logs, a tanker, a
+  tender and a black engine, grey smoke), an express (19, 11: three silver
+  coaches and a power car with a sloping nose, no smoke) and at night the
+  sleeper (the steam train in dark blue and green, windows glowing, a lamp
+  throwing light down the line ahead). By day 45% steam, 30% goods, 25%
+  express; at night 70% sleeper, 30% goods; off the rail's own seeded
+  stream. The goods is the longest wait (9.65s in `rail` against the
+  hole's 20s stop; `rail`'s worst case now forces it).
+- **Waving** (`railWave`, only while he stands at the line, `atLine`, and
+  eased in as the train reaches the fairway): his far arm leaves the club
+  and waves over his head; his caddie takes his `wave` turn once per
+  train; the driver's hand is up out of the cab within 9 of the crossing
+  (`driverWave`). A toot (`whistle(t, low, 1)` or `horn(t, 1)`) as the
+  engine passes him at the line; the express sets off with its horn, the
+  goods with a whistle a quarter lower; no chuff from the express.
+- Snow: a cap on every roof (`cap` in `drawTrain`).
+
+### Weather on the signature holes (user asked, with the railway)
+
+- **Rain rings** (`rainRings`, called from `ripples` while `rain` and not
+  `ice`): up to 70 rings spreading where drops land, sized by how far down
+  the screen their row is, on any water (the island's lake, the stones'
+  river, the sea, ordinary ponds). A ring's pixel is kept only where a
+  water row noted by the painter (`_rips`, one to a slice) lies within a
+  pixel or two and spans it. Those rows run far off the screen either
+  side, so a ring's place is taken along the part in view (the first try
+  put most out of sight, and the river had none).
+- **Snow** (`Scene.snow`, a home course's winter): the bridge's planks
+  white with a white line along each rope and a cap on each post; the
+  stepping stones' tops; the pier's planks (a greyer white, so the seams
+  still show), its rail and the stack's rocks; the crossing's boards; the
+  train's roofs.
+- **A storm** (rain, which comes with the Crosswind): the pier's spray
+  starts at 3 mph instead of 6, 1.8 times as much of it flying half as
+  high again; waves break over the stack's rocks now and then. The bridge
+  sways more and quicker from 8 mph up to 20 (`gust`), in any weather.
+- `sigview` plays every train kind and the snow and storm in turn.
 
 ### A moment for the legends (user asked, from the menu)
 
@@ -1285,6 +1328,10 @@ him (about 49px tall on a 320 phone, 71px on its side).
 
 ## 6. Recent history (newest first, one line each)
 
+- Four trains on the railway (steam, goods, express, a night sleeper), and
+  waving as one goes by; rain rings on the water, snow on the signature
+  holes, a storm at the sea stack, the bridge swaying in a gale.
+
 - A moment for the legends on an eagle or better (a column of hellfire, a
   pillar of light, with sounds), and the Demonic made the ultimate skin
   (aura, curled horns, chains of fire, cracks at the strike).
@@ -1407,20 +1454,19 @@ him (about 49px tall on a 320 phone, 71px on its side).
 
 ## 8. What to offer next
 
-Everything asked for is done. First ask how the two moments feel when an
-eagle drops (the dev menu's Legends row shows them at once) and whether
-the new Demonic is too busy on the phone.
+Everything asked for is done. First ask how the trains and the weather
+look (the dev menu's railway button shows the crossing; the trains come
+every 20-35s), and whether the waving reads on the phone.
 
 The menu to offer next:
-1. **Life on the railway** (recommended): other trains now and then (a
-   goods train, an express, a night train with glowing windows), and the
-   golfer and his caddie wave as it goes by.
-2. **Weather on the signature holes**: rain rings on the island's lake,
-   snow settling on the train and the bridge, spray thicker in a storm.
-3. **A Signature Week honour**: all five kinds played in one real week.
-4. **The Divine, ultimate too**: the third of the top skins given the same
-   treatment in gold (a moment of its own on a great hole: the heavens
-   opening, a choir's chord).
-5. **Legendary moments for the lesser skins**: a small flourish for each
-   of the other effect skins on an eagle (the Inferno flares, the
-   Frostborn's ground freezes out).
+1. **A Signature Week honour** (recommended): all five kinds played in one
+   real week, with a row on the Record.
+2. **The Divine, ultimate too**: the third of the top skins given the same
+   treatment in gold, with its own great-hole moment (the heavens opening,
+   a choir's chord).
+3. **Small flourishes for the other effect skins** on an eagle (the Inferno
+   flares, the Frostborn freezes the ground out).
+4. **Night on the signature holes**: lanterns along the pier, the bridge's
+   ropes hung with lights, the island's green lit, fireflies by the river.
+5. **A station on the railway**: now and then a train stops at a little
+   halt by the crossing, a guard waves a flag, passengers get off to watch.

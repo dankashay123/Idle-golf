@@ -117,7 +117,7 @@ module.exports = {
         // a train goes by, he crosses and putts out, and only then does the
         // hole move on. Once with the train that meets him, and once with the
         // longest wait there is, a train on its own just setting off as he
-        // gets there.
+        // gets there (the goods train: the slowest and longest).
         const early = worst => {
           S.hole = h; startHole(); Scene.announce = null;
           for (let i = 0; i < 10; i++) Scene.draw(1 / 60, derive());
@@ -135,7 +135,7 @@ module.exports = {
               if (end) break;
               Scene.draw(1 / 60, Dn);
               if (S.doneT != null && downCam === null) downCam = +Scene.camD.toFixed(2);
-              if (worst && !forced && !Scene.train && Scene.camD >= I.bank - 0.3) { Scene.train = { t0: Scene.t, dir: 1 }; Scene.trainMet = 1; forced = true; }
+              if (worst && !forced && !Scene.train && Scene.camD >= I.bank - 0.3) { Scene.train = { t0: Scene.t, dir: 1, kind: 'goods' }; Scene.trainMet = 1; forced = true; }
               const there = Scene.camD >= I.bank - 0.35 && Scene.camD <= I.bank + 0.02;
               if (there && Scene.train) met = true;
               if (there && Scene.railHold()) at += 1 / 60;

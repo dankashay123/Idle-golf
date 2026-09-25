@@ -9,7 +9,8 @@
  * The life on them is held to it too: the pier's spray and gulls, the
  * canyon's hawk and the river's fish (drawn with their holes), and the
  * island's ducks, whose holes are played as well; and the railway crossing,
- * its line, posts and a train on it in every view.
+ * its line, posts and a train on it in every view, every kind in turn; and
+ * the weather on them (snow settled on them, a storm's spray) in turn.
  *
  * Every course with a canyon, stones or a sea stack is played (the home courses and the
  * others, rolling ground included): two holes of each kind, and on each the
@@ -50,8 +51,12 @@ module.exports = {
               Scene.t += 0.37;
               // a railway's train somewhere along the line in every view,
               // each way in turn
+              // (every kind of train in turn)
               if (k === 'rail') { Scene.trainMet = 1; Scene.trainNext = 1e9;
-                Scene.train = { t0: Scene.t - (2 + (o.frames % 4) * 1.1), dir: o.frames & 1 ? 1 : -1 }; }
+                Scene.train = { t0: Scene.t - (2 + (o.frames % 4) * 1.1), dir: o.frames & 1 ? 1 : -1, kind: ['steam', 'goods', 'express', 'night'][(o.frames >> 1) % 4] }; }
+              // and the weather on them in turn: snow settled on them, a storm
+              // throwing spray over the pier
+              Scene.snow = o.frames % 3 === 0; Scene.rain = o.frames % 3 === 1; if (Scene.rain) Scene.wind = 1.2;
               Scene.camD = cam; Scene.walkTo = cam; S.yards = S.yardsMax * (1 - Math.min(0.999, cam / LEN));
               Scene.draw(0, D);
               const a = c.getImageData(0, 0, VW, VH).data;

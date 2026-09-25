@@ -5975,11 +5975,20 @@ const Sfx = {
   // The railway crossing: the train's whistle as it sets off (two toots, a
   // chord of two), its chuff while it runs, and the crossing's bell while
   // the lamps flash.
-  whistle(t){
+  // (a goods engine's is lower; one toot as it passes him)
+  whistle(t, low, once){
+    const V = this.WHISTLE_VOL, k = low ? 0.75 : 1;
+    for(const [t0, dur] of once ? [[0, 0.22]] : [[0, 0.32], [0.45, 0.7]]){
+      this.tone(740 * k, t + t0, dur, 'square', V, 720 * k);
+      this.tone(932 * k, t + t0, dur, 'square', V * 0.7, 905 * k);
+    }
+  },
+  // the express's horn: two notes together, held, a little sour
+  horn(t, once){
     const V = this.WHISTLE_VOL;
-    for(const [t0, dur] of [[0, 0.32], [0.45, 0.7]]){
-      this.tone(740, t + t0, dur, 'square', V, 720);
-      this.tone(932, t + t0, dur, 'square', V * 0.7, 905);
+    for(const [t0, dur] of once ? [[0, 0.3]] : [[0, 0.6]]){
+      this.tone(311, t + t0, dur, 'sawtooth', V * 0.8, 305);
+      this.tone(370, t + t0, dur, 'sawtooth', V * 0.6, 364);
     }
   },
   chuff(t){ this.hiss(t, 0.12, 700, 0.8, this.CHUFF_VOL, 380); },
@@ -6113,10 +6122,12 @@ const Sfx = {
     // the line within sight, and the bell while the crossing's lamps flash
     const TR = live && SI2.rail ? Scene.train : null;
     if(TR){
-      if(this.trainT0 !== TR.t0){ this.trainT0 = TR.t0; this.whistle(now + 0.02); this.chuffK = null; this.dingK = null; }
-      const A = Scene.railAt(), age = Scene.t - TR.t0;
-      const ck = Math.floor(age / 0.26);
-      if(A && A.head > -RAIL_X + 3 && A.tail < RAIL_X - 3 && ck !== this.chuffK){ this.chuffK = ck; this.chuff(now + 0.01); }
+      const A = Scene.railAt(), age = Scene.t - TR.t0, K = trainKind(TR), horn = A && A.kind === 'express';
+      if(this.trainT0 !== TR.t0){ this.trainT0 = TR.t0; horn ? this.horn(now + 0.02) : this.whistle(now + 0.02, A && A.kind === 'goods'); this.chuffK = null; this.dingK = null; this.tootK = null; }
+      // and a toot as its engine passes him waiting at the crossing
+      if(A && A.head > 0 && A.head < 3 && this.tootK !== TR.t0 && Scene.atLine()){ this.tootK = TR.t0; horn ? this.horn(now + 0.01, 1) : this.whistle(now + 0.01, A.kind === 'goods', 1); }
+      const ck = Math.floor(age / (A && A.kind === 'goods' ? 0.32 : 0.26));
+      if(A && K.smoke && A.head > -RAIL_X + 3 && A.tail < RAIL_X - 3 && ck !== this.chuffK){ this.chuffK = ck; this.chuff(now + 0.01); }
       const dk = Math.floor(age / 0.45);
       if(Scene.railLights() && dk !== this.dingK){ this.dingK = dk; this.ding(now + 0.01); }
     }
@@ -8807,6 +8818,14 @@ const PX_CSS = 1.1, K_PROJ = 22.4, LEN = 60, B_GOLFER = 12, B_FLY = 11, B_BRIDGE
 // it runs, and how long it is (engine and two carriages)
 // (and how far out the one that meets him at the line sets off)
 const RAIL_X = 34, RAIL_V = 11, RAIL_LEN = 7.4, RAIL_MEET = 20;
+// The trains that run on it (the user asked for more than the one): the
+// little steam train, a goods train (slower and longer: the longest wait of
+// them), a streamlined express and, at night, a sleeper with its windows
+// lit and its lamp on. Each one's speed and length; a train with no kind
+// is the steam train.
+const TRAINS = { steam: { v: RAIL_V, len: RAIL_LEN, smoke: 1 }, goods: { v: 9, len: 12.1, smoke: 1 },
+                 express: { v: 19, len: 11, smoke: 0 }, night: { v: RAIL_V, len: RAIL_LEN, smoke: 1 } };
+const trainKind = T => TRAINS[T && T.kind] || TRAINS.steam;
 // the end of a hole: where he stops to putt, short of the cup (from there the
 // cup shows above his head), and how near that counts as up on the green (see
 // Scene.holeWait); and the putt (Scene.putt): the stroke's moment of impact
@@ -11638,6 +11657,37 @@ const Scene = {
       const rw = Math.round(w * (0.16 + 0.15*Math.abs(Math.sin(yy*0.6 + this.t))));
       c.fillRect(xl + ((w - rw) >> 1) + Math.round(Math.sin(yy*0.31)*w*0.14), yy, rw, 1);
     }
+    if(this.rain && !this.ice) this.rainRings(c, T, R);
+  },
+  // Rain on the water (the user asked for weather on the signature holes):
+  // rings spreading where the drops land, bigger the nearer they are, each
+  // on a clock of its own. Only ever on the water's own rows, so none spill
+  // onto the bank.
+  rainRings(c, T, R){
+    const rows = new Map();
+    for(let i = 0; i < R.length; i += 3){ const a = rows.get(R[i]); if(a) a.push(R[i+1], R[i+1] + R[i+2]); else rows.set(R[i], [R[i+1], R[i+1] + R[i+2]]); }
+    // (the rows are noted one to a slice of the ground, so a pixel counts as
+    // on the water if a row within a pixel or two of it spans it)
+    const on = (x, y) => { const a = rows.get(y); if(!a) return false; for(let k = 0; k < a.length; k += 2) if(x >= a[k] + 1 && x < a[k+1] - 1) return true; return false; };
+    const wet = (x, y) => on(x, y) || (on(x, y - 1) && on(x, y + 1)) || (on(x, y - 1) && on(x, y + 2)) || (on(x, y - 2) && on(x, y + 1));
+    const n = R.length / 3, N = Math.min(70, Math.round(n * 0.8)), c1 = mixC(pickC(T._wt, 0.95), '#FFFFFF', 0.7), c2 = mixC(pickC(T._wt, 0.9), '#FFFFFF', 0.4);
+    for(let i = 0; i < N; i++){
+      const L = 0.6 + 0.35 * hr(i, 1), clock = this.t / L + hr(i, 2), m = Math.floor(clock), u = clock - m;
+      const j = Math.floor(hr(i, m) * n) * 3, yy = R[j], xl = R[j+1], w = R[j+2];
+      // (a row can run far off the screen either side: they land on the part of it in view)
+      const x0 = Math.max(xl, 0), x1 = Math.min(xl + w, VW);
+      if(x1 - x0 < 4) continue;
+      const cx = x0 + 2 + hr(i, m + 3) * (x1 - x0 - 4), k = clamp((yy - HORIZON) / Math.max(1, VH - HORIZON), 0, 1);
+      const r = u * (2.5 + k * 8), ry = Math.max(0.5, r * 0.32);
+      c.fillStyle = u < 0.5 ? c1 : c2;
+      if(u < 0.12){ if(wet(Math.round(cx), yy)) c.fillRect(Math.round(cx), yy - 1, 1, 1); continue; }
+      const pts = Math.max(6, Math.round(r * 5));
+      for(let q = 0; q < pts; q++){
+        const a = q / pts * Math.PI * 2, x = Math.round(cx + Math.cos(a) * r), y = Math.round(yy + Math.sin(a) * ry);
+        if(u > 0.75 && (q & 1)) continue;
+        if(wet(x, y)) c.fillRect(x, y, 1, 1);
+      }
+    }
   },
 
   holeLen(){ return LEN; },
@@ -12727,7 +12777,7 @@ function golferG(x, y, w, h, ph, t, bot, walking, spr){
    through this and so does the battery saver, so the two always match. ph is
    the swing, 0 at address; walking draws him from behind, striding. arc keeps
    the club head's last few places for the clubs that leave a trail. */
-function paintGolfer(c, x, y, w, h, ph, t, bot, walking, walkPh, spr, arc, putt, noGround){
+function paintGolfer(c, x, y, w, h, ph, t, bot, walking, walkPh, spr, arc, putt, noGround, wave){
   const FX = STYLEFX[outfitNow().fx] || null;
   // the skin's effect, if it has one: what lies on the ground under him
   // first (unless the course put it down already, under the pin), its back
@@ -12783,7 +12833,14 @@ function paintGolfer(c, x, y, w, h, ph, t, bot, walking, walkPh, spr, arc, putt,
   // plain tone, whatever his face was)
   const OS = outfitNow();
   pxLine(c, sx, sy, hx, hy, OS.skin || PX.skin, th);
-  pxLine(c, sx - w*0.10, sy + 1, hx, hy, OS.skin2 || PX.skin2, th);
+  // waving at a train going by (wave 0..1): his far arm up off the club and
+  // to and fro over his head
+  if(wave > 0){
+    const wx = sx - w * 0.06 + Math.sin(t * 9) * w * 0.14 * wave, wy = sy - h * 0.34 * wave;
+    pxLine(c, sx - w*0.10, sy + 1, wx, wy, OS.skin2 || PX.skin2, th);
+    c.fillStyle = OS.hand || OS.skin2 || PX.skin2; c.fillRect(Math.round(wx) - 1, Math.round(wy) - 1, th + 1, th + 1);
+  }
+  else pxLine(c, sx - w*0.10, sy + 1, hx, hy, OS.skin2 || PX.skin2, th);
   if(h > 22){ c.fillStyle = OS.hand || OS.shirt; c.fillRect(Math.round(hx) - 1, Math.round(hy) - 1, th + 1, th + 1); }
   g.hand = { x: hx, y: hy };
   // the arc the head cuts through a swing, for the clubs that leave one
@@ -13720,7 +13777,8 @@ Object.assign(Scene, {
       const q = this.puttBall(PT), bp = this.proj(q.d, q.lat);
       if(bp.y <= this.clipAt(q.d) + 1){ const bs = h > 30 ? 2 : 1; drawLyingBall(c, bp.x + bs / 2, Math.round(bp.y - bs), Math.max(1.5, bs * 0.8 + 0.5), this.t); }
     }
-    paintGolfer(c, x, y, w, h, ph, this.t, p.y, walking, this.walkPh, spr, this.clubArc || (this.clubArc = []), PT >= 0 ? this.puttArm(PT) : undefined, true);
+    paintGolfer(c, x, y, w, h, ph, this.t, p.y, walking, this.walkPh, spr, this.clubArc || (this.clubArc = []), PT >= 0 ? this.puttArm(PT) : undefined, true,
+                atCam === undefined && ph === 0 && !walking ? this.railWave() : 0);
     if(atCam === undefined && SPRITE.caddie) this.drawCaddie(c, p.x - Math.round(w*0.42), y, w, h);
     if(atCam === undefined) this.drawBless(c, x, y, w, h, p.y);
     if(walking) return;
@@ -13850,9 +13908,11 @@ Object.assign(Scene, {
     if(!I || I.fly || !W || !W.canyon) return;
     const c = this.b, a = I.bank - 0.2, b = I.land + 0.2, hw = 0.8;
     const near = this.camD - CAM_BACK + 0.7;
-    const sway = Math.sin(this.t * 1.3) * 0.07;
+    // it sways more, and quicker, the harder the wind blows; in snow it is
+    // white along its planks and its ropes
+    const gust = clamp((this.windMph() - 8) / 12, 0, 1), sway = Math.sin(this.t * (1.3 + gust * 1.2)) * (0.07 + gust * 0.12);
     const n = Math.max(4, Math.round((b - a) / 0.3));
-    const PL = ['#94633A', '#7A4E2C'], POST = '#4E321C', ROPE = '#CDB88C';
+    const PL = this.snow ? ['#E8EEF2', '#D4DCE2'] : ['#94633A', '#7A4E2C'], POST = '#4E321C', ROPE = '#CDB88C', SNOW = '#F2F6F8';
     // a solid deck, each plank running from its own edge to the next one's
     // with a dark seam between, far to near; a crest in front still hides it
     const at = i => { const d = a + (b - a) * i / n, sag = Math.sin(Math.PI * i / n), off = sway * sag;
@@ -13872,8 +13932,9 @@ Object.assign(Scene, {
     for(const side of [-1, 1]){
       for(const d of [a, b]){
         if(d < near) continue;
-        const g = this.proj(d, side * hw, 0), t = this.proj(d, side * hw, 1.4);
-        pxLineClip(c, g.x, g.y, t.x, t.y, POST, Math.max(1, Math.round(g.s * 0.12)), this.clipAt(d));
+        const g = this.proj(d, side * hw, 0), t = this.proj(d, side * hw, 1.4), th = Math.max(1, Math.round(g.s * 0.12));
+        pxLineClip(c, g.x, g.y, t.x, t.y, POST, th, this.clipAt(d));
+        if(this.snow){ c.fillStyle = SNOW; fillClip(c, Math.round(t.x - th / 2), Math.round(t.y) - 1, th + 1, Math.max(1, th >> 1) + 1, this.clipAt(d)); }
       }
       let prev = null;
       for(let i = 0; i <= n; i++){
@@ -13883,7 +13944,9 @@ Object.assign(Scene, {
         const p = this.proj(d, side * hw + sway * sag, 1.3 - sag * 0.6);
         p.d = d;
         // cut at the farther end's clip, which is the higher of the two
-        if(prev) pxLineClip(c, prev.x, prev.y, p.x, p.y, ROPE, Math.max(1, Math.min(3, Math.round(prev.s * 0.05))), this.clipAt(Math.max(prev.d, d)));
+        if(prev){ const rw = Math.max(1, Math.min(3, Math.round(prev.s * 0.05)));
+          pxLineClip(c, prev.x, prev.y, p.x, p.y, ROPE, rw, this.clipAt(Math.max(prev.d, d)));
+          if(this.snow) pxLineClip(c, prev.x, prev.y - 1, p.x, p.y - 1, SNOW, 1, this.clipAt(Math.max(prev.d, d))); }
         prev = p;
       }
     }
@@ -13897,7 +13960,7 @@ Object.assign(Scene, {
     const I = this.isle;
     if(!I || !I.stones) return;
     const c = this.b, T = this.theme, near = this.camD - CAM_BACK + 0.7;
-    const top = pickC(T.rk, 0.85), side = pickC(T.rk, 0.25), foam = this.ice ? null : '#EAF4F6';
+    const top = this.snow ? '#EEF3F6' : pickC(T.rk, 0.85), side = pickC(T.rk, 0.25), foam = this.ice ? null : '#EAF4F6';
     for(let i = I.stones.length - 1; i >= 0; i--){
       const d = I.stones[i];
       if(d < near) continue;
@@ -13926,7 +13989,7 @@ Object.assign(Scene, {
     if(!I || !I.pier) return;
     const c = this.b, T = this.theme, near = this.camD - CAM_BACK + 0.7;
     const a = I.bank + 0.5, b = LEN - 8.3, hw = 0.55, up = 0.12;
-    const PL = ['#A07C56', '#8A6A48'], SEAM = '#5A4230', POST = '#4A3626', RAIL = '#BFA27A', FOAM = '#EAF4F6';
+    const PL = this.snow ? ['#E2E8EC', '#C6D0D8'] : ['#A07C56', '#8A6A48'], SEAM = '#5A4230', POST = '#4A3626', RAIL = this.snow ? '#F2F6F8' : '#BFA27A', FOAM = '#EAF4F6';
     // the rocks of the stack: far side first, then the near side over them
     const rk = [];
     for(let k = 0; k < 40; k++){
@@ -13935,7 +13998,7 @@ Object.assign(Scene, {
       rk.push({ d, x, k });
     }
     rk.sort((p, q) => q.d - p.d);
-    const rTop = pickC(T.rk, 0.8), rSide = pickC(T.rk, 0.3);
+    const rTop = this.snow ? '#EEF3F6' : pickC(T.rk, 0.8), rSide = pickC(T.rk, 0.3);
     // (the ones right beside him are left out: that close they filled the
     // corners of the view)
     const rock = r => {
@@ -13950,6 +14013,15 @@ Object.assign(Scene, {
         fillClip(c, p.x - ww, p.y - hh + yy, ww * 2, 1, clip);
       }
       c.fillStyle = FOAM; fillClip(c, p.x - w - 1, p.y, w * 2 + 2, 1, clip);
+      // in a storm, waves breaking over them now and then, the white thrown up and falling back
+      if(this.rain && this.windMph() > 6){
+        const L = 1.6 + hr(r.k, 7), cl = this.t / L + hr(r.k, 8), u = cl - Math.floor(cl);
+        if(u < 0.35 && hr(r.k, Math.floor(cl)) > 0.35){
+          const q = Math.sin(u / 0.35 * Math.PI), bh = Math.max(1, Math.round(hh * 1.2 * q)), bw = Math.max(1, Math.round(w * (0.6 + 0.6 * u / 0.35)));
+          for(let yy = 0; yy < bh; yy++){ c.fillStyle = yy < bh * 0.4 ? '#FFFFFF' : FOAM;
+            const ww = Math.max(1, Math.round(bw * (0.4 + 0.6 * yy / bh))); fillClip(c, p.x - ww, p.y - hh - bh + yy, ww * 2, 1, clip); }
+        }
+      }
     };
     // the deck, far to near
     const n = Math.max(4, Math.round((b - a) / 0.3));
@@ -14005,15 +14077,16 @@ Object.assign(Scene, {
   // kept from frame to frame and a paused frame draws the same. Each is cut
   // at its own distance's ground line, like the posts.
   drawSpray(posts, hw, up, near){
-    const amt = clamp((this.windMph() - 6) / 12, 0, 1);
+    // (in a storm, rain and wind together, it is thicker and flies higher)
+    const storm = this.rain ? 1 : 0, amt = clamp((this.windMph() - (storm ? 3 : 6)) / 12, 0, 1);
     if(amt <= 0 || !posts.length) return;
-    const c = this.b, dir = (this.wind || 0) < 0 ? -1 : 1, N = Math.round(64 * amt);
+    const c = this.b, dir = (this.wind || 0) < 0 ? -1 : 1, N = Math.round(64 * amt * (1 + storm * 0.8));
     for(let i = 0; i < N; i++){
       const L = 0.9 + 0.5 * hr(i, 1), clock = this.t / L + hr(i, 2), n = Math.floor(clock), u = clock - n;
       const d = posts[Math.floor(hr(i, n) * posts.length) % posts.length] + (hr(i, n + 5) - 0.5) * 0.8;
       if(d < near) continue;
       const x = -dir * (hw + 0.1) + dir * u * (hw * 2 + 1.1) + (hr(i, n + 7) - 0.5) * 0.35;
-      const z = up + Math.sin(Math.PI * u) * (0.4 + 0.9 * hr(i, n + 3)) * (0.6 + 0.4 * amt);
+      const z = up + Math.sin(Math.PI * u) * (0.4 + 0.9 * hr(i, n + 3)) * (0.6 + 0.4 * amt) * (1 + storm * 0.5);
       const p = this.proj(d, x, z), clip = this.clipAt(d);
       if(p.y > clip) continue;
       // a drop a twentieth of a unit across, streaked a little downwind
@@ -14213,20 +14286,36 @@ Object.assign(Scene, {
       // the wait is a few seconds
       const meet = at && !this.trainMet;
       if(at) this.trainMet = 1;
-      this.train = { t0: meet ? this.t - (RAIL_X - RAIL_MEET) / RAIL_V : this.t, dir: R() < 0.5 ? -1 : 1 };
+      // (by day mostly the steam train, now and then a goods or the
+      // express; at night mostly the sleeper)
+      const k = R(), kind = this.night ? (k < 0.7 ? 'night' : 'goods') : k < 0.45 ? 'steam' : k < 0.75 ? 'goods' : 'express';
+      this.train = { t0: meet ? this.t - (RAIL_X - RAIL_MEET) / TRAINS[kind].v : this.t, dir: R() < 0.5 ? -1 : 1, kind };
       this.trainNext = this.t + 20 + R() * 15;
     }
   },
   railAt(t){
     const T = this.train;
     if(!T) return null;
-    const head = -RAIL_X + RAIL_V * ((t === undefined ? this.t : t) - T.t0);
-    return { head, tail: head - RAIL_LEN, dir: T.dir };
+    const K = trainKind(T), head = -RAIL_X + K.v * ((t === undefined ? this.t : t) - T.t0);
+    return { head, tail: head - K.len, dir: T.dir, kind: T.kind || 'steam' };
   },
   // while a train is coming he does not step onto the line: he waits from
   // the moment it sets off until it is clear of the fairway, and the lamps
   // flash all that time and a moment longer
   railHold(){ const A = this.railAt(); return !!A && A.tail < 12; },
+  // Waiting at the crossing as a train goes by, he waves to it (0..1, eased
+  // in and out as it comes and goes), and his caddie does too
+  atLine(){ const I = this.isle; return !!(I && I.rail && !this.crossing && Math.abs(this.camD - I.bank) <= 0.4); },
+  railWave(){
+    const A = this.railAt();
+    if(!A || this.swingT > 0 || !this.atLine()) return 0;
+    const m = (A.head + A.tail) / 2, len = A.head - A.tail, f = clamp(1 - (Math.abs(m) - len / 2 - 2) / 4, 0, 1);
+    if(f > 0 && this.waveTrain !== this.train.t0){
+      this.waveTrain = this.train.t0;
+      if(!this.fairyMove && !QUIET && !OFFLINE) this.fairyMoveGo('wave');
+    }
+    return f * f * (3 - 2 * f);
+  },
   railLights(){ const A = this.railAt(); return !!A && A.tail < 14; },
   // The line: sleepers right across the ballast, two rails along it, boards
   // between them where his line crosses, and a post each side of the fairway
@@ -14248,8 +14337,8 @@ Object.assign(Scene, {
       const a = this.proj(d0, x), b = this.proj(d1, x);
       fillClip(c, Math.round((a.x + b.x) / 2 - sw / 2), Math.round(b.y), sw, Math.max(1, Math.round(a.y - b.y)), this.clipAt(d1));
     }
-    // the boards across where he walks over, row by row
-    c.fillStyle = '#A88A60';
+    // the boards across where he walks over, row by row (white in snow)
+    c.fillStyle = this.snow ? '#E4EAEE' : '#A88A60';
     for(let yy = Math.round(s1.y); yy <= Math.round(s0.y); yy++){
       const f = (yy - s1.y) / Math.max(1, s0.y - s1.y), d = d1 - f * (d1 - d0);
       const l = this.proj(d, -1.25), r = this.proj(d, 1.25);
@@ -14287,14 +14376,18 @@ Object.assign(Scene, {
     this.drawTrain(dc, near);
     rail(-0.3); posts(I.bank + 0.25);
   },
-  // The train, side on as it crosses: an engine with its boiler, cab, chimney
-  // and wheels, and two carriages with a band of lit windows, laid out along
-  // the line in world units; smoke puffing up from the chimney and drifting
-  // back over the carriages.
+  // The train, side on as it crosses, laid out along the line in world units
+  // from its tail: the steam train (an engine and two carriages with a band
+  // of lit windows), the goods (a brake van, a coal wagon, a wagon of logs,
+  // a tanker, and a black engine with its tender), the express (three silver
+  // coaches and a power car with a sloping nose) or the sleeper at night
+  // (dark blue, its windows glowing, its lamp throwing light down the line).
+  // Smoke puffs up from a chimney and drifts back; the driver waves from his
+  // cab as he passes the crossing; in snow it wears a cap of it on every roof.
   drawTrain(dc, near){
     const A = this.railAt();
     if(!A || dc < near + 0.5) return;
-    const c = this.b, clip = this.clipAt(dc), dir = A.dir;
+    const c = this.b, clip = this.clipAt(dc), dir = A.dir, kind = A.kind, K = trainKind(this.train), t = this.t;
     // one piece: x0..x1 along the train from its tail (0) toward its head, z0..z1 up
     const box = (x0, x1, z0, z1, col) => {
       const a = this.proj(dc, dir * (A.tail + x0), z1), b = this.proj(dc, dir * (A.tail + x1), z0);
@@ -14303,34 +14396,98 @@ Object.assign(Scene, {
       c.fillStyle = col; fillClip(c, l, Math.round(a.y), Math.max(1, r - l), Math.max(1, Math.round(b.y - a.y)), clip);
     };
     const wheels = (x0, x1) => { for(let x = x0; x < x1 - 0.2; x += 0.55) box(x + 0.08, x + 0.42, 0.02, 0.32, '#1E1E22'); };
-    // two carriages, then the engine at the head
-    for(const x0 of [0, 2.5]){
-      box(x0, x0 + 2.3, 0.28, 1.08, '#8A3228');
-      box(x0 + 0.15, x0 + 2.15, 0.62, 0.84, '#F2E2A6');
-      for(let x = x0 + 0.5; x < x0 + 2.1; x += 0.5) box(x, x + 0.08, 0.62, 0.84, '#8A3228');
-      box(x0 - 0.05, x0 + 2.35, 1.08, 1.2, '#2A2426');
-      wheels(x0 + 0.2, x0 + 2.2);
+    // snow settled on a roof, in a winter's snowfall
+    const cap = (x0, x1, z) => { if(this.snow) box(x0, x1, z, z + 0.09, '#F2F6F8'); };
+    // a steam engine at e: cab, roof, window (the driver in it), boiler, chimney, buffer beam
+    const engine = (e, P) => {
+      box(e, e + 0.8, 0.3, 1.3, P.cab); box(e + 0.05, e + 0.75, 1.3, 1.4, P.roof); cap(e + 0.05, e + 0.75, 1.4);
+      box(e + 0.2, e + 0.6, 0.85, 1.1, P.win);
+      box(e + 0.3, e + 0.46, 0.85, 1.02, '#3A2A22');                      // the driver, in his cap
+      box(e + 0.8, e + 2.3, 0.35, 0.98, P.boiler); box(e + 0.8, e + 2.3, 0.84, 0.98, P.top); cap(e + 0.8, e + 2.3, 0.98);
+      box(e + 1.9, e + 2.1, 0.98, 1.34, '#1E1E22');
+      box(e + 2.3, e + 2.4, 0.2, 0.45, '#C8302A');
+      wheels(e + 0.3, e + 2.3);
+      this.driverWave(box, e + 0.4, A);
+    };
+    let chim = null;
+    if(kind === 'goods'){
+      // the brake van at the back, its little window and veranda
+      box(0, 1.6, 0.3, 1.15, '#6A3A24'); box(0.25, 1.6, 1.15, 1.25, '#3A2418'); cap(0.25, 1.6, 1.25);
+      box(0, 0.25, 0.3, 0.75, '#3A2418'); box(0.8, 1.1, 0.7, 0.95, '#F2E2A6'); wheels(0.2, 1.5);
+      // coal: grey sides ribbed, a heap of it on top
+      box(1.85, 3.85, 0.3, 0.85, '#5A5E66');
+      for(let x = 2.3; x < 3.8; x += 0.5) box(x, x + 0.07, 0.3, 0.85, '#44484E');
+      box(1.9, 3.8, 0.85, 0.94, '#1A1A1E'); box(2.2, 3.5, 0.94, 1.02, '#1A1A1E'); cap(2.2, 3.5, 1.02);
+      wheels(2.0, 3.8);
+      // logs, stacked three high on a flat wagon between stakes, their ends pale
+      box(4.1, 6.1, 0.3, 0.42, '#4A3A2A');
+      [[0.42, 0.58, '#8A5A32'], [0.58, 0.74, '#6E4526'], [0.74, 0.88, '#8A5A32']].forEach(([z0, z1, col]) => {
+        box(4.2, 6.0, z0, z1, col); box(4.2, 4.28, z0, z1, '#C89A64'); box(5.92, 6.0, z0, z1, '#C89A64'); });
+      box(4.12, 4.2, 0.42, 1.0, '#2A2020'); box(6.0, 6.08, 0.42, 1.0, '#2A2020'); cap(4.2, 6.0, 0.88);
+      wheels(4.2, 6.0);
+      // the tanker: a black drum on a frame, a shine along it and a dome
+      box(6.35, 8.35, 0.3, 0.4, '#1E1E22'); box(6.45, 8.25, 0.4, 0.95, '#2A2E34'); box(6.45, 8.25, 0.8, 0.86, '#5A6068');
+      box(7.25, 7.45, 0.95, 1.08, '#2A2E34'); cap(6.45, 8.25, 0.95);
+      wheels(6.4, 8.3);
+      // the tender, heaped with coal, and the black engine
+      box(8.6, 9.6, 0.3, 1.05, '#2A2A30'); box(8.65, 9.55, 1.05, 1.17, '#141414'); cap(8.65, 9.55, 1.17); wheels(8.7, 9.6);
+      engine(9.7, { cab: '#34343C', roof: '#141418', win: '#F2E2A6', boiler: '#22222A', top: '#3E3E48' });
+      chim = 9.7 + 2.0;
+    }else if(kind === 'express'){
+      // three silver coaches, a band of windows and a red stripe, on bogies
+      for(const x0 of [0, 2.75, 5.5]){
+        box(x0, x0 + 2.6, 0.3, 1.2, '#D8DCE2'); box(x0, x0 + 2.6, 1.2, 1.28, '#9AA2AA'); cap(x0, x0 + 2.6, 1.28);
+        box(x0, x0 + 2.6, 0.72, 0.94, '#27384A');
+        for(let x = x0 + 0.2; x < x0 + 2.45; x += 0.42) box(x, x + 0.3, 0.75, 0.91, this.night ? '#FFE6A0' : '#BFE3F2');
+        box(x0, x0 + 2.6, 0.4, 0.5, '#C8302A');
+        box(x0 + 0.2, x0 + 0.8, 0.1, 0.32, '#1E1E22'); box(x0 + 1.8, x0 + 2.4, 0.1, 0.32, '#1E1E22');
+      }
+      // the power car, its nose sloping down to the front, its lamp lit
+      const e = 8.25;
+      box(e, e + 2.35, 0.3, 1.25, '#D8DCE2'); box(e, e + 2.35, 1.25, 1.32, '#9AA2AA'); cap(e, e + 2.35, 1.32);
+      box(e, e + 2.35, 0.4, 0.5, '#C8302A'); box(e + 0.3, e + 1.9, 0.78, 0.92, '#27384A');
+      for(let k = 0; k < 5; k++) box(e + 2.35 + k * 0.13, e + 2.35 + (k + 1) * 0.13, 0.3, 1.2 - k * 0.17, k === 1 || k === 2 ? '#27384A' : '#D8DCE2');
+      box(e + 2.35, e + 3.0, 0.4, 0.5, '#C8302A'); box(e + 2.85, e + 3.0, 0.52, 0.62, '#FFF6C8');
+      box(e + 0.3, e + 0.9, 0.1, 0.32, '#1E1E22'); box(e + 1.9, e + 2.5, 0.1, 0.32, '#1E1E22');
+      this.driverWave(box, e + 2.1, A);
+    }else{
+      const N = kind === 'night';
+      // two carriages, then the engine at the head
+      for(const x0 of [0, 2.5]){
+        box(x0, x0 + 2.3, 0.28, 1.08, N ? '#22305A' : '#8A3228');
+        box(x0 + 0.15, x0 + 2.15, 0.62, 0.84, N ? '#FFD36A' : '#F2E2A6');
+        for(let x = x0 + 0.5; x < x0 + 2.1; x += 0.5) box(x, x + 0.08, 0.62, 0.84, N ? '#22305A' : '#8A3228');
+        box(x0 - 0.05, x0 + 2.35, 1.08, 1.2, N ? '#12182C' : '#2A2426'); cap(x0 - 0.05, x0 + 2.35, 1.2);
+        wheels(x0 + 0.2, x0 + 2.2);
+      }
+      engine(5.0, N ? { cab: '#1E3A2A', roof: '#101A14', win: '#FFD36A', boiler: '#1A3024', top: '#2A4A36' }
+                    : { cab: '#6A2420', roof: '#1E1E22', win: '#F2E2A6', boiler: '#2E5A3A', top: '#3E7A4E' });
+      chim = 7.0;
+      // the sleeper's lamp: light thrown down the line ahead of it, thinning out
+      if(N){
+        box(7.3, 7.4, 0.55, 0.7, '#FFF6C8');
+        for(let x = 7.4; x < 10.4; x += 0.04){
+          const f = (x - 7.4) / 3, p = this.proj(dc, dir * (A.tail + x), 0.1 + 0.5 * (1 - f));
+          const hh = Math.max(1, Math.round(LAT * p.s * 0.45 * f));
+          c.fillStyle = f < 0.4 ? '#FFF1B0' : '#D8C47A';
+          const X = Math.round(p.x), Y0 = Math.round(p.y) - (hh >> 1);
+          for(let yy = 0; yy < hh; yy++) if(f < 0.3 || (((X + Y0 + yy) & 1) && (f < 0.7 || hr(X, yy) > 0.5))) fillClip(c, X, Y0 + yy, 1, 1, clip);
+        }
+      }
     }
-    const e = 5.0;
-    box(e, e + 0.8, 0.3, 1.3, '#6A2420');               // the cab
-    box(e + 0.05, e + 0.75, 1.3, 1.4, '#1E1E22');       // its roof
-    box(e + 0.2, e + 0.6, 0.85, 1.1, '#F2E2A6');        // its window
-    box(e + 0.8, e + 2.3, 0.35, 0.98, '#2E5A3A');       // the boiler
-    box(e + 0.8, e + 2.3, 0.84, 0.98, '#3E7A4E');
-    box(e + 1.9, e + 2.1, 0.98, 1.34, '#1E1E22');       // the chimney
-    box(e + 2.3, e + 2.4, 0.2, 0.45, '#C8302A');        // the buffer beam
-    wheels(e + 0.3, e + 2.3);
     // smoke: a puff off the chimney every fifth of a second, rising and
-    // falling back over the carriages as it fades, gone within a second
-    const age = this.t - this.train.t0;
+    // falling back over the train as it fades, gone within a second (dark
+    // off the goods engine)
+    if(chim === null || !K.smoke) return;
+    const age = t - this.train.t0;
     for(let i = 0; i < 6; i++){
       const pa = (age % 0.2) + i * 0.2;
       if(pa > age) break;
       const q = pa / 1.2;
-      const p = this.proj(dc, dir * (A.tail + e + 2.0 - pa * RAIL_V * 0.45), 1.4 + pa * 1.3);
+      const p = this.proj(dc, dir * (A.tail + chim - pa * K.v * 0.45), 1.4 + pa * 1.3);
       const r = Math.max(1, Math.round(LAT * p.s * (0.1 + q * 0.16)));
       c.globalAlpha = 0.7 * (1 - q);
-      c.fillStyle = '#EDEDEA';
+      c.fillStyle = kind === 'goods' ? '#8A8A88' : '#EDEDEA';
       // a round puff, a row at a time
       for(let yy = -r; yy < r; yy++){
         const hw = Math.round(Math.sqrt(Math.max(0, r * r - (yy + 0.5) * (yy + 0.5))));
@@ -14338,6 +14495,15 @@ Object.assign(Scene, {
       }
     }
     c.globalAlpha = 1;
+  },
+  // The driver's hand out of his cab window, waving, while his cab is near
+  // the crossing (x is where his window is along the train)
+  driverWave(box, x, A){
+    const at = A.tail + x;
+    if(Math.abs(at) > 9) return;
+    const w = Math.sin(this.t * 14) * 0.07;
+    box(x + w * 0.5, x + w * 0.5 + 0.08, 1.0, 1.45, '#E0B090');
+    box(x + w - 0.02, x + w + 0.1, 1.45, 1.57, '#E0B090');
   },
 
   drawTee(){
