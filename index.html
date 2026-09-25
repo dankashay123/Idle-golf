@@ -13862,22 +13862,20 @@ function refreshUpg(){
     : 'Playing the card as it lies';
 
   // The range used to carry a line of its own at the top naming the cheapest
-  // rung in reach. That goes on the row it is about instead: a rung whose
-  // button is grey says what purse lights it. It said how long the purse
-  // needed, but an estimate off the current income moves every second and
-  // read as a lock with a timer on it; the price is the actual condition.
+  // rung in reach, and then each row said "unlocks when you have" its price.
+  // Both are gone (the user asked): the button's price, grey until the purse
+  // covers it, says all of that.
 
   for(const r of UPGREF){
     const u = r.u, lv = upgLv(u.id), cap = capOf(u);
     const maxed = lv >= cap;
     const k = maxed ? 0 : bulkFor(u.base, u.r, lv, cap);
     const c = maxed ? 0 : costBulk(u.base, u.r, lv, k);
-    // The wait is to the price the button is actually asking for, so it tracks
-    // the multiplier: on x10 it is how long until ten of them, not one.
+    // lit when the purse covers the price the button is actually asking for,
+    // so it tracks the multiplier: on x10 it is ten of them, not one
     const ok = !maxed && S.gold >= c && k > 0;
     r.mt.innerHTML = 'Lv <i>' + lv + (isFinite(cap) ? '/' + cap : '') + '</i> \u00b7 <b>'
-      + effectLabel(u) + '</b>'
-      + (!maxed && !ok ? ' \u00b7\u00a0<u>unlocks when you have\u00a0' + fmt(c) + '</u>' : '');
+      + effectLabel(u) + '</b>';
     if(maxed){
       r.btn.className = 'buy max'; r.lbl.textContent = 'Capped'; r.amt.textContent = '\u2014';
     }else{

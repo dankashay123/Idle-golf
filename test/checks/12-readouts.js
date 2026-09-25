@@ -10,9 +10,9 @@
  * lines that have something on them, so a row on that card means something
  * happened.
  *
- * The Range line turns a wall of grey into a next step, and it has to be right
- * about which rung that is -- naming one you cannot afford, or claiming
- * nothing is in reach when something is, is worse than saying nothing.
+ * The Range's rungs show their price on the button, grey until the purse
+ * covers it, and say nothing else about when they unlock (the user asked for
+ * the "unlocks when you have" line to go); the button charges what it names.
  *
  * The retirement screen showed the legacy figure in exactly one place, on the
  * button, and only once the first event was in the book. Every term in the
@@ -193,26 +193,23 @@ module.exports = {
         } finally { window.toast = realToast; }
       }
 
-      // ---- 3. the Range says when each rung unlocks --------------------
+      // ---- 3. the Range's rungs: the price on the button, and no "unlocks
+      // when you have" line (the user asked for it gone) ----------------
       DEV.clearUpg(); try { hideSheet(); } catch (e) {}
       S.mult = 1;
       Meter.buf = [{ g: 100, t: 1 }];          // a flat 100 purse a second
       const rows = () => { refreshUpg(); return UPGREF.map(r => {
         const u = r.u, lv = upgLv(u.id), cap = capOf(u), maxed = lv >= cap;
         const k = maxed ? 0 : bulkFor(u.base, u.r, lv, cap);
-        const el = r.mt.querySelector('u');
-        return { n: u.n, maxed, cost: maxed ? 0 : costBulk(u.base, u.r, lv, k),
-                 note: el ? el.textContent : '', lit: / ok\b/.test(r.btn.className) };
+        return { n: u.n, maxed, cost: maxed ? 0 : costBulk(u.base, u.r, lv, k), amt: r.amt.textContent,
+                 note: /unlock|when you have/i.test(r.mt.textContent) ? r.mt.textContent : '', lit: / ok\b/.test(r.btn.className) };
       }); };
       S.gold = 0;     out.rngBroke = rows();
       S.gold = 1e30;  out.rngRich  = rows();
       DEV.maxCapped(); S.gold = 0; out.rngCapped = rows();
       out.rngMults = MULTS.length;
-      // what the note claims, read back through the same clock the rest of the
-      // game prints times with
-      // the purse that lights the button, at the price the button asks
-      out.rngWant = out.rngBroke.map(r2 => r2.maxed ? ''
-        : 'unlocks when you have\u00a0' + fmt(r2.cost));
+      // the price the button asks
+      out.rngWant = out.rngBroke.map(r2 => r2.maxed ? '\u2014' : fmt(r2.cost));
       // and the button charges for what it says it sells, at every multiplier
       DEV.clearUpg();
       out.rngBuy = [];
@@ -392,35 +389,28 @@ module.exports = {
         + 'caddie actually played (' + capTxt + '). It reads: "'
         + r.awayLong.slice(0, 120).replace(/\s+/g, ' ') + '"');
 
-    // ---- the Range rows carry their own wait --------------------------
-    // The summary line above the list is gone, so the thing it used to say --
-    // which rung is next and how long the purse needs -- has to be on the rows
-    // or it is nowhere. Three states: grey rungs say what purse lights them,
-    // lit rungs say nothing because you can buy them now, capped rungs say
-    // nothing because there is nothing left to wait for. It used to be a time
-    // off the current income, which moved every second and read as a lock
-    // with a countdown on it.
+    // ---- the Range rows: the price is on the button ------------------
+    // The summary line above the list went first, then the rows' own
+    // "unlocks when you have" line (the user asked for it gone). What is left
+    // says it all: each button shows its price, grey until the purse covers
+    // it, lit once it does, and a capped rung says Capped.
     if (!(r.rngBroke.length > 10))
       throw new Error('only ' + r.rngBroke.length + ' rungs on the range to look at');
-    const missing = r.rngBroke.filter((x, i) => r.rngWant[i] && !x.note);
-    if (missing.length)
-      throw new Error(missing.length + ' rung(s) you cannot afford say nothing about when they '
-        + 'unlock: ' + missing.slice(0, 4).map(x => x.n).join(', '));
+    // no rung says when it unlocks, broke, rich or capped: the price is on
+    // its button, grey until the purse covers it
+    const saying = r.rngBroke.concat(r.rngRich, r.rngCapped).filter(x => x.note);
+    if (saying.length)
+      throw new Error(saying.length + ' rung(s) still say when they unlock: ' + saying[0].n + ' reads "' + saying[0].note + '"');
     const wrong = r.rngBroke.map((x, i) => [x, r.rngWant[i]])
-      .filter(([x, want]) => !x.maxed && x.note !== want);
+      .filter(([x, want]) => !x.maxed && x.amt !== want);
     if (wrong.length)
-      throw new Error(wrong.length + ' rung(s) print the wrong wait: '
-        + wrong.slice(0, 3).map(([x, want]) => x.n + ' says "' + x.note
+      throw new Error(wrong.length + ' rung(s) show the wrong price on the button: '
+        + wrong.slice(0, 3).map(([x, want]) => x.n + ' says "' + x.amt
           + '" for a price of ' + Math.round(x.cost) + ', which is "' + want + '"')
           .join('; '));
     const lit = r.rngBroke.filter(x => x.lit);
     if (lit.length)
       throw new Error(lit.length + ' rung(s) are lit up as buyable on an empty purse');
-    const stillWaiting = r.rngRich.filter(x => x.note);
-    if (stillWaiting.length)
-      throw new Error(stillWaiting.length + ' rung(s) still say "unlocks when" with the purse '
-        + 'big enough to buy every one of them: ' + stillWaiting[0].n + ' says "'
-        + stillWaiting[0].note + '"');
     if (r.rngRich.filter(x => !x.maxed && !x.lit).length)
       throw new Error('a rung you can plainly afford is not lit, so the rich case is not '
         + 'the rich case');
