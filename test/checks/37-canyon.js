@@ -87,10 +87,14 @@ module.exports = {
 
         window.step = window.__step;
         QUIET = false;
+        // in a week that is not this kind's: the week's own tee says more
+        // (see sigweek), and the week follows the calendar
+        SIGWEEK_FORCE = 'island';
         $('toasts').innerHTML = '';
         startHole();
         o.toast = $('toasts').textContent;
       } finally {
+        SIGWEEK_FORCE = null;
         window.step = window.__step || window.step;
         CANYON_FORCE = 0;
         Object.keys(S).forEach(k => delete S[k]); Object.assign(S, JSON.parse(SNAP));
@@ -161,7 +165,7 @@ module.exports = {
     if (r.fast || r.stood) f('crossing the gorge he ' + (r.fast ? 'went faster than the bridge ' + r.fast + ' frames' : 'stood still ' + r.stood + ' frames'));
     if (r.plank < r.looked) f('under his feet over the gorge: a plank ' + r.plank + ' times in ' + r.looked);
     if (r.end < r.land) f('he ended the shot at ' + r.end + ', short of the far rim at ' + r.land);
-    if (!/Canyon Carry/.test(r.toast)) f('the tee of a canyon hole said "' + r.toast + '"');
+    if (!/Signature Hole/.test(r.toast) || !/Canyon Carry/.test(r.toast)) f('the tee of a canyon hole said "' + r.toast + '"');
     if (!live.moved) f('a canyon hole finished by its tee shot never moved on');
     if (live.cam < live.land - 0.1 || !live.over) f('a canyon hole finished by its tee shot moved on before he crossed (stood at ' + live.cam + ' of ' + live.land + ')');
     return [r.home + ' canyons over ' + r.homes + ' home events and ' + r.away + ' on the ' + r.mineCourses + ' other courses whose signature it is, the last par five of each round',

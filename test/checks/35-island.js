@@ -101,10 +101,14 @@ module.exports = {
         // the tee says so
         window.step = window.__step;
         QUIET = false;
+        // in a week that is not this kind's: the week's own tee says more
+        // (see sigweek), and the week follows the calendar
+        SIGWEEK_FORCE = 'canyon';
         $('toasts').innerHTML = '';
         startHole();
         o.toast = $('toasts').textContent;
       } finally {
+        SIGWEEK_FORCE = null;
         window.step = window.__step || window.step;
         ISLE_FORCE = 0;
         Object.keys(S).forEach(k => delete S[k]); Object.assign(S, JSON.parse(SNAP));

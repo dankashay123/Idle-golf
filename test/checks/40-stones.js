@@ -86,10 +86,14 @@ module.exports = {
 
         window.step = window.__step;
         QUIET = false;
+        // in a week that is not this kind's: the week's own tee says more
+        // (see sigweek), and the week follows the calendar
+        SIGWEEK_FORCE = 'island';
         $('toasts').innerHTML = '';
         startHole();
         o.toast = $('toasts').textContent;
       } finally {
+        SIGWEEK_FORCE = null;
         window.step = window.__step || window.step;
         STONES_FORCE = 0;
         Object.keys(S).forEach(k => delete S[k]); Object.assign(S, JSON.parse(SNAP));
@@ -157,7 +161,7 @@ module.exports = {
     if (r.flew) f('he flew over the river: that is the island');
     if (r.fast || r.stood) f('crossing the river he ' + (r.fast ? 'went faster than a hop ' + r.fast + ' frames' : 'stood still ' + r.stood + ' frames'));
     if (r.end < r.land) f('he ended the shot at ' + r.end + ', short of the far bank at ' + r.land);
-    if (!/Stepping Stones/.test(r.toast)) f('the tee of a stepping-stones hole said "' + r.toast + '"');
+    if (!/Signature Hole/.test(r.toast) || !/Stepping Stones/.test(r.toast)) f('the tee of a stepping-stones hole said "' + r.toast + '"');
     if (!live.moved) f('a stepping-stones hole finished by its tee shot never moved on');
     if (live.cam < live.land - 0.1 || !live.over) f('a stepping-stones hole finished by its tee shot moved on before he crossed (stood at ' + live.cam + ' of ' + live.land + ')');
     return [r.home + ' stepping-stone holes over ' + r.homes + ' home events and ' + r.away + ' on the ' + r.mineCourses + ' other courses whose signature it is, the last par four of each round',

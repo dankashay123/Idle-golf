@@ -2997,6 +2997,8 @@ const B = {
     meridian:'island',
     masters:'stones', crown:'stones', sovereign:'island', starfall:'canyon'
   },
+  // what the signature hole of the week (sigWeek) multiplies its holes' purse by
+  SIG_WEEK_MULT: 2,
   ACH: [
     { id:'h100',   n:'Fairway Found',    d:'Play 100 holes',              m:'holes',  v:100,   r:{k:'tick', v:2}, sov:5 },
     { id:'h2500',  n:'Card Sharp',       d:'Play 2,500 holes',            m:'holes',  v:2500,  r:{k:'gld', v:0.05}, sov:10 },
@@ -3535,6 +3537,21 @@ function isPier(h){ return sigHole(h, 'pier', 3, false); }
 const SIG_NAME = { island: 'Island Green', canyon: 'Canyon Carry', stones: 'Stepping Stones', pier: 'Sea Stack' };
 // which signature hole h is, if it is one
 const sigKind = h => isIsland(h) ? 'island' : isPier(h) ? 'pier' : isCanyon(h) ? 'canyon' : isStones(h) ? 'stones' : null;
+// The signature hole of the week: one kind a real week, Monday to Sunday like
+// the majors, pays its holes SIG_WEEK_MULT times their purse. Every block of
+// four weeks holds all four kinds and no kind comes two weeks running; the
+// order slides a step each block, so each major of the week meets each kind
+// in turn. SIGWEEK_FORCE (the developer menu) picks one.
+const SIG_KINDS = Object.keys(SIG_NAME);
+let SIGWEEK_FORCE = null;
+const sigWeekOf = wk => { const n = SIG_KINDS.length;
+  return SIG_KINDS[(((wk + Math.floor(wk / n)) % n) + n) % n]; };
+const sigWeek = () => SIGWEEK_FORCE || sigWeekOf(weekNow());
+const isSigWeek = h => { const k = sigKind(h); return !!k && k === sigWeek(); };
+// A hole's own purse: the card's, doubled on the signature hole of the week.
+// Only the hole is doubled; the event's cheque and the wagers' "holes worth"
+// are priced off purseFor and never move with it.
+const holePurse = (h, tier, goldMult) => purseFor(h, tier, goldMult) * (isSigWeek(h) ? B.SIG_WEEK_MULT : 1);
 // the major of the week plays for a major's purse and a major's points
 const slotOfEvent = t => S && S.weekly && S.weekly.t === t ? 'major' : B.SLOTS_SEASON[(t-1) % B.SEASON];
 const COURSE_EVT = B.COURSE.filter(c => c.slot === 'event');
@@ -4390,18 +4407,21 @@ function startHole(){
   openEvent();         // which course this event is on, fixed from its first hole
   rivalNow();          // the event's rival exists from its first hole, seen or not
   S.courseEl = courseElFor(S.hole, S.tier);
-  const D = derive();
+  // The weather before the golfer is read: the purse carries its gold
+  // multiplier. Read first, the first hole of every round was paid at the
+  // round before's weather (0.8x to 2.3x), which the away model never did.
   S.chaos = chaosFor(S.hole, S.tier);
   // Punch Shot asks whether the weather lengthened this hole, which is one
   // flag rather than a reader picking through the chaos table every swing.
   S.stretched = S.chaos.y > 1;
+  const D = derive();
   S.parTime = parTimeFor(S.hole);
   // the card sets the hole, and only the card
   const carded = yardageFor(S.hole, S.tier, S.chaos);
   S.yardsMax = carded;
   S.carded = carded;
   S.yards = S.yardsMax;
-  S.purse = purseFor(S.hole, S.tier, D.gold);
+  S.purse = holePurse(S.hole, S.tier, D.gold);
   // a strike from a golfer at the tempo cap clearing this hole in par time
   const refSwing = S.yardsMax / (S.parTime * B.SPEED_CAP);
   // Never more than ARMOR_CAP of one of your swings. Sized off the card alone,
@@ -4425,7 +4445,9 @@ function startHole(){
   }
   Scene.newHole(S.hole, S.tier);
   const sk = !QUIET && !OFFLINE && sigKind(S.hole);
-  if(sk) toast('Signature Hole \u00b7 <b>' + SIG_NAME[sk] + '</b>');
+  if(sk) toast(sk === sigWeek()
+    ? 'Hole of the Week \u00b7 <b>' + SIG_NAME[sk] + '</b> \u00b7 pays\u00a0' + B.SIG_WEEK_MULT + '\u00d7'
+    : 'Signature Hole \u00b7 <b>' + SIG_NAME[sk] + '</b>');
 }
 
 // soft=true for continuous sources like burn, which armour taxes as a
@@ -4460,7 +4482,12 @@ function damage(amt, D, soft, through){
 function applyAffinity(D, dmg){
   const el = D.ball && D.ball.el; if(!el) return;
   const v = B.ELEM_VAL[el] * D.elemEff;
-  if(el === 'ember'){ S.burn = dmg * v / 3; S.burnT = 3; }
+  // Ember: each strike that takes it lays dmg * v of burn, spent over three
+  // seconds, and burns add up. Each one used to replace the one burning, so a
+  // quick swing (or a provisional's small burn) threw most of every burn
+  // away: an ember ball played at half the carry derive() credits it with,
+  // auto-equip still chose it, and a player sat on doubles for half an hour.
+  if(el === 'ember'){ S.burn = (S.burn || 0) + dmg * v; S.burnT = 3; }
   else if(el === 'frost'){ S.frost = 1; }
   else if(el === 'storm'){ damage(dmg * v, D); damage(dmg * v, D); Scene.spark('storm'); }
   else if(el === 'verdant'){ const g = (dmg/S.yardsMax)*S.purse*B.SWING_SHARE*v;
@@ -7015,7 +7042,7 @@ function roundRate(tier, wx){
       S.carded = carded; S.yardsMax = y;
       secs  += Math.max(S.walkMin || B.WALK_MIN, y / Math.max(1e-9, D.dps));
       par   += parTimeFor(h);
-      purse += purseFor(h, tier, D.gold);
+      purse += holePurse(h, tier, D.gold);
       drop  += D.drop;
       card  += carded; yards += y;
     }
@@ -7348,7 +7375,9 @@ const GLYPH = {
   '*':['......','#..#.#','.####.','..##..','.####.','#..#.#','......','......','......'],
   '=':['......','......','######','......','######','......','......','......','......'],
   '<':['....#.','...#..','..#...','.#....','..#...','...#..','....#.','......','......'],
-  '>':['.#....','..#...','...#..','....#.','...#..','..#...','.#....','......','......']
+  '>':['.#....','..#...','...#..','....#.','...#..','..#...','.#....','......','......'],
+  // the times sign, as in the x2 on a signature hole of the week
+  '\u00d7':['......','......','.#..#.','..##..','..##..','.#..#.','......','......','......']
 };
 const FW = 6, FH = 9, FGAP = 2;
 /* ---- the small face ----
@@ -7412,7 +7441,8 @@ const GLYPH_S = {
   '*':['...','.#.','###','.#.','#.#','...','...','...'],
   '=':['...','...','###','...','###','...','...','...'],
   '<':['...','..#','.#.','#..','.#.','..#','...','...'],
-  '>':['...','#..','.#.','..#','.#.','#..','...','...']
+  '>':['...','#..','.#.','..#','.#.','#..','...','...'],
+  '\u00d7':['...','...','#.#','.#.','#.#','...','...','...']
 
 };
 const FHS = 8, FGAPS = 1;
@@ -10863,6 +10893,26 @@ function panel(c, x, y, w, h, fill, border){
   }
 }
 
+// The sparkle that marks the signature hole of the week on the map, full and
+// at the ebb of its glint: gold with a pale centre, and a dark edge round it
+// so it reads on rough, trees and water alike. Baked once each, 7x7.
+const MAP_STAR = [];
+function mapStar(i){
+  if(MAP_STAR[i]) return MAP_STAR[i];
+  const rows = [['..#..', '..#..', '##o##', '..#..', '..#..'],
+                ['.....', '..#..', '.#o#.', '..#..', '.....']][i];
+  const on = (x, y) => y >= 0 && y < 5 && x >= 0 && x < 5 && rows[y][x] !== '.';
+  const cv = document.createElement('canvas'); cv.width = 7; cv.height = 7;
+  const g = cv.getContext('2d');
+  for(let y = -1; y <= 5; y++) for(let x = -1; x <= 5; x++){
+    if(on(x, y)) g.fillStyle = rows[y][x] === 'o' ? '#FFF6D8' : '#FFD66B';
+    else if(on(x - 1, y) || on(x + 1, y) || on(x, y - 1) || on(x, y + 1)) g.fillStyle = '#12160F';
+    else continue;
+    g.fillRect(x + 1, y + 1, 1, 1);
+  }
+  return MAP_STAR[i] = cv;
+}
+
 /* ---- the hole from above ----
    From the tee the rolling ground hides most of a dogleg, so a small map of
    the hole sits on the stage: fairway, sand, water, trees, the green and the
@@ -10917,7 +10967,10 @@ Object.assign(Scene, {
   },
   buildMap(mw, mh){
     const T = this.theme || THEMES.day;
-    const key = [this.hole, this.tier, this.themeId, mw, mh, this.gGen].join('|');
+    // the signature hole of the week is marked: a brass frame, and a sparkle
+    // in the corner (drawMap)
+    const wk = this.mapWk = isSigWeek(this.hole);
+    const key = [this.hole, this.tier, this.themeId, mw, mh, this.gGen, wk ? 1 : 0].join('|');
     if(this.mapKey === key && this.mapStatic) return;
     this.mapKey = key;
     const d0 = -3, d1 = LEN + 11;
@@ -10969,8 +11022,8 @@ Object.assign(Scene, {
     { const [x, y] = this.mapXY(LEN, 0), fx = Math.round(x), fy = Math.round(y);
       g.fillStyle = '#F4F6EF'; g.fillRect(fx, fy - 3, 1, 4);
       g.fillStyle = '#E4574A'; g.fillRect(fx + 1, fy - 3, 2, 1); }
-    // a frame, one pixel of the rough's own dark
-    g.fillStyle = T.rg[0];
+    // a frame, one pixel of the rough's own dark, or brass
+    g.fillStyle = wk ? PX.brass : T.rg[0];
     g.fillRect(0, 0, mw, 1); g.fillRect(0, mh - 1, mw, 1); g.fillRect(0, 0, 1, mh); g.fillRect(mw - 1, 0, 1, mh);
   },
   drawMap(){
@@ -10986,6 +11039,10 @@ Object.assign(Scene, {
     this.buildMap(mw, mh);
     const g = cv.getContext('2d');
     g.drawImage(this.mapStatic, 0, 0);
+    // The week's sparkle, top left, clear of the green: a signature hole is
+    // played dead straight, so the green is always in the middle. It ebbs
+    // for a moment every couple of seconds, which is the glint.
+    if(this.mapWk) g.drawImage(mapStar((this.t % 1.8) < 1.45 ? 0 : 1), 1, 1);
     // balls in the air, as a white pixel each
     g.fillStyle = '#FFFFFF';
     for(const b of this.balls){
@@ -12225,9 +12282,11 @@ Object.assign(Scene, {
       drawTextS(c, isSunday(S.hole) ? 'CHAMPIONSHIP' : 'CLOSING HOLE', R, ly, PX.flag, TSC, 'r');
       ly -= LH;
     }
+    // (and the signature hole of the week says what it pays)
     const sk = sigKind(S.hole);
     if(sk){
-      drawTextS(c, SIG_NAME[sk].toUpperCase(), R, ly, PX.brass, TSC, 'r');
+      drawTextS(c, SIG_NAME[sk].toUpperCase() + (sk === sigWeek() ? ' \u00d7' + B.SIG_WEEK_MULT : ''),
+                R, ly, PX.brass, TSC, 'r');
       ly -= LH;
     }
     if(S.courseEl){
@@ -12676,6 +12735,8 @@ function roomToday(w){
   const row2 = (nm, ds) => '<div class="row"><div><div class="nm">' + nm + '</div><div class="ds">' + ds + '</div></div></div>';
   h += '<div class="eyebrow" style="margin:12px 0 0">This Week</div>'
     + row2(M.cs.n, '<b style="color:var(--brass)">Major of the Week</b> \u00b7 ' + say + ' \u00b7 new in\u00a0' + wk)
+    + row2(SIG_NAME[sigWeek()], '<b style="color:var(--brass)">Signature Hole of the Week</b> \u00b7 pays\u00a0'
+        + B.SIG_WEEK_MULT + '\u00d7')
     + row2(fw.n, 'Wager of the day \u00b7 pays ' + B.DGN_FEAT_MULT + '\u00d7 \u00b7 new in\u00a0' + hms(featLeft()))
     + (isMember() ? row2('Club Membership', '+' + B.MEMBER_DAILY + sovIc() + ' a day \u00b7 next in\u00a0' + hms(86400 - (S.memberT || 0))) : '');
   w.innerHTML = h;
@@ -14225,6 +14286,9 @@ const DEV = {
     h += row('Signature hole', b('this hole an island', 'DEV.isle()') + b('this hole a canyon', 'DEV.canyon()')
       + b('stepping stones', 'DEV.stones()') + b('sea stack', 'DEV.pier()'));
 
+    h += row('Signature hole of the week \u00b7 ' + SIG_NAME[sigWeek()] + (SIGWEEK_FORCE ? ' \u00b7 forced' : ''), SIG_KINDS.map(k =>
+      b(SIG_NAME[k].toLowerCase(), 'DEV.sigWeek(\'' + k + '\')')).join('') + b('by the date', 'DEV.sigWeek()'));
+
     h += row('Home season', b('by the card', 'DEV.season(-1)') + b('as built', 'DEV.season(0)')
       + b('autumn', 'DEV.season(1)') + b('winter', 'DEV.season(2)') + b('blossom', 'DEV.season(3)'));
 
@@ -14438,12 +14502,17 @@ const DEV = {
   // a home course in any season (play one first: Home course, or DEV.course)
   season(k){ SEASON_FORCE = k; Scene.newHole(S.hole, S.tier); hideSheet(); },
   // the hole in play crosses a river on stepping stones, from the tee
-  pier(){ PIER_FORCE = S.hole; STONES_FORCE = 0; ISLE_FORCE = 0; CANYON_FORCE = 0; S.yards = S.yardsMax; Scene.newHole(S.hole, S.tier); hideSheet(); },
-  stones(){ STONES_FORCE = S.hole; ISLE_FORCE = 0; CANYON_FORCE = 0; PIER_FORCE = 0; S.yards = S.yardsMax; Scene.newHole(S.hole, S.tier); hideSheet(); },
+  pier(){ PIER_FORCE = S.hole; STONES_FORCE = 0; ISLE_FORCE = 0; CANYON_FORCE = 0; S.yards = S.yardsMax; this.reprice(); Scene.newHole(S.hole, S.tier); hideSheet(); },
+  stones(){ STONES_FORCE = S.hole; ISLE_FORCE = 0; CANYON_FORCE = 0; PIER_FORCE = 0; S.yards = S.yardsMax; this.reprice(); Scene.newHole(S.hole, S.tier); hideSheet(); },
   // the hole in play becomes a canyon, from the tee
-  canyon(){ CANYON_FORCE = S.hole; ISLE_FORCE = 0; STONES_FORCE = 0; PIER_FORCE = 0; S.yards = S.yardsMax; Scene.newHole(S.hole, S.tier); hideSheet(); },
+  canyon(){ CANYON_FORCE = S.hole; ISLE_FORCE = 0; STONES_FORCE = 0; PIER_FORCE = 0; S.yards = S.yardsMax; this.reprice(); Scene.newHole(S.hole, S.tier); hideSheet(); },
   // the hole in play becomes an island green, from the tee
-  isle(){ ISLE_FORCE = S.hole; CANYON_FORCE = 0; STONES_FORCE = 0; PIER_FORCE = 0; S.yards = S.yardsMax; Scene.newHole(S.hole, S.tier); hideSheet(); },
+  // the hole under him priced again, for a signature hole forced on it or
+  // the week's kind changed: the signature hole of the week pays double
+  reprice(){ S.purse = holePurse(S.hole, S.tier, derive().gold); },
+  // the signature hole of the week, pinned to one kind, or by the date
+  sigWeek(k){ SIGWEEK_FORCE = k || null; this.reprice(); this.re(); },
+  isle(){ ISLE_FORCE = S.hole; CANYON_FORCE = 0; STONES_FORCE = 0; PIER_FORCE = 0; S.yards = S.yardsMax; this.reprice(); Scene.newHole(S.hole, S.tier); hideSheet(); },
   // as if nobody had touched the phone for the whole wait, bar five seconds
   saverSoon(){
     hideSheet(); SAVER_AUTO = true;
@@ -14744,9 +14813,11 @@ function step(dt, D){
   S.elapsed += dt;
   autoCast(D, dt);
 
+  // the burn left (S.burn is what remains of it), spent evenly over the time left
   if(S.burnT > 0){
-    const d = Math.min(dt, S.burnT);
-    damage(S.burn * d, D, true); S.burnT -= d;
+    const d = Math.min(dt, S.burnT), amt = S.burn * d / S.burnT;
+    S.burn -= amt; S.burnT -= d;
+    damage(amt, D, true);
   }
 
   S.swingT += D.spd * dt;

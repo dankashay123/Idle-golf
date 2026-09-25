@@ -89,10 +89,14 @@ module.exports = {
 
         window.step = window.__step;
         QUIET = false;
+        // in a week that is not this kind's: the week's own tee says more
+        // (see sigweek), and the week follows the calendar
+        SIGWEEK_FORCE = 'island';
         $('toasts').innerHTML = '';
         startHole();
         o.toast = $('toasts').textContent;
       } finally {
+        SIGWEEK_FORCE = null;
         window.step = window.__step || window.step;
         PIER_FORCE = 0;
         Object.keys(S).forEach(k => delete S[k]); Object.assign(S, JSON.parse(SNAP));
@@ -158,7 +162,7 @@ module.exports = {
     if (r.fast || r.stood) f('on the pier he ' + (r.fast ? 'went faster than a walk ' + r.fast + ' frames' : 'stood still ' + r.stood + ' frames'));
     if (r.plank < r.looked) f('under his feet on the pier: a plank ' + r.plank + ' times in ' + r.looked);
     if (r.end < r.land) f('he ended the shot at ' + r.end + ', short of the rock at ' + r.land);
-    if (!/Sea Stack/.test(r.toast)) f('the tee of a sea stack hole said "' + r.toast + '"');
+    if (!/Signature Hole/.test(r.toast) || !/Sea Stack/.test(r.toast)) f('the tee of a sea stack hole said "' + r.toast + '"');
     if (!live.moved) f('a sea stack hole finished by its tee shot never moved on');
     if (live.cam < live.land - 0.1 || !live.over) f('a sea stack hole finished by its tee shot moved on before he walked out (stood at ' + live.cam + ' of ' + live.land + ')');
     return [r.away + ' sea stacks on the Coastal Classic and the Seaside Open and ' + r.home + ' on Harbour Lights\' front nine, one a round',

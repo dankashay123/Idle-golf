@@ -9,21 +9,17 @@ check is for.
 ## 1. Where things stand
 
 - Everything is committed and pushed to `main` (mirrored on the session
-  branch `claude/funny-davinci-7ik9ge`). Nothing is half-built.
-- `node test/run.js` passes all **44 checks** (about 8 minutes).
-- **Last request**: "the canyon bridge is clipping through the hill; when the
-  caddie's perk goes off, arms up and an aura per buff coming down on the
-  golfer like a blessing; a countdown right of the cog, no box, '+20% tempo
-  for Xs', fading out; and go ahead with everything you suggested; no
-  clipping or visual bugs on new holes". All done:
-  - the bridge fix (every signature hole now checked by `sigview`)
-  - the blessing and countdown (§5 "Caddie blessing")
-  - volume sliders, seasons on six regular stops by the real month, the
-    fourth signature hole **Sea Stack**, and signature rows in the Trophy
-    Room's Record (§5 "Volume sliders, calendar seasons, Sea Stack")
-  - The user was sent screenshots but has **not yet seen these on the
-    phone**. I offered the §8 menu, recommending the signature hole of the
-    week; no answer yet.
+  branch `claude/notes-review-dju532`). Nothing is half-built.
+- `node test/run.js` passes all **46 checks** (about 8 minutes).
+- **Last request**: "read the notes and let's continue". Read as: build the
+  item the last menu recommended, the **Signature Hole of the Week** (§5).
+  Also fixed on the way (§5 "Fixed on the way"): the ember ball's burns
+  replacing each other (an ember ball played at half its numbers and stalled
+  players who play; new check `ember`), the first hole of every round being
+  paid at the round before's weather, and the `settings` check's race with
+  the second music track (it failed on untouched code).
+  - The user has **not yet seen** this or the previous session's work
+    (blessing, sliders, autumn on the regular stops, Sea Stack) on the phone.
 - **Waiting on the user** (ask when it fits, one or two at a time):
   - Does the second music track (night and wagers) fit? Does the town theme?
   - Does the 2 min battery saver wait suit?
@@ -127,6 +123,7 @@ Line numbers are approximate and drift. Search for the name instead.
 | Tour tab: Tour Card, The Card, Season, Major of the Week | `renderTour`, `renderSeason`, `renderMajor` |
 | **Seasons**: home courses by the card, six regular stops by the real month | `SEASONS`, `homeSeason`, `courseSeason`, `CAL_SEASONED`, `MONTH_SEASON`, `monthNow`, `seasonLook`, `LOOK_CACHE`, `SEASON_FORCE`, `Scene.look`, `Scene.snow` (drawn in `drawWeather`), the banner in `announceCourse` |
 | **Signature holes** (island, canyon, stones, sea stack) | `sigHole`, `sigKind`, `SIG_NAME`, `B.SIG_HOLE`, `HOME_PIER`, the `*_FORCE` values, `drawBridge`, `drawStones`, `drawPier`, `isleWait` (the hold), `sigScore` (honours and `S.sigRec`), `renderRecord` |
+| **Signature hole of the week** | `SIG_KINDS`, `sigWeekOf`, `sigWeek`, `isSigWeek`, `holePurse`, `B.SIG_WEEK_MULT`, `SIGWEEK_FORCE`; the map's `mapStar` / `MAP_STAR` and `Scene.mapWk`; `DEV.sigWeek`, `DEV.reprice` |
 | Island greens in particular | `isIsland`, `ISLE_FORCE`, `Scene.isle` (`bank`, `land`), `Scene.spot`, `Scene.heli`, `B_FLY`, `paintHeli`, `P_LAKE`, the `moat` in `newHole` and `layHazards` |
 | **Battery saver** | `saverOn`, `saverOff`, `saverDue`, `saverDraw`, `saverStats`, `saverFrame`, `saverClub`, `SAVER`, `S.saver`, `SAVER_AUTO`, `touchedAt`; the loop's switch is in `frame`/`frameBody`; markup `#saver` |
 | Golfer drawn at any size in the equipped look (the course and the saver share it) | `paintGolfer` |
@@ -230,8 +227,84 @@ Line numbers are approximate and drift. Search for the name instead.
    write a new check while a full run is going, or it runs half-built.
 22. **Some checks count rows** (`smoke` counts the Record's): adding a row
    to a sheet means updating that count.
+23. **The signature hole of the week follows the real week**, and it moves
+   money, so a check that plays for money can pass this week and fail the
+   next. After touching the purse, the pacing or anything paid per hole, run
+   the suite with the week pinned to each kind: a temporary patch of
+   `sigWeek` to return `'island'`, `'canyon'`, `'stones'`, `'pier'` in turn.
+   Only `sigweek` itself should fail then (its calendar part expects the
+   week to turn).
+24. **A hole is priced as it is played.** The purse carries the weather's
+   gold multiplier, so `startHole` draws the weather before it reads the
+   golfer (`derive()`); `sigweek` compares the away model's price with the
+   live one and caught it the other way round.
 
 ## 5. What the last features do (for debugging them)
+
+### Signature hole of the week (the menu's recommendation)
+
+- **Which kind**: `sigWeekOf(wk)` = `SIG_KINDS[(wk + floor(wk/4)) % 4]`
+  (`SIG_KINDS` is `SIG_NAME`'s order: island, canyon, stones, pier). Every
+  block of four weeks has all four, never the same two weeks running, and
+  the order slides a step each block so each major of the week (also
+  `wk % 4`) meets each kind in turn; a plain `wk % 4` paired each major with
+  the same kind for ever. `sigWeek()` reads `weekNow()` (so `DAY_FORCE`
+  moves it); `SIGWEEK_FORCE` pins it (dev menu row "Signature hole of the
+  week"). Week 2960 (from Monday 21 Sep 2026) is the island.
+- **The money**: `holePurse(h, tier, gold)` = `purseFor` x `SIG_WEEK_MULT`
+  (2) when `isSigWeek(h)`. Used for the hole (`startHole`'s `S.purse`, so
+  every swing and the finish pay double) and by the away model
+  (`roundRate`). Not in `purseFor` itself: the event's cheque, the nine-hole
+  goals and the Vault's "holes worth" are priced off it and must not move.
+  Measured over every course at five Tour Cards (geometric mean, range),
+  on an event whose course has the week's kind: island +4% (home courses,
+  two a round, +7%), sea stack +4%, stepping stones +9% (5% to 16%), canyon
+  +15% (6% to 19%: the canyon is often the round's closing hole, which pays
+  3.2x). A course without the kind gets nothing extra.
+- **Marked where it is played**: the hole map's 1px frame goes brass and a
+  7x7 sparkle (`mapStar`, gold with a pale centre and a dark edge, ebbing
+  for 0.35s every 1.8s) sits in its top left corner, clear of the green (a
+  signature hole is straight, so the green is always central). The corner's
+  words read e.g. `CANYON CARRY ×2` (a `×` glyph was added to both
+  pixel faces). The tee toasts "Hole of the Week · Canyon Carry · pays
+  2×". The Trophy Room's Today page has a This Week row: "Canyon Carry —
+  Signature Hole of the Week · pays 2×".
+- On its side the map shows as it always has, when the corner's words
+  leave it room (on a hole with a long forecast it gives way); the ×2 in
+  the words shows either way.
+- Check `sigweek`.
+
+### Fixed on the way
+
+- **The ember ball's burn** (check `ember`): each strike that took the
+  ember affinity *replaced* the burn already going (`S.burn = dmg*v/3`), so
+  at a quick tempo most of every burn was lost and a provisional's small
+  burn could wipe out a pure strike's big one. derive() (and so auto-equip,
+  the item sheet and the away model) credited every burn in full: an ember
+  ball played at about half its numbers. Burns add up now: `S.burn` is the
+  burn left to deal, spent evenly over `S.burnT` (3s from the last strike).
+  How it was found: `pacing` failed with the week pinned to the Sea Stack.
+  Over 200 seeds each, a player who plays sat 20 minutes under 40% par or
+  better in 1 (old game, 38%), 2 (no week bonus), 1 (island) and 4 (sea
+  stack, one at 0%) seeds; tracing the worst showed the gear sweep swapping
+  a storm ball for an ember one it rated higher, then doubles for half an
+  hour. Measured at that moment, same holes and numbers: the ember ball at
+  2.14x par, the storm ball it dropped at 1.39x; with burns adding up the
+  ember plays at 1.53x (what is still burning when a hole ends is lost,
+  which is fair for damage over time). After the fix, 200 seeds each:
+  island and canyon weeks no window under 40%, sea stack two (34%, 39%),
+  no bonus one (28%: a storm ball on a verdant course, the affinity dip the
+  `pacing` header already allows for). The sweep script is the `pacing`
+  player with `SIGWEEK_FORCE` set per run; about 25 minutes for 200 seeds.
+- **The weather and the purse**: `startHole` read the golfer (`derive()`,
+  whose gold carries the weather's multiplier, 0.8x to 2.3x) before drawing
+  the new hole's weather, so the first hole of every round was paid at the
+  round before's weather. The away model drew it first, so the two
+  disagreed on four holes an event. The weather is drawn first now.
+- **The `settings` check** waited for three of the four recordings and then
+  required exactly three, so it failed whenever the second music track
+  decoded first (it did on untouched code this session). It waits for all
+  four now.
 
 ### Caddie blessing and the countdown (user asked)
 
@@ -646,6 +719,10 @@ Line numbers are approximate and drift. Search for the name instead.
 
 ## 6. Recent history (newest first, one line each)
 
+- Signature hole of the week (double purse, brass map frame and sparkle,
+  x2 in the corner, a Today row); ember burns add up instead of replacing
+  each other; the first hole of a round paid at its own weather; the
+  `settings` check's music race.
 - Caddie blessing and countdown; volume sliders; six regular stops turn
   with the real month; Sea Stack, the fourth signature hole; Trophy Room
   record rows per signature kind; canyon bridge no longer shows through a
@@ -725,19 +802,22 @@ Line numbers are approximate and drift. Search for the name instead.
 
 ## 8. What to offer next
 
-Everything asked for is done. First ask how the latest look on the phone:
-the blessing and the countdown by the cog, the sliders, autumn on the
-regular stops, and the Sea Stack (Coastal Classic, Seaside Open, Harbour
-Lights' front nine; dev menu "sea stack" forces one).
+The signature hole of the week is done. First ask how it looks on the phone:
+this week (from Monday 21 September) is the Island Green, then Canyon Carry,
+Stepping Stones and Sea Stack. It shows as a brass frame and a sparkle on the
+hole map, "×2" after the name in the corner, a toast at the tee, and a row
+on the Trophy Room's Today page. Last session's work (the blessing and the
+countdown, the sliders, autumn on the regular stops, Sea Stack) is also
+unseen on the phone.
 
-The menu last offered (the user has not picked yet):
-1. **Signature hole of the week** (recommended): one kind pays double for
-   the week and is marked on the map.
-2. **Caddie perk upgrades**: longer or stronger blessings, bought with
-   sovereigns.
-3. **Life on the pier**: sea spray over the deck in a crosswind, and gulls.
-4. **A short chime when a course's season turns.**
+The menu to offer next:
+1. **Caddie perk upgrades** (recommended): longer or stronger blessings,
+   bought with sovereigns.
+2. **Life on the pier**: sea spray over the deck in a crosswind, and gulls.
+3. **A short chime when a course's season turns.**
+4. **A Record row for seasons seen.**
 
 Other ideas: a fifth signature hole (a plateau green was set aside: the
-ground near the camera is eased flat, so a cliff barely shows); a Record row
-for seasons seen.
+ground near the camera is eased flat, so a cliff barely shows). Sea Stack
+weeks are lean (three courses have one); if the user minds, the week's kind
+could also take one hole a round on courses without it.
