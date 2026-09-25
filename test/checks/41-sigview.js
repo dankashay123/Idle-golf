@@ -10,7 +10,9 @@
  * canyon's hawk and the river's fish (drawn with their holes), and the
  * island's ducks, whose holes are played as well; and the railway crossing,
  * its line, posts and a train on it in every view, every kind in turn; and
- * the weather on them (snow settled on them, a storm's spray) in turn.
+ * the weather on them (snow settled on them, a storm's spray) in turn, and
+ * the night (the pier's lanterns, the bridge's lights, the island's lamps,
+ * the fireflies by the river).
  *
  * Every course with a canyon, stones or a sea stack is played (the home courses and the
  * others, rolling ground included): two holes of each kind, and on each the
@@ -57,6 +59,8 @@ module.exports = {
               // and the weather on them in turn: snow settled on them, a storm
               // throwing spray over the pier
               Scene.snow = o.frames % 3 === 0; Scene.rain = o.frames % 3 === 1; if (Scene.rain) Scene.wind = 1.2;
+              // and at night in turn, its lamps, lights and fireflies
+              Scene.night = o.frames % 4 === 2;
               Scene.camD = cam; Scene.walkTo = cam; S.yards = S.yardsMax * (1 - Math.min(0.999, cam / LEN));
               Scene.draw(0, D);
               const a = c.getImageData(0, 0, VW, VH).data;

@@ -18,6 +18,8 @@
  *     and the sea round the stack, only ever on the water; none out of the
  *     rain or on ice
  *   - snow settles on the bridge, the stones and the pier
+ *   - at night the pier's lanterns, the bridge's lights, lamps round the
+ *     island green and fireflies by the river
  *   - a storm (rain and wind) throws more spray over the pier than the wind
  *     alone; the bridge sways more in a strong wind
  */
@@ -182,6 +184,25 @@ module.exports = {
         };
         o.snow = { bridge: snowy('canyon', I2 => I2.bank - 3), stones: snowy('stones', I2 => I2.bank - 4), pier: snowy('pier', I2 => I2.bank + 4) };
 
+        // ---- night: the pier's lanterns, the bridge's lights, the island's
+        // lamps, fireflies by the river; none by day ----
+        // (each drawn alone after a frame of its hole, and only the lights'
+        // own colours counted: the night changes much else in a frame)
+        const LIGHT = ['#FFD36A', '#FFF6D0', '#E8B84A', '#E8FF8A', '#9ACB3A', '#FF8A5A', '#9FE0FF', '#B8FF8A'];
+        const nightly = (dev, cam) => {
+          DEV[dev](); hideSheet(); chaos('Fair');
+          const at = cam(Scene.isle), one = { pier: 'drawPier', canyon: 'drawBridge', isle: 'drawDucks', stones: 'drawStones' }[dev];
+          const lit = () => { c.clearRect(0, 0, VW, VH); Scene[one](); const d = px(); let n = 0;
+            for (let i = 0; i < d.length; i += 4) { if (!d[i + 3]) continue;
+              const hx = '#' + [d[i], d[i + 1], d[i + 2]].map(v => v.toString(16).padStart(2, '0')).join('').toUpperCase(); if (LIGHT.includes(hx)) n++; }
+            return n; };
+          let n = 0, day = 0;
+          for (let k = 0; k < 4; k++) { Scene.t = 70 + k * 0.6; frame(at, null);
+            Scene.night = true; n += lit(); Scene.night = false; day += lit(); }
+          return { n, day };
+        };
+        o.lights = { pier: nightly('pier', I2 => I2.bank + 2), bridge: nightly('canyon', I2 => I2.bank + 1.5), island: nightly('isle', I2 => 28), stones: nightly('stones', I2 => I2.bank - 4) };
+
         // ---- a storm over the pier; the bridge in the wind ----
         {
           DEV.pier(); hideSheet(); chaos('Fair');
@@ -191,6 +212,8 @@ module.exports = {
               Scene.drawSpray(posts, 0.55, 0.12, Scene.camD - CAM_BACK + 0.7);
               const d = px(); for (let i = 3; i < d.length; i += 4) if (d[i]) n++; }
             Scene.rain = false; return n; };
+          // (a frame of this hole first: the spray keeps to its ground line)
+          frame(Scene.isle.bank + 2, null);
           Scene.camD = Scene.isle.bank + 2;
           o.spray = { wind: spray(false), storm: spray(true), mph: Math.round(Scene.windMph()) };
           DEV.canyon(); hideSheet(); chaos('Fair');
@@ -237,13 +260,14 @@ module.exports = {
       if (!R.rain || !(R.n >= 300) || R.off) f('rain rings on the ' + k + ': ' + J(R) + ' (on the water only)'); }
     if (r.dryRings || r.iceRings) f('rain rings out of the rain ' + r.dryRings + ', or on ice ' + r.iceRings);
     for (const k in r.snow) if (!(r.snow[k] >= 30)) f('snow on the ' + k + ': ' + r.snow[k] + ' pixels');
-    if (!(r.spray.storm >= r.spray.wind * 1.4)) f('a storm over the pier: ' + J(r.spray) + ' (more spray than the wind alone)');
+    for (const k in r.lights) if (!(r.lights[k].n >= 20) || r.lights[k].day) f('night on the ' + k + ': ' + J(r.lights[k]) + ' pixels of light at night and by day (lanterns, lights, lamps or fireflies, only at night)');
+    if (!(r.spray.wind >= 300 && r.spray.storm >= r.spray.wind * 1.4)) f('a storm over the pier: ' + J(r.spray) + ' (more spray than the wind alone)');
     if (!(r.sway.gale >= r.sway.calm * 1.3)) f('the bridge in the wind: ' + J(r.sway) + ' (it sways more)');
     return ['trains by day ' + J(day) + ', at night ' + J(night) + '; the goods ' + K.goods.v + ' fast and ' + K.goods.len + ' long, the express ' + K.express.v,
       'each drawn (' + J(r.drawn) + '), each unlike the others (the nearest ' + Math.min(...r.unlike.map(([, n]) => n)) + ' pixels apart); the sleeper\'s lamp ' + r.lamp + 'px, snow on the roofs ' + r.trainSnow + 'px',
       'he waves (' + r.wave.arm + 'px, his arm up over his head), his caddie once, the driver from his cab near the crossing; none far off or away from the line',
       'the express\'s horn, the goods\' lower whistle, a toot passing him, no toot when he is elsewhere',
       'rain rings on the water: ' + Object.entries(r.rain).map(([k, v]) => k + ' ' + v.n).join(', ') + ', none off it, none dry or on ice',
-      'snow on the bridge ' + r.snow.bridge + ', stones ' + r.snow.stones + ', pier ' + r.snow.pier + 'px; storm spray ' + r.spray.storm + ' against ' + r.spray.wind + ' at ' + r.spray.mph + ' mph; the bridge swaying ' + r.sway.gale + ' against ' + r.sway.calm];
+      'at night the pier\'s lanterns, the bridge\'s lights, the island\'s lamps and fireflies (' + Object.entries(r.lights).map(([k, v]) => k + ' ' + v.n).join(', ') + 'px, none by day); snow on the bridge ' + r.snow.bridge + ', stones ' + r.snow.stones + ', pier ' + r.snow.pier + 'px; storm spray ' + r.spray.storm + ' against ' + r.spray.wind + ' at ' + r.spray.mph + ' mph; the bridge swaying ' + r.sway.gale + ' against ' + r.sway.calm];
   }
 };

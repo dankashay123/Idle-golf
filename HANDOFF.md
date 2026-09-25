@@ -11,17 +11,19 @@ check is for.
 - Everything is committed and pushed to `main` (mirrored on the session
   branch `claude/loving-archimedes-ct2rpb`). Nothing is half-built.
 - `node test/run.js` passes all **56 checks** (about nine minutes).
-- **Last request**: "let's do option 1 [the Divine, ultimate too], but
-  redesign it so the wings aren't so solid. also please make sure that the
-  wings follow the profile of the golfer, so when he is hitting a shot,
-  they are still on his back but the view is a sideways profile. when he
-  is walking, make it so you can see the wings from the back. Do this to
-  any skin that could have different views. then do 2 please" (the
-  flourishes for the other effect skins). The Divine had no wings: read as
-  giving it feathered ones, and the profile rule to the Demonic's bat wings
-  too (the only other winged skin). Done: §5 "The Divine, made the ultimate
-  skin; wings as he is seen" and "A flourish for the other effect skins".
-- **The request before**: the canyon bridge cut to slats (fixed) and the
+- **Last request**: "Let's make the effects actually only occur on Aces
+  and albatrosses, but only last half a second. make the effects not go
+  all the way to the top of the screen, too. Make it so they just quickly
+  surround the golfer for half a second. When I am getting aces or
+  albatrosses on every hole at lower levels and high gear, the effect
+  basically never goes away due to quick pace. have the effect come
+  outwards from the outline of the golfer kind of like an explosion. Then
+  do option 1 and 4" (night on the signature holes; the caddies' wings in
+  profile). Done: §5 "The moments, cut back", "Night on the signature
+  holes", "The caddies' wings".
+- **The request before**: the Divine made the ultimate skin, wings side on
+  and from behind, and a flourish for the other effect skins.
+- **Before that**: the canyon bridge cut to slats (fixed) and the
   Signature Week honour.
 - **Before that**: four trains on the railway and weather on the
   signature holes (§5 "Life on the railway", "Weather on the signature
@@ -360,6 +362,44 @@ Line numbers are approximate and drift. Search for the name instead.
    nothing. Assert the order, and count a name after the edit.
 
 ## 5. What the last features do (for debugging them)
+
+### The moments, cut back (user asked)
+
+- `legendGo` fires only on an albatross or an ace (`d <= -3`); `big` is an
+  ace. `LEGEND_DUR` and `FLOURISH_DUR` are 0.5s. The column of hellfire,
+  the pillar of light and the heavens are gone, and the Divine's beam no
+  longer brightens for it; the skulls, the shards' ring and the waves on
+  the ground reach only a little past him.
+- Every moment is now a burst from his outline (`outlineBurst(c, g, F, n,
+  reach, piece)`: points round the edge of him from `outlineOf`, thrown out
+  away from his middle, fast then slowing, at most `reach` of his widths;
+  `burstStreak` draws a head and a tail). The legends: hellfire streaks;
+  shards and magenta streaks; light and feathers. The flourishes:
+  `FLOURISH_PIECE[k]` is what each throws (flames, ice and snow, sparks,
+  void fragments, glitch pixels, coins, disco squares, little ghosts,
+  bananas, flashes, confetti); `FLOURISH[k]` wraps it (front layer only).
+- Sounds shortened to under a second (`choir`, `hellfire`).
+
+### Night on the signature holes (user asked, from the menu)
+
+- `Scene.nightLamp(c, x, y, k, r, clip, seed)`: a flame and a dithered
+  warm glow, flickering, all solid pixels. The pier: a lantern on every
+  other post, its light rippling on the water below (cut nearer than the
+  post: it lies this side of it). The bridge: bulbs strung along both
+  ropes in four colours, twinkling in turn (cut with `clipB`). The island:
+  ten lamps on posts round the green (`drawIsleLights`, from `drawDucks`).
+  The stones: fireflies over the river and the far bank (`drawFireflies`,
+  from `drawStones`; over the near bank they fell in front of the line
+  `sigview` holds them to). All only while `Scene.night`.
+
+### The caddies' wings (user asked, from the menu)
+
+- The caddie is always drawn side on (one sprite, facing right, his bag on
+  his back), so the Demonic caddie's bat wings and the Divine caddie's new
+  small feathered ones (0.8 of his height) are always side on, on his back.
+  (Walking away the golfer turns but the caddie does not.) The standing
+  rule "the caddie has no wings" is the default fairy's; the dear caddies
+  have always had their own.
 
 ### The Divine, made the ultimate skin; wings as he is seen (user asked)
 
@@ -1414,6 +1454,10 @@ him (about 49px tall on a 320 phone, 71px on its side).
 
 ## 6. Recent history (newest first, one line each)
 
+- The moments only on an albatross or an ace, half a second, bursting out
+  of him; night on the signature holes (lanterns, string lights, lamps,
+  fireflies); the caddies' wings side on.
+
 - The Divine made the ultimate skin (feathered wings, a sun, a second
   halo, the heavens opening); wings side on as he swings and spread from
   behind as he walks, the Demonic's too; a flourish on an eagle for the
@@ -1549,18 +1593,19 @@ him (about 49px tall on a 320 phone, 71px on its side).
 
 ## 8. What to offer next
 
-Everything asked for is done. First ask how the Divine's wings look to
-them now, side on and from behind, and whether any flourish is too much.
+Everything asked for is done. First ask whether the half-second bursts
+feel right on a fast bag, and whether the Divine caddie's wings should
+stay (the default caddie is wingless at their request).
 
 The menu to offer next:
-1. **Night on the signature holes** (recommended): lanterns along the pier,
-   the bridge's ropes hung with lights, the island's green lit, fireflies
-   by the river.
-2. **A station on the railway**: now and then a train stops at a little
-   halt by the crossing, a guard waves a flag, passengers get off to watch.
-3. **The Signature Week on the Tour tab**: the five kinds shown ticked off
+1. **A station on the railway** (recommended): now and then a train stops
+   at a little halt by the crossing, a guard waves a flag, passengers get
+   off to watch.
+2. **The Signature Week on the Tour tab**: the five kinds shown ticked off
    beside the signature hole of the week, so the chase is in sight.
-4. **Caddies with wings in profile**: the Divine and Demonic caddies turn
-   side on and from behind with their golfer.
-5. **A flourish for the club effects**: the Divine Driver, the Demonic's,
+3. **A flourish for the club effects**: the Divine Driver, the Demonic's,
    the Ascended's, each doing something on a pure strike.
+4. **Night on the ordinary holes**: lamps by the tee, a lit clubhouse far
+   off, the flag glowing, fireflies in the rough.
+5. **A photo mode**: a button that freezes the course and hides the words,
+   to take a clean screenshot of a skin.
