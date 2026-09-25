@@ -1093,7 +1093,14 @@ const B = {
   // outruns the cost of the next card forever and the ladder never walls.
   // Nine tenths of a second is also the shortest a hole can be and still be
   // worth watching, and it is what makes an Ace the genuine ceiling it should be.
-  WALK_MIN: 0.9, ISLE_HOLD: 8,
+  // ISLE_HOLD: the longest a watched hole waits for him once its ball is
+  // down (see Scene.holeWait). It was 8s, set for the island's flight; on a
+  // railway hole a ball down on the tee, the walk to the line, the longest
+  // wait for a train (one just setting off as he gets there), the crossing,
+  // the walk up and the putt come to just over 8s, and the hole moved on
+  // before he was done (the user saw it). The wait is paid for, so a long
+  // one costs nothing; this is only a stop for a picture that has stuck.
+  WALK_MIN: 0.9, ISLE_HOLD: 20,
 
   /* ---- the swing ---- */
   BASE_POWER: 6, BASE_SPEED: 0.85,
@@ -11961,9 +11968,13 @@ Object.assign(Scene, {
   },
 
   // One back-to-front pass over everything standing beside the hole.
-  drawProps(){
+  // (edge, side: only those beyond edge, side 1, or this side of it, side
+  // -1; the railway goes down between the two, see the frame)
+  drawProps(edge, side){
     const c = this.b, T = this.theme || THEMES.day, night = this.night;
     for(const p of (this.props || [])){
+      if(side > 0 && p.d < edge) continue;
+      if(side < 0 && p.d >= edge) continue;
       // A rope post is culled on the far end of the span it carries, not on
       // itself: the post the span starts from goes behind the camera while the
       // rope is still crossing the bottom of the frame.
@@ -13259,7 +13270,13 @@ Object.assign(Scene, {
       this.drawRidge();
       this.drawGround();
       this.drawFarFade();
-      this.drawProps();
+      // The railway runs right across among the trees and the gallery: those
+      // beyond it first, then the line and its train, then those this side of
+      // it (drawn over them all, it cut across the trees in front; the user
+      // saw it). Under the haze, like the ground it lies on.
+      const RI = this.isle && this.isle.rail ? this.isle : null;
+      if(RI){ this.drawProps(RI.bank, 1); this.drawRail(); this.drawProps(RI.bank, -1); }
+      else this.drawProps();
       this.buildHaze();
       if(this.haze) c.drawImage(this.haze, 0, 0);
       this.drawTee();
@@ -13267,7 +13284,6 @@ Object.assign(Scene, {
       this.drawStones();
       this.drawPier();
       this.drawDucks();
-      this.drawRail();
       this.drawFlagstick();
       this.drawGolfer(D);
       this.drawBalls(dt);

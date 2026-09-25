@@ -14,8 +14,18 @@
  *   - the wait, played out in frames: a train sets off as he reaches the
  *     line; he does not step onto it while the train is near and crosses once
  *     it has passed; he is never on the crossing while the train is on it
+ *   - a ball down early, played in the loop and watched: the hole waits for
+ *     him to walk to the line, the train to go by, the crossing, the walk up
+ *     and the putt, and moves on only then, in under half the stop on a
+ *     hole's wait (the user saw a hole move on as the train came: the stop
+ *     was 8s, and the longest wait for a train and a putt comes to 8.05s)
  *   - drawn: the rails and posts from the tee; the train, when one runs, with
  *     its smoke, and the lamps lit red only while it is near
+ *   - drawn in its place, on all four courses with a railway: the trees and
+ *     the gallery this side of the line are drawn over it and its train
+ *     (the railway went over everything, and cut across the trees in front
+ *     of it; the user saw it), and it over those beyond it; by pixels, the
+ *     frame with the railway against the frame without
  *   - trains come on their own now and then with the course on screen, none
  *     in a wager, and none of it calls Math.random
  *   - sounds: a whistle as each train sets off, its chuff while it runs and
@@ -100,19 +110,105 @@ module.exports = {
         o.waited = log.filter(x => x.hold && x.cam <= I.bank + 0.02).length / 30;
         o.lightsOff = log.filter(x => x.lights && !x.train).length;
 
+        // ---- a ball down early: the hole waits for the train ----
+        // (the user saw a hole move on as the train came, its yardage long
+        // beaten: the wait for him to reach the green had run out). Played in
+        // the loop, watched: the ball down a second in, he walks to the line,
+        // a train goes by, he crosses and putts out, and only then does the
+        // hole move on. Once with the train that meets him, and once with the
+        // longest wait there is, a train on its own just setting off as he
+        // gets there.
+        const early = worst => {
+          S.hole = h; startHole(); Scene.announce = null;
+          for (let i = 0; i < 10; i++) Scene.draw(1 / 60, derive());
+          // (carded a par, so he putts: an ace goes straight in off the tee)
+          let q = 0.3; while (scoreFor(q).d !== 0) q += 0.01;
+          S.elapsed = 0.95; S.parTime = S.elapsed / (q + 0.05); S.yards = 1e-9; S.swingT = 0.999; S.doneT = null;
+          const fh = window.finishHole; let end = null, downCam = null, met = false, at = 0, forced = false;
+          window.finishHole = function () {
+            if (!end) end = { wait: +(S.elapsed - S.doneT).toFixed(2), short: +(LEN - Scene.camD).toFixed(2), cup: !!Scene.cupT,
+                              putt: !!(Scene.putt && Scene.putt.hit), across: Scene.camD > I.land };
+            return fh.apply(this, arguments); };
+          try {
+            for (let i = 0; i < 60 * 40 && !end; i++) {
+              const Dn = derive(); step(1 / 60, Dn);
+              if (end) break;
+              Scene.draw(1 / 60, Dn);
+              if (S.doneT != null && downCam === null) downCam = +Scene.camD.toFixed(2);
+              if (worst && !forced && !Scene.train && Scene.camD >= I.bank - 0.3) { Scene.train = { t0: Scene.t, dir: 1 }; Scene.trainMet = 1; forced = true; }
+              const there = Scene.camD >= I.bank - 0.35 && Scene.camD <= I.bank + 0.02;
+              if (there && Scene.train) met = true;
+              if (there && Scene.railHold()) at += 1 / 60;
+            }
+          } finally { window.finishHole = fh; }
+          return Object.assign({ downCam, met, at: +at.toFixed(2) }, end || { ended: false });
+        };
+        QUIET = false; S.autoClimb = 0; S.saver = 0;
+        try { o.early = early(false); o.earlyWorst = early(true); } finally { QUIET = true; }
+        o.hold = B.ISLE_HOLD;
+        S.hole = h; startHole(); Scene.announce = null;
+
         // ---- drawn ----
+        // (counted by their own colours, so with the haze, which lifts the
+        // far ground and the railway on it alike toward the sky, left off)
         const look = (cam, age, dir) => { Scene.camD = cam; Scene.walkTo = cam; Scene.swingT = 0; Scene.trainMet = 1; Scene.trainNext = 1e9;
           Scene.train = age === null ? null : { t0: Scene.t - age, dir }; Scene.draw(0, D); };
-        const TRAIN = ['#8A3228', '#2E5A3A', '#6A2420'], RAILS = ['#C8D0D8'], POSTS = ['#F2F2EA'], LIT = ['#FF3A2A'];
-        look(0, null); o.tee = { rails: count(RAILS), posts: count(POSTS), train: count(TRAIN), lit: count(LIT) };
-        look(0, 3.8, 1); o.teeTrain = { train: count(TRAIN), lit: count(LIT) };
-        // its smoke, see-through, counted drawn on its own
-        c.clearRect(0, 0, VW, VH); Scene.drawTrain(W.d, Scene.camD - CAM_BACK + 0.7);
-        { const d = c.getImageData(0, 0, VW, VH).data; let n = 0;
-          for (let i = 0; i < d.length; i += 4) if (d[i + 3] && d[i] >= 225 && d[i + 1] >= 225 && d[i + 2] >= 220) n++;
-          o.teeTrain.smoke = n; }
-        look(I.bank - 0.1, 3.8, -1); o.nearTrain = { train: count(TRAIN), lit: count(LIT) };
-        look(I.bank - 0.1, 30, 1); o.gone = { train: count(TRAIN), lit: count(LIT) };
+        const bh = Scene.buildHaze; Scene.buildHaze = function () { this.haze = null; };
+        try {
+          const TRAIN = ['#8A3228', '#2E5A3A', '#6A2420'], RAILS = ['#C8D0D8'], POSTS = ['#F2F2EA'], LIT = ['#FF3A2A'];
+          look(0, null); o.tee = { rails: count(RAILS), posts: count(POSTS), train: count(TRAIN), lit: count(LIT) };
+          // (crossing the fairway: out at the side it is behind the trees in front)
+          look(0, 3.4, 1); o.teeTrain = { train: count(TRAIN), lit: count(LIT) };
+          // its smoke, see-through, counted drawn on its own
+          c.clearRect(0, 0, VW, VH); Scene.drawTrain(W.d, Scene.camD - CAM_BACK + 0.7);
+          { const d = c.getImageData(0, 0, VW, VH).data; let n = 0;
+            for (let i = 0; i < d.length; i += 4) if (d[i + 3] && d[i] >= 225 && d[i + 1] >= 225 && d[i + 2] >= 220) n++;
+            o.teeTrain.smoke = n; }
+          look(I.bank - 0.1, 3.8, -1); o.nearTrain = { train: count(TRAIN), lit: count(LIT) };
+          look(I.bank - 0.1, 30, 1); o.gone = { train: count(TRAIN), lit: count(LIT) };
+        } finally { Scene.buildHaze = bh; Scene.hazeKey = null; }
+
+        // ---- in its place among the trees and the gallery ----
+        // Whatever stands this side of the line is drawn over it: where a tree
+        // or a spectator nearer than the line stands in front of the rails,
+        // the posts or the train, it is the tree that shows (the railway was
+        // drawn over everything and cut across the trees in front of it; the
+        // user saw it). And the line and its train are seen over what stands
+        // beyond it. Compared pixel by pixel, the frame with the railway and
+        // without it, where each lot stands on its own, from the tee to the
+        // line, with a train and without.
+        // (on each course with a railway: the home course and the three away;
+        // the words, the map and the rain printed over the picture left off)
+        {
+          const px = () => c.getImageData(0, 0, VW, VH).data;
+          const alone = fn => { c.clearRect(0, 0, VW, VH); fn(); return px(); };
+          const dr = Scene.drawRail, over = { drawHud: Scene.drawHud, drawMap: Scene.drawMap, drawWeather: Scene.drawWeather };
+          o.depth = { nearOver: 0, through: 0, farOver: 0, hidden: 0, views: 0, courses: [] };
+          try {
+            for (const k in over) Scene[k] = () => {};
+            for (const id of ['home', 'ironbark', 'moorland', 'oldlinks']) {
+              DEV.course(B.COURSE.findIndex(cs => id === 'home' ? cs.slot === 'home' : cs.id === id)); hideSheet();
+              let hr = awayFirstHole(S.hole); while (!isRail(hr)) hr++;
+              S.hole = hr; startHole(); Scene.announce = null;
+              const IR = Scene.isle, Dr = derive(), D1 = o.depth, n0 = D1.nearOver;
+              const view = (cam, age, dir) => { Scene.camD = cam; Scene.walkTo = cam; Scene.swingT = 0; Scene.trainMet = 1; Scene.trainNext = 1e9;
+                Scene.train = age === null ? null : { t0: Scene.t - age, dir }; Scene.draw(0, Dr); };
+              for (const cam of [0, 4, 8, 12, 16, IR.bank - 6, IR.bank - 3, IR.bank - 1]) for (const age of [null, 3.2, 3.8]) {
+                const dir = cam % 8 ? 1 : -1;
+                view(cam, age, dir); const F1 = px();
+                const near = alone(() => Scene.drawProps(IR.bank, -1)), far = alone(() => Scene.drawProps(IR.bank, 1)), rl = alone(() => dr.call(Scene));
+                Scene.drawRail = () => {}; view(cam, age, dir); const F0 = px(); Scene.drawRail = dr;
+                D1.views++;
+                for (let i = 0; i < F1.length; i += 4) {
+                  const differs = F1[i] !== F0[i] || F1[i + 1] !== F0[i + 1] || F1[i + 2] !== F0[i + 2];
+                  if (near[i + 3] === 255) { if (rl[i + 3] === 255) D1.nearOver++; if (differs) D1.through++; }
+                  else if (far[i + 3] === 255 && rl[i + 3] === 255) { D1.farOver++; if (!differs) D1.hidden++; }
+                }
+              }
+              D1.courses.push(id + ' ' + (D1.nearOver - n0));
+            }
+          } finally { Scene.drawRail = dr; Object.assign(Scene, over); }
+        }
 
         // ---- trains on their own; none in a wager ----
         Scene.train = null; Scene.trainMet = 1; Scene.trainNext = Scene.t + 5;
@@ -184,9 +280,24 @@ module.exports = {
     if (r.onTogether) f('he and the train were on the crossing together in ' + r.onTogether + ' frames');
     if (r.acrossAt === null || !(r.waited >= 2)) f('the wait: ' + r.waited + 's at the line, across at ' + r.acrossAt + 's');
     if (r.lightsOff) f('the lamps were lit with no train, in ' + r.lightsOff + ' frames');
+    // the hole waits for him, the train and the putt, well inside the stop
+    for (const [k, E] of [['with the train that meets him', r.early], ['with the longest wait', r.earlyWorst]]) {
+      if (E.ended === false) f('a ball down early ' + k + ': the hole never ended in forty seconds');
+      if (!(E.downCam < 1) || !E.met || !(E.at >= (E === r.earlyWorst ? 4.2 : 2.5)))
+        f('a ball down early ' + k + ': not set up as meant (down with him at ' + E.downCam + ', a train at the line ' + E.met + ', held there ' + E.at + 's)');
+      if (!E.across || !(E.short <= 2.7) || !E.putt || !E.cup)
+        f('a ball down early ' + k + ': the hole moved on with him ' + E.short + ' short of the pin (across the line ' + E.across + ', putted ' + E.putt + ', in the cup ' + E.cup + ')');
+      if (!(E.wait <= r.hold / 2)) f('a ball down early ' + k + ': the hole waited ' + E.wait + 's, over half the ' + r.hold + 's stop');
+    }
+    const Dp = r.depth;
+    if (!(Dp.nearOver >= 200) || !(Dp.farOver >= 100)) f('the railway never met a tree in front of it or beyond it on screen: ' + J(Dp));
+    if (Dp.through) f('the railway was drawn over the trees and the gallery in front of it, ' + Dp.through + ' pixels of them in ' + Dp.views + ' views');
+    if (Dp.hidden) f('the railway was hidden by what stands beyond it, ' + Dp.hidden + ' pixels of ' + Dp.farOver);
     if (r.frameRnd) f('drawing the railway called Math.random ' + r.frameRnd + ' times');
     if (!(r.tee.rails >= 20 && r.tee.posts >= 4) || r.tee.train || r.tee.lit) f('from the tee with no train: ' + J(r.tee));
-    if (!(r.teeTrain.train >= 20 && r.teeTrain.lit >= 1 && r.teeTrain.smoke >= 1)) f('from the tee with a train crossing: ' + J(r.teeTrain));
+    // (from the tee the whole train is some twenty pixels, a few of them
+    // behind the gallery in front of the line)
+    if (!(r.teeTrain.train >= 10 && r.teeTrain.lit >= 1 && r.teeTrain.smoke >= 1)) f('from the tee with a train crossing: ' + J(r.teeTrain));
     if (!(r.nearTrain.train >= 200 && r.nearTrain.lit >= 1)) f('at the line with a train crossing: ' + J(r.nearTrain));
     if (r.gone.train || r.gone.lit) f('a train long gone still drawn: ' + J(r.gone));
     if (!(r.own >= 3 && r.own <= 7)) f(r.own + ' trains came on their own in two minutes (want one every twenty to thirty five seconds)');
@@ -201,6 +312,8 @@ module.exports = {
     if (!r.recRow) f('the Record has no Railway Crossing row');
     return ['four a home event (hole nine, the last par four of the front nine) and four an event on ' + Object.keys(r.awayN).join(', ') + '; no ball comes to rest on the line',
       'a train sets off as he reaches the line; he waited ' + r.waited.toFixed(1) + 's and was across ' + r.acrossAt + 's in, never on the crossing with it; lamps only with a train',
+      'a ball down early: the hole moved on ' + r.early.wait + 's later (' + r.earlyWorst.wait + 's with the longest wait for a train), him up and putted, the stop at ' + r.hold + 's',
+      'drawn among the trees on four courses: ' + Dp.nearOver + ' pixels of trees and gallery in front of the line, none crossed by it; ' + Dp.farOver + ' beyond it, the line over all of them',
       r.own + ' trains on their own in two minutes, none in a wager; whistle ' + d.whistle + ', chuff ' + d.chuff + ', bell ' + d.ding + ' dB (coin ' + d.coin + ', plank ' + d.plank + ', bird ' + d.chirp + ')'];
   }
 };
