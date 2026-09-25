@@ -10,9 +10,14 @@ check is for.
 
 - Everything is committed and pushed to `main` (mirrored on the session
   branch `claude/notes-review-dju532`). Nothing is half-built.
-- `node test/run.js` passes all **46 checks** (about 8 minutes).
-- **Last request**: "read the notes and let's continue". Read as: build the
-  item the last menu recommended, the **Signature Hole of the Week** (§5).
+- `node test/run.js` passes all **47 checks** (about 8 minutes).
+- **Last request**: "get rid of the caddy wings, just have them float up
+  and down a tiny bit; more animation too, like randomly will spin, dance,
+  stuff like that for fun". Done (§5 "The caddie: no wings, a float, and
+  turns"); sent a zoomed GIF of each turn.
+- **The request before**: "read the notes and let's continue". Read as:
+  build the item the last menu recommended, the **Signature Hole of the
+  Week** (§5).
   Also fixed on the way (§5 "Fixed on the way"): the ember ball's burns
   replacing each other (an ember ball played at half its numbers and stalled
   players who play; new check `ember`), the first hole of every round being
@@ -40,6 +45,8 @@ check is for.
 - **No applause**: removed at their request (it never stopped when holes
   end every few seconds). Don't bring a crowd back without asking.
 - The island crossing (flying on the spinning club) was **their idea**.
+- **The caddie has no wings**: he floats, a little up and down, and now and
+  then takes a turn (spin, dance, flip, wave, loop). Their request.
 - The word is **scrap**, not salvage; old legacy finds are **heirlooms**.
 
 ### Sound and music
@@ -116,6 +123,7 @@ Line numbers are approximate and drift. Search for the name instead.
 | Palettes built from a course | `buildTheme`, `courseTrees` |
 | **Landmarks** | `drawLandmark` (called from `Scene.buildRidge`) |
 | Renderer | `const Scene = {`. Key members: `newHole`, `newDepthsHole`, `proj`, `curveAt`/`bendOff` (doglegs), `layHazards`, `layProps`, `buildSky`, `buildRidge`, `buildWood`, `drawGround`, `drawGolfer`, `fairyBox`/`drawCaddie`, `swing`/`walking2ball`/`launch`, `drawBalls`, `drawLyingBall`, `drawMap` |
+| The caddie's turns (spin, dance, flip, wave, loop) | `FAIRY_MOVES`, `fairyPose`, `Scene.tickMove`, `fairyMoveNow`, `fairyMoveGo`, the offscreen `_fairyCv` in `drawCaddie`; `DEV.move` |
 | Caddie perks (nine; `now:1` means instant, e.g. Ready Golf); each has `col` and a short line `s` | `tickCaddie`, `cperkPick`, `renderCadPerks`; the blessing `Scene.drawBless`, the countdown `buffTip` (`#buffTip` in `#setRow`) |
 | Clipping to the ground in front | `Scene.clipAt(d)`, `fillClip`, `pxLineClip` |
 | Volume | `Sfx.out`, `Sfx.master` (effects), `Sfx.musBus`, `Sfx.setVol`, `setVol`, `S.volFx`, `S.volMus` |
@@ -240,6 +248,31 @@ Line numbers are approximate and drift. Search for the name instead.
    live one and caught it the other way round.
 
 ## 5. What the last features do (for debugging them)
+
+### The caddie: no wings, a float, and turns (user asked)
+
+- The wings are gone (and the sideways drift with them). He floats up and
+  down, `gh * 0.035` either way (about 2px on a phone), as before. The
+  fairy dust still falls off him.
+- **Turns**: `FAIRY_MOVES` (spin 1.0s, dance 2.6s, flip 0.9s, wave 1.8s,
+  loop 1.4s). `Scene.tickMove` (called with `tickQuip` from the frame)
+  starts one 8-18s after the course is first drawn, then 12-28s after each
+  ends, never the same twice running; not while he has his say, while a
+  perk goes off (a perk going off also ends one: its arms up come first) or
+  in a wager. It draws its random numbers from its own `seeded` stream:
+  `Math.random` is the round's, and the balance checks seed it.
+- `fairyPose(kind, q, T, w, h)` gives the move as offsets and limbs: `dx`
+  (never toward the golfer), `dy`, `sx` (a spin squashes him, and mirrors
+  him below zero), `rot` (a flip rolls him), `armL`/`armR` (0..1 up; the
+  cast's arms share the code), `waveL`, `legs` (a stride phase for
+  `drawLegs`). Spin and flip draw him whole into `_fairyCv` and lay it down
+  with nearest-neighbour scaling; a roll that takes more room takes it on
+  the far side. `Scene._fairy` is the room he takes (standing box and turn
+  together), which the `caddie` check holds clear of the golfer.
+- A reaction's hop or droop sits a turn out (the word still shows).
+- Dev menu, Fairy caddie row: a button per turn. Check `fairy` (pixel for
+  pixel: none of his on the golfer's through every turn and swing stage;
+  no wings; the float; the timing; no `Math.random`).
 
 ### Signature hole of the week (the menu's recommendation)
 
@@ -719,6 +752,8 @@ Line numbers are approximate and drift. Search for the name instead.
 
 ## 6. Recent history (newest first, one line each)
 
+- The caddie's wings gone; he floats, and now and then spins, dances,
+  flips, waves or loops.
 - Signature hole of the week (double purse, brass map frame and sparkle,
   x2 in the corner, a Today row); ember burns add up instead of replacing
   each other; the first hole of a round paid at its own weather; the

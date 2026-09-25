@@ -45,6 +45,7 @@ module.exports = {
         o.hits = []; o.poses = 0;
         const keep = SPRITE.caddie;
         const pose = (walking, ph) => {
+          Scene.fairyMove = null;              // his turns have a check of their own (fairy)
           Scene.walkOn = walking; Scene.walkPh = 0.3;
           Scene.swingT = ph > 0 ? Scene.swingDur * (1 - ph) : 0;
           // the golfer alone, painted, then where the fairy goes beside him

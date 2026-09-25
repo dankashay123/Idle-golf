@@ -10001,11 +10001,12 @@ const Scene = {
     drawTextS(c, A.sub, CX, y0 + lh + 2 * TSC, A.gold ? '#FFE9A8' : PX.bone, TSC, 'c');
     c.globalAlpha = 1;
   },
-  // The caddie is a fairy now: a third of the golfer's height, on little
-  // wings, hovering off his left shoulder at the height of his head. He was a
-  // man on the ground, and a man on the ground walked into bunkers, ponds and
-  // the golfer himself. Placed off the golfer's own box -- beyond where the
-  // top of the backswing puts the club -- so he never overlaps him.
+  // The caddie is a fairy now: a third of the golfer's height, floating off
+  // his left shoulder at the height of his head (no wings: the user asked
+  // for him to float, a little up and a little down). He was a man on the
+  // ground, and a man on the ground walked into bunkers, ponds and the
+  // golfer himself. Placed off the golfer's own box -- beyond where the top
+  // of the backswing puts the club -- so he never overlaps him.
   // gx is where the golfer stands at address, whatever pose he is in, so the
   // fairy does not jump when he turns to walk. The club on its way up is the
   // furthest left any of him reaches -- not at the top, but where the shaft
@@ -10020,10 +10021,41 @@ const Scene = {
     }
     const clubTip = gx + gw * 0.66 + this._reach * gh;
     const edge = Math.min(gx, clubTip) - gw * 0.18 - 2;
-    const drift = (1 + Math.sin(this.t * 0.9)) * 0.5 * gw * 0.10;       // only ever further left
-    const x = Math.round(edge - w - drift);
-    const y = Math.round(gy + gh * 0.02 + Math.sin(this.t * 2.2) * gh * 0.035) + this.fairyDy(h);
+    const x = Math.round(edge - w);
+    // the float; a reaction's hop or droop sits out one of his turns
+    const y = Math.round(gy + gh * 0.02 + Math.sin(this.t * 2.2) * gh * 0.035)
+            + (this.fairyMoveNow() ? 0 : this.fairyDy(h));
     return { x, y, w, h };
+  },
+  // His turn, if he is taking one (see FAIRY_MOVES): which, how far through
+  // it (0..1) and the seconds into it. A perk going off ends it: its arms up
+  // come first.
+  fairyMoveNow(){
+    const M = this.fairyMove;
+    if(!M) return null;
+    const T = this.t - M.t0;
+    if(!(T >= 0 && T < M.dur) || this.fairyCast){ this.fairyMove = null; return null; }
+    return { kind: M.kind, q: T / M.dur, T };
+  },
+  // Every twelve to twenty eight seconds of the course on screen he takes a
+  // turn, never the same one twice running: not while he has his say or
+  // casts a perk, and not in a wager. Chosen off a random stream of his own,
+  // so drawing the course never moves the numbers the round is played on.
+  tickMove(dt){
+    const R = this._moveRnd || (this._moveRnd = seeded(20260925));
+    if(this.moveT === undefined) this.moveT = 8 + R() * 10;
+    if(this.fairyMoveNow() || this.fairyNow() || this.fairyCast || S.dgnRun) return;
+    this.moveT -= dt;
+    if(this.moveT > 0) return;
+    this.moveT = 12 + R() * 16;
+    const pool = FAIRY_MOVES.filter(m => m.id !== this._lastMove);
+    this.fairyMoveGo(pool[R() * pool.length | 0].id);
+  },
+  fairyMoveGo(id){
+    const m = FAIRY_MOVES.find(x => x.id === id);
+    if(!m) return;
+    this._lastMove = m.id;
+    this.fairyMove = { kind: m.id, t0: this.t, dur: m.dur };
   },
   // What he is saying, if anything, and how far through it he is (0..1).
   fairyNow(){
@@ -10070,20 +10102,10 @@ const Scene = {
   },
   drawCaddie(c, gx, gy, gw, gh){
     const spr = SPRITE.caddie, CD = caddieNow(), FX = STYLEFX[CD.fx] || null;
-    const { x, y, w, h } = this.fairyBox(gx, gy, gw, gh);
-    this._fairy = { x, y, w, h };
-    // wings, flickering, behind him
-    const say = this.fairyNow();
-    const beat = Math.sin(this.t * (say && say.F.kind === 'sigh' ? 8 : 22)), wy = y + h * 0.30, span = w * (0.55 + 0.25 * beat);
-    c.globalAlpha = 0.55;
-    c.fillStyle = '#DFF4FF';
-    for(let i = 0; i < Math.max(2, Math.round(h * 0.28)); i++){
-      const f = i / Math.max(2, Math.round(h * 0.28)), ww = Math.round(span * (1 - f * 0.7));
-      c.fillRect(Math.round(x + w * 0.35 - ww), Math.round(wy - h * 0.10 + i), ww, 1);
-    }
-    c.globalAlpha = 0.35; c.fillStyle = '#FFFFFF';
-    c.fillRect(Math.round(x + w * 0.35 - span * 0.7), Math.round(wy - h * 0.08), Math.round(span * 0.5), 1);
-    c.globalAlpha = 1;
+    const B0 = this.fairyBox(gx, gy, gw, gh), say = this.fairyNow(), M = this.fairyMoveNow();
+    const P = M ? fairyPose(M.kind, M.q, M.T, B0.w, B0.h) : null;
+    const w = B0.w, h = B0.h;
+    const x = B0.x + (P ? Math.round(P.dx) : 0), y = B0.y + (P ? Math.round(P.dy) : 0);
     // fairy dust drifting down off him
     for(let i = 0; i < 5; i++){
       const life = (this.t * 0.8 + i / 5) % 1;
@@ -10091,26 +10113,59 @@ const Scene = {
             i & 1 ? '#FFF6D8' : '#BFE6FA', (1 - life) * 0.8);
     }
     c.globalAlpha = 1;
-    // his outfit's effect, if it has one, at his size
-    const g = { x, y, w, h, cx: x + w*0.55, cy: y + h*0.53, bot: y + h, t: this.t + 0.7, ph: 0, minor: true,
-                still: !(FX && FX.shearMod), k: 1, spr, shear: () => 0,
-                head: { x: x + w*CAP_CADDIE.x, y: y + h*CAP_CADDIE.y, w: w*CAP_CADDIE.w, hh: h*CAP_CADDIE.h } };
-    if(FX && FX.back) FX.back(c, g);
-    if(FX && FX.alpha) c.globalAlpha = FX.alpha;
-    // legs dangling, a little swing to them
-    drawLegs(c, x + w*0.55, y + h*(32/58), h*(25/58), w, Math.sin(this.t * 1.7) * 0.08,
-             CD.pant, CD.pant2 || CD.pant, CD.shoe || PX.shoe);
-    c.drawImage(spr.cv, x, y, w, h);
-    c.globalAlpha = 1;
-    // Casting: both arms up over his head, for as long as the spark lasts
-    if(this.fairyCast && (this.fairyCast.t || 0) < 1.1){
-      const up = Math.min(1, (this.fairyCast.t || 0) / 0.15), th = Math.max(1, Math.round(h / 22));
-      const sy = y + h * 0.34, ty = sy - h * (0.20 + 0.28 * up);
-      pxLine(c, x + w * 0.30, sy, x + w * (0.30 - 0.14 * up), ty, CD.skin || PX.skin, th);
-      pxLine(c, x + w * 0.78, sy, x + w * (0.78 + 0.14 * up), ty, CD.skin || PX.skin, th);
+    const cast = this.fairyCast && (this.fairyCast.t || 0) < 1.1 ? Math.min(1, (this.fairyCast.t || 0) / 0.15) : 0;
+    // all of him, at bx, by: his outfit's effect, his legs, himself, his arms
+    const body = (g0, bx, by) => {
+      const g = { x: bx, y: by, w, h, cx: bx + w*0.55, cy: by + h*0.53, bot: by + h, t: this.t + 0.7, ph: 0, minor: true,
+                  still: !(FX && FX.shearMod), k: 1, spr, shear: () => 0,
+                  head: { x: bx + w*CAP_CADDIE.x, y: by + h*CAP_CADDIE.y, w: w*CAP_CADDIE.w, hh: h*CAP_CADDIE.h } };
+      if(FX && FX.back) FX.back(g0, g);
+      if(FX && FX.alpha) g0.globalAlpha = FX.alpha;
+      // legs dangling, a little swing to them; stepping when he dances
+      drawLegs(g0, bx + w*0.55, by + h*(32/58), h*(25/58), w, P && P.legs !== null ? P.legs : Math.sin(this.t * 1.7) * 0.08,
+               CD.pant, CD.pant2 || CD.pant, CD.shoe || PX.shoe);
+      g0.drawImage(spr.cv, bx, by, w, h);
+      g0.globalAlpha = 1;
+      // arms up: both while a perk goes off, one or the other as he dances,
+      // the far one waving
+      const th = Math.max(1, Math.round(h / 22)), sy = by + h * 0.34, skin = CD.skin || PX.skin;
+      const arm = (ax, up, out, wave) => { if(up <= 0) return;
+        pxLine(g0, ax, sy, ax + out * w * 0.14 * up + wave * w * 0.12, sy - h * (0.20 + 0.28 * up), skin, th); };
+      arm(bx + w * 0.30, Math.max(cast, P ? P.armL : 0), -1, P ? P.waveL : 0);
+      arm(bx + w * 0.78, Math.max(cast, P ? P.armR : 0), 1, 0);
+      if(FX && FX.front) FX.front(g0, g);
+      g0.globalAlpha = 1; g0.globalCompositeOperation = 'source-over';
+    };
+    if(P && (P.sx !== 1 || P.rot !== 0)){
+      // Turned, for a spin or a flip: drawn whole into a canvas of his own,
+      // then laid down squashed, mirrored or rolled about his middle, pixel for
+      // pixel. Rolled, he takes more room across; he takes it on the far side
+      // from the golfer, never nearer him than he stands.
+      const pad = Math.ceil(Math.max(w, h) * 0.8), cw = w + pad * 2, ch = h + pad * 2;
+      const oc = this._fairyCv || (this._fairyCv = document.createElement('canvas'));
+      if(oc.width !== cw || oc.height !== ch){ oc.width = cw; oc.height = ch; }
+      const o = oc.getContext('2d');
+      o.clearRect(0, 0, cw, ch);
+      body(o, pad, pad);
+      const sx = Math.sign(P.sx || 1) * Math.max(Math.abs(P.sx), 1 / w);
+      const cs = Math.abs(Math.cos(P.rot)), sn = Math.abs(Math.sin(P.rot));
+      const ew = w * Math.abs(sx) * cs + h * sn, eh = w * Math.abs(sx) * sn + h * cs;
+      const cx = Math.round(x + w / 2 - Math.max(0, (ew - w) / 2)), cy = Math.round(y + h / 2);
+      c.save();
+      c.imageSmoothingEnabled = false;
+      c.translate(cx, cy);
+      c.rotate(P.rot);
+      c.scale(sx, 1);
+      c.drawImage(oc, -pad - w / 2, -pad - h / 2);
+      c.restore();
+      // the room he takes: where he stands (his dust keeps falling there)
+      // and where the turn puts him
+      const X0 = Math.min(x, Math.floor(cx - ew / 2)), Y0 = Math.min(y, Math.floor(cy - eh / 2));
+      this._fairy = { x: X0, y: Y0, w: Math.max(x + w, Math.ceil(cx + ew / 2)) - X0, h: Math.max(y + h, Math.ceil(cy + eh / 2)) - Y0 };
+    }else{
+      body(c, x, y);
+      this._fairy = { x, y, w, h };
     }
-    if(FX && FX.front) FX.front(c, g);
-    c.globalAlpha = 1; c.globalCompositeOperation = 'source-over';
     // the caddie's perk, going off: a spark round him and its word over him
     const F = this.fairyCast;
     if(F){
@@ -10647,6 +10702,49 @@ function drawLegs(c, hx, hy, len, w, ph, near, far, shoe){
   leg(-s, far, -th * 0.4);
   leg(s, near, th * 0.6);
 }
+// The caddie's turns, taken now and then for fun (Scene.tickMove): a spin, a
+// dance, a flip, a wave, and a loop out to the side and back. fairyPose says
+// where one takes him (dx, dy: only ever away from the golfer, or up and
+// down), how it turns him (sx squashes him, and mirrors him below zero, for
+// a spin; rot rolls him over for a flip), and what his arms (0..1 up) and
+// legs (a stride phase, as drawLegs takes it) are doing, q of the way
+// through it and T seconds in.
+const FAIRY_MOVES = [
+  { id:'spin',  dur:1.0 },
+  { id:'dance', dur:2.6 },
+  { id:'flip',  dur:0.9 },
+  { id:'wave',  dur:1.8 },
+  { id:'loop',  dur:1.4 }
+];
+const easeIO = q => q < 0.5 ? 2*q*q : 1 - 2*(1-q)*(1-q);
+function fairyPose(kind, q, T, w, h){
+  const P = { dx: 0, dy: 0, sx: 1, rot: 0, armL: 0, armR: 0, waveL: 0, legs: null };
+  const env = Math.min(1, q / 0.12, (1 - q) / 0.12);          // eased in and out
+  if(kind === 'spin'){                                          // twice round, on a little hop
+    P.sx = Math.cos(easeIO(q) * Math.PI * 4);
+    P.dy = -Math.sin(Math.PI * q) * h * 0.16;
+  }else if(kind === 'dance'){                                   // a bounce on every beat
+    const beat = T * 2.4;
+    P.dy = -Math.abs(Math.sin(Math.PI * beat)) * h * 0.14 * env;
+    P.dx = -(1 - Math.cos(Math.PI * beat)) * 0.5 * w * 0.22 * env;
+    P.armL = Math.max(0, Math.sin(Math.PI * beat)) * env;
+    P.armR = Math.max(0, -Math.sin(Math.PI * beat)) * env;
+    P.legs = beat * 0.5;
+  }else if(kind === 'flip'){                                    // head over heels, up and down
+    P.dy = -Math.sin(Math.PI * q) * h * 0.5;
+    P.rot = -easeIO(q) * Math.PI * 2;
+  }else if(kind === 'wave'){                                    // the far arm, to and fro
+    P.armL = env;
+    P.waveL = Math.sin(T * 11) * env;
+    P.dy = -Math.sin(Math.PI * q) * h * 0.05;
+  }else if(kind === 'loop'){                                    // round and back, out to the side
+    const a = easeIO(q) * Math.PI * 2;
+    P.dx = -(1 - Math.cos(a)) * 0.5 * w * 1.1;
+    P.dy = -Math.sin(a) * h * 0.4;
+  }
+  return P;
+}
+
 // What the special clubs do beyond their colours. under: drawn beneath the
 // shaft (a glow); shaft: replaces the plain line; head: replaces the plain
 // head; over: on top (sparkle); trail: the arc the head leaves in a swing.
@@ -12490,6 +12588,7 @@ Object.assign(Scene, {
       this.drawBalls(dt);
       this.drawWeather();
       this.tickQuip(dt);
+      this.tickMove(dt);
       this.drawHud(D);
       this.drawPerks();
       this.drawShots();
@@ -14295,7 +14394,8 @@ const DEV = {
     h += row('Battery saver', b('start now', 'saverNow()') + b('in 5s', 'DEV.saverSoon()'));
 
     h += row('Fairy caddie', b('cheer', 'DEV.say(\'cheer\')') + b('sigh', 'DEV.say(\'sigh\')')
-      + b('quip', 'DEV.say(\'quip\')') + b('perk now', 'DEV.cperkNow()')
+      + b('quip', 'DEV.say(\'quip\')') + FAIRY_MOVES.map(m => b(m.id, 'DEV.move(\'' + m.id + '\')')).join('')
+      + b('perk now', 'DEV.cperkNow()')
       + b('own all perks', 'DEV.cperks(1)') + b('no perks', 'DEV.cperks(0)'));
 
     h += row('Frame', b('frame times ' + (DEV_FPS ? 'on' : 'off'), 'DEV.fps()')
@@ -14531,6 +14631,8 @@ const DEV = {
     else { const l = kind === 'cheer' ? B.FAIRY_SAY.birdie : B.FAIRY_SAY.bogey;
            Scene.fairyReact(kind, l[Math.random() * l.length | 0]); }
     hideSheet(); },
+  // one of his turns, now
+  move(id){ Scene.fairyMove = null; Scene.fairyMoveGo(id); hideSheet(); },
   cperkNow(){ if(!S.cperk || !cperkDef(S.cperk)){ const p = B.CPERKS[0];
       S.cperkOwn = S.cperkOwn || {}; S.cperkOwn[p.id] = 1; S.cperk = p.id; }
     S.cperkT = B.CPERK_EVERY; tickCaddie(0); hideSheet(); },
