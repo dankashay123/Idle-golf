@@ -16896,7 +16896,8 @@ const DEV = {
       + b('restart music', 'DEV.music(1)') + b(DEV._recs ? 'recordings off' : 'recordings on', 'DEV.synth()'));
 
     h += row('Signature hole', b('this hole an island', 'DEV.isle()') + b('this hole a canyon', 'DEV.canyon()')
-      + b('stepping stones', 'DEV.stones()') + b('sea stack', 'DEV.pier()') + b('railway', 'DEV.rail()'));
+      + b('stepping stones', 'DEV.stones()') + b('sea stack', 'DEV.pier()') + b('railway', 'DEV.rail()')
+      + ['steam', 'goods', 'express', 'night'].map(k => b(k === 'night' ? 'sleeper' : k, 'DEV.train(\'' + k + '\')')).join(''));
 
     h += row('Signature hole of the week \u00b7 ' + SIG_NAME[sigWeek()] + (SIGWEEK_FORCE ? ' \u00b7 forced' : ''), SIG_KINDS.map(k =>
       b(SIG_NAME[k].toLowerCase(), 'DEV.sigWeek(\'' + k + '\')')).join('') + b('by the date', 'DEV.sigWeek()'));
@@ -17128,6 +17129,8 @@ const DEV = {
   reprice(){ S.purse = holePurse(S.hole, S.tier, derive().gold); },
   // the signature hole of the week, pinned to one kind, or by the date
   sigWeek(k){ SIGWEEK_FORCE = k || null; this.reprice(); this.re(); },
+  // a train of that kind setting off now (on a railway hole)
+  train(kind){ Scene.train = { t0: Scene.t, dir: Math.random() < 0.5 ? -1 : 1, kind }; Scene.trainNext = Scene.t + 30; hideSheet(); },
   rail(){ RAIL_FORCE = S.hole; ISLE_FORCE = 0; CANYON_FORCE = 0; STONES_FORCE = 0; PIER_FORCE = 0; S.yards = S.yardsMax; this.reprice(); Scene.newHole(S.hole, S.tier); hideSheet(); },
   isle(){ ISLE_FORCE = S.hole; CANYON_FORCE = 0; STONES_FORCE = 0; PIER_FORCE = 0; RAIL_FORCE = 0; S.yards = S.yardsMax; this.reprice(); Scene.newHole(S.hole, S.tier); hideSheet(); },
   // as if nobody had touched the phone for the whole wait, bar five seconds
