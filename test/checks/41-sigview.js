@@ -6,6 +6,10 @@
  * keep to the same line: the bridge's posts and hand-ropes were drawn on top
  * of a hill that hid the gorge itself, on a rolling course seen from the tee.
  *
+ * The life on them is held to it too: the pier's spray and gulls, the
+ * canyon's hawk and the river's fish (drawn with their holes), and the
+ * island's ducks, whose holes are played as well.
+ *
  * Every course with a canyon, stones or a sea stack is played (the home courses and the
  * others, rolling ground included): two holes of each kind, and on each the
  * camera stands at eight places, from the tee to past the crossing. The frame
@@ -20,7 +24,7 @@ module.exports = {
   async run(page) {
     const r = await page.evaluate(() => {
       const SNAP = JSON.stringify(S), o = { frames: 0, seen: 0, bad: [], holes: 0 };
-      const keep = { bridge: Scene.drawBridge, stones: Scene.drawStones, pier: Scene.drawPier, step: window.step };
+      const keep = { bridge: Scene.drawBridge, stones: Scene.drawStones, pier: Scene.drawPier, ducks: Scene.drawDucks, step: window.step };
       try {
         hideSheet(); QUIET = true; window.step = () => {};
         S.outfit = 'classic'; S.caddie = 'classic'; buildSprites();
@@ -30,7 +34,7 @@ module.exports = {
           if (cs.slot !== 'home' && !['canyon', 'stones', 'pier'].includes(B.SIG_HOLE[cs.id])) continue;
           DEV.course(ci); hideSheet();
           const t = tournamentOf(S.hole), first = (t - 1) * B.ROUND * B.DAYS + 1;
-          const want = { canyon: 2, stones: 2, pier: 2 };
+          const want = { canyon: 2, stones: 2, pier: 2, island: 2 };
           for (let h = first; h < first + B.ROUND * B.DAYS; h++) {
             const k = sigKind(h);
             if (!want[k]) continue;
@@ -39,12 +43,16 @@ module.exports = {
             const I = Scene.isle;
             o.holes++;
             for (const cam of [0, I.bank * 0.3, I.bank * 0.6, I.bank - 3, I.bank, (I.bank + I.land) / 2, I.land, I.land + 3]) {
+              // the clock on a little each view, so the wildlife is caught at
+              // many points of its rounds (a fish is only out of the water now
+              // and then)
+              Scene.t += 0.37;
               Scene.camD = cam; Scene.walkTo = cam; S.yards = S.yardsMax * (1 - Math.min(0.999, cam / LEN));
               Scene.draw(0, D);
               const a = c.getImageData(0, 0, VW, VH).data;
-              Scene.drawBridge = () => {}; Scene.drawStones = () => {}; Scene.drawPier = () => {};
+              Scene.drawBridge = () => {}; Scene.drawStones = () => {}; Scene.drawPier = () => {}; Scene.drawDucks = () => {};
               Scene.draw(0, D);
-              Scene.drawBridge = keep.bridge; Scene.drawStones = keep.stones; Scene.drawPier = keep.pier;
+              Scene.drawBridge = keep.bridge; Scene.drawStones = keep.stones; Scene.drawPier = keep.pier; Scene.drawDucks = keep.ducks;
               const b = c.getImageData(0, 0, VW, VH).data;
               const limit = Scene.clipAt(Math.max(I.bank - 0.2, cam - CAM_BACK + 0.7)) + 1;
               let n = 0, low = 0, worst = 0;
@@ -61,7 +69,7 @@ module.exports = {
           }
         }
       } finally {
-        Scene.drawBridge = keep.bridge; Scene.drawStones = keep.stones; Scene.drawPier = keep.pier; window.step = keep.step;
+        Scene.drawBridge = keep.bridge; Scene.drawStones = keep.stones; Scene.drawPier = keep.pier; Scene.drawDucks = keep.ducks; window.step = keep.step;
         QUIET = false; OFFLINE = false;
         Object.keys(S).forEach(k => delete S[k]); Object.assign(S, JSON.parse(SNAP)); buildSprites(); startHole();
       }
@@ -69,7 +77,7 @@ module.exports = {
     });
     if (r.bad.length) throw new Error(r.bad.length + ' frames with a bridge, stones or pier drawn through the ground: ' + r.bad.slice(0, 4).join('; '));
     if (r.seen < r.frames * 0.4) throw new Error('the bridge, stones or pier were seen in only ' + r.seen + ' of ' + r.frames + ' frames');
-    return [r.holes + ' canyon, stepping-stone and sea stack holes over every course that has them, ' + r.frames + ' views from the tee to past the crossing',
-      'the bridge, stones or pier in view in ' + r.seen + ' of them, and never a pixel below the ground in front'];
+    return [r.holes + ' canyon, stepping-stone, sea stack and island holes over every course that has them, ' + r.frames + ' views from the tee to past the crossing',
+      'the bridge, stones, pier or the life on them in view in ' + r.seen + ' of them, and never a pixel below the ground in front'];
   }
 };
