@@ -10,7 +10,7 @@ check is for.
 
 - Everything is committed and pushed to `main` (mirrored on the session
   branch `claude/notes-review-dju532`). Nothing is half-built.
-- `node test/run.js` passes all **48 checks** (about 8 minutes).
+- `node test/run.js` passes all **49 checks** (about 8 minutes).
 - **Last request**: "get rid of the caddy wings, just have them float up
   and down a tiny bit; more animation too, like randomly will spin, dance,
   stuff like that for fun". Done (§5 "The caddie: no wings, a float, and
@@ -123,6 +123,7 @@ Line numbers are approximate and drift. Search for the name instead.
 | Palettes built from a course | `buildTheme`, `courseTrees` |
 | **Landmarks** | `drawLandmark` (called from `Scene.buildRidge`) |
 | Renderer | `const Scene = {`. Key members: `newHole`, `newDepthsHole`, `proj`, `curveAt`/`bendOff` (doglegs), `layHazards`, `layProps`, `buildSky`, `buildRidge`, `buildWood`, `drawGround`, `drawGolfer`, `fairyBox`/`drawCaddie`, `swing`/`walking2ball`/`launch`, `drawBalls`, `drawLyingBall`, `drawMap` |
+| **Life on the pier** (spray, gulls, their cry) | `Scene.drawSpray`, `Scene.drawGulls` (both called at the end of `drawPier`), `Scene.gullOff`, `Sfx.gull`, `Sfx.GULL_VOL`, `Sfx.gullT` |
 | **Caddie perk upgrades** (Lv 1-5) | `B.CPERK_LV_MAX`, `CPERK_LV_T`, `CPERK_LV_V`, `CPERK_LV_COST`, `cperkLv`, `cperkVal`, `cperkDur`, `cperkTxt`, `cperkUp`, `S.cperkLv`, `renderCadPerks` (the worn row's button), honour `headcad`; `DEV.cperkLv` |
 | The caddie's turns (spin, dance, flip, wave, loop, cartwheel, juggle) | `FAIRY_MOVES`, `fairyPose`, `Scene.tickMove`, `fairyMoveNow`, `fairyMoveGo`, the offscreen `_fairyCv` in `drawCaddie`; `DEV.move` |
 | Caddie perks (nine; `now:1` means instant, e.g. Ready Golf); each has `col` and a short line `s` | `tickCaddie`, `cperkPick`, `renderCadPerks`; the blessing `Scene.drawBless`, the countdown `buffTip` (`#buffTip` in `#setRow`) |
@@ -249,6 +250,26 @@ Line numbers are approximate and drift. Search for the name instead.
    live one and caught it the other way round.
 
 ## 5. What the last features do (for debugging them)
+
+### Life on the pier (user asked, the third of four)
+
+- **Spray** (`drawSpray`): on a Sea Stack hole with the wind at 6 mph or
+  more, waves slap the windward posts and spray blows up and across the
+  deck: 64 drop slots, as many used as the wind allows (all at 18 mph, a
+  crosswind is 18-24). Each drop is a slot on its own clock (`hr` noise off
+  `Scene.t`), so nothing is stored and `Math.random` is never touched; drops
+  are a twentieth of a unit, streaked downwind, with a white burst at the
+  foot of the post a wave hits. Cut at their own distance's ground line.
+- **Gulls** (`drawGulls`): three wheel over the sea round the stack,
+  flapping then gliding (a pixel "v", "^" or flat, white with grey tips,
+  scaled with distance). One sits on the middle post of the pier (white
+  body, grey back, yellow beak) until the camera comes within 7 of it
+  (`Scene.gullOff`, reset per hole), then flies up and out to sea for 6s.
+- **The cry** (`Sfx.gull`): a thin "kee" and a falling "ow", once or twice,
+  every 6-15s on a Sea Stack hole, not at night. Measured offline (loudest
+  300ms): -54.9 dB against a bird's chirp at -54.3 and a gust's -46.
+- Both draw inside `drawPier`, so `sigview` holds them above the ground in
+  front (pier holes are level anyway). Check `pierlife`.
 
 ### Caddie perk upgrades (user asked: "all of those", the first of four)
 
@@ -778,6 +799,8 @@ Line numbers are approximate and drift. Search for the name instead.
 
 ## 6. Recent history (newest first, one line each)
 
+- Life on the pier: spray over the deck in the wind, wheeling gulls, one
+  on a post that flies off as he comes, and a quiet gull cry.
 - The caddie cartwheels and juggles too.
 - Caddie perk upgrades: the worn perk to Lv 5, a second longer and 12.5%
   stronger a level; Head Caddie honour.

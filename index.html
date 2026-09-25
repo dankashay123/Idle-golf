@@ -5863,6 +5863,15 @@ const Sfx = {
     this.tone(420, t, 0.05, 'triangle', 0.045, 260);
     if(!ice) this.hiss(t + 0.01, 0.12, 1400, 0.9, 0.035, 700);
   },
+  // A gull off the pier: a thin "kee" and a long falling "ow", once or twice.
+  gull(t){
+    const f = 1150 + Math.random() * 250, k = Math.random() < 0.5 ? 1 : 2, V = this.GULL_VOL;
+    for(let i = 0; i < k; i++){
+      const t0 = t + i * 0.34;
+      this.tone(f * 1.25, t0, 0.07, 'triangle', V, f * 1.4);
+      this.tone(f * 1.4, t0 + 0.06, 0.26, 'sawtooth', V * 0.55, f * 0.75);
+    }
+  },
   // Birds in the trees, now and then, on a fine day: a quick rising chirp, or
   // two falling ones.
   chirp(t){
@@ -5879,6 +5888,8 @@ const Sfx = {
   // the season's air, set by measure (see the handoff notes): a gust a shade
   // over a bird, the winter breath under one
   SEASON_VOL: { gust: 0.035, hush: 0.008 },
+  // the gulls on a Sea Stack hole, set by measure (see the handoff notes)
+  GULL_VOL: 0.015,
   mus: [],
   // a slider's 0 to 1, heard as loudness: squared, so the middle of the
   // slider sounds like the middle rather than nearly full
@@ -5957,6 +5968,12 @@ const Sfx = {
       const st = Math.floor((Scene.walkPh || 0) * 2);
       if(st !== this.stepK){ this.stepK = st; this.plank(now + 0.01, Math.random() < 0.3); }
     }
+    // Gulls, now and then, out over the sea off a pier (not at night)
+    const SI2 = Scene.isle;
+    if(SI2 && SI2.pier && !S.dgnRun && !Scene.night){
+      this.gullT = (this.gullT === undefined ? 2 + Math.random() * 4 : this.gullT) - dt;
+      if(this.gullT <= 0){ this.gullT = 6 + Math.random() * 9; this.gull(now + 0.02); }
+    }else this.gullT = undefined;
     // The seasons on a home course: the wind gusting through the leaves in
     // autumn; in winter the hush of the snow, the birds gone quiet and only a
     // thin breath of air now and then; in blossom, birdsong more often.
@@ -12126,6 +12143,83 @@ Object.assign(Scene, {
         prev = d;
       }
     }
+    this.drawSpray(posts, hw, up, near);
+    this.drawGulls(posts, hw, near);
+  },
+  // Sea spray (the user asked for life on the pier): with the wind up, waves
+  // slap the windward posts and the spray blows up and across the deck, more
+  // of it the harder it blows (none under 6 mph, all of it at 18, a
+  // crosswind). Every drop is a slot on a clock of its own, so nothing is
+  // kept from frame to frame and a paused frame draws the same. Each is cut
+  // at its own distance's ground line, like the posts.
+  drawSpray(posts, hw, up, near){
+    const amt = clamp((this.windMph() - 6) / 12, 0, 1);
+    if(amt <= 0 || !posts.length) return;
+    const c = this.b, dir = (this.wind || 0) < 0 ? -1 : 1, N = Math.round(64 * amt);
+    for(let i = 0; i < N; i++){
+      const L = 0.9 + 0.5 * hr(i, 1), clock = this.t / L + hr(i, 2), n = Math.floor(clock), u = clock - n;
+      const d = posts[Math.floor(hr(i, n) * posts.length) % posts.length] + (hr(i, n + 5) - 0.5) * 0.8;
+      if(d < near) continue;
+      const x = -dir * (hw + 0.1) + dir * u * (hw * 2 + 1.1) + (hr(i, n + 7) - 0.5) * 0.35;
+      const z = up + Math.sin(Math.PI * u) * (0.4 + 0.9 * hr(i, n + 3)) * (0.6 + 0.4 * amt);
+      const p = this.proj(d, x, z), clip = this.clipAt(d);
+      if(p.y > clip) continue;
+      // a drop a twentieth of a unit across, streaked a little downwind
+      const sz = clamp(Math.round(LAT * p.s * 0.05), 1, 3);
+      c.globalAlpha = Math.pow(1 - u, 0.7) * 0.9;
+      c.fillStyle = i & 1 ? '#FFFFFF' : '#EAF4F6';
+      fillClip(c, Math.round(p.x - (dir < 0 ? sz : 0)), Math.round(p.y), sz * 2, sz, clip);
+      // where the wave hit: a burst of white at the foot of the post
+      if(u < 0.16){
+        const g = this.proj(d, -dir * hw, 0), q = 1 - u / 0.16, bw = Math.max(1, Math.round(LAT * g.s * 0.14 * q));
+        c.globalAlpha = 0.85 * q;
+        fillClip(c, g.x - bw, g.y - Math.max(1, Math.round(bw * 0.5)), bw * 2 + 1, Math.max(1, Math.round(bw * 0.5)), this.clipAt(d));
+      }
+    }
+    c.globalAlpha = 1;
+  },
+  // Gulls: three wheeling over the sea round the stack, flapping and then
+  // gliding, and one on a post half way along the pier that takes off as he
+  // walks up to it and flies out to sea. Drawn as a pixel "v" with grey tips
+  // (a "^" on the downbeat, flat in a glide), bigger the nearer they are.
+  drawGulls(posts, hw, near){
+    const c = this.b;
+    const gull = (d, x, z, flap, seed) => {
+      if(d < near + 1) return;
+      const p = this.proj(d, x, z), clip = this.clipAt(d);
+      if(p.y > clip || p.x < -8 || p.x > VW + 8) return;
+      const k = clamp(Math.round(LAT * p.s * 0.9 / 5), 1, 4);
+      const rows = flap > 0.35 ? ['#...#', '.#.#.', '..#..'] : flap < -0.35 ? ['..#..', '.#.#.', '#...#'] : ['.....', '##.##', '..#..'];
+      for(let r = 0; r < 3; r++) for(let q = 0; q < 5; q++){
+        if(rows[r][q] !== '#') continue;
+        c.fillStyle = q === 0 || q === 4 ? '#5A6470' : '#EEF1F3';
+        fillClip(c, Math.round(p.x + (q - 2) * k), Math.round(p.y + (r - 1) * k), k, k, clip);
+      }
+    };
+    for(let j = 0; j < 3; j++){
+      const a = this.t * (0.35 + 0.08 * j) + j * 2.1, R = 3 + j;
+      const d = LEN - 2 + j * 3 + Math.cos(a) * R * 0.8, x = (j - 1) * 3.5 + Math.sin(a) * R;
+      const glide = Math.sin(this.t * 0.5 + j * 1.7) > 0.2;
+      gull(d, x, 3.2 + j * 0.9 + Math.sin(this.t * 0.7 + j) * 0.4, glide ? 0 : Math.sin(this.t * 7 + j * 1.3), j);
+    }
+    // the one on a post: sat there until he comes within seven, then off
+    if(!posts.length) return;
+    if(this._gullHole !== this.hole){ this._gullHole = this.hole; this.gullOff = null; }
+    const pd = posts[Math.floor(posts.length / 2)], side = 1;
+    if(this.gullOff === null && this.camD > pd - 7) this.gullOff = this.t;
+    if(this.gullOff === null){
+      const t = this.proj(pd, side * hw, 0.75), clip = this.clipAt(pd);
+      if(pd < near || t.y > clip) return;
+      const k = clamp(Math.round(LAT * t.s * 0.9 / 5), 1, 3);
+      // a white body, a grey back, a yellow beak, facing out to sea
+      c.fillStyle = '#EEF1F3'; fillClip(c, t.x - k, t.y - 2 * k, 3 * k, 2 * k, clip);
+      c.fillStyle = '#8A949E'; fillClip(c, t.x - k, t.y - 2 * k, 2 * k, k, clip);
+      c.fillStyle = '#E8B04A'; fillClip(c, t.x + 2 * k, t.y - 2 * k, k, k, clip);
+      return;
+    }
+    const f = this.t - this.gullOff;
+    if(f > 6) return;
+    gull(pd + f * 0.6, side * (hw + f * 2.2), 0.75 + f * 1.1, Math.sin(this.t * 9), 7);
   },
 
   drawTee(){
