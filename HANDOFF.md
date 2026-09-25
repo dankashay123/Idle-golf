@@ -11,14 +11,16 @@ check is for.
 - Everything is committed and pushed to `main` (mirrored on the session
   branch `claude/loving-archimedes-ct2rpb`). Nothing is half-built.
 - `node test/run.js` passes all **56 checks** (about nine minutes).
-- **Last request**: "option 1 and 2" of the menu: life on the railway and
-  weather on the signature holes. Done: §5 "Life on the railway" and
-  "Weather on the signature holes". Four trains now (the steam train, a
-  goods, an express, a sleeper at night); he, his caddie and the driver
-  wave as one goes by, with a toot. Rain rings on the water, snow settling
-  on the train, bridge, stones, pier and crossing, a storm's spray and
-  breakers at the sea stack, the bridge swaying in a gale.
-- **The request before**: a moment for the legends (eagle or better) and
+- **Last request** (with a screenshot out on the canyon bridge in a
+  storm, its deck in slats with the canyon between): "Can you fix the
+  bridges visibility please. Also check other signature holes for
+  visibility/clipping issues. Then also do number 1" (the Signature Week
+  honour). Done: §5 "Cut away where nothing hides it" and "The Signature
+  Week".
+- **The request before**: four trains on the railway and weather on the
+  signature holes (§5 "Life on the railway", "Weather on the signature
+  holes").
+- **Before that**: a moment for the legends (eagle or better) and
   the Demonic made the ultimate skin (§5).
 - **Before that**: the Ascended made the ultimate skin (§5 "The
   Ascended, made the ultimate skin").
@@ -352,6 +354,37 @@ Line numbers are approximate and drift. Search for the name instead.
    nothing. Assert the order, and count a name after the edit.
 
 ## 5. What the last features do (for debugging them)
+
+### Cut away where nothing hides it (user saw the bridge)
+
+- Rule 19 keeps what is drawn over the field from showing through a hill
+  in front; the opposite went wrong. Out on the bridge each plank was cut
+  at `clipAt` of its own distance, and over the canyon that line is the
+  canyon's rim (the ground's surface, not its sunk floor), so the sagging
+  deck lost all but a slat of each plank. `drawBridge` now cuts at the
+  ground in front up to the bank (`clipB`): the canyon itself hides
+  nothing.
+- The crossing: its boards were laid by screen row with the distance
+  worked out as a straight share (too far near him, so rows were cut and
+  the boards had a gap as he stood on them); now walked out by distance.
+  Its sleepers lie flat, so they are cut at their near end, not their far
+  one (they were dashes). A rail's dark side is cut a little nearer than
+  the rail (it lost its lowest row close up).
+- `sigview` now also draws each structure with its cut and without from
+  at or on it, and allows none of it lost (470 views). A scan over five
+  courses found nothing else: the ducks lose a pixel or two under a lake's
+  rim, and from six short of the line a rise in the fairway hides the
+  train's wheels, both as they should.
+
+### The Signature Week (user asked, from the menu)
+
+- Honour **Signature Week** (`sigWk`, tally `sigWeek`): all five kinds of
+  signature hole played in one real week, Monday to Sunday (`weekNow`),
+  once a week. A home round has four (no sea stack but at Harbour Lights,
+  and some away courses), so the fifth has to be found. Counted in
+  `sigScore` into `S.sigWk = { wk, k: [kinds] }`, repaired on load;
+  `sigWeekKinds()` is this week's. The Record has a row, "3 of 5 this
+  week". Dev menu: honours row, "a signature week".
 
 ### Life on the railway (user asked, from the menu)
 
@@ -1328,6 +1361,10 @@ him (about 49px tall on a 320 phone, 71px on its side).
 
 ## 6. Recent history (newest first, one line each)
 
+- The canyon bridge solid underfoot (it was cut to slats against the sunk
+  rim), the crossing's boards and sleepers whole; the Signature Week
+  honour and its Record row.
+
 - Four trains on the railway (steam, goods, express, a night sleeper), and
   waving as one goes by; rain rings on the water, snow on the signature
   holes, a storm at the sea stack, the bridge swaying in a gale.
@@ -1454,19 +1491,18 @@ him (about 49px tall on a 320 phone, 71px on its side).
 
 ## 8. What to offer next
 
-Everything asked for is done. First ask how the trains and the weather
-look (the dev menu's railway button shows the crossing; the trains come
-every 20-35s), and whether the waving reads on the phone.
+Everything asked for is done. First ask whether the bridge now looks
+right to them out on it, in the storm they sent.
 
 The menu to offer next:
-1. **A Signature Week honour** (recommended): all five kinds played in one
-   real week, with a row on the Record.
-2. **The Divine, ultimate too**: the third of the top skins given the same
-   treatment in gold, with its own great-hole moment (the heavens opening,
-   a choir's chord).
-3. **Small flourishes for the other effect skins** on an eagle (the Inferno
+1. **The Divine, ultimate too** (recommended): the third of the top skins
+   given the same treatment in gold, with its own great-hole moment (the
+   heavens opening, a choir's chord).
+2. **Small flourishes for the other effect skins** on an eagle (the Inferno
    flares, the Frostborn freezes the ground out).
-4. **Night on the signature holes**: lanterns along the pier, the bridge's
+3. **Night on the signature holes**: lanterns along the pier, the bridge's
    ropes hung with lights, the island's green lit, fireflies by the river.
-5. **A station on the railway**: now and then a train stops at a little
+4. **A station on the railway**: now and then a train stops at a little
    halt by the crossing, a guard waves a flag, passengers get off to watch.
+5. **The Signature Week on the Tour tab**: the five kinds shown ticked off
+   beside the signature hole of the week, so the chase is in sight.

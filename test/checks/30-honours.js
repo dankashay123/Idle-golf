@@ -171,13 +171,45 @@ module.exports = {
             if (S.sigRec !== undefined && Object.keys(S.sigRec).length) o.sigRepair.push('record ' + JSON.stringify(v) + ' loaded as ' + JSON.stringify(S.sigRec)); }
           S.sigRec = { pier: { n: 3.7, b: -9 } }; initState();
           if (!S.sigRec || !S.sigRec.pier || S.sigRec.pier.n !== 3 || S.sigRec.pier.b !== -4) o.sigRepair.push('a good record loaded as ' + JSON.stringify(S.sigRec));
+
+          // ---- the Signature Week: all five kinds in one real week ----
+          // (a home round has four; the sea stack is found at Harbour Lights)
+          // (played without writing to the record's tally above, which is already read)
+          const playW = (h, d) => { S.hole = h; startHole(); S.elapsed = S.parTime * at(d); S.doneT = null; S.yards = 0; finishHole(derive()); };
+          const homeFour = () => { DEV.course(home); hideSheet(); const t0 = tournamentOf(S.hole); return round((t0 - 1) * B.ROUND * B.DAYS + 1); };
+          const aPier = () => { DEV.course(B.COURSE.findIndex(c => c.id === 'harbour')); hideSheet();
+            const t0 = tournamentOf(S.hole), f0 = (t0 - 1) * B.ROUND * B.DAYS + 1; let q = f0; while (sigKind(q) !== 'pier' && q < f0 + B.ROUND) q++; return q; };
+          const recRow = () => { const rw = document.createElement('div'); rw.id = 'statRows'; document.body.appendChild(rw); renderRecord();
+            const l = [...rw.querySelectorAll('.lb')].find(x => x.children[1].textContent === 'Signature Week'); rw.remove(); return l ? l.children[2].textContent : null; };
+          const W = { }, mon = 7 * 2960 - 3;             // a Monday
+          S.tally.sigWeek = 0; delete S.sigWk; delete S.achDone.sigWk;
+          DAY_FORCE = mon + 1;
+          W.none = recRow();
+          homeFour().forEach(h => playW(h, 0)); W.four = { t: tally('sigWeek'), row: recRow() };
+          playW(aPier(), 1); W.five = { t: tally('sigWeek'), row: recRow() };
+          // again the same week: once a week
+          playW(aPier(), -1); homeFour().forEach(h => playW(h, -1)); W.again = tally('sigWeek');
+          checkAch(); W.honour = !!S.achDone.sigWk;
+          // the next week starts again from none
+          DAY_FORCE = mon + 7; W.nextRow = recRow();
+          // four on the Sunday and the sea stack on the Monday: two weeks, not one
+          DAY_FORCE = mon + 13; homeFour().forEach(h => playW(h, 0));
+          DAY_FORCE = mon + 14; playW(aPier(), 0); W.split = { t: tally('sigWeek'), row: recRow() };
+          // and the whole of it that next week
+          homeFour().forEach(h => playW(h, 0)); W.second = tally('sigWeek');
+          // junk in the week being counted
+          W.repair = [];
+          for (const v of ['x', 3, { wk: 'a', k: [] }, { wk: 3, k: 'island' }, { wk: 3, k: ['moat'] }, { wk: 3, k: ['pier', 'pier'] }]) { S.sigWk = v; initState(); if (S.sigWk !== undefined) W.repair.push(JSON.stringify(v)); }
+          S.sigWk = { wk: 3, k: ['pier', 'rail'] }; initState(); if (!S.sigWk || S.sigWk.k.length !== 2) W.repair.push('a good one was dropped');
+          DAY_FORCE = null;
+          o.sigWeek = W;
         }
 
         // ---- a save with junk in it ---------------------------------------------
         S.homes = { willow: 1, nowhere: 1, masters: 1 }; initState(); o.repaired = Object.keys(S.homes).join(',');
         S.homes = 'x'; initState(); o.repaired2 = typeof S.homes + ':' + Object.keys(S.homes).length;
       } finally {
-        QUIET = false; OFFLINE = false;
+        QUIET = false; OFFLINE = false; DAY_FORCE = null;
         Object.keys(S).forEach(k => delete S[k]); Object.assign(S, JSON.parse(SNAP)); startHole();
       }
       return o;
@@ -209,6 +241,13 @@ module.exports = {
     if (r.sigAce.ace !== 1 || r.sigAce.is !== r.sigBogey.is + 1) f2('an ace on an island counted ' + J(r.sigAce));
     if (J(r.sigPlain) !== J(r.sigAce)) f2('a birdie on an ordinary hole counted: ' + J(r.sigPlain));
     if (r.awayN !== 4 || r.sigAway.rd !== 1 || r.sigAway.cn !== r.sigPlain.cn + 1) f2('a canyon course (' + r.awayN + ' signature holes an event): ' + J(r.sigAway) + ' (want one more canyon birdie and no signature round)');
+    const W = r.sigWeek;
+    if (W.none !== '0\u00a0of 5 this week' || W.four.t || W.four.row !== '4\u00a0of 5 this week' || W.five.t !== 1 || W.five.row !== '5\u00a0of 5 this week')
+      f2('the Signature Week: ' + JSON.stringify(W) + ' (none at first, four from a home round and no honour, the sea stack makes five and the honour)');
+    if (W.again !== 1 || !W.honour) f2('the Signature Week counted again in the same week (' + W.again + '), or not awarded (' + W.honour + ')');
+    if (W.nextRow !== '0\u00a0of 5 this week' || W.split.t !== 1 || W.split.row !== '1\u00a0of 5 this week' || W.second !== 2)
+      f2('the Signature Week across weeks: ' + JSON.stringify(W) + ' (a new week starts from none; four on a Sunday and the fifth on the Monday is no week; all five the next week is)');
+    if (W.repair.length) f2('junk in the Signature Week loaded: ' + W.repair.join(', '));
     if (r.sigDone !== 'sig4,isleAce') f2('signature honours awarded: ' + (r.sigDone || 'none') + ' (want Signature Round and Ace on the Island)');
     if (r.pierBird !== 1) f2('an eagle on a sea stack counted ' + r.pierBird + ' sea stack birdies');
     if (J(r.recGot) !== J(r.recWant)) f2('the signature record kept ' + J(r.recGot) + ', not ' + J(r.recWant));
@@ -224,6 +263,7 @@ module.exports = {
       'a birdie in ' + w.mph + ' mph of wind counts, a birdie in a breeze or a par in a gale does not',
       'the matching pair, all ' + r.homesNeed + ' home courses, a major and every caddie perk: all six awarded',
       'signature holes: birdies counted by kind, an island ace, a home round of par or better once, spoilt by a bogey, never on a course with one',
+      'the Signature Week: four kinds from a home round, the sea stack the fifth, once a week; four on a Sunday and the fifth on the Monday no week',
       'the Trophy Room records each kind: ' + Object.entries(r.recGot).map(([k, v]) => k + ' ' + v.n + ' best ' + v.b).join(', ')];
   }
 };

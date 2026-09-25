@@ -3060,6 +3060,9 @@ const B = {
     // the signature holes: a home round has four (two island greens, the
     // canyon and the stepping stones), any other course one of its own
     { id:'sig4',   n:'Signature Round',  d:'Par or better on every signature hole of a home round', m:'sigRound', v:1, r:{k:'tick', v:3}, sov:10 },
+    // all five kinds in one real week, Monday to Sunday: a home round has
+    // four, so the sea stack has to be found as well (the user asked)
+    { id:'sigWk',  n:'Signature Week',   d:'Play all five kinds of signature hole in one week', m:'sigWeek', v:1, r:{k:'tick', v:3}, sov:10 },
     { id:'sigIs',  n:'Island Hopper',    d:'Birdie 25 island greens',     m:'sigIsle',   v:25,  r:{k:'tick', v:2}, sov:10 },
     { id:'sigCn',  n:'Rope Walker',      d:'Birdie 10 canyon holes',      m:'sigCanyon', v:10,  r:{k:'tick', v:2}, sov:10 },
     { id:'sigSt',  n:'Sure-Footed',      d:'Birdie 10 stepping-stone holes', m:'sigStones', v:10, r:{k:'tick', v:2}, sov:10 },
@@ -3593,6 +3596,8 @@ const SIG_KINDS = Object.keys(SIG_NAME);
 let SIGWEEK_FORCE = null;
 const sigWeekOf = wk => { const n = SIG_KINDS.length; return SIG_KINDS[((wk % n) + n) % n]; };
 const sigWeek = () => SIGWEEK_FORCE || sigWeekOf(weekNow());
+// the kinds of signature hole played this real week (the Signature Week honour)
+const sigWeekKinds = () => S.sigWk && S.sigWk.wk === weekNow() ? S.sigWk.k : [];
 const isSigWeek = h => { const k = sigKind(h); return !!k && k === sigWeek(); };
 // A hole's own purse: the card's, doubled on the signature hole of the week.
 // Only the hole is doubled; the event's cheque and the wagers' "holes worth"
@@ -3842,6 +3847,8 @@ function initState(){
   if(!S.caseGot || typeof S.caseGot !== 'object') S.caseGot = {};
   if(S.sigRound !== undefined && !(S.sigRound && typeof S.sigRound === 'object' && isFinite(S.sigRound.r)
      && S.sigRound.n >= 0 && S.sigRound.n <= SIG_HOME_ROUND)) delete S.sigRound;
+  if(S.sigWk !== undefined && !(S.sigWk && typeof S.sigWk === 'object' && isFinite(S.sigWk.wk) && Array.isArray(S.sigWk.k)
+     && S.sigWk.k.every((k, i, a) => SIG_KINDS.includes(k) && a.indexOf(k) === i))) delete S.sigWk;
   for(const k in S.caseGot){ const c = B.CASE.find(x => x.id === k);
     if(!c || !(S.caseGot[k] >= 0)) delete S.caseGot[k]; else S.caseGot[k] = Math.min(c.at.length, Math.floor(S.caseGot[k])); }
   if(S.music !== undefined && S.music !== 0 && S.music !== 1) delete S.music;
@@ -6282,6 +6289,10 @@ function sigScore(sc){
   K.n++; if(K.b === null || sc.d < K.b) K.b = sc.d;
   if(sc.d <= -1) bump({ island: 'sigIsle', canyon: 'sigCanyon', stones: 'sigStones', pier: 'sigPier', rail: 'sigRail' }[sk]);
   if(sk === 'island' && sc.d === -4) bump('isleAce');
+  // the Signature Week: the kinds played this real week (see sigWeekKinds)
+  const wk = weekNow();
+  if(!S.sigWk || S.sigWk.wk !== wk) S.sigWk = { wk, k: [] };
+  if(!S.sigWk.k.includes(sk)){ S.sigWk.k.push(sk); if(S.sigWk.k.length === SIG_KINDS.length) bump('sigWeek'); }
   const ri = roundIndex(S.hole);
   if(!S.sigRound || S.sigRound.r !== ri) S.sigRound = { r: ri, n: 0, ok: 1 };
   const R = S.sigRound;
@@ -16364,6 +16375,8 @@ function renderRecord(){
     // a course in each of its seasons: the home courses and the regular
     // stops that turn with the month, four each
     ['Seasons Seen', seasonsSeen() + '\u00a0of ' + seasonsAll()],
+    // the kinds of signature hole played this real week, of the five
+    ['Signature Week', sigWeekKinds().length + '\u00a0of ' + SIG_KINDS.length + ' this week'],
     // each kind of signature hole: played, and the best card on one
     ...Object.keys(SIG_NAME).map(k => { const R = (S.sigRec || {})[k];
       return [SIG_NAME[k], R && R.n ? fmt(R.n, 0) + '\u00a0played \u00b7 best ' + scoreName(R.b) : '\u2014']; })
@@ -16975,7 +16988,7 @@ const DEV = {
       + b('+5 cups', 'DEV.cups(5)') + b('doglegs +50', 'DEV.hon(\'dogleg\')')
       + b('wind birdies +25', 'DEV.hon(\'windBird\')') + b('every home course', 'DEV.hon(\'homes\')')
       + b('island birdies +25', 'DEV.hon(\'sigIsle\')') + b('canyon birdies +25', 'DEV.hon(\'sigCanyon\')')
-      + b('stone birdies +25', 'DEV.hon(\'sigStones\')') + b('sea stack birdies +25', 'DEV.hon(\'sigPier\')') + b('railway birdies +25', 'DEV.hon(\'sigRail\')') + b('a signature round', 'DEV.hon(\'sigRound\')')
+      + b('stone birdies +25', 'DEV.hon(\'sigStones\')') + b('sea stack birdies +25', 'DEV.hon(\'sigPier\')') + b('railway birdies +25', 'DEV.hon(\'sigRail\')') + b('a signature round', 'DEV.hon(\'sigRound\')') + b('a signature week', 'DEV.hon(\'sigWeek\')')
       + b('an island ace', 'DEV.hon(\'isleAce\')'));
 
     h += row('Simulate away', b('1 hour', 'DEV.away(3600)') + b('6 hours', 'DEV.away(6*3600)')
@@ -17127,7 +17140,7 @@ const DEV = {
     }
     checkAch(); this.re(); },
   hon(k){ if(k === 'homes') COURSE_HOME.forEach(c => { S.homes[c.id] = 1; });
-    else bump(k, k === 'dogleg' ? 50 : k === 'sigRound' || k === 'isleAce' ? 1 : 25);
+    else bump(k, k === 'dogleg' ? 50 : k === 'sigRound' || k === 'isleAce' || k === 'sigWeek' ? 1 : 25);
     checkAch(); this.re(); },
   // ---- sound, the fairy, the frame ----
   snd(k, a){ Sfx.unlock(); Sfx.lastSwing = -1; Sfx.play(k, k === 'hole' ? -1 : a); },
