@@ -1,6 +1,6 @@
 # Handoff — Mythic Mulligan
 
-Last updated 2026-09-24 on `main`. Read this with
+Last updated 2026-09-25 on `main`. Read this with
 `CLAUDE.md`, which holds the standing rules. `test/README.md` says what each
 check is for.
 
@@ -10,13 +10,15 @@ check is for.
 
 - Everything is committed and pushed to `main` (mirrored on the session
   branch `claude/notes-review-dju532`). Nothing is half-built.
-- `node test/run.js` passes all **50 checks** (about 9 minutes).
-- **Last request**: "All of those please" (the menu: caddie perk upgrades,
-  more caddie moves, life on the pier, a season chime). All four done and
-  pushed one by one (§5, the four newest sections); sent a GIF of the pier,
-  one of the cartwheel and juggle, and a screenshot of the upgrade rack.
-  The suite passes with the day pinned to each season (rule 20): only the
-  "today" line of `seasons` moved, as it should.
+- `node test/run.js` passes all **54 checks** (about 10 minutes).
+- **Last request**: "All 4 please and thank you" (the menu: life on the
+  other signature holes, a happy dance on a great hole, a Record row for
+  seasons seen, a fifth signature hole), and part way through: "Also please
+  make sure the hole never ends before the golfer gets to the green". All
+  five done, one commit each (§5, the five newest sections). The fifth
+  signature hole is a **Railway Crossing** (my pick; the user left it open).
+- **The request before**: "All of those please" (caddie perk upgrades, more
+  caddie moves, life on the pier, a season chime). All four done.
 - **The request before**: "get rid of the caddy wings, just have them
   float up and down a tiny bit; more animation too, like randomly will
   spin, dance, stuff like that for fun". Done (§5 "The caddie: no wings, a
@@ -140,6 +142,10 @@ Line numbers are approximate and drift. Search for the name instead.
 | Tour tab: Tour Card, The Card, Season, Major of the Week | `renderTour`, `renderSeason`, `renderMajor` |
 | **Seasons**: home courses by the card, six regular stops by the real month | `SEASONS`, `homeSeason`, `courseSeason`, `CAL_SEASONED`, `MONTH_SEASON`, `monthNow`, `seasonLook`, `LOOK_CACHE`, `SEASON_FORCE`, `Scene.look`, `Scene.snow` (drawn in `drawWeather`), the banner in `announceCourse` |
 | **Signature holes** (island, canyon, stones, sea stack) | `sigHole`, `sigKind`, `SIG_NAME`, `B.SIG_HOLE`, `HOME_PIER`, the `*_FORCE` values, `drawBridge`, `drawStones`, `drawPier`, `isleWait` (the hold), `sigScore` (honours and `S.sigRec`), `renderRecord` |
+| **The hole waits for him to reach the green** | `Scene.holeWait` (was `isleWait`), `B_GREEN_UP`, `B_GREEN_STAND`, `Scene.upT`, `holeSaid`, `Scene.saidHole`, the `waiting` guard and hold in `step`, `walk` in `finishHole` (the wait paid for) |
+| **Railway Crossing** | `isRail`, `RAIL_FORCE`, `P_RAIL`, `Scene.tickRail`, `railAt`, `railHold`, `railLights`, `drawRail`, `drawTrain`, `RAIL_X`/`RAIL_V`/`RAIL_LEN`/`RAIL_MEET`, `railWait` in the camera code, `Sfx.whistle`/`chuff`/`ding`, `SIG_HOME_ROUND`; `DEV.rail` |
+| **Life on the signature holes** | `DUCKS`, `Scene.duckAt`, `drawDucks`, `drawHawk` (from `drawBridge`), `fishAt`, `drawFish` (from `drawStones`), `Sfx.quack`/`hawk`/`plop` |
+| Happy dance, Seasons Seen | `Scene.happyDance`, `fairyQueue`; `S.seasonsGot`, `seasonsSeen`, `seasonsAll` |
 | **Signature hole of the week** | `SIG_KINDS`, `sigWeekOf`, `sigWeek`, `isSigWeek`, `holePurse`, `B.SIG_WEEK_MULT`, `SIGWEEK_FORCE`; the map's `mapStar` / `MAP_STAR` and `Scene.mapWk`; `DEV.sigWeek`, `DEV.reprice` |
 | Island greens in particular | `isIsland`, `ISLE_FORCE`, `Scene.isle` (`bank`, `land`), `Scene.spot`, `Scene.heli`, `B_FLY`, `paintHeli`, `P_LAKE`, the `moat` in `newHole` and `layHazards` |
 | **Battery saver** | `saverOn`, `saverOff`, `saverDue`, `saverDraw`, `saverStats`, `saverFrame`, `saverClub`, `SAVER`, `S.saver`, `SAVER_AUTO`, `touchedAt`; the loop's switch is in `frame`/`frameBody`; markup `#saver` |
@@ -252,15 +258,130 @@ Line numbers are approximate and drift. Search for the name instead.
    money, so a check that plays for money can pass this week and fail the
    next. After touching the purse, the pacing or anything paid per hole, run
    the suite with the week pinned to each kind: a temporary patch of
-   `sigWeek` to return `'island'`, `'canyon'`, `'stones'`, `'pier'` in turn.
-   Only `sigweek` itself should fail then (its calendar part expects the
-   week to turn).
+   `sigWeek` to return `'island'`, `'canyon'`, `'stones'`, `'pier'`,
+   `'rail'` in turn (in a copy of the game, like rule 20). Only `sigweek`
+   itself should fail then (its calendar part expects the week to turn).
 24. **A hole is priced as it is played.** The purse carries the weather's
    gold multiplier, so `startHole` draws the weather before it reads the
    golfer (`derive()`); `sigweek` compares the away model's price with the
    live one and caught it the other way round.
+25. **A hole waits for him while the course is drawn** (`Scene.holeWait`):
+   a check that calls `step()` right after drawing, with `QUIET` off, will
+   not see the hole end until he has walked up to the green. Play frames
+   (`step` and `Scene.draw` together), or set `QUIET`. It is also why
+   `performance.now` matters: the wait only holds while the last frame was
+   drawn within 250ms.
+26. **Measuring a sound with `Math.random` pinned to a constant silences
+   every noise burst** (`Sfx.noise` fills its buffer from it). Feed it a
+   seeded stream instead.
 
 ## 5. What the last features do (for debugging them)
+
+### A hole never ends before he reaches the green (user asked, mid-task)
+
+- Before: a hole moved on the step its ball was down, with him on average
+  about 12 short of the pin (up to 30) and, on a strong bag (holes of about
+  a second), never off the tee. Measured in frames with `greenwait2.js`
+  (scratchpad; rewrite if lost: step + draw at 60 a second with
+  `performance.now` driven by the script).
+- Now `Scene.holeWait()` (was `isleWait`, which only covered the signature
+  crossings) holds the hole's end in `step()` until he has walked up within
+  `B_GREEN_UP` (1.5) of the pin and stood there 0.25s (`Scene.upT`), after
+  any crossing. Only while the course is drawn (`drawnAt` within 250ms), not
+  in `QUIET`/`OFFLINE`/a wager, not behind the saver; capped at `ISLE_HOLD`
+  (8s). Once the ball is down (`S.yards <= 0`) the camera heads straight for
+  `LEN - B_GREEN_STAND` (1.0) a little brisker (rate 6, was 4.5), whether
+  or not the last ball is still in the air.
+- The cup's sound, the banner, the caddie's word and the happy dance come as
+  the ball drops (`holeSaid`, called once from `step` when the wait begins;
+  `Scene.saidHole` stops `finishHole` repeating them). Unwatched, everything
+  happens in `finishHole` in the old order, so seeded checks see the same
+  random sequence.
+- Nothing is played on a waiting hole: `step` skips `autoCast`, the burn and
+  the swing timer while `S.doneT != null && S.yards <= 0`.
+- **The wait is paid for**: `finishHole`'s `walk` = elapsed / doneT (1 when
+  it did not wait). The hole's gold (its swings' `S.holeGold` and the
+  finish), its experience and its gear-luck roll are scaled by it, so purse
+  per second watched equals away. Measured on the same dice (the picture on
+  its own random stream, no caddie perk): 3.81 against 3.67 a second on a
+  fresh bag, 57.7 against 56.4 on a strong one; the difference is the two
+  runs drifting apart (wall-clock buffs), not the wait. What is not paid:
+  events simply take longer while watched (about 12% on a normal bag, 2.5x
+  on a strong one), so per-event things (cheques, cups) come slower.
+- Typical wait: 1.1-1.2s on a plain hole; island 2.5-3s, stones about 3s,
+  a railway up to about 5.5s (the train).
+- Check `green`. `dance` now plays its frames with `step` running.
+
+### The Railway Crossing, the fifth signature hole (user asked, my design)
+
+- Where: a home course's last par four of the front nine (hole 9 in all
+  three par layouts; `sigHole` special case: `holeInRound <= 9`); regular
+  courses `moorland`, `ironbark` (were stones and canyon) and the major
+  `oldlinks` (was stones) in `B.SIG_HOLE`. So home rounds have five
+  signature holes (`SIG_HOME_ROUND`); Signature Round needs all five.
+- `newHole`: `rail` moat `{ rail: 1, d: 0.47 LEN, rd: 0.95, rx: 40 }` drawn
+  by `P_RAIL` (level ballast in the course's rock), map colour rock, roll
+  0.5. `Scene.isle` gets `{ bank, land, rail: 1 }`; balls never rest on the
+  line (`spot`).
+- The train (`tickRail`, `railAt`, `railHold`, `railLights`): sets off
+  `RAIL_X` (34) out, runs at `RAIL_V` (11), `RAIL_LEN` 7.4 long; every
+  20-35s on its own (`trainNext`, own `seeded` stream), and one meets him
+  the first time he reaches the line on a hole (`trainMet`), setting off
+  `RAIL_MEET` (20) out so the wait is about 3.6s. He does not step onto the
+  line while a train is set off and not yet clear (`railWait` in the camera
+  code clamps him to the bank; the first version let him fall through to
+  his ordinary walk, and the check caught it).
+- `drawRail` (after `drawDucks` in the frame): sleepers, the boarded
+  crossing, far rail, far posts, the train (`drawTrain`: engine, two
+  carriages with lit windows, round smoke puffs), near rail, near posts;
+  posts carry crossed white boards and two lamps flashing while
+  `railLights`. All clipped at their own distance.
+- Sounds: `Sfx.whistle` (as it sets off, -45.7 dB), `chuff` (every 0.26s
+  while it runs, about a bird), `ding` (every 0.45s while the lamps flash,
+  under the plank). `WHISTLE_VOL`, `CHUFF_VOL`, `DING_VOL`.
+- Week rotation is now plain `wk % 5` (`sigWeekOf`); week 2960 is still the
+  island and 2961 the canyon, as before. Honour **All Aboard** (`sigRl`,
+  tally `sigRail`). Dev menu: "railway" button, "railway birdies +25".
+- Checks `rail` (new), `sigview` (plays rail holes with a train in every
+  view), `sigweek`, `honours`, `island`, `smoke` updated for five kinds.
+
+### Life on the other signature holes (user asked)
+
+- `drawDucks` (island holes only, `isle.fly`): four ducks (`DUCKS`, two
+  drakes with green heads, two hens) paddling slow rounds short of the
+  island, kept inside the lake's outline (`duckAt` clamps to 0.7 of
+  `hazSpan`), a pale wake, one tipping up now and then.
+- `drawHawk` (from `drawBridge`, so canyon only): circling over the gorge,
+  soaring with raised tips, three beats every 6.3s; not at night.
+- `drawFish` (from `drawStones`): three fish on clocks of their own
+  (`fishAt`), half their turns a leap out beside the stones and back, a
+  splash and a ring; none on ice.
+- Sounds from `Sfx.tick`: `quack` (island, not at night), `hawk` (canyon,
+  not at night), `plop` (each fish that lands, off `fishAt`). Levels
+  measured with real noise (a constant `Math.random` silences `hiss`: the
+  first measurement read the chuff at -120 dB).
+- All worked out from the clock (`hr` noise), no `Math.random`. Check
+  `wildlife`; `sigview` now also plays island holes and moves the clock
+  between views (a fish drawn through the ground was missed while it stood
+  still).
+
+### A happy dance on a great hole (user asked)
+
+- `Scene.happyDance(d)`: an ace two flips and a cartwheel, an albatross a
+  flip and a cartwheel, an eagle a cartwheel, one birdie in three a dance or
+  a spin (his own `_moveRnd` stream). The turns queue in `fairyQueue` and
+  `tickMove` starts each as the last ends; a perk going off or a wager
+  drops the rest; no turn of his own for 12s after. Called from `holeSaid`
+  (as the ball drops) or `finishHole`. Check `dance`.
+
+### Seasons Seen on the Record (user asked)
+
+- `S.seasonsGot[courseId]` is a bit a season (0 as built .. 3 blossom), set
+  in `seasonTurn` for every hole played on a course that turns, catch-ups
+  included, wagers not; `initState` repairs it and counts an old save's
+  `S.seasonSeen`. The Record row "Seasons Seen" reads "n of 64"
+  (`seasonsSeen`, `seasonsAll`). The Record's row titles went to Title
+  Case. Checked in `chime`.
 
 ### Season chime (user asked, the last of four)
 
@@ -826,6 +947,12 @@ Line numbers are approximate and drift. Search for the name instead.
 
 ## 6. Recent history (newest first, one line each)
 
+- A hole never ends before he is up on the green (while watched; the wait
+  is paid for, so watching earns what being away does).
+- The fifth signature hole: the Railway Crossing, with its train.
+- Ducks on the island lake, a hawk over the canyon, fish by the stones.
+- A happy dance on a great hole.
+- Seasons Seen on the Record; the Record's titles in Title Case.
 - A short chime when a course comes up in a new season.
 - Life on the pier: spray over the deck in the wind, wheeling gulls, one
   on a post that flies off as he comes, and a quiet gull cry.
@@ -918,18 +1045,19 @@ Line numbers are approximate and drift. Search for the name instead.
 ## 8. What to offer next
 
 Everything asked for is done. First ask how the latest look on the phone:
-the caddie without wings and his turns (spin, dance, flip, wave, loop,
-cartwheel, juggle), perk upgrades on the Range's Caddie tab, the pier on a
-windy day (Coastal Classic, Seaside Open, Harbour Lights' front nine), and
-the chime when a course comes up in a new season (the regular stops turn
-to winter in December; dev menu Sound row plays each chime). Also still
-unseen: the signature hole of the week (Island Green this week).
+the railway crossing (home courses' hole 9; the Moorland, Old Links and
+Ironbark), the ducks, hawk and fish, the caddie's happy dance on an eagle,
+Seasons Seen on the Record, and holes now finishing with him up on the
+green. Still unseen before that: the caddie's turns, perk upgrades, the pier
+on a windy day and the season chime.
 
 The menu to offer next:
-1. **Life on the other signature holes** (recommended): ducks on the island
-   lake, a hawk circling the canyon, fish jumping by the stepping stones.
-2. **A happy dance on a great hole**: the caddie's turns chosen by the
-   score now and then (a cartwheel on an eagle, a flip on an ace).
-3. **A Record row for seasons seen.**
-4. **A fifth signature hole** (a plateau green was set aside: the ground
-   near the camera is eased flat, so a cliff barely shows).
+1. **He putts out** (recommended): now that every hole waits for him on
+   the green, he taps the ball in when he gets there, a short putt and the
+   ball dropping, paid for like the walk.
+2. **Life on the railway**: other trains now and then (a goods train, an
+   express, a night train with glowing windows), and the golfer and his
+   caddie wave as it goes by.
+3. **Weather on the signature holes**: rain rings on the island's lake,
+   snow settling on the train and the bridge, spray thicker in a storm.
+4. **A Signature Week honour**: all five kinds played in one real week.

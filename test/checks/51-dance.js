@@ -43,10 +43,14 @@ module.exports = {
             try { return hd.call(this, dd); } finally { Math.random = mr; } };
           const h0 = S.hole;
           try { step(0.002, D); } finally { Scene.happyDance = hd; Math.random = mr; }
-          const seen = [], ended = S.hole !== h0;
+          // (the hole now waits for him to walk up to the green, so the round
+          // plays on in the frames: the dance starts as the ball drops)
+          const seen = [];
+          let ended = S.hole !== h0;
           let last = null;
           for (let i = 0; i < 120; i++) {
-            Scene.draw(0.05, derive());
+            const Dn = derive(); step(0.05, Dn); Scene.draw(0.05, Dn);
+            if (S.hole !== h0) ended = true;
             const M = Scene.fairyMove, key = M ? M.kind + '@' + M.t0.toFixed(3) : null;
             if (key && key !== last) seen.push(M.kind);
             last = key;

@@ -82,7 +82,7 @@ module.exports = {
         // that moment once read as neither, and the hole went on without him
         Scene.camD = I.land - 0.03; Scene.crossing = 0.99; Scene.landT = -99; Scene.drawnAt = performance.now();
         Scene.hole = S.hole; const q = QUIET; QUIET = false;
-        o.edgeWaits = Scene.isleWait(); QUIET = q;
+        o.edgeWaits = Scene.holeWait(); QUIET = q;
 
         window.step = window.__step;
         QUIET = false;

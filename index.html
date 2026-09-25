@@ -6223,11 +6223,28 @@ function sigScore(sc){
 // The hole's time: when the ball was down, not when the hole moved on. They
 // differ only on an island, where the hole waits for him to fly across.
 const holeTime = () => S.doneT != null ? S.doneT : S.elapsed;
+// The ball is down on a hole that waits for him to walk up to the green (see
+// Scene.holeWait): the cup's sound, the score's banner, the caddie's word and
+// his happy dance come now, as it drops, rather than when the hole moves on.
+function holeSaid(){
+  const sc = scoreFor(holeTime() / S.parTime);
+  Sfx.play('hole', sc.d);
+  Scene.holed(sc);
+  Scene.happyDance(sc.d);
+  Scene.saidHole = S.hole;
+}
 function finishHole(D){
   const ratio = holeTime() / S.parTime;
   const sc = scoreFor(ratio);
-  Sfx.play('hole', sc.d);
-  const pay = S.purse * (1 - B.SWING_SHARE) * sc.pay * (1 + D.C.pay);
+  const said = Scene.saidHole === S.hole;
+  if(!said) Sfx.play('hole', sc.d);
+  // A hole that waited for him to walk up to the green (only ever while it
+  // is watched) pays for the wait: its purse, experience and gear luck are
+  // what those seconds would have brought at the hole's own rate, so
+  // watching earns what being away does. walk is 1 when it did not wait.
+  const walk = S.doneT > 0 ? Math.max(1, S.elapsed / S.doneT) : 1;
+  const base = S.purse * (1 - B.SWING_SHARE) * sc.pay * (1 + D.C.pay);
+  const pay = base + (base + (S.holeGold || 0)) * (walk - 1);
   S.gold += pay; Meter.add(pay);
 
   const idx = holeInRound(S.hole) - 1;
@@ -6251,9 +6268,8 @@ function finishHole(D){
   if(sc.d <= -2) bump('eagle');
   if(sc.d >= 4) bump('snow');
   if(sc.d < S.bestScore) S.bestScore = sc.d;
-  addXp(B.XP_HOLE * Math.pow(1 + S.tier, B.XP_TIER) * sc.pay * (parOf(S.hole)/4));
-  Scene.holed(sc);
-  Scene.happyDance(sc.d);
+  addXp(B.XP_HOLE * Math.pow(1 + S.tier, B.XP_TIER) * sc.pay * (parOf(S.hole)/4) * walk);
+  if(!said){ Scene.holed(sc); Scene.happyDance(sc.d); }
 
   // gear drops: the closing hole always gives one up
   const luck = D.drop;
@@ -6263,7 +6279,7 @@ function finishHole(D){
   if(isClosing(S.hole)){
     const it = dropItem(S.tier, luck + 0.15, isSunday(S.hole) ? 1 : 0);
     if(bagAdd(it)) toast('<b>' + B.RARITY[it.rar].n + '</b> ' + it.name);
-  }else if(Math.random() < luck){
+  }else if(Math.random() < luck * walk){
     const it = dropItem(S.tier, luck, 0);
     if(bagAdd(it) && it.rar >= 2) toast('<b>' + B.RARITY[it.rar].n + '</b> ' + it.name);
   }
@@ -8667,6 +8683,9 @@ const PX_CSS = 1.1, K_PROJ = 22.4, LEN = 60, B_GOLFER = 12, B_FLY = 11, B_BRIDGE
 // it runs, and how long it is (engine and two carriages)
 // (and how far out the one that meets him at the line sets off)
 const RAIL_X = 34, RAIL_V = 11, RAIL_LEN = 7.4, RAIL_MEET = 20;
+// the end of a hole: where he stops, short of the cup, and how near it counts
+// as up on the green (see Scene.holeWait)
+const B_GREEN_STAND = 1.0, B_GREEN_UP = 1.5;
 // How far behind the golfer the camera sits, in world units. Small numbers put
 // you over his shoulder with the hole falling away hard; large numbers flatten
 // it into a diagram. GROUND is derived from it below, so his feet stay put.
@@ -10588,6 +10607,7 @@ const Scene = {
 
     this.camD = 0; this.restBall = null; this.walkTo = 0;
     this.train = null; this.trainMet = 0; this.trainNext = this.t + 8;
+    this.upT = 0; this.saidHole = null;
     // A swing still playing when the last hole ended belonged to that hole: it
     // finished it. Carried over, it hit a ball a yard off the new tee that
     // counted for nothing, and he stood and hit again.
@@ -10823,16 +10843,23 @@ const Scene = {
     if(!I || d <= I.bank || d >= I.land) return d;
     return d < (I.bank + I.land) / 2 ? I.bank : I.land;
   },
-  // Still on his way to an island green: only while the course is being
-  // drawn, so the round never waits on a picture nobody can see.
-  isleWait(){
+  // The hole waits for him (the user asked: a hole never ends before he gets
+  // to the green). Once its ball is down it moves on only when he has walked
+  // up onto the green, across an island's water, a canyon's bridge, a
+  // river's stones, a pier or a railway on the way, and stood there a
+  // moment. Only while the course is being drawn, so the round never waits
+  // on a picture nobody can see: not in a catch-up or a wager, and not
+  // behind the saver. step() holds the hole's end on it (never longer than
+  // ISLE_HOLD), and finishHole pays for the wait.
+  holeWait(){
     const I = this.isle;
-    if(!I || QUIET || OFFLINE || S.dgnRun || this.hole !== S.hole) return false;
+    if(QUIET || OFFLINE || S.dgnRun || this.hole !== S.hole) return false;
     if(performance.now() - (this.drawnAt || 0) > 250) return false;
     // (still crossing counts: the last hundredth of a step before the far
     // side read as neither across nor on the way, and let the hole go)
-    if(this.crossing || this.camD < I.land - 0.05) return true;
-    return this.t - (this.landT || 0) < 0.4;          // a moment on the green
+    if(I && (this.crossing || this.camD < I.land - 0.05)) return true;
+    if(this.camD < LEN - B_GREEN_UP || !this.upT) return true;
+    return this.t - this.upT < 0.25;                   // a moment up there
   },
   // still on his way to where his last ball came down
   walking2ball(){
@@ -13133,7 +13160,10 @@ Object.assign(Scene, {
       // carried on through a swing.
       const swingPh = this.swingT > 0 ? 1 - this.swingT / this.swingDur : 1;
       const at = this.spot(prog);
-      const goal = Math.min(at, this.walkTo === undefined ? at : this.walkTo);
+      // once the hole's ball is down he goes straight up to the green, a
+      // little brisker, whether or not the last ball is still in the air
+      const up = S.yards <= 0 && this.hole === S.hole;
+      const goal = up ? LEN - B_GREEN_STAND : Math.min(at, this.walkTo === undefined ? at : this.walkTo);
       const I = this.isle;
       // (at a railway, not while a train is coming or going by)
       const railWait = !!(I && I.rail && !this.crossing && this.railHold());
@@ -13142,7 +13172,7 @@ Object.assign(Scene, {
         // over the canyon on its bridge: at a steady pace, so it can be seen.
         this.camD = Math.min(goal, Math.max(cam0, I.bank) + (I.fly ? B_FLY : I.hop ? B_HOP : B_BRIDGE) * dt);
       }else{
-        if(swingPh >= 0.85) this.camD += Math.max(0, goal - this.camD) * Math.min(1, dt*4.5);
+        if(swingPh >= 0.85) this.camD += Math.max(0, goal - this.camD) * Math.min(1, dt * (up ? 6 : 4.5));
         // (not on an island: the hole waits for him there, and carried on
         // mid-swing he slid off the tee to the water's edge)
         else if(!I && at - this.camD > LEN * 0.4) this.camD += (at - this.camD) * Math.min(1, dt*4.5);
@@ -13157,6 +13187,7 @@ Object.assign(Scene, {
         ? (this.camD - I.bank) / (I.land - I.bank) : 0;
       this.heli = I && I.fly ? this.crossing : 0;
       if(was && !this.crossing) this.landT = this.t;
+      if(this.camD >= LEN - B_GREEN_UP && !this.upT) this.upT = this.t;
       this.drawnAt = performance.now();
       // walking: the camera is carrying him on and he is not mid-swing. A new
       // hole puts the camera back on the tee, which is not a walk.
@@ -15571,26 +15602,37 @@ function step(dt, D){
   if(S.dgnRun){ tickDgn(dt, D); return; }
 
   S.elapsed += dt;
-  autoCast(D, dt);
+  // A hole whose ball is down and that is waiting for him to walk up to the
+  // green: nothing more is played on it, so the wait costs no perk, burn or
+  // swing (they carry on with the next hole).
+  const waiting = S.doneT != null && S.yards <= 0;
+  if(!waiting){
+    autoCast(D, dt);
 
-  // the burn left (S.burn is what remains of it), spent evenly over the time left
-  if(S.burnT > 0){
-    const d = Math.min(dt, S.burnT), amt = S.burn * d / S.burnT;
-    S.burn -= amt; S.burnT -= d;
-    damage(amt, D, true);
+    // the burn left (S.burn is what remains of it), spent evenly over the time left
+    if(S.burnT > 0){
+      const d = Math.min(dt, S.burnT), amt = S.burn * d / S.burnT;
+      S.burn -= amt; S.burnT -= d;
+      damage(amt, D, true);
+    }
+
+    S.swingT += D.spd * dt;
+    const n = Math.floor(S.swingT);
+    if(n > 0){ S.swingT -= n; doSwings(n, D); }
   }
 
-  S.swingT += D.spd * dt;
-  const n = Math.floor(S.swingT);
-  if(n > 0){ S.swingT -= n; doSwings(n, D); }
-
   if(S.yards <= 0 && S.elapsed >= (S.walkMin || B.WALK_MIN)){
-    // On an island the ball is often down with the tee shot, and the next
-    // hole came before he had flown across. The hole waits for him while the
-    // course is on screen, scored from when the ball was down, and never
-    // longer than ISLE_HOLD.
+    // The ball is down, and the next hole used to come there and then, with
+    // him still out on the fairway (or never off the tee, on a fast bag). The
+    // hole waits for him to walk up to the green while the course is on
+    // screen (Scene.holeWait), scored from when the ball was down, and never
+    // longer than ISLE_HOLD; the score, its sound and the caddie's cheer come
+    // as the ball drops.
     if(S.doneT == null) S.doneT = S.elapsed;
-    if(Scene.isleWait() && S.elapsed - S.doneT < B.ISLE_HOLD) return;
+    if(Scene.holeWait() && S.elapsed - S.doneT < B.ISLE_HOLD){
+      if(Scene.saidHole !== S.hole) holeSaid();
+      return;
+    }
     finishHole(D);
   }
 }
