@@ -303,38 +303,48 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
   padding:3px 7px;min-height:24px;cursor:pointer;flex:0 0 auto}
 .lkhead .lkauto.on{border-color:var(--brass-dk);color:var(--brass);background:rgba(227,180,87,.09)}
 
+/* The Bag tab (the user asked): its sub tabs and the slot bar stay at the
+   top of the panel however far down the clubs you have scrolled */
+#v-bag #bagNav{position:sticky;top:0;z-index:4}
+#bagGrid{position:sticky;top:var(--bagnav,37px);z-index:3;background:var(--panel);border-bottom:var(--hair)}
+.lkhead .lkscrap{margin-left:0}
+/* the clubs in a slot, two to a row: framed art, the name in its rarity's
+   colour, its level, and its numbers */
+#bagList{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;padding:2px 8px 10px}
+#bagList .empty{grid-column:1 / -1}
+.gt{position:relative;display:grid;grid-template-columns:40px minmax(0,1fr);gap:7px;align-items:start;
+  padding:7px 7px 8px;background:#0D1D14;border:1px solid var(--line);border-left:3px solid var(--line);cursor:pointer;min-width:0}
+.gt.worn{background:#15291D;border-color:var(--brass-dk)}
+.gt .thumb{width:40px;height:40px}
+.gt .thumb img{width:36px;height:36px}
+.gt .gup{position:absolute;top:-1px;left:-1px;background:var(--aurora);color:#04150F;font-size:9px;font-weight:700;
+  line-height:12px;padding:0 3px}
+.gt .genh{position:absolute;bottom:-1px;left:-1px;background:#08130D;border:1px solid var(--brass-dk);color:var(--brass);
+  font-family:var(--mono);font-size:9px;font-weight:700;line-height:11px;padding:0 2px}
+.gt .gn{font-family:var(--disp);font-size:var(--f2);line-height:1.15;display:-webkit-box;-webkit-line-clamp:2;
+  -webkit-box-orient:vertical;overflow:hidden;word-break:break-word}
+.gt .glv{font-family:var(--mono);font-size:var(--f0);color:#6FB6F0;white-space:nowrap}
+.gt .ib{font-size:var(--f0);color:var(--faint);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.gt .gs{font-family:var(--mono);font-size:var(--f0);color:var(--chalk);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.gt .gs2{font-family:var(--mono);font-size:var(--f0);color:var(--dim);margin-top:1px;display:-webkit-box;-webkit-line-clamp:2;
+  -webkit-box-orient:vertical;overflow:hidden}
+.gt .wtag{font-size:9px;letter-spacing:.1em;text-transform:uppercase;font-weight:700;color:var(--brass)}
+/* the item sheet's three buttons, side by side */
+.acts3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin-top:10px}
+.acts3 .act{margin:0;padding:10px 4px;font-size:var(--f1)}
+.acts3 .act small{display:block;font-size:var(--f0);opacity:.8;letter-spacing:0;text-transform:none;margin-top:2px}
+.sheetcur{font-family:var(--mono);font-size:var(--f0);color:var(--faint);margin-top:8px}
 .item{padding:9px 12px;border-bottom:1px solid #12261A;display:grid;
   grid-template-columns:1fr auto;gap:9px;align-items:center;border-left:2px solid transparent}
 .item .in{font-family:var(--disp);font-size:var(--f3);letter-spacing:.01em}
 .item .ia{font-size:var(--f1);color:var(--dim);margin-top:3px;line-height:1.45;font-family:var(--mono)}
 .item .ib{font-size:var(--f0);color:var(--faint);margin-top:2px}
-/* a club in the locker: framed art, the rarity said out loud beside the name,
-   and one button you can hit without aiming */
-/* minmax(0,1fr) and not 1fr. A grid item will not shrink below its own
-   min-content unless it is told it may, so a club with a long name pushed the
-   middle column to 231px where only 222 was free: the row overran its own
-   right padding and squeezed the button down to its min-width, which clipped
-   the word UPGRADE in half. The name already knows how to ellipsis; it was
-   never being given the chance. */
-.item.card2{grid-template-columns:44px minmax(0,1fr) auto;gap:10px;align-items:start}
 .item.worn{background:#12241A}
 .thumb{position:relative;width:44px;height:44px;display:flex;align-items:center;justify-content:center;
   background:#08130D;border:1px solid var(--line)}
 .thumb img{width:36px;height:36px;image-rendering:pixelated;image-rendering:crisp-edges}
 .thumb .tel{position:absolute;bottom:-1px;right:-1px;width:13px;height:13px;background:#08130D;
   border:1px solid var(--line);padding:1px}
-.irow{display:flex;align-items:baseline;gap:8px}
-.irow .in{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.irow .irar{flex:0 0 auto;font-size:var(--f0);letter-spacing:.1em;text-transform:uppercase;font-weight:700}
-.equipbtn{min-width:88px;padding:9px 6px;border:1px solid var(--brass-dk);background:var(--raise2);
-  color:var(--brass);border-radius:0;font-size:var(--f1);letter-spacing:.1em;text-transform:uppercase;
-  font-weight:700;display:flex;align-items:center;justify-content:center;gap:5px}
-/* flex:0 0 auto or the button squeezes it: measured at 7.8x13 and 8.8x13 in
-   the locker, which is a 12x12 drawing rendered two thirds as wide as it is
-   tall. The other half of it is that 13 was never a whole multiple of 12. */
-.equipbtn img{width:12px;height:12px;flex:0 0 auto;image-rendering:pixelated}
-.equipbtn.up{border-color:var(--aurora);color:var(--aurora);background:rgba(87,224,190,.10)}
-.equipbtn.worn{border-color:var(--line);color:var(--faint);background:transparent}
 .tag{font-size:var(--f0);letter-spacing:.1em;text-transform:uppercase;font-weight:700}
 .mini{border:1px solid var(--line);border-radius:0;padding:5px 9px;min-height:24px;font-size:var(--f1);
   letter-spacing:.08em;text-transform:uppercase;color:var(--dim);background:var(--raise)}
@@ -927,14 +937,13 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
       <div id="bagNav"></div>
       <div id="bagGear">
         <div id="bagGrid"></div>
-        <div id="purseStrip"></div>
-        <div class="band"><span class="eyebrow">Sets and affinity</span><span class="note" id="bagPower"></span></div>
-        <div id="setBox"></div>
-        <div class="band"><span class="eyebrow">Locker</span><div class="btnrow">
-          <button class="mini" id="scrapBtn">Scrap</button>
-        </div></div>
         <div class="lkhead" id="lkHead"></div>
         <div id="bagList"></div>
+      </div>
+      <div id="bagSets" hidden>
+        <div id="purseStrip"></div>
+        <div class="band"><span class="eyebrow">Sets &amp; Affinities</span><span class="note" id="bagPower"></span></div>
+        <div id="setBox"></div>
       </div>
       <div id="bagShots" hidden>
         <div class="band"><span class="eyebrow" id="sklHead">Shot Book</span><span class="note" id="sklNote">0 / 3 carried</span></div>
@@ -5066,7 +5075,7 @@ function enhance(it){
   S.grit -= c;
   if(Math.random() < enhChance(it)){ it.enh++; if(it.enh >= B.ENH_MAX) bump('enh15');
     toast(it.name + ' \u2192 <b>+' + it.enh + '</b>'); }
-  else toast('Reforge failed \u00b7 still +' + it.enh);
+  else toast('Upgrade failed \u00b7 still +' + it.enh);
   renderBag(); renderVitals();
 }
 const lockCount = it => (it.aff || []).filter(a => a.lock).length;
@@ -16646,6 +16655,54 @@ function renderBag(){
     d.onclick = () => { S.bagSlot = sl.id; renderBag(); };
     g.appendChild(d);
   }
+  // (the slot bar sits just under the sub tabs, both held at the top)
+  const nav = $('bagNav'); if(nav && nav.offsetHeight) document.documentElement.style.setProperty('--bagnav', nav.offsetHeight + 'px');
+  renderBagSets();
+
+  const sl = B.SLOTS.find(x => x.id === S.bagSlot);
+  const worn = S.equip[S.bagSlot];
+  const spare = S.bag.filter(it => it.slot === S.bagSlot)
+                     .sort((a, b) => itemScore(b) - itemScore(a));
+
+  // one line over the clubs: the slot, the locker against its cap, and the
+  // two switches (auto-equip, scrapping)
+  const hd = $('lkHead');
+  if(hd){
+    hd.innerHTML = '<span class="lkn">' + sl.n + '</span>'
+      + '<span class="lkc"><b>' + S.bag.length + '</b> / ' + bagCap() + '</span>';
+    const ab = document.createElement('button');
+    ab.className = 'lkauto' + (S.autoEquip ? ' on' : '');
+    ab.id = 'autoEqBtn';
+    ab.textContent = 'Auto-equip ' + (S.autoEquip ? 'on' : 'off');
+    ab.title = 'Equips a club that drops when it is better on the carry or the '
+      + 'purse and worse on neither. Trade-offs stay on the bench.';
+    ab.onclick = () => {
+      S.autoEquip = S.autoEquip ? 0 : 1;
+      const took = autoEquipSweep();
+      if(took.length) toast('Auto equipped <b>' + took.length + '</b> club'
+        + (took.length > 1 ? 's' : ''));
+      else if(S.autoEquip) toast('Nothing better on the bench');
+      renderBag(); renderVitals();
+    };
+    hd.appendChild(ab);
+    const sb = document.createElement('button');
+    sb.className = 'lkauto lkscrap' + (S.autoScrap >= 0 ? ' on' : '');
+    sb.id = 'scrapBtn';
+    sb.textContent = S.autoScrap >= 0 ? 'Scrap \u00b7 auto' : 'Scrap';
+    sb.onclick = () => scrapSheet();
+    hd.appendChild(sb);
+  }
+
+  const w = $('bagList'); w.innerHTML = '';
+  if(worn) w.appendChild(gearTile(worn, true));
+  for(const it of spare) w.appendChild(gearTile(it, false));
+  if(!worn && !spare.length){
+    w.innerHTML = '<div class="empty">No ' + sl.n.toLowerCase() + ' yet.</div>';
+  }
+}
+// The Sets & Affinities sub tab (the user asked: it sat over the clubs):
+// what you hold to spend, the set bonuses, and today's course affinity.
+function renderBagSets(){
   const D = derive();
   const ps = $('purseStrip');
   ps.innerHTML = [['Grit', fmt(S.grit), 'grit', '#E0D0A6'], ['Shards', fmt(S.shard), 'shard', '#4FA3F0'],
@@ -16681,59 +16738,6 @@ function renderBag(){
           + (next ? ' \u00b7 ' + next.n + '\u00a0pieces: ' + nb(eff(next)) : '') + '</div></div></div>';
       }).join('')
     + (Object.keys(ownedSets()).length ? '' : '<div class="hint">Named sets drop from Rare clubs and up.</div>');
-
-  const sl = B.SLOTS.find(x => x.id === S.bagSlot);
-  const worn = S.equip[S.bagSlot];
-  const spare = S.bag.filter(it => it.slot === S.bagSlot)
-                     .sort((a, b) => itemScore(b) - itemScore(a));
-
-  const hd = $('lkHead');
-  if(hd){
-    // "Auto on" sat beside a Scrap button that has an auto of its own, so it
-    // says which it is; the words it gave up were "in the locker", which the
-    // band over it already says
-    hd.innerHTML = '<span class="lkn">' + sl.n + '</span>'
-      + '<span class="lkc"><b>' + S.bag.length + '</b> / ' + bagCap()
-      + (spare.length ? ' \u00b7 ' + spare.length + '\u00a0spare' : '') + '</span>';
-    const ab = document.createElement('button');
-    ab.className = 'lkauto' + (S.autoEquip ? ' on' : '');
-    ab.id = 'autoEqBtn';
-    ab.textContent = 'Auto-equip ' + (S.autoEquip ? 'on' : 'off');
-    ab.title = 'Equips a club that drops when it is better on the carry or the '
-      + 'purse and worse on neither. Trade-offs stay on the bench.';
-    ab.onclick = () => {
-      S.autoEquip = S.autoEquip ? 0 : 1;
-      const took = autoEquipSweep();
-      if(took.length) toast('Auto equipped <b>' + took.length + '</b> club'
-        + (took.length > 1 ? 's' : ''));
-      else if(S.autoEquip) toast('Nothing better on the bench');
-      renderBag(); renderVitals();
-    };
-    hd.appendChild(ab);
-  }
-
-  const sb = $('scrapBtn');
-  if(sb){ setText(sb, S.autoScrap >= 0 ? 'Scrap \u00b7 auto' : 'Scrap'); sb.classList.toggle('go', S.autoScrap >= 0); }
-
-  const w = $('bagList'); w.innerHTML = '';
-  if(worn) w.appendChild(bagRow(worn, true));
-  for(const it of spare) w.appendChild(bagRow(it, false));
-
-  if(!worn && !spare.length){
-    w.innerHTML = '<div class="empty">No ' + sl.n.toLowerCase() + ' yet.</div>';
-  }
-  if(spare.length > 1){
-    const r = document.createElement('div');
-    r.className = 'item';
-    r.innerHTML = '<div><div class="in">Scrap the spare ' + sl.n.toLowerCase() + '</div>'
-      + '<div class="ib">' + spare.length + '\u00a0spare \u00b7 keeps the best</div></div>';
-    const btn = document.createElement('button');
-    btn.className = 'equipbtn';
-    btn.textContent = 'Scrap ' + (spare.length - 1);
-    btn.onclick = () => { scrapList(spare.slice(1)); renderBag(); renderVitals(); };
-    r.appendChild(btn);
-    w.appendChild(r);
-  }
 }
 
 // Scrapping, in one place: auto-scrap for what drops from now on, and the
@@ -16788,39 +16792,35 @@ function scrapSheet(){
   });
 }
 
-// One club, the way the reference reads it: framed art, the rarity said out
-// loud beside the name, what it is worth on its own line, and one button.
-function bagRow(it, isWorn){
+// One club as a tile, two to a row (the user sent a picture of the look):
+// framed art in its rarity's colour, the name in that colour with its
+// level beside it, the rarity and item level, and its numbers. A tap opens
+// it: equip, upgrade, scrap and the rest are in there.
+function gearTile(it, isWorn){
   const cur = S.equip[it.slot];
   const better = !isWorn && (!cur || itemScore(it) > itemScore(cur));
   const sl = B.SLOTS.find(s => s.id === it.slot);
   const col = RC(it.rar);
   const el = it.el ? elemOf(it.el) : null;
   const d = document.createElement('div');
-  d.className = 'item card2' + (isWorn ? ' worn' : '');
+  d.className = 'gt' + (isWorn ? ' worn' : '');
   d.style.borderLeftColor = col;
-
-  const primary = (sl.p === 'elm' || it.slot === 'ball' ? 'affinity power' : 'swing power');
+  if(!isWorn) d.style.borderColor = col + '55', d.style.borderLeftColor = col;
+  const primary = (sl.p === 'elm' || it.slot === 'ball' ? 'affinity' : 'swing');
   d.innerHTML = '<div class="thumb" style="border-color:' + col + '">'
       + '<img src="' + pixUrl(sl.ic, col) + '" alt="">'
       + (el ? '<span class="tel">' + svgIcon(el.ic, 'lel', elemColor(el.id)) + '</span>' : '')
+      + (better ? '<span class="gup" title="Better than the one you carry">\u25B2</span>' : '')
+      + (it.enh ? '<span class="genh">+' + it.enh + '</span>' : '')
     + '</div>'
-    + '<div><div class="irow"><span class="in">' + itemHead(it) + '</span>'
-      + '<span class="irar" style="color:' + col + '">' + B.RARITY[it.rar].n + '</span></div>'
-    + '<div class="ib">' + sl.n + ' \u00b7 item level ' + it.ilvl
-      + (it.set && setDef(it.set) ? ' \u00b7 <span style="color:var(--aurora)">' + setDef(it.set).n + '</span>' : '')
-      + (it.enh ? ' \u00b7 +' + it.enh : '')
-      + (isWorn ? ' \u00b7 <span style="color:var(--brass)">carrying</span>' : '') + '</div>'
-    + '<div class="ia">\u00d7' + fmt(1 + itemPrimary(it)) + ' ' + primary + '</div>'
-    + '<div class="ia">' + (affLine(it, 3) || 'no affixes') + '</div></div>';
-
-  const btn = document.createElement('button');
-  btn.className = 'equipbtn' + (isWorn ? ' worn' : better ? ' up' : '');
-  btn.innerHTML = isWorn ? 'Equipped'
-    : '<img src="' + pixUrl(sl.ic, better ? '#57E0BE' : '#E3B457') + '" alt="">'
-      + (better ? 'Upgrade' : 'Equip');
-  btn.onclick = e => { e.stopPropagation(); if(!isWorn) equipItem(it); };
-  d.appendChild(btn);
+    + '<div style="min-width:0"><div class="gn" style="color:' + col + '">' + it.name + '</div>'
+    + '<div class="ib"><span class="glv">iLv\u00a0' + it.ilvl + '</span> \u00b7 <span style="color:' + col + '">' + B.RARITY[it.rar].n + '</span></div>'
+    + '<div class="gs">\u00d7' + fmt(1 + itemPrimary(it)) + '\u00a0' + primary + '</div>'
+    + '<div class="gs2">' + (affLine(it, 1) || B.RARITY[it.rar].n) + '</div>'
+    + (isWorn ? '<div class="wtag">Equipped</div>' : '')
+    + (it.set && setDef(it.set) ? '<div class="gs2" style="color:var(--aurora)">' + setDef(it.set).n + '</div>' : '')
+    + '</div>';
+  d.dataset.uid = it.uid;
   d.onclick = () => itemSheet(it, isWorn);
   return d;
 }
@@ -16896,8 +16896,19 @@ function itemSheet(it, equipped){
       + (sw.lost.length ? '<div class="swset no">Breaks ' + sw.lost.join(', ') + '</div>' : '')
       + '</div>';
   }
-  if(canEnh) h += '<button class="act" onclick="doEnh(' + it.uid + ')">Reforge to +' + (it.enh+1)
-    + ' \u2014 ' + fmt(enhCost(it)) + ' grit, ' + Math.round(enhChance(it)*100) + '%</button>';
+  // the three it gets opened for, side by side (the user asked for upgrade
+  // and scrap here): equip, upgrade (a reforge, a level at a time), scrap
+  const sv = scrapValue(it);
+  h += '<div class="acts3">'
+    + (equipped ? '<button class="act ghost" disabled>Equipped</button>'
+                : '<button class="act" onclick="doEquip(' + it.uid + ')">Equip</button>')
+    + (canEnh ? '<button class="act' + ((S.grit || 0) >= enhCost(it) ? '' : ' ghost') + '" onclick="doEnh(' + it.uid + ')">Upgrade<small>+' + (it.enh + 1)
+        + ' \u00b7 ' + fmt(enhCost(it)) + '\u00a0grit \u00b7 ' + Math.round(enhChance(it)*100) + '%</small></button>'
+              : '<button class="act ghost" disabled>Upgrade<small>+' + B.ENH_MAX + ', the top</small></button>')
+    + (equipped ? '<button class="act ghost" disabled>Scrap<small>in the bag</small></button>'
+                : '<button class="act danger" onclick="doSalvage(' + it.uid + ')">Scrap<small>+' + fmt(sv, 0) + '\u00a0' + plural(sv, 'shards') + '</small></button>')
+    + '</div>'
+    + '<div class="sheetcur">' + fmt(S.grit || 0) + '\u00a0grit \u00b7 ' + fmt(S.shard || 0) + '\u00a0shards</div>';
   const lk = lockCount(it);
   h += '<button class="act ghost" onclick="doReroll(' + it.uid + ')">Re-attune '
     + (lk ? 'the other ' + (it.aff.length - lk) : 'affixes') + ' \u2014 '
@@ -16907,22 +16918,18 @@ function itemSheet(it, equipped){
   if(it.rar < B.RARITY.length-1)
     h += '<button class="act ghost" onclick="doAscend(' + it.uid + ')">Ascend to '
       + B.RARITY[it.rar+1].n + ' \u2014 ' + ascendCost(it) + '\u00a0shards</button>';
-  if(!equipped){
-    h += '<button class="act" onclick="doEquip(' + it.uid + ')">Put in the bag</button>';
-    h += '<button class="act danger" onclick="doSalvage(' + it.uid + ')">Scrap for '
-      + scrapValue(it) + ' ' + plural(scrapValue(it), 'shards') + '</button>';
-  }
   h += '<button class="act ghost" onclick="hideSheet()">Close</button>';
   showSheet(h);
 }
 const findItem = uid => S.bag.find(x => x.uid === uid)
   || B.SLOTS.map(s => S.equip[s.id]).filter(Boolean).find(x => x.uid === uid);
+// (each redraws the clubs behind the sheet too, so a tile shows what changed)
 function doEnh(uid){ const it = findItem(uid); if(it){ enhance(it); itemSheet(it, !S.bag.includes(it)); } }
 function doLock(uid, i){ const it = findItem(uid); if(it){ toggleLock(it, i); itemSheet(it, !S.bag.includes(it)); } }
-function doReroll(uid){ const it = findItem(uid); if(it){ rerollItem(it); itemSheet(it, !S.bag.includes(it)); } }
-function doAscend(uid){ const it = findItem(uid); if(it){ ascendItem(it); itemSheet(it, !S.bag.includes(it)); } }
-function doEquip(uid){ const it = findItem(uid); if(it){ equipItem(it); hideSheet(); } }
-function doSalvage(uid){ const it = findItem(uid); if(it){ salvageItem(it); hideSheet(); } }
+function doReroll(uid){ const it = findItem(uid); if(it){ rerollItem(it); itemSheet(it, !S.bag.includes(it)); renderBag(); } }
+function doAscend(uid){ const it = findItem(uid); if(it){ ascendItem(it); itemSheet(it, !S.bag.includes(it)); renderBag(); } }
+function doEquip(uid){ const it = findItem(uid); if(it){ equipItem(it); hideSheet(); renderBag(); } }
+function doSalvage(uid){ const it = findItem(uid); if(it){ salvageItem(it); hideSheet(); renderBag(); } }
 
 /* ---- shot book and sponsor perks ---- */
 let sklSub = 'shots';
@@ -17745,7 +17752,7 @@ function tickCaddie(dt){
   }
 }
 function renderBagNav(){
-  const subs = [['gear','Gear'], ['shots','Shots']];
+  const subs = [['gear','Gear'], ['sets','Sets & Affinities'], ['shots','Shots']];
   const n = $('bagNav');
   if(!n) return;
   n.innerHTML = subs.map(([id, t]) =>
@@ -17753,6 +17760,7 @@ function renderBagNav(){
   n.querySelectorAll('.sub').forEach(b =>
     b.onclick = () => { bagSub = b.dataset.s; renderBagNav(); $('panel').scrollTop = 0; });
   $('bagGear').hidden  = bagSub !== 'gear';
+  $('bagSets').hidden  = bagSub !== 'sets';
   $('bagShots').hidden = bagSub !== 'shots';
 }
 function renderAll(){
@@ -18984,7 +18992,6 @@ function boot(){
     if(t.dataset.v === 'career') careerTab = t;
     if(t.dataset.v === 'tour') tourTab = t;
   });
-  $('scrapBtn').onclick = () => scrapSheet();
   $('xpStrip').onclick = () => setView('career');
   $('drawerIc').src = pixUrl('caret', '#E3B457');
   $('sovIcon').src = pixUrl('sov2', '#E3B457');

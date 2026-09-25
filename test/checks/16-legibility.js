@@ -72,7 +72,7 @@ module.exports = {
       try { hideSheet(); } catch (e) {}
       sweep('stage');
       for (const v of ['upg', 'bag', 'dgn', 'tour', 'career']) { setView(v); sweep(v); }
-      setView('bag'); bagSub = 'shots'; renderBagNav(); sweep('bag/shots');
+      setView('bag'); bagSub = 'sets'; renderBagNav(); sweep('bag/sets'); bagSub = 'shots'; renderBagNav(); sweep('bag/shots');
       bagSub = 'gear'; renderBagNav();
       setView('career');
       for (const sub of ['stat', 'tal', 'para', 'leg']) {

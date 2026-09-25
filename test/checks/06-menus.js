@@ -99,20 +99,22 @@ module.exports = {
       for (let i = 0; i < B.SLOTS.length; i++) {
         tabs[i].onclick();
         const sl = B.SLOTS[i];
-        const rows = [...document.getElementById('bagList').children]
-          .filter(e => e.classList.contains('card2'));
+        // (the clubs are tiles now, two to a row; each carries its club's id)
+        const rows = [...document.getElementById('bagList').children].filter(e => e.classList.contains('gt'));
         if (!rows.length) { out.bad = out.bad || (sl.n + ' tab drew nothing'); continue; }
         for (const r of rows) {
-          const t = r.querySelector('.ib').textContent;
-          if (t.indexOf(sl.n) !== 0) out.bad = out.bad || (sl.n + ' tab listed "' + t + '"');
+          const it = findItem(+r.dataset.uid);
+          if (!it || it.slot !== sl.id) out.bad = out.bad || (sl.n + ' tab listed ' + (it ? 'a ' + it.slot : 'nothing it knows'));
         }
-        const first = rows[0].querySelector('.ib').textContent;
-        const carried = /carrying/.test(first);
+        const carried = rows[0].classList.contains('worn');
         if (sl.id === 'wedge' && !carried)
           out.bad = out.bad || 'the carried wedge is not at the top of its own tab';
-        if (sl.id !== 'wedge' && carried)
+        if (rows.slice(sl.id === 'wedge' ? 1 : 0).some(r => r.classList.contains('worn')))
           out.bad = out.bad || (sl.n + ' says it is carrying something it is not');
-        if (sl.id === 'wedge') out.wornBtn = rows[0].querySelector('.equipbtn').textContent.trim();
+        if (sl.id === 'wedge') out.wornBtn = (rows[0].querySelector('.wtag') || { textContent: '' }).textContent.trim();
+        // two to a row
+        if (rows.length > 1) { const a = rows[0].getBoundingClientRect(), b = rows[1].getBoundingClientRect();
+          if (Math.abs(a.top - b.top) > 1 || b.left <= a.right - 1) out.bad = out.bad || (sl.n + ': the first two clubs are not side by side'); }
       }
       // every tile is the same tile, whatever is or is not in that slot. The
       // modifier used to be called "empty", which is also the class on the
@@ -142,7 +144,7 @@ module.exports = {
       if (lk.badges[n] !== 2)
         throw new Error(n + ' tab badges ' + lk.badges[n] + ' spares, there are 2');
     if (lk.wornBtn !== 'Equipped')
-      throw new Error('the carried club offers "' + lk.wornBtn + '" rather than saying it is worn');
+      throw new Error('the carried club says "' + lk.wornBtn + '" rather than that it is equipped');
     const g0 = lk.geom[0];
     if (!(g0.h > 20))
       throw new Error('the slot tiles measured ' + g0.h + 'px tall, so nothing below was '

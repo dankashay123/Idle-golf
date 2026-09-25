@@ -88,7 +88,7 @@ module.exports = {
       };
 
       for (const v of ['upg', 'bag', 'dgn', 'tour', 'career']) { setView(v); sweep('panel', v); }
-      setView('bag'); bagSub = 'shots'; renderBag(); renderSkillsTab(); sweep('panel', 'shots');
+      setView('bag'); bagSub = 'sets'; renderBagNav(); renderBag(); sweep('panel', 'sets'); bagSub = 'shots'; renderBag(); renderSkillsTab(); sweep('panel', 'shots');
       bagSub = 'gear'; renderBag();
       for (const sub of ['stats', 'tal', 'para', 'leg']) {
         careerSub = sub; setView('career'); renderCareer(); sweep('panel', 'career/' + sub);
@@ -358,7 +358,7 @@ module.exports = {
       S.sov = 9999; S.shard = 1e7; S.legacy = 5000; S.cups = 3;
       try { hideSheet(); } catch (e) {}
       for (const v of ['upg', 'bag', 'dgn', 'tour', 'career']) { setView(v); scan(); }
-      setView('bag'); bagSub = 'shots'; renderBagNav(); scan();
+      setView('bag'); bagSub = 'sets'; renderBagNav(); scan(); bagSub = 'shots'; renderBagNav(); scan();
       bagSub = 'gear'; renderBagNav();
       setView('career');
       for (const sub of ['stat', 'tal', 'para', 'leg']) {

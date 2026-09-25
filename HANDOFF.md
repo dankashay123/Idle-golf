@@ -10,13 +10,15 @@ check is for.
 
 - Everything is committed and pushed to `main` (mirrored on the session
   branch `claude/notes-claude-review-4cqv98`). Nothing is half-built.
-- `node test/run.js` passes all **62 checks** (about ten minutes).
-- **Last request** (a screenshot of Castle Dunes at night): "Please fix
-  the audience as well, they are super far away. Also please add more
-  ambiance to the blank areas to the left right and behind the green so
-  it's not so bare, everywhere." Done: a gallery beside and close behind
-  every green, trees behind every green, and shrubs, tufts and rocks in the
-  rough on every course (§5, "The gallery and the scenery").
+- `node test/run.js` passes all **63 checks** (about ten minutes).
+- **Last request** (a picture of another game's pet list): "Can you
+  rework the bag tab... clubs up at the top... rectangle icons for each,
+  indicating rarity, name and stats... 2 items per row... set info... to
+  its own sub tab labeled Sets & Affinities... the club types and balls
+  category selector buttons [locked] at the top... When an item is
+  clicked... an upgrade button and scrap button." Done (§5, "The Bag tab").
+- Before that: the gallery round the green and scenery in the rough
+  everywhere.
 - Before that: rain rings only on water and the stray ring beside him
   removed; night glow for the dearest skins; the Mythic caddies' tricks;
   frost and puddles.
@@ -136,6 +138,7 @@ Line numbers are approximate and drift. Search for the name instead.
 | Hole lifecycle | `startHole` → `finishHole` → `advanceHole` → `endTournament` |
 | Course announcement banner | `announceCourse`, `Scene.drawAnnounce` |
 | Tour Cards | `climb`, `eventsToUnlock`, `roundRatio`, `projectedRatio`, `climbLines` |
+| **The Bag tab** | sub tabs Gear, Sets & Affinities, Shots (`bagSub` 'gear'/'sets'/'shots', `renderBagNav`); `renderBag` (slot bar `#bagGrid`, header `#lkHead` with `#autoEqBtn` and `#scrapBtn`, tiles `#bagList`), `renderBagSets` (`#purseStrip`, `#bagPower`, `#setBox`), the tile `gearTile` (`.gt`, `data-uid`, `.gup` better, `.genh` upgrade level), the sheet's three buttons `.acts3` in `itemSheet`; sticky: `#v-bag #bagNav` and `#bagGrid` (`--bagnav`) |
 | Shop: four tabs, Offers (one-time offers, Double Purse as a wide tile, sovereign packs), Bags, Bench, Style. An old caller asking for `'buy'` gets Offers | `renderShop`, `shopCard` (`wide`), `styleDef`, `styleOwned`, `styleBuy`, `styleTry` |
 | **Trophy Room** (the medal under the shop): Today, Cabinet, Honours; the case's rewards | `trophyRoom(tab)`, `roomToday`, `dailyBlock`, `roomCase`, `honRows`, `collect(id)`, `casePending`, `caseTrack`, `B.CASE`, `S.caseGot`, `roomWaiting` |
 | Stage buttons (Trophy Room `#roomBtn`, perks, shop, settings, auto-climb): one renderer | `renderStageBtns` (was `renderHonBtn`); markup `#hudLeft` > `#rRow` (readout + `#hudClimb`), `#setBtn`, `#shopBtn`, `#roomBtn`, `#perkBtn`; the map alone on the right at 37% |
@@ -399,6 +402,28 @@ Line numbers are approximate and drift. Search for the name instead.
    check the file's time before trusting it.
 
 ## 5. What the last features do (for debugging them)
+
+### The Bag tab (user asked, with a picture of the look)
+
+- Opens on **Gear**: the slot bar (Driver, Irons, Wedge, Putter, Ball,
+  Glove, each with its spare count and a green count when one is better),
+  one header line (the slot, the locker against its cap, Auto-equip,
+  Scrap), then the clubs as tiles two to a row: framed in the rarity's
+  colour, name in that colour (two lines at most), "iLv 40 · Epic", the
+  swing or affinity figure and one affix, a green ▲ on the picture when it
+  beats the one carried, a +n badge when upgraded; the carried one first,
+  marked Equipped. The whole tile is the button.
+- The sub tabs and the slot bar are `position: sticky` in the panel, so
+  they stay at the top however far the clubs are scrolled.
+- **Sets & Affinities**: the purse (grit, shards, scrolls, gear luck),
+  the set bonuses and today's course affinity, as they were over the clubs.
+- The club's sheet: its stats and what carrying it would do, then
+  **Equip / Upgrade / Scrap** side by side (Upgrade is the reforge, a level
+  at a time for grit, with its chance; the carried one shows Equipped and
+  cannot be scrapped), what you hold to spend, then Re-attune and Ascend.
+  "Reforge failed" now reads "Upgrade failed".
+- Gone to make room: the "Scrap the spare" row under the list (the Scrap
+  sheet has it, as Spares) and the Locker band.
 
 ### The gallery and the scenery (user sent a screenshot)
 
@@ -1633,6 +1658,10 @@ him (about 49px tall on a 320 phone, 71px on its side).
   done, won}`; majors are settled in `endTournament`. `majors` covers it.
 
 ## 6. Recent history (newest first, one line each)
+
+- The Bag tab reworked: clubs as tiles two to a row under a slot bar that
+  stays at the top; Sets & Affinities its own sub tab; Equip, Upgrade and
+  Scrap together on a club's sheet.
 
 - The gallery beside and behind every green, trees behind it, shrubs,
   tufts and rocks in the rough everywhere.

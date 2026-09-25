@@ -137,15 +137,15 @@ module.exports = {
       if (S.bag[0]) { itemSheet(S.bag[0], false); sweep(); try { hideSheet(); } catch (e) {} }
       setView('upg'); sweep();
       return { bad: Object.values(seen), looked, spares,
-               equip: document.querySelectorAll('.equipbtn img').length };
+               equip: document.querySelectorAll('#bagList .gt img').length };
     });
     // the sweep has to have had something to look at, or it passes by seeing nothing
     if (!(boxes.looked > 100))
       throw new Error('the sprite sweep only saw ' + boxes.looked + ' images, so it is not '
         + 'reaching the screens it thinks it is');
     if (!(boxes.equip > 0))
-      throw new Error('the locker had no equip buttons in it, which is where the squashed '
-        + 'sprite was, so this proves nothing. Spare clubs by slot: '
+      throw new Error('the locker had no clubs drawn in it (where a squashed sprite was once), '
+        + 'so this proves nothing. Spare clubs by slot: '
         + (JSON.stringify(boxes.spares) || '{}'));
     if (boxes.bad.length) {
       const squashed = boxes.bad.filter(b => Math.abs(b.w - b.h) >= 0.01);
