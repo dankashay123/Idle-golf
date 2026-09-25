@@ -3825,6 +3825,12 @@ function initState(){
   if(!styleOwned('k', S.club)) S.club = 'steel';
   if(!S.cperkOwn || typeof S.cperkOwn !== 'object') S.cperkOwn = {};
   if(S.cperk && (!cperkDef(S.cperk) || !S.cperkOwn[S.cperk])) S.cperk = null;
+  // the seasons courses were last seen in: courses that turn, seasons that exist
+  if(!S.seasonSeen || typeof S.seasonSeen !== 'object' || Array.isArray(S.seasonSeen)) S.seasonSeen = {};
+  for(const k of Object.keys(S.seasonSeen)){
+    const cs = courseById(k), v = S.seasonSeen[k];
+    if(!cs || (cs.slot !== 'home' && !CAL_SEASONED.includes(k)) || !(Number.isInteger(v) && v >= 0 && v < SEASONS.length)) delete S.seasonSeen[k];
+  }
   // perk levels: whole numbers from 2 to the top, on perks that exist and are
   // owned; anything else is Lv 1 and is left out
   if(!S.cperkLv || typeof S.cperkLv !== 'object' || Array.isArray(S.cperkLv)) S.cperkLv = {};
@@ -4419,6 +4425,22 @@ function announceCourse(){
               + (cs.slot === 'home' ? 'Home of Tour Card ' + roman(S.tier) : 'Tour Card ' + roman(S.tier) + ' - Event ' + t);
   Scene.announce = { name: fit(cs.n), sub: fit(sub), t: 0, dur: 4.2, gold: isWeekMajor(t) };
 }
+// The season each course that turns (the home courses, and the regular stops
+// that follow the month) was last seen in. Seen in another one, it chimes:
+// as the course comes up with its banner, or on the hole after the month
+// turns under it. Not in a catch-up or a wager, and not the first time a
+// course is seen: it is the turn you see that chimes.
+function seasonTurn(){
+  if(QUIET || OFFLINE || S.dgnRun) return;
+  const cs = courseFor(tournamentOf(S.hole));
+  if(!cs || (cs.slot !== 'home' && !CAL_SEASONED.includes(cs.id))) return;
+  const s = courseSeason(cs, S.tier);
+  S.seasonSeen = S.seasonSeen || {};
+  const was = S.seasonSeen[cs.id];
+  if(was === s) return;
+  S.seasonSeen[cs.id] = s;
+  if(was !== undefined) Sfx.play('season', s);
+}
 function startHole(){
   openEvent();         // which course this event is on, fixed from its first hole
   rivalNow();          // the event's rival exists from its first hole, seen or not
@@ -4460,6 +4482,7 @@ function startHole(){
     S.gold += fee; S.holeGold += fee; Meter.add(fee);
   }
   Scene.newHole(S.hole, S.tier);
+  seasonTurn();
   const sk = !QUIET && !OFFLINE && sigKind(S.hole);
   if(sk) toast(sk === sigWeek()
     ? 'Hole of the Week \u00b7 <b>' + SIG_NAME[sk] + '</b> \u00b7 pays\u00a0' + B.SIG_WEEK_MULT + '\u00d7'
@@ -6024,6 +6047,24 @@ const Sfx = {
     else if(k === 'level') this.notes([587.33, 880], 'triangle', 0.11, 0.1);
     else if(k === 'cup')   this.notes([523.25, 659.25, 783.99, 1046.5, 783.99, 1046.5], 'triangle', 0.14, 0.11);
     else if(k === 'buy')   this.tone(880, t, 0.06, 'square', 0.045, 1320);
+    else if(k === 'season') this.season(arg);
+  },
+  // A course seen in a new season (the user asked for a short chime), in the
+  // season's own manner: autumn falls away, winter rings high and thin like
+  // frost, blossom climbs, and back to how it was built is two plain notes.
+  // s is the season, 0 as built to 3 blossom. Its loudness is set by measure
+  // (see the handoff notes).
+  SEASON_CHIME: 0.05,
+  season(s){
+    const t = this.ctx.currentTime + 0.02, V = this.SEASON_CHIME;
+    const sets = [
+      [[783.99, 0], [1046.5, 0.13]],
+      [[1174.66, 0], [987.77, 0.13], [783.99, 0.26], [659.25, 0.39]],
+      [[2637.02, 0], [3135.96, 0.09], [2637.02, 0.18], [3951.07, 0.3]],
+      [[523.25, 0], [659.25, 0.1], [783.99, 0.2], [1046.5, 0.3], [1318.51, 0.4]]
+    ];
+    const frost = s === 2;
+    for(const [f, dt] of sets[s] || sets[0]) this.tone(f, t + dt, frost ? 0.5 : 0.34, frost ? 'sine' : 'triangle', V * (frost ? 0.6 : 1));
   }
 };
 function toggleMusic(){
@@ -14568,6 +14609,7 @@ const DEV = {
 
     h += row('Sound', b('strike', 'DEV.snd(\'strike\')') + b('pure strike', 'DEV.snd(\'strike\', 1)')
       + b('cup', 'DEV.snd(\'hole\')') + b('coin', 'DEV.snd(\'coin\')') + b('honour', 'DEV.snd(\'ach\')')
+      + ['as built', 'autumn', 'winter', 'blossom'].map((n, i) => b('chime: ' + n, 'DEV.snd(\'season\', ' + i + ')')).join('')
       + b('event won', 'DEV.snd(\'cup\')') + b('music ' + (S.music === 0 ? 'off' : 'on'), 'DEV.music()')
       + b('restart music', 'DEV.music(1)') + b(DEV._recs ? 'recordings off' : 'recordings on', 'DEV.synth()'));
 

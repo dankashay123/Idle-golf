@@ -10,7 +10,7 @@ check is for.
 
 - Everything is committed and pushed to `main` (mirrored on the session
   branch `claude/notes-review-dju532`). Nothing is half-built.
-- `node test/run.js` passes all **49 checks** (about 8 minutes).
+- `node test/run.js` passes all **50 checks** (about 9 minutes).
 - **Last request**: "get rid of the caddy wings, just have them float up
   and down a tiny bit; more animation too, like randomly will spin, dance,
   stuff like that for fun". Done (§5 "The caddie: no wings, a float, and
@@ -123,6 +123,7 @@ Line numbers are approximate and drift. Search for the name instead.
 | Palettes built from a course | `buildTheme`, `courseTrees` |
 | **Landmarks** | `drawLandmark` (called from `Scene.buildRidge`) |
 | Renderer | `const Scene = {`. Key members: `newHole`, `newDepthsHole`, `proj`, `curveAt`/`bendOff` (doglegs), `layHazards`, `layProps`, `buildSky`, `buildRidge`, `buildWood`, `drawGround`, `drawGolfer`, `fairyBox`/`drawCaddie`, `swing`/`walking2ball`/`launch`, `drawBalls`, `drawLyingBall`, `drawMap` |
+| **Season chime** | `seasonTurn` (from `startHole`), `S.seasonSeen`, `Sfx.season`, `Sfx.SEASON_CHIME`; dev menu Sound row "chime: …" |
 | **Life on the pier** (spray, gulls, their cry) | `Scene.drawSpray`, `Scene.drawGulls` (both called at the end of `drawPier`), `Scene.gullOff`, `Sfx.gull`, `Sfx.GULL_VOL`, `Sfx.gullT` |
 | **Caddie perk upgrades** (Lv 1-5) | `B.CPERK_LV_MAX`, `CPERK_LV_T`, `CPERK_LV_V`, `CPERK_LV_COST`, `cperkLv`, `cperkVal`, `cperkDur`, `cperkTxt`, `cperkUp`, `S.cperkLv`, `renderCadPerks` (the worn row's button), honour `headcad`; `DEV.cperkLv` |
 | The caddie's turns (spin, dance, flip, wave, loop, cartwheel, juggle) | `FAIRY_MOVES`, `fairyPose`, `Scene.tickMove`, `fairyMoveNow`, `fairyMoveGo`, the offscreen `_fairyCv` in `drawCaddie`; `DEV.move` |
@@ -250,6 +251,22 @@ Line numbers are approximate and drift. Search for the name instead.
    live one and caught it the other way round.
 
 ## 5. What the last features do (for debugging them)
+
+### Season chime (user asked, the last of four)
+
+- `S.seasonSeen[courseId]` is the season (0 as built .. 3 blossom) each
+  course that turns (home courses, `CAL_SEASONED`) was last seen in.
+  `seasonTurn()`, called in `startHole` after the new hole is laid out,
+  notes it; if it differs from what was noted, `Sfx.play('season', s)`.
+  So it chimes with the banner when a course comes up in a new season, and
+  on the next hole if the month turns part way through an event. Not the
+  first look at a course, not in a catch-up (`QUIET`/`OFFLINE`) or a
+  wager: the next live hole hears a turn passed there.
+- `Sfx.season(s)`: autumn four falling notes (D6 B5 G5 E5), winter high
+  sine bells (E7 G7 E7 B7), blossom five rising (C5..E6), as built two
+  (G5 C6). Measured offline: -36.4 to -38.2 dB, against the coin jingle's
+  -37.4 and the honour fanfare's -33.5. Dev menu Sound row plays each.
+- Junk in `S.seasonSeen` is dropped on load. Check `chime`.
 
 ### Life on the pier (user asked, the third of four)
 
@@ -799,6 +816,7 @@ Line numbers are approximate and drift. Search for the name instead.
 
 ## 6. Recent history (newest first, one line each)
 
+- A short chime when a course comes up in a new season.
 - Life on the pier: spray over the deck in the wind, wheeling gulls, one
   on a post that flies off as he comes, and a quiet gull cry.
 - The caddie cartwheels and juggles too.
