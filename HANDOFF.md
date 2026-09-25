@@ -11,13 +11,19 @@ check is for.
 - Everything is committed and pushed to `main` (mirrored on the session
   branch `claude/loving-archimedes-ct2rpb`). Nothing is half-built.
 - `node test/run.js` passes all **56 checks** (about nine minutes).
-- **Last request** (with a screenshot out on the canyon bridge in a
-  storm, its deck in slats with the canyon between): "Can you fix the
-  bridges visibility please. Also check other signature holes for
-  visibility/clipping issues. Then also do number 1" (the Signature Week
-  honour). Done: §5 "Cut away where nothing hides it" and "The Signature
-  Week".
-- **The request before**: four trains on the railway and weather on the
+- **Last request**: "let's do option 1 [the Divine, ultimate too], but
+  redesign it so the wings aren't so solid. also please make sure that the
+  wings follow the profile of the golfer, so when he is hitting a shot,
+  they are still on his back but the view is a sideways profile. when he
+  is walking, make it so you can see the wings from the back. Do this to
+  any skin that could have different views. then do 2 please" (the
+  flourishes for the other effect skins). The Divine had no wings: read as
+  giving it feathered ones, and the profile rule to the Demonic's bat wings
+  too (the only other winged skin). Done: §5 "The Divine, made the ultimate
+  skin; wings as he is seen" and "A flourish for the other effect skins".
+- **The request before**: the canyon bridge cut to slats (fixed) and the
+  Signature Week honour.
+- **Before that**: four trains on the railway and weather on the
   signature holes (§5 "Life on the railway", "Weather on the signature
   holes").
 - **Before that**: a moment for the legends (eagle or better) and
@@ -354,6 +360,53 @@ Line numbers are approximate and drift. Search for the name instead.
    nothing. Assert the order, and count a name after the edit.
 
 ## 5. What the last features do (for debugging them)
+
+### The Divine, made the ultimate skin; wings as he is seen (user asked)
+
+- **Wings as he is seen** (`wingPair(key, paint, pal, S, view, ph, up,
+  shade)`, baked): view `side` at address and through the swing (his back
+  to the left): the near wing foreshortened (x 0.74) reaching back and up
+  off his back, the far one beyond it (x 0.5) darkened by `shade`, both
+  swept back 0.22; view `back` walking away and on a caddie: both spread.
+  The Demonic's bat wings (`batWing`) and the Divine's (`featherWing`) both
+  go through it; nothing else has wings. The first Divine wings, many small
+  feathers each edged in gold, read as a spiky gold fuzz: five long flight
+  feathers with sky between their tips, four shorter ones, and a solid
+  white upper wing with a gold leading edge read as wings. Its far wing is
+  shaded warm gold (a dark shade read as a brown spike).
+- **The Divine** (`STYLEFX.divine`): wings 0.62 of his height, beating;
+  lifted off his back and raised through the backswing, driven down at
+  the strike (`lift`); a sun turning under him (`sunSigil`, lit as he
+  winds up); a second halo turning the other way with six stars
+  (`halo2`); a feather coming away and drifting down now and then
+  (`feathers`, many on a great hole); the beam and rays brighter as he
+  winds up; a ring of light out over the ground and light off the ball as
+  he strikes (`wave`, `sparks`). On an eagle or better (the moment of the
+  legends, now three): the heavens open (`heavens`: rays fanning down from
+  the top of the sky onto him and a shaft onto his head, solid pixels),
+  wave after wave on the ground, the wings raised, the halo flaring, and
+  `Sfx.choir` (a chord of paired voices a shade apart, a bell; a second
+  chord on an ace), measured at the legends' level.
+
+### A flourish for the other effect skins (user asked, from the menu)
+
+- `FLOURISH` (assigned to `STYLEFX[k].flourish`), for the eleven other
+  effect skins; `Scene.flourish` / `flourishNow(g)`, set by `legendGo` on
+  an eagle or better (1.6s, 2s and more on an albatross or ace), cleared
+  by the saver; drawn in three layers: `ground` (from `golferGround`, under
+  the pin), `back` and `front` (in `paintGolfer`). `flourishBurst` throws
+  pieces up and out. Inferno: flames leap round him and a ring of fire;
+  Frostborn: spikes of ice run out over the ground, snow thrown up;
+  Stormcaller: struck by a bolt from the sky, twice; Void Walker: echoes
+  burst out either side; Glitch: red and blue copies and slices jumping;
+  Midas: the grass goes gold round him, coins thrown up; Disco: the floor
+  lights in squares, two spotlights; Ghost: little ghosts circle out;
+  Banana: bananas thrown; Dad: a camera flash every half second, his
+  sunglasses catching it; Clown: confetti, his nose flashing.
+- `Sfx.flourishSnd(t, fx)`: one small sound each, evened out by measure to
+  about the train's whistle (a loudest 100ms window of 0.005 to 0.009).
+- `legends` holds all of it (negative tested six ways for the flourishes,
+  eleven for the Divine and the wings).
 
 ### Cut away where nothing hides it (user saw the bridge)
 
@@ -1361,6 +1414,11 @@ him (about 49px tall on a 320 phone, 71px on its side).
 
 ## 6. Recent history (newest first, one line each)
 
+- The Divine made the ultimate skin (feathered wings, a sun, a second
+  halo, the heavens opening); wings side on as he swings and spread from
+  behind as he walks, the Demonic's too; a flourish on an eagle for the
+  eleven other effect skins.
+
 - The canyon bridge solid underfoot (it was cut to slats against the sunk
   rim), the crossing's boards and sleepers whole; the Signature Week
   honour and its Record row.
@@ -1491,18 +1549,18 @@ him (about 49px tall on a 320 phone, 71px on its side).
 
 ## 8. What to offer next
 
-Everything asked for is done. First ask whether the bridge now looks
-right to them out on it, in the storm they sent.
+Everything asked for is done. First ask how the Divine's wings look to
+them now, side on and from behind, and whether any flourish is too much.
 
 The menu to offer next:
-1. **The Divine, ultimate too** (recommended): the third of the top skins
-   given the same treatment in gold, with its own great-hole moment (the
-   heavens opening, a choir's chord).
-2. **Small flourishes for the other effect skins** on an eagle (the Inferno
-   flares, the Frostborn freezes the ground out).
-3. **Night on the signature holes**: lanterns along the pier, the bridge's
-   ropes hung with lights, the island's green lit, fireflies by the river.
-4. **A station on the railway**: now and then a train stops at a little
+1. **Night on the signature holes** (recommended): lanterns along the pier,
+   the bridge's ropes hung with lights, the island's green lit, fireflies
+   by the river.
+2. **A station on the railway**: now and then a train stops at a little
    halt by the crossing, a guard waves a flag, passengers get off to watch.
-5. **The Signature Week on the Tour tab**: the five kinds shown ticked off
+3. **The Signature Week on the Tour tab**: the five kinds shown ticked off
    beside the signature hole of the week, so the chase is in sight.
+4. **Caddies with wings in profile**: the Divine and Demonic caddies turn
+   side on and from behind with their golfer.
+5. **A flourish for the club effects**: the Divine Driver, the Demonic's,
+   the Ascended's, each doing something on a pure strike.

@@ -350,7 +350,25 @@ module.exports = {
               // and the battery saver starting puts an end to it
               QUIET = false; Scene.happyDance(-4); saverOn(); L.saver = !!Scene.legend; saverOff(); QUIET = true; Scene.legend = null;
             }
-          } finally { Sfx.play = keep; Scene.legend = null; QUIET = true; }
+            // ---- and a flourish for every other effect skin ----
+            o.flourish = {};
+            const fxOutfits = B.OUTFITS.filter(x => x.fx && !['demonic', 'ascended', 'divine'].includes(x.fx));
+            for (const O of fxOutfits) {
+              S.styleOwn['o:' + O.id] = 1; S.outfit = O.id; buildSprites();
+              Scene.walkOn = false; Scene.swingT = 0; Scene.fairyMove = null; Scene.moveT = 999;
+              // (the whole of him, his ground and all, as the frame draws it)
+              const whole = () => { const k = SPRITE.caddie; SPRITE.caddie = null; c.clearRect(0, 0, VW, VH); Scene.drawGolferGround(); Scene.drawGolfer(D); SPRITE.caddie = k; return px(); };
+              const at = (d, T) => {
+                Scene.flourish = null; Scene.legend = null; QUIET = false; played.length = 0;
+                Scene.t = 10 - T; Scene.happyDance(d); QUIET = true; Scene.t = 10;
+                const F0 = Scene.flourish, sound = played.join(' ');
+                const on = whole(); Scene.flourish = null; const off = whole();
+                return { sound, n: diff(on, off).length, big: F0 ? F0.big : null, dur: F0 ? +F0.dur.toFixed(2) : null, legend: !!Scene.legend };
+              };
+              o.flourish[O.fx] = { birdie: at(-1, 0.5), eagle: at(-2, 0.5), ace: at(-4, 0.5), over: at(-2, FLOURISH_DUR + 0.05) };
+            }
+            Scene.flourish = null;
+          } finally { Sfx.play = keep; Scene.legend = null; Scene.flourish = null; QUIET = true; }
         }
         // his ground goes down before the pin and a putt rolling away beyond
         // him, which stand on it (drawn with him, it covered them): the order
@@ -452,6 +470,14 @@ module.exports = {
     if (dm.foot.l > 1.4 || dm.foot.r > 1.4 || dm.foot.up > 0.45 || dm.foot.dn > 0.2)
       f('the Demonic takes too much of the screen: ' + J(dm.foot));
     // the moment
+    for (const fx in r.flourish) {
+      const F = r.flourish[fx];
+      if (F.birdie.n || F.birdie.sound) f('the ' + fx + ' flourish on a birdie: ' + J(F.birdie));
+      if (!(F.eagle.n >= 25) || F.eagle.sound !== 'flourish!' && F.eagle.sound !== 'flourish' || F.eagle.legend) f('the ' + fx + ' flourish on an eagle: ' + J(F.eagle));
+      if (!(F.ace.big && F.ace.dur > F.eagle.dur)) f('the ' + fx + ' flourish on an ace is no bigger: ' + J(F.ace));
+      if (F.over.n) f('the ' + fx + ' flourish has not ended after its time: ' + F.over.n + ' pixels');
+    }
+    if (Object.keys(r.flourish).length !== 11) f('flourishes for ' + Object.keys(r.flourish).length + ' skins, not the eleven: ' + Object.keys(r.flourish).join(', '));
     const dvn = r.divine;
     if (!(dvn.rise >= 2) || !(dvn.sweep >= 2)) f('the Divine wings through a swing: up ' + dvn.rise + 'px at the top of the backswing, down ' + dvn.sweep + ' at the strike');
     if (!(dvn.ground >= 100) || dvn.groundOff) f('the Divine sun: ' + dvn.ground + ' pixels, ' + dvn.groundOff + ' off the ground at his feet');
@@ -492,6 +518,7 @@ module.exports = {
       'his ground under the pin and a putt rolling away (' + r.layer.order + ')',
       'the ultimate Demonic: an aura of hellfire (' + Math.round(dm.auraTop / dm.auraIdle * 100 - 100) + '% more at the top of the backswing), chains of fire round him, horns curling over (their top row ' + dm.hornCurl.toFixed(2) + ' of his cap across), hands on fire, the ground cracking at the strike (' + dm.cracks + 'px); ' + dm.foot.l + '/' + dm.foot.r + ' of his width either side, ' + dm.foot.up + ' of his height over him',
       'the ultimate Divine: wings of feathers side on and from behind, up ' + dvn.rise + 'px through the backswing and down at the strike; a sun at his feet, a second halo, feathers drifting down, light off the ball and a ring of light as he strikes',
+      'a flourish on an eagle for each of the other ' + Object.keys(r.flourish).length + ' effect skins (' + Object.entries(r.flourish).map(([k, v]) => k + ' ' + v.eagle.n).join(', ') + 'px), with a sound, longer on an ace; none on a birdie or once over',
       'the moment on an eagle: the Demonic ' + r.legend.demonic.eagle.n + 'px (' + r.legend.demonic.ace.n + ' on an ace), the Ascended ' + r.legend.ascended.eagle.n + 'px (' + r.legend.ascended.ace.n + '), each with its sound; none on a birdie, in a plain golfer, while quiet or once over'];
   }
 };

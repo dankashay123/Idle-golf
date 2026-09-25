@@ -6193,6 +6193,7 @@ const Sfx = {
     else if(k === 'hellfire') this.hellfire(t, arg);
     else if(k === 'ascend') this.ascend(t, arg);
     else if(k === 'choir') this.choir(t, arg);
+    else if(k === 'flourish') this.flourishSnd(t, arg);
   },
   // A moment for the legends. The Demonic's pit erupting: a deep boom, the
   // rumble of the ground, a roar of fire falling away and its crackle. The
@@ -6206,6 +6207,27 @@ const Sfx = {
     this.hiss(t, big ? 1.6 : 1.2, 420, 0.7, V * 1.2, 110, 'lowpass');
     this.tone(210, t + 0.05, big ? 1.1 : 0.8, 'sawtooth', V * 0.25, 65);
     for(let i = 0; i < (big ? 10 : 6); i++) this.hiss(t + 0.15 + i * 0.11 + Math.random() * 0.05, 0.04, 2400 + Math.random() * 1800, 1.2, V * 0.5);
+  },
+  // A flourish's sound, small, one for each skin (FLOURISH): a whoosh of
+  // fire, a tinkle of ice, a crack of thunder, a whoom, bleeps, a coin's
+  // chime, a run of notes, a ghostly woo, a boing, a camera's click and a
+  // honk.
+  flourishSnd(t, fx){
+    // (each evened out by measure to about the train's whistle at its loudest)
+    const V = this.LEGEND_VOL * 0.6 * ({ inferno: 4, glitch: 3.5, disco: 2.8, clown: 3.2, dad: 2.6, stormcaller: 2.6, midas: 1.5, frostborn: 1.3 }[fx] || 1);
+    ({
+      inferno: () => this.hiss(t, 0.6, 400, 0.8, V * 1.4, 1800),
+      frostborn: () => [2637, 3136, 3951, 3520].forEach((f, i) => this.tone(f, t + i * 0.07, 0.3, 'sine', V * 0.6)),
+      stormcaller: () => { this.hiss(t, 0.08, 3000, 0.6, V * 1.6); this.hiss(t + 0.05, 0.9, 300, 0.7, V * 1.2, 90, 'lowpass'); },
+      void: () => this.tone(220, t, 0.7, 'sine', V * 1.3, 60),
+      glitch: () => [0, 1, 2, 3, 4].forEach(i => this.tone(300 + ((i * 7919) % 900), t + i * 0.05, 0.04, 'square', V * 0.35)),
+      midas: () => [1318.5, 1760, 2093].forEach((f, i) => this.tone(f, t + i * 0.08, 0.35, 'triangle', V * 0.7)),
+      disco: () => [523.25, 659.25, 783.99, 1046.5, 783.99, 1046.5].forEach((f, i) => this.tone(f, t + i * 0.08, 0.1, 'square', V * 0.35)),
+      ghost: () => this.tone(520, t, 0.8, 'sine', V * 0.9, 340),
+      banana: () => this.tone(260, t, 0.25, 'sine', V * 1.2, 760),
+      dad: () => { this.hiss(t, 0.03, 4000, 1, V * 1.2); this.tone(1760, t + 0.05, 0.25, 'sine', V * 0.4); },
+      clown: () => { this.tone(330, t, 0.16, 'sawtooth', V * 0.5, 320); this.tone(262, t + 0.18, 0.2, 'sawtooth', V * 0.5, 255); }
+    }[fx] || (() => {}))();
   },
   // the Divine's heavens opening: a choir's chord swelling in, voices a
   // little apart so it shimmers, a bell over it (a second chord on an ace)
@@ -10977,6 +10999,217 @@ const STYLEFX = {
   }
 };
 
+/* ---- A flourish for the other effect skins on a great hole ----
+   (the user asked, after the moments for the three legends): on an eagle
+   or better each does a small thing of its own for a second and a half,
+   more on an albatross or an ace, with a small sound. Each is told the
+   layer it is drawing ('ground', under the pin; 'back', behind him;
+   'front', over him) and F, how far through it is (f 0..1, T seconds). */
+const FLOURISH_DUR = 1.6;
+function flourishNow(g){
+  const L = Scene.flourish;
+  if(!L || g.minor) return null;
+  const T = g.t - L.t0;
+  if(!(T >= 0 && T < L.dur)) return null;
+  return { T, f: T / L.dur, big: L.big, fx: L.fx };
+}
+// small pieces thrown up and out from him and falling back: n of them, each
+// drawn by piece(x, y, i, u) at u (0..1) of its flight
+function flourishBurst(g, F, n, reach, piece){
+  const N = F.big ? Math.round(n * 1.6) : n;
+  for(let i = 0; i < N; i++){
+    const a = -Math.PI * (0.1 + 0.8 * hr(i, 131)), v = 0.55 + 0.45 * hr(i, 132), u = Math.min(1, F.f * 1.5);
+    const x = g.cx + Math.cos(a) * v * u * g.w * reach, y = g.y + g.h * 0.35 + Math.sin(a) * v * u * g.h * 0.9 + u * u * g.h * 0.9;
+    if(y > g.bot) continue;
+    piece(x, y, i, u);
+  }
+}
+const FLOURISH = {
+  // the Inferno flares: flames leaping up all round him, and a ring of fire
+  // thrown out along the ground
+  inferno(c, g, F, layer){
+    const q = outBack(F.f, 0.15), rx = g.w * (0.7 + 0.5 * F.f), ry = Math.max(2, g.h * 0.09);
+    if(layer === 'ground'){
+      const R = 1 + F.f * (F.big ? 1.6 : 1.2);
+      for(let i = 0; i < 28; i++){ const a = i / 28 * Math.PI * 2;
+        fxDot(c, g.cx + Math.cos(a) * g.w * R, g.bot + Math.sin(a) * ry * R * 1.4, 1, i & 1 ? '#FFB43A' : '#F0612A', 1 - F.f); }
+      c.globalAlpha = 1; return;
+    }
+    const front = layer === 'front';
+    for(let i = 0; i < 26; i++){
+      const a = i / 26 * Math.PI * 2; if((Math.sin(a) > 0) !== front) continue;
+      const hgt = Math.round(q * g.h * (F.big ? 0.8 : 0.55) * (0.5 + 0.5 * hr(i, 141)) * (0.75 + 0.25 * Math.sin(g.t * 17 + i)));
+      if(hgt < 1) continue;
+      const x = Math.round(g.cx + Math.cos(a) * rx), y = Math.round(g.bot + Math.sin(a) * ry);
+      c.globalAlpha = 1;
+      c.fillStyle = '#E8401C'; c.fillRect(x - 1, y - hgt, 2, hgt);
+      c.fillStyle = '#FFD34A'; c.fillRect(x, y - Math.round(hgt * 0.55), 1, Math.max(1, Math.round(hgt * 0.55)));
+    }
+  },
+  // the Frostborn's ground freezes out: spikes of ice running out across the
+  // grass from his feet, branching, and a puff of snow thrown up
+  frostborn(c, g, F, layer){
+    if(layer === 'ground'){
+      const grow = Math.min(1, F.T / 0.4), fade = F.f > 0.7 ? 1 - (F.f - 0.7) / 0.3 : 1, R = F.big ? 2.4 : 1.9, ry = Math.max(2, g.h * 0.1);
+      const col = fade > 0.5 ? '#FFFFFF' : fade > 0.2 ? '#DFF4FF' : '#9FD6F2';
+      c.globalAlpha = 1;
+      for(let i = 0; i < 8; i++){
+        const a = (i + 0.3 * hr(i, 151)) / 8 * Math.PI * 2, L = R * (0.7 + 0.3 * hr(i, 152)) * grow;
+        const ex = g.cx + Math.cos(a) * g.w * L, ey = g.bot + Math.sin(a) * ry * L;
+        pxLine(c, g.cx + Math.cos(a) * g.w * 0.4, g.bot + Math.sin(a) * ry * 0.4, ex, ey, col, 1);
+        // a branch either side, two thirds of the way out
+        const mx = g.cx + Math.cos(a) * g.w * L * 0.66, my = g.bot + Math.sin(a) * ry * L * 0.66;
+        for(const s2 of [-1, 1]){ const b = a + s2 * 0.6;
+          pxLine(c, mx, my, mx + Math.cos(b) * g.w * L * 0.22, my + Math.sin(b) * ry * L * 0.22, '#9FD6F2', 1); }
+        fxDot(c, ex, ey, 1, '#FFFFFF', fade);
+      }
+      c.globalAlpha = 1; return;
+    }
+    if(layer !== 'front') return;
+    flourishBurst(g, F, 14, 1.4, (x, y, i, u) => fxDot(c, x, y, 1, i & 1 ? '#FFFFFF' : '#DFF4FF', 1 - u * 0.7));
+    c.globalAlpha = 1;
+  },
+  // the Stormcaller is struck: a bolt down out of the sky onto him, twice,
+  // and a ring of light thrown out where it lands
+  stormcaller(c, g, F, layer){
+    const on = F.T < 0.18 || (F.T > 0.36 && F.T < 0.56) || (F.big && F.T > 0.7 && F.T < 0.82);
+    if(layer === 'ground'){
+      const R = 1 + F.f * 1.5, ry = Math.max(2, g.h * 0.1);
+      for(let i = 0; i < 26; i++){ const a = i / 26 * Math.PI * 2;
+        fxDot(c, g.cx + Math.cos(a) * g.w * 0.8 * R, g.bot + Math.sin(a) * ry * R, 1, '#8FD0FF', 1 - F.f); }
+      c.globalAlpha = 1; return;
+    }
+    if(layer !== 'back' || !on) return;
+    const n = Math.floor(F.T / 0.18), topY = 0, y1 = g.head.y - 2;
+    let px = g.head.x + (hr(n, 161) - 0.5) * g.w * 0.8, py = topY;
+    const steps = 9;
+    c.globalAlpha = 1;
+    for(let k = 1; k <= steps; k++){
+      const ny = topY + (y1 - topY) * k / steps, nx = k === steps ? g.head.x : g.head.x + (hr(n * 11 + k, 162) - 0.5) * g.w * 1.1 * (1 - k / steps);
+      pxLine(c, px - 1, py, nx - 1, ny, '#8FD0FF', 1); pxLine(c, px + 1, py, nx + 1, ny, '#8FD0FF', 1);
+      pxLine(c, px, py, nx, ny, '#FFFFFF', 1);
+      px = nx; py = ny;
+    }
+  },
+  // the Void Walker's echoes burst out of him either side and fall back in
+  void(c, g, F, layer){
+    if(layer !== 'back') return;
+    const q = outBack(F.f, 0.2), S1 = silhouette(g, '#6E44A0'), S2 = silhouette(g, '#C68BFF'), n = F.big ? 3 : 2;
+    for(let i = 1; i <= n; i++) for(const side of [-1, 1]){
+      const dx = Math.round(side * q * g.w * 0.55 * i), dy = Math.round(-q * g.h * 0.06 * i);
+      c.globalAlpha = 0.75 - i * 0.15;
+      c.drawImage(i & 1 ? S2.cv : S1.cv, (i & 1 ? S2 : S1).ox + dx, (i & 1 ? S2 : S1).oy + dy);
+    }
+    c.globalAlpha = 1;
+  },
+  // the Glitch breaks up: split into red and blue copies of him, and slices
+  // of him jumping sideways
+  glitch(c, g, F, layer){
+    if(layer !== 'front') return;
+    const k = Math.floor(F.T * 14), q = 1 - F.f;
+    const R = silhouette(g, '#FF2A6D'), Bl = silhouette(g, '#2AE0FF'), o = Math.round((2 + 2 * hr(k, 171)) * (F.big ? 1.5 : 1));
+    c.globalAlpha = 0.7 * q; c.drawImage(R.cv, R.ox - o, R.oy); c.drawImage(Bl.cv, Bl.ox + o, Bl.oy);
+    c.globalAlpha = 1;
+    for(let j = 0; j < 4; j++){
+      if(hr(k, j + 172) < 0.4) continue;
+      const sy = Math.floor(hr(k, j + 173) * (R.cv.height - 3)), sh = 1 + Math.floor(hr(k, j + 174) * 3), dx = Math.round((hr(k, j + 175) - 0.5) * g.w * 0.6);
+      c.drawImage(hr(j, k) > 0.5 ? R.cv : Bl.cv, 0, sy, R.cv.width, sh, R.ox + dx, R.oy + sy, R.cv.width, sh);
+    }
+  },
+  // Midas turns the grass gold: a ring of gold spreading out over the ground
+  // from his feet, glinting, and coins thrown up
+  midas(c, g, F, layer){
+    if(layer === 'ground'){
+      const R = (F.big ? 2.3 : 1.8) * Math.min(1, F.T / 0.5), fade = F.f > 0.7 ? 1 - (F.f - 0.7) / 0.3 : 1, rx = g.w * R, ry = Math.max(2, g.h * 0.1) * R;
+      c.globalAlpha = 1;
+      for(let y = -Math.ceil(ry); y <= ry; y++) for(let x = -Math.ceil(rx); x <= rx; x++){
+        const d = (x * x) / (rx * rx) + (y * y) / (ry * ry);
+        if(d > 1) continue;
+        const X = Math.round(g.cx) + x, Y = Math.round(g.bot) + y;
+        if(d > 0.8){ c.fillStyle = fade > 0.4 ? '#FFD86B' : '#C99A2E'; c.fillRect(X, Y, 1, 1); }
+        else if(((X + Y) & 1) && hr(X, Y) < fade * 0.8){ c.fillStyle = hr(Y, X) > 0.9 ? '#FFFFFF' : '#F0C04A'; c.fillRect(X, Y, 1, 1); }
+      }
+      return;
+    }
+    if(layer !== 'front') return;
+    flourishBurst(g, F, 9, 1.5, (x, y, i, u) => {
+      const X = Math.round(x), Y = Math.round(y), edge = Math.sin(g.t * 14 + i) > 0;
+      c.globalAlpha = 1; c.fillStyle = '#C99A2E'; c.fillRect(X - 1, Y, edge ? 3 : 1, 2);
+      c.fillStyle = '#FFD86B'; c.fillRect(X - (edge ? 1 : 0), Y, edge ? 2 : 1, 1);
+    });
+  },
+  // Disco: the floor round him lights up in squares, changing, and two
+  // spotlights sweep down onto him
+  disco(c, g, F, layer){
+    const COL = ['#FF4FB8', '#3FE0FF', '#FFE14A', '#7AFF6A', '#B06CFF'];
+    if(layer === 'ground'){
+      const n = F.big ? 4 : 3, sz = Math.max(3, Math.round(g.w * 0.3)), k = Math.floor(F.T * 6), fade = F.f > 0.8 ? 1 - (F.f - 0.8) / 0.2 : 1;
+      c.globalAlpha = 1;
+      for(let j = -n; j <= n; j++) for(let i = -1; i <= 1; i++){
+        if(hr(i * 7 + j, k) > 0.55 * fade + 0.2) continue;
+        const X = Math.round(g.cx + j * sz - sz / 2), Y = Math.round(g.bot + i * Math.max(2, sz * 0.35) - 1);
+        c.fillStyle = COL[Math.floor(hr(j, i + k) * 5)]; c.fillRect(X + 1, Y, sz - 2, Math.max(1, Math.round(sz * 0.3)));
+      }
+      return;
+    }
+    if(layer !== 'back') return;
+    for(const side of [-1, 1]){
+      const sw = Math.sin(g.t * 3 + side) * g.w * 0.6, x0 = g.cx + side * g.w * 2.2, y0 = Math.max(0, g.y - g.h * 1.2);
+      const col = COL[(Math.floor(F.T * 4) + (side > 0 ? 2 : 0)) % 5];
+      for(let k2 = 0; k2 < 3; k2++) pxLine(c, x0, y0, g.cx + sw + (k2 - 1) * g.w * 0.25, g.bot, col, 1);
+    }
+  },
+  // the Ghost's friends come out: little ghosts circling out from him and
+  // fading away
+  ghost(c, g, F, layer){
+    if(layer !== 'front') return;
+    const ROWS = ['.XXX.', 'XXXXX', 'X.X.X', 'XXXXX', 'X.X.X'], n = F.big ? 7 : 5, R = g.w * (0.6 + 1.1 * F.f);
+    for(let i = 0; i < n; i++){
+      const a = F.T * 3 + i / n * Math.PI * 2, x = Math.round(g.cx + Math.cos(a) * R), y = Math.round(g.cy - g.h * 0.2 + Math.sin(a) * R * 0.35 - F.f * g.h * 0.3);
+      c.globalAlpha = 0.85 * (1 - F.f);
+      ROWS.forEach((row, yy) => [...row].forEach((ch, xx) => { if(ch !== 'X') return;
+        c.fillStyle = yy === 2 && xx !== 0 && xx !== 4 ? '#3A3A48' : '#F2F4FA'; c.fillRect(x - 2 + xx, y - 2 + yy, 1, 1); }));
+    }
+    c.globalAlpha = 1;
+  },
+  // the Banana Suit throws bananas
+  banana(c, g, F, layer){
+    if(layer !== 'front') return;
+    flourishBurst(g, F, 12, 2.2, (x, y, i, u) => {
+      const X = Math.round(x), Y = Math.round(y), turn = Math.floor(g.t * 10 + i) & 3;
+      const B = [['XXX.', '.XXb'], ['X.', 'XX', '.X', 'b.'], ['bXX.', '.XXX'], ['.b', 'X.', 'XX', '.X']][turn];
+      c.globalAlpha = 1;
+      B.forEach((row, yy) => [...row].forEach((ch, xx) => { if(ch === '.') return;
+        c.fillStyle = ch === 'b' ? '#6A4A1A' : '#FFD84A'; c.fillRect(X + xx, Y + yy, 1, 1); }));
+    });
+  },
+  // Dad on Holiday takes a picture: a camera's flash going off beside him
+  // and the light catching his sunglasses
+  dad(c, g, F, layer){
+    if(layer !== 'front') return;
+    // (a flash every half second, from beside him and then the other side)
+    const k = Math.floor(F.T / 0.5), u = (F.T % 0.5) / 0.22, q = u < 1 ? 1 - u : 0;
+    if(q > 0){
+      const X = Math.round(g.x + g.w * (k & 1 ? -0.35 : 1.25)), Y = Math.round(g.y + g.h * (0.2 + 0.1 * (k % 3))), R = Math.round(g.w * 0.5 * q) + 2;
+      c.globalAlpha = 1; c.fillStyle = '#FFFFFF';
+      c.fillRect(X - R, Y, R * 2 + 1, 1); c.fillRect(X, Y - R, 1, R * 2 + 1);
+      c.fillStyle = '#FFF6C8'; c.fillRect(X - 1, Y - 1, 3, 3);
+      for(const [dx, dy] of [[1, 1], [-1, 1], [1, -1], [-1, -1]]) for(let k = 1; k < R * 0.6; k++) c.fillRect(X + dx * k, Y + dy * k, 1, 1);
+    }
+    if(!g.back){ const E = eyeAt(g); if(E){ c.fillStyle = '#FFFFFF'; c.fillRect(Math.round(E.x), Math.round(E.y) - 1, 1, 1); c.fillRect(Math.round(E.x) - 1, Math.round(E.y), 3, 1); } }
+  },
+  // the Clown: confetti, and his nose flashing
+  clown(c, g, F, layer){
+    if(layer !== 'front') return;
+    const COL = ['#E4302A', '#FFE14A', '#3FE0FF', '#7AFF6A', '#FF4FB8'];
+    flourishBurst(g, F, 24, 2.2, (x, y, i, u) => { c.globalAlpha = 1; c.fillStyle = COL[i % 5];
+      c.fillRect(Math.round(x), Math.round(y), (Math.floor(g.t * 12 + i) & 1) + 1, 2 - (Math.floor(g.t * 12 + i) & 1)); });
+    if(!g.back && Math.floor(F.T * 6) & 1){ const { head, k } = g;
+      fxDot(c, head.x + head.w * 0.18, head.y + head.hh + k * 2, k + 2, '#FFFFFF', 1); c.globalAlpha = 1; }
+  }
+};
+for(const k in FLOURISH) if(STYLEFX[k]) STYLEFX[k].flourish = FLOURISH[k];
+
 // The trails. They were three one-pixel dots a few frames behind the ball --
 // the Rainbow put one of its five colours on each, and nobody could tell it
 // was on. Each is a ribbon now, the ball's width or more, drawn through the
@@ -12039,9 +12272,17 @@ const Scene = {
   // A moment for the legends (legendNow): on an eagle or better in the
   // Demonic or the Ascended, bigger on an albatross or an ace, with a sound.
   legend: null,
+  flourish: null,
   legendGo(d){
     const fx = outfitNow().fx;
-    if(d > -2 || (fx !== 'demonic' && fx !== 'ascended' && fx !== 'divine')) return;
+    if(d > -2 || !fx) return;
+    // the other effect skins: a flourish of their own
+    if(fx !== 'demonic' && fx !== 'ascended' && fx !== 'divine'){
+      if(!STYLEFX[fx] || !STYLEFX[fx].flourish) return;
+      this.flourish = { t0: this.t, big: d <= -3, dur: FLOURISH_DUR * (d <= -3 ? 1.25 : 1), fx };
+      Sfx.play('flourish', fx);
+      return;
+    }
     const big = d <= -3;
     this.legend = { t0: this.t, big, dur: big ? LEGEND_BIG : LEGEND_DUR };
     Sfx.play(fx === 'demonic' ? 'hellfire' : fx === 'divine' ? 'choir' : 'ascend', big);
@@ -13049,6 +13290,8 @@ function paintGolfer(c, x, y, w, h, ph, t, bot, walking, walkPh, spr, arc, putt,
   const shear = FX && FX.shearMod ? f => shear0(f) + FX.shearMod(f, g) : shear0;
   g.shear = shear0;
   if(FX && FX.back) FX.back(c, g);
+  const FL = FX && FX.flourish ? flourishNow(g) : null;
+  if(FL) FX.flourish(c, g, FL, 'back');
   if(FX && FX.outline) outlineAt(c, g, FX.outline, RING1, FX.outlineA * (0.8 + 0.2 * Math.sin(t * 3)));
   if(FX && FX.alpha) c.globalAlpha = FX.alpha;
   if(walking){
@@ -13063,6 +13306,7 @@ function paintGolfer(c, x, y, w, h, ph, t, bot, walking, walkPh, spr, arc, putt,
     drawClub(c, hx, hy, hx + Math.sin(a) * L, hy + Math.cos(a) * L, h > 34 ? 2 : 1, h, 1, t);
     c.globalAlpha = 1;
     if(FX && FX.front) FX.front(c, g);
+    if(FL){ c.globalAlpha = 1; FX.flourish(c, g, FL, 'front'); }
     c.globalAlpha = 1; c.globalCompositeOperation = 'source-over';
     return;
   }
@@ -13095,6 +13339,7 @@ function paintGolfer(c, x, y, w, h, ph, t, bot, walking, walkPh, spr, arc, putt,
   drawClub(c, hx, hy, tx, ty, th, h, arm > FIN - 0.3 || arm < TOP + 0.3 ? 0 : (arm > ADDR ? 1 : -1), t);
   c.globalAlpha = 1;
   if(FX && FX.front) FX.front(c, g);
+  if(FL){ c.globalAlpha = 1; FX.flourish(c, g, FL, 'front'); }
   c.globalAlpha = 1; c.globalCompositeOperation = 'source-over';
 }
 // Flying: seen from behind, legs hanging, both hands up over his head holding
@@ -13990,8 +14235,11 @@ Object.assign(Scene, {
   },
   golferGround(c, G){
     const FX = STYLEFX[outfitNow().fx];
-    if(G.heli || !FX || !FX.ground) return;
-    FX.ground(c, golferG(G.x, G.y, G.w, G.h, G.ph, this.t, G.p.y, G.walking, G.spr));
+    if(G.heli || !FX || !(FX.ground || FX.flourish)) return;
+    const g = golferG(G.x, G.y, G.w, G.h, G.ph, this.t, G.p.y, G.walking, G.spr);
+    if(FX.ground) FX.ground(c, g);
+    const FL = FX.flourish ? flourishNow(g) : null;
+    if(FL){ c.globalAlpha = 1; FX.flourish(c, g, FL, 'ground'); }
     c.globalAlpha = 1; c.globalCompositeOperation = 'source-over';
   },
   drawGolfer(D, atCam){
@@ -17750,7 +17998,7 @@ function saverOn(){
   SAVER = { t: 0, since: Date.now(), gold: S.gold, holes: S.totalHoles || 0, ev: S.eventsPlayed || 0,
             cups: S.cups || 0, lv: S.lv, card: S.tierMax || 0, sov: S.sov || 0, para: S.para || 0,
             clubs: 0, best: null, balls: [], rest: [], arc: [], statT: 1, moveT: 0, html: '' };
-  Scene.legend = null;
+  Scene.legend = null; Scene.flourish = null;
   $('saver').classList.add('on');
   saverSize();
   $('saverBox').style.transform = '';
