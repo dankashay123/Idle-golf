@@ -6175,6 +6175,7 @@ function finishHole(D){
   if(sc.d < S.bestScore) S.bestScore = sc.d;
   addXp(B.XP_HOLE * Math.pow(1 + S.tier, B.XP_TIER) * sc.pay * (parOf(S.hole)/4));
   Scene.holed(sc);
+  Scene.happyDance(sc.d);
 
   // gear drops: the closing hole always gives one up
   const luck = D.drop;
@@ -10124,7 +10125,11 @@ const Scene = {
     const M = this.fairyMove;
     if(!M) return null;
     const T = this.t - M.t0;
-    if(!(T >= 0 && T < M.dur) || this.fairyCast){ this.fairyMove = null; return null; }
+    if(!(T >= 0 && T < M.dur) || this.fairyCast){
+      // a perk going off ends a happy dance's turns still to come too
+      if(this.fairyCast) this.fairyQueue = null;
+      this.fairyMove = null; return null;
+    }
     return { kind: M.kind, q: T / M.dur, T };
   },
   // Every twelve to twenty eight seconds of the course on screen he takes a
@@ -10134,12 +10139,31 @@ const Scene = {
   tickMove(dt){
     const R = this._moveRnd || (this._moveRnd = seeded(20260925));
     if(this.moveT === undefined) this.moveT = 8 + R() * 10;
+    // the next turn of a happy dance goes straight on from the last
+    if(S.dgnRun) this.fairyQueue = null;
+    if(this.fairyQueue && this.fairyQueue.length && !this.fairyMoveNow() && !this.fairyCast) this.fairyMoveGo(this.fairyQueue.shift());
     if(this.fairyMoveNow() || this.fairyNow() || this.fairyCast || S.dgnRun) return;
     this.moveT -= dt;
     if(this.moveT > 0) return;
     this.moveT = 12 + R() * 16;
     const pool = FAIRY_MOVES.filter(m => m.id !== this._lastMove);
     this.fairyMoveGo(pool[R() * pool.length | 0].id);
+  },
+  // A happy dance on a great hole (the user asked): an ace gets two flips
+  // and a cartwheel, an albatross a flip and a cartwheel, an eagle a
+  // cartwheel, and one birdie in three a dance or a spin. Off his own random
+  // stream, like his other turns; none in a catch-up or a wager, and no other
+  // turn for a while after.
+  happyDance(d){
+    if(QUIET || OFFLINE || S.dgnRun) return;
+    const R = this._moveRnd || (this._moveRnd = seeded(20260925));
+    const seq = d <= -4 ? ['flip', 'flip', 'cartwheel'] : d === -3 ? ['flip', 'cartwheel'] : d === -2 ? ['cartwheel']
+      : d === -1 && R() < 1 / 3 ? [R() < 0.5 ? 'dance' : 'spin'] : null;
+    if(!seq) return;
+    this.fairyMove = null;
+    this.fairyMoveGo(seq[0]);
+    this.fairyQueue = seq.slice(1);
+    this.moveT = Math.max(this.moveT || 0, 12);
   },
   fairyMoveGo(id){
     const m = FAIRY_MOVES.find(x => x.id === id);
