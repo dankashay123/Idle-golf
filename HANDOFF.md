@@ -11,7 +11,15 @@ check is for.
 - Everything is committed and pushed to `main` (mirrored on the session
   branch `claude/notes-review-dju532`). Nothing is half-built.
 - `node test/run.js` passes all **54 checks** (about 10 minutes).
-- **Last request**: "Let's get rid of the 'unlocks when you have…' text
+- **Last request**: "Let's start with putting out" (the menu's first
+  item). Done (§5 "He putts out"). Asked whether it would need another
+  run with the week pinned: no, it moves no money (the wait's pay was
+  already there); the full suite was run as usual.
+- Found on the way, from the pinned-week runs: the challenges check leaned
+  on one brand-new save, and "Card 70 eagles" was cleared in five minutes by
+  a third of fast starts in every week. The daily asks for 100 now, and the
+  check judges twelve starts (§5 "Fixed on the way", second list).
+- **The request before**: "Let's get rid of the 'unlocks when you have…' text
   completely please". Done: it was only on the Range's upgrade rows; each
   row now reads its level and effect, the price is on the button (grey
   until affordable). `readouts` now requires that no rung says when it
@@ -147,6 +155,7 @@ Line numbers are approximate and drift. Search for the name instead.
 | Tour tab: Tour Card, The Card, Season, Major of the Week | `renderTour`, `renderSeason`, `renderMajor` |
 | **Seasons**: home courses by the card, six regular stops by the real month | `SEASONS`, `homeSeason`, `courseSeason`, `CAL_SEASONED`, `MONTH_SEASON`, `monthNow`, `seasonLook`, `LOOK_CACHE`, `SEASON_FORCE`, `Scene.look`, `Scene.snow` (drawn in `drawWeather`), the banner in `announceCourse` |
 | **Signature holes** (island, canyon, stones, sea stack) | `sigHole`, `sigKind`, `SIG_NAME`, `B.SIG_HOLE`, `HOME_PIER`, the `*_FORCE` values, `drawBridge`, `drawStones`, `drawPier`, `isleWait` (the hold), `sigScore` (honours and `S.sigRec`), `renderRecord` |
+| **He putts out** | `Scene.putt`, `puttArm`, `puttBall`, `cupT`, `cupHeard`, `PUTT_HIT`, `PUTT_ROLL`, `PIN_X`, `Scene.pinX`, `putSpot` in `launch`, `Sfx.putt`; `paintGolfer`'s last argument |
 | **The hole waits for him to reach the green** | `Scene.holeWait` (was `isleWait`), `B_GREEN_UP`, `B_GREEN_STAND`, `Scene.upT`, `holeSaid`, `Scene.saidHole`, the `waiting` guard and hold in `step`, `walk` in `finishHole` (the wait paid for) |
 | **Railway Crossing** | `isRail`, `RAIL_FORCE`, `P_RAIL`, `Scene.tickRail`, `railAt`, `railHold`, `railLights`, `drawRail`, `drawTrain`, `RAIL_X`/`RAIL_V`/`RAIL_LEN`/`RAIL_MEET`, `railWait` in the camera code, `Sfx.whistle`/`chuff`/`ding`, `SIG_HOME_ROUND`; `DEV.rail` |
 | **Life on the signature holes** | `DUCKS`, `Scene.duckAt`, `drawDucks`, `drawHawk` (from `drawBridge`), `fishAt`, `drawFish` (from `drawStones`), `Sfx.quack`/`hawk`/`plop` |
@@ -281,6 +290,36 @@ Line numbers are approximate and drift. Search for the name instead.
    seeded stream instead.
 
 ## 5. What the last features do (for debugging them)
+
+### He putts out (user asked, from the menu)
+
+- Once the hole's ball is down he walks up to `LEN - B_GREEN_STAND` (2.2
+  short of the cup) and putts: `Scene.putt = { t0, d0 }` starts when he is
+  up (`upT`), not swinging, no ball in the air or lying beyond him.
+  `puttArm(T)` feeds `paintGolfer` a club angle (its new last argument):
+  still 0.15s, back to 0.38s, through to 0.48s (impact `PUTT_HIT` 0.43),
+  held, back to address by 1.15s. `puttBall(T)` rolls the ball for
+  `PUTT_ROLL` (0.6s) from his feet (`teeLat`) up his right side into the
+  cup, drawn before him (it is beyond him). `Sfx.putt` (a tock, -51 dB).
+- **The pin moved right** (`PIN_X` 0.9, `Scene.pinX()`; a wager keeps it at
+  0): on his own line the cup was behind him as he putted, and on a phone
+  turned on its side it is behind his head from any distance (measured,
+  `cupgeo2.js` in the scratchpad). The map's pin mark is left at the
+  middle (under a pixel).
+- `cupT` is when the ball dropped (the putt, or an ace straight in off the
+  tee: the last shot of a hole lands in the cup when its score is an ace,
+  else a putt short: `putSpot`, and no ball ever rests nearer the cup than
+  that). The cup's sound plays at the drop (`cupHeard`); the banner, the
+  caddie's word and the happy dance (`holeSaid`) come at the drop, or for
+  an ace dropping before the hole's walk minimum, when that is up.
+  `holeWait` holds until `cupT` and 0.3s after it (and after `upT`).
+- A swing still waiting (`Scene.queued`) is dropped once the hole's ball is
+  down: it fired on the green as a full swing before the putt.
+- The plain-hole wait is about 2.0s now (was 1.15s); paid for as before.
+- Check `green` (putt, tock, drop timing, the rolling ball seen and clear of
+  him upright and on its side, the cup clear of him, no ball resting nearer
+  the cup, a deliberate hole in one); `dance` times its turn trick to the
+  drop.
 
 ### A hole never ends before he reaches the green (user asked, mid-task)
 
@@ -506,6 +545,17 @@ Line numbers are approximate and drift. Search for the name instead.
   leave it room (on a hole with a long forecast it gives way); the ×2 in
   the words shows either way.
 - Check `sigweek`.
+
+### Fixed on the way (this session: the dailies)
+
+- The week pinned to Island Green failed `challenges`: its brand-new save
+  (one start, five minutes) found 12 Rare clubs. Over forty starts that is
+  luck (1-2 in 40, whatever the week), but the same sweep showed "Card 70
+  eagles or better" cleared in five minutes by 12 of 40 starts in every
+  week (16 to 91 eagles). The daily asks for 100 now (one start in twelve
+  still can), and the check plays twelve starts: a daily fails if more than
+  three clear it or a typical start is four fifths of the way through it.
+  Sweep script `dailyfast40.js` (scratchpad).
 
 ### Fixed on the way
 
@@ -952,6 +1002,9 @@ Line numbers are approximate and drift. Search for the name instead.
 
 ## 6. Recent history (newest first, one line each)
 
+- He putts out on every hole (an ace goes straight in); the pin stands a
+  little right of centre so the cup shows.
+- The eagle daily asks for 100; the dailies check plays twelve starts.
 - The Range's rows no longer say "unlocks when you have" (user asked).
 - A hole never ends before he is up on the green (while watched; the wait
   is paid for, so watching earns what being away does).

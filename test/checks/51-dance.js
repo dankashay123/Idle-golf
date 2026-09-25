@@ -29,32 +29,34 @@ module.exports = {
         const clear = () => { Scene.fairyMove = null; Scene.fairyQueue = null; Scene.fairySay = null; Scene.fairyCast = null; Scene.moveT = 999; };
         // the hole ends in the loop at the time that cards d; then five
         // seconds of frames, noting each turn as it starts
-        // (a turn of his own falls due half a second in: a dance puts it off,
-        // so none should show in the six seconds watched)
+        // (the dance comes as his putt drops; a turn of his own is made to fall
+        // due just then: a dance puts it off, so none should show after it)
         const play = d => {
           S.hole = plain(); startHole(); clear();
-          if (d <= -2) Scene.moveT = 0.5;
           const D = derive();
           S.parTime = 1000; S.yards = 0; S.doneT = null; S.elapsed = S.parTime * at(d) - 0.001;
           // how often the hole's end asks for a dance, and how many of the
           // round's random numbers the dance takes (none)
           const hd = Scene.happyDance; let asked = 0, calls = 0;
-          Scene.happyDance = function (dd) { asked++; Math.random = () => { calls++; return mr(); };
+          Scene.happyDance = function (dd) { if (S.hole === h0) asked++; Math.random = () => { calls++; return mr(); };
             try { return hd.call(this, dd); } finally { Math.random = mr; } };
           const h0 = S.hole;
-          try { step(0.002, D); } finally { Scene.happyDance = hd; Math.random = mr; }
+          step(0.002, D);
           // (the hole now waits for him to walk up to the green, so the round
           // plays on in the frames: the dance starts as the ball drops)
           const seen = [];
           let ended = S.hole !== h0;
           let last = null;
-          for (let i = 0; i < 120; i++) {
+          try {
+          for (let i = 0; i < 160; i++) {
+            if (d <= -2 && S.hole === h0 && Scene.putt && !Scene.cupT && Scene.t - Scene.putt.t0 > PUTT_HIT) Scene.moveT = 0.12;
             const Dn = derive(); step(0.05, Dn); Scene.draw(0.05, Dn);
             if (S.hole !== h0) ended = true;
             const M = Scene.fairyMove, key = M ? M.kind + '@' + M.t0.toFixed(3) : null;
             if (key && key !== last) seen.push(M.kind);
             last = key;
           }
+          } finally { Scene.happyDance = hd; Math.random = mr; }
           return { seen: seen.join(','), ended, asked, calls, moveT: Scene.moveT };
         };
         o.ace = play(-4); o.alb = play(-3); o.eagle = play(-2); o.par = play(0); o.bogey = play(1);
