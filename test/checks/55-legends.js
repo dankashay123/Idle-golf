@@ -378,6 +378,25 @@ module.exports = {
               o.flourish[O.fx] = { birdie: at(-1, 0.15), eagle: at(-2, 0.15), alb: at(-3, 0.15), ace: at(-4, 0.15), over: at(-3, FLOURISH_DUR + 0.05) };
             }
             Scene.flourish = null;
+            // ---- a pure strike with the three dearest drivers ----
+            o.pure = {};
+            S.outfit = 'classic'; buildSprites();
+            const G2 = () => { const k = SPRITE.caddie; SPRITE.caddie = null; c.clearRect(0, 0, VW, VH); Scene.clubArc = []; Scene.drawGolfer(D); SPRITE.caddie = k; return px(); };
+            const bxp = box.x0 + w * 1.19;
+            for (const id of ['divine', 'demonic', 'ascended', 'steel']) {
+              S.styleOwn['k:' + id] = 1; S.club = id;
+              const hit = (crit, T) => {
+                Scene.pure = null; played.length = 0; QUIET = false;
+                Scene.t = 10 - T; Scene.pendingBall = { crit, el: null, dmg: 0 }; Scene.launch(); QUIET = true; Scene.balls.length = 0; Scene.t = 10;
+                Scene.swingT = Scene.swingDur * (1 - 0.62);
+                const P0 = Scene.pure, sound = played.filter(k => /pure/.test(k)).join(' ');
+                const a = G2(); Scene.pure = null; const b2 = G2(); Scene.swingT = 0;
+                const d2 = diff(a, b2);
+                return { set: !!P0, sound, n: d2.length, off: d2.filter(([x, y]) => Math.abs(x - bxp) > h * 0.5 || Math.abs(y - p.y) > h * 0.5).length };
+              };
+              o.pure[id] = { crit: hit(true, 0.1), plain: hit(false, 0.1), over: hit(true, PURE_DUR + 0.05) };
+            }
+            S.club = 'steel'; Scene.pure = null; o.pureDur = PURE_DUR;
           } finally { Sfx.play = keep; Scene.legend = null; Scene.flourish = null; QUIET = true; }
         }
         // his ground goes down before the pin and a putt rolling away beyond
@@ -489,6 +508,14 @@ module.exports = {
       if (F.over.n) f('the ' + fx + ' flourish has not ended after its time: ' + F.over.n + ' pixels');
     }
     if (Object.keys(r.flourish).length !== 11) f('flourishes for ' + Object.keys(r.flourish).length + ' skins, not the eleven: ' + Object.keys(r.flourish).join(', '));
+    if (!(r.pureDur <= 0.5)) f('a pure strike\'s flourish lasts ' + r.pureDur + 's (a fast bag strikes pure every second or two)');
+    for (const id in r.pure) {
+      const P = r.pure[id];
+      if (id === 'steel') { if (P.crit.set || P.crit.n || P.crit.sound) f('a pure strike with a plain club flourishes: ' + J(P.crit)); continue; }
+      if (!(P.crit.set && P.crit.n >= 15) || P.crit.off || P.crit.sound !== 'pure!') f('the ' + id + ' driver\'s pure strike: ' + J(P.crit) + ' (its flourish at the ball, and its sound)');
+      if (P.plain.set || P.plain.n) f('the ' + id + ' driver flourishes on a strike that is not pure: ' + J(P.plain));
+      if (P.over.n) f('the ' + id + ' driver\'s flourish has not ended after its time: ' + J(P.over));
+    }
     const dvn = r.divine;
     if (!(dvn.rise >= 2) || !(dvn.sweep >= 2)) f('the Divine wings through a swing: up ' + dvn.rise + 'px at the top of the backswing, down ' + dvn.sweep + ' at the strike');
     if (!(dvn.ground >= 100) || dvn.groundOff) f('the Divine sun: ' + dvn.ground + ' pixels, ' + dvn.groundOff + ' off the ground at his feet');
@@ -531,6 +558,7 @@ module.exports = {
       'the ultimate Demonic: an aura of hellfire (' + Math.round(dm.auraTop / dm.auraIdle * 100 - 100) + '% more at the top of the backswing), chains of fire round him, horns curling over (their top row ' + dm.hornCurl.toFixed(2) + ' of his cap across), hands on fire, the ground cracking at the strike (' + dm.cracks + 'px); ' + dm.foot.l + '/' + dm.foot.r + ' of his width either side, ' + dm.foot.up + ' of his height over him',
       'the ultimate Divine: wings of feathers side on and from behind, up ' + dvn.rise + 'px through the backswing and down at the strike; a sun at his feet, a second halo, feathers drifting down, light off the ball and a ring of light as he strikes',
       'a flourish on an albatross or an ace for each of the other ' + Object.keys(r.flourish).length + ' effect skins (' + Object.entries(r.flourish).map(([k, v]) => k + ' ' + v.alb.n).join(', ') + 'px), half a second, close about him, with a sound, more on an ace; none on a birdie or an eagle',
+      'a pure strike with the Divine, Demonic and Ascended drivers: its flourish at the ball (' + ['divine', 'demonic', 'ascended'].map(k => k + ' ' + r.pure[k].crit.n).join(', ') + 'px) and its sound, over in a third of a second; none on an ordinary strike or with a plain club',
       'the moment on an albatross: the Demonic ' + r.legend.demonic.alb.n + 'px (' + r.legend.demonic.ace.n + ' on an ace), the Ascended ' + r.legend.ascended.alb.n + 'px (' + r.legend.ascended.ace.n + '), the Divine ' + r.legend.divine.alb.n + 'px, bursting out of him and close about him for half a second, each with its sound; none on an eagle, in a plain golfer, while quiet or once over'];
   }
 };

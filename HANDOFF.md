@@ -11,17 +11,15 @@ check is for.
 - Everything is committed and pushed to `main` (mirrored on the session
   branch `claude/loving-archimedes-ct2rpb`). Nothing is half-built.
 - `node test/run.js` passes all **56 checks** (about nine minutes).
-- **Last request**: "Let's make the effects actually only occur on Aces
-  and albatrosses, but only last half a second. make the effects not go
-  all the way to the top of the screen, too. Make it so they just quickly
-  surround the golfer for half a second. When I am getting aces or
-  albatrosses on every hole at lower levels and high gear, the effect
-  basically never goes away due to quick pace. have the effect come
-  outwards from the outline of the golfer kind of like an explosion. Then
-  do option 1 and 4" (night on the signature holes; the caddies' wings in
-  profile). Done: §5 "The moments, cut back", "Night on the signature
-  holes", "The caddies' wings".
-- **The request before**: the Divine made the ultimate skin, wings side on
+- **Last request**: "I think 1 would take up too much time, so let's skip
+  that [the railway station]. let's do 2 and 3": the Signature Week on the
+  Tour tab, and a flourish for the three dearest drivers on a pure strike.
+  Done: §5 "The Signature Week on the Tour tab", "A pure strike with the
+  dearest drivers". The station is off the menu.
+- **The request before**: the moments cut to half a second on an
+  albatross or an ace, bursting out of him; night on the signature holes;
+  the caddies' wings side on.
+- **Before that**: the Divine made the ultimate skin, wings side on
   and from behind, and a flourish for the other effect skins.
 - **Before that**: the canyon bridge cut to slats (fixed) and the
   Signature Week honour.
@@ -362,6 +360,26 @@ Line numbers are approximate and drift. Search for the name instead.
    nothing. Assert the order, and count a name after the edit.
 
 ## 5. What the last features do (for debugging them)
+
+### The Signature Week on the Tour tab (user asked, from the menu)
+
+- A band "Signature Week" after the Major of the Week (`#sigNote`,
+  `#sigBox`, `renderSigWeek`, from `renderTour`): "n of 5 this week", a
+  line saying all five or not and how many weeks won, a `?` fold (Monday
+  to Sunday; the courses with a sea stack, worked out from `HOME_PIER` and
+  `B.SIG_HOLE`), and a row per kind, "\u2713 played" in green or a dash, the
+  hole of the week's row marked "pays 2\u00d7".
+
+### A pure strike with the dearest drivers (user asked, from the menu)
+
+- `CLUBFX.divine/demonic/ascended.pure(c, x, y, h, f)`, at the ball for
+  `PURE_DUR` (0.35s; pure strikes come every second or two on a fast bag):
+  a starburst of gold light with a ring; a fireball swelling and going
+  dark with embers thrown forward; a crescent of magenta light slashed
+  through the ball with shards off it. Set in `Scene.launch` on a pure
+  strike (`Scene.pure`, `pureNow(t)`, only while that club is held), drawn
+  at the end of `paintGolfer`. `Sfx.pureSnd`: a bell, a whoomp, a slice,
+  under the strike's crack (0.004 to 0.007 at their loudest).
 
 ### The moments, cut back (user asked)
 
@@ -1454,6 +1472,9 @@ him (about 49px tall on a 320 phone, 71px on its side).
 
 ## 6. Recent history (newest first, one line each)
 
+- The Signature Week on the Tour tab; a flourish on a pure strike for the
+  Divine, Demonic and Ascended drivers.
+
 - The moments only on an albatross or an ace, half a second, bursting out
   of him; night on the signature holes (lanterns, string lights, lamps,
   fireflies); the caddies' wings side on.
@@ -1593,19 +1614,18 @@ him (about 49px tall on a 320 phone, 71px on its side).
 
 ## 8. What to offer next
 
-Everything asked for is done. First ask whether the half-second bursts
-feel right on a fast bag, and whether the Divine caddie's wings should
-stay (the default caddie is wingless at their request).
+Everything asked for is done. First ask how the pure-strike flourishes
+feel at their tempo (too often, too small?). The railway station was
+turned down as too big a job: don't offer it again.
 
 The menu to offer next:
-1. **A station on the railway** (recommended): now and then a train stops
-   at a little halt by the crossing, a guard waves a flag, passengers get
-   off to watch.
-2. **The Signature Week on the Tour tab**: the five kinds shown ticked off
-   beside the signature hole of the week, so the chase is in sight.
-3. **A flourish for the club effects**: the Divine Driver, the Demonic's,
-   the Ascended's, each doing something on a pure strike.
-4. **Night on the ordinary holes**: lamps by the tee, a lit clubhouse far
-   off, the flag glowing, fireflies in the rough.
-5. **A photo mode**: a button that freezes the course and hides the words,
+1. **Night on the ordinary holes** (recommended): lamps by the tee, a lit
+   clubhouse far off, the flag glowing, fireflies in the rough.
+2. **A photo mode**: a button that freezes the course and hides the words,
    to take a clean screenshot of a skin.
+3. **Trail flourishes**: the Seraph, Hellfire and Ascension trails do
+   something as an ace drops.
+4. **A Mythic caddie perk**: a perk only the three dearest caddies can
+   wear, with an effect of its own.
+5. **Weekly Signature bonus**: the Signature Week pays a small prize of
+   sovereigns each time, on top of the honour.
