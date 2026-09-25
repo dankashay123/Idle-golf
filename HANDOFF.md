@@ -14,7 +14,9 @@ check is for.
 - **Last request**: "Let's start with putting out" (the menu's first
   item). Done (§5 "He putts out"). Asked whether it would need another
   run with the week pinned: no, it moves no money (the wait's pay was
-  already there); the full suite was run as usual.
+  already there); the full suite was run as usual (all 54 pass; `caddie`
+  now expects a shot onto the green to stop a putt short). Sent a GIF of a
+  birdie and an eagle being putted out.
 - Found on the way, from the pinned-week runs: the challenges check leaned
   on one brand-new save, and "Card 70 eagles" was cleared in five minutes by
   a third of fast starts in every week. The daily asks for 100 now, and the
@@ -1110,13 +1112,12 @@ Seasons Seen on the Record, and holes now finishing with him up on the
 green. Still unseen before that: the caddie's turns, perk upgrades, the pier
 on a windy day and the season chime.
 
-The menu to offer next:
-1. **He putts out** (recommended): now that every hole waits for him on
-   the green, he taps the ball in when he gets there, a short putt and the
-   ball dropping, paid for like the walk.
-2. **Life on the railway**: other trains now and then (a goods train, an
-   express, a night train with glowing windows), and the golfer and his
-   caddie wave as it goes by.
-3. **Weather on the signature holes**: rain rings on the island's lake,
+The menu to offer next (the putt out is done; the rest of the last menu):
+1. **Life on the railway** (recommended): other trains now and then (a
+   goods train, an express, a night train with glowing windows), and the
+   golfer and his caddie wave as it goes by.
+2. **Weather on the signature holes**: rain rings on the island's lake,
    snow settling on the train and the bridge, spray thicker in a storm.
-4. **A Signature Week honour**: all five kinds played in one real week.
+3. **A Signature Week honour**: all five kinds played in one real week.
+4. **A read of the green**: now and then a longer putt that breaks, and
+   once in a while a lip-out and a second tap-in.
