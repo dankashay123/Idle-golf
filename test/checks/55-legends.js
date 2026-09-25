@@ -331,20 +331,21 @@ module.exports = {
                 Scene.t = 10 - T; Scene.happyDance(d); QUIET = true; Scene.t = 10;
                 const sound = played.join(' '), on = diff(golfer(), (() => { const k = Scene.legend; Scene.legend = null; const a = golfer(); Scene.legend = k; return a; })());
                 Scene.legend = null;
-                return { sound, n: on.length, above: on.filter(([, y]) => y < box.y0 - h * 0.3).length,
-                         out: on.filter(([x]) => Math.abs(x - cx) > w * 1.6).length };
+                // out: thrown clear of him; far: out of the close ring about
+                // him it keeps to (the user asked: no more up the sky)
+                return { sound, n: on.length, out: on.filter(([x, y]) => x < box.x0 - 2 || x > box.x1 + 2 || y < box.y0 - 2).length,
+                         far: on.filter(([x, y]) => Math.abs(x - cx) > w * 1.9 || y < box.y0 - h * 0.6).length };
               };
-              L.birdie = at(-1, 0.8); L.eagle = at(-2, 0.8); L.ace = at(-4, 0.8);
-              L.over = at(-2, LEGEND_DUR + 0.05);
-              // the skulls scatter and the shards burst out, far past where they ride
-              Scene.legend = { t0: Scene.t - 0.8, big: false, dur: LEGEND_DUR };
-              const flung = { demonic: 'skulls', ascended: 'orbit', divine: 'feathers' }[id];
-              const fl = part(id, flung, golfer);
-              L.flung = fl.filter(([x]) => Math.abs(x - cx) > w * 1.4).length;
+              // only on an albatross or an ace, for half a second
+              L.birdie = at(-1, 0.15); L.eagle = at(-2, 0.15); L.alb = at(-3, 0.15); L.ace = at(-4, 0.15);
+              L.over = at(-3, LEGEND_DUR + 0.05); L.dur = LEGEND_DUR;
+              // the burst itself, out of his outline, taken away from the same frame
+              Scene.legend = { t0: Scene.t - 0.3, big: false, dur: LEGEND_DUR };
+              { const a = golfer(), keepB = window.outlineBurst; window.outlineBurst = () => {}; const b2 = golfer(); window.outlineBurst = keepB;
+                const B2 = diff(a, b2); L.burst = { n: B2.length, clear: B2.filter(([x, y]) => x < box.x0 - 2 || x > box.x1 + 2 || y < box.y0 - 2).length }; }
               Scene.legend = null;
-              L.home = part(id, flung, golfer).filter(([x]) => Math.abs(x - cx) > w * 1.4).length;
               // not in the plain golfer
-              S.outfit = 'classic'; buildSprites(); L.plain = at(-2, 0.8); S.outfit = id; buildSprites();
+              S.outfit = 'classic'; buildSprites(); L.plain = at(-4, 0.15); S.outfit = id; buildSprites();
               // never while the game is quiet (a catch-up, a check)
               Scene.legend = null; QUIET = true; Scene.happyDance(-4); L.quiet = !!Scene.legend;
               // and the battery saver starting puts an end to it
@@ -362,10 +363,11 @@ module.exports = {
                 Scene.flourish = null; Scene.legend = null; QUIET = false; played.length = 0;
                 Scene.t = 10 - T; Scene.happyDance(d); QUIET = true; Scene.t = 10;
                 const F0 = Scene.flourish, sound = played.join(' ');
-                const on = whole(); Scene.flourish = null; const off = whole();
-                return { sound, n: diff(on, off).length, big: F0 ? F0.big : null, dur: F0 ? +F0.dur.toFixed(2) : null, legend: !!Scene.legend };
+                const on = whole(); Scene.flourish = null; const off = diff(on, whole());
+                return { sound, n: off.length, big: F0 ? F0.big : null, dur: F0 ? +F0.dur.toFixed(2) : null, legend: !!Scene.legend,
+                         far: off.filter(([x, y]) => Math.abs(x - cx) > w * 1.9 || y < box.y0 - h * 0.6).length };
               };
-              o.flourish[O.fx] = { birdie: at(-1, 0.5), eagle: at(-2, 0.5), ace: at(-4, 0.5), over: at(-2, FLOURISH_DUR + 0.05) };
+              o.flourish[O.fx] = { birdie: at(-1, 0.15), eagle: at(-2, 0.15), alb: at(-3, 0.15), ace: at(-4, 0.15), over: at(-3, FLOURISH_DUR + 0.05) };
             }
             Scene.flourish = null;
           } finally { Sfx.play = keep; Scene.legend = null; Scene.flourish = null; QUIET = true; }
@@ -472,9 +474,9 @@ module.exports = {
     // the moment
     for (const fx in r.flourish) {
       const F = r.flourish[fx];
-      if (F.birdie.n || F.birdie.sound) f('the ' + fx + ' flourish on a birdie: ' + J(F.birdie));
-      if (!(F.eagle.n >= 25) || F.eagle.sound !== 'flourish!' && F.eagle.sound !== 'flourish' || F.eagle.legend) f('the ' + fx + ' flourish on an eagle: ' + J(F.eagle));
-      if (!(F.ace.big && F.ace.dur > F.eagle.dur)) f('the ' + fx + ' flourish on an ace is no bigger: ' + J(F.ace));
+      if (F.birdie.n || F.birdie.sound || F.eagle.n || F.eagle.sound) f('the ' + fx + ' flourish on a birdie ' + J(F.birdie) + ' or an eagle ' + J(F.eagle));
+      if (!(F.alb.n >= 25) || F.alb.far || F.alb.sound !== 'flourish!' || F.alb.legend || F.alb.dur > 0.5) f('the ' + fx + ' flourish on an albatross: ' + J(F.alb) + ' (half a second, kept close about him)');
+      if (!(F.ace.big && F.ace.n > F.alb.n) || F.ace.far) f('the ' + fx + ' flourish on an ace is no bigger, or strays: ' + J(F.ace));
       if (F.over.n) f('the ' + fx + ' flourish has not ended after its time: ' + F.over.n + ' pixels');
     }
     if (Object.keys(r.flourish).length !== 11) f('flourishes for ' + Object.keys(r.flourish).length + ' skins, not the eleven: ' + Object.keys(r.flourish).join(', '));
@@ -486,10 +488,11 @@ module.exports = {
     if (!(dvn.sparks >= 6) || dvn.sparksOff || !(dvn.waveOut >= 8)) f('the Divine strike: light off the ball ' + dvn.sparks + ' (' + dvn.sparksOff + ' away from it), a ring ' + dvn.waveOut + ' out past the sun');
     for (const id of ['demonic', 'ascended', 'divine']) {
       const L = r.legend[id], snd = { demonic: 'hellfire', ascended: 'ascend', divine: 'choir' }[id];
-      if (L.birdie.n || L.birdie.sound) f('the ' + id + ' moment on a birdie: ' + J(L.birdie) + ' (only an eagle or better)');
-      if (!(L.eagle.above >= 30 && L.eagle.out >= 3) || L.eagle.sound !== snd) f('the ' + id + ' moment on an eagle: ' + J(L.eagle) + ' (a column up over him, things flung out, the sound ' + snd + ')');
-      if (!(L.ace.n > L.eagle.n * 1.1 && L.ace.out >= L.eagle.out) || L.ace.sound !== snd + '!') f('the ' + id + ' moment on an ace is not bigger: ' + J(L.ace) + ' against ' + J(L.eagle));
-      if (!(L.flung >= 3) || L.home) f('the ' + id + { demonic: ' skulls', ascended: ' shards', divine: ' feathers' }[id] + ' flung out on a great hole: ' + L.flung + ' pixels far out (' + L.home + ' when they ride as usual)');
+      if (L.birdie.n || L.birdie.sound || L.eagle.n || L.eagle.sound) f('the ' + id + ' moment on a birdie ' + J(L.birdie) + ' or an eagle ' + J(L.eagle) + ' (only an albatross or an ace)');
+      if (!(L.alb.out >= 40) || L.alb.far || L.alb.sound !== snd) f('the ' + id + ' moment on an albatross: ' + J(L.alb) + ' (a burst out of him, kept close about him, the sound ' + snd + ')');
+      if (!(L.ace.n > L.alb.n * 1.05) || L.ace.far || L.ace.sound !== snd + '!') f('the ' + id + ' moment on an ace is not bigger, or strays: ' + J(L.ace) + ' against ' + J(L.alb));
+      if (!(L.burst.n >= 60 && L.burst.clear >= 30)) f('the ' + id + ' burst out of him: ' + J(L.burst));
+      if (L.dur > 0.5) f('the ' + id + ' moment lasts ' + L.dur + 's (half a second)');
       if (L.over.n) f('the ' + id + ' moment has not ended after its time: ' + L.over.n + ' pixels');
       if (L.plain.n || L.plain.sound) f('a plain golfer has a moment: ' + J(L.plain));
       if (L.quiet || L.saver) f('the ' + id + ' moment while the game is quiet ' + L.quiet + ', or through the battery saver starting ' + L.saver);
@@ -518,7 +521,7 @@ module.exports = {
       'his ground under the pin and a putt rolling away (' + r.layer.order + ')',
       'the ultimate Demonic: an aura of hellfire (' + Math.round(dm.auraTop / dm.auraIdle * 100 - 100) + '% more at the top of the backswing), chains of fire round him, horns curling over (their top row ' + dm.hornCurl.toFixed(2) + ' of his cap across), hands on fire, the ground cracking at the strike (' + dm.cracks + 'px); ' + dm.foot.l + '/' + dm.foot.r + ' of his width either side, ' + dm.foot.up + ' of his height over him',
       'the ultimate Divine: wings of feathers side on and from behind, up ' + dvn.rise + 'px through the backswing and down at the strike; a sun at his feet, a second halo, feathers drifting down, light off the ball and a ring of light as he strikes',
-      'a flourish on an eagle for each of the other ' + Object.keys(r.flourish).length + ' effect skins (' + Object.entries(r.flourish).map(([k, v]) => k + ' ' + v.eagle.n).join(', ') + 'px), with a sound, longer on an ace; none on a birdie or once over',
-      'the moment on an eagle: the Demonic ' + r.legend.demonic.eagle.n + 'px (' + r.legend.demonic.ace.n + ' on an ace), the Ascended ' + r.legend.ascended.eagle.n + 'px (' + r.legend.ascended.ace.n + '), each with its sound; none on a birdie, in a plain golfer, while quiet or once over'];
+      'a flourish on an albatross or an ace for each of the other ' + Object.keys(r.flourish).length + ' effect skins (' + Object.entries(r.flourish).map(([k, v]) => k + ' ' + v.alb.n).join(', ') + 'px), half a second, close about him, with a sound, more on an ace; none on a birdie or an eagle',
+      'the moment on an albatross: the Demonic ' + r.legend.demonic.alb.n + 'px (' + r.legend.demonic.ace.n + ' on an ace), the Ascended ' + r.legend.ascended.alb.n + 'px (' + r.legend.ascended.ace.n + '), the Divine ' + r.legend.divine.alb.n + 'px, bursting out of him and close about him for half a second, each with its sound; none on an eagle, in a plain golfer, while quiet or once over'];
   }
 };
