@@ -13,9 +13,10 @@ check is for.
 - `node test/run.js` passes all **50 checks** (about 9 minutes).
 - **Last request**: "All of those please" (the menu: caddie perk upgrades,
   more caddie moves, life on the pier, a season chime). All four done and
-  pushed one by one (§5, the four newest sections); sent a GIF of the pier
-  and a screenshot of the upgrade rack. Since the chime reads the seasons,
-  the suite is being run with the day pinned to each season (rule 20).
+  pushed one by one (§5, the four newest sections); sent a GIF of the pier,
+  one of the cartwheel and juggle, and a screenshot of the upgrade rack.
+  The suite passes with the day pinned to each season (rule 20): only the
+  "today" line of `seasons` moved, as it should.
 - **The request before**: "get rid of the caddy wings, just have them
   float up and down a tiny bit; more animation too, like randomly will
   spin, dance, stuff like that for fun". Done (§5 "The caddie: no wings, a
