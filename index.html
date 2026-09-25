@@ -13912,6 +13912,12 @@ Object.assign(Scene, {
     // white along its planks and its ropes
     const gust = clamp((this.windMph() - 8) / 12, 0, 1), sway = Math.sin(this.t * (1.3 + gust * 1.2)) * (0.07 + gust * 0.12);
     const n = Math.max(4, Math.round((b - a) / 0.3));
+    // What can hide it is the ground this side of the canyon, never the
+    // canyon itself: that is sunk far below, so a plank sagging a little under
+    // the canyon's rim is still in sight. Cut at the ground in front of it,
+    // up to the bank (cut at its own distance, the canyon's rim took most of
+    // each plank out of the deck as he walked it, leaving slats, the user saw).
+    const clipB = d => this.clipAt(Math.max(near, Math.min(d, a)));
     const PL = this.snow ? ['#E8EEF2', '#D4DCE2'] : ['#94633A', '#7A4E2C'], POST = '#4E321C', ROPE = '#CDB88C', SNOW = '#F2F6F8';
     // a solid deck, each plank running from its own edge to the next one's
     // with a dark seam between, far to near; a crest in front still hides it
@@ -13921,7 +13927,7 @@ Object.assign(Scene, {
     for(let i = n - 1; i >= 0; i--){
       const q = at(i);
       if(q.d >= near){
-        const clip = this.clipAt(q.d);
+        const clip = clipB(q.d);
         const top = Math.min(far.L.y, q.L.y - 1), h = Math.max(1, q.L.y - top);
         const x0 = Math.min(q.L.x, far.L.x), x1 = Math.max(q.R.x, far.R.x);
         c.fillStyle = PL[i & 1]; fillClip(c, x0, top, Math.max(1, x1 - x0), h, clip);
@@ -13933,8 +13939,8 @@ Object.assign(Scene, {
       for(const d of [a, b]){
         if(d < near) continue;
         const g = this.proj(d, side * hw, 0), t = this.proj(d, side * hw, 1.4), th = Math.max(1, Math.round(g.s * 0.12));
-        pxLineClip(c, g.x, g.y, t.x, t.y, POST, th, this.clipAt(d));
-        if(this.snow){ c.fillStyle = SNOW; fillClip(c, Math.round(t.x - th / 2), Math.round(t.y) - 1, th + 1, Math.max(1, th >> 1) + 1, this.clipAt(d)); }
+        pxLineClip(c, g.x, g.y, t.x, t.y, POST, th, clipB(d));
+        if(this.snow){ c.fillStyle = SNOW; fillClip(c, Math.round(t.x - th / 2), Math.round(t.y) - 1, th + 1, Math.max(1, th >> 1) + 1, clipB(d)); }
       }
       let prev = null;
       for(let i = 0; i <= n; i++){
@@ -13945,8 +13951,8 @@ Object.assign(Scene, {
         p.d = d;
         // cut at the farther end's clip, which is the higher of the two
         if(prev){ const rw = Math.max(1, Math.min(3, Math.round(prev.s * 0.05)));
-          pxLineClip(c, prev.x, prev.y, p.x, p.y, ROPE, rw, this.clipAt(Math.max(prev.d, d)));
-          if(this.snow) pxLineClip(c, prev.x, prev.y - 1, p.x, p.y - 1, SNOW, 1, this.clipAt(Math.max(prev.d, d))); }
+          pxLineClip(c, prev.x, prev.y, p.x, p.y, ROPE, rw, clipB(Math.max(prev.d, d)));
+          if(this.snow) pxLineClip(c, prev.x, prev.y - 1, p.x, p.y - 1, SNOW, 1, clipB(Math.max(prev.d, d))); }
         prev = p;
       }
     }
@@ -14335,21 +14341,30 @@ Object.assign(Scene, {
     const sw = Math.max(1, Math.round(LAT * g.s * 0.14));
     for(let x = -span; x <= span; x += 0.5){
       const a = this.proj(d0, x), b = this.proj(d1, x);
-      fillClip(c, Math.round((a.x + b.x) / 2 - sw / 2), Math.round(b.y), sw, Math.max(1, Math.round(a.y - b.y)), this.clipAt(d1));
+      // (cut at its near end: it lies flat, so only the ground this side of
+      // it can hide it; cut at its far end, all but a dash of each was lost)
+      fillClip(c, Math.round((a.x + b.x) / 2 - sw / 2), Math.round(b.y), sw, Math.max(1, Math.round(a.y - b.y)), this.clipAt(d0));
     }
     // the boards across where he walks over, row by row (white in snow)
     c.fillStyle = this.snow ? '#E4EAEE' : '#A88A60';
-    for(let yy = Math.round(s1.y); yy <= Math.round(s0.y); yy++){
-      const f = (yy - s1.y) / Math.max(1, s0.y - s1.y), d = d1 - f * (d1 - d0);
+    // (walked out by distance, a row where each lands: worked out from the
+    // row instead, a straight share of the way, the distance came out too far
+    // near him and those rows were cut, leaving a gap in the boards as he
+    // stood on the crossing)
+    for(let d = d1, yl = null; d >= d0 - 1e-6; d -= 0.01){
       const l = this.proj(d, -1.25), r = this.proj(d, 1.25);
-      fillClip(c, Math.round(l.x), yy, Math.max(1, Math.round(r.x - l.x)), 1, this.clipAt(d));
+      if(l.y === yl) continue;
+      fillClip(c, Math.round(l.x), l.y, Math.max(1, Math.round(r.x - l.x)), yl === null ? 1 : Math.max(1, l.y - yl), this.clipAt(d));
+      yl = l.y;
     }
     // two rails, a bright top over a dark side
     const rail = off => {
       const d = dc + off;
       if(d < near) return;
       const l = this.proj(d, -span, 0.06), r = this.proj(d, span, 0.06), th = Math.max(1, Math.round(LAT * g.s * 0.05));
-      pxLineClip(c, l.x, l.y + th, r.x, r.y + th, '#4A5058', th, this.clipAt(d));
+      // (its side stands on the ballast, down to the ground at its own foot:
+      // cut at the rail's own distance, it lost its lowest rows close up)
+      pxLineClip(c, l.x, l.y + th, r.x, r.y + th, '#4A5058', th, this.clipAt(Math.max(near, d - 0.15)));
       pxLineClip(c, l.x, l.y, r.x, r.y, '#C8D0D8', th, this.clipAt(d));
     };
     // the crossing's posts: crossed white boards over two lamps

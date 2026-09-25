@@ -25,7 +25,7 @@ module.exports = {
   name: 'sigview',
   async run(page) {
     const r = await page.evaluate(() => {
-      const SNAP = JSON.stringify(S), o = { frames: 0, seen: 0, bad: [], holes: 0 };
+      const SNAP = JSON.stringify(S), o = { frames: 0, seen: 0, bad: [], holes: 0, cut: [], onIt: 0 };
       const keep = { bridge: Scene.drawBridge, stones: Scene.drawStones, pier: Scene.drawPier, ducks: Scene.drawDucks, rail: Scene.drawRail, step: window.step };
       try {
         hideSheet(); QUIET = true; window.step = () => {};
@@ -44,7 +44,7 @@ module.exports = {
             S.hole = h; startHole(); Scene.announce = null;
             const I = Scene.isle;
             o.holes++;
-            for (const cam of [0, I.bank * 0.3, I.bank * 0.6, I.bank - 3, I.bank, (I.bank + I.land) / 2, I.land, I.land + 3]) {
+            for (const cam of [0, I.bank * 0.3, I.bank * 0.6, I.bank - 3, I.bank, I.bank + 1.2, (I.bank + I.land) / 2, I.land, I.land + 3]) {
               // the clock on a little each view, so the wildlife is caught at
               // many points of its rounds (a fish is only out of the water now
               // and then)
@@ -64,6 +64,18 @@ module.exports = {
               Scene.draw(0, D);
               Scene.drawBridge = keep.bridge; Scene.drawStones = keep.stones; Scene.drawPier = keep.pier; Scene.drawDucks = keep.ducks; Scene.drawRail = keep.rail;
               const b = c.getImageData(0, 0, VW, VH).data;
+              // and the other way: standing at it or out on it, nothing lies
+              // between him and it, so none of it may be cut away (out on the
+              // bridge the canyon's sunk rim cut each plank to a slat, and on
+              // the crossing its boards lost their middle and its sleepers were
+              // dashes: the user saw the bridge)
+              if (cam >= I.bank - 0.3 && k !== 'island') {
+                const one = { canyon: 'drawBridge', stones: 'drawStones', pier: 'drawPier', rail: 'drawRail' }[k];
+                const solo = () => { c.clearRect(0, 0, VW, VH); Scene[one](); const d = c.getImageData(0, 0, VW, VH).data; let n = 0; for (let i = 3; i < d.length; i += 4) if (d[i]) n++; return n; };
+                const cut = solo(), ck = Scene.clipAt; Scene.clipAt = () => 1e6; const whole = solo(); Scene.clipAt = ck;
+                if (whole - cut > 3) o.cut.push(cs.id + ' hole ' + holeInRound(h) + ' (' + k + ') from ' + cam.toFixed(1) + ': ' + (whole - cut) + ' of its ' + whole + ' pixels cut away');
+                o.onIt++;
+              }
               const limit = Scene.clipAt(Math.max(I.bank - 0.2, cam - CAM_BACK + 0.7)) + 1;
               let n = 0, low = 0, worst = 0;
               for (let i = 0; i < a.length; i += 4) {
@@ -85,9 +97,11 @@ module.exports = {
       }
       return o;
     });
+    if (r.cut.length) throw new Error(r.cut.length + ' views from on or at a signature hole\'s bridge, stones, pier or crossing with some of it cut away: ' + r.cut.slice(0, 4).join('; '));
     if (r.bad.length) throw new Error(r.bad.length + ' frames with a bridge, stones or pier drawn through the ground: ' + r.bad.slice(0, 4).join('; '));
     if (r.seen < r.frames * 0.4) throw new Error('the bridge, stones or pier were seen in only ' + r.seen + ' of ' + r.frames + ' frames');
     return [r.holes + ' canyon, stepping-stone, sea stack, island and railway holes over every course that has them, ' + r.frames + ' views from the tee to past the crossing',
-      'the bridge, stones, pier or the life on them in view in ' + r.seen + ' of them, and never a pixel below the ground in front'];
+      'the bridge, stones, pier or the life on them in view in ' + r.seen + ' of them, and never a pixel below the ground in front',
+      'from on them or at them (' + r.onIt + ' views) none of them cut away'];
   }
 };
