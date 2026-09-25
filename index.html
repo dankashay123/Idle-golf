@@ -6192,6 +6192,7 @@ const Sfx = {
     else if(k === 'putt')  this.putt(t);
     else if(k === 'hellfire') this.hellfire(t, arg);
     else if(k === 'ascend') this.ascend(t, arg);
+    else if(k === 'choir') this.choir(t, arg);
   },
   // A moment for the legends. The Demonic's pit erupting: a deep boom, the
   // rumble of the ground, a roar of fire falling away and its crackle. The
@@ -6205,6 +6206,20 @@ const Sfx = {
     this.hiss(t, big ? 1.6 : 1.2, 420, 0.7, V * 1.2, 110, 'lowpass');
     this.tone(210, t + 0.05, big ? 1.1 : 0.8, 'sawtooth', V * 0.25, 65);
     for(let i = 0; i < (big ? 10 : 6); i++) this.hiss(t + 0.15 + i * 0.11 + Math.random() * 0.05, 0.04, 2400 + Math.random() * 1800, 1.2, V * 0.5);
+  },
+  // the Divine's heavens opening: a choir's chord swelling in, voices a
+  // little apart so it shimmers, a bell over it (a second chord on an ace)
+  choir(t, big){
+    const V = this.LEGEND_VOL;
+    const voice = (f, t0, dur, v) => {
+      const c = this.ctx, o = c.createOscillator(), o2 = c.createOscillator(), g = c.createGain();
+      o.type = 'triangle'; o2.type = 'sine'; o.frequency.value = f; o2.frequency.value = f * 1.004;
+      g.gain.setValueAtTime(0.0001, t0); g.gain.exponentialRampToValueAtTime(v, t0 + dur * 0.35); g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+      o.connect(g); o2.connect(g); g.connect(this.master); o.start(t0); o2.start(t0); o.stop(t0 + dur + 0.05); o2.stop(t0 + dur + 0.05);
+    };
+    [261.63, 329.63, 392, 523.25].forEach(f => voice(f, t, 1.8, V * 0.35));
+    if(big) [349.23, 440, 523.25, 698.46].forEach(f => voice(f, t + 1.2, 1.8, V * 0.3));
+    this.tone(1568, t + 0.25, 1.2, 'sine', V * 0.35, 1566);
   },
   ascend(t, big){
     const V = this.LEGEND_VOL;
@@ -9253,6 +9268,75 @@ function batWing(g, S, up){
   for(const t of tip){ g.beginPath(); g.arc(t.x, t.y, Math.max(0.8, S * 0.025), 0, Math.PI * 2); g.fill(); }
 }
 
+// An angel's wing (the Divine, made the ultimate skin), out to the right of a
+// shoulder at (0, 0): an arm curving up and out to the wrist, long flight
+// feathers fanning from the wrist with sky between their tips, shorter ones
+// hanging from the forearm, and a scalloped row of small ones along the top.
+// Each feather a cream vane edged in gold, so the wing is a fan of feathers
+// and not a solid shape (the user asked), and reads on sky and grass alike.
+// up (0..1) is how high it is raised; S its reach in pixels.
+const FEATHER_PAL = ['#FFFFFF', '#FFF6DE', '#F2D58A', '#E3B457', '#B98A2E'];
+function featherWing(g, S, up){
+  const at = (o, a, L) => ({ x: o.x + Math.cos(a) * L, y: o.y - Math.sin(a) * L });
+  const sh = { x: 0, y: 0 }, a1 = 0.3 + 0.65 * up, el = at(sh, a1, S * 0.26), a2 = a1 + 0.4, wr = at(el, a2, S * 0.24);
+  const lw = Math.max(1, S * 0.035);
+  // one feather: a long vane from root to a rounded tip, edged in gold
+  const feather = (root, a, L, w, quill) => {
+    const tip = at(root, a, L), nx = Math.sin(a), ny = Math.cos(a), m = at(root, a, L * 0.55);
+    g.beginPath(); g.moveTo(root.x + nx * w * 0.6, root.y + ny * w * 0.6);
+    g.quadraticCurveTo(m.x + nx * w * 1.1, m.y + ny * w * 1.1, tip.x, tip.y);
+    g.quadraticCurveTo(m.x - nx * w * 0.9, m.y - ny * w * 0.9, root.x - nx * w * 0.6, root.y - ny * w * 0.6);
+    g.closePath(); g.fillStyle = '#FFF6DE'; g.fill();
+    g.strokeStyle = '#E3B457'; g.lineWidth = lw; g.stroke();
+    if(quill){ const q = at(root, a, L * 0.7); g.strokeStyle = '#F2D58A'; g.beginPath(); g.moveTo(root.x, root.y); g.lineTo(q.x, q.y); g.stroke(); }
+  };
+  g.lineCap = 'round'; g.lineJoin = 'round';
+  // the shorter feathers hanging from the forearm, behind the rest
+  for(let i = 0; i < 4; i++){
+    const f = i / 3, root = { x: el.x * (1 - f) * 0.4 + (el.x + (wr.x - el.x) * f) * (0.6 + 0.4 * f), y: el.y * (1 - f) * 0.4 + (el.y + (wr.y - el.y) * f) * (0.6 + 0.4 * f) };
+    feather(root, -1.3 + a1 * 0.45 + f * 0.4, S * (0.34 + 0.08 * f), Math.max(1.6, S * 0.1), false);
+  }
+  // the long flight feathers fanning from the wrist, the sky showing between their tips
+  for(let i = 4; i >= 0; i--) feather(wr, a2 + 0.2 - i * 0.36, S * (0.62 - i * 0.05), Math.max(1.8, S * 0.1), true);
+  // the solid upper wing: shoulder, elbow, wrist and down over the roots of the feathers
+  const d1 = at(wr, -1.0 + a1 * 0.4, S * 0.2), d0 = at(el, -1.2 + a1 * 0.4, S * 0.18), d00 = at(sh, -1.4, S * 0.12);
+  g.beginPath(); g.moveTo(sh.x, sh.y); g.lineTo(el.x, el.y); g.lineTo(wr.x, wr.y); g.lineTo(d1.x, d1.y);
+  g.quadraticCurveTo(d0.x, d0.y + S * 0.04, d00.x, d00.y); g.closePath();
+  g.fillStyle = '#FFFFFF'; g.fill(); g.strokeStyle = '#E3B457'; g.lineWidth = lw; g.stroke();
+  // a scallop of small feathers along its foot
+  for(let i = 0; i < 4; i++){
+    const f = (i + 0.5) / 4, p = { x: d00.x + (d1.x - d00.x) * f, y: d00.y + (d1.y - d00.y) * f + Math.sin(f * Math.PI) * S * 0.04 };
+    g.beginPath(); g.arc(p.x, p.y, Math.max(1, S * 0.05), 0, Math.PI); g.strokeStyle = '#F2D58A'; g.stroke();
+  }
+  // the leading edge, gold
+  g.strokeStyle = '#E3B457'; g.lineWidth = Math.max(1.5, S * 0.05);
+  g.beginPath(); g.moveTo(sh.x, sh.y); g.lineTo(el.x, el.y); g.lineTo(wr.x, wr.y); g.stroke();
+}
+// A pair of wings as they are seen, baked (key, the look's own; paint, one
+// wing as batWing or featherWing draws it; pal, its colours). From behind
+// (view 'back', walking away, and on a caddie) both spread either side of
+// his back. Side on (at address and through the swing, his back to the left)
+// they rise from his back behind him: the near one foreshortened, reaching
+// back and up, and the far one a little beyond it, in shadow (the user asked
+// that the wings follow his profile). ox, oy: where the anchor sits in it.
+function wingPair(key, paint, pal, S, view, ph, up, shade){
+  const Wd = Math.ceil(S * 2.6) + 8, Hd = Math.ceil(S * 1.9) + 6, ox = Math.round(Wd / 2), oy = Math.ceil(S * 1.2) + 3;
+  const cv = fxBake(key + '|' + S + '|' + view + '|' + ph, Wd, Hd, g2 => {
+    if(view === 'side'){
+      // (the far one first, then darkened, alone on the canvas, before the near one)
+      // (both swept back a little, as they would lie along a back)
+      g2.save(); g2.translate(ox + Math.max(1, S * 0.08), oy - Math.max(1, S * 0.05)); g2.rotate(-0.22); g2.scale(-0.5, 0.95); paint(g2, S, Math.min(1.1, up + 0.2)); g2.restore();
+      g2.globalCompositeOperation = 'source-atop'; g2.fillStyle = shade || 'rgba(30,14,8,0.55)'; g2.fillRect(0, 0, Wd, Hd);
+      g2.globalCompositeOperation = 'source-over';
+      g2.save(); g2.translate(ox, oy); g2.rotate(-0.22); g2.scale(-0.74, 1); paint(g2, S, up); g2.restore();
+    }else{
+      g2.save(); g2.translate(ox + 1, oy); paint(g2, S, up); g2.restore();
+      g2.save(); g2.translate(ox - 1, oy); g2.scale(-1, 1); paint(g2, S, up); g2.restore();
+    }
+  }, pal);
+  return { cv, ox, oy };
+}
+
 // Eight runes on a ring round the Demonic's pit, flat on the ground, glowing;
 // step 0..15 turns them on by a sixteenth of the way to the next.
 const RUNES = [['X.X', '.X.', 'X.X'], ['XXX', 'X..', 'XXX'], ['.X.', 'XXX', '.X.'], ['X..', 'XXX', '..X'],
@@ -9462,6 +9546,31 @@ function voidSigil(rx, ry, step){
   });
 }
 
+// The Divine's sun, flat on the ground under him: a disc of pale light, a
+// ring round it and twelve rays between it and an outer ring, long and short
+// in turn, turning; lit (as he winds up) its rays burn white. Baked per size
+// and for each of 24 steps through a twelfth of a turn.
+function sunSigil(rx, ry, step, lit){
+  return fxBake('sun|' + rx + '|' + ry + '|' + step + '|' + lit, rx * 2 + 3, ry * 2 + 3, g => {
+    const ox = rx + 1, oy = ry + 1, P = (x, y, col) => { g.fillStyle = col; g.fillRect(Math.round(x), Math.round(y), 1, 1); };
+    const E = (a, f) => [ox + Math.cos(a) * rx * f, oy + Math.sin(a) * ry * f];
+    for(let y = -ry; y <= ry; y++) for(let x = -rx; x <= rx; x++){
+      const d = Math.sqrt((x * x) / (rx * rx) + (y * y) / (ry * ry));
+      if(d < 0.34) P(ox + x, oy + y, (x + y) & 1 ? '#FFF6D8' : '#FFE39A');
+      else if(d < 0.5 && !((x + y) & 1)) P(ox + x, oy + y, '#F2D58A');
+    }
+    const ring = (f, col, skip) => { const n = Math.max(40, Math.round((rx + ry) * f * 4));
+      for(let i = 0; i < n; i++){ if(skip && i % skip === 0) continue; const [x, y] = E(i / n * Math.PI * 2, f); P(x, y, col); } };
+    ring(0.4, '#E3B457');
+    ring(1, '#C99A2E', 5);
+    const th = step / 24 * Math.PI / 6;
+    for(let k = 0; k < 12; k++){
+      const a = th + k * Math.PI / 6, f1 = k & 1 ? 0.72 : 0.92;
+      for(let f = 0.46; f <= f1; f += 0.5 / Math.max(rx, ry)){ const [x, y] = E(a, f); P(x, y, lit ? (k & 1 ? '#FFF6D8' : '#FFFFFF') : k & 1 ? '#E3B457' : '#FFE39A'); }
+    }
+  });
+}
+
 // Where he is, row by row, in the sprite he is drawn from: the columns of
 // each row that are him. Found once per sprite.
 function occOf(spr){
@@ -9576,18 +9685,110 @@ function legendNow(g){
 const outBack = (f, a) => f < a ? Math.sin(f / a * Math.PI / 2) : f > 0.75 ? Math.cos((f - 0.75) / 0.25 * Math.PI / 2) : 1;
 
 const STYLEFX = {
-  /* ---- Divine: a golden aura, a halo, turning rays, orbiting wisps ---- */
+  /* ---- Divine: a golden aura, a halo, turning rays, orbiting wisps ----
+     Made the ultimate skin too (the user asked, after the Demonic and the
+     Ascended): wings of feathers, a fan of them with the sky between, on his
+     back side on as he swings and spread from behind as he walks, beating
+     slowly and a feather drifting down off them now and then; a sun turning
+     on the ground under him; a second halo turning the other way with
+     stars on it. Through a swing he powers up (the wings rise, the beam
+     brightens, the rays reach out) and as he strikes the wings sweep down,
+     a ring of light runs out and light flies off the ball. On an eagle or
+     better, the heavens open over him. */
   divine: {
-    // light pooling on the ground at his feet
+    charge(ph){ return STYLEFX.ascended.charge(ph); },
+    strike(ph){ return STYLEFX.ascended.strike(ph); },
+    // light pooling on the ground at his feet, and the sun turning in it
     ground(c, g){
       const breathe = 0.5 + 0.5 * Math.sin(g.t * 1.6);
       drawGlow(c, g.cx, g.bot, g.w * (1.05 + 0.08 * breathe), Math.max(2, g.h * 0.10),
                [[0.75, '#B98A2E', 1], [0.45, '#E3B457', 2], [0, '#FFE39A', 3]], Math.floor(g.t * 6) & 3, 0.9);
+      if(g.minor || g.h < 30) return;
+      const L = legendNow(g), q = L ? 1 : this.charge(g.ph), st = this.strike(g.ph);
+      const rx = Math.max(6, Math.round(g.w * 0.9)), ry = Math.max(3, Math.round(g.h * 0.11)), X = Math.round(g.cx), Y = Math.round(g.bot);
+      c.globalAlpha = 1; c.drawImage(sunSigil(rx, ry, Math.floor(g.t * 6 + (g.ph > 0 ? g.ph * 24 : 0)) % 24, q > 0.5 ? 1 : 0), X - rx - 1, Y - ry - 1);
+      // a ring of light running out as he strikes, and wave after wave on a great hole
+      if(L){ for(let i = 0; i < (L.big ? 5 : 3); i++){ const f = (L.T - i * 0.3) / 0.9; if(f >= 0 && f < 1) this.wave(c, X, Y, rx, ry, f, L.big ? 2.3 : 1.9); } }
+      else if(st >= 0) this.wave(c, X, Y, rx, ry, st, 1.6);
+      c.globalAlpha = 1;
+    },
+    wave(c, X, Y, rx, ry, f, R){
+      const s = 1 + f * (R - 1), n = Math.max(24, Math.round((rx + ry) * s * 2.2));
+      c.globalAlpha = 1 - f; c.fillStyle = f < 0.35 ? '#FFFFFF' : f < 0.7 ? '#FFE39A' : '#E3B457';
+      for(let i = 0; i < n; i++){ const a = i / n * Math.PI * 2;
+        c.fillRect(Math.round(X + Math.cos(a) * rx * s), Math.round(Y + Math.sin(a) * ry * s), 1, 1); }
+      c.globalAlpha = 1;
+    },
+    // wings of feathers, seen as he is seen (wingPair), their beat slow; up
+    // through the backswing, swept down at the strike, spread on a great hole
+    wings(c, g){
+      const L = legendNow(g), ph = g.ph, S = Math.max(9, Math.round(g.h * 0.62)), view = g.back ? 'back' : 'side';
+      let step, up, lift = 0;
+      if(L && outBack(L.f, 0.1) > 0.5){ step = 'R'; up = 1.15; }
+      else if(ph > 0){ const q = this.charge(ph), st = this.strike(ph);
+        step = st >= 0 ? 's' + Math.min(3, Math.floor(st * 4)) : 'q' + Math.round(q * 4);
+        up = st >= 0 ? 0.15 + Math.min(1, st * 1.4) * 0.45 : 0.55 + q * 0.5;
+        // (lifting off his back as he winds up, driven down as he strikes)
+        lift = st >= 0 ? -S * 0.1 * (1 - st) : S * 0.14 * q; }
+      else { const k = Math.floor(g.t * 5) % 12; step = k; up = 0.5 + 0.3 * Math.sin(k / 12 * Math.PI * 2); }
+      // (the far one side on in a warm shade of its own gold, not a dark one)
+      const W = wingPair('feather', featherWing, FEATHER_PAL, S, view, step, up, 'rgba(185,138,46,0.45)'), A = wingAnchor(g);
+      c.globalAlpha = 1; c.drawImage(W.cv, Math.round(A.x - W.ox), Math.round(A.y - lift - W.oy));
+      return { A, S };
+    },
+    // now and then a feather coming away and drifting down, rocking (more on a great hole)
+    feathers(c, g, A, S){
+      const L = legendNow(g), N = L ? 14 : 3;
+      for(let i = 0; i < N; i++){
+        const P = 3.2 + hr(i, 11) * 2, cyc = g.t / P + hr(i, 12), n = Math.floor(cyc), u = cyc - n;
+        if(!L && hr(n, i + 13) > 0.55) continue;
+        const x0 = L ? g.cx + (hr(n, i + 14) - 0.5) * g.w * 3.2 : A.x + (g.back ? (hr(n, i + 14) - 0.5) * S * 2 : -hr(n, i + 14) * S * 0.9);
+        const y0 = L ? g.y - g.h * (0.3 + hr(n, i + 15) * 0.6) : A.y - hr(n, i + 15) * S * 0.6;
+        const x = x0 + Math.sin(u * 9 + i) * g.w * 0.18 - u * g.w * 0.25, y = y0 + u * (g.bot - y0 + 1), tilt = Math.sin(u * 9 + i) > 0;
+        if(y > g.bot) continue;
+        c.globalAlpha = 1;
+        c.fillStyle = '#C99A2E'; c.fillRect(Math.round(x) - 1, Math.round(y) + (tilt ? 0 : 1), 1, 1);
+        c.fillStyle = '#FFF3D0'; c.fillRect(Math.round(x), Math.round(y) + (tilt ? 1 : 0) - 0, 2, 1);
+        c.fillStyle = '#FFFFFF'; c.fillRect(Math.round(x) + 2, Math.round(y) + (tilt ? 1 : 0), 1, 1);
+      }
+      c.globalAlpha = 1;
+    },
+    // On an eagle or better the heavens open over him: rays of light fanning
+    // down from the top of the sky onto him, turning, and a shaft of light
+    // straight down onto his head. Solid pixels (a wash turns grey).
+    heavens(c, g, L){
+      const X = g.cx, top = 0, T = L.T, f = L.f, t = g.t;
+      const open = Math.min(1, T / 0.4) * (f > 0.75 ? Math.max(0, 1 - (f - 0.75) / 0.25) : 1);
+      if(open <= 0) return;
+      const N = L.big ? 11 : 7, span = (L.big ? 1.0 : 0.75) * open, bot = g.y + g.h * 0.2;
+      c.globalAlpha = 1;
+      for(let i = 0; i < N; i++){
+        const a = (i / (N - 1) - 0.5) * span + Math.sin(t * 0.8) * 0.06;
+        const len = (bot - top) / Math.cos(a);
+        const w0 = Math.max(1, Math.round(g.w * 0.08 * open));
+        for(let s2 = 0; s2 < len; s2 += 1){
+          const y = Math.round(top + s2 * Math.cos(a)), x = Math.round(X - Math.sin(a) * (len - s2));
+          if(y > bot) break;
+          const lit = hr(Math.floor((s2 + t * 60) / 4), i) > 0.2;
+          if(!lit && ((x + y) & 1)) continue;
+          c.fillStyle = i & 1 ? '#FFF6D8' : '#FFE39A';
+          c.fillRect(x - (w0 >> 1), y, w0, 1);
+        }
+      }
+      // the shaft onto his head
+      const hw = Math.max(1, Math.round(g.w * 0.22 * open));
+      for(let y = 0; y < bot; y++){
+        c.fillStyle = ((y + Math.floor(t * 40)) % 7) ? '#FFF6D8' : '#FFFFFF';
+        for(let x = -hw; x <= hw; x++) if(Math.abs(x) < hw * 0.5 || ((x + y) & 1)) c.fillRect(Math.round(X) + x, y, 1, 1);
+      }
+      c.globalAlpha = 1;
     },
     back(c, g){
       const { cx, cy, w, h, t, k, bot, x, spr } = g;
       const breathe = 0.5 + 0.5 * Math.sin(t * 1.6);
       const phase = Math.floor(t * 6) & 3;
+      const L = legendNow(g), q = g.minor ? 0 : L ? 1 : this.charge(g.ph);
+      if(L) this.heavens(c, g, L);
       // a column of light from the top of the sky down onto him, a touch
       // wider at his feet, with a brighter spine and a slow flicker
       // (not round his caddie: one beam from the sky is a blessing, two is
@@ -9596,7 +9797,7 @@ const STYLEFX = {
       if(!g.minor) for(let yy = top; yy < bot; yy += 1){
         const f = (yy - top) / span;
         const hw = Math.round(w * (0.42 + 0.30 * f));
-        c.globalAlpha = 0.07 + 0.05 * f + 0.02 * breathe;
+        c.globalAlpha = (0.07 + 0.05 * f + 0.02 * breathe) * (1 + q * 0.8);
         c.fillStyle = '#FFF6D8'; c.fillRect(Math.round(cx - hw), yy, hw * 2, 1);
         c.globalAlpha = 0.06 + 0.06 * f;
         c.fillRect(Math.round(cx - hw * 0.35), yy, Math.round(hw * 0.7), 1);
@@ -9610,10 +9811,13 @@ const STYLEFX = {
       // rays fanning up from behind him
       for(let i = 0; i < 7; i++){
         const a = -Math.PI / 2 + (i - 3) * 0.36 + Math.sin(t * 0.4 + i * 0.9) * 0.08;
-        const L = h * (0.75 + 0.2 * Math.sin(t * 1.1 + i * 2.1));
-        c.globalAlpha = 0.10 + 0.14 * Math.max(0, Math.sin(t * 1.7 + i * 1.9));
-        pxLine(c, cx, cy, cx + Math.cos(a) * L, cy + Math.sin(a) * L, '#FFE7A3', Math.max(1, k));
+        const Lr = h * (0.75 + 0.2 * Math.sin(t * 1.1 + i * 2.1)) * (1 + q * 0.4);
+        c.globalAlpha = (0.10 + 0.14 * Math.max(0, Math.sin(t * 1.7 + i * 1.9))) * (1 + q);
+        pxLine(c, cx, cy, cx + Math.cos(a) * Lr, cy + Math.sin(a) * Lr, '#FFE7A3', Math.max(1, k));
       }
+      c.globalAlpha = 1;
+      // his wings, and a feather coming away now and then
+      if(!g.minor){ const Wg = this.wings(c, g); this._wg = Wg; }
       // he radiates: a soft gold edge two pixels out, a bright one one pixel out
       outlineAt(c, g, '#E3B457', RING2, 0.30 + 0.15 * breathe);
       outlineAt(c, g, '#FFF6D8', RING1, 0.75 + 0.2 * breathe);
@@ -9640,6 +9844,39 @@ const STYLEFX = {
       }
       c.globalCompositeOperation = 'source-over';
       this.wisps(c, g, true);
+      if(!g.minor){
+        this.halo2(c, g, hx, hy, rx, ry);
+        if(this._wg) this.feathers(c, g, this._wg.A, this._wg.S);
+        this.sparks(c, g);
+      }
+      c.globalAlpha = 1;
+    },
+    // a second halo round the first, turning the other way, six stars on it
+    // (bigger on a great hole). Solid pixels.
+    halo2(c, g, hx, hy, rx, ry){
+      const L = legendNow(g), big = L ? 1 + 0.5 * outBack(L.f, 0.15) : 1, R = rx * 1.45 * big, Ry = Math.max(1, ry * 1.5 * big);
+      const n = Math.max(20, Math.round(R * 4));
+      c.globalAlpha = 1; c.fillStyle = '#E3B457';
+      for(let i = 0; i < n; i++){ if(i % 3 === 0) continue; const a = i / n * Math.PI * 2 + g.t * 0.8;
+        if(Math.sin(a) < 0 && i & 1) continue;
+        c.fillRect(Math.round(hx + Math.cos(a) * R), Math.round(hy - 1 + Math.sin(a) * Ry), 1, 1); }
+      for(let j = 0; j < 6; j++){
+        const a = -g.t * 1.1 + j * Math.PI / 3, x = Math.round(hx + Math.cos(a) * R), y = Math.round(hy - 1 + Math.sin(a) * Ry);
+        const tw = Math.sin(g.t * 5 + j * 1.7) > 0.3;
+        c.fillStyle = '#FFFFFF'; c.fillRect(x, y, 1, 1);
+        if(tw){ c.fillStyle = '#FFE39A'; c.fillRect(x - 1, y, 1, 1); c.fillRect(x + 1, y, 1, 1); c.fillRect(x, y - 1, 1, 1); c.fillRect(x, y + 1, 1, 1); }
+      }
+    },
+    // and as he strikes, light flying off the ball
+    sparks(c, g){
+      const f = this.strike(g.ph);
+      if(f < 0) return;
+      const bx = g.x + g.w * 1.19, by = g.bot - 2;
+      for(let i = 0; i < 14; i++){
+        const a = -Math.PI * (0.08 + 0.84 * hr(i, 101)), v = 0.5 + 0.5 * hr(i, 102);
+        fxDot(c, bx + Math.cos(a) * v * f * g.w * 0.7, by + Math.sin(a) * v * f * g.h * 0.35 + f * f * g.h * 0.12, 1,
+              f < 0.25 ? '#FFFFFF' : i & 1 ? '#FFF6D8' : '#FFD66B', 1 - f);
+      }
       c.globalAlpha = 1;
     },
     // Seven wisps on an orbit round his middle, each riding up and down on
@@ -9746,7 +9983,7 @@ const STYLEFX = {
         this.chains(c, g, false, q);
       }
       // the wings, spread behind him, beating slowly (raised high on a great hole)
-      const W = this.wings(h, minor, t, L && outBack(L.f, 0.1) > 0.5), A = wingAnchor(g);
+      const W = this.wings(h, minor, t, L && outBack(L.f, 0.1) > 0.5, minor || g.back ? 'back' : 'side'), A = wingAnchor(g);
       c.globalAlpha = 1; c.drawImage(W.cv, Math.round(A.x - W.ox), Math.round(A.y - W.oy));
       // his tail (walking away from us it hangs in front of him: see front)
       if(!g.back) this.tail(c, g);
@@ -9863,15 +10100,12 @@ const STYLEFX = {
       c.globalAlpha = 1;
     },
     // twelve steps of a slow beat, baked per size
-    wings(h, minor, t, raised){
+    // (seen as he is seen: from behind as he walks away and on his caddie,
+    // side on at address and through the swing, rising off his back)
+    wings(h, minor, t, raised, view){
       const S = Math.max(8, Math.round(h * (minor ? 0.40 : 0.52))), ph = raised ? 12 : Math.floor(t * 6) % 12;
       const up = raised ? 1.15 : 0.5 + 0.4 * Math.sin(ph / 12 * Math.PI * 2);
-      const Wd = Math.ceil(S * 2.5) + 6, Hd = Math.ceil(S * 1.75) + 4, ox = Math.round(Wd / 2), oy = Math.ceil(S * 1.12) + 2;
-      const cv = fxBake('bat|' + S + '|' + ph, Wd, Hd, g2 => {
-        g2.save(); g2.translate(ox + 1, oy); batWing(g2, S, up); g2.restore();
-        g2.save(); g2.translate(ox - 1, oy); g2.scale(-1, 1); batWing(g2, S, up); g2.restore();
-      }, BAT_PAL);
-      return { cv, ox, oy };
+      return wingPair('bat', batWing, BAT_PAL, S, view || 'back', ph, up);
     },
     // from his hips, curling back and up with a slow wave in it, a spade at the end
     tail(c, g){
@@ -11807,10 +12041,10 @@ const Scene = {
   legend: null,
   legendGo(d){
     const fx = outfitNow().fx;
-    if(d > -2 || (fx !== 'demonic' && fx !== 'ascended')) return;
+    if(d > -2 || (fx !== 'demonic' && fx !== 'ascended' && fx !== 'divine')) return;
     const big = d <= -3;
     this.legend = { t0: this.t, big, dur: big ? LEGEND_BIG : LEGEND_DUR };
-    Sfx.play(fx === 'demonic' ? 'hellfire' : 'ascend', big);
+    Sfx.play(fx === 'demonic' ? 'hellfire' : fx === 'divine' ? 'choir' : 'ascend', big);
   },
   fairyMoveGo(id){
     const m = FAIRY_MOVES.find(x => x.id === id);

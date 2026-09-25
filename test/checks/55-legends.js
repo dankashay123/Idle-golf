@@ -74,7 +74,7 @@ module.exports = {
         const part = (fx, name, frame) => {
           const F = STYLEFX[fx], keep = F[name];
           const full = frame();
-          F[name] = name === 'wings' ? function () { const w = keep.apply(this, arguments); return { cv: blank, ox: w.ox, oy: w.oy }; } : () => {};
+          F[name] = name === 'wings' && fx === 'demonic' ? function () { const w = keep.apply(this, arguments); return { cv: blank, ox: w.ox, oy: w.oy }; } : () => {};
           try { return diff(full, frame()); } finally { F[name] = keep; }
         };
         const soles = (golfer, box, h) => {
@@ -92,6 +92,25 @@ module.exports = {
           return n;
         };
         o.drawn = {};
+        // Wings as he is seen (the user asked): side on at address and at the
+        // top of the backswing, on his back behind him and up off it, none out
+        // in front of him; walking away, spread either side of him
+        const wingViews = (id, golfer, box, w, h, head) => {
+          const R = {};
+          for (const [k, ph] of [['addr', 0], ['top', 0.36]]) {
+            Scene.swingT = ph ? Scene.swingDur * (1 - ph) : 0;
+            const W = part(id, 'wings', golfer);
+            R[k] = { n: W.length, behind: W.filter(([x]) => x < box.x0 + w * 0.4).length, up: W.filter(([, y]) => y < head.y).length,
+                     front: W.filter(([x]) => x > box.x1 + 2).length };
+          }
+          Scene.swingT = 0; Scene.walkOn = true; Scene.walkPh = 0.2;
+          const W = part(id, 'wings', golfer).filter(([, y]) => y < box.y0 + h * 0.55);
+          Scene.walkOn = false;
+          // (from behind he stands centred on his line, not where he addresses the ball)
+          const bx0 = box.x0 + Math.round(w * 0.42) - Math.round(w * 0.5), bx1 = bx0 + w;
+          R.backL = W.filter(([x]) => x < bx0 - 2).length; R.backR = W.filter(([x]) => x > bx1 + 2).length;
+          return R;
+        };
         for (const id of ['demonic', 'ascended']) {
           S.styleOwn['o:' + id] = 1; S.styleOwn['c:' + id] = 1; S.outfit = id; S.caddie = id; buildSprites();
           const cad = SPRITE.caddie;
@@ -105,9 +124,7 @@ module.exports = {
           const eye = { x: box.x0 + w * EYE_ADDR.x, y: box.y0 + h * EYE_ADDR.y };
           const d = o.drawn[id] = {};
           if (id === 'demonic') {
-            const wings = part(id, 'wings', golfer).filter(([x, y]) => y < box.y0 + h * 0.55);
-            d.wingL = wings.filter(([x]) => x < box.x0 - 2).length; d.wingR = wings.filter(([x]) => x > box.x1 + 2).length;
-            d.reachL = box.x0 - Math.min(...wings.map(([x]) => x)); d.reachR = Math.max(...wings.map(([x]) => x)) - box.x1;
+            d.wing = wingViews(id, golfer, box, w, h, head);
             // ---- made the ultimate skin too ----
             const cx = box.x0 + w * 0.55;
             // an aura of hellfire close about him, swelling as he winds up
@@ -265,6 +282,36 @@ module.exports = {
           d.cEyes = part(id, 'eyes', caddie).length;
           d.cadSprite = cad === SPRITE.caddie;
         }
+        // ---- the Divine, made the ultimate skin ----
+        {
+          S.styleOwn['o:divine'] = 1; S.outfit = 'divine'; S.caddie = 'bib'; buildSprites();
+          Scene.walkOn = false; Scene.swingT = 0; Scene.fairyMove = null; Scene.fairySay = null; Scene.moveT = 999; Scene.t = 1.3; Scene.legend = null;
+          const golfer = () => { const k = SPRITE.caddie; SPRITE.caddie = null; c.clearRect(0, 0, VW, VH); Scene.drawGolfer(D); SPRITE.caddie = k; return px(); };
+          const p = Scene.proj(Scene.camD, 0), h = Math.max(6, Math.round(B_GOLFER * US * p.s)), w = Math.max(4, Math.round(h * 40 / 58));
+          const box = { x0: p.x - Math.round(w * 0.42), y0: p.y - h }; box.x1 = box.x0 + w; box.y1 = box.y0 + h;
+          const head = { x: box.x0 + w * CAP_ADDR.x, y: box.y0 + h * CAP_ADDR.y, w: w * CAP_ADDR.w };
+          const cx = box.x0 + w * 0.55, d = o.divine = {};
+          d.wing = wingViews('divine', golfer, box, w, h, head);
+          // up off his back through the backswing, and down again at the strike
+          const top = ph => { Scene.swingT = ph ? Scene.swingDur * (1 - ph) : 0; const W = part('divine', 'wings', golfer); Scene.swingT = 0; return Math.min(...W.map(([, y]) => y)); };
+          d.rise = top(0) - top(0.36); d.sweep = top(0.62) - top(0.36);
+          // the sun at his feet and nowhere else
+          const gr = part('divine', 'ground', golfer);
+          d.ground = gr.length; d.groundOff = gr.filter(([x, y]) => Math.abs(x - cx) > w * 1.2 + 1 || Math.abs(y - p.y) > h * 0.13 + 1.5).length;
+          // the second halo, over his head
+          const h2 = part('divine', 'halo2', golfer);
+          d.halo2 = h2.length; d.halo2Off = h2.filter(([x, y]) => y > head.y + h * 0.04 || Math.abs(x - head.x) > head.w * 1.8).length;
+          // a feather coming away now and then
+          d.feathers = 0; for (let k = 0; k < 40; k++) { Scene.t = 1.3 + k * 0.37; d.feathers += part('divine', 'feathers', golfer).length > 0; } Scene.t = 1.3;
+          // at the strike, light off the ball and a ring of light out past the sun
+          Scene.swingT = Scene.swingDur * (1 - 0.62);
+          const bx = box.x0 + w * 1.19, sp = part('divine', 'sparks', golfer);
+          d.sparks = sp.length; d.sparksOff = sp.filter(([x, y]) => Math.abs(x - bx) > w * 0.8 || y > p.y + 2 || y < p.y - h * 0.5).length;
+          Scene.swingT = Scene.swingDur * (1 - 0.7);
+          d.waveOut = part('divine', 'ground', golfer).filter(([x]) => Math.abs(x - cx) > w * 0.9 + 2).length;
+          Scene.swingT = 0;
+        }
+
         // ---- a moment for the legends: on an eagle or better ----
         {
           const p = Scene.proj(Scene.camD, 0), h = Math.max(6, Math.round(B_GOLFER * US * p.s)), w = Math.max(4, Math.round(h * 40 / 58));
@@ -274,7 +321,7 @@ module.exports = {
           Sfx.play = function (k, a) { played.push(k + (a ? '!' : '')); };
           o.legend = {};
           try {
-            for (const id of ['demonic', 'ascended']) {
+            for (const id of ['demonic', 'ascended', 'divine']) {
               S.outfit = id; buildSprites();
               Scene.walkOn = false; Scene.swingT = 0; Scene.fairyMove = null; Scene.moveT = 999; Scene.t = 10;
               const L = o.legend[id] = {};
@@ -291,10 +338,11 @@ module.exports = {
               L.over = at(-2, LEGEND_DUR + 0.05);
               // the skulls scatter and the shards burst out, far past where they ride
               Scene.legend = { t0: Scene.t - 0.8, big: false, dur: LEGEND_DUR };
-              const fl = part(id, id === 'demonic' ? 'skulls' : 'orbit', golfer);
+              const flung = { demonic: 'skulls', ascended: 'orbit', divine: 'feathers' }[id];
+              const fl = part(id, flung, golfer);
               L.flung = fl.filter(([x]) => Math.abs(x - cx) > w * 1.4).length;
               Scene.legend = null;
-              L.home = part(id, id === 'demonic' ? 'skulls' : 'orbit', golfer).filter(([x]) => Math.abs(x - cx) > w * 1.4).length;
+              L.home = part(id, flung, golfer).filter(([x]) => Math.abs(x - cx) > w * 1.4).length;
               // not in the plain golfer
               S.outfit = 'classic'; buildSprites(); L.plain = at(-2, 0.8); S.outfit = id; buildSprites();
               // never while the game is quiet (a catch-up, a check)
@@ -370,8 +418,11 @@ module.exports = {
     if (r.badges.Ascended !== 'MYTHIC' || r.badges.Demonic !== 'LEGENDARY' || r.badges.Divine !== 'LEGENDARY') f('the Style tab\'s badges: ' + J(r.badges));
     const dm = r.drawn.demonic, as = r.drawn.ascended;
     // (counted past the box he is drawn in, which is wider than he is)
-    if (!(dm.wingL >= 12 && dm.wingR >= 12 && dm.reachL >= 4 && dm.reachR >= 4))
-      f('the Demonic wings, either side of him above his waist: ' + dm.wingL + ' and ' + dm.wingR + ' pixels, reaching ' + dm.reachL + ' and ' + dm.reachR + ' past him');
+    for (const [nm, V] of [['Demonic', dm.wing], ['Divine', r.divine.wing]]) {
+      for (const k of ['addr', 'top']) { const q = V[k];
+        if (!(q.n >= 40 && q.behind >= q.n * 0.6 && q.up >= 8) || q.front) f('the ' + nm + ' wings side on (' + k + '): ' + J(q) + ' (on his back behind him and up off it, none in front)'); }
+      if (!(V.backL >= 12 && V.backR >= 12)) f('the ' + nm + ' wings walking away: ' + V.backL + ' and ' + V.backR + ' pixels either side of him (spread from behind)');
+    }
     if (!(dm.cWings >= 30)) f('the Demonic caddie\'s wings: ' + dm.cWings + ' pixels');
     if (!(as.cape >= 40 && as.capeBehind >= 25 && as.capeBack >= 100))
       f('the Ascended cape: ' + as.cape + ' pixels, ' + as.capeBehind + ' behind him, ' + as.capeBack + ' down his back as he walks away');
@@ -401,12 +452,18 @@ module.exports = {
     if (dm.foot.l > 1.4 || dm.foot.r > 1.4 || dm.foot.up > 0.45 || dm.foot.dn > 0.2)
       f('the Demonic takes too much of the screen: ' + J(dm.foot));
     // the moment
-    for (const id of ['demonic', 'ascended']) {
-      const L = r.legend[id], snd = id === 'demonic' ? 'hellfire' : 'ascend';
+    const dvn = r.divine;
+    if (!(dvn.rise >= 2) || !(dvn.sweep >= 2)) f('the Divine wings through a swing: up ' + dvn.rise + 'px at the top of the backswing, down ' + dvn.sweep + ' at the strike');
+    if (!(dvn.ground >= 100) || dvn.groundOff) f('the Divine sun: ' + dvn.ground + ' pixels, ' + dvn.groundOff + ' off the ground at his feet');
+    if (!(dvn.halo2 >= 10) || dvn.halo2Off) f('the Divine second halo: ' + dvn.halo2 + ' pixels, ' + dvn.halo2Off + ' away from over his head');
+    if (!(dvn.feathers >= 3)) f('the Divine feathers drifting down: in ' + dvn.feathers + ' of 40 frames');
+    if (!(dvn.sparks >= 6) || dvn.sparksOff || !(dvn.waveOut >= 8)) f('the Divine strike: light off the ball ' + dvn.sparks + ' (' + dvn.sparksOff + ' away from it), a ring ' + dvn.waveOut + ' out past the sun');
+    for (const id of ['demonic', 'ascended', 'divine']) {
+      const L = r.legend[id], snd = { demonic: 'hellfire', ascended: 'ascend', divine: 'choir' }[id];
       if (L.birdie.n || L.birdie.sound) f('the ' + id + ' moment on a birdie: ' + J(L.birdie) + ' (only an eagle or better)');
       if (!(L.eagle.above >= 30 && L.eagle.out >= 3) || L.eagle.sound !== snd) f('the ' + id + ' moment on an eagle: ' + J(L.eagle) + ' (a column up over him, things flung out, the sound ' + snd + ')');
       if (!(L.ace.n > L.eagle.n * 1.1 && L.ace.out >= L.eagle.out) || L.ace.sound !== snd + '!') f('the ' + id + ' moment on an ace is not bigger: ' + J(L.ace) + ' against ' + J(L.eagle));
-      if (!(L.flung >= 3) || L.home) f('the ' + id + (id === 'demonic' ? ' skulls' : ' shards') + ' flung out on a great hole: ' + L.flung + ' pixels far out (' + L.home + ' when they ride as usual)');
+      if (!(L.flung >= 3) || L.home) f('the ' + id + { demonic: ' skulls', ascended: ' shards', divine: ' feathers' }[id] + ' flung out on a great hole: ' + L.flung + ' pixels far out (' + L.home + ' when they ride as usual)');
       if (L.over.n) f('the ' + id + ' moment has not ended after its time: ' + L.over.n + ' pixels');
       if (L.plain.n || L.plain.sound) f('a plain golfer has a moment: ' + J(L.plain));
       if (L.quiet || L.saver) f('the ' + id + ' moment while the game is quiet ' + L.quiet + ', or through the battery saver starting ' + L.saver);
@@ -428,12 +485,13 @@ module.exports = {
     const oa = Object.entries(r.otherArms).filter(([, n]) => n);
     if (oa.length) f('plain skin tone on skins with their own: ' + oa.map(([k, n]) => k + ' ' + n).join(', '));
     return ['the Demonic at the Divine\'s ' + r.price.demonic + ', the Ascended at ' + r.price.ascended + '; club, trail, ball and caddie for each in the Divine\'s proportion (' + J(r.sets.ascended.cost) + '), Legendary and Mythic',
-      'the Demonic: wings reaching ' + dm.reachL + '/' + dm.reachR + 'px past him either side, horns ' + dm.top + ', eyes at his eye; his caddie\'s wings ' + dm.cWings,
+      'the Demonic: wings on his back side on (' + dm.wing.addr.behind + 'px behind him, none in front) and spread from behind walking away (' + dm.wing.backL + '/' + dm.wing.backR + '), horns ' + dm.top + ', eyes at his eye; his caddie\'s wings ' + dm.cWings,
       'the Ascended: a cape ' + as.cape + ' (' + as.capeBack + ' down his back walking away), horns ' + as.top + ', hair of fire reaching ' + Math.round(as.hairReach) + 'px back, the light in his chest, magenta hands; the imp\'s tail ' + as.cTail + ', flame ' + as.cFlame + ', green eyes',
       'his arms in his own skin, on these and on the Void Walker, Midas and the Ghost; his soles in his belt\'s colour walking away (' + r.drawn.ascended.sole.own + 'px), a plain golfer\'s tan',
       'the ultimate Ascended: a sigil at his feet (' + as.ground + 'px), an aura of flame (' + Math.round(as.auraTop / as.auraIdle * 100 - 100) + '% more at the top of the backswing), a ring of shards passing in front of him and behind, horns swept back (their tops ' + (-as.hornSweep).toFixed(2) + ' of his helm behind their roots), sparks and a shockwave as he strikes; ' + as.foot.l + '/' + as.foot.r + ' of his width either side and ' + as.foot.up + ' of his height over him at most',
       'his ground under the pin and a putt rolling away (' + r.layer.order + ')',
       'the ultimate Demonic: an aura of hellfire (' + Math.round(dm.auraTop / dm.auraIdle * 100 - 100) + '% more at the top of the backswing), chains of fire round him, horns curling over (their top row ' + dm.hornCurl.toFixed(2) + ' of his cap across), hands on fire, the ground cracking at the strike (' + dm.cracks + 'px); ' + dm.foot.l + '/' + dm.foot.r + ' of his width either side, ' + dm.foot.up + ' of his height over him',
+      'the ultimate Divine: wings of feathers side on and from behind, up ' + dvn.rise + 'px through the backswing and down at the strike; a sun at his feet, a second halo, feathers drifting down, light off the ball and a ring of light as he strikes',
       'the moment on an eagle: the Demonic ' + r.legend.demonic.eagle.n + 'px (' + r.legend.demonic.ace.n + ' on an ace), the Ascended ' + r.legend.ascended.eagle.n + 'px (' + r.legend.ascended.ace.n + '), each with its sound; none on a birdie, in a plain golfer, while quiet or once over'];
   }
 };
