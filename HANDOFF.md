@@ -10,7 +10,7 @@ check is for.
 
 - Everything is committed and pushed to `main` (mirrored on the session
   branch `claude/notes-review-dju532`). Nothing is half-built.
-- `node test/run.js` passes all **47 checks** (about 8 minutes).
+- `node test/run.js` passes all **48 checks** (about 8 minutes).
 - **Last request**: "get rid of the caddy wings, just have them float up
   and down a tiny bit; more animation too, like randomly will spin, dance,
   stuff like that for fun". Done (§5 "The caddie: no wings, a float, and
@@ -123,6 +123,7 @@ Line numbers are approximate and drift. Search for the name instead.
 | Palettes built from a course | `buildTheme`, `courseTrees` |
 | **Landmarks** | `drawLandmark` (called from `Scene.buildRidge`) |
 | Renderer | `const Scene = {`. Key members: `newHole`, `newDepthsHole`, `proj`, `curveAt`/`bendOff` (doglegs), `layHazards`, `layProps`, `buildSky`, `buildRidge`, `buildWood`, `drawGround`, `drawGolfer`, `fairyBox`/`drawCaddie`, `swing`/`walking2ball`/`launch`, `drawBalls`, `drawLyingBall`, `drawMap` |
+| **Caddie perk upgrades** (Lv 1-5) | `B.CPERK_LV_MAX`, `CPERK_LV_T`, `CPERK_LV_V`, `CPERK_LV_COST`, `cperkLv`, `cperkVal`, `cperkDur`, `cperkTxt`, `cperkUp`, `S.cperkLv`, `renderCadPerks` (the worn row's button), honour `headcad`; `DEV.cperkLv` |
 | The caddie's turns (spin, dance, flip, wave, loop) | `FAIRY_MOVES`, `fairyPose`, `Scene.tickMove`, `fairyMoveNow`, `fairyMoveGo`, the offscreen `_fairyCv` in `drawCaddie`; `DEV.move` |
 | Caddie perks (nine; `now:1` means instant, e.g. Ready Golf); each has `col` and a short line `s` | `tickCaddie`, `cperkPick`, `renderCadPerks`; the blessing `Scene.drawBless`, the countdown `buffTip` (`#buffTip` in `#setRow`) |
 | Clipping to the ground in front | `Scene.clipAt(d)`, `fillClip`, `pxLineClip` |
@@ -248,6 +249,28 @@ Line numbers are approximate and drift. Search for the name instead.
    live one and caught it the other way round.
 
 ## 5. What the last features do (for debugging them)
+
+### Caddie perk upgrades (user asked: "all of those", the first of four)
+
+- The perk he wears can go up a level at a time to Lv 5, on the Range's
+  Caddie rack: the worn row's button (it read "Worn") now reads "To Lv n"
+  over the price, or "Top level" with a tick; its meta line says "Worn ·
+  Lv n/5". A `?` above the rows says what a level does. Owned rows show
+  their level once past 1.
+- Each level: `CPERK_LV_T` (1s) longer and `CPERK_LV_V` (12.5%) of its own
+  strength stronger (Ready Golf and Lost Ball Scout only stronger).
+  Prices 100, 160, 250, 400 sovereigns (910 to the top). Values round to
+  whole percents (tenths of a second for Ready Golf), so Lv 5 Tempo Call is
+  +30% for 12s, Sponsor Chat +38% for 12s.
+- `cperkTxt` makes a level's words from the perk's own (`s`, `d`) by
+  swapping the numbers, so Lv 1 reads exactly as before (`bless` reads
+  those lines).
+- The blessing grows a little with the level: 6% wider, 8% brighter and
+  0.1s longer a level (`Scene.bless.lv`).
+- Honour **Head Caddie** (`headcad`, metric `cperkLv`: the highest level of
+  an owned perk): a perk at Lv 5, 2 tickets and 10 sovereigns.
+- `S.cperkLv` is repaired on load: levels 2-5 on owned, known perks only.
+- Check `perkup`.
 
 ### The caddie: no wings, a float, and turns (user asked)
 
@@ -752,6 +775,8 @@ Line numbers are approximate and drift. Search for the name instead.
 
 ## 6. Recent history (newest first, one line each)
 
+- Caddie perk upgrades: the worn perk to Lv 5, a second longer and 12.5%
+  stronger a level; Head Caddie honour.
 - The caddie's wings gone; he floats, and now and then spins, dances,
   flips, waves or loops.
 - Signature hole of the week (double purse, brass map frame and sparkle,

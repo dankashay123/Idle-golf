@@ -3046,6 +3046,7 @@ const B = {
     { id:'homes',  n:'Home Tour',        d:'Play all ten home courses',   m:'homes',  v:10,    r:{k:'gld', v:0.05}, sov:10 },
     { id:'major1', n:'Major Winner',     d:'Win a major of the week',     m:'slam',   v:1,     r:{k:'tick', v:3}, sov:10 },
     { id:'staff',  n:'Full Staff',       d:'Own every caddie perk',       m:'cperks', v:9,     r:{k:'gld', v:0.04}, sov:10 },
+    { id:'headcad', n:'Head Caddie',     d:'Take a caddie perk to Lv\u00a05', m:'cperkLv', v:5,  r:{k:'tick', v:2}, sov:10 },
     // the signature holes: a home round has four (two island greens, the
     // canyon and the stepping stones), any other course one of its own
     { id:'sig4',   n:'Signature Round',  d:'Par or better on every signature hole of a home round', m:'sigRound', v:1, r:{k:'tick', v:3}, sov:10 },
@@ -3377,6 +3378,12 @@ const B = {
   ],
   // (col: the colour of the blessing each one sends down on the golfer, and
   // of its line by the settings cog while it lasts)
+  // Upgrades, on the Range's Caddie rack, for the perk he wears: each level
+  // lasts CPERK_LV_T seconds longer and is CPERK_LV_V of its own strength
+  // stronger, up to CPERK_LV_MAX; CPERK_LV_COST is each step's price in
+  // sovereigns, from Lv 1 to 2 onwards (910 to take one to the top).
+  CPERK_LV_MAX: 5, CPERK_LV_T: 1, CPERK_LV_V: 0.125,
+  CPERK_LV_COST: [100, 160, 250, 400],
   // What the fairy says: when a hole is holed, by the score, and now and then
   // on the course (quip), with a line for the conditions when they call for one.
   FAIRY_SAY: {
@@ -3818,6 +3825,14 @@ function initState(){
   if(!styleOwned('k', S.club)) S.club = 'steel';
   if(!S.cperkOwn || typeof S.cperkOwn !== 'object') S.cperkOwn = {};
   if(S.cperk && (!cperkDef(S.cperk) || !S.cperkOwn[S.cperk])) S.cperk = null;
+  // perk levels: whole numbers from 2 to the top, on perks that exist and are
+  // owned; anything else is Lv 1 and is left out
+  if(!S.cperkLv || typeof S.cperkLv !== 'object' || Array.isArray(S.cperkLv)) S.cperkLv = {};
+  for(const k of Object.keys(S.cperkLv)){
+    const v = Math.round(Number(S.cperkLv[k]));
+    if(!cperkDef(k) || !S.cperkOwn[k] || !(v >= 2)) delete S.cperkLv[k];
+    else S.cperkLv[k] = Math.min(B.CPERK_LV_MAX, v);
+  }
   if(!isFinite(S.cperkT) || S.cperkT < 0) S.cperkT = 0;
   if(!B.BANK_OPTS.includes(S.islandBank)) S.islandBank = 5;
   if(!S.tierEvents) S.tierEvents = {};
@@ -4017,6 +4032,7 @@ function achMetric(m){
     case 'slam':   return Object.keys(S.majorWins || {}).length;
     case 'homes':  return Object.keys(S.homes || {}).length;
     case 'cperks': return B.CPERKS.filter(p => S.cperkOwn && S.cperkOwn[p.id]).length;
+    case 'cperkLv': return B.CPERKS.reduce((m2, p) => S.cperkOwn && S.cperkOwn[p.id] ? Math.max(m2, cperkLv(p.id)) : m2, 0);
     case 'twin':   return S.caddie === S.outfit && S.outfit !== 'classic' && styleOwned('c', S.caddie) ? 1 : 0;
     case 'troph':  return trophiesFound();
     case 'mst':    return derive().mst;
@@ -11836,16 +11852,18 @@ Object.assign(Scene, {
     const B2 = this.bless;
     if(!B2) return;
     if(B2.t0 === undefined) B2.t0 = this.t;
-    const t = this.t - B2.t0, DUR = 1.5;
+    // at each level up, a little wider, brighter and longer
+    const up = Math.max(0, (B2.lv || 1) - 1), glow = 1 + 0.08 * up;
+    const t = this.t - B2.t0, DUR = 1.5 + 0.1 * up;
     if(t > DUR){ this.bless = null; return; }
-    const cx = x + w * 0.5, half = Math.max(3, Math.round(w * 0.75));
+    const cx = x + w * 0.5, half = Math.max(3, Math.round(w * (0.75 + 0.06 * up)));
     const fall = Math.min(1, t / 0.30);                 // the front of it coming down
     const fade = t < 0.30 ? 1 : 1 - (t - 0.30) / (DUR - 0.30);
     const front = Math.round(bot * fall);
     // the column: brightest down the middle and at its falling front
     for(let yy = 0; yy < front; yy += 2){
       const near = 1 - Math.min(1, (front - yy) / Math.max(8, bot * 0.5));
-      const a = (0.10 + 0.22 * near) * fade;
+      const a = (0.10 + 0.22 * near) * fade * glow;
       c.globalAlpha = a; c.fillStyle = B2.col;
       c.fillRect(Math.round(cx - half), yy, half * 2, 2);
       c.globalAlpha = Math.min(1, a * 1.6); c.fillStyle = '#FFFFFF';
@@ -14205,22 +14223,70 @@ function renderRangeNav(){
   if(rangeSub === 'cad') renderCadPerks();
 }
 const cperkDef = id => B.CPERKS.find(x => x.id === id);
+// A perk's level (1 until upgraded) and what it does there: a second longer
+// and an eighth stronger each level (Ready Golf and Lost Ball Scout only
+// stronger: one acts at once, the other lasts a hole). Its words are its own
+// with the numbers moved, so Lv 1 reads exactly as it always has.
+const cperkLv = id => clamp(Math.round(((S.cperkLv || {})[id]) || 1), 1, B.CPERK_LV_MAX);
+function cperkVal(pk, lv){
+  const x = pk.v * (1 + B.CPERK_LV_V * ((lv || 1) - 1));
+  return pk.k === 'clock' ? Math.round(x * 10) / 10 : pk.v < 1 ? Math.round(x * 100) / 100 : Math.round(x);
+}
+const cperkDur = (pk, lv) => pk.now || pk.next ? pk.t : pk.t + B.CPERK_LV_T * ((lv || 1) - 1);
+function cperkTxt(str, pk, lv){
+  const v = cperkVal(pk, lv);
+  return str.replace(/\d+(\.\d+)?/, String(pk.v < 1 ? Math.round(v * 100) : v))
+            .replace(/for \d+s/, 'for ' + cperkDur(pk, lv) + 's');
+}
+// the perk he wears, a level up, bought with sovereigns a step at a time
+function cperkUp(id){
+  const pk = cperkDef(id), lv = cperkLv(id);
+  if(!pk || !(S.cperkOwn && S.cperkOwn[id]) || lv >= B.CPERK_LV_MAX) return false;
+  if(!spendSov(B.CPERK_LV_COST[lv - 1])) return false;
+  S.cperkLv = S.cperkLv || {}; S.cperkLv[id] = lv + 1;
+  toast('<b>' + pk.n + '</b> \u00b7 Lv\u00a0' + (lv + 1));
+  Sfx.play('buy');
+  checkAch();
+  renderCadPerks(); renderVitals();
+  return true;
+}
+let cadHintOpen = false;
 function renderCadPerks(){
   const w = $('cadRows'); if(!w) return;
   $('cadNote').textContent = 'every ' + B.CPERK_EVERY + 's \u00b7 one at a time';
-  w.innerHTML = '';
+  // how the upgrades work, behind the ?
+  w.innerHTML = '<div class="hint' + (cadHintOpen ? ' open' : '') + '" id="cadHint"><div class="foldhead">'
+    + '<span>Upgrade the one he wears</span><button class="qm" aria-label="How caddie upgrades work">?</button></div>'
+    + '<div class="fold" style="margin-top:6px">Each level lasts 1s longer and is 12.5% stronger, up to Lv\u00a0'
+    + B.CPERK_LV_MAX + '. Its light comes down brighter too.</div></div>';
+  w.querySelector('#cadHint .qm').onclick = () => { cadHintOpen = !cadHintOpen; $('cadHint').classList.toggle('open', cadHintOpen); };
   for(const pk of B.CPERKS){
     const own = !!(S.cperkOwn && S.cperkOwn[pk.id]), on = S.cperk === pk.id;
+    const lv = cperkLv(pk.id), top = lv >= B.CPERK_LV_MAX;
     const d = rowShell('<img class="ric" src="' + pixUrl(pk.ic, '#57E0BE') + '" alt="">');
     const body = d.children[1], btn = d.children[2];
     body.children[0].textContent = pk.n;
-    body.children[1].textContent = pk.d;
-    if(on) body.children[2].innerHTML = '<div class="cadbar"><i style="width:'
+    body.children[1].textContent = cperkTxt(pk.d, pk, lv);
+    // the one he wears: its level and the wait for it to go off again; the
+    // others their level, once they have one
+    if(on) body.children[2].innerHTML = 'Worn \u00b7 Lv\u00a0' + lv + '/' + B.CPERK_LV_MAX + '<div class="cadbar"><i style="width:'
       + Math.round(clamp((S.cperkT || 0) / B.CPERK_EVERY, 0, 1) * 100) + '%"></i></div>';
-    btn.className = 'buy' + (on ? ' ok' : own || (S.sov || 0) >= pk.cost ? '' : ' no');
-    btn.children[0].textContent = on ? 'Worn' : own ? 'Wear' : B.SOV;
-    btn.children[1].textContent = on ? '\u2713' : own ? 'Free' : sovFmt(pk.cost);
-    btn.onclick = () => cperkPick(pk.id);
+    else if(own && lv > 1) body.children[2].textContent = 'Lv\u00a0' + lv + '/' + B.CPERK_LV_MAX;
+    if(on){
+      // worn, its button is the upgrade
+      const cost = top ? 0 : B.CPERK_LV_COST[lv - 1];
+      btn.className = 'buy' + (top ? ' ok' : (S.sov || 0) >= cost ? '' : ' no');
+      btn.children[0].textContent = top ? 'Top level' : 'To Lv\u00a0' + (lv + 1);
+      btn.children[1].textContent = top ? '\u2713' : sovFmt(cost);
+      btn.setAttribute('aria-label', top ? pk.n + ' is at its top level'
+        : 'Upgrade ' + pk.n + ' to Lv ' + (lv + 1) + ' for ' + cost + ' ' + B.SOV.toLowerCase());
+      btn.onclick = () => cperkUp(pk.id);
+    }else{
+      btn.className = 'buy' + (own || (S.sov || 0) >= pk.cost ? '' : ' no');
+      btn.children[0].textContent = own ? 'Wear' : B.SOV;
+      btn.children[1].textContent = own ? 'Free' : sovFmt(pk.cost);
+      btn.onclick = () => cperkPick(pk.id);
+    }
     w.appendChild(d);
   }
 }
@@ -14249,10 +14315,10 @@ function buffTip(dt){
   let txt = '', a = 0, col = '';
   const pk = cperkShow && cperkDef(cperkShow.id);
   if(pk){
-    const b = !pk.now && S.buff[pk.k];
-    if(pk.now){ cperkShow.left -= dt; if(cperkShow.left > 0){ txt = pk.s; a = Math.min(1, cperkShow.left); } }
-    else if(b && pk.next){ txt = pk.s; a = 1; }
-    else if(b){ txt = pk.s + ' for ' + Math.ceil(b.t - 1e-6) + 's'; a = Math.min(1, b.t); }
+    const b = !pk.now && S.buff[pk.k], s = cperkTxt(pk.s, pk, cperkLv(pk.id));
+    if(pk.now){ cperkShow.left -= dt; if(cperkShow.left > 0){ txt = s; a = Math.min(1, cperkShow.left); } }
+    else if(b && pk.next){ txt = s; a = 1; }
+    else if(b){ txt = s + ' for ' + Math.ceil(b.t - 1e-6) + 's'; a = Math.min(1, b.t); }
     if(!txt) cperkShow = null;
     col = pk.col || '';
   }
@@ -14273,12 +14339,14 @@ function tickCaddie(dt){
     // only while the hole is in play: once it is cleared the golfer is walking
     // in, and winding the clock back then just made the hole wait out its
     // minimum again, for no better score
-    if(pk.now){ if(S.yards > 0) S.elapsed = Math.max(0, (S.elapsed || 0) - pk.v); }
-    else addBuff(pk.k, pk.v, pk.t);
+    const lv = cperkLv(pk.id);
+    if(pk.now){ if(S.yards > 0) S.elapsed = Math.max(0, (S.elapsed || 0) - cperkVal(pk, lv)); }
+    else addBuff(pk.k, cperkVal(pk, lv), cperkDur(pk, lv));
     Scene.fairyCast = { t: 0, word: pk.w };
     // and the blessing: his arms go up and the perk's own light comes down
-    // on the golfer (see Scene.drawBless); its line by the cog counts it down
-    Scene.bless = { col: pk.col || '#FFD66B' };
+    // on the golfer (see Scene.drawBless), brighter at a higher level; its
+    // line by the cog counts it down
+    Scene.bless = { col: pk.col || '#FFD66B', lv };
     if(!pk.now || S.yards > 0) cperkShow = { id: pk.id, left: 2 };
     Sfx.play('coin');
   }
@@ -14396,7 +14464,8 @@ const DEV = {
     h += row('Fairy caddie', b('cheer', 'DEV.say(\'cheer\')') + b('sigh', 'DEV.say(\'sigh\')')
       + b('quip', 'DEV.say(\'quip\')') + FAIRY_MOVES.map(m => b(m.id, 'DEV.move(\'' + m.id + '\')')).join('')
       + b('perk now', 'DEV.cperkNow()')
-      + b('own all perks', 'DEV.cperks(1)') + b('no perks', 'DEV.cperks(0)'));
+      + b('own all perks', 'DEV.cperks(1)') + b('no perks', 'DEV.cperks(0)')
+      + b('perks Lv 5', 'DEV.cperkLv(5)') + b('perks Lv 1', 'DEV.cperkLv(1)'));
 
     h += row('Frame', b('frame times ' + (DEV_FPS ? 'on' : 'off'), 'DEV.fps()')
       + b('ground by ' + (Scene.pixGround === false ? 'rects' : 'pixels'), 'DEV.ground()'));
@@ -14636,6 +14705,9 @@ const DEV = {
   cperkNow(){ if(!S.cperk || !cperkDef(S.cperk)){ const p = B.CPERKS[0];
       S.cperkOwn = S.cperkOwn || {}; S.cperkOwn[p.id] = 1; S.cperk = p.id; }
     S.cperkT = B.CPERK_EVERY; tickCaddie(0); hideSheet(); },
+  // every owned perk at one level
+  cperkLv(n){ S.cperkLv = {}; if(n > 1) B.CPERKS.forEach(p => { if(S.cperkOwn && S.cperkOwn[p.id]) S.cperkLv[p.id] = n; });
+    checkAch(); this.re(); },
   cperks(on){ S.cperkOwn = {}; if(on) B.CPERKS.forEach(p => { S.cperkOwn[p.id] = 1; });
     else S.cperk = null;
     this.re(); },
