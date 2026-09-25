@@ -91,8 +91,9 @@ module.exports = {
         o.arms = arm;
 
         // ---- the line --------------------------------------------------------
-        const L = () => { const el = $('buffTip'); return { txt: el.textContent, col: el.style.color,
-          on: el.classList.contains('on'), op: el.style.opacity }; };
+        // (the caddie perk's own line in the stack by the cog)
+        const L = () => { const el = $('buffTip').querySelector('[data-k="c"]'); return { txt: el ? el.textContent : '', col: el ? el.style.color : '',
+          on: !!el, op: el ? el.style.opacity : '' }; };
         const hex = h => { const v = parseInt(h.slice(1), 16); return 'rgb(' + (v >> 16) + ', ' + (v >> 8 & 255) + ', ' + (v & 255) + ')'; };
         fire('tempo'); buffTip(0); o.lines.t8 = L();
         S.buff.cSpd.t = 3.2; buffTip(0); o.lines.t4 = L();
@@ -108,10 +109,32 @@ module.exports = {
 
         // where it sits
         fire('towel'); buffTip(0);
-        const s = $('setBtn').getBoundingClientRect(), t = $('buffTip').getBoundingClientRect();
+        const s = $('setBtn').getBoundingClientRect(), first = () => $('buffTip').firstElementChild;
+        const t = first().getBoundingClientRect();
         o.place = { gap: Math.round(t.left - s.right), mid: Math.round((t.top + t.bottom) / 2 - (s.top + s.bottom) / 2),
-          cut: $('buffTip').scrollWidth > $('buffTip').clientWidth + 1,
+          cut: first().scrollWidth > first().clientWidth + 1,
           inside: t.right <= $('stage').getBoundingClientRect().right };
+
+        // ---- the sponsor perks join it: a line each, in brass, stacked ----
+        // (the user asked: their icons on the field sat behind the shop)
+        const lines = () => [...$('buffTip').children].map(n => ({ k: n.dataset.k, txt: n.textContent, col: n.style.color, op: n.style.opacity,
+          mid: Math.round((n.getBoundingClientRect().top + n.getBoundingClientRect().bottom) / 2 - (s.top + s.bottom) / 2) }));
+        S.perkOn = { hot: 460 }; buffTip(0); o.stack = { two: lines() };
+        // the caddie's runs out: the sponsor's moves up to the cog's row
+        delete S.buff[B.CPERKS.find(p => p.id === 'towel').k]; buffTip(0); o.stack.up = lines();
+        // a caddie perk goes off again: under the one already showing
+        fire('tempo'); S.perkOn = { hot: 430 }; buffTip(0); o.stack.again = lines();
+        // a second sponsor perk, a minute left on the first, and its last second
+        S.perkOn = { hot: 59.2, coffee: 300 }; buffTip(0); o.stack.three = lines();
+        S.perkOn = { hot: 0.5, coffee: 300 }; buffTip(0); o.stack.fade = lines();
+        S.perkOn = {}; cperkShow = null; S.buff = {}; buffTip(0); o.stack.none = lines();
+        o.brass = PX.brass;
+        // nothing of them left on the field: a frame with a perk running is the
+        // frame without one
+        const Dd = derive(); Scene.t = 10; S.perkOn = {}; Scene.draw(0, Dd); const f0 = c.getImageData(0, 0, VW, VH).data;
+        Scene.t = 10; S.perkOn = { hot: 400, patch: 200 }; Scene.draw(0, Dd); const f1 = c.getImageData(0, 0, VW, VH).data;
+        let dif = 0; for (let i = 0; i < f0.length; i++) if (f0[i] !== f1[i]) dif++;
+        o.fieldDiff = dif; S.perkOn = {};
       } finally {
         window.step = keep; QUIET = false; OFFLINE = false;
         Object.keys(S).forEach(k => delete S[k]); Object.assign(S, JSON.parse(SNAP));
@@ -132,12 +155,24 @@ module.exports = {
       f('Lost Ball Scout read "' + L.scout.txt + '" and 30s on "' + L.scout30.txt + '"');
     if (!/1s hole clock/.test(L.ready.txt) || L.ready15.op !== '0.5' || L.ready21.txt) f('Ready Golf read "' + L.ready.txt + '", then at ' + L.ready15.op + ', then "' + L.ready21.txt + '"');
     if (L.readyDone.txt) f('Ready Golf with the hole already down still said "' + L.readyDone.txt + '"');
+    const St = r.stack, hx = h => { const v = parseInt(h.slice(1), 16); return 'rgb(' + (v >> 16) + ', ' + (v >> 8 & 255) + ', ' + (v & 255) + ')'; };
+    const brass = hx(r.brass), rows = a => a.map(x => x.k + ' "' + x.txt + '" at ' + x.mid).join('; ');
+    if (St.two.length !== 2 || St.two[0].k !== 'c' || St.two[1].k !== 'p:hot' || St.two[1].txt !== '5\u00d7 purse for 7:40' || St.two[1].col !== brass || Math.abs(St.two[0].mid) > 4 || !(St.two[1].mid > 8))
+      f('a caddie perk and Hot Streak running read: ' + rows(St.two));
+    if (St.up.length !== 1 || St.up[0].k !== 'p:hot' || Math.abs(St.up[0].mid) > 4) f('the caddie\'s line gone, the rest did not move up to the cog: ' + rows(St.up));
+    if (St.again.map(x => x.k).join() !== 'p:hot,c' || St.again[1].txt !== '+20% tempo for 8s') f('a caddie perk going off again did not go under the one showing: ' + rows(St.again));
+    if (St.three.map(x => x.k + ' ' + x.txt).join('|') !== 'p:hot 5\u00d7 purse for 60s|c +20% tempo for 8s|p:coffee 2\u00d7 tempo for 5:00' && St.three.map(x => x.k + ' ' + x.txt).join('|') !== 'p:hot 5\u00d7 purse for 59s|c +20% tempo for 8s|p:coffee 2\u00d7 tempo for 5:00')
+      f('three running read: ' + rows(St.three));
+    if (St.fade[0].k !== 'p:hot' || St.fade[0].op !== '0.5') f('a sponsor perk in its last half second: ' + rows(St.fade) + ' at ' + St.fade[0].op);
+    if (St.none.length) f('with nothing running the stack still read: ' + rows(St.none));
+    if (r.fieldDiff) f('a sponsor perk running still changed ' + r.fieldDiff + ' values of the field');
     const P = r.place;
     if (P.gap < 0 || P.gap > 16 || Math.abs(P.mid) > 4) f('the line sits ' + P.gap + 'px right of the cog and ' + P.mid + 'px off its row');
     if (P.cut || !P.inside) f('the longest line is cut off at 400 wide');
     const c = r.cols;
     return [Object.keys(c).length + ' perks, each a colour of its own coming down on the golfer: '
       + Object.entries(c).map(([k, v]) => k + ' ' + v.n + 'px').join(', '),
-      'arms up (' + r.arms + ' pixels); the line counts 8s, 4s, 1s at half, then gone; next-hole and Ready Golf read right; beside the cog'];
+      'arms up (' + r.arms + ' pixels); the line counts 8s, 4s, 1s at half, then gone; next-hole and Ready Golf read right; beside the cog',
+      'sponsor perks join it in brass ("' + St.two[1].txt + '"), stacked in the order they began, moving up as one ends; none on the field'];
   }
 };

@@ -726,13 +726,14 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
   background:none;border:0;padding:0;display:flex;align-items:center;justify-content:center;
   filter:drop-shadow(0 0 1px #000) drop-shadow(0 0 1px #000) drop-shadow(0 1px 2px rgba(0,0,0,.9))}
 #hudClimb.off{opacity:.55}
-/* The caddie perk that is running, by the cog: its line in its own colour,
-   counting down, no box behind it, fading out as it runs out. */
+/* What is running, by the cog: a line each for the caddie perk (its own
+   colour) and the sponsor perks (brass), counting down, no box behind them,
+   each fading out as it runs out; the first on the cog's own row. */
 #setRow{position:relative;display:flex;align-items:center;pointer-events:none}
-#buffTip{position:absolute;left:32px;top:50%;transform:translateY(-50%);max-width:calc(100vw - 90px);font-family:var(--mono);font-size:var(--f2);font-weight:600;white-space:nowrap;
-  overflow:hidden;text-overflow:ellipsis;min-width:0;
-  text-shadow:0 0 2px #000,0 1px 2px #000,0 0 1px #000;opacity:0;transition:opacity .25s}
-#buffTip.on{opacity:1}
+#buffTip{position:absolute;left:32px;top:calc(50% - .625em);max-width:calc(100vw - 90px);font-family:var(--mono);font-size:var(--f2);font-weight:600;
+  display:flex;flex-direction:column;align-items:flex-start;min-width:0;pointer-events:none}
+#buffTip .bl{display:block;max-width:100%;line-height:1.25em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  text-shadow:0 0 2px #000,0 1px 2px #000,0 0 1px #000;transition:opacity .25s}
 #setIcon,#hudClimbIcon{display:block;width:24px;height:24px;image-rendering:pixelated;image-rendering:crisp-edges}
 /* settings sheet */
 .setrow{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;padding:9px 0;
@@ -2378,15 +2379,16 @@ const B = {
      choice is when to burn a limited stock rather than whether to open a wallet.
      Five run on a clock, three fire once. ---- */
   PERKS: [
-    { id:'hot',    n:'Hot Streak',        ic:'arrowup',   cost:3, dur:480, k:'gold', v:5,
+    // (s: its short line by the cog while it runs, like the caddie perks')
+    { id:'hot',    n:'Hot Streak',        ic:'arrowup',   cost:3, dur:480, k:'gold', v:5, s:'5\u00d7 purse',
       d:'Five times purse for eight minutes' },
-    { id:'patch',  n:'Purple Patch',      ic:'purple',    cost:4, dur:300, k:'pow',  v:4,
+    { id:'patch',  n:'Purple Patch',      ic:'purple',    cost:4, dur:300, k:'pow',  v:4, s:'4\u00d7 power',
       d:'Four times swing power for five minutes' },
-    { id:'coffee', n:'Caddie Coffee',     ic:'cup',    cost:4, dur:360, k:'spd',  v:2,
+    { id:'coffee', n:'Caddie Coffee',     ic:'cup',    cost:4, dur:360, k:'spd',  v:2, s:'2\u00d7 tempo',
       d:'Double tempo for six minutes' },
-    { id:'proam',  n:'Pro-Am Day',        ic:'proam',  cost:5, dur:420, k:'drop', v:0.35,
+    { id:'proam',  n:'Pro-Am Day',        ic:'proam',  cost:5, dur:420, k:'drop', v:0.35, s:'+35pp gear luck',
       d:'+35pp gear luck for seven minutes' },
-    { id:'ley',    n:'Ley Attunement',    ic:'leyatt', cost:5, dur:480, k:'reson', v:1,
+    { id:'ley',    n:'Ley Attunement',    ic:'leyatt', cost:5, dur:480, k:'reson', v:1, s:'resonates everywhere',
       d:'Your ball resonates on every course for eight minutes' },
     { id:'range',  n:'Range Session',     ic:'bucket',     cost:3, dur:0,   k:'bank', v:150,
       d:'Bank two and a half minutes of purse at your current rate' },
@@ -12937,32 +12939,6 @@ Object.assign(Scene, {
     }
   },
 
-  // Live perks, on the field. A buff you have to open a panel to see is a buff
-  // you forget you paid for.
-  drawPerks(){
-    const live = [];
-    for(const id in S.perkOn) if(S.perkOn[id] > 0) live.push(id);
-    if(!live.length) return;
-    // 12, and pixIcon asked for 12, so the sprite is rasterised at exactly the
-    // size it is drawn at. It used to be baked at 16 -- which pixIcon rounds to
-    // a whole 1x, so 12 -- and then squeezed into 9, which drops three rows and
-    // three columns of a twelve pixel drawing wherever they happen to fall.
-    const c = this.b, sz = 12;
-    let x = 3;                          // the buttons moved right, so this side is free
-    const y = Math.round(VH*0.24);
-    for(const id of live.slice(0, 5)){
-      const p = perkDef(id), f = clamp(S.perkOn[id] / p.dur, 0, 1);
-      c.fillStyle = 'rgba(6,12,9,.72)';
-      c.fillRect(x - 1, y - 1, sz + 2, sz + 4);
-      blit(c, pixIcon(p.ic, sz, PX.brass), x, y, sz, sz);
-      c.fillStyle = '#2A2418'; c.fillRect(x, y + sz + 1, sz, 1);
-      c.fillStyle = PX.brass; c.fillRect(x, y + sz + 1, Math.max(1, Math.round(sz*f)), 1);
-      x += sz + 4;
-    }
-    if((S.tickets || 0) > 0 && live.length < 5)
-      drawTextS(c, 'x' + S.tickets, x + 1, y + 1, PX.grey, TSC);
-  },
-
   /* ---- the shot book, on the field ---- */
   drawShots(){
     if(!S.carry || !S.carry.length) return;
@@ -13200,7 +13176,6 @@ Object.assign(Scene, {
       }
       this.drawDepthsHud(D, R, dg);
       if(this.mapOn || this._mapTry){ this.mapOn = false; this._mapTry = null; $('holeMap').style.display = 'none'; }
-      this.drawPerks();
       this.drawShots();
       this.drawFx(dt);
     }else{
@@ -13300,7 +13275,6 @@ Object.assign(Scene, {
       this.tickQuip(dt);
       this.tickMove(dt);
       this.drawHud(D);
-      this.drawPerks();
       this.drawShots();
       this.drawFx(dt);
       if(this.announce) this.drawAnnounce(dt);
@@ -14999,29 +14973,55 @@ function cperkPick(id){
 // Every CPERK_EVERY seconds of play on the course, the worn perk goes off.
 // Not during a wager, not in a catch-up: like every other buff, it sits the
 // absence out.
-// The line by the cog: the perk that went off, in its own colour, its seconds
-// read straight off the buff so it cannot drift from what is really running.
-// A perk that lasts till the next hole says so; one that acts at once (Ready
-// Golf) shows for two seconds. It fades over its last second.
-let cperkShow = null;
-function buffTip(dt){
-  const el = $('buffTip'); if(!el) return;
-  let txt = '', a = 0, col = '';
+// The lines by the cog: what is running, one line each, stacked down from the
+// cog's own row. The caddie perk that went off, in its own colour, its seconds
+// read straight off the buff so it cannot drift from what is really running
+// (a perk that lasts till the next hole says so; one that acts at once, Ready
+// Golf, shows for two seconds); and each sponsor perk on a clock, in brass
+// (the user asked for them here: their icons on the field had ended up behind
+// the shop). Each fades over its last second; a line keeps its place while it
+// runs, a new one goes under the others, and when one has gone the rest move
+// up.
+let cperkShow = null, buffOrder = [];
+const buffClock = t => t >= 60 ? Math.floor(t / 60) + ':' + String(Math.floor(t % 60)).padStart(2, '0') : Math.ceil(t - 1e-6) + 's';
+function buffLines(dt){
+  const out = [];
   const pk = cperkShow && cperkDef(cperkShow.id);
   if(pk){
+    let txt = '', a = 0;
     const b = !pk.now && S.buff[pk.k], s = cperkTxt(pk.s, pk, cperkLv(pk.id));
     if(pk.now){ cperkShow.left -= dt; if(cperkShow.left > 0){ txt = s; a = Math.min(1, cperkShow.left); } }
     else if(b && pk.next){ txt = s; a = 1; }
     else if(b){ txt = s + ' for ' + Math.ceil(b.t - 1e-6) + 's'; a = Math.min(1, b.t); }
     if(!txt) cperkShow = null;
-    col = pk.col || '';
+    else out.push({ k: 'c', txt, col: pk.col || '', a });
   }
-  if(el.textContent !== txt) el.textContent = txt;
-  if(el.style.color !== col && col) el.style.color = col;
-  const on = a > 0;
+  for(const p of B.PERKS){
+    const left = perkLeft(p.id);
+    if(!(p.dur > 0) || !(left > 0) || !p.s) continue;
+    out.push({ k: 'p:' + p.id, txt: p.s + ' for ' + buffClock(left), col: PX.brass, a: Math.min(1, left) });
+  }
+  return out;
+}
+function buffTip(dt){
+  const el = $('buffTip'); if(!el) return;
+  const now = buffLines(dt), keys = now.map(x => x.k);
+  buffOrder = buffOrder.filter(k => keys.includes(k)).concat(keys.filter(k => !buffOrder.includes(k)));
+  // one line an entry, reused while it runs, in the order kept
+  const have = {};
+  for(const n of [...el.children]){ if(keys.includes(n.dataset.k)) have[n.dataset.k] = n; else n.remove(); }
+  buffOrder.forEach((k, i) => {
+    const L = now.find(x => x.k === k);
+    let n = have[k];
+    if(!n){ n = document.createElement('span'); n.className = 'bl'; n.dataset.k = k; }
+    if(el.children[i] !== n) el.insertBefore(n, el.children[i] || null);
+    if(n.textContent !== L.txt) n.textContent = L.txt;
+    if(n.style.color !== L.col && L.col) n.style.color = L.col;
+    const op = String(Math.round(L.a * 20) / 20);
+    if(n.style.opacity !== op) n.style.opacity = op;
+  });
+  const on = now.length > 0;
   if(el.classList.contains('on') !== on) el.classList.toggle('on', on);
-  const op = on ? String(Math.round(a * 20) / 20) : '';
-  if(el.style.opacity !== op) el.style.opacity = op;
 }
 function tickCaddie(dt){
   buffTip(dt);

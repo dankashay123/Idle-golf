@@ -11,7 +11,12 @@ check is for.
 - Everything is committed and pushed to `main` (mirrored on the session
   branch `claude/notes-review-dju532`). Nothing is half-built.
 - `node test/run.js` passes all **54 checks** (about 10 minutes).
-- **Last request**: "Let's start with putting out" (the menu's first
+- **Last request** (with a screenshot): "Looks like the sponsor buff is
+  behind the shop icon? Let's move that to the right of the settings icon
+  and have it part of the caddie buff area. Make it so they are one
+  element, when one fades, the other goes to the top". Done (§5 "The
+  stack by the cog").
+- **The request before**: "Let's start with putting out" (the menu's first
   item). Done (§5 "He putts out"). Asked whether it would need another
   run with the week pinned: no, it moves no money (the wait's pay was
   already there); the full suite was run as usual (all 54 pass; `caddie`
@@ -157,6 +162,7 @@ Line numbers are approximate and drift. Search for the name instead.
 | Tour tab: Tour Card, The Card, Season, Major of the Week | `renderTour`, `renderSeason`, `renderMajor` |
 | **Seasons**: home courses by the card, six regular stops by the real month | `SEASONS`, `homeSeason`, `courseSeason`, `CAL_SEASONED`, `MONTH_SEASON`, `monthNow`, `seasonLook`, `LOOK_CACHE`, `SEASON_FORCE`, `Scene.look`, `Scene.snow` (drawn in `drawWeather`), the banner in `announceCourse` |
 | **Signature holes** (island, canyon, stones, sea stack) | `sigHole`, `sigKind`, `SIG_NAME`, `B.SIG_HOLE`, `HOME_PIER`, the `*_FORCE` values, `drawBridge`, `drawStones`, `drawPier`, `isleWait` (the hold), `sigScore` (honours and `S.sigRec`), `renderRecord` |
+| **The stack by the cog** (caddie and sponsor perks) | `buffLines`, `buffTip`, `buffOrder`, `buffClock`, `#buffTip .bl`, each timed perk's `s` in `B.PERKS` |
 | **He putts out** | `Scene.putt`, `puttArm`, `puttBall`, `cupT`, `cupHeard`, `PUTT_HIT`, `PUTT_ROLL`, `PIN_X`, `Scene.pinX`, `putSpot` in `launch`, `Sfx.putt`; `paintGolfer`'s last argument |
 | **The hole waits for him to reach the green** | `Scene.holeWait` (was `isleWait`), `B_GREEN_UP`, `B_GREEN_STAND`, `Scene.upT`, `holeSaid`, `Scene.saidHole`, the `waiting` guard and hold in `step`, `walk` in `finishHole` (the wait paid for) |
 | **Railway Crossing** | `isRail`, `RAIL_FORCE`, `P_RAIL`, `Scene.tickRail`, `railAt`, `railHold`, `railLights`, `drawRail`, `drawTrain`, `RAIL_X`/`RAIL_V`/`RAIL_LEN`/`RAIL_MEET`, `railWait` in the camera code, `Sfx.whistle`/`chuff`/`ding`, `SIG_HOME_ROUND`; `DEV.rail` |
@@ -292,6 +298,23 @@ Line numbers are approximate and drift. Search for the name instead.
    seeded stream instead.
 
 ## 5. What the last features do (for debugging them)
+
+### The stack by the cog (user asked, with a screenshot)
+
+- The sponsor perks' icons were drawn on the field at the top left
+  (`drawPerks`, from when the stage buttons were on the right) and sat
+  behind the shop button. `drawPerks` is gone; `#buffTip` by the cog is now
+  a stack of lines (`.bl` spans keyed `c` for the caddie perk, `p:<id>` for
+  a sponsor perk): `buffLines` says what runs, `buffTip` keeps them in
+  `buffOrder` (the order they began: a new one goes under, a gone one lets
+  the rest move up), each fading over its last second. Sponsor lines are
+  brass, from each timed perk's new `s` ("5× purse", "4× power", "2×
+  tempo", "+35pp gear luck", "resonates everywhere") and `buffClock` (m:ss
+  over a minute, else seconds). The first line sits on the cog's row
+  (`top: calc(50% - .625em)`, lines 1.25em).
+- The ticket count that showed beside the icons went with them.
+- Check `bless` (the stack, its order, moving up, fading, nothing on the
+  field); `perkup` reads the caddie line as before.
 
 ### He putts out (user asked, from the menu)
 
@@ -1004,6 +1027,7 @@ Line numbers are approximate and drift. Search for the name instead.
 
 ## 6. Recent history (newest first, one line each)
 
+- The sponsor perks' lines join the caddie's by the cog, one stack.
 - He putts out on every hole (an ace goes straight in); the pin stands a
   little right of centre so the cup shows.
 - The eagle daily asks for 100; the dailies check plays twelve starts.
