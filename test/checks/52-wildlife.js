@@ -165,7 +165,7 @@ module.exports = {
         const loud = async fn => {
           const oc = new OfflineAudioContext(1, 88200, 44100), k2 = { ctx: Sfx.ctx, master: Sfx.master, nz: Sfx._nz };
           Sfx.ctx = oc; Sfx.master = oc.destination; Sfx._nz = null;
-          const m = Math.random; Math.random = () => 0.5;
+          const m = Math.random; let sd = 7; Math.random = () => { sd = (sd * 16807) % 2147483647; return sd / 2147483647; };
           try { fn(0.05); } finally { Sfx.ctx = k2.ctx; Sfx.master = k2.master; Sfx._nz = k2.nz; Math.random = m; }
           const d = (await oc.startRendering()).getChannelData(0), Wn = 13230; let sum = 0, best = 0;
           for (let i = 0; i < d.length; i++) { sum += d[i] * d[i]; if (i >= Wn) sum -= d[i - Wn] * d[i - Wn]; if (i >= Wn - 1) best = Math.max(best, sum / Wn); }

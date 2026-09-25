@@ -5,7 +5,7 @@
  * brass frame and a sparkle on the hole map, "x2" after its name in the
  * corner, and the tee says so. The Trophy Room's Today page names it.
  *
- *   - which kind: every block of four weeks holds all four, no kind comes two
+ *   - which kind: every block of five weeks holds all five, no kind comes two
  *     weeks running, and each major of the week meets each kind; it turns on
  *     the real Monday, and the developer menu can pin it
  *   - its holes are priced at twice the purse, on every course, and nothing
@@ -35,7 +35,7 @@ module.exports = {
       const SNAP = JSON.stringify(S), o = {};
       const put = snap => { Object.keys(S).forEach(k => delete S[k]); Object.assign(S, JSON.parse(snap)); };
       const force = (kind, h) => { ISLE_FORCE = kind === 'island' ? h : 0; CANYON_FORCE = kind === 'canyon' ? h : 0;
-        STONES_FORCE = kind === 'stones' ? h : 0; PIER_FORCE = kind === 'pier' ? h : 0; };
+        STONES_FORCE = kind === 'stones' ? h : 0; PIER_FORCE = kind === 'pier' ? h : 0; RAIL_FORCE = kind === 'rail' ? h : 0; };
       const mr = Math.random;
       try {
         QUIET = true;
@@ -52,8 +52,8 @@ module.exports = {
           if (got.size !== n) o.blocks.push(m);
         }
         const meet = {};
-        for (let w = W0; w < W0 + 16; w++) (meet[weekMajor(w).id] = meet[weekMajor(w).id] || new Set()).add(sigWeekOf(w));
-        o.meet = Object.keys(meet).map(id => id + ' ' + meet[id].size);
+        for (let w = W0; w < W0 + 4 * n; w++) (meet[weekMajor(w).id] = meet[weekMajor(w).id] || new Set()).add(sigWeekOf(w));
+        o.meet = Object.keys(meet).map(id => id + ' ' + meet[id].size); o.n = n;
         // it turns over on the Monday, with the major
         let mon = 20700; while ((mon + 3) % 7) mon++;
         DAY_FORCE = mon - 1; const sun = sigWeek();
@@ -161,12 +161,12 @@ module.exports = {
     });
 
     const f = m => { throw new Error(m); };
-    if (r.kinds !== 'island,canyon,stones,pier') f('the kinds of signature hole are ' + r.kinds);
+    if (r.kinds !== 'island,canyon,stones,pier,rail') f('the kinds of signature hole are ' + r.kinds);
     if (r.unknown.length) f('weeks with no kind: ' + r.unknown.slice(0, 5).join(', '));
     if (r.runs.length) f('the same kind two weeks running at week ' + r.runs.slice(0, 5).join(', '));
-    if (r.blocks.length) f('a block of four weeks without all four kinds: ' + r.blocks.slice(0, 5).join(', '));
-    if (r.meet.length !== 4 || !r.meet.every(x => / 4$/.test(x)))
-      f('in sixteen weeks each major of the week should meet all four kinds: ' + r.meet.join(', '));
+    if (r.blocks.length) f('a block of five weeks without all five kinds: ' + r.blocks.slice(0, 5).join(', '));
+    if (r.meet.length !== 4 || !r.meet.every(x => x.endsWith(' ' + r.n)))
+      f('in twenty weeks each major of the week should meet all five kinds: ' + r.meet.join(', '));
     if (!r.cal.turns || !r.cal.holds || !r.cal.same)
       f('the kind does not turn over with the real week, Monday to Sunday: ' + JSON.stringify(r.cal));
     if (r.dev.pinned !== 'pier' || !r.dev.back) f('the developer menu does not pin the week\'s kind and let it go: ' + JSON.stringify(r.dev));
@@ -201,7 +201,7 @@ module.exports = {
       screen.push(await page.evaluate(([w, h, BRASS, GOLD, PALE]) => {
         const SNAP = JSON.stringify(S), out = { size: w + 'x' + h, holes: [] };
         const force = (kind, hl) => { ISLE_FORCE = kind === 'island' ? hl : 0; CANYON_FORCE = kind === 'canyon' ? hl : 0;
-          STONES_FORCE = kind === 'stones' ? hl : 0; PIER_FORCE = kind === 'pier' ? hl : 0; };
+          STONES_FORCE = kind === 'stones' ? hl : 0; PIER_FORCE = kind === 'pier' ? hl : 0; RAIL_FORCE = kind === 'rail' ? hl : 0; };
         const hex = (d, i) => '#' + [d[i], d[i + 1], d[i + 2]].map(v => v.toString(16).padStart(2, '0')).join('').toUpperCase();
         const og = window.drawTextS;
         try {
@@ -308,7 +308,7 @@ module.exports = {
     }
 
     const d = r.doubled;
-    return ['all four kinds every four weeks, never twice running, each major meeting each; turns on the Monday; the dev menu pins it',
+    return ['all five kinds every five weeks, never twice running, each major meeting each; turns on the Monday; the dev menu pins it',
       'priced x2 on its own holes of every course and nowhere else (' + Object.keys(d).map(k => d[k] + ' ' + k).join(', ')
         + ' hole-weeks), and played out the same card pays x' + P.ratio.toFixed(2) + ' the money',
       'the away model prices holes as they are played, the week\'s and every round\'s first; the event\'s cheque does not move',
@@ -316,5 +316,5 @@ module.exports = {
         + maps + ' maps over ' + SIZES.length + ' sizes; Today names it'];
   }
 };
-const SIG_NAME_T = { island: 'Island Green', canyon: 'Canyon Carry', stones: 'Stepping Stones', pier: 'Sea Stack' };
+const SIG_NAME_T = { island: 'Island Green', canyon: 'Canyon Carry', stones: 'Stepping Stones', pier: 'Sea Stack', rail: 'Railway Crossing' };
 const SIG_NAME_UP = k => SIG_NAME_T[k].toUpperCase();

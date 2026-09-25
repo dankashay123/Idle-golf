@@ -38,7 +38,7 @@ module.exports = {
           DEV.course(ci); hideSheet();
           const cs = B.COURSE[ci], t = tournamentOf(S.hole), first = (t - 1) * B.ROUND * B.DAYS + 1;
           const home = cs.slot === 'home', mine = !home && B.SIG_HOLE[cs.id] === 'island';
-          if (!home && !['island', 'canyon', 'stones', 'pier'].includes(B.SIG_HOLE[cs.id])) o.noKind.push(cs.id);
+          if (!home && !SIG_KINDS.includes(B.SIG_HOLE[cs.id])) o.noKind.push(cs.id);
           // Harbour Lights closes its front nine on the sea stack instead
           const pierFront = home && cs.id === 'harbour';
           let n = 0;

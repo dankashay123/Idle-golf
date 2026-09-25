@@ -117,8 +117,8 @@ module.exports = {
           const play = (h, d) => { const k = sigKind(h);
             if (k) { const m = mine[k] || (mine[k] = { n: 0, b: null }); m.n++; if (m.b === null || d < m.b) m.b = d; }
             S.hole = h; startHole(); S.elapsed = S.parTime * at(d); S.doneT = null; S.yards = 0; finishHole(derive()); };
-          const T = () => ({ is: tally('sigIsle'), cn: tally('sigCanyon'), st: tally('sigStones'), rd: tally('sigRound'), ace: tally('isleAce') });
-          for (const k of ['sigIsle', 'sigCanyon', 'sigStones', 'sigRound', 'isleAce']) S.tally[k] = 0;
+          const T = () => ({ is: tally('sigIsle'), cn: tally('sigCanyon'), st: tally('sigStones'), rl: tally('sigRail'), rd: tally('sigRound'), ace: tally('isleAce') });
+          for (const k of ['sigIsle', 'sigCanyon', 'sigStones', 'sigRail', 'sigRound', 'isleAce']) S.tally[k] = 0;
           delete S.sigRound; delete S.sigRec; S.tally.sigPier = 0;
           const home = B.COURSE.findIndex(c => c.slot === 'home');
           DEV.course(home); hideSheet();
@@ -126,11 +126,11 @@ module.exports = {
           const round = r0 => { const a = []; for (let h = r0; h < r0 + B.ROUND; h++) if (sigKind(h)) a.push(h); return a; };
           const r1 = round(first), r2 = round(first + B.ROUND), r3 = round(first + 2 * B.ROUND);
           o.sigPer = r1.map(sigKind).join(',');
-          // round one: par on all four -- a signature round, and no birdies
+          // round one: par on all five -- a signature round, and no birdies
           r1.forEach(h => play(h, 0)); o.sigPar = T();
-          // round two: birdies on all four but a bogey on the last -- birdies
+          // round two: birdies on all five but a bogey on the last -- birdies
           // counted on each kind, no round
-          r2.forEach((h, i) => play(h, i === r2.length - 1 ? 1 : -1)); o.sigBogey = T();
+          r2.forEach((h, i) => play(h, i === r2.length - 1 ? 1 : -1)); o.sigBogey = T(); o.sigR2 = r2.map(sigKind);
           // round three: an ace on an island
           play(r3.find(h => sigKind(h) === 'island'), -4); o.sigAce = T();
           // an ordinary hole with a birdie
@@ -200,10 +200,12 @@ module.exports = {
     if (r.staffV !== r.perks) throw new Error('Full Staff asks for ' + r.staffV + ' perks and there are ' + r.perks);
     if (!/^\d+% \/ \d+%/.test(r.share)) throw new Error('an honour counted as a share reads "' + r.share + '"');
     const J = x => JSON.stringify(x);
-    if (r.sigPer.split(',').sort().join(',') !== 'canyon,island,island,stones') f2('a home round\'s signature holes are ' + r.sigPer);
-    if (J(r.sigPar) !== J({ is: 0, cn: 0, st: 0, rd: 1, ace: 0 })) f2('par on all four of a home round counted ' + J(r.sigPar) + ' (want one signature round, no birdies)');
-    if (J(r.sigBogey) !== J({ is: 2, cn: 1, st: 0, rd: 1, ace: 0 }) && J(r.sigBogey) !== J({ is: 1, cn: 1, st: 1, rd: 1, ace: 0 }) && J(r.sigBogey) !== J({ is: 2, cn: 0, st: 1, rd: 1, ace: 0 }))
-      f2('birdies on three and a bogey on the last counted ' + J(r.sigBogey) + ' (want a birdie on each kind birdied, no new round)');
+    if (r.sigPer.split(',').sort().join(',') !== 'canyon,island,island,rail,stones') f2('a home round\'s signature holes are ' + r.sigPer);
+    if (J(r.sigPar) !== J({ is: 0, cn: 0, st: 0, rl: 0, rd: 1, ace: 0 })) f2('par on all five of a home round counted ' + J(r.sigPar) + ' (want one signature round, no birdies)');
+    const bird = { is: 0, cn: 0, st: 0, rl: 0, rd: 1, ace: 0 };
+    r.sigR2.slice(0, -1).forEach(k => bird[{ island: 'is', canyon: 'cn', stones: 'st', rail: 'rl' }[k]]++);
+    if (J(r.sigBogey) !== J(bird))
+      f2('birdies on four and a bogey on the last counted ' + J(r.sigBogey) + ' (want a birdie on each kind birdied, no new round)');
     if (r.sigAce.ace !== 1 || r.sigAce.is !== r.sigBogey.is + 1) f2('an ace on an island counted ' + J(r.sigAce));
     if (J(r.sigPlain) !== J(r.sigAce)) f2('a birdie on an ordinary hole counted: ' + J(r.sigPlain));
     if (r.awayN !== 4 || r.sigAway.rd !== 1 || r.sigAway.cn !== r.sigPlain.cn + 1) f2('a canyon course (' + r.awayN + ' signature holes an event): ' + J(r.sigAway) + ' (want one more canyon birdie and no signature round)');

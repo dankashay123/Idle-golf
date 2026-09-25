@@ -8,7 +8,8 @@
  *
  * The life on them is held to it too: the pier's spray and gulls, the
  * canyon's hawk and the river's fish (drawn with their holes), and the
- * island's ducks, whose holes are played as well.
+ * island's ducks, whose holes are played as well; and the railway crossing,
+ * its line, posts and a train on it in every view.
  *
  * Every course with a canyon, stones or a sea stack is played (the home courses and the
  * others, rolling ground included): two holes of each kind, and on each the
@@ -24,17 +25,17 @@ module.exports = {
   async run(page) {
     const r = await page.evaluate(() => {
       const SNAP = JSON.stringify(S), o = { frames: 0, seen: 0, bad: [], holes: 0 };
-      const keep = { bridge: Scene.drawBridge, stones: Scene.drawStones, pier: Scene.drawPier, ducks: Scene.drawDucks, step: window.step };
+      const keep = { bridge: Scene.drawBridge, stones: Scene.drawStones, pier: Scene.drawPier, ducks: Scene.drawDucks, rail: Scene.drawRail, step: window.step };
       try {
         hideSheet(); QUIET = true; window.step = () => {};
         S.outfit = 'classic'; S.caddie = 'classic'; buildSprites();
         const D = derive(), c = Scene.b;
         for (let ci = 0; ci < B.COURSE.length; ci++) {
           const cs = B.COURSE[ci];
-          if (cs.slot !== 'home' && !['canyon', 'stones', 'pier'].includes(B.SIG_HOLE[cs.id])) continue;
+          if (cs.slot !== 'home' && !['canyon', 'stones', 'pier', 'rail'].includes(B.SIG_HOLE[cs.id])) continue;
           DEV.course(ci); hideSheet();
           const t = tournamentOf(S.hole), first = (t - 1) * B.ROUND * B.DAYS + 1;
-          const want = { canyon: 2, stones: 2, pier: 2, island: 2 };
+          const want = { canyon: 2, stones: 2, pier: 2, island: 2, rail: 2 };
           for (let h = first; h < first + B.ROUND * B.DAYS; h++) {
             const k = sigKind(h);
             if (!want[k]) continue;
@@ -47,12 +48,16 @@ module.exports = {
               // many points of its rounds (a fish is only out of the water now
               // and then)
               Scene.t += 0.37;
+              // a railway's train somewhere along the line in every view,
+              // each way in turn
+              if (k === 'rail') { Scene.trainMet = 1; Scene.trainNext = 1e9;
+                Scene.train = { t0: Scene.t - (2 + (o.frames % 4) * 1.1), dir: o.frames & 1 ? 1 : -1 }; }
               Scene.camD = cam; Scene.walkTo = cam; S.yards = S.yardsMax * (1 - Math.min(0.999, cam / LEN));
               Scene.draw(0, D);
               const a = c.getImageData(0, 0, VW, VH).data;
-              Scene.drawBridge = () => {}; Scene.drawStones = () => {}; Scene.drawPier = () => {}; Scene.drawDucks = () => {};
+              Scene.drawBridge = () => {}; Scene.drawStones = () => {}; Scene.drawPier = () => {}; Scene.drawDucks = () => {}; Scene.drawRail = () => {};
               Scene.draw(0, D);
-              Scene.drawBridge = keep.bridge; Scene.drawStones = keep.stones; Scene.drawPier = keep.pier; Scene.drawDucks = keep.ducks;
+              Scene.drawBridge = keep.bridge; Scene.drawStones = keep.stones; Scene.drawPier = keep.pier; Scene.drawDucks = keep.ducks; Scene.drawRail = keep.rail;
               const b = c.getImageData(0, 0, VW, VH).data;
               const limit = Scene.clipAt(Math.max(I.bank - 0.2, cam - CAM_BACK + 0.7)) + 1;
               let n = 0, low = 0, worst = 0;
@@ -69,7 +74,7 @@ module.exports = {
           }
         }
       } finally {
-        Scene.drawBridge = keep.bridge; Scene.drawStones = keep.stones; Scene.drawPier = keep.pier; Scene.drawDucks = keep.ducks; window.step = keep.step;
+        Scene.drawBridge = keep.bridge; Scene.drawStones = keep.stones; Scene.drawPier = keep.pier; Scene.drawDucks = keep.ducks; Scene.drawRail = keep.rail; window.step = keep.step;
         QUIET = false; OFFLINE = false;
         Object.keys(S).forEach(k => delete S[k]); Object.assign(S, JSON.parse(SNAP)); buildSprites(); startHole();
       }
@@ -77,7 +82,7 @@ module.exports = {
     });
     if (r.bad.length) throw new Error(r.bad.length + ' frames with a bridge, stones or pier drawn through the ground: ' + r.bad.slice(0, 4).join('; '));
     if (r.seen < r.frames * 0.4) throw new Error('the bridge, stones or pier were seen in only ' + r.seen + ' of ' + r.frames + ' frames');
-    return [r.holes + ' canyon, stepping-stone, sea stack and island holes over every course that has them, ' + r.frames + ' views from the tee to past the crossing',
+    return [r.holes + ' canyon, stepping-stone, sea stack, island and railway holes over every course that has them, ' + r.frames + ' views from the tee to past the crossing',
       'the bridge, stones, pier or the life on them in view in ' + r.seen + ' of them, and never a pixel below the ground in front'];
   }
 };

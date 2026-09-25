@@ -2988,12 +2988,13 @@ const B = {
   // Each course's own signature hole (the home courses have all three): an
   // island where there is water to spare, a canyon in rock and sand, the
   // stepping stones where a river or a burn runs through, and on the coast a
-  // green on a sea stack at the end of a pier.
+  // green on a sea stack at the end of a pier; and where a line runs past the
+  // links, the moor or the mine, a railway crossing.
   SIG_HOLE: {
     coastal:'pier', blackwater:'island', palmetto:'island', blossom:'island',
-    highlands:'canyon', dunes:'canyon', ironbark:'canyon', mesa:'canyon',
-    sandbelt:'stones', riverbend:'stones', snowline:'stones', moorland:'stones',
-    azalea:'island', national:'canyon', seaside:'pier', autumn:'stones', oldlinks:'stones',
+    highlands:'canyon', dunes:'canyon', ironbark:'rail', mesa:'canyon',
+    sandbelt:'stones', riverbend:'stones', snowline:'stones', moorland:'rail',
+    azalea:'island', national:'canyon', seaside:'pier', autumn:'stones', oldlinks:'rail',
     meridian:'island',
     masters:'stones', crown:'stones', sovereign:'island', starfall:'canyon'
   },
@@ -3054,6 +3055,7 @@ const B = {
     { id:'sigCn',  n:'Rope Walker',      d:'Birdie 10 canyon holes',      m:'sigCanyon', v:10,  r:{k:'tick', v:2}, sov:10 },
     { id:'sigSt',  n:'Sure-Footed',      d:'Birdie 10 stepping-stone holes', m:'sigStones', v:10, r:{k:'tick', v:2}, sov:10 },
     { id:'sigPr',  n:'Sea Legs',         d:'Birdie 10 sea stack holes',   m:'sigPier',   v:10,  r:{k:'tick', v:2}, sov:10 },
+    { id:'sigRl',  n:'All Aboard',       d:'Birdie 10 railway crossings', m:'sigRail',   v:10,  r:{k:'tick', v:2}, sov:10 },
     { id:'isleAce', n:'Ace on the Island', d:'Card an ace on an island green', m:'isleAce', v:1,  r:{k:'tick', v:3}, sov:10 }
   ],
   // The trophy case pays for what goes in it, collected by hand in the Trophy
@@ -3514,7 +3516,9 @@ const parOf = h => B.PAR_LAYOUTS[hash32(roundIndex(h)+7) % B.PAR_LAYOUTS.length]
 // (the developer menu) make one hole that kind and none of the others.
 // Harbour Lights, on the coast, closes its front nine on the sea stack instead
 // of an island.
-let ISLE_FORCE = 0, CANYON_FORCE = 0, STONES_FORCE = 0, PIER_FORCE = 0;
+// The railway crossing closes a home course's front nine on its last par
+// four (the stones take the round's last, on the back nine).
+let ISLE_FORCE = 0, CANYON_FORCE = 0, STONES_FORCE = 0, PIER_FORCE = 0, RAIL_FORCE = 0;
 const HOME_PIER = { harbour: 1 };
 // the last hole of a par in its round, or in its nine
 function lastOfPar(h, par, nine){
@@ -3524,7 +3528,7 @@ function lastOfPar(h, par, nine){
   return true;
 }
 function sigHole(h, kind, par, homeNine){
-  const F = { island: ISLE_FORCE, canyon: CANYON_FORCE, stones: STONES_FORCE, pier: PIER_FORCE };
+  const F = { island: ISLE_FORCE, canyon: CANYON_FORCE, stones: STONES_FORCE, pier: PIER_FORCE, rail: RAIL_FORCE };
   if(h === F[kind]) return true;
   for(const k in F) if(k !== kind && h === F[k]) return false;
   const cs = courseFor(tournamentOf(h));
@@ -3532,6 +3536,7 @@ function sigHole(h, kind, par, homeNine){
   if(cs.slot === 'home'){
     const front = HOME_PIER[cs.id] && holeInRound(h) <= 9;
     if(kind === 'pier') return !!front && lastOfPar(h, 3, true);
+    if(kind === 'rail') return holeInRound(h) <= 9 && lastOfPar(h, 4, true);
     if(kind === 'island' && front) return false;
     return lastOfPar(h, par, homeNine);
   }
@@ -3541,18 +3546,23 @@ function isIsland(h){ return sigHole(h, 'island', 3, true); }
 function isCanyon(h){ return sigHole(h, 'canyon', 5, false); }
 function isStones(h){ return sigHole(h, 'stones', 4, false); }
 function isPier(h){ return sigHole(h, 'pier', 3, false); }
-const SIG_NAME = { island: 'Island Green', canyon: 'Canyon Carry', stones: 'Stepping Stones', pier: 'Sea Stack' };
+function isRail(h){ return sigHole(h, 'rail', 4, false); }
+const SIG_NAME = { island: 'Island Green', canyon: 'Canyon Carry', stones: 'Stepping Stones', pier: 'Sea Stack', rail: 'Railway Crossing' };
 // which signature hole h is, if it is one
-const sigKind = h => isIsland(h) ? 'island' : isPier(h) ? 'pier' : isCanyon(h) ? 'canyon' : isStones(h) ? 'stones' : null;
+const sigKind = h => isIsland(h) ? 'island' : isPier(h) ? 'pier' : isCanyon(h) ? 'canyon' : isStones(h) ? 'stones' : isRail(h) ? 'rail' : null;
+// how many a home course has in a round: an island to close each nine (or
+// Harbour Lights' sea stack), the canyon, the stones and the railway
+const SIG_HOME_ROUND = 5;
 // The signature hole of the week: one kind a real week, Monday to Sunday like
-// the majors, pays its holes SIG_WEEK_MULT times their purse. Every block of
-// four weeks holds all four kinds and no kind comes two weeks running; the
-// order slides a step each block, so each major of the week meets each kind
-// in turn. SIGWEEK_FORCE (the developer menu) picks one.
+// the majors, pays its holes SIG_WEEK_MULT times their purse. The five kinds
+// in turn, so every five weeks hold all of them and none comes two weeks
+// running; five kinds against four majors of the week, so each major meets
+// each kind in turn. (With four kinds the order had to slide a step every
+// block for that; week 2960, from 21 Sep 2026, is still the island and the
+// weeks after it as they were.) SIGWEEK_FORCE (the developer menu) picks one.
 const SIG_KINDS = Object.keys(SIG_NAME);
 let SIGWEEK_FORCE = null;
-const sigWeekOf = wk => { const n = SIG_KINDS.length;
-  return SIG_KINDS[(((wk + Math.floor(wk / n)) % n) + n) % n]; };
+const sigWeekOf = wk => { const n = SIG_KINDS.length; return SIG_KINDS[((wk % n) + n) % n]; };
 const sigWeek = () => SIGWEEK_FORCE || sigWeekOf(weekNow());
 const isSigWeek = h => { const k = sigKind(h); return !!k && k === sigWeek(); };
 // A hole's own purse: the card's, doubled on the signature hole of the week.
@@ -3802,7 +3812,7 @@ function initState(){
     .sort((a, b) => a.s - b.s).slice(0, 5) : [];
   if(!S.caseGot || typeof S.caseGot !== 'object') S.caseGot = {};
   if(S.sigRound !== undefined && !(S.sigRound && typeof S.sigRound === 'object' && isFinite(S.sigRound.r)
-     && S.sigRound.n >= 0 && S.sigRound.n <= 4)) delete S.sigRound;
+     && S.sigRound.n >= 0 && S.sigRound.n <= SIG_HOME_ROUND)) delete S.sigRound;
   for(const k in S.caseGot){ const c = B.CASE.find(x => x.id === k);
     if(!c || !(S.caseGot[k] >= 0)) delete S.caseGot[k]; else S.caseGot[k] = Math.min(c.at.length, Math.floor(S.caseGot[k])); }
   if(S.music !== undefined && S.music !== 0 && S.music !== 1) delete S.music;
@@ -5933,6 +5943,19 @@ const Sfx = {
     this.hiss(t + 0.01, 0.1, 1800, 0.9, V * 0.6, 900);
   },
   QUACK_VOL: 0.012, HAWK_VOL: 0.012, PLOP_VOL: 0.03,
+  // The railway crossing: the train's whistle as it sets off (two toots, a
+  // chord of two), its chuff while it runs, and the crossing's bell while
+  // the lamps flash.
+  whistle(t){
+    const V = this.WHISTLE_VOL;
+    for(const [t0, dur] of [[0, 0.32], [0.45, 0.7]]){
+      this.tone(740, t + t0, dur, 'square', V, 720);
+      this.tone(932, t + t0, dur, 'square', V * 0.7, 905);
+    }
+  },
+  chuff(t){ this.hiss(t, 0.12, 700, 0.8, this.CHUFF_VOL, 380); },
+  ding(t){ this.tone(1480, t, 0.3, 'triangle', this.DING_VOL, 1460); },
+  WHISTLE_VOL: 0.01, CHUFF_VOL: 0.075, DING_VOL: 0.014,
   // Birds in the trees, now and then, on a fine day: a quick rising chirp, or
   // two falling ones.
   chirp(t){
@@ -6057,6 +6080,17 @@ const Sfx = {
         }
       }
     }else this.fishN = null;
+    // the railway: a whistle as a train sets off, its chuff while it is on
+    // the line within sight, and the bell while the crossing's lamps flash
+    const TR = live && SI2.rail ? Scene.train : null;
+    if(TR){
+      if(this.trainT0 !== TR.t0){ this.trainT0 = TR.t0; this.whistle(now + 0.02); this.chuffK = null; this.dingK = null; }
+      const A = Scene.railAt(), age = Scene.t - TR.t0;
+      const ck = Math.floor(age / 0.26);
+      if(A && A.head > -RAIL_X + 3 && A.tail < RAIL_X - 3 && ck !== this.chuffK){ this.chuffK = ck; this.chuff(now + 0.01); }
+      const dk = Math.floor(age / 0.45);
+      if(Scene.railLights() && dk !== this.dingK){ this.dingK = dk; this.ding(now + 0.01); }
+    }
     // The seasons on a home course: the wind gusting through the leaves in
     // autumn; in winter the hush of the snow, the birds gone quiet and only a
     // thin breath of air now and then; in blossom, birdsong more often.
@@ -6176,7 +6210,7 @@ function sigScore(sc){
   S.sigRec = S.sigRec || {};
   const K = S.sigRec[sk] || (S.sigRec[sk] = { n: 0, b: null });
   K.n++; if(K.b === null || sc.d < K.b) K.b = sc.d;
-  if(sc.d <= -1) bump({ island: 'sigIsle', canyon: 'sigCanyon', stones: 'sigStones', pier: 'sigPier' }[sk]);
+  if(sc.d <= -1) bump({ island: 'sigIsle', canyon: 'sigCanyon', stones: 'sigStones', pier: 'sigPier', rail: 'sigRail' }[sk]);
   if(sk === 'island' && sc.d === -4) bump('isleAce');
   const ri = roundIndex(S.hole);
   if(!S.sigRound || S.sigRound.r !== ri) S.sigRound = { r: ri, n: 0, ok: 1 };
@@ -6184,7 +6218,7 @@ function sigScore(sc){
   R.n++;
   if(sc.d > 0) R.ok = 0;
   const cs = courseFor(tournamentOf(S.hole));
-  if(R.n === 4 && R.ok && cs && cs.slot === 'home') bump('sigRound');
+  if(R.n === SIG_HOME_ROUND && R.ok && cs && cs.slot === 'home') bump('sigRound');
 }
 // The hole's time: when the ball was down, not when the hole moved on. They
 // differ only on an island, where the hole waits for him to fly across.
@@ -8629,6 +8663,10 @@ function pixIcon(id, size, col){
 // not pixel art at all, just a small picture. 2.2 is the point where a 5x7
 // font is still legible on a phone and a diagonal still reads as a staircase.
 const PX_CSS = 1.1, K_PROJ = 22.4, LEN = 60, B_GOLFER = 12, B_FLY = 11, B_BRIDGE = 4.2, B_HOP = 2.6;
+// the railway crossing's train: how far out to the side it sets off, how fast
+// it runs, and how long it is (engine and two carriages)
+// (and how far out the one that meets him at the line sets off)
+const RAIL_X = 34, RAIL_V = 11, RAIL_LEN = 7.4, RAIL_MEET = 20;
 // How far behind the golfer the camera sits, in world units. Small numbers put
 // you over his shoulder with the hole falling away hard; large numbers flatten
 // it into a diagram. GROUND is derived from it below, so his feet stay put.
@@ -8732,6 +8770,14 @@ const P_CANYON = { D: 2.4, eu: 0.10, e0: 0.30, e1: 0.30,
   tone(T, f, ndl, near, steep){
     if(f < 0.04) return T.lip;
     return pickC(T._cn, clamp(f * 1.05 + (HZ_LZ - ndl) * 0.5, 0, 1));
+  }
+};
+// A railway's bed: a level band of ballast right across the hole, in the
+// course's own rock, a shade darker on its edges where it meets the turf.
+const P_RAIL = { D: 0, eu: 0.05, e0: 0.02, e1: 0.02, rip: 0,
+  tone(T, f, ndl, near, steep){
+    if(f < 0.03) return T.lip;
+    return pickC(T.rk, clamp(0.34 + near * 0.12 + (ndl - HZ_LZ) * 0.4, 0, 1));
   }
 };
 // Where the golfer's feet sit, as a fraction of frame height. Everything about
@@ -10492,7 +10538,13 @@ const Scene = {
     // way, crossed on a line of stones (see drawStones).
     const river = !isle && !canyon && isStones(h);
     if(river) this.roll = 0.5;                  // gentler ground, so the water lies level
-    const moat = river ? { river: 1, d: LEN * 0.44, x: 0, rd: 2.9, rx: 40, shape: this.blob(rnd, 0.16), shape2: this.blob(rnd, 0.16) }
+    // The railway: a band of ballast right across, just short of half way,
+    // with the line on it (see drawRail); he waits at the crossing while a
+    // train goes by (see railHold).
+    const rail = !isle && !canyon && !river && isRail(h);
+    if(rail) this.roll = 0.5;
+    const moat = rail ? { rail: 1, d: LEN * 0.47, x: 0, rd: 0.95, rx: 40, shape: this.blob(rnd, 0.02), shape2: this.blob(rnd, 0.02) }
+               : river ? { river: 1, d: LEN * 0.44, x: 0, rd: 2.9, rx: 40, shape: this.blob(rnd, 0.16), shape2: this.blob(rnd, 0.16) }
                : isle ? { lake: 1, d: LEN + 4, x: 0, rd: 30, rx: 6.4, shape: this.blob(rnd, 0.10), shape2: this.blob(rnd, 0.10) }
                : canyon ? { canyon: 1, d: LEN * 0.52, x: 0, rd: 4.2, rx: 40, shape: this.blob(rnd, 0.22), shape2: this.blob(rnd, 0.22) }
                : null;
@@ -10518,7 +10570,7 @@ const Scene = {
       if(moat.lake) this.isle = pier ? { bank: d - 1.2, land: LEN - 6, fly: 0, pier: 1 } : { bank: d - 1.2, land: LEN - 6, fly: 1 };
       else{
         let e = d; while(e < LEN && wet(e)) e += 0.1;
-        this.isle = { bank: d - 0.6, land: e + 0.6, fly: 0, hop: moat.river ? 1 : 0 };
+        this.isle = { bank: d - 0.6, land: e + 0.6, fly: 0, hop: moat.river ? 1 : 0, rail: moat.rail ? 1 : 0 };
         // the stones, evenly from bank to bank, one hop apart
         if(moat.river){
           const n = Math.max(3, Math.round((e - d + 1.2) / 1.25));
@@ -10535,6 +10587,7 @@ const Scene = {
 
 
     this.camD = 0; this.restBall = null; this.walkTo = 0;
+    this.train = null; this.trainMet = 0; this.trainNext = this.t + 8;
     // A swing still playing when the last hole ended belonged to that hole: it
     // finished it. Carried over, it hit a ball a yard off the new tee that
     // counted for nothing, and he stood and hit again.
@@ -11290,7 +11343,7 @@ Object.assign(Scene, {
     for(let d = d0; d <= d1; d += step){
       if(d > -0.5 && d < LEN + 7){ const hw = this.fwWidth(d); span(d, -hw, hw, [T.fw[4], T.fw[5]], true); }
       for(const hz of this.bunkers){ const sp = this.hazSpan(hz, d); if(sp) span(d, hz.x - sp.l, hz.x + sp.r, T.sd[4]); }
-      if(this.water){ const sp = this.hazSpan(this.water, d); if(sp) span(d, this.water.x - sp.l, this.water.x + sp.r, this.water.canyon ? dark(pickC(T.rk, 0.25), 0.3) : T.wt[3]); }
+      if(this.water){ const sp = this.hazSpan(this.water, d); if(sp) span(d, this.water.x - sp.l, this.water.x + sp.r, this.water.canyon ? dark(pickC(T.rk, 0.25), 0.3) : this.water.rail ? pickC(T.rk, 0.35) : T.wt[3]); }
       // the green after the hazards: nothing else touches it, and an island's
       // lake runs all the way round it
       const gd = d - LEN;
@@ -11618,7 +11671,7 @@ Object.assign(Scene, {
       }
 
       for(const bk of this.bunkers) this.hazSlice(c, T, bk, P_SAND, d, s, y, hgt, near, C0);
-      if(this.water) this.hazSlice(c, T, this.water, this.water.canyon ? P_CANYON : this.water.river ? (this.ice ? P_ICEL : P_LAKE) : this.water.lake ? P_LAKE : this.ice ? P_ICE : P_WATER, d, s, y, hgt, near, C0);
+      if(this.water) this.hazSlice(c, T, this.water, this.water.rail ? P_RAIL : this.water.canyon ? P_CANYON : this.water.river ? (this.ice ? P_ICEL : P_LAKE) : this.water.lake ? P_LAKE : this.ice ? P_ICE : P_WATER, d, s, y, hgt, near, C0);
 
       const gd = d - LEN;
       const lobe = 1 + 0.085*Math.sin(gd*0.85 + this.seed);
@@ -12475,6 +12528,152 @@ Object.assign(Scene, {
     }
   },
 
+  // The railway crossing. A little steam train, an engine and two carriages,
+  // runs right across the hole along the line now and then (every twenty to
+  // thirty five seconds), and one always comes as he first reaches the
+  // crossing on a hole, so he waits for it (about three and a half seconds). this.train is the one running:
+  // when it set off and which way. Its head is RAIL_X out to one side when it
+  // sets off and it runs at RAIL_V; railAt gives where its head and tail are
+  // along the line, measured the way it is going.
+  tickRail(){
+    const I = this.isle;
+    if(!I || !I.rail || S.dgnRun){ this.train = null; return; }
+    if(this.train && this.railAt().tail > RAIL_X) this.train = null;       // gone by
+    const at = this.camD >= I.bank - 0.3 && this.camD < I.land;
+    if(this.train){ if(at) this.trainMet = 1; return; }
+    const R = this._railRnd || (this._railRnd = seeded(20260926));
+    if((at && !this.trainMet) || this.t >= this.trainNext){
+      // the one that meets him sets off nearer, a little out of sight, so
+      // the wait is a few seconds
+      const meet = at && !this.trainMet;
+      if(at) this.trainMet = 1;
+      this.train = { t0: meet ? this.t - (RAIL_X - RAIL_MEET) / RAIL_V : this.t, dir: R() < 0.5 ? -1 : 1 };
+      this.trainNext = this.t + 20 + R() * 15;
+    }
+  },
+  railAt(t){
+    const T = this.train;
+    if(!T) return null;
+    const head = -RAIL_X + RAIL_V * ((t === undefined ? this.t : t) - T.t0);
+    return { head, tail: head - RAIL_LEN, dir: T.dir };
+  },
+  // while a train is coming he does not step onto the line: he waits from
+  // the moment it sets off until it is clear of the fairway, and the lamps
+  // flash all that time and a moment longer
+  railHold(){ const A = this.railAt(); return !!A && A.tail < 12; },
+  railLights(){ const A = this.railAt(); return !!A && A.tail < 14; },
+  // The line: sleepers right across the ballast, two rails along it, boards
+  // between them where his line crosses, and a post each side of the fairway
+  // on both sides of the line with its crossed sign and two lamps that flash
+  // in turn while a train is near. Then the train, if one is running. All of
+  // it keeps to the ground's clip line at its own distance.
+  drawRail(){
+    const I = this.isle, W = this.water;
+    if(!I || !I.rail || !W || !W.rail) return;
+    const c = this.b, near = this.camD - CAM_BACK + 0.7, dc = W.d;
+    if(dc + 0.6 < near) return;
+    const g = this.proj(dc, 0), d0 = Math.max(dc - 0.5, near), d1 = dc + 0.5;
+    const span = Math.ceil(VW / 2 / Math.max(0.5, LAT * g.s)) + 2;
+    // sleepers, every half unit across
+    const s0 = this.proj(d0, 0), s1 = this.proj(d1, 0);
+    c.fillStyle = '#5A4230';
+    const sw = Math.max(1, Math.round(LAT * g.s * 0.14));
+    for(let x = -span; x <= span; x += 0.5){
+      const a = this.proj(d0, x), b = this.proj(d1, x);
+      fillClip(c, Math.round((a.x + b.x) / 2 - sw / 2), Math.round(b.y), sw, Math.max(1, Math.round(a.y - b.y)), this.clipAt(d1));
+    }
+    // the boards across where he walks over, row by row
+    c.fillStyle = '#A88A60';
+    for(let yy = Math.round(s1.y); yy <= Math.round(s0.y); yy++){
+      const f = (yy - s1.y) / Math.max(1, s0.y - s1.y), d = d1 - f * (d1 - d0);
+      const l = this.proj(d, -1.25), r = this.proj(d, 1.25);
+      fillClip(c, Math.round(l.x), yy, Math.max(1, Math.round(r.x - l.x)), 1, this.clipAt(d));
+    }
+    // two rails, a bright top over a dark side
+    const rail = off => {
+      const d = dc + off;
+      if(d < near) return;
+      const l = this.proj(d, -span, 0.06), r = this.proj(d, span, 0.06), th = Math.max(1, Math.round(LAT * g.s * 0.05));
+      pxLineClip(c, l.x, l.y + th, r.x, r.y + th, '#4A5058', th, this.clipAt(d));
+      pxLineClip(c, l.x, l.y, r.x, r.y, '#C8D0D8', th, this.clipAt(d));
+    };
+    // the crossing's posts: crossed white boards over two lamps
+    const on = this.railLights(), blink = Math.floor(this.t * 2.4) & 1;
+    const posts = d => {
+      if(d < near) return;
+      const cl = this.clipAt(d);
+      for(const side of [-1, 1]){
+        const x = side * (this.fwWidth(d) + 0.7), b = this.proj(d, x, 0), t = this.proj(d, x, 1.7);
+        const th = Math.max(1, Math.round(b.s * 0.09));
+        pxLineClip(c, b.x, b.y, t.x, t.y, '#3A3E44', th, cl);
+        const r = Math.max(2, Math.round(LAT * b.s * 0.28));
+        pxLineClip(c, t.x - r, t.y - r * 0.6, t.x + r, t.y + r * 0.6, '#F2F2EA', th, cl);
+        pxLineClip(c, t.x - r, t.y + r * 0.6, t.x + r, t.y - r * 0.6, '#F2F2EA', th, cl);
+        const lp = this.proj(d, x, 1.15), lw = Math.max(1, Math.round(LAT * b.s * 0.1));
+        for(const k of [-1, 1]){
+          c.fillStyle = on && (k < 0) === !!blink ? '#FF3A2A' : '#4A1A16';
+          fillClip(c, Math.round(lp.x + k * lw * 1.5 - lw / 2), Math.round(lp.y - lw / 2), lw, lw, cl);
+        }
+      }
+    };
+    // far to near: what is beyond the train, the train, what is before it
+    rail(0.3); posts(I.land - 0.25);
+    this.drawTrain(dc, near);
+    rail(-0.3); posts(I.bank + 0.25);
+  },
+  // The train, side on as it crosses: an engine with its boiler, cab, chimney
+  // and wheels, and two carriages with a band of lit windows, laid out along
+  // the line in world units; smoke puffing up from the chimney and drifting
+  // back over the carriages.
+  drawTrain(dc, near){
+    const A = this.railAt();
+    if(!A || dc < near + 0.5) return;
+    const c = this.b, clip = this.clipAt(dc), dir = A.dir;
+    // one piece: x0..x1 along the train from its tail (0) toward its head, z0..z1 up
+    const box = (x0, x1, z0, z1, col) => {
+      const a = this.proj(dc, dir * (A.tail + x0), z1), b = this.proj(dc, dir * (A.tail + x1), z0);
+      const l = Math.round(Math.min(a.x, b.x)), r = Math.round(Math.max(a.x, b.x));
+      if(r < -2 || l > VW + 2) return;
+      c.fillStyle = col; fillClip(c, l, Math.round(a.y), Math.max(1, r - l), Math.max(1, Math.round(b.y - a.y)), clip);
+    };
+    const wheels = (x0, x1) => { for(let x = x0; x < x1 - 0.2; x += 0.55) box(x + 0.08, x + 0.42, 0.02, 0.32, '#1E1E22'); };
+    // two carriages, then the engine at the head
+    for(const x0 of [0, 2.5]){
+      box(x0, x0 + 2.3, 0.28, 1.08, '#8A3228');
+      box(x0 + 0.15, x0 + 2.15, 0.62, 0.84, '#F2E2A6');
+      for(let x = x0 + 0.5; x < x0 + 2.1; x += 0.5) box(x, x + 0.08, 0.62, 0.84, '#8A3228');
+      box(x0 - 0.05, x0 + 2.35, 1.08, 1.2, '#2A2426');
+      wheels(x0 + 0.2, x0 + 2.2);
+    }
+    const e = 5.0;
+    box(e, e + 0.8, 0.3, 1.3, '#6A2420');               // the cab
+    box(e + 0.05, e + 0.75, 1.3, 1.4, '#1E1E22');       // its roof
+    box(e + 0.2, e + 0.6, 0.85, 1.1, '#F2E2A6');        // its window
+    box(e + 0.8, e + 2.3, 0.35, 0.98, '#2E5A3A');       // the boiler
+    box(e + 0.8, e + 2.3, 0.84, 0.98, '#3E7A4E');
+    box(e + 1.9, e + 2.1, 0.98, 1.34, '#1E1E22');       // the chimney
+    box(e + 2.3, e + 2.4, 0.2, 0.45, '#C8302A');        // the buffer beam
+    wheels(e + 0.3, e + 2.3);
+    // smoke: a puff off the chimney every fifth of a second, rising and
+    // falling back over the carriages as it fades, gone within a second
+    const age = this.t - this.train.t0;
+    for(let i = 0; i < 6; i++){
+      const pa = (age % 0.2) + i * 0.2;
+      if(pa > age) break;
+      const q = pa / 1.2;
+      const p = this.proj(dc, dir * (A.tail + e + 2.0 - pa * RAIL_V * 0.45), 1.4 + pa * 1.3);
+      const r = Math.max(1, Math.round(LAT * p.s * (0.1 + q * 0.16)));
+      c.globalAlpha = 0.7 * (1 - q);
+      c.fillStyle = '#EDEDEA';
+      // a round puff, a row at a time
+      for(let yy = -r; yy < r; yy++){
+        const hw = Math.round(Math.sqrt(Math.max(0, r * r - (yy + 0.5) * (yy + 0.5))));
+        if(hw > 0) fillClip(c, Math.round(p.x) - hw, Math.round(p.y) + yy, hw * 2, 1, clip);
+      }
+    }
+    c.globalAlpha = 1;
+  },
+
   drawTee(){
     if(0.2 - this.camD + CAM_BACK < 1.2) return;
     const c = this.b;
@@ -12922,6 +13121,7 @@ Object.assign(Scene, {
       }
       const prog = clamp(1 - S.yards / S.yardsMax, 0, 1);
       const cam0 = this.camD;
+      this.tickRail();
       // He stays where he is until the swing is through: the purse and the
       // yardage move the moment the simulation swings, and the camera chasing
       // them carried him forward in his backswing. Only a camera that has
@@ -12935,7 +13135,9 @@ Object.assign(Scene, {
       const at = this.spot(prog);
       const goal = Math.min(at, this.walkTo === undefined ? at : this.walkTo);
       const I = this.isle;
-      if(I && goal > I.bank + 0.5 && cam0 >= I.bank - 0.05 && cam0 < I.land && (swingPh >= 0.85 || this.crossing)){
+      // (at a railway, not while a train is coming or going by)
+      const railWait = !!(I && I.rail && !this.crossing && this.railHold());
+      if(I && goal > I.bank + 0.5 && cam0 >= I.bank - 0.05 && cam0 < I.land && (swingPh >= 0.85 || this.crossing) && !railWait){
         // Across the water on his club, spun over his head like a rotor, or
         // over the canyon on its bridge: at a steady pace, so it can be seen.
         this.camD = Math.min(goal, Math.max(cam0, I.bank) + (I.fly ? B_FLY : I.hop ? B_HOP : B_BRIDGE) * dt);
@@ -12946,6 +13148,9 @@ Object.assign(Scene, {
         else if(!I && at - this.camD > LEN * 0.4) this.camD += (at - this.camD) * Math.min(1, dt*4.5);
         // he walks as far as the bank and takes off from there
         if(I && cam0 < I.bank && this.camD > I.bank) this.camD = I.bank;
+        // and at a railway he stays on his side of the line while a train
+        // goes by
+        if(railWait && cam0 <= I.bank + 0.01 && this.camD > I.bank) this.camD = Math.max(cam0, I.bank);
       }
       const was = this.crossing;
       this.crossing = I && this.camD > I.bank + 0.01 && this.camD < I.land - 0.01 && this.camD > cam0
@@ -12976,6 +13181,7 @@ Object.assign(Scene, {
       this.drawStones();
       this.drawPier();
       this.drawDucks();
+      this.drawRail();
       this.drawFlagstick();
       this.drawGolfer(D);
       this.drawBalls(dt);
@@ -14830,7 +15036,7 @@ const DEV = {
       + b('restart music', 'DEV.music(1)') + b(DEV._recs ? 'recordings off' : 'recordings on', 'DEV.synth()'));
 
     h += row('Signature hole', b('this hole an island', 'DEV.isle()') + b('this hole a canyon', 'DEV.canyon()')
-      + b('stepping stones', 'DEV.stones()') + b('sea stack', 'DEV.pier()'));
+      + b('stepping stones', 'DEV.stones()') + b('sea stack', 'DEV.pier()') + b('railway', 'DEV.rail()'));
 
     h += row('Signature hole of the week \u00b7 ' + SIG_NAME[sigWeek()] + (SIGWEEK_FORCE ? ' \u00b7 forced' : ''), SIG_KINDS.map(k =>
       b(SIG_NAME[k].toLowerCase(), 'DEV.sigWeek(\'' + k + '\')')).join('') + b('by the date', 'DEV.sigWeek()'));
@@ -14891,7 +15097,7 @@ const DEV = {
       + b('+5 cups', 'DEV.cups(5)') + b('doglegs +50', 'DEV.hon(\'dogleg\')')
       + b('wind birdies +25', 'DEV.hon(\'windBird\')') + b('every home course', 'DEV.hon(\'homes\')')
       + b('island birdies +25', 'DEV.hon(\'sigIsle\')') + b('canyon birdies +25', 'DEV.hon(\'sigCanyon\')')
-      + b('stone birdies +25', 'DEV.hon(\'sigStones\')') + b('sea stack birdies +25', 'DEV.hon(\'sigPier\')') + b('a signature round', 'DEV.hon(\'sigRound\')')
+      + b('stone birdies +25', 'DEV.hon(\'sigStones\')') + b('sea stack birdies +25', 'DEV.hon(\'sigPier\')') + b('railway birdies +25', 'DEV.hon(\'sigRail\')') + b('a signature round', 'DEV.hon(\'sigRound\')')
       + b('an island ace', 'DEV.hon(\'isleAce\')'));
 
     h += row('Simulate away', b('1 hour', 'DEV.away(3600)') + b('6 hours', 'DEV.away(6*3600)')
@@ -15050,17 +15256,18 @@ const DEV = {
   // a home course in any season (play one first: Home course, or DEV.course)
   season(k){ SEASON_FORCE = k; Scene.newHole(S.hole, S.tier); hideSheet(); },
   // the hole in play crosses a river on stepping stones, from the tee
-  pier(){ PIER_FORCE = S.hole; STONES_FORCE = 0; ISLE_FORCE = 0; CANYON_FORCE = 0; S.yards = S.yardsMax; this.reprice(); Scene.newHole(S.hole, S.tier); hideSheet(); },
-  stones(){ STONES_FORCE = S.hole; ISLE_FORCE = 0; CANYON_FORCE = 0; PIER_FORCE = 0; S.yards = S.yardsMax; this.reprice(); Scene.newHole(S.hole, S.tier); hideSheet(); },
+  pier(){ PIER_FORCE = S.hole; STONES_FORCE = 0; ISLE_FORCE = 0; CANYON_FORCE = 0; RAIL_FORCE = 0; S.yards = S.yardsMax; this.reprice(); Scene.newHole(S.hole, S.tier); hideSheet(); },
+  stones(){ STONES_FORCE = S.hole; ISLE_FORCE = 0; CANYON_FORCE = 0; PIER_FORCE = 0; RAIL_FORCE = 0; S.yards = S.yardsMax; this.reprice(); Scene.newHole(S.hole, S.tier); hideSheet(); },
   // the hole in play becomes a canyon, from the tee
-  canyon(){ CANYON_FORCE = S.hole; ISLE_FORCE = 0; STONES_FORCE = 0; PIER_FORCE = 0; S.yards = S.yardsMax; this.reprice(); Scene.newHole(S.hole, S.tier); hideSheet(); },
+  canyon(){ CANYON_FORCE = S.hole; ISLE_FORCE = 0; STONES_FORCE = 0; PIER_FORCE = 0; RAIL_FORCE = 0; S.yards = S.yardsMax; this.reprice(); Scene.newHole(S.hole, S.tier); hideSheet(); },
   // the hole in play becomes an island green, from the tee
   // the hole under him priced again, for a signature hole forced on it or
   // the week's kind changed: the signature hole of the week pays double
   reprice(){ S.purse = holePurse(S.hole, S.tier, derive().gold); },
   // the signature hole of the week, pinned to one kind, or by the date
   sigWeek(k){ SIGWEEK_FORCE = k || null; this.reprice(); this.re(); },
-  isle(){ ISLE_FORCE = S.hole; CANYON_FORCE = 0; STONES_FORCE = 0; PIER_FORCE = 0; S.yards = S.yardsMax; this.reprice(); Scene.newHole(S.hole, S.tier); hideSheet(); },
+  rail(){ RAIL_FORCE = S.hole; ISLE_FORCE = 0; CANYON_FORCE = 0; STONES_FORCE = 0; PIER_FORCE = 0; S.yards = S.yardsMax; this.reprice(); Scene.newHole(S.hole, S.tier); hideSheet(); },
+  isle(){ ISLE_FORCE = S.hole; CANYON_FORCE = 0; STONES_FORCE = 0; PIER_FORCE = 0; RAIL_FORCE = 0; S.yards = S.yardsMax; this.reprice(); Scene.newHole(S.hole, S.tier); hideSheet(); },
   // as if nobody had touched the phone for the whole wait, bar five seconds
   saverSoon(){
     hideSheet(); SAVER_AUTO = true;
