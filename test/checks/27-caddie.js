@@ -141,11 +141,13 @@ module.exports = {
           Scene.pendingBall = { crit: false, el: null, dmg: 1 }; Scene.launch();
           const b = Scene.balls[0], land = b.d0 + b.dist;
           let rest = null, camAtLand = null;
-          for (let i = 0; i < 400 && (Scene.balls.length || Scene.camD < to - 0.05); i++) {
+          for (let i = 0; i < 400 && (Scene.balls.length || Scene.camD < Math.min(to, LEN - B_GREEN_STAND - 0.4) - 0.05); i++) {
             Scene.draw(0.016, D);
             if (!Scene.balls.length && camAtLand === null) { camAtLand = Scene.camD; rest = Scene.restBall && Scene.restBall.d; }
           }
-          o.walk.push({ from, to, land: +land.toFixed(2), rest: rest && +rest.toFixed(2), camAtLand: camAtLand && +camAtLand.toFixed(2), end: +Scene.camD.toFixed(2) });
+          // (a shot onto the green comes down a putt short of the cup, where
+          // he putts from: no ball rests nearer the cup than that)
+          o.walk.push({ from, to, want: +Math.min(to, LEN - B_GREEN_STAND - 0.4).toFixed(2), land: +land.toFixed(2), rest: rest && +rest.toFixed(2), camAtLand: camAtLand && +camAtLand.toFixed(2), end: +Scene.camD.toFixed(2) });
         }
 
         // ---- he does not hit again until he reaches his ball ------------------
@@ -209,10 +211,10 @@ module.exports = {
     if (r.rows !== r.n || r.navs !== 'Upgrades/Caddie') throw new Error('the Range shows ' + r.rows + ' perk rows of ' + r.n + ' under ' + r.navs);
     if (r.glide > 0.001) throw new Error('the camera moved ' + r.glide.toFixed(2) + ' units while he was still swinging');
     for (const w of r.walk) {
-      if (Math.abs(w.land - w.to) > 0.01) throw new Error('a shot from ' + w.from + ' that took him to ' + w.to + ' flew to ' + w.land);
+      if (Math.abs(w.land - w.want) > 0.01) throw new Error('a shot from ' + w.from + ' that took him to ' + w.to + ' flew to ' + w.land + (w.want !== w.to ? ', not ' + w.want + ', a putt short of the cup' : ''));
       if (w.camAtLand !== null && w.camAtLand > w.from + 0.05)
         throw new Error('he was already ' + (w.camAtLand - w.from).toFixed(1) + ' of ' + (w.to - w.from) + ' units down the hole when the ball landed');
-      if (Math.abs(w.end - w.to) > 0.1) throw new Error('he walked to ' + w.end + ', the ball came down at ' + w.to);
+      if (Math.abs(w.end - w.want) > 0.1) throw new Error('he walked to ' + w.end + ', the ball came down at ' + w.want);
     }
     if (r.held.swinging) throw new Error('he swung again with his last ball still lying 20 units ahead of him');
     if (r.held.queued !== 12) throw new Error('the waiting swings were not kept: ' + r.held.queued + ' of 12');
