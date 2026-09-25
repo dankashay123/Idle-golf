@@ -29,6 +29,12 @@
  *     of him and 0.4 of his height over him, the most over six seconds
  *   - a skin's ground goes down before the pin and a putt rolling away beyond
  *     him, which stand on it: drawn with him, it covered them
+ *   - the Demonic made the ultimate skin too: an aura of hellfire swelling as
+ *     he winds up, two chains of fire round him, horns curling over, his
+ *     hands on fire, the ground cracking and fire off the ball at the strike
+ *   - a moment for the legends: on an eagle or better, the Demonic's column
+ *     of hellfire with his skulls scattering, the Ascended's pillar of light
+ *     with his shards bursting out, each with its sound, bigger on an ace
  */
 'use strict';
 module.exports = {
@@ -102,6 +108,57 @@ module.exports = {
             const wings = part(id, 'wings', golfer).filter(([x, y]) => y < box.y0 + h * 0.55);
             d.wingL = wings.filter(([x]) => x < box.x0 - 2).length; d.wingR = wings.filter(([x]) => x > box.x1 + 2).length;
             d.reachL = box.x0 - Math.min(...wings.map(([x]) => x)); d.reachR = Math.max(...wings.map(([x]) => x)) - box.x1;
+            // ---- made the ultimate skin too ----
+            const cx = box.x0 + w * 0.55;
+            // an aura of hellfire close about him, swelling as he winds up
+            d.auraIdle = 0; d.auraTop = 0; d.auraOff = 0;
+            for (let k = 0; k < 6; k++) {
+              Scene.t = 1.3 + k * 0.43;
+              const au = part(id, 'aura', golfer);
+              d.auraIdle += au.length; d.auraOff += au.filter(([x, y]) => x < box.x0 - w * 0.3 || x > box.x1 + w * 0.3 || y < box.y0 - h * 0.3 || y > p.y + 1).length;
+              Scene.swingT = Scene.swingDur * (1 - 0.36); d.auraTop += part(id, 'aura', golfer).length; Scene.swingT = 0;
+            }
+            Scene.t = 1.3;
+            // two chains of fire round him, both sides, and over a lap in front of his middle
+            const ch = part(id, 'chains', golfer);
+            d.chains = ch.length; d.chainsL = ch.filter(([x]) => x < box.x0).length; d.chainsR = ch.filter(([x]) => x > box.x1).length;
+            d.chainsOff = ch.filter(([x, y]) => Math.abs(x - cx) > w * 0.9 || y < box.y0 + h * 0.3 || y > box.y0 + h * 0.8).length;
+            d.chainsFront = 0;
+            for (let k = 0; k < 8; k++) {
+              Scene.t = 1.3 + k * 0.5;
+              d.chainsFront += part(id, 'chains', golfer).filter(([x, y]) => x > box.x0 + w * 0.35 && x < box.x0 + w * 0.65 && y > box.y0 + h * 0.45 && y < box.y0 + h * 0.65).length;
+            }
+            Scene.t = 1.3;
+            // the horns curl forward: their top a good way ahead of their roots
+            const hn = part(id, 'horns', golfer).filter(([x, y]) => y < head.y), ys = hn.map(([, y]) => y);
+            const y0h = Math.min(...ys), y1h = Math.max(...ys), mx = P => P.length ? P.reduce((a, [x]) => a + x, 0) / P.length : 0;
+            // (the widest row of the top of them, against his cap: a hook curling
+            // over lies across near the top, where a straight horn is a post)
+            d.hornCurl = 0;
+            for (let y = y0h; y < y0h + (y1h - y0h) * 0.4; y++) { const xs = hn.filter(([, yy]) => yy === y).map(([x]) => x);
+              if (xs.length) d.hornCurl = Math.max(d.hornCurl, (Math.max(...xs) - Math.min(...xs) + 1) / head.w); }
+            // at the top of the backswing his hands on fire; at the strike the
+            // ground cracks open out past the pit, and fire flies off the ball
+            Scene.swingT = Scene.swingDur * (1 - 0.36);
+            d.fists = part(id, 'fists', golfer).length;
+            Scene.swingT = Scene.swingDur * (1 - 0.66);
+            const bx = box.x0 + w * 1.19, bl = part(id, 'blast', golfer);
+            d.blast = bl.length; d.blastOff = bl.filter(([x, y]) => Math.abs(x - bx) > w * 0.8 || y > p.y + 2 || y < p.y - h * 0.5).length;
+            d.cracks = part(id, 'cracks', golfer).filter(([x]) => Math.abs(x - cx) > w * 1.05 + 2).length;
+            Scene.swingT = 0;
+            d.cracksIdle = part(id, 'cracks', golfer).length;
+            // all of it, against him bare, the most over six seconds
+            const bare = () => { const O = outfitNow(), fx = O.fx; O.fx = null; try { return golfer(); } finally { O.fx = fx; } };
+            d.foot = { l: 0, r: 0, up: 0, dn: 0 };
+            for (let k = 0; k < 16; k++) {
+              Scene.t = 0.1 + k * 0.41;
+              if (STYLEFX.demonic.erupt(Scene.t) >= 0) continue;   // (the pit's eruption, a second in six and a half, throws its ring wider)
+              const foot = diff(golfer(), bare());
+              const ext = { l: (cx - Math.min(...foot.map(([x]) => x))) / w, r: (Math.max(...foot.map(([x]) => x)) - cx) / w,
+                            up: (box.y0 - Math.min(...foot.map(([, y]) => y))) / h, dn: (Math.max(...foot.map(([, y]) => y)) - p.y) / h };
+              for (const e in ext) d.foot[e] = Math.max(d.foot[e], +ext[e].toFixed(2));
+            }
+            Scene.t = 1.3;
           } else {
             // the cape: behind him, out past his legs; walking away, down his back
             const cape = part(id, 'cape', golfer);
@@ -208,6 +265,45 @@ module.exports = {
           d.cEyes = part(id, 'eyes', caddie).length;
           d.cadSprite = cad === SPRITE.caddie;
         }
+        // ---- a moment for the legends: on an eagle or better ----
+        {
+          const p = Scene.proj(Scene.camD, 0), h = Math.max(6, Math.round(B_GOLFER * US * p.s)), w = Math.max(4, Math.round(h * 40 / 58));
+          const box = { x0: p.x - Math.round(w * 0.42), y0: p.y - h }, cx = box.x0 + w * 0.55;
+          const golfer = () => { const k = SPRITE.caddie; SPRITE.caddie = null; c.clearRect(0, 0, VW, VH); Scene.drawGolfer(D); SPRITE.caddie = k; return px(); };
+          const played = [], keep = Sfx.play;
+          Sfx.play = function (k, a) { played.push(k + (a ? '!' : '')); };
+          o.legend = {};
+          try {
+            for (const id of ['demonic', 'ascended']) {
+              S.outfit = id; buildSprites();
+              Scene.walkOn = false; Scene.swingT = 0; Scene.fairyMove = null; Scene.moveT = 999; Scene.t = 10;
+              const L = o.legend[id] = {};
+              // what the moment adds, T seconds in, over him as he is
+              const at = (d, T) => {
+                Scene.legend = null; QUIET = false; played.length = 0;
+                Scene.t = 10 - T; Scene.happyDance(d); QUIET = true; Scene.t = 10;
+                const sound = played.join(' '), on = diff(golfer(), (() => { const k = Scene.legend; Scene.legend = null; const a = golfer(); Scene.legend = k; return a; })());
+                Scene.legend = null;
+                return { sound, n: on.length, above: on.filter(([, y]) => y < box.y0 - h * 0.3).length,
+                         out: on.filter(([x]) => Math.abs(x - cx) > w * 1.6).length };
+              };
+              L.birdie = at(-1, 0.8); L.eagle = at(-2, 0.8); L.ace = at(-4, 0.8);
+              L.over = at(-2, LEGEND_DUR + 0.05);
+              // the skulls scatter and the shards burst out, far past where they ride
+              Scene.legend = { t0: Scene.t - 0.8, big: false, dur: LEGEND_DUR };
+              const fl = part(id, id === 'demonic' ? 'skulls' : 'orbit', golfer);
+              L.flung = fl.filter(([x]) => Math.abs(x - cx) > w * 1.4).length;
+              Scene.legend = null;
+              L.home = part(id, id === 'demonic' ? 'skulls' : 'orbit', golfer).filter(([x]) => Math.abs(x - cx) > w * 1.4).length;
+              // not in the plain golfer
+              S.outfit = 'classic'; buildSprites(); L.plain = at(-2, 0.8); S.outfit = id; buildSprites();
+              // never while the game is quiet (a catch-up, a check)
+              Scene.legend = null; QUIET = true; Scene.happyDance(-4); L.quiet = !!Scene.legend;
+              // and the battery saver starting puts an end to it
+              QUIET = false; Scene.happyDance(-4); saverOn(); L.saver = !!Scene.legend; saverOff(); QUIET = true; Scene.legend = null;
+            }
+          } finally { Sfx.play = keep; Scene.legend = null; QUIET = true; }
+        }
         // his ground goes down before the pin and a putt rolling away beyond
         // him, which stand on it (drawn with him, it covered them): the order
         // of a frame, and the ball seen as the putt is struck over a ground
@@ -294,6 +390,27 @@ module.exports = {
       f('the Ascended takes too much of the screen: ' + J(as.foot) + ' (his widths either side of him, his heights above and below)');
     if (!(as.auraTop >= as.auraIdle * 1.2)) f('the aura does not swell as he winds up: ' + as.auraTop + ' pixels at the top of his backswing against ' + as.auraIdle + ' at address');
     if (!(as.sparks >= 6) || as.sparksOff || !(as.waveOut >= 8)) f('the strike: sparks ' + as.sparks + ' (' + as.sparksOff + ' away from the ball), a shockwave ' + as.waveOut + ' pixels out past the sigil');
+    // the Demonic made the ultimate skin
+    if (!(dm.auraIdle >= 120) || dm.auraOff || !(dm.auraTop >= dm.auraIdle * 1.2))
+      f('the Demonic aura: ' + dm.auraIdle + ' pixels over six frames (' + dm.auraOff + ' away from him), ' + dm.auraTop + ' at the top of the backswing');
+    if (!(dm.chains >= 30 && dm.chainsL >= 3 && dm.chainsR >= 3 && dm.chainsFront >= 5) || dm.chainsOff)
+      f('the chains of fire: ' + dm.chains + ' pixels, ' + dm.chainsL + '/' + dm.chainsR + ' either side, ' + dm.chainsFront + ' over a lap in front of his middle, ' + dm.chainsOff + ' out of place');
+    if (!(dm.hornCurl >= 0.8)) f('the Demonic horns do not curl over: the widest row of their top ' + dm.hornCurl.toFixed(2) + ' of his cap');
+    if (!(dm.fists >= 4) || !(dm.blast >= 6) || dm.blastOff || !(dm.cracks >= 8) || dm.cracksIdle)
+      f('the Demonic swing: hands on fire ' + dm.fists + ', fire off the ball ' + dm.blast + ' (' + dm.blastOff + ' away from it), cracks out past the pit ' + dm.cracks + ' (' + dm.cracksIdle + ' at rest)');
+    if (dm.foot.l > 1.4 || dm.foot.r > 1.4 || dm.foot.up > 0.45 || dm.foot.dn > 0.2)
+      f('the Demonic takes too much of the screen: ' + J(dm.foot));
+    // the moment
+    for (const id of ['demonic', 'ascended']) {
+      const L = r.legend[id], snd = id === 'demonic' ? 'hellfire' : 'ascend';
+      if (L.birdie.n || L.birdie.sound) f('the ' + id + ' moment on a birdie: ' + J(L.birdie) + ' (only an eagle or better)');
+      if (!(L.eagle.above >= 30 && L.eagle.out >= 3) || L.eagle.sound !== snd) f('the ' + id + ' moment on an eagle: ' + J(L.eagle) + ' (a column up over him, things flung out, the sound ' + snd + ')');
+      if (!(L.ace.n > L.eagle.n * 1.1 && L.ace.out >= L.eagle.out) || L.ace.sound !== snd + '!') f('the ' + id + ' moment on an ace is not bigger: ' + J(L.ace) + ' against ' + J(L.eagle));
+      if (!(L.flung >= 3) || L.home) f('the ' + id + (id === 'demonic' ? ' skulls' : ' shards') + ' flung out on a great hole: ' + L.flung + ' pixels far out (' + L.home + ' when they ride as usual)');
+      if (L.over.n) f('the ' + id + ' moment has not ended after its time: ' + L.over.n + ' pixels');
+      if (L.plain.n || L.plain.sound) f('a plain golfer has a moment: ' + J(L.plain));
+      if (L.quiet || L.saver) f('the ' + id + ' moment while the game is quiet ' + L.quiet + ', or through the battery saver starting ' + L.saver);
+    }
     if (r.layer.order !== 'drawGolferGround drawFlagstick drawGolfer' || !r.layer.inSigil || !(r.layer.white >= 1))
       f('his ground over the pin or the putt: the frame draws ' + r.layer.order + '; the ball on his sigil ' + r.layer.inSigil + ', its white pixels ' + r.layer.white);
     for (const id of ['demonic', 'ascended']) {
@@ -315,6 +432,8 @@ module.exports = {
       'the Ascended: a cape ' + as.cape + ' (' + as.capeBack + ' down his back walking away), horns ' + as.top + ', hair of fire reaching ' + Math.round(as.hairReach) + 'px back, the light in his chest, magenta hands; the imp\'s tail ' + as.cTail + ', flame ' + as.cFlame + ', green eyes',
       'his arms in his own skin, on these and on the Void Walker, Midas and the Ghost; his soles in his belt\'s colour walking away (' + r.drawn.ascended.sole.own + 'px), a plain golfer\'s tan',
       'the ultimate Ascended: a sigil at his feet (' + as.ground + 'px), an aura of flame (' + Math.round(as.auraTop / as.auraIdle * 100 - 100) + '% more at the top of the backswing), a ring of shards passing in front of him and behind, horns swept back (their tops ' + (-as.hornSweep).toFixed(2) + ' of his helm behind their roots), sparks and a shockwave as he strikes; ' + as.foot.l + '/' + as.foot.r + ' of his width either side and ' + as.foot.up + ' of his height over him at most',
-      'his ground under the pin and a putt rolling away (' + r.layer.order + ')'];
+      'his ground under the pin and a putt rolling away (' + r.layer.order + ')',
+      'the ultimate Demonic: an aura of hellfire (' + Math.round(dm.auraTop / dm.auraIdle * 100 - 100) + '% more at the top of the backswing), chains of fire round him, horns curling over (their top row ' + dm.hornCurl.toFixed(2) + ' of his cap across), hands on fire, the ground cracking at the strike (' + dm.cracks + 'px); ' + dm.foot.l + '/' + dm.foot.r + ' of his width either side, ' + dm.foot.up + ' of his height over him',
+      'the moment on an eagle: the Demonic ' + r.legend.demonic.eagle.n + 'px (' + r.legend.demonic.ace.n + ' on an ace), the Ascended ' + r.legend.ascended.eagle.n + 'px (' + r.legend.ascended.ace.n + '), each with its sound; none on a birdie, in a plain golfer, while quiet or once over'];
   }
 };

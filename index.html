@@ -6172,6 +6172,29 @@ const Sfx = {
     else if(k === 'buy')   this.tone(880, t, 0.06, 'square', 0.045, 1320);
     else if(k === 'season') this.season(arg);
     else if(k === 'putt')  this.putt(t);
+    else if(k === 'hellfire') this.hellfire(t, arg);
+    else if(k === 'ascend') this.ascend(t, arg);
+  },
+  // A moment for the legends. The Demonic's pit erupting: a deep boom, the
+  // rumble of the ground, a roar of fire falling away and its crackle. The
+  // Ascended's pillar of light: a swell rising into a bright arpeggio over a
+  // low bloom. big, an albatross or an ace, is longer and fuller. Set by
+  // measure no louder than the cup at its loudest (see the handoff notes).
+  LEGEND_VOL: 0.03,
+  hellfire(t, big){
+    const V = this.LEGEND_VOL;
+    this.tone(95, t, big ? 1.1 : 0.8, 'sine', V * 1.6, 38);
+    this.hiss(t, big ? 1.6 : 1.2, 420, 0.7, V * 1.2, 110, 'lowpass');
+    this.tone(210, t + 0.05, big ? 1.1 : 0.8, 'sawtooth', V * 0.25, 65);
+    for(let i = 0; i < (big ? 10 : 6); i++) this.hiss(t + 0.15 + i * 0.11 + Math.random() * 0.05, 0.04, 2400 + Math.random() * 1800, 1.2, V * 0.5);
+  },
+  ascend(t, big){
+    const V = this.LEGEND_VOL;
+    this.hiss(t, 0.7, 500, 0.8, V * 0.5, 5200);
+    this.tone(130.81, t, big ? 1.8 : 1.3, 'sine', V * 1.1, 131);
+    const up = big ? [523.25, 659.25, 783.99, 1046.5, 1318.51, 1567.98, 2093] : [659.25, 783.99, 1046.5, 1318.51, 1567.98];
+    up.forEach((f, i) => this.tone(f, t + 0.12 + i * 0.07, 0.6, 'triangle', V * 0.45));
+    this.tone(2093, t + 0.12 + up.length * 0.07, big ? 1.2 : 0.9, 'sine', V * 0.3);
   },
   // The putt out: a soft tock off the putter's face.
   putt(t){
@@ -9200,24 +9223,6 @@ function batWing(g, S, up){
   for(const t of tip){ g.beginPath(); g.arc(t.x, t.y, Math.max(0.8, S * 0.025), 0, Math.PI * 2); g.fill(); }
 }
 
-// Two horns, curling out and up, for the Demonic's cap: s tall, their roots
-// sp apart. Dark red at the root to bone and white at the point, with a dark
-// edge down the outside of the curve so they read on any sky.
-function hornPair(s, sp){
-  const W = sp + Math.ceil(s * 1.2) + 4, H = s + 2;
-  return fxBake('horn|' + s + '|' + sp, W, H, g => {
-    for(const side of [-1, 1]){
-      const bx = W / 2 + side * sp / 2;
-      for(let i = 0; i <= s; i++){
-        const u = i / s, x = bx + side * (0.1 + 0.9 * u * u) * s * 0.55, yy = H - 1 - i;
-        const th = Math.max(1, Math.round((1 - u) * s * 0.45 + 0.5)), x0 = Math.round(x - th / 2);
-        g.fillStyle = u > 0.7 ? '#FFF6E6' : u > 0.35 ? '#D8C4A8' : '#8A2A1C'; g.fillRect(x0, yy, th, 1);
-        g.fillStyle = '#2A0A08'; g.fillRect(side > 0 ? x0 + th : x0 - 1, yy, 1, 1);
-      }
-    }
-  });
-}
-
 // Eight runes on a ring round the Demonic's pit, flat on the ground, glowing;
 // step 0..15 turns them on by a sixteenth of the way to the next.
 const RUNES = [['X.X', '.X.', 'X.X'], ['XXX', 'X..', 'XXX'], ['.X.', 'XXX', '.X.'], ['X..', 'XXX', '..X'],
@@ -9295,19 +9300,35 @@ function hornLine(s, a0, a1){
 // Each horn of a view: its root off the anchor, the angle it leaves at and
 // the one it ends at (from upright, + toward the target), which side of it
 // is the outside of its curve, and whether it is the far one (drawn first).
+// The Demonic's (demon: true) rise off his cap and curl forward at the tip,
+// and from behind sweep out and curl back in.
 const HORN_VIEWS = {
   side: s => [[-Math.max(3, Math.round(s * 0.22)), 0, -0.55, -1.5, 1, true], [0, 0, -0.42, -1.4, 1, false]],
-  back: s => { const d = Math.max(2, Math.round(s * 0.25)); return [[-d, 0, -0.95, 0.05, -1, false], [d, 0, 0.95, -0.05, 1, false]]; }
+  back: s => { const d = Math.max(2, Math.round(s * 0.25)); return [[-d, 0, -0.95, 0.05, -1, false], [d, 0, 0.95, -0.05, 1, false]]; },
+  dside: s => [[-Math.max(3, Math.round(s * 0.3)), 0, -0.75, 1.1, -1, true], [0, 0, -0.6, 1.45, -1, false]],
+  dback: s => { const d = Math.max(2, Math.round(s * 0.3)); return [[-d, 0, -0.85, 0.45, -1, false], [d, 0, 0.85, -0.45, 1, false]]; }
 };
-function sleekHorns(s, view){
-  const th0 = Math.max(3, s * 0.36);
-  const L = HORN_VIEWS[view](s).map(([dx, dy, a0, a1, out, far]) =>
+// The colour of a pixel of a horn: u along it (0 root, 1 tip), hw its half
+// width there, d across it (+ to the outside of the curve), far the one behind.
+const HORN_COL = {
+  asc: (u, hw, d, far) => far ? (hw < 0.9 ? '#762889' : d > hw - 1 ? '#3B3B7A' : d < 1 - hw ? '#4A1E5C' : '#0E0E26')
+    : u > 0.93 ? '#FFE0FF' : hw < 0.9 || u > 0.8 ? '#E639EB' : d > hw - 1 ? (u > 0.15 ? '#8A8AC8' : '#6E6EA8')
+    : d < 1 - hw && u > 0.2 ? '#C936D5' : '#1B1B44',
+  // obsidian, ribbed, lava burning along the inside of the curve out to a
+  // white-hot point
+  dem: (u, hw, d, far) => far ? (hw < 0.9 ? '#8A1A10' : d > hw - 1 ? '#3C0A0E' : d < 1 - hw ? '#5E1418' : '#12040A')
+    : u > 0.92 ? '#FFE680' : hw < 0.9 || u > 0.8 ? '#FF8A2A' : d < 1 - hw && u > 0.12 ? '#E8401C'
+    : (u * 7) % 1 < 0.2 && u < 0.72 ? '#7A2016' : d > hw - 1 ? '#8A2A1C' : '#1A0608'
+};
+function sleekHorns(s, view, demon){
+  const th0 = Math.max(3, s * (demon ? 0.5 : 0.36)), V = demon ? 'd' + view : view, COL = HORN_COL[demon ? 'dem' : 'asc'];
+  const L = HORN_VIEWS[V](s).map(([dx, dy, a0, a1, out, far]) =>
     ({ P: hornLine(far ? Math.round(s * 0.9) : s, a0, a1).map(p => ({ x: p.x + dx, y: p.y + dy, u: p.u, a: p.a })), out, far }));
   let x0 = 0, x1 = 0, y0 = 0, y1 = 0;
   for(const l of L) for(const p of l.P){ x0 = Math.min(x0, p.x); x1 = Math.max(x1, p.x); y0 = Math.min(y0, p.y); y1 = Math.max(y1, p.y); }
   const ox = Math.ceil(th0 - x0) + 1, oy = Math.ceil(th0 - y0) + 1;
   const W = ox + Math.ceil(x1 + th0) + 2, H = oy + Math.ceil(y1) + 2;
-  const cv = fxBake('shorn|' + s + '|' + view, W, H, g => {
+  const cv = fxBake('shorn|' + s + '|' + V, W, H, g => {
     for(const l of L) for(let py = 0; py < H; py++) for(let px = 0; px < W; px++){
       const X = px + 0.5 - ox, Y = py + 0.5 - oy;
       if(Y > 0.5) continue;                     // (nothing below the root: that is in his helm)
@@ -9320,10 +9341,7 @@ function sleekHorns(s, view){
       }
       const hw = Math.max(0.5, Math.pow(1 - u, 0.85) * th0 / 2);
       if(best > hw * hw) continue;
-      const col = l.far ? (hw < 0.9 ? '#762889' : d > hw - 1 ? '#3B3B7A' : d < 1 - hw ? '#4A1E5C' : '#0E0E26')
-        : u > 0.93 ? '#FFE0FF' : hw < 0.9 || u > 0.8 ? '#E639EB' : d > hw - 1 ? (u > 0.15 ? '#8A8AC8' : '#6E6EA8')
-        : d < 1 - hw && u > 0.2 ? '#C936D5' : '#1B1B44';
-      g.fillStyle = col; g.fillRect(px, py, 1, 1);
+      g.fillStyle = COL(u, hw, d, l.far); g.fillRect(px, py, 1, 1);
     }
   });
   return { cv, ox, oy, L, th0 };
@@ -9474,6 +9492,59 @@ function drawVoidOrb(c, cx, cy, r, t, big){
   c.globalAlpha = 1;
 }
 
+// An aura of flame hugging him: tongues of it rising off the top of him
+// (head, shoulders, back), hottest at the root and dark at the tip, licks
+// breaking off and rising away, and a flicker down his sides. up is how tall
+// the tallest tongue is; P its colours, root to tip (hot, root, mid, tip),
+// the licks (lick, lick2) and the flicker (side). Solid pixels: over the
+// grass a wash of light turns grey. calm, [x0, x1], is a stretch of the
+// screen where the tongues burn low (so a pair of horns there can be seen).
+const VOID_FLAME = { hot: '#F2A6F8', root: '#E639EB', mid: '#962CA8', tip: '#4A1E5C', lick: '#E639EB', lick2: '#962CA8', side: '#962CA8' };
+const HELL_FLAME = { hot: '#FFE680', root: '#FF8A2A', mid: '#E8401C', tip: '#5A0E0E', lick: '#FFB43A', lick2: '#C8281C', side: '#E8401C' };
+function flameAura(c, g, up, P, calm){
+  const O = outlineOf(g), t = g.t;
+  c.globalAlpha = 1;
+  for(let i = 0; i < O.top.length; i++){
+    const Y = O.top[i]; if(Y > 1e8) continue;
+    // (tongues three pixels wide, fixed to the screen so they do not slide as he leans)
+    const X = O.x0 + i, j = Math.floor(X / 3), m = X - j * 3;
+    const fl = 0.5 + 0.5 * Math.sin(t * 7.3 + j * 2.1 + 1.7 * Math.sin(t * 2.9 + j * 1.3));
+    c.globalAlpha = 1;   // (fxDot leaves its alpha behind: rule 30 of the notes)
+    const H = Math.max(1, Math.round(up * (0.3 + 0.7 * fl) * (m === 1 ? 1 : 0.6) * (calm && X >= calm[0] && X <= calm[1] ? 0.3 : 1)));
+    const a = Math.max(1, Math.round(H * 0.3)), b = Math.min(H - a, Math.max(1, Math.round(H * 0.4)));
+    c.fillStyle = m === 1 && H > 3 ? P.hot : P.root; c.fillRect(X, Y - a, 1, a);
+    if(b > 0){ c.fillStyle = P.mid; c.fillRect(X, Y - a - b, 1, b); }
+    if(H - a - b > 0){ c.fillStyle = P.tip; c.fillRect(X, Y - H, 1, H - a - b); }
+    if(m === 1){
+      const v = t * 1.9 + hr(j, 7), u = v % 1;
+      if(u < 0.6 && hr(j, Math.floor(v)) > 0.45) fxDot(c, X, Y - H - 1 - u * up, 1, u < 0.25 ? P.lick : P.lick2, 1 - u / 0.6);
+    }
+  }
+  const k = Math.floor(t * 12);
+  c.fillStyle = P.side;
+  for(const [Y, L, R] of O.rows){
+    if(hr(Y, k) > 0.7){ c.globalAlpha = 0.9; c.fillRect(L - 1 - (hr(Y, k + 1) > 0.6 ? 1 : 0), Y, 1, 1); }
+    if(hr(Y + 31, k) > 0.7){ c.globalAlpha = 0.9; c.fillRect(R + 1 + (hr(Y + 31, k + 1) > 0.6 ? 1 : 0), Y, 1, 1); }
+  }
+  c.globalAlpha = 1;
+}
+
+// A moment for the legends (the user asked): on an eagle or better the
+// Demonic's pit erupts into a column of hellfire and his skulls scatter, and
+// the Ascended's sigil flares into a pillar of light and his shards burst
+// out; both bigger on an albatross or an ace. Scene.legend is when it began;
+// this is how far through it he is now (T seconds, f 0..1), or null.
+const LEGEND_DUR = 2.8, LEGEND_BIG = 3.4;
+function legendNow(g){
+  const L = Scene.legend;
+  if(!L || g.minor) return null;
+  const T = g.t - L.t0;
+  if(!(T >= 0 && T < L.dur)) return null;
+  return { T, f: T / L.dur, big: L.big };
+}
+// out and back: 0 to 1 by a of the way through, held, and home again by the end
+const outBack = (f, a) => f < a ? Math.sin(f / a * Math.PI / 2) : f > 0.75 ? Math.cos((f - 0.75) / 0.25 * Math.PI / 2) : 1;
+
 const STYLEFX = {
   /* ---- Divine: a golden aura, a halo, turning rays, orbiting wisps ---- */
   divine: {
@@ -9575,29 +9646,63 @@ const STYLEFX = {
   /* ---- Demonic: horned and winged, out of a pit of hellfire ----
      Bat wings beating slowly behind him; a pit of lava at his feet with a
      ring of runes turning round it, bubbling, smoke and embers going up and
-     shadows writhing up out of it; a tail with a spade to it; horns; eyes
-     lit like coals; the cracks in his shirt pulsing with the fire inside;
-     three skulls on fire circling him; and every few seconds the pit
-     erupts. His caddie gets the wings, horns, tail, eyes and cracks. */
+     shadows writhing up out of it; a tail with a spade to it; eyes lit like
+     coals; the cracks in his shirt pulsing with the fire inside; three
+     skulls on fire circling him; and every few seconds the pit erupts.
+     Made the ultimate skin too (the user asked, after the Ascended): an aura
+     of hellfire hugging him; sleek horns of obsidian rising off his cap and
+     curling forward, lava burning along them to white-hot points that burn;
+     two chains of fire circling him, crossing, turning opposite ways. Through
+     a swing it powers up: the aura swells, the runes race, the pit glows
+     white and his hands catch fire, and as he strikes the ground cracks open
+     round the pit and fire flies off the ball. His caddie gets the wings,
+     horns, tail, eyes, cracks and a little of the aura. */
   demonic: {
     outline: '#E8281C', outlineA: 0.28,
     // the pit erupts for a second in every six and a half: 0..1 through it, or -1
     erupt(t){ const f = t % 6.5; return f < 1 ? f : -1; },
-    // the pit at his feet and its ring of runes turning, bubbling (on the
-    // ground: drawn before the pin and a putt rolling away, which stand on it)
+    // (powering up through a swing and the strike, as the Ascended does)
+    charge(ph){ return STYLEFX.ascended.charge(ph); },
+    strike(ph){ return STYLEFX.ascended.strike(ph); },
+    // the pit at his feet and its ring of runes turning, bubbling, and the
+    // ground cracking open round it as he strikes (on the ground: drawn
+    // before the pin and a putt rolling away, which stand on it)
     ground(c, g){
       if(g.minor) return;
-      const { cx, w, h, t, bot } = g, rx = w * 1.05, ry = Math.max(2, h * 0.10), E = this.erupt(t);
-      drawGlow(c, cx, bot, rx, ry, [[0.82, '#2A0404', 2], [0.58, '#7A1408', 3], [0.3, '#E8401C', 3], [0, E >= 0 ? '#FFF1A0' : '#FFB43A', 4]],
+      const { cx, w, h, t, bot } = g, rx = w * 1.05, ry = Math.max(2, h * 0.10), L = legendNow(g);
+      const q = L ? 1 : this.charge(g.ph), st = this.strike(g.ph), E = this.erupt(t);
+      drawGlow(c, cx, bot, rx, ry, [[0.82, '#2A0404', 2], [0.58, '#7A1408', 3], [0.3, '#E8401C', 3], [0, E >= 0 || q > 0.5 || st >= 0 ? '#FFF1A0' : '#FFB43A', 4]],
                Math.floor(t * 8) & 3, 0.95);
-      const RR = runeRing(Math.round(rx * 1.18), Math.round(ry * 1.3), Math.floor(t * 6) % 16);
+      const RR = runeRing(Math.round(rx * 1.18), Math.round(ry * 1.3), Math.floor(t * 6 + (g.ph > 0 ? g.ph * 48 : 0) + (L ? L.T * 40 : 0)) % 16);
       c.globalAlpha = 0.95; c.drawImage(RR, Math.round(cx - RR.width / 2), Math.round(bot - RR.height / 2));
+      if(L) this.cracks(c, g, rx, ry, Math.min(1, L.T / 0.25), L.f > 0.7 ? 1 - (L.f - 0.7) / 0.3 : 1, L.big ? 2.3 : 1.9);
+      else if(st >= 0 && h >= 30) this.cracks(c, g, rx, ry, Math.min(1, st / 0.25), 1 - st, 1.7);
       this.bubbles(c, g, rx, ry);
       c.globalAlpha = 1;
     },
+    // cracks running out across the ground from the pit, lava glowing in
+    // them: grow is how far they have run (0..1), fade how hot they still are
+    cracks(c, g, rx, ry, grow, fade, R){
+      const { cx, bot } = g, n = 7, hot = fade > 0.66 ? '#FFE680' : fade > 0.33 ? '#FF8A2A' : fade > 0.12 ? '#C8281C' : '#5A0E0E';
+      c.globalAlpha = 1;
+      for(let i = 0; i < n; i++){
+        const a = (i + hr(i, 121) * 0.6) / n * Math.PI * 2, len = 0.85 + (R * (0.75 + 0.25 * hr(i, 122)) - 0.85) * grow;
+        let px = cx + Math.cos(a) * rx * 0.85, py = bot + Math.sin(a) * ry * 0.85;
+        for(let j = 1; j <= 5; j++){
+          const aa = a + (hr(i * 7 + j, 123) - 0.5) * 0.4, r = 0.85 + (len - 0.85) * j / 5;
+          const nx = cx + Math.cos(aa) * rx * r, ny = bot + Math.sin(aa) * ry * r;
+          pxLine(c, px, py + 1, nx, ny + 1, '#1A0404', 1);
+          pxLine(c, px, py, nx, ny, hot, 1);
+          // a branch off the middle of every other one
+          if(j === 3 && !(i & 1)){ const ba = aa + 0.35, br = r + (len - 0.85) * 0.3;
+            pxLine(c, nx, ny, cx + Math.cos(ba) * rx * br, bot + Math.sin(ba) * ry * br, hot, 1); }
+          px = nx; py = ny;
+        }
+      }
+    },
     back(c, g){
       const { cx, w, h, t, k, bot } = g, minor = !!g.minor;
-      const rx = w * 1.05, ry = Math.max(2, h * 0.10), E = minor ? -1 : this.erupt(t);
+      const rx = w * 1.05, ry = Math.max(2, h * 0.10), E = minor ? -1 : this.erupt(t), L = legendNow(g), q = L ? 1 : this.charge(g.ph);
       if(!minor){
         // brimstone smoke going up off the pit, spreading and thinning
         for(let i = 0; i < 6; i++){
@@ -9605,15 +9710,20 @@ const STYLEFX = {
           fxEllipse(c, sx, bot - life * h * 1.2, 1 + life * w * 0.14, 1 + life * w * 0.08, life < 0.3 ? '#3A2A2A' : '#2A2020', 0.35 * (1 - life));
         }
         this.tendrils(c, g, rx);
-        if(E >= 0) this.eruption(c, g, E, rx, ry, false);
+        if(L) this.column(c, g, L, rx);
+        if(L) this.eruption(c, g, L.f, rx, ry, false, L.big ? 1.3 : 1);
+        else if(E >= 0) this.eruption(c, g, E, rx, ry, false);
+        this.chains(c, g, false, q);
       }
-      // the wings, spread behind him, beating slowly
-      const W = this.wings(h, minor, t), A = wingAnchor(g);
+      // the wings, spread behind him, beating slowly (raised high on a great hole)
+      const W = this.wings(h, minor, t, L && outBack(L.f, 0.1) > 0.5), A = wingAnchor(g);
       c.globalAlpha = 1; c.drawImage(W.cv, Math.round(A.x - W.ox), Math.round(A.y - W.oy));
       // his tail (walking away from us it hangs in front of him: see front)
       if(!g.back) this.tail(c, g);
       // a shadow round him, smoking
       outlineAt(c, g, '#140204', RING2, 0.42 + 0.14 * Math.sin(t * 5));
+      // (his aura after the dark edge round him, or it dims the roots of the flames)
+      this.aura(c, g, q);
       // embers going up
       for(let i = 0; i < (minor ? 4 : 12); i++){
         const life = (t * 0.55 + hr(i, 31)) % 1;
@@ -9629,16 +9739,103 @@ const STYLEFX = {
       this.horns(c, g);
       this.eyes(c, g);
       if(!g.minor){
+        const L = legendNow(g), q = L ? 1 : this.charge(g.ph);
+        this.chains(c, g, true, q);
         this.skulls(c, g, true);
+        this.fists(c, g, q);
+        this.blast(c, g);
         const E = this.erupt(g.t);
-        if(E >= 0) this.eruption(c, g, E, g.w * 1.05, Math.max(2, g.h * 0.10), true);
+        if(L) this.eruption(c, g, L.f, g.w * 1.05, Math.max(2, g.h * 0.10), true, L.big ? 1.3 : 1);
+        else if(E >= 0) this.eruption(c, g, E, g.w * 1.05, Math.max(2, g.h * 0.10), true);
       }
       c.globalAlpha = 1; c.globalCompositeOperation = 'source-over';
     },
+    aura(c, g, q){
+      const hd = g.head, hx = hd.x + (g.shear ? g.shear(0.1) : 0);
+      // (low on the battery saver, where he is small and it hid him)
+      flameAura(c, g, g.minor ? Math.max(2, Math.round(g.h / 18)) : Math.round(g.h / (g.h < 30 ? 18 : 9) * (1 + q * 1.2)), HELL_FLAME,
+                [Math.round(hx - hd.w * 0.75), Math.round(hx + hd.w * 0.75)]);
+    },
+    // Two chains of fire circling him, crossing, turning opposite ways (the
+    // far half of each goes down before him, dimmer): each link seen face on
+    // or edge on in turn, a heat running along them, flames licking up off
+    // the near links. Faster as he winds up (q).
+    chains(c, g, front, q){
+      if(g.h < 30) return;   // (on the battery saver, where he is small, they only muddled him)
+      const { cx, w, h, t } = g, rx = w * 0.74, ry = Math.max(2, h * 0.07), oy = g.y + h * 0.55;
+      const n = Math.max(24, Math.round(rx * 1.6) * 2), k = Math.floor(t * 10);
+      c.globalAlpha = 1;
+      [[0.24, 1, 0], [-0.24, -1, 1.7]].forEach(([tilt, dir, ph0], j) => {
+        const ct = Math.cos(tilt), sn = Math.sin(tilt), spin = (t * 0.8 * (1 + q * 1.5) + ph0) * dir;
+        for(let i = 0; i < n; i++){
+          const a = spin + i / n * Math.PI * 2;
+          if((Math.sin(a) > 0) !== front) continue;
+          const X = Math.cos(a) * rx, Y = Math.sin(a) * ry, px = Math.round(cx + X * ct - Y * sn), py = Math.round(oy + X * sn + Y * ct);
+          const hot = (((i / n - t * 0.35 * dir) % 1) + 1) % 1 < 0.1;
+          if(i & 1){ c.fillStyle = front ? (hot ? '#FFE680' : '#FF8A2A') : '#8A1A10'; c.fillRect(px, py - 1, 1, 2); }
+          else { c.fillStyle = front ? '#B8321A' : '#3C0A0E'; c.fillRect(px, py, 1, 1); }
+          if(front && (i & 1) && hr(i + j * 97, k) > 0.85){
+            c.fillStyle = '#FF4A1A'; c.fillRect(px, py - 3, 1, 2);
+            c.fillStyle = '#FFD34A'; c.fillRect(px, py - 2, 1, 1);
+          }
+        }
+      });
+    },
+    // A column of hellfire bursting up out of the pit behind him on a great
+    // hole: tongues of flame side by side, the middle ones tallest, each hot
+    // at its root, reddening up it to a dark tip, flickering, licks breaking
+    // off the top; at the end it sinks back into the pit.
+    column(c, g, L, rx){
+      const { cx, h, t, bot } = g, sink = Math.max(0, (L.f - 0.62) / 0.38);
+      const Ht = h * (L.big ? 2.3 : 1.7) * Math.min(1, L.T / 0.3) * (1 - sink * sink);
+      const X = Math.round(cx), W = Math.round(rx * (L.big ? 0.6 : 0.5)), Y = Math.round(bot), k = Math.floor(t * 14);
+      c.globalAlpha = 1;
+      if(Ht >= 2) for(let x = -W; x <= W; x++){
+        const e = Math.abs(x) / (W + 1), j = Math.floor((x + 99) / 2);
+        const fl = 0.55 + 0.45 * Math.sin(t * 13 + j * 2.7 + 2 * Math.sin(t * 3.1 + j));
+        const H = Math.round(Ht * (1 - e * e * 0.85) * (0.7 + 0.3 * fl) * (1 - e * 0.3));
+        if(H < 1) continue;
+        // (hotter in the middle: its heart is near white most of the way up)
+        const s1 = H * (0.55 - e * 0.4), s2 = H * (0.8 - e * 0.25), s3 = H * 0.93;
+        const seg = (y0, y1, col) => { if(y1 > y0){ c.fillStyle = col; c.fillRect(X + x, Math.round(Y - y1), 1, Math.round(y1) - Math.round(y0)); } };
+        seg(0, s1, e < 0.35 ? '#FFF1A0' : '#FFD34A'); seg(s1, s2, '#FF8A2A'); seg(s2, s3, '#E8401C'); seg(s3, H, '#8A1A10');
+        if(hr(j, k) > 0.8) { c.fillStyle = '#FF4A1A'; c.fillRect(X + x, Math.round(Y - H - 2 - hr(j, k + 1) * h * 0.2), 1, 2); }
+      }
+      // sparks thrown up out of it
+      for(let i = 0; i < 14; i++){
+        const u = (L.T * 1.6 + hr(i, 5)) % 1;
+        fxDot(c, X + (hr(i, 6) - 0.5) * W * 3.2 + Math.sin(t * 6 + i) * 1.5, Y - u * Math.max(Ht, h) * 1.1, 1, u < 0.4 ? '#FFE680' : '#FF8A2A', (1 - u * 0.7) * (1 - sink));
+      }
+      c.globalAlpha = 1;
+    },
+    // as he winds up, his hands catch fire
+    fists(c, g, q){
+      const H = g.hand; if(!H || q < 0.05) return;
+      c.globalAlpha = 1;
+      for(let i = 0; i < 5; i++){
+        const hgt = Math.max(1, Math.round(q * (2 + g.h / 16) * (0.5 + 0.5 * Math.sin(g.t * 11 + i * 1.9)) * (i === 2 ? 1 : 0.65)));
+        const x = Math.round(H.x) - 2 + i, y = Math.round(H.y);
+        c.fillStyle = '#E8401C'; c.fillRect(x, y - hgt, 1, hgt);
+        if(hgt > 1){ c.fillStyle = '#FF8A2A'; c.fillRect(x, y - Math.ceil(hgt / 2), 1, Math.ceil(hgt / 2)); }
+      }
+      c.fillStyle = '#FFE680'; c.fillRect(Math.round(H.x), Math.round(H.y) - 1, 1, 1);
+    },
+    // and as he strikes, fire flying off the ball
+    blast(c, g){
+      const f = this.strike(g.ph);
+      if(f < 0) return;
+      const bx = g.x + g.w * 1.19, by = g.bot - 2;
+      for(let i = 0; i < 14; i++){
+        const a = -Math.PI * (0.06 + 0.8 * hr(i, 99)), v = 0.5 + 0.5 * hr(i, 100);
+        fxDot(c, bx + Math.cos(a) * v * f * g.w * 0.7, by + Math.sin(a) * v * f * g.h * 0.35 + f * f * g.h * 0.14, 1,
+              f < 0.25 ? '#FFE680' : i & 1 ? '#FF8A2A' : '#E8401C', 1 - f);
+      }
+      c.globalAlpha = 1;
+    },
     // twelve steps of a slow beat, baked per size
-    wings(h, minor, t){
-      const S = Math.max(8, Math.round(h * (minor ? 0.40 : 0.52))), ph = Math.floor(t * 6) % 12;
-      const up = 0.5 + 0.4 * Math.sin(ph / 12 * Math.PI * 2);
+    wings(h, minor, t, raised){
+      const S = Math.max(8, Math.round(h * (minor ? 0.40 : 0.52))), ph = raised ? 12 : Math.floor(t * 6) % 12;
+      const up = raised ? 1.15 : 0.5 + 0.4 * Math.sin(ph / 12 * Math.PI * 2);
       const Wd = Math.ceil(S * 2.5) + 6, Hd = Math.ceil(S * 1.75) + 4, ox = Math.round(Wd / 2), oy = Math.ceil(S * 1.12) + 2;
       const cv = fxBake('bat|' + S + '|' + ph, Wd, Hd, g2 => {
         g2.save(); g2.translate(ox + 1, oy); batWing(g2, S, up); g2.restore();
@@ -9665,11 +9862,26 @@ const STYLEFX = {
       SP.forEach((row, yy) => [...row].forEach((ch, xx) => { if(ch === '.') return;
         c.fillStyle = ch === 'R' ? '#C8281C' : '#1A0406'; c.fillRect(x0 + xx, y0 + yy, 1, 1); }));
     },
+    // sleek horns of obsidian rising off his cap and curling forward (from
+    // behind, out and curling back in), lava along them to white-hot points,
+    // a flame burning on each point and now and then a pulse of heat
+    // running up the near one
     horns(c, g){
-      const hd = g.head, s = Math.max(4, Math.round(hd.w * 0.75)), sp = Math.max(3, Math.round(hd.w * 0.62));
-      const hx = hd.x + (g.shear ? g.shear(0.1) : 0), hy = hd.y + Math.max(1, Math.round(hd.hh * 0.3));
-      const cv = hornPair(s, sp);
-      c.globalAlpha = 1; c.drawImage(cv, Math.round(hx - cv.width / 2), Math.round(hy - cv.height + 1));
+      const hd = g.head, minor = !!g.minor, view = g.back && !minor ? 'back' : 'side';
+      const s = Math.max(minor ? 4 : 7, Math.round(hd.w * (minor ? 0.75 : 1.25))), Hn = sleekHorns(s, view, true);
+      const ax = Math.round(hd.x + (view === 'side' ? hd.w * 0.06 : 0) + (g.shear ? g.shear(0.1) : 0)), ay = Math.round(hd.y + Math.max(1, hd.hh * 0.3));
+      c.globalAlpha = 1; c.drawImage(Hn.cv, ax - Hn.ox, ay - Hn.oy);
+      const L = legendNow(g);
+      Hn.L.filter(l => !l.far).forEach((l, i) => {
+        const p = l.P[l.P.length - 1], X = Math.round(ax + p.x), Y = Math.round(ay + p.y);
+        const f = Math.max(1, Math.round((minor ? 1 : 2) * (L ? 1.6 : 1) * (0.6 + 0.4 * Math.sin(g.t * 9 + i * 2.3))));
+        c.fillStyle = '#FF4A1A'; c.fillRect(X, Y - f, 1, f);
+        if(f > 1){ c.fillStyle = '#FFD34A'; c.fillRect(X, Y - 1, 1, 1); }
+      });
+      if(minor) return;
+      const u = (g.t % 2.7) / 0.5, l = Hn.L[Hn.L.length - 1];
+      if(u < 1){ const p = l.P[Math.round(u * (l.P.length - 1))]; fxDot(c, ax + p.x, ay + p.y, 1, '#FFE680', 1); }
+      c.globalAlpha = 1;
     },
     // his eyes like coals, and now and then they flare
     eyes(c, g){
@@ -9702,11 +9914,13 @@ const STYLEFX = {
     // three skulls on fire circling him, a trail of embers behind each: the
     // half of the circle behind him goes down before him, dimmer
     skulls(c, g, front){
-      const { cx, cy, w, h, t } = g, s = Math.max(1, Math.round(h / 45));
-      for(let i = 0; i < 3; i++) for(let q = 6; q >= 0; q--){
-        const tt = t - q * 0.05, a = tt * 0.9 + i * Math.PI * 2 / 3, depth = Math.sin(a);
+      const { cx, cy, w, h, t } = g, s = Math.max(1, Math.round(h / 45)), L = legendNow(g), N = L && L.big ? 6 : 3;
+      // (on a great hole they scatter, spinning out and up, and come home)
+      const out = L ? outBack(L.f, 0.15) : 0, R = w * 0.92 * (1 + out * (L && L.big ? 1.6 : 1.2)), turn = L ? (1 - Math.cos(L.f * Math.PI)) * Math.PI * 2 : 0;
+      for(let i = 0; i < N; i++) for(let q = 6; q >= 0; q--){
+        const tt = t - q * 0.05, a = tt * 0.9 + turn + i * Math.PI * 2 / N, depth = Math.sin(a);
         if((depth > 0) !== front) continue;
-        const px = cx + Math.cos(a) * w * 0.92, py = cy - h * 0.12 + Math.sin(tt * 0.8 + i * 2.1) * h * 0.28 + depth * h * 0.05;
+        const px = cx + Math.cos(a) * R, py = cy - h * 0.12 - out * h * 0.3 + Math.sin(tt * 0.8 + i * 2.1) * h * 0.28 + depth * h * 0.05;
         const dim = front ? 1 : 0.55;
         if(q === 0) drawSkull(c, px, py, s, dim, Math.floor(t * 8 + i) & 1);
         else fxDot(c, px, py, 1, q < 3 ? '#FF8A2A' : '#8A1A0E', (0.8 - q * 0.11) * dim);
@@ -9741,8 +9955,8 @@ const STYLEFX = {
     },
     // the eruption: flames shooting up all round the pit (the far half behind
     // him, the near half in front) and a ring of fire thrown out along the ground
-    eruption(c, g, f, rx, ry, front){
-      const { cx, bot, h, t } = g, q = f < 0.2 ? f / 0.2 : 1 - (f - 0.2) / 0.8;
+    eruption(c, g, f, rx, ry, front, amp){
+      const { cx, bot, h, t } = g, q = (f < 0.2 ? f / 0.2 : 1 - (f - 0.2) / 0.8) * (amp || 1);
       for(let i = 0; i < 26; i++){
         const a = i / 26 * Math.PI * 2; if((Math.sin(a) > 0) !== front) continue;
         const fx = cx + Math.cos(a) * rx * 0.95, fy = bot + Math.sin(a) * ry * 0.95;
@@ -9752,7 +9966,7 @@ const STYLEFX = {
         c.fillStyle = '#FF4A1A'; c.fillRect(Math.round(fx) - 1, Math.round(fy - hgt), 2, hgt);
         c.fillStyle = '#FFD34A'; c.fillRect(Math.round(fx), Math.round(fy - hgt * 0.6), 1, Math.max(1, Math.round(hgt * 0.6)));
       }
-      const R = 1 + f * 1.4;
+      const R = 1 + f * 1.4 * (amp || 1);
       for(let i = 0; i < 24; i++){
         const a = i / 24 * Math.PI * 2; if((Math.sin(a) > 0) !== front) continue;
         fxDot(c, cx + Math.cos(a) * rx * R, bot + Math.sin(a) * ry * R, 1, i & 1 ? '#FFB43A' : '#FF4A1A', 1 - f);
@@ -9793,12 +10007,12 @@ const STYLEFX = {
     // putt rolling away, which stand on it)
     ground(c, g){
       if(g.minor) return;
-      const t = g.t, [rx, ry] = this.sigilSize(g), q = this.charge(g.ph), st = this.strike(g.ph);
-      const X = Math.round(g.cx), Y = Math.round(g.bot), step = Math.floor(t * 8) % 48;
+      const t = g.t, [rx, ry] = this.sigilSize(g), L = legendNow(g), st = this.strike(g.ph);
+      const q = L ? 1 : this.charge(g.ph), X = Math.round(g.cx), Y = Math.round(g.bot), step = Math.floor(t * 8 + (L ? L.T * 24 : 0)) % 48;
       c.globalAlpha = 1; c.drawImage(voidSigil(rx, ry, step), X - rx - 1, Y - ry - 1);
       const E = (a, f) => [X + Math.cos(a) * rx * f, Y + Math.sin(a) * ry * f];
       // its rim lit as he winds up, and flashing as he strikes
-      const lit = Math.max(q * 0.6, st >= 0 ? 1 - st : 0);
+      const lit = L ? 1 : Math.max(q * 0.6, st >= 0 ? 1 - st : 0);
       if(lit > 0.05){
         const n = Math.round((rx + ry) * 4);
         c.globalAlpha = lit; c.fillStyle = '#F2A6F8';
@@ -9819,6 +10033,10 @@ const STYLEFX = {
       // a shockwave running out over the grass: now and then, and bigger as he strikes
       const idle = (t % 4.2) / 0.8;
       if(g.h < 30) {}
+      else if(L){
+        // on a great hole, wave after wave running out from it
+        for(let i = 0; i < (L.big ? 5 : 3); i++){ const f = (L.T - i * 0.3) / 0.9; if(f >= 0 && f < 1) this.wave(c, X, Y, rx, ry, f, L.big ? 2.3 : 1.9); }
+      }
       else if(st >= 0) this.wave(c, X, Y, rx, ry, st, 1.55);
       else if(idle < 1) this.wave(c, X, Y, rx, ry, idle, 1.3);
       c.globalAlpha = 1;
@@ -9837,6 +10055,8 @@ const STYLEFX = {
                  [[0.75, '#281838', 1], [0.45, '#662A7A', 2], [0, '#962CA8', 3]], Math.floor(t * 6) & 3, 0.85);
         this.tail(c, g);
       }else{
+        const L = legendNow(g);
+        if(L) this.pillar(c, g, L);
         this.glyphs(c, g);
         this.orbit(c, g, false);
         if(!g.back) this.cape(c, g);
@@ -9844,7 +10064,40 @@ const STYLEFX = {
       }
       outlineAt(c, g, '#0A0517', RING2, 0.45);
       // (his aura after the dark edge round him, or it dims the roots of the flames)
-      this.aura(c, g, this.charge(g.ph));
+      this.aura(c, g, legendNow(g) ? 1 : this.charge(g.ph));
+      c.globalAlpha = 1;
+    },
+    // A pillar of light up out of the sigil into the sky, behind him, on a
+    // great hole: it shoots up, stands, its light streaming up it and sparks
+    // riding it, and narrows away to nothing. Solid pixels (over the grass a
+    // wash turns grey), its edge rippling.
+    pillar(c, g, L){
+      const [rx] = this.sigilSize(g), T = L.T, t = g.t;
+      const top = Math.round(g.bot - Math.min(1, T / 0.3) * (g.bot + 4));
+      const W = rx * (L.big ? 0.5 : 0.38) * (T < 0.3 ? 0.5 + T / 0.6 : 1) * (L.f > 0.72 ? Math.max(0, 1 - (L.f - 0.72) / 0.28) : 1);
+      if(W < 0.5) return;
+      const X = Math.round(g.cx), Yb = Math.round(g.bot), sc = Math.floor(t * 110);
+      c.globalAlpha = 1;
+      for(let y = Math.max(0, top); y < Yb; y++){
+        // wider at its foot, rippling up its edge, thinning to a lattice of
+        // light as it rises into the sky
+        const up = (Yb - y) / Math.max(1, g.bot), foot = Math.max(0, 1 - (Yb - y) / (g.h * 0.3));
+        const hw = Math.round(W * (1 + 0.6 * foot) + Math.sin(y * 0.45 - t * 14) * 0.8), thin = up > 0.5;
+        const k = Math.max(0, Math.round(hw * 0.28));
+        for(let x = -hw; x <= hw; x++){
+          const e = Math.abs(x);
+          if(e > k && (thin || e > hw * 0.6) && ((x + y) & 1)) continue;
+          const streak = hr(x + 40, Math.floor((y + sc) / 7)) > 0.82;
+          c.fillStyle = e <= k ? '#FFFFFF' : e <= k + 1 ? '#FFE0FF' : e <= hw * 0.6 ? (streak ? '#F2A6F8' : '#E639EB') : streak ? '#E639EB' : '#962CA8';
+          c.fillRect(X + x, y, 1, 1);
+        }
+      }
+      // sparks riding up it, and just outside it
+      for(let i = 0; i < 16; i++){
+        const u = (T * 1.4 + hr(i, 3)) % 1, y = Yb - u * (Yb - Math.max(0, top));
+        const x = X + (hr(i, 4) - 0.5) * W * 4 + Math.sin(t * 5 + i) * 1.5;
+        fxDot(c, x, y, 1, i & 1 ? '#FFFFFF' : '#F2A6F8', 1 - u * 0.6);
+      }
       c.globalAlpha = 1;
     },
     front(c, g){
@@ -9871,41 +10124,19 @@ const STYLEFX = {
     // tip, licks breaking off and rising away, and a flicker down his sides.
     // Taller as he winds up (q 0..1). His imp has a little of it.
     aura(c, g, q){
-      const O = outlineOf(g), t = g.t, up = g.minor ? Math.max(2, Math.round(g.h / 18)) : Math.round(g.h / 8 * (1 + q * 0.8));
-      c.globalAlpha = 1;
-      for(let i = 0; i < O.top.length; i++){
-        const Y = O.top[i]; if(Y > 1e8) continue;
-        // (tongues three pixels wide, fixed to the screen so they do not slide as he leans)
-        const X = O.x0 + i, j = Math.floor(X / 3), m = X - j * 3;
-        const fl = 0.5 + 0.5 * Math.sin(t * 7.3 + j * 2.1 + 1.7 * Math.sin(t * 2.9 + j * 1.3));
-        c.globalAlpha = 1;
-        const H = Math.max(1, Math.round(up * (0.3 + 0.7 * fl) * (m === 1 ? 1 : 0.6)));
-        const a = Math.max(1, Math.round(H * 0.3)), b = Math.min(H - a, Math.max(1, Math.round(H * 0.4)));
-        c.fillStyle = m === 1 && H > 3 ? '#F2A6F8' : '#E639EB'; c.fillRect(X, Y - a, 1, a);
-        if(b > 0){ c.fillStyle = '#962CA8'; c.fillRect(X, Y - a - b, 1, b); }
-        if(H - a - b > 0){ c.fillStyle = '#4A1E5C'; c.fillRect(X, Y - H, 1, H - a - b); }
-        if(m === 1){
-          const v = t * 1.9 + hr(j, 7), u = v % 1;
-          if(u < 0.6 && hr(j, Math.floor(v)) > 0.45) fxDot(c, X, Y - H - 1 - u * up, 1, u < 0.25 ? '#E639EB' : '#962CA8', 1 - u / 0.6);
-        }
-      }
-      const k = Math.floor(t * 12);
-      c.fillStyle = '#962CA8';
-      for(const [Y, L, R] of O.rows){
-        if(hr(Y, k) > 0.7){ c.globalAlpha = 0.9; c.fillRect(L - 1 - (hr(Y, k + 1) > 0.6 ? 1 : 0), Y, 1, 1); }
-        if(hr(Y + 31, k) > 0.7){ c.globalAlpha = 0.9; c.fillRect(R + 1 + (hr(Y + 31, k + 1) > 0.6 ? 1 : 0), Y, 1, 1); }
-      }
-      c.globalAlpha = 1;
+      flameAura(c, g, g.minor ? Math.max(2, Math.round(g.h / 18)) : Math.round(g.h / 8 * (1 + q * 0.8)), VOID_FLAME);
     },
     // three shards of the void riding a ring round his middle, turning over
     // as they go, a trail of light behind each: the far half of the ring goes
     // down before him, the near half after. A lap faster through a swing;
     // and now and then a shard in front throws a bolt into his chest.
     orbit(c, g, front){
-      const { cx, w, h, t } = g, big = h >= 55, oy = g.y + h * 0.56, rx = w * 0.8, ry = Math.max(2, h * 0.075);
+      const { cx, w, h, t } = g, big = h >= 55, oy = g.y + h * 0.56, L = legendNow(g);
+      // (on a great hole the shards burst out, spinning, and come home)
+      const out = L ? 1 + (L.big ? 1.9 : 1.4) * outBack(L.f, 0.18) : 1, rx = w * 0.8 * out, ry = Math.max(2, h * 0.075) * (1 + (out - 1) * 1.6);
       const ct = Math.cos(-0.12), sn = Math.sin(-0.12);
       const at = a => { const X = Math.cos(a) * rx, Y = Math.sin(a) * ry; return [cx + X * ct - Y * sn, oy + X * sn + Y * ct]; };
-      const spin = t * 1.2 + (g.ph > 0 ? g.ph * Math.PI * 2 : 0);
+      const spin = t * 1.2 + (g.ph > 0 ? g.ph * Math.PI * 2 : 0) + (L ? (1 - Math.cos(L.f * Math.PI)) * Math.PI * 2 : 0), N = L && L.big ? 6 : 3;
       // the ring itself, dotted, its dots creeping round
       const n = Math.max(32, Math.round(rx * 2)), off = Math.floor(t * 10);
       c.globalAlpha = front ? 0.85 : 0.5; c.fillStyle = '#762889';
@@ -9914,14 +10145,14 @@ const STYLEFX = {
         if((i + off) % 3 || (Math.sin(a) > 0) !== front) continue;
         const [x, y] = at(a); c.fillRect(Math.round(x), Math.round(y), 1, 1);
       }
-      for(let i = 0; i < 3; i++){
-        const a0 = spin + i * Math.PI * 2 / 3, bob = Math.sin(t * 1.9 + i * 2.1) * h * 0.03;
+      for(let i = 0; i < N; i++){
+        const a0 = spin + i * Math.PI * 2 / N, bob = Math.sin(t * 1.9 + i * 2.1) * h * 0.03;
         for(let s = 6; s >= 0; s--){
           const a = a0 - s * 0.09;
           if((Math.sin(a) > 0) !== front) continue;
           const [x, y] = at(a);
           if(s) fxDot(c, x, y + bob, 1, s < 3 ? '#E639EB' : '#962CA8', (0.85 - s * 0.11) * (front ? 1 : 0.6));
-          else drawShard(c, x, y + bob, big, t * 5 + i * 2, !front);
+          else drawShard(c, x, y + bob, big || out > 1.3, t * 5 + i * 2, !front);
         }
       }
       const u = t / 2.3, m = Math.floor(u);
@@ -10036,7 +10267,8 @@ const STYLEFX = {
       c.globalAlpha = 1; c.drawImage(Hn.cv, ax - Hn.ox, ay - Hn.oy);
       // (solid, not a wash of light: over the grass a wash turns grey)
       const tips = Hn.L.filter(l => !l.far).map(l => l.P[l.P.length - 1]);
-      tips.forEach((p, i) => { if(Math.sin(g.t * 4.2 + i * 2) < 0.2) return;
+      const lit = !!legendNow(g);
+      tips.forEach((p, i) => { if(Math.sin(g.t * 4.2 + i * 2) < 0.2 && !lit) return;
         const X = Math.round(ax + p.x), Y = Math.round(ay + p.y);
         c.fillStyle = '#E639EB'; c.fillRect(X - 1, Y, 1, 1); c.fillRect(X + 1, Y, 1, 1); c.fillRect(X, Y - 1, 1, 1); });
       if(minor){ c.globalAlpha = 1; return; }
@@ -11499,6 +11731,7 @@ const Scene = {
   // turn for a while after.
   happyDance(d){
     if(QUIET || OFFLINE || S.dgnRun) return;
+    this.legendGo(d);
     const R = this._moveRnd || (this._moveRnd = seeded(20260925));
     const seq = d <= -4 ? ['flip', 'flip', 'cartwheel'] : d === -3 ? ['flip', 'cartwheel'] : d === -2 ? ['cartwheel']
       : d === -1 && R() < 1 / 3 ? [R() < 0.5 ? 'dance' : 'spin'] : null;
@@ -11507,6 +11740,16 @@ const Scene = {
     this.fairyMoveGo(seq[0]);
     this.fairyQueue = seq.slice(1);
     this.moveT = Math.max(this.moveT || 0, 12);
+  },
+  // A moment for the legends (legendNow): on an eagle or better in the
+  // Demonic or the Ascended, bigger on an albatross or an ace, with a sound.
+  legend: null,
+  legendGo(d){
+    const fx = outfitNow().fx;
+    if(d > -2 || (fx !== 'demonic' && fx !== 'ascended')) return;
+    const big = d <= -3;
+    this.legend = { t0: this.t, big, dur: big ? LEGEND_BIG : LEGEND_DUR };
+    Sfx.play(fx === 'demonic' ? 'hellfire' : 'ascend', big);
   },
   fairyMoveGo(id){
     const m = FAIRY_MOVES.find(x => x.id === id);
@@ -16497,6 +16740,8 @@ const DEV = {
 
     h += row('Battery saver', b('start now', 'saverNow()') + b('in 5s', 'DEV.saverSoon()'));
 
+    h += row('Legends', b('eagle', 'DEV.legend(-2)') + b('ace', 'DEV.legend(-4)'));
+
     h += row('Fairy caddie', b('cheer', 'DEV.say(\'cheer\')') + b('sigh', 'DEV.say(\'sigh\')')
       + b('quip', 'DEV.say(\'quip\')') + FAIRY_MOVES.map(m => b(m.id, 'DEV.move(\'' + m.id + '\')')).join('')
       + b('perk now', 'DEV.cperkNow()')
@@ -16739,6 +16984,8 @@ const DEV = {
     hideSheet(); },
   // one of his turns, now
   move(id){ Scene.fairyMove = null; Scene.fairyMoveGo(id); hideSheet(); },
+  // the Demonic's or the Ascended's moment on a great hole (wearing one)
+  legend(d){ Scene.legendGo(d); hideSheet(); },
   cperkNow(){ if(!S.cperk || !cperkDef(S.cperk)){ const p = B.CPERKS[0];
       S.cperkOwn = S.cperkOwn || {}; S.cperkOwn[p.id] = 1; S.cperk = p.id; }
     S.cperkT = B.CPERK_EVERY; tickCaddie(0); hideSheet(); },
@@ -17072,6 +17319,7 @@ function saverOn(){
   SAVER = { t: 0, since: Date.now(), gold: S.gold, holes: S.totalHoles || 0, ev: S.eventsPlayed || 0,
             cups: S.cups || 0, lv: S.lv, card: S.tierMax || 0, sov: S.sov || 0, para: S.para || 0,
             clubs: 0, best: null, balls: [], rest: [], arc: [], statT: 1, moveT: 0, html: '' };
+  Scene.legend = null;
   $('saver').classList.add('on');
   saverSize();
   $('saverBox').style.transform = '';

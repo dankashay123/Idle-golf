@@ -9,30 +9,27 @@ check is for.
 ## 1. Where things stand
 
 - Everything is committed and pushed to `main` (mirrored on the session
-  branch `claude/notes-review-dju532`). Nothing is half-built.
+  branch `claude/loving-archimedes-ct2rpb`). Nothing is half-built.
 - `node test/run.js` passes all **55 checks** (about nine minutes).
-- **Last request**: "Let's add some aura effects to the skin as well.
-  Rotating elements round them, cooler ground effects, make the horns more
-  sleek and cool, and add anything else to make this like an ultimate skin
-  that is worth the price. Really really go nuts but not so much that it
-  takes up a ton of space on the screen." Read as the Ascended (the skin
-  just restyled). Done: §5 "The Ascended, made the ultimate skin": a sigil
-  turning on the ground, an aura of flame, a ring of shards round him,
-  sleek swept-back horns, and the whole of it powering up through a swing.
-  On the way: a skin's ground (the Demonic's pit, the Divine's pool, the
-  sigil) was drawn over the pin, the cup and a putt rolling away beyond
-  him; it goes down first now (§4 rule 29). On the battery saver the
-  golfer stood 5px from the edge and the Demonic's wings (and now the
-  sigil) were cut off; a look with an effect stands further in. Then the
-  user asked for these notes and `CLAUDE.md` to be brought up to date for
-  a handoff (done; nothing else changed).
-- **The request before** (with a picture: a dark armoured figure with horns,
+- **Last request**: "Let's do option 1 [a moment for the legends]. Also
+  update the demonic skin to an ultimate skin as well and add things to it
+  please." Done: §5 "A moment for the legends" and "The Demonic, made the
+  ultimate skin too". On an eagle or better the Demonic's pit erupts into a
+  column of hellfire, his wings rise and his skulls scatter; the Ascended's
+  sigil sends up a pillar of light and his shards burst out; both bigger on
+  an albatross or ace, each with a sound. The Demonic got an aura of
+  hellfire, sleek obsidian horns that curl forward, two chains of fire
+  circling him, hands that catch fire on the backswing, the ground cracking
+  and fire flying off the ball at the strike.
+- **The request before**: the Ascended made the ultimate skin (§5 "The
+  Ascended, made the ultimate skin").
+- **The one before that** (with a picture: a dark armoured figure with horns,
   eyes lit white, magenta hair of fire, a cape, spectral hands, a scythe,
   and a little horned imp): "Can you make the ascended skin look more like
   this, but more intricate. I like the colors too." Done, read as the whole
   Ascended set, names and prices kept (§5 "The Ascended, restyled"). The
   skins check now times a look against the plain golfer (§4 rule 28).
-- **The one before**: the railway clipping through the trees, a hole ending
+- **Earlier**: the railway clipping through the trees, a hole ending
   while he waited for a train, and the Demonic (3000) and Ascended (3500)
   sets with a caddie, club, trail and ball each (§5 "The Demonic and the
   Ascended", "The railway among the trees").
@@ -160,7 +157,9 @@ Line numbers are approximate and drift. Search for the name instead.
 | **He putts out** | `Scene.putt`, `puttArm`, `puttBall`, `cupT`, `cupHeard`, `PUTT_HIT`, `PUTT_ROLL`, `PIN_X`, `Scene.pinX`, `putSpot` in `launch`, `Sfx.putt`; `paintGolfer`'s last argument |
 | **The hole waits for him to reach the green** | `Scene.holeWait` (was `isleWait`), `B_GREEN_UP`, `B_GREEN_STAND`, `Scene.upT`, `holeSaid`, `Scene.saidHole`, the `waiting` guard and hold in `step`, `walk` in `finishHole` (the wait paid for) |
 | **A skin's ground** (drawn before the pin) | `FX.ground` (Divine, Demonic, Ascended); `golferG` (what an effect is told about him), `Scene.golferPose`, `Scene.drawGolferGround` (in the frame, before `drawFlagstick`), `Scene.golferGround`, `groundDone`; `paintGolfer`'s `noGround` |
-| **The Demonic and the Ascended** (skins, caddies, clubs, trails, balls) | `STYLEFX.demonic`, `STYLEFX.ascended`; baked stamps `fxBake` (with `crispen`, `FXBAKE`), `batWing`, `hornPair`, `runeRing`, `drawSkull`, `sleekHorns` (`hornLine`, `HORN_VIEWS`), `voidCape` (`CAPE_PAL`), `voidSigil`, `drawShard`; the aura's `outlineOf` (`occOf`); `veinsOf` (the lava cracks' pulse), `eyeAt` (`EYE_ADDR`, `EYE_FIN`, `EYE_CADDIE`), `wingAnchor`, `g.hand` (set in `paintGolfer`), `blitAs` (a copy of him drawn as he is drawn); patterns `hellcrack`, `voidplate`; the outfit field `hand`; `CLUBFX.demonic`/`ascended`; `BALLFX.tHellfire`, `demoneye`, `tAscension`, `ascorb`, `drawDemonEye`, `demonEye`, `drawVoidOrb`; tiles `ICON_FX`, `BALL_ICON`; the Mythic badge is `top: 2` |
+| **A moment for the legends** (eagle or better) | `Scene.legend`, `Scene.legendGo` (from `happyDance`), `legendNow`, `LEGEND_DUR`/`LEGEND_BIG`, `outBack`; the Ascended's `pillar`, the Demonic's `column`; `Sfx.hellfire`, `Sfx.ascend`, `Sfx.LEGEND_VOL`; cleared in `saverOn`; `DEV.legend(d)` (dev menu row Legends) |
+| **The ultimate Demonic** | `STYLEFX.demonic`: `aura` (the shared `flameAura` with `HELL_FLAME`; the Ascended's uses `VOID_FLAME`), `chains`, `cracks`, `fists`, `blast`, `charge`/`strike` (borrowed from the Ascended), `horns` (`sleekHorns(s, view, true)`, views `dside`/`dback`, colours `HORN_COL.dem`) |
+| **The Demonic and the Ascended** (skins, caddies, clubs, trails, balls) | `STYLEFX.demonic`, `STYLEFX.ascended`; baked stamps `fxBake` (with `crispen`, `FXBAKE`), `batWing`, `runeRing`, `drawSkull`, `sleekHorns` (`hornLine`, `HORN_VIEWS`), `voidCape` (`CAPE_PAL`), `voidSigil`, `drawShard`; the aura's `outlineOf` (`occOf`) and `flameAura`; `veinsOf` (the lava cracks' pulse), `eyeAt` (`EYE_ADDR`, `EYE_FIN`, `EYE_CADDIE`), `wingAnchor`, `g.hand` (set in `paintGolfer`), `blitAs` (a copy of him drawn as he is drawn); patterns `hellcrack`, `voidplate`; the outfit field `hand`; `CLUBFX.demonic`/`ascended`; `BALLFX.tHellfire`, `demoneye`, `tAscension`, `ascorb`, `drawDemonEye`, `demonEye`, `drawVoidOrb`; tiles `ICON_FX`, `BALL_ICON`; the Mythic badge is `top: 2` |
 | **Railway Crossing** | `isRail`, `RAIL_FORCE`, `P_RAIL`, `Scene.tickRail`, `railAt`, `railHold`, `railLights`, `drawRail`, `drawTrain`, `RAIL_X`/`RAIL_V`/`RAIL_LEN`/`RAIL_MEET`, `railWait` in the camera code, `Sfx.whistle`/`chuff`/`ding`, `SIG_HOME_ROUND`; `DEV.rail` |
 | **Life on the signature holes** | `DUCKS`, `Scene.duckAt`, `drawDucks`, `drawHawk` (from `drawBridge`), `fishAt`, `drawFish` (from `drawStones`), `Sfx.quack`/`hawk`/`plop` |
 | Happy dance, Seasons Seen | `Scene.happyDance`, `fairyQueue`; `S.seasonsGot`, `seasonsSeen`, `seasonsAll` |
@@ -345,8 +344,67 @@ Line numbers are approximate and drift. Search for the name instead.
    off. And `fxDot` leaves `globalAlpha` where it set it: a loop that mixes
    it with `fillRect` sets the alpha back each time round (the first aura
    drew every flame after one fading lick at that lick's alpha).
+31. **Cutting a stretch between two markers: check the second comes after
+   the first.** A patch that replaced from one marker to "the next" found
+   one earlier in the file and wrote a whole stretch in twice; the page
+   still ran (the later copies won), so it looked like an edit that did
+   nothing. Assert the order, and count a name after the edit.
 
 ## 5. What the last features do (for debugging them)
+
+### A moment for the legends (user asked, from the menu)
+
+On an eagle or better, in the Demonic or the Ascended, as the ball drops
+(`happyDance` calls `Scene.legendGo`, so it has the dance's guards: none
+while `QUIET`, in a catch-up or a wager). `Scene.legend` holds when it
+began; every effect asks `legendNow(g)` how far through it is (null for
+the caddie). 2.8s, or 3.4s and bigger on an albatross or an ace (`big`).
+`saverOn` clears it (the saver has its own clock).
+- **The Demonic**: a column of hellfire out of the pit behind him (`column`:
+  tongues side by side, the middle tallest, white-hot at the heart, licks
+  breaking off; 1.7 of his height, 2.3 when big; it sinks back into the pit
+  over the last third), the pit's eruption, the ground cracked open out to
+  1.9 of the pit (2.3), his wings raised high (a baked step of their own,
+  `ph` 12), his skulls flung out and up, spinning, and home again (six when
+  big), the flames on his horns taller. A dark smoke over the grass read as
+  holes in it and went.
+- **The Ascended**: a pillar of light up out of the sigil into the sky
+  behind him (`pillar`: a white core, magenta round it, streaks running
+  up, the edge dithered and the upper half a lattice of light so the sky
+  shows through; a solid slab first read as a pink wall), waves after
+  waves running out from the sigil, his shards burst out to 2.4 of their
+  ring (2.9) spinning and come home (six when big), his aura at full.
+- **Sounds** (`Sfx.hellfire`, `Sfx.ascend`): a boom, a rumble, a falling
+  roar and a crackle; a swell into a bright arpeggio over a low bloom.
+  Set by measure (a loudest 100ms window) no louder than the cup: 0.019
+  and 0.016 against its 0.019, with `LEGEND_VOL` 0.03.
+- Dev menu: Legends, eagle / ace (wear the skin first).
+
+### The Demonic, made the ultimate skin too (user asked, with the moment)
+
+All in `STYLEFX.demonic`, round what it had (wings, pit, runes, tail, eyes,
+veins, skulls, the eruption every 6.5s).
+- **An aura of hellfire** (`aura`, the shared `flameAura`): as the
+  Ascended's, in yellow, orange, red and a dark tip, a ninth of his height
+  (an eighteenth on the saver), low over his cap (`calm`) or it hid the
+  horns. It swells 120% at the top of the backswing.
+- **Horns** (`sleekHorns(s, view, true)`): obsidian, ribbed, lava along the
+  inside of the curve to a white-hot point; they rise and hook forward
+  (from behind, out and curling back in), 1.25 of his cap long; a flame on
+  each point and a pulse of heat running up the near one. `hornPair` is
+  gone. The first try, nearly upright, read as two posts.
+- **Two chains of fire** (`chains`): tilted rings round his hips crossing
+  each other, turning opposite ways, faster through a swing; links face on
+  (two pixels) and edge on (one) in turn, a heat running along them,
+  flames licking off the near links. Not on the saver, where they muddled
+  him.
+- **Through a swing** (`charge`, `strike`, the Ascended's): the pit glows
+  white and its runes race, his hands catch fire (`fists`), and at the
+  strike the ground cracks open out to 1.7 of the pit (`cracks`, in
+  `ground`) and fire flies off the ball (`blast`).
+- `legends` holds all of it (§ the check's header); he stays within 1.31
+  of his width either side and 0.29 of his height over him, away from the
+  pit's eruption (whose ring was always wider).
 
 ### The Ascended, made the ultimate skin (user asked: "really go nuts")
 
@@ -1227,6 +1285,10 @@ him (about 49px tall on a 320 phone, 71px on its side).
 
 ## 6. Recent history (newest first, one line each)
 
+- A moment for the legends on an eagle or better (a column of hellfire, a
+  pillar of light, with sounds), and the Demonic made the ultimate skin
+  (aura, curled horns, chains of fire, cracks at the strike).
+
 - The Ascended made the ultimate skin: a sigil, an aura of flame, a ring of
   shards, sleek horns, powering up through a swing. A skin's ground goes
   down before the pin; the saver's golfer stands clear of the edge.
@@ -1345,21 +1407,20 @@ him (about 49px tall on a 320 phone, 71px on its side).
 
 ## 8. What to offer next
 
-Everything asked for is done. First ask how the ultimate Ascended feels
-in play ("Try it" in the shop wears it for ten seconds) and whether any
-part is too much or too little.
+Everything asked for is done. First ask how the two moments feel when an
+eagle drops (the dev menu's Legends row shows them at once) and whether
+the new Demonic is too busy on the phone.
 
 The menu to offer next:
-1. **A moment for the legends** (recommended): the Demonic and Ascended
-   do something on a great hole: the pit erupts and the skulls scatter on
-   an eagle; the Ascended's sigil flares into a pillar of magenta light and
-   his shards burst out and come back on an ace; a sound for each.
-2. **The Demonic, ultimate too**: the same treatment in hellfire (an aura
-   of flame, sleeker horns, chains of fire circling him, the ground
-   cracking open at the strike).
-3. **Life on the railway**: other trains now and then (a goods train, an
-   express, a night train with glowing windows), and the golfer and his
-   caddie wave as it goes by.
-4. **Weather on the signature holes**: rain rings on the island's lake,
+1. **Life on the railway** (recommended): other trains now and then (a
+   goods train, an express, a night train with glowing windows), and the
+   golfer and his caddie wave as it goes by.
+2. **Weather on the signature holes**: rain rings on the island's lake,
    snow settling on the train and the bridge, spray thicker in a storm.
-5. **A Signature Week honour**: all five kinds played in one real week.
+3. **A Signature Week honour**: all five kinds played in one real week.
+4. **The Divine, ultimate too**: the third of the top skins given the same
+   treatment in gold (a moment of its own on a great hole: the heavens
+   opening, a choir's chord).
+5. **Legendary moments for the lesser skins**: a small flourish for each
+   of the other effect skins on an eagle (the Inferno flares, the
+   Frostborn's ground freezes out).
