@@ -14288,7 +14288,11 @@ const Scene = {
   holeWait(){
     const I = this.isle;
     if(QUIET || OFFLINE || S.dgnRun || this.hole !== S.hole) return false;
-    if(performance.now() - (this.drawnAt || 0) > 250) return false;
+    // (shown on the last frame the page ran: a quarter second since it was
+    // drawn read a phone's hitch as nobody watching, and the hole went on
+    // without his putt; the user saw it. A menu over the field, the saver
+    // or a hidden page still let it go.)
+    if(this.onShow === false || (this.onShow === undefined && performance.now() - (this.drawnAt || 0) > 250)) return false;
     // (still crossing counts: the last hundredth of a step before the far
     // side read as neither across nor on the way, and let the hole go)
     if(I && (this.crossing || this.camD < I.land - 0.05)) return true;
@@ -20406,6 +20410,7 @@ function frameBody(now){
 
   let D = derive();
   if(SAVER){
+    Scene.onShow = false;
     for(let t = dt; t > 1e-6; t -= B.TICK_MAX){
       step(Math.min(B.TICK_MAX, t), D);
       if(t > B.TICK_MAX) D = derive();
@@ -20415,7 +20420,9 @@ function frameBody(now){
     step(dt, D);
     // No point painting the hole while the menu is over it. The sim runs on
     // regardless; only the drawing stops.
-    if(!$('app').classList.contains('big') || (SIDEWAYS && SIDEWAYS.matches)) Scene.draw(dt, D);
+    const shown = !$('app').classList.contains('big') || (SIDEWAYS && SIDEWAYS.matches);
+    if(shown) Scene.draw(dt, D);
+    Scene.onShow = !!shown;
     renderLive(D);
   }
   Sfx.tick(dt);
