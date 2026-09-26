@@ -11960,6 +11960,24 @@ const Scene = {
       if(this.hitsHazard(d, x, 1.2) || put.some(p => p.kind === 7 && Math.abs(p.d - d) < 2.2)) continue;
       put.push({ kind: 7, d, x, rd, rx, k: i });
     }
+    // birds on the fairway (kind 9), two little groups pecking about, that
+    // fly off when a ball comes down near them or he walks up; not on a
+    // signature hole, which has its own life
+    this.birdUp = {};
+    if(!sigKind(this.hole)) for(let a = 0, g = 0; a < 12 && g < 2; a++){
+      const gd = 12 + hr(this.hole * 61 + a, 330) * (LEN - 30), gx = (hr(this.hole * 61 + a, 331) - 0.5) * 0.9 * this.fwWidth(gd);
+      if(this.hitsHazard(gd, gx, 1.6) || !this.onPlay(gd, gx, 0)
+         || put.some(q => q.kind === 9 && Math.abs(q.d - gd) < 9)) continue;
+      g++;
+      const n = 3 + Math.floor(hr(this.hole * 61 + a, 332) * 3);
+      for(let i = 0; i < n * 3 && put.filter(q => q.kind === 9 && q.g === g).length < n; i++){
+        const d = gd + (hr(this.hole * 67 + g * 17 + i, 333) - 0.5) * 5, x = gx + (hr(this.hole * 67 + g * 17 + i, 334) - 0.5) * 3;
+        // (apart, or at his size a group reads as one dark bar)
+        if(!this.onPlay(d, x, 0) || this.hitsHazard(d, x, 0.6)
+           || put.some(q => q.kind === 9 && Math.abs(q.d - d) < 1.1 && Math.abs(q.x - x) < 0.7)) continue;
+        put.push({ kind: 9, d, x, g, k: this.hole * 11 + g * 7 + i, dir: hr(this.hole * 71 + i, 335) < 0.5 ? -1 : 1 });
+      }
+    }
     put.sort((a, b) => b.d - a.d);
     this.props = put;
   },
@@ -14356,6 +14374,7 @@ Object.assign(Scene, {
       // rope is still crossing the bottom of the frame.
       const back = p.kind === 2 && p.nd !== undefined ? p.nd : p.d;
       if(back < this.camD - 5) continue;
+      if(p.kind === 9){ if(!S.dgnRun && !night && !this.rain) this.drawBird(c, p); continue; }
       const pr = this.proj(p.d, p.x);
       if(pr.s < 0.05) continue;
       // Ground is drawn with occlusion but props were not, so a tree standing
@@ -14377,6 +14396,80 @@ Object.assign(Scene, {
         continue;
       }
       this.drawProp(c, T, night, p, pr);
+    }
+  },
+
+  // A bird on the fairway: a dark back, a paler breast, pecking now and then.
+  // Its group flies off together once a ball lies within a few paces of it
+  // or he walks up to it: up and out to the side on beating wings, gone in
+  // under two seconds. Every pixel cut at the ground's line where it is, so
+  // nothing shows through a rise.
+  drawBird(c, p){
+    const up = this.birdUp || (this.birdUp = {});
+    if(up[p.g] === undefined){
+      const R = this.restBall, near = (R && Math.abs(R.d - p.d) < 6 && Math.abs(R.lat - p.x) < 5)
+        || (p.d - this.camD < 5.5 && p.d - this.camD > -3);
+      if(near) up[p.g] = this.t;
+    }
+    const u = up[p.g] === undefined ? -1 : this.t - up[p.g] - hr(p.k, 336) * 0.18;
+    if(u > 1.9) return;
+    const f = Math.max(0, u);
+    const fd = p.d + f * 1.2, fx = p.x + p.dir * (f * 3.2 + f * f * 2), fh = u < 0 ? 0 : 0.25 + f * 2.6 + f * f * 3.4;
+    if(fd < this.camD - CAM_BACK + ROPE_REL) return;
+    const pr = this.proj(fd, fx, fh);
+    if(pr.s < 0.05 || pr.x < -6 || pr.x > VW + 6) return;
+    const k = clamp(Math.round(pr.s * US * 1.6), 1, 3), clip = this.clipAt(fd), x = Math.round(pr.x), y = Math.round(pr.y);
+    if(u < 0){
+      // on the ground: pecking (its head down) a moment in every few seconds
+      const pk = Math.sin(this.t * (1.3 + hr(p.k, 337)) + p.k) > 0.8;
+      c.fillStyle = '#3B2F27'; fillClip(c, x - k, y - k * 2, k * 3, k, clip);
+      fillClip(c, p.dir > 0 ? x - k * 2 : x + k * 2, y - k * 2 - (k > 1 ? 1 : 0), k, k, clip);   // its tail
+      c.fillStyle = '#9A7650'; fillClip(c, x - k, y - k, k * 2, k, clip);
+      c.fillStyle = '#3B2F27';
+      if(pk) fillClip(c, x + k * p.dir * 2 - (p.dir < 0 ? k : 0), y - k, k, k, clip);
+      else fillClip(c, x + (p.dir > 0 ? k * 2 : -k * 2), y - k * 3, k, k, clip);
+      return;
+    }
+    // in the air: a body and two wings, up and down
+    const beat = Math.sin(this.t * 26 + p.k) > 0;
+    c.fillStyle = '#2E2A26';
+    fillClip(c, x - k, y, k * 3, k, clip);
+    fillClip(c, x - k * 3, y + (beat ? -k : k), k * 2, k, clip);
+    fillClip(c, x + k * 2, y + (beat ? -k : k), k * 2, k, clip);
+  },
+  // Now and then a flock crosses the sky, high over the hills, in a loose
+  // line; never at night, in the rain or in a wager. Times and shapes from
+  // a hash of the scene's own clock, not Math.random (the checks count on
+  // its sequence).
+  drawFlock(){
+    if(S.dgnRun || this.night || this.rain){ this.flock = null; return; }
+    if(this.flockNext === undefined || this.flockNext > this.t + 60) this.flockNext = this.t + 6 + hr(this.hole, 340) * 14;
+    if(!this.flock && this.t >= this.flockNext){
+      const n = (this.flockN = (this.flockN || 0) + 1);
+      // (below the readout, which the first flew behind, and over the hills)
+      const rd = typeof document !== 'undefined' && document.getElementById('readout'), cv = this.cv;
+      let top = HORIZON * 0.3;
+      if(rd && cv && rd.offsetParent){ const k = cv.getBoundingClientRect().height / Math.max(1, VH);
+        if(k > 0) top = (rd.getBoundingClientRect().bottom - cv.getBoundingClientRect().top) / k; }
+      const lo = Math.max(top + 10 * TSC, HORIZON * 0.36), hi = Math.max(lo, HORIZON * 0.56);
+      this.flock = { t0: this.t, dir: hr(n, 341) < 0.5 ? -1 : 1, y: lo + hr(n, 342) * (hi - lo), m: 5 + Math.floor(hr(n, 343) * 5),
+                     v: 0.07 + hr(n, 344) * 0.04, n };
+      this.flockNext = this.t + 22 + hr(n, 345) * 26;
+    }
+    const F = this.flock;
+    if(!F) return;
+    const c = this.b, k = TSC, span = VW + 90 * k, u = (this.t - F.t0) * F.v * VW;
+    if(u > span){ this.flock = null; return; }
+    c.fillStyle = '#343A40';
+    for(let i = 0; i < F.m; i++){
+      const lag = i * 8 * k + hr(F.n * 13 + i, 346) * 5 * k;
+      const px = F.dir > 0 ? Math.round(-lag + u) : Math.round(VW + lag - u);
+      const py = Math.round(F.y + ((i & 1) ? 1 : -1) * Math.ceil(i / 2) * 1.6 * k + Math.sin(this.t * 0.9 + i) * k);
+      if(px < -4 * k || px > VW + 4 * k || py < 0) continue;
+      const beat = Math.sin(this.t * 9 + i * 1.3) > 0;
+      c.fillRect(px, py, k, k);
+      c.fillRect(px - 2 * k, py + (beat ? -k : 0), k * 2, k);
+      c.fillRect(px + k, py + (beat ? -k : 0), k * 2, k);
     }
   },
 
@@ -15959,6 +16052,7 @@ Object.assign(Scene, {
         this.swingT = this.swingDur; this.pendingBall = q;
       }
       if(this.sky) c.drawImage(this.sky, 0, 0);
+      this.drawFlock();
       this.drawRidge();
       this.drawGround();
       this.drawFarFade();
