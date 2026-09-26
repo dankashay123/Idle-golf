@@ -78,9 +78,13 @@ module.exports = {
         if (Scene.swingT > 0) o.swung++;
         if (Scene.putt && Scene.putt.wager && Scene.putt !== lastPutt) { o.putts++; lastPutt = Scene.putt; }
         if (Scene.putt && Scene.putt.wager && (Scene.t - Scene.putt.t0) / Scene.putt.k > PUTT_HIT + 0.1) o.rolled++;
+
       }
+      // a putt that drops ends in the cup (it ran to the course's pin, off his line)
+      { const keepP = Scene.putt; Scene.wagerPutt(true, 0, 2); const e = Scene.puttBall(PUTT_HIT + PUTT_ROLL); o.off = Math.abs(e.lat - Scene.pinX()) + Math.abs(e.d - LEN); Scene.putt = keepP; }
       delete S.dgnRun; return o;
     });
+    if (tw.off > 0.15) f('a putt that dropped in the Twilight Putt finished ' + tw.off.toFixed(2) + ' off the cup');
     if (Math.abs(tw.cam0 - tw.spot) > 0.05) f('the Twilight Putt starts him at ' + tw.cam0.toFixed(2) + ', not on the green at ' + tw.spot.toFixed(2) + ' (he glided up to it)');
     if (tw.swung) f('in the Twilight Putt he swung ' + tw.swung + ' frames: it is putts, not chips');
     if (!(tw.putts >= 2) || !(tw.rolled > 5)) f('in five seconds of the Twilight Putt ' + tw.putts + ' putts were struck and ' + tw.rolled + ' frames rolled');

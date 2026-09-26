@@ -2722,7 +2722,7 @@ const B = {
     { id:'drive',   n:'Drive',   ic:'muscle', d:'Yardage on every swing',  v:'+1.2% swing power',
       mile:{ at:60, n:'Off The Tee', d:'First swing of each hole hits triple' } },
     { id:'tempo',   n:'Tempo',   ic:'beat',   d:'Swings per second',       v:'+0.30% tempo',
-      mile:{ at:60, n:'Quick Play', d:'Almost no walk between holes' } },
+      mile:{ at:60, n:'Quick Play', d:'A hole can end almost at once' } },
     { id:'touch',   n:'Touch',   ic:'touch',  d:'Contact off the middle',  v:'+0.10pp pure, +0.03x payoff',
       mile:{ at:60, n:'Flush', d:'Pure strikes ignore armour' } },
     { id:'fortune', n:'Fortune', ic:'coins',  d:'What the week is worth',  v:'+0.7% purse, +0.08pp luck',
@@ -2791,7 +2791,10 @@ const B = {
         { id:'gallery', n:'Sunday Gallery', req:0,  max:5, k:'sunday', v:0.14,  d:'+14% purse on Sunday holes' },
         { id:'spotter', n:'Sponsor Eye',    req:0,  max:5, k:'look2',  v:0.12,  d:'12% chance a new club rolls twice and you keep the better one' },
         { id:'home',    n:'Home Fixture',   req:5,  max:5, k:'wfeat',  v:0.12,  d:'+12% from the stake of the day' },
-        { id:'walker',  n:'Fast Walker',    req:5,  max:5, k:'walk',   v:0.04,  d:'Walk between holes 4% faster' },
+        // (a hole never ends in under WALK_MIN, however fast the bag: this cuts
+    // that least time, so it helps a bag that clears a hole in under a
+    // second. It was worded as a walk, which it never was.)
+    { id:'walker',  n:'Fast Walker',    req:5,  max:5, k:'walk',   v:0.04,  d:'The least time a hole takes, 4% shorter' },
         { id:'delve',   n:'Head Start',     req:12, max:3, k:'dfloor', v:1,     d:'Wagers start one level further in' },
         { id:'school',  n:'Tour School',    req:12, max:5, k:'xp',     v:0.10,  d:'+10% experience' },
         { id:'sharp',   n:'Card Sharp',     req:22, max:1, k:'sharp',  v:1,     d:'Wager entries refill 40% faster and runs last 40% longer' }
@@ -3752,14 +3755,23 @@ const hourNow = () => HOUR_FORCE !== null ? HOUR_FORCE : new Date().getHours();
 // Dawn and dusk (the user asked, as a setting, off by default: a course
 // built for the day or the night keeps it whatever the time): with it on,
 // the sky warms towards the horizon from five to half past eight in the
-// morning and from five to half past eight in the evening, by the player's
+// morning and from five to nine in the evening, by the player's
 // own clock. Never at night or in the rain. How warm, in fifths, and which.
 const dawnDusk = () => {
   if(S.dawnDusk !== 1) return null;
   const h = HOUR_FORCE !== null ? HOUR_FORCE : new Date().getHours() + new Date().getMinutes() / 60;
   const tent = (a, pk, b) => h <= a || h >= b ? 0 : h < pk ? (h - a) / (pk - a) : (b - h) / (b - pk);
-  const dn = tent(5, 6.25, 8.5), dk = tent(17, 19, 20.5), w = Math.round(Math.max(dn, dk) * 5) / 5;
+  const dn = tent(5, 6.25, 8.5), dk = tent(17, 19.2, 21), w = Math.round(Math.max(dn, dk) * 5) / 5;
   return w > 0 ? { w, dawn: dn > dk } : null;
+};
+// And night by the player's clock, with the setting on (the user found it
+// light at midnight): from nine in the evening to five in the morning a hole
+// is played in the dark. It only ever adds night: a round built for the
+// night keeps it at noon, and with the setting off the clock does nothing.
+const clockNight = () => {
+  if(S.dawnDusk !== 1) return false;
+  const h = HOUR_FORCE !== null ? HOUR_FORCE : new Date().getHours() + new Date().getMinutes() / 60;
+  return h >= 21 || h < 5;
 };
 const DAWN_COL = { dawn: ['#F6B98E', '#E596A6'], dusk: ['#F2904A', '#C9637E'], sun: '#FFE7A8' };
 const frostFor = (cs, tier) => FROST_FORCE !== null ? !!FROST_FORCE
@@ -11466,6 +11478,9 @@ function trailNormal(path){
 // tail to head, fading toward the tail; col and off (a distance across the
 // flight) may be functions of the point's index
 function trailRibbon(c, path, w, col, a, off){
+  // (a pixel thinner than asked wherever it is three or more across: the
+  // user found the trails a touch heavy; the one and two pixel spines stay)
+  if(w >= 3) w -= 1;
   const n = path.length, half = w >> 1, N = off ? trailNormal(path) : null;
   for(let i = n - 1; i >= 1; i--){
     const p0 = path[i], p1 = path[i - 1], f = i / n;
@@ -13104,7 +13119,7 @@ const Scene = {
     this.roll = 1;
     this.greenH = (rnd()*2 - 1) * 3.4;   // uphill or downhill to the green
     const ch = S.chaos ? S.chaos.n : 'Fair';
-    this.night  = /Night/.test(ch);
+    this.night  = /Night/.test(ch) || clockNight();
     this.aurora = /Aurora|Ley|Mythic/.test(ch);
     this.rain   = /Crosswind|Marshal/.test(ch);
     this.wind   = (rnd()*2 - 1) * 0.7;
@@ -13219,6 +13234,7 @@ const Scene = {
     this.camD = 0; this.restBall = null; this.walkTo = 0;
     this.train = null; this.trainMet = 0; this.trainNext = this.t + 8;
     this.upT = 0; this.saidHole = null; this.putt = null; this.cupT = 0; this.cupHeard = 0;
+    this.galleryUp = null;          // (the last hole's gallery cheered on into this one)
     // A swing still playing when the last hole ended belonged to that hole: it
     // finished it. Carried over, it hit a ball a yard off the new tee that
     // counted for nothing, and he stood and hit again.
@@ -13525,7 +13541,8 @@ const Scene = {
     const u = clamp((T - PUTT_HIT) / PUTT_ROLL, 0, 1), L0 = this.teeLat === undefined ? 0.42 : this.teeLat;
     const q = 1 - (1 - u) * (1 - u);                         // slowing as it goes
     const sm = x => x <= 0 ? 0 : x >= 1 ? 1 : x * x * (3 - 2 * x);
-    const P = this.putt, end = P.miss ? LEN + 1.4 : LEN, to = PIN_X + (P.miss ? P.miss : 0);
+    // (to the cup where it is: on a wager's green the pin stands on his line)
+    const P = this.putt, end = P.miss ? LEN + 1.4 : LEN, to = this.pinX() + (P.miss ? P.miss : 0);
     return { u, d: P.d0 + (end - P.d0) * q,
              lat: L0 + (to - L0) * sm(q) + 0.12 * Math.sin(Math.PI * q) };
   },
@@ -19107,7 +19124,8 @@ function talDesc(t, n){
   if(t.k === 'dfloor') return '+' + v + ' ' + plural(v, 'levels');
   // Worded as the row's own description reads, so the total never argues
   // with the line above it.
-  if(t.k === 'cdr' || t.k === 'walk') return Math.round(v*100) + '%\u00a0faster';
+  if(t.k === 'walk') return Math.round(v*100) + '%\u00a0shorter';
+  if(t.k === 'cdr') return Math.round(v*100) + '%\u00a0faster';
   return '+' + Math.round(v*100) + '%';
 }
 function achReward(a){
@@ -19490,7 +19508,7 @@ function settingsSheet(){
     + row('Night Music', S.music === 0 || S.sound === 0 ? 'Needs Music on' : 'A calmer tune at night and in wagers',
         '<button class="mini' + (S.music2 !== 0 ? ' go' : '') + '" onclick="toggleMusic2()">'
         + (S.music2 !== 0 ? 'On' : 'Off') + '</button>')
-    + row('Dawn and Dusk', 'The sky follows your clock',
+    + row('Dawn and Dusk', 'Day and night follow your clock, from the next hole',
         '<button class="mini' + (S.dawnDusk === 1 ? ' go' : '') + '" onclick="toggleDawn()">'
         + (S.dawnDusk === 1 ? 'On' : 'Off') + '</button>')
     + row('Battery Saver', saverMins() ? 'After ' + saverMins() + '\u00a0min untouched' : 'Only when started',

@@ -8,9 +8,11 @@
  *     the lower sky than at noon, and a low sun on the east side in the
  *     morning, the west in the evening); at noon it is the plain sky
  *   - never at night or in the rain: those skies are the same on or off
- *   - the clock never picks day or night: across forty holes, the weather
- *     (a Night Round among it) is the same at two in the morning and at two
- *     in the afternoon, with the setting on or off
+ *   - off, the clock never picks day or night: across forty holes the
+ *     weather (a Night Round among it) is the same at two in the morning
+ *     and two in the afternoon; on, the weather is the same too, no night
+ *     is added by day, and every hole is dark from nine at night to five
+ *     in the morning (the user found it light at midnight with it on)
  *   - the setting is a row in Settings that turns it on and off, and a
  *     broken value in a save is cleared on load
  */
@@ -64,10 +66,17 @@ module.exports = {
           const out = []; const h0 = S.hole;
           for (let k = 0; k < 40; k++) { S.hole = h0 + k * 3; startHole(); out.push((S.chaos ? S.chaos.n : '') + (Scene.night ? '*' : '')); }
           S.hole = h0; return out.join(','); };
-        const base = weathers(14, false);
+        const base = weathers(14, false), wx = t => t.split(',').map(x => x.replace('*', '')).join(',');
         o.nights = base.split(',').filter(x => x.indexOf('*') >= 0).length;
-        for (const [hr, on] of [[2, false], [2, true], [14, true], [6, true], [19, true]])
+        // off, the clock changes nothing; on, it never changes the weather,
+        // adds no night by day, and makes every hole dark at two in the
+        // morning (the user found it light at midnight with it on)
+        for (const [hr, on] of [[2, false], [14, true], [6, true], [19, true]])
           if (weathers(hr, on) !== base) f('the weather or the night changed with the clock at ' + hr + (on ? ' with the setting on' : ''));
+        const late = weathers(2, true), dusk = weathers(22.5, true);
+        if (wx(late) !== wx(base)) f('with the setting on the weather changed at two in the morning');
+        o.lateNights = late.split(',').filter(x => x.indexOf('*') >= 0).length;
+        if (o.lateNights !== 40 || dusk.split(',').filter(x => x.indexOf('*') >= 0).length !== 40) f('with the setting on, ' + o.lateNights + ' of 40 holes were dark at two in the morning');
         // the row in Settings, and a broken save
         delete S.dawnDusk; QUIET = false; settingsSheet();
         const rowBtn = () => [...document.querySelectorAll('#sheet .setrow')].find(r => r.querySelector('.nm').textContent === 'Dawn and Dusk');
@@ -93,6 +102,6 @@ module.exports = {
     });
     if (r.fails.length) throw new Error(r.fails.join('\n'));
     return ['off by default and changes nothing; on, the low sky warms (red less blue, noon/dawn/dusk: ' + r.rows.join(', ') + ') with a low sun east then west; the same at noon, at night and in the rain',
-      'forty holes play the same weather at 2am and 2pm, on or off (' + r.nights + ' of them at night); a row in Settings turns it on and off; a broken save is cleared'];
+      'forty holes play the same weather at 2am and 2pm, on or off (' + r.nights + ' of them at night); on, all ' + r.lateNights + ' dark at 2am; a row in Settings turns it on and off; a broken save is cleared'];
   }
 };

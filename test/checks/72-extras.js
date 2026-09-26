@@ -29,6 +29,10 @@ module.exports = {
         Scene.t = Scene.galleryUp.t0 + 0.2; const up = pic();
         Scene.t = Scene.galleryUp.t0 + GALLERY_UP + 0.05; const after = pic();
         Scene.galleryUp = null; Scene.t = 20; const back = pic();
+        // (and it stops at the next hole: it cheered on over the next tee)
+        Scene.happyDance(-3); Scene.newHole(S.hole + 1, S.tier); o.nextHole = Scene.galleryUp;
+        if (o.nextHole) f('the gallery was still cheering on the next hole');
+        S.hole = 3; startHole(); Scene.announce = null; Scene.camD = LEN - 10; Scene.walkTo = Scene.camD; Scene.draw(0, D); Scene.t = 20;
         o.gal = [diff(up, still), gal.length].join('/');
         if (o.birdie) f('the gallery jumped on a birdie');
         if (!o.eagle || !(diff(up, still) > 100)) f('the gallery did not jump and wave on an eagle (' + o.gal + ')');
