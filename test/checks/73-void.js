@@ -86,6 +86,15 @@ module.exports = {
           o.far += off.filter(([x, y]) => !plain.has(x + ',' + y)).length; o.frames++;
         }
         if (o.far) f(o.far + ' pixels of the skin drawn far from him across ' + o.frames + ' frames');
+        // ---- his caddie: plated and orbed like him (the user asked) ----
+        { S.styleOwn['c:cosmic'] = 1; S.caddie = 'cosmic'; S.outfit = 'classic'; buildSprites(); Scene.fairyMove = null; Scene.swingT = 0; Scene.walkOn = false; Scene.t = 40;
+          const keepW = window.step; window.step = () => {};
+          try { Scene.draw(0, derive()); const P = Scene.golferPose(), F = Scene.fairyBox(P.x, P.y, P.w, P.h);
+            const d = Scene.b.getImageData(Math.max(0, F.x - 8), Math.max(0, F.y - 8), F.w + 16, F.h + 16).data; const n = { pink: 0, gold: 0, plate: 0 };
+            for (let i = 0; i < d.length; i += 4) { const k = col(d, i); if (k === '#FF7AD9' || k === '#E08CFF') n.pink++; if (k === '#D8B060' || k === '#9A7432' || k === '#F4DC96') n.gold++; if (k === '#141030' || k === '#3E2A6E') n.plate++; }
+            o.caddie = n; } finally { window.step = keepW; }
+          S.outfit = 'cosmic'; buildSprites();
+          if (!(o.caddie.pink >= 6 && o.caddie.gold >= 6 && o.caddie.plate >= 6)) f('his caddie\'s orbs, crescent and plate: ' + JSON.stringify(o.caddie)); }
         // ---- no sound on its moment ----
         const played = [], keep = Sfx.play; Sfx.play = function (k) { played.push(k); };
         try { QUIET = false; Scene.legend = null; Scene.happyDance(-4); QUIET = true; } finally { Sfx.play = keep; }
@@ -109,6 +118,6 @@ module.exports = {
     if (r.fails.length) throw new Error(r.fails.join('; '));
     return ['the set, all Mythic: ' + r.set + '; a save with the Spirit Blossom now wears The Void',
       'all of him: a hood peaked over his cap (' + r.peak + 'px), a gold mask (' + r.mask + ') with a violet eye, a black hole on his chest (' + r.orb.join('/') + '), a crescent off his shoulder (' + r.crescent + '), gold at the knee, a cloak of stars to his heels (' + r.cloak + ', ' + r.cloakStars + ' stars)',
-      'ghostly hands behind him (' + r.hands + 'px) and either side walking away (' + r.backHands.join('/') + '), the cloak down his back; nothing far from him across ' + r.frames + ' frames; no sound on its moment'];
+      'his caddie plated and orbed (' + r.caddie.pink + 'px of orb, ' + r.caddie.gold + ' of gold, ' + r.caddie.plate + ' of plate); ghostly hands behind him (' + r.hands + 'px) and either side walking away (' + r.backHands.join('/') + '), the cloak down his back; nothing far from him across ' + r.frames + ' frames; no sound on its moment'];
   }
 };
