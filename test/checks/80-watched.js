@@ -29,7 +29,8 @@ module.exports = {
         if (!(o.holes >= 3) || o.skipped) f(o.skipped + ' of ' + o.holes + ' holes ended without the putt after one slow frame');
         // the menu over the field: nobody is watching it
         document.getElementById('app').classList.add('big');
-        await new Promise(res => requestAnimationFrame(() => requestAnimationFrame(res)));
+        // (a few frames: the hole asks whether it was drawn in the last few steps)
+        for (let i = 0; i < 8; i++) await new Promise(res => requestAnimationFrame(res));
         o.menuWaits = Scene.holeWait();
         document.getElementById('app').classList.remove('big');
         await new Promise(res => requestAnimationFrame(() => requestAnimationFrame(res)));

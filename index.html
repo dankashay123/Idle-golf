@@ -14292,7 +14292,12 @@ const Scene = {
     // drawn read a phone's hitch as nobody watching, and the hole went on
     // without his putt; the user saw it. A menu over the field, the saver
     // or a hidden page still let it go.)
-    if(this.onShow === false || (this.onShow === undefined && performance.now() - (this.drawnAt || 0) > 250)) return false;
+    // (drawn within the last few steps of the round: a quarter second since
+    // it was drawn read a phone's hitch, one slow frame, as nobody watching,
+    // and the hole went on without his putt; the user saw it. A menu over
+    // the field or the saver runs step after step undrawn, and still lets
+    // it go.)
+    if((this.stepN || 0) - (this.drawnN || 0) > 3) return false;
     // (still crossing counts: the last hundredth of a step before the far
     // side read as neither across nor on the way, and let the hole go)
     if(I && (this.crossing || this.camD < I.land - 0.05)) return true;
@@ -17588,7 +17593,7 @@ Object.assign(Scene, {
         if(this.hole === S.hole && isSunday(S.hole) && holeInRound(S.hole) === B.ROUND && !S.dgnRun
            && (this.props || []).some(q => q.kind === 10)){ this.cheerT = this.t; Sfx.play('cheer'); } }
       if(this.cupT && up && S.doneT != null && this.saidHole !== S.hole) holeSaid();
-      this.drawnAt = performance.now();
+      this.drawnAt = performance.now(); this.drawnN = this.stepN || 0;
       // walking: the camera is carrying him on and he is not mid-swing. A new
       // hole puts the camera back on the tee, which is not a walk.
       const v = dt > 0 ? (this.camD - cam0) / dt : 0;
@@ -20172,6 +20177,8 @@ function addPara(cat, a, n){
    THE LOOP
    ========================================================================= */
 function step(dt, D){
+  // (counted, so the hole's wait can ask whether the course is being drawn)
+  Scene.stepN = (Scene.stepN || 0) + 1;
   // These run on wall time wherever you are: buff timers, perk timers, keys
   // coming back, the income meter.
   for(const k in S.buff){
@@ -20410,7 +20417,6 @@ function frameBody(now){
 
   let D = derive();
   if(SAVER){
-    Scene.onShow = false;
     for(let t = dt; t > 1e-6; t -= B.TICK_MAX){
       step(Math.min(B.TICK_MAX, t), D);
       if(t > B.TICK_MAX) D = derive();
@@ -20420,9 +20426,7 @@ function frameBody(now){
     step(dt, D);
     // No point painting the hole while the menu is over it. The sim runs on
     // regardless; only the drawing stops.
-    const shown = !$('app').classList.contains('big') || (SIDEWAYS && SIDEWAYS.matches);
-    if(shown) Scene.draw(dt, D);
-    Scene.onShow = !!shown;
+    if(!$('app').classList.contains('big') || (SIDEWAYS && SIDEWAYS.matches)) Scene.draw(dt, D);
     renderLive(D);
   }
   Sfx.tick(dt);
