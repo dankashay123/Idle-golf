@@ -206,14 +206,17 @@ module.exports = {
         {
           const dr = $('drawer'), sr = $('stage').getBoundingClientRect(), mpE = $('holeMap');
           const per = Scene.scale / Math.min(3, devicePixelRatio);
-          const low = sr.top + (Scene.hudBase() + FHS * TSC + 1) * per;
+          // (the words are on the page now, in the interface's sans serif)
+          const hw = $('hudWords'), hr = hw.getBoundingClientRect();
+          if (getComputedStyle(hw).display === 'none' || !hw.textContent.trim()) o.hit.push('the weather words are not shown');
+          const low = hr.bottom;
           const mapOn = mpE && getComputedStyle(mpE).display !== 'none', mr = mapOn && mpE.getBoundingClientRect();
           const tabTop = dr && dr.offsetParent ? dr.getBoundingClientRect().top : sr.bottom;
           if (mapOn) {
             if (low > mr.top + 0.5) o.hit.push('the weather words run ' + (low - mr.top).toFixed(1) + 'px down behind the map');
             if (mr.bottom > tabTop + 0.5) o.hit.push('the map runs ' + (mr.bottom - tabTop).toFixed(1) + 'px down behind the pull tab');
             if (tabTop - mr.bottom > 24) o.hit.push('the map stands ' + (tabTop - mr.bottom).toFixed(0) + 'px above the pull tab, not just over it');
-            const right = sr.left + (Scene.hudRight() + 1) * per;
+            const right = hr.right;
             if (Math.abs(right - mr.right) > per * 2 + 1) o.hit.push('the weather words end at ' + right.toFixed(0) + ' and the map at ' + mr.right.toFixed(0));
           } else if (low > tabTop + 0.5) o.hit.push('the weather words ' + (low - tabTop).toFixed(1) + 'px behind the pull tab');
         }

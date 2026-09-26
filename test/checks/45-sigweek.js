@@ -222,6 +222,8 @@ module.exports = {
             window.drawTextS = function (c, str) { words.push(String(str)); return og.apply(this, arguments); };
             const D = derive();
             Scene.draw(0.2, D); words.length = 0; Scene.draw(0.2, D);
+            // (the words on the map are on the page, over the field)
+            words.push(...[...document.getElementById('hudWords').children].map(e => e.textContent));
             window.drawTextS = og;
             const cv = document.getElementById('holeMap'), mw = cv.width, mh = cv.height;
             const shown = Scene.mapOn && cv.style.display !== 'none';
