@@ -49,7 +49,8 @@ the handoff notes until I tell you to").
   see night holes at night and day holes during the day". So anything that
   follows the real time of day for how a course looks (dawn and dusk, next
   to build) is a setting the player turns on, off by default. It is only
-  the day/night look; other options for course looks aren't wanted.
+  the day/night look; other options for course looks aren't wanted, and
+  what exists already (frost on cold mornings) stays as it is.
 - **Effects stay short and close.** A skin's moment on a great hole comes
   only on an albatross or an ace, lasts half a second and bursts out from
   his outline; nothing climbs the sky. A fast bag aces every hole, so

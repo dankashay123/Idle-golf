@@ -64,8 +64,8 @@ What each part means and what is already known:
    players to only see night holes at night and day holes during the day."
    So the real clock must never decide day or night on its own; the
    switch is only for the time-of-day look. Frost also follows the clock
-   (mornings), though it is weather, not day or night: ask whether it
-   should go under the same switch. A switch in Settings like Night
+   (mornings); the user said "anything that exists already can stay as it
+   is", so frost stays as it is, outside the switch. A switch in Settings like Night
    Music (`S.dawnDusk`, repaired on load). Likely in `buildSky` (its cache
    key must carry it) plus perhaps a low sun; not at night or in rain.
 6. **Birds** (menu item 4): a flock crossing the sky now and then, and
