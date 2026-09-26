@@ -5473,6 +5473,16 @@ function dgnPayout(d, D){
            note: cleared + '\u00a0floor' + (cleared === 1 ? '' : 's') + ' deep', floors: cleared };
 }
 
+// Where on the hole each contest is played from (a share of it): the tee for
+// the Long Drive, out by the water for the Island Green, short of the green
+// for the chips, the approach for the Scramble, on the green for the putts
+// (where he putts out on the course);
+// the Vault's floor walked as its work is done.
+function wagerSpot(R){
+  return R.mode === 'drive' ? 0.03 : R.mode === 'island' ? 0.60 : R.mode === 'chip' ? 0.76
+       : R.mode === 'scramble' ? 0.70 : R.mode === 'twilight' ? (LEN - B_GREEN_STAND) / LEN
+       : clamp(1 - R.work / Math.max(1e-9, R.full), 0, 1);
+}
 function startDgn(d){
   if(S.dgnRun){ toast('One wager at a time'); return; }
   if(S.dgnKeys[d.id] < 1){ toast('No entries left for ' + d.n); return; }
@@ -5620,8 +5630,7 @@ function tickDgn(dt, D){
       R.shot++;
       const drop = Math.random() < B.TWI_Q;
       R.log.push(drop ? 1 : 0);
-      Scene.aimed(D.pow * 0.25, D.ball && D.ball.el, Scene.holeLen(),
-                  drop ? 0 : (Math.random()-0.5)*1.6, drop);
+      Scene.wagerPutt(drop, drop ? 0 : (Math.random() < 0.5 ? -1 : 1) * (0.5 + Math.random() * 0.6), R.gap);
       if(drop){
         R.made++;
         R.pot += yieldAt(R.f0 + R.made*B.TWI_STEP, D, d);
@@ -13176,6 +13185,12 @@ const Scene = {
     this.hills = [[], []];
     for(let L = 0; L < 2; L++) for(let i = 0; i <= 40; i++) this.hills[L].push(rnd());
     this.camD = 0; this.restBall = null; this.walkTo = 0;
+    // (a putt left over from the course: its ball sat at the cup through
+    // the whole Scramble)
+    this.putt = null; this.cupT = 0; this.cupHeard = 0; this.upT = 0;
+    // each contest played from its own place from the first frame: he glided
+    // onto the Twilight Putt's green from the tee
+    if(R.mode !== 'floor') this.camD = wagerSpot(R) * LEN;
     // A swing still playing when the last hole ended belonged to that hole: it
     // finished it. Carried over, it hit a ball a yard off the new tee that
     // counted for nothing, and he stood and hit again.
@@ -13398,8 +13413,17 @@ const Scene = {
     const u = clamp((T - PUTT_HIT) / PUTT_ROLL, 0, 1), L0 = this.teeLat === undefined ? 0.42 : this.teeLat;
     const q = 1 - (1 - u) * (1 - u);                         // slowing as it goes
     const sm = x => x <= 0 ? 0 : x >= 1 ? 1 : x * x * (3 - 2 * x);
-    return { u, d: this.putt.d0 + (LEN - this.putt.d0) * q,
-             lat: L0 + (PIN_X - L0) * sm(q) + 0.12 * Math.sin(Math.PI * q) };
+    const P = this.putt, end = P.miss ? LEN + 1.4 : LEN, to = PIN_X + (P.miss ? P.miss : 0);
+    return { u, d: P.d0 + (end - P.d0) * q,
+             lat: L0 + (to - L0) * sm(q) + 0.12 * Math.sin(Math.PI * q) };
+  },
+  // The Twilight Putt: a putt, not a swing (he chipped them). The stroke
+  // and the roll are the course's putt out, quickened to fit the gap to the
+  // next one; one that misses runs on past the cup.
+  wagerPutt(drop, lat, gap){
+    this.swingT = 0; this.pendingBall = null;
+    this.putt = { t0: this.t, d0: this.camD, wager: 1, drop, miss: drop ? 0 : lat || 0.8, k: Math.min(1, gap / 1.25) };
+    this.cupT = 0;
   },
   // still on his way to where his last ball came down
   walking2ball(){
@@ -15194,7 +15218,7 @@ Object.assign(Scene, {
 
     // putting out: the ball rolling away from him to the cup is beyond him,
     // so it goes down first
-    const PT = atCam === undefined && this.putt && !walking && ph === 0 ? this.t - this.putt.t0 : -1;
+    const PT = atCam === undefined && this.putt && !walking && ph === 0 ? (this.t - this.putt.t0) / (this.putt.k || 1) : -1;
     if(PT >= PUTT_HIT && !this.cupT){
       const q = this.puttBall(PT), bp = this.proj(q.d, q.lat);
       if(bp.y <= this.clipAt(q.d) + 1){ const bs = h > 30 ? 2 : 1; drawLyingBall(c, bp.x + bs / 2, Math.round(bp.y - bs), Math.max(1.5, bs * 0.8 + 0.5), this.t); }
@@ -16347,26 +16371,38 @@ Object.assign(Scene, {
       // the green for the chipping.
       // The chipper stands SHORT of the green: at 0.90 he was standing on it,
       // which is not chipping. The island shot is played from across the water.
-      const within = R.mode === 'drive' ? 0.03
-                   : R.mode === 'island' ? 0.60
-                   : R.mode === 'chip' ? 0.76
-                   // the Scramble is played from the approach, the putts on the green
-                   : R.mode === 'scramble' ? 0.70
-                   : R.mode === 'twilight' ? 0.90
-                   : clamp(1 - R.work/Math.max(1e-9, R.full), 0, 1);
-      this.camD += (within*LEN - this.camD) * Math.min(1, dt*4.5);
+      const within = wagerSpot(R), cam0 = this.camD;
+      // The Vault's floor is walked (he glided up it as he swung): he swings,
+      // the ball goes, he walks after it, and swings again when he is there.
+      // The others are played from one place and never move.
+      const goal = within * LEN, behind = goal - this.camD;
+      if(R.mode !== 'floor') this.camD = goal;
+      else if(this.swingT === 0 || behind > 12) this.camD += behind * Math.min(1, dt * 3.2);
+      const v = dt > 0 ? (this.camD - cam0) / dt : 0;
+      this.walkOn = this.swingT === 0 && v > 0.8 && v < 200;
+      if(this.walkOn) this.walkPh = (this.walkPh || 0) + dt * clamp(1.4 + v * 0.08, 1.4, 2.6);
       // The round is paused, so no swing ever reaches the renderer from the
       // simulation. Down here the animation is driven off tempo directly:
       // he is still hitting the ball, the ball is just not on the course.
-      // Only the endurance floor swings continuously; the other three fire on
-      // their own beat, from the simulation.
+      // Only the endurance floor swings continuously (once he has walked up
+      // to where the last one went); the others fire on their own beat,
+      // from the simulation.
       if(!R.dead && R.mode === 'floor'){
-        this.dSwing = (this.dSwing || 0) + dt * Math.min(D.spd, B.VIS_SWING_CAP);
-        while(this.dSwing >= 1){
+        this.dSwing = Math.min(1.5, (this.dSwing || 0) + dt * Math.min(D.spd, B.VIS_SWING_CAP));
+        if(this.dSwing >= 1 && this.swingT === 0 && behind < 0.6){
           this.dSwing -= 1;
           this.swing(D.pow * (1 + D.mst*B.MST_DMG), Math.random() < D.crit,
                      D.ball && D.ball.el);
         }
+      }
+      // a putt on the Twilight Putt's green: struck, rolled, in (or past),
+      // and over
+      const WP = this.putt && this.putt.wager ? this.putt : null;
+      if(WP){
+        const T = (this.t - WP.t0) / WP.k;
+        if(!WP.hit && T >= PUTT_HIT){ WP.hit = 1; Sfx.play('putt'); }
+        if(WP.drop && !this.cupT && T >= PUTT_HIT + PUTT_ROLL){ this.cupT = this.t; Sfx.play('hole'); }
+        if(T > PUTT_HIT + PUTT_ROLL + 0.35) this.putt = null;
       }
       if(!isFinite(this.camD)) this.camD = 0;
       if(this.sky) c.drawImage(this.sky, 0, 0);
