@@ -726,6 +726,8 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
 @container (max-width:199.5px){
   #rRow{flex-wrap:wrap;row-gap:12px}
   #rRow #readout{flex-basis:100%}
+  /* a narrower gap, or late on "Hole 18 · Par 5" lost its par at 320 */
+  .rline{gap:6px}
 }
 /* min-width, or on a 320 phone the button comes to 19.7px around a 24px sprite
    and the drawing hangs outside its own tap target. */
@@ -752,10 +754,10 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
    and the weather words in the readout make it longer), the four icons go
    in a row under the readout, in the same order, and the perk countdown
    under the row (fitHudLeft). */
-#hudLeft.row{flex-direction:row;flex-wrap:wrap;align-items:center;gap:8px 10px}
-#hudLeft.row #rRow{flex-basis:100%}
-#hudLeft.row #setRow{flex:0 0 auto;width:24px}
-#hudLeft.row #buffTip{left:0;top:calc(100% + 6px)}
+#hudLeft.inrow{flex-direction:row;flex-wrap:wrap;align-items:center;gap:8px 10px}
+#hudLeft.inrow #rRow{flex-basis:100%;min-width:0}
+#hudLeft.inrow #setRow{flex:0 0 auto;width:24px}
+#hudLeft.inrow #buffTip{left:0;top:calc(100% + 6px)}
 #buffTip{position:absolute;left:32px;top:calc(50% - .625em);max-width:calc(100vw - 90px);font-family:var(--mono);font-size:var(--f2);font-weight:600;
   display:flex;flex-direction:column;align-items:flex-start;min-width:0;pointer-events:none}
 #buffTip .bl{display:block;max-width:100%;line-height:1.25em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
@@ -15146,11 +15148,11 @@ function mapStar(i){
 function fitHudLeft(){
   const hl = typeof document !== 'undefined' && document.getElementById('hudLeft'), st = hl && document.getElementById('stage');
   if(!hl || !st || !Scene.cv || !st.clientHeight) return;
-  hl.classList.remove('row');
+  hl.classList.remove('inrow');
   const k = (parseFloat(Scene.cv.style.height) || st.clientHeight) / Math.max(1, VH);
   const sz = Math.max(12, Math.round(VW * 0.050 / 12) * 12), pad = Math.max(3, Math.round(sz / 6));
   const room = st.getBoundingClientRect().top + (VH - sz - pad * 2 - 2 - LH - 4) * k;
-  if(hl.getBoundingClientRect().bottom > room) hl.classList.add('row');
+  if(hl.getBoundingClientRect().bottom > room) hl.classList.add('inrow');
 }
 /* ---- the hole from above ----
    From the tee the rolling ground hides most of a dogleg, so a small map of

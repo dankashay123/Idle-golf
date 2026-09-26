@@ -191,11 +191,16 @@ module.exports = {
         // The star stood alone on the right over the map until the user asked
         // for it under the medal. On a short stage they go in a row under the
         // readout instead, in the same order (fitHudLeft).
-        const pm = box.perkBtn, rm = box.roomBtn, mp = box.holeMap, rowed = $('hudLeft').classList.contains('row');
+        const pm = box.perkBtn, rm = box.roomBtn, mp = box.holeMap, rowed = $('hudLeft').classList.contains('inrow');
         if (rowed ? !(pm.left >= rm.right - 0.5) || Math.abs(pm.top - rm.top) > 1.5
                   : !(pm.top >= rm.bottom - 0.5) || Math.abs(pm.left - rm.left) > 1.5)
           o.hit.push('the star is not ' + (rowed ? 'beside' : 'under') + ' the medal (star ' + pm.left.toFixed(0) + ',' + pm.top.toFixed(0)
             + ', medal ' + rm.left.toFixed(0) + ',' + rm.bottom.toFixed(0) + ')');
+        // In a row, the column once took the list rows' style too: a dark
+        // line under the icons (the user saw it) and a pad around them
+        { const cs = getComputedStyle($('hudLeft'));
+          if (parseFloat(cs.borderBottomWidth) || parseFloat(cs.paddingTop) || parseFloat(cs.paddingLeft))
+            o.hit.push('the left column draws a line or pad of its own (' + cs.borderBottom + ', pad ' + cs.padding + ')'); }
         if (mp && mp.height && mp.top < st.top + st.height * 0.36)
           o.hit.push('the map reaches up into the toasts\' corner');
 
