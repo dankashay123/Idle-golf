@@ -7,7 +7,8 @@
  *     footprint (they were laid there before it)
  *   - nothing through a hill: alone over a blank from eight places down each
  *     home course's 18th; and in view from near the green
- *   - its windows lit at night and not by day, and no far-off clubhouse on
+ *   - its windows lit at night and not by day (and at dusk with Dawn and
+ *     Dusk on, not at dawn), and no far-off clubhouse on
  *     the hills that night as well (every other night hole has that one)
  *   - never over the pin; none in a wager
  */
@@ -79,6 +80,15 @@ module.exports = {
             play(first + B.ROUND - 1, true); Scene.camD = LEN - 8; Scene.walkTo = Scene.camD; Scene.draw(0, D);
             const C2 = Scene.props.find(p => p.kind === 11), nightLit = count(drawn([C2]).d, '#FFD36A');
             o.lit = dayLit + '/' + nightLit;
+            // with Dawn and Dusk on, lit at dusk too; not at dawn, and not at
+            // dusk with it off
+            const at = (on, hr) => { if (on) S.dawnDusk = 1; else delete S.dawnDusk; HOUR_FORCE = hr;
+              play(first + B.ROUND - 1); Scene.skyKey = null; Scene.buildSky(); Scene.camD = LEN - 8; Scene.walkTo = Scene.camD; Scene.draw(0, D);
+              const n = count(drawn([Scene.props.find(p => p.kind === 11)]).d, '#FFD36A'); return n; };
+            o.dusk = [at(true, 19), at(true, 6), at(false, 19)].join('/');
+            delete S.dawnDusk; HOUR_FORCE = null; Scene.skyKey = null;
+            if (!(+o.dusk.split('/')[0] >= 3) || o.dusk.split('/')[1] !== '0' || o.dusk.split('/')[2] !== '0') f('with Dawn and Dusk the clubhouse windows at dusk/dawn/dusk with it off: ' + o.dusk + ' (want lit, dark, dark)');
+            play(first + B.ROUND - 1, true);
             if (dayLit || nightLit < 3) f('the clubhouse windows lit by day or dark at night (' + o.lit + ')');
             const farKept = Scene.clubhouse; let far = 0; Scene.clubhouse = function () { far++; return farKept.apply(this, arguments); };
             Scene.ridgeKey = null; Scene.buildRidge(); Scene.clubhouse = farKept;
@@ -94,7 +104,7 @@ module.exports = {
         }
         if (o.pin < 30) f('the pin was only ' + o.pin + ' pixels over the checks');
       } finally {
-        window.step = keep; FROST_FORCE = null; delete S.dgnRun;
+        window.step = keep; FROST_FORCE = null; HOUR_FORCE = null; delete S.dgnRun;
         Object.keys(S).forEach(k => delete S[k]); Object.assign(S, JSON.parse(SNAP));
         QUIET = false; buildSprites(); startHole();
       }
@@ -102,6 +112,6 @@ module.exports = {
     });
     if (r.fails.length) throw new Error(r.fails.join('; '));
     return [r.lasts + ' last holes with a grandstand, each with the clubhouse beside it and nothing standing inside it; none on other holes',
-      r.views + ' views down the home courses\' 18th, ' + r.pix + ' pixels of clubhouse, none under the ground\'s line; ' + r.pin + ' pixels of pin, none changed; lit windows day/night ' + r.lit + ', the far one on the hills only on other nights; none in a wager'];
+      r.views + ' views down the home courses\' 18th, ' + r.pix + ' pixels of clubhouse, none under the ground\'s line; ' + r.pin + ' pixels of pin, none changed; lit windows day/night ' + r.lit + ', at dusk/dawn/dusk-off ' + r.dusk + ', the far one on the hills only on other nights; none in a wager'];
   }
 };

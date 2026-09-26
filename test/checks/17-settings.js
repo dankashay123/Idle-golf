@@ -13,7 +13,7 @@
  *     and every sound plays without throwing once audio is running
  *   - the course sounds like a course: a strike is a swoosh, a crack, a ring
  *     and a thump; a holed ball is the cup alone, with no gallery;
- *     and the birds sing on a fine day
+ *     and the birds sing on a fine day, and crickets on a dry night
  *   - the Home Screen tip turns up once, on an iPhone, after a real session
  */
 'use strict';
@@ -94,7 +94,12 @@ module.exports = {
       const count = f => { n = 0; played.length = 0; f(); return n; };
       o.parts = { strike: count(() => { Sfx.lastSwing = -1; Sfx.play('strike'); }), strikeRec: played.slice(),
                   holedRec: (count(() => Sfx.play('hole', -1)), played.slice()),
-                  birds: count(() => { Scene.night = false; Scene.rain = false; Sfx.birdT = 0.001; Sfx.tick(0.01); }) };
+                  birds: count(() => { Scene.night = false; Scene.rain = false; Sfx.birdT = 0.001; Sfx.cricketT = 99; Sfx.tick(0.01); }),
+                  // crickets at night and never by day; no birds at night; neither in the rain
+                  crickets: count(() => { Scene.night = true; Scene.rain = false; Sfx.birdT = 0.001; Sfx.cricketT = 0.001; Sfx.tick(0.01); }),
+                  cricketsDay: count(() => { Scene.night = false; Scene.rain = false; Sfx.birdT = 99; Sfx.cricketT = 0.001; Sfx.tick(0.01); }),
+                  nightRain: count(() => { Scene.night = true; Scene.rain = true; Sfx.birdT = 0.001; Sfx.cricketT = 0.001; Sfx.tick(0.01); }) };
+      Scene.night = false; Scene.rain = false;
       // and the synthesised sounds still stand in for any recording that cannot decode
       const keep = Sfx.recs; Sfx.recs = {};
       o.synth = { strike: count(() => { Sfx.lastSwing = -1; Sfx.play('strike'); }),
@@ -119,9 +124,10 @@ module.exports = {
     // and no gallery: a fast bag holes out every few seconds, and the
     // applause after each hole never stopped. A holed ball is the cup alone.
     if (snd.running && !(snd.parts.strikeRec.join() === 'strike'
-        && snd.parts.holedRec.join() === 'cup' && snd.parts.birds >= 1))
+        && snd.parts.holedRec.join() === 'cup' && snd.parts.birds >= 1
+        && snd.parts.crickets >= 6 && !snd.parts.cricketsDay && !snd.parts.nightRain))
       throw new Error('the course sounds are not right: ' + JSON.stringify(snd.parts)
-        + ' (a strike is the recorded crack; a holed ball is the cup and nothing else; birds sing)');
+        + ' (a strike is the recorded crack; a holed ball is the cup and nothing else; birds sing by day, crickets at night, neither in the rain)');
     if (snd.running && !(snd.synth.strike >= 4 && snd.synth.holed >= 1 && snd.synth.holed <= 8))
       throw new Error('without the recordings the stand-in sounds are not all there: ' + JSON.stringify(snd.synth));
     if (snd.running && !(snd.onCount >= 7))

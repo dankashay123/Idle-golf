@@ -6088,6 +6088,16 @@ const Sfx = {
     if(Math.random() < 0.5) this.tone(f, t, 0.07, 'sine', 0.018, f * 1.35);
     else { this.tone(f * 1.2, t, 0.05, 'sine', 0.016, f); this.tone(f * 1.2, t + 0.09, 0.05, 'sine', 0.014, f * 0.9); }
   },
+  // A cricket at night (the user asked for them): a trill of three quick
+  // pulses, high and thin, a third of a bird's level; now and then a second
+  // answering it a little lower.
+  CRICKET_VOL: 0.006,
+  cricket(t){
+    const f = 4300 + Math.random() * 500, n = 2 + (Math.random() * 3 | 0);
+    for(let j = 0; j < n; j++) for(let i = 0; i < 3; i++)
+      this.tone(f, t + j * 0.34 + i * 0.045, 0.022, 'sine', this.CRICKET_VOL);
+    if(Math.random() < 0.35) for(let i = 0; i < 3; i++) this.tone(f * 0.92, t + n * 0.34 + 0.2 + i * 0.05, 0.022, 'sine', this.CRICKET_VOL * 0.7);
+  },
   // Background music: one track, played quietly under everything and looped
   // by starting the next play before this one ends, the two overlapping for
   // MUS_XF seconds so there is no gap or click where the track comes round.
@@ -6230,6 +6240,11 @@ const Sfx = {
         if(fall) this.gust(now + 0.02, 2.2 + Math.random() * 1.4, this.SEASON_VOL.gust, 260, 900);
         else this.gust(now + 0.02, 3.5 + Math.random() * 2, this.SEASON_VOL.hush, 900, 2200);
       }
+    }
+    // crickets on a dry night, now and then (not in the snow of winter)
+    if(!S.dgnRun && Scene.night && !Scene.rain && season !== 'Winter' && !Scene.snow){
+      this.cricketT = (this.cricketT || 2 + Math.random() * 5) - dt;
+      if(this.cricketT <= 0){ this.cricketT = 5 + Math.random() * 9; this.cricket(this.ctx.currentTime + 0.02); }
     }
     if(S.dgnRun || Scene.night || Scene.rain || season === 'Winter') return;
     this.birdT = (this.birdT || 3 + Math.random() * 6) - dt;
@@ -8680,8 +8695,9 @@ function standCv(sh, full, night, seed){
 // sign over it, and in front a terrace with a white rail, parasols and a few
 // members at their tables. Its windows glow at night. One picture a size.
 const CLUB_D = 14.5, CLUB_X = 11, CLUB_W = 8, CLUB_CACHE = [];
-function clubhouseCv(sh, night, side, seed){
-  const key = sh + '|' + (night ? 1 : 0) + '|' + side + '|' + seed;
+function clubhouseCv(sh, night, side, seed, lit){
+  if(lit === undefined) lit = night;
+  const key = sh + '|' + (night ? 1 : 0) + '|' + (lit ? 1 : 0) + '|' + side + '|' + seed;
   const hit = CLUB_CACHE.find(e => e.key === key);
   if(hit) return hit.cv;
   const W = Math.max(10, Math.round(sh * CLUB_W / 12 * LAT / US));
@@ -8708,15 +8724,15 @@ function clubhouseCv(sh, night, side, seed){
     const x = Math.round(inW + i * pitch + (pitch - winW) / 2);
     if(i === door){
       g.fillStyle = dk('#4A3526'); g.fillRect(x, winY + Math.round(winH * 0.2), winW, H - deck - winY - Math.round(winH * 0.2));
-      g.fillStyle = night ? '#F2B84A' : '#6E5236'; g.fillRect(x + (winW > 2 ? 1 : 0), winY + Math.round(winH * 0.2) + 1, Math.max(1, winW - 2), Math.max(1, H - deck - winY - Math.round(winH * 0.2) - 2));
+      g.fillStyle = lit ? '#F2B84A' : '#6E5236'; g.fillRect(x + (winW > 2 ? 1 : 0), winY + Math.round(winH * 0.2) + 1, Math.max(1, winW - 2), Math.max(1, H - deck - winY - Math.round(winH * 0.2) - 2));
       g.fillStyle = dk('#1A2A20'); g.fillRect(x - Math.round(winW * 0.5), wy + 1, winW * 2, Math.max(2, Math.round(wall * 0.14)));
       g.fillStyle = dk(PX.brass); g.fillRect(x - Math.round(winW * 0.5), wy + 1, winW * 2, 1);
       continue;
     }
     g.fillStyle = dk('#5A4A3E'); g.fillRect(x - 1, winY - 1, winW + 2, winH + 2);
-    g.fillStyle = night ? (hr(seed + i, 356) > 0.2 ? '#FFD36A' : '#3A3A44') : '#3D5566';
+    g.fillStyle = lit ? (hr(seed + i, 356) > 0.2 ? '#FFD36A' : '#3A3A44') : '#3D5566';
     g.fillRect(x, winY, winW, winH);
-    if(!night && winW > 1){ g.fillStyle = '#8FB0C4'; g.fillRect(x, winY, Math.max(1, winW >> 1), 1); }
+    if(!lit && winW > 1){ g.fillStyle = '#8FB0C4'; g.fillRect(x, winY, Math.max(1, winW >> 1), 1); }
   }
   // the terrace: its boards, members at tables under parasols, the rail
   g.fillStyle = dk('#9A7A56'); g.fillRect(0, H - deck, W, deck);
@@ -8742,7 +8758,7 @@ function clubhouseCv(sh, night, side, seed){
   g.fillRect(0, railY, W, 1);
   for(let x = 0; x < W; x += Math.max(2, k * 3)) g.fillRect(x, railY, 1, H - railY);
   // a lamp on the terrace at night
-  if(night){ g.fillStyle = '#FFE7A8'; g.fillRect(side > 0 ? 1 : W - 2, H - deck - Math.round(sh * 0.6), 1, 1); }
+  if(lit){ g.fillStyle = '#FFE7A8'; g.fillRect(side > 0 ? 1 : W - 2, H - deck - Math.round(sh * 0.6), 1, 1); }
   CLUB_CACHE.unshift({ key, cv });
   if(CLUB_CACHE.length > 8) CLUB_CACHE.pop();
   return cv;
@@ -14979,7 +14995,8 @@ Object.assign(Scene, {
       // the clubhouse, likewise one blit
       const sh = Math.round(12 * pr.s * US);
       if(sh < 3) return;
-      const cv = clubhouseCv(sh, night, p.side, p.k), w = cv.width;
+      // (its lights on at dusk too, with Dawn and Dusk on)
+      const dd = this.dawnDusk, cv = clubhouseCv(sh, night, p.side, p.k, night || !!(dd && !dd.dawn && dd.w >= 0.4)), w = cv.width;
       if(pr.x + w / 2 < -2 || pr.x - w / 2 > VW + 2) return;
       c.drawImage(cv, Math.round(pr.x - w / 2), pr.y - cv.height);
 
