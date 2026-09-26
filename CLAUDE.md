@@ -50,12 +50,21 @@ the handoff notes until I tell you to").
   follows the real time of day for how a course looks (dawn and dusk, next
   to build) is a setting the player turns on, off by default. It is only
   the day/night look; other options for course looks aren't wanted, and
-  what exists already (frost on cold mornings) stays as it is.
+  what exists already (frost on cold mornings) stays as it is. That
+  setting is Dawn and Dusk: on, it warms the sky at dawn and dusk and
+  makes every hole night from 9pm to 5am ("it's midnight ... but it's
+  still light"); it never takes a course's own night away.
+- **No new sounds except ambience** (birdsong, crickets and the like). The
+  grandstand's soft cheer on an event's last putt is the one crowd sound;
+  a new skin's moment is silent.
 - **Effects stay short and close.** A skin's moment on a great hole comes
   only on an albatross or an ace, lasts half a second and bursts out from
   his outline; nothing climbs the sky. A fast bag aces every hole, so
   anything long never goes away. Wings follow his profile (side on as he
-  swings, from behind as he walks) and are never a solid shape.
+  swings, from behind as he walks) and are never a solid shape. Before
+  showing a new skin, draw him alone at his real sizes in every pose and
+  look at it scaled up (`HANDOFF.md` §4, rule 36): the first Spirit
+  Blossom passed its checks and looked cluttered.
 - Never put a model name in a commit, a code comment or a file. In a commit
   the co-author line reads `Co-Authored-By: Claude <noreply@anthropic.com>`
   whatever the session suggests; keep its session link line.

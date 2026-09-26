@@ -3467,6 +3467,15 @@ const B = {
     { id:'ascended', n:'Ascended',       cost:3500, fx:'ascended', cat:'skin', top:2, pattern:'voidplate',
       cap:'#4C4C90', cap2:'#33336C', shirt:'#4A4A8E', shirt2:'#393976', shirt3:'#26264E', pant:'#180C25', pant2:'#0A0517',
       skin:'#2D2D5E', skin2:'#1B1B44', shoe:'#3F3F7E', belt:'#E639EB', hair:'#C936D5', hand:'#E86CF2' },
+    // Spirit Blossom (the user asked for a new Mythic set, "immaculate", no
+    // wings): ivory silk shaded in blush, blossoms woven through it, jade
+    // trousers, a gold sash; a haori flowing off his shoulders to a rose hem
+    // trimmed in gold, blossoms pinned in his hair on a gold pin, petals
+    // drifting off him and a sakura ring on the grass. Its caddie, driver,
+    // wake and ball to match.
+    { id:'blossom', n:'Spirit Blossom',  cost:3500, fx:'blossom', cat:'skin', top:2, pattern:'sakura',
+      cap:'#2A1A22', cap2:'#150C12', shirt:'#FBF3F1', shirt2:'#F2CCD8', shirt3:'#C98BA6', pant:'#2F8F7A', pant2:'#1E6656',
+      shoe:'#1A1216', belt:'#E8C45A', hair:'#1A1216' },
     // Won, never bought: one for each major of the week, and its caddie with it.
     { id:'mjMasters',   n:'Masters Jacket',   cost:0, cat:'major', major:'masters',
       cap:'#F4F4EC', cap2:'#C8C8BE', shirt:'#2E7A3E', shirt2:'#236030', shirt3:'#174A22', pant:'#E8E0C8', pant2:'#C4BA9E' },
@@ -3541,6 +3550,7 @@ const B = {
     { id:'saber',     n:'Light Saber',    cost:1200, fx:'saber',    shaft:'#E8FFFF', shaft2:'#9FFFFF', head:'#E8FFFF', grip:'#3A3F46', glow:'#3FE0FF' },
     { id:'divine',    n:'Divine Driver',  cost:2000, fx:'divine',   top:1, shaft:'#FFF3C8', shaft2:'#E3B457', head:'#FFD66B', head2:'#FFFFFF', grip:'#8A6A26', glow:'#FFD66B' },
     { id:'demonic',   n:'Demonic Driver', cost:2000, fx:'demonic',  top:1, shaft:'#241010', shaft2:'#160A0A', head:'#1A0A0A', head2:'#FF5A1E', grip:'#5A100C', glow:'#E8401C' },
+    { id:'blossom',   n:'Blossom Driver',  cost:2350, fx:'blossom',  top:2, shaft:'#F6EEF0', shaft2:'#D8C8CE', head:'#2F8F7A', head2:'#F2A7C3', grip:'#1A1216', glow:'#F2A7C3' },
     { id:'ascended',  n:'Ascended Driver', cost:2350, fx:'ascended', top:2, shaft:'#2A2A5A', shaft2:'#1B1B44', head:'#3B3B7A', head2:'#E639EB', grip:'#180C25', glow:'#C936D5' }
   ],
   TRAILS: [
@@ -3554,6 +3564,7 @@ const B = {
     { id:'seraph',  n:'Seraph Wake', cost:2000, fx:'tSeraph', cols:['#FFF6D8', '#FFD66B'], top:1 },
     { id:'hellfire',  n:'Hellfire Wake',  cost:2000, fx:'tHellfire',  cols:['#FF5A1E', '#FFD34A'], top:1 },
     { id:'ascension', n:'Ascension Wake', cost:2350, fx:'tAscension', cols:['#E639EB', '#F2A6F8'], top:2 },
+    { id:'petalwake', n:'Petal Wake',     cost:2350, fx:'tBlossom',   cols:['#F2A7C3', '#FFFFFF'], top:2 },
     // balls: more than a colour
     { id:'duck',     n:'Rubber Duck', cost:400,  fx:'duck',      cat:'ball', cols:['#FFD84A'] },
     { id:'hearts',   n:'Hearts',      cost:500,  fx:'hearts',    cat:'ball', cols:['#FF4F7A'] },
@@ -3563,7 +3574,8 @@ const B = {
     { id:'blackhole',n:'Black Hole',  cost:1300, fx:'blackhole', cat:'ball', cols:['#C68BFF', '#3A1E5A'] },
     { id:'godlight', n:'Godlight',    cost:1500, fx:'godlight',  cat:'ball', cols:['#FFD66B'], top:1 },
     { id:'demoneye', n:'Demon Eye',   cost:1500, fx:'demoneye',  cat:'ball', cols:['#FF3A1A'], top:1 },
-    { id:'ascorb',   n:'Ascended Orb', cost:1750, fx:'ascorb',   cat:'ball', cols:['#E639EB'], top:2 }
+    { id:'ascorb',   n:'Ascended Orb', cost:1750, fx:'ascorb',   cat:'ball', cols:['#E639EB'], top:2 },
+    { id:'blossombud', n:'Blossom Bud', cost:1750, fx:'blossombud', cat:'ball', cols:['#F2A7C3'], top:2 }
   ]
 };
 
@@ -7129,12 +7141,21 @@ const OUTFIT_ICON = ['...cccc.....',
 const SKIN_ACCENT = { divine:['#FFD66B', '#FFFFFF'], inferno:['#FFB43A', '#F0612A'], frostborn:['#FFFFFF', '#9FD6F2'],
   stormcaller:['#8FD0FF', '#FFFFFF'], void:['#C68BFF', '#6E44A0'], glitch:['#FF2A6D', '#2AE0FF'],
   midas:['#FFFFFF', '#FFD86B'], disco:['#FF4FB8', '#3FE0FF'], ghost:['#EEF2FF', '#A5B0D6'],
-  demonic:['#FF5A1E', '#FFD34A'], ascended:['#E639EB', '#F2A6F8'] };
+  demonic:['#FF5A1E', '#FFD34A'], ascended:['#E639EB', '#F2A6F8'], blossom:['#F2A7C3', '#FFFFFF'] };
 // and the dearest two a little more of themselves on their tiles: the
 // Demonic's horns and wings, the Ascended's horns, hair of fire, the light
 // in his chest and his cape; his imp's horns, flame, green eye and the heart
 // on his tail (P paints one pixel; the caddie's tile has his bag on the right)
 const ICON_FX = {
+  // the Spirit Blossom's blossoms pinned in his hair, and petals about him
+  blossom(P, caddie){
+    const G = '#E8C45A', K = '#F2A7C3', L = '#FFD6E4', R = '#E07FA6', W = '#FFFFFF';
+    const bl = (x, y) => { P(x, y - 1, L); P(x - 1, y, K); P(x + 1, y, K); P(x, y + 1, R); P(x, y, G); };
+    if(caddie){ bl(1, 1); P(0, 8, K); P(1, 9, W); return; }
+    bl(1, 1); bl(4, 1);
+    for(const [x, y] of [[11, 6], [10, 8], [0, 7], [1, 10]]) P(x, y, K);
+    P(10, 7, W); P(0, 11, W);
+  },
   demonic(P, caddie){
     const W = '#5E1418', V = '#B0301E', H = '#E8DCC8';
     if(caddie){ P(1, 0, H); P(6, 0, H); P(4, 2, '#FF5A1E'); }
@@ -7197,7 +7218,9 @@ function clubUrl(d){
     if(d.fx === 'ascended'){ P(6, 10, '#3B3B7A'); P(5, 10, '#3B3B7A'); P(4, 9, '#3B3B7A'); P(3, 8, '#6E6EA8');
                              P(6, 11, '#E639EB'); P(5, 11, '#E639EB'); P(4, 10, '#E639EB'); P(3, 9, '#F2A6F8'); }
     const acc = { divine:['#FFD66B', '#FFFFFF'], ice:['#FFFFFF', '#9FD6F2'], neon:['#3FFFB0', '#CFFFEA'], gold:['#FFFFFF', '#FFE39A'],
-                  demonic:['#FF5A1E', '#FFD34A'], ascended:['#E639EB', '#F2A6F8'] }[d.fx === 'glint' ? 'gold' : d.fx];
+                  demonic:['#FF5A1E', '#FFD34A'], ascended:['#E639EB', '#F2A6F8'], blossom:['#F2A7C3', '#FFFFFF'] }[d.fx === 'glint' ? 'gold' : d.fx];
+    // the Blossom's shaft wrapped in blush, and a blossom on its jade head
+    if(d.fx === 'blossom'){ pts.forEach(([x, y], i) => { if(i > 1 && i % 2) P(x, y, '#F2A7C3'); }); P(8, 8, '#F2A7C3'); P(9, 8, '#FFFFFF'); P(10, 9, '#E8C45A'); }
     if(acc) [[10, 1], [1, 10], [11, 4], [4, 11]].forEach(([x, y], i) => P(x, y, acc[i & 1]));
     return DOMSPR[key] = cv.toDataURL();
   }catch(e){ return DOMSPR[key] = ''; }
@@ -7245,6 +7268,10 @@ const BALL_ICON = {
               map:{ K:'#2A0606', R:'#C8281C', o:'#FF6A1A', Y:'#FFD34A', P:'#0A0000' } },
   tAscension:{ rows:['.........FWF','........FWWF','.......mFFm.','......mMm...','.....mMm..l.','....dMm.....','...dMm..l...','..dMm.......','.dMd........','dMd.........','Md..........','............'],
               map:{ W:'#FFFFFF', F:'#F2A6F8', M:'#E639EB', m:'#C936D5', d:'#762889', l:'#FFE0FF' } },
+  tBlossom: { rows:['........k.W.','.......kWk..','......PPk...','.....PPP....','....PPw..k..','...PPP......','..PPw...k...','.PPP........','PPw....k....','Pw..........','w....k......','............'],
+              map:{ P:'#F2A7C3', w:'#FFFFFF', W:'#FFFFFF', k:'#FFD6E4' } },
+  blossombud:{ rows:['............','.....KK.....','..KK.KK.KK..','..KKKWWKKK..','...KWGGWK...','.KKWGGGGWKK.','.KKWGGGGWKK.','...KWGGWK...','..KKKWWKKK..','..KK.KK.KK..','.....KK.....','............'],
+              map:{ K:'#F2A7C3', W:'#FFD6E4', G:'#E8C45A' } },
   ascorb:   { rows:['...f..f..f..','..fMffMffM..','...MMMMMM...','..MKKKKKKM..','.MKKkkKKKKM.','.MKkKKKMKKM.','.MKKKKMWMKM.','.MKKKMKMKKM.','.MKKKKKKKKM.','..MKKKKKKM..','...MMMMMM...','............'],
               map:{ f:'#F2A6F8', M:'#C936D5', K:'#1B1B44', k:'#3B3B7A', W:'#FFFFFF' } }
 };
@@ -9192,7 +9219,15 @@ const PATTERNS = {
   },
   // the Ascended: dark plate, each plate's lower edge caught in the light
   // and a stud of magenta here and there along it
-  voidplate: (x, y) => y % 5 !== 4 ? null : (x * 7 + y) % 9 === 0 ? '#E639EB' : '#6868AE'
+  voidplate: (x, y) => y % 5 !== 4 ? null : (x * 7 + y) % 9 === 0 ? '#E639EB' : '#6868AE',
+  // Spirit Blossom: little five-dot blossoms scattered over the silk, a gold
+  // heart and four petals of blush, one in two cells
+  sakura: (x, y) => {
+    const C = 6, gx = Math.floor(x / C), gy = Math.floor(y / C);
+    if(hr(gx * 3 + 1, gy * 5 + 2) < 0.5) return null;
+    const cx = gx * C + 1 + Math.floor(hr(gx, gy + 9) * 4), cy = gy * C + 1 + Math.floor(hr(gy, gx + 4) * 4), d = Math.abs(x - cx) + Math.abs(y - cy);
+    return d === 0 ? '#E8C45A' : d === 1 ? '#F2A7C3' : null;
+  }
 };
 function patterned(sp, o){
   if(!o.pattern && !o.capPattern) return sp;
@@ -10725,6 +10760,88 @@ const STYLEFX = {
      fly off the ball. His caddie is the picture's little imp, in an aura of
      his own: horns, a magenta flame for hair, green eyes, a heart on his
      chest and a curled tail with a heart on the end. */
+  // Spirit Blossom. Everything in solid pixels (a wash of light turns grey
+  // on the grass), close about him; no wings. A silk haori flowing off his
+  // shoulders, blossoms pinned in his hair, a sakura ring on the grass and a
+  // few petals drifting off him.
+  blossom: {
+    outline: '#FFD6E4', outlineA: 0.30,
+    charge(ph){ return STYLEFX.ascended.charge(ph); },
+    strike(ph){ return STYLEFX.ascended.strike(ph); },
+    sigilSize(g){ return [Math.max(6, Math.round(g.w * 0.95)), g.h < 30 ? 2 : Math.max(3, Math.round(g.h * 0.12))]; },
+    // the sakura ring turning under him and a few petals fallen round it
+    ground(c, g){
+      if(g.minor) return;
+      const [rx, ry] = this.sigilSize(g), L = legendNow(g), st = this.strike(g.ph), q = L ? 1 : this.charge(g.ph);
+      const X = Math.round(g.cx), Y = Math.round(g.bot), step = Math.floor(g.t * 5 + (g.ph > 0 ? g.ph * 30 : 0) + (L ? L.T * 40 : 0)) % 60;
+      c.globalAlpha = 1; c.drawImage(blossomSigil(rx, ry, step, q > 0.5 || st >= 0 ? 1 : 0), X - rx - 1, Y - ry - 1);
+      const k = Math.max(1, g.k);
+      for(let i = 0; i < 5; i++){ const a = hr(i, 381) * Math.PI * 2, R = 1.1 + hr(i, 382) * 0.3;
+        petalAt(c, X + Math.cos(a) * rx * R, Y + Math.sin(a) * ry * R, k, hr(i, 383) * 6, '#F2A7C3', '#FFFFFF'); }
+      if(g.h < 30) {}
+      else if(L) this.wave(c, X, Y, rx, ry, L.f, L.big ? 1.7 : 1.5, k);
+      else if(st >= 0) this.wave(c, X, Y, rx, ry, st, 1.6, k);
+      c.globalAlpha = 1;
+    },
+    // a ring of petals running out over the grass
+    wave(c, X, Y, rx, ry, f, R, k){
+      const s = 1 + f * (R - 1), n = Math.max(10, Math.round((rx + ry) * s * 0.6));
+      for(let i = 0; i < n; i++){ if(hr(i, 384) < f * 0.8) continue; const a = i / n * Math.PI * 2;
+        petalAt(c, X + Math.cos(a) * rx * s, Y + Math.sin(a) * ry * s, k, a + f * 3, f < 0.4 ? '#FFFFFF' : '#F2A7C3', '#FFD6E4'); }
+    },
+    back(c, g){
+      if(g.minor){
+        // his caddie: a petal or two drifting down about him
+        this.fall(c, g, 2);
+        return;
+      }
+      if(!g.back) this.coat(c, g);
+      c.globalAlpha = 1;
+    },
+    front(c, g){
+      if(g.minor){ this.pins(c, g); return; }
+      // walking away, the haori hangs down his back, over him
+      if(g.back) this.coat(c, g);
+      this.pins(c, g);
+      this.fall(c, g, 4);
+      const L = legendNow(g);
+      if(L) outlineBurst(c, g, L, 48, 0.95, (x, y, i, f, dx, dy) => {
+        if(i % 3 === 0) blossomAt(c, x, y, Math.max(1, g.k), f < 0.5);
+        else petalAt(c, x, y, Math.max(1, g.k), f * 6 + i, f < 0.4 ? '#FFFFFF' : '#F2A7C3', '#FFD6E4'); });
+      c.globalAlpha = 1;
+    },
+    // the haori: ivory silk off his shoulders, blushing to a hem of deep
+    // rose trimmed in gold, blossoms along it; streaming behind him side
+    // on, hanging down his back as he walks away (baked per size and frame)
+    coat(c, g){
+      const pose = g.back ? 2 : g.spr === SPRITE.gFinish ? 1 : 0;
+      const C = blossomCoat(Math.round(g.w), Math.round(g.h), pose, Math.floor(g.t * 6) % 12);
+      c.globalAlpha = 1; c.drawImage(C.cv, Math.round(g.x + (g.shear && !g.back ? g.shear(0.3) : 0) - C.ox), Math.round(g.y));
+    },
+    // three blossoms pinned in his hair behind the cap, a gold pin through
+    // them and a chain of gold hanging off it with a petal at its end
+    pins(c, g){
+      const H = g.head, k = Math.max(1, g.minor ? 1 : g.k), sh = g.shear ? g.shear(0.1) : 0;
+      const bx = H.x + sh + (g.back ? H.w * 0.12 : H.w * 0.02), by = H.y + H.hh * (g.back ? 0.35 : 0.55);
+      if(g.minor){ blossomAt(c, bx, by, 1, false, true); return; }
+      const big = g.h >= 40;
+      c.fillStyle = '#B8923A'; c.fillRect(Math.round(bx - 3 * k), Math.round(by - k), 6 * k, k);
+      c.fillStyle = '#FFE9A0'; c.fillRect(Math.round(bx + 2 * k), Math.round(by - k), k, k);
+      // the chain swings a little
+      const sw = Math.round(Math.sin(g.t * 2.4) * k);
+      for(let i = 1; i <= (big ? 4 : 2); i++){ c.fillStyle = i & 1 ? '#E8C45A' : '#B8923A'; c.fillRect(Math.round(bx - 2 * k + (i > 2 ? sw : 0)), Math.round(by + i * k), k, k); }
+      petalAt(c, bx - 2 * k + sw, by + (big ? 5 : 3) * k, k, Math.PI / 2, '#F2A7C3', '#FFFFFF');
+      blossomAt(c, bx - k, by - 2 * k, k, true, !big);
+      if(big){ blossomAt(c, bx + 2 * k, by - 3 * k, k, false, true); blossomAt(c, bx - 3 * k, by + k, k, false, true); }
+    },
+    // petals drifting down off him, swaying as they go
+    fall(c, g, n){
+      const k = Math.max(1, g.minor ? Math.round(g.h / 18) : g.k);
+      for(let i = 0; i < n; i++){ const life = (g.t * (0.22 + hr(i, 385) * 0.1) + i / n) % 1;
+        const x = g.cx - g.w * (0.2 + hr(i, 386) * 0.9) - life * g.w * 0.4 + Math.sin(g.t * 1.7 + i * 2.3) * g.w * 0.1, y = g.y + g.h * (0.25 + life * 0.75);
+        petalAt(c, x, y, k, g.t * 2 + i, i & 1 ? '#F2A7C3' : '#FFD6E4', '#FFFFFF'); }
+    }
+  },
   ascended: {
     outline: '#C936D5', outlineA: 0.32,
     // how charged he is through a swing: building on the backswing, full
@@ -11561,6 +11678,14 @@ function drawLyingBall(c, cx, cy, r, t){
     case 'demoneye':                                 // looking about, and blinking
       drawDemonEye(c, cx, cy - 1, Math.max(3, Math.round(r * 1.6 + 1)), Math.sin(t * 0.7), Math.sin(t * 0.43) * 0.4, t);
       break;
+    case 'blossombud':                               // a bud, its petals turning about it
+      drawBud(c, cx, cy - 1, r, t);
+      break;
+    case 'tBlossom':                                 // blush, a petal drifting off it
+      drawGlow(c, cx, cy, r + 3, r + 2, [[0.55, '#9A5A7A', 1], [0, '#F2A7C3', 2]], Math.floor(t * 8) & 3, 0.85);
+      dot(x, y, d, '#FFFFFF');
+      { const f = (t * 0.9) % 1; petalAt(c, cx + 2 + f * 4, cy - r - 1 + f * 3, 1, f * 3, '#F2A7C3', '#FFFFFF'); }
+      break;
     case 'ascorb':                                   // burning, its sparks circling
       drawVoidOrb(c, cx, cy - 1, r, t, false);
       break;
@@ -11630,6 +11755,22 @@ const CUP_FX = {
     // (not when the green is far off: at its least the eye is bigger than the cup's whole moment)
     if(q < 0.7 && h >= 24) drawDemonEye(c, x, y - Math.round(h * 0.05), Math.max(3, Math.round(h * 0.09)), 0, -1, t);
   },
+  // the Blossom Bud: petals spiral down into the cup and a blossom opens on it
+  blossombud(c, x, y, cr, h, q, t){
+    const k = Math.max(1, Math.round(h / 16));
+    for(let i = 0; i < 20; i++){
+      const u = clamp(q * 1.35 - hr(i, 368) * 0.35, 0, 1);
+      if(u >= 1) continue;
+      const a = i / 20 * Math.PI * 2 - u * 4, r = h * 0.62 * (1 - u);
+      petalAt(c, x + Math.cos(a) * r - (k >> 1), y + Math.sin(a) * r * 0.36 - (1 - u) * h * 0.2, k, a, i % 3 === 0 ? '#FFFFFF' : i & 1 ? '#F2A7C3' : '#FFD6E4', '#FFFFFF');
+    }
+    // the blossom on the cup: five petals opening round a gold heart
+    if(q > 0.35){ const o = Math.min(1, (q - 0.35) / 0.3), R = h * (0.05 + 0.1 * o);
+      for(let i = 0; i < 5; i++){ const a = -Math.PI / 2 + i / 5 * Math.PI * 2;
+        const px = x + Math.cos(a) * R, py = y - k + Math.sin(a) * R * 0.5;
+        fxDot(c, px - k, py - (k >> 1), k * 2, q > 0.85 ? '#FFD6E4' : '#F2A7C3', 1); fxDot(c, px, py, k, '#FFFFFF', 1); }
+      fxDot(c, x - (k >> 1), y - k - (k >> 1), k, '#E8C45A', 1); }
+  },
   ascorb(c, x, y, cr, h, q, t){
     const k = Math.max(1, Math.round(h / 16));
     // the void drawn down into the cup in a spiral
@@ -11645,6 +11786,100 @@ const CUP_FX = {
     else for(let i = 0; i < 10; i++){ const a = i / 10 * Math.PI * 2; fxDot(c, x + Math.cos(a) * h * 0.12 - (k >> 1), y + Math.sin(a) * h * 0.045, k, '#FFFFFF', 1); }
   }
 };
+// A petal of the Spirit Blossom: two pixels (k each) of blush with a white
+// tip, lying along one of four ways as it tumbles (a). Solid pixels.
+function petalAt(c, x, y, k, a, col, tip){
+  const q = ((Math.round(a * 2 / Math.PI) % 4) + 4) % 4, X = Math.round(x), Y = Math.round(y);
+  c.globalAlpha = 1; c.fillStyle = col;
+  if(q & 1){ c.fillRect(X, Y, k, k * 2); c.fillStyle = tip; c.fillRect(X, q === 1 ? Y : Y + k, k, k); }
+  else{ c.fillRect(X, Y, k * 2, k); c.fillStyle = tip; c.fillRect(q === 0 ? X + k : X, Y, k, k); }
+}
+// The Blossom Bud: a round bud of blush with its highlight, five petals
+// turning about it
+function drawBud(c, cx, cy, r, t){
+  const R = Math.max(1, Math.round(r));
+  pxCircle(c, cx, cy, R, '#F2A7C3');
+  if(R > 1){ c.fillStyle = '#FFD6E4'; c.fillRect(Math.round(cx - R * 0.4), Math.round(cy - R * 0.5), Math.max(1, R >> 1), Math.max(1, R >> 1)); }
+  c.fillStyle = '#E8C45A'; c.fillRect(Math.round(cx), Math.round(cy), 1, 1);
+  for(let i = 0; i < 5; i++){ const a = t * 2.2 + i / 5 * Math.PI * 2;
+    petalAt(c, cx + Math.cos(a) * (R + 2), cy + Math.sin(a) * (R + 1) * 0.8, 1, a, i & 1 ? '#FFFFFF' : '#F2A7C3', '#FFD6E4'); }
+}
+// A blossom in solid pixels: a gold heart and four petals of blush with a
+// deeper rose at their roots (k each); small is the heart and petals alone
+function blossomAt(c, x, y, k, lit, small){
+  const X = Math.round(x), Y = Math.round(y), P = (i, j, col) => { c.fillStyle = col; c.fillRect(X + i * k, Y + j * k, k, k); };
+  c.globalAlpha = 1;
+  if(small){ P(-1, 0, '#F2A7C3'); P(1, 0, '#F2A7C3'); P(0, -1, '#FFD6E4'); P(0, 1, '#E07FA6'); P(0, 0, '#E8C45A'); return; }
+  const out = lit ? '#FFFFFF' : '#FFD6E4', mid = lit ? '#FFD6E4' : '#F2A7C3';
+  P(-1, -2, out); P(1, -2, out); P(-2, -1, out); P(2, -1, out); P(-2, 1, mid); P(2, 1, mid); P(-1, 2, mid); P(1, 2, mid);
+  P(0, -1, mid); P(-1, 0, mid); P(1, 0, mid); P(0, 1, '#E07FA6'); P(-1, -1, mid); P(1, -1, mid); P(-1, 1, '#E07FA6'); P(1, 1, '#E07FA6');
+  P(0, 0, '#E8C45A');
+}
+// The Spirit Blossom's haori, baked per size, pose (0 side on, 1 at the
+// finish, 2 from behind) and frame of its ripple
+const COAT_PAL = ['#FBF3F1', '#F2CCD8', '#E07FA6', '#B04A78', '#7A2A52', '#E8C45A', '#FFE9A0'];
+function blossomCoat(w, h, pose, ph){
+  const ox = Math.round(w * 0.6);
+  const cv = fxBake('bcoat|' + w + '|' + h + '|' + pose + '|' + ph, ox + Math.ceil(w * 1.1), Math.ceil(h * 1.02), g => {
+    const X = f => ox + f * w, Y = f => f * h, a = ph / 12 * Math.PI * 2, s = Math.sin(a), s2 = Math.sin(a + 1.3);
+    let outer, inner;
+    if(pose === 2){
+      const sw = 0.02 * s;
+      outer = [[0.30, 0.22], [0.26 + sw, 0.50], [0.22 + sw * 2, 0.76]];
+      inner = [[0.72 + sw * 2, 0.76], [0.70 + sw, 0.50], [0.68, 0.22]];
+    }else{
+      const flow = 0.08 + 0.04 * s, top = pose ? [[0.60, 0.24], [0.46, 0.27]] : [[0.64, 0.28], [0.46, 0.38]];
+      outer = [top[1], [top[1][0] - 0.16 - flow * 0.5, 0.56], [0.08 - flow, 0.74]];
+      inner = [[0.44, 0.76], [top[0][0] - 0.08, 0.5], top[0]];
+    }
+    const h0 = outer[outer.length - 1], h1 = inner[0], hem = [];
+    for(let i = 1; i < 6; i++){ const f = i / 6; hem.push([h0[0] + (h1[0] - h0[0]) * f, h0[1] + (h1[1] - h0[1]) * f + Math.sin(f * Math.PI) * 0.03 + 0.012 * s2 * (1 - f)]); }
+    const pts = outer.concat(hem, inner), path = () => { g.beginPath(); g.moveTo(X(pts[0][0]), Y(pts[0][1])); for(const [p, q] of pts.slice(1)) g.lineTo(X(p), Y(q)); g.closePath(); };
+    // ivory silk blushing down to the hem
+    const top = Math.min(outer[0][1], inner[2][1]), gr = g.createLinearGradient(0, Y(top), 0, Y(0.78));
+    gr.addColorStop(0, '#FBF3F1'); gr.addColorStop(0.5, '#FBF3F1'); gr.addColorStop(0.62, '#F2CCD8'); gr.addColorStop(0.82, '#F2CCD8'); gr.addColorStop(0.84, '#E07FA6'); gr.addColorStop(1, '#B04A78');
+    path(); g.fillStyle = gr; g.fill();
+    g.save(); path(); g.clip();
+    // a fold down it, and blossoms of rose along the hem
+    g.lineWidth = Math.max(1, w * 0.03); g.strokeStyle = '#F2CCD8';
+    const f0 = 0.5, t0 = [outer[0][0] + (inner[2][0] - outer[0][0]) * f0, outer[0][1] + (inner[2][1] - outer[0][1]) * f0], t1 = [h0[0] + (h1[0] - h0[0]) * f0, h0[1] + (h1[1] - h0[1]) * f0];
+    g.beginPath(); g.moveTo(X(t0[0]), Y(t0[1])); g.lineTo(X(t1[0]), Y(t1[1] - 0.12)); g.stroke();
+    g.restore();
+    // the streaming edge and hem trimmed in gold
+    g.lineWidth = Math.max(1, w * 0.035); g.strokeStyle = '#E8C45A';
+    g.beginPath(); g.moveTo(X(outer[0][0]), Y(outer[0][1])); for(const [p, q] of outer.concat(hem, [inner[0]]).slice(1)) g.lineTo(X(p), Y(q)); g.stroke();
+    // from behind, the crest of a blossom between his shoulders
+    if(pose === 2 && h >= 30){ const r = w * 0.09, cx = X(0.49), cy = Y(0.38);
+      for(let i = 0; i < 5; i++){ const b = -Math.PI / 2 + i / 5 * Math.PI * 2; g.fillStyle = '#E07FA6'; g.beginPath(); g.arc(cx + Math.cos(b) * r, cy + Math.sin(b) * r, r * 0.75, 0, Math.PI * 2); g.fill(); }
+      g.fillStyle = '#E8C45A'; g.beginPath(); g.arc(cx, cy, r * 0.5, 0, Math.PI * 2); g.fill(); }
+  }, COAT_PAL);
+  // blossoms along the hem, in solid pixels on the baked silk
+  if(!cv._hem && h >= 30){
+    cv._hem = 1; const q = cv.getContext('2d'), k = Math.max(1, Math.round(h / 40));
+    const pts = pose === 2 ? [[0.32, 0.71], [0.5, 0.72], [0.66, 0.71]] : [[0.14, 0.70], [0.3, 0.72]];
+    for(const [u, v] of pts) blossomAt(q, ox + u * w, v * h, k, false, true);
+  }
+  return { cv, ox };
+}
+// The sakura sigil on the grass: a ring of gold, a ring of blush inside it,
+// five blossoms turning between them and one at its heart, lit (a white rim)
+// as he winds up. Baked a size and a step at a time.
+const SIGIL_BLOSSOM = {};
+function blossomSigil(rx, ry, step, lit){
+  const key = rx + '|' + ry + '|' + step + '|' + lit;
+  if(SIGIL_BLOSSOM[key]) return SIGIL_BLOSSOM[key];
+  const cv = document.createElement('canvas'); cv.width = rx * 2 + 3; cv.height = ry * 2 + 3;
+  const g = cv.getContext('2d'), X = rx + 1, Y = ry + 1, P = (x, y, col) => { g.fillStyle = col; g.fillRect(Math.round(x), Math.round(y), 1, 1); };
+  const n = Math.round((rx + ry) * 4);
+  for(let i = 0; i < n; i++){ const a = i / n * Math.PI * 2;
+    P(X + Math.cos(a) * rx, Y + Math.sin(a) * ry, lit ? (i % 3 ? '#FFE9A0' : '#FFFFFF') : (i & 1 ? '#E8C45A' : '#B8923A'));
+    if(i % 3 === 0) P(X + Math.cos(a) * rx * 0.62, Y + Math.sin(a) * ry * 0.62, lit ? '#FFD6E4' : '#F2A7C3'); }
+  const bl = (bx, by, s) => { P(bx, by, '#E8C45A'); P(bx - 1, by, '#F2A7C3'); P(bx + 1, by, '#F2A7C3'); P(bx, by - 1, '#FFD6E4'); P(bx, by + 1, '#F2A7C3');
+    if(s){ P(bx - 2, by, '#F2A7C3'); P(bx + 2, by, '#F2A7C3'); } };
+  for(let k = 0; k < 5; k++){ const a = step / 60 * Math.PI * 2 + k / 5 * Math.PI * 2; bl(X + Math.cos(a) * rx * 0.81, Y + Math.sin(a) * ry * 0.81, rx > 14); }
+  bl(X, Y, rx > 14);
+  return SIGIL_BLOSSOM[key] = cv;
+}
 // A ball effect is drawn instead of the plain trail: path is the ball's last
 // few positions (0 is the ball itself), r its size, t the scene clock.
 const BALLFX = {
@@ -11966,6 +12201,35 @@ const BALLFX = {
       const q = (u - 0.85) / 0.15;
       for(let i = 0; i < 10; i++){ const a = i / 10 * Math.PI * 2 + b.seed;
         fxDot(c, h0.x + Math.cos(a) * (3 + q * 10), h0.y + Math.sin(a) * (1 + q * 4), 1, i & 1 ? '#FF4A1A' : '#FFB43A', 1 - q); }
+    }
+    c.globalAlpha = 1;
+  },
+  /* ---- Petal Wake: a ribbon of blush and white, petals shed off it and
+     drifting down behind the ball ---- */
+  tBlossom(c, b, path, r, t, u){
+    trailRibbon(c, path, r + 5, '#9A3E6A', 0.22);
+    trailRibbon(c, path, Math.max(2, r + 2), i => i < 3 ? '#FFFFFF' : i < 7 ? '#FFD6E4' : '#F2A7C3', 1);
+    trailRibbon(c, path.slice(0, 5), 1, '#FFFFFF', 0.9);
+    for(let i = 2; i < path.length; i++){
+      const f = (t * 1.6 + hr(i, b.seed)) % 1, p = path[i];
+      petalAt(c, p.x + (hr(b.seed, i) - 0.5) * 8 + f * 3, p.y + 1 + f * 7, 1, f * 4 + i, i & 1 ? '#F2A7C3' : '#FFD6E4', '#FFFFFF');
+    }
+    trailBall(c, b, path[0], r);
+    c.globalAlpha = 1;
+  },
+  // the Blossom Bud: a bud in flight, its petals turning about it, a ribbon
+  // of blush behind, and petals bursting off it as it comes down
+  blossombud(c, b, path, r, t, u){
+    trailRibbon(c, path, r + 5, '#5A2A40', 0.3);
+    trailRibbon(c, path, Math.max(2, r + 2), i => i < 3 ? '#FFD6E4' : i < 7 ? '#F2A7C3' : '#C9658E', 0.95);
+    for(let i = 2; i < path.length; i += 2){ const f = (t * 1.8 + hr(i, b.seed)) % 1, p = path[i];
+      petalAt(c, p.x + (hr(b.seed, i) - 0.5) * 7, p.y + f * 6, 1, f * 3, '#F2A7C3', '#FFFFFF'); }
+    const h0 = path[0];
+    drawBud(c, h0.x, h0.y, r, t + b.seed);
+    if(u > 0.85){
+      const q = (u - 0.85) / 0.15;
+      for(let i = 0; i < 10; i++){ const a = i / 10 * Math.PI * 2 + b.seed;
+        petalAt(c, h0.x + Math.cos(a) * (3 + q * 10), h0.y + Math.sin(a) * (1 + q * 4), 1, a, i & 1 ? '#FFFFFF' : '#F2A7C3', '#FFD6E4'); }
     }
     c.globalAlpha = 1;
   },
@@ -12634,8 +12898,39 @@ const Scene = {
     if(A.t >= A.dur){ this.announce = null; return; }
     const c = this.b, u = A.t / A.dur;
     const a = u < 0.12 ? u / 0.12 : u > 0.82 ? (1 - u) / 0.18 : 1;
-    const big = textW(A.name, TSC * 2) <= VW * 0.9 ? TSC * 2 : TSC;
-    const lh = (FH + 2) * big, y0 = Math.round(VH * 0.27), bandH = lh + LH + 10 * TSC;
+    // Where it goes, worked out once: below the readout (on a narrow phone
+    // it wraps to more lines and hid the name), at twice the size only
+    // where that fits, and along its row clear of the icons and the map
+    // (on its side the big name ran under them)
+    if(A.y0 === undefined){
+      const cv = this.cv, cr = typeof document !== 'undefined' && cv && cv.offsetParent ? cv.getBoundingClientRect() : null;
+      const k = cr ? cr.height / Math.max(1, VH) : 0, box = id => { const e = document.getElementById(id);
+        if(!e || !e.offsetParent || !k) return null; const r = e.getBoundingClientRect();
+        return r.width ? { l: (r.left - cr.left) / k, r: (r.right - cr.left) / k, t: (r.top - cr.top) / k, b: (r.bottom - cr.top) / k } : null; };
+      const rd = box('readout');
+      A.y0 = Math.round(Math.max(VH * 0.27, rd ? rd.b + 8 * TSC : 0));
+      const obs = ['hudClimb', 'setBtn', 'shopBtn', 'roomBtn', 'perkBtn', 'holeMap'].map(box).filter(Boolean);
+      const place = sz => {
+        const w = textW(A.name, sz) + 4, t = A.y0 - 2, b2 = A.y0 + FH * sz + 2;
+        const hit = obs.filter(o => o.t < b2 && o.b > t);
+        const clear = x0 => hit.every(o => o.r <= x0 || o.l >= x0 + w) && x0 >= 2 && x0 + w <= VW - 2;
+        if(clear(CX - w / 2)) return CX;
+        // else the widest gap between them on its row
+        const edges = [0].concat(hit.map(o => o.r)).sort((x, y) => x - y);
+        let best = null;
+        for(const l of edges){ const r = Math.min(VW, ...hit.filter(o => o.l >= l).map(o => o.l));
+          if(r - l >= w + 4 && clear(l + (r - l - w) / 2) && (!best || r - l > best.g)) best = { g: r - l, c: (l + r) / 2 }; }
+        return best ? Math.round(best.c) : null;
+      };
+      // (twice the size, else half as big again where the pixels allow, else single)
+      A.big = TSC; A.cx = CX;
+      for(const sz of [TSC * 2, Math.round(TSC * 1.5), TSC]){
+        const at = textW(A.name, sz) <= VW * 0.9 ? place(sz) : null;
+        if(at !== null){ A.big = sz; A.cx = at; break; }
+      }
+    }
+    const big = A.big, NX = A.cx;
+    const lh = (FH + 2) * big, y0 = A.y0, bandH = lh + LH + 10 * TSC;
     c.globalAlpha = 0.72 * a; c.fillStyle = '#08120C';
     c.fillRect(0, y0 - 5 * TSC, VW, bandH);
     c.globalAlpha = a; c.fillStyle = PX.brass;
@@ -12648,8 +12943,8 @@ const Scene = {
       c.fillStyle = '#FFF6D8';
       c.fillRect(x, y0 - 5 * TSC + (i & 1 ? bandH - rule : 0), 2, rule);
     }
-    drawTextS(c, A.name, CX, y0, PX.brass, big, 'c');
-    drawTextS(c, A.sub, CX, y0 + lh + 2 * TSC, A.gold ? '#FFE9A8' : PX.bone, TSC, 'c');
+    drawTextS(c, A.name, NX, y0, PX.brass, big, 'c');
+    drawTextS(c, A.sub, NX, y0 + lh + 2 * TSC, A.gold ? '#FFE9A8' : PX.bone, TSC, 'c');
     c.globalAlpha = 1;
   },
   // The caddie is a fairy now: a third of the golfer's height, floating off
@@ -12739,7 +13034,7 @@ const Scene = {
     const fx = outfitNow().fx;
     if(d > -3 || !fx) return;
     // the other effect skins: a flourish of their own
-    if(fx !== 'demonic' && fx !== 'ascended' && fx !== 'divine'){
+    if(fx !== 'demonic' && fx !== 'ascended' && fx !== 'divine' && fx !== 'blossom'){
       if(!STYLEFX[fx] || !STYLEFX[fx].flourish) return;
       this.flourish = { t0: this.t, big: d <= -4, dur: FLOURISH_DUR, fx };
       Sfx.play('flourish', fx);
@@ -12747,7 +13042,8 @@ const Scene = {
     }
     const big = d <= -4;
     this.legend = { t0: this.t, big, dur: big ? LEGEND_BIG : LEGEND_DUR };
-    Sfx.play(fx === 'demonic' ? 'hellfire' : fx === 'divine' ? 'choir' : 'ascend', big);
+    // (the Spirit Blossom's is silent: the user wants no more sounds)
+    if(fx !== 'blossom') Sfx.play(fx === 'demonic' ? 'hellfire' : fx === 'divine' ? 'choir' : 'ascend', big);
   },
   fairyMoveGo(id){
     const m = FAIRY_MOVES.find(x => x.id === id);
@@ -12837,6 +13133,11 @@ const Scene = {
     }else if(b === 'orbit'){
       for(let i = 0; i < 8; i++){ const a = i / 8 * Math.PI * 2 + T * 5, R = Math.cos(a) > 0 ? w * 0.45 : w * 0.8;
         dot(cx + Math.cos(a) * R, cy + Math.sin(a) * h * 0.3, i % 3 === 0 ? '#E0C8FF' : i & 1 ? '#8A4AD8' : '#3A1E5A'); }
+    }else if(b === 'bloom'){
+      // petals flung out in a spiral on his far side and drawn back in
+      const out = Math.sin(Math.PI * q);
+      for(let i = 0; i < 12; i++){ const a = i / 12 * Math.PI * 2 + q * 6, R = w * (Math.cos(a) > 0 ? 0.45 : 1.0) * (0.3 + 0.7 * out);
+        dot(cx + Math.cos(a) * R, cy + Math.sin(a) * R * 0.75, i % 3 === 0 ? '#FFFFFF' : i & 1 ? '#F2A7C3' : '#FFD6E4'); }
     }else if(b === 'coin'){
       const u = clamp((q - 0.2) / 0.55, 0, 1), px = hand[0], py = hand[1] - Math.sin(Math.PI * u) * h * 0.8 - k;
       const face = Math.abs(Math.sin(T * 18)) > 0.4, s2 = k * 2;
@@ -13722,6 +14023,8 @@ const FAIRY_MOVES = [
   { id:'soar',  dur:1.6, only:'divine' },
   { id:'blaze', dur:1.3, only:'demonic' },
   { id:'blink', dur:1.4, only:'ascended' },
+  // the Spirit Blossom's: once round on a whirl of petals, flung out and back
+  { id:'bloom', dur:1.5, only:'blossom' },
   // and one each for the other caddies with a look of their own (the user
   // asked): slips on a peel, snaps a photo, honks up confetti, sinks and
   // pops up with a boo, twirls in the disco lights, glitches about, shivers
@@ -13786,6 +14089,9 @@ function fairyPose(kind, q, T, w, h){
     // and where he will be
     const gap = q > 0.22 && q < 0.38 ? (q - 0.22) / 0.16 : q > 0.62 && q < 0.78 ? (q - 0.62) / 0.16 : -1;
     if(gap >= 0){ P.hide = 1; P.swirl = gap; P.from = q < 0.5 ? 0 : -out; P.to = q < 0.5 ? -out : 0; }
+  }else if(kind === 'bloom'){                                   // round on a whirl of petals
+    P.sx = Math.cos(easeIO(q) * Math.PI * 2); P.dy = -Math.sin(Math.PI * q) * h * 0.14;
+    P.armL = P.armR = env * 0.8; P.bits = 'bloom';
   }else if(kind === 'slip'){                                    // over on a peel, and up again
     const lie = 0.9;
     if(q < 0.25){ const u = easeIO(q / 0.25); P.rot = -lie * u; P.dy = u * h * 0.12; }
@@ -14002,6 +14308,44 @@ const CLUBFX = {
   // dark shaft wound with chain below the grip and a spark running down it,
   // a scythe's blade curving back off the head with its edge lit magenta,
   // magenta fire on it, and a swing that leaves a great sweep of magenta
+  // the Blossom Driver: ivory wrapped in blush, a jade head edged in gold,
+  // petals coming off it; a pure strike blooms at the ball
+  blossom: {
+    shaft(c, hx, hy, tx, ty, th, h, t, K){
+      pxLine(c, hx, hy, tx, ty, K.shaft, th);
+      const P = clubPts(hx, hy, tx, ty, 14);
+      for(let i = 2; i < 11; i += 2) fxDot(c, P[i][0], P[i][1], th, '#F2A7C3', 1);
+      c.globalAlpha = 1;
+    },
+    head(c, tx, ty, th, h, turn, t, K){
+      const hw = th * 2 + 1, x0 = Math.round(tx) - (turn < 0 ? hw - th : th), y0 = Math.round(ty) - 1;
+      c.fillStyle = K.head; c.fillRect(x0, y0, hw, th + 1);
+      c.fillStyle = '#E8C45A'; c.fillRect(x0, y0 + th, hw, 1);
+      c.fillStyle = '#F2A7C3'; c.fillRect(x0 + (turn < 0 ? hw - 1 : 0), y0, 1, 1);
+    },
+    over(c, hx, hy, tx, ty, th, h, t){
+      for(let i = 0; i < 3; i++){ const life = (t * 0.9 + i / 3) % 1;
+        petalAt(c, tx + (hr(i, 9) - 0.5) * 6 + life * 3, ty + life * 6, 1, t * 2 + i, i & 1 ? '#F2A7C3' : '#FFD6E4', '#FFFFFF'); }
+      c.globalAlpha = 1;
+    },
+    trail(c, arc, th, t){
+      arcTrail(c, arc, th + 2, ['#F2A7C3', '#FFD6E4'], 0.6);
+      arcTrail(c, arc, th, ['#FFFFFF'], 0.7);
+      for(let i = 2; i < arc.length; i += 2){ const f = (t * 1.8 + i * 0.37) % 1;
+        petalAt(c, arc[i][0] + f * 3, arc[i][1] + f * 5, 1, f * 4 + i, '#F2A7C3', '#FFFFFF'); }
+      c.globalAlpha = 1;
+    },
+    // a pure strike: a blossom bursting open at the ball, its petals flying
+    pure(c, x, y, h, f){
+      const X = Math.round(x), Y = Math.round(y), k = Math.max(1, Math.round(h / 40)), R = h * (0.08 + 0.3 * Math.sqrt(f));
+      for(let i = 0; i < 14; i++){ if(hr(i, 387) < f * 0.7) continue; const a = i / 14 * Math.PI * 2 + 0.2;
+        petalAt(c, X + Math.cos(a) * R, Y + Math.sin(a) * R * 0.7, k, a + f * 5, f < 0.4 ? '#FFFFFF' : i & 1 ? '#F2A7C3' : '#FFD6E4', '#FFFFFF'); }
+      if(f < 0.55){ const r2 = Math.max(2, Math.round(h * 0.05 * (1 + f * 2)));
+        for(let i = 0; i < 5; i++){ const a = -Math.PI / 2 + i / 5 * Math.PI * 2; fxDot(c, X + Math.cos(a) * r2 - k, Y + Math.sin(a) * r2 * 0.8, k * 2, '#F2A7C3', 1); }
+        fxDot(c, X - (k >> 1), Y - (k >> 1), k, '#E8C45A', 1); }
+      c.globalAlpha = 1;
+    }
+  },
   ascended: {
     under(c, hx, hy, tx, ty, th, h, t, K){ glowLine(c, hx, hy, tx, ty, th, '#962CA8', 0.26 + 0.1 * Math.sin(t * 4)); },
     shaft(c, hx, hy, tx, ty, th, h, t, K){
@@ -14091,7 +14435,8 @@ function golferG(x, y, w, h, ph, t, bot, walking, spr){
 const NIGHT_GLOW = {
   divine:   { col: ['#6E6436', '#A8903E', '#E3C46A'], breathe: 1.6 },
   demonic:  { col: ['#5A2A1A', '#9A3A1C', '#E0602A'], flicker: 1 },
-  ascended: { col: ['#402A5E', '#7A3A96', '#C45AD8'], breathe: 1.1 }
+  ascended: { col: ['#402A5E', '#7A3A96', '#C45AD8'], breathe: 1.1 },
+  blossom:  { col: ['#5A3A4A', '#9A5A7A', '#E8A8C4'], breathe: 1.3 }
 };
 // A pool of light on the ground at his feet: an ellipse three of his widths
 // across, dithered solid pixels (a wash of light turns grey on grass),
@@ -18453,9 +18798,9 @@ function renderTourNav(){
 }
 const cperkDef = id => B.CPERKS.find(x => x.id === id);
 // the Mythic Favour: worn only with the Divine, Demonic or Ascended caddie
-const MYTH_CADDIES = ['divine', 'demonic', 'ascended'];
+const MYTH_CADDIES = ['divine', 'demonic', 'ascended', 'blossom'];
 const mythOk = () => MYTH_CADDIES.includes(S.caddie);
-const MYTH_PAL = { divine: ['#FFFFFF', '#FFE39A', '#E3B457'], demonic: ['#FFE680', '#FF8A2A', '#E8401C'], ascended: ['#FFE0FF', '#F27CFF', '#B04ACB'] };
+const MYTH_PAL = { divine: ['#FFFFFF', '#FFE39A', '#E3B457'], demonic: ['#FFE680', '#FF8A2A', '#E8401C'], ascended: ['#FFE0FF', '#F27CFF', '#B04ACB'], blossom: ['#FFFFFF', '#F2A7C3', '#2F8F7A'] };
 // A perk's level (1 until upgraded) and what it does there: a second longer
 // and an eighth stronger each level (Ready Golf and Lost Ball Scout only
 // stronger: one acts at once, the other lasts a hole). Its words are its own

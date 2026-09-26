@@ -9,134 +9,79 @@ check is for.
 ## 1. Where things stand
 
 - Everything is committed and pushed to `main` (mirrored on the session
-  branch `claude/notes-claude-review-4cqv98`). Nothing is half-built: the
-  request below was stopped before any of it was written.
-- `node test/run.js` passes all **63 checks** (about ten minutes). Frost
+  branch `claude/notes-review-9kshah`). Nothing is half-built and **no
+  request is waiting**: the user's last message was all done (§5, the
+  first sections).
+- `node test/run.js` passes all **74 checks** (about eleven minutes). Frost
   follows the real hour: after touching weather or colours, run it with
   `HOUR_FORCE` pinned to 8 and to 15 in a copy (`CLAUDE.md`).
 - **Only update this file and `CLAUDE.md` when the user asks.**
-
-### The request to pick up (their last message, not started)
-
-With two screenshots (a club's sheet, and two gear tiles), in their words:
-"Can we make sure that the font used for the course name at the top of the
-screen is the same as the serif font for gear if it isn't already? Also
-let's change the font for the wind and the weather area above the minimap
-to the sans serif font we use. Can you also make an 'Upgrade failed'
-indication when an upgrade fails please if it's not already there. Then
-lets also reduce the size of the gear tiles a little bit. Then let's do 2
-(but make it an option in the settings to enable, because this could
-override the course designs right? So let's make it an option). Let's do 4
-and 5 too. I don't want to add anything new to the tours tab, there is
-already so much in there. We need to reduce that clutter, so maybe we can
-make sub tabs for things in there so you aren't scrolling so much to see
-things."
-
-What each part means and what is already known:
-1. **Course name font**: already the same. The course name (`#eventLine`)
-   and the gear names (`.gt .gn`, the sheet's `h3`) all use `var(--disp)`
-   (Iowan Old Style, then Palatino, Georgia). Tell them so; nothing to do.
-2. **Wind and weather words above the map** (e.g. "11 MPH >>", "NIGHT ROUND
-   · GLASS GREENS", "EMBER"): drawn on the canvas in the pixel font by
-   `Scene.drawHud` (their height is `Scene.hudLines`, and `placeMap` sizes
-   the map under them). They want the UI's sans serif, `var(--sans)`
-   (system-ui). Canvas text on the low-res buffer would blur: the clean way
-   is a DOM overlay (`#stage` is the parent) placed where the words stand
-   now, over the map, keeping the colours (the affinity word in its own
-   colour, the Hole of the Week line in brass). Keep the order the user
-   fixed: pull tab, map, then the words standing on the map. Checks that
-   read those words or their place: `layout`, `hud`-related parts of
-   `readouts`/`legibility`/`render`; `sigweek` reads "x2" in the corner.
-3. **"Upgrade failed"**: `enhance()` already toasts "Upgrade failed · still
-   +n", but toasts show on the stage behind the sheet's veil, so from the
-   sheet it cannot be seen. Put the result in the sheet itself after
-   `doEnh`: a line under the three buttons, red "Upgrade failed · still +n"
-   or green "Upgraded to +n", fading after a couple of seconds.
-4. **Smaller gear tiles**: `.gt` in the stylesheet (padding 7px, thumb 40,
-   name `var(--f2)`, lines `var(--f0)`); a little smaller all round, still
-   two to a row and readable at 320 (`bag`, `layout`, `legibility` hold it).
-5. **Dawn and dusk** (menu item 2), **as a setting, off by default**: the
-   sky warming at its edges near the horizon in the morning and evening by
-   the player's own clock (`hourNow()`, `HOUR_FORCE`), without changing the
-   course's own colours when it is off. Why a setting (the user, after):
-   "I'm only talking about night and day stuff, because some courses are
-   built for the day... and some for night... I don't want to force
-   players to only see night holes at night and day holes during the day."
-   So the real clock must never decide day or night on its own; the
-   switch is only for the time-of-day look. Frost also follows the clock
-   (mornings); the user said "anything that exists already can stay as it
-   is", so frost stays as it is, outside the switch. A switch in Settings like Night
-   Music (`S.dawnDusk`, repaired on load). Likely in `buildSky` (its cache
-   key must carry it) plus perhaps a low sun; not at night or in rain.
-6. **Birds** (menu item 4): a flock crossing the sky now and then, and
-   birds on the fairway that scatter when a ball lands near them. None at
-   night. From the scene's own random stream (never `Math.random`: the
-   `pacing`-type checks and rule 7). Anything on the field keeps to the
-   ground's clip line (`sigview`/`nightholes`/`scenery` show how to check).
-7. **A grandstand on the last hole** (menu item 5): seats behind the 18th
-   green (`holeInRound(h) === B.ROUND`), full on the final day of an event
-   (`S.day`/the calendar: see `holeInRound`, `tournamentOf`), fewer on the
-   other days. A prop drawn in `drawProps` order behind the green (the new
-   gallery and backdrop trees are laid in `layNight`, tagged `extra`),
-   clipped to the ground's line, and not over the pin.
-8. **The Tour tab**: **add nothing new to it.** Reduce the clutter with sub
-   tabs, like the Bag and Range have (`#bagNav` style: `renderBagNav`).
-   Its sections now, in order (`renderTour`): Tour Card (`#tierBox`), The
-   Card (`#cardBox`), Season (`#seasonBox`, the trophy cabinet in it), Major
-   of the Week (`#majBox`), Signature Week (`#sigBox`, with the Hole of the
-   Week Run row). A likely split: **Card** (Tour Card and The Card),
-   **Season**, **Majors** (Major of the Week), **Signature** (Signature
-   Week); ask if unsure. The tab's dot/flash (`renderTourTab`) must still
-   lead to what is new. Checks that read these: `smoke`, `menus`,
-   `honours` (the Signature band), `majors`, `cabinet`, `climb`,
-   `layout`/`legibility`/`titles` (they sweep sub tabs: add the new ones).
+- Answered this session, in case it comes up again: **swing speed** still
+  matters fully (a hole's time is when the ball drops, and the walk is
+  paid in that time); **Fast Walker** only shortens the least time a hole
+  can take (0.9s), so it helps only a bag that clears a hole in under a
+  second (its words now say so; it was not reworked).
 
 ### Recent work (sections in §5)
 
-- This session, newest first: the Bag tab reworked (tiles two to a row
-  under a sticky slot bar, Sets & Affinities sub tab, Equip/Upgrade/Scrap
-  on a club's sheet); a gallery beside and behind every green, trees behind
-  it, shrubs, tufts and rocks in the rough everywhere; rain rings only on
-  water and the stray ring beside him removed; night glow for the dearest
-  skins; the Mythic caddies' tricks; frost and puddles; a skin flies with
-  him (arms up on the club); night on the ordinary holes; the Mythic
-  Favour; the Hole of the Week run.
-- The session before: the moments for the top skins (half a second on an
-  albatross or an ace), the Demonic and the Divine made ultimate skins,
-  four trains, weather and night on the signature holes, the Signature
-  Week, pure-strike flourishes for the three dearest drivers.
+- This session, newest first: the **Spirit Blossom** Mythic set (skin,
+  caddie, driver, wake, ball); the course banner kept under the readout;
+  the gallery's cheer stops at the next hole; Twilight putts drop in the
+  cup; trails a pixel thinner; **Dawn and Dusk** now also brings night from
+  9pm to 5am when on; the Island Green wager in a wider, brighter lake;
+  the wager calls small, in the interface's type; the gallery jumps and
+  waves on an eagle or better; frost on the new roofs; the Record in
+  folds; wager guides, a Leave button, "Helped by ..." over the shot
+  buttons; the wagers played from their own place (Twilight on the green,
+  the Vault walked); capitals on short lines; the ball stays on the map;
+  the nine's goal explained; the wind and weather words inside the
+  readout; a soft cheer from the grandstand on an event's last putt, lamps
+  on it at night; Better Season and Season Bests; crickets; a trick for
+  every caddie look; the clubhouse and the cup moments; the grandstand;
+  birds; Dawn and Dusk; the Tour tab in sub tabs; the upgrade result on
+  the club's sheet and smaller gear tiles.
 - **Turned down**: a station on the railway ("would take up too much
   time"); **a photo mode** and **trail flourishes**. Don't offer them again.
 - Older requests are in §6, one line each.
-- **Not yet heard back on** (ask one when it fits, never as a list):
-  whether the second music track and the town theme fit; the 2 min battery
-  saver wait; where the auto-climb button sits; how the pure-strike
-  flourishes feel at a fast tempo; the Mythic Favour's price (600) and
-  strength (three lifts of 20%); frost from five to eleven by their clock.
+- **Not yet heard back on** (ask one when it fits, never as a list): how
+  the Spirit Blossom looks on the phone; whether the second music track
+  and the town theme fit; the 2 min battery saver wait; the Mythic
+  Favour's price (600) and strength (three lifts of 20%).
 - The user usually ends a task by asking **"What's next?"**: a short plain
   menu with a recommendation (§8), then wait for the choice.
 
 ### Things the user asked for that must stay
 
-- **Nothing new on the Tour tab**: it is already crowded; the next job
-  there is sub tabs to cut the scrolling.
+- **Nothing new on the Tour tab**: it is split into sub tabs (Card,
+  Season, Major, Signature) to cut the scrolling; add nothing to it.
 - **The Bag tab** opens on the clubs: a slot bar held at the top, tiles two
   to a row, the sets on their own sub tab (their design, from a picture).
 
 - **Honours stay in the medal** (left column: settings, shop, medal, star).
   They stopped me putting a trophy back on the right.
-- The right side, from the bottom up: pull tab, hole map, then the wind and
-  weather words standing on the map.
+- The right side, from the bottom up: pull tab, then the hole map. The
+  wind and weather words are in the readout (top left); where the left
+  column of icons will not fit under it they go in a row.
 - **Strike and cup sounds are turned right down** (strike 0.09, pure 0.12,
   cup 0.15). Keep them subtle.
-- **No applause**: removed at their request (it never stopped when holes
-  end every few seconds). Don't bring a crowd back without asking.
+- **No more sounds except ambience** (their words: "I don't want anymore
+  sounds except ambience"). The crickets and birdsong are ambience. The
+  one crowd sound is the grandstand's soft cheer on an event's **last**
+  putt ("fine since it's not every hole"); the old applause on every hole
+  stays gone. The Spirit Blossom has no sound of its own.
+- **The gallery's jump on an eagle or better** is silent, lasts 1.5s and
+  stops when the next hole starts (it cheered on over the next tee).
+- **Dawn and Dusk** is off by default. On, it warms the sky by the
+  player's clock and makes every hole night from 9pm to 5am (they found
+  it light at midnight). It never takes away a course's own night.
+- **The wind and weather words** live inside the readout box, small, in
+  the interface's sans serif (not over the map, not in pixel letters).
 - The island crossing (flying on the spinning club) was **their idea**.
 - **The caddie has no wings**: he floats, a little up and down, and now and
   then takes a turn (spin, dance, flip, wave, loop). Their request. (That
   is the default fairy; the Demonic and Divine caddies have wings of their
   own, side on. The user said to keep the Divine caddie's.)
-- **The great-hole effects** (the three top skins' moments and every other
+- **The great-hole effects** (the four Mythic skins' moments and every other
   skin's flourish) come **only on an albatross or an ace, last half a
   second, and burst out from his outline close about him**. Nothing climbs
   the sky. On a fast bag acing every hole the long ones never went away.
@@ -188,7 +133,7 @@ What each part means and what is already known:
 
 ## 3. The project
 
-- **The whole game is `index.html`** (about 19.1k lines, 2.5 MB with the
+- **The whole game is `index.html`** (about 20.3k lines, 2.5 MB with the
   sounds and the music): markup, CSS and one classic script. There is no
   build step.
 - Play it over http (`npm start`, then http://localhost:8080). Opening the
@@ -272,6 +217,15 @@ Line numbers are approximate and drift. Search for the name instead.
 | Golfer drawn at any size in the equipped look (the course and the saver share it) | `paintGolfer` |
 | Developer menu (hold the course name still for 1.5s) | `const DEV = {`. `DEV.course(i)` pins any course to the next event (a major of the week is set up as the major). The read panel shows the audio state and the auto-climb judgement; rows for the major of the week, the season, the cabinet, sound and music, the fairy, caddie perks, the new honours, and a frame-time readout (`DEV_FPS`) |
 | Main loop | `step()` |
+| **The Spirit Blossom set** | outfit/caddie `blossom`, club `blossom`, trails `petalwake` (`BALLFX.tBlossom`) and `blossombud`; `STYLEFX.blossom` (`coat`, `pins`, `fall`, `ground`, `wave`); `blossomCoat` (`COAT_PAL`, baked with `fxBake`), `blossomAt`, `petalAt`, `drawBud`, `blossomSigil`; pattern `sakura`; `CLUBFX.blossom`, `CUP_FX.blossombud`, `NIGHT_GLOW.blossom`, `ICON_FX.blossom`; its caddie trick `bloom`; in `MYTH_CADDIES`, and silent in `legendGo` |
+| **The words in the readout** | `#rWx` (wind, weather, affinity), `Scene.hudWords`, `fitHudLeft` (the `row` mode for the icons) |
+| **Tour sub tabs** | `tourSub` ('card', 'season', 'maj', 'sig'), `renderTourNav`, `#tourNav` |
+| **Dawn and Dusk** | `S.dawnDusk`, `dawnDusk()` (its warmth by the hour), `clockNight()` (9pm to 5am, in `newHole`), the row in `settingsSheet`; `buildSky`'s key carries it |
+| **Birds** | `Scene.drawFlock` (below the readout's bottom), the fairway birds (props kind 9, laid in `layNight`) |
+| **Grandstand and clubhouse** | props kind 10 `standCv(sh, full, night, seed, cheer, frost)` and kind 11 `clubhouseCv(sh, night, side, seed, lit, frost)`, laid in `layNight` behind the round's last green; `Scene.galleryUp` (the jump on an eagle, `GALLERY_UP`), the last putt's cheer |
+| **Cup moments** (the Mythic balls) | `CUP_FX`, `Scene.drawCupFx` (before `drawFlagstick`), the hole hold lengthened for them |
+| **Wagers as played** | `wagerSpot(R)`, `Scene.wagerPutt`, `Scene.wagerCallout` (`#callout`), `leaveDgn` (`#leaveBtn`, `#leaveTxt`), `#wagerStat` ("Helped by ..."), `wagerGuide` |
+| **Record folds, Season Bests, Better Season** | `renderRecord` (`.rfold`), `S.seasonBest`, `seasonBestPost`, the Cabinet in `roomCase` |
 
 ### Globals worth knowing
 
@@ -476,7 +430,77 @@ Line numbers are approximate and drift. Search for the name instead.
    again; one that errors part way may leave its old picture behind, so
    check the file's time before trusting it.
 
+36. **Look at a new skin at 8x before showing it.** The first Spirit
+   Blossom looked fine in code and cluttered on screen: a crown like a
+   headphone, a ribbon like a wire, confetti everywhere. Draw him with
+   `paintGolfer` straight onto a small canvas at his real sizes (30, 48,
+   60), in every pose (address, top, impact, finish, walking away, the
+   moment), and scale it up; judge that sheet, not a whole frame.
+37. **A random setup in a check is seeded.** `pierlife` measured a cricket
+   with a constant `Math.random` and heard silence; `dance` played on into
+   an unseeded next hole. Seed it (a small LCG) or pin what it draws.
+38. **Home courses' 18ths are signature holes.** A check of something on
+   the last hole (the grandstand) found nothing on a home course; pick
+   the hole with `sigKind` in mind.
+
 ## 5. What the last features do (for debugging them)
+
+### The Spirit Blossom (user asked: "immaculate. No wings")
+
+- Ivory silk shaded in blush with blossoms woven in (`sakura`), jade
+  trousers, a gold sash. A **haori** off his shoulders, baked per size and
+  frame: side on it streams behind him to a rose hem trimmed in gold with
+  blossoms on it; walking away it hangs down his back, over him, with a
+  blossom crest. Three blossoms on a gold pin in his hair with a short
+  swinging chain. A sakura ring on the grass (gold rim, blush inside, five
+  blossoms turning), a few petals fallen round it; four petals drifting
+  off him. A ring of petals on the strike; blossoms and petals bursting
+  from his outline on an albatross or an ace (half a second, silent).
+- The caddie: a blossom in its hair, petals drifting, its trick `bloom`.
+  The driver, the Petal Wake and the Blossom Bud (which blooms in the cup).
+  Prices: 3500, the caddie in proportion, 2350, 2350, 1750; all Mythic.
+- `blossom` holds it: the haori both ways, the pins, nothing far from him
+  across forty frames, no sound; `legends` holds its moment and its
+  driver's pure strike with the other three.
+
+### Smaller fixes of the last batch
+
+- The course banner goes under the readout (it wraps to more lines at
+  320 and hid the name), and its name takes the biggest size that fits
+  along its row clear of the icons and the map, moved into the widest
+  gap if the middle is taken (on its side it ran under them). Worked out
+  once per banner in `drawAnnounce` (`A.y0`, `A.big`, `A.cx`); `banner`
+  holds it at seven sizes.
+- The gallery's jump stops on a new hole (`newHole` clears `galleryUp`).
+- A Twilight putt that counts as made ends in the cup: `puttBall` runs to
+  the pin (plus the miss) rather than the course's own line.
+- Trails a pixel thinner (`trailRibbon` takes one off any width of 3+).
+- Fast Walker's words: "The least time a hole takes, 4% shorter".
+- The Island Green wager's lake is wider and brighter, the bank softer;
+  its calls ("On the green", "In the water") are the `#callout` box in the
+  interface's type, not pixel letters on the field.
+
+### Wagers as played (user sent screenshots)
+
+- Each wager starts at its own place (`wagerSpot`): the Twilight Putt on
+  the green, putting (`wagerPutt`); the Vault walked, the camera moving
+  only between swings; no ball from the course in the Scramble.
+- A Leave button at the top right of the field asks "Sure?" once, then
+  ends the wager with what it won. "Helped by ..." stands over the shot
+  buttons. Each wager on the tab has a Guide (what it is, what helps,
+  words like "plugged lie" explained). `wagerplay` holds all of it.
+
+### The course's life (user asked, from the menu)
+
+- Birds: a flock over the hills now and then (below the readout), birds
+  on the fairway that fly off when a ball lands near. None at night or in
+  rain. A grandstand behind the round's last green, filling through the
+  week, a soft cheer on an event's last putt, lamps at night; a clubhouse
+  with a terrace beside it, lit at dusk. Frost on both roofs on a frosty
+  morning. The gallery jumps and waves on an eagle or better. Crickets on
+  a dry night. Held by `birds`, `stand`, `clubhouse`, `extras`, `pierlife`.
+
+
 
 ### The Bag tab (user asked, with a picture of the look)
 
@@ -1734,6 +1758,17 @@ him (about 49px tall on a 320 phone, 71px on its side).
 
 ## 6. Recent history (newest first, one line each)
 
+- The Spirit Blossom Mythic set; the banner under the readout; the
+  gallery quiet on a new hole; Twilight putts in the cup; thinner trails;
+  Dawn and Dusk brings night; the Island Green's lake; small wager calls.
+- The gallery's jump, frost on the roofs, the Record in folds; wager
+  guides, Leave, "Helped by"; wagers from their own place; capitals; the
+  ball on the map; the nine's goal; words in the readout.
+- The grandstand's cheer and lamps; Better Season; Season Bests; crickets;
+  a trick for every caddie look; the clubhouse; cup moments; the
+  grandstand; birds; Dawn and Dusk; Tour sub tabs; the upgrade result on
+  the sheet; smaller gear tiles.
+
 - The Bag tab reworked: clubs as tiles two to a row under a slot bar that
   stays at the top; Sets & Affinities its own sub tab; Equip, Upgrade and
   Scrap together on a club's sheet.
@@ -1885,18 +1920,22 @@ him (about 49px tall on a 320 phone, 71px on its side).
 
 ## 8. What to offer next
 
-First finish the request in §1 (eight parts). Turned down, don't offer
-again: the railway station, a photo mode, trail flourishes. Don't offer
-anything that adds to the Tour tab.
+Turned down, don't offer again: the railway station, a photo mode, trail
+flourishes. Don't offer anything that adds to the Tour tab, or any new
+sound that is not ambience.
 
-The menu to offer after it:
-1. **Season bests somewhere other than the Tour tab** (the Trophy Room's
-   Cabinet, say): the best card of each season and where it came.
-2. **A Mythic ball trick**: the three dearest balls do something of their
-   own as they drop in the cup.
-3. **Clubhouse on the last hole**: the clubhouse near the 18th green with a
-   terrace, beside the grandstand.
-4. **A caddie turn for every caddie look**: a small trick of its own for
-   each of the mid-priced caddies, as the dearest three have.
-5. **Sounds of the course**: birdsong by day, crickets at night, quiet and
-   rare (the user likes sounds turned right down).
+The menu to offer:
+1. **A second new Mythic touch for the Spirit Blossom**: a spirit fox
+   (kitsune) mask on its caddie, or blossom trees on the course bursting
+   into flower when it aces. (Only if they like the set.)
+2. **Ambience by the course**: wind in the pines on the mountain courses,
+   waves on the coast, a stream by the stones (quiet, rare: ambience is
+   the one kind of sound they still want).
+3. **Umbrellas in the stands**: in the rain the gallery and the grandstand
+   put umbrellas up, in a few colours; down again when it clears.
+4. **A Mythic set's collection bonus**: wearing all five pieces of a
+   Mythic set lights something small (a gold rim on its tiles, a line in
+   the Record).
+
+Recommend 3: small, silent, and it makes the new grandstand feel alive in
+the weather the courses already have.
