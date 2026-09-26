@@ -22,6 +22,9 @@
  *   - the Career tab carries its dot when retiring now would find an
  *     heirloom, and not before retiring opens or once every one is found:
  *     nothing on screen ever pointed at retiring before
+ *   - Season Bests in the Cabinet (the user asked): the best card of each
+ *     of this golfer's seasons, newest first, with its course and card;
+ *     never one played away; an old save's taken from its log
  *   - retiring starts the calendar again, so the season's results go and the
  *     best cards stay; a save with junk in either loads clean
  */
@@ -147,6 +150,27 @@ module.exports = {
         o.retired = S.evLog.length + '/' + (S.bestCards.length === bestBefore ? 'kept' : 'lost');
         S.evLog = [{ t: 3, id: 'nowhere', s: -5 }, { t: 'x', id: W[0].id, s: 1 }, 'junk', { t: 4, id: W[0].id, s: -9, b: 1 }];
         S.bestCards = [{ t: 1, id: W[0].id, s: 'lots' }, { t: 2, id: W[1].id, s: -3 }, null];
+        // ---- season bests: the best card of each season, in the Cabinet --------
+        {
+          // (the junk the repair below is given, kept aside meanwhile)
+          const kE = S.evLog, kB = S.bestCards, kH = S.hole;
+          S.seasonBest = []; S.evLog = []; S.bestCards = []; S.hole = 1; startHole();
+          const g = S.retires || 0;
+          for (const sc of [-10, -50, -30, -5, -60, -20, -15, -45]) finish(sc);   // events 1-8: six in season 1, two in season 2
+          const mine = () => S.seasonBest.filter(x => x.g === g).map(x => x.n + ':' + x.s).sort().join(',');
+          o.sb = mine();
+          finish(-300, true); o.sbAway = mine();
+          QUIET = false; trophyRoom('case');
+          const lines = () => [...document.querySelectorAll('#seasonBests .pr')].map(e => e.textContent);
+          o.sbLines = lines();
+          o.sbNamed = S.seasonBest.every(x => !!courseById(x.id) && lines().some(l => l.indexOf(courseById(x.id).n) >= 0));
+          S.retires = g + 1; renderCabinet(); o.sbOther = lines().length; S.retires = g; hideSheet();
+          delete S.seasonBest; S.evLog = [{ t: 1, id: courseFor(1).id, s: -33, b: 0, w: 0, c: 0 }, { t: 2, id: courseFor(2).id, s: null, b: 0, w: 0, c: 0 }];
+          initState(); o.sbRepair = S.seasonBest.map(x => x.n + ':' + x.s).join(',');
+          S.seasonBest = [{ n: 1, g, t: 1, id: 'nowhere', s: -5, c: 0 }, 'x', { n: 2, g, t: 7, id: courseFor(7).id, s: -9, c: 0 }]; initState();
+          o.sbJunk = S.seasonBest.map(x => x.n + ':' + x.s).join(',');
+          S.evLog = kE; S.bestCards = kB; S.hole = kH; startHole();
+        }
         initState(); o.repaired = S.evLog.length + '/' + S.bestCards.length;
         S.evLog = 'bad'; S.bestCards = 7; initState(); o.repaired2 = Array.isArray(S.evLog) + '/' + Array.isArray(S.bestCards);
       } finally {
@@ -185,12 +209,18 @@ module.exports = {
     if (!r.worthOn) throw new Error('retiring would find an heirloom and the Career tab said nothing');
     if (r.worthEarly || r.worthAll) throw new Error('the Career tab pointed at retiring before it opens, or with every heirloom found');
     if (r.retired !== '0/kept') throw new Error('after retiring the season log and best cards were ' + r.retired + ' (want 0/kept)');
+    if (r.sb !== '1:-60,2:-45' || r.sbAway !== r.sb) throw new Error('the season bests are ' + r.sb + ' (want 1:-60,2:-45), and after an event away ' + r.sbAway);
+    if (r.sbLines.length !== 2 || !/^-45Season 2 \(now\)/.test(r.sbLines[0]) || !/^-60Season 1 /.test(r.sbLines[1]) || !r.sbNamed)
+      throw new Error('the Cabinet\'s Season Bests read ' + JSON.stringify(r.sbLines) + ' (want season 2 then 1, each with its course)');
+    if (r.sbOther) throw new Error('a new golfer\'s Cabinet showed ' + r.sbOther + ' of the last golfer\'s season bests');
+    if (r.sbRepair !== '1:-33' || r.sbJunk !== '2:-9') throw new Error('season bests from an old save\'s log read ' + r.sbRepair + ', and with junk ' + r.sbJunk);
     if (r.repaired !== '1/1' || r.repaired2 !== 'true/true') throw new Error('a save with junk records loaded as ' + r.repaired + ' / ' + r.repaired2);
     return ['every event logged with its course; away events post no card; the best five kept, best first',
       'the season shows six events, and what it names next is what then gets played (' + r.predict.map(x => x.split(':')[0]).join(', ') + ')',
       'the cabinet lights the majors won (x2 past one) and their jackets, holds ' + r.cups + ' cups and the best cards by course',
       'its rewards wait at each step, pay once and never go; Collect all takes them and the free sovereigns, and the trophy\'s dot goes',
       'the Career tab points at retiring when it would find an heirloom, and only then',
-      'retiring clears the season and keeps the best cards; junk records load clean'];
+      'retiring clears the season and keeps the best cards; junk records load clean',
+      'Season Bests: the best card of each season, newest first with its course; none from away, none of another golfer\'s; an old save starts from its log'];
   }
 };
