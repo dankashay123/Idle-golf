@@ -642,6 +642,9 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
 .card{display:flex;flex-direction:column;border:1px solid var(--line);background:var(--raise);
   border-radius:0;overflow:hidden;text-align:center}
 .card.on{border-color:var(--brass-dk)}
+/* a Mythic set worn in full: its pieces rimmed in gold */
+.card.full{border-color:var(--brass);box-shadow:inset 0 0 0 1px var(--brass)}
+.card.full .badge{background:var(--brass)}
 .card .chd{padding:5px 4px;background:var(--raise2);border-bottom:1px solid var(--line);
   font-size:var(--f1);font-weight:700;color:var(--chalk);letter-spacing:.02em;line-height:1.25}
 .card .cart{position:relative;flex:1 1 auto;display:flex;align-items:center;justify-content:center;
@@ -4015,6 +4018,8 @@ function initState(){
   if(S.saver !== undefined && !SAVER_MINS.includes(S.saver)) delete S.saver;
   for(const k in S.homes){ const c = courseById(k); if(!c || c.slot !== 'home') delete S.homes[k]; }
   if(!S.styleOwn || typeof S.styleOwn !== 'object') S.styleOwn = {};
+  if(!S.fullSets || typeof S.fullSets !== 'object' || Array.isArray(S.fullSets)) S.fullSets = {};
+  for(const k of Object.keys(S.fullSets)) if(!MYTH_SETS[k] || S.fullSets[k] !== 1) delete S.fullSets[k];
   // (the Spirit Blossom set was replaced by The Void: what was bought of it
   // becomes the same piece of the new set, and what was worn stays worn)
   { const was = { 'o:blossom': 'o:cosmic', 'c:blossom': 'c:cosmic', 'k:blossom': 'k:cosmic', 't:petalwake': 't:horizon', 't:blossombud': 't:singularity' };
@@ -7159,6 +7164,16 @@ const outfitNow = () => previewOf('o') || styleDef('o', S.outfit) || B.OUTFITS[0
 const trailNow  = () => previewOf('t') || styleDef('t', S.trail) || B.TRAILS[0];
 const caddieNow = () => previewOf('c') || styleDef('c', S.caddie) || B.CADDIES[0];
 const clubNow   = () => previewOf('k') || styleDef('k', S.club) || B.CLUBS[0];
+// The Mythic sets, and what makes each whole: its look, its caddie and its
+// driver, with its wake or its ball in the one place for either
+const MYTH_SETS = { ascended: { n: 'Ascended', t: ['ascension', 'ascorb'] }, cosmic: { n: 'The Void', t: ['horizon', 'singularity'] } };
+function fullSetOf(k, id){ for(const s in MYTH_SETS) if(k === 't' ? MYTH_SETS[s].t.includes(id) : id === s) return s; return null; }
+// the Mythic set he wears in full (never while trying one on)
+function fullSet(){
+  for(const s in MYTH_SETS) if(S.outfit === s && S.caddie === s && S.club === s && MYTH_SETS[s].t.includes(S.trail)
+    && styleOwned('o', s) && styleOwned('c', s) && styleOwned('k', s) && styleOwned('t', S.trail)) return s;
+  return null;
+}
 function styleTry(k, id){
   const d = styleDef(k, id); if(!d) return;
   PREVIEW = { k, id, until: Date.now() + 10000 };
@@ -7186,6 +7201,9 @@ function styleBuy(k, id){
   else if(k === 'c'){ S.caddie = id; buildSprites(); }
   else if(k === 'k') S.club = id;
   else S.trail = id;
+  // the first time a Mythic set is worn in full, it is said, and the Record keeps it
+  const FS = fullSet();
+  if(FS && !S.fullSets[FS]){ S.fullSets[FS] = 1; toast('Full Set \u00b7 <b>' + MYTH_SETS[FS].n + '</b>'); }
   renderShop(); renderVitals();
 }
 // The shop's picture of an outfit: its cap over its shirt, on the same 12x12
@@ -7368,7 +7386,7 @@ function trailUrl(t){
   }catch(e){ return DOMSPR[key] = ''; }
 }
 function shopCard(o){
-  return '<div class="card' + (o.on ? ' on' : '') + (o.wide ? ' wide' : '') + '">'
+  return '<div class="card' + (o.on ? ' on' : '') + (o.full ? ' full' : '') + (o.wide ? ' wide' : '') + '">'
     + '<div class="chd">' + o.head + '</div>'
     + '<div class="cart' + (o.badge ? ' hasbadge' : '') + '">'
     + (o.badge ? '<span class="badge">' + o.badge + '</span>' : '')
@@ -7426,12 +7444,13 @@ function renderShop(){
   }
 
   if(shopSub === 'style'){
+    const FS = fullSet();
     const card = (k, d, img) => {
       const own = styleOwned(k, d.id);
       const worn = (k === 'o' ? S.outfit : k === 'c' ? (S.caddie || 'bib') : k === 'k' ? (S.club || 'steel') : S.trail) === d.id;
       // a major's jacket is won, not bought: it names the major instead of a price
-      const won = d.major ? courseById(d.major) : null;
-      return shopCard({ img, on: worn || !!d.top || (!!won && own), badge: worn ? 'WORN' : d.top ? (d.top > 1 ? 'MYTHIC' : 'LEGENDARY') : won && own ? 'CHAMPION' : '', head: d.n,
+      const won = d.major ? courseById(d.major) : null, full = !!FS && fullSetOf(k, d.id) === FS;
+      return shopCard({ img, full, on: worn || !!d.top || (!!won && own), badge: full ? 'FULL SET' : worn ? 'WORN' : d.top ? (d.top > 1 ? 'MYTHIC' : 'LEGENDARY') : won && own ? 'CHAMPION' : '', head: d.n,
         sub: own ? '' : '<button class="mini try" data-try="' + k + '.' + d.id + '">Try it</button>',
         price: worn ? 'WORN' : own ? 'WEAR' : won ? 'WIN IT' : sovFmt(d.cost),
         note: worn || own ? '' : won ? won.short : B.SOV.toLowerCase(),
@@ -18748,7 +18767,9 @@ function renderRecord(){
     ['Best Hole', scoreName(S.bestScore)],
     ['Aces', fmt(S.aces, 0)],
     ['Perks Used', fmt(S.perkUsed || 0, 0)],
-    ['Retirements', fmt(S.retires, 0)]]],
+    ['Retirements', fmt(S.retires, 0)],
+    // the Mythic sets worn in full
+    ['Mythic Sets', Object.keys(S.fullSets || {}).length + '\u00a0of ' + Object.keys(MYTH_SETS).length + ' worn']]],
     ['now', 'Right Now', [
     ['Purse per Second', fmt(Meter.rate())],
     ['Total Carry', fmt(D.dps) + ' yds/s']]],

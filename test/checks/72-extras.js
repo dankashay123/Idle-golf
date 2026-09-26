@@ -67,7 +67,7 @@ module.exports = {
         hideSheet();
         if (o.folds !== 'Career/Right Now/Courses' || o.open0 !== '100' || o.open1 !== '110' || o.open2 !== '000')
           f('the Record\'s folds: ' + o.folds + ', open ' + o.open0 + ' then ' + o.open1 + ' then ' + o.open2);
-        if (o.rows !== 15 || o.visible !== 6) f('the Record holds ' + o.rows + ' rows, ' + o.visible + ' shown (want 15, the career\'s 6)');
+        if (o.rows !== 16 || o.visible !== 7) f('the Record holds ' + o.rows + ' rows, ' + o.visible + ' shown (want 16, the career\'s 7)');
       } finally {
         window.step = keep; FROST_FORCE = null; Scene.galleryUp = null; QUIET = false;
         Object.keys(S).forEach(k => delete S[k]); Object.assign(S, JSON.parse(SNAP)); startHole();
