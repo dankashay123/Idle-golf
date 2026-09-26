@@ -12,7 +12,7 @@ check is for.
   branch `claude/notes-review-9kshah`). Nothing is half-built and **no
   request is waiting**: the user's last message was all done (§5, the
   first sections).
-- `node test/run.js` passes all **79 checks** (about twelve minutes). Frost
+- `node test/run.js` passes all **80 checks** (about twelve minutes). Frost
   follows the real hour: after touching weather or colours, run it with
   `HOUR_FORCE` pinned to 8 and to 15 in a copy (`CLAUDE.md`).
 - **Only update this file and `CLAUDE.md` when the user asks.**
@@ -24,7 +24,9 @@ check is for.
 
 ### Recent work (sections in §5)
 
-- This session, newest first: **The Void** made bulkier with void orbs,
+- This session, newest first: **the putt no longer skipped** (a slow
+  frame on the phone ended the hole before he putted); the Vault never
+  carries him up the floor mid-swing; **The Void** made bulkier with void orbs,
   and its caddie to match; the **railway rebuilt** (its rails stopped part
   way on a wide screen; now a raised bed, sleepers and standing rails);
   **the caddie's blessing in the caddie's own look** (all 15 looks with an
@@ -227,6 +229,7 @@ Line numbers are approximate and drift. Search for the name instead.
 | **Ambience** | `Sfx.ambOf`, `AMB_OF`, `AMB_VOL`, `Sfx.pines`, `Sfx.surf`, `Sfx.stream` (in `Sfx.tick`, `ambT`) |
 | **Umbrellas** | `drawUmbrella`, `UMB_COLS`; the gallery in `drawProp`, `standCv`'s `rain` |
 | **The caddie's blessing** | `Scene.drawBless`, `BLESS_FX` (by the caddie's `fx`), `blessBolt`, `DISCO_COLS` |
+| **The hole's wait, watched** | `Scene.stepN` (counted in `step`), `Scene.drawnN` (set with `drawnAt` in the frame), the test in `holeWait` |
 | **The winning shot** | `Scene.aceNow`, `b.fin`/`b.lift0` in `drawBalls` (a ball in the air carried on to the green), the played-on shot when `restBall` is reached, `shortBall` in the camera's goal |
 | **The railway's track** | `drawRail`: ballast rows, stones, sleepers (`sT`), the boards, `rail(off)` in rows (`RT`, `RB`, `rw`) |
 | **The words in the readout** | `#rWx` (wind, weather, affinity), `Scene.hudWords`, `fitHudLeft` (the `row` mode for the icons) |
@@ -375,8 +378,9 @@ Line numbers are approximate and drift. Search for the name instead.
    a check that calls `step()` right after drawing, with `QUIET` off, will
    not see the hole end until he has walked up to the green. Play frames
    (`step` and `Scene.draw` together), or set `QUIET`. It is also why
-   `performance.now` matters: the wait only holds while the last frame was
-   drawn within 250ms.
+   the wait counts steps: it holds only while the course was drawn within
+   the last three calls of `step()` (`Scene.stepN`, `Scene.drawnN`), so a
+   check that steps without drawing sees no wait, as behind the saver.
 26. **Measuring a sound with `Math.random` pinned to a constant silences
    every noise burst** (`Sfx.noise` fills its buffer from it). Feed it a
    seeded stream instead.
@@ -466,6 +470,13 @@ Line numbers are approximate and drift. Search for the name instead.
    three tall far off and hid a train. Far off, draw it as one line.
 42. **A name that matches another check runs both.** `node test/run.js
    bless` ran the old `bless` and the new one; the new is `blessings`.
+43. **Never judge "is anyone watching" by wall time.** A quarter second
+   since the last draw was a phone's hitch, not an empty screen, and it
+   cost the user his putts. Count frames or steps instead, and test it by
+   holding one frame long in a real loop (a busy wait in the rAF loop).
+44. **A full run on a busy machine finds timing bugs.** The Vault's slide
+   showed only when other checks ran alongside; it was real (a slow phone
+   does the same). Reproduce it by driving `Scene.draw` with a large `dt`.
 
 ## 5. What the last features do (for debugging them)
 
@@ -494,6 +505,22 @@ Line numbers are approximate and drift. Search for the name instead.
   Singularity (it draws light into the cup).
 - `void` holds it all (and the caddie, and a save that had the Blossom);
   `legends` holds its moment and its driver with the other three.
+
+### The putt skipped (user saw the hole finish without it)
+
+- The hole's end waits in `step()` while `holeWait()` says the course is
+  being watched. That asked whether a frame had been drawn in the last
+  quarter second, and `step()` runs before the draw in each frame, so a
+  single slow frame (a new course built, a busy moment on the phone) read
+  as nobody watching and the hole ended there: with a 0.33s hitch held
+  after each win, 30 holes of 30 skipped the putt. Now it counts steps:
+  the course drawn within the last three steps. A menu over the field or
+  the saver still steps undrawn and lets the hole go. `watched` plays real
+  frames with a hitch in each hole; `green` still sees no wait unwatched.
+- While at it: the Vault carried him up the floor mid-swing when he fell
+  more than 12 behind (a slow phone); now he never moves mid-swing there
+  (he swings again only when he is up with his ball). `wagerplay` has a
+  slow-phone case.
 
 ### The winning shot on the green (user saw it land short)
 
@@ -1157,7 +1184,9 @@ him (about 49px tall on a 320 phone, 71px on its side).
 - Now `Scene.holeWait()` (was `isleWait`, which only covered the signature
   crossings) holds the hole's end in `step()` until he has walked up within
   `B_GREEN_UP` (1.5) of the pin and stood there 0.25s (`Scene.upT`), after
-  any crossing. Only while the course is drawn (`drawnAt` within 250ms), not
+  any crossing. Only while the course is drawn (within the last three
+  steps: `Scene.stepN` against `drawnN`; it was `drawnAt` within 250ms, and
+  a phone's slow frame ended the hole before his putt), not
   in `QUIET`/`OFFLINE`/a wager, not behind the saver; capped at `ISLE_HOLD`
   (8s). Once the ball is down (`S.yards <= 0`) the camera heads straight for
   `LEN - B_GREEN_STAND` (1.0) a little brisker (rate 6, was 4.5), whether
@@ -1831,6 +1860,8 @@ him (about 49px tall on a 320 phone, 71px on its side).
 
 ## 6. Recent history (newest first, one line each)
 
+- The putt no longer skipped on a slow frame; the Vault never slides him
+  mid-swing.
 - The Void bulkier with void orbs, its caddie to match; the railway
   rebuilt; the caddie's blessing in its look; the winning shot on the
   green; Full Set; ambience; umbrellas; The Void replaced the Spirit

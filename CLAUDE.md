@@ -118,6 +118,11 @@ Rules that have cost real time here:
   stage is small (about 199 to 329 pixels), so check wide-stage things
   close up (`HANDOFF.md` §4, rules 39 to 41).
 
+- **"Is anyone watching" is counted in steps, never wall time.** The
+  hole's wait for his putt asked for a draw in the last quarter second,
+  and a phone's slow frame ended holes before the putt (`HANDOFF.md` §4,
+  rule 43).
+
 A check that fails once is not a flake. Chase it: three times it has been
 the check's own random setup (most lately `dance`, which played on into an
 unseeded next hole), and that needs fixing as much as a game bug does.
