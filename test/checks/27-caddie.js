@@ -5,7 +5,11 @@
  *     pixel of the golfer, club included. He was a man on the ground, who
  *     walked into bunkers, ponds and the golfer himself; the first fairy sat
  *     where the club reaches on its way up, which is further left than the
- *     top of the backswing
+ *     top of the backswing. Counted from what is at least half solid: the
+ *     Divine's faint rays of light turn with the clock and reach past him,
+ *     so a check on every pixel passed or failed by how long the page had
+ *     been open (it failed once in a full run); the moment is pinned and
+ *     swept instead
  *   - caddie perks: bought once with sovereigns, one worn at a time, and
  *     changing between owned ones is free; ten sovereigns buy nothing
  *   - the worn perk goes off every CPERK_EVERY seconds on the course and
@@ -39,7 +43,7 @@ module.exports = {
       try {
         // ---- the fairy keeps clear of the golfer ---------------------------
         const bbox = () => { const g = Scene.b.getImageData(0, 0, VW, VH).data; let x0 = 1e9, x1 = -1, y0 = 1e9, y1 = -1;
-          for (let i = 3; i < g.length; i += 4) if (g[i]) { const p = i >> 2, x = p % VW, y = (p / VW) | 0;
+          for (let i = 3; i < g.length; i += 4) if (g[i] >= 128) { const p = i >> 2, x = p % VW, y = (p / VW) | 0;
             x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); y1 = Math.max(y1, y); }
           return x1 < 0 ? null : { x0, x1, y0, y1 }; };
         o.hits = []; o.poses = 0;
@@ -57,8 +61,9 @@ module.exports = {
             o.hits.push((walking ? 'walking' : 'swing ' + ph.toFixed(2)) + ': fairy ' + f.x + '-' + (f.x + f.w) + ', golfer from ' + g.x0);
         };
         // and hopping for a birdie or drooping at a bogey, at every point of it
-        for (const outfit of ['classic', 'divine']) {
-          S.styleOwn['o:' + outfit] = 1; S.outfit = outfit; buildSprites();
+        const t0 = Scene.t;
+        for (const outfit of ['classic', 'divine']) for (const T of [0, 6.3, 12.58]) {
+          S.styleOwn['o:' + outfit] = 1; S.outfit = outfit; buildSprites(); Scene.t = T;
           for (const say of [null, 'cheer', 'sigh'])
             for (let ph = 0; ph <= 1.0001; ph += 0.02) {
               Scene.fairySay = say && { kind: say, word: 'X', t0: Scene.t - ph * 1.3, dur: 1.3 };
@@ -67,7 +72,7 @@ module.exports = {
           Scene.fairySay = null;
           pose(true, 0);
         }
-        S.outfit = 'classic'; buildSprites(); Scene.walkOn = false; Scene.swingT = 0;
+        S.outfit = 'classic'; buildSprites(); Scene.walkOn = false; Scene.swingT = 0; Scene.t = t0;
 
         // ---- perks: bought once, one worn, free to change ------------------
         S.cperkOwn = {}; S.cperk = null; S.sov = 10;
