@@ -189,53 +189,36 @@ module.exports = {
 
         // The left column, top to bottom: settings, shop, the medal, the star.
         // The star stood alone on the right over the map until the user asked
-        // for it under the medal.
-        const pm = box.perkBtn, rm = box.roomBtn, mp = box.holeMap;
-        if (!(pm.top >= rm.bottom - 0.5) || Math.abs(pm.left - rm.left) > 1.5)
-          o.hit.push('the star is not under the medal (star ' + pm.left.toFixed(0) + ',' + pm.top.toFixed(0)
+        // for it under the medal. On a short stage they go in a row under the
+        // readout instead, in the same order (fitHudLeft).
+        const pm = box.perkBtn, rm = box.roomBtn, mp = box.holeMap, rowed = $('hudLeft').classList.contains('row');
+        if (rowed ? !(pm.left >= rm.right - 0.5) || Math.abs(pm.top - rm.top) > 1.5
+                  : !(pm.top >= rm.bottom - 0.5) || Math.abs(pm.left - rm.left) > 1.5)
+          o.hit.push('the star is not ' + (rowed ? 'beside' : 'under') + ' the medal (star ' + pm.left.toFixed(0) + ',' + pm.top.toFixed(0)
             + ', medal ' + rm.left.toFixed(0) + ',' + rm.bottom.toFixed(0) + ')');
         if (mp && mp.height && mp.top < st.top + st.height * 0.36)
           o.hit.push('the map reaches up into the toasts\' corner');
 
-        // The bottom right corner, from the bottom up: the menu's pull tab, the
-        // hole map just above it, and the weather words standing on the map
-        // (the user asked for them there). The words are drawn on the field,
-        // so they are measured in its pixels: the lowest line has to end above
-        // the map, or above the tab when there is no map (it once ran a few
-        // pixels behind the tab on a tall phone), and their right-hand ends
-        // line up with the map's.
+        // The wind and weather words are in the readout now (the user asked:
+        // over the map they had grown too big): shown, inside its box; the
+        // left column, the longer for them, ends above the shot buttons at
+        // the foot of the field; and the map sits just above the pull tab.
         {
           const dr = $('drawer'), sr = $('stage').getBoundingClientRect(), mpE = $('holeMap');
-          const per = Scene.scale / Math.min(3, devicePixelRatio);
-          // (the words are on the page now, in the interface's sans serif;
-          // measured with no banner up, which hides them where it stands)
-          const was = Scene.announce; Scene.announce = null; Scene.draw(0, derive());
-          const hw = $('hudWords'), hr = hw.getBoundingClientRect();
-          if (getComputedStyle(hw).display === 'none' || !hw.textContent.trim()) o.hit.push('the weather words are not shown');
-          const low = hr.bottom;
+          Scene.announce = null; Scene.draw(0, derive());
+          const wx = $('rWx'), wr = wx.getBoundingClientRect(), rr = $('readout').getBoundingClientRect();
+          if (wx.hidden || !wx.textContent.trim()) o.hit.push('the weather words are not shown');
+          if (wr.left < rr.left - 0.5 || wr.right > rr.right + 0.5 || wr.bottom > rr.bottom + 0.5) o.hit.push('the weather words run out of the readout');
+          if (!/mph/i.test(wx.textContent) && Scene.windMph() > 0) o.hit.push('the wind is not in the readout: ' + wx.textContent);
+          const k = (parseFloat(Scene.cv.style.height) || sr.height) / VH, sz = Math.max(12, Math.round(VW * 0.050 / 12) * 12), pad = Math.max(3, Math.round(sz / 6));
+          const shots = sr.top + (VH - sz - pad * 2 - 2 - LH - 2) * k, hl = $('hudLeft').getBoundingClientRect();
+          if (S.carry && S.carry.length && hl.bottom > shots + 0.5) o.hit.push('the left column runs ' + (hl.bottom - shots).toFixed(0) + 'px down into the shot buttons');
           const mapOn = mpE && getComputedStyle(mpE).display !== 'none', mr = mapOn && mpE.getBoundingClientRect();
           const tabTop = dr && dr.offsetParent ? dr.getBoundingClientRect().top : sr.bottom;
           if (mapOn) {
-            if (low > mr.top + 0.5) o.hit.push('the weather words run ' + (low - mr.top).toFixed(1) + 'px down behind the map');
             if (mr.bottom > tabTop + 0.5) o.hit.push('the map runs ' + (mr.bottom - tabTop).toFixed(1) + 'px down behind the pull tab');
             if (tabTop - mr.bottom > 24) o.hit.push('the map stands ' + (tabTop - mr.bottom).toFixed(0) + 'px above the pull tab, not just over it');
-            const right = hr.right;
-            if (Math.abs(right - mr.right) > per * 2 + 1) o.hit.push('the weather words end at ' + right.toFixed(0) + ' and the map at ' + mr.right.toFixed(0));
-          } else if (low > tabTop + 0.5) o.hit.push('the weather words ' + (low - tabTop).toFixed(1) + 'px behind the pull tab');
-          // and never over the course's banner (on the page now, they would
-          // stand on it; in the picture it covered them)
-          // (on the first hole too, where fewer lines stand higher)
-          for (const hl of [1, 18]) {
-            if (hl === 1) { S.hole = 1; startHole(); }
-            Scene.announce = { name: 'The Longest Course Name', sub: 'Home of Tour Card I', t: 1, dur: 4 };
-            Scene.draw(0, derive());
-            const y0 = Math.round(VH * 0.27) - 5 * TSC, big = textW(Scene.announce.name, TSC * 2) <= VW * 0.9 ? TSC * 2 : TSC;
-            const bt = sr.top + y0 * per, bb = sr.top + (y0 + (FH + 2) * big + LH + 10 * TSC) * per, h2 = hw.getBoundingClientRect();
-            if (getComputedStyle(hw).display !== 'none' && h2.top < bb - 0.5 && h2.bottom > bt + 0.5)
-              o.hit.push('the weather words stand on the course\'s banner on hole ' + hl + ' (' + h2.top.toFixed(0) + '-' + h2.bottom.toFixed(0) + ' over ' + bt.toFixed(0) + '-' + bb.toFixed(0) + ')');
-            if (hl === 1) { S.hole = 18; startHole(); }
           }
-          Scene.announce = was; Scene.draw(0, derive());
         }
 
         // text that runs out of its box with nothing to catch it

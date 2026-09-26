@@ -744,6 +744,14 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
    colour) and the sponsor perks (brass), counting down, no box behind them,
    each fading out as it runs out; the first on the cog's own row. */
 #setRow{position:relative;display:flex;align-items:center;pointer-events:none}
+/* Where the column would reach down into the shot buttons (a short stage,
+   and the weather words in the readout make it longer), the four icons go
+   in a row under the readout, in the same order, and the perk countdown
+   under the row (fitHudLeft). */
+#hudLeft.row{flex-direction:row;flex-wrap:wrap;align-items:center;gap:8px 10px}
+#hudLeft.row #rRow{flex-basis:100%}
+#hudLeft.row #setRow{flex:0 0 auto;width:24px}
+#hudLeft.row #buffTip{left:0;top:calc(100% + 6px)}
 #buffTip{position:absolute;left:32px;top:calc(50% - .625em);max-width:calc(100vw - 90px);font-family:var(--mono);font-size:var(--f2);font-weight:600;
   display:flex;flex-direction:column;align-items:flex-start;min-width:0;pointer-events:none}
 #buffTip .bl{display:block;max-width:100%;line-height:1.25em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
@@ -779,13 +787,14 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
 #holeMap{position:absolute;right:2.5%;z-index:28;display:none;pointer-events:none;
   image-rendering:pixelated;image-rendering:crisp-edges;
   box-shadow:0 0 0 1px rgba(0,0,0,.55),0 2px 6px rgba(0,0,0,.45)}
-/* The wind and weather words standing on the map: in the interface's own
-   sans serif (the user asked), placed by drawHud where the pixel font's
-   lines stood, a line of the field's rows to each. */
-#hudWords{position:absolute;z-index:28;display:none;pointer-events:none;text-align:right;white-space:nowrap;
-  font-family:var(--sans);font-weight:700;text-transform:uppercase;letter-spacing:.04em;
-  text-shadow:1px 1px 0 #000,0 0 2px #000,0 0 1px #000}
-#hudWords div{overflow:visible}
+/* The wind, the weather, the course's affinity, a signature hole and the
+   closing hole: small, in the readout under its bar (the user asked, the
+   words over the map having grown too big), each item kept whole and the
+   line wrapping between them. */
+.rwx{font-size:var(--f0);letter-spacing:.12em;text-transform:uppercase;font-weight:700;margin-top:4px;line-height:1.35}
+.rwx[hidden]{display:none}
+.rwx span{white-space:normal}
+.rwx i{font-style:normal;color:var(--faint);padding:0 3px}
 #perkIcon{display:block;width:24px;height:24px;object-fit:contain;
   image-rendering:pixelated;image-rendering:crisp-edges}
 #perkBtn:active{transform:translateY(1px)}
@@ -885,7 +894,6 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
   <div id="stage">
     <canvas id="hole" width="720" height="440"></canvas>
     <canvas id="holeMap" aria-hidden="true"></canvas>
-    <div id="hudWords" aria-hidden="true"></div>
     <div id="hudLeft">
     <div id="rRow">
     <div id="readout">
@@ -894,6 +902,7 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
         <span class="rsp"></span><span id="rTag"></span></div>
       <div class="rbar"><i id="rFill"></i></div>
       <div class="rstrip" id="rStrip" hidden></div>
+      <div class="rwx" id="rWx" hidden></div>
     </div>
     <button id="hudClimb" aria-label="Auto-climb"><img id="hudClimbIcon" alt=""></button>
     </div>
@@ -12003,6 +12012,7 @@ const Scene = {
     this.buildSky();
     this.mapOn = false; this._mapTry = null;   // the hole map is placed again
     this.mapHide();
+    fitHudLeft();
   },
 
   // World-space overlap test. Hazards were placed by pure rejection-free random
@@ -14102,6 +14112,17 @@ function mapStar(i){
   return MAP_STAR[i] = cv;
 }
 
+// The left column (readout, settings, shop, medal, star) as a column where
+// it clears the shot buttons at the foot of the field, else in a row.
+function fitHudLeft(){
+  const hl = typeof document !== 'undefined' && document.getElementById('hudLeft'), st = hl && document.getElementById('stage');
+  if(!hl || !st || !Scene.cv || !st.clientHeight) return;
+  hl.classList.remove('row');
+  const k = (parseFloat(Scene.cv.style.height) || st.clientHeight) / Math.max(1, VH);
+  const sz = Math.max(12, Math.round(VW * 0.050 / 12) * 12), pad = Math.max(3, Math.round(sz / 6));
+  const room = st.getBoundingClientRect().top + (VH - sz - pad * 2 - 2 - LH - 4) * k;
+  if(hl.getBoundingClientRect().bottom > room) hl.classList.add('row');
+}
 /* ---- the hole from above ----
    From the tee the rolling ground hides most of a dogleg, so a small map of
    the hole sits on the stage: fairway, sand, water, trees, the green and the
@@ -14112,13 +14133,11 @@ Object.assign(Scene, {
     const cv = $('holeMap'), st = $('stage');
     if(!cv || !st || !this.cv) return;
     const SW = st.clientWidth, SH = st.clientHeight;
-    // At the foot of the field on the right, just above the menu's pull tab,
-    // with the weather words standing on top of it (see drawHud): the user
-    // asked for it there. Its height is what is left between the words and
-    // the toasts' corner (37% down, clear of the tallest pair on the shortest
-    // phone), up to its full shape. Where too little is left it is not shown
-    // and the words sit down by the tab. It is placed again on each hole,
-    // since the lines above it (hudLines) come and go.
+    // At the foot of the field on the right, just above the menu's pull tab:
+    // the user asked for it there (the weather words that stood on it are in
+    // the readout now). Its height is what is left under the toasts' corner
+    // (37% down, clear of the tallest pair on the shortest phone), up to its
+    // full shape. Where too little is left it is not shown.
     // screen pixels to a pixel of the picture, exactly: the picture is shown
     // whole pixels at a time, and its last part-pixel hangs off the stage
     const k = (parseFloat(this.cv.style.height) || SH) / Math.max(1, VH);
@@ -14126,7 +14145,7 @@ Object.assign(Scene, {
     const dr = $('drawer'), tab = dr && dr.offsetParent ? dr.offsetHeight : 0;
     const gap = Math.max(6, Math.round(SW * 0.02));
     const bottom = SH - tab - gap;
-    const words = Math.ceil((LH * this.hudLines() + 3) * k);
+    const words = 0;
     const room = bottom - words - gap - Math.round(SH * 0.37);
     this.mapTopR = null;
     if(room < W * 0.8 || S.dgnRun){ cv.style.display = 'none'; this.mapOn = false; return; }
@@ -16202,93 +16221,45 @@ Object.assign(Scene, {
 
   // rows kept clear at the bottom for the pull tab (see resize)
   tabRows(){ return this.tabR || Math.round(VH*0.045); },
-  // How wide a line in that corner may run: from the right-hand edge the
-  // words line up on to just short of the golfer and the ball at his feet.
-  // It was a fixed 62% of the picture, which on its side ran "Aurora Front +
-  // Night Round" straight across him. (The right edge is taken as the map's
-  // whether or not the map is up, so the lines counted to place the map are
-  // the lines drawn on it.)
-  hudRoom(){
-    const p = this.proj(this.camD, 0), h = Math.max(6, Math.round(B_GOLFER * US * p.s)), w = Math.round(h * 40 / 58);
-    const right = Math.min(VW - 4*TSC - 1, Math.floor(VW * 0.975) - 1);
-    return Math.max(VW * 0.34, right - (p.x + Math.round(w * 0.8) + 3));
-  },
-  // How many lines the corner holds on this hole, so the map under them can
-  // leave exactly that room: the weather (two lines when it is a long pair on
-  // a narrow picture), the wind, the course's affinity, a signature hole's
-  // name, the closing hole.
-  hudLines(){
-    const cn = S.chaos ? S.chaos.n : 'FAIR';
-    return 1 + (textW(cn, TSC) > this.hudRoom() && cn.indexOf(' + ') > 0 ? 1 : 0)
-      + (this.windMph() > 0 ? 1 : 0) + (S.courseEl ? 1 : 0) + (S.armor > 0 ? 1 : 0) + (sigKind(S.hole) ? 1 : 0);
-  },
-  // Where the words in the bottom right corner stand: the top row of their
-  // lowest line, and the column their right-hand ends line up on. On the
-  // hole map where it is shown; else just above the pull tab, and clear of
-  // the last buffer column, which is blitted past the canvas edge and
-  // clipped, and of the words' own drop shadow.
-  hudBase(){ return this.mapOn && this.mapTopR != null ? this.mapTopR - LH : VH - LH - 2 - this.tabRows(); },
-  hudRight(){ return this.mapOn && this.mapRightR != null ? Math.min(VW - 4*TSC - 1, this.mapRightR - 1) : VW - 4*TSC - 1; },
   // The panel lives in the DOM now. What stays on the canvas is the stuff that
   // belongs to the world rather than the interface.
   drawHud(D){
-    // the map first: the words stand on it
+    // the map, placed for the stage
     if(!this.mapOn && this._mapTry !== VW + 'x' + VH){ this._mapTry = VW + 'x' + VH; this.placeMap(); }
-    const L = [];                                // from the bottom up: [words, colour]
-    // The round's last hole plays harder. It was called SIGNATURE here, which
-    // the signature holes needed for themselves: it is the closing hole now,
-    // and a signature hole says which one it is.
-    if(S.armor > 0) L.push([isSunday(S.hole) ? 'CHAMPIONSHIP' : 'CLOSING HOLE', PX.flag]);
-    // (and the signature hole of the week says what it pays)
-    const sk = sigKind(S.hole);
-    if(sk) L.push([SIG_NAME[sk].toUpperCase() + (sk === sigWeek() ? ' \u00d7' + B.SIG_WEEK_MULT : ''), PX.brass]);
-    if(S.courseEl){
-      const e = B.ELEM.find(x => x.id === S.courseEl);
-      L.push([e.n.toUpperCase() + (D.reson > 1 ? '+' : D.reson < 1 ? '-' : ''), PX[S.courseEl] || PX.bone]);
-    }
-    // Two conditions at once can be wider than a narrow picture: "Aurora
-    // Front + Night Round" ran behind the golfer and off the left edge on a
-    // 320 phone. There the pair goes on two lines.
-    const cn = S.chaos ? S.chaos.n : 'FAIR';
-    const parts = textW(cn, TSC) > this.hudRoom() && cn.indexOf(' + ') > 0 ? cn.split(' + ') : [cn];
-    for(let i = parts.length - 1; i >= 0; i--) L.push([parts[i] + (i < parts.length - 1 ? ' +' : ''), PX.grey]);
+    const L = [];                                // in reading order: [words, colour]
     // the wind, pointing the way it blows
     const mph = this.windMph();
     if(mph > 0){
       const arrow = mph >= 14 ? '>>>' : mph >= 7 ? '>>' : '>';
-      L.push([this.wind < 0 ? arrow.replace(/>/g, '<') + ' ' + mph + '\u00a0MPH' : mph + '\u00a0MPH ' + arrow,
+      L.push([this.wind < 0 ? arrow.replace(/>/g, '<') + ' ' + mph + '\u00a0mph' : mph + '\u00a0mph ' + arrow,
               mph >= 14 ? PX.brass : PX.bone]);
     }
-    // (out of the way while the course's name is announced over them: on
-    // the page they would stand on its banner, which covered them in the
-    // picture)
-    const A = this.announce;
-    if(A){
-      const big = textW(A.name, TSC * 2) <= VW * 0.9 ? TSC * 2 : TSC, y0 = Math.round(VH * 0.27) - 5 * TSC;
-      const bh = (FH + 2) * big + LH + 10 * TSC, top = this.hudBase() - (L.length - 1) * LH;
-      if(top < y0 + bh && this.hudBase() + LH > y0){ this.hudWords(null); return; }
+    L.push([S.chaos ? S.chaos.n : 'Fair', 'var(--dim)']);
+    if(S.courseEl){
+      const e = B.ELEM.find(x => x.id === S.courseEl);
+      L.push([e.n + (D.reson > 1 ? '+' : D.reson < 1 ? '-' : ''), PX[S.courseEl] || PX.bone]);
     }
+    // (and the signature hole of the week says what it pays)
+    const sk = sigKind(S.hole);
+    if(sk) L.push([SIG_NAME[sk] + (sk === sigWeek() ? ' \u00d7' + B.SIG_WEEK_MULT : ''), PX.brass]);
+    // The round's last hole plays harder. It was called SIGNATURE here, which
+    // the signature holes needed for themselves: it is the closing hole now,
+    // and a signature hole says which one it is.
+    if(S.armor > 0) L.push([isSunday(S.hole) ? 'Championship' : 'Closing Hole', PX.flag]);
     this.hudWords(L);
   },
-  // The words go on the page over the field, not into its pixels: the user
-  // asked for the interface's sans serif there. Each line takes the rows a
-  // line of the pixel font took, so the map under them still leaves exactly
-  // their room (hudLines), and the lowest ends on the map's top edge.
+  // The words go in the readout, written only when they change.
   hudWords(L){
-    const el = typeof document !== 'undefined' && document.getElementById('hudWords');
-    if(!el || !this.cv) return;
-    if(!L){ if(this._hwKey !== 'off'){ this._hwKey = 'off'; el.style.display = 'none'; } return; }
-    const k = (parseFloat(this.cv.style.height) || this.cv.clientHeight || VH) / Math.max(1, VH);
-    const SW = el.parentNode.clientWidth, SH = el.parentNode.clientHeight;
-    const lh = LH * k, bottom = (this.hudBase() + LH) * k, right = (this.hudRight() + 1) * k;
-    const key = L.map(l => l.join('|')).join('/') + '@' + [lh, bottom, right, SW, SH].map(v => v.toFixed(1)).join(',');
+    const el = typeof document !== 'undefined' && document.getElementById('rWx');
+    if(!el) return;
+    const key = L ? L.map(l => l.join('|')).join('/') : 'off';
     if(key === this._hwKey) return;
     this._hwKey = key;
+    if(!L || !L.length){ el.hidden = true; el.innerHTML = ''; return; }
     const esc = t => t.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-    el.innerHTML = L.slice().reverse().map(l => '<div style="color:' + l[1] + '">' + esc(l[0]) + '</div>').join('');
-    Object.assign(el.style, { display: 'block', lineHeight: lh.toFixed(2) + 'px',
-      fontSize: (FHS * TSC * k * 1.3).toFixed(1) + 'px',
-      bottom: (SH - bottom).toFixed(1) + 'px', right: (SW - right).toFixed(1) + 'px' });
+    el.innerHTML = L.map(l => '<span style="color:' + l[1] + '">' + esc(l[0]) + '</span>').join('<i>\u00b7</i> ');
+    el.hidden = false;
+    fitHudLeft();
   },
 
   /* ---- the wager stage ---- */
