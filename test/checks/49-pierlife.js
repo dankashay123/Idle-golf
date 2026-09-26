@@ -20,7 +20,7 @@ module.exports = {
   async run(page) {
     const r = await page.evaluate(async () => {
       const o = {}, SNAP = JSON.stringify(S);
-      const keep = { ctx: Sfx.ctx, gull: Sfx.gull, chirp: Sfx.chirp, gust: Sfx.gust, mt: Sfx.musicTick, sound: S.sound, wind: Scene.wind, night: Scene.night };
+      const keep = { ctx: Sfx.ctx, gull: Sfx.gull, chirp: Sfx.chirp, cricket: Sfx.cricket, gust: Sfx.gust, mt: Sfx.musicTick, sound: S.sound, wind: Scene.wind, night: Scene.night };
       try {
         hideSheet(); QUIET = true;
         DEV.course(B.COURSE.findIndex(c => c.id === 'coastal')); hideSheet();
@@ -71,12 +71,12 @@ module.exports = {
         let n = 0;
         S.sound = 1; QUIET = false;
         Sfx.ctx = { state: 'running', currentTime: 1 };
-        Sfx.gull = () => { n++; }; Sfx.chirp = () => {}; Sfx.gust = () => {}; Sfx.musicTick = () => {};
+        Sfx.gull = () => { n++; }; Sfx.chirp = () => {}; Sfx.cricket = () => {}; Sfx.gust = () => {}; Sfx.musicTick = () => {};
         const cries = (secs, night) => { const n0 = n; Scene.night = night; Sfx.gullT = undefined;
           for (let t = 0; t < secs; t += 0.1) Sfx.tick(0.1); return n - n0; };
         o.onPier = cries(120, false); o.atNight = cries(120, true);
         const piered = Scene.isle; Scene.isle = null; o.elsewhere = cries(120, false); Scene.isle = piered;
-        Sfx.ctx = keep.ctx; Sfx.gull = keep.gull; Sfx.chirp = keep.chirp; Sfx.gust = keep.gust; Sfx.musicTick = keep.mt;
+        Sfx.ctx = keep.ctx; Sfx.gull = keep.gull; Sfx.chirp = keep.chirp; Sfx.cricket = keep.cricket; Sfx.gust = keep.gust; Sfx.musicTick = keep.mt;
 
         // ---- as loud as a bird ----
         const loud = async fn => {
@@ -89,8 +89,10 @@ module.exports = {
           return 10 * Math.log10(best + 1e-12);
         };
         o.gullDb = await loud(t => Sfx.gull(t)); o.chirpDb = await loud(t => Sfx.chirp(t));
+        // (and the crickets at night, which the user asked for quiet: under a bird)
+        o.cricketDb = await loud(t => Sfx.cricket(t));
       } finally {
-        Sfx.ctx = keep.ctx; Sfx.gull = keep.gull; Sfx.chirp = keep.chirp; Sfx.gust = keep.gust; Sfx.musicTick = keep.mt;
+        Sfx.ctx = keep.ctx; Sfx.gull = keep.gull; Sfx.chirp = keep.chirp; Sfx.cricket = keep.cricket; Sfx.gust = keep.gust; Sfx.musicTick = keep.mt;
         S.sound = keep.sound; Scene.wind = keep.wind; Scene.night = keep.night; QUIET = false;
         Object.keys(S).forEach(k => delete S[k]); Object.assign(S, JSON.parse(SNAP)); startHole();
         try { hideSheet(); } catch (e) {}
@@ -104,10 +106,11 @@ module.exports = {
     if (!(r.sat > 0 && r.stillSat > 0)) f('the gull was not sat on its post while he was further off (' + r.sat + ', ' + r.stillSat + ')');
     if (r.off || !r.offAt || r.gone || r.later) f('the gull on the post did not take off when he came within seven (' + [r.off, r.offAt, r.gone, r.later].join(', ') + ')');
     if (!(r.back > 0)) f('on the next Sea Stack hole the gull was not back on its post');
+    if (!(r.cricketDb < r.chirpDb - 3) || !(r.cricketDb > r.chirpDb - 20)) f('a cricket is ' + r.cricketDb.toFixed(1) + ' dB against a bird\'s ' + r.chirpDb.toFixed(1) + ' (want quieter by 3 to 20)');
     if (!(r.onPier >= 6) || r.atNight || r.elsewhere) f('gull cries in two minutes: ' + r.onPier + ' on the pier, ' + r.atNight + ' at night, ' + r.elsewhere + ' on another hole');
     if (Math.abs(r.gullDb - r.chirpDb) > 3) f('a gull cries at ' + r.gullDb.toFixed(1) + ' dB against a bird\'s ' + r.chirpDb.toFixed(1) + ' dB');
     return ['spray with the wind: ' + [r.calm, r.breeze, r.gale].join(' / ') + ' pixels at ' + r.mph.join(' / ') + ' mph',
       'gulls wheeling over the stack; the one on the post sits till he is within seven, takes off, and is back on the next Sea Stack hole',
-      r.onPier + ' cries in two minutes on the pier, none at night or elsewhere; ' + r.gullDb.toFixed(1) + ' dB against a bird\'s ' + r.chirpDb.toFixed(1)];
+      r.onPier + ' cries in two minutes on the pier, none at night or elsewhere; ' + r.gullDb.toFixed(1) + ' dB against a bird\'s ' + r.chirpDb.toFixed(1) + ', a cricket ' + r.cricketDb.toFixed(1)];
   }
 };
