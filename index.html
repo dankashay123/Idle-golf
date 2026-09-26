@@ -13709,7 +13709,7 @@ const Scene = {
   windMph(){ return Math.round(Math.abs(this.wind || 0) * 18); },
   // how high a ball is a fraction u of the way: a chip stays low, a drive
   // climbs to the old full height
-  ballLift(b, u){ return Math.sin(u * Math.PI) * clamp(b.dist * 0.17, 0.25, 2.6); },
+  ballLift(b, u){ return Math.sin(u * Math.PI) * clamp((b.lift0 || b.dist) * 0.17, 0.25, 2.6); },
   // ---- the hole bends ----
   // Every hole used to run dead straight from tee to green. It has a centre
   // line now -- a dogleg on most par fours, an S on a par five, a drift on a
@@ -14207,6 +14207,8 @@ const Scene = {
     this.swingT = this.swingDur;
     this.pendingBall = { crit, el, dmg, target:targetD, lat };
   },
+  // the hole won in an ace (its ball goes in off the shot, no putt)
+  aceNow(){ return scoreFor((S.doneT != null ? S.doneT : Math.max(S.elapsed, S.walkMin || B.WALK_MIN)) / S.parTime).d <= -4; },
   launch(){
     const p = this.pendingBall || { crit:false, el:null, dmg:0 };
     this.pendingBall = null;
@@ -14223,7 +14225,7 @@ const Scene = {
     // Once the hole's ball is down the shot that did it comes down a putt
     // short of the cup, for him to walk up and putt out; an ace goes in.
     const last = !S.dgnRun && S.yardsMax > 0 && S.yards <= 0 && this.hole === S.hole;
-    const ace = last && scoreFor((S.doneT != null ? S.doneT : Math.max(S.elapsed, S.walkMin || B.WALK_MIN)) / S.parTime).d <= -4;
+    const ace = last && this.aceNow();
     // (and no ball comes to rest nearer the cup than that: the last one he
     // sees come down is not always the one that finished the hole)
     const putSpot = LEN - B_GREEN_STAND - 0.4;
@@ -16917,7 +16919,13 @@ Object.assign(Scene, {
     const c = this.b;
     const R = this.restBall;
     if(R){
-      if(R.d < this.camD + 0.6) this.restBall = null;          // he has reached it
+      if(R.d < this.camD + 0.6){
+        this.restBall = null;                                  // he has reached it
+        // and with the hole's ball down while it lay short of the green, he
+        // plays it on up onto the green: that shot comes down there
+        if(!S.dgnRun && S.yardsMax > 0 && S.yards <= 0 && this.hole === S.hole && R.d < LEN - B_GREEN_STAND - 0.9
+           && !this.swingT && !this.balls.length && !this.putt && !this.cupT){ this.swingT = this.swingDur; this.pendingBall = { crit: false, el: null, dmg: 0 }; }
+      }
       else{
         const p = this.proj(R.d, R.lat);
         if(p.y <= this.clipAt(R.d) + 1 && p.s > 0.05){
@@ -16931,6 +16939,16 @@ Object.assign(Scene, {
       const b = this.balls[i];
       b.t += dt;
       const u = b.t / b.dur;
+      // The hole's ball went down while this one was in the air (the swing
+      // that did it came while it flew): it carries on to the green, from
+      // where it is now, rather than landing short for him to walk to, stop
+      // at and walk on from (the user saw that). Its height stays its own.
+      if(!b.cup && !b.fin && !S.dgnRun && S.yardsMax > 0 && S.yards <= 0 && this.hole === S.hole){
+        b.fin = 1;
+        // (an ace goes on into the cup)
+        const ace = this.aceNow(), L = ace ? LEN : LEN - B_GREEN_STAND - 0.4, P = b.d0 + b.dist * Math.min(u, 1);
+        if(b.d0 + b.dist < L - 0.3 && u < 0.8){ b.lift0 = b.dist; b.dist = (L - P) / (1 - u); b.d0 = L - b.dist; if(ace){ b.cup = 1; b.lat = PIN_X; } }
+      }
       if(u >= 1){
         // it lies where it came down until he walks up to it (an ace is in
         // the cup)
@@ -17313,7 +17331,9 @@ Object.assign(Scene, {
       // once the hole's ball is down he goes straight up to the green, a
       // little brisker, whether or not the last ball is still in the air
       const up = S.yards <= 0 && this.hole === S.hole;
-      const goal = up ? LEN - B_GREEN_STAND : Math.min(at, this.walkTo === undefined ? at : this.walkTo);
+      // (but to his ball first if it lies short of the green: he plays it on)
+      const shortBall = up && this.restBall && !this.balls.length && this.restBall.d < LEN - B_GREEN_STAND - 0.9;
+      const goal = up ? (shortBall ? this.restBall.d : LEN - B_GREEN_STAND) : Math.min(at, this.walkTo === undefined ? at : this.walkTo);
       const I = this.isle;
       // (at a railway, not while a train is coming or going by)
       const railWait = !!(I && I.rail && !this.crossing && this.railHold());
