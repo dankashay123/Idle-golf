@@ -70,6 +70,11 @@ module.exports = {
 
         // ---- no wings, no drift, a float ----
         pose(false, 0);
+        // (from a moment of its own, not the page's age: the float and the
+        // dust follow the clock, and a caddie's edge touched his club at some
+        // moments only, so a full run failed where a single one passed; 4.48
+        // was one of them)
+        Scene.t = 4.48;
         const t0 = Scene.t, xs = [], ys = [];
         o.idleOut = 0;
         for (let i = 0; i < 60; i++) {

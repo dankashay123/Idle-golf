@@ -13633,7 +13633,9 @@ const Scene = {
     const clubTip = gx + gw * 0.66 + this._reach * gh;
     // (a caddie with an effect stands a little further off: the Divine's
     // rays and sparks reached the club at the top of the backswing)
-    const edge = Math.min(gx, clubTip) - gw * (STYLEFX[caddieNow().fx] ? 0.30 : 0.18) - 2;
+    // (and those two pixels further again: they are built out in plate, and
+    // on the Divine's soar its edge came onto his club)
+    const edge = Math.min(gx, clubTip) - (STYLEFX[caddieNow().fx] ? gw * 0.30 + 4 : gw * 0.18 + 2);
     const x = Math.round(edge - w);
     // the float; a reaction's hop or droop sits out one of his turns
     const y = Math.round(gy + gh * 0.02 + Math.sin(this.t * 2.2) * gh * 0.035)
