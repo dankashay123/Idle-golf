@@ -1,13 +1,15 @@
 /* The dearest balls' moment in the cup (the user asked, from the menu: the
  * three dearest balls do something of their own as they drop in the cup).
  *
- *   - Godlight, Demon Eye and the Ascended Orb each draw something as the
- *     ball drops (a frame against the same frame with nothing dropped);
- *     no other ball does
+ *   - Godlight, Demon Eye, the Ascended Orb and the Singularity each draw
+ *     something as the ball drops (a frame against the same frame with
+ *     nothing dropped), and so do the Ascended's and The Void's wakes (the
+ *     user found The Void's not its own); no other ball does
  *   - short and close: over by 0.55s, and nothing outside a box of the
  *     pin's own size about the cup
  *   - the pin stands in front of it: its pixels the same with and without
- *   - cut at the ground's line: nothing under it at the green's distance
+ *   - cut at the ground's line: nothing under it at its own distance (what
+ *     lies flat in front of the cup is nearer than the pin)
  *   - the hole holds for the whole moment with these balls (the next hole
  *     came 0.3s after the drop on a fast bag), and no longer with others
  *   - none of it calls Math.random
@@ -28,7 +30,8 @@ module.exports = {
         const c = Scene.b, px = () => c.getImageData(0, 0, VW, VH).data;
         const blank = () => { c.fillStyle = '#010203'; c.fillRect(0, 0, VW, VH); };
         DEV.course(B.COURSE.findIndex(cs => cs.slot === 'home')); hideSheet();
-        const balls = ['godlight', 'demoneye', 'ascorb', 'singularity', 'classic', 'comet', 'hearts'].filter(id => styleDef('t', id));
+        const TOP = ['godlight', 'demoneye', 'ascorb', 'singularity', 'horizon', 'ascension'];
+        const balls = TOP.concat(['classic', 'comet', 'hearts', 'rainbow']).filter(id => styleDef('t', id));
         if (balls.length < 5) f('the balls to try are missing: ' + balls.join(','));
         for (let hh = 2; hh <= 7; hh++) {
           S.hole = hh; S.chaos = Object.assign({}, B.CHAOS.find(x => x.n === 'Fair')); startHole(); Scene.announce = null; Scene.rain = false; Scene.night = false;
@@ -36,12 +39,15 @@ module.exports = {
             Scene.camD = at; Scene.walkTo = at; Scene.swingT = 0; Scene.balls = []; Scene.restBall = null; Scene.t = 30; o.views++;
             for (const id of balls) {
               S.styleOwn['t:' + id] = 1; S.trail = id;
-              const top = ['godlight', 'demoneye', 'ascorb', 'singularity'].includes(id);
+              const top = TOP.includes(id);
               // a frame of the hole first (it owns the clip line), then the
               // moment alone over a blank
               Scene.cupT = 0; Scene.draw(0, derive());
               // (where the frame left the camera)
               const p = Scene.proj(LEN, PIN_X), h = Math.max(4, Math.round(B_FLAG * US * p.s)), cut = Scene.clipAt(LEN);
+              // the ground's line for a row: at the distance whose ground lies on it
+              const rowCut = {}; const lineAt = y => { if (y <= p.y) return cut; if (rowCut[y] !== undefined) return rowCut[y];
+                let d = LEN; while (d > LEN - 8 && Scene.proj(d, PIN_X).y < y) d -= 0.02; return rowCut[y] = Scene.clipAt(d); };
               let total = 0;
               for (const q of [0.1, 0.35, 0.6, 0.9, 1.05]) {
                 Scene.t = 30; Scene.cupT = 30 - q * CUP_FX_DUR; blank(); Scene.drawCupFx();
@@ -51,7 +57,7 @@ module.exports = {
                   n++;
                   const x = (i / 4) % VW, y = Math.floor(i / 4 / VW);
                   if (Math.abs(x - p.x) > h * 0.9 + 2 || y < p.y - h * 0.75 - 2 || y > p.y + h * 0.4 + 2) out++;
-                  if (y > cut + 1) under++;
+                  if (y > lineAt(y) + 1) under++;
                 }
                 const where = id + ' hole ' + hh + ' from ' + at.toFixed(0) + ' at ' + q;
                 if (q >= 1 && n) f(where + ': ' + n + ' pixels still there after ' + CUP_FX_DUR + 's');
