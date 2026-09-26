@@ -101,6 +101,15 @@ module.exports = {
         if (spare.enh !== 1 || !(S.grit < g0)) f('Upgrade did not raise it a level for grit (+' + spare.enh + ')');
         const enhTag = tile(spare.uid) && tile(spare.uid).querySelector('.genh');
         if (!enhTag || enhTag.textContent !== '+1') f('the tile does not show the upgrade');
+        // the result is said on the sheet itself (a toast is behind its veil)
+        const said = () => { const e = document.querySelector('#sheet .enhres'); return e ? e.className + ': ' + e.textContent : ''; };
+        if (said() !== 'enhres ok: Upgraded to +1') f('the sheet did not say the upgrade took: "' + said() + '"');
+        spare.enh = B.ENH_SAFE + 2; itemSheet(spare, false); Math.random = () => 0.9999;
+        btn('Upgrade').click(); Math.random = mr;
+        if (spare.enh !== B.ENH_SAFE + 2 || said() !== 'enhres no: Upgrade failed \u00b7 still +' + spare.enh) f('the sheet did not say the upgrade failed: "' + said() + '"');
+        itemSheet(spare, false);
+        if (said()) f('the upgrade\'s result stayed on the sheet when it was opened again');
+        spare.enh = 1; renderBag(); itemSheet(spare, false);
         const sh0 = S.shard, val = scrapValue(spare);
         btn('Scrap').click();
         if (S.bag.includes(spare) || S.shard !== sh0 + val || tile(spare.uid)) f('Scrap did not take it out for its shards');

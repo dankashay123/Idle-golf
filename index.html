@@ -310,28 +310,31 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
 .lkhead .lkscrap{margin-left:0}
 /* the clubs in a slot, two to a row: framed art, the name in its rarity's
    colour, its level, and its numbers */
-#bagList{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;padding:2px 8px 10px}
+#bagList{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px;padding:2px 8px 10px}
 #bagList .empty{grid-column:1 / -1}
-.gt{position:relative;display:grid;grid-template-columns:40px minmax(0,1fr);gap:7px;align-items:start;
-  padding:7px 7px 8px;background:#0D1D14;border:1px solid var(--line);border-left:3px solid var(--line);cursor:pointer;min-width:0}
+.gt{position:relative;display:grid;grid-template-columns:32px minmax(0,1fr);gap:6px;align-items:start;
+  padding:5px 6px 6px;background:#0D1D14;border:1px solid var(--line);border-left:3px solid var(--line);cursor:pointer;min-width:0}
 .gt.worn{background:#15291D;border-color:var(--brass-dk)}
-.gt .thumb{width:40px;height:40px}
-.gt .thumb img{width:36px;height:36px}
+.gt .thumb{width:32px;height:32px}
+.gt .thumb img{width:28px;height:28px}
 .gt .gup{position:absolute;top:-1px;left:-1px;background:var(--aurora);color:#04150F;font-size:9px;font-weight:700;
   line-height:12px;padding:0 3px}
 .gt .genh{position:absolute;bottom:-1px;left:-1px;background:#08130D;border:1px solid var(--brass-dk);color:var(--brass);
   font-family:var(--mono);font-size:9px;font-weight:700;line-height:11px;padding:0 2px}
-.gt .gn{font-family:var(--disp);font-size:var(--f2);line-height:1.15;display:-webkit-box;-webkit-line-clamp:2;
+.gt .gn{font-family:var(--disp);font-size:10.5px;line-height:1.12;display:-webkit-box;-webkit-line-clamp:2;
   -webkit-box-orient:vertical;overflow:hidden;word-break:break-word}
 .gt .glv{font-family:var(--mono);font-size:var(--f0);color:#6FB6F0;white-space:nowrap}
-.gt .ib{font-size:var(--f0);color:var(--faint);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.gt .gs{font-family:var(--mono);font-size:var(--f0);color:var(--chalk);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.gt .ib{font-size:var(--f0);color:var(--faint);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.gt .gs{font-family:var(--mono);font-size:var(--f0);color:var(--chalk);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .gt .gs2{font-family:var(--mono);font-size:var(--f0);color:var(--dim);margin-top:1px;display:-webkit-box;-webkit-line-clamp:2;
   -webkit-box-orient:vertical;overflow:hidden}
 .gt .wtag{font-size:9px;letter-spacing:.1em;text-transform:uppercase;font-weight:700;color:var(--brass)}
 /* the item sheet's three buttons, side by side */
 .acts3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin-top:10px}
 .acts3 .act{margin:0;padding:10px 4px;font-size:var(--f1)}
+.enhres{text-align:center;font-weight:700;font-size:var(--f1);margin-top:8px;animation:enhFade 2.6s forwards}
+.enhres.ok{color:var(--aurora)}.enhres.no{color:var(--flag)}
+@keyframes enhFade{0%,70%{opacity:1}100%{opacity:0}}
 .acts3 .act small{display:block;font-size:var(--f0);opacity:.8;letter-spacing:0;text-transform:none;margin-top:2px}
 .sheetcur{font-family:var(--mono);font-size:var(--f0);color:var(--faint);margin-top:8px}
 .item{padding:9px 12px;border-bottom:1px solid #12261A;display:grid;
@@ -5071,12 +5074,14 @@ function enhChance(it){
 function enhance(it){
   if(it.enh >= B.ENH_MAX) return;
   const c = enhCost(it);
-  if(S.grit < c){ toast('Not enough grit for that'); return; }
+  if(S.grit < c){ toast('Not enough grit for that'); return 'grit'; }
   S.grit -= c;
-  if(Math.random() < enhChance(it)){ it.enh++; if(it.enh >= B.ENH_MAX) bump('enh15');
+  let r = 'fail';
+  if(Math.random() < enhChance(it)){ it.enh++; r = 'up'; if(it.enh >= B.ENH_MAX) bump('enh15');
     toast(it.name + ' \u2192 <b>+' + it.enh + '</b>'); }
   else toast('Upgrade failed \u00b7 still +' + it.enh);
   renderBag(); renderVitals();
+  return r;
 }
 const lockCount = it => (it.aff || []).filter(a => a.lock).length;
 function rerollCost(it){
@@ -16908,6 +16913,12 @@ function itemSheet(it, equipped){
     + (equipped ? '<button class="act ghost" disabled>Scrap<small>in the bag</small></button>'
                 : '<button class="act danger" onclick="doSalvage(' + it.uid + ')">Scrap<small>+' + fmt(sv, 0) + '\u00a0' + plural(sv, 'shards') + '</small></button>')
     + '</div>'
+    // the upgrade's result, on the sheet itself: a toast shows behind its veil
+    + (enhSaid && enhSaid.r && enhSaid.uid === it.uid
+        ? '<div class="enhres ' + (enhSaid.r === 'up' ? 'ok' : 'no') + '">'
+          + (enhSaid.r === 'up' ? 'Upgraded to +' + it.enh
+             : enhSaid.r === 'grit' ? 'Not enough grit'
+             : 'Upgrade failed \u00b7 still +' + it.enh) + '</div>' : '')
     + '<div class="sheetcur">' + fmt(S.grit || 0) + '\u00a0grit \u00b7 ' + fmt(S.shard || 0) + '\u00a0shards</div>';
   const lk = lockCount(it);
   h += '<button class="act ghost" onclick="doReroll(' + it.uid + ')">Re-attune '
@@ -16924,7 +16935,9 @@ function itemSheet(it, equipped){
 const findItem = uid => S.bag.find(x => x.uid === uid)
   || B.SLOTS.map(s => S.equip[s.id]).filter(Boolean).find(x => x.uid === uid);
 // (each redraws the clubs behind the sheet too, so a tile shows what changed)
-function doEnh(uid){ const it = findItem(uid); if(it){ enhance(it); itemSheet(it, !S.bag.includes(it)); } }
+let enhSaid = null;
+function doEnh(uid){ const it = findItem(uid); if(it){ enhSaid = { uid, r: enhance(it) };
+  itemSheet(it, !S.bag.includes(it)); enhSaid = null; } }
 function doLock(uid, i){ const it = findItem(uid); if(it){ toggleLock(it, i); itemSheet(it, !S.bag.includes(it)); } }
 function doReroll(uid){ const it = findItem(uid); if(it){ rerollItem(it); itemSheet(it, !S.bag.includes(it)); renderBag(); } }
 function doAscend(uid){ const it = findItem(uid); if(it){ ascendItem(it); itemSheet(it, !S.bag.includes(it)); renderBag(); } }
