@@ -57,8 +57,14 @@ module.exports = {
           const g = bbox(); SPRITE.caddie = keep;
           Scene.b.clearRect(0, 0, VW, VH); Scene.drawGolfer(D);
           const f = Scene._fairy; o.poses++;
-          if (g && f && f.x + f.w > g.x0 && f.x < g.x1 && f.y + f.h > g.y0 && f.y < g.y1)
-            o.hits.push((walking ? 'walking' : 'swing ' + ph.toFixed(2)) + ': fairy ' + f.x + '-' + (f.x + f.w) + ', golfer from ' + g.x0);
+          // what of him is inside the fairy's box (by box it counted his
+          // ground's wave under the fairy's feet, far below it)
+          if (g && f && f.x + f.w > g.x0 && f.x < g.x1 && f.y + f.h > g.y0 && f.y < g.y1) {
+            SPRITE.caddie = null; Scene.b.clearRect(0, 0, VW, VH); Scene.drawGolfer(D); SPRITE.caddie = keep;
+            const x0 = Math.max(0, f.x), y0 = Math.max(0, f.y), d = Scene.b.getImageData(x0, y0, Math.max(1, f.x + f.w - x0), Math.max(1, f.y + f.h - y0)).data;
+            let inside = 0; for (let i = 3; i < d.length; i += 4) if (d[i] >= 128) inside++;
+            if (inside) o.hits.push((walking ? 'walking' : 'swing ' + ph.toFixed(2)) + ': ' + inside + ' of his pixels in the fairy\'s box ' + f.x + '-' + (f.x + f.w));
+          }
         };
         // and hopping for a birdie or drooping at a bogey, at every point of it
         const t0 = Scene.t;

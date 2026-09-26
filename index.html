@@ -10033,9 +10033,10 @@ const RUNES = [['X.X', '.X.', 'X.X'], ['XXX', 'X..', 'XXX'], ['.X.', 'XXX', '.X.
 function runeRing(rx, ry, step){
   return fxBake('rune|' + rx + '|' + ry + '|' + step, rx * 2 + 5, ry * 2 + 5, g => {
     const ox = rx + 2, oy = ry + 2, n = Math.max(24, Math.round(rx * 4.4));
-    g.fillStyle = '#8A1A10';
-    for(let i = 0; i < n; i++){ if(i % 3 === 0) continue; const a = i / n * Math.PI * 2;
-      g.fillRect(Math.round(ox + Math.cos(a) * rx), Math.round(oy + Math.sin(a) * ry), 1, 1); }
+    // (solid and doubled: dotted, it was faint on the grass)
+    for(let i = 0; i < n; i++){ const a = i / n * Math.PI * 2;
+      g.fillStyle = '#C8281C'; g.fillRect(Math.round(ox + Math.cos(a) * rx), Math.round(oy + Math.sin(a) * ry), 1, 1);
+      g.fillStyle = '#5A0E0E'; g.fillRect(Math.round(ox + Math.cos(a) * rx), Math.round(oy + Math.sin(a) * ry) + 1, 1, 1); }
     for(let j = 0; j < 8; j++){
       const a = (j + step / 16) / 8 * Math.PI * 2, px = Math.round(ox + Math.cos(a) * rx), py = Math.round(oy + Math.sin(a) * ry);
       RUNES[j].forEach((row, yy) => [...row].forEach((ch, xx) => { if(ch !== 'X') return;
@@ -10207,24 +10208,25 @@ function voidSigil(rx, ry, step){
   return fxBake('sigil|' + rx + '|' + ry + '|' + step, rx * 2 + 3, ry * 2 + 3, g => {
     const ox = rx + 1, oy = ry + 1, P = (x, y, col) => { g.fillStyle = col; g.fillRect(Math.round(x), Math.round(y), 1, 1); };
     const E = (a, f) => [ox + Math.cos(a) * rx * f, oy + Math.sin(a) * ry * f];
-    // the pool, its edge dithered
+    // the pool, solid out to its inner ring, and the band between the rings
+    // dark too (it was a thin line on the grass: the user found it faint)
     for(let y = -ry; y <= ry; y++) for(let x = -rx; x <= rx; x++){
       const d = Math.sqrt((x * x) / (rx * rx) + (y * y) / (ry * ry));
-      if(d < 0.62) P(ox + x, oy + y, '#12081C');
-      else if(d < 0.74 && ((x + y) & 1)) P(ox + x, oy + y, '#1E0F2C');
+      if(d < 0.66) P(ox + x, oy + y, d < 0.4 ? '#08040E' : '#12081C');
+      else if(d < 1) P(ox + x, oy + y, (x + y) & 1 ? '#1E0F2C' : '#2A1240');
     }
     // the star
     const th = -step / 48 * Math.PI / 3;
     for(let k = 0; k < 2; k++){
       const pts = [0, 1, 2].map(i => E(th + k * Math.PI / 3 + i * Math.PI * 2 / 3, 0.6));
-      for(let i = 0; i < 3; i++) pxLine(g, pts[i][0], pts[i][1], pts[(i + 1) % 3][0], pts[(i + 1) % 3][1], '#762889', 1);
+      for(let i = 0; i < 3; i++) pxLine(g, pts[i][0], pts[i][1], pts[(i + 1) % 3][0], pts[(i + 1) % 3][1], '#B23AC4', 1);
     }
-    for(let k = 0; k < 6; k++){ const [x, y] = E(th + k * Math.PI / 3, 0.6); P(x, y, '#E639EB'); }
-    // the rings
+    for(let k = 0; k < 6; k++){ const [x, y] = E(th + k * Math.PI / 3, 0.6); P(x, y, '#FFE0FF'); P(x + 1, y, '#E639EB'); }
+    // the rings, each doubled
     const ring = (f, col) => { const n = Math.max(40, Math.round((rx + ry) * f * 4));
       for(let i = 0; i < n; i++){ const [x, y] = E(i / n * Math.PI * 2, f); P(x, y, col); } };
-    ring(0.66, '#962CA8');
-    ring(1, '#C936D5');
+    ring(0.66, '#962CA8'); ring(0.66 - 1 / ry, '#5A1A6E');
+    ring(1, '#E639EB'); ring(1 - 1 / ry, '#962CA8');
     // twelve marks between them, turning the other way
     const ph = step / 48 * Math.PI / 6;
     for(let j = 0; j < 12; j++){
@@ -10243,19 +10245,23 @@ function sunSigil(rx, ry, step, lit){
   return fxBake('sun|' + rx + '|' + ry + '|' + step + '|' + lit, rx * 2 + 3, ry * 2 + 3, g => {
     const ox = rx + 1, oy = ry + 1, P = (x, y, col) => { g.fillStyle = col; g.fillRect(Math.round(x), Math.round(y), 1, 1); };
     const E = (a, f) => [ox + Math.cos(a) * rx * f, oy + Math.sin(a) * ry * f];
+    // (the disc fuller, the rays two pixels wide and the outer ring solid:
+    // the user found it faint)
     for(let y = -ry; y <= ry; y++) for(let x = -rx; x <= rx; x++){
       const d = Math.sqrt((x * x) / (rx * rx) + (y * y) / (ry * ry));
-      if(d < 0.34) P(ox + x, oy + y, (x + y) & 1 ? '#FFF6D8' : '#FFE39A');
-      else if(d < 0.5 && !((x + y) & 1)) P(ox + x, oy + y, '#F2D58A');
+      if(d < 0.4) P(ox + x, oy + y, d < 0.22 ? '#FFFFFF' : (x + y) & 1 ? '#FFF6D8' : '#FFE39A');
+      else if(d < 0.56) P(ox + x, oy + y, (x + y) & 1 ? '#F2D58A' : '#E3B457');
+      else if(d < 1 && !((x + y) & 1) && !(y & 1)) P(ox + x, oy + y, '#B98A2E');
     }
     const ring = (f, col, skip) => { const n = Math.max(40, Math.round((rx + ry) * f * 4));
       for(let i = 0; i < n; i++){ if(skip && i % skip === 0) continue; const [x, y] = E(i / n * Math.PI * 2, f); P(x, y, col); } };
-    ring(0.4, '#E3B457');
-    ring(1, '#C99A2E', 5);
+    ring(0.56, '#C99A2E');
+    ring(1, '#E3B457'); ring(1 - 1 / ry, '#9A7432');
     const th = step / 24 * Math.PI / 6;
     for(let k = 0; k < 12; k++){
-      const a = th + k * Math.PI / 6, f1 = k & 1 ? 0.72 : 0.92;
-      for(let f = 0.46; f <= f1; f += 0.5 / Math.max(rx, ry)){ const [x, y] = E(a, f); P(x, y, lit ? (k & 1 ? '#FFF6D8' : '#FFFFFF') : k & 1 ? '#E3B457' : '#FFE39A'); }
+      const a = th + k * Math.PI / 6, f1 = k & 1 ? 0.78 : 0.96;
+      for(let f = 0.56; f <= f1; f += 0.5 / Math.max(rx, ry)){ const [x, y] = E(a, f), col = lit ? (k & 1 ? '#FFF6D8' : '#FFFFFF') : k & 1 ? '#E3B457' : '#FFE39A';
+        P(x, y, col); P(x + 1, y, col); }
     }
   });
 }
@@ -10428,11 +10434,11 @@ const STYLEFX = {
     // light pooling on the ground at his feet, and the sun turning in it
     ground(c, g){
       const breathe = 0.5 + 0.5 * Math.sin(g.t * 1.6);
-      drawGlow(c, g.cx, g.bot, g.w * (1.05 + 0.08 * breathe), Math.max(2, g.h * 0.10),
-               [[0.75, '#B98A2E', 1], [0.45, '#E3B457', 2], [0, '#FFE39A', 3]], Math.floor(g.t * 6) & 3, 0.9);
+      drawGlow(c, g.cx, g.bot, g.w * (1.25 + 0.08 * breathe), Math.max(2, g.h * 0.13),
+               [[0.75, '#B98A2E', 1], [0.45, '#E3B457', 2], [0, '#FFE39A', 3]], Math.floor(g.t * 6) & 3, 1);
       if(g.minor || g.h < 30) return;
       const L = legendNow(g), q = L ? 1 : this.charge(g.ph), st = this.strike(g.ph);
-      const rx = Math.max(6, Math.round(g.w * 0.9)), ry = Math.max(3, Math.round(g.h * 0.11)), X = Math.round(g.cx), Y = Math.round(g.bot);
+      const rx = Math.max(6, Math.round(g.w * 1.05)), ry = Math.max(3, Math.round(g.h * 0.13)), X = Math.round(g.cx), Y = Math.round(g.bot);
       c.globalAlpha = 1; c.drawImage(sunSigil(rx, ry, Math.floor(g.t * 6 + (g.ph > 0 ? g.ph * 24 : 0)) % 24, q > 0.5 ? 1 : 0), X - rx - 1, Y - ry - 1);
       // a ring of light running out as he strikes, and wave after wave on a great hole
       if(L) this.wave(c, X, Y, rx, ry, L.f, L.big ? 1.6 : 1.45);
@@ -10644,12 +10650,15 @@ const STYLEFX = {
     // before the pin and a putt rolling away, which stand on it)
     ground(c, g){
       if(g.minor) return;
-      const { cx, w, h, t, bot } = g, rx = w * 1.05, ry = Math.max(2, h * 0.10), L = legendNow(g);
+      const { cx, w, h, t, bot } = g, rx = w * 1.15, ry = Math.max(2, h * 0.12), L = legendNow(g);
       const q = L ? 1 : this.charge(g.ph), st = this.strike(g.ph), E = this.erupt(t);
-      drawGlow(c, cx, bot, rx, ry, [[0.82, '#2A0404', 2], [0.58, '#7A1408', 3], [0.3, '#E8401C', 3], [0, E >= 0 || q > 0.5 || st >= 0 ? '#FFF1A0' : '#FFB43A', 4]],
-               Math.floor(t * 8) & 3, 0.95);
+      // the ground round the pit always cracked and smouldering (the user
+      // found it faint); the cracks run hot as he strikes
+      if(h >= 30 && !L && !(st >= 0)) this.cracks(c, g, rx, ry, 0.55, 0.3 + 0.08 * Math.sin(t * 3), 1.5);
+      drawGlow(c, cx, bot, rx, ry, [[0.82, '#2A0404', 1], [0.58, '#7A1408', 2], [0.3, '#E8401C', 3], [0, E >= 0 || q > 0.5 || st >= 0 ? '#FFF1A0' : '#FFB43A', 4]],
+               Math.floor(t * 8) & 3, 1);
       const RR = runeRing(Math.round(rx * 1.18), Math.round(ry * 1.3), Math.floor(t * 6 + (g.ph > 0 ? g.ph * 48 : 0) + (L ? L.T * 40 : 0)) % 16);
-      c.globalAlpha = 0.95; c.drawImage(RR, Math.round(cx - RR.width / 2), Math.round(bot - RR.height / 2));
+      c.globalAlpha = 1; c.drawImage(RR, Math.round(cx - RR.width / 2), Math.round(bot - RR.height / 2));
       if(L) this.cracks(c, g, rx, ry, Math.min(1, L.T / 0.25), L.f > 0.7 ? 1 - (L.f - 0.7) / 0.3 : 1, L.big ? 1.6 : 1.45);
       else if(st >= 0 && h >= 30) this.cracks(c, g, rx, ry, Math.min(1, st / 0.25), 1 - st, 1.7);
       this.bubbles(c, g, rx, ry);
@@ -10952,13 +10961,13 @@ const STYLEFX = {
     outline: '#7A4ED8', outlineA: 0.30,
     charge(ph){ return STYLEFX.ascended.charge(ph); },
     strike(ph){ return STYLEFX.ascended.strike(ph); },
-    sigilSize(g){ return [Math.max(6, Math.round(g.w * 1.0)), g.h < 30 ? 2 : Math.max(3, Math.round(g.h * 0.12))]; },
-    // the galaxy turning under him
+    sigilSize(g){ return [Math.max(6, Math.round(g.w * 1.15)), g.h < 30 ? 2 : Math.max(3, Math.round(g.h * 0.15))]; },
+    // the void open under him
     ground(c, g){
       if(g.minor) return;
       const [rx, ry] = this.sigilSize(g), L = legendNow(g), st = this.strike(g.ph), q = L ? 1 : this.charge(g.ph);
       const X = Math.round(g.cx), Y = Math.round(g.bot), step = Math.floor(g.t * 4 + (g.ph > 0 ? g.ph * 24 : 0) + (L ? L.T * 40 : 0)) % 48;
-      c.globalAlpha = 1; c.drawImage(voidGalaxy(rx, ry, step, q > 0.5 || st >= 0 ? 1 : 0), X - rx - 1, Y - ry - 1);
+      { const V = voidGalaxy(rx, ry, step, q > 0.5 || st >= 0 ? 1 : 0); c.globalAlpha = 1; c.drawImage(V, X - V.ox, Y - V.oy); }
       if(g.h < 30) {}
       else if(L) this.wave(c, X, Y, rx, ry, L.f, L.big ? 1.7 : 1.5);
       else if(st >= 0) this.wave(c, X, Y, rx, ry, st, 1.55);
@@ -11190,7 +11199,7 @@ const STYLEFX = {
     // the strike: 0..1 through the moment after it, or -1
     strike(ph){ return ph >= 0.55 && ph < 0.9 ? (ph - 0.55) / 0.35 : -1; },
     // (flatter on the saver, where there are two rows under his feet)
-    sigilSize(g){ return [Math.max(6, Math.round(g.w * 0.95)), g.h < 30 ? 2 : Math.max(3, Math.round(g.h * 0.12))]; },
+    sigilSize(g){ return [Math.max(6, Math.round(g.w * 1.1)), g.h < 30 ? 2 : Math.max(3, Math.round(g.h * 0.14))]; },
     // the sigil turning under him (on the ground: drawn before the pin and a
     // putt rolling away, which stand on it)
     ground(c, g){
@@ -11575,8 +11584,9 @@ const STYLEFX = {
     back(c, g){
       const { cx, bot, w, h, t } = g;
       // (what lies on the ground under him stays there while he flies)
-      if(!g.fly) drawGlow(c, cx, bot, w * 0.95, Math.max(2, h * 0.09),
-               [[0.7, '#7A2A14', 1], [0.4, '#F0612A', 2], [0, '#FFB43A', 3]], Math.floor(t * 10) & 3, 0.9);
+      // (all these grounds fuller and solid: the user found them faint)
+      if(!g.fly) drawGlow(c, cx, bot, w * 1.15, Math.max(2, h * 0.11),
+               [[0.8, '#4A1408', 2], [0.55, '#C8401C', 3], [0.25, '#F0612A', 4], [0, '#FFD34A', 4]], Math.floor(t * 10) & 3, 1);
       this.flames(c, g, false);
       // embers drifting well above him
       for(let i = 0; i < 8; i++){
@@ -11593,8 +11603,8 @@ const STYLEFX = {
     outline: '#CFF1FF', outlineA: 0.6,
     back(c, g){
       const { cx, bot, w, h, t } = g;
-      if(!g.fly) drawGlow(c, cx, bot, w * 1.1, Math.max(2, h * 0.10),
-               [[0.7, '#6FB2D8', 1], [0.35, '#BFE6FA', 2], [0, '#F2FBFF', 3]], Math.floor(t * 3) & 3, 0.9);
+      if(!g.fly) drawGlow(c, cx, bot, w * 1.25, Math.max(2, h * 0.12),
+               [[0.8, '#3F7FB0', 2], [0.5, '#8FCBEA', 3], [0.25, '#BFE6FA', 4], [0, '#FFFFFF', 4]], Math.floor(t * 3) & 3, 1);
       this.snow(c, g, false);
     },
     front(c, g){
@@ -11646,7 +11656,7 @@ const STYLEFX = {
     },
     back(c, g){
       const { cx, bot, w, h, t, spr, x, y } = g;
-      if(!g.fly) drawGlow(c, cx, bot, w * 0.9, Math.max(2, h * 0.08), [[0.6, '#2A4A7A', 1], [0, '#5A8AD8', 2]], Math.floor(t * 12) & 3, 0.8);
+      if(!g.fly) drawGlow(c, cx, bot, w * 1.1, Math.max(2, h * 0.10), [[0.75, '#1A2A4A', 2], [0.45, '#2A4A7A', 3], [0.2, '#5A8AD8', 4], [0, '#BFE0FF', 4]], Math.floor(t * 12) & 3, 1);
       // the charge on him flickers
       const on = hr(Math.floor(t * 14), 3);
       outlineAt(c, g, '#8FD0FF', RING1, 0.25 + on * 0.5);
@@ -11747,8 +11757,8 @@ const STYLEFX = {
   midas: {
     back(c, g){
       // gold throws a little gold on the ground round it
-      if(!g.fly) drawGlow(c, g.cx, g.bot, g.w * 0.8, Math.max(2, g.h * 0.07),
-               [[0.6, '#8F6A1E', 1], [0, '#F0C04A', 2]], Math.floor(g.t * 3) & 3, 0.8);
+      if(!g.fly) drawGlow(c, g.cx, g.bot, g.w * 1.0, Math.max(2, g.h * 0.09),
+               [[0.7, '#6A4A10', 2], [0.4, '#C99A2E', 3], [0, '#FFD86B', 4]], Math.floor(g.t * 3) & 3, 1);
     },
     front(c, g){
       const { spr, x, y, w, h, t, cx, cy } = g;
@@ -11781,8 +11791,8 @@ const STYLEFX = {
       const cols = ['#FF4FB8', '#3FE0FF', '#FFE14A', '#7CFF6A'];
       for(let i = 0; i < 4; i++){
         const a = t * 1.3 + i * Math.PI / 2;
-        drawGlow(c, cx + Math.cos(a) * w * 0.8, bot + Math.sin(a) * h * 0.05, w * 0.32, Math.max(2, h * 0.05),
-                 [[0, cols[i], 2]], (Math.floor(t * 8) + i) & 3, 0.8);
+        drawGlow(c, cx + Math.cos(a) * w * 0.8, bot + Math.sin(a) * h * 0.05, w * 0.38, Math.max(2, h * 0.06),
+                 [[0.5, cols[i], 2], [0, cols[i], 4]], (Math.floor(t * 8) + i) & 3, 1);
       }
       // beams from the ball to the floor, sweeping
       const bx = g.head.x, by = g.head.y - h * 0.32;
@@ -11811,7 +11821,7 @@ const STYLEFX = {
     alpha: 0.55, bob: 1,
     back(c, g){
       const { cx, bot, w, h, t } = g;
-      if(!g.fly) drawGlow(c, cx, bot, w * 0.7, Math.max(2, h * 0.06), [[0.5, '#A5B0D6', 1], [0, '#EEF2FF', 2]], Math.floor(t * 4) & 3, 0.5);
+      if(!g.fly) drawGlow(c, cx, bot, w * 0.95, Math.max(2, h * 0.09), [[0.7, '#7A84AA', 2], [0.4, '#A5B0D6', 3], [0, '#EEF2FF', 3]], Math.floor(t * 4) & 3, 1);
     },
     front(c, g){
       const { cx, w, h, t, k, head, y } = g;
@@ -12272,32 +12282,53 @@ function voidHand(k, flip){
     }
   });
 }
-// The galaxy under his feet: a black hole at its heart ringed in gold,
-// three arms of stars turning out of it in violet and pink, lit brighter
-// as he winds up. Baked a size and a step at a time.
+// The void open under his feet (the user asked: the galaxy was "very
+// faint"; "like a void is open below him"): a pit of near black with a
+// torn edge that shifts as it turns, darker the deeper it goes, stars
+// sinking into it, a violet lip with a pink light running round it, and a
+// swirl of violet drawn round the lip. Solid pixels, baked a size and a
+// step at a time; lit as he winds up.
 const VOID_GALAXY = {};
 function voidGalaxy(rx, ry, step, lit){
   const key = rx + '|' + ry + '|' + step + '|' + lit;
   if(VOID_GALAXY[key]) return VOID_GALAXY[key];
-  const cv = document.createElement('canvas'); cv.width = rx * 2 + 3; cv.height = ry * 2 + 3;
-  const g = cv.getContext('2d'), X = rx + 1, Y = ry + 1, P = (x, y, col) => { g.fillStyle = col; g.fillRect(Math.round(x), Math.round(y), 1, 1); };
-  // the rim, faint, and stars scattered over the disc
-  const n = Math.round((rx + ry) * 4);
-  for(let i = 0; i < n; i++){ if(i % 3) continue; const a = i / n * Math.PI * 2; P(X + Math.cos(a) * rx, Y + Math.sin(a) * ry, '#3E2A6E'); }
-  for(let i = 0; i < Math.round(rx * 0.8); i++){ const a = hr(i, 397) * Math.PI * 2, r = 0.35 + hr(i, 398) * 0.6;
-    P(X + Math.cos(a) * rx * r, Y + Math.sin(a) * ry * r, hr(i, 399) > 0.6 ? '#7FE6FF' : '#FFFFFF'); }
-  // three arms turning
+  const R2 = Math.ceil(rx * 1.35), RY2 = Math.ceil(ry * 1.35);
+  const cv = document.createElement('canvas'); cv.width = R2 * 2 + 3; cv.height = RY2 * 2 + 3;
+  const g = cv.getContext('2d'), X = R2 + 1, Y = RY2 + 1, P = (x, y, col) => { g.fillStyle = col; g.fillRect(Math.round(x), Math.round(y), 1, 1); };
   const S0 = step / 48 * Math.PI * 2;
-  for(let j = 0; j < 3; j++) for(let q = 0; q <= 26; q++){
-    const u = q / 26, r = 0.3 + 0.68 * u, a = S0 + j * Math.PI * 2 / 3 + u * 3.3;
-    if(u > 0.6 && q & 1) continue;
-    P(X + Math.cos(a) * rx * r, Y + Math.sin(a) * ry * r, lit && u < 0.25 ? '#FFFFFF' : u < 0.3 ? '#FF7AD9' : u < 0.62 ? '#B98CFF' : '#7A4ED8');
+  // the torn edge: its reach at each angle, moving as it turns
+  const edge = a => 1 + 0.10 * Math.sin(3 * a + S0) + 0.07 * Math.sin(7 * a - 2 * S0) + 0.05 * Math.sin(11 * a + 3 * S0);
+  const run = ((S0 / (Math.PI * 2)) % 1) * Math.PI * 2;
+  for(let yy = -RY2; yy <= RY2; yy++) for(let xx = -R2; xx <= R2; xx++){
+    const a = Math.atan2(yy / ry, xx / rx), d = Math.sqrt((xx * xx) / (rx * rx) + (yy * yy) / (ry * ry)) / edge(a);
+    if(d > 1.08) continue;
+    const par = (xx + yy) & 1;
+    let col;
+    if(d < 0.5) col = '#020107';
+    else if(d < 0.72) col = par ? '#020107' : '#07041A';
+    else if(d < 0.86) col = '#0E0828';
+    else if(d < 0.96) col = par ? '#1C1046' : '#0E0828';
+    else {
+      // the lip: violet, lit pink where the light runs round it
+      const da = Math.abs(((a - run) % (Math.PI * 2) + Math.PI * 3) % (Math.PI * 2) - Math.PI);
+      col = da < 0.35 ? (lit ? '#FFFFFF' : '#FF7AD9') : da < 0.8 ? '#B98CFF' : par ? '#7A4ED8' : '#3E2A6E';
+    }
+    P(X + xx, Y + yy, col);
   }
-  // the black hole and its ring of gold
-  for(let yy = -ry; yy <= ry; yy++) for(let xx = -rx; xx <= rx; xx++){
-    const d = (xx * xx) / (rx * rx) + (yy * yy) / (ry * ry);
-    if(d < 0.06) P(X + xx, Y + yy, '#05030C'); else if(d < 0.1) P(X + xx, Y + yy, (xx + yy) & 1 ? '#D8B060' : lit ? '#F4DC96' : '#9A7432');
+  // stars sinking into the dark, spiralling in as it turns
+  for(let i = 0; i < Math.max(6, Math.round(rx * 0.7)); i++){
+    const u = (hr(i, 397) + step / 48) % 1, r = 0.78 * (1 - u), a = hr(i, 398) * Math.PI * 2 + u * 2.4;
+    if(r < 0.12) continue;
+    P(X + Math.cos(a) * rx * r, Y + Math.sin(a) * ry * r, r < 0.3 ? '#3E2A6E' : hr(i, 399) > 0.6 ? '#7FE6FF' : lit ? '#FFFFFF' : '#D8C8FF');
   }
+  // the swirl round the lip: two arms of violet running round it
+  const n = Math.round((rx + ry) * 5);
+  for(let j = 0; j < 2; j++) for(let i = 0; i < n; i++){
+    const u = i / n, a = S0 * 1.5 + j * Math.PI + u * Math.PI * 1.3, r = 1.1 + 0.2 * u;
+    if(i & 1 || u > 0.85) continue;
+    P(X + Math.cos(a) * rx * r * edge(a), Y + Math.sin(a) * ry * r * edge(a), u < 0.3 ? (lit ? '#FFFFFF' : '#FF7AD9') : u < 0.6 ? '#B98CFF' : '#7A4ED8');
+  }
+  cv.ox = X; cv.oy = Y;
   return VOID_GALAXY[key] = cv;
 }
 // A little black hole: dark at its heart, a ring of gold round it with a
@@ -13740,20 +13771,28 @@ const Scene = {
     if(!P || t > 0.8) return;
     const k = Math.max(1, Math.round(gh / 30));
     const sx = fx + fw / 2, sy = fy + fh * 0.1, ex = gx + gw * 0.5, ey = gy + gh * 0.38;
-    for(let i = 0; i < 18; i++){
-      const u = (t - i * 0.015) / 0.42;
+    // (a thicker stream, three strands of it, and a bigger burst: the user
+    // found the caddie's effects faint)
+    for(let i = 0; i < 36; i++){
+      const u = (t - (i % 12) * 0.015 - Math.floor(i / 12) * 0.03) / 0.42;
       if(u < 0 || u > 1) continue;
       const e = u * u * (3 - 2 * u), lift = Math.sin(Math.PI * e) * gh * (0.22 + 0.2 * hr(i, 331));
-      const px = sx + (ex - sx) * e + (hr(i, 332) - 0.5) * gw * 0.5 * Math.sin(Math.PI * e), py = sy + (ey - sy) * e - lift;
-      c.fillStyle = P[2]; c.fillRect(Math.round(px - (ex - sx) * 0.04), Math.round(py + lift * 0.08), k, k);
-      c.fillStyle = P[i % 2]; c.fillRect(Math.round(px), Math.round(py), k, k);
+      const px = sx + (ex - sx) * e + (hr(i, 332) - 0.5) * gw * 0.6 * Math.sin(Math.PI * e), py = sy + (ey - sy) * e - lift;
+      c.fillStyle = P[2]; c.fillRect(Math.round(px - (ex - sx) * 0.04), Math.round(py + lift * 0.08), k + 1, k);
+      c.fillStyle = P[i % 2]; c.fillRect(Math.round(px), Math.round(py), k + 1, k + 1);
+      if(i % 12 === 0){ c.fillStyle = '#FFFFFF'; c.fillRect(Math.round(px), Math.round(py), k, k); }
     }
     if(t > 0.42){
       const q = (t - 0.42) / 0.38;
-      for(let j = 0; j < 12; j++){
+      // a ring of it round him as it lands, and stars thrown out of it
+      for(let j = 0; j < 28; j++){ const a = j / 28 * Math.PI * 2, R = gw * (0.45 + 0.25 * q);
+        if(hr(j, 335) < q) continue;
+        c.fillStyle = P[j % 2]; c.fillRect(Math.round(ex + Math.cos(a) * R), Math.round(ey + Math.sin(a) * R * 0.9), k, k); }
+      for(let j = 0; j < 18; j++){
         if(hr(j, 333) < q * 0.7) continue;
-        const a = j / 12 * Math.PI * 2 + hr(j, 334), R = gw * (0.2 + 0.55 * Math.sqrt(q));
-        c.fillStyle = P[j % 3]; c.fillRect(Math.round(ex + Math.cos(a) * R), Math.round(ey + Math.sin(a) * R * 0.8), k, k);
+        const a = j / 18 * Math.PI * 2 + hr(j, 334), R = gw * (0.2 + 0.7 * Math.sqrt(q)), X = Math.round(ex + Math.cos(a) * R), Y = Math.round(ey + Math.sin(a) * R * 0.8);
+        c.fillStyle = P[j % 3]; c.fillRect(X - k, Y, k * 3, k); c.fillRect(X, Y - k, k, k * 3);
+        c.fillStyle = '#FFFFFF'; c.fillRect(X, Y, k, k);
       }
     }
   },
@@ -16339,41 +16378,74 @@ Object.assign(Scene, {
     const fade = t < 0.30 ? 1 : 1 - (t - 0.30) / (DUR - 0.30);
     const front = Math.round(bot * fall);
     const G = { c, cx, bot, half, t, fall, fade, w, h, k: Math.max(1, Math.round(h / 30)) };
-    // the column: brightest down the middle and at its falling front
-    for(let yy = 0; yy < front; yy += 2){
-      const near = 1 - Math.min(1, (front - yy) / Math.max(8, bot * 0.5));
-      const a = (0.10 + 0.22 * near) * fade * glow;
-      // (the disco's runs through the colours; the glitch's slips sideways in blocks)
+    // the column (the user found it faint: it was a scatter of dots): a
+    // beam with solid edges and a bright core, two ribbons of light winding
+    // down it, runes sliding down its heart, thinning toward its tail
+    const k = G.k, ribbon = TH && TH.ring ? TH.ring : [col], tick = Math.floor(t * 12);
+    for(let yy = 0; yy < front; yy++){
+      const near = 1 - Math.min(1, (front - yy) / Math.max(8, bot * 0.6));
+      const live = fade * (0.45 + 0.55 * near) * glow;
       const cc = TH && TH.rainbow ? DISCO_COLS[Math.floor(yy / 6 + t * 12) % DISCO_COLS.length] : col;
       const sl = TH && TH.slip ? Math.round((hr(Math.floor(yy / 8), Math.floor(t * 14)) - 0.5) * half * 0.8) : 0;
-      // (in solid pixels, thinned toward its edges and its tail: a wash of
-      // colour over the grass went grey, and red went khaki)
-      const x0 = Math.round(cx - half) + sl, dens = Math.min(0.75, a * 2.2);
-      for(let r2 = 0; r2 < 2; r2++) for(let xx = 0; xx < half * 2; xx++){
-        const e = Math.abs(xx - half + 0.5) / half, mid = e < 0.25;
-        if(hr(xx * 7 + yy + r2, 421 + (Math.floor(t * 10) & 3)) > dens * (mid ? 1.3 : 1 - e * 0.6) * 0.75) continue;
-        c.fillStyle = mid ? core : cc; c.fillRect(x0 + xx, yy + r2, 1, 1);
+      const x0 = Math.round(cx - half) + sl, x1 = x0 + half * 2 - 1;
+      // its edges
+      if(hr(yy, 441 + (tick & 3)) < live * 1.5){ c.fillStyle = cc; c.fillRect(x0, yy, k, 1); c.fillRect(x1 - k + 1, yy, k, 1); }
+      // its body, a dither that thins out from the middle
+      for(let xx = k + 1; xx < half * 2 - k - 1; xx += 1){
+        const e = Math.abs(xx - half + 0.5) / half;
+        if(hr(xx * 7 + yy, 421 + (tick & 3)) > live * (1.1 - e) * 0.4) continue;
+        c.fillStyle = e < 0.2 ? core : cc; c.fillRect(x0 + xx, yy, 1, 1);
       }
+      // its core
+      if(hr(yy, 443 + (tick & 3)) < live * 1.6){ c.fillStyle = core; c.fillRect(Math.round(cx) - k + sl, yy, k * 2, 1); }
+      // the ribbons, the near one over the far
+      for(let r = 0; r < 2; r++){
+        const ph = yy * 0.09 - t * 9 + r * Math.PI, sx = Math.round(cx + Math.sin(ph) * half * 0.8) + sl;
+        if(hr(yy + r * 997, 445) > live * 1.8) continue;
+        c.fillStyle = Math.cos(ph) > 0 ? ribbon[0] : ribbon[ribbon.length - 1]; c.fillRect(sx, yy, k + 1, 1);
+      }
+    }
+    // runes sliding down its heart
+    for(let i = 0; i < 5; i++){
+      const u = (t * 1.1 + i / 5) % 1, ry2 = Math.round(u * front);
+      if(ry2 > front - 4 || fade < 0.25) continue;
+      const R = RUNES[(i + Math.floor(t * 3)) % RUNES.length];
+      R.forEach((row, yy) => [...row].forEach((ch, xx) => { if(ch !== 'X') return;
+        c.fillStyle = xx === 1 && yy === 1 ? core : ribbon[0]; c.fillRect(Math.round(cx) - 1 + xx, ry2 + yy, 1, 1); }));
     }
     c.globalAlpha = 1;
     if(TH && TH.extra) TH.extra(G);
-    // what comes down it (or rises in it): motes of light, or the look's own
-    for(let i = 0; i < 12; i++){
+    // what comes down it (or rises in it): sparks of light, or the look's own
+    for(let i = 0; i < 16; i++){
       const u = (t * (TH && TH.slow ? 0.55 : 0.9) + hr(i, 7)) % 1, mx = cx + (hr(i, 11) - 0.5) * half * 1.8;
       const my = TH && TH.rise ? bot - u * bot * 0.45 : u * bot * fall;
       if(TH && TH.mote){ c.globalAlpha = 1; if(fade > 0.15 || (i & 1)) TH.mote(G, mx + (TH.sway ? Math.sin(t * 3 + i) * half * 0.3 : 0), my, i, u); }
-      else if(fade * (0.5 + 0.5 * Math.sin(t * 9 + i)) > 0.3){ c.fillStyle = i & 1 ? '#FFFFFF' : col; c.fillRect(Math.round(mx), Math.round(my), 1, 1); }
+      else if(fade * (0.5 + 0.5 * Math.sin(t * 9 + i)) > 0.25){ const X = Math.round(mx), Y = Math.round(my);
+        c.fillStyle = col; c.fillRect(X - 1, Y, 3, 1); c.fillRect(X, Y - 1, 1, 3); c.fillStyle = '#FFFFFF'; c.fillRect(X, Y, 1, 1); }
     }
-    // landed: a ring spreading out round his feet
+    // landed: a ring of light set round his feet, spikes of it bursting up
+    // off the ring, and a wave of it running out over the grass
     if(t > 0.28){
-      const q = Math.min(1, (t - 0.28) / 0.5), rx = half * (0.8 + q * 1.4), ry = Math.max(1, rx * 0.22);
-      // (thinning out as it goes, in solid pixels)
+      const q = Math.min(1, (t - 0.28) / 0.5), ring = TH && TH.ring ? TH.ring : [col, core];
       c.globalAlpha = 1;
-      for(let k = 0; k < 28; k++){ const an = k / 28 * Math.PI * 2;
-        if(hr(k, 430 + Math.floor(q * 6)) < q * 0.9) continue;
-        c.fillStyle = TH && TH.rainbow ? DISCO_COLS[k % DISCO_COLS.length] : TH && TH.ring ? TH.ring[k % TH.ring.length] : col;
-        if(TH && TH.slip && (k & 3) === 0) continue;
-        c.fillRect(Math.round(cx + Math.cos(an) * rx), Math.round(bot - 1 + Math.sin(an) * ry), 1, 1); }
+      const RX = half * 1.15, RY = Math.max(2, RX * 0.24), n = Math.max(32, Math.round(RX * 5));
+      for(let j = 0; j < n; j++){ const an = j / n * Math.PI * 2;
+        if(hr(j, 450) > fade * 1.6) continue;
+        c.fillStyle = TH && TH.rainbow ? DISCO_COLS[j % DISCO_COLS.length] : ring[j % ring.length];
+        const X = Math.round(cx + Math.cos(an) * RX), Y = Math.round(bot - 1 + Math.sin(an) * RY);
+        c.fillRect(X, Y, 1, 1); c.fillRect(Math.round(cx + Math.cos(an) * (RX - 2)), Math.round(bot - 1 + Math.sin(an) * (RY - 1)), 1, 1); }
+      // the spikes, for the first half second
+      if(t < 0.8){ const sp = 1 - (t - 0.28) / 0.52;
+        for(let j = 0; j < 10; j++){ const an = j / 10 * Math.PI * 2 + 0.3, X = Math.round(cx + Math.cos(an) * RX), Y = Math.round(bot - 1 + Math.sin(an) * RY);
+          const hh = Math.round(h * (0.18 + 0.14 * hr(j, 452)) * sp);
+          for(let yy = 0; yy < hh; yy++){ c.fillStyle = yy < 2 ? core : ring[yy % ring.length]; c.fillRect(X, Y - yy, 1, 1); } } }
+      // the wave
+      const rx = half * (1.2 + q * 1.4), ry = Math.max(1, rx * 0.22);
+      for(let j = 0; j < 36; j++){ const an = j / 36 * Math.PI * 2;
+        if(hr(j, 430 + Math.floor(q * 6)) < q * 0.8) continue;
+        c.fillStyle = TH && TH.rainbow ? DISCO_COLS[j % DISCO_COLS.length] : ring[j % ring.length];
+        if(TH && TH.slip && (j & 3) === 0) continue;
+        c.fillRect(Math.round(cx + Math.cos(an) * rx), Math.round(bot - 1 + Math.sin(an) * ry), 1 + (q < 0.5 ? 1 : 0), 1); }
       if(TH && TH.land) { c.globalAlpha = 1; TH.land(G, q); }
     }
     c.globalAlpha = 1;
