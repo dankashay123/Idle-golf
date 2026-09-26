@@ -269,7 +269,7 @@ module.exports = {
       const mine = !!x.kind && x.kind === x.wk;
       if (mine) {
         if (x.sig !== SIG_NAME_UP(x.kind) + ' ×2') f(at + ': the corner reads ' + JSON.stringify(x.sig) + ', not ' + SIG_NAME_UP(x.kind) + ' ×2');
-        if (!/Hole of the Week/.test(x.toast) || !/pays\s2×/.test(x.toast)) f(at + ': the tee said ' + JSON.stringify(x.toast));
+        if (!/Hole of the Week/.test(x.toast) || !/pays\s2×/i.test(x.toast)) f(at + ': the tee said ' + JSON.stringify(x.toast));
       } else {
         if (x.kind && x.sig !== SIG_NAME_UP(x.kind)) f(at + ': the corner reads ' + JSON.stringify(x.sig));
         if (/Week|2×/.test(x.toast)) f(at + ': the tee said ' + JSON.stringify(x.toast));
@@ -305,7 +305,7 @@ module.exports = {
       }
     });
     for (const x of today) {
-      if (x.n !== 1 || x.nm !== SIG_NAME_T[x.k] || !/pays\s2×/.test(x.ds))
+      if (x.n !== 1 || x.nm !== SIG_NAME_T[x.k] || !/pays\s2×/i.test(x.ds))
         f('Today in ' + x.k + ' week shows ' + JSON.stringify(x) + ', not one row for ' + SIG_NAME_T[x.k] + ' that pays 2×');
     }
 

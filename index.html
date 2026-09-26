@@ -3176,18 +3176,18 @@ const B = {
            'Owen Pryce', 'Sofia Marchetti'],
   RIVAL_SPREAD: 0.08, RIVAL_SOV: 10, RIVAL_FORM: 0.5, RIVAL_EASE: 0.03,
   ACH_REP: [
-    { id:'rHoles', n:'Steady Hand',    d:'every 100 holes', m:'holes',  step:100, sov:2 },
-    { id:'rBird',  n:'Birdie Watch',   d:'every 50 birdies', m:'birdie', step:50,  sov:2 },
-    { id:'rEagle', n:'Eagle Nest',     d:'every 50 eagles', m:'eagle',  step:50,  sov:3 },
-    { id:'rNine',  n:'Front and Back', d:'every 3 nine goals', m:'nines',  step:3,   sov:3 },
-    { id:'rRuns',  n:'Regular Punter', d:'every 10 wagers', m:'runs',   step:10,  sov:3 },
-    { id:'rAce',   n:'Ace Shelf',      d:'every 50 aces', m:'ace',    step:50,  sov:4 },
-    { id:'rEvent', n:'Weekly Grind',   d:'every event', m:'events', step:1,   sov:5 },
-    { id:'rLeg',   n:'Legendary Haul', d:'every 3 Legendaries', m:'legend', step:3,   sov:6 },
-    { id:'rCup',   n:'Silverware',     d:'every cup', m:'cups',   step:1,   sov:10 },
-    { id:'rMyth',  n:'Mythic Haul',    d:'every Mythic', m:'myth',   step:1,   sov:10 },
+    { id:'rHoles', n:'Steady Hand',    d:'Every 100 holes', m:'holes',  step:100, sov:2 },
+    { id:'rBird',  n:'Birdie Watch',   d:'Every 50 birdies', m:'birdie', step:50,  sov:2 },
+    { id:'rEagle', n:'Eagle Nest',     d:'Every 50 eagles', m:'eagle',  step:50,  sov:3 },
+    { id:'rNine',  n:'Front and Back', d:'Every 3 nine goals', m:'nines',  step:3,   sov:3 },
+    { id:'rRuns',  n:'Regular Punter', d:'Every 10 wagers', m:'runs',   step:10,  sov:3 },
+    { id:'rAce',   n:'Ace Shelf',      d:'Every 50 aces', m:'ace',    step:50,  sov:4 },
+    { id:'rEvent', n:'Weekly Grind',   d:'Every event', m:'events', step:1,   sov:5 },
+    { id:'rLeg',   n:'Legendary Haul', d:'Every 3 Legendaries', m:'legend', step:3,   sov:6 },
+    { id:'rCup',   n:'Silverware',     d:'Every cup', m:'cups',   step:1,   sov:10 },
+    { id:'rMyth',  n:'Mythic Haul',    d:'Every Mythic', m:'myth',   step:1,   sov:10 },
     // (the Cabinet's Season Bests: a season whose best card beats the last's)
-    { id:'rSeason', n:'Better Season', d:'beat last season\u2019s best', m:'seasonUp', step:1, sov:8 }
+    { id:'rSeason', n:'Better Season', d:'Beat last season\u2019s best', m:'seasonUp', step:1, sov:8 }
   ],
 
   /* ---- retirement ---- */
@@ -4637,7 +4637,7 @@ function startHole(){
   seasonTurn();
   const sk = !QUIET && !OFFLINE && sigKind(S.hole);
   if(sk) toast(sk === sigWeek()
-    ? 'Hole of the Week \u00b7 <b>' + SIG_NAME[sk] + '</b> \u00b7 pays\u00a0' + B.SIG_WEEK_MULT + '\u00d7'
+    ? 'Hole of the Week \u00b7 <b>' + SIG_NAME[sk] + '</b> \u00b7 Pays\u00a0' + B.SIG_WEEK_MULT + '\u00d7'
     : 'Signature Hole \u00b7 <b>' + SIG_NAME[sk] + '</b>');
 }
 
@@ -5830,7 +5830,7 @@ function nineGoalTip(){
   const p = nineProgress(), r = p.goal.r;
   const pay = r.k === 'purse' ? r.v + ' holes of purse' : r.k === 'tick' ? r.v + '\u00a0' + (r.v > 1 ? 'tickets' : 'ticket')
     : fmt(r.v, 0) + '\u00a0' + (r.k === 'shard' ? 'shards' : r.k);
-  toast('<b>This nine\u2019s goal</b> \u00b7 ' + p.goal.n + ' in these nine holes \u00b7 pays ' + pay);
+  toast('<b>This nine\u2019s goal</b> \u00b7 ' + p.goal.n + ' in these nine holes \u00b7 Pays ' + pay);
 }
 function resolveNine(){
   const N = S.nine; if(!N) return;
@@ -7171,7 +7171,7 @@ function renderShop(){
 
   if(shopSub === 'bags'){
     h += '<div class="shopnote">' + nb('Clubs fitted ' + B.BAG_ILVL
-      + ' levels above your card \u00b7 guaranteed Mythic in ' + (B.BAG_PITY - (S.pity || 0))
+      + ' levels above your card \u00b7 Guaranteed Mythic in ' + (B.BAG_PITY - (S.pity || 0))
       + ' bags \u00b7 ' + sovFmt(S.bagsOpened) + ' opened') + '</div>'
       + ribbon('Bags') + '<div class="sgrid c2">' + B.BAGS.map(bg =>
         shopCard({ ic: bg.ic, col: RC(Math.min(5, bg.top)), on: bg.top >= 4,
@@ -7749,7 +7749,7 @@ function offline(){
       + '<div class="awbest" style="border-color:' + RC(best.rar) + '">'
       + '<img src="' + pixUrl(sl.ic, RC(best.rar)) + '" alt="">'
       + '<div><div class="awbn" style="color:' + RC(best.rar) + '">' + best.name + '</div>'
-      + '<div class="awbs">' + B.RARITY[best.rar].n + ' ' + sl.n + ' \u00b7 item level ' + best.ilvl
+      + '<div class="awbs">' + B.RARITY[best.rar].n + ' ' + sl.n + ' \u00b7 Item level ' + best.ilvl
       + (up ? ' \u00b7 <span style="color:var(--aurora)">beats what you are carrying</span>' : '')
       + '</div></div></div>';
   }
@@ -16760,27 +16760,27 @@ function roomToday(w){
   const kinds = new Set(P.map(x => x.c.id)).size + (ready ? 1 : 0);
   let h = kinds > 1 ? '<button class="act" data-collect="">Collect all \u00b7 +' + sovFmt(all) + ' ' + B.SOV + '</button>' : '';
   h += '<div class="eyebrow" style="margin:6px 0 4px">To Collect</div>'
-    + roomLine('Free ' + B.SOV.toLowerCase() + ' \u00b7 every ' + Math.round(B.FREE_EVERY / 3600) + ' hours',
+    + roomLine('Free ' + B.SOV.toLowerCase() + ' \u00b7 Every ' + Math.round(B.FREE_EVERY / 3600) + ' hours',
         ready ? '' : 'in ' + hms(B.FREE_EVERY - (S.freeT || 0)),
         ready ? collectBtn('free', B.FREE_GIFT) : '');
   const byTrack = {};
   for(const x of P) (byTrack[x.c.id] = byTrack[x.c.id] || []).push(x);
   for(const c of B.CASE){
     const list = byTrack[c.id]; if(!list) continue;
-    h += roomLine('Cabinet \u00b7 ' + c.n.toLowerCase(), '', collectBtn(c.id, casePay(list)));
+    h += roomLine('Cabinet \u00b7 ' + c.n, '', collectBtn(c.id, casePay(list)));
   }
   if(!P.length) h += roomLine('Cabinet', '<span style="color:var(--faint)">nothing waiting</span>');
   h += dailyBlock();
   // this week, and today's wager: the two things that turn over on a clock
   const M = majorState(), fw = featWager();
-  const say = { won: 'won', played: 'played', live: 'in play now', next: 'your next event', early: 'after your first event' }[M.st];
+  const say = { won: 'Won', played: 'Played', live: 'In play now', next: 'Your next event', early: 'After your first event' }[M.st];
   const wk = weekLeft() > 86400 ? Math.floor(weekLeft() / 86400) + 'd ' + Math.floor(weekLeft() % 86400 / 3600) + 'h' : hms(weekLeft());
   const row2 = (nm, ds) => '<div class="row"><div><div class="nm">' + nm + '</div><div class="ds">' + ds + '</div></div></div>';
   h += '<div class="eyebrow" style="margin:12px 0 0">This Week</div>'
-    + row2(M.cs.n, '<b style="color:var(--brass)">Major of the Week</b> \u00b7 ' + say + ' \u00b7 new in\u00a0' + wk)
-    + row2(SIG_NAME[sigWeek()], '<b style="color:var(--brass)">Signature Hole of the Week</b> \u00b7 pays\u00a0'
+    + row2(M.cs.n, '<b style="color:var(--brass)">Major of the Week</b> \u00b7 ' + say + ' \u00b7 New in\u00a0' + wk)
+    + row2(SIG_NAME[sigWeek()], '<b style="color:var(--brass)">Signature Hole of the Week</b> \u00b7 Pays\u00a0'
         + B.SIG_WEEK_MULT + '\u00d7')
-    + row2(fw.n, 'Wager of the day \u00b7 pays ' + B.DGN_FEAT_MULT + '\u00d7 \u00b7 new in\u00a0' + hms(featLeft()))
+    + row2(fw.n, 'Wager of the day \u00b7 Pays ' + B.DGN_FEAT_MULT + '\u00d7 \u00b7 New in\u00a0' + hms(featLeft()))
     + (isMember() ? row2('Club Membership', '+' + B.MEMBER_DAILY + sovIc() + ' a day \u00b7 next in\u00a0' + hms(86400 - (S.memberT || 0))) : '');
   w.innerHTML = h;
 }
@@ -16789,7 +16789,7 @@ function dailyBlock(){
   if(!S.daily) return '';
   const Dy = S.daily, st = dailyStreak();
   const bonus = B.DAILY_ALL + B.DAILY_STREAK * Math.min(B.DAILY_STREAK_MAX, st + (Dy.all ? 0 : 1));
-  return '<div class="eyebrow" style="margin:12px 0 4px">Challenges \u00b7 new in ' + hms(featLeft())
+  return '<div class="eyebrow" style="margin:12px 0 4px">Challenges \u00b7 New in ' + hms(featLeft())
       + (st ? ' \u00b7 ' + st + '-day streak' : '') + '</div>'
     + Dy.picks.map((id, i) => {
         const c = dailyDef(id); if(!c) return '';
@@ -16808,7 +16808,7 @@ function roomCase(w){
 function caseTrack(id){
   const c = B.CASE.find(x => x.id === id), got = (S.caseGot || {})[id] || 0, have = caseHave(id);
   const list = casePending().filter(x => x.c.id === id);
-  if(list.length) return '<div class="ctrack"><span>' + c.n + ' \u00b7 reward waiting</span>' + collectBtn(id, casePay(list)) + '</div>';
+  if(list.length) return '<div class="ctrack"><span>' + c.n + ' \u00b7 Reward waiting</span>' + collectBtn(id, casePay(list)) + '</div>';
   if(got >= c.at.length) return '<div class="ctrack"><span>' + c.n + ' \u00b7 every reward collected</span></div>';
   const at = c.at[got], what = id === 'card' ? 'a card of -' + at : at + (id === 'maj' ? (at === 1 ? ' major' : ' majors') : at === 1 ? ' cup' : ' cups');
   return '<div class="ctrack"><span>Next: ' + what + ' <i>(' + fmt(Math.min(have, at), 0) + '/' + at + ')</i></span>'
@@ -17462,7 +17462,7 @@ function swapLine(label, a, b, fmtv, higherIsBetter){
     + '<span class="swar">\u2192</span>'
     + '<span class="swb" style="color:' + col + '">' + fmtv(b) + '</span>'
     + '<span class="swd" style="color:' + col + '">'
-    + (same ? 'same' : (pct > 0 ? '+' : '') + (Math.abs(pct) >= 10 ? Math.round(pct)
+    + (same ? 'Same' : (pct > 0 ? '+' : '') + (Math.abs(pct) >= 10 ? Math.round(pct)
         : pct.toFixed(1)) + '%') + '</span></div>';
 }
 
@@ -17471,7 +17471,7 @@ function itemSheet(it, equipped){
   const canEnh = it.enh < B.ENH_MAX;
   let h = '<div class="sheethead">' + svgIcon(B.SLOTS.find(s=>s.id===it.slot).ic, 'bic', RC(it.rar))
     + '<h3 style="color:' + RC(it.rar) + ';margin:0">' + it.name + (it.enh ? ' +' + it.enh : '') + '</h3></div>';
-  h += '<p>' + B.RARITY[it.rar].n + ' ' + B.SLOTS.find(s=>s.id===it.slot).n + ' \u00b7 item level ' + it.ilvl
+  h += '<p>' + B.RARITY[it.rar].n + ' ' + B.SLOTS.find(s=>s.id===it.slot).n + ' \u00b7 Item level ' + it.ilvl
     + (it.set && setDef(it.set) ? ' \u00b7 <span style="color:var(--aurora)">' + setDef(it.set).n + ' set</span>' : '') + '</p>';
   h += '<ul><li>Primary: +' + fmt(itemPrimary(it)*100) + '% '
      + (it.slot === 'ball' ? 'affinity power' : 'swing power') + '</li>';
@@ -17556,7 +17556,7 @@ function renderPerks(){
   w.innerHTML = '';
   const live = B.PERKS.filter(p => perkLeft(p.id) > 0);
   w.innerHTML = '<div class="hint"><b style="color:var(--brass)">'
-    + fmt(S.tickets || 0, 0) + '</b>\u00a0tickets \u00b7 earned from events, Sundays, levels and '
+    + fmt(S.tickets || 0, 0) + '</b>\u00a0tickets \u00b7 Earned from events, Sundays, levels and '
     + 'wager bests' + (live.length ? ' \u00b7 <b style="color:var(--aurora)">' + live.length
     + ' running</b>' : '') + '</div>';
   for(const p of B.PERKS){
@@ -17646,8 +17646,8 @@ function renderDgn(){
   const feat = featWager();
   const fb = $('dgnFeat');
   if(fb) fb.innerHTML = '<span class="fn">' + feat.n + '</span>'
-    + '<span class="fd">pays ' + B.DGN_FEAT_MULT + '\u00d7 today</span>'
-    + '<span class="ft">turns over in ' + hms(featLeft()) + '</span>';
+    + '<span class="fd">Pays ' + B.DGN_FEAT_MULT + '\u00d7 today</span>'
+    + '<span class="ft">Turns over in ' + hms(featLeft()) + '</span>';
   for(const d of B.DGN){
     const run = S.dgnRun && S.dgnRun.id === d.id ? S.dgnRun : null;
     const keys = S.dgnKeys[d.id] || 0;
@@ -17696,10 +17696,10 @@ function renderDgn(){
       // what one entry pays, in what the currency buys; the basis of the
       // projection is the odds line above it, so it is not said twice
       + '<div class="dm" style="color:var(--brass)">Pays ' + d.cn + ' \u00b7 '
-      + (P.buys < 0.1 ? 'under <b>0.1' : 'about <b>' + fmt(P.buys, P.buys < 10 ? undefined : 0)) + '</b>\u00a0'
+      + (P.buys < 0.1 ? 'Under <b>0.1' : 'About <b>' + fmt(P.buys, P.buys < 10 ? undefined : 0)) + '</b>\u00a0'
       + DGN_BUYS[d.cur] + ' an entry</div>'
       + '<div class="dm">' + best.charAt(0).toUpperCase() + best.slice(1) + ' \u00b7 '
-      + Math.round(d.run) + 's \u00b7 ' + (nextIn === 'full' ? 'entries full' : 'next entry ' + nextIn) + '</div>'
+      + Math.round(d.run) + 's \u00b7 ' + (nextIn === 'full' ? 'Entries full' : 'Next entry ' + nextIn) + '</div>'
       + '<div class="bar"><i style="width:' + (run ? clamp(run.t/run.dur,0,1)*100 : 0) + '%"></i></div>'
       + '<div class="btnrow" style="margin-top:8px"></div>';
     el.classList.toggle('open', !!dgnOpen[d.id]);
@@ -17750,7 +17750,7 @@ function renderTour(){
   const target = eventTarget();
   const proj = played > 0 ? Math.round(S.tourScore / played * B.ROUND * B.DAYS) : 0;
   const fm = n => n === 0 ? 'E' : n > 0 ? '+' + n : String(n);
-  $('tierNote').textContent = 'Card ' + roman(S.tier) + ' \u00b7 best ' + roman(S.bestTier);
+  $('tierNote').textContent = 'Card ' + roman(S.tier) + ' \u00b7 Best ' + roman(S.bestTier);
 
   // The card you are ON and the card that is your HIGHEST are two different
   // things, and this panel used to name both in one sentence while the button
@@ -17777,7 +17777,7 @@ function renderTour(){
   $('tierBox').innerHTML =
     '<div class="hint" id="cardHint"><div class="foldhead">'
     + '<span>Playing <b>Card ' + roman(S.tier) + '</b>'
-    + (atTop ? '' : ' · highest <b>Card ' + roman(top) + '</b>') + '</span>'
+    + (atTop ? '' : ' · Highest <b>Card ' + roman(top) + '</b>') + '</span>'
     + '<button class="qm" aria-label="How Tour Cards work">?</button></div>'
     + '<div class="fold" style="margin-top:6px">Each card up has holes \u00d7' + B.TIER_Y + ' longer that pay \u00d7'
     + B.TIER_G + ' more. Win the cup on your '
@@ -17828,7 +17828,7 @@ function renderTour(){
     '<div class="row"><div><div class="nm">' + eventName(t) + '</div>'
     + '<div class="ds">' + (isWeekMajor(t) ? '<b style="color:var(--brass)">Major of the Week</b> \u00b7 '
         : courseFor(t).slot === 'home' ? 'Home course \u00b7 ' : '')
-    + dayName(S.hole) + ' \u00b7 hole ' + holeInRound(S.hole)
+    + dayName(S.hole) + ' \u00b7 Hole ' + holeInRound(S.hole)
     + '</div></div></div>'
     + '<div class="lb"><span class="p"></span><span>Through ' + played + '</span>'
     + '<span class="s">' + fm(S.tourScore) + '</span></div>'
@@ -17838,7 +17838,7 @@ function renderTour(){
     + '<div class="lb"><span class="p"></span><span>Target</span>'
     + '<span class="s" style="color:var(--brass)">' + fm(Math.round(target)) + '</span></div>'
     + (() => { const Rv = rivalNow(), rt = rivalThru(Rv, played), ahead = S.tourScore < rt;
-        return '<div class="lb"><span class="p"></span><span>' + Rv.n + ' \u00b7 rival</span>'
+        return '<div class="lb"><span class="p"></span><span>' + Rv.n + ' \u00b7 Rival</span>'
           + '<span class="s">' + fm(rt) + ' \u00b7 <b style="color:'
           + (S.tourScore === rt ? 'var(--chalk)">level' : ahead ? 'var(--aurora)">up\u00a0' + (rt - S.tourScore)
                                  : 'var(--flag)">down\u00a0' + (S.tourScore - rt))
@@ -17896,7 +17896,7 @@ function renderMajor(){
                 live: '<b style="color:var(--aurora)">In play now</b>', next: 'Your next event',
                 early: 'After your first event' }[M.st];
   const left = weekLeft();
-  $('majNote').textContent = 'new in ' + (left > 86400
+  $('majNote').textContent = 'New in ' + (left > 86400
     ? Math.floor(left/86400) + 'd ' + Math.floor(left%86400/3600) + 'h' : hms(left));
   box.innerHTML = '<div class="hint" id="majHint"><div class="foldhead">'
     + '<span><b>' + M.cs.n + '</b> \u00b7 ' + say + '</span>'
@@ -17929,7 +17929,7 @@ function renderSigWeek(){
     + '<div class="fold" style="margin-top:6px">Monday to Sunday. A home round has four kinds; the sea stack is at '
     + stacks.join(', ') + '. Play the hole of the week ' + B.HOTW_RUN + ' weeks running for +' + B.HOTW_SOV
     + ' ' + B.SOV.toLowerCase() + ', and again each week the run goes on.</div></div>'
-    + SIG_KINDS.map(k => lb(SIG_NAME[k] + (k === wk ? ' \u00b7 pays\u00a0' + B.SIG_WEEK_MULT + '\u00d7' : ''),
+    + SIG_KINDS.map(k => lb(SIG_NAME[k] + (k === wk ? ' \u00b7 Pays\u00a0' + B.SIG_WEEK_MULT + '\u00d7' : ''),
         got.includes(k) ? '\u2713 played' : '\u2014', got.includes(k) ? '--verdant' : null)).join('')
     + (() => { const n = hotwRun(), on = n >= B.HOTW_RUN;
         return lb('Hole of the Week Run', (on ? n + '\u00a0weeks \u00b7 +' + B.HOTW_SOV + sovIc() : n + '\u00a0of ' + B.HOTW_RUN)
@@ -17977,7 +17977,7 @@ function renderSeason(){
   const box = $('seasonBox'); if(!box) return;
   const t = tournamentOf(S.hole), first = seasonOf(t) * B.SEASON + 1;
   setText($$('seasonHead'), 'Season ' + (seasonOf(t) + 1));
-  setText($$('seasonNote'), 'event ' + (t - first + 1) + ' of ' + B.SEASON);
+  setText($$('seasonNote'), 'Event ' + (t - first + 1) + ' of ' + B.SEASON);
   let h = '';
   for(let e = first; e < first + B.SEASON; e++){
     const slot = B.SLOTS_SEASON[(e-1) % B.SEASON];
@@ -18263,7 +18263,7 @@ function cperkUp(id){
 let cadHintOpen = false;
 function renderCadPerks(){
   const w = $('cadRows'); if(!w) return;
-  $('cadNote').textContent = 'every ' + B.CPERK_EVERY + 's \u00b7 one at a time';
+  $('cadNote').textContent = 'Every ' + B.CPERK_EVERY + 's \u00b7 one at a time';
   // how the upgrades work, behind the ?
   w.innerHTML = '<div class="hint' + (cadHintOpen ? ' open' : '') + '" id="cadHint"><div class="foldhead">'
     + '<span>Upgrade the one he wears</span><button class="qm" aria-label="How caddie upgrades work">?</button></div>'

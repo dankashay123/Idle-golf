@@ -252,7 +252,7 @@ module.exports = {
       f2('the Signature Week: ' + JSON.stringify(W) + ' (none at first, four from a home round and no honour, the sea stack makes five and the honour)');
     const tr = W.tour, B25 = r.sigWeekSov;
     if (tr.note !== '4\u00a0of 5 this week' || tr.rows.length !== 6 || tr.rows[5][0] !== 'Hole of the Week Run' || tr.rows.slice(0, 5).filter(([, v]) => /played/.test(v)).length !== 4
-        || /played/.test(tr.rows.find(([k]) => /Sea Stack/.test(k))[1]) || tr.rows.filter(([k]) => /pays/.test(k)).length !== 1)
+        || /played/.test(tr.rows.find(([k]) => /Sea Stack/.test(k))[1]) || tr.rows.filter(([k]) => /pays/i.test(k)).length !== 1)
       f2('the Signature Week on the Tour tab: ' + JSON.stringify(tr) + ' (five kinds, the four played ticked, the sea stack not, the hole of the week marked, then its run)');
     if (W.four.sov || W.five.sov !== B25 || W.againSov !== B25) f2('the Signature Week\'s prize: ' + W.four.sov + ' sovereigns with four kinds, ' + W.five.sov + ' with five, ' + W.againSov + ' after playing on that week (' + B25 + ' once a week)');
     if (W.again !== 1 || !W.honour) f2('the Signature Week counted again in the same week (' + W.again + '), or not awarded (' + W.honour + ')');
