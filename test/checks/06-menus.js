@@ -66,22 +66,32 @@ module.exports = {
     const a = await read(); await page.waitForTimeout(2600); const b = await read();
     if (a === b) throw new Error('skill cooldown bars are frozen: ' + a);
 
-    // the Depths notes fold, and survive the redraw the key timer forces
-    await page.evaluate(() => setView('dgn'));
+    // each wager has a Guide (the user asked, in place of the notes fold): it
+    // opens a sheet naming the wager and what helps in it, and still works
+    // after the redraw the key timer forces; each row says what helps
+    await page.evaluate(() => { QUIET = false; hideSheet(); setView('dgn'); });
     await page.waitForTimeout(200);
-    // Queried and read inside one evaluate. renderDgn() replaces these rows on
-    // every slow tick, and $eval resolves the selector in one round trip and
-    // reads the style in the next: land a redraw between the two and the style
-    // comes off a node that is no longer in the document, which reads as the
-    // empty string rather than as a display. That is what "( -> block)" was.
-    const foldDisplay = () => page.evaluate(() => {
-      const e = document.querySelector('.dgn .fold');
-      return e ? getComputedStyle(e).display : 'no fold in the wager book';
+    const guide = await page.evaluate(async () => {
+      const out = [];
+      for (const d of B.DGN) {
+        renderDgn();
+        const row = [...document.querySelectorAll('.dgn')].find(e => e.querySelector('.dn').textContent === d.n);
+        const helped = row && [...row.querySelectorAll('.dm')].some(e => e.textContent === 'Helped by ' + d.st);
+        const btn = row && row.querySelector('.guide');
+        if (!btn) { out.push(d.n + ': no Guide button'); continue; }
+        btn.click(); await new Promise(r => setTimeout(r, 30));
+        const sh = document.getElementById('sheet'), on = document.getElementById('veil').classList.contains('on');
+        const t = sh.textContent;
+        if (!on || sh.querySelector('h3').textContent !== d.n || t.indexOf(d.st) < 0 || t.length < 200) out.push(d.n + ': the guide ' + (on ? 'reads "' + t.slice(0, 80) + '"' : 'did not open'));
+        if (!helped) out.push(d.n + ': the row does not say what helps');
+        hideSheet();
+      }
+      const V = document.getElementById('sheet'); wagerGuide('vault');
+      if (!B.DGN_EVENTS.every(e => V.textContent.toLowerCase().indexOf(e.n.toLowerCase()) >= 0)) out.push('the Vault\'s guide does not explain every turn on a floor (plugged lie and the rest)');
+      hideSheet(); QUIET = true;
+      return out;
     });
-    const shut = await foldDisplay();
-    await page.click('.dgn .qm'); await page.waitForTimeout(1400);
-    const open = await foldDisplay();
-    if (shut !== 'none' || open === 'none') throw new Error('the Depths fold does not open (' + shut + ' -> ' + open + ')');
+    if (guide.length) throw new Error('the wager guides: ' + guide.join('; '));
 
     // the pull tab takes the menu (its top is the tabs now the vitals live in the
     // Range) to the underside of the scorecard and back

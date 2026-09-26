@@ -839,6 +839,12 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
   min-height:28px;padding:3px 8px 3px 5px;background:rgba(8,18,12,.85);border:1px solid var(--line);color:var(--chalk);
   font-size:var(--f1);letter-spacing:.08em;text-transform:uppercase;font-weight:700;pointer-events:auto;cursor:pointer}
 #leaveBtn[hidden]{display:none}
+/* what helps in the wager on the stage, over the shot buttons */
+#wagerStat{position:absolute;left:2.2%;z-index:28;pointer-events:none;padding:2px 6px;background:rgba(8,18,12,.8);
+  border:1px solid var(--line);font-size:var(--f0);letter-spacing:.1em;text-transform:uppercase;font-weight:700;color:var(--dim);white-space:nowrap}
+#wagerStat[hidden]{display:none}
+#wagerStat b{color:var(--aurora);font-weight:700}
+.guidelist{margin:6px 0 8px 18px;font-size:var(--f1);line-height:1.5}
 #leaveBtn.ask{border-color:var(--flag);color:var(--flag)}
 #leaveIcon{display:block;width:24px;height:24px;image-rendering:pixelated;image-rendering:crisp-edges}
 #stage.wager #toasts{top:calc(2.5% + 38px)}
@@ -921,6 +927,7 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
     <button id="roomBtn" aria-label="Trophy Room"><img id="roomIcon" alt=""><span id="roomDot"></span></button>
     <button id="perkBtn" aria-label="Sponsor perks"><img id="perkIcon" alt=""><span id="perkDot"></span></button>
     </div>
+    <div id="wagerStat" hidden></div>
     <button id="leaveBtn" hidden aria-label="Leave the wager"><img id="leaveIcon" alt=""><span id="leaveTxt">Leave</span></button>
     <div id="toasts"></div>
   </div>
@@ -2483,19 +2490,19 @@ const B = {
   // Four different games, not one game in four palettes. Each leans on a
   // different part of the build, so a bag that wins one can lose another.
   DGN: [
-    { id:'sand', ic:'grit', mode:'drive', n:'The Long Drive', cur:'grit', cn:'Grit',
+    { id:'sand', st:'Swing power and pure strike', ic:'grit', mode:'drive', n:'The Long Drive', cur:'grit', cn:'Grit',
       regen:660, cap:4, run:16, pay:0.046, gear:0.22, floorRar:0,
       d:'Six swings, the longest counts.',
       how:'Tempo is worth nothing here. It all rides on a single strike, so power, pure strike, payoff, affinity and provisionals are the whole game.' },
-    { id:'water', ic:'island', mode:'island', n:'The Island Green', cur:'shard', cn:'Shards',
+    { id:'water', st:'Pure strike', ic:'island', mode:'island', n:'The Island Green', cur:'shard', cn:'Shards',
       regen:840, cap:3, run:70, pay:0.028, gear:0.40, floorRar:2,
       d:'Every green doubles the pot. Miss and you keep a quarter.',
       how:'Make chance is 56% plus 42% of your pure strike chance, less 3.5 points for each green already hit. You pick where to bank before you go in.' },
-    { id:'cellar', ic:'flood', mode:'chip', n:'The Floodlit Green', cur:'scroll', cn:'Scrolls',
+    { id:'cellar', st:'Affinity chance', ic:'flood', mode:'chip', n:'The Floodlit Green', cur:'scroll', cn:'Scrolls',
       regen:1080, cap:3, run:46, pay:0.019, gear:0.20, floorRar:1,
       d:'Twenty five chips. Each one that drops is worth more than the last.',
       how:'Runs on affinity chance, not power, and reads the raw figure rather than the capped one. A bag that rarely procs drops few chips.' },
-    { id:'vault', ic:'vault', mode:'floor', n:'The Clubhouse Vault', cur:'gold', cn:'Purse',
+    { id:'vault', st:'Carry (power and tempo)', ic:'vault', mode:'floor', n:'The Clubhouse Vault', cur:'gold', cn:'Purse',
       regen:900, cap:2, run:56, pay:1, gear:0.62, floorRar:1,
       d:'Floor after floor, each one harder than the last.',
       how:'Straight endurance. How deep your carry drags you before the clock runs out.' },
@@ -2503,11 +2510,11 @@ const B = {
     // is provisionals: every ball you carry is another look at the hole. The
     // Twilight Putt is tempo: the quicker you swing, the more putts you get in
     // before the light goes.
-    { id:'scramble', ic:'balls3', mode:'scramble', n:'The Scramble', cur:'grit', cn:'Grit',
+    { id:'scramble', st:'Provisionals', ic:'balls3', mode:'scramble', n:'The Scramble', cur:'grit', cn:'Grit',
       regen:780, cap:3, run:24, pay:0.05, gear:0.30, floorRar:1,
       d:'Nine holes, every ball you carry. Hole any of them and the hole is yours.',
       how:'Runs on provisionals: one ball plus one for every whole point of provisional chance, and a chance at one more. More balls, more holes.' },
-    { id:'twilight', ic:'dusk', mode:'twilight', n:'The Twilight Putt', cur:'scroll', cn:'Scrolls',
+    { id:'twilight', st:'Tempo', ic:'dusk', mode:'twilight', n:'The Twilight Putt', cur:'scroll', cn:'Scrolls',
       regen:960, cap:3, run:30, pay:0.018, gear:0.25, floorRar:1,
       d:'Putts until the light goes. Each one that drops is worth more than the last.',
       how:'Runs on tempo: the quicker you swing, the more putts you get before dark. Half of them drop, whatever the bag.' }
@@ -5683,7 +5690,64 @@ function renderLeave(){
   const b = $('leaveBtn'); if(!b) return;
   const on = !!S.dgnRun;
   if(b.hidden === on){ b.hidden = !on; $('stage').classList.toggle('wager', on); }
+  // and what helps in it, just over the shot buttons
+  const ws = $('wagerStat'), d = on && B.DGN.find(x => x.id === S.dgnRun.id);
+  if(ws){
+    const st = $('stage'), k = Scene.cv ? (parseFloat(Scene.cv.style.height) || st.clientHeight) / Math.max(1, VH) : 1;
+    const sz = Math.max(12, Math.round(VW * 0.050 / 12) * 12), pad = Math.max(3, Math.round(sz / 6));
+    const bottom = Math.round(st.clientHeight - (VH - sz - pad * 2 - 2 - (S.carry && S.carry.length ? LH + 2 : 0)) * k + 4);
+    const key = d ? d.id + '|' + bottom : '';
+    if(ws._k !== key){ ws._k = key; ws.hidden = !d;
+      if(d){ ws.innerHTML = 'Helped by <b>' + d.st + '</b>'; ws.style.bottom = bottom + 'px'; } }
+  }
   if(!b._built){ b._built = 1; $('leaveIcon').src = pixUrl('leave', '#DFE9DC'); b.onclick = leaveDgn; }
+}
+// A wager's guide (the user asked, one for each): what it is, how it is
+// played, what makes you better at it, and what it pays.
+const DGN_GUIDE = {
+  sand: ['Six swings, and only the longest counts.',
+         'Each swing gets its own wind, from a headwind of \u00d70.72 to a tailwind of \u00d71.38.',
+         'Tempo does nothing here: it all rides on one strike, so swing power, pure strike (its chance and its payoff), affinity and provisionals are what win it.',
+         'Pays grit, by how far the longest went.'],
+  water: ['Across the water to an island green, again and again.',
+          'The first green is a gimme. Each one after it multiplies the pot by 1.9, and each is a little harder to hit.',
+          'Before you go in, pick where to bank. Reach it and you keep the whole pot; miss a green and you keep a quarter. Leave at any time to bank the pot as it stands.',
+          'Make chance is 56% plus 42% of your pure strike chance, less 3.5 points for each green already hit.',
+          'Pays shards.'],
+  cellar: ['Twenty five chips at a floodlit green. Each one that drops is worth more than the last.',
+           'It runs on affinity chance, not power, and reads the raw figure before its cap: a bag that rarely procs drops few chips.',
+           'Pays scrolls.'],
+  vault: ['Down floor after floor of the members\u2019 vault before the clock runs out. Each floor is longer than the last, and you start where you left off last time.',
+          'It runs on your carry: swing power and tempo together.',
+          'Each time you clear a floor there is a 38% chance of a turn on the next one, called out on the field:',
+          '@events',
+          'Pays purse, by how deep you got.'],
+  scramble: ['Nine holes, with every ball you carry. Hole any of them and the hole is yours.',
+             'You carry one ball, one more for every whole point of provisional chance, and a chance at one more on top: more balls, more holes.',
+             'Pays grit.'],
+  twilight: ['Putts until the light goes. About half of them drop, whatever the bag, and each one that drops is worth more than the last.',
+             'It runs on tempo: the quicker you swing, the more putts you get in before dark.',
+             'Pays scrolls.']
+};
+const DGN_EVENT_SAY = {
+  'LOST BALL': '5s of the clock gone', 'PLUGGED LIE': 'this floor dug at 55% of your carry',
+  'SNAPPED SHAFT': 'this floor dug at 42% of your carry', 'CASUAL WATER': 'this floor 60% longer',
+  'GUST, PUSHED BACK': 'back up a floor', 'UNPLAYABLE, DROP': '8s of the clock gone',
+  'PERFECT LIE': 'this floor dug at 180% of your carry', 'TAILWIND': '4s back on the clock',
+  'FOUND A CACHE': 'this floor 55% shorter' };
+function wagerGuide(id){
+  const d = B.DGN.find(x => x.id === id); if(!d) return;
+  const cap = s => s.charAt(0) + s.slice(1).toLowerCase();
+  const para = (DGN_GUIDE[id] || [d.d]).map(t => t === '@events'
+    ? '<ul class="guidelist">' + B.DGN_EVENTS.map(e => '<li><b style="color:var(--' + (e.bad ? 'flag' : 'aurora') + ')">' + cap(e.n) + '</b>: '
+        + (DGN_EVENT_SAY[e.n] || '') + '</li>').join('') + '</ul>'
+    : '<p>' + t + '</p>').join('');
+  showSheet('<h3>' + d.n + '</h3>'
+    + '<div class="lb"><span class="p"></span><span>Helped By</span><span class="s" style="color:var(--aurora)">' + d.st + '</span></div>'
+    + '<div class="lb"><span class="p"></span><span>Entries</span><span class="s">One every ' + Math.round(keyInterval(d) / 60) + '\u00a0min, ' + entryCap(d) + ' held</span></div>'
+    + '<div class="lb"><span class="p"></span><span>Length</span><span class="s">' + Math.round(d.run) + 's</span></div>'
+    + para + '<p style="color:var(--faint)">One wager at a time. The round waits while you play it.</p>'
+    + '<button class="act ghost" onclick="hideSheet()">Close</button>');
 }
 function endDgn(d, R, D){
   S.dgnRun = null;
@@ -17764,9 +17828,9 @@ function renderDgn(){
     el.innerHTML = '<div class="dh">' + svgIcon(d.ic || STAT_IC[d.cur] || 'ball', 'ric') + '<span class="dn">' + d.n + '</span>'
       + (d.id === feat.id ? '<span class="fstar">' + B.DGN_FEAT_MULT + '\u00d7 today</span>' : '')
       + '<span class="keys">' + keyHtml + '</span>'
-      + '<button class="qm" aria-label="How it works">?</button></div>'
+      + '<button class="mini guide" aria-label="How ' + d.n + ' works">Guide</button></div>'
       + '<div class="dd">' + d.d + '</div>'
-      + '<div class="dd fold" style="color:var(--faint);margin-top:4px">' + d.how + '</div>'
+      + '<div class="dm">Helped by <b style="color:var(--aurora)">' + d.st + '</b></div>'
       + '<div class="dm">' + reads + '</div>'
       // what one entry pays, in what the currency buys; the basis of the
       // projection is the odds line above it, so it is not said twice
@@ -17777,12 +17841,7 @@ function renderDgn(){
       + Math.round(d.run) + 's \u00b7 ' + (nextIn === 'full' ? 'Entries full' : 'Next entry ' + nextIn) + '</div>'
       + '<div class="bar"><i style="width:' + (run ? clamp(run.t/run.dur,0,1)*100 : 0) + '%"></i></div>'
       + '<div class="btnrow" style="margin-top:8px"></div>';
-    el.classList.toggle('open', !!dgnOpen[d.id]);
-    el.querySelector('.qm').onclick = e => {
-      e.stopPropagation();
-      dgnOpen[d.id] = !dgnOpen[d.id];
-      el.classList.toggle('open', !!dgnOpen[d.id]);
-    };
+    el.querySelector('.guide').onclick = e => { e.stopPropagation(); wagerGuide(d.id); };
     const br = el.querySelector('.btnrow');
 
     // the Island Green is the one with a decision in it, so it gets a dial
