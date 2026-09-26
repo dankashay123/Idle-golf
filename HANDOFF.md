@@ -58,7 +58,14 @@ What each part means and what is already known:
 5. **Dawn and dusk** (menu item 2), **as a setting, off by default**: the
    sky warming at its edges near the horizon in the morning and evening by
    the player's own clock (`hourNow()`, `HOUR_FORCE`), without changing the
-   course's own colours when it is off. A switch in Settings like Night
+   course's own colours when it is off. Why a setting (the user, after):
+   "I'm only talking about night and day stuff, because some courses are
+   built for the day... and some for night... I don't want to force
+   players to only see night holes at night and day holes during the day."
+   So the real clock must never decide day or night on its own; the
+   switch is only for the time-of-day look. Frost also follows the clock
+   (mornings), though it is weather, not day or night: ask whether it
+   should go under the same switch. A switch in Settings like Night
    Music (`S.dawnDusk`, repaired on load). Likely in `buildSky` (its cache
    key must carry it) plus perhaps a low sun; not at night or in rain.
 6. **Birds** (menu item 4): a flock crossing the sky now and then, and

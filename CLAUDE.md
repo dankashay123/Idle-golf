@@ -43,9 +43,13 @@ the handoff notes until I tell you to").
   the canyon bridge as slats).
 - **Don't add anything new to the Tour tab.** The user finds it cluttered;
   what is there is to be split into sub tabs, not added to.
-- **Anything new that changes a course's look is an option.** The user
-  asked for dawn and dusk as a setting "because this could override the
-  course designs": ask for, or build, a switch for anything like it.
+- **The player's real clock never forces day or night on a course.** Some
+  courses and rounds are built for the day and some for night (a Night
+  Round, the Starfall), and the user doesn't want "to force players to only
+  see night holes at night and day holes during the day". So anything that
+  follows the real time of day for how a course looks (dawn and dusk, next
+  to build) is a setting the player turns on, off by default. It is only
+  the day/night look; other options for course looks aren't wanted.
 - **Effects stay short and close.** A skin's moment on a great hole comes
   only on an albatross or an ace, lasts half a second and bursts out from
   his outline; nothing climbs the sky. A fast bag aces every hole, so
