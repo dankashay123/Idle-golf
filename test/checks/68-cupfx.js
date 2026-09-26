@@ -28,7 +28,7 @@ module.exports = {
         const c = Scene.b, px = () => c.getImageData(0, 0, VW, VH).data;
         const blank = () => { c.fillStyle = '#010203'; c.fillRect(0, 0, VW, VH); };
         DEV.course(B.COURSE.findIndex(cs => cs.slot === 'home')); hideSheet();
-        const balls = ['godlight', 'demoneye', 'ascorb', 'classic', 'comet', 'hearts'].filter(id => styleDef('t', id));
+        const balls = ['godlight', 'demoneye', 'ascorb', 'singularity', 'classic', 'comet', 'hearts'].filter(id => styleDef('t', id));
         if (balls.length < 5) f('the balls to try are missing: ' + balls.join(','));
         for (let hh = 2; hh <= 7; hh++) {
           S.hole = hh; S.chaos = Object.assign({}, B.CHAOS.find(x => x.n === 'Fair')); startHole(); Scene.announce = null; Scene.rain = false; Scene.night = false;
@@ -36,7 +36,7 @@ module.exports = {
             Scene.camD = at; Scene.walkTo = at; Scene.swingT = 0; Scene.balls = []; Scene.restBall = null; Scene.t = 30; o.views++;
             for (const id of balls) {
               S.styleOwn['t:' + id] = 1; S.trail = id;
-              const top = ['godlight', 'demoneye', 'ascorb'].includes(id);
+              const top = ['godlight', 'demoneye', 'ascorb', 'singularity'].includes(id);
               // a frame of the hole first (it owns the clip line), then the
               // moment alone over a blank
               Scene.cupT = 0; Scene.draw(0, derive());
@@ -92,7 +92,7 @@ module.exports = {
       return o;
     });
     if (r.fails.length) throw new Error(r.fails.join('; '));
-    return ['Godlight ' + r.px.godlight + ', Demon Eye ' + r.px.demoneye + ', Ascended Orb ' + r.px.ascorb + ' pixels over ' + r.views + ' views and five moments; no other ball draws a pixel',
+    return ['Godlight ' + r.px.godlight + ', Demon Eye ' + r.px.demoneye + ', Ascended Orb ' + r.px.ascorb + ', Singularity ' + r.px.singularity + ' pixels over ' + r.views + ' views and five moments; no other ball draws a pixel',
       'gone after 0.55s, all of it inside a pin-sized box about the cup, under the pin, over the ground\'s line; no Math.random'];
   }
 };
