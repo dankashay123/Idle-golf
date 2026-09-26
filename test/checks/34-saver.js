@@ -75,6 +75,9 @@ module.exports = {
       S.gold += 5000; S.totalHoles += 7; S.lv += 2; S.cups = (S.cups || 0) + 1;
       const it = makeItem(S.tier + 3, 0, 3); it.rar = 3; it.aff = []; delete it.set;
       bagAdd(it);
+      // (the round plays on behind it, and a club it drops in the next
+      // second made two one run in twenty: none is kept while this counts)
+      window.__bagAdd = bagAdd; window.bagAdd = () => false;
       return { name: it.name };
     });
     await wait(1300);
@@ -89,6 +92,7 @@ module.exports = {
       const row = k => { const r = [...el.querySelectorAll('.lb')].find(x => x.children[1].textContent === k);
         return r ? r.children[2].textContent : null; };
       const V = SAVER;
+      window.bagAdd = window.__bagAdd;
       return { shown: { purse: tile('purse'), holes: tile('holes'), clubs: tile('clubs'), lv: row('Career Levels'),
                         cups: row('Cups Won'), best: row('Best Club'), since: $('saverFor').textContent },
                purse: { want: fmt(Math.max(0, S.gold - V.gold)), holes: fmt(S.totalHoles - V.holes, 0) } };
