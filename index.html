@@ -13130,6 +13130,8 @@ const Scene = {
     this.seed = rnd() * 1000;
     this.roll = 0.42;                    // a cellar floor does not roll like links
     this.greenH = (rnd()*2 - 1) * 1.4;
+    // (and a lake lies on level ground, as it does on the course's island greens)
+    if(R.mode === 'island'){ this.roll = 0; this.greenH = 0; }
     this.hole = R.floor + 1;
 
     this.layHazards(rnd, {
@@ -13152,8 +13154,11 @@ const Scene = {
     // radius of a quarter the hole the moat started well past the camera and
     // there was a fairway running all the way to it, which is a par three
     // over a pond. It now opens at the golfer's feet and runs past the green.
+    // (a level lake, as the island greens on the course have: drawn as a
+    // sunk pond, its near bank hid the green and left a bare basin with the
+    // flag standing in it)
     if(R.mode === 'island')
-      this.water = { d: LEN, x: 0, rd: LEN*0.30, rx: 6.0, shape: this.blob(rnd, 0.14) };
+      this.water = { lake: 1, d: LEN, x: 0, rd: LEN*0.30, rx: 6.0, shape: this.blob(rnd, 0.14) };
     // Trees were planted from the same table everywhere, so the Island Green
     // grew a copse in the middle of its lake and the Vault had a forest
     // indoors.
