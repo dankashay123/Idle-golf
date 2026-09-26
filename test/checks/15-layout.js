@@ -224,12 +224,17 @@ module.exports = {
           } else if (low > tabTop + 0.5) o.hit.push('the weather words ' + (low - tabTop).toFixed(1) + 'px behind the pull tab');
           // and never over the course's banner (on the page now, they would
           // stand on it; in the picture it covered them)
-          Scene.announce = { name: 'The Longest Course Name', sub: 'Home of Tour Card I', t: 1, dur: 4 };
-          Scene.draw(0, derive());
-          const y0 = Math.round(VH * 0.27) - 5 * TSC, big = textW(Scene.announce.name, TSC * 2) <= VW * 0.9 ? TSC * 2 : TSC;
-          const bt = sr.top + y0 * per, bb = sr.top + (y0 + (FH + 2) * big + LH + 10 * TSC) * per, h2 = hw.getBoundingClientRect();
-          if (getComputedStyle(hw).display !== 'none' && h2.top < bb - 0.5 && h2.bottom > bt + 0.5)
-            o.hit.push('the weather words stand on the course\'s banner (' + h2.top.toFixed(0) + '-' + h2.bottom.toFixed(0) + ' over ' + bt.toFixed(0) + '-' + bb.toFixed(0) + ')');
+          // (on the first hole too, where fewer lines stand higher)
+          for (const hl of [1, 18]) {
+            if (hl === 1) { S.hole = 1; startHole(); }
+            Scene.announce = { name: 'The Longest Course Name', sub: 'Home of Tour Card I', t: 1, dur: 4 };
+            Scene.draw(0, derive());
+            const y0 = Math.round(VH * 0.27) - 5 * TSC, big = textW(Scene.announce.name, TSC * 2) <= VW * 0.9 ? TSC * 2 : TSC;
+            const bt = sr.top + y0 * per, bb = sr.top + (y0 + (FH + 2) * big + LH + 10 * TSC) * per, h2 = hw.getBoundingClientRect();
+            if (getComputedStyle(hw).display !== 'none' && h2.top < bb - 0.5 && h2.bottom > bt + 0.5)
+              o.hit.push('the weather words stand on the course\'s banner on hole ' + hl + ' (' + h2.top.toFixed(0) + '-' + h2.bottom.toFixed(0) + ' over ' + bt.toFixed(0) + '-' + bb.toFixed(0) + ')');
+            if (hl === 1) { S.hole = 18; startHole(); }
+          }
           Scene.announce = was; Scene.draw(0, derive());
         }
 
