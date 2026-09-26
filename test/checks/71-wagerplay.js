@@ -112,8 +112,17 @@ module.exports = {
         if (dc > 0.002) o.moved++;
         if (Scene.walkOn) o.walk++;
       }
+      // and on a slow phone, a frame every fifth of a second: never carried
+      // up the floor mid-swing (a full run on a busy machine caught it)
+      const keepRaf = window.requestAnimationFrame; window.requestAnimationFrame = () => 0;
+      // (fallen well behind his ball, as a slow phone leaves him, and in a swing)
+      try { const D = derive(); Scene.camD -= 15; Scene.swingT = Scene.swingDur * 0.9; let cam2 = Scene.camD, sw2 = Scene.swingT; o.slowSlid = 0;
+        for (let i = 0; i < 120; i++) { Scene.draw(0.2, D); const dc = Scene.camD - cam2; cam2 = Scene.camD;
+          if (Math.abs(dc) > 0.002 && Scene.swingT > 0 && sw2 > 0 && Scene.swingT < sw2) o.slowSlid++; sw2 = Scene.swingT; } }
+      finally { window.requestAnimationFrame = keepRaf; }
       delete S.dgnRun; return o;
     });
+    if (va.slowSlid) f('in the Vault on a slow phone he slid forward mid-swing in ' + va.slowSlid + ' frames');
     if (!(va.moved > 10) || !(va.walk > 5)) f('in the Vault the camera moved ' + va.moved + ' frames and he walked ' + va.walk);
     if (va.slid > 2) f('in the Vault he slid forward mid-swing in ' + va.slid + ' frames');
     await page.evaluate(() => { delete S.dgnRun; QUIET = false; hideSheet(); startHole(); });

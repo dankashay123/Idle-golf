@@ -17461,7 +17461,9 @@ Object.assign(Scene, {
       // The others are played from one place and never move.
       const goal = within * LEN, behind = goal - this.camD;
       if(R.mode !== 'floor') this.camD = goal;
-      else if(this.swingT === 0 || behind > 12) this.camD += behind * Math.min(1, dt * 3.2);
+      // (never mid-swing: carried on when far behind, a slow phone slid him up
+      // the floor as he swung; he swings again only once he is there anyway)
+      else if(this.swingT === 0) this.camD += behind * Math.min(1, dt * 3.2);
       const v = dt > 0 ? (this.camD - cam0) / dt : 0;
       this.walkOn = this.swingT === 0 && v > 0.8 && v < 200;
       if(this.walkOn) this.walkPh = (this.walkPh || 0) + dt * clamp(1.4 + v * 0.08, 1.4, 2.6);
