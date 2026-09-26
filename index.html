@@ -3479,7 +3479,10 @@ const B = {
     // under his feet. His caddie, driver, trail and ball to match.
     { id:'cosmic', n:'The Void',         cost:3500, fx:'cosmic', cat:'skin', top:2, pattern:'cosmos', pantPattern:'greave',
       cap:'#1C1640', cap2:'#0B0818', shirt:'#2A2158', shirt2:'#1C1640', shirt3:'#141030', pant:'#1C1640', pant2:'#0B0818',
-      skin:'#C9A45C', skin2:'#8A6A30', shoe:'#9A7432', belt:'#B98CFF', hair:'#0B0818', hand:'#2A2158' },
+      skin:'#C9A45C', skin2:'#8A6A30', shoe:'#9A7432', belt:'#B98CFF', hair:'#0B0818', hand:'#D8B060',
+      // (bulkier than the plain golfer, the user asked: thicker arms in
+      // dark plate, and his outline built out in armour)
+      bulk:1, arm:'#2A2158', arm2:'#1C1640' },
     // Won, never bought: one for each major of the week, and its caddie with it.
     { id:'mjMasters',   n:'Masters Jacket',   cost:0, cat:'major', major:'masters',
       cap:'#F4F4EC', cap2:'#C8C8BE', shirt:'#2E7A3E', shirt2:'#236030', shirt3:'#174A22', pant:'#E8E0C8', pant2:'#C4BA9E' },
@@ -10906,9 +10909,27 @@ const STYLEFX = {
     back(c, g){
       if(g.minor){ this.rocks(c, g, false); return; }
       if(!g.back) this.cloak(c, g);
+      this.bulk(c, g);
       this.hands(c, g);
       this.rocks(c, g, false);
       c.globalAlpha = 1;
+    },
+    // his outline built out in plate, behind him (the user asked him
+    // bulkier): the chest and shoulders two pixels broader each side, the
+    // legs one, in dark indigo with a violet edge to the chest
+    bulk(c, g){
+      if(g.minor || g.h < 30) return;
+      const k = Math.max(1, Math.round(g.h / 30)), S0 = silhouette(g, '#141030'), S1 = silhouette(g, '#3E2A6E');
+      const band = (Sx, y0f, y1f, offs) => {
+        const y0 = Math.round(g.y + g.h * y0f - S0.oy), y1 = Math.round(g.y + g.h * y1f - S0.oy);
+        if(y1 <= y0) return;
+        for(const [dx, dy] of offs) c.drawImage(Sx.cv, 0, y0, Sx.cv.width, y1 - y0, Sx.ox + dx, Sx.oy + y0 + dy, Sx.cv.width, y1 - y0);
+      };
+      c.globalAlpha = 1;
+      const wide = n => [[-n, 0], [n, 0], [-n, -1], [n, -1], [0, -1]];
+      band(S1, 0.24, 0.55, wide(2 * k + 1));
+      band(S0, 0.24, 0.55, wide(2 * k).concat(wide(k)));
+      if(!g.back) band(S0, 0.55, 0.93, wide(k));
     },
     body(c, g){
       this.faulds(c, g);
@@ -10968,8 +10989,9 @@ const STYLEFX = {
           c.fillStyle = '#9A7432'; c.fillRect(a, y0 + r, 1, 1); c.fillStyle = '#D8B060'; c.fillRect(b - 1, y0 + r, 1, 1);
           if(f > 0.85){ c.fillStyle = '#D8B060'; c.fillRect(a, y0 + r, b - a, 1); }
         }
-        const gx = Math.round(x0 + wide * p / 2 - 0.5), gy = y0 + Math.max(1, Math.round(p));
-        c.fillStyle = '#B98CFF'; c.fillRect(gx, gy, Math.max(1, Math.round(p)), Math.max(1, Math.round(p)));
+        const gx = Math.round(x0 + wide * p / 2 - 0.5), gy = y0 + Math.max(2, Math.round(p * 2));
+        if(g.h >= 45) voidOrb(c, gx, gy, 1, g.t + 0.5, false);
+        else{ c.fillStyle = '#B98CFF'; c.fillRect(gx, gy, Math.max(1, Math.round(p)), Math.max(1, Math.round(p))); }
       };
       plate(B0.x1 - 5 / 40, 4.5, 12, sway);
     },
@@ -10977,22 +10999,33 @@ const STYLEFX = {
     crescent(c, g){
       const p = this.px(g), sh = g.shear ? g.shear(0.3) : 0;
       if(g.back){
-        for(const [fx, dir] of [[0.30, -1], [0.70, 1]]){ const C = voidCrescent(p, dir);
-          c.drawImage(C.cv, Math.round(g.x + g.w * fx - C.ox), Math.round(g.y + g.h * 0.22 - C.oy)); }
+        for(const [fx, dir] of [[0.28, -1], [0.72, 1]]){ const P2 = p * 1.2, C = voidCrescent(P2, dir), bx = Math.round(g.x + g.w * fx), by = Math.round(g.y + g.h * 0.22);
+          c.drawImage(C.cv, bx - C.ox, by - C.oy);
+          voidOrb(c, bx + dir * 4.6 * P2, by - 6.5 * P2, Math.max(1, Math.round(1.7 * P2)), g.t + dir, false); }
         return;
       }
-      const s = g.spr, C = voidCrescent(p, -1);
-      c.globalAlpha = 1; c.drawImage(C.cv, Math.round(g.x + g.w * ((s.ax || 0.66) - 0.05) + sh - C.ox), Math.round(g.y + g.h * ((s.ay || 0.30) - 0.01) - C.oy));
+      const s = g.spr, P2 = p * 1.25, C = voidCrescent(P2, -1);
+      const bx = Math.round(g.x + g.w * ((s.ax || 0.66) - 0.05) + sh), by = Math.round(g.y + g.h * ((s.ay || 0.30) - 0.01));
+      c.globalAlpha = 1; c.drawImage(C.cv, bx - C.ox, by - C.oy);
+      // the void orb held in its curve, and the bronze plate over his shoulder
+      voidOrb(c, bx - 4.2 * P2, by - 6.5 * P2, Math.max(1, Math.round(1.9 * P2)), g.t, false);
+      const pw = Math.round(5 * P2), ph2 = Math.max(2, Math.round(2.4 * P2));
+      for(let j = 0; j < ph2; j++){ const f = j / ph2, hw = Math.round(pw * Math.sqrt(1 - (1 - f) * (1 - f) * 0.7));
+        c.fillStyle = j === 0 ? '#F4DC96' : j === ph2 - 1 ? '#5A4020' : j & 1 ? '#9A7432' : '#D8B060'; c.fillRect(bx - hw, by - ph2 + j, hw * 2, 1); }
     },
     // where the black hole in his chest is (none to see from behind)
     coreAt(g){ return STYLEFX.ascended.coreAt(g); },
     orb(c, g){
       const C = this.coreAt(g); if(!C) return;
       if(g.minor){ c.fillStyle = '#D8B060'; c.fillRect(C.x - 1, C.y, 3, 1); c.fillStyle = '#05030C'; c.fillRect(C.x, C.y, 1, 1); return; }
-      // hung on a chain of gold from his collar
-      const r = Math.max(1, Math.round(g.h / 24));
-      c.fillStyle = '#9A7432'; c.fillRect(C.x, C.y - r - 3, 1, 2);
-      voidHole(c, C.x, C.y, r, g.t, false);
+      // hung on a chain of gold from his collar: a void orb in a heavy ring
+      // of bronze, a point of violet under it (after the user's picture)
+      const r = Math.max(1, Math.round(g.h / 26));
+      c.fillStyle = '#9A7432'; c.fillRect(C.x, C.y - r - 5, 1, 2);
+      const dp = Math.max(2, Math.round(g.h / 16));
+      for(let j = 0; j < dp; j++){ const hw = Math.max(0, Math.round((1 - j / dp) * (r + 1)));
+        c.fillStyle = j === dp - 1 ? '#B98CFF' : j & 1 ? '#3E2A6E' : '#7A4ED8'; c.fillRect(C.x - hw, C.y + r + 3 + j, hw * 2 + 1, 1); }
+      voidOrb(c, C.x, C.y, r, g.t, true);
     },
     // as he winds up, starlight is pulled in to the black hole in his chest
     pull(c, g){
@@ -11052,6 +11085,7 @@ const STYLEFX = {
         for(let d = 2; d >= 1; d--){ const [x, y] = at(a0 - d * 0.12); c.fillStyle = d === 1 ? '#7A4ED8' : '#3E2A6E'; c.fillRect(Math.round(x), Math.round(y + bob), 1, 1); }
         const [x, y] = at(a0);
         if(minor){ c.fillStyle = '#6A5A8A'; c.fillRect(Math.round(x), Math.round(y + bob), 1, 1); }
+        else if(i === 1 || i === 3) voidOrb(c, x, y + bob, g.h >= 45 ? 1 : 0, g.t + i, false);
         else voidRock(c, x - 2, y + bob - 2, 0, front, g.h < 40 ? 3 : i);
       }
       c.globalAlpha = 1;
@@ -12200,6 +12234,21 @@ function voidHole(c, x, y, r, t, tilt){
     if(!front) for(let yy = -R; yy <= R; yy++) for(let xx = -R; xx <= R; xx++) if(xx * xx + yy * yy <= R * R + 0.5){
       c.fillStyle = xx * xx + yy * yy > (R - 1) * (R - 1) + 0.5 && R > 1 ? '#3E2A6E' : '#05030C'; c.fillRect(X + xx, Y + yy, 1, 1); }
   }
+}
+// A void orb, as the user's picture has them set in his armour: a black
+// hole with a ring of pink light glowing round it, a bright spot running
+// round the ring, and (framed) a heavy ring of bronze about it all
+function voidOrb(c, x, y, r, t, framed){
+  const R = Math.max(1, Math.round(r)), X = Math.round(x), Y = Math.round(y), P = (i, j, col) => { c.fillStyle = col; c.fillRect(X + i, Y + j, 1, 1); };
+  c.globalAlpha = 1;
+  const ring = (rr, f) => { const n = Math.max(8, Math.round(rr * 7)); for(let i = 0; i < n; i++){ const a = i / n * Math.PI * 2; f(Math.round(Math.cos(a) * rr), Math.round(Math.sin(a) * rr), a, i, n); } };
+  if(framed){
+    // the bronze, lit from above left
+    for(const rr of [R + 2, R + 3]) ring(rr, (i, j, a) => P(i, j, Math.cos(a - 3.9) > 0.4 ? '#F4DC96' : Math.cos(a - 3.9) < -0.4 ? '#5A4020' : rr === R + 3 ? '#9A7432' : '#D8B060'));
+  }else ring(R + 2, (i, j, a, k) => { if(k & 1) P(i, j, '#7A2A8A'); });
+  const spot = (t * 1.1) % 1;
+  ring(R + 1, (i, j, a, k, n) => { const d = Math.abs(((k / n - spot) % 1 + 1) % 1); P(i, j, d < 0.06 ? '#FFFFFF' : d < 0.16 ? '#FFB8EC' : k % 3 ? '#FF7AD9' : '#E08CFF'); });
+  for(let j = -R; j <= R; j++) for(let i = -R; i <= R; i++) if(i * i + j * j <= R * R + 0.5) P(i, j, i * i + j * j > (R - 1) * (R - 1) + 0.5 && R > 1 ? '#2A1030' : '#05030C');
 }
 // A star's glint: a point of white with four arms of violet (arm, k each)
 function voidStar(c, x, y, k, arm, col){
@@ -14926,19 +14975,19 @@ function paintGolfer(c, x, y, w, h, ph, t, bot, walking, walkPh, spr, arc, putt,
   const armH = arm * 0.55;
   const hx = sx + Math.sin(armH)*al, hy = sy + Math.cos(armH)*al*0.85;
   const tx = hx + Math.sin(arm)*cl, ty = hy + Math.cos(arm)*cl*0.90;
-  const th = h > 34 ? 2 : 1;
-  // his arms in his own skin: a red demon's are red (they were always the
-  // plain tone, whatever his face was)
   const OS = outfitNow();
-  pxLine(c, sx, sy, hx, hy, OS.skin || PX.skin, th);
+  const th = (h > 34 ? 2 : 1) + (OS.bulk && h > 30 ? 1 : 0);
+  // his arms in his own skin: a red demon's are red (they were always the
+  // plain tone, whatever his face was); in plate, where he wears it
+  pxLine(c, sx, sy, hx, hy, OS.arm || OS.skin || PX.skin, th);
   // waving at a train going by (wave 0..1): his far arm up off the club and
   // to and fro over his head
   if(wave > 0){
     const wx = sx - w * 0.06 + Math.sin(t * 9) * w * 0.14 * wave, wy = sy - h * 0.34 * wave;
-    pxLine(c, sx - w*0.10, sy + 1, wx, wy, OS.skin2 || PX.skin2, th);
+    pxLine(c, sx - w*0.10, sy + 1, wx, wy, OS.arm2 || OS.skin2 || PX.skin2, th);
     c.fillStyle = OS.hand || OS.skin2 || PX.skin2; c.fillRect(Math.round(wx) - 1, Math.round(wy) - 1, th + 1, th + 1);
   }
-  else pxLine(c, sx - w*0.10, sy + 1, hx, hy, OS.skin2 || PX.skin2, th);
+  else pxLine(c, sx - w*0.10, sy + 1, hx, hy, OS.arm2 || OS.skin2 || PX.skin2, th);
   if(h > 22){ c.fillStyle = OS.hand || OS.shirt; c.fillRect(Math.round(hx) - 1, Math.round(hy) - 1, th + 1, th + 1); }
   g.hand = { x: hx, y: hy };
   // the arc the head cuts through a swing, for the clubs that leave one
