@@ -24,7 +24,8 @@
  *     nothing on screen ever pointed at retiring before
  *   - Season Bests in the Cabinet (the user asked): the best card of each
  *     of this golfer's seasons, newest first, with its course and card;
- *     never one played away; an old save's taken from its log
+ *     never one played away; an old save's taken from its log; beating
+ *     last season's best pays the Better Season honour, once a season
  *   - retiring starts the calendar again, so the season's results go and the
  *     best cards stay; a save with junk in either loads clean
  */
@@ -165,6 +166,16 @@ module.exports = {
           o.sbLines = lines();
           o.sbNamed = S.seasonBest.every(x => !!courseById(x.id) && lines().some(l => l.indexOf(courseById(x.id).n) >= 0));
           S.retires = g + 1; renderCabinet(); o.sbOther = lines().length; S.retires = g; hideSheet();
+          // the Better Season honour: beating last season's best pays, once a season
+          checkAch();
+          // (the honour's own steps paid, times what one pays: finishing an
+          // event pays other honours too)
+          const rep = B.ACH_REP.find(a => a.id === 'rSeason'), paid = () => (S.achRep.rSeason || 0) * (rep ? rep.sov : 0);
+          const sov0 = paid(), up0 = tally('seasonUp');
+          finish(-70); checkAch(); const sov1 = paid();
+          finish(-80); checkAch(); const sov2 = paid();
+          o.better = [tally('seasonUp') - up0, sov1 - sov0, sov2 - sov1, rep ? rep.sov : 0].join('/');
+          QUIET = false; trophyRoom('case'); o.betterMark = lines()[0]; hideSheet();
           delete S.seasonBest; S.evLog = [{ t: 1, id: courseFor(1).id, s: -33, b: 0, w: 0, c: 0 }, { t: 2, id: courseFor(2).id, s: null, b: 0, w: 0, c: 0 }];
           initState(); o.sbRepair = S.seasonBest.map(x => x.n + ':' + x.s).join(',');
           S.seasonBest = [{ n: 1, g, t: 1, id: 'nowhere', s: -5, c: 0 }, 'x', { n: 2, g, t: 7, id: courseFor(7).id, s: -9, c: 0 }]; initState();
@@ -180,6 +191,7 @@ module.exports = {
       }
       return o;
     });
+    const f0 = m => { throw new Error(m); };
     const L = JSON.parse(r.log1);
     if (L.t !== r.t0 || L.id !== r.id0 || L.s !== -40) throw new Error('an event was logged as ' + r.log1 + ' (event ' + r.t0 + ' on ' + r.id0 + ', -40)');
     if (r.away !== null) throw new Error('an event resolved away was logged with a card of ' + r.away);
@@ -213,6 +225,9 @@ module.exports = {
     if (r.sbLines.length !== 2 || !/^-45Season 2 \(now\)/.test(r.sbLines[0]) || !/^-60Season 1 /.test(r.sbLines[1]) || !r.sbNamed)
       throw new Error('the Cabinet\'s Season Bests read ' + JSON.stringify(r.sbLines) + ' (want season 2 then 1, each with its course)');
     if (r.sbOther) throw new Error('a new golfer\'s Cabinet showed ' + r.sbOther + ' of the last golfer\'s season bests');
+    { const [n, p1, p2, want] = r.better.split('/').map(Number);
+      if (n !== 1 || p1 !== want || p2 !== 0 || !(want > 0)) f0('beating last season\'s best counted ' + n + ' and paid ' + p1 + ' then ' + p2 + ' (want once, ' + want + ' sovereigns, then nothing)'); }
+    if (!/Season 2 \(now\) \u25b2/.test(r.betterMark || '')) f0('the season that beat the last is not marked: ' + r.betterMark);
     if (r.sbRepair !== '1:-33' || r.sbJunk !== '2:-9') throw new Error('season bests from an old save\'s log read ' + r.sbRepair + ', and with junk ' + r.sbJunk);
     if (r.repaired !== '1/1' || r.repaired2 !== 'true/true') throw new Error('a save with junk records loaded as ' + r.repaired + ' / ' + r.repaired2);
     return ['every event logged with its course; away events post no card; the best five kept, best first',

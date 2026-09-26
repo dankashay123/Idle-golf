@@ -3175,7 +3175,9 @@ const B = {
     { id:'rEvent', n:'Weekly Grind',   d:'every event', m:'events', step:1,   sov:5 },
     { id:'rLeg',   n:'Legendary Haul', d:'every 3 Legendaries', m:'legend', step:3,   sov:6 },
     { id:'rCup',   n:'Silverware',     d:'every cup', m:'cups',   step:1,   sov:10 },
-    { id:'rMyth',  n:'Mythic Haul',    d:'every Mythic', m:'myth',   step:1,   sov:10 }
+    { id:'rMyth',  n:'Mythic Haul',    d:'every Mythic', m:'myth',   step:1,   sov:10 },
+    // (the Cabinet's Season Bests: a season whose best card beats the last's)
+    { id:'rSeason', n:'Better Season', d:'beat last season\u2019s best', m:'seasonUp', step:1, sov:8 }
   ],
 
   /* ---- retirement ---- */
@@ -3916,7 +3918,7 @@ function initState(){
   // of each golfer; a save from before they were kept starts from its log
   if(!Array.isArray(S.seasonBest)){
     S.seasonBest = [];
-    for(const x of S.evLog) if(x.s !== null) seasonBestPost(x.t, x.id, x.s, x.c);
+    for(const x of S.evLog) if(x.s !== null) seasonBestPost(x.t, x.id, x.s, x.c, true);
   }
   S.seasonBest = S.seasonBest.filter(x => rec(x) && isFinite(x.s) && x.n >= 1 && isFinite(x.g))
     .filter((x, i, a) => a.findIndex(y => y.n === x.n && y.g === x.g) === i).slice(-40);
@@ -17916,12 +17918,15 @@ function renderSigWeek(){
 /* ---- the season and the trophy cabinet ---- */
 // A card posted at event t: the season's best if it beats the one there
 // (kept a season to a line, for each golfer, the newest forty)
-function seasonBestPost(t, id, sc, card){
+// Beating the last season's best counts once a season towards the Better
+// Season honour (quiet: when a save's log is read back, and the dev menu).
+function seasonBestPost(t, id, sc, card, quiet){
   const n = Math.floor((t - 1) / B.SEASON) + 1, g = S.retires || 0, L = S.seasonBest || (S.seasonBest = []);
-  const x = L.find(y => y.n === n && y.g === g);
-  if(x){ if(sc < x.s) Object.assign(x, { t, id, s: sc, c: card }); return; }
-  L.push({ n, g, t, id, s: sc, c: card });
-  if(L.length > 40) L.splice(0, L.length - 40);
+  let x = L.find(y => y.n === n && y.g === g);
+  if(x){ if(sc < x.s) Object.assign(x, { t, id, s: sc, c: card }); }
+  else{ x = { n, g, t, id, s: sc, c: card }; L.push(x); if(L.length > 40) L.splice(0, L.length - 40); }
+  const last = L.find(y => y.n === n - 1 && y.g === g);
+  if(last && x.s < last.s && !x.up){ x.up = 1; if(!quiet) bump('seasonUp'); }
 }
 const seasonOf = t => Math.floor((t-1) / B.SEASON);
 const scoreTxt = n => n === 0 ? 'E' : n > 0 ? '+' + n : String(n);
@@ -18012,7 +18017,7 @@ function renderCabinet(){
   const sb = (S.seasonBest || []).filter(x => x.g === (S.retires || 0)).sort((a, b) => b.n - a.n).slice(0, 8);
   const seasons = '<div class="plaque" id="seasonBests"><div class="ph">Season Bests</div>'
     + (sb.length ? sb.map(x => { const cs = courseById(x.id);
-        return line(x.s, 'Season ' + x.n + (x.n === now + 1 ? ' (now)' : '') + ' \u00b7 ' + (cs ? cs.n : '') + ' \u00b7 Card ' + roman(x.c)); }).join('')
+        return line(x.s, 'Season ' + x.n + (x.n === now + 1 ? ' (now)' : '') + (x.up ? ' \u25b2' : '') + ' \u00b7 ' + (cs ? cs.n : '') + ' \u00b7 Card ' + roman(x.c)); }).join('')
       : '<div class="pe">Finish an event to post one here.</div>') + '</div>';
   setHTML(box, '<div class="cab"><div class="shelf">' + trophies + '</div>' + caseTrack('maj') + '<div class="plank"></div>'
     + '<div class="shelf">' + jackets + '</div><div class="plank"></div>'
@@ -18680,7 +18685,7 @@ const DEV = {
       S.bestCards = [-212, -180, -151, -120, -96].map((sc, i) =>
         ({ t: 1 + i, id: B.COURSE[(i * 7) % B.COURSE.length].id, s: sc, c: Math.max(0, S.tier - i) }));
       // and a best card for each season so far
-      for(let e = 1; e <= t; e++) seasonBestPost(e, calendarCourse(e).id, -30 - (e % 5) * 11, Math.max(0, S.tier - (t - e) % 3));
+      for(let e = 1; e <= t; e++) seasonBestPost(e, calendarCourse(e).id, -30 - (e % 5) * 11, Math.max(0, S.tier - (t - e) % 3), true);
       if(S.bestRound === undefined || S.bestRound > -212) S.bestRound = -212;
       if(S.bestNine === undefined || S.bestNine > -31) S.bestNine = -31;
     }else{
