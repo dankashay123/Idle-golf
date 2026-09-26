@@ -10652,11 +10652,11 @@ const STYLEFX = {
     // before the pin and a putt rolling away, which stand on it)
     ground(c, g){
       if(g.minor) return;
-      const { cx, w, h, t, bot } = g, rx = w * 1.15, ry = Math.max(2, h * 0.12), L = legendNow(g);
+      const { cx, w, h, t, bot } = g, rx = w * 1.1, ry = Math.max(2, h * 0.12), L = legendNow(g);
       const q = L ? 1 : this.charge(g.ph), st = this.strike(g.ph), E = this.erupt(t);
       // the ground round the pit always cracked and smouldering (the user
       // found it faint); the cracks run hot as he strikes
-      if(h >= 30 && !L && !(st >= 0)) this.cracks(c, g, rx, ry, 0.55, 0.3 + 0.08 * Math.sin(t * 3), 1.5);
+      if(h >= 30 && !L && !(st >= 0)) this.cracks(c, g, rx, ry, 0.55, 0.3 + 0.08 * Math.sin(t * 3), 1.4);
       drawGlow(c, cx, bot, rx, ry, [[0.82, '#2A0404', 1], [0.58, '#7A1408', 2], [0.3, '#E8401C', 3], [0, E >= 0 || q > 0.5 || st >= 0 ? '#FFF1A0' : '#FFB43A', 4]],
                Math.floor(t * 8) & 3, 1);
       const RR = runeRing(Math.round(rx * 1.18), Math.round(ry * 1.3), Math.floor(t * 6 + (g.ph > 0 ? g.ph * 48 : 0) + (L ? L.T * 40 : 0)) % 16);
@@ -11186,7 +11186,7 @@ const STYLEFX = {
     // the strike: 0..1 through the moment after it, or -1
     strike(ph){ return ph >= 0.55 && ph < 0.9 ? (ph - 0.55) / 0.35 : -1; },
     // (flatter on the saver, where there are two rows under his feet)
-    sigilSize(g){ return [Math.max(6, Math.round(g.w * 1.1)), g.h < 30 ? 2 : Math.max(3, Math.round(g.h * 0.14))]; },
+    sigilSize(g){ return [Math.max(6, Math.round(g.w * 1.0)), g.h < 30 ? 2 : Math.max(3, Math.round(g.h * 0.14))]; },
     // the sigil turning under him (on the ground: drawn before the pin and a
     // putt rolling away, which stand on it)
     ground(c, g){
@@ -11941,10 +11941,12 @@ function bulkPlate(c, g, dark, edge){
   band(S0, 0.24, 0.55, wide(2 * k).concat(wide(k)));
   if(!g.back) band(S0, 0.55, 0.93, wide(k));
 }
-// the three, last thing behind him (over their wings, so the plate reads)
-const BULK_PLATE = { ascended: ['#1B1B44', '#962CA8'], divine: ['#B98A2E', '#FFE39A'], demonic: ['#1A0606', '#8A1A10'] };
+// the three, first thing behind him: their wings and the Ascended's cape
+// lie over it (over them, it hid a caddie's wings and the cape's root)
+// (the Ascended's plate a shade off his own dark skin, which reads as his arms)
+const BULK_PLATE = { ascended: ['#161638', '#962CA8'], divine: ['#B98A2E', '#FFE39A'], demonic: ['#1A0606', '#8A1A10'] };
 for(const k in BULK_PLATE){ const F = STYLEFX[k], back0 = F.back, P = BULK_PLATE[k];
-  F.back = function(c, g){ if(back0) back0.call(this, c, g); bulkPlate(c, g, P[0], P[1]); }; }
+  F.back = function(c, g){ bulkPlate(c, g, P[0], P[1]); if(back0) back0.call(this, c, g); }; }
 
 // The trails. They were three one-pixel dots a few frames behind the ball --
 // the Rainbow put one of its five colours on each, and nobody could tell it
@@ -15070,7 +15072,8 @@ const NIGHT_GLOW = {
 function nightPool(c, g, NG){
   const sw = g.ph > 0 ? Math.sin(Math.PI * Math.min(1, g.ph / 0.55)) : 0;
   const pulse = NG.flicker ? 0.94 + 0.06 * Math.sin(g.t * 13) * Math.sin(g.t * 7.3) : 0.95 + 0.05 * Math.sin(g.t * NG.breathe);
-  const rx = Math.max(6, g.w * 1.5 * pulse * (1 + 0.12 * sw)), ry = Math.max(2, g.h * 0.16 * pulse * (1 + 0.12 * sw));
+  // (wider than the skins' own grounds, which grew: the light shows round them)
+  const rx = Math.max(6, g.w * 1.85 * pulse * (1 + 0.12 * sw)), ry = Math.max(2, g.h * 0.2 * pulse * (1 + 0.12 * sw));
   const X = Math.round(g.cx), Y = Math.round(g.bot), R = Math.ceil(rx), RY = Math.ceil(ry);
   for(let yy = -RY; yy <= RY; yy++) for(let xx = -R; xx <= R; xx++){
     const d2 = (xx * xx) / (rx * rx) + (yy * yy) / (ry * ry);

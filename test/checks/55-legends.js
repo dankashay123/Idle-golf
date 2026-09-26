@@ -161,9 +161,12 @@ module.exports = {
             Scene.swingT = Scene.swingDur * (1 - 0.66);
             const bx = box.x0 + w * 1.19, bl = part(id, 'blast', golfer);
             d.blast = bl.length; d.blastOff = bl.filter(([x, y]) => Math.abs(x - bx) > w * 0.8 || y > p.y + 2 || y < p.y - h * 0.5).length;
-            d.cracks = part(id, 'cracks', golfer).filter(([x]) => Math.abs(x - cx) > w * 1.05 + 2).length;
+            d.cracks = part(id, 'cracks', golfer).filter(([x]) => Math.abs(x - cx) > w * 1.5 + 2).length;
             Scene.swingT = 0;
-            d.cracksIdle = part(id, 'cracks', golfer).length;
+            // (at rest the ground round the pit smoulders, cracked close about
+            // it, dim: the user asked for the grounds more prominent; only the
+            // strike runs them out past that)
+            d.cracksIdle = part(id, 'cracks', golfer).filter(([x]) => Math.abs(x - cx) > w * 1.5 + 2).length;
             // all of it, against him bare, the most over six seconds
             const bare = () => { const O = outfitNow(), fx = O.fx; O.fx = null; try { return golfer(); } finally { O.fx = fx; } };
             d.foot = { l: 0, r: 0, up: 0, dn: 0 };
@@ -194,7 +197,7 @@ module.exports = {
             const cx = box.x0 + w * 0.55, [rx, ry] = STYLEFX.ascended.sigilSize({ w, h });
             // the sigil on the ground under him, and nowhere else
             const gr = part(id, 'ground', golfer);
-            d.ground = gr.length; d.groundOff = gr.filter(([x, y]) => Math.abs(x - cx) > w + 1 || Math.abs(y - p.y) > h * 0.13 + 1.5).length;
+            d.ground = gr.length; d.groundOff = gr.filter(([x, y]) => Math.abs(x - cx) > rx + 2 || Math.abs(y - p.y) > ry + 2).length;
             // the aura: flames rising off him, close about him
             const au = part(id, 'aura', golfer);
             d.aura = au.length; d.auraAbove = au.filter(([x, y]) => y < head.y).length;
@@ -305,7 +308,7 @@ module.exports = {
           d.rise = top(0) - top(0.36); d.sweep = top(0.62) - top(0.36);
           // the sun at his feet and nowhere else
           const gr = part('divine', 'ground', golfer);
-          d.ground = gr.length; d.groundOff = gr.filter(([x, y]) => Math.abs(x - cx) > w * 1.2 + 1 || Math.abs(y - p.y) > h * 0.13 + 1.5).length;
+          d.ground = gr.length; d.groundOff = gr.filter(([x, y]) => Math.abs(x - cx) > w * 1.3 + 1 || Math.abs(y - p.y) > h * 0.15 + 1.5).length;
           // the second halo, over his head
           const h2 = part('divine', 'halo2', golfer);
           d.halo2 = h2.length; d.halo2Off = h2.filter(([x, y]) => y > head.y + h * 0.04 || Math.abs(x - head.x) > head.w * 1.8).length;
