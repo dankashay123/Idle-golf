@@ -1,10 +1,12 @@
-/* A Mythic set worn in full (the user asked, from the menu): its look, its
- * caddie, its driver and its wake or its ball.
+/* A top set worn in full (the user asked, from the menu): its look, its
+ * caddie, its driver and its wake or its ball. The two Mythic sets first;
+ * the Divine and the Demonic count too (the user asked, from the menu).
  *
  *   - one piece off and it is not a full set; all on and it is
  *   - every piece of it in the Style shop is rimmed in gold and badged
  *     "Full Set" (its wake and its ball both), and no other tile
- *   - said once, the first time; the Record's Mythic Sets row counts it
+ *   - said once, the first time; the Record's Full Sets row counts it
+ *   - the Divine, with its ball, is a full set too
  *   - a broken value in a save is cleared on load
  */
 'use strict';
@@ -21,6 +23,11 @@ module.exports = {
         o.part = fullSet(); o.saidPart = toasts.length;
         styleBuy('c', 'cosmic'); o.full = fullSet(); o.said = toasts.slice();
         styleBuy('t', 'singularity'); o.withBall = fullSet(); o.saidAgain = toasts.length;
+        // the Divine, worn whole with its ball; then back to The Void for the shop
+        for (const k of ['o:divine', 'c:divine', 'k:divine', 't:godlight']) S.styleOwn[k] = 1;
+        for (const [k, id] of [['o', 'divine'], ['c', 'divine'], ['k', 'divine'], ['t', 'godlight']]) styleBuy(k, id);
+        o.divine = fullSet(); o.saidDivine = toasts[toasts.length - 1];
+        for (const [k, id] of [['o', 'cosmic'], ['c', 'cosmic'], ['k', 'cosmic'], ['t', 'singularity']]) styleBuy(k, id);
         // the shop's tiles (the sheets open only when the game is not quiet)
         QUIET = false; o.tiles = {};
         for (const cat of ['golfer', 'caddie', 'clubs', 'balls']) { styleCat = cat; openShop('style');
@@ -29,20 +36,21 @@ module.exports = {
         hideSheet();
         // the Record
         trophyRoom('case');
-        const row = [...document.querySelectorAll('#statRows .lb')].find(e => e.children[1].textContent === 'Mythic Sets');
+        const row = [...document.querySelectorAll('#statRows .lb')].find(e => e.children[1].textContent === 'Full Sets');
         o.record = row ? row.children[2].textContent.replace(/ /g, ' ') : 'missing';
         hideSheet(); QUIET = true;
         if (o.part || o.saidPart) f('with the plain caddie it counted as a full set (' + o.part + ', said ' + o.saidPart + ')');
         if (o.full !== 'cosmic' || o.withBall !== 'cosmic' || o.said.length !== 1 || o.said[0] !== 'Full Set · The Void' || o.saidAgain !== 1)
           f('the full set: ' + o.full + ', with its ball ' + o.withBall + ', said ' + JSON.stringify(o.said) + ' then ' + o.saidAgain + ' times');
+        if (o.divine !== 'divine' || o.saidDivine !== 'Full Set · Divine') f('the Divine worn whole: ' + o.divine + ', said "' + o.saidDivine + '"');
         const want = { golfer: 'The Void:FULL SET', caddie: 'The Void Caddie:FULL SET', clubs: 'Eclipse Driver:FULL SET', balls: 'Singularity:FULL SET,Event Horizon:FULL SET' };
         for (const k in want) if (o.tiles[k] !== want[k]) f('the ' + k + ' rack rims ' + JSON.stringify(o.tiles[k]) + ' (want ' + want[k] + ')');
-        if (o.record !== '1 of 2 worn') f('the Record reads "' + o.record + '"');
+        if (o.record !== '2 of 4 worn') f('the Record reads "' + o.record + '"');
         // a broken save
-        const saved = JSON.parse(JSON.stringify(S)); saved.fullSets = { cosmic: 1, blossom: 1, ascended: 'x' };
+        const saved = JSON.parse(JSON.stringify(S)); saved.fullSets = { cosmic: 1, blossom: 1, ascended: 'x', demonic: 1 };
         Object.keys(S).forEach(k => delete S[k]); Object.assign(S, saved); initState();
         o.repaired = JSON.stringify(S.fullSets);
-        if (o.repaired !== '{"cosmic":1}') f('a broken save kept ' + o.repaired);
+        if (o.repaired !== '{"cosmic":1,"demonic":1}') f('a broken save kept ' + o.repaired);
       } finally {
         window.toast = keepT; QUIET = false;
         Object.keys(S).forEach(k => delete S[k]); Object.assign(S, JSON.parse(SNAP)); buildSprites(); startHole();
@@ -52,6 +60,6 @@ module.exports = {
     });
     if (r.fails.length) throw new Error(r.fails.join('; '));
     return ['one piece off, no set; all on, The Void worn in full (with its wake or its ball), said once: "' + r.said[0] + '"',
-      'rimmed in gold: ' + Object.values(r.tiles).join(', ') + '; the Record: Mythic Sets ' + r.record + '; a broken save repaired'];
+      'rimmed in gold: ' + Object.values(r.tiles).join(', ') + '; the Divine too; the Record: Full Sets ' + r.record + '; a broken save repaired'];
   }
 };
