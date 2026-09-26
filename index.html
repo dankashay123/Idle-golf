@@ -11926,20 +11926,26 @@ for(const k in FLOURISH) if(STYLEFX[k]) STYLEFX[k].flourish = FLOURISH[k];
 // with an edge of the look's own (The Void's first; then the other three
 // top skins, the user asked: "make the skins bulkier like the void skin").
 // His caddie a pixel broader about the chest and shoulders.
-function bulkPlate(c, g, dark, edge){
+// (legs, if given, is the colour built out about the legs; alpha, for a
+// look drawn see-through, the Ghost's)
+function bulkPlate(c, g, dark, edge, legs, alpha, soft){
   if(!g.minor && g.h < 30) return;
-  const k = g.minor ? 1 : Math.max(1, Math.round(g.h / 30)), S0 = silhouette(g, dark), S1 = silhouette(g, edge);
+  const k = g.minor ? 1 : Math.max(1, Math.round(g.h / 30)), S0 = silhouette(g, dark), S1 = silhouette(g, edge), S2 = legs ? silhouette(g, legs) : S0;
   const band = (Sx, y0f, y1f, offs) => {
     const y0 = Math.round(g.y + g.h * y0f - S0.oy), y1 = Math.round(g.y + g.h * y1f - S0.oy);
     if(y1 <= y0) return;
     for(const [dx, dy] of offs) c.drawImage(Sx.cv, 0, y0, Sx.cv.width, y1 - y0, Sx.ox + dx, Sx.oy + y0 + dy, Sx.cv.width, y1 - y0);
   };
-  c.globalAlpha = 1; c.globalCompositeOperation = 'source-over';
+  c.globalAlpha = alpha || 1; c.globalCompositeOperation = 'source-over';
   const wide = n => [[-n, 0], [n, 0], [-n, -1], [n, -1], [0, -1]];
-  if(g.minor){ band(S1, 0.30, 0.62, wide(2)); band(S0, 0.30, 0.62, wide(1)); return; }
-  band(S1, 0.24, 0.55, wide(2 * k + 1));
-  band(S0, 0.24, 0.55, wide(2 * k).concat(wide(k)));
-  if(!g.back) band(S0, 0.55, 0.93, wide(k));
+  if(g.minor){ band(S1, 0.30, 0.62, wide(2)); band(S0, 0.30, 0.62, wide(1)); c.globalAlpha = 1; return; }
+  // (clothes seen from behind, a pixel less: at full width the shoulders
+  // came out as square blocks)
+  const n = soft && g.back ? k : 2 * k;
+  band(S1, 0.24, 0.55, wide(n + 1));
+  band(S0, 0.24, 0.55, wide(n).concat(wide(k)));
+  if(!g.back) band(S2, 0.55, 0.93, wide(k));
+  c.globalAlpha = 1;
 }
 // the three, first thing behind him: their wings and the Ascended's cape
 // lie over it (over them, it hid a caddie's wings and the cape's root)
@@ -11947,6 +11953,19 @@ function bulkPlate(c, g, dark, edge){
 const BULK_PLATE = { ascended: ['#161638', '#962CA8'], divine: ['#B98A2E', '#FFE39A'], demonic: ['#1A0606', '#8A1A10'] };
 for(const k in BULK_PLATE){ const F = STYLEFX[k], back0 = F.back, P = BULK_PLATE[k];
   F.back = function(c, g){ bulkPlate(c, g, P[0], P[1]); if(back0) back0.call(this, c, g); }; }
+// and every other skin with an effect (the user asked, after the three),
+// built out in its own clothes rather than plate: the shirt's darker shades
+// about the chest and shoulders, the trousers' about the legs, the arms a
+// pixel thicker
+for(const fx of ['inferno', 'frostborn', 'stormcaller', 'void', 'glitch', 'midas', 'disco', 'ghost', 'banana', 'dad', 'clown']){
+  const F = STYLEFX[fx], O = B.OUTFITS.find(o => o.fx === fx);
+  if(!F || !O) continue;
+  O.bulk = 1;
+  // (the Stormcaller is drawn in his storm's pale light: his own dark navy
+  // showed as a stripe down his back, so his is the storm's blues)
+  const back0 = F.back, P = fx === 'stormcaller' ? ['#5A8AD8', '#BFE0FF', '#2A4A7A'] : [O.shirt3 || O.shirt2, O.shirt2 || O.shirt, O.pant2 || O.pant];
+  F.back = function(c, g){ bulkPlate(c, g, P[0], P[1], P[2], F.alpha, true); if(back0) back0.call(this, c, g); };
+}
 
 // The trails. They were three one-pixel dots a few frames behind the ball --
 // the Rainbow put one of its five colours on each, and nobody could tell it
