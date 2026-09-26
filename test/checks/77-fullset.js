@@ -7,6 +7,7 @@
  *     "Full Set" (its wake and its ball both), and no other tile
  *   - said once, the first time; the Record's Full Sets row counts it
  *   - the Divine, with its ball, is a full set too
+ *   - the score box is edged in the set's colour while it is worn whole
  *   - a broken value in a save is cleared on load
  */
 'use strict';
@@ -28,6 +29,9 @@ module.exports = {
         for (const [k, id] of [['o', 'divine'], ['c', 'divine'], ['k', 'divine'], ['t', 'godlight']]) styleBuy(k, id);
         o.divine = fullSet(); o.saidDivine = toasts[toasts.length - 1];
         for (const [k, id] of [['o', 'cosmic'], ['c', 'cosmic'], ['k', 'cosmic'], ['t', 'singularity']]) styleBuy(k, id);
+        // the score box, edged in the set's colour; plain again with a piece off
+        const ro = document.getElementById('readout'), edge = () => { renderLive(); return getComputedStyle(ro).borderTopColor + '/' + getComputedStyle(ro).boxShadow; };
+        o.edge = edge(); styleBuy('c', 'bib'); o.edgeOff = edge(); styleBuy('c', 'cosmic');
         // the shop's tiles (the sheets open only when the game is not quiet)
         QUIET = false; o.tiles = {};
         for (const cat of ['golfer', 'caddie', 'clubs', 'balls']) { styleCat = cat; openShop('style');
@@ -43,6 +47,8 @@ module.exports = {
         if (o.full !== 'cosmic' || o.withBall !== 'cosmic' || o.said.length !== 1 || o.said[0] !== 'Full Set · The Void' || o.saidAgain !== 1)
           f('the full set: ' + o.full + ', with its ball ' + o.withBall + ', said ' + JSON.stringify(o.said) + ' then ' + o.saidAgain + ' times');
         if (o.divine !== 'divine' || o.saidDivine !== 'Full Set · Divine') f('the Divine worn whole: ' + o.divine + ', said "' + o.saidDivine + '"');
+        if (!/201, 176, 255/.test(o.edge) || !/201, 176, 255/.test(o.edge.split('/')[1]) || /201, 176, 255/.test(o.edgeOff))
+          f('the score box: ' + o.edge + ' worn whole, ' + o.edgeOff + ' with a piece off');
         const want = { golfer: 'The Void:FULL SET', caddie: 'The Void Caddie:FULL SET', clubs: 'Eclipse Driver:FULL SET', balls: 'Singularity:FULL SET,Event Horizon:FULL SET' };
         for (const k in want) if (o.tiles[k] !== want[k]) f('the ' + k + ' rack rims ' + JSON.stringify(o.tiles[k]) + ' (want ' + want[k] + ')');
         if (o.record !== '2 of 4 worn') f('the Record reads "' + o.record + '"');
@@ -60,6 +66,6 @@ module.exports = {
     });
     if (r.fails.length) throw new Error(r.fails.join('; '));
     return ['one piece off, no set; all on, The Void worn in full (with its wake or its ball), said once: "' + r.said[0] + '"',
-      'rimmed in gold: ' + Object.values(r.tiles).join(', ') + '; the Divine too; the Record: Full Sets ' + r.record + '; a broken save repaired'];
+      'rimmed in gold: ' + Object.values(r.tiles).join(', ') + '; the Divine too; the score box edged in its colour; the Record: Full Sets ' + r.record + '; a broken save repaired'];
   }
 };

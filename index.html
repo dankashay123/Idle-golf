@@ -7172,8 +7172,10 @@ const clubNow   = () => previewOf('k') || styleDef('k', S.club) || B.CLUBS[0];
 // The four top sets (two Mythic, two Legendary), and what makes each whole:
 // its look, its caddie and its driver, with its wake or its ball in the one
 // place for either
-const FULL_SETS = { ascended: { n: 'Ascended', t: ['ascension', 'ascorb'] }, cosmic: { n: 'The Void', t: ['horizon', 'singularity'] },
-  divine: { n: 'Divine', t: ['seraph', 'godlight'] }, demonic: { n: 'Demonic', t: ['hellfire', 'demoneye'] } };
+// (rim: the colour the score box is edged in while he wears it whole)
+const FULL_SETS = { ascended: { n: 'Ascended', t: ['ascension', 'ascorb'], rim: '#F2A6F8' },
+  cosmic: { n: 'The Void', t: ['horizon', 'singularity'], rim: '#C9B0FF' },
+  divine: { n: 'Divine', t: ['seraph', 'godlight'], rim: '#FFE38A' }, demonic: { n: 'Demonic', t: ['hellfire', 'demoneye'], rim: '#FF8A3A' } };
 function fullSetOf(k, id){ for(const s in FULL_SETS) if(k === 't' ? FULL_SETS[s].t.includes(id) : id === s) return s; return null; }
 // the top set he wears in full (never while trying one on)
 function fullSet(){
@@ -18179,7 +18181,11 @@ function renderReadout(D){
   const ro = $$('readout'), st = $$('rStrip');
   const rc = accent || 'var(--brass)';
   if(ro._rc !== rc && ro.style.setProperty){ ro._rc = rc; ro.style.setProperty('--rc', rc); }
-  setSty(ro, 'borderColor', accent ? accent + '55' : '');
+  // a top set worn whole edges the box in its colour, as its pieces are
+  // rimmed in the shop (a wager's own colour comes first)
+  const FS = !accent && !PREVIEW ? fullSet() : null;
+  setSty(ro, 'borderColor', accent ? accent + '55' : FS ? FULL_SETS[FS].rim : '');
+  setSty(ro, 'boxShadow', FS ? 'inset 0 0 0 1px ' + FULL_SETS[FS].rim : '');
   setSty($$('rBig'), 'color', accent || '');
   if(!strip){ if(!st.hidden) st.hidden = true; return; }
   if(st.hidden) st.hidden = false;
