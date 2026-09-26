@@ -9,6 +9,11 @@
  *   - the Divine, with its ball, is a full set too
  *   - the score box is edged in the set's colour while it is worn whole
  *   - a broken value in a save is cleared on load
+ *   - the four sets keep one order on every rack (the Ascended was first on
+ *     one and second on the next: the user saw it)
+ *   - Sets (the user asked): one tap buys what of a set is missing, for what
+ *     those pieces cost, and wears it whole; too few sovereigns buys
+ *     nothing; owned, it is worn for nothing
  */
 'use strict';
 module.exports = {
@@ -52,6 +57,29 @@ module.exports = {
         const want = { golfer: 'The Void:FULL SET', caddie: 'The Void Caddie:FULL SET', clubs: 'Eclipse Driver:FULL SET', balls: 'Singularity:FULL SET,Event Horizon:FULL SET' };
         for (const k in want) if (o.tiles[k] !== want[k]) f('the ' + k + ' rack rims ' + JSON.stringify(o.tiles[k]) + ' (want ' + want[k] + ')');
         if (o.record !== '2 of 4 worn') f('the Record reads "' + o.record + '"');
+        // one order on every rack: the four sets' pieces, as the racks show them
+        QUIET = false; o.orders = {};
+        for (const cat of ['golfer', 'caddie', 'clubs', 'balls']) { styleCat = cat; openShop('style');
+          const names = [...document.querySelectorAll('#sheet .card .chd')].map(e => e.textContent);
+          o.orders[cat] = names.filter(n => /Ascend|Void|Eclipse|Horizon|Singularity|Divin|Seraph|Godlight|Demon|Hellfire/.test(n)).slice(0, 4).join(', '); }
+        hideSheet();
+        const setOf = n => /Ascend/.test(n) ? 'A' : /Void|Eclipse|Horizon|Singularity/.test(n) ? 'V' : /Divin|Seraph|Godlight/.test(n) ? 'D' : 'M';
+        for (const cat in o.orders) { const seq = o.orders[cat].split(', ').map(setOf).join('');
+          if (seq !== 'AVDM') f('the ' + cat + ' rack puts the sets ' + o.orders[cat]); }
+        // Sets: buy the Divine whole with one piece already owned, too poor first
+        QUIET = true;
+        for (const k of ['o:divine', 'c:divine', 'k:divine', 't:seraph', 't:godlight']) delete S.styleOwn[k];
+        S.styleOwn['c:divine'] = 1; S.outfit = 'classic'; S.caddie = 'bib'; S.club = 'steel'; S.trail = 'plain';
+        const need = ['o:divine', 'k:divine', 't:seraph', 't:godlight'].map(k => styleDef(k[0], k.slice(2)).cost).reduce((a, b) => a + b, 0);
+        o.cost = setCost('divine');
+        S.sov = need - 1; setBuy('divine'); o.poor = S.sov + ' ' + S.outfit + ' ' + !!S.styleOwn['o:divine'];
+        S.sov = need + 100; setBuy('divine'); o.paid = need + 100 - S.sov;
+        o.worn = fullSet() + ' ' + S.trail;
+        S.outfit = 'classic'; const sov0 = S.sov; setBuy('divine'); o.again = (sov0 - S.sov) + ' ' + fullSet();
+        if (o.cost !== need) f('the Divine set, the caddie owned, costs ' + o.cost + ' (its missing pieces are ' + need + ')');
+        if (o.poor !== (need - 1) + ' classic false') f('too few sovereigns: ' + o.poor);
+        if (o.paid !== need || o.worn !== 'divine seraph') f('bought whole it took ' + o.paid + ' (need ' + need + ') and wore ' + o.worn);
+        if (o.again !== '0 divine') f('owned, wearing it again took ' + o.again);
         // a broken save
         const saved = JSON.parse(JSON.stringify(S)); saved.fullSets = { cosmic: 1, blossom: 1, ascended: 'x', demonic: 1 };
         Object.keys(S).forEach(k => delete S[k]); Object.assign(S, saved); initState();
@@ -66,6 +94,6 @@ module.exports = {
     });
     if (r.fails.length) throw new Error(r.fails.join('; '));
     return ['one piece off, no set; all on, The Void worn in full (with its wake or its ball), said once: "' + r.said[0] + '"',
-      'rimmed in gold: ' + Object.values(r.tiles).join(', ') + '; the Divine too; the score box edged in its colour; the Record: Full Sets ' + r.record + '; a broken save repaired'];
+      'rimmed in gold: ' + Object.values(r.tiles).join(', ') + '; one set order on every rack (' + r.orders.golfer + '); Sets buys the missing pieces (' + r.cost + ') and wears them whole; the Divine too; the score box edged in its colour; the Record: Full Sets ' + r.record + '; a broken save repaired'];
   }
 };

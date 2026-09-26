@@ -626,6 +626,12 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
   color:var(--dim);font-size:var(--f1);letter-spacing:.08em;text-transform:uppercase;font-weight:700}
 .catnav button.on{color:var(--ink);background:var(--brass);border-color:var(--brass)}
 .catnav.c3{grid-template-columns:repeat(3,1fr)}
+/* five racks across (Sets the fifth): the words a little tighter to fit 320 */
+.catnav.c5{grid-template-columns:repeat(5,1fr);gap:4px}
+.catnav.c5 button{letter-spacing:.06em}
+/* a set's other pieces, small, under him */
+.setpcs{display:flex;gap:4px;justify-content:center;flex-wrap:wrap}
+.setpcs img{width:24px;height:24px;image-rendering:pixelated;image-rendering:crisp-edges}
 .freebar{border:1px solid var(--r5);background:rgba(166,107,245,.10);padding:7px 9px;margin-bottom:10px;
   font-size:var(--f1);color:var(--chalk);line-height:1.5}
 .freebar b{color:var(--r5)}
@@ -7238,12 +7244,38 @@ const clubNow   = () => previewOf('k') || styleDef('k', S.club) || B.CLUBS[0];
 const FULL_SETS = { ascended: { n: 'Ascended', t: ['ascension', 'ascorb'], rim: '#F2A6F8' },
   cosmic: { n: 'The Void', t: ['horizon', 'singularity'], rim: '#C9B0FF' },
   divine: { n: 'Divine', t: ['seraph', 'godlight'], rim: '#FFE38A' }, demonic: { n: 'Demonic', t: ['hellfire', 'demoneye'], rim: '#FF8A3A' } };
+// the one order the four sets keep on every rack of the shop, and on Sets
+// (each rack kept its own list's order, so the Ascended was first on one
+// and second on the next: the user saw it)
+const SET_ORDER = ['ascended', 'cosmic', 'divine', 'demonic'];
+const setRank = (k, id) => { const i = SET_ORDER.indexOf(fullSetOf(k, id)); return i < 0 ? 99 : i; };
 function fullSetOf(k, id){ for(const s in FULL_SETS) if(k === 't' ? FULL_SETS[s].t.includes(id) : id === s) return s; return null; }
 // the top set he wears in full (never while trying one on)
 function fullSet(){
   for(const s in FULL_SETS) if(S.outfit === s && S.caddie === s && S.club === s && FULL_SETS[s].t.includes(S.trail)
     && styleOwned('o', s) && styleOwned('c', s) && styleOwned('k', s) && styleOwned('t', S.trail)) return s;
   return null;
+}
+// A whole set at a tap (the user asked): its look, caddie, driver, wake and
+// ball; what it costs is what of it is not owned yet
+const setPieces = s => [['o', s], ['c', s], ['k', s], ['t', FULL_SETS[s].t[0]], ['t', FULL_SETS[s].t[1]]];
+const setCost = s => setPieces(s).filter(([k, id]) => !styleOwned(k, id)).reduce((a, [k, id]) => a + styleDef(k, id).cost, 0);
+// bought whole if any of it is missing, then worn whole: his wake or ball
+// stays if it is the set's, else the wake
+function setBuy(s){
+  const cost = setCost(s);
+  if(cost > 0){
+    if(!spendSov(cost)) return;
+    for(const [k, id] of setPieces(s)) S.styleOwn[k + ':' + id] = 1;
+    toast('<b>' + FULL_SETS[s].n + '</b> set is yours');
+    Sfx.play('buy');
+  }
+  PREVIEW = null;
+  S.outfit = s; S.caddie = s; S.club = s;
+  if(!FULL_SETS[s].t.includes(S.trail)) S.trail = FULL_SETS[s].t[0];
+  buildSprites();
+  if(!S.fullSets[s]){ S.fullSets[s] = 1; toast('Full Set \u00b7 <b>' + FULL_SETS[s].n + '</b>'); }
+  renderShop(); renderVitals();
 }
 function styleTry(k, id){
   const d = styleDef(k, id); if(!d) return;
@@ -7529,13 +7561,25 @@ function renderShop(){
     };
     const shelf = (title, k, list, url) => list.length
       ? ribbon(title) + '<div class="sgrid c3">'
-        + list.slice().sort((a, b) => (b.top || 0) - (a.top || 0)).map(d => card(k, d, url(d))).join('') + '</div>' : '';
+        + list.slice().sort((a, b) => (b.top || 0) - (a.top || 0) || setRank(k, a.id) - setRank(k, b.id)).map(d => card(k, d, url(d))).join('') + '</div>' : '';
     // one rack at a time, picked along the top
-    const cats = [['golfer', 'Golfer'], ['caddie', 'Caddie'], ['clubs', 'Clubs'], ['balls', 'Balls']];
-    h += '<div class="catnav">' + cats.map(([id, t]) => '<button data-cat="' + id + '"'
+    const cats = [['golfer', 'Golfer'], ['caddie', 'Caddie'], ['clubs', 'Clubs'], ['balls', 'Balls'], ['sets', 'Sets']];
+    h += '<div class="catnav c5">' + cats.map(([id, t]) => '<button data-cat="' + id + '"'
         + (styleCat === id ? ' class="on"' : '') + '>' + t + '</button>').join('') + '</div>'
       + '<div class="shopnote">Looks only. Nothing here changes a stat.</div>';
-    if(styleCat === 'golfer')
+    if(styleCat === 'sets'){
+      // each set whole: him in it, its other four pieces small under him
+      h += ribbon('Sets') + '<div class="sgrid c2">' + SET_ORDER.map(s => {
+        const O = styleDef('o', s), cost = setCost(s), worn = FS === s;
+        const pcs = [caddieUrl(styleDef('c', s)), clubUrl(styleDef('k', s))].concat(FULL_SETS[s].t.map(id => trailUrl(styleDef('t', id))))
+          .map(u => '<img src="' + u + '" alt="">').join('');
+        return shopCard({ img: outfitUrl(O), full: worn, on: true, badge: worn ? 'FULL SET' : O.top > 1 ? 'MYTHIC' : 'LEGENDARY',
+          head: FULL_SETS[s].n, sub: '<div class="setpcs">' + pcs + '</div>',
+          price: worn ? 'WORN' : cost ? sovFmt(cost) : 'WEAR', note: worn || !cost ? '' : B.SOV.toLowerCase(),
+          cls: worn ? 'max' : !cost || (S.sov || 0) >= cost ? '' : 'no', act: 'set:' + s });
+      }).join('') + '</div>';
+    }
+    else if(styleCat === 'golfer')
       h += shelf('Skins', 'o', B.OUTFITS.filter(o => o.cat === 'skin'), outfitUrl)
         // the funny ones and the plain shirts are all outfits: one shelf, the
         // funny ones first
@@ -7624,6 +7668,7 @@ function renderShop(){
       else if(kind === 'member') buyMember();
       else if(kind === 'boost') buyBoost();
       else if(kind === 'style'){ const [k, sid] = id.split('.'); styleBuy(k, sid); }
+      else if(kind === 'set') setBuy(id);
     };
   });
 }
