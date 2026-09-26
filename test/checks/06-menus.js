@@ -30,6 +30,29 @@ module.exports = {
       if (!await page.$('#v-' + t + '.on')) throw new Error('tab ' + t + ' did not open its view');
     }
 
+    // The Tour tab in four sub tabs (the user found it too long to scroll):
+    // each shows its own sections and no other, and a new card waiting
+    // opens the tab on the cards whatever was looked at last
+    const tour = await page.evaluate(() => {
+      const bits = { card: ['tierBox', 'cardBox'], season: ['seasonBox'], maj: ['majBox'], sig: ['sigBox'] }, bad = [];
+      const shown = id => { const e = $(id); return !!e && !!e.offsetParent; };
+      setView('tour');
+      const subs = [...$('tourNav').querySelectorAll('.sub')];
+      if (subs.map(b => b.textContent).join('/') !== 'Card/Season/Major/Signature') bad.push('sub tabs read ' + subs.map(b => b.textContent).join('/'));
+      for (const b of subs) {
+        b.click();
+        for (const k in bits) for (const id of bits[k]) if (shown(id) !== (k === b.dataset.s)) bad.push(b.textContent + ': ' + id + (shown(id) ? ' shown' : ' hidden'));
+        if (!$('tourNav').querySelector('.sub.on') || $('tourNav').querySelector('.sub.on').dataset.s !== b.dataset.s) bad.push(b.textContent + ' not marked on');
+      }
+      setView('bag'); S.cardSeen = (S.tierMax || 0) - 1; setView('tour');
+      if (tourSub !== 'card' || !shown('tierBox')) bad.push('a new card waiting did not open the tab on Card');
+      tourSub = 'sig'; setView('bag'); setView('tour');
+      if (tourSub !== 'sig') bad.push('a visit with nothing new did not keep the sub tab');
+      tourSub = 'card'; renderTour();
+      return bad;
+    });
+    if (tour.length) throw new Error('the Tour tab\'s sub tabs: ' + tour.join('; '));
+
     // the retired names still land somewhere sensible
     const skl = await page.evaluate(() => { setView('skl'); return [view, bagSub, !$('bagShots').hidden]; });
     if (skl[0] !== 'bag' || skl[1] !== 'shots' || !skl[2]) throw new Error('setView("skl") went to ' + skl);

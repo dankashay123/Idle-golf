@@ -459,9 +459,10 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
 .lvno{font-family:var(--disp);font-size:var(--f5);letter-spacing:.01em}
 .lvxp{font-family:var(--mono);font-size:var(--f1);color:var(--faint)}
 #lvBox .bar{margin-top:8px;height:5px}
-#bagNav,#careerNav,#rangeNav{display:flex;overflow-x:auto;gap:0;background:var(--panel);border-bottom:var(--hair);
+#bagNav,#careerNav,#rangeNav,#tourNav{display:flex;overflow-x:auto;gap:0;background:var(--panel);border-bottom:var(--hair);
   -webkit-overflow-scrolling:touch;scrollbar-width:none}
-#bagNav::-webkit-scrollbar,#careerNav::-webkit-scrollbar,#rangeNav::-webkit-scrollbar{display:none}
+#bagNav::-webkit-scrollbar,#careerNav::-webkit-scrollbar,#rangeNav::-webkit-scrollbar,#tourNav::-webkit-scrollbar{display:none}
+#v-tour #tourNav{position:sticky;top:0;z-index:4}
 /* the caddie's timer, under his perk's row: how long to the next lift */
 .cadbar{height:3px;background:#0D1D14;margin-top:5px;overflow:hidden}
 .cadbar i{display:block;height:100%;background:var(--aurora)}
@@ -969,16 +970,25 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
     </div>
 
     <div class="view" id="v-tour">
+      <div id="tourNav"></div>
+      <div id="tourCard">
       <div class="band"><span class="eyebrow">Tour Card</span><span class="note" id="tierNote"></span></div>
       <div id="tierBox"></div>
       <div class="band"><span class="eyebrow">The Card</span><span class="note" id="cardNote"></span></div>
       <div id="cardBox"></div>
+      </div>
+      <div id="tourSeason" hidden>
       <div class="band"><span class="eyebrow" id="seasonHead">Season</span><span class="note" id="seasonNote"></span></div>
       <div id="seasonBox"></div>
+      </div>
+      <div id="tourMaj" hidden>
       <div class="band"><span class="eyebrow">Major of the Week</span><span class="note" id="majNote"></span></div>
       <div id="majBox"></div>
+      </div>
+      <div id="tourSig" hidden>
       <div class="band"><span class="eyebrow">Signature Week</span><span class="note" id="sigNote"></span></div>
       <div id="sigBox"></div>
+      </div>
     </div>
 
     <div class="view" id="v-career">
@@ -17159,6 +17169,7 @@ function renderDgn(){
 
 /* ---- tour ---- */
 function renderTour(){
+  renderTourNav();
   const D = derive();
   const t = tournamentOf(S.hole);
   const played = holesPlayed(S.hole);
@@ -17588,7 +17599,8 @@ function setView(v){
   if(v === 'upg') renderRangeNav();
   if(v === 'dgn') renderDgn();
   // Looking at it is what clears the flash on the tab.
-  if(v === 'tour'){ S.cardSeen = S.tierMax || 0; renderTour(); renderTourTab(); }
+  // (a new card waiting is what the tab's flash is for: it opens on it)
+  if(v === 'tour'){ if(cardWaiting()) tourSub = 'card'; S.cardSeen = S.tierMax || 0; renderTour(); renderTourTab(); }
   if(v === 'career'){ renderLegacy(); renderCareer(); }
   $('panel').scrollTop = 0;
 }
@@ -17604,6 +17616,25 @@ function renderRangeNav(){
   $('rangeUpg').hidden = rangeSub !== 'upg';
   $('rangeCad').hidden = rangeSub !== 'cad';
   if(rangeSub === 'cad') renderCadPerks();
+}
+// The Tour tab in four (the user found it too long to scroll): the cards,
+// the season, the major of the week and the signature week.
+let tourSub = 'card';
+function renderTourNav(){
+  const n = $('tourNav'); if(!n) return;
+  const subs = [['card', 'Card'], ['season', 'Season'], ['maj', 'Major'], ['sig', 'Signature']];
+  const key = tourSub;
+  if(n._k !== key){
+    n._k = key;
+    n.innerHTML = subs.map(([id, t]) =>
+      '<button class="sub' + (tourSub === id ? ' on' : '') + '" data-s="' + id + '">' + t + '</button>').join('');
+    n.querySelectorAll('.sub').forEach(b =>
+      b.onclick = () => { tourSub = b.dataset.s; renderTourNav(); $('panel').scrollTop = 0; });
+  }
+  $('tourCard').hidden   = tourSub !== 'card';
+  $('tourSeason').hidden = tourSub !== 'season';
+  $('tourMaj').hidden    = tourSub !== 'maj';
+  $('tourSig').hidden    = tourSub !== 'sig';
 }
 const cperkDef = id => B.CPERKS.find(x => x.id === id);
 // the Mythic Favour: worn only with the Divine, Demonic or Ascended caddie

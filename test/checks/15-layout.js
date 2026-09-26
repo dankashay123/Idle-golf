@@ -90,6 +90,7 @@ module.exports = {
       for (const v of ['upg', 'bag', 'dgn', 'tour', 'career']) { setView(v); sweep('panel', v); }
       setView('bag'); bagSub = 'sets'; renderBagNav(); renderBag(); sweep('panel', 'sets'); bagSub = 'shots'; renderBag(); renderSkillsTab(); sweep('panel', 'shots');
       bagSub = 'gear'; renderBag();
+      for (const s of ['card', 'season', 'maj', 'sig']) { setView('tour'); tourSub = s; renderTour(); sweep('panel', 'tour/' + s); } tourSub = 'card'; renderTour();
       for (const sub of ['stats', 'tal', 'para', 'leg']) {
         careerSub = sub; setView('career'); renderCareer(); sweep('panel', 'career/' + sub);
       }
@@ -363,6 +364,7 @@ module.exports = {
       for (const v of ['upg', 'bag', 'dgn', 'tour', 'career']) { setView(v); scan(); }
       setView('bag'); bagSub = 'sets'; renderBagNav(); scan(); bagSub = 'shots'; renderBagNav(); scan();
       bagSub = 'gear'; renderBagNav();
+      for (const s of ['card', 'season', 'maj', 'sig']) { setView('tour'); tourSub = s; renderTour(); scan(); } tourSub = 'card'; renderTour();
       setView('career');
       for (const sub of ['stat', 'tal', 'para', 'leg']) {
         const btn = [...document.querySelectorAll('#careerNav button')]

@@ -43,6 +43,7 @@ module.exports = { name: 'titles', async run(page) {
     sweep('stage');
     for (const v of ['upg', 'bag', 'dgn', 'tour', 'career']) { setView(v); sweep(v); }
     setView('bag'); bagSub = 'sets'; renderBagNav(); sweep('bag/sets'); bagSub = 'shots'; renderBagNav(); sweep('bag/shots'); bagSub = 'gear'; renderBagNav();
+    for (const s of ['card', 'season', 'maj', 'sig']) { setView('tour'); tourSub = s; renderTour(); sweep('tour/' + s); } tourSub = 'card'; renderTour();
     setView('career');
     for (const sub of ['stat', 'tal', 'para', 'leg']) { const b = [...document.querySelectorAll('#careerNav button')].find(x => x.dataset.s === sub); if (b) { b.click(); sweep('career/' + sub); } }
     for (const sub of ['offers', 'bags', 'perm', 'style']) { openShop(sub); sweep('shop/' + sub); }
