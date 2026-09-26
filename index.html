@@ -833,6 +833,15 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
   #saverBox{max-width:660px;flex-direction:row;align-items:center;gap:24px}
   .svCol{flex:1 1 0;min-width:0}
 }
+/* Leaving a wager: top right of the field while one is played (the user
+   asked), the toasts stepping down under it. A tap asks, a second leaves. */
+#leaveBtn{position:absolute;right:2.2%;top:2.5%;z-index:31;display:flex;align-items:center;gap:5px;
+  min-height:28px;padding:3px 8px 3px 5px;background:rgba(8,18,12,.85);border:1px solid var(--line);color:var(--chalk);
+  font-size:var(--f1);letter-spacing:.08em;text-transform:uppercase;font-weight:700;pointer-events:auto;cursor:pointer}
+#leaveBtn[hidden]{display:none}
+#leaveBtn.ask{border-color:var(--flag);color:var(--flag)}
+#leaveIcon{display:block;width:24px;height:24px;image-rendering:pixelated;image-rendering:crisp-edges}
+#stage.wager #toasts{top:calc(2.5% + 38px)}
 #toasts{position:absolute;right:2%;top:2%;display:flex;flex-direction:column;
   align-items:flex-end;gap:3px;pointer-events:none;z-index:30;max-width:38%}
 .toast{background:rgba(8,18,12,.9);border:1px solid var(--line);border-radius:0;
@@ -912,6 +921,7 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
     <button id="roomBtn" aria-label="Trophy Room"><img id="roomIcon" alt=""><span id="roomDot"></span></button>
     <button id="perkBtn" aria-label="Sponsor perks"><img id="perkIcon" alt=""><span id="perkDot"></span></button>
     </div>
+    <button id="leaveBtn" hidden aria-label="Leave the wager"><img id="leaveIcon" alt=""><span id="leaveTxt">Leave</span></button>
     <div id="toasts"></div>
   </div>
 
@@ -1196,6 +1206,9 @@ const B = {
     // rather than what a shop looks like from the path.
     gear: ['.....XX.....','..X.XXXX.X..','.XXXXwwXXXX.','..XXw..wXX..','.XXw....wXX.','XXXw....wXXX',
            'XXXx....xXXX','.XXx....xXX.','..XXx..xXX..','.XXXXxxXXXX.','..X.XXXX.X..','.....XX.....'],
+    // a door with the way out beside it: leaving a wager
+    leave: ['XXXXXX......','XwwwwX......','XwXXwX..X...','XwXXwX..XX..','XwXXXXXXXXX.','XwXowwwwwwXX',
+            'XwXXXXXXXXX.','XwXXwX..XX..','XwXXwX..X...','XwXXwX......','XwwwwX......','XXXXXX......'],
     balls3: ['............','....XXXX....','...XwwXXx...','...XwXXXx...','....xxxx....','.XXXX..XXXX.',
              'XwwXXxXwwXXx','XwXXXxXwXXXx','XXXXXxXXXXXx','.xxxx..xxxx.','............','............'],
     dusk: ['.......XXX..','.....XXw....','.....Xw.....','.....Xw.....','.....XXw....','.......XXX..',
@@ -5652,6 +5665,26 @@ function tickDgn(dt, D){
   }
 }
 
+// Leaving a wager part way: what it has won so far is paid as its end would
+// pay it (the Island Green banks its pot as it stands).
+function leaveDgn(){
+  const R = S.dgnRun; if(!R) return;
+  const b = $('leaveBtn');
+  if(b && !b.classList.contains('ask')){
+    b.classList.add('ask'); setText($('leaveTxt'), 'Sure?');
+    clearTimeout(leaveDgn._t); leaveDgn._t = setTimeout(() => { b.classList.remove('ask'); setText($('leaveTxt'), 'Leave'); }, 2500);
+    return;
+  }
+  if(b){ b.classList.remove('ask'); setText($('leaveTxt'), 'Leave'); }
+  if(R.mode === 'island' && !R.dead) R.banked = true;
+  endDgn(B.DGN.find(x => x.id === R.id), R, derive());
+}
+function renderLeave(){
+  const b = $('leaveBtn'); if(!b) return;
+  const on = !!S.dgnRun;
+  if(b.hidden === on){ b.hidden = !on; $('stage').classList.toggle('wager', on); }
+  if(!b._built){ b._built = 1; $('leaveIcon').src = pixUrl('leave', '#DFE9DC'); b.onclick = leaveDgn; }
+}
 function endDgn(d, R, D){
   S.dgnRun = null;
   const stats = [];
@@ -17112,6 +17145,7 @@ function renderLive(D){
   renderNine();
   renderReadout(D || derive());
   renderStageBtns(true);
+  renderLeave();
   setText($('gold'), fmt(S.gold));
   setText($('rate'), fmt(Meter.rate()) + ' purse/sec');
   setText($('sovNum'), sovFmt(S.sov));
