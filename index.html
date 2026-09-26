@@ -8910,9 +8910,9 @@ const GALLERY_UP = 1.5;
 const STAND_D = 13.5, STAND_W = 12, STAND_CACHE = [], STAND_CHEER = 2.4;
 // cheer: 0 seated; 1 or 2 on their feet, arms up in turn. At night lamps on
 // posts over the roof, and the seats lit under them.
-function standCv(sh, full, night, seed, cheer, frost){
+function standCv(sh, full, night, seed, cheer, frost, rain){
   cheer = cheer || 0;
-  const key = sh + '|' + full + '|' + (night ? 1 : 0) + '|' + seed + '|' + cheer + '|' + (frost ? 1 : 0);
+  const key = sh + '|' + full + '|' + (night ? 1 : 0) + '|' + seed + '|' + cheer + '|' + (frost ? 1 : 0) + '|' + (rain ? 1 : 0);
   const hit = STAND_CACHE.find(e => e.key === key);
   if(hit) return hit.cv;
   const th = Math.max(2, Math.round(sh * 0.62)), R = 5, plinth = Math.max(2, Math.round(th * 0.9));
@@ -8929,6 +8929,7 @@ function standCv(sh, full, night, seed, cheer, frost){
   g.fillStyle = dk('#27313A'); g.fillRect(0, roof, W, top - roof + 1);
   const sp = spectSpr(0, 0, night), sw = Math.max(1, Math.round(sh * sp.w / sp.h)), pitch = sw + Math.max(1, Math.round(sw * 0.3));
   const aisle = [Math.round(W / 3), Math.round(W * 2 / 3)], aw = Math.max(1, Math.round(sw * 0.8));
+  const umbs = [];
   for(let r = R - 1; r >= 0; r--){
     const y = H - plinth - (r + 1) * th;
     g.fillStyle = dk(r & 1 ? '#56606A' : '#4B555F'); g.fillRect(0, y, W, th);   // the step
@@ -8946,9 +8947,13 @@ function standCv(sh, full, night, seed, cheer, frost){
       // and arms up, every other fan in turn
       if(cheer && ((i + r) & 1) === cheer - 1){ const ak = Math.max(1, Math.round(sw / 5)), ah = Math.max(2, Math.round(sh * 0.32));
         g.fillStyle = night ? PX.skin2 : PX.skin; g.fillRect(x, fy + Math.round(sh * 0.3) - ah, ak, ah); g.fillRect(x + sw - ak, fy + Math.round(sh * 0.3) - ah, ak, ah); }
+      // in the rain the front rows, out from under the roof, put umbrellas up
+      else if(rain && r < 2 && sh >= 5 && hr(seed * 17 + r * 7 + i, 412) < 0.7) umbs.push([x + sw / 2, fy, sw, Math.floor(hr(seed + r * 3 + i, 413) * 6)]);
     }
     g.fillStyle = dk('#6E7880'); g.fillRect(0, y + th - Math.max(1, Math.round(th * 0.4)), W, Math.max(1, Math.round(th * 0.4)));   // the bench
   }
+  // (the umbrellas over them after all the rows, so a row behind never covers one)
+  for(const [ux, uy, uw, ci] of umbs) drawUmbrella(g, ux, uy, uw, sh, ci, night);
   // the aisles' steps, pale, from the wall to the top
   g.fillStyle = dk('#B7BEC3');
   for(const a of aisle) for(let r = 0; r < R; r++) g.fillRect(a - (aw >> 1), H - plinth - (r + 1) * th, aw, Math.max(1, th >> 1));
@@ -9049,6 +9054,28 @@ function clubhouseCv(sh, night, side, seed, lit, frost){
   CLUB_CACHE.unshift({ key, cv });
   if(CLUB_CACHE.length > 8) CLUB_CACHE.pop();
   return cv;
+}
+// An umbrella over a spectator's head in the rain (the user asked): a dome
+// of colour in panels, lit along its top, its ribs' tips darker, on a thin
+// shaft down to the hand. w is the spectator's width, hy the top of the head.
+const UMB_COLS = ['#C8323A', '#2A4A8A', '#E8C040', '#F2F2F2', '#6A3A8A', '#2E8A5A'];
+function drawUmbrella(c, cx, hy, w, h, ci, night){
+  const col0 = UMB_COLS[ci % UMB_COLS.length], col = night ? mixC(col0, '#0B1118', 0.45) : col0;
+  const dark = mixC(col, '#000000', 0.35), lite = mixC(col, '#FFFFFF', 0.35);
+  const R = Math.max(2, Math.round(w * 1.1)), ch = Math.max(2, Math.round(R * 0.55)), top = Math.round(hy - ch - Math.round(h * 0.04));
+  const X = Math.round(cx), sw = Math.max(1, Math.round(w / 7));
+  // the shaft, from under the dome down to his hand
+  c.fillStyle = night ? '#1E2226' : '#3A3A3A'; c.fillRect(X, top + ch, sw, Math.max(1, Math.round(hy + h * 0.4 - top - ch)));
+  for(let y = 0; y < ch; y++){
+    const u = (ch - y) / ch, hw = Math.max(1, Math.round(R * Math.sqrt(Math.max(0, 1 - u * u * 0.85))));
+    for(let x = -hw; x <= hw; x++){
+      const panel = Math.floor((x + R) / Math.max(1, Math.round(R * 0.66))) & 1;
+      c.fillStyle = y === 0 || (y === 1 && x < 0) ? lite : panel && ci % 3 === 0 ? '#F2F2F2' : col;
+      if(y === ch - 1 && (x & 1)) c.fillStyle = dark;
+      c.fillRect(X + x, top + y, 1, 1);
+    }
+  }
+  c.fillStyle = dark; c.fillRect(X, top - 1, 1, 1);
 }
 function spectSpr(ci, pose, night){
   const key = ci + '|' + pose + '|' + (night ? 1 : 0);
@@ -15901,7 +15928,7 @@ Object.assign(Scene, {
       if(sh < 3) return;
       // (standing and waving through the cheer, two poses a quarter second each)
       const ch = this.cheerT !== undefined && this.t - this.cheerT >= 0 && this.t - this.cheerT < STAND_CHEER ? 1 + (Math.floor((this.t - this.cheerT) * 4) & 1) : 0;
-      const cv = standCv(sh, p.full, night, p.k, ch, !!this.frost);
+      const cv = standCv(sh, p.full, night, p.k, ch, !!this.frost, !!this.rain);
       const w = cv.width;
       if(pr.x + w / 2 < -2 || pr.x - w / 2 > VW + 2) return;
       c.drawImage(cv, Math.round(pr.x - w / 2), pr.y - cv.height);
@@ -15955,6 +15982,8 @@ Object.assign(Scene, {
       c.fillStyle = 'rgba(8,16,10,.26)';
       c.fillRect(pr.x - Math.round(w/2), pr.y - 1, w, 1);
       blit(c, spr, pr.x - w/2, pr.y - h, w, h);
+      // in the rain most of them have an umbrella up
+      if(this.rain && h >= 5 && hr(p.p * 97 + p.c, 410) < 0.75) drawUmbrella(c, pr.x + w * 0.1, pr.y - h, w, h, Math.floor(hr(p.p * 31, 411) * 6), night);
     }
   },
 
