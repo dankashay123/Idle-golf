@@ -128,6 +128,7 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
 #nineGoal{color:var(--dim);text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
   letter-spacing:.06em;text-transform:none;font-weight:400;font-size:var(--f1)}
 #nineGoal b{color:var(--aurora);font-weight:600}
+#nineGoal{pointer-events:auto}
 #nineGoal.done{color:var(--aurora)}
 #nineScore{font-family:var(--mono);color:var(--brass);white-space:nowrap}
 
@@ -5822,6 +5823,14 @@ function nineProgress(){
   else if(goal.k === 'allunder') have = (N.allUnder && N.n === 9) ? 1 : 0;
   else have = N[goal.k] || 0;
   return { have, need: goal.v, goal };
+}
+// What the nine's goal is, for a tap on it: done within these nine holes,
+// and what it pays.
+function nineGoalTip(){
+  const p = nineProgress(), r = p.goal.r;
+  const pay = r.k === 'purse' ? r.v + ' holes of purse' : r.k === 'tick' ? r.v + '\u00a0' + (r.v > 1 ? 'tickets' : 'ticket')
+    : fmt(r.v, 0) + '\u00a0' + (r.k === 'shard' ? 'shards' : r.k);
+  toast('<b>This nine\u2019s goal</b> \u00b7 ' + p.goal.n + ' in these nine holes \u00b7 pays ' + pay);
 }
 function resolveNine(){
   const N = S.nine; if(!N) return;
@@ -17045,7 +17054,10 @@ function renderNine(){
   const done = p.have >= p.need;
   setText($$('nineWhich'), (N.idx === 0 ? 'Front' : 'Back') + ' ' + N.n + '/9');
   const gEl = $$('nineGoal');
-  setHTML(gEl, p.goal.n + ' <b>' + Math.min(p.have, p.need) + '/' + p.need + '</b>');
+  // (named as the nine's goal: "An ace 0/1" alone read as a puzzle; a tap
+  // says what it is and what it pays)
+  setHTML(gEl, 'Goal: ' + p.goal.n + ' <b>' + Math.min(p.have, p.need) + '/' + p.need + '</b>');
+  if(!gEl._tap){ gEl._tap = 1; gEl.style.cursor = 'pointer'; gEl.onclick = nineGoalTip; }
   setCls(gEl, done ? 'done' : '');
   setText($$('nineScore'), (N.total === 0 ? 'E' : N.total > 0 ? '+' + N.total : N.total)
     + (S.bestNine !== undefined ? '  best ' + (S.bestNine === 0 ? 'E' : S.bestNine) : ''));
