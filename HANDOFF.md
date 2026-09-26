@@ -12,7 +12,7 @@ check is for.
   branch `claude/notes-review-9kshah`). Nothing is half-built and **no
   request is waiting**: the user's last message was all done (§5, the
   first sections).
-- `node test/run.js` passes all **74 checks** (about eleven minutes). Frost
+- `node test/run.js` passes all **79 checks** (about twelve minutes). Frost
   follows the real hour: after touching weather or colours, run it with
   `HOUR_FORCE` pinned to 8 and to 15 in a copy (`CLAUDE.md`).
 - **Only update this file and `CLAUDE.md` when the user asks.**
@@ -24,27 +24,31 @@ check is for.
 
 ### Recent work (sections in §5)
 
-- This session, newest first: the **Spirit Blossom** Mythic set (skin,
-  caddie, driver, wake, ball); the course banner kept under the readout;
-  the gallery's cheer stops at the next hole; Twilight putts drop in the
-  cup; trails a pixel thinner; **Dawn and Dusk** now also brings night from
-  9pm to 5am when on; the Island Green wager in a wider, brighter lake;
-  the wager calls small, in the interface's type; the gallery jumps and
-  waves on an eagle or better; frost on the new roofs; the Record in
-  folds; wager guides, a Leave button, "Helped by ..." over the shot
-  buttons; the wagers played from their own place (Twilight on the green,
-  the Vault walked); capitals on short lines; the ball stays on the map;
-  the nine's goal explained; the wind and weather words inside the
-  readout; a soft cheer from the grandstand on an event's last putt, lamps
-  on it at night; Better Season and Season Bests; crickets; a trick for
-  every caddie look; the clubhouse and the cup moments; the grandstand;
-  birds; Dawn and Dusk; the Tour tab in sub tabs; the upgrade result on
-  the club's sheet and smaller gear tiles.
+- This session, newest first: **The Void** made bulkier with void orbs,
+  and its caddie to match; the **railway rebuilt** (its rails stopped part
+  way on a wide screen; now a raised bed, sleepers and standing rails);
+  **the caddie's blessing in the caddie's own look** (all 15 looks with an
+  effect); **the shot that wins the hole comes down on the green**; a
+  **Full Set** reward for wearing a Mythic set whole; **umbrellas** in the
+  rain; **ambience** by the course (pines, the sea, a stream); **The Void**
+  (a dark cosmic set after the user's picture) **replaced the Spirit
+  Blossom**, which the user found "just a shirt basically".
+- Earlier this session: the course banner kept under the readout; the
+  gallery's cheer stops at the next hole; Twilight putts drop in the cup;
+  trails a pixel thinner; Dawn and Dusk brings night from 9pm to 5am; the
+  Island Green wager's lake; small wager calls; the gallery's jump; frost
+  on the new roofs; the Record in folds; wager guides, Leave and "Helped
+  by"; wagers from their own place; capitals on short lines; the ball on
+  the map; the nine's goal; the words in the readout; the grandstand, its
+  cheer and lamps; Better Season and Season Bests; crickets; a trick for
+  every caddie look; the clubhouse and the cup moments; birds; the Tour
+  tab in sub tabs; the upgrade result on the club's sheet.
 - **Turned down**: a station on the railway ("would take up too much
   time"); **a photo mode** and **trail flourishes**. Don't offer them again.
 - Older requests are in §6, one line each.
 - **Not yet heard back on** (ask one when it fits, never as a list): how
-  the Spirit Blossom looks on the phone; whether the second music track
+  the bulkier Void looks on the phone; whether the Full Set should count
+  the Divine and Demonic too (only the two Mythic sets do); whether the second music track
   and the town theme fit; the 2 min battery saver wait; the Mythic
   Favour's price (600) and strength (three lifts of 20%).
 - The user usually ends a task by asking **"What's next?"**: a short plain
@@ -68,7 +72,8 @@ check is for.
   sounds except ambience"). The crickets and birdsong are ambience. The
   one crowd sound is the grandstand's soft cheer on an event's **last**
   putt ("fine since it's not every hole"); the old applause on every hole
-  stays gone. The Spirit Blossom has no sound of its own.
+  stays gone. The Void has no sound of its own; the ambience (pines, the
+  sea, a stream) is the newest sound, quiet and now and then.
 - **The gallery's jump on an eagle or better** is silent, lasts 1.5s and
   stops when the next hole starts (it cheered on over the next tee).
 - **Dawn and Dusk** is off by default. On, it warms the sky by the
@@ -133,7 +138,7 @@ check is for.
 
 ## 3. The project
 
-- **The whole game is `index.html`** (about 20.3k lines, 2.5 MB with the
+- **The whole game is `index.html`** (about 20.9k lines, 2.5 MB with the
   sounds and the music): markup, CSS and one classic script. There is no
   build step.
 - Play it over http (`npm start`, then http://localhost:8080). Opening the
@@ -217,7 +222,13 @@ Line numbers are approximate and drift. Search for the name instead.
 | Golfer drawn at any size in the equipped look (the course and the saver share it) | `paintGolfer` |
 | Developer menu (hold the course name still for 1.5s) | `const DEV = {`. `DEV.course(i)` pins any course to the next event (a major of the week is set up as the major). The read panel shows the audio state and the auto-climb judgement; rows for the major of the week, the season, the cabinet, sound and music, the fairy, caddie perks, the new honours, and a frame-time readout (`DEV_FPS`) |
 | Main loop | `step()` |
-| **The Spirit Blossom set** | outfit/caddie `blossom`, club `blossom`, trails `petalwake` (`BALLFX.tBlossom`) and `blossombud`; `STYLEFX.blossom` (`coat`, `pins`, `fall`, `ground`, `wave`); `blossomCoat` (`COAT_PAL`, baked with `fxBake`), `blossomAt`, `petalAt`, `drawBud`, `blossomSigil`; pattern `sakura`; `CLUBFX.blossom`, `CUP_FX.blossombud`, `NIGHT_GLOW.blossom`, `ICON_FX.blossom`; its caddie trick `bloom`; in `MYTH_CADDIES`, and silent in `legendGo` |
+| **The Void set** (outfit/caddie `cosmic`, shown as "The Void") | club `cosmic` (Eclipse Driver), trails `horizon` (`BALLFX.tHorizon`) and `singularity`; `STYLEFX.cosmic` (`cloak`, `bulk`, `hands`, `rocks`, `hood` and `faulds` in `body`, `crescent`, `orb`, `miniOrb` for the caddie, `eye`, `pull`, `glints`, `ground`, `wave`); the `body` layer (after him, before his arms: in `paintGolfer`, the walk, `paintHeli` and the caddie); `voidHood` (`HOOD_SIDE`, `HOOD_BACK`), `voidCloak` (its `_stars`), `voidCrescent`, `voidHand` (`VHAND_ROWS`), `voidGalaxy`, `voidHole`, `voidOrb`, `voidStar`, `voidRock` (`VROCKS`), `beltOf` (`BELT_ADDR`, `BELT_FIN`), `VOID_PAL`; patterns `cosmos` and `greave` (outfit field `pantPattern`); outfit fields `bulk`, `arm`, `arm2`; `CUP_FX.singularity`; its trick `collapse` (`caddieSwirl`'s `pal`); saves with the old Spirit Blossom moved over in `initState` |
+| **Full Set** | `MYTH_SETS`, `fullSet()`, `fullSetOf`, `S.fullSets` (repaired in `initState`), the toast in `styleBuy`, `.card.full`, the Record's Mythic Sets row |
+| **Ambience** | `Sfx.ambOf`, `AMB_OF`, `AMB_VOL`, `Sfx.pines`, `Sfx.surf`, `Sfx.stream` (in `Sfx.tick`, `ambT`) |
+| **Umbrellas** | `drawUmbrella`, `UMB_COLS`; the gallery in `drawProp`, `standCv`'s `rain` |
+| **The caddie's blessing** | `Scene.drawBless`, `BLESS_FX` (by the caddie's `fx`), `blessBolt`, `DISCO_COLS` |
+| **The winning shot** | `Scene.aceNow`, `b.fin`/`b.lift0` in `drawBalls` (a ball in the air carried on to the green), the played-on shot when `restBall` is reached, `shortBall` in the camera's goal |
+| **The railway's track** | `drawRail`: ballast rows, stones, sleepers (`sT`), the boards, `rail(off)` in rows (`RT`, `RB`, `rw`) |
 | **The words in the readout** | `#rWx` (wind, weather, affinity), `Scene.hudWords`, `fitHudLeft` (the `row` mode for the icons) |
 | **Tour sub tabs** | `tourSub` ('card', 'season', 'maj', 'sig'), `renderTourNav`, `#tourNav` |
 | **Dawn and Dusk** | `S.dawnDusk`, `dawnDusk()` (its warmth by the hour), `clockNight()` (9pm to 5am, in `newHole`), the row in `settingsSheet`; `buildSky`'s key carries it |
@@ -431,7 +442,7 @@ Line numbers are approximate and drift. Search for the name instead.
    check the file's time before trusting it.
 
 36. **Look at a new skin at 8x before showing it.** The first Spirit
-   Blossom looked fine in code and cluttered on screen: a crown like a
+   Blossom (since replaced by The Void) looked fine in code and cluttered on screen: a crown like a
    headphone, a ribbon like a wire, confetti everywhere. Draw him with
    `paintGolfer` straight onto a small canvas at his real sizes (30, 48,
    60), in every pose (address, top, impact, finish, walking away, the
@@ -442,26 +453,88 @@ Line numbers are approximate and drift. Search for the name instead.
 38. **Home courses' 18ths are signature holes.** A check of something on
    the last hole (the grandstand) found nothing on a home course; pick
    the hole with `sigKind` in mind.
+39. **`pxLine` and `pxLineClip` stop after 400 steps.** A line from off one
+   edge of a wide stage to off the other ran out part way (the railway's
+   rails, on a phone on its side). Anything that spans the stage is drawn
+   in rows (`fillClip`) from the stage's edge, not stepped from off it.
+40. **The harness's stage is small and stops growing.** At one pixel to two
+   of a phone's, 390 wide is a 199px buffer, and no window makes it more
+   than about 329. A thing too small to draw there (a fan's umbrella in a
+   far stand) needs the camera closer, not a bigger window.
+41. **Rounding each part of something small up to a pixel makes it big.**
+   The rails' top, side, shadow and chairs each rounded to a pixel stood
+   three tall far off and hid a train. Far off, draw it as one line.
+42. **A name that matches another check runs both.** `node test/run.js
+   bless` ran the old `bless` and the new one; the new is `blessings`.
 
 ## 5. What the last features do (for debugging them)
 
-### The Spirit Blossom (user asked: "immaculate. No wings")
+### The Void (the user's picture of a dark cosmic sorcerer; then "bulkier")
 
-- Ivory silk shaded in blush with blossoms woven in (`sakura`), jade
-  trousers, a gold sash. A **haori** off his shoulders, baked per size and
-  frame: side on it streams behind him to a rose hem trimmed in gold with
-  blossoms on it; walking away it hangs down his back, over him, with a
-  blossom crest. Three blossoms on a gold pin in his hair with a short
-  swinging chain. A sakura ring on the grass (gold rim, blush inside, five
-  blossoms turning), a few petals fallen round it; four petals drifting
-  off him. A ring of petals on the strike; blossoms and petals bursting
-  from his outline on an albatross or an ace (half a second, silent).
-- The caddie: a blossom in its hair, petals drifting, its trick `bloom`.
-  The driver, the Petal Wake and the Blossom Bud (which blooms in the cup).
-  Prices: 3500, the caddie in proportion, 2350, 2350, 1750; all Mythic.
-- `blossom` holds it: the haori both ways, the pins, nothing far from him
-  across forty frames, no sound; `legends` holds its moment and its
-  driver's pure strike with the other three.
+- In place of the Spirit Blossom (found "just a shirt basically"). All of
+  him changes: a hood with a tall peak over his cap (`voidHood`, in the
+  `body` layer after him and before his arms), a gold mask for a face
+  (the outfit's skin) with one violet eye that flares like a star, a
+  black-hole orb on his chest in a heavy bronze ring with a violet point
+  under it, a gold crescent off his shoulder with an orb glowing in its
+  curve and a bronze plate over the shoulder (one each side walking
+  away), a pointed plate at his hip with a small orb, gold-banded greaves
+  (`pantPattern`), a cloak of stars to his heels, two ghostly cyan hands
+  behind him (either side walking away), rocks and two orbs circling him
+  on a tilted ring, a galaxy turning under his feet.
+- Bulkier (the user asked): `bulk` builds his outline out behind him in
+  dark plate from his own silhouette (two pixels at the chest and
+  shoulders, one at the legs), and his arms are a pixel thicker in dark
+  plate (`bulk`, `arm`, `arm2`) with gold claws.
+- On an albatross or an ace: stars, rocks and streaks from his outline for
+  half a second, silent. The caddie matches (plated, a crescent behind its
+  hood, an orb on its chest and one circling it; three orbs on it merged
+  into one pink blob); its trick `collapse`. The Eclipse Driver (a pure
+  strike opens a tiny black hole at the ball), the Event Horizon and the
+  Singularity (it draws light into the cup).
+- `void` holds it all (and the caddie, and a save that had the Blossom);
+  `legends` holds its moment and its driver with the other three.
+
+### The winning shot on the green (user saw it land short)
+
+- The swing that won the hole came while the last ball was still in the
+  air, so it was queued, and then thrown away once the hole was over: he
+  walked to the short ball, stopped, and walked on to the green. Now a
+  ball in the air when the hole is won carries on from where it is to a
+  putt short of the cup (into it on an ace), its height kept (`lift0`);
+  one lying short is walked to and played on up to the green. `finish`.
+
+### The caddie's blessing in the caddie's look (user asked)
+
+- `BLESS_FX` by the caddie's `fx`: the column's colours and what falls or
+  rises in it, and what it leaves at his feet (feathers and a halo, embers
+  and flames, a bolt and shards, stars and a black hole, coins, snow and
+  ice spikes, the Disco's colours, the Glitch slipping, wisps, bananas, a
+  camera's flash, confetti). All solid pixels now (the column was a wash
+  that went grey on the grass). Plain caddies keep the perk's colour.
+  `blessings` (the older `bless` holds when it comes and its levels).
+
+### The railway rebuilt (user sent a screenshot: rails missing)
+
+- The rails were lines stepped out from off the edge and ran out of steps
+  (rule 39). Now: a raised bed of ballast with stones laid in the world,
+  sleepers with a top and a front face (cut at their near end), boards in
+  planks at the crossing, and two rails in rows across the stage (a
+  bright top with a glint, a steel side, a shadow, a chair at each
+  sleeper); far off a single line (rule 41). `rail`.
+
+### Full Set, ambience, umbrellas (user asked, from the menu)
+
+- A Mythic set (only the Ascended and The Void are Mythic) worn whole
+  (look, caddie, driver, its wake or its ball): its pieces rimmed in gold
+  in the Style shop and badged Full Set, said once, counted in the Record
+  (Mythic Sets). Looks only. `fullset`.
+- Ambience: wind in the pines (Highlands, Snowline, National, Fjordheim),
+  the sea (Coastal Classic, Seaside, Harbour Lights, Old Links, and round
+  the sea stack), a stream by the stepping stones (not frozen); every few
+  seconds, quieter than the autumn gust; none in a wager. `ambience`.
+- Umbrellas: most of the gallery and the grandstand's front two rows, in
+  the rain; darker at night. `umbrellas`.
 
 ### Smaller fixes of the last batch
 
@@ -1758,7 +1831,12 @@ him (about 49px tall on a 320 phone, 71px on its side).
 
 ## 6. Recent history (newest first, one line each)
 
-- The Spirit Blossom Mythic set; the banner under the readout; the
+- The Void bulkier with void orbs, its caddie to match; the railway
+  rebuilt; the caddie's blessing in its look; the winning shot on the
+  green; Full Set; ambience; umbrellas; The Void replaced the Spirit
+  Blossom.
+
+- The Spirit Blossom Mythic set (since replaced); the banner under the readout; the
   gallery quiet on a new hole; Twilight putts in the cup; thinner trails;
   Dawn and Dusk brings night; the Island Green's lake; small wager calls.
 - The gallery's jump, frost on the roofs, the Record in folds; wager
@@ -1925,17 +2003,14 @@ flourishes. Don't offer anything that adds to the Tour tab, or any new
 sound that is not ambience.
 
 The menu to offer:
-1. **A second new Mythic touch for the Spirit Blossom**: a spirit fox
-   (kitsune) mask on its caddie, or blossom trees on the course bursting
-   into flower when it aces. (Only if they like the set.)
-2. **Ambience by the course**: wind in the pines on the mountain courses,
-   waves on the coast, a stream by the stones (quiet, rare: ambience is
-   the one kind of sound they still want).
-3. **Umbrellas in the stands**: in the rain the gallery and the grandstand
-   put umbrellas up, in a few colours; down again when it clears.
-4. **A Mythic set's collection bonus**: wearing all five pieces of a
-   Mythic set lights something small (a gold rim on its tiles, a line in
-   the Record).
+1. **The divider under the icons**: when the icons sit in a row under the
+   readout a thin dark line runs under them; the user saw it in a
+   screenshot of the crossing. Offer to take it away.
+2. **A Full Set touch on the course**: a small mark by the score or a
+   glint about him while a Mythic set is worn whole (looks only).
+3. **More ambience**: birds by the river (Riverbend), wind over the moors
+   and the dunes, the lake at the island greens (quiet, now and then).
+4. **Divine and Demonic as full sets**: if the user wants the Full Set to
+   count the two Legendary sets as well.
 
-Recommend 3: small, silent, and it makes the new grandstand feel alive in
-the weather the courses already have.
+Recommend 1: small and something they have already seen.

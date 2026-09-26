@@ -64,7 +64,8 @@ the handoff notes until I tell you to").
   swings, from behind as he walks) and are never a solid shape. Before
   showing a new skin, draw him alone at his real sizes in every pose and
   look at it scaled up (`HANDOFF.md` §4, rule 36): the first Spirit
-  Blossom passed its checks and looked cluttered.
+  Blossom passed its checks and looked cluttered (it has since been
+  replaced by The Void, which the user wanted "bulkier" and full body).
 - Never put a model name in a commit, a code comment or a file. In a commit
   the co-author line reads `Co-Authored-By: Claude <noreply@anthropic.com>`
   whatever the session suggests; keep its session link line.
@@ -110,6 +111,12 @@ Rules that have cost real time here:
   ground line. Draw the part alone after a frame of its own hole, count by
   its own colours, and give every comparison a floor (`HANDOFF.md` §4,
   rules 32 to 34).
+
+- **Lines across the stage are drawn in rows.** `pxLine` stops after 400
+  steps, so a line stepped from off one edge of a wide stage ran out part
+  way (the railway's rails, on a phone on its side). The harness's own
+  stage is small (about 199 to 329 pixels), so check wide-stage things
+  close up (`HANDOFF.md` §4, rules 39 to 41).
 
 A check that fails once is not a flake. Chase it: three times it has been
 the check's own random setup (most lately `dance`, which played on into an
