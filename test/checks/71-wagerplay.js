@@ -49,10 +49,17 @@ module.exports = {
     });
     if (lv.asked !== 'Sure?' || !lv.still || !lv.gone || !lv.sheet) f('Leave did not ask and then end the wager: ' + JSON.stringify(lv));
     await page.waitForTimeout(100);
-    if (!(await page.evaluate(() => document.getElementById('leaveBtn').hidden && document.getElementById('wagerStat').hidden))) f('the Leave button or hint stayed up after leaving');
+    await page.waitForTimeout(100);
+    if (!(await page.evaluate(() => document.getElementById('leaveBtn').hidden && document.getElementById('wagerStat').hidden && document.getElementById('callout').hidden))) f('the Leave button or hint stayed up after leaving');
 
-    // ---- the Island Green: its green shows ----
+    // ---- the Island Green: its green shows, and its calls are on the page,
+    // small, in the interface's type (the pixel letters were too big) ----
     await start('water'); await page.waitForTimeout(600);
+    await page.waitForTimeout(1100);
+    const call = await page.evaluate(() => { const e = document.getElementById('callout'), cs = getComputedStyle(e);
+      return { shown: !e.hidden, t: e.textContent, size: parseFloat(cs.fontSize), font: cs.fontFamily, off: !!document.getElementById('callout').hidden }; });
+    if (!call.shown || !/on the green|in the water/i.test(call.t) || !(call.size <= 14) || /Iowan|monospace/i.test(call.font))
+      f('the Island Green\'s call reads ' + JSON.stringify(call));
     const isl = await page.evaluate(() => {
       // (bright grass, the haze on it and all: the lake about it is dark
       // blue-green, and the bare basin was darker still)

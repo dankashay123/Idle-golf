@@ -843,6 +843,14 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
 #wagerStat{position:absolute;left:2.2%;z-index:28;pointer-events:none;padding:2px 6px;background:rgba(8,18,12,.8);
   border:1px solid var(--line);font-size:var(--f0);letter-spacing:.1em;text-transform:uppercase;font-weight:700;color:var(--dim);white-space:nowrap}
 #wagerStat[hidden]{display:none}
+#callout{position:absolute;left:50%;transform:translateX(-50%);z-index:27;pointer-events:none;white-space:nowrap;
+  font-family:var(--sans);font-size:var(--f3);font-weight:800;letter-spacing:.08em;text-transform:uppercase;
+  text-shadow:1px 1px 0 #000,0 0 3px #000;animation:coIn 1.2s ease-out forwards}
+#callout[hidden]{display:none}
+#callout.evt{padding:3px 9px;background:rgba(6,10,8,.88);border:1px solid;font-size:var(--f2);animation-duration:2.4s}
+#callout.evt.bad{color:var(--flag);border-color:var(--flag)}
+#callout.evt.good{color:var(--aurora);border-color:var(--aurora)}
+@keyframes coIn{0%{opacity:0;margin-top:4px}12%{opacity:1;margin-top:0}80%{opacity:1}100%{opacity:0}}
 #wagerStat b{color:var(--aurora);font-weight:700}
 .rfold{border-top:1px solid var(--line)}
 .rfh{display:flex;justify-content:space-between;width:100%;padding:8px 4px;background:none;border:0;color:var(--chalk);
@@ -934,6 +942,7 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
     <button id="perkBtn" aria-label="Sponsor perks"><img id="perkIcon" alt=""><span id="perkDot"></span></button>
     </div>
     <div id="wagerStat" hidden></div>
+    <div id="callout" hidden></div>
     <button id="leaveBtn" hidden aria-label="Leave the wager"><img id="leaveIcon" alt=""><span id="leaveTxt">Leave</span></button>
     <div id="toasts"></div>
   </div>
@@ -5565,7 +5574,7 @@ function rollDgnEvent(R){
     R.cleared--; R.floor--;
     R.work = floorWork(R.floor); R.full = R.work; R.fT = 0;
   }
-  R.evt = pick; R.evtT = 2.4;
+  R.evt = pick; R.evtT = 2.4; R.t0e = R.t;
   // The stage already calls it out in the middle of the screen. A toast on top
   // of that made three copies of one event: two stacked in the corner and one
   // over the hole, all saying LOST BALL.
@@ -8575,7 +8584,9 @@ const THEMES = {
     fw:['#1E5A3A','#246A44','#2A7A4E','#308A58','#389A62'],
     rg:['#0A3A52','#0C4460','#0E4E6E'], gr:['#3E9A5E','#4AAA68','#56BA72'],
     sd:['#8C8556','#A89E68','#C2B67E','#D8CC96'],
-    wt:['#031A28','#052638','#07344C','#0A4664','#136484'],
+    // (brighter water, and the lake wider, so its bank reads as a shore
+    // round the island and not the lip of a pit)
+    wt:['#0A3A56','#0F4C6C','#176284','#22789A','#3592B0'],
     edge:'#0A3A52', tl:'#0C4460', rk:['#0C3448','#124458','#1A5468'], trees:0.25, kind:1 },
   cellar: { sky:['#140A20','#221038','#301850','#432268','#5A3080'],
     fw:['#1C2A20','#223428','#283E2E','#2E4834','#34523A'],
@@ -13295,7 +13306,7 @@ const Scene = {
     // sunk pond, its near bank hid the green and left a bare basin with the
     // flag standing in it)
     if(R.mode === 'island')
-      this.water = { lake: 1, d: LEN, x: 0, rd: LEN*0.30, rx: 6.0, shape: this.blob(rnd, 0.14) };
+      this.water = { lake: 1, d: LEN + 2, x: 0, rd: LEN*0.36, rx: 9.0, shape: this.blob(rnd, 0.10), shape2: this.blob(rnd, 0.10) };
     // Trees were planted from the same table everywhere, so the Island Green
     // grew a copse in the middle of its lake and the Vault had a forest
     // indoors.
@@ -13628,7 +13639,7 @@ const Scene = {
   burst(id){},
   cast(g){ this.casts.push({ t:0, g }); if(this.casts.length > 4) this.casts.shift(); },
   holed(sc){
-    this.banner = { t:0, n:sc.n, d:sc.d };
+    this.banner = { t:0, n:sc.n, d:sc.d, id: (this._banN = (this._banN || 0) + 1) };
     // and the fairy's say on it: pleased with a birdie or better, glum at a
     // bogey or worse, nothing for a par
     const SAY = B.FAIRY_SAY, d = sc.d, one = l => l[Math.random() * l.length | 0];
@@ -13637,7 +13648,28 @@ const Scene = {
     // no tip straight after he has had his say
     this.quipT = Math.max(this.quipT || 0, 10);
   },
-  depthsFlash(col){ this.flash = 1; this.flashCol = col; }
+  depthsFlash(col){ this.flash = 1; this.flashCol = col; },
+  // A wager's calls ("On the Green", "Lost Ball"), which the user found too
+  // big in the pixel font: small, in the interface's type, over the horizon,
+  // a turn on a floor boxed in its colour. Written only when they change.
+  wagerCallout(R){
+    const el = typeof document !== 'undefined' && document.getElementById('callout');
+    if(!el) return;
+    const E = R && R.evt && R.evtT > 0 ? R.evt : null, Bn = R ? this._coBan : null;
+    const cap = t => t.toLowerCase().replace(/(^|[\s,])([a-z])/g, (m, a, b) => a + b.toUpperCase());
+    const key = E ? 'e|' + E.n + '|' + R.t0e : Bn ? 'b|' + Bn.n + '|' + (this.banner && this.banner.id) : '';
+    if(key === this._coKey) return;
+    this._coKey = key;
+    if(!key){ el.hidden = true; return; }
+    const k = this.cv ? (parseFloat(this.cv.style.height) || this.cv.clientHeight) / Math.max(1, VH) : 1;
+    el.className = E ? (E.bad ? 'evt bad' : 'evt good') : 'ban';
+    el.style.color = E ? '' : Bn.col;
+    el.textContent = cap(E ? E.n : Bn.n);
+    el.style.top = Math.round((E ? VH * 0.34 : HORIZON - 24) * k) + 'px';
+    el.hidden = false;
+    // (and in again from the start, each call)
+    el.style.animation = 'none'; void el.offsetWidth; el.style.animation = '';
+  }
 };
 
 // Two legs from the hip: the far one first, in the darker cloth, then the
@@ -16334,9 +16366,13 @@ Object.assign(Scene, {
       else{
         const col = b.d <= -3 ? PX.myth : b.d <= -2 ? PX.brass : b.d === -1 ? PX.aur
                   : b.d === 0 ? PX.bone : PX.flag;
-        let sc = 3*TSC;
-        while(sc > 1 && textW(b.n, sc) > VW - 10) sc--;
-        drawTextS(c, b.n, CX, HORIZON - 6 - sc*4 - Math.round(b.t*6), col, sc, 'c');
+        // (in a wager, on the page and smaller: see wagerCallout)
+        if(S.dgnRun) this._coBan = { n: b.n, col, t: b.t };
+        else{
+          let sc = 3*TSC;
+          while(sc > 1 && textW(b.n, sc) > VW - 10) sc--;
+          drawTextS(c, b.n, CX, HORIZON - 6 - sc*4 - Math.round(b.t*6), col, sc, 'c');
+        }
       }
     }
     if(this.flash > 0){
@@ -16450,12 +16486,8 @@ Object.assign(Scene, {
     const c = this.b;
     const pal = B.DGN_PAL[R.id] || {};
     const glow = pal.glow || PX.brass;
-    if(R.evt && R.evtT > 0){
-      const bad = R.evt.bad, w = textW(R.evt.n, TSC) + 8, y = Math.round(VH*0.34);
-      panel(c, Math.round(CX - w/2), y, w, FHS*TSC + 4, 'rgba(6,10,8,.88)',
-            bad ? PX.flag : PX.verdant);
-      drawText(c, R.evt.n, CX, y + 2, bad ? PX.flag : PX.verdant, TSC, 'c');
-    }
+    // (a turn on a floor is called out on the page, with the shots' calls:
+    // see wagerCallout)
     // All of this stacks up the RIGHT edge. Along the bottom left it ran under
     // the shot book icons, which are drawn from the same corner. The pull tab
     // sits in this corner too, and the name ran straight under it and then off
@@ -16568,8 +16600,11 @@ Object.assign(Scene, {
       this.drawDepthsHud(D, R, dg);
       if(this.mapOn || this._mapTry){ this.mapOn = false; this._mapTry = null; $('holeMap').style.display = 'none'; }
       this.drawShots();
+      this._coBan = null;
       this.drawFx(dt);
+      this.wagerCallout(R);
     }else{
+      if(this._coKey) this.wagerCallout(null);
       // after any wager: the Scramble and Twilight left their scene up
       if(B.DGN.some(d => d.id === this.themeId)){
         this.dFloor = -1; this.newHole(S.hole, S.tier);   // back up top
