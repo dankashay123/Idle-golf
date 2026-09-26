@@ -12556,6 +12556,79 @@ const Scene = {
       }
     }
   },
+  // The other caddies' tricks' pieces (fairyPose's bits): a peel, a flash,
+  // confetti, wisps, disco lights, broken pixels, snow, embers, a bolt, the
+  // void's motes, a coin. Solid pixels, on his far side (to his own edge at
+  // most on the golfer's), and back off with the turn. Returns the room
+  // they took.
+  caddieBits(c, x, y, w, h, P, M){
+    const k = Math.max(1, Math.round(h / 18)), q = M.q, T = M.T, cx = x + w * 0.5, cy = y + h * 0.5;
+    const edge = x + w - k;                              // no further towards the golfer than this
+    let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9;
+    const dot = (px, py, col, s) => { s = s || k; px = Math.round(Math.min(px, edge - s + k)); py = Math.round(py);
+      c.fillStyle = col; c.fillRect(px, py, s, s);
+      x0 = Math.min(x0, px); y0 = Math.min(y0, py); x1 = Math.max(x1, px + s); y1 = Math.max(y1, py + s); };
+    const hand = [x + w * 0.16, y + h * 0.34 - h * 0.48];   // his far hand, raised
+    const b = P.bits;
+    if(b === 'peel' && q < 0.7){
+      const u = q / 0.7, px = x + w * 0.45 - w * 0.95 * u, py = y + h - Math.sin(Math.PI * u) * h * 0.45;
+      dot(px, py, '#F6D84A'); dot(px + k, py, '#F6D84A'); dot(px - k, py + k, '#E0B830'); dot(px + k * 2, py + k, '#6B4A1E');
+    }else if(b === 'flash'){
+      dot(hand[0] - k, hand[1], '#2A2A30'); dot(hand[0], hand[1], '#2A2A30'); dot(hand[0], hand[1] - k, '#9AA3AA');
+      if(q > 0.42 && q < 0.62){ const r = (q - 0.42) / 0.2 * w * 0.5;
+        for(let i = 0; i < 8; i++){ const a = i / 8 * Math.PI * 2; dot(hand[0] + Math.cos(a) * r, hand[1] + Math.sin(a) * r * 0.8, i & 1 ? '#FFF6D0' : '#FFFFFF'); }
+        dot(hand[0] - k, hand[1] - k, '#FFFFFF', k * 2); }
+    }else if(b === 'confetti'){
+      const COL = ['#E4302A', '#FFD84A', '#3E76C8', '#7ADB86', '#FF4FB8'];
+      for(let n = 0; n < 3; n++){ const u = q * 3 - n; if(u < 0.35 || u > 1.3) continue; const f = (u - 0.35) / 0.95;
+        for(let i = 0; i < 7; i++){ const a = Math.PI * (0.55 + 0.9 * hr(n * 7 + i, 371)), r = w * (0.2 + 0.6 * f);
+          dot(cx + Math.cos(a) * r, y - h * 0.05 - Math.sin(a) * r * 0.8 + f * f * h * 0.5, COL[(n + i) % 5]); } }
+    }else if(b === 'wisps' && q > 0.38 && q < 0.9){
+      const f = (q - 0.38) / 0.52;
+      for(let i = 0; i < 10; i++){ const a = Math.PI * (0.35 + 1.3 * i / 9), r = w * (0.35 + 0.55 * f);
+        if(hr(i, 372) < f * 0.8) continue;
+        dot(cx + Math.cos(a) * r, cy - Math.sin(a) * r * 0.7, i & 1 ? '#FFFFFF' : '#D8E4F0'); }
+    }else if(b === 'disco'){
+      const COL = ['#FF4FB8', '#3FE0FF', '#FFE14A', '#7CFF6A'];
+      for(let i = 0; i < 10; i++){ const a = i / 10 * Math.PI * 2 + T * 6, R = Math.cos(a) > 0 ? w * 0.4 : w * 0.8;
+        if(Math.sin(T * 14 + i * 2.1) < -0.2) continue;
+        dot(cx + Math.cos(a) * R, cy + Math.sin(a) * h * 0.45, COL[(i + Math.floor(T * 8)) % 4]); }
+    }else if(b === 'glitch'){
+      if(P.gone || (q * 6) % 1 < 0.3) for(let i = 0; i < 6; i++){
+        const yy = y + h * hr(i, 373 + Math.floor(T * 20)), ww = Math.round(w * (0.3 + 0.5 * hr(i, 374)));
+        const xx = x + w * 0.5 - ww / 2 - w * 0.4 * hr(i, 375 + Math.floor(T * 20));
+        for(let j = 0; j < ww; j += k) dot(xx + j, yy, i % 3 === 0 ? '#FF3A6A' : i % 3 === 1 ? '#3AFFE0' : '#7CFF6A'); }
+    }else if(b === 'snow' && q > 0.38){
+      const f = (q - 0.38) / 0.62;
+      // six-pointed flakes flung out, the size of his hand
+      for(let i = 0; i < 9; i++){ const a = i / 9 * Math.PI * 2 + 0.2, R = w * (Math.cos(a) > 0 ? 0.45 : 1.1) * Math.sqrt(f);
+        if(hr(i, 376) < f * f * 0.7) continue;
+        const fx2 = cx + Math.cos(a) * R, fy2 = cy + Math.sin(a) * R * 0.8 + f * h * 0.25;
+        dot(fx2, fy2, '#FFFFFF'); dot(fx2 - k, fy2, '#9FD6F2'); dot(fx2 + k, fy2, '#9FD6F2'); dot(fx2, fy2 - k, '#9FD6F2'); dot(fx2, fy2 + k, '#9FD6F2'); }
+    }else if(b === 'embers'){
+      for(let i = 0; i < 9; i++){ const u = clamp(q - i * 0.06, 0, 1); if(u <= 0 || q - i * 0.06 > 0.85) continue;
+        const life = Math.min(1, (q - u) * 4 + 0.1);
+        dot(cx - w * 0.3 * hr(i, 377), y + h * 0.5 - Math.sin(Math.PI * u) * h * 0.5 + life * h * 0.5, life < 0.5 ? '#FFD34A' : '#FF6A1A'); }
+    }else if(b === 'bolt' && q > 0.28 && q < 0.62){
+      // from over his raised hand down to the grass out on his far side, in
+      // three jags, a white core edged in yellow, and a splash where it lands
+      const bx = x - w * 0.7, top = hand[1] - h * 0.25, bot = y + h * 1.15, jag = [0, 0.35, 0.6, 1];
+      const jx = [hand[0], hand[0] - w * 0.55, hand[0] - w * 0.15, bx];
+      for(let j = 0; j < 3; j++){ const ya = top + (bot - top) * jag[j], yb = top + (bot - top) * jag[j + 1];
+        for(let yy = ya; yy < yb; yy += k){ const u = (yy - ya) / Math.max(1, yb - ya), px = jx[j] + (jx[j + 1] - jx[j]) * u;
+          dot(px, yy, '#FFFFFF'); dot(px + k, yy, '#FFF36A'); } }
+      for(let i = 0; i < 6; i++){ const a = Math.PI * (1 + i / 5); dot(bx + Math.cos(a) * w * 0.3, bot + Math.sin(a) * h * 0.12, i & 1 ? '#FFF36A' : '#FFFFFF'); }
+    }else if(b === 'orbit'){
+      for(let i = 0; i < 8; i++){ const a = i / 8 * Math.PI * 2 + T * 5, R = Math.cos(a) > 0 ? w * 0.45 : w * 0.8;
+        dot(cx + Math.cos(a) * R, cy + Math.sin(a) * h * 0.3, i % 3 === 0 ? '#E0C8FF' : i & 1 ? '#8A4AD8' : '#3A1E5A'); }
+    }else if(b === 'coin'){
+      const u = clamp((q - 0.2) / 0.55, 0, 1), px = hand[0], py = hand[1] - Math.sin(Math.PI * u) * h * 0.8 - k;
+      const face = Math.abs(Math.sin(T * 18)) > 0.4, s2 = k * 2;
+      dot(px, py, '#FFD66B', s2); if(face) dot(px + s2 - k, py, '#FFF3B0'); dot(px, py + s2, '#A8802F', face ? s2 : k);
+      if(q > 0.74 && q < 0.86) for(let i = 0; i < 4; i++){ const a = i / 4 * Math.PI * 2; dot(px + Math.cos(a) * k * 3, py + Math.sin(a) * k * 3, '#FFF3B0'); }
+    }
+    return x0 < 1e9 ? [x0, y0, x1, y1] : null;
+  },
   // The Ascended caddie's blink: motes of the void swirling in to a point
   // (open 0) or out from it (open 1) where he stands.
   caddieSwirl(c, x, y, w, h, open, T){
@@ -12675,7 +12748,10 @@ const Scene = {
       g0.globalAlpha = 1; g0.globalCompositeOperation = 'source-over';
     };
     if(P && P.fire) this.caddieFire(c, x, y, w, h, P.fire, M.T, false);
-    if(P && P.hide){
+    if(P && P.gone){
+      // (the glitch: out of sight for a moment, only his broken pixels)
+      this._fairy = { x, y, w, h };
+    }else if(P && P.hide){
       // blinking through the void: a swirl where he was and one where he
       // comes out, closing and opening
       this.caddieSwirl(c, x - P.dx + P.from, y, w, h, 1 - P.swirl, M.T);
@@ -12713,6 +12789,9 @@ const Scene = {
       this._fairy = { x, y, w, h };
     }
     if(P && P.fire) this.caddieFire(c, x, y, w, h, P.fire, M.T, true);
+    if(P && P.bits){ const bb = this.caddieBits(c, x, y, w, h, P, M);
+      if(bb){ const F = this._fairy, a = Math.min(F.x, bb[0]), b = Math.min(F.y, bb[1]);
+        this._fairy = { x: a, y: b, w: Math.max(F.x + F.w, bb[2]) - a, h: Math.max(F.y + F.h, bb[3]) - b }; } }
     // (the room the fire and the feathers take, about him and under him)
     const grow = (x0, y0, x1, y1) => { const F = this._fairy; const a = Math.min(F.x, Math.floor(x0)), b = Math.min(F.y, Math.floor(y0));
       this._fairy = { x: a, y: b, w: Math.max(F.x + F.w, Math.ceil(x1)) - a, h: Math.max(F.y + F.h, Math.ceil(y1)) - b }; };
@@ -13383,7 +13462,23 @@ const FAIRY_MOVES = [
   // everything else he does.
   { id:'soar',  dur:1.6, only:'divine' },
   { id:'blaze', dur:1.3, only:'demonic' },
-  { id:'blink', dur:1.4, only:'ascended' }
+  { id:'blink', dur:1.4, only:'ascended' },
+  // and one each for the other caddies with a look of their own (the user
+  // asked): slips on a peel, snaps a photo, honks up confetti, sinks and
+  // pops up with a boo, twirls in the disco lights, glitches about, shivers
+  // into a flurry, flips in flame, calls down a bolt, spins in the void,
+  // tosses a coin. On his far side, like everything he does.
+  { id:'slip',   dur:1.4, only:'banana' },
+  { id:'snap',   dur:1.5, only:'dad' },
+  { id:'honk',   dur:1.6, only:'clown' },
+  { id:'boo',    dur:1.6, only:'ghost' },
+  { id:'twirl',  dur:1.4, only:'disco' },
+  { id:'glitch', dur:1.2, only:'glitch' },
+  { id:'flurry', dur:1.5, only:'frostborn' },
+  { id:'flare',  dur:1.3, only:'inferno' },
+  { id:'zap',    dur:1.2, only:'stormcaller' },
+  { id:'orbit',  dur:1.6, only:'void' },
+  { id:'toss',   dur:1.6, only:'midas' }
 ];
 // the turns this caddie may take: his own trick, if he has one, among the rest
 const fairyMoves = () => { const fx = caddieNow().fx; return FAIRY_MOVES.filter(m => !m.only || m.only === fx); };
@@ -13432,6 +13527,43 @@ function fairyPose(kind, q, T, w, h){
     // and where he will be
     const gap = q > 0.22 && q < 0.38 ? (q - 0.22) / 0.16 : q > 0.62 && q < 0.78 ? (q - 0.62) / 0.16 : -1;
     if(gap >= 0){ P.hide = 1; P.swirl = gap; P.from = q < 0.5 ? 0 : -out; P.to = q < 0.5 ? -out : 0; }
+  }else if(kind === 'slip'){                                    // over on a peel, and up again
+    const lie = 0.9;
+    if(q < 0.25){ const u = easeIO(q / 0.25); P.rot = -lie * u; P.dy = u * h * 0.12; }
+    else if(q < 0.6){ P.rot = -lie; P.dy = h * 0.12; }
+    else{ const u = (q - 0.6) / 0.4; P.rot = -lie * (1 - easeIO(u)); P.dy = h * 0.12 * (1 - u) - Math.sin(Math.PI * u) * h * 0.2; }
+    P.legs = q < 0.6 ? 0.25 : null; P.bits = 'peel';
+  }else if(kind === 'snap'){                                    // the camera up, and its flash
+    P.armL = env; P.bits = 'flash';
+  }else if(kind === 'honk'){                                    // three bounces, confetti off the top
+    P.dy = -Math.abs(Math.sin(Math.PI * q * 3)) * h * 0.18 * env;
+    P.armL = Math.max(0, Math.sin(Math.PI * q * 3)) * env; P.armR = Math.max(0, -Math.sin(Math.PI * q * 3)) * env * 0.6;
+    P.bits = 'confetti';
+  }else if(kind === 'boo'){                                     // down he goes, then up with his arms out
+    // (not far down: at the top of the backswing the club comes low by him)
+    if(q < 0.4) P.dy = easeIO(q / 0.4) * h * 0.12;
+    else if(q < 0.55){ const u = (q - 0.4) / 0.15; P.dy = h * 0.12 - u * h * 0.37; P.armL = P.armR = u; }
+    else{ const u = easeIO((q - 0.55) / 0.45); P.dy = -h * 0.25 * (1 - u); P.armL = P.armR = 1 - u; }
+    P.bits = 'wisps';
+  }else if(kind === 'twirl'){                                   // three times round in the lights
+    P.sx = Math.cos(easeIO(q) * Math.PI * 6);
+    P.dy = -Math.sin(Math.PI * q) * h * 0.1; P.armL = P.armR = env * 0.7; P.bits = 'disco';
+  }else if(kind === 'glitch'){                                  // here, there, gone and back
+    const seq = [0, -0.7, -0.2, -1.0, -0.4, 0], st = Math.min(5, Math.floor(q * 6));
+    P.dx = seq[st] * w; P.gone = q > 0.05 && q < 0.95 && (q * 6) % 1 < 0.16; P.bits = 'glitch';
+  }else if(kind === 'flurry'){                                  // a shiver, then snow off him
+    if(q < 0.4) P.dx = -Math.abs(Math.sin(T * 40)) * w * 0.06;
+    else P.armL = P.armR = Math.min(1, (q - 0.4) / 0.1) * env;
+    P.bits = 'snow';
+  }else if(kind === 'flare'){                                   // head over heels, trailing embers
+    P.dy = -Math.sin(Math.PI * q) * h * 0.5;
+    P.rot = -easeIO(q) * Math.PI * 2; P.bits = 'embers';
+  }else if(kind === 'zap'){                                     // his far arm up, a bolt down beside him
+    P.armL = env; P.dy = -Math.sin(Math.PI * q) * h * 0.06; P.bits = 'bolt';
+  }else if(kind === 'orbit'){                                   // once round slowly, the void about him
+    P.sx = Math.cos(easeIO(q) * Math.PI * 2); P.bits = 'orbit';
+  }else if(kind === 'toss'){                                    // a coin flipped up and caught
+    P.armL = env; P.dy = -Math.sin(Math.PI * q) * h * 0.05; P.bits = 'coin';
   }else if(kind === 'juggle'){                                  // three balls, hand to hand
     const beat = T * 1.5;
     P.juggle = { beat, env };
