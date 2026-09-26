@@ -1,6 +1,6 @@
 # Handoff — Mythic Mulligan
 
-Last updated 2026-09-25 on `main`. Read this with
+Last updated 2026-09-26 on `main`. Read this with
 `CLAUDE.md`, which holds the standing rules. `test/README.md` says what each
 check is for.
 
@@ -9,44 +9,112 @@ check is for.
 ## 1. Where things stand
 
 - Everything is committed and pushed to `main` (mirrored on the session
-  branch `claude/notes-claude-review-4cqv98`). Nothing is half-built.
-- `node test/run.js` passes all **63 checks** (about ten minutes).
-- **Last request** (a picture of another game's pet list): "Can you
-  rework the bag tab... clubs up at the top... rectangle icons for each,
-  indicating rarity, name and stats... 2 items per row... set info... to
-  its own sub tab labeled Sets & Affinities... the club types and balls
-  category selector buttons [locked] at the top... When an item is
-  clicked... an upgrade button and scrap button." Done (§5, "The Bag tab").
-- Before that: the gallery round the green and scenery in the rough
-  everywhere.
-- Before that: rain rings only on water and the stray ring beside him
-  removed; night glow for the dearest skins; the Mythic caddies' tricks;
-  frost and puddles.
-- Earlier this session: a skin flies with him (and his arms up on the club,
-  not hanging), night on the ordinary holes, the Mythic Favour, the Hole of
-  the Week run.
-- The session before (sections in §5 too): the moments for the top skins
-  (since cut to half a second on an albatross or an ace), the Demonic and
-  the Divine made ultimate skins, four trains, weather and night on the
-  signature holes, the Signature Week (honour, Tour band, 25 sovereigns),
-  pure-strike flourishes for the three dearest drivers.
+  branch `claude/notes-claude-review-4cqv98`). Nothing is half-built: the
+  request below was stopped before any of it was written.
+- `node test/run.js` passes all **63 checks** (about ten minutes). Frost
+  follows the real hour: after touching weather or colours, run it with
+  `HOUR_FORCE` pinned to 8 and to 15 in a copy (`CLAUDE.md`).
+- **Only update this file and `CLAUDE.md` when the user asks.**
+
+### The request to pick up (their last message, not started)
+
+With two screenshots (a club's sheet, and two gear tiles), in their words:
+"Can we make sure that the font used for the course name at the top of the
+screen is the same as the serif font for gear if it isn't already? Also
+let's change the font for the wind and the weather area above the minimap
+to the sans serif font we use. Can you also make an 'Upgrade failed'
+indication when an upgrade fails please if it's not already there. Then
+lets also reduce the size of the gear tiles a little bit. Then let's do 2
+(but make it an option in the settings to enable, because this could
+override the course designs right? So let's make it an option). Let's do 4
+and 5 too. I don't want to add anything new to the tours tab, there is
+already so much in there. We need to reduce that clutter, so maybe we can
+make sub tabs for things in there so you aren't scrolling so much to see
+things."
+
+What each part means and what is already known:
+1. **Course name font**: already the same. The course name (`#eventLine`)
+   and the gear names (`.gt .gn`, the sheet's `h3`) all use `var(--disp)`
+   (Iowan Old Style, then Palatino, Georgia). Tell them so; nothing to do.
+2. **Wind and weather words above the map** (e.g. "11 MPH >>", "NIGHT ROUND
+   · GLASS GREENS", "EMBER"): drawn on the canvas in the pixel font by
+   `Scene.drawHud` (their height is `Scene.hudLines`, and `placeMap` sizes
+   the map under them). They want the UI's sans serif, `var(--sans)`
+   (system-ui). Canvas text on the low-res buffer would blur: the clean way
+   is a DOM overlay (`#stage` is the parent) placed where the words stand
+   now, over the map, keeping the colours (the affinity word in its own
+   colour, the Hole of the Week line in brass). Keep the order the user
+   fixed: pull tab, map, then the words standing on the map. Checks that
+   read those words or their place: `layout`, `hud`-related parts of
+   `readouts`/`legibility`/`render`; `sigweek` reads "x2" in the corner.
+3. **"Upgrade failed"**: `enhance()` already toasts "Upgrade failed · still
+   +n", but toasts show on the stage behind the sheet's veil, so from the
+   sheet it cannot be seen. Put the result in the sheet itself after
+   `doEnh`: a line under the three buttons, red "Upgrade failed · still +n"
+   or green "Upgraded to +n", fading after a couple of seconds.
+4. **Smaller gear tiles**: `.gt` in the stylesheet (padding 7px, thumb 40,
+   name `var(--f2)`, lines `var(--f0)`); a little smaller all round, still
+   two to a row and readable at 320 (`bag`, `layout`, `legibility` hold it).
+5. **Dawn and dusk** (menu item 2), **as a setting, off by default**: the
+   sky warming at its edges near the horizon in the morning and evening by
+   the player's own clock (`hourNow()`, `HOUR_FORCE`), without changing the
+   course's own colours when it is off. A switch in Settings like Night
+   Music (`S.dawnDusk`, repaired on load). Likely in `buildSky` (its cache
+   key must carry it) plus perhaps a low sun; not at night or in rain.
+6. **Birds** (menu item 4): a flock crossing the sky now and then, and
+   birds on the fairway that scatter when a ball lands near them. None at
+   night. From the scene's own random stream (never `Math.random`: the
+   `pacing`-type checks and rule 7). Anything on the field keeps to the
+   ground's clip line (`sigview`/`nightholes`/`scenery` show how to check).
+7. **A grandstand on the last hole** (menu item 5): seats behind the 18th
+   green (`holeInRound(h) === B.ROUND`), full on the final day of an event
+   (`S.day`/the calendar: see `holeInRound`, `tournamentOf`), fewer on the
+   other days. A prop drawn in `drawProps` order behind the green (the new
+   gallery and backdrop trees are laid in `layNight`, tagged `extra`),
+   clipped to the ground's line, and not over the pin.
+8. **The Tour tab**: **add nothing new to it.** Reduce the clutter with sub
+   tabs, like the Bag and Range have (`#bagNav` style: `renderBagNav`).
+   Its sections now, in order (`renderTour`): Tour Card (`#tierBox`), The
+   Card (`#cardBox`), Season (`#seasonBox`, the trophy cabinet in it), Major
+   of the Week (`#majBox`), Signature Week (`#sigBox`, with the Hole of the
+   Week Run row). A likely split: **Card** (Tour Card and The Card),
+   **Season**, **Majors** (Major of the Week), **Signature** (Signature
+   Week); ask if unsure. The tab's dot/flash (`renderTourTab`) must still
+   lead to what is new. Checks that read these: `smoke`, `menus`,
+   `honours` (the Signature band), `majors`, `cabinet`, `climb`,
+   `layout`/`legibility`/`titles` (they sweep sub tabs: add the new ones).
+
+### Recent work (sections in §5)
+
+- This session, newest first: the Bag tab reworked (tiles two to a row
+  under a sticky slot bar, Sets & Affinities sub tab, Equip/Upgrade/Scrap
+  on a club's sheet); a gallery beside and behind every green, trees behind
+  it, shrubs, tufts and rocks in the rough everywhere; rain rings only on
+  water and the stray ring beside him removed; night glow for the dearest
+  skins; the Mythic caddies' tricks; frost and puddles; a skin flies with
+  him (arms up on the club); night on the ordinary holes; the Mythic
+  Favour; the Hole of the Week run.
+- The session before: the moments for the top skins (half a second on an
+  albatross or an ace), the Demonic and the Divine made ultimate skins,
+  four trains, weather and night on the signature holes, the Signature
+  Week, pure-strike flourishes for the three dearest drivers.
 - **Turned down**: a station on the railway ("would take up too much
-  time"); **a photo mode** and **trail flourishes** (this session). Don't
-  offer them again.
-- Older requests are in §6, one line each, with a section of their own in
-  §5 where there is more to know.
-- **Not yet heard back on** (carried from earlier sessions; ask one when it
-  fits, never as a list): whether the second music track (night and wagers)
-  and the town theme fit; whether the 2 min battery saver wait suits;
-  whether the auto-climb button sits right. They were on about Card V a few
-  sessions ago, so may not have seen a home course season (from Card XI).
-  How the pure-strike flourishes feel at a fast tempo; whether the Mythic
-  Favour's price (600) and strength (three lifts of 20%) feel right;
-  whether frost from five to eleven by their own clock suits.
+  time"); **a photo mode** and **trail flourishes**. Don't offer them again.
+- Older requests are in §6, one line each.
+- **Not yet heard back on** (ask one when it fits, never as a list):
+  whether the second music track and the town theme fit; the 2 min battery
+  saver wait; where the auto-climb button sits; how the pure-strike
+  flourishes feel at a fast tempo; the Mythic Favour's price (600) and
+  strength (three lifts of 20%); frost from five to eleven by their clock.
 - The user usually ends a task by asking **"What's next?"**: a short plain
   menu with a recommendation (§8), then wait for the choice.
 
 ### Things the user asked for that must stay
+
+- **Nothing new on the Tour tab**: it is already crowded; the next job
+  there is sub tabs to cut the scrolling.
+- **The Bag tab** opens on the clubs: a slot bar held at the top, tiles two
+  to a row, the sets on their own sub tab (their design, from a picture).
 
 - **Honours stay in the medal** (left column: settings, shop, medal, star).
   They stopped me putting a trophy back on the right.
@@ -113,7 +181,7 @@ check is for.
 
 ## 3. The project
 
-- **The whole game is `index.html`** (about 18.6k lines, 2.5 MB with the
+- **The whole game is `index.html`** (about 19.1k lines, 2.5 MB with the
   sounds and the music): markup, CSS and one classic script. There is no
   build step.
 - Play it over http (`npm start`, then http://localhost:8080). Opening the
@@ -1810,17 +1878,18 @@ him (about 49px tall on a 320 phone, 71px on its side).
 
 ## 8. What to offer next
 
-Everything asked for is done. Turned down, don't offer again: the railway
-station, a photo mode, trail flourishes.
+First finish the request in §1 (eight parts). Turned down, don't offer
+again: the railway station, a photo mode, trail flourishes. Don't offer
+anything that adds to the Tour tab.
 
-The menu to offer next:
-1. **Season bests** (recommended): the best card of each season and where
-   it came, on the Tour tab.
-2. **Dawn and dusk**: the sky warming at the edges on a morning or evening
-   round by the player's own clock, as frost follows it.
-3. **A Mythic ball trick**: the three dearest balls do something of their
+The menu to offer after it:
+1. **Season bests somewhere other than the Tour tab** (the Trophy Room's
+   Cabinet, say): the best card of each season and where it came.
+2. **A Mythic ball trick**: the three dearest balls do something of their
    own as they drop in the cup.
-4. **Birds over the ordinary holes**: a flock crossing the sky now and
-   then, scattering off the fairway as a ball lands near.
-5. **A grandstand on the last hole**: a stand of seats behind the
-   eighteenth green, filled on the final day.
+3. **Clubhouse on the last hole**: the clubhouse near the 18th green with a
+   terrace, beside the grandstand.
+4. **A caddie turn for every caddie look**: a small trick of its own for
+   each of the mid-priced caddies, as the dearest three have.
+5. **Sounds of the course**: birdsong by day, crickets at night, quiet and
+   rare (the user likes sounds turned right down).

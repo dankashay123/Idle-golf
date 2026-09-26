@@ -4,7 +4,8 @@ An idle golf game. The whole thing is one file: `index.html` holds the markup,
 the styles and the script. There is no build step — open the file and it runs.
 
 **Starting a new session? Read `HANDOFF.md` first.** It has where things
-stand, a map of the file, what the recent features do and ideas to offer next.
+stand, **a request waiting to be picked up** (§1), a map of the file, what the
+recent features do and ideas to offer next.
 Update it only when the user asks (they said so: "You don't need to update
 the handoff notes until I tell you to").
 
@@ -40,6 +41,11 @@ the handoff notes until I tell you to").
   It holds both ways: nothing through a hill in front, and nothing on a
   bridge, pier or crossing cut away while he stands on it (the user saw
   the canyon bridge as slats).
+- **Don't add anything new to the Tour tab.** The user finds it cluttered;
+  what is there is to be split into sub tabs, not added to.
+- **Anything new that changes a course's look is an option.** The user
+  asked for dawn and dusk as a setting "because this could override the
+  course designs": ask for, or build, a switch for anything like it.
 - **Effects stay short and close.** A skin's moment on a great hole comes
   only on an albatross or an ace, lasts half a second and bursts out from
   his outline; nothing climbs the sky. A fast bag aces every hole, so
@@ -60,7 +66,11 @@ check whose name contains `<name>` (only the first name given counts).
 
 Setup: `npm install --no-save playwright@1.56.1` (it matches the Chromium
 already installed; never run `playwright install`). A full run takes about
-nine minutes, so start it in the background.
+ten minutes, so start it in the background. Don't write a new check file or
+edit `index.html` while a full run is going (it reads both as it reaches
+them): run the suite on a copy of the repo in the scratchpad if you want to
+keep working, and never `pkill -f "node test/run.js"` from a command that
+contains that text (it kills its own shell).
 
 Rules that have cost real time here:
 
@@ -87,8 +97,13 @@ Rules that have cost real time here:
   its own colours, and give every comparison a floor (`HANDOFF.md` §4,
   rules 32 to 34).
 
-A check that fails once is not a flake. Chase it: twice it has been the
-check's own random setup, and that needs fixing as much as a game bug does.
+A check that fails once is not a flake. Chase it: three times it has been
+the check's own random setup (most lately `dance`, which played on into an
+unseeded next hole), and that needs fixing as much as a game bug does.
+
+New things on the course are laid from a hash (`Scene.layNight`, tagged
+`extra`), never from the hole's own `rnd`: changing how many numbers a hole
+draws moves its hills and everything after them. `nightholes` holds it.
 
 Every new check gets a negative test: break the game on purpose, watch the
 check fail, put it back. `HANDOFF.md` §4 has the harness and its gotchas;
