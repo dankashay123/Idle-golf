@@ -3459,7 +3459,9 @@ const B = {
       cap:'#FFD86B', cap2:'#C99A2E', shirt:'#F0C04A', shirt2:'#C9962C', shirt3:'#8F6A1E', pant:'#D9A83A', pant2:'#9E7424',
       skin:'#F2C75C', skin2:'#B8862A', shoe:'#7A5818', belt:'#8F6A1E' },
     { id:'divine',  n:'Divine',          cost:3000, fx:'divine', cat:'skin', top:1,
-      cap:'#FFD66B', cap2:'#C99A2E', shirt:'#FFF8E6', shirt2:'#F1D98F', shirt3:'#C9A24A', pant:'#F4E7C2', pant2:'#D8C18A', shoe:'#B98A2E' },
+      cap:'#FFD66B', cap2:'#C99A2E', shirt:'#FFF8E6', shirt2:'#F1D98F', shirt3:'#C9A24A', pant:'#F4E7C2', pant2:'#D8C18A', shoe:'#B98A2E',
+      // (bulkier, as The Void is: gold plate behind him, thicker arms in gold)
+      bulk:1, arm:'#F1D98F', arm2:'#C9A24A' },
     // The user's two: the Demonic, horned and winged, out of a pit of
     // hellfire, at the Divine's price; and the Ascended, a knight of the void
     // after a picture the user sent, in dark plate and magenta fire. Each has
@@ -3468,10 +3470,10 @@ const B = {
     // hand, where there is one, is the colour of his hands.
     { id:'demonic', n:'Demonic',         cost:3000, fx:'demonic', cat:'skin', top:1, pattern:'hellcrack',
       cap:'#1E0E10', cap2:'#0C0406', shirt:'#5C1412', shirt2:'#42100E', shirt3:'#280808', pant:'#1E1214', pant2:'#100A0C',
-      skin:'#B4442E', skin2:'#7C2A1C', shoe:'#140A0A', belt:'#FF5A1E', hair:'#140808' },
+      skin:'#B4442E', skin2:'#7C2A1C', shoe:'#140A0A', belt:'#FF5A1E', hair:'#140808', bulk:1 },
     { id:'ascended', n:'Ascended',       cost:3500, fx:'ascended', cat:'skin', top:2, pattern:'voidplate',
       cap:'#4C4C90', cap2:'#33336C', shirt:'#4A4A8E', shirt2:'#393976', shirt3:'#26264E', pant:'#180C25', pant2:'#0A0517',
-      skin:'#2D2D5E', skin2:'#1B1B44', shoe:'#3F3F7E', belt:'#E639EB', hair:'#C936D5', hand:'#E86CF2' },
+      skin:'#2D2D5E', skin2:'#1B1B44', shoe:'#3F3F7E', belt:'#E639EB', hair:'#C936D5', hand:'#E86CF2', bulk:1, arm:'#393976', arm2:'#26264E' },
     // The Void (the user sent a picture of a dark cosmic sorcerer: "extremely
     // detailed, full body"): a hooded figure in indigo robes starred like the
     // night, a gold mask with one violet eye, a black hole burning in his
@@ -10992,22 +10994,7 @@ const STYLEFX = {
     // his outline built out in plate, behind him (the user asked him
     // bulkier): the chest and shoulders two pixels broader each side, the
     // legs one, in dark indigo with a violet edge to the chest
-    bulk(c, g){
-      if(!g.minor && g.h < 30) return;
-      const k = g.minor ? 1 : Math.max(1, Math.round(g.h / 30)), S0 = silhouette(g, '#141030'), S1 = silhouette(g, '#3E2A6E');
-      const band = (Sx, y0f, y1f, offs) => {
-        const y0 = Math.round(g.y + g.h * y0f - S0.oy), y1 = Math.round(g.y + g.h * y1f - S0.oy);
-        if(y1 <= y0) return;
-        for(const [dx, dy] of offs) c.drawImage(Sx.cv, 0, y0, Sx.cv.width, y1 - y0, Sx.ox + dx, Sx.oy + y0 + dy, Sx.cv.width, y1 - y0);
-      };
-      c.globalAlpha = 1;
-      const wide = n => [[-n, 0], [n, 0], [-n, -1], [n, -1], [0, -1]];
-      // (his caddie: a pixel broader about the chest and shoulders)
-      if(g.minor){ band(S1, 0.30, 0.62, wide(2)); band(S0, 0.30, 0.62, wide(1)); return; }
-      band(S1, 0.24, 0.55, wide(2 * k + 1));
-      band(S0, 0.24, 0.55, wide(2 * k).concat(wide(k)));
-      if(!g.back) band(S0, 0.55, 0.93, wide(k));
-    },
+    bulk(c, g){ bulkPlate(c, g, '#141030', '#3E2A6E'); },
     body(c, g){
       this.faulds(c, g);
       this.hood(c, g);
@@ -11933,6 +11920,31 @@ for(const k in FLOURISH_PIECE) FLOURISH[k] = function(c, g, F, layer){
   outlineBurst(c, g, F, k === 'banana' || k === 'ghost' ? 32 : 48, 0.95, FLOURISH_PIECE[k](c, g));
 };
 for(const k in FLOURISH) if(STYLEFX[k]) STYLEFX[k].flourish = FLOURISH[k];
+
+// His outline built out in plate behind him, from his own silhouette: the
+// chest and shoulders two pixels broader each side, the legs one, dark
+// with an edge of the look's own (The Void's first; then the other three
+// top skins, the user asked: "make the skins bulkier like the void skin").
+// His caddie a pixel broader about the chest and shoulders.
+function bulkPlate(c, g, dark, edge){
+  if(!g.minor && g.h < 30) return;
+  const k = g.minor ? 1 : Math.max(1, Math.round(g.h / 30)), S0 = silhouette(g, dark), S1 = silhouette(g, edge);
+  const band = (Sx, y0f, y1f, offs) => {
+    const y0 = Math.round(g.y + g.h * y0f - S0.oy), y1 = Math.round(g.y + g.h * y1f - S0.oy);
+    if(y1 <= y0) return;
+    for(const [dx, dy] of offs) c.drawImage(Sx.cv, 0, y0, Sx.cv.width, y1 - y0, Sx.ox + dx, Sx.oy + y0 + dy, Sx.cv.width, y1 - y0);
+  };
+  c.globalAlpha = 1; c.globalCompositeOperation = 'source-over';
+  const wide = n => [[-n, 0], [n, 0], [-n, -1], [n, -1], [0, -1]];
+  if(g.minor){ band(S1, 0.30, 0.62, wide(2)); band(S0, 0.30, 0.62, wide(1)); return; }
+  band(S1, 0.24, 0.55, wide(2 * k + 1));
+  band(S0, 0.24, 0.55, wide(2 * k).concat(wide(k)));
+  if(!g.back) band(S0, 0.55, 0.93, wide(k));
+}
+// the three, last thing behind him (over their wings, so the plate reads)
+const BULK_PLATE = { ascended: ['#1B1B44', '#962CA8'], divine: ['#B98A2E', '#FFE39A'], demonic: ['#1A0606', '#8A1A10'] };
+for(const k in BULK_PLATE){ const F = STYLEFX[k], back0 = F.back, P = BULK_PLATE[k];
+  F.back = function(c, g){ if(back0) back0.call(this, c, g); bulkPlate(c, g, P[0], P[1]); }; }
 
 // The trails. They were three one-pixel dots a few frames behind the ball --
 // the Rainbow put one of its five colours on each, and nobody could tell it
