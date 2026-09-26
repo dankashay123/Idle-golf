@@ -18978,14 +18978,11 @@ function renderTour(){
   const lb = (k, v, col) => '<div class="lb"><span class="p"></span><span>' + k + '</span>'
     + '<span class="s"' + (col ? ' style="color:var(' + col + ')"' : '') + '>' + v + '</span></div>';
 
-  const unlockLine = top >= B.TIER_MAX
-    ? lb('Cards unlocked', 'all of them')
-    : atTop
-      ? lb('Events on Card ' + roman(top),
-           Math.min(eventsOn(top), eventsToUnlock(top)) + ' of ' + eventsToUnlock(top),
-           eventsToNext() === 0 ? '--aurora' : '')
-      : lb('Events on Card ' + roman(top), Math.min(eventsOn(top), eventsToUnlock(top)) + ' of '
-           + eventsToUnlock(top), '--flag');
+  // (only when playing below the highest card: on it, the Climb row under
+  // says the same, "5 to go", and the user found the tab cluttered)
+  const unlockLine = atTop || top >= B.TIER_MAX ? ''
+    : lb('Events on Card ' + roman(top), Math.min(eventsOn(top), eventsToUnlock(top)) + ' of '
+         + eventsToUnlock(top), '--flag');
 
   $('tierBox').innerHTML =
     '<div class="hint" id="cardHint"><div class="foldhead">'
@@ -19008,7 +19005,7 @@ function renderTour(){
         + '<div class="ds">' + (cardUnlocked(nextT)
             ? 'This hole: <b style="color:var(--chalk)">' + nm(hereR)
               + '</b> now, <b style="color:var(--chalk)">' + nm(nextR) + '</b> there.'
-            : 'Locked \u00b7 win the cup on Card ' + roman(top) + ', or play ' + eventsToNext()
+            : 'Win the cup on Card ' + roman(top) + ', or play ' + eventsToNext()
               + '\u00a0more event' + (eventsToNext() === 1 ? '' : 's')) + '</div></div>'
         + '<button class="buy' + (cardUnlocked(nextT) ? ' ok' : ' no') + '" id="climbBtn">'
         + '<span class="lbl">Climb</span><span class="amt">'
@@ -19021,7 +19018,7 @@ function renderTour(){
     + '<button class="buy' + (S.tier > 0 ? '' : ' no') + '" id="dropBtn">'
     + '<span class="lbl">Drop</span><span class="amt">−1</span></button></div>'
     + '<div class="row"><div><div class="nm">Climb on Form</div>'
-    + '<div class="ds">Moves you up a card on its own once your golfer is strong enough for the next card\'s holes.</div></div>'
+    + '<div class="ds">Climbs on its own once your bag is ready.</div></div>'
     + '<button class="buy' + (S.autoClimb ? ' ok' : '') + '" id="autoBtn"><span class="lbl">Auto</span>'
     + '<span class="amt">' + (S.autoClimb ? 'On' : 'Off') + '</span></button></div>';
   const cb = $('climbBtn'); if(cb) cb.onclick = () => climb(1);
