@@ -82,7 +82,8 @@ module.exports = {
         const loud = async fn => {
           const oc = new OfflineAudioContext(1, 88200, 44100), k2 = { ctx: Sfx.ctx, master: Sfx.master, nz: Sfx._nz };
           Sfx.ctx = oc; Sfx.master = oc.destination; Sfx._nz = null;
-          const mr = Math.random; Math.random = () => 0.5;
+          // (a seeded stream, not a constant: a constant flattens every burst of noise to nothing)
+          const mr = Math.random; Math.random = seeded(9173);
           try { fn(0.05); } finally { Sfx.ctx = k2.ctx; Sfx.master = k2.master; Sfx._nz = k2.nz; Math.random = mr; }
           const d = (await oc.startRendering()).getChannelData(0), W = 13230; let sum = 0, best = 0;
           for (let i = 0; i < d.length; i++) { sum += d[i] * d[i]; if (i >= W) sum -= d[i - W] * d[i - W]; if (i >= W - 1) best = Math.max(best, sum / W); }
@@ -91,6 +92,8 @@ module.exports = {
         o.gullDb = await loud(t => Sfx.gull(t)); o.chirpDb = await loud(t => Sfx.chirp(t));
         // (and the crickets at night, which the user asked for quiet: under a bird)
         o.cricketDb = await loud(t => Sfx.cricket(t));
+        // (and the grandstand's cheer on an event's last putt: soft, about a bird)
+        o.cheerDb = await loud(t => Sfx.cheer(t));
       } finally {
         Sfx.ctx = keep.ctx; Sfx.gull = keep.gull; Sfx.chirp = keep.chirp; Sfx.cricket = keep.cricket; Sfx.gust = keep.gust; Sfx.musicTick = keep.mt;
         S.sound = keep.sound; Scene.wind = keep.wind; Scene.night = keep.night; QUIET = false;
@@ -107,10 +110,11 @@ module.exports = {
     if (r.off || !r.offAt || r.gone || r.later) f('the gull on the post did not take off when he came within seven (' + [r.off, r.offAt, r.gone, r.later].join(', ') + ')');
     if (!(r.back > 0)) f('on the next Sea Stack hole the gull was not back on its post');
     if (!(r.cricketDb < r.chirpDb - 3) || !(r.cricketDb > r.chirpDb - 20)) f('a cricket is ' + r.cricketDb.toFixed(1) + ' dB against a bird\'s ' + r.chirpDb.toFixed(1) + ' (want quieter by 3 to 20)');
+    if (!(r.cheerDb < r.chirpDb + 3) || !(r.cheerDb > r.chirpDb - 15)) f('the cheer is ' + r.cheerDb.toFixed(1) + ' dB against a bird\'s ' + r.chirpDb.toFixed(1) + ' (want within 15 under to 3 over)');
     if (!(r.onPier >= 6) || r.atNight || r.elsewhere) f('gull cries in two minutes: ' + r.onPier + ' on the pier, ' + r.atNight + ' at night, ' + r.elsewhere + ' on another hole');
     if (Math.abs(r.gullDb - r.chirpDb) > 3) f('a gull cries at ' + r.gullDb.toFixed(1) + ' dB against a bird\'s ' + r.chirpDb.toFixed(1) + ' dB');
     return ['spray with the wind: ' + [r.calm, r.breeze, r.gale].join(' / ') + ' pixels at ' + r.mph.join(' / ') + ' mph',
       'gulls wheeling over the stack; the one on the post sits till he is within seven, takes off, and is back on the next Sea Stack hole',
-      r.onPier + ' cries in two minutes on the pier, none at night or elsewhere; ' + r.gullDb.toFixed(1) + ' dB against a bird\'s ' + r.chirpDb.toFixed(1) + ', a cricket ' + r.cricketDb.toFixed(1)];
+      r.onPier + ' cries in two minutes on the pier, none at night or elsewhere; ' + r.gullDb.toFixed(1) + ' dB against a bird\'s ' + r.chirpDb.toFixed(1) + ', a cricket ' + r.cricketDb.toFixed(1) + ', the cheer ' + r.cheerDb.toFixed(1)];
   }
 };

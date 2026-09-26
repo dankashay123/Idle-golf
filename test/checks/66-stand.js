@@ -11,6 +11,10 @@
  *   - never over the pin: the flag's pixels are the same with the stand drawn
  *     behind it and without it, from four places
  *   - darker at night; not in a wager
+ *   - it cheers as the event's last putt drops (the user asked: once an
+ *     event, not every hole): the sound once, the fans on their feet and
+ *     waving for a moment, then sat again; on no other hole
+ *   - lamps on posts over it, lit at night and not by day
  */
 'use strict';
 module.exports = {
@@ -97,6 +101,37 @@ module.exports = {
           }
         }
         if (o.pin < 50) f('the pin was only ' + o.pin + ' pixels over the checks');
+        // ---- the cheer, as the event's last putt drops, and only then ----
+        {
+          DEV.course(B.COURSE.findIndex(c => c.slot === 'home')); hideSheet();
+          const t = tournamentOf(S.hole), first = (t - 1) * B.ROUND * B.DAYS + 1, played = [];
+          const kp = Sfx.play; Sfx.play = function (k) { played.push(k); };
+          const drop = hh => { S.hole = hh; S.chaos = Object.assign({}, B.CHAOS.find(x => x.n === 'Fair')); Scene.newHole(S.hole, S.tier); Scene.announce = null;
+            QUIET = false; S.yards = 0; Scene.cheerT = undefined; Scene.camD = LEN; Scene.walkTo = LEN; Scene.upT = Scene.t - 1;
+            Scene.cupT = Scene.t - 0.01; Scene.cupHeard = 0; Scene.putt = null; Scene.balls = []; Scene.restBall = null; played.length = 0;
+            Scene.draw(0.016, D); Scene.draw(0.016, D); QUIET = true; return played.filter(k => k === 'cheer').length; };
+          try {
+            o.cheer = [drop(first + 3 * B.ROUND + B.ROUND - 1), drop(first + B.ROUND - 1), drop(first + 3 * B.ROUND + B.ROUND - 2)].join('/');
+            // and the fans on their feet, then sat again
+            drop(first + 3 * B.ROUND + B.ROUND - 1);
+            const Q = Scene.props.find(p => p.kind === 10), t0 = Scene.cheerT;
+            Scene.camD = LEN - 8; Scene.draw(0, D);
+            const pic = at => { Scene.t = t0 + at; return drawn([Q]).d; };
+            const same = (a, b) => { let n = 0; for (let i = 0; i < a.length; i++) if (a[i] !== b[i]) n++; return n; };
+            const sat = pic(STAND_CHEER + 0.1), up1 = pic(0.1), up2 = pic(0.35), later = pic(STAND_CHEER + 2);
+            o.cheerPix = [same(up1, sat), same(up1, up2), same(later, sat)].join('/');
+          } finally { Sfx.play = kp; QUIET = true; }
+          if (o.cheer !== '1/0/0') f('the grandstand cheered ' + o.cheer + ' times (the event\'s last putt / the first day\'s last hole / the last day\'s 17th; want 1/0/0)');
+          const [a, b2, c2] = o.cheerPix.split('/').map(Number);
+          if (!(a > 20) || !(b2 > 20) || c2) f('through the cheer the stand changed ' + a + ' pixels from seated, ' + b2 + ' between its two poses, ' + c2 + ' after (want some, some, none)');
+          // lamps over it: lit at night, not by day
+          const lampLit = night => { S.hole = first + B.ROUND - 1; S.chaos = Object.assign({}, B.CHAOS.find(x => x.n === (night ? 'Night Round' : 'Fair')));
+            Scene.newHole(S.hole, S.tier); Scene.announce = null; Scene.camD = LEN - 8; Scene.walkTo = Scene.camD; Scene.draw(0, D);
+            const d = drawn([Scene.props.find(p => p.kind === 10)]).d; let n = 0;
+            for (let i = 0; i < d.length; i += 4) if (d[i] === 0xFF && d[i + 1] === 0xF6 && d[i + 2] === 0xD0) n++; return n; };
+          o.lamps = lampLit(false) + '/' + lampLit(true);
+          if (o.lamps.split('/')[0] !== '0' || !(+o.lamps.split('/')[1] >= 3)) f('the stand\'s lamps lit by day or dark at night (' + o.lamps + ')');
+        }
       } finally {
         window.step = keep; FROST_FORCE = null; delete S.dgnRun;
         Object.keys(S).forEach(k => delete S[k]); Object.assign(S, JSON.parse(SNAP));
@@ -106,6 +141,6 @@ module.exports = {
     });
     if (r.fails.length) throw new Error(r.fails.join('; '));
     return [r.lasts + ' last holes with a stand behind the green, none on any other hole or by the island or the sea stack; seats taken day by day ' + r.seats + ', full on the final day',
-      r.views + ' views down the home courses\' 18th, ' + r.pix + ' pixels of stand, none under the ground\'s line; ' + r.pin + ' pixels of pin, none changed by it; day/night brightness ' + r.night + ', none in a wager'];
+      r.views + ' views down the home courses\' 18th, ' + r.pix + ' pixels of stand, none under the ground\'s line; ' + r.pin + ' pixels of pin, none changed by it; day/night brightness ' + r.night + ', none in a wager', 'the cheer on the event\'s last putt and no other (' + r.cheer + '), on their feet and waving then sat again (' + r.cheerPix + '); lamps lit day/night ' + r.lamps];
   }
 };

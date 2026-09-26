@@ -6025,6 +6025,19 @@ const Sfx = {
     src.connect(f); f.connect(g); g.connect(this.master);
     src.start(t, Math.random() * 0.5); src.stop(t + dur + 0.05);
   },
+  // The grandstand as the last putt of an event drops (the user asked, it
+  // being once an event, not every hole): a soft roar that swells and
+  // fades, and a scatter of claps in it, all well under the music.
+  CHEER_VOL: 0.012,
+  cheer(t){
+    const c = this.ctx, src = c.createBufferSource(), bp = c.createBiquadFilter(), g = c.createGain(), V = this.CHEER_VOL;
+    src.buffer = this.noise(); src.loop = true;
+    bp.type = 'bandpass'; bp.Q.value = 0.6; bp.frequency.setValueAtTime(700, t); bp.frequency.linearRampToValueAtTime(1100, t + 0.4);
+    g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(V, t + 0.3); g.gain.exponentialRampToValueAtTime(0.0001, t + 2.2);
+    src.connect(bp); bp.connect(g); g.connect(this.master);
+    src.start(t, Math.random() * 0.5); src.stop(t + 2.3);
+    for(let i = 0; i < 16; i++) this.hiss(t + 0.1 + Math.random() * 1.6, 0.03, 1800 + Math.random() * 900, 1.2, V * 0.7);
+  },
   // On the stepping stones: a knock of a shoe on stone and a little splash.
   hop(t, ice){
     this.tone(420, t, 0.05, 'triangle', 0.045, 260);
@@ -6287,6 +6300,7 @@ const Sfx = {
     else if(k === 'buy')   this.tone(880, t, 0.06, 'square', 0.045, 1320);
     else if(k === 'season') this.season(arg);
     else if(k === 'putt')  this.putt(t);
+    else if(k === 'cheer') this.cheer(t + 0.05);
     else if(k === 'hellfire') this.hellfire(t, arg);
     else if(k === 'ascend') this.ascend(t, arg);
     else if(k === 'choir') this.choir(t, arg);
@@ -8645,18 +8659,23 @@ const SPECT_CACHE = {};
 // foot in the game's green and brass. Seated fans in the gallery's
 // own colours, each seat filled or not from a hash; the one picture a size,
 // so a frame draws it in a single blit.
-const STAND_D = 13.5, STAND_W = 12, STAND_CACHE = [];
-function standCv(sh, full, night, seed){
-  const key = sh + '|' + full + '|' + (night ? 1 : 0) + '|' + seed;
+const STAND_D = 13.5, STAND_W = 12, STAND_CACHE = [], STAND_CHEER = 2.4;
+// cheer: 0 seated; 1 or 2 on their feet, arms up in turn. At night lamps on
+// posts over the roof, and the seats lit under them.
+function standCv(sh, full, night, seed, cheer){
+  cheer = cheer || 0;
+  const key = sh + '|' + full + '|' + (night ? 1 : 0) + '|' + seed + '|' + cheer;
   const hit = STAND_CACHE.find(e => e.key === key);
   if(hit) return hit.cv;
   const th = Math.max(2, Math.round(sh * 0.62)), R = 5, plinth = Math.max(2, Math.round(th * 0.9));
   const W = Math.max(8, Math.round(sh * STAND_W / 12 * LAT / US));
   const roof = Math.max(1, Math.round(sh * 0.22)), clear = Math.round(sh * 0.55);
-  const H = plinth + R * th + clear + roof + 1;
-  const cv = document.createElement('canvas'); cv.width = W; cv.height = H;
+  const H = plinth + R * th + clear + roof + 1, L = Math.max(3, Math.round(sh * 0.6));   // (and the lamps' room over the roof)
+  const cv = document.createElement('canvas'); cv.width = W; cv.height = H + L;
   const g = cv.getContext('2d'); g.imageSmoothingEnabled = false;
-  const dk = col => night ? mixC(col, '#0B1118', 0.5) : col;
+  g.translate(0, L);
+  // (at night under its own lamps: darker than by day, but lit)
+  const dk = col => night ? mixC(col, '#0B1118', 0.3) : col;
   const post = Math.max(1, Math.round(sh * 0.14)), top = H - plinth - R * th;
   // the back wall under the roof, then the tiers from the back row down
   g.fillStyle = dk('#27313A'); g.fillRect(0, roof, W, top - roof + 1);
@@ -8672,8 +8691,13 @@ function standCv(sh, full, night, seed){
       const x = x0 + i * pitch;
       if(aisle.some(a => x + sw > a - aw && x < a + aw)) continue;
       if(hr(seed * 131 + r * 37 + i, 350) >= full) continue;
-      const ci = Math.floor(hr(seed * 7 + r * 11 + i, 351) * 6);
-      blit(g, spectSpr(ci, hr(seed + r * 5 + i, 352) < 0.5 ? 0 : 1, night), x, y + th - sh + Math.round(th * 0.25), sw, sh);
+      const ci = Math.floor(hr(seed * 7 + r * 11 + i, 351) * 6), pose = (hr(seed + r * 5 + i, 352) < 0.5 ? 0 : 1) ^ (cheer === 2 ? 1 : 0);
+      // (on their feet for the cheer)
+      const fy = y + th - sh + Math.round(th * 0.25) - (cheer ? Math.max(1, Math.round(th * 0.35)) : 0);
+      blit(g, spectSpr(ci, pose, night), x, fy, sw, sh);
+      // and arms up, every other fan in turn
+      if(cheer && ((i + r) & 1) === cheer - 1){ const ak = Math.max(1, Math.round(sw / 5)), ah = Math.max(2, Math.round(sh * 0.32));
+        g.fillStyle = night ? PX.skin2 : PX.skin; g.fillRect(x, fy + Math.round(sh * 0.3) - ah, ak, ah); g.fillRect(x + sw - ak, fy + Math.round(sh * 0.3) - ah, ak, ah); }
     }
     g.fillStyle = dk('#6E7880'); g.fillRect(0, y + th - Math.max(1, Math.round(th * 0.4)), W, Math.max(1, Math.round(th * 0.4)));   // the bench
   }
@@ -8688,6 +8712,14 @@ function standCv(sh, full, night, seed){
   g.fillStyle = dk('#1A2A20'); g.fillRect(0, H - plinth, W, plinth);
   g.fillStyle = dk(PX.brass); g.fillRect(0, H - plinth, W, 1);
   if(plinth > 3) g.fillRect(0, H - 2, W, 1);
+  // three lamps on posts over the roof, lit at night
+  const lw = Math.max(2, Math.round(sh * 0.45)), lh = Math.max(1, Math.round(sh * 0.16));
+  for(const u of [0.12, 0.5, 0.88]){
+    const lx = Math.round(W * u);
+    g.fillStyle = dk('#2F383F'); g.fillRect(lx, -L + lh, Math.max(1, post >> 1), L - lh);
+    g.fillStyle = night ? '#FFF6D0' : '#8E979E'; g.fillRect(lx - (lw >> 1), -L + 1, lw, lh);
+    g.fillStyle = night ? '#FFD36A' : '#5A636B'; g.fillRect(lx - (lw >> 1), -L + 1 + lh, lw, 1);
+  }
   STAND_CACHE.unshift({ key, cv });
   if(STAND_CACHE.length > 8) STAND_CACHE.pop();
   return cv;
@@ -15006,7 +15038,9 @@ Object.assign(Scene, {
       // the grandstand: baked once for its size and drawn in one blit
       const sh = Math.round(12 * pr.s * US);
       if(sh < 3) return;
-      const cv = standCv(sh, p.full, night, p.k);
+      // (standing and waving through the cheer, two poses a quarter second each)
+      const ch = this.cheerT !== undefined && this.t - this.cheerT >= 0 && this.t - this.cheerT < STAND_CHEER ? 1 + (Math.floor((this.t - this.cheerT) * 4) & 1) : 0;
+      const cv = standCv(sh, p.full, night, p.k, ch);
       const w = cv.width;
       if(pr.x + w / 2 < -2 || pr.x - w / 2 > VW + 2) return;
       c.drawImage(cv, Math.round(pr.x - w / 2), pr.y - cv.height);
@@ -16429,7 +16463,10 @@ Object.assign(Scene, {
       // the ball has dropped: the cup's sound at once, and the score and the
       // caddie's cheer as soon as it is settled (an ace off the tee can drop
       // before the hole's shortest time is up)
-      if(this.cupT && up && !this.cupHeard){ this.cupHeard = 1; Sfx.play('hole'); }
+      if(this.cupT && up && !this.cupHeard){ this.cupHeard = 1; Sfx.play('hole');
+        // the event's last putt: the grandstand cheers, and stands to it
+        if(this.hole === S.hole && isSunday(S.hole) && holeInRound(S.hole) === B.ROUND && !S.dgnRun
+           && (this.props || []).some(q => q.kind === 10)){ this.cheerT = this.t; Sfx.play('cheer'); } }
       if(this.cupT && up && S.doneT != null && this.saidHole !== S.hole) holeSaid();
       this.drawnAt = performance.now();
       // walking: the camera is carrying him on and he is not mid-swing. A new
