@@ -15908,6 +15908,15 @@ Object.assign(Scene, {
       L.push([this.wind < 0 ? arrow.replace(/>/g, '<') + ' ' + mph + '\u00a0MPH' : mph + '\u00a0MPH ' + arrow,
               mph >= 14 ? PX.brass : PX.bone]);
     }
+    // (out of the way while the course's name is announced over them: on
+    // the page they would stand on its banner, which covered them in the
+    // picture)
+    const A = this.announce;
+    if(A){
+      const big = textW(A.name, TSC * 2) <= VW * 0.9 ? TSC * 2 : TSC, y0 = Math.round(VH * 0.27) - 5 * TSC;
+      const bh = (FH + 2) * big + LH + 10 * TSC, top = this.hudBase() - (L.length - 1) * LH;
+      if(top < y0 + bh && this.hudBase() + LH > y0){ this.hudWords(null); return; }
+    }
     this.hudWords(L);
   },
   // The words go on the page over the field, not into its pixels: the user
