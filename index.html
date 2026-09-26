@@ -3711,6 +3711,19 @@ const courseSeason = (cs, tier) => !cs ? 0 : cs.slot === 'home' ? homeSeason(cs,
 // pins the hour.
 let FROST_FORCE = null, HOUR_FORCE = null;
 const hourNow = () => HOUR_FORCE !== null ? HOUR_FORCE : new Date().getHours();
+// Dawn and dusk (the user asked, as a setting, off by default: a course
+// built for the day or the night keeps it whatever the time): with it on,
+// the sky warms towards the horizon from five to half past eight in the
+// morning and from five to half past eight in the evening, by the player's
+// own clock. Never at night or in the rain. How warm, in fifths, and which.
+const dawnDusk = () => {
+  if(S.dawnDusk !== 1) return null;
+  const h = HOUR_FORCE !== null ? HOUR_FORCE : new Date().getHours() + new Date().getMinutes() / 60;
+  const tent = (a, pk, b) => h <= a || h >= b ? 0 : h < pk ? (h - a) / (pk - a) : (b - h) / (b - pk);
+  const dn = tent(5, 6.25, 8.5), dk = tent(17, 19, 20.5), w = Math.round(Math.max(dn, dk) * 5) / 5;
+  return w > 0 ? { w, dawn: dn > dk } : null;
+};
+const DAWN_COL = { dawn: ['#F6B98E', '#E596A6'], dusk: ['#F2904A', '#C9637E'], sun: '#FFE7A8' };
 const frostFor = (cs, tier) => FROST_FORCE !== null ? !!FROST_FORCE
   : !!cs && (cs.id === 'snowline' || [1, 2].includes(courseSeason(cs, tier))) && hourNow() >= 5 && hourNow() < 11;
 const LOOK_CACHE = {};
@@ -3909,6 +3922,7 @@ function initState(){
     if(!c || !(S.caseGot[k] >= 0)) delete S.caseGot[k]; else S.caseGot[k] = Math.min(c.at.length, Math.floor(S.caseGot[k])); }
   if(S.music !== undefined && S.music !== 0 && S.music !== 1) delete S.music;
   if(S.music2 !== undefined && S.music2 !== 0 && S.music2 !== 1) delete S.music2;
+  if(S.dawnDusk !== undefined && S.dawnDusk !== 1) delete S.dawnDusk;
   if(S.sigRec !== undefined){
     if(!S.sigRec || typeof S.sigRec !== 'object' || Array.isArray(S.sigRec)) delete S.sigRec;
     else for(const k in S.sigRec){ const R = S.sigRec[k];
@@ -6350,6 +6364,11 @@ function toggleMusic(){
   settingsSheet();
 }
 // the calm night tune, or the town theme all the time
+function toggleDawn(){
+  if(S.dawnDusk === 1) delete S.dawnDusk; else S.dawnDusk = 1;
+  Scene.buildSky();
+  settingsSheet();
+}
 function toggleMusic2(){
   S.music2 = S.music2 === 0 ? 1 : 0;
   Sfx.musicTick();
@@ -12824,7 +12843,9 @@ const Scene = {
     // Dithering a sky is thousands of single-pixel writes. It only depends on
     // the conditions and the frame size, so it is cached against those and not
     // rebuilt for every hole, which at a high Tour Card is several a second.
-    const key = [this.themeId, this.night, this.aurora, this.rain, VW, HORIZON].join('|');
+    const dd = !this.night && !this.rain && !S.dgnRun ? dawnDusk() : null;
+    this.dawnDusk = dd;
+    const key = [this.themeId, this.night, this.aurora, this.rain, VW, HORIZON, dd ? dd.w + (dd.dawn ? 'a' : 'p') : ''].join('|');
     if(key === this.skyKey && this.sky) return;
     this.skyKey = key;
     const H = Math.max(2, HORIZON + 2);
@@ -12834,6 +12855,22 @@ const Scene = {
     g.imageSmoothingEnabled = false;
     const ramp = (this.theme || THEMES.day).sky;
     smoothRamp(g, 0, 0, VW, H, ramp);
+    // the warm band low in the sky, a row at a time over the course's own
+    // sky: rose above, peach or orange at the horizon
+    const warm = dd ? DAWN_COL[dd.dawn ? 'dawn' : 'dusk'] : null;
+    if(dd){
+      const y0 = Math.round(H * 0.28);
+      for(let y = y0; y < H; y++){
+        const f = (y - y0) / Math.max(1, H - 1 - y0);
+        g.fillStyle = lerpCols([lerpCols(ramp, (y + 0.5) / H), lerpCols(warm.slice().reverse(), f)], dd.w * (0.3 + 0.62 * Math.pow(f, 1.2)));
+        g.fillRect(0, y, VW, 1);
+      }
+      // and a low sun, east in the morning and west in the evening, just
+      // over the hills (lower as it is warmer)
+      const r = Math.max(3, Math.round(VW * 0.028)), sx = Math.round(VW * (dd.dawn ? 0.2 : 0.8)), sy = Math.round(H * (0.52 + 0.12 * dd.w));
+      pxCircle(g, sx, sy, r + 2, lerpCols([lerpCols(ramp, sy / H), warm[0]], 0.6 + 0.3 * dd.w));
+      pxCircle(g, sx, sy, r, DAWN_COL.sun);
+    }
 
     const rnd = seeded(hash32(key.length*7919 + VW*31 + (this.night?3:0) + (this.aurora?7:0)));
     if(this.night){
@@ -12881,7 +12918,7 @@ const Scene = {
       // wherever two overlapped, so a cloud read as a clump of discs rather
       // than one body, and whatever was behind it showed through every seam.
       const body = lite(ramp[0], 0.80), lit = lite(ramp[0], 0.96),
-            shade = lite(ramp[0], 0.56);
+            shade = dd ? lerpCols([lite(ramp[0], 0.56), warm[1]], 0.45 * dd.w) : lite(ramp[0], 0.56);
       for(let i = 0; i < 5; i++){
         const cx = Math.floor(rnd()*VW), cy = Math.floor(H*0.12 + rnd()*H*0.38);
         const w = Math.round(VW*(0.10 + rnd()*0.11));
@@ -18725,6 +18762,9 @@ function settingsSheet(){
     + row('Night Music', S.music === 0 || S.sound === 0 ? 'Needs Music on' : 'A calmer tune at night and in wagers',
         '<button class="mini' + (S.music2 !== 0 ? ' go' : '') + '" onclick="toggleMusic2()">'
         + (S.music2 !== 0 ? 'On' : 'Off') + '</button>')
+    + row('Dawn and Dusk', 'The sky follows your clock',
+        '<button class="mini' + (S.dawnDusk === 1 ? ' go' : '') + '" onclick="toggleDawn()">'
+        + (S.dawnDusk === 1 ? 'On' : 'Off') + '</button>')
     + row('Battery Saver', saverMins() ? 'After ' + saverMins() + '\u00a0min untouched' : 'Only when started',
         '<div class="setbtns"><button class="mini' + (saverMins() ? ' go' : '') + '" onclick="saverCycle()">'
         + (saverMins() ? saverMins() + '\u00a0min' : 'Off') + '</button>'
