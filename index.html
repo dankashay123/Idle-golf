@@ -8666,6 +8666,78 @@ function standCv(sh, full, night, seed){
   if(STAND_CACHE.length > 8) STAND_CACHE.pop();
   return cv;
 }
+// The clubhouse by the last green: a long cream house under a pitched red
+// roof with a chimney, tall windows either side of its door and the club's
+// sign over it, and in front a terrace with a white rail, parasols and a few
+// members at their tables. Its windows glow at night. One picture a size.
+const CLUB_D = 14.5, CLUB_X = 11, CLUB_W = 8, CLUB_CACHE = [];
+function clubhouseCv(sh, night, side, seed){
+  const key = sh + '|' + (night ? 1 : 0) + '|' + side + '|' + seed;
+  const hit = CLUB_CACHE.find(e => e.key === key);
+  if(hit) return hit.cv;
+  const W = Math.max(10, Math.round(sh * CLUB_W / 12 * LAT / US));
+  const deck = Math.max(2, Math.round(sh * 0.3)), wall = Math.max(4, Math.round(sh * 1.35)), roof = Math.max(3, Math.round(sh * 0.55));
+  const chim = Math.max(2, Math.round(sh * 0.3)), H = deck + wall + roof + chim;
+  const cv = document.createElement('canvas'); cv.width = W; cv.height = H;
+  const g = cv.getContext('2d'); g.imageSmoothingEnabled = false;
+  const dk = col => night ? mixC(col, '#0B1118', 0.55) : col;
+  const k = Math.max(1, Math.round(sh / 10)), inW = Math.round(W * 0.06);
+  const wy = H - deck - wall;                       // the top of the wall
+  // the wall, with a darker band at its foot
+  g.fillStyle = dk('#E6DCC4'); g.fillRect(inW, wy, W - inW * 2, wall);
+  g.fillStyle = dk('#B9AD93'); g.fillRect(inW, H - deck - k, W - inW * 2, k);
+  // the roof, pitched and overhanging, a ridge line, and a chimney
+  const rc = dk('#8E3B2E'), rl = dk('#B5543F');
+  for(let r = 0; r < roof; r++){ const inset = Math.round(r * (W * 0.16) / roof);
+    g.fillStyle = r === roof - 1 ? rl : rc; g.fillRect(inset, wy - 1 - r, W - inset * 2, 1); }
+  g.fillStyle = dk('#5A4A3E'); g.fillRect(side > 0 ? Math.round(W * 0.72) : Math.round(W * 0.2), wy - roof - chim + 1, Math.max(2, k * 2), chim + Math.round(roof * 0.5));
+  // tall windows either side of the door, and the door under the sign
+  const n = Math.max(2, Math.floor((W - inW * 2) / (sh * 0.62))), pitch = (W - inW * 2) / n;
+  const winH = Math.max(2, Math.round(wall * 0.48)), winW = Math.max(1, Math.round(pitch * 0.45)), winY = wy + Math.round(wall * 0.22);
+  const door = Math.floor(n / 2);
+  for(let i = 0; i < n; i++){
+    const x = Math.round(inW + i * pitch + (pitch - winW) / 2);
+    if(i === door){
+      g.fillStyle = dk('#4A3526'); g.fillRect(x, winY + Math.round(winH * 0.2), winW, H - deck - winY - Math.round(winH * 0.2));
+      g.fillStyle = night ? '#F2B84A' : '#6E5236'; g.fillRect(x + (winW > 2 ? 1 : 0), winY + Math.round(winH * 0.2) + 1, Math.max(1, winW - 2), Math.max(1, H - deck - winY - Math.round(winH * 0.2) - 2));
+      g.fillStyle = dk('#1A2A20'); g.fillRect(x - Math.round(winW * 0.5), wy + 1, winW * 2, Math.max(2, Math.round(wall * 0.14)));
+      g.fillStyle = dk(PX.brass); g.fillRect(x - Math.round(winW * 0.5), wy + 1, winW * 2, 1);
+      continue;
+    }
+    g.fillStyle = dk('#5A4A3E'); g.fillRect(x - 1, winY - 1, winW + 2, winH + 2);
+    g.fillStyle = night ? (hr(seed + i, 356) > 0.2 ? '#FFD36A' : '#3A3A44') : '#3D5566';
+    g.fillRect(x, winY, winW, winH);
+    if(!night && winW > 1){ g.fillStyle = '#8FB0C4'; g.fillRect(x, winY, Math.max(1, winW >> 1), 1); }
+  }
+  // the terrace: its boards, members at tables under parasols, the rail
+  g.fillStyle = dk('#9A7A56'); g.fillRect(0, H - deck, W, deck);
+  g.fillStyle = dk('#C2A078'); g.fillRect(0, H - deck, W, 1);
+  const np = Math.max(2, Math.round(W / (sh * 1.6)));
+  for(let i = 0; i < np; i++){
+    const px = Math.round(W * (i + 0.5) / np), pw = Math.max(3, Math.round(sh * 0.9)), top = H - deck - Math.round(sh * 0.95);
+    // two members either side of the pole, seated (their legs behind the rail)
+    for(const dx of [-1, 1]){
+      if(hr(seed * 3 + i * 2 + dx, 357) < 0.25) continue;
+      const sp = spectSpr(Math.floor(hr(seed + i * 5 + dx, 358) * 6), 0, night), s2 = Math.round(sh * 0.8), sw = Math.max(1, Math.round(s2 * sp.w / sp.h));
+      blit(g, sp, px + dx * Math.round(pw * 0.32) - (sw >> 1), H - s2 + Math.round(deck * 0.2), sw, s2);
+    }
+    g.fillStyle = dk('#E8E2D2'); g.fillRect(px, top, 1, H - deck - top);
+    const ch = Math.max(2, Math.round(sh * 0.3));
+    for(let r = 0; r < ch; r++){ const ww = Math.max(1, Math.round(pw * (0.3 + 0.7 * Math.sqrt(r / Math.max(1, ch - 1)))));
+      g.fillStyle = dk(r === ch - 1 ? '#1F4A30' : '#2E6B45'); g.fillRect(px - (ww >> 1), top - ch + r, ww, 1);
+      if(ww > 4 && r < ch - 1){ g.fillStyle = dk('#F2EEE4'); g.fillRect(px - 1, top - ch + r, 2, 1); } }
+    g.fillStyle = dk('#F2EEE4'); g.fillRect(px - Math.round(pw * 0.25), H - deck - Math.max(1, Math.round(sh * 0.25)), Math.round(pw * 0.5) || 1, 1);   // the table
+  }
+  g.fillStyle = dk('#F4F1EA');
+  const railY = H - Math.max(2, Math.round(deck * 0.9));
+  g.fillRect(0, railY, W, 1);
+  for(let x = 0; x < W; x += Math.max(2, k * 3)) g.fillRect(x, railY, 1, H - railY);
+  // a lamp on the terrace at night
+  if(night){ g.fillStyle = '#FFE7A8'; g.fillRect(side > 0 ? 1 : W - 2, H - deck - Math.round(sh * 0.6), 1, 1); }
+  CLUB_CACHE.unshift({ key, cv });
+  if(CLUB_CACHE.length > 8) CLUB_CACHE.pop();
+  return cv;
+}
 function spectSpr(ci, pose, night){
   const key = ci + '|' + pose + '|' + (night ? 1 : 0);
   if(SPECT_CACHE[key]) return SPECT_CACHE[key];
@@ -11294,6 +11366,64 @@ function drawLyingBall(c, cx, cy, r, t){
   }
   c.globalAlpha = 1;
 }
+// The dearest balls' moment in the cup (Scene.drawCupFx): each told the
+// cup's place, its size, the pin's height, how far through (0 to 1) and the
+// clock. Fading is done by dropping pixels, never by alpha over the grass.
+const CUP_FX_DUR = 0.55;
+const CUP_FX = {
+  godlight(c, x, y, cr, h, q, t){
+    const R = h * 0.75, k = Math.max(1, Math.round(h / 16));
+    // a ring of light running out across the green
+    if(q < 0.75) for(let i = 0; i < 28; i++){ const a = i / 28 * Math.PI * 2, r = R * (0.15 + q * 1.1);
+      fxDot(c, x + Math.cos(a) * r - (k >> 1), y + Math.sin(a) * r * 0.36, k, i & 1 ? '#FFE7A3' : '#FFD66B', 1); }
+    // rays of gold, white at their tips
+    for(let i = 0; i < 12; i++){
+      const a = i / 12 * Math.PI * 2 + 0.26, r0 = R * q * 0.45, r1 = R * (0.3 + q * 0.8);
+      for(let r = r0; r <= r1; r += k){
+        if(hr(i * 31 + Math.round(r), 360) < q * 0.7) continue;
+        fxDot(c, x + Math.cos(a) * r - (k >> 1), y + Math.sin(a) * r * 0.36, k, r > r1 - k * 1.5 ? '#FFFFFF' : r > (r0 + r1) / 2 ? '#FFE7A3' : '#FFD66B', 1);
+      }
+    }
+    // sparks popping up out of the cup
+    for(let i = 0; i < 8; i++){
+      if(hr(i, 361) < q * 0.8) continue;
+      const a = i / 8 * Math.PI * 2 + 1.1;
+      fxDot(c, x + Math.cos(a) * h * (0.05 + q * 0.28), y - Math.sin(q * Math.PI) * h * (0.3 + hr(i, 362) * 0.2), k, i & 1 ? '#FFF6D8' : '#FFD66B', 1);
+    }
+    if(q < 0.3) fxDot(c, x - k, y - k * 2, k * 2, '#FFFFFF', 1);
+  },
+  demoneye(c, x, y, cr, h, q, t){
+    const R = h * (0.2 + q * 0.18), k = Math.max(1, Math.round(h / 16));
+    // a ring of fire about the cup, its flames licking up and dying down
+    for(let i = 0; i < 16; i++){
+      if(hr(i, 363) < q * q) continue;
+      const a = i / 16 * Math.PI * 2, fx = x + Math.cos(a) * R - (k >> 1), fy = y + Math.sin(a) * R * 0.36;
+      const lick = Math.max(k * 2, Math.round(h * (0.2 + 0.1 * Math.sin(t * 20 + i * 1.7)) * (1 - q * 0.6)));
+      for(let j = 0; j < lick; j += k)
+        fxDot(c, fx, fy - j, k, j > lick * 0.66 ? '#FFD34A' : j > lick * 0.3 ? '#FF6A1A' : '#A81E14', 1);
+    }
+    // embers thrown up
+    for(let i = 0; i < 6; i++){ if(hr(i, 365) < q) continue;
+      fxDot(c, x + (hr(i, 366) - 0.5) * h * 0.6, y - q * h * (0.35 + hr(i, 367) * 0.2), k, i & 1 ? '#FFB43A' : '#FF4A1A', 1); }
+    // and the eye low in the cup, looking up (the pin in front of it)
+    // (not when the green is far off: at its least the eye is bigger than the cup's whole moment)
+    if(q < 0.7 && h >= 24) drawDemonEye(c, x, y - Math.round(h * 0.05), Math.max(3, Math.round(h * 0.09)), 0, -1, t);
+  },
+  ascorb(c, x, y, cr, h, q, t){
+    const k = Math.max(1, Math.round(h / 16));
+    // the void drawn down into the cup in a spiral
+    for(let i = 0; i < 28; i++){
+      const u = clamp(q * 1.3 - hr(i, 364) * 0.3, 0, 1);
+      if(u >= 1) continue;
+      const a = i / 28 * Math.PI * 2 + u * 5, r = h * 0.7 * (1 - u);
+      fxDot(c, x + Math.cos(a) * r - (k >> 1), y + Math.sin(a) * r * 0.36 - (1 - u) * h * 0.15, k, i % 3 === 0 ? '#FFE0FF' : i & 1 ? '#E639EB' : '#F2A6F8', 1);
+    }
+    // a dark ring closing on it, then a white flash as it shuts
+    if(q < 0.8){ const rr = Math.max(k, Math.round(h * 0.26 * (1 - q)));
+      for(let i = 0; i < 20; i++){ const a = i / 20 * Math.PI * 2; fxDot(c, x + Math.cos(a) * rr - (k >> 1), y + Math.sin(a) * rr * 0.4, k, i & 1 ? '#371946' : '#962CA8', 1); } }
+    else for(let i = 0; i < 10; i++){ const a = i / 10 * Math.PI * 2; fxDot(c, x + Math.cos(a) * h * 0.12 - (k >> 1), y + Math.sin(a) * h * 0.045, k, '#FFFFFF', 1); }
+  }
+};
 // A ball effect is drawn instead of the plain trail: path is the ball's last
 // few positions (0 is the ball itself), r its size, t the scene clock.
 const BALLFX = {
@@ -12019,6 +12149,22 @@ const Scene = {
       if(this.hitsHazard(LEN + STAND_D + dd, x, 0.6)) return false; return true; };
     if(holeInRound(this.hole) === B.ROUND && sk !== 'island' && sk !== 'pier' && sfoot())
       put.push({ kind: 10, d: LEN + STAND_D, x: 0, full: isSunday(this.hole) ? 1 : 0.3 + 0.15 * dayIndex(this.hole), k: this.hole });
+    // and the clubhouse beside it (kind 11), its terrace facing the green,
+    // on whichever side is clear; what stood where it goes is taken away
+    if(put.some(q => q.kind === 10)){
+      const cd = LEN + CLUB_D, first = hr(this.hole, 355) < 0.5 ? -1 : 1;
+      for(const side of [first, -first]){
+        const cx = side * CLUB_X;
+        let ok = true;
+        for(let dd = -0.5; dd <= 3 && ok; dd += 1.5) for(let x = cx - CLUB_W / 2; x <= cx + CLUB_W / 2; x += 1.5)
+          if(this.hitsHazard(cd + dd, x, 0.6)){ ok = false; break; }
+        if(!ok) continue;
+        for(let i = put.length - 1; i >= 0; i--){ const q = put[i];
+          if((q.kind === 0 || q.kind === 1 || q.kind === 8) && Math.abs(q.x - cx) < CLUB_W / 2 + 0.8 && q.d > cd - 0.8 && q.d < cd + 3.5) put.splice(i, 1); }
+        put.push({ kind: 11, d: cd, x: cx, side, k: this.hole });
+        break;
+      }
+    }
     // birds on the fairway (kind 9), two little groups pecking about, that
     // fly off when a ball comes down near them or he walks up; not on a
     // signature hole, which has its own life
@@ -13065,8 +13211,10 @@ const Scene = {
     if(I && (this.crossing || this.camD < I.land - 0.05)) return true;
     if(this.camD < LEN - B_GREEN_UP || !this.upT) return true;
     // the ball in the cup (a putt, or an ace straight in), and a moment after
+    // (the dearest balls' own moment in the cup plays out whole: the wait is
+    // paid for, as all of it is)
     if(!this.cupT) return true;
-    return this.t - Math.max(this.upT, this.cupT) < 0.3;
+    return this.t - Math.max(this.upT, this.cupT) < (CUP_FX[trailNow().fx] ? CUP_FX_DUR : 0.3);
   },
   // The putt out (the user asked): once the hole's ball is down he walks up
   // onto the green, addresses the ball lying a putt short of the cup, and
@@ -14308,7 +14456,8 @@ Object.assign(Scene, {
     }
     // At night the clubhouse far off, its windows lit: on the foothills, on
     // the side away from the landmark
-    if(this.night && !S.dgnRun){
+    // (not on the last hole, where it stands by the green itself)
+    if(this.night && !S.dgnRun && !(this.props || []).some(q => q.kind === 11)){
       const left = lmX >= 0 ? lmX > VW / 2 : hr(this.hole, 321) < 0.5;
       this.clubhouse(g, Math.round(VW * (left ? 0.13 + hr(this.hole, 322) * 0.07 : 0.80 + hr(this.hole, 322) * 0.07)),
                      HORIZON - Math.round(VH * 0.045), Math.max(1, Math.round(VH / 215)), T);
@@ -14434,7 +14583,7 @@ Object.assign(Scene, {
       const back = p.kind === 2 && p.nd !== undefined ? p.nd : p.d;
       if(back < this.camD - 5) continue;
       if(p.kind === 9){ if(!S.dgnRun && !night && !this.rain) this.drawBird(c, p); continue; }
-      if(p.kind === 10 && S.dgnRun) continue;
+      if((p.kind === 10 || p.kind === 11) && S.dgnRun) continue;
       const pr = this.proj(p.d, p.x);
       if(pr.s < 0.05) continue;
       // Ground is drawn with occlusion but props were not, so a tree standing
@@ -14684,6 +14833,14 @@ Object.assign(Scene, {
           fillClip(c, X, Y, 1, 1, this.clipAt(E.dd));
         }
       }
+
+    }else if(p.kind === 11){
+      // the clubhouse, likewise one blit
+      const sh = Math.round(12 * pr.s * US);
+      if(sh < 3) return;
+      const cv = clubhouseCv(sh, night, p.side, p.k), w = cv.width;
+      if(pr.x + w / 2 < -2 || pr.x - w / 2 > VW + 2) return;
+      c.drawImage(cv, Math.round(pr.x - w / 2), pr.y - cv.height);
 
     }else if(p.kind === 10){
       // the grandstand: baked once for its size and drawn in one blit
@@ -16153,6 +16310,8 @@ Object.assign(Scene, {
       this.drawPier();
       this.drawDucks();
       this.drawGolferGround();
+      // (the balls' moment in the cup goes down first: the pin stands in it)
+      this.drawCupFx();
       if(!pinFirst) this.drawFlagstick();
       this.drawGolfer(D);
       this.drawBalls(dt);
@@ -16188,6 +16347,28 @@ Object.assign(Scene, {
   },
 
   pinX(){ return S.dgnRun ? 0 : PIN_X; },
+  // The three dearest balls each do something of their own as they drop in
+  // the cup (the user asked): half a second, close about the cup, in solid
+  // pixels (a wash over the green turns grey), cut at the ground's line so
+  // a green behind a rise hides it. Godlight: rays of gold out across the
+  // green and sparks. Demon Eye: a ring of fire about the cup and the eye
+  // looking up out of it. Ascended Orb: the void drawn down into the cup in
+  // a spiral, and a white flash as it closes.
+  drawCupFx(){
+    const fx = trailNow().fx;
+    if(!this.cupT || S.dgnRun || !CUP_FX[fx]) return;
+    const q = (this.t - this.cupT) / CUP_FX_DUR;
+    if(q < 0 || q >= 1) return;
+    const c = this.b, p = this.proj(LEN, this.pinX());
+    if(p.s < 0.05) return;
+    const cut = this.clipAt(LEN);
+    if(p.y - Math.round(B_FLAG * US * p.s) > cut + 1) return;
+    c.save(); c.beginPath(); c.rect(0, 0, VW, Math.max(0, Math.floor(cut) + 1)); c.clip();
+    const cr = Math.max(1, Math.round(1.6 * p.s * US)), h = Math.max(4, Math.round(B_FLAG * US * p.s));
+    CUP_FX[fx](c, p.x, p.y, cr, h, q, this.t);
+    c.globalAlpha = 1;
+    c.restore();
+  },
   pinBody(c, p){
     const h = Math.max(4, Math.round(B_FLAG * US * p.s));
     const pw = Math.max(1, Math.round(h*0.05));
