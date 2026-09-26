@@ -14267,6 +14267,10 @@ Object.assign(Scene, {
       const [x, y] = this.mapXY(b.d0 + b.dist*u, lt);
       g.fillRect(Math.round(x), Math.round(y), 1, 1);
     }
+    // and the ball lying out there, until he walks up to it (it went off the
+    // map as he set off)
+    const R = this.restBall;
+    if(R && !S.dgnRun){ const [bx, by] = this.mapXY(R.d, R.lat); g.fillRect(Math.round(bx), Math.round(by), 1, 1); }
     // the golfer, blinking
     const [x, y] = this.mapXY(this.camD, -0.30);
     g.fillStyle = (this.t * 2.5) % 1 < 0.6 ? '#FFD66B' : '#1A1F1A';
