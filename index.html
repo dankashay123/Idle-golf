@@ -844,6 +844,12 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
   border:1px solid var(--line);font-size:var(--f0);letter-spacing:.1em;text-transform:uppercase;font-weight:700;color:var(--dim);white-space:nowrap}
 #wagerStat[hidden]{display:none}
 #wagerStat b{color:var(--aurora);font-weight:700}
+.rfold{border-top:1px solid var(--line)}
+.rfh{display:flex;justify-content:space-between;width:100%;padding:8px 4px;background:none;border:0;color:var(--chalk);
+  font-family:var(--disp);font-size:var(--f3);cursor:pointer;min-height:32px;align-items:center}
+.rfn{font-family:var(--mono);font-size:var(--f0);color:var(--dim)}
+.rfold .rfb{display:none}
+.rfold.open .rfb{display:block}
 .guidelist{margin:6px 0 8px 18px;font-size:var(--f1);line-height:1.5}
 #leaveBtn.ask{border-color:var(--flag);color:var(--flag)}
 #leaveIcon{display:block;width:24px;height:24px;image-rendering:pixelated;image-rendering:crisp-edges}
@@ -8783,12 +8789,13 @@ const SPECT_CACHE = {};
 // foot in the game's green and brass. Seated fans in the gallery's
 // own colours, each seat filled or not from a hash; the one picture a size,
 // so a frame draws it in a single blit.
+const GALLERY_UP = 1.5;
 const STAND_D = 13.5, STAND_W = 12, STAND_CACHE = [], STAND_CHEER = 2.4;
 // cheer: 0 seated; 1 or 2 on their feet, arms up in turn. At night lamps on
 // posts over the roof, and the seats lit under them.
-function standCv(sh, full, night, seed, cheer){
+function standCv(sh, full, night, seed, cheer, frost){
   cheer = cheer || 0;
-  const key = sh + '|' + full + '|' + (night ? 1 : 0) + '|' + seed + '|' + cheer;
+  const key = sh + '|' + full + '|' + (night ? 1 : 0) + '|' + seed + '|' + cheer + '|' + (frost ? 1 : 0);
   const hit = STAND_CACHE.find(e => e.key === key);
   if(hit) return hit.cv;
   const th = Math.max(2, Math.round(sh * 0.62)), R = 5, plinth = Math.max(2, Math.round(th * 0.9));
@@ -8833,6 +8840,9 @@ function standCv(sh, full, night, seed, cheer){
   g.fillRect(0, roof, post, H - plinth - roof); g.fillRect(W - post, roof, post, H - plinth - roof);
   g.fillStyle = dk('#1A2A20'); g.fillRect(0, 0, W, roof);
   g.fillStyle = dk(PX.brass); g.fillRect(0, roof - 1, W, 1);
+  // frost on the roof on a cold morning, as on the grass
+  if(frost){ g.fillStyle = dk('#E6F0F4'); g.fillRect(0, 0, W, Math.max(1, roof - 1));
+    g.fillStyle = dk('#FFFFFF'); for(let x = 1; x < W; x += 4) if(hr(seed + x, 353) < 0.4) g.fillRect(x, 0, 1, 1); }
   g.fillStyle = dk('#1A2A20'); g.fillRect(0, H - plinth, W, plinth);
   g.fillStyle = dk(PX.brass); g.fillRect(0, H - plinth, W, 1);
   if(plinth > 3) g.fillRect(0, H - 2, W, 1);
@@ -8853,9 +8863,9 @@ function standCv(sh, full, night, seed, cheer){
 // sign over it, and in front a terrace with a white rail, parasols and a few
 // members at their tables. Its windows glow at night. One picture a size.
 const CLUB_D = 14.5, CLUB_X = 11, CLUB_W = 8, CLUB_CACHE = [];
-function clubhouseCv(sh, night, side, seed, lit){
+function clubhouseCv(sh, night, side, seed, lit, frost){
   if(lit === undefined) lit = night;
-  const key = sh + '|' + (night ? 1 : 0) + '|' + (lit ? 1 : 0) + '|' + side + '|' + seed;
+  const key = sh + '|' + (night ? 1 : 0) + '|' + (lit ? 1 : 0) + '|' + side + '|' + seed + '|' + (frost ? 1 : 0);
   const hit = CLUB_CACHE.find(e => e.key === key);
   if(hit) return hit.cv;
   const W = Math.max(10, Math.round(sh * CLUB_W / 12 * LAT / US));
@@ -8872,7 +8882,9 @@ function clubhouseCv(sh, night, side, seed, lit){
   // the roof, pitched and overhanging, a ridge line, and a chimney
   const rc = dk('#8E3B2E'), rl = dk('#B5543F');
   for(let r = 0; r < roof; r++){ const inset = Math.round(r * (W * 0.16) / roof);
-    g.fillStyle = r === roof - 1 ? rl : rc; g.fillRect(inset, wy - 1 - r, W - inset * 2, 1); }
+    g.fillStyle = r === roof - 1 ? rl : rc; g.fillRect(inset, wy - 1 - r, W - inset * 2, 1);
+    // (white with frost on a cold morning, the lower edge still showing red)
+    if(frost && r > 0){ g.fillStyle = dk(r > roof * 0.5 ? '#EEF6FA' : '#D6E4EA'); g.fillRect(inset + 1, wy - 1 - r, W - inset * 2 - 2, 1); } }
   g.fillStyle = dk('#5A4A3E'); g.fillRect(side > 0 ? Math.round(W * 0.72) : Math.round(W * 0.2), wy - roof - chim + 1, Math.max(2, k * 2), chim + Math.round(roof * 0.5));
   // tall windows either side of the door, and the door under the sign
   const n = Math.max(2, Math.floor((W - inW * 2) / (sh * 0.62))), pitch = (W - inW * 2) / n;
@@ -12681,6 +12693,9 @@ const Scene = {
   happyDance(d){
     if(QUIET || OFFLINE || S.dgnRun) return;
     this.legendGo(d);
+    // the gallery jumps and waves on an eagle or better (the user asked):
+    // a second and a half, the higher the better the hole
+    if(d <= -2) this.galleryUp = { t0: this.t, d };
     const R = this._moveRnd || (this._moveRnd = seeded(20260925));
     const seq = d <= -4 ? ['flip', 'flip', 'cartwheel'] : d === -3 ? ['flip', 'cartwheel'] : d === -2 ? ['cartwheel']
       : d === -1 && R() < 1 / 3 ? [R() < 0.5 ? 'dance' : 'spin'] : null;
@@ -15188,7 +15203,7 @@ Object.assign(Scene, {
       const sh = Math.round(12 * pr.s * US);
       if(sh < 3) return;
       // (its lights on at dusk too, with Dawn and Dusk on)
-      const dd = this.dawnDusk, cv = clubhouseCv(sh, night, p.side, p.k, night || !!(dd && !dd.dawn && dd.w >= 0.4)), w = cv.width;
+      const dd = this.dawnDusk, cv = clubhouseCv(sh, night, p.side, p.k, night || !!(dd && !dd.dawn && dd.w >= 0.4), !!this.frost), w = cv.width;
       if(pr.x + w / 2 < -2 || pr.x - w / 2 > VW + 2) return;
       c.drawImage(cv, Math.round(pr.x - w / 2), pr.y - cv.height);
 
@@ -15198,7 +15213,7 @@ Object.assign(Scene, {
       if(sh < 3) return;
       // (standing and waving through the cheer, two poses a quarter second each)
       const ch = this.cheerT !== undefined && this.t - this.cheerT >= 0 && this.t - this.cheerT < STAND_CHEER ? 1 + (Math.floor((this.t - this.cheerT) * 4) & 1) : 0;
-      const cv = standCv(sh, p.full, night, p.k, ch);
+      const cv = standCv(sh, p.full, night, p.k, ch, !!this.frost);
       const w = cv.width;
       if(pr.x + w / 2 < -2 || pr.x - w / 2 > VW + 2) return;
       c.drawImage(cv, Math.round(pr.x - w / 2), pr.y - cv.height);
@@ -15235,6 +15250,18 @@ Object.assign(Scene, {
     }else{
       const h = Math.max(3, Math.round(12 * pr.s * US));
       if(pr.x < -6 || pr.x > VW + 6) return;
+      // a jump and a wave, each to their own beat, after a great hole
+      const G = this.galleryUp, gq = G && !S.dgnRun ? (this.t - G.t0) / GALLERY_UP : -1;
+      if(gq >= 0 && gq < 1){
+        const hop = Math.abs(Math.sin((this.t - G.t0) * 9 + p.p)) * h * (G.d <= -3 ? 0.22 : 0.14) * (1 - gq);
+        const spr2 = spectSpr(p.c, Math.sin((this.t - G.t0) * 14 + p.p) > 0 ? 0 : 1, night), w2 = Math.max(1, Math.round(h * spr2.w / spr2.h));
+        c.fillStyle = 'rgba(8,16,10,.26)'; c.fillRect(pr.x - Math.round(w2/2), pr.y - 1, w2, 1);
+        blit(c, spr2, pr.x - w2/2, pr.y - h - Math.round(hop), w2, h);
+        // arms up
+        if(h >= 6){ const ak = Math.max(1, Math.round(w2 / 5)), ah = Math.max(2, Math.round(h * 0.3)), top = pr.y - h - Math.round(hop) + Math.round(h * 0.3);
+          c.fillStyle = night ? PX.skin2 : PX.skin; c.fillRect(Math.round(pr.x - w2 / 2), top - ah, ak, ah); c.fillRect(Math.round(pr.x + w2 / 2) - ak, top - ah, ak, ah); }
+        return;
+      }
       const spr = spectSpr(p.c, Math.sin(this.t*0.9 + p.p) > 0 ? 0 : 1, night);
       const w = Math.max(1, Math.round(h * spr.w / spr.h));
       c.fillStyle = 'rgba(8,16,10,.26)';
@@ -17988,18 +18015,24 @@ function renderTour(){
 }
 // The record, in the Trophy Room under the cabinet.
 const scoreName = d => d <= -4 ? 'Ace' : (B.SCORE.find(x => x.d === d) || { n: 'Par' }).n;
+// The Record in three folds (the user asked, it had grown long to scroll):
+// the career, how the bag is going now, and the courses. The career open.
+const recOpen = { career: 1 };
 function renderRecord(){
   const el = $('statRows'); if(!el) return;
   const D = derive();
-  el.innerHTML = [
+  const row = ([k,v]) => '<div class="lb"><span class="p"></span><span>' + k + '</span><span class="s">' + v + '</span></div>';
+  const groups = [['career', 'Career', [
     ['Cup Points', fmt(S.points)],
     ['Holes Played', fmt(S.totalHoles, 0)],
     ['Best Hole', scoreName(S.bestScore)],
     ['Aces', fmt(S.aces, 0)],
     ['Perks Used', fmt(S.perkUsed || 0, 0)],
-    ['Retirements', fmt(S.retires, 0)],
+    ['Retirements', fmt(S.retires, 0)]]],
+    ['now', 'Right Now', [
     ['Purse per Second', fmt(Meter.rate())],
-    ['Total Carry', fmt(D.dps) + ' yds/s'],
+    ['Total Carry', fmt(D.dps) + ' yds/s']]],
+    ['courses', 'Courses', [
     // a course in each of its seasons: the home courses and the regular
     // stops that turn with the month, four each
     ['Seasons Seen', seasonsSeen() + '\u00a0of ' + seasonsAll()],
@@ -18007,8 +18040,12 @@ function renderRecord(){
     ['Signature Week', sigWeekKinds().length + '\u00a0of ' + SIG_KINDS.length + ' this week'],
     // each kind of signature hole: played, and the best card on one
     ...Object.keys(SIG_NAME).map(k => { const R = (S.sigRec || {})[k];
-      return [SIG_NAME[k], R && R.n ? fmt(R.n, 0) + '\u00a0played \u00b7 best ' + scoreName(R.b) : '\u2014']; })
-  ].map(([k,v]) => '<div class="lb"><span class="p"></span><span>' + k + '</span><span class="s">' + v + '</span></div>').join('');
+      return [SIG_NAME[k], R && R.n ? fmt(R.n, 0) + '\u00a0played \u00b7 Best ' + scoreName(R.b) : '\u2014']; })]]];
+  el.innerHTML = groups.map(([id, n, rows]) => '<div class="rfold' + (recOpen[id] ? ' open' : '') + '" data-f="' + id + '">'
+    + '<button class="rfh"><span>' + n + '</span><span class="rfn">' + rows.length + '\u00a0' + (recOpen[id] ? '\u25b4' : '\u25be') + '</span></button>'
+    + '<div class="rfb">' + rows.map(row).join('') + '</div></div>').join('');
+  el.querySelectorAll('.rfold').forEach(f => f.querySelector('.rfh').onclick = () => {
+    const id = f.dataset.f; recOpen[id] = recOpen[id] ? 0 : 1; renderRecord(); });
 }
 
 // This week's major: which it is, where it stands, what it pays, how long is

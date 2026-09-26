@@ -65,7 +65,7 @@ module.exports = {
       setView('skl');    await sleep(120); o.shots  = [n('sklRows'),   B.SKILL.length];
       setView('dgn');    await sleep(120); o.depths = [n('dgnRows'),   B.DGN.length];
       setView('tour');   await sleep(120); o.calendar = [n('seasonBox'), B.SEASON];
-      trophyRoom('case'); await sleep(60);   o.record = [n('statRows'), 9 + 1 + 5];   // Seasons Seen, the Signature Week, and a row for each kind of signature hole
+      trophyRoom('case'); await sleep(60);   o.record = [document.querySelectorAll('#statRows .lb').length, 9 + 1 + 5];   // Seasons Seen, the Signature Week, and a row for each kind of signature hole
                                            o.cabinet = [document.querySelectorAll('#cabBox .shelf').length, 3];
       hideSheet();
       setView('career'); await sleep(120); o.subs   = [n('careerNav'), 4];

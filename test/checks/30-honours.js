@@ -264,7 +264,7 @@ module.exports = {
     if (J(r.recGot) !== J(r.recWant)) f2('the signature record kept ' + J(r.recGot) + ', not ' + J(r.recWant));
     const nm = d => d <= -4 ? 'Ace' : { '-3': 'Albatross', '-2': 'Eagle', '-1': 'Birdie', 0: 'Par', 1: 'Bogey' }[d];
     for (const [k, t] of [['island', 'Island Green'], ['canyon', 'Canyon Carry'], ['stones', 'Stepping Stones'], ['pier', 'Sea Stack']]) {
-      const w = r.recWant[k], want = w.n + '\u00a0played \u00b7 best ' + nm(w.b);
+      const w = r.recWant[k], want = w.n + '\u00a0played \u00b7 Best ' + nm(w.b);
       if (r.recRows[t] !== want) f2('the Trophy Room\'s ' + t + ' row reads "' + r.recRows[t] + '", not "' + want + '"');
     }
     if (r.recNone.length !== 4 || r.recNone.some(x => x !== '\u2014')) f2('with none played the record reads ' + J(r.recNone));
