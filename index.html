@@ -14018,6 +14018,7 @@ const Scene = {
     this.camD = 0; this.restBall = null; this.walkTo = 0;
     this.train = null; this.trainMet = 0; this.trainNext = this.t + 8;
     this.upT = 0; this.saidHole = null; this.putt = null; this.cupT = 0; this.cupHeard = 0;
+    this.shotN = 0;                 // (the hole's shots so far: only the first is off the tee)
     this.galleryUp = null;          // (the last hole's gallery cheered on into this one)
     // A swing still playing when the last hole ended belonged to that hole: it
     // finished it. Carried over, it hit a ball a yard off the new tee that
@@ -14372,9 +14373,14 @@ const Scene = {
     // so a big hit could land far past the spot he then walked a step toward.
     // A wager's floor shots, which move nothing, keep their old carry.
     // Once the hole's ball is down the shot that did it comes down a putt
-    // short of the cup, for him to walk up and putt out; an ace goes in.
+    // short of the cup, for him to walk up and putt out; an ace off the tee
+    // goes in. (Any ace went in, from wherever he stood: on a strong bag he
+    // walked up to a ball already holed and the hole ended with no putt;
+    // the user saw it.)
+    const tee = !S.dgnRun && !this.shotN;
+    if(!S.dgnRun) this.shotN = (this.shotN || 0) + 1;
     const last = !S.dgnRun && S.yardsMax > 0 && S.yards <= 0 && this.hole === S.hole;
-    const ace = last && this.aceNow();
+    const ace = last && tee && this.aceNow();
     // (and no ball comes to rest nearer the cup than that: the last one he
     // sees come down is not always the one that finished the hole)
     const putSpot = LEN - B_GREEN_STAND - 0.4;
@@ -14388,7 +14394,7 @@ const Scene = {
                       // a short one is quick and low, a long one hangs
                       t:0, dur: 0.34 + Math.min(0.32, dist * 0.016) + Math.random()*0.08,
                       el:p.el, crit:p.crit, seed: Math.random()*100,
-                      lat0: lat0, cup: ace ? 1 : 0,
+                      lat0: lat0, cup: ace ? 1 : 0, tee: tee ? 1 : 0,
                       lat: ace ? PIN_X : p.lat !== undefined ? p.lat : -0.15 + (Math.random()-.5)*0.30 });
     if(this.nums.length < 12 && p.dmg > 0){
       // Kept clear of whatever is already floating there, measured in the
@@ -17166,8 +17172,8 @@ Object.assign(Scene, {
       // at and walk on from (the user saw that). Its height stays its own.
       if(!b.cup && !b.fin && !S.dgnRun && S.yardsMax > 0 && S.yards <= 0 && this.hole === S.hole){
         b.fin = 1;
-        // (an ace goes on into the cup)
-        const ace = this.aceNow(), L = ace ? LEN : LEN - B_GREEN_STAND - 0.4, P = b.d0 + b.dist * Math.min(u, 1);
+        // (an ace off the tee goes on into the cup)
+        const ace = b.tee && this.aceNow(), L = ace ? LEN : LEN - B_GREEN_STAND - 0.4, P = b.d0 + b.dist * Math.min(u, 1);
         if(b.d0 + b.dist < L - 0.3 && u < 0.8){ b.lift0 = b.dist; b.dist = (L - P) / (1 - u); b.d0 = L - b.dist; if(ace){ b.cup = 1; b.lat = PIN_X; } }
       }
       if(u >= 1){

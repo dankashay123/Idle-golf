@@ -40,7 +40,7 @@ module.exports = {
           window.finishHole = function (D) {
             H.push({ h: S.hole, hr: holeInRound(S.hole), par: S.parTime, short: LEN - Scene.camD, done: S.doneT, el: S.elapsed, wait: S.elapsed - S.doneT, cap: S.elapsed - S.doneT >= B.ISLE_HOLD - 0.02,
                      sig: sigKind(S.hole) || '', said: said.filter(x => x.h === S.hole && B.SCORE.some(z => z.n === x.n)),
-                     putt: !!(Scene.putt && Scene.putt.hit), tocks: tocks.filter(x => x === S.hole).length, cup: !!Scene.cupT,
+                     putt: !!(Scene.putt && Scene.putt.hit), shots: Scene.shotN || 0, tocks: tocks.filter(x => x === S.hole).length, cup: !!Scene.cupT,
                      cups: cups.filter(x => x.h === S.hole), puttDur: Scene.putt && Scene.cupT ? Scene.cupT - Scene.putt.t0 : null });
             const res = keep.fh.apply(this, arguments);
             const last = H[H.length - 1];
@@ -116,6 +116,13 @@ module.exports = {
           // the next swing finishes it, a tenth of the way through par
           S.parTime = 60; S.elapsed = 0.2; S.yards = 1e-9; S.swingT = 0.999;
           o.ace = play(12, true, 1);
+        }
+        // ---- an ace won from the fairway, his second shot: putted out ----
+        {
+          startHole(); for (let k = 0; k < 30; k++) { fake += 1000 / 60; Scene.draw(1 / 60, derive()); }
+          Scene.shotN = 1; Scene.camD = 20; Scene.walkTo = 20; Scene.restBall = null; Scene.balls.length = 0;
+          S.parTime = 60; S.elapsed = 0.2; S.yards = 1e-9; S.swingT = 0.999;
+          o.ace2 = play(12, true, 1);
         }
 
         // ---- nobody watching: in a catch-up, and behind the saver ----
@@ -199,9 +206,12 @@ module.exports = {
       const late = H.filter(h => h.said.length !== 1 || !h.said[0].down || h.said[0].cupAgo === null
         || (h.putt ? h.said[0].cupAgo > 0.05 || !h.said[0].up : h.said[0].cupAgo > 0.05 && Math.abs(h.said[0].el - h.said[0].done) > 0.05)
         || h.cups.length !== 1 || h.cups[0].ago === null || h.cups[0].ago > 0.05);
-      // he putted out every hole but an ace, whose tee shot went in; one
-      // tock of the putter a putt
-      const noPutt = H.filter(h => !h.cup || (h.want <= -4 ? h.putt : !h.putt) || h.tocks !== (h.putt ? 1 : 0));
+      // he putted out every hole but a hole in one, whose tee shot went in;
+      // one tock of the putter a putt. An ace in more than one shot (a
+      // strong bag clears a hole fast) is putted out too: its last ball went
+      // in from the fairway, and he walked up to a holed ball with no putt
+      // (the user saw it)
+      const noPutt = H.filter(h => !h.cup || (h.want <= -4 && h.shots === 1 ? h.putt : !h.putt) || h.tocks !== (h.putt ? 1 : 0));
       if (noPutt.length) f('with a ' + k + ' bag ' + noPutt.length + ' of ' + H.length + ' holes were not putted out as they should be: '
         + noPutt.slice(0, 3).map(h => 'hole ' + h.hr + ' (' + h.want + '): putt ' + h.putt + ', in the cup ' + h.cup + ', tocks ' + h.tocks).join('; '));
       if (late.length) f('with a ' + k + ' bag the score\'s banner came ' + (late[0].said.length !== 1 ? late[0].said.length + ' times' : 'late') + ' on ' + late.length + ' holes');
@@ -217,6 +227,13 @@ module.exports = {
     if (!A || A.want > -4) f('the hole in one was not played as one: ' + JSON.stringify(A && { want: A.want, carded: A.carded }));
     else if (A.putt || !A.cup || A.said.length !== 1 || A.cups.length !== 1 || A.carded !== A.want)
       f('a hole in one: putt ' + A.putt + ', in the cup ' + A.cup + ', banners ' + A.said.length + ', cup sounds ' + A.cups.length + ', carded ' + A.carded);
+    // an ace won by his second shot, from the fairway: it lands a putt short
+    // and he putts it in
+    const A2 = r.ace2.H[0];
+    if (!A2 || A2.want > -4 || A2.shots < 2) f('the ace from the fairway was not played as one: ' + JSON.stringify(A2 && { want: A2.want, shots: A2.shots }));
+    else if (!A2.putt || !A2.cup || A2.tocks !== 1 || A2.said.length !== 1 || A2.carded !== A2.want)
+      f('an ace from the fairway: putt ' + A2.putt + ', in the cup ' + A2.cup + ', tocks ' + A2.tocks + ', banners ' + A2.said.length + ', carded ' + A2.carded);
+    const acesPutted = r.strong.H.filter(h => h.want <= -4 && h.shots > 1 && h.putt).length + (A2 && A2.putt ? 1 : 0);
     const sigs = [...new Set(r.normal.H.map(h => h.sig).filter(Boolean))];
     if (sigs.length < 2) f('the normal bag met only ' + (sigs.join(', ') || 'no') + ' signature holes');
     for (const k of ['quiet', 'saver']) {
@@ -234,6 +251,6 @@ module.exports = {
         + pw(N) + 's on a plain hole (at most ' + Math.max(...N.map(h => h.wait)).toFixed(2) + 's, a train going by)',
       'a strong bag: ' + St.length + ' holes, each walked from the tee to the pin; wait ' + pw(St) + 's on a plain hole',
       'putted out every hole (' + r.normal.H.filter(h => h.putt).length + ' of ' + N.length + '; a hole in one went straight in, as did '
-        + St.filter(h => h.want <= -4).length + ' of the strong bag\'s), the cup\'s sound as the ball drops, the banner as the putt drops, nothing played while it waits, no wait unwatched; a wait of half the hole pays 1.5x, experience and gear luck alike'];
+        + St.filter(h => h.want <= -4 && h.shots === 1).length + ' of the strong bag\'s; ' + 'aces in more than one shot putted out: ' + acesPutted + '), the cup\'s sound as the ball drops, the banner as the putt drops, nothing played while it waits, no wait unwatched; a wait of half the hole pays 1.5x, experience and gear luck alike'];
   }
 };
