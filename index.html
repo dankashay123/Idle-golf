@@ -16804,37 +16804,89 @@ Object.assign(Scene, {
     if(dc + 0.6 < near) return;
     const g = this.proj(dc, 0), d0 = Math.max(dc - 0.5, near), d1 = dc + 0.5;
     const span = Math.ceil(VW / 2 / Math.max(0.5, LAT * g.s)) + 2;
-    // sleepers, every half unit across
-    const s0 = this.proj(d0, 0), s1 = this.proj(d1, 0);
-    c.fillStyle = '#5A4230';
-    const sw = Math.max(1, Math.round(LAT * g.s * 0.14));
-    for(let x = -span; x <= span; x += 0.5){
-      const a = this.proj(d0, x), b = this.proj(d1, x);
-      // (cut at its near end: it lies flat, so only the ground this side of
-      // it can hide it; cut at its far end, all but a dash of each was lost)
-      fillClip(c, Math.round((a.x + b.x) / 2 - sw / 2), Math.round(b.y), sw, Math.max(1, Math.round(a.y - b.y)), this.clipAt(d0));
+    // (darker at night, pale under snow)
+    const dk = col => this.night ? mixC(col, '#0B1118', 0.45) : col, snow = !!this.snow;
+    const X0 = Math.max(0, Math.round(this.proj(dc, -span).x)), X1 = Math.min(VW, Math.round(this.proj(dc, span).x));
+    // a whole row across the stage at distance d, height z, cut at its own ground
+    const row = (d, z, col, hgt, cut) => { const p = this.proj(d, 0, z); c.fillStyle = col; fillClip(c, X0, Math.round(p.y), X1 - X0, Math.max(1, hgt || 1), this.clipAt(cut === undefined ? d : cut)); };
+    // ---- the ballast it lies on: a bed of stones, raised a little, its far
+    // edge lit and its near side falling away in shadow ----
+    const bF = dc + 0.62, bN = Math.max(near, dc - 0.62);
+    for(let d = bF, yl = null; d >= bN - 1e-6; d -= 0.01){
+      const p = this.proj(d, 0, 0.04);
+      if(p.y === yl) continue;
+      const f = (d - bN) / Math.max(0.01, bF - bN);
+      row(d, 0.04, dk(snow ? '#DCE3E7' : f > 0.94 ? '#8C877D' : f < 0.1 ? '#4E4A44' : '#6E6A62'), yl === null ? 1 : Math.max(1, p.y - yl));
+      yl = p.y;
     }
-    // the boards across where he walks over, row by row (white in snow)
-    c.fillStyle = this.snow ? '#E4EAEE' : '#A88A60';
+    // (its near side, down to the ground)
+    if(bN > near){ const t0 = this.proj(bN, 0, 0.04), g0 = this.proj(bN - 0.04, 0, 0);
+      c.fillStyle = dk(snow ? '#B8C2C8' : '#3E3A35'); fillClip(c, X0, Math.round(t0.y), X1 - X0, Math.max(1, Math.round(g0.y - t0.y)), this.clipAt(bN - 0.04)); }
+    // stones in it, laid in the world so they stay put as he walks
+    for(let d = Math.ceil((bN) / 0.09) * 0.09; d < bF; d += 0.09){
+      const cl = this.clipAt(d);
+      for(let k = Math.floor(-span / 0.22); k <= span / 0.22; k++){
+        const h2 = hr(k, Math.round(d / 0.09) + 431); if(h2 > 0.45) continue;
+        const q = this.proj(d, k * 0.22 + h2 * 0.2, 0.04); if(q.x < 0 || q.x >= VW) continue;
+        c.fillStyle = dk(snow ? (h2 < 0.2 ? '#FFFFFF' : '#C8D2D8') : h2 < 0.15 ? '#9A958A' : '#4A463F'); fillClip(c, Math.round(q.x), Math.round(q.y), 1, 1, cl);
+      }
+    }
+    // ---- the sleepers: slabs of wood across the bed, each a top and a front
+    // face, cut at their near end (a flat thing: only the ground this side
+    // of it can hide it) ----
+    const sF = dc + 0.5, sN = Math.max(near, dc - 0.5), sT = 0.09;
+    for(let x = Math.ceil(-span * 2) / 2; x <= span; x += 0.5){
+      const aL = this.proj(sN, x - 0.09, sT), aR = this.proj(sN, x + 0.09, sT), bL = this.proj(sF, x - 0.09, sT), bR = this.proj(sF, x + 0.09, sT);
+      if(Math.max(aR.x, bR.x) < 0 || Math.min(aL.x, bL.x) > VW) continue;
+      const cl = this.clipAt(sN), y0 = Math.round(bL.y), y1 = Math.round(aL.y);
+      for(let y = y0; y <= y1; y++){
+        const f = y1 === y0 ? 1 : (y - y0) / (y1 - y0), l = Math.round(bL.x + (aL.x - bL.x) * f), r = Math.round(bR.x + (aR.x - bR.x) * f);
+        c.fillStyle = dk(snow ? '#E4EAEE' : f < 0.12 ? '#8A6A48' : '#6A4E36'); fillClip(c, l, y, Math.max(1, r - l), 1, cl);
+      }
+      const g0 = this.proj(sN, x, 0.02);
+      c.fillStyle = dk(snow ? '#AEB8BE' : '#3E2C20'); fillClip(c, Math.round(aL.x), y1 + 1, Math.max(1, Math.round(aR.x - aL.x)), Math.max(1, Math.round(g0.y - y1)), cl);
+    }
+    // ---- the boards across where he walks over, plank by plank (white in snow) ----
     // (walked out by distance, a row where each lands: worked out from the
     // row instead, a straight share of the way, the distance came out too far
     // near him and those rows were cut, leaving a gap in the boards as he
     // stood on the crossing)
     for(let d = d1, yl = null; d >= d0 - 1e-6; d -= 0.01){
-      const l = this.proj(d, -1.25), r = this.proj(d, 1.25);
+      const l = this.proj(d, -1.25, sT), r = this.proj(d, 1.25, sT);
       if(l.y === yl) continue;
+      const seam = Math.abs(((d - dc) / 0.2) - Math.round((d - dc) / 0.2)) < 0.08;
+      c.fillStyle = dk(snow ? '#E4EAEE' : seam ? '#6E5638' : '#A88A60');
       fillClip(c, Math.round(l.x), l.y, Math.max(1, Math.round(r.x - l.x)), yl === null ? 1 : Math.max(1, l.y - yl), this.clipAt(d));
       yl = l.y;
     }
-    // two rails, a bright top over a dark side
+    { const f = this.proj(Math.max(d0, near), -1.25, sT), f2 = this.proj(Math.max(d0, near), 1.25, sT), gnd = this.proj(Math.max(d0, near), 0, 0.02);
+      c.fillStyle = dk(snow ? '#B8C2C8' : '#6A5236'); fillClip(c, Math.round(f.x), Math.round(f.y) + 1, Math.max(1, Math.round(f2.x - f.x)), Math.max(1, Math.round(gnd.y - f.y)), this.clipAt(Math.max(d0, near))); }
+    // ---- the rails, standing on the sleepers: a bright running top, the
+    // dark steel of its side, a line of shadow under it, and the chair
+    // holding it at every sleeper. Rows straight across the stage (a line
+    // stepped out from off the edge ran out before it got across) ----
+    const RT = 0.2, RB = sT, rw = 0.035;
     const rail = off => {
       const d = dc + off;
-      if(d < near) return;
-      const l = this.proj(d, -span, 0.06), r = this.proj(d, span, 0.06), th = Math.max(1, Math.round(LAT * g.s * 0.05));
-      // (its side stands on the ballast, down to the ground at its own foot:
-      // cut at the rail's own distance, it lost its lowest rows close up)
-      pxLineClip(c, l.x, l.y + th, r.x, r.y + th, '#4A5058', th, this.clipAt(Math.max(near, d - 0.15)));
-      pxLineClip(c, l.x, l.y, r.x, r.y, '#C8D0D8', th, this.clipAt(d));
+      if(d - rw < near) return;
+      const top0 = this.proj(d + rw, 0, RT).y, top1 = this.proj(d - rw, 0, RT).y, foot = this.proj(d - rw, 0, RB).y;
+      const cut = d - rw;
+      // (far off, a line of steel: its parts each rounded up to a whole
+      // pixel stood three tall and hid the train's wheels and more)
+      if(foot - top0 < 2.5){ c.fillStyle = this.night ? '#8A949E' : '#D8E0E8'; fillClip(c, X0, Math.round(top1), X1 - X0, 1, this.clipAt(cut)); return; }
+      // its shadow on the sleepers
+      row(d - rw - 0.05, RB, dk('#221A14'), 1, cut - 0.05);
+      // the side
+      c.fillStyle = dk('#4A5058'); fillClip(c, X0, Math.round(top1), X1 - X0, Math.max(1, Math.round(foot - top1)), this.clipAt(cut));
+      c.fillStyle = dk('#2A2E34'); fillClip(c, X0, Math.round(foot) - 1, X1 - X0, 1, this.clipAt(cut));
+      // the running top, and a glint along it
+      c.fillStyle = this.night ? '#8A949E' : '#D8E0E8'; fillClip(c, X0, Math.round(top0), X1 - X0, Math.max(1, Math.round(top1 - top0)), this.clipAt(cut));
+      c.fillStyle = this.night ? '#C8D0D8' : '#FFFFFF';
+      const gx = Math.round(((this.t * 0.12 + off) % 1) * VW); fillClip(c, gx, Math.round(top0), Math.max(2, Math.round(LAT * g.s * 0.5)), 1, this.clipAt(cut));
+      // the chairs
+      c.fillStyle = dk('#26282C');
+      for(let x = Math.ceil(-span * 2) / 2; x <= span; x += 0.5){ const q = this.proj(d - rw, x, RB); if(q.x < -2 || q.x > VW + 2) continue;
+        const cw = Math.max(1, Math.round(LAT * q.s * 0.12)); fillClip(c, Math.round(q.x - cw / 2), Math.round(q.y) - 1, cw, 2, this.clipAt(cut)); }
     };
     // the crossing's posts: crossed white boards over two lamps
     const on = this.railLights(), blink = Math.floor(this.t * 2.4) & 1;

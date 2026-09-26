@@ -155,7 +155,7 @@ module.exports = {
           Scene.train = age === null ? null : { t0: Scene.t - age, dir }; Scene.draw(0, D); };
         const bh = Scene.buildHaze; Scene.buildHaze = function () { this.haze = null; };
         try {
-          const TRAIN = ['#8A3228', '#2E5A3A', '#6A2420'], RAILS = ['#C8D0D8'], POSTS = ['#F2F2EA'], LIT = ['#FF3A2A'];
+          const TRAIN = ['#8A3228', '#2E5A3A', '#6A2420'], RAILS = ['#D8E0E8', '#C8D0D8'], POSTS = ['#F2F2EA'], LIT = ['#FF3A2A'];
           look(0, null); o.tee = { rails: count(RAILS), posts: count(POSTS), train: count(TRAIN), lit: count(LIT) };
           // (crossing the fairway: out at the side it is behind the trees in front)
           look(0, 3.4, 1); o.teeTrain = { train: count(TRAIN), lit: count(LIT) };
@@ -271,6 +271,23 @@ module.exports = {
       return o;
     });
     const f = m => { throw new Error(m); };
+    // ---- the rails all the way across, on a wide stage (the user saw them
+    // stop part way on the phone on its side: each was a line stepped out
+    // from off the edge, and it ran out of steps before it got across) ----
+    { const vp = page.viewportSize();
+      // (the harness draws at one pixel to two of a phone's: this is a wide phone on its side)
+      await page.setViewportSize({ width: 1864, height: 860 }); await page.waitForTimeout(300);
+      const w = await page.evaluate(() => { hideSheet(); QUIET = true; const keep = window.step; window.step = () => {};
+        try { DEV.rail(); hideSheet(); Scene.announce = null; const I = Scene.isle; Scene.camD = I.bank - 1.2; Scene.walkTo = Scene.camD; Scene.draw(0, derive());
+          // (the near rail's running top, in its own rows: pale steel, a shade off
+          // its colour under the haze)
+          const y = Math.round(Scene.proj(Scene.water.d - 0.3 + 0.035, 0, 0.2).y), d = Scene.b.getImageData(0, y - 1, VW, 3).data, cols = new Set();
+          for (let i = 0; i < d.length; i += 4) if (d[i] > 180 && d[i + 1] > 190 && d[i + 2] > 200 && Math.abs(d[i + 2] - d[i]) < 40) cols.add((i >> 2) % VW);
+          return { vw: VW, n: cols.size }; } finally { window.step = keep; QUIET = false; } });
+      await page.setViewportSize(vp); await page.waitForTimeout(200);
+      r.wide = w;
+      if (!(w.vw >= 300) || !(w.n >= w.vw * 0.97)) f('on a wide stage (' + w.vw + 'px) the rails run across ' + w.n + ' columns of it');
+    }
     const J = x => JSON.stringify(x);
     if (r.bad.length) f('railway crossings on the wrong holes: ' + r.bad.slice(0, 4).join('; '));
     if (!r.homeN.length || r.homeN.some(n => n !== 4)) f('railway crossings an event on each home course: ' + r.homeN.join(', ') + ' (want four, one a round)');
@@ -314,7 +331,7 @@ module.exports = {
     if (!(d.whistle < d.coin && d.whistle > d.plank) || Math.abs(d.chuff - d.chirp) > 3 || !(d.ding < d.plank && d.ding > d.chirp - 3))
       f('loudness: whistle ' + d.whistle + ', chuff ' + d.chuff + ', bell ' + d.ding + ' against the coin ' + d.coin + ', the plank ' + d.plank + ' and a bird ' + d.chirp);
     if (!r.recRow) f('the Record has no Railway Crossing row');
-    return ['four a home event (hole nine, the last par four of the front nine) and four an event on ' + Object.keys(r.awayN).join(', ') + '; no ball comes to rest on the line',
+    return ['the rails all the way across a ' + r.wide.vw + 'px stage (' + r.wide.n + ' columns)', 'four a home event (hole nine, the last par four of the front nine) and four an event on ' + Object.keys(r.awayN).join(', ') + '; no ball comes to rest on the line',
       'a train sets off as he reaches the line; he waited ' + r.waited.toFixed(1) + 's and was across ' + r.acrossAt + 's in, never on the crossing with it; lamps only with a train',
       'a ball down early: the hole moved on ' + r.early.wait + 's later (' + r.earlyWorst.wait + 's with the longest wait for a train), him up and putted, the stop at ' + r.hold + 's',
       'drawn among the trees on four courses: ' + Dp.nearOver + ' pixels of trees and gallery in front of the line, none crossed by it; ' + Dp.farOver + ' beyond it, the line over all of them',
