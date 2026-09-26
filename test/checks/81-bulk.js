@@ -1,5 +1,6 @@
-/* Every skin with an effect is bulkier than the plain golfer (the user
- * asked: "make the skins bulkier like the void skin", then the rest):
+/* Every look is bulkier than the sprite he is drawn from (the user asked:
+ * "make the skins bulkier like the void skin", then the other skins, then
+ * the plain outfits and the Majors' jackets, "so everyone's broader"):
  *
  *   - drawn on the course, each one's outline is built out behind him
  *     (bulkPlate), and his arms are a pixel thicker (bulk)
@@ -15,8 +16,8 @@ module.exports = {
       const f = m => o.fails.push(m);
       try {
         hideSheet(); QUIET = true;
-        const skins = B.OUTFITS.filter(x => x.fx && STYLEFX[x.fx]);
-        if (skins.length < 15) f('only ' + skins.length + ' skins with an effect');
+        const skins = B.OUTFITS;
+        if (skins.filter(x => x.fx && STYLEFX[x.fx]).length < 15) f('fewer than 15 skins with an effect');
         const cv = document.createElement('canvas'); cv.width = 160; cv.height = 120;
         const c = cv.getContext('2d');
         // the width of what is drawn on one row
@@ -31,7 +32,7 @@ module.exports = {
           Scene.draw(0, derive());
           window.bulkPlate = keep;
           if (!him) f(O.n + ': not built out on the course');
-          if (!outfitNow().bulk) f(O.n + ': his arms are not thicker');
+          if (O.fx && STYLEFX[O.fx] && !outfitNow().bulk) f(O.n + ': his arms are not thicker');
           // alone: his sprite, then the plate under it, measured at his chest
           const spr = SPRITE.gAddr, h = 58, w = Math.round(h * spr.w / spr.h), x = 50, y = 40;
           const g = golferG(x, y, w, h, 0, 1, y + h, false, spr);
@@ -51,7 +52,7 @@ module.exports = {
       return o;
     });
     if (r.fails.length) throw new Error(r.fails.join('; '));
-    return ['every skin with an effect built out behind him and thicker in the arm; at his chest, pixels added either side: '
+    return [Object.keys(r.wide).length + ' looks, every one built out behind him (the skins thicker in the arm too); at his chest, pixels added either side: '
       + Object.entries(r.wide).map(([k, v]) => k + ' ' + v).join(', ')];
   }
 };
