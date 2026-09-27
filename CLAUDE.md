@@ -66,6 +66,15 @@ the handoff notes until I tell you to").
   look at it scaled up (`HANDOFF.md` §4, rule 36): the first Spirit
   Blossom passed its checks and looked cluttered (it has since been
   replaced by The Void, which the user wanted "bulkier" and full body).
+  Then look at it at the checks' size too (about 30 pixels, rule 57).
+- **A skin from the user's pictures follows the pictures.** The Divine is
+  a celestial monk and shows no skin ("obviously no skin showing": a gold
+  mask, jade gauntlets); The Void, the Demonic and the Ascended each
+  follow theirs. When one is restyled, the whole set goes with it: the
+  caddie, driver, wake, ball, cup moment, blessing and shop tiles.
+- **His address stance is the user's picture**: tall, legs straight and
+  together, not leaning far over. Anything anchored to him moves with it
+  (rule 58).
 - **Everyone is bulky, and effects are prominent.** Every look and every
   caddie is drawn wider from his own picture (`bulkRow` in `blitShear`)
   with thicker arms: the user asked it for The Void, then every skin,
@@ -127,6 +136,11 @@ Rules that have cost real time here:
   way (the railway's rails, on a phone on its side). The harness's own
   stage is small (about 199 to 329 pixels), so check wide-stage things
   close up (`HANDOFF.md` §4, rules 39 to 41).
+
+- **What is painted into the ground is under every prop.** The forest's
+  trees are stamped into the ground, so a farther flag drawn after it
+  stood in front of them; anything that can stand behind a stamp is cut
+  by it (`_forOcc`, `farflags`; `HANDOFF.md` §4, rule 56).
 
 - **"Is anyone watching" is counted in steps, never wall time.** The
   hole's wait for his putt asked for a draw in the last quarter second,

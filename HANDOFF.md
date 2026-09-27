@@ -12,8 +12,8 @@ check is for.
   branch `claude/notes-review-r3a9e1`). Nothing is half-built and **no
   request is waiting**: the user's last message was all done (§5, the
   first sections).
-- `node test/run.js` has **83 checks** (about twelve minutes; the new ones
-  are `course` and `pins`, and `bulk` was rewritten). Frost follows the
+- `node test/run.js` has **84 checks** (about twelve minutes; the newest
+  is `farflags`; `legends` was rewritten for the new Divine). Frost follows the
   real hour: after touching weather or colours, run it with `HOUR_FORCE`
   pinned to 8 and to 15 in a copy (`CLAUDE.md`).
 - **Only update this file and `CLAUDE.md` when the user asks.**
@@ -23,11 +23,23 @@ check is for.
   (0.9s). **Every caddie look with an effect already has a trick of its
   own** (16 of them, `FAIRY_MOVES`): the Divine soars, the Demonic blazes.
   I offered "a trick for the Divine and Demonic caddies" by mistake; don't
-  offer it again.
+  offer it again. **Dawn and Dusk is already built** (a setting, off by
+  default, `dawnDusk`); I offered it as new by mistake once too.
 
 ### Recent work (sections in §5)
 
-- This session, newest first: **the Demonic reworked** after a second
+- This session, newest first: **another hole's flag hidden behind the
+  forest's trees** (it stood out in front of them); **the Divine reworked
+  as a celestial monk** after two pictures (white robes over crimson,
+  gold guards, jade horns and beads, a blindfold, a ponytail, ribbons of
+  jade and gold; no skin showing; its driver, wake and ball to match);
+  **the crease between his legs** a soft shade; **the address stance**
+  after the user's picture (taller, legs straight and together, less
+  bent over); **a set equips its ball too** (the ball has its own slot);
+  **legs as wide as the torso** on every look; **the wave at the train**
+  (he turns to it and waves his left arm from the shoulder); **the woods
+  stood up as trees** (they read as "brown ground"); **the Demonic's
+  driver a curved blade**. Before those: **the Demonic reworked** after a second
   picture (deep red and orange: wrappings, a mask, a crest of blades,
   streamers, ribbons of fire); **everyone built out from his own
   picture** (the dark plate read as an outline); **Unequip** on every
@@ -57,6 +69,7 @@ check is for.
   time"); **a photo mode** and **trail flourishes**. Don't offer them again.
 - Older requests are in §6, one line each.
 - **Not yet heard back on** (ask one when it fits, never as a list): the
+  reworked Divine; the woods as trees; the new stance; the
   reworked Demonic; the built-out look from his own picture; the course
   round the hole since "no bare areas" (a neighbour whose green finds no
   room is a strip of woods, about one in seven); how the prominent grounds
@@ -97,16 +110,24 @@ check is for.
 - The island crossing (flying on the spinning club) was **their idea**.
 - **The caddie has no wings**: he floats, a little up and down, and now and
   then takes a turn (spin, dance, flip, wave, loop). Their request. (That
-  is the default fairy; the Divine caddie has wings of its own, side on,
-  which the user said to keep. The reworked Demonic's caddie has
-  streamers and a crest instead.)
+  is the default fairy. No caddie has wings now: the reworked Demonic's
+  has streamers and a crest, the reworked Divine's ribbons and horns.)
 - **The great-hole effects** (the four Mythic skins' moments and every other
   skin's flourish) come **only on an albatross or an ace, last half a
   second, and burst out from his outline close about him**. Nothing climbs
   the sky. On a fast bag acing every hole the long ones never went away.
 - **Wings follow his profile**: side on, on his back, at address and
   through the swing; spread from behind as he walks away. Wings are
-  feathered or membraned, never a solid shape.
+  feathered or membraned, never a solid shape. (No skin draws wings at
+  the moment; `wingPair` stays for one that does.)
+- **The Divine shows no skin** ("obviously no skin showing"): a gold mask,
+  jade gauntlets; `legends` fails on a pixel of him in a skin tone. Its
+  style is the user's two pictures of a celestial monk (white and crimson
+  robes, gold armour, jade, swirling jade and gold energy).
+- **His address stance** is the user's picture: tall, legs straight and
+  together, not bowlegged, not leaning far over (`G_ADDR_ROWS`).
+- **A set's one tap wears all five pieces**, the ball included (the ball
+  has its own slot, `S.ball`).
 - The word is **scrap**, not salvage; old legacy finds are **heirlooms**.
 - **Everyone is bulkier, and it blends** (over three asks: "make the
   skins bulkier like the void skin"; then of the dark plate it was:
@@ -237,19 +258,19 @@ Line numbers are approximate and drift. Search for the name instead.
 | **A skin's ground** (drawn before the pin) | `FX.ground` (Divine, Demonic, Ascended); `golferG` (what an effect is told about him), `Scene.golferPose`, `Scene.drawGolferGround` (in the frame, before `drawFlagstick`), `Scene.golferGround`, `groundDone`; `paintGolfer`'s `noGround` |
 | **A moment on an albatross or an ace** (the three top skins, and a flourish for the other eleven) | `Scene.legendGo` (from `happyDance`), `Scene.legend` / `legendNow`, `Scene.flourish` / `flourishNow`, `LEGEND_DUR`, `FLOURISH_DUR` (0.5s), `outBack`; `outlineBurst`, `burstStreak`; `FLOURISH_PIECE`, `FLOURISH`; `Sfx.hellfire`, `ascend`, `choir`, `flourishSnd`, `LEGEND_VOL`; both cleared in `saverOn`; `DEV.legend(d)` (dev menu row Legends) |
 | **A pure strike with the three dearest drivers** | `CLUBFX.divine/demonic/ascended.pure`, `Scene.pure` (set in `Scene.launch`), `pureNow`, `PURE_DUR`; `Sfx.pureSnd` |
-| **The ultimate Divine** and wings as he is seen | `STYLEFX.divine` (`wings`, `feathers`, `halo2`, `sparks`, `wave`, `charge`/`strike`), `sunSigil`; `featherWing` (`FEATHER_PAL`), `batWing`, `wingPair(key, paint, pal, S, view, ph, up, shade)` |
+| **The Divine** (a celestial monk, after the user's two pictures) | outfit `divine` (patterns `heaven` and `kneeguard`: the robe's skirt, knee guards; the mask in `skin`, jade gauntlets `hand`, the belt is the sash and his blindfold's eye pixel); `STYLEFX.divine`: `ground` (`jadeSeal`, `wave`), `back` (`ring` behind his head, `hair` side on, `ribbons` far half), `body` (`skirt` from behind, `sash`, `blindfold`, `hair` from behind, `horns` via `sleekHorns(s, view, false, 'jade')` and `HORN_COL.jade`), `front` (`beads` over his far arm, `guards` at shoulder and wrist, `ribbons` near half, `sparks`, the burst); `pose(g)` and `at(g, x, y)` place things in the sprite's own 40x58 pixels; `CLUBFX.divine` (a jade ribbon winding down the shaft); `BALLFX.tSeraph` (the **Jade Wake**: two ribbons twining) and `godlight`; `CUP_FX.godlight`; `ICON_FX.divine`, `BALL_ICON`; the caddie's `soar` drops jade light. `wingPair`/`batWing` are no longer drawn by anyone |
 | **A skin in flight** (over the island's lake, the canyon) | `paintHeli` runs the skin's `back`/`front`/`flourish` with a from-behind `golferG` (`g.fly`, `bot` at his boots); what lies round his feet is skipped on `g.fly` (the glows of the Inferno, Frostborn, Stormcaller, Midas, Ghost; the Disco's floor; the peel; the Demonic's pit smoke, tendrils and eruption) |
 | **Night on the ordinary holes** | `Scene.layNight` (props kind 4, a tee lamp; kind 5, a spot of three fireflies; laid from a hash after `layProps`), drawn in `drawProp` only while `night` and not in a wager; `Scene.clubhouse` (baked into the ridge in `buildRidge`, away from the landmark); the flag's halo and light in `pinBody` (`lit`) |
 | **The Mythic Favour** (caddie perk `myth`) | `B.CPERKS` entry with `myth`, `also`; `MYTH_CADDIES`, `mythOk`, `MYTH_PAL`; in `tickCaddie` (waits without a Mythic caddie; `also` buffs), `renderCadPerks` (`locked`), `cperkPick`; the cast `Scene.drawFavour` (from `drawCaddie`, `fairyCast.myth`); icon `cpmyth`; Full Staff counts only the nine ordinary perks |
 | **Rain rings and ripples** (on water only) | `rainRings`, `ripples`: a pixel is kept only where `waterAt` says the painted ground is one of the theme's water colours (`PixPaint.px` against `_wtSet`, or the canvas against `_wtHex`), as well as on a noted water row |
 | **The dearest skins at night** | `NIGHT_GLOW`, `nightPool` (from `golferGround`, before the skin's own ground) |
-| **The Mythic caddies' tricks** | `FAIRY_MOVES` entries with `only` (soar, blaze, blink), `fairyMoves()` (the pool for this caddie), `fairyPose` (`beat`, `feathers`, `fire`, `hide`/`swirl`), `Scene.caddieFire`, `Scene.caddieSwirl`, the room they take (`grow` in `drawCaddie`); `fairyMoveGo` refuses another caddie's trick |
+| **The Mythic caddies' tricks** | `FAIRY_MOVES` entries with `only` (soar, blaze, blink), `fairyMoves()` (the pool for this caddie), `fairyPose` (`beat`, `feathers` (the Divine's falling jade light now), `fire`, `hide`/`swirl`), `Scene.caddieFire`, `Scene.caddieSwirl`, the room they take (`grow` in `drawCaddie`); `fairyMoveGo` refuses another caddie's trick |
 | **The gallery and the scenery** | in `layNight` (all from a hash; tagged `extra`): the gallery round the green (kind 1), trees behind it (kind 0), scenery kind 8 (`sp`: bush, tuft, rock; sprites `BUSH_ROWS`, `TUFT_ROWS`, `ROCK_ROWS` built in `courseTrees`); drawn in `drawProp`, culled early in `drawProps` when hidden or off the view |
 | **Frost and puddles** | `frostFor`, `FROST_FORCE`, `HOUR_FORCE`, `hourNow`, `Scene.frost`, mode `'frost'` in `buildTheme` (`tg`) and `courseTrees`; props kind 6 (a frost speck, one in four glinting) and kind 7 (a puddle, rows walked out by distance, rings) laid in `layNight`; dev menu row Frost |
 | **The Hole of the Week run** | `S.hotw = { wk, n }` in `sigScore`, `B.HOTW_RUN`/`HOTW_SOV`, `hotwRun`, `hotwDone`, repaired in `initState`; the Tour band's last row in `renderSigWeek` |
 | **Night on the signature holes** | `Scene.nightLamp`, `drawIsleLights` (from `drawDucks`), `drawFireflies` (from `drawStones`), the lanterns in `drawPier`, the bulbs in `drawBridge` |
 | **The Signature Week** | `S.sigWk`, `sigWeekKinds`, the tally `sigWeek`, honour `sigWk`, `B.SIG_WEEK_SOV`; counted in `sigScore`; the Record's row; the Tour tab's band (`renderSigWeek`, `#sigBox`) |
-| **The Demonic** (reworked after the user's second picture: deep red and orange) | outfit `demonic` (pattern `wraps`, the mask in `skin`, arms `arm`/`arm2`, dark gloves `hand`); `STYLEFX.demonic`: `ground` (pit, `runeRing`, `cracks`, `bubbles`, `eruption`), `back` (smoke, `tendrils`, `swirl` far half, `streamers` side on, the shadow outline, `aura` via `flameAura` with `HELL_FLAME`, embers), `front` (`streamers` from behind, `veins` over the seams, `crest`, `eyes`, `swirl` near half, `fists`, `blast`, the burst, the eruption's near half); `HELL_VEINS` are the seams' glow colours. The old `wings`, `tail`, `horns`, `chains`, `skulls` are still defined but no longer drawn; `batWing`/`sleekHorns` still serve the Divine and the Ascended |
+| **The Demonic** (reworked after the user's second picture: deep red and orange) | outfit `demonic` (pattern `wraps`, the mask in `skin`, arms `arm`/`arm2`, dark gloves `hand`); `STYLEFX.demonic`: `ground` (pit, `runeRing`, `cracks`, `bubbles`, `eruption`), `back` (smoke, `tendrils`, `swirl` far half, `streamers` side on, the shadow outline, `aura` via `flameAura` with `HELL_FLAME`, embers), `front` (`streamers` from behind, `veins` over the seams, `crest`, `eyes`, `swirl` near half, `fists`, `blast`, the burst, the eruption's near half); `HELL_VEINS` are the seams' glow colours. The old `wings`, `tail`, `horns`, `chains`, `skulls` are still defined but no longer drawn; `sleekHorns` serves the Divine and the Ascended |
 | **The Demonic and the Ascended** (skins, caddies, clubs, trails, balls) | `STYLEFX.demonic`, `STYLEFX.ascended`; baked stamps `fxBake` (with `crispen`, `FXBAKE`), `batWing`, `runeRing`, `drawSkull`, `sleekHorns` (`hornLine`, `HORN_VIEWS`), `voidCape` (`CAPE_PAL`), `voidSigil`, `drawShard`; the aura's `outlineOf` (`occOf`) and `flameAura`; `veinsOf` (the lava cracks' pulse), `eyeAt` (`EYE_ADDR`, `EYE_FIN`, `EYE_CADDIE`), `wingAnchor`, `g.hand` (set in `paintGolfer`), `blitAs` (a copy of him drawn as he is drawn); patterns `wraps` (the Demonic's now; `hellcrack` unused), `voidplate`; the outfit field `hand`; `CLUBFX.demonic`/`ascended`; `BALLFX.tHellfire`, `demoneye`, `tAscension`, `ascorb`, `drawDemonEye`, `demonEye`, `drawVoidOrb`; tiles `ICON_FX`, `BALL_ICON`; the Mythic badge is `top: 2` |
 | **The trains** (four kinds) and waving | dev menu: a button per kind by "railway" (`DEV.train(kind)`); `TRAINS`, `trainKind`, the train's `kind` (none is the steam train), picked in `tickRail`; `drawTrain` (by kind), `driverWave`; `Scene.atLine`, `Scene.railWave` (his arm: `paintGolfer`'s last argument `wave`; his caddie's `wave` move); `Sfx.horn`, `Sfx.whistle(t, low, once)`, the toot in `Sfx.tick` (`tootK`) |
 | **Weather on the signature holes** | `Scene.rainRings` (from `ripples`, on the `_rips` rows); snow in `drawBridge`, `drawStones`, `drawPier`, `drawRail`, `drawTrain` (`cap`); the storm in `drawSpray` (`storm`) and the stack's `rock` (breakers); the bridge's `gust` |
@@ -279,7 +300,7 @@ Line numbers are approximate and drift. Search for the name instead.
 | **Wagers as played** | `wagerSpot(R)`, `Scene.wagerPutt`, `Scene.wagerCallout` (`#callout`), `leaveDgn` (`#leaveBtn`, `#leaveTxt`), `#wagerStat` ("Helped by ..."), `wagerGuide` |
 | **Record folds, Season Bests, Better Season** | `renderRecord` (`.rfold`), `S.seasonBest`, `seasonBestPost`, the Cabinet in `roomCase` |
 | **Bulk** (everyone built out, from his own picture) | `bulkOf(h, minor)` (how far: chest `2k+1`, legs `k`; a caddie 1.5 at the chest only, clear of the imp's tail), `bulkAt(b, f)` (eased in over the shoulders, none at head or feet), `bodySpan(spr)` (his body's columns, cached as `spr._body`), `bulkRow(spr, x, w, bulk, f, sp)` (a row's x and width, stretched); used by `blitShear` (his last argument), `silhouette`, `blitAs`, `outlineOf`, the Demonic's `veins`; `g.bulk` set in `golferG` and the caddie's `g`. `bulkPlate`/`plainBulk`/`BULK_PLATE` are gone; the eleven skins keep `O.bulk` (thicker arms) |
-| **Skin grounds** | `voidGalaxy` (now The Void's pit: torn edge, stars sinking, lip, swirl; `cv.ox/oy`), `voidSigil` (filled, doubled rings), `sunSigil`, `runeRing` (solid), the Demonic's resting `cracks`, the lesser skins' `drawGlow` calls; `nightPool` (wider than the grounds) |
+| **Skin grounds** | `voidGalaxy` (now The Void's pit: torn edge, stars sinking, lip, swirl; `cv.ox/oy`), `voidSigil` (filled, doubled rings), `jadeSeal` (the Divine's; was `sunSigil`), `runeRing` (solid), the Demonic's resting `cracks`, the lesser skins' `drawGlow` calls; `nightPool` (wider than the grounds) |
 | **The blessing beam** | `Scene.drawBless`: edges, core, ribbons (`TH.ring`, or the perk's own colour), `RUNES` sliding down, sparks; landing ring, spikes, wave; `BLESS_FX` per caddie look; the Mythic Favour `drawFavour` |
 | **Ambience** | `Sfx.AMB_VOL`, `AMB_OF`, `ambOf` (stones, pier, island `lap`, the course), `Sfx.amb` (a filtered noise voice), `river`, `piper`, `moor`, `drift`, `lap`; the tick in `Sfx.tick` |
 | **The course round the hole** | `Scene.layCourse` (after `layNight`; all from `hr`, props tagged `extra`): `this.nbrs` (other holes: `sd`, `in` for the second ring, `toward`, `gd` green, `a`/`b` fairway, `lo`/`hi` how far the hole reaches, `tees`, `bks`), `this.fills` (woods and lakes: plain, `after` a ring, `behind` a lake, `ring` over another hole's strip where it is not, `water` clear of an island's or sea stack's water), `this.cart` (the path), `this.pond`, `this.back` (the forest behind the green: `d0`, `near` where it comes round the sides, `cs` the clubhouse's side, `lake`); helpers `nbrX`, `nbrW`, `nbrGX`, `nbrBunkerX`, `onNbr`, `lobeSpan`, `fillIn`, `inFill`, `ringW`, `lakeW`, `cartX`, `inPond`, `backEdge`, `inBack`, `layWoodTrees`, `GREEN_GAP`; painted in `Scene.courseSlice` (from `groundSlice`, before the hole's own fairway); flags are props kind 12 |
@@ -287,6 +308,10 @@ Line numbers are approximate and drift. Search for the name instead.
 | **An ace from the tee** | `Scene.aceHold(D)` (an ace, or a hole on course to be one at the pace it is played: he stays where he is), `ACE_HOLD` (1s), `CUP_HOLD` (0.6s after any other drop), the ace branch at the top of `holeWait`, `aceH` in the camera code, `Scene.aceBurst` (ACE's rays and sparks, 0.45s, from the banner draw); the banner cleared in `newHole` |
 | **Unequip** | `STYLE_DEFAULT`, `styleWorn`, `styleSet`; `styleBuy` takes a worn look off, `setBuy` a worn set; the `.price.unq` button in `renderShop` |
 | **Shots near the green** | `launch`: an ace's last ball goes in, first shot or not (he stays where he stood: `aceHold`); `putSpot` (no shot short of the green carries past it) |
+| **The woods as trees** | `Scene.forestPass(g, cam)` (from `drawGround`, both the pixel buffer and the canvas path): the course's tree sprites shrunk and stamped into the ground far to near, laid once a hole by `layForest(S0)` (cached on `this.back`; a staggered grid from `hr`, only in woods and the forest, ragged starts), thinning (`kh`/`keep`) and fogged toward the sky far off (`fogged`, `_forHz`), feet softened where a rise cuts them (`footOf`); `this._forOcc` keeps where each stood for `drawProp` |
+| **Another hole's flag behind the forest** | `drawProp` kind 12: cut per column below the top of any tree in `_forOcc` nearer than its green |
+| **The ball's own slot** | `S.ball` (null by default, repaired in `initState`), `isBallItem`, `trailNow` (the wake), `ballNow`, `ballLookNow` (at rest, `drawLyingBall`), `isWorn`, `styleSet`; flight draws the wake's `BALLFX` then the ball's; `drawCupFx` prefers the ball's `CUP_FX`; `setBuy` wears both |
+| **The stance, legs and the wave** | `G_ADDR_ROWS` (redrawn), `SPRITE.gAddr.ax/ay`, the club's `cl` 0.64 (and `fairyBox`'s `_reach`); `bulkS` per sprite (0.8 at address, 0.5 from behind), `bulkOf` legs as wide as the chest, `drawLegsBack`'s soft crease; `SPRITE.gWave` and `waving` in `Scene.golferPose`, the raised left arm in `paintGolfer`'s walking branch |
 
 ### Globals worth knowing
 
@@ -572,8 +597,90 @@ Line numbers are approximate and drift. Search for the name instead.
    wider than 5; the user's screenshots of bare corners each turned out to
    be something no screenshot of mine had shown (past the outer hole on a
    wide view, beyond a side lake, a neighbour's strip past its green).
+56. **What is painted into the ground is under every prop.** The forest's
+   trees are stamped into the ground's buffer, so props drawn after it (a
+   farther green's flag) showed in front of them. A prop that can stand
+   behind a stamp has to be cut by it (`_forOcc`).
+57. **A new skin at real size, then its checks at the check's size.** In
+   `legends` he is about 30 pixels tall: the Divine's beads sat under his
+   far arm (which starts at his chest) and drew nothing, though they
+   showed zoomed at 80. Place things in the sprite's own pixels and look
+   at 30, 46 and 80.
+58. **Changing the stance moves everything anchored to it.** The new
+   address sprite hid The Void's mask under his crescent and the
+   Ascended's cape behind him, and the longer club reached the fairy;
+   each anchor (`wingAnchor`, `ca`, the cape's top, `_reach`) moved with it.
+59. **Credit a pixel to the thing drawn on top.** Two other greens' flags
+   overlapped; `farflags` first blamed a pixel on the farther flag (hidden
+   behind a tree) when it was the nearer one's.
 
 ## 5. What the last features do (for debugging them)
+
+### Another hole's flag behind the forest (from the menu)
+
+- The forest's trees go into the ground's buffer; the other greens' flags
+  (props kind 12) are drawn after the ground, so one beyond a tree stood
+  in front of it. `forestPass` now keeps each tree it stamps (`_forOcc`:
+  its distance, place, rows and the cut of the ground in front), and
+  `drawProp` finds, column by column, the top of any tree nearer than the
+  flag's green and draws the flag only above it. `farflags` sweeps every
+  course; negative tested.
+
+### The Divine reworked as a celestial monk (user sent two pictures)
+
+- "The divine skin is a bit underwhelming. Just looks like he's wearing a
+  shirt and pants with some wings ... Obviously no skin showing. Please
+  fix the full set." The pictures: a celestial monk in white and crimson
+  robes, gold shoulder guards and bracers, jade beads and horns, a long
+  ponytail, jade and gold energy swirling.
+- Him: a white robe embroidered in gold (`heaven`) with a gold front edge
+  (`shirt3`), its skirt to the thigh, crimson trousers with gold knee
+  guards (`kneeguard`), a crimson sash (the belt; `sash` draws its knot
+  and flying ends), a gold mask (`skin`) under a crimson blindfold whose
+  ends stream back, silver hair (`cap`, `hair`) in a long tail bound in
+  gold, jade horns swept back, jade gauntlets (`hand`), white sleeves with
+  gold bracers, a gold guard on the shoulder (both from behind), jade
+  beads. Round him three ribbons (two jade, one gold) spiral up, a gold
+  curl at each head, drawn in and racing as he winds up and flung out as
+  he strikes; a gold ring set with jade behind his head; a jade seal with
+  gold clouds turning under him. The wings, halo, beam, rays and falling
+  feathers are gone. The moment: jade and gold bursting out, the choir.
+- The set: the driver ivory on a crimson grip, a gold head, a jade ribbon
+  winding down the shaft and a jade and gold trail; the wake renamed
+  **Jade Wake** (two ribbons twining, the ball in jade with a gold curl
+  circling it); Godlight in a jade glow with a gold cross, its cup moment
+  in jade and gold; the caddie the same look, small; his `soar` drops
+  jade light. Shop tiles show it (`ICON_FX.divine`).
+- `legends` checks no skin tone in any pose, the ribbons (either side,
+  close, narrower at the top, wider at the strike, from behind too), the
+  ring, horns, hair, blindfold, beads, sash, guards, skirt, seal, sparks,
+  the caddie's ribbons and horns; negative tested (skin left on, ribbons
+  one width). `flight` wants his ribbons either side in the air.
+
+### The ball's own slot; a set wears its ball (user asked)
+
+- "The Void set equip does not equip the ball": a wake and a ball were
+  one slot. Now `S.trail` is the wake and `S.ball` the ball; flight draws
+  the wake then the ball, the ball at rest and in the cup is the ball's.
+  `fullset` checks a set wears (and unequips) all five.
+
+### The stance, the legs, the wave (user sent pictures)
+
+- Address after the user's picture: taller, legs straight and together,
+  less bent over (`G_ADDR_ROWS` redrawn, the arm rig and a longer club to
+  match). Legs as wide as the torso on every look (`bulkOf`'s legs), the
+  crease between them a soft mid shade from the knee down; from behind he
+  is built out half as much (a white block showed at his shoulders).
+- Waving at the train: from behind, turned to it, his left arm up from
+  the shoulder, elbow out, the forearm waving (`SPRITE.gWave`).
+
+### The woods as trees (user: "what is the brown ground")
+
+- The woods and the forest behind the green were painted flat and read as
+  brown ground. `forestPass` stamps the course's own tree sprites into the
+  ground far to near (see the map). It costs about 2.5ms a ground redraw,
+  so it is laid once a hole and stamps with ready colours; `render`'s seam
+  limit is 60 because of the stand of trees at the horizon.
 
 ### The Demonic reworked (user sent a second picture)
 
@@ -802,7 +909,7 @@ Line numbers are approximate and drift. Search for the name instead.
 ### The caddie's blessing in the caddie's look (user asked)
 
 - `BLESS_FX` by the caddie's `fx`: the column's colours and what falls or
-  rises in it, and what it leaves at his feet (feathers and a halo, embers
+  rises in it, and what it leaves at his feet (curls of jade and gold and a gold ring for the Divine, embers
   and flames, a bolt and shards, stars and a black hole, coins, snow and
   ice spikes, the Disco's colours, the Glitch slipping, wisps, bananas, a
   camera's flash, confetti). All solid pixels now (the column was a wash
@@ -1080,7 +1187,7 @@ Line numbers are approximate and drift. Search for the name instead.
   from `drawStones`; over the near bank they fell in front of the line
   `sigview` holds them to). All only while `Scene.night`.
 
-### The caddies' wings (user asked, from the menu)
+### The caddies' wings (user asked, from the menu; both since reworked away)
 
 - The caddie is always drawn side on (one sprite, facing right, his bag on
   his back), so the Demonic caddie's bat wings and the Divine caddie's new
@@ -1089,7 +1196,7 @@ Line numbers are approximate and drift. Search for the name instead.
   rule "the caddie has no wings" is the default fairy's; the dear caddies
   have always had their own.
 
-### The Divine, made the ultimate skin; wings as he is seen (user asked)
+### The Divine, made the ultimate skin; wings as he is seen (user asked; the Divine since reworked, see above)
 
 - **Wings as he is seen** (`wingPair(key, paint, pal, S, view, ph, up,
   shade)`, baked): view `side` at address and through the swing (his back
@@ -2129,6 +2236,14 @@ him (about 49px tall on a 320 phone, 71px on its side).
 
 ## 6. Recent history (newest first, one line each)
 
+- Another hole's flag hidden behind the forest's trees.
+- The Divine reworked as a celestial monk (no skin, jade and gold); its
+  driver, the Jade Wake and Godlight to match.
+- The crease between his legs softened.
+- The address stance after the user's picture; a set wears its ball too.
+- Legs as wide as the torso; the wave at the train from the shoulder.
+- The woods stood up as trees; the Demonic's driver a curved blade.
+
 - The Demonic reworked in deep red and orange after a second picture.
 - Everyone built out from his own picture (no dark plate).
 - Unequip on every worn look and set.
@@ -2322,13 +2437,11 @@ not ambience.
 
 The menu to offer:
 1. **Ask how the session's changes sit on the phone**: the reworked
-   Demonic, the built-out look, the course round the hole, the aces.
+   Divine, the woods as trees, the new stance, the reworked Demonic.
    Tune from their screenshots.
-2. **The Demonic's driver as a curved blade** to match the picture (the
-   club still has the old demonic head).
-3. **The lesser skins' cup moments**: only the dearest balls and the two
+2. **The lesser skins' cup moments**: only the dearest balls and the two
    Mythic wakes have one; the other balls could get a small one.
-4. **The Seraph and Hellfire Wakes' cup moments**: they could play their
+3. **The Jade and Hellfire Wakes' cup moments**: they could play their
    set's, as the two Mythic wakes do (one line each in `CUP_FX`).
 
 Recommend 1: much changed on screen without their eyes on it.

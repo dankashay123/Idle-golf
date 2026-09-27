@@ -12697,10 +12697,11 @@ function blessBolt(G, colA, colB){
   }
 }
 const BLESS_FX = {
-  divine:   { col: '#FFE39A', core: '#FFFFFF', slow: 1, sway: 1, ring: ['#FFD66B', '#FFFFFF'],
-              // feathers drifting down, white with a gold quill
-              mote(G, x, y, i){ const X = Math.round(x), Y = Math.round(y); G.c.fillStyle = '#FFFFFF'; G.c.fillRect(X, Y, 3, 1); G.c.fillRect(X + 1, Y + 1, 2, 1); G.c.fillStyle = '#E3B457'; G.c.fillRect(X - 1, Y + 1, 1, 1); },
-              land(G, q){ const r = G.half * (0.5 + q * 0.4); G.c.fillStyle = '#FFE39A'; for(let k = 0; k < 16; k++){ const a = k / 16 * Math.PI * 2; G.c.fillRect(Math.round(G.cx + Math.cos(a) * r), Math.round(G.bot - G.h * 1.05 + Math.sin(a) * r * 0.28), 1, 1); } } },
+  divine:   { col: '#3FD6A8', core: '#B8FFE6', slow: 1, sway: 1, ring: ['#E0AE3E', '#7FF0C8'],
+              // curls of jade and gold drifting down
+              mote(G, x, y, i){ const X = Math.round(x), Y = Math.round(y); G.c.fillStyle = i & 1 ? '#7FF0C8' : '#F4D27A'; G.c.fillRect(X, Y, 3, 1); G.c.fillRect(X + 2, Y + 1, 1, 1); G.c.fillStyle = i & 1 ? '#17866A' : '#B8841E'; G.c.fillRect(X - 1, Y + 1, 2, 1); },
+              // and a gold ring over his head
+              land(G, q){ const r = G.half * (0.5 + q * 0.4); G.c.fillStyle = '#E0AE3E'; for(let k = 0; k < 16; k++){ const a = k / 16 * Math.PI * 2; G.c.fillRect(Math.round(G.cx + Math.cos(a) * r), Math.round(G.bot - G.h * 1.05 + Math.sin(a) * r * 0.28), 1, 1); } } },
   demonic:  { col: '#C8281C', core: '#FFD34A', rise: 1, ring: ['#E8401C', '#FF8A2A', '#FFD34A'],
               mote(G, x, y, i, u){ G.c.fillStyle = u < 0.3 ? '#FFD34A' : u < 0.7 ? '#FF6A1A' : '#8A1A0E'; G.c.fillRect(Math.round(x), Math.round(y), 1, 2); },
               // flames licking up round his feet
@@ -16280,7 +16281,7 @@ Object.assign(Scene, {
     }
     this._clipN = cn;
     // the woods stood up: trees across them, far to near (forestPass)
-    if(this.back) this.forestPass(g, cam);
+    if(this.back) this.forestPass(g, cam); else this._forOcc = null;
     if(g !== c) PixPaint.flush(c);
     this.ripples(c, T);
     this._gMaxy = maxy;
@@ -16332,6 +16333,9 @@ Object.assign(Scene, {
     // where the trees stand: laid once a hole (a staggered grid from a hash,
     // only inside the woods, their straight starts made ragged), by row
     const L = this._forest && this._forest.back === this.back ? this._forest : (this._forest = this.layForest(S0));
+    // (where each tree stood, so another green's flag beyond it is hidden
+    // behind it: see drawProp)
+    const OCC = this._forOcc = [];
     for(let ri = L.rows.length - 1; ri >= 0; ri--){
       const Rw = L.rows[ri]; if(Rw.d > far) continue; if(Rw.d < cam + 1.2) break;
       const p0 = this.proj(Rw.d, 0), U = this.proj(Rw.d, 1).x - p0.x;
@@ -16348,6 +16352,7 @@ Object.assign(Scene, {
         const X = p0.x + t.x * U; if(X < -12 || X > VW + 12) continue;
         const hp = Math.max(2, Math.round(hp0 * t.sc)), key = (t.oak ? 'o' : 'p') + hp, R = stamp(t.oak, hp), F = fogged(R, key, fog);
         const X0 = Math.round(X - R.w / 2), Y0 = Yb - hp;
+        OCC.push({ d: Rw.d, X0, Y0, w: R.w, cut, R });
         for(let y = 0; y < hp; y++){
           const Y = Y0 + y; if(Y > cut) break;
           // (where a rise in front cuts its foot, the last rows blend toward
@@ -16997,11 +17002,23 @@ Object.assign(Scene, {
       const h = Math.max(3, Math.round(B_FLAG * US * pr.s));
       if(pr.x < -8 || pr.x > VW + 8) return;
       const pw = Math.max(1, Math.round(h * 0.05)), fh = Math.max(2, Math.round(h * 0.28)), fw = Math.max(2, Math.round(fh * 1.3));
-      c.fillStyle = '#132215'; c.fillRect(pr.x - pw, pr.y - 1, pw * 2 + 1, 1);
-      c.fillStyle = night ? '#B8B8AE' : '#E8E8DE'; c.fillRect(pr.x, pr.y - h, pw, h);
+      // (behind the forest's trees nearer than it, which are painted into
+      // the ground: the top of them in each of its columns, below which it
+      // is hidden)
+      const X = Math.round(pr.x), top = new Array(pw + fw + 1).fill(1e9);
+      for(const O of this._forOcc || []){
+        if(O.d >= p.d || O.X0 > X + pw + fw || O.X0 + O.w < X - pw) continue;
+        for(let i = 0; i < top.length; i++){ const col = X - pw + i - O.X0; if(col < 0 || col >= O.w) continue;
+          for(let y = 0; y < O.R.rows.length; y++){ const Y = O.Y0 + y; if(Y > O.cut || Y >= top[i]) break;
+            if(O.R.rows[y].some(([a, n]) => col >= a && col < a + n)){ top[i] = Y; break; } } }
+      }
+      const col = (x0, y0, w, h2, colr) => { c.fillStyle = colr;
+        for(let x = x0; x < x0 + w; x++){ const lim = top[x - X + pw]; const y1 = Math.min(y0 + h2, lim === undefined ? 1e9 : lim); if(y1 > y0) c.fillRect(x, y0, 1, y1 - y0); } };
+      col(X - pw, pr.y - 1, pw * 2 + 1, 1, '#132215');
+      col(X, pr.y - h, pw, h, night ? '#B8B8AE' : '#E8E8DE');
       const wv = (Math.floor(this.t * 3 + p.k) & 1);
-      c.fillStyle = night ? '#A88A2A' : '#E8C43A'; c.fillRect(pr.x + pw, pr.y - h, fw - wv, fh);
-      c.fillStyle = night ? '#7A6420' : '#B8962A'; c.fillRect(pr.x + pw, pr.y - h + fh - 1, fw - wv, 1);
+      col(X + pw, pr.y - h, fw - wv, fh, night ? '#A88A2A' : '#E8C43A');
+      col(X + pw, pr.y - h + fh - 1, fw - wv, 1, night ? '#7A6420' : '#B8962A');
       return;
     }
     if(p.kind === 0){
