@@ -14,6 +14,8 @@
  *   - Sets (the user asked): one tap buys what of a set is missing, for what
  *     those pieces cost, and wears it whole; too few sovereigns buys
  *     nothing; owned, it is worn for nothing
+ *   - Unequip (the user asked): worn, a look's button reads UNEQUIP and
+ *     takes it off, back to the plain one; a worn set's takes all of it off
  */
 'use strict';
 module.exports = {
@@ -80,6 +82,26 @@ module.exports = {
         if (o.poor !== (need - 1) + ' classic false') f('too few sovereigns: ' + o.poor);
         if (o.paid !== need || o.worn !== 'divine seraph') f('bought whole it took ' + o.paid + ' (need ' + need + ') and wore ' + o.worn);
         if (o.again !== '0 divine') f('owned, wearing it again took ' + o.again);
+        // Unequip (the user asked): a worn set's button takes it all off,
+        // back to the plain look; a worn piece's takes it off alone; the
+        // plain ones can't be taken off
+        const lab = () => { QUIET = false; renderShop(); QUIET = true; const B2 = [...document.querySelectorAll('#sheet .price[data-do]')];
+          return Object.fromEntries(B2.map(b => [b.dataset.do, b.textContent.trim()])); };
+        shopSub = 'style'; styleCat = 'sets'; let L = lab();
+        o.unq = [L['set:divine'], L['set:cosmic']].join('/');
+        setBuy('divine'); o.off = [S.outfit, S.caddie, S.club, S.trail, fullSet()].join(' ');
+        setBuy('divine'); styleCat = 'golfer'; L = lab();
+        o.unq2 = [L['style:o.divine'], L['style:o.classic']].join('/');
+        styleBuy('o', 'divine'); o.off2 = [S.outfit, S.caddie, S.club, S.trail].join(' ');
+        styleBuy('o', 'classic'); o.plain = S.outfit;
+        for (const k of ['c', 'k', 't']) { const id = k === 't' ? 'seraph' : 'divine'; styleCat = { c: 'caddie', k: 'clubs', t: 'balls' }[k]; L = lab();
+          if (!/^UNEQUIP/.test(L['style:' + k + '.' + id] || '')) f('a worn ' + id + ' (' + k + ') reads ' + L['style:' + k + '.' + id]); }
+        hideSheet();
+        if (!/^UNEQUIP/.test(o.unq.split('/')[0]) || /UNEQUIP/.test(o.unq.split('/')[1])) f('the Sets buttons read ' + o.unq + ' (want UNEQUIP on the worn one only)');
+        if (o.off !== 'classic bib steel plain ') f('the set taken off left ' + o.off);
+        if (!/^UNEQUIP/.test(o.unq2.split('/')[0]) || /UNEQUIP/.test(o.unq2)  && !/^UNEQUIP/.test(o.unq2)) f('the golfer rack reads ' + o.unq2);
+        if (o.off2 !== 'classic divine divine seraph') f('the look taken off alone left ' + o.off2);
+        if (o.plain !== 'classic') f('the plain look was taken off: ' + o.plain);
         // a broken save
         const saved = JSON.parse(JSON.stringify(S)); saved.fullSets = { cosmic: 1, blossom: 1, ascended: 'x', demonic: 1 };
         Object.keys(S).forEach(k => delete S[k]); Object.assign(S, saved); initState();
@@ -94,6 +116,6 @@ module.exports = {
     });
     if (r.fails.length) throw new Error(r.fails.join('; '));
     return ['one piece off, no set; all on, The Void worn in full (with its wake or its ball), said once: "' + r.said[0] + '"',
-      'rimmed in gold: ' + Object.values(r.tiles).join(', ') + '; one set order on every rack (' + r.orders.golfer + '); Sets buys the missing pieces (' + r.cost + ') and wears them whole; the Divine too; the score box edged in its colour; the Record: Full Sets ' + r.record + '; a broken save repaired'];
+      'rimmed in gold: ' + Object.values(r.tiles).join(', ') + '; one set order on every rack (' + r.orders.golfer + '); Sets buys the missing pieces (' + r.cost + ') and wears them whole; the Divine too; the score box edged in its colour; the Record: Full Sets ' + r.record + '; Unequip on a worn set (' + r.unq + ') takes it all off, on a worn look (' + r.unq2 + ') just that; a broken save repaired'];
   }
 };

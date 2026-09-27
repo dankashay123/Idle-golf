@@ -678,6 +678,8 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
   font-weight:700;font-size:var(--f2);line-height:1.2;font-family:var(--mono)}
 .price.no{border-top-color:var(--line);color:var(--dim);background:transparent}
 .price.max{border-top-color:var(--line);color:var(--dim);background:transparent}
+/* a look worn, to take off (back to the plain one) */
+.price.unq{border-top-color:var(--flag);color:var(--chalk);background:transparent}
 .price small{display:block;font-size:var(--f0);letter-spacing:.08em;color:var(--dim);
   font-weight:400;font-family:var(--sans);text-transform:uppercase;margin-top:1px}
 /* On the art, not on the header: over the header it sat on top of the number,
@@ -7263,6 +7265,8 @@ const setCost = s => setPieces(s).filter(([k, id]) => !styleOwned(k, id)).reduce
 // bought whole if any of it is missing, then worn whole: his wake or ball
 // stays if it is the set's, else the wake
 function setBuy(s){
+  // worn whole: taken off whole, back to the plain look, caddie, club and ball
+  if(fullSet() === s){ PREVIEW = null; for(const k of ['o', 'c', 'k', 't']) styleSet(k, STYLE_DEFAULT[k]); buildSprites(); renderShop(); renderVitals(); return; }
   const cost = setCost(s);
   if(cost > 0){
     if(!spendSov(cost)) return;
@@ -7288,8 +7292,18 @@ function styleTry(k, id){
 function previewTick(){
   if(PREVIEW && Date.now() >= PREVIEW.until){ const k = PREVIEW.k; PREVIEW = null; if(k === 'o' || k === 'c') buildSprites(); }
 }
+// what he wears when he takes a look off (the user asked for an Unequip)
+const STYLE_DEFAULT = { o: 'classic', c: 'bib', k: 'steel', t: 'plain' };
+const styleWorn = k => k === 'o' ? S.outfit : k === 'c' ? (S.caddie || 'bib') : k === 'k' ? (S.club || 'steel') : S.trail;
+function styleSet(k, id){ if(k === 'o') S.outfit = id; else if(k === 'c') S.caddie = id; else if(k === 'k') S.club = id; else S.trail = id; }
 function styleBuy(k, id){
   const d = styleDef(k, id); if(!d) return;
+  // worn: taken off, back to the plain one
+  if(styleWorn(k) === id && id !== STYLE_DEFAULT[k]){
+    PREVIEW = null; styleSet(k, STYLE_DEFAULT[k]);
+    if(k === 'o' || k === 'c') buildSprites();
+    renderShop(); renderVitals(); return;
+  }
   if(!styleOwned(k, id) && d.major){
     toast('Win <b>' + courseById(d.major).n + '</b> to wear it');
     return;
@@ -7553,11 +7567,13 @@ function renderShop(){
       const worn = (k === 'o' ? S.outfit : k === 'c' ? (S.caddie || 'bib') : k === 'k' ? (S.club || 'steel') : S.trail) === d.id;
       // a major's jacket is won, not bought: it names the major instead of a price
       const won = d.major ? courseById(d.major) : null, full = !!FS && fullSetOf(k, d.id) === FS;
+      // (worn, it can be taken off, back to the plain one: not the plain one)
+      const off = worn && d.id !== STYLE_DEFAULT[k];
       return shopCard({ img, full, on: worn || !!d.top || (!!won && own), badge: full ? 'FULL SET' : worn ? 'WORN' : d.top ? (d.top > 1 ? 'MYTHIC' : 'LEGENDARY') : won && own ? 'CHAMPION' : '', head: d.n,
         sub: own ? '' : '<button class="mini try" data-try="' + k + '.' + d.id + '">Try it</button>',
-        price: worn ? 'WORN' : own ? 'WEAR' : won ? 'WIN IT' : sovFmt(d.cost),
+        price: off ? 'UNEQUIP' : worn ? 'WORN' : own ? 'WEAR' : won ? 'WIN IT' : sovFmt(d.cost),
         note: worn || own ? '' : won ? won.short : B.SOV.toLowerCase(),
-        cls: worn ? 'max' : own || (!won && (S.sov || 0) >= d.cost) ? '' : 'no', act: 'style:' + k + '.' + d.id });
+        cls: off ? 'unq' : worn ? 'max' : own || (!won && (S.sov || 0) >= d.cost) ? '' : 'no', act: 'style:' + k + '.' + d.id });
     };
     const shelf = (title, k, list, url) => list.length
       ? ribbon(title) + '<div class="sgrid c3">'
@@ -7575,8 +7591,8 @@ function renderShop(){
           .map(u => '<img src="' + u + '" alt="">').join('');
         return shopCard({ img: outfitUrl(O), full: worn, on: true, badge: worn ? 'FULL SET' : O.top > 1 ? 'MYTHIC' : 'LEGENDARY',
           head: FULL_SETS[s].n, sub: '<div class="setpcs">' + pcs + '</div>',
-          price: worn ? 'WORN' : cost ? sovFmt(cost) : 'WEAR', note: worn || !cost ? '' : B.SOV.toLowerCase(),
-          cls: worn ? 'max' : !cost || (S.sov || 0) >= cost ? '' : 'no', act: 'set:' + s });
+          price: worn ? 'UNEQUIP' : cost ? sovFmt(cost) : 'WEAR', note: worn || !cost ? '' : B.SOV.toLowerCase(),
+          cls: worn ? 'unq' : !cost || (S.sov || 0) >= cost ? '' : 'no', act: 'set:' + s });
       }).join('') + '</div>';
     }
     else if(styleCat === 'golfer')
