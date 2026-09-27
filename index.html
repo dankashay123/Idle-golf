@@ -8539,6 +8539,15 @@ function shrinkSprite(spr, w, h){
   R = makeSprite(rows, spr.map);
   M.set(key, R); return R;
 }
+// a sprite a share of the way to a colour (the haze), made once
+function fogSprite(spr, col, a){
+  const M = spr._fog || (spr._fog = new Map()), key = col + a;
+  let R = M.get(key); if(R) return R;
+  const cv = document.createElement('canvas'); cv.width = spr.w; cv.height = spr.h;
+  const g = cv.getContext('2d'); g.drawImage(spr.cv, 0, 0);
+  g.globalCompositeOperation = 'source-atop'; g.globalAlpha = a; g.fillStyle = col; g.fillRect(0, 0, spr.w, spr.h);
+  R = { cv, w: spr.w, h: spr.h }; M.set(key, R); return R;
+}
 function blit(c, spr, x, y, w, h){
   if(!spr || w < 1 || h < 1) return;
   c.drawImage(spr.cv, 0, 0, spr.w, spr.h, Math.round(x), Math.round(y),
@@ -16228,6 +16237,69 @@ Object.assign(Scene, {
   // everything far away toward the horizon colour, which is what actually makes
   // a flat scanline field read as depth. Cached per theme and size, so it costs
   // a single drawImage a frame rather than a hundred alpha fills.
+  // how strong the haze is on a row of the screen (buildHaze lays it)
+  hazeA(y){
+    const top  = Math.max(0, HORIZON - Math.round(VH*0.18));
+    const deep = HORIZON + Math.round((VH - HORIZON) * 0.55);
+    const ss   = t => t*t*(3 - 2*t);
+    const u = clamp((y - top) / Math.max(1, HORIZON - top), 0, 1);
+    const v = clamp((y - HORIZON) / Math.max(1, deep - HORIZON), 0, 1);
+    return ss(u) * (1 - ss(v)) * 0.34;
+  },
+  // Where the trees stand this frame (the forest's, and every tree, shrub
+  // and rock and the gallery drawn standing): the haze by rows and the blend
+  // at the horizon are laid everywhere but there, and each of those is
+  // hazed evenly by the haze at its own foot. Laid by rows over them, a
+  // tall tree's top was washed pale and its trunk not: a band of fog through
+  // the trees, the horizon showing through them (the user saw it).
+  treeMaskClear(){
+    if(!this._tmImg || this._tmImg.width !== VW || this._tmImg.height !== VH){
+      this._tmImg = new ImageData(VW, VH); this._tmPx = new Uint32Array(this._tmImg.data.buffer); }
+    this._tmPx.fill(0); this._tmOn = true;
+    return this._tmPx;
+  },
+  // this frame's: the forest's (kept with the ground, which is reused while
+  // he stands still), then each standing thing marked on it as it is drawn
+  treeMaskOn(){
+    const M = this._tmCv || (this._tmCv = document.createElement('canvas'));
+    if(M.width !== VW || M.height !== VH){ M.width = VW; M.height = VH; M._c = null; }
+    const g = M._c || (M._c = M.getContext('2d'));
+    if(!this._tmFI || this._tmFI.width !== VW || this._tmFI.height !== VH){
+      this._tmFI = new ImageData(VW, VH); this._tmF = new Uint32Array(this._tmFI.data.buffer); }
+    if(this._tmImg && this._tmOn && this._tmImg.width === VW && this._tmImg.height === VH) this._tmF.set(this._tmPx);
+    else this._tmF.fill(0);
+    g.putImageData(this._tmFI, 0, 0); this._tmDirty = false;
+    this.treeMask = g;
+  },
+  // a sprite drawn standing, hazed evenly by its foot, and marked where it
+  // stands (from its own rows: a canvas call each was too many a frame),
+  // down to the crest it stands behind
+  standBlit(c, spr, x, y, w, h){
+    const a = Math.round(this.hazeA(y + h) * 20) / 20;
+    blit(c, a > 0 ? fogSprite(spr, (this.theme || THEMES.day).sky[4], a) : spr, x, y, w, h);
+    const F = this._tmF; if(!F || !this.treeMask || !spr.rows) return;
+    x = Math.round(x); y = Math.round(y); w = Math.max(1, Math.round(w)); h = Math.max(1, Math.round(h));
+    const y1 = Math.min(VH, y + h, this._propCut === undefined ? VH : Math.max(0, this._propCut));
+    for(let yy = Math.max(0, y); yy < y1; yy++){
+      const row = spr.rows[Math.floor((yy - y) * spr.h / h)];
+      for(let xx = Math.max(0, x), e = Math.min(VW, x + w); xx < e; xx++){
+        const ch = row[Math.floor((xx - x) * spr.w / w)];
+        if(ch !== '.' && ch !== ' ' && ch !== undefined) F[yy * VW + xx] = 0xFF000000;
+      }
+    }
+    this._tmDirty = true;
+  },
+  // a layer laid over the frame everywhere but where the trees stand
+  overTrees(c, layer){
+    const T = this._tmTmp || (this._tmTmp = document.createElement('canvas'));
+    if(T.width !== VW || T.height !== VH){ T.width = VW; T.height = VH; T._c = null; }
+    const g = T._c || (T._c = T.getContext('2d'));
+    g.globalCompositeOperation = 'copy'; g.drawImage(layer, 0, 0);
+    if(this.treeMask){ if(this._tmDirty){ this.treeMask.putImageData(this._tmFI, 0, 0); this._tmDirty = false; }
+      g.globalCompositeOperation = 'destination-out'; g.drawImage(this.treeMask.canvas, 0, 0); }
+    g.globalCompositeOperation = 'source-over';
+    c.drawImage(T, 0, 0);
+  },
   buildHaze(){
     const key = this.themeId + '|' + VW + 'x' + VH;
     if(this.hazeKey === key && this.haze) return;
@@ -16297,14 +16369,21 @@ Object.assign(Scene, {
     if(!row._c || row.width !== VW){ row.width = VW; row.height = 1; row._c = row.getContext('2d'); }
     row._c.clearRect(0, 0, VW, 1);
     row._c.drawImage(this.buf, 0, HORIZON - 1, VW, 1, 0, 0, VW, 1);
+    // (laid everywhere but where the trees stand, or it streaked the row
+    // above down over every tree standing across the horizon)
+    const L = this._fadeL || (this._fadeL = document.createElement('canvas'));
+    if(L.width !== VW || L.height !== VH){ L.width = VW; L.height = VH; L._c = null; }
+    const g = L._c || (L._c = L.getContext('2d'));
+    g.clearRect(0, HORIZON - 1, VW, n + 2);
     for(let i = 0; i < n; i++){
       const t = i / n;
       const a = (1 - t) * (1 - t) * 0.85;
       if(a <= 0.01) continue;
-      c.globalAlpha = a;
-      c.drawImage(row, 0, HORIZON + i);
+      g.globalAlpha = a;
+      g.drawImage(row, 0, HORIZON + i);
     }
-    c.globalAlpha = 1;
+    g.globalAlpha = 1;
+    this.overTrees(c, L);
   },
 
   drawGround(){
@@ -16364,9 +16443,12 @@ Object.assign(Scene, {
     let same = this.pixGround !== false && key.length === now.length;
     for(let i = 0; same && i < now.length; i++) if(key[i] !== now[i]) same = false;
     if(same){
-      PixPaint.blit(c);
-      this.ripples(c, T);
+      // (the wood at the back goes down first, behind the forest's trees:
+      // laid over them, its haze and its line cut across every tree top
+      // that stood above the skyline)
       this.groundTail(c, T, this._gMaxy);
+      PixPaint.blit(c); this.treeMaskOn();
+      this.ripples(c, T);
       return;
     }
     key.length = 0; key.push(...now);
@@ -16380,7 +16462,14 @@ Object.assign(Scene, {
     if(this.water) hzClear(this.water);
     let maxy = VH, d = cam - CAM_BACK + 0.62, guard = 0;
     let prevD = d, prevH = this.hAt(d);
-    const g = this.pixGround === false ? c : PixPaint.begin(VW, VH);
+    // (painted rect by rect, onto a canvas of its own and laid down after the
+    // wood at the back, as the pixels are)
+    let g;
+    if(this.pixGround === false){
+      const R = this._rectCv || (this._rectCv = document.createElement('canvas'));
+      if(R.width !== VW || R.height !== VH){ R.width = VW; R.height = VH; R._c = null; }
+      g = R._c || (R._c = R.getContext('2d')); g.clearRect(0, 0, VW, VH);
+    }else g = PixPaint.begin(VW, VH);
     while(d < cam + 300 && maxy > SKY && guard++ < 6000){
       const rel = Math.max(0.6, d - cam + CAM_BACK);
       const s = K_PROJ / rel;
@@ -16409,11 +16498,15 @@ Object.assign(Scene, {
     }
     this._clipN = cn;
     // the woods stood up: trees across them, far to near (forestPass)
-    if(this.back) this.forestPass(g, cam); else this._forOcc = null;
-    if(g !== c) PixPaint.flush(c);
-    this.ripples(c, T);
+    // (the wood at the back first, behind the forest's trees, whichever way
+    // the ground is painted)
     this._gMaxy = maxy;
     this.groundTail(c, T, maxy);
+    this._tmOn = false;
+    if(this.back) this.forestPass(g, cam); else this._forOcc = null;
+    if(g === PixPaint) PixPaint.flush(c); else c.drawImage(g.canvas, 0, 0);
+    this.treeMaskOn();
+    this.ripples(c, T);
     // Three ruled lines of haze used to be blended in just under the horizon
     // to soften the join. The haze layer now ramps THROUGH the line instead of
     // starting at it, so the join is soft on its own and all the lines did was
@@ -16465,6 +16558,11 @@ Object.assign(Scene, {
     // (where each tree stood, so another green's flag beyond it is hidden
     // behind it: see drawProp)
     const OCC = this._forOcc = [];
+    // (where the trees are, so the haze by the screen's rows and the blend at
+    // the horizon pass over them: see treeMask; each is hazed evenly by the
+    // haze at its own foot instead, or a tall one's top was washed out and
+    // its trunk not, a band of fog across the wood)
+    const MK = this.treeMaskClear();
     for(let ri = L.rows.length - 1; ri >= 0; ri--){
       const Rw = L.rows[ri]; if(Rw.d > far) continue; if(Rw.d < cam + 1.2) break;
       // (across the row by the view's own scale, not the gap between two
@@ -16477,7 +16575,8 @@ Object.assign(Scene, {
       // stopping in a row: that read as a line ruled across the view)
       const hp0 = 46 * p0.s * US; if(hp0 < 3) continue;
       const keep = clamp((hp0 - 3) / 9, 0, 1);
-      const cut = this.clipAt(Rw.d), fog = Math.round(clamp((Rw.d - cam - 18) / 95, 0, 0.7) * 20) / 20, Yb = Math.round(p0.y);
+      const Yb = Math.round(p0.y), f0 = clamp((Rw.d - cam - 18) / 95, 0, 0.7), a0 = this.hazeA(Yb);
+      const cut = this.clipAt(Rw.d), fog = Math.round((1 - (1 - f0) * (1 - a0)) * 20) / 20;
       for(const t of Rw.t){
         // (one just thinned in grows up out of the wood rather than popping
         // in whole: which trees were kept changes as he walks, and the far
@@ -16495,9 +16594,13 @@ Object.assign(Scene, {
           // (where a rise in front cuts its foot, the last rows blend toward
           // the ground, undergrowth: cut hard, a whole forest's feet made a
           // line across the view)
-          const row = Y >= cut - 1 && Y < Yb ? footOf(F[y], Y === cut ? 0.55 : 0.3) : F[y];
-          if(fast) for(let k = 0; k < row.length; k++){ g.cur = row[k][3]; g.fillRect(X0 + row[k][0], Y, row[k][1], 1); }
-          else for(let k = 0; k < row.length; k++){ g.fillStyle = row[k][2]; g.fillRect(X0 + row[k][0], Y, row[k][1], 1); }
+          const ft = Y >= cut - 1 && Y < Yb, row = ft ? footOf(F[y], Y === cut ? 0.55 : 0.3) : F[y];
+          // (the rows blended into the ground are hazed with the ground, or
+          // the forest's feet were a line ruled across the view)
+          if(fast) for(let k = 0; k < row.length; k++){ g.cur = row[k][3]; g.fillRect(X0 + row[k][0], Y, row[k][1], 1);
+            if(!ft && Y >= 0 && Y < VH) for(let x = Math.max(0, X0 + row[k][0]), e = Math.min(VW, X0 + row[k][0] + row[k][1]); x < e; x++) MK[Y * VW + x] = 0xFF000000; }
+          else for(let k = 0; k < row.length; k++){ g.fillStyle = row[k][2]; g.fillRect(X0 + row[k][0], Y, row[k][1], 1);
+            if(!ft && Y >= 0 && Y < VH) for(let x = Math.max(0, X0 + row[k][0]), e = Math.min(VW, X0 + row[k][0] + row[k][1]); x < e; x++) MK[Y * VW + x] = 0xFF000000; }
         }
       }
     }
@@ -16537,7 +16640,9 @@ Object.assign(Scene, {
     // and the wood at the back of it, standing on whatever the march left as
     // the skyline rather than on the horizon line
     this.buildWood();
-    if(this.wood) c.drawImage(this.wood, 0, maxy - this.woodBase);
+    // (down to the ground's line: the field is in front of it, painted
+    // before it or after)
+    if(this.wood && this.woodBase > 0) c.drawImage(this.wood, 0, 0, this.wood.width, this.woodBase, 0, maxy - this.woodBase, this.wood.width, this.woodBase);
   },
 
   // One band of ground, at one distance. Everything here was a single scanline
@@ -16838,9 +16943,13 @@ Object.assign(Scene, {
             if(capH > 0){
               // A cap shaded like the rock under it, rather than one flat
               // sheet of white laid over the peaks.
-              g.fillStyle = slope > 0 ? snowS : snow;
+              // (by the peak's own slope, not the step its rounded outline
+              // takes: on a gentle face every column at a step went shaded
+              // or lit from top to foot, and the caps were striped)
+              const sl = topAt(x) - topAt(x - 1);
+              g.fillStyle = sl > 0.45 ? snowS : snow;
               g.fillRect(x, top, 1, capH);
-              if(slope < 0){ g.fillStyle = snowL; g.fillRect(x, top, 1, Math.min(capH, 2)); }
+              if(sl < -0.45){ g.fillStyle = snowL; g.fillRect(x, top, 1, Math.min(capH, 2)); }
               // it thins out as it runs down into the rock
               g.fillStyle = mixC(snow, body, 0.55);
               g.fillRect(x, top + capH - Math.max(1, capH >> 2), 1, Math.max(1, capH >> 2));
@@ -17017,7 +17126,12 @@ Object.assign(Scene, {
       if(pr.y > cut + 1){
         // its feet are behind the crest: draw only what stands above it
         c.save(); c.beginPath(); c.rect(0, 0, VW, Math.max(0, cut)); c.clip();
+        // (and where the haze passes it by, cut the same: its whole outline
+        // left the ground hidden behind the crest unhazed, tree shapes of
+        // bare ground behind the green)
+        this._propCut = cut;
         this.drawProp(c, T, night, p, pr);
+        this._propCut = undefined;
         c.restore();
         continue;
       }
@@ -17174,7 +17288,7 @@ Object.assign(Scene, {
       // pixel picked out of the picture, a far tree wobbled as he walked)
       const X = Math.round(pr.x), Y = Math.round(pr.y);
       c.fillRect(X - Math.round(w*0.34), Y - sh, Math.round(w*0.68), sh);
-      blit(c, shrinkSprite(spr, w, h) || spr, X - (w >> 1), Y - h, w, h);
+      this.standBlit(c, shrinkSprite(spr, w, h) || spr, X - (w >> 1), Y - h, w, h);
     }else if(p.kind === 2){
       // The rope goes down first, and before any cull on the post, because the
       // two posts either side of the camera swing right out of frame while the
@@ -17230,7 +17344,7 @@ Object.assign(Scene, {
       // (anchored and shrunk as the trees are: see shrinkSprite)
       const X = Math.round(pr.x), Y = Math.round(pr.y);
       if(p.sp === 'bush' && h > 4){ c.fillStyle = 'rgba(8,16,10,.26)'; c.fillRect(X - Math.round(w * 0.4), Y - 1, Math.round(w * 0.8), 1); }
-      blit(c, shrinkSprite(spr, w, h) || spr, X - (w >> 1), Y - h, w, h);
+      this.standBlit(c, shrinkSprite(spr, w, h) || spr, X - (w >> 1), Y - h, w, h);
 
     }else if(p.kind === 6){
       // frost on the grass: a pale speck, and one in four a glint catching
@@ -17355,7 +17469,7 @@ Object.assign(Scene, {
       const X = Math.round(pr.x), Y = Math.round(pr.y);
       c.fillStyle = 'rgba(8,16,10,.26)';
       c.fillRect(X - (w >> 1), Y - 1, w, 1);
-      blit(c, spr, X - (w >> 1), Y - h, w, h);
+      this.standBlit(c, spr, X - (w >> 1), Y - h, w, h);
       // in the rain most of them have an umbrella up
       if(this.rain && h >= 5 && hr(p.p * 97 + p.c, 410) < 0.75) drawUmbrella(c, pr.x + w * 0.1, pr.y - h, w, h, Math.floor(hr(p.p * 31, 411) * 6), night);
     }
@@ -18756,7 +18870,7 @@ Object.assign(Scene, {
       this.drawFarFade();
       this.drawProps();
       this.buildHaze();
-      if(this.haze) c.drawImage(this.haze, 0, 0);
+      if(this.haze) this.overTrees(c, this.haze);
       this.drawTee();
       // No flag on the Long Drive. It is a measured range with no hole in it,
       // and a pin at the far end was the single thing that made it read as
@@ -18884,7 +18998,7 @@ Object.assign(Scene, {
       if(RI){ this.drawProps(RI.bank, 1); if(pinFirst) this.drawFlagstick(); this.drawRail(); this.drawProps(RI.bank, -1); }
       else this.drawProps();
       this.buildHaze();
-      if(this.haze) c.drawImage(this.haze, 0, 0);
+      if(this.haze) this.overTrees(c, this.haze);
       this.drawTee();
       this.drawBridge();
       this.drawStones();
