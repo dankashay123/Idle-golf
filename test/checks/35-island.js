@@ -76,6 +76,7 @@ module.exports = {
         // one shot from the tee onto the island, played out frame by frame
         const D = derive(), dt = 1 / 30;
         S.yards = S.yardsMax * 0.06;
+        S.elapsed = Math.max(S.elapsed, S.parTime * 0.4);   // (not an ace: on an ace he stays on the tee)
         Scene.swing(1, false, null);
         let flew = 0, fast = 0, stood = 0, walked = 0, t = 0, last = Scene.camD;
         for (let f = 0; f < 30 * 9; f++) {
@@ -128,6 +129,7 @@ module.exports = {
         const h0 = S.hole, I = Scene.isle, pt = S.parTime;
         if (hidden) saverNow();
         S.yards = S.yardsMax * 0.005;          // the next swing finishes it
+        S.elapsed = Math.max(S.elapsed, S.parTime * 0.4);   // (not an ace: on an ace he stays on the tee)
         let heli = 0, cam = 0, doneT = null, el = 0, t0 = performance.now(), moved = false;
         while (performance.now() - t0 < 12000) {
           await sleep(40);

@@ -409,8 +409,8 @@ module.exports = {
         {
           S.outfit = 'ascended'; buildSprites();
           startHole(); const D2 = derive();
-          S.yards = 0; S.doneT = null;
-          Scene.camD = LEN - B_GREEN_STAND; Scene.walkTo = LEN; Scene.swingT = 0; Scene.walkOn = false; Scene.restBall = null; Scene.balls.length = 0;
+          S.yards = 0; S.doneT = null; S.elapsed = S.parTime * 0.5;   // (a par: an ace would go straight in)
+          Scene.camD = Scene.pinD() - B_GREEN_STAND; Scene.walkTo = LEN; Scene.swingT = 0; Scene.walkOn = false; Scene.restBall = null; Scene.balls.length = 0;
           Scene.upT = Scene.t - 1; Scene.cupT = 0; Scene.fairyMove = null; Scene.moveT = 999;
           const order = [], keep = {}, cam = [Scene.camD, Scene.walkTo, Scene.upT];
           for (const k of ['drawGolferGround', 'drawFlagstick', 'drawGolfer']) { keep[k] = Scene[k]; Scene[k] = function () { order.push(k); return keep[k].apply(this, arguments); }; }

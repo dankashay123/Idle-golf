@@ -78,7 +78,7 @@ module.exports = {
                 if (Scene.inBack(LEN + 3, 0, 0) || Scene.inBack(LEN + 3, 0, 0, 1)) f(where + ': the forest or its lake on the green');
                 let row = 0; for (let x = -20; x <= 20; x += 2) if (Scene.props.some(q => q.kind === 0 && Math.abs(q.x - x) < 1.6 && Math.abs(q.d - Scene.backEdge(q.x) - 0.6) < 1.2)) row++;
                 if (row < 12) f(where + ': trees along the forest\'s edge in only ' + row + ' of 21 places');
-                for (const q of Scene.props) if ((q.kind === 1 || q.kind === 8) && (Scene.inBack(q.d, q.x, -0.3) || Scene.inBack(q.d, q.x, 0, 1))) { f(where + ': a ' + (q.kind === 1 ? 'spectator' : q.sp) + ' in the forest or its lake'); break; }
+                for (const q of Scene.props) if ((q.kind === 1 || q.kind === 8) && (Scene.inBack(q.d, q.x, -0.7) || Scene.inBack(q.d, q.x, 0, 1))) { f(where + ': a ' + (q.kind === 1 ? 'spectator' : q.sp) + ' in the forest or its lake'); break; }
                 for (const q of Scene.props) if (q.kind === 0 && Scene.inBack(q.d, q.x, 0.3, 1)) { f(where + ': a tree in the lake behind the green'); break; }
               } }
             if (sk === 'island' || sk === 'pier') {

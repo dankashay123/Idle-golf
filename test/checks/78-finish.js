@@ -17,8 +17,8 @@ module.exports = {
       const SNAP = JSON.stringify(S), o = { fails: [] }, f = m => o.fails.push(m), keep = window.step;
       try {
         hideSheet(); QUIET = true; window.step = () => {};
-        const D = derive(), putSpot = LEN - B_GREEN_STAND - 0.4;
-        const fresh = () => { S.hole = 4; startHole(); Scene.announce = null; Scene.camD = 20; Scene.walkTo = 20; Scene.balls = []; Scene.restBall = null;
+        const D = derive(); let putSpot = 0;
+        const fresh = () => { S.hole = 4; startHole(); Scene.announce = null; putSpot = Scene.pinD() - B_GREEN_STAND - 0.4; Scene.camD = 20; Scene.walkTo = 20; Scene.balls = []; Scene.restBall = null;
           Scene.swingT = 0; Scene.putt = null; Scene.cupT = 0; Scene.pendingBall = null; Scene.queued = null;
           S.doneT = S.parTime; };   // (a par: an ace goes in the cup, see below)
         const pos = b => b.d0 + b.dist * Math.min(1, b.t / b.dur);
@@ -47,11 +47,11 @@ module.exports = {
         fresh(); S.doneT = S.parTime * 0.05; Scene.camD = 0; Scene.walkTo = 0;
         Scene.balls.push({ d0: 0, dist: 12, t: 0.2, dur: 0.6, el: null, crit: false, seed: 1, lat0: 0.42, lat: 0, cup: 0, tee: 1 });
         S.yards = 0; Scene.drawBalls(0); o.ace = [+(Scene.balls[0].d0 + Scene.balls[0].dist).toFixed(2), Scene.balls[0].cup].join('/');
-        if (o.ace !== LEN + '/1') f('an ace in the air off the tee came down at ' + o.ace + ' (want the cup)');
+        if (o.ace !== +Scene.pinD().toFixed(2) + '/1') f('an ace in the air off the tee came down at ' + o.ace + ' (want the cup)');
         fresh(); S.doneT = S.parTime * 0.05;
         Scene.balls.push({ d0: 20, dist: 12, t: 0.2, dur: 0.6, el: null, crit: false, seed: 1, lat0: 0.42, lat: 0, cup: 0, tee: 0 });
         S.yards = 0; Scene.drawBalls(0); o.ace2 = [+(Scene.balls[0].d0 + Scene.balls[0].dist).toFixed(2), Scene.balls[0].cup].join('/');
-        if (o.ace2 !== LEN + '/1') f('an ace in the air, a second shot, came down at ' + o.ace2 + ' (want the cup)');
+        if (o.ace2 !== +Scene.pinD().toFixed(2) + '/1') f('an ace in the air, a second shot, came down at ' + o.ace2 + ' (want the cup)');
         // ---- a ball lying just short of the putting spot, yardage to go: the
         // next shot stays short of it (the least carry took it past, nearer
         // the cup than he putts from) ----

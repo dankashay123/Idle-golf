@@ -47,7 +47,7 @@ module.exports = {
           const H = [];
           let rec = null, waitingPlays = 0, said = [], nearCup = 0, banners = 0, cam0 = Scene.camD, camMax = Scene.camD, at = S.hole;
           window.finishHole = function (D) {
-            H.push({ h: S.hole, hr: holeInRound(S.hole), par: S.parTime, short: LEN - Scene.camD, done: S.doneT, el: S.elapsed, wait: S.elapsed - S.doneT, cap: S.elapsed - S.doneT >= B.ISLE_HOLD - 0.02,
+            H.push({ h: S.hole, hr: holeInRound(S.hole), par: S.parTime, short: Scene.pinD() - Scene.camD, done: S.doneT, el: S.elapsed, wait: S.elapsed - S.doneT, cap: S.elapsed - S.doneT >= B.ISLE_HOLD - 0.02,
                      sig: sigKind(S.hole) || '', said: said.filter(x => x.h === S.hole && B.SCORE.some(z => z.n === x.n)),
                      putt: !!(Scene.putt && Scene.putt.hit), shots: Scene.shotN || 0, tocks: tocks.filter(x => x === S.hole).length, cup: !!Scene.cupT,
                      cups: cups.filter(x => x.h === S.hole), puttDur: Scene.putt && Scene.cupT ? Scene.cupT - Scene.putt.t0 : null,
@@ -65,7 +65,7 @@ module.exports = {
           window.fireSkill = function () { if (S.doneT != null && S.yards <= 0) waitingPlays++; return keep.fs.apply(this, arguments); };
           const saidLate = [];
           Scene.holed = function (sc) { said.push({ h: S.hole, n: sc.n, d: sc.d, down: S.doneT != null && S.yards <= 0, el: S.elapsed, done: S.doneT,
-            cupAgo: Scene.cupT ? Scene.t - Scene.cupT : null, up: Scene.camD >= LEN - B_GREEN_UP }); return keep.holed.apply(this, arguments); };
+            cupAgo: Scene.cupT ? Scene.t - Scene.cupT : null, up: Scene.camD >= Scene.pinD() - B_GREEN_UP }); return keep.holed.apply(this, arguments); };
           const tocks = [];
           const cups = [];
           Sfx.play = function (k) { if (k === 'putt') tocks.push(S.hole);
@@ -81,7 +81,7 @@ module.exports = {
             if (watch) Scene.draw(dt, D);
             if (S.hole === at) camMax = Math.max(camMax, Scene.camD);
             // no ball ever lies nearer the cup than where he putts from
-            if (watch && Scene.restBall && Scene.restBall.d > LEN - B_GREEN_STAND - 0.4 + 0.01) nearCup++;
+            if (watch && Scene.restBall && Scene.restBall.d > Scene.pinD() - B_GREEN_STAND - 0.4 + 0.01) nearCup++;
             if (stop && H.length >= stop) break;
           }
           window.finishHole = keep.fh; window.oneSwing = keep.os; window.fireSkill = keep.fs; Scene.holed = keep.holed; Sfx.play = keep.play;
@@ -100,12 +100,12 @@ module.exports = {
         window.__puttDraw = () => {
           const o = {};
           startHole(); const D = derive();
-          S.yards = 0; S.doneT = null;
-          Scene.camD = LEN - B_GREEN_STAND; Scene.walkTo = LEN; Scene.swingT = 0; Scene.walkOn = false; Scene.restBall = null; Scene.balls.length = 0;
+          S.yards = 0; S.doneT = null; S.elapsed = S.parTime * 0.5;   // (a par: an ace would go straight in)
+          Scene.camD = Scene.pinD() - B_GREEN_STAND; Scene.walkTo = Scene.pinD(); Scene.swingT = 0; Scene.walkOn = false; Scene.restBall = null; Scene.balls.length = 0;
           Scene.upT = Scene.t - 1; Scene.cupT = 0; Scene.fairyMove = null; Scene.moveT = 999;
           const p = Scene.proj(Scene.camD, 0), gh = Math.round(B_GOLFER * US * p.s), gw = Math.round(gh * SPRITE.gAddr.w / SPRITE.gAddr.h);
           const body = { x0: p.x - gw * 0.42, x1: p.x + gw * 0.58, y0: p.y - gh, y1: p.y };
-          const cup = Scene.proj(LEN, Scene.pinX());
+          const cup = Scene.proj(Scene.pinD(), Scene.pinX());
           o.putDraw = { seen: 0, looked: 0, onHim: 0, cupHid: cup.x >= body.x0 - 1 && cup.x <= body.x1 + 1 && cup.y >= body.y0 - 1 && cup.y <= body.y1, size: VW + 'x' + VH };
           for (let T = PUTT_HIT + 0.05; T < PUTT_HIT + PUTT_ROLL - 0.02; T += 0.05) {
             Scene.putt = { t0: Scene.t - T, d0: Scene.camD, hit: 1 };

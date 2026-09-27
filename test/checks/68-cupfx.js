@@ -35,7 +35,8 @@ module.exports = {
         if (balls.length < 5) f('the balls to try are missing: ' + balls.join(','));
         for (let hh = 2; hh <= 7; hh++) {
           S.hole = hh; S.chaos = Object.assign({}, B.CHAOS.find(x => x.n === 'Fair')); startHole(); Scene.announce = null; Scene.rain = false; Scene.night = false;
-          for (const at of [LEN - 5, LEN - 14, 4]) {
+          const PD = Scene.pinD();
+          for (const at of [PD - 5, PD - 14, 4]) {
             Scene.camD = at; Scene.walkTo = at; Scene.swingT = 0; Scene.balls = []; Scene.restBall = null; Scene.t = 30; o.views++;
             for (const id of balls) {
               S.styleOwn['t:' + id] = 1; S.trail = id;
@@ -44,10 +45,10 @@ module.exports = {
               // moment alone over a blank
               Scene.cupT = 0; Scene.draw(0, derive());
               // (where the frame left the camera)
-              const p = Scene.proj(LEN, PIN_X), h = Math.max(4, Math.round(B_FLAG * US * p.s)), cut = Scene.clipAt(LEN);
+              const p = Scene.proj(PD, Scene.pinX()), h = Math.max(4, Math.round(B_FLAG * US * p.s)), cut = Scene.clipAt(PD);
               // the ground's line for a row: at the distance whose ground lies on it
               const rowCut = {}; const lineAt = y => { if (y <= p.y) return cut; if (rowCut[y] !== undefined) return rowCut[y];
-                let d = LEN; while (d > LEN - 8 && Scene.proj(d, PIN_X).y < y) d -= 0.02; return rowCut[y] = Scene.clipAt(d); };
+                let d = PD; while (d > PD - 8 && Scene.proj(d, Scene.pinX()).y < y) d -= 0.02; return rowCut[y] = Scene.clipAt(d); };
               let total = 0;
               for (const q of [0.1, 0.35, 0.6, 0.9, 1.05]) {
                 Scene.t = 30; Scene.cupT = 30 - q * CUP_FX_DUR; blank(); Scene.drawCupFx();
@@ -68,7 +69,7 @@ module.exports = {
               }
               if (top) {
                 o.px[id] = (o.px[id] || 0) + total;
-                if (at === LEN - 5 && p.y <= cut + 1 && total < 60) f(id + ' hole ' + hh + ': only ' + total + ' pixels from beside the green');
+                if (at === PD - 5 && p.y <= cut + 1 && total < 60) f(id + ' hole ' + hh + ': only ' + total + ' pixels from beside the green');
               }
             }
           }
@@ -84,7 +85,7 @@ module.exports = {
         // the hole holds for the whole moment with these balls, and no longer
         // than before with any other (a fast bag's next hole came at 0.3s)
         {
-          const hold = (id, age) => { S.trail = id; QUIET = false; Scene.hole = S.hole; Scene.isle = null; Scene.camD = LEN; Scene.t = 50;
+          const hold = (id, age) => { S.trail = id; QUIET = false; Scene.hole = S.hole; Scene.isle = null; Scene.camD = Scene.pinD(); Scene.t = 50;
             Scene.upT = 48; Scene.cupT = 50 - age; Scene.drawnAt = performance.now(); const w = Scene.holeWait(); QUIET = true; return w; };
           // (every ball now holds CUP_HOLD, for the score to be read; the
           // moment fits inside it)

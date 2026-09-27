@@ -152,13 +152,13 @@ module.exports = {
           Scene.pendingBall = { crit: false, el: null, dmg: 1 }; Scene.launch();
           const b = Scene.balls[0], land = b.d0 + b.dist;
           let rest = null, camAtLand = null;
-          for (let i = 0; i < 400 && (Scene.balls.length || Scene.camD < Math.min(to, LEN - B_GREEN_STAND - 0.4) - 0.05); i++) {
+          for (let i = 0; i < 400 && (Scene.balls.length || Scene.camD < Math.min(to, Scene.pinD() - B_GREEN_STAND - 0.4) - 0.05); i++) {
             Scene.draw(0.016, D);
             if (!Scene.balls.length && camAtLand === null) { camAtLand = Scene.camD; rest = Scene.restBall && Scene.restBall.d; }
           }
           // (a shot onto the green comes down a putt short of the cup, where
           // he putts from: no ball rests nearer the cup than that)
-          o.walk.push({ from, to, want: +Math.min(to, LEN - B_GREEN_STAND - 0.4).toFixed(2), land: +land.toFixed(2), rest: rest && +rest.toFixed(2), camAtLand: camAtLand && +camAtLand.toFixed(2), end: +Scene.camD.toFixed(2) });
+          o.walk.push({ from, to, want: +Math.min(to, Scene.pinD() - B_GREEN_STAND - 0.4).toFixed(2), land: +land.toFixed(2), rest: rest && +rest.toFixed(2), camAtLand: camAtLand && +camAtLand.toFixed(2), end: +Scene.camD.toFixed(2) });
         }
 
         // ---- he does not hit again until he reaches his ball ------------------

@@ -9598,6 +9598,14 @@ const B_GREEN_STAND = 2.2, B_GREEN_UP = 2.7, PUTT_HIT = 0.43, PUTT_ROLL = 0.6;
 // behind his head from any distance), and the ball dropped out of sight.
 // A wager keeps its pin in the middle, where its shots are aimed.
 const PIN_X = 0.9;
+// Nine pin positions (the user asked: "every flag/hole on the green is in
+// the exact same spot every time"): front, middle and back of the green,
+// each left, middle and right (never on his line, where he would stand on
+// it). Along the hole, and across. Each hole takes the next one round the
+// nine, and they all move on a day; a wager's green keeps its pin in the
+// middle, on his line.
+const PINS = [[-3.2, -1.0], [0, 0.5], [3.2, 1.4], [0, -1.0], [3.2, 0.5], [-3.2, 1.4], [3.2, -1.0], [-3.2, 0.5], [0, 1.4]];
+const pinFor = h => PINS[(holeInRound(h) - 1 + dayIndex(h) * 4 + tournamentOf(h) * 2) % PINS.length];
 // How far behind the golfer the camera sits, in world units. Small numbers put
 // you over his shoulder with the hole falling away hard; large numbers flatten
 // it into a diagram. GROUND is derived from it below, so his feet stay put.
@@ -13291,7 +13299,8 @@ const Scene = {
     }
     // (in the forest nothing but trees; nothing in its lake)
     for(let i = put.length - 1; i >= 0; i--){ const q = put[i];
-      if((q.kind === 1 || q.kind === 8) && this.inBack(q.d, q.x, -0.3) || (q.kind === 0 || q.kind === 1 || q.kind === 8) && this.inBack(q.d, q.x, 0.5, 1)) put.splice(i, 1); }
+      // (the shrubs and rocks off the rest of the course are laid again below)
+      if((q.kind === 1 || isle && q.kind === 8) && this.inBack(q.d, q.x, -0.3) || (q.kind === 0 || q.kind === 1 || q.kind === 8) && this.inBack(q.d, q.x, 0.5, 1)) put.splice(i, 1); }
     // the island green and the sea stack: a wood down each side, clear of
     // the water, and nothing else (no other hole, no path)
     if(isle){
@@ -13391,15 +13400,18 @@ const Scene = {
     const gone = [];
     for(let i = put.length - 1; i >= 0; i--){ const q = put[i];
       if(q.kind !== 0 && q.kind !== 1 && q.kind !== 8) continue;
-      if(this.onNbr(q.d, q.x, 0.7) || this.inPond(q.d, q.x, 0.6) || this.inFill(q.d, q.x, 0.4, 'lake') || (q.kind !== 1 && onPath(q.d, q.x))){ put.splice(i, 1); if(q.kind === 8) gone.push(q); } }
+      if(this.onNbr(q.d, q.x, 0.7) || this.inPond(q.d, q.x, 0.6) || this.inFill(q.d, q.x, 0.4, 'lake') || (q.kind !== 1 && onPath(q.d, q.x))
+         || q.kind !== 0 && (this.inFill(q.d, q.x, -0.3, 'wood') || this.inBack(q.d, q.x, -0.3))){ put.splice(i, 1); if(q.kind === 8) gone.push(q); } }
     const clear = (d, x, pad) => !(this.onNbr(d, x, pad) || onPath(d, x) || this.inPond(d, x, pad) || this.inFill(d, x, pad, 'lake') || this.onPlay(d, x, 0.5) || this.hitsHazard(d, x, 0.5)
       || put.some(q => (q.kind === 10 || q.kind === 11) && Math.abs(q.d - d) < 5 && Math.abs(q.x - x) < 7));
     // the shrubs, tufts and rocks taken off them laid again somewhere clear,
     // near where they were (the rough stays as full as it was)
-    for(let i = 0, a = 0; i < gone.length && a < gone.length * 12; a++){
+    // (the rough is narrower now the woods close in: tried further along
+    // the hole when there is no room near, and at a wood's very edge)
+    for(let i = 0, a = 0; i < gone.length && a < gone.length * 40; a++){
       const q = gone[i], u = hr(h * 61 + a, 513), v = hr(h * 61 + a, 514), sd = hr(h * 61 + a, 515) < 0.5 ? -1 : 1;
-      const d = clamp(q.d + (u - 0.5) * 8, -2, LEN + 12), x = sd * (this.fwWidth(d) + 0.9 + v * 7);
-      if(!clear(d, x, 0.7)) continue;
+      const d = clamp(q.d + (u - 0.5) * (a < gone.length * 12 ? 8 : 40), -2, LEN + 12), x = sd * (this.fwWidth(d) + 0.9 + v * 7);
+      if(!clear(d, x, 0.7) || this.inFill(d, x, -0.6, 'wood') || this.inBack(d, x, -0.6)) continue;
       put.push(Object.assign({}, q, { d, x, extra: 1 })); i++;
     }
     // trees: between this hole and the next, between the rings, beyond the
@@ -13416,9 +13428,6 @@ const Scene = {
     }
     for(let j = 0; j < 12; j++, ti++){ const d = -4 + R(ti, 542) * (LEN + 18); tree(ti, d, this.cartX(d) + ps * (1.2 + R(ti, 543) * 4)); }
     this.layWoodTrees(put, (d, x) => clear(d, x, 0.9));
-    // (and nothing but trees standing in a wood)
-    for(let i = put.length - 1; i >= 0; i--){ const q = put[i];
-      if((q.kind === 1 || q.kind === 8) && this.inFill(q.d, q.x, -0.3, 'wood')) put.splice(i, 1); }
     // each other green's flag (kind 12), stood with the rest (none off the
     // ends of the course)
     for(const N of this.nbrs) if(N.gd < LEN + 100) put.push({ kind: 12, d: N.gd, x: this.nbrGX(N), extra: 1, k: N.sd });
@@ -14418,6 +14427,7 @@ const Scene = {
   newHole(h, tier){
     this.gGen = (this.gGen || 0) + 1;
     this.hole = h; this.tier = tier;
+    this.pin = pinFor(h);
     // the last hole's score is never carried on to this one (the user saw an
     // Albatross still up on the next tee)
     this.banner = null;
@@ -14835,7 +14845,7 @@ const Scene = {
     // (still crossing counts: the last hundredth of a step before the far
     // side read as neither across nor on the way, and let the hole go)
     if(I && (this.crossing || this.camD < I.land - 0.05)) return true;
-    if(this.camD < LEN - B_GREEN_UP || !this.upT) return true;
+    if(this.camD < this.pinD() - B_GREEN_UP || !this.upT) return true;
     // the ball in the cup (a putt, or an ace straight in), and a moment after
     // (the dearest balls' own moment in the cup plays out whole: the wait is
     // paid for, as all of it is)
@@ -14865,7 +14875,7 @@ const Scene = {
     const q = 1 - (1 - u) * (1 - u);                         // slowing as it goes
     const sm = x => x <= 0 ? 0 : x >= 1 ? 1 : x * x * (3 - 2 * x);
     // (to the cup where it is: on a wager's green the pin stands on his line)
-    const P = this.putt, end = P.miss ? LEN + 1.4 : LEN, to = this.pinX() + (P.miss ? P.miss : 0);
+    const P = this.putt, end = this.pinD() + (P.miss ? 1.4 : 0), to = this.pinX() + (P.miss ? P.miss : 0);
     return { u, d: P.d0 + (end - P.d0) * q,
              lat: L0 + (to - L0) * sm(q) + 0.12 * Math.sin(Math.PI * q) };
   },
@@ -14924,9 +14934,9 @@ const Scene = {
     const ace = last && this.aceNow();
     // (and no ball comes to rest nearer the cup than that: the last one he
     // sees come down is not always the one that finished the hole)
-    const putSpot = LEN - B_GREEN_STAND - 0.4;
+    const putSpot = this.pinD() - B_GREEN_STAND - 0.4;
     const reach = S.dgnRun || !(S.yardsMax > 0) ? null
-                : last ? (ace ? LEN : putSpot) - this.camD
+                : last ? (ace ? this.pinD() : putSpot) - this.camD
                 : Math.min(this.spot(clamp(1 - S.yards / S.yardsMax, 0, 1)), putSpot) - this.camD;
     // (and never past the putting spot, short as it is, unless it goes in:
     // from a ball lying just short of it the least carry, 0.6, left the
@@ -14939,7 +14949,7 @@ const Scene = {
                       t:0, dur: 0.34 + Math.min(0.32, dist * 0.016) + Math.random()*0.08,
                       el:p.el, crit:p.crit, seed: Math.random()*100,
                       lat0: lat0, cup: ace ? 1 : 0, tee: tee ? 1 : 0,
-                      lat: ace ? PIN_X : p.lat !== undefined ? p.lat : -0.15 + (Math.random()-.5)*0.30 });
+                      lat: ace ? this.pinX() : p.lat !== undefined ? p.lat : -0.15 + (Math.random()-.5)*0.30 });
     if(this.nums.length < 12 && p.dmg > 0){
       // Kept clear of whatever is already floating there, measured in the
       // numbers' real widths. They all rise at the same speed, so a number
@@ -17908,7 +17918,7 @@ Object.assign(Scene, {
         this.restBall = null;                                  // he has reached it
         // and with the hole's ball down while it lay short of the green, he
         // plays it on up onto the green: that shot comes down there
-        if(!S.dgnRun && S.yardsMax > 0 && S.yards <= 0 && this.hole === S.hole && R.d < LEN - B_GREEN_STAND - 0.9
+        if(!S.dgnRun && S.yardsMax > 0 && S.yards <= 0 && this.hole === S.hole && R.d < this.pinD() - B_GREEN_STAND - 0.9
            && !this.swingT && !this.balls.length && !this.putt && !this.cupT){ this.swingT = this.swingDur; this.pendingBall = { crit: false, el: null, dmg: 0 }; }
       }
       else{
@@ -17931,8 +17941,8 @@ Object.assign(Scene, {
       if(!b.cup && !b.fin && !S.dgnRun && S.yardsMax > 0 && S.yards <= 0 && this.hole === S.hole){
         b.fin = 1;
         // (an ace goes on into the cup)
-        const ace = this.aceNow(), L = ace ? LEN : LEN - B_GREEN_STAND - 0.4, P = b.d0 + b.dist * Math.min(u, 1);
-        if(b.d0 + b.dist < L - 0.3 && u < 0.8){ b.lift0 = b.dist; b.dist = (L - P) / (1 - u); b.d0 = L - b.dist; if(ace){ b.cup = 1; b.lat = PIN_X; } }
+        const ace = this.aceNow(), L = ace ? this.pinD() : this.pinD() - B_GREEN_STAND - 0.4, P = b.d0 + b.dist * Math.min(u, 1);
+        if(b.d0 + b.dist < L - 0.3 && u < 0.8){ b.lift0 = b.dist; b.dist = (L - P) / (1 - u); b.d0 = L - b.dist; if(ace){ b.cup = 1; b.lat = this.pinX(); } }
       }
       if(u >= 1){
         // it lies where it came down until he walks up to it (an ace is in
@@ -18324,10 +18334,10 @@ Object.assign(Scene, {
       // little brisker, whether or not the last ball is still in the air
       const up = S.yards <= 0 && this.hole === S.hole;
       // (but to his ball first if it lies short of the green: he plays it on)
-      const shortBall = up && this.restBall && !this.balls.length && this.restBall.d < LEN - B_GREEN_STAND - 0.9;
+      const shortBall = up && this.restBall && !this.balls.length && this.restBall.d < this.pinD() - B_GREEN_STAND - 0.9;
       const aceH = this.aceHold(D);
       const goal = aceH ? this.camD
-                 : up ? (shortBall ? this.restBall.d : LEN - B_GREEN_STAND) : Math.min(at, this.walkTo === undefined ? at : this.walkTo);
+                 : up ? (shortBall ? this.restBall.d : this.pinD() - B_GREEN_STAND) : Math.min(at, this.walkTo === undefined ? at : this.walkTo);
       const I = this.isle;
       // (at a railway, not while a train is coming or going by)
       const railWait = !!(I && I.rail && !this.crossing && this.railHold());
@@ -18351,7 +18361,7 @@ Object.assign(Scene, {
         ? (this.camD - I.bank) / (I.land - I.bank) : 0;
       this.heli = I && I.fly ? this.crossing : 0;
       if(was && !this.crossing) this.landT = this.t;
-      if(this.camD >= LEN - B_GREEN_UP && !this.upT) this.upT = this.t;
+      if(this.camD >= this.pinD() - B_GREEN_UP && !this.upT) this.upT = this.t;
       // up on the green with the hole's ball down: he putts out (a ball left
       // lying beyond him is the one he putts)
       if(up && this.upT && this.restBall && this.restBall.d > this.camD) this.restBall = null;
@@ -18436,9 +18446,9 @@ Object.assign(Scene, {
 
   drawFlagstick(){
     const c = this.b;
-    const p = this.proj(LEN, this.pinX());
+    const P = this.pinD(), p = this.proj(P, this.pinX());
     if(p.s < 0.05) return;
-    const cut = this.clipAt(LEN);
+    const cut = this.clipAt(P);
     if(p.y > cut + 1){
       // the green is over a rise: only the top of the pin shows
       c.save(); c.beginPath(); c.rect(0, 0, VW, Math.max(0, cut)); c.clip();
@@ -18449,7 +18459,9 @@ Object.assign(Scene, {
     this.pinBody(c, p);
   },
 
-  pinX(){ return S.dgnRun ? 0 : PIN_X; },
+  pinX(){ return S.dgnRun ? 0 : (this.pin || [0, PIN_X])[1]; },
+  // how far down the hole the cup is (the green's middle is at LEN)
+  pinD(){ return S.dgnRun ? LEN : LEN + (this.pin || [0])[0]; },
   // The three dearest balls each do something of their own as they drop in
   // the cup (the user asked): half a second, close about the cup, in solid
   // pixels (a wash over the green turns grey), cut at the ground's line so
@@ -18462,15 +18474,15 @@ Object.assign(Scene, {
     if(!this.cupT || (S.dgnRun && !wager) || !CUP_FX[fx]) return;
     const q = (this.t - this.cupT) / CUP_FX_DUR;
     if(q < 0 || q >= 1) return;
-    const c = this.b, p = this.proj(LEN, this.pinX());
+    const P = this.pinD(), c = this.b, p = this.proj(P, this.pinX());
     if(p.s < 0.05) return;
-    const cut = this.clipAt(LEN);
+    const cut = this.clipAt(P);
     if(p.y - Math.round(B_FLAG * US * p.s) > cut + 1) return;
     // (what lies flat on the green in front of the cup is nearer than the
     // pin: it is cut at the ground's line at its own distance, or a void
     // opening round the cup showed only its far half; a crest in front still
     // cuts it at the crest)
-    const near = LEN - 0.9 * B_FLAG * US / LAT, cut2 = Math.max(cut, Math.min(this.clipAt(near), this.proj(near, this.pinX()).y + 1));
+    const near = P - 0.9 * B_FLAG * US / LAT, cut2 = Math.max(cut, Math.min(this.clipAt(near), this.proj(near, this.pinX()).y + 1));
     c.save(); c.beginPath(); c.rect(0, 0, VW, Math.max(0, Math.floor(cut2) + 1)); c.clip();
     const cr = Math.max(1, Math.round(1.6 * p.s * US)), h = Math.max(4, Math.round(B_FLAG * US * p.s));
     CUP_FX[fx](c, p.x, p.y, cr, h, q, this.t);

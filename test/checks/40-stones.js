@@ -111,6 +111,7 @@ module.exports = {
         STONES_FORCE = S.hole; startHole(); Scene.announce = null;
         const h0 = S.hole, I = Scene.isle;
         S.yards = S.yardsMax * 0.005;
+        S.elapsed = Math.max(S.elapsed, S.parTime * 0.4);   // (not an ace: on an ace he stays on the tee)
         let cam = 0, moved = false, over = 0;
         const t0 = performance.now();
         while (performance.now() - t0 < 12000) {

@@ -59,6 +59,7 @@ module.exports = {
         // one shot over the gorge, frame by frame
         const D = derive(), dt = 1 / 30;
         S.yards = S.yardsMax * 0.06;
+        S.elapsed = Math.max(S.elapsed, S.parTime * 0.4);   // (not an ace: on an ace he stays on the tee)
         Scene.swing(1, false, null);
         let crossed = 0, fast = 0, stood = 0, last = Scene.camD, plank = 0, looked = 0, flew = 0;
         const PL = ['#A07C56', '#8A6A48', '#5A4230'].map(h => parseInt(h.slice(1), 16));
@@ -114,6 +115,7 @@ module.exports = {
         PIER_FORCE = S.hole; startHole(); Scene.announce = null;
         const h0 = S.hole, I = Scene.isle;
         S.yards = S.yardsMax * 0.005;
+        S.elapsed = Math.max(S.elapsed, S.parTime * 0.4);   // (not an ace: on an ace he stays on the tee)
         let cam = 0, moved = false, over = 0;
         const t0 = performance.now();
         while (performance.now() - t0 < 12000) {
