@@ -5,9 +5,8 @@
  *     it is to the green, a putt short of the cup, without a jump
  *   - a ball lying short when the hole's ball goes down: he walks to it and
  *     plays it on, and that shot comes down on the green
- *   - on an ace, a ball in the air off the tee goes on into the cup; one
- *     from the fairway comes down a putt short, for him to putt (it went in,
- *     and he walked up to a holed ball with no putt: the user saw it)
+ *   - on an ace, a ball in the air goes on into the cup, off the tee or
+ *     not (he stays where he is for an ace: the user asked)
  *   - with yardage still to go neither happens: a ball lands where it lands
  */
 'use strict';
@@ -44,7 +43,7 @@ module.exports = {
         o.chip = Scene.balls.length ? +(Scene.balls[0].d0 + Scene.balls[0].dist).toFixed(2) : null;
         if (!o.swung || o.passed || !(o.stopAt > 25) || Math.abs(o.chip - putSpot) > 0.05)
           f('with his ball lying short he ' + (o.swung ? 'swung' : 'did not swing') + ' at ' + o.stopAt + (o.passed ? ', walking past it,' : '') + ' and it came down at ' + o.chip + ' (the green at ' + putSpot.toFixed(2) + ')');
-        // ---- an ace in the air off the tee goes on into the cup; from the fairway, a putt short ----
+        // ---- an ace in the air goes on into the cup, off the tee or a second shot ----
         fresh(); S.doneT = S.parTime * 0.05; Scene.camD = 0; Scene.walkTo = 0;
         Scene.balls.push({ d0: 0, dist: 12, t: 0.2, dur: 0.6, el: null, crit: false, seed: 1, lat0: 0.42, lat: 0, cup: 0, tee: 1 });
         S.yards = 0; Scene.drawBalls(0); o.ace = [+(Scene.balls[0].d0 + Scene.balls[0].dist).toFixed(2), Scene.balls[0].cup].join('/');
@@ -52,7 +51,7 @@ module.exports = {
         fresh(); S.doneT = S.parTime * 0.05;
         Scene.balls.push({ d0: 20, dist: 12, t: 0.2, dur: 0.6, el: null, crit: false, seed: 1, lat0: 0.42, lat: 0, cup: 0, tee: 0 });
         S.yards = 0; Scene.drawBalls(0); o.ace2 = [+(Scene.balls[0].d0 + Scene.balls[0].dist).toFixed(2), Scene.balls[0].cup].join('/');
-        if (Math.abs(+o.ace2.split('/')[0] - putSpot) > 0.05 || !o.ace2.endsWith('/0')) f('an ace in the air from the fairway came down at ' + o.ace2 + ' (want a putt short, ' + putSpot.toFixed(2) + ')');
+        if (o.ace2 !== LEN + '/1') f('an ace in the air, a second shot, came down at ' + o.ace2 + ' (want the cup)');
         // ---- a ball lying just short of the putting spot, yardage to go: the
         // next shot stays short of it (the least carry took it past, nearer
         // the cup than he putts from) ----
@@ -74,6 +73,6 @@ module.exports = {
       return o;
     });
     if (r.fails.length) throw new Error(r.fails.join('; '));
-    return ['a ball in the air as the hole was won carries on to ' + r.air + ' without a jump; one lying short is walked to (' + r.stopAt + ') and played on to ' + r.chip + '; an ace off the tee goes in, one from the fairway comes down a putt short; with yardage to go, as before'];
+    return ['a ball in the air as the hole was won carries on to ' + r.air + ' without a jump; one lying short is walked to (' + r.stopAt + ') and played on to ' + r.chip + '; an ace in the air goes in, a first shot or a second; with yardage to go, as before'];
   }
 };

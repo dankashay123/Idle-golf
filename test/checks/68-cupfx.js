@@ -11,7 +11,7 @@
  *   - cut at the ground's line: nothing under it at its own distance (what
  *     lies flat in front of the cup is nearer than the pin)
  *   - the hole holds for the whole moment with these balls (the next hole
- *     came 0.3s after the drop on a fast bag), and no longer with others
+ *     came 0.3s after the drop on a fast bag), and no longer than any hole
  *   - none of it calls Math.random
  */
 'use strict';
@@ -86,8 +86,11 @@ module.exports = {
         {
           const hold = (id, age) => { S.trail = id; QUIET = false; Scene.hole = S.hole; Scene.isle = null; Scene.camD = LEN; Scene.t = 50;
             Scene.upT = 48; Scene.cupT = 50 - age; Scene.drawnAt = performance.now(); const w = Scene.holeWait(); QUIET = true; return w; };
-          if (!hold('godlight', 0.45) || hold('godlight', CUP_FX_DUR + 0.01)) f('with Godlight the hole does not hold for the moment in the cup, or holds on after it');
-          if (hold('classic', 0.35)) f('with a plain ball the hole holds longer than 0.3s after the drop');
+          // (every ball now holds CUP_HOLD, for the score to be read; the
+          // moment fits inside it)
+          if (!(CUP_HOLD >= CUP_FX_DUR)) f('the hold after the drop, ' + CUP_HOLD + 's, is shorter than the moment in the cup');
+          if (!hold('godlight', CUP_FX_DUR - 0.05) || hold('godlight', CUP_HOLD + 0.01)) f('with Godlight the hole does not hold for the moment in the cup, or holds on after it');
+          if (hold('classic', CUP_HOLD + 0.01)) f('with a plain ball the hole holds longer than ' + CUP_HOLD + 's after the drop');
         }
         // the Twilight Putt (the user asked): a putt that drops has the moment
         // too, with a dearest ball; a plain one draws nothing

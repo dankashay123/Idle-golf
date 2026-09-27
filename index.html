@@ -12153,6 +12153,9 @@ function drawLyingBall(c, cx, cy, r, t){
 // cup's place, its size, the pin's height, how far through (0 to 1) and the
 // clock. Fading is done by dropping pixels, never by alpha over the grass.
 const CUP_FX_DUR = 0.55;
+// how long a watched hole holds once its ball is in the cup (the score shows
+// that long, and the dearest balls' moment plays out whole), and on an ace
+const CUP_HOLD = 0.6, ACE_HOLD = 1.0;
 const CUP_FX = {
   godlight(c, x, y, cr, h, q, t){
     const R = h * 0.75, k = Math.max(1, Math.round(h / 16));
@@ -14310,6 +14313,9 @@ const Scene = {
   newHole(h, tier){
     this.gGen = (this.gGen || 0) + 1;
     this.hole = h; this.tier = tier;
+    // the last hole's score is never carried on to this one (the user saw an
+    // Albatross still up on the next tee)
+    this.banner = null;
     const rnd = seeded(h*7919 + tier*104729);
     this.seed = rnd() * 1000;
     this.roll = 1;
@@ -14719,6 +14725,8 @@ const Scene = {
     // the field or the saver runs step after step undrawn, and still lets
     // it go.)
     if((this.stepN || 0) - (this.drawnN || 0) > 3) return false;
+    // an ace: from the tee, the ball in the cup and a second on its ACE
+    if(S.yards <= 0 && this.aceHold()) return !this.cupT || this.t - this.cupT < ACE_HOLD;
     // (still crossing counts: the last hundredth of a step before the far
     // side read as neither across nor on the way, and let the hole go)
     if(I && (this.crossing || this.camD < I.land - 0.05)) return true;
@@ -14727,7 +14735,9 @@ const Scene = {
     // (the dearest balls' own moment in the cup plays out whole: the wait is
     // paid for, as all of it is)
     if(!this.cupT) return true;
-    return this.t - Math.max(this.upT, this.cupT) < (CUP_FX[trailNow().fx] ? CUP_FX_DUR : 0.3);
+    // (long enough for the score over the field to be read: it is gone
+    // before the next hole, never carried on to it)
+    return this.t - Math.max(this.upT, this.cupT) < CUP_HOLD;
   },
   // The putt out (the user asked): once the hole's ball is down he walks up
   // onto the green, addresses the ball lying a putt short of the cup, and
@@ -14773,6 +14783,18 @@ const Scene = {
   },
   // the hole won in an ace (its ball goes in off the shot, no putt)
   aceNow(){ return scoreFor((S.doneT != null ? S.doneT : Math.max(S.elapsed, S.walkMin || B.WALK_MIN)) / S.parTime).d <= -4; },
+  // An ace, or a hole on its way to one at the pace it is being played: he
+  // stays on the tee (the user: "there's no point in the golfer running to
+  // the green to putt it on an Ace"), the ball goes in off the shot, and the
+  // hole holds a second on its ACE, signature holes too. (A hole merely
+  // young enough to be one held a normal bag on the tee after its drive.)
+  aceHold(D){
+    if(S.dgnRun || this.hole !== S.hole || !(S.yardsMax > 0)) return false;
+    if(S.yards <= 0) return this.aceNow();
+    if(!D || !(D.dps > 0)) return false;
+    const at = Math.max(S.elapsed + S.yards / D.dps, S.walkMin || B.WALK_MIN);
+    return at / S.parTime <= B.SCORE[0].r * 1.2;
+  },
   launch(){
     const p = this.pendingBall || { crit:false, el:null, dmg:0 };
     this.pendingBall = null;
@@ -14794,7 +14816,7 @@ const Scene = {
     const tee = !S.dgnRun && !this.shotN;
     if(!S.dgnRun) this.shotN = (this.shotN || 0) + 1;
     const last = !S.dgnRun && S.yardsMax > 0 && S.yards <= 0 && this.hole === S.hole;
-    const ace = last && tee && this.aceNow();
+    const ace = last && this.aceNow();
     // (and no ball comes to rest nearer the cup than that: the last one he
     // sees come down is not always the one that finished the hole)
     const putSpot = LEN - B_GREEN_STAND - 0.4;
@@ -14845,6 +14867,28 @@ const Scene = {
   spark(el){},
   burst(id){},
   cast(g){ this.casts.push({ t:0, g }); if(this.casts.length > 4) this.casts.shift(); },
+  // ACE's burst: a quick flash of rays and sparks out from round the word,
+  // gone in under half a second (effects stay short and close)
+  aceBurst(c, x, y, w, h, t){
+    const D = 0.45; if(t >= D) return;
+    const q = t / D, e = 1 - (1 - q) * (1 - q), px = Math.max(1, Math.round(TSC)), th = 2 * px;
+    const rx = w / 2 + 3 * px, ry = h / 2 + 3 * px, R = (8 + 18 * e) * px;
+    const cols = [PX.myth, PX.brass, PX.bone];
+    for(let i = 0; i < 16; i++){
+      const a = i / 16 * Math.PI * 2 + 0.2, ca = Math.cos(a), sa = Math.sin(a);
+      const x0 = x + ca * rx, y0 = y + sa * ry, long = i % 2 ? 0.55 : 1;
+      // a ray: its root fades first, its tip runs out
+      const r0 = R * long * Math.max(0, q * 1.6 - 0.5), r1 = R * long;
+      if(r1 - r0 >= 1) pxLine(c, x0 + ca * r0, y0 + sa * r0, x0 + ca * r1, y0 + sa * r1, cols[i % 3], i % 2 ? px : th);
+      // and a spark beyond it, a little cross
+      if(i % 2 === 0 && q > 0.2){ const s = r1 + 4 * px, sx = Math.round(x0 + ca * s), sy = Math.round(y0 + sa * s);
+        c.fillStyle = cols[(i / 2 + 1) % 3];
+        c.fillRect(sx - px, sy - px * 0.5 | 0, px * 3, px); c.fillRect(sx - px * 0.5 | 0, sy - px, px, px * 3); }
+    }
+    // a flash of the word's box, first frames only
+    if(q < 0.3){ c.globalAlpha = 0.35 * (1 - q / 0.3); c.fillStyle = PX.bone;
+      c.fillRect(Math.round(x - rx), Math.round(y - ry), Math.round(rx * 2), Math.round(ry * 2)); c.globalAlpha = 1; }
+  },
   holed(sc){
     this.banner = { t:0, n:sc.n, d:sc.d, id: (this._banN = (this._banN || 0) + 1) };
     // and the fairy's say on it: pleased with a birdie or better, glum at a
@@ -17756,8 +17800,8 @@ Object.assign(Scene, {
       // at and walk on from (the user saw that). Its height stays its own.
       if(!b.cup && !b.fin && !S.dgnRun && S.yardsMax > 0 && S.yards <= 0 && this.hole === S.hole){
         b.fin = 1;
-        // (an ace off the tee goes on into the cup)
-        const ace = b.tee && this.aceNow(), L = ace ? LEN : LEN - B_GREEN_STAND - 0.4, P = b.d0 + b.dist * Math.min(u, 1);
+        // (an ace goes on into the cup)
+        const ace = this.aceNow(), L = ace ? LEN : LEN - B_GREEN_STAND - 0.4, P = b.d0 + b.dist * Math.min(u, 1);
         if(b.d0 + b.dist < L - 0.3 && u < 0.8){ b.lift0 = b.dist; b.dist = (L - P) / (1 - u); b.d0 = L - b.dist; if(ace){ b.cup = 1; b.lat = PIN_X; } }
       }
       if(u >= 1){
@@ -17887,7 +17931,9 @@ Object.assign(Scene, {
         else{
           let sc = 3*TSC;
           while(sc > 1 && textW(b.n, sc) > VW - 10) sc--;
-          drawTextS(c, b.n, CX, HORIZON - 6 - sc*4 - Math.round(b.t*6), col, sc, 'c');
+          const ty = HORIZON - 6 - sc*4 - Math.round(b.t*6);
+          if(b.d <= -4) this.aceBurst(c, CX, ty + Math.round(FH * sc / 2), textW(b.n, sc), FH * sc, b.t);
+          drawTextS(c, b.n, CX, ty, col, sc, 'c');
         }
       }
     }
@@ -18149,7 +18195,9 @@ Object.assign(Scene, {
       const up = S.yards <= 0 && this.hole === S.hole;
       // (but to his ball first if it lies short of the green: he plays it on)
       const shortBall = up && this.restBall && !this.balls.length && this.restBall.d < LEN - B_GREEN_STAND - 0.9;
-      const goal = up ? (shortBall ? this.restBall.d : LEN - B_GREEN_STAND) : Math.min(at, this.walkTo === undefined ? at : this.walkTo);
+      const aceH = this.aceHold(D);
+      const goal = aceH ? this.camD
+                 : up ? (shortBall ? this.restBall.d : LEN - B_GREEN_STAND) : Math.min(at, this.walkTo === undefined ? at : this.walkTo);
       const I = this.isle;
       // (at a railway, not while a train is coming or going by)
       const railWait = !!(I && I.rail && !this.crossing && this.railHold());
@@ -18161,7 +18209,7 @@ Object.assign(Scene, {
         if(swingPh >= 0.85) this.camD += Math.max(0, goal - this.camD) * Math.min(1, dt * (up ? 6 : 4.5));
         // (not on an island: the hole waits for him there, and carried on
         // mid-swing he slid off the tee to the water's edge)
-        else if(!I && at - this.camD > LEN * 0.4) this.camD += (at - this.camD) * Math.min(1, dt*4.5);
+        else if(!I && !aceH && at - this.camD > LEN * 0.4) this.camD += (at - this.camD) * Math.min(1, dt*4.5);
         // he walks as far as the bank and takes off from there
         if(I && cam0 < I.bank && this.camD > I.bank) this.camD = I.bank;
         // and at a railway he stays on his side of the line while a train
@@ -18179,6 +18227,10 @@ Object.assign(Scene, {
       if(up && this.upT && this.restBall && this.restBall.d > this.camD) this.restBall = null;
       if(up && !this.putt && !this.cupT && this.upT && this.swingT === 0 && !this.balls.length && !this.restBall)
         this.putt = { t0: this.t, d0: this.camD };
+      // an ace with no ball in the air to go in (the last of it was a burn
+      // or a skill, not a swing): in, there and then
+      if(up && aceH && !this.cupT && !this.balls.length && !this.pendingBall && this.swingT === 0) this.cupT = this.t;
+      if(up && aceH && this.cupT) this.restBall = null;
       if(this.putt && !this.cupT){
         const T = this.t - this.putt.t0;
         if(!this.putt.hit && T >= PUTT_HIT){ this.putt.hit = 1; Sfx.play('putt'); }
@@ -18760,7 +18812,7 @@ function renderReadout(D){
     topR = holeTime().toFixed(1) + ' / ' + Math.round(S.parTime) + 's';
     const ly = shownYards();
     big = ly <= 0 ? '\u2014' : fmt(ly);
-    unit = ly <= 0 ? 'walking in' : 'yds';
+    unit = ly <= 0 ? (Scene.aceHold() ? 'in the cup' : 'walking in') : 'yds';
     frac = clamp(ly/S.yardsMax, 0, 1);
     tag = sc.n;
     tagCol = sc.d <= -3 ? 'var(--myth)' : sc.d <= -2 ? 'var(--brass)' : sc.d === -1 ? 'var(--aurora)'

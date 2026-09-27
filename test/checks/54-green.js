@@ -7,12 +7,15 @@
  *
  *   - played in frames on a home course (its signature holes and their
  *     crossings included), a normal bag and a strong one: every hole moves
- *     on with him up on the green, within 1.5 of the pin; the wait after the
+ *     on with him up on the green, within 1.5 of the pin, but an ace: he
+ *     stays on the tee, the ball goes in, and the hole holds a second on
+ *     its ACE (the user asked, signature holes too); the wait after the
  *     ball is down is short, and never runs to the cap
  *   - the score is the ball's: each hole is carded from when its ball was
  *     down, not from when it moved on
  *   - the cup's sound, the score's banner and the caddie's cheer come as the
- *     ball drops, once, not when the hole moves on
+ *     ball drops, once, not when the hole moves on; and the banner is gone
+ *     before the next hole (the user saw an Albatross on the next tee)
  *   - nothing is played on a hole that is waiting: no swing, no perk
  *   - no wait where nobody sees it: in a catch-up, or behind the saver (the
  *     course not being drawn), the hole moves on as its ball drops
@@ -32,7 +35,7 @@ module.exports = {
       window.__RealDate = RD;
       window.Date = class extends RD { constructor(...a) { if (a.length) super(...a); else super(at + RD.now() - t0); } static now() { return at + RD.now() - t0; } }; });
     const r = await page.evaluate(() => {
-      const o = {}, SNAP = JSON.stringify(S), mr = Math.random, raf = window.requestAnimationFrame;
+      const o = { aceHold: ACE_HOLD }, SNAP = JSON.stringify(S), mr = Math.random, raf = window.requestAnimationFrame;
       const pn = performance.now.bind(performance);
       const keep = { fh: window.finishHole, os: window.oneSwing, fs: window.fireSkill, holed: Scene.holed, play: Sfx.play };
       try {
@@ -42,12 +45,13 @@ module.exports = {
         // played in frames, the clock driven here; every hole's end noted
         const play = (secs, watch, stop) => {
           const H = [];
-          let rec = null, waitingPlays = 0, said = [], nearCup = 0;
+          let rec = null, waitingPlays = 0, said = [], nearCup = 0, banners = 0, cam0 = Scene.camD, camMax = Scene.camD, at = S.hole;
           window.finishHole = function (D) {
             H.push({ h: S.hole, hr: holeInRound(S.hole), par: S.parTime, short: LEN - Scene.camD, done: S.doneT, el: S.elapsed, wait: S.elapsed - S.doneT, cap: S.elapsed - S.doneT >= B.ISLE_HOLD - 0.02,
                      sig: sigKind(S.hole) || '', said: said.filter(x => x.h === S.hole && B.SCORE.some(z => z.n === x.n)),
                      putt: !!(Scene.putt && Scene.putt.hit), shots: Scene.shotN || 0, tocks: tocks.filter(x => x === S.hole).length, cup: !!Scene.cupT,
-                     cups: cups.filter(x => x.h === S.hole), puttDur: Scene.putt && Scene.cupT ? Scene.cupT - Scene.putt.t0 : null });
+                     cups: cups.filter(x => x.h === S.hole), puttDur: Scene.putt && Scene.cupT ? Scene.cupT - Scene.putt.t0 : null,
+                     cam0, walked: camMax - cam0, afterCup: Scene.cupT ? Scene.t - Scene.cupT : null });
             const res = keep.fh.apply(this, arguments);
             const last = H[H.length - 1];
             last.want = scoreFor(last.done / last.par).d;
@@ -72,13 +76,16 @@ module.exports = {
             fake += dt * 1000;
             const D = derive();
             step(dt, D);
+            // a new hole: never with the last one's score still up
+            if (S.hole !== at) { at = S.hole; if (Scene.banner) banners++; cam0 = camMax = Scene.camD; }
             if (watch) Scene.draw(dt, D);
+            if (S.hole === at) camMax = Math.max(camMax, Scene.camD);
             // no ball ever lies nearer the cup than where he putts from
             if (watch && Scene.restBall && Scene.restBall.d > LEN - B_GREEN_STAND - 0.4 + 0.01) nearCup++;
             if (stop && H.length >= stop) break;
           }
           window.finishHole = keep.fh; window.oneSwing = keep.os; window.fireSkill = keep.fs; Scene.holed = keep.holed; Sfx.play = keep.play;
-          return { H, waitingPlays, nearCup, stand: B_GREEN_STAND, up: B_GREEN_UP, roll: PUTT_HIT + PUTT_ROLL };
+          return { H, waitingPlays, nearCup, banners, stand: B_GREEN_STAND, up: B_GREEN_UP, roll: PUTT_HIT + PUTT_ROLL };
         };
 
         // ---- a normal bag on a home course, watched ----
@@ -123,7 +130,7 @@ module.exports = {
           S.parTime = 60; S.elapsed = 0.2; S.yards = 1e-9; S.swingT = 0.999;
           o.ace = play(12, true, 1);
         }
-        // ---- an ace won from the fairway, his second shot: putted out ----
+        // ---- an ace won by his second shot, from where he stands: in off it ----
         {
           startHole(); for (let k = 0; k < 30; k++) { fake += 1000 / 60; Scene.draw(1 / 60, derive()); }
           Scene.shotN = 1; Scene.camD = 20; Scene.walkTo = 20; Scene.restBall = null; Scene.balls.length = 0;
@@ -187,12 +194,21 @@ module.exports = {
     });
     await page.setViewportSize({ width: 400, height: 860 });
     const f = m => { throw new Error(m); };
+    const ACE_HOLD_WANT = 1.0;
+    if (r.aceHold !== ACE_HOLD_WANT) f('an ace holds ' + r.aceHold + 's, not a second');
     const avg = a => a.reduce((s, x) => s + x, 0) / Math.max(1, a.length);
     for (const k of ['normal', 'strong']) {
       const H = r[k].H;
       if (H.length < (k === 'normal' ? 10 : 12)) f('only ' + H.length + ' holes were played with a ' + k + ' bag');
       // where he stands to putt: a little short of the cup, up on the green
-      const far = H.filter(h => h.short > r[k].up + 1e-6 || h.short < r[k].stand - 0.3);
+      // (an ace: he never leaves where he stood, the tee, and the hole holds
+      // a second on its ACE; the user: "no point in the golfer running to
+      // the green to putt it on an Ace")
+      const far = H.filter(h => h.want > -4 && (h.short > r[k].up + 1e-6 || h.short < r[k].stand - 0.3));
+      const aceOff = H.filter(h => h.want <= -4 && (h.walked > 0.05 || h.afterCup === null || h.afterCup < ACE_HOLD_WANT - 0.05 || h.afterCup > ACE_HOLD_WANT + 0.1));
+      if (aceOff.length) f('with a ' + k + ' bag ' + aceOff.length + ' aces were not held on the tee for a second: '
+        + aceOff.slice(0, 3).map(h => 'hole ' + h.hr + (h.sig ? ' (' + h.sig + ')' : '') + ' walked ' + h.walked.toFixed(2) + ', held ' + (h.afterCup === null ? 'never in' : h.afterCup.toFixed(2) + 's')).join('; '));
+      if (r[k].banners) f('with a ' + k + ' bag ' + r[k].banners + ' holes started with the last one\'s score still up');
       if (far.length) f('with a ' + k + ' bag ' + far.length + ' of ' + H.length + ' holes moved on with him short of the green: '
         + far.slice(0, 3).map(h => 'hole ' + h.hr + (h.sig ? ' (' + h.sig + ')' : '') + ' ' + h.short.toFixed(1) + ' short').join('; '));
       if (H.some(h => h.cap)) f('with a ' + k + ' bag a hole ran to the wait\'s cap: ' + H.filter(h => h.cap).map(h => 'hole ' + h.hr + ' ' + h.sig + ' waited ' + h.wait.toFixed(2) + 's, putt ' + h.putt + ', short ' + h.short.toFixed(1)).join('; '));
@@ -212,12 +228,10 @@ module.exports = {
       const late = H.filter(h => h.said.length !== 1 || !h.said[0].down || h.said[0].cupAgo === null
         || (h.putt ? h.said[0].cupAgo > 0.05 || !h.said[0].up : h.said[0].cupAgo > 0.05 && Math.abs(h.said[0].el - h.said[0].done) > 0.05)
         || h.cups.length !== 1 || h.cups[0].ago === null || h.cups[0].ago > 0.05);
-      // he putted out every hole but a hole in one, whose tee shot went in;
-      // one tock of the putter a putt. An ace in more than one shot (a
-      // strong bag clears a hole fast) is putted out too: its last ball went
-      // in from the fairway, and he walked up to a holed ball with no putt
-      // (the user saw it)
-      const noPutt = H.filter(h => !h.cup || (h.want <= -4 && h.shots === 1 ? h.putt : !h.putt) || h.tocks !== (h.putt ? 1 : 0));
+      // he putted out every hole but an ace, whose shot went in (in one shot
+      // or more: he stays on the tee till the hole is past being one); one
+      // tock of the putter a putt
+      const noPutt = H.filter(h => !h.cup || (h.want <= -4 ? h.putt : !h.putt) || h.tocks !== (h.putt ? 1 : 0));
       if (noPutt.length) f('with a ' + k + ' bag ' + noPutt.length + ' of ' + H.length + ' holes were not putted out as they should be: '
         + noPutt.slice(0, 3).map(h => 'hole ' + h.hr + ' (' + h.want + '): putt ' + h.putt + ', in the cup ' + h.cup + ', tocks ' + h.tocks).join('; '));
       if (late.length) f('with a ' + k + ' bag the score\'s banner came ' + (late[0].said.length !== 1 ? late[0].said.length + ' times' : 'late') + ' on ' + late.length + ' holes');
@@ -233,13 +247,14 @@ module.exports = {
     if (!A || A.want > -4) f('the hole in one was not played as one: ' + JSON.stringify(A && { want: A.want, carded: A.carded }));
     else if (A.putt || !A.cup || A.said.length !== 1 || A.cups.length !== 1 || A.carded !== A.want)
       f('a hole in one: putt ' + A.putt + ', in the cup ' + A.cup + ', banners ' + A.said.length + ', cup sounds ' + A.cups.length + ', carded ' + A.carded);
-    // an ace won by his second shot, from the fairway: it lands a putt short
-    // and he putts it in
+    if (A && A.want <= -4 && (A.walked > 0.05 || !(A.afterCup >= ACE_HOLD_WANT - 0.05))) f('a hole in one: walked ' + A.walked.toFixed(2) + ', held ' + A.afterCup + 's after the drop');
+    // an ace won by his second shot: in off it, from where he stood, no walk
     const A2 = r.ace2.H[0];
-    if (!A2 || A2.want > -4 || A2.shots < 2) f('the ace from the fairway was not played as one: ' + JSON.stringify(A2 && { want: A2.want, shots: A2.shots }));
-    else if (!A2.putt || !A2.cup || A2.tocks !== 1 || A2.said.length !== 1 || A2.carded !== A2.want)
-      f('an ace from the fairway: putt ' + A2.putt + ', in the cup ' + A2.cup + ', tocks ' + A2.tocks + ', banners ' + A2.said.length + ', carded ' + A2.carded);
-    const acesPutted = r.strong.H.filter(h => h.want <= -4 && h.shots > 1 && h.putt).length + (A2 && A2.putt ? 1 : 0);
+    if (!A2 || A2.want > -4 || A2.shots < 2) f('the ace in two shots was not played as one: ' + JSON.stringify(A2 && { want: A2.want, shots: A2.shots }));
+    else if (A2.putt || !A2.cup || A2.tocks || A2.walked > 0.05 || A2.said.length !== 1 || A2.carded !== A2.want)
+      f('an ace in two shots: putt ' + A2.putt + ', in the cup ' + A2.cup + ', walked ' + A2.walked.toFixed(2) + ', tocks ' + A2.tocks + ', banners ' + A2.said.length + ', carded ' + A2.carded);
+    const acesPutted = r.strong.H.filter(h => h.want <= -4 && h.putt).length;
+    if (acesPutted) f(acesPutted + ' aces putted out');
     const sigs = [...new Set(r.normal.H.map(h => h.sig).filter(Boolean))];
     if (sigs.length < 2) f('the normal bag met only ' + (sigs.join(', ') || 'no') + ' signature holes');
     for (const k of ['quiet', 'saver']) {
@@ -255,8 +270,7 @@ module.exports = {
     const pw = H => avg(H.filter(h => !h.sig).map(h => h.wait)).toFixed(2);
     return ['a normal bag: ' + N.length + ' holes (' + sigs.join(', ') + ' among them), each moved on with him up by the pin; the wait after the ball was down '
         + pw(N) + 's on a plain hole (at most ' + Math.max(...N.map(h => h.wait)).toFixed(2) + 's, a train going by)',
-      'a strong bag: ' + St.length + ' holes, each walked from the tee to the pin; wait ' + pw(St) + 's on a plain hole',
-      'putted out every hole (' + r.normal.H.filter(h => h.putt).length + ' of ' + N.length + '; a hole in one went straight in, as did '
-        + St.filter(h => h.want <= -4 && h.shots === 1).length + ' of the strong bag\'s; ' + 'aces in more than one shot putted out: ' + acesPutted + '), the cup\'s sound as the ball drops, the banner as the putt drops, nothing played while it waits, no wait unwatched; a wait of half the hole pays 1.5x, experience and gear luck alike'];
+      'a strong bag: ' + St.length + ' holes (' + St.filter(h => h.want <= -4).length + ' aces, each played from the tee, into the cup and held a second); wait ' + pw(St) + 's on a plain hole',
+      'putted out every hole but an ace (' + r.normal.H.filter(h => h.putt).length + ' of ' + N.length + '; a hole in one and an ace in two shots went straight in, no walk), no hole started with the last one\'s score up; the cup\'s sound as the ball drops, the banner as the putt drops, nothing played while it waits, no wait unwatched; a wait of half the hole pays 1.5x, experience and gear luck alike'];
   }
 };
