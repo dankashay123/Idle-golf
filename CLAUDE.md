@@ -5,7 +5,10 @@ the styles and the script. There is no build step — open the file and it runs.
 
 **Starting a new session? Read `HANDOFF.md` first.** It has where things
 stand, **a request waiting to be picked up** (§1), a map of the file, what the
-recent features do and ideas to offer next.
+recent features do and ideas to offer next. The waiting request: **cup
+moments for more balls** (a small one each for the Rubber Duck, Hearts,
+Bubbles, Confetti, Comet and Black Hole; the Jade and Hellfire Wakes
+playing their set's). Start on it without asking; the details are there.
 Update it only when the user asks (they said so: "You don't need to update
 the handoff notes until I tell you to").
 

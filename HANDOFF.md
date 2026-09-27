@@ -9,9 +9,34 @@ check is for.
 ## 1. Where things stand
 
 - Everything is committed and pushed to `main` (mirrored on the session
-  branch `claude/notes-review-r3a9e1`). Nothing is half-built and **no
-  request is waiting**: the user's last message was all done (§5, the
-  first sections).
+  branch `claude/notes-review-r3a9e1`). Nothing is half-built.
+- **A request is waiting** (the user chose it from the menu, for a new
+  session to pick up): **cup moments for more balls**, two parts:
+  1. **A small moment in the cup for the other balls**: Rubber Duck,
+     Hearts, Bubbles, Confetti, Comet and Black Hole (`fx` `duck`,
+     `hearts`, `bubbles`, `confetti`, `comet`, `blackhole`). Only
+     Godlight, Demon Eye, the Ascended Orb and the Singularity have one
+     now. Each in its ball's own look (a duck bobbing up out of the cup,
+     hearts popping, a burst of bubbles, confetti, a spray of sparks, a
+     swirl sucked in) and **smaller than the dear balls'**: they cost
+     400 to 1300. The plain wakes (Gold, Aurora, Ember, Mythic, Rainbow)
+     were not asked for; leave them, or ask.
+  2. **The Jade and Hellfire Wakes play their set's moment**, as the two
+     Mythic wakes do: `CUP_FX.tSeraph = CUP_FX.godlight` and
+     `CUP_FX.tHellfire = CUP_FX.demoneye`, beside the two lines for
+     `tHorizon` and `tAscension`.
+  How it works: `CUP_FX[fx](c, x, y, cr, h, q, t)`, played by
+  `Scene.drawCupFx` for `CUP_FX_DUR` (0.55s) after the drop (the ball's
+  own, or else its wake's), before the pin, clipped at the ground's line;
+  the hole holds `CUP_HOLD` (0.6s) so a moment plays out whole (check a
+  new one does not need longer). Rules that apply: solid pixels, fading by
+  dropping pixels never alpha, short and close (inside a pin-sized box),
+  **no sound**. `cupfx` (test/checks/68-cupfx.js) currently fails if any
+  other ball draws a pixel: change it to require a moment for each of the
+  new balls and both wakes, still none for the plain wakes, all inside
+  the box and gone after `CUP_FX_DUR`; negative test it. Check the
+  Twilight Putt too (it calls `drawCupFx(true)`). Screenshot each at
+  phone widths, zoomed.
 - `node test/run.js` has **84 checks** (about twelve minutes; the newest
   is `farflags`; `legends` was rewritten for the new Divine). Frost follows the
   real hour: after touching weather or colours, run it with `HOUR_FORCE`
@@ -2435,13 +2460,11 @@ flourishes, a caddie trick for the Divine or Demonic (they have one).
 Don't offer anything that adds to the Tour tab, or any new sound that is
 not ambience.
 
-The menu to offer:
+The menu to offer (after the waiting request in §1):
 1. **Ask how the session's changes sit on the phone**: the reworked
    Divine, the woods as trees, the new stance, the reworked Demonic.
    Tune from their screenshots.
-2. **The lesser skins' cup moments**: only the dearest balls and the two
-   Mythic wakes have one; the other balls could get a small one.
-3. **The Jade and Hellfire Wakes' cup moments**: they could play their
-   set's, as the two Mythic wakes do (one line each in `CUP_FX`).
+2. **Cup moments for the plain wakes** (Gold, Aurora, Ember, Mythic,
+   Rainbow), if the ones for the balls land well.
 
 Recommend 1: much changed on screen without their eyes on it.
