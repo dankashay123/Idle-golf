@@ -7567,8 +7567,9 @@ function renderShop(){
         '<button data-sub="' + id + '"' + (shopSub === id ? ' class="on"' : '') + '>' + t
         + '</button>').join('') + '</div>'
     + '<div class="sovline"><span>You hold</span><b>' + sovFmt(S.sov) + '\u00a0' + B.SOV + '</b></div>'
-    + '<div class="freebar"><b>Nothing here is charged.</b> Prices are for show \u2014 '
-    + 'every pack is free.</div>';
+    // (once, where the money prices are: on every tab it was two lines of
+    // pink over each rack)
+    + (shopSub === 'offers' ? '<div class="freebar"><b>Nothing here is charged:</b> every pack is free.</div>' : '');
 
   if(shopSub === 'bags'){
     h += '<div class="shopnote">' + nb('Clubs fitted ' + B.BAG_ILVL
@@ -19991,7 +19992,8 @@ function refreshUpg(){
     ? (cardUnlocked(S.tier + 1)
         ? 'Your bag outdrives this card \u00b7 <b>climb</b> on the Tour tab'
         : 'Your bag outdrives this card \u00b7 win its <b>cup</b> to move up')
-    : 'Playing the card as it lies';
+    : '';
+  if(note) note.hidden = !ahead;
 
   // The range used to carry a line of its own at the top naming the cheapest
   // rung in reach, and then each row said "unlocks when you have" its price.
@@ -20408,14 +20410,16 @@ function renderSkills(){
       + svgIcon(k.ic, 'kic') + '<div class="cd" style="height:' + (1-frac)*100 + '%"></div></div>'
       + '<div><div class="nm">' + k.n + '</div>'
       + '<div class="ds">' + nb(skillLabel(k, owned ? lv : 1)) + '</div>'
-      + '<div class="mt">' + (owned ? 'Lv <i>' + lv + '</i> \u00b7 ' + k.cd + 's cooldown'
-                                    : 'Not learned yet \u00b7 costs ' + k.cost + ' scrolls') + '</div></div>'
+      + (owned ? '<div class="mt">Lv <i>' + lv + '</i> \u00b7 ' + k.cd + 's cooldown</div>' : '') + '</div>'
       + '<div class="btnrow"></div>';
     const br = d.querySelector('.btnrow');
     if(!owned){
       const b = document.createElement('button');
       b.className = 'mini' + (S.scroll >= k.cost ? ' go' : ' dim');
-      b.textContent = 'Learn';
+      // (the cost on the button, in scrolls as the level buttons are: it was
+      // a line of its own, "Not learned yet \u00b7 costs 3 scrolls", every row)
+      b.textContent = 'Learn\u00a0\u00b7\u00a0' + k.cost;
+      b.setAttribute('aria-label', 'Learn ' + k.n + ' for ' + k.cost + ' scrolls');
       b.onclick = () => {
         if(S.scroll < k.cost){ toast('Not enough scrolls'); return; }
         S.scroll -= k.cost; S.skillLv[k.id] = 1; toast('Learned <b>' + k.n + '</b>'); renderSkills();
@@ -20506,8 +20510,7 @@ function renderDgn(){
       + '<span class="keys">' + keyHtml + '</span>'
       + '<button class="mini guide" aria-label="How ' + d.n + ' works">Guide</button></div>'
       + '<div class="dd">' + d.d + '</div>'
-      + '<div class="dm">Helped by <b style="color:var(--aurora)">' + d.st + '</b></div>'
-      + '<div class="dm">' + reads + '</div>'
+      + '<div class="dm">Helped by <b style="color:var(--aurora)">' + d.st + '</b> \u00b7 ' + reads + '</div>'
       // what one entry pays, in what the currency buys; the basis of the
       // projection is the odds line above it, so it is not said twice
       + '<div class="dm" style="color:var(--brass)">Pays ' + d.cn + ' \u00b7 '
@@ -21107,7 +21110,7 @@ function renderCadPerks(){
     if(locked && !on){
       btn.className = 'buy no';
       btn.children[0].textContent = own ? 'Wear' : B.SOV;
-      btn.children[1].textContent = own ? 'Free' : sovFmt(pk.cost);
+      btn.children[1].textContent = own ? 'Owned' : sovFmt(pk.cost);
       btn.onclick = () => toast('The <b>' + pk.n + '</b> needs a Mythic caddie');
     }else if(on){
       // worn, its button is the upgrade
@@ -21121,7 +21124,7 @@ function renderCadPerks(){
     }else{
       btn.className = 'buy' + (own || (S.sov || 0) >= pk.cost ? '' : ' no');
       btn.children[0].textContent = own ? 'Wear' : B.SOV;
-      btn.children[1].textContent = own ? 'Free' : sovFmt(pk.cost);
+      btn.children[1].textContent = own ? 'Owned' : sovFmt(pk.cost);
       btn.onclick = () => cperkPick(pk.id);
     }
     w.appendChild(d);
@@ -21662,9 +21665,8 @@ function careerStats(w, C){
         + '<b>' + m.n + '</b> \u00b7 ' + m.d
         + (on ? '' : ' \u00b7 <i>' + (m.at - n) + '\u00a0more</i>') + '</div></div>'
       : '';
-    d.innerHTML = '<div><div class="nm">' + svgIcon(s.ic, 'tic') + s.n + '</div>'
-      + '<div class="ds">' + nb(s.v) + ' each</div>'
-      + '<div class="mt">Placed <i>' + n + '</i></div>' + bar + '</div>'
+    d.innerHTML = '<div><div class="nm">' + svgIcon(s.ic, 'tic') + s.n + ' <span class="mt">\u00b7 <i>' + n + '</i>\u00a0placed</span></div>'
+      + '<div class="ds">' + nb(s.v) + ' each</div>' + bar + '</div>'
       + '<div class="btnrow"><button class="mini' + (S.statPts ? ' go' : ' dim') + '">+1</button>'
       + '<button class="mini' + (S.statPts >= 10 ? ' go' : ' dim') + '">+10</button></div>';
     const bs = d.querySelectorAll('button');
@@ -22149,10 +22151,9 @@ function settingsSheet(){
         '<div class="setbtns"><button class="mini' + (saverMins() ? ' go' : '') + '" onclick="saverCycle()">'
         + (saverMins() ? saverMins() + '\u00a0min' : 'Off') + '</button>'
         + '<button class="mini go" onclick="saverNow()">Start</button></div>')
-    + row('Back Up Your Save', 'A code you can keep, or load on another device',
-        '<button class="mini go" onclick="exportSheet()">Export</button>')
-    + row('Load a Save', 'Paste a code from Export',
-        '<button class="mini" onclick="importSheet()">Import</button>')
+    + row('Save Code', 'Keep it, or load it on another device',
+        '<div class="setbtns"><button class="mini go" onclick="exportSheet()">Export</button>'
+        + '<button class="mini" onclick="importSheet()">Import</button></div>')
     + (isIOS() && !isStandalone()
         ? row('Add to Home Screen', 'Safari clears a website’s save after 7 days away. '
             + 'From the Home Screen it never does: tap Share, then Add to Home Screen.', '')
