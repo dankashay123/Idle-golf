@@ -1,6 +1,6 @@
 # Handoff — Mythic Mulligan
 
-Last updated 2026-09-26 on `main`. Read this with
+Last updated 2026-09-27 on `main`. Read this with
 `CLAUDE.md`, which holds the standing rules. `test/README.md` says what each
 check is for.
 
@@ -9,50 +9,48 @@ check is for.
 ## 1. Where things stand
 
 - Everything is committed and pushed to `main` (mirrored on the session
-  branch `claude/notes-review-9kshah`). Nothing is half-built and **no
+  branch `claude/notes-review-r3a9e1`). Nothing is half-built and **no
   request is waiting**: the user's last message was all done (§5, the
   first sections).
-- `node test/run.js` passes all **80 checks** (about twelve minutes). Frost
-  follows the real hour: after touching weather or colours, run it with
-  `HOUR_FORCE` pinned to 8 and to 15 in a copy (`CLAUDE.md`).
+- `node test/run.js` passes all **81 checks** (about twelve minutes; the
+  new one is `bulk`). Frost follows the real hour: after touching weather
+  or colours, run it with `HOUR_FORCE` pinned to 8 and to 15 in a copy
+  (`CLAUDE.md`).
 - **Only update this file and `CLAUDE.md` when the user asks.**
-- Answered this session, in case it comes up again: **swing speed** still
-  matters fully (a hole's time is when the ball drops, and the walk is
-  paid in that time); **Fast Walker** only shortens the least time a hole
-  can take (0.9s), so it helps only a bag that clears a hole in under a
-  second (its words now say so; it was not reworked).
+- Answered, in case it comes up again: **swing speed** still matters fully
+  (a hole's time is when the ball drops, and the walk is paid in that
+  time); **Fast Walker** only shortens the least time a hole can take
+  (0.9s). **Every caddie look with an effect already has a trick of its
+  own** (16 of them, `FAIRY_MOVES`): the Divine soars, the Demonic blazes.
+  I offered "a trick for the Divine and Demonic caddies" by mistake; don't
+  offer it again.
 
 ### Recent work (sections in §5)
 
-- This session, newest first: **the putt no longer skipped** (a slow
-  frame on the phone ended the hole before he putted); the Vault never
-  carries him up the floor mid-swing; **The Void** made bulkier with void orbs,
-  and its caddie to match; the **railway rebuilt** (its rails stopped part
-  way on a wide screen; now a raised bed, sleepers and standing rails);
-  **the caddie's blessing in the caddie's own look** (all 15 looks with an
-  effect); **the shot that wins the hole comes down on the green**; a
-  **Full Set** reward for wearing a Mythic set whole; **umbrellas** in the
-  rain; **ambience** by the course (pines, the sea, a stream); **The Void**
-  (a dark cosmic set after the user's picture) **replaced the Spirit
-  Blossom**, which the user found "just a shirt basically".
-- Earlier this session: the course banner kept under the readout; the
-  gallery's cheer stops at the next hole; Twilight putts drop in the cup;
-  trails a pixel thinner; Dawn and Dusk brings night from 9pm to 5am; the
-  Island Green wager's lake; small wager calls; the gallery's jump; frost
-  on the new roofs; the Record in folds; wager guides, Leave and "Helped
-  by"; wagers from their own place; capitals on short lines; the ball on
-  the map; the nine's goal; the words in the readout; the grandstand, its
-  cheer and lamps; Better Season and Season Bests; crickets; a trick for
-  every caddie look; the clubhouse and the cup moments; birds; the Tour
-  tab in sub tabs; the upgrade result on the club's sheet.
+- This session, newest first: **every caddie broader**, the plain ones
+  too; **the cup moments in the Twilight Putt**; a shot short of the green
+  **never carries past the putting spot**; **everyone broader** (every
+  look built out in its own clothes, thicker arms); the **Sets rack** in
+  the Style shop and **one set order** on every rack; **every skin
+  bulkier**; **skin grounds and caddie blessings made prominent** (The
+  Void's pit, the beam); **The Void's own cup moment**; **an ace from the
+  fairway is putted out** (the user saw the putt skipped again); ambience
+  by the river, the moor, the dunes and the island lake; the **Tour
+  Card page trimmed**; **the Divine and Demonic count as Full Sets**, and
+  a full set **edges the score box** in its colour; **no line under the
+  icons**.
+- Last session: the putt no longer skipped on a slow frame; the Vault
+  never slides him mid-swing; The Void bulkier; the railway rebuilt; the
+  caddie's blessing in its look; the winning shot on the green; Full Set;
+  ambience; umbrellas; The Void replaced the Spirit Blossom.
 - **Turned down**: a station on the railway ("would take up too much
   time"); **a photo mode** and **trail flourishes**. Don't offer them again.
 - Older requests are in §6, one line each.
 - **Not yet heard back on** (ask one when it fits, never as a list): how
-  the bulkier Void looks on the phone; whether the Full Set should count
-  the Divine and Demonic too (only the two Mythic sets do); whether the second music track
-  and the town theme fit; the 2 min battery saver wait; the Mythic
-  Favour's price (600) and strength (three lifts of 20%).
+  the prominent grounds and the blessing beam look on the phone (the beam
+  covers him more for half a second as it comes down); everyone bulkier;
+  the Sets rack; whether the second music track and the town theme fit;
+  the 2 min battery saver wait.
 - The user usually ends a task by asking **"What's next?"**: a short plain
   menu with a recommendation (§8), then wait for the choice.
 
@@ -74,8 +72,10 @@ check is for.
   sounds except ambience"). The crickets and birdsong are ambience. The
   one crowd sound is the grandstand's soft cheer on an event's **last**
   putt ("fine since it's not every hole"); the old applause on every hole
-  stays gone. The Void has no sound of its own; the ambience (pines, the
-  sea, a stream) is the newest sound, quiet and now and then.
+  stays gone. The Void has no sound of its own. The ambience is by the
+  course, quiet and now and then: pines, the sea, a stream by the stones,
+  and (the newest) the river at Riverbend with a wader by day, wind over
+  the Moorland and over the Dunes, the lake lapping at an island green.
 - **The gallery's jump on an eagle or better** is silent, lasts 1.5s and
   stops when the next hole starts (it cheered on over the next tee).
 - **Dawn and Dusk** is off by default. On, it warms the sky by the
@@ -96,6 +96,19 @@ check is for.
   through the swing; spread from behind as he walks away. Wings are
   feathered or membraned, never a solid shape.
 - The word is **scrap**, not salvage; old legacy finds are **heirlooms**.
+- **Everyone is bulkier** (their words, over three asks: "make the skins
+  bulkier like the void skin"): every look and every caddie is built out
+  behind him in plate or in its own clothes, arms a pixel thicker. Keep
+  it on anything new (a new outfit gets it for free; a new effect skin
+  needs `bulkPlate` in its `back`, as the rest have).
+- **Effects are prominent, not faint**: the user found the grounds and the
+  blessing "very faint". Solid pixels, filled, doubled rings; The Void's
+  ground is a void open under him, dark, not a faint galaxy.
+- **The four sets keep one order** on every rack of the Style shop:
+  Ascended, The Void, Divine, Demonic (`SET_ORDER`). The Sets rack buys
+  and wears a set in one tap.
+- **An ace off the tee goes straight in; any other shot is putted out**
+  (the user saw the putt skipped twice: a slow frame, then a fairway ace).
 
 ### Sound and music
 
@@ -140,7 +153,7 @@ check is for.
 
 ## 3. The project
 
-- **The whole game is `index.html`** (about 20.9k lines, 2.5 MB with the
+- **The whole game is `index.html`** (about 21.1k lines, 2.5 MB with the
   sounds and the music): markup, CSS and one classic script. There is no
   build step.
 - Play it over http (`npm start`, then http://localhost:8080). Opening the
@@ -225,21 +238,26 @@ Line numbers are approximate and drift. Search for the name instead.
 | Developer menu (hold the course name still for 1.5s) | `const DEV = {`. `DEV.course(i)` pins any course to the next event (a major of the week is set up as the major). The read panel shows the audio state and the auto-climb judgement; rows for the major of the week, the season, the cabinet, sound and music, the fairy, caddie perks, the new honours, and a frame-time readout (`DEV_FPS`) |
 | Main loop | `step()` |
 | **The Void set** (outfit/caddie `cosmic`, shown as "The Void") | club `cosmic` (Eclipse Driver), trails `horizon` (`BALLFX.tHorizon`) and `singularity`; `STYLEFX.cosmic` (`cloak`, `bulk`, `hands`, `rocks`, `hood` and `faulds` in `body`, `crescent`, `orb`, `miniOrb` for the caddie, `eye`, `pull`, `glints`, `ground`, `wave`); the `body` layer (after him, before his arms: in `paintGolfer`, the walk, `paintHeli` and the caddie); `voidHood` (`HOOD_SIDE`, `HOOD_BACK`), `voidCloak` (its `_stars`), `voidCrescent`, `voidHand` (`VHAND_ROWS`), `voidGalaxy`, `voidHole`, `voidOrb`, `voidStar`, `voidRock` (`VROCKS`), `beltOf` (`BELT_ADDR`, `BELT_FIN`), `VOID_PAL`; patterns `cosmos` and `greave` (outfit field `pantPattern`); outfit fields `bulk`, `arm`, `arm2`; `CUP_FX.singularity`; its trick `collapse` (`caddieSwirl`'s `pal`); saves with the old Spirit Blossom moved over in `initState` |
-| **Full Set** | `MYTH_SETS`, `fullSet()`, `fullSetOf`, `S.fullSets` (repaired in `initState`), the toast in `styleBuy`, `.card.full`, the Record's Mythic Sets row |
+| **Full Set and Sets** | `FULL_SETS` (was `MYTH_SETS`: the four top sets, each with `t` its wake and ball and `rim` its colour), `fullSet()`, `fullSetOf`, `S.fullSets` (repaired in `initState`), the toast in `styleBuy`, `.card.full`, the Record's Full Sets row; the score box's rim in `renderLive` (`borderColor`/`boxShadow`); `SET_ORDER`, `setRank` (the racks' tie-break), `setPieces`, `setCost`, `setBuy`, the Sets rack (`styleCat === 'sets'`, `.catnav.c5`, `.setpcs`, the `set:` act) |
 | **Ambience** | `Sfx.ambOf`, `AMB_OF`, `AMB_VOL`, `Sfx.pines`, `Sfx.surf`, `Sfx.stream` (in `Sfx.tick`, `ambT`) |
 | **Umbrellas** | `drawUmbrella`, `UMB_COLS`; the gallery in `drawProp`, `standCv`'s `rain` |
 | **The caddie's blessing** | `Scene.drawBless`, `BLESS_FX` (by the caddie's `fx`), `blessBolt`, `DISCO_COLS` |
 | **The hole's wait, watched** | `Scene.stepN` (counted in `step`), `Scene.drawnN` (set with `drawnAt` in the frame), the test in `holeWait` |
 | **The winning shot** | `Scene.aceNow`, `b.fin`/`b.lift0` in `drawBalls` (a ball in the air carried on to the green), the played-on shot when `restBall` is reached, `shortBall` in the camera's goal |
 | **The railway's track** | `drawRail`: ballast rows, stones, sleepers (`sT`), the boards, `rail(off)` in rows (`RT`, `RB`, `rw`) |
-| **The words in the readout** | `#rWx` (wind, weather, affinity), `Scene.hudWords`, `fitHudLeft` (the `row` mode for the icons) |
+| **The words in the readout** | `#rWx` (wind, weather, affinity), `Scene.hudWords`, `fitHudLeft` (the `inrow` class for the icons: it was `row`, which is also the list rows' class, and drew their border under the icons) |
 | **Tour sub tabs** | `tourSub` ('card', 'season', 'maj', 'sig'), `renderTourNav`, `#tourNav` |
 | **Dawn and Dusk** | `S.dawnDusk`, `dawnDusk()` (its warmth by the hour), `clockNight()` (9pm to 5am, in `newHole`), the row in `settingsSheet`; `buildSky`'s key carries it |
 | **Birds** | `Scene.drawFlock` (below the readout's bottom), the fairway birds (props kind 9, laid in `layNight`) |
 | **Grandstand and clubhouse** | props kind 10 `standCv(sh, full, night, seed, cheer, frost)` and kind 11 `clubhouseCv(sh, night, side, seed, lit, frost)`, laid in `layNight` behind the round's last green; `Scene.galleryUp` (the jump on an eagle, `GALLERY_UP`), the last putt's cheer |
-| **Cup moments** (the Mythic balls) | `CUP_FX`, `Scene.drawCupFx` (before `drawFlagstick`), the hole hold lengthened for them |
+| **Cup moments** (the dearest balls and the two Mythic wakes) | `CUP_FX` (`tHorizon`, `tAscension` share their set's), `Scene.drawCupFx(wager)` (before `drawFlagstick`; its clip reaches to the ground at its own distance in front of the cup; the Twilight Putt calls it with `true`), the hole hold lengthened for them |
 | **Wagers as played** | `wagerSpot(R)`, `Scene.wagerPutt`, `Scene.wagerCallout` (`#callout`), `leaveDgn` (`#leaveBtn`, `#leaveTxt`), `#wagerStat` ("Helped by ..."), `wagerGuide` |
 | **Record folds, Season Bests, Better Season** | `renderRecord` (`.rfold`), `S.seasonBest`, `seasonBestPost`, the Cabinet in `roomCase` |
+| **Bulk** (everyone built out) | `bulkPlate(c, g, dark, edge, legs, alpha, soft)` (from his silhouette, behind him; `soft`: clothes, none from behind), `BULK_PLATE` (the three's plate, wrapped round their `back`), the loop for the other eleven skins, `plainBulk` (every look without an effect, in `paintGolfer`/`paintHeli`), the plain caddie's in `drawCaddie`; the arms `th` in `paintGolfer` (a pixel thicker for all) |
+| **Skin grounds** | `voidGalaxy` (now The Void's pit: torn edge, stars sinking, lip, swirl; `cv.ox/oy`), `voidSigil` (filled, doubled rings), `sunSigil`, `runeRing` (solid), the Demonic's resting `cracks`, the lesser skins' `drawGlow` calls; `nightPool` (wider than the grounds) |
+| **The blessing beam** | `Scene.drawBless`: edges, core, ribbons (`TH.ring`, or the perk's own colour), `RUNES` sliding down, sparks; landing ring, spikes, wave; `BLESS_FX` per caddie look; the Mythic Favour `drawFavour` |
+| **Ambience** | `Sfx.AMB_VOL`, `AMB_OF`, `ambOf` (stones, pier, island `lap`, the course), `Sfx.amb` (a filtered noise voice), `river`, `piper`, `moor`, `drift`, `lap`; the tick in `Sfx.tick` |
+| **Shots near the green** | `launch`: `shotN` (only the hole's first shot is off the tee, and only it goes in on an ace), `putSpot` (no shot short of the green carries past it) |
 
 ### Globals worth knowing
 
@@ -477,8 +495,111 @@ Line numbers are approximate and drift. Search for the name instead.
 44. **A full run on a busy machine finds timing bugs.** The Vault's slide
    showed only when other checks ran alongside; it was real (a slow phone
    does the same). Reproduce it by driving `Scene.draw` with a large `dt`.
+45. **A check is only as steady as its clock and its date.** Three failed
+   in a full run and passed alone this session: `caddie` and `fairy` drew
+   at `Scene.t` as the page's age left it (the Divine's rays, the float and
+   the dust follow it), and `green` played whatever course the date gave
+   (a run crossed midnight). Pin `Scene.t` and sweep a few fixed moments;
+   `green` fakes `Date` to a fixed day. When one fails, sweep the moment or
+   the date (`Date` shifted a day at a time) to find where it shows.
+46. **Measure what is inside a box, not whether two boxes meet.** The
+   caddie check compared bounding boxes, so the Divine's wave on the
+   ground far below the fairy counted as touching him. Count his pixels
+   (at least half solid) inside the fairy's box.
+47. **The runner shows one failure.** A check that throws hides the page's
+   console errors, so a `console.error` put in to trace a bug may never
+   print. Push the trace onto a `window.__` array and have the check
+   report it.
+48. **The local server dies between commands.** Start it with the Bash
+   tool's `run_in_background` (`node test/serve.js`), not `&` in a
+   command, and check `curl localhost:8080` before a screenshot.
+49. **Things flat on the green in front of the cup are nearer than the
+   pin.** Cut at the ground's line at the pin's distance, a void opening
+   round the cup showed its far half only; `drawCupFx` clips to the ground
+   at its own distance in front of it (a crest in front still cuts it).
+50. **A check with a size in it records a choice.** Making the grounds
+   bigger (the user asked) tripped `legends`' bounds for "at his feet" and
+   its footprint limits; move a bound when the change is the point, keep
+   the footprint limits (the user asked for "not a ton of the screen") and
+   fit the change inside them.
 
 ## 5. What the last features do (for debugging them)
+
+### Everyone bulkier (user asked, three times over)
+
+- First the three top skins "like the void skin", then the other eleven
+  effect skins, then the plain outfits, the Majors' jackets and the
+  start, then every caddie. `bulkPlate` draws his silhouette (`silhouette`)
+  offset behind him: the chest and shoulders two pixels broader each side
+  (`edge` outside, `dark` inside), the legs one (`legs`, or `dark`); a
+  caddie (`g.minor`) a pixel or two about the chest. The Void's own `bulk`
+  calls it.
+- The three: plate in `BULK_PLATE` (Ascended indigo edged magenta, a shade
+  off his skin or `flight` reads it as his arms; Divine gold; Demonic
+  charred), drawn **first** in `back` so wings and the Ascended's cape lie
+  over it (over them it hid a caddie's wings and the cape's root). The
+  eleven: their own clothes (`shirt3`, `shirt2`, `pant2`; the Ghost at its
+  alpha; the Stormcaller in his storm's blues). `plainBulk` for every look
+  without an effect. Clothes (`soft`) are not built out from behind:
+  there the shoulders came out as blocks, then as lines off his arms.
+- Arms: a pixel thicker for every look above 30px tall (`th`).
+- Caddies with an effect float two pixels further off (`fairyBox`): the
+  Divine caddie's plate touched his club on its soar. `bulk` checks 26
+  looks and 27 caddies; `fairy`, `caddie`, `legends`, `flight` hold the
+  rest.
+
+### Skin grounds, blessings and cup moments made prominent (user asked)
+
+- "The effect under the golfer's feet is very faint ... like a void is
+  open below him": `voidGalaxy` is now a pit (near black, darker the
+  deeper, a torn edge that shifts, stars sinking in, a violet lip lit
+  pink, a swirl round it), bigger (`sigilSize` 1.15 by 0.15). The
+  Ascended's sigil filled and doubled; the Divine's sun fuller with
+  two-pixel rays and a solid ring; the Demonic's runes a solid double
+  ring and its ground smouldering at rest (cracks close to the pit; the
+  strike still runs them out past 1.5 widths). The lesser skins' glows
+  solid and bigger. Kept inside `legends`' footprints.
+- The blessing (`drawBless`) was a scatter of dots: a beam now, solid
+  edges, a core, two ribbons winding down (the look's `ring`, or the
+  perk's own colour on a plain caddie, which `bless` needs), runes
+  sliding down, sparks; landing ring, spikes, a wave. The Mythic Favour
+  three strands and a burst of stars. It covers him more as it comes
+  down (half a second): ask how it sits.
+- The Void's cup moment was not its own: the cup opens into a void, light
+  is pulled in, it shuts on a star with a ring of gold. The Ascended's
+  opens its sigil (from a flag of 8px). Each set's wake plays its set's.
+  In the Twilight Putt too (`drawCupFx(true)` in the wager frame).
+- At night all of it was checked and needed nothing; `nightPool` was
+  widened (it lay under the bigger grounds).
+
+### Sets, and one order (user sent screenshots)
+
+- The racks sorted by rarity only, then by their own list's order, so the
+  Ascended was first on one and second on the next: `setRank` breaks the
+  tie by `SET_ORDER`. The Sets rack: each set with him in it and its four
+  other pieces; one tap buys the missing pieces (their sum) and wears it
+  (wake or ball: his own if it is the set's, else the wake). `fullset`.
+- The Divine and the Demonic count as Full Sets; a full set edges the
+  score box in its colour (a glint on him was tried and lost among the
+  skins' own sparkles).
+
+### The putt skipped again (user sent a screenshot)
+
+- An ace is by time, not strokes: on a strong bag a hole won by a second
+  shot from the fairway was an ace, and its ball was sent into the cup
+  from there; he walked up to a holed ball. Only the hole's first shot
+  (`shotN`) goes in; `green` has a fairway ace, `finish` both kinds.
+- And no shot short of the green carries past the putting spot (the least
+  carry, 0.6, left a ball nearer the cup than he putts from). `finish`.
+
+### Smaller things this session
+
+- The icons in a row had the list rows' border and padding (`row` class):
+  now `inrow`; `layout` fails on a line or pad there.
+- Ambience by the river, the moor, the dunes and the island lake (§1).
+- The Tour Card page: the events row only where it is the one place it
+  shows (below the highest card), "Locked" gone, Climb on Form one line.
+
 
 ### The Void (the user's picture of a dark cosmic sorcerer; then "bulkier")
 
@@ -555,7 +676,8 @@ Line numbers are approximate and drift. Search for the name instead.
 - A Mythic set (only the Ascended and The Void are Mythic) worn whole
   (look, caddie, driver, its wake or its ball): its pieces rimmed in gold
   in the Style shop and badged Full Set, said once, counted in the Record
-  (Mythic Sets). Looks only. `fullset`.
+  (Full Sets, of four: the Divine and the Demonic count now). Looks only.
+  `fullset`.
 - Ambience: wind in the pines (Highlands, Snowline, National, Fjordheim),
   the sea (Coastal Classic, Seaside, Harbour Lights, Old Links, and round
   the sea stack), a stream by the stepping stones (not frozen); every few
@@ -1860,6 +1982,13 @@ him (about 49px tall on a 320 phone, 71px on its side).
 
 ## 6. Recent history (newest first, one line each)
 
+- Everyone and every caddie bulkier; skin grounds, blessings and cup
+  moments prominent (The Void's pit, the beam, its cup); the Sets rack
+  and one set order; cup moments in the Twilight Putt; a fairway ace is
+  putted out; no carry past the putting spot; ambience by the river, moor,
+  dunes and lake; the Tour Card page trimmed; the Divine and Demonic
+  Full Sets and the score box's rim; no line under the icons.
+
 - The putt no longer skipped on a slow frame; the Vault never slides him
   mid-swing.
 - The Void bulkier with void orbs, its caddie to match; the railway
@@ -2030,18 +2159,19 @@ him (about 49px tall on a 320 phone, 71px on its side).
 ## 8. What to offer next
 
 Turned down, don't offer again: the railway station, a photo mode, trail
-flourishes. Don't offer anything that adds to the Tour tab, or any new
-sound that is not ambience.
+flourishes, a caddie trick for the Divine or Demonic (they have one).
+Don't offer anything that adds to the Tour tab, or any new sound that is
+not ambience.
 
 The menu to offer:
-1. **The divider under the icons**: when the icons sit in a row under the
-   readout a thin dark line runs under them; the user saw it in a
-   screenshot of the crossing. Offer to take it away.
-2. **A Full Set touch on the course**: a small mark by the score or a
-   glint about him while a Mythic set is worn whole (looks only).
-3. **More ambience**: birds by the river (Riverbend), wind over the moors
-   and the dunes, the lake at the island greens (quiet, now and then).
-4. **Divine and Demonic as full sets**: if the user wants the Full Set to
-   count the two Legendary sets as well.
+1. **Ask how the session's looks sit on the phone**: the prominent
+   grounds, the blessing beam (it covers him more for half a second),
+   everyone bulkier. Tune from their screenshots.
+2. **The lesser skins' cup moments**: only the dearest balls and the two
+   Mythic wakes have one; the other balls (Comet, Black Hole, ...) could
+   get a small one of their own.
+3. **The Seraph and Hellfire Wakes' cup moments**: the Divine's and the
+   Demonic's balls have one, their wakes none; they could play their
+   set's, as the two Mythic wakes do (one line each in `CUP_FX`).
 
-Recommend 1: small and something they have already seen.
+Recommend 1: much changed on screen this session without their eyes on it.

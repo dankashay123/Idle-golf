@@ -66,6 +66,11 @@ the handoff notes until I tell you to").
   look at it scaled up (`HANDOFF.md` §4, rule 36): the first Spirit
   Blossom passed its checks and looked cluttered (it has since been
   replaced by The Void, which the user wanted "bulkier" and full body).
+- **Everyone is bulky, and effects are prominent.** Every look and every
+  caddie is built out behind him (`bulkPlate`) with thicker arms: the user
+  asked it for The Void, then every skin, then everyone. The skins'
+  grounds and the caddie's blessing were "very faint": draw them filled
+  and solid. A new look or effect keeps both.
 - Never put a model name in a commit, a code comment or a file. In a commit
   the co-author line reads `Co-Authored-By: Claude <noreply@anthropic.com>`
   whatever the session suggests; keep its session link line.
@@ -123,9 +128,12 @@ Rules that have cost real time here:
   and a phone's slow frame ended holes before the putt (`HANDOFF.md` §4,
   rule 43).
 
-A check that fails once is not a flake. Chase it: three times it has been
-the check's own random setup (most lately `dance`, which played on into an
-unseeded next hole), and that needs fixing as much as a game bug does.
+A check that fails once is not a flake. Chase it: it has often been the
+check's own setup (`dance` played on into an unseeded next hole; `caddie`
+and `fairy` drew at the page's age; `green` played whatever course the date
+gave, and a run crossed midnight), and that needs fixing as much as a game
+bug does. Pin the clock and the date, then sweep them to find the real case
+(two of those turned out to be real game bugs; `HANDOFF.md` §4, rule 45).
 
 New things on the course are laid from a hash (`Scene.layNight`, tagged
 `extra`), never from the hole's own `rnd`: changing how many numbers a hole
@@ -135,5 +143,6 @@ Every new check gets a negative test: break the game on purpose, watch the
 check fail, put it back. `HANDOFF.md` §4 has the harness and its gotchas;
 rule 6 there lists the helpers each session rewrites (the scratchpad is not
 kept): a server, a look in a pose, a zoom sheet, the harness, a clip. The
-local server tends to stop between long runs: restart it when a screenshot
-gets "connection refused", and don't trust a picture older than the run.
+local server stops between commands: start it with the Bash tool's
+`run_in_background` (`node test/serve.js`), check it answers before a
+screenshot, and don't trust a picture older than the run.
