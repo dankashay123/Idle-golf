@@ -8508,7 +8508,36 @@ function makeSprite(rows, map){
       }
     }
   }
-  return { cv, w, h, rows };
+  return { cv, w, h, rows, map };
+}
+// A sprite made smaller, w by h, by what covers each of its pixels rather
+// than by one pixel picked out of it: picked, a far tree a pixel taller as
+// he walked was a different set of its pixels, and a wood of them shook
+// and jittered on every step (the user saw it). Each small pixel is solid
+// where most of what it covers is, in the tone most of it is (the pictures'
+// own colours, never a blend), so a tree a pixel bigger is the same tree.
+function shrinkSprite(spr, w, h){
+  if(!spr.rows || !spr.map || w >= spr.w || h >= spr.h) return null;
+  const M = spr._sh || (spr._sh = new Map()), key = w + 'x' + h;
+  let R = M.get(key); if(R) return R;
+  const cv = document.createElement('canvas'); cv.width = w; cv.height = h;
+  const g = cv.getContext('2d'), N = 4, rows = [];
+  for(let y = 0; y < h; y++){
+    let row = '';
+    for(let x = 0; x < w; x++){
+      const cnt = {}; let on = 0, best = '.', bn = 0;
+      for(let j = 0; j < N; j++) for(let i = 0; i < N; i++){
+        const sx = Math.floor((x + (i + 0.5) / N) * spr.w / w), sy = Math.floor((y + (j + 0.5) / N) * spr.h / h);
+        const ch = spr.rows[sy][sx]; if(ch === '.' || !spr.map[ch]) continue;
+        on++; cnt[ch] = (cnt[ch] || 0) + 1;
+        if(cnt[ch] > bn){ bn = cnt[ch]; best = ch; }
+      }
+      row += on * 2 >= N * N ? best : '.';
+    }
+    rows.push(row);
+  }
+  R = makeSprite(rows, spr.map);
+  M.set(key, R); return R;
 }
 function blit(c, spr, x, y, w, h){
   if(!spr || w < 1 || h < 1) return;
@@ -16371,7 +16400,12 @@ Object.assign(Scene, {
         maxy = y;
       }
       prevD = d; prevH = gh;
-      d += step;
+      // (the next slice at a place fixed on the course, on a grid as fine
+      // as the step, not a step on from wherever he stands: stepped on from
+      // him, every far slice was another bit of ground each step he took,
+      // and the far edge of the field and every tree cut by it jittered)
+      const q = Math.pow(2, Math.round(Math.log2(step)));
+      d = (Math.floor(d / q + 1e-6) + 1) * q;
     }
     this._clipN = cn;
     // the woods stood up: trees across them, far to near (forestPass)
@@ -16398,7 +16432,8 @@ Object.assign(Scene, {
       const key = (oak ? 'o' : 'p') + hp; let R = ST.m.get(key); if(R) return R;
       const spr = oak ? TS.oak : TS.pine, w = Math.max(1, Math.round(hp * spr.w / spr.h));
       const cv = document.createElement('canvas'); cv.width = w; cv.height = hp;
-      const x = cv.getContext('2d'); x.imageSmoothingEnabled = false; x.drawImage(spr.cv, 0, 0, w, hp);
+      // (shrunk by what covers each pixel, not picked: see shrinkSprite)
+      const x = cv.getContext('2d'); x.imageSmoothingEnabled = false; x.drawImage((shrinkSprite(spr, w, hp) || spr).cv, 0, 0, w, hp);
       const d = x.getImageData(0, 0, w, hp).data; R = { w, rows: [] };
       for(let y = 0; y < hp; y++){ const row = []; let run = null;
         for(let i = 0; i <= w; i++){
@@ -16432,21 +16467,29 @@ Object.assign(Scene, {
     const OCC = this._forOcc = [];
     for(let ri = L.rows.length - 1; ri >= 0; ri--){
       const Rw = L.rows[ri]; if(Rw.d > far) continue; if(Rw.d < cam + 1.2) break;
-      const p0 = this.proj(Rw.d, 0), U = this.proj(Rw.d, 1).x - p0.x;
+      // (across the row by the view's own scale, not the gap between two
+      // rounded places: that gap went 3 pixels a unit to 4 in one step, and
+      // a tree 20 units along leapt 20 pixels; every row of the far wood
+      // stretched and snapped as he walked, the user saw it shake)
+      const p0 = this.proj(Rw.d, 0), U = LAT * p0.s, X00 = CX + (this.bendOff(Rw.d) - CAM_LAT) * U;
       if(!(U > 0)) continue;
       // (thinning out and shrinking far off into the painted canopy, not
       // stopping in a row: that read as a line ruled across the view)
       const hp0 = 46 * p0.s * US; if(hp0 < 3) continue;
-      const keep = clamp((hp0 - 3) / 9, 0.12, 1);
+      const keep = clamp((hp0 - 3) / 9, 0, 1);
       const cut = this.clipAt(Rw.d), fog = Math.round(clamp((Rw.d - cam - 18) / 95, 0, 0.7) * 20) / 20, Yb = Math.round(p0.y);
       for(const t of Rw.t){
-        if(t.kh > keep) continue;
+        // (one just thinned in grows up out of the wood rather than popping
+        // in whole: which trees were kept changes as he walks, and the far
+        // wood twinkled with trees coming and going)
+        const grow = (keep - t.kh) / 0.12; if(grow <= 0) continue;
         // (nor starting all at one distance near him: their feet in a row)
         if(Rw.d < cam + 1.5 + t.near) continue;
-        const X = p0.x + t.x * U; if(X < -12 || X > VW + 12) continue;
-        const hp = Math.max(2, Math.round(hp0 * t.sc)), key = (t.oak ? 'o' : 'p') + hp, R = stamp(t.oak, hp), F = fogged(R, key, fog);
+        const X = X00 + t.x * U; if(X < -12 || X > VW + 12) continue;
+        const hp = Math.round(hp0 * t.sc * Math.min(1, 0.25 + grow * 0.75)); if(hp < 2) continue;
+        const key = (t.oak ? 'o' : 'p') + hp, R = stamp(t.oak, hp), F = fogged(R, key, fog);
         const X0 = Math.round(X - R.w / 2), Y0 = Yb - hp;
-        OCC.push({ d: Rw.d, X0, Y0, w: R.w, cut, R });
+        OCC.push({ d: Rw.d, X0, Y0, w: R.w, cut, R, t, full: hp0 * t.sc });
         for(let y = 0; y < hp; y++){
           const Y = Y0 + y; if(Y > cut) break;
           // (where a rise in front cuts its foot, the last rows blend toward
@@ -17126,8 +17169,12 @@ Object.assign(Scene, {
       // shadow hung down from its foot showed under the ground's line)
       const sh = Math.max(1, Math.round(h*0.035));
       c.fillStyle = 'rgba(8,16,10,.30)';
-      c.fillRect(pr.x - Math.round(w*0.34), pr.y - sh, Math.round(w*0.68), sh);
-      blit(c, spr, pr.x - w/2, pr.y - h, w, h);
+      // (its foot and its middle each rounded once, and shrunk by what
+      // covers each pixel: its edge and its width rounded apart, and a
+      // pixel picked out of the picture, a far tree wobbled as he walked)
+      const X = Math.round(pr.x), Y = Math.round(pr.y);
+      c.fillRect(X - Math.round(w*0.34), Y - sh, Math.round(w*0.68), sh);
+      blit(c, shrinkSprite(spr, w, h) || spr, X - (w >> 1), Y - h, w, h);
     }else if(p.kind === 2){
       // The rope goes down first, and before any cull on the post, because the
       // two posts either side of the camera swing right out of frame while the
@@ -17180,8 +17227,10 @@ Object.assign(Scene, {
       const w = Math.round(h * spr.w / spr.h);
       if(pr.x + w < -4 || pr.x - w > VW + 4) return;
       // (one call or two each: there are many of them)
-      if(p.sp === 'bush' && h > 4){ c.fillStyle = 'rgba(8,16,10,.26)'; c.fillRect(pr.x - Math.round(w * 0.4), pr.y - 1, Math.round(w * 0.8), 1); }
-      blit(c, spr, pr.x - w / 2, pr.y - h, w, h);
+      // (anchored and shrunk as the trees are: see shrinkSprite)
+      const X = Math.round(pr.x), Y = Math.round(pr.y);
+      if(p.sp === 'bush' && h > 4){ c.fillStyle = 'rgba(8,16,10,.26)'; c.fillRect(X - Math.round(w * 0.4), Y - 1, Math.round(w * 0.8), 1); }
+      blit(c, shrinkSprite(spr, w, h) || spr, X - (w >> 1), Y - h, w, h);
 
     }else if(p.kind === 6){
       // frost on the grass: a pale speck, and one in four a glint catching
@@ -17301,9 +17350,12 @@ Object.assign(Scene, {
       }
       const spr = spectSpr(p.c, Math.sin(this.t*0.9 + p.p) > 0 ? 0 : 1, night);
       const w = Math.max(1, Math.round(h * spr.w / spr.h));
+      // (its middle and its feet each rounded once, or he wobbled as the
+      // camera went by)
+      const X = Math.round(pr.x), Y = Math.round(pr.y);
       c.fillStyle = 'rgba(8,16,10,.26)';
-      c.fillRect(pr.x - Math.round(w/2), pr.y - 1, w, 1);
-      blit(c, spr, pr.x - w/2, pr.y - h, w, h);
+      c.fillRect(X - (w >> 1), Y - 1, w, 1);
+      blit(c, spr, X - (w >> 1), Y - h, w, h);
       // in the rain most of them have an umbrella up
       if(this.rain && h >= 5 && hr(p.p * 97 + p.c, 410) < 0.75) drawUmbrella(c, pr.x + w * 0.1, pr.y - h, w, h, Math.floor(hr(p.p * 31, 411) * 6), night);
     }
