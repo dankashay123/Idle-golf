@@ -8514,7 +8514,7 @@ function blitShear(c, spr, x, y, w, h, shear, bulk){
 // either side of it); for anything laid over him row by row too (the
 // Demonic's seams), sp the picture whose body it follows
 function bulkRow(spr, x, w, bulk, f, sp){
-  const n = bulk ? bulkAt(bulk, f) * (spr.bulkS || 1) : 0;
+  const n = bulk ? bulkAt(bulk, f) * (spr.bulkS === undefined ? 1 : spr.bulkS) : 0;
   if(n <= 0) return [Math.round(x), Math.max(1, Math.round(w))];
   // (his legs about their own middle, his chest about its own)
   const S0 = bodySpan(sp || spr), B = f > 0.55 ? S0.legs : S0, sc = w / spr.w, bw = (B.r - B.l) * sc, a = (bw + 2 * n) / bw;
@@ -9613,6 +9613,10 @@ function buildSprites(){
   SPRITE.gAddr.ax = 0.66; SPRITE.gAddr.ay = 0.250;
   // (broad in his own picture at address: built out half as much there)
   SPRITE.gAddr.bulkS = 0.8;
+  // (from behind built out gently, his legs as much (drawLegsBack): at full
+  // stretch the shirt came out past his shoulders as a square block over
+  // each arm)
+  SPRITE.gBack.bulkS = 0.5; SPRITE.gWave.bulkS = 0.5; SPRITE.gFly.bulkS = 0.5;
   SPRITE.gFinish.ax = 0.60; SPRITE.gFinish.ay = 0.266;
   SPRITE.gWalk.ax = 0.58; SPRITE.gWalk.ay = 0.266;
   SPRITE.flagA = makeSprite([
@@ -15627,7 +15631,7 @@ const CLUBFX = {
 function drawLegsBack(c, cx, hy, len, w, ph, near, far, shoe, sole = '#B8AE9C', bulk){
   // (built out as his body is: each leg the wider by his build, so his
   // legs are as broad as his chest)
-  const n = bulk ? bulk.legs : 0, th = Math.max(1, Math.round(w * 0.11 + n)), gap = w * 0.085 + n / 2;
+  const n = bulk ? bulk.legs * (bulk.s === undefined ? 1 : bulk.s) : 0, th = Math.max(1, Math.round(w * 0.11 + n)), gap = w * 0.085 + n / 2;
   for(let i = 0; i < 2; i++){
     const q = ph * Math.PI * 2 + i * Math.PI, lift = Math.max(0, Math.sin(q));
     const lx = Math.round(cx + (i ? gap : -gap) - th / 2);
@@ -15640,8 +15644,10 @@ function drawLegsBack(c, cx, hy, len, w, ph, near, far, shoe, sole = '#B8AE9C', 
     c.fillStyle = lift > 0.35 ? sole : shoe;                 // a lifted heel shows its sole
     c.fillRect(lx - (lift > 0.35 ? 0 : 1), fy, th + (lift > 0.35 ? 0 : 1), sh);
   }
-  // (and the crease between them, so the two read as two)
-  if(n > 0){ c.fillStyle = far; c.fillRect(Math.round(cx) - 1, Math.round(hy + len * 0.3), 1, Math.round(len * 0.7)); }
+  // (and the crease between them, so the two read as two: a shade between
+  // the two legs', from the knee down; a full-length line of the darker read
+  // as a seam drawn on)
+  if(n > 0){ c.fillStyle = mixC(near, far, 0.5); c.fillRect(Math.round(cx) - 1, Math.round(hy + len * 0.5), 1, Math.round(len * 0.5)); }
 }
 // A golf club: the shaft from the grip to the head, and the head. turn is
 // which way the face points (1 toward the target, -1 back, 0 end on).
@@ -15720,7 +15726,7 @@ function paintGolfer(c, x, y, w, h, ph, t, bot, walking, walkPh, spr, arc, putt,
   if(FX && FX.alpha) c.globalAlpha = FX.alpha;
   if(walking){
     const O = outfitNow();
-    drawLegsBack(c, x + w*0.5, y + h*(31/58), h*(26/58), w, walkPh, O.pant || '#2B3B4F', O.pant2 || O.pant || '#1C2937', O.shoe || PX.shoe, O.belt, g.bulk);
+    drawLegsBack(c, x + w*0.5, y + h*(31/58), h*(26/58), w, walkPh, O.pant || '#2B3B4F', O.pant2 || O.pant || '#1C2937', O.shoe || PX.shoe, O.belt, g.bulk && Object.assign({ s: spr.bulkS }, g.bulk));
     blitShear(c, spr, x, y, w, h, () => 0, g.bulk);
     if(FX && FX.body) FX.body(c, g);
     // The club in his right hand, hanging at his side, the head down by
@@ -15802,7 +15808,7 @@ function paintHeli(c, x, y, w, h, t, bot){
   if(FX && FX.outline) outlineAt(c, g, FX.outline, RING1, FX.outlineA * (0.8 + 0.2 * Math.sin(t * 3)));
   c.globalAlpha = FX && FX.alpha ? FX.alpha : 1; c.globalCompositeOperation = 'source-over';
   drawLegsBack(c, x + w*0.5, y + h*(31/58), h*(26/58), w, 0.25 + Math.sin(t * 5) * 0.04,
-               O.pant || '#2B3B4F', O.pant2 || O.pant || '#1C2937', O.shoe || PX.shoe, O.belt, g.bulk);
+               O.pant || '#2B3B4F', O.pant2 || O.pant || '#1C2937', O.shoe || PX.shoe, O.belt, g.bulk && Object.assign({ s: spr.bulkS }, g.bulk));
   blitShear(c, spr, x, y, w, h, () => 0, g.bulk);
   if(FX && FX.body) FX.body(c, g);
   // the skin's front half (a cape down his back) before the arms: they go
