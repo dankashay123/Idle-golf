@@ -8523,7 +8523,7 @@ function shrinkSprite(spr, w, h){
   const cv = document.createElement('canvas'); cv.width = w; cv.height = h;
   const g = cv.getContext('2d'), N = 4, rows = [];
   for(let y = 0; y < h; y++){
-    let row = '';
+    let row = '', most = 0, mx = -1, mch = '.';
     for(let x = 0; x < w; x++){
       const cnt = {}; let on = 0, best = '.', bn = 0;
       for(let j = 0; j < N; j++) for(let i = 0; i < N; i++){
@@ -8533,7 +8533,11 @@ function shrinkSprite(spr, w, h){
         if(cnt[ch] > bn){ bn = cnt[ch]; best = ch; }
       }
       row += on * 2 >= N * N ? best : '.';
+      if(on > most){ most = on; mx = x; mch = best; }
     }
+    // (a row with something in it keeps a pixel of it: a pine's trunk, thin
+    // beside its crown, went altogether and a small one stood in the air)
+    if(mx >= 0 && !/[^.]/.test(row)) row = row.slice(0, mx) + mch + row.slice(mx + 1);
     rows.push(row);
   }
   R = makeSprite(rows, spr.map);
@@ -9054,7 +9058,14 @@ const PINE_ROWS = [
   '...........ttTTTtt...........',
   '...........ttTTTtt...........'
 ];
+// (its trunk down to the bottom row: five empty rows under it stood every
+// oak a little above the ground, its shadow on the grass below it)
 const OAK_ROWS = [
+  '..................................',
+  '..................................',
+  '..................................',
+  '..................................',
+  '..................................',
   '..................................',
   '..............0..11...............',
   '.............0.33.3310............',
@@ -9093,12 +9104,7 @@ const OAK_ROWS = [
   '..............ttTTt...............',
   '............tttTTTTtt.............',
   '............tttTTTTtt.............',
-  '............tttTTTTtt.............',
-  '..................................',
-  '..................................',
-  '..................................',
-  '..................................',
-  '..................................'
+  '............tttTTTTtt.............'
 ];
 const TREE_DEFAULT = { 0:'#0C2011', 1:'#16391F', 2:'#1F4E29', 3:'#2C6634', 4:'#3E8244',
                        t:'#4A3A24', T:'#2E2416' };
