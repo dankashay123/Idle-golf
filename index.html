@@ -16256,6 +16256,8 @@ Object.assign(Scene, {
     if(!this._tmImg || this._tmImg.width !== VW || this._tmImg.height !== VH){
       this._tmImg = new ImageData(VW, VH); this._tmPx = new Uint32Array(this._tmImg.data.buffer); }
     this._tmPx.fill(0); this._tmOn = true;
+    if(!this._fdep || this._fdep.length !== VW * VH) this._fdep = new Float32Array(VW * VH);
+    this._fdep.fill(Infinity);
     return this._tmPx;
   },
   // this frame's: the forest's (kept with the ground, which is reused while
@@ -16278,16 +16280,53 @@ Object.assign(Scene, {
     const a = Math.round(this.hazeA(y + h) * 20) / 20;
     blit(c, a > 0 ? fogSprite(spr, (this.theme || THEMES.day).sky[4], a) : spr, x, y, w, h);
     const F = this._tmF; if(!F || !this.treeMask || !spr.rows) return;
+    const FD = this._tmOn && this._fcov ? this._fdep : null, FC = this._fcov, PD = this._pdep, d = this._propD;
     x = Math.round(x); y = Math.round(y); w = Math.max(1, Math.round(w)); h = Math.max(1, Math.round(h));
     const y1 = Math.min(VH, y + h, this._propCut === undefined ? VH : Math.max(0, this._propCut));
     for(let yy = Math.max(0, y); yy < y1; yy++){
       const row = spr.rows[Math.floor((yy - y) * spr.h / h)];
       for(let xx = Math.max(0, x), e = Math.min(VW, x + w); xx < e; xx++){
         const ch = row[Math.floor((xx - x) * spr.w / w)];
-        if(ch !== '.' && ch !== ' ' && ch !== undefined) F[yy * VW + xx] = 0xFF000000;
+        if(ch !== '.' && ch !== ' ' && ch !== undefined){ const i = yy * VW + xx; F[i] = 0xFF000000; if(FD){ if(PD[i] === Infinity) FC.push(i); PD[i] = d; } }
       }
     }
     this._tmDirty = true;
+  },
+  // A shadow under something standing: whatever of it a nearer tree of the
+  // forest covers is given back to the tree (see forestOver)
+  standShadow(c, x, y, w, h){
+    c.fillRect(x, y, w, h);
+    this.standCover(x, y, w, h);
+  },
+  // (a box of it: what else is in the box is the forest already, or farther)
+  standCover(x, y, w, h){
+    if(!this._fcov || !this._fdep || !this._tmOn) return;
+    const PD = this._pdep, d = this._propD, L = this._fcov;
+    x = Math.round(x); y = Math.round(y); w = Math.round(w); h = Math.round(h);
+    const y1 = Math.min(VH, y + h, this._propCut === undefined ? VH : Math.max(0, this._propCut));
+    for(let yy = Math.max(0, y); yy < y1; yy++) for(let xx = Math.max(0, x); xx < Math.min(VW, x + w); xx++){
+      const i = yy * VW + xx; if(PD[i] === Infinity) L.push(i); PD[i] = d; }
+  },
+  // The forest's trees are painted into the ground, under everything drawn
+  // standing, so a tree, a shrub or the gallery beyond a tree of the forest
+  // showed through it: its trunk and its shadow a brown line through the
+  // wood (the user saw them). Where a nearer tree of the forest stood, its
+  // own pixels go back over them.
+  forestOver(c){
+    const L = this._fcov; if(!L || !L.length){ if(L) L.length = 0; return; }
+    const G = PixPaint.px;
+    if(this.pixGround === false || !G || PixPaint.w !== VW || PixPaint.h !== VH){ L.length = 0; return; }
+    if(!this._foI || this._foI.width !== VW || this._foI.height !== VH){
+      this._foI = new ImageData(VW, VH); this._foP = new Uint32Array(this._foI.data.buffer);
+      this._foC = document.createElement('canvas'); this._foC.width = VW; this._foC.height = VH; this._foX = this._foC.getContext('2d'); }
+    const P = this._foP, FD = this._fdep, PD = this._pdep; let n = 0;
+    // (where the last thing drawn is beyond a tree of the forest)
+    for(const i of L){ if(FD[i] < PD[i]){ P[i] = G[i]; n++; } PD[i] = Infinity; }
+    if(!n){ L.length = 0; return; }
+    this._foX.putImageData(this._foI, 0, 0);
+    c.drawImage(this._foC, 0, 0);
+    for(const i of L) P[i] = 0;
+    L.length = 0;
   },
   // a layer laid over the frame everywhere but where the trees stand
   overTrees(c, layer){
@@ -16562,7 +16601,7 @@ Object.assign(Scene, {
     // the horizon pass over them: see treeMask; each is hazed evenly by the
     // haze at its own foot instead, or a tall one's top was washed out and
     // its trunk not, a band of fog across the wood)
-    const MK = this.treeMaskClear();
+    const MK = this.treeMaskClear(), FD = this._fdep;
     for(let ri = L.rows.length - 1; ri >= 0; ri--){
       const Rw = L.rows[ri]; if(Rw.d > far) continue; if(Rw.d < cam + 1.2) break;
       // (across the row by the view's own scale, not the gap between two
@@ -16598,9 +16637,9 @@ Object.assign(Scene, {
           // (the rows blended into the ground are hazed with the ground, or
           // the forest's feet were a line ruled across the view)
           if(fast) for(let k = 0; k < row.length; k++){ g.cur = row[k][3]; g.fillRect(X0 + row[k][0], Y, row[k][1], 1);
-            if(!ft && Y >= 0 && Y < VH) for(let x = Math.max(0, X0 + row[k][0]), e = Math.min(VW, X0 + row[k][0] + row[k][1]); x < e; x++) MK[Y * VW + x] = 0xFF000000; }
+            if(Y >= 0 && Y < VH) for(let x = Math.max(0, X0 + row[k][0]), e = Math.min(VW, X0 + row[k][0] + row[k][1]); x < e; x++){ if(!ft) MK[Y * VW + x] = 0xFF000000; FD[Y * VW + x] = Rw.d; } }
           else for(let k = 0; k < row.length; k++){ g.fillStyle = row[k][2]; g.fillRect(X0 + row[k][0], Y, row[k][1], 1);
-            if(!ft && Y >= 0 && Y < VH) for(let x = Math.max(0, X0 + row[k][0]), e = Math.min(VW, X0 + row[k][0] + row[k][1]); x < e; x++) MK[Y * VW + x] = 0xFF000000; }
+            if(Y >= 0 && Y < VH) for(let x = Math.max(0, X0 + row[k][0]), e = Math.min(VW, X0 + row[k][0] + row[k][1]); x < e; x++){ if(!ft) MK[Y * VW + x] = 0xFF000000; FD[Y * VW + x] = Rw.d; } }
         }
       }
     }
@@ -17099,7 +17138,10 @@ Object.assign(Scene, {
   // -1; the railway goes down between the two, see the frame)
   drawProps(edge, side){
     const c = this.b, T = this.theme || THEMES.day, night = this.night;
+    this._fcov = this._fcov || []; this._fcov.length = 0;
+    if(!this._pdep || this._pdep.length !== VW * VH) this._pdep = new Float32Array(VW * VH).fill(Infinity);
     for(const p of (this.props || [])){
+      this._propD = p.d;
       if(p.kind >= 4 && p.kind <= 7 && (S.dgnRun || (p.kind <= 5 ? !night : p.kind === 6 ? !this.frost || night || this.rain : !this.rain || this.ice))) continue;
       if(side > 0 && p.d < edge) continue;
       if(side < 0 && p.d >= edge) continue;
@@ -17137,6 +17179,8 @@ Object.assign(Scene, {
       }
       this.drawProp(c, T, night, p, pr);
     }
+    this._propD = Infinity;
+    this.forestOver(c);
   },
 
   // A bird on the fairway: a dark back, a paler breast, pecking now and then.
@@ -17287,7 +17331,7 @@ Object.assign(Scene, {
       // covers each pixel: its edge and its width rounded apart, and a
       // pixel picked out of the picture, a far tree wobbled as he walked)
       const X = Math.round(pr.x), Y = Math.round(pr.y);
-      c.fillRect(X - Math.round(w*0.34), Y - sh, Math.round(w*0.68), sh);
+      this.standShadow(c, X - Math.round(w*0.34), Y - sh, Math.round(w*0.68), sh);
       this.standBlit(c, shrinkSprite(spr, w, h) || spr, X - (w >> 1), Y - h, w, h);
     }else if(p.kind === 2){
       // The rope goes down first, and before any cull on the post, because the
@@ -17343,7 +17387,7 @@ Object.assign(Scene, {
       // (one call or two each: there are many of them)
       // (anchored and shrunk as the trees are: see shrinkSprite)
       const X = Math.round(pr.x), Y = Math.round(pr.y);
-      if(p.sp === 'bush' && h > 4){ c.fillStyle = 'rgba(8,16,10,.26)'; c.fillRect(X - Math.round(w * 0.4), Y - 1, Math.round(w * 0.8), 1); }
+      if(p.sp === 'bush' && h > 4){ c.fillStyle = 'rgba(8,16,10,.26)'; this.standShadow(c, X - Math.round(w * 0.4), Y - 1, Math.round(w * 0.8), 1); }
       this.standBlit(c, shrinkSprite(spr, w, h) || spr, X - (w >> 1), Y - h, w, h);
 
     }else if(p.kind === 6){
@@ -17468,10 +17512,15 @@ Object.assign(Scene, {
       // camera went by)
       const X = Math.round(pr.x), Y = Math.round(pr.y);
       c.fillStyle = 'rgba(8,16,10,.26)';
-      c.fillRect(X - (w >> 1), Y - 1, w, 1);
+      this.standShadow(c, X - (w >> 1), Y - 1, w, 1);
       this.standBlit(c, spr, X - (w >> 1), Y - h, w, h);
       // in the rain most of them have an umbrella up
-      if(this.rain && h >= 5 && hr(p.p * 97 + p.c, 410) < 0.75) drawUmbrella(c, pr.x + w * 0.1, pr.y - h, w, h, Math.floor(hr(p.p * 31, 411) * 6), night);
+      if(this.rain && h >= 5 && hr(p.p * 97 + p.c, 410) < 0.75){
+        drawUmbrella(c, pr.x + w * 0.1, pr.y - h, w, h, Math.floor(hr(p.p * 31, 411) * 6), night);
+        // (behind a tree of the forest, so is the umbrella over him)
+        const R = Math.max(2, Math.round(w * 1.1)), ch = Math.max(2, Math.round(R * 0.55)), ux = Math.round(pr.x + w * 0.1);
+        this.standCover(ux - R, pr.y - h - ch - Math.round(h * 0.04) - 1, R * 2 + 2, ch + Math.round(h * 0.45) + 2);
+      }
     }
   },
 
