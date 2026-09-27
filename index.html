@@ -12430,11 +12430,105 @@ const CUP_FX = {
       for(let i = 0; i < 22; i++){ const a = i / 22 * Math.PI * 2; fxDot(c, x + Math.cos(a) * rr - (k >> 1), y + Math.sin(a) * rr * 0.4, k, i & 1 ? '#371946' : '#962CA8', 1); } }
     else for(let i = 0; i < 14; i++){ const a = i / 14 * Math.PI * 2, r = h * (0.12 + 0.3 * (q - 0.8) / 0.2);
       fxDot(c, x + Math.cos(a) * r - (k >> 1), y + Math.sin(a) * r * 0.34, k, i & 1 ? '#FFFFFF' : '#F2A6F8', 1); }
+  },
+  // The cheaper balls' moments (the user asked, from the menu): each in its
+  // ball's own look, and smaller than the dear balls' (inside about half
+  // their box), as they cost less
+  // (on a green far off, where the pin is a few pixels tall, a speck of the
+  // ball's colour hops out of the cup and drops back)
+  // Rubber Duck: it bobs up out of the cup, looks about and ducks back down
+  duck(c, x, y, cr, h, q, t){
+    if(h < 8) return cupSpeck(c, x, y, h, q, '#FFD84A');
+    const s = Math.max(1, Math.round(h / 14)), DUCK = ['..YY..', '.YYYO.', 'YYYYY.', '.YYY..'];
+    const up = Math.round(Math.sin(Math.min(1, q / 0.9) * Math.PI) * h * 0.3), turn = q > 0.35 && q < 0.6;
+    const ox = Math.round(x - 3 * s), oy = Math.round(y) - up - 4 * s;
+    DUCK.forEach((row, yy) => { const ry = oy + yy * s; if(ry + s > y) return;   // what is still in the cup
+      [...row].forEach((ch, xx) => { if(ch === '.') return; const cx = turn ? 5 - xx : xx;
+        fxDot(c, ox + cx * s, ry, s, ch === 'O' ? '#FF8A2A' : yy === 0 ? '#FFF0A0' : '#FFD84A', 1); }); });
+    if(oy + 2 * s <= y) fxDot(c, ox + (turn ? 2 : 3) * s, oy + s, Math.max(1, s - (s > 2 ? 1 : 0)), '#1A1A1A', 1);
+    // a splash as it comes up
+    if(q < 0.3) for(let i = 0; i < 4; i++){ const u = q / 0.3, side = i & 1 ? 1 : -1;
+      fxDot(c, x + side * (s * 2 + u * h * (0.12 + (i >> 1) * 0.08)), y - s - Math.sin(u * Math.PI) * h * (0.1 + (i >> 1) * 0.06), s, i > 1 ? '#FFFFFF' : '#BFE6FA', 1); }
+  },
+  // Hearts: a few hearts float up out of the cup, beating, and pop
+  hearts(c, x, y, cr, h, q, t){
+    if(h < 8) return cupSpeck(c, x, y, h, q, '#FF2F66');
+    const s = Math.max(1, Math.round(h / 22)), H = ['.X.X.', 'XXXXX', '.XXX.', '..X..'];
+    for(let i = 0; i < 5; i++){
+      const u = clamp(q * 1.3 - i * 0.07, 0, 1), pop = 0.55 + hr(i, 370) * 0.35;
+      if(u <= 0 || u >= pop + 0.1) continue;
+      const hx = x + (i - 2) * h * 0.1 * (0.6 + u), hy = y - s * 4 - u * h * (0.12 + ((i * 2) % 5) * 0.06);
+      if(u >= pop){ for(const [dx, dy] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) fxDot(c, hx + dx * s * 2, hy + s * 2 + dy * s * 2, s, '#FFC2D4', 1); continue; }
+      const b = s + (Math.sin(t * 12 + i * 2) > 0.5 && s > 1 ? 1 : 0);
+      H.forEach((row, yy) => [...row].forEach((ch, xx) => { if(ch !== 'X') return;
+        fxDot(c, hx - 2.5 * b + xx * b, hy + yy * b, b, yy === 0 ? '#FFC2D4' : '#FF2F66', 1); }));
+    }
+  },
+  // Bubbles: a burst of bubbles rising out of the cup, wobbling, popping
+  bubbles(c, x, y, cr, h, q, t){
+    if(h < 8) return cupSpeck(c, x, y, h, q, '#BFE6FA');
+    const k = Math.max(1, Math.round(h / 24));
+    for(let i = 0; i < 6; i++){
+      const t0 = i * 0.05, pop = 0.5 + hr(i, 373) * 0.4, u = q - t0;
+      if(u < 0 || q >= pop + 0.08) continue;
+      const r = Math.max(1, Math.round(h * (0.035 + hr(i, 375) * 0.035)));
+      const bx = Math.round(x + ((i * 3) % 6 / 5 - 0.5) * h * 0.6 + Math.sin(q * 14 + i) * k), by = Math.round(y - r - k - u * h * (0.2 + (i % 3) * 0.1));
+      if(q >= pop){ for(const [dx, dy] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) fxDot(c, bx + dx * (r + k), by + dy * (r + k), k, '#FFFFFF', 1); continue; }
+      const n = Math.max(8, Math.round(r * 5));
+      for(let j = 0; j < n; j++){ const a = j / n * Math.PI * 2;
+        fxDot(c, bx + Math.cos(a) * r - (k >> 1), by + Math.sin(a) * r - (k >> 1), k, Math.sin(a) > 0.3 ? '#7FC4E8' : '#D8F2FF', 1); }
+      fxDot(c, bx - Math.round(r * 0.5), by - Math.round(r * 0.5), k, '#FFFFFF', 1);
+    }
+  },
+  // Confetti: a pop of confetti out of the cup, the bits turning as they fall
+  confetti(c, x, y, cr, h, q, t){
+    const k = Math.max(1, Math.round(h / 20)), COLS = ['#FF4FB8', '#3FE0FF', '#FFE14A', '#7CFF6A'];
+    for(let i = 0; i < 16; i++){
+      if(hr(i, 376) < q * q * 1.3 - 0.25) continue;
+      const a = (i / 15 - 0.5) * 2, top = h * (0.3 + hr(i, 377) * 0.2);
+      const px = x + Math.sin(a) * h * 0.45 * q, py = y - k - 4 * q * (1 - q * 0.8) * top;
+      const flat = (Math.floor(t * 14) + i) & 1;
+      c.globalAlpha = 1; c.fillStyle = COLS[i & 3];
+      c.fillRect(Math.round(px), Math.round(py), flat ? k * 2 : k, flat ? k : k * 2);
+    }
+  },
+  // Comet: a spray of sparks thrown up out of the cup, each with its tail
+  comet(c, x, y, cr, h, q, t){
+    const k = Math.max(1, Math.round(h / 14));
+    if(q < 0.18) fxDot(c, x - k, y - k * 2, k * 2, '#FFF3B0', 1);
+    for(let i = 0; i < 14; i++){
+      if(hr(i, 378) < q * 0.9 - 0.1) continue;
+      const a = (i / 13 - 0.5) * 2.2, v = h * (0.42 + hr(i, 379) * 0.2);
+      const at = u => ({ x: x + Math.sin(a) * v * u * 0.8, y: y - k - (Math.cos(a) * v * u * 1.5 - v * u * u * 1.1) });
+      const p = at(q), b = at(Math.max(0, q - 0.06)), e = at(Math.max(0, q - 0.12));
+      if(q > 0.12) fxDot(c, e.x, e.y, k, '#A8321A', 1);
+      fxDot(c, b.x, b.y, k, '#F0612A', 1);
+      fxDot(c, p.x, p.y, k, i % 3 ? '#FFB43A' : '#FFF3B0', 1);
+    }
+  },
+  // Black Hole: a swirl sucked down into the cup, a dark core and a wink of
+  // light as it shuts
+  blackhole(c, x, y, cr, h, q, t){
+    const k = Math.max(1, Math.round(h / 16)), o = q < 0.15 ? q / 0.15 : q < 0.75 ? 1 : q < 0.85 ? 1 - (q - 0.75) / 0.1 : 0;
+    if(o > 0.1) { fxEllipse(c, x, y, Math.max(1, h * 0.16 * o) + k, Math.max(1, h * 0.06 * o) + k, '#C68BFF', 1);
+      fxEllipse(c, x, y, Math.max(1, h * 0.16 * o), Math.max(1, h * 0.06 * o), '#050308', 1); }
+    for(let i = 0; i < 18; i++){
+      const u = clamp(q * 1.3 - hr(i, 380) * 0.3, 0, 1); if(u <= 0 || u >= 1) continue;
+      const a = i / 18 * Math.PI * 2 + u * 4, r = h * 0.4 * (1 - u) + h * 0.05;
+      fxDot(c, x + Math.cos(a) * r - (k >> 1), y + Math.sin(a) * r * 0.36 - (1 - u) * h * 0.08, k, i % 3 === 0 ? '#FFFFFF' : i & 1 ? '#C68BFF' : '#7A4AC0', 1);
+    }
+    if(q >= 0.85) for(const [dx, dy] of [[0, -2], [2, 0], [0, 2], [-2, 0]]) fxDot(c, x + dx * k * (q > 0.93 ? 2 : 1) - (k >> 1), y - k + dy * k * 0.5, k, '#FFFFFF', 1);
   }
 };
+function cupSpeck(c, x, y, h, q, col){
+  if(q > 0.85) return;
+  fxDot(c, x, y - 1 - Math.round(Math.sin(q / 0.85 * Math.PI) * h * 0.45), 1, col, 1);
+}
 // each set's wake plays its set's moment too
 CUP_FX.tHorizon = CUP_FX.singularity;
 CUP_FX.tAscension = CUP_FX.ascorb;
+CUP_FX.tSeraph = CUP_FX.godlight;
+CUP_FX.tHellfire = CUP_FX.demoneye;
 // ---- The Void ----
 // Where the belt is in a sprite, as shares of it: its first long run of belt
 function beltOf(rows){
@@ -18791,6 +18885,8 @@ Object.assign(Scene, {
   // green and sparks. Demon Eye: a ring of fire about the cup and the eye
   // looking up out of it. Ascended Orb: the void drawn down into the cup in
   // a spiral, and a white flash as it closes.
+  // The cheaper balls have a smaller one each (a duck bobbing up, hearts,
+  // bubbles, confetti, sparks, a swirl sucked in); the plain wakes none.
   drawCupFx(wager){
     // (the ball's own moment, or else its wake's)
     const bn = ballNow(), fx = bn && CUP_FX[bn.fx] ? bn.fx : trailNow().fx;

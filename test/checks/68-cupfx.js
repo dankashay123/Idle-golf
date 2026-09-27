@@ -4,7 +4,11 @@
  *   - Godlight, Demon Eye, the Ascended Orb and the Singularity each draw
  *     something as the ball drops (a frame against the same frame with
  *     nothing dropped), and so do the Ascended's and The Void's wakes (the
- *     user found The Void's not its own); no other ball does
+ *     user found The Void's not its own), and the Jade and Hellfire Wakes
+ *     play their sets' too
+ *   - the cheaper balls (Rubber Duck, Hearts, Bubbles, Confetti, Comet,
+ *     Black Hole) have a smaller one each: inside a smaller box, and fewer
+ *     pixels than any of the dear balls'; the plain wakes have none
  *   - short and close: over by 0.55s, and nothing outside a box of the
  *     pin's own size about the cup
  *   - the pin stands in front of it: its pixels the same with and without
@@ -30,9 +34,12 @@ module.exports = {
         const c = Scene.b, px = () => c.getImageData(0, 0, VW, VH).data;
         const blank = () => { c.fillStyle = '#010203'; c.fillRect(0, 0, VW, VH); };
         DEV.course(B.COURSE.findIndex(cs => cs.slot === 'home')); hideSheet();
-        const TOP = ['godlight', 'demoneye', 'ascorb', 'singularity', 'horizon', 'ascension'];
-        const balls = TOP.concat(['classic', 'comet', 'hearts', 'rainbow']).filter(id => styleDef('t', id));
-        if (balls.length < 5) f('the balls to try are missing: ' + balls.join(','));
+        const TOP = ['godlight', 'demoneye', 'ascorb', 'singularity', 'horizon', 'ascension', 'seraph', 'hellfire'];
+        const SMALL = ['duck', 'hearts', 'bubbles', 'confetti', 'comet', 'blackhole'];
+        const PLAIN = ['plain', 'gold', 'aurora', 'ember', 'mythic', 'rainbow'];
+        const balls = TOP.concat(SMALL, PLAIN).filter(id => styleDef('t', id));
+        if (balls.length < TOP.length + SMALL.length + PLAIN.length) f('the balls to try are missing: ' + balls.join(','));
+        delete S.ball;
         for (let hh = 2; hh <= 7; hh++) {
           S.hole = hh; S.chaos = Object.assign({}, B.CHAOS.find(x => x.n === 'Fair')); startHole(); Scene.announce = null; Scene.rain = false; Scene.night = false;
           const PD = Scene.pinD();
@@ -40,7 +47,7 @@ module.exports = {
             Scene.camD = at; Scene.walkTo = at; Scene.swingT = 0; Scene.balls = []; Scene.restBall = null; Scene.t = 30; o.views++;
             for (const id of balls) {
               S.styleOwn['t:' + id] = 1; S.trail = id;
-              const top = TOP.includes(id);
+              const top = TOP.includes(id), small = SMALL.includes(id), has = top || small;
               // a frame of the hole first (it owns the clip line), then the
               // moment alone over a blank
               Scene.cupT = 0; Scene.draw(0, derive());
@@ -52,24 +59,27 @@ module.exports = {
               let total = 0;
               for (const q of [0.1, 0.35, 0.6, 0.9, 1.05]) {
                 Scene.t = 30; Scene.cupT = 30 - q * CUP_FX_DUR; blank(); Scene.drawCupFx();
-                const a = px(); let n = 0, out = 0, under = 0;
+                const a = px(); let n = 0, out = 0, under = 0, big = 0;
                 for (let i = 0; i < a.length; i += 4) {
                   if (a[i] === 1 && a[i + 1] === 2 && a[i + 2] === 3) continue;
                   n++;
                   const x = (i / 4) % VW, y = Math.floor(i / 4 / VW);
                   if (Math.abs(x - p.x) > h * 0.9 + 2 || y < p.y - h * 0.75 - 2 || y > p.y + h * 0.4 + 2) out++;
+                  // (the cheaper balls' inside a smaller box)
+                  if (small && (Math.abs(x - p.x) > h * 0.55 + 2 || y < p.y - h * 0.6 - 2 || y > p.y + h * 0.2 + 2)) { if (!big) o.bx = ' (h ' + h + ', at ' + (x - p.x).toFixed(1) + ',' + (y - p.y) + ')'; big++; }
                   if (y > lineAt(y) + 1) under++;
                 }
                 const where = id + ' hole ' + hh + ' from ' + at.toFixed(0) + ' at ' + q;
                 if (q >= 1 && n) f(where + ': ' + n + ' pixels still there after ' + CUP_FX_DUR + 's');
-                if (!top && n) f(where + ': a plain ball drew ' + n + ' pixels in the cup');
+                if (!has && n) f(where + ': a plain wake drew ' + n + ' pixels in the cup');
+                if (big) f(where + ': ' + big + ' pixels outside the smaller box of a cheaper ball' + o.bx);
                 if (out) f(where + ': ' + out + ' pixels outside the box about the cup');
                 if (under) f(where + ': ' + under + ' pixels under the ground\'s line');
                 total += n;
               }
-              if (top) {
+              if (has) {
                 o.px[id] = (o.px[id] || 0) + total;
-                if (at === PD - 5 && p.y <= cut + 1 && total < 60) f(id + ' hole ' + hh + ': only ' + total + ' pixels from beside the green');
+                if (at === PD - 5 && p.y <= cut + 1 && total < (top ? 60 : 20)) f(id + ' hole ' + hh + ': only ' + total + ' pixels from beside the green');
               }
             }
           }
@@ -96,7 +106,7 @@ module.exports = {
         // the Twilight Putt (the user asked): a putt that drops has the moment
         // too, with a dearest ball; a plain one draws nothing
         o.twi = {};
-        for (const id of ['godlight', 'singularity', 'classic']) {
+        for (const id of ['godlight', 'singularity', 'duck', 'plain']) {
           const fn = CUP_FX[id]; let calls = 0; if (fn) CUP_FX[id] = function () { calls++; return fn.apply(this, arguments); };
           try {
             hideSheet(); QUIET = false; delete S.dgnRun; S.styleOwn['t:' + id] = 1; S.trail = id;
@@ -106,10 +116,13 @@ module.exports = {
               if (Scene.cupT && Scene.cupT !== was) { was = Scene.cupT; drops++; } }
             o.twi[id] = drops + '/' + calls;
             if (!drops) f('no putt dropped in the Twilight Putt with ' + id);
-            else if (fn && id !== 'classic' && !calls) f(id + ': a putt dropped in the Twilight Putt with no moment in the cup');
-            else if (id === 'classic' && CUP_FX.classic) f('a plain ball has a moment in the cup');
+            else if (fn && id !== 'plain' && !calls) f(id + ': a putt dropped in the Twilight Putt with no moment in the cup');
+            else if (id === 'plain' && CUP_FX.plain) f('a plain ball has a moment in the cup');
           } finally { if (fn) CUP_FX[id] = fn; delete S.dgnRun; QUIET = true; }
         }
+        // the cheaper balls' moments are smaller than any of the dear balls'
+        { const least = Math.min(...['godlight', 'demoneye', 'ascorb', 'singularity'].map(id => o.px[id] || 0));
+          for (const id of SMALL) if (!((o.px[id] || 0) < least)) f(id + ' draws ' + o.px[id] + ' pixels, not fewer than the least of the dear balls (' + least + ')'); }
         if (rnd) f('the cup moment called Math.random ' + rnd + ' times');
       } finally {
         Scene.drawCupFx = of; Math.random = mr; window.step = keep; FROST_FORCE = null;
@@ -119,7 +132,7 @@ module.exports = {
       return o;
     });
     if (r.fails.length) throw new Error(r.fails.join('; '));
-    return ['Godlight ' + r.px.godlight + ', Demon Eye ' + r.px.demoneye + ', Ascended Orb ' + r.px.ascorb + ', Singularity ' + r.px.singularity + ' pixels over ' + r.views + ' views and five moments; no other ball draws a pixel; in the Twilight Putt (drops/moments drawn) ' + JSON.stringify(r.twi),
+    return ['pixels over ' + r.views + ' views and five moments: ' + JSON.stringify(r.px) + '; the plain wakes draw none; in the Twilight Putt (drops/moments drawn) ' + JSON.stringify(r.twi),
       'gone after 0.55s, all of it inside a pin-sized box about the cup, under the pin, over the ground\'s line; no Math.random'];
   }
 };
