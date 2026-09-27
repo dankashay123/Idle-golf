@@ -53,6 +53,13 @@ module.exports = {
         Scene.balls.push({ d0: 20, dist: 12, t: 0.2, dur: 0.6, el: null, crit: false, seed: 1, lat0: 0.42, lat: 0, cup: 0, tee: 0 });
         S.yards = 0; Scene.drawBalls(0); o.ace2 = [+(Scene.balls[0].d0 + Scene.balls[0].dist).toFixed(2), Scene.balls[0].cup].join('/');
         if (Math.abs(+o.ace2.split('/')[0] - putSpot) > 0.05 || !o.ace2.endsWith('/0')) f('an ace in the air from the fairway came down at ' + o.ace2 + ' (want a putt short, ' + putSpot.toFixed(2) + ')');
+        // ---- a ball lying just short of the putting spot, yardage to go: the
+        // next shot stays short of it (the least carry took it past, nearer
+        // the cup than he putts from) ----
+        fresh(); S.doneT = null; S.yards = S.yardsMax * 0.02; Scene.camD = putSpot - 0.2; Scene.walkTo = Scene.camD;
+        Scene.pendingBall = { crit: false, el: null, dmg: 1 }; Scene.launch();
+        o.short = +(Scene.balls[0].d0 + Scene.balls[0].dist).toFixed(2);
+        if (o.short > putSpot + 0.01) f('from 0.2 short of the putting spot the next shot came down at ' + o.short + ', past it (' + putSpot.toFixed(2) + ')');
         // ---- yardage to go: as it was ----
         fresh(); S.yards = S.yardsMax * 0.5;
         Scene.balls.push({ d0: 20, dist: 12, t: 0.2, dur: 0.6, el: null, crit: false, seed: 1, lat0: 0.42, lat: 0, cup: 0 });

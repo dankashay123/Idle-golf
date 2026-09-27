@@ -14597,8 +14597,11 @@ const Scene = {
     const reach = S.dgnRun || !(S.yardsMax > 0) ? null
                 : last ? (ace ? LEN : putSpot) - this.camD
                 : Math.min(this.spot(clamp(1 - S.yards / S.yardsMax, 0, 1)), putSpot) - this.camD;
+    // (and never past the putting spot, short as it is, unless it goes in:
+    // from a ball lying just short of it the least carry, 0.6, left the
+    // next one lying nearer the cup than he putts from)
     const dist = p.target !== undefined ? Math.max(3, p.target - this.camD)   // an aimed shot flies to its mark
-               : reach !== null ? Math.max(0.6, reach)
+               : reach !== null ? (ace ? Math.max(0.6, reach) : Math.min(Math.max(0.6, reach), Math.max(0.05, putSpot - this.camD)))
                : 14 + Math.random()*9;
     this.balls.push({ d0:this.camD, dist,
                       // a short one is quick and low, a long one hangs

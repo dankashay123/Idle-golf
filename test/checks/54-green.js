@@ -25,6 +25,12 @@
 module.exports = {
   name: 'green',
   async run(page) {
+    // (on a day of its own: the course and its weather follow the date, and
+    // a full run that went over midnight played other holes and met a ball
+    // lying past the putting spot that the day before never showed)
+    await page.evaluate(() => { const RD = Date, at = new RD(2026, 8, 26, 12, 0, 0).getTime(), t0 = RD.now();
+      window.__RealDate = RD;
+      window.Date = class extends RD { constructor(...a) { if (a.length) super(...a); else super(at + RD.now() - t0); } static now() { return at + RD.now() - t0; } }; });
     const r = await page.evaluate(() => {
       const o = {}, SNAP = JSON.stringify(S), mr = Math.random, raf = window.requestAnimationFrame;
       const pn = performance.now.bind(performance);
