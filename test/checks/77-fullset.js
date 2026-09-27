@@ -70,9 +70,9 @@ module.exports = {
         QUIET = false; o.orders = {};
         for (const cat of ['golfer', 'caddie', 'clubs', 'balls']) { styleCat = cat; openShop('style');
           const names = [...document.querySelectorAll('#sheet .card .chd')].map(e => e.textContent);
-          o.orders[cat] = names.filter(n => /Ascend|Void|Eclipse|Horizon|Singularity|Divin|Seraph|Godlight|Demon|Hellfire/.test(n)).slice(0, 4).join(', '); }
+          o.orders[cat] = names.filter(n => /Ascend|Void|Eclipse|Horizon|Singularity|Divin|Jade|Godlight|Demon|Hellfire/.test(n)).slice(0, 4).join(', '); }
         hideSheet();
-        const setOf = n => /Ascend/.test(n) ? 'A' : /Void|Eclipse|Horizon|Singularity/.test(n) ? 'V' : /Divin|Seraph|Godlight/.test(n) ? 'D' : 'M';
+        const setOf = n => /Ascend/.test(n) ? 'A' : /Void|Eclipse|Horizon|Singularity/.test(n) ? 'V' : /Divin|Jade|Godlight/.test(n) ? 'D' : 'M';
         for (const cat in o.orders) { const seq = o.orders[cat].split(', ').map(setOf).join('');
           if (seq !== 'AVDM') f('the ' + cat + ' rack puts the sets ' + o.orders[cat]); }
         // Sets: buy the Divine whole with one piece already owned, too poor first

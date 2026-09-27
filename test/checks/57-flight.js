@@ -8,7 +8,7 @@
  *   - every skin (not the fun suits, whose bits are on the face) draws its
  *     effect in flight: the same flight drawn with the skin's effect and
  *     with it taken away differs, summed over several moments
- *   - the Demonic's and the Divine's wings show either side of him
+ *   - the Demonic's streamers and the Divine's ribbons show either side of him
  *   - nothing is left under his feet in the air: what a skin lays round his
  *     feet (a glow, mist, a puddle of light, the pit's smoke and tendrils, a
  *     banana peel) stays on the ground: at his boots, out past his sides,
@@ -71,7 +71,7 @@ module.exports = {
           if (grounded >= 3) o.fails.push(z.n + ' leaves a glow round his feet in the air, as if on the ground (' + grounded + ' of 5 moments, up to ' + most + ' pixels)');
           o.worst = Math.max(o.worst || -99, most);
           if ((z.fx === 'demonic' || z.fx === 'divine') && (left < 40 || right < 40))
-            o.fails.push(z.n + '\'s wings in flight: ' + left + ' pixels left of him, ' + right + ' right');
+            o.fails.push(z.n + '\'s streamers or ribbons in flight: ' + left + ' pixels left of him, ' + right + ' right');
         }
         // his arms: up, and none hanging at his sides
         o.arms = [];
