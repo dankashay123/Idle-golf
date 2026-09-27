@@ -94,8 +94,12 @@ module.exports = {
       if (el) await el.screenshot({ path: ctx.shots + '/render.png' });
     }
     // 35 is roughly what one band of the dithered sky steps by, so anything
-    // over 60 across the full width is a ruled line and not terrain.
-    const SEAM_MAX = 60;
+    // over 64 across the full width is a ruled line and not terrain. (It was
+    // 60; the woods stood up as real trees, and a crest hiding their feet all
+    // across the Dunes steps 60.1: terrain, as a crest should look. The far
+    // trees' tops over the horizon, which stepped 69.5, were a real fault:
+    // they are hazed now.)
+    const SEAM_MAX = 64;
     const badSeam = seam.filter(s2 => s2.step > SEAM_MAX);
     if (badSeam.length)
       throw new Error('a hard line runs across the frame on '

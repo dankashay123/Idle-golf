@@ -2,7 +2,9 @@
  * caddie, its driver and its wake or its ball. The two Mythic sets first;
  * the Divine and the Demonic count too (the user asked, from the menu).
  *
- *   - one piece off and it is not a full set; all on and it is
+ *   - one piece off and it is not a full set; all on and it is (its wake
+ *     and its ball both, each in its own place: the user found the Sets
+ *     rack left the ball off)
  *   - every piece of it in the Style shop is rimmed in gold and badged
  *     "Full Set" (its wake and its ball both), and no other tile
  *   - said once, the first time; the Record's Full Sets row counts it
@@ -29,13 +31,16 @@ module.exports = {
         for (const k of ['o:cosmic', 'c:cosmic', 'k:cosmic', 't:horizon', 't:singularity']) S.styleOwn[k] = 1;
         styleBuy('o', 'cosmic'); styleBuy('k', 'cosmic'); styleBuy('t', 'horizon'); styleBuy('c', 'bib');
         o.part = fullSet(); o.saidPart = toasts.length;
-        styleBuy('c', 'cosmic'); o.full = fullSet(); o.said = toasts.slice();
-        styleBuy('t', 'singularity'); o.withBall = fullSet(); o.saidAgain = toasts.length;
-        // the Divine, worn whole with its ball; then back to The Void for the shop
-        for (const k of ['o:divine', 'c:divine', 'k:divine', 't:godlight']) S.styleOwn[k] = 1;
-        for (const [k, id] of [['o', 'divine'], ['c', 'divine'], ['k', 'divine'], ['t', 'godlight']]) styleBuy(k, id);
+        // (its wake and its ball both, each in its own place: the user found
+        // the Sets rack left the ball off)
+        styleBuy('c', 'cosmic'); o.noBall = fullSet(); o.saidNoBall = toasts.length;
+        styleBuy('t', 'singularity'); o.full = fullSet(); o.said = toasts.slice(); o.both = S.trail + '+' + (ballNow() || {}).id;
+        o.withBall = o.full; o.saidAgain = toasts.length;
+        // the Divine, worn whole with its wake and its ball; then back to The Void for the shop
+        for (const k of ['o:divine', 'c:divine', 'k:divine', 't:godlight', 't:seraph']) S.styleOwn[k] = 1;
+        for (const [k, id] of [['o', 'divine'], ['c', 'divine'], ['k', 'divine'], ['t', 'seraph'], ['t', 'godlight']]) styleBuy(k, id);
         o.divine = fullSet(); o.saidDivine = toasts[toasts.length - 1];
-        for (const [k, id] of [['o', 'cosmic'], ['c', 'cosmic'], ['k', 'cosmic'], ['t', 'singularity']]) styleBuy(k, id);
+        for (const [k, id] of [['o', 'cosmic'], ['c', 'cosmic'], ['k', 'cosmic'], ['t', 'horizon'], ['t', 'singularity']]) styleBuy(k, id);
         // the score box, edged in the set's colour; plain again with a piece off
         const ro = document.getElementById('readout'), edge = () => { renderLive(); return getComputedStyle(ro).borderTopColor + '/' + getComputedStyle(ro).boxShadow; };
         o.edge = edge(); styleBuy('c', 'bib'); o.edgeOff = edge(); styleBuy('c', 'cosmic');
@@ -51,6 +56,8 @@ module.exports = {
         o.record = row ? row.children[2].textContent.replace(/ /g, ' ') : 'missing';
         hideSheet(); QUIET = true;
         if (o.part || o.saidPart) f('with the plain caddie it counted as a full set (' + o.part + ', said ' + o.saidPart + ')');
+        if (o.noBall || o.saidNoBall) f('without its ball it counted as a full set');
+        if (o.both !== 'horizon+singularity') f('its wake and its ball are not worn together: ' + o.both);
         if (o.full !== 'cosmic' || o.withBall !== 'cosmic' || o.said.length !== 1 || o.said[0] !== 'Full Set · The Void' || o.saidAgain !== 1)
           f('the full set: ' + o.full + ', with its ball ' + o.withBall + ', said ' + JSON.stringify(o.said) + ' then ' + o.saidAgain + ' times');
         if (o.divine !== 'divine' || o.saidDivine !== 'Full Set · Divine') f('the Divine worn whole: ' + o.divine + ', said "' + o.saidDivine + '"');
@@ -76,11 +83,11 @@ module.exports = {
         o.cost = setCost('divine');
         S.sov = need - 1; setBuy('divine'); o.poor = S.sov + ' ' + S.outfit + ' ' + !!S.styleOwn['o:divine'];
         S.sov = need + 100; setBuy('divine'); o.paid = need + 100 - S.sov;
-        o.worn = fullSet() + ' ' + S.trail;
+        o.worn = fullSet() + ' ' + S.trail + ' ' + (ballNow() || {}).id;
         S.outfit = 'classic'; const sov0 = S.sov; setBuy('divine'); o.again = (sov0 - S.sov) + ' ' + fullSet();
         if (o.cost !== need) f('the Divine set, the caddie owned, costs ' + o.cost + ' (its missing pieces are ' + need + ')');
         if (o.poor !== (need - 1) + ' classic false') f('too few sovereigns: ' + o.poor);
-        if (o.paid !== need || o.worn !== 'divine seraph') f('bought whole it took ' + o.paid + ' (need ' + need + ') and wore ' + o.worn);
+        if (o.paid !== need || o.worn !== 'divine seraph godlight') f('bought whole it took ' + o.paid + ' (need ' + need + ') and wore ' + o.worn + ' (want its wake and its ball both)');
         if (o.again !== '0 divine') f('owned, wearing it again took ' + o.again);
         // Unequip (the user asked): a worn set's button takes it all off,
         // back to the plain look; a worn piece's takes it off alone; the
@@ -115,7 +122,7 @@ module.exports = {
       return o;
     });
     if (r.fails.length) throw new Error(r.fails.join('; '));
-    return ['one piece off, no set; all on, The Void worn in full (with its wake or its ball), said once: "' + r.said[0] + '"',
+    return ['one piece off, no set; all on, The Void worn in full (its wake and its ball together), said once: "' + r.said[0] + '"',
       'rimmed in gold: ' + Object.values(r.tiles).join(', ') + '; one set order on every rack (' + r.orders.golfer + '); Sets buys the missing pieces (' + r.cost + ') and wears them whole; the Divine too; the score box edged in its colour; the Record: Full Sets ' + r.record + '; Unequip on a worn set (' + r.unq + ') takes it all off, on a worn look (' + r.unq2 + ') just that; a broken save repaired'];
   }
 };

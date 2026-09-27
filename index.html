@@ -3933,7 +3933,7 @@ function defaultState(){ return {
   swingT: 0, frost: 0, burn: 0, burnT: 0, buff: {},
   scores: [], mult: 1,
   nine: null, bestNine: undefined, ninesWon: 0,
-  styleOwn: {}, outfit: 'classic', trail: 'plain',
+  styleOwn: {}, outfit: 'classic', trail: 'plain', ball: null,
   rival: null, form: undefined,
   evCourse: null, weekly: null, majorWins: {}, homes: {},
   // what each event came to (the season calendar), and the best cards
@@ -4046,6 +4046,10 @@ function initState(){
     if(S.trail === 'petalwake') S.trail = 'horizon'; if(S.trail === 'blossombud') S.trail = 'singularity'; }
   if(!styleOwned('o', S.outfit)) S.outfit = 'classic';
   if(!styleOwned('t', S.trail)) S.trail = 'plain';
+  // (a ball has its own place now, beside the wake: one worn where the wake
+  // goes, from before, moves over)
+  if(isBallItem(styleDef('t', S.trail))){ S.ball = S.trail; S.trail = 'plain'; }
+  if(S.ball !== null && S.ball !== undefined && !(isBallItem(styleDef('t', S.ball)) && styleOwned('t', S.ball))) S.ball = null;
   if(!styleOwned('c', S.caddie)) S.caddie = 'bib';
   if(!styleOwned('k', S.club)) S.club = 'steel';
   if(!S.cperkOwn || typeof S.cperkOwn !== 'object') S.cperkOwn = {};
@@ -7239,7 +7243,18 @@ const styleOwned = (k, id) => { const d = styleDef(k, id);
 let PREVIEW = null;
 const previewOf = k => PREVIEW && PREVIEW.k === k && Date.now() < PREVIEW.until ? styleDef(k, PREVIEW.id) : null;
 const outfitNow = () => previewOf('o') || styleDef('o', S.outfit) || B.OUTFITS[0];
-const trailNow  = () => previewOf('t') || styleDef('t', S.trail) || B.TRAILS[0];
+// A wake and a ball are worn together (the user: a set's one tap "does not
+// equip the ball"): the wake, a ribbon behind the ball, in S.trail; the
+// ball, a ball of its own, in S.ball. (A ball put where the wake goes, as
+// before, still counts as the ball.)
+const isBallItem = d => !!d && d.cat === 'ball';
+const trailNow  = () => { const P = previewOf('t'); if(P && !isBallItem(P)) return P;
+  const d = styleDef('t', S.trail); return d && !isBallItem(d) ? d : B.TRAILS[0]; };
+const ballNow   = () => { const P = previewOf('t'); if(P && isBallItem(P)) return P;
+  const b = styleDef('t', S.ball); if(isBallItem(b)) return b;
+  const d = styleDef('t', S.trail); return isBallItem(d) ? d : null; };
+// what the ball looks like: its own, or the wake's
+const ballLookNow = () => ballNow() || trailNow();
 const caddieNow = () => previewOf('c') || styleDef('c', S.caddie) || B.CADDIES[0];
 const clubNow   = () => previewOf('k') || styleDef('k', S.club) || B.CLUBS[0];
 // The four top sets (two Mythic, two Legendary), and what makes each whole:
@@ -7257,8 +7272,10 @@ const setRank = (k, id) => { const i = SET_ORDER.indexOf(fullSetOf(k, id)); retu
 function fullSetOf(k, id){ for(const s in FULL_SETS) if(k === 't' ? FULL_SETS[s].t.includes(id) : id === s) return s; return null; }
 // the top set he wears in full (never while trying one on)
 function fullSet(){
-  for(const s in FULL_SETS) if(S.outfit === s && S.caddie === s && S.club === s && FULL_SETS[s].t.includes(S.trail)
-    && styleOwned('o', s) && styleOwned('c', s) && styleOwned('k', s) && styleOwned('t', S.trail)) return s;
+  // (its wake and its ball both)
+  const B0 = ballNow(), T0 = trailNow();
+  for(const s in FULL_SETS) if(S.outfit === s && S.caddie === s && S.club === s && T0.id === FULL_SETS[s].t[0] && B0 && B0.id === FULL_SETS[s].t[1]
+    && styleOwned('o', s) && styleOwned('c', s) && styleOwned('k', s) && styleOwned('t', T0.id) && styleOwned('t', B0.id)) return s;
   return null;
 }
 // A whole set at a tap (the user asked): its look, caddie, driver, wake and
@@ -7269,7 +7286,7 @@ const setCost = s => setPieces(s).filter(([k, id]) => !styleOwned(k, id)).reduce
 // stays if it is the set's, else the wake
 function setBuy(s){
   // worn whole: taken off whole, back to the plain look, caddie, club and ball
-  if(fullSet() === s){ PREVIEW = null; for(const k of ['o', 'c', 'k', 't']) styleSet(k, STYLE_DEFAULT[k]); buildSprites(); renderShop(); renderVitals(); return; }
+  if(fullSet() === s){ PREVIEW = null; for(const k of ['o', 'c', 'k', 't']) styleSet(k, STYLE_DEFAULT[k]); S.ball = null; buildSprites(); renderShop(); renderVitals(); return; }
   const cost = setCost(s);
   if(cost > 0){
     if(!spendSov(cost)) return;
@@ -7279,7 +7296,7 @@ function setBuy(s){
   }
   PREVIEW = null;
   S.outfit = s; S.caddie = s; S.club = s;
-  if(!FULL_SETS[s].t.includes(S.trail)) S.trail = FULL_SETS[s].t[0];
+  S.trail = FULL_SETS[s].t[0]; S.ball = FULL_SETS[s].t[1];
   buildSprites();
   if(!S.fullSets[s]){ S.fullSets[s] = 1; toast('Full Set \u00b7 <b>' + FULL_SETS[s].n + '</b>'); }
   renderShop(); renderVitals();
@@ -7298,12 +7315,17 @@ function previewTick(){
 // what he wears when he takes a look off (the user asked for an Unequip)
 const STYLE_DEFAULT = { o: 'classic', c: 'bib', k: 'steel', t: 'plain' };
 const styleWorn = k => k === 'o' ? S.outfit : k === 'c' ? (S.caddie || 'bib') : k === 'k' ? (S.club || 'steel') : S.trail;
-function styleSet(k, id){ if(k === 'o') S.outfit = id; else if(k === 'c') S.caddie = id; else if(k === 'k') S.club = id; else S.trail = id; }
+// whether this one is worn (a ball in its own place, beside the wake)
+const isWorn = (k, id) => k === 't' ? (isBallItem(styleDef('t', id)) ? (ballNow() || {}).id === id && !previewOf('t') : trailNow().id === id && !previewOf('t')) : styleWorn(k) === id;
+function styleSet(k, id){ if(k === 'o') S.outfit = id; else if(k === 'c') S.caddie = id; else if(k === 'k') S.club = id;
+  else if(isBallItem(styleDef('t', id))){ S.ball = id; if(isBallItem(styleDef('t', S.trail))) S.trail = 'plain'; } else S.trail = id; }
 function styleBuy(k, id){
   const d = styleDef(k, id); if(!d) return;
   // worn: taken off, back to the plain one
-  if(styleWorn(k) === id && id !== STYLE_DEFAULT[k]){
-    PREVIEW = null; styleSet(k, STYLE_DEFAULT[k]);
+  if(isWorn(k, id) && id !== STYLE_DEFAULT[k]){
+    PREVIEW = null;
+    if(k === 't' && isBallItem(d)){ S.ball = null; if(S.trail === id) S.trail = 'plain'; }
+    else styleSet(k, STYLE_DEFAULT[k]);
     if(k === 'o' || k === 'c') buildSprites();
     renderShop(); renderVitals(); return;
   }
@@ -7317,10 +7339,8 @@ function styleBuy(k, id){
     toast('<b>' + d.n + '</b> is yours');
     Sfx.play('buy');
   }
-  if(k === 'o'){ S.outfit = id; buildSprites(); }
-  else if(k === 'c'){ S.caddie = id; buildSprites(); }
-  else if(k === 'k') S.club = id;
-  else S.trail = id;
+  styleSet(k, id);
+  if(k === 'o' || k === 'c') buildSprites();
   // the first time a top set is worn in full, it is said, and the Record keeps it
   const FS = fullSet();
   if(FS && !S.fullSets[FS]){ S.fullSets[FS] = 1; toast('Full Set \u00b7 <b>' + FULL_SETS[FS].n + '</b>'); }
@@ -7567,7 +7587,7 @@ function renderShop(){
     const FS = fullSet();
     const card = (k, d, img) => {
       const own = styleOwned(k, d.id);
-      const worn = (k === 'o' ? S.outfit : k === 'c' ? (S.caddie || 'bib') : k === 'k' ? (S.club || 'steel') : S.trail) === d.id;
+      const worn = isWorn(k, d.id);
       // a major's jacket is won, not bought: it names the major instead of a price
       const won = d.major ? courseById(d.major) : null, full = !!FS && fullSetOf(k, d.id) === FS;
       // (worn, it can be taken off, back to the plain one: not the plain one)
@@ -12180,7 +12200,7 @@ const WING = [['....X', '...XX', '..XXw', 'XXXw.'], ['.....', 'XXXww', '.XXXw', 
 // the ball he has on, not a plain white one. cx, cy its centre, r its size.
 // The coloured trails leave the ball itself white, as in flight.
 function drawLyingBall(c, cx, cy, r, t){
-  const fx = trailNow().fx, k = Math.max(1, Math.round(r));
+  const fx = ballLookNow().fx, k = Math.max(1, Math.round(r));
   const x = Math.round(cx - r), y = Math.round(cy - r), d = Math.max(1, Math.round(r * 2));
   const dot = (px, py, s, col, a) => fxDot(c, px, py, s, col, a === undefined ? 1 : a);
   switch(fx){
@@ -16250,29 +16270,69 @@ Object.assign(Scene, {
         R.rows.push(row); }
       ST.m.set(key, R); return R;
     };
-    const S0 = 1.3, far = cam + 120;
-    for(let r = Math.floor(far / S0); r * S0 > cam + 1.2; r--){
-      const d0 = r * S0 + (hr(r, 570) - 0.5) * 0.5, p0 = this.proj(d0, 0), U = this.proj(d0, 1).x - p0.x;
+    const S0 = 1.5, far = cam + 120;
+    // (far off, faded toward the sky as the ground's haze fades what is under
+    // it: tops over the horizon it does not reach read as a line ruled
+    // against the sky)
+    const T = this.theme || THEMES.day, sky = T.sky[4];
+    const HZ = this._forHz && this._forHz.sky === sky && this._forHz.ts === TS ? this._forHz : (this._forHz = { sky, ts: TS, m: new Map() });
+    // a stamp's runs at a fog, the colours ready for the pixel buffer
+    const fogged = (R, key, f) => { const k = key + '|' + f; let F = HZ.m.get(k); if(F) return F;
+      F = R.rows.map(row => row.map(([i, n, col]) => { const cc = f > 0 ? mixC(col, sky, f) : col; PixPaint.fillStyle = cc; return [i, n, cc, PixPaint.cur]; }));
+      HZ.m.set(k, F); return F; };
+    const fast = g === PixPaint;
+    // where the trees stand: laid once a hole (a staggered grid from a hash,
+    // only inside the woods, their straight starts made ragged), by row
+    const L = this._forest && this._forest.back === this.back ? this._forest : (this._forest = this.layForest(S0));
+    for(let ri = L.rows.length - 1; ri >= 0; ri--){
+      const Rw = L.rows[ri]; if(Rw.d > far) continue; if(Rw.d < cam + 1.2) break;
+      const p0 = this.proj(Rw.d, 0), U = this.proj(Rw.d, 1).x - p0.x;
       if(!(U > 0)) continue;
       // (thinning out and shrinking far off into the painted canopy, not
       // stopping in a row: that read as a line ruled across the view)
-      const hp0 = 46 * p0.s * US; if(hp0 < 2.6) continue;
-      const keep = clamp((hp0 - 2.6) / 5, 0.2, 1);
-      const xa = (-12 - p0.x) / U, xb = (VW + 12 - p0.x) / U, off = r & 1 ? S0 * 0.5 : 0;
-      const cut = this.clipAt(d0);
-      for(let j = Math.floor((xa - off) / S0); j <= Math.ceil((xb - off) / S0); j++){
-        const x = j * S0 + off + (hr(r * 97 + j, 571) - 0.5) * 0.6, d = d0 + (hr(j, r + 572) - 0.5) * 0.4;
-        if(keep < 1 && hr(r * 53 + j, 575) > keep) continue;
-        if(!(this.inFill(d, x, -0.6, 'wood') || this.inBack(d, x, -0.6)) || this.inBack(d, x, 0.4, 1) || this.hitsHazard(d, x, 0.3)) continue;
-        const sc = 0.8 + hr(r * 31 + j, 573) * 0.45, hp = Math.max(2, Math.round(hp0 * sc));
-        const oak = tk === 1 || (tk === 2 && hr(j * 7 + r, 574) < 0.42);
-        const R = stamp(oak, hp), pr = this.proj(d, x), X0 = Math.round(pr.x - R.w / 2), Y0 = Math.round(pr.y - hp);
+      const hp0 = 46 * p0.s * US; if(hp0 < 3) continue;
+      const keep = clamp((hp0 - 3) / 9, 0.12, 1);
+      const cut = this.clipAt(Rw.d), fog = Math.round(clamp((Rw.d - cam - 18) / 95, 0, 0.7) * 20) / 20, Yb = Math.round(p0.y);
+      for(const t of Rw.t){
+        if(t.kh > keep) continue;
+        // (nor starting all at one distance near him: their feet in a row)
+        if(Rw.d < cam + 1.5 + t.near) continue;
+        const X = p0.x + t.x * U; if(X < -12 || X > VW + 12) continue;
+        const hp = Math.max(2, Math.round(hp0 * t.sc)), key = (t.oak ? 'o' : 'p') + hp, R = stamp(t.oak, hp), F = fogged(R, key, fog);
+        const X0 = Math.round(X - R.w / 2), Y0 = Yb - hp;
         for(let y = 0; y < hp; y++){
           const Y = Y0 + y; if(Y > cut) break;
-          for(const [i, n, col] of R.rows[y]){ g.fillStyle = col; g.fillRect(X0 + i, Y, n, 1); }
+          const row = F[y];
+          if(fast) for(let k = 0; k < row.length; k++){ g.cur = row[k][3]; g.fillRect(X0 + row[k][0], Y, row[k][1], 1); }
+          else for(let k = 0; k < row.length; k++){ g.fillStyle = row[k][2]; g.fillRect(X0 + row[k][0], Y, row[k][1], 1); }
         }
       }
     }
+  },
+  // the forest's trees, laid once a hole: rows along the hole (far rows last),
+  // each tree its place across, its kind, its size, when it thins out far
+  // off (kh) and how far past him the near ones begin (near)
+  layForest(S0){
+    const tk = (this.land && this.land.kind) || 0, rows = [], K = this.back;
+    const dMax = (K ? Math.max(K.d0, K.near) : LEN) + 60;
+    let xMax = 0; for(const F of this.fills || []) xMax = Math.max(xMax, F.ring ? Math.abs(this.nbrX(F.ring, LEN)) + 8 : 0);
+    for(let r = Math.floor(-4 / S0); r * S0 < dMax; r++){
+      const d0 = r * S0 + (hr(r, 570) - 0.5) * 0.5, off = r & 1 ? S0 * 0.5 : 0, t = [];
+      // (as far across as the view can reach at that distance, both ways)
+      const reach = Math.min(160, Math.max(30, (d0 + 10) * 1.3));
+      for(let j = Math.floor((-reach - off) / S0); j <= Math.ceil((reach - off) / S0); j++){
+        const x = j * S0 + off + (hr(r * 97 + j, 571) - 0.5) * 0.6, d = d0 + (hr(j, r + 572) - 0.5) * 0.4;
+        if(!(this.inFill(d, x, -0.6, 'wood') || this.inBack(d, x, -0.6)) || this.inBack(d, x, 0.4, 1) || this.hitsHazard(d, x, 0.3)) continue;
+        // (a wood that begins straight across, past another hole's green,
+        // begins raggedly: its first trees stand in ones and twos)
+        const bk = hr(j * 3 + r, 577) * 4;
+        if(bk > 0.3 && !(this.inFill(d - bk, x, -0.6, 'wood') || this.inBack(d - bk, x, -0.6))) continue;
+        t.push({ x, sc: 0.7 + hr(r * 31 + j, 573) * 0.75, oak: tk === 1 || (tk === 2 && hr(j * 7 + r, 574) < 0.42),
+                 kh: hr(r * 53 + j, 575), near: hr(j * 5 + r, 576) * 4 });
+      }
+      if(t.length) rows.push({ d: d0, t });
+    }
+    return { back: this.back, rows };
   },
   groundTail(c, T, maxy){
     // whatever is left between the furthest slice and the horizon
@@ -18146,7 +18206,8 @@ Object.assign(Scene, {
         this.balls.splice(i, 1); continue;
       }
       const col = b.el ? (PX[b.el] || PX.white) : PX.white;
-      const BF = BALLFX[trailNow().fx];
+      // the wake's ribbon, then the ball's own over it (either may be none)
+      const BN = ballNow(), BT = BALLFX[trailNow().fx], BB = BN && BALLFX[BN.fx], BF = BT || BB;
       if(BF){
         // a ball effect gets the flight as a path, ball first
         const path = []; let rr = 1;
@@ -18165,7 +18226,7 @@ Object.assign(Scene, {
           if(k === 0) rr = Math.max(1, Math.round(B_BALL * p.s * US));
           path.push(p);
         }
-        if(path.length) BF(c, b, path, rr, this.t, u);
+        if(path.length){ if(BT) BT(c, b, path, rr, this.t, u); c.globalAlpha = 1; c.globalCompositeOperation = 'source-over'; if(BB) BB(c, b, path, rr, this.t, u); }
         c.globalAlpha = 1; c.globalCompositeOperation = 'source-over';
         continue;
       }
@@ -18663,7 +18724,8 @@ Object.assign(Scene, {
   // looking up out of it. Ascended Orb: the void drawn down into the cup in
   // a spiral, and a white flash as it closes.
   drawCupFx(wager){
-    const fx = trailNow().fx;
+    // (the ball's own moment, or else its wake's)
+    const bn = ballNow(), fx = bn && CUP_FX[bn.fx] ? bn.fx : trailNow().fx;
     if(!this.cupT || (S.dgnRun && !wager) || !CUP_FX[fx]) return;
     const q = (this.t - this.cupT) / CUP_FX_DUR;
     if(q < 0 || q >= 1) return;
@@ -20792,7 +20854,7 @@ const DEV = {
   style(){ B.OUTFITS.forEach(o => S.styleOwn['o:' + o.id] = 1); B.TRAILS.forEach(t => S.styleOwn['t:' + t.id] = 1);
     B.CADDIES.forEach(d => S.styleOwn['c:' + d.id] = 1); B.CLUBS.forEach(d => S.styleOwn['k:' + d.id] = 1);
            this.re(); },
-  style0(){ S.styleOwn = {}; S.outfit = 'classic'; S.trail = 'plain'; S.caddie = 'bib'; S.club = 'steel'; buildSprites(); this.re(); },
+  style0(){ S.styleOwn = {}; S.outfit = 'classic'; S.trail = 'plain'; S.ball = null; S.caddie = 'bib'; S.club = 'steel'; buildSprites(); this.re(); },
   // today's challenges done the honest way: the counter is moved back so the
   // target is met, and the normal check pays it
   daily(n){ dailyTick(); const Dy = S.daily; let k = 0;
@@ -21312,7 +21374,7 @@ function saverDraw(dt){
     drawLyingBall(c, b.x, G - 1, 1.3, V.t);
   }
   const at = (b, q) => ({ x: b.x0 + (b.x1 - b.x0) * q, y: G - 1 - b.top * 4 * q * (1 - q), s: 1 });
-  const BF = BALLFX[trailNow().fx];
+  const BN = ballNow(), BT = BALLFX[trailNow().fx], BB = BN && BALLFX[BN.fx], BF = BT || BB;
   for(let i = V.balls.length - 1; i >= 0; i--){
     const b = V.balls[i]; b.t += dt;
     const q = b.t / b.dur;
@@ -21320,7 +21382,8 @@ function saverDraw(dt){
     if(BF){
       const path = [];
       for(let k = 0; k <= 12 && q - k * 0.028 >= 0; k++) path.push(at(b, q - k * 0.028));
-      BF(c, b, path, 1, V.t, q);
+      if(BT) BT(c, b, path, 1, V.t, q); c.globalAlpha = 1; c.globalCompositeOperation = 'source-over';
+      if(BB) BB(c, b, path, 1, V.t, q);
       c.globalAlpha = 1; c.globalCompositeOperation = 'source-over';
       continue;
     }
