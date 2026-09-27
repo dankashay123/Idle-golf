@@ -51,7 +51,9 @@ module.exports = {
         if (!(o.peak >= 6)) f('no hood standing over his cap: ' + o.peak + ' pixels above it');
         o.mask = has(P, ['#C9A45C', '#8A6A30'], (x, y) => y > hd.y && y < hd.y + H * 0.2);
         const E = eyeAt(G); o.eye = has(P, ['#B98CFF', '#FFFFFF'], (x, y) => Math.abs(x - E.x) <= 2 && Math.abs(y - E.y) <= 1);
-        if (!(o.mask >= 6) || !(o.eye >= 2)) f('the gold mask ' + o.mask + ' pixels, the violet eye ' + o.eye);
+        // (5: his face is a row shorter since the address stance was redrawn
+        // after the user's picture, taller and less bent over)
+        if (!(o.mask >= 5) || !(o.eye >= 2)) f('the gold mask ' + o.mask + ' pixels, the violet eye ' + o.eye);
         const C = STYLEFX.cosmic.coreAt(G);
         o.orb = [has(P, ['#05030C'], (x, y) => Math.abs(x - C.x) <= 2 && Math.abs(y - C.y) <= 2), has(P, ['#D8B060', '#9A7432'], (x, y) => Math.abs(x - C.x) <= 4 && Math.abs(y - C.y) <= 4)];
         if (!(o.orb[0] >= 3) || !(o.orb[1] >= 4)) f('the black hole on his chest: dark ' + o.orb[0] + ', gold ring ' + o.orb[1]);
@@ -109,7 +111,7 @@ module.exports = {
         Object.assign(saved.styleOwn = saved.styleOwn || {}, { 'o:blossom': 1, 'c:blossom': 1, 'k:blossom': 1, 't:petalwake': 1, 't:blossombud': 1 });
         saved.outfit = 'blossom'; saved.caddie = 'blossom'; saved.club = 'blossom'; saved.trail = 'blossombud';
         Object.keys(S).forEach(k => delete S[k]); Object.assign(S, saved); initState();
-        o.moved = [S.outfit, S.caddie, S.club, S.trail, ['o:cosmic', 'c:cosmic', 'k:cosmic', 't:horizon', 't:singularity'].every(k => S.styleOwn[k]), Object.keys(S.styleOwn).some(k => /blossom|petal/.test(k))].join('/');
+        o.moved = [S.outfit, S.caddie, S.club, S.ball || S.trail, ['o:cosmic', 'c:cosmic', 'k:cosmic', 't:horizon', 't:singularity'].every(k => S.styleOwn[k]), Object.keys(S.styleOwn).some(k => /blossom|petal/.test(k))].join('/');
         if (o.moved !== 'cosmic/cosmic/cosmic/singularity/true/false') f('a save with the Spirit Blossom became ' + o.moved);
       } finally {
         QUIET = false; Scene.legend = null;

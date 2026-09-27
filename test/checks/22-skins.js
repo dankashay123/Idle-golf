@@ -198,8 +198,8 @@ module.exports = {
         o.tryInSave = JSON.stringify(S).indexOf('divine') >= 0;
         PREVIEW.until = Date.now() - 1; previewTick();
         o.tryAfter = outfitNow().id;
-        styleTry('t', 'godlight'); o.tryBall = trailNow().id; PREVIEW.until = Date.now() - 1; previewTick();
-        o.tryBallAfter = trailNow().id;
+        styleTry('t', 'godlight'); o.tryBall = ballLookNow().id; PREVIEW.until = Date.now() - 1; previewTick();
+        o.tryBallAfter = ballLookNow().id;
 
         // ---- the shop lists every look once, each with its own picture --------
         // one rack at a time, picked along the top: all four, through their buttons

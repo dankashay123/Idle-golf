@@ -9317,16 +9317,16 @@ const G_ADDR_ROWS = [
     '........................................',
     '........................................',
     '........................................',
-    '..........................ccccc.........',
-    '.........................cccccccC.......',
-    '.........................ccccccCC.......',
-    '..........................ccccCCCCCC....',
-    '...........................kkkkkbK......',
-    '...........................kkkkkKk......',
-    '...........................kkkkKKK......',
-    '...........................kkkKKK.......',
-    '..........................kkkkK.........',
-    '.......................sTTTTTTTT........',
+    '...........................ccccc........',
+    '..........................cccccccC......',
+    '..........................ccccccCC......',
+    '..........................cccccCCC......',
+    '...........................cccCCCCCCCC..',
+    '............................kkkkkbK.....',
+    '...........................kkkkkkKk.....',
+    '...........................kkkkkKKK.....',
+    '...........................kkkkKK.......',
+    '.......................sTTTkkkKT........',
     '....................sssSSSSSTTT.........',
     '...................sssSSSSSSTTT.........',
     '...................sssSSSSSTTT..........',
@@ -9612,7 +9612,7 @@ function buildSprites(){
   // growing out of his chest at the finish.
   SPRITE.gAddr.ax = 0.66; SPRITE.gAddr.ay = 0.250;
   // (broad in his own picture at address: built out half as much there)
-  SPRITE.gAddr.bulkS = 0.5;
+  SPRITE.gAddr.bulkS = 0.8;
   SPRITE.gFinish.ax = 0.60; SPRITE.gFinish.ay = 0.266;
   SPRITE.gWalk.ax = 0.58; SPRITE.gWalk.ay = 0.266;
   SPRITE.flagA = makeSprite([
@@ -9700,13 +9700,15 @@ const B_GREEN_STAND = 2.2, B_GREEN_UP = 2.7, PUTT_HIT = 0.43, PUTT_ROLL = 0.6;
 const PIN_X = 0.9;
 // Nine pin positions (the user asked: "every flag/hole on the green is in
 // the exact same spot every time"): front, middle and back of the green,
-// each left, middle and right (never on his line, where he would stand on
-// it). Along the hole, and across. Each hole takes the next one round the
+// each at three places across it (never on his line, where he would stand
+// on it). Along the hole, and across. Each hole takes the next one round the
 // nine, and they all move on a day; a wager's green keeps its pin in the
 // middle, on his line.
 // how far apart along the hole two greens beside each other must be
 const GREEN_GAP = 16;
-const PINS = [[-3.2, -1.0], [0, 0.5], [3.2, 1.4], [0, -1.0], [3.2, 0.5], [-3.2, 1.4], [3.2, -1.0], [-3.2, 0.5], [0, 1.4]];
+// (across, all to the right of his line: a putt to one left of it, or
+// just right of it, rolled behind his legs, where he hid it)
+const PINS = [[-3.2, 0.85], [0, 1.2], [3.2, 1.5], [0, 0.85], [3.2, 1.2], [-3.2, 1.5], [3.2, 0.85], [-3.2, 1.2], [0, 1.5]];
 const pinFor = h => PINS[(holeInRound(h) - 1 + dayIndex(h) * 4 + tournamentOf(h) * 2) % PINS.length];
 // How far behind the golfer the camera sits, in world units. Small numbers put
 // you over his shoulder with the hole falling away hard; large numbers flatten
@@ -10324,8 +10326,11 @@ function voidCape(w, h, pose, ph){
       outer = [[0.32, 0.21], [0.25 + sw, 0.50], [0.19 + sw * 2, 0.84]];
       inner = [[0.81 + sw * 2, 0.84], [0.75 + sw, 0.50], [0.68, 0.21]];
     }else{
-      const flow = 0.10 + 0.05 * s, top = pose ? [[0.60, 0.24], [0.46, 0.27]] : [[0.66, 0.27], [0.44, 0.40]];
-      outer = [top[1], [top[1][0] - 0.2 - flow * 0.5, 0.58], [0.02 - flow, 0.82]];
+      // (at address from the top of his back, streaming well out past his
+      // seat: he stands taller since the user's picture, and broad, and it
+      // hung hidden behind him)
+      const flow = 0.10 + 0.05 * s, top = pose ? [[0.60, 0.24], [0.46, 0.27]] : [[0.60, 0.25], [0.48, 0.28]];
+      outer = [top[1], [top[1][0] - (pose ? 0.2 : 0.36) - flow * 0.5, 0.58], [(pose ? 0.02 : -0.06) - flow, 0.82]];
       inner = [[0.48, 0.88], [top[0][0] - 0.05, 0.5], top[0]];
     }
     // the hem, torn: between the foot of the streaming edge and the foot of the other
@@ -11302,7 +11307,10 @@ const STYLEFX = {
         return;
       }
       const s = g.spr, P2 = p * 1.25, C = voidCrescent(P2, -1);
-      const bx = Math.round(g.x + g.w * ((s.ax || 0.66) - 0.05) + sh), by = Math.round(g.y + g.h * ((s.ay || 0.30) - 0.01));
+      // (at address on the top of his back, behind his head: at the arm's
+      // root, now he stands taller, it covered his mask)
+      const ca = s === SPRITE.gAddr ? [0.57, 0.285] : [(s.ax || 0.66) - 0.05, (s.ay || 0.30) - 0.01];
+      const bx = Math.round(g.x + g.w * ca[0] + sh), by = Math.round(g.y + g.h * ca[1]);
       c.globalAlpha = 1; c.drawImage(C.cv, bx - C.ox, by - C.oy);
       // the void orb held in its curve, and the bronze plate over his shoulder
       voidOrb(c, bx - 4.2 * P2, by - 6.5 * P2, Math.max(1, Math.round(1.9 * P2)), g.t, false);
@@ -14082,7 +14090,7 @@ const Scene = {
     const h = Math.max(8, Math.round(gh * 0.36)), w = Math.max(5, Math.round(h * 40 / 58));
     if(this._reach === undefined){
       let m = 0;
-      for(let a = -2.5; a <= 0.5; a += 0.02) m = Math.min(m, Math.sin(a * 0.55) * 0.30 + Math.sin(a) * 0.60);
+      for(let a = -2.5; a <= 0.5; a += 0.02) m = Math.min(m, Math.sin(a * 0.55) * 0.30 + Math.sin(a) * 0.64);   // (his arm and club, as paintGolfer has them)
       this._reach = m;
     }
     const clubTip = gx + gw * 0.66 + this._reach * gh;
@@ -15003,8 +15011,9 @@ const Scene = {
     const sm = x => x <= 0 ? 0 : x >= 1 ? 1 : x * x * (3 - 2 * x);
     // (to the cup where it is: on a wager's green the pin stands on his line)
     const P = this.putt, end = this.pinD() + (P.miss ? 1.4 : 0), to = this.pinX() + (P.miss ? P.miss : 0);
+      const k = sm(q);
     return { u, d: P.d0 + (end - P.d0) * q,
-             lat: L0 + (to - L0) * sm(q) + 0.12 * Math.sin(Math.PI * q) };
+             lat: L0 + (to - L0) * k + 0.12 * Math.sin(Math.PI * q) };
   },
   // The Twilight Putt: a putt, not a swing (he chipped them). The stroke
   // and the roll are the course's putt out, quickened to fit the gap to the
@@ -16283,6 +16292,9 @@ Object.assign(Scene, {
       F = R.rows.map(row => row.map(([i, n, col]) => { const cc = f > 0 ? mixC(col, sky, f) : col; PixPaint.fillStyle = cc; return [i, n, cc, PixPaint.cur]; }));
       HZ.m.set(k, F); return F; };
     const fast = g === PixPaint;
+    const foot = pickC(T._rg || expandC(T.rg, 40), 0.5), FT = HZ.foot || (HZ.foot = new Map());
+    const footOf = (row, f) => { let R2 = FT.get(row); if(!R2){ R2 = {}; FT.set(row, R2); } if(R2[f]) return R2[f];
+      return R2[f] = row.map(([i, n, cc]) => { const c2 = mixC(cc, foot, f); PixPaint.fillStyle = c2; return [i, n, c2, PixPaint.cur]; }); };
     // where the trees stand: laid once a hole (a staggered grid from a hash,
     // only inside the woods, their straight starts made ragged), by row
     const L = this._forest && this._forest.back === this.back ? this._forest : (this._forest = this.layForest(S0));
@@ -16304,7 +16316,10 @@ Object.assign(Scene, {
         const X0 = Math.round(X - R.w / 2), Y0 = Yb - hp;
         for(let y = 0; y < hp; y++){
           const Y = Y0 + y; if(Y > cut) break;
-          const row = F[y];
+          // (where a rise in front cuts its foot, the last rows blend toward
+          // the ground, undergrowth: cut hard, a whole forest's feet made a
+          // line across the view)
+          const row = Y >= cut - 1 && Y < Yb ? footOf(F[y], Y === cut ? 0.55 : 0.3) : F[y];
           if(fast) for(let k = 0; k < row.length; k++){ g.cur = row[k][3]; g.fillRect(X0 + row[k][0], Y, row[k][1], 1); }
           else for(let k = 0; k < row.length; k++){ g.fillStyle = row[k][2]; g.fillRect(X0 + row[k][0], Y, row[k][1], 1); }
         }
