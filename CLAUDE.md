@@ -67,10 +67,15 @@ the handoff notes until I tell you to").
   Blossom passed its checks and looked cluttered (it has since been
   replaced by The Void, which the user wanted "bulkier" and full body).
 - **Everyone is bulky, and effects are prominent.** Every look and every
-  caddie is built out behind him (`bulkPlate`) with thicker arms: the user
-  asked it for The Void, then every skin, then everyone. The skins'
-  grounds and the caddie's blessing were "very faint": draw them filled
-  and solid. A new look or effect keeps both.
+  caddie is drawn wider from his own picture (`bulkRow` in `blitShear`)
+  with thicker arms: the user asked it for The Void, then every skin,
+  then everyone, and called the dark plate it was first built out in "a
+  weird darker outline", so never put a plate or rim behind him. The
+  skins' grounds and the caddie's blessing were "very faint": draw them
+  filled and solid. A new look or effect keeps both.
+- **An ace is played from the tee** (no walk, no putt, ACE held a
+  second), and **nothing on the course is bare**: other holes, woods and
+  lakes all round, no hole seen from the green (`course` measures it).
 - Never put a model name in a commit, a code comment or a file. In a commit
   the co-author line reads `Co-Authored-By: Claude <noreply@anthropic.com>`
   whatever the session suggests; keep its session link line.

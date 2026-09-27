@@ -12,10 +12,10 @@ check is for.
   branch `claude/notes-review-r3a9e1`). Nothing is half-built and **no
   request is waiting**: the user's last message was all done (§5, the
   first sections).
-- `node test/run.js` passes all **81 checks** (about twelve minutes; the
-  new one is `bulk`). Frost follows the real hour: after touching weather
-  or colours, run it with `HOUR_FORCE` pinned to 8 and to 15 in a copy
-  (`CLAUDE.md`).
+- `node test/run.js` has **83 checks** (about twelve minutes; the new ones
+  are `course` and `pins`, and `bulk` was rewritten). Frost follows the
+  real hour: after touching weather or colours, run it with `HOUR_FORCE`
+  pinned to 8 and to 15 in a copy (`CLAUDE.md`).
 - **Only update this file and `CLAUDE.md` when the user asks.**
 - Answered, in case it comes up again: **swing speed** still matters fully
   (a hole's time is when the ball drops, and the walk is paid in that
@@ -27,7 +27,17 @@ check is for.
 
 ### Recent work (sections in §5)
 
-- This session, newest first: **every caddie broader**, the plain ones
+- This session, newest first: **the Demonic reworked** after a second
+  picture (deep red and orange: wrappings, a mask, a crest of blades,
+  streamers, ribbons of fire); **everyone built out from his own
+  picture** (the dark plate read as an outline); **Unequip** on every
+  worn look and set; **nine pin positions**; **no two greens side by
+  side**; **an ace is played from the tee** (ACE and a quick burst, a
+  second's hold, the score gone before the next hole); **the course round
+  the hole**: other holes both sides and a second ring, cart paths,
+  woods, lakes, ponds, a forest behind every green, nothing bare, no hole
+  seen from the green, woods round the island and sea stack. Before
+  those: **every caddie broader**, the plain ones
   too; **the cup moments in the Twilight Putt**; a shot short of the green
   **never carries past the putting spot**; **everyone broader** (every
   look built out in its own clothes, thicker arms); the **Sets rack** in
@@ -46,11 +56,12 @@ check is for.
 - **Turned down**: a station on the railway ("would take up too much
   time"); **a photo mode** and **trail flourishes**. Don't offer them again.
 - Older requests are in §6, one line each.
-- **Not yet heard back on** (ask one when it fits, never as a list): how
-  the prominent grounds and the blessing beam look on the phone (the beam
-  covers him more for half a second as it comes down); everyone bulkier;
-  the Sets rack; whether the second music track and the town theme fit;
-  the 2 min battery saver wait.
+- **Not yet heard back on** (ask one when it fits, never as a list): the
+  reworked Demonic; the built-out look from his own picture; the course
+  round the hole since "no bare areas" (a neighbour whose green finds no
+  room is a strip of woods, about one in seven); how the prominent grounds
+  and the blessing beam look on the phone; whether the second music track
+  and the town theme fit; the 2 min battery saver wait.
 - The user usually ends a task by asking **"What's next?"**: a short plain
   menu with a recommendation (§8), then wait for the choice.
 
@@ -86,8 +97,9 @@ check is for.
 - The island crossing (flying on the spinning club) was **their idea**.
 - **The caddie has no wings**: he floats, a little up and down, and now and
   then takes a turn (spin, dance, flip, wave, loop). Their request. (That
-  is the default fairy; the Demonic and Divine caddies have wings of their
-  own, side on. The user said to keep the Divine caddie's.)
+  is the default fairy; the Divine caddie has wings of its own, side on,
+  which the user said to keep. The reworked Demonic's caddie has
+  streamers and a crest instead.)
 - **The great-hole effects** (the four Mythic skins' moments and every other
   skin's flourish) come **only on an albatross or an ace, last half a
   second, and burst out from his outline close about him**. Nothing climbs
@@ -96,19 +108,32 @@ check is for.
   through the swing; spread from behind as he walks away. Wings are
   feathered or membraned, never a solid shape.
 - The word is **scrap**, not salvage; old legacy finds are **heirlooms**.
-- **Everyone is bulkier** (their words, over three asks: "make the skins
-  bulkier like the void skin"): every look and every caddie is built out
-  behind him in plate or in its own clothes, arms a pixel thicker. Keep
-  it on anything new (a new outfit gets it for free; a new effect skin
-  needs `bulkPlate` in its `back`, as the rest have).
+- **Everyone is bulkier, and it blends** (over three asks: "make the
+  skins bulkier like the void skin"; then of the dark plate it was:
+  "it just looks like a weird darker outline. I want it to blend well"):
+  every look and caddie is drawn wider from his own picture (his chest,
+  shoulders and legs stretched about his body's middle, `bulkOf`,
+  `bulkRow` in `blitShear`), arms a pixel thicker. Anything new gets it
+  for free; anything laid over him row by row (the Demonic's seams) or
+  hugging his outline (`outlineOf`) must go through `bulkRow` too. Never
+  put a plate or a darker rim behind him again.
 - **Effects are prominent, not faint**: the user found the grounds and the
   blessing "very faint". Solid pixels, filled, doubled rings; The Void's
   ground is a void open under him, dark, not a faint galaxy.
 - **The four sets keep one order** on every rack of the Style shop:
   Ascended, The Void, Divine, Demonic (`SET_ORDER`). The Sets rack buys
   and wears a set in one tap.
-- **An ace off the tee goes straight in; any other shot is putted out**
-  (the user saw the putt skipped twice: a slow frame, then a fairway ace).
+- **An ace is played from the tee** (their words: "the golfer doesn't
+  leave the tee box and it just says ACE on the screen, with a super
+  quick effect around it ... stay on the hole for 1 second"). Signature
+  holes too: no crossing, no walk, no putt. Every other hole is putted
+  out. **No score is ever still up when a new hole starts.**
+- **The course round the hole**: other holes both sides (mostly), woods,
+  lakes, a cart path running off out of sight, **nothing bare anywhere**,
+  and **no hole seen from the green** (forests, lakes with trees round
+  them). No two greens side by side. The pin moves round nine spots.
+- **Unequip**: a worn look, caddie, club, ball or set reads UNEQUIP and
+  goes back to the plain one.
 
 ### Sound and music
 
@@ -224,8 +249,8 @@ Line numbers are approximate and drift. Search for the name instead.
 | **The Hole of the Week run** | `S.hotw = { wk, n }` in `sigScore`, `B.HOTW_RUN`/`HOTW_SOV`, `hotwRun`, `hotwDone`, repaired in `initState`; the Tour band's last row in `renderSigWeek` |
 | **Night on the signature holes** | `Scene.nightLamp`, `drawIsleLights` (from `drawDucks`), `drawFireflies` (from `drawStones`), the lanterns in `drawPier`, the bulbs in `drawBridge` |
 | **The Signature Week** | `S.sigWk`, `sigWeekKinds`, the tally `sigWeek`, honour `sigWk`, `B.SIG_WEEK_SOV`; counted in `sigScore`; the Record's row; the Tour tab's band (`renderSigWeek`, `#sigBox`) |
-| **The ultimate Demonic** | `STYLEFX.demonic`: `aura` (the shared `flameAura` with `HELL_FLAME`; the Ascended's uses `VOID_FLAME`), `chains`, `cracks`, `fists`, `blast`, `charge`/`strike` (borrowed from the Ascended), `horns` (`sleekHorns(s, view, true)`, views `dside`/`dback`, colours `HORN_COL.dem`) |
-| **The Demonic and the Ascended** (skins, caddies, clubs, trails, balls) | `STYLEFX.demonic`, `STYLEFX.ascended`; baked stamps `fxBake` (with `crispen`, `FXBAKE`), `batWing`, `runeRing`, `drawSkull`, `sleekHorns` (`hornLine`, `HORN_VIEWS`), `voidCape` (`CAPE_PAL`), `voidSigil`, `drawShard`; the aura's `outlineOf` (`occOf`) and `flameAura`; `veinsOf` (the lava cracks' pulse), `eyeAt` (`EYE_ADDR`, `EYE_FIN`, `EYE_CADDIE`), `wingAnchor`, `g.hand` (set in `paintGolfer`), `blitAs` (a copy of him drawn as he is drawn); patterns `hellcrack`, `voidplate`; the outfit field `hand`; `CLUBFX.demonic`/`ascended`; `BALLFX.tHellfire`, `demoneye`, `tAscension`, `ascorb`, `drawDemonEye`, `demonEye`, `drawVoidOrb`; tiles `ICON_FX`, `BALL_ICON`; the Mythic badge is `top: 2` |
+| **The Demonic** (reworked after the user's second picture: deep red and orange) | outfit `demonic` (pattern `wraps`, the mask in `skin`, arms `arm`/`arm2`, dark gloves `hand`); `STYLEFX.demonic`: `ground` (pit, `runeRing`, `cracks`, `bubbles`, `eruption`), `back` (smoke, `tendrils`, `swirl` far half, `streamers` side on, the shadow outline, `aura` via `flameAura` with `HELL_FLAME`, embers), `front` (`streamers` from behind, `veins` over the seams, `crest`, `eyes`, `swirl` near half, `fists`, `blast`, the burst, the eruption's near half); `HELL_VEINS` are the seams' glow colours. The old `wings`, `tail`, `horns`, `chains`, `skulls` are still defined but no longer drawn; `batWing`/`sleekHorns` still serve the Divine and the Ascended |
+| **The Demonic and the Ascended** (skins, caddies, clubs, trails, balls) | `STYLEFX.demonic`, `STYLEFX.ascended`; baked stamps `fxBake` (with `crispen`, `FXBAKE`), `batWing`, `runeRing`, `drawSkull`, `sleekHorns` (`hornLine`, `HORN_VIEWS`), `voidCape` (`CAPE_PAL`), `voidSigil`, `drawShard`; the aura's `outlineOf` (`occOf`) and `flameAura`; `veinsOf` (the lava cracks' pulse), `eyeAt` (`EYE_ADDR`, `EYE_FIN`, `EYE_CADDIE`), `wingAnchor`, `g.hand` (set in `paintGolfer`), `blitAs` (a copy of him drawn as he is drawn); patterns `wraps` (the Demonic's now; `hellcrack` unused), `voidplate`; the outfit field `hand`; `CLUBFX.demonic`/`ascended`; `BALLFX.tHellfire`, `demoneye`, `tAscension`, `ascorb`, `drawDemonEye`, `demonEye`, `drawVoidOrb`; tiles `ICON_FX`, `BALL_ICON`; the Mythic badge is `top: 2` |
 | **The trains** (four kinds) and waving | dev menu: a button per kind by "railway" (`DEV.train(kind)`); `TRAINS`, `trainKind`, the train's `kind` (none is the steam train), picked in `tickRail`; `drawTrain` (by kind), `driverWave`; `Scene.atLine`, `Scene.railWave` (his arm: `paintGolfer`'s last argument `wave`; his caddie's `wave` move); `Sfx.horn`, `Sfx.whistle(t, low, once)`, the toot in `Sfx.tick` (`tootK`) |
 | **Weather on the signature holes** | `Scene.rainRings` (from `ripples`, on the `_rips` rows); snow in `drawBridge`, `drawStones`, `drawPier`, `drawRail`, `drawTrain` (`cap`); the storm in `drawSpray` (`storm`) and the stack's `rock` (breakers); the bridge's `gust` |
 | **Railway Crossing** | `isRail`, `RAIL_FORCE`, `P_RAIL`, `Scene.tickRail`, `railAt`, `railHold`, `railLights`, `drawRail`, `drawTrain`, `RAIL_X`/`RAIL_V`/`RAIL_LEN`/`RAIL_MEET`, `railWait` in the camera code, `Sfx.whistle`/`chuff`/`ding`, `SIG_HOME_ROUND`; `DEV.rail` |
@@ -253,11 +278,15 @@ Line numbers are approximate and drift. Search for the name instead.
 | **Cup moments** (the dearest balls and the two Mythic wakes) | `CUP_FX` (`tHorizon`, `tAscension` share their set's), `Scene.drawCupFx(wager)` (before `drawFlagstick`; its clip reaches to the ground at its own distance in front of the cup; the Twilight Putt calls it with `true`), the hole hold lengthened for them |
 | **Wagers as played** | `wagerSpot(R)`, `Scene.wagerPutt`, `Scene.wagerCallout` (`#callout`), `leaveDgn` (`#leaveBtn`, `#leaveTxt`), `#wagerStat` ("Helped by ..."), `wagerGuide` |
 | **Record folds, Season Bests, Better Season** | `renderRecord` (`.rfold`), `S.seasonBest`, `seasonBestPost`, the Cabinet in `roomCase` |
-| **Bulk** (everyone built out) | `bulkPlate(c, g, dark, edge, legs, alpha, soft)` (from his silhouette, behind him; `soft`: clothes, none from behind), `BULK_PLATE` (the three's plate, wrapped round their `back`), the loop for the other eleven skins, `plainBulk` (every look without an effect, in `paintGolfer`/`paintHeli`), the plain caddie's in `drawCaddie`; the arms `th` in `paintGolfer` (a pixel thicker for all) |
+| **Bulk** (everyone built out, from his own picture) | `bulkOf(h, minor)` (how far: chest `2k+1`, legs `k`; a caddie 1.5 at the chest only, clear of the imp's tail), `bulkAt(b, f)` (eased in over the shoulders, none at head or feet), `bodySpan(spr)` (his body's columns, cached as `spr._body`), `bulkRow(spr, x, w, bulk, f, sp)` (a row's x and width, stretched); used by `blitShear` (his last argument), `silhouette`, `blitAs`, `outlineOf`, the Demonic's `veins`; `g.bulk` set in `golferG` and the caddie's `g`. `bulkPlate`/`plainBulk`/`BULK_PLATE` are gone; the eleven skins keep `O.bulk` (thicker arms) |
 | **Skin grounds** | `voidGalaxy` (now The Void's pit: torn edge, stars sinking, lip, swirl; `cv.ox/oy`), `voidSigil` (filled, doubled rings), `sunSigil`, `runeRing` (solid), the Demonic's resting `cracks`, the lesser skins' `drawGlow` calls; `nightPool` (wider than the grounds) |
 | **The blessing beam** | `Scene.drawBless`: edges, core, ribbons (`TH.ring`, or the perk's own colour), `RUNES` sliding down, sparks; landing ring, spikes, wave; `BLESS_FX` per caddie look; the Mythic Favour `drawFavour` |
 | **Ambience** | `Sfx.AMB_VOL`, `AMB_OF`, `ambOf` (stones, pier, island `lap`, the course), `Sfx.amb` (a filtered noise voice), `river`, `piper`, `moor`, `drift`, `lap`; the tick in `Sfx.tick` |
-| **Shots near the green** | `launch`: `shotN` (only the hole's first shot is off the tee, and only it goes in on an ace), `putSpot` (no shot short of the green carries past it) |
+| **The course round the hole** | `Scene.layCourse` (after `layNight`; all from `hr`, props tagged `extra`): `this.nbrs` (other holes: `sd`, `in` for the second ring, `toward`, `gd` green, `a`/`b` fairway, `lo`/`hi` how far the hole reaches, `tees`, `bks`), `this.fills` (woods and lakes: plain, `after` a ring, `behind` a lake, `ring` over another hole's strip where it is not, `water` clear of an island's or sea stack's water), `this.cart` (the path), `this.pond`, `this.back` (the forest behind the green: `d0`, `near` where it comes round the sides, `cs` the clubhouse's side, `lake`); helpers `nbrX`, `nbrW`, `nbrGX`, `nbrBunkerX`, `onNbr`, `lobeSpan`, `fillIn`, `inFill`, `ringW`, `lakeW`, `cartX`, `inPond`, `backEdge`, `inBack`, `layWoodTrees`, `GREEN_GAP`; painted in `Scene.courseSlice` (from `groundSlice`, before the hole's own fairway); flags are props kind 12 |
+| **Pins** | `PINS` (nine `[along, across]`), `pinFor(h)`, `Scene.pin` (set in `newHole`), `Scene.pinD()` and `Scene.pinX()` (a wager: the middle); every cup use goes through them (`holeWait`, `puttBall`, `launch`'s `putSpot`, `drawBalls`, the camera's goal, `drawFlagstick`, `drawCupFx`) |
+| **An ace from the tee** | `Scene.aceHold(D)` (an ace, or a hole on course to be one at the pace it is played: he stays where he is), `ACE_HOLD` (1s), `CUP_HOLD` (0.6s after any other drop), the ace branch at the top of `holeWait`, `aceH` in the camera code, `Scene.aceBurst` (ACE's rays and sparks, 0.45s, from the banner draw); the banner cleared in `newHole` |
+| **Unequip** | `STYLE_DEFAULT`, `styleWorn`, `styleSet`; `styleBuy` takes a worn look off, `setBuy` a worn set; the `.price.unq` button in `renderShop` |
+| **Shots near the green** | `launch`: an ace's last ball goes in, first shot or not (he stays where he stood: `aceHold`); `putSpot` (no shot short of the green carries past it) |
 
 ### Globals worth knowing
 
@@ -523,9 +552,126 @@ Line numbers are approximate and drift. Search for the name instead.
    the footprint limits (the user asked for "not a ton of the screen") and
    fit the change inside them.
 
+51. **A check's setup can look like an ace.** A fresh hole with the
+   yardage set to nothing and the clock at zero is an ace now, so he
+   stays on the tee and the ball drops in: the putt, crossing and walking
+   checks set `S.elapsed` to a share of par first (`green`, `legends`,
+   `island`, `pier`, `canyon`, `stones`). Do the same in anything new.
+52. **Holding him for an ace must be predictive.** Holding him on the tee
+   while a hole was merely young enough to be an ace kept a normal bag
+   there after every drive; `aceHold` holds only when the yardage left at
+   the current pace would still finish inside the ace's time.
+53. **`hitsHazard` is a box, and its pad is on both axes.** A neighbour's
+   green tried with a pad of 7 hit the hole's own bunkers nearly every
+   time and was never placed (the hole ran on for ever). Test a big thing
+   at a few points with a pad its own size.
+54. **`showSheet` does nothing while `QUIET`.** A check reading the shop's
+   buttons has to render it with `QUIET` off for that moment.
+55. **Measure bare ground by coverage, not by eye.** `course` walks every
+   row of the view from the tee and fails on a stretch of plain rough
+   wider than 5; the user's screenshots of bare corners each turned out to
+   be something no screenshot of mine had shown (past the outer hole on a
+   wide view, beyond a side lake, a neighbour's strip past its green).
+
 ## 5. What the last features do (for debugging them)
 
-### Everyone bulkier (user asked, three times over)
+### The Demonic reworked (user sent a second picture)
+
+- The picture: a hooded hunter bound in wrappings, a pale mask, blades
+  swept back off the hood, swirls of colour; "change the color to a deep
+  red/orange. Crazy cool auras too." Same set, same price, same pieces.
+- Him: crimson wrappings on the slant (pattern `wraps`, its seams in
+  `HELL_VEINS` so `veins` pulses them), a bronze mask (`skin`), dark
+  gloves (`hand`), arms in the cloth (`arm`/`arm2`). `crest`: five blades
+  swept back and up off the hood side on, fanned round it from behind,
+  an edge of fire and white-hot points, a pulse running up. `streamers`:
+  three torn strips flowing back off his shoulders (from behind, over his
+  back, so drawn in `front` there), ragged ends with an ember; the caddie
+  two. `swirl`: two ribbons of fire round him, crossing, bright heads and
+  fading tails, sparks; faster as he winds up, wider on a great hole; far
+  half in `back`, near half in `front`. The hellfire aura taller (h/7),
+  the pit, cracks, fists, blast and eruption as they were.
+- `legends` checks the streamers (side on behind him, none in front; from
+  behind, out either side), the crest (swept back, over his head), the
+  ribbons (both sides, in front of his middle, close), and the caddie's
+  streamers; negative tested. At real size it read muddy until the cloth
+  was brightened, the blades raised and the ribbons drawn as solid lines:
+  look at him at 40px, not only zoomed.
+
+### Everyone built out from his own picture (user: "a weird darker outline")
+
+- The plate behind him (`bulkPlate`) is gone. `blitShear` draws each row
+  of his chest, shoulders and legs stretched about his body's middle
+  (`bulkRow`), so the width is his own clothes, shading and edge; head
+  and feet untouched. The walk, the flight and the caddie use it too; so
+  do copies of him (`blitAs`, `silhouette`) and what hugs his outline
+  (`outlineOf`: the auras were lost under the wider body until it did).
+- `bulk` checks every look and caddie: drawn built out, 2+ pixels each side
+  at the chest, every pixel there a colour of his own row, his edge its
+  own colour, head and feet unchanged; negative tested with a dark rim.
+
+### Unequip (user asked)
+
+- A worn look, caddie, club or ball reads UNEQUIP (`.price.unq`) and
+  goes back to the plain one (`STYLE_DEFAULT`); a worn set's button on
+  Sets takes all five pieces off. The plain ones read Worn. `fullset`.
+
+### Nine pin positions; no two greens side by side (user asked)
+
+- `PINS`: front, middle, back by left, middle, right (never on his line,
+  where he would stand on the cup, nor within 0.6 of the green's edge).
+  `pinFor(h)` steps round them by the hole, the day and the event.
+  Everything about the cup reads `pinD()`/`pinX()`; he stands
+  `B_GREEN_STAND` short of the pin, so from where he putts the pin always
+  looks the same distance away: the change shows on the approach. `pins`.
+- Other greens are kept `GREEN_GAP` (16) along the hole from this one and
+  from the next ring's; `course` fails on two within 15 and 14 across.
+
+### An ace from the tee (user asked)
+
+- `aceHold(D)`: once the hole is an ace, or while the yardage left at the
+  current pace would finish inside an ace's time, he stays where he is
+  (no walk, no crossing, no putt, signature holes too); the last ball goes
+  into the cup (`launch`, `drawBalls`), or drops in there and then when a
+  burn or a skill finished it. `holeWait` holds `ACE_HOLD` (1s) after the
+  drop; every other hole `CUP_HOLD` (0.6s, long enough to read the score;
+  it was 0.3). The banner is cleared in `newHole`. `aceBurst`: rays and
+  sparks round ACE for 0.45s. The readout says "In the Cup".
+- `green` plays aces on a strong bag (held on the tee a second, no walk,
+  no putt) and fails if any hole starts with the last score up.
+
+### The course round the hole (user asked, over four messages)
+
+- "Like an actual golf course ... other holes next to it, cart paths";
+  "the cart path ending abruptly is odd"; "fill the empty space ... there
+  always needs to be holes around the hole being played"; "I just don't
+  want to see any bare areas ... make the view from the greens forests,
+  lakes with trees around it, etc., instead of holes. Signature holes seem
+  to be barren."
+- Each side: the next hole (a first ring following the fairway and bowing
+  out round the green, a second ring beyond, then a wood), or a wood, or
+  a lake in a wood (the clubhouse's side a wood). A hole comes toward us
+  (tees just beside this green) or goes away (from behind); where it is
+  not, past its green or short of its tees, its strip is wood (`ring`).
+  Greens clear of hazards; none past this green. A cart path down one
+  side, round ponds and bunkers, across a river or canyon as the hole is,
+  off into the forest (to the clubhouse on the last hole). Ponds beyond
+  the path, in clearings. Trees between the rings and along every wood's
+  edge (`layWoodTrees`). Behind the green, `back`: a forest right across,
+  its edge winding, coming round nearer at the sides so the green sits in
+  a bowl of trees; now and then a lake before it with trees round it.
+  The island green and the sea stack: a wood each side, clear of the
+  water, and the forest past it.
+- Painted in the ground's own march (`courseSlice`), so a rise hides it;
+  treetops as rows of crowns where near enough. `course` checks it all
+  (bare rough, nothing past the green, clearances, the path's end never in
+  view, flags seen); `scenery` holds the shrubs and rocks (those taken out
+  of woods are laid again); negative tested.
+
+### Everyone bulkier (user asked, three times over; since replaced)
+
+- Replaced by the section above: the plate described here is gone. Kept
+  for the history of what the user asked.
 
 - First the three top skins "like the void skin", then the other eleven
   effect skins, then the plain outfits, the Majors' jackets and the
@@ -587,8 +733,9 @@ Line numbers are approximate and drift. Search for the name instead.
 
 - An ace is by time, not strokes: on a strong bag a hole won by a second
   shot from the fairway was an ace, and its ball was sent into the cup
-  from there; he walked up to a holed ball. Only the hole's first shot
-  (`shotN`) goes in; `green` has a fairway ace, `finish` both kinds.
+  from there; he walked up to a holed ball. (Since superseded: on any
+  ace he stays where he stood and the ball goes in; see "An ace from the
+  tee".)
 - And no shot short of the green carries past the putting spot (the least
   carry, 0.6, left a ball nearer the cup than he putts from). `finish`.
 
@@ -1982,6 +2129,16 @@ him (about 49px tall on a 320 phone, 71px on its side).
 
 ## 6. Recent history (newest first, one line each)
 
+- The Demonic reworked in deep red and orange after a second picture.
+- Everyone built out from his own picture (no dark plate).
+- Unequip on every worn look and set.
+- Nine pin positions; no two greens side by side.
+- An ace played from the tee: ACE, a quick burst, a second's hold; no
+  score carried to the next hole.
+- The course round the hole: other holes, woods, lakes, cart paths,
+  ponds, a forest behind every green, nothing bare; woods round the
+  island and sea stack.
+
 - Everyone and every caddie bulkier; skin grounds, blessings and cup
   moments prominent (The Void's pit, the beam, its cup); the Sets rack
   and one set order; cup moments in the Twilight Putt; a fairway ace is
@@ -2164,14 +2321,14 @@ Don't offer anything that adds to the Tour tab, or any new sound that is
 not ambience.
 
 The menu to offer:
-1. **Ask how the session's looks sit on the phone**: the prominent
-   grounds, the blessing beam (it covers him more for half a second),
-   everyone bulkier. Tune from their screenshots.
-2. **The lesser skins' cup moments**: only the dearest balls and the two
-   Mythic wakes have one; the other balls (Comet, Black Hole, ...) could
-   get a small one of their own.
-3. **The Seraph and Hellfire Wakes' cup moments**: the Divine's and the
-   Demonic's balls have one, their wakes none; they could play their
+1. **Ask how the session's changes sit on the phone**: the reworked
+   Demonic, the built-out look, the course round the hole, the aces.
+   Tune from their screenshots.
+2. **The Demonic's driver as a curved blade** to match the picture (the
+   club still has the old demonic head).
+3. **The lesser skins' cup moments**: only the dearest balls and the two
+   Mythic wakes have one; the other balls could get a small one.
+4. **The Seraph and Hellfire Wakes' cup moments**: they could play their
    set's, as the two Mythic wakes do (one line each in `CUP_FX`).
 
-Recommend 1: much changed on screen this session without their eyes on it.
+Recommend 1: much changed on screen without their eyes on it.
