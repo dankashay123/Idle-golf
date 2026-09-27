@@ -89,6 +89,23 @@ module.exports = {
           if (!hold('godlight', 0.45) || hold('godlight', CUP_FX_DUR + 0.01)) f('with Godlight the hole does not hold for the moment in the cup, or holds on after it');
           if (hold('classic', 0.35)) f('with a plain ball the hole holds longer than 0.3s after the drop');
         }
+        // the Twilight Putt (the user asked): a putt that drops has the moment
+        // too, with a dearest ball; a plain one draws nothing
+        o.twi = {};
+        for (const id of ['godlight', 'singularity', 'classic']) {
+          const fn = CUP_FX[id]; let calls = 0; if (fn) CUP_FX[id] = function () { calls++; return fn.apply(this, arguments); };
+          try {
+            hideSheet(); QUIET = false; delete S.dgnRun; S.styleOwn['t:' + id] = 1; S.trail = id;
+            const d = B.DGN.find(x => x.id === 'twilight'); S.dgnKeys[d.id] = 3; setView('dgn'); startDgn(d); hideSheet();
+            let drops = 0, was = 0;
+            for (let i = 0; i < 60 * 25 && drops < 2 && S.dgnRun; i++) { const D = derive(); keep(1 / 60, D); Scene.draw(1 / 60, D);
+              if (Scene.cupT && Scene.cupT !== was) { was = Scene.cupT; drops++; } }
+            o.twi[id] = drops + '/' + calls;
+            if (!drops) f('no putt dropped in the Twilight Putt with ' + id);
+            else if (fn && id !== 'classic' && !calls) f(id + ': a putt dropped in the Twilight Putt with no moment in the cup');
+            else if (id === 'classic' && CUP_FX.classic) f('a plain ball has a moment in the cup');
+          } finally { if (fn) CUP_FX[id] = fn; delete S.dgnRun; QUIET = true; }
+        }
         if (rnd) f('the cup moment called Math.random ' + rnd + ' times');
       } finally {
         Scene.drawCupFx = of; Math.random = mr; window.step = keep; FROST_FORCE = null;
@@ -98,7 +115,7 @@ module.exports = {
       return o;
     });
     if (r.fails.length) throw new Error(r.fails.join('; '));
-    return ['Godlight ' + r.px.godlight + ', Demon Eye ' + r.px.demoneye + ', Ascended Orb ' + r.px.ascorb + ', Singularity ' + r.px.singularity + ' pixels over ' + r.views + ' views and five moments; no other ball draws a pixel',
+    return ['Godlight ' + r.px.godlight + ', Demon Eye ' + r.px.demoneye + ', Ascended Orb ' + r.px.ascorb + ', Singularity ' + r.px.singularity + ' pixels over ' + r.views + ' views and five moments; no other ball draws a pixel; in the Twilight Putt (drops/moments drawn) ' + JSON.stringify(r.twi),
       'gone after 0.55s, all of it inside a pin-sized box about the cup, under the pin, over the ground\'s line; no Math.random'];
   }
 };

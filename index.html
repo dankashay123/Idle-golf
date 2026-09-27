@@ -12225,7 +12225,7 @@ const CUP_FX = {
   ascorb(c, x, y, cr, h, q, t){
     const k = Math.max(1, Math.round(h / 16));
     const o = q < 0.2 ? q / 0.2 : q < 0.72 ? 1 : q < 0.85 ? 1 - (q - 0.72) / 0.13 : 0;
-    if(o > 0.05 && h >= 12){ const rx = Math.max(4, Math.round(h * 0.6 * o)), ry = Math.max(2, Math.round(h * 0.2 * o));
+    if(o > 0.05 && h >= 8){ const rx = Math.max(4, Math.round(h * 0.6 * o)), ry = Math.max(2, Math.round(h * 0.2 * o));
       c.globalAlpha = 1; c.drawImage(voidSigil(rx, ry, Math.floor(t * 40) % 48), Math.round(x - rx - 1), Math.round(y - ry - 1)); }
     for(let i = 0; i < 28; i++){
       const u = clamp(q * 1.3 - hr(i, 364) * 0.3, 0, 1);
@@ -17775,6 +17775,9 @@ Object.assign(Scene, {
       // and a pin at the far end was the single thing that made it read as
       // another par four in a different colour.
       this.drawGolferGround();
+      // (a putt dropping on the Twilight Putt's green has the dearest balls'
+      // moment in the cup too, the user asked; under the pin, as on the course)
+      if(R.mode === 'twilight') this.drawCupFx(true);
       if(R.mode !== 'drive') this.drawFlagstick();
       this.drawWagerStage(R);
       this.drawGolfer(D);
@@ -17939,9 +17942,9 @@ Object.assign(Scene, {
   // green and sparks. Demon Eye: a ring of fire about the cup and the eye
   // looking up out of it. Ascended Orb: the void drawn down into the cup in
   // a spiral, and a white flash as it closes.
-  drawCupFx(){
+  drawCupFx(wager){
     const fx = trailNow().fx;
-    if(!this.cupT || S.dgnRun || !CUP_FX[fx]) return;
+    if(!this.cupT || (S.dgnRun && !wager) || !CUP_FX[fx]) return;
     const q = (this.t - this.cupT) / CUP_FX_DUR;
     if(q < 0 || q >= 1) return;
     const c = this.b, p = this.proj(LEN, this.pinX());
