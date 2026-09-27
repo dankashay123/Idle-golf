@@ -126,7 +126,7 @@ module.exports = {
           S.elapsed = 0.95; S.parTime = S.elapsed / (q + 0.05); S.yards = 1e-9; S.swingT = 0.999; S.doneT = null;
           const fh = window.finishHole; let end = null, downCam = null, met = false, at = 0, forced = false;
           window.finishHole = function () {
-            if (!end) end = { wait: +(S.elapsed - S.doneT).toFixed(2), short: +(LEN - Scene.camD).toFixed(2), cup: !!Scene.cupT,
+            if (!end) end = { wait: +(S.elapsed - S.doneT).toFixed(2), short: +(Scene.pinD() - Scene.camD).toFixed(2), cup: !!Scene.cupT,
                               putt: !!(Scene.putt && Scene.putt.hit), across: Scene.camD > I.land };
             return fh.apply(this, arguments); };
           try {
