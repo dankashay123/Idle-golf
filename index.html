@@ -13249,6 +13249,93 @@ const Scene = {
   // tree or the gallery in front hides them as it hides anything; laid on
   // every hole (drawn only at night) from a hash, so the hole's own dice,
   // and all it lays, stay as they were.
+  // The course round the hole (the user asked: "like an actual golf course
+  // ... other holes next to it, cart paths"): the next hole beyond the trees
+  // on one side (on some holes both), playing the other way or on ahead,
+  // its fairway, its green with its flag, a bunker by it and a tee; and a
+  // cart path down one side, just off the rough, from the tee to the green.
+  // Laid from a hash (the hole's own draws stay where they were); painted
+  // in the ground's march (groundSlice), so hills hide them as they hide
+  // the fairway; none on an island or the sea stack, whose water is all
+  // round, nor in a wager (newDepthsHole never lays it).
+  layCourse(){
+    const h = this.hole, sk = sigKind(h);
+    this.nbrs = []; this.cart = null;
+    if(sk === 'island' || sk === 'pier') return;
+    const side = hr(h, 501) < 0.5 ? -1 : 1;
+    const sides = hr(h, 502) < 0.35 ? [side, -side] : [side];
+    sides.forEach((sd, i) => {
+      const k = h * 5 + i, gd = 14 + hr(k, 503) * (LEN - 2), toward = hr(k, 504) < 0.5;
+      // (its line follows this one's fairway, a band of rough between: gap)
+      const N = { sd, gd, toward, gap: 1.8 + hr(k, 505) * 0.5, ph: hr(k, 506) * 6.28, ph2: hr(k, 507) * 6.28,
+        // its fairway runs away from its green: on toward us, or out ahead
+        a: toward ? gd + 7 : -30, b: toward ? 400 : gd - 7 };
+      N.tee = toward ? null : { d: Math.max(-6, N.a) };
+      N.bunker = { d: gd + (hr(k, 508) - 0.5) * 5, dx: sd * (2.5 + hr(k, 509) * 0.6), rd: 1.3 + hr(k, 510) * 0.5, rx: 0.8 + hr(k, 511) * 0.3 };
+      this.nbrs.push(N);
+    });
+    if(!this.nbrs.length) return;
+    // the path down the side with no other hole (with one each side, the
+    // first's, and that hole stands clear of it)
+    const ps = sides.length > 1 ? side : -side;
+    this.cart = { sd: ps, ph: hr(h, 512) * 6.28 };
+    for(const N of this.nbrs){
+      if(N.sd !== ps) continue;
+      let m = 0;
+      for(let d = Math.max(-3, N.a); d <= Math.min(LEN + 7, N.b); d += 0.5) m = Math.max(m, Math.abs(this.cartX(d)) - this.fwWidth(d));
+      if(N.gd > -3 && N.gd < LEN + 7) m = Math.max(m, Math.abs(this.cartX(N.gd)) - this.fwWidth(N.gd) + 0.5);
+      N.gap = Math.max(N.gap, m + 0.3 + 0.35 + 0.6);
+    }
+    const put = this.props || [], onPath = (d, x) => Math.abs(x - this.cartX(d)) < 0.75 && d > -3 && d < LEN + 7;
+    const gone = [];
+    for(let i = put.length - 1; i >= 0; i--){ const q = put[i];
+      if(q.kind !== 0 && q.kind !== 1 && q.kind !== 8) continue;
+      if(this.onNbr(q.d, q.x, 0.7) || (q.kind !== 1 && onPath(q.d, q.x))){ put.splice(i, 1); if(q.kind === 8) gone.push(q); } }
+    // the shrubs, tufts and rocks taken off them laid again somewhere clear,
+    // near where they were (the rough stays as full as it was)
+    for(let i = 0, a = 0; i < gone.length && a < gone.length * 12; a++){
+      const q = gone[i], u = hr(h * 61 + a, 513), v = hr(h * 61 + a, 514), sd = hr(h * 61 + a, 515) < 0.5 ? -1 : 1;
+      const d = clamp(q.d + (u - 0.5) * 8, -2, LEN + 12), x = sd * (this.fwWidth(d) + 0.9 + v * 7);
+      if(this.onNbr(d, x, 0.7) || onPath(d, x) || this.onPlay(d, x, 0.3) || this.hitsHazard(d, x, 0.4)) continue;
+      put.push(Object.assign({}, q, { d, x, extra: 1 })); i++;
+    }
+    // each other green's flag (kind 12), stood with the rest
+    for(const N of this.nbrs) put.push({ kind: 12, d: N.gd, x: this.nbrGX(N), extra: 1, k: N.sd });
+    put.sort((a, b) => b.d - a.d);
+  },
+  // where the other hole's line is, across, at a distance; its fairway's half
+  // width; and whether a point lies on its fairway or its green
+  // (bowing out round this hole's green, where the gallery stands)
+  nbrX(N, d){ const u = clamp((12 - Math.abs(d - LEN)) / 6, 0, 1);
+    return N.sd * (this.fwWidth(d) + N.gap + this.nbrW(N, d) + 0.35 * Math.sin(d * 0.045 + N.ph) + 2.0 * u * u * (3 - 2 * u)); },
+  nbrW(N, d){ return 2.2 + 0.25 * Math.sin(d * 0.07 + N.ph2); },
+  // its green, set off its line a little away from this hole (it is wider
+  // than the fairway, and reached in toward this one's play)
+  nbrGX(N){ return this.nbrX(N, N.gd) + N.sd * 0.6; },
+  onNbr(d, x, pad){
+    for(const N of this.nbrs || []){
+      const nx = this.nbrX(N, d), off = Math.abs(x - nx);
+      if(d > N.a && d < N.b && off < this.nbrW(N, d) + pad) return true;
+      const gu = (d - N.gd) / 6.2, gv = Math.abs(x - this.nbrGX(N)) / 2.6;
+      if(gu * gu + gv * gv < 1 + pad) return true;
+    }
+    return false;
+  },
+  // the cart path: just off the rough on its side, winding a little, and
+  // round any pond on that side
+  cartX(d){
+    const C = this.cart; if(!C) return 1e9;
+    let x = this.fwWidth(d) + 1.55 + 0.35 * Math.sin(d * 0.09 + C.ph);
+    // (easing out round a pond or a bunker on its side and back, over a few
+    // paces either end, not stepping)
+    const round = (hd, hx, rd, rx, gap) => { if(Math.sign(hx || C.sd) !== C.sd) return;
+      const u = clamp(1 - (Math.abs(d - hd) - rd) / 3, 0, 1), e = u * u * (3 - 2 * u), out = Math.abs(hx) + rx + gap;
+      if(out > x) x += (out - x) * e; };
+    const w = this.water;
+    if(w && !w.canyon && !w.rail) round(w.d, w.x, w.rd, w.rx, 0.9);
+    for(const bk of this.bunkers || []) round(bk.d, bk.x, bk.rd, bk.rx, 0.8);
+    return C.sd * x;
+  },
   layNight(){
     const put = this.props || [];
     for(const side of [-1, 1]) put.push({ kind: 4, d: 0.35, x: side * 2.05, k: side > 0 ? 1 : 0 });
@@ -14201,6 +14288,7 @@ const Scene = {
     this.layProps(rnd, { trees: (30 + rnd()*14) * L.trees, kind: L.kind, corners,
                          crowd: (26 + rnd()*14) * L.crowd });
     this.layNight();
+    this.layCourse();
     // the near bank: the last ground on his line before the water
     // Where he stops before it and where he is across: an island's near bank
     // and its green, a canyon's two rims.
@@ -14249,6 +14337,7 @@ const Scene = {
   newDepthsHole(R){
     this.gGen = (this.gGen || 0) + 1;
     const dg = R.id;
+    this.nbrs = []; this.cart = null;         // (no course round a wager)
     this.curve = null; this._bcD = null;      // a wager is played dead straight
     this.isle = null; this.heli = 0; this.crossing = 0;
     this.wind = 0;                            // and in still air
@@ -15771,6 +15860,8 @@ Object.assign(Scene, {
         }
       }
 
+      if(this.nbrs && this.nbrs.length) this.courseSlice(c, T, d, s, y, hgt, near, lit, C0);
+
       if(d < LEN + 7){
         const hw = Math.round(this.fwWidth(d) * LAT * s);
         if(hw > 0){
@@ -15837,6 +15928,62 @@ Object.assign(Scene, {
           }
         }
       }
+  },
+
+  // The course round the hole, in one slice of the ground (layCourse): the
+  // other holes' fairways, greens, bunkers and tees, and the cart path, in
+  // the course's own colours and shaded by distance as the hole is.
+  courseSlice(c, T, d, s, y, hgt, near, lit, C0){
+    const px = x => Math.round(C0 + x * LAT * s), U = LAT * s;
+    if(!T._path){
+      // the path: pale concrete, tinted by the course's rough (so it dims at
+      // night with the rest), a darker edge (out of the sand and rock it was
+      // lost in the Mesa's red earth)
+      const base = mixC('#BDB9AE', pickC(T._rg, 0.55), 0.3);
+      T._path = [dark(base, 0.22), base, lite(base, 0.08)];
+    }
+    for(const N of this.nbrs){
+      const nx = this.nbrX(N, d);
+      if(d > N.a && d < N.b){
+        const hw = Math.round(this.nbrW(N, d) * U), X = px(nx);
+        if(hw > 0 && X + hw > -2 && X - hw < VW + 2){
+          // mown in stripes down its length (they run the way he walks, so
+          // they hold still as he goes), a cut of darker rough round it
+          const ft = near * 0.55 + lit + 0.02;
+          c.fillStyle = pickC(T._rg, near * 0.3 + lit - 0.1); c.fillRect(X - hw - 2, y, hw * 2 + 4, hgt);
+          c.fillStyle = T.apron; c.fillRect(X - hw - 1, y, hw * 2 + 2, hgt);
+          c.fillStyle = pickC(T._fw, ft); c.fillRect(X - hw, y, hw * 2, hgt);
+          if(hw >= 4){ const n = hw >= 12 ? 6 : 4, sw = hw * 2 / n; c.fillStyle = pickC(T._fw, ft + 0.16);
+            for(let j = 1; j < n; j += 2) c.fillRect(Math.round(X - hw + j * sw), y, Math.round(sw), hgt); }
+        }
+      }
+      // its tee: a small box of short grass
+      if(N.tee && d > N.tee.d - 1.2 && d < N.tee.d + 1.2){
+        const tw = Math.max(1, Math.round(1.0 * U)), X = px(nx);
+        c.fillStyle = pickC(T._gr, 0.6); c.fillRect(X - tw, y, tw * 2, hgt);
+      }
+      // a bunker by its green
+      const B0 = N.bunker, bu = (d - B0.d) / B0.rd;
+      if(bu > -1 && bu < 1){ const bw = Math.round(B0.rx * Math.sqrt(1 - bu * bu) * U), X = px(this.nbrX(N, B0.d) + B0.dx);
+        if(bw > 0){ c.fillStyle = pickC(T._sd, 0.35 + near * 0.3); c.fillRect(X - bw, y, bw * 2, hgt); } }
+      // its green and apron
+      const gu = (d - N.gd) / 6.2;
+      if(gu > -1 && gu < 1){
+        const X = px(this.nbrGX(N)), q = Math.sqrt(1 - gu * gu);
+        const aw = Math.round(2.6 * q * U), gw = Math.round(2.05 * q * U);
+        if(aw > 0){ c.fillStyle = T.apron; c.fillRect(X - aw, y, aw * 2, hgt); }
+        if(gw > 0){ c.fillStyle = pickC(T._gr, 0.40 + near * 0.36); c.fillRect(X - gw, y, gw * 2, hgt); }
+      }
+    }
+    // the cart path
+    if(this.cart && d > -2.8 && d < LEN + 7){
+      const X = px(this.cartX(d)), pw = Math.max(1, Math.round(0.27 * U));
+      if(X + pw > -2 && X - pw < VW + 2){
+        c.fillStyle = T._path[0]; c.fillRect(X - pw - 1, y, pw * 2 + 2, hgt);
+        c.fillStyle = T._path[1]; c.fillRect(X - pw, y, pw * 2, hgt);
+        if(pw > 3){ c.fillStyle = T._path[2]; c.fillRect(X - Math.round(pw * 0.4), y, Math.round(pw * 0.8), hgt); }
+      }
+    }
   },
 
   // The ranges do not move with the camera and do not animate, so they are
@@ -16192,6 +16339,19 @@ Object.assign(Scene, {
   },
 
   drawProp(c, T, night, p, pr){
+    // the other hole's flag, on its green: a pole and a yellow flag (the
+    // hole he plays has the red), waving
+    if(p.kind === 12){
+      const h = Math.max(3, Math.round(B_FLAG * US * pr.s));
+      if(pr.x < -8 || pr.x > VW + 8) return;
+      const pw = Math.max(1, Math.round(h * 0.05)), fh = Math.max(2, Math.round(h * 0.28)), fw = Math.max(2, Math.round(fh * 1.3));
+      c.fillStyle = '#132215'; c.fillRect(pr.x - pw, pr.y - 1, pw * 2 + 1, 1);
+      c.fillStyle = night ? '#B8B8AE' : '#E8E8DE'; c.fillRect(pr.x, pr.y - h, pw, h);
+      const wv = (Math.floor(this.t * 3 + p.k) & 1);
+      c.fillStyle = night ? '#A88A2A' : '#E8C43A'; c.fillRect(pr.x + pw, pr.y - h, fw - wv, fh);
+      c.fillStyle = night ? '#7A6420' : '#B8962A'; c.fillRect(pr.x + pw, pr.y - h + fh - 1, fw - wv, 1);
+      return;
+    }
     if(p.kind === 0){
       const TS = this.treeSpr || SPRITE;
       const spr = p.k ? TS.oak : TS.pine;

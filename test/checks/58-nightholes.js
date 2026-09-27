@@ -91,7 +91,9 @@ module.exports = {
           const a = Scene.props.filter(p => p.kind < 4 && !p.extra).map(p => p.kind + ':' + p.d.toFixed(3) + ':' + p.x.toFixed(3)).join('|');
           Scene.layNight = function () {};
           Scene.newHole(S.hole, S.tier);
-          const b = Scene.props.map(p => p.kind + ':' + p.d.toFixed(3) + ':' + p.x.toFixed(3)).join('|');
+          // (the same kinds both ways: the course round the hole lays its
+          // flags with or without the night's props)
+          const b = Scene.props.filter(p => p.kind < 4 && !p.extra).map(p => p.kind + ':' + p.d.toFixed(3) + ':' + p.x.toFixed(3)).join('|');
           Scene.layNight = keep.layNight;
           if (a !== b) o.fails.push('laying the night\'s props moved the hole\'s own trees or gallery');
         }
