@@ -8496,7 +8496,8 @@ function blitShear(c, spr, x, y, w, h, shear, bulk){
 function bulkRow(spr, x, w, bulk, f, sp){
   const n = bulk ? bulkAt(bulk, f) : 0;
   if(n <= 0) return [Math.round(x), Math.max(1, Math.round(w))];
-  const B = bodySpan(sp || spr), sc = w / spr.w, bw = (B.r - B.l) * sc, a = (bw + 2 * n) / bw;
+  // (his legs about their own middle, his chest about its own)
+  const S0 = bodySpan(sp || spr), B = f > 0.55 ? S0.legs : S0, sc = w / spr.w, bw = (B.r - B.l) * sc, a = (bw + 2 * n) / bw;
   return [Math.round(x + B.l * sc * (1 - a) - n), Math.max(1, Math.round(w * a))];
 }
 // Everyone built out (the user asked for The Void bulkier, then every
@@ -8512,8 +8513,9 @@ function bulkOf(h, minor){
   // imp's tail)
   if(minor) return { chest: 1.5, legs: 0, down: 0.4 };
   if(h < 30) return null;
+  // (his legs as broad as his chest: the user asked for them to match)
   const k = Math.max(1, Math.round(h / 30));
-  return { chest: 2 * k + 1, legs: k };
+  return { chest: 2 * k + 1, legs: 2 * k + 1 };
 }
 // how far out at a height f down him (0 his crown, 1 his feet): easing in
 // over the shoulders and down to the legs, none at the head and the feet
@@ -8523,17 +8525,20 @@ function bulkAt(b, f){
   const up = sm(0.19, 0.29), d0 = b.down || 0.5, down = sm(d0, d0 + 0.1);
   return b.chest * up * (1 - down) + b.legs * down * (1 - sm(0.88, 0.95));
 }
-// the columns his body fills about the chest, found once for each picture
+// the columns his body fills about the chest, and about the legs, found
+// once for each picture
 function bodySpan(spr){
   if(spr._body) return spr._body;
-  let l = spr.w, r = 0;
-  try {
-    const d = spr.cv.getContext('2d').getImageData(0, 0, spr.w, spr.h).data;
-    for(let y = Math.floor(spr.h * 0.3); y < Math.floor(spr.h * 0.5); y++) for(let x = 0; x < spr.w; x++)
-      if(d[(y * spr.w + x) * 4 + 3] > 128){ l = Math.min(l, x); r = Math.max(r, x + 1); }
-  } catch(e){}
-  if(r <= l){ l = 0; r = spr.w; }
-  return spr._body = { l, r };
+  const span = (f0, f1) => { let l = spr.w, r = 0;
+    try {
+      const d = spr.cv.getContext('2d').getImageData(0, 0, spr.w, spr.h).data;
+      for(let y = Math.floor(spr.h * f0); y < Math.floor(spr.h * f1); y++) for(let x = 0; x < spr.w; x++)
+        if(d[(y * spr.w + x) * 4 + 3] > 128){ l = Math.min(l, x); r = Math.max(r, x + 1); }
+    } catch(e){}
+    return r <= l ? { l: 0, r: spr.w } : { l, r }; };
+  const B = span(0.3, 0.5), L = span(0.62, 0.9);
+  B.legs = L.r - L.l >= 2 ? L : B;
+  return spr._body = B;
 }
 // A pixel line, Bresenham, for club shafts and arms.
 function pxLine(c, x0, y0, x1, y1, col, thick){
@@ -9566,6 +9571,11 @@ function buildSprites(){
   // over his head holding the club: drawn in code), his sleeves left on
   SPRITE.gFly = patterned(makeSprite(G_BACK_ROWS.map((r, y) => y < 17 ? r
     : [...r].map((ch, x) => (x < 12 || x > 27) && (ch === 'k' || ch === 'K') ? '.' : ch).join('')).concat(pad),
+    Object.assign({}, GMAP, { h: OUT.hair || (OUT.skin ? OUT.skin2 : HAIR) })), OUT);
+  // Waving to a train: from behind, his left arm off his side (it is up
+  // over his head: drawn in code)
+  SPRITE.gWave = patterned(makeSprite(G_BACK_ROWS.map((r, y) => y < 17 ? r
+    : [...r].map((ch, x) => x < 12 && (ch === 'k' || ch === 'K') ? '.' : ch).join('')).concat(pad),
     Object.assign({}, GMAP, { h: OUT.hair || (OUT.skin ? OUT.skin2 : HAIR) })), OUT);
   const CD = caddieNow();
   SPRITE.caddie = patterned(makeSprite(CADDIE_ROWS.concat(G_FIN_ROWS.slice(32).map(() => blank)), caddieMap(CD)), CD);
@@ -15567,8 +15577,10 @@ const CLUBFX = {
 // lifted at the heel with the sole of its shoe showing, the planted one
 // straight. ph as for drawLegs. An outfit with a belt colour of its own
 // wears it on its soles, as it does side-on.
-function drawLegsBack(c, cx, hy, len, w, ph, near, far, shoe, sole = '#B8AE9C'){
-  const th = Math.max(1, Math.round(w * 0.11)), gap = w * 0.085;
+function drawLegsBack(c, cx, hy, len, w, ph, near, far, shoe, sole = '#B8AE9C', bulk){
+  // (built out as his body is: each leg the wider by his build, so his
+  // legs are as broad as his chest)
+  const n = bulk ? bulk.legs : 0, th = Math.max(1, Math.round(w * 0.11 + n)), gap = w * 0.085 + n / 2;
   for(let i = 0; i < 2; i++){
     const q = ph * Math.PI * 2 + i * Math.PI, lift = Math.max(0, Math.sin(q));
     const lx = Math.round(cx + (i ? gap : -gap) - th / 2);
@@ -15581,6 +15593,8 @@ function drawLegsBack(c, cx, hy, len, w, ph, near, far, shoe, sole = '#B8AE9C'){
     c.fillStyle = lift > 0.35 ? sole : shoe;                 // a lifted heel shows its sole
     c.fillRect(lx - (lift > 0.35 ? 0 : 1), fy, th + (lift > 0.35 ? 0 : 1), sh);
   }
+  // (and the crease between them, so the two read as two)
+  if(n > 0){ c.fillStyle = far; c.fillRect(Math.round(cx) - 1, Math.round(hy + len * 0.3), 1, Math.round(len * 0.7)); }
 }
 // A golf club: the shaft from the grip to the head, and the head. turn is
 // which way the face points (1 toward the target, -1 back, 0 end on).
@@ -15659,7 +15673,7 @@ function paintGolfer(c, x, y, w, h, ph, t, bot, walking, walkPh, spr, arc, putt,
   if(FX && FX.alpha) c.globalAlpha = FX.alpha;
   if(walking){
     const O = outfitNow();
-    drawLegsBack(c, x + w*0.5, y + h*(31/58), h*(26/58), w, walkPh, O.pant || '#2B3B4F', O.pant2 || O.pant || '#1C2937', O.shoe || PX.shoe, O.belt);
+    drawLegsBack(c, x + w*0.5, y + h*(31/58), h*(26/58), w, walkPh, O.pant || '#2B3B4F', O.pant2 || O.pant || '#1C2937', O.shoe || PX.shoe, O.belt, g.bulk);
     blitShear(c, spr, x, y, w, h, () => 0, g.bulk);
     if(FX && FX.body) FX.body(c, g);
     // The club in his right hand, hanging at his side, the head down by
@@ -15668,6 +15682,18 @@ function paintGolfer(c, x, y, w, h, ph, t, bot, walking, walkPh, spr, arc, putt,
     g.hand = { x: hx, y: hy };
     const a = 0.14 + Math.sin(walkPh * Math.PI * 2) * 0.07, L = h * 0.49;
     drawClub(c, hx, hy, hx + Math.sin(a) * L, hy + Math.cos(a) * L, h > 34 ? 2 : 1, h, 1, t);
+    // waving to a train (from behind, facing it): his left arm up from his
+    // shoulder, the elbow out, the hand to and fro over his head
+    if(wave > 0){
+      const O2 = outfitNow(), th = (h > 34 ? 2 : 1) + (h > 30 ? 1 : 0);
+      const shx = x + w * (11 / 40), shy = y + h * (16.5 / 58);
+      const ex = shx - w * 0.16 * wave, ey = shy - h * 0.14 * wave;
+      const sw = Math.sin(t * 9) * 0.45, fa = -Math.PI / 2 + sw * wave, fl = h * 0.25;
+      const wx = ex + Math.cos(fa) * fl * wave, wy = ey + Math.sin(fa) * fl * wave;
+      pxLine(c, shx, shy, ex, ey, O2.shirt || '#E8ECE4', th + 1);       // his sleeve
+      pxLine(c, ex, ey, wx, wy, O2.arm || O2.skin || PX.skin, th);
+      c.fillStyle = O2.hand || O2.skin || PX.skin; c.fillRect(Math.round(wx) - 1, Math.round(wy) - 1, th + 1, th + 1);
+    }
     c.globalAlpha = 1;
     if(FX && FX.front) FX.front(c, g);
     if(FL){ c.globalAlpha = 1; FX.flourish(c, g, FL, 'front'); }
@@ -15690,14 +15716,7 @@ function paintGolfer(c, x, y, w, h, ph, t, bot, walking, walkPh, spr, arc, putt,
   // his arms in his own skin: a red demon's are red (they were always the
   // plain tone, whatever his face was); in plate, where he wears it
   pxLine(c, sx, sy, hx, hy, OS.arm || OS.skin || PX.skin, th);
-  // waving at a train going by (wave 0..1): his far arm up off the club and
-  // to and fro over his head
-  if(wave > 0){
-    const wx = sx - w * 0.06 + Math.sin(t * 9) * w * 0.14 * wave, wy = sy - h * 0.34 * wave;
-    pxLine(c, sx - w*0.10, sy + 1, wx, wy, OS.arm2 || OS.skin2 || PX.skin2, th);
-    c.fillStyle = OS.hand || OS.skin2 || PX.skin2; c.fillRect(Math.round(wx) - 1, Math.round(wy) - 1, th + 1, th + 1);
-  }
-  else pxLine(c, sx - w*0.10, sy + 1, hx, hy, OS.arm2 || OS.skin2 || PX.skin2, th);
+  pxLine(c, sx - w*0.10, sy + 1, hx, hy, OS.arm2 || OS.skin2 || PX.skin2, th);
   if(h > 22){ c.fillStyle = OS.hand || OS.shirt; c.fillRect(Math.round(hx) - 1, Math.round(hy) - 1, th + 1, th + 1); }
   g.hand = { x: hx, y: hy };
   // the arc the head cuts through a swing, for the clubs that leave one
@@ -15736,7 +15755,7 @@ function paintHeli(c, x, y, w, h, t, bot){
   if(FX && FX.outline) outlineAt(c, g, FX.outline, RING1, FX.outlineA * (0.8 + 0.2 * Math.sin(t * 3)));
   c.globalAlpha = FX && FX.alpha ? FX.alpha : 1; c.globalCompositeOperation = 'source-over';
   drawLegsBack(c, x + w*0.5, y + h*(31/58), h*(26/58), w, 0.25 + Math.sin(t * 5) * 0.04,
-               O.pant || '#2B3B4F', O.pant2 || O.pant || '#1C2937', O.shoe || PX.shoe, O.belt);
+               O.pant || '#2B3B4F', O.pant2 || O.pant || '#1C2937', O.shoe || PX.shoe, O.belt, g.bulk);
   blitShear(c, spr, x, y, w, h, () => 0, g.bulk);
   if(FX && FX.body) FX.body(c, g);
   // the skin's front half (a cape down his back) before the arms: they go
@@ -16999,10 +17018,15 @@ Object.assign(Scene, {
     if(this.heli && ph === 0) return { p, ph, heli: true };
     // Between shots, while the camera carries him on to the ball, he walks:
     // upright, the club on his shoulder, his legs striding.
-    const walking = ph === 0 && !!this.walkOn;
+    // Waiting at the crossing as a train goes by he turns to it and waves
+    // (the user: "make the golfer face the train as it passes by and
+    // waving with his left arm"): seen from behind, standing, as he stands
+    // when he walks
+    const wave = atCam === undefined && ph === 0 && !this.walkOn ? this.railWave() : 0, waving = wave > 0.15;
+    const walking = ph === 0 && (!!this.walkOn || waving);
     // Past the ball he comes up out of the posture, so the silhouette changes
     // rather than the same bent figure sliding around.
-    const spr = walking ? SPRITE.gBack : ph > 0.60 ? SPRITE.gFinish : SPRITE.gAddr;
+    const spr = waving ? SPRITE.gWave : walking ? SPRITE.gBack : ph > 0.60 ? SPRITE.gFinish : SPRITE.gAddr;
     // He stood 1:2.9 against the fairway. Real golf is nearer 1:17; a figure
     // that small is unreadable in pixel art, so 1:7 is the compromise. The
     // number is his world height in the same units the lateral scale uses.
@@ -17010,14 +17034,14 @@ Object.assign(Scene, {
     const w = Math.max(4, Math.round(h * spr.w / spr.h));
     const FX = STYLEFX[outfitNow().fx] || null;
     // from behind he is centred on his line, and sways a pixel as he steps
-    const x = walking ? p.x - Math.round(w*0.5) + Math.round(Math.sin(this.walkPh * Math.PI * 2) * w * 0.02)
+    const x = waving ? p.x - Math.round(w*0.5) : walking ? p.x - Math.round(w*0.5) + Math.round(Math.sin(this.walkPh * Math.PI * 2) * w * 0.02)
                       : p.x - Math.round(w*0.42);
-    const stepUp = walking && (Math.floor(this.walkPh * 4) & 1) ? Math.max(1, Math.round(h / 40)) : 0;
+    const stepUp = walking && !waving && (Math.floor(this.walkPh * 4) & 1) ? Math.max(1, Math.round(h / 40)) : 0;
     // on the stepping stones he hops from one to the next
     const I = this.isle, hop = walking && this.crossing && I && I.hop
       ? Math.round(Math.sin(Math.PI * ((((this.camD - I.bank) / I.hopLen) % 1) + 1) % 1) * h * 0.3) : 0;
     const y = p.y - h - stepUp - hop - (FX && FX.bob ? Math.round(2 + Math.sin(this.t * 2.2) * 2) : 0);
-    return { p, ph, walking, spr, h, w, x, y };
+    return { p, ph, walking, spr, h, w, x, y, wave: waving ? wave : 0 };
   },
   // A skin's ground (its circle on the grass under him) goes down before the
   // pin, the cup and a putt rolling away beyond him, which all stand on it:
@@ -17068,8 +17092,7 @@ Object.assign(Scene, {
       const q = this.puttBall(PT), bp = this.proj(q.d, q.lat);
       if(bp.y <= this.clipAt(q.d) + 1){ const bs = h > 30 ? 2 : 1; drawLyingBall(c, bp.x + bs / 2, Math.round(bp.y - bs), Math.max(1.5, bs * 0.8 + 0.5), this.t); }
     }
-    paintGolfer(c, x, y, w, h, ph, this.t, p.y, walking, this.walkPh, spr, this.clubArc || (this.clubArc = []), PT >= 0 ? this.puttArm(PT) : undefined, true,
-                atCam === undefined && ph === 0 && !walking ? this.railWave() : 0);
+    paintGolfer(c, x, y, w, h, ph, this.t, p.y, walking, G.wave ? 0 : this.walkPh, spr, this.clubArc || (this.clubArc = []), PT >= 0 ? this.puttArm(PT) : undefined, true, G.wave);
     if(atCam === undefined && SPRITE.caddie) this.drawCaddie(c, p.x - Math.round(w*0.42), y, w, h);
     if(atCam === undefined) this.drawBless(c, x, y, w, h, p.y);
     if(walking) return;

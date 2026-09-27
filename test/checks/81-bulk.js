@@ -10,7 +10,8 @@
  *     side than his own picture
  *   - blended: every pixel at his chest is a colour his own row there
  *     already has, and his edge is the colour it was (no plate, no rim);
- *     his head and his feet as they were
+ *     his head and his feet as they were; his legs built out as much as his
+ *     chest (the user asked for them to match)
  */
 'use strict';
 module.exports = {
@@ -37,9 +38,9 @@ module.exports = {
           const spr = SPRITE.gAddr, h = 58, w = Math.round(h * spr.w / spr.h), x = 50, y = 40, bulk = bulkOf(h, false);
           const at = fy => Math.round(y + h * fy);
           c.clearRect(0, 0, cv.width, cv.height); blitShear(c, spr, x, y, w, h, () => 0, null);
-          const plain = { chest: row(at(0.4)), head: row(at(0.1)), feet: row(at(0.97)) };
+          const plain = { chest: row(at(0.4)), head: row(at(0.1)), feet: row(at(0.97)), legs: row(at(0.75)) };
           c.clearRect(0, 0, cv.width, cv.height); blitShear(c, spr, x, y, w, h, () => 0, bulk);
-          const built = { chest: row(at(0.4)), head: row(at(0.1)), feet: row(at(0.97)) };
+          const built = { chest: row(at(0.4)), head: row(at(0.1)), feet: row(at(0.97)), legs: row(at(0.75)) };
           const P = plain.chest, Q = built.chest;
           if (!P.length || !Q.length) { f(O.n + ': nothing at his chest'); continue; }
           const l = P[0][0] - Q[0][0], rr = Q[Q.length - 1][0] - P[P.length - 1][0];
@@ -49,6 +50,10 @@ module.exports = {
           const odd = Q.filter(p => !cols.has(p[1])).length;
           if (odd) f(O.n + ': ' + odd + ' pixels at his chest in colours not his own');
           if (Q[0][1] !== P[0][1] || Q[Q.length - 1][1] !== P[P.length - 1][1]) f(O.n + ': his edge at the chest changed colour');
+          // his legs as broad as his chest (the user asked for them to match)
+          { const P2 = plain.legs, Q2 = built.legs;
+            if (P2.length && Q2.length && (P2[0][0] - Q2[0][0] < l - 1 || Q2[Q2.length - 1][0] - P2[P2.length - 1][0] < rr - 1))
+              f(O.n + ': his legs built out ' + (P2[0][0] - Q2[0][0]) + '/' + (Q2[Q2.length - 1][0] - P2[P2.length - 1][0]) + ', his chest ' + l + '/' + rr); }
           for (const k of ['head', 'feet']) if (JSON.stringify(plain[k]) !== JSON.stringify(built[k])) f(O.n + ': his ' + k + ' changed');
         }
         // and every caddie, plain ones too
