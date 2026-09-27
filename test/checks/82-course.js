@@ -19,7 +19,7 @@ module.exports = {
   name: 'course',
   async run(page) {
     const r = await page.evaluate(() => {
-      const SNAP = JSON.stringify(S), o = { fails: [], holes: 0, both: 0, path: [], flags: 0 }, keep = window.step;
+      const SNAP = JSON.stringify(S), o = { fails: [], holes: 0, both: 0, path: [], flags: 0, ponds: 0 }, keep = window.step;
       const f = m => { if (o.fails.length < 14) o.fails.push(m); };
       try {
         hideSheet(); QUIET = true; window.step = () => {};
@@ -48,6 +48,19 @@ module.exports = {
             }
             for (const n of N) { const gx = Scene.nbrGX(n);
               if (Math.abs(gx) - 2.6 < Scene.fwWidth(n.gd) + 1 || (Math.abs(n.gd - LEN) < 9 && Math.abs(gx) - 2.6 < 3.2)) f(where + ': the other green by this hole\'s play'); }
+            // a pond, where there is one: clear of this hole's play and hazards,
+            // the path and the other hole
+            const Pd = Scene.pond;
+            if (Pd) { o.ponds = (o.ponds || 0) + 1;
+              for (let t = -1; t <= 1; t += 0.25) { const d = Pd.d + t * Pd.rd;
+                for (const x of [Pd.x - Pd.rx * 1.25, Pd.x, Pd.x + Pd.rx * 1.25]) {
+                  if (Scene.onPlay(d, x, 0.3) || Scene.onNbr(d, x, 0.2) || Math.abs(x - Scene.cartX(d)) < 0.5) { f(where + ': the pond on the play, the other hole or the path at ' + d.toFixed(1)); t = 9; break; } } } }
+            // the path never seen to end: from anywhere down the hole its far
+            // end is off the side of the screen, or under the clubhouse
+            { const C = Scene.cart, end = C.club ? LEN + 15.5 : LEN + 60;
+              for (const at of [0, 20, 40, LEN - 3]) { Scene.camD = at; const pr = Scene.proj(end, Scene.cartX(end));
+                if (!C.club && pr.x > -4 && pr.x < VW + 4) { f(where + ': the path\'s end in view from ' + at); break; }
+                if (C.club && !Scene.props.some(q => q.kind === 11 && Math.abs(q.x - Scene.cartX(end)) < CLUB_W / 2 && Math.abs(q.d - end) < 2)) { f(where + ': the path does not end at the clubhouse'); break; } } }
             for (const q of Scene.props) {
               if (q.kind !== 0 && q.kind !== 1 && q.kind !== 8) continue;
               if (Scene.onNbr(q.d, q.x, 0.2)) { f(where + ': a ' + (q.kind === 1 ? 'spectator' : q.kind ? q.sp : 'tree') + ' on the other hole at ' + q.d.toFixed(1) + ', ' + q.x.toFixed(1)); break; }
@@ -89,7 +102,7 @@ module.exports = {
       return o;
     });
     if (r.fails.length) throw new Error(r.fails.join('; '));
-    return [r.holes + ' holes over every course, each with the next hole beside it and a cart path (' + r.both + ' with one each side), none round an island or the sea stack or in a wager',
+    return [r.holes + ' holes over every course, each with the next hole beside it and a cart path (' + r.both + ' with one each side, ' + r.ponds + ' with a pond), none round an island or the sea stack or in a wager',
       'all laid clear of the play, the hazards and each other, nothing standing on them; the path ' + Math.min(...r.path) + ' pixels at least from the tee; the other flag seen on ' + r.flags + ' courses'];
   }
 };
