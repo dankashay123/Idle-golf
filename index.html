@@ -13250,79 +13250,105 @@ const Scene = {
   // every hole (drawn only at night) from a hash, so the hole's own dice,
   // and all it lays, stay as they were.
   // The course round the hole (the user asked: "like an actual golf course
-  // ... other holes next to it, cart paths", and sent pictures of real ones
-  // to lay it out by): the next hole beyond a line of trees on one side (on
-  // some holes both), playing the other way or on ahead, bending a little,
-  // its fairway mown in stripes, bunkers down its edge and round its green,
-  // its green with its flag, its tees; a cart path down the other side just
-  // off the rough, winding, round a pond or a bunker, from behind him to past
-  // the green, where it swings away (to the clubhouse on the last hole), so
-  // no end of it is ever seen; now and then a pond beyond the path; trees
-  // between the holes and beyond them. Laid from a hash (the hole's own
-  // draws stay where they were); painted in the ground's march
-  // (courseSlice), so a rise hides them as it hides the fairway; none round
-  // an island or the sea stack, none in a wager (newDepthsHole lays none).
+  // ... other holes next to it, cart paths", sent pictures of real ones to
+  // lay it out by, then: "there always needs to be holes around the hole
+  // being played ... just make that space not empty"). Both sides are
+  // filled: mostly the next hole (on its far side another, a second ring),
+  // now and then a forest or a lake instead; a hole crosses behind the
+  // green; a cart path runs down one side from behind him to past the green
+  // and away out of sight (to the clubhouse on the last hole); a pond now
+  // and then beyond the path; trees between the holes. Each hole bends a
+  // little, is mown in stripes, has bunkers down its edge and round its
+  // green, its flag, its tees. Laid from a hash (the hole's own draws stay
+  // where they were); painted in the ground's march (courseSlice), so a
+  // rise hides them as it hides the fairway; nothing on a hazard; none
+  // round an island or the sea stack, none in a wager.
   layCourse(){
     const h = this.hole, sk = sigKind(h);
-    this.nbrs = []; this.cart = null; this.pond = null;
+    this.nbrs = []; this.cart = null; this.pond = null; this.fills = []; this.cross = null;
     if(sk === 'island' || sk === 'pier') return;
     const put = this.props || [];
-    // the clubhouse's side (the last hole of a round) keeps no other hole
+    // the clubhouse's side (the last hole of a round) keeps a wood, no hole
     const club = put.find(q => q.kind === 11), cs = club ? Math.sign(club.x) : 0;
-    let side = hr(h, 501) < 0.5 ? -1 : 1;
-    if(side === cs) side = -side;
-    const sides = hr(h, 502) < 0.35 && -side !== cs ? [side, -side] : [side];
+    const ps = hr(h, 501) < 0.5 ? -1 : 1;               // the path's side
+    this.cart = { sd: ps, ph: hr(h, 512) * 6.28, club: cs === ps };
     const bunker = (k, d, dx, rd, rx) => ({ d, dx, rd, rx, p1: hr(k, 520) * 6.28, p2: hr(k, 521) * 6.28 });
-    sides.forEach((sd, i) => {
-      const k = h * 5 + i, gd = 14 + hr(k, 503) * (LEN - 2), toward = hr(k, 504) < 0.5;
-      // (its line follows this one's fairway, a band of rough and trees
-      // between: gap; and bends out a little somewhere along it)
-      const N = { sd, gd, toward, gap: 2.0 + hr(k, 505) * 0.5, ph: hr(k, 506) * 6.28, ph2: hr(k, 507) * 6.28,
-        bend: 0.8 + hr(k, 516) * 1.6, bendAt: 6 + hr(k, 517) * 44,
-        // its fairway runs away from its green: on toward us, or out ahead
-        a: toward ? gd + 7 : -30, b: toward ? 400 : gd - 7 };
+    // a green clear of every hazard (a canyon, a river, the railway cross the
+    // hole from side to side): tried along the hole until one is
+    const greenAt = (k, gx) => { for(let t = 0; t < 8; t++){ const gd = 14 + hr(k + t * 13, 503) * (LEN - 2);
+      if(!this.hitsHazard(gd, gx(gd), 7)) return gd; } return null; };
+    const mkHole = (sd, k, inner, gapLo, gapHi) => {
+      const toward = hr(k, 504) < 0.5;
+      const N = { sd, in: inner, toward, gap: gapLo + hr(k, 505) * (gapHi - gapLo), ph: hr(k, 506) * 6.28, ph2: hr(k, 507) * 6.28,
+        bend: inner ? 0 : 0.8 + hr(k, 516) * 1.6, bendAt: 6 + hr(k, 517) * 44, gd: 0, a: 0, b: 0, tees: [], bks: [] };
+      const gd = greenAt(k, d => this.nbrX(N, d) + sd * 0.6);
+      N.gd = gd === null ? LEN + 400 : gd;
+      // its fairway runs away from its green: on toward us, or out ahead
+      N.a = toward ? N.gd + 7 : -30; N.b = toward ? 400 : N.gd - 7;
       // its tees, two, staggered, where it starts (if that is in view)
-      N.tees = toward ? [] : [{ d: N.a - 1.6, dx: -0.35 }, { d: N.a - 4.4, dx: 0.4 }];
+      if(!toward) N.tees = [{ d: N.a - 1.6, dx: -0.35 }, { d: N.a - 4.4, dx: 0.4 }];
       // bunkers: a pair round its green, one or two down its fairway's edge
-      // (as dx off its line; a shape each)
-      N.bks = [bunker(k * 7 + 1, gd - 1.5 - hr(k, 508) * 1.5, 3.0 + hr(k, 509) * 0.4, 1.1 + hr(k, 510) * 0.5, 0.75 + hr(k, 511) * 0.25),
-               bunker(k * 7 + 2, gd + 1 + hr(k, 512) * 2, -(3.0 + hr(k, 513) * 0.4), 1.0 + hr(k, 514) * 0.5, 0.7 + hr(k, 515) * 0.25)];
+      N.bks = [bunker(k * 7 + 1, N.gd - 1.5 - hr(k, 508) * 1.5, 3.0 + hr(k, 509) * 0.4, 1.1 + hr(k, 510) * 0.5, 0.75 + hr(k, 511) * 0.25),
+               bunker(k * 7 + 2, N.gd + 1 + hr(k, 512) * 2, -(2.7 + hr(k, 513) * 0.3), 1.0 + hr(k, 514) * 0.5, 0.7 + hr(k, 515) * 0.2)];
       for(let j = 0; j < 1 + (hr(k, 518) < 0.5 ? 1 : 0); j++){
-        const fd = toward ? gd + 14 + hr(k * 3 + j, 519) * 24 : gd - 14 - hr(k * 3 + j, 519) * 24;
+        const fd = toward ? N.gd + 14 + hr(k * 3 + j, 519) * 24 : N.gd - 14 - hr(k * 3 + j, 519) * 24;
         const e = hr(k * 3 + j, 522) < 0.5 ? -1 : 1;
         N.bks.push(bunker(k * 7 + 3 + j, fd, e * (2.3 + hr(k * 3 + j, 523) * 0.3), 1.6 + hr(k * 3 + j, 524) * 1.0, 0.7 + hr(k * 3 + j, 525) * 0.35));
       }
+      // (a bunker on a hazard is left out)
+      N.bks = N.bks.filter(B => !this.hitsHazard(B.d, this.nbrBunkerX(N, B), 1));
       this.nbrs.push(N);
-    });
-    // the path down the side with no other hole (with one each side, the
-    // first's, and that hole stands clear of it)
-    const ps = sides.length > 1 ? side : -side;
-    this.cart = { sd: ps, ph: hr(h, 512) * 6.28, club: cs === ps };
-    for(const N of this.nbrs){
-      if(N.sd !== ps) continue;
-      let m = 0;
-      for(let d = Math.max(-3, N.a); d <= Math.min(LEN + 7, N.b); d += 0.5) m = Math.max(m, Math.abs(this.cartX(d)) - this.fwWidth(d));
-      if(N.gd > -3 && N.gd < LEN + 7) m = Math.max(m, Math.abs(this.cartX(N.gd)) - this.fwWidth(N.gd) + 0.5);
-      N.gap = Math.max(N.gap, m + 0.3 + 0.35 + 0.6);
+      return N;
+    };
+    // what lies each side: the next hole mostly; a wood by the clubhouse and
+    // now and then; a lake now and then; never neither side a hole
+    const kinds = [-1, 1].map(sd => { const roll = hr(h * 5 + (sd > 0 ? 1 : 0), 502);
+      return sd === cs ? 'wood' : roll < 0.8 ? 'hole' : roll < 0.9 ? 'wood' : 'lake'; });
+    if(kinds[0] !== 'hole' && kinds[1] !== 'hole') kinds[cs === -1 ? 1 : 0] = 'hole';
+    for(const sd of [-1, 1]){
+      const k = h * 5 + (sd > 0 ? 1 : 0), kind = kinds[sd > 0 ? 1 : 0];
+      if(kind === 'hole'){
+        const N = mkHole(sd, k, null, 2.0, 2.5);
+        // (on the path's side it stands clear of the path)
+        if(sd === ps){
+          let m = 0;
+          for(let d = Math.max(-3, N.a); d <= Math.min(LEN + 7, N.b); d += 0.5) m = Math.max(m, Math.abs(this.cartX(d)) - this.fwWidth(d));
+          if(N.gd > -3 && N.gd < LEN + 7) m = Math.max(m, Math.abs(this.cartX(N.gd)) - this.fwWidth(N.gd) + 0.5);
+          N.gap = Math.max(N.gap, m + 0.3 + 0.35 + 0.6);
+        }
+        // and beyond it another, a band of trees between
+        mkHole(sd, k * 11 + 3, N, 2.4, 3.2);
+      } else {
+        // a wood or a lake, from a band of rough (or the path) out
+        const F = { sd, kind, gap: 1.8 + hr(k, 526) * 0.8, ph: hr(k, 527) * 6.28, d0: kind === 'lake' ? 4 + hr(k, 528) * 10 : -40, d1: kind === 'lake' ? LEN - 4 - hr(k, 529) * 10 : LEN + 60, w: 5 + hr(k, 530) * 5 };
+        this.fills.push(F);
+      }
     }
-    // now and then a pond beyond the path, the path skirting it
-    if(hr(h, 530) < 0.45 && !(this.water && (this.water.lake || this.water.river))){
+    // a hole crossing behind the green, far off (not where the grandstand
+    // or the clubhouse stands, nor across a hazard)
+    if(!put.some(q => q.kind === 10 || q.kind === 11)){
+      const d0 = LEN + 22 + hr(h, 536) * 6;
+      if(!this.hitsHazard(d0 + 2, 0, 3)) this.cross = { d0, d1: d0 + 4.5 + hr(h, 537) * 1.5, ph: hr(h, 538) * 6.28 };
+    }
+    // now and then a pond beyond the path, the path skirting it (not where a
+    // lake is, nor by the other hole)
+    if(hr(h, 530) < 0.45 && !(this.water && (this.water.lake || this.water.river)) && !this.fills.some(F => F.sd === ps && F.kind === 'lake')){
       const d = 12 + hr(h, 531) * (LEN - 20), rx = 1.6 + hr(h, 532) * 1.0, rd = 3.2 + hr(h, 533) * 2.2;
       // (clear of the path's widest along its length, not only at its middle)
       let m = 0; for(let t = -rd - 1; t <= rd + 1; t += 0.5) m = Math.max(m, Math.abs(this.cartX(d + t)));
       const P = { d, x: ps * (m + 0.9 + rx * 1.25), rd, rx, p1: hr(h, 534) * 6.28, p2: hr(h, 535) * 6.28 };
-      let ok = true;
-      for(let t = -1; t <= 1 && ok; t += 0.25) for(const u of [-1.3, 0, 1.3]) if(this.onNbr(d + t * rd, P.x + u * rx, 0.5)){ ok = false; break; }
+      let ok = !this.hitsHazard(d, P.x, P.rd);
+      for(let t = -1; t <= 1 && ok; t += 0.25) for(const u of [-1.3, 0, 1.3]) if(this.onNbr(d + t * rd, P.x + u * rx, 0.5) || this.inFill(d + t * rd, P.x + u * rx, 0.5)){ ok = false; break; }
       if(ok) this.pond = P;
     }
-    // nothing that stands (a tree, a shrub, the gallery) on the other
-    // fairway, its green or bunkers, or in the pond; no tree or shrub on the path
-    const onPath = (d, x) => Math.abs(x - this.cartX(d)) < 0.8 && d > -30 && d < LEN + 26;
+    // nothing that stands (a tree, a shrub, the gallery) on another hole, in
+    // a pond or a lake; no tree or shrub on the path
+    const onPath = (d, x) => Math.abs(x - this.cartX(d)) < 0.8 && d > -30 && d < LEN + 60;
     const gone = [];
     for(let i = put.length - 1; i >= 0; i--){ const q = put[i];
       if(q.kind !== 0 && q.kind !== 1 && q.kind !== 8) continue;
-      if(this.onNbr(q.d, q.x, 0.7) || this.inPond(q.d, q.x, 0.6) || (q.kind !== 1 && onPath(q.d, q.x))){ put.splice(i, 1); if(q.kind === 8) gone.push(q); } }
-    const clear = (d, x, pad) => !(this.onNbr(d, x, pad) || onPath(d, x) || this.inPond(d, x, pad) || this.onPlay(d, x, 0.5) || this.hitsHazard(d, x, 0.5)
+      if(this.onNbr(q.d, q.x, 0.7) || this.inPond(q.d, q.x, 0.6) || this.inFill(q.d, q.x, 0.4, 'lake') || (q.kind !== 1 && onPath(q.d, q.x))){ put.splice(i, 1); if(q.kind === 8) gone.push(q); } }
+    const clear = (d, x, pad) => !(this.onNbr(d, x, pad) || onPath(d, x) || this.inPond(d, x, pad) || this.inFill(d, x, pad, 'lake') || this.onPlay(d, x, 0.5) || this.hitsHazard(d, x, 0.5)
       || put.some(q => (q.kind === 10 || q.kind === 11) && Math.abs(q.d - d) < 5 && Math.abs(q.x - x) < 7));
     // the shrubs, tufts and rocks taken off them laid again somewhere clear,
     // near where they were (the rough stays as full as it was)
@@ -13332,45 +13358,53 @@ const Scene = {
       if(!clear(d, x, 0.7)) continue;
       put.push(Object.assign({}, q, { d, x, extra: 1 })); i++;
     }
-    // trees: a line between this hole and the next, and more beyond it and
-    // beyond the path, as the pictures have them
+    // trees: between this hole and the next, between the rings, beyond the
+    // path, and a wood's edge standing tall
     const tk = () => (this.land && this.land.kind) || 0, kind = i => tk() === 2 ? (hr(h * 97 + i, 540) < 0.42 ? 1 : 0) : tk();
-    const tree = (i, d, x) => { if(!clear(d, x, 0.9) || put.some(q => q.kind === 0 && Math.abs(q.d - d) < 1.5 && Math.abs(q.x - x) < 1.2)) return;
+    const tree = (i, d, x, sp) => { if(!clear(d, x, 0.9) || put.some(q => q.kind === 0 && Math.abs(q.d - d) < (sp || 1.5) && Math.abs(q.x - x) < 1.1)) return;
       put.push({ kind: 0, extra: 1, d, x, s: 0.8 + hr(h * 97 + i, 541) * 0.5, k: kind(i) }); };
     let ti = 0;
-    for(const N of this.nbrs) for(let j = 0; j < 22; j++, ti++){
-      const d = -4 + hr(h * 97 + ti, 542) * (LEN + 18), v = hr(h * 97 + ti, 543);
-      const inner = Math.abs(this.nbrX(N, d)) - this.nbrW(N, d), outer = Math.abs(this.nbrX(N, d)) + this.nbrW(N, d), fw = this.fwWidth(d);
-      // (half between the holes, half beyond the other one)
-      const x = j & 1 ? N.sd * (outer + 1.1 + v * 4) : N.sd * (fw + 1.2 + v * Math.max(0, inner - fw - 2.4));
-      tree(ti, d, x);
+    const R = (i, n) => hr(h * 97 + i, n);
+    for(const N of this.nbrs) for(let j = 0; j < 14; j++, ti++){
+      const d = -4 + R(ti, 542) * (LEN + 18), v = R(ti, 543), fw = N.in ? Math.abs(this.nbrX(N.in, d)) + this.nbrW(N.in, d) : this.fwWidth(d);
+      const inner = Math.abs(this.nbrX(N, d)) - this.nbrW(N, d);
+      tree(ti, d, N.sd * (fw + 1.0 + v * Math.max(0, inner - fw - 2.0)));
     }
-    for(let j = 0; j < 12; j++, ti++){
-      const d = -4 + hr(h * 97 + ti, 542) * (LEN + 18), v = hr(h * 97 + ti, 543);
-      tree(ti, d, this.cartX(d) + ps * (1.2 + v * 5));
+    for(let j = 0; j < 12; j++, ti++){ const d = -4 + R(ti, 542) * (LEN + 18); tree(ti, d, this.cartX(d) + ps * (1.2 + R(ti, 543) * 4)); }
+    for(const F of this.fills){
+      if(F.kind !== 'wood') continue;
+      // (a close row along its edge, over the treetops painted beyond it)
+      for(let d = -6; d < LEN + 16; d += 1.7, ti++) tree(ti, d + R(ti, 544) * 0.8, F.sd * (this.fillIn(F, d) + 0.5 + R(ti, 545) * 1.4), 1.1);
     }
-    // each other green's flag (kind 12), stood with the rest
-    for(const N of this.nbrs) put.push({ kind: 12, d: N.gd, x: this.nbrGX(N), extra: 1, k: N.sd });
+    // each other green's flag (kind 12), stood with the rest (none off the
+    // ends of the course)
+    for(const N of this.nbrs) if(N.gd < LEN + 100) put.push({ kind: 12, d: N.gd, x: this.nbrGX(N), extra: 1, k: N.sd });
     put.sort((a, b) => b.d - a.d);
   },
-  // where the other hole's line is, across, at a distance; its fairway's half
-  // width; and whether a point lies on its fairway, its green or a bunker of it
-  // (bowing out round this hole's green, where the gallery stands, and
-  // bending out somewhere along its length)
-  nbrX(N, d){ const u = clamp((12 - Math.abs(d - LEN)) / 6, 0, 1), b = clamp((d - N.bendAt) / 15, 0, 1);
-    return N.sd * (this.fwWidth(d) + N.gap + this.nbrW(N, d) + 0.35 * Math.sin(d * 0.045 + N.ph) + 2.0 * u * u * (3 - 2 * u) + N.bend * b * b * (3 - 2 * b)); },
+  // where another hole's line is, across, at a distance; its fairway's half
+  // width; and whether a point lies on its fairway, its green or a bunker of
+  // it. The first ring follows this hole's fairway, a band of rough between,
+  // bowing out round this hole's green (where the gallery stands) and
+  // bending out somewhere along its length; the second follows the first.
+  nbrX(N, d){
+    let base;
+    if(N.in) base = Math.abs(this.nbrX(N.in, d)) + this.nbrW(N.in, d);
+    else { const u = clamp((12 - Math.abs(d - LEN)) / 6, 0, 1), b = clamp((d - N.bendAt) / 15, 0, 1);
+      base = this.fwWidth(d) + 2.0 * u * u * (3 - 2 * u) + N.bend * b * b * (3 - 2 * b); }
+    return N.sd * (base + N.gap + this.nbrW(N, d) + 0.35 * Math.sin(d * 0.045 + N.ph));
+  },
   nbrW(N, d){ return 2.2 + 0.25 * Math.sin(d * 0.07 + N.ph2); },
   // its green, set off its line a little away from this hole (it is wider
   // than the fairway, and reached in toward this one's play)
   nbrGX(N){ return this.nbrX(N, N.gd) + N.sd * 0.6; },
-  // a bunker's reach across at d, either side of its middle, or null
-  // (lobed: two sines on the ellipse, one each side)
+  // a bunker's (or a pond's) reach across at d, either side of its middle,
+  // or null (lobed: two sines on the ellipse, one each side)
   lobeSpan(B, d){
     const t = (d - B.d) / B.rd; if(t <= -1 || t >= 1) return null;
     const w = B.rx * Math.sqrt(1 - t * t);
     return [w * (1 + 0.22 * Math.sin(t * 5 + B.p1)), w * (1 + 0.22 * Math.sin(t * 4 + B.p2))];
   },
-  nbrBunkerX(N, B){ return (Math.abs(B.dx) > 2.8 ? this.nbrGX(N) : this.nbrX(N, B.d)) + N.sd * B.dx; },
+  nbrBunkerX(N, B){ return (Math.abs(B.dx) > 2.6 ? this.nbrGX(N) : this.nbrX(N, B.d)) + N.sd * B.dx; },
   onNbr(d, x, pad){
     for(const N of this.nbrs || []){
       const nx = this.nbrX(N, d), off = Math.abs(x - nx);
@@ -13380,9 +13414,22 @@ const Scene = {
       for(const B of N.bks) if(Math.abs(d - B.d) < B.rd + pad && Math.abs(x - this.nbrBunkerX(N, B)) < B.rx * 1.25 + pad) return true;
       for(const T0 of N.tees) if(Math.abs(d - T0.d) < 1.1 + pad && Math.abs(x - this.nbrX(N, T0.d) - N.sd * T0.dx) < 1.0 + pad) return true;
     }
+    const X = this.cross;
+    if(X && d > X.d0 - pad && d < X.d1 + pad && Math.abs(x) > 3.5) return true;
     return false;
   },
   inPond(d, x, pad){ const P = this.pond; return !!P && Math.abs(d - P.d) < P.rd + pad && Math.abs(x - P.x) < P.rx * 1.25 + pad; },
+  // a wood or a lake's inner edge, across, at d; and whether a point is in one
+  fillIn(F, d){ return (F.sd === (this.cart && this.cart.sd) ? Math.abs(this.cartX(d)) + 0.6 : this.fwWidth(d)) + F.gap + 0.3 * Math.sin(d * 0.06 + F.ph); },
+  inFill(d, x, pad, kind){
+    for(const F of this.fills || []){
+      if(kind && F.kind !== kind) continue;
+      if(Math.sign(x) !== F.sd || d < F.d0 - pad || d > F.d1 + pad) continue;
+      const i = this.fillIn(F, d), ax = Math.abs(x);
+      if(ax > i - pad && (F.kind === 'wood' || ax < i + F.w + pad)) return true;
+    }
+    return false;
+  },
   // the cart path: just off the rough on its side, winding a little, round
   // any pond or bunker on that side; past the green it swings away (on
   // the last hole toward the clubhouse), so it runs on out of sight
@@ -14402,7 +14449,7 @@ const Scene = {
   newDepthsHole(R){
     this.gGen = (this.gGen || 0) + 1;
     const dg = R.id;
-    this.nbrs = []; this.cart = null; this.pond = null;   // (no course round a wager)
+    this.nbrs = []; this.cart = null; this.pond = null; this.fills = []; this.cross = null;   // (no course round a wager)
     this.curve = null; this._bcD = null;      // a wager is played dead straight
     this.isle = null; this.heli = 0; this.crossing = 0;
     this.wind = 0;                            // and in still air
@@ -15925,7 +15972,7 @@ Object.assign(Scene, {
         }
       }
 
-      if(this.nbrs && this.nbrs.length) this.courseSlice(c, T, d, s, y, hgt, near, lit, C0);
+      if(this.cart) this.courseSlice(c, T, d, s, y, hgt, near, lit, C0);
 
       if(d < LEN + 7){
         const hw = Math.round(this.fwWidth(d) * LAT * s);
@@ -16013,6 +16060,43 @@ Object.assign(Scene, {
       a = Math.max(-2, a); b = Math.min(VW + 2, b); if(b <= a) return; c.fillStyle = col; c.fillRect(a, y, b - a, hgt); };
     // a lobed shape (a bunker, a pond, a green) about x at this distance
     const lobe = (B, x, grow) => { const w = this.lobeSpan(B, d); if(!w) return null; return [x - w[0] * (grow || 1), x + w[1] * (grow || 1)]; };
+    // a wood: treetops seen from the side, crowded, crown upon crown (a
+    // close row of real trees stands along its edge: layCourse); a lake: its
+    // bank and its water
+    for(const F of this.fills || []){
+      if(d < F.d0 || d > F.d1) continue;
+      const i0 = this.fillIn(F, d), sd = F.sd;
+      if(F.kind === 'wood'){
+        span(sd * i0, sd * 400, T.tl2);
+        if(U * 0.85 >= 2){
+          const hl = T._tlh || (T._tlh = lite(T.tl, 0.14));
+          for(let r = Math.floor(d / 0.9) - 1; r <= Math.floor(d / 0.9) + 1; r++){
+            const cd = (r + 0.5) * 0.9 + (hr(r, 550) - 0.5) * 0.4, dd = d - cd;
+            for(let j = 0; j < 48; j++){
+              const cx = i0 + 0.35 + j * 0.85 + hr(r * 131 + j, 551) * 0.3, rr = 0.48 + hr(r * 131 + j, 552) * 0.14;
+              const X = px(sd * cx); if(sd > 0 ? X > VW + 4 : X < -4) break;
+              if(Math.abs(dd) >= rr) continue;
+              const hw = rr * Math.sqrt(1 - (dd / rr) * (dd / rr));
+              span(sd * (cx - hw), sd * (cx + hw), dd > rr * 0.35 ? hl : T.tl);
+            }
+          }
+        }
+      } else {
+        const mid = (F.d0 + F.d1) / 2, half = (F.d1 - F.d0) / 2, t = (d - mid) / half, q = Math.sqrt(Math.max(0, 1 - t * t * t * t));
+        const w = F.w * q * (1 + 0.1 * Math.sin(d * 0.3 + F.ph));
+        if(w > 0.2){ span(sd * (i0 - 0.3), sd * (i0 + w + 0.3), pickC(T._bk, 0.5));
+          span(sd * i0, sd * (i0 + w), this.ice ? pickC(T._ic, 0.3 + near * 0.4) : pickC(T._wt, 0.25 + near * 0.45)); }
+      }
+    }
+    // a hole crossing behind the green: its fairway right across, mown in
+    // stripes, a cut of rough either side
+    const X0 = this.cross;
+    if(X0 && d > X0.d0 - 0.4 && d < X0.d1 + 0.4){
+      if(d < X0.d0 || d > X0.d1) span(-400, 400, T.apron);
+      else { span(-400, 400, pickC(T._fw, near * 0.55 + lit));
+        const xl = (0 - C0) / U, xr = (VW - C0) / U, sc = pickC(T._fw, near * 0.55 + lit + 0.16);
+        for(let x = Math.floor(xl / 2.5) * 2.5; x < xr; x += 2.5) if(Math.round(x / 2.5 + X0.ph) & 1) span(x, x + 2.5, sc); }
+    }
     // the pond: its bank, then its water (ice in the cold)
     const P = this.pond;
     if(P){
