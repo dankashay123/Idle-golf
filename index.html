@@ -8514,7 +8514,7 @@ function blitShear(c, spr, x, y, w, h, shear, bulk){
 // either side of it); for anything laid over him row by row too (the
 // Demonic's seams), sp the picture whose body it follows
 function bulkRow(spr, x, w, bulk, f, sp){
-  const n = bulk ? bulkAt(bulk, f) : 0;
+  const n = bulk ? bulkAt(bulk, f) * (spr.bulkS || 1) : 0;
   if(n <= 0) return [Math.round(x), Math.max(1, Math.round(w))];
   // (his legs about their own middle, his chest about its own)
   const S0 = bodySpan(sp || spr), B = f > 0.55 ? S0.legs : S0, sc = w / spr.w, bw = (B.r - B.l) * sc, a = (bw + 2 * n) / bw;
@@ -9317,60 +9317,60 @@ const G_ADDR_ROWS = [
     '........................................',
     '........................................',
     '........................................',
-    '............................cccccc......',
-    '...........................cccccccC.....',
-    '..........................cccccccCC.....',
-    '...........................cccccCCC.....',
-    '............................cccCCCCCCC..',
-    '............................kkkkkbC.....',
-    '............................kkkkkKk.....',
-    '............................kkkkKKK.....',
-    '............................kkkKKK......',
-    '...........................kkkkKK.......',
+    '..........................ccccc.........',
+    '.........................cccccccC.......',
+    '.........................ccccccCC.......',
+    '..........................ccccCCCCCC....',
+    '...........................kkkkkbK......',
+    '...........................kkkkkKk......',
+    '...........................kkkkKKK......',
+    '...........................kkkKKK.......',
     '..........................kkkkK.........',
-    '........................sTTTTT..........',
-    '.......................sSSSSSS..........',
-    '......................ssSSSSSS..........',
-    '.....................ssssSSSTT..........',
-    '.....................sssSSSTTTT.........',
-    '....................ssssSSTTTT..........',
-    '....................sssSSSSTTT..........',
-    '...................ssssSSSTTTT..........',
-    '..................ssssSSSSTTT...........',
-    '..................sssSSSSTTT............',
-    '.................ssssSSSTTTT............',
-    '................ssssSSSSTTT.............',
-    '................sssSSSSTTT..............',
-    '...............ssssSSSTTTT..............',
-    '..............ssssSSSSTTT...............',
-    '..............sssSSSSTTT................',
-    '.............bbbbbbbbbbT................',
-    '............ppppPbbbbbb.................',
-    '............ppppPpppPT..................',
-    '............ppppPppPPT..................',
-    '...........pppppPpPPPP..................',
-    '...........ppppPPPPPPP..................',
-    '...........ppppPPPPPPP..................',
-    '...........ppppPTTPPPP..................',
-    '...........ppppP..PPPP..................',
-    '...........pppPP..PPPP..................',
-    '...........pppPP..PPPPP.................',
-    '..........ppppP...PPPPP.................',
-    '..........ppppP...PPPPP.................',
-    '..........ppppP...PPPPP.................',
-    '..........pppPP...PPPPP.................',
-    '..........pppPP...PPPPP.................',
-    '..........pppPP....PPPP.................',
-    '..........pppP.....PPPP.................',
-    '..........pppP.....PPPP.................',
-    '..........pppP.....PPPP.................',
-    '..........pppP.....PPPP.................',
-    '..........pppP.....PPPP.................',
-    '..........pppP.....PPPP.................',
-    '..........pppP.....PPPP.................',
-    '........oooooooo..PPPPPPP...............',
-    '........oooooooo..PPPPPPP...............',
-    '........bbbbbbbb..bbbbbbb...............'
+    '.......................sTTTTTTTT........',
+    '....................sssSSSSSTTT.........',
+    '...................sssSSSSSSTTT.........',
+    '...................sssSSSSSTTT..........',
+    '..................sssSSSSSTTT...........',
+    '.................sssSSSSSSTTT...........',
+    '................sssSSSSSSTTT............',
+    '...............sssSSSSSSTTT.............',
+    '...............sssSSSSSSTTT.............',
+    '..............sssSSSSSSTTT..............',
+    '.............sssSSSSSSTTT...............',
+    '............sssSSSSSSSTTT...............',
+    '...........sssSSSSSSSTTT................',
+    '...........sssSSSSSSTTT.................',
+    '..........bbbbbbbbbbbbT.................',
+    '..........ppppppPPPPPP..................',
+    '..........ppppppPPPPPP..................',
+    '..........pppppPPPPPPP..................',
+    '...........pppppPPPPPP..................',
+    '...........pppppPPPPPP..................',
+    '............pppppPPPPPP.................',
+    '............pppppPPPPPP.................',
+    '............pppppPPPPPP.................',
+    '............pppppPPPPPP.................',
+    '............pppppPPPPPP.................',
+    '.............pppppPPPPPP................',
+    '.............pppppPPPPPP................',
+    '.............pppppPPPPPP................',
+    '.............pppppPPPPPP................',
+    '.............pppppPPPPPP................',
+    '.............pppppPPPPPP................',
+    '.............pppppPPPPPP................',
+    '.............pppppPPPPPP................',
+    '.............pppppPPPPPP................',
+    '.............pppppPPPPPP................',
+    '.............pppppPPPPPP................',
+    '............pppppPPPPPP.................',
+    '............pppppPPPPPP.................',
+    '............pppppPPPPPP.................',
+    '............pppppPPPPPP.................',
+    '............pppppPPPPPP.................',
+    '...........pppppPPPPPP..................',
+    '...........oooooooooooooo...............',
+    '...........oooooooooooooo...............',
+    '...........bbbbbbb..bbbbb...............'
 ];
 const G_FIN_ROWS = [
     '........................................',
@@ -9610,7 +9610,9 @@ function buildSprites(){
   // Where the arm rig hangs from, as a fraction of the sprite. The shoulder is
   // in a different place in each pose, and a single constant left the arms
   // growing out of his chest at the finish.
-  SPRITE.gAddr.ax = 0.66; SPRITE.gAddr.ay = 0.300;
+  SPRITE.gAddr.ax = 0.66; SPRITE.gAddr.ay = 0.250;
+  // (broad in his own picture at address: built out half as much there)
+  SPRITE.gAddr.bulkS = 0.5;
   SPRITE.gFinish.ax = 0.60; SPRITE.gFinish.ay = 0.266;
   SPRITE.gWalk.ax = 0.58; SPRITE.gWalk.ay = 0.266;
   SPRITE.flagA = makeSprite([
@@ -15741,7 +15743,7 @@ function paintGolfer(c, x, y, w, h, ph, t, bot, walking, walkPh, spr, arc, putt,
   if(FX && FX.body) FX.body(c, g);
 
   const sx = x + w*(spr.ax || 0.66), sy = y + h*(spr.ay || 0.30);
-  const al = h*0.30, cl = h*0.60;
+  const al = h*0.30, cl = h*0.64;   // (a touch longer: he stands taller at address now)
   const armH = arm * 0.55;
   const hx = sx + Math.sin(armH)*al, hy = sy + Math.cos(armH)*al*0.85;
   const tx = hx + Math.sin(arm)*cl, ty = hy + Math.cos(arm)*cl*0.90;
