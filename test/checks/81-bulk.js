@@ -1,6 +1,7 @@
 /* Every look is bulkier than the sprite he is drawn from (the user asked:
  * "make the skins bulkier like the void skin", then the other skins, then
- * the plain outfits and the Majors' jackets, "so everyone's broader"):
+ * the plain outfits and the Majors' jackets, "so everyone's broader", then
+ * the caddies):
  *
  *   - drawn on the course, each one's outline is built out behind him
  *     (bulkPlate), and his arms are a pixel thicker (bulk)
@@ -44,6 +45,17 @@ module.exports = {
           o.wide[O.id] = (a0 - a1) + '/' + (b1 - b0);
           if (a0 - a1 < 2 || b1 - b0 < 2) f(O.n + ': at his chest the plate adds ' + (a0 - a1) + ' and ' + (b1 - b0) + ' pixels');
         }
+        // and every caddie, plain ones too (the user asked, after the golfers)
+        o.cads = 0;
+        for (const C of B.CADDIES) {
+          S.styleOwn['c:' + C.id] = 1; S.caddie = C.id; S.outfit = 'classic'; buildSprites();
+          startHole(); Scene.announce = null; Scene.fairyMove = null; Scene.moveT = 999;
+          let cad = 0;
+          window.bulkPlate = function (cx, g) { if (g.minor) cad++; return keep.apply(this, arguments); };
+          Scene.draw(0, derive());
+          window.bulkPlate = keep;
+          if (!cad) f(C.n + ': the caddie is not built out'); else o.cads++;
+        }
       } finally {
         window.bulkPlate = keep; QUIET = false;
         Object.keys(S).forEach(k => delete S[k]); Object.assign(S, JSON.parse(SNAP)); buildSprites(); startHole();
@@ -52,7 +64,7 @@ module.exports = {
       return o;
     });
     if (r.fails.length) throw new Error(r.fails.join('; '));
-    return [Object.keys(r.wide).length + ' looks, every one built out behind him (the skins thicker in the arm too); at his chest, pixels added either side: '
+    return [Object.keys(r.wide).length + ' looks and ' + r.cads + ' caddies, every one built out behind him (the skins thicker in the arm too); at his chest, pixels added either side: '
       + Object.entries(r.wide).map(([k, v]) => k + ' ' + v).join(', ')];
   }
 };

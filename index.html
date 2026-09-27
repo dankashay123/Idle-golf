@@ -13928,6 +13928,9 @@ const Scene = {
                   head: { x: bx + w*CAP_CADDIE.x, y: by + h*CAP_CADDIE.y, w: w*CAP_CADDIE.w, hh: h*CAP_CADDIE.h } };
       if(FX && FX.ground) FX.ground(g0, g);
       if(FX && FX.back) FX.back(g0, g);
+      // (a plain caddie built out in his own clothes too, as the golfers are:
+      // the user asked)
+      else bulkPlate(g0, g, CD.shirt3 || CD.shirt2 || CD.shirt, CD.shirt2 || CD.shirt, null, null, true);
       if(FX && FX.alpha) g0.globalAlpha = FX.alpha;
       // legs dangling, a little swing to them; stepping when he dances
       drawLegs(g0, bx + w*0.55, by + h*(32/58), h*(25/58), w, P && P.legs !== null ? P.legs : Math.sin(this.t * 1.7) * 0.08,
