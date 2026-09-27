@@ -17963,7 +17963,10 @@ Object.assign(Scene, {
     for(let i = I.stones.length - 1; i >= 0; i--){
       const d = I.stones[i];
       if(d < near) continue;
-      const p = this.proj(d, 0), clip = this.clipAt(d);
+      // (at them or out on them nothing is between him and them: their foot
+      // and foam sit a row under the river's rim, and snow on them at night
+      // lost its lower edge)
+      const p = this.proj(d, 0), clip = this.camD >= I.bank - 0.3 ? Math.max(this.clipAt(d), p.y + 1) : this.clipAt(d);
       if(p.y - 1 > clip) continue;
       const w = Math.max(2, Math.round(0.62 * LAT * p.s)), hh = Math.max(1, Math.round(w * 0.30));
       for(let r = 0; r < hh; r++){
