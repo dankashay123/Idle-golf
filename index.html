@@ -12300,8 +12300,96 @@ const WING = [['....X', '...XX', '..XXw', 'XXXw.'], ['.....', 'XXXww', '.XXXw', 
 // The ball at rest -- teed up at his feet, or lying where it came down -- in
 // the ball he has on, not a plain white one. cx, cy its centre, r its size.
 // The coloured trails leave the ball itself white, as in flight.
+// The ball lying, or teed up, or rolling on the green (the user: "when
+// it's sitting on the ground or being putted, it doesn't look like anything
+// special"): a round ball lit from above, what goes round it drawn behind
+// it and then in front, and the ball's own look between
 function drawLyingBall(c, cx, cy, r, t){
-  const fx = ballLookNow().fx, k = Math.max(1, Math.round(r));
+  const fx = ballLookNow().fx, O = LB_ORBIT[fx];
+  drawLyingBallBase(c, cx, cy, r, t, fx);
+  // (the far half after the ball's glow, where the ball does not hide it:
+  // drawn first, the glow covered it)
+  if(O){ LB_HIDE = { cx, cy, r: r + 0.3 }; O(c, cx, cy, r, t, false); LB_HIDE = null; O(c, cx, cy, r, t, true); }
+  c.globalAlpha = 1;
+}
+// a ball as a lit sphere in a colour: its lit side up and to the left, its
+// shade under it, a glint (a plain square at its smallest)
+function lbSphere(c, cx, cy, r, col){
+  const R = Math.max(1, r), x0 = Math.floor(cx - R), y0 = Math.floor(cy - R), n = Math.max(1, Math.round(R * 2));
+  c.globalAlpha = 1;
+  if(n <= 2){ c.fillStyle = col; c.fillRect(Math.round(cx - R), Math.round(cy - R), n, n); return; }
+  const L = lite(col, 0.45), D = dark(col, col === '#050308' ? 0 : 0.28), E = dark(col, col === '#050308' ? 0 : 0.5);
+  for(let j = 0; j < n; j++) for(let i = 0; i < n; i++){
+    const u = (i + 0.5) / n * 2 - 1, v = (j + 0.5) / n * 2 - 1, q = u * u + v * v;
+    if(q > 1.05) continue;
+    const l = -(u * 0.6 + v * 0.75);
+    c.fillStyle = q > 0.72 && l < -0.1 ? E : l > 0.35 ? L : l < -0.35 ? D : col;
+    c.fillRect(x0 + i, y0 + j, 1, 1);
+  }
+  if(n >= 4){ c.fillStyle = '#FFFFFF'; c.fillRect(x0 + Math.round(n * 0.25), y0 + Math.round(n * 0.2), 1, 1); }
+}
+// dots along a tilted ring about the ball, the far half (front false) or the
+// near; n dots, a trail of len of them behind a head going round at spin
+let LB_HIDE = null;
+function lbRing(c, cx, cy, rx, ry, tilt, a0, len, cols, front, step, thick){
+  const ct = Math.cos(tilt), st = Math.sin(tilt), H = LB_HIDE;
+  for(let j = 0; j < len; j++){
+    const a = a0 - j * (step || 0.32), sa = Math.sin(a);
+    if((sa > 0) !== front) continue;
+    const px = Math.cos(a) * rx, py = sa * ry;
+    const X = Math.round(cx + px * ct - py * st), Y = Math.round(cy + px * st + py * ct);
+    if(H && (X + 0.5 - H.cx) ** 2 + (Y + 0.5 - H.cy) ** 2 < H.r * H.r) continue;
+    c.globalAlpha = 1; c.fillStyle = cols[Math.min(cols.length - 1, Math.floor(j / len * cols.length))];
+    c.fillRect(X, Y, 1, thick ? 2 : 1);
+  }
+}
+const LB_ORBIT = {
+  // the Divine's: a ribbon of jade and a ribbon of gold going round it, as
+  // round him (the user asked)
+  godlight(c, cx, cy, r, t, front){
+    const th = r >= 3, R1 = r + 3.5, R2 = r + 3;
+    lbRing(c, cx, cy, R1, R1 * 0.42, -0.35, t * 3.2, 16, ['#FFFFFF', '#B8FFE6', '#7FF0C8', '#3FD6A8', '#2FB592'], front, 0.26, th);
+    lbRing(c, cx, cy, R2, R2 * 0.4, 0.45, -t * 2.6 + 2, 15, ['#FFF6D0', '#F4D27A', '#E0AE3E', '#B8862A'], front, -0.27, th);
+  },
+  demoneye(c, cx, cy, r, t, front){
+    lbRing(c, cx, cy, r + 3.5, (r + 3.5) * 0.36, 0.1, t * 2.4, 12, ['#FFD34A', '#FF6A1A', '#A81E14'], front, 0.5);
+  },
+  ascorb(c, cx, cy, r, t, front){
+    lbRing(c, cx, cy, r + 3, (r + 3) * 0.4, -0.25, t * 3, 12, ['#FFE0FF', '#F2A6F8', '#E639EB', '#962CA8'], front);
+  },
+  singularity(c, cx, cy, r, t, front){
+    lbRing(c, cx, cy, r + 3.5, (r + 3.5) * 0.3, 0.2, -t * 2.2, 6, ['#FFFFFF', '#B98CFF'], front, 1.05);
+  },
+  hearts(c, cx, cy, r, t, front){
+    if(!front) return; const f = (t * 0.9) % 1; if(f > 0.7) return;
+    const hx = Math.round(cx + r + 1 + Math.sin(t * 4) * 1), hy = Math.round(cy - r - 2 - f * 6);
+    c.globalAlpha = 1; c.fillStyle = '#FF7A9A'; c.fillRect(hx, hy, 1, 1); c.fillRect(hx + 2, hy, 1, 1); c.fillRect(hx, hy + 1, 3, 1); c.fillRect(hx + 1, hy + 2, 1, 1);
+  },
+  bubbles(c, cx, cy, r, t, front){
+    if(!front) return;
+    for(let i = 0; i < 2; i++){ const f = (t * 0.7 + i * 0.5) % 1; if(f > 0.8) continue;
+      c.globalAlpha = 1; pxRing(c, Math.round(cx - r + i * r * 2 + Math.sin(t * 3 + i) * 1), Math.round(cy - r - 1 - f * 7), 1, '#D8F2FF'); }
+  },
+  comet(c, cx, cy, r, t, front){
+    if(!front) return;
+    for(let i = 0; i < 4; i++){ const f = (t * 1.6 + i / 4) % 1;
+      c.globalAlpha = 1; c.fillStyle = f < 0.35 ? '#FFE08A' : f < 0.7 ? '#FF8A3A' : '#A8321A';
+      c.fillRect(Math.round(cx + Math.sin(t * 5 + i * 1.7) * r * 0.6), Math.round(cy - r - 1 - f * 5), 1, 1); }
+  },
+  // the plain wakes: a glint of the wake's own colour going round
+  tGold(c, cx, cy, r, t, front){ lbRing(c, cx, cy, r + 2, (r + 2) * 0.4, 0, t * 3, 4, ['#FFF2B8', '#E3B457'], front); },
+  tAurora(c, cx, cy, r, t, front){ lbRing(c, cx, cy, r + 2, (r + 2) * 0.4, 0.3, t * 2.6, 5, ['#C8FFF0', '#57E0BE', '#3FB8D8'], front); },
+  tEmber(c, cx, cy, r, t, front){ lbRing(c, cx, cy, r + 2, (r + 2) * 0.4, -0.2, t * 3.4, 4, ['#FFD08A', '#F07A3A'], front); },
+  tMythic(c, cx, cy, r, t, front){ lbRing(c, cx, cy, r + 2, (r + 2) * 0.4, 0.2, -t * 2.8, 4, ['#FFFFFF', '#C68BFF'], front); },
+  tRainbow(c, cx, cy, r, t, front){ lbRing(c, cx, cy, r + 2.5, (r + 2.5) * 0.4, 0, t * 2.4, 5, ['#E4574A', '#E3B457', '#7ADB86', '#57A5C2', '#C68BFF'], front, 0.4); },
+  tHellfire(c, cx, cy, r, t, front){ LB_ORBIT.demoneye(c, cx, cy, r - 0.5, t, front); },
+  tAscension(c, cx, cy, r, t, front){ LB_ORBIT.ascorb(c, cx, cy, r - 0.5, t, front); },
+  tHorizon(c, cx, cy, r, t, front){ LB_ORBIT.singularity(c, cx, cy, r, t, front); }
+};
+// the Divine's wake carries its ribbons too
+LB_ORBIT.tSeraph = LB_ORBIT.godlight;
+function drawLyingBallBase(c, cx, cy, r, t, fx){
+  const k = Math.max(1, Math.round(r));
   const x = Math.round(cx - r), y = Math.round(cy - r), d = Math.max(1, Math.round(r * 2));
   const dot = (px, py, s, col, a) => fxDot(c, px, py, s, col, a === undefined ? 1 : a);
   switch(fx){
@@ -12309,7 +12397,7 @@ function drawLyingBall(c, cx, cy, r, t){
       const DUCK = ['..YY..', '.YYYO.', 'YYYYY.', '.YYY..'], s = Math.max(1, Math.round(r * 0.8));
       const ox = Math.round(cx - 3 * s), oy = Math.round(cy - 3 * s);
       DUCK.forEach((row, yy) => [...row].forEach((ch, xx) => { if(ch === '.') return;
-        c.fillStyle = ch === 'O' ? '#FF8A2A' : '#FFD84A'; c.fillRect(ox + xx * s, oy + yy * s, s, s); }));
+        c.fillStyle = ch === 'O' ? '#FF8A2A' : yy === 0 ? '#FFF0A0' : yy === 3 ? '#D9A62E' : '#FFD84A'; c.fillRect(ox + xx * s, oy + yy * s, s, s); }));
       c.fillStyle = '#1A1A1A'; c.fillRect(ox + 3 * s, oy + s, 1, 1);
       break;
     }
@@ -12321,28 +12409,28 @@ function drawLyingBall(c, cx, cy, r, t){
       break;
     }
     case 'bubbles':                                  // the ball in its bubble
-      dot(x, y, d, '#FFFFFF');
+      lbSphere(c, cx, cy, r, '#FFFFFF');
       c.globalAlpha = 0.9; pxRing(c, Math.round(cx), Math.round(cy), r + 2 + k, '#BFE6FA');
       dot(cx - r - 1, cy - r - 1, 1, '#FFFFFF');
       break;
     case 'confetti':                                 // a few bits still falling round it
-      dot(x, y, d, '#FFFFFF');
+      lbSphere(c, cx, cy, r, '#FFFFFF');
       ['#FF4FB8', '#3FE0FF', '#FFE14A', '#7CFF6A'].forEach((col, i) => {
         const a = t * 2 + i * 1.6; dot(cx + Math.cos(a) * (r + 3), cy - r - 1 + ((t * 3 + i * 0.4) % 1) * (r + 3), 1, col); });
       break;
     case 'comet':                                    // still smouldering
       drawGlow(c, cx, cy, r + 3, r + 3, [[0.5, '#F0612A', 1], [0, '#FFB43A', 2]], Math.floor(t * 10) & 3, 0.8);
-      dot(x, y, d, '#FFF3B0');
+      lbSphere(c, cx, cy, r, '#FFF3B0');
       if(Math.sin(t * 7) > 0.2) dot(cx + Math.sin(t * 3) * 2, cy - r - 2 - ((t * 2) % 1) * 4, 1, '#FFB43A', 0.8);
       break;
     case 'blackhole':                                // a dark core with its ring
       for(let i = 0; i < 10; i++){ const a = t * 5 + i / 10 * Math.PI * 2;
         dot(cx + Math.cos(a) * (r + 2), cy + Math.sin(a) * (r + 2) * 0.4, 1, i % 3 ? '#C68BFF' : '#FFFFFF', Math.sin(a) > 0 ? 1 : 0.5); }
-      dot(x, y, d, '#050308');
+      lbSphere(c, cx, cy, r, '#050308');
       break;
     case 'godlight':                                 // in a jade glow, a gold halo over it
       drawGlow(c, cx, cy, r + 3, r + 3, [[0.6, '#17866A', 1], [0, '#3FD6A8', 2]], Math.floor(t * 8) & 3, 0.8);
-      dot(x, y, d, '#FFFFFF');
+      lbSphere(c, cx, cy, r, '#FFFFFF');
       c.globalAlpha = 0.9; c.fillStyle = '#E0AE3E';
       c.fillRect(Math.round(cx - r - 1), Math.round(cy - r - 3), d + 2, 1);
       break;
@@ -12354,7 +12442,7 @@ function drawLyingBall(c, cx, cy, r, t){
       break;
     case 'tHorizon':                                 // the night about it, a star glinting
       drawGlow(c, cx, cy, r + 3, r + 2, [[0.55, '#3E2A6E', 1], [0, '#7A4ED8', 2]], Math.floor(t * 8) & 3, 0.85);
-      dot(x, y, d, '#FFFFFF');
+      lbSphere(c, cx, cy, r, '#FFFFFF');
       if(((t * 0.8) % 1) < 0.3) voidStar(c, cx + r + 2, cy - r - 2, 1, 1);
       break;
     case 'ascorb':                                   // burning, its sparks circling
@@ -12362,23 +12450,23 @@ function drawLyingBall(c, cx, cy, r, t){
       break;
     case 'tHellfire':                                // smouldering
       drawGlow(c, cx, cy, r + 3, r + 2, [[0.55, '#8A1408', 1], [0, '#FF4A1A', 2]], Math.floor(t * 10) & 3, 0.85);
-      dot(x, y, d, '#FFF3B0');
+      lbSphere(c, cx, cy, r, '#FFF3B0');
       for(let i = 0; i < 3; i++){ const f = (t * 1.4 + i / 3) % 1;
         dot(cx + Math.sin(t * 3 + i * 2) * 2, cy - r - 1 - f * 6, 1, f < 0.4 ? '#FFB43A' : '#5A4444', 1 - f); }
       break;
     case 'tAscension':                               // smouldering magenta
       drawGlow(c, cx, cy, r + 3, r + 2, [[0.55, '#762889', 1], [0, '#E639EB', 2]], Math.floor(t * 8) & 3, 0.85);
-      dot(x, y, d, '#FFE0FF');
+      lbSphere(c, cx, cy, r, '#FFE0FF');
       for(let i = 0; i < 2; i++){ const f = (t * 1.5 + i / 2) % 1;
         dot(cx + Math.sin(t * 3 + i * 2) * 2, cy - r - 1 - f * 5, 1, f < 0.4 ? '#F2A6F8' : '#762889', 1 - f); }
       break;
     case 'tSeraph':                                  // resting in jade, gold over it
-      dot(x, y, d, '#B8FFE6');
+      lbSphere(c, cx, cy, r, '#B8FFE6');
       c.globalAlpha = 0.95; c.fillStyle = '#E0AE3E';
       c.fillRect(Math.round(cx - r - 1), Math.round(cy - r - 3 - (Math.sin(t * 3) > 0 ? 1 : 0)), d + 2, 1);
       break;
     default:
-      dot(x, y, d, '#FFFFFF');
+      lbSphere(c, cx, cy, r, '#FFFFFF');
       if(r > 1) dot(x, y, 1, '#FFFFFF');
   }
   c.globalAlpha = 1;
@@ -12611,6 +12699,75 @@ Object.assign(CUP_FX, {
       for(let a = a0; a < a1; a += 0.3) fxDot(c, x - Math.cos(a) * rr - (k >> 1), y - k - Math.sin(a) * rr * 0.9, k, COLS[b], 1); }
   }
 });
+// A second layer over the four sets' moments (the user: more "damn this
+// skin set was worth the money", at the same pace): the same half second,
+// inside the same box, in solid pixels dropped to fade
+function cupHelix(c, x, y, h, q, k, cols, turns, seed){
+  const top = h * 0.66 * Math.min(1, q * 2.2);
+  for(let s2 = 0; s2 < 2; s2++) for(let j = 0; j < 22; j++){
+    const u = j / 21; if(hr(j + s2 * 40, seed) < (q - 0.55) * 2.4) continue;
+    const a = u * turns + q * 11 + s2 * Math.PI, rr = h * 0.3 * (1 - u * 0.45);
+    fxDot(c, x + Math.cos(a) * rr - (k >> 1), y - k - u * top + Math.sin(a) * h * 0.05, k, cols[s2][Math.sin(a) > 0 ? 0 : 1], 1);
+  }
+}
+function cupStar(c, x, y, k, arm, core, rim){
+  fxDot(c, x, y, k, core, 1);
+  for(let i = 1; i <= arm; i++) for(const [dx, dy] of [[-1, 0], [1, 0], [0, -1], [0, 1]]) fxDot(c, x + dx * k * i, y + dy * k * i, k, i === arm ? rim : core, 1);
+}
+const CUP_FX2 = {
+  godlight(c, x, y, cr, h, q, t){
+    const k = Math.max(1, Math.round(h / 16));
+    // a beam of light standing up out of the cup a moment
+    if(q < 0.55){ const bh = h * 0.7 * Math.sin(q / 0.55 * Math.PI);
+      for(let yy = 0; yy < bh; yy += k) for(let xx = -k; xx <= k; xx += k){ if(hr(xx * 7 + yy, 390) < 0.3 + q) continue;
+        fxDot(c, x + xx - (k >> 1), y - k - yy, k, xx === 0 ? '#FFFFFF' : yy > bh * 0.6 ? '#F4D27A' : '#7FF0C8', 1); } }
+    // the two ribbons, jade and gold, winding up round the pin
+    cupHelix(c, x, y, h, q, k, [['#B8FFE6', '#2FB592'], ['#FFF2B8', '#E0AE3E']], 7, 391);
+    // stars twinkling about it
+    for(let i = 0; i < 5; i++){ const on = q > 0.1 + i * 0.12 && q < 0.35 + i * 0.12; if(!on) continue;
+      cupStar(c, x + (hr(i, 392) - 0.5) * h * 1.2, y - hr(i, 393) * h * 0.6, k, q < 0.25 + i * 0.12 ? 2 : 1, '#FFFFFF', i & 1 ? '#F4D27A' : '#7FF0C8'); }
+  },
+  demoneye(c, x, y, cr, h, q, t){
+    const k = Math.max(1, Math.round(h / 16));
+    // a ring of runes burnt round the cup, turning
+    if(q < 0.8){ const R = h * 0.55;
+      for(let i = 0; i < 30; i++){ if(hr(i, 394) < (q - 0.5) * 3) continue; const a = i / 30 * Math.PI * 2 + q * 2.5;
+        if(i % 5 === 4) continue;
+        fxDot(c, x + Math.cos(a) * R - (k >> 1), y + Math.sin(a) * R * 0.34, k, i % 5 === 0 ? '#FFD34A' : i & 1 ? '#C8281A' : '#6A0E08', 1); } }
+    // tongues of fire whirling out of it
+    for(let arm = 0; arm < 6; arm++) for(let j = 0; j < 7; j++){
+      const u = j / 6, a = arm / 6 * Math.PI * 2 + u * 1.6 + q * 4, rr = h * (0.08 + u * 0.45) * Math.min(1, q * 2.5);
+      if(hr(arm * 9 + j, 395) < q * q * 1.3) continue;
+      fxDot(c, x + Math.cos(a) * rr - (k >> 1), y + Math.sin(a) * rr * 0.34 - (1 - u) * h * 0.12, k, u < 0.3 ? '#FFF3B0' : u < 0.65 ? '#FF8A1A' : '#C8281A', 1); }
+    // smoke going up off it
+    for(let i = 0; i < 8; i++){ if(hr(i, 396) > q * 1.6 || hr(i, 397) < q - 0.4) continue;
+      fxDot(c, x + (hr(i, 398) - 0.5) * h * 0.7, y - h * (0.3 + q * 0.35 + hr(i, 399) * 0.05), k, '#3A2A2A', 1); }
+  },
+  ascorb(c, x, y, cr, h, q, t){
+    const k = Math.max(1, Math.round(h / 16));
+    cupHelix(c, x, y, h, q, k, [['#FFE0FF', '#962CA8'], ['#F2A6F8', '#E639EB']], 6, 400);
+    // rays flashing out as it shuts
+    if(q > 0.72){ const f = (q - 0.72) / 0.28;
+      for(let i = 0; i < 8; i++){ const a = i / 8 * Math.PI * 2 + 0.2;
+        for(let r2 = h * 0.1; r2 < h * (0.15 + f * 0.55); r2 += k){ if(hr(i * 13 + Math.round(r2), 401) < f * 0.9) continue;
+          fxDot(c, x + Math.cos(a) * r2 - (k >> 1), y - k + Math.sin(a) * r2 * 0.5, k, r2 > h * 0.4 ? '#F2A6F8' : '#FFFFFF', 1); } }
+      cupStar(c, x - (k >> 1), y - k * 2, k, 2, '#FFFFFF', '#E639EB'); }
+  },
+  singularity(c, x, y, cr, h, q, t){
+    const k = Math.max(1, Math.round(h / 16));
+    // a disc of gold swirling round it while it is open, tilted
+    if(q > 0.1 && q < 0.78){ const R = h * 0.46;
+      for(let i = 0; i < 34; i++){ const a = i / 34 * Math.PI * 2 + q * 9, xx = Math.cos(a) * R, yy = Math.sin(a) * R * 0.26;
+        if(hr(i, 402) < Math.abs(q - 0.44) * 1.6 - 0.2) continue;
+        fxDot(c, x + xx - (k >> 1), y + yy - xx * 0.12, k, Math.sin(a) > 0 ? (i & 1 ? '#F4DC96' : '#FFFFFF') : '#B07A2A', 1); } }
+    // a flare across it as it snaps shut
+    if(q > 0.8 && q < 0.95){ const L = h * 0.6 * (1 - Math.abs(q - 0.87) / 0.08);
+      for(let r2 = -L; r2 <= L; r2 += k){ fxDot(c, x + r2 - (k >> 1), y - k, k, Math.abs(r2) < L * 0.4 ? '#FFFFFF' : '#B98CFF', 1);
+        if(Math.abs(r2) < L * 0.45) fxDot(c, x - (k >> 1), y - k + r2 * 0.8, k, '#FFFFFF', 1); } }
+  }
+};
+CUP_FX2.tSeraph = CUP_FX2.godlight; CUP_FX2.tHellfire = CUP_FX2.demoneye;
+CUP_FX2.tAscension = CUP_FX2.ascorb; CUP_FX2.tHorizon = CUP_FX2.singularity;
 // each set's wake plays its set's moment too
 CUP_FX.tHorizon = CUP_FX.singularity;
 CUP_FX.tAscension = CUP_FX.ascorb;
@@ -16980,8 +17137,11 @@ Object.assign(Scene, {
     const T = this.theme || THEMES.day;
     const H = Math.max(4, HORIZON + 6);
     const cv = document.createElement('canvas');
-    cv.width = Math.max(2, VW); cv.height = H;
-    const g = cv.getContext('2d');
+    // (wider than the frame by a margin either side: it slides a little as
+    // the hole turns, see drawRidge)
+    const M = this.ridgeM = Math.round(VW * 0.1);
+    cv.width = Math.max(2, VW + M * 2); cv.height = H;
+    const g = cv.getContext('2d'); g.translate(M, 0);
     const rnd = seeded(hash32(this.hole*7919 + 17));
 
     // Four ranges, back to front. Distance is carried by haze: the range at
@@ -17016,8 +17176,8 @@ Object.assign(Scene, {
       // The snowline follows the weather, not a ruler. Cut straight across it
       // read as a sheet of paper laid over the peaks.
       const snowAt = x => base - amp*(Y.snow + 0.075*Math.sin(x/(p2*1.7) + a4));
-      let prev = topAt(-1);
-      for(let x = 0; x < VW; x++){
+      let prev = topAt(-M - 1);
+      for(let x = -M; x < VW + M; x++){
         const top = Math.round(topAt(x));
         g.fillStyle = body;
         g.fillRect(x, top, 1, H - top);
@@ -17114,9 +17274,18 @@ Object.assign(Scene, {
     g.fillStyle = '#FFF6D0'; g.fillRect(x0 + 11 * k, y - H + 2 * k, k, k);
   },
 
+  // The ranges far off turn a little with the view as the hole bends (the
+  // user: "the horizon view would move slightly ... when turning"): slid
+  // against the way he faces, a fraction of what a true turn would, so the
+  // far hills drift and never swing
   drawRidge(){
     this.buildRidge();
-    if(this.ridge) this.b.drawImage(this.ridge, 0, 0);
+    if(!this.ridge) return;
+    const M = this.ridgeM || 0;
+    this.bendOff(this.camD);                         // (sets the heading, _bh)
+    const turn = this.curve ? (this.curveAt(this.camD + 0.5) - this.curveAt(this.camD - 0.5)) - (this.curveAt(0.5) - this.curveAt(-0.5)) : 0;
+    const sh = clamp(Math.round(-turn * LAT * K_PROJ * 0.04), -M, M);
+    this.b.drawImage(this.ridge, -M + sh, 0);
   },
 
   // The wood at the back of the course sits on the SKYLINE, and with a height
@@ -18599,7 +18768,10 @@ Object.assign(Scene, {
     }
   },
 
-  drawBalls(dt){
+  // The ball lying ahead of him, before him: it is always further off than
+  // he is, and drawn after him it lay over his legs and body as he walked up
+  // to it (the user saw it clip through him)
+  drawRestBall(){
     const c = this.b;
     const R = this.restBall;
     if(R){
@@ -18619,6 +18791,9 @@ Object.assign(Scene, {
         }
       }
     }
+  },
+  drawBalls(dt){
+    const c = this.b;
     for(let i = this.balls.length - 1; i >= 0; i--){
       const b = this.balls[i];
       b.t += dt;
@@ -18989,6 +19164,7 @@ Object.assign(Scene, {
       if(R.mode === 'twilight') this.drawCupFx(true);
       if(R.mode !== 'drive') this.drawFlagstick();
       this.drawWagerStage(R);
+      this.drawRestBall();
       this.drawGolfer(D);
       this.drawBalls(dt);
       if(this.themeId === 'cellar' && Math.sin(this.t*1.9) > 0.988){
@@ -19116,6 +19292,7 @@ Object.assign(Scene, {
       // (the balls' moment in the cup goes down first: the pin stands in it)
       this.drawCupFx();
       if(!pinFirst) this.drawFlagstick();
+      this.drawRestBall();
       this.drawGolfer(D);
       this.drawBalls(dt);
       this.drawWeather();
@@ -19179,6 +19356,7 @@ Object.assign(Scene, {
     c.save(); c.beginPath(); c.rect(0, 0, VW, Math.max(0, Math.floor(cut2) + 1)); c.clip();
     const cr = Math.max(1, Math.round(1.6 * p.s * US)), h = Math.max(4, Math.round(B_FLAG * US * p.s));
     CUP_FX[fx](c, p.x, p.y, cr, h, q, this.t);
+    if(CUP_FX2[fx]) CUP_FX2[fx](c, p.x, p.y, cr, h, q, this.t);
     c.globalAlpha = 1;
     c.restore();
   },
