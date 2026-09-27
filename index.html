@@ -14093,7 +14093,7 @@ const Scene = {
     // shape at once, and the slice that did it came out as a solid slab of
     // one colour laid over the end of the hazard.
     const py = hz._py || (hz._py = new Float32Array(HZ_N));
-    if(!hz._on){ hz._on = 1; py.fill(y + hgt); hz._py0 = y + hgt; }
+    if(!hz._on){ hz._on = 1; py.fill(y + hgt); }
     hazCols(P);
     const tt  = clamp((d - (hz.d - hz.rd)) / (hz.rd*2), 0, 1);
     const gv  = hazProf(tt, P.e0, P.e1);
@@ -14106,7 +14106,8 @@ const Scene = {
     // (a band a pixel over each neighbour, inside the hazard only: the
     // columns fall a little further across from one slice to the next as it
     // narrows away, and the pixel between two was never painted, turf
-    // showing through the sand in dots)
+    // showing through the sand in dots. Not a row down as well: that laid
+    // the lake over the island green)
     const band = () => { const a = rx0 > xl ? 1 : 0, b = rx1 < xr ? 1 : 0;
       c.fillStyle = rc; c.fillRect(rx0 - a, rt, rx1 - rx0 + a + b, rb - rt); };
     const dk = P.D * gv * kz;
@@ -14116,9 +14117,6 @@ const Scene = {
       const bot = py[i];
       if(top >= bot - 0.2) continue;               // this column is behind the lip
       py[i] = top;
-      // (and a row down into its own nearer part, where that is painted
-      // already: across, the columns shift, and the row between was missed)
-      const under = bot < hz._py0 - 0.01 ? 1 : 0;
       // Start at the SHALLOWER of the two neighbours, and a row above that
       // again. The floor slopes sideways, so adjacent columns land on
       // different rows, and the step between them belongs to neither -- which
@@ -14130,7 +14128,7 @@ const Scene = {
       const t0 = Math.round(y + P._fm[i] * dk) - (P._fm[i] < fu ? 1 : 0);
       // and always at least one row, so a band thinner than a pixel still
       // covers the ground it is cut into
-      const t1 = Math.max(t0 + 1, Math.round(bot)) + under;
+      const t1 = Math.max(t0 + 1, Math.round(bot));
       const x0 = xl + ((w*i / HZ_N) | 0), x1 = xl + ((w*(i+1) / HZ_N) | 0);
       if(x1 <= x0) continue;
       const gx = gxk * P._fs[i], gy = gyk * fu;
