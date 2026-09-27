@@ -3476,9 +3476,12 @@ const B = {
     // a caddie, a club, a trail and a ball to match. (top 2 is a step above
     // Legendary: Mythic.) The belt's colour is also his eyes and his soles;
     // hand, where there is one, is the colour of his hands.
-    { id:'demonic', n:'Demonic',         cost:3000, fx:'demonic', cat:'skin', top:1, pattern:'hellcrack',
-      cap:'#1E0E10', cap2:'#0C0406', shirt:'#5C1412', shirt2:'#42100E', shirt3:'#280808', pant:'#1E1214', pant2:'#100A0C',
-      skin:'#B4442E', skin2:'#7C2A1C', shoe:'#140A0A', belt:'#FF5A1E', hair:'#140808', bulk:1 },
+    // (reworked after a second picture the user sent, a hooded hunter
+    // bound in wrappings, a mask for a face, blades swept back off the hood
+    // and swirls of colour about him: in deep red and orange)
+    { id:'demonic', n:'Demonic',         cost:3000, fx:'demonic', cat:'skin', top:1, pattern:'wraps',
+      cap:'#6A140A', cap2:'#3A0804', shirt:'#9A2410', shirt2:'#6E180C', shirt3:'#3A0A06', pant:'#5A120A', pant2:'#320806',
+      skin:'#E0A060', skin2:'#9A5A30', shoe:'#1A0604', belt:'#FF7A1A', hair:'#3A0804', hand:'#2A0806', arm:'#8A200E', arm2:'#5A140A', bulk:1 },
     { id:'ascended', n:'Ascended',       cost:3500, fx:'ascended', cat:'skin', top:2, pattern:'voidplate',
       cap:'#4C4C90', cap2:'#33336C', shirt:'#4A4A8E', shirt2:'#393976', shirt3:'#26264E', pant:'#180C25', pant2:'#0A0517',
       skin:'#2D2D5E', skin2:'#1B1B44', shoe:'#3F3F7E', belt:'#E639EB', hair:'#C936D5', hand:'#E86CF2', bulk:1, arm:'#393976', arm2:'#26264E' },
@@ -8478,15 +8481,59 @@ function blit(c, spr, x, y, w, h){
 }
 // Blit row by row with a horizontal offset per row: how the golfer leans
 // through a swing without needing a separate sprite for every frame.
-function blitShear(c, spr, x, y, w, h, shear){
+function blitShear(c, spr, x, y, w, h, shear, bulk){
   if(!spr || w < 1 || h < 1) return;
   const rh = h / spr.h;
   for(let r = 0; r < spr.h; r++){
-    const dx = shear(r / (spr.h - 1));
-    c.drawImage(spr.cv, 0, r, spr.w, 1,
-      Math.round(x + dx), Math.round(y + r*rh), Math.max(1, Math.round(w)),
-      Math.max(1, Math.ceil(rh)));
+    const R = bulkRow(spr, x + shear(r / (spr.h - 1)), w, bulk, r / (spr.h - 1));
+    c.drawImage(spr.cv, 0, r, spr.w, 1, R[0], Math.round(y + r*rh), R[1], Math.max(1, Math.ceil(rh)));
   }
+}
+// where a row of him goes, [x, width], built out (a row of his chest,
+// shoulders or legs stretched about the middle of his body, n pixels more
+// either side of it); for anything laid over him row by row too (the
+// Demonic's seams), sp the picture whose body it follows
+function bulkRow(spr, x, w, bulk, f, sp){
+  const n = bulk ? bulkAt(bulk, f) : 0;
+  if(n <= 0) return [Math.round(x), Math.max(1, Math.round(w))];
+  const B = bodySpan(sp || spr), sc = w / spr.w, bw = (B.r - B.l) * sc, a = (bw + 2 * n) / bw;
+  return [Math.round(x + B.l * sc * (1 - a) - n), Math.max(1, Math.round(w * a))];
+}
+// Everyone built out (the user asked for The Void bulkier, then every
+// skin, then everyone). It was a plate drawn behind him in a darker shade,
+// and read as "a weird darker outline ... just something quickly placed
+// on": he is drawn wider from his own pixels instead, his chest and
+// shoulders stretched out about the middle of his body, his legs a little,
+// his head and feet as they were, so the width is his own clothes, their
+// shading and their edge. For a figure h pixels tall (null: too small to
+// build out); the caddie, a little.
+function bulkOf(h, minor){
+  // (his chest and shoulders only, clear of what hangs off his hips: the
+  // imp's tail)
+  if(minor) return { chest: 1.5, legs: 0, down: 0.4 };
+  if(h < 30) return null;
+  const k = Math.max(1, Math.round(h / 30));
+  return { chest: 2 * k + 1, legs: k };
+}
+// how far out at a height f down him (0 his crown, 1 his feet): easing in
+// over the shoulders and down to the legs, none at the head and the feet
+function bulkAt(b, f){
+  const sm = (a, z) => { const u = clamp((f - a) / (z - a), 0, 1); return u * u * (3 - 2 * u); };
+  if(f < 0.19 || f > 0.95) return 0;
+  const up = sm(0.19, 0.29), d0 = b.down || 0.5, down = sm(d0, d0 + 0.1);
+  return b.chest * up * (1 - down) + b.legs * down * (1 - sm(0.88, 0.95));
+}
+// the columns his body fills about the chest, found once for each picture
+function bodySpan(spr){
+  if(spr._body) return spr._body;
+  let l = spr.w, r = 0;
+  try {
+    const d = spr.cv.getContext('2d').getImageData(0, 0, spr.w, spr.h).data;
+    for(let y = Math.floor(spr.h * 0.3); y < Math.floor(spr.h * 0.5); y++) for(let x = 0; x < spr.w; x++)
+      if(d[(y * spr.w + x) * 4 + 3] > 128){ l = Math.min(l, x); r = Math.max(r, x + 1); }
+  } catch(e){}
+  if(r <= l){ l = 0; r = spr.w; }
+  return spr._body = { l, r };
 }
 // A pixel line, Bresenham, for club shafts and arms.
 function pxLine(c, x0, y0, x1, y1, col, thick){
@@ -9464,6 +9511,11 @@ const PATTERNS = {
   },
   // the Ascended: dark plate, each plate's lower edge caught in the light
   // and a stud of magenta here and there along it
+  // the Demonic: bound in wrappings, strip over strip on the slant, the
+  // edge of each dark, and the fire in him glowing through the seams here
+  // and there (the pulse of it drawn over the top: see veinsOf)
+  wraps: (x, y) => { const k = (x + y * 2) % 7;
+    return k === 0 ? (hr(x + 3, y) > 0.55 ? (hr(y, x) > 0.5 ? '#FFD34A' : '#FF8A2A') : '#3A0804') : k === 1 ? '#D0461A' : null; },
   voidplate: (x, y) => y % 5 !== 4 ? null : (x * 7 + y) % 9 === 0 ? '#E639EB' : '#6868AE',
   // The Void: indigo plate strewn with stars (white, violet, now and then
   // cyan) and a wisp of violet nebula
@@ -9829,7 +9881,7 @@ function silhouette(g, col){
       o.cv.width = g.w + P * 2; o.cv.height = g.h + P * 2;
       const x = o.cv.getContext('2d');
       x.imageSmoothingEnabled = false;
-      x.drawImage(g.spr.cv, P, P, g.w, g.h);
+      blitShear(x, g.spr, P, P, g.w, g.h, () => 0, g.bulk);
       x.globalCompositeOperation = 'source-in'; x.fillStyle = col; x.fillRect(0, 0, o.cv.width, o.cv.height);
       x.globalCompositeOperation = 'source-over';
     }
@@ -9840,7 +9892,7 @@ function silhouette(g, col){
   if(o.cv.width !== W || o.cv.height !== H){ o.cv.width = W; o.cv.height = H; }
   const x = o.cv.getContext('2d');
   x.clearRect(0, 0, W, H); x.globalCompositeOperation = 'source-over'; x.globalAlpha = 1;
-  blitShear(x, g.spr, P + Math.ceil(g.w * 0.2), P, g.w, g.h, g.shear);
+  blitShear(x, g.spr, P + Math.ceil(g.w * 0.2), P, g.w, g.h, g.shear, g.bulk);
   x.globalCompositeOperation = 'source-in'; x.fillStyle = col; x.fillRect(0, 0, W, H);
   x.globalCompositeOperation = 'source-over';
   return { cv: o.cv, ox: g.x - P - Math.ceil(g.w * 0.2), oy: g.y - P };
@@ -9851,8 +9903,8 @@ function silhouette(g, col){
 // it was some 230 draws a frame for the Glitch golfer walking beside his
 // caddie, where four whole copies do.
 function blitAs(c, g, spr, x, y){
-  if(g.back || g.minor) c.drawImage(spr.cv, x, y, g.w, g.h);
-  else blitShear(c, spr, x, y, g.w, g.h, g.shear);
+  if(g.back || g.minor) blitShear(c, spr, x, y, g.w, g.h, () => 0, g.bulk);
+  else blitShear(c, spr, x, y, g.w, g.h, g.shear, g.bulk);
 }
 function outlineAt(c, g, col, offsets, alpha){
   const S0 = silhouette(g, col);
@@ -9967,7 +10019,7 @@ function wingAnchor(g){
 // The cracks in the Demonic's shirt, lit from inside: its pattern's own
 // pixels, found once in the sprite he is drawn from (the golfer's poses, his
 // back, his caddie) and kept with it, as a mask the light is poured through.
-const HELL_VEINS = ['#FF8A2A', '#FFD34A', '#B8321A'];
+const HELL_VEINS = ['#FF8A2A', '#FFD34A'];
 function veinsOf(spr){
   if(spr._veins !== undefined) return spr._veins;
   const W = spr.w, H = spr.h, src = spr.cv.getContext('2d').getImageData(0, 0, W, H).data;
@@ -10350,11 +10402,12 @@ function occOf(spr){
 // His outline on the screen as he is drawn now, leaning through a swing: the
 // top of him over each column (from x0 on), and his edges on each row.
 function outlineOf(g){
-  const O = occOf(g.spr), sx = g.w / g.spr.w, rh = g.h / g.spr.h, lean = g.shear && !g.back && !g.minor;
+  const O = occOf(g.spr), rh = g.h / g.spr.h, lean = g.shear && !g.back && !g.minor;
   const x0 = Math.floor(g.x - g.w * 0.3), top = new Array(Math.ceil(g.w * 1.6)).fill(1e9), rows = [];
   for(let r = 0; r < O.length; r++){
     const cols = O[r]; if(!cols.length) continue;
-    const X = Math.round(g.x + (lean ? g.shear(r / (g.spr.h - 1)) : 0)), Y = Math.round(g.y + r * rh);
+    // (as he is drawn, built out: blitShear)
+    const R = bulkRow(g.spr, g.x + (lean ? g.shear(r / (g.spr.h - 1)) : 0), g.w, g.bulk, r / (g.spr.h - 1)), X = R[0], sx = R[1] / g.spr.w, Y = Math.round(g.y + r * rh);
     rows.push([Y, X + Math.round(cols[0] * sx), X + Math.round((cols[cols.length - 1] + 1) * sx) - 1]);
     for(const k of cols) for(let x = X + Math.round(k * sx), x1 = Math.max(x, X + Math.round((k + 1) * sx) - 1); x <= x1; x++){
       const i = x - x0; if(i >= 0 && i < top.length && Y < top[i]) top[i] = Y; }
@@ -10770,13 +10823,10 @@ const STYLEFX = {
         if(L) this.eruption(c, g, L.f, rx, ry, false, L.big ? 1.3 : 1);
         else if(E >= 0) this.eruption(c, g, E, rx, ry, false);
       }
-      if(!minor) this.chains(c, g, false, q);
-      // the wings, spread behind him, beating slowly (raised high on a great hole)
-      // (his caddie is always seen side on, so his are always side on too)
-      const W = this.wings(h, minor, t, L && outBack(L.f, 0.1) > 0.5, g.back ? 'back' : 'side'), A = wingAnchor(g);
-      c.globalAlpha = 1; c.drawImage(W.cv, Math.round(A.x - W.ox), Math.round(A.y - W.oy));
-      // his tail (walking away from us it hangs in front of him: see front)
-      if(!g.back) this.tail(c, g);
+      this.swirl(c, g, false, q);
+      // his wrappings torn loose, streaming back off him (walking away from
+      // us they fly out over his back: see front)
+      if(!g.back || minor) this.streamers(c, g);
       // a shadow round him, smoking
       outlineAt(c, g, '#140204', RING2, 0.42 + 0.14 * Math.sin(t * 5));
       // (his aura after the dark edge round him, or it dims the roots of the flames)
@@ -10787,18 +10837,16 @@ const STYLEFX = {
         const ex = cx + (hr(i, 32) - 0.5) * rx * 1.8 + Math.sin(t * 2 + i * 1.3) * k * 2, ey = bot - life * h * 1.3;
         fxDot(c, ex, ey, 1, life < 0.25 ? '#FFE680' : life < 0.55 ? '#FF8A2A' : life < 0.8 ? '#C8281C' : '#3A1A1A', (1 - life) * 0.9);
       }
-      if(!minor) this.skulls(c, g, false);
       c.globalAlpha = 1;
     },
     front(c, g){
-      if(g.back) this.tail(c, g);
+      if(g.back && !g.minor) this.streamers(c, g);
       this.veins(c, g);
-      this.horns(c, g);
+      this.crest(c, g);
       this.eyes(c, g);
+      const L = legendNow(g), q = L ? 1 : this.charge(g.ph);
+      this.swirl(c, g, true, q);
       if(!g.minor){
-        const L = legendNow(g), q = L ? 1 : this.charge(g.ph);
-        this.chains(c, g, true, q);
-        this.skulls(c, g, true);
         this.fists(c, g, q);
         this.blast(c, g);
         // on an albatross or an ace, hellfire bursting out of him
@@ -10810,10 +10858,89 @@ const STYLEFX = {
       }
       c.globalAlpha = 1; c.globalCompositeOperation = 'source-over';
     },
+    // Two ribbons of fire swirling round him, crossing, each a bright head
+    // and a tail fading behind it, sparks shed off it (the far half of each
+    // behind him, dimmer); faster as he winds up (q), flung wide and fast
+    // on a great hole
+    swirl(c, g, front, q){
+      if(!g.minor && g.h < 30) return;
+      const { cx, w, h, t } = g, L = legendNow(g), wide = L ? 1 + outBack(L.f, 0.12) * 0.35 : 1;
+      const rx = w * (g.minor ? 0.66 : 0.92) * wide, ry = Math.max(2, h * 0.11), th = g.minor ? 1 : Math.max(2, Math.round(h / 16));
+      const M = g.minor ? 14 : 32, spin = t * 2.4 * (1 + q * 1.6) * (L ? 1.8 : 1);
+      [[0.34, 1, 0, 0.42], [-0.3, -1, Math.PI, 0.64]].forEach(([tilt, dir, a0, yf]) => {
+        const ct = Math.cos(tilt), sn = Math.sin(tilt), oy = g.y + h * yf;
+        const at = f => { const a = (spin + a0) * dir - dir * f * 2.6, X = Math.cos(a) * rx, Y = Math.sin(a) * ry;
+          return { x: cx + X * ct - Y * sn, y: oy + X * sn + Y * ct, d: Math.sin(a) }; };
+        // tail first, head last, so the bright head lies over it
+        for(let i = M; i > 0; i--){
+          const f = i / M, A = at(f), P = at((i - 1) / M);
+          if((A.d > 0) !== front) continue;
+          const wd = Math.max(1, Math.round(th * (1 - f * 0.65)));
+          c.globalAlpha = front ? 1 : 0.55;
+          pxLine(c, A.x, A.y, P.x, P.y, f < 0.3 ? '#FFB43A' : f < 0.55 ? '#FF6A1A' : f < 0.8 ? '#C8281C' : '#5A0E0A', wd);
+          if(wd > 1 && f < 0.6) pxLine(c, A.x, A.y - Math.floor(wd / 2), P.x, P.y - Math.floor(wd / 2), f < 0.2 ? '#FFF1B0' : '#FFD34A', 1);
+          if(front && f > 0.2 && hr(i + (dir > 0 ? 0 : 50), Math.floor(t * 12)) > 0.86) fxDot(c, A.x, A.y - wd - 1 - hr(i, 7) * 3, 1, '#FFB43A', 0.9);
+        }
+      });
+      c.globalAlpha = 1;
+    },
+    // his wrappings torn loose, three strips streaming back off his
+    // shoulders and hood, rippling, ragged at the ends, the upper edge of
+    // each lit by the fire in him (his caddie's two, shorter)
+    streamers(c, g){
+      const { x, y, w, h, t } = g, minor = !!g.minor, back = !!g.back && !minor, L = legendNow(g);
+      const sh = g.shear ? g.shear(0.25) : 0, th = Math.max(1, Math.round(h / (minor ? 30 : 22)));
+      const ax = back ? x + w * 0.5 : x + w * (minor ? 0.42 : 0.36) + sh, ay = y + h * (minor ? 0.3 : 0.26);
+      const N = 12, n = minor ? 2 : 3, lift = L ? outBack(L.f, 0.12) : 0;
+      c.globalAlpha = 1;
+      for(let s = 0; s < n; s++){
+        const len = h * (minor ? 0.55 + 0.1 * s : 0.46 + 0.1 * s), side = s - (n - 1) / 2;
+        let px = ax + (back ? side * w * 0.14 : 0), py = ay + s * h * 0.035;
+        for(let i = 1; i <= N; i++){
+          const f = i / N, wave = Math.sin(t * 4.4 - f * 5.5 + s * 1.9) * h * 0.05 * f;
+          const nx = back ? ax + side * w * (0.14 + 0.3 * f) + wave : ax - f * len - lift * f * len * 0.3;
+          const ny = back ? ay + h * 0.02 * s + f * len * 0.8 - lift * f * len * 0.6 : ay + s * h * 0.05 + f * len * (0.42 - lift * 0.5) + wave;
+          const wd = Math.max(1, Math.round((th + 2) * (1 - f * 0.5)));
+          pxLine(c, px, py, nx, ny, f < 0.4 ? '#6A140A' : f < 0.75 ? '#9A2410' : '#C8401A', wd);
+          pxLine(c, px, py - Math.ceil(wd / 2), nx, ny - Math.ceil(wd / 2), f > 0.7 ? '#FFD34A' : '#FF6A1A', 1);
+          px = nx; py = ny;
+        }
+        // (torn: two threads frayed off the end, an ember at one)
+        pxLine(c, px, py, px - (back ? -side : 1) * h * 0.04, py + h * 0.035, '#6A160C', 1);
+        pxLine(c, px, py, px - (back ? -side : 1) * h * 0.02, py + h * 0.06, '#4A0E08', 1);
+        fxDot(c, px - (back ? -side : 1) * h * 0.04, py + h * 0.035, 1, '#FFB43A', 0.6 + 0.4 * Math.sin(t * 7 + s));
+      }
+      c.globalAlpha = 1;
+    },
+    // A crest of blades swept back off his hood (from behind, fanned out
+    // round it), dark crimson with an edge of fire and white-hot points,
+    // a pulse of heat running up them now and then
+    crest(c, g){
+      const hd = g.head, minor = !!g.minor, back = !!g.back && !minor, L = legendNow(g);
+      const hx = hd.x + (g.shear ? g.shear(0.1) : 0), top = hd.y, s = Math.max(minor ? 6 : 10, hd.w * (minor ? 1.2 : 1.8)) * (L ? 1 + outBack(L.f, 0.12) * 0.25 : 1);
+      const th = Math.max(1, Math.round(s / 8)), pulse = (g.t % 2.3) / 0.45;
+      // [root across the hood (0 its back, 1 its front), angle, length]
+      const side = [[0.0, 2.75, 0.8], [0.15, 2.45, 1.0], [0.35, 2.2, 0.95], [0.55, 1.95, 0.75], [0.75, 1.7, 0.5]];
+      const fan = [[-0.5, 3.6, 0.7], [-0.25, 4.1, 0.85], [0, 4.71, 0.9], [0.25, 5.32, 0.85], [0.5, 5.8, 0.7]];
+      c.globalAlpha = 1;
+      (back ? fan : side).forEach(([u, a, len], i) => {
+        const rx = back ? hx + u * hd.w : hx - hd.w * 0.45 + u * hd.w * 0.9, ry = top + Math.max(1, hd.hh * (back ? 0.25 : 0.2 + Math.abs(u - 0.4) * 0.3));
+        let px = rx, py = ry;
+        const N = 5, L0 = s * len;
+        for(let j = 1; j <= N; j++){
+          const f = j / N, aa = a + (back ? 0 : 0.3) * f * f, nx = rx + Math.cos(aa) * L0 * f, ny = ry - Math.abs(Math.sin(aa)) * L0 * f;
+          const wd = Math.max(1, Math.round(th * 1.8 * (1 - f * 0.8)));
+          pxLine(c, px, py, nx, ny, j < 3 ? '#4A0A06' : '#8A1E0E', wd);
+          pxLine(c, px, py - 1, nx, ny - 1, j === N ? '#FFE9A0' : j > 2 ? '#FFB43A' : '#FF6A1A', 1);
+          if(pulse < 1 && Math.abs(pulse - f) < 0.2) fxDot(c, nx, ny - 1, 1, '#FFF1B0', 1);
+          px = nx; py = ny;
+        }
+      });
+    },
     aura(c, g, q){
       const hd = g.head, hx = hd.x + (g.shear ? g.shear(0.1) : 0);
       // (low on the battery saver, where he is small and it hid him)
-      flameAura(c, g, g.minor ? Math.max(2, Math.round(g.h / 18)) : Math.round(g.h / (g.h < 30 ? 18 : 9) * (1 + q * 1.2)), HELL_FLAME,
+      flameAura(c, g, g.minor ? Math.max(2, Math.round(g.h / 18)) : Math.round(g.h / (g.h < 30 ? 18 : 7) * (1 + q * 1.2)), HELL_FLAME,
                 [Math.round(hx - hd.w * 0.75), Math.round(hx + hd.w * 0.75)]);
     },
     // Two chains of fire circling him, crossing, turning opposite ways (the
@@ -10936,8 +11063,8 @@ const STYLEFX = {
       for(let r = V.r0; r <= V.r1; r++){
         const beat = Math.max(0, Math.sin(t * 3.2 + (r - V.r0) / Math.max(1, V.r1 - V.r0) * 2.4));
         c.globalAlpha = 0.16 + 0.7 * beat * beat * beat;
-        c.drawImage(V.cv, 0, r, V.w, 1, Math.round(x + (g.shear ? g.shear(r / (V.h - 1)) : 0)), Math.round(y + r * rh),
-                    Math.max(1, Math.round(w)), Math.max(1, Math.ceil(rh)));
+        const R = bulkRow(V, x + (g.shear ? g.shear(r / (V.h - 1)) : 0), w, g.bulk, r / (V.h - 1), g.spr);
+        c.drawImage(V.cv, 0, r, V.w, 1, R[0], Math.round(y + r * rh), R[1], Math.max(1, Math.ceil(rh)));
       }
       c.globalCompositeOperation = 'source-over'; c.globalAlpha = 1;
     },
@@ -11062,10 +11189,8 @@ const STYLEFX = {
       this.rocks(c, g, false);
       c.globalAlpha = 1;
     },
-    // his outline built out in plate, behind him (the user asked him
-    // bulkier): the chest and shoulders two pixels broader each side, the
-    // legs one, in dark indigo with a violet edge to the chest
-    bulk(c, g){ bulkPlate(c, g, '#141030', '#3E2A6E'); },
+    // (built out as everyone is, from his own picture: blitShear)
+    bulk(c, g){},
     body(c, g){
       this.faulds(c, g);
       this.hood(c, g);
@@ -11349,7 +11474,7 @@ const STYLEFX = {
     // tip, licks breaking off and rising away, and a flicker down his sides.
     // Taller as he winds up (q 0..1). His imp has a little of it.
     aura(c, g, q){
-      flameAura(c, g, g.minor ? Math.max(2, Math.round(g.h / 18)) : Math.round(g.h / 8 * (1 + q * 0.8)), VOID_FLAME);
+      flameAura(c, g, g.minor ? Math.max(2, Math.round(g.h / 18)) : Math.round(g.h / 8 * (1 + q * 1.0)), VOID_FLAME);
     },
     // three shards of the void riding a ring round his middle, turning over
     // as they go, a trail of light behind each: the far half of the ring goes
@@ -11992,59 +12117,11 @@ for(const k in FLOURISH_PIECE) FLOURISH[k] = function(c, g, F, layer){
 };
 for(const k in FLOURISH) if(STYLEFX[k]) STYLEFX[k].flourish = FLOURISH[k];
 
-// His outline built out in plate behind him, from his own silhouette: the
-// chest and shoulders two pixels broader each side, the legs one, dark
-// with an edge of the look's own (The Void's first; then the other three
-// top skins, the user asked: "make the skins bulkier like the void skin").
-// His caddie a pixel broader about the chest and shoulders.
-// (legs, if given, is the colour built out about the legs; alpha, for a
-// look drawn see-through, the Ghost's)
-function bulkPlate(c, g, dark, edge, legs, alpha, soft){
-  if(!g.minor && g.h < 30) return;
-  const k = g.minor ? 1 : Math.max(1, Math.round(g.h / 30)), S0 = silhouette(g, dark), S1 = silhouette(g, edge), S2 = legs ? silhouette(g, legs) : S0;
-  const band = (Sx, y0f, y1f, offs) => {
-    const y0 = Math.round(g.y + g.h * y0f - S0.oy), y1 = Math.round(g.y + g.h * y1f - S0.oy);
-    if(y1 <= y0) return;
-    for(const [dx, dy] of offs) c.drawImage(Sx.cv, 0, y0, Sx.cv.width, y1 - y0, Sx.ox + dx, Sx.oy + y0 + dy, Sx.cv.width, y1 - y0);
-  };
-  c.globalAlpha = alpha || 1; c.globalCompositeOperation = 'source-over';
-  const wide = n => [[-n, 0], [n, 0], [-n, -1], [n, -1], [0, -1]];
-  if(g.minor){ band(S1, 0.30, 0.62, wide(2)); band(S0, 0.30, 0.62, wide(1)); c.globalAlpha = 1; return; }
-  // (clothes seen from behind are left to his thicker arms: built out
-  // there, the shoulders came out as square blocks, and a pixel less as
-  // thin lines standing off his arms)
-  if(soft && g.back){ c.globalAlpha = 1; return; }
-  const n = 2 * k;
-  band(S1, 0.24, 0.55, wide(n + 1));
-  band(S0, 0.24, 0.55, wide(n).concat(wide(k)));
-  if(!g.back) band(S2, 0.55, 0.93, wide(k));
-  c.globalAlpha = 1;
-}
-// Every look without an effect (the plain outfits, the Majors' jackets and
-// the one he starts in) built out the same way, in its own clothes (the
-// user asked, after the skins: "so everyone's broader")
-function plainBulk(c, g){
-  const O = outfitNow();
-  bulkPlate(c, g, O.shirt3 || O.shirt2 || O.shirt, O.shirt2 || O.shirt, O.pant2 || O.pant, null, true);
-}
-// the three, first thing behind him: their wings and the Ascended's cape
-// lie over it (over them, it hid a caddie's wings and the cape's root)
-// (the Ascended's plate a shade off his own dark skin, which reads as his arms)
-const BULK_PLATE = { ascended: ['#161638', '#962CA8'], divine: ['#B98A2E', '#FFE39A'], demonic: ['#1A0606', '#8A1A10'] };
-for(const k in BULK_PLATE){ const F = STYLEFX[k], back0 = F.back, P = BULK_PLATE[k];
-  F.back = function(c, g){ bulkPlate(c, g, P[0], P[1]); if(back0) back0.call(this, c, g); }; }
-// and every other skin with an effect (the user asked, after the three),
-// built out in its own clothes rather than plate: the shirt's darker shades
-// about the chest and shoulders, the trousers' about the legs, the arms a
-// pixel thicker
+// The skins with an effect have thicker arms too (bulk): the width of
+// him is his own picture, stretched (blitShear, bulkOf)
 for(const fx of ['inferno', 'frostborn', 'stormcaller', 'void', 'glitch', 'midas', 'disco', 'ghost', 'banana', 'dad', 'clown']){
-  const F = STYLEFX[fx], O = B.OUTFITS.find(o => o.fx === fx);
-  if(!F || !O) continue;
-  O.bulk = 1;
-  // (the Stormcaller is drawn in his storm's pale light: his own dark navy
-  // showed as a stripe down his back, so his is the storm's blues)
-  const back0 = F.back, P = fx === 'stormcaller' ? ['#5A8AD8', '#BFE0FF', '#2A4A7A'] : [O.shirt3 || O.shirt2, O.shirt2 || O.shirt, O.pant2 || O.pant];
-  F.back = function(c, g){ bulkPlate(c, g, P[0], P[1], P[2], F.alpha, true); if(back0) back0.call(this, c, g); };
+  const O = B.OUTFITS.find(o => o.fx === fx);
+  if(STYLEFX[fx] && O) O.bulk = 1;
 }
 
 // The trails. They were three one-pixel dots a few frames behind the ball --
@@ -14261,18 +14338,15 @@ const Scene = {
     // all of him, at bx, by: his outfit's effect, his legs, himself, his arms
     const body = (g0, bx, by) => {
       const g = { x: bx, y: by, w, h, cx: bx + w*0.55, cy: by + h*0.53, bot: by + h, t: this.t + 0.7 + (P && P.beat ? (P.beat - 1) * M.T : 0), ph: 0, minor: true,
-                  still: !(FX && FX.shearMod), k: 1, spr, shear: () => 0,
+                  still: !(FX && FX.shearMod), k: 1, spr, shear: () => 0, bulk: bulkOf(h, true),
                   head: { x: bx + w*CAP_CADDIE.x, y: by + h*CAP_CADDIE.y, w: w*CAP_CADDIE.w, hh: h*CAP_CADDIE.h } };
       if(FX && FX.ground) FX.ground(g0, g);
       if(FX && FX.back) FX.back(g0, g);
-      // (a plain caddie built out in his own clothes too, as the golfers are:
-      // the user asked)
-      else bulkPlate(g0, g, CD.shirt3 || CD.shirt2 || CD.shirt, CD.shirt2 || CD.shirt, null, null, true);
       if(FX && FX.alpha) g0.globalAlpha = FX.alpha;
       // legs dangling, a little swing to them; stepping when he dances
       drawLegs(g0, bx + w*0.55, by + h*(32/58), h*(25/58), w, P && P.legs !== null ? P.legs : Math.sin(this.t * 1.7) * 0.08,
                CD.pant, CD.pant2 || CD.pant, CD.shoe || PX.shoe);
-      g0.drawImage(spr.cv, bx, by, w, h);
+      blitShear(g0, spr, bx, by, w, h, () => 0, g.bulk);
       if(FX && FX.body) FX.body(g0, g);
       g0.globalAlpha = 1;
       // arms up: both while a perk goes off, one or the other as he dances,
@@ -15516,7 +15590,7 @@ function drawLegsBack(c, cx, hy, len, w, ph, near, far, shoe, sole = '#B8AE9C'){
 function golferG(x, y, w, h, ph, t, bot, walking, spr){
   const cb = spr === SPRITE.gFinish ? CAP_FIN : spr === SPRITE.gBack || spr === SPRITE.gFly ? CAP_BACK : CAP_ADDR;
   return { x, y, w, h, cx: x + w*(walking ? 0.5 : 0.55), cy: y + h*0.53, bot: bot, t: t, ph, back: walking,
-           k: Math.max(1, Math.round(h / 40)), spr,
+           k: Math.max(1, Math.round(h / 40)), spr, bulk: bulkOf(h, false),
            head: { x: x + w*cb.x, y: y + h*cb.y, w: w*cb.w, hh: h*cb.h } };
 }
 // Night on the course (the user asked): the light the three dearest skins
@@ -15579,7 +15653,6 @@ function paintGolfer(c, x, y, w, h, ph, t, bot, walking, walkPh, spr, arc, putt,
   const shear = FX && FX.shearMod ? f => shear0(f) + FX.shearMod(f, g) : shear0;
   g.shear = shear0;
   if(FX && FX.back) FX.back(c, g);
-  else plainBulk(c, g);
   const FL = FX && FX.flourish ? flourishNow(g) : null;
   if(FL) FX.flourish(c, g, FL, 'back');
   if(FX && FX.outline) outlineAt(c, g, FX.outline, RING1, FX.outlineA * (0.8 + 0.2 * Math.sin(t * 3)));
@@ -15587,7 +15660,7 @@ function paintGolfer(c, x, y, w, h, ph, t, bot, walking, walkPh, spr, arc, putt,
   if(walking){
     const O = outfitNow();
     drawLegsBack(c, x + w*0.5, y + h*(31/58), h*(26/58), w, walkPh, O.pant || '#2B3B4F', O.pant2 || O.pant || '#1C2937', O.shoe || PX.shoe, O.belt);
-    c.drawImage(spr.cv, x, y, w, h);
+    blitShear(c, spr, x, y, w, h, () => 0, g.bulk);
     if(FX && FX.body) FX.body(c, g);
     // The club in his right hand, hanging at his side, the head down by
     // his foot and turned out -- swinging a little with his arm.
@@ -15601,7 +15674,7 @@ function paintGolfer(c, x, y, w, h, ph, t, bot, walking, walkPh, spr, arc, putt,
     c.globalAlpha = 1; c.globalCompositeOperation = 'source-over';
     return;
   }
-  blitShear(c, spr, x, y, w, h, shear);
+  blitShear(c, spr, x, y, w, h, shear, g.bulk);
   // (what he wears over himself and under his arms: The Void's hood and plates)
   if(FX && FX.body) FX.body(c, g);
 
@@ -15658,14 +15731,13 @@ function paintHeli(c, x, y, w, h, t, bot){
   const hx = x + w * 0.5, hy = y - h * 0.10;
   g.hand = { x: hx, y: hy }; g.shear = () => 0; g.fly = true;
   if(FX && FX.back) FX.back(c, g);
-  else plainBulk(c, g);
   const FL = FX && FX.flourish ? flourishNow(g) : null;
   if(FL) FX.flourish(c, g, FL, 'back');
   if(FX && FX.outline) outlineAt(c, g, FX.outline, RING1, FX.outlineA * (0.8 + 0.2 * Math.sin(t * 3)));
   c.globalAlpha = FX && FX.alpha ? FX.alpha : 1; c.globalCompositeOperation = 'source-over';
   drawLegsBack(c, x + w*0.5, y + h*(31/58), h*(26/58), w, 0.25 + Math.sin(t * 5) * 0.04,
                O.pant || '#2B3B4F', O.pant2 || O.pant || '#1C2937', O.shoe || PX.shoe, O.belt);
-  c.drawImage(spr.cv, x, y, w, h);
+  blitShear(c, spr, x, y, w, h, () => 0, g.bulk);
   if(FX && FX.body) FX.body(c, g);
   // the skin's front half (a cape down his back) before the arms: they go
   // up over it
