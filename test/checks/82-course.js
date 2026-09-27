@@ -7,7 +7,8 @@
  *     on at least one, a wood or a lake at most on the other; a second hole
  *     beyond each next one; a cart path down one side; none on an island
  *     green or the sea stack, none in a wager
- *   - no other green or flag on a hazard or in a lake
+ *   - no other green or flag on a hazard or in a lake, and no two greens
+ *     side by side (the user saw two flags next to each other)
  *   - laid clear: the other fairway and its green clear of the hole's own
  *     play; the path off the rough, clear of the other fairway, and of any
  *     pond or bunker; no tree, shrub or spectator on the other fairway or
@@ -93,6 +94,10 @@ module.exports = {
             for (const sd of [-1, 1]) if (!ring1.some(n => n.sd === sd) && !F.some(x => x.sd === sd)) f(where + ': nothing on the ' + (sd < 0 ? 'left' : 'right'));
             if (ring1.length > 1) o.both++;
             if (ring1.some(n => !N.some(m => m.in === n))) f(where + ': a next hole with nothing beyond it');
+            // no two greens side by side (this one's, the other holes')
+            { const G = [[LEN, 0]].concat(N.filter(n => n.gd < LEN + 100).map(n => [n.gd, Scene.nbrGX(n)]));
+              for (let i = 0; i < G.length; i++) for (let j = i + 1; j < G.length; j++)
+                if (Math.abs(G[i][1] - G[j][1]) < 14 && Math.abs(G[i][0] - G[j][0]) < 15) f(where + ': two greens side by side at ' + G[i][0].toFixed(1) + ' and ' + G[j][0].toFixed(1)); }
             for (const n of N) if (n.gd < LEN + 100) { const gx = Scene.nbrGX(n);
               if (Scene.hitsHazard(n.gd, gx, 1) || Scene.inFill(n.gd, gx, 0, 'lake') || Scene.inPond(n.gd, gx, 0)) f(where + ': another green on a hazard or in water at ' + n.gd.toFixed(1)); }
             for (let d = 0; d <= LEN + 6; d += 0.5) {

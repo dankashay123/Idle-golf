@@ -9604,6 +9604,8 @@ const PIN_X = 0.9;
 // it). Along the hole, and across. Each hole takes the next one round the
 // nine, and they all move on a day; a wager's green keeps its pin in the
 // middle, on his line.
+// how far apart along the hole two greens beside each other must be
+const GREEN_GAP = 16;
 const PINS = [[-3.2, -1.0], [0, 0.5], [3.2, 1.4], [0, -1.0], [3.2, 0.5], [-3.2, 1.4], [3.2, -1.0], [-3.2, 0.5], [0, 1.4]];
 const pinFor = h => PINS[(holeInRound(h) - 1 + dayIndex(h) * 4 + tournamentOf(h) * 2) % PINS.length];
 // How far behind the golfer the camera sits, in world units. Small numbers put
@@ -13320,7 +13322,10 @@ const Scene = {
     // hole from side to side): tried along the hole until one is
     // (and short of this hole's green: past it are the trees; one played
     // toward us short enough of it for a fairway up to its tees)
-    const greenAt = (k, gx, far) => { for(let t = 0; t < 16; t++){ const gd = 14 + hr(k + t * 13, 503) * (far - 14), x = gx(gd);
+    // (and never side by side with another green, this one's or the
+    // other hole's inside it: the user saw two flags next to each other)
+    const greenAt = (k, gx, far, near) => { for(let t = 0; t < 16; t++){ const gd = 14 + hr(k + t * 13, 503) * (far - 14), x = gx(gd);
+      if(near.some(g => Math.abs(gd - g) < GREEN_GAP)) continue;
       if(!this.hitsHazard(gd, x, 3) && !this.hitsHazard(gd - 5, x, 2) && !this.hitsHazard(gd + 5, x, 2)) return gd; } return null; };
     const mkHole = (sd, k, inner, gapLo, gapHi) => {
       const toward = hr(k, 504) < 0.5;
@@ -13329,7 +13334,7 @@ const Scene = {
       // its fairway runs away from its green: on toward us, from its tees
       // beside this green, or out ahead
       const end = LEN - 7.5;
-      const gd = greenAt(k, d => this.nbrX(N, d) + sd * 0.6, toward ? end - 14 : LEN - 8);
+      const gd = greenAt(k, d => this.nbrX(N, d) + sd * 0.6, toward ? end - 14 : LEN - 8, [LEN].concat(inner && inner.gd < LEN + 100 ? [inner.gd] : []));
       N.gd = gd === null ? LEN + 400 : gd;
       N.a = toward ? N.gd + 7 : -30; N.b = toward ? end : N.gd - 7;
       // its tees, two, staggered, where it starts (if that is in view)
