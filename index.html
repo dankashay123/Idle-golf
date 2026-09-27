@@ -12562,6 +12562,49 @@ function cupSpeck(c, x, y, h, q, col){
   if(q > 0.85) return;
   fxDot(c, x, y - 1 - Math.round(Math.sin(q / 0.85 * Math.PI) * h * 0.45), 1, col, 1);
 }
+// The plain wakes' (from the menu, after the balls'): the least of all, a
+// glint or two in the wake's own colours
+Object.assign(CUP_FX, {
+  // Gold: a ring of gold glints round the cup, winking out
+  tGold(c, x, y, cr, h, q, t){
+    const k = Math.max(1, Math.round(h / 16)), r = h * (0.14 + q * 0.3);
+    for(let i = 0; i < 12; i++){ if(hr(i, 381) < q * 1.1 - 0.15) continue; const a = i / 12 * Math.PI * 2;
+      fxDot(c, x + Math.cos(a) * r - (k >> 1), y + Math.sin(a) * r * 0.36 - k, k, i & 1 ? '#FFE9A0' : '#E3B457', 1); }
+    if(q < 0.25) fxDot(c, x - (k >> 1), y - k * 3, k, '#FFF6D0', 1);
+  },
+  // Aurora: a little ribbon of green and teal rising off the cup
+  tAurora(c, x, y, cr, h, q, t){
+    const k = Math.max(1, Math.round(h / 18)), top = h * 0.38 * Math.min(1, q * 1.6);
+    for(let j = 0; j < 10; j++){ const u = j / 9; if(u * 0.8 < q - 0.25) continue;
+      const wx = x + Math.sin(u * 5 + t * 6) * h * 0.09 - k;
+      fxDot(c, wx, y - k - u * top, k, j % 3 === 0 ? '#C8FFF0' : '#57E0BE', 1);
+      fxDot(c, wx + k, y - k - u * top, k, j & 1 ? '#3FB8D8' : '#2FA88E', 1); }
+  },
+  // Ember: a few embers popped up out of the cup
+  tEmber(c, x, y, cr, h, q, t){
+    const k = Math.max(1, Math.round(h / 14));
+    if(q < 0.2) fxDot(c, x - k, y - k * 2, k * 2, '#FFD08A', 1);
+    for(let i = 0; i < 12; i++){ if(hr(i, 382) < q * 1.3 - 0.45) continue; const s2 = (i / 11 - 0.5) * 1.1;
+      const at = u => [x + s2 * h * 0.35 * u - (k >> 1), y - k - (u * 1.3 - u * u) * h * (0.7 + hr(i, 383) * 0.25)];
+      const [ax, ay] = at(q), [bx, by] = at(Math.max(0, q - 0.07));
+      fxDot(c, bx, by, k, '#A8321A', 1); fxDot(c, ax, ay, k, i % 3 ? '#F07A3A' : '#FFD08A', 1); }
+  },
+  // Mythic: violet twinkles about the cup, each a four-point star
+  tMythic(c, x, y, cr, h, q, t){
+    const k = Math.max(1, Math.round(h / 16));
+    for(let i = 0; i < 5; i++){ const on = q > i * 0.15 && q < i * 0.15 + 0.4; if(!on) continue;
+      const px = x + (hr(i, 384) - 0.5) * h * 0.5, py = y - k - hr(i, 385) * h * 0.3;
+      fxDot(c, px - (k >> 1), py, k, '#FFFFFF', 1);
+      for(const [dx, dy] of [[-1, 0], [1, 0], [0, -1], [0, 1]]) fxDot(c, px - (k >> 1) + dx * k, py + dy * k, k, '#C68BFF', 1); }
+  },
+  // Rainbow: a little arc of its colours over the cup, gone end to end
+  tRainbow(c, x, y, cr, h, q, t){
+    const k = Math.max(1, Math.round(h / 20)), R = h * 0.24, COLS = ['#E4574A', '#E3B457', '#7ADB86', '#57A5C2', '#C68BFF'];
+    const a0 = Math.PI * Math.max(0, q * 1.6 - 0.6), a1 = Math.PI * Math.min(1, q * 2.2);
+    for(let b = 0; b < 5; b++){ const rr = R - b * k;
+      for(let a = a0; a < a1; a += 0.3) fxDot(c, x - Math.cos(a) * rr - (k >> 1), y - k - Math.sin(a) * rr * 0.9, k, COLS[b], 1); }
+  }
+});
 // each set's wake plays its set's moment too
 CUP_FX.tHorizon = CUP_FX.singularity;
 CUP_FX.tAscension = CUP_FX.ascorb;

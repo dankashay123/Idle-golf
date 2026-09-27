@@ -7,8 +7,9 @@
  *     user found The Void's not its own), and the Jade and Hellfire Wakes
  *     play their sets' too
  *   - the cheaper balls (Rubber Duck, Hearts, Bubbles, Confetti, Comet,
- *     Black Hole) have a smaller one each: inside a smaller box, and fewer
- *     pixels than any of the dear balls'; the plain wakes have none
+ *     Black Hole) and the plain wakes (Gold, Aurora, Ember, Mythic,
+ *     Rainbow) have a smaller one each: inside a smaller box, and fewer
+ *     pixels than any of the dear balls'; the plain ball has none
  *   - short and close: over by 0.55s, and nothing outside a box of the
  *     pin's own size about the cup
  *   - the pin stands in front of it: its pixels the same with and without
@@ -35,8 +36,8 @@ module.exports = {
         const blank = () => { c.fillStyle = '#010203'; c.fillRect(0, 0, VW, VH); };
         DEV.course(B.COURSE.findIndex(cs => cs.slot === 'home')); hideSheet();
         const TOP = ['godlight', 'demoneye', 'ascorb', 'singularity', 'horizon', 'ascension', 'seraph', 'hellfire'];
-        const SMALL = ['duck', 'hearts', 'bubbles', 'confetti', 'comet', 'blackhole'];
-        const PLAIN = ['plain', 'gold', 'aurora', 'ember', 'mythic', 'rainbow'];
+        const SMALL = ['duck', 'hearts', 'bubbles', 'confetti', 'comet', 'blackhole', 'gold', 'aurora', 'ember', 'mythic', 'rainbow'];
+        const PLAIN = ['plain'];
         const balls = TOP.concat(SMALL, PLAIN).filter(id => styleDef('t', id));
         if (balls.length < TOP.length + SMALL.length + PLAIN.length) f('the balls to try are missing: ' + balls.join(','));
         delete S.ball;
@@ -71,7 +72,7 @@ module.exports = {
                 }
                 const where = id + ' hole ' + hh + ' from ' + at.toFixed(0) + ' at ' + q;
                 if (q >= 1 && n) f(where + ': ' + n + ' pixels still there after ' + CUP_FX_DUR + 's');
-                if (!has && n) f(where + ': a plain wake drew ' + n + ' pixels in the cup');
+                if (!has && n) f(where + ': the plain ball drew ' + n + ' pixels in the cup');
                 if (big) f(where + ': ' + big + ' pixels outside the smaller box of a cheaper ball' + o.bx);
                 if (out) f(where + ': ' + out + ' pixels outside the box about the cup');
                 if (under) f(where + ': ' + under + ' pixels under the ground\'s line');
@@ -132,7 +133,7 @@ module.exports = {
       return o;
     });
     if (r.fails.length) throw new Error(r.fails.join('; '));
-    return ['pixels over ' + r.views + ' views and five moments: ' + JSON.stringify(r.px) + '; the plain wakes draw none; in the Twilight Putt (drops/moments drawn) ' + JSON.stringify(r.twi),
+    return ['pixels over ' + r.views + ' views and five moments: ' + JSON.stringify(r.px) + '; the plain ball draws none; in the Twilight Putt (drops/moments drawn) ' + JSON.stringify(r.twi),
       'gone after 0.55s, all of it inside a pin-sized box about the cup, under the pin, over the ground\'s line; no Math.random'];
   }
 };
