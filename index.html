@@ -16215,7 +16215,7 @@ Object.assign(Scene, {
     }
     this._clipN = cn;
     // the woods stood up: trees across them, far to near (forestPass)
-    if(this.back && g !== c) this.forestPass(g, cam);
+    if(this.back) this.forestPass(g, cam);
     if(g !== c) PixPaint.flush(c);
     this.ripples(c, T);
     this._gMaxy = maxy;
@@ -16250,17 +16250,21 @@ Object.assign(Scene, {
         R.rows.push(row); }
       ST.m.set(key, R); return R;
     };
-    const S0 = 1.3, far = cam + 70;
+    const S0 = 1.3, far = cam + 120;
     for(let r = Math.floor(far / S0); r * S0 > cam + 1.2; r--){
       const d0 = r * S0 + (hr(r, 570) - 0.5) * 0.5, p0 = this.proj(d0, 0), U = this.proj(d0, 1).x - p0.x;
       if(!(U > 0)) continue;
-      const hp0 = 46 * p0.s * US; if(hp0 * 0.8 < 4) continue;
+      // (thinning out and shrinking far off into the painted canopy, not
+      // stopping in a row: that read as a line ruled across the view)
+      const hp0 = 46 * p0.s * US; if(hp0 < 2.6) continue;
+      const keep = clamp((hp0 - 2.6) / 5, 0.2, 1);
       const xa = (-12 - p0.x) / U, xb = (VW + 12 - p0.x) / U, off = r & 1 ? S0 * 0.5 : 0;
       const cut = this.clipAt(d0);
       for(let j = Math.floor((xa - off) / S0); j <= Math.ceil((xb - off) / S0); j++){
         const x = j * S0 + off + (hr(r * 97 + j, 571) - 0.5) * 0.6, d = d0 + (hr(j, r + 572) - 0.5) * 0.4;
+        if(keep < 1 && hr(r * 53 + j, 575) > keep) continue;
         if(!(this.inFill(d, x, -0.6, 'wood') || this.inBack(d, x, -0.6)) || this.inBack(d, x, 0.4, 1) || this.hitsHazard(d, x, 0.3)) continue;
-        const sc = 0.8 + hr(r * 31 + j, 573) * 0.45, hp = Math.round(hp0 * sc);
+        const sc = 0.8 + hr(r * 31 + j, 573) * 0.45, hp = Math.max(2, Math.round(hp0 * sc));
         const oak = tk === 1 || (tk === 2 && hr(j * 7 + r, 574) < 0.42);
         const R = stamp(oak, hp), pr = this.proj(d, x), X0 = Math.round(pr.x - R.w / 2), Y0 = Math.round(pr.y - hp);
         for(let y = 0; y < hp; y++){
