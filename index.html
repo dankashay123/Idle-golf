@@ -488,6 +488,8 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
 /* the bar was a flex child like the words beside it, so it took half the row
    and squeezed the text into the other half; it goes underneath instead */
 .row.hrow{flex-wrap:wrap}
+/* what it asks, beside its name (it was a line of its own, 51 times) */
+.row.hrow .nm .hd{font-family:var(--sans, inherit);font-size:var(--f1);color:var(--dim);font-weight:400}
 .row.hrow > .hbar{flex:0 0 100%;width:100%;margin-top:-2px}
 .pips{display:inline-flex;gap:3px;vertical-align:-1px;margin-right:5px}
 .pip{width:7px;height:7px;border-radius:0;border:1px solid var(--line);display:block}
@@ -7549,8 +7551,11 @@ function shopCard(o){
     + '<img src="' + (o.img || pixUrl(o.ic, o.col)) + '" alt=""></div>'
     + (o.sub ? '<div class="csub">' + o.sub + '</div>' : '')
     + (o.pips !== undefined ? pipRow(o.pips, B.PERM_MAX) : '')
+    // (a price in sovereigns carries their mark beside it: "sovereigns" in a
+    // line of its own under every price made every tile a row taller)
     + '<button class="price' + (o.cls ? ' ' + o.cls : '') + '" data-do="' + o.act + '">'
-    + o.price + (o.note ? '<small>' + o.note + '</small>' : '') + '</button></div>';
+    + (o.note === B.SOV.toLowerCase() ? o.price + '\u00a0' + sovIc()
+      : o.price + (o.note ? '<small>' + o.note + '</small>' : '')) + '</button></div>';
 }
 function pipRow(n, of){
   let h = '<div class="pips">';
@@ -7609,7 +7614,8 @@ function renderShop(){
       const won = d.major ? courseById(d.major) : null, full = !!FS && fullSetOf(k, d.id) === FS;
       // (worn, it can be taken off, back to the plain one: not the plain one)
       const off = worn && d.id !== STYLE_DEFAULT[k];
-      return shopCard({ img, full, on: worn || !!d.top || (!!won && own), badge: full ? 'FULL SET' : worn ? 'WORN' : d.top ? (d.top > 1 ? 'MYTHIC' : 'LEGENDARY') : won && own ? 'CHAMPION' : '', head: d.n,
+      // (the badge says worn only when the button does not: WORN twice over)
+      return shopCard({ img, full, on: worn || !!d.top || (!!won && own), badge: full ? 'FULL SET' : off ? 'WORN' : d.top ? (d.top > 1 ? 'MYTHIC' : 'LEGENDARY') : won && own ? 'CHAMPION' : '', head: d.n,
         sub: own ? '' : '<button class="mini try" data-try="' + k + '.' + d.id + '">Try it</button>',
         price: off ? 'UNEQUIP' : worn ? 'WORN' : own ? 'WEAR' : won ? 'WIN IT' : sovFmt(d.cost),
         note: worn || own ? '' : won ? won.short : B.SOV.toLowerCase(),
@@ -19504,8 +19510,7 @@ function honRows(w){
   for(const a of rows){
     const got = achDone(a.id), have = achMetric(a.m), need = a.v;
     h += '<div class="row hrow' + (got ? '' : ' locked') + '"><div>'
-      + '<div class="nm">' + (got ? '\u2713 ' : '') + a.n + '</div>'
-      + '<div class="ds">' + nb(a.d) + '</div>'
+      + '<div class="nm">' + (got ? '\u2713 ' : '') + a.n + ' <span class="hd">\u00b7 ' + nb(a.d) + '</span></div>'
       + '<div class="mt">' + (got ? '<b>' + achReward(a) + '</b>'
           : '<i>' + achAmt(a, Math.min(have, need)) + '</i> / ' + achAmt(a, need)
             + ' \u00b7 ' + achReward(a))
