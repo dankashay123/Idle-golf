@@ -2448,7 +2448,7 @@ const B = {
   // denominated in swings and this effect is not.
   VOID_MAX_SHARE: 0.20,
   PREFIX: ['Worn','Tour','Forged','Gilded','Runed','Storm-Cut','Ley-Bound','Ancestral','Eclipse','Mythwrought'],
-  SUFFIX: ['of the Links','of the Sandbelt','of Long Carry','of the Ninth Green','of Still Air',
+  SUFFIX: ['of the Links','of the Heath','of Long Carry','of the Ninth Green','of Still Air',
            'of the Ley Line','of the Broken Tee','of Sunday Nerve','of the Old Course','of the Mulligan'],
 
   /* ---- shot book ---- */
@@ -2948,7 +2948,7 @@ const B = {
       sky:['#1A5C86','#BFE0E8'], turf:'#5E9A52', rough:'#7E8A4E', sand:'#E8DCB8',
       water:'#2E7FA4', rock:'#7C93A0', tree:['#4A7A4E','#2E5A38'],
       land:{ fw:3.45, taper:0.70, trees:0.35, kind:0, nb:5, bsize:1.45, water:0.50, wsize:1.2, crowd:1.1 } },
-    { id:'sandbelt', slot:'event', n:'Sandbelt Invitational', sig:'Heather to the knee and bunkers with faces like walls.',
+    { id:'sandbelt', slot:'event', n:'The Heathland Invitational', sig:'Heather to the knee and bunkers with faces like walls.',
       sky:['#2A5E8C','#C8D8E0'], turf:'#4E8A46', rough:'#6A4A5E', sand:'#F0E4C0',
       water:'#2A6E90', rock:'#8A7E88', tree:['#3E6E44','#26482C'],
       land:{ fw:2.80, taper:0.85, trees:0.70, kind:2, nb:6, bsize:1.55, water:0.25, wsize:1.0, crowd:1.0 } },
@@ -2964,7 +2964,7 @@ const B = {
       sky:['#3E5A7A','#E0C89E'], turf:'#8A9A4E', rough:'#9A8A56', sand:'#F4E4B4',
       water:'#3A7E90', rock:'#A08A6A', tree:['#6A7A46','#4A5A2E'],
       land:{ fw:3.20, taper:0.75, trees:0.20, kind:0, nb:7, bsize:1.75, water:0.10, wsize:1.0, crowd:0.9 } },
-    { id:'palmetto', slot:'event', n:'The Palmetto Open', sig:'Warm, green, and ringed with lakes.',
+    { id:'palmetto', slot:'event', n:'The Lagoon Open', sig:'Warm, green, and ringed with lakes.',
       sky:['#1E6E9E','#CFE8E4'], turf:'#4EA050', rough:'#2E6A3A', sand:'#F2E8CC',
       water:'#22A0A8', rock:'#6E9490', tree:['#3EA05A','#248040'],
       land:{ fw:3.00, taper:0.85, trees:0.90, kind:1, nb:3, bsize:1.1, water:0.70, wsize:1.3, crowd:1.2 } },
@@ -2992,11 +2992,11 @@ const B = {
       sky:['#46566A','#B8BEC6'], turf:'#56804A', rough:'#6A4A70', sand:'#D8CCA8',
       water:'#4A6A7A', rock:'#6E7478', tree:['#4E6048','#303E2C'],
       land:{ fw:3.10, taper:0.80, trees:0.30, kind:0, nb:9, bsize:0.80, water:0.20, wsize:1.0, crowd:0.9 } },
-    { id:'azalea', slot:'major', n:'The Azalea Invitational', sig:'Not a blade out of place, and the shrubs are in flower.',
+    { id:'azalea', slot:'major', n:'The Wisteria Invitational', sig:'Not a blade out of place, and the shrubs are in flower.',
       sky:['#2A78A8','#DCEEE8'], turf:'#3EA046', rough:'#1E6A2E', sand:'#FFF4DC',
       water:'#2A96B4', rock:'#7E9EA0', tree:['#D06A9A','#8A3E68'],
       land:{ fw:3.00, taper:0.85, trees:1.10, kind:1, nb:4, bsize:1.2, water:0.50, wsize:1.2, crowd:1.4 } },
-    { id:'national', slot:'major', n:'The National Championship', sig:'Set up to hurt. Fairways like corridors, rough like treacle.',
+    { id:'national', slot:'major', n:'The Summit Championship', sig:'Set up to hurt. Fairways like corridors, rough like treacle.',
       sky:['#22506E','#B0C2C8'], turf:'#3E7A3E', rough:'#1A3A20', sand:'#E4D8B0',
       water:'#2A6484', rock:'#5A6E78', tree:['#2E6034','#183A1E'],
       land:{ fw:2.10, taper:0.95, trees:1.30, kind:2, nb:7, bsize:1.25, water:0.40, wsize:1.1, crowd:1.5 } },
@@ -3026,7 +3026,7 @@ const B = {
       sky:['#2A70A8','#D2E8EE'], turf:'#52A04E', rough:'#2E6A36', sand:'#EEE2C0',
       water:'#2E8EB0', rock:'#7A8C98', tree:['#6AA05A','#3E7040'],
       land:{ fw:3.20, taper:0.85, trees:0.90, kind:1, nb:3, bsize:1.1, water:0.60, wsize:1.3, crowd:1.0 } },
-    { id:'harbour', slot:'home', n:'Harbour Lights Links', lm:'lighthouse', lmc:['#F2F0E8','#D8453A','#FFE08A'],
+    { id:'harbour', slot:'home', n:'Lantern Bay Links', lm:'lighthouse', lmc:['#F2F0E8','#D8453A','#FFE08A'],
       sky:['#1A6090','#C4E2EA'], turf:'#62A052', rough:'#86904E', sand:'#EEE2BE',
       water:'#1E80A8', rock:'#8496A2', tree:['#4A7A4E','#2E5A38'],
       land:{ fw:3.40, taper:0.72, trees:0.30, kind:0, nb:5, bsize:1.3, water:0.55, wsize:1.4, crowd:1.1 } },
@@ -3065,8 +3065,8 @@ const B = {
 
     /* The majors of the week, one a real week in turn. Win one on your highest
        card and its jacket is yours: nothing else in the game unlocks it. */
-    { id:'masters', slot:'weekly', n:'The Mythic Masters', lm:'clock', lmc:['#F0ECE0','#3E7A46','#E3B457'],
-      prize:'mjMasters', short:'Masters', trophy:'tpMasters', trophyCol:'#DDE3E6',
+    { id:'masters', slot:'weekly', n:'The Maestro', lm:'clock', lmc:['#F0ECE0','#6A3FA8','#E3B457'],
+      prize:'mjMasters', short:'Maestro', trophy:'tpMasters', trophyCol:'#DDE3E6',
       sky:['#2A78A8','#DCEEE8'], turf:'#3EA046', rough:'#1E6A2E', sand:'#FFF6E0',
       water:'#2A96B4', rock:'#7E9EA0', tree:['#D06A9A','#8A3E68'],
       land:{ fw:3.00, taper:0.85, trees:1.10, kind:1, nb:4, bsize:1.2, water:0.55, wsize:1.2, crowd:1.6 } },
@@ -3507,9 +3507,11 @@ const B = {
       // dark plate, and his outline built out in armour)
       bulk:1, arm:'#2A2158', arm2:'#1C1640' },
     // Won, never bought: one for each major of the week, and its caddie with it.
-    { id:'mjMasters',   n:'Masters Jacket',   cost:0, cat:'major', major:'masters',
-      cap:'#F4F4EC', cap2:'#C8C8BE', shirt:'#2E7A3E', shirt2:'#236030', shirt3:'#174A22', pant:'#E8E0C8', pant2:'#C4BA9E' },
-    { id:'mjClaret',    n:'Claret Jacket',    cost:0, cat:'major', major:'crown',
+    // (names of our own: a real tournament's name, or its jacket's, is not
+    // ours to use)
+    { id:'mjMasters',   n:'Maestro Jacket',   cost:0, cat:'major', major:'masters',
+      cap:'#F4F4EC', cap2:'#C8C8BE', shirt:'#6A3FA8', shirt2:'#54308A', shirt3:'#3A1F62', pant:'#E8E0C8', pant2:'#C4BA9E' },
+    { id:'mjClaret',    n:'Crown Jacket',    cost:0, cat:'major', major:'crown',
       cap:'#E3B457', cap2:'#A8802F', shirt:'#8A2234', shirt2:'#6A1828', shirt3:'#48101C', pant:'#2A2E33', pant2:'#181B1F' },
     { id:'mjSovereign', n:'Sovereign Blazer', cost:0, cat:'major', major:'sovereign',
       cap:'#FFD66B', cap2:'#C99A2E', shirt:'#24367A', shirt2:'#1A285C', shirt3:'#101A3E', pant:'#F0EEE6', pant2:'#C8C4B8' },
@@ -3683,7 +3685,7 @@ const parOf = h => B.PAR_LAYOUTS[hash32(roundIndex(h)+7) % B.PAR_LAYOUTS.length]
 // on its last par four. Every other course has one of its own (B.SIG_HOLE),
 // once a round, on the round's last hole of that par. The *_FORCE values
 // (the developer menu) make one hole that kind and none of the others.
-// Harbour Lights, on the coast, closes its front nine on the sea stack instead
+// Lantern Bay, on the coast, closes its front nine on the sea stack instead
 // of an island.
 // The railway crossing closes a home course's front nine on its last par
 // four (the stones take the round's last, on the back nine).
@@ -3720,7 +3722,7 @@ const SIG_NAME = { island: 'Island Green', canyon: 'Canyon Carry', stones: 'Step
 // which signature hole h is, if it is one
 const sigKind = h => isIsland(h) ? 'island' : isPier(h) ? 'pier' : isCanyon(h) ? 'canyon' : isStones(h) ? 'stones' : isRail(h) ? 'rail' : null;
 // how many a home course has in a round: an island to close each nine (or
-// Harbour Lights' sea stack), the canyon, the stones and the railway
+// Lantern Bay's sea stack), the canyon, the stones and the railway
 const SIG_HOME_ROUND = 5;
 // The signature hole of the week: one kind a real week, Monday to Sunday like
 // the majors, pays its holes SIG_WEEK_MULT times their purse. The five kinds
@@ -8908,7 +8910,7 @@ function drawLandmark(g, L, cx, by, s, haze, hz){
   }
 }
 // Trees are rebuilt in the course's own colours, so the Autumn Classic is
-// actually orange and the Azalea is actually in flower.
+// actually orange and the Wisteria is actually in flower.
 const BUSH_ROWS = ['....1221....', '..12332221..', '.1233433321.', '123344433321', '123333433221', '012233332210', '.0112222110.', '..00000000..'];
 const TUFT_ROWS = ['.3...4..3...', '.3..34..3.4.', '23.3.4.33.3.', '2332343.332.', '12232332221.', '.1122222111.'];
 const ROCK_ROWS = ['...3344.....', '..2334443...', '.12233443...', '11222333322.', '.1112222211.'];

@@ -144,7 +144,7 @@ module.exports = {
           const aw = []; for (let h = f2; h < f2 + B.ROUND * B.DAYS; h++) if (sigKind(h)) aw.push(h);
           o.awayN = aw.length;
           aw.forEach(h => play(h, 0)); play(aw[0], -1); o.sigAway = T();
-          // Harbour Lights' sea stack, eagled
+          // Lantern Bay's sea stack, eagled
           DEV.course(B.COURSE.findIndex(c => c.id === 'harbour')); hideSheet();
           const t3 = tournamentOf(S.hole), f3 = (t3 - 1) * B.ROUND * B.DAYS + 1;
           let ph = f3; while (sigKind(ph) !== 'pier' && ph < f3 + B.ROUND) ph++;
@@ -173,7 +173,7 @@ module.exports = {
           if (!S.sigRec || !S.sigRec.pier || S.sigRec.pier.n !== 3 || S.sigRec.pier.b !== -4) o.sigRepair.push('a good record loaded as ' + JSON.stringify(S.sigRec));
 
           // ---- the Signature Week: all five kinds in one real week ----
-          // (a home round has four; the sea stack is found at Harbour Lights)
+          // (a home round has four; the sea stack is found at Lantern Bay)
           // (played without writing to the record's tally above, which is already read)
           const playW = (h, d) => { S.hole = h; startHole(); S.elapsed = S.parTime * at(d); S.doneT = null; S.yards = 0; finishHole(derive()); };
           const homeFour = () => { DEV.course(home); hideSheet(); const t0 = tournamentOf(S.hole); return round((t0 - 1) * B.ROUND * B.DAYS + 1); };

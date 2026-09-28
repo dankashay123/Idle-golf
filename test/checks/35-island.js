@@ -6,7 +6,7 @@
  * crosses to it on his club, spun over his head like a rotor.
  *
  *   - which holes: par threes, the last of their nine, on home courses (but
- *     Harbour Lights' front nine, which closes on its sea stack instead)
+ *     Lantern Bay's front nine, which closes on its sea stack instead)
  *   - no ball ever comes down in the water, and where one lies only ever moves
  *     on down the hole
  *   - he walks to the bank and flies the rest, at the flight's pace, and never
@@ -39,7 +39,7 @@ module.exports = {
           const cs = B.COURSE[ci], t = tournamentOf(S.hole), first = (t - 1) * B.ROUND * B.DAYS + 1;
           const home = cs.slot === 'home', mine = !home && B.SIG_HOLE[cs.id] === 'island';
           if (!home && !SIG_KINDS.includes(B.SIG_HOLE[cs.id])) o.noKind.push(cs.id);
-          // Harbour Lights closes its front nine on the sea stack instead
+          // Lantern Bay closes its front nine on the sea stack instead
           const pierFront = home && cs.id === 'harbour';
           let n = 0;
           for (let h = first; h < first + B.ROUND * B.DAYS; h++) {
@@ -168,9 +168,9 @@ module.exports = {
     if (r.noKind.length) f('courses with no signature hole of their own: ' + r.noKind.join(', '));
     if (r.wrongCount.length) f('island greens on the other courses: ' + r.wrongCount.slice(0, 4).join('; '));
     if (!r.islandCourses) f('no course but the home courses has an island green');
-    const wantHome = r.homes * B_ISLANDS_PER_EVENT - 4;   // Harbour Lights' front nine has the sea stack
+    const wantHome = r.homes * B_ISLANDS_PER_EVENT - 4;   // Lantern Bay's front nine has the sea stack
     if (r.home !== wantHome) f(r.home + ' island greens over ' + r.homes + ' home events, not '
-      + wantHome + ' (the last par three of each nine, but Harbour Lights\' front)');
+      + wantHome + ' (the last par three of each nine, but Lantern Bay\'s front)');
     if (!r.isle) f('a forced island hole has no lake');
     if (r.wetSpot.length) f('balls come down in the water: ' + r.wetSpot.slice(0, 4).join(', '));
     if (r.back) f('where a ball lies went back up the hole ' + r.back + ' times');

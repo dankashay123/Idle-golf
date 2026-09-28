@@ -1,11 +1,11 @@
 /* The fourth signature hole: a green on a sea stack, out along a pier.
  *
- * On the coast (the Coastal Classic and the Seaside Open, and Harbour Lights,
+ * On the coast (the Coastal Classic and the Seaside Open, and Lantern Bay,
  * whose front nine closes on it instead of an island) the last par three is
  * a green alone on a rock in the sea, and he walks out to it along a pier.
  * It works the way the island does, but on foot.
  *
- *   - which holes: par threes, the last of their round (Harbour Lights: of
+ *   - which holes: par threes, the last of their round (Lantern Bay: of
  *     its front nine, where it has no island any more)
  *   - no ball comes down in the sea; where one lies only moves on
  *   - he walks the pier at its pace, never flying and never standing still,
@@ -153,8 +153,8 @@ module.exports = {
     if (!(snd.pier.plank >= 5) || snd.pier.rotor || snd.pier.hop) f('walking the pier for 2s played ' + JSON.stringify(snd.pier));
     if (r.bad.length) f('sea stacks on the wrong holes: ' + r.bad.slice(0, 4).join('; '));
     if (r.wrongCount.length) f('sea stacks by course: ' + r.wrongCount.slice(0, 4).join('; '));
-    if (r.mineCourses !== 2) f(r.mineCourses + ' courses besides Harbour Lights have the sea stack, not the Coastal Classic and the Seaside Open');
-    if (r.home !== 4) f(r.home + ' sea stacks in a Harbour Lights event, not 4 (one a round)');
+    if (r.mineCourses !== 2) f(r.mineCourses + ' courses besides Lantern Bay have the sea stack, not the Coastal Classic and the Seaside Open');
+    if (r.home !== 4) f(r.home + ' sea stacks in a Lantern Bay event, not 4 (one a round)');
     if (!r.laid) f('a forced sea stack hole has no pier or no sea');
     if (!r.rims) f('the pier does not run from the bank over the sea to the rock');
     if (r.wet.length) f('balls come down in the sea: ' + r.wet.slice(0, 4).join(', '));
@@ -167,7 +167,7 @@ module.exports = {
     if (!/Signature Hole/.test(r.toast) || !/Sea Stack/.test(r.toast)) f('the tee of a sea stack hole said "' + r.toast + '"');
     if (!live.moved) f('a sea stack hole finished by its tee shot never moved on');
     if (live.cam < live.land - 0.1 || !live.over) f('a sea stack hole finished by its tee shot moved on before he walked out (stood at ' + live.cam + ' of ' + live.land + ')');
-    return [r.away + ' sea stacks on the Coastal Classic and the Seaside Open and ' + r.home + ' on Harbour Lights\' front nine, one a round',
+    return [r.away + ' sea stacks on the Coastal Classic and the Seaside Open and ' + r.home + ' on Lantern Bay\'s front nine, one a round',
       'no ball in the sea; he walked the pier in ' + r.crossed.toFixed(1) + 's on its planks, knocking underfoot; a hole done early waits for him'];
   }
 };
