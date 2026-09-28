@@ -1,6 +1,6 @@
 # Handoff — Mythic Mulligan
 
-Last updated 2026-09-27 on `main`. Read this with
+Last updated 2026-09-28 on `main`. Read this with
 `CLAUDE.md`, which holds the standing rules. `test/README.md` says what each
 check is for.
 
@@ -9,36 +9,12 @@ check is for.
 ## 1. Where things stand
 
 - Everything is committed and pushed to `main` (mirrored on the session
-  branch `claude/notes-review-r3a9e1`). Nothing is half-built.
-- **A request is waiting** (the user chose it from the menu, for a new
-  session to pick up): **cup moments for more balls**, two parts:
-  1. **A small moment in the cup for the other balls**: Rubber Duck,
-     Hearts, Bubbles, Confetti, Comet and Black Hole (`fx` `duck`,
-     `hearts`, `bubbles`, `confetti`, `comet`, `blackhole`). Only
-     Godlight, Demon Eye, the Ascended Orb and the Singularity have one
-     now. Each in its ball's own look (a duck bobbing up out of the cup,
-     hearts popping, a burst of bubbles, confetti, a spray of sparks, a
-     swirl sucked in) and **smaller than the dear balls'**: they cost
-     400 to 1300. The plain wakes (Gold, Aurora, Ember, Mythic, Rainbow)
-     were not asked for; leave them, or ask.
-  2. **The Jade and Hellfire Wakes play their set's moment**, as the two
-     Mythic wakes do: `CUP_FX.tSeraph = CUP_FX.godlight` and
-     `CUP_FX.tHellfire = CUP_FX.demoneye`, beside the two lines for
-     `tHorizon` and `tAscension`.
-  How it works: `CUP_FX[fx](c, x, y, cr, h, q, t)`, played by
-  `Scene.drawCupFx` for `CUP_FX_DUR` (0.55s) after the drop (the ball's
-  own, or else its wake's), before the pin, clipped at the ground's line;
-  the hole holds `CUP_HOLD` (0.6s) so a moment plays out whole (check a
-  new one does not need longer). Rules that apply: solid pixels, fading by
-  dropping pixels never alpha, short and close (inside a pin-sized box),
-  **no sound**. `cupfx` (test/checks/68-cupfx.js) currently fails if any
-  other ball draws a pixel: change it to require a moment for each of the
-  new balls and both wakes, still none for the plain wakes, all inside
-  the box and gone after `CUP_FX_DUR`; negative test it. Check the
-  Twilight Putt too (it calls `drawCupFx(true)`). Screenshot each at
-  phone widths, zoomed.
-- `node test/run.js` has **84 checks** (about twelve minutes; the newest
-  is `farflags`; `legends` was rewritten for the new Divine). Frost follows the
+  branch `claude/notes-review-nxyd70`). Nothing is half-built and **no
+  request is waiting**: the last one (cup moments for more balls) is done.
+- `node test/run.js` has **90 checks** (about ten minutes; the newest are
+  `steady`, `treehaze`, `forestfront`, `grounded`, `sandholes` and
+  `ballrest`). Run it with the machine quiet: screenshots taken alongside
+  pushed `render`'s ground pass past its budget once. Frost follows the
   real hour: after touching weather or colours, run it with `HOUR_FORCE`
   pinned to 8 and to 15 in a copy (`CLAUDE.md`).
 - **Only update this file and `CLAUDE.md` when the user asks.**
@@ -53,53 +29,41 @@ check is for.
 
 ### Recent work (sections in §5)
 
-- This session, newest first: **another hole's flag hidden behind the
-  forest's trees** (it stood out in front of them); **the Divine reworked
-  as a celestial monk** after two pictures (white robes over crimson,
-  gold guards, jade horns and beads, a blindfold, a ponytail, ribbons of
-  jade and gold; no skin showing; its driver, wake and ball to match);
-  **the crease between his legs** a soft shade; **the address stance**
-  after the user's picture (taller, legs straight and together, less
-  bent over); **a set equips its ball too** (the ball has its own slot);
-  **legs as wide as the torso** on every look; **the wave at the train**
-  (he turns to it and waves his left arm from the shoulder); **the woods
-  stood up as trees** (they read as "brown ground"); **the Demonic's
-  driver a curved blade**. Before those: **the Demonic reworked** after a second
-  picture (deep red and orange: wrappings, a mask, a crest of blades,
-  streamers, ribbons of fire); **everyone built out from his own
-  picture** (the dark plate read as an outline); **Unequip** on every
-  worn look and set; **nine pin positions**; **no two greens side by
-  side**; **an ace is played from the tee** (ACE and a quick burst, a
-  second's hold, the score gone before the next hole); **the course round
-  the hole**: other holes both sides and a second ring, cart paths,
-  woods, lakes, ponds, a forest behind every green, nothing bare, no hole
-  seen from the green, woods round the island and sea stack. Before
-  those: **every caddie broader**, the plain ones
-  too; **the cup moments in the Twilight Putt**; a shot short of the green
-  **never carries past the putting spot**; **everyone broader** (every
-  look built out in its own clothes, thicker arms); the **Sets rack** in
-  the Style shop and **one set order** on every rack; **every skin
-  bulkier**; **skin grounds and caddie blessings made prominent** (The
-  Void's pit, the beam); **The Void's own cup moment**; **an ace from the
-  fairway is putted out** (the user saw the putt skipped again); ambience
-  by the river, the moor, the dunes and the island lake; the **Tour
-  Card page trimmed**; **the Divine and Demonic count as Full Sets**, and
-  a full set **edges the score box** in its colour; **no line under the
-  icons**.
-- Last session: the putt no longer skipped on a slow frame; the Vault
-  never slides him mid-swing; The Void bulkier; the railway rebuilt; the
-  caddie's blessing in its look; the winning shot on the green; Full Set;
-  ambience; umbrellas; The Void replaced the Spirit Blossom.
+- This session, newest first: **sovereigns a purple gem everywhere**
+  (the corner had a gold shield, the shop purple packs; after the user's
+  picture) and the gem beside its price, not under it; **names of our own
+  for events taken from real ones** (The Maestro and its purple Maestro
+  Jacket, the Crown Jacket, The Summit Championship, The Wisteria
+  Invitational, The Heathland Invitational, The Lagoon Open, Lantern Bay
+  Links); **the Style racks and the Honours list shorter**; **the menus
+  trimmed** (one line where there were two, nothing lost); **the ball
+  lying goes down before him** (it showed through him as he walked up)
+  and the putt in front of him as it is struck; **every ball lying is a
+  lit ball**, the dear ones with something going round them (the Divine's
+  a ribbon of jade and one of gold); **the four sets' cup moments richer**
+  at the same pace; **cup moments for every ball and wake** but the plain
+  one (the cheaper balls, the plain wakes, the Jade and Hellfire Wakes
+  playing their sets'); **the far ranges slide a little as the hole
+  bends**; **the far trees steady** as he walks (they shook); **no fog
+  through the far trees** and **no brown lines through the forest**
+  (things beyond a tree showed through it); oaks on the ground; no dots of
+  turf through sand and water; stones, fish and fireflies whole at the
+  river.
+- Before that: another hole's flag hidden behind the forest; the Divine
+  reworked as a celestial monk; the address stance after the user's
+  picture; a set wears its ball; legs as wide as the torso; the wave at
+  the train; the woods as trees; the Demonic reworked; everyone built out
+  from his own picture; Unequip; nine pin positions; an ace played from
+  the tee; the course round the hole.
 - **Turned down**: a station on the railway ("would take up too much
   time"); **a photo mode** and **trail flourishes**. Don't offer them again.
 - Older requests are in §6, one line each.
-- **Not yet heard back on** (ask one when it fits, never as a list): the
-  reworked Divine; the woods as trees; the new stance; the
-  reworked Demonic; the built-out look from his own picture; the course
-  round the hole since "no bare areas" (a neighbour whose green finds no
-  room is a strip of woods, about one in seven); how the prominent grounds
-  and the blessing beam look on the phone; whether the second music track
-  and the town theme fit; the 2 min battery saver wait.
+- **Heard back**: "everything looks great so far" on the far trees and
+  the scenery; "looks fantastic" on the forest. **Not yet heard back on**
+  (ask one when it fits, never as a list): the purple sovereign gem; the
+  balls lying and their ribbons; the richer cup moments; the far ranges
+  turning; the trimmed menus; the reworked Divine and Demonic; the new
+  stance; whether the second music track and the town theme fit.
 - The user usually ends a task by asking **"What's next?"**: a short plain
   menu with a recommendation (§8), then wait for the choice.
 
@@ -180,6 +144,19 @@ check is for.
   them). No two greens side by side. The pin moves round nine spots.
 - **Unequip**: a worn look, caddie, club, ball or set reads UNEQUIP and
   goes back to the plain one.
+- **No names from real events** (the user: "the Masters is extremely
+  protective of their name"). The majors and tournaments, their jackets
+  and the prizes a player wins all have names of our own; the Maestro
+  Jacket is purple. Anything new gets an invented name, never one taken
+  from a real tournament, course or trophy. The ids behind them (`masters`,
+  `mjMasters`, `mjClaret`, `sandbelt`) stay so saves carry over.
+- **A sovereign is a purple gem** (the user's picture: a faceted diamond,
+  lit rim, dark inner line, a mark in the middle), the same everywhere: the
+  corner, beside a price, the packs. Its figures are light purple.
+- **The shop's "Nothing here is charged" notice stays on every tab**, in
+  one line (nothing there may look like it takes a payment).
+- **The far ranges turn only a little** with the hole ("very slightly"):
+  a few pixels at most, none on the tee.
 
 ### Sound and music
 
@@ -224,7 +201,7 @@ check is for.
 
 ## 3. The project
 
-- **The whole game is `index.html`** (about 21.1k lines, 2.5 MB with the
+- **The whole game is `index.html`** (about 22.6k lines, 2.7 MB with the
   sounds and the music): markup, CSS and one classic script. There is no
   build step.
 - Play it over http (`npm start`, then http://localhost:8080). Opening the
@@ -321,7 +298,7 @@ Line numbers are approximate and drift. Search for the name instead.
 | **Dawn and Dusk** | `S.dawnDusk`, `dawnDusk()` (its warmth by the hour), `clockNight()` (9pm to 5am, in `newHole`), the row in `settingsSheet`; `buildSky`'s key carries it |
 | **Birds** | `Scene.drawFlock` (below the readout's bottom), the fairway birds (props kind 9, laid in `layNight`) |
 | **Grandstand and clubhouse** | props kind 10 `standCv(sh, full, night, seed, cheer, frost)` and kind 11 `clubhouseCv(sh, night, side, seed, lit, frost)`, laid in `layNight` behind the round's last green; `Scene.galleryUp` (the jump on an eagle, `GALLERY_UP`), the last putt's cheer |
-| **Cup moments** (the dearest balls and the two Mythic wakes) | `CUP_FX` (`tHorizon`, `tAscension` share their set's), `Scene.drawCupFx(wager)` (before `drawFlagstick`; its clip reaches to the ground at its own distance in front of the cup; the Twilight Putt calls it with `true`), the hole hold lengthened for them |
+| **Cup moments** (every ball and wake but the plain one) | `CUP_FX` (the four dear balls; the cheaper balls `duck`, `hearts`, `bubbles`, `confetti`, `comet`, `blackhole`; the plain wakes `tGold`, `tAurora`, `tEmber`, `tMythic`, `tRainbow`; the set wakes `tHorizon`, `tAscension`, `tSeraph`, `tHellfire` share their set's), a second layer `CUP_FX2` for the four sets (helpers `cupHelix`, `cupStar`), `cupSpeck` for a small green; `Scene.drawCupFx(wager)` (before `drawFlagstick`; its clip reaches to the ground at its own distance in front of the cup; the Twilight Putt calls it with `true`), `CUP_FX_DUR`, `CUP_HOLD` |
 | **Wagers as played** | `wagerSpot(R)`, `Scene.wagerPutt`, `Scene.wagerCallout` (`#callout`), `leaveDgn` (`#leaveBtn`, `#leaveTxt`), `#wagerStat` ("Helped by ..."), `wagerGuide` |
 | **Record folds, Season Bests, Better Season** | `renderRecord` (`.rfold`), `S.seasonBest`, `seasonBestPost`, the Cabinet in `roomCase` |
 | **Bulk** (everyone built out, from his own picture) | `bulkOf(h, minor)` (how far: chest `2k+1`, legs `k`; a caddie 1.5 at the chest only, clear of the imp's tail), `bulkAt(b, f)` (eased in over the shoulders, none at head or feet), `bodySpan(spr)` (his body's columns, cached as `spr._body`), `bulkRow(spr, x, w, bulk, f, sp)` (a row's x and width, stretched); used by `blitShear` (his last argument), `silhouette`, `blitAs`, `outlineOf`, the Demonic's `veins`; `g.bulk` set in `golferG` and the caddie's `g`. `bulkPlate`/`plainBulk`/`BULK_PLATE` are gone; the eleven skins keep `O.bulk` (thicker arms) |
@@ -336,6 +313,13 @@ Line numbers are approximate and drift. Search for the name instead.
 | **The woods as trees** | `Scene.forestPass(g, cam)` (from `drawGround`, both the pixel buffer and the canvas path): the course's tree sprites shrunk and stamped into the ground far to near, laid once a hole by `layForest(S0)` (cached on `this.back`; a staggered grid from `hr`, only in woods and the forest, ragged starts), thinning (`kh`/`keep`) and fogged toward the sky far off (`fogged`, `_forHz`), feet softened where a rise cuts them (`footOf`); `this._forOcc` keeps where each stood for `drawProp` |
 | **Another hole's flag behind the forest** | `drawProp` kind 12: cut per column below the top of any tree in `_forOcc` nearer than its green |
 | **The ball's own slot** | `S.ball` (null by default, repaired in `initState`), `isBallItem`, `trailNow` (the wake), `ballNow`, `ballLookNow` (at rest, `drawLyingBall`), `isWorn`, `styleSet`; flight draws the wake's `BALLFX` then the ball's; `drawCupFx` prefers the ball's `CUP_FX`; `setBuy` wears both |
+| **The far trees steady** | `shrinkSprite(spr, w, h)` (a tree shrunk by coverage, keeping a pixel in any row with something in it; `makeSprite` returns `map`); `forestPass` places each tree by true scale (`U = LAT*p0.s`, `X00`), grows it in (`grow`), and the ground's march is on a grid (`q = 2^round(log2(step))`); prop trees and scenery kind 8 anchored at a rounded middle and foot |
+| **Haze and the trees** | `hazeA(y)`, `treeMaskClear`/`treeMaskOn` (the frame's mask `_tmF`/`_tmFI`, the forest's `_tmPx`); `standBlit` fogs a sprite by the haze at its foot (`fogSprite`) and marks the mask (respecting `_propCut`); `overTrees(c, layer)` cuts the haze and `drawFarFade` where trees stand; `groundTail` (the wood band) drawn before the forest and clipped to `woodBase`; the slow path paints on `_rectCv` |
+| **The forest in front of what is beyond it** | `_fdep` (the forest's depth per pixel), `_pdep` and `_fcov` (the last prop drawn there), marked by `standCover`/`standShadow` (umbrellas too); `Scene.forestOver(c)` at the end of `drawProps` puts the tree back where it is nearer |
+| **The far ranges turning** | `buildRidge` built wider by `ridgeM` (10% of the width each side); `drawRidge` slides it by the heading's change since the tee, clamped to the margin |
+| **Balls lying** | `Scene.drawRestBall()` (before him, in both frames; the reaching stays in `drawBalls`), the putt drawn after `paintGolfer` while near (`puttLate`); `drawLyingBall` → `drawLyingBallBase`, `lbSphere`, `LB_ORBIT` rings (`lbRing`, `LB_HIDE` for the far half; Godlight and the Jade Wake jade and gold ribbons) |
+| **Sovereigns** | `SOV_COL` (the gem's purple), `--sov` (its figures), `B.PX12.sovg` (the gem beside a figure), `sov1`..`sov6` (the packs), `sovIc()`, `#sovIcon`; a price in sovereigns is `.price .pv` (figure and gem kept on one line) |
+| **Event names** | on screen only: `B.COURSE` `n`/short names, the jackets `mjMasters` ("Maestro Jacket"), `mjClaret` ("Crown Jacket"), the gear suffix "of the Heath"; the ids are the old ones |
 | **The stance, legs and the wave** | `G_ADDR_ROWS` (redrawn), `SPRITE.gAddr.ax/ay`, the club's `cl` 0.64 (and `fairyBox`'s `_reach`); `bulkS` per sprite (0.8 at address, 0.5 from behind), `bulkOf` legs as wide as the chest, `drawLegsBack`'s soft crease; `SPRITE.gWave` and `waving` in `Scene.golferPose`, the raised left arm in `paintGolfer`'s walking branch |
 
 ### Globals worth knowing
@@ -638,8 +622,101 @@ Line numbers are approximate and drift. Search for the name instead.
 59. **Credit a pixel to the thing drawn on top.** Two other greens' flags
    overlapped; `farflags` first blamed a pixel on the farther flag (hidden
    behind a tree) when it was the nearer one's.
+60. **Far things shake when they are rounded one way and placed another.**
+   The far trees were placed by a scale rounded per tree and grew in and
+   out a whole size at a time, and the ground's march stepped from the
+   camera: all of it shimmered as he walked. Place by true scale, fade in
+   by pixels, anchor steps to a grid (`steady` measures it frame to frame).
+61. **A layer over the field has to respect the trees.** The haze was laid
+   over everything, so it showed between trunks as fog, and the wood band
+   drawn after the forest drew a line across it. Anything new drawn over
+   the far field goes through `overTrees` (`treehaze`).
+62. **`battery` counts canvas calls** (under 1000 a frame). A per-sprite
+   mask drawn with the canvas took 1405; build masks in JS from the
+   sprite's rows.
+63. **A fix that reaches into its neighbour's rows can paint over them.**
+   Stretching each hazard's run a row down closed the turf dots and laid
+   the lake over the island green; the fix reaches across only
+   (`sandholes`).
+64. **Something lying ahead of him is drawn before him; something struck
+   beside him after.** The ball lying showed through him as he walked up;
+   the putt, drawn before him, vanished under the Ascended's robe. Both
+   go through `drawRestBall` and `puttLate`; keep the reaching (off the
+   map) in `drawBalls` (`mapball`).
+65. **Stopping the suite mid-run** gives a cascade of "browser closed"
+   failures. They are not results; run it again whole.
 
 ## 5. What the last features do (for debugging them)
+
+### Sovereigns, one purple gem (user sent a picture)
+
+- "Sovereigns are gold on the top right. But in the shop they're purple.
+  Can you remake the sovereigns design to look more like this purple
+  one ... Also please fix the alignment in the shop for the icon." The
+  picture: a faceted purple diamond, a light rim, a dark inner line, a
+  crown and S in the middle.
+- One 12 by 12 gem (`sovg`): rim lit on top and dark below, a band, a dark
+  inner line, the face and a dark mark in the middle, in `SOV_COL`. The
+  packs are gems too (one small, larger, larger, then piles of two and
+  three, with a dark gap where one lies on another). The corner's figure
+  and the shop's "You hold" are `--sov`, a light purple (the latter was
+  pink). Drawn from a small generator (a diamond by distance from the
+  middle); the rows are pasted into `B.PX12`.
+- The wide tile's price button is a column, so its figure and gem were
+  two stacked items; `.pv` holds them on one line. Checked at 320 and 440
+  on every tab for overflow.
+
+### Names of our own (user asked)
+
+- "The Masters is extremely protective of their name ... rename it The
+  Maestro ... and have the winning jacket be renamed as well and recolor
+  it purple. If you got the name of any other major or tournament from a
+  real tournament, please change those." Every event, course and prize
+  name was checked against real ones; the ones renamed are in §1. Only
+  the words on screen changed (and the Maestro's landmark colour and the
+  jacket's shirt), so saves and checks keyed on ids hold.
+
+### Menus, racks and honours trimmed (user asked)
+
+- One line where there were two: the shop's notice (on every tab, one
+  line), one Save Code row, the Range's line only when the bag is ahead
+  of the card, the shot book's cost on its button, Attributes' count by
+  the name, the wager book's help on one line, an owned perk "Owned", a
+  sovereign price as figure and gem (no caption line), WORN once, an
+  honour's ask beside its name.
+
+### Balls lying, the putt, richer cup moments (user asked)
+
+- "When approaching a ball, it clips through the player": `drawRestBall`
+  draws it before him; the putt is drawn after him while near. Every ball
+  lying is a lit sphere (`lbSphere`, placed where the old square was, to
+  the pixel); the dear ones have rings going round (`LB_ORBIT`, far half
+  behind the ball); Godlight and the Jade Wake jade and gold ribbons
+  ("make it have those ribbons circling it too"). `ballrest` checks the
+  order, the tones and the ribbons.
+- "A damn this skin set was worth the money effect. Same speed": a second
+  layer (`CUP_FX2`) for the four sets inside the same 0.55s and box.
+
+### Cup moments for every ball and wake (the waiting request)
+
+- The cheaper balls and the plain wakes each have a small moment in their
+  own colours, inside a smaller box and fewer pixels than any dear ball's
+  (`cupfx`); the Jade and Hellfire Wakes play their sets'. The plain ball
+  has none. The Twilight Putt's odds are pinned in the check.
+
+### The far scenery (user sent screenshots)
+
+- Far trees "shake and jitter like crazy": see rule 60 and the map's rows.
+  "Fog ... in between the trees": rule 61. "Brown lines ... in the
+  trees": trees, shrubs and the gallery beyond a forest tree showed
+  through it (it is painted into the ground); `forestOver` restores the
+  tree where it is nearer (`forestfront`). Oaks had five blank rows at
+  their foot and floated (`grounded`). Snow caps striped on a slope: shaded
+  by the slope, not per column. Turf dots in sand and water: rule 63.
+  Stones, fish splashes and fireflies cut at the river's rim when he was
+  at them.
+- "The horizon ... stays in place when the player is moving corners":
+  the ranges slide with the heading, a few pixels at most (`ballrest`).
 
 ### Another hole's flag behind the forest (from the menu)
 
@@ -2261,6 +2338,16 @@ him (about 49px tall on a 320 phone, 71px on its side).
 
 ## 6. Recent history (newest first, one line each)
 
+- Sovereigns a purple gem everywhere; the gem beside its price.
+- Names of our own for events taken from real ones (The Maestro, its
+  purple jacket, and the rest).
+- The Style racks, the Honours list and the menus trimmed.
+- The ball lying drawn before him, lit balls with rings and the Divine's
+  ribbons; the sets' cup moments richer; the far ranges turning.
+- Cup moments for every ball and wake but the plain one.
+- The far trees steady; no fog or brown lines through the forest; oaks
+  on the ground; no turf dots in hazards; stones, fish, fireflies whole.
+
 - Another hole's flag hidden behind the forest's trees.
 - The Divine reworked as a celestial monk (no skin, jade and gold); its
   driver, the Jade Wake and Godlight to match.
@@ -2460,11 +2547,15 @@ flourishes, a caddie trick for the Divine or Demonic (they have one).
 Don't offer anything that adds to the Tour tab, or any new sound that is
 not ambience.
 
-The menu to offer (after the waiting request in §1):
-1. **Ask how the session's changes sit on the phone**: the reworked
-   Divine, the woods as trees, the new stance, the reworked Demonic.
-   Tune from their screenshots.
-2. **Cup moments for the plain wakes** (Gold, Aurora, Ember, Mythic,
-   Rainbow), if the ones for the balls land well.
+The menu to offer:
+1. **Ask how the session's changes sit on the phone**: the purple gem,
+   the balls lying and their ribbons, the richer cup moments, the ranges
+   turning. Tune from their screenshots.
+2. **The Style shop racks** are still a long scroll: a filter (owned,
+   by price) or fewer tiles a row taller.
+3. **The last turf specks** where a bunker and a pond cross (a few
+   pixels in the water, under `sandholes`' limits).
+4. **A look over every course at night and in snow** for the new
+   scenery fixes (they were swept mostly by day).
 
 Recommend 1: much changed on screen without their eyes on it.

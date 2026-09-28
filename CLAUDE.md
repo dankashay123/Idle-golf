@@ -4,13 +4,10 @@ An idle golf game. The whole thing is one file: `index.html` holds the markup,
 the styles and the script. There is no build step — open the file and it runs.
 
 **Starting a new session? Read `HANDOFF.md` first.** It has where things
-stand, **a request waiting to be picked up** (§1), a map of the file, what the
-recent features do and ideas to offer next. The waiting request: **cup
-moments for more balls** (a small one each for the Rubber Duck, Hearts,
-Bubbles, Confetti, Comet and Black Hole; the Jade and Hellfire Wakes
-playing their set's). Start on it without asking; the details are there.
-Update it only when the user asks (they said so: "You don't need to update
-the handoff notes until I tell you to").
+stand (§1; no request is waiting), a map of the file, what the recent
+features do and ideas to offer next. Update it only when the user asks
+(they said so: "You don't need to update the handoff notes until I tell
+you to").
 
 ## Standing instructions
 
@@ -50,8 +47,8 @@ the handoff notes until I tell you to").
   courses and rounds are built for the day and some for night (a Night
   Round, the Starfall), and the user doesn't want "to force players to only
   see night holes at night and day holes during the day". So anything that
-  follows the real time of day for how a course looks (dawn and dusk, next
-  to build) is a setting the player turns on, off by default. It is only
+  follows the real time of day for how a course looks (Dawn and Dusk,
+  built) is a setting the player turns on, off by default. It is only
   the day/night look; other options for course looks aren't wanted, and
   what exists already (frost on cold mornings) stays as it is. That
   setting is Dawn and Dusk: on, it warms the sky at dawn and dusk and
@@ -88,6 +85,12 @@ the handoff notes until I tell you to").
 - **An ace is played from the tee** (no walk, no putt, ACE held a
   second), and **nothing on the course is bare**: other holes, woods and
   lakes all round, no hole seen from the green (`course` measures it).
+- **No names taken from real events.** Majors, tournaments, courses,
+  jackets and prizes all have names of our own (The Maestro, not the
+  Masters; its jacket is purple). Anything new gets an invented name; the
+  ids behind the old ones stay so saves carry over.
+- **A sovereign is a purple gem** (from the user's picture), the same in
+  the corner, beside a price and on the packs.
 - Never put a model name in a commit, a code comment or a file. In a commit
   the co-author line reads `Co-Authored-By: Claude <noreply@anthropic.com>`
   whatever the session suggests; keep its session link line.
@@ -149,6 +152,11 @@ Rules that have cost real time here:
   hole's wait for his putt asked for a draw in the last quarter second,
   and a phone's slow frame ended holes before the putt (`HANDOFF.md` §4,
   rule 43).
+
+- **Things far off are placed by true scale and anchored to a grid**, or
+  they shimmer as he walks; anything laid over the far field is cut where
+  the trees stand (`HANDOFF.md` §4, rules 60 and 61). Run the suite with
+  the machine quiet: screenshots alongside push `render` past its budget.
 
 A check that fails once is not a flake. Chase it: it has often been the
 check's own setup (`dance` played on into an unseeded next hole; `caddie`
