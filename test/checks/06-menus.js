@@ -76,7 +76,7 @@ module.exports = {
       for (const d of B.DGN) {
         renderDgn();
         const row = [...document.querySelectorAll('.dgn')].find(e => e.querySelector('.dn').textContent === d.n);
-        const helped = row && [...row.querySelectorAll('.dm')].some(e => e.textContent === 'Helped by ' + d.st);
+        const helped = row && [...row.querySelectorAll('.dm')].some(e => e.textContent.startsWith('Helped by ' + d.st));
         const btn = row && row.querySelector('.guide');
         if (!btn) { out.push(d.n + ': no Guide button'); continue; }
         btn.click(); await new Promise(r => setTimeout(r, 30));
