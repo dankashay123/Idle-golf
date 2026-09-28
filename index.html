@@ -17,7 +17,7 @@
      moved up the same step so the three shades stay three shades. */
   --chalk:#DFE9DC; --dim:#8BA793; --faint:#6B8874;
   --brass:#E3B457; --brass-dk:#8A6A26;
-  --flag:#E4574A; --aurora:#57E0BE; --myth:#C68BFF;
+  --flag:#E4574A; --aurora:#57E0BE; --myth:#C68BFF; --sov:#C9A2FF;
 
   --r0:#93A69A; --r1:#64D07A; --r2:#4FA3F0; --r3:#B36BF5; --r4:#F0A03C; --r5:#FF5F86;
   --ember:#FF7A3D; --frost:#6FD9F2; --storm:#F2D75E; --verdant:#7ADB86; --void:#A86BF5;
@@ -87,7 +87,7 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
 #gold{font-family:var(--mono);font-size:var(--f5);font-weight:600;color:var(--brass);line-height:1}
 #rate{font-size:var(--f1);color:var(--dim);margin-top:2px;font-family:var(--mono)}
 #sovLine{display:flex;align-items:center;justify-content:flex-end;gap:3px;margin-top:2px;
-  font-family:var(--mono);font-size:var(--f1);color:var(--brass)}
+  font-family:var(--mono);font-size:var(--f1);color:var(--sov)}
 #sovIcon{width:12px;height:12px;image-rendering:pixelated;image-rendering:crisp-edges}
 
 /* ---------- experience strip ---------- */
@@ -682,6 +682,10 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
 .price.max{border-top-color:var(--line);color:var(--dim);background:transparent}
 /* a look worn, to take off (back to the plain one) */
 .price.unq{border-top-color:var(--flag);color:var(--chalk);background:transparent}
+/* a figure and the sovereign's mark beside it, as one piece: in the wide
+   tile's column the two were stacked, the mark below and to the left */
+.price .pv{display:inline-flex;align-items:center;justify-content:center;gap:3px;white-space:nowrap}
+.price .pv .tsov{margin:0}
 .price small{display:block;font-size:var(--f0);letter-spacing:.08em;color:var(--dim);
   font-weight:400;font-family:var(--sans);text-transform:uppercase;margin-top:1px}
 /* On the art, not on the header: over the header it sat on top of the number,
@@ -696,7 +700,7 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
 .card .cart.hasbadge{padding-top:22px}
 .sovline{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px;
   font-size:var(--f1);color:var(--dim)}
-.sovline b{font-family:var(--mono);font-size:var(--f4);color:var(--r5)}
+.sovline b{font-family:var(--mono);font-size:var(--f4);color:var(--sov)}
 .rstrip i{flex:1 1 0;min-width:1px;height:2px;background:#162C22;transition:height .12s linear}
 .rstrip i.lit{background:#2E4A3C}
 .rstrip i.on{background:var(--rc,var(--brass))}
@@ -1220,12 +1224,15 @@ const B = {
   //
   //   X main   x shade   o deep   w highlight   . clear
   PX12: {
-    sov1: ['............','............','....XXXX....','...XwwwXx...','...XwXXXx...','...XwXXXx...','...XxXXXx...','....XXXx....','.....Xx.....','............','............','............'],
-    sov2: ['............','...XXXXXX...','..XwwwwwXx..','..XwXXXXXx..','..XwXXXXXx..','..XwXXXXXx..','..XxXXXXXx..','...XXXXXx...','....XXXx....','.....Xx.....','............','............'],
-    sov3: ['..XXXXXXXX..','.XwwwwwwwXx.','.XwXXXXXXXx.','.XwXXXXXXXx.','.XwXXXXXXXx.','.XwXXXXXXXx.','.XxXXXXXXXx.','..XXXXXXXx..','...XXXXXx...','....XXXx....','.....Xx.....','............'],
-    sov4: ['..XXXX..XXXX','.XwwXx.XwwXx','.XwXXx.XwXXx','.XxXXx.XxXXx','..XXXx..XXXx','...Xx....Xx.','....XXXX....','...XwwwXx...','...XwXXXx...','...XxXXXx...','....XXXx....','.....Xx.....'],
-    sov5: ['.XXXX..XXXX.','XwwXx.XwwXx.','XwXXx.XwXXx.','XxXXx.XxXXx.','.XXXx..XXXx.','...XXXXXX...','..XwwwwwXx..','..XwXXXXXx..','..XwXXXXXx..','..XxXXXXXx..','...XXXXXx...','....XXXx....'],
-    sov6: ['XXXX.XXXX.XX','wXXx.wXXx.wX','xXXx.xXXx.xX','.XXx..XXx..X','XXXXXXXXXXXX','XwwwwwwwwwXx','XwXXXXXXXXXx','XwXXXXXXXXXx','XxXXXXXXXXXx','.XXXXXXXXXx.','..XXXXXXXx..','....XXXx....'],
+    sov1: ['............','............','.....ww.....','....wwXw....','...wwwXXw...','..wwwwXXXw..','..xxxxooox..','...xxxoox...','....xxox....','.....xx.....','............','............'],
+    sov2: ['............','.....ww.....','....wXXw....','...wXooXw...','..wXoXXoXw..','.wXoXooXoXw.','.xXoxooxoXx.','..xXoxxoXx..','...xXooXx...','....xXXx....','.....xx.....','............'],
+    sov3: ['.....ww.....','....wXXw....','...wXooXw...','..wXoXXoXw..','.wXoXXXXoXw.','wXoXXooXXoXw','xXoxxooxxoXx','.xXoxxxxoXx.','..xXoxxoXx..','...xXooXx...','....xXXx....','.....xx.....'],
+    sov4: ['............','........w...','.......wXw..','......wwXXw.','...w.xxxooox','..wXw.xxoox.','.wwXXw.xox..','xxxooox.x...','.xxoox......','..xox.......','...x........','............'],
+    sov5: ['............','.....ww.....','....wwXw....','...wwwXXw...','..wwwwXXXw..','..xxxxooox..','..oxxxooxo..','.wwoxxoxoXw.','wwwXoxxowXXw','xxxooooxxoox','.xxox..xxox.','..xx....xx..'],
+    sov6: ['.....ww.....','....wXXw....','...wXooXw...','..wXoXXoXw..','.wXoXooXoXw.','.xXoxooxoXx.','..xXoxxoXx..','..oxXooXxo..','.wXoxXXxoXw.','xxoooxxoxoox','.xox....xox.','..x......x..'],
+    // the sovereign itself, as the menus show it beside a figure: a gem, lit
+    // from above, a dark line round its face and a mark in the middle
+    sovg: ['.....ww.....','....wXXw....','...wXooXw...','..wXoXXoXw..','.wXoXXXXoXw.','wXoXXooXXoXw','xXoxxooxxoXx','.xXoxxxxoXx.','..xXoxxoXx..','...xXooXx...','....xXXx....','.....xx.....'],
     bagrange: ['............','.....X......','....XXx.....','.....X......','...XXXXX....','..XwXXXXx...','..XwXXXXx...','..XwXXXXx...','..XwXXXXx...','..XwXXXXx...','..XxXXXXx...','...XXXXx....'],
     bagtour: ['...X....X...','..XXx..XXx..','...X....X...','..XXXXXXX...','.XwXXXXXXx..','.XwXXXXXXx..','.XwXoooXXx..','.XwXXXXXXx..','.XwXXXXXXx..','.XwXXXXXXx..','.XxXXXXXXx..','..XXXXXXx...'],
     bagchamp: ['.X...X...X..','XXx.XXx.XXx.','.X...X...X..','XXXXXXXXXX..','XwXXXXXXXXx.','XwXXXXXXXXx.','XwXoowwooXx.','XwXoowwooXx.','XwXXXXXXXXx.','XwXXXXXXXXx.','XxXXXXXXXXx.','.XXXXXXXXx..'],
@@ -7125,7 +7132,10 @@ const isMember = () => !!S.member;
 // comparing against another price, so they are written out in full rather
 // than run through the K/M shortener the purse uses.
 const sovFmt = n => Math.round(n || 0).toLocaleString('en-US');
-const sovIc = () => '<img class="tsov" src="' + pixUrl('sov2', '#E3B457') + '" alt="' + B.SOV + '">';
+// the sovereign's own purple, the same in the corner, beside a price and on
+// the packs (the corner's was a gold shield and the shop's purple)
+const SOV_COL = '#A35BF2';
+const sovIc = () => '<img class="tsov" src="' + pixUrl('sovg', SOV_COL) + '" alt="' + B.SOV + '">';
 const boostOn  = () => (S.boostT || 0) > 0;
 const freeReady = () => (S.freeT || 0) >= B.FREE_EVERY;
 
@@ -7556,7 +7566,7 @@ function shopCard(o){
     // (a price in sovereigns carries their mark beside it: "sovereigns" in a
     // line of its own under every price made every tile a row taller)
     + '<button class="price' + (o.cls ? ' ' + o.cls : '') + '" data-do="' + o.act + '">'
-    + (o.note === B.SOV.toLowerCase() ? o.price + '\u00a0' + sovIc()
+    + (o.note === B.SOV.toLowerCase() ? '<span class="pv">' + o.price + sovIc() + '</span>'
       : o.price + (o.note ? '<small>' + o.note + '</small>' : '')) + '</button></div>';
 }
 function pipRow(n, of){
@@ -7696,7 +7706,7 @@ function renderShop(){
     h += ribbon(B.SOV) + '<div class="sgrid c3">' + B.SOV_PACKS.map(pk => {
       const bonus = Math.round((pk.c / (pk.usd * rate) - 1) * 100);
       const taken = S.packsTaken[pk.id] || 0;
-      return shopCard({ ic: pk.ic, col: '#C68BFF', on: bonus >= 40,
+      return shopCard({ ic: pk.ic, col: SOV_COL, on: bonus >= 40,
         badge: bonus > 0 ? '+' + bonus + '%' : '',
         head: sovFmt(pk.c),
         sub: pk.n + (taken ? '<br><b>taken ' + taken + '\u00d7</b>' : ''),
@@ -22490,7 +22500,7 @@ function boot(){
   });
   $('xpStrip').onclick = () => setView('career');
   $('drawerIc').src = pixUrl('caret', '#E3B457');
-  $('sovIcon').src = pixUrl('sov2', '#E3B457');
+  $('sovIcon').src = pixUrl('sovg', SOV_COL);
   $('drawer').onclick = () => {
     const big = $('app').classList.toggle('big');
     $('drawer').setAttribute('aria-label', big ? 'Shrink the menu' : 'Expand the menu');
