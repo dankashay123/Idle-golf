@@ -108,10 +108,13 @@ module.exports = {
         // too, with a dearest ball; a plain one draws nothing
         o.twi = {};
         for (const id of ['godlight', 'singularity', 'duck', 'plain']) {
-          const fn = CUP_FX[id]; let calls = 0; if (fn) CUP_FX[id] = function () { calls++; return fn.apply(this, arguments); };
+          const fn = CUP_FX[id], mr2 = Math.random; let calls = 0; if (fn) CUP_FX[id] = function () { calls++; return fn.apply(this, arguments); };
           try {
             hideSheet(); QUIET = false; delete S.dgnRun; S.styleOwn['t:' + id] = 1; S.trail = id;
             const d = B.DGN.find(x => x.id === 'twilight'); S.dgnKeys[d.id] = 3; setView('dgn'); startDgn(d); hideSheet();
+            // (the putts drop by chance: the odds pinned, or a run of misses
+            // left too few drops to look at)
+            let seed = 7; Math.random = () => { seed = (seed * 16807) % 2147483647; const v = (seed - 1) / 2147483646; return v * 0.5; };
             let drops = 0, was = 0;
             for (let i = 0; i < 60 * 25 && drops < 2 && S.dgnRun; i++) { const D = derive(); keep(1 / 60, D); Scene.draw(1 / 60, D);
               if (Scene.cupT && Scene.cupT !== was) { was = Scene.cupT; drops++; } }
@@ -119,7 +122,7 @@ module.exports = {
             if (!drops) f('no putt dropped in the Twilight Putt with ' + id);
             else if (fn && id !== 'plain' && !calls) f(id + ': a putt dropped in the Twilight Putt with no moment in the cup');
             else if (id === 'plain' && CUP_FX.plain) f('a plain ball has a moment in the cup');
-          } finally { if (fn) CUP_FX[id] = fn; delete S.dgnRun; QUIET = true; }
+          } finally { Math.random = mr2; if (fn) CUP_FX[id] = fn; delete S.dgnRun; QUIET = true; }
         }
         // the cheaper balls' moments are smaller than any of the dear balls'
         { const least = Math.min(...['godlight', 'demoneye', 'ascorb', 'singularity'].map(id => o.px[id] || 0));

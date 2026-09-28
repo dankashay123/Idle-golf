@@ -256,7 +256,7 @@ module.exports = {
       out.honPct = hrows.map(e => { const b = e.querySelector('.hbar i');
                                     return b ? parseFloat(b.style.width) : null; });
       out.honFirstName = hrows.length
-        ? hrows[0].querySelector('.nm').textContent.replace(/^\u2713 /, '') : '';
+        ? hrows[0].querySelector('.nm').childNodes[0].textContent.replace(/^\u2713 /, '').trim() : '';   // (its name: what it asks sits beside it)
       out.honDoneAt = out.honLocked.indexOf(false);
       out.honTableFirst = B.ACH[0].n;
       out.honHints = Array.from(hw.querySelectorAll('.hint')).map(e => e.textContent);

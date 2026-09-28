@@ -213,7 +213,7 @@ module.exports = {
           const here = [...sheet.querySelectorAll('.price[data-do^="style:"]')].map(b => b.dataset.do);
           o.cats.push(cat + ' ' + here.length);
           acts = acts.concat(here);
-          imgs = imgs.concat([...sheet.querySelectorAll('.card img')].map(i => i.src));
+          imgs = imgs.concat([...sheet.querySelectorAll('.card .cart img')].map(i => i.src));   // (the look's own picture, not the sovereign mark on its price)
           o.tries += sheet.querySelectorAll('.try[data-try]').length;
         }
         o.listed = acts.length; o.dupes = acts.length - new Set(acts).size;
