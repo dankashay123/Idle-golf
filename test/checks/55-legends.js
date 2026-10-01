@@ -10,24 +10,23 @@
  *   - drawn, by pixels, each part taken away in turn from the same frame.
  *     The Demonic (reworked after a second picture, in deep red and
  *     orange): torn wrappings streaming back off him, on him and his
- *     caddie; a crest of blades swept back off his hood. The Ascended, a knight
- *     of the void after a picture the user sent: a cape streaming behind
- *     him, and hanging down his back as he walks away; horns; hair of fire
- *     streaming back from his head; a light in his chest; hands in their own
- *     magenta. His caddie, the picture's imp: horns, a flame, green eyes and
- *     a curled tail. Both: eyes that shine, where his eye is; walking away,
- *     the sole of his lifted boot in his belt's colour (it flashed the plain
- *     tan under the Ascended's cape), while a plain golfer keeps the tan
+ *     caddie; a crest of blades swept back off his hood. The Ascended,
+ *     redrawn after a third picture as a hooded star-walker: a galaxy cape
+ *     streaming behind him, and hanging down his back as he walks away;
+ *     wings of feathers on his back behind him (none out in front), spread
+ *     either side as he walks away; two ears on his hood; a silver mantle,
+ *     his hood down past his face, a gauntlet; hands in their own silver;
+ *     his caddie's wings behind him. Both: eyes where his eye is; walking
+ *     away, the sole of his lifted boot in his belt's colour (it flashed the
+ *     plain tan under the Ascended's cape), while a plain golfer keeps the tan
  *   - his arms in his own skin: they were always the plain tone, so the red
  *     Demonic had peach arms (and the Void Walker, Midas and the Ghost too)
  *   - the Ascended made the ultimate skin ("really go nuts, but not so much
- *     that it takes up a ton of the screen"): a sigil on the ground at his
- *     feet and nowhere else; an aura of flame close about him that swells as
- *     he winds up; a ring of shards round him both sides, passing in front of
- *     his middle over a lap; horns swept back off his helm, a pair either
- *     side from behind; sparks off the ball and a shockwave out past the
- *     sigil as he strikes; and all of it within 1.3 of his widths either side
- *     of him and 0.4 of his height over him, the most over six seconds
+ *     that it takes up a ton of the screen"): a disc on the ground at his
+ *     feet and nowhere else; bits of light glitching close about him; motes
+ *     drawn in as he winds up; sparks off the ball and a ring out past the
+ *     disc as he strikes; and all of it within 1.4 of his widths either
+ *     side of him and 0.4 of his height over him, the most over six seconds
  *   - a skin's ground goes down before the pin and a putt rolling away beyond
  *     him, which stand on it: drawn with him, it covered them
  *   - the Demonic made the ultimate skin too: an aura of hellfire swelling as
@@ -180,74 +179,68 @@ module.exports = {
             }
             Scene.t = 1.3;
           } else {
-            // the cape: behind him, out past his legs; walking away, down his back
+            // (redrawn after the user's third picture: a hooded star-walker)
+            // the galaxy cape: behind him, out past his legs; walking away, down his back
             const cape = part(id, 'cape', golfer);
             d.cape = cape.length; d.capeBehind = cape.filter(([x]) => x < box.x0 + w * 0.25).length;
             Scene.walkOn = true; Scene.walkPh = 0.2;
             d.capeBack = part(id, 'cape', golfer).filter(([x, y]) => x >= box.x0 && x <= box.x1 && y > box.y0 + h * 0.3 && y < box.y0 + h * 0.8).length;
             Scene.walkOn = false;
-            // hair of fire, back from his head
-            const hair = part(id, 'hair', golfer), hl = head.x - head.w / 2;
-            d.hair = hair.length; d.hairBack = hair.filter(([x]) => x < hl).length; d.hairReach = hl - Math.min(...hair.map(([x]) => x));
-            // the light in his chest
-            const core = part(id, 'core', golfer);
-            d.core = core.length; d.coreOff = core.filter(([x, y]) => x < box.x0 || x > box.x1 || y < box.y0 + h * 0.3 || y > box.y0 + h * 0.6).length;
-            // ---- made the ultimate skin ("go nuts, but not so much that it
-            // takes up a ton of the screen") ----
+            // wings of feathers following his profile: side on, on his back
+            // behind him and up off it, none out in front of him; walking
+            // away, spread either side of him
+            d.wing = {};
+            for (const [k, ph] of [['addr', 0], ['top', 0.36]]) {
+              Scene.swingT = ph ? Scene.swingDur * (1 - ph) : 0;
+              const W = part(id, 'wings', golfer);
+              d.wing[k] = { n: W.length, behind: W.filter(([x]) => x < box.x0 + w * 0.6).length, up: W.filter(([, y]) => y < head.y + h * 0.1).length, front: W.filter(([x]) => x > box.x0 + w * 0.75).length };
+            }
+            Scene.swingT = 0; Scene.walkOn = true; Scene.walkPh = 0.2;
+            { const W = part(id, 'wings', golfer); d.wing.backL = W.filter(([x]) => x < p.x - w * 0.3).length; d.wing.backR = W.filter(([x]) => x > p.x + w * 0.3).length; }
+            // and from behind, the silver mantle across his shoulders
+            d.mantleBack = part(id, 'mantle', golfer).filter(([x, y]) => Math.abs(x - p.x) < w * 0.45 && y < box.y0 + h * 0.45).length;
+            Scene.walkOn = false;
+            d.mantle = part(id, 'mantle', golfer).length;
+            d.drape = part(id, 'drape', golfer).length;
+            d.gauntlet = part(id, 'gauntlet', golfer).length;
             const cx = box.x0 + w * 0.55, [rx, ry] = STYLEFX.ascended.sigilSize({ w, h });
-            // the sigil on the ground under him, and nowhere else
+            // the disc on the ground under him (its rim lit out over the
+            // grass round it), and nowhere else
+            const inDisc = (x, y, m) => ((x - cx) / rx) ** 2 + ((y - p.y) / ry) ** 2 <= (1 + m / ry) ** 2;
             const gr = part(id, 'ground', golfer);
-            d.ground = gr.length; d.groundOff = gr.filter(([x, y]) => Math.abs(x - cx) > rx + 2 || Math.abs(y - p.y) > ry + 2).length;
-            // the aura: flames rising off him, close about him
-            const au = part(id, 'aura', golfer);
-            d.aura = au.length; d.auraAbove = au.filter(([x, y]) => y < head.y).length;
-            d.auraOff = au.filter(([x, y]) => x < box.x0 - w * 0.3 || x > box.x1 + w * 0.3 || y < box.y0 - h * 0.3 || y > p.y + 1).length;
-            // the ring of shards, round him both sides and close in; over a
-            // lap, passing in front of his middle
-            const ob = part(id, 'orbit', golfer);
-            d.orbit = ob.length; d.orbitL = ob.filter(([x]) => x < box.x0).length; d.orbitR = ob.filter(([x]) => x > box.x1).length;
-            d.orbitOff = ob.filter(([x, y]) => Math.abs(x - cx) > w * 0.95 || y < box.y0 + h * 0.3 || y > box.y0 + h * 0.8).length;
-            d.orbitFront = 0;
-            for (let k = 0; k < 8; k++) {
-              Scene.t = 1.3 + k * 0.66;
-              d.orbitFront += part(id, 'orbit', golfer).filter(([x, y]) => x > box.x0 + w * 0.35 && x < box.x0 + w * 0.65 && y > box.y0 + h * 0.5 && y < box.y0 + h * 0.65).length;
+            d.ground = gr.length; d.groundOff = gr.filter(([x, y]) => !inDisc(x, y, 3)).length;
+            // bits of light glitching about him, close
+            d.glitch = 0; d.glitchOff = 0;
+            for (let k = 0; k < 6; k++) {
+              Scene.t = 1.3 + k * 0.53;
+              const gl = part(id, 'glitch', golfer);
+              d.glitch += gl.length; d.glitchOff += gl.filter(([x, y]) => Math.abs(x - cx) > w * 1.3 || y > p.y || y < box.y0 - h * 0.15).length;
             }
             Scene.t = 1.3;
-            // the horns swept back off his helm: the top third of them well
-            // behind the bottom third
-            const hn = part(id, 'horns', golfer).filter(([x, y]) => y < head.y), ys = hn.map(([, y]) => y);
-            const y0h = Math.min(...ys), y1h = Math.max(...ys), mx = P => P.length ? P.reduce((a, [x]) => a + x, 0) / P.length : 0;
-            d.hornSweep = hn.length ? (mx(hn.filter(([, y]) => y < y0h + (y1h - y0h) / 3)) - mx(hn.filter(([, y]) => y > y1h - (y1h - y0h) / 3))) / head.w : 0;
-            // walking away, a pair either side of his head
-            Scene.walkOn = true; Scene.walkPh = 0.2;
-            const hb = part(id, 'horns', golfer), hx = p.x;
-            d.hornsBack = [hb.filter(([x]) => x < hx - 2).length, hb.filter(([x]) => x > hx + 2).length];
-            Scene.walkOn = false;
             // all of it, against him bare: how much of the screen it takes,
-            // the most over six seconds of him standing there (its shockwave
-            // and all), and his aura then against at the top of his backswing
+            // the most over six seconds of him standing there
             const bare = () => { const O = outfitNow(), fx = O.fx; O.fx = null; try { return golfer(); } finally { O.fx = fx; } };
-            d.foot = { l: 0, r: 0, up: 0, dn: 0 }; d.auraIdle = 0; d.auraTop = 0;
+            d.foot = { l: 0, r: 0, up: 0, dn: 0 };
             for (let k = 0; k < 14; k++) {
               Scene.t = 1.3 + k * 0.43;
               const foot = diff(golfer(), bare());
               const ext = { l: (cx - Math.min(...foot.map(([x]) => x))) / w, r: (Math.max(...foot.map(([x]) => x)) - cx) / w,
                             up: (box.y0 - Math.min(...foot.map(([, y]) => y))) / h, dn: (Math.max(...foot.map(([, y]) => y)) - p.y) / h };
               for (const e in ext) d.foot[e] = Math.max(d.foot[e], +ext[e].toFixed(2));
-              if (k < 6){ d.auraIdle += part(id, 'aura', golfer).length;
-                Scene.swingT = Scene.swingDur * (1 - 0.36); d.auraTop += part(id, 'aura', golfer).length; Scene.swingT = 0; }
             }
             Scene.t = 1.3;
-            // at the strike, sparks flying up off the ball, and a shockwave
-            // running out past the sigil
+            // as he winds up, motes drawn into him; at the strike, light
+            // flying up off the ball, and a ring running out past the disc
+            Scene.swingT = Scene.swingDur * (1 - 0.3);
+            d.motes = part(id, 'motes', golfer).length;
             Scene.swingT = Scene.swingDur * (1 - 0.62);
             const bx = box.x0 + w * 1.19, sp = part(id, 'sparks', golfer);
             d.sparks = sp.length; d.sparksOff = sp.filter(([x, y]) => Math.abs(x - bx) > w * 0.8 || y > p.y + 2 || y < p.y - h * 0.5).length;
             Scene.swingT = Scene.swingDur * (1 - 0.7);
-            d.waveOut = part(id, 'ground', golfer).filter(([x]) => Math.abs(x - cx) > rx + 2).length;
+            d.waveOut = part(id, 'ground', golfer).filter(([x]) => Math.abs(x - cx) > rx + 4).length;
             Scene.swingT = 0;
           }
-          const top = part(id, id === 'demonic' ? 'crest' : 'horns', golfer);
+          const top = part(id, id === 'demonic' ? 'crest' : 'ears', golfer);
           d.top = top.length; d.topAbove = top.filter(([x, y]) => y < head.y).length;
           d.topBelow = top.filter(([x, y]) => y > head.y + h * 0.1).length;
           d.topWide = top.filter(([x]) => Math.abs(x - head.x) > head.w * (id === 'demonic' ? 2.6 : 1.4)).length;
@@ -279,11 +272,8 @@ module.exports = {
           // (his wings side on, on his back: the caddie is always seen side on)
           const cb = Scene.fairyBox(box.x0, box.y0, w, h);
           if (id === 'demonic') { const cw = part(id, 'streamers', caddie); d.cWings = cw.length; d.cWingsBehind = cw.filter(([x]) => x < cb.x + cb.w * 0.5).length; }
-          else { d.cTail = part(id, 'tail', caddie).length; d.cFlame = part(id, 'hair', caddie).length;
-                 // the imp's eyes are green: the brightest pixel they put down
-                 const ce = caddie(), eyes = part(id, 'eyes', caddie);
-                 d.cGreen = eyes.filter(([x, y]) => { const i = (y * VW + x) * 4; return ce[i + 1] > ce[i] + 30 && ce[i + 1] > ce[i + 2]; }).length; }
-          d.cTop = part(id, id === 'demonic' ? 'crest' : 'horns', caddie).length;
+          else { const cw = part(id, 'wings', caddie); d.cWings = cw.length; d.cWingsBehind = cw.filter(([x]) => x < cb.x + cb.w * 0.5).length; }
+          d.cTop = part(id, id === 'demonic' ? 'crest' : 'ears', caddie).length;
           d.cEyes = part(id, 'eyes', caddie).length;
           d.cadSprite = cad === SPRITE.caddie;
         }
@@ -498,21 +488,19 @@ module.exports = {
     if (!(dm.cWings >= 15 && dm.cWingsBehind >= dm.cWings * 0.6)) f('the Demonic caddie\'s streamers: ' + dm.cWings + ' pixels, ' + dm.cWingsBehind + ' of them behind him');
     if (!(as.cape >= 40 && as.capeBehind >= 25 && as.capeBack >= 100))
       f('the Ascended cape: ' + as.cape + ' pixels, ' + as.capeBehind + ' behind him, ' + as.capeBack + ' down his back as he walks away');
-    if (!(as.hairBack >= 25 && as.hairReach >= 5)) f('the Ascended hair of fire: ' + as.hairBack + ' pixels back from his head, reaching ' + as.hairReach);
-    if (!(as.core >= 10) || as.coreOff) f('the light in the Ascended\'s chest: ' + as.core + ' pixels, ' + as.coreOff + ' of them off his chest');
-    if (!(as.hand >= 2)) f('the Ascended hands in their own magenta: ' + as.hand + ' pixels');
-    if (!(as.cTail >= 5 && as.cFlame >= 4 && as.cGreen >= 1)) f('the imp: tail ' + as.cTail + ', flame ' + as.cFlame + ', green eye ' + as.cGreen + ' pixels');
-    // the ultimate
-    if (!(as.ground >= 120) || as.groundOff) f('the Ascended sigil: ' + as.ground + ' pixels, ' + as.groundOff + ' of them off the ground at his feet');
-    if (!(as.auraIdle >= 120) || as.auraOff) f('the Ascended aura: ' + as.auraIdle + ' pixels over six frames, ' + as.auraOff + ' of them away from him');
-    if (!(as.orbit >= 25 && as.orbitL >= 3 && as.orbitR >= 3 && as.orbitFront >= 5) || as.orbitOff)
-      f('the ring of shards: ' + as.orbit + ' pixels, ' + as.orbitL + '/' + as.orbitR + ' either side of him, ' + as.orbitFront + ' over a lap in front of his middle, ' + as.orbitOff + ' out of place');
-    if (!(as.hornSweep <= -0.2) || !(as.hornsBack[0] >= 5 && as.hornsBack[1] >= 5))
-      f('the horns: their top ' + as.hornSweep.toFixed(2) + ' of his helm behind their roots (swept back is past -0.2); from behind ' + J(as.hornsBack) + ' pixels either side');
-    if (as.foot.l > 1.3 || as.foot.r > 1.3 || as.foot.up > 0.4 || as.foot.dn > 0.2)
+    for (const k of ['addr', 'top']) { const q = as.wing[k];
+      if (!(q.n >= 30 && q.behind >= q.n * 0.85 && q.up >= q.n * 0.5) || q.front) f('the Ascended wings side on (' + k + '): ' + J(q) + ' (on his back behind him and up off it, none in front)'); }
+    if (!(as.wing.backL >= 10 && as.wing.backR >= 10)) f('the Ascended wings walking away: ' + J(as.wing) + ' (spread either side of him)');
+    if (!(as.mantle >= 6 && as.mantleBack >= 30 && as.drape >= 4 && as.gauntlet >= 3))
+      f('what the Ascended wears: his mantle ' + as.mantle + ' (' + as.mantleBack + ' across his shoulders from behind), his hood down past his face ' + as.drape + ', his gauntlet ' + as.gauntlet + ' pixels');
+    if (!(as.hand >= 2)) f('the Ascended hands in their own silver: ' + as.hand + ' pixels');
+    if (!(as.cWings >= 10 && as.cWingsBehind >= as.cWings * 0.6)) f('the Ascended caddie\'s wings: ' + as.cWings + ' pixels, ' + as.cWingsBehind + ' of them behind him');
+    if (!(as.ground >= 120) || as.groundOff) f('the Ascended disc: ' + as.ground + ' pixels, ' + as.groundOff + ' of them off the ground at his feet');
+    if (!(as.glitch >= 10) || as.glitchOff) f('the Ascended glitching: ' + as.glitch + ' pixels over six frames, ' + as.glitchOff + ' of them away from him');
+    if (as.foot.l > 1.4 || as.foot.r > 1.4 || as.foot.up > 0.4 || as.foot.dn > 0.2)
       f('the Ascended takes too much of the screen: ' + J(as.foot) + ' (his widths either side of him, his heights above and below)');
-    if (!(as.auraTop >= as.auraIdle * 1.2)) f('the aura does not swell as he winds up: ' + as.auraTop + ' pixels at the top of his backswing against ' + as.auraIdle + ' at address');
-    if (!(as.sparks >= 6) || as.sparksOff || !(as.waveOut >= 8)) f('the strike: sparks ' + as.sparks + ' (' + as.sparksOff + ' away from the ball), a shockwave ' + as.waveOut + ' pixels out past the sigil');
+    if (!(as.motes >= 4)) f('no motes drawn into the Ascended as he winds up: ' + as.motes + ' pixels');
+    if (!(as.sparks >= 6) || as.sparksOff || !(as.waveOut >= 8)) f('the strike: sparks ' + as.sparks + ' (' + as.sparksOff + ' away from the ball), a ring ' + as.waveOut + ' pixels out past the disc');
     // the Demonic made the ultimate skin
     if (!(dm.auraIdle >= 120) || dm.auraOff || !(dm.auraTop >= dm.auraIdle * 1.2))
       f('the Demonic aura: ' + dm.auraIdle + ' pixels over six frames (' + dm.auraOff + ' away from him), ' + dm.auraTop + ' at the top of the backswing');
@@ -569,10 +557,11 @@ module.exports = {
       f('his ground over the pin or the putt: the frame draws ' + r.layer.order + '; the ball on his sigil ' + r.layer.inSigil + ', its white pixels ' + r.layer.white);
     for (const id of ['demonic', 'ascended']) {
       const d = r.drawn[id];
-      if (!(d.top >= 12 && d.topAbove >= 6) || d.topBelow || d.topWide) f('the ' + id + ' horns: ' + J(d) + ' (standing up off his cap, and nowhere else)');
+      // (the Ascended's two ears are smaller than the Demonic's crest of blades)
+      if (!(d.top >= (id === 'ascended' ? 8 : 12) && d.topAbove >= 6) || d.topBelow || d.topWide) f('the ' + id + (id === 'ascended' ? ' hood\'s ears: ' : ' crest: ') + J(d) + ' (standing up off his head, and nowhere else)');
       if (!(d.eyes >= 1) || d.eyesOff) f('the ' + id + ' eyes: ' + d.eyes + ' pixels, ' + d.eyesOff + ' of them away from his eye');
       if (d.plain || !(d.own >= 12)) f('the ' + id + ' golfer\'s arms: ' + d.plain + ' pixels of the plain skin tone on him, ' + d.own + ' of his own');
-      if (!(d.cTop >= 4 && d.cEyes >= 1)) f('the ' + id + ' caddie: horns ' + d.cTop + ', eyes ' + d.cEyes + ' pixels');
+      if (!(d.cTop >= 4 && d.cEyes >= 1)) f('the ' + id + ' caddie: ' + (id === 'ascended' ? 'ears ' : 'crest ') + d.cTop + ', eyes ' + d.cEyes + ' pixels');
     }
     for (const id of ['demonic', 'ascended']) {
       const so = r.drawn[id].sole;
@@ -583,9 +572,9 @@ module.exports = {
     if (oa.length) f('plain skin tone on skins with their own: ' + oa.map(([k, n]) => k + ' ' + n).join(', '));
     return ['the Demonic at the Divine\'s ' + r.price.demonic + ', the Ascended at ' + r.price.ascended + '; club, trail, ball and caddie for each in the Divine\'s proportion (' + J(r.sets.ascended.cost) + '), Legendary and Mythic',
       'the Demonic: torn wrappings streaming back side on (' + dm.wing.addr.behind + 'px behind him, none in front) and over his back walking away (' + dm.wing.backL + '/' + dm.wing.backR + '), a crest of blades ' + dm.top + ', eyes at his eye; his caddie\'s streamers ' + dm.cWings,
-      'the Ascended: a cape ' + as.cape + ' (' + as.capeBack + ' down his back walking away), horns ' + as.top + ', hair of fire reaching ' + Math.round(as.hairReach) + 'px back, the light in his chest, magenta hands; the imp\'s tail ' + as.cTail + ', flame ' + as.cFlame + ', green eyes',
+      'the Ascended, a hooded star-walker: a galaxy cape ' + as.cape + ' (' + as.capeBack + ' down his back walking away), wings of feathers on his back side on (' + as.wing.addr.behind + 'px behind him, none in front) and either side walking away, ears on his hood ' + as.top + ', a silver mantle (' + as.mantleBack + ' from behind), a gauntlet; his caddie\'s wings ' + as.cWings + '',
       'his arms in his own skin, on these and on the Void Walker, Midas and the Ghost; his soles in his belt\'s colour walking away (' + r.drawn.ascended.sole.own + 'px), a plain golfer\'s tan',
-      'the ultimate Ascended: a sigil at his feet (' + as.ground + 'px), an aura of flame (' + Math.round(as.auraTop / as.auraIdle * 100 - 100) + '% more at the top of the backswing), a ring of shards passing in front of him and behind, horns swept back (their tops ' + (-as.hornSweep).toFixed(2) + ' of his helm behind their roots), sparks and a shockwave as he strikes; ' + as.foot.l + '/' + as.foot.r + ' of his width either side and ' + as.foot.up + ' of his height over him at most',
+      'the Ascended\'s disc at his feet (' + as.ground + 'px), glitching about him (' + as.glitch + 'px), motes as he winds up, sparks and a ring as he strikes; ' + as.foot.l + '/' + as.foot.r + ' of his width either side and ' + as.foot.up + ' of his height over him at most',
       'his ground under the pin and a putt rolling away (' + r.layer.order + ')',
       'the ultimate Demonic: an aura of hellfire (' + Math.round(dm.auraTop / dm.auraIdle * 100 - 100) + '% more at the top of the backswing), two ribbons of fire swirling round him, a crest swept back (' + dm.hornCurl.toFixed(2) + ' of his hood behind, ' + dm.crestUp.toFixed(2) + ' of his height up), hands on fire, the ground cracking at the strike (' + dm.cracks + 'px); ' + dm.foot.l + '/' + dm.foot.r + ' of his width either side, ' + dm.foot.up + ' of his height over him',
       'the Divine, a celestial monk: no skin showing (' + dvn.bodyPx + ' pixels of him); ribbons of jade and gold either side (' + dvn.rib.n + 'px), drawn in to ' + dvn.ribTop.span + 'px wide at the top and out to ' + dvn.ribHit.span + ' at the strike (' + dvn.rib.span + ' at rest), from behind too; a gold ring behind his head, jade horns, hair streaming back and down his back, blindfold, beads, sash, guards and his robe from behind; the jade seal at his feet, light off the ball and a ring as he strikes; his caddie in ribbons and horns',
