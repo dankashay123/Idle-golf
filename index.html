@@ -2582,6 +2582,10 @@ const B = {
   // The endurance floor: each one is a piece of work, deeper floors are more of
   // it, and a floor still takes a moment even when you are far too strong.
   DGN_WORK: 26, DGN_WORK_STEP: 1.55, DGN_MIN_FLOOR: 0.45,
+  // the Vault's wait between floors, the clock stood still: the floor's last
+  // ball in and its banner read (the user asked for a second and a half),
+  // longer only while that ball is still on its way, never past the most
+  VAULT_PAUSE: 1.5, VAULT_PAUSE_MAX: 3.5,
   DGN_YIELD_STEP: 1.16,
   // CARRY_FLOOR_T is read as seconds of carry: the floor a bag can chew
   // through in that long, which is roughly where a Vault run settles. It is
@@ -3481,9 +3485,12 @@ const B = {
     // jade prayer beads, a gold mask and a crimson blindfold, silver hair
     // in a long tail, jade horns, scaled jade gauntlets, and ribbons of jade
     // and gold light swirling about him.
+    // (and again after the user's third picture: a long-nosed crimson mask,
+    // a gold crown set with jade, a great ring of blue and gold behind him,
+    // a skirt of crimson worked in gold)
     { id:'divine',  n:'Divine',          cost:3000, fx:'divine', cat:'skin', top:1, pattern:'heaven', pantPattern:'kneeguard',
       cap:'#E8ECF2', cap2:'#D9A63A', shirt:'#F7F3EA', shirt2:'#DDD5C4', shirt3:'#D9A63A', pant:'#A81C2A', pant2:'#6E0F1A', shoe:'#D9A63A',
-      skin:'#E6B54A', skin2:'#A8781E', belt:'#D8283A', hair:'#E8ECF2', hand:'#2FB592',
+      skin:'#C8283A', skin2:'#7A1020', belt:'#1A0A0C', hair:'#E8ECF2', hand:'#2FB592',
       bulk:1, arm:'#F7F3EA', arm2:'#C9C0AE' },
     // The user's two: the Demonic, horned and winged, out of a pit of
     // hellfire, at the Divine's price; and the Ascended, a knight of the void
@@ -5647,6 +5654,15 @@ function rollDgnEvent(R){
 function tickDgn(dt, D){
   const R = S.dgnRun; if(!R) return;
   const d = B.DGN.find(x => x.id === R.id);
+  // The Vault between floors (the user asked): the floor's last ball goes in
+  // the cup, its banner shows, and the next floor opens after
+  // B.VAULT_PAUSE with the clock stood still (a little longer while the ball
+  // is still on its way in; never in a catch-up or with nobody watching)
+  if(R.held){
+    R.held += dt;
+    if((R.held >= B.VAULT_PAUSE && !Scene.vaultHold()) || R.held >= B.VAULT_PAUSE_MAX || !Scene.watched()) floorOn(R);
+    return;
+  }
   R.t += dt;
   if(R.evtT > 0) R.evtT -= dt;
 
@@ -5752,14 +5768,22 @@ function tickDgn(dt, D){
 
   }else{
     R.fT += dt;
-    R.work -= D.dps * (R.mod || 1) * dt;
+    R.rate = D.dps * (R.mod || 1);
+    R.work -= R.rate * dt;
     if(R.work <= 0 && R.fT >= B.DGN_MIN_FLOOR){
-      R.cleared++; R.floor++; R.mod = 1; R.fT = 0;
-      R.work = floorWork(R.floor); R.full = R.work;
-      rollDgnEvent(R);
+      R.cleared++;
+      if(Scene.watched()) R.held = 1e-9; else floorOn(R);
     }
     if(R.t >= R.dur) endDgn(d, R, D);
   }
+}
+
+// the Vault's next floor, once the last is cleared (quiet: no turn of luck
+// rolled, as when a run ends between floors)
+function floorOn(R, quiet){
+  R.held = 0; R.floor++; R.mod = 1; R.fT = 0;
+  R.work = floorWork(R.floor); R.full = R.work;
+  if(!quiet) rollDgnEvent(R);
 }
 
 // Leaving a wager part way: what it has won so far is paid as its end would
@@ -5840,6 +5864,8 @@ function wagerGuide(id){
     + '<button class="act ghost" onclick="hideSheet()">Close</button>');
 }
 function endDgn(d, R, D){
+  // (left between two floors: the one cleared counts)
+  if(R.held) floorOn(R, true);
   S.dgnRun = null;
   const stats = [];
   let fe = -1, head = '', pot = 0;
@@ -7337,7 +7363,9 @@ const STYLE_DEFAULT = { o: 'classic', c: 'bib', k: 'steel', t: 'plain' };
 const styleWorn = k => k === 'o' ? S.outfit : k === 'c' ? (S.caddie || 'bib') : k === 'k' ? (S.club || 'steel') : S.trail;
 // whether this one is worn (a ball in its own place, beside the wake)
 const isWorn = (k, id) => k === 't' ? (isBallItem(styleDef('t', id)) ? (ballNow() || {}).id === id && !previewOf('t') : trailNow().id === id && !previewOf('t')) : styleWorn(k) === id;
-function styleSet(k, id){ if(k === 'o') S.outfit = id; else if(k === 'c') S.caddie = id; else if(k === 'k') S.club = id;
+// (a new caddie redraws his perks: the Mythic Favour stayed greyed out, as
+// for the caddie before, until another perk was worn; the user saw it)
+function styleSet(k, id){ if(k === 'o') S.outfit = id; else if(k === 'c'){ S.caddie = id; renderCadPerks(); } else if(k === 'k') S.club = id;
   else if(isBallItem(styleDef('t', id))){ S.ball = id; if(isBallItem(styleDef('t', S.trail))) S.trail = 'plain'; } else S.trail = id; }
 function styleBuy(k, id){
   const d = styleDef(k, id); if(!d) return;
@@ -7391,15 +7419,17 @@ const SKIN_ACCENT = { divine:['#3FD6A8', '#F4D27A'], inferno:['#FFB43A', '#F0612
 // in his chest and his cape; his imp's horns, flame, green eye and the heart
 // on his tail (P paints one pixel; the caddie's tile has his bag on the right)
 const ICON_FX = {
-  // the Divine: jade horns, a gold mask under a crimson blindfold, jade
-  // beads, a crimson sash
+  // the Divine (after the user's third picture): a gold crown with jade at
+  // its points, the long-nosed crimson mask, his great blue ring behind him,
+  // jade beads and a skirt of crimson worked in gold
   divine(P, caddie){
-    const J = '#3FD6A8', D = '#17745C', R = '#D8283A';
-    P(2, 0, J); P(1, 0, '#7FF0C8'); P(9, 1, J); P(10, 0, '#7FF0C8');
-    if(caddie) return;
-    P(3, 3, '#E6B54A'); for(let x = 4; x <= 8; x++) P(x, 3, R); P(9, 3, '#8A1020');
-    P(4, 4, J); P(4, 5, D); P(5, 6, J); P(6, 6, D); P(7, 5, J); P(7, 4, D); P(5, 7, '#D9A63A');
-    for(let x = 3; x <= 9; x++) P(x, 9, R); P(2, 10, R);
+    const J = '#3FD6A8', G = '#D9A63A', R = '#C8283A', N = '#1E2C78';
+    if(caddie){ P(1, 0, J); P(3, 0, J); P(5, 0, J); P(2, 1, G); P(4, 1, G); return; }
+    P(3, 0, J); P(5, 0, '#7FF0C8'); P(7, 0, J); for(let x = 3; x <= 7; x++) P(x, 1, G);
+    for(let x = 4; x <= 8; x++) P(x, 3, R); P(9, 3, R); P(10, 3, '#7A1020');
+    for(let y = 1; y <= 6; y++){ P(0, y, N); P(11, y, N); } P(0, 0, G); P(11, 0, G); P(0, 7, G); P(11, 7, G);
+    P(4, 5, J); P(5, 6, J); P(6, 6, '#17745C'); P(7, 5, J); P(5, 7, G);
+    P(3, 10, G); P(5, 10, G); P(7, 10, G); P(4, 11, G); P(8, 11, G);
   },
   // The Void's hood edged in gold, its violet eye, the black hole in his
   // chest in its gold ring, the crescent off his shoulder and a ghostly hand
@@ -9630,7 +9660,10 @@ const PATTERNS = {
   heaven: (x, y) => { const k = (x * 5 + y * 3) % 19; return k === 0 ? '#E0AE3E' : k === 1 && (y & 1) ? '#F4D27A' : null; },
   // and the skirt of his robe to his thighs, hemmed in gold; below it
   // crimson, his knee guards gold with a jade stone, and gold at his ankles
-  kneeguard: (x, y) => y < 34 ? (x % 4 === 3 && y > 29 ? '#DDD5C4' : '#F7F3EA') : y === 34 ? '#D9A63A' : y === 41 || y === 43 ? '#D9A63A' : y === 42 ? (x % 3 === 1 ? '#2FB592' : '#F4D27A') : y === 53 ? '#D9A63A' : null,
+  // (the Divine's crimson skirt worked in a gold lattice, after the user's
+  // picture, hemmed in gold)
+  kneeguard: (x, y) => y < 34 ? (x % 4 === 3 && y > 29 ? '#DDD5C4' : '#F7F3EA') : y === 34 || y === 53 ? '#D9A63A'
+    : (x + y) % 4 === 0 ? '#E0AE3E' : (x - y + 400) % 4 === 0 ? '#9A6A1A' : null,
   // and his greaves: a gold band at the knee, gold at the ankle, a plum
   // highlight down the shin
   greave: (x, y) => y === 42 || y === 43 ? (x & 1 ? '#D8B060' : '#9A7432') : y >= 52 ? '#9A7432' : y > 44 && (x % 5) === 1 ? '#3E2A6E' : null
@@ -10452,6 +10485,30 @@ function voidSigil(rx, ry, step){
 // The Divine's seal on the ground: a disc of jade, pale at its heart, in
 // two rings of gold, six gold clouds curling round it and turning (lit
 // white as he powers up). Solid pixels, baked per size and step.
+// The Divine's great ring (the user's third picture): a band of deep blue,
+// gold at its edges, gold glyphs along it and jade at its quarters, step
+// turning them; ox, oy its middle.
+function divineHalo(R, th, step){
+  const S0 = R + th + 3, cv = fxBake('halo|' + R + '|' + th + '|' + step, S0 * 2 + 1, S0 * 2 + 1, g => {
+    const P = (x, y, col) => { g.fillStyle = col; g.fillRect(x, y, 1, 1); };
+    const r0 = R - th / 2, r1 = R + th / 2, rot = step / 24 * Math.PI * 2 / 8;
+    for(let y = -S0; y <= S0; y++) for(let x = -S0; x <= S0; x++){
+      const d = Math.sqrt(x * x + y * y), X = x + S0, Y = y + S0;
+      if(d < r0 - 1.0 || d > r1 + 1.0) continue;
+      if(d < r0 || d > r1){ P(X, Y, d > r1 ? '#D9A63A' : '#E0AE3E'); continue; }
+      // the glyphs: short gold marks across the band, sixteen round
+      const a = Math.atan2(y, x) - rot, u = ((a / (Math.PI * 2)) * 16 % 1 + 1) % 1;
+      const glyph = th >= 2 && (u < 0.12 || (u > 0.42 && u < 0.5 && Math.abs(d - R) < th * 0.3));
+      P(X, Y, glyph ? '#F4D27A' : (x + y) & 1 ? '#1E2C78' : '#26388E');
+    }
+    // jade at the quarters
+    for(let q = 0; q < 4; q++){ const a = q * Math.PI / 2 + Math.PI / 4 + rot, X = Math.round(S0 + Math.cos(a) * R), Y = Math.round(S0 + Math.sin(a) * R), k = Math.max(1, Math.ceil(th / 2));
+      g.fillStyle = '#17745C'; g.fillRect(X - k, Y - k, k * 2 + 1, k * 2 + 1); g.fillStyle = '#3FD6A8'; g.fillRect(X - k + 1, Y - k + 1, Math.max(1, k * 2 - 1), Math.max(1, k * 2 - 1));
+      g.fillStyle = '#B8FFE6'; g.fillRect(X, Y - (k > 1 ? 1 : 0), 1, 1); }
+  });
+  cv.ox = S0; cv.oy = S0;
+  return cv;
+}
 function jadeSeal(rx, ry, step, lit){
   return fxBake('jade|' + rx + '|' + ry + '|' + step + '|' + lit, rx * 2 + 3, ry * 2 + 3, g => {
     const ox = rx + 1, oy = ry + 1, P = (x, y, col) => { g.fillStyle = col; g.fillRect(Math.round(x), Math.round(y), 1, 1); };
@@ -10460,18 +10517,21 @@ function jadeSeal(rx, ry, step, lit){
       const d = Math.sqrt((x * x) / (rx * rx) + (y * y) / (ry * ry));
       if(d < 0.4) P(ox + x, oy + y, d < 0.2 ? '#FFFFFF' : (x + y) & 1 ? '#B8FFE6' : '#7FF0C8');
       else if(d < 0.56) P(ox + x, oy + y, (x + y) & 1 ? '#3FD6A8' : '#2FB592');
+      // (a band of deep blue round its rim, as the ring behind him: the
+      // user's third picture)
+      else if(d >= 0.84 && d < 1) P(ox + x, oy + y, (x + y) & 1 ? '#1E2C78' : '#26388E');
       else if(d < 1 && !((x + y) & 1)) P(ox + x, oy + y, y & 1 ? '#17745C' : '#1E8A6C');
     }
     const ring = (f, col) => { const n = Math.max(40, Math.round((rx + ry) * f * 4));
       for(let i = 0; i < n; i++){ const [x, y] = E(i / n * Math.PI * 2, f); P(x, y, col); } };
-    ring(0.56, '#D9A63A');
+    ring(0.56, '#D9A63A'); ring(0.84, '#D9A63A');
     ring(1, '#E0AE3E'); ring(1 - 1 / ry, '#8A6418');
     const th = step / 24 * Math.PI / 3;
     for(let k = 0; k < 6; k++){
       const a0 = th + k * Math.PI / 3;
       // (each cloud a curve out from the inner ring, curling back at its end)
-      for(let f = 0.6; f <= 0.94; f += 0.5 / Math.max(rx, ry)){
-        const u = (f - 0.6) / 0.34, a = a0 + u * 0.7 - (u > 0.75 ? (u - 0.75) * 2.4 : 0), [x, y] = E(a, f - (u > 0.75 ? (u - 0.75) * 0.3 : 0));
+      for(let f = 0.6; f <= 0.8; f += 0.5 / Math.max(rx, ry)){
+        const u = (f - 0.6) / 0.2, a = a0 + u * 0.7 - (u > 0.75 ? (u - 0.75) * 2.4 : 0), [x, y] = E(a, f - (u > 0.75 ? (u - 0.75) * 0.3 : 0));
         const col = lit ? (u < 0.5 ? '#FFFFFF' : '#FFF2B8') : u < 0.5 ? '#F4D27A' : '#E0AE3E';
         P(x, y, col); P(x + 1, y, col);
       }
@@ -10683,9 +10743,9 @@ const STYLEFX = {
     body(c, g){
       this.skirt(c, g);
       this.sash(c, g);
-      this.blindfold(c, g);
+      this.nose(c, g);
       if(g.back) this.hair(c, g);
-      this.horns(c, g);
+      this.crown(c, g);
     },
     front(c, g){
       // (his beads over his far arm, which starts at his chest behind them)
@@ -10702,8 +10762,56 @@ const STYLEFX = {
         else burstStreak(c, x, y, dx, dy, f < 0.4 ? '#FFFFFF' : i & 1 ? '#B8FFE6' : '#F4D27A', i & 1 ? '#3FD6A8' : '#E0AE3E', 2); });
       c.globalAlpha = 1;
     },
-    // a gold ring behind his head, set with jade, a glint running round it
+    // a great ring behind him (the user's third picture): a band of deep
+    // blue edged in gold, gold glyphs on it and jade set at the quarters,
+    // turning slowly; centred behind his shoulders, round his head and
+    // body. Baked per size and step, one stamp a frame.
     ring(c, g){
+      const hd = g.head, p = g.h / 58, sh = g.shear ? g.shear(0.15) : 0;
+      const R = Math.max(5, Math.round(g.h * (g.minor ? 0.3 : 0.39))), th = Math.max(1, Math.round(p * (g.minor ? 2 : 3)));
+      const X = Math.round(hd.x + sh + (g.back ? 0 : -hd.w * 0.8)), Y = Math.round(hd.y + g.h * (g.minor ? 0.22 : 0.24) + Math.sin(g.t * 1.3) * p * 0.6);
+      const step = Math.floor(g.t * 3) % 24, cv = divineHalo(R, th, step);
+      c.globalAlpha = 1; c.drawImage(cv, X - cv.ox, Y - cv.oy);
+    },
+    // his crown: a gold band, three points set with jade and a crimson
+    // stone at its front
+    crown(c, g){
+      const hd = g.head, k = Math.max(1, Math.round(g.h / 58 * (g.minor ? 1.4 : 1.6))), view = g.back && !g.minor ? 'back' : 'side';
+      const cx = Math.round(hd.x + (g.shear ? g.shear(0.1) : 0) + (view === 'side' ? -hd.w * 0.05 : 0));
+      const cy = Math.round(hd.y + Math.max(1, hd.hh * 0.3));
+      const half = Math.max(2, Math.round(hd.w * 0.5));
+      c.globalAlpha = 1;
+      // the band
+      c.fillStyle = '#D9A63A'; c.fillRect(cx - half, cy, half * 2 + 1, k + 1);
+      c.fillStyle = '#F4D27A'; c.fillRect(cx - half, cy, half * 2 + 1, 1);
+      c.fillStyle = '#8A6418'; c.fillRect(cx - half, cy + k, half * 2 + 1, 1);
+      // three points, the middle tallest, jade at each tip
+      const pts = [[-half + k, 2.2], [0, 3.4], [half - k, 2.2]];
+      for(const [dx, hh] of pts){
+        const H = Math.max(2, Math.round(hh * k)), x0 = cx + dx;
+        for(let r = 0; r < H; r++){ const wd = Math.max(1, Math.round(k * 1.5 * (1 - r / H)));
+          c.fillStyle = r === 0 ? '#E0AE3E' : '#D9A63A'; c.fillRect(x0 - (wd >> 1), cy - 1 - r, wd, 1); }
+        c.fillStyle = '#2FB592'; c.fillRect(x0 - (k >> 1), cy - H - k + 1, k, k);
+        if(k > 1){ c.fillStyle = '#7FF0C8'; c.fillRect(x0 - (k >> 1), cy - H - k + 1, 1, 1); }
+      }
+      // the crimson stone on the band
+      if(view === 'side' || g.minor){ c.fillStyle = '#D8283A'; c.fillRect(cx + (view === 'side' ? Math.round(half * 0.55) : 0), cy, Math.max(1, k), Math.max(1, k)); }
+    },
+    // the crimson mask's long nose, out in front of his face (side on)
+    nose(c, g){
+      const pose = this.pose(g); if(pose === 'back') return;
+      const N = { addr: [35.5, 10.5], fin: [29.5, 9.5], cad: [29.5, 7.5] }[pose];
+      const A = this.at(g, N[0], N[1]), L = Math.max(3, Math.round(g.h * (g.minor ? 0.1 : 0.12))), th = Math.max(2, Math.round(g.h / 22));
+      c.globalAlpha = 1;
+      for(let i = 0; i < L; i++){
+        const wd = Math.max(1, Math.round(th * (1 - i / L)));
+        c.fillStyle = '#C8283A'; c.fillRect(Math.round(A.x) + i, Math.round(A.y + i * 0.3), 1, wd);
+        c.fillStyle = '#7A1020'; c.fillRect(Math.round(A.x) + i, Math.round(A.y + i * 0.3) + wd - 1, 1, 1);
+      }
+      c.fillStyle = '#E8505E'; c.fillRect(Math.round(A.x), Math.round(A.y) - 1, Math.max(1, L >> 1), 1);
+    },
+    // (the old gold ring behind his head, set with jade)
+    ringOld(c, g){
       const hd = g.head, sh = g.shear ? g.shear(0.1) : 0, p = g.h / 58;
       const X = hd.x + sh + (g.back ? 0 : -hd.w * 0.3), Y = hd.y + hd.hh * 0.55 + Math.sin(g.t * 1.3) * p * 0.5;
       const R = Math.max(3, hd.w * (g.minor ? 0.85 : 1.2)), n = Math.max(20, Math.round(R * 6.5)), th = g.h >= 45 ? 2 : 1;
@@ -10791,13 +10899,19 @@ const STYLEFX = {
     // code, and side on it is his trousers' pattern), hemmed in gold
     skirt(c, g){
       if(!g.back || g.minor) return;
-      const y0 = Math.round(g.y + g.h * 33 / 58), y1 = Math.round(g.y + g.h * 38.5 / 58);
-      c.globalAlpha = 1;
-      for(let y = y0; y < y1; y++){
-        const f = (y - y0) / Math.max(1, y1 - y0), a = Math.round(g.x + g.w * (13 - f) / 40), b = Math.round(g.x + g.w * (27 + f) / 40);
-        c.fillStyle = y === y1 - 1 ? '#D9A63A' : '#F7F3EA'; c.fillRect(a, y, b - a, 1);
-        if(y < y1 - 1){ c.fillStyle = '#DDD5C4'; c.fillRect(a, y, 1, 1); c.fillRect(Math.round((a + b) / 2), y, 1, 1); c.fillRect(b - 1, y, 1, 1); }
-      }
+      // (crimson worked in a gold lattice to below his knees, as side on:
+      // the user's third picture)
+      const y0 = Math.round(g.y + g.h * 33 / 58), y1 = Math.round(g.y + g.h * 49 / 58), X0 = Math.round(g.x);
+      const H = y1 - y0, W = Math.round(g.w * 30 / 40) + 2;
+      const cv = fxBake('dskirt|' + g.w + '|' + H, W, H, k => {
+        for(let y = 0; y < H; y++){
+          const f = y / Math.max(1, H), a = Math.round(g.w * (13 - f * 1.5) / 40) - Math.round(g.w * 5 / 40), b = Math.round(g.w * (27 + f * 1.5) / 40) - Math.round(g.w * 5 / 40);
+          if(y === 0 || y === H - 1){ k.fillStyle = '#D9A63A'; k.fillRect(a, y, b - a, 1); continue; }
+          for(let x = a; x < b; x++){ const u = x - a;
+            k.fillStyle = (u + y) % 4 === 0 ? '#E0AE3E' : (u - y + 400) % 4 === 0 ? '#9A6A1A' : x === a || x === b - 1 ? '#6E0F1A' : '#A81C2A'; k.fillRect(x, y, 1, 1); }
+        }
+      });
+      c.globalAlpha = 1; c.drawImage(cv, X0 + Math.round(g.w * 5 / 40), y0);
     },
     // his crimson sash, its two ends flying behind him, their tips gold
     sash(c, g){
@@ -15073,7 +15187,7 @@ const Scene = {
       for(let i = 0; i <= 40; i++) this.hills[L].push(rnd());
 
 
-    this.camD = 0; this.restBall = null; this.walkTo = 0;
+    this.camD = 0; this.restBall = null; this.walkTo = 0; this.greenBall = false;
     this.train = null; this.trainMet = 0; this.trainNext = this.t + 8;
     this.upT = 0; this.saidHole = null; this.putt = null; this.cupT = 0; this.cupHeard = 0;
     this.shotN = 0;                 // (the hole's shots so far: only the first is off the tee)
@@ -15156,13 +15270,16 @@ const Scene = {
 
     this.hills = [[], []];
     for(let L = 0; L < 2; L++) for(let i = 0; i <= 40; i++) this.hills[L].push(rnd());
-    this.camD = 0; this.restBall = null; this.walkTo = 0;
+    this.camD = 0; this.restBall = null; this.walkTo = 0; this.greenBall = false;
     // (a putt left over from the course: its ball sat at the cup through
     // the whole Scramble)
     this.putt = null; this.cupT = 0; this.cupHeard = 0; this.upT = 0;
     // each contest played from its own place from the first frame: he glided
     // onto the Twilight Putt's green from the tee
     if(R.mode !== 'floor') this.camD = wagerSpot(R) * LEN;
+    // (a floor's first swing straight away: the yardage stood still a second
+    // and more while the work went on)
+    else this.dSwing = Math.max(this.dSwing || 0, 0.95);
     // A swing still playing when the last hole ended belonged to that hole: it
     // finished it. Carried over, it hit a ball a yard off the new tee that
     // counted for nothing, and he stood and hit again.
@@ -15351,6 +15468,18 @@ const Scene = {
   // on a picture nobody can see: not in a catch-up or a wager, and not
   // behind the saver. step() holds the hole's end on it (never longer than
   // ISLE_HOLD), and finishHole pays for the wait.
+  // the course (or a wager) drawn within the last few steps: someone is
+  // watching it (counted in steps, never wall time: rules 43)
+  watched(){ return !QUIET && !OFFLINE && (this.stepN || 0) - (this.drawnN || 0) <= 3; },
+  // the Vault's floor cleared and its last ball not yet in the cup, or only
+  // just in (its banner still to be read)
+  vaultHold(){ return !this.cupT || this.t - this.cupT < 0.9; },
+  // what is left of the Vault's floor as he has played it: down as each ball
+  // comes down, none once the last is in
+  vaultLeft(R){
+    if(R.held && this.cupT) return 0;
+    return Math.max(0, R.full * (1 - clamp((this.walkTo || 0) / LEN, 0, 1)));
+  },
   holeWait(){
     const I = this.isle;
     if(QUIET || OFFLINE || S.dgnRun || this.hole !== S.hole) return false;
@@ -15457,24 +15586,33 @@ const Scene = {
     if(!S.dgnRun) this.shotN = (this.shotN || 0) + 1;
     const last = !S.dgnRun && S.yardsMax > 0 && S.yards <= 0 && this.hole === S.hole;
     const ace = last && this.aceNow();
+    // (in the Vault each shot comes down as far down the floor as the work
+    // done says, and the floor's last goes in the cup: the user saw him
+    // walk on with the yardage whatever the ball did)
+    const VR = S.dgnRun && S.dgnRun.mode === 'floor' ? S.dgnRun : null, vin = !!(VR && VR.held), inCup = ace || vin;
     // (and no ball comes to rest nearer the cup than that: the last one he
     // sees come down is not always the one that finished the hole)
     const putSpot = this.pinD() - B_GREEN_STAND - 0.4;
-    const reach = S.dgnRun || !(S.yardsMax > 0) ? null
+    // (aimed at the work done by the time it is down and he has walked to it,
+    // not as struck: a floor's first shot, struck the moment it opened,
+    // dribbled a yard)
+    const vAhead = VR ? (VR.rate || 0) * 1.4 : 0;
+    const reach = VR ? (vin ? this.pinD() : Math.min(clamp(1 - (VR.work - vAhead) / Math.max(1e-9, VR.full), 0, 1) * LEN, putSpot)) - this.camD
+                : S.dgnRun || !(S.yardsMax > 0) ? null
                 : last ? (ace ? this.pinD() : putSpot) - this.camD
                 : Math.min(this.spot(clamp(1 - S.yards / S.yardsMax, 0, 1)), putSpot) - this.camD;
     // (and never past the putting spot, short as it is, unless it goes in:
     // from a ball lying just short of it the least carry, 0.6, left the
     // next one lying nearer the cup than he putts from)
     const dist = p.target !== undefined ? Math.max(3, p.target - this.camD)   // an aimed shot flies to its mark
-               : reach !== null ? (ace ? Math.max(0.6, reach) : Math.min(Math.max(0.6, reach), Math.max(0.05, putSpot - this.camD)))
+               : reach !== null ? (inCup ? Math.max(0.6, reach) : Math.min(Math.max(0.6, reach), Math.max(0.05, putSpot - this.camD)))
                : 14 + Math.random()*9;
     this.balls.push({ d0:this.camD, dist,
                       // a short one is quick and low, a long one hangs
                       t:0, dur: 0.34 + Math.min(0.32, dist * 0.016) + Math.random()*0.08,
                       el:p.el, crit:p.crit, seed: Math.random()*100,
-                      lat0: lat0, cup: ace ? 1 : 0, tee: tee ? 1 : 0,
-                      lat: ace ? this.pinX() : p.lat !== undefined ? p.lat : -0.15 + (Math.random()-.5)*0.30 });
+                      lat0: lat0, cup: inCup ? 1 : 0, tee: tee ? 1 : 0,
+                      lat: inCup ? this.pinX() : p.lat !== undefined ? p.lat : -0.15 + (Math.random()-.5)*0.30 });
     if(this.nums.length < 12 && p.dmg > 0){
       // Kept clear of whatever is already floating there, measured in the
       // numbers' real widths. They all rise at the same speed, so a number
@@ -15820,6 +15958,16 @@ const CLUBFX = {
   // gold riding it; a swing leaves jade and gold behind it
   divine: {
     under(c, hx, hy, tx, ty, th, h, t, K){ glowLine(c, hx, hy, tx, ty, th + 1, K.glow, 0.30 + 0.12 * Math.sin(t * 3)); },
+    // (a blade of jade light below a gold guard, after the user's third
+    // picture: a crimson grip, then jade with a white heart to the head)
+    shaft(c, hx, hy, tx, ty, th, h, t, K){
+      const u0 = 0.22, gx = hx + (tx - hx) * u0, gy = hy + (ty - hy) * u0;
+      pxLine(c, hx, hy, gx, gy, '#A81C2A', th);
+      pxLine(c, gx, gy, tx, ty, '#2FB592', th + 1);
+      pxLine(c, gx, gy, tx, ty, Math.sin(t * 4) > 0.6 ? '#FFFFFF' : '#B8FFE6', Math.max(1, th - 1));
+      const L = Math.hypot(tx - hx, ty - hy) || 1, nx = -(ty - hy) / L, ny = (tx - hx) / L, k = th + 1;
+      pxLine(c, gx - nx * k, gy - ny * k, gx + nx * k, gy + ny * k, '#D9A63A', Math.max(1, th));
+    },
     over(c, hx, hy, tx, ty, th, h, t){
       const L = Math.hypot(tx - hx, ty - hy) || 1, nx = -(ty - hy) / L, ny = (tx - hx) / L, n = Math.max(8, Math.round(L / 1.5)), amp = th + 0.5;
       c.globalAlpha = 1;
@@ -17860,6 +18008,11 @@ Object.assign(Scene, {
     if(puttLate) puttLate();
     if(atCam === undefined && SPRITE.caddie) this.drawCaddie(c, p.x - Math.round(w*0.42), y, w, h);
     if(atCam === undefined) this.drawBless(c, x, y, w, h, p.y);
+    // (the last steps up to his ball on the green: it lies in front of him)
+    if(walking && atCam === undefined && this.greenBall && this.hole === S.hole && !this.cupT){
+      const bs = h > 30 ? 2 : 1;
+      drawLyingBall(c, Math.round(x + w*1.19) + bs / 2, Math.round(p.y - bs), Math.max(1.5, bs * 0.8 + 0.5), this.t);
+    }
     if(walking) return;
 
     // the ball waits out in front, on the ground, where he is looking
@@ -18816,6 +18969,9 @@ Object.assign(Scene, {
     if(R){
       if(R.d < this.camD + 0.6){
         this.restBall = null;                                  // he has reached it
+        // (on the green with the hole's ball down: it stays in front of him
+        // for the last steps up to it, until he putts, never gone a moment)
+        this.greenBall = S.yards <= 0 && this.hole === S.hole && R.d >= this.pinD() - B_GREEN_STAND - 0.9;
         // and with the hole's ball down while it lay short of the green, he
         // plays it on up onto the green: that shot comes down there
         if(!S.dgnRun && S.yardsMax > 0 && S.yards <= 0 && this.hole === S.hole && R.d < this.pinD() - B_GREEN_STAND - 0.9
@@ -18839,9 +18995,14 @@ Object.assign(Scene, {
       if(u >= 1){
         // it lies where it came down until he walks up to it (an ace is in
         // the cup)
-        if(!S.dgnRun){ if(b.cup) this.cupT = this.cupT || this.t;
+        // (in the Vault too: walked to, and the floor's last ball in the cup
+        // calls the floor, as a birdie is called)
+        const VR = S.dgnRun && S.dgnRun.mode === 'floor' ? S.dgnRun : null;
+        if(VR && b.cup && !this.cupT){ Sfx.play('hole'); this.holed({ n: 'FLOOR ' + (VR.floor + 1), d: -2 }); }
+        if(!S.dgnRun || VR){ if(b.cup) this.cupT = this.cupT || this.t;
                        else this.restBall = { d: b.d0 + b.dist, lat: this.ballLat(b, 1) };
-                       this.walkTo = Math.max(this.walkTo || 0, b.d0 + b.dist); }
+                       // (he stays put for the Vault's ball in the cup)
+                       if(!(VR && b.cup)) this.walkTo = Math.max(this.walkTo || 0, b.d0 + b.dist); }
         this.balls.splice(i, 1); continue;
       }
       const col = b.el ? (PX[b.el] || PX.white) : PX.white;
@@ -19143,7 +19304,7 @@ Object.assign(Scene, {
       // The Vault's floor is walked (he glided up it as he swung): he swings,
       // the ball goes, he walks after it, and swings again when he is there.
       // The others are played from one place and never move.
-      const goal = within * LEN, behind = goal - this.camD;
+      const goal = R.mode === 'floor' ? (this.walkTo || 0) : within * LEN, behind = goal - this.camD;
       if(R.mode !== 'floor') this.camD = goal;
       // (never mid-swing: carried on when far behind, a slow phone slid him up
       // the floor as he swung; he swings again only once he is there anyway)
@@ -19159,10 +19320,15 @@ Object.assign(Scene, {
       // from the simulation.
       if(!R.dead && R.mode === 'floor'){
         this.dSwing = Math.min(1.5, (this.dSwing || 0) + dt * Math.min(D.spd, B.VIS_SWING_CAP));
-        if(this.dSwing >= 1 && this.swingT === 0 && behind < 0.6){
+        if(this.dSwing >= 1 && this.swingT === 0 && behind < 0.6 && !this.balls.length && !R.held){
           this.dSwing -= 1;
           this.swing(D.pow * (1 + D.mst*B.MST_DMG), Math.random() < D.crit,
                      D.ball && D.ball.el);
+        }
+        // the floor cleared: from his ball (walked to first), the last one
+        // into the cup
+        if(R.held && !this.cupT && this.swingT === 0 && !this.balls.length && !this.pendingBall && !this.restBall && behind < 0.6){
+          this.swingT = this.swingDur; this.pendingBall = { crit: false, el: D.ball && D.ball.el, dmg: 0 };
         }
       }
       // a putt on the Twilight Putt's green: struck, rolled, in (or past),
@@ -19175,6 +19341,7 @@ Object.assign(Scene, {
         if(T > PUTT_HIT + PUTT_ROLL + 0.35) this.putt = null;
       }
       if(!isFinite(this.camD)) this.camD = 0;
+      this.drawnAt = performance.now(); this.drawnN = this.stepN || 0;
       if(this.sky) c.drawImage(this.sky, 0, 0);
       this.drawRidge();
       this.drawGround();
@@ -19224,13 +19391,15 @@ Object.assign(Scene, {
       // carried on through a swing.
       const swingPh = this.swingT > 0 ? 1 - this.swingT / this.swingDur : 1;
       const at = this.spot(prog);
-      // once the hole's ball is down he goes straight up to the green, a
-      // little brisker, whether or not the last ball is still in the air
+      // once the hole's ball is down he walks up to the green, as after any
+      // other shot: when the last ball has come down, not while it is still
+      // in the air (the user saw him glide off the moment it was struck)
       const up = S.yards <= 0 && this.hole === S.hole;
+      const flying = up && this.balls.length > 0;
       // (but to his ball first if it lies short of the green: he plays it on)
       const shortBall = up && this.restBall && !this.balls.length && this.restBall.d < this.pinD() - B_GREEN_STAND - 0.9;
       const aceH = this.aceHold(D);
-      const goal = aceH ? this.camD
+      const goal = aceH || flying ? this.camD
                  : up ? (shortBall ? this.restBall.d : this.pinD() - B_GREEN_STAND) : Math.min(at, this.walkTo === undefined ? at : this.walkTo);
       const I = this.isle;
       // (at a railway, not while a train is coming or going by)
@@ -19240,7 +19409,7 @@ Object.assign(Scene, {
         // over the canyon on its bridge: at a steady pace, so it can be seen.
         this.camD = Math.min(goal, Math.max(cam0, I.bank) + (I.fly ? B_FLY : I.hop ? B_HOP : B_BRIDGE) * dt);
       }else{
-        if(swingPh >= 0.85) this.camD += Math.max(0, goal - this.camD) * Math.min(1, dt * (up ? 6 : 4.5));
+        if(swingPh >= 0.85) this.camD += Math.max(0, goal - this.camD) * Math.min(1, dt * 4.5);
         // (not on an island: the hole waits for him there, and carried on
         // mid-swing he slid off the tee to the water's edge)
         else if(!I && !aceH && at - this.camD > LEN * 0.4) this.camD += (at - this.camD) * Math.min(1, dt*4.5);
@@ -19259,7 +19428,9 @@ Object.assign(Scene, {
       // up on the green with the hole's ball down: he putts out (a ball left
       // lying beyond him is the one he putts)
       if(up && this.upT && this.restBall && this.restBall.d > this.camD) this.restBall = null;
-      if(up && !this.putt && !this.cupT && this.upT && this.swingT === 0 && !this.balls.length && !this.restBall)
+      // (once he has stopped: started as he still walked, the stroke ran on
+      // unseen and the ball was gone from in front of him)
+      if(up && !this.putt && !this.cupT && this.upT && this.swingT === 0 && !this.balls.length && !this.restBall && !this.walkOn)
         this.putt = { t0: this.t, d0: this.camD };
       // an ace with no ball in the air to go in (the last of it was a burn
       // or a skill, not a swing): in, there and then
@@ -19831,8 +20002,9 @@ function renderReadout(D){
       }
     }else{
       top = 'Floor ' + (R.floor + 1) + ' \u00b7 ' + R.cleared + ' banked';
-      big = fmt(Math.max(0, R.work)); unit = 'left';
-      frac = clamp(1 - R.work/Math.max(1e-9, R.full), 0, 1);
+      const vl = Scene.vaultLeft(R);
+      big = fmt(vl); unit = 'left';
+      frac = clamp(1 - vl/Math.max(1e-9, R.full), 0, 1);
       tag = R.dead ? 'Turned back' : R.mod < 1 ? 'Slowed' : R.mod > 1 ? 'Running hot' : 'Digging';
       tagCol = R.dead || R.mod < 1 ? 'var(--flag)' : R.mod > 1 ? 'var(--verdant)' : 'var(--dim)';
       // a flight of stairs going down, the one underfoot filling as you dig
@@ -21077,7 +21249,7 @@ function renderTourNav(){
   $('tourSig').hidden    = tourSub !== 'sig';
 }
 const cperkDef = id => B.CPERKS.find(x => x.id === id);
-// the Mythic Favour: worn only with the Divine, Demonic or Ascended caddie
+// the Mythic Favour: worn only with a Mythic caddie (the Divine, Demonic, Ascended or Void)
 const MYTH_CADDIES = ['divine', 'demonic', 'ascended', 'cosmic'];
 const mythOk = () => MYTH_CADDIES.includes(S.caddie);
 const MYTH_PAL = { divine: ['#FFF2B8', '#3FD6A8', '#E0AE3E'], demonic: ['#FFE680', '#FF8A2A', '#E8401C'], ascended: ['#FFE0FF', '#F27CFF', '#B04ACB'], cosmic: ['#FFFFFF', '#B98CFF', '#7FE6FF'] };
@@ -21129,7 +21301,7 @@ function renderCadPerks(){
     // others their level, once they have one
     const locked = pk.myth && !mythOk();
     if(on && locked) body.children[2].textContent = 'Worn \u00b7 waits for a Mythic caddie';
-    else if(locked) body.children[2].textContent = 'Divine, Demonic or Ascended caddie only';
+    else if(locked) body.children[2].textContent = 'Mythic caddie only';
     else if(on) body.children[2].innerHTML = 'Worn \u00b7 Lv\u00a0' + lv + '/' + B.CPERK_LV_MAX + '<div class="cadbar"><i style="width:'
       + Math.round(clamp((S.cperkT || 0) / B.CPERK_EVERY, 0, 1) * 100) + '%"></i></div>';
     else if(own && lv > 1) body.children[2].textContent = 'Lv\u00a0' + lv + '/' + B.CPERK_LV_MAX;

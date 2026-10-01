@@ -4,7 +4,8 @@
  * The Mythic Favour is a caddie perk only the three dearest caddies wear:
  *   - with a plain caddie it cannot be bought or worn, its row says whose it
  *     is and its button is greyed; worn and then the caddie changed, it
- *     waits (its clock stands still) and its row says so
+ *     waits (its clock stands still) and its row says so; a Mythic caddie
+ *     put on opens its row at once (it stayed greyed: the user saw it)
  *   - with the Divine, Demonic or Ascended caddie it goes off every 30s as
  *     three lifts at once, power, tempo and prize money, each its number
  *     for its seconds, and the stats really move
@@ -38,7 +39,12 @@ module.exports = {
         rangeSub = 'cad'; renderCadPerks();
         const row = () => [...document.querySelectorAll('#cadRows .row')].find(e => /Mythic Favour/.test(e.textContent));
         let R = row();
-        if (!R || !/Divine, Demonic or Ascended caddie only/.test(R.textContent) || !R.querySelector('.buy.no')) f('its row with a plain caddie: ' + (R ? R.textContent : 'none'));
+        if (!R || !/Mythic caddie only/.test(R.textContent) || !R.querySelector('.buy.no')) f('its row with a plain caddie: ' + (R ? R.textContent : 'none'));
+        // ---- a Mythic caddie put on: the row opens at once (it stayed greyed
+        // out until another perk was worn; the user saw it) ----
+        S.styleOwn['c:cosmic'] = 1; styleBuy('c', 'cosmic'); R = row();
+        if (!R || /caddie only/.test(R.textContent) || R.querySelector('.buy.no')) f('its row stayed shut with the Void caddie put on: ' + (R ? R.textContent : 'none'));
+        S.caddie = 'bib'; renderCadPerks();
         // ---- worn with a Mythic caddie ----
         S.caddie = 'demonic'; cperkPick('myth');
         if (S.cperk !== 'myth' || !S.cperkOwn.myth) f('not worn with the Demonic caddie');

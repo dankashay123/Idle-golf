@@ -214,9 +214,11 @@ module.exports = {
       if (H.some(h => h.cap)) f('with a ' + k + ' bag a hole ran to the wait\'s cap: ' + H.filter(h => h.cap).map(h => 'hole ' + h.hr + ' ' + h.sig + ' waited ' + h.wait.toFixed(2) + 's, putt ' + h.putt + ', short ' + h.short.toFixed(1)).join('; '));
       // on a plain hole the rest of his swing, the walk up and a moment
       // there; a signature hole adds its crossing (a flight, a bridge, the
-      // stones, a train going by)
+      // stones, a train going by). Since the user asked that he wait for the
+      // winning shot to come down and walk up at his own pace, stopping
+      // before he putts, that is about a second more than it was (2.6, 3.2).
       const plain = H.filter(h => !h.sig), mw = avg(plain.map(h => h.wait));
-      if (!(mw < (k === 'normal' ? 2.6 : 3.2))) f('with a ' + k + ' bag the wait on a plain hole after the ball was down was ' + mw.toFixed(2) + 's on average: '
+      if (!(mw < (k === 'normal' ? 3.8 : 4.2))) f('with a ' + k + ' bag the wait on a plain hole after the ball was down was ' + mw.toFixed(2) + 's on average: '
         + H.map(h => (h.sig ? h.sig + ' ' : '') + h.wait.toFixed(2)).join(', '));
       const bad = H.filter(h => h.carded !== h.want);
       if (bad.length) f('with a ' + k + ' bag ' + bad.length + ' holes were not carded from when the ball was down');

@@ -308,7 +308,10 @@ module.exports = {
         f('a ball down early ' + k + ': not set up as meant (down with him at ' + E.downCam + ', a train at the line ' + E.met + ', held there ' + E.at + 's)');
       if (!E.across || !(E.short <= 2.7) || !E.putt || !E.cup)
         f('a ball down early ' + k + ': the hole moved on with him ' + E.short + ' short of the pin (across the line ' + E.across + ', putted ' + E.putt + ', in the cup ' + E.cup + ')');
-      if (!(E.wait <= r.hold / 2)) f('a ball down early ' + k + ': the hole waited ' + E.wait + 's, over half the ' + r.hold + 's stop');
+      // (three fifths, not a half, since he walks up at his own pace once
+      // the winning shot is down rather than off at once and briskly: the
+      // user asked; the longest wait went from about 9s to 11s)
+      if (!(E.wait <= r.hold * 0.6)) f('a ball down early ' + k + ': the hole waited ' + E.wait + 's, over three fifths of the ' + r.hold + 's stop');
     }
     const Dp = r.depth;
     if (!(Dp.nearOver >= 200) || !(Dp.farOver >= 100)) f('the railway never met a tree in front of it or beyond it on screen: ' + J(Dp));

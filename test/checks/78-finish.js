@@ -8,6 +8,10 @@
  *   - on an ace, a ball in the air goes on into the cup, off the tee or
  *     not (he stays where he is for an ace: the user asked)
  *   - with yardage still to go neither happens: a ball lands where it lands
+ *   - he stays where he is while the winning shot is in the air, then walks
+ *     up as after any shot, the ball lying on the green (or in front of
+ *     him) every frame until he putts, and the putt only once he has
+ *     stopped (the user saw him glide off the moment it was struck)
  */
 'use strict';
 module.exports = {
@@ -33,6 +37,27 @@ module.exports = {
         // it lands, and he walks to it on the green
         for (let i = 0; i < 40 && Scene.balls.length; i++) Scene.drawBalls(0.05);
         o.lay = Scene.restBall ? +Scene.restBall.d.toFixed(2) : null;
+        // ---- he waits for it to come down, then walks up at his own pace,
+        // and the ball is never gone from the green before he putts it (the
+        // user saw him glide off the moment the shot was struck) ----
+        fresh(); S.doneT = S.parTime;
+        Scene.balls.push({ d0: 20, dist: 12, t: 0.05, dur: 0.6, el: null, crit: false, seed: 1, lat0: 0.42, lat: 0, cup: 0 });
+        S.yards = 0; o.flewWalk = 0; o.gone = 0; o.puttWalking = 0; let landed = false, maxV = 0, prev = Scene.camD;
+        for (let i = 0; i < 600 && !Scene.cupT; i++) {
+          const fly = Scene.balls.length > 0;
+          Scene.draw(1 / 60, D);
+          if (fly) o.flewWalk = Math.max(o.flewWalk, Scene.camD - 20);
+          if (!Scene.balls.length) landed = true;
+          if (landed) { maxV = Math.max(maxV, (Scene.camD - prev) * 60);
+            if (!Scene.restBall && !Scene.greenBall && !Scene.putt) o.gone++;
+            if (Scene.putt && Scene.putt.t0 === Scene.t && Scene.walkOn) o.puttWalking++; }
+          prev = Scene.camD;
+        }
+        o.walkV = +maxV.toFixed(1);
+        if (o.flewWalk > 0.01) f('he went ' + o.flewWalk.toFixed(2) + ' up the hole while the winning shot was still in the air');
+        if (o.gone) f('the ball was gone from the green for ' + o.gone + ' frames before he putted');
+        if (o.puttWalking) f('he started his putt while still walking');
+        if (!Scene.cupT) f('the ball never went in after the walk up');
         // ---- lying short ----
         fresh(); S.yards = 0; Scene.restBall = { d: 26, lat: 0 };
         const cam = []; for (let i = 0; i < 400 && !Scene.swingT; i++) { Scene.draw(1 / 60, D); cam.push(Scene.camD); }
@@ -73,6 +98,6 @@ module.exports = {
       return o;
     });
     if (r.fails.length) throw new Error(r.fails.join('; '));
-    return ['a ball in the air as the hole was won carries on to ' + r.air + ' without a jump; one lying short is walked to (' + r.stopAt + ') and played on to ' + r.chip + '; an ace in the air goes in, a first shot or a second; with yardage to go, as before'];
+    return ['he waits for the winning shot to land, walks up (at most ' + r.walkV + '/s) with the ball in front of him and putts once stopped; a ball in the air as the hole was won carries on to ' + r.air + ' without a jump; one lying short is walked to (' + r.stopAt + ') and played on to ' + r.chip + '; an ace in the air goes in, a first shot or a second; with yardage to go, as before'];
   }
 };

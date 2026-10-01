@@ -36,8 +36,9 @@
  *   - the Divine, reworked after two pictures the user sent of a celestial
  *     monk ("obviously no skin showing"): no pixel of him in a skin tone;
  *     ribbons of jade and gold round him either side, close, drawn in as he
- *     winds up and flung out as he strikes; a gold ring behind his head,
- *     jade horns, his hair streaming back, blindfold, beads, sash, guards
+ *     winds up and flung out as he strikes; since the user's third
+ *     picture a great ring of blue and gold behind him, a crown, the long
+ *     nosed crimson mask, his hair streaming back, beads, sash, guards
  *   - a moment for the legends: on an eagle or better, the Demonic's column
  *     of hellfire with his skulls scattering, the Ascended's pillar of light
  *     with his shards bursting out, each with its sound, bigger on an ace
@@ -321,17 +322,19 @@ module.exports = {
           // his caddie's ribbons
           S.styleOwn['c:divine'] = 1; S.caddie = 'divine'; buildSprites();
           { const caddie = () => { c.clearRect(0, 0, VW, VH); Scene.drawCaddie(c, box.x0, box.y0, w, h); return px(); };
-            d.cRib = part('divine', 'ribbons', caddie).length; d.cHorns = part('divine', 'horns', caddie).length; }
+            d.cRib = part('divine', 'ribbons', caddie).length; d.cHorns = part('divine', 'crown', caddie).length; }
           S.caddie = 'bib'; buildSprites();
-          // what he wears: the gold ring behind his head, horns, hair streaming
-          // back behind him, the blindfold, beads, sash, guards
+          // what he wears (the user's third picture): the great ring of blue
+          // and gold behind him, round his head and shoulders; a crown; hair
+          // streaming back behind him, the long-nosed mask, beads, sash, guards
           const ring = part('divine', 'ring', golfer);
-          d.ring = ring.length; d.ringOff = ring.filter(([x, y]) => Math.abs(x - head.x) > head.w * 1.8 || y > head.y + h * 0.3 || y < head.y - h * 0.25).length;
-          const horns = part('divine', 'horns', golfer);
+          d.ring = ring.length; d.ringOff = ring.filter(([x, y]) => Math.abs(x - head.x) > h * 0.6 || y > head.y + h * 0.7 || y < head.y - h * 0.25).length;
+          d.ringAbove = ring.filter(([x, y]) => y < head.y).length;
+          const horns = part('divine', 'crown', golfer);
           d.horns = horns.length; d.hornsOff = horns.filter(([x, y]) => Math.abs(x - head.x) > head.w * 1.3 || y > head.y + h * 0.15).length;
           const hair = part('divine', 'hair', golfer);
           d.hair = hair.length; d.hairBehind = hair.filter(([x]) => x < head.x - head.w * 0.3).length;
-          for (const k of ['blindfold', 'beads', 'sash', 'guards']) d[k] = part('divine', k, golfer).length;
+          for (const k of ['nose', 'beads', 'sash', 'guards']) d[k] = part('divine', k, golfer).length;
           // the seal at his feet and nowhere else
           const gr = part('divine', 'ground', golfer);
           d.ground = gr.length; d.groundOff = gr.filter(([x, y]) => Math.abs(x - cx) > w * 1.3 + 1 || Math.abs(y - p.y) > h * 0.15 + 1.5).length;
@@ -542,12 +545,12 @@ module.exports = {
     { const R = dvn.rib; if (!(R.n >= 60 && R.L >= 8 && R.R >= 8) || R.far) f('the Divine ribbons: ' + J(R) + ' (either side of him, close)'); }
     if (!(dvn.ribTop.span < dvn.rib.span && dvn.ribHit.span > dvn.rib.span)) f('the Divine ribbons do not draw in as he winds up and fly out as he strikes: spans ' + [dvn.rib.span, dvn.ribTop.span, dvn.ribHit.span].join(', '));
     if (!(dvn.ribBackL >= 5 && dvn.ribBackR >= 5)) f('the Divine ribbons walking away: ' + dvn.ribBackL + ' and ' + dvn.ribBackR + ' pixels either side of him');
-    if (!(dvn.cRib >= 15 && dvn.cHorns >= 3)) f('the Divine caddie: ribbons ' + dvn.cRib + ', horns ' + dvn.cHorns + ' pixels');
-    if (!(dvn.ring >= 25) || dvn.ringOff) f('the Divine ring behind his head: ' + dvn.ring + ' pixels, ' + dvn.ringOff + ' away from his head');
-    if (!(dvn.horns >= 6) || dvn.hornsOff) f('the Divine horns: ' + dvn.horns + ' pixels, ' + dvn.hornsOff + ' away from his head');
+    if (!(dvn.cRib >= 15 && dvn.cHorns >= 3)) f('the Divine caddie: ribbons ' + dvn.cRib + ', crown ' + dvn.cHorns + ' pixels');
+    if (!(dvn.ring >= 60 && dvn.ringAbove >= 8) || dvn.ringOff) f('the Divine\'s great ring behind him: ' + dvn.ring + ' pixels (' + dvn.ringAbove + ' over his head), ' + dvn.ringOff + ' away from him');
+    if (!(dvn.horns >= 6) || dvn.hornsOff) f('the Divine crown: ' + dvn.horns + ' pixels, ' + dvn.hornsOff + ' away from his head');
     if (!(dvn.hair >= 8 && dvn.hairBehind >= dvn.hair * 0.6 && dvn.hairBack >= 15)) f('the Divine\'s hair: ' + dvn.hair + ' pixels, ' + dvn.hairBehind + ' streaming back; ' + dvn.hairBack + ' down his back walking away');
-    if (!(dvn.blindfold >= 5 && dvn.beads >= 2 && dvn.sash >= 8 && dvn.guards >= 10 && dvn.skirt >= 12))
-      f('what the Divine wears: blindfold ' + dvn.blindfold + ', beads ' + dvn.beads + ', sash ' + dvn.sash + ', guards ' + dvn.guards + ', skirt from behind ' + dvn.skirt + ' pixels');
+    if (!(dvn.nose >= 5 && dvn.beads >= 2 && dvn.sash >= 8 && dvn.guards >= 10 && dvn.skirt >= 12))
+      f('what the Divine wears: the mask\'s nose ' + dvn.nose + ', beads ' + dvn.beads + ', sash ' + dvn.sash + ', guards ' + dvn.guards + ', skirt from behind ' + dvn.skirt + ' pixels');
     if (!(dvn.ground >= 100) || dvn.groundOff) f('the Divine seal: ' + dvn.ground + ' pixels, ' + dvn.groundOff + ' off the ground at his feet');
     if (!(dvn.sparks >= 6) || dvn.sparksOff || !(dvn.waveOut >= 8)) f('the Divine strike: light off the ball ' + dvn.sparks + ' (' + dvn.sparksOff + ' away from it), a ring ' + dvn.waveOut + ' out past the seal');
     // (The Void has no sound of its own: the user wants no more)
