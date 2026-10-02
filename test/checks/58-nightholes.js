@@ -38,7 +38,7 @@ module.exports = {
         };
         const blank = () => { c.fillStyle = '#010203'; c.fillRect(0, 0, VW, VH); };
         const alone = (props, t) => { const was = Scene.props; Scene.t = t; blank(); Scene.props = props; Scene.drawProps(); Scene.props = was; };
-        const LAMP = new Set(['#FFD36A', '#FFF6D0']), FLY = new Set(['#E8FF8A', '#9ACB3A']), WIN = new Set(['#FFD36A', '#F2B84A']);
+        const LAMP = new Set(['#FFD36A', '#FFF6D0']), FLY = new Set(['#F4FFB0', '#B8E04A']), WIN = new Set(['#FFD36A', '#F2B84A']);
         const HALO = new Set(['#D0564A', '#9A3A32', '#6A2A28']);
         const look = (night) => {
           S.chaos = Object.assign({}, night ? NIGHT : DAY);

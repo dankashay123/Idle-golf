@@ -8839,11 +8839,21 @@ function skyRamp(a, b, n){
   return out;
 }
 const THEME_CACHE = {}, TREE_CACHE = {};
+// Night is moonlight, not a wash of navy over everything. Mixed two thirds
+// into one blue, sand, path and stone all came out the same flat grey and a
+// bunker read as a sheet of metal. Each colour keeps some of its own hue and
+// how light it is, loses most of its red and keeps more of its blue.
+function moonC(c){
+  const [r, g, b] = hxToRgb(c), L = r * 0.3 + g * 0.59 + b * 0.11, k = MOON_K;
+  const d = v => v * (1 - k[0]) + L * k[0];
+  return rgbToHx(d(r) * k[1] + k[4], d(g) * k[2] + k[5], d(b) * k[3] + L * k[7] + k[6]);
+}
+let MOON_K = [0.30, 0.30, 0.38, 0.34, 8, 12, 12, 0.10];
 function buildTheme(cs, mode){
   const key = cs.id + '|' + mode;
   if(THEME_CACHE[key]) return THEME_CACHE[key];
-  const tint = mode === 'night' ? ['#0A1424', 0.66] : mode === 'rain' ? ['#54626A', 0.40] : mode === 'frost' ? ['#DCE8EE', 0.14] : null;
-  const t0 = c => tint ? mixC(c, tint[0], tint[1]) : c;
+  const tint = mode === 'rain' ? ['#54626A', 0.40] : mode === 'frost' ? ['#DCE8EE', 0.14] : null;
+  const t0 = c => mode === 'night' ? moonC(c) : tint ? mixC(c, tint[0], tint[1]) : c;
   // (a frosty morning whitens the grass more than anything else)
   const t = t0, tg = c => mode === 'frost' ? mixC(t0(c), '#E6EFF3', 0.30) : t0(c);
   return THEME_CACHE[key] = {
@@ -9042,8 +9052,8 @@ const ROCK_ROWS = ['...3344.....', '..2334443...', '.12233443...', '11222333322.
 function courseTrees(cs, mode){
   const key = cs.id + '|' + mode;
   if(TREE_CACHE[key]) return TREE_CACHE[key];
-  const tint = mode === 'night' ? ['#0A1424', 0.66] : mode === 'rain' ? ['#54626A', 0.40] : mode === 'frost' ? ['#DCE8EE', 0.16] : null;
-  const t = c => tint ? mixC(c, tint[0], tint[1]) : c;
+  const tint = mode === 'rain' ? ['#54626A', 0.40] : mode === 'frost' ? ['#DCE8EE', 0.16] : null;
+  const t = c => mode === 'night' ? moonC(c) : tint ? mixC(c, tint[0], tint[1]) : c;
   const a = t(cs.tree[0]), b = t(cs.tree[1]);
   // Five steps, not three. Foliage generated with gaps in it needs a deep tone
   // for what sits behind the gap and a highlight for what catches the sun, or
@@ -15121,6 +15131,29 @@ const Scene = {
       }
     }
     if(this.rain && !this.ice) this.rainRings(c, T, R, water);
+    // the moon's path on the water at night: broken glints straight down
+    // from it, wider the nearer the water, shimmering
+    if(this.night && !this.ice && this.moonX != null){
+      const M = this.moonX, hi = mixC(pickC(T._wt, 0.95), '#EEF2DC', 0.75), lo = mixC(pickC(T._wt, 0.9), '#DCE2D2', 0.4);
+      const f6 = Math.floor(this.t * 5);
+      for(let i = 0; i < R.length; i += 3){
+        const yy = R[i], xl = R[i+1], w = R[i+2];
+        if(M < xl || M > xl + w) continue;
+        const k = clamp((yy - HORIZON) / Math.max(1, VH - HORIZON), 0, 1), sp = 1 + k * 9;
+        for(let q = 0; q < 2; q++){
+          const u = hr(yy * 3 + q, f6 + q * 7);
+          if(u < 0.35) continue;
+          const len = 1 + Math.round(hr(yy, f6 + 11 + q) * (1 + k * 4)), x0 = Math.round(M + (hr(yy + q * 13, f6 + 3) * 2 - 1) * sp - len / 2);
+          c.fillStyle = u > 0.8 ? hi : lo;
+          let run = -1;
+          for(let x = x0; x <= x0 + len; x++){
+            const ok = x < x0 + len && water(x, yy);
+            if(ok && run < 0) run = x;
+            else if(!ok && run >= 0){ c.fillRect(run, yy, x - run, 1); run = -1; }
+          }
+        }
+      }
+    }
   },
   // Whether the ground as painted is water at x, y: read off the pixel
   // buffer, or (painted rect by rect) off the canvas before anything is drawn
@@ -15754,6 +15787,8 @@ const Scene = {
     this.fall = !this.rain ? look.fall || null : null;
     this.fallCols = look.fall === 'petals' ? [lite(look.tree[0], 0.25), look.tree[0], '#FFF4F8']
                   : look.fall === 'leaves' ? [look.tree[0], look.tree[1], mixC(look.tree[0], '#F2D060', 0.5)] : null;
+    // (in the moonlight with everything else: bright orange glowed at night)
+    if(this.fallCols && this.night) this.fallCols = this.fallCols.map(c => mixC(moonC(c), c, 0.25));
     this.ice = !!look.ice;
 
     // The bend, off its own stream. a: how far the line moves across, c:
@@ -15954,7 +15989,7 @@ const Scene = {
   // the wrong blue, sitting a shade off whatever it was covering. Built on its
   // own layer and BITTEN out instead, so what shows through the crescent is
   // the sky itself, whatever the sky happens to be doing there.
-  drawMoon(g, mx, my, r){
+  drawMoon(g, mx, my, r, ph = 0.66){
     // A little air around it. Stacked discs one pixel apart rather than four
     // fat ones: four read as four rings drawn round the moon, which is not
     // what a halo is.
@@ -15981,10 +16016,49 @@ const Scene = {
                Math.max(1, Math.round(r*(0.09 + mr()*0.15))),
                i & 1 ? '#C2CAB8' : '#CED6C4');
     }
-    m.globalCompositeOperation = 'destination-out';
-    pxCircle(m, c0 + Math.round(r*0.66), c0 - Math.round(r*0.36), r, '#000');
-    m.globalCompositeOperation = 'source-over';
+    // ph: how far off the shadow sits, a thin crescent at about half its
+    // width, a full moon when it misses altogether
+    if(ph < 2){
+      m.globalCompositeOperation = 'destination-out';
+      pxCircle(m, c0 + Math.round(r*ph), c0 - Math.round(r*ph*0.55), r, '#000');
+      m.globalCompositeOperation = 'source-over';
+    }
     g.drawImage(cv, mx - c0, my - c0);
+  },
+
+  // The Milky Way: a band of faint light across the sky with a dark lane of
+  // dust down it and its own thick scatter of small stars, laid in a few
+  // dithered steps so it stays pixels. Thins out towards the horizon.
+  milkyWay(g, H, sr){
+    const W = VW, im = g.getImageData(0, 0, W, H), d = im.data;
+    const a = -0.35 - sr() * 0.5, ca = Math.cos(a), sa = Math.sin(a);
+    const cx = W * (0.25 + sr() * 0.4), cy = H * 0.45, bw = Math.max(8, W * 0.11), o = sr() * 100;
+    const L = [184, 198, 236], N = (x, y) => {
+      const xi = Math.floor(x), yi = Math.floor(y), fx = x - xi, fy = y - yi;
+      const a0 = hr(xi + o, yi), a1 = hr(xi + 1 + o, yi), b0 = hr(xi + o, yi + 1), b1 = hr(xi + 1 + o, yi + 1);
+      const sx = fx * fx * (3 - 2 * fx), sy = fy * fy * (3 - 2 * fy);
+      return (a0 + (a1 - a0) * sx) * (1 - sy) + (b0 + (b1 - b0) * sx) * sy;
+    };
+    for(let y = 0; y < H; y++){
+      const fade = clamp(1.25 - y / (H * 0.85), 0, 1);
+      if(!fade) continue;
+      for(let x = 0; x < W; x++){
+        const u = (x - cx) * sa - (y - cy) * ca, v = (x - cx) * ca + (y - cy) * sa;
+        const wob = (N(v * 0.05, 3.1) - 0.5) * bw * 0.9;
+        const q = (u + wob) / bw;
+        let I = Math.exp(-q * q * 1.6) * (0.55 + 0.75 * N(x * 0.09, y * 0.09)) * fade;
+        // the dust lane, a little off the middle
+        const ql = (u + wob - bw * 0.18) / (bw * 0.22);
+        I *= 1 - 0.75 * Math.exp(-ql * ql) * N(v * 0.08, 7.7);
+        const lv = Math.floor(I * 4 + BAYER[y & 3][x & 3] / 16);
+        if(lv <= 0) continue;
+        const t = Math.min(3, lv) * 0.075, j = (y * W + x) * 4;
+        d[j] += (L[0] - d[j]) * t; d[j + 1] += (L[1] - d[j + 1]) * t; d[j + 2] += (L[2] - d[j + 2]) * t;
+        // its own stars: many and faint inside the band
+        if(I > 0.35 && hr(x * 1.3 + o, y * 0.7) > 0.93){ const k = 0.3 + 0.4 * hr(y, x + o); d[j] += (235 - d[j]) * k; d[j + 1] += (240 - d[j + 1]) * k; d[j + 2] += (255 - d[j + 2]) * k; }
+      }
+    }
+    g.putImageData(im, 0, 0);
   },
 
   buildSky(){
@@ -16022,6 +16096,11 @@ const Scene = {
 
     const rnd = seeded(hash32(key.length*7919 + VW*31 + (this.night?3:0) + (this.aurora?7:0)));
     if(this.night){
+      // Each course its own night: where the Milky Way crosses, and how full
+      // the moon is and where it hangs (every course had the same sky).
+      let sh = 7; for(const ch of String(this.themeId || '')) sh = (sh * 31 + ch.charCodeAt(0)) >>> 0;
+      const sr = seeded(hash32(sh));
+      this.milkyWay(g, H, sr);
       // A field of one tone at one brightness reads as dust on the screen.
       // Three tiers, thinning towards the horizon where the air thickens, and
       // a few bright enough to throw a glint.
@@ -16039,8 +16118,16 @@ const Scene = {
         }
       }
       g.globalAlpha = 1;
-      this.drawMoon(g, Math.round(VW*0.775), Math.round(H*0.23),
-                    Math.max(5, Math.round(VW*0.055)));
+      // a few coloured ones: a red giant, a blue one
+      for(let i = 0; i < 6; i++){
+        const x = Math.floor(sr()*VW), y = Math.floor(sr()*H*0.6);
+        g.fillStyle = i & 1 ? '#FFC9A8' : '#B4D4FF'; g.globalAlpha = 0.9; g.fillRect(x, y, 1, 1);
+        g.globalAlpha = 0.3; g.fillRect(x - 1, y, 3, 1); g.fillRect(x, y - 1, 1, 3);
+      }
+      g.globalAlpha = 1;
+      const PH = [0.5, 0.66, 0.66, 0.95, 1.35, 3];
+      this.drawMoon(g, this.moonX = Math.round(VW*(0.70 + sr()*0.12)), Math.round(H*(0.18 + sr()*0.1)),
+                    Math.max(5, Math.round(VW*0.055)), PH[Math.floor(sr()*PH.length)]);
     }
     if(this.aurora){
       // Two curtains of light, each a bright edge along the top with rays
@@ -18476,8 +18563,10 @@ Object.assign(Scene, {
         const fd = p.d + Math.sin(this.t * 0.35 + n) * 0.5, clip = this.clipAt(fd);
         const f = this.proj(fd, p.x + Math.sin(this.t * 0.45 + n * 1.7) * 0.7, 0.3 + hr(n, 312) * 0.8 + Math.sin(this.t * 0.9 + n) * 0.15);
         const kk = f.s > 1.2 ? 2 : 1;
-        if(blink > 0.65){ c.fillStyle = '#4A6A1E'; fillClip(c, f.x - 1, f.y - 1, kk + 2, kk + 2, clip); }
-        c.fillStyle = blink > 0.8 ? '#E8FF8A' : '#9ACB3A'; fillClip(c, f.x, f.y, kk, kk, clip);
+        // a glow round it in a cross, not a dark square (it read as a green
+        // box at night)
+        if(blink > 0.65){ c.fillStyle = '#6E9A2A'; fillClip(c, f.x - 1, f.y, kk + 2, kk, clip); fillClip(c, f.x, f.y - 1, kk, kk + 2, clip); }
+        c.fillStyle = blink > 0.8 ? '#F4FFB0' : '#B8E04A'; fillClip(c, f.x, f.y, kk, kk, clip);
       }
 
     }else if(p.kind === 8){
