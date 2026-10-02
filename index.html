@@ -14236,6 +14236,9 @@ function blShaft(G, y1, hw, cols, opt){
   y1 = Math.round(y1);
   if(y1 <= 0 || hw < 1 || !blFront(G)) return;
   const [edge, body, core, band, hot] = cols, ek = (opt && opt.ek) || k;
+  // (on down over him to the ground, see-through: the user saw it stop at
+  // his head and asked for it to reach the floor with him showing through)
+  blVeil(G, y1, hw, edge, core || (opt && opt.inner) || band || edge, hot || band || core || edge, core ? body : null);
   if(body){ c.fillStyle = blChecker(c, body); c.fillRect(X - hw, 0, hw * 2 + 1, y1); }
   if(opt && opt.inner){ c.fillStyle = opt.inner; c.fillRect(X - hw, 0, 1, y1); c.fillRect(X + hw, 0, 1, y1); }
   c.fillStyle = edge; c.fillRect(X - hw - ek, 0, ek, y1); c.fillRect(X + hw + 1, 0, ek, y1);
@@ -14252,6 +14255,22 @@ function blShaft(G, y1, hw, cols, opt){
     if(hot){ c.fillStyle = hot; c.fillRect(X, 0, 1, y1); } }
   if(G.fall < 1 && hot){ const fw = Math.round(hw * 1.5), fh = Math.max(2, Math.round(hw * 0.5));
     fxEllipse(c, X, y1, fw, fh, band || core, 1); fxEllipse(c, X, y1, Math.max(1, fw * 0.55), Math.max(1, fh * 0.6), hot, 1); c.globalAlpha = 1; }
+}
+// The shaft carried on down over him to the ground, see-through so he
+// shows through it: its edges a pixel wide, its heart a checker of light
+// and its body a sparse sprinkle; from y0 down to its front (or his feet)
+function blVeil(G, y0, hw, edge, core, hot, body){
+  const { c, cx, bot, t } = G, X = Math.round(cx), y1 = Math.min(G.front, Math.round(bot) - 1);
+  y0 = Math.max(0, Math.round(y0));
+  if(y1 <= y0 || !blFront(G)) return;
+  const cw = Math.max(1, Math.round(hw * 0.28)), run = Math.floor(t * 60);
+  c.globalAlpha = 1;
+  for(let y = y0; y < y1; y++){
+    c.fillStyle = edge; c.fillRect(X - hw - 1, y, 1, 1); c.fillRect(X + hw + 1, y, 1, 1);
+    c.fillStyle = core; for(let x = X - cw; x <= X + cw; x++) if(((x + y + run) & 1) === 0) c.fillRect(x, y, 1, 1);
+    if(body){ c.fillStyle = body; for(let x = X - hw; x <= X + hw; x++) if(Math.abs(x - X) > cw && ((x + y) & 3) === 0 && (y & 1) === 0) c.fillRect(x, y, 1, 1); }
+    if(((y + run) % 6) === 0){ c.fillStyle = hot; c.fillRect(X, y, 1, 2); }
+  }
 }
 // an ellipse ring th thick on the ground, the back half before him and the
 // front half after
@@ -14356,6 +14375,7 @@ function blessPlain(G, col){
     c.fillStyle = hi; for(let yy = (Math.floor(t * 90) % 6); yy < top; yy += 6) c.fillRect(X, yy, 1, 3);
     if(G.fall < 1){ c.fillStyle = col; c.fillRect(X - hw, top - 1, hw * 2 + 1, 1); c.fillStyle = '#FFFFFF'; c.fillRect(X, top - 1, 1, 1); }
   }
+  if(top > 0) blVeil(G, top, hw, col, col, hi, null);
   if(t > 0.28 && fade > 0.2){ const q = Math.min(1, (t - 0.28) / 0.3), RX = half * (0.6 + 0.4 * q);
     blRing(G, bot - 1, RX, Math.max(2, RX * 0.24), 1 + (G.up >> 1), col); }
   blessMotes(G, 4, 0.7, true, false, (x, y) => { c.fillStyle = col; c.fillRect(Math.round(x), Math.round(y), 1, 1); });
@@ -14901,6 +14921,7 @@ const BLESS_FX = {
         for(let yy = 0; yy < stop; yy++){ const col = psyC(Math.floor((yy - t * 90) / 6), 0); c.fillStyle = col; c.fillRect(X - hw, yy, hw * 2 + 1, 1); }
         c.fillStyle = '#FFFFFF'; c.fillRect(X - Math.max(0, Math.round(hw * 0.2)), 0, Math.max(1, Math.round(hw * 0.4)) + 1, stop);
         const ek = 1 + (G.up >> 1); c.fillStyle = psyC(sh, 2); c.fillRect(X - hw - ek, 0, ek, stop); c.fillRect(X + hw + 1, 0, ek, stop);
+        blVeil(G, stop, hw, psyC(sh, 0), '#FFFFFF', psyC(sh + 3, 0), psyC(sh + 2, 0));
       }
       blessMotes(G, 10, 0.7, false, true, (x, y, i) => psyFlower(c, x, y, h >= 50 ? 2 : 1, i + Math.floor(t * 4)));
       blImpact(G, 0.27, ['#FF2E88', '#2EC8FF']);
@@ -18500,10 +18521,38 @@ function paintHeli(c, x, y, w, h, t, bot){
   }
   c.globalAlpha = 1;
   const tx = hx + Math.cos(a) * L, ty = hy - 1 + Math.sin(a) * L * 0.22;
+  // his look's trail behind the spinning club, breaking up as it goes
+  flyTrail(c, O.fx, hx, hy - 1, L, a, t, h);
   drawClub(c, hx, hy - 1, tx, ty, th, h, Math.cos(a) < 0 ? -1 : 1, t);
   c.globalAlpha = 1; c.globalCompositeOperation = 'source-over';
   if(FL){ c.globalAlpha = 1; FX.flourish(c, g, FL, 'front'); }
   c.globalAlpha = 1; c.globalCompositeOperation = 'source-over';
+}
+// What trails the club as he flies with it spinning over his head (the user
+// asked: "skin-related effects that trail the spinning club and
+// dissipate"): bits of his look left behind its head round the turn, fewer
+// and drifting the farther back they are. Each look's own; any other look
+// with an effect in its colours.
+const FLY_FX = {
+  divine(c, x, y, u, j, t, k){ fxDot(c, x, y, k, j & 1 ? '#F4D27A' : '#7FF0C8', 1); if(u < 0.4) fxDot(c, x, y + 1, k, j & 1 ? '#E0AE3E' : '#3FD6A8', 1); },
+  demonic(c, x, y, u, j, t, k){ fxDot(c, x, y - u * 3, k, u < 0.3 ? '#FFD34A' : u < 0.6 ? '#FF6A1A' : u < 0.85 ? '#C8281C' : '#3A2A2A', 1); if(u < 0.5) fxDot(c, x, y - u * 3 - 1, k, '#FF8A2A', 1); },
+  ascended(c, x, y, u, j, t, k){ if(j % 4 === 0) voidStar(c, x, y, 1, 1, '#F2A6F8'); else fxDot(c, x, y, k, u < 0.4 ? '#FFE0FF' : '#E639EB', 1); },
+  cosmic(c, x, y, u, j, t, k){ if(j % 5 === 0) voidStar(c, x, y, 1, u < 0.5 ? 1 : 0, '#B98CFF'); else fxDot(c, x, y, k, u < 0.3 ? '#FFFFFF' : j & 1 ? '#7FE6FF' : '#7A4ED8', 1); },
+  dread(c, x, y, u, j, t, k){ if(j % 4 === 0) dreadSoul(c, x, y - u * 4, 0, -1, u < 0.5 ? 1 : 0, 1); else fxDot(c, x, y - u * 2, k, u < 0.35 ? '#A8FFD0' : u < 0.7 ? '#2EB872' : '#24222C', 1); },
+  psyche(c, x, y, u, j, t, k){ const st = Math.floor(t * 12); if(j % 5 === 0) psyFlower(c, x, y, 1, j + st); else { fxDot(c, x, y, k, psyC(j + st, 0), 1); fxDot(c, x, y + 1, k, psyC(j + st + 3, 0), 1); } }
+};
+function flyTrail(c, fx, hx, hy, L, a, t, h){
+  if(!fx) return;
+  const F = FLY_FX[fx], acc = SKIN_ACCENT[fx];
+  if(!F && !acc) return;
+  const n = 24, tick = Math.floor(t * 24), K = Math.max(1, Math.round(h / 40));
+  for(const R of [1, 0.8, 0.6]) for(let j = n; j >= 1; j--){
+    const u = j / n, b = a - j * 0.13, rr = L * R * (1 + u * 0.12);
+    if(hr(j + R * 50, tick) < u * 0.7) continue;
+    const x = hx + Math.cos(b) * rr, y = hy + Math.sin(b) * rr * 0.22 + u * u * h * 0.06, k = u < 0.45 && R > 0.7 ? K + 1 : K;
+    if(F) F(c, x, y, u, j, t, k); else fxDot(c, x, y, k, acc[j & 1], 1);
+  }
+  c.globalAlpha = 1;
 }
 function drawClub(c, hx, hy, tx, ty, th, h, turn, t){
   const K = clubNow(), fx = CLUBFX[K.fx];
