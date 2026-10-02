@@ -23172,10 +23172,12 @@ Object.assign(Scene, {
         // over the canyon on its bridge: at a steady pace, so it can be seen.
         this.camD = Math.min(goal, Math.max(cam0, I.bank) + (I.fly ? B_FLY : I.hop ? B_HOP : B_BRIDGE) * dt);
       }else{
+        // (never carried on through a swing, however far the yardage has
+        // run ahead: on a strong bag he slid down the fairway in his
+        // backswing, and the ball he then hit dribbled off the tee, a step
+        // short of where it should have gone; the user saw both. The shot
+        // flies as far as the yardage went instead, and he walks after it)
         if(swingPh >= 0.85) this.camD += Math.max(0, goal - this.camD) * Math.min(1, dt * 4.5);
-        // (not on an island: the hole waits for him there, and carried on
-        // mid-swing he slid off the tee to the water's edge)
-        else if(!I && !aceH && at - this.camD > LEN * 0.4) this.camD += (at - this.camD) * Math.min(1, dt*4.5);
         // he walks as far as the bank and takes off from there
         if(I && cam0 < I.bank && this.camD > I.bank) this.camD = I.bank;
         // and at a railway he stays on his side of the line while a train
