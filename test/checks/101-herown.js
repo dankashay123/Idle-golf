@@ -9,6 +9,11 @@
  *     in a catch-up or a wager; gone on the next hole
  *   - each pose draws her differently from her standing plain, and puts
  *     nothing below her feet or more than her height above her head
+ *   - her figure (the user: "the only difference I see is long hair"): a
+ *     skirt wider than his trousers at the hip, bare legs below it on a
+ *     plain look and leggings on a skin (the Divine still shows no skin),
+ *     a slimmer build than his, and the long cloaks (The Void, The Dread,
+ *     the Ascended) drawn in at her waist from behind
  */
 'use strict';
 module.exports = {
@@ -56,6 +61,28 @@ module.exports = {
           if (diff < 25) f(kind + ' at ' + t + 's draws only ' + diff + ' pixels unlike her standing');
           if (below || above) f(kind + ' at ' + t + 's: ' + below + ' pixels below her feet, ' + above + ' far over her head');
         }
+        // her figure
+        const KEEP = { o: S.outfit, own: S.styleOwn };
+        const sk = PX.skin.toLowerCase(), hex = d => '#' + [d[0], d[1], d[2]].map(v => v.toString(16).padStart(2, '0')).join('');
+        const legsSkin = spr => { const d = spr.cv.getContext('2d').getImageData(0, 0, spr.w, spr.h).data; let n = 0;
+          for (let y = 36; y < spr.h; y++) for (let x = 0; x < spr.w; x++) { const i = (y * spr.w + x) * 4; if (d[i + 3] && hex([d[i], d[i + 1], d[i + 2]]) === sk) n++; } return n; };
+        const rowW = (spr, y) => { const d = spr.cv.getContext('2d').getImageData(0, y, spr.w, 1).data; let a = -1, b = -1; for (let x = 0; x < spr.w; x++) if (d[x * 4 + 3]) { if (a < 0) a = x; b = x; } return b - a + 1; };
+        S.outfit = 'classic';
+        S.gender = 'm'; for (const k in SHOWSPR) delete SHOWSPR[k]; buildSprites(); const mLeg = legsSkin(SPRITE.gAddr), mHip = rowW(SPRITE.gAddr, 31), mBulk = bulkOf(60, false);
+        S.gender = 'f'; for (const k in SHOWSPR) delete SHOWSPR[k]; buildSprites(); const fLeg = legsSkin(SPRITE.gAddr), fHip = rowW(SPRITE.gAddr, 31), fBulk = bulkOf(60, false);
+        o.fig = 'bare leg pixels his ' + mLeg + ' hers ' + fLeg + '; at the hip his ' + mHip + ' hers ' + fHip + '; built out at the chest his ' + mBulk.chest + ' hers ' + fBulk.chest;
+        if (fLeg < 40 || mLeg) f('her bare legs: ' + o.fig);
+        if (fHip <= mHip) f('her skirt no wider than his trousers: ' + o.fig);
+        if (!(fBulk.chest < mBulk.chest) || fBulk.legs >= mBulk.legs) f('her build no slimmer than his: ' + o.fig);
+        S.styleOwn = Object.assign({}, S.styleOwn, { 'o:divine': 1 }); S.outfit = 'divine'; for (const k in SHOWSPR) delete SHOWSPR[k]; buildSprites();
+        const dSkin = ['gAddr', 'gFinish', 'gBack'].map(k => legsSkin(SPRITE[k]));
+        if (dSkin.some(n => n)) f('the Divine shows skin on her legs: ' + dSkin.join('/'));
+        // the cloaks from behind, at her waist and at his
+        const waist = (fn, sex) => { S.gender = sex; const C = fn(40, 58, 2, 0), cv = C.cv || C, d = cv.getContext('2d').getImageData(0, Math.round(58 * 0.45), cv.width, 1).data; let n = 0; for (let x = 0; x < cv.width; x++) if (d[x * 4 + 3] > 128) n++; return n; };
+        o.cloaks = [];
+        for (const [nm, fn] of [['Void', voidCloak], ['Dread', dreadCloak], ['Ascended', galaxyCape]]) { const m = waist(fn, 'm'), w2 = waist(fn, 'f'); o.cloaks.push(nm + ' ' + m + '/' + w2);
+          if (w2 >= m) f('the ' + nm + ' cloak is no narrower at her waist: his ' + m + ', hers ' + w2); }
+        S.outfit = KEEP.o; S.styleOwn = KEEP.own;
       } finally {
         Math.random = rnd; HER_POSE = null;
         Object.keys(S).forEach(k => delete S[k]); Object.assign(S, JSON.parse(SNAP));
@@ -65,6 +92,6 @@ module.exports = {
     });
     if (r.fails.length) throw new Error(r.fails.join('\n'));
     return [r.lines + '; with him none', 'poses by score: ' + r.by.join(' ') + '; none for him, in a catch-up, or on the next hole',
-      'each pose draws her anew and stays about her'];
+      'each pose draws her anew and stays about her', r.fig + '; cloaks at the waist (his/hers) ' + r.cloaks.join(', ')];
   }
 };

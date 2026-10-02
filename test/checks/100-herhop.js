@@ -97,8 +97,10 @@ module.exports = {
         const tail = g => { setGender(g); const c2 = document.createElement('canvas'); c2.width = 80; c2.height = 80; const c = c2.getContext('2d');
           const spr = SPRITE.gAddr, hh = 46, w = Math.round(hh * spr.w / spr.h);
           paintGolfer(c, 20, 70 - hh, w, hh, 0, 3.3, 70, false, 0.1, spr, [], undefined, false); return c.getImageData(0, 0, 80, 80).data; };
-        const a = tail('m'), b = tail('f'), P = FEM_HAIR.midas[0], Q = [parseInt(P.slice(1, 3), 16), parseInt(P.slice(3, 5), 16), parseInt(P.slice(5, 7), 16)];
-        let na = 0, nb = 0; for (let i = 0; i < a.length; i += 4) { if (a[i] === Q[0] && a[i + 1] === Q[1] && a[i + 2] === Q[2]) na++; if (b[i] === Q[0] && b[i + 1] === Q[1] && b[i + 2] === Q[2]) nb++; }
+        // (its colour and the shade its body is drawn in, under the strands)
+        const a = tail('m'), b = tail('f'), HP = FEM_HAIR.midas, rgb = P => [parseInt(P.slice(1, 3), 16), parseInt(P.slice(3, 5), 16), parseInt(P.slice(5, 7), 16)];
+        const QS = [rgb(HP[0]), rgb(mixC(HP[0], HP[1], 0.42))], hit = (d, i) => QS.some(Q => d[i] === Q[0] && d[i + 1] === Q[1] && d[i + 2] === Q[2]);
+        let na = 0, nb = 0; for (let i = 0; i < a.length; i += 4) { if (hit(a, i)) na++; if (hit(b, i)) nb++; }
         o.tail = na + ' and ' + nb;
         if (nb < na + 6) f('on Midas her ponytail shows ' + nb + ' pixels of its gold, his ' + na);
       } catch (e) { f('threw: ' + e.message + ' ' + (e.stack || '').split('\n')[1]); }

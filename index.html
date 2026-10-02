@@ -9041,6 +9041,9 @@ function bulkOf(h, minor){
   if(h < 30) return null;
   // (his legs as broad as his chest: the user asked for them to match)
   const k = Math.max(1, Math.round(h / 30));
+  // (her build slimmer than his: narrower shoulders and slim legs under
+  // her skirt, so she reads as a woman, not his outline with long hair)
+  if(isFem()) return { chest: k + 1, legs: 0 };
   return { chest: 2 * k + 1, legs: 2 * k + 1 };
 }
 // how far out at a height f down him (0 his crown, 1 his feet): easing in
@@ -10322,7 +10325,12 @@ function patterned(sp, o){
 }
 const golferMap = o => ({ c:o.cap, C:o.cap2, k:o.skin || PX.skin, K:o.skin2 || PX.skin2, s:o.shirt, S:o.shirt2,
                           T:o.shirt3, b:o.belt || '#2A2018', p:o.pant, P:o.pant2, o:o.shoe || PX.shoe,
-                          h:o.hair || (o.skin ? o.skin2 : HAIR) });
+                          h:o.hair || (o.skin ? o.skin2 : HAIR),
+                          // (her legs below her skirt: bare on a plain look,
+                          // leggings a shade under the skirt on a skin with
+                          // its own skin, which shows none; her lips)
+                          L: o.skin ? mixC(o.pant, '#000000', 0.32) : PX.skin, M: o.skin ? mixC(o.pant2 || o.pant, '#000000', 0.38) : PX.skin2,
+                          l: '#C25A6A' });
 // The female golfer (the user asked for one, chosen in Settings): his
 // picture with her hair. A ponytail out from under the back of her cap
 // side on, long hair down her back from behind, and a little shape to the
@@ -10347,13 +10355,53 @@ const SAY_HER = {
   quip:   ['OWN THE TEE', 'HER TEE, HER RULES', 'GRACE AND POWER', 'SHOW THEM HOW',
            'STEADY, SKIPPER', 'ALL YOURS, BOSS', 'RUN THE COURSE']
 };
-function femRows(rows, pose){
+function femRows(rows, pose, O){
   if(!isFem()) return rows;
   const F = FEM[pose], R = rows.map(r => [...r]);
   for(const [y, a, b] of F.hair) for(let x = a; x <= b; x++) if(R[y] && R[y][x] === '.') R[y][x] = 'h';
   for(const [y, a, b] of F.over || []) for(let x = a; x <= b; x++) if(R[y] && R[y][x] !== '.') R[y][x] = 'h';
   for(const [y, a, b] of F.front || []) for(let x = a; x <= b; x++) if(R[y] && R[y][x] === '.') R[y][x] = 'T';
+  femShape(R, pose, O || {});
   return R.map(r => r.join(''));
+}
+// Her figure (the user: "the only difference I see is long hair"): a bust,
+// a waist drawn in above her hips, a pleated golf skirt flaring to a hem
+// over her legs (bare on a plain look, leggings on a skin), narrower legs,
+// and her lips. Edits to his picture, row by row, in each pose.
+function femShape(R, pose, O){
+  const W = R[0].length, left = y => R[y].findIndex(ch => ch !== '.'), right = y => { for(let x = W - 1; x >= 0; x--) if(R[y][x] !== '.') return x; return -1; };
+  const set = (y, x, ch) => { if(R[y] && x >= 0 && x < W) R[y][x] = ch; };
+  const legs = (y0, y1, trimL, trimR) => { for(let y = y0; y <= y1 && y < R.length; y++){
+    for(let x = 0; x < W; x++){ if(R[y][x] === 'p') R[y][x] = 'L'; else if(R[y][x] === 'P') R[y][x] = 'M'; }
+    // (each run of leg a pixel narrower)
+    let x = 0; while(x < W){ if(R[y][x] !== 'L' && R[y][x] !== 'M'){ x++; continue; }
+      let e = x; while(e < W && (R[y][e] === 'L' || R[y][e] === 'M')) e++;
+      if(e - x > 3){ for(let k = 0; k < trimL; k++) R[y][x + k] = '.'; for(let k = 1; k <= trimR; k++) R[y][e - k] = '.'; }
+      x = e; } } };
+  const skirt = (y0, rows) => rows.forEach(([a, b], i) => { const y = y0 + i, hem = i === rows.length - 1;
+    for(let x = a; x <= b; x++) R[y][x] = hem || x > a + (b - a) * 0.55 ? 'P' : (x - a) % 3 === 2 && i > 0 ? 'P' : 'p'; });
+  if(pose === 'addr'){
+    for(const [y, n] of [[15, 1], [16, 1], [17, 1]]){ const r = right(y); for(let k = 1; k <= n; k++) set(y, r + k, 'T'); }
+    for(const y of [24, 25, 26]) set(y, left(y), '.');
+    for(const y of [28, 29, 30]) set(y, left(y) - 1, 'p');
+    // the skirt, flaring a little to the front and back, to a hem
+    const l = left(28) , r = right(30);
+    skirt(28, [[l, r], [l, r], [l, r + 1], [l, r + 1], [l - 0 + 1, r + 2], [l + 1, r + 2]]);
+    legs(34, 54, 2, 1);
+    if(!O.skin) set(11, 33, 'l');
+  } else if(pose === 'fin'){
+    for(const y of [14, 15, 16]){ const r = right(y); set(y, r + 1, 'T'); }
+    for(const y of [24, 25, 26, 27, 28]) set(y, left(y), '.');
+    skirt(32, [[16, 25], [15, 26], [15, 26], [14, 27], [14, 28]]);
+    legs(37, 54, 0, 0);
+    // (the trailing foot, up on its toe, is a shoe)
+    for(let y = 55; y < R.length; y++) for(let x = 0; x < W; x++) if(R[y][x] === 'P' || R[y][x] === 'p') R[y][x] = 'o';
+    if(!O.skin) set(10, 28, 'l');
+  } else if(pose === 'back'){
+    for(const y of [24, 25, 26, 27, 28]){ set(y, 13, '.'); set(y, 26, '.'); }
+    while(R.length < 36) R.push([...'.'.repeat(W)]);
+    skirt(32, [[12, 27], [12, 27], [11, 28], [11, 28]]);
+  }
 }
 const SPRITE = {};
 function buildSprites(){
@@ -10363,16 +10411,16 @@ function buildSprites(){
   // to speak of; a profile has a posture you can recognise instantly.
   // Arms and club stay procedural so the swing arc is exact at any tempo.
   const OUT = outfitNow(), GMAP = golferMap(OUT);
-  SPRITE.gAddr = patterned(makeSprite(femRows(G_ADDR_ROWS, 'addr'), GMAP), OUT);
+  SPRITE.gAddr = patterned(makeSprite(femRows(G_ADDR_ROWS, 'addr', OUT), GMAP), OUT);
   // Finish: up out of the posture, chest turned through, weight on the lead
   // side with the trail foot dragged up on its toe.
-  const FIN = femRows(G_FIN_ROWS, 'fin'), BACK = femRows(G_BACK_ROWS, 'back');
+  const FIN = femRows(G_FIN_ROWS, 'fin', OUT), BACK = femRows(G_BACK_ROWS, 'back', OUT);
   SPRITE.gFinish = patterned(makeSprite(FIN, GMAP), OUT);
   // Walking: the finish pose from the belt up, standing tall, and nothing
   // below it -- the legs stride in code.
   const blank = '.'.repeat(40);
   SPRITE.gWalk = patterned(makeSprite(FIN.slice(0, 32).concat(G_FIN_ROWS.slice(32).map(() => blank)), GMAP), OUT);
-  const pad = G_FIN_ROWS.slice(32).map(() => blank);
+  const pad = G_FIN_ROWS.slice(BACK.length).map(() => blank);
   SPRITE.gBack = patterned(makeSprite(BACK.concat(pad), GMAP), OUT);
   // Flying: the same, without the arms hanging at his sides (both are up
   // over his head holding the club: drawn in code), his sleeves left on
@@ -11179,14 +11227,15 @@ function sleekHorns(s, view, demon, pal){
 // The golfer's box starts at (ox, 0) in it.
 const CAPE_PAL = ['#1E1648', '#2A2060', '#3A2A7A', '#6A2E8E', '#B04ACB', '#FFFFFF', '#C8B8F8', '#A49CC8', '#5A3E8E', '#14102E'];
 function galaxyCape(w, h, pose, ph){
-  const ox = Math.round(w * 0.6);
-  const cv = fxBake('gcape|' + w + '|' + h + '|' + pose + '|' + ph, ox + Math.ceil(w * 1.1), Math.ceil(h * 1.02), g => {
+  const ox = Math.round(w * 0.6), fem = isFem();
+  const cv = fxBake('gcape|' + w + '|' + h + '|' + pose + '|' + ph + (fem ? '|f' : ''), ox + Math.ceil(w * 1.1), Math.ceil(h * 1.02), g => {
     const X = f => ox + f * w, Y = f => f * h, a = ph / 12 * Math.PI * 2, s = Math.sin(a), s2 = Math.sin(a + 1.3);
     let outer, inner;
     if(pose === 2){
       const sw = 0.03 * s;
-      outer = [[0.30, 0.20], [0.23 + sw, 0.50], [0.17 + sw * 2, 0.86]];
-      inner = [[0.83 + sw * 2, 0.86], [0.77 + sw, 0.50], [0.70, 0.20]];
+      // (hers drawn in at the waist and out again over her hips)
+      outer = fem ? [[0.32, 0.20], [0.34 + sw, 0.43], [0.24 + sw, 0.56], [0.14 + sw * 2, 0.86]] : [[0.30, 0.20], [0.23 + sw, 0.50], [0.17 + sw * 2, 0.86]];
+      inner = fem ? [[0.86 + sw * 2, 0.86], [0.76 + sw, 0.56], [0.66 + sw, 0.43], [0.68, 0.20]] : [[0.83 + sw * 2, 0.86], [0.77 + sw, 0.50], [0.70, 0.20]];
     }else{
       const flow = 0.10 + 0.05 * s, top = pose ? [[0.60, 0.24], [0.46, 0.27]] : [[0.60, 0.25], [0.48, 0.28]];
       outer = [top[1], [top[1][0] - (pose ? 0.2 : 0.36) - flow * 0.5, 0.58], [(pose ? 0.02 : -0.06) - flow, 0.84]];
@@ -14850,15 +14899,16 @@ function voidSpiral(R, step){
 // side on, down his back walking away. Baked per size, pose and ripple;
 // its stars kept so a few can twinkle.
 function voidCloak(w, h, pose, ph){
-  const ox = Math.round(w * 0.75), key = 'vcloak|' + w + '|' + h + '|' + pose + '|' + ph;
+  const fem = isFem(), ox = Math.round(w * 0.75), key = 'vcloak|' + w + '|' + h + '|' + pose + '|' + ph + (fem ? '|f' : '');
   let stars = [];
   const cv = fxBake(key, ox + Math.ceil(w * 1.1), Math.ceil(h * 1.0), g => {
     const X = f => ox + f * w, Y = f => f * h, a = ph / 12 * Math.PI * 2, s = Math.sin(a), s2 = Math.sin(a + 1.3);
     let outer, inner;
     if(pose === 2){
       const sw = 0.02 * s;
-      outer = [[0.30, 0.21], [0.22 + sw, 0.52], [0.16 + sw * 2, 0.9]];
-      inner = [[0.84 + sw * 2, 0.9], [0.78 + sw, 0.52], [0.70, 0.21]];
+      // (hers drawn in at the waist and out again over her hips)
+      outer = fem ? [[0.32, 0.21], [0.33 + sw, 0.44], [0.24 + sw, 0.56], [0.12 + sw * 2, 0.9]] : [[0.30, 0.21], [0.22 + sw, 0.52], [0.16 + sw * 2, 0.9]];
+      inner = fem ? [[0.88 + sw * 2, 0.9], [0.76 + sw, 0.56], [0.67 + sw, 0.44], [0.68, 0.21]] : [[0.84 + sw * 2, 0.9], [0.78 + sw, 0.52], [0.70, 0.21]];
     }else{
       const flow = 0.1 + 0.05 * s, top = pose ? [[0.60, 0.24], [0.46, 0.27]] : [[0.66, 0.27], [0.46, 0.36]];
       outer = [top[1], [top[1][0] - 0.12 - flow * 0.3, 0.46], [top[1][0] - 0.3 - flow * 0.6, 0.66], [-0.02 - flow * 0.8, 0.82], [-0.08 - flow, 0.93]];
@@ -14882,7 +14932,7 @@ function voidCloak(w, h, pose, ph){
     }
     // the folds: dark lines down it from the shoulders
     g.lineWidth = Math.max(1, w * 0.03); g.strokeStyle = '#0B0818';
-    for(let k = 1; k <= 2; k++){ const f = k / 3, t0 = [outer[0][0] + (inner[2][0] - outer[0][0]) * f, outer[0][1] + (inner[2][1] - outer[0][1]) * f];
+    for(let k = 1; k <= 2; k++){ const f = k / 3, t0 = [outer[0][0] + (inner[inner.length - 1][0] - outer[0][0]) * f, outer[0][1] + (inner[inner.length - 1][1] - outer[0][1]) * f];
       const t1 = [h0[0] + (h1[0] - h0[0]) * f, h0[1] + (h1[1] - h0[1]) * f];
       g.beginPath(); g.moveTo(X(t0[0]), Y(t0[1])); g.lineTo(X(t1[0] + 0.02 * s2), Y(t1[1] - 0.06)); g.stroke(); }
     g.restore();
@@ -15350,14 +15400,15 @@ function dreadRobe(w, h, pose, step){
 // in it and a lining of deep green; streaming behind him side on, down his
 // back walking away. Baked per size, pose and ripple (ph 0..11).
 function dreadCloak(w, h, pose, ph){
-  const ox = Math.round(w * 0.8), key = 'dcloak|' + w + '|' + h + '|' + pose + '|' + ph;
+  const fem = isFem(), ox = Math.round(w * 0.8), key = 'dcloak|' + w + '|' + h + '|' + pose + '|' + ph + (fem ? '|f' : '');
   const cv = fxBake(key, ox + Math.ceil(w * 1.1), Math.ceil(h * 1.0), g => {
     const X = f => ox + f * w, Y = f => f * h, a = ph / 12 * Math.PI * 2, s = Math.sin(a);
     let outer, inner;
     if(pose === 2){
       const sw = 0.02 * s;
-      outer = [[0.30, 0.21], [0.20 + sw, 0.52], [0.13 + sw * 2, 0.86]];
-      inner = [[0.87 + sw * 2, 0.86], [0.80 + sw, 0.52], [0.70, 0.21]];
+      // (hers drawn in at the waist and out again over her hips)
+      outer = fem ? [[0.32, 0.21], [0.33 + sw, 0.44], [0.22 + sw, 0.56], [0.10 + sw * 2, 0.86]] : [[0.30, 0.21], [0.20 + sw, 0.52], [0.13 + sw * 2, 0.86]];
+      inner = fem ? [[0.90 + sw * 2, 0.86], [0.78 + sw, 0.56], [0.67 + sw, 0.44], [0.68, 0.21]] : [[0.87 + sw * 2, 0.86], [0.80 + sw, 0.52], [0.70, 0.21]];
     }else{
       const flow = 0.12 + 0.05 * s, top = pose ? [[0.60, 0.24], [0.46, 0.27]] : [[0.66, 0.27], [0.46, 0.36]];
       outer = [top[1], [top[1][0] - 0.14 - flow * 0.3, 0.46], [top[1][0] - 0.34 - flow * 0.6, 0.64], [-0.06 - flow * 0.8, 0.78], [-0.12 - flow, 0.86]];
@@ -15375,7 +15426,7 @@ function dreadCloak(w, h, pose, ph){
     path(); g.fillStyle = gr; g.fill();
     g.save(); path(); g.clip();
     g.lineWidth = Math.max(1, w * 0.03);
-    for(let k = 1; k <= 3; k++){ const f = k / 4, t0 = [outer[0][0] + (inner[2][0] - outer[0][0]) * f, outer[0][1] + (inner[2][1] - outer[0][1]) * f];
+    for(let k = 1; k <= 3; k++){ const f = k / 4, t0 = [outer[0][0] + (inner[inner.length - 1][0] - outer[0][0]) * f, outer[0][1] + (inner[inner.length - 1][1] - outer[0][1]) * f];
       const t1 = [h0[0] + (h1[0] - h0[0]) * f, h0[1] + (h1[1] - h0[1]) * f];
       g.strokeStyle = '#06050A'; g.beginPath(); g.moveTo(X(t0[0]), Y(t0[1])); g.lineTo(X(t1[0] + 0.02 * s), Y(t1[1])); g.stroke();
       if(k === 2){ g.strokeStyle = '#34303E'; g.beginPath(); g.moveTo(X(t0[0]) + 1, Y(t0[1])); g.lineTo(X(t1[0] + 0.02 * s) + 1, Y(t1[1] - 0.04)); g.stroke(); } }
@@ -19440,18 +19491,36 @@ function femTail(c, g, fx){
   if(!isFem() || g.minor || g.fly) return;
   const H = g.head, h = g.h, th = Math.max(2, Math.round(h / 22)), sw = Math.sin(g.t * 3.1) * h * 0.012;
   const P = fx === 'psyche' ? [psyC(Math.floor(g.t * 6), 0), '#1A1024'] : FEM_HAIR[fx] || [HAIR, '#24180F'];
-  // (the head's box is about its middle: her back is to the left side on.
-  // Side on it springs back from under her cap and falls; from behind it
-  // hangs down her back)
-  let pts;
-  if(g.back){ const x0 = H.x, y0 = H.y + H.hh + h * 0.03; pts = [[x0, y0], [x0 + sw * 0.5, y0 + h * 0.1], [x0 + sw, y0 + h * 0.19]]; }
-  else { const sh = g.shear ? g.shear(0.1) : 0, x0 = H.x - H.w * 0.5 + sh, y0 = H.y + H.hh * 0.75;
-    pts = [[x0, y0], [x0 - h * 0.07, y0 + h * 0.02], [x0 - h * 0.1 + sw, y0 + h * 0.13]]; }
+  // (a fuller fall of it now, wide where it leaves her head and narrowing
+  // to its ends, with a lit strand down it: a thin line of it read as a
+  // stripe on a dark robe, not as hair. From behind it falls past her
+  // shoulder blades; side on a ponytail springs back and down)
+  let pts, wid;
+  if(g.back){ const x0 = H.x, y0 = H.y + H.hh * 0.7;
+    pts = [[x0, y0], [x0 + sw * 0.4, y0 + h * 0.1], [x0 + sw * 0.8, y0 + h * 0.2], [x0 + sw, y0 + h * 0.28]];
+    wid = [th * 2.6, th * 2.4, th * 1.9, th * 1.1]; }
+  else { const sh = g.shear ? g.shear(0.1) : 0, x0 = H.x - H.w * 0.5 + sh, y0 = H.y + H.hh * 0.7;
+    pts = [[x0, y0], [x0 - h * 0.07, y0 + h * 0.03], [x0 - h * 0.1 + sw * 0.6, y0 + h * 0.11], [x0 - h * 0.1 + sw, y0 + h * 0.19]];
+    wid = [th * 1.8, th * 2.0, th * 1.6, th * 0.9]; }
   c.globalAlpha = 1;
-  for(const [col, t2] of [[P[1], th + 2], [P[0], th]])
-    for(let i = 1; i < pts.length; i++) pxLine(c, pts[i - 1][0], pts[i - 1][1], pts[i][0], pts[i][1], col, t2);
+  // drawn row by row down it: a dark edge each side, a body a shade under
+  // its colour, two strands of its colour and a lit one, the ends parted
+  const mid = mixC(P[0], P[1], 0.42), hi = mixC(P[0], '#FFFFFF', 0.45);
+  const y0 = Math.round(pts[0][1]), y1 = Math.round(pts[pts.length - 1][1]);
+  const at = y => { for(let i = 1; i < pts.length; i++) if(y <= pts[i][1] || i === pts.length - 1){
+    const u = clamp((y - pts[i - 1][1]) / Math.max(0.5, pts[i][1] - pts[i - 1][1]), 0, 1);
+    return [pts[i - 1][0] + (pts[i][0] - pts[i - 1][0]) * u, wid[i - 1] + (wid[i] - wid[i - 1]) * u]; } };
+  for(let y = y0; y <= y1; y++){
+    const [cx, wd] = at(y), half = Math.max(1, wd / 2 + 0.5), xa = Math.round(cx - half), xb = Math.round(cx + half) - 1, n = xb - xa + 1;
+    const tip = y1 - y < 2 && n > 2;
+    for(let x = xa; x <= xb; x++){ const f = n > 1 ? (x - xa) / (n - 1) : 0.5;
+      if(tip && Math.abs(f - 0.5) < 0.2) continue;
+      c.fillStyle = x === xa || x === xb ? P[1] : Math.abs(f - 0.3) < 0.09 ? hi : Math.abs(f - 0.62) < 0.09 ? P[0] : mid;
+      c.fillRect(x, y, 1, 1); }
+  }
   // (a band where it is tied, in the darker of the two)
-  c.fillStyle = P[1]; c.fillRect(Math.round(pts[0][0] + (pts[1][0] - pts[0][0]) * 0.4), Math.round(pts[0][1] + (pts[1][1] - pts[0][1]) * 0.4) - (th >> 1), 1, th + 1);
+  const [bx, bw] = at(y0 + Math.max(1, Math.round((y1 - y0) * 0.12)));
+  c.fillStyle = P[1]; c.fillRect(Math.round(bx - bw / 2), y0 + Math.max(1, Math.round((y1 - y0) * 0.12)), Math.max(2, Math.round(bw)), 1);
 }
 // Her poses, hers alone (the user asked for "a few poses that are hers
 // alone"): as the ball drops she stands up tall and, on a birdie or an
@@ -19528,8 +19597,10 @@ function paintGolfer(c, x, y, w, h, ph, t, bot, walking, walkPh, spr, arc, putt,
   if(FX && FX.alpha) c.globalAlpha = FX.alpha;
   if(walking){
     const O = outfitNow();
-    drawLegsBack(c, x + w*0.5, y + h*(31/58), h*(26/58), w, walkPh, O.pant || '#2B3B4F', O.pant2 || O.pant || '#1C2937', O.shoe || PX.shoe, O.belt, g.bulk && Object.assign({ s: spr.bulkS }, g.bulk),
-                 O.pantPattern && PATTERNS[O.pantPattern]);
+    // (hers below her skirt, in her legs' own colours)
+    const GM = isFem() ? golferMap(O) : null;
+    drawLegsBack(c, x + w*0.5, y + h*(31/58), h*(26/58), w, walkPh, GM ? GM.L : O.pant || '#2B3B4F', GM ? GM.M : O.pant2 || O.pant || '#1C2937', O.shoe || PX.shoe, O.belt, g.bulk && Object.assign({ s: spr.bulkS }, g.bulk),
+                 !GM && O.pantPattern && PATTERNS[O.pantPattern]);
     blitShear(c, spr, x, y, w, h, () => 0, g.bulk);
     if(FX && FX.body) FX.body(c, g);
     // The club in his right hand, hanging at his side, the head down by
