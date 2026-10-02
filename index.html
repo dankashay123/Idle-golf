@@ -1009,7 +1009,7 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
     <div class="view on" id="v-upg">
       <div id="vitals">
         <div class="vital"><div class="k">Swing</div><div class="v" id="vPower">0</div></div>
-        <div class="vital"><div class="k">Tempo</div><div class="v" id="vSpeed">0/s</div></div>
+        <div class="vital"><div class="k">Pace</div><div class="v" id="vSpeed">0/s</div></div>
         <div class="vital"><div class="k">Carry</div><div class="v" id="vDps">0</div></div>
         <div class="vital"><div class="k">Pure</div><div class="v" id="vCrit">0%</div></div>
         <div class="vital"><div class="k">Prov</div><div class="v" id="vMst">0%</div></div>
@@ -2364,7 +2364,7 @@ const B = {
   // so it is a long job rather than an afternoon.
   UPG: [
     { id:'drive',   k:'pow',  cap:0,   base:20,     r:1.0800, g:1.04000, n:'Drive Power',        d:'Yardage on every swing' },
-    { id:'tempo',   k:'spd',  cap:500, base:150,    r:1.0287, g:1.00439, n:'Swing Tempo',        d:'Swings per second' },
+    { id:'tempo',   k:'spd',  cap:500, base:150,    r:1.0287, g:1.00439, n:'Pace of Play',       d:'Plays every hole faster' },
     { id:'provis',  k:'mst',  cap:500, base:70,     r:1.0300, g:0,       n:'Provisional Ball',   d:'Chance to play a second ball on a swing' },
     { id:'face',    k:'crt',  cap:500, base:1200,   r:1.0317, g:0,       n:'Face Milling',       d:'Chance of a pure strike' },
     { id:'compress',k:'pow',  cap:500, base:1.1e4,  r:1.0271, g:1.00491, n:'Ball Compression',   d:'Yardage on every swing' },
@@ -2447,7 +2447,7 @@ const B = {
   AFFIX: [
     { id:'pow', n:'Swing Power',    sc:true,  lo:0.06, hi:0.14, sfx:'%' },
     { id:'elm', n:'Affinity Power', sc:false, lo:0.15, hi:0.55, sfx:'%' },
-    { id:'spd', n:'Swing Tempo',    sc:false, lo:0.02, hi:0.09, sfx:'%' },
+    { id:'spd', n:'Pace of Play',    sc:false, lo:0.02, hi:0.09, sfx:'%' },
     { id:'crt', n:'Pure Strike',    sc:false, lo:0.006,hi:0.040, sfx:'pp' },
     { id:'cpw', n:'Strike Payoff',  sc:false, lo:0.12, hi:0.85, sfx:'x' },
     { id:'gld', n:'Purse',          sc:false, lo:0.05, hi:0.30, sfx:'%' },
@@ -2489,7 +2489,7 @@ const B = {
   SKILL: [
     { ic:'thunder', id:'thunder', n:'Thunder Drive',   cd:14, cost:0,  g:'T', d:'One strike for {v} swings of yardage', b:10,  s:3.0 },
     { ic:'bounce', id:'chain',   n:'Chip-In Chain',   cd:19, cost:3,  g:'C', d:'Fires {v} swings back to back',        b:6,   s:1.0 },
-    { ic:'gale', id:'gale',    n:'Gale Force',      cd:30, cost:5,  g:'G', d:'+{v}% tempo for 8 seconds',            b:60,  s:9.0 },
+    { ic:'gale', id:'gale',    n:'Gale Force',      cd:30, cost:5,  g:'G', d:'+{v}% pace for 8 seconds',             b:60,  s:9.0 },
     { ic:'target', id:'ace',     n:'Ace Window',      cd:26, cost:8,  g:'A', d:'+{v}% pure strike chance for 6 seconds', b:0.22, s:0.03 },
     { ic:'bag', id:'rally',   n:'Caddie Rally',    cd:34, cost:12, g:'R', d:'+{v}% provisional chance for 10 seconds', b:40, s:6 },
     { ic:'rewind', id:'mull',    n:'Mulligan',        cd:45, cost:18, g:'M', d:'Winds the hole clock back {v}%',       b:34,  s:2.6 },
@@ -2517,8 +2517,8 @@ const B = {
       d:'Five times purse for eight minutes' },
     { id:'patch',  n:'Purple Patch',      ic:'purple',    cost:4, dur:300, k:'pow',  v:4, s:'4\u00d7 power',
       d:'Four times swing power for five minutes' },
-    { id:'coffee', n:'Caddie Coffee',     ic:'cup',    cost:4, dur:360, k:'spd',  v:2, s:'2\u00d7 tempo',
-      d:'Double tempo for six minutes' },
+    { id:'coffee', n:'Caddie Coffee',     ic:'cup',    cost:4, dur:360, k:'spd',  v:2, s:'2\u00d7 pace',
+      d:'Double pace for six minutes' },
     { id:'proam',  n:'Pro-Am Day',        ic:'proam',  cost:5, dur:420, k:'drop', v:0.35, s:'+35pp gear luck',
       d:'+35pp gear luck for seven minutes' },
     { id:'ley',    n:'Ley Attunement',    ic:'leyatt', cost:5, dur:480, k:'reson', v:1, s:'resonates everywhere',
@@ -2556,7 +2556,7 @@ const B = {
     { id:'sand', st:'Swing power and pure strike', ic:'grit', mode:'drive', n:'The Long Drive', cur:'grit', cn:'Grit',
       regen:660, cap:4, run:16, pay:0.046, gear:0.22, floorRar:0,
       d:'Six swings, the longest counts.',
-      how:'Tempo is worth nothing here. It all rides on a single strike, so power, pure strike, payoff, affinity and provisionals are the whole game.' },
+      how:'Pace is worth nothing here. It all rides on a single strike, so power, pure strike, payoff, affinity and provisionals are the whole game.' },
     { id:'water', st:'Pure strike', ic:'island', mode:'island', n:'The Island Green', cur:'shard', cn:'Shards',
       regen:840, cap:3, run:70, pay:0.028, gear:0.40, floorRar:2,
       d:'Every green doubles the pot. Miss and you keep a quarter.',
@@ -2565,7 +2565,7 @@ const B = {
       regen:1080, cap:3, run:46, pay:0.019, gear:0.20, floorRar:1,
       d:'Twenty five chips. Each one that drops is worth more than the last.',
       how:'Runs on affinity chance, not power, and reads the raw figure rather than the capped one. A bag that rarely procs drops few chips.' },
-    { id:'vault', st:'Carry (power and tempo)', ic:'vault', mode:'floor', n:'The Clubhouse Vault', cur:'gold', cn:'Purse',
+    { id:'vault', st:'Carry (power and pace)', ic:'vault', mode:'floor', n:'The Clubhouse Vault', cur:'gold', cn:'Purse',
       regen:900, cap:2, run:56, pay:1, gear:0.62, floorRar:1,
       d:'Floor after floor, each one harder than the last.',
       how:'Straight endurance. How deep your carry drags you before the clock runs out.' },
@@ -2577,10 +2577,10 @@ const B = {
       regen:780, cap:3, run:24, pay:0.05, gear:0.30, floorRar:1,
       d:'Nine holes, every ball you carry. Hole any of them and the hole is yours.',
       how:'Runs on provisionals: one ball plus one for every whole point of provisional chance, and a chance at one more. More balls, more holes.' },
-    { id:'twilight', st:'Tempo', ic:'dusk', mode:'twilight', n:'The Twilight Putt', cur:'scroll', cn:'Scrolls',
+    { id:'twilight', st:'Pace', ic:'dusk', mode:'twilight', n:'The Twilight Putt', cur:'scroll', cn:'Scrolls',
       regen:960, cap:3, run:30, pay:0.018, gear:0.25, floorRar:1,
       d:'Putts until the light goes. Each one that drops is worth more than the last.',
-      how:'Runs on tempo: the quicker you swing, the more putts you get before dark. Half of them drop, whatever the bag.' }
+      how:'Runs on pace: the quicker you play, the more putts you get before dark. Half of them drop, whatever the bag.' }
   ],
   DRIVE_SHOTS: 6, DRIVE_GAP: 2.0, DRIVE_WIND: [0.72, 1.38],
   ISLAND_GAP: 2.8, ISLAND_BASE: 0.56, ISLAND_CRIT: 0.42, ISLAND_DECAY: 0.035,
@@ -2717,7 +2717,7 @@ const B = {
       d:'A purse set',
       tiers:[ {n:2, gld:0.15}, {n:4, gld:0.40}, {n:6, gld:1.00} ] },
     { id:'stormforge', n:'Stormforge', mk:'Stormforge', ic:'hammer', named:true,
-      d:'A tempo set',
+      d:'A pace set',
       tiers:[ {n:2, spd:0.06}, {n:4, spd:0.15}, {n:6, spd:0.30} ] },
     { id:'twinline', n:'Twinline', mk:'Twinline', ic:'chevrons', named:true,
       d:'A provisionals set',
@@ -2782,7 +2782,7 @@ const B = {
   STATS: [
     { id:'drive',   n:'Drive',   ic:'muscle', d:'Yardage on every swing',  v:'+1.2% swing power',
       mile:{ at:60, n:'Off The Tee', d:'First swing of each hole hits triple' } },
-    { id:'tempo',   n:'Tempo',   ic:'beat',   d:'Swings per second',       v:'+0.30% tempo',
+    { id:'tempo',   n:'Pace',    ic:'beat',   d:'Plays every hole faster', v:'+0.30% pace',
       mile:{ at:60, n:'Quick Play', d:'A hole can end almost at once' } },
     { id:'touch',   n:'Touch',   ic:'touch',  d:'Contact off the middle',  v:'+0.10pp pure, +0.03x payoff',
       mile:{ at:60, n:'Flush', d:'Pure strikes ignore armour' } },
@@ -3585,7 +3585,7 @@ const B = {
   CPERK_EVERY: 30,
   CPERKS: [
     { id:'book',   ic:'cpbook', col:'#FFB347', s:'+15% power', n:'Yardage Book',    cost:150, k:'cPow',  v:15,   t:8,  w:'POWER',  d:'+15% swing power for 8s' },
-    { id:'tempo',  ic:'cptempo', col:'#57E0BE', s:'+20% tempo', n:'Tempo Call',      cost:150, k:'cSpd',  v:20,   t:8,  w:'TEMPO',  d:'+20% tempo for 8s' },
+    { id:'tempo',  ic:'cptempo', col:'#57E0BE', s:'+20% pace', n:'Pace Call',      cost:150, k:'cSpd',  v:20,   t:8,  w:'PACE',  d:'+20% pace for 8s' },
     { id:'read',   ic:'cpread', col:'#9BE66B',  s:'+8% pure strike', n:'Green Reader',    cost:150, k:'cCrt',  v:0.08, t:8,  w:'PURE',   d:'+8% pure strike chance for 8s' },
     { id:'towel',  ic:'cptowel', col:'#8FD3FF', s:'+25% provisional', n:'Towel Service',   cost:150, k:'cMst',  v:25,   t:8,  w:'PROV',   d:'+25% provisional chance for 8s' },
     // gear luck is only read when a hole ends, so this one waits for that:
@@ -3599,7 +3599,7 @@ const B = {
     // the Mythic one: only the three dearest caddies wear it (MYTH_CADDIES).
     // Three lifts at once, and the caddie casts it into him in his own
     // colours (Scene.drawFavour); its light comes down in them too
-    { id:'myth',   ic:'cpmyth', col:'#F27CFF',  s:'+20% power, tempo, purse', n:'Mythic Favour', cost:600, k:'cPow', also:['cSpd', 'cGold'], v:20, t:8, w:'FAVOUR', myth:1, d:'+20% power, tempo and prize money for 8s' }
+    { id:'myth',   ic:'cpmyth', col:'#F27CFF',  s:'+20% power, pace, purse', n:'Mythic Favour', cost:600, k:'cPow', also:['cSpd', 'cGold'], v:20, t:8, w:'FAVOUR', myth:1, d:'+20% power, pace and prize money for 8s' }
   ],
   // (col: the colour of the blessing each one sends down on the golfer, and
   // of its line by the settings cog while it lasts)
@@ -4455,7 +4455,7 @@ function itemScore(it){
 const setEffect = t => Object.keys(t).filter(k => k !== 'n').map(k => ({
     pow:'+' + Math.round(t[k]*100) + '% swing', crt:'+' + (t[k]*100).toFixed(0) + 'pp pure',
     cpw:'+' + t[k].toFixed(1) + 'x payoff', elm:'+' + Math.round(t[k]*100) + '% affinity',
-    gld:'+' + Math.round(t[k]*100) + '% purse', spd:'+' + Math.round(t[k]*100) + '% tempo',
+    gld:'+' + Math.round(t[k]*100) + '% purse', spd:'+' + Math.round(t[k]*100) + '% pace',
     mst:'+' + Math.round(t[k]*100) + 'pp provisional', drp:'+' + Math.round(t[k]*100) + 'pp gear luck',
     dgn:'+' + Math.round(t[k]*100) + '% wager haul'
   })[k]).join(', ');
@@ -4995,7 +4995,7 @@ function checkAch(){
     else if(r.k === 'scroll'){ S.scroll += r.v; got = '+' + r.v + ' ' + plural(r.v, 'scrolls'); }
     else if(r.k === 'legacy'){ S.legacy += r.v; got = '+' + r.v + ' legacy'; }
     else if(r.k === 'crt' || r.k === 'drp' || r.k === 'prc') got = '+' + (r.v*100).toFixed(1) + 'pp ' + r.k;
-    else got = '+' + Math.round(r.v*100) + '% ' + ({ pow:'swing power', gld:'purse', spd:'tempo',
+    else got = '+' + Math.round(r.v*100) + '% ' + ({ pow:'swing power', gld:'purse', spd:'pace',
       mst:'provisional chance', elm:'affinity', dgn:'wager haul' }[r.k] || r.k);
     // "Unlocked" and not "Achievement unlocked". The eyebrow is its own line,
     // and at the width a toast is allowed on a 320 phone the longer one wrapped
@@ -5875,7 +5875,7 @@ function renderLeave(){
 const DGN_GUIDE = {
   sand: ['Six swings, and only the longest counts.',
          'Each swing gets its own wind, from a headwind of \u00d70.72 to a tailwind of \u00d71.38.',
-         'Tempo does nothing here: it all rides on one strike, so swing power, pure strike (its chance and its payoff), affinity and provisionals are what win it.',
+         'Pace does nothing here: it all rides on one strike, so swing power, pure strike (its chance and its payoff), affinity and provisionals are what win it.',
          'Pays grit, by how far the longest went.'],
   water: ['Across the water to an island green, again and again.',
           'The first green is a gimme. Each one after it multiplies the pot by 1.9, and each is a little harder to hit.',
@@ -5886,7 +5886,7 @@ const DGN_GUIDE = {
            'It runs on affinity chance, not power, and reads the raw figure before its cap: a bag that rarely procs drops few chips.',
            'Pays scrolls.'],
   vault: ['Down floor after floor of the members\u2019 vault before the clock runs out. Each floor is longer than the last, and you start where you left off last time.',
-          'It runs on your carry: swing power and tempo together.',
+          'It runs on your carry: swing power and pace together.',
           'Each time you clear a floor there is a 38% chance of a turn on the next one, called out on the field:',
           '@events',
           'Pays purse, by how deep you got.'],
@@ -5894,7 +5894,7 @@ const DGN_GUIDE = {
              'You carry one ball, one more for every whole point of provisional chance, and a chance at one more on top: more balls, more holes.',
              'Pays grit.'],
   twilight: ['Putts until the light goes. About half of them drop, whatever the bag, and each one that drops is worth more than the last.',
-             'It runs on tempo: the quicker you swing, the more putts you get in before dark.',
+             'It runs on pace: the quicker you play, the more putts you get in before dark.',
              'Pays scrolls.']
 };
 const DGN_EVENT_SAY = {
@@ -25898,7 +25898,7 @@ function achReward(a){
   if(r.k === 'scroll') return '+' + r.v + ' ' + plural(r.v, 'scrolls');
   if(r.k === 'legacy') return '+' + r.v + ' legacy';
   if(r.k === 'crt' || r.k === 'drp' || r.k === 'prc') return '+' + (r.v*100).toFixed(1) + 'pp';
-  const nm = { pow:'swing power', gld:'purse', spd:'tempo', mst:'provisional chance',
+  const nm = { pow:'swing power', gld:'purse', spd:'pace', mst:'provisional chance',
                elm:'affinity power', dgn:'wager haul' }[r.k] || r.k;
   return '+' + Math.round(r.v*100) + '% ' + nm;
 }

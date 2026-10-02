@@ -199,8 +199,8 @@ module.exports = {
     if (r.book !== r.want) throw new Error('two perks and changing back cost ' + r.book + ', their prices are ' + r.want);
     if (!/^tempo 0 /.test(r.back)) throw new Error('changing back to an owned perk was not free: ' + r.back);
     if (r.early) throw new Error('the perk went off before ' + r.every + ' seconds');
-    if (r.fired !== '20/8') throw new Error('Tempo Call did not give +20% tempo for 8s: ' + r.fired);
-    if (!(r.spdUp > 1.15)) throw new Error('with Tempo Call live the tempo moved by x' + r.spdUp.toFixed(3));
+    if (r.fired !== '20/8') throw new Error('Pace Call did not give +20% pace for 8s: ' + r.fired);
+    if (!(r.spdUp > 1.15)) throw new Error('with Pace Call live the pace moved by x' + r.spdUp.toFixed(3));
     if (r.quiet) throw new Error('the perk went off during a catch-up');
     if (r.none) throw new Error('with no perk worn, ' + r.none + ' buffs went off');
     if (!(r.xpUp > 1.29 && r.xpUp < 1.31)) throw new Error('Course Notes moved xp by x' + (r.xpUp || 0).toFixed(3) + ', not x1.30');
@@ -235,7 +235,7 @@ module.exports = {
     if (!r.scoutSpent) throw new Error('Lost Ball Scout was still armed after the hole it was for');
     if (!(r.after > 1)) throw new Error('after the swing the camera did not move on: ' + r.after.toFixed(2));
     return ['the fairy stays clear of the golfer in all ' + r.poses + ' poses, club and all',
-      r.n + ' perks: bought once, one worn, free to change; +20% tempo for 8s every ' + r.every + 's, none in a catch-up;'
+      r.n + ' perks: bought once, one worn, free to change; +20% pace for 8s every ' + r.every + 's, none in a catch-up;'
         + ' Course Notes x' + r.xpUp.toFixed(2) + ' xp, Club Selection x' + r.cpwUp.toFixed(2) + ' pure power, Ready Golf 1s off',
       'the fairy cheers a birdie or better, sighs at a bogey or worse, keeps quiet at par and in a catch-up (' + r.react + '),'
         + ' and a quip comes round ("' + r.quip.slice(5) + '")',

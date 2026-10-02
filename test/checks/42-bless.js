@@ -3,7 +3,7 @@
  * When the caddie's perk goes off, he throws his arms up and a column of the
  * perk's own colour comes down on the golfer from above and fades; right of
  * the settings cog a line in the same colour says what it gives and for how
- * long ("+20% tempo for 8s"), counts the seconds down and fades out as they
+ * long ("+20% pace for 8s"), counts the seconds down and fades out as they
  * run out.
  *
  *   - every perk has a colour of its own, and the light that comes down is
@@ -147,9 +147,9 @@ module.exports = {
     if (r.bad.length) f(r.bad.slice(0, 5).join('; '));
     if (!(r.arms > 3)) f('the caddie casting looked the same as standing (' + r.arms + ' pixels)');
     const L = r.lines;
-    if (L.t8.txt !== '+20% tempo for 8s' || !L.t8.on || L.t8.col !== r.want.tempo) f('Tempo Call went off and the line read "' + L.t8.txt + '" in ' + L.t8.col);
-    if (L.t4.txt !== '+20% tempo for 4s' || L.t4.op !== '1') f('3.2s left read "' + L.t4.txt + '" at ' + L.t4.op);
-    if (L.t1.txt !== '+20% tempo for 1s' || L.t1.op !== '0.5') f('half a second left read "' + L.t1.txt + '" at ' + L.t1.op + ', not faded half way');
+    if (L.t8.txt !== '+20% pace for 8s' || !L.t8.on || L.t8.col !== r.want.tempo) f('Pace Call went off and the line read "' + L.t8.txt + '" in ' + L.t8.col);
+    if (L.t4.txt !== '+20% pace for 4s' || L.t4.op !== '1') f('3.2s left read "' + L.t4.txt + '" at ' + L.t4.op);
+    if (L.t1.txt !== '+20% pace for 1s' || L.t1.op !== '0.5') f('half a second left read "' + L.t1.txt + '" at ' + L.t1.op + ', not faded half way');
     if (L.t0.txt || L.t0.on) f('the buff spent, the line still read "' + L.t0.txt + '"');
     if (L.scout.txt !== '+10% gear luck next hole' || L.scout.col !== r.want.scout || L.scout30.txt !== L.scout.txt || L.scout30.op !== '1')
       f('Lost Ball Scout read "' + L.scout.txt + '" and 30s on "' + L.scout30.txt + '"');
@@ -160,8 +160,8 @@ module.exports = {
     if (St.two.length !== 2 || St.two[0].k !== 'c' || St.two[1].k !== 'p:hot' || St.two[1].txt !== '5\u00d7 purse for 7:40' || St.two[1].col !== brass || Math.abs(St.two[0].mid) > 4 || !(St.two[1].mid > 8))
       f('a caddie perk and Hot Streak running read: ' + rows(St.two));
     if (St.up.length !== 1 || St.up[0].k !== 'p:hot' || Math.abs(St.up[0].mid) > 4) f('the caddie\'s line gone, the rest did not move up to the cog: ' + rows(St.up));
-    if (St.again.map(x => x.k).join() !== 'p:hot,c' || St.again[1].txt !== '+20% tempo for 8s') f('a caddie perk going off again did not go under the one showing: ' + rows(St.again));
-    if (St.three.map(x => x.k + ' ' + x.txt).join('|') !== 'p:hot 5\u00d7 purse for 60s|c +20% tempo for 8s|p:coffee 2\u00d7 tempo for 5:00' && St.three.map(x => x.k + ' ' + x.txt).join('|') !== 'p:hot 5\u00d7 purse for 59s|c +20% tempo for 8s|p:coffee 2\u00d7 tempo for 5:00')
+    if (St.again.map(x => x.k).join() !== 'p:hot,c' || St.again[1].txt !== '+20% pace for 8s') f('a caddie perk going off again did not go under the one showing: ' + rows(St.again));
+    if (St.three.map(x => x.k + ' ' + x.txt).join('|') !== 'p:hot 5\u00d7 purse for 60s|c +20% pace for 8s|p:coffee 2\u00d7 pace for 5:00' && St.three.map(x => x.k + ' ' + x.txt).join('|') !== 'p:hot 5\u00d7 purse for 59s|c +20% pace for 8s|p:coffee 2\u00d7 pace for 5:00')
       f('three running read: ' + rows(St.three));
     if (St.fade[0].k !== 'p:hot' || St.fade[0].op !== '0.5') f('a sponsor perk in its last half second: ' + rows(St.fade) + ' at ' + St.fade[0].op);
     if (St.none.length) f('with nothing running the stack still read: ' + rows(St.none));

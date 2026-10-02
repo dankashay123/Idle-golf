@@ -83,10 +83,10 @@ module.exports = {
         const read = n => { const x = row(n), b = x.querySelector('.buy');
           return { mt: x.querySelector('.mt').textContent, lbl: b.children[0].textContent, amt: b.children[1].textContent, gem: !!b.children[1].querySelector('img.tsov'),
                    ds: x.querySelector('.ds').textContent }; };
-        o.worn = read('Tempo Call'); o.other = read('Sponsor Chat'); o.none = read('Green Reader');
-        const s0 = S.sov; row('Tempo Call').querySelector('.buy').click();
+        o.worn = read('Pace Call'); o.other = read('Sponsor Chat'); o.none = read('Green Reader');
+        const s0 = S.sov; row('Pace Call').querySelector('.buy').click();
         o.clicked = [cperkLv('tempo'), s0 - S.sov].join();
-        S.cperkLv.tempo = 5; renderCadPerks(); o.atTop = read('Tempo Call');
+        S.cperkLv.tempo = 5; renderCadPerks(); o.atTop = read('Pace Call');
         S.cperkLv.tempo = 2; renderCadPerks();
 
         // ---- a save with junk in it ----
@@ -151,10 +151,10 @@ module.exports = {
     if (r.notOwned !== 'false,1') f('a perk not owned was upgraded: ' + r.notOwned);
     if (r.lv1.some(Boolean)) f('at Lv 1 these no longer read as they did: ' + r.lv1.filter(Boolean).join(', '));
     if (r.bad.length) f(r.bad.length + ' perk levels do not do what they say: ' + r.bad.slice(0, 4).join('; '));
-    if (!(Math.abs(r.spd5 - 1.30) < 0.02 && Math.abs(r.spd1 - 1.20) < 0.02)) f('Tempo Call moved tempo by x' + r.spd1.toFixed(3) + ' at Lv 1 and x' + r.spd5.toFixed(3) + ' at Lv 5, not 1.20 and 1.30');
-    if (r.line3 !== '+25% tempo for 10s') f('Tempo Call at Lv 3 read "' + r.line3 + '" by the cog');
+    if (!(Math.abs(r.spd5 - 1.30) < 0.02 && Math.abs(r.spd1 - 1.20) < 0.02)) f('Pace Call moved pace by x' + r.spd1.toFixed(3) + ' at Lv 1 and x' + r.spd5.toFixed(3) + ' at Lv 5, not 1.20 and 1.30');
+    if (r.line3 !== '+25% pace for 10s') f('Pace Call at Lv 3 read "' + r.line3 + '" by the cog');
     if (!/1\.5s hole clock/.test(r.lineReady5)) f('Ready Golf at Lv 5 read "' + r.lineReady5 + '" by the cog');
-    if (!/Worn · Lv 2\/5/.test(r.worn.mt) || r.worn.lbl !== 'To Lv 3' || r.worn.amt !== '160' || r.worn.ds !== '+23% tempo for 9s')
+    if (!/Worn · Lv 2\/5/.test(r.worn.mt) || r.worn.lbl !== 'To Lv 3' || r.worn.amt !== '160' || r.worn.ds !== '+23% pace for 9s')
       f('the worn row reads ' + JSON.stringify(r.worn));
     if (r.other.mt !== 'Lv 5/5' || r.other.lbl !== 'Wear' || r.other.ds !== '+38% prize money for 12s') f('an owned Lv 5 row reads ' + JSON.stringify(r.other));
     // a price in sovereigns is the purple gem beside the number, not the word
@@ -171,7 +171,7 @@ module.exports = {
     if (!fit.inside || fit.cut || fit.h < 24) f('at 320 wide the worn row\'s upgrade button is out of its row or cut: ' + JSON.stringify(fit));
     if (!fit.no) f('with 50 sovereigns the upgrade button did not show it cannot be bought');
     return ['each step costs its price (' + r.paid + ') and stops at Lv 5; not without the sovereigns, not on a perk not owned',
-      'all ' + (r.lv1.length) + ' perks at every level do and say what they should (Tempo Call x' + r.spd1.toFixed(2) + ' at Lv 1, x' + r.spd5.toFixed(2) + ' at Lv 5); Lv 1 unchanged',
+      'all ' + (r.lv1.length) + ' perks at every level do and say what they should (Pace Call x' + r.spd1.toFixed(2) + ' at Lv 1, x' + r.spd5.toFixed(2) + ' at Lv 5); Lv 1 unchanged',
       'the worn row reads "' + r.worn.mt + '", its button "' + r.worn.lbl + ' ' + r.worn.amt + '" upgrades it; fits at 320; junk levels repaired',
       'Head Caddie at Lv 5, paid once; the Lv 5 blessing ' + r.b5.w + 'px wide against ' + r.b1.w + ' and still up at 1.55s'];
   }
