@@ -2,13 +2,15 @@
  * detailed, full body", in place of the Spirit Blossom, which was "just a
  * shirt basically"): the skin, its caddie, driver, trail and ball, Mythic.
  *
- *   - all of him changed, not just his shirt: a hood over his cap with its
- *     peak standing above it, the gold mask of his face with a violet eye,
- *     a black hole on his chest ringed in gold, a gold crescent off his
- *     shoulder, gold at his knees, a cloak of stars from his shoulders to
- *     his heels behind him (down his back, walking away)
- *   - two ghostly hands of cyan light behind him side on, one either side
- *     of him walking away
+ *   - all of him changed, not just his shirt (redrawn after two more
+ *     pictures): a hood over his cap standing above it, nothing but dark
+ *     inside it (no gold mask), a gold crown on it set with violet gems, a
+ *     violet gem at his chest set in gold, a gold crescent off his
+ *     shoulder, a robe over his legs to the ground worked in gold with a
+ *     gold hem, a cloak of stars from his shoulders to his heels behind him
+ *     (down his back, walking away)
+ *   - two hands of bone behind him side on, a black hole turning over each,
+ *     one either side of him walking away
  *   - all of it close about him: nothing more than two of his widths out
  *     or far over his head, idle, swinging or walking
  *   - its moment on a great hole makes no sound (the user wants no more)
@@ -49,29 +51,34 @@ module.exports = {
         const HOOD = ['#1C1640', '#0B0818', '#2A2158', '#D8B060', '#7A4ED8', '#9A7432', '#F4DC96'];
         o.peak = has(P, HOOD, (x, y) => y < hd.y - 2 && Math.abs(x - hd.x) < hd.w * 1.2);
         if (!(o.peak >= 6)) f('no hood standing over his cap: ' + o.peak + ' pixels above it');
-        o.mask = has(P, ['#C9A45C', '#8A6A30'], (x, y) => y > hd.y && y < hd.y + H * 0.2);
-        const E = eyeAt(G); o.eye = has(P, ['#B98CFF', '#FFFFFF'], (x, y) => Math.abs(x - E.x) <= 2 && Math.abs(y - E.y) <= 1);
-        // (5: his face is a row shorter since the address stance was redrawn
-        // after the user's picture, taller and less bent over)
-        if (!(o.mask >= 5) || !(o.eye >= 2)) f('the gold mask ' + o.mask + ' pixels, the violet eye ' + o.eye);
+        // (since the user's second pictures: nothing but dark in his hood,
+        // no face, no gold mask; a gold crown on it set with a violet gem)
+        o.dark = has(P, ['#05030C', '#07040F'], (x, y) => y > hd.y && y < hd.y + H * 0.2 && x > hd.x - hd.w * 0.2);
+        o.mask = has(P, ['#C9A45C', '#8A6A30'], () => true);
+        if (!(o.dark >= 5) || o.mask) f('the dark in his hood ' + o.dark + ' pixels, his old gold mask ' + o.mask);
+        const above = (x, y) => y < hd.y && Math.abs(x - hd.x) < hd.w * 1.5;
+        o.crown = [has(P, ['#D8B060', '#F4DC96', '#E8C878', '#9A7432'], above), has(P, ['#7A2AB0', '#C860F0', '#F2C8FF'], above)];
+        if (!(o.crown[0] >= 12) || !(o.crown[1] >= 3)) f('the crown on his hood: gold ' + o.crown[0] + ', violet gems ' + o.crown[1]);
         const C = STYLEFX.cosmic.coreAt(G);
-        o.orb = [has(P, ['#05030C'], (x, y) => Math.abs(x - C.x) <= 2 && Math.abs(y - C.y) <= 2), has(P, ['#D8B060', '#9A7432'], (x, y) => Math.abs(x - C.x) <= 4 && Math.abs(y - C.y) <= 4)];
-        if (!(o.orb[0] >= 3) || !(o.orb[1] >= 4)) f('the black hole on his chest: dark ' + o.orb[0] + ', gold ring ' + o.orb[1]);
+        o.orb = [has(P, ['#7A2AB0', '#C860F0'], (x, y) => Math.abs(x - C.x) <= 2 && Math.abs(y - C.y) <= 2), has(P, ['#D8B060', '#9A7432'], (x, y) => Math.abs(x - C.x) <= 4 && Math.abs(y - C.y) <= 4)];
+        if (!(o.orb[0] >= 3) || !(o.orb[1] >= 4)) f('the violet gem at his chest: violet ' + o.orb[0] + ', gold setting ' + o.orb[1]);
         o.crescent = has(P, ['#D8B060', '#9A7432', '#F4DC96'], (x, y) => y < G.y + H * 0.28 && x < hd.x - hd.w * 0.6);
         if (!(o.crescent >= 8)) f('the crescent off his shoulder: ' + o.crescent + ' pixels of gold behind his head');
-        // (in his own picture: the gold bands of his greaves at the knee)
-        { const sp = SPRITE.gAddr, d = sp.cv.getContext('2d').getImageData(0, 0, sp.w, sp.h).data; o.knee = 0;
-          for (let y = 40; y < 46; y++) for (let x = 0; x < sp.w; x++) { const q = (y * sp.w + x) * 4; if (d[q + 3] && ['#D8B060', '#9A7432'].includes(col(d, q))) o.knee++; } }
-        if (!(o.knee >= 3)) f('gold at his knees: ' + o.knee);
+        // his robe over his legs to the ground: gold scrollwork on it below
+        // his waist, and its gold hem at his feet
+        o.robe = [has(P, ['#D8B060'], (x, y) => y > G.y + H * 0.55 && y < G.bot - H * 0.08 && x > G.x + G.w * 0.15 && x < G.x + G.w * 0.6),
+                  has(P, ['#9A7432'], (x, y) => y >= G.bot - H * 0.05 && y <= G.bot && x > G.x && x < G.x + G.w * 0.7)];
+        if (!(o.robe[0] >= 20) || !(o.robe[1] >= 10)) f('his robe to the ground: gold on it ' + o.robe[0] + ', its hem ' + o.robe[1]);
         const STARS = ['#FFFFFF', '#B98CFF', '#7FE6FF'], CLOAK = ['#0B0818', '#141030', '#1C1640', '#2A3A8A', '#6A2A7A', '#3E2A6E'];
         // (above the galaxy on the grass, which has colours of its own)
         const low = (x, y) => x < G.x + G.w * 0.25 && y > G.y + H * 0.5 && y < G.bot - H * 0.14;
         o.cloak = has(P, CLOAK, low);
         o.cloakStars = has(P, STARS, low);
         if (!(o.cloak >= 60) || !(o.cloakStars >= 2)) f('the cloak of stars behind him to his heels: ' + o.cloak + ' pixels low down, ' + o.cloakStars + ' stars');
-        const CYAN = ['#7FE6FF', '#3FA6D8', '#D8FAFF'];
+        const CYAN = ['#7FE6FF', '#C8F4FF', '#D8FAFF'];
         o.hands = has(P, CYAN, (x) => x < G.x + G.w * 0.2);
-        if (!(o.hands >= 40)) f('the ghostly hands behind him: ' + o.hands + ' pixels');
+        o.holes = has(P, ['#B98CFF', '#7A4ED8'], (x, y) => x < G.x + G.w * 0.2 && y < G.y + H * 0.5);
+        if (!(o.hands >= 40) || !(o.holes >= 20)) f('the hands of bone behind him: ' + o.hands + ' pixels, the black holes over them ' + o.holes);
         const back = draw(0, true, 50, true), PB = all(back), GB = back.g;
         o.backCloak = has(PB, CLOAK.concat(STARS, ['#D8B060', '#9A7432']), (x, y) => x > GB.x + GB.w * 0.3 && x < GB.x + GB.w * 0.7 && y > GB.y + H * 0.3 && y < GB.y + H * 0.8);
         const area = (GB.w * 0.4) * (H * 0.5);
@@ -122,7 +129,7 @@ module.exports = {
     });
     if (r.fails.length) throw new Error(r.fails.join('; '));
     return ['the set, all Mythic: ' + r.set + '; a save with the Spirit Blossom now wears The Void',
-      'all of him: a hood peaked over his cap (' + r.peak + 'px), a gold mask (' + r.mask + ') with a violet eye, a black hole on his chest (' + r.orb.join('/') + '), a crescent off his shoulder (' + r.crescent + '), gold at the knee, a cloak of stars to his heels (' + r.cloak + ', ' + r.cloakStars + ' stars)',
-      'his caddie orbed (' + r.caddie.pink + 'px of orb, ' + r.caddie.gold + ' of gold); ghostly hands behind him (' + r.hands + 'px) and either side walking away (' + r.backHands.join('/') + '), the cloak down his back; nothing far from him across ' + r.frames + ' frames; no sound on its moment'];
+      'all of him: a hood over his cap (' + r.peak + 'px), dark inside (' + r.dark + '), a gold crown on it with violet gems (' + r.crown.join('/') + '), a violet gem at his chest (' + r.orb.join('/') + '), a crescent off his shoulder (' + r.crescent + '), a robe to the ground worked in gold (' + r.robe.join('/') + '), a cloak of stars to his heels (' + r.cloak + ', ' + r.cloakStars + ' stars)',
+      'his caddie orbed (' + r.caddie.pink + 'px of orb, ' + r.caddie.gold + ' of gold); hands of bone behind him holding up black holes (' + r.hands + '/' + r.holes + 'px) and either side walking away (' + r.backHands.join('/') + '), the cloak down his back; nothing far from him across ' + r.frames + ' frames; no sound on its moment'];
   }
 };

@@ -3511,15 +3511,16 @@ const B = {
       cap:'#2A1E48', cap2:'#221840', shirt:'#2A2060', shirt2:'#1E1848', shirt3:'#151036', pant:'#2A2236', pant2:'#1C1626',
       skin:'#120A1E', skin2:'#0A0614', shoe:'#3A3048', belt:'#9A6AD8', hair:'#221840', hand:'#A49CC8', bulk:1, arm:'#3A3456', arm2:'#262040' },
     // The Void (the user sent a picture of a dark cosmic sorcerer: "extremely
-    // detailed, full body"): a hooded figure in indigo robes starred like the
-    // night, a gold mask with one violet eye, a black hole burning in his
-    // chest, a gold crescent off his shoulder, armoured greaves and plates at
-    // his hips, a cloak of stars to his heels, two ghostly hands of cyan
-    // light floating behind him, rocks circling him and a galaxy turning
-    // under his feet. His caddie, driver, trail and ball to match.
-    { id:'cosmic', n:'The Void',         cost:3500, fx:'cosmic', cat:'skin', top:2, pattern:'cosmos', pantPattern:'greave',
+    // detailed, full body"; then two more, which he now follows): a hooded
+    // figure with nothing but dark in his hood, a gold crown on it set with
+    // a violet gem, a bell of a robe to the ground starred like the night
+    // and worked in gold, a gold crescent off his shoulder, a cloak of stars
+    // to his heels, hands of bone holding up black holes, orbs circling him
+    // and the void open under his feet. His caddie, driver, trail and ball
+    // to match.
+    { id:'cosmic', n:'The Void',         cost:3500, fx:'cosmic', cat:'skin', top:2, pattern:'filigree',
       cap:'#1C1640', cap2:'#0B0818', shirt:'#2A2158', shirt2:'#1C1640', shirt3:'#141030', pant:'#1C1640', pant2:'#0B0818',
-      skin:'#C9A45C', skin2:'#8A6A30', shoe:'#9A7432', belt:'#B98CFF', hair:'#0B0818', hand:'#D8B060',
+      skin:'#07040F', skin2:'#05030C', shoe:'#1C1640', belt:'#D8B060', hair:'#0B0818', hand:'#C8F4FF',
       // (bulkier than the plain golfer, the user asked: thicker arms in
       // dark plate, and his outline built out in armour)
       bulk:1, arm:'#2A2158', arm2:'#1C1640' },
@@ -7439,10 +7440,12 @@ const ICON_FX = {
   cosmic(P, caddie){
     const G = '#D8B060', L = '#F4DC96', V = '#B98CFF', W = '#FFFFFF', K = '#05030C', C = '#7FE6FF';
     if(caddie){ P(2, 0, G); P(1, 1, G); P(4, 3, V); P(5, 3, W); P(3, 5, K); P(3, 4, G); P(2, 5, G); P(4, 5, G); P(0, 9, C); P(0, 8, '#D8FAFF'); return; }
-    P(3, 0, G); P(2, 1, G); P(2, 2, G); P(8, 2, V); P(9, 2, W);
-    P(6, 5, K); P(5, 5, G); P(7, 5, G); P(6, 4, G); P(6, 6, '#FF7AD9');
+    // his crown and its gem, the dark of his hood, the gem at his chest, the
+    // crescent, and a hand of bone under a black hole
+    P(3, 0, G); P(4, 0, '#C860F0'); P(5, 0, G); P(6, 0, L); P(8, 2, K); P(9, 2, K);
+    P(6, 5, '#C860F0'); P(5, 5, G); P(7, 5, G); P(6, 4, G); P(6, 6, G);
     P(10, 4, G); P(11, 3, L); P(11, 2, L); P(11, 5, G);
-    P(0, 8, C); P(0, 7, '#D8FAFF'); P(1, 9, '#3FA6D8'); P(0, 10, C);
+    P(0, 6, V); P(1, 6, K); P(1, 5, '#7A4ED8'); P(0, 8, C); P(0, 7, '#D8FAFF'); P(1, 8, '#C8F4FF'); P(0, 9, G);
   },
   demonic(P, caddie){
     const W = '#5E1418', V = '#B0301E', H = '#E8DCC8';
@@ -9665,6 +9668,9 @@ const PATTERNS = {
   // cyan) and a wisp of violet nebula
   cosmos: (x, y) => { const h = hr(x * 3 + 1, y * 7 + 2);
     return h > 0.93 ? (hr(y, x + 11) > 0.55 ? '#FFFFFF' : hr(x, y + 5) > 0.5 ? '#B98CFF' : '#7FE6FF') : h < 0.07 && (x + y) % 3 === 0 ? '#3E2A6E' : null; },
+  // and since his second pictures, gold scrollwork worked over it
+  filigree: (x, y) => { const k = (x * 5 + y * 3) % 13;
+    return k === 0 ? '#D8B060' : k === 1 && (y & 1) ? '#9A7432' : PATTERNS.cosmos(x, y); },
   // the Divine: gold thread worked into his white robe, a scroll of cloud
   // here and there
   heaven: (x, y) => { const k = (x * 5 + y * 3) % 19; return k === 0 ? '#E0AE3E' : k === 1 && (y & 1) ? '#F4D27A' : null; },
@@ -11505,12 +11511,14 @@ const STYLEFX = {
     }
   },
 
-  // The Void (the user's picture of a dark cosmic sorcerer). Everything in
-  // solid pixels, close about him; no wings. Behind him: his cloak of stars,
-  // two ghostly hands of light, the far side of the rocks circling him. Over
-  // him, under his arms: his hood, the plates at his hips. In front: the
-  // crescent off his shoulder, the black hole in his chest, his eye, the
-  // near rocks, a star or two glinting about him.
+  // The Void (redrawn after the user's two pictures of a sorcerer of the
+  // void). Everything in solid pixels, close about him; no wings. Behind
+  // him: his cloak of stars, two hands of bone held up with a black hole
+  // turning over each, the far side of the orbs circling him. Over him,
+  // under his arms: a bell of a robe to the ground worked in gold, his
+  // hood, dark inside, and a gold crown on it set with a violet gem. In
+  // front: the crescent off his shoulder, a violet gem at his chest, a gold
+  // bracelet on his wrist, the near orbs, a star or two glinting.
   cosmic: {
     outline: '#7A4ED8', outlineA: 0.30,
     charge(ph){ return STYLEFX.ascended.charge(ph); },
@@ -11546,7 +11554,7 @@ const STYLEFX = {
     // (built out as everyone is, from his own picture: blitShear)
     bulk(c, g){},
     body(c, g){
-      this.faulds(c, g);
+      this.robe(c, g);
       this.hood(c, g);
     },
     front(c, g){
@@ -11555,23 +11563,44 @@ const STYLEFX = {
       if(g.back){ this.cloak(c, g); this.hood(c, g); }
       this.crescent(c, g);
       this.orb(c, g);
+      this.cuff(c, g);
       this.eye(c, g);
       this.rocks(c, g, true);
       this.glints(c, g);
       this.pull(c, g);
       const L = legendNow(g);
       if(L) outlineBurst(c, g, L, 52, 0.95, (x, y, i, f, dx, dy) => {
-        if(i % 4 === 0) voidRock(c, x, y, 0, true, i >> 2);
+        if(i % 4 === 0) voidSphere(c, x, y, 1);
         else if(i % 4 === 1) voidStar(c, x, y, 1, f < 0.5 ? 2 : 1, f < 0.5 ? '#B98CFF' : '#7A4ED8');
         else burstStreak(c, x, y, dx, dy, f < 0.4 ? '#FFFFFF' : i & 1 ? '#7FE6FF' : '#B98CFF', '#7A4ED8', 2); });
       c.globalAlpha = 1;
     },
     // the pixel scale of his sprite, and the top middle of his cap
     px(g){ return g.h / 58; },
+    // his hood, and his crown on it
     hood(c, g){
       const p = this.px(g), H = g.head, view = g.back ? 'back' : 'side';
       const Hd = voidHood(p, view), sh = g.shear && !g.back ? g.shear(0.1) : 0;
       c.globalAlpha = 1; c.drawImage(Hd.cv, Math.round(H.x + sh - Hd.ox), Math.round(H.y - Hd.oy));
+      const pc = p * (g.minor ? 0.8 : 1), Cr = voidCrown(pc, view);
+      c.drawImage(Cr.cv, Math.round(H.x + sh + (view === 'back' ? 0 : -0.8 * p) - Cr.ox), Math.round(H.y - (view === 'back' ? 5 : 5.4) * p - Cr.oy));
+    },
+    // his robe over his legs, to the ground (his caddie has his bag)
+    robe(c, g){
+      if(g.minor) return;
+      const pose = g.back ? 'back' : g.spr === SPRITE.gFinish || g.spr === SPRITE.gWalk ? 'fin' : 'addr';
+      const Rb = voidRobe(Math.round(g.w), Math.round(g.h), pose), sh = g.shear && !g.back ? g.shear(0.7) : 0;
+      c.globalAlpha = 1; c.drawImage(Rb.cv, Math.round(g.x + g.w * Rb.x / 40 + sh), Math.round(g.y + g.h * Rb.y / 58));
+    },
+    // a gold bracelet on his wrist, a chain hanging from it
+    cuff(c, g){
+      const Hn = g.hand; if(!Hn || g.minor || g.back) return;
+      const S0 = { x: g.x + g.w * (g.spr.ax || 0.66), y: g.y + g.h * (g.spr.ay || 0.30) }, u = 0.8;
+      const X = Math.round(S0.x + (Hn.x - S0.x) * u), Y = Math.round(S0.y + (Hn.y - S0.y) * u), k = Math.max(1, Math.round(g.h / 40));
+      c.globalAlpha = 1; c.fillStyle = '#D8B060'; c.fillRect(X - k, Y - k, k * 2 + 1, k * 2);
+      c.fillStyle = '#F4DC96'; c.fillRect(X - k, Y - k, k, 1);
+      if(g.h >= 45){ const sw = Math.sin(g.t * 2.2) * 1.5;
+        for(let i = 1; i <= 4; i++){ c.fillStyle = i & 1 ? '#9A7432' : '#D8B060'; c.fillRect(Math.round(X + sw * i / 4 - i * 0.3), Y + k + i, 1, 1); } }
     },
     // his cloak of stars, a few of them twinkling
     cloak(c, g){
@@ -11584,30 +11613,6 @@ const STYLEFX = {
         const n = Math.floor(g.t * 1.7 + i * 0.33), S1 = st[Math.floor(hr(n, 401 + i) * st.length)];
         if(((g.t * 1.7 + i * 0.33) % 1) < 0.45) voidStar(c, X + S1[0], Y + S1[1], 1, 1, '#B98CFF');
       }
-    },
-    // the plates at his hips, hung from his belt: before and behind him,
-    // indigo edged in gold with a violet stone; swaying as he swings
-    faulds(c, g){
-      if(g.back || g.minor) return;
-      const B0 = g.spr === SPRITE.gFinish ? BELT_FIN : g.spr === SPRITE.gAddr ? BELT_ADDR : null; if(!B0) return;
-      const p = this.px(g), y0 = Math.round(g.y + g.h * B0.y + p), sh = g.shear ? g.shear(B0.y) : 0;
-      const sway = g.ph > 0 ? Math.sin(g.ph * Math.PI * 2) * p * 1.5 : Math.sin(g.t * 1.3) * p * 0.4;
-      const plate = (xa, wide, len, sw) => {
-        const L = Math.max(3, Math.round(len * p)), x0 = g.x + g.w * xa + sh;
-        for(let r = 0; r < L; r++){
-          // (straight down, then closing to a point)
-          const f = r / L, nar = f > 0.6 ? (f - 0.6) / 0.4 * wide * p * 0.5 : 0;
-          const a = Math.round(x0 + sw * f + nar), b = Math.round(x0 + wide * p + sw * f - nar);
-          if(b - a < 1) continue;
-          c.fillStyle = '#1C1640'; c.fillRect(a, y0 + r, b - a, 1);
-          c.fillStyle = '#9A7432'; c.fillRect(a, y0 + r, 1, 1); c.fillStyle = '#D8B060'; c.fillRect(b - 1, y0 + r, 1, 1);
-          if(f > 0.85){ c.fillStyle = '#D8B060'; c.fillRect(a, y0 + r, b - a, 1); }
-        }
-        const gx = Math.round(x0 + wide * p / 2 - 0.5), gy = y0 + Math.max(2, Math.round(p * 2));
-        if(g.h >= 45) voidOrb(c, gx, gy, 1, g.t + 0.5, false);
-        else{ c.fillStyle = '#B98CFF'; c.fillRect(gx, gy, Math.max(1, Math.round(p)), Math.max(1, Math.round(p))); }
-      };
-      plate(B0.x1 - 5 / 40, 4.5, 12, sway);
     },
     // the crescent off his shoulder (from behind, one off each)
     crescent(c, g){
@@ -11645,17 +11650,18 @@ const STYLEFX = {
     },
     // where the black hole in his chest is (none to see from behind)
     coreAt(g){ return STYLEFX.ascended.coreAt(g); },
+    // a violet gem at his chest in a setting of gold (after the user's
+    // picture); his caddie wears a little void orb
     orb(c, g){
       const C = this.coreAt(g); if(!C) return;
       if(g.minor){ c.fillStyle = '#9A7432'; c.fillRect(C.x - 2, C.y - 1, 5, 3); this.miniOrb(c, C.x, C.y, g.t); c.fillStyle = '#7A4ED8'; c.fillRect(C.x, C.y + 2, 1, 1); return; }
-      // hung on a chain of gold from his collar: a void orb in a heavy ring
-      // of bronze, a point of violet under it (after the user's picture)
-      const r = Math.max(1, Math.round(g.h / 26));
-      c.fillStyle = '#9A7432'; c.fillRect(C.x, C.y - r - 5, 1, 2);
-      const dp = Math.max(2, Math.round(g.h / 16));
-      for(let j = 0; j < dp; j++){ const hw = Math.max(0, Math.round((1 - j / dp) * (r + 1)));
-        c.fillStyle = j === dp - 1 ? '#B98CFF' : j & 1 ? '#3E2A6E' : '#7A4ED8'; c.fillRect(C.x - hw, C.y + r + 3 + j, hw * 2 + 1, 1); }
-      voidOrb(c, C.x, C.y, r, g.t, true);
+      const r = Math.max(2, Math.round(g.h / 20));
+      c.globalAlpha = 1;
+      for(let j = -r - 1; j <= r + 1; j++){ const hw = r + 1 - Math.abs(j);
+        c.fillStyle = Math.abs(j) === r + 1 || hw === 0 ? '#9A7432' : '#D8B060'; c.fillRect(C.x - hw, C.y + j, hw * 2 + 1, 1); }
+      for(let j = -r + 1; j <= r - 1; j++){ const hw = r - 1 - Math.abs(j);
+        c.fillStyle = j < 0 ? '#C860F0' : '#7A2AB0'; c.fillRect(C.x - hw, C.y + j, hw * 2 + 1, 1); }
+      c.fillStyle = Math.sin(g.t * 2.6) > 0.3 ? '#FFFFFF' : '#F2C8FF'; c.fillRect(C.x - 1, C.y - 1, 1, 1);
     },
     // as he winds up, starlight is pulled in to the black hole in his chest
     pull(c, g){
@@ -11667,39 +11673,38 @@ const STYLEFX = {
         c.fillRect(Math.round(C.x + Math.cos(a) * r), Math.round(C.y + Math.sin(a) * r * 0.55), 1, 1);
       }
     },
-    // one violet eye in the gold mask, a star flaring in it now and then
+    // a glint of violet deep in the dark of his hood, now and then
     eye(c, g){
       const E = eyeAt(g); if(!E) return;
       const X = Math.round(E.x), Y = Math.round(E.y);
       c.globalAlpha = 1;
-      if(g.minor){ c.fillStyle = '#FFFFFF'; c.fillRect(X, Y, 1, 1); return; }
-      c.fillStyle = '#7A4ED8'; c.fillRect(X - 1, Y, 3, 1);
-      c.fillStyle = '#B98CFF'; c.fillRect(X, Y, 2, 1);
-      c.fillStyle = '#FFFFFF'; c.fillRect(X, Y, 1, 1);
-      const f = (g.t / 2.3) % 1;
-      if(f < 0.14 || legendNow(g)) voidStar(c, X, Y, 1, 2);
+      if(g.minor){ c.fillStyle = '#7A4ED8'; c.fillRect(X, Y, 1, 1); return; }
+      c.fillStyle = (g.t / 2.3) % 1 < 0.3 ? '#B98CFF' : '#3E2A6E'; c.fillRect(X, Y, 1, 1);
     },
-    // two ghostly hands of cyan light floating behind him, one up by his
-    // shoulder and one down by his hip, rising as he winds up; from behind,
-    // one either side of him. The arm each belongs to thins away below it.
+    // two hands of bone held up behind him (one by his shoulder, one by his
+    // hip; from behind, one either side of him), a black hole turning over
+    // each with wisps of light streaming off it, rising as he winds up
     hands(c, g){
       if(g.h < 30) return;
       const k = Math.max(1, Math.round(g.h / 50)), L = legendNow(g), q = L ? 1 : this.charge(g.ph);
       const out = L ? 1 + (L.big ? 0.5 : 0.35) * outBack(L.f, 0.2) : 1;
-      const A = wingAnchor(g), hw = 9 * k, hh = 10 * k;
-      const spots = g.back ? [[-0.78, -0.02, 0, true], [0.78, -0.02, 1, false]]
-                           : [[-0.48, -0.22 - q * 0.10, 0, false], [-0.8, 0.12 - q * 0.04, 1.7, false]];
+      const A = wingAnchor(g), hw = 9 * k, hh = 10 * k, R = Math.max(3, Math.round(g.h * 0.075));
+      const spots = g.back ? [[-0.82, 0.02, 0, true], [0.82, 0.02, 1, false]]
+                           : [[-0.5, -0.06 - q * 0.10, 0, false], [-0.86, 0.22 - q * 0.04, 1.7, false]];
       for(const [fx, fy, ph, flip] of spots){
         const bob = Math.sin(g.t * 1.6 + ph) * g.h * 0.02;
         const x = Math.round(A.x + fx * g.w * out - hw / 2), y = Math.round(A.y + fy * g.h * out + bob - hh / 2);
-        // the arm below it, fading in a dither
-        for(let i = 1; i <= 6; i++){ const yy = y + hh + (i - 1) * k, xx = x + Math.round(hw / 2 - k + Math.sin(g.t * 2 + i * 0.7 + ph) * k);
-          if(i > 3 && (i + Math.floor(g.t * 6)) & 1) continue;
-          c.fillStyle = i < 3 ? '#7FE6FF' : '#3FA6D8'; c.fillRect(xx, yy, k * (i < 4 ? 3 : 2), k); }
         c.globalAlpha = 1; c.drawImage(voidHand(k, flip), x, y);
+        // the black hole over his palm, and its wisps streaming back
+        const ox = x + Math.round(hw / 2) + (flip ? -k : k), oy = y - R - k, dir = g.back ? (flip ? -1 : 1) : -1;
+        for(let w2 = 0; w2 < 3; w2++){ let px = ox - dir * R, py = oy + (w2 - 1) * R * 0.5;
+          for(let i = 1; i <= 5; i++){ const nx = px - dir * R * 0.45, ny = py + Math.sin(g.t * 3 + i * 0.9 + w2 * 2) * 0.8;
+            if(i < 5 || w2 === 1) pxLine(c, px, py, nx, ny, i < 3 ? '#D8D4E8' : '#8A84A8', 1); px = nx; py = ny; } }
+        const Sp = voidSpiral(R, Math.floor(g.t * 6 + ph * 3) % 12);
+        c.drawImage(Sp, ox - Sp.ox, oy - Sp.oy);
       }
     },
-    // rocks of the void circling him on a tilted ring, dust behind each:
+    // orbs of the void and dark spheres circling him on a tilted ring, dust behind each:
     // the far half before him, the near half after. On a great hole they
     // are flung out and come home.
     rocks(c, g, front){
@@ -11714,9 +11719,9 @@ const STYLEFX = {
         if((Math.sin(a0) > 0) !== front) continue;
         for(let d = 2; d >= 1; d--){ const [x, y] = at(a0 - d * 0.12); c.fillStyle = d === 1 ? '#7A4ED8' : '#3E2A6E'; c.fillRect(Math.round(x), Math.round(y + bob), 1, 1); }
         const [x, y] = at(a0);
-        if(minor){ if(i === 1) this.miniOrb(c, x, y + bob, g.t + i); else{ c.fillStyle = '#6A5A8A'; c.fillRect(Math.round(x), Math.round(y + bob), 1, 1); } }
+        if(minor){ if(i === 1) this.miniOrb(c, x, y + bob, g.t + i); else{ c.fillStyle = '#1A1030'; c.fillRect(Math.round(x), Math.round(y + bob), 1, 1); } }
         else if(i === 1 || i === 3) voidOrb(c, x, y + bob, g.h >= 45 ? 1 : 0, g.t + i, false);
-        else voidRock(c, x - 2, y + bob - 2, 0, front, g.h < 40 ? 3 : i);
+        else voidSphere(c, x, y + bob, g.h >= 45 ? 2 : 1);
       }
       c.globalAlpha = 1;
     },
@@ -12853,11 +12858,12 @@ function beltOf(rows){
 }
 const BELT_ADDR = beltOf(G_ADDR_ROWS), BELT_FIN = beltOf(G_FIN_ROWS);
 // The Void's hood, in the sprite's own pixels about the top middle of his
-// cap: side on a cowl with a tall peak leaning forward, open at the face
-// where the gold mask shows; from behind, peaked and hanging to the
-// shoulders. Its edge lit violet, the opening and a crest in gold.
-const HOOD_SIDE = [[6, 3], [4, -1], [2, -7], [0, -4], [-3, -2], [-6, 1], [-7, 6], [-8, 10], [-10, 14], [-4, 13], [-1, 10], [-1, 6], [1, 5], [6, 5]];
-const HOOD_BACK = [[0, -7], [-3, -3], [-6, 0], [-7, 5], [-8, 9], [-11, 13], [11, 13], [8, 9], [7, 5], [6, 0], [3, -3]];
+// cap (after the user's two pictures): side on a deep cowl, rounded over
+// the top, open at the face onto nothing but dark; from behind, rounded
+// and hanging to the shoulders. Its edge lit violet, the opening trimmed
+// in gold. His crown sits on it (voidCrown).
+const HOOD_SIDE = [[6, 3], [5, -2], [3, -5], [0, -6], [-3, -5], [-6, -2], [-7, 3], [-8, 9], [-10, 14], [-4, 13], [-1, 10], [-1, 6], [1, 5], [6, 5]];
+const HOOD_BACK = [[0, -6], [-4, -5], [-6, -2], [-7, 3], [-8, 9], [-11, 13], [11, 13], [8, 9], [7, 3], [6, -2], [4, -5]];
 const VOID_PAL = ['#05030C', '#0B0818', '#141030', '#1C1640', '#2A2158', '#3E2A6E', '#7A4ED8', '#B98CFF', '#FF7AD9',
                   '#D8B060', '#9A7432', '#F4DC96', '#FFFFFF', '#7FE6FF', '#3FA6D8', '#2A3A8A', '#6A2A7A', '#D8FAFF'];
 function voidHood(p, view){
@@ -12876,25 +12882,105 @@ function voidHood(p, view){
       g.fillStyle = '#0B0818'; g.fillRect(X([-12, 0]), Y([0, 9]), 24 * p, 6 * p);
       line([[-3, -2], [-5, 12]], '#2A2158', lw); line([[3, -2], [5, 12]], '#2A2158', lw);
     }else{
-      // his crown catching the light, the back of it in shadow
+      // the back of it in shadow, a fold over the top
       g.fillStyle = '#0B0818'; g.beginPath(); g.moveTo(X([-3, -2]), Y([-3, -2])); g.lineTo(X([-12, 3]), Y([-12, 3])); g.lineTo(X([-12, 16]), Y([-12, 16])); g.lineTo(X([-5, 16]), Y([-5, 16])); g.lineTo(X([-4, 3]), Y([-4, 3])); g.closePath(); g.fill();
-      line([[4, -1], [1, 1], [0, 4]], '#2A2158', lw);
+      line([[4, -2], [1, 0], [0, 4]], '#2A2158', lw);
+      // and the dark inside it where his face would be
+      g.fillStyle = '#05030C'; g.beginPath(); g.moveTo(X([5.4, 3]), Y([5.4, 3])); g.lineTo(X([4.6, -1]), Y([4.6, -1])); g.lineTo(X([2, 0.5]), Y([2, 0.5])); g.lineTo(X([0.5, 4.6]), Y([0.5, 4.6])); g.lineTo(X([5.4, 4.6]), Y([5.4, 4.6])); g.closePath(); g.fill();
     }
     g.restore();
     if(view === 'back'){
-      line([[0, -7], [-3, -3], [-6, 0], [-7, 5], [-8, 9], [-11, 13]], '#7A4ED8', lw);
-      line([[0, -7], [3, -3], [6, 0], [7, 5], [8, 9], [11, 13]], '#7A4ED8', lw);
-      line([[0, -7], [0, 13]], '#D8B060', lw); line([[-11, 13], [11, 13]], '#9A7432', lw);
+      line([[0, -6], [-4, -5], [-6, -2], [-7, 3], [-8, 9], [-11, 13]], '#7A4ED8', lw);
+      line([[0, -6], [4, -5], [6, -2], [7, 3], [8, 9], [11, 13]], '#7A4ED8', lw);
+      line([[-11, 13], [11, 13]], '#9A7432', lw);
     }else{
-      line([[6, 3], [4, -1], [2, -7]], '#7A4ED8', lw);
-      line([[2, -7], [0, -4], [-3, -2], [-6, 1]], '#D8B060', lw);
-      line([[6, 5], [1, 5], [-1, 6], [-1, 10]], '#D8B060', lw);
+      line([[6, 3], [5, -2], [3, -5]], '#7A4ED8', lw);
+      line([[6, 3], [6, 5], [1, 5], [-1, 6], [-1, 10]], '#D8B060', lw);
+      line([[6, 3], [5, -2]], '#D8B060', lw);
       line([[-10, 14], [-4, 13]], '#9A7432', lw);
-      // the tip of the peak, lit
-      g.fillStyle = '#F4DC96'; g.fillRect(Math.round(X([2, -7])) - 1, Math.round(Y([2, -7])), Math.max(1, Math.round(p)), Math.max(1, Math.round(p)));
     }
   }, VOID_PAL);
   return { cv, ox, oy };
+}
+// His crown, on his hood (the user's pictures): a gold band, five points,
+// the middle one tallest and set with a great violet gem, small gems on
+// the others; ox, oy the middle of its band. p his pixel scale.
+function voidCrown(p, view){
+  const W = Math.ceil(12 * p) + 4, H = Math.ceil(10 * p) + 4, ox = Math.round(W / 2), oy = H - Math.ceil(2 * p) - 2;
+  const cv = fxBake('vcrown|' + p.toFixed(3) + '|' + view, W, H, g => {
+    const P = (x, y, w2, h2, col) => { g.fillStyle = col; g.fillRect(Math.round(ox + x * p), Math.round(oy + y * p), Math.max(1, Math.round(w2 * p)), Math.max(1, Math.round(h2 * p))); };
+    P(-5, 0, 10, 1.6, '#D8B060'); P(-5, 1.2, 10, 0.8, '#9A7432'); P(-5, 0, 10, 0.6, '#F4DC96');
+    // the points: [x, height]
+    for(const [x, hh] of [[-4.5, 3], [-2.4, 4.2], [2.4, 4.2], [4.5, 3]]){
+      for(let r = 0; r < hh; r += 0.5){ const wd = 1.4 * (1 - r / hh) + 0.5; P(x - wd / 2, -r, wd, 0.6, r < 0.6 ? '#D8B060' : '#E8C878'); }
+      P(x - 0.5, -hh + 0.2, 1, 1, '#C860F0');
+    }
+    for(let r = 0; r < 7; r += 0.5){ const wd = 2.2 * (1 - r / 7) + 0.6; P(-wd / 2, -r, wd, 0.6, '#D8B060'); }
+    // the great gem: a violet diamond in gold
+    P(-1.6, -5.4, 3.2, 3.6, '#9A7432'); P(-1.1, -5.0, 2.2, 2.8, '#7A2AB0'); P(-0.6, -4.8, 1, 1.6, '#C860F0'); P(-0.6, -4.8, 0.6, 0.6, '#F2C8FF');
+    if(view !== 'back') P(-3.5, 0.3, 1, 1, '#C860F0'), P(3, 0.3, 1, 1, '#C860F0');
+  }, VOID_PAL.concat(['#E8C878', '#7A2AB0', '#C860F0', '#F2C8FF']));
+  return { cv, ox, oy };
+}
+// His robe, in a bell from his waist to the ground over his legs (the
+// user's pictures): a galaxy of indigo and violet with stars in it, gold
+// scrollwork worked over it, a band of gold down its front with violet
+// gems set in it, and a gold hem. In the sprite's pixels per pose: the
+// waist's row and ends, and the hem's ends. Baked per size and pose.
+const VROBE = { addr: [27, 9.5, 22.5, 5.5, 27.5], fin: [32, 16.5, 26.5, 11.5, 34.5], back: [31, 12, 28, 8.5, 31.5] };
+function voidRobe(w, h, pose){
+  const R = VROBE[pose], sx = w / 40, sy = h / 58, x0 = Math.min(R[3], R[1]) - 1, y0 = R[0];
+  const cv = fxBake('vrobe|' + w + '|' + h + '|' + pose, Math.ceil((Math.max(R[4], R[2]) - x0 + 2) * sx), Math.ceil((58 - y0 + 0.5) * sy), g => {
+    const X = x => (x - x0) * sx, Y = y => (y - y0) * sy;
+    const path = () => { g.beginPath(); g.moveTo(X(R[1]), Y(R[0])); g.lineTo(X(R[2]), Y(R[0]));
+      g.quadraticCurveTo(X(R[2] + 0.5), Y(45), X(R[4]), Y(58)); g.lineTo(X(R[3]), Y(58)); g.quadraticCurveTo(X(R[1] - 0.5), Y(45), X(R[1]), Y(R[0])); g.closePath(); };
+    path(); g.fillStyle = '#1C1640'; g.fill();
+    g.save(); path(); g.clip();
+    for(let i = 0; i < 4; i++){ const nx = X(R[3] + (R[4] - R[3]) * hr(i, 501)), ny = Y(R[0] + (58 - R[0]) * (0.3 + 0.6 * hr(i, 502))), r = (2.5 + 2 * hr(i, 503)) * sx;
+      g.fillStyle = i & 1 ? '#3E2A6E' : '#2A2158'; g.beginPath(); g.ellipse(nx, ny, r * 1.4, r * 0.8, 0.5, 0, Math.PI * 2); g.fill(); }
+    // gold scrollwork: curls in rows, each a little C turned this way and that
+    if(h >= 40){
+      g.strokeStyle = '#D8B060'; g.lineWidth = Math.max(1, sx * 0.7);
+      for(let yy = R[0] + 3; yy < 56; yy += 5) for(let xx = R[3] + 1.5; xx < R[4]; xx += 4.5){
+        const k = Math.round(xx * 3 + yy), r = 1.4 * sx;
+        g.beginPath(); g.arc(X(xx + (yy % 2 ? 2 : 0)), Y(yy), r, k & 1 ? 0.6 : 3.7, (k & 1 ? 0.6 : 3.7) + 4.2); g.stroke();
+      }
+    }else{
+      g.fillStyle = '#9A7432';
+      for(let yy = R[0] + 3; yy < 56; yy += 4) for(let xx = R[3] + 1; xx < R[4]; xx += 3) g.fillRect(Math.round(X(xx + (yy % 2 ? 1.5 : 0))), Math.round(Y(yy)), 1, 1);
+    }
+    for(let y = 0; y < g.canvas.height; y++) for(let x = 0; x < g.canvas.width; x++){ const v = hr(x * 7 + 1, y * 5 + 3);
+      if(v > 0.975){ g.fillStyle = v > 0.99 ? '#FFFFFF' : '#B98CFF'; g.fillRect(x, y, 1, 1); } }
+    // the band down its front (side on, along the front edge; from
+    // behind, down the middle) with gems in it
+    const bx = pose === 'back' ? (R[1] + R[2]) / 2 : R[2] - 2, bx2 = pose === 'back' ? (R[3] + R[4]) / 2 : R[4] - 3;
+    g.lineWidth = Math.max(1, sx * 1.6); g.strokeStyle = '#D8B060'; g.beginPath(); g.moveTo(X(bx), Y(R[0])); g.lineTo(X(bx2), Y(58)); g.stroke();
+    for(let k = 1; k <= 3; k++){ const f = k / 4, gx = X(bx + (bx2 - bx) * f), gy = Y(R[0] + (58 - R[0]) * f), r = Math.max(1, Math.round(sx));
+      g.fillStyle = '#7A2AB0'; g.fillRect(Math.round(gx - r / 2), Math.round(gy - r / 2), r, r + (r > 1 ? 1 : 0)); }
+    g.restore();
+    // gold round it, and its hem
+    g.lineJoin = 'round'; g.lineWidth = Math.max(1, sx * 0.9); g.strokeStyle = '#D8B060'; path(); g.stroke();
+    g.fillStyle = '#9A7432'; g.fillRect(Math.round(X(R[3])), Math.round(Y(58) - Math.max(1, sy * 1.6)), Math.round(X(R[4]) - X(R[3])), Math.max(1, Math.round(sy * 1.6)));
+  }, VOID_PAL.concat(['#7A2AB0']));
+  return { cv, x: x0, y: y0 };
+}
+// A black hole in a sphere, as he holds them up (the user's pictures): dark,
+// two arms of violet spiralling in to a black heart, a rim of plum and a
+// fine ring of violet round it; step 0..11 turns it.
+function voidSpiral(R, step){
+  const S0 = R + 2, cv = fxBake('vspiral|' + R + '|' + step, S0 * 2 + 1, S0 * 2 + 1, g => {
+    const P = (x, y, col) => { g.fillStyle = col; g.fillRect(x, y, 1, 1); }, rot = step / 12 * Math.PI * 2;
+    for(let y = -S0; y <= S0; y++) for(let x = -S0; x <= S0; x++){
+      const d = Math.hypot(x, y);
+      if(d > R + 1.2) continue;
+      if(d > R + 0.2){ if((x + y) & 1) P(x + S0, y + S0, '#7A4ED8'); continue; }
+      if(d > R - 0.8){ P(x + S0, y + S0, '#3E2A6E'); continue; }
+      const a = Math.atan2(y, x) - rot, u = d / R, arm = Math.cos(2 * (a - u * 4.2));
+      P(x + S0, y + S0, u < 0.22 ? '#05030C' : arm > 0.55 ? (u < 0.55 ? '#B98CFF' : '#7A4ED8') : arm > 0 ? '#3E2A6E' : '#0B0818');
+    }
+  });
+  cv.ox = S0; cv.oy = S0;
+  return cv;
 }
 // His cloak of stars: from his shoulders to his heels, deep indigo with
 // nebulae of plum and blue in it and stars through it, the hem cut in
@@ -12975,20 +13061,18 @@ function voidCrescent(p, dir){
   }, VOID_PAL);
   return { cv, ox, oy };
 }
-// A ghostly hand of cyan light: fingers spread and clawed, dithered like
-// light you can see through (in solid pixels), a white edge on it and the
-// arm it belongs to thinning away below the wrist
-const VHAND_ROWS = ['..x.x.x..', '..X.X.X..', 'x.X.X.X..', 'X.XXXXX..', 'XXXXXXX.x', 'XXXXXXXXX', '.XXXXXXX.', '..XXXXX..', '...XXX...', '...XXX...'];
+// One of his hands held up, palm up, under a black hole (the user's
+// pictures): pale bone, the fingers long and apart, a gold bracelet at the
+// wrist and the bones of the forearm below it
+const VHAND_ROWS = ['x..x.x.x.', 'X..X.X.X.', 'X..X.X.X.', 'XX.XXXXX.', '.XXXXXXX.', '..XXXXX..', '..ggggg..', '...X.X...', '...X.X...', '...X.X...'];
 function voidHand(k, flip){
   const W = VHAND_ROWS[0].length, H = VHAND_ROWS.length;
-  return fxBake('vhand|' + k + '|' + (flip ? 1 : 0), W * k, H * k, g => {
-    const at = (x, y) => y >= 0 && y < H && x >= 0 && x < W && VHAND_ROWS[y][x] !== '.';
+  return fxBake('vhand2|' + k + '|' + (flip ? 1 : 0), W * k, H * k, g => {
+    const at = (x, y) => y >= 0 && y < H && x >= 0 && x < W && VHAND_ROWS[y][x] === 'X';
     for(let y = 0; y < H; y++) for(let x0 = 0; x0 < W; x0++){
       const x = flip ? W - 1 - x0 : x0, ch = VHAND_ROWS[y][x];
       if(ch === '.') continue;
-      const edge = !at(x - 1, y) || !at(x + 1, y) || !at(x, y - 1);
-      g.fillStyle = ch === 'x' ? '#FFFFFF' : edge ? '#D8FAFF' : (x + y) & 1 ? '#7FE6FF' : '#3FA6D8';
-      if(ch === 'X' && !edge && (x * 3 + y) % 5 === 0) continue;   // a hole or two: light, not flesh
+      g.fillStyle = ch === 'g' ? (x & 1 ? '#D8B060' : '#F4DC96') : ch === 'x' ? '#FFFFFF' : !at(x - 1, y) || !at(x + 1, y) ? '#D8FAFF' : (x + y) & 1 ? '#7FE6FF' : '#C8F4FF';
       g.fillRect(x0 * k, y * k, k, k);
     }
   });
@@ -13082,6 +13166,13 @@ function voidStar(c, x, y, k, arm, col){
 }
 // A rock of the void: a lump of dark stone lit on one side, a rim of violet
 const VROCKS = [['.aa.', 'abbd', 'bbdd', '.dd.'], ['.ab', 'abd', 'bd.'], ['ab.', 'bbd', '.dd'], ['.a.', 'abd', '.d.']];
+// a dark sphere floating, lit at its top left (the user's pictures)
+function voidSphere(c, x, y, r){
+  const X = Math.round(x), Y = Math.round(y);
+  c.globalAlpha = 1; c.fillStyle = '#1A1030';
+  if(r > 1){ c.fillRect(X - 1, Y - 2, 3, 5); c.fillRect(X - 2, Y - 1, 5, 3); c.fillStyle = '#3E2A6E'; c.fillRect(X - 1, Y - 1, 1, 1); }
+  else{ c.fillRect(X - 1, Y - 1, 2, 2); c.fillStyle = '#3E2A6E'; c.fillRect(X - 1, Y - 1, 1, 1); }
+}
 function voidRock(c, x, y, s, lit, n){
   const R = VROCKS[(n || 0) % VROCKS.length], X = Math.round(x), Y = Math.round(y);
   c.globalAlpha = 1;
