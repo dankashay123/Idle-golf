@@ -25645,9 +25645,9 @@ function settingsSheet(){
         + (S.music2 !== 0 ? 'On' : 'Off') + '</button>')
     // (the golfer: him or her, a box each, one ticked; the user asked for
     // "a checkbox for Male Golfer and a checkbox for Female Golfer")
-    + ['m', 'f'].map(g => row(g === 'm' ? 'Male Golfer' : 'Female Golfer', '',
-        '<input type="checkbox" class="setchk" id="gender_' + g + '"' + ((S.gender === 'f') === (g === 'f') ? ' checked' : '')
-        + ' aria-label="' + (g === 'm' ? 'Male' : 'Female') + ' golfer" onchange="setGender(\'' + g + '\')">')).join('')
+    + [['m', 'Male Golfer', '<input type="checkbox" class="setchk" id="gender_m"'], ['f', 'Female Golfer', '<input type="checkbox" class="setchk" id="gender_f"']]
+      .map(([g, nm, box]) => row(nm, '', box + ((S.gender === 'f') === (g === 'f') ? ' checked' : '')
+        + ' aria-label="' + nm + '" onchange="setGender(\'' + g + '\')">')).join('')
     + row('Dawn and Dusk', 'Day and night follow your clock, from the next hole',
         '<button class="mini' + (S.dawnDusk === 1 ? ' go' : '') + '" onclick="toggleDawn()">'
         + (S.dawnDusk === 1 ? 'On' : 'Off') + '</button>')
