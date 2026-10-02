@@ -17608,7 +17608,9 @@ Object.assign(Scene, {
         if(Rw.d < cam + 1.5 + t.near) continue;
         const X = X00 + t.x * U; if(X < -12 || X > VW + 12) continue;
         const hp = Math.round(hp0 * t.sc * Math.min(1, 0.25 + grow * 0.75)); if(hp < 2) continue;
-        const key = (t.oak ? 'o' : 'p') + hp, R = stamp(t.oak, hp), F = fogged(R, key, fog);
+        // (the tree's own stamp kept on it while its size and fog hold)
+        if(t._hp !== hp || t._fog !== fog || t._st !== ST || t._hz !== HZ){ const key = (t.oak ? 'o' : 'p') + hp; t._R = stamp(t.oak, hp); t._F = fogged(t._R, key, fog); t._hp = hp; t._fog = fog; t._st = ST; t._hz = HZ; }
+        const R = t._R, F = t._F;
         const X0 = Math.round(X - R.w / 2), Y0 = Yb - hp;
         OCC.push({ d: Rw.d, X0, Y0, w: R.w, cut, R, t, full: hp0 * t.sc });
         for(let y = 0; y < hp; y++){
@@ -17619,8 +17621,15 @@ Object.assign(Scene, {
           const ft = Y >= cut - 1 && Y < Yb, row = ft ? footOf(F[y], Y === cut ? 0.55 : 0.3) : F[y];
           // (the rows blended into the ground are hazed with the ground, or
           // the forest's feet were a line ruled across the view)
-          if(fast) for(let k = 0; k < row.length; k++){ g.cur = row[k][3]; g.fillRect(X0 + row[k][0], Y, row[k][1], 1);
-            if(Y >= 0 && Y < VH) for(let x = Math.max(0, X0 + row[k][0]), e = Math.min(VW, X0 + row[k][0] + row[k][1]); x < e; x++){ if(!ft) MK[Y * VW + x] = 0xFF000000; FD[Y * VW + x] = Rw.d; } }
+          // (straight into the buffers, a run at a time: a call and a loop a
+          // pixel for each run was the dearest part of the frame)
+          if(fast){ if(Y < 0 || Y >= VH || Y >= g.h) continue;
+            if(Y < g.y0) g.y0 = Y; if(Y + 1 > g.y1) g.y1 = Y + 1;
+            const PX = g.px, base = Y * VW, gw = Math.min(VW, g.w);
+            for(let k = 0; k < row.length; k++){ const rk = row[k], a = X0 + rk[0], x0 = a < 0 ? 0 : a, x1 = Math.min(gw, a + rk[1]); if(x1 <= x0) continue;
+              const v = rk[3];
+              if((v >>> 24) === 255) PX.fill(v, base + x0, base + x1); else { g.cur = v; g.fillRect(x0, Y, x1 - x0, 1); }
+              if(!ft) MK.fill(0xFF000000, base + x0, base + x1); FD.fill(Rw.d, base + x0, base + x1); } }
           else for(let k = 0; k < row.length; k++){ g.fillStyle = row[k][2]; g.fillRect(X0 + row[k][0], Y, row[k][1], 1);
             if(Y >= 0 && Y < VH) for(let x = Math.max(0, X0 + row[k][0]), e = Math.min(VW, X0 + row[k][0] + row[k][1]); x < e; x++){ if(!ft) MK[Y * VW + x] = 0xFF000000; FD[Y * VW + x] = Rw.d; } }
         }
@@ -17885,7 +17894,17 @@ Object.assign(Scene, {
     const K = this.back, L = K.lake;
     if(L){ const bk = lobe(L, L.x, 1.2), wt = lobe(L, L.x, 1);
       if(bk) span(bk[0], bk[1], pickC(T._bk, 0.5));
-      if(wt) span(wt[0], wt[1], this.ice ? pickC(T._ic, 0.3 + near * 0.4) : pickC(T._wt, 0.25 + near * 0.45)); }
+      if(wt){ const base = 0.25 + near * 0.45, t = (d - L.d) / L.rd;
+        if(this.ice) span(wt[0], wt[1], pickC(T._ic, 0.3 + near * 0.4));
+        else {
+          // (the trees round it in its far side, dark, the sky in its near
+          // side, pale, and a glint or two of the light off it between: one
+          // flat tone it read as a slab)
+          span(wt[0], wt[1], pickC(T._wt, t > 0.35 ? base * 0.3 : t > 0.1 ? base * 0.65 : t < -0.7 ? Math.min(1, base + 0.22) : base));
+          const k = Math.floor(d * 3);
+          if(t > -0.6 && t < 0.1 && hr(k, 557 + L.x) < 0.3){ const w = wt[1] - wt[0], gx = wt[0] + w * (0.15 + 0.6 * hr(k, 558));
+            span(gx, gx + Math.min(w * 0.25, 0.5 + hr(k, 559)), pickC(T._wt, Math.min(1, base + 0.4))); }
+        } } }
     const lo = Math.min(K.d0, K.near) - 1.8, hi = Math.max(K.d0 + 1.8, L ? L.d + L.rd * 1.15 + 0.4 : 0);
     if(d > lo){
       const ok = (cx, cd) => cd >= this.backEdge(cx) + 0.3;
@@ -18428,15 +18447,32 @@ Object.assign(Scene, {
         const A = at(y); R.push(A);
         if(A.hw < 0.5) continue;
         const clip = this.clipAt(A.dd), xl = Math.round(A.x - A.hw), xr = Math.round(A.x + A.hw);
-        c.fillStyle = pickC(T2._wt, y - y0 < (y1 - y0) * 0.25 ? 0.62 : 0.5); fillClip(c, xl, y, xr - xl, 1, clip);
+        // (the sky in its far side, the darker water nearer, a dithered row
+        // between each)
+        const f = (y - y0) / Math.max(1, y1 - y0), tone = f < 0.2 ? 1 : f < 0.27 ? ((y + xl) & 1 ? 1 : 0.62) : f < 0.52 ? 0.62 : f < 0.58 ? ((y + xl) & 1 ? 0.62 : 0.44) : 0.44;
+        c.fillStyle = tone === 1 ? (T2._wsky || (T2._wsky = mixC(pickC(T2._wt, 0.9), '#E8F2F8', 0.4))) : pickC(T2._wt, tone); fillClip(c, xl, y, xr - xl, 1, clip);
         c.fillStyle = pickC(T2._bk || T2._wt, 0.2); fillClip(c, xl - 1, y, 1, 1, clip); fillClip(c, xr, y, 1, 1, clip);
+        // (the grass wet about it, a shade darker)
+        if(y1 - y0 >= 4){ c.fillStyle = 'rgba(10,22,12,.28)'; fillClip(c, xl - 2, y, 1, 1, clip); fillClip(c, xr + 1, y, 1, 1, clip); }
       }
+      // (its near lip: the bank's edge in shadow, the wet grass under it)
+      if(y1 - y0 >= 4){ const N = R[R.length - 1];
+        if(N && N.hw >= 1){ const clip = this.clipAt(N.dd), xl = Math.round(N.x - N.hw), xr = Math.round(N.x + N.hw);
+          c.fillStyle = pickC(T2._bk || T2._wt, 0.28); fillClip(c, xl, y1, xr - xl, 1, clip);
+          c.fillStyle = 'rgba(10,22,12,.28)'; fillClip(c, xl - 1, y1 + 1, xr - xl + 2, 1, clip); fillClip(c, xl + 1, y1 + 2, Math.max(0, xr - xl - 2), 1, clip); }
+        const Fr = R[0]; if(Fr && Fr.hw >= 1){ const xl = Math.round(Fr.x - Fr.hw), xr = Math.round(Fr.x + Fr.hw);
+          c.fillStyle = 'rgba(10,22,12,.28)'; fillClip(c, xl - 1, y0 - 1, xr - xl + 2, 1, this.clipAt(Fr.dd)); } }
       // (its sky: a paler streak across the middle)
       const my = Math.round((y0 + y1) / 2), M = R[my - y0];
-      if(M && M.hw > 2){ c.fillStyle = pickC(T2._wt, 0.9); fillClip(c, Math.round(M.x - M.hw * 0.6), my, Math.round(M.hw * 0.7), 1, this.clipAt(M.dd)); }
+      if(M && M.hw > 2){ c.fillStyle = pickC(T2._wt, 0.9); fillClip(c, Math.round(M.x - M.hw * 0.6), my, Math.round(M.hw * 0.7), 1, this.clipAt(M.dd));
+        // (and a second, broken, nearer: the light off its ripples)
+        const ny = Math.round(y0 + (y1 - y0) * 0.72), N2 = R[ny - y0];
+        if(N2 && N2.hw > 4 && ny > my + 1){ c.fillStyle = pickC(T2._wt, 0.78); const cl = this.clipAt(N2.dd);
+          fillClip(c, Math.round(N2.x - N2.hw * 0.15), ny, Math.round(N2.hw * 0.35), 1, cl);
+          fillClip(c, Math.round(N2.x + N2.hw * 0.3), ny, Math.max(1, Math.round(N2.hw * 0.15)), 1, cl); } }
       // drops landing: a ring or two spreading in it, kept inside
       c.fillStyle = mixC(pickC(T2._wt, 0.9), '#FFFFFF', 0.5);
-      for(let j = 0; j < 2; j++){
+      for(let j = 0; j < 3; j++){
         const cl = this.t / 0.7 + hr(p.k, 311 + j), m = Math.floor(cl), q = cl - m;
         const cy = Math.round(y0 + (0.3 + 0.4 * hr(m, p.k + 11 * j)) * (y1 - y0)), C = R[cy - y0];
         if(!C || C.hw < 3) continue;
