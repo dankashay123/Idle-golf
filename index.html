@@ -7773,7 +7773,7 @@ function showAt(t){
 // (the sky, the woods and the grass baked once by day and once by night)
 const SHOW_BG = {};
 function showStage(c, W, H, G, night, t){
-  const key = W + '|' + H + '|' + (night ? 1 : 0), FX0 = W - 18;
+  const key = W + "|" + H + "|" + (night ? 1 : 0), FX0 = W - 14;
   if(!SHOW_BG[key]){ const cv = document.createElement('canvas'); cv.width = W; cv.height = H; showBack(cv.getContext('2d'), W, H, G, night, FX0); SHOW_BG[key] = cv; }
   c.globalAlpha = 1; c.drawImage(SHOW_BG[key], 0, 0);
   if(night) for(let i = 0; i < 26; i++){ const x = Math.floor(hr(i, 901) * W), y = Math.floor(hr(i, 902) * G * 0.7);
@@ -7825,7 +7825,7 @@ function showDraw(cv, dt){
 }
 function showPlay(c, V, W, H, G, cup, dt){
   const A = showAt(V.t), P = A.P, O = outfitNow(), FX = STYLEFX[O.fx] || null;
-  const h = 30, w = Math.round(h * 40 / 58), x = 46, bx = Math.round(x + w * 1.19);
+  const h = 30, w = Math.round(h * 40 / 58), x = 52, bx = Math.round(x + w * 1.19);
   const bob = FX && FX.bob ? Math.round(1 + Math.sin(V.t * 2.2)) : 0;
   // the caddie stands where he does on the course, his own clock
   const sc = V.sc || (V.sc = Object.assign(Object.create(Scene), { fairyMoveNow: () => null, fairyNow: () => null, fairyDy: () => 0, fairyCast: null }));
