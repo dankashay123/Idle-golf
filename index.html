@@ -13509,6 +13509,101 @@ for(const k in FLOURISH_PIECE) FLOURISH[k] = function(c, g, F, layer){
   outlineBurst(c, g, F, k === 'banana' || k === 'ghost' ? 32 : 48, 0.95, FLOURISH_PIECE[k](c, g));
 };
 for(const k in FLOURISH) if(STYLEFX[k]) STYLEFX[k].flourish = FLOURISH[k];
+// The Legendary skins' moments made their own (the user asked them up
+// toward the Mythic sets'): besides the burst from his outline, each lays
+// something of its own over the grass round him and throws one more thing
+// out of him, half a second, close about him, more of it on the greater
+// hole. f 0..1 through it.
+//   Inferno: a ring of fire running out over the grass, tongues of flame up off it
+//   Frostborn: spikes of ice bursting up out of the grass round him
+//   Stormcaller: forked bolts cracking out from him, scorch on the grass
+//   Void Walker: a rift torn in the grass under him, shards drawn into it
+//   Glitch: he tears into slices shifted sideways, a grid flashing under him
+//   Midas: a ring of gold over the grass, coins flipped out of him
+//   Disco: the grass lit in tiles of colour, short beams turning off him
+const FLOURISH_SIG = {
+  inferno: {
+    ground(c, g, F){ sigRing(c, g, F, (i, n, x, y, f) => { c.fillStyle = f < 0.35 ? '#FFFBE0' : i & 1 ? '#FFB43A' : '#F0612A'; c.fillRect(x, y, 1, 1);
+      if(i % 3 === 0 && f < 0.8){ const L = 1 + Math.round(4 * (1 - f) * hr(i, 731)) * sigK(g);
+        for(let j = 1; j <= L; j++){ c.fillStyle = j > L * 0.6 ? '#FFE14A' : '#E8401C'; c.fillRect(x, y - j, 1, 1); } } }); }
+  },
+  frostborn: {
+    ground(c, g, F){ const k = sigK(g), [rx, ry] = sigR(g), X = g.cx, Y = g.bot, n = F.big ? 12 : 8;
+      for(let i = 0; i < n; i++){ const a = i / n * Math.PI * 2 + 0.2, d = 0.9 + 0.5 * hr(i, 741), x = Math.round(X + Math.cos(a) * rx * d), y = Math.round(Y + Math.sin(a) * ry * d);
+        const grow = Math.min(1, F.f / 0.25), melt = F.f > 0.7 ? (1 - F.f) / 0.3 : 1, L = Math.round((5 + 6 * hr(i, 742)) * k * grow * melt * (F.big ? 1.3 : 1));
+        for(let j = 0; j < L; j++){ const w = Math.max(1, Math.round((1 - j / L) * 3.5 * k));
+          c.fillStyle = '#4A86AE'; c.fillRect(x - (w >> 1) - 1, y - j, 1, 1);
+          c.fillStyle = j >= L - k ? '#FFFFFF' : j > L * 0.4 ? '#BFE6FA' : '#6FB2D8'; c.fillRect(x - (w >> 1), y - j, w, 1); if(w > 2){ c.fillStyle = '#FFFFFF'; c.fillRect(x - (w >> 1), y - j, 1, 1); } } } }
+  },
+  stormcaller: {
+    ground(c, g, F){ sigRing(c, g, F, (i, n, x, y, f) => { if(i % 2) return; c.fillStyle = f < 0.4 ? '#8FD0FF' : '#3A4660'; c.fillRect(x, y, 1, 1); }); },
+    front(c, g, F){ const k = sigK(g), n = F.big ? 7 : 5, st = Math.floor(F.T * 30);
+      if(F.f > 0.6) return;
+      for(let i = 0; i < n; i++){ const a = i / n * Math.PI * 2 + hr(i + st, 751) * 0.4, L = g.h * (0.35 + 0.25 * hr(i, 752)) * Math.min(1, F.f / 0.15);
+        let x = g.cx + Math.cos(a) * g.w * 0.45, y = g.y + g.h * 0.45 + Math.sin(a) * g.h * 0.35;
+        const sx = Math.cos(a), sy = Math.sin(a) * 0.8, seg = Math.max(3, Math.round(L / (3 * k)));
+        for(let j = 0; j < seg; j++){ const jx = (hr(i * 9 + j + st, 753) - 0.5) * 3 * k, nx = x + sx * L / seg + jx * -sy, ny = y + sy * L / seg + jx * sx;
+          pxLine(c, x, y, nx, ny, j < seg / 2 ? '#FFFFFF' : '#8FD0FF', k); x = nx; y = ny; } } }
+  },
+  void: {
+    ground(c, g, F){ const [rx, ry] = sigR(g), q = Math.sin(Math.PI * Math.min(1, F.f / 0.9)) * (F.big ? 1 : 0.8), X = Math.round(g.cx), Y = Math.round(g.bot);
+      const RX = rx * 1.1 * q, RY = ry * 0.9 * q;
+      for(let yy = -Math.ceil(RY); yy <= RY; yy++) for(let xx = -Math.ceil(RX); xx <= RX; xx++){ const d = (xx * xx) / (RX * RX || 1) + (yy * yy) / (RY * RY || 1);
+        if(d > 1) continue; c.fillStyle = d > 0.75 ? '#C68BFF' : d > 0.5 ? '#3A2058' : '#07040C'; if(d > 0.75 && ((xx + yy) & 1)) c.fillStyle = '#6E44A0'; c.fillRect(X + xx, Y + yy, 1, 1); } },
+    front(c, g, F){ const k = sigK(g), n = F.big ? 14 : 10, X = g.cx, Y = g.bot;
+      for(let i = 0; i < n; i++){ const a = i / n * Math.PI * 2, d = (1 - F.f) * (g.w * 1.6 + hr(i, 761) * g.w), x = Math.round(X + Math.cos(a) * d), y = Math.round(Y - g.h * 0.35 + Math.sin(a) * d * 0.6);
+        c.fillStyle = i & 1 ? '#C68BFF' : '#F0DCFF'; c.fillRect(x, y, k + 1, k); c.fillStyle = '#0D0814'; c.fillRect(x + k + 1, y, 1, k); } }
+  },
+  glitch: {
+    ground(c, g, F){ const [rx, ry] = sigR(g), X = Math.round(g.cx), Y = Math.round(g.bot), on = Math.floor(F.T * 20) & 1, R = rx * (1 + 0.5 * F.f);
+      if(!on && F.f > 0.2) return;
+      for(let xx = -Math.round(R); xx <= R; xx += 3) for(let yy = -Math.round(ry * 1.2); yy <= ry * 1.2; yy++){ if((xx * xx) / (R * R) + (yy * yy) / (ry * ry * 1.44) > 1) continue;
+        c.fillStyle = '#29E07A'; c.fillRect(X + xx, Y + yy, 1, 1); }
+      for(let yy = -Math.round(ry); yy <= ry; yy += 2){ const w = Math.round(R * Math.sqrt(Math.max(0, 1 - (yy * yy) / (ry * ry)))); c.fillStyle = '#1AA457'; c.fillRect(X - w, Y + yy, w * 2, 1); } },
+    front(c, g, F){ // him torn into slices, each shifted sideways and edged in red and blue
+      if(F.f > 0.8) return;
+      const k = sigK(g), n = F.big ? 6 : 4, st = Math.floor(F.T * 16);
+      for(let i = 0; i < n; i++){ const y = Math.round(g.y + g.h * hr(i + st * 5, 771)), hh = Math.max(1, Math.round(g.h * 0.05 * (1 + hr(i, 772)))), dx = Math.round((hr(i + st, 773) - 0.5) * g.w * 0.8);
+        const x0 = Math.round(g.x - g.w * 0.1), w = Math.round(g.w * 1.3);
+        try{ c.drawImage(c.canvas, x0, y, w, hh, x0 + dx, y, w, hh); }catch(e){}
+        c.fillStyle = '#FF2A6D'; c.fillRect(x0 + dx - k, y, k, hh); c.fillStyle = '#2AE0FF'; c.fillRect(x0 + dx + w, y, k, hh); } }
+  },
+  midas: {
+    ground(c, g, F){ sigRing(c, g, F, (i, n, x, y, f) => { c.fillStyle = f < 0.3 ? '#FFFFFF' : i % 3 ? '#FFD86B' : '#C99A2E'; c.fillRect(x, y, 1, 1); if(i % 4 === 0){ c.fillStyle = '#8F6A1E'; c.fillRect(x, y + 1, 1, 1); } }); },
+    front(c, g, F){ const k = Math.max(1, Math.round(g.h / 30)), n = F.big ? 10 : 7;
+      for(let i = 0; i < n; i++){ const a = -Math.PI * (0.1 + 0.8 * i / (n - 1)), v = g.h * (0.55 + 0.3 * hr(i, 781)), t = F.f;
+        const x = Math.round(g.cx + Math.cos(a) * v * t * 1.1), y = Math.round(g.y + g.h * 0.4 + Math.sin(a) * v * t + g.h * 1.2 * t * t);
+        const edge = Math.sin(F.T * 30 + i * 2) > 0, w = edge ? 3 * k : k;
+        c.fillStyle = '#8F6A1E'; c.fillRect(x - (w >> 1), y + 1, w, 2 * k);
+        c.fillStyle = '#FFD86B'; c.fillRect(x - (w >> 1), y, w, 2 * k); if(edge){ c.fillStyle = '#FFF2B8'; c.fillRect(x - (w >> 1), y, k, k); } } }
+  },
+  disco: {
+    ground(c, g, F){ const [rx, ry] = sigR(g), X = Math.round(g.cx), Y = Math.round(g.bot), cols = ['#FF4FB8', '#3FE0FF', '#FFE14A', '#7AFF6A', '#B06CFF'], st = Math.floor(F.T * 10), T = Math.max(3, Math.round(rx / 4));
+      const R = rx * (F.big ? 1.4 : 1.25) * Math.min(1, F.f / 0.2 + 0.4), RY = ry * (F.big ? 1.4 : 1.25) * Math.min(1, F.f / 0.2 + 0.4);
+      for(let yy = -Math.round(RY); yy <= RY; yy++) for(let xx = -Math.round(R); xx <= R; xx++){ if((xx * xx) / (R * R) + (yy * yy) / (RY * RY) > 1) continue;
+        const tx = Math.floor((xx + 999 * T) / T), ty = Math.floor((yy * 2 + 999 * T) / T); if(((tx + ty + st) % 3) || ((xx + yy) & 1)) continue;
+        c.fillStyle = cols[((tx * 7 + ty * 3 + st) % 5 + 5) % 5]; c.fillRect(X + xx, Y + yy, 1, 1); } },
+    front(c, g, F){ const k = sigK(g), n = F.big ? 8 : 6, cols = ['#FF4FB8', '#3FE0FF', '#FFE14A', '#7AFF6A', '#B06CFF'];
+      for(let i = 0; i < n; i++){ const a = i / n * Math.PI * 2 + F.T * 6, L = g.h * 0.3 * Math.sin(Math.PI * F.f);
+        const x0 = g.cx + Math.cos(a) * g.w * 0.5, y0 = g.y + g.h * 0.4 + Math.sin(a) * g.h * 0.3;
+        pxLine(c, x0, y0, x0 + Math.cos(a) * L, y0 + Math.sin(a) * L * 0.8, cols[i % 5], k); } }
+  }
+};
+const sigK = g => Math.max(1, Math.round(g.h / 50));
+const sigR = g => [Math.max(6, g.w * 1.3), Math.max(2, g.h * 0.14)];
+// dots of a ring running out over the grass from his feet, thinning as it goes
+function sigRing(c, g, F, dot){
+  const [rx, ry] = sigR(g), s = 0.6 + F.f * (F.big ? 1.6 : 1.2), n = Math.max(24, Math.round((rx + ry) * s * 2.2)), X = g.cx, Y = g.bot;
+  for(let i = 0; i < n; i++){ if(hr(i, 739) < F.f * 0.6) continue; const a = i / n * Math.PI * 2;
+    dot(i, n, Math.round(X + Math.cos(a) * rx * s), Math.round(Y + Math.sin(a) * ry * s), F.f); }
+}
+for(const k in FLOURISH_SIG){ const B0 = FLOURISH[k]; if(!B0) continue;
+  FLOURISH[k] = STYLEFX[k].flourish = function(c, g, F, layer){
+    const S0 = FLOURISH_SIG[k] || {};
+    if(layer === 'ground' && S0.ground) S0.ground(c, g, F);
+    if(layer === 'front' && S0.front) S0.front(c, g, F);
+    c.globalAlpha = 1; c.globalCompositeOperation = 'source-over';
+    B0.call(this, c, g, F, layer); }; }
 
 // The skins with an effect have thicker arms too (bulk): the width of
 // him is his own picture, stretched (blitShear, bulkOf)
@@ -18840,6 +18935,7 @@ function paintGolfer(c, x, y, w, h, ph, t, bot, walking, walkPh, spr, arc, putt,
   // both behind him and in front
   const g = golferG(x, y, w, h, ph, t, bot, walking, spr);
   if(FX && FX.ground && !noGround){ FX.ground(c, g); c.globalAlpha = 1; c.globalCompositeOperation = 'source-over'; }
+  if(FX && FX.flourish && !noGround){ const F0 = flourishNow(g); if(F0){ FX.flourish(c, g, F0, 'ground'); c.globalAlpha = 1; c.globalCompositeOperation = 'source-over'; } }
   c.fillStyle = 'rgba(8,16,10,.34)';
   c.fillRect(x + Math.round(w*0.05), bot - 1, Math.round(w*0.62), Math.max(1, Math.round(h*0.045)));
 
