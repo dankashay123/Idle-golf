@@ -18229,7 +18229,7 @@ const Scene = {
 
     this.camD = 0; this.restBall = null; this.walkTo = 0; this.greenBall = false;
     this.train = null; this.trainMet = 0; this.trainNext = this.t + 8;
-    this.upT = 0; this.saidHole = null; this.putt = null; this.cupT = 0; this.cupHeard = 0; this.aceT = 0; this.aceSwung = 0; this.herPose = null;
+    this.upT = 0; this.saidHole = null; this.putt = null; this.cupT = 0; this.cupHeard = 0; this.aceT = 0; this.aceSwung = 0; this.herPose = null; this.tracks = null;
     this.shotN = 0;                 // (the hole's shots so far: only the first is off the tee)
     this.galleryUp = null;          // (the last hole's gallery cheered on into this one)
     // A swing still playing when the last hole ended belonged to that hole: it
@@ -18313,7 +18313,7 @@ const Scene = {
     this.camD = 0; this.restBall = null; this.walkTo = 0; this.greenBall = false;
     // (a putt left over from the course: its ball sat at the cup through
     // the whole Scramble)
-    this.putt = null; this.cupT = 0; this.cupHeard = 0; this.upT = 0; this.aceT = 0; this.aceSwung = 0; this.herPose = null;
+    this.putt = null; this.cupT = 0; this.cupHeard = 0; this.upT = 0; this.aceT = 0; this.aceSwung = 0; this.herPose = null; this.tracks = null;
     // each contest played from its own place from the first frame: he glided
     // onto the Twilight Putt's green from the tee
     if(R.mode !== 'floor') this.camD = wagerSpot(R) * LEN;
@@ -21542,6 +21542,31 @@ Object.assign(Scene, {
   // A skin's ground (its circle on the grass under him) goes down before the
   // pin, the cup and a putt rolling away beyond him, which all stand on it:
   // drawn with him, it covered them.
+  // His footprints in the snow of a winter hole (the walk from the tee to
+  // him, a print a step, left and right of his line), pressed into the
+  // ground under everything standing on it, cut at the ground's line; not
+  // over water, sand or a bridge, not in a wager
+  noteTrack(a, b){
+    if(!this.snow || S.dgnRun || this.heli) return;
+    const T = this.tracks || (this.tracks = { lo: a, hi: a });
+    T.lo = Math.min(T.lo, a); T.hi = Math.max(T.hi, b);
+  },
+  drawTracks(){
+    const T = this.tracks;
+    if(!T || !this.snow || S.dgnRun || this.heli) return;
+    const c = this.b, I = this.isle, near = this.camD - CAM_BACK + ROPE_REL, hi = Math.min(T.hi, this.camD - 0.35);
+    const col = this.night ? 'rgba(40,52,70,.5)' : 'rgba(96,118,140,.42)';
+    c.fillStyle = col;
+    for(let i = Math.ceil(Math.max(T.lo, near) / 0.3), n = 0; i * 0.3 < hi && n < 400; i++, n++){
+      const d = i * 0.3, x = (i & 1 ? 0.09 : -0.09);
+      if(this.hitsHazard(d, x, 0) || (I && d > I.bank - 0.5 && d < (I.land || LEN - 8) + 0.5)) continue;
+      const q = this.proj(d, x);
+      if(q.s < 0.05) continue;
+      // (a print his shoe's size)
+      const w = Math.max(1, Math.round(B_GOLFER * US * q.s * 0.1)), h = Math.max(1, Math.round(w * 0.5));
+      fillClip(c, Math.round(q.x - w / 2), Math.round(q.y) - h, w, h, this.clipAt(d));
+    }
+  },
   drawGolferGround(){
     previewTick();
     this.golferGround(this.b, this.golferPose());
@@ -23076,6 +23101,9 @@ Object.assign(Scene, {
       // hole puts the camera back on the tee, which is not a walk.
       const v = dt > 0 ? (this.camD - cam0) / dt : 0;
       this.walkOn = !this.heli && this.swingT === 0 && v > 0.8 && v < 200;
+      // (in the snow his footprints are left behind him, the hole's length
+      // walked: drawn by drawTracks)
+      if(this.walkOn) this.noteTrack(cam0, this.camD);
       if(this.heli) this.heliT = (this.heliT || 0) + dt;
       if(this.walkOn) this.walkPh = (this.walkPh || 0) + dt * clamp(1.4 + v * 0.08, 1.4, 2.6);
       // there: the swing that waited for him goes off now (not once the
@@ -23091,6 +23119,7 @@ Object.assign(Scene, {
       this.drawRidge();
       this.drawGround();
       this.drawFarFade();
+      this.drawTracks();
       // The railway runs right across among the trees and the gallery: those
       // beyond it first, then the line and its train, then those this side of
       // it (drawn over them all, it cut across the trees in front; the user
