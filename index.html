@@ -14006,60 +14006,187 @@ const BLESS_FX = {
       blSides(G, '#B98CFF', '#F4DC96');
     } }
 };
+// ---- what winds round a trail (the user: "small galaxies that spiral
+// around it starting from the beginning of the trail to the end of it", and
+// for every trail "not all just solid colored lines") ----
+// a point along the trail at s (0 the ball, 1 its tail) and the way across
+// the flight there
+function trailAt(path, s){
+  const n = path.length - 1, u = clamp(s, 0, 1) * n, i = Math.min(n - 1, Math.floor(u)), f = u - i;
+  const a = path[i], b = path[i + 1] || a, dx = a.x - b.x, dy = a.y - b.y, L = Math.hypot(dx, dy);
+  return { x: a.x + (b.x - a.x) * f, y: a.y + (b.y - a.y) * f, nx: L < 0.3 ? 1 : -dy / L, ny: L < 0.3 ? 0 : dx / L };
+}
+// n things winding round it, each setting off from the ball and travelling
+// down to the tail as it turns: x, y, z (-1 behind the trail, 1 in front), s
+// how far down it, k which
+function trailSpiral(path, n, amp, t, speed, turns, seed){
+  const out = [];
+  if(path.length < 3) return out;
+  for(let k = 0; k < n; k++){
+    const s = (k / n + t * speed + (seed || 0) * 0.37) % 1, a = s * turns * Math.PI * 2 - t * 7 + k * 0.6;
+    const P = trailAt(path, s), env = Math.min(1, s / 0.12) * (1 - 0.3 * s), o = Math.sin(a) * amp * env;
+    out.push({ x: P.x + P.nx * o, y: P.y + P.ny * o, z: Math.cos(a), s, k });
+  }
+  return out;
+}
+// ribbons wound round it as a helix: each { ph, front, back } and its
+// width, the halves behind it drawn in pass 0 (before the spine), the halves
+// in front in pass 1
+function trailHelix(c, path, amp, ribs, t, spin, pass, w){
+  const n = path.length;
+  if(n < 3) return;
+  const pt = (i, R) => { const a = i * 0.75 - t * spin + R.ph, P = trailAt(path, i / (n - 1)), env = Math.min(1, i / 2) * (1 - 0.25 * i / n), o = Math.sin(a) * amp * env;
+    return { x: P.x + P.nx * o, y: P.y + P.ny * o, z: Math.cos(a) }; };
+  for(const R of ribs) for(let i = n - 1; i >= 1; i--){
+    const A = pt(i, R), B2 = pt(i - 1, R), z = (A.z + B2.z) / 2;
+    if((z > 0) !== !!pass) continue;
+    c.globalAlpha = 1 - (i / n) * 0.55;
+    const ww = z > 0.4 ? (w || 2) : 1;
+    pxLine(c, A.x, A.y, B2.x, B2.y, z > 0 ? (z > 0.75 && R.hi ? R.hi : R.front) : R.back, ww);
+  }
+  c.globalAlpha = 1;
+}
+// a small spiral galaxy: a halo of faint stars, two curling arms bright
+// at the heart and violet at their tips, and a white core
+function trailGalaxy(c, x, y, sc, rot, cols, a){
+  const X = Math.round(x), Y = Math.round(y), n = Math.round(2 + sc * 2);
+  c.globalAlpha = a;
+  if(sc > 1){ c.fillStyle = cols[3];
+    for(let j = 0; j < 6; j++){ const an = rot * 0.5 + j * 1.05, R = n * 0.9; c.fillRect(Math.round(X + Math.cos(an) * R), Math.round(Y + Math.sin(an) * R * 0.6), 1, 1); } }
+  for(let arm = 0; arm < 2; arm++) for(let j = 1; j <= n; j++){
+    const an = rot + arm * Math.PI + j * 0.62, R = j * 0.9, px = Math.round(X + Math.cos(an) * R), py = Math.round(Y + Math.sin(an) * R * 0.6);
+    c.fillStyle = cols[Math.min(3, Math.ceil(j / n * 3))];
+    c.fillRect(px, py, 1, 1);
+    // (thicker toward the heart on the big ones)
+    if(sc > 1 && j < n * 0.6) c.fillRect(px, py + 1, 1, 1);
+  }
+  c.fillStyle = cols[1]; if(sc > 1){ c.fillRect(X - 1, Y, 3, 1); c.fillRect(X, Y - 1, 1, 3); }
+  c.fillStyle = cols[0]; c.fillRect(X, Y, sc > 2 ? 2 : 1, 1);
+  c.globalAlpha = 1;
+}
+// a small void: a black pit with a violet rim and a tilted ring of gold
+function trailVoid(c, x, y, R, t, a){
+  const X = Math.round(x), Y = Math.round(y), rx = R + 2;
+  c.globalAlpha = a;
+  c.fillStyle = '#D8B060'; c.fillRect(X - rx, Y, rx * 2 + 1, 1);
+  c.fillStyle = '#B98CFF';
+  for(let j = 0; j < 8; j++){ const an = j / 8 * Math.PI * 2 + t * 5; c.fillRect(Math.round(X + Math.cos(an) * (R + 1)), Math.round(Y + Math.sin(an) * (R + 1)), 1, 1); }
+  pxCircle(c, X, Y, R, '#050308');
+  c.fillStyle = '#F4DC96'; c.fillRect(X - rx + ((Math.floor(t * 14) % (rx * 2 + 1))), Y, 1, 1);
+  c.fillStyle = '#FFE0A0'; c.fillRect(X - R, Y + 1, R * 2 + 1, 1);
+  c.globalAlpha = 1;
+}
+// a burst of fire: a white flash, then flecks flying out yellow, orange and
+// red, cooling to smoke, a tongue of flame licking up out of it
+function trailBurst(c, x, y, age, sc, seed){
+  const X = Math.round(x), Y = Math.round(y), R = (1 + age * 5.5) * sc;
+  c.globalAlpha = 1;
+  if(age < 0.22){ c.fillStyle = '#FFD34A'; c.fillRect(X - sc, Y - sc, sc * 2 + 1, sc * 2 + 1); c.fillStyle = '#FFF6D0'; c.fillRect(X - (sc >> 1), Y - (sc >> 1), sc, sc); }
+  const col = age < 0.3 ? '#FFD34A' : age < 0.55 ? '#FF7A1A' : age < 0.8 ? '#D8301C' : '#3A1E1C';
+  const sz = sc > 1 && age < 0.6 ? 2 : 1;
+  for(let j = 0; j < 8; j++){
+    const an = j / 8 * Math.PI * 2 + seed, r = R * (0.65 + 0.35 * hr(j, seed));
+    c.fillStyle = j & 1 && age < 0.55 ? '#FFB43A' : col;
+    c.fillRect(Math.round(X + Math.cos(an) * r), Math.round(Y + Math.sin(an) * r * 0.8 - age * 2), sz, sz);
+  }
+  if(age < 0.65){ const L = Math.max(1, Math.round((1 - age) * 3.5 * sc));
+    for(let j = 0; j < L; j++){ c.fillStyle = j < L * 0.4 ? '#FFE680' : j < L * 0.75 ? '#FF7A1A' : '#C8281C'; c.fillRect(X, Y - 1 - j, 1, 1); } }
+}
 // A ball effect is drawn instead of the plain trail: path is the ball's last
 // few positions (0 is the ball itself), r its size, t the scene clock.
 const BALLFX = {
-  /* ---- Gold: a gilded ribbon that glints ---- */
+  /* ---- Gold: a gilded chain, a band of gold wound round a bright spine,
+     coins spinning off it and glints along it ---- */
   tGold(c, b, path, r, t){
-    const w = Math.max(2, r + 1);
+    const w = Math.max(2, r + 1), amp = 3 + r * 2, rib = [{ ph: 0, front: '#FFE7A3', back: '#8A6A24', hi: '#FFFFFF' }];
+    trailHelix(c, path, amp, rib, t, 10, 0);
     trailRibbon(c, path, w, i => i < 3 ? '#FFE7A3' : i < 8 ? '#E3B457' : '#A8812F', 1);
-    trailRibbon(c, path.slice(0, 5), 1, '#FFF6D8', 0.9);
+    trailHelix(c, path, amp, rib, t, 10, 1);
+    // coins: flat gold discs tumbling out and dropping, edge on and face on
+    for(let i = 2; i < path.length; i += 2){
+      const q = (t * 1.8 + hr(i, b.seed)) % 1, p = path[i], face = Math.floor(t * 10 + i) & 1, k = r > 1 ? 2 : 1;
+      const x = Math.round(p.x + (hr(b.seed, i) - 0.5) * 10), y = Math.round(p.y + q * 9);
+      c.globalAlpha = 1 - q; c.fillStyle = '#C8902A'; c.fillRect(x, y, face ? k + 1 : 1, k + 1);
+      c.fillStyle = '#FFE7A3'; c.fillRect(x, y, 1, 1);
+    }
     for(let i = 2; i < path.length; i += 2){
       const tw = Math.sin(t * 10 + i * 1.7 + b.seed);
-      const N = trailNormal(path), side = (i & 2 ? 1 : -1) * (w + 1);
+      const N = trailNormal(path), side = (i & 2 ? 1 : -1) * (w + 2);
       if(tw > 0.45) trailStar(c, path[i].x + N.x * side, path[i].y + N.y * side, '#FFFFFF', '#FFE7A3', tw);
     }
+    c.globalAlpha = 1;
     trailBall(c, b, path[0], r);
   },
-  /* ---- Aurora: bands of northern light, rippling ---- */
+  /* ---- Aurora: curtains of northern light hanging off it, swaying, green
+     at the top fading through teal into violet ---- */
   tAurora(c, b, path, r, t){
-    const w = Math.max(3, r + 1), wave = i => Math.round(Math.sin(t * 7 - i * 0.8) * 2);
-    trailRibbon(c, path, 1, '#C68BFF', 0.55, i => wave(i) - w);
-    trailRibbon(c, path, w, i => (i + Math.floor(t * 6)) % 4 < 2 ? '#57E0BE' : '#9FF5DD', 1, wave);
-    trailRibbon(c, path, 1, '#7ADB86', 0.8, i => wave(i) + w);
+    const w = Math.max(2, r), cols = ['#9FF5DD', '#57E0BE', '#2FB592', '#7A6AD8', '#C68BFF'];
+    // a band of light that ripples wider and narrower down its length,
+    // pale green at its heart through teal to violet at its edges, the
+    // edges broken into a dither
+    const Wd = i => (2 + 3 * (0.5 + 0.5 * Math.sin(t * 6 - i * 0.9))) * (0.8 + r * 0.3);
+    for(let k = 6; k >= 1; k--) for(const sd of [-1, 1]){
+      const col = cols[Math.min(cols.length - 1, Math.floor(k / 6 * cols.length))];
+      for(let i = path.length - 1; i >= 1; i--){
+        if(k > Wd(i)) continue;
+        if(k > Wd(i) * 0.6 && (i + k) & 1) continue;
+        const A = trailAt(path, i / (path.length - 1)), B2 = trailAt(path, (i - 1) / (path.length - 1));
+        c.globalAlpha = 1 - (i / path.length) * 0.55;
+        pxLine(c, A.x + A.nx * sd * k, A.y + A.ny * sd * k, B2.x + B2.nx * sd * k, B2.y + B2.ny * sd * k, col, 1);
+      }
+    }
+    const wave = i => Math.round(Math.sin(t * 7 - i * 0.8) * 1.5);
+    trailRibbon(c, path, w, i => (i + Math.floor(t * 6)) % 4 < 2 ? '#57E0BE' : '#C8FFEE', 1, wave);
+    c.globalAlpha = 1;
     trailBall(c, b, path[0], r);
   },
-  /* ---- Ember: burning from white to cinder, sparks lifting off it ---- */
+  /* ---- Ember: a ribbon of flame that flickers wider and narrower, coals
+     tumbling out of it and sparks lifting off, smoke off the cold end ---- */
   tEmber(c, b, path, r, t){
     const cols = ['#FFF3B0', '#FFD06A', '#FFB43A', '#F07A3A', '#C8401E', '#6A2A1E'];
     trailRibbon(c, path, Math.max(2, r + 1), (i, f) => cols[Math.min(cols.length - 1, Math.floor(f * cols.length))], 1);
+    // tongues of flame up off it, each its own flicker
+    for(let i = 1; i < path.length - 1; i++){
+      const p = path[i], H = Math.max(0, Math.round((2 + 3 * Math.sin(t * 17 + i * 2.3)) * (1 - i / path.length)));
+      for(let j = 0; j < H; j++){ c.globalAlpha = 1; c.fillStyle = j < H * 0.5 ? '#FFB43A' : '#F07A3A'; c.fillRect(Math.round(p.x + Math.sin(t * 9 + i) * j * 0.3) + 1, Math.round(p.y) - 1 - j, 1, 1); }
+    }
+    // coals: glowing lumps tumbling down out of it
+    for(let i = 3; i < path.length; i += 3){
+      const q = (t * 1.5 + hr(i, b.seed + 2)) % 1, p = path[i], x = Math.round(p.x + (hr(b.seed, i + 9) - 0.5) * 8), y = Math.round(p.y + q * q * 12);
+      c.globalAlpha = 1 - q * 0.7; c.fillStyle = '#6A2A1E'; c.fillRect(x, y, 2, 2); c.fillStyle = q < 0.5 ? '#FFB43A' : '#C8401E'; c.fillRect(x, y, 1, 1);
+    }
     for(let i = 2; i < path.length; i++){
       const rise = (t * 2.5 + hr(i, b.seed)) % 1, p = path[i];
       fxDot(c, p.x + (hr(b.seed, i) - 0.5) * 6 + Math.sin(t * 9 + i) * 1.5, p.y - 2 - rise * 11, 1,
             rise < 0.4 ? '#FFE08A' : '#F07A3A', 1 - rise);
     }
-    // smoke off the cold end
     for(let i = path.length - 3; i < path.length; i++){
       if(i < 1) continue;
       const p = path[i], rise = (t * 1.2 + i * 0.3) % 1;
       fxDot(c, p.x, p.y - 2 - rise * 6, 2, '#5A5250', 0.35 * (1 - rise));
     }
+    c.globalAlpha = 1;
     trailBall(c, b, path[0], r);
   },
-  /* ---- Mythic: a violet ribbon scattering stars ---- */
+  /* ---- Mythic: a river of stars, big ones near the ball and small ones
+     down the tail, twinkling, over a thin violet thread ---- */
   tMythic(c, b, path, r, t){
-    const w = Math.max(3, r + 1);
-    trailRibbon(c, path, w, i => i < 4 ? '#E3C8FF' : '#C68BFF', 1);
-    trailRibbon(c, path.slice(0, 6), 1, '#FFFFFF', 0.7);
+    trailRibbon(c, path, 1, i => i < 4 ? '#E3C8FF' : '#9A6AD8', 0.9);
     for(let i = 1; i < path.length; i++){
-      const tw = Math.sin(t * 8 + i * 2.1 + b.seed);
-      if(tw < 0.3) continue;
-      const p = path[i], ox = (hr(i, b.seed) - 0.5) * (w * 6 + 6), oy = (hr(b.seed, i) - 0.5) * (w * 5 + 5);
-      trailStar(c, p.x + ox, p.y + oy, '#FFFFFF', '#C68BFF', tw);
+      const p = path[i], tw = 0.5 + 0.5 * Math.sin(t * 8 + i * 2.1 + b.seed), big = i < 5 && tw > 0.5 ? 2 : 1;
+      const ox = Math.sin(t * 3 + i * 1.3) * (r + 2);
+      const X = Math.round(p.x + ox), Y = Math.round(p.y);
+      c.globalAlpha = 1 - (i / path.length) * 0.5;
+      c.fillStyle = i & 1 ? '#C68BFF' : '#E3C8FF';
+      for(let a = 1; a <= big; a++){ c.fillRect(X - a, Y, 1, 1); c.fillRect(X + a, Y, 1, 1); c.fillRect(X, Y - a, 1, 1); c.fillRect(X, Y + a, 1, 1); }
+      c.fillStyle = '#FFFFFF'; c.fillRect(X, Y, 1, 1);
+      if(i % 3 === 0 && tw > 0.7){ const sx = Math.round(p.x - ox * 1.4), sy = Math.round(p.y + 2); c.fillStyle = '#FFFFFF'; c.fillRect(sx, sy, 1, 1); }
     }
+    c.globalAlpha = 1;
     trailBall(c, b, path[0], r);
   },
-  /* ---- Rainbow: every colour, stacked, with a bounce in it ---- */
+  /* ---- Rainbow: every colour, stacked in pixel steps that hop, a little
+     cloud at its tail and sparkles off it ---- */
   tRainbow(c, b, path, r, t){
     const cols = ['#E4574A', '#F0A03C', '#E3D457', '#7ADB86', '#57A5C2', '#C68BFF'];
     const bt = Math.max(1, r), top = -Math.round(cols.length * bt / 2), N = trailNormal(path);
@@ -14069,26 +14196,33 @@ const BALLFX = {
       const tw = Math.sin(t * 12 + i + b.seed), side = (i & 1 ? 1 : -1) * (-top + 3);
       if(tw > 0.5) trailStar(c, path[i].x + N.x * side, path[i].y + N.y * side, '#FFFFFF', '#FFE14A', tw);
     }
+    // the cloud it comes out of, puffing
+    const z = path[path.length - 1], pf = Math.sin(t * 6) > 0 ? 1 : 0, k = Math.max(1, r);
+    c.globalAlpha = 0.95; c.fillStyle = '#FFFFFF';
+    c.fillRect(Math.round(z.x) - 2 * k, Math.round(z.y) - k, 4 * k + pf, 2 * k); c.fillRect(Math.round(z.x) - k, Math.round(z.y) - 2 * k, 2 * k, k);
+    c.fillStyle = '#D8E4EE'; c.fillRect(Math.round(z.x) - 2 * k, Math.round(z.y) + k - 1, 4 * k + pf, 1);
+    c.globalAlpha = 1;
     trailBall(c, b, path[0], r);
   },
-  /* ---- Jade Wake (the Divine's): two ribbons, jade and gold, twining
-     along behind the ball, motes of jade rising off them, and the ball in
-     a jade glow with a curl of gold circling it ---- */
+  /* ---- Jade Wake (the Divine's): ribbons of jade, gold and pale jade
+     wound round a thread of light, turning as it flies, the near side of
+     each bright and wide and its far side dark behind the thread; motes of
+     jade rising off them, and the ball in a jade glow with a curl of gold
+     circling it ---- */
   tSeraph(c, b, path, r, t, u){
-    const w = Math.max(2, r + 1), amp = r + 2.5;
-    trailRibbon(c, path, w + 3, '#3FD6A8', 0.25);
-    trailRibbon(c, path, Math.max(2, w - 1), i => i % 4 < 2 ? '#17866A' : '#2FB592', 0.9, i => Math.sin(i * 0.55 - t * 9) * amp * Math.min(1, i / 4));
-    trailRibbon(c, path, Math.max(2, w - 1), i => i < 6 ? '#FFF2B8' : '#E0AE3E', 0.9, i => -Math.sin(i * 0.55 - t * 9) * amp * Math.min(1, i / 4));
-    trailRibbon(c, path.slice(0, 7), 1, '#B8FFE6', 1);
-    // motes of jade and gold rising off it
+    const w = Math.max(2, r + 1), amp = 4 + r * 2.5;
+    const ribs = [{ ph: 0, front: '#3FD6A8', back: '#0E5A48', hi: '#B8FFE6' }, { ph: Math.PI * 2 / 3, front: '#F4D27A', back: '#7A5A24', hi: '#FFF6D8' }, { ph: Math.PI * 4 / 3, front: '#7FF0C8', back: '#17866A', hi: '#FFFFFF' }];
+    trailRibbon(c, path, w + 3, '#3FD6A8', 0.22);
+    trailHelix(c, path, amp, ribs, t, 9, 0, 2);
+    trailRibbon(c, path, Math.max(1, w - 1), i => i < 5 ? '#FFF6D8' : '#B8FFE6', 1);
+    trailHelix(c, path, amp, ribs, t, 9, 1, 2);
     for(let i = 1; i < path.length; i += 2){
       const rise = (t * 1.6 + hr(b.seed, i)) % 1, p = path[i];
-      fxDot(c, p.x + (hr(i, b.seed + 3) - 0.5) * 8, p.y - 2 - rise * 9, 1, i & 2 ? '#F4D27A' : '#7FF0C8', 1 - rise);
+      fxDot(c, p.x + (hr(i, b.seed + 3) - 0.5) * 10, p.y - 2 - rise * 9, 1, i & 2 ? '#F4D27A' : '#7FF0C8', 1 - rise);
     }
     const h0 = path[0];
     drawGlow(c, h0.x, h0.y, r * 3 + 4, r * 3 + 3, [[0.6, '#17866A', 1], [0.3, '#3FD6A8', 2], [0, '#B8FFE6', 3]], Math.floor(t * 8) & 3, 0.8);
     trailBall(c, b, h0, r);
-    // the curl of gold circling it
     const R = r + 3;
     for(let k = 0; k < 6; k++){ const a = t * 10 - k * 0.35;
       fxDot(c, h0.x + Math.cos(a) * R, h0.y + Math.sin(a) * R * 0.6, 1, k < 2 ? '#FFF2B8' : '#E0AE3E', 1 - k * 0.12); }
@@ -14098,6 +14232,9 @@ const BALLFX = {
   comet(c, b, path, r, t, u){
     const cols = ['#FFFFFF', '#FFF3B0', '#FFB43A', '#F0612A', '#B8341C', '#5A2A20'];
     trailRibbon(c, path, r + 5, '#F0612A', 0.28);
+    // two threads of flame braided round its tail, the far one dim
+    const ribs = [{ ph: 0, front: '#FFD06A', back: '#8A2A18', hi: '#FFF3B0' }, { ph: Math.PI, front: '#FF7A2A', back: '#5A2A20' }];
+    trailHelix(c, path, 2 + r * 2, ribs, t, 14, 0, 1);
     for(let i = path.length - 1; i >= 1; i--){
       const p0 = path[i], p1 = path[i - 1], f = i / path.length, w = Math.max(2, r + 3 - (i >> 2)), h = w >> 1;
       c.globalAlpha = 1 - f * 0.8;
@@ -14108,6 +14245,7 @@ const BALLFX = {
       const p = path[i], fall = ((t * 3 + i * 0.37 + b.seed) % 1);
       fxDot(c, p.x + (hr(i, b.seed) - 0.5) * 6, p.y + fall * 8, 1, fall < 0.5 ? '#FFB43A' : '#F0612A', 1 - fall);
     }
+    trailHelix(c, path, 2 + r * 2, ribs, t, 14, 1, 1);
     const h0 = path[0];
     drawGlow(c, h0.x, h0.y, r * 3 + 5, r * 3 + 5, [[0.5, '#F0612A', 1], [0, '#FFB43A', 2]], Math.floor(t * 12) & 3);
     fxDot(c, h0.x - r - 1, h0.y - r - 1, r * 2 + 2, '#FFFFFF', 1);
@@ -14120,6 +14258,14 @@ const BALLFX = {
       const w = Math.max(3, r + 2), h = w >> 1;
       c.globalAlpha = 0.85 * (1 - i / path.length); pxLine(c, p0.x - h, p0.y - h, p1.x - h, p1.y - h, i < 4 ? '#6E44A0' : '#3A1E5A', w);
     }
+    // light bent round its trail: streaks of violet and white curling in
+    // toward it as they fall behind
+    for(const o of trailSpiral(path, 9, 3 + r * 2.5, t, 0.7, 1.5, b.seed)){
+      const P = trailAt(path, Math.min(1, o.s + 0.04)), dx = Math.round(P.x - o.x) || 0;
+      c.globalAlpha = o.z > 0 ? 1 : 0.55; c.fillStyle = o.k % 3 ? '#C68BFF' : '#FFFFFF';
+      c.fillRect(Math.round(o.x), Math.round(o.y), 1, 1); c.fillRect(Math.round(o.x) + Math.sign(dx), Math.round(o.y) + 1, 1, 1);
+    }
+    c.globalAlpha = 1;
     const h0 = path[0], R = Math.max(6, r * 3 + 4);
     drawGlow(c, h0.x, h0.y, R * 1.2, R * 0.9, [[0.6, '#3A1E5A', 1], [0, '#6E44A0', 2]], Math.floor(t * 10) & 3, 0.8);
     for(let i = 0; i < 22; i++){
@@ -14221,8 +14367,12 @@ const BALLFX = {
     // the ribbon: a continuous stroke through the path, gold fading to warm
     // white at the ball, with a white spine
     trailRibbon(c, path, r + 5, '#3FD6A8', 0.25);
+    // ribbons of jade and gold wound round it (not over the Jade Wake's own)
+    const ribs = b.wake ? [] : [{ ph: 0, front: '#3FD6A8', back: '#0E5A48', hi: '#B8FFE6' }, { ph: Math.PI, front: '#F4D27A', back: '#7A5A24', hi: '#FFF6D8' }];
+    trailHelix(c, path, 4 + r * 2.5, ribs, t, 9, 0, 2);
     trailRibbon(c, path, Math.max(2, r + 1), i => i < 4 ? '#B8FFE6' : '#2FB592', 1);
     trailRibbon(c, path.slice(0, 6), 1, '#FFFFFF', 0.9);
+    trailHelix(c, path, 4 + r * 2.5, ribs, t, 9, 1, 2);
     // stars shed along the way, each twinkling on its own beat
     for(let i = 1; i < path.length; i++){
       const p = path[i];
@@ -14254,20 +14404,15 @@ const BALLFX = {
     fxDot(c, h0.x - r, h0.y - r, r * 2, b.crit ? '#FFD66B' : '#FFFFFF', 1);
     c.globalAlpha = 1;
   },
-  /* ---- Hellfire Wake: fire in a river of smoke, flames licking up off it,
-     embers thrown from it, a skull in the smoke now and then, the ball red
-     hot, and fire where it lands ---- */
+  /* ---- Hellfire Wake: fire in a river of smoke, bursts of fire breaking
+     out of it one after another from the ball down to its tail, embers
+     thrown, a skull in the smoke now and then, the ball red hot, and fire
+     where it lands ---- */
   tHellfire(c, b, path, r, t, u){
     const w = Math.max(2, r + 1), cols = ['#FFF3B0', '#FFD34A', '#FF8A2A', '#FF4A1A', '#C8281C', '#6A1410'];
     trailRibbon(c, path, w + 4, '#2A1618', 0.45);
     trailRibbon(c, path, w + 1, (i, f) => cols[Math.min(cols.length - 1, Math.floor(f * cols.length))], 1);
-    for(let i = 1; i < path.length; i += 2){
-      const p = path[i], life = (t * 3 + hr(i, b.seed)) % 1, hgt = Math.max(1, Math.round((1 - life) * (4 + (path.length - i) * 0.4)));
-      const x = Math.round(p.x + Math.sin(t * 11 + i * 1.7) * 1.5), y0 = Math.round(p.y - w);
-      c.globalAlpha = 0.9 * (1 - i / path.length * 0.6);
-      c.fillStyle = life < 0.35 ? '#FFD34A' : '#FF7A2A'; c.fillRect(x, y0 - hgt, 1, hgt);
-      c.fillStyle = '#E8281C'; c.fillRect(x - 1, y0 - Math.round(hgt * 0.5), 1, Math.max(1, Math.round(hgt * 0.5)));
-    }
+    hellBursts(c, path, r, t, b.seed, 7, w);
     for(let i = 2; i < path.length; i++){
       const f = (t * 2.2 + hr(b.seed, i)) % 1, p = path[i];
       fxDot(c, p.x + (hr(i, b.seed + 5) - 0.5) * 10, p.y + (f - 0.3) * 12, 1, f < 0.5 ? '#FFB43A' : '#C8281C', 1 - f);
@@ -14292,6 +14437,7 @@ const BALLFX = {
   demoneye(c, b, path, r, t, u){
     trailRibbon(c, path, r + 5, '#2A1618', 0.4);
     trailRibbon(c, path, Math.max(2, r + 2), i => i < 3 ? '#FFD34A' : i < 7 ? '#FF6A1A' : '#A81E14', 1);
+    if(!b.wake) hellBursts(c, path, r, t, b.seed, 5, Math.max(2, r + 2));
     for(let i = 2; i < path.length; i++){
       const f = (t * 2.6 + hr(i, b.seed)) % 1, p = path[i];
       fxDot(c, p.x + (hr(b.seed, i) - 0.5) * 8, p.y - 2 - f * 8, 1, f < 0.5 ? '#FFB43A' : '#8A1A0E', 1 - f);
@@ -14307,22 +14453,30 @@ const BALLFX = {
     c.globalAlpha = 1;
   },
   /* ---- Event Horizon: a river of the night edged in violet, pink at its
-     heart and white at the ball, stars glinting in it ---- */
+     heart and white at the ball, and small voids winding round it from the
+     ball to its tail, each a black pit in a ring of gold ---- */
   tHorizon(c, b, path, r, t, u){
     trailRibbon(c, path, r + 5, '#0B0818', 0.42);
+    const sp = trailSpiral(path, 8, 5 + r * 3, t, 0.55, 2, b.seed);
+    for(const o of sp) if(o.z < 0) trailVoid(c, o.x, o.y, 1, t + o.k, 0.75);
     trailRibbon(c, path, Math.max(2, r + 3), '#3E2A6E', 0.8);
     trailRibbon(c, path, Math.max(2, r + 1), (i, f) => f < 0.15 ? '#FFFFFF' : f < 0.4 ? '#FF7AD9' : f < 0.7 ? '#B98CFF' : '#7A4ED8', 1);
+    for(const o of sp) if(o.z >= 0) trailVoid(c, o.x, o.y, o.z > 0 && o.s < 0.7 ? 2 : 1, t + o.k, 1);
     const N = trailNormal(path);
-    for(let i = 2; i < path.length; i += 2){ const tw = Math.sin(t * 8 + i * 1.9 + b.seed); if(tw < 0.5) continue;
+    for(let i = 2; i < path.length; i += 3){ const tw = Math.sin(t * 8 + i * 1.9 + b.seed); if(tw < 0.5) continue;
       const side = (i & 2 ? 1 : -1) * (r + 3); voidStar(c, path[i].x + N.x * side, path[i].y + N.y * side, 1, tw > 0.85 ? 1 : 0, i & 4 ? '#7FE6FF' : '#B98CFF'); }
     trailBall(c, b, path[0], r);
     c.globalAlpha = 1;
   },
   // the Singularity: a black hole in flight, its gold ring turning, light
-  // drawn in behind it; a flash of its ring as it comes down
+  // drawn in behind it, small voids winding down its trail; a flash of its
+  // ring as it comes down
   singularity(c, b, path, r, t, u){
     trailRibbon(c, path, r + 4, '#0B0818', 0.35);
+    const sp = b.wake ? [] : trailSpiral(path, 5, 5 + r * 3, t, 0.55, 1.6, b.seed);
+    for(const o of sp) if(o.z < 0) trailVoid(c, o.x, o.y, 1, t + o.k, 0.75);
     trailRibbon(c, path, Math.max(2, r + 1), i => i < 3 ? '#FF7AD9' : i < 7 ? '#B98CFF' : '#3E2A6E', 0.95);
+    for(const o of sp) if(o.z >= 0) trailVoid(c, o.x, o.y, o.z > 0 && o.s < 0.7 ? 2 : 1, t + o.k, 1);
     const h0 = path[0];
     for(let i = 0; i < 3; i++){ const f = (t * 2 + i / 3) % 1, a = i * 2.1 + f * 4, R = (1 - f) * (r + 6);
       fxDot(c, h0.x + Math.cos(a) * R, h0.y + Math.sin(a) * R * 0.6, 1, f > 0.6 ? '#FFFFFF' : '#7FE6FF', 1); }
@@ -14333,18 +14487,17 @@ const BALLFX = {
     c.globalAlpha = 1;
   },
   /* ---- Ascension Wake: a river of magenta fire over void smoke, white at
-     the ball, flames licking up off it, lightning jumping from it now and
-     then, motes of the void drifting off it ---- */
+     the ball, small galaxies spiralling round it from the ball to its tail,
+     each turning as it goes, lightning jumping from it now and then ---- */
   tAscension(c, b, path, r, t, u){
     const w = Math.max(2, r + 1);
     trailRibbon(c, path, w + 5, '#180C25', 0.42);
+    const sp = trailSpiral(path, 8, 6 + r * 3, t, 0.5, 2, b.seed);
+    const GC = ['#FFFFFF', '#CFEFFF', '#8FC8FF', '#7A4ED8'], GB = ['#E0D8FF', '#B49AE6', '#7A4ED8', '#3A1E5A'];
+    for(const o of sp) if(o.z < 0) trailGalaxy(c, o.x, o.y, 1, t * 4 + o.k * 1.7, GB, 0.8);
     trailRibbon(c, path, w + 3, '#962CA8', 0.5);
     trailRibbon(c, path, w + 1, (i, f) => f < 0.2 ? '#FFE0FF' : f < 0.45 ? '#F2A6F8' : f < 0.7 ? '#E639EB' : '#C936D5', 1);
-    for(let i = 1; i < path.length; i += 2){
-      const p = path[i], life = (t * 3 + hr(i, b.seed)) % 1, hgt = Math.max(1, Math.round((1 - life) * (3 + (path.length - i) * 0.35)));
-      c.globalAlpha = 0.85 * (1 - i / path.length * 0.6); c.fillStyle = life < 0.35 ? '#F2A6F8' : '#E639EB';
-      c.fillRect(Math.round(p.x + Math.sin(t * 10 + i * 1.7) * 1.5), Math.round(p.y - w) - hgt, 1, hgt);
-    }
+    for(const o of sp) if(o.z >= 0) trailGalaxy(c, o.x, o.y, o.z > 0 ? (o.s < 0.45 && r > 1 ? 3 : 2) : 1, t * 4 + o.k * 1.7, GC, 1);
     const n = Math.floor(t * 3 + b.seed), f = (t * 3 + b.seed) % 1;
     if(hr(n, 13) > 0.4 && f < 0.3 && path.length > 4){
       const p = path[2 + Math.floor(hr(n, 14) * (path.length - 3))];
@@ -14354,10 +14507,6 @@ const BALLFX = {
         c.globalAlpha = 1 - f / 0.3; pxLine(c, px, py, qx, qy, s & 1 ? '#F2A6F8' : '#FFFFFF', 1);
         px = qx; py = qy;
       }
-    }
-    for(let i = 2; i < path.length; i++){
-      const q = (t * 1.8 + hr(b.seed, i)) % 1, p = path[i];
-      fxDot(c, p.x + (hr(i, b.seed + 3) - 0.5) * 9, p.y - 2 - q * 8, 1, q < 0.5 ? '#E639EB' : '#371946', 1 - q);
     }
     const h0 = path[0];
     drawGlow(c, h0.x, h0.y, r * 2 + 4, r * 2 + 4, [[0.6, '#762889', 1], [0.3, '#C936D5', 2], [0, '#F2A6F8', 3]], Math.floor(t * 10) & 3, 0.85);
@@ -14370,14 +14519,15 @@ const BALLFX = {
     c.globalAlpha = 1;
   },
   /* ---- Ascended Orb: a sphere of the void with a light burning in it and
-     magenta fire round it, on a trail of that fire over smoke ---- */
+     magenta fire round it, on a trail of that fire over smoke, galaxies
+     spiralling round the trail ---- */
   ascorb(c, b, path, r, t, u){
     trailRibbon(c, path, r + 5, '#180C25', 0.4);
+    const sp = b.wake ? [] : trailSpiral(path, 6, 6 + r * 3, t, 0.5, 2, b.seed);
+    const GC = ['#FFFFFF', '#CFEFFF', '#8FC8FF', '#7A4ED8'], GB = ['#E0D8FF', '#B49AE6', '#7A4ED8', '#3A1E5A'];
+    for(const o of sp) if(o.z < 0) trailGalaxy(c, o.x, o.y, 1, t * 4 + o.k * 1.7, GB, 0.8);
     trailRibbon(c, path, Math.max(2, r + 2), i => i < 3 ? '#F2A6F8' : i < 7 ? '#E639EB' : '#962CA8', 0.95);
-    for(let i = 2; i < path.length; i++){
-      const q = (t * 2.4 + hr(i, b.seed)) % 1, p = path[i];
-      fxDot(c, p.x + (hr(b.seed, i) - 0.5) * 8, p.y - 2 - q * 8, 1, q < 0.5 ? '#E639EB' : '#371946', 1 - q);
-    }
+    for(const o of sp) if(o.z >= 0) trailGalaxy(c, o.x, o.y, o.z > 0 ? (o.s < 0.45 && r > 1 ? 3 : 2) : 1, t * 4 + o.k * 1.7, GC, 1);
     const h0 = path[0];
     drawVoidOrb(c, h0.x, h0.y, r, t + b.seed, true);
     if(u > 0.85){
@@ -14388,6 +14538,17 @@ const BALLFX = {
     c.globalAlpha = 1;
   }
 };
+
+// bursts of fire breaking out along a trail one after another, from the
+// ball down to the tail: each lights where it is and grows as the trail
+// carries it back
+function hellBursts(c, path, r, t, seed, n, w){
+  if(path.length < 3) return;
+  for(let k = 0; k < n; k++){
+    const s = (k / n + t * 0.9 + seed * 0.29) % 1, P = trailAt(path, s), side = (hr(k, Math.floor(t * 0.9 + k / n + seed * 0.29)) - 0.5) * (w + 3);
+    trailBurst(c, P.x + P.nx * side, P.y + P.ny * side, s, s < 0.7 ? 2 : 1, k * 1.3 + seed);
+  }
+}
 
 /* ---- painting the ground by the pixel ----------------------------------
    The ground march is a few thousand solid, whole-pixel rectangles a frame.
@@ -19907,6 +20068,9 @@ Object.assign(Scene, {
           if(k === 0) rr = Math.max(1, Math.round(B_BALL * p.s * US));
           path.push(p);
         }
+        // (a ball of a set over its own wake leaves what winds round the
+        // trail to the wake, so there are not two of each)
+        b.wake = !!BT;
         if(path.length){ if(BT) BT(c, b, path, rr, this.t, u); c.globalAlpha = 1; c.globalCompositeOperation = 'source-over'; if(BB) BB(c, b, path, rr, this.t, u); }
         c.globalAlpha = 1; c.globalCompositeOperation = 'source-over';
         continue;
@@ -23211,6 +23375,7 @@ function saverDraw(dt){
     if(BF){
       const path = [];
       for(let k = 0; k <= 12 && q - k * 0.028 >= 0; k++) path.push(at(b, q - k * 0.028));
+      b.wake = !!BT;
       if(BT) BT(c, b, path, 1, V.t, q); c.globalAlpha = 1; c.globalCompositeOperation = 'source-over';
       if(BB) BB(c, b, path, 1, V.t, q);
       c.globalAlpha = 1; c.globalCompositeOperation = 'source-over';
