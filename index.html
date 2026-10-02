@@ -13146,7 +13146,7 @@ function aceStrip(fx, W, H, f){
     const mid = bands[Math.floor(r / sh) % bands.length], inner = hw - e, core = Math.max(0.6, hw * (bulb > body ? 0.4 : 0.2));
     // (a halo of the deep colour about it, every other pixel)
     for(let x = Math.max(0, x0 - G); x < Math.min(SW, x1 + G); x++){ if(x >= x0 && x < x1) continue;
-      const out = x < x0 ? x0 - x : x - x1 + 1; if(((x + r) & 1) || out > G * (0.6 + 0.4 * hr(r >> 1, f + 389))) continue;
+      const out = x < x0 ? x0 - x : x - x1 + 1; if(out > Math.max(1, Math.round(G * 0.5)) || (out > 1 && ((x + r) & 1))) continue;
       P[r * SW + x] = deep; }
     for(let x = Math.max(0, x0); x < Math.min(SW, x1); x++){
       const dx = Math.abs(x + 0.5 - (cx + sway));
@@ -13159,6 +13159,85 @@ function aceStrip(fx, W, H, f){
   S2 = { cv, SW, cx, L, R, Rb, G }; ACE_STRIP.set(key, S2);
   return S2;
 }
+// Each ball's own column (the user asked): over the light, what that ball
+// does, up its length. Each is told the column (X, its top y0 and foot y1,
+// its width W, a pixel k), how far through (q), the clock and the colours,
+// and draws with put (cut at the ground's line and covered by the trees).
+const aceSpiral = (A, n, amp, cols, sp, ph) => { const { X, y0, y1, k, t } = A;
+  for(let i = 0; i < n; i++){ const y = y1 - (i + 0.5) / n * (y1 - y0), a = y * 0.09 - t * sp + (ph || 0), z = Math.cos(a);
+    A.put(X + Math.sin(a) * amp - (k >> 1), y, k + (z > 0.5 ? 1 : 0), z > 0 ? cols[i % cols.length] : cols[cols.length - 1]); } };
+const aceRise = (A, n, seed, f) => { const { y0, y1, t } = A;
+  for(let i = 0; i < n; i++){ const u = (t * 0.9 + hr(i, seed)) % 1, y = y1 - u * (y1 - y0); if(y < y0 - 4) continue; f(i, y, u); } };
+const ACE_EXTRA = {
+  // the Divine's: ribbons of jade and gold winding up round it
+  godlight(A){ aceSpiral(A, 44, A.W * 0.95, ['#F4D27A', '#E0AE3E', '#A8802F'], 7); aceSpiral(A, 44, A.W * 0.95, ['#7FF0C8', '#2FB592', '#17866A'], 7, Math.PI); },
+  // the Demonic's: tongues of fire licking off its sides, embers thrown up
+  demoneye(A){ const { X, W, k, t, put } = A;
+    aceRise(A, 16, 391, (i, y, u) => { const side = i & 1 ? 1 : -1, L = Math.max(2, Math.round(W * (0.35 + 0.35 * Math.abs(Math.sin(t * 17 + i * 2.1)))));
+      for(let j = 0; j < L; j += k) put(X + side * (W / 2 + j) - (k >> 1), y - j * 0.8, k, j < L * 0.35 ? '#FFD34A' : j < L * 0.7 ? '#FF6A1A' : '#A81E14'); });
+    aceRise(A, 14, 392, (i, y, u) => put(X + Math.sin(i * 2.7 + t * 6) * W * 1.3, y - u * 6, k, u < 0.5 ? '#FFB43A' : '#C8281C')); },
+  // the Void's: small voids winding up round it, a rim of violet each
+  singularity(A){ const { X, y0, y1, W, k, t, put } = A;
+    for(let i = 0; i < 9; i++){ const y = y1 - (i + 0.5) / 9 * (y1 - y0), a = y * 0.07 - t * 6, R = Math.max(k * 2, Math.round(W * 0.22)), x = X + Math.sin(a) * W * 1.05;
+      for(let dy = -R; dy <= R; dy++){ const hw = Math.round(Math.sqrt(Math.max(0, R * R - dy * dy))); if(hw < 1) continue;
+        put(x - hw, y + dy, hw * 2, '#B98CFF', 1); if(hw > k && Math.abs(dy) < R - k + 1) put(x - hw + k, y + dy, hw * 2 - 2 * k, dy < -R / 3 ? '#2A1A4E' : '#0B0818', 1); }
+      put(x - (k >> 1) - Math.round(R / 3), y - Math.round(R / 3), k, Math.cos(a) > 0 ? '#FFFFFF' : '#7FE6FF'); }
+    aceRise(A, 10, 393, (i, y) => put(X + (hr(i, 394) - 0.5) * W * 2.6, y, k, i & 1 ? '#7FE6FF' : '#FFFFFF')); },
+  // the Ascended's: lightning jumping off it, small galaxies turning about it
+  ascorb(A){ const { X, y0, y1, W, k, t, put } = A, n = Math.floor(t * 7);
+    for(let j = 0; j < 2; j++){ if(hr(n, 395 + j) < 0.3) continue; let x = X + (j ? 1 : -1) * W / 2, y = y0 + hr(n, 397 + j) * (y1 - y0);
+      for(let s = 0; s < 6; s++){ const nx = x + (j ? 1 : -1) * W * (0.2 + hr(n * 7 + s, 399) * 0.3), ny = y + (hr(n * 5 + s, 400) - 0.6) * W * 0.6;
+        for(let u = 0; u <= 1; u += 0.34) put(x + (nx - x) * u - (k >> 1), y + (ny - y) * u, k, s & 1 ? '#F2A6F8' : '#FFFFFF'); x = nx; y = ny; } }
+    aceSpiral(A, 36, W * 1.0, ['#FFE0FF', '#E639EB', '#762889'], 6); },
+  // Event Horizon, Ascension, the Jade and Hellfire Wakes: their sets'
+  tHorizon(A){ ACE_EXTRA.singularity(A); }, tAscension(A){ ACE_EXTRA.ascorb(A); },
+  tSeraph(A){ ACE_EXTRA.godlight(A); }, tHellfire(A){ ACE_EXTRA.demoneye(A); },
+  // Rubber Duck: little ducks bobbing up beside it
+  duck(A){ const { X, W, k, put } = A, D = ['.YY.', 'YYYO', '.YY.'];
+    aceRise(A, 6, 401, (i, y) => { const ox = X + (i & 1 ? 1 : -1) * W * 1.1, s = k + 1;
+      D.forEach((row, yy) => [...row].forEach((ch, xx) => { if(ch !== '.') put(ox + (xx - 2) * s, y + yy * s, s, ch === 'O' ? '#FF8A2A' : '#FFD84A'); })); }); },
+  // Hearts: hearts floating up beside it
+  hearts(A){ const { X, W, k, put } = A, H = ['X.X', 'XXX', '.X.'];
+    aceRise(A, 8, 402, (i, y) => { const ox = X + (i & 1 ? 1 : -1) * W * (0.9 + hr(i, 403) * 0.5), s = k + 1;
+      H.forEach((row, yy) => [...row].forEach((ch, xx) => { if(ch === 'X') put(ox + (xx - 1) * s, y + yy * s, s, i % 3 ? '#FF2F66' : '#FFC2D4'); })); }); },
+  // Bubbles: bubbles rising round it
+  bubbles(A){ const { X, W, k, t, put } = A;
+    aceRise(A, 8, 404, (i, y) => { const R = Math.max(2, Math.round(W * (0.18 + hr(i, 405) * 0.15))), ox = X + (hr(i, 406) - 0.5) * W * 2.4 + Math.sin(t * 5 + i) * k;
+      for(let j = 0; j < 8; j++){ const a = j / 8 * Math.PI * 2; put(ox + Math.cos(a) * R, y + Math.sin(a) * R, k, j < 3 ? '#FFFFFF' : '#9FD6F2'); } }); },
+  // Confetti: a fountain of it thrown out of the column
+  confetti(A){ const { X, W, k, t, put } = A, C = ['#FF4FB8', '#3FE0FF', '#FFE14A', '#7CFF6A'];
+    aceRise(A, 26, 407, (i, y, u) => { const side = i & 1 ? 1 : -1, fl = (Math.floor(t * 14) + i) & 1;
+      put(X + side * W * (0.6 + u * 1.6 * hr(i, 408)), y + u * u * W * 2, fl ? k + 1 : k, C[i & 3]); }); },
+  // Comet: sparks streaming off it, each with its tail
+  comet(A){ const { X, W, k, put } = A;
+    aceRise(A, 16, 409, (i, y, u) => { const side = i & 1 ? 1 : -1, x = X + side * W * (0.4 + u * 1.2);
+      put(x, y, k, '#FFF3B0'); put(x - side * k, y + k * 2, k, '#FFB43A'); put(x - side * k * 2, y + k * 4, k, '#A8321A'); }); },
+  // Black Hole: rings of light rising up it
+  blackhole(A){ const { X, y0, y1, W, k, t, put } = A;
+    for(let j = 0; j < 3; j++){ const y = y1 - ((t * 0.8 + j / 3) % 1) * (y1 - y0);
+      for(let i = 0; i < 14; i++){ const a = i / 14 * Math.PI * 2; put(X + Math.cos(a) * W * 1.1, y + Math.sin(a) * W * 0.3, k, Math.sin(a) > 0 ? '#C68BFF' : '#5A3AA8'); } } },
+  // Gold: glints of gold up it
+  tGold(A){ const { X, W, k, t, put } = A;
+    aceRise(A, 9, 410, (i, y) => { if(Math.sin(t * 13 + i * 2) < 0) return; const x = X + (hr(i, 411) - 0.5) * W * 2.4;
+      put(x, y, k, '#FFFFFF'); for(const [dx, dy] of [[-1, 0], [1, 0], [0, -1], [0, 1]]) put(x + dx * k, y + dy * k, k, '#FFE7A3'); }); },
+  // Aurora: two bands of it waving up its sides
+  tAurora(A){ const { X, y0, y1, W, k, t, put } = A;
+    for(let i = 0; i < 34; i++){ const y = y1 - (i + 0.5) / 34 * (y1 - y0), w = Math.sin(y * 0.06 - t * 5) * W * 0.4;
+      put(X - W * 0.9 + w - (k >> 1), y, k + 1, i & 1 ? '#57E0BE' : '#9FF5DD'); put(X + W * 0.9 - w - (k >> 1), y, k + 1, i & 1 ? '#7ADB86' : '#C8FFF0'); } },
+  // Ember: embers lifting off it
+  tEmber(A){ const { X, W, k, t, put } = A;
+    aceRise(A, 20, 412, (i, y, u) => put(X + (hr(i, 413) - 0.5) * W * 2.2 + Math.sin(t * 8 + i) * k, y, k, u < 0.4 ? '#FFE08A' : u < 0.75 ? '#F07A3A' : '#8A3A2A')); },
+  // Mythic: violet stars twinkling about it
+  tMythic(A){ const { X, W, k, t, put } = A;
+    aceRise(A, 10, 414, (i, y) => { const tw = Math.sin(t * 11 + i * 1.9); if(tw < 0) return; const x = X + (hr(i, 415) - 0.5) * W * 2.6;
+      put(x, y, k, '#FFFFFF'); if(tw > 0.6) for(const [dx, dy] of [[-1, 0], [1, 0], [0, -1], [0, 1]]) put(x + dx * k, y + dy * k, k, '#C68BFF'); }); },
+  // Rainbow: its colours flung off it in arcs
+  tRainbow(A){ const { X, W, k, put } = A, C = ['#E4574A', '#F0A03C', '#E3D457', '#7ADB86', '#57A5C2', '#C68BFF'];
+    aceRise(A, 18, 416, (i, y, u) => { const side = i & 1 ? 1 : -1; put(X + side * W * (0.6 + Math.sin(u * Math.PI) * 0.9), y, k + 1, C[i % 6]); }); },
+  // the plain ball: a white glitter
+  plain(A){ const { X, W, k, t, put } = A;
+    aceRise(A, 12, 417, (i, y) => { if(Math.sin(t * 12 + i * 2.3) < -0.2) return; put(X + (hr(i, 418) - 0.5) * W * 2.2, y, k, i % 3 ? '#FFFFFF' : '#DDE6EE'); }); }
+};
 function cupSpeck(c, x, y, h, q, col){
   if(q > 0.85) return;
   fxDot(c, x, y - 1 - Math.round(Math.sin(q / 0.85 * Math.PI) * h * 0.45), 1, col, 1);
@@ -20177,7 +20256,7 @@ Object.assign(Scene, {
     const c = this.b, X = Math.round(p.x);
     const bn = ballNow(), fx0 = bn && CUP_FX[bn.fx] ? bn.fx : trailNow().fx, fx = ACE_COL[fx0] ? fx0 : 'plain';
     const C = ACE_COL[fx], bands = C[3] || [C[1]];
-    const h = Math.max(4, Math.round(B_FLAG * US * p.s)), W = clamp(Math.round(h * 0.7), 10, 30);
+    const h = Math.max(4, Math.round(B_FLAG * US * p.s)), W = clamp(Math.round(h * 1.0), 14, 40);
     const cutY = Math.min(Math.round(p.y), Math.floor(this.clipAt(P)) + 1);
     if(cutY <= 0) return;
     const ez = u => 1 - (1 - u) * (1 - u), top = -W * 3;
@@ -20196,8 +20275,8 @@ Object.assign(Scene, {
       for(let x = Math.max(bx0, x0); x < Math.min(bx1, x1); x++){ const i = y * VW + x;
         if(FD && FD[i] < P){ back.push(i); continue; }
         if(F && lit !== false) F[i] = 0xFF000000; } };
-    const put = (x, y, s, col) => { x = Math.round(x); y = Math.round(y);
-      const y1 = Math.min(y + s, cutY); if(y1 <= y || x + s <= 0 || x >= VW) return;
+    const put = (x, y, s, col, hh) => { x = Math.round(x); y = Math.round(y);
+      const y1 = Math.min(y + (hh || s), cutY); if(y1 <= y || x + s <= 0 || x >= VW) return;
       c.fillStyle = col; c.fillRect(x, y, s, y1 - y); for(let yy = y; yy < y1; yy++) mark(x, x + s, yy); };
     c.globalAlpha = 1;
     const y0 = Math.max(0, head), y1 = Math.min(tail, cutY);
@@ -20230,6 +20309,8 @@ Object.assign(Scene, {
       if(y < tail - W * 2 && q > 0.5 && hr(i, 388) < 0.5) continue;
       put(X + side * off - (k >> 1), y, k + (i % 5 === 0 ? 1 : 0), i % 3 === 0 ? C[2] : bands[i % bands.length]);
     }
+    // and the ball's own, up its length
+    if(y1 > y0 && ACE_EXTRA[fx]) ACE_EXTRA[fx]({ X, y0: Math.max(head, -W), y1, W, k: Math.max(1, Math.round(W / 7)), q, t: this.t, put });
     this._tmDirty = true;
     if(back.length){
       const cur = c.getImageData(bx0, 0, bw, cutY), A = new Uint32Array(cur.data.buffer), B2 = new Uint32Array(snap.data.buffer);
