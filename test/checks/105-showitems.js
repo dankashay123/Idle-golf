@@ -24,7 +24,7 @@ module.exports = {
           styleCat = cat; openShop('style');
           const cv = document.getElementById('showCv');
           if (!cv) { f('no showcase on the ' + cat + ' rack'); continue; }
-          if (!SHOW.set.startsWith(k + ':')) f('the ' + cat + ' rack opened on ' + SHOW.set);
+          if (SHOW.set !== list[0]) f('the ' + cat + ' rack opened on ' + SHOW.set + ', not its first piece');
           const name = () => document.getElementById('showN').textContent;
           const s0 = SHOW.set; document.querySelector('[data-show="1"]').click();
           const want = list[(list.indexOf(s0) + 1) % list.length];

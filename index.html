@@ -8110,13 +8110,15 @@ function renderShop(){
     }
     else if(styleCat === 'clubs'){
       // over them the stage, the plain golfer swinging the club on show
-      if(!SHOW || !SHOW.set.startsWith('k:')) showStart('k:' + clubNow().id);
+      if(!SHOW || !SHOW.set.startsWith('k:')) showStart(clubNow().id === STYLE_DEFAULT.k ? showClubs()[0] : 'k:' + clubNow().id);
       h += showStageHtml() + shelf('Clubs', 'k', B.CLUBS.filter(d => d.cat !== 'fun'), clubUrl)
         + shelf('Just for Fun', 'k', B.CLUBS.filter(d => d.cat === 'fun'), clubUrl);
     }
     else{
       // and the ball or the wake on show flying out to the flag
-      if(!SHOW || !SHOW.set.startsWith('t:')) showStart('t:' + (ballNow() || trailNow()).id);
+      // (on the first of them while he carries the plain ones)
+      const BW = ballNow() || trailNow();
+      if(!SHOW || !SHOW.set.startsWith('t:')) showStart(BW.id === STYLE_DEFAULT.t ? showTrails()[0] : 't:' + BW.id);
       h += showStageHtml() + shelf('Balls', 't', B.TRAILS.filter(t => t.cat === 'ball'), trailUrl)
         + shelf('Ball Trails', 't', B.TRAILS.filter(t => !t.cat), trailUrl);
     }
