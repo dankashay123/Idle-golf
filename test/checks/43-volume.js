@@ -8,6 +8,10 @@
  *     figure beside it changes
  *   - the slider under a sound that is switched off is dimmed
  *   - a save with junk in them loads them at full
+ *   - the shot sounds (the recorded club hit, putt and cup) have a slider of
+ *     their own (the user asked, in case they sit loud next to the music):
+ *     it moves only their gain, which feeds the effects', so Sound still
+ *     turns them down too; the synthesised sounds don't go through it
  */
 'use strict';
 module.exports = {
@@ -24,14 +28,18 @@ module.exports = {
         for (let i = 0; i < 100 && !Sfx.recs.music; i++) await sleep(50);
         o.decoded = !!Sfx.recs.music;
         // the gains asked for, as each slider moves
-        const asked = { fx: [], mus: [] };
+        const asked = { fx: [], mus: [], rec: [] };
         const spy = (bus, k) => { const f = bus.gain.setTargetAtTime.bind(bus.gain);
           bus.gain.setTargetAtTime = (v, t, c) => { asked[k].push(+v.toFixed(3)); return f(v, t, c); }; };
-        spy(Sfx.master, 'fx'); spy(Sfx.musBus, 'mus');
+        spy(Sfx.master, 'fx'); spy(Sfx.musBus, 'mus'); if (Sfx.recBus) spy(Sfx.recBus, 'rec');
         S.sound = 1; S.music = 1; settingsSheet();
         const inp = k => document.querySelector('#sheet input[aria-label="' + k + ' volume"]');
         const a = inp('Sound'), m = inp('Music');
-        o.found = !!a && !!m;
+        const rs = inp('Shot Sounds');
+        o.found = !!a && !!m; o.recFound = !!rs;
+        if (rs) { const n0 = asked.fx.length, n1 = asked.mus.length; const drag0 = (el, v) => { el.value = v; el.dispatchEvent(new Event('input', { bubbles: true })); };
+          drag0(rs, 4); o.r4 = { s: S.volRec, rec: asked.rec.slice(-1)[0], others: asked.fx.slice(n0).concat(asked.mus.slice(n1)).filter(v => v !== 1).length, pct: $('volRecPct').textContent, same: rs.isConnected };
+          drag0(rs, 10); o.r10 = { has: 'volRec' in S, rec: asked.rec.slice(-1)[0] }; }
         const drag = (el, v) => { el.value = v; el.dispatchEvent(new Event('input', { bubbles: true })); };
         drag(m, 5);
         o.m5 = { s: S.volMus, fx: asked.fx.slice(), mus: asked.mus.slice(-1)[0], pct: $('volMusPct').textContent, same: m.isConnected };
@@ -50,6 +58,11 @@ module.exports = {
         Sfx.musicWanted = keepWanted; Sfx.musicFade(AC.currentTime, 0.01);
         to.length = 0; const h = Sfx.hold; Sfx.hold = 0; Sfx.tone(880, AC.currentTime, 0.02, 'square', 0.01); Sfx.hold = h;
         o.tone = to.slice();
+        // a recording goes out through the shot sounds' gain, and that through the effects'
+        for (let i = 0; i < 100 && !Sfx.recs.strike; i++) await sleep(50);
+        to.length = 0; GainNode.prototype.connect = function(d){ to.push(d === Sfx.recBus ? 'rec' : d === Sfx.master ? 'fx' : d === Sfx.musBus ? 'mus' : 'other'); return conn.apply(this, arguments); };
+        o.recPlayed = Sfx.rec('strike', AC.currentTime, 0.01, 1); o.recTo = to.slice();
+        GainNode.prototype.connect = conn;
         GainNode.prototype.connect = conn;
 
         // dimmed under a sound switched off
@@ -62,6 +75,7 @@ module.exports = {
         o.junk = [];
         for (const v of ['0.5', -0.1, 1, 1.5, NaN, null, {}]) { S.volFx = v; initState(); if (S.volFx !== undefined) o.junk.push(String(v) + ' loaded as ' + S.volFx); }
         for (const [v, w] of [[0, 0], [0.5, 0.5], [0.33, 0.3]]) { S.volMus = v; initState(); if (S.volMus !== w) o.junk.push(v + ' loaded as ' + S.volMus); }
+        for (const v of ['0.5', -0.1, 1, 2, NaN, {}]) { S.volRec = v; initState(); if (S.volRec !== undefined) o.junk.push('shot sounds ' + String(v) + ' loaded as ' + S.volRec); }
       } finally {
         GainNode.prototype.connect = conn;
         Sfx.mus = keepMus || [];
@@ -84,9 +98,16 @@ module.exports = {
     if (!r.music.includes('mus') || r.music.includes('fx')) f('the music went out through ' + r.music.join(', '));
     if (!r.tone.includes('fx') || r.tone.includes('mus')) f('a sound went out through ' + r.tone.join(', '));
     if (!r.dimMusic || !r.fxLit) f('with the music off its slider is ' + (r.dimMusic ? 'dimmed' : 'lit') + ' and the sounds\' ' + (r.fxLit ? 'lit' : 'dimmed'));
+    if (!r.recFound) f('Settings has no Shot Sounds slider');
+    if (r.r4.s !== 0.4 || r.r4.rec !== 0.16 || r.r4.pct !== '40%' || !r.r4.same) f('shot sounds at 4: ' + JSON.stringify(r.r4));
+    if (r.r4.others) f('moving the shot sounds slider moved the other gains too');
+    if (r.r10.has || r.r10.rec !== 1) f('shot sounds back at full: ' + JSON.stringify(r.r10));
+    if (!r.recPlayed || !r.recTo.includes('rec') || r.recTo.includes('fx')) f('a recording went out through ' + r.recTo.join(', ') + (r.recPlayed ? '' : ' (it never played)'));
+    if (r.tone.includes('rec')) f('a synthesised sound went through the shot sounds\' gain');
     if (r.junk.length) f('junk in the save: ' + r.junk.join('; '));
     return ['full on a new save; half way is a quarter of the gain, 0 is silence, full leaves nothing in the save',
       'each slider moves only its own: the music through its gain, the other sounds through theirs; the sheet stays put while dragging',
-      'dimmed under a sound switched off; junk in the save loads at full'];
+      'dimmed under a sound switched off; junk in the save loads at full',
+      'the shot sounds have their own slider and gain, feeding the effects\''];
   }
 };

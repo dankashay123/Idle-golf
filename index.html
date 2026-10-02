@@ -4108,7 +4108,7 @@ function initState(){
       if(!SIG_NAME[k] || !R || typeof R !== 'object' || !(R.n >= 1) || !isFinite(R.n) || typeof R.b !== 'number' || !isFinite(R.b)) delete S.sigRec[k];
       else { R.n = Math.floor(R.n); R.b = Math.max(-4, Math.min(4, Math.round(R.b))); } }
   }
-  for(const k of ['volFx', 'volMus']) if(S[k] !== undefined){
+  for(const k of ['volFx', 'volMus', 'volRec']) if(S[k] !== undefined){
     if(typeof S[k] !== 'number' || !isFinite(S[k]) || S[k] < 0 || S[k] >= 1) delete S[k];
     else S[k] = Math.round(S[k] * 10) / 10; }
   if(S.saver !== undefined && !SAVER_MINS.includes(S.saver)) delete S.saver;
@@ -6186,6 +6186,10 @@ const Sfx = {
       this.out.connect(this.ctx.destination);
       this.master = this.ctx.createGain();
       this.master.connect(this.out);
+      // (the recorded club hit, putt and cup have a slider of their own,
+      // under the effects', so Sound still turns them down with the rest)
+      this.recBus = this.ctx.createGain();
+      this.recBus.connect(this.master);
       this.musBus = this.ctx.createGain();
       this.musBus.connect(this.out);
       this.setVol();
@@ -6221,7 +6225,7 @@ const Sfx = {
     const end = t + Math.min(len || 99, b.duration / (rate || 1));
     g.gain.setValueAtTime(vol, t);
     if(len){ g.gain.setValueAtTime(vol, Math.max(t, end - len * 0.45)); g.gain.linearRampToValueAtTime(0.0001, end); }
-    src.connect(g); g.connect(this.master);
+    src.connect(g); g.connect(this.recBus || this.master);
     src.start(t); src.stop(end + 0.02);
     (this.live || (this.live = {}))[k] = { src, g, end };
     return true;
@@ -6536,7 +6540,8 @@ const Sfx = {
   setVol(){
     if(!this.ctx) return;
     const t = this.ctx.currentTime;
-    for(const [bus, k] of [[this.master, 'volFx'], [this.musBus, 'volMus']]){
+    for(const [bus, k] of [[this.master, 'volFx'], [this.musBus, 'volMus'], [this.recBus, 'volRec']]){
+      if(!bus) continue;
       const v = this.volOf(k);
       try{ bus.gain.cancelScheduledValues(t); bus.gain.setTargetAtTime(v * v, t, 0.03); }catch(e){ bus.gain.value = v * v; }
     }
@@ -6845,6 +6850,8 @@ function setVol(k, v){
   const el = $(k + 'Pct'); if(el) el.textContent = Math.round(v * 100) + '%';
   Sfx.setVol();
   if(k === 'volFx' && performance.now() - (setVol._t || 0) > 120){ setVol._t = performance.now(); Sfx.play('buy'); }
+  // (the shot sounds give a club hit to hear theirs by)
+  if(k === 'volRec' && performance.now() - (setVol._t || 0) > 250){ setVol._t = performance.now(); Sfx.lastSwing = -1; Sfx.play('strike'); }
 }
 function toggleSound(){
   S.sound = S.sound === 0 ? 1 : 0;
@@ -25766,11 +25773,14 @@ function settingsSheet(){
     + (ds ? '<div class="ds">' + ds + '</div>' : '') + '</div>' + btn + '</div>';
   const vol = (k, off) => { const v = Sfx.volOf(k);
     return '<span class="vol' + (off ? ' off' : '') + '"><input type="range" min="0" max="10" step="1" value="' + Math.round(v * 10)
-      + '" aria-label="' + (k === 'volFx' ? 'Sound' : 'Music') + ' volume" oninput="setVol(\'' + k + '\', this.value)">'
+      + '" aria-label="' + ({ volFx: 'Sound', volMus: 'Music', volRec: 'Shot Sounds' })[k] + ' volume" oninput="setVol(\'' + k + '\', this.value)">'
       + '<span id="' + k + 'Pct">' + Math.round(v * 100) + '%</span></span>'; };
   showSheet('<h3>Settings</h3>'
     + row('Sound', vol('volFx', S.sound === 0), '<button class="mini' + (S.sound !== 0 ? ' go' : '') + '" onclick="toggleSound()">'
         + (S.sound !== 0 ? 'On' : 'Off') + '</button>')
+    // (the user's recordings: club hit, putt, ball in the cup, a level of
+    // their own in case they sit loud against the music)
+    + row('Shot Sounds', S.sound === 0 ? 'Needs Sound on' : vol('volRec', false), '')
     + row('Music', S.sound === 0 ? 'Needs Sound on' : vol('volMus', S.music === 0), '<button class="mini' + (S.music !== 0 ? ' go' : '') + '" onclick="toggleMusic()">'
         + (S.music !== 0 ? 'On' : 'Off') + '</button>')
     + row('Night Music', S.music === 0 || S.sound === 0 ? 'Needs Music on' : 'A calmer tune at night and in wagers',
