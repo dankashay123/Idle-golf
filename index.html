@@ -17918,6 +17918,9 @@ const Scene = {
                   : look.fall === 'leaves' ? [look.tree[0], look.tree[1], mixC(look.tree[0], '#F2D060', 0.5)] : null;
     // (in the moonlight with everything else: bright orange glowed at night)
     if(this.fallCols && this.night) this.fallCols = this.fallCols.map(c => mixC(moonC(c), c, 0.25));
+    // (each colour with its paler back and a darker rib, for the shapes)
+    this.fallPal = this.fallCols && this.fallCols.map(c => look.fall === 'petals' ? [c, lite(c, 0.3), mixC(c, '#C4628E', 0.35)] : [c, lite(dark(c, 0.06), 0.18), dark(c, 0.36)]);
+    this.leafy = look.fall === 'leaves';
     this.ice = !!look.ice;
 
     // The bend, off its own stream. a: how far the line moves across, c:
@@ -19179,6 +19182,34 @@ const CLUBFX = {
 // straight. ph as for drawLegs. An outfit with a belt colour of its own
 // wears it on its soles, as it does side-on.
 // (his legs drawn up under him in the air, 0..1: a hop over the stones)
+// A leaf or a petal turning in the air, or lying on the grass, in pixels
+// (the user: the falling leaves were "just squares"): a pointed leaf, or a
+// rounder petal, of a length in pixels, at an angle (sixteenths of a half
+// turn), tipped toward or away from you (flip -3..3: edge on at 0, its
+// paler back at a negative). A leaf has a darker midrib once it is big
+// enough to carry one, and its stalk. cols: face, back, rib. Kept by shape.
+const FALL_SPR = new Map();
+function fallSprite(kind, len, ang, flip, cols){
+  const key = kind + len + '|' + ang + '|' + flip + '|' + cols[0];
+  let F = FALL_SPR.get(key); if(F) return F;
+  if(FALL_SPR.size > 800) FALL_SPR.clear();
+  const R = Math.ceil(len / 2) + 1, N = R * 2 + 1, cv = document.createElement('canvas'); cv.width = cv.height = N;
+  const g = cv.getContext('2d'), a = (ang + 0.37) / 16 * Math.PI, ca = Math.cos(a), sa = Math.sin(a), P = kind === 'p';
+  const fl = flip / 3, H = len / 2, W = Math.max(0.42, Math.abs(fl)) * len * (P ? 0.42 : 0.3);
+  const face = fl >= 0 ? cols[0] : cols[1];
+  for(let y = 0; y < N; y++) for(let x = 0; x < N; x++){
+    const dx = x - R, dy = y - R, u = dx * ca + dy * sa, v = -dx * sa + dy * ca, t = u / H;
+    if(Math.abs(t) > 1.05) continue;
+    // (a leaf widest a little below its middle and pointed at its tip; a
+    // petal round, notched a touch at its outer end)
+    const half = P ? W * Math.sqrt(Math.max(0, 1 - t * t)) * (0.45 + 0.55 * (t + 1) / 2) * 1.25 : W * (1 - t * t) * (1 - 0.25 * t);
+    if(Math.abs(v) > half + 0.3) continue;
+    g.fillStyle = P ? (t < -0.45 ? cols[2] : face) : len >= 5 && Math.abs(fl) > 0.3 && Math.abs(v) < 0.5 && t > -0.8 ? cols[2] : face;
+    g.fillRect(x, y, 1, 1);
+  }
+  if(!P && len >= 4){ g.fillStyle = cols[2]; g.fillRect(Math.round(R - ca * (H + 0.8)), Math.round(R - sa * (H + 0.8)), 1, 1); }
+  F = { cv, R }; FALL_SPR.set(key, F); return F;
+}
 let LEGS_TUCK = 0;
 function drawLegsBack(c, cx, hy, len, w, ph, near, far, shoe, sole = '#B8AE9C', bulk, pat){
   // (built out as his body is: each leg the wider by his build, so his
@@ -19752,6 +19783,7 @@ Object.assign(Scene, {
   standBlit(c, spr, x, y, w, h){
     const a = Math.round(this.hazeA(y + h) * 20) / 20;
     blit(c, a > 0 ? fogSprite(spr, (this.theme || THEMES.day).sky[4], a) : spr, x, y, w, h);
+    if(spr.rows) this.standDepth(spr, x, y, w, h);
     const F = this._tmF; if(!F || !this.treeMask || !spr.rows) return;
     const FD = this._tmOn && this._fcov ? this._fdep : null, FC = this._fcov, PD = this._pdep, d = this._propD;
     x = Math.round(x); y = Math.round(y); w = Math.max(1, Math.round(w)); h = Math.max(1, Math.round(h));
@@ -19773,6 +19805,7 @@ Object.assign(Scene, {
   },
   // (a box of it: what else is in the box is the forest already, or farther)
   standCover(x, y, w, h){
+    this.standDepth(null, x, y, w, h);
     if(!this._fcov || !this._fdep || !this._tmOn) return;
     const PD = this._pdep, d = this._propD, L = this._fcov;
     x = Math.round(x); y = Math.round(y); w = Math.round(w); h = Math.round(h);
@@ -19780,6 +19813,25 @@ Object.assign(Scene, {
     for(let yy = Math.max(0, y); yy < y1; yy++) for(let xx = Math.max(0, x); xx < Math.min(VW, x + w); xx++){
       const i = yy * VW + xx; if(PD[i] === Infinity) L.push(i); PD[i] = d; }
   },
+  // How far off the nearest thing standing is at each pixel this frame (a
+  // tree, a spectator, a stand: what is drawn among the scenery), so what
+  // is drawn after it all, the hole's flag and the ball lying out there,
+  // is hidden where something nearer stands in front of it (the user saw
+  // the flag through the trees). spr: only its own pixels, else the box.
+  standDepth(spr, x, y, w, h){
+    const SD = this._sdep, d = this._propD; if(!SD || !(d < Infinity)) return;
+    x = Math.round(x); y = Math.round(y); w = Math.max(1, Math.round(w)); h = Math.max(1, Math.round(h));
+    const y1 = Math.min(VH, y + h, this._propCut === undefined ? VH : Math.max(0, this._propCut));
+    for(let yy = Math.max(0, y); yy < y1; yy++){
+      const row = spr && spr.rows[Math.floor((yy - y) * spr.h / h)];
+      for(let xx = Math.max(0, x), e = Math.min(VW, x + w); xx < e; xx++){
+        if(row){ const ch = row[Math.floor((xx - x) * spr.w / w)]; if(ch === '.' || ch === ' ' || ch === undefined) continue; }
+        const i = yy * VW + xx; if(d < SD[i]) SD[i] = d; }
+    }
+  },
+  sdepClear(){ if(!this._sdep || this._sdep.length !== VW * VH) this._sdep = new Float32Array(VW * VH); this._sdep.fill(Infinity); },
+  // nearer than d at pixel i: a thing standing, or a tree of the forest
+  nearerAt(i, d){ return (this._sdep && this._sdep[i] < d) || (this._tmOn && this._fdep && this._fdep[i] < d); },
   // The forest's trees are painted into the ground, under everything drawn
   // standing, so a tree, a shrub or the gallery beyond a tree of the forest
   // showed through it: its trunk and its shadow a brown line through the
@@ -20654,7 +20706,7 @@ Object.assign(Scene, {
     this._fcov = this._fcov || []; if(!this._propKeep){ for(const i of this._fcov) this._pdep[i] = Infinity; this._fcov.length = 0; }
     for(const p of (this.props || [])){
       this._propD = p.d;
-      if(p.kind >= 4 && p.kind <= 7 && (S.dgnRun || (p.kind <= 5 ? !night : p.kind === 6 ? !this.frost || night || this.rain : !this.rain || this.ice))) continue;
+      if(p.kind >= 4 && p.kind <= 7 && (S.dgnRun || (p.kind <= 5 ? !night : p.kind === 6 ? (this.leafy ? p.k % 4 !== 3 : !this.frost || night || this.rain) : !this.rain || this.ice))) continue;
       if(side > 0 && p.d < edge) continue;
       if(side < 0 && p.d >= edge) continue;
       if(this._propLo !== undefined && (p.d < this._propLo || p.d >= this._propHi)) continue;
@@ -20906,6 +20958,19 @@ Object.assign(Scene, {
       const X = Math.round(pr.x), Y = Math.round(pr.y);
       if(p.sp === 'bush' && h > 4){ c.fillStyle = 'rgba(8,16,10,.26)'; this.standShadow(c, X - Math.round(w * 0.4), Y - 1, Math.round(w * 0.8), 1); }
       this.standBlit(c, shrinkSprite(spr, w, h) || spr, X - (w >> 1), Y - h, w, h);
+
+    }else if(p.kind === 6 && this.leafy){
+      // on an autumn course a fallen leaf lying here and there on the grass
+      // instead (the user: the frost's white specks were "white things";
+      // "make them fallen leaves, but not a ton of them"): flat, lying
+      // along the ground, face up or its back
+      if(pr.x < -6 || pr.x > VW + 6) return;
+      // (none where one would be a speck: far off they read as frost again)
+      const sz = B_GOLFER * US * pr.s / 8, len = clamp(Math.round(sz * 1.3), 5, 7), C = this.fallPal; if(sz < 2.2) return;
+      // (lying lengthways across the view, as a leaf on the ground is seen
+      // from a man's height, its stalk to one side or the other)
+      const ang = [0, 1, 15, 14, 2, 16][p.k % 6] % 16 + ((p.k >> 3) & 1 ? 0 : 0), F = fallSprite('l', len, (p.k >> 3) & 1 ? ang : (16 - ang) % 16, (p.k >> 1) & 1 ? 2 : -2, C[(p.k >> 2) % C.length]);
+      c.drawImage(F.cv, Math.round(pr.x) - F.R, Math.round(pr.y) - F.R - 1);
 
     }else if(p.kind === 6){
       // frost on the grass: a pale speck, and one in four a glint catching
@@ -21391,7 +21456,11 @@ Object.assign(Scene, {
       if(blink < 0.2) continue;
       const p = this.proj(d, x, z), k = p.s > 1.2 ? 2 : 1;
       const clip = this.camD >= I.bank - 0.3 ? Math.max(this.clipAt(d), p.y + k + 2) : this.clipAt(d);
-      if(blink > 0.6){ c.fillStyle = '#4A6A1E'; fillClip(c, p.x - 1, p.y - 1, k + 2, k + 2, clip); }
+      // (a soft glow round a bright heart: a cross of light, wider as it
+      // brightens, not a square)
+      if(blink > 0.6){ c.fillStyle = '#4A6A1E'; const g = blink > 0.85 ? 2 : 1;
+        fillClip(c, p.x - g, p.y, k + g * 2, k, clip); fillClip(c, p.x, p.y - g, k, k + g * 2, clip);
+        if(g > 1){ c.fillStyle = '#6E8E2A'; fillClip(c, p.x - 1, p.y, k + 2, k, clip); fillClip(c, p.x, p.y - 1, k, k + 2, clip); } }
       c.fillStyle = blink > 0.75 ? '#E8FF8A' : '#9ACB3A'; fillClip(c, p.x, p.y, k, k, clip);
     }
   },
@@ -22109,7 +22178,8 @@ Object.assign(Scene, {
     if(p.y <= this.clipAt(R.d) + 1 && p.s > 0.05){
       // drawn larger than true, so a ball lying out there can be found
       const r = Math.max(2, Math.round(B_BALL * p.s * US * 1.7));
-      drawLyingBall(c, p.x, p.y - r, r, this.t);
+      // (not where something nearer stands in front of it)
+      this.drawBehind(R.d - 0.3, p.x - r * 4 - 4, p.y - r * 6 - 4, p.x + r * 4 + 4, p.y + r + 2, g => drawLyingBall(g, p.x, p.y - r, r, this.t));
     }
   },
   drawBalls(dt){
@@ -22182,7 +22252,11 @@ Object.assign(Scene, {
         // (a ball of a set over its own wake leaves what winds round the
         // trail to the wake, so there are not two of each)
         b.wake = !!BT;
-        if(path.length){ if(BT) BT(c, b, path, rr, this.t, u); c.globalAlpha = 1; c.globalCompositeOperation = 'source-over'; if(BB) BB(c, b, path, rr, this.t, u); }
+        // (laid down behind what stands nearer than even its tail: a ball
+        // coming down beyond the trees on the corner goes behind them)
+        if(path.length){ let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9; for(const q of path){ x0 = Math.min(x0, q.x); x1 = Math.max(x1, q.x); y0 = Math.min(y0, q.y); y1 = Math.max(y1, q.y); }
+          const M = 28, dn = b.d0 + b.dist * Math.max(0, u - (path.length - 1) * 0.028);
+          this.drawBehind(dn - 0.3, x0 - M, y0 - M, x1 + M, y1 + M, g => { if(BT) BT(g, b, path, rr, this.t, u); g.globalAlpha = 1; g.globalCompositeOperation = 'source-over'; if(BB) BB(g, b, path, rr, this.t, u); }); }
         c.globalAlpha = 1; c.globalCompositeOperation = 'source-over';
         continue;
       }
@@ -22200,6 +22274,9 @@ Object.assign(Scene, {
         pts.push({ x: p.x, y: p.y, s: p.s, cl });
       }
       if(!pts.length) continue;
+      // (behind a tree nearer than it, as it comes down beyond the corner)
+      { const X = Math.round(pts[0].x), Y = Math.round(pts[0].y), bd = Math.max(this.camD, b.d0 + b.dist * u);
+        if(X >= 0 && X < VW && Y >= 0 && Y < VH && this.nearerAt(Y * VW + X, bd - 0.3)) continue; }
       const r = Math.max(1, Math.round(B_BALL * pts[0].s * US));
       // (kept slight: a wake bought from the shop has to stand out against it)
       for(let k = pts.length - 1; k > 0; k--){
@@ -22214,40 +22291,52 @@ Object.assign(Scene, {
   drawWeather(){
     if(this.fall){
       // Blossom petals sink slowly, turning; autumn leaves are blown across
-      // with the wind, tumbling. A few dozen, and each keeps to its own lane.
-      const c = this.b, w = this.wind || 0, P = this.fall === 'petals', C = this.fallCols;
+      // with the wind, tumbling over. Each keeps to its own lane, at one of
+      // three depths: far ones small and slow, near ones bigger and quicker.
+      const c = this.b, w = this.wind || 0, P = this.fall === 'petals', C = this.fallPal;
       for(let i = 0; i < 40; i++){
-        const sp = P ? 9 + (i % 4) * 3 : 16 + (i % 3) * 6;
-        const drift = P ? this.t * (4 + w * 10) : this.t * (22 + Math.abs(w) * 30) * (w < 0 ? -1 : 1);
-        const x = Math.round((((i*71 + drift + Math.sin(this.t*1.6 + i*1.9)*(P ? 7 : 4)) % (VW + 20)) + VW + 20) % (VW + 20) - 10);
-        const y = Math.round((i*37 + this.t*sp + Math.sin(this.t*2.3 + i)*3) % VH);
-        const turn = Math.sin(this.t*(P ? 3 : 7) + i*2.1) > 0;
-        c.fillStyle = C[i % C.length];
-        c.fillRect(x, y, turn ? 3 : 2, turn ? 2 : 3);
-        if(!P && turn){ c.fillStyle = C[(i + 1) % C.length]; c.fillRect(x + 1, y, 1, 1); }
+        const z = i % 3, zk = [0.6, 1, 1.45][z];
+        const sp = (P ? 9 + (i % 4) * 3 : 16 + (i % 4) * 5) * zk;
+        const drift = (P ? this.t * (4 + w * 10) : this.t * (22 + Math.abs(w) * 30) * (w < 0 ? -1 : 1)) * zk;
+        const x = Math.round((((i*71 + drift + Math.sin(this.t*1.6 + i*1.9)*(P ? 7 : 4)) % (VW + 24)) + VW + 24) % (VW + 24) - 12);
+        const y = Math.round((i*37 + this.t*sp + Math.sin(this.t*2.3 + i)*3) % (VH + 12)) - 6;
+        // (a leaf rolls end over end and flips; a petal turns slowly, rocking)
+        const ang = ((Math.floor((this.t * (P ? 1.6 : 4.2) * (i & 1 ? 1 : -1) + i * 5.3) * 2.6) % 16) + 16) % 16;
+        const flip = Math.round(Math.sin(this.t * (P ? 2.2 : 5) + i * 2.1) * 3);
+        const len = P ? [4, 5, 6][z] : [3, 5, 7][z];
+        const F = fallSprite(P ? 'p' : 'l', len, ang, flip, C[i % C.length]);
+        c.drawImage(F.cv, x - F.R, y - F.R);
       }
     }
     if(this.snow && !this.rain){
-      // a home course in winter: slow flakes, drifting with the wind
+      // a home course in winter: slow flakes, drifting with the wind, at
+      // three depths: a speck far off, a soft cross nearer, a star close by
       const c = this.b, w = this.wind || 0;
-      c.fillStyle = 'rgba(244,248,250,.85)';
-      for(let i = 0; i < 36; i++){
-        const x = Math.round((((i*67 + Math.sin(this.t*0.8 + i)*5 + this.t*w*14) % (VW + 20)) + VW + 20) % (VW + 20) - 10);
-        const y = Math.round((i*41 + this.t*(14 + (i % 3)*5)) % VH);
-        c.fillRect(x, y, i % 4 ? 1 : 2, i % 4 ? 1 : 2);
+      for(let i = 0; i < 40; i++){
+        const z = i % 3, zk = [0.6, 1, 1.5][z];
+        const x = Math.round((((i*67 + Math.sin(this.t*0.8 + i)*5*zk + this.t*w*14*zk) % (VW + 20)) + VW + 20) % (VW + 20) - 10);
+        const y = Math.round((i*41 + this.t*(12 + (i % 4)*3)*zk) % (VH + 8)) - 4;
+        if(z === 0){ c.fillStyle = 'rgba(236,242,246,.7)'; c.fillRect(x, y, 1, 1); continue; }
+        c.fillStyle = 'rgba(232,240,246,.55)';
+        c.fillRect(x - 1, y, 3, 1); c.fillRect(x, y - 1, 1, 3);
+        if(z === 2){ c.fillRect(x - 2, y, 1, 1); c.fillRect(x + 2, y, 1, 1); c.fillRect(x, y - 2, 1, 1); c.fillRect(x, y + 2, 1, 1);
+          c.fillStyle = 'rgba(232,240,246,.35)'; c.fillRect(x - 1, y - 1, 1, 1); c.fillRect(x + 1, y - 1, 1, 1); c.fillRect(x - 1, y + 1, 1, 1); c.fillRect(x + 1, y + 1, 1, 1); }
+        c.fillStyle = '#F6FAFC'; c.fillRect(x, y, 1, 1);
       }
       return;
     }
     if(!this.rain) return;
     const c = this.b;
-    c.fillStyle = 'rgba(198,222,232,.36)';
-    // driven the way the wind is blowing, and harder the harder it blows
-    const w = this.wind || 0, run = (40 + Math.abs(w) * 300) * (w < 0 ? -1 : 1), lean = Math.abs(w) > 0.5 ? 1 : 0;
-    for(let i = 0; i < 40; i++){
-      const x = Math.round((((i*67 + this.t*run) % (VW + 40)) + VW + 40) % (VW + 40) - 20);
-      const y = Math.round((i*41 + this.t*330) % VH);
-      c.fillRect(x, y, 1, 2);
-      if(lean) c.fillRect(x - (w < 0 ? -1 : 1), y + 2, 1, 2); else c.fillRect(x, y + 2, 1, 1);
+    // driven the way the wind is blowing, and harder the harder it blows;
+    // three depths of streak, the near ones longer and brighter
+    const w = this.wind || 0, run = (40 + Math.abs(w) * 300) * (w < 0 ? -1 : 1), lean = Math.abs(w) > 0.5 ? (w < 0 ? -1 : 1) : 0;
+    const STREAK = [[2, 'rgba(198,222,232,.24)'], [3, 'rgba(198,222,232,.34)'], [5, 'rgba(210,230,238,.42)']];
+    for(let i = 0; i < 45; i++){
+      const z = i % 3, zk = [0.7, 1, 1.3][z], [L, col] = STREAK[z];
+      const x = Math.round((((i*67 + this.t*run*zk) % (VW + 40)) + VW + 40) % (VW + 40) - 20);
+      const y = Math.round((i*41 + this.t*330*zk) % (VH + 10)) - 5;
+      c.fillStyle = col;
+      for(let k = 0; k < L; k++) c.fillRect(x - (lean ? Math.round(k * lean * 0.5) : 0), y + k, 1, 1);
     }
   },
 
@@ -22501,6 +22590,7 @@ Object.assign(Scene, {
       this.drawRidge();
       this.drawGround();
       this.drawFarFade();
+      this.sdepClear();
       this.drawProps();
       this.buildHaze();
       if(this.haze) this.overTrees(c, this.haze);
@@ -22642,6 +22732,7 @@ Object.assign(Scene, {
       // it (drawn over them all, it cut across the trees in front; the user
       // saw it). Under the haze, like the ground it lies on.
       const RI = this.isle && this.isle.rail ? this.isle : null;
+      this.sdepClear();
       // (the pin stands beyond the line: short of it, it goes down before
       // the railway, which crosses in front of it; drawn after, its top
       // stood over a crossing post)
@@ -22697,14 +22788,32 @@ Object.assign(Scene, {
     const P = this.pinD(), p = this.proj(P, this.pinX());
     if(p.s < 0.05) return;
     const cut = this.clipAt(P);
-    if(p.y > cut + 1){
-      // the green is over a rise: only the top of the pin shows
-      c.save(); c.beginPath(); c.rect(0, 0, VW, Math.max(0, cut)); c.clip();
-      this.pinBody(c, p);
-      c.restore();
-      return;
-    }
-    this.pinBody(c, p);
+    // (drawn after the scenery, so laid down only where nothing nearer
+    // stands: a tree on the bend in front of the green, the wood beside
+    // it, a spectator, all go over it; the user saw it through the trees)
+    const h = Math.max(4, Math.round(B_FLAG * US * p.s)), R = h * 2 + 8;
+    this._pinHid = this.drawBehind(P - 0.3, p.x - R, p.y - h * 2 - 8, p.x + R, Math.min(p.y + 6, p.y > cut + 1 ? Math.max(0, cut) : VH), g => this.pinBody(g, p));
+  },
+  // What is drawn after the scenery but is out on the hole at a distance d
+  // (the flag, the ball lying or in the air, the cup's moment): drawn apart,
+  // in the box it can reach, and laid down only where nothing standing
+  // nearer is in front of it. this.b is the apart canvas while fn draws.
+  // How many of its pixels were hidden.
+  drawBehind(d, x0, y0, x1, y1, fn){
+    const bx = clamp(Math.floor(x0), 0, VW), by = clamp(Math.floor(y0), 0, VH);
+    const bw = clamp(Math.ceil(x1), 0, VW) - bx, bh = clamp(Math.ceil(y1), 0, VH) - by;
+    if(bw <= 0 || bh <= 0) return 0;
+    const T = this._behCv || (this._behCv = document.createElement('canvas'));
+    if(T.width !== VW || T.height !== VH){ T.width = VW; T.height = VH; T._g = null; }
+    const g = T._g || (T._g = T.getContext('2d', { willReadFrequently: true })), keep = this.b;
+    g.clearRect(bx, by, bw, bh);
+    this.b = g; try{ fn(g); } finally{ this.b = keep; g.globalAlpha = 1; g.globalCompositeOperation = 'source-over'; }
+    const im = g.getImageData(bx, by, bw, bh), D = im.data; let hid = 0;
+    for(let y = 0; y < bh; y++){ const r = (by + y) * VW + bx;
+      for(let x = 0; x < bw; x++){ const k = (y * bw + x) * 4; if(D[k + 3] && this.nearerAt(r + x, d)){ D[k + 3] = 0; hid++; } } }
+    if(hid) g.putImageData(im, bx, by);
+    keep.drawImage(T, bx, by, bw, bh, bx, by, bw, bh);
+    return hid;
   },
 
   pinX(){ return S.dgnRun ? 0 : (this.pin || [0, PIN_X])[1]; },
@@ -22813,12 +22922,15 @@ Object.assign(Scene, {
     // opening round the cup showed only its far half; a crest in front still
     // cuts it at the crest)
     const near = P - 0.9 * B_FLAG * US / LAT, cut2 = Math.max(cut, Math.min(this.clipAt(near), this.proj(near, this.pinX()).y + 1));
-    c.save(); c.beginPath(); c.rect(0, 0, VW, Math.max(0, Math.floor(cut2) + 1)); c.clip();
-    const cr = Math.max(1, Math.round(1.6 * p.s * US)), h = Math.max(4, Math.round(B_FLAG * US * p.s));
-    CUP_FX[fx](c, p.x, p.y, cr, h, q, this.t);
-    if(CUP_FX2[fx]) CUP_FX2[fx](c, p.x, p.y, cr, h, q, this.t);
-    c.globalAlpha = 1;
-    c.restore();
+    const cr = Math.max(1, Math.round(1.6 * p.s * US)), h = Math.max(4, Math.round(B_FLAG * US * p.s)), R = h * 3 + 12;
+    // (and behind what stands nearer than the cup: an ace seen from the tee
+    // past the trees on the corner)
+    this.drawBehind(P - 0.3, p.x - R, p.y - R, p.x + R, Math.min(p.y + R, Math.floor(cut2) + 1), g => {
+      g.save(); g.beginPath(); g.rect(0, 0, VW, Math.max(0, Math.floor(cut2) + 1)); g.clip();
+      CUP_FX[fx](g, p.x, p.y, cr, h, q, this.t);
+      if(CUP_FX2[fx]) CUP_FX2[fx](g, p.x, p.y, cr, h, q, this.t);
+      g.globalAlpha = 1;
+      g.restore(); });
   },
   pinBody(c, p){
     const h = Math.max(4, Math.round(B_FLAG * US * p.s));
