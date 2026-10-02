@@ -3536,6 +3536,13 @@ const B = {
       // (bulkier than the plain golfer, the user asked: thicker arms in
       // dark plate, and his outline built out in armour)
       bulk:1, arm:'#2A2158', arm2:'#1C1640' },
+    // The Dread (the user named him): a wraith in a black shroud, a skull in
+    // the dark of his hood with soul-green eyes, a scythe at his back, a
+    // soul lantern at his hip and a grave open under his feet
+    { id:'dread', n:'The Dread',        cost:3500, fx:'dread', cat:'skin', top:2, pattern:'shroud', pantPattern:'shroud',
+      cap:'#18161E', cap2:'#0E0C12', shirt:'#24222C', shirt2:'#18161E', shirt3:'#0E0C12', pant:'#18161E', pant2:'#0E0C12',
+      skin:'#D8D2BC', skin2:'#8A836E', shoe:'#18161E', belt:'#5CF0A0', hair:'#0E0C12', hand:'#D8D2BC',
+      bulk:1, arm:'#24222C', arm2:'#18161E' },
     // Won, never bought: one for each major of the week, and its caddie with it.
     // (names of our own: a real tournament's name, or its jacket's, is not
     // ours to use)
@@ -3613,7 +3620,8 @@ const B = {
     { id:'divine',    n:'Divine Driver',  cost:2000, fx:'divine',   top:1, shaft:'#F7F3EA', shaft2:'#DDD5C4', head:'#E0AE3E', head2:'#7FF0C8', grip:'#A81C2A', glow:'#3FD6A8' },
     { id:'demonic',   n:'Demonic Driver', cost:2000, fx:'demonic',  top:1, shaft:'#1A1214', shaft2:'#0E0A0C', head:'#1A1214', head2:'#FF6A1A', grip:'#3A2A28', glow:'#E8401C' },
     { id:'cosmic',    n:'Eclipse Driver',  cost:2350, fx:'cosmic',   top:2, shaft:'#D8B060', shaft2:'#9A7432', head:'#0B0818', head2:'#B98CFF', grip:'#1C1640', glow:'#B98CFF' },
-    { id:'ascended',  n:'Ascended Driver', cost:2350, fx:'ascended', top:2, shaft:'#4A4466', shaft2:'#3A3456', head:'#6A3AC8', head2:'#B070F8', grip:'#262040', glow:'#9A3AC8' }
+    { id:'ascended',  n:'Ascended Driver', cost:2350, fx:'ascended', top:2, shaft:'#4A4466', shaft2:'#3A3456', head:'#6A3AC8', head2:'#B070F8', grip:'#262040', glow:'#9A3AC8' },
+    { id:'dread',     n:'Reaper Driver',   cost:2350, fx:'dread',    top:2, shaft:'#3E3A48', shaft2:'#24222C', head:'#6E6A78', head2:'#E8FFF2', grip:'#D8D2BC', glow:'#5CF0A0' }
   ],
   TRAILS: [
     { id:'plain',   n:'Plain',   cost:0,    cols:['#F4F6EF'] },
@@ -3627,6 +3635,7 @@ const B = {
     { id:'hellfire',  n:'Hellfire Wake',  cost:2000, fx:'tHellfire',  cols:['#FF5A1E', '#FFD34A'], top:1 },
     { id:'ascension', n:'Ascension Wake', cost:2350, fx:'tAscension', cols:['#E639EB', '#F2A6F8'], top:2 },
     { id:'horizon',   n:'Event Horizon',  cost:2350, fx:'tHorizon',   cols:['#B98CFF', '#FFFFFF'], top:2 },
+    { id:'soulwake',  n:'Soul Wake',      cost:2350, fx:'tSoul',      cols:['#5CF0A0', '#E8FFF2'], top:2 },
     // balls: more than a colour
     { id:'duck',     n:'Rubber Duck', cost:400,  fx:'duck',      cat:'ball', cols:['#FFD84A'] },
     { id:'hearts',   n:'Hearts',      cost:500,  fx:'hearts',    cat:'ball', cols:['#FF4F7A'] },
@@ -3637,7 +3646,8 @@ const B = {
     { id:'godlight', n:'Godlight',    cost:1500, fx:'godlight',  cat:'ball', cols:['#3FD6A8'], top:1 },
     { id:'demoneye', n:'Demon Eye',   cost:1500, fx:'demoneye',  cat:'ball', cols:['#FF3A1A'], top:1 },
     { id:'ascorb',   n:'Ascended Orb', cost:1750, fx:'ascorb',   cat:'ball', cols:['#E639EB'], top:2 },
-    { id:'singularity', n:'Singularity', cost:1750, fx:'singularity', cat:'ball', cols:['#B98CFF'], top:2 }
+    { id:'singularity', n:'Singularity', cost:1750, fx:'singularity', cat:'ball', cols:['#B98CFF'], top:2 },
+    { id:'reaperskull', n:'Reaper Skull', cost:1750, fx:'skullball', cat:'ball', cols:['#5CF0A0'], top:2 }
   ]
 };
 
@@ -7325,11 +7335,12 @@ const clubNow   = () => previewOf('k') || styleDef('k', S.club) || B.CLUBS[0];
 // (rim: the colour the score box is edged in while he wears it whole)
 const FULL_SETS = { ascended: { n: 'Ascended', t: ['ascension', 'ascorb'], rim: '#F2A6F8' },
   cosmic: { n: 'The Void', t: ['horizon', 'singularity'], rim: '#C9B0FF' },
-  divine: { n: 'Divine', t: ['seraph', 'godlight'], rim: '#FFE38A' }, demonic: { n: 'Demonic', t: ['hellfire', 'demoneye'], rim: '#FF8A3A' } };
+  divine: { n: 'Divine', t: ['seraph', 'godlight'], rim: '#FFE38A' }, demonic: { n: 'Demonic', t: ['hellfire', 'demoneye'], rim: '#FF8A3A' },
+  dread: { n: 'The Dread', t: ['soulwake', 'reaperskull'], rim: '#7CFFB2' } };
 // the one order the four sets keep on every rack of the shop, and on Sets
 // (each rack kept its own list's order, so the Ascended was first on one
 // and second on the next: the user saw it)
-const SET_ORDER = ['ascended', 'cosmic', 'divine', 'demonic'];
+const SET_ORDER = ['dread', 'ascended', 'cosmic', 'divine', 'demonic'];
 const setRank = (k, id) => { const i = SET_ORDER.indexOf(fullSetOf(k, id)); return i < 0 ? 99 : i; };
 function fullSetOf(k, id){ for(const s in FULL_SETS) if(k === 't' ? FULL_SETS[s].t.includes(id) : id === s) return s; return null; }
 // the top set he wears in full (never while trying one on)
@@ -7429,7 +7440,8 @@ const OUTFIT_ICON = ['...cccc.....',
 const SKIN_ACCENT = { divine:['#3FD6A8', '#F4D27A'], inferno:['#FFB43A', '#F0612A'], frostborn:['#FFFFFF', '#9FD6F2'],
   stormcaller:['#8FD0FF', '#FFFFFF'], void:['#C68BFF', '#6E44A0'], glitch:['#FF2A6D', '#2AE0FF'],
   midas:['#FFFFFF', '#FFD86B'], disco:['#FF4FB8', '#3FE0FF'], ghost:['#EEF2FF', '#A5B0D6'],
-  demonic:['#FF5A1E', '#FFD34A'], ascended:['#C070F0', '#F2A6F8'], cosmic:['#B98CFF', '#7FE6FF'] };
+  demonic:['#FF5A1E', '#FFD34A'], ascended:['#C070F0', '#F2A6F8'], cosmic:['#B98CFF', '#7FE6FF'],
+  dread:['#5CF0A0', '#D8D2BC'] };
 // and the dearest two a little more of themselves on their tiles: the
 // Demonic's horns and wings, the Ascended's horns, hair of fire, the light
 // in his chest and his cape; his imp's horns, flame, green eye and the heart
@@ -7458,6 +7470,15 @@ const ICON_FX = {
     P(6, 5, '#C860F0'); P(5, 5, G); P(7, 5, G); P(6, 4, G); P(6, 6, G);
     P(10, 4, G); P(11, 3, L); P(11, 2, L); P(11, 5, G);
     P(0, 6, V); P(1, 6, K); P(1, 5, '#7A4ED8'); P(0, 8, C); P(0, 7, '#D8FAFF'); P(1, 8, '#C8F4FF'); P(0, 9, G);
+  },
+  // The Dread: the skull in his hood with its green eyes, his scythe's
+  // blade over his shoulder, and his lantern; his caddie's skull and lantern
+  dread(P, caddie){
+    const B = '#D8D2BC', G = '#5CF0A0', I = '#9A96A6', E = '#E8FFF2', K = '#06050A';
+    if(caddie){ P(3, 2, B); P(4, 2, G); P(5, 2, B); P(6, 2, G); P(2, 9, '#3E3A48'); P(2, 10, G); return; }
+    P(4, 3, B); P(5, 3, G); P(6, 3, B); P(7, 3, G); P(8, 3, B); P(5, 4, K); P(7, 4, K);
+    P(11, 1, I); P(10, 0, I); P(9, 0, E); P(11, 2, '#2EB872'); P(11, 3, '#3E3A48'); P(11, 4, '#3E3A48');
+    P(5, 9, '#3E3A48'); P(5, 10, G); P(5, 11, '#3E3A48');
   },
   // the Demonic: black horns cracked with lava swept back off his head, red
   // eyes, a ram's skull on each shoulder and gold edging his plate
@@ -7533,7 +7554,10 @@ function clubUrl(d){
       for(const [x, y, col] of [[8, 9, '#A49CC8'], [7, 10, '#A49CC8'], [9, 10, '#6A3AC8'], [10, 11, '#B070F8'], [9, 11, '#3A1E78'], [10, 10, '#F0D0FF'],
                                 [11, 10, '#6A3AC8'], [8, 11, '#6A3AC8'], [11, 11, '#3A1E78']]) P(x, y, col); }
     const acc = { divine:['#3FD6A8', '#F4D27A'], ice:['#FFFFFF', '#9FD6F2'], neon:['#3FFFB0', '#CFFFEA'], gold:['#FFFFFF', '#FFE39A'],
-                  demonic:['#FF5A1E', '#FFD34A'], ascended:['#E639EB', '#F2A6F8'], cosmic:['#B98CFF', '#FFFFFF'] }[d.fx === 'glint' ? 'gold' : d.fx];
+                  demonic:['#FF5A1E', '#FFD34A'], ascended:['#E639EB', '#F2A6F8'], cosmic:['#B98CFF', '#FFFFFF'], dread:['#5CF0A0', '#E8FFF2'] }[d.fx === 'glint' ? 'gold' : d.fx];
+    // the Reaper's dark haft bound in bone, a scythe's blade for its head, its edge green
+    if(d.fx === 'dread'){ g.clearRect(7, 9, 4, 3); P(3, 2, '#D8D2BC'); P(5, 5, '#D8D2BC'); P(7, 8, '#D8D2BC');
+      for(const [x, y, col] of [[8, 9, '#6E6A78'], [9, 9, '#9A96A6'], [10, 10, '#9A96A6'], [11, 11, '#E8FFF2'], [8, 10, '#5CF0A0'], [9, 10, '#5CF0A0'], [10, 11, '#5CF0A0']]) P(x, y, col); }
     // the Eclipse's gold shaft bound in indigo, and a black orb in a gold ring for its head
     if(d.fx === 'cosmic'){ pts.forEach(([x, y], i) => { if(i > 1 && i % 3 === 0) P(x, y, '#1C1640'); }); P(9, 8, '#05030C'); P(10, 9, '#05030C'); P(8, 8, '#D8B060'); P(11, 9, '#D8B060'); P(10, 10, '#B98CFF'); P(9, 7, '#FFFFFF'); }
     if(acc) [[10, 1], [1, 10], [11, 4], [4, 11]].forEach(([x, y], i) => P(x, y, acc[i & 1]));
@@ -7587,6 +7611,10 @@ const BALL_ICON = {
               map:{ W:'#FFFFFF', F:'#B98CFF', M:'#7A4ED8', m:'#3E2A6E', d:'#141030', l:'#7FE6FF' } },
   singularity:{ rows:['..s.......s.','....KKKK....','...KkKKKK...','..KkKKKKKK..','.gGGKKKKGGg.','gGPPGGGGPPGg','.gGGKKKKGGg.','..KKKKKKKK..','...KKKKKK...','....KKKK....','.s.......s..','............'],
               map:{ K:'#0B0818', k:'#3E2A6E', G:'#D8B060', g:'#9A7432', P:'#FF7AD9', s:'#FFFFFF' } },
+  tSoul:    { rows:['.........gWg','........gWWg','.......lGGl.','......lGl...','.....lGl..s.','....dGl.....','...dGl..s...','..dGl.......','.dGd........','dGd.....s...','Gd..........','............'],
+              map:{ W:'#E8FFF2', g:'#A8FFD0', G:'#5CF0A0', l:'#2EB872', d:'#17734A', s:'#A8FFD0' } },
+  skullball:{ rows:['............','...wWWWWw...','..wWWWWWWw..','..WWWWWWWW..','..WEEWWEEW..','..WEEWWEEW..','..wWWNNWWw..','...WWWWWW...','...TtTtTt...','....wwww....','.g........g.','............'],
+              map:{ W:'#D8D2BC', w:'#B8B09A', E:'#5CF0A0', N:'#24222C', T:'#F2EEDC', t:'#24222C', g:'#2EB872' } },
   ascorb:   { rows:['...f..f..f..','..fMffMffM..','...MMMMMM...','..MKKKKKKM..','.MKKkkKKKKM.','.MKkKKKMKKM.','.MKKKKMWMKM.','.MKKKMKMKKM.','.MKKKKKKKKM.','..MKKKKKKM..','...MMMMMM...','............'],
               map:{ f:'#F2A6F8', M:'#C936D5', K:'#1B1B44', k:'#3B3B7A', W:'#FFFFFF' } }
 };
@@ -9895,6 +9923,12 @@ const PATTERNS = {
   cosmos: (x, y) => { const h = hr(x * 3 + 1, y * 7 + 2);
     return h > 0.93 ? (hr(y, x + 11) > 0.55 ? '#FFFFFF' : hr(x, y + 5) > 0.5 ? '#B98CFF' : '#7FE6FF') : h < 0.07 && (x + y) % 3 === 0 ? '#3E2A6E' : null; },
   // and since his second pictures, gold scrollwork worked over it
+  // The Dread: black cloth hung in folds, a lit thread on the crown of each,
+  // a fleck of soul-green in the weave here and there
+  shroud: (x, y, sh) => { const f = (x * 3 + (y >> 2)) % 7;
+    if(f === 0) return '#0E0C12';
+    if(f === 3 && !sh) return '#34303E';
+    return hr(x * 9 + 2, y * 7 + 5) > 0.975 ? '#17734A' : null; },
   filigree: (x, y) => { const k = (x * 5 + y * 3) % 13;
     return k === 0 ? '#D8B060' : k === 1 && (y & 1) ? '#9A7432' : PATTERNS.cosmos(x, y); },
   // the Divine: gold thread worked into his white robe, a scroll of cloud
@@ -11070,6 +11104,8 @@ function flameAura(c, g, up, P, calm){
 // longer ones on every hole of a fast bag never went away; kept close about
 // him, never up the sky)
 const LEGEND_DUR = 0.5, LEGEND_BIG = 0.5;
+// the looks that have one (the newer ones silent: the user wants no more sounds)
+const LEGEND_FX = ['demonic', 'ascended', 'divine', 'cosmic', 'dread'];
 function legendNow(g){
   const L = Scene.legend;
   if(!L || g.minor) return null;
@@ -12106,6 +12142,197 @@ const STYLEFX = {
       }
     }
   },
+  /* ---- The Dread: a wraith in a black shroud ----
+     The user named him. A deep hood with a skull in the dark of it, two
+     points of soul-green light for eyes that stream as he winds up; a
+     shroud to the ground torn into drifting strips, the green showing
+     through its holes; a cloak in tatters lined in green; a chain at his
+     waist with a soul lantern swinging from it; a great scythe floating at
+     his back, its edge lit green; souls circling him; a grave open under
+     his feet with hands of bone reaching up out of its lip. Through a
+     swing the souls are drawn into his lantern and the hands reach; as he
+     strikes a ring of soulfire runs out over the grass. On an albatross or
+     an ace, souls, bone and green light bursting out of him. His caddie
+     has the hood, the skull, the lantern and two souls. */
+  dread: {
+    outline: '#2EB872', outlineA: 0.30,
+    charge(ph){ return STYLEFX.ascended.charge(ph); },
+    strike(ph){ return STYLEFX.ascended.strike(ph); },
+    sigilSize(g){ return STYLEFX.cosmic.sigilSize(g); },
+    px(g){ return g.h / 58; },
+    // the grave open under him, hands of bone reaching up out of its lip
+    ground(c, g){
+      if(g.minor) return;
+      const [rx, ry] = this.sigilSize(g), L = legendNow(g), st = this.strike(g.ph), q = L ? 1 : this.charge(g.ph);
+      const X = Math.round(g.cx), Y = Math.round(g.bot), step = Math.floor(g.t * 5 + (g.ph > 0 ? g.ph * 12 : 0) + (L ? L.T * 30 : 0)) % 24;
+      { const V = dreadGrave(rx, ry, step, q > 0.5 || st >= 0 ? 1 : 0); c.globalAlpha = 1; c.drawImage(V, X - V.ox, Y - V.oy); }
+      if(g.h >= 30){
+        this.reach(c, g, X, Y, rx, ry, L ? 1 : Math.max(q, st >= 0 ? 1 - st : 0));
+        // souls rising out of it, a few at a time
+        for(let i = 0; i < 4; i++){ const u = (g.t * 0.45 + i / 4) % 1, a = hr(i + Math.floor(g.t * 0.45 + i / 4) * 4, 641) * Math.PI * 2;
+          const x = X + Math.cos(a) * rx * 0.45 + Math.sin(g.t * 2 + i) * 1.5, y = Y + Math.sin(a) * ry * 0.4 - u * g.h * 0.5;
+          if(u < 0.85) dreadSoul(c, x, y, 0, -1, u < 0.5 && g.h >= 45 ? 1 : 0, 1, Math.max(1, Math.round(g.h / 70))); }
+      }
+      if(g.h < 30) {}
+      else if(L) this.wave(c, X, Y, rx, ry, L.f, L.big ? 1.8 : 1.6);
+      else if(st >= 0) this.wave(c, X, Y, rx, ry, st, 1.55);
+      c.globalAlpha = 1;
+    },
+    // the hands, out at either side of the lip and one behind: each rising
+    // and sinking back in its own time, all reaching up as he winds up
+    reach(c, g, X, Y, rx, ry, q){
+      const k = Math.max(1, Math.round(g.h / 46)), H = DHAND_ROWS.length * k;
+      for(const [a, ph, flip] of [[Math.PI * 1.02, 0, false], [-0.04, 2.1, true], [Math.PI * 1.22, 4.2, false], [-0.3, 1.1, true]]){
+        const rise = Math.max(q, Math.max(0, Math.sin(g.t * 0.9 + ph)) * 0.85), n = Math.round(rise * DHAND_ROWS.length);
+        if(n < 1) continue;
+        const hx = Math.round(X + Math.cos(a) * rx * 0.96 - DHAND_ROWS[0].length * k / 2), hy = Math.round(Y + Math.sin(a) * ry * 0.96);
+        const Hc = dreadHand(k, flip);
+        c.globalAlpha = 1; c.drawImage(Hc, 0, 0, Hc.width, n * k, hx, hy - n * k, Hc.width, n * k);
+        // earth thrown up where it breaks the ground
+        c.fillStyle = '#3E3A48'; c.fillRect(hx - k, hy - 1, Hc.width + 2 * k, 1);
+        if(rise > 0.6 && g.h >= 45){ c.fillStyle = '#5CF0A0'; c.fillRect(hx + Math.round(Hc.width / 2), hy - n * k - 2 - Math.round((g.t * 6 + ph) % 3), 1, 1); }
+      }
+      c.globalAlpha = 1;
+    },
+    // a ring of soulfire running out over the grass, flames licking up off it
+    wave(c, X, Y, rx, ry, f, R){
+      const s = 1 + f * (R - 1), n = Math.max(24, Math.round((rx + ry) * s * 2));
+      c.globalAlpha = 1;
+      for(let i = 0; i < n; i++){ if(hr(i, 642) < f * 0.7) continue; const a = i / n * Math.PI * 2;
+        const x = Math.round(X + Math.cos(a) * rx * s), y = Math.round(Y + Math.sin(a) * ry * s);
+        c.fillStyle = f < 0.35 ? '#E8FFF2' : f < 0.7 ? '#5CF0A0' : '#2EB872'; c.fillRect(x, y, 1, 1);
+        if(i % 3 === 0 && f < 0.75){ const L = 1 + Math.round(2 * (1 - f) * hr(i, 643)); c.fillStyle = '#2EB872'; c.fillRect(x, y - L, 1, L); c.fillStyle = '#A8FFD0'; c.fillRect(x, y - L - 1, 1, 1); } }
+    },
+    back(c, g){
+      if(g.minor){ this.souls(c, g, false); return; }
+      if(!g.back){ this.cloak(c, g); this.scythe(c, g); }
+      this.souls(c, g, false);
+      c.globalAlpha = 1;
+    },
+    body(c, g){
+      this.robe(c, g);
+      this.hood(c, g);
+    },
+    front(c, g){
+      if(g.minor){ this.lantern(c, g); this.eyes(c, g); this.souls(c, g, true); return; }
+      // walking away his cloak hangs down his back, his scythe slung over it
+      if(g.back){ this.cloak(c, g); this.scythe(c, g); this.hood(c, g); }
+      this.chain(c, g);
+      this.lantern(c, g);
+      this.eyes(c, g);
+      this.souls(c, g, true);
+      this.pull(c, g);
+      const L = legendNow(g);
+      if(L) outlineBurst(c, g, L, 52, 0.95, (x, y, i, f, dx, dy) => {
+        if(i % 4 === 0) dreadSoul(c, x, y, dx, dy, g.h >= 45 && f < 0.6 ? 2 : 1, 1, Math.max(1, Math.round(g.h / 70)));
+        else if(i % 4 === 1){ c.fillStyle = '#D8D2BC'; c.fillRect(Math.round(x), Math.round(y), 2, 1); c.fillStyle = '#F2EEDC'; c.fillRect(Math.round(x + dx * 2), Math.round(y + dy * 2), 1, 1); }
+        else burstStreak(c, x, y, dx, dy, f < 0.4 ? '#E8FFF2' : i & 1 ? '#5CF0A0' : '#A8FFD0', '#17734A', 2); });
+      c.globalAlpha = 1;
+    },
+    // his hood, and the skull in it
+    hood(c, g){
+      const p = this.px(g), H = g.head, view = g.back ? 'back' : 'side';
+      const Hd = dreadHood(p, view), sh = g.shear && !g.back ? g.shear(0.1) : 0;
+      c.globalAlpha = 1; c.drawImage(Hd.cv, Math.round(H.x + sh - Hd.ox), Math.round(H.y - Hd.oy));
+    },
+    // his shroud over his legs, to the ground (his caddie has his bag)
+    robe(c, g){
+      if(g.minor) return;
+      const pose = g.back ? 'back' : g.spr === SPRITE.gFinish || g.spr === SPRITE.gWalk ? 'fin' : 'addr';
+      const Rb = dreadRobe(Math.round(g.w), Math.round(g.h), pose, Math.floor(g.t * 5) % 12), sh = g.shear && !g.back ? g.shear(0.7) : 0;
+      c.globalAlpha = 1; c.drawImage(Rb.cv, Math.round(g.x + g.w * Rb.x / 40 + sh), Math.round(g.y + g.h * Rb.y / 58));
+    },
+    cloak(c, g){
+      const pose = g.back ? 2 : g.spr === SPRITE.gFinish ? 1 : 0;
+      const C = dreadCloak(Math.round(g.w), Math.round(g.h), pose, Math.floor(g.t * 6) % 12);
+      c.globalAlpha = 1; c.drawImage(C.cv, Math.round(g.x + (g.shear && !g.back ? g.shear(0.3) : 0) - C.ox), Math.round(g.y));
+    },
+    // the scythe at his back, rising a little as he winds up; a glint of
+    // light running up its edge now and then
+    scythe(c, g){
+      const p = this.px(g), L = legendNow(g), q = L ? 1 : this.charge(g.ph), A = wingAnchor(g);
+      const bob = Math.sin(g.t * 1.4) * g.h * 0.02 - q * g.h * 0.05 - (L ? outBack(L.f, 0.2) * g.h * 0.08 : 0);
+      const S = dreadScythe(p, g.back ? 1 : 0), x = Math.round(A.x + (g.back ? 0 : -g.w * 0.30) - S.ox), y = Math.round(A.y + bob - S.oy);
+      c.globalAlpha = 1; c.drawImage(S.cv, x, y);
+    },
+    // where the lantern hangs: from his waist, toward his back
+    hip(g){
+      const s = g.spr, B0 = g.minor ? BELT_CADDIE : s === SPRITE.gFinish || s === SPRITE.gWalk ? BELT_FIN : BELT_ADDR;
+      if(g.back) return { x: g.x + g.w * 0.74, y: g.y + g.h * 0.55 };
+      if(!B0) return null;
+      const f = g.minor ? 0.75 : 0.3, y = g.y + g.h * B0.y + 1;
+      return { x: g.x + g.w * (B0.x0 + (B0.x1 - B0.x0) * f) + (g.shear ? g.shear(B0.y) : 0), y };
+    },
+    // a chain hung in a loop at his waist
+    chain(c, g){
+      if(g.h < 30 || g.back) return;
+      const s = g.spr, B0 = s === SPRITE.gFinish || s === SPRITE.gWalk ? BELT_FIN : BELT_ADDR;
+      const sh = g.shear ? g.shear(B0.y) : 0, x0 = g.x + g.w * B0.x0 + sh, x1 = g.x + g.w * (B0.x0 + (B0.x1 - B0.x0) * 0.85) + sh, y = g.y + g.h * B0.y + 1;
+      const n = Math.max(6, Math.round((x1 - x0) / 1.5)), sag = g.h * 0.05;
+      for(let i = 0; i <= n; i++){ const u = i / n, X = Math.round(x0 + (x1 - x0) * u), Y = Math.round(y + Math.sin(u * Math.PI) * sag);
+        c.fillStyle = i & 1 ? '#6E6A78' : '#9A96A6'; c.fillRect(X, Y, 1, 1); if(!(i & 1) && g.h >= 60){ c.fillStyle = '#3E3A48'; c.fillRect(X, Y + 1, 1, 1); } }
+    },
+    // the soul lantern swinging from it: an iron cage, green fire in it
+    lantern(c, g){
+      const P = this.hip(g); if(!P) return;
+      const k = Math.max(1, Math.round(g.h / (g.minor ? 50 : 56))), sw = Math.sin(g.t * 2.1) * 0.25 + (g.ph > 0 && g.ph < 0.55 ? -0.3 * Math.sin(g.ph / 0.55 * Math.PI) : 0);
+      const L = Math.max(2, Math.round(g.h * 0.06)), bx = Math.round(P.x + Math.sin(sw) * L), by = Math.round(P.y + Math.cos(sw) * L);
+      c.globalAlpha = 1;
+      for(let i = 0; i < L; i += 1){ c.fillStyle = i & 1 ? '#6E6A78' : '#9A96A6'; c.fillRect(Math.round(P.x + Math.sin(sw) * i), Math.round(P.y + Math.cos(sw) * i), 1, 1); }
+      const W = 3 * k, H = 4 * k, x0 = bx - Math.floor(W / 2) - k, y0 = by;
+      // its cap, its cage and its foot
+      c.fillStyle = '#3E3A48'; c.fillRect(x0, y0, W + 2 * k, k); c.fillRect(x0, y0 + H + k, W + 2 * k, k);
+      c.fillStyle = '#6E6A78'; c.fillRect(x0 + k, y0 - k, W, k);
+      const fl = Math.sin(g.t * 13) * Math.sin(g.t * 7.7), Q = this.charge(g.ph);
+      c.fillStyle = Q > 0.3 || fl > 0.3 ? '#5CF0A0' : '#2EB872'; c.fillRect(x0 + k, y0 + k, W, H);
+      c.fillStyle = Q > 0.3 ? '#FFFFFF' : '#E8FFF2'; c.fillRect(x0 + k + (W > 2 ? k : 0), y0 + k + Math.round(H / 3) + (fl > 0 ? 0 : 1), Math.max(1, W - 2 * k), Math.max(1, Math.round(H / 2)));
+      c.fillStyle = '#18161E'; c.fillRect(x0, y0 + k, k, H); c.fillRect(x0 + W + k, y0 + k, k, H);
+      if(W >= 3 && g.h >= 50){ c.fillStyle = '#3E3A48'; c.fillRect(x0 + k + Math.floor(W / 2), y0 + k, 1, H); }
+      // a wisp of its fire drifting up off it
+      if(g.h >= 40){ const u = (g.t * 0.8) % 1; if(u < 0.7) dreadSoul(c, bx + Math.sin(g.t * 3) * 2, y0 - k - 1 - u * g.h * 0.12, 0, -1, 0, 1); }
+    },
+    // his eyes: two points of green in the dark of the skull, streaming
+    // back as he winds up and strikes
+    eyes(c, g){
+      if(g.back) return;
+      const p = this.px(g), H = g.head, sh = g.shear ? g.shear(0.1) : 0;
+      const X = Math.round(H.x + sh + 3.5 * p), Y = Math.round(H.y + 0.5 * p), k = Math.max(1, Math.round(p * 0.9));
+      const L = legendNow(g), q = L ? 1 : Math.max(this.charge(g.ph), this.strike(g.ph) >= 0 ? 1 : 0), fl = Math.sin(g.t * 9) > -0.6;
+      c.globalAlpha = 1;
+      if(q > 0.2 && !g.minor){ const n = Math.round(2 + q * g.w * 0.25);
+        for(let i = 1; i <= n; i++){ c.fillStyle = i < n * 0.4 ? '#5CF0A0' : i < n * 0.75 ? '#2EB872' : '#17734A';
+          c.fillRect(X - i, Y - Math.round(i * 0.25 + Math.sin(g.t * 10 + i) * 0.6), 1, 1); } }
+      c.fillStyle = q > 0.2 ? '#E8FFF2' : fl ? '#5CF0A0' : '#2EB872'; c.fillRect(X, Y, k, k);
+      if(p >= 1.4){ c.fillStyle = '#5CF0A0'; c.fillRect(X + k + Math.round(p), Y, k, k); }
+    },
+    // souls circling him on a tilted ring, tails behind them: the far half
+    // before him, the near half after; flung out on a great hole
+    souls(c, g, front){
+      const L = legendNow(g), out = L ? 1 + (L.big ? 0.55 : 0.4) * outBack(L.f, 0.18) : 1;
+      const minor = !!g.minor, N = minor ? 2 : 4;
+      const rx = g.w * (minor ? 0.75 : 0.95) * out, ry = Math.max(2, g.h * 0.08) * out, oy = g.y + g.h * (minor ? 0.45 : 0.4);
+      const ct = Math.cos(0.18), sn = Math.sin(0.18), cx = g.cx;
+      const at = a => { const X = Math.cos(a) * rx, Y = Math.sin(a) * ry; return [cx + X * ct - Y * sn, oy + X * sn + Y * ct]; };
+      const spin = g.t * 0.9 + (g.ph > 0 ? g.ph * Math.PI * 1.5 : 0);
+      for(let i = 0; i < N; i++){
+        const a0 = spin + i * Math.PI * 2 / N + hr(i, 644) * 0.5, bob = Math.sin(g.t * 1.7 + i * 2) * g.h * 0.03;
+        if((Math.sin(a0) > 0) !== front) continue;
+        const [x, y] = at(a0), [x2, y2] = at(a0 + 0.1), d = Math.hypot(x2 - x, y2 - y) || 1;
+        dreadSoul(c, x, y + bob, (x2 - x) / d, (y2 - y) / d, minor ? (g.h >= 40 ? 1 : 0) : g.h >= 45 ? 2 : 1, 1, minor ? 1 : Math.max(1, Math.round(g.h / 55)));
+      }
+    },
+    // as he winds up, souls are drawn in to his lantern
+    pull(c, g){
+      const q = this.charge(g.ph), P = this.hip(g);
+      if(q <= 0 || g.ph >= 0.55 || !P) return;
+      const ty = P.y + g.h * 0.08;
+      for(let i = 0; i < 8; i++){
+        const life = (g.t * 2 + i / 8) % 1, r = (1 - life) * g.w * 0.9, a = i * 0.785 + life * 2.5 + g.t;
+        const x = P.x + Math.cos(a) * r, y = ty + Math.sin(a) * r * 0.6, d = Math.hypot(P.x - x, ty - y) || 1;
+        dreadSoul(c, x, y, (P.x - x) / d, (ty - y) / d, 0, 1);
+      }
+    }
+  },
   /* ---- Ascended: a hooded star-walker ----
      After the user's picture: a dark hood with two pointed ears, a silver
      mantle set with violet gems across his shoulders, a cape that is a
@@ -12808,6 +13035,11 @@ const LB_ORBIT = {
   singularity(c, cx, cy, r, t, front){
     lbRing(c, cx, cy, r + 3.5, (r + 3.5) * 0.3, 0.2, -t * 2.2, 6, ['#FFFFFF', '#B98CFF'], front, 1.05);
   },
+  // the Reaper Skull's: a soul going round it, its tail behind it
+  skullball(c, cx, cy, r, t, front){
+    lbRing(c, cx, cy, r + 3.5, (r + 3.5) * 0.4, -0.2, t * 2.6, 8, ['#E8FFF2', '#A8FFD0', '#5CF0A0', '#2EB872', '#17734A'], front, 0.3);
+  },
+  tSoul(c, cx, cy, r, t, front){ LB_ORBIT.skullball(c, cx, cy, r - 0.5, t, front); },
   hearts(c, cx, cy, r, t, front){
     if(!front) return; const f = (t * 0.9) % 1; if(f > 0.7) return;
     const hx = Math.round(cx + r + 1 + Math.sin(t * 4) * 1), hy = Math.round(cy - r - 2 - f * 6);
@@ -12892,6 +13124,15 @@ function drawLyingBallBase(c, cx, cy, r, t, fx){
       drawGlow(c, cx, cy, r + 3, r + 2, [[0.55, '#3E2A6E', 1], [0, '#7A4ED8', 2]], Math.floor(t * 8) & 3, 0.85);
       lbSphere(c, cx, cy, r, '#FFFFFF');
       if(((t * 0.8) % 1) < 0.3) voidStar(c, cx + r + 2, cy - r - 2, 1, 1);
+      break;
+    case 'skullball':                                // a skull, its eyes lit, mist off it
+      dreadSkull(c, cx, cy - 1, Math.max(2.5, r * 1.6), t);
+      if(((t * 0.7) % 1) < 0.6) dot(cx + Math.sin(t * 2) * 2, cy - r - 3 - ((t * 0.7) % 1) * 5, 1, '#5CF0A0', 1);
+      break;
+    case 'tSoul':                                    // in a green glow, a soul rising off it
+      drawGlow(c, cx, cy, r + 3, r + 2, [[0.55, '#0C3A26', 1], [0, '#2EB872', 2]], Math.floor(t * 8) & 3, 0.85);
+      lbSphere(c, cx, cy, r, '#E8FFF2');
+      { const f = (t * 0.8) % 1; if(f < 0.7) dreadSoul(c, cx + Math.sin(t * 3) * 1.5, cy - r - 2 - f * 6, 0, -1, 0, 1); }
       break;
     case 'ascorb':                                   // burning, its sparks circling
       drawVoidOrb(c, cx, cy - 1, r, t, false);
@@ -12991,6 +13232,26 @@ const CUP_FX = {
       for(let i = 0; i < 26; i++){ if(hr(i, 369) < f * 0.8) continue; const a = i / 26 * Math.PI * 2, r = h * (0.2 + 0.65 * f);
         fxDot(c, x + Math.cos(a) * r - (k >> 1), y + Math.sin(a) * r * 0.34, k, i & 1 ? '#D8B060' : '#F4DC96', 1); }
     }
+  },
+  // The Dread's (the Reaper Skull, and its wake the Soul Wake): a grave
+  // opens round the cup, hands of bone reach up out of its lip and close,
+  // souls stream up out of it, and it shuts on a flash of green
+  skullball(c, x, y, cr, h, q, t){
+    const k = Math.max(1, Math.round(h / 16));
+    const o = q < 0.2 ? q / 0.2 : q < 0.72 ? 1 : q < 0.86 ? 1 - (q - 0.72) / 0.14 : 0;
+    if(o > 0.05 && h >= 8){ const rx = Math.max(3, Math.round(h * 0.55 * o)), ry = Math.max(1, Math.round(h * 0.18 * o));
+      const V = dreadGrave(rx, ry, Math.floor(t * 20) % 24, q > 0.4 ? 1 : 0); c.globalAlpha = 1; c.drawImage(V, Math.round(x - V.ox), Math.round(y - V.oy));
+      // the hands, out of either side of its lip, reaching and closing
+      if(h >= 16){ const kk = Math.max(1, Math.round(h / 40)), rise = Math.sin(Math.min(1, q / 0.7) * Math.PI), n = Math.round(rise * DHAND_ROWS.length);
+        if(n > 0) for(const s2 of [-1, 1]){ const Hc = dreadHand(kk, s2 > 0), hx = Math.round(x + s2 * rx * 0.8 - Hc.width / 2), hy = Math.round(y + ry * 0.2);
+          c.drawImage(Hc, 0, 0, Hc.width, n * kk, hx, hy - n * kk, Hc.width, n * kk); } } }
+    // souls streaming up out of it, turning
+    for(let i = 0; i < 10; i++){ const u = clamp(q * 1.6 - hr(i, 651) * 0.6, 0, 1); if(u <= 0 || u >= 1) continue;
+      const a = i / 10 * Math.PI * 2 + u * 4, r = h * (0.1 + 0.3 * u);
+      dreadSoul(c, x + Math.cos(a) * r, y - u * h * 0.75 + Math.sin(a) * r * 0.3, 0, -1, h >= 30 && u < 0.6 ? 2 : 1, 1, k); }
+    if(q >= 0.84){ const f = (q - 0.84) / 0.16;
+      for(let i = 0; i < 24; i++){ if(hr(i, 652) < f * 0.8) continue; const a = i / 24 * Math.PI * 2, r = h * (0.15 + 0.6 * f);
+        fxDot(c, x + Math.cos(a) * r - (k >> 1), y + Math.sin(a) * r * 0.34, k, i & 1 ? '#5CF0A0' : '#E8FFF2', 1); } }
   },
   // The Ascended's (its orb, and its wake): its disc opening under the cup,
   // the void drawn down into it in a spiral, a dark ring closing and a
@@ -13127,7 +13388,9 @@ const ACE_COL = {
   godlight:    ['#2FB592', '#E0AE3E', '#FFF2B8'],
   demoneye:    ['#A81E14', '#FF6A1A', '#FFD34A'],
   ascorb:      ['#962CA8', '#E639EB', '#FFE0FF'],
-  singularity: ['#3E2A6E', '#B98CFF', '#FFFFFF']
+  singularity: ['#3E2A6E', '#B98CFF', '#FFFFFF'],
+  tSoul:       ['#17734A', '#5CF0A0', '#E8FFF2'],
+  skullball:   ['#17734A', '#5CF0A0', '#E8FFF2']
 };
 const ACE_STRIP = new Map();
 const hxU32 = h => { const n = parseInt(h.slice(1), 16); return (0xFF000000 | (n & 255) << 16 | (n & 0xFF00) | (n >> 16)) >>> 0; };
@@ -13199,6 +13462,17 @@ const ACE_EXTRA = {
       for(let s = 0; s < 6; s++){ const nx = x + (j ? 1 : -1) * W * (0.2 + hr(n * 7 + s, 399) * 0.3), ny = y + (hr(n * 5 + s, 400) - 0.6) * W * 0.6;
         for(let u = 0; u <= 1; u += 0.34) put(x + (nx - x) * u - (k >> 1), y + (ny - y) * u, k, s & 1 ? '#F2A6F8' : '#FFFFFF'); x = nx; y = ny; } }
     aceSpiral(A, 36, W * 1.0, ['#FFE0FF', '#E639EB', '#762889'], 6); },
+  // the Dread's: souls winding up round it, skulls rising beside it
+  skullball(A){ const { X, y0, y1, W, k, t, put } = A;
+    // souls winding up round it, each a face with its tail below it
+    for(let i = 0; i < 10; i++){ const y = y1 - (i + 0.5) / 10 * (y1 - y0), a = y * 0.07 - t * 6, x = X + Math.sin(a) * W * 1.05, s = Math.max(1, Math.round(W / 10));
+      for(let j = 1; j <= 4; j++) put(x - (k >> 1) + Math.sin(a + j * 0.5) * s, y + 2 * s + j * s * 1.3, s, j < 2 ? '#5CF0A0' : j < 3 ? '#2EB872' : '#17734A');
+      put(x - 2 * s, y - 2 * s, 5 * s, '#0C3A26', 5 * s); put(x - s, y - s, 3 * s, Math.cos(a) > 0 ? '#E8FFF2' : '#A8FFD0', 3 * s);
+      put(x - s, y, s, '#0C3A26'); put(x + s, y, s, '#0C3A26'); }
+    const SK = ['.WWW.', 'WWWWW', 'WEWEW', '.TTT.'];
+    aceRise(A, 4, 653, (i, y) => { const ox = X + (i & 1 ? 1 : -1) * W * (1.2 + hr(i, 654) * 0.4), s = k;
+      SK.forEach((row, yy) => [...row].forEach((ch, xx) => { if(ch !== '.') put(ox + (xx - 2) * s, y + yy * s, s, ch === 'E' ? '#5CF0A0' : ch === 'T' ? '#B8B09A' : '#D8D2BC'); })); }); },
+  tSoul(A){ ACE_EXTRA.skullball(A); },
   // Event Horizon, Ascension, the Jade and Hellfire Wakes: their sets'
   tHorizon(A){ ACE_EXTRA.singularity(A); }, tAscension(A){ ACE_EXTRA.ascorb(A); },
   tSeraph(A){ ACE_EXTRA.godlight(A); }, tHellfire(A){ ACE_EXTRA.demoneye(A); },
@@ -13362,10 +13636,18 @@ const CUP_FX2 = {
         if(Math.abs(r2) < L * 0.45) fxDot(c, x - (k >> 1), y - k + r2 * 0.8, k, '#FFFFFF', 1); } }
   }
 };
+CUP_FX2.skullball = function(c, x, y, cr, h, q, t){
+  // a skull flashing up over the cup as it shuts, its eyes lit
+  const k = Math.max(1, Math.round(h / 16));
+  if(q > 0.7 && q < 0.98 && h >= 12){ const f = (q - 0.7) / 0.28; dreadSkull(c, x, y - h * (0.3 + f * 0.25), Math.max(3, Math.round(h * 0.1)), t);
+    if(f < 0.4) cupStar(c, x - (k >> 1), y - k * 2, k, 2, '#FFFFFF', '#5CF0A0'); }
+};
+CUP_FX2.tSoul = CUP_FX2.skullball;
 CUP_FX2.tSeraph = CUP_FX2.godlight; CUP_FX2.tHellfire = CUP_FX2.demoneye;
 CUP_FX2.tAscension = CUP_FX2.ascorb; CUP_FX2.tHorizon = CUP_FX2.singularity;
 // each set's wake plays its set's moment too
 CUP_FX.tHorizon = CUP_FX.singularity;
+CUP_FX.tSoul = CUP_FX.skullball;
 CUP_FX.tAscension = CUP_FX.ascorb;
 CUP_FX.tSeraph = CUP_FX.godlight;
 CUP_FX.tHellfire = CUP_FX.demoneye;
@@ -13376,7 +13658,7 @@ function beltOf(rows){
     if(m) return { x0: m.index / rows[0].length, x1: (m.index + m[0].length) / rows[0].length, y: y / 58 }; }
   return null;
 }
-const BELT_ADDR = beltOf(G_ADDR_ROWS), BELT_FIN = beltOf(G_FIN_ROWS);
+const BELT_ADDR = beltOf(G_ADDR_ROWS), BELT_FIN = beltOf(G_FIN_ROWS); const BELT_CADDIE = beltOf(CADDIE_ROWS);
 // The Void's hood, in the sprite's own pixels about the top middle of his
 // cap (after the user's two pictures): side on a deep cowl, rounded over
 // the top, open at the face onto nothing but dark; from behind, rounded
@@ -13884,6 +14166,286 @@ function blessPlain(G, col){
     blRing(G, bot - 1, RX, Math.max(2, RX * 0.24), 1 + (G.up >> 1), col); }
   blessMotes(G, 4, 0.7, true, false, (x, y) => { c.fillStyle = col; c.fillRect(Math.round(x), Math.round(y), 1, 1); });
 }
+// ---- The Dread ----
+// A wraith in a black shroud (the user named him): a deep hood with a
+// skull in the dark of it and two points of soul-green light for eyes, a
+// shroud to the ground torn into drifting strips with the green showing
+// through its holes, a cloak in tatters, a chain at his waist and a soul
+// lantern hanging from it, a great scythe floating at his back, souls
+// circling him and a grave open under his feet with hands of bone reaching
+// up out of it.
+const DREAD_PAL = ['#06050A', '#0E0C12', '#18161E', '#24222C', '#34303E', '#4A4558',
+  '#F2EEDC', '#D8D2BC', '#B8B09A', '#8A836E', '#5A5446',
+  '#E8FFF2', '#A8FFD0', '#5CF0A0', '#2EB872', '#17734A', '#0C3A26',
+  '#9A96A6', '#6E6A78', '#3E3A48'];
+// his skull in the dark of his hood, side on, in the hood's own units (one
+// a pixel of his sprite): W bone lit, w bone in shade, E a socket (his
+// eyes are lit in it as he is drawn), N the nose, T teeth, t the gaps
+const DSKULL_SIDE = ['..wWWW.', '.wWWWWW', '.wWWEEW', '.wwWWEN', '..wWWWW', '..wTtTt', '...www.'];
+function dreadHood(p, view){
+  const P = view === 'back' ? HOOD_BACK : HOOD_SIDE, pad = 2;
+  const xs = P.map(q => q[0]), ys = P.map(q => q[1]);
+  const x0 = Math.min(...xs), y0 = Math.min(...ys);
+  const W = (Math.max(...xs) - x0) * p + pad * 2 + 2, H = (Math.max(...ys) - y0 + 3) * p + pad * 2 + 2, ox = -x0 * p + pad, oy = -y0 * p + pad;
+  const cv = fxBake('dhood|' + p.toFixed(3) + '|' + view, W, H, g => {
+    const X = q => ox + q[0] * p, Y = q => oy + q[1] * p, lw = Math.max(1, p * 0.9);
+    const line = (pts, col, w) => { g.strokeStyle = col; g.lineWidth = w; g.lineJoin = 'round'; g.beginPath(); g.moveTo(X(pts[0]), Y(pts[0])); for(const q of pts.slice(1)) g.lineTo(X(q), Y(q)); g.stroke(); };
+    // the hem of it torn: rags hanging off its lower edge
+    const rags = view === 'back' ? [[-11, 13], [11, 13]] : [[-10, 14], [-4, 13]];
+    g.fillStyle = '#18161E';
+    for(let i = 0; i < 6; i++){ const f0 = i / 6, f1 = (i + 1) / 6, a = rags[0], b = rags[1];
+      const L = 1.2 + 1.8 * hr(i, 611 + (view === 'back' ? 1 : 0));
+      g.beginPath(); g.moveTo(X([a[0] + (b[0] - a[0]) * f0, a[1] + (b[1] - a[1]) * f0 - 0.5]), Y([0, a[1] + (b[1] - a[1]) * f0 - 0.5]));
+      g.lineTo(X([a[0] + (b[0] - a[0]) * f1, 0]), Y([0, a[1] + (b[1] - a[1]) * f1 - 0.5]));
+      g.lineTo(X([a[0] + (b[0] - a[0]) * (f0 + f1) / 2, 0]), Y([0, a[1] + (b[1] - a[1]) * (f0 + f1) / 2 + L])); g.closePath(); g.fill(); }
+    g.beginPath(); g.moveTo(X(P[0]), Y(P[0])); for(const q of P.slice(1)) g.lineTo(X(q), Y(q)); g.closePath();
+    g.fillStyle = '#18161E'; g.fill();
+    g.save(); g.clip();
+    if(view === 'back'){
+      g.fillStyle = '#0E0C12'; g.fillRect(X([-12, 0]), Y([0, 8]), 24 * p, 7 * p);
+      line([[-3, -3], [-5, 12]], '#24222C', lw); line([[3, -3], [5, 12]], '#24222C', lw);
+      if(p >= 1.5){ line([[-1, -4], [-2, 12]], '#0E0C12', 1); line([[1.2, -4], [2.2, 12]], '#0E0C12', 1);
+        line([[-6.5, 1], [-7.5, 12]], '#0E0C12', 1); line([[6.5, 1], [7.5, 12]], '#0E0C12', 1);
+        line([[-3, -5.2], [0, -5.6], [3, -5.2]], '#34303E', 1); }
+    }else{
+      g.fillStyle = '#0E0C12'; g.beginPath(); g.moveTo(X([-3, -2]), Y([-3, -2])); g.lineTo(X([-12, 3]), Y([-12, 3])); g.lineTo(X([-12, 16]), Y([-12, 16])); g.lineTo(X([-5, 16]), Y([-5, 16])); g.lineTo(X([-4, 3]), Y([-4, 3])); g.closePath(); g.fill();
+      line([[4, -2.5], [1, -0.5], [-0.5, 4]], '#24222C', lw);
+      if(p >= 1.5){ line([[3, -4.5], [-1, -3], [-3, 1]], '#34303E', 1); line([[-6, 4], [-8, 12]], '#06050A', 1); line([[-5.4, 4], [-7.2, 12]], '#24222C', 1); }
+      // the dark in it, and the skull in the dark
+      g.fillStyle = '#06050A'; g.beginPath(); g.moveTo(X([6.2, 3]), Y([6.2, 3])); g.lineTo(X([5.2, -2]), Y([5.2, -2])); g.lineTo(X([1.5, -0.5]), Y([1.5, -0.5])); g.lineTo(X([0, 5]), Y([0, 5])); g.lineTo(X([6.2, 5]), Y([6.2, 5])); g.closePath(); g.fill();
+      DSKULL_SIDE.forEach((row, j) => [...row].forEach((ch, i) => { if(ch === '.') return;
+        g.fillStyle = { W: '#D8D2BC', w: '#8A836E', E: '#06050A', N: '#24222C', T: '#B8B09A', t: '#24222C' }[ch];
+        g.fillRect(Math.round(X([i - 0.5, 0])), Math.round(Y([0, j - 1.5])), Math.ceil(p), Math.ceil(p)); }));
+      if(p >= 1.5){ g.fillStyle = '#F2EEDC'; g.fillRect(Math.round(X([2.5, 0])), Math.round(Y([0, -1.5])), Math.ceil(p * 2), Math.max(1, Math.round(p * 0.5))); }
+    }
+    g.restore();
+    // its edge lit grey, as by moonlight
+    if(view === 'back'){
+      line([[0, -6], [-4, -5], [-6, -2], [-7, 3], [-8, 9]], '#34303E', lw);
+      line([[0, -6], [4, -5], [6, -2], [7, 3], [8, 9]], '#34303E', lw);
+    }else{
+      line([[6, 3], [5, -2], [3, -5], [0, -6]], '#4A4558', lw);
+      line([[6.2, 4.6], [1, 5], [-0.5, 6], [-1, 10]], '#24222C', lw);
+    }
+  }, DREAD_PAL);
+  return { cv, ox, oy };
+}
+// His shroud, from his waist to the ground over his legs: black cloth hung
+// in folds, torn at the foot into strips that drift (step 0..11), holes in
+// it with the soul-green showing through, and the strips' ends fading into
+// a green mist (the Void's robe's shape: VROBE)
+function dreadRobe(w, h, pose, step){
+  const R = VROBE[pose], sx = w / 40, sy = h / 58, x0 = Math.min(R[3], R[1]) - 2, y0 = R[0];
+  const cv = fxBake('drobe|' + w + '|' + h + '|' + pose + '|' + step, Math.ceil((Math.max(R[4], R[2]) - x0 + 4) * sx), Math.ceil((58 - y0 + 0.5) * sy), g => {
+    const X = x => (x - x0) * sx, Y = y => (y - y0) * sy, a = step / 12 * Math.PI * 2, hemY = 54.5;
+    const path = () => { g.beginPath(); g.moveTo(X(R[1]), Y(R[0])); g.lineTo(X(R[2]), Y(R[0]));
+      g.quadraticCurveTo(X(R[2] + 0.5), Y(45), X(R[4] - (R[4] - R[2]) * (58 - hemY) / (58 - R[0])), Y(hemY));
+      g.lineTo(X(R[3] + (R[1] - R[3]) * (58 - hemY) / (58 - R[0])), Y(hemY)); g.quadraticCurveTo(X(R[1] - 0.5), Y(45), X(R[1]), Y(R[0])); g.closePath(); };
+    // the strips, each torn to a point, its tip in the mist
+    const n = Math.max(4, Math.round((R[4] - R[3]) / 2.2));
+    for(let i = 0; i < n; i++){
+      const f0 = i / n, f1 = (i + 1) / n, xa = R[3] + (R[4] - R[3]) * f0, xb = R[3] + (R[4] - R[3]) * f1, sw = Math.sin(a + i * 1.3) * 0.7;
+      const L = 58 - 0.4 - hr(i, 621) * 1.6;
+      g.fillStyle = i & 1 ? '#18161E' : '#0E0C12';
+      g.beginPath(); g.moveTo(X(xa), Y(hemY - 0.6)); g.lineTo(X(xb), Y(hemY - 0.6)); g.lineTo(X((xa + xb) / 2 + sw), Y(L)); g.closePath(); g.fill();
+    }
+    path(); g.fillStyle = '#18161E'; g.fill();
+    g.save(); path(); g.clip();
+    // folds: dark creases down it, each with the cloth lit beside it
+    g.lineWidth = Math.max(1, sx * 0.8);
+    for(let k = 1; k < 5; k++){ const f = k / 5, xa = R[1] + (R[2] - R[1]) * f, xb = R[3] + (R[4] - R[3]) * f + Math.sin(a + k) * 0.3;
+      g.strokeStyle = '#06050A'; g.beginPath(); g.moveTo(X(xa), Y(R[0] + 1)); g.lineTo(X(xb), Y(58)); g.stroke();
+      if(k & 1){ g.strokeStyle = '#24222C'; g.beginPath(); g.moveTo(X(xa) + sx, Y(R[0] + 2)); g.lineTo(X(xb) + sx, Y(58)); g.stroke(); } }
+    // the holes, the soul-light of him showing through
+    if(h >= 40) for(let i = 0; i < 3; i++){
+      const hx = X(R[3] + (R[4] - R[3]) * (0.2 + 0.6 * hr(i, 622))), hy = Y(R[0] + (hemY - R[0]) * (0.3 + 0.55 * hr(i, 623))), r = Math.max(1, sx * (0.9 + 0.6 * hr(i, 624)));
+      g.fillStyle = '#06050A'; g.beginPath(); g.ellipse(hx, hy, r + 1, r * 1.4 + 1, 0.3, 0, Math.PI * 2); g.fill();
+      g.fillStyle = '#17734A'; g.beginPath(); g.ellipse(hx, hy, r, r * 1.4, 0.3, 0, Math.PI * 2); g.fill();
+      g.fillStyle = '#5CF0A0'; g.fillRect(Math.round(hx - r * 0.3), Math.round(hy - r * 0.4), Math.max(1, Math.round(r * 0.6)), Math.max(1, Math.round(r * 0.8)));
+    }
+    g.restore();
+    // the strips' tips fading into a green mist, dithered
+    const yy0 = Math.round(Y(56.2)), yy1 = Math.round(Y(58));
+    const d = g.getImageData(0, 0, g.canvas.width, g.canvas.height);
+    for(let y = yy0; y < Math.min(yy1, g.canvas.height); y++) for(let x = 0; x < g.canvas.width; x++){
+      const i = (y * g.canvas.width + x) * 4; if(d.data[i + 3] < 110) continue;
+      if(((x + y) & 1) || y >= yy1 - 1){ const c2 = y >= yy1 - 1 && ((x + step) % 3 === 0) ? [46, 184, 114] : [23, 115, 74]; d.data[i] = c2[0]; d.data[i + 1] = c2[1]; d.data[i + 2] = c2[2]; }
+    }
+    g.putImageData(d, 0, 0);
+  }, DREAD_PAL);
+  return { cv, x: x0, y: y0 };
+}
+// His cloak, from his shoulders, torn into long rags at its foot, holes
+// in it and a lining of deep green; streaming behind him side on, down his
+// back walking away. Baked per size, pose and ripple (ph 0..11).
+function dreadCloak(w, h, pose, ph){
+  const ox = Math.round(w * 0.8), key = 'dcloak|' + w + '|' + h + '|' + pose + '|' + ph;
+  const cv = fxBake(key, ox + Math.ceil(w * 1.1), Math.ceil(h * 1.0), g => {
+    const X = f => ox + f * w, Y = f => f * h, a = ph / 12 * Math.PI * 2, s = Math.sin(a);
+    let outer, inner;
+    if(pose === 2){
+      const sw = 0.02 * s;
+      outer = [[0.30, 0.21], [0.20 + sw, 0.52], [0.13 + sw * 2, 0.86]];
+      inner = [[0.87 + sw * 2, 0.86], [0.80 + sw, 0.52], [0.70, 0.21]];
+    }else{
+      const flow = 0.12 + 0.05 * s, top = pose ? [[0.60, 0.24], [0.46, 0.27]] : [[0.66, 0.27], [0.46, 0.36]];
+      outer = [top[1], [top[1][0] - 0.14 - flow * 0.3, 0.46], [top[1][0] - 0.34 - flow * 0.6, 0.64], [-0.06 - flow * 0.8, 0.78], [-0.12 - flow, 0.86]];
+      inner = [[0.32, 0.9], [top[0][0] - 0.12, 0.56], top[0]];
+    }
+    // the foot of it torn into rags of every length, each swaying
+    const h0 = outer[outer.length - 1], h1 = inner[0], hem = [], N = 9;
+    for(let i = 1; i < N * 2; i++){ const f = i / (N * 2), long = i & 1;
+      const L = long ? 0.05 + 0.08 * hr(i, 631) : -0.01, sw = long ? 0.025 * Math.sin(a + i * 0.9) : 0;
+      hem.push([h0[0] + (h1[0] - h0[0]) * f + sw, h0[1] + (h1[1] - h0[1]) * f + L]); }
+    const pts = outer.concat(hem, inner);
+    const path = () => { g.beginPath(); g.moveTo(X(pts[0][0]), Y(pts[0][1])); for(const [u, v] of pts.slice(1)) g.lineTo(X(u), Y(v)); g.closePath(); };
+    const gr = g.createLinearGradient(0, Y(0.2), 0, Y(0.95));
+    gr.addColorStop(0, '#24222C'); gr.addColorStop(0.5, '#18161E'); gr.addColorStop(1, '#0E0C12');
+    path(); g.fillStyle = gr; g.fill();
+    g.save(); path(); g.clip();
+    g.lineWidth = Math.max(1, w * 0.03);
+    for(let k = 1; k <= 3; k++){ const f = k / 4, t0 = [outer[0][0] + (inner[2][0] - outer[0][0]) * f, outer[0][1] + (inner[2][1] - outer[0][1]) * f];
+      const t1 = [h0[0] + (h1[0] - h0[0]) * f, h0[1] + (h1[1] - h0[1]) * f];
+      g.strokeStyle = '#06050A'; g.beginPath(); g.moveTo(X(t0[0]), Y(t0[1])); g.lineTo(X(t1[0] + 0.02 * s), Y(t1[1])); g.stroke();
+      if(k === 2){ g.strokeStyle = '#34303E'; g.beginPath(); g.moveTo(X(t0[0]) + 1, Y(t0[1])); g.lineTo(X(t1[0] + 0.02 * s) + 1, Y(t1[1] - 0.04)); g.stroke(); } }
+    // its holes, green light through them
+    if(h >= 40) for(let i = 0; i < 3; i++){
+      const u = 0.25 + 0.5 * hr(i, 632), v = 0.4 + 0.35 * hr(i, 633), P0 = [outer[2][0] + (inner[1][0] - outer[2][0]) * u, v], r = Math.max(1, w * 0.035);
+      g.fillStyle = '#06050A'; g.beginPath(); g.ellipse(X(P0[0]), Y(P0[1]), r + 1, r * 1.5 + 1, 0.4, 0, Math.PI * 2); g.fill();
+      g.fillStyle = '#2EB872'; g.beginPath(); g.ellipse(X(P0[0]), Y(P0[1]), r, r * 1.5, 0.4, 0, Math.PI * 2); g.fill(); }
+    g.restore();
+    // grey along its streaming edge, the green of its lining along the other
+    g.lineWidth = Math.max(1, w * 0.03); g.strokeStyle = '#4A4558';
+    g.beginPath(); g.moveTo(X(outer[0][0]), Y(outer[0][1])); for(const [u, v] of outer.slice(1)) g.lineTo(X(u), Y(v)); g.stroke();
+    g.lineWidth = Math.max(1, w * 0.035); g.strokeStyle = '#17734A';
+    g.beginPath(); g.moveTo(X(inner[0][0]), Y(inner[0][1])); for(const [u, v] of inner.slice(1)) g.lineTo(X(u), Y(v)); g.stroke();
+    // and the rags' tips in the mist
+    g.fillStyle = '#17734A';
+    for(let i = 1; i < hem.length; i += 2){ const [u, v] = hem[i]; g.fillRect(Math.round(X(u)) - (w > 50 ? 1 : 0), Math.round(Y(v)) - 1, w > 50 ? 2 : 1, 1); }
+  }, DREAD_PAL);
+  return { cv, ox };
+}
+// His scythe (view 0 side on, floating behind his back; 1 from behind,
+// slung across it): a long haft of dark wood bound in bone, a small skull
+// where the blade is set, and the blade itself, a great curve of pale iron
+// with its edge lit soul-green. ox, oy the middle of the haft.
+function dreadScythe(p, view){
+  const S = Math.ceil(66 * p) + 8, o = S / 2;
+  const cv = fxBake('dscythe|' + p.toFixed(3) + '|' + view, S, S, g => {
+    const bot = view ? [-11, 19] : [7, 20], top = view ? [11, -22] : [-9, -24], sg = view ? 1 : -1;
+    const X = q => o + q[0] * p, Y = q => o + q[1] * p;
+    const dx = top[0] - bot[0], dy = top[1] - bot[1], L = Math.hypot(dx, dy), d = [dx / L, dy / L];
+    // across the haft, toward where the blade reaches
+    const n = sg < 0 ? [-Math.abs(d[1]), Math.abs(d[0]) * 0.4] : [Math.abs(d[1]), Math.abs(d[0]) * 0.4];
+    const at = (s, k) => [top[0] + n[0] * k + d[0] * s, top[1] + n[1] * k + d[1] * s];
+    // the haft
+    g.lineCap = 'round';
+    g.strokeStyle = '#18161E'; g.lineWidth = Math.max(2, 2.4 * p); g.beginPath(); g.moveTo(X(bot), Y(bot)); g.lineTo(X(top), Y(top)); g.stroke();
+    g.strokeStyle = '#3E3A48'; g.lineWidth = Math.max(1, 1.4 * p); g.beginPath(); g.moveTo(X(bot), Y(bot)); g.lineTo(X(top), Y(top)); g.stroke();
+    if(p >= 1.4){ g.strokeStyle = '#6E6A78'; g.lineWidth = 1; g.beginPath(); g.moveTo(X(bot) - p * 0.5, Y(bot)); g.lineTo(X(top) - p * 0.5, Y(top)); g.stroke(); }
+    // bound in bone
+    for(const f of [0.1, 0.45, 0.5, 0.82]){ const q = [bot[0] + dx * f, bot[1] + dy * f];
+      g.fillStyle = '#D8D2BC'; g.beginPath(); g.ellipse(X(q), Y(q), Math.max(1, 1.5 * p), Math.max(0.7, 0.8 * p), Math.atan2(dy, dx) + Math.PI / 2, 0, Math.PI * 2); g.fill(); }
+    // the blade: its back and its edge, curving down to a point
+    const root = at(0.5, 0), root2 = at(-4, 0), tip = at(-9, 24), c1 = at(4, 13), c2 = at(-3, 12);
+    const blade = () => { g.beginPath(); g.moveTo(X(root), Y(root)); g.quadraticCurveTo(X(c1), Y(c1), X(tip), Y(tip)); g.quadraticCurveTo(X(c2), Y(c2), X(root2), Y(root2)); g.closePath(); };
+    // (the soul-light off its edge first, under it)
+    g.strokeStyle = '#2EB872'; g.lineWidth = Math.max(1, 2.2 * p); g.beginPath(); g.moveTo(X(tip), Y(tip)); g.quadraticCurveTo(X(c2), Y(c2), X(root2), Y(root2)); g.stroke();
+    blade(); g.fillStyle = '#6E6A78'; g.fill();
+    g.save(); blade(); g.clip();
+    g.strokeStyle = '#3E3A48'; g.lineWidth = Math.max(1, 1.6 * p); g.beginPath(); g.moveTo(X(root), Y(root)); g.quadraticCurveTo(X(c1), Y(c1), X(tip), Y(tip)); g.stroke();
+    g.strokeStyle = '#9A96A6'; g.lineWidth = Math.max(1, 1.2 * p); const m1 = at(-1, 2), m2 = at(-3.5, 18);
+    g.beginPath(); g.moveTo(X(m1), Y(m1)); g.quadraticCurveTo(X(at(1, 11)), Y(at(1, 11)), X(m2), Y(m2)); g.stroke();
+    g.restore();
+    g.strokeStyle = '#E8FFF2'; g.lineWidth = Math.max(1, 0.8 * p); g.beginPath(); g.moveTo(X(tip), Y(tip)); g.quadraticCurveTo(X(c2), Y(c2), X(root2), Y(root2)); g.stroke();
+    // the skull it is set in
+    const sk = at(-1.5, -0.5), r = Math.max(1.2, 2 * p);
+    g.fillStyle = '#D8D2BC'; g.beginPath(); g.arc(X(sk), Y(sk), r, 0, Math.PI * 2); g.fill();
+    g.fillStyle = '#06050A'; g.fillRect(Math.round(X(sk) - r * 0.6), Math.round(Y(sk)), Math.max(1, Math.round(r * 0.5)), Math.max(1, Math.round(r * 0.5)));
+    g.fillRect(Math.round(X(sk) + r * 0.15), Math.round(Y(sk)), Math.max(1, Math.round(r * 0.5)), Math.max(1, Math.round(r * 0.5)));
+  }, DREAD_PAL);
+  return { cv, ox: o, oy: o };
+}
+// The grave open under him: a pit of black with the soul-light deep in it,
+// a lip of broken earth with bits of bone in it, and the green mist curling
+// round it; baked a size and a step at a time, brighter as he winds up.
+const DREAD_GRAVE = {};
+function dreadGrave(rx, ry, step, lit){
+  const key = rx + '|' + ry + '|' + step + '|' + lit;
+  if(DREAD_GRAVE[key]) return DREAD_GRAVE[key];
+  const R2 = Math.ceil(rx * 1.35), RY2 = Math.ceil(ry * 1.35);
+  const cv = document.createElement('canvas'); cv.width = R2 * 2 + 3; cv.height = RY2 * 2 + 3;
+  const g = cv.getContext('2d'), X = R2 + 1, Y = RY2 + 1, P = (x, y, col) => { g.fillStyle = col; g.fillRect(Math.round(x), Math.round(y), 1, 1); };
+  const S0 = step / 24 * Math.PI * 2;
+  const edge = a => 1 + 0.12 * Math.sin(5 * a + 1) + 0.06 * Math.sin(9 * a + 2) + 0.04 * Math.sin(13 * a);
+  for(let yy = -RY2; yy <= RY2; yy++) for(let xx = -R2; xx <= R2; xx++){
+    const a = Math.atan2(yy / ry, xx / rx), d = Math.sqrt((xx * xx) / (rx * rx) + (yy * yy) / (ry * ry)) / edge(a);
+    if(d > 1.1) continue;
+    const par = (xx + yy) & 1, glow = 0.5 + 0.5 * Math.sin(S0 + d * 4);
+    let col;
+    if(d < 0.2) col = lit ? (par ? '#5CF0A0' : '#2EB872') : par ? '#2EB872' : '#17734A';
+    else if(d < 0.36) col = par ? '#17734A' : glow > 0.5 || lit ? '#2EB872' : '#0C3A26';
+    else if(d < 0.54) col = par ? '#0C3A26' : '#06050A';
+    else if(d < 0.86) col = '#06050A';
+    else if(d < 1.0) col = hr(xx * 3 + 7, yy * 5 + 1) > 0.86 ? (yy < 0 ? '#8A836E' : '#D8D2BC') : par ? '#24222C' : '#3E3A48';
+    else col = par ? '#5A5446' : null;
+    if(col) P(X + xx, Y + yy, col);
+  }
+  // the mist curling round its lip: two arms of green running round it
+  const n = Math.round((rx + ry) * 5);
+  for(let j = 0; j < 2; j++) for(let i = 0; i < n; i++){
+    const u = i / n, a = S0 + j * Math.PI + u * Math.PI * 1.2, r = 0.94 + 0.16 * Math.sin(u * 9 + S0);
+    if(i & 1 || u > 0.8) continue;
+    P(X + Math.cos(a) * rx * r * edge(a), Y + Math.sin(a) * ry * r * edge(a), u < 0.25 ? (lit ? '#E8FFF2' : '#A8FFD0') : u < 0.55 ? '#5CF0A0' : '#2EB872');
+  }
+  cv.ox = X; cv.oy = Y;
+  return DREAD_GRAVE[key] = cv;
+}
+// a hand of bone reaching up out of the ground, its fingers clawed
+const DHAND_ROWS = ['x..x.x.', 'X.xX.Xx', 'X.XX.XX', 'XXXXXX.', '.XXXXX.', '..XXX..', '..X.X..', '..X.X..', '..X.X..', '..X.X..', '..X.X..', '..X.X..'];
+function dreadHand(k, flip){
+  const W = DHAND_ROWS[0].length, H = DHAND_ROWS.length;
+  return fxBake('dhand|' + k + '|' + (flip ? 1 : 0), W * k, H * k, g => {
+    const at = (x, y) => y >= 0 && y < H && x >= 0 && x < W && DHAND_ROWS[y][x] !== '.';
+    for(let y = 0; y < H; y++) for(let x0 = 0; x0 < W; x0++){
+      const x = flip ? W - 1 - x0 : x0, ch = DHAND_ROWS[y][x];
+      if(ch === '.') continue;
+      g.fillStyle = ch === 'x' ? '#F2EEDC' : !at(x + (flip ? -1 : 1), y) ? '#8A836E' : (x + y) % 3 === 0 ? '#B8B09A' : '#D8D2BC';
+      g.fillRect(x0 * k, y * k, k, k);
+    }
+  });
+}
+// A soul: a wisp of green-white light, its tail streaming behind it the way
+// it came (dx, dy the way it goes); s 0 a point, 1 a mote, 2 a face with
+// two dark eyes
+function dreadSoul(c, x, y, dx, dy, s, a, k){
+  k = k || 1;
+  const X = Math.round(x), Y = Math.round(y), n = 2 + s * 2, sp = (s ? 1.3 : 1) * k;
+  c.globalAlpha = a === undefined ? 1 : a;
+  for(let i = n; i >= 1; i--){
+    c.fillStyle = i > n * 0.66 ? '#17734A' : i > n * 0.33 ? '#2EB872' : '#5CF0A0';
+    const wob = Math.sin(i * 1.9 + x * 0.21 + y * 0.13) * 0.7 * k * (i / n), w = i < n * 0.5 ? k : Math.max(1, k - 1);
+    c.fillRect(Math.round(x - dx * i * sp - dy * wob), Math.round(y - dy * i * sp + dx * wob), w, w);
+  }
+  // (a dark rim round its head, so it reads on the grass)
+  if(s >= 1){ c.fillStyle = '#0C3A26'; if(s >= 2) c.fillRect(X - 2 * k, Y - 2 * k, 5 * k, 5 * k); else c.fillRect(X - k, Y - k, 4 * k, 4 * k); }
+  if(s >= 2){ c.fillStyle = '#E8FFF2'; c.fillRect(X - k, Y - k, 3 * k, k); c.fillStyle = '#A8FFD0'; c.fillRect(X - k, Y, 3 * k, 2 * k);
+    c.fillStyle = '#0C3A26'; c.fillRect(X - k, Y, k, k); c.fillRect(X + k, Y, k, k); }
+  else if(s === 1){ c.fillStyle = '#A8FFD0'; c.fillRect(X, Y, 2 * k, 2 * k); c.fillStyle = '#E8FFF2'; c.fillRect(X, Y, k, k); }
+  else{ c.fillStyle = '#E8FFF2'; c.fillRect(X, Y, k, k); }
+  c.globalAlpha = 1;
+}
+// A skull the size of a ball: bone lit at its top left, its sockets lit
+// soul-green, its teeth; R its size in pixels (half across), t the clock
+const DSKULL_BALL = ['.WWW.', 'WWWWW', 'WEWEW', 'wWwWw', '.TtT.'];
+function dreadSkull(c, x, y, R, t){
+  const s = Math.max(1, Math.round(R / 2.5)), X = Math.round(x - 2.5 * s), Y = Math.round(y - 2.5 * s);
+  const eye = Math.sin(t * 7) > -0.3 ? '#5CF0A0' : '#2EB872';
+  c.globalAlpha = 1;
+  DSKULL_BALL.forEach((row, j) => [...row].forEach((ch, i) => { if(ch === '.') return;
+    c.fillStyle = ch === 'E' ? eye : ch === 't' ? '#24222C' : ch === 'T' ? '#B8B09A' : ch === 'w' ? '#B8B09A' : i + j < 3 ? '#F2EEDC' : '#D8D2BC';
+    c.fillRect(X + i * s, Y + j * s, s, s); }));
+}
 const BLESS_FX = {
   // the Divine: a shaft of jade light edged in gold comes down on him with
   // his ribbons of jade and gold winding round it and on down round him,
@@ -13980,6 +14542,25 @@ const BLESS_FX = {
       blessMotes(G, 12, 0.6, false, true, (x, y, i) => { const X = Math.round(x), Y = Math.round(y), d = Math.sin(G.t * 5 + i) > 0 ? 1 : -1;
         c.fillStyle = '#E2D2FF'; c.fillRect(X, Y, 1, 1); c.fillRect(X + d, Y + 1, 1, 1); c.fillStyle = '#B49AE6'; c.fillRect(X + 2 * d, Y + 2, 1, 1); c.fillRect(X + d * 2, Y + 1, 1, 1);
         c.fillStyle = '#8A6AC8'; c.fillRect(X + 3 * d, Y + 3, 1, 1); });
+    } },
+  // The Dread: a grave opens under him with hands of bone reaching up out
+  // of its lip, a shaft of soul-light falls on him with chains winding
+  // round it, and souls rise up out of the grave round him
+  dread: { col: '#2EB872',
+    draw(G){
+      const { c, cx, bot, half, h, t, fade, front, k } = G, top = Math.round(bot - h * 1.1);
+      const hw = Math.max(2, Math.round(half * 0.5 * (0.35 + 0.65 * fade))), stop = Math.min(front, top);
+      if(t > 0.26 && fade > 0.12){ const q = Math.min(1, (t - 0.26) / 0.3), RX = half * (0.7 + 0.45 * q), RY = Math.max(2, RX * 0.26);
+        blDisc(G, RX, RY, '#06050A', true); blDisc(G, RX * 0.55, RY * 0.55, '#17734A', false);
+        blRing(G, bot - 1, RX, RY, 1 + (G.up >> 1), '#2EB872');
+        if(blBack(G) && h >= 24){ const kk = Math.max(1, Math.round(h / 46)), n = Math.round(q * DHAND_ROWS.length);
+          for(const s2 of [-1, 1]){ const Hc = dreadHand(kk, s2 > 0), hx = Math.round(cx + s2 * RX * 0.85 - Hc.width / 2), hy = Math.round(bot - 1);
+            if(n > 0) c.drawImage(Hc, 0, 0, Hc.width, n * kk, hx, hy - n * kk, Hc.width, n * kk); } } }
+      blShaft(G, stop, hw, ['#2EB872', '#0C3A26', '#A8FFD0', '#5CF0A0', '#E8FFF2'], { inner: '#17734A' });
+      blRibbons({ ...G, half: hw / 0.9 }, 0, stop, ['#9A96A6', '#3E3A48', '#6E6A78', '#3E3A48'], 1, 1.25, 5, '#24222C');
+      blessMotes(G, 9, 0.7, true, true, (x, y, i) => dreadSoul(c, x, y, 0, -1, h >= 40 && i % 3 === 0 ? 2 : 1, 1));
+      blImpact(G, 0.27, ['#2EB872', '#E8FFF2']);
+      blSides(G, '#5CF0A0', '#E8FFF2');
     } },
   // The Void: a black hole opens over his head in its ring of gold and
   // drinks a shaft of the dark down out of the sky, stars falling into it;
@@ -14484,6 +15065,46 @@ const BALLFX = {
     if(u > 0.85){ const q = (u - 0.85) / 0.15;
       for(let i = 0; i < 12; i++){ const a = i / 12 * Math.PI * 2 + b.seed;
         fxDot(c, h0.x + Math.cos(a) * (3 + q * 10), h0.y + Math.sin(a) * (1 + q * 4), 1, i & 1 ? '#D8B060' : '#B98CFF', 1 - q); } }
+    c.globalAlpha = 1;
+  },
+  /* ---- Soul Wake: a river of ghost-fire, white at the ball and green down
+     its length over a smoke of the grave, green flames licking up off it,
+     and souls winding round it from the ball to its tail, each chasing the
+     ball with its tail streaming behind it ---- */
+  tSoul(c, b, path, r, t, u){
+    const w = Math.max(2, r + 1);
+    trailRibbon(c, path, w + 5, '#06050A', 0.42);
+    const sp = trailSpiral(path, 8, 5 + r * 3, t, 0.5, 2, b.seed);
+    const soul = (o, big) => { const P = trailAt(path, o.s); dreadSoul(c, o.x, o.y, P.ny, -P.nx, big, o.z < 0 ? 0.75 : 1); };
+    for(const o of sp) if(o.z < 0) soul(o, 1);
+    trailRibbon(c, path, w + 3, '#0C3A26', 0.75);
+    trailRibbon(c, path, w + 1, (i, f) => f < 0.15 ? '#E8FFF2' : f < 0.4 ? '#A8FFD0' : f < 0.7 ? '#5CF0A0' : '#2EB872', 1);
+    // flames licking up off it
+    for(let i = 2; i < path.length; i += 2){ const p = path[i], L = Math.round(1 + 3 * Math.max(0, Math.sin(t * 11 + i * 1.7 + b.seed)) * (1 - i / path.length));
+      for(let j = 0; j < L; j++){ c.globalAlpha = 1; c.fillStyle = j === L - 1 ? '#A8FFD0' : '#2EB872'; c.fillRect(Math.round(p.x), Math.round(p.y - w / 2 - 1 - j), 1, 1); } }
+    for(const o of sp) if(o.z >= 0) soul(o, r > 1 ? 2 : 1);
+    const h0 = path[0];
+    drawGlow(c, h0.x, h0.y, r * 2 + 4, r * 2 + 4, [[0.6, '#0C3A26', 1], [0.3, '#17734A', 2], [0, '#5CF0A0', 3]], Math.floor(t * 10) & 3, 0.85);
+    trailBall(c, b, h0, r);
+    if(u > 0.85){ const q = (u - 0.85) / 0.15;
+      for(let i = 0; i < 12; i++){ const a = i / 12 * Math.PI * 2 + b.seed;
+        fxDot(c, h0.x + Math.cos(a) * (2 + q * 11), h0.y + Math.sin(a) * (1 + q * 4) - q * 3, 1, i & 1 ? '#5CF0A0' : '#E8FFF2', 1 - q); } }
+    c.globalAlpha = 1;
+  },
+  // the Reaper Skull: a skull in flight, its eyes lit, ghost-fire streaming
+  // off it and souls winding down its trail; a ring of green as it lands
+  skullball(c, b, path, r, t, u){
+    trailRibbon(c, path, r + 4, '#06050A', 0.35);
+    const sp = b.wake ? [] : trailSpiral(path, 5, 5 + r * 3, t, 0.55, 1.6, b.seed);
+    const soul = (o, big) => { const P = trailAt(path, o.s); dreadSoul(c, o.x, o.y, P.ny, -P.nx, big, o.z < 0 ? 0.75 : 1); };
+    for(const o of sp) if(o.z < 0) soul(o, 1);
+    trailRibbon(c, path, Math.max(2, r + 1), i => i < 3 ? '#A8FFD0' : i < 7 ? '#5CF0A0' : '#17734A', 0.95);
+    for(const o of sp) if(o.z >= 0) soul(o, o.s < 0.5 && r > 1 ? 2 : 1);
+    const h0 = path[0];
+    dreadSkull(c, h0.x, h0.y, Math.max(2.5, r * 2.2), t + b.seed);
+    if(u > 0.85){ const q = (u - 0.85) / 0.15;
+      for(let i = 0; i < 12; i++){ const a = i / 12 * Math.PI * 2 + b.seed;
+        fxDot(c, h0.x + Math.cos(a) * (3 + q * 10), h0.y + Math.sin(a) * (1 + q * 4), 1, i & 1 ? '#D8D2BC' : '#5CF0A0', 1 - q); } }
     c.globalAlpha = 1;
   },
   /* ---- Ascension Wake: a river of magenta fire over void smoke, white at
@@ -15634,7 +16255,7 @@ const Scene = {
     const fx = outfitNow().fx;
     if(d > -3 || !fx) return;
     // the other effect skins: a flourish of their own
-    if(fx !== 'demonic' && fx !== 'ascended' && fx !== 'divine' && fx !== 'cosmic'){
+    if(!LEGEND_FX.includes(fx)){
       if(!STYLEFX[fx] || !STYLEFX[fx].flourish) return;
       this.flourish = { t0: this.t, big: d <= -4, dur: FLOURISH_DUR, fx };
       Sfx.play('flourish', fx);
@@ -15643,7 +16264,7 @@ const Scene = {
     const big = d <= -4;
     this.legend = { t0: this.t, big, dur: big ? LEGEND_BIG : LEGEND_DUR };
     // (The Void's is silent: the user wants no more sounds)
-    if(fx !== 'cosmic') Sfx.play(fx === 'demonic' ? 'hellfire' : fx === 'divine' ? 'choir' : 'ascend', big);
+    if(fx === 'demonic' || fx === 'divine' || fx === 'ascended') Sfx.play(fx === 'demonic' ? 'hellfire' : fx === 'divine' ? 'choir' : 'ascend', big);
   },
   fairyMoveGo(id){
     const m = FAIRY_MOVES.find(x => x.id === id);
@@ -15745,7 +16366,8 @@ const Scene = {
   // (open 0) or out from it (open 1) where he stands.
   caddieSwirl(c, x, y, w, h, open, T, pal){
     const k = Math.max(1, Math.round(h / 18)), cx = x + w * 0.5, cy = y + h * 0.5;
-    const C = pal === 'cosmic' ? ['#FFFFFF', '#B98CFF', '#7FE6FF', '#D8B060', '#05030C'] : ['#FFE0FF', '#F27CFF', '#B04ACB', '#F27CFF', '#1C0F2A'];
+    const C = pal === 'cosmic' ? ['#FFFFFF', '#B98CFF', '#7FE6FF', '#D8B060', '#05030C'] : pal === 'dread' ? ['#E8FFF2', '#5CF0A0', '#2EB872', '#D8D2BC', '#06050A']
+      : ['#FFE0FF', '#F27CFF', '#B04ACB', '#F27CFF', '#1C0F2A'];
     for(let ring = 0; ring < 2; ring++) for(let i = 0; i < 12; i++){
       const a = i / 12 * Math.PI * 2 + T * (ring ? -12 : 9), R = (0.15 + 0.85 * open) * w * (ring ? 0.4 : 0.7) * (0.7 + 0.3 * hr(i, 361 + ring));
       c.fillStyle = C[i % 3];
@@ -16778,6 +17400,8 @@ const FAIRY_MOVES = [
   { id:'blink', dur:1.4, only:'ascended' },
   // The Void's: he falls in on himself, into a black hole, and out again
   { id:'collapse', dur:1.5, only:'cosmic' },
+  // The Dread's: he comes apart into souls and gathers again
+  { id:'haunt', dur:1.5, only:'dread' },
   // and one each for the other caddies with a look of their own (the user
   // asked): slips on a peel, snaps a photo, honks up confetti, sinks and
   // pops up with a boo, twirls in the disco lights, glitches about, shivers
@@ -16842,9 +17466,9 @@ function fairyPose(kind, q, T, w, h){
     // and where he will be
     const gap = q > 0.22 && q < 0.38 ? (q - 0.22) / 0.16 : q > 0.62 && q < 0.78 ? (q - 0.62) / 0.16 : -1;
     if(gap >= 0){ P.hide = 1; P.swirl = gap; P.from = q < 0.5 ? 0 : -out; P.to = q < 0.5 ? -out : 0; }
-  }else if(kind === 'collapse'){                                // in on himself, into a black hole, and out
+  }else if(kind === 'collapse' || kind === 'haunt'){            // in on himself, into a black hole (or souls), and out
     const gap = q > 0.2 && q < 0.5 ? (q - 0.2) / 0.3 : q >= 0.5 && q < 0.8 ? 1 - (q - 0.5) / 0.3 : -1;
-    if(gap >= 0){ P.hide = 1; P.swirl = gap; P.from = 0; P.to = 0; P.pal = 'cosmic'; }
+    if(gap >= 0){ P.hide = 1; P.swirl = gap; P.from = 0; P.to = 0; P.pal = kind === 'haunt' ? 'dread' : 'cosmic'; }
   }else if(kind === 'slip'){                                    // over on a peel, and up again
     const lie = 0.9;
     if(q < 0.25){ const u = easeIO(q / 0.25); P.rot = -lie * u; P.dy = u * h * 0.12; }
@@ -17127,6 +17751,49 @@ const CLUBFX = {
       c.globalAlpha = 1;
     }
   },
+  // the Reaper Driver: a haft of dark wood bound in bone, a scythe's blade
+  // for its head with its edge lit green; souls rise off it, its swing
+  // leaves a sweep of grave-smoke edged in soul-light, and a pure strike
+  // looses souls from the ball round a flash of a skull
+  dread: {
+    under(c, hx, hy, tx, ty, th, h, t, K){ glowLine(c, hx, hy, tx, ty, th, '#17734A', 0.2 + 0.08 * Math.sin(t * 3)); },
+    shaft(c, hx, hy, tx, ty, th, h, t, K){
+      pxLine(c, hx, hy, tx, ty, K.shaft, th);
+      const P = clubPts(hx, hy, tx, ty, 12);
+      for(let i = 2; i < 12; i += 3) fxDot(c, P[i][0], P[i][1], th, '#D8D2BC', 1);
+      c.globalAlpha = 1;
+    },
+    head(c, tx, ty, th, h, turn, t, K){
+      // a hooked blade, back from the face, its edge green
+      const X = Math.round(tx), Y = Math.round(ty), d = turn < 0 ? 1 : -1, L = th * 3 + 2;
+      c.globalAlpha = 1;
+      for(let i = 0; i <= L; i++){ const x = X + d * i, y = Y + Math.round(i * i / (L * 1.6));
+        c.fillStyle = '#6E6A78'; c.fillRect(x, y - 1, 1, th);
+        c.fillStyle = i > L - 2 ? '#E8FFF2' : '#5CF0A0'; c.fillRect(x, y - 1 + th, 1, 1); }
+      c.fillStyle = '#D8D2BC'; c.fillRect(X - 1, Y - 1, 2, 2);
+    },
+    over(c, hx, hy, tx, ty, th, h, t){
+      const f = (t * 0.7) % 1;
+      if(f < 0.6) dreadSoul(c, tx + 2 + Math.sin(t * 4) * 1.5, ty - 3 - f * 8, 0, -1, 0, 1);
+      c.globalAlpha = 1;
+    },
+    trail(c, arc, th, t){
+      arcTrail(c, arc, th + 3, ['#06050A', '#18161E'], 0.6);
+      arcTrail(c, arc, th + 1, ['#17734A', '#2EB872'], 0.8);
+      arcTrail(c, arc, 1, ['#A8FFD0'], 0.7);
+      for(let i = 2; i < arc.length; i += 3){ if(Math.sin(t * 9 + i * 1.7) < 0.4) continue;
+        fxDot(c, arc[i][0], arc[i][1] - 3, 1, '#E8FFF2', 1); }
+      c.globalAlpha = 1;
+    },
+    pure(c, x, y, h, f){
+      const X = Math.round(x), Y = Math.round(y), k = Math.max(1, Math.round(h / 40));
+      for(let i = 0; i < 8; i++){ const a = i / 8 * Math.PI * 2 + 0.3, R = h * (0.08 + 0.4 * f);
+        if(hr(i, 655) < f * 0.6) continue;
+        dreadSoul(c, X + Math.cos(a) * R, Y + Math.sin(a) * R * 0.6 - f * h * 0.1, Math.cos(a), Math.sin(a) * 0.6, h >= 50 ? 2 : 1, 1, k); }
+      if(f < 0.5) dreadSkull(c, X, Y - h * 0.08 - f * h * 0.1, Math.max(2.5, h * 0.07), f * 9);
+      c.globalAlpha = 1;
+    }
+  },
   // the Ascended Driver: a staff, after the user's picture. A dark silver
   // shaft bound in silver, and at its foot a silver claw holding a cluster
   // of violet crystals, light running up through them; its swing leaves a
@@ -17243,7 +17910,8 @@ const NIGHT_GLOW = {
   divine:   { col: ['#1E5A4A', '#2F8A6E', '#6FD8B0'], breathe: 1.6 },
   demonic:  { col: ['#5A2A1A', '#9A3A1C', '#E0602A'], flicker: 1 },
   ascended: { col: ['#402A5E', '#7A3A96', '#C45AD8'], breathe: 1.1 },
-  cosmic:   { col: ['#241A44', '#3E2A6E', '#7A4ED8'], breathe: 1.2 }
+  cosmic:   { col: ['#241A44', '#3E2A6E', '#7A4ED8'], breathe: 1.2 },
+  dread:    { col: ['#0C3A26', '#17734A', '#2EB872'], breathe: 0.9 }
 };
 // A pool of light on the ground at his feet: an ellipse three of his widths
 // across, dithered solid pixels (a wash of light turns grey on grass),
@@ -22421,9 +23089,9 @@ function renderTourNav(){
 }
 const cperkDef = id => B.CPERKS.find(x => x.id === id);
 // the Mythic Favour: worn only with a Mythic caddie (the Divine, Demonic, Ascended or Void)
-const MYTH_CADDIES = ['divine', 'demonic', 'ascended', 'cosmic'];
+const MYTH_CADDIES = ['divine', 'demonic', 'ascended', 'cosmic', 'dread'];
 const mythOk = () => MYTH_CADDIES.includes(S.caddie);
-const MYTH_PAL = { divine: ['#FFF2B8', '#3FD6A8', '#E0AE3E'], demonic: ['#FFE680', '#FF8A2A', '#E8401C'], ascended: ['#FFE0FF', '#F27CFF', '#B04ACB'], cosmic: ['#FFFFFF', '#B98CFF', '#7FE6FF'] };
+const MYTH_PAL = { divine: ['#FFF2B8', '#3FD6A8', '#E0AE3E'], demonic: ['#FFE680', '#FF8A2A', '#E8401C'], ascended: ['#FFE0FF', '#F27CFF', '#B04ACB'], cosmic: ['#FFFFFF', '#B98CFF', '#7FE6FF'], dread: ['#E8FFF2', '#5CF0A0', '#2EB872'] };
 // A perk's level (1 until upgraded) and what it does there: a second longer
 // and an eighth stronger each level (Ready Golf and Lost Ball Scout only
 // stronger: one acts at once, the other lasts a hole). Its words are its own
