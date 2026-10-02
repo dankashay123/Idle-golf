@@ -10520,14 +10520,39 @@ const DEER_GRAZE = [
   '....d..d.......d..d.....bd',
   '....d..d.......d..d.......'
 ];
+// bounding away: legs stretched out fore and aft, its white tail up
+const DEER_RUN = [
+  '..........................',
+  '..........................',
+  '..........................',
+  '..........................',
+  '..........................',
+  '..........................',
+  '...................a..a...',
+  '...................aaa....',
+  '...................ebbb...',
+  '..................bbbbbbd.',
+  '..WW.............bbkbbb...',
+  '..WWBBBBBBBBBBBBbbbW......',
+  '...bbbbbbbbbbbbbbbb.......',
+  '...bbbbbbbbbbbbbbbb.......',
+  '...BbbbbbbbbbbbbbbB.......',
+  '....BWWWWWWWWWWWBB........',
+  '...bbB..........bbB.......',
+  '..bbB............bbB......',
+  '.bbB..............bbB.....',
+  '.bB................bB.....',
+  'dd..................dd....',
+  'd....................dd...'
+];
 const DEER_SPR = {};
 // coat by season: a red-brown autumn coat, a greyer winter one
 function deerSprite(graze, stag, winter, flip){
-  const key = (graze ? 1 : 0) + '|' + (stag ? 1 : 0) + '|' + (winter ? 1 : 0) + '|' + (flip ? 1 : 0);
+  const key = graze + '|' + (stag ? 1 : 0) + '|' + (winter ? 1 : 0) + '|' + (flip ? 1 : 0);
   if(DEER_SPR[key]) return DEER_SPR[key];
   const coat = winter ? ['#7A6452', '#56443A'] : ['#9A6236', '#6A3E20'];
   const map = { b: coat[0], B: coat[1], e: coat[1], W: '#ECE4D2', d: '#2A1E16', k: '#14100C', a: '#D8C8A2' };
-  const rows = (graze ? DEER_GRAZE : DEER_UP).map(r => { const q = stag ? r : r.replace(/a/g, '.'); return flip ? [...q].reverse().join('') : q; });
+  const rows = (graze === 2 ? DEER_RUN : graze ? DEER_GRAZE : DEER_UP).map(r => { const q = stag ? r : r.replace(/a/g, '.'); return flip ? [...q].reverse().join('') : q; });
   return DEER_SPR[key] = makeSprite(rows, map);
 }
 
@@ -17060,6 +17085,7 @@ const Scene = {
   // anything already standing there. From a hash, tagged extra.
   layDeer(){
     const put = this.props || [], sea = this.look && this.look.season;
+    this.deerUp = {};
     if(sea !== 'Autumn' && sea !== 'Winter' || !(this.fills || []).length) return;
     const h = this.hole, woods = this.fills.filter(F => F.kind === 'wood');
     if(!woods.length || hr(h, 560) < 0.3) return;
@@ -21152,10 +21178,30 @@ Object.assign(Scene, {
     // then, and watching him as he comes near; not at night, not in a wager
     if(p.kind === 13){
       if(night || S.dgnRun) return;
+      // (it bolts for the woods when he walks up close, or a ball comes
+      // down by it: bounding off sideways and in, its tail up, gone in a
+      // second and a half behind the trees, and gone for the hole)
+      const up = this.deerUp || (this.deerUp = {}), R0 = this.restBall;
+      if(up[p.k] === undefined && ((p.d - this.camD < 5 && p.d - this.camD > -3) || (R0 && Math.abs(R0.d - p.d) < 4 && Math.abs(R0.lat - p.x) < 3))) up[p.k] = this.t;
+      const run = up[p.k] === undefined ? -1 : this.t - up[p.k];
+      if(run > 1.5) return;
       const h = Math.round(B_GOLFER * 0.88 * US * pr.s);
-      if(h < 4) return;
+      if(run < 0 && h < 4) return;
       const w = Math.round(h * 26 / 22);
-      if(pr.x + w < -4 || pr.x - w > VW + 4) return;
+      if(run < 0 && (pr.x + w < -4 || pr.x - w > VW + 4)) return;
+      if(run >= 0){
+        const sd = Math.sign(p.x) || 1, fd = p.d + run * 1.2, fx = p.x + sd * (run * 3.4 + run * run * 1.2), hop = Math.abs(Math.sin(run * Math.PI * 2.6)) * 0.5;
+        const q = this.proj(fd, fx, hop), g0 = this.proj(fd, fx), cut = this.clipAt(fd);
+        if(q.x < -w - 4 || q.x > VW + w + 4) return;
+        const spr = deerSprite(2, p.stag, this.look && this.look.season === 'Winter', sd < 0);
+        const hh = Math.max(4, Math.round(B_GOLFER * 0.88 * US * g0.s)), ww = Math.round(hh * 26 / 22), X = Math.round(q.x), Y = Math.round(q.y);
+        // (cut at the ground's line where it is now: nothing through a rise)
+        c.save(); c.beginPath(); c.rect(0, 0, VW, Math.max(0, cut + 1)); c.clip();
+        if(hop < 0.12){ c.fillStyle = 'rgba(8,16,10,.26)'; this.standShadow(c, X - Math.round(ww * 0.36), Math.round(g0.y) - 1, Math.round(ww * 0.72), 1); }
+        this.standBlit(c, shrinkSprite(spr, ww, hh) || spr, X - (ww >> 1), Y - hh, ww, hh);
+        c.restore();
+        return;
+      }
       const near = p.d - this.camD < 12 && p.d - this.camD > -4;
       const graze = !near && Math.sin(this.t * 0.37 + p.k * 1.7) < 0.55;
       const spr = deerSprite(graze, p.stag, this.look && this.look.season === 'Winter', p.flip);
