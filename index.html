@@ -12701,7 +12701,31 @@ const STYLEFX = {
     body(c, g){
       const V = psyVariant(g.spr, this.step(g));
       if(V !== g.spr) blitAs(c, g, V, g.x, g.y);
+      this.beads(c, g);
       this.afro(c, g);
+    },
+    // a string of love beads round his neck, a peace sign hung on it
+    beads(c, g){
+      if(g.back || g.h < 34) return;
+      const p = this.px(g), H = g.head, s = g.spr, B0 = g.minor ? BELT_CADDIE : s === SPRITE.gFinish || s === SPRITE.gWalk ? BELT_FIN : BELT_ADDR;
+      if(!B0) return;
+      const sh = g.shear ? g.shear(0.25) : 0, nx = H.x + sh + 1.5 * p, ny = H.y + H.hh + 2.5 * p;
+      const bx = g.x + g.w * (B0.x0 + B0.x1) / 2 + (g.shear ? g.shear(B0.y) : 0), by = g.y + g.h * B0.y;
+      const mx = nx + (bx - nx) * 0.4 + 2 * p, my = ny + (by - ny) * 0.42, k = Math.max(1, Math.round(p * 0.8));
+      // the beads, down from his neck to it, a colour each
+      const n = Math.max(4, Math.round(Math.hypot(mx - nx, my - ny) / (1.6 * k)));
+      for(let i = 0; i < n; i++){ const u = i / n; c.fillStyle = psyC(i, 0);
+        c.fillRect(Math.round(nx + (mx - nx) * u - 1.2 * p * Math.sin(u * Math.PI)), Math.round(ny + (my - ny) * u), k, k); }
+      // the peace sign: a ring, its stem and its two legs
+      const r = Math.max(2, Math.round(2.4 * p)), X = Math.round(mx), Y = Math.round(my + r);
+      for(let j = -r - 1; j <= r + 1; j++) for(let i = -r - 1; i <= r + 1; i++){ const d = Math.hypot(i, j);
+        if(d > r + 0.6) continue;
+        c.fillStyle = d > r - 0.5 ? '#FFFFFF' : d > r - 1.5 && r > 2 ? '#1A1024' : psyC(this.step(g) + 1, 1);
+        if(d > r - 0.5 && d > r - 0.5 && i + j > 0) c.fillStyle = '#C8C8D8';
+        c.fillRect(X + i, Y + j, 1, 1); }
+      c.fillStyle = '#FFFFFF';
+      for(let j = -r + 1; j < r; j++) c.fillRect(X, Y + j, 1, 1);
+      for(let i = 1; i < r * 0.75; i++){ c.fillRect(X - i, Y + i, 1, 1); c.fillRect(X + i, Y + i, 1, 1); }
     },
     front(c, g){
       this.shades(c, g);
@@ -13312,6 +13336,129 @@ const STYLEFX = {
     }
   }
 };
+/* ---- What the Legendary skins wear (the user asked them brought up
+   toward the Mythic sets' detail): a piece of each on his head, worn over
+   his cap and moving with him, drawn after the skin's own front:
+     Frostborn: a crown of ice, icicles off his brim, his breath in the cold
+     Inferno: a crown of flame off his cap, embers for eyes
+     Stormcaller: a circlet of lightning crackling round his cap, his eyes lit
+     Void Walker: a broken halo of void shards turning over him, eyes of violet
+     Glitch: a visor of green light over his eyes, a scanline running down it
+     Midas: a laurel of gold round his cap with a ruby at its front, a glint
+     Disco: star shades, mirror-bright, and sparkles off them ---- */
+const LEGEND_WEAR = {
+  frostborn(c, g){
+    const W = wearAt(g); if(!W) return;
+    const { p, k, cx, top, hw, brim } = W;
+    // the crown: spikes of ice across his cap, tallest at the middle
+    const n = 5;
+    for(let i = 0; i < n; i++){ const u = i / (n - 1), x = Math.round(cx - hw + u * hw * 2), L = Math.max(2, Math.round((i === 2 ? 4.5 : i & 1 ? 3 : 2) * p));
+      for(let j = 0; j < L; j++){ const wd = Math.max(1, Math.round(k * (1 - j / L) * 1.5));
+        c.fillStyle = j >= L - 1 ? '#FFFFFF' : j > L * 0.5 ? '#BFE6FA' : '#6FB2D8'; c.fillRect(x - (wd >> 1), top - j, wd, 1); } }
+    c.fillStyle = '#DDF3FF'; c.fillRect(Math.round(cx - hw), top + 1, Math.round(hw * 2) + 1, k);
+    if(Math.sin(g.t * 2.3) > 0.7){ c.fillStyle = '#FFFFFF'; c.fillRect(Math.round(cx), top - Math.round(4.5 * p) - 1, 1, 1); }
+    // icicles off his brim
+    if(brim) for(let i = 0; i < 3; i++){ const L = Math.max(1, Math.round((1 + (i === 1 ? 1.2 : 0.4)) * p));
+      c.fillStyle = '#BFE6FA'; c.fillRect(Math.round(brim.x + i * 1.6 * p), brim.y, k, L); c.fillStyle = '#FFFFFF'; c.fillRect(Math.round(brim.x + i * 1.6 * p), brim.y + L, 1, 1); }
+    // his breath in the cold, now and then
+    const E = eyeAt(g), u = (g.t * 0.5) % 1;
+    if(E && !g.minor && u < 0.45){ const q = u / 0.45, x = E.x + 3 * p + q * 6 * p, y = E.y + 3 * p - q * 2 * p;
+      for(let i = 0; i < 6; i++){ if(hr(i, 701) < q * 0.8) continue; c.fillStyle = i & 1 ? '#FFFFFF' : '#DDF3FF';
+        c.fillRect(Math.round(x + (hr(i, 702) - 0.5) * 3 * p * (0.5 + q)), Math.round(y + (hr(i, 703) - 0.5) * 2 * p * (0.5 + q)), 1, 1); } }
+  },
+  inferno(c, g){
+    const W = wearAt(g); if(!W) return;
+    const { p, k, cx, top, hw } = W;
+    // a crown of flame: tongues off his cap, each rising and falling
+    const n = Math.max(4, Math.round(hw * 2 / Math.max(1, k * 1.5)));
+    for(let i = 0; i < n; i++){ const x = Math.round(cx - hw + (i + 0.5) / n * hw * 2);
+      const L = Math.max(2, Math.round((2 + 3 * Math.max(0, Math.sin(g.t * 9 + i * 1.7)) + (i === (n >> 1) ? 1.5 : 0)) * p * 0.8));
+      for(let j = 0; j < L; j++){ const f = j / L; c.fillStyle = f > 0.75 ? '#FFE14A' : f > 0.45 ? '#FFB43A' : f > 0.2 ? '#F0612A' : '#C2361C';
+        c.fillRect(x + Math.round(Math.sin(g.t * 6 + i + j * 0.5) * 0.6), top - j, k, 1); } }
+    // embers for eyes
+    const E = eyeAt(g);
+    if(E){ c.fillStyle = Math.sin(g.t * 11) > -0.4 ? '#FFE14A' : '#FFB43A'; c.fillRect(Math.round(E.x), Math.round(E.y), k, k);
+      if(!g.minor){ c.fillStyle = '#F0612A'; c.fillRect(Math.round(E.x) - k, Math.round(E.y) - 1, k, 1); } }
+  },
+  stormcaller(c, g){
+    const W = wearAt(g); if(!W) return;
+    const { p, k, cx, top, hw } = W, st = Math.floor(g.t * 14);
+    // a circlet of lightning crackling round his cap, a new zigzag each flicker
+    const y0 = top + Math.max(1, Math.round(p)), n = Math.max(5, Math.round(hw * 2 / k));
+    for(let i = 0; i <= n; i++){ const x = Math.round(cx - hw + i / n * hw * 2), dy = Math.round((hr(i + st * 13, 711) - 0.5) * 2.4 * p);
+      c.fillStyle = hr(i + st, 712) > 0.75 ? '#FFFFFF' : '#8FD0FF'; c.fillRect(x, y0 + dy, k, k); }
+    // a spark leaping off it now and then
+    if(hr(st, 713) > 0.6){ const x = Math.round(cx + (hr(st, 714) - 0.5) * hw * 2), L = Math.round(3 * p);
+      c.fillStyle = '#FFFFFF'; for(let j = 0; j < L; j++) c.fillRect(x + ((j >> 1) & 1 ? 1 : 0), y0 - j - 1, 1, 1); }
+    const E = eyeAt(g);
+    if(E){ c.fillStyle = '#FFFFFF'; c.fillRect(Math.round(E.x), Math.round(E.y), k, k);
+      if(!g.minor){ c.fillStyle = '#8FD0FF'; c.fillRect(Math.round(E.x) + k, Math.round(E.y), k, k); } }
+  },
+  void(c, g){
+    const W = wearAt(g); if(!W) return;
+    const { p, k, cx, top, hw } = W;
+    // a broken halo of shards turning over him
+    const rx = hw * 1.5, ry = Math.max(1.5, p * 1.6), y = top - Math.round(3 * p) + Math.sin(g.t * 1.5) * p * 0.6, n = 16;
+    for(let i = 0; i < n; i++){ const a = g.t * 0.9 + i / n * Math.PI * 2; if(i % 5 === 4) continue;
+      const x = Math.round(cx + Math.cos(a) * rx), yy = Math.round(y + Math.sin(a) * ry), near = Math.sin(a) > 0;
+      c.fillStyle = '#0D0814'; c.fillRect(x - 1, yy, k + 2 + (i & 1), k);
+      c.fillStyle = near ? '#C68BFF' : '#6E44A0'; c.fillRect(x, yy, k + (i & 1), k);
+      if(near && i % 3 === 0){ c.fillStyle = '#F0DCFF'; c.fillRect(x, yy, 1, 1); } }
+    const E = eyeAt(g);
+    if(E){ c.fillStyle = '#E0B0FF'; c.fillRect(Math.round(E.x), Math.round(E.y), k, k);
+      if(!g.minor && Math.sin(g.t * 3) > 0){ c.fillStyle = '#C68BFF'; c.fillRect(Math.round(E.x) - k, Math.round(E.y) - 1, k, 1); } }
+  },
+  glitch(c, g){
+    const E = eyeAt(g); if(!E) return;
+    const p = g.h / 58, k = Math.max(1, Math.round(p)), X = Math.round(E.x) - 2 * k, Y = Math.round(E.y) - k, w = 5 * k + (g.minor ? 0 : k), h = 2 * k + (g.minor ? 0 : 1);
+    // a visor of green light over his eyes, a scanline running down it
+    c.fillStyle = '#0A0F0A'; c.fillRect(X - 1, Y - 1, w + 2, h + 2);
+    c.fillStyle = '#1AA457'; c.fillRect(X, Y, w, h);
+    const sl = Math.floor(g.t * 8) % (h + 2);
+    c.fillStyle = '#7CFFB0'; if(sl < h) c.fillRect(X, Y + sl, w, 1);
+    c.fillStyle = '#29E07A'; c.fillRect(X + w - 2 * k, Y, k, k);
+    // a pixel torn off it now and then
+    const n = Math.floor(g.t * 5);
+    if(hr(n, 721) > 0.55){ c.fillStyle = hr(n, 722) > 0.5 ? '#FF2A6D' : '#2AE0FF'; c.fillRect(X + w + 1 + Math.round(hr(n, 723) * 3 * k), Y + Math.round(hr(n, 724) * h), k, 1); }
+  },
+  midas(c, g){
+    const W = wearAt(g); if(!W) return;
+    const { p, k, cx, top, hw } = W, y = top + Math.max(1, Math.round(p * 0.8));
+    // a laurel of gold round his cap, its leaves up off the band both ways,
+    // a ruby at its front
+    const n = Math.max(4, Math.round(hw * 2 / (1.4 * k)));
+    c.fillStyle = '#8F6A1E'; c.fillRect(Math.round(cx - hw), y + k, Math.round(hw * 2) + 1, 1);
+    for(let i = 0; i <= n; i++){ const x = Math.round(cx - hw + i / n * hw * 2), up = i % 2 ? 1 : 0;
+      c.fillStyle = i % 3 ? '#FFD86B' : '#FFF2B8'; c.fillRect(x, y - up * k, k, k);
+      c.fillStyle = '#C99A2E'; c.fillRect(x + (x < cx ? -1 : 1), y - up * k - 1, 1, 1); }
+    if(!g.back){ c.fillStyle = '#E0303A'; c.fillRect(Math.round(cx + hw * 0.6), y, k, k); c.fillStyle = '#FFB0B0'; c.fillRect(Math.round(cx + hw * 0.6), y, 1, 1); }
+    // a glint sweeping across it
+    const u = (g.t * 0.6) % 1;
+    if(u < 0.3){ const x = Math.round(cx - hw + u / 0.3 * hw * 2); c.fillStyle = '#FFFFFF'; c.fillRect(x, y - k, 1, 3 * k); c.fillRect(x - 1, y, 3, 1); }
+  },
+  disco(c, g){
+    const E = eyeAt(g); if(!E) return;
+    const p = g.h / 58, k = Math.max(1, Math.round(p)), X = Math.round(E.x), Y = Math.round(E.y);
+    // star shades, mirror-bright, the light running round them
+    const st = Math.floor(g.t * 6), cols = ['#FF4FB8', '#3FE0FF', '#FFE14A', '#FFFFFF'];
+    const star = [[0, -2], [-1, -1], [0, -1], [1, -1], [-2, 0], [-1, 0], [0, 0], [1, 0], [2, 0], [-1, 1], [1, 1]];
+    for(const [i, j] of star){ c.fillStyle = cols[((i + j + st) % 4 + 4) % 4]; c.fillRect(X + i * k, Y + j * k, k, k); }
+    c.fillStyle = '#1A1A1A'; c.fillRect(X - 4 * k, Y, 2 * k, 1);
+    if(!g.minor && Math.sin(g.t * 4) > 0.6){ c.fillStyle = '#FFFFFF'; const sx = X + 3 * k, sy = Y - 3 * k;
+      c.fillRect(sx, sy - 1, 1, 3); c.fillRect(sx - 1, sy, 3, 1); }
+  }
+};
+// where a piece worn on his head goes: the middle and top of his cap, half
+// its width, and the end of his brim (not from behind)
+function wearAt(g){
+  if(g.h < 14) return null;
+  const p = g.h / 58, H = g.head, sh = g.shear && !g.back ? g.shear(0.1) : 0, k = Math.max(1, Math.round(p * 0.9));
+  const cx = H.x + sh, top = Math.round(H.y), hw = Math.max(2, H.w * 0.42);
+  const brim = g.back ? null : { x: Math.round(cx + H.w * 0.35), y: Math.round(H.y + H.hh) };
+  return { p, k, cx, top, hw, brim };
+}
+for(const id in LEGEND_WEAR){ const F = STYLEFX[id]; if(!F) continue; const f0 = F.front;
+  F.front = function(c, g){ if(f0) f0.call(this, c, g); c.globalAlpha = 1; c.globalCompositeOperation = 'source-over'; LEGEND_WEAR[id](c, g); }; }
 
 /* ---- A flourish for the other effect skins on a great hole ----
    (the user asked, after the moments for the three legends): on an eagle
@@ -14741,6 +14888,7 @@ function dreadHood(p, view){
 // in folds, torn at the foot into strips that drift (step 0..11), holes in
 // it with the soul-green showing through, and the strips' ends fading into
 // a green mist (the Void's robe's shape: VROBE)
+const DRUNES = [['.#.', '###', '.#.', '#.#'], ['#..', '##.', '#.#', '#..'], ['###', '.#.', '#.#', '..#'], ['#.#', '.#.', '#.#', '.#.'], ['.##', '#..', '.#.', '##.']];
 function dreadRobe(w, h, pose, step){
   const R = VROBE[pose], sx = w / 40, sy = h / 58, x0 = Math.min(R[3], R[1]) - 2, y0 = R[0];
   const cv = fxBake('drobe|' + w + '|' + h + '|' + pose + '|' + step, Math.ceil((Math.max(R[4], R[2]) - x0 + 4) * sx), Math.ceil((58 - y0 + 0.5) * sy), g => {
@@ -14769,6 +14917,16 @@ function dreadRobe(w, h, pose, step){
       g.fillStyle = '#06050A'; g.beginPath(); g.ellipse(hx, hy, r + 1, r * 1.4 + 1, 0.3, 0, Math.PI * 2); g.fill();
       g.fillStyle = '#17734A'; g.beginPath(); g.ellipse(hx, hy, r, r * 1.4, 0.3, 0, Math.PI * 2); g.fill();
       g.fillStyle = '#5CF0A0'; g.fillRect(Math.round(hx - r * 0.3), Math.round(hy - r * 0.4), Math.max(1, Math.round(r * 0.6)), Math.max(1, Math.round(r * 0.8)));
+    }
+    // a band of grave-runes worked round his hem in soul-green, a stitched
+    // line over them; one rune at a time lit bright, going round
+    if(h >= 40){
+      const q = Math.max(1, Math.round(sx * 0.5)), ry = Math.round(Y(hemY - 3.4)), xl = X(R[3] + 1.2), xr = X(R[4] - 1.2), n2 = Math.max(3, Math.floor((xr - xl) / (5 * q)));
+      g.fillStyle = '#17734A';
+      for(let x = Math.round(xl); x < xr; x += 2 * q) g.fillRect(x, ry - 2 * q, q, Math.max(1, q >> 1) || 1);
+      for(let i = 0; i < n2; i++){ const G0 = DRUNES[(i + Math.round(R[3] * 3)) % DRUNES.length], lit = i === step % n2, rx0 = Math.round(xl + i * (xr - xl) / n2 + q);
+        G0.forEach((row, j) => [...row].forEach((ch, k2) => { if(ch !== '#') return;
+          g.fillStyle = lit ? (j === 0 ? '#E8FFF2' : '#5CF0A0') : (j === 0 ? '#5CF0A0' : '#2EB872'); g.fillRect(rx0 + k2 * q, ry + j * q, q, q); })); }
     }
     g.restore();
     // the strips' tips fading into a green mist, dithered
@@ -14925,20 +15083,21 @@ function dreadHand(k, flip){
 // A soul: a wisp of green-white light, its tail streaming behind it the way
 // it came (dx, dy the way it goes); s 0 a point, 1 a mote, 2 a face with
 // two dark eyes
+const DSOUL_FACE = ['.ooo.', 'oWWWo', 'oEWEo', 'oAAAo', 'oAoAo', '.o.o.'], DSOUL_MOTE = ['.oo.', 'oWAo', 'oAGo', '.oo.'];
 function dreadSoul(c, x, y, dx, dy, s, a, k){
   k = k || 1;
   const X = Math.round(x), Y = Math.round(y), n = 2 + s * 2, sp = (s ? 1.3 : 1) * k;
   c.globalAlpha = a === undefined ? 1 : a;
   for(let i = n; i >= 1; i--){
     c.fillStyle = i > n * 0.66 ? '#17734A' : i > n * 0.33 ? '#2EB872' : '#5CF0A0';
-    const wob = Math.sin(i * 1.9 + x * 0.21 + y * 0.13) * 0.7 * k * (i / n), w = i < n * 0.5 ? k : Math.max(1, k - 1);
+    const wob = Math.sin(i * 1.9 + x * 0.21 + y * 0.13) * 0.7 * k * (i / n), w = i < n * 0.5 ? (s >= 2 ? 2 * k : k) : Math.max(1, k - 1);
     c.fillRect(Math.round(x - dx * i * sp - dy * wob), Math.round(y - dy * i * sp + dx * wob), w, w);
   }
   // (a dark rim round its head, so it reads on the grass)
-  if(s >= 1){ c.fillStyle = '#0C3A26'; if(s >= 2) c.fillRect(X - 2 * k, Y - 2 * k, 5 * k, 5 * k); else c.fillRect(X - k, Y - k, 4 * k, 4 * k); }
-  if(s >= 2){ c.fillStyle = '#E8FFF2'; c.fillRect(X - k, Y - k, 3 * k, k); c.fillStyle = '#A8FFD0'; c.fillRect(X - k, Y, 3 * k, 2 * k);
-    c.fillStyle = '#0C3A26'; c.fillRect(X - k, Y, k, k); c.fillRect(X + k, Y, k, k); }
-  else if(s === 1){ c.fillStyle = '#A8FFD0'; c.fillRect(X, Y, 2 * k, 2 * k); c.fillStyle = '#E8FFF2'; c.fillRect(X, Y, k, k); }
+  // (a dark rim round its head, rounded, so it reads on the grass)
+  const G0 = s >= 2 ? DSOUL_FACE : s === 1 ? DSOUL_MOTE : null;
+  if(G0){ const o = s >= 2 ? 2 : 1, cols = { o: '#0C3A26', W: '#E8FFF2', A: '#A8FFD0', E: '#0C3A26', G: '#5CF0A0' };
+    G0.forEach((row, j) => [...row].forEach((ch, i) => { if(ch === '.') return; c.fillStyle = cols[ch]; c.fillRect(X + (i - o) * k, Y + (j - o) * k, k, k); })); }
   else{ c.fillStyle = '#E8FFF2'; c.fillRect(X, Y, k, k); }
   c.globalAlpha = 1;
 }
