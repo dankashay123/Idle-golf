@@ -10420,6 +10420,69 @@ function buildSprites(){
   ], fmap);
 }
 
+// A deer at the edge of the woods, side on, facing right (the user asked
+// for wildlife in autumn and winter): head up, watching, and head down,
+// grazing. a antlers (a stag's; a doe has none), e ear, k eye, d hooves and
+// nose, W white (throat, belly, tail), B the coat's darker shade.
+const DEER_UP = [
+  '..................a...a...',
+  '..................a..aa...',
+  '...................aaa....',
+  '..................aaa.....',
+  '.................ebbbb....',
+  '..................bbbbbb..',
+  '..................bkbbbbd.',
+  '..................bbbbb...',
+  '.................bbbW.....',
+  '................bbbbW.....',
+  '...WBBBBBBBBBBBBbbbb......',
+  '..WWbbbbbbbbbbbbbbbb......',
+  '...bbbbbbbbbbbbbbbbb......',
+  '...bbbbbbbbbbbbbbbbb......',
+  '...BbbbbbbbbbbbbbbbB......',
+  '....BWWWWWWWWWWWWBB.......',
+  '....bb.B.......bb.B.......',
+  '....bB.B.......bB.B.......',
+  '....bB.B.......bB.B.......',
+  '....dd.d.......dd.d.......',
+  '....d..d.......d..d.......',
+  '....d..d.......d..d.......'
+];
+const DEER_GRAZE = [
+  '..........................',
+  '..........................',
+  '..........................',
+  '..........................',
+  '..........................',
+  '..........................',
+  '..........................',
+  '..........................',
+  '..........................',
+  '..........................',
+  '...WBBBBBBBBBBBBbbb.......',
+  '..WWbbbbbbbbbbbbbbbb......',
+  '...bbbbbbbbbbbbbbbbbb.....',
+  '...bbbbbbbbbbbbbbbbbbb....',
+  '...BbbbbbbbbbbbbbbbBbbb...',
+  '....BWWWWWWWWWWWWBB..bb.a.',
+  '....bb.B.......bb.B..ebbaa',
+  '....bB.B.......bB.B...bbba',
+  '....bB.B.......bB.B...bkbb',
+  '....dd.d.......dd.d....bbb',
+  '....d..d.......d..d.....bd',
+  '....d..d.......d..d.......'
+];
+const DEER_SPR = {};
+// coat by season: a red-brown autumn coat, a greyer winter one
+function deerSprite(graze, stag, winter, flip){
+  const key = (graze ? 1 : 0) + '|' + (stag ? 1 : 0) + '|' + (winter ? 1 : 0) + '|' + (flip ? 1 : 0);
+  if(DEER_SPR[key]) return DEER_SPR[key];
+  const coat = winter ? ['#7A6452', '#56443A'] : ['#9A6236', '#6A3E20'];
+  const map = { b: coat[0], B: coat[1], e: coat[1], W: '#ECE4D2', d: '#2A1E16', k: '#14100C', a: '#D8C8A2' };
+  const rows = (graze ? DEER_GRAZE : DEER_UP).map(r => { const q = stag ? r : r.replace(/a/g, '.'); return flip ? [...q].reverse().join('') : q; });
+  return DEER_SPR[key] = makeSprite(rows, map);
+}
+
 /* ---- pixel-perfect icons from the existing vector library ----
    The paths are rasterised once at a small size and their alpha thresholded to
    fully on or fully off, which turns a smooth vector glyph into a real pixel
@@ -16939,6 +17002,40 @@ const Scene = {
   lakeW(F, d){ if(d <= F.d0 || d >= F.d1) return 0;
     const mid = (F.d0 + F.d1) / 2, half = (F.d1 - F.d0) / 2, t = (d - mid) / half, q = Math.sqrt(Math.max(0, 1 - t * t * t * t));
     return F.w * q * (1 + 0.1 * Math.sin(d * 0.3 + F.ph)); },
+  // Deer at the edge of the woods in autumn and winter (props kind 13; the
+  // user asked for wildlife then): on most holes a stag or a doe, now and
+  // then two together, standing in the rough just in front of a wood down
+  // one side, clear of play, hazards, the cart path, other holes and
+  // anything already standing there. From a hash, tagged extra.
+  layDeer(){
+    const put = this.props || [], sea = this.look && this.look.season;
+    if(sea !== 'Autumn' && sea !== 'Winter' || !(this.fills || []).length) return;
+    const h = this.hole, woods = this.fills.filter(F => F.kind === 'wood');
+    if(!woods.length || hr(h, 560) < 0.3) return;
+    const want = hr(h, 561) < 0.35 ? 2 : 1;
+    let n = 0, at = null;
+    for(let i = 0; i < 40 && n < want; i++){
+      const F = woods[Math.floor(hr(h * 7 + i, 562) * woods.length)];
+      // (the second near the first, as deer go about together)
+      const lo = Math.max(10, F.d0 + 2), hi = Math.min(LEN + 4, F.d1 - 2);
+      if(hi <= lo) continue;
+      const d = at ? at.d + (hr(h * 7 + i, 563) - 0.5) * 6 : lo + hr(h * 7 + i, 563) * (hi - lo);
+      if(at && Math.sign(at.x) !== F.sd) continue;
+      if(d < F.d0 + 2 || d > F.d1 - 2) continue;
+      const x = F.sd * (this.fillIn(F, d) - 0.45 - hr(h * 7 + i, 564) * 0.7);
+      if(Math.abs(x) > 9.5 || Math.abs(x) < this.fwWidth(d) + 0.8 || this.onPlay(d, x, 0.9) || this.hitsHazard(d, x, 0.9) || this.onNbr(d, x, 0.4)
+         || this.inPond(d, x, 0.8) || this.inFill(d, x, 0.25, 'lake') || this.inFill(d, x, -0.05, 'wood') || this.inBack(d, x, 0.6)
+         || (this.cart && Math.sign(x) === this.cart.sd && Math.abs(Math.abs(x) - Math.abs(this.cartX(d))) < 1.0)
+         || put.some(q => (q.kind <= 1 || q.kind >= 10) && Math.abs(q.d - d) < 1.6 && Math.abs(q.x - x) < 1.4)) continue;
+      // (a shrub, tuft or rock where it stands is taken away)
+      for(let j = put.length - 1; j >= 0; j--){ const q = put[j]; if(q.kind === 8 && Math.abs(q.d - d) < 1.2 && Math.abs(q.x - x) < 1.1) put.splice(j, 1); }
+      // (the first a stag or a doe, the second a doe)
+      const p = { kind: 13, d, x, extra: 1, k: h * 5 + n, stag: !at && hr(h, 565) < 0.5 ? 1 : 0, flip: hr(h * 9 + n, 566) < 0.5 ? 1 : 0 };
+      put.push(p); at = at || p; n++;
+    }
+    put.sort((a, b) => b.d - a.d);
+    this.props = put;
+  },
   inFill(d, x, pad, kind){
     for(const F of this.fills || []){
       if(kind && F.kind !== kind) continue;
@@ -18022,6 +18119,7 @@ const Scene = {
                          crowd: (26 + rnd()*14) * L.crowd });
     this.layNight();
     this.layCourse();
+    this.layDeer();
     // the near bank: the last ground on his line before the water
     // Where he stops before it and where he is across: an island's near bank
     // and its green, a canyon's two rims.
@@ -20893,14 +20991,18 @@ Object.assign(Scene, {
       if(rd && cv && rd.offsetParent){ const k = cv.getBoundingClientRect().height / Math.max(1, VH);
         if(k > 0) top = (rd.getBoundingClientRect().bottom - cv.getBoundingClientRect().top) / k; }
       const lo = Math.max(top + 10 * TSC, HORIZON * 0.36), hi = Math.max(lo, HORIZON * 0.56);
-      this.flock = { t0: this.t, dir: hr(n, 341) < 0.5 ? -1 : 1, y: lo + hr(n, 342) * (hi - lo), m: 5 + Math.floor(hr(n, 343) * 5),
-                     v: 0.07 + hr(n, 344) * 0.04, n };
+      // (in autumn and winter one flock in two is geese, in a V, higher,
+      // bigger and slower on the wing: the user asked for them)
+      const sea = this.look && this.look.season, geese = (sea === 'Autumn' || sea === 'Winter') && hr(n, 347) < 0.5;
+      this.flock = { t0: this.t, dir: hr(n, 341) < 0.5 ? -1 : 1, y: geese ? lo : lo + hr(n, 342) * (hi - lo), m: geese ? 7 + Math.floor(hr(n, 343) * 6) : 5 + Math.floor(hr(n, 343) * 5),
+                     v: geese ? 0.05 + hr(n, 344) * 0.02 : 0.07 + hr(n, 344) * 0.04, n, geese };
       this.flockNext = this.t + 22 + hr(n, 345) * 26;
     }
     const F = this.flock;
     if(!F) return;
-    const c = this.b, k = TSC, span = VW + 90 * k, u = (this.t - F.t0) * F.v * VW;
+    const c = this.b, k = TSC, span = VW + (F.geese ? 160 : 90) * k, u = (this.t - F.t0) * F.v * VW;
     if(u > span){ this.flock = null; return; }
+    if(F.geese){ this.drawGeese(c, F, u, k); return; }
     c.fillStyle = '#343A40';
     for(let i = 0; i < F.m; i++){
       const lag = i * 8 * k + hr(F.n * 13 + i, 346) * 5 * k;
@@ -20916,6 +21018,31 @@ Object.assign(Scene, {
     }
   },
 
+  // Geese going over in a V (drawFlock): the leader in front, the two arms
+  // trailing back from it, one a little longer; each a grey-brown body, a
+  // black neck and head stretched out in front with a white chin strap,
+  // and slow, deep wingbeats (up, level, down), not all in step.
+  drawGeese(c, F, u, k){
+    const D = F.dir;
+    for(let i = 0; i < F.m; i++){
+      const r = Math.ceil(i / 2), side = i & 1 ? 1 : -1, arm = side > 0 ? 1 : 1.15;
+      const lag = r * 9 * k * arm + hr(F.n * 17 + i, 348) * 2 * k;
+      const lead = D > 0 ? u : VW - u;
+      const px = Math.round(lead - D * lag), py = Math.round(F.y + side * r * 3.2 * k * arm + Math.sin(this.t * 0.7 + i) * k * 0.6);
+      if(px < -10 * k || px > VW + 10 * k || py < 2 * k) continue;
+      const ph = Math.floor((this.t * 4.2 + hr(F.n * 5 + i, 349) * 3) % 3);
+      const R = (x, y, w, h, col) => { c.fillStyle = col; c.fillRect(D > 0 ? px + x * k : px - (x + w) * k, py + y * k, w * k, h * k); };
+      // wings first, the far one behind the body
+      if(ph === 0){ R(-1, -1, 2, 1, '#5A5248'); R(-2, -2, 2, 1, '#5A5248'); R(-3, -3, 2, 1, '#6A6258'); }
+      else if(ph === 1){ R(-3, -1, 5, 1, '#5A5248'); }
+      else { R(-1, 1, 2, 1, '#5A5248'); R(-2, 2, 2, 1, '#6A6258'); }
+      R(-3, 0, 6, 1, '#7A7064');          // body
+      R(-4, 0, 1, 1, '#E8E2D6');          // tail's white
+      R(3, 0, 3, 1, '#1A1816');           // neck
+      R(6, -1, 1, 1, '#1A1816');          // head
+      R(5, 0, 1, 1, '#E8E2D6');           // chin strap
+    }
+  },
   // One span of gallery rope, from this post to the next one along its side.
   // Nearer than ROPE_REL the projection clamps at its minimum and the span
   // whips across the screen, so a span that starts behind that line is walked
@@ -20950,6 +21077,22 @@ Object.assign(Scene, {
   },
 
   drawProp(c, T, night, p, pr){
+    // a deer at the wood's edge (layDeer): grazing, its head up now and
+    // then, and watching him as he comes near; not at night, not in a wager
+    if(p.kind === 13){
+      if(night || S.dgnRun) return;
+      const h = Math.round(B_GOLFER * 0.88 * US * pr.s);
+      if(h < 4) return;
+      const w = Math.round(h * 26 / 22);
+      if(pr.x + w < -4 || pr.x - w > VW + 4) return;
+      const near = p.d - this.camD < 12 && p.d - this.camD > -4;
+      const graze = !near && Math.sin(this.t * 0.37 + p.k * 1.7) < 0.55;
+      const spr = deerSprite(graze, p.stag, this.look && this.look.season === 'Winter', p.flip);
+      const X = Math.round(pr.x), Y = Math.round(pr.y);
+      c.fillStyle = 'rgba(8,16,10,.26)'; this.standShadow(c, X - Math.round(w * 0.36), Y - 1, Math.round(w * 0.72), 1);
+      this.standBlit(c, shrinkSprite(spr, w, h) || spr, X - (w >> 1), Y - h, w, h);
+      return;
+    }
     // the other hole's flag, on its green: a pole and a yellow flag (the
     // hole he plays has the red), waving
     if(p.kind === 12){
