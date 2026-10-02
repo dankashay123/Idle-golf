@@ -164,7 +164,11 @@ module.exports = {
           { const d = c.getImageData(0, 0, VW, VH).data; let n = 0;
             for (let i = 0; i < d.length; i += 4) if (d[i + 3] && d[i] >= 225 && d[i + 1] >= 225 && d[i + 2] >= 220) n++;
             o.teeTrain.smoke = n; }
-          look(I.bank - 0.1, 3.8, -1); o.nearTrain = { train: count(TRAIN), lit: count(LIT) };
+          // (its middle on the crossing, whatever its speed and length; the lamps
+          // as it comes, its head nearly at the fairway: full size, once it is
+          // across, it hides the far posts' lamps, as a real one does)
+          { const K = trainKind(null); look(I.bank - 0.1, (RAIL_X + K.len / 2) / K.v, -1); o.nearTrain = { train: count(TRAIN) };
+            look(I.bank - 0.1, (RAIL_X - 3) / K.v, -1); o.nearTrain.lit = count(LIT); }
           look(I.bank - 0.1, 30, 1); o.gone = { train: count(TRAIN), lit: count(LIT) };
         } finally { Scene.buildHaze = bh; Scene.hazeKey = null; }
 

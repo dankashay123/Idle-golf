@@ -1,5 +1,7 @@
 /* The Dread and Psychedelic glow the more after dark (the user asked for
- * night versions of the two, "more glow after dark"):
+ * night versions of the two, "more glow after dark"), and so do the seven
+ * Legendary skins, each with a haze of its own light round him (asked
+ * for after them; no caddie of their own is drawn here):
  *
  *   - each drawn alone on a clear canvas, in every pose, the night adds
  *     pixels of its own: The Dread's grave-mist, will-o'-wisps and the
@@ -37,7 +39,9 @@ module.exports = {
           return { n, d: Array.from(d) };
         };
         const diff = (a, b) => { let n = 0; for (let i = 0; i < a.length; i += 4) if (a[i] !== b[i] || a[i + 1] !== b[i + 1] || a[i + 2] !== b[i + 2] || a[i + 3] !== b[i + 3]) n++; return n; };
-        for (const s of ['dread', 'psyche']) for (const pose of [0, 0.3, 0.8, -1]) {
+        // (and the Legendary skins, given a night after them: no caddie of
+        // their own drawn here)
+        for (const s of ['dread', 'psyche', 'inferno', 'frost', 'storm', 'void', 'glitch', 'midas', 'disco']) for (const pose of FULL_SETS[s] ? [0, 0.3, 0.8, -1] : [0, 0.3, 0.8]) {
           const day = draw(s, pose, false, null), night = draw(s, pose, true, null), vault = draw(s, pose, true, { mode: 'floor' });
           const add = diff(day.d, night.d), where = s + (pose < 0 ? ' caddie' : ' at ' + pose);
           o.adds[where] = add;

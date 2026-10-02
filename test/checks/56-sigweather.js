@@ -73,7 +73,10 @@ module.exports = {
             const hx = '#' + [d[i], d[i + 1], d[i + 2]].map(v => v.toString(16).padStart(2, '0')).join('').toUpperCase(); n[hx] = (n[hx] || 0) + 1; }
           return n; };
         o.own = {};
-        for (const k in OWN) { const n = alone({ t0: Scene.t - mid(k), dir: 1, kind: k });
+        // (at full size the view holds only part of it: its engine, its
+        // middle and its tail at the fairway in turn)
+        for (const k in OWN) { const K = trainKind({ kind: k }), n = alone({ t0: Scene.t - mid(k), dir: 1, kind: k });
+          for (const at of [RAIL_X + 2, RAIL_X + K.len - 2]) { const e = alone({ t0: Scene.t - at / K.v, dir: 1, kind: k }); for (const h in e) n[h] = (n[h] || 0) + e[h]; }
           o.own[k] = { mine: OWN[k].map(h => n[h] || 0), theirs: Object.keys(OWN).filter(q => q !== k).flatMap(q => OWN[q]).filter(h => h !== '#2A2E34' || k !== 'goods').reduce((a, h) => a + (n[h] || 0), 0) }; }
         o.unlike = [];
         const ks = Object.keys(F);

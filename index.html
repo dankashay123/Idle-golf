@@ -801,6 +801,7 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
 .setrow{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;padding:9px 0;
   border-bottom:1px solid var(--line-soft)}
 .setrow .ds{margin-top:2px}
+.setchk{width:24px;height:24px;margin:0;accent-color:var(--brass)}
 .vol{display:flex;align-items:center;gap:8px;margin-top:4px;font-family:var(--mono);font-size:var(--f1)}
 .vol input{flex:1 1 auto;min-width:0;max-width:180px;height:24px;margin:0;accent-color:var(--aurora)}
 .vol span{flex:0 0 4ch;text-align:right}
@@ -4094,6 +4095,7 @@ function initState(){
   if(S.music !== undefined && S.music !== 0 && S.music !== 1) delete S.music;
   if(S.music2 !== undefined && S.music2 !== 0 && S.music2 !== 1) delete S.music2;
   if(S.dawnDusk !== undefined && S.dawnDusk !== 1) delete S.dawnDusk;
+  if(S.gender !== undefined && S.gender !== 'f' && S.gender !== 'm') delete S.gender;
   if(S.sigRec !== undefined){
     if(!S.sigRec || typeof S.sigRec !== 'object' || Array.isArray(S.sigRec)) delete S.sigRec;
     else for(const k in S.sigRec){ const R = S.sigRec[k];
@@ -7341,11 +7343,17 @@ function showLook(id){
   if(SHOW_LOOK[id]) return SHOW_LOOK[id];
   const F = FULL_SETS[id];
   if(F) return SHOW_LOOK[id] = { o: id, c: id, k: id, t: F.t[0], b: F.t[1], set: id };
+  // (a caddie on its own: 'c:' and its id, the golfer plain and not drawn)
+  if(id.startsWith('c:')) return SHOW_LOOK[id] = { o: STYLE_DEFAULT.o, c: id.slice(2), k: 'steel', t: 'plain', b: null, set: null };
   const O = styleDef('o', id), C = O && B.CADDIES.find(d => d.fx && d.fx === O.fx);
   return SHOW_LOOK[id] = { o: id, c: C ? C.id : 'bib', k: 'steel', t: 'plain', b: null, set: null };
 }
 const SHOW_SKINS = ['disco', 'glitch', 'frost', 'inferno', 'storm', 'void', 'midas'];
-const showName = id => FULL_SETS[id] ? FULL_SETS[id].n : (styleDef('o', id) || {}).n;
+const showName = id => FULL_SETS[id] ? FULL_SETS[id].n : id.startsWith('c:') ? (styleDef('c', id.slice(2)) || {}).n : (styleDef('o', id) || {}).n;
+// the caddies, in the order the Caddie rack has them
+let SHOW_CADS = null;
+const showCads = () => SHOW_CADS || (SHOW_CADS = [d => d.cat === 'skin', d => d.cat !== 'skin' && d.cat !== 'major', d => d.cat === 'major']
+  .flatMap(f => B.CADDIES.filter(f).sort((a, b) => (b.top || 0) - (a.top || 0) || setRank('c', a.id) - setRank('c', b.id))).map(d => 'c:' + d.id));
 const previewOf = k => SHOWSET ? (k === 't' ? null : styleDef(k, showLook(SHOWSET)[k])) : PREVIEW && PREVIEW.k === k && Date.now() < PREVIEW.until ? styleDef(k, PREVIEW.id) : null;
 const outfitNow = () => previewOf('o') || styleDef('o', S.outfit) || B.OUTFITS[0];
 // A wake and a ball are worn together (the user: a set's one tap "does not
@@ -7750,7 +7758,7 @@ const SHOW_PLAN = [{ k: 'shot', bless: 1, addr: 1.5, dur: 3.4 }, { k: 'shot', ad
 const SHOW_CYC = SHOW_PLAN.reduce((a, p) => a + p.dur, 0);
 function showStart(s){
   const night = SHOW ? SHOW.night : false;
-  SHOW = { set: s, list: FULL_SETS[s] ? SET_ORDER : SHOW_SKINS, night, t: 0, balls: [], rest: [], arc: [], shot: -1, legend: null, flourish: null, raf: 0, last: 0 };
+  SHOW = { set: s, list: FULL_SETS[s] ? SET_ORDER : s.startsWith('c:') ? showCads() : SHOW_SKINS, night, t: 0, balls: [], rest: [], arc: [], shot: -1, legend: null, flourish: null, raf: 0, last: 0 };
 }
 function showBind(sheet){
   const go = s => { showStart(s); $('showN').textContent = showName(s); };
@@ -7849,6 +7857,7 @@ function showDraw(cv, dt){
   }
 }
 function showPlay(c, V, W, H, G, cup, dt){
+  if(V.set.startsWith('c:')) return showCaddie(c, V, W, G);
   const A = showAt(V.t), P = A.P, O = outfitNow(), FX = STYLEFX[O.fx] || null;
   const Z = SHOW_Z, h = 48, w = Math.round(h * 40 / 58), x = Math.round(W * 0.42), bx = Math.round(x + w * 1.19), rb = Math.max(1, Math.round(h / 26)), lb = 2.1;
   const bob = FX && FX.bob ? Math.round(1 + Math.sin(V.t * 2.2)) : 0;
@@ -7919,6 +7928,34 @@ function showPlay(c, V, W, H, G, cup, dt){
   }
   Scene.legend = V.legend; Scene.flourish = V.flourish;
 }
+// A caddie on its own, as big as he is (the user asked to see each caddie
+// on the stage): it floats, does its own trick, and puts its blessing down
+// with its arms up, round and round
+const SHOW_CAD_PLAN = [{ k: 'float', dur: 1.4 }, { k: 'trick' }, { k: 'float', dur: 0.8 }, { k: 'bless', dur: 2.0 }];
+function showCaddie(c, V, W, G){
+  const CD = caddieNow(), MV = FAIRY_MOVES.find(m => m.only === cadKey(CD)), h = 46, w = Math.round(h * 40 / 58);
+  const plan = SHOW_CAD_PLAN.map(P => P.k === 'trick' ? { k: 'trick', dur: MV ? MV.dur + 0.4 : 0 } : P);
+  const cyc = plan.reduce((a, P) => a + P.dur, 0);
+  let u = V.t % cyc, P = plan[0];
+  for(const Q of plan){ if(u < Q.dur){ P = Q; break; } u -= Q.dur; }
+  // (where he floats: in the middle, his own height off the grass, his box
+  // given straight, not beside a golfer)
+  const x = Math.round(W * 0.5 - w / 2), y0 = Math.round(G - h * 1.25), fy = Math.round(Math.sin(V.t * 2.2) * h * 0.035);
+  const sc = V.sc || (V.sc = Object.assign(Object.create(Scene), { fairyNow: () => null, fairyDy: () => 0, fairyCast: null }));
+  sc.t = V.t;
+  sc.fairyBox = () => ({ x, y: y0 + fy, w, h });
+  V.move = P.k === 'trick' && MV && u < MV.dur ? { kind: MV.id, q: u / MV.dur, T: u } : null;
+  sc.fairyMoveNow = () => V.move;
+  if(P.k === 'bless'){ if(!sc.fairyCast || sc.fairyCast.n !== Math.floor(V.t / cyc)) sc.fairyCast = { t0: V.t - u, n: Math.floor(V.t / cyc), word: '' }; }
+  else sc.fairyCast = null;
+  // his shadow on the grass under him
+  c.fillStyle = 'rgba(8,16,10,.34)'; c.fillRect(Math.round(x + w * 0.1), G - 1, Math.round(w * 0.8), 2);
+  const bless = P.k === 'bless' && u < 1.6 ? u : -1;
+  if(bless >= 0) showBless(c, x, w, h, G, 'back', bless);
+  if(SPRITE.caddie) Scene.drawCaddie.call(sc, c, x, y0, w, h);
+  if(bless >= 0) showBless(c, x, w, h, G, 'front', bless);
+  c.globalAlpha = 1; c.globalCompositeOperation = 'source-over';
+}
 // the caddie's blessing falling on him, in the set's own look
 function showBless(c, x, w, h, bot, layer, t){
   const TH = BLESS_FX[caddieNow().fx]; if(!TH) return;
@@ -7987,7 +8024,7 @@ function renderShop(){
       // (worn, it can be taken off, back to the plain one: not the plain one)
       const off = worn && d.id !== STYLE_DEFAULT[k];
       // (the badge says worn only when the button does not: WORN twice over)
-      return shopCard({ img, full, art: k === 'o' && SHOW_SKINS.includes(d.id) ? d.id : '', on: worn || !!d.top || (!!won && own), badge: full ? 'FULL SET' : off ? 'WORN' : d.top ? (d.top > 1 ? 'MYTHIC' : 'LEGENDARY') : won && own ? 'CHAMPION' : '', head: d.n,
+      return shopCard({ img, full, art: k === 'o' && SHOW_SKINS.includes(d.id) ? d.id : k === 'c' ? 'c:' + d.id : '', on: worn || !!d.top || (!!won && own), badge: full ? 'FULL SET' : off ? 'WORN' : d.top ? (d.top > 1 ? 'MYTHIC' : 'LEGENDARY') : won && own ? 'CHAMPION' : '', head: d.n,
         sub: own ? '' : '<button class="mini try" data-try="' + k + '.' + d.id + '">Try it</button>',
         price: off ? 'UNEQUIP' : worn ? 'WORN' : own ? 'WEAR' : won ? 'WIN IT' : sovFmt(d.cost),
         note: worn || own ? '' : won ? won.short : B.SOV.toLowerCase(),
@@ -8024,11 +8061,14 @@ function renderShop(){
         + shelf('Outfits', 'o', B.OUTFITS.filter(o => o.cat === 'fun').concat(B.OUTFITS.filter(o => !o.cat)), outfitUrl)
         + shelf('Major Winners', 'o', B.OUTFITS.filter(o => o.cat === 'major'), outfitUrl);
     }
-    else if(styleCat === 'caddie')
+    else if(styleCat === 'caddie'){
+      // over them the stage, a caddie on its own on it
+      if(!SHOW || !SHOW.set.startsWith('c:')) showStart('c:' + caddieNow().id);
       // in the same order as the golfer's looks: skins, then the rest
-      h += shelf('Caddie Skins', 'c', B.CADDIES.filter(d => d.cat === 'skin'), caddieUrl)
+      h += showStageHtml() + shelf('Caddie Skins', 'c', B.CADDIES.filter(d => d.cat === 'skin'), caddieUrl)
         + shelf('Caddie Outfits', 'c', B.CADDIES.filter(d => d.cat !== 'skin' && d.cat !== 'major'), caddieUrl)
         + shelf('Major Winners', 'c', B.CADDIES.filter(d => d.cat === 'major'), caddieUrl);
+    }
     else if(styleCat === 'clubs')
       h += shelf('Clubs', 'k', B.CLUBS.filter(d => d.cat !== 'fun'), clubUrl)
         + shelf('Just for Fun', 'k', B.CLUBS.filter(d => d.cat === 'fun'), clubUrl);
@@ -10258,7 +10298,29 @@ function patterned(sp, o){
   return sp;
 }
 const golferMap = o => ({ c:o.cap, C:o.cap2, k:o.skin || PX.skin, K:o.skin2 || PX.skin2, s:o.shirt, S:o.shirt2,
-                          T:o.shirt3, b:o.belt || '#2A2018', p:o.pant, P:o.pant2, o:o.shoe || PX.shoe });
+                          T:o.shirt3, b:o.belt || '#2A2018', p:o.pant, P:o.pant2, o:o.shoe || PX.shoe,
+                          h:o.hair || (o.skin ? o.skin2 : HAIR) });
+// The female golfer (the user asked for one, chosen in Settings): his
+// picture with her hair. A ponytail out from under the back of her cap
+// side on, long hair down her back from behind, and a little shape to the
+// front of her shirt. Each skin goes with it: its own hair colour (gold on
+// Midas, a skin's own where it has one), drawn under whatever it puts over
+// her. Her cells go only where his picture is empty, except down her back.
+// [row, from, to] in each pose
+const FEM = {
+  addr: { hair: [[8, 25, 26], [9, 24, 27], [10, 23, 26], [11, 22, 25], [12, 22, 24], [13, 21, 22]], front: [] },
+  fin:  { hair: [[7, 20, 21], [8, 19, 21], [9, 18, 21], [10, 18, 22], [11, 18, 21], [12, 19, 21], [13, 19, 20]], front: [[15, 28, 28], [16, 29, 29]] },
+  back: { hair: [], over: [[10, 18, 21], [11, 17, 22], [12, 17, 22], [13, 17, 22], [14, 18, 21], [15, 18, 21], [16, 18, 21], [17, 19, 20], [18, 19, 20]] }
+};
+const isFem = () => S.gender === 'f';
+function femRows(rows, pose){
+  if(!isFem()) return rows;
+  const F = FEM[pose], R = rows.map(r => [...r]);
+  for(const [y, a, b] of F.hair) for(let x = a; x <= b; x++) if(R[y] && R[y][x] === '.') R[y][x] = 'h';
+  for(const [y, a, b] of F.over || []) for(let x = a; x <= b; x++) if(R[y] && R[y][x] !== '.') R[y][x] = 'h';
+  for(const [y, a, b] of F.front || []) for(let x = a; x <= b; x++) if(R[y] && R[y][x] === '.') R[y][x] = 'T';
+  return R.map(r => r.join(''));
+}
 const SPRITE = {};
 function buildSprites(){
   // Side-on at address, facing the target: bent at the hips, spine tilted, hips
@@ -10267,26 +10329,25 @@ function buildSprites(){
   // to speak of; a profile has a posture you can recognise instantly.
   // Arms and club stay procedural so the swing arc is exact at any tempo.
   const OUT = outfitNow(), GMAP = golferMap(OUT);
-  SPRITE.gAddr = patterned(makeSprite(G_ADDR_ROWS, GMAP), OUT);
+  SPRITE.gAddr = patterned(makeSprite(femRows(G_ADDR_ROWS, 'addr'), GMAP), OUT);
   // Finish: up out of the posture, chest turned through, weight on the lead
   // side with the trail foot dragged up on its toe.
-  SPRITE.gFinish = patterned(makeSprite(G_FIN_ROWS, GMAP), OUT);
+  const FIN = femRows(G_FIN_ROWS, 'fin'), BACK = femRows(G_BACK_ROWS, 'back');
+  SPRITE.gFinish = patterned(makeSprite(FIN, GMAP), OUT);
   // Walking: the finish pose from the belt up, standing tall, and nothing
   // below it -- the legs stride in code.
   const blank = '.'.repeat(40);
-  SPRITE.gWalk = patterned(makeSprite(G_FIN_ROWS.slice(0, 32).concat(G_FIN_ROWS.slice(32).map(() => blank)), GMAP), OUT);
+  SPRITE.gWalk = patterned(makeSprite(FIN.slice(0, 32).concat(G_FIN_ROWS.slice(32).map(() => blank)), GMAP), OUT);
   const pad = G_FIN_ROWS.slice(32).map(() => blank);
-  SPRITE.gBack = patterned(makeSprite(G_BACK_ROWS.concat(pad), Object.assign({}, GMAP, { h: OUT.hair || (OUT.skin ? OUT.skin2 : HAIR) })), OUT);
+  SPRITE.gBack = patterned(makeSprite(BACK.concat(pad), GMAP), OUT);
   // Flying: the same, without the arms hanging at his sides (both are up
   // over his head holding the club: drawn in code), his sleeves left on
-  SPRITE.gFly = patterned(makeSprite(G_BACK_ROWS.map((r, y) => y < 17 ? r
-    : [...r].map((ch, x) => (x < 12 || x > 27) && (ch === 'k' || ch === 'K') ? '.' : ch).join('')).concat(pad),
-    Object.assign({}, GMAP, { h: OUT.hair || (OUT.skin ? OUT.skin2 : HAIR) })), OUT);
+  SPRITE.gFly = patterned(makeSprite(BACK.map((r, y) => y < 17 ? r
+    : [...r].map((ch, x) => (x < 12 || x > 27) && (ch === 'k' || ch === 'K') ? '.' : ch).join('')).concat(pad), GMAP), OUT);
   // Waving to a train: from behind, his left arm off his side (it is up
   // over his head: drawn in code)
-  SPRITE.gWave = patterned(makeSprite(G_BACK_ROWS.map((r, y) => y < 17 ? r
-    : [...r].map((ch, x) => x < 12 && (ch === 'k' || ch === 'K') ? '.' : ch).join('')).concat(pad),
-    Object.assign({}, GMAP, { h: OUT.hair || (OUT.skin ? OUT.skin2 : HAIR) })), OUT);
+  SPRITE.gWave = patterned(makeSprite(BACK.map((r, y) => y < 17 ? r
+    : [...r].map((ch, x) => x < 12 && (ch === 'k' || ch === 'K') ? '.' : ch).join('')).concat(pad), GMAP), OUT);
   const CD = caddieNow();
   SPRITE.caddie = patterned(makeSprite(CADDIE_ROWS.concat(G_FIN_ROWS.slice(32).map(() => blank)), caddieMap(CD)), CD);
 
@@ -10370,6 +10431,8 @@ function pixIcon(id, size, col){
 // not pixel art at all, just a small picture. 2.2 is the point where a 5x7
 // font is still legible on a phone and a diagonal still reads as a staircase.
 const PX_CSS = 1.1, K_PROJ = 22.4, LEN = 60, B_GOLFER = 12, B_FLY = 11, B_BRIDGE = 4.2, B_HOP = 2.6;
+// how much of each hop over the stones is the crouch on a stone, either end
+const HOP_CROUCH = 0.16;
 // the railway crossing's train: how far out to the side it sets off, how fast
 // it runs, and how long it is (engine and two carriages)
 // (and how far out the one that meets him at the line sets off)
@@ -10379,8 +10442,12 @@ const RAIL_X = 34, RAIL_V = 11, RAIL_LEN = 7.4, RAIL_MEET = 20;
 // them), a streamlined express and, at night, a sleeper with its windows
 // lit and its lamp on. Each one's speed and length; a train with no kind
 // is the steam train.
-const TRAINS = { steam: { v: RAIL_V, len: RAIL_LEN, smoke: 1 }, goods: { v: 9, len: 12.1, smoke: 1 },
-                 express: { v: 19, len: 11, smoke: 0 }, night: { v: RAIL_V, len: RAIL_LEN, smoke: 1 } };
+// (each drawn TRAIN_K times the size it was laid out at: the user found it
+// "shorter than the golfer"; now its roof is twice his height, as a real
+// one's is, and it runs a little quicker so it is by in about the time it was)
+const TRAIN_K = 2.4;
+const TRAINS = { steam: { v: RAIL_V * 1.4, len: RAIL_LEN * TRAIN_K, smoke: 1 }, goods: { v: 9 * 1.4, len: 12.1 * TRAIN_K, smoke: 1 },
+                 express: { v: 19 * 1.4, len: 11 * TRAIN_K, smoke: 0 }, night: { v: RAIL_V * 1.4, len: RAIL_LEN * TRAIN_K, smoke: 1 } };
 const trainKind = T => TRAINS[T && T.kind] || TRAINS.steam;
 // the end of a hole: where he stops to putt, short of the cup (from there the
 // cup shows above his head), and how near that counts as up on the green (see
@@ -10408,6 +10475,10 @@ const pinFor = h => PINS[(holeInRound(h) - 1 + dayIndex(h) * 4 + tournamentOf(h)
 // you over his shoulder with the hole falling away hard; large numbers flatten
 // it into a diagram. GROUND is derived from it below, so his feet stay put.
 const CAM_BACK = 3.2;
+// the tee box, in world measures: from d0 behind his feet to d1 in front,
+// hw either side of the line, its corners r round, raised lift; its two
+// markers at mark, markLat out
+const TEE_DECK = { d0: -1.6, d1: 2.4, hw: 1.9, r: 0.8, lift: 0.05, mark: 2.0, markLat: 1.35, col: '#D8343A' };
 // Nearest the gallery rope is projected from. Inside this the 1/distance
 // projection hits its clamp and a span whips sideways across the frame.
 const ROPE_REL = 1.4;
@@ -13651,6 +13722,99 @@ for(const k in FLOURISH_SIG){ const B0 = FLOURISH[k]; if(!B0) continue;
     c.globalAlpha = 1; c.globalCompositeOperation = 'source-over';
     B0.call(this, c, g, F, layer); }; }
 
+// The Legendary skins after dark (the user asked them the night The Dread
+// and Psychedelic have): each throws its own light, drawn over him once
+// the rest of him is, in solid dithered pixels close about him. By day,
+// and in the Vault's cellar, none of it.
+// (a haze of light round a point, dithered: thickest a little way out from
+// him and thinning to nothing at its edge, its middle left clear; solid
+// rings read as hoops)
+const BAYER4 = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5];
+function nightHalo(c, x, y, rx, ry, col, ph, top){
+  const RX = Math.ceil(rx), RY = Math.ceil(ry), X = Math.round(x), Y = Math.round(y), mx = top || 0.42, o = ph || 0;
+  c.globalAlpha = 1; c.fillStyle = col;
+  for(let j = -RY; j <= RY; j++) for(let i = -RX; i <= RX; i++){
+    const d = Math.sqrt((i * i) / (rx * rx) + (j * j) / (ry * ry));
+    if(d > 1 || d < 0.55) continue;
+    const dens = d < 0.72 ? mx * (d - 0.55) / 0.17 : mx * (1 - d) / 0.28;
+    if(BAYER4[((X + i + o) & 3) + ((Y + j) & 3) * 4] / 16 >= dens) continue;
+    c.fillRect(X + i, Y + j, 1, 1);
+  }
+}
+// a star of light: its middle and four arms L long
+function nightStar(c, x, y, L, col, hot){
+  const X = Math.round(x), Y = Math.round(y);
+  c.globalAlpha = 1; c.fillStyle = col; c.fillRect(X - L, Y, L * 2 + 1, 1); c.fillRect(X, Y - L, 1, L * 2 + 1);
+  c.fillStyle = hot || '#FFFFFF'; c.fillRect(X, Y, 1, 1);
+}
+const NIGHT_SIG = {
+  // his flames light the dark round him, sparks flying up high
+  inferno(c, g){
+    const { cx, cy, w, h, t, k } = g, fl = 0.92 + 0.08 * Math.sin(t * 13) * Math.sin(t * 7.3);
+    nightHalo(c, cx, cy, w * 0.95 * fl, h * 0.62 * fl, '#B8401C', Math.floor(t * 10));
+    for(let i = 0; i < 7; i++){ const life = (t * 0.7 + hr(i, 771)) % 1;
+      const x = cx + (hr(i, 772) - 0.5) * w * 1.2 + Math.sin(t * 3 + i) * k * 2, y = g.y + h * 0.2 - life * h * 0.6;
+      if(life < 0.85) nightStar(c, x, y, life < 0.4 ? k : 0, life < 0.4 ? '#FFD34A' : '#FF8A24', '#FFFBE0'); }
+  },
+  // a cold light round him, and the snow catching it
+  frostborn(c, g){
+    const { cx, cy, w, h, t, k } = g;
+    nightHalo(c, cx, cy, w * 0.9 * (0.95 + 0.05 * Math.sin(t)), h * 0.6, '#3F7FB0', 0);
+    for(let i = 0; i < 6; i++){ const n = Math.floor(t * 1.6) + i * 5, f = (t * 1.6) % 1;
+      if(f > 0.7) continue;
+      nightStar(c, cx + (hr(n, 781) - 0.5) * w * 1.8, g.y + hr(n, 782) * h, f < 0.35 ? k + 1 : k, '#BFE6FA'); }
+  },
+  // his cloud lit from inside, and each strike flashes the grass round him
+  stormcaller(c, g){
+    const { cx, w, h, t, k, head } = g, n = Math.floor(t * 7);
+    const ccx = head.x - w * 0.1, ccy = head.y - h * 0.38;
+    // (a charge on him, always, glowing blue in the dark)
+    nightHalo(c, g.cx, g.cy, w * 0.85, h * 0.58, '#2A4A7A', n);
+    if(hr(n, 791) > 0.55) nightHalo(c, ccx, ccy, w * 0.55, h * 0.1, '#9FB8E0', n);
+    if(this.strike(t) >= 0){ nightHalo(c, cx, g.bot, w * 2, h * 0.2, '#BFE0FF', 0); nightHalo(c, cx, g.bot, w * 1.3, h * 0.13, '#FFFFFF', 1); }
+  },
+  // the stars come out round him, wheeling slowly in
+  void(c, g){
+    const { cx, cy, w, h, t, k } = g;
+    nightHalo(c, cx, cy, w * 0.9, h * 0.6, '#7A4ED8', 0);
+    for(let i = 0; i < 9; i++){ const a = hr(i, 801) * Math.PI * 2 + t * 0.4, R = 0.7 + 0.35 * hr(i, 802);
+      if(Math.sin(t * 3 + i * 2.1) < -0.3) continue;
+      nightStar(c, cx + Math.cos(a) * w * R, cy + Math.sin(a) * h * 0.55 * R, i % 3 ? 0 : k, '#C68BFF', '#F2E8FF'); }
+  },
+  // he glows like a screen in the dark: his two colours either side
+  glitch(c, g){
+    const { cx, cy, w, h, t } = g, j = this.burst(t) >= 0 ? 2 : 0;
+    c.save(); c.beginPath(); c.rect(0, 0, Math.round(cx), c.canvas.height); c.clip();
+    nightHalo(c, cx - j, cy, w * 0.9, h * 0.6, '#FF2A6D', 0); c.restore();
+    c.save(); c.beginPath(); c.rect(Math.round(cx), 0, c.canvas.width, c.canvas.height); c.clip();
+    nightHalo(c, cx + j, cy, w * 0.9, h * 0.6, '#2AE0FF', 1); c.restore();
+    const n = Math.floor(t * 4); c.fillStyle = '#29E07A';
+    for(let i = 0; i < 3; i++) if(hr(n, 811 + i) > 0.4) c.fillRect(Math.round(cx + (hr(n, 814 + i) - 0.5) * w * 1.6), Math.round(g.y + hr(n, 817 + i) * h), 2, 1);
+  },
+  // gold shining in the dark, glints popping all over him
+  midas(c, g){
+    const { cx, cy, w, h, t, k } = g;
+    nightHalo(c, cx, cy, w * 0.85, h * 0.58, '#8A6A1A', Math.floor(t * 2));
+    for(let i = 0; i < 3; i++){ const n = Math.floor(t * 2 + i * 0.33), f = (t * 2 + i * 0.33) % 1;
+      const L = Math.round(Math.sin(f * Math.PI) * 2 * k);
+      nightStar(c, cx + (hr(n, 821 + i) - 0.5) * w * 0.7, cy + (hr(n, 824 + i) - 0.5) * h * 0.8, L, '#FFD86B'); }
+  },
+  // the dance floor at night: his ball's beams bright, spots thrown round him
+  disco(c, g){
+    const { cx, bot, w, h, t, k } = g, cols = ['#FF4FB8', '#3FE0FF', '#FFE14A', '#7CFF6A'];
+    const bx = g.head.x, by = g.head.y - h * 0.32;
+    for(let i = 0; i < 4; i++){ const a = t * 1.3 + i * Math.PI / 2, ex = cx + Math.cos(a) * w * 0.8, ey = bot;
+      c.fillStyle = cols[i]; const N = Math.max(4, Math.round(Math.hypot(ex - bx, ey - by)));
+      for(let s2 = 0; s2 <= N; s2 += 2) c.fillRect(Math.round(bx + (ex - bx) * s2 / N), Math.round(by + (ey - by) * s2 / N), 1, 1); }
+    for(let i = 0; i < 8; i++){ const a = hr(i, 831) * Math.PI * 2 + t * 1.7, R = 0.5 + 0.6 * hr(i, 832);
+      c.fillStyle = cols[i & 3]; c.fillRect(Math.round(cx + Math.cos(a) * w * R), Math.round(g.cy + Math.sin(a) * h * 0.45 * R), k + 1, k); }
+  }
+};
+for(const k in NIGHT_SIG){ const F0 = STYLEFX[k]; if(!F0) continue; const fr = F0.front;
+  F0.front = function(c, g){
+    if(fr) fr.call(this, c, g);
+    if(!g.minor && nightNow()){ c.globalAlpha = 1; c.globalCompositeOperation = 'source-over'; NIGHT_SIG[k].call(this, c, g); c.globalAlpha = 1; } }; }
+
 // The skins with an effect have thicker arms too (bulk): the width of
 // him is his own picture, stretched (blitShear, bulkOf)
 for(const fx of ['inferno', 'frostborn', 'stormcaller', 'void', 'glitch', 'midas', 'disco', 'ghost', 'banana', 'dad', 'clown']){
@@ -14812,14 +14976,34 @@ const blBack = G => G.layer !== 'front', blFront = G => G.layer !== 'back';
 // a column of light from the top of the view to y1, hw either side of cx:
 // solid edges k wide, a checkered body, a solid core and bright bands
 // running down it, and while it is still falling a flare at its front
+// The part of a beam over him, drawn through him: behind him (the back
+// layer) it goes on down to the ground whole, and in front of him again
+// see-through, so it is see-through only on his own outline (the user saw
+// it stop hard at his head: "I only want the opacity to kick in on the
+// exact outline of the golfer"). Off him the two are the same pixels, the
+// one over the other. Over his head it is drawn whole in front. draw(y1)
+// draws the beam from the top of the view down to row y1, the same each
+// time it is called in a frame.
+const BL_SEE = 0.45;
+function blThrough(G, top, draw){
+  const { c } = G, W = c.canvas.width, yG = Math.min(G.front, Math.round(G.bot) - 1);
+  top = Math.round(top);
+  const part = (y0, y1, a) => { if(y1 <= y0) return;
+    c.save(); c.beginPath(); c.rect(0, y0, W, y1 - y0); c.clip(); c.globalAlpha = a; draw(y1); c.restore(); c.globalAlpha = 1; };
+  if(G.layer === 'back'){ part(Math.max(0, top), yG, 1); return; }
+  part(0, Math.min(top, yG), 1);
+  part(Math.max(0, top), yG, G.layer === 'front' ? BL_SEE : 1);
+}
 function blShaft(G, y1, hw, cols, opt){
-  const { c, cx, t, k } = G, X = Math.round(cx);
+  if(hw < 1) return;
   y1 = Math.round(y1);
-  if(y1 <= 0 || hw < 1 || !blFront(G)) return;
+  // (from his head down it is drawn through him)
+  blThrough(G, y1, y => blShaftTo(G, y, hw, cols, opt));
+}
+function blShaftTo(G, y1, hw, cols, opt){
+  const { c, cx, t, k } = G, X = Math.round(cx);
+  if(y1 <= 0) return;
   const [edge, body, core, band, hot] = cols, ek = (opt && opt.ek) || k;
-  // (on down over him to the ground, see-through: the user saw it stop at
-  // his head and asked for it to reach the floor with him showing through)
-  blVeil(G, y1, hw, edge, core || (opt && opt.inner) || band || edge, hot || band || core || edge, core ? body : null);
   if(body){ c.fillStyle = blChecker(c, body); c.fillRect(X - hw, 0, hw * 2 + 1, y1); }
   if(opt && opt.inner){ c.fillStyle = opt.inner; c.fillRect(X - hw, 0, 1, y1); c.fillRect(X + hw, 0, 1, y1); }
   c.fillStyle = edge; c.fillRect(X - hw - ek, 0, ek, y1); c.fillRect(X + hw + 1, 0, ek, y1);
@@ -14836,22 +15020,6 @@ function blShaft(G, y1, hw, cols, opt){
     if(hot){ c.fillStyle = hot; c.fillRect(X, 0, 1, y1); } }
   if(G.fall < 1 && hot){ const fw = Math.round(hw * 1.5), fh = Math.max(2, Math.round(hw * 0.5));
     fxEllipse(c, X, y1, fw, fh, band || core, 1); fxEllipse(c, X, y1, Math.max(1, fw * 0.55), Math.max(1, fh * 0.6), hot, 1); c.globalAlpha = 1; }
-}
-// The shaft carried on down over him to the ground, see-through so he
-// shows through it: its edges a pixel wide, its heart a checker of light
-// and its body a sparse sprinkle; from y0 down to its front (or his feet)
-function blVeil(G, y0, hw, edge, core, hot, body){
-  const { c, cx, bot, t } = G, X = Math.round(cx), y1 = Math.min(G.front, Math.round(bot) - 1);
-  y0 = Math.max(0, Math.round(y0));
-  if(y1 <= y0 || !blFront(G)) return;
-  const cw = Math.max(1, Math.round(hw * 0.28)), run = Math.floor(t * 60);
-  c.globalAlpha = 1;
-  for(let y = y0; y < y1; y++){
-    c.fillStyle = edge; c.fillRect(X - hw - 1, y, 1, 1); c.fillRect(X + hw + 1, y, 1, 1);
-    c.fillStyle = core; for(let x = X - cw; x <= X + cw; x++) if(((x + y + run) & 1) === 0) c.fillRect(x, y, 1, 1);
-    if(body){ c.fillStyle = body; for(let x = X - hw; x <= X + hw; x++) if(Math.abs(x - X) > cw && ((x + y) & 3) === 0 && (y & 1) === 0) c.fillRect(x, y, 1, 1); }
-    if(((y + run) % 6) === 0){ c.fillStyle = hot; c.fillRect(X, y, 1, 2); }
-  }
 }
 // an ellipse ring th thick on the ground, the back half before him and the
 // front half after
@@ -14948,15 +15116,15 @@ function blessBolt(G, colA, colB, y1){
 function blessPlain(G, col){
   const { c, cx, bot, half, h, t, fade, front, k } = G, hw = Math.max(2, Math.round(half * 0.55 * (0.4 + 0.6 * fade)));
   const top = Math.min(front, Math.round(bot - h * 1.02)), hi = lite(col, 0.7);
-  if(blFront(G) && top > 0){
+  // (from his head down drawn through him)
+  if(top > 0) blThrough(G, top, y1 => {
     const X = Math.round(cx);
     // (a pixel thicker at each second level up)
     const ek = 1 + (G.up >> 1);
-    c.fillStyle = col; c.fillRect(X - hw - ek + 1, 0, ek, top); c.fillRect(X + hw, 0, ek, top);
-    c.fillStyle = hi; for(let yy = (Math.floor(t * 90) % 6); yy < top; yy += 6) c.fillRect(X, yy, 1, 3);
-    if(G.fall < 1){ c.fillStyle = col; c.fillRect(X - hw, top - 1, hw * 2 + 1, 1); c.fillStyle = '#FFFFFF'; c.fillRect(X, top - 1, 1, 1); }
-  }
-  if(top > 0) blVeil(G, top, hw, col, col, hi, null);
+    c.fillStyle = col; c.fillRect(X - hw - ek + 1, 0, ek, y1); c.fillRect(X + hw, 0, ek, y1);
+    c.fillStyle = hi; for(let yy = (Math.floor(t * 90) % 6); yy < y1; yy += 6) c.fillRect(X, yy, 1, 3);
+    if(G.fall < 1){ c.fillStyle = col; c.fillRect(X - hw, y1 - 1, hw * 2 + 1, 1); c.fillStyle = '#FFFFFF'; c.fillRect(X, y1 - 1, 1, 1); }
+  });
   if(t > 0.28 && fade > 0.2){ const q = Math.min(1, (t - 0.28) / 0.3), RX = half * (0.6 + 0.4 * q);
     blRing(G, bot - 1, RX, Math.max(2, RX * 0.24), 1 + (G.up >> 1), col); }
   blessMotes(G, 4, 0.7, true, false, (x, y) => { c.fillStyle = col; c.fillRect(Math.round(x), Math.round(y), 1, 1); });
@@ -15497,7 +15665,7 @@ const BLESS_FX = {
           for(const s2 of [-1, 1]){ const Hc = dreadHand(kk, s2 > 0), hx = Math.round(cx + s2 * RX * 0.85 - Hc.width / 2), hy = Math.round(bot - 1);
             if(n > 0) c.drawImage(Hc, 0, 0, Hc.width, n * kk, hx, hy - n * kk, Hc.width, n * kk); } } }
       blShaft(G, stop, hw, ['#2EB872', '#0C3A26', '#A8FFD0', '#5CF0A0', '#E8FFF2'], { inner: '#17734A' });
-      blRibbons({ ...G, half: hw / 0.9 }, 0, stop, ['#9A96A6', '#3E3A48', '#6E6A78', '#3E3A48'], 1, 1.25, 5, '#24222C');
+      blRibbons({ ...G, half: hw / 0.9 }, 0, Math.min(front, bot - 1), ['#9A96A6', '#3E3A48', '#6E6A78', '#3E3A48'], 1, 1.25, 5, '#24222C');
       blessMotes(G, 9, 0.7, true, true, (x, y, i) => dreadSoul(c, x, y, 0, -1, h >= 40 && i % 3 === 0 ? 2 : 1, 1));
       blImpact(G, 0.27, ['#2EB872', '#E8FFF2']);
       blSides(G, '#5CF0A0', '#E8FFF2');
@@ -15511,14 +15679,13 @@ const BLESS_FX = {
       const hw = Math.max(2, Math.round(half * 0.5 * (0.35 + 0.65 * fade))), stop = Math.min(front, top), X = Math.round(cx);
       if(t > 0.26 && fade > 0.12 && blBack(G)){ const q = Math.min(1, (t - 0.26) / 0.3), RX = Math.max(4, Math.round(half * (0.7 + 0.45 * q))), RY = Math.max(2, Math.round(RX * 0.26));
         const V = psySpiral(RX, RY, Math.floor(t * 30) % 24, 0); c.globalAlpha = 1; c.drawImage(V, X - V.ox, Math.round(bot - 1) - V.oy); }
-      if(blFront(G) && stop > 0){
+      if(stop > 0) blThrough(G, stop, y1 => {
         const sh = Math.floor(t * 24);
         // bands of the six across it, running down; a white heart
-        for(let yy = 0; yy < stop; yy++){ const col = psyC(Math.floor((yy - t * 90) / 6), 0); c.fillStyle = col; c.fillRect(X - hw, yy, hw * 2 + 1, 1); }
-        c.fillStyle = '#FFFFFF'; c.fillRect(X - Math.max(0, Math.round(hw * 0.2)), 0, Math.max(1, Math.round(hw * 0.4)) + 1, stop);
-        const ek = 1 + (G.up >> 1); c.fillStyle = psyC(sh, 2); c.fillRect(X - hw - ek, 0, ek, stop); c.fillRect(X + hw + 1, 0, ek, stop);
-        blVeil(G, stop, hw, psyC(sh, 0), '#FFFFFF', psyC(sh + 3, 0), psyC(sh + 2, 0));
-      }
+        for(let yy = 0; yy < y1; yy++){ const col = psyC(Math.floor((yy - t * 90) / 6), 0); c.fillStyle = col; c.fillRect(X - hw, yy, hw * 2 + 1, 1); }
+        c.fillStyle = '#FFFFFF'; c.fillRect(X - Math.max(0, Math.round(hw * 0.2)), 0, Math.max(1, Math.round(hw * 0.4)) + 1, y1);
+        const ek = 1 + (G.up >> 1); c.fillStyle = psyC(sh, 2); c.fillRect(X - hw - ek, 0, ek, y1); c.fillRect(X + hw + 1, 0, ek, y1);
+      });
       blessMotes(G, 10, 0.7, false, true, (x, y, i) => psyFlower(c, x, y, h >= 50 ? 2 : 1, i + Math.floor(t * 4)));
       blImpact(G, 0.27, ['#FF2E88', '#2EC8FF']);
       blSides(G, '#FFE81E', '#FFFFFF');
@@ -15538,7 +15705,7 @@ const BLESS_FX = {
           c.fillStyle = j & 1 ? '#7FE6FF' : '#F4DC96'; c.fillRect(Math.round(cx + Math.cos(a) * RX * r), Math.round(bot - 1 + Math.sin(a) * RY * r), 1, 1); }
         if(blBack(G)) voidHole(c, cx, bot - 2, Math.max(1, Math.round(h / 26)), t, true); }
       blShaft(G, stop, hw, ['#3E2A6E', '#120A24', null, '#2A1C4A', null], { inner: '#D8B060' });
-      blRibbons({ ...G, half: hw / 0.9 }, 0, stop, ['#F4DC96', '#7A5A24', '#D8B060', '#7A5A24'], 1, 1.25, 6);
+      blRibbons({ ...G, half: hw / 0.9 }, 0, Math.min(front, bot - 1), ['#F4DC96', '#7A5A24', '#D8B060', '#7A5A24'], 1, 1.25, 6);
       blessMotes({ ...G, bot: Math.max(8, hy + 2) }, 10, 0.9, false, false, (x, y, i) => {
         const pull = Math.min(1, y / Math.max(1, hy)), X = cx + (x - cx) * (1 - pull * 0.8);
         if(Math.sin(t * 11 + i * 2.3) > -0.2) voidStar(c, X, y, 1, i % 3 === 0 ? 1 : 0, i & 1 ? '#7FE6FF' : '#B98CFF'); });
@@ -19011,14 +19178,16 @@ const CLUBFX = {
 // lifted at the heel with the sole of its shoe showing, the planted one
 // straight. ph as for drawLegs. An outfit with a belt colour of its own
 // wears it on its soles, as it does side-on.
+// (his legs drawn up under him in the air, 0..1: a hop over the stones)
+let LEGS_TUCK = 0;
 function drawLegsBack(c, cx, hy, len, w, ph, near, far, shoe, sole = '#B8AE9C', bulk, pat){
   // (built out as his body is: each leg the wider by his build, so his
   // legs are as broad as his chest)
   const n = bulk ? bulk.legs * (bulk.s === undefined ? 1 : bulk.s) : 0, th = Math.max(1, Math.round(w * 0.11 + n)), gap = w * 0.085 + n / 2;
   for(let i = 0; i < 2; i++){
-    const q = ph * Math.PI * 2 + i * Math.PI, lift = Math.max(0, Math.sin(q));
+    const q = ph * Math.PI * 2 + i * Math.PI, lift = Math.max(LEGS_TUCK, Math.max(0, Math.sin(q)));
     const lx = Math.round(cx + (i ? gap : -gap) - th / 2);
-    const L = len * (1 - 0.14 * lift), fy = Math.round(hy + L);
+    const L = len * (1 - 0.14 * lift - 0.18 * LEGS_TUCK * (i ? 1 : 0.7)), fy = Math.round(hy + L);
     c.fillStyle = i ? far : near;
     c.fillRect(lx, Math.round(hy), th, fy - Math.round(hy));
     // the calf, a shade darker where it turns away
@@ -19057,7 +19226,15 @@ const NIGHT_GLOW = {
   ascended: { col: ['#402A5E', '#7A3A96', '#C45AD8'], breathe: 1.1 },
   cosmic:   { col: ['#241A44', '#3E2A6E', '#7A4ED8'], breathe: 1.2 },
   dread:    { col: ['#0C3A26', '#17734A', '#2EB872'], breathe: 0.9 },
-  psyche:   { col: ['#4A2290', '#C81E6A', '#FF8A1E'], breathe: 2.2 }
+  psyche:   { col: ['#4A2290', '#C81E6A', '#FF8A1E'], breathe: 2.2 },
+  // (and the Legendary skins, after them: the user asked them a night too)
+  inferno:     { col: ['#5A1A0A', '#B8401C', '#FF9A2A'], flicker: 1 },
+  frostborn:   { col: ['#1E3A5A', '#3F7FB0', '#BFE6FA'], breathe: 1.0 },
+  stormcaller: { col: ['#141E3A', '#2A4A7A', '#8FD0FF'], breathe: 2.6 },
+  void:        { col: ['#1C0F2A', '#3A1E5A', '#9A62D6'], breathe: 0.8 },
+  glitch:      { col: ['#0A2A2E', '#1A6A7A', '#2AE0FF'], breathe: 3.1 },
+  midas:       { col: ['#4A3408', '#8A6A1A', '#FFD86B'], breathe: 1.3 },
+  disco:       { col: ['#3A0F3A', '#8A2A8A', '#FF4FB8'], breathe: 2.0 }
 };
 // A pool of light on the ground at his feet: an ellipse three of his widths
 // across, dithered solid pixels (a wash of light turns grey on grass),
@@ -19078,6 +19255,33 @@ function nightPool(c, g, NG){
     else if(!par && (gy & 1)) col = NG.col[0];
     if(col){ c.fillStyle = col; c.fillRect(gx, gy, 1, 1); }
   }
+}
+// Her hair on a skin with an effect, drawn over what the skin puts on her
+// head (a hood, a mask, a crown), in the skin's own colours: a ponytail
+// out from the back of her head side on, down her back from behind,
+// swinging a little. Plain looks have it in their picture (femRows).
+// ([its colour, the dark edge it is drawn in, so it shows against her])
+const FEM_HAIR = { divine: ['#F4D27A', '#0E5A48'], midas: ['#FFF2B8', '#6A4A10'], void: ['#C68BFF', '#120A24'],
+  dread: ['#C8FFE0', '#0C3A26'], inferno: ['#FFD34A', '#4A1408'], demonic: ['#FF8A24', '#1A0A0A'],
+  ascended: ['#F2A6F8', '#3A1A5A'], cosmic: ['#7FE6FF', '#120A24'], frostborn: ['#FFFFFF', '#3F7FB0'],
+  stormcaller: ['#BFE0FF', '#1A2A4A'], glitch: ['#FF2A6D', '#0A2A2E'], disco: ['#FF4FB8', '#3A0F3A'],
+  ghost: ['#EEF2FF', '#5A6488'] };
+function femTail(c, g, fx){
+  if(!isFem() || g.minor || g.fly) return;
+  const H = g.head, h = g.h, th = Math.max(2, Math.round(h / 22)), sw = Math.sin(g.t * 3.1) * h * 0.012;
+  const P = fx === 'psyche' ? [psyC(Math.floor(g.t * 6), 0), '#1A1024'] : FEM_HAIR[fx] || [HAIR, '#24180F'];
+  // (the head's box is about its middle: her back is to the left side on.
+  // Side on it springs back from under her cap and falls; from behind it
+  // hangs down her back)
+  let pts;
+  if(g.back){ const x0 = H.x, y0 = H.y + H.hh + h * 0.03; pts = [[x0, y0], [x0 + sw * 0.5, y0 + h * 0.1], [x0 + sw, y0 + h * 0.19]]; }
+  else { const sh = g.shear ? g.shear(0.1) : 0, x0 = H.x - H.w * 0.5 + sh, y0 = H.y + H.hh * 0.75;
+    pts = [[x0, y0], [x0 - h * 0.07, y0 + h * 0.02], [x0 - h * 0.1 + sw, y0 + h * 0.13]]; }
+  c.globalAlpha = 1;
+  for(const [col, t2] of [[P[1], th + 2], [P[0], th]])
+    for(let i = 1; i < pts.length; i++) pxLine(c, pts[i - 1][0], pts[i - 1][1], pts[i][0], pts[i][1], col, t2);
+  // (a band where it is tied, in the darker of the two)
+  c.fillStyle = P[1]; c.fillRect(Math.round(pts[0][0] + (pts[1][0] - pts[0][0]) * 0.4), Math.round(pts[0][1] + (pts[1][1] - pts[0][1]) * 0.4) - (th >> 1), 1, th + 1);
 }
 /* One golfer, at any size, in the look he is wearing: the course draws him
    through this and so does the battery saver, so the two always match. ph is
@@ -19141,6 +19345,7 @@ function paintGolfer(c, x, y, w, h, ph, t, bot, walking, walkPh, spr, arc, putt,
     }
     c.globalAlpha = 1;
     if(FX && FX.front) FX.front(c, g);
+    if(FX) femTail(c, g, outfitNow().fx);
     if(FL){ c.globalAlpha = 1; FX.flourish(c, g, FL, 'front'); }
     c.globalAlpha = 1; c.globalCompositeOperation = 'source-over';
     return;
@@ -19171,6 +19376,7 @@ function paintGolfer(c, x, y, w, h, ph, t, bot, walking, walkPh, spr, arc, putt,
   drawClub(c, hx, hy, tx, ty, th, h, arm > FIN - 0.3 || arm < TOP + 0.3 ? 0 : (arm > ADDR ? 1 : -1), t);
   c.globalAlpha = 1;
   if(FX && FX.front) FX.front(c, g);
+  if(FX) femTail(c, g, outfitNow().fx);
   if(FL){ c.globalAlpha = 1; FX.flourish(c, g, FL, 'front'); }
   // a pure strike's flourish at the ball, for the clubs that have one
   const PF = CF && CF.pure ? pureNow(t) : null;
@@ -20885,11 +21091,24 @@ Object.assign(Scene, {
     const x = waving ? p.x - Math.round(w*0.5) : walking ? p.x - Math.round(w*0.5) + Math.round(Math.sin(this.walkPh * Math.PI * 2) * w * 0.02)
                       : p.x - Math.round(w*0.42);
     const stepUp = walking && !waving && (Math.floor(this.walkPh * 4) & 1) ? Math.max(1, Math.round(h / 40)) : 0;
-    // on the stepping stones he hops from one to the next
-    const I = this.isle, hop = walking && this.crossing && I && I.hop
-      ? Math.round(Math.sin(Math.PI * ((((this.camD - I.bank) / I.hopLen) % 1) + 1) % 1) * h * 0.3) : 0;
-    const y = p.y - h - stepUp - hop - (FX && FX.bob ? Math.round(2 + Math.sin(this.t * 2.2) * 2) : 0);
-    return { p, ph, walking, spr, h, w, x, y, wave: waving ? wave : 0 };
+    // On the stepping stones he jumps from one to the next (the user: "the
+    // golfer isn't just moving up and down"): he crouches on a stone to
+    // spring, goes up stretched, draws his legs up under him over the
+    // water, and lands into a crouch on the next; his shadow stays on the
+    // stones (see paintGolfer)
+    const I = this.isle, hopping = walking && this.crossing && I && I.hop;
+    let hop = 0, sq = 0, air = 0;
+    if(hopping){
+      const u = ((((this.camD - I.bank) / I.hopLen) % 1) + 1) % 1;
+      if(u < HOP_CROUCH) sq = Math.sin(Math.PI * u / HOP_CROUCH);
+      else if(u > 1 - HOP_CROUCH) sq = Math.sin(Math.PI * (u - 1 + HOP_CROUCH) / HOP_CROUCH);
+      else{ air = (u - HOP_CROUCH) / (1 - 2 * HOP_CROUCH); hop = Math.round(Math.sin(Math.PI * air) * h * 0.42); }
+    }
+    // (in a crouch he is shorter, his feet where they were; just off the
+    // stone, a little longer)
+    const hh = h - Math.round(sq * h * 0.12) + (air > 0 && air < 0.3 ? Math.round(Math.sin(Math.PI * air / 0.3) * h * 0.04) : 0);
+    const y = p.y - hh - stepUp - hop - (FX && FX.bob ? Math.round(2 + Math.sin(this.t * 2.2) * 2) : 0);
+    return { p, ph, walking, spr, h: hh, w, x, y, wave: waving ? wave : 0, hopAir: air, hopSq: sq, hopping: !!hopping };
   },
   // A skin's ground (its circle on the grass under him) goes down before the
   // pin, the cup and a putt rolling away beyond him, which all stand on it:
@@ -20947,7 +21166,10 @@ Object.assign(Scene, {
     }
     // (the blessing's ground and what is behind him go down first)
     if(atCam === undefined) this.drawBless(c, x, y, w, h, p.y, 'back');
-    paintGolfer(c, x, y, w, h, ph, this.t, p.y, walking, G.wave ? 0 : this.walkPh, spr, this.clubArc || (this.clubArc = []), PT >= 0 ? this.puttArm(PT) : undefined, true, G.wave);
+    // (over the water his legs drawn up, a stride held, not walking on air)
+    LEGS_TUCK = G.hopAir > 0 ? Math.sin(Math.PI * G.hopAir) : 0;
+    try{ paintGolfer(c, x, y, w, h, ph, this.t, p.y, walking, G.wave ? 0 : G.hopping ? 0.12 : this.walkPh, spr, this.clubArc || (this.clubArc = []), PT >= 0 ? this.puttArm(PT) : undefined, true, G.wave); }
+    finally{ LEGS_TUCK = 0; }
     if(puttLate) puttLate();
     if(atCam === undefined && SPRITE.caddie) this.drawCaddie(c, p.x - Math.round(w*0.42), y, w, h);
     if(atCam === undefined) this.drawBless(c, x, y, w, h, p.y, 'front');
@@ -21686,10 +21908,11 @@ Object.assign(Scene, {
     const c = this.b, clip = this.clipAt(dc), dir = A.dir, kind = A.kind, K = trainKind(this.train), t = this.t;
     // (the fine work, bands, rods, doors and lining, only where a tenth of
     // a unit is a pixel or more: far off it would only blot out the colours)
-    const big = LAT * this.proj(dc, 0, 0).s >= 10;
+    const big = LAT * this.proj(dc, 0, 0).s * TRAIN_K >= 10;
     // one piece: x0..x1 along the train from its tail (0) toward its head, z0..z1 up
+    const F = TRAIN_K;
     const box = (x0, x1, z0, z1, col) => {
-      const a = this.proj(dc, dir * (A.tail + x0), z1), b = this.proj(dc, dir * (A.tail + x1), z0);
+      const a = this.proj(dc, dir * (A.tail + x0 * F), z1 * F), b = this.proj(dc, dir * (A.tail + x1 * F), z0 * F);
       const l = Math.round(Math.min(a.x, b.x)), r = Math.round(Math.max(a.x, b.x));
       if(r < -2 || l > VW + 2) return;
       c.fillStyle = col; fillClip(c, l, Math.round(a.y), Math.max(1, r - l), Math.max(1, Math.round(b.y - a.y)), clip);
@@ -21777,8 +22000,8 @@ Object.assign(Scene, {
       if(N){
         box(7.3, 7.4, 0.55, 0.7, '#FFF6C8');
         for(let x = 7.4; x < 10.4; x += 0.04){
-          const f = (x - 7.4) / 3, p = this.proj(dc, dir * (A.tail + x), 0.1 + 0.5 * (1 - f));
-          const hh = Math.max(1, Math.round(LAT * p.s * 0.45 * f));
+          const f = (x - 7.4) / 3, p = this.proj(dc, dir * (A.tail + x * F), (0.1 + 0.5 * (1 - f)) * F);
+          const hh = Math.max(1, Math.round(LAT * p.s * 0.45 * f * F));
           c.fillStyle = f < 0.4 ? '#FFF1B0' : '#D8C47A';
           const X = Math.round(p.x), Y0 = Math.round(p.y) - (hh >> 1);
           for(let yy = 0; yy < hh; yy++) if(f < 0.3 || (((X + Y0 + yy) & 1) && (f < 0.7 || hr(X, yy) > 0.5))) fillClip(c, X, Y0 + yy, 1, 1, clip);
@@ -21794,8 +22017,8 @@ Object.assign(Scene, {
       const pa = (age % 0.2) + i * 0.2;
       if(pa > age) break;
       const q = pa / 1.2;
-      const p = this.proj(dc, dir * (A.tail + chim - pa * K.v * 0.45), 1.4 + pa * 1.3);
-      const r = Math.max(1, Math.round(LAT * p.s * (0.1 + q * 0.16)));
+      const p = this.proj(dc, dir * (A.tail + chim * F - pa * K.v * 0.45), (1.4 + pa * 1.3) * F);
+      const r = Math.max(1, Math.round(LAT * p.s * (0.1 + q * 0.16) * F));
       c.globalAlpha = 0.7 * (1 - q);
       c.fillStyle = kind === 'goods' ? '#8A8A88' : '#EDEDEA';
       // a round puff, a row at a time
@@ -21809,25 +22032,70 @@ Object.assign(Scene, {
   // The driver's hand out of his cab window, waving, while his cab is near
   // the crossing (x is where his window is along the train)
   driverWave(box, x, A){
-    const at = A.tail + x;
-    if(Math.abs(at) > 9) return;
+    const at = A.tail + x * TRAIN_K;
+    if(Math.abs(at) > 9 * TRAIN_K) return;
     const w = Math.sin(this.t * 14) * 0.07;
-    box(x + w * 0.5, x + w * 0.5 + 0.08, 1.0, 1.45, '#E0B090');
-    box(x + w - 0.02, x + w + 0.1, 1.45, 1.57, '#E0B090');
+    // (up out of his window and no higher than the roof: at life size an
+    // arm up over it stood up like a post)
+    box(x + w * 0.5, x + w * 0.5 + 0.05, 0.96, 1.16, '#E0B090');
+    box(x + w - 0.01, x + w + 0.06, 1.16, 1.24, '#E0B090');
   },
 
-  drawTee(){
+  // The tee box (the user sent a picture of a real one): a flat deck of
+  // close-mown grass a little lighter than the fairway, raised a touch on
+  // a bank, its corners rounded, mown in stripes across, with a pair of
+  // ball markers at its front. A wager keeps its two plain posts (the
+  // Island's moat opens round his feet). Drawn row by row from its far end
+  // to its near, cut where a rise in front hides it.
+  drawTee(deck){
     if(0.2 - this.camD + CAM_BACK < 1.2) return;
     const c = this.b;
+    if(!deck){
+      for(const sx of [-1, 1]){
+        const p = this.proj(0.2, sx*1.55);
+        if(p.y < HORIZON + 2 || p.y > VH + 4) continue;
+        const h = Math.max(2, Math.round(2.4 * US * p.s));
+        const w = Math.max(1, Math.round(h*0.75));
+        c.fillStyle = sx < 0 ? PX.flag : PX.bone;
+        c.fillRect(p.x - (w >> 1), p.y - h, w, h);
+        c.fillStyle = PX.white;
+        c.fillRect(p.x - (w >> 1), p.y - h, w, Math.max(1, Math.round(h*0.3)));
+      }
+      return;
+    }
+    const T = this.theme || THEMES.day;
+    // (lighter than the fairway round it, a band of each stripe; a darker
+    // collar at its edge and the bank under it darker again, so it reads
+    // as a deck set on the ground and not a paler patch of fairway)
+    if(!T._tee){ const base = mixC(T.gr[3], T.fw[6], 0.25);
+      T._tee = { a: lite(base, 0.10), b: dark(base, 0.02), rim: dark(T.fw[4], 0.14), bank: dark(T.fw[3], 0.26) }; }
+    const TC = T._tee, D0 = TEE_DECK.d0, D1 = TEE_DECK.d1, HW = TEE_DECK.hw, R = TEE_DECK.r, LIFT = TEE_DECK.lift;
+    const half = d => { const e = Math.min(d - D0, D1 - d); return e >= R ? HW : HW - R + Math.sqrt(Math.max(0, R * R - (R - e) * (R - e))); };
+    // its bank first, at the ground; the deck over it, lifted
+    for(const [lift, top] of [[0, false], [LIFT, true]]){
+      let py = null;
+      for(let d = D1; d >= D0 - 1e-6; d -= 0.012){
+        if(d - this.camD + CAM_BACK < 0.8) break;
+        const hw = half(d), p = this.proj(d, -hw, lift), q = this.proj(d, hw, lift), y = Math.round((p.y + q.y) / 2);
+        if(py === null){ py = y; if(top){ c.fillStyle = TC.rim; c.fillRect(p.x, y - 1, q.x - p.x + 1, 1); } continue; }
+        if(y <= py) continue;
+        const cut = this.clipAt(d) + 1;
+        for(let yy = py; yy < y; yy++){
+          if(yy > cut || yy < HORIZON) continue;
+          // (stripes across it, a world measure apart)
+          c.fillStyle = !top ? TC.bank : (Math.floor((d - D0) / 0.42) & 1) ? TC.a : TC.b;
+          c.fillRect(p.x, yy, q.x - p.x + 1, 1);
+          if(top){ c.fillStyle = TC.rim; c.fillRect(p.x, yy, 1, 1); c.fillRect(q.x, yy, 1, 1); }
+        }
+        py = y;
+      }
+    }
+    // the markers: two balls at its front
     for(const sx of [-1, 1]){
-      const p = this.proj(0.2, sx*1.55);
-      if(p.y < HORIZON + 2 || p.y > VH + 4) continue;
-      const h = Math.max(2, Math.round(2.4 * US * p.s));
-      const w = Math.max(1, Math.round(h*0.75));
-      c.fillStyle = sx < 0 ? PX.flag : PX.bone;
-      c.fillRect(p.x - (w >> 1), p.y - h, w, h);
-      c.fillStyle = PX.white;
-      c.fillRect(p.x - (w >> 1), p.y - h, w, Math.max(1, Math.round(h*0.3)));
+      const p = this.proj(TEE_DECK.mark, sx * TEE_DECK.markLat, LIFT);
+      if(p.y < HORIZON + 2 || p.y > VH + 4 || p.y > this.clipAt(TEE_DECK.mark) + 1) continue;
+      const r = Math.max(1.5, 0.11 * LAT * p.s);
+      lbSphere(c, p.x, p.y - r, r, TEE_DECK.col);
     }
   },
 
@@ -22396,7 +22664,7 @@ Object.assign(Scene, {
       else this.drawProps();
       this.buildHaze();
       if(this.haze) this.overTrees(c, this.haze);
-      this.drawTee();
+      this.drawTee(true);
       this.drawBridge();
       this.drawStones();
       this.drawPier();
@@ -25353,6 +25621,13 @@ const isIOS = () => /iP(hone|ad|od)/.test(navigator.userAgent)
   || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 const isStandalone = () => navigator.standalone === true
   || (window.matchMedia && matchMedia('(display-mode: standalone)').matches);
+// him or her, from the Settings: the pictures made again, the shop's too
+function setGender(g){
+  S.gender = g === 'f' ? 'f' : 'm';
+  for(const k in SHOWSPR) delete SHOWSPR[k];
+  buildSprites(); save();
+  if($('gender_m')){ $('gender_m').checked = S.gender === 'm'; $('gender_f').checked = S.gender === 'f'; }
+}
 function settingsSheet(){
   const row = (nm, ds, btn) => '<div class="setrow"><div><div class="nm">' + nm + '</div>'
     + (ds ? '<div class="ds">' + ds + '</div>' : '') + '</div>' + btn + '</div>';
@@ -25368,6 +25643,11 @@ function settingsSheet(){
     + row('Night Music', S.music === 0 || S.sound === 0 ? 'Needs Music on' : 'A calmer tune at night and in wagers',
         '<button class="mini' + (S.music2 !== 0 ? ' go' : '') + '" onclick="toggleMusic2()">'
         + (S.music2 !== 0 ? 'On' : 'Off') + '</button>')
+    // (the golfer: him or her, a box each, one ticked; the user asked for
+    // "a checkbox for Male Golfer and a checkbox for Female Golfer")
+    + ['m', 'f'].map(g => row(g === 'm' ? 'Male Golfer' : 'Female Golfer', '',
+        '<input type="checkbox" class="setchk" id="gender_' + g + '"' + ((S.gender === 'f') === (g === 'f') ? ' checked' : '')
+        + ' aria-label="' + (g === 'm' ? 'Male' : 'Female') + ' golfer" onchange="setGender(\'' + g + '\')">')).join('')
     + row('Dawn and Dusk', 'Day and night follow your clock, from the next hole',
         '<button class="mini' + (S.dawnDusk === 1 ? ' go' : '') + '" onclick="toggleDawn()">'
         + (S.dawnDusk === 1 ? 'On' : 'Off') + '</button>')

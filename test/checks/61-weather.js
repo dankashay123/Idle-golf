@@ -149,15 +149,15 @@ module.exports = {
         // ---- the dearest skins' light on the grass at night ----
         hole(home);
         o.glow = {};
-        for (const id of ['divine', 'demonic', 'ascended', 'inferno']) {
+        for (const id of ['divine', 'demonic', 'ascended', 'inferno', 'ghost']) {
           S.styleOwn['o:' + id] = 1; S.outfit = id; buildSprites();
           const run = (chaos) => { setup(chaos); const G = Scene.golferPose(); blank(); Scene.golferGround(c, G);
             const cols = new Set((NIGHT_GLOW[id] || NIGHT_GLOW.divine).col); return count(cols); };
           const nt = run('Night Round'), dy = run('Fair');
           o.glow[id] = nt + '/' + dy;
-          if (id !== 'inferno' && nt < 40) f('the ' + id + ' at night lit ' + nt + ' pixels of grass');
+          if (id !== 'ghost' && nt < 40) f('the ' + id + ' at night lit ' + nt + ' pixels of grass');
           if (dy) f('the ' + id + ' lit the grass by day: ' + dy);
-          if (id === 'inferno' && nt) f('a plain effect skin lit the grass at night: ' + nt);
+          if (id === 'ghost' && nt) f('a plain effect skin lit the grass at night: ' + nt);
         }
       } finally {
         window.step = keep; FROST_FORCE = null; HOUR_FORCE = null; SEASON_FORCE = -1; S.dgnRun = null;
