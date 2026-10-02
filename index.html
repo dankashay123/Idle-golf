@@ -21088,10 +21088,11 @@ Object.assign(Scene, {
       if(rd && cv && rd.offsetParent){ const k = cv.getBoundingClientRect().height / Math.max(1, VH);
         if(k > 0) top = (rd.getBoundingClientRect().bottom - cv.getBoundingClientRect().top) / k; }
       const lo = Math.max(top + 10 * TSC, HORIZON * 0.36), hi = Math.max(lo, HORIZON * 0.56);
-      // (in autumn and winter one flock in two is geese, in a V, higher,
+      // (in autumn and winter one flock in two is geese, in a shallow V that
+      // fits between the readout and the hills,
       // bigger and slower on the wing: the user asked for them)
       const sea = this.look && this.look.season, geese = (sea === 'Autumn' || sea === 'Winter') && hr(n, 347) < 0.5;
-      this.flock = { t0: this.t, dir: hr(n, 341) < 0.5 ? -1 : 1, y: geese ? lo : lo + hr(n, 342) * (hi - lo), m: geese ? 7 + Math.floor(hr(n, 343) * 6) : 5 + Math.floor(hr(n, 343) * 5),
+      this.flock = { t0: this.t, dir: hr(n, 341) < 0.5 ? -1 : 1, y: geese ? Math.min(lo + 2 * TSC, HORIZON * 0.7 - 12 * TSC) : lo + hr(n, 342) * (hi - lo), m: geese ? 6 + Math.floor(hr(n, 343) * 4) : 5 + Math.floor(hr(n, 343) * 5),
                      v: geese ? 0.05 + hr(n, 344) * 0.02 : 0.07 + hr(n, 344) * 0.04, n, geese };
       this.flockNext = this.t + 22 + hr(n, 345) * 26;
     }
@@ -21122,10 +21123,10 @@ Object.assign(Scene, {
   drawGeese(c, F, u, k){
     const D = F.dir;
     for(let i = 0; i < F.m; i++){
-      const r = Math.ceil(i / 2), side = i & 1 ? 1 : -1, arm = side > 0 ? 1 : 1.15;
+      const r = Math.ceil(i / 2), side = i & 1 ? 1 : -1, arm = side > 0 ? 1 : 1.12;
       const lag = r * 9 * k * arm + hr(F.n * 17 + i, 348) * 2 * k;
       const lead = D > 0 ? u : VW - u;
-      const px = Math.round(lead - D * lag), py = Math.round(F.y + side * r * 3.2 * k * arm + Math.sin(this.t * 0.7 + i) * k * 0.6);
+      const px = Math.round(lead - D * lag), py = Math.round(F.y + side * r * 1.7 * k * arm + Math.sin(this.t * 0.7 + i) * k * 0.6);
       if(px < -10 * k || px > VW + 10 * k || py < 2 * k) continue;
       const ph = Math.floor((this.t * 4.2 + hr(F.n * 5 + i, 349) * 3) % 3);
       const R = (x, y, w, h, col) => { c.fillStyle = col; c.fillRect(D > 0 ? px + x * k : px - (x + w) * k, py + y * k, w * k, h * k); };
