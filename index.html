@@ -9694,7 +9694,19 @@ const PATTERNS = {
     return k === 0 ? '#D8B060' : k === 1 && (y & 1) ? '#9A7432' : PATTERNS.cosmos(x, y); },
   // the Divine: gold thread worked into his white robe, a scroll of cloud
   // here and there
-  heaven: (x, y) => { const k = (x * 5 + y * 3) % 19; return k === 0 ? '#E0AE3E' : k === 1 && (y & 1) ? '#F4D27A' : null; },
+  // (made as fine as the Ascended's wings, the user asked: clouds of gold
+  // thread in rows, each lit along its top and shadowed under, folds down
+  // the white between them, and his own shading kept)
+  heaven: (x, y, sh) => {
+    if(sh === 2) return null;
+    const row = Math.floor(y / 5), u = ((x + (row & 1) * 4) % 8 + 8) % 8, v = y % 5;
+    const M = ['.LG.', 'G..G', '.GGs'][v];
+    const m = M && M[u];
+    if(m === 'L') return '#FFF2B8';
+    if(m === 'G') return sh ? '#B8841E' : '#E0AE3E';
+    if(m === 's') return sh ? null : '#E6DCC4';
+    if(!sh && u === 6 && v < 4) return '#EEE8DA';
+    return null; },
   // and the skirt of his robe to his thighs, hemmed in gold; below it
   // crimson, his knee guards gold with a jade stone, and gold at his ankles
   // (the Divine's crimson skirt worked in a gold lattice, after the user's
@@ -9713,9 +9725,11 @@ function patterned(sp, o){
   for(let y = 0; y < sp.h; y++) for(let x = 0; x < sp.w; x++){
     const i = (y * sp.w + x) * 4; if(!d.data[i + 3]) continue;
     const c0 = '#' + [d.data[i], d.data[i + 1], d.data[i + 2]].map(v => v.toString(16).padStart(2, '0')).join('');
-    const pat = shirt.includes(c0) && o.pattern ? PATTERNS[o.pattern](x, y)
-              : cap.includes(c0) && o.capPattern ? PATTERNS[o.capPattern](x, y)
-              : pant.includes(c0) && o.pantPattern ? PATTERNS[o.pantPattern](x, y) : null;
+    // (a pattern is told which of the cloth's shades the pixel was, 0 the
+    // lightest, so it can keep his shading and fold it into its own)
+    const pat = shirt.includes(c0) && o.pattern ? PATTERNS[o.pattern](x, y, shirt.indexOf(c0))
+              : cap.includes(c0) && o.capPattern ? PATTERNS[o.capPattern](x, y, cap.indexOf(c0))
+              : pant.includes(c0) && o.pantPattern ? PATTERNS[o.pantPattern](x, y, pant.indexOf(c0)) : null;
     if(!pat) continue;
     d.data[i] = parseInt(pat.slice(1, 3), 16); d.data[i + 1] = parseInt(pat.slice(3, 5), 16); d.data[i + 2] = parseInt(pat.slice(5, 7), 16);
   }
@@ -10986,14 +11000,21 @@ const STYLEFX = {
       c.fillStyle = '#D9A63A'; c.fillRect(cx - half, cy, half * 2 + 1, k + 1);
       c.fillStyle = '#F4D27A'; c.fillRect(cx - half, cy, half * 2 + 1, 1);
       c.fillStyle = '#8A6418'; c.fillRect(cx - half, cy + k, half * 2 + 1, 1);
-      // three points, the middle tallest, jade at each tip
-      const pts = [[-half + k, 2.2], [0, 3.4], [half - k, 2.2]];
+      // the band studded with pearls of light; five points, the middle
+      // tallest, each lit down one side and shadowed down the other, a
+      // jade set at each tip in a dark rim with a glint (as fine as the
+      // Ascended's wings, the user asked)
+      c.fillStyle = '#FFF2B8'; for(let x = cx - half + 1; x <= cx + half; x += Math.max(2, k * 2)) c.fillRect(x, cy + (k >> 1), 1, 1);
+      const pts = half >= 4 ? [[-half + 1, 1.8], [-half * 0.5, 2.6], [0, 3.6], [half * 0.5, 2.6], [half - 1, 1.8]] : [[-half + k, 2.2], [0, 3.4], [half - k, 2.2]];
       for(const [dx, hh] of pts){
-        const H = Math.max(2, Math.round(hh * k)), x0 = cx + dx;
-        for(let r = 0; r < H; r++){ const wd = Math.max(1, Math.round(k * 1.5 * (1 - r / H)));
-          c.fillStyle = r === 0 ? '#E0AE3E' : '#D9A63A'; c.fillRect(x0 - (wd >> 1), cy - 1 - r, wd, 1); }
-        c.fillStyle = '#2FB592'; c.fillRect(x0 - (k >> 1), cy - H - k + 1, k, k);
-        if(k > 1){ c.fillStyle = '#7FF0C8'; c.fillRect(x0 - (k >> 1), cy - H - k + 1, 1, 1); }
+        const H = Math.max(2, Math.round(hh * k)), x0 = Math.round(cx + dx);
+        for(let r = 0; r < H; r++){ const wd = Math.max(1, Math.round(k * 1.6 * (1 - r / H))), xl = x0 - (wd >> 1);
+          c.fillStyle = '#D9A63A'; c.fillRect(xl, cy - 1 - r, wd, 1);
+          if(wd > 1){ c.fillStyle = '#F4D27A'; c.fillRect(xl, cy - 1 - r, 1, 1); c.fillStyle = '#8A6418'; c.fillRect(xl + wd - 1, cy - 1 - r, 1, 1); } }
+        const gs = Math.max(1, k), gx = x0 - (gs >> 1), gy = cy - H - gs + 1;
+        if(gs > 1){ c.fillStyle = '#17745C'; c.fillRect(gx - 1, gy, gs + 2, gs); c.fillRect(gx, gy - 1, gs, gs + 2); }
+        c.fillStyle = '#2FB592'; c.fillRect(gx, gy, gs, gs);
+        c.fillStyle = '#7FF0C8'; c.fillRect(gx, gy, 1, 1);
       }
       // the crimson stone on the band
       if(view === 'side' || g.minor){ c.fillStyle = '#D8283A'; c.fillRect(cx + (view === 'side' ? Math.round(half * 0.55) : 0), cy, Math.max(1, k), Math.max(1, k)); }
@@ -11052,6 +11073,10 @@ const STYLEFX = {
         const wd = Math.max(1, Math.round(w0 * (1 - f * 0.65)));
         pxLine(c, x, y, nx, ny, '#AEB6C4', wd);
         if(wd > 1) pxLine(c, x, y - (g.back ? 0 : 1), nx, ny - (g.back ? 0 : 1), i & 1 ? '#FFFFFF' : '#E8ECF2', Math.max(1, wd - 1));
+        // (strands down it, as fine as the Ascended's wings: a darker one
+        // through the middle, a lit one along its top)
+        if(wd > 2){ pxLine(c, x, y + (g.back ? 0 : 1), nx, ny + (g.back ? 0 : 1), '#9AA2B2', 1);
+          if(g.back) pxLine(c, x - 1, y, nx - 1, ny, '#C8CED8', 1); }
         // (bound in gold near his head)
         if(i === 2){ c.fillStyle = '#D9A63A'; c.fillRect(Math.round(nx) - (wd >> 1), Math.round(ny) - (wd >> 1) - 1, wd + 1, wd + 1); }
         x = nx; y = ny;
@@ -11168,7 +11193,7 @@ const STYLEFX = {
     // as he winds up, flung out as he strikes.
     ribbons(c, g, front){
       const { cx, cy, w, h, t } = g, L = legendNow(g), q = g.minor || L ? 0 : this.charge(g.ph), st = g.minor ? -1 : this.strike(g.ph);
-      const N = g.minor ? 2 : 3, TAIL = g.minor ? 16 : 26, wd = g.h >= 45 ? 3 : 2;
+      const N = g.minor ? 2 : 3, TAIL = g.minor ? 16 : 26, wd = g.h >= 80 ? 5 : g.h >= 45 ? 4 : 2;
       const R = w * (g.minor ? 0.55 : 0.82) * (1 - q * 0.2 + (st >= 0 ? Math.sin(st * Math.PI) * 0.35 : 0) + (L ? outBack(L.f, 0.15) * 0.4 : 0));
       const spin = 1.3 + q * 1.8, COLS = [['#17866A', '#3FD6A8', '#B8FFE6'], ['#B8841E', '#F2C14E', '#FFF2B8'], ['#17866A', '#3FD6A8', '#B8FFE6']];
       for(let i = 0; i < N; i++){
@@ -11182,10 +11207,18 @@ const STYLEFX = {
         for(let s = TAIL; s >= 1; s--){
           const A = pts[s], B2 = pts[s - 1];
           if((B2.d > 0) !== front) continue;
-          const f = s / TAIL, ww = Math.max(1, Math.round(wd * (1 - f * 0.55)));
+          // (made as fine as the Ascended's wings, the user asked: each
+          // ribbon a band with a dark edge under it, its body, a light
+          // along its top and a thread of gold or jade down its middle; it
+          // narrows where it turns edge on, and frays into its tail)
+          const f = s / TAIL, turn = 0.45 + 0.55 * Math.abs(B2.d), ww = Math.max(1, Math.round(wd * (1 - f * 0.55) * turn));
           if(f > 0.8 && (s & 1)) continue;
-          pxLine(c, A.x, A.y, B2.x, B2.y, f > 0.55 ? C[0] : C[1], ww);
-          if(ww > 1 && f < 0.55) pxLine(c, A.x, A.y, B2.x, B2.y, C[2], 1);
+          if(ww < 3 || f > 0.55){ pxLine(c, A.x, A.y, B2.x, B2.y, f > 0.55 ? C[0] : C[1], ww); if(ww > 1 && f < 0.55) pxLine(c, A.x, A.y, B2.x, B2.y, C[2], 1); continue; }
+          const top = -Math.floor(ww / 2);
+          for(let r = 0; r < ww; r++){
+            const col = r === 0 ? C[2] : r === ww - 1 ? C[0] : r === (ww >> 1) && (s & 3) < 2 ? (i === 1 ? '#3FD6A8' : '#F2C14E') : C[1];
+            pxLine(c, A.x, A.y + top + r, B2.x, B2.y + top + r, col, 1);
+          }
         }
         // the head: a curl of gold
         const Hd = pts[0];
