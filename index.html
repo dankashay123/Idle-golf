@@ -11342,6 +11342,9 @@ function flameAura(c, g, up, P, calm){
 const LEGEND_DUR = 0.5, LEGEND_BIG = 0.5;
 // the looks that have one (the newer ones silent: the user wants no more sounds)
 const LEGEND_FX = ['demonic', 'ascended', 'divine', 'cosmic', 'dread', 'psyche'];
+// night on the course (never the Vault's cellar): The Dread and
+// Psychedelic glow the more for it
+function nightNow(){ return !!Scene.night && !S.dgnRun; }
 function legendNow(g){
   const L = Scene.legend;
   if(!L || g.minor) return null;
@@ -12412,7 +12415,42 @@ const STYLEFX = {
       if(g.h < 30) {}
       else if(L) this.wave(c, X, Y, rx, ry, L.f, L.big ? 1.8 : 1.6);
       else if(st >= 0) this.wave(c, X, Y, rx, ry, st, 1.55);
+      if(nightNow()) this.mist(c, g, X, Y, rx, ry);
       c.globalAlpha = 1;
+    },
+    // After dark a grave-mist creeps over the grass round him, lit green
+    // from the grave, thinning out away from him; it parts round the grave
+    mist(c, g, X, Y, rx, ry){
+      const R = Math.round(Math.max(rx * 1.9, g.w * 2.2)), tk = Math.floor(g.t * 3);
+      for(let x = -R; x <= R; x++){
+        const e = 1 - Math.abs(x) / R, m = Math.round((Math.sin((X + x) * 0.17 + g.t * 0.8) + Math.sin((X + x) * 0.071 - g.t * 0.5) + 2.2) / 4.2 * g.h * 0.1 * (0.4 + 0.6 * e));
+        for(let y = -m; y <= Math.round(ry * 0.7); y++){
+          const gx = X + x, gy = Y + y;
+          if((x * x) / (rx * rx) + (y * y) / (ry * ry) < 1) continue;
+          if(((gx + gy + tk) & 1) || hr(gx * 3 + gy, 671 + (tk & 3)) > e * 0.9) continue;
+          c.fillStyle = y < -m + 1 ? '#7CC0A0' : y < 0 ? '#4E8A70' : '#2E5A48'; c.fillRect(gx, gy, 1, 1); }
+      }
+    },
+    // after dark: will-o'-wisps drifting round him, and the light of his
+    // lantern and his eyes thrown round them
+    wisps(c, g){
+      const k = Math.max(1, Math.round(g.h / 50)), N = g.minor ? 1 : 3;
+      for(let i = 0; i < N; i++){
+        const a = g.t * (0.45 + i * 0.08) + i * 2.1, x = Math.round(g.cx + Math.sin(a) * g.w * (g.minor ? 1.1 : 1.7)), y = Math.round(g.y + g.h * (0.15 + 0.28 * i) + Math.sin(g.t * 1.3 + i) * g.h * 0.06);
+        const on = 0.75 + 0.25 * Math.sin(g.t * 5 + i * 3);
+        c.fillStyle = '#17734A'; for(const [dx, dy] of [[-2, 0], [2, 0], [0, -2], [0, 2]]) c.fillRect(x + dx * k, y + dy * k, k, k);
+        c.fillStyle = on > 0.7 ? '#5CF0A0' : '#2EB872'; for(const [dx, dy] of [[-1, 0], [1, 0], [0, -1], [0, 1]]) c.fillRect(x + dx * k, y + dy * k, k, k);
+        c.fillStyle = '#E8FFF2'; c.fillRect(x, y, k, k);
+        // its tail, the way it came
+        c.fillStyle = '#2EB872'; c.fillRect(x - Math.round(Math.cos(a) * 3 * k), y + 2 * k, k, k);
+      }
+    },
+    // a ring of green light dithered round a point (his lantern, his eyes)
+    halo(c, x, y, r, col){
+      const R = Math.ceil(r);
+      c.fillStyle = col;
+      for(let j = -R; j <= R; j++) for(let i = -R; i <= R; i++){ const d = Math.hypot(i, j) / r;
+        if(d > 1 || d < 0.45 || ((x + i + y + j) & 1)) continue; c.fillRect(Math.round(x) + i, Math.round(y) + j, 1, 1); }
     },
     // the hands, out at either side of the lip and one behind: each rising
     // and sinking back in its own time, all reaching up as he winds up
@@ -12450,20 +12488,32 @@ const STYLEFX = {
       this.hood(c, g);
     },
     front(c, g){
-      if(g.minor){ this.lantern(c, g); this.eyes(c, g); this.souls(c, g, true); return; }
+      const N = nightNow();
+      if(g.minor){ if(N) this.nightGlow(c, g); this.lantern(c, g); this.eyes(c, g); this.souls(c, g, true); if(N) this.wisps(c, g); return; }
       // walking away his cloak hangs down his back, his scythe slung over it
       if(g.back){ this.cloak(c, g); this.scythe(c, g); this.hood(c, g); }
       this.chain(c, g);
+      if(N) this.nightGlow(c, g);
       this.lantern(c, g);
       this.eyes(c, g);
       this.souls(c, g, true);
       this.pull(c, g);
+      if(N) this.wisps(c, g);
       const L = legendNow(g);
       if(L) outlineBurst(c, g, L, 52, 0.95, (x, y, i, f, dx, dy) => {
         if(i % 4 === 0) dreadSoul(c, x, y, dx, dy, g.h >= 45 && f < 0.6 ? 2 : 1, 1, Math.max(1, Math.round(g.h / 70)));
         else if(i % 4 === 1){ c.fillStyle = '#D8D2BC'; c.fillRect(Math.round(x), Math.round(y), 2, 1); c.fillStyle = '#F2EEDC'; c.fillRect(Math.round(x + dx * 2), Math.round(y + dy * 2), 1, 1); }
         else burstStreak(c, x, y, dx, dy, f < 0.4 ? '#E8FFF2' : i & 1 ? '#5CF0A0' : '#A8FFD0', '#17734A', 2); });
       c.globalAlpha = 1;
+    },
+    // the light his lantern throws round it after dark, and his eyes'
+    nightGlow(c, g){
+      const P = this.hip(g);
+      if(P){ const L = Math.max(2, Math.round(g.h * 0.06)), sw = Math.sin(g.t * 2.1) * 0.25, r = g.h * (g.minor ? 0.16 : 0.11) * (0.92 + 0.08 * Math.sin(g.t * 9));
+        const x = P.x + Math.sin(sw) * L, y = P.y + Math.cos(sw) * L + g.h * 0.04;
+        this.halo(c, x, y, r, '#17734A'); this.halo(c, x, y, r * 0.6, '#2EB872'); }
+      if(!g.back){ const p = this.px(g), H = g.head, sh = g.shear ? g.shear(0.1) : 0;
+        this.halo(c, H.x + sh + 3.5 * p, H.y + 0.5 * p, Math.max(2.5, p * 2.6), '#17734A'); }
     },
     // his hood, and the skull in it
     hood(c, g){
@@ -12591,11 +12641,47 @@ const STYLEFX = {
       if(g.minor) return;
       const [rx, ry] = this.sigilSize(g), L = legendNow(g), st = this.strike(g.ph), q = L ? 1 : this.charge(g.ph);
       const X = Math.round(g.cx), Y = Math.round(g.bot), step = ((Math.floor(g.t * 8 + (g.ph > 0 ? g.ph * 40 : 0) + (L ? L.T * 60 : 0)) % 24) + 24) % 24;
+      if(nightNow()) this.glowPaint(c, g, X, Y, rx, ry);
       { const V = psySpiral(rx, ry, step, q > 0.5 || st >= 0 ? 1 : 0); c.globalAlpha = 1; c.drawImage(V, X - V.ox, Y - V.oy); }
       if(g.h < 30) {}
       else if(L) this.wave(c, X, Y, rx, ry, L.f, L.big ? 1.9 : 1.7);
       else if(st >= 0) this.wave(c, X, Y, rx, ry, st, 1.6);
       c.globalAlpha = 1;
+    },
+    // After dark, under a blacklight: the spiral's glow thrown out round it
+    // in rings of the six, and spots of glow paint splashed over the grass
+    // round him, each lighting up and going dark in its own time
+    glowPaint(c, g, X, Y, rx, ry){
+      const st = Math.floor(g.t * 3);
+      for(let j = 0; j < 2; j++){ const s = 1.12 + j * 0.14, n = Math.round((rx + ry) * s * 2.2);
+        for(let i = 0; i < n; i++){ if((i + j + st) % 3 === 0) continue; const a = i / n * Math.PI * 2;
+          c.fillStyle = psyC(i * 6 / n + st - j * 2, j); c.fillRect(Math.round(X + Math.cos(a) * rx * s), Math.round(Y + Math.sin(a) * ry * s), 1, 1); } }
+      const k = Math.max(1, Math.round(g.h / 50));
+      for(let i = 0; i < 16; i++){ const a = hr(i, 681) * Math.PI * 2, d = 1.5 + hr(i, 682) * 1.3;
+        const on = Math.sin(g.t * (1.5 + hr(i, 683)) + i * 2.3); if(on < -0.3) continue;
+        const x = Math.round(X + Math.cos(a) * rx * d), y = Math.round(Y + Math.sin(a) * ry * d * 0.9);
+        c.fillStyle = psyC(i + Math.floor(g.t * 0.7), 0); c.fillRect(x, y, k + (i & 1), k);
+        if(on > 0.6){ c.fillStyle = '#FFFFFF'; c.fillRect(x, y, 1, 1); } }
+    },
+    // after dark, bubbles of glowing colour rising round him as in a lava
+    // lamp, swelling and going round as they rise; and sparks in his afro
+    bubbles(c, g){
+      const N = g.minor ? 2 : 6, k = g.minor ? 1 : Math.max(1, Math.round(g.h / 45));
+      for(let i = 0; i < N; i++){
+        const u = (g.t * 0.22 + i / N) % 1, cyc = Math.floor(g.t * 0.22 + i / N);
+        const x = Math.round(g.cx + (hr(i + cyc * 7, 684) - 0.5) * g.w * (g.minor ? 2 : 3.2) + Math.sin(g.t * 1.6 + i * 2) * 2 * k);
+        const y = Math.round(g.bot - u * g.h * 1.15), r = Math.max(1, Math.round((1 + (i % 3)) * k * Math.sin(Math.PI * Math.min(1, u * 1.2)) * (g.h >= 45 ? 1 : 0.7)));
+        if(u > 0.92) continue;
+        const col = psyC(i + Math.floor(g.t * 1.2), 0), rim = psyC(i + Math.floor(g.t * 1.2), 1);
+        for(let yy = -r; yy <= r; yy++) for(let xx = -r; xx <= r; xx++){ const d = xx * xx + yy * yy; if(d > r * r + r * 0.6) continue;
+          c.fillStyle = d > (r - 1) * (r - 1) + 0.5 && r > 1 ? rim : col; c.fillRect(x + xx, y + yy, 1, 1); }
+        c.fillStyle = '#FFFFFF'; c.fillRect(x - Math.floor(r / 2), y - Math.floor(r / 2), 1, 1);
+      }
+      if(g.minor || g.h < 30) return;
+      const H = g.head, p = this.px(g), sh = g.shear && !g.back ? g.shear(0.1) : 0;
+      for(let i = 0; i < 5; i++){ if(Math.sin(g.t * 4 + i * 2.7) < 0.5) continue;
+        const x = Math.round(H.x + sh + (hr(i + Math.floor(g.t * 1.3) * 5, 685) - 0.5) * 16 * p), y = Math.round(H.y - 5 * p + (hr(i, 686) - 0.6) * 12 * p);
+        c.fillStyle = '#FFFFFF'; c.fillRect(x, y, 1, 1); c.fillStyle = psyC(i + 2, 0); c.fillRect(x - 1, y, 1, 1); c.fillRect(x + 1, y, 1, 1); c.fillRect(x, y - 1, 1, 1); c.fillRect(x, y + 1, 1, 1); }
     },
     // rings of colour running out over the grass, one after another
     wave(c, X, Y, rx, ry, f, R){
@@ -12620,6 +12706,7 @@ const STYLEFX = {
     front(c, g){
       this.shades(c, g);
       this.orbit(c, g, true);
+      if(nightNow()) this.bubbles(c, g);
       const L = legendNow(g);
       if(L) outlineBurst(c, g, L, 56, 1.0, (x, y, i, f, dx, dy) => {
         const s = Math.max(1, Math.round(g.h / 50));
