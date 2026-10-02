@@ -18229,7 +18229,7 @@ const Scene = {
 
     this.camD = 0; this.restBall = null; this.walkTo = 0; this.greenBall = false;
     this.train = null; this.trainMet = 0; this.trainNext = this.t + 8;
-    this.upT = 0; this.saidHole = null; this.putt = null; this.cupT = 0; this.cupHeard = 0; this.aceT = 0; this.aceSwung = 0; this.herPose = null; this.tracks = null;
+    this.upT = 0; this.saidHole = null; this.putt = null; this.cupT = 0; this.cupHeard = 0; this.aceT = 0; this.aceSwung = 0; this.herPose = null; this.tracks = null; this.marks = null;
     this.shotN = 0;                 // (the hole's shots so far: only the first is off the tee)
     this.galleryUp = null;          // (the last hole's gallery cheered on into this one)
     // A swing still playing when the last hole ended belonged to that hole: it
@@ -18313,7 +18313,7 @@ const Scene = {
     this.camD = 0; this.restBall = null; this.walkTo = 0; this.greenBall = false;
     // (a putt left over from the course: its ball sat at the cup through
     // the whole Scramble)
-    this.putt = null; this.cupT = 0; this.cupHeard = 0; this.upT = 0; this.aceT = 0; this.aceSwung = 0; this.herPose = null; this.tracks = null;
+    this.putt = null; this.cupT = 0; this.cupHeard = 0; this.upT = 0; this.aceT = 0; this.aceSwung = 0; this.herPose = null; this.tracks = null; this.marks = null;
     // each contest played from its own place from the first frame: he glided
     // onto the Twilight Putt's green from the tee
     if(R.mode !== 'floor') this.camD = wagerSpot(R) * LEN;
@@ -21583,7 +21583,36 @@ Object.assign(Scene, {
     const T = this.tracks || (this.tracks = { lo: a, hi: a });
     T.lo = Math.min(T.lo, a); T.hi = Math.max(T.hi, b);
   },
+  // where a ball comes down in the snow, its mark: a dent ringed in white,
+  // and a puff of snow off it as it lands (the hole's last dozen)
+  noteMark(d, lat){
+    if(!this.snow || S.dgnRun) return;
+    const M = this.marks || (this.marks = []);
+    M.push({ d, lat, t: this.t }); if(M.length > 12) M.shift();
+  },
+  drawMarks(){
+    const M = this.marks;
+    if(!M || !this.snow || S.dgnRun) return;
+    const c = this.b, near = this.camD - CAM_BACK + ROPE_REL;
+    for(const m of M){
+      if(m.d < near || this.hitsHazard(m.d, m.lat, 0)) continue;
+      const q = this.proj(m.d, m.lat);
+      if(q.s < 0.05 || q.x < -10 || q.x > VW + 10) continue;
+      const cl = this.clipAt(m.d), w = Math.max(3, Math.round(B_GOLFER * US * q.s * 0.3)), h = Math.max(1, Math.round(w * 0.4));
+      const X = Math.round(q.x - w / 2), Y = Math.round(q.y) - h;
+      // (ringed in thrown-up snow in the rough; in the turf a dent alone)
+      if(!this.onPlay(m.d, m.lat, 0)){ c.fillStyle = this.night ? 'rgba(200,214,226,.35)' : '#F4F8FA'; fillClip(c, X - 1, Y, w + 2, h, cl); }
+      c.fillStyle = this.night ? "rgba(30,40,56,.7)" : "rgba(70,90,112,.72)"; fillClip(c, X, Y, w, h, cl); if(h > 2){ c.fillStyle = this.night ? "rgba(20,28,40,.7)" : "rgba(52,68,88,.7)"; fillClip(c, X + 1, Y + 1, w - 2, h - 1, cl); }
+      // (the puff: a few flecks up off it and down again, under half a second)
+      const u = (this.t - m.t) / 0.45;
+      if(u >= 0 && u < 1){ c.fillStyle = '#F6FAFC';
+        for(let k = 0; k < 5; k++){ const a = (k - 2) * 0.55, r = w * (0.4 + u * 0.9);
+          const fx = Math.round(q.x + Math.sin(a) * r), fy = Math.round(q.y - h - Math.sin(Math.PI * u) * w * (0.8 + (k & 1) * 0.4));
+          if(fy <= cl + 1) c.fillRect(fx, fy, 1, 1); } }
+    }
+  },
   drawTracks(){
+    this.drawMarks();
     const T = this.tracks;
     if(!T || !this.snow || S.dgnRun || this.heli) return;
     const c = this.b, I = this.isle, near = this.camD - CAM_BACK + ROPE_REL, hi = Math.min(T.hi, this.camD - 0.35);
@@ -22644,7 +22673,7 @@ Object.assign(Scene, {
         const VR = S.dgnRun && S.dgnRun.mode === 'floor' ? S.dgnRun : null;
         if(VR && b.cup && !this.cupT){ Sfx.play('hole'); this.holed({ n: 'FLOOR ' + (VR.floor + 1), d: -2 }); }
         if(!S.dgnRun || VR){ if(b.cup) this.cupT = this.cupT || this.t;
-                       else this.restBall = { d: b.d0 + b.dist, lat: this.ballLat(b, 1) };
+                       else{ this.restBall = { d: b.d0 + b.dist, lat: this.ballLat(b, 1) }; this.noteMark(this.restBall.d, this.restBall.lat); }
                        // (he stays put for the Vault's ball in the cup)
                        if(!(VR && b.cup)) this.walkTo = Math.max(this.walkTo || 0, b.d0 + b.dist); }
         this.balls.splice(i, 1); continue;
