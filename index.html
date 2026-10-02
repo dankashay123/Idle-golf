@@ -13090,6 +13090,75 @@ const CUP_FX = {
     if(q >= 0.85) for(const [dx, dy] of [[0, -2], [2, 0], [0, 2], [-2, 0]]) fxDot(c, x + dx * k * (q > 0.93 ? 2 : 1) - (k >> 1), y - k + dy * k * 0.5, k, '#FFFFFF', 1);
   }
 };
+// An ace's column of light (the user asked): his ball goes in off the tee
+// and he never walks up, so the cup's moment shoots up out of it, far off
+// where the hole is, in the colours of the ball's own moment, up past the
+// top of the view and gone. It plays inside the ace's held second and
+// ends with the hole; the ground, a crest and the trees nearer than the
+// cup cover it (Scene.drawAceBeam). [deep, mid, bright], and a ball of
+// many colours gives its bands.
+const ACE_COL = {
+  plain:       ['#7A8C9A', '#DDE6EE', '#FFFFFF'],
+  tGold:       ['#A8802F', '#E3B457', '#FFF3B0'],
+  tAurora:     ['#1E8A70', '#57E0BE', '#CFFFEA'],
+  tEmber:      ['#A8321A', '#F07A3A', '#FFD34A'],
+  tMythic:     ['#5A3AA8', '#C68BFF', '#F0E0FF'],
+  tRainbow:    ['#5A3A8A', '#E3B457', '#FFFFFF', ['#E4574A', '#E3B457', '#7ADB86', '#57A5C2', '#C68BFF']],
+  tSeraph:     ['#2FB592', '#7FF0C8', '#FFF2B8'],
+  tHellfire:   ['#A81E14', '#FF6A1A', '#FFD34A'],
+  tAscension:  ['#762889', '#E639EB', '#FFE0FF'],
+  tHorizon:    ['#3E2A6E', '#B98CFF', '#FFFFFF'],
+  duck:        ['#D8A82A', '#FFD84A', '#FFF0A0'],
+  hearts:      ['#C81E4A', '#FF2F66', '#FFC2D4'],
+  bubbles:     ['#4F94C8', '#9FD6F2', '#FFFFFF'],
+  confetti:    ['#3A2A6A', '#FFE14A', '#FFFFFF', ['#FF4FB8', '#3FE0FF', '#FFE14A', '#7CFF6A']],
+  comet:       ['#A8321A', '#F0612A', '#FFF3B0'],
+  blackhole:   ['#3A1E5A', '#C68BFF', '#FFFFFF'],
+  godlight:    ['#2FB592', '#E0AE3E', '#FFF2B8'],
+  demoneye:    ['#A81E14', '#FF6A1A', '#FFD34A'],
+  ascorb:      ['#962CA8', '#E639EB', '#FFE0FF'],
+  singularity: ['#3E2A6E', '#B98CFF', '#FFFFFF']
+};
+const ACE_STRIP = new Map();
+const hxU32 = h => { const n = parseInt(h.slice(1), 16); return (0xFF000000 | (n & 255) << 16 | (n & 0xFF00) | (n >> 16)) >>> 0; };
+// The column baked once a size into a strip of solid pixels (a canvas call
+// a row was too many a frame): a round head of light, then the column,
+// its edge in the deep colour, its middle bright, flickering a little
+// side to side; each row's left and right kept, for what covers it
+function aceStrip(fx, W, H, f){
+  const key = fx + '|' + W + '|' + H + '|' + f;
+  let S2 = ACE_STRIP.get(key); if(S2) return S2;
+  if(ACE_STRIP.size > 48) ACE_STRIP.clear();
+  const C = ACE_COL[fx] || ACE_COL.plain, deep = hxU32(C[0]), bright = hxU32(C[2]), white = 0xFFFFFFFF;
+  const bands = (C[3] || [C[1]]).map(hxU32);
+  const Rb = Math.max(3, Math.round(W * 0.75)), A = Math.max(1, Math.round(W * 0.1)), G = Math.max(2, Math.round(W * 0.35)), SW = Rb * 2 + A * 2 + G * 2 + 2, cx = SW >> 1;
+  const sh = Math.max(6, Math.round(W * 2.2)), e = Math.max(1, Math.round(W / 8));
+  const cv = document.createElement('canvas'); cv.width = SW; cv.height = H;
+  const g = cv.getContext('2d'), I = g.createImageData(SW, H), P = new Uint32Array(I.data.buffer);
+  const L = new Int16Array(H), R = new Int16Array(H);
+  for(let r = 0; r < H; r++){
+    const bulb = r <= Rb * 2 ? Math.sqrt(Math.max(0, Rb * Rb - (r - Rb) * (r - Rb))) : 0;
+    const body = r >= Rb ? W / 2 : 0, hw = Math.max(bulb, body);
+    // (the column sways from below the head, more the farther down)
+    const sway = r > Rb * 2 ? Math.round(Math.sin(r / sh * 1.3 + f * 1.57) * A * Math.min(1, (r - Rb * 2) / (Rb * 2))) : 0;
+    const x0 = Math.round(cx + sway - hw), x1 = Math.round(cx + sway + hw);
+    L[r] = x0 - cx; R[r] = x1 - cx;
+    const mid = bands[Math.floor(r / sh) % bands.length], inner = hw - e, core = Math.max(0.6, hw * (bulb > body ? 0.4 : 0.2));
+    // (a halo of the deep colour about it, every other pixel)
+    for(let x = Math.max(0, x0 - G); x < Math.min(SW, x1 + G); x++){ if(x >= x0 && x < x1) continue;
+      const out = x < x0 ? x0 - x : x - x1 + 1; if(((x + r) & 1) || out > G * (0.6 + 0.4 * hr(r >> 1, f + 389))) continue;
+      P[r * SW + x] = deep; }
+    for(let x = Math.max(0, x0); x < Math.min(SW, x1); x++){
+      const dx = Math.abs(x + 0.5 - (cx + sway));
+      let v = dx < core ? white : dx < inner ? (hr(r * 7 + x, f + 383) > 0.93 ? bright : mid) : deep;
+      if(dx >= core && dx < core + 1 && v !== deep) v = bright;
+      P[r * SW + x] = v;
+    }
+  }
+  g.putImageData(I, 0, 0);
+  S2 = { cv, SW, cx, L, R, Rb, G }; ACE_STRIP.set(key, S2);
+  return S2;
+}
 function cupSpeck(c, x, y, h, q, col){
   if(q > 0.85) return;
   fxDot(c, x, y - 1 - Math.round(Math.sin(q / 0.85 * Math.PI) * h * 0.45), 1, col, 1);
@@ -15700,7 +15769,7 @@ const Scene = {
 
     this.camD = 0; this.restBall = null; this.walkTo = 0; this.greenBall = false;
     this.train = null; this.trainMet = 0; this.trainNext = this.t + 8;
-    this.upT = 0; this.saidHole = null; this.putt = null; this.cupT = 0; this.cupHeard = 0;
+    this.upT = 0; this.saidHole = null; this.putt = null; this.cupT = 0; this.cupHeard = 0; this.aceT = 0;
     this.shotN = 0;                 // (the hole's shots so far: only the first is off the tee)
     this.galleryUp = null;          // (the last hole's gallery cheered on into this one)
     // A swing still playing when the last hole ended belonged to that hole: it
@@ -15784,7 +15853,7 @@ const Scene = {
     this.camD = 0; this.restBall = null; this.walkTo = 0; this.greenBall = false;
     // (a putt left over from the course: its ball sat at the cup through
     // the whole Scramble)
-    this.putt = null; this.cupT = 0; this.cupHeard = 0; this.upT = 0;
+    this.putt = null; this.cupT = 0; this.cupHeard = 0; this.upT = 0; this.aceT = 0;
     // each contest played from its own place from the first frame: he glided
     // onto the Twilight Putt's green from the tee
     if(R.mode !== 'floor') this.camD = wagerSpot(R) * LEN;
@@ -17229,7 +17298,7 @@ Object.assign(Scene, {
   forestOver(c){
     const L = this._fcov; if(!L || !L.length){ if(L) L.length = 0; return; }
     const G = PixPaint.px;
-    if(this.pixGround === false || !G || PixPaint.w !== VW || PixPaint.h !== VH){ L.length = 0; return; }
+    if(this.pixGround === false || !G || PixPaint.w !== VW || PixPaint.h !== VH){ for(const i of L) this._pdep[i] = Infinity; L.length = 0; return; }
     if(!this._foI || this._foI.width !== VW || this._foI.height !== VH){
       this._foI = new ImageData(VW, VH); this._foP = new Uint32Array(this._foI.data.buffer);
       this._foC = document.createElement('canvas'); this._foC.width = VW; this._foC.height = VH; this._foX = this._foC.getContext('2d'); }
@@ -18069,13 +18138,17 @@ Object.assign(Scene, {
   // -1; the railway goes down between the two, see the frame)
   drawProps(edge, side){
     const c = this.b, T = this.theme || THEMES.day, night = this.night;
-    this._fcov = this._fcov || []; this._fcov.length = 0;
-    if(!this._pdep || this._pdep.length !== VW * VH) this._pdep = new Float32Array(VW * VH).fill(Infinity);
+    // (what was marked since the last time a tree was put back is let go,
+    // its depth with it: a depth left over kept a pixel off the list for
+    // good, and a tree in front no longer went back over what stood behind)
+    if(!this._pdep || this._pdep.length !== VW * VH){ this._pdep = new Float32Array(VW * VH).fill(Infinity); if(this._fcov) this._fcov.length = 0; }
+    this._fcov = this._fcov || []; if(!this._propKeep){ for(const i of this._fcov) this._pdep[i] = Infinity; this._fcov.length = 0; }
     for(const p of (this.props || [])){
       this._propD = p.d;
       if(p.kind >= 4 && p.kind <= 7 && (S.dgnRun || (p.kind <= 5 ? !night : p.kind === 6 ? !this.frost || night || this.rain : !this.rain || this.ice))) continue;
       if(side > 0 && p.d < edge) continue;
       if(side < 0 && p.d >= edge) continue;
+      if(this._propLo !== undefined && (p.d < this._propLo || p.d >= this._propHi)) continue;
       // A rope post is culled on the far end of the span it carries, not on
       // itself: the post the span starts from goes behind the camera while the
       // rope is still crossing the bottom of the frame.
@@ -18111,7 +18184,7 @@ Object.assign(Scene, {
       this.drawProp(c, T, night, p, pr);
     }
     this._propD = Infinity;
-    this.forestOver(c);
+    if(!this._propDefer) this.forestOver(c);
   },
 
   // A bird on the fairway: a dark back, a paler breast, pecking now and then.
@@ -18236,8 +18309,10 @@ Object.assign(Scene, {
           for(let y = 0; y < O.R.rows.length; y++){ const Y = O.Y0 + y; if(Y > O.cut || Y >= top[i]) break;
             if(O.R.rows[y].some(([a, n]) => col >= a && col < a + n)){ top[i] = Y; break; } } }
       }
+      // (and marked at its own distance: a tree farther off marked under
+      // it put the forest back over it, a flag nearer than the trees gone)
       const col = (x0, y0, w, h2, colr) => { c.fillStyle = colr;
-        for(let x = x0; x < x0 + w; x++){ const lim = top[x - X + pw]; const y1 = Math.min(y0 + h2, lim === undefined ? 1e9 : lim); if(y1 > y0) c.fillRect(x, y0, 1, y1 - y0); } };
+        for(let x = x0; x < x0 + w; x++){ const lim = top[x - X + pw]; const y1 = Math.min(y0 + h2, lim === undefined ? 1e9 : lim); if(y1 > y0){ c.fillRect(x, y0, 1, y1 - y0); this.standCover(x, y0, 1, y1 - y0); } } };
       col(X - pw, pr.y - 1, pw * 2 + 1, 1, '#132215');
       col(X, pr.y - h, pw, h, night ? '#B8B8AE' : '#E8E8DE');
       const wv = (Math.floor(this.t * 3 + p.k) & 1);
@@ -19917,6 +19992,8 @@ Object.assign(Scene, {
       // or a skill, not a swing): in, there and then
       if(up && aceH && !this.cupT && !this.balls.length && !this.pendingBall && this.swingT === 0) this.cupT = this.t;
       if(up && aceH && this.cupT) this.restBall = null;
+      // (an ace's column of light goes up from the cup as it drops)
+      if(up && aceH && this.cupT && !this.aceT) this.aceT = this.cupT;
       if(this.putt && !this.cupT){
         const T = this.t - this.putt.t0;
         if(!this.putt.hit && T >= PUTT_HIT){ this.putt.hit = 1; Sfx.play('putt'); }
@@ -19959,7 +20036,21 @@ Object.assign(Scene, {
       // the railway, which crosses in front of it; drawn after, its top
       // stood over a crossing post)
       const pinFirst = !!RI && this.camD < RI.bank;
-      if(RI){ this.drawProps(RI.bank, 1); if(pinFirst) this.drawFlagstick(); this.drawRail(); this.drawProps(RI.bank, -1); }
+      // (an ace's column of light goes in among them at the cup's distance:
+      // what stands nearer is drawn over it)
+      const AB = this.aceBeamQ() >= 0 ? this.pinD() : null;
+      // (as one pass: the trees of the forest go back over what they stand
+      // in front of once, at the end, as they do without it)
+      const band = (lo, hi, open, shut) => { this._propLo = lo; this._propHi = hi; this._propKeep = !shut; this._propDefer = open;
+        this.drawProps(); this._propLo = this._propHi = undefined; this._propKeep = this._propDefer = false; };
+      if(RI){
+        if(AB !== null && AB >= RI.bank){ band(AB, Infinity, true, true); this.drawAceBeam(); band(RI.bank, AB, false, false); }
+        else band(RI.bank, Infinity, false, true);
+        if(pinFirst) this.drawFlagstick(); this.drawRail();
+        if(AB !== null && AB < RI.bank){ band(AB, RI.bank, true, true); this.drawAceBeam(); band(-Infinity, AB, false, false); }
+        else band(-Infinity, RI.bank, false, true);
+      }
+      else if(AB !== null){ band(AB, Infinity, true, true); this.drawAceBeam(); band(-Infinity, AB, false, false); }
       else this.drawProps();
       this.buildHaze();
       if(this.haze) this.overTrees(c, this.haze);
@@ -20018,6 +20109,83 @@ Object.assign(Scene, {
   // a spiral, and a white flash as it closes.
   // The cheaper balls have a smaller one each (a duck bobbing up, hearts,
   // bubbles, confetti, sparks, a swirl sucked in); the plain wakes none.
+  // an ace's column of light is going up (see ACE_COL): how far through
+  aceBeamQ(){
+    if(!this.aceT || this.cupT !== this.aceT || S.dgnRun || this.hole !== S.hole) return -1;
+    const q = (this.t - this.aceT) / ACE_HOLD;
+    return q >= 0 && q < 1 ? q : -1;
+  },
+  // drawn among the scenery at the cup's own distance (what stands nearer
+  // goes over it after), cut at the ground's line there (a crest in front
+  // hides its foot), the forest's nearer trees put back over it, and kept
+  // out of the haze like a tree (it is light, not ground)
+  drawAceBeam(){
+    const q = this.aceBeamQ(); if(q < 0) return;
+    const P = this.pinD(), p = this.proj(P, this.pinX());
+    if(!(p.s > 0)) return;
+    const c = this.b, X = Math.round(p.x);
+    const bn = ballNow(), fx0 = bn && CUP_FX[bn.fx] ? bn.fx : trailNow().fx, fx = ACE_COL[fx0] ? fx0 : 'plain';
+    const C = ACE_COL[fx], bands = C[3] || [C[1]];
+    const h = Math.max(4, Math.round(B_FLAG * US * p.s)), W = clamp(Math.round(h * 0.7), 10, 30);
+    const cutY = Math.min(Math.round(p.y), Math.floor(this.clipAt(P)) + 1);
+    if(cutY <= 0) return;
+    const ez = u => 1 - (1 - u) * (1 - u), top = -W * 3;
+    // up out of the cup and off the top in a third of it, its foot lifting
+    // after it from halfway, gone by the end
+    const head = Math.round(p.y + (top - p.y) * ez(Math.min(1, q / 0.32)));
+    const tail = q < 0.5 ? Math.round(p.y) : Math.round(p.y + (top * 2 - p.y) * Math.pow((q - 0.5) / 0.45, 2));
+    // (what of it lies over a tree of the forest nearer than the cup is put
+    // back as it was, from the frame under it; the rest is kept out of the
+    // haze like a tree, it is light, not ground)
+    const F = this._tmF, FD = this._tmOn ? this._fdep : null;
+    const R = W * 5 + 4, bx0 = clamp(X - R, 0, VW), bx1 = clamp(X + R, 0, VW), bw = bx1 - bx0;
+    if(bw <= 0) return;
+    const snap = FD ? c.getImageData(bx0, 0, bw, cutY) : null, back = [];
+    const mark = (x0, x1, y, lit) => { if(y < 0 || y >= cutY) return;
+      for(let x = Math.max(bx0, x0); x < Math.min(bx1, x1); x++){ const i = y * VW + x;
+        if(FD && FD[i] < P){ back.push(i); continue; }
+        if(F && lit !== false) F[i] = 0xFF000000; } };
+    const put = (x, y, s, col) => { x = Math.round(x); y = Math.round(y);
+      const y1 = Math.min(y + s, cutY); if(y1 <= y || x + s <= 0 || x >= VW) return;
+      c.fillStyle = col; c.fillRect(x, y, s, y1 - y); for(let yy = y; yy < y1; yy++) mark(x, x + s, yy); };
+    c.globalAlpha = 1;
+    const y0 = Math.max(0, head), y1 = Math.min(tail, cutY);
+    if(y1 > y0){
+      const SP = aceStrip(fx, W, VH + W * 8, Math.floor(this.t * 16) & 3);
+      // (its foot, once it lifts, narrows to a point, every other row at
+      // the last: cut square it hung in the sky like a bar)
+      const T = q < 0.5 ? 0 : W * 2, ym = clamp(tail - T, y0, y1);
+      if(ym > y0) c.drawImage(SP.cv, 0, y0 - head, SP.SW, ym - y0, X - SP.cx, y0, SP.SW, ym - y0);
+      for(let y = y0; y < y1; y++){ let l = X + SP.L[y - head], rr = X + SP.R[y - head];
+        if(y >= ym){ const f = (tail - y) / T; if(f < 0.45 && (y & 1)) continue;
+          const m = (l + rr) / 2, hw = Math.max(0.5, (rr - l) / 2 * f);
+          l = Math.round(m - hw); rr = Math.max(l + 1, Math.round(m + hw));
+          c.drawImage(SP.cv, l - X + SP.cx, y - head, rr - l, 1, l, y, rr - l, 1); mark(l, rr, y); continue; }
+        // (the halo about it, every other pixel, is hazed: kept out of the
+        // haze, the ground between its pixels showed unhazed)
+        mark(l, rr, y); mark(l - SP.G, l, y, false); mark(rr, rr + SP.G, y, false); }
+    }
+    const k = Math.max(1, Math.round(W / 6));
+    // at its foot as it goes: a flash, and a ring of light out over the green
+    if(q < 0.35){ const u = q / 0.35, rr = W * (0.7 + u * 3.2);
+      if(u < 0.4) put(X - W * 0.6, p.y - W * 0.9, Math.round(W * 1.2), C[2]);
+      for(let i = 0; i < 20; i++){ if(hr(i, 384) < u * 0.7) continue; const a = i / 20 * Math.PI * 2;
+        put(X + Math.cos(a) * rr - (k >> 1), p.y + Math.sin(a) * rr * 0.34 - k, k, i & 1 ? C[2] : bands[i % bands.length]); } }
+    // and sparks thrown off it, climbing with it
+    for(let i = 0; i < 22; i++){
+      const u = clamp(q * 1.5 - hr(i, 385) * 0.5, 0, 1); if(u <= 0 || u >= 1) continue;
+      const side = i & 1 ? 1 : -1, off = W * (0.5 + hr(i, 386) * 1.4) * (0.4 + u);
+      const y = p.y + (top - p.y) * ez(u) * (0.75 + hr(i, 387) * 0.25);
+      if(y < tail - W * 2 && q > 0.5 && hr(i, 388) < 0.5) continue;
+      put(X + side * off - (k >> 1), y, k + (i % 5 === 0 ? 1 : 0), i % 3 === 0 ? C[2] : bands[i % bands.length]);
+    }
+    this._tmDirty = true;
+    if(back.length){
+      const cur = c.getImageData(bx0, 0, bw, cutY), A = new Uint32Array(cur.data.buffer), B2 = new Uint32Array(snap.data.buffer);
+      for(const i of back){ const j = Math.floor(i / VW) * bw + (i % VW) - bx0; A[j] = B2[j]; }
+      c.putImageData(cur, bx0, 0);
+    }
+  },
   drawCupFx(wager){
     // (the ball's own moment, or else its wake's)
     const bn = ballNow(), fx = bn && CUP_FX[bn.fx] ? bn.fx : trailNow().fx;
