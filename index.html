@@ -607,6 +607,36 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
 .swset{font-size:var(--f0);margin-top:5px;letter-spacing:.04em}
 .swset.ok{color:var(--aurora)}
 .swset.no{color:var(--flag)}
+/* the away card (redone: the user found it "super basic"): a header with
+   the time away, the purse in a lit hero tile counting up, two tiles under
+   it, what came of it as a list of icons, the best find, and him on a
+   little stage throwing money in the air over Play on */
+.awhead{text-align:center;margin:-2px 0 10px}
+.aweye{font-size:var(--f0);letter-spacing:.24em;text-transform:uppercase;color:var(--brass)}
+.awhead h3{margin:2px 0 6px;text-align:center}
+.awpill{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--brass-dk);border-radius:999px;
+  padding:3px 10px;font-size:var(--f1);color:var(--chalk);background:rgba(227,180,87,.07)}
+.awpill b{color:var(--brass);font-weight:600;white-space:nowrap}
+.awgrid.v2{grid-template-columns:1fr 1fr;border-color:var(--brass-dk)}
+.awgrid.v2 .awst.big{grid-column:1/-1;flex-direction:row;gap:12px;padding:14px 10px;
+  background:radial-gradient(ellipse at 50% 120%,rgba(227,180,87,.26),rgba(227,180,87,0) 70%),var(--raise)}
+.awgrid.v2 .awst.big .awv{font-size:calc(var(--f5) * 1.35);text-shadow:0 0 12px rgba(227,180,87,.35)}
+.awgrid.v2 .awst.big .awk{color:var(--brass);margin-top:2px}
+.awst img{width:24px;height:24px;image-rendering:pixelated;margin-bottom:4px}
+.awst.big img{width:40px;height:40px;margin:0}
+.awlist{border:1px solid var(--line);background:var(--raise)}
+.awlist .lb{display:flex;align-items:center;gap:8px;padding:7px 10px;margin:0}
+.awlist .lb:nth-child(odd){background:rgba(255,255,255,.025)}
+.awlist .lb img{width:18px;height:18px;image-rendering:pixelated;flex:0 0 auto}
+.awlist .lb .s{margin-left:auto;color:var(--brass);white-space:nowrap}
+.awfoot{position:sticky;bottom:-16px;margin:12px -16px -16px;padding:0 16px 16px;background:var(--panel);
+  box-shadow:0 -12px 12px -4px var(--panel)}
+#sheet .awst.big{margin:0}
+@media (max-height:560px){.awfoot{position:static;box-shadow:none}}
+.awstage{margin:0 0 8px;border:1px solid var(--brass-dk);background:#08130D;line-height:0;text-align:center}
+.awstage canvas{image-rendering:pixelated;display:inline-block}
+.awplay{width:100%;margin-top:0;background:linear-gradient(#E3B457,#B8862A);color:#1A1206;border-color:#F2D38A;
+  font-size:var(--f3);letter-spacing:.2em;padding:13px 0}
 /* the away card */
 .awgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--line);
   border:1px solid var(--line);margin:4px 0 10px}
@@ -8599,54 +8629,119 @@ function offline(){
   // the rest as a flat list of zeroes; what earns the next session is seeing
   // what the caddie actually did with the time, and only the lines that have
   // something on them.
-  const stat = (k, v, cls) => '<div class="awst' + (cls ? ' ' + cls : '') + '">'
-    + '<div class="awv">' + v + '</div><div class="awk">' + k + '</div></div>';
-  const line = (k, v) => '<div class="lb"><span class="p"></span><span>' + k
+  // (icons beside each: a pixel picture, coloured)
+  const ic = (id, col) => '<img src="' + pixUrl(id, col || '#E3B457') + '" alt="">';
+  const stat = (k, v, cls, icon) => '<div class="awst' + (cls ? ' ' + cls : '') + '">' + (icon || '')
+    + '<div><div class="awv"' + (cls === 'big' ? ' id="awPurse"' : '') + '>' + v + '</div><div class="awk">' + k + '</div></div></div>';
+  const line = (k, v, icon) => '<div class="lb">' + (icon || '<span class="p"></span>') + '<span>' + k
     + '</span><span class="s">' + v + '</span></div>';
 
-  let h = '<h3>While You Were Away</h3>'
-    + '<p>' + (away > dt + 60
-        ? spanTxt(away) + ' away \u00b7 the caddie played the last ' + hms(dt)
-        : hms(dt) + ' away') + ' at '
-    + Math.round(B.OFFLINE_RATE * (1 + Math.min(1, D.C.paway)) * 100)
-    + '% pace.</p>'
-    + '<div class="awgrid">'
-      + stat('purse', fmt(g), 'big')
-      + stat('holes', fmt(holes, 0))
-      + stat('clubs', String(gear))
+  let h = '<div class="awhead"><div class="aweye">Welcome back</div><h3>While You Were Away</h3>'
+    + '<span class="awpill">' + (away > dt + 60
+        ? '<b>' + spanTxt(away) + '</b> away · the caddie played <b>' + hms(dt) + '</b>'
+        : '<b>' + hms(dt) + '</b> away') + ' at <b>'
+    + Math.round(B.OFFLINE_RATE * (1 + Math.min(1, D.C.paway)) * 100) + '% pace</b></span></div>'
+    + '<div class="awgrid v2">'
+      + stat('purse earned', fmt(g), 'big', ic('coins'))
+      + stat('holes', fmt(holes, 0), '', ic('flag', '#D8453A'))
+      + stat('clubs', String(gear), '', ic('driver', '#C8CDD0'))
     + '</div>';
 
   const marks = [];
-  if(cards > 0) marks.push(['Tour Card', roman(S.tierMax) + (cards > 1 ? ' (+' + cards + ')' : '')]);
-  if(events > 0) marks.push(['Events finished', String(events)]);
-  if(cups > 0) marks.push(['Cups won', String(cups)]);
-  if(levels > 0) marks.push(['Career levels', '+' + levels]);
-  if(paras > 0) marks.push(['Paragon', '+' + paras]);
-  if(sov > 0) marks.push([B.SOV, '+' + sovFmt(sov)]);
-  if(swapped > 0) marks.push(['Auto equipped', swapped + ' club' + (swapped > 1 ? 's' : '')]);
-  if(autoOff > 0) marks.push(['Auto-scrapped ' + autoOff, '+' + fmt(autoOffSh, 0) + '\u00a0' + plural(autoOffSh, 'shards')]);
-  if(scrapped > 0) marks.push(['Locker full \u00b7 scrapped ' + scrapped, '+' + fmt(scrapSh, 0) + '\u00a0' + plural(scrapSh, 'shards')]);
-  if(entries > 0) marks.push(['Wager entries back', '+' + entries]);
+  if(cards > 0) marks.push(['Tour Card', roman(S.tierMax) + (cards > 1 ? ' (+' + cards + ')' : ''), ic('chevrons')]);
+  if(events > 0) marks.push(['Events finished', String(events), ic('flag', '#D8453A')]);
+  if(cups > 0) marks.push(['Cups won', String(cups), ic('trophy')]);
+  if(levels > 0) marks.push(['Career levels', '+' + levels, ic('star')]);
+  if(paras > 0) marks.push(['Paragon', '+' + paras, ic('medal')]);
+  if(sov > 0) marks.push([B.SOV, '+' + sovFmt(sov), ic('sovg', SOV_COL)]);
+  if(swapped > 0) marks.push(['Auto equipped', swapped + ' club' + (swapped > 1 ? 's' : ''), ic('driver', '#C8CDD0')]);
+  if(autoOff > 0) marks.push(['Auto-scrapped ' + autoOff, '+' + fmt(autoOffSh, 0) + ' ' + plural(autoOffSh, 'shards'), ic('shard', '#7FD6F2')]);
+  if(scrapped > 0) marks.push(['Locker full · scrapped ' + scrapped, '+' + fmt(scrapSh, 0) + ' ' + plural(scrapSh, 'shards'), ic('shard', '#7FD6F2')]);
+  if(entries > 0) marks.push(['Wager entries back', '+' + entries, ic('scroll')]);
   if(marks.length) h += '<div class="awband">What came of it</div>'
-    + marks.map(([k, v]) => line(k, v)).join('');
+    + '<div class="awlist">' + marks.map(([k, v, i]) => line(k, v, i)).join('') + '</div>';
 
   if(best){
     const sl = B.SLOTS.find(x => x.id === best.slot);
     const cur = S.equip[best.slot];
     const up = !cur || itemScore(best) > itemScore(cur);
-    h += '<div class="awband">Best thing in the bag</div>'
-      + '<div class="awbest" style="border-color:' + RC(best.rar) + '">'
+    h += '<div class="awband">Best find</div>'
+      + '<div class="awbest" style="border-color:' + RC(best.rar) + ';box-shadow:inset 0 0 18px ' + RC(best.rar) + '33">'
       + '<img src="' + pixUrl(sl.ic, RC(best.rar)) + '" alt="">'
       + '<div><div class="awbn" style="color:' + RC(best.rar) + '">' + best.name + '</div>'
-      + '<div class="awbs">' + B.RARITY[best.rar].n + ' ' + sl.n + ' \u00b7 Item level ' + best.ilvl
-      + (up ? ' \u00b7 <span style="color:var(--aurora)">beats what you are carrying</span>' : '')
+      + '<div class="awbs">' + B.RARITY[best.rar].n + ' ' + sl.n + ' · Item level ' + best.ilvl
+      + (up ? ' · <span style="color:var(--aurora)">beats what you are carrying</span>' : '')
       + '</div></div></div>';
   }
 
   h += '<div class="awband">Back on the tee</div>'
-    + line('Now playing', eventName(tournamentOf(S.hole)) + ', ' + dayName(S.hole))
-    + '<button class="act" onclick="hideSheet()">Play on</button>';
+    + '<div class="awlist">' + line('Now playing', eventName(tournamentOf(S.hole)) + ', ' + dayName(S.hole), ic('flag', '#D8453A')) + '</div>'
+    + '<div class="awfoot"><div class="awstage"><canvas id="awCv" width="160" height="' + AW_H + '"></canvas></div>'
+    + '<button class="act awplay" onclick="hideSheet()">Play on</button></div>';
   showSheet(h);
+  awayStage(g);
+}
+// The away card's stage: him in what he wears, throwing money up over his
+// head (the user asked), coins and notes flying up and raining down round
+// him, and the purse counting up beside it. Runs while the card is open.
+const AW_H = 62;
+let AWAY = null;
+function awayStage(gain){
+  const cv = $('awCv'); if(!cv) return;
+  // (drawn twice the size of the course's pixels, so he reads at a glance;
+  // a short screen keeps the course's size, or the card is all stage)
+  const dpr = Math.min(3, window.devicePixelRatio || 1), sc = clamp(Math.round(dpr * PX_CSS), 2, 8) * (innerHeight < 700 ? 1 : 2);
+  const cw = Math.min(480, (cv.parentNode && cv.parentNode.clientWidth) || innerWidth - 32);
+  cv.width = Math.max(60, Math.floor(cw * dpr / sc)); cv.height = AW_H;
+  cv.style.width = cv.width * sc / dpr + 'px'; cv.style.height = AW_H * sc / dpr + 'px';
+  if(AWAY) cancelAnimationFrame(AWAY.raf);
+  AWAY = { t: 0, last: 0, bits: [], tossN: -1, raf: 0, gain };
+  const step = now => {
+    if(!AWAY || !cv.isConnected || !$('veil').classList.contains('on')){ AWAY = null; return; }
+    const dt = AWAY.last ? Math.min(0.1, (now - AWAY.last) / 1000) : 0; AWAY.last = now;
+    awayDraw(cv, dt);
+    AWAY.raf = requestAnimationFrame(step);
+  };
+  AWAY.raf = requestAnimationFrame(step);
+}
+function awayDraw(cv, dt){
+  const V = AWAY, c = cv.getContext('2d'), W = cv.width, H = cv.height, G = H - 8;
+  c.imageSmoothingEnabled = false;
+  V.t += dt;
+  // the purse counting up, over the first second and a bit
+  const pe = $('awPurse');
+  if(pe && V.gain > 0){ const u = Math.min(1, V.t / 1.2), e = 1 - Math.pow(1 - u, 3); pe.textContent = fmt(V.gain * e); }
+  // a night tee lit from above: a pool of light on the grass where he stands
+  c.fillStyle = '#08130D'; c.fillRect(0, 0, W, H);
+  for(let y = 0; y < H; y++){ const a = Math.max(0, 1 - Math.abs(y - G * 0.55) / (G * 0.9)) * 0.10; c.fillStyle = 'rgba(227,180,87,' + a.toFixed(3) + ')'; c.fillRect(0, y, W, 1); }
+  for(let x = 0; x < W; x++){ c.fillStyle = (x >> 3) & 1 ? '#173A24' : '#1C4229'; c.fillRect(x, G, 1, H - G); }
+  const cx = W >> 1;
+  for(let y = G - 2; y < H; y++){ const hw = Math.round(W * 0.22 * Math.sqrt(Math.max(0, 1 - Math.pow((y - G - 1) / 6, 2))));
+    c.fillStyle = 'rgba(255,224,150,.10)'; c.fillRect(cx - hw, y, hw * 2, 1); }
+  // him, standing tall, both arms going up and down
+  const spr = SPRITE.gFinish, h = 36, w = Math.round(h * spr.w / spr.h), x = cx - Math.round(w * 0.45), y = G - h;
+  const FX = STYLEFX[outfitNow().fx];
+  const g0 = golferG(x, y, w, h, 0, V.t, G, false, spr);
+  if(FX && FX.ground){ FX.ground(c, g0); c.globalAlpha = 1; c.globalCompositeOperation = 'source-over'; }
+  const n = Math.floor(V.t / TOSS_T), q = (V.t % TOSS_T) / TOSS_T;
+  // (each toss lets go a handful at the top of it)
+  if(q >= 0.42 && V.tossN !== n){ V.tossN = n;
+    for(let i = 0; i < 9; i++){ const r = hr(n * 9 + i, 731), r2 = hr(n * 9 + i, 732);
+      V.bits.push({ x: cx + (r - 0.5) * 6, y: y - h * 0.08, vx: (r - 0.5) * 56, vy: -42 - r2 * 22, t: 0, note: i % 3 === 0, spin: r2 * 6 }); } }
+  HER_POSE = { kind: 'toss', t: V.t };
+  try{ paintGolfer(c, x, y, w, h, 0, V.t, G, false, 0, spr, [], undefined, true, 0); }
+  finally{ HER_POSE = null; c.globalAlpha = 1; c.globalCompositeOperation = 'source-over'; }
+  // the money: gold coins catching the light as they turn, green notes
+  // fluttering, down onto the grass and gone
+  for(let i = V.bits.length - 1; i >= 0; i--){
+    const b = V.bits[i]; b.t += dt; b.vy += 150 * dt; b.vx *= 1 - dt * 0.6; if(b.note) b.vy = Math.min(b.vy, 26);
+    b.x += b.vx * dt; b.y += b.vy * dt;
+    if(b.y > G + 2 || b.t > 3){ V.bits.splice(i, 1); continue; }
+    const X = Math.round(b.x), Y = Math.round(b.y), f = Math.floor(b.t * 10 + b.spin) % 4;
+    if(b.note){ const w = f & 1 ? 5 : 4; c.fillStyle = '#2F7A3A'; c.fillRect(X - 2, Y, w, 3); c.fillStyle = '#6CC072'; c.fillRect(X - 2, Y, w, 1); c.fillStyle = '#B9EBA8'; c.fillRect(X, Y + 1, 1, 1); }
+    else{ const w = f === 3 ? 1 : f === 1 ? 2 : 3; c.fillStyle = '#A8802F'; c.fillRect(X - (w >> 1), Y, w, 3); c.fillStyle = f === 1 ? '#FFF2B8' : '#E3B457'; c.fillRect(X - (w >> 1), Y, w, 2); if(w === 3){ c.fillStyle = '#FFF2B8'; c.fillRect(X - 1, Y, 1, 1); } }
+  }
+  if(V.bits.length > 120) V.bits.splice(0, V.bits.length - 120);
 }
 
 /* ---- modal ---- */
@@ -19592,7 +19687,7 @@ const herPoseOf = d => d <= -4 ? 'herace' : d <= -3 ? 'heralb' : d <= -1 ? 'twir
 // bogey or worse both hands stacked on the club, planted, head down
 const hisPoseOf = d => d <= -4 ? 'hisace' : d <= -3 ? 'hisalb' : d <= -1 ? 'hisbird' : d >= 1 ? 'hislean' : null;
 const HIS_POSES = ['hisace', 'hisalb', 'hisbird', 'hislean'];
-const HER_TWIRL = 0.42;
+const HER_TWIRL = 0.42, TOSS_T = 1.15;
 // On an ace each has a celebration of their own (the user asked for his
 // too), over in well under the second the ace is held, so nothing of it is
 // left for the next tee: he leaps with both arms up, the club high, lands
@@ -19623,6 +19718,14 @@ function herPoseAt(P, sx, sy, w, h, cl, bot){
     const up = ease((T - HER_TWIRL) / 0.12), hx = sx + w*(0.22 - 0.14 * up), hy = sy + h*(0.20 - 0.52 * up);
     const far = [[sx - w*0.10, sy + 1], [sx - w*(0.16 - 0.04 * up), sy - h*0.14 * up], [hx - w*0.06, hy + h*0.02]];
     return { hx, hy, gx: hx, gy: hy + h*0.03, tx: hx + w*0.12, ty: hy - cl*(0.3 + 0.55 * up), turn: 1, far };
+  }
+  if(P.kind === 'toss'){
+    // (the away card: handfuls of money flung up over his head, both arms,
+    // again and again; no club)
+    const q = (T % TOSS_T) / TOSS_T, up = q < 0.42 ? ease(q / 0.42) : q < 0.55 ? 1 : 1 - ease((q - 0.55) / 0.45);
+    const hx = sx + w*(0.20 - 0.06 * up), hy = sy + h*(0.26 - 0.56 * up);
+    const far = [[sx - w*0.10, sy + 1], [sx - w*(0.20 + 0.04 * up), sy + h*(0.12 - 0.24 * up)], [sx - w*(0.14 + 0.04 * up), sy + h*(0.26 - 0.56 * up)]];
+    return { hx, hy, gx: hx, gy: hy, tx: hx, ty: hy, turn: 1, far, noClub: true };
   }
   if(P.kind === 'heralb'){
     // the club pointed out at the flag, her arm straight, the other hand on
@@ -19761,7 +19864,7 @@ function paintGolfer(c, x, y, w, h, ph, t, bot, walking, walkPh, spr, arc, putt,
     pxLine(c, sx, sy, P.hx, P.hy, OS.arm || OS.skin || PX.skin, th);
     if(h > 22){ c.fillStyle = OS.hand || OS.shirt; c.fillRect(Math.round(P.hx) - 1, Math.round(P.hy) - 1, th + 1, th + 1); }
     g.hand = { x: P.hx, y: P.hy }; arc.length = 0;
-    drawClub(c, P.gx, P.gy, P.tx, P.ty, th, h, P.turn, t);
+    if(!P.noClub) drawClub(c, P.gx, P.gy, P.tx, P.ty, th, h, P.turn, t);
     c.globalAlpha = 1;
     if(FX && FX.front) FX.front(c, g);
     if(FX) femTail(c, g, outfitNow().fx);

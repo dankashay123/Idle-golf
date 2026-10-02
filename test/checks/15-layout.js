@@ -109,12 +109,15 @@ module.exports = {
       QUIET = true; offline(); QUIET = false;
       const tiles = [...document.querySelectorAll('#sheet .awst')];
       out.tiles = tiles.length;
-      out.capTops = tiles.map(t => +t.querySelector('.awk').getBoundingClientRect().top.toFixed(1));
+      // (the purse has a row of its own over the other two; tiles that share
+      // a row share a caption line)
+      out.capTops = tiles.map(t => [Math.round(t.getBoundingClientRect().top), +t.querySelector('.awk').getBoundingClientRect().top.toFixed(1)]);
       out.offCentre = tiles.map(t => {
         const b = t.getBoundingClientRect();
-        const v = t.querySelector('.awv').getBoundingClientRect();
-        const k = t.querySelector('.awk').getBoundingClientRect();
-        return +(((v.top + k.bottom) / 2) - ((b.top + b.bottom) / 2)).toFixed(1);
+        // (the content is everything in the tile, its picture included)
+        const kids = [...t.children].map(c => c.getBoundingClientRect());
+        const top = Math.min(...kids.map(k => k.top)), bot = Math.max(...kids.map(k => k.bottom));
+        return +(((top + bot) / 2) - ((b.top + b.bottom) / 2)).toFixed(1);
       });
       try { hideSheet(); } catch (e) {}
       setView('upg');
@@ -443,9 +446,11 @@ module.exports = {
         + 'put a hard space between them.');
 
     if (r.tiles !== 3) throw new Error('the away card has ' + r.tiles + ' tiles, expected 3');
-    if (new Set(r.capTops).size !== 1)
-      throw new Error('the away card captions sit on ' + new Set(r.capTops).size
-        + ' different lines (' + r.capTops.join(', ') + '). One of the three is in a bigger '
+    const rows = {}; r.capTops.forEach(([row, cap]) => (rows[row] = rows[row] || new Set()).add(cap));
+    const split = Object.values(rows).find(x => x.size !== 1);
+    if (split)
+      throw new Error('the away card captions in one row sit on ' + split.size
+        + ' different lines (' + [...split].join(', ') + '). One tile is in a bigger '
         + 'face, so left to flow from the top it sets the row height and the other two sit '
         + 'above their own middles.');
     for (const d of r.offCentre)
@@ -487,7 +492,7 @@ module.exports = {
 
     return [r.looked + ' boxes measured across five screens, four shop tabs, the Trophy Room\'s three pages and three sheets, '
       + 'none past its edge',
-      'away card: three tiles, captions on one line, all three centred',
+      'away card: three tiles, captions in a row on one line, all three centred',
       'stage and vitals at 320/400/768 and on its side at 740/844: nothing off the stage, no HUD element on another '
       + 'with the tallest toasts up, five equal cells holding a maxed golfer\'s numbers',
       'on its side at ' + side.map(o => o.w + 'x' + o.h).join('/') + ': field and menu side by '
