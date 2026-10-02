@@ -74,7 +74,7 @@ module.exports = {
       // strike, the cup and both music tracks. This waited for three and then
       // asked for exactly three, so it failed whenever the second track
       // happened to finish decoding first.
-      const want = ['strike', 'cup', 'music', 'music2'];
+      const want = ['strike', 'putt', 'cup', 'music', 'music2'];
       for (let i = 0; i < 80 && o.running && !want.every(k => Sfx.recs[k]); i++)
         await new Promise(r => setTimeout(r, 50));
       o.recs = Object.keys(Sfx.recs).filter(k => Sfx.recs[k]);
@@ -94,6 +94,7 @@ module.exports = {
       const count = f => { n = 0; played.length = 0; f(); return n; };
       o.parts = { strike: count(() => { Sfx.lastSwing = -1; Sfx.play('strike'); }), strikeRec: played.slice(),
                   holedRec: (count(() => Sfx.play('hole', -1)), played.slice()),
+                  puttRec: (count(() => Sfx.play('putt')), played.slice()),
                   birds: count(() => { Scene.night = false; Scene.rain = false; Sfx.birdT = 0.001; Sfx.cricketT = 99; Sfx.tick(0.01); }),
                   // crickets at night and never by day; no birds at night; neither in the rain
                   crickets: count(() => { Scene.night = true; Scene.rain = false; Sfx.birdT = 0.001; Sfx.cricketT = 0.001; Sfx.tick(0.01); }),
@@ -118,13 +119,13 @@ module.exports = {
     });
     if (!snd.open) throw new Error('the settings button did not open the settings sheet');
     if (snd.errs.length) throw new Error('playing a sound threw: ' + snd.errs.join('; '));
-    if (snd.running && snd.recs.join() !== 'strike,cup,music,music2')
+    if (snd.running && snd.recs.join() !== 'strike,putt,cup,music,music2')
       throw new Error('the recordings that decoded were ' + JSON.stringify(snd.recs)
-        + ', not the strike, the cup and the two music tracks');
+        + ', not the strike, the putt, the cup and the two music tracks');
     // and no gallery: a fast bag holes out every few seconds, and the
     // applause after each hole never stopped. A holed ball is the cup alone.
     if (snd.running && !(snd.parts.strikeRec.join() === 'strike'
-        && snd.parts.holedRec.join() === 'cup' && snd.parts.birds >= 1
+        && snd.parts.holedRec.join() === 'cup' && snd.parts.puttRec.join() === 'putt' && snd.parts.birds >= 1
         && snd.parts.crickets >= 6 && !snd.parts.cricketsDay && !snd.parts.nightRain))
       throw new Error('the course sounds are not right: ' + JSON.stringify(snd.parts)
         + ' (a strike is the recorded crack; a holed ball is the cup and nothing else; birds sing by day, crickets at night, neither in the rain)');
