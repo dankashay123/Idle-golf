@@ -10336,6 +10336,17 @@ const FEM = {
   back: { hair: [], over: [[10, 18, 21], [11, 17, 22], [12, 17, 22], [13, 17, 22], [14, 18, 21], [15, 18, 21], [16, 18, 21], [17, 19, 20], [18, 19, 20]] }
 };
 const isFem = () => S.gender === 'f';
+// The caddie's lines for her (the user asked: "her own caddie lines"),
+// said in place of the usual ones three times in five
+const SAY_HER = {
+  huge:   ['QUEEN OF GREENS!', 'SHE DID THAT!', 'ICONIC!'],
+  eagle:  ['SHE\'S ON FIRE!', 'PURE CLASS!', 'STUNNING!'],
+  birdie: ['THAT\'S HER!', 'TEXTBOOK!', 'GO ON, CHAMP!', 'CLASSY!'],
+  bogey:  ['SHAKE IT OFF', 'CHIN UP', 'ALL GOOD'],
+  worse:  ['WE GO AGAIN', 'BRUSH IT OFF', 'HEAD HIGH'],
+  quip:   ['OWN THE TEE', 'HER TEE, HER RULES', 'GRACE AND POWER', 'SHOW THEM HOW',
+           'STEADY, SKIPPER', 'ALL YOURS, BOSS', 'RUN THE COURSE']
+};
 function femRows(rows, pose){
   if(!isFem()) return rows;
   const F = FEM[pose], R = rows.map(r => [...r]);
@@ -17672,7 +17683,7 @@ const Scene = {
     if(this.night) ctx.push(SAY.night);
     if(cs.slot === 'home') ctx.push(SAY.home);
     if(isWeekMajor(t)) ctx.push(SAY.major);
-    const list = ctx.length && Math.random() < 0.6 ? ctx[Math.random() * ctx.length | 0] : SAY.quip;
+    const list = ctx.length && Math.random() < 0.6 ? ctx[Math.random() * ctx.length | 0] : isFem() && Math.random() < 0.6 ? SAY_HER.quip : SAY.quip;
     return list[Math.random() * list.length | 0];
   },
   // The Mythic Favour going off: the caddie casts it into him, a stream of
@@ -18040,7 +18051,7 @@ const Scene = {
 
     this.camD = 0; this.restBall = null; this.walkTo = 0; this.greenBall = false;
     this.train = null; this.trainMet = 0; this.trainNext = this.t + 8;
-    this.upT = 0; this.saidHole = null; this.putt = null; this.cupT = 0; this.cupHeard = 0; this.aceT = 0; this.aceSwung = 0;
+    this.upT = 0; this.saidHole = null; this.putt = null; this.cupT = 0; this.cupHeard = 0; this.aceT = 0; this.aceSwung = 0; this.herPose = null;
     this.shotN = 0;                 // (the hole's shots so far: only the first is off the tee)
     this.galleryUp = null;          // (the last hole's gallery cheered on into this one)
     // A swing still playing when the last hole ended belonged to that hole: it
@@ -18124,7 +18135,7 @@ const Scene = {
     this.camD = 0; this.restBall = null; this.walkTo = 0; this.greenBall = false;
     // (a putt left over from the course: its ball sat at the cup through
     // the whole Scramble)
-    this.putt = null; this.cupT = 0; this.cupHeard = 0; this.upT = 0; this.aceT = 0; this.aceSwung = 0;
+    this.putt = null; this.cupT = 0; this.cupHeard = 0; this.upT = 0; this.aceT = 0; this.aceSwung = 0; this.herPose = null;
     // each contest played from its own place from the first frame: he glided
     // onto the Twilight Putt's green from the tee
     if(R.mode !== 'floor') this.camD = wagerSpot(R) * LEN;
@@ -18579,8 +18590,13 @@ const Scene = {
     // and the fairy's say on it: pleased with a birdie or better, glum at a
     // bogey or worse, nothing for a par
     const SAY = B.FAIRY_SAY, d = sc.d, one = l => l[Math.random() * l.length | 0];
-    if(d <= -1) this.fairyReact('cheer', one(d <= -3 ? SAY.huge : d === -2 ? SAY.eagle : SAY.birdie));
-    else if(d >= 1) this.fairyReact('sigh', one(d >= 2 ? SAY.worse : SAY.bogey));
+    // (the female golfer has lines of her own, said to her, mixed in with
+    // the rest: the user asked for them)
+    const her = (k) => isFem() && SAY_HER[k] && Math.random() < 0.6 ? SAY_HER[k] : SAY[k];
+    if(d <= -1) this.fairyReact('cheer', one(her(d <= -3 ? 'huge' : d === -2 ? 'eagle' : 'birdie')));
+    else if(d >= 1) this.fairyReact('sigh', one(her(d >= 2 ? 'worse' : 'bogey')));
+    // and a pose of hers alone as the ball drops (herPoseOf)
+    this.herPose = isFem() && !QUIET && !OFFLINE && !S.dgnRun && herPoseOf(d) ? { kind: herPoseOf(d), t0: this.t, hole: S.hole } : null;
     // no tip straight after he has had his say
     this.quipT = Math.max(this.quipT || 0, 10);
   },
@@ -19339,6 +19355,43 @@ function femTail(c, g, fx){
   // (a band where it is tied, in the darker of the two)
   c.fillStyle = P[1]; c.fillRect(Math.round(pts[0][0] + (pts[1][0] - pts[0][0]) * 0.4), Math.round(pts[0][1] + (pts[1][1] - pts[0][1]) * 0.4) - (th >> 1), 1, th + 1);
 }
+// Her poses, hers alone (the user asked for "a few poses that are hers
+// alone"): as the ball drops she stands up tall and, on a birdie or an
+// eagle, twirls the club round her hand like a baton and rests it on her
+// shoulder, the other hand on her hip; on an albatross or an ace holds it
+// up high over her head; on a bogey or worse leans on it, planted, a hand
+// on her hip. Held until the next hole.
+let HER_POSE = null;
+const herPoseOf = d => d <= -3 ? 'aloft' : d <= -1 ? 'twirl' : d >= 1 ? 'hip' : null;
+const HER_TWIRL = 0.42;
+// where her hand, the club's grip and head, and (on her hip) her far arm go,
+// side on, facing the target; sx, sy her near shoulder
+function herPoseAt(P, sx, sy, w, h, cl, bot){
+  const T = P.t, ease = u => u < 0 ? 0 : u > 1 ? 1 : u * u * (3 - 2 * u);
+  const hip = [[sx - w*0.10, sy + 1], [sx - w*0.30, sy + h*0.12], [sx - w*0.13, sy + h*0.235]];
+  if(P.kind === 'aloft'){
+    // up over her head, pumped once or twice
+    const up = ease(T / 0.18), pump = T < 0.7 ? Math.abs(Math.sin(T * 9)) * h * 0.035 : 0;
+    const hx = sx + w*(0.30 - 0.20 * up), hy = sy + h*(0.24 - 0.56 * up) - pump * up;
+    return { hx, hy, gx: hx, gy: hy + h*0.04, tx: hx + w*0.10, ty: hy - cl*(0.25 + 0.55 * up), turn: 1 };
+  }
+  if(P.kind === 'hip'){
+    // leaning on it in front of her, planted, the other hand on her hip
+    const hx = sx + w*0.26, hy = sy + h*0.25;
+    return { hx, hy, gx: hx, gy: hy, tx: hx + h*0.30, ty: bot - 1, turn: 1, far: hip };
+  }
+  // the twirl: round her hand about its middle one and a half turns, then
+  // over her shoulder at rest, the head behind her
+  const hx0 = sx + w*0.22, hy0 = sy + h*0.20;
+  if(T < HER_TWIRL){
+    const a = Math.PI * 0.15 + T / HER_TWIRL * Math.PI * 3;
+    const dx = Math.sin(a), dy = Math.cos(a) * 0.9;
+    return { hx: hx0, hy: hy0, gx: hx0 - dx * cl * 0.42, gy: hy0 - dy * cl * 0.42, tx: hx0 + dx * cl * 0.58, ty: hy0 + dy * cl * 0.58, turn: dx < 0 ? -1 : 1 };
+  }
+  const u = ease((T - HER_TWIRL) / 0.12);
+  const hx = hx0 + (sx + w*0.10 - hx0) * u, hy = hy0 + (sy + h*0.06 - hy0) * u;
+  return { hx, hy, gx: hx + w*0.05, gy: hy + h*0.02, tx: hx - cl*0.7, ty: hy - cl*0.3, turn: -1, far: u > 0.5 ? hip : null };
+}
 /* One golfer, at any size, in the look he is wearing: the course draws him
    through this and so does the battery saver, so the two always match. ph is
    the swing, 0 at address; walking draws him from behind, striding. arc keeps
@@ -19413,12 +19466,30 @@ function paintGolfer(c, x, y, w, h, ph, t, bot, walking, walkPh, spr, arc, putt,
   const sx = x + w*(spr.ax || 0.66), sy = y + h*(spr.ay || 0.30);
   const al = h*0.30, cl = h*0.64;   // (a touch longer: he stands taller at address now)
   const armH = arm * 0.55;
-  const hx = sx + Math.sin(armH)*al, hy = sy + Math.cos(armH)*al*0.85;
-  const tx = hx + Math.sin(arm)*cl, ty = hy + Math.cos(arm)*cl*0.90;
+  let hx = sx + Math.sin(armH)*al, hy = sy + Math.cos(armH)*al*0.85;
+  let tx = hx + Math.sin(arm)*cl, ty = hy + Math.cos(arm)*cl*0.90;
   const OS = outfitNow();
   // (every look a pixel thicker in the arm now, the plain ones too: the
   // user asked for everyone bulkier)
   const th = (h > 34 ? 2 : 1) + (h > 30 ? 1 : 0);
+  // her own poses as the ball drops (herPoseOf): her arms and club placed
+  // here instead of by the swing
+  if(HER_POSE && !walking){
+    const P = herPoseAt(HER_POSE, sx, sy, w, h, cl, bot);
+    if(P.far) for(let i = 1; i < P.far.length; i++) pxLine(c, P.far[i - 1][0], P.far[i - 1][1], P.far[i][0], P.far[i][1], OS.arm2 || OS.skin2 || PX.skin2, th);
+    else pxLine(c, sx - w*0.10, sy + 1, P.hx, P.hy, OS.arm2 || OS.skin2 || PX.skin2, th);
+    if(P.far && h > 22){ const [fx2, fy2] = P.far[P.far.length - 1]; c.fillStyle = OS.hand || OS.shirt; c.fillRect(Math.round(fx2) - 1, Math.round(fy2) - 1, th + 1, th + 1); }
+    pxLine(c, sx, sy, P.hx, P.hy, OS.arm || OS.skin || PX.skin, th);
+    if(h > 22){ c.fillStyle = OS.hand || OS.shirt; c.fillRect(Math.round(P.hx) - 1, Math.round(P.hy) - 1, th + 1, th + 1); }
+    g.hand = { x: P.hx, y: P.hy }; arc.length = 0;
+    drawClub(c, P.gx, P.gy, P.tx, P.ty, th, h, P.turn, t);
+    c.globalAlpha = 1;
+    if(FX && FX.front) FX.front(c, g);
+    if(FX) femTail(c, g, outfitNow().fx);
+    if(FL){ c.globalAlpha = 1; FX.flourish(c, g, FL, 'front'); }
+    c.globalAlpha = 1; c.globalCompositeOperation = 'source-over';
+    return;
+  }
   // his arms in his own skin: a red demon's are red (they were always the
   // plain tone, whatever his face was); in plate, where he wears it
   pxLine(c, sx, sy, hx, hy, OS.arm || OS.skin || PX.skin, th);
@@ -21170,7 +21241,9 @@ Object.assign(Scene, {
     const walking = ph === 0 && (!!this.walkOn || waving);
     // Past the ball he comes up out of the posture, so the silhouette changes
     // rather than the same bent figure sliding around.
-    const spr = waving ? SPRITE.gWave : walking ? SPRITE.gBack : ph > 0.60 ? SPRITE.gFinish : SPRITE.gAddr;
+    // (her pose as the ball drops is stood up tall, as at the finish)
+    const her = atCam === undefined && ph === 0 && !walking && this.herPose && this.herPose.hole === S.hole && isFem() ? this.herPose : null;
+    const spr = waving ? SPRITE.gWave : walking ? SPRITE.gBack : ph > 0.60 || her ? SPRITE.gFinish : SPRITE.gAddr;
     // He stood 1:2.9 against the fairway. Real golf is nearer 1:17; a figure
     // that small is unreadable in pixel art, so 1:7 is the compromise. The
     // number is his world height in the same units the lateral scale uses.
@@ -21198,7 +21271,8 @@ Object.assign(Scene, {
     // stone, a little longer)
     const hh = h - Math.round(sq * h * 0.12) + (air > 0 && air < 0.3 ? Math.round(Math.sin(Math.PI * air / 0.3) * h * 0.04) : 0);
     const y = p.y - hh - stepUp - hop - (FX && FX.bob ? Math.round(2 + Math.sin(this.t * 2.2) * 2) : 0);
-    return { p, ph, walking, spr, h: hh, w, x, y, wave: waving ? wave : 0, hopAir: air, hopSq: sq, hopping: !!hopping };
+    return { p, ph, walking, spr, h: hh, w, x, y, wave: waving ? wave : 0, hopAir: air, hopSq: sq, hopping: !!hopping,
+             her: her ? { kind: her.kind, t: this.t - her.t0 } : null };
   },
   // A skin's ground (its circle on the grass under him) goes down before the
   // pin, the cup and a putt rolling away beyond him, which all stand on it:
@@ -21257,9 +21331,9 @@ Object.assign(Scene, {
     // (the blessing's ground and what is behind him go down first)
     if(atCam === undefined) this.drawBless(c, x, y, w, h, p.y, 'back');
     // (over the water his legs drawn up, a stride held, not walking on air)
-    LEGS_TUCK = G.hopAir > 0 ? Math.sin(Math.PI * G.hopAir) : 0;
+    LEGS_TUCK = G.hopAir > 0 ? Math.sin(Math.PI * G.hopAir) : 0; HER_POSE = G.her;
     try{ paintGolfer(c, x, y, w, h, ph, this.t, p.y, walking, G.wave ? 0 : G.hopping ? 0.12 : this.walkPh, spr, this.clubArc || (this.clubArc = []), PT >= 0 ? this.puttArm(PT) : undefined, true, G.wave); }
-    finally{ LEGS_TUCK = 0; }
+    finally{ LEGS_TUCK = 0; HER_POSE = null; }
     if(puttLate) puttLate();
     if(atCam === undefined && SPRITE.caddie) this.drawCaddie(c, p.x - Math.round(w*0.42), y, w, h);
     if(atCam === undefined) this.drawBless(c, x, y, w, h, p.y, 'front');
