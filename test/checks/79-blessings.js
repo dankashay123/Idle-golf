@@ -1,11 +1,15 @@
-/* The caddie's blessing in the look of the caddie who gives it (the user
- * asked: "the caddie buff visual effect should match the skin that the
- * caddie is wearing"):
+/* The caddie's blessing in the look of the caddie who gives it. First the
+ * user asked that it "match the skin that the caddie is wearing"; then
+ * that it be "unique per skin (only mythic and legendary skins). Make all
+ * other skin have a basic, faint light beam":
  *
- *   - every caddie look with an effect of its own has a blessing of its own:
- *     its colours in the column, and what it drops or raises in it; no two
- *     alike, and each unlike the plain one
- *   - a plain caddie's keeps the colour of the perk it gives
+ *   - the Divine, the Demonic, the Ascended and The Void each give a
+ *     blessing of their own: their colours, none alike, each unlike the
+ *     plain one; the Demonic's hellfire rises from his feet, not out of
+ *     the sky
+ *   - every other caddie, plain or with a look of its own, gives the same
+ *     plain beam in the perk's colour, and it is faint: under half the
+ *     pixels of the least of the four
  *   - all of it in solid pixels (a wash of colour over the grass went grey,
  *     red went khaki), close about him: no wider than twice his width either
  *     side, and gone after its time
@@ -34,27 +38,41 @@ module.exports = {
           const after = c.getImageData(0, 0, CW, CH).data.some((v, i) => i % 4 === 3 && v) || !!Scene.bless;
           return { cols, soft, wide, after };
         };
-        const looks = B.CADDIES.filter(x => x.fx).map(x => x.id);
-        const plain = shoot('bib');
-        o.plainPerk = plain.cols.get(PERK) || 0;
+        const LEG = ['divine', 'demonic', 'ascended', 'cosmic'];
+        const looks = B.CADDIES.filter(x => x.fx).map(x => x.id), legs = looks.filter(id => LEG.includes(B.CADDIES.find(x => x.id === id).fx));
+        const plain = shoot('bib'), total = R => [...R.cols.values()].reduce((a, b) => a + b, 0), key = R => [...R.cols.entries()].sort().join(';');
+        o.plainPerk = plain.cols.get(PERK) || 0; o.plainN = total(plain);
         if (!(o.plainPerk > 50)) f('a plain caddie\'s blessing shows ' + o.plainPerk + ' pixels of its perk\'s colour');
-        const sig = {}; o.rows = [];
-        for (const id of [ 'bib'].concat(looks)) {
+        if (legs.length !== 4) f('the Legendary and Mythic caddies: ' + legs.join(', '));
+        const sig = {}; o.rows = []; o.same = 0;
+        for (const id of ['bib'].concat(looks)) {
           const R = id === 'bib' ? plain : shoot(id), fx = (B.CADDIES.find(x => x.id === id) || {}).fx, TH = BLESS_FX[fx];
           if (R.soft) f('the ' + id + ' blessing has ' + R.soft + ' see-through pixels');
           if (R.wide) f('the ' + id + ' blessing reaches ' + R.wide + ' pixels beyond twice his width');
           if (R.after) f('the ' + id + ' blessing is still there after its time');
           if (id === 'bib') continue;
+          if (!legs.includes(id)) {
+            // the plain beam, pixel for pixel
+            if (TH || key(R) !== key(plain)) f('the ' + id + ' caddie\'s blessing is not the plain beam'); else o.same++;
+            continue;
+          }
           if (!TH) { f(id + ' has no blessing of its own'); continue; }
-          const own = R.cols.get(TH.col.toUpperCase()) || 0, perk = R.cols.get(PERK) || 0;
-          if (!(own > 40 || TH.rainbow) || perk) f('the ' + id + ' blessing: ' + own + ' pixels of its own colour, ' + perk + ' of the perk\'s');
+          const own = R.cols.get(TH.col.toUpperCase()) || 0, perk = R.cols.get(PERK) || 0, n = total(R);
+          if (!(own > 40) || perk) f('the ' + id + ' blessing: ' + own + ' pixels of its own colour, ' + perk + ' of the perk\'s');
+          if (!(o.plainN * 2 < n)) f('the plain beam is not faint beside the ' + id + '\'s: ' + o.plainN + ' pixels to ' + n);
           // its signature: its five commonest colours
           sig[id] = [...R.cols.entries()].sort((a, b) => b[1] - a[1]).slice(0, 5).map(e => e[0]).sort().join(',');
-          o.rows.push(id + ' ' + own);
+          o.rows.push(id + ' ' + n);
         }
         const seen = {};
         for (const id in sig) { if (seen[sig[id]]) f('the ' + id + ' and ' + seen[sig[id]] + ' blessings look alike'); seen[sig[id]] = id; }
         o.n = Object.keys(sig).length;
+        // the Demonic's fire rising from his feet: early on, none of it high
+        { const id = legs.find(id => B.CADDIES.find(x => x.id === id).fx === 'demonic');
+          S.styleOwn['c:' + id] = 1; S.caddie = id; c.clearRect(0, 0, CW, CH); Scene.bless = { col: PERK, lv: 1, t0: 10 }; Scene.t = 10.1; Scene.drawBless(c, X, 60, W, 40, BOT);
+          const d = c.getImageData(0, 0, CW, CH).data; o.riseLow = 0; o.riseHigh = 0;
+          for (let i = 3; i < d.length; i += 4) if (d[i]) { if (((i >> 2) / CW | 0) < BOT * 0.5) o.riseHigh++; else o.riseLow++; }
+          if (!(o.riseLow > 30 && !o.riseHigh)) f('the Demonic\'s fire does not rise from his feet: ' + o.riseLow + ' pixels low, ' + o.riseHigh + ' high, a moment in'); }
       } finally {
         QUIET = false; Scene.bless = null;
         Object.keys(S).forEach(k => delete S[k]); Object.assign(S, JSON.parse(SNAP)); buildSprites(); startHole();
@@ -63,7 +81,8 @@ module.exports = {
       return o;
     });
     if (r.fails.length) throw new Error(r.fails.join('; '));
-    return ['a blessing of its own for each of the ' + r.n + ' caddie looks with an effect, none alike (' + r.rows.join(', ') + ' pixels of its own colour); the plain caddie\'s in its perk\'s colour (' + r.plainPerk + ')',
+    return ['a blessing of its own for each of the ' + r.n + ' Legendary and Mythic caddies, none alike (' + r.rows.join(', ') + ' pixels), the Demonic\'s rising from his feet (' + r.riseLow + 'px low, none high a moment in)',
+      'every other caddie (' + r.same + ' looks and the plain one) the same faint beam of the perk\'s colour (' + r.plainN + ' pixels, ' + r.plainPerk + ' of them its colour)',
       'all in solid pixels, within twice his width, gone after its time'];
   }
 };
