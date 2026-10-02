@@ -14,6 +14,8 @@
  *     plain look and leggings on a skin (the Divine still shows no skin),
  *     a slimmer build than his, and the long cloaks (The Void, The Dread,
  *     the Ascended) drawn in at her waist from behind
+ *   - every Legendary and Mythic skin goes on her legs too (the user asked):
+ *     her legs in his trousers' colours and pattern, no bare skin
  */
 'use strict';
 module.exports = {
@@ -77,6 +79,21 @@ module.exports = {
         S.styleOwn = Object.assign({}, S.styleOwn, { 'o:divine': 1 }); S.outfit = 'divine'; for (const k in SHOWSPR) delete SHOWSPR[k]; buildSprites();
         const dSkin = ['gAddr', 'gFinish', 'gBack'].map(k => legsSkin(SPRITE[k]));
         if (dSkin.some(n => n)) f('the Divine shows skin on her legs: ' + dSkin.join('/'));
+        // every Legendary and Mythic skin on her legs too (the user asked):
+        // her legs in the colours of his trousers, pattern and all, no skin
+        const legCols = spr => { const d = spr.cv.getContext('2d').getImageData(0, 0, spr.w, spr.h).data, m = new Map();
+          for (let y = 38; y < 54; y++) for (let x = 0; x < spr.w; x++) { const i = (y * spr.w + x) * 4; if (d[i + 3]) { const k = hex([d[i], d[i + 1], d[i + 2]]); m.set(k, (m.get(k) || 0) + 1); } } return m; };
+        o.skinLegs = [];
+        for (const fit of B.OUTFITS.filter(q => q.cat === 'skin')) {
+          S.styleOwn = Object.assign({}, S.styleOwn, { ['o:' + fit.id]: 1 }); S.outfit = fit.id;
+          S.gender = 'm'; for (const k in SHOWSPR) delete SHOWSPR[k]; buildSprites(); const his = legCols(SPRITE.gAddr);
+          S.gender = 'f'; for (const k in SHOWSPR) delete SHOWSPR[k]; buildSprites(); const hers = legCols(SPRITE.gAddr);
+          let all = 0, like = 0; for (const [k, n] of hers) { all += n; if (his.has(k)) like += n; }
+          const bare = legsSkin(SPRITE.gAddr) + legsSkin(SPRITE.gFinish) + legsSkin(SPRITE.gBack);
+          o.skinLegs.push(fit.n + ' ' + like + '/' + all);
+          if (all < 20 || like < all * 0.9 || bare) f(fit.n + ': her legs ' + like + ' of ' + all + ' pixels in his trousers\' colours, ' + bare + ' bare');
+          if (fit.pantPattern && his.size > 2 && [...hers.keys()].filter(k => his.has(k)).length < 3) f(fit.n + ': her legs miss the trousers\' pattern (' + hers.size + ' colours)');
+        }
         // the cloaks from behind, at her waist and at his
         const waist = (fn, sex) => { S.gender = sex; const C = fn(40, 58, 2, 0), cv = C.cv || C, d = cv.getContext('2d').getImageData(0, Math.round(58 * 0.45), cv.width, 1).data; let n = 0; for (let x = 0; x < cv.width; x++) if (d[x * 4 + 3] > 128) n++; return n; };
         o.cloaks = [];
@@ -92,6 +109,7 @@ module.exports = {
     });
     if (r.fails.length) throw new Error(r.fails.join('\n'));
     return [r.lines + '; with him none', 'poses by score: ' + r.by.join(' ') + '; none for him, in a catch-up, or on the next hole',
-      'each pose draws her anew and stays about her', r.fig + '; cloaks at the waist (his/hers) ' + r.cloaks.join(', ')];
+      'each pose draws her anew and stays about her', r.fig + '; cloaks at the waist (his/hers) ' + r.cloaks.join(', '),
+      'skins on her legs (pixels in his trousers\' colours): ' + r.skinLegs.join(', ')];
   }
 };

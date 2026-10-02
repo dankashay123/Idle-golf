@@ -10327,9 +10327,12 @@ const golferMap = o => ({ c:o.cap, C:o.cap2, k:o.skin || PX.skin, K:o.skin2 || P
                           T:o.shirt3, b:o.belt || '#2A2018', p:o.pant, P:o.pant2, o:o.shoe || PX.shoe,
                           h:o.hair || (o.skin ? o.skin2 : HAIR),
                           // (her legs below her skirt: bare on a plain look,
-                          // leggings a shade under the skirt on a skin with
-                          // its own skin, which shows none; her lips)
-                          L: o.skin ? mixC(o.pant, '#000000', 0.32) : PX.skin, M: o.skin ? mixC(o.pant2 || o.pant, '#000000', 0.38) : PX.skin2,
+                          // leggings a shade under the skirt on one with its
+                          // own skin, which shows none; on a Legendary or
+                          // Mythic skin its own legs, the trousers' cloth and
+                          // pattern, the user asked; her lips)
+                          L: o.cat === 'skin' ? o.pant : o.skin ? mixC(o.pant, '#000000', 0.32) : PX.skin,
+                          M: o.cat === 'skin' ? o.pant2 || o.pant : o.skin ? mixC(o.pant2 || o.pant, '#000000', 0.38) : PX.skin2,
                           l: '#C25A6A' });
 // The female golfer (the user asked for one, chosen in Settings): his
 // picture with her hair. A ponytail out from under the back of her cap
@@ -19623,10 +19626,11 @@ function paintGolfer(c, x, y, w, h, ph, t, bot, walking, walkPh, spr, arc, putt,
   if(FX && FX.alpha) c.globalAlpha = FX.alpha;
   if(walking){
     const O = outfitNow();
-    // (hers below her skirt, in her legs' own colours)
+    // (hers below her skirt, in her legs' own colours; a skin's in its
+    // trousers' pattern too)
     const GM = isFem() ? golferMap(O) : null;
     drawLegsBack(c, x + w*0.5, y + h*(31/58), h*(26/58), w, walkPh, GM ? GM.L : O.pant || '#2B3B4F', GM ? GM.M : O.pant2 || O.pant || '#1C2937', O.shoe || PX.shoe, O.belt, g.bulk && Object.assign({ s: spr.bulkS }, g.bulk),
-                 !GM && O.pantPattern && PATTERNS[O.pantPattern]);
+                 (!GM || O.cat === 'skin') && O.pantPattern && PATTERNS[O.pantPattern]);
     blitShear(c, spr, x, y, w, h, () => 0, g.bulk);
     if(FX && FX.body) FX.body(c, g);
     // The club in his right hand, hanging at his side, the head down by
