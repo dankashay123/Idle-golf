@@ -3543,6 +3543,13 @@ const B = {
       cap:'#18161E', cap2:'#0E0C12', shirt:'#24222C', shirt2:'#18161E', shirt3:'#0E0C12', pant:'#18161E', pant2:'#0E0C12',
       skin:'#D8D2BC', skin2:'#8A836E', shoe:'#18161E', belt:'#5CF0A0', hair:'#0E0C12', hand:'#D8D2BC',
       bulk:1, arm:'#24222C', arm2:'#18161E' },
+    // Psychedelic (the user named him): clothes in a spiral of six colours
+    // that keep turning, a rainbow afro, mirror shades and a third eye, a
+    // mandala behind his head and a spiral turning under his feet
+    { id:'psyche', n:'Psychedelic',      cost:3500, fx:'psyche', cat:'skin', top:2, pattern:'psyswirl', pantPattern:'psyswirl',
+      cap:'#FF2E88', cap2:'#C81E6A', shirt:'#FF2E88', shirt2:'#C81E6A', shirt3:'#8A1248', pant:'#2EC8FF', pant2:'#1E96CC',
+      skin:'#F0C8A0', skin2:'#C89870', shoe:'#8A4CFF', belt:'#FFE81E', hair:'#FF8A1E', hand:'#F0C8A0',
+      bulk:1, arm:'#8A4CFF', arm2:'#6A34D0' },
     // Won, never bought: one for each major of the week, and its caddie with it.
     // (names of our own: a real tournament's name, or its jacket's, is not
     // ours to use)
@@ -3621,7 +3628,8 @@ const B = {
     { id:'demonic',   n:'Demonic Driver', cost:2000, fx:'demonic',  top:1, shaft:'#1A1214', shaft2:'#0E0A0C', head:'#1A1214', head2:'#FF6A1A', grip:'#3A2A28', glow:'#E8401C' },
     { id:'cosmic',    n:'Eclipse Driver',  cost:2350, fx:'cosmic',   top:2, shaft:'#D8B060', shaft2:'#9A7432', head:'#0B0818', head2:'#B98CFF', grip:'#1C1640', glow:'#B98CFF' },
     { id:'ascended',  n:'Ascended Driver', cost:2350, fx:'ascended', top:2, shaft:'#4A4466', shaft2:'#3A3456', head:'#6A3AC8', head2:'#B070F8', grip:'#262040', glow:'#9A3AC8' },
-    { id:'dread',     n:'Reaper Driver',   cost:2350, fx:'dread',    top:2, shaft:'#3E3A48', shaft2:'#24222C', head:'#6E6A78', head2:'#E8FFF2', grip:'#D8D2BC', glow:'#5CF0A0' }
+    { id:'dread',     n:'Reaper Driver',   cost:2350, fx:'dread',    top:2, shaft:'#3E3A48', shaft2:'#24222C', head:'#6E6A78', head2:'#E8FFF2', grip:'#D8D2BC', glow:'#5CF0A0' },
+    { id:'psyche',    n:'Kaleido Driver',  cost:2350, fx:'psyche',   top:2, shaft:'#FF2E88', shaft2:'#C81E6A', head:'#FFFFFF', head2:'#2EC8FF', grip:'#1A1024', glow:'#FF2E88' }
   ],
   TRAILS: [
     { id:'plain',   n:'Plain',   cost:0,    cols:['#F4F6EF'] },
@@ -3636,6 +3644,7 @@ const B = {
     { id:'ascension', n:'Ascension Wake', cost:2350, fx:'tAscension', cols:['#E639EB', '#F2A6F8'], top:2 },
     { id:'horizon',   n:'Event Horizon',  cost:2350, fx:'tHorizon',   cols:['#B98CFF', '#FFFFFF'], top:2 },
     { id:'soulwake',  n:'Soul Wake',      cost:2350, fx:'tSoul',      cols:['#5CF0A0', '#E8FFF2'], top:2 },
+    { id:'kaleido',   n:'Kaleido Wake',   cost:2350, fx:'tKaleido',   cols:['#FF2E88', '#2EC8FF'], top:2 },
     // balls: more than a colour
     { id:'duck',     n:'Rubber Duck', cost:400,  fx:'duck',      cat:'ball', cols:['#FFD84A'] },
     { id:'hearts',   n:'Hearts',      cost:500,  fx:'hearts',    cat:'ball', cols:['#FF4F7A'] },
@@ -3647,7 +3656,8 @@ const B = {
     { id:'demoneye', n:'Demon Eye',   cost:1500, fx:'demoneye',  cat:'ball', cols:['#FF3A1A'], top:1 },
     { id:'ascorb',   n:'Ascended Orb', cost:1750, fx:'ascorb',   cat:'ball', cols:['#E639EB'], top:2 },
     { id:'singularity', n:'Singularity', cost:1750, fx:'singularity', cat:'ball', cols:['#B98CFF'], top:2 },
-    { id:'reaperskull', n:'Reaper Skull', cost:1750, fx:'skullball', cat:'ball', cols:['#5CF0A0'], top:2 }
+    { id:'reaperskull', n:'Reaper Skull', cost:1750, fx:'skullball', cat:'ball', cols:['#5CF0A0'], top:2 },
+    { id:'thirdeye',  n:'Third Eye',   cost:1750, fx:'psyeye',    cat:'ball', cols:['#FF2E88'], top:2 }
   ]
 };
 
@@ -7336,11 +7346,12 @@ const clubNow   = () => previewOf('k') || styleDef('k', S.club) || B.CLUBS[0];
 const FULL_SETS = { ascended: { n: 'Ascended', t: ['ascension', 'ascorb'], rim: '#F2A6F8' },
   cosmic: { n: 'The Void', t: ['horizon', 'singularity'], rim: '#C9B0FF' },
   divine: { n: 'Divine', t: ['seraph', 'godlight'], rim: '#FFE38A' }, demonic: { n: 'Demonic', t: ['hellfire', 'demoneye'], rim: '#FF8A3A' },
-  dread: { n: 'The Dread', t: ['soulwake', 'reaperskull'], rim: '#7CFFB2' } };
+  dread: { n: 'The Dread', t: ['soulwake', 'reaperskull'], rim: '#7CFFB2' },
+  psyche: { n: 'Psychedelic', t: ['kaleido', 'thirdeye'], rim: '#FF7AC0' } };
 // the one order the four sets keep on every rack of the shop, and on Sets
 // (each rack kept its own list's order, so the Ascended was first on one
 // and second on the next: the user saw it)
-const SET_ORDER = ['dread', 'ascended', 'cosmic', 'divine', 'demonic'];
+const SET_ORDER = ['psyche', 'dread', 'ascended', 'cosmic', 'divine', 'demonic'];
 const setRank = (k, id) => { const i = SET_ORDER.indexOf(fullSetOf(k, id)); return i < 0 ? 99 : i; };
 function fullSetOf(k, id){ for(const s in FULL_SETS) if(k === 't' ? FULL_SETS[s].t.includes(id) : id === s) return s; return null; }
 // the top set he wears in full (never while trying one on)
@@ -7441,7 +7452,7 @@ const SKIN_ACCENT = { divine:['#3FD6A8', '#F4D27A'], inferno:['#FFB43A', '#F0612
   stormcaller:['#8FD0FF', '#FFFFFF'], void:['#C68BFF', '#6E44A0'], glitch:['#FF2A6D', '#2AE0FF'],
   midas:['#FFFFFF', '#FFD86B'], disco:['#FF4FB8', '#3FE0FF'], ghost:['#EEF2FF', '#A5B0D6'],
   demonic:['#FF5A1E', '#FFD34A'], ascended:['#C070F0', '#F2A6F8'], cosmic:['#B98CFF', '#7FE6FF'],
-  dread:['#5CF0A0', '#D8D2BC'] };
+  dread:['#5CF0A0', '#D8D2BC'], psyche:['#FF2E88', '#2EC8FF'] };
 // and the dearest two a little more of themselves on their tiles: the
 // Demonic's horns and wings, the Ascended's horns, hair of fire, the light
 // in his chest and his cape; his imp's horns, flame, green eye and the heart
@@ -7479,6 +7490,14 @@ const ICON_FX = {
     P(4, 3, B); P(5, 3, G); P(6, 3, B); P(7, 3, G); P(8, 3, B); P(5, 4, K); P(7, 4, K);
     P(11, 1, I); P(10, 0, I); P(9, 0, E); P(11, 2, '#2EB872'); P(11, 3, '#3E3A48'); P(11, 4, '#3E3A48');
     P(5, 9, '#3E3A48'); P(5, 10, G); P(5, 11, '#3E3A48');
+  },
+  // Psychedelic: his rainbow afro, his mirror shades and the third eye;
+  // his caddie's afro and a flower
+  psyche(P, caddie){
+    if(caddie){ for(let x = 1; x <= 6; x++) P(x, 0, PSY[x % 6]); P(0, 1, PSY[4]); P(7, 1, PSY[1]); P(4, 2, '#1A1024'); P(5, 2, PSY[4]); P(1, 9, PSY[0]); P(1, 8, PSY[2]); return; }
+    for(let x = 2; x <= 9; x++) P(x, 0, PSY[x % 6]); for(let x = 1; x <= 10; x++) P(x, 1, PSY[(x + 2) % 6]); P(0, 2, PSY[3]); P(11, 2, PSY[5]);
+    P(6, 3, '#1A1024'); P(7, 3, PSY[4]); P(8, 3, PSY[0]); P(9, 3, '#1A1024'); P(7, 2, '#FFFFFF');
+    P(0, 9, PSY[0]); P(1, 8, PSY[2]); P(11, 8, PSY[4]); P(10, 9, PSY[2]);
   },
   // the Demonic: black horns cracked with lava swept back off his head, red
   // eyes, a ram's skull on each shoulder and gold edging his plate
@@ -7554,7 +7573,10 @@ function clubUrl(d){
       for(const [x, y, col] of [[8, 9, '#A49CC8'], [7, 10, '#A49CC8'], [9, 10, '#6A3AC8'], [10, 11, '#B070F8'], [9, 11, '#3A1E78'], [10, 10, '#F0D0FF'],
                                 [11, 10, '#6A3AC8'], [8, 11, '#6A3AC8'], [11, 11, '#3A1E78']]) P(x, y, col); }
     const acc = { divine:['#3FD6A8', '#F4D27A'], ice:['#FFFFFF', '#9FD6F2'], neon:['#3FFFB0', '#CFFFEA'], gold:['#FFFFFF', '#FFE39A'],
-                  demonic:['#FF5A1E', '#FFD34A'], ascended:['#E639EB', '#F2A6F8'], cosmic:['#B98CFF', '#FFFFFF'], dread:['#5CF0A0', '#E8FFF2'] }[d.fx === 'glint' ? 'gold' : d.fx];
+                  demonic:['#FF5A1E', '#FFD34A'], ascended:['#E639EB', '#F2A6F8'], cosmic:['#B98CFF', '#FFFFFF'], dread:['#5CF0A0', '#E8FFF2'], psyche:['#FF2E88', '#2EC8FF'] }[d.fx === 'glint' ? 'gold' : d.fx];
+    // the Kaleido's shaft in bands of the six, a crystal for its head
+    if(d.fx === 'psyche'){ pts.forEach(([x, y], i) => { if(i > 1) P(x, y, PSY[i % 6]); }); g.clearRect(7, 9, 4, 3);
+      for(const [x, y, col] of [[8, 9, '#FFFFFF'], [9, 9, '#2EC8FF'], [8, 10, '#FF2E88'], [9, 10, '#FFFFFF'], [10, 10, '#FFE81E'], [9, 11, '#8A4CFF'], [10, 11, '#3AF07A']]) P(x, y, col); }
     // the Reaper's dark haft bound in bone, a scythe's blade for its head, its edge green
     if(d.fx === 'dread'){ g.clearRect(7, 9, 4, 3); P(3, 2, '#D8D2BC'); P(5, 5, '#D8D2BC'); P(7, 8, '#D8D2BC');
       for(const [x, y, col] of [[8, 9, '#6E6A78'], [9, 9, '#9A96A6'], [10, 10, '#9A96A6'], [11, 11, '#E8FFF2'], [8, 10, '#5CF0A0'], [9, 10, '#5CF0A0'], [10, 11, '#5CF0A0']]) P(x, y, col); }
@@ -7613,6 +7635,10 @@ const BALL_ICON = {
               map:{ K:'#0B0818', k:'#3E2A6E', G:'#D8B060', g:'#9A7432', P:'#FF7AD9', s:'#FFFFFF' } },
   tSoul:    { rows:['.........gWg','........gWWg','.......lGGl.','......lGl...','.....lGl..s.','....dGl.....','...dGl..s...','..dGl.......','.dGd........','dGd.....s...','Gd..........','............'],
               map:{ W:'#E8FFF2', g:'#A8FFD0', G:'#5CF0A0', l:'#2EB872', d:'#17734A', s:'#A8FFD0' } },
+  tKaleido: { rows:['.........aWb','........cWWd','.......abcd.','......fea...','.....dcb..W.','....cba.....','...bae..W...','..aed.......','.edc........','dcb.....W...','ba..........','............'],
+              map:{ W:'#FFFFFF', a:'#FF2E88', b:'#FF8A1E', c:'#FFE81E', d:'#3AF07A', e:'#2EC8FF', f:'#8A4CFF' } },
+  psyeye:   { rows:['............','....KKKK....','..KKWWWWKK..','.KWWaabbWWK.','KWWfeKKcbWWK','KWWeKKKKcWWK','KWWdKKKKcWWK','.KWWddccWWK.','..KKWWWWKK..','....KKKK....','.a........e.','............'],
+              map:{ K:'#1A1024', W:'#FFFFFF', a:'#FF2E88', b:'#FF8A1E', c:'#FFE81E', d:'#3AF07A', e:'#2EC8FF', f:'#8A4CFF' } },
   skullball:{ rows:['............','...wWWWWw...','..wWWWWWWw..','..WWWWWWWW..','..WEEWWEEW..','..WEEWWEEW..','..wWWNNWWw..','...WWWWWW...','...TtTtTt...','....wwww....','.g........g.','............'],
               map:{ W:'#D8D2BC', w:'#B8B09A', E:'#5CF0A0', N:'#24222C', T:'#F2EEDC', t:'#24222C', g:'#2EB872' } },
   ascorb:   { rows:['...f..f..f..','..fMffMffM..','...MMMMMM...','..MKKKKKKM..','.MKKkkKKKKM.','.MKkKKKMKKM.','.MKKKKMWMKM.','.MKKKMKMKKM.','.MKKKKKKKKM.','..MKKKKKKM..','...MMMMMM...','............'],
@@ -9929,6 +9955,10 @@ const PATTERNS = {
     if(f === 0) return '#0E0C12';
     if(f === 3 && !sh) return '#34303E';
     return hr(x * 9 + 2, y * 7 + 5) > 0.975 ? '#17734A' : null; },
+  // Psychedelic: a spiral of six colours winding in, each in his own
+  // shade of it (the colours then turn through him: psyVariant)
+  psyswirl: (x, y, sh) => { const dx = x - 20, dy = (y - 30) * 0.8, a = Math.atan2(dy, dx) / (Math.PI * 2), v = a * 2 + Math.hypot(dx, dy) * 0.09;
+    return psyC(Math.floor((((v % 1) + 1) % 1) * 6), Math.min(2, sh)); },
   filigree: (x, y) => { const k = (x * 5 + y * 3) % 13;
     return k === 0 ? '#D8B060' : k === 1 && (y & 1) ? '#9A7432' : PATTERNS.cosmos(x, y); },
   // the Divine: gold thread worked into his white robe, a scroll of cloud
@@ -11105,7 +11135,7 @@ function flameAura(c, g, up, P, calm){
 // him, never up the sky)
 const LEGEND_DUR = 0.5, LEGEND_BIG = 0.5;
 // the looks that have one (the newer ones silent: the user wants no more sounds)
-const LEGEND_FX = ['demonic', 'ascended', 'divine', 'cosmic', 'dread'];
+const LEGEND_FX = ['demonic', 'ascended', 'divine', 'cosmic', 'dread', 'psyche'];
 function legendNow(g){
   const L = Scene.legend;
   if(!L || g.minor) return null;
@@ -12333,6 +12363,122 @@ const STYLEFX = {
       }
     }
   },
+  /* ---- Psychedelic: a trip of a golfer ----
+     The user named him. His clothes a spiral of six colours that keep
+     turning through him, a great rainbow afro, round mirror shades with
+     the spiral turning in them and a third eye open on his brow; a
+     mandala turning behind his head, flowers and eyes circling him and an
+     op-art spiral turning under his feet. As he swings, echoes of him in
+     pink and blue follow a step behind and the spiral spins faster; as he
+     strikes, rings of colour run out over the grass. On an albatross or an
+     ace, flowers, eyes and streaks of every colour bursting out of him.
+     His caddie has the afro, the shades and a flower or two. */
+  psyche: {
+    outline: '#FF2E88', outlineA: 0.30,
+    charge(ph){ return STYLEFX.ascended.charge(ph); },
+    strike(ph){ return STYLEFX.ascended.strike(ph); },
+    sigilSize(g){ return STYLEFX.cosmic.sigilSize(g); },
+    px(g){ return g.h / 58; },
+    // the step his colours have turned to: faster as he swings
+    step(g){ return Math.floor(g.t * 4 + (g.ph > 0 ? g.ph * 18 : 0)); },
+    ground(c, g){
+      if(g.minor) return;
+      const [rx, ry] = this.sigilSize(g), L = legendNow(g), st = this.strike(g.ph), q = L ? 1 : this.charge(g.ph);
+      const X = Math.round(g.cx), Y = Math.round(g.bot), step = ((Math.floor(g.t * 8 + (g.ph > 0 ? g.ph * 40 : 0) + (L ? L.T * 60 : 0)) % 24) + 24) % 24;
+      { const V = psySpiral(rx, ry, step, q > 0.5 || st >= 0 ? 1 : 0); c.globalAlpha = 1; c.drawImage(V, X - V.ox, Y - V.oy); }
+      if(g.h < 30) {}
+      else if(L) this.wave(c, X, Y, rx, ry, L.f, L.big ? 1.9 : 1.7);
+      else if(st >= 0) this.wave(c, X, Y, rx, ry, st, 1.6);
+      c.globalAlpha = 1;
+    },
+    // rings of colour running out over the grass, one after another
+    wave(c, X, Y, rx, ry, f, R){
+      for(let j = 0; j < 3; j++){ const u = f - j * 0.14; if(u <= 0 || u >= 1) continue;
+        const s = 1 + u * (R - 1), n = Math.max(24, Math.round((rx + ry) * s * 2));
+        c.fillStyle = psyC(j * 2 + Math.floor(f * 6), 0);
+        for(let i = 0; i < n; i++){ if(hr(i + j * 97, 661) < u * 0.6) continue; const a = i / n * Math.PI * 2;
+          c.fillRect(Math.round(X + Math.cos(a) * rx * s), Math.round(Y + Math.sin(a) * ry * s), 1, 1); } }
+    },
+    back(c, g){
+      if(!g.minor) this.echoes(c, g);
+      this.mandala(c, g);
+      this.orbit(c, g, false);
+      c.globalAlpha = 1;
+    },
+    // his clothes turned on through the six, the afro over his cap
+    body(c, g){
+      const V = psyVariant(g.spr, this.step(g));
+      if(V !== g.spr) blitAs(c, g, V, g.x, g.y);
+      this.afro(c, g);
+    },
+    front(c, g){
+      this.shades(c, g);
+      this.orbit(c, g, true);
+      const L = legendNow(g);
+      if(L) outlineBurst(c, g, L, 56, 1.0, (x, y, i, f, dx, dy) => {
+        const s = Math.max(1, Math.round(g.h / 50));
+        if(i % 4 === 0) psyFlower(c, x, y, s, i + Math.floor(f * 6));
+        else if(i % 4 === 1) psyEye(c, x, y, s, i, g.t + i, dx);
+        else burstStreak(c, x, y, dx, dy, f < 0.3 ? '#FFFFFF' : psyC(i, 0), psyC(i + 1, 0), 3); });
+      c.globalAlpha = 1;
+    },
+    // echoes of him a step and two behind as he swings, pink then blue
+    echoes(c, g){
+      if(!(g.ph > 0 && g.ph < 0.95) || g.back) return;
+      const q = Math.sin(Math.min(1, g.ph / 0.95) * Math.PI), k = Math.max(1, Math.round(g.h / 20));
+      for(const [n, col] of [[2, '#2EC8FF'], [1, '#FF2E88']]){
+        const S0 = silhouette(g, col), d = Math.round(n * k * (0.6 + q));
+        c.globalAlpha = 1; c.drawImage(S0.cv, S0.ox - d, S0.oy);
+      }
+    },
+    // the mandala behind his head
+    mandala(c, g){
+      if(g.h < 30 && !g.minor) return;
+      const H = g.head, p = this.px(g), R = Math.max(5, Math.round(g.h * (g.minor ? 0.18 : 0.23)));
+      const L = legendNow(g), st = ((Math.floor(g.t * 6 + (L ? L.T * 50 : 0)) % 24) + 24) % 24;
+      const M = psyMandala(R, st), sh = g.shear && !g.back ? g.shear(0.1) : 0;
+      c.globalAlpha = 1; c.drawImage(M, Math.round(H.x + sh - (g.back ? 0 : 3 * p) - R - 1), Math.round(H.y - 6 * p - R - 1));
+    },
+    afro(c, g){
+      const p = this.px(g) * (g.minor ? 0.85 : 1), H = g.head, view = g.back ? 'back' : 'side';
+      const A = psyAfro(p, view, ((this.step(g) % 6) + 6) % 6), sh = g.shear && !g.back ? g.shear(0.1) : 0;
+      c.globalAlpha = 1; c.drawImage(A.cv, Math.round(H.x + sh - A.ox), Math.round(H.y - A.oy));
+    },
+    // round mirror shades over his eye, the spiral turning in them, and
+    // his third eye open on his brow
+    shades(c, g){
+      const E = eyeAt(g); if(!E) return;
+      const p = this.px(g), k = Math.max(1, Math.round(p)), X = Math.round(E.x) - k, Y = Math.round(E.y) - k, st = this.step(g);
+      c.globalAlpha = 1;
+      c.fillStyle = '#1A1024'; c.fillRect(X - 1, Y - 1, 3 * k + 2, 2 * k + 2);
+      for(let j = 0; j < 2 * k; j++) for(let i = 0; i < 3 * k; i++){ c.fillStyle = psyC(i + j - st, j < k ? 0 : 1); c.fillRect(X + i, Y + j, 1, 1); }
+      c.fillStyle = '#FFFFFF'; c.fillRect(X, Y, 1, 1);
+      // the band back to his ear
+      c.fillStyle = '#1A1024'; c.fillRect(X - 3 * k, Y, 2 * k, 1);
+      if(g.minor || g.h < 30) return;
+      const ex = X + Math.round(k * 0.5), ey = Y - 3 * k, blink = Math.sin(g.t * 0.9) > 0.95;
+      if(blink){ c.fillStyle = '#C89870'; c.fillRect(ex - k, ey, 3 * k, k); return; }
+      c.fillStyle = '#FFFFFF'; c.fillRect(ex - k, ey, 3 * k, k); c.fillStyle = psyC(st + 3, 0); c.fillRect(ex, ey, k, k);
+      if(k > 1){ c.fillStyle = '#1A1024'; c.fillRect(ex + (k >> 1), ey + (k >> 1) - 1, 1, 2); }
+      c.fillStyle = '#8A4CFF'; c.fillRect(ex - k, ey - 1, 3 * k, 1); c.fillRect(ex - k, ey + k, 3 * k, 1);
+    },
+    // flowers and eyes circling him on a tilted ring: the far half before
+    // him, the near half after; flung out on a great hole
+    orbit(c, g, front){
+      const L = legendNow(g), out = L ? 1 + (L.big ? 0.55 : 0.4) * outBack(L.f, 0.18) : 1;
+      const minor = !!g.minor, N = minor ? 2 : 6, s = minor ? 1 : Math.max(1, Math.round(g.h / 35));
+      const rx = g.w * (minor ? 0.75 : 1.0) * out, ry = Math.max(2, g.h * 0.09) * out, oy = g.y + g.h * (minor ? 0.45 : 0.42);
+      const ct = Math.cos(-0.2), sn = Math.sin(-0.2), cx = g.cx;
+      const spin = g.t * 1.1 + (g.ph > 0 ? g.ph * Math.PI * 2 : 0);
+      for(let i = 0; i < N; i++){
+        const a = spin + i * Math.PI * 2 / N, bob = Math.sin(g.t * 2 + i * 1.7) * g.h * 0.03;
+        if((Math.sin(a) > 0) !== front) continue;
+        const X = Math.cos(a) * rx, Y = Math.sin(a) * ry, x = cx + X * ct - Y * sn, y = oy + X * sn + Y * ct + bob;
+        if(i & 1 && !minor) psyEye(c, x, y, s, i + Math.floor(g.t * 2), g.t + i * 3, -Math.sin(a));
+        else psyFlower(c, x, y, s, i * 2 + Math.floor(g.t * 3), 1);
+      }
+    }
+  },
   /* ---- Ascended: a hooded star-walker ----
      After the user's picture: a dark hood with two pointed ears, a silver
      mantle set with violet gems across his shoulders, a cape that is a
@@ -13040,6 +13186,12 @@ const LB_ORBIT = {
     lbRing(c, cx, cy, r + 3.5, (r + 3.5) * 0.4, -0.2, t * 2.6, 8, ['#E8FFF2', '#A8FFD0', '#5CF0A0', '#2EB872', '#17734A'], front, 0.3);
   },
   tSoul(c, cx, cy, r, t, front){ LB_ORBIT.skullball(c, cx, cy, r - 0.5, t, front); },
+  // the Third Eye's: a ring of the six going round it, its colours turning
+  psyeye(c, cx, cy, r, t, front){
+    const st = Math.floor(t * 6);
+    lbRing(c, cx, cy, r + 3.5, (r + 3.5) * 0.4, 0.25, t * 2.8, 12, [0, 1, 2, 3, 4, 5].map(i => psyC(i + st, 0)), front, 0.42);
+  },
+  tKaleido(c, cx, cy, r, t, front){ LB_ORBIT.psyeye(c, cx, cy, r - 0.5, t, front); },
   hearts(c, cx, cy, r, t, front){
     if(!front) return; const f = (t * 0.9) % 1; if(f > 0.7) return;
     const hx = Math.round(cx + r + 1 + Math.sin(t * 4) * 1), hy = Math.round(cy - r - 2 - f * 6);
@@ -13128,6 +13280,13 @@ function drawLyingBallBase(c, cx, cy, r, t, fx){
     case 'skullball':                                // a skull, its eyes lit, mist off it
       dreadSkull(c, cx, cy - 1, Math.max(2.5, r * 1.6), t);
       if(((t * 0.7) % 1) < 0.6) dot(cx + Math.sin(t * 2) * 2, cy - r - 3 - ((t * 0.7) % 1) * 5, 1, '#5CF0A0', 1);
+      break;
+    case 'psyeye':                                   // looking about, its iris turning
+      psyBallEye(c, cx, cy - 1, Math.max(3, Math.round(r * 1.6 + 1)), t, Math.sin(t * 0.7) * 0.8, Math.sin(t * 0.43) * 0.4);
+      break;
+    case 'tKaleido':                                 // the ball, a flower turning over it
+      lbSphere(c, cx, cy, r, '#FFFFFF');
+      psyFlower(c, cx, cy - r - 3 - (Math.sin(t * 3) > 0 ? 1 : 0), 1, Math.floor(t * 3), 1);
       break;
     case 'tSoul':                                    // in a green glow, a soul rising off it
       drawGlow(c, cx, cy, r + 3, r + 2, [[0.55, '#0C3A26', 1], [0, '#2EB872', 2]], Math.floor(t * 8) & 3, 0.85);
@@ -13252,6 +13411,20 @@ const CUP_FX = {
     if(q >= 0.84){ const f = (q - 0.84) / 0.16;
       for(let i = 0; i < 24; i++){ if(hr(i, 652) < f * 0.8) continue; const a = i / 24 * Math.PI * 2, r = h * (0.15 + 0.6 * f);
         fxDot(c, x + Math.cos(a) * r - (k >> 1), y + Math.sin(a) * r * 0.34, k, i & 1 ? '#5CF0A0' : '#E8FFF2', 1); } }
+  },
+  // Psychedelic's (the Third Eye, and its wake the Kaleido Wake): the green
+  // ripples out round the cup in rings of the six, an eye opens in it and
+  // looks about, and shuts; flowers pop up round it
+  psyeye(c, x, y, cr, h, q, t){
+    const k = Math.max(1, Math.round(h / 16));
+    for(let j = 0; j < 5; j++){ const u = q * 1.3 - j * 0.12; if(u <= 0 || u >= 1) continue;
+      const R = h * (0.08 + 0.7 * u), n = Math.max(16, Math.round(R * 1.6));
+      for(let i = 0; i < n; i++){ if(hr(i + j * 31, 671) < u * 0.7) continue; const a = i / n * Math.PI * 2;
+        fxDot(c, x + Math.cos(a) * R - (k >> 1), y + Math.sin(a) * R * 0.34, k, psyC(j + Math.floor(q * 12), 0), 1); } }
+    if(q > 0.12 && q < 0.8 && h >= 16){ const o = Math.min(1, (q - 0.12) / 0.12, (0.8 - q) / 0.12);
+      if(o > 0.25) psyBallEye(c, x, y - Math.round(h * 0.06), Math.max(3, Math.round(h * 0.12 * o)), t, Math.sin(t * 5) * 0.8, 0.2); }
+    for(let i = 0; i < 6; i++){ const u = clamp((q - 0.25 - i * 0.06) / 0.4, 0, 1); if(u <= 0 || u >= 1) continue;
+      const a = i / 6 * Math.PI * 2 + 0.4; psyFlower(c, x + Math.cos(a) * h * 0.45, y + Math.sin(a) * h * 0.15 - Math.sin(u * Math.PI) * h * 0.25, k, i * 2 + 1, 1); }
   },
   // The Ascended's (its orb, and its wake): its disc opening under the cup,
   // the void drawn down into it in a spiral, a dark ring closing and a
@@ -13390,7 +13563,9 @@ const ACE_COL = {
   ascorb:      ['#962CA8', '#E639EB', '#FFE0FF'],
   singularity: ['#3E2A6E', '#B98CFF', '#FFFFFF'],
   tSoul:       ['#17734A', '#5CF0A0', '#E8FFF2'],
-  skullball:   ['#17734A', '#5CF0A0', '#E8FFF2']
+  skullball:   ['#17734A', '#5CF0A0', '#E8FFF2'],
+  tKaleido:    ['#4A2290', '#FF2E88', '#FFFFFF', ['#FF2E88', '#FF8A1E', '#FFE81E', '#3AF07A', '#2EC8FF', '#8A4CFF']],
+  psyeye:      ['#4A2290', '#FF2E88', '#FFFFFF', ['#FF2E88', '#FF8A1E', '#FFE81E', '#3AF07A', '#2EC8FF', '#8A4CFF']]
 };
 const ACE_STRIP = new Map();
 const hxU32 = h => { const n = parseInt(h.slice(1), 16); return (0xFF000000 | (n & 255) << 16 | (n & 0xFF00) | (n >> 16)) >>> 0; };
@@ -13473,6 +13648,14 @@ const ACE_EXTRA = {
     aceRise(A, 4, 653, (i, y) => { const ox = X + (i & 1 ? 1 : -1) * W * (1.2 + hr(i, 654) * 0.4), s = k;
       SK.forEach((row, yy) => [...row].forEach((ch, xx) => { if(ch !== '.') put(ox + (xx - 2) * s, y + yy * s, s, ch === 'E' ? '#5CF0A0' : ch === 'T' ? '#B8B09A' : '#D8D2BC'); })); }); },
   tSoul(A){ ACE_EXTRA.skullball(A); },
+  // Psychedelic's: flowers winding up round it, eyes rising beside it
+  psyeye(A){ const { X, y0, y1, W, k, t, put } = A;
+    for(let i = 0; i < 12; i++){ const y = y1 - (i + 0.5) / 12 * (y1 - y0), a = y * 0.08 - t * 7, x = X + Math.sin(a) * W * 1.05, s = Math.max(1, Math.round(W / 9)), hu = i + Math.floor(t * 4);
+      for(const [di, dj] of [[0, -1], [1, 0], [0, 1], [-1, 0]]) put(x + di * s, y + dj * s, s, psyC(hu, Math.cos(a) > 0 ? 0 : 1));
+      put(x, y, s, psyC(hu + 2, 0)); }
+    aceRise(A, 5, 672, (i, y) => { const ox = X + (i & 1 ? 1 : -1) * W * (1.2 + hr(i, 673) * 0.4), s = k;
+      put(ox - s * 2, y - s, s * 5, '#1A1024', s * 3); put(ox - s, y - s, s * 3, '#FFFFFF', s * 3); put(ox - (s >> 1), y - (s >> 1), s, psyC(i + Math.floor(t * 6), 0)); }); },
+  tKaleido(A){ ACE_EXTRA.psyeye(A); },
   // Event Horizon, Ascension, the Jade and Hellfire Wakes: their sets'
   tHorizon(A){ ACE_EXTRA.singularity(A); }, tAscension(A){ ACE_EXTRA.ascorb(A); },
   tSeraph(A){ ACE_EXTRA.godlight(A); }, tHellfire(A){ ACE_EXTRA.demoneye(A); },
@@ -13643,11 +13826,20 @@ CUP_FX2.skullball = function(c, x, y, cr, h, q, t){
     if(f < 0.4) cupStar(c, x - (k >> 1), y - k * 2, k, 2, '#FFFFFF', '#5CF0A0'); }
 };
 CUP_FX2.tSoul = CUP_FX2.skullball;
+CUP_FX2.psyeye = function(c, x, y, cr, h, q, t){
+  // as it shuts, streaks of every colour thrown up out of the cup
+  const k = Math.max(1, Math.round(h / 16));
+  if(q > 0.75) for(let i = 0; i < 10; i++){ const f = (q - 0.75) / 0.25, a = -Math.PI / 2 + (i / 9 - 0.5) * 2.2;
+    for(let j = 0; j < 3; j++){ const r = h * (0.1 + f * 0.6) - j * k * 1.5; if(r <= 0) continue;
+      fxDot(c, x + Math.cos(a) * r - (k >> 1), y - k + Math.sin(a) * r * 0.8, k, j ? psyC(i, 1) : psyC(i, 0), 1); } }
+};
+CUP_FX2.tKaleido = CUP_FX2.psyeye;
 CUP_FX2.tSeraph = CUP_FX2.godlight; CUP_FX2.tHellfire = CUP_FX2.demoneye;
 CUP_FX2.tAscension = CUP_FX2.ascorb; CUP_FX2.tHorizon = CUP_FX2.singularity;
 // each set's wake plays its set's moment too
 CUP_FX.tHorizon = CUP_FX.singularity;
 CUP_FX.tSoul = CUP_FX.skullball;
+CUP_FX.tKaleido = CUP_FX.psyeye;
 CUP_FX.tAscension = CUP_FX.ascorb;
 CUP_FX.tSeraph = CUP_FX.godlight;
 CUP_FX.tHellfire = CUP_FX.demoneye;
@@ -14446,6 +14638,136 @@ function dreadSkull(c, x, y, R, t){
     c.fillStyle = ch === 'E' ? eye : ch === 't' ? '#24222C' : ch === 'T' ? '#B8B09A' : ch === 'w' ? '#B8B09A' : i + j < 3 ? '#F2EEDC' : '#D8D2BC';
     c.fillRect(X + i * s, Y + j * s, s, s); }));
 }
+// ---- Psychedelic ----
+// The user named him: a trip of a golfer. His clothes a spiral of six
+// colours that keep turning through him, a great rainbow afro, round
+// mirror shades with the spiral in them and a third eye open on his
+// brow; a mandala turning behind his head, flowers and eyes circling him,
+// an op-art spiral turning under his feet, and as he swings, echoes of
+// him in pink and blue a step behind.
+const PSY = ['#FF2E88', '#FF8A1E', '#FFE81E', '#3AF07A', '#2EC8FF', '#8A4CFF'];
+const PSYM = ['#C81E6A', '#D0661A', '#D0B814', '#22B85A', '#1E96CC', '#6A34D0'];
+const PSYD = ['#8A1248', '#904410', '#8A7A10', '#167A3C', '#146490', '#4A2290'];
+const PSY_PAL = PSY.concat(PSYM, PSYD, ['#FFFFFF', '#1A1024', '#F0C8A0', '#C89870']);
+// a hue's colour by step (it turns with the clock), in a shade
+const psyC = (i, sh) => [PSY, PSYM, PSYD][sh || 0][((Math.round(i) % 6) + 6) % 6];
+// his clothes with their colours turned on by step: each pixel of the
+// spiral moved along the six by the same, its shade kept (made once a
+// picture and a step, and kept with the picture)
+const PSY_KEY = (() => { const m = {}; [PSY, PSYM, PSYD].forEach((L, sh) => L.forEach((h, i) => { m[parseInt(h.slice(1), 16)] = [i, sh]; })); return m; })();
+function psyVariant(spr, step){
+  step = ((step % 6) + 6) % 6;
+  if(!step) return spr;
+  const V = spr._psy || (spr._psy = []);
+  if(V[step]) return V[step];
+  const cv = document.createElement('canvas'); cv.width = spr.w; cv.height = spr.h;
+  const g = cv.getContext('2d'); g.drawImage(spr.cv, 0, 0);
+  const d = g.getImageData(0, 0, spr.w, spr.h), a = d.data;
+  for(let i = 0; i < a.length; i += 4){ if(!a[i + 3]) continue;
+    const k = PSY_KEY[(a[i] << 16) | (a[i + 1] << 8) | a[i + 2]]; if(!k) continue;
+    const h = psyC(k[0] + step, k[1]), n = parseInt(h.slice(1), 16); a[i] = n >> 16; a[i + 1] = (n >> 8) & 255; a[i + 2] = n & 255; }
+  g.putImageData(d, 0, 0);
+  bodySpan(spr);
+  return V[step] = { cv, w: spr.w, h: spr.h, _body: spr._body, bulkS: spr.bulkS, ax: spr.ax, ay: spr.ay };
+}
+// His afro: a great round cloud of hair in rings of the six, turning out
+// from its middle (step 0..5), lit at its top; in the hood's units about the
+// top middle of his cap (view 'side' or 'back')
+function psyAfro(p, view, step){
+  const W = Math.ceil(22 * p) + 4, H = Math.ceil(18 * p) + 4, ox = Math.round(W / 2 + (view === 'back' ? 0 : -1 * p)), oy = Math.round(13 * p) + 2;
+  const cv = fxBake('pafro|' + p.toFixed(3) + '|' + view + '|' + step, W, H, g => {
+    // the cloud: puffs round its edge
+    const cx = W / 2, cy = oy - 6 * p, R = 8.2 * p;
+    const puffs = [[0, 0, 1]];
+    for(let i = 0; i < 11; i++){ const a = i / 11 * Math.PI * 2; puffs.push([Math.cos(a) * R * 0.78, Math.sin(a) * R * 0.66, 0.36]); }
+    const inside = (x, y) => puffs.some(([px, py, r]) => { const dx = x - (cx + px), dy = (y - (cy + py)) * 1.12; return dx * dx + dy * dy <= (r * R) * (r * R); });
+    for(let y = 0; y < H; y++) for(let x = 0; x < W; x++){
+      if(!inside(x + 0.5, y + 0.5)) continue;
+      // (cut clear of his face side on: his brow and the shades show)
+      if(view !== 'back' && x > cx + 2.5 * p && y > cy + 5.5 * p) continue;
+      const dx = x + 0.5 - cx, dy = (y + 0.5 - cy) * 1.12, d = Math.hypot(dx, dy) / R, lit = dx + dy < -R * 0.5 ? 0 : dx + dy > R * 0.6 ? 2 : 1;
+      const curl = Math.sin(Math.atan2(dy, dx) * 5 + d * 7) * 0.35;
+      g.fillStyle = psyC(Math.floor(d * 5 + curl) - step, lit === 2 ? 1 : 0);
+      if(lit === 0 && ((x + y) & 3) === 0) g.fillStyle = '#FFFFFF';
+      g.fillRect(x, y, 1, 1);
+    }
+  });
+  return { cv, ox, oy };
+}
+// A mandala turning behind his head: an outer ring of twelve petals, an
+// inner one of eight between them, a ring of dots and a bright heart; its
+// colours moving out through it (step 0..23)
+function psyMandala(R, step){
+  return fxBake('pmand|' + R + '|' + step, R * 2 + 3, R * 2 + 3, g => {
+    const C = R + 1, rot = step / 24 * Math.PI * 2 / 6, sh = Math.floor(step / 4);
+    for(let y = -R - 1; y <= R + 1; y++) for(let x = -R - 1; x <= R + 1; x++){
+      const d = Math.hypot(x, y) / R, a = Math.atan2(y, x);
+      let col = null;
+      const p12 = Math.abs(Math.cos((a - rot) * 6)), p8 = Math.abs(Math.cos((a + rot) * 4 + 0.4));
+      if(d <= 1 && d > 0.68 && p12 > (d - 0.68) / 0.32 * 0.9 + 0.05) col = psyC(sh + (d > 0.86 ? 0 : 1), d > 0.9 ? 1 : 0);
+      else if(d <= 0.68 && d > 0.4 && p8 > (d - 0.4) / 0.28 * 0.85) col = psyC(sh + 3, d > 0.6 ? 1 : 0);
+      else if(d <= 0.4 && d > 0.3 && Math.cos((a - rot * 2) * 8) > 0.2) col = '#FFFFFF';
+      else if(d <= 0.24) col = psyC(sh + 2, d > 0.14 ? 0 : 1);
+      if(col){ g.fillStyle = col; g.fillRect(C + x, C + y, 1, 1); }
+    }
+  });
+}
+// The spiral turning under his feet: two arms of the six winding in, a
+// rim of white dots going round it; baked a size and a step at a time
+const PSY_SPIRAL = {};
+function psySpiral(rx, ry, step, lit){
+  const key = rx + '|' + ry + '|' + step + '|' + lit;
+  if(PSY_SPIRAL[key]) return PSY_SPIRAL[key];
+  const R2 = Math.ceil(rx * 1.1), RY2 = Math.ceil(ry * 1.1);
+  const cv = document.createElement('canvas'); cv.width = R2 * 2 + 3; cv.height = RY2 * 2 + 3;
+  const g = cv.getContext('2d'), X = R2 + 1, Y = RY2 + 1, S0 = step / 24;
+  for(let yy = -RY2; yy <= RY2; yy++) for(let xx = -R2; xx <= R2; xx++){
+    const d = Math.sqrt((xx * xx) / (rx * rx) + (yy * yy) / (ry * ry)); if(d > 1.04) continue;
+    const a = Math.atan2(yy / ry, xx / rx) / (Math.PI * 2);
+    let col;
+    if(d > 0.94) col = ((Math.round((a + S0 * 0.5) * 48)) & 1) ? '#FFFFFF' : psyC(Math.floor(S0 * 6), 0);
+    else { const v = a * 2 + d * 3.2 - S0 * 2; col = psyC(Math.floor(((v % 1) + 1) % 1 * 6), d > 0.7 ? 1 : 0); if(lit && d < 0.18) col = '#FFFFFF'; }
+    g.fillStyle = col; g.fillRect(X + xx, Y + yy, 1, 1);
+  }
+  cv.ox = X; cv.oy = Y;
+  return PSY_SPIRAL[key] = cv;
+}
+// a flower of the sixties: five petals of one colour round a heart of
+// another, s its pixel size
+function psyFlower(c, x, y, s, hue, a){
+  const X = Math.round(x), Y = Math.round(y);
+  c.globalAlpha = a === undefined ? 1 : a;
+  c.fillStyle = psyC(hue, 0);
+  for(const [i, j] of [[0, -1], [1, 0], [0, 1], [-1, 0]]) c.fillRect(X + i * s, Y + j * s, s, s);
+  if(s > 1){ c.fillStyle = psyC(hue, 1); for(const [i, j] of [[1, 1], [-1, 1]]) c.fillRect(X + i * s, Y + j * s, s, s); }
+  c.fillStyle = psyC(hue + 2, 0); c.fillRect(X, Y, s, s);
+  c.globalAlpha = 1;
+}
+// an eye floating: white, a ring of a colour, a black pupil looking dx,
+// blinking now and then (t its clock)
+function psyEye(c, x, y, s, hue, t, dx){
+  const X = Math.round(x), Y = Math.round(y);
+  c.globalAlpha = 1;
+  if(Math.sin(t * 1.3) > 0.93){ c.fillStyle = '#1A1024'; c.fillRect(X - s, Y, 3 * s, s); return; }
+  c.fillStyle = '#FFFFFF'; c.fillRect(X - s, Y - (s > 1 ? 1 : 0), 3 * s, s + (s > 1 ? 2 : 0));
+  c.fillStyle = psyC(hue, 0); c.fillRect(X - (dx < 0 ? s : 0), Y, s, s);
+  c.fillStyle = '#1A1024'; c.fillRect(X + (dx < 0 ? -s : s), Y, s > 1 ? 1 : s, s > 1 ? 1 : s);
+}
+// The Third Eye, the size of a ball: its iris in rings of the six turning
+// out, a black slit of a pupil looking the way it flies, its lid lined in
+// dark; R its size, t the clock
+function psyBallEye(c, x, y, R, t, dx, dy){
+  const r = Math.max(2, Math.round(R)), X = Math.round(x), Y = Math.round(y), st = Math.floor(t * 8);
+  c.globalAlpha = 1;
+  for(let j = -r; j <= r; j++) for(let i = -r; i <= r; i++){
+    const d = Math.hypot(i, j) / r; if(d > 1.05) continue;
+    const ex = i - dx * r * 0.35, ey = j - dy * r * 0.35, e = Math.hypot(ex, ey) / r;
+    let col = d > 0.82 ? '#1A1024' : '#FFFFFF';
+    if(d <= 0.82 && e < 0.62) col = e < 0.16 ? '#1A1024' : psyC(Math.floor(e * 9) - st, 0);
+    c.fillStyle = col; c.fillRect(X + i, Y + j, 1, 1);
+  }
+  c.fillStyle = '#FFFFFF'; c.fillRect(X - Math.round(r * 0.4), Y - Math.round(r * 0.5), 1, 1);
+}
 const BLESS_FX = {
   // the Divine: a shaft of jade light edged in gold comes down on him with
   // his ribbons of jade and gold winding round it and on down round him,
@@ -14561,6 +14883,26 @@ const BLESS_FX = {
       blessMotes(G, 9, 0.7, true, true, (x, y, i) => dreadSoul(c, x, y, 0, -1, h >= 40 && i % 3 === 0 ? 2 : 1, 1));
       blImpact(G, 0.27, ['#2EB872', '#E8FFF2']);
       blSides(G, '#5CF0A0', '#E8FFF2');
+    } },
+  // Psychedelic: the spiral opens under him, a shaft of every colour falls
+  // on him in bands that run down it, flowers drift down round him and
+  // rings of colour run out as it lands
+  psyche: { col: '#FF2E88',
+    draw(G){
+      const { c, cx, bot, half, h, t, fade, front, k } = G, top = Math.round(bot - h * 1.05);
+      const hw = Math.max(2, Math.round(half * 0.5 * (0.35 + 0.65 * fade))), stop = Math.min(front, top), X = Math.round(cx);
+      if(t > 0.26 && fade > 0.12 && blBack(G)){ const q = Math.min(1, (t - 0.26) / 0.3), RX = Math.max(4, Math.round(half * (0.7 + 0.45 * q))), RY = Math.max(2, Math.round(RX * 0.26));
+        const V = psySpiral(RX, RY, Math.floor(t * 30) % 24, 0); c.globalAlpha = 1; c.drawImage(V, X - V.ox, Math.round(bot - 1) - V.oy); }
+      if(blFront(G) && stop > 0){
+        const sh = Math.floor(t * 24);
+        // bands of the six across it, running down; a white heart
+        for(let yy = 0; yy < stop; yy++){ const col = psyC(Math.floor((yy - t * 90) / 6), 0); c.fillStyle = col; c.fillRect(X - hw, yy, hw * 2 + 1, 1); }
+        c.fillStyle = '#FFFFFF'; c.fillRect(X - Math.max(0, Math.round(hw * 0.2)), 0, Math.max(1, Math.round(hw * 0.4)) + 1, stop);
+        const ek = 1 + (G.up >> 1); c.fillStyle = psyC(sh, 2); c.fillRect(X - hw - ek, 0, ek, stop); c.fillRect(X + hw + 1, 0, ek, stop);
+      }
+      blessMotes(G, 10, 0.7, false, true, (x, y, i) => psyFlower(c, x, y, h >= 50 ? 2 : 1, i + Math.floor(t * 4)));
+      blImpact(G, 0.27, ['#FF2E88', '#2EC8FF']);
+      blSides(G, '#FFE81E', '#FFFFFF');
     } },
   // The Void: a black hole opens over his head in its ring of gold and
   // drinks a shaft of the dark down out of the sky, stars falling into it;
@@ -15105,6 +15447,47 @@ const BALLFX = {
     if(u > 0.85){ const q = (u - 0.85) / 0.15;
       for(let i = 0; i < 12; i++){ const a = i / 12 * Math.PI * 2 + b.seed;
         fxDot(c, h0.x + Math.cos(a) * (3 + q * 10), h0.y + Math.sin(a) * (1 + q * 4), 1, i & 1 ? '#D8D2BC' : '#5CF0A0', 1 - q); } }
+    c.globalAlpha = 1;
+  },
+  /* ---- Kaleido Wake: three ribbons of colour wound round each other,
+     their colours turning down their length, and flowers of the sixties
+     spiralling round them from the ball to the tail ---- */
+  tKaleido(c, b, path, r, t, u){
+    const w = Math.max(2, r + 1), st = Math.floor(t * 8);
+    trailRibbon(c, path, w + 5, '#1A1024', 0.35);
+    const sp = trailSpiral(path, 8, 5 + r * 3, t, 0.5, 2, b.seed);
+    for(const o of sp) if(o.z < 0) psyFlower(c, o.x, o.y, 1, o.k * 2 + st, 0.8);
+    const ribs = [0, 1, 2].map(j => ({ ph: j * Math.PI * 2 / 3, front: psyC(st + j * 2, 0), back: psyC(st + j * 2, 2), hi: '#FFFFFF' }));
+    trailHelix(c, path, 2 + r * 1.5, ribs, t, 9, 0, w);
+    trailRibbon(c, path, w, (i, f) => f < 0.15 ? '#FFFFFF' : psyC(i - st, 0), 1);
+    trailHelix(c, path, 2 + r * 1.5, ribs, t, 9, 1, w);
+    for(const o of sp) if(o.z >= 0) psyFlower(c, o.x, o.y, r > 1 ? 2 : 1, o.k * 2 + st, 1);
+    const h0 = path[0];
+    trailBall(c, b, h0, r);
+    if(u > 0.85){ const q = (u - 0.85) / 0.15;
+      for(let i = 0; i < 12; i++){ const a = i / 12 * Math.PI * 2 + b.seed;
+        fxDot(c, h0.x + Math.cos(a) * (2 + q * 11), h0.y + Math.sin(a) * (1 + q * 4) - q * 3, 1, psyC(i, 0), 1 - q); } }
+    c.globalAlpha = 1;
+  },
+  // the Third Eye: an eye in flight, its iris turning, looking the way it
+  // flies; rings of colour left behind it down the trail, flowers winding
+  // round it; rings out as it lands
+  psyeye(c, b, path, r, t, u){
+    const st = Math.floor(t * 8), N = trailNormal(path);
+    trailRibbon(c, path, r + 4, '#1A1024', 0.35);
+    trailRibbon(c, path, Math.max(2, r), (i, f) => f < 0.15 ? '#FFFFFF' : psyC(i - st, 0), 1);
+    // the rings it leaves, each an ellipse across the flight
+    for(let i = 2; i < path.length; i += 2){ const p = path[i], R = 2 + r * 0.9 + i * 0.4, col = psyC(i / 2 - st, i > path.length * 0.6 ? 1 : 0);
+      for(let j = 0; j < 18; j++){ const a = j / 18 * Math.PI * 2, o = Math.cos(a) * R, l = Math.sin(a) * R * 0.4;
+        c.globalAlpha = 1 - i / path.length * 0.5; c.fillStyle = col; c.fillRect(Math.round(p.x + N.x * o - N.y * l), Math.round(p.y + N.y * o + N.x * l), 1, 1); } }
+    c.globalAlpha = 1;
+    const sp = b.wake ? [] : trailSpiral(path, 5, 5 + r * 3, t, 0.55, 1.6, b.seed);
+    for(const o of sp) psyFlower(c, o.x, o.y, o.z > 0 && r > 1 ? 2 : 1, o.k * 2 + st, o.z < 0 ? 0.8 : 1);
+    const h0 = path[0], p1 = path[Math.min(3, path.length - 1)], dx = h0.x - p1.x, dy = h0.y - p1.y, L = Math.hypot(dx, dy) || 1;
+    psyBallEye(c, h0.x, h0.y, Math.max(3, r * 2 + 1), t + b.seed, dx / L, dy / L);
+    if(u > 0.85){ const q = (u - 0.85) / 0.15;
+      for(let i = 0; i < 12; i++){ const a = i / 12 * Math.PI * 2 + b.seed;
+        fxDot(c, h0.x + Math.cos(a) * (3 + q * 10), h0.y + Math.sin(a) * (1 + q * 4), 1, psyC(i, 0), 1 - q); } }
     c.globalAlpha = 1;
   },
   /* ---- Ascension Wake: a river of magenta fire over void smoke, white at
@@ -16367,6 +16750,7 @@ const Scene = {
   caddieSwirl(c, x, y, w, h, open, T, pal){
     const k = Math.max(1, Math.round(h / 18)), cx = x + w * 0.5, cy = y + h * 0.5;
     const C = pal === 'cosmic' ? ['#FFFFFF', '#B98CFF', '#7FE6FF', '#D8B060', '#05030C'] : pal === 'dread' ? ['#E8FFF2', '#5CF0A0', '#2EB872', '#D8D2BC', '#06050A']
+      : pal === 'psyche' ? [PSY[Math.floor(T * 12) % 6], PSY[(Math.floor(T * 12) + 2) % 6], PSY[(Math.floor(T * 12) + 4) % 6], '#FFE81E', '#8A4CFF']
       : ['#FFE0FF', '#F27CFF', '#B04ACB', '#F27CFF', '#1C0F2A'];
     for(let ring = 0; ring < 2; ring++) for(let i = 0; i < 12; i++){
       const a = i / 12 * Math.PI * 2 + T * (ring ? -12 : 9), R = (0.15 + 0.85 * open) * w * (ring ? 0.4 : 0.7) * (0.7 + 0.3 * hr(i, 361 + ring));
@@ -17402,6 +17786,8 @@ const FAIRY_MOVES = [
   { id:'collapse', dur:1.5, only:'cosmic' },
   // The Dread's: he comes apart into souls and gathers again
   { id:'haunt', dur:1.5, only:'dread' },
+  // Psychedelic's: he melts into a whirl of colour and back
+  { id:'trip', dur:1.5, only:'psyche' },
   // and one each for the other caddies with a look of their own (the user
   // asked): slips on a peel, snaps a photo, honks up confetti, sinks and
   // pops up with a boo, twirls in the disco lights, glitches about, shivers
@@ -17466,9 +17852,9 @@ function fairyPose(kind, q, T, w, h){
     // and where he will be
     const gap = q > 0.22 && q < 0.38 ? (q - 0.22) / 0.16 : q > 0.62 && q < 0.78 ? (q - 0.62) / 0.16 : -1;
     if(gap >= 0){ P.hide = 1; P.swirl = gap; P.from = q < 0.5 ? 0 : -out; P.to = q < 0.5 ? -out : 0; }
-  }else if(kind === 'collapse' || kind === 'haunt'){            // in on himself, into a black hole (or souls), and out
+  }else if(kind === 'collapse' || kind === 'haunt' || kind === 'trip'){            // in on himself, into a black hole (or souls), and out
     const gap = q > 0.2 && q < 0.5 ? (q - 0.2) / 0.3 : q >= 0.5 && q < 0.8 ? 1 - (q - 0.5) / 0.3 : -1;
-    if(gap >= 0){ P.hide = 1; P.swirl = gap; P.from = 0; P.to = 0; P.pal = kind === 'haunt' ? 'dread' : 'cosmic'; }
+    if(gap >= 0){ P.hide = 1; P.swirl = gap; P.from = 0; P.to = 0; P.pal = kind === 'haunt' ? 'dread' : kind === 'trip' ? 'psyche' : 'cosmic'; }
   }else if(kind === 'slip'){                                    // over on a peel, and up again
     const lie = 0.9;
     if(q < 0.25){ const u = easeIO(q / 0.25); P.rot = -lie * u; P.dy = u * h * 0.12; }
@@ -17794,6 +18180,39 @@ const CLUBFX = {
       c.globalAlpha = 1;
     }
   },
+  // the Kaleido Driver: a shaft in bands of the six that run down it, a
+  // crystal head that flashes every colour, flowers drifting off it, its
+  // swing leaves a rainbow, and a pure strike blooms flowers at the ball
+  psyche: {
+    shaft(c, hx, hy, tx, ty, th, h, t, K){
+      const n = 10, P = clubPts(hx, hy, tx, ty, n), st = Math.floor(t * 10);
+      for(let i = 1; i <= n; i++) pxLine(c, P[i - 1][0], P[i - 1][1], P[i][0], P[i][1], i < 3 ? K.grip : psyC(i - st, 0), th);
+    },
+    head(c, tx, ty, th, h, turn, t, K){
+      const hw = th * 2 + 1, x0 = Math.round(tx) - (turn < 0 ? hw - th : th), y0 = Math.round(ty) - 1, st = Math.floor(t * 8);
+      c.globalAlpha = 1;
+      for(let j = 0; j < th + 1; j++) for(let i = 0; i < hw; i++){ c.fillStyle = (i + j) % 3 === 0 ? '#FFFFFF' : psyC(i + j + st, 0); c.fillRect(x0 + i, y0 + j, 1, 1); }
+    },
+    over(c, hx, hy, tx, ty, th, h, t){
+      const f = (t * 0.7) % 1;
+      if(f < 0.5) psyFlower(c, tx + 3, ty - 3 - f * 8, 1, Math.floor(t * 0.7));
+      c.globalAlpha = 1;
+    },
+    trail(c, arc, th, t){
+      const st = Math.floor(t * 10);
+      for(let j = 0; j < 3; j++) arcTrail(c, arc.map(([x, y]) => [x, y + (j - 1) * (th + 1)]), th, [psyC(st + j * 2, 0)], 0.85);
+      c.globalAlpha = 1;
+    },
+    pure(c, x, y, h, f){
+      const X = Math.round(x), Y = Math.round(y), k = Math.max(1, Math.round(h / 40));
+      for(let j = 0; j < 3; j++){ const u = f - j * 0.15; if(u <= 0 || u >= 1) continue; const R = h * (0.05 + 0.4 * u);
+        for(let i = 0; i < 16; i++){ if(hr(i + j * 17, 674) < u * 0.6) continue; const a = i / 16 * Math.PI * 2;
+          fxDot(c, X + Math.cos(a) * R, Y + Math.sin(a) * R * 0.6, k, psyC(j * 2 + i, 0), 1); } }
+      for(let i = 0; i < 5; i++){ const a = i / 5 * Math.PI * 2 - 1.2, R = h * 0.25 * Math.min(1, f * 2);
+        psyFlower(c, X + Math.cos(a) * R, Y + Math.sin(a) * R * 0.6 - f * h * 0.08, k, i * 2 + 1); }
+      c.globalAlpha = 1;
+    }
+  },
   // the Ascended Driver: a staff, after the user's picture. A dark silver
   // shaft bound in silver, and at its foot a silver claw holding a cluster
   // of violet crystals, light running up through them; its swing leaves a
@@ -17911,7 +18330,8 @@ const NIGHT_GLOW = {
   demonic:  { col: ['#5A2A1A', '#9A3A1C', '#E0602A'], flicker: 1 },
   ascended: { col: ['#402A5E', '#7A3A96', '#C45AD8'], breathe: 1.1 },
   cosmic:   { col: ['#241A44', '#3E2A6E', '#7A4ED8'], breathe: 1.2 },
-  dread:    { col: ['#0C3A26', '#17734A', '#2EB872'], breathe: 0.9 }
+  dread:    { col: ['#0C3A26', '#17734A', '#2EB872'], breathe: 0.9 },
+  psyche:   { col: ['#4A2290', '#C81E6A', '#FF8A1E'], breathe: 2.2 }
 };
 // A pool of light on the ground at his feet: an ellipse three of his widths
 // across, dithered solid pixels (a wash of light turns grey on grass),
@@ -23089,9 +23509,9 @@ function renderTourNav(){
 }
 const cperkDef = id => B.CPERKS.find(x => x.id === id);
 // the Mythic Favour: worn only with a Mythic caddie (the Divine, Demonic, Ascended or Void)
-const MYTH_CADDIES = ['divine', 'demonic', 'ascended', 'cosmic', 'dread'];
+const MYTH_CADDIES = ['divine', 'demonic', 'ascended', 'cosmic', 'dread', 'psyche'];
 const mythOk = () => MYTH_CADDIES.includes(S.caddie);
-const MYTH_PAL = { divine: ['#FFF2B8', '#3FD6A8', '#E0AE3E'], demonic: ['#FFE680', '#FF8A2A', '#E8401C'], ascended: ['#FFE0FF', '#F27CFF', '#B04ACB'], cosmic: ['#FFFFFF', '#B98CFF', '#7FE6FF'], dread: ['#E8FFF2', '#5CF0A0', '#2EB872'] };
+const MYTH_PAL = { divine: ['#FFF2B8', '#3FD6A8', '#E0AE3E'], demonic: ['#FFE680', '#FF8A2A', '#E8401C'], ascended: ['#FFE0FF', '#F27CFF', '#B04ACB'], cosmic: ['#FFFFFF', '#B98CFF', '#7FE6FF'], dread: ['#E8FFF2', '#5CF0A0', '#2EB872'], psyche: ['#FFFFFF', '#FF2E88', '#2EC8FF'] };
 // A perk's level (1 until upgraded) and what it does there: a second longer
 // and an eighth stronger each level (Ready Golf and Lost Ball Scout only
 // stronger: one acts at once, the other lasts a hole). Its words are its own

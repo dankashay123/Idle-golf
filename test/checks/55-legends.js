@@ -360,7 +360,7 @@ module.exports = {
           Sfx.play = function (k, a) { played.push(k + (a ? '!' : '')); };
           o.legend = {};
           try {
-            for (const id of ['demonic', 'ascended', 'divine', 'cosmic']) {
+            for (const id of ['demonic', 'ascended', 'divine', 'cosmic', 'dread', 'psyche']) {
               S.styleOwn['o:' + id] = 1; S.outfit = id; buildSprites();
               Scene.walkOn = false; Scene.swingT = 0; Scene.fairyMove = null; Scene.moveT = 999; Scene.t = 10;
               const L = o.legend[id] = {};
@@ -392,7 +392,7 @@ module.exports = {
             }
             // ---- and a flourish for every other effect skin ----
             o.flourish = {};
-            const fxOutfits = B.OUTFITS.filter(x => x.fx && !['demonic', 'ascended', 'divine', 'cosmic'].includes(x.fx));
+            const fxOutfits = B.OUTFITS.filter(x => x.fx && !['demonic', 'ascended', 'divine', 'cosmic', 'dread', 'psyche'].includes(x.fx));
             for (const O of fxOutfits) {
               S.styleOwn['o:' + O.id] = 1; S.outfit = O.id; buildSprites();
               Scene.walkOn = false; Scene.swingT = 0; Scene.fairyMove = null; Scene.moveT = 999;
@@ -561,8 +561,8 @@ module.exports = {
     if (!(dvn.ground >= 100) || dvn.groundOff) f('the Divine seal: ' + dvn.ground + ' pixels, ' + dvn.groundOff + ' off the ground at his feet');
     if (!(dvn.sparks >= 6) || dvn.sparksOff || !(dvn.waveOut >= 8)) f('the Divine strike: light off the ball ' + dvn.sparks + ' (' + dvn.sparksOff + ' away from it), a ring ' + dvn.waveOut + ' out past the seal');
     // (The Void has no sound of its own: the user wants no more)
-    for (const id of ['demonic', 'ascended', 'divine', 'cosmic']) {
-      const L = r.legend[id], snd = { demonic: 'hellfire', ascended: 'ascend', divine: 'choir', cosmic: '' }[id];
+    for (const id of ['demonic', 'ascended', 'divine', 'cosmic', 'dread', 'psyche']) {
+      const L = r.legend[id], snd = { demonic: 'hellfire', ascended: 'ascend', divine: 'choir', cosmic: '', dread: '', psyche: '' }[id];
       if (L.birdie.n || L.birdie.sound || L.eagle.n || L.eagle.sound) f('the ' + id + ' moment on a birdie ' + J(L.birdie) + ' or an eagle ' + J(L.eagle) + ' (only an albatross or an ace)');
       if (!(L.alb.out >= 40) || L.alb.far || L.alb.sound !== snd) f('the ' + id + ' moment on an albatross: ' + J(L.alb) + ' (a burst out of him, kept close about him, the sound ' + snd + ')');
       if (!(L.ace.n > L.alb.n * 1.05) || L.ace.far || L.ace.sound !== (snd ? snd + '!' : '')) f('the ' + id + ' moment on an ace is not bigger, or strays: ' + J(L.ace) + ' against ' + J(L.alb));

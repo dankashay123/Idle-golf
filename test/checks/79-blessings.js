@@ -38,12 +38,12 @@ module.exports = {
           const after = c.getImageData(0, 0, CW, CH).data.some((v, i) => i % 4 === 3 && v) || !!Scene.bless;
           return { cols, soft, wide, after };
         };
-        const LEG = ['divine', 'demonic', 'ascended', 'cosmic'];
+        const LEG = ['divine', 'demonic', 'ascended', 'cosmic', 'dread', 'psyche'];
         const looks = B.CADDIES.filter(x => x.fx).map(x => x.id), legs = looks.filter(id => LEG.includes(B.CADDIES.find(x => x.id === id).fx));
         const plain = shoot('bib'), total = R => [...R.cols.values()].reduce((a, b) => a + b, 0), key = R => [...R.cols.entries()].sort().join(';');
         o.plainPerk = plain.cols.get(PERK) || 0; o.plainN = total(plain);
         if (!(o.plainPerk > 50)) f('a plain caddie\'s blessing shows ' + o.plainPerk + ' pixels of its perk\'s colour');
-        if (legs.length !== 4) f('the Legendary and Mythic caddies: ' + legs.join(', '));
+        if (legs.length !== LEG.length) f('the Legendary and Mythic caddies: ' + legs.join(', '));
         const sig = {}; o.rows = []; o.same = 0;
         for (const id of ['bib'].concat(looks)) {
           const R = id === 'bib' ? plain : shoot(id), fx = (B.CADDIES.find(x => x.id === id) || {}).fx, TH = BLESS_FX[fx];
