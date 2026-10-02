@@ -5,7 +5,8 @@
  *     picture put that set on it, and its name over it
  *   - played through its round, every set shows its own colours (its
  *     accents counted on the stage), its blessing falls, an ace gives him
- *     his moment, and it hops on its club; no two sets draw alike
+ *     his moment, it hops on its club and its caddie does its own trick;
+ *     no two sets draw alike
  *   - Night darkens its sky and Day brings it back
  *   - drawing it never touches the round behind: his look, his caddie,
  *     his pictures and the moment on the course are all as they were
@@ -42,7 +43,8 @@ module.exports = {
         const prints = {};
         const play = (T, night) => { const n = night; showStart(SHOW.set); SHOW.night = n; while (SHOW.t < T - 1e-6) showDraw(cv, Math.min(1 / 60, T - SHOW.t)); return c.getImageData(0, 0, W, H).data; };
         const count = (d, cols) => { const C = cols.map(hex); let n = 0; for (let i = 0; i < d.length; i += 4) if (C.some(q => q[0] === d[i] && q[1] === d[i + 1] && q[2] === d[i + 2])) n++; return n; };
-        const T_BLESS = 0.6, T_SWING = 2.2, T_ACE = SHOW_PLAN[0].dur + SHOW_PLAN[1].dur + SHOW_PLAN[2].addr + 0.45 + 1.25 + 0.15, T_FLY = SHOW_CYC - SHOW_PLAN[3].dur * 0.5;
+        const T_BLESS = 0.6, T_SWING = 2.2, T_ACE = SHOW_PLAN[0].dur + SHOW_PLAN[1].dur + SHOW_PLAN[2].addr + 0.45 + 1.25 + 0.15, T_FLY = SHOW_PLAN[0].dur + SHOW_PLAN[1].dur + SHOW_PLAN[2].dur + SHOW_PLAN[3].dur * 0.5,
+          T_MOVE = SHOW_PLAN.slice(0, 4).reduce((a, p) => a + p.dur, 0) + 1.0;
         for (const s of SET_ORDER) {
           showStart(s); SHOW.night = false;
           const acc = SKIN_ACCENT[s];
@@ -60,6 +62,11 @@ module.exports = {
           if (!SHOW.legend || SHOW.t - SHOW.legend.t0 > 0.5) f(s + ' had no moment on its ace');
           // the hop on his club: him up off the grass
           play(T_FLY, false);
+          // his caddie's own trick while he waits on the tee
+          play(T_MOVE, false);
+          const MV = FULL_SETS[s] && FAIRY_MOVES.find(m => m.only === styleDef('c', s).fx);
+          if (!MV) f(s + "'s caddie has no trick of its own");
+          else if (!SHOW.move || SHOW.move.kind !== MV.id) f(s + "'s caddie does not do its trick on the stage (" + JSON.stringify(SHOW.move) + ')');
           // night: a dark sky over him
           const dN = play(T_SWING, true), top = [dN[0], dN[1], dN[2]];
           if (top[0] + top[1] + top[2] > 120) f(s + ' at night has a sky of ' + top);

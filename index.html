@@ -7726,9 +7726,10 @@ function showSprites(s){
   Object.assign(SPRITE, keep);
   return SHOWSPR[s] = out;
 }
-// the round he plays on it: a blessing and a shot, a shot, an ace, a hop
+// the round he plays on it: a blessing and a shot, a shot, an ace, a hop,
+// and his caddie's own trick while he waits on the tee
 const SHOW_PLAN = [{ k: 'shot', bless: 1, addr: 1.5, dur: 3.4 }, { k: 'shot', addr: 0.8, dur: 3.0 },
-                   { k: 'ace', addr: 0.8, dur: 3.6 }, { k: 'fly', dur: 2.8 }];
+                   { k: 'ace', addr: 0.8, dur: 3.6 }, { k: 'fly', dur: 2.8 }, { k: 'move', dur: 2.4 }];
 const SHOW_CYC = SHOW_PLAN.reduce((a, p) => a + p.dur, 0);
 function showStart(s){
   const night = SHOW ? SHOW.night : false;
@@ -7824,16 +7825,21 @@ function showDraw(cv, dt){
 }
 function showPlay(c, V, W, H, G, cup, dt){
   const A = showAt(V.t), P = A.P, O = outfitNow(), FX = STYLEFX[O.fx] || null;
-  const h = 30, w = Math.round(h * 40 / 58), x = 42, bx = Math.round(x + w * 1.19);
+  const h = 30, w = Math.round(h * 40 / 58), x = 46, bx = Math.round(x + w * 1.19);
   const bob = FX && FX.bob ? Math.round(1 + Math.sin(V.t * 2.2)) : 0;
   // the caddie stands where he does on the course, his own clock
   const sc = V.sc || (V.sc = Object.assign(Object.create(Scene), { fairyMoveNow: () => null, fairyNow: () => null, fairyDy: () => 0, fairyCast: null }));
   sc.t = V.t;
+  // the caddie's own trick (each set's caddie has one), as on the course
+  const MV = P.k === 'move' ? FAIRY_MOVES.find(m => m.only === caddieNow().fx) : null, mu = A.u - 0.3;
+  V.move = MV && mu >= 0 && mu < MV.dur ? { kind: MV.id, q: mu / MV.dur, T: mu } : null;
+  sc.fairyMoveNow = () => V.move;
   // the swing, by the part of the round
   let ph = 0, fly = 0;
   if(P.k === 'fly') fly = A.u / P.dur;
+  else if(P.k === 'move') ph = 0;
   else { const s0 = P.addr, sd = 0.9; ph = A.u < s0 ? 0 : A.u < s0 + sd ? (A.u - s0) / sd : 1; }
-  if(ph >= 0.5 && V.shot !== A.n && P.k !== 'fly'){
+  if(ph >= 0.5 && V.shot !== A.n && P.k !== 'fly' && P.k !== 'move'){
     V.shot = A.n;
     const r = hash32(A.n + 11) / 4294967296, ace = P.k === 'ace';
     V.balls.push({ t: 0, dur: ace ? 1.25 : 1.1 + r * 0.25, x0: bx, x1: ace ? cup : cup - 14 + Math.round(r * 9), top: 20 + r * 6, seed: r * 100, ace });
