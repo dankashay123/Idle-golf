@@ -54,7 +54,7 @@ module.exports = {
         // the one on the post: there until he is within seven, then off
         const pd = posts[Math.floor(posts.length / 2)];
         const beak = cam => { const t0 = Scene.t; look(cam); Scene.t = t0;
-          c.clearRect(0, 0, VW, VH); Scene.drawGulls(posts, hw, cam - CAM_BACK + 0.7); return px('#E8B04A'); };
+          c.clearRect(0, 0, VW, VH); Scene.drawGulls(posts, hw, cam - CAM_BACK + 0.7); return px('#8A949E'); };   // (the sat one's grey back: the ones flying have bills of the same yellow)
         Scene.gullOff = null; Scene._gullHole = Scene.hole;
         o.sat = beak(pd - 10);
         o.stillSat = beak(pd - 7.2);

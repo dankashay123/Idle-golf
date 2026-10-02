@@ -261,6 +261,14 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
 
 /* ---------- multiplier switch ---------- */
 #multBar{display:flex;gap:6px}
+.mbtn.all{border-color:var(--brass-dk);color:var(--brass);background:var(--raise2)}
+/* Range rows: name and level on one line, what it does under it */
+.row.urow{padding:6px 12px}
+.row.urow .nm{display:flex;flex-wrap:wrap;align-items:baseline;column-gap:8px}
+.row.urow .nm .mt{margin:0 0 0 auto;white-space:nowrap}
+.row.urow .buy{min-width:88px}
+.row.urow .buy .amt{padding:4px 7px 3px}
+.row.urow .buy .lbl{padding:2px 7px}
 .mbtn{font-family:var(--mono);font-size:var(--f2);padding:3px 9px;min-height:24px;border:1px solid var(--line);
   border-radius:0;color:var(--dim)}
 .mbtn.on{background:var(--raise2);border-color:var(--brass-dk);color:var(--brass)}
@@ -483,6 +491,8 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
   color:var(--faint);background:#0A170F;border-top:1px solid #12261A;border-bottom:1px solid #12261A}
 .tier.open{color:var(--aurora)}
 .row.locked{opacity:.55}
+.row.tlock{padding:6px 12px}
+.row.tlock .nm{font-size:var(--f2)}
 .hbar{width:44px;height:3px;background:#12261C;border-radius:0;overflow:hidden}
 .hbar i{display:block;height:100%;background:var(--brass)}
 /* the bar was a flex child like the words beside it, so it took half the row
@@ -995,8 +1005,7 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
       </div>
       <div id="rangeNav"></div>
       <div id="rangeUpg">
-      <div class="band"><span class="eyebrow">Practice Range</span><span class="note" id="upgCount"></span></div>
-      <div class="band" style="top:auto"><div id="multBar"></div></div>
+      <div class="band"><div id="multBar"></div><button class="mbtn all" id="buyAll">Buy All</button></div>
       <div class="hint" id="upgTax"></div>
       <div id="upgRows"></div>
       </div>
@@ -8728,6 +8737,16 @@ function fillClip(c, x, y, w, h, clip){
   const b = Math.min(y + h, Math.floor(clip) + 1);
   if(b > y && w > 0) c.fillRect(x, y, w, b - y);
 }
+// A little picture in rows, k pixels to a cell, flipped to face left when
+// flip is set, cut at the ground's clip line: the creatures on the course.
+function pxRows(c, rows, map, x0, y0, k, clip, flip){
+  const w = rows[0].length;
+  for(let r = 0; r < rows.length; r++) for(let q = 0; q < w; q++){
+    const ch = rows[r][flip ? w - 1 - q : q];
+    if(ch === '.' || !map[ch]) continue;
+    c.fillStyle = map[ch]; fillClip(c, x0 + q * k, y0 + r * k, k, k, clip);
+  }
+}
 function pxCircle(c, cx, cy, r, col){
   cx = Math.round(cx); cy = Math.round(cy); r = Math.round(r);
   c.fillStyle = col;
@@ -8864,6 +8883,9 @@ function drawLandmark(g, L, cx, by, s, haze, hz){
            Math.cos(ang + 0.11) * 13, 20 + Math.sin(ang + 0.11) * 13, m, Math.max(1, Math.round(s)));
       }
       R(-0.8, 19.2, 1.6, 1.6, dk);
+      // a stage round the body, a window over the door
+      R(-5.4, 7, 10.8, 0.8, b); R(-5.4, 6.4, 0.6, 0.8, dk); R(4.8, 6.4, 0.6, 0.8, dk);
+      R(-0.7, 14.5, 1.4, 1.8, dk);
       break;
     case 'lighthouse':
       T(0, 0, 18, 11, 3, H(dark(L.cols[0], 0.55)));
@@ -8886,7 +8908,14 @@ function drawLandmark(g, L, cx, by, s, haze, hz){
       R(-2.5, 14, 5, 9, m); R(1, 14, 1.5, 9, sh);
       R(-2.5, 23, 1.5, 1.6, m); R(1, 23, 1.5, 1.6, sh);
       R(-0.3, 24, 0.7, 6, dk); R(0.4, 27, 4, 2.4, a);
-      R(-2, 0, 4, 5, dk);
+      R(-2, 0, 4, 5, dk); R(-1.4, 5, 2.8, 0.8, dk);
+      // courses of stone, arrow slits in the towers, a portcullis
+      { const mo = H(dark(L.cols[0], 0.14)), ms = H(dark(L.cols[0], 0.36));
+        for(const y of [3.5, 7, 10.5]){ R(-7, y, 9.5, 0.4, mo); R(2.5, y, 4.5, 0.4, ms); }
+        for(const y of [3.5, 7, 10.5, 14, 17]){ R(-12, y, 5, 0.4, mo); R(7, y, 5, 0.4, ms); }
+        for(const y of [17, 20.5]){ R(-2.5, y, 3.5, 0.4, mo); R(1, y, 1.5, 0.4, ms); }
+        R(-9.8, 5, 0.6, 2.2, dk); R(9.2, 5, 0.6, 2.2, dk); R(-0.3, 20, 0.6, 2, dk);
+        R(-1.2, 0, 0.4, 4.6, ms); R(0.8, 0, 0.4, 4.6, ms); R(-2, 2.6, 4, 0.4, ms); }
       { const w = L.lamp ? H('#FFD66B') : dk;
         R(-10, 13, 1, 2, w); R(9, 13, 1, 2, w); R(-0.5, 17, 1, 2, w); R(-4.5, 8, 1, 2, w); }
       break;
@@ -8901,6 +8930,10 @@ function drawLandmark(g, L, cx, by, s, haze, hz){
       T(-9, 4, 7, 5, 18, m); T(9, 4, 7, 5, 18, sh);
       R(-12, 21, 24, 6, m); R(-7, 20, 14, 1, m); R(-4.5, 19, 9, 1, m); R(4, 19, 8, 8, sh);
       R(-12, 26.2, 24, 0.9, a);
+      // the rock in bands, as sandstone lies
+      { const st = H(dark(L.cols[0], 0.16)), ss = H(dark(L.cols[0], 0.4));
+        for(const y of [8, 13, 17.5]){ R(-12.5, y, 7, 0.45, st); R(5.5, y, 7, 0.45, ss); }
+        R(-12, 23.4, 16, 0.45, st); R(4, 23.4, 8, 0.45, ss); }
       break;
     case 'pagoda':
       for(let i = 0; i < 5; i++){
@@ -8917,6 +8950,9 @@ function drawLandmark(g, L, cx, by, s, haze, hz){
       R(-0.5, 6, 1, 2.4, dk); R(-0.5, 13, 1, 2.4, dk); R(-1.2, 0, 2.4, 3.5, dk);
       T(0, 20, 10, 0.6, 10, b); T(-1.4, 21, 3, 0.4, 7, a);
       R(-0.3, 30, 0.6, 2, dk);
+      // its stones in courses, and a ring of corbels under the roof
+      { const st = H(dark(L.cols[0], 0.16)); for(const y of [4, 9, 16]) R(-3.4, y, 6.6, 0.4, st);
+        R(-4, 19.2, 8, 0.8, dk); }
       if(L.lamp) R(-0.5, 13, 1, 2.4, H('#FFD66B'));
       break;
     case 'volcano':
@@ -9181,78 +9217,104 @@ const TREE_DEFAULT = { 0:'#0C2011', 1:'#16391F', 2:'#1F4E29', 3:'#2C6634', 4:'#3
 
 /* ---- the cast ---- */
 /* ---- the gallery ----
-   Drawn as three flat rectangles before, which at any size above about ten
-   pixels read as a stack of bricks rather than a person. Authored here in
-   generic tones and baked per crowd colour, so a spectator keeps a head, a
-   collar and a pair of legs while still being whatever colour he was. */
-const SPECT_A = [
-  '..................',
-  '..................',
-  '..................',
-  '......hhhhhhh.....',
-  '.....hhhhhhhhh....',
-  '.....hhhhhhhhh....',
-  '.....hhhhhhhhh....',
-  '......hhhhhhh.....',
-  '......kkkkkKK.....',
-  '......kkkkkKK.....',
-  '.....bkkkkKKKB....',
-  '.....bbkkKKKBB....',
-  '...bbbbbbKbbBBBB..',
-  '..bbbBbbbbbbBBBBB.',
-  '..bbbBbbbbbbBBBBB.',
-  '..bbbBbbbbbbBBBBB.',
-  '..bbbBbbbbbbBBBBB.',
-  '..bbbBbbbbbbBBBBB.',
-  '..bbbBbbbbbbBBBBB.',
-  '..bbbBbbbbbbBBBBB.',
-  '..bkbBbbbbbbBBBkB.',
-  '...bbbbbbbbbBBBB..',
-  '....bbbbbbbbBBB...',
-  '....pbbbbbbbBBP...',
-  '....pbbbbbbbBBP...',
-  '....ppbbbbbbBPP...',
-  '....ppppbbbPPPP...',
-  '....ppppP.PPPPP...',
-  '....ppppP.PPPPP...',
-  '....ppppP.PPPPP...',
-  '....ooooo.ooooo...',
-  '....ooooo.ooooo...'
+   Each spectator is built in eighteen by thirty two: a head with hair and
+   eyes, a shirt, trousers and shoes, and the arms laid on by pose, so a fan
+   can clap, wave, pump a fist or hold their head as well as throw both arms
+   up. A hash gives each one a hair colour, a skin, a hat or none, trousers
+   and a shirt of their own, so a gallery is a crowd of people rather than
+   one person in six colours. */
+const SPECT_HAIR = ['#2A2018', '#141010', '#B8863A', '#8E8A84', '#7A3A1E'];
+const SPECT_SKIN = [['#DFAD7D', '#B5835A'], ['#F0C8A0', '#C99C74'], ['#A8714A', '#7E5232'], ['#6E4429', '#4E2E1A']];
+const SPECT_PANT = [['#39434E', '#232B34'], ['#C2AE84', '#968458'], ['#2E3A2E', '#1E281E']];
+const SPECT_HAT = ['#F4F4EE', '#C0563F', '#3E76C8', '#24302A', '#D8C070'];
+// the arms: [elbow, hand] for the one on the left as you look, then the right
+const SPECT_POSE = {
+  rest:  [[3, 17], [3, 21],  [14, 17], [14, 21]],
+  clasp: [[3, 18], [6, 21],  [14, 18], [11, 21]],
+  hips:  [[2, 16], [4, 20],  [15, 16], [13, 20]],
+  fold:  [[3, 18], [10, 17], [14, 18], [7, 16]],
+  up:    [[2, 8],  [2, 2],   [15, 8],  [15, 2]],
+  up2:   [[1, 9],  [3, 3],   [16, 9],  [14, 3]],
+  clap:  [[2, 17], [6, 14],  [15, 17], [11, 14]],
+  clap2: [[3, 17], [8, 13],  [14, 17], [9, 13]],
+  pump:  [[3, 17], [3, 21],  [16, 11], [15, 4]],
+  pump2: [[3, 17], [3, 21],  [16, 12], [16, 7]],
+  wave:  [[3, 17], [3, 21],  [16, 8],  [17, 2]],
+  wave2: [[3, 17], [3, 21],  [16, 8],  [13, 2]],
+  head:  [[1, 9],  [6, 3],   [16, 9],  [11, 3]],
+  head2: [[1, 10], [6, 4],   [16, 10], [11, 4]],
+  towel: [[3, 17], [3, 21],  [16, 8],  [16, 1]],
+  towel2:[[3, 17], [3, 21],  [15, 8],  [14, 1]]
+};
+// what a fan does when the gallery goes up, two frames each, and how high
+// they jump with it (one in six throws both arms up; the rest their own way)
+const SPECT_EMOTE = [['up', 'up2', 1], ['clap', 'clap2', 0.3], ['pump', 'pump2', 0.6],
+                     ['wave', 'wave2', 0.35], ['head', 'head2', 0.15], ['towel', 'towel2', 0.5]];
+const SPECT_IDLE = ['rest', 'clasp', 'hips', 'fold'];
+function spectRows(v, pose){
+  const G = []; for(let y = 0; y < 32; y++) G.push('.'.repeat(18).split(''));
+  const put = (x, y, ch) => { if(x >= 0 && x < 18 && y >= 0 && y < 32) G[y][x] = ch; };
+  const box = (x0, y0, x1, y1, ch) => { for(let y = y0; y <= y1; y++) for(let x = x0; x <= x1; x++) put(x, y, ch); };
+  const hat = Math.floor(v / 20) % 4, stripe = Math.floor(v / 480) % 3 === 0, collar = Math.floor(v / 240) % 2;
+  // legs and shoes, a gap between the knees down
+  box(5, 23, 8, 25, 'p'); box(9, 23, 12, 25, 'P');
+  box(5, 26, 7, 30, 'p'); box(10, 26, 12, 30, 'P');
+  box(4, 31, 7, 31, 'o'); box(10, 31, 13, 31, 'o');
+  // the shirt: shoulders, a body narrowing to the belt, its far side shaded
+  box(4, 12, 13, 13, 'b'); box(5, 14, 12, 21, 'b');
+  for(let y = 12; y <= 21; y++) for(let x = 10; x <= 13; x++) if(G[y][x] === 'b') G[y][x] = 'B';
+  if(stripe) for(const y of [15, 18]) for(let x = 5; x <= 12; x++) G[y][x] = x >= 10 ? 'd' : 'B';
+  box(5, 22, 12, 22, 'd');
+  box(7, 12, 10, 12, collar ? 'c' : 'b'); put(8, 13, 'K'); put(9, 13, 'K');
+  // the head: hair over the crown and down the sides, a face, two eyes
+  box(7, 3, 10, 3, 'h'); box(6, 4, 11, 9, 'k'); box(7, 10, 10, 10, 'k');
+  box(6, 4, 11, 5, 'h'); put(6, 6, 'h'); put(11, 6, 'h'); put(6, 7, 'h'); put(11, 7, 'h');
+  box(11, 8, 11, 9, 'K'); put(10, 10, 'K');
+  put(7, 7, 'e'); put(10, 7, 'e');
+  box(8, 11, 9, 11, 'K');
+  if(hat === 1){ box(7, 2, 10, 2, 't'); box(6, 3, 11, 4, 't'); box(5, 5, 12, 5, 'T'); }        // a cap
+  else if(hat === 2){ box(6, 4, 11, 4, 't'); box(5, 5, 12, 5, 'T'); }                          // a visor
+  else if(hat === 3){ box(7, 1, 10, 1, 't'); box(6, 2, 11, 4, 't'); box(3, 5, 14, 5, 'T'); }  // a wide brim
+  // the arms, two pixels thick: a sleeve to the elbow, then the forearm and hand
+  const P = SPECT_POSE[pose] || SPECT_POSE.rest;
+  const arm = (sx, sy, e, h, sl, sk, dx) => {
+    const seg = (ax, ay, bx, by, ch) => {
+      const n = Math.max(Math.abs(bx - ax), Math.abs(by - ay), 1);
+      for(let i = 0; i <= n; i++){ const x = Math.round(ax + (bx - ax) * i / n), y = Math.round(ay + (by - ay) * i / n);
+        put(x, y, ch); put(x + dx, y, ch); }
+    };
+    seg(sx, sy, Math.round((sx + e[0]) / 2), Math.round((sy + e[1]) / 2), sl);
+    seg(Math.round((sx + e[0]) / 2), Math.round((sy + e[1]) / 2), e[0], e[1], sk);
+    seg(e[0], e[1], h[0], h[1], sk);
+    put(h[0], h[1], sk); put(h[0] + dx, h[1], sk); put(h[0], h[1] + 1, sk); put(h[0] + dx, h[1] + 1, sk);
+  };
+  arm(4, 13, P[0], P[1], 'b', 'k', -1);
+  arm(13, 13, P[2], P[3], 'B', 'K', 1);
+  // a towel waved overhead, to one side and then the other
+  if(pose === 'towel'){ box(11, 0, 15, 1, 'w'); box(11, 2, 12, 3, 'w'); }
+  else if(pose === 'towel2'){ box(14, 0, 17, 1, 'w'); box(16, 2, 17, 3, 'w'); }
+  return G.map(r => r.join(''));
+}
+// the birds on the fairway, facing right (flipped to face left)
+const BIRD_STAND = ['....HH.', 'T.BBHeY', '.TBWW..', '...L.L.'];
+const BIRD_PECK  = ['.......', 'TBBB...', '.TBWHH.', '..L.LeY'];
+const BIRD_FLY = [['T.....T', '.BB.BB.', '..TWHY.', '.......'],
+                  ['.......', 'TBBHBBT', '..TWWY.', '.......'],
+                  ['.......', '..TWHY.', '.BB.BB.', 'T.....T']];
+const BIRD_KIND = [
+  { H:'#6A4A30', B:'#8A6A48', W:'#C8B49A', T:'#3B2F27', e:'#101010', Y:'#C89A40', L:'#5A4A3A' },   // a sparrow
+  { H:'#3B342E', B:'#5E5448', W:'#D8743A', T:'#2E2A26', e:'#101010', Y:'#C89A40', L:'#5A4A3A' },   // a robin
+  { H:'#1E1A18', B:'#2A2522', W:'#2A2522', T:'#141210', e:'#E8A030', Y:'#E8A030', L:'#3A302A' }    // a blackbird
 ];
-const SPECT_B = [
-  '..................',
-  '..................',
-  '..................',
-  '......hhhhhhh.....',
-  '.....hhhhhhhhh....',
-  '.....hhhhhhhhh....',
-  '.....hhhhhhhhh....',
-  '......hhhhhhh.....',
-  '......kkkkkKK.....',
-  '......kkkkkKK.....',
-  '.....bkkkkKKKB....',
-  '.....bbkkKKKBB....',
-  '...bbbbbbKbbBBBB..',
-  '..bbbBbbbbbbBBBBB.',
-  '..bbbBbbbbbbBBBBB.',
-  '..bbbBbbbbbbBBBBB.',
-  '..bbbBbbbbbbBBBBB.',
-  '..bbbBbbbbbbBBBBB.',
-  '..bbbBbbbbbbBBBBB.',
-  '..bbbBbbbbbbBBBBB.',
-  '..bkbBbbbbbbBBBk..',
-  '...bbBbbbbbbBBB...',
-  '....bbbbbbbbBBB...',
-  '....pbbbbbbbBBP...',
-  '....pbbbbbbbBBP...',
-  '....ppbbbbbbBPP...',
-  '....ppppbbbPPPP...',
-  '....ppppP.PPPPP...',
-  '....ppppP.PPPPP...',
-  '....ppppP.PPPPP...',
-  '....ooooo.ooooo...',
-  '....ooooo.ooooo...'
-];
+const GULL_COL = { K:'#5A6470', G:'#B8C2CA', W:'#EEF1F3', Y:'#E8B04A', g:'#8A949E', e:'#1A1E22' };
+const GULL_FLY = [['K.....K', '.GG.GG.', '..GWG..', '...WY..'],
+                  ['.......', 'KGGWGGK', '...WY..', '.......'],
+                  ['.......', '...WY..', '.GGWGG.', 'K.....K']];
+const GULL_SIT = ['...WW.', '...WeY', 'KggWW.', '.gWW..', '..Y.Y.'];
+const HAWK_COL = { '#': '#5A3E28', K: '#2E2018', B: '#7A5236', H: '#D8C8A8', T: '#B8602E', t: '#F0E2C8' };
+const HAWK_FLY = [['KK.........KK', '..##.....##..', '....##H##....', '.....TtT.....', '.....TTT.....'],
+                  ['K...........K', 'K###.BHB.###K', '..####B####..', '.....TtT.....', '.....TTT.....'],
+                  ['.............', '....##H##....', '..##.BBB.##..', 'KK...TtT...KK', '.....TTT.....']];
 const SPECT_CACHE = {};
 // The grandstand behind the round's last green: five tiers of benches
 // across twelve units under a roof on posts, two aisles, and a wall at its
@@ -9296,12 +9358,12 @@ function standCv(sh, full, night, seed, cheer, frost, rain){
       const ci = Math.floor(hr(seed * 7 + r * 11 + i, 351) * 6), pose = (hr(seed + r * 5 + i, 352) < 0.5 ? 0 : 1) ^ (cheer === 2 ? 1 : 0);
       // (on their feet for the cheer)
       const fy = y + th - sh + Math.round(th * 0.25) - (cheer ? Math.max(1, Math.round(th * 0.35)) : 0);
-      blit(g, spectSpr(ci, pose, night), x, fy, sw, sh);
-      // and arms up, every other fan in turn
-      if(cheer && ((i + r) & 1) === cheer - 1){ const ak = Math.max(1, Math.round(sw / 5)), ah = Math.max(2, Math.round(sh * 0.32));
-        g.fillStyle = night ? PX.skin2 : PX.skin; g.fillRect(x, fy + Math.round(sh * 0.3) - ah, ak, ah); g.fillRect(x + sw - ak, fy + Math.round(sh * 0.3) - ah, ak, ah); }
+      // seated they sit as they sit; on their feet each cheers their own way
+      const who = Math.floor(hr(seed * 3 + r * 13 + i, 353) * 1440);
+      const E = SPECT_EMOTE[Math.floor(hr(seed * 5 + r * 17 + i, 354) * SPECT_EMOTE.length)];
+      blit(g, spectSpr(ci, cheer ? E[((i + r + cheer) & 1)] : pose, night, who), x, fy, sw, sh);
       // in the rain the front rows, out from under the roof, put umbrellas up
-      else if(rain && r < 2 && sh >= 5 && hr(seed * 17 + r * 7 + i, 412) < 0.7) umbs.push([x + sw / 2, fy, sw, Math.floor(hr(seed + r * 3 + i, 413) * 6)]);
+      if(!cheer && rain && r < 2 && sh >= 5 && hr(seed * 17 + r * 7 + i, 412) < 0.7) umbs.push([x + sw / 2, fy, sw, Math.floor(hr(seed + r * 3 + i, 413) * 6)]);
     }
     g.fillStyle = dk('#6E7880'); g.fillRect(0, y + th - Math.max(1, Math.round(th * 0.4)), W, Math.max(1, Math.round(th * 0.4)));   // the bench
   }
@@ -9430,13 +9492,23 @@ function drawUmbrella(c, cx, hy, w, h, ci, night){
   }
   c.fillStyle = dark; c.fillRect(X, top - 1, 1, 1);
 }
-function spectSpr(ci, pose, night){
-  const key = ci + '|' + pose + '|' + (night ? 1 : 0);
+// pose: a name from SPECT_POSE, or 0 and 1 for the two ways of standing
+// that the grandstand used before; v: who they are (hair, skin, hat, ...)
+function spectSpr(ci, pose, night, v){
+  if(v === undefined) v = ci * 37;
+  v = Math.abs(Math.floor(v)) % 1440;
+  if(typeof pose !== 'string') pose = pose ? 'clasp' : 'rest';
+  const key = ci + '|' + pose + '|' + (night ? 1 : 0) + '|' + v;
   if(SPECT_CACHE[key]) return SPECT_CACHE[key];
-  const body = night ? PX.crowdDk[ci] : PX.crowd[ci];
-  const map = { h:'#2A2018', k: night ? PX.skin2 : PX.skin, b:body, B:PX.crowdDk[ci],
-                p: night ? '#1C2937' : '#39434E', P:'#232B34', o:PX.shoe };
-  return SPECT_CACHE[key] = makeSprite(pose ? SPECT_B : SPECT_A, map);
+  const dk = col => night ? mixC(col, '#0B1118', 0.35) : col;
+  const sk = SPECT_SKIN[Math.floor(v / 5) % 4], pt = SPECT_PANT[Math.floor(v / 80) % 3];
+  const body = PX.crowd[ci] || PX.crowd[0], bodyDk = PX.crowdDk[ci] || PX.crowdDk[0];
+  const hatC = SPECT_HAT[(v * 7 + ci) % SPECT_HAT.length];
+  const map = { h:dk(SPECT_HAIR[v % 5]), k:dk(sk[0]), K:dk(sk[1]), e:dk('#1A1410'),
+                b:dk(body), B:dk(bodyDk), d:dk(mixC(bodyDk, '#000000', 0.3)), c:dk(mixC(body, '#F4F4EE', 0.5)),
+                p:dk(pt[0]), P:dk(pt[1]), o:dk(PX.shoe),
+                t:dk(hatC), T:dk(mixC(hatC, '#000000', 0.28)), w:dk('#F4F6EF') };
+  return SPECT_CACHE[key] = makeSprite(spectRows(v, pose), map);
 }
 // The golfer, side on: at address, and at the finish. Kept out of
 // buildSprites so the shop can paint the same figure in an outfit it is
@@ -18014,24 +18086,20 @@ Object.assign(Scene, {
     if(fd < this.camD - CAM_BACK + ROPE_REL) return;
     const pr = this.proj(fd, fx, fh);
     if(pr.s < 0.05 || pr.x < -6 || pr.x > VW + 6) return;
-    const k = clamp(Math.round(pr.s * US * 1.6), 1, 3), clip = this.clipAt(fd), x = Math.round(pr.x), y = Math.round(pr.y);
+    const k = clamp(Math.round(pr.s * US * 1.15), 1, 3), clip = this.clipAt(fd), x = Math.round(pr.x), y = Math.round(pr.y);
+    // a sparrow, a robin or a blackbird, from a hash: a head with an eye
+    // and a beak, a wing over a lighter breast, a tail and two legs
+    const sp = BIRD_KIND[Math.floor(hr(p.g * 3 + 1, 338) * BIRD_KIND.length)];
+    const flip = p.dir < 0;
     if(u < 0){
       // on the ground: pecking (its head down) a moment in every few seconds
       const pk = Math.sin(this.t * (1.3 + hr(p.k, 337)) + p.k) > 0.8;
-      c.fillStyle = '#3B2F27'; fillClip(c, x - k, y - k * 2, k * 3, k, clip);
-      fillClip(c, p.dir > 0 ? x - k * 2 : x + k * 2, y - k * 2 - (k > 1 ? 1 : 0), k, k, clip);   // its tail
-      c.fillStyle = '#9A7650'; fillClip(c, x - k, y - k, k * 2, k, clip);
-      c.fillStyle = '#3B2F27';
-      if(pk) fillClip(c, x + k * p.dir * 2 - (p.dir < 0 ? k : 0), y - k, k, k, clip);
-      else fillClip(c, x + (p.dir > 0 ? k * 2 : -k * 2), y - k * 3, k, k, clip);
+      pxRows(c, pk ? BIRD_PECK : BIRD_STAND, sp, x - Math.round(3.5 * k), y - 4 * k, k, clip, flip);
       return;
     }
-    // in the air: a body and two wings, up and down
-    const beat = Math.sin(this.t * 26 + p.k) > 0;
-    c.fillStyle = '#2E2A26';
-    fillClip(c, x - k, y, k * 3, k, clip);
-    fillClip(c, x - k * 3, y + (beat ? -k : k), k * 2, k, clip);
-    fillClip(c, x + k * 2, y + (beat ? -k : k), k * 2, k, clip);
+    // in the air: wings up, level and down in turn
+    const ph = Math.floor((this.t * 14 + p.k) % 3);
+    pxRows(c, BIRD_FLY[ph], sp, x - Math.round(3.5 * k), y - 2 * k, k, clip, flip);
   },
   // Now and then a flock crosses the sky, high over the hills, in a loose
   // line; never at night, in the rain or in a wager. Times and shapes from
@@ -18062,10 +18130,12 @@ Object.assign(Scene, {
       const px = F.dir > 0 ? Math.round(-lag + u) : Math.round(VW + lag - u);
       const py = Math.round(F.y + ((i & 1) ? 1 : -1) * Math.ceil(i / 2) * 1.6 * k + Math.sin(this.t * 0.9 + i) * k);
       if(px < -4 * k || px > VW + 4 * k || py < 0) continue;
-      const beat = Math.sin(this.t * 9 + i * 1.3) > 0;
-      c.fillRect(px, py, k, k);
-      c.fillRect(px - 2 * k, py + (beat ? -k : 0), k * 2, k);
-      c.fillRect(px + k, py + (beat ? -k : 0), k * 2, k);
+      // (wings up, level, down: three frames, not two)
+      const ph = Math.floor((this.t * 7 + i * 1.3) % 3);
+      c.fillRect(px - k, py, k * 3, k);
+      if(ph === 0){ c.fillRect(px - 2 * k, py - k, k, k); c.fillRect(px + 2 * k, py - k, k, k); c.fillRect(px - 3 * k, py - 2 * k, k, k); c.fillRect(px + 3 * k, py - 2 * k, k, k); }
+      else if(ph === 1){ c.fillRect(px - 3 * k, py, k * 2, k); c.fillRect(px + 2 * k, py, k * 2, k); }
+      else { c.fillRect(px - 2 * k, py + k, k, k); c.fillRect(px + 2 * k, py + k, k, k); }
     }
   },
 
@@ -18306,19 +18376,25 @@ Object.assign(Scene, {
     }else{
       const h = Math.max(3, Math.round(12 * pr.s * US));
       if(pr.x < -6 || pr.x > VW + 6) return;
-      // a jump and a wave, each to their own beat, after a great hole
+      // who they are, and what they do: after a great hole each fan
+      // celebrates their own way (arms up, a clap, a fist pump, a wave, hands
+      // on the head, a towel overhead), each to their own beat
+      const who = Math.floor(hr(p.p * 13 + p.c, 420) * 1440);
       const G = this.galleryUp, gq = G && !S.dgnRun ? (this.t - G.t0) / GALLERY_UP : -1;
       if(gq >= 0 && gq < 1){
-        const hop = Math.abs(Math.sin((this.t - G.t0) * 9 + p.p)) * h * (G.d <= -3 ? 0.22 : 0.14) * (1 - gq);
-        const spr2 = spectSpr(p.c, Math.sin((this.t - G.t0) * 14 + p.p) > 0 ? 0 : 1, night), w2 = Math.max(1, Math.round(h * spr2.w / spr2.h));
-        c.fillStyle = 'rgba(8,16,10,.26)'; c.fillRect(pr.x - Math.round(w2/2), pr.y - 1, w2, 1);
-        blit(c, spr2, pr.x - w2/2, pr.y - h - Math.round(hop), w2, h);
-        // arms up
-        if(h >= 6){ const ak = Math.max(1, Math.round(w2 / 5)), ah = Math.max(2, Math.round(h * 0.3)), top = pr.y - h - Math.round(hop) + Math.round(h * 0.3);
-          c.fillStyle = night ? PX.skin2 : PX.skin; c.fillRect(Math.round(pr.x - w2 / 2), top - ah, ak, ah); c.fillRect(Math.round(pr.x + w2 / 2) - ak, top - ah, ak, ah); }
+        const E = SPECT_EMOTE[Math.floor(hr(p.p * 7 + p.c, 421) * SPECT_EMOTE.length)];
+        const rate = E[0] === 'clap' ? 16 : E[0] === 'head' ? 5 : 11;
+        const hop = Math.abs(Math.sin((this.t - G.t0) * 9 + p.p)) * h * (G.d <= -3 ? 0.22 : 0.14) * E[2] * (1 - gq);
+        const spr2 = spectSpr(p.c, Math.sin((this.t - G.t0) * rate + p.p) > 0 ? E[0] : E[1], night, who), w2 = Math.max(1, Math.round(h * spr2.w / spr2.h));
+        const X = Math.round(pr.x), Y = Math.round(pr.y);
+        c.fillStyle = 'rgba(8,16,10,.26)'; this.standShadow(c, X - (w2 >> 1), Y - 1, w2, 1);
+        this.standBlit(c, spr2, X - (w2 >> 1), Y - h - Math.round(hop), w2, h);
         return;
       }
-      const spr = spectSpr(p.c, Math.sin(this.t*0.9 + p.p) > 0 ? 0 : 1, night);
+      // standing about: their own way of standing, now and then easing
+      // back to arms at their sides
+      const idle = SPECT_IDLE[Math.floor(hr(p.p * 5 + p.c, 422) * SPECT_IDLE.length)];
+      const spr = spectSpr(p.c, Math.sin(this.t * 0.23 + p.p * 3) > -0.6 ? idle : 'rest', night, who);
       const w = Math.max(1, Math.round(h * spr.w / spr.h));
       // (its middle and its feet each rounded once, or he wobbled as the
       // camera went by)
@@ -18826,13 +18902,10 @@ Object.assign(Scene, {
       if(d < near + 1) return;
       const p = this.proj(d, x, z), clip = this.clipAt(d);
       if(p.y > clip || p.x < -8 || p.x > VW + 8) return;
-      const k = clamp(Math.round(LAT * p.s * 0.9 / 5), 1, 4);
-      const rows = flap > 0.35 ? ['#...#', '.#.#.', '..#..'] : flap < -0.35 ? ['..#..', '.#.#.', '#...#'] : ['.....', '##.##', '..#..'];
-      for(let r = 0; r < 3; r++) for(let q = 0; q < 5; q++){
-        if(rows[r][q] !== '#') continue;
-        c.fillStyle = q === 0 || q === 4 ? '#5A6470' : '#EEF1F3';
-        fillClip(c, Math.round(p.x + (q - 2) * k), Math.round(p.y + (r - 1) * k), k, k, clip);
-      }
+      const k = clamp(Math.round(LAT * p.s * 0.9 / 7), 1, 4);
+      // grey-backed wings with black tips over a white body and a yellow bill
+      const rows = flap > 0.35 ? GULL_FLY[0] : flap < -0.35 ? GULL_FLY[2] : GULL_FLY[1];
+      pxRows(c, rows, GULL_COL, Math.round(p.x - 3.5 * k), Math.round(p.y - 2 * k), k, clip, seed & 1);
     };
     for(let j = 0; j < 3; j++){
       const a = this.t * (0.35 + 0.08 * j) + j * 2.1, R = 3 + j;
@@ -18849,10 +18922,9 @@ Object.assign(Scene, {
       const t = this.proj(pd, side * hw, 0.75), clip = this.clipAt(pd);
       if(pd < near || t.y > clip) return;
       const k = clamp(Math.round(LAT * t.s * 0.9 / 5), 1, 3);
-      // a white body, a grey back, a yellow beak, facing out to sea
-      c.fillStyle = '#EEF1F3'; fillClip(c, t.x - k, t.y - 2 * k, 3 * k, 2 * k, clip);
-      c.fillStyle = '#8A949E'; fillClip(c, t.x - k, t.y - 2 * k, 2 * k, k, clip);
-      c.fillStyle = '#E8B04A'; fillClip(c, t.x + 2 * k, t.y - 2 * k, k, k, clip);
+      // a white head and breast, a grey back, black wing tips, a yellow
+      // bill and legs, facing out to sea
+      pxRows(c, GULL_SIT, GULL_COL, Math.round(t.x - 2 * k), Math.round(t.y - 4 * k), k, clip, false);
       return;
     }
     const f = this.t - this.gullOff;
@@ -18886,29 +18958,29 @@ Object.assign(Scene, {
     const c = this.b, near = this.camD - CAM_BACK + 0.7;
     // (the island's lamps at night: it stands beyond the ducks)
     if(this.night) this.drawIsleLights(near);
-    const SWIM = ['....H.', 'TBBBHY', '.bbbb.'], TIP = ['.T....', '.BB...', '.bbb..'];
+    // a head with an eye and a bill (a drake's green with a white ring
+    // under it), a blue flash on the wing, a curled tail; tipped up to
+    // feed, only the tail end shows
+    const SWIM = ['.....HH.', '....HHeY', 'TbBSBWb.', '.bbbbbb.'], TIP = ['.T......', '.BB.....', '.bBb....', '..bbb...'];
     for(let i = DUCKS.length - 1; i >= 0; i--){
       const U = this.duckAt(i, this.t);
       if(!U || U.d < near + 1) continue;
       const p = this.proj(U.d, U.x, 0), clip = this.clipAt(U.d);
       if(p.y > clip || p.x < -8 || p.x > VW + 8) continue;
-      const k = clamp(Math.round(LAT * p.s * 0.5 / 6), 1, 3);
+      const k = clamp(Math.round(LAT * p.s * 0.5 / 7), 1, 3);
       const right = U.right, tip = U.tip;
-      const rows = tip ? TIP : SWIM;
-      const col = { H: U.drake ? '#2E6B3A' : '#7A5A3C', Y: '#E8B04A', T: '#3A2E24',
+      const col = { H: U.drake ? '#2E6B3A' : '#7A5A3C', Y: '#E8B04A', T: '#3A2E24', e: '#101410', S: '#3A5AA8',
+                    W: U.drake ? '#F2F2EA' : '#8A6A48',
                     B: U.drake ? '#9A8C7A' : '#8A6A48', b: U.drake ? '#6E6254' : '#6A5038' };
-      const x0 = Math.round(p.x - 3 * k), y0 = Math.round(p.y - 3 * k + 1);
+      const x0 = Math.round(p.x - 4 * k), y0 = Math.round(p.y - 4 * k + 1);
       // the wake, a fading line behind him on the water
       if(!tip){
         c.globalAlpha = 0.55; c.fillStyle = '#DCEBEE';
-        fillClip(c, right ? x0 - 3 * k : x0 + 6 * k, Math.round(p.y) + 1, 3 * k, 1, clip);
+        fillClip(c, right ? x0 - 3 * k : x0 + 8 * k, Math.round(p.y) + 1, 3 * k, 1, clip);
+        c.globalAlpha = 0.3; fillClip(c, right ? x0 - 6 * k : x0 + 11 * k, Math.round(p.y) + 1, 3 * k, 1, clip);
         c.globalAlpha = 1;
       }
-      for(let r = 0; r < 3; r++) for(let q = 0; q < 6; q++){
-        const ch = rows[r][right ? q : 5 - q];
-        if(ch === '.') continue;
-        c.fillStyle = col[ch]; fillClip(c, x0 + q * k, y0 + r * k, k, k, clip);
-      }
+      pxRows(c, tip ? TIP : SWIM, col, x0, y0, k, clip, !right);
     }
   },
   // A hawk wheeling high over the canyon: a slow circle a little beyond the
@@ -18921,19 +18993,12 @@ Object.assign(Scene, {
     if(d < near + 1) return;
     const p = this.proj(d, x, z), clip = this.clipAt(d);
     if(p.y > clip || p.x < -12 || p.x > VW + 12) return;
-    const k = clamp(Math.round(LAT * p.s * 1.2 / 9), 1, 3);
-    // three beats every six seconds or so, soaring between
+    const k = clamp(Math.round(LAT * p.s * 1.2 / 12), 1, 3);
+    // three beats every six seconds or so, soaring between: fingered dark
+    // wing tips, a pale head, a red tail with a pale band
     const flap = ((this.t / 6.3) % 1) < 0.2 ? Math.sin(this.t * 10) : 0;
-    const rows = flap > 0.3 ? ['K.......K', '.##.B.##.', '....T....']
-               : flap < -0.3 ? ['.........', '..##B##..', '.K..T..K.']
-               : ['K.......K', '.###B###.', '....T....'];
-    const col = { '#': '#5A3E28', K: '#2E2018', B: '#7A5236', T: '#B8602E' };
-    const x0 = Math.round(p.x - 4.5 * k), y0 = Math.round(p.y - 1.5 * k);
-    for(let r = 0; r < 3; r++) for(let q = 0; q < 9; q++){
-      const ch = rows[r][q];
-      if(ch === '.') continue;
-      c.fillStyle = col[ch]; fillClip(c, x0 + q * k, y0 + r * k, k, k, clip);
-    }
+    const rows = flap > 0.3 ? HAWK_FLY[0] : flap < -0.3 ? HAWK_FLY[2] : HAWK_FLY[1];
+    pxRows(c, rows, HAWK_COL, Math.round(p.x - 6.5 * k), Math.round(p.y - 2 * k), k, clip, false);
   },
   // Fish in the river, each on a clock of its own: most turns round one
   // leaps out beside the stones, arcs a little way outward and drops back
@@ -19167,6 +19232,9 @@ Object.assign(Scene, {
     const A = this.railAt();
     if(!A || dc < near + 0.5) return;
     const c = this.b, clip = this.clipAt(dc), dir = A.dir, kind = A.kind, K = trainKind(this.train), t = this.t;
+    // (the fine work, bands, rods, doors and lining, only where a tenth of
+    // a unit is a pixel or more: far off it would only blot out the colours)
+    const big = LAT * this.proj(dc, 0, 0).s >= 10;
     // one piece: x0..x1 along the train from its tail (0) toward its head, z0..z1 up
     const box = (x0, x1, z0, z1, col) => {
       const a = this.proj(dc, dir * (A.tail + x0), z1), b = this.proj(dc, dir * (A.tail + x1), z0);
@@ -19183,9 +19251,16 @@ Object.assign(Scene, {
       box(e + 0.2, e + 0.6, 0.85, 1.1, P.win);
       box(e + 0.3, e + 0.46, 0.85, 1.02, '#3A2A22');                      // the driver, in his cap
       box(e + 0.8, e + 2.3, 0.35, 0.98, P.boiler); box(e + 0.8, e + 2.3, 0.84, 0.98, P.top); cap(e + 0.8, e + 2.3, 0.98);
-      box(e + 1.9, e + 2.1, 0.98, 1.34, '#1E1E22');
+      box(e + 1.9, e + 2.1, 0.98, 1.34, '#1E1E22'); box(e + 1.86, e + 2.14, 1.3, 1.36, '#1E1E22');
+      // bands round the boiler, a brass dome, a lamp on the smokebox
+      if(big) for(const x of [1.2, 1.6, 2.0]) box(e + x, e + x + 0.05, 0.35, 0.98, '#1A1A1E');
+      box(e + 1.25, e + 1.5, 0.98, 1.14, '#C8A040'); box(e + 1.3, e + 1.45, 1.14, 1.18, '#C8A040');
+      box(e + 2.18, e + 2.3, 0.62, 0.74, '#FFF6C8');
       box(e + 2.3, e + 2.4, 0.2, 0.45, '#C8302A');
       wheels(e + 0.3, e + 2.3);
+      // the coupling rod, going round with the wheels
+      if(big){ const ph = Math.sin(t * K.v * 6) * 0.06, rz = 0.16 + Math.cos(t * K.v * 6) * 0.05;
+        box(e + 0.4 + ph, e + 2.1 + ph, rz, rz + 0.05, '#9AA0A8'); }
       this.driverWave(box, e + 0.4, A);
     };
     let chim = null;
@@ -19236,6 +19311,10 @@ Object.assign(Scene, {
         box(x0, x0 + 2.3, 0.28, 1.08, N ? '#22305A' : '#8A3228');
         box(x0 + 0.15, x0 + 2.15, 0.62, 0.84, N ? '#FFD36A' : '#F2E2A6');
         for(let x = x0 + 0.5; x < x0 + 2.1; x += 0.5) box(x, x + 0.08, 0.62, 0.84, N ? '#22305A' : '#8A3228');
+        // a lining under the windows, the doors at each end, a footboard
+        if(big) box(x0, x0 + 2.3, 0.52, 0.56, N ? '#C8A040' : '#E8C878');
+        if(big){ box(x0 + 0.12, x0 + 0.17, 0.3, 1.0, N ? '#12182C' : '#5A1E18'); box(x0 + 2.13, x0 + 2.18, 0.3, 1.0, N ? '#12182C' : '#5A1E18');
+        box(x0 + 0.05, x0 + 2.25, 0.26, 0.3, '#2A2426'); }
         box(x0 - 0.05, x0 + 2.35, 1.08, 1.2, N ? '#12182C' : '#2A2426'); cap(x0 - 0.05, x0 + 2.35, 1.2);
         wheels(x0 + 0.2, x0 + 2.2);
       }
@@ -20494,11 +20573,15 @@ function buildUpg(){
   for(const u of B.UPG){
     const d = rowShell(idIcon(UPG_IC, u.id, u.k, 'ric'));
     const body = d.children[1], btn = d.children[2];
-    body.children[0].textContent = u.n;
+    // three lines to two: the level and what it gives sit beside the name
+    d.classList.add('urow');
+    body.children[0].innerHTML = '<span></span><span class="mt"></span>';
+    body.children[0].children[0].textContent = u.n;
     body.children[1].textContent = u.d;
+    body.children[2].remove();
     btn.onclick = () => buyUpg(u);
     w.appendChild(d);
-    UPGREF.push({ u, el:d, mt:body.children[2], btn,
+    UPGREF.push({ u, el:d, mt:body.children[0].children[1], btn,
                   lbl:btn.children[0], amt:btn.children[1] });
   }
   const mb = $('multBar'); mb.innerHTML = '';
@@ -20509,6 +20592,27 @@ function buildUpg(){
     b.onclick = () => { S.mult = m; buildUpg(); refreshUpg(); };
     mb.appendChild(b);
   });
+  $('buyAll').onclick = buyAllUpg;
+}
+// One tap for the whole range: the cheapest next level, again and again,
+// until the purse runs short. Twenty rows tapped one by one was the tedium.
+function buyAllUpg(){
+  let n = 0;
+  for(let guard = 0; guard < 20000; guard++){
+    let best = null, bc = Infinity;
+    for(const u of B.UPG){
+      const lv = upgLv(u.id);
+      if(lv >= capOf(u)) continue;
+      const c = costBulk(u.base, u.r, lv, 1);
+      if(c < bc){ bc = c; best = u; }
+    }
+    if(!best || S.gold < bc) break;
+    S.gold -= bc; S.upg[best.id] = upgLv(best.id) + 1; n++;
+  }
+  if(!n){ toast('Nothing in reach yet'); return; }
+  Sfx.play('buy');
+  toast('<b>' + n + '</b> level' + (n > 1 ? 's' : '') + ' bought');
+  refreshUpg(); renderVitals();
 }
 function bulkFor(base, r, owned, cap){
   let k = S.mult === 'Max' ? maxAffordable(base, r, owned, S.gold) : S.mult;
@@ -20529,12 +20633,8 @@ function refreshUpg(){
   // Every rung is on show from the first minute. Hiding them made the ladder
   // look shorter than it is, and rows that came and went with your balance
   // looked like the game losing your upgrades.
-  let owned = 0;
-  for(const r of UPGREF) if(upgLv(r.u.id) > 0) owned++;
   // an albatross or better on this card is a golfer who belongs on the next
   const ahead = S.tier < B.TIER_MAX && projectedRatio(S.tier) <= 0.27;
-  const band = $('upgCount');
-  if(band) band.textContent = owned + ' of ' + B.UPG.length + ' started';
   const note = $('upgTax');
   if(note) note.innerHTML = ahead
     ? (cardUnlocked(S.tier + 1)
@@ -20556,7 +20656,7 @@ function refreshUpg(){
     // lit when the purse covers the price the button is actually asking for,
     // so it tracks the multiplier: on x10 it is ten of them, not one
     const ok = !maxed && S.gold >= c && k > 0;
-    r.mt.innerHTML = 'Lv <i>' + lv + (isFinite(cap) ? '/' + cap : '') + '</i> \u00b7 <b>'
+    r.mt.innerHTML = 'Lv\u00a0<i>' + lv + (isFinite(cap) ? '/' + cap : '') + '</i> <b>'
       + effectLabel(u) + '</b>';
     if(maxed){
       r.btn.className = 'buy max'; r.lbl.textContent = 'Capped'; r.amt.textContent = '\u2014';
@@ -21057,7 +21157,7 @@ function renderDgn(){
       + (d.id === feat.id ? '<span class="fstar">' + B.DGN_FEAT_MULT + '\u00d7 today</span>' : '')
       + '<span class="keys">' + keyHtml + '</span>'
       + '<button class="mini guide" aria-label="How ' + d.n + ' works">Guide</button></div>'
-      + '<div class="dd">' + d.d + '</div>'
+      // (its blurb is in the Guide: one line fewer on every card)
       + '<div class="dm">Helped by <b style="color:var(--aurora)">' + d.st + '</b> \u00b7 ' + reads + '</div>'
       // what one entry pays, in what the currency buys; the basis of the
       // projection is the odds line above it, so it is not said twice
@@ -21657,22 +21757,22 @@ function renderCadPerks(){
     else if(own && lv > 1) body.children[2].textContent = 'Lv\u00a0' + lv + '/' + B.CPERK_LV_MAX;
     if(locked && !on){
       btn.className = 'buy no';
-      btn.children[0].textContent = own ? 'Wear' : B.SOV;
-      btn.children[1].textContent = own ? 'Owned' : sovFmt(pk.cost);
+      btn.children[0].textContent = own ? 'Wear' : 'Buy';
+      btn.children[1].innerHTML = own ? 'Owned' : sovFmt(pk.cost) + sovIc();
       btn.onclick = () => toast('The <b>' + pk.n + '</b> needs a Mythic caddie');
     }else if(on){
       // worn, its button is the upgrade
       const cost = top ? 0 : B.CPERK_LV_COST[lv - 1];
       btn.className = 'buy' + (top ? ' ok' : (S.sov || 0) >= cost ? '' : ' no');
       btn.children[0].textContent = top ? 'Top level' : 'To Lv\u00a0' + (lv + 1);
-      btn.children[1].textContent = top ? '\u2713' : sovFmt(cost);
+      btn.children[1].innerHTML = top ? '\u2713' : sovFmt(cost) + sovIc();
       btn.setAttribute('aria-label', top ? pk.n + ' is at its top level'
         : 'Upgrade ' + pk.n + ' to Lv ' + (lv + 1) + ' for ' + cost + ' ' + B.SOV.toLowerCase());
       btn.onclick = () => cperkUp(pk.id);
     }else{
       btn.className = 'buy' + (own || (S.sov || 0) >= pk.cost ? '' : ' no');
-      btn.children[0].textContent = own ? 'Wear' : B.SOV;
-      btn.children[1].textContent = own ? 'Owned' : sovFmt(pk.cost);
+      btn.children[0].textContent = own ? 'Wear' : 'Buy';
+      btn.children[1].innerHTML = own ? 'Owned' : sovFmt(pk.cost) + sovIc();
       btn.onclick = () => cperkPick(pk.id);
     }
     w.appendChild(d);
@@ -22269,23 +22369,29 @@ function careerTree(w, tree){
       lastReq = t.req;
       const h = document.createElement('div');
       h.className = 'tier' + (spent >= t.req ? ' open' : '');
-      h.textContent = t.req === 0 ? 'Open' : t.req + '\u00a0points in ' + tree.n;
+      h.textContent = t.req === 0 ? 'Open' : t.req + '\u00a0points in ' + tree.n
+        + (spent < t.req ? ' \u00b7 ' + (t.req - spent) + '\u00a0to go' : '');
       w.appendChild(h);
     }
     const n = talLv(t.id), locked = spent < t.req, maxed = n >= t.max;
     const d = document.createElement('div');
-    d.className = 'row' + (locked ? ' locked' : '');
+    // A locked one is its name and what it does: the tier above says what
+    // opens it, so no empty pips and no grey button on every row.
+    d.className = 'row' + (locked ? ' locked tlock' : '');
+    const fill = !locked && !maxed && S.talPts > 1 && t.max - n > 1;
     d.innerHTML = '<div><div class="nm">' + t.n + (t.max === 1 ? ' <span class="pill">capstone</span>' : '') + '</div>'
       + '<div class="ds">' + nb(t.d) + '</div>'
-      + '<div class="mt">' + pipRow(n, t.max) + ' <i>' + n + '/' + t.max + '</i>'
-      + (n ? ' \u00b7 <b>now ' + talDesc(t, n) + '</b>' : '') + '</div></div>'
-      + '<div class="btnrow"><button class="mini' + (!locked && !maxed && S.talPts ? ' go' : ' dim') + '">'
-      + (maxed ? 'Max' : locked ? 'Locked' : '+1') + '</button></div>';
-    d.querySelector('button').onclick = () => {
-      if(locked){ toast('Needs ' + t.req + ' points in ' + tree.n); return; }
+      + (locked ? '' : '<div class="mt">' + pipRow(n, t.max) + ' <i>' + n + '/' + t.max + '</i>'
+      + (n ? ' \u00b7 <b>now ' + talDesc(t, n) + '</b>' : '') + '</div>') + '</div>'
+      + (locked ? '' : '<div class="btnrow"><button class="mini' + (!maxed && S.talPts ? ' go' : ' dim') + '">'
+      + (maxed ? 'Max' : '+1') + '</button>'
+      + (fill ? '<button class="mini go">+' + Math.min(S.talPts, t.max - n) + '</button>' : '') + '</div>');
+    if(locked) d.onclick = () => toast('Needs ' + t.req + ' points in ' + tree.n);
+    else d.querySelectorAll('button').forEach((b, i) => b.onclick = () => {
       if(maxed || !S.talPts) return;
-      S.talPts--; S.tal[t.id] = n + 1; renderCareer(); renderVitals();
-    };
+      const k = i ? Math.min(S.talPts, t.max - n) : 1;
+      S.talPts -= k; S.tal[t.id] = n + k; renderCareer(); renderVitals();
+    });
     w.appendChild(d);
   }
   const r = document.createElement('div');

@@ -81,7 +81,7 @@ module.exports = {
         setView('upg'); rangeSub = 'cad'; renderRangeNav();
         const row = n => [...document.querySelectorAll('#cadRows .row')].find(x => x.querySelector('.nm').textContent === n);
         const read = n => { const x = row(n), b = x.querySelector('.buy');
-          return { mt: x.querySelector('.mt').textContent, lbl: b.children[0].textContent, amt: b.children[1].textContent,
+          return { mt: x.querySelector('.mt').textContent, lbl: b.children[0].textContent, amt: b.children[1].textContent, gem: !!b.children[1].querySelector('img.tsov'),
                    ds: x.querySelector('.ds').textContent }; };
         o.worn = read('Tempo Call'); o.other = read('Sponsor Chat'); o.none = read('Green Reader');
         const s0 = S.sov; row('Tempo Call').querySelector('.buy').click();
@@ -157,7 +157,8 @@ module.exports = {
     if (!/Worn · Lv 2\/5/.test(r.worn.mt) || r.worn.lbl !== 'To Lv 3' || r.worn.amt !== '160' || r.worn.ds !== '+23% tempo for 9s')
       f('the worn row reads ' + JSON.stringify(r.worn));
     if (r.other.mt !== 'Lv 5/5' || r.other.lbl !== 'Wear' || r.other.ds !== '+38% prize money for 12s') f('an owned Lv 5 row reads ' + JSON.stringify(r.other));
-    if (r.none.lbl !== 'Sovereigns' || r.none.amt !== '150') f('a perk not owned reads ' + JSON.stringify(r.none));
+    // a price in sovereigns is the purple gem beside the number, not the word
+    if (r.none.lbl !== 'Buy' || r.none.amt !== '150' || !r.none.gem || !r.worn.gem) f('a perk not owned reads ' + JSON.stringify(r.none));
     if (r.clicked !== '3,160') f('the worn row\'s button did not upgrade it for its price: ' + r.clicked);
     if (r.atTop.lbl !== 'Top level' || r.atTop.amt !== '✓') f('at Lv 5 the button reads ' + JSON.stringify(r.atTop));
     if (r.repaired !== '{"tempo":5}' || r.repairedArr !== '{}' || r.repairedFrac !== '{"tempo":3}')

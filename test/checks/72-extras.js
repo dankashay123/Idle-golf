@@ -1,7 +1,9 @@
 /* Three the user asked for from the menu together:
  *
  *   - the gallery jumps and waves on an eagle or better, for a second and a
- *     half, and not on a birdie
+ *     half, and not on a birdie; each fan their own way, four ways or more
+ *     across a gallery (the user: "not everyone is doing the same arms in
+ *     the air celebration")
  *   - frost on the grandstand's and the clubhouse's roofs on a frosty
  *     morning, as on the grass, and none on another day
  *   - the Record in the Trophy Room in three folds (Career, Right Now,
@@ -26,7 +28,11 @@ module.exports = {
         Scene.t = 20; Scene.galleryUp = null; const still = pic();
         Scene.happyDance(-1); o.birdie = !!Scene.galleryUp;
         Scene.galleryUp = null; Scene.happyDance(-2); o.eagle = !!Scene.galleryUp;
-        Scene.t = Scene.galleryUp.t0 + 0.2; const up = pic();
+        // (each fan their own way: the poses asked for while they cheer)
+        const asked = new Set(), sp = spectSpr; spectSpr = function (ci, pose) { asked.add(pose); return sp.apply(this, arguments); };
+        Scene.t = Scene.galleryUp.t0 + 0.2; let up; try { up = pic(); Scene.t += 0.07; pic(); Scene.t -= 0.07; } finally { spectSpr = sp; }
+        o.kinds = new Set([...asked].map(p => String(p).replace(/2$/, ''))).size;
+        if (o.kinds < 4) f('the gallery celebrated only ' + o.kinds + ' ways (' + [...asked].join(',') + ')');
         Scene.t = Scene.galleryUp.t0 + GALLERY_UP + 0.05; const after = pic();
         Scene.galleryUp = null; Scene.t = 20; const back = pic();
         // (and it stops at the next hole: it cheered on over the next tee)
@@ -76,7 +82,7 @@ module.exports = {
       return o;
     });
     if (r.fails.length) throw new Error(r.fails.join('; '));
-    return ['the gallery jumps and waves on an eagle, ' + r.gal.split('/')[0] + ' pixels changed across ' + r.gal.split('/')[1] + ' of them, not on a birdie, and is back after 1.5s',
+    return ['the gallery jumps and waves on an eagle, ' + r.gal.split('/')[0] + ' pixels changed across ' + r.gal.split('/')[1] + ' of them, ' + r.kinds + ' ways at once, not on a birdie, and is back after 1.5s',
       'frost on the roofs (stand/clubhouse ' + r.frost + ', ' + r.onCourse + ' on a frosty morning\'s stand); the Record in folds ' + r.folds + ', ' + r.rows + ' rows, the career open'];
   }
 };
