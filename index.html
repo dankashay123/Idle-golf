@@ -13728,11 +13728,138 @@ function voidRock(c, x, y, s, lit, n){
 // asked): the column's colour and what comes down it, or rises in it, and
 // what it leaves round his feet. Solid pixels for the pieces.
 const DISCO_COLS = ['#FF4FB8', '#3FE0FF', '#FFE14A', '#7ADB86', '#C68BFF'];
-// a jagged bolt from the top of the stage to his feet, flickering
-function blessBolt(G, colA, colB){
-  const { c, cx, bot, t } = G;
-  if(t > 0.42 || (t > 0.2 && Math.floor(t * 30) & 1)) return;
-  const n = 9, F = Math.floor(t * 20);
+// A caddie perk's blessing (the user asked: "unique per skin (only mythic
+// and legendary skins). Make all other skin have a basic, faint light
+// beam"; then "make the caddy buff visual effects better and better
+// designed"). Every other caddie gives the plain beam, in the perk's colour;
+// the four great ones each give theirs in their own look. Each is built in
+// the same three beats: it comes down (or up), it lands in a ring that
+// flashes out across the ground, and it lingers round him as it fades,
+// narrowing rather than breaking up into specks. G carries the frame: cx,
+// bot his middle and feet, half the beam's half width, t its age, fall how
+// far its front has come down (0..1), front that row, fade (1..0), k a pixel
+// at his size, w and h his width and height, layer 'back' (drawn before
+// him: what lies on the ground and behind him) or 'front' (after him), or
+// neither for both.
+const BL_PAT = new WeakMap();
+// every other pixel of a colour, as a pattern fixed to the canvas, so a body
+// of light lets the ground through without a grey wash over it (rule 30)
+function blChecker(c, col){
+  let m = BL_PAT.get(c); if(!m) BL_PAT.set(c, m = new Map());
+  let p = m.get(col);
+  if(!p){ const cv = document.createElement('canvas'); cv.width = cv.height = 2; const g = cv.getContext('2d');
+    g.fillStyle = col; g.fillRect(0, 0, 1, 1); g.fillRect(1, 1, 1, 1); p = c.createPattern(cv, 'repeat'); m.set(col, p); }
+  return p;
+}
+const blBack = G => G.layer !== 'front', blFront = G => G.layer !== 'back';
+// a column of light from the top of the view to y1, hw either side of cx:
+// solid edges k wide, a checkered body, a solid core and bright bands
+// running down it, and while it is still falling a flare at its front
+function blShaft(G, y1, hw, cols, opt){
+  const { c, cx, t, k } = G, X = Math.round(cx);
+  y1 = Math.round(y1);
+  if(y1 <= 0 || hw < 1 || !blFront(G)) return;
+  const [edge, body, core, band, hot] = cols, ek = (opt && opt.ek) || k;
+  if(body){ c.fillStyle = blChecker(c, body); c.fillRect(X - hw, 0, hw * 2 + 1, y1); }
+  if(opt && opt.inner){ c.fillStyle = opt.inner; c.fillRect(X - hw, 0, 1, y1); c.fillRect(X + hw, 0, 1, y1); }
+  c.fillStyle = edge; c.fillRect(X - hw - ek, 0, ek, y1); c.fillRect(X + hw + 1, 0, ek, y1);
+  if(core){ const cw = Math.max(1, Math.round(hw * 0.28)); c.fillStyle = core; c.fillRect(X - cw, 0, cw * 2 + 1, y1);
+    if(hot){ c.fillStyle = hot; c.fillRect(X, 0, 1, y1); } }
+  // pulses running down it: a diamond of light, widest in its middle (full
+  // width bars read as the rungs of a ladder)
+  if(band){ const per = Math.max(14, Math.round(G.bot * 0.24)), sh = Math.floor(t * G.bot * 1.6), L = Math.max(3, hw);
+    c.fillStyle = band;
+    for(let yy = (sh % per) - per; yy < y1; yy += per) for(let j = 0; j < L * 2; j++){
+      const y = yy + j, ww = Math.round(hw * (1 - Math.abs(j - L + 0.5) / L));
+      if(y >= 0 && y < y1 && ww > 0) c.fillRect(X - ww, y, ww * 2 + 1, 1); }
+    if(core){ c.fillStyle = core; const cw = Math.max(1, Math.round(hw * 0.28)); c.fillRect(X - cw, 0, cw * 2 + 1, y1); }
+    if(hot){ c.fillStyle = hot; c.fillRect(X, 0, 1, y1); } }
+  if(G.fall < 1 && hot){ const fw = Math.round(hw * 1.5), fh = Math.max(2, Math.round(hw * 0.5));
+    fxEllipse(c, X, y1, fw, fh, band || core, 1); fxEllipse(c, X, y1, Math.max(1, fw * 0.55), Math.max(1, fh * 0.6), hot, 1); c.globalAlpha = 1; }
+}
+// an ellipse ring th thick on the ground, the back half before him and the
+// front half after
+function blRing(G, cy, rx, ry, th, col){
+  const { c, cx } = G;
+  if(rx < 1) return;
+  c.fillStyle = col;
+  const R = Math.ceil(ry);
+  for(let dy = -R; dy <= R; dy++){
+    if(dy < 0 ? !blBack(G) : !blFront(G)) continue;
+    const o = rx * Math.sqrt(Math.max(0, 1 - dy * dy / (ry * ry))), iy = ry - th, i = Math.abs(dy) < iy ? (rx - th) * Math.sqrt(Math.max(0, 1 - dy * dy / (iy * iy))) : -1;
+    const x0 = Math.round(cx - o), x1 = Math.round(cx + o);
+    if(i < 0){ if(x1 > x0) c.fillRect(x0, Math.round(cy + dy), x1 - x0, 1); continue; }
+    const a = Math.round(cx - i), b = Math.round(cx + i);
+    if(a > x0) c.fillRect(x0, Math.round(cy + dy), a - x0, 1);
+    if(x1 > b) c.fillRect(b, Math.round(cy + dy), x1 - b, 1);
+  }
+}
+// a filled disc on the ground under him (back), checkered or solid
+function blDisc(G, rx, ry, col, solid){
+  if(!blBack(G) || rx < 1) return;
+  const { c, cx, bot } = G;
+  c.fillStyle = solid ? col : blChecker(c, col);
+  for(let dy = -Math.floor(ry); dy <= Math.floor(ry); dy++){
+    const hw = Math.round(rx * Math.sqrt(Math.max(0, 1 - dy * dy / (ry * ry))));
+    if(hw > 0) c.fillRect(Math.round(cx - hw), Math.round(bot - 1 + dy), hw * 2, 1);
+  }
+}
+// the moment it lands: a ring flashing out across the ground and shards of
+// light thrown out along it
+function blImpact(G, t0, cols){
+  const { c, cx, bot, half, t, k } = G, q = (t - t0) / 0.34;
+  if(q < 0 || q > 1) return;
+  const rx = half * (0.55 + 1.9 * q), ry = Math.max(2, rx * 0.26), th = Math.max(1, Math.round((1 - q) * 2.5 * k));
+  blRing(G, bot - 1, rx, ry, th, q < 0.4 ? cols[1] : cols[0]);
+  for(let j = 0; j < 8; j++){
+    const a = j / 8 * Math.PI * 2 + 0.4, s = Math.sin(a);
+    if(s < 0 ? !blBack(G) : !blFront(G)) continue;
+    const r0 = rx + 1 + k, L = Math.max(1, Math.round((1 - q) * 4 * k));
+    c.fillStyle = cols[1];
+    for(let u = 0; u < L; u++) c.fillRect(Math.round(cx + Math.cos(a) * (r0 + u)), Math.round(bot - 1 + s * (r0 + u) * 0.26), 1, 1);
+  }
+}
+// light running down his outline either side, in short bright streaks
+function blSides(G, col, hot){
+  if(!blFront(G)) return;
+  const { c, cx, bot, h, w, t, fade } = G, L = Math.max(2, Math.round(h * 0.22 * fade));
+  for(let s = -1; s <= 1; s += 2) for(let i = 0; i < 2; i++){
+    const u = (t * 1.6 + i * 0.5 + (s > 0 ? 0.25 : 0)) % 1, y = Math.round(bot - h + u * (h - L)), x = Math.round(cx + s * (w * 0.55 + 1));
+    c.fillStyle = col; c.fillRect(x, y, 1, L); c.fillStyle = hot; c.fillRect(x, y + L - 1, 1, 1);
+  }
+}
+// two ribbons winding down round a line through cx from y0 to y1: cols
+// [near, far, near2, far2], thick in pixels, wide as a share of half; a
+// pass behind him draws their far sides, in front their near sides, and a
+// darker edge under each so it reads as a ribbon and not a wire
+function blRibbons(G, y0, y1, cols, thick, wide, speed, under){
+  const { c, cx, half, t } = G;
+  for(let yy = Math.max(0, Math.round(y0)); yy < y1; yy++){
+    for(let r = 0; r < 2; r++){
+      const ph = yy * 0.09 - t * speed + r * Math.PI, cs = Math.cos(ph), near = cs > 0;
+      if(near ? !blFront(G) : !blBack(G)) continue;
+      const sx = Math.round(cx + Math.sin(ph) * half * wide);
+      c.fillStyle = near ? cols[r * 2] : cols[r * 2 + 1]; c.fillRect(sx, yy, thick, 1);
+      if(under && near){ c.fillStyle = under; c.fillRect(sx, yy + 1, thick, 1); }
+    }
+  }
+}
+// what drifts down (or rises) in it: n of them, each drawn by draw(x, y, i, u)
+function blessMotes(G, n, speed, rise, sway, draw){
+  const { cx, bot, half, t, fall, fade } = G;
+  if(!blFront(G)) return;
+  for(let i = 0; i < n; i++){
+    const u = (t * speed + hr(i, 7)) % 1, mx = cx + (hr(i, 11) - 0.5) * half * 1.8 + (sway ? Math.sin(t * 3 + i) * half * 0.3 : 0);
+    const my = rise ? bot - u * bot * 0.45 : u * bot * fall;
+    if(fade > 0.15 || (i & 1)) draw(mx, my, i, u);
+  }
+}
+// a jagged bolt from the top of the stage to y1, three pixels thick with a
+// white heart, flickering
+function blessBolt(G, colA, colB, y1){
+  const { c, cx, t } = G;
+  if(!blFront(G) || t > 0.42 || (t > 0.2 && Math.floor(t * 30) & 1)) return;
+  const n = 9, F = Math.floor(t * 20), bot = y1 == null ? G.bot : y1;
   let px = cx, py = 0;
   for(let i = 1; i <= n; i++){
     const nx = i === n ? cx : cx + (hr(i, F + 420) - 0.5) * G.half * 1.4, ny = bot * i / n;
@@ -13740,156 +13867,143 @@ function blessBolt(G, colA, colB){
     px = nx; py = ny;
   }
 }
-// A caddie perk's blessing (the user asked: "unique per skin (only mythic
-// and legendary skins). Make all other skin have a basic, faint light
-// beam"). Every other caddie gives the plain beam, in the perk's colour; the
-// four great ones each give theirs in their own look. G carries the frame:
-// cx, bot his middle and feet, half the beam's half width, t its age, fall
-// how far its front has come down (0..1), front that row, fade (1..0), k a
-// pixel at his size, h his height.
+// the plain one stays a faint, clean beam: two edges of the perk's colour, a
+// light thread down its middle, a small flare as it lands and a thin ring
 function blessPlain(G, col){
-  const { c, cx, bot, half, t, fade, front } = G, hw = Math.max(2, Math.round(half * 0.6)), tick = Math.floor(t * 12) & 3;
-  for(let yy = 0; yy < front; yy++){
-    const live = fade * (0.35 + 0.65 * (1 - Math.min(1, (front - yy) / Math.max(8, bot * 0.6))));
-    // its two edges, the faint light between, a thin line down its middle
-    if(hr(yy, 461 + tick) < live * 0.8){ c.fillStyle = col; c.fillRect(Math.round(cx - hw), yy, 1, 1); c.fillRect(Math.round(cx + hw) - 1, yy, 1, 1); }
-    for(let xx = 1 - hw; xx < hw - 1; xx++) if(hr(xx * 7 + yy, 467 + tick) < live * 0.06){ c.fillStyle = col; c.fillRect(Math.round(cx + xx), yy, 1, 1); }
-    if(hr(yy, 463 + tick) < live * 0.5){ c.fillStyle = '#FFFFFF'; c.fillRect(Math.round(cx), yy, 1, 1); }
+  const { c, cx, bot, half, h, t, fade, front, k } = G, hw = Math.max(2, Math.round(half * 0.55 * (0.4 + 0.6 * fade)));
+  const top = Math.min(front, Math.round(bot - h * 1.02)), hi = lite(col, 0.7);
+  if(blFront(G) && top > 0){
+    const X = Math.round(cx);
+    // (a pixel thicker at each second level up)
+    const ek = 1 + (G.up >> 1);
+    c.fillStyle = col; c.fillRect(X - hw - ek + 1, 0, ek, top); c.fillRect(X + hw, 0, ek, top);
+    c.fillStyle = hi; for(let yy = (Math.floor(t * 90) % 6); yy < top; yy += 6) c.fillRect(X, yy, 1, 3);
+    if(G.fall < 1){ c.fillStyle = col; c.fillRect(X - hw, top - 1, hw * 2 + 1, 1); c.fillStyle = '#FFFFFF'; c.fillRect(X, top - 1, 1, 1); }
   }
-  // a faint ring where it lands
-  if(t > 0.28 && fade > 0.2){ const RX = half * 0.9, RY = Math.max(2, RX * 0.24), n = Math.max(20, Math.round(RX * 3));
-    c.fillStyle = col;
-    for(let j = 0; j < n; j++){ if(hr(j, 469) > fade) continue; const a = j / n * Math.PI * 2;
-      c.fillRect(Math.round(cx + Math.cos(a) * RX), Math.round(bot - 1 + Math.sin(a) * RY), 1, 1); } }
-}
-// Two ribbons winding down round a line through cx, from the top to front:
-// cols [near, far], thick in pixels, wide as a share of half.
-function blessRibbons(G, cols, thick, wide, speed){
-  const { c, cx, bot, half, t, fade, front } = G;
-  for(let yy = 0; yy < front; yy++){
-    const live = fade * (0.5 + 0.5 * (1 - Math.min(1, (front - yy) / Math.max(8, bot * 0.6))));
-    for(let r = 0; r < 2; r++){
-      const ph = yy * 0.09 - t * speed + r * Math.PI, sx = Math.round(cx + Math.sin(ph) * half * wide);
-      if(hr(yy + r * 997, 445) > live * 1.8) continue;
-      c.fillStyle = Math.cos(ph) > 0 ? cols[r * 2] : cols[r * 2 + 1]; c.fillRect(sx, yy, thick, 1);
-    }
-  }
-}
-// what drifts down (or rises) in it: n of them, each drawn by draw(x, y, i, u)
-function blessMotes(G, n, speed, rise, sway, draw){
-  const { cx, bot, half, t, fall, fade } = G;
-  for(let i = 0; i < n; i++){
-    const u = (t * speed + hr(i, 7)) % 1, mx = cx + (hr(i, 11) - 0.5) * half * 1.8 + (sway ? Math.sin(t * 3 + i) * half * 0.3 : 0);
-    const my = rise ? bot - u * bot * 0.45 : u * bot * fall;
-    if(fade > 0.15 || (i & 1)) draw(mx, my, i, u);
-  }
+  if(t > 0.28 && fade > 0.2){ const q = Math.min(1, (t - 0.28) / 0.3), RX = half * (0.6 + 0.4 * q);
+    blRing(G, bot - 1, RX, Math.max(2, RX * 0.24), 1 + (G.up >> 1), col); }
+  blessMotes(G, 4, 0.7, true, false, (x, y) => { c.fillStyle = col; c.fillRect(Math.round(x), Math.round(y), 1, 1); });
 }
 const BLESS_FX = {
-  // the Divine: his ribbons of jade and gold winding down a thread of gold,
-  // his great blue ring coming down with it to settle over his head, curls
-  // of jade drifting, and a lotus of jade opening at his feet
+  // the Divine: a shaft of jade light edged in gold comes down on him with
+  // his ribbons of jade and gold winding round it and on down round him,
+  // his great ring settling over his head; a lotus of jade opens at his
+  // feet and curls of jade drift down
   divine: { col: '#3FD6A8',
     draw(G){
-      const { c, cx, bot, h, t, fade, front, half } = G;
-      for(let yy = 0; yy < front; yy++) if(hr(yy, 471 + (Math.floor(t * 12) & 3)) < fade * 1.4){ c.fillStyle = yy & 1 ? '#F4D27A' : '#E0AE3E'; c.fillRect(Math.round(cx), yy, 1, 1); }
-      blessRibbons(G, ['#3FD6A8', '#17866A', '#F4D27A', '#A87A26'], 2, 0.85, 7);
-      // the ring
-      if(fade > 0.2){ const ry0 = Math.min(front, bot - h * 1.05), R = half * 0.8, RY = Math.max(2, R * 0.3), n = Math.max(24, Math.round(R * 6));
-        for(let j = 0; j < n; j++){ const a = j / n * Math.PI * 2, X = Math.round(cx + Math.cos(a) * R), Y = Math.round(ry0 + Math.sin(a) * RY);
-          c.fillStyle = '#1E2C78'; c.fillRect(X, Y, 1, 2); c.fillStyle = (j & 3) ? '#E0AE3E' : '#7FF0C8'; c.fillRect(X, Y - 1, 1, 1); } }
+      const { c, cx, bot, h, t, fade, front, half, k } = G, head = Math.round(bot - h * 1.05);
+      const hw = Math.max(2, Math.round(half * 0.5 * (0.35 + 0.65 * fade)));
+      // the lotus, under him: eight petals opening, gold at their tips
+      if(t > 0.26 && fade > 0.1){ const q = Math.min(1, (t - 0.26) / 0.3);
+        blDisc(G, half * (0.7 + 0.5 * q), Math.max(2, half * 0.3), '#17866A');
+        for(const back of [true, false]) for(let j = 0; j < 8; j++){
+          const a = j / 8 * Math.PI * 2 + 0.2, s = Math.sin(a);
+          if((s < 0) !== back || (back ? !blBack(G) : !blFront(G))) continue;
+          const L = half * (0.35 + 0.8 * q), ex = cx + Math.cos(a) * L, ey = bot - 1 + s * L * 0.26;
+          const mx = (cx + ex) / 2, my = (bot - 1 + ey) / 2;
+          fxEllipse(c, mx, my, Math.max(1, L * 0.42), Math.max(1, L * 0.14), j & 1 ? '#3FD6A8' : '#2FB892', 1);
+          c.fillStyle = '#F4D27A'; c.fillRect(Math.round(ex), Math.round(ey) - 1, k, k + 1);
+        }
+        c.globalAlpha = 1;
+        if(blFront(G)){ c.fillStyle = '#C8283A'; c.fillRect(Math.round(cx) - 1, bot - 2, 3, 2); }
+      }
+      blShaft(G, Math.min(front, head - 2), hw, ['#E0AE3E', '#3FD6A8', '#7FF0C8', '#F4D27A', '#FFF6D8']);
+      blRibbons(G, 0, Math.min(front, bot - 1), ['#3FD6A8', '#17866A', '#F4D27A', '#A87A26'], 2, 0.95, 7, '#0E5A48');
+      // the ring: two pixels of gold over a band of his blue, front and back
+      if(front >= head - 4 && fade > 0.2){ const R = half * 0.85, RY = Math.max(2, R * 0.3);
+        blRing(G, head, R, RY + 1, 2, '#1E2C78'); blRing(G, head - 1, R, RY, 1, '#E0AE3E');
+        if(blFront(G)){ const a = t * 6, X = Math.round(cx + Math.cos(a) * R), Y = Math.round(head - 1 + Math.abs(Math.sin(a)) * RY);
+          c.fillStyle = '#FFFFFF'; c.fillRect(X, Y, 1, 1); } }
+      blImpact(G, 0.27, ['#3FD6A8', '#FFF6D8']);
+      blSides(G, '#7FF0C8', '#FFF6D8');
       blessMotes(G, 12, 0.55, false, true, (x, y, i) => { const X = Math.round(x), Y = Math.round(y);
         c.fillStyle = i & 1 ? '#7FF0C8' : '#F4D27A'; c.fillRect(X, Y, 3, 1); c.fillRect(X + 2, Y + 1, 1, 1); c.fillStyle = i & 1 ? '#17866A' : '#C8283A'; c.fillRect(X, Y + 1, 1, 1); });
-      // the lotus
-      if(t > 0.28 && fade > 0.15){ const q = Math.min(1, (t - 0.28) / 0.35);
-        for(let j = 0; j < 8; j++){ const a = j / 8 * Math.PI * 2 + 0.2, L = half * (0.4 + 0.75 * q);
-          const ex = cx + Math.cos(a) * L, ey = bot - 1 + Math.sin(a) * L * 0.26;
-          pxLine(c, cx + Math.cos(a) * 2, bot - 1 + Math.sin(a) * 0.6, ex, ey, j & 1 ? '#3FD6A8' : '#17866A', 1);
-          c.fillStyle = '#F4D27A'; c.fillRect(Math.round(ex), Math.round(ey) - 1, 1, 2); }
-        c.fillStyle = '#C8283A'; c.fillRect(Math.round(cx) - 1, bot - 2, 3, 2); }
     } },
-  // the Demonic: no light from above; his star of fire flares at his feet
-  // and hellfire roars up out of it, black at its edges, lava in its heart,
-  // embers flying up, flames licking round his feet as it dies
+  // the Demonic: no light from above. His star of fire burns into the
+  // ground at his feet, a ring of flames roars up round him out of it,
+  // taller behind than in front so he stands in it, embers flying, smoke
+  // rolling off their tops as it dies
   demonic: { col: '#C8281C',
     draw(G){
-      const { c, cx, bot, half, h, t, fade, fall, k } = G;
-      const RX = half * 1.1, RY = Math.max(2, RX * 0.24), E = a => [cx + Math.cos(a) * RX, bot - 1 + Math.sin(a) * RY];
-      if(fade > 0.15){ const n = Math.max(28, Math.round(RX * 5));
-        for(let j = 0; j < n; j++){ const [x, y] = E(j / n * Math.PI * 2); c.fillStyle = j & 1 ? '#E8401C' : '#8A1A0E'; c.fillRect(Math.round(x), Math.round(y), 1, 1); }
-        const rot = t * 2, P = [0, 1, 2, 3, 4].map(i => E(-Math.PI / 2 + rot + i * Math.PI * 2 / 5));
-        for(let i = 0; i < 5; i++) pxLine(c, P[i][0], P[i][1], P[(i + 2) % 5][0], P[(i + 2) % 5][1], '#FFB43A', 1); }
-      // the pillar, its top climbing, each row a flame's width that wavers:
-      // its walls of fire, black at the edge, and a thread of lava up its
-      // heart, so he is still seen inside it
-      const top = Math.round(bot - bot * fall), tick = Math.floor(t * 14);
-      for(let yy = top; yy < bot - 1; yy++){
-        const live = fade * (0.55 + 0.45 * Math.min(1, (yy - top) / Math.max(8, bot * 0.5)));
-        const wv = half * (0.6 + 0.18 * Math.sin(yy * 0.23 + t * 16) + 0.12 * hr(yy, tick + 483)) * (yy - top < 4 ? 0.5 : 1);
-        const x0 = Math.round(cx - wv), x1 = Math.round(cx + wv), wall = Math.max(2, Math.round(wv * 0.4));
-        if(hr(yy, 481 + (tick & 3)) < live * 1.4){ c.fillStyle = '#2A1414'; c.fillRect(x0 - k, yy, k, 1); c.fillRect(x1, yy, k, 1); }
-        for(let x = x0; x < x1; x++){ const e = Math.min(x - x0, x1 - 1 - x);
-          if(e >= wall || hr(x * 5 + yy, 485 + (tick & 3)) > live * (1.3 - e / wall)) continue;
-          c.fillStyle = e < 1 ? '#8A1A0E' : e < wall * 0.5 ? '#C8281C' : (yy + tick + x) % 4 ? '#FF6A1A' : '#FFB43A'; c.fillRect(x, yy, 1, 1); }
-        if(hr(yy, 487 + (tick & 3)) < live){ c.fillStyle = (yy + tick) % 5 ? '#FFB43A' : '#FFE680'; c.fillRect(Math.round(cx), yy, 1, 1); }
+      const { c, cx, bot, half, h, t, fade, fall, k } = G, tick = Math.floor(t * 14);
+      const RX = half * 1.1, RY = Math.max(2, RX * 0.24);
+      if(fade > 0.12){
+        blDisc(G, RX, RY, '#3A0A06', false);
+        blRing(G, bot - 1, RX, RY, Math.max(1, k), '#C8281C');
+        blRing(G, bot - 1, RX - k - 1, Math.max(1, RY - 1), 1, '#FF6A1A');
+        if(blBack(G)){ const rot = t * 2, E = a => [cx + Math.cos(a) * (RX - 1), bot - 1 + Math.sin(a) * (RY - 0.5)], P = [0, 1, 2, 3, 4].map(i => E(-Math.PI / 2 + rot + i * Math.PI * 2 / 5));
+          for(let i = 0; i < 5; i++) pxLine(c, P[i][0], P[i][1], P[(i + 2) % 5][0], P[(i + 2) % 5][1], '#FFB43A', 1); }
       }
-      // tongues licking up off its top
-      for(let i = 0; i < 4; i++){ const X = Math.round(cx + (hr(i, tick + 487) - 0.5) * half), L = Math.round((2 + hr(i, tick + 489) * 5) * k);
-        for(let j = 0; j < L; j++){ c.fillStyle = j < L * 0.5 ? '#C8281C' : '#2A1414'; c.fillRect(X, top - j, 1, 1); } }
+      // the flames: tongues round the ring, each a tapering column of fire,
+      // dark red at its edges and gold in its root
+      const N = 11, rise = Math.min(1, fall * 1.15);
+      for(let j = 0; j < N; j++){
+        const a = j / N * Math.PI * 2 + 0.3, s = Math.sin(a), back = s < 0.15;
+        if(back ? !blBack(G) : !blFront(G)) continue;
+        const X = Math.round(cx + Math.cos(a) * RX * 0.9), Y = Math.round(bot - 1 + s * RY * 0.9);
+        const fl = 0.75 + 0.25 * Math.sin(t * 22 + j * 1.9) + 0.12 * hr(j, tick + 483);
+        const H = Math.round(h * (back ? 0.95 : 0.4) * rise * fl * Math.min(1, fade * 1.6)), bw = Math.max(2, Math.round((back ? 2.5 : 2) * k));
+        for(let y = 0; y < H; y++){
+          const u = y / Math.max(1, H), ww = Math.max(1, Math.round(bw * (1 - u * 0.85))), lean = Math.round(Math.sin(y * 0.3 + t * 12 + j) * u * 2 * k);
+          const x0 = X - (ww >> 1) + lean;
+          c.fillStyle = u > 0.8 ? '#5A1410' : '#C8281C'; c.fillRect(x0 - 1, Y - y, ww + 2, 1);
+          c.fillStyle = u < 0.3 ? '#FFD34A' : u < 0.6 ? '#FF6A1A' : '#E8401C'; if(ww > 1 || u < 0.6) c.fillRect(x0, Y - y, ww, 1);
+        }
+        // smoke rolling off the tops of the tall ones as it dies
+        if(back && fade < 0.6 && H > 3){ c.fillStyle = '#2A1414'; c.fillRect(X - k, Y - H - 2 * k, 2 * k, 2 * k); }
+      }
+      blImpact(G, 0.2, ['#C8281C', '#FFD34A']);
       blessMotes(G, 14, 0.9, true, false, (x, y, i, u) => { c.fillStyle = u < 0.3 ? '#FFD34A' : u < 0.7 ? '#FF6A1A' : '#8A1A0E'; c.fillRect(Math.round(x), Math.round(y), 1, 2); });
-      if(t > 0.28){ const q = Math.min(1, (t - 0.28) / 0.5), n = 9;
-        for(let i = 0; i < n; i++){ const a = i / n * Math.PI * 2, rx = half * (0.9 + q), X = Math.round(cx + Math.cos(a) * rx), Y = Math.round(bot - 1 + Math.sin(a) * rx * 0.22);
-          const hh = Math.max(1, Math.round((1 - q) * h * 0.14 * (0.6 + 0.4 * Math.sin(t * 20 + i))));
-          for(let j = 0; j < hh; j++){ c.fillStyle = j < hh * 0.4 ? '#FFD34A' : j < hh * 0.75 ? '#FF6A1A' : '#C8281C'; c.fillRect(X, Y - j, 1, 1); } } }
     } },
-  // the Ascended: a shaft of starlight edged in violet, a bolt down it as
-  // it strikes, his lavender feathers drifting down, and his disc of stars
-  // flashing under his feet as it lands
+  // the Ascended: a shaft of violet starlight with a white heart, stars
+  // twinkling in it, a bolt striking down it, his lavender feathers
+  // drifting, and his disc of stars flashing out under his feet as it lands
   ascended: { col: '#B04ACB',
     draw(G){
-      const { c, cx, bot, half, t, fade, front, k } = G, hw = Math.round(half * 0.75), tick = Math.floor(t * 12) & 3;
-      for(let yy = 0; yy < front; yy++){
-        const live = fade * (0.45 + 0.55 * (1 - Math.min(1, (front - yy) / Math.max(8, bot * 0.6))));
-        if(hr(yy, 491 + tick) < live * 1.5){ c.fillStyle = '#B04ACB'; c.fillRect(Math.round(cx - hw), yy, k, 1); c.fillRect(Math.round(cx + hw) - k, yy, k, 1); }
-        if(hr(yy, 493 + tick) < live * 1.2){ c.fillStyle = '#E639EB'; c.fillRect(Math.round(cx - hw) + k, yy, 1, 1); c.fillRect(Math.round(cx + hw) - k - 1, yy, 1, 1); }
-        // stars twinkling inside it
-        for(let xx = 2 - hw; xx < hw - 2; xx++){ const s = hr(xx * 13 + yy * 7, 495);
-          if(s < 0.025 * live && Math.sin(t * 13 + xx + yy) > -0.3){ c.fillStyle = s < 0.012 * live ? '#FFFFFF' : '#F2A6F8'; c.fillRect(Math.round(cx + xx), yy, 1, 1); } }
-      }
-      blessBolt(G, '#FFFFFF', '#E639EB');
+      const { c, cx, bot, half, h, t, fade, front, k } = G, head = Math.round(bot - h * 1.02);
+      const hw = Math.max(2, Math.round(half * 0.62 * (0.35 + 0.65 * fade))), top = Math.min(front, head - 1);
+      if(t > 0.26 && fade > 0.12){ const q = Math.min(1, (t - 0.26) / 0.35), RX = half * (0.8 + 0.4 * q), RY = Math.max(2, RX * 0.26);
+        blDisc(G, RX, RY, '#3A1A5A', true); blDisc(G, RX - 1, RY - 1, '#5A2A8A', false);
+        if(blBack(G)) for(let j = 0; j < 7; j++){ const a = hr(j, 497) * Math.PI * 2, r = Math.sqrt(hr(j, 499)) * 0.8;
+          c.fillStyle = Math.sin(t * 12 + j) > 0 ? '#FFFFFF' : '#F2A6F8'; c.fillRect(Math.round(cx + Math.cos(a) * RX * r), Math.round(bot - 1 + Math.sin(a) * RY * r), 1, 1); }
+        blRing(G, bot - 1, RX, RY, Math.max(1, k), '#B04ACB');
+        if(blFront(G)){ const run = t * 9, n = Math.max(12, Math.round(RX * 3));
+          for(let j = 0; j < n; j++){ const a = j / n * Math.PI * 2; if(Math.cos(a - run) < 0.88 || Math.sin(a) < 0) continue;
+            c.fillStyle = '#FFFFFF'; c.fillRect(Math.round(cx + Math.cos(a) * RX), Math.round(bot - 1 + Math.sin(a) * RY), 2, 1); } } }
+      blShaft(G, top, hw, ['#B04ACB', '#E639EB', '#FFD6FC', '#F2A6F8', '#FFFFFF'], { inner: '#7A2A9A' });
+      // stars in it, crosses that twinkle
+      if(blFront(G)) for(let i = 0; i < 6; i++){ const y = Math.round((hr(i, 495) * 0.9 + 0.05) * top), x = Math.round(cx + (hr(i, 496) - 0.5) * hw * 1.4);
+        if(y < 2 || Math.sin(t * 13 + i * 2) < -0.2) continue; voidStar(c, x, y, 1, i % 3 ? 1 : 2, '#FFFFFF'); c.fillStyle = '#FFFFFF'; c.fillRect(x, y, 1, 1); }
+      blessBolt(G, '#FFFFFF', '#E639EB', bot - 1);
+      blImpact(G, 0.27, ['#E639EB', '#FFFFFF']);
+      blSides(G, '#F2A6F8', '#FFFFFF');
       blessMotes(G, 12, 0.6, false, true, (x, y, i) => { const X = Math.round(x), Y = Math.round(y), d = Math.sin(G.t * 5 + i) > 0 ? 1 : -1;
         c.fillStyle = '#E2D2FF'; c.fillRect(X, Y, 1, 1); c.fillRect(X + d, Y + 1, 1, 1); c.fillStyle = '#B49AE6'; c.fillRect(X + 2 * d, Y + 2, 1, 1); c.fillRect(X + d * 2, Y + 1, 1, 1);
         c.fillStyle = '#8A6AC8'; c.fillRect(X + 3 * d, Y + 3, 1, 1); });
-      // landed: a ring of violet at his feet, starlight running round it
-      if(t > 0.28 && fade > 0.15){ const q = Math.min(1, (t - 0.28) / 0.4), RX = half * (0.8 + 0.4 * q), RY = Math.max(2, RX * 0.26), n = Math.max(28, Math.round(RX * 6)), run = t * 9;
-        for(let j = 0; j < n; j++){ const a = j / n * Math.PI * 2, X = Math.round(cx + Math.cos(a) * RX), Y = Math.round(bot - 1 + Math.sin(a) * RY), lit = Math.cos(a - run) > 0.9;
-          c.fillStyle = lit ? '#FFFFFF' : '#E639EB'; c.fillRect(X, Y, 1, 1); c.fillStyle = lit ? '#F2A6F8' : '#B04ACB'; c.fillRect(X, Y + 1, 1, 1); } }
     } },
   // The Void: a black hole opens over his head in its ring of gold and
   // drinks a shaft of the dark down out of the sky, stars falling into it;
-  // gold threads wind round the shaft, and the dark spills to his feet
+  // gold threads wind round the shaft, and the dark spills to his feet in a
+  // pool rimmed with gold
   cosmic: { col: '#3E2A6E',
     draw(G){
-      const { c, cx, bot, half, h, t, fade, front, k } = G, hy = Math.round(bot - h * 1.25), tick = Math.floor(t * 12) & 3;
-      const hw = Math.round(half * 0.55), stop = Math.min(front, hy);
-      for(let yy = 0; yy < stop; yy++){
-        const live = fade * (0.5 + 0.5 * (1 - Math.min(1, (stop - yy) / Math.max(8, bot * 0.5))));
-        const nw = Math.max(1, Math.round(hw * (0.5 + 0.5 * Math.min(1, (hy - yy) / Math.max(4, bot * 0.3)))));
-        if(hr(yy, 501 + tick) < live * 1.5){ c.fillStyle = '#3E2A6E'; c.fillRect(Math.round(cx) - nw - k, yy, k, 1); c.fillRect(Math.round(cx) + nw, yy, k, 1); }
-        for(let x = -nw; x < nw; x++) if(hr(x * 5 + yy, 503 + tick) < live * 0.35){ c.fillStyle = (x + yy) & 1 ? '#1A1030' : '#120A24'; c.fillRect(Math.round(cx) + x, yy, 1, 1); }
-      }
-      // the gold threads and the stars pulled down into it
-      blessRibbons({ ...G, front: stop, half: hw / 0.9 }, ['#D8B060', '#7A5A24', '#F4DC96', '#7A5A24'], 1, 0.9, 6);
+      const { c, cx, bot, half, h, t, fade, front, k } = G, hy = Math.round(bot - h * 1.25);
+      const hw = Math.max(2, Math.round(half * 0.5 * (0.35 + 0.65 * fade))), stop = Math.min(front, hy);
+      if(t > 0.26 && fade > 0.12){ const q = Math.min(1, (t - 0.26) / 0.3), RX = half * (0.7 + 0.4 * q), RY = Math.max(2, RX * 0.25);
+        blDisc(G, RX, RY, '#120A24', true); blDisc(G, RX * 0.6, RY * 0.6, '#3E2A6E', false);
+        blRing(G, bot - 1, RX, RY, 1, '#D8B060');
+        if(blBack(G)) for(let j = 0; j < 5; j++){ const a = t * 4 + j * 1.26, r = 1 - ((t * 0.8 + j * 0.2) % 1);
+          c.fillStyle = j & 1 ? '#7FE6FF' : '#F4DC96'; c.fillRect(Math.round(cx + Math.cos(a) * RX * r), Math.round(bot - 1 + Math.sin(a) * RY * r), 1, 1); }
+        if(blBack(G)) voidHole(c, cx, bot - 2, Math.max(1, Math.round(h / 26)), t, true); }
+      blShaft(G, stop, hw, ['#3E2A6E', '#120A24', null, '#2A1C4A', null], { inner: '#D8B060' });
+      blRibbons({ ...G, half: hw / 0.9 }, 0, stop, ['#F4DC96', '#7A5A24', '#D8B060', '#7A5A24'], 1, 1.25, 6);
       blessMotes({ ...G, bot: Math.max(8, hy + 2) }, 10, 0.9, false, false, (x, y, i) => {
         const pull = Math.min(1, y / Math.max(1, hy)), X = cx + (x - cx) * (1 - pull * 0.8);
         if(Math.sin(t * 11 + i * 2.3) > -0.2) voidStar(c, X, y, 1, i % 3 === 0 ? 1 : 0, i & 1 ? '#7FE6FF' : '#B98CFF'); });
-      if(front >= hy - 2 && fade > 0.15){ voidHole(c, cx, hy, Math.max(2, Math.round(h / 12)), t, false);
-        // a thread of dark down from it to him
-        for(let yy = hy + 3; yy < bot - h * 0.95; yy++) if(hr(yy, 505 + tick) < fade){ c.fillStyle = '#B98CFF'; c.fillRect(Math.round(cx), yy, 1, 1); } }
-      // landed: the dark pooling at his feet in a crescent of gold
-      if(t > 0.28 && fade > 0.15){ const RX = half * 1.05, RY = Math.max(2, RX * 0.24), n = Math.max(28, Math.round(RX * 5));
-        for(let j = 0; j < n; j++){ const a = j / n * Math.PI * 2, X = Math.round(cx + Math.cos(a) * RX), Y = Math.round(bot - 1 + Math.sin(a) * RY);
-          c.fillStyle = Math.sin(a) > 0.1 ? '#D8B060' : '#3E2A6E'; c.fillRect(X, Y, 1, 1); }
-        voidHole(c, cx, bot - 2, Math.max(1, Math.round(h / 26)), t, true); }
+      if(front >= hy - 2 && fade > 0.15 && blFront(G)){ voidHole(c, cx, hy, Math.max(2, Math.round(h / 12)), t, false);
+        c.fillStyle = '#B98CFF'; c.fillRect(Math.round(cx), hy + 3, 1, Math.max(0, Math.round(bot - h * 0.95) - hy - 3)); }
+      blImpact(G, 0.27, ['#3E2A6E', '#D8B060']);
+      blSides(G, '#B98CFF', '#F4DC96');
     } }
 };
 // A ball effect is drawn instead of the plain trail: path is the ball's last
@@ -18827,10 +18941,12 @@ Object.assign(Scene, {
         const put = () => drawLyingBall(c, bp.x + bs / 2, Math.round(bp.y - bs), Math.max(1.5, bs * 0.8 + 0.5), this.t);
         if(q.d - this.camD < 0.7) puttLate = put; else put(); }
     }
+    // (the blessing's ground and what is behind him go down first)
+    if(atCam === undefined) this.drawBless(c, x, y, w, h, p.y, 'back');
     paintGolfer(c, x, y, w, h, ph, this.t, p.y, walking, G.wave ? 0 : this.walkPh, spr, this.clubArc || (this.clubArc = []), PT >= 0 ? this.puttArm(PT) : undefined, true, G.wave);
     if(puttLate) puttLate();
     if(atCam === undefined && SPRITE.caddie) this.drawCaddie(c, p.x - Math.round(w*0.42), y, w, h);
-    if(atCam === undefined) this.drawBless(c, x, y, w, h, p.y);
+    if(atCam === undefined) this.drawBless(c, x, y, w, h, p.y, 'front');
     // (the last steps up to his ball on the green: it lies in front of him)
     if(walking && atCam === undefined && this.greenBall && this.hole === S.hole && !this.cupT){
       const bs = h > 30 ? 2 : 1;
@@ -18855,7 +18971,7 @@ Object.assign(Scene, {
   // A caddie perk's blessing: a column of the perk's own light comes down
   // from the top of the view onto the golfer, lands in a ring at his feet
   // and fades, with motes of it drifting down; about a second in all.
-  drawBless(c, x, y, w, h, bot){
+  drawBless(c, x, y, w, h, bot, layer){
     const B2 = this.bless;
     if(!B2) return;
     if(B2.t0 === undefined) B2.t0 = this.t;
@@ -18869,7 +18985,7 @@ Object.assign(Scene, {
     const cx = x + w * 0.5, half = Math.max(3, Math.round(w * (0.75 + 0.06 * up)));
     const fall = Math.min(1, t / 0.30);                 // the front of it coming down
     const fade = Math.min(1, (t < 0.30 ? 1 : 1 - (t - 0.30) / (DUR - 0.30)) * glow);
-    const G = { c, cx, bot, half, t, fall, fade, front: Math.round(bot * fall), w, h, k: Math.max(1, Math.round(h / 30)), DUR };
+    const G = { c, cx, bot, half, t, fall, fade, front: Math.round(bot * fall), w, h, k: Math.max(1, Math.round(h / 30)), DUR, layer, up };
     c.globalAlpha = 1;
     if(TH) TH.draw(G); else blessPlain(G, B2.col);
     c.globalAlpha = 1;
