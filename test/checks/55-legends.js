@@ -8,9 +8,11 @@
  *     third); the Demonic's pieces marked Legendary, the Ascended's Mythic
  *   - each piece has an effect of its own, and the shop lists it
  *   - drawn, by pixels, each part taken away in turn from the same frame.
- *     The Demonic (reworked after a second picture, in deep red and
- *     orange): torn wrappings streaming back off him, on him and his
- *     caddie; a crest of blades swept back off his hood. The Ascended,
+ *     The Demonic (redrawn after a fourth picture, a demon knight in
+ *     black plate edged in gold): streamers of lava streaming back off him,
+ *     on him and his caddie; four black horns swept back off his head; a
+ *     ram's skull on his shoulder (on both from behind); fangs at his mask
+ *     and red eyes; his dais of stone under his feet, and nowhere else. The Ascended,
  *     redrawn after a third picture as a hooded star-walker: a galaxy cape
  *     streaming behind him, and hanging down his back as he walks away;
  *     wings of feathers on his back behind him (none out in front), spread
@@ -153,6 +155,18 @@ module.exports = {
             const hn = part(id, 'crest', golfer).filter(([x, y]) => y < head.y);
             d.hornCurl = hn.length ? (head.x - hn.reduce((a, [x]) => a + x, 0) / hn.length) / head.w : 0;
             d.crestUp = hn.length ? (head.y - Math.min(...hn.map(([, y]) => y))) / h : 0;
+            // (redrawn after the user's fourth picture) a ram's skull on his
+            // shoulder, fangs at his mask, eyes burning red, and his dais of
+            // stone with its star of fire under his feet
+            { const sk = part(id, 'skullGuard', golfer);
+              d.skull = sk.length; d.skullOff = sk.filter(([x, y]) => y < box.y0 + h * 0.12 || y > box.y0 + h * 0.5 || x < box.x0 || x > box.x1 + 2).length;
+              const fg = part(id, 'fangs', golfer); d.fangs = fg.length; d.fangsOff = fg.filter(([x, y]) => Math.abs(y - eye.y) > h * 0.12).length;
+              Scene.walkOn = true; Scene.walkPh = 0.2;
+              const sb = part(id, 'skullGuard', golfer); d.skullBackL = sb.filter(([x]) => x < p.x).length; d.skullBackR = sb.filter(([x]) => x > p.x).length;
+              Scene.walkOn = false;
+              const ey = part(id, 'eyes', golfer); d.eyesRed = ey.length;
+              const ds = part(id, 'dais', golfer), rx = w * 1.2 + 2, ry = h * 0.13 + 2;
+              d.dais = ds.length; d.daisOut = ds.filter(([x, y]) => ((x - cx) / rx) ** 2 + ((y - p.y) / (ry + h * 0.04)) ** 2 > 1.3).length; }
             // at the top of the backswing his hands on fire; at the strike the
             // ground cracks open out past the pit, and fire flies off the ball
             Scene.swingT = Scene.swingDur * (1 - 0.36);
@@ -506,6 +520,9 @@ module.exports = {
       f('the Demonic aura: ' + dm.auraIdle + ' pixels over six frames (' + dm.auraOff + ' away from him), ' + dm.auraTop + ' at the top of the backswing');
     if (!(dm.chains >= 200 && dm.chainsL >= 20 && dm.chainsR >= 20 && dm.chainsFront >= 20) || dm.chainsOff)
       f('the ribbons of fire: ' + dm.chains + ' pixels over eight frames, ' + dm.chainsL + '/' + dm.chainsR + ' either side, ' + dm.chainsFront + ' in front of his middle, ' + dm.chainsOff + ' out of place');
+    if (!(dm.skull >= 15 && !dm.skullOff && dm.skullBackL >= 10 && dm.skullBackR >= 10)) f('the Demonic\'s skulls on his shoulders: ' + J({ n: dm.skull, off: dm.skullOff, backL: dm.skullBackL, backR: dm.skullBackR }) + ' (on his shoulder, on both from behind)');
+    if (!(dm.fangs >= 3 && !dm.fangsOff && dm.eyesRed >= 2)) f('the Demonic\'s mask: fangs ' + dm.fangs + ' (' + dm.fangsOff + ' off his face), eyes ' + dm.eyesRed);
+    if (!(dm.dais >= 150 && !dm.daisOut)) f('the Demonic\'s dais: ' + dm.dais + ' pixels, ' + dm.daisOut + ' out past it (a disc of stone under his feet)');
     if (!(dm.hornCurl >= 0.3 && dm.crestUp >= 0.08)) f('the Demonic crest is not swept back and up: ' + dm.hornCurl.toFixed(2) + ' of his hood behind, ' + dm.crestUp.toFixed(2) + ' of his height over it');
     if (!(dm.fists >= 4) || !(dm.blast >= 6) || dm.blastOff || !(dm.cracks >= 8) || dm.cracksIdle)
       f('the Demonic swing: hands on fire ' + dm.fists + ', fire off the ball ' + dm.blast + ' (' + dm.blastOff + ' away from it), cracks out past the pit ' + dm.cracks + ' (' + dm.cracksIdle + ' at rest)');
@@ -571,7 +588,7 @@ module.exports = {
     const oa = Object.entries(r.otherArms).filter(([, n]) => n);
     if (oa.length) f('plain skin tone on skins with their own: ' + oa.map(([k, n]) => k + ' ' + n).join(', '));
     return ['the Demonic at the Divine\'s ' + r.price.demonic + ', the Ascended at ' + r.price.ascended + '; club, trail, ball and caddie for each in the Divine\'s proportion (' + J(r.sets.ascended.cost) + '), Legendary and Mythic',
-      'the Demonic: torn wrappings streaming back side on (' + dm.wing.addr.behind + 'px behind him, none in front) and over his back walking away (' + dm.wing.backL + '/' + dm.wing.backR + '), a crest of blades ' + dm.top + ', eyes at his eye; his caddie\'s streamers ' + dm.cWings,
+      'the Demonic, armoured in black and gold: streamers of lava back side on (' + dm.wing.addr.behind + 'px behind him, none in front) and over his back walking away (' + dm.wing.backL + '/' + dm.wing.backR + '), four horns ' + dm.top + ', red eyes, fangs ' + dm.fangs + ', a ram\'s skull on his shoulder (' + dm.skull + 'px; ' + dm.skullBackL + '/' + dm.skullBackR + ' from behind), his dais of stone ' + dm.dais + 'px; his caddie\'s streamers ' + dm.cWings,
       'the Ascended, a hooded star-walker: a galaxy cape ' + as.cape + ' (' + as.capeBack + ' down his back walking away), wings of feathers on his back side on (' + as.wing.addr.behind + 'px behind him, none in front) and either side walking away, ears on his hood ' + as.top + ', a silver mantle (' + as.mantleBack + ' from behind), a gauntlet; his caddie\'s wings ' + as.cWings + '',
       'his arms in his own skin, on these and on the Void Walker, Midas and the Ghost; his soles in his belt\'s colour walking away (' + r.drawn.ascended.sole.own + 'px), a plain golfer\'s tan',
       'the Ascended\'s disc at his feet (' + as.ground + 'px), glitching about him (' + as.glitch + 'px), motes as he winds up, sparks and a ring as he strikes; ' + as.foot.l + '/' + as.foot.r + ' of his width either side and ' + as.foot.up + ' of his height over him at most',
