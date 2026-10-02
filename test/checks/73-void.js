@@ -67,7 +67,8 @@ module.exports = {
         // his robe over his legs to the ground: gold scrollwork on it below
         // his waist, and its gold hem at his feet
         o.robe = [has(P, ['#D8B060'], (x, y) => y > G.y + H * 0.55 && y < G.bot - H * 0.08 && x > G.x + G.w * 0.15 && x < G.x + G.w * 0.6),
-                  has(P, ['#9A7432'], (x, y) => y >= G.bot - H * 0.05 && y <= G.bot && x > G.x && x < G.x + G.w * 0.7)];
+                  // (the hem in its golds since it was lit along its top and beaded)
+                  has(P, ['#9A7432', '#F4DC96', '#5A4018'], (x, y) => y >= G.bot - H * 0.05 && y <= G.bot && x > G.x && x < G.x + G.w * 0.7)];
         if (!(o.robe[0] >= 20) || !(o.robe[1] >= 10)) f('his robe to the ground: gold on it ' + o.robe[0] + ', its hem ' + o.robe[1]);
         const STARS = ['#FFFFFF', '#B98CFF', '#7FE6FF'], CLOAK = ['#0B0818', '#141030', '#1C1640', '#2A3A8A', '#6A2A7A', '#3E2A6E'];
         // (above the galaxy on the grass, which has colours of its own)
