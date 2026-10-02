@@ -1,7 +1,8 @@
 /* The showcase over the Sets rack (the user asked: "a Sets showcase in
  * the shop where you can preview each full set swinging"):
  *
- *   - it is there on the Sets rack only; the arrows and a tap on a set's
+ *   - on the Sets rack it shows the sets (the Clubs and Balls racks have
+ *     stages of their own, showing their pieces: showitems); the arrows and a tap on a set's
  *     picture put that set on it, and its name over it
  *   - played through its round, every set shows its own colours (its
  *     accents counted on the stage), its blessing falls, an ace gives him
@@ -22,7 +23,9 @@ module.exports = {
       try {
         hideSheet(); QUIET = false; S.sov = 1e9;
         const before = { out: outfitNow().id, cad: caddieNow().id, club: clubNow().id, tr: trailNow().id, spr: SPRITE.gAddr, cspr: SPRITE.caddie, leg: Scene.legend };
-        for (const cat of ['clubs', 'balls']) { styleCat = cat; openShop('style'); if (document.getElementById('showCv')) f('the showcase is on the ' + cat + ' rack'); }
+        // (the Clubs and Balls racks have a stage of their own now, the user
+        // asked: it shows their pieces, never a set; showitems has the rest)
+        for (const [cat, k] of [['clubs', 'k'], ['balls', 't']]) { styleCat = cat; openShop('style'); if (!document.getElementById('showCv') || !SHOW.set.startsWith(k + ':')) f('the ' + cat + ' rack\'s stage shows ' + (SHOW && SHOW.set)); }
         styleCat = 'sets'; openShop('style');
         const cv = document.getElementById('showCv');
         if (!cv) { f('no showcase on the Sets rack'); return o; }
