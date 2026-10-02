@@ -19557,18 +19557,24 @@ function femTail(c, g, fx){
 // Her poses, hers alone (the user asked for "a few poses that are hers
 // alone"): as the ball drops she stands up tall and, on a birdie or an
 // eagle, twirls the club round her hand like a baton and rests it on her
-// shoulder, the other hand on her hip; on an albatross or an ace holds it
-// up high over her head; on a bogey or worse leans on it, planted, a hand
-// on her hip. Held until the next hole.
+// shoulder, the other hand on her hip; on an albatross points it out at
+// the flag; on an ace celebrates (celebOf); on a bogey or worse leans on
+// it, planted, a hand on her hip. Held until the next hole.
 let HER_POSE = null;
-const herPoseOf = d => d <= -3 ? 'aloft' : d <= -1 ? 'twirl' : d >= 1 ? 'hip' : null;
+const herPoseOf = d => d <= -4 ? 'herace' : d <= -3 ? 'heralb' : d <= -1 ? 'twirl' : d >= 1 ? 'hip' : null;
+// and his (the user: "make sure the poses are created for him and her
+// both"): on a birdie or an eagle a fist pumped at his chest, the club at
+// his side; on an albatross the club up over his head in both hands; on a
+// bogey or worse both hands stacked on the club, planted, head down
+const hisPoseOf = d => d <= -4 ? 'hisace' : d <= -3 ? 'hisalb' : d <= -1 ? 'hisbird' : d >= 1 ? 'hislean' : null;
+const HIS_POSES = ['hisace', 'hisalb', 'hisbird', 'hislean'];
 const HER_TWIRL = 0.42;
 // On an ace each has a celebration of their own (the user asked for his
 // too), over in well under the second the ace is held, so nothing of it is
 // left for the next tee: he leaps with both arms up, the club high, lands
 // and pumps his fist twice; she twirls the club, then hops with it held up
 // high in both hands. After that the last frame is held, this hole only.
-const celebOf = (d, fem) => d <= -4 ? (fem ? 'herace' : 'hisace') : fem ? herPoseOf(d) : null;
+const celebOf = (d, fem) => fem ? herPoseOf(d) : hisPoseOf(d);
 const CELEB_END = 0.9;
 // how far off the ground the leap carries them, in heights, at T seconds
 const celebLift = (kind, T) => kind === 'hisace' ? (T > 0 && T < 0.4 ? Math.sin(Math.PI * T / 0.4) * 0.16 : 0)
@@ -19594,11 +19600,32 @@ function herPoseAt(P, sx, sy, w, h, cl, bot){
     const far = [[sx - w*0.10, sy + 1], [sx - w*(0.16 - 0.04 * up), sy - h*0.14 * up], [hx - w*0.06, hy + h*0.02]];
     return { hx, hy, gx: hx, gy: hy + h*0.03, tx: hx + w*0.12, ty: hy - cl*(0.3 + 0.55 * up), turn: 1, far };
   }
-  if(P.kind === 'aloft'){
-    // up over her head, pumped once or twice
-    const up = ease(T / 0.18), pump = T < 0.7 ? Math.abs(Math.sin(T * 9)) * h * 0.035 : 0;
-    const hx = sx + w*(0.30 - 0.20 * up), hy = sy + h*(0.24 - 0.56 * up) - pump * up;
-    return { hx, hy, gx: hx, gy: hy + h*0.04, tx: hx + w*0.10, ty: hy - cl*(0.25 + 0.55 * up), turn: 1 };
+  if(P.kind === 'heralb'){
+    // the club pointed out at the flag, her arm straight, the other hand on
+    // her hip: called it
+    const u = ease(T / 0.16), hx = sx + w*(0.22 + 0.30 * u), hy = sy + h*(0.20 - 0.14 * u);
+    return { hx, hy, gx: hx - w*0.04, gy: hy + h*0.01, tx: hx + cl*(0.3 + 0.62 * u), ty: hy - cl*(0.5 - 0.42 * u), turn: 1, far: u > 0.4 ? hip : null };
+  }
+  if(P.kind === 'hisalb'){
+    // the club lifted over his head in both hands, level, and shaken once
+    const u = ease(T / 0.16), sh = T > 0.16 && T < 0.5 ? Math.sin((T - 0.16) * 18) * h * 0.02 : 0;
+    const hx = sx + w*(0.30 - 0.10 * u), hy = sy + h*(0.24 - 0.56 * u) + sh;
+    const fx = sx - w*(0.10 + 0.26 * u), fy = sy + h*(0.24 - 0.56 * u) - sh;
+    const far = [[sx - w*0.10, sy + 1], [sx - w*(0.16 + 0.12 * u), sy - h*0.12 * u], [fx, fy]];
+    return { hx, hy, gx: hx + w*0.04, gy: hy, tx: fx - w*0.30, ty: fy + h*0.01, turn: -1, far };
+  }
+  if(P.kind === 'hisbird'){
+    // the club down at his side, his far fist pumped once at his chest
+    const pump = T < 0.5 ? Math.abs(Math.sin(T / 0.5 * Math.PI)) : 0;
+    const hx = sx + w*0.18, hy = sy + h*0.30;
+    const far = [[sx - w*0.10, sy + 1], [sx - w*0.24, sy + h*(0.16 - 0.06 * pump)], [sx - w*(0.06 + 0.04 * pump), sy + h*(0.14 - 0.26 * pump)]];
+    return { hx, hy, gx: hx, gy: hy, tx: hx + w*0.12, ty: bot - 1, turn: 1, far };
+  }
+  if(P.kind === 'hislean'){
+    // both hands stacked on the grip in front of him, the club planted
+    const hx = sx + w*0.20, hy = sy + h*0.30;
+    const far = [[sx - w*0.10, sy + 1], [sx + w*0.02, sy + h*0.20], [hx - w*0.02, hy - h*0.03]];
+    return { hx, hy, gx: hx, gy: hy - h*0.04, tx: hx + w*0.10, ty: bot - 1, turn: 1, far };
   }
   if(P.kind === 'hip'){
     // leaning on it in front of her, planted, the other hand on her hip
@@ -21537,7 +21564,7 @@ Object.assign(Scene, {
     // rather than the same bent figure sliding around.
     // (her pose as the ball drops is stood up tall, as at the finish)
     const her = atCam === undefined && ph === 0 && !walking && this.herPose && this.herPose.hole === S.hole && this.hole === S.hole
-      && (isFem() ? this.herPose.kind !== 'hisace' : this.herPose.kind === 'hisace') ? this.herPose : null;
+      && isFem() !== HIS_POSES.includes(this.herPose.kind) ? this.herPose : null;
     const spr = waving ? SPRITE.gWave : walking ? SPRITE.gBack : ph > 0.60 || her ? SPRITE.gFinish : SPRITE.gAddr;
     // He stood 1:2.9 against the fairway. Real golf is nearer 1:17; a figure
     // that small is unreadable in pixel art, so 1:7 is the compromise. The

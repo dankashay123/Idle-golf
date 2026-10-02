@@ -4,9 +4,10 @@
  *   - with her chosen, the caddie says her lines (SAY_HER) on a hole and in
  *     his tips, mixed with the usual ones; with him chosen, never
  *   - as the ball drops she takes a pose of her own: a birdie or eagle the
- *     twirl, an albatross or ace the club held up high, a bogey or worse a
- *     lean on the club with a hand on her hip; a par none; him never (but
- *     for his own on an ace: acecheer); none
+ *     twirl, an albatross the club pointed at the flag, a bogey or worse a
+ *     lean on the club with a hand on her hip; a par none; and he his own
+ *     (the user: "the poses are created for him and her both"): a fist
+ *     pump, the club over his head, a lean on it (aces: acecheer); none
  *     in a catch-up or a wager; gone on the next hole
  *   - each pose draws her differently from her standing plain, and puts
  *     nothing below her feet or more than her height above her head
@@ -40,14 +41,19 @@ module.exports = {
         if (sm.her || sm.q) f('with him chosen her lines came ' + sm.her + ', tips ' + sm.q);
         // poses by the score
         const poseFor = (g, ratio) => { S.gender = g; Scene.herPose = null; Scene.holed(scoreFor(ratio)); return Scene.herPose && Scene.herPose.kind; };
-        const want = [[0.2, 'aloft'], [0.45, 'twirl'], [0.75, 'twirl'], [1.0, null], [1.4, 'hip'], [2.2, 'hip']];
+        const want = [[0.2, 'heralb'], [0.45, 'twirl'], [0.75, 'twirl'], [1.0, null], [1.4, 'hip'], [2.2, 'hip']];
         o.by = [];
         for (const [ratio, k] of want) { const d = scoreFor(ratio).d, got = poseFor('f', ratio); o.by.push(d + ':' + got);
           if (k !== (herPoseOf(d))) {} if (got !== herPoseOf(d)) f('score ' + d + ' gave her ' + got);
-          if (poseFor('m', ratio)) f('he took a pose on ' + d); }
-        if (!o.by.some(x => x.endsWith('aloft')) || !o.by.some(x => x.endsWith('twirl')) || !o.by.some(x => x.endsWith('hip'))) f('not every pose came up: ' + o.by.join(' '));
+          const hm = poseFor('m', ratio); o.his = (o.his || []).concat(d + ':' + hm); if (hm !== { '0.2': 'hisalb', '0.45': 'hisbird', '0.75': 'hisbird', '1': null, '1.4': 'hislean', '2.2': 'hislean' }[String(ratio)]) f('score ' + d + ' gave him ' + hm); }
+        if (!['hisalb', 'hisbird', 'hislean'].every(k => o.his.some(x => x.endsWith(k)))) f('not every pose of his came up: ' + o.his.join(' '));
+        if (!o.by.some(x => x.endsWith('heralb')) || !o.by.some(x => x.endsWith('twirl')) || !o.by.some(x => x.endsWith('hip'))) f('not every pose came up: ' + o.by.join(' '));
         S.gender = 'f'; QUIET = true; Scene.herPose = null; Scene.holed(scoreFor(0.3)); if (Scene.herPose) f('a pose in a catch-up'); QUIET = false;
         S.gender = 'f'; Scene.holed(scoreFor(0.3)); startHole(); if (Scene.herPose) f('her pose carried into the next hole');
+        S.gender = 'm'; QUIET = true; Scene.herPose = null; Scene.holed(scoreFor(0.45)); if (Scene.herPose) f('his pose in a catch-up'); QUIET = false;
+        S.gender = 'm'; Scene.holed(scoreFor(0.45)); const G1 = Scene.golferPose(); if (!G1.her || G1.her.kind !== 'hisbird') f('his pose not drawn on his hole');
+        S.gender = 'f'; if (Scene.golferPose().her) f('his pose drawn on her'); S.gender = 'm';
+        startHole(); if (Scene.herPose || Scene.golferPose().her) f('his pose carried into the next hole');
         // each pose drawn: differs from her standing, and stays near her
         for (const k in SHOWSPR) delete SHOWSPR[k]; buildSprites();
         const h = 60, spr = SPRITE.gFinish, w = Math.round(h * spr.w / spr.h), W = 200, H = 220, X = 70, Y = 120;
@@ -55,7 +61,7 @@ module.exports = {
           HER_POSE = P; try { paintGolfer(c, X, Y, w, h, 0, 1, Y + h, false, 0, spr, [], undefined, true, 0); } finally { HER_POSE = null; }
           return c.getImageData(0, 0, W, H).data; };
         const plain = draw(null);
-        for (const kind of ['twirl', 'aloft', 'hip']) for (const t of [0.05, 0.2, 0.6]) {
+        for (const kind of ['twirl', 'heralb', 'hip', 'hisbird', 'hisalb', 'hislean']) for (const t of [0.05, 0.2, 0.6]) {
           const d = draw({ kind, t }); let diff = 0, below = 0, above = 0;
           for (let i = 0; i < d.length; i += 4) { const y = (i >> 2) / W | 0;
             if (d[i + 3] !== plain[i + 3] || d[i] !== plain[i]) diff++;
@@ -109,7 +115,7 @@ module.exports = {
       return o;
     });
     if (r.fails.length) throw new Error(r.fails.join('\n'));
-    return [r.lines + '; with him none', 'poses by score: ' + r.by.join(' ') + '; none for him, in a catch-up, or on the next hole',
+    return [r.lines + '; with him none', 'her poses by score: ' + r.by.join(' ') + '; his: ' + r.his.join(' ') + '; none in a catch-up, or on the next hole',
       'each pose draws her anew and stays about her', r.fig + '; cloaks at the waist (his/hers) ' + r.cloaks.join(', '),
       'skins on her legs (pixels in his trousers\' colours): ' + r.skinLegs.join(', ')];
   }
