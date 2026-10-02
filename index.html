@@ -15769,7 +15769,7 @@ const Scene = {
 
     this.camD = 0; this.restBall = null; this.walkTo = 0; this.greenBall = false;
     this.train = null; this.trainMet = 0; this.trainNext = this.t + 8;
-    this.upT = 0; this.saidHole = null; this.putt = null; this.cupT = 0; this.cupHeard = 0; this.aceT = 0;
+    this.upT = 0; this.saidHole = null; this.putt = null; this.cupT = 0; this.cupHeard = 0; this.aceT = 0; this.aceSwung = 0;
     this.shotN = 0;                 // (the hole's shots so far: only the first is off the tee)
     this.galleryUp = null;          // (the last hole's gallery cheered on into this one)
     // A swing still playing when the last hole ended belonged to that hole: it
@@ -15853,7 +15853,7 @@ const Scene = {
     this.camD = 0; this.restBall = null; this.walkTo = 0; this.greenBall = false;
     // (a putt left over from the course: its ball sat at the cup through
     // the whole Scramble)
-    this.putt = null; this.cupT = 0; this.cupHeard = 0; this.upT = 0; this.aceT = 0;
+    this.putt = null; this.cupT = 0; this.cupHeard = 0; this.upT = 0; this.aceT = 0; this.aceSwung = 0;
     // each contest played from its own place from the first frame: he glided
     // onto the Twilight Putt's green from the tee
     if(R.mode !== 'floor') this.camD = wagerSpot(R) * LEN;
@@ -19584,6 +19584,10 @@ Object.assign(Scene, {
         // (an ace goes on into the cup)
         const ace = this.aceNow(), L = ace ? this.pinD() : this.pinD() - B_GREEN_STAND - 0.4, P = b.d0 + b.dist * Math.min(u, 1);
         if(b.d0 + b.dist < L - 0.3 && u < 0.8){ b.lift0 = b.dist; b.dist = (L - P) / (1 - u); b.d0 = L - b.dist; if(ace){ b.cup = 1; b.lat = this.pinX(); } }
+        // (nearly down when it went: an ace's ball skips on from there into
+        // the cup, its own new flight, rather than landing short and gone)
+        else if(ace && b.d0 + b.dist < L - 0.3){ const lt = this.ballLat(b, Math.min(u, 1));
+          Object.assign(b, { d0: P, dist: L - P, t: 0, dur: 0.4 + Math.min(0.4, (L - P) * 0.012), lat0: lt, lat: this.pinX(), cup: 1, lift0: undefined }); continue; }
       }
       if(u >= 1){
         // it lies where it came down until he walks up to it (an ace is in
@@ -20026,7 +20030,18 @@ Object.assign(Scene, {
         this.putt = { t0: this.t, d0: this.camD };
       // an ace with no ball in the air to go in (the last of it was a burn
       // or a skill, not a swing): in, there and then
-      if(up && aceH && !this.cupT && !this.balls.length && !this.pendingBall && this.swingT === 0) this.cupT = this.t;
+      // (the ball always goes to the hole, the user asked: one lying short
+      // from an earlier shot carries on from there into the cup, and with
+      // none in sight he plays one in; it used to vanish and the ace play out)
+      if(up && aceH && !this.cupT && !this.balls.length && !this.pendingBall && this.swingT === 0){
+        const R = this.restBall, P = this.pinD();
+        if(R && R.d < P - 0.3){ const dist = P - R.d;
+          this.balls.push({ d0: R.d, dist, t: 0, dur: 0.4 + Math.min(0.4, dist * 0.012), el: null, crit: false, seed: 7,
+                            lat0: R.lat, lat: this.pinX(), cup: 1, tee: 0, fin: 1 });
+          this.restBall = null; }
+        else if(!R && !this.aceSwung){ this.aceSwung = 1; this.swingT = this.swingDur; this.pendingBall = { crit: false, el: null, dmg: 0 }; }
+        else this.cupT = this.t;
+      }
       if(up && aceH && this.cupT) this.restBall = null;
       // (an ace's column of light goes up from the cup as it drops)
       if(up && aceH && this.cupT && !this.aceT) this.aceT = this.cupT;

@@ -43,6 +43,21 @@ module.exports = {
         if (bad.length) f('a column lasted ' + bad.join(', ') + ' frames, not about a second (60)');
         if (o.leak) f(o.leak + ' frames drew the column after its hole');
         if (wrong) f(wrong + ' frames drew a column on a hole that was not an ace');
+        // ---- the ball always goes in (the user saw one land a little in
+        // front of him and vanish as the ace played): one nearly down when
+        // the hole went, one lying short from an earlier shot, and none ----
+        o.into = {};
+        for (const mode of ['late', 'lying', 'none']) {
+          startHole(); const D = derive();
+          Scene.camD = 0; Scene.walkTo = 0; Scene.swingT = 0; Scene.balls = []; Scene.restBall = null; Scene.pendingBall = null; Scene.cupT = 0;
+          if (mode === 'late') Scene.balls.push({ d0: 0, dist: 8, t: 0.85 * 0.45, dur: 0.45, el: null, crit: false, seed: 1, lat0: 0.42, lat: 0, cup: 0, tee: 1 });
+          if (mode === 'lying') Scene.restBall = { d: 8, lat: 0 };
+          S.elapsed = S.parTime * 0.05; S.doneT = S.elapsed; S.yards = 0;
+          let from = null;
+          for (let i = 0; i < 180 && !Scene.cupT; i++) { fake += 1000 / 60; const b = Scene.balls[0]; Scene.draw(1 / 60, D); if (Scene.cupT && b) from = b.d0 + b.dist; }
+          o.into[mode] = from === null ? 'none' : (from - Scene.pinD()).toFixed(2);
+          if (from === null || Math.abs(from - Scene.pinD()) > 0.3) f('an ace with ' + (mode === 'late' ? 'its ball nearly down short' : mode === 'lying' ? 'a ball lying short' : 'no ball out') + ': the ace played without a ball flying into the cup');
+        }
         // ---- drawn: with and without it, the same frame ----
         QUIET = true; window.step = () => {};
         const c = Scene.b;
@@ -95,7 +110,7 @@ module.exports = {
       return o;
     });
     if (r.fails.length) throw new Error(r.fails.join('; '));
-    return ['aces played: ' + r.frames.length + ' columns of ' + r.frames.join('/') + ' frames, none after its hole',
+    return ['the ball into the cup from nearly down, lying short and with none out: ' + JSON.stringify(r.into), 'aces played: ' + r.frames.length + ' columns of ' + r.frames.join('/') + ' frames, none after its hole',
       r.views + ' views (' + r.crest + ' behind a crest, ' + r.wood + ' wood pixels in front): every one reaches the top, none below the ground\'s line or over a nearer tree'];
   }
 };
