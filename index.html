@@ -3453,30 +3453,30 @@ const B = {
     { id:'blacktie', n:'Black Tie',      cost:450,
       cap:'#15151A', cap2:'#0A0A0D', shirt:'#24242A', shirt2:'#18181D', shirt3:'#0E0E11', pant:'#1A1A1F', pant2:'#101013' },
     // funny ones
-    { id:'banana',  n:'Banana Suit',     cost:500, fx:'banana', cat:'fun',
+    { id:'banana',  n:'Banana Suit',     cost:500, fx:'banana', cat:'fun', pattern:'banana', pantPattern:'banana',
       cap:'#F6D84A', cap2:'#C9A92A', shirt:'#F6D84A', shirt2:'#E0BC2E', shirt3:'#B8961E', pant:'#F2D040', pant2:'#D8B42A', shoe:'#8A6A20' },
     { id:'dad',     n:'Dad on Holiday',  cost:600, fx:'dad', cat:'fun', pattern:'hawaii',
       cap:'#E8D18A', cap2:'#BFA35C', shirt:'#2FA7C9', shirt2:'#228AA8', shirt3:'#186A82', pant:'#D8C79A', pant2:'#B5A276', shoe:'#F4F4F0' },
-    { id:'clown',   n:'Clown',           cost:800, fx:'clown', cat:'fun', pattern:'polka', capPattern:'rainbow',
+    { id:'clown',   n:'Clown',           cost:800, fx:'clown', cat:'fun', pattern:'polka', capPattern:'rainbow', pantPattern:'clownpatch',
       cap:'#E4302A', cap2:'#B0201C', shirt:'#E4302A', shirt2:'#B8241F', shirt3:'#861A16', pant:'#2A6FD8', pant2:'#1E52A6', shoe:'#E4302A' },
-    { id:'ghost',   n:'Ghost',           cost:1000, fx:'ghost', cat:'fun',
+    { id:'ghost',   n:'Ghost',           cost:1000, fx:'ghost', cat:'fun', pattern:'ghostsheet', pantPattern:'ghostsheet',
       cap:'#F4F7FF', cap2:'#C9D2EE', shirt:'#EEF2FF', shirt2:'#C9D2EE', shirt3:'#A5B0D6', pant:'#EEF2FF', pant2:'#C9D2EE',
       skin:'#F4F7FF', skin2:'#C9D2EE', shoe:'#C9D2EE', belt:'#C9D2EE' },
     // skins: more than a colour
-    { id:'disco',   n:'Disco',           cost:1200, fx:'disco', cat:'skin',
+    { id:'disco',   n:'Disco',           cost:1200, fx:'disco', cat:'skin', pattern:'sequin', pantPattern:'sequin',
       cap:'#F4F4F4', cap2:'#C8C8C8', shirt:'#FFFFFF', shirt2:'#D8D8E0', shirt3:'#A8A8B8', pant:'#F4F4F4', pant2:'#C8C8D0', shoe:'#1A1A1A' },
-    { id:'glitch',  n:'Glitch',          cost:1400, fx:'glitch', cat:'skin',
+    { id:'glitch',  n:'Glitch',          cost:1400, fx:'glitch', cat:'skin', pattern:'glitchy',
       cap:'#0A0F0A', cap2:'#050805', shirt:'#29E07A', shirt2:'#1AA457', shirt3:'#107038', pant:'#0F1A12', pant2:'#08100A' },
-    { id:'frost',   n:'Frostborn',       cost:1600, fx:'frostborn', cat:'skin',
+    { id:'frost',   n:'Frostborn',       cost:1600, fx:'frostborn', cat:'skin', pattern:'frostweave', pantPattern:'icecrack',
       cap:'#DDF3FF', cap2:'#A9D4EE', shirt:'#9FD6F2', shirt2:'#6FB2D8', shirt3:'#4A86AE', pant:'#E8F6FF', pant2:'#B8D8EA', shoe:'#6FB2D8' },
-    { id:'inferno', n:'Inferno',         cost:1800, fx:'inferno', cat:'skin',
+    { id:'inferno', n:'Inferno',         cost:1800, fx:'inferno', cat:'skin', pattern:'flames', pantPattern:'charcoal',
       cap:'#2A1410', cap2:'#150A08', shirt:'#C2361C', shirt2:'#8E2412', shirt3:'#5E170C', pant:'#2B1B17', pant2:'#170E0C' },
-    { id:'storm',   n:'Stormcaller',     cost:1800, fx:'stormcaller', cat:'skin',
+    { id:'storm',   n:'Stormcaller',     cost:1800, fx:'stormcaller', cat:'skin', pattern:'storm',
       cap:'#1C2433', cap2:'#10151E', shirt:'#2E3A55', shirt2:'#222B40', shirt3:'#161C2B', pant:'#1A2130', pant2:'#10151F' },
-    { id:'void',    n:'Void Walker',     cost:2200, fx:'void', cat:'skin',
+    { id:'void',    n:'Void Walker',     cost:2200, fx:'void', cat:'skin', pattern:'voidcloth', pantPattern:'voidcloth',
       cap:'#1A1024', cap2:'#0D0814', shirt:'#23142F', shirt2:'#170C20', shirt3:'#0E0714', pant:'#140B1C', pant2:'#0A0610',
       skin:'#3A2A4A', skin2:'#2A1E36' },
-    { id:'midas',   n:'Midas',           cost:2500, fx:'midas', cat:'skin',
+    { id:'midas',   n:'Midas',           cost:2500, fx:'midas', cat:'skin', pattern:'midasgold', pantPattern:'midasgold',
       cap:'#FFD86B', cap2:'#C99A2E', shirt:'#F0C04A', shirt2:'#C9962C', shirt3:'#8F6A1E', pant:'#D9A83A', pant2:'#9E7424',
       skin:'#F2C75C', skin2:'#B8862A', shoe:'#7A5818', belt:'#8F6A1E' },
     // The Divine (reworked after two pictures the user sent of a celestial
@@ -9645,9 +9645,89 @@ const CAP_CADDIE = capBox(CADDIE_ROWS.concat(new Array(26).fill('.'.repeat(40)))
 // Patterned shirts and caps, painted over the plain sprite: anything that came
 // out in the shirt's (or cap's) colours takes the pattern's colour instead.
 const PATTERNS = {
-  hawaii: (x, y) => (x * 3 + y * 5) % 9 === 0 ? '#FF6FA8' : (x * 5 + y * 3) % 13 === 0 ? '#FFE14A'
-                  : (x + y * 2) % 11 === 0 ? '#FFFFFF' : null,
-  polka:  (x, y) => ((x & 3) === 1 && (y & 3) === 1) ? '#FFFFFF' : ((x & 3) === 3 && (y & 3) === 3) ? '#FFE14A' : null,
+  // ---- (as fine as the Ascended's wings, the user asked of every skin:
+  // a cloth of its own for each, its shading kept: sh is the shade, 0 the
+  // lightest) ----
+  // Midas: beaten gold, a bright streak of polish down it, engraved lines
+  // with a lit edge, a spark here and there
+  midasgold: (x, y, sh) => { const d = (x + y) % 13;
+    if(d === 0 && !sh && y % 3) return '#FFF2B8';
+    if(d === 1 && !sh) return '#FFD86B';
+    if(y % 6 === 3) return (x & 1) ? '#8F6A1E' : '#B8862A';
+    if(y % 6 === 2 && !sh && (x & 1)) return '#FFE48A';
+    return hr(x * 7, y * 3) > 0.96 ? '#FFFFFF' : null; },
+  // the Void Walker: dark cloth stitched in violet runes, a seam of shadow
+  // down it, a glint of violet in the weave
+  voidcloth: (x, y, sh) => { const u = x % 6, v = y % 7;
+    const R = ['X.X', '.X.', 'XXX', '.X.'][v]; if(R && u < 3 && R[u] === 'X' && ((x / 6 | 0) + (y / 7 | 0)) & 1) return sh ? '#5A3A7A' : '#8A5AB8';
+    if(u === 5) return '#0A0610';
+    return hr(x * 5, y * 11) > 0.95 ? '#6E44A0' : null; },
+  // Stormcaller: storm-grey cloth with a bolt stitched across it in pale
+  // blue, rain running down in dashes
+  storm: (x, y, sh) => { const u = (x + Math.floor(y / 10) * 4) % 10, v = y % 10;
+    const B = ['...XX', '..XX.', '.XXX.', '..XX.', '.XX..', 'XX...'][v]; if(B && u < 5 && B[u] === 'X') return v === 0 || v === 2 ? '#FFFFFF' : '#8FD0FF';
+    if((x * 3 + y) % 11 === 0 && (y & 1)) return sh ? '#3A4A66' : '#5A6E92';
+    return null; },
+  // Inferno: flames climbing up from his hem, orange under yellow, and
+  // char between them
+  flames: (x, y, sh) => { const tip = 40 - 8 * Math.abs(Math.sin(x * 0.9)) - 6 * hr(x, 3), dy = y - tip;
+    if(dy > 6) return sh ? '#E04A1A' : '#FF8A2A';
+    if(dy > 2) return sh ? '#FF6A1A' : '#FFB43A';
+    if(dy > 0) return '#FFE680';
+    if(dy > -2 && (x & 1)) return '#5E170C';
+    return hr(x * 3, y * 5) > 0.95 ? '#FF8A2A' : null; },
+  // and his trousers charred, cracks of ember through them
+  charcoal: (x, y, sh) => { const k = (x * 2 + y) % 7, j = (x * 5 - y * 2 + 300) % 11;
+    if(k === 0 && j < 4) return hr(x, y) > 0.6 ? '#FFB43A' : '#C2361C';
+    return (x + y * 3) % 5 === 0 ? '#3E2620' : null; },
+  // Frostborn: frost crystals on the ice-blue, a white glint on each, and
+  // rime along the shaded side
+  frostweave: (x, y, sh) => { const u = (x + (Math.floor(y / 6) & 1) * 3) % 6, v = y % 6;
+    const F = ['..X..', 'X.X.X', '.XXX.', 'X.X.X', '..X..'][v]; if(F && u < 5 && F[u] === 'X') return u === 2 && v === 2 ? '#FFFFFF' : '#DDF3FF';
+    if(sh === 2 && (x + y) & 1) return '#BFE6FA';
+    return null; },
+  // and his trousers crazed like ice
+  icecrack: (x, y, sh) => { const k = (x * 3 + y * 2) % 13, j = (x * 2 - y + 400) % 9;
+    return k === 0 || j === 0 ? (sh ? '#8FC0DC' : '#A9D4EE') : hr(x * 9, y) > 0.96 ? '#FFFFFF' : null; },
+  // Glitch: scanlines, and blocks of the picture slipped sideways in magenta
+  // and cyan
+  glitchy: (x, y, sh) => { const b = Math.floor(y / 4), slip = hr(b, 77) > 0.7;
+    if(slip && x % 9 < 3) return hr(b, 78) > 0.5 ? '#FF2A6D' : '#2AE0FF';
+    if(y % 3 === 2) return sh ? '#0A5028' : '#1AA457';
+    return hr(x * 13, y * 7) > 0.97 ? '#FFFFFF' : null; },
+  // Disco: sequins in every colour, a shine on each
+  sequin: (x, y, sh) => { if((x + y) & 1) return null; const h = hr(x * 3 + 1, y * 5 + 2);
+    if(h > 0.82) return ['#FF4FB8', '#3FE0FF', '#FFE14A', '#7CFF6A', '#B04FFF'][Math.floor(hr(x, y + 9) * 5)];
+    if(h > 0.62) return sh ? '#C8C8D0' : '#FFFFFF';
+    return sh === 2 ? '#8A8A9A' : '#E8E8F0'; },
+  // the Banana Suit: ridges down the peel, brown freckles, the stalk dark
+  banana: (x, y, sh) => { if(x % 5 === 0) return sh ? '#A8861A' : '#E0BC2E';
+    if(x % 5 === 1 && !sh) return '#FFF0A0';
+    return hr(x * 7 + 3, y * 3) > 0.94 ? (hr(x, y) > 0.5 ? '#6A4A1A' : '#8A6A20') : null; },
+  // the Clown: dots each lit at the top and shadowed below, in white and
+  // yellow; patches on his trousers
+  polka: (x, y, sh) => { const u = x & 3, v = y & 3, alt = ((x >> 2) + (y >> 2)) & 1;
+    if(u === 1 && v === 1) return alt ? '#FFE14A' : '#FFFFFF';
+    if(u === 2 && v === 1) return alt ? '#FFE14A' : '#FFFFFF';
+    if(u === 1 && v === 2) return alt ? '#C8A820' : '#C8C8D0';
+    return null; },
+  clownpatch: (x, y, sh) => { const P = (x >= 16 && x <= 20 && y >= 44 && y <= 48) ? '#FFE14A' : (x >= 23 && x <= 27 && y >= 37 && y <= 41) ? '#4FD86A' : null;
+    if(P) return (x + y) % 4 === 0 ? '#1A1A1A' : P;
+    return (x + y * 2) % 9 === 0 ? (sh ? '#163E80' : '#3F8AFF') : null; },
+  // the Ghost: a sheet hanging in folds, each fold a shadow with the cloth
+  // lit beside it, the hem ragged
+  ghostsheet: (x, y, sh) => { const f = (x + Math.floor(y / 12)) % 6;
+    if(f === 0) return '#A5B0D6'; if(f === 1 && !sh) return '#FFFFFF';
+    if(y > 50 && hr(x, 4) > 0.6) return '#C9D2EE';
+    return null; },
+  // Dad on Holiday: hibiscus flowers, each a pink bloom with a yellow heart,
+  // green leaves by it, on the blue
+  hawaii: (x, y, sh) => { const cx0 = Math.floor(x / 7) * 7 + 3 + ((Math.floor(y / 7)) & 1) * 3, cy0 = Math.floor(y / 7) * 7 + 3, dx = x - cx0, dy = y - cy0;
+    if(dx === 0 && dy === 0) return '#FFE14A';
+    if(Math.abs(dx) + Math.abs(dy) === 1) return sh ? '#D84F88' : '#FF6FA8';
+    if(Math.abs(dx) === 1 && Math.abs(dy) === 1) return '#FF9AC8';
+    if(dx === 2 && dy === 1 || dx === -2 && dy === -1) return sh ? '#1E6A3A' : '#3EA85A';
+    return null; },
   rainbow:(x, y) => ['#E4302A', '#FF9A2A', '#FFE14A', '#4FD86A', '#3F8AFF', '#B04FFF'][(x + y) % 6],
   // the Demonic: cracks glowing through dark red, as through a crust on
   // lava. The edges between the cells of a jittered grid: where the nearest
