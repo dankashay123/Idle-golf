@@ -5,7 +5,8 @@
  *     his tips, mixed with the usual ones; with him chosen, never
  *   - as the ball drops she takes a pose of her own: a birdie or eagle the
  *     twirl, an albatross or ace the club held up high, a bogey or worse a
- *     lean on the club with a hand on her hip; a par none; him never; none
+ *     lean on the club with a hand on her hip; a par none; him never (but
+ *     for his own on an ace: acecheer); none
  *     in a catch-up or a wager; gone on the next hole
  *   - each pose draws her differently from her standing plain, and puts
  *     nothing below her feet or more than her height above her head

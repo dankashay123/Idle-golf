@@ -18773,8 +18773,11 @@ const Scene = {
     const her = (k) => isFem() && SAY_HER[k] && Math.random() < 0.6 ? SAY_HER[k] : SAY[k];
     if(d <= -1) this.fairyReact('cheer', one(her(d <= -3 ? 'huge' : d === -2 ? 'eagle' : 'birdie')));
     else if(d >= 1) this.fairyReact('sigh', one(her(d >= 2 ? 'worse' : 'bogey')));
-    // and a pose of hers alone as the ball drops (herPoseOf)
-    this.herPose = isFem() && !QUIET && !OFFLINE && !S.dgnRun && herPoseOf(d) ? { kind: herPoseOf(d), t0: this.t, hole: S.hole } : null;
+    // and a pose of hers alone as the ball drops (herPoseOf), and on an ace
+    // a celebration each of their own (his too: the user asked); for this
+    // hole only, played out inside the ace's held second
+    const pk = celebOf(d, isFem());
+    this.herPose = !QUIET && !OFFLINE && !S.dgnRun && pk ? { kind: pk, t0: this.t, hole: S.hole } : null;
     // no tip straight after he has had his say
     this.quipT = Math.max(this.quipT || 0, 10);
   },
@@ -19560,11 +19563,37 @@ function femTail(c, g, fx){
 let HER_POSE = null;
 const herPoseOf = d => d <= -3 ? 'aloft' : d <= -1 ? 'twirl' : d >= 1 ? 'hip' : null;
 const HER_TWIRL = 0.42;
+// On an ace each has a celebration of their own (the user asked for his
+// too), over in well under the second the ace is held, so nothing of it is
+// left for the next tee: he leaps with both arms up, the club high, lands
+// and pumps his fist twice; she twirls the club, then hops with it held up
+// high in both hands. After that the last frame is held, this hole only.
+const celebOf = (d, fem) => d <= -4 ? (fem ? 'herace' : 'hisace') : fem ? herPoseOf(d) : null;
+const CELEB_END = 0.9;
+// how far off the ground the leap carries them, in heights, at T seconds
+const celebLift = (kind, T) => kind === 'hisace' ? (T > 0 && T < 0.4 ? Math.sin(Math.PI * T / 0.4) * 0.16 : 0)
+  : kind === 'herace' ? (T > HER_TWIRL && T < HER_TWIRL + 0.36 ? Math.sin(Math.PI * (T - HER_TWIRL) / 0.36) * 0.14 : 0) : 0;
 // where her hand, the club's grip and head, and (on her hip) her far arm go,
 // side on, facing the target; sx, sy her near shoulder
 function herPoseAt(P, sx, sy, w, h, cl, bot){
   const T = P.t, ease = u => u < 0 ? 0 : u > 1 ? 1 : u * u * (3 - 2 * u);
   const hip = [[sx - w*0.10, sy + 1], [sx - w*0.30, sy + h*0.12], [sx - w*0.13, sy + h*0.235]];
+  if(P.kind === 'hisace'){
+    // up with both arms, the club high in his near hand; down, and his far
+    // fist pumped twice from over his head to his chest, then held there
+    const up = ease(T / 0.12), hx = sx + w*(0.30 - 0.22 * up), hy = sy + h*(0.24 - 0.58 * up);
+    const pumpU = T < 0.42 ? 0 : T < CELEB_END ? Math.abs(Math.sin((T - 0.42) / (CELEB_END - 0.42) * Math.PI * 2)) : 1;
+    const fy = sy - h*0.30 * up + (sy + h*0.10 - (sy - h*0.30)) * pumpU, fx = sx - w*(0.12 + 0.06 * pumpU);
+    const far = [[sx - w*0.10, sy + 1], [sx - w*(0.22 - 0.06 * up) , sy - h*0.06 * up + h*0.08 * pumpU], [fx, fy]];
+    return { hx, hy, gx: hx, gy: hy + h*0.04, tx: hx - w*0.06, ty: hy - cl*(0.25 + 0.6 * up), turn: 1, far };
+  }
+  if(P.kind === 'herace'){
+    // the twirl, then the club up high in both hands as she hops
+    if(T < HER_TWIRL) return herPoseAt({ kind: 'twirl', t: T }, sx, sy, w, h, cl, bot);
+    const up = ease((T - HER_TWIRL) / 0.12), hx = sx + w*(0.22 - 0.14 * up), hy = sy + h*(0.20 - 0.52 * up);
+    const far = [[sx - w*0.10, sy + 1], [sx - w*(0.16 - 0.04 * up), sy - h*0.14 * up], [hx - w*0.06, hy + h*0.02]];
+    return { hx, hy, gx: hx, gy: hy + h*0.03, tx: hx + w*0.12, ty: hy - cl*(0.3 + 0.55 * up), turn: 1, far };
+  }
   if(P.kind === 'aloft'){
     // up over her head, pumped once or twice
     const up = ease(T / 0.18), pump = T < 0.7 ? Math.abs(Math.sin(T * 9)) * h * 0.035 : 0;
@@ -21507,7 +21536,8 @@ Object.assign(Scene, {
     // Past the ball he comes up out of the posture, so the silhouette changes
     // rather than the same bent figure sliding around.
     // (her pose as the ball drops is stood up tall, as at the finish)
-    const her = atCam === undefined && ph === 0 && !walking && this.herPose && this.herPose.hole === S.hole && isFem() ? this.herPose : null;
+    const her = atCam === undefined && ph === 0 && !walking && this.herPose && this.herPose.hole === S.hole && this.hole === S.hole
+      && (isFem() ? this.herPose.kind !== 'hisace' : this.herPose.kind === 'hisace') ? this.herPose : null;
     const spr = waving ? SPRITE.gWave : walking ? SPRITE.gBack : ph > 0.60 || her ? SPRITE.gFinish : SPRITE.gAddr;
     // He stood 1:2.9 against the fairway. Real golf is nearer 1:17; a figure
     // that small is unreadable in pixel art, so 1:7 is the compromise. The
@@ -21535,8 +21565,10 @@ Object.assign(Scene, {
     // (in a crouch he is shorter, his feet where they were; just off the
     // stone, a little longer)
     const hh = h - Math.round(sq * h * 0.12) + (air > 0 && air < 0.3 ? Math.round(Math.sin(Math.PI * air / 0.3) * h * 0.04) : 0);
-    const y = p.y - hh - stepUp - hop - (FX && FX.bob ? Math.round(2 + Math.sin(this.t * 2.2) * 2) : 0);
-    return { p, ph, walking, spr, h: hh, w, x, y, wave: waving ? wave : 0, hopAir: air, hopSq: sq, hopping: !!hopping,
+    // (the leap of an ace's celebration: his shadow stays on the tee)
+    const leap = her ? Math.round(celebLift(her.kind, this.t - her.t0) * h) : 0;
+    const y = p.y - hh - stepUp - hop - leap - (FX && FX.bob ? Math.round(2 + Math.sin(this.t * 2.2) * 2) : 0);
+    return { p, ph, walking, spr, h: hh, w, x, y, leap, wave: waving ? wave : 0, hopAir: air, hopSq: sq, hopping: !!hopping,
              her: her ? { kind: her.kind, t: this.t - her.t0 } : null };
   },
   // A skin's ground (its circle on the grass under him) goes down before the
@@ -21625,7 +21657,7 @@ Object.assign(Scene, {
     try{ paintGolfer(c, x, y, w, h, ph, this.t, p.y, walking, G.wave ? 0 : G.hopping ? 0.12 : this.walkPh, spr, this.clubArc || (this.clubArc = []), PT >= 0 ? this.puttArm(PT) : undefined, true, G.wave); }
     finally{ LEGS_TUCK = 0; HER_POSE = null; }
     if(puttLate) puttLate();
-    if(atCam === undefined && SPRITE.caddie) this.drawCaddie(c, p.x - Math.round(w*0.42), y, w, h);
+    if(atCam === undefined && SPRITE.caddie) this.drawCaddie(c, p.x - Math.round(w*0.42), y + (G.leap || 0), w, h);
     if(atCam === undefined) this.drawBless(c, x, y, w, h, p.y, 'front');
     // (the last steps up to his ball on the green: it lies in front of him)
     if(walking && atCam === undefined && this.greenBall && this.hole === S.hole && !this.cupT){
