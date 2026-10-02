@@ -7846,7 +7846,7 @@ function showPlay(c, V, W, H, G, cup, dt){
   const bless = P.bless && A.u < 1.6 ? A.u : -1;
   if(fly){
     // up off the tee on his spinning club, a turn in the air and down
-    const lift = Math.round(Math.sin(Math.PI * Math.min(1, fly * 1.05)) * h * 0.45 + Math.sin(V.t * 9) * h * 0.04);
+    const lift = Math.round(Math.sin(Math.PI * Math.min(1, fly * 1.05)) * h * 0.3 + Math.sin(V.t * 9) * h * 0.04);
     if(FX && FX.ground) { FX.ground(c, golferG(x, y, w, h, 0, V.t, G, true, SPRITE.gBack)); c.globalAlpha = 1; }
     paintHeli(c, x, G - h - lift, w, h, V.t, G);
     if(SPRITE.caddie) Scene.drawCaddie.call(sc, c, x + Math.round(w * 0.08), G - h - lift, w, h);
