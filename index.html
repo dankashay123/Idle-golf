@@ -7368,11 +7368,22 @@ function showLook(id){
   if(F) return SHOW_LOOK[id] = { o: id, c: id, k: id, t: F.t[0], b: F.t[1], set: id };
   // (a caddie on its own: 'c:' and its id, the golfer plain and not drawn)
   if(id.startsWith('c:')) return SHOW_LOOK[id] = { o: STYLE_DEFAULT.o, c: id.slice(2), k: 'steel', t: 'plain', b: null, set: null };
+  // (a club, a ball or a wake on its own, the user asked: the plain golfer
+  // and caddie, with that one piece)
+  if(id.startsWith('k:')) return SHOW_LOOK[id] = { o: STYLE_DEFAULT.o, c: 'bib', k: id.slice(2), t: 'plain', b: null, set: null };
+  if(id.startsWith('t:')){ const T = styleDef('t', id.slice(2));
+    return SHOW_LOOK[id] = { o: STYLE_DEFAULT.o, c: 'bib', k: 'steel', t: isBallItem(T) ? 'plain' : id.slice(2), b: isBallItem(T) ? id.slice(2) : null, set: null }; }
   const O = styleDef('o', id), C = O && B.CADDIES.find(d => d.fx && d.fx === O.fx);
   return SHOW_LOOK[id] = { o: id, c: C ? C.id : 'bib', k: 'steel', t: 'plain', b: null, set: null };
 }
 const SHOW_SKINS = ['disco', 'glitch', 'frost', 'inferno', 'storm', 'void', 'midas'];
-const showName = id => FULL_SETS[id] ? FULL_SETS[id].n : id.startsWith('c:') ? (styleDef('c', id.slice(2)) || {}).n : (styleDef('o', id) || {}).n;
+const showName = id => FULL_SETS[id] ? FULL_SETS[id].n : /^[ckt]:/.test(id) ? (styleDef(id[0], id.slice(2)) || {}).n : (styleDef('o', id) || {}).n;
+// the clubs, and the balls and wakes, in the order their racks have them
+const showRack = (k, groups) => groups.flatMap(f => (k === 'k' ? B.CLUBS : B.TRAILS).filter(f)
+  .sort((a, b) => (b.top || 0) - (a.top || 0) || setRank(k, a.id) - setRank(k, b.id))).map(d => k + ':' + d.id);
+let SHOW_CLUBS = null, SHOW_TRAILS = null;
+const showClubs = () => SHOW_CLUBS || (SHOW_CLUBS = showRack('k', [d => d.cat !== 'fun', d => d.cat === 'fun']));
+const showTrails = () => SHOW_TRAILS || (SHOW_TRAILS = showRack('t', [d => d.cat === 'ball', d => !d.cat]));
 // the caddies, in the order the Caddie rack has them
 let SHOW_CADS = null;
 const showCads = () => SHOW_CADS || (SHOW_CADS = [d => d.cat === 'skin', d => d.cat !== 'skin' && d.cat !== 'major', d => d.cat === 'major']
@@ -7781,7 +7792,7 @@ const SHOW_PLAN = [{ k: 'shot', bless: 1, addr: 1.5, dur: 3.4 }, { k: 'shot', ad
 const SHOW_CYC = SHOW_PLAN.reduce((a, p) => a + p.dur, 0);
 function showStart(s){
   const night = SHOW ? SHOW.night : false;
-  SHOW = { set: s, list: FULL_SETS[s] ? SET_ORDER : s.startsWith('c:') ? showCads() : SHOW_SKINS, night, t: 0, balls: [], rest: [], arc: [], shot: -1, legend: null, flourish: null, raf: 0, last: 0 };
+  SHOW = { set: s, list: FULL_SETS[s] ? SET_ORDER : s.startsWith('c:') ? showCads() : s.startsWith('k:') ? showClubs() : s.startsWith('t:') ? showTrails() : SHOW_SKINS, night, t: 0, balls: [], rest: [], arc: [], shot: -1, legend: null, flourish: null, raf: 0, last: 0 };
 }
 function showBind(sheet){
   const go = s => { showStart(s); $('showN').textContent = showName(s); };
@@ -7816,10 +7827,15 @@ function showSize(){
 }
 addEventListener('resize', showSize);
 // where in the round the stage is: the part, its index and how far in
-function showAt(t){
-  const n = Math.floor(t / SHOW_CYC);
-  let u = t - n * SHOW_CYC;
-  for(let i = 0; i < SHOW_PLAN.length; i++){ const P = SHOW_PLAN[i]; if(u < P.dur) return { P, i, u, n: n * SHOW_PLAN.length + i }; u -= P.dur; }
+// (a club on its own: shots, an ace and a ride on it; a ball or a wake:
+// shots and an ace, nothing else to watch)
+const SHOW_PLAN_K = [{ k: 'shot', addr: 1.0, dur: 3.0 }, { k: 'shot', addr: 0.8, dur: 3.0 }, { k: 'ace', addr: 0.8, dur: 3.6 }, { k: 'fly', dur: 2.8 }];
+const SHOW_PLAN_T = [{ k: 'shot', addr: 1.0, dur: 3.0 }, { k: 'shot', addr: 0.8, dur: 3.0 }, { k: 'ace', addr: 0.8, dur: 3.6 }];
+function showAt(t, set){
+  const PL = set && set.startsWith('k:') ? SHOW_PLAN_K : set && set.startsWith('t:') ? SHOW_PLAN_T : SHOW_PLAN;
+  const cyc = PL.reduce((a, p) => a + p.dur, 0), n = Math.floor(t / cyc);
+  let u = t - n * cyc;
+  for(let i = 0; i < PL.length; i++){ const P = PL[i]; if(u < P.dur) return { P, i, u, n: n * PL.length + i }; u -= P.dur; }
   return { P: SHOW_PLAN[0], i: 0, u: 0, n: 0 };
 }
 // the ground and the sky it plays under, by day or by night
@@ -7881,7 +7897,7 @@ function showDraw(cv, dt){
 }
 function showPlay(c, V, W, H, G, cup, dt){
   if(V.set.startsWith('c:')) return showCaddie(c, V, W, G);
-  const A = showAt(V.t), P = A.P, O = outfitNow(), FX = STYLEFX[O.fx] || null;
+  const A = showAt(V.t, V.set), P = A.P, O = outfitNow(), FX = STYLEFX[O.fx] || null;
   const Z = SHOW_Z, h = 48, w = Math.round(h * 40 / 58), x = Math.round(W * 0.42), bx = Math.round(x + w * 1.19), rb = Math.max(1, Math.round(h / 26)), lb = 2.1;
   const bob = FX && FX.bob ? Math.round(1 + Math.sin(V.t * 2.2)) : 0;
   // the caddie stands where he does on the course, his own clock
@@ -8047,7 +8063,7 @@ function renderShop(){
       // (worn, it can be taken off, back to the plain one: not the plain one)
       const off = worn && d.id !== STYLE_DEFAULT[k];
       // (the badge says worn only when the button does not: WORN twice over)
-      return shopCard({ img, full, art: k === 'o' && SHOW_SKINS.includes(d.id) ? d.id : k === 'c' ? 'c:' + d.id : '', on: worn || !!d.top || (!!won && own), badge: full ? 'FULL SET' : off ? 'WORN' : d.top ? (d.top > 1 ? 'MYTHIC' : 'LEGENDARY') : won && own ? 'CHAMPION' : '', head: d.n,
+      return shopCard({ img, full, art: k === 'o' && SHOW_SKINS.includes(d.id) ? d.id : k === 'c' || k === 'k' || k === 't' ? k + ':' + d.id : '', on: worn || !!d.top || (!!won && own), badge: full ? 'FULL SET' : off ? 'WORN' : d.top ? (d.top > 1 ? 'MYTHIC' : 'LEGENDARY') : won && own ? 'CHAMPION' : '', head: d.n,
         sub: own ? '' : '<button class="mini try" data-try="' + k + '.' + d.id + '">Try it</button>',
         price: off ? 'UNEQUIP' : worn ? 'WORN' : own ? 'WEAR' : won ? 'WIN IT' : sovFmt(d.cost),
         note: worn || own ? '' : won ? won.short : B.SOV.toLowerCase(),
@@ -8092,12 +8108,18 @@ function renderShop(){
         + shelf('Caddie Outfits', 'c', B.CADDIES.filter(d => d.cat !== 'skin' && d.cat !== 'major'), caddieUrl)
         + shelf('Major Winners', 'c', B.CADDIES.filter(d => d.cat === 'major'), caddieUrl);
     }
-    else if(styleCat === 'clubs')
-      h += shelf('Clubs', 'k', B.CLUBS.filter(d => d.cat !== 'fun'), clubUrl)
+    else if(styleCat === 'clubs'){
+      // over them the stage, the plain golfer swinging the club on show
+      if(!SHOW || !SHOW.set.startsWith('k:')) showStart('k:' + clubNow().id);
+      h += showStageHtml() + shelf('Clubs', 'k', B.CLUBS.filter(d => d.cat !== 'fun'), clubUrl)
         + shelf('Just for Fun', 'k', B.CLUBS.filter(d => d.cat === 'fun'), clubUrl);
-    else
-      h += shelf('Balls', 't', B.TRAILS.filter(t => t.cat === 'ball'), trailUrl)
+    }
+    else{
+      // and the ball or the wake on show flying out to the flag
+      if(!SHOW || !SHOW.set.startsWith('t:')) showStart('t:' + (ballNow() || trailNow()).id);
+      h += showStageHtml() + shelf('Balls', 't', B.TRAILS.filter(t => t.cat === 'ball'), trailUrl)
         + shelf('Ball Trails', 't', B.TRAILS.filter(t => !t.cat), trailUrl);
+    }
   }
 
   if(shopSub === 'offers'){
