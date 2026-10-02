@@ -21713,6 +21713,7 @@ Object.assign(Scene, {
     try{ paintGolfer(c, x, y, w, h, ph, this.t, p.y, walking, G.wave ? 0 : G.hopping ? 0.12 : this.walkPh, spr, this.clubArc || (this.clubArc = []), PT >= 0 ? this.puttArm(PT) : undefined, true, G.wave); }
     finally{ LEGS_TUCK = 0; HER_POSE = null; }
     if(puttLate) puttLate();
+    if(atCam === undefined && ph === 0 && !walking) this.coldBreath(c, golferG(x, y, w, h, 0, this.t, p.y, false, spr));
     if(atCam === undefined && SPRITE.caddie) this.drawCaddie(c, p.x - Math.round(w*0.42), y + (G.leap || 0), w, h);
     if(atCam === undefined) this.drawBless(c, x, y, w, h, p.y, 'front');
     // (the last steps up to his ball on the green: it lies in front of him)
@@ -21739,6 +21740,22 @@ Object.assign(Scene, {
   // A caddie perk's blessing: a column of the perk's own light comes down
   // from the top of the view onto the golfer, lands in a ring at his feet
   // and fades, with motes of it drifting down; about a second in all.
+  // His breath in the cold (a frosty morning, or winter on the course): a
+  // little cloud off his face every few seconds, drifting out and gone in
+  // under a second; not in a wager, and the Frostborn has its own
+  coldBreath(c, g){
+    if(S.dgnRun || outfitNow().fx === 'frostborn' || !(this.frost || (this.look && this.look.season === 'Winter'))) return;
+    const u = ((this.t + 0.7) / 2.8) % 1, D = 0.32;
+    if(u >= D) return;
+    const E = eyeAt(g); if(!E || g.h < 14) return;
+    // (in pixels no smaller than one a step, so it reads at his size)
+    const p = Math.max(1, g.h / 58), q = u / D, x = E.x + 2 * p + q * 5 * p, y = E.y + 2 * p - q * 2 * p;
+    const n = ((this.t + 0.7) / 2.8) | 0;
+    for(let i = 0; i < 9; i++){ if(hr(i + n * 9, 711) < q * 0.8) continue;
+      c.fillStyle = this.night ? (i & 1 ? 'rgba(220,230,240,.6)' : 'rgba(180,196,212,.55)') : (i & 1 ? '#FFFFFF' : '#E4EEF4');
+      const r = Math.max(1, Math.round(p * (0.6 + q * 0.8)));
+      c.fillRect(Math.round(x + (hr(i, 712) - 0.5) * 4 * p * (0.4 + q)), Math.round(y + (hr(i, 713) - 0.5) * 2.4 * p * (0.4 + q)), r, r); }
+  },
   drawBless(c, x, y, w, h, bot, layer){
     const B2 = this.bless;
     if(!B2) return;

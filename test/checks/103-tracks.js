@@ -6,6 +6,9 @@
  *   - a ball coming down in the snow leaves its mark (the last dozen kept),
  *     drawn ahead of him, none of it below the ground's line at its own
  *     distance; none in other seasons or a wager
+ *   - his breath in the cold (winter, or a frosty morning): a small cloud
+ *     off his face for under a second every few seconds, close
+ *     to him; none in a warm season, a wager, or on the Frostborn (its own)
  *   - a new hole starts clean
  */
 'use strict';
@@ -60,6 +63,27 @@ module.exports = {
           S.dgnRun = { id: 'x' }; Scene.marks = null; Scene.noteMark(5, 0); if (Scene.marks) f('a mark laid in a wager'); delete S.dgnRun;
           S.dgnRun = { id: 'x' }; Scene.tracks = null; Scene.noteTrack(0, 10); if (Scene.tracks) f('tracks laid in a wager'); delete S.dgnRun;
         }
+        // his breath
+        { const breath = (sea, extra) => { SEASON_FORCE = sea; DEV.course(home); hideSheet(); startHole(); S.chaos = { n: 'Fair' }; Scene.newHole(S.hole, S.tier); Scene.frost = false;
+            if (extra) extra(); for (const k in SHOWSPR) delete SHOWSPR[k]; buildSprites();
+            const cv = document.createElement('canvas'); cv.width = 200; cv.height = 200; const cc = cv.getContext('2d');
+            const spr = SPRITE.gAddr, h = 60, w = Math.round(h * spr.w / spr.h), g = golferG(60, 80, w, h, 0, 0, 140, false, spr);
+            let on = 0, off = 0, far = 0;
+            for (let t = 0; t < 2.8; t += 0.05) { Scene.t = 2.8 * 5 - 0.7 + t; cc.clearRect(0, 0, 200, 200); Scene.coldBreath(cc, g); const d = cc.getImageData(0, 0, 200, 200).data; let n = 0;
+              for (let i = 0; i < d.length; i += 4) if (d[i + 3]) { n++; const x = (i >> 2) % 200, y = (i >> 2) / 200 | 0; if (x < 60 || x > 60 + w * 1.6 || y < 80 - 10 || y > 80 + h * 0.5) far++; }
+              if (n) on++; else off++; }
+            return { on, off, far }; };
+          const W = breath(2), Su = breath(0), Fr = breath(0, () => { Scene.frost = true; });
+          const Wg = breath(2, () => { S.dgnRun = { id: 'x' }; }); delete S.dgnRun;
+          const Ff = breath(2, () => { S.outfit = 'frost'; S.styleOwn = Object.assign({}, S.styleOwn, { 'o:frost': 1 }); });
+          o.breath = W.on + ' of ' + (W.on + W.off) + ' steps';
+          if (!W.on || W.on > (W.on + W.off) * 0.4) f('his breath in winter on ' + o.breath);
+          if (W.far) f(W.far + ' pixels of breath far from his face');
+          if (!Fr.on) f('no breath on a frosty morning');
+          if (Su.on) f('breath on a warm day');
+          if (Wg.on) f('breath in a wager');
+          if (Ff.on) f('a second breath on the Frostborn');
+          SEASON_FORCE = 2; }
         if (!o.markHoles || o.marks < o.markHoles * 0.6) f('marks seen on only ' + o.marks + ' of ' + o.markHoles + ' holes');
         if (o.frames < 10 || o.seen < o.frames * 0.6) f('tracks seen in only ' + o.seen + ' of ' + o.frames + ' frames');
         Scene.tracks = { lo: 0, hi: 1 }; Scene.marks = [{ d: 5, lat: 0, t: 0 }]; S.hole++; startHole(); Scene.draw(0, D); if (Scene.tracks || Scene.marks) f('the next hole kept the last one\'s tracks or marks');
@@ -71,6 +95,7 @@ module.exports = {
     });
     if (r.fails.length) throw new Error(r.fails.join('\n'));
     return ['a walk in winter leaves tracks and a ball its mark, in other seasons and wagers none; a new hole starts clean',
+      'his breath in the cold on ' + r.breath + ', none on a warm day, in a wager or on the Frostborn',
       'marks seen on ' + r.marks + ' of ' + r.markHoles + ' holes, none below the ground',
       'tracks seen behind him in ' + r.seen + ' of ' + r.frames + ' frames, a few pixels each'];
   }
