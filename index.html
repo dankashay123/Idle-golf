@@ -18286,7 +18286,9 @@ Object.assign(Scene, {
     }else if(p.kind === 4){
       // a lamp by the tee: a dark post, a lantern on it, its warm light
       if(p.d < this.camD - CAM_BACK + ROPE_REL) return;
-      if(pr.x < -20 || pr.x > VW + 20) return;
+      // (not with its lantern off the side of the stage: half its light
+      // stood at the edge of the view with nothing giving it off)
+      if(pr.x < 3 || pr.x > VW - 3) return;
       const t = this.proj(p.d, p.x, 1.05), th = Math.max(1, Math.round(pr.s * 0.10 * US));
       c.fillStyle = '#1C1C22'; c.fillRect(pr.x - (th >> 1), t.y, th, pr.y - t.y);
       const k = clamp(Math.round(LAT * pr.s * 0.07), 1, 3);
