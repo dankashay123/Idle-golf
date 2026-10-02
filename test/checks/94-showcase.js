@@ -22,7 +22,7 @@ module.exports = {
       try {
         hideSheet(); QUIET = false; S.sov = 1e9;
         const before = { out: outfitNow().id, cad: caddieNow().id, club: clubNow().id, tr: trailNow().id, spr: SPRITE.gAddr, cspr: SPRITE.caddie, leg: Scene.legend };
-        for (const cat of ['golfer', 'caddie', 'clubs', 'balls']) { styleCat = cat; openShop('style'); if (document.getElementById('showCv')) f('the showcase is on the ' + cat + ' rack'); }
+        for (const cat of ['caddie', 'clubs', 'balls']) { styleCat = cat; openShop('style'); if (document.getElementById('showCv')) f('the showcase is on the ' + cat + ' rack'); }
         styleCat = 'sets'; openShop('style');
         const cv = document.getElementById('showCv');
         if (!cv) { f('no showcase on the Sets rack'); return o; }

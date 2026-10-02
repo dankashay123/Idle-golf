@@ -429,6 +429,7 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
   box-shadow:inset 0 0 0 1px #2A1B0E,0 1px 0 #08110C}
 .shelf{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;padding:10px 6px 6px}
 .shelf.two{grid-template-columns:1fr 1fr}
+.shelf.three{grid-template-columns:repeat(3,1fr);row-gap:8px}
 .plank{height:5px;background:#6B4424;border-top:1px solid #8A5A30;border-bottom:1px solid #3A2512}
 .ci{text-align:center;min-width:0}
 .ci img{width:36px;height:36px;image-rendering:pixelated;image-rendering:crisp-edges;display:block;margin:0 auto 3px}
@@ -7332,18 +7333,29 @@ const styleOwned = (k, id) => { const d = styleDef(k, id);
   return !!d && ((d.cost === 0 && !d.major) || !!(S.styleOwn && S.styleOwn[k + ':' + id])); };
 // "Try it": a look worn for ten seconds without buying it. Never saved.
 let PREVIEW = null;
-// the set on the shop's showcase, while its stage is drawn (and only then)
+// the set (or skin) on the shop's showcase, while its stage is drawn (and only then)
 let SHOWSET = null;
-const previewOf = k => SHOWSET ? (k === 't' ? null : styleDef(k, SHOWSET)) : PREVIEW && PREVIEW.k === k && Date.now() < PREVIEW.until ? styleDef(k, PREVIEW.id) : null;
+// what is worn on it: a set whole; a skin with its own caddie, a plain club and ball
+const SHOW_LOOK = {};
+function showLook(id){
+  if(SHOW_LOOK[id]) return SHOW_LOOK[id];
+  const F = FULL_SETS[id];
+  if(F) return SHOW_LOOK[id] = { o: id, c: id, k: id, t: F.t[0], b: F.t[1], set: id };
+  const O = styleDef('o', id), C = O && B.CADDIES.find(d => d.fx && d.fx === O.fx);
+  return SHOW_LOOK[id] = { o: id, c: C ? C.id : 'bib', k: 'steel', t: 'plain', b: null, set: null };
+}
+const SHOW_SKINS = ['disco', 'glitch', 'frost', 'inferno', 'storm', 'void', 'midas'];
+const showName = id => FULL_SETS[id] ? FULL_SETS[id].n : (styleDef('o', id) || {}).n;
+const previewOf = k => SHOWSET ? (k === 't' ? null : styleDef(k, showLook(SHOWSET)[k])) : PREVIEW && PREVIEW.k === k && Date.now() < PREVIEW.until ? styleDef(k, PREVIEW.id) : null;
 const outfitNow = () => previewOf('o') || styleDef('o', S.outfit) || B.OUTFITS[0];
 // A wake and a ball are worn together (the user: a set's one tap "does not
 // equip the ball"): the wake, a ribbon behind the ball, in S.trail; the
 // ball, a ball of its own, in S.ball. (A ball put where the wake goes, as
 // before, still counts as the ball.)
 const isBallItem = d => !!d && d.cat === 'ball';
-const trailNow  = () => { if(SHOWSET) return styleDef('t', FULL_SETS[SHOWSET].t[0]); const P = previewOf('t'); if(P && !isBallItem(P)) return P;
+const trailNow  = () => { if(SHOWSET) return styleDef('t', showLook(SHOWSET).t); const P = previewOf('t'); if(P && !isBallItem(P)) return P;
   const d = styleDef('t', S.trail); return d && !isBallItem(d) ? d : B.TRAILS[0]; };
-const ballNow   = () => { if(SHOWSET) return styleDef('t', FULL_SETS[SHOWSET].t[1]); const P = previewOf('t'); if(P && isBallItem(P)) return P;
+const ballNow   = () => { if(SHOWSET){ const b = showLook(SHOWSET).b; return b ? styleDef('t', b) : null; } const P = previewOf('t'); if(P && isBallItem(P)) return P;
   const b = styleDef('t', S.ball); if(isBallItem(b)) return b;
   const d = styleDef('t', S.trail); return isBallItem(d) ? d : null; };
 // what the ball looks like: its own, or the wake's
@@ -7367,7 +7379,7 @@ const setRank = (k, id) => { const i = SET_ORDER.indexOf(fullSetOf(k, id)); retu
 function fullSetOf(k, id){ for(const s in FULL_SETS) if(k === 't' ? FULL_SETS[s].t.includes(id) : id === s) return s; return null; }
 // the top set he wears in full (never while trying one on)
 function fullSet(){
-  if(SHOWSET) return SHOWSET;
+  if(SHOWSET) return showLook(SHOWSET).set;
   // (its wake and its ball both)
   const B0 = ballNow(), T0 = trailNow();
   for(const s in FULL_SETS) if(S.outfit === s && S.caddie === s && S.club === s && T0.id === FULL_SETS[s].t[0] && B0 && B0.id === FULL_SETS[s].t[1]
@@ -7710,7 +7722,12 @@ const ribbon = t => '<div class="srib"><span>' + t + '</span></div>';
    day or by night, at a tap. Drawn with the set's own pictures, built
    once a set and swapped in only while the stage is drawn, so the round
    behind the shop goes on in what he wears. ---- */
-const SHOW_W = 120, SHOW_H = 64;
+// (at twice the pixels it was, and him a little further off: the user found
+// it "very low pixel" beside the course; Z the stage's own scale)
+// (its width the stage's own: as wide as the shop, at the course's own
+// pixel size, so he looks on it as he does on the course)
+let SHOW_W = 240;
+const SHOW_H = 128, SHOW_Z = SHOW_H / 64;
 let SHOW = null;
 const SHOWSPR = {};
 const SHOW_KEYS = ['gAddr', 'gFinish', 'gWalk', 'gBack', 'gFly', 'gWave', 'caddie'];
@@ -7733,13 +7750,13 @@ const SHOW_PLAN = [{ k: 'shot', bless: 1, addr: 1.5, dur: 3.4 }, { k: 'shot', ad
 const SHOW_CYC = SHOW_PLAN.reduce((a, p) => a + p.dur, 0);
 function showStart(s){
   const night = SHOW ? SHOW.night : false;
-  SHOW = { set: s, night, t: 0, balls: [], rest: [], arc: [], shot: -1, legend: null, raf: 0, last: 0 };
+  SHOW = { set: s, list: FULL_SETS[s] ? SET_ORDER : SHOW_SKINS, night, t: 0, balls: [], rest: [], arc: [], shot: -1, legend: null, flourish: null, raf: 0, last: 0 };
 }
 function showBind(sheet){
-  const go = s => { showStart(s); $('showN').textContent = FULL_SETS[s].n; };
+  const go = s => { showStart(s); $('showN').textContent = showName(s); };
   sheet.querySelectorAll('[data-show]').forEach(b => b.onclick = () => {
-    const i = SET_ORDER.indexOf(SHOW.set), n = SET_ORDER.length;
-    go(SET_ORDER[(i + +b.dataset.show + n) % n]); });
+    const L = SHOW.list, i = L.indexOf(SHOW.set), n = L.length;
+    go(L[(i + +b.dataset.show + n) % n]); });
   $('showNight').onclick = () => { SHOW.night = !SHOW.night; $('showNight').textContent = SHOW.night ? 'Day' : 'Night'; };
   sheet.querySelectorAll('.cart[data-art]').forEach(a => a.onclick = () => {
     go(a.dataset.art); const st = sheet.querySelector('.showcase'); if(st && st.scrollIntoView) st.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); });
@@ -7756,12 +7773,17 @@ function showBind(sheet){
   };
   SHOW.raf = requestAnimationFrame(step);
 }
-// as wide as fits, at a whole number of screen pixels to each of its own
+// as wide as fits, each of its pixels as big as the course's are
 function showSize(){
   const cv = $('showCv'); if(!cv) return;
-  const k = Math.max(1, Math.floor(Math.min(440, cv.parentNode.parentNode.clientWidth || innerWidth - 32) / SHOW_W));
-  cv.style.width = SHOW_W * k + 'px'; cv.style.height = SHOW_H * k + 'px';
+  const dpr = Math.min(3, window.devicePixelRatio || 1), sc = clamp(Math.round(dpr * PX_CSS), 2, 8);
+  const cw = Math.min(480, cv.parentNode.parentNode.clientWidth || innerWidth - 32);
+  SHOW_W = Math.max(160, Math.floor(cw * dpr / sc));
+  if(cv.width !== SHOW_W) cv.width = SHOW_W;
+  cv.height = SHOW_H;
+  cv.style.width = SHOW_W * sc / dpr + 'px'; cv.style.height = SHOW_H * sc / dpr + 'px';
 }
+addEventListener('resize', showSize);
 // where in the round the stage is: the part, its index and how far in
 function showAt(t){
   const n = Math.floor(t / SHOW_CYC);
@@ -7773,13 +7795,13 @@ function showAt(t){
 // (the sky, the woods and the grass baked once by day and once by night)
 const SHOW_BG = {};
 function showStage(c, W, H, G, night, t){
-  const key = W + "|" + H + "|" + (night ? 1 : 0), FX0 = W - 14;
+  const Z = SHOW_Z, key = W + "|" + H + "|" + (night ? 1 : 0), FX0 = W - 14 * Z;
   if(!SHOW_BG[key]){ const cv = document.createElement('canvas'); cv.width = W; cv.height = H; showBack(cv.getContext('2d'), W, H, G, night, FX0); SHOW_BG[key] = cv; }
   c.globalAlpha = 1; c.drawImage(SHOW_BG[key], 0, 0);
-  if(night) for(let i = 0; i < 26; i++){ const x = Math.floor(hr(i, 901) * W), y = Math.floor(hr(i, 902) * G * 0.7);
-    if(Math.hypot(x - 14, y - 7) < 6) continue;
+  if(night) for(let i = 0; i < 60; i++){ const x = Math.floor(hr(i, 901) * W), y = Math.floor(hr(i, 902) * G * 0.7);
+    if(Math.hypot(x - 14 * Z, y - 7 * Z) < 6 * Z) continue;
     c.fillStyle = Math.sin(t * 2 + i * 1.9) > 0.6 ? '#FFFFFF' : '#8A96C8'; c.fillRect(x, y, 1, 1); }
-  c.fillStyle = Math.floor(t * 2) & 1 ? PX.flag : PX.flag2; c.fillRect(FX0 + 1, G - 18, 6, 3); c.fillRect(FX0 + 1, G - 15, 4, 1);
+  c.fillStyle = Math.floor(t * 2) & 1 ? PX.flag : PX.flag2; c.fillRect(FX0 + 1, G - 18 * Z, 6 * Z, 3 * Z); c.fillRect(FX0 + 1, G - 15 * Z, 4 * Z, Z);
   return FX0;
 }
 function showBack(c, W, H, G, night, FX0){
@@ -7788,26 +7810,29 @@ function showBack(c, W, H, G, night, FX0){
     for(let x = 0; x < W; x++){ c.fillStyle = sky[i < 2 && d > 0.5 && ((x + y) & 1) ? i + 1 : i]; c.fillRect(x, y, 1, 1); } }
   if(night){
     // a crescent moon
-    for(let j = -4; j <= 4; j++) for(let i = -4; i <= 4; i++) if(i * i + j * j <= 14 && (i - 2) * (i - 2) + (j + 1) * (j + 1) > 10){
-      c.fillStyle = i + j < -2 ? '#FFFBE8' : '#D8D4B8'; c.fillRect(14 + i, 7 + j, 1, 1); }
+    const Z = SHOW_Z, R = 4 * Z;
+    for(let j = -R; j <= R; j++) for(let i = -R; i <= R; i++) if(i * i + j * j <= 14 * Z * Z && (i - 2 * Z) * (i - 2 * Z) + (j + Z) * (j + Z) > 10 * Z * Z){
+      c.fillStyle = i + j < -2 * Z ? '#FFFBE8' : '#D8D4B8'; c.fillRect(14 * Z + i, 7 * Z + j, 1, 1); }
   }
   // woods along the back, the far fairway under them
   const far = night ? ['#0C1E18', '#12281E'] : ['#3E7A44', '#4C8C4E'];
+  const Z = SHOW_Z;
   for(let x = 0; x < W; x++){
-    const top = Math.round(G - 9 - 3 * Math.sin(x * 0.21) - 2 * Math.sin(x * 0.53 + 1) - (hr(x >> 2, 903) > 0.6 ? 2 : 0));
-    c.fillStyle = far[0]; c.fillRect(x, top, 1, G - 3 - top);
-    c.fillStyle = far[1]; c.fillRect(x, G - 3, 1, 3);
+    const u = x / Z, top = Math.round(G - Z * (9 + 3 * Math.sin(u * 0.21) + 2 * Math.sin(u * 0.53 + 1) + (hr(Math.floor(u) >> 2, 903) > 0.6 ? 2 : 0)) - Math.round(Math.abs(Math.sin(x * 0.9)) * Z * 0.8));
+    c.fillStyle = far[0]; c.fillRect(x, top, 1, G - 3 * Z - top);
+    if(((x * 7) % 5) === 0){ c.fillStyle = night ? '#163024' : '#356A3C'; c.fillRect(x, top + 2, 1, Math.max(1, G - 3 * Z - top - 4)); }
+    c.fillStyle = far[1]; c.fillRect(x, G - 3 * Z, 1, 3 * Z);
   }
   // the tee's grass, mown in stripes, and the green round the flag
   const gr = night ? ['#173A24', '#1C4229'] : ['#4E8F3A', '#58993F'];
-  for(let y = G; y < H; y++) for(let x = 0; x < W; x++){ c.fillStyle = gr[((x + (y - G) * 2) >> 3) & 1]; c.fillRect(x, y, 1, 1); }
+  for(let y = G; y < H; y++) for(let x = 0; x < W; x++){ c.fillStyle = gr[((x + (y - G) * 2) >> 4) & 1]; c.fillRect(x, y, 1, 1); }
   c.fillStyle = night ? '#225030' : '#6AB04C';
-  for(let y = G; y < G + 4; y++){ const hw = Math.round(16 * Math.sqrt(1 - Math.pow((y - G - 1.5) / 2.5, 2))); c.fillRect(FX0 - hw, y, hw * 2, 1); }
-  c.fillStyle = '#0A140C'; c.fillRect(FX0 - 1, G + 1, 3, 1);
-  c.fillStyle = '#C8CDD0'; c.fillRect(FX0, G - 18, 1, 19);
+  for(let y = G; y < G + 4 * Z; y++){ const hw = Math.round(16 * Z * Math.sqrt(Math.max(0, 1 - Math.pow((y - G - 1.5 * Z) / (2.5 * Z), 2)))); c.fillRect(FX0 - hw, y, hw * 2, 1); }
+  c.fillStyle = '#0A140C'; c.fillRect(FX0 - Z, G + Z, 3 * Z, Z);
+  c.fillStyle = '#C8CDD0'; c.fillRect(FX0, G - 18 * Z, Math.max(1, Z >> 1), 19 * Z);
 }
 function showDraw(cv, dt){
-  const V = SHOW, c = cv.getContext('2d'), W = SHOW_W, H = SHOW_H, G = H - 10;
+  const V = SHOW, c = cv.getContext('2d'), W = cv.width, H = cv.height, G = H - 10 * SHOW_Z;
   c.imageSmoothingEnabled = false;
   V.t += dt;
   const cup = showStage(c, W, H, G, V.night, V.t);
@@ -7815,7 +7840,7 @@ function showDraw(cv, dt){
   const SP = showSprites(V.set), keep = {};
   for(const k of SHOW_KEYS){ keep[k] = SPRITE[k]; SPRITE[k] = SP[k]; }
   const was = { set: SHOWSET, leg: Scene.legend, fl: Scene.flourish, night: Scene.night };
-  SHOWSET = V.set; Scene.legend = V.legend; Scene.flourish = null; Scene.night = V.night;
+  SHOWSET = V.set; Scene.legend = V.legend; Scene.flourish = V.flourish; Scene.night = V.night;
   try{ showPlay(c, V, W, H, G, cup, dt); }
   finally {
     SHOWSET = was.set; Scene.legend = was.leg; Scene.flourish = was.fl; Scene.night = was.night;
@@ -7825,13 +7850,13 @@ function showDraw(cv, dt){
 }
 function showPlay(c, V, W, H, G, cup, dt){
   const A = showAt(V.t), P = A.P, O = outfitNow(), FX = STYLEFX[O.fx] || null;
-  const h = 30, w = Math.round(h * 40 / 58), x = 52, bx = Math.round(x + w * 1.19);
+  const Z = SHOW_Z, h = 48, w = Math.round(h * 40 / 58), x = Math.round(W * 0.42), bx = Math.round(x + w * 1.19), rb = Math.max(1, Math.round(h / 26)), lb = 2.1;
   const bob = FX && FX.bob ? Math.round(1 + Math.sin(V.t * 2.2)) : 0;
   // the caddie stands where he does on the course, his own clock
   const sc = V.sc || (V.sc = Object.assign(Object.create(Scene), { fairyMoveNow: () => null, fairyNow: () => null, fairyDy: () => 0, fairyCast: null }));
   sc.t = V.t;
   // the caddie's own trick (each set's caddie has one), as on the course
-  const MV = P.k === 'move' ? FAIRY_MOVES.find(m => m.only === caddieNow().fx) : null, mu = A.u - 0.3;
+  const MV = P.k === 'move' ? FAIRY_MOVES.find(m => m.only === cadKey(caddieNow())) : null, mu = A.u - 0.3;
   V.move = MV && mu >= 0 && mu < MV.dur ? { kind: MV.id, q: mu / MV.dur, T: mu } : null;
   sc.fairyMoveNow = () => V.move;
   // the swing, by the part of the round
@@ -7839,10 +7864,12 @@ function showPlay(c, V, W, H, G, cup, dt){
   if(P.k === 'fly') fly = A.u / P.dur;
   else if(P.k === 'move') ph = 0;
   else { const s0 = P.addr, sd = 0.9; ph = A.u < s0 ? 0 : A.u < s0 + sd ? (A.u - s0) / sd : 1; }
+  // (the last ball gone as he starts his swing: one ball out at a time)
+  if(ph > 0 && P.k !== 'fly' && P.k !== 'move') V.rest = [];
   if(ph >= 0.5 && V.shot !== A.n && P.k !== 'fly' && P.k !== 'move'){
     V.shot = A.n;
     const r = hash32(A.n + 11) / 4294967296, ace = P.k === 'ace';
-    V.balls.push({ t: 0, dur: ace ? 1.25 : 1.1 + r * 0.25, x0: bx, x1: ace ? cup : cup - 14 + Math.round(r * 9), top: 20 + r * 6, seed: r * 100, ace });
+    V.balls.push({ t: 0, dur: ace ? 1.25 : 1.1 + r * 0.25, x0: bx, x1: ace ? cup : cup - 14 * Z + Math.round(r * 9 * Z), top: (20 + r * 6) * Z, seed: r * 100, ace });
   }
   // at night the dearest skins light the grass round him
   const NG = NIGHT_GLOW[O.fx], spr = fly ? SPRITE.gFly : ph > 0.6 ? SPRITE.gFinish : SPRITE.gAddr;
@@ -7860,31 +7887,37 @@ function showPlay(c, V, W, H, G, cup, dt){
     // (his ground, the blessing's back half, then him, as the course has it)
     if(FX && FX.ground){ FX.ground(c, g0); c.globalAlpha = 1; c.globalCompositeOperation = 'source-over'; }
     if(bless >= 0) showBless(c, x, w, h, G, 'back', bless);
-    if(ph < 0.5) drawLyingBall(c, bx + 0.5, G - 1, 1.3, V.t);
     paintGolfer(c, x, y, w, h, ph === 1 ? 0.999 : ph, V.t, G, false, 0, spr, V.arc, undefined, true);
     if(SPRITE.caddie) Scene.drawCaddie.call(sc, c, x, y, w, h);
+    // (his ball in front of him, as on the course: under him a broad
+    // skin's robe and the club head hid it)
+    if(ph < 0.5) drawLyingBall(c, bx + 1, G - 2, lb, V.t);
     if(bless >= 0) showBless(c, x, w, h, G, 'front', bless);
   }
   // the balls: the set's wake and its ball, out to the flag
-  for(let i = V.rest.length - 1; i >= 0; i--){ const b = V.rest[i]; b.t += dt; if(b.t > 3){ V.rest.splice(i, 1); continue; } drawLyingBall(c, b.x, G - 1, 1.3, V.t); }
-  const at = (b, q) => ({ x: b.x0 + (b.x1 - b.x0) * q, y: G - 1 - b.top * 4 * q * (1 - q) + (b.ace ? 3 * q * q : 0), s: 1 });
+  for(const b of V.rest){ b.t += dt; drawLyingBall(c, b.x, G - 2, lb, V.t); }
+  const at = (b, q) => ({ x: b.x0 + (b.x1 - b.x0) * q, y: G - rb - b.top * 4 * q * (1 - q) + (b.ace ? 3 * Z * q * q : 0), s: 1 });
   const BT = BALLFX[trailNow().fx], BN = ballNow(), BB = BN && BALLFX[BN.fx];
   for(let i = V.balls.length - 1; i >= 0; i--){
     const b = V.balls[i]; b.t += dt;
     const q = b.t / b.dur;
     if(q >= 1){ V.balls.splice(i, 1);
       // in the cup: his moment, as on the course
-      if(b.ace) V.legend = { t0: V.t, big: true, dur: LEGEND_BIG }; else V.rest.push({ x: b.x1, t: 0 });
+      // (a skin's own: a flourish of its own, as on the course)
+      if(b.ace){ if(LEGEND_FX.includes(O.fx)) V.legend = { t0: V.t, big: true, dur: LEGEND_BIG };
+                 else if(FX && FX.flourish) V.flourish = { t0: V.t, big: true, dur: FLOURISH_DUR, fx: O.fx }; }
+      else V.rest.push({ x: b.x1, t: 0 });
       continue; }
     const path = [];
     for(let k = 0; k <= 12 && q - k * 0.028 >= 0; k++) path.push(at(b, q - k * 0.028));
     b.wake = !!BT;
-    if(BT) BT(c, b, path, 1, V.t, q);
+    if(BT) BT(c, b, path, rb, V.t, q);
     c.globalAlpha = 1; c.globalCompositeOperation = 'source-over';
-    if(BB) BB(c, b, path, 1, V.t, q);
+    if(BB) BB(c, b, path, rb, V.t, q);
+    if(!BT && !BB){ for(let k = 1; k < path.length; k += 2) fxDot(c, path[k].x, path[k].y, 1, '#FFFFFF', 0.5 * (1 - k / path.length)); flightBall(c, path[0].x, path[0].y, rb, PX.white); }
     c.globalAlpha = 1; c.globalCompositeOperation = 'source-over';
   }
-  Scene.legend = V.legend;
+  Scene.legend = V.legend; Scene.flourish = V.flourish;
 }
 // the caddie's blessing falling on him, in the set's own look
 function showBless(c, x, w, h, bot, layer, t){
@@ -7894,6 +7927,14 @@ function showBless(c, x, w, h, bot, layer, t){
   c.globalAlpha = 1;
   TH.draw({ c, cx, bot, half, t, fall, fade, front: Math.round(bot * fall), w, h, k: Math.max(1, Math.round(h / 30)), DUR, layer, up: 0 });
   c.globalAlpha = 1; c.globalCompositeOperation = 'source-over';
+}
+// the showcase's stage, its Day/Night and its arrows (one at a time: on
+// the Sets rack the sets, over the Golfer rack's skins the skins)
+function showStageHtml(){
+  return ribbon('Showcase') + '<div class="showcase"><div class="showst"><canvas id="showCv" width="' + SHOW_W + '" height="' + SHOW_H + '"></canvas>'
+    + '<button class="mini" id="showNight">' + (SHOW.night ? 'Day' : 'Night') + '</button></div>'
+    + '<div class="shownav"><button class="mini" data-show="-1" aria-label="Previous">\u2039</button><b id="showN">' + showName(SHOW.set) + '</b>'
+    + '<button class="mini" data-show="1" aria-label="Next">\u203a</button></div></div>';
 }
 function renderShop(){
   if(shopSub === 'buy') shopSub = 'offers';
@@ -7946,7 +7987,7 @@ function renderShop(){
       // (worn, it can be taken off, back to the plain one: not the plain one)
       const off = worn && d.id !== STYLE_DEFAULT[k];
       // (the badge says worn only when the button does not: WORN twice over)
-      return shopCard({ img, full, on: worn || !!d.top || (!!won && own), badge: full ? 'FULL SET' : off ? 'WORN' : d.top ? (d.top > 1 ? 'MYTHIC' : 'LEGENDARY') : won && own ? 'CHAMPION' : '', head: d.n,
+      return shopCard({ img, full, art: k === 'o' && SHOW_SKINS.includes(d.id) ? d.id : '', on: worn || !!d.top || (!!won && own), badge: full ? 'FULL SET' : off ? 'WORN' : d.top ? (d.top > 1 ? 'MYTHIC' : 'LEGENDARY') : won && own ? 'CHAMPION' : '', head: d.n,
         sub: own ? '' : '<button class="mini try" data-try="' + k + '.' + d.id + '">Try it</button>',
         price: off ? 'UNEQUIP' : worn ? 'WORN' : own ? 'WEAR' : won ? 'WIN IT' : sovFmt(d.cost),
         note: worn || own ? '' : won ? won.short : B.SOV.toLowerCase(),
@@ -7964,10 +8005,7 @@ function renderShop(){
       // each set whole: him in it, its other four pieces small under him;
       // over them the showcase, the set on show playing on its own stage
       if(!SHOW || !FULL_SETS[SHOW.set]) showStart(FS || SET_ORDER[0]);
-      h += ribbon('Showcase') + '<div class="showcase"><div class="showst"><canvas id="showCv" width="' + SHOW_W + '" height="' + SHOW_H + '"></canvas>'
-        + '<button class="mini" id="showNight">' + (SHOW.night ? 'Day' : 'Night') + '</button></div>'
-        + '<div class="shownav"><button class="mini" data-show="-1" aria-label="Previous set">\u2039</button><b id="showN">' + FULL_SETS[SHOW.set].n + '</b>'
-        + '<button class="mini" data-show="1" aria-label="Next set">\u203a</button></div></div>'
+      h += showStageHtml()
         + ribbon('Sets') + '<div class="sgrid c2">' + SET_ORDER.map(s => {
         const O = styleDef('o', s), cost = setCost(s), worn = FS === s;
         const pcs = [caddieUrl(styleDef('c', s)), clubUrl(styleDef('k', s))].concat(FULL_SETS[s].t.map(id => trailUrl(styleDef('t', id))))
@@ -7978,12 +8016,14 @@ function renderShop(){
           cls: worn ? 'unq' : !cost || (S.sov || 0) >= cost ? '' : 'no', act: 'set:' + s });
       }).join('') + '</div>';
     }
-    else if(styleCat === 'golfer')
-      h += shelf('Skins', 'o', B.OUTFITS.filter(o => o.cat === 'skin'), outfitUrl)
+    else if(styleCat === 'golfer'){
+      if(!SHOW || !SHOW_SKINS.includes(SHOW.set)) showStart(SHOW_SKINS.includes(S.outfit) ? S.outfit : SHOW_SKINS[0]);
+      h += showStageHtml() + shelf('Skins', 'o', B.OUTFITS.filter(o => o.cat === 'skin'), outfitUrl)
         // the funny ones and the plain shirts are all outfits: one shelf, the
         // funny ones first
         + shelf('Outfits', 'o', B.OUTFITS.filter(o => o.cat === 'fun').concat(B.OUTFITS.filter(o => !o.cat)), outfitUrl)
         + shelf('Major Winners', 'o', B.OUTFITS.filter(o => o.cat === 'major'), outfitUrl);
+    }
     else if(styleCat === 'caddie')
       // in the same order as the golfer's looks: skins, then the rest
       h += shelf('Caddie Skins', 'c', B.CADDIES.filter(d => d.cat === 'skin'), caddieUrl)
@@ -15328,17 +15368,20 @@ function psyEye(c, x, y, s, hue, t, dx){
   c.fillStyle = psyC(hue, 0); c.fillRect(X - (dx < 0 ? s : 0), Y, s, s);
   c.fillStyle = '#1A1024'; c.fillRect(X + (dx < 0 ? -s : s), Y, s > 1 ? 1 : s, s > 1 ? 1 : s);
 }
-// The Third Eye, the size of a ball: its iris in rings of the six turning
-// out, a black slit of a pupil looking the way it flies, its lid lined in
-// dark; R its size, t the clock
+// The Third Eye, the size of a ball: its white a rainbow swirling round
+// (the user found it "mostly white"), its iris in rings of the six turning
+// out the other way, edged in dark, a black pupil looking the way it
+// flies, its lid lined in dark; R its size, t the clock
 function psyBallEye(c, x, y, R, t, dx, dy){
   const r = Math.max(2, Math.round(R)), X = Math.round(x), Y = Math.round(y), st = Math.floor(t * 8);
   c.globalAlpha = 1;
   for(let j = -r; j <= r; j++) for(let i = -r; i <= r; i++){
     const d = Math.hypot(i, j) / r; if(d > 1.05) continue;
     const ex = i - dx * r * 0.35, ey = j - dy * r * 0.35, e = Math.hypot(ex, ey) / r;
-    let col = d > 0.82 ? '#1A1024' : '#FFFFFF';
-    if(d <= 0.82 && e < 0.62) col = e < 0.16 ? '#1A1024' : psyC(Math.floor(e * 9) - st, 0);
+    // (the swirl: bands of the six wound round by angle, turning)
+    const a = Math.atan2(j, i) / (Math.PI * 2) * 6;
+    let col = d > 0.82 ? '#1A1024' : psyC(Math.floor(a + d * 5 + st * 0.5), d > 0.6 ? 1 : 0);
+    if(d <= 0.82 && e < 0.62) col = e < 0.16 || (e > 0.5 && r >= 5) ? '#1A1024' : psyC(Math.floor(e * 9) - st, 0);
     c.fillStyle = col; c.fillRect(X + i, Y + j, 1, 1);
   }
   c.fillStyle = '#FFFFFF'; c.fillRect(X - Math.round(r * 0.4), Y - Math.round(r * 0.5), 1, 1);
@@ -16051,7 +16094,7 @@ const BALLFX = {
   psyeye(c, b, path, r, t, u){
     const st = Math.floor(t * 8), N = trailNormal(path);
     trailRibbon(c, path, r + 4, '#1A1024', 0.35);
-    trailRibbon(c, path, Math.max(2, r), (i, f) => f < 0.15 ? '#FFFFFF' : psyC(i - st, 0), 1);
+    trailRibbon(c, path, Math.max(2, r), (i, f) => psyC(i - st, 0), 1);
     // the rings it leaves, each an ellipse across the flight
     for(let i = 2; i < path.length; i += 2){ const p = path[i], R = 2 + r * 0.9 + i * 0.4, col = psyC(i / 2 - st, i > path.length * 0.6 ? 1 : 0);
       for(let j = 0; j < 18; j++){ const a = j / 18 * Math.PI * 2, o = Math.cos(a) * R, l = Math.sin(a) * R * 0.4;
@@ -24006,6 +24049,11 @@ function renderCabinet(){
     return cell(cs.trophy, cs.trophyCol, n > 0, cs.short, n > 1 ? '\u00d7' + n : n ? 'Won' : 'Not yet'); }).join('');
   const jackets = COURSE_WEEK.map(cs => { const o = styleDef('o', cs.prize), got = styleOwned('o', cs.prize);
     return cell('cabJacket', o.shirt, got, o.n, got ? (S.outfit === o.id ? 'Wearing' : 'Yours') : 'Not yet'); }).join('');
+  // the full sets he has worn whole, each lit once he has (its pieces
+  // owned counted till then)
+  const FS = fullSet(), sets = SET_ORDER.map(s => { const on = !!(S.fullSets || {})[s];
+    return '<div class="ci' + (on ? '' : ' no') + '"><img src="' + outfitUrl(styleDef('o', s)) + '" alt=""><div class="cn">' + FULL_SETS[s].n
+      + '</div><div class="cc">' + (FS === s ? 'Wearing' : on ? 'Worn' : setPieces(s).filter(([k, id]) => styleOwned(k, id)).length + '/5') + '</div></div>'; }).join('');
   const now = seasonOf(tournamentOf(S.hole));
   const thisSeason = (S.evLog || []).filter(x => x.b && seasonOf(x.t) === now).length;
   // lit once there is something to show, like everything else in the case
@@ -24036,6 +24084,7 @@ function renderCabinet(){
       : '<div class="pe">Finish an event to post one here.</div>') + '</div>';
   setHTML(box, '<div class="cab"><div class="shelf">' + trophies + '</div>' + caseTrack('maj') + '<div class="plank"></div>'
     + '<div class="shelf">' + jackets + '</div><div class="plank"></div>'
+    + '<div class="shelf three">' + sets + '</div><div class="plank"></div>'
     + '<div class="shelf two">' + cups + slam + '</div>' + caseTrack('cup') + '<div class="plank"></div>'
     + plaque + caseTrack('card') + '<div class="plank"></div>' + seasons + '</div>');
 }
@@ -25160,12 +25209,11 @@ function saverDraw(dt){
   if(ph === 0 || ph < 0.5) drawLyingBall(c, bx + 0.5, G - 1, 1.3, V.t);
   paintGolfer(c, x, y, w, h, ph === 1 ? 0.999 : ph, V.t, G, false, 0, spr, V.arc);
 
-  // balls that came down sit by the flag a few seconds, then go
-  for(let i = V.rest.length - 1; i >= 0; i--){
-    const b = V.rest[i]; b.t += dt;
-    if(b.t > 4){ V.rest.splice(i, 1); continue; }
-    drawLyingBall(c, b.x, G - 1, 1.3, V.t);
-  }
+  // a ball that came down sits by the flag until he starts his next swing
+  // (one ball out at a time: the user saw a new one hit with the last
+  // still lying there)
+  if(ph > 0) V.rest = [];
+  for(const b of V.rest){ b.t += dt; drawLyingBall(c, b.x, G - 1, 1.3, V.t); }
   const at = (b, q) => ({ x: b.x0 + (b.x1 - b.x0) * q, y: G - 1 - b.top * 4 * q * (1 - q), s: 1 });
   const BN = ballNow(), BT = BALLFX[trailNow().fx], BB = BN && BALLFX[BN.fx], BF = BT || BB;
   for(let i = V.balls.length - 1; i >= 0; i--){
