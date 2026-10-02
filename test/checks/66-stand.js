@@ -78,12 +78,15 @@ module.exports = {
           }
           // never over the pin
           for (const at of [LEN * 0.4, LEN * 0.6, LEN - 12, LEN - 6]) {
-            Scene.camD = at; Scene.walkTo = at; Scene.draw(0, D);
-            blank(); Scene.drawFlagstick(); const m = px();
+            // (the pin where it shows without the stand: it goes behind what
+            // stands nearer than it, so where it is hidden the stand beyond
+            // may rightly show)
+            Scene.camD = at; Scene.walkTo = at;
             const was = Scene.props; Scene.draw(0, D); const a = px();
-            Scene.props = was.filter(p => p.kind !== 10); Scene.draw(0, D); const b = px(); Scene.props = was;
-            for (let i = 0; i < m.length; i += 4) {
-              if (m[i] === 1 && m[i + 1] === 2 && m[i + 2] === 3) continue;
+            Scene.props = was.filter(p => p.kind !== 10); Scene.draw(0, D); const b = px();
+            const pb = Scene.pinBody; Scene.pinBody = () => {}; try { Scene.draw(0, D); } finally { Scene.pinBody = pb; } const b0 = px(); Scene.props = was;
+            for (let i = 0; i < a.length; i += 4) {
+              if (b[i] === b0[i] && b[i + 1] === b0[i + 1] && b[i + 2] === b0[i + 2]) continue;
               o.pin++;
               if (a[i] !== b[i] || a[i + 1] !== b[i + 1] || a[i + 2] !== b[i + 2]) { f(where + ', camera at ' + at.toFixed(1) + ': the stand over the pin at ' + ((i / 4) % VW) + ',' + Math.floor(i / 4 / VW)); break; }
             }

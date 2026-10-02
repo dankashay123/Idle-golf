@@ -61,6 +61,10 @@ module.exports = {
     if (!on) f('a minute untouched on a one minute wait and the saver did not come on');
 
     // ---- while it is on ---------------------------------------------------
+    // (no club found on its own while it counts: the round plays on behind
+    // it, and a club dropped in these seconds, or the next, made two with
+    // the one put in below, one run in twenty)
+    await page.evaluate(() => { window.__bagAdd = bagAdd; window.bagAdd = () => false; });
     await page.evaluate(() => { window.__draws = 0; window.__dt = 0; window.__frames = 0; window.__t0 = performance.now(); });
     await wait(3000);
     const run = await page.evaluate(() => ({ wall: (performance.now() - window.__t0) / 1000,
@@ -74,10 +78,7 @@ module.exports = {
     const tally = await page.evaluate(() => {
       S.gold += 5000; S.totalHoles += 7; S.lv += 2; S.cups = (S.cups || 0) + 1;
       const it = makeItem(S.tier + 3, 0, 3); it.rar = 3; it.aff = []; delete it.set;
-      bagAdd(it);
-      // (the round plays on behind it, and a club it drops in the next
-      // second made two one run in twenty: none is kept while this counts)
-      window.__bagAdd = bagAdd; window.bagAdd = () => false;
+      window.__bagAdd(it);
       return { name: it.name };
     });
     await wait(1300);

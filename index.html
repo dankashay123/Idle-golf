@@ -22823,7 +22823,10 @@ Object.assign(Scene, {
     if(bw <= 0 || bh <= 0) return 0;
     const T = this._behCv || (this._behCv = document.createElement('canvas'));
     if(T.width !== VW || T.height !== VH){ T.width = VW; T.height = VH; T._g = null; }
+    // (crisp, as the frame is: smoothed, the flag's cloth blurred into what
+    // was behind it)
     const g = T._g || (T._g = T.getContext('2d', { willReadFrequently: true })), keep = this.b;
+    g.imageSmoothingEnabled = false;
     g.clearRect(bx, by, bw, bh);
     this.b = g; try{ fn(g); } finally{ this.b = keep; g.globalAlpha = 1; g.globalCompositeOperation = 'source-over'; }
     const im = g.getImageData(bx, by, bw, bh), D = im.data; let hid = 0;
