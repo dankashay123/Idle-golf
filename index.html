@@ -8739,16 +8739,29 @@ function fillClip(c, x, y, w, h, clip){
 }
 // A little picture in rows, k pixels to a cell, flipped to face left when
 // flip is set, cut at the ground's clip line: the creatures on the course.
+// Baked once a picture, size and way round, so each is one stamp a frame
+// (a cell at a time was a hundred canvas calls for a few birds).
+const PXROWS = new Map(), PXMAPID = new WeakMap(); let pxMapN = 0;
 function pxRows(c, rows, map, x0, y0, k, clip, flip){
-  const w = rows[0].length;
-  for(let r = 0; r < rows.length; r++) for(let q = 0; q < w; q++){
-    const ch = rows[r][flip ? w - 1 - q : q];
-    if(ch === '.' || !map[ch]) continue;
-    c.fillStyle = map[ch]; fillClip(c, x0 + q * k, y0 + r * k, k, k, clip);
+  let mid = PXMAPID.get(map); if(mid === undefined){ mid = ++pxMapN; PXMAPID.set(map, mid); }
+  const key = rows.join('/') + '|' + mid + '|' + k + '|' + (flip ? 1 : 0);
+  let cv = PXROWS.get(key);
+  if(!cv){
+    const w = rows[0].length;
+    cv = document.createElement('canvas'); cv.width = w * k; cv.height = rows.length * k;
+    const g = cv.getContext('2d');
+    for(let r = 0; r < rows.length; r++) for(let q = 0; q < w; q++){
+      const ch = rows[r][flip ? w - 1 - q : q];
+      if(ch === '.' || !map[ch]) continue;
+      g.fillStyle = map[ch]; g.fillRect(q * k, r * k, k, k);
+    }
+    if(PXROWS.size > 600) PXROWS.clear();
+    PXROWS.set(key, cv);
   }
+  x0 = Math.round(x0); y0 = Math.round(y0);
+  const h = Math.min(cv.height, Math.floor(clip) + 1 - y0);
+  if(h > 0) c.drawImage(cv, 0, 0, cv.width, h, x0, y0, cv.width, h);
 }
-// a ball in the air: two pixels across far off; bigger, a round body in
-// its colour with a lit cap and a shaded side
 function flightBall(c, x, y, r, col){
   x = Math.round(x); y = Math.round(y);
   if(r <= 1){ c.fillStyle = col; c.fillRect(x - 1, y - 1, 2, 2); return; }
@@ -9330,6 +9343,8 @@ const HAWK_COL = { '#': '#5A3E28', K: '#2E2018', B: '#7A5236', H: '#D8C8A8', T: 
 const HAWK_FLY = [['KK.........KK', '..##.....##..', '....##H##....', '.....TtT.....', '.....TTT.....'],
                   ['K...........K', 'K###.BHB.###K', '..####B####..', '.....TtT.....', '.....TTT.....'],
                   ['.............', '....##H##....', '..##.BBB.##..', 'KK...TtT...KK', '.....TTT.....']];
+const DUCK_DRAKE = { H:'#2E6B3A', Y:'#E8B04A', T:'#3A2E24', e:'#101410', S:'#3A5AA8', W:'#F2F2EA', B:'#9A8C7A', b:'#6E6254' };
+const DUCK_HEN = { H:'#7A5A3C', Y:'#E8B04A', T:'#3A2E24', e:'#101410', S:'#3A5AA8', W:'#8A6A48', B:'#8A6A48', b:'#6A5038' };
 const SPECT_CACHE = {};
 // The grandstand behind the round's last green: five tiers of benches
 // across twelve units under a roof on posts, two aisles, and a wall at its
@@ -17659,16 +17674,21 @@ Object.assign(Scene, {
             const gt = 0.40 + near*0.36;
             c.fillStyle = pickC(T._gr, gt);
             c.fillRect(C0 - gh, y, gh*2, hgt);
+            // (its crown a shade lighter: at more than a shade it stood out
+            // as a spot of light laid on the green)
             if(gh > 7){
-              c.fillStyle = pickC(T._gr, gt + 0.18);
+              c.fillStyle = pickC(T._gr, gt + 0.08);
               const iw = Math.round(gh*0.46);
               c.fillRect(C0 - iw, y, iw*2, hgt);
             }
-            // three graded pixels into the apron, so the rim is a gradient
-            for(let k = 0; k < 3 && gh > k + 1; k++){
-              c.fillStyle = T._rim[k];
-              c.fillRect(C0 - gh + (2 - k), y, 1, hgt);
-              c.fillRect(C0 + gh - 3 + k, y, 1, hgt);
+            // its edge: a crisp cut line where the green meets the collar,
+            // and one step of tone inside it (three graded pixels made the
+            // green a soft spot of light with no edge to it)
+            if(gh > 2){
+              c.fillStyle = T._rim[0];
+              c.fillRect(C0 - gh + 1, y, 1, hgt); c.fillRect(C0 + gh - 2, y, 1, hgt);
+              c.fillStyle = T._cut || (T._cut = dark(T.apron, 0.18));
+              c.fillRect(C0 - gh, y, 1, hgt); c.fillRect(C0 + gh - 1, y, 1, hgt);
             }
           }
         }
@@ -18996,9 +19016,7 @@ Object.assign(Scene, {
       if(p.y > clip || p.x < -8 || p.x > VW + 8) continue;
       const k = clamp(Math.round(LAT * p.s * 0.5 / 7), 1, 3);
       const right = U.right, tip = U.tip;
-      const col = { H: U.drake ? '#2E6B3A' : '#7A5A3C', Y: '#E8B04A', T: '#3A2E24', e: '#101410', S: '#3A5AA8',
-                    W: U.drake ? '#F2F2EA' : '#8A6A48',
-                    B: U.drake ? '#9A8C7A' : '#8A6A48', b: U.drake ? '#6E6254' : '#6A5038' };
+      const col = U.drake ? DUCK_DRAKE : DUCK_HEN;
       const x0 = Math.round(p.x - 4 * k), y0 = Math.round(p.y - 4 * k + 1);
       // the wake, a fading line behind him on the water
       if(!tip){
@@ -19158,11 +19176,17 @@ Object.assign(Scene, {
     if(bN > near){ const t0 = this.proj(bN, 0, 0.04), g0 = this.proj(bN - 0.04, 0, 0);
       c.fillStyle = dk(snow ? '#B8C2C8' : '#3E3A35'); fillClip(c, X0, Math.round(t0.y), X1 - X0, Math.max(1, Math.round(g0.y - t0.y)), this.clipAt(bN - 0.04)); }
     // stones in it, laid in the world so they stay put as he walks
+    // (across a row the view is straight: two places on it give the rest,
+    // and only the stones on the stage are worked out; projecting every one
+    // across the whole line cost more than the rest of the crossing)
     for(let d = Math.ceil((bN) / 0.09) * 0.09; d < bF; d += 0.09){
-      const cl = this.clipAt(d);
-      for(let k = Math.floor(-span / 0.22); k <= span / 0.22; k++){
+      const cl = this.clipAt(d), q0 = this.proj(d, 0, 0.04), ux = LAT * q0.s, bx = CX + (this.bendOff(d) - CAM_LAT) * ux;
+      if(!(ux > 1e-6)) continue;
+      const xa = (0 - bx) / ux, xb = (VW - bx) / ux;
+      const kA = Math.max(Math.floor(-span / 0.22), Math.floor((Math.min(xa, xb) - 0.2) / 0.22)), kB = Math.min(span / 0.22, Math.ceil(Math.max(xa, xb) / 0.22));
+      for(let k = kA; k <= kB; k++){
         const h2 = hr(k, Math.round(d / 0.09) + 431); if(h2 > 0.45) continue;
-        const q = this.proj(d, k * 0.22 + h2 * 0.2, 0.04); if(q.x < 0 || q.x >= VW) continue;
+        const X = k * 0.22 + h2 * 0.2, q = { x: Math.round(bx + ux * X), y: q0.y }; if(q.x < 0 || q.x >= VW) continue;
         c.fillStyle = dk(snow ? (h2 < 0.2 ? '#FFFFFF' : '#C8D2D8') : h2 < 0.15 ? '#9A958A' : '#4A463F'); fillClip(c, Math.round(q.x), Math.round(q.y), 1, 1, cl);
       }
     }
