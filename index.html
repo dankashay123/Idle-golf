@@ -17227,7 +17227,7 @@ const Scene = {
   },
   fairyMoveGo(id){
     const m = FAIRY_MOVES.find(x => x.id === id);
-    if(!m || (m.only && m.only !== caddieNow().fx)) return;
+    if(!m || (m.only && m.only !== cadKey(caddieNow()))) return;
     this._lastMove = m.id;
     this.fairyMove = { kind: m.id, t0: this.t, dur: m.dur };
   },
@@ -17313,6 +17313,68 @@ const Scene = {
     }else if(b === 'orbit'){
       for(let i = 0; i < 8; i++){ const a = i / 8 * Math.PI * 2 + T * 5, R = Math.cos(a) > 0 ? w * 0.45 : w * 0.8;
         dot(cx + Math.cos(a) * R, cy + Math.sin(a) * h * 0.3, i % 3 === 0 ? '#E0C8FF' : i & 1 ? '#8A4AD8' : '#3A1E5A'); }
+    }else if(b === 'towel'){
+      // a white towel off his raised hand, flapping
+      for(let j = 0; j < 4; j++) for(let i = 0; i < 3; i++){ const fl = Math.round(Math.sin(T * 16 + i * 0.9 + j) * k);
+        dot(hand[0] - (i + 1) * k, hand[1] + j * k + fl, (i + j) & 1 ? '#FFFFFF' : '#D8DED6'); }
+    }else if(b === 'brolly'){
+      // an umbrella opening over him and twirling, its panels blue and white
+      const op = Math.min(1, q / 0.25, (1 - q) / 0.2), R = w * 0.5 * op, ux = x + w * 0.4, uy = y - h * 0.18, sp = T * 6;
+      for(let yy = 0; yy <= 2; yy++) for(let i = -6; i <= 6; i++){ const u = i / 6, X = ux + u * R, Y = uy - Math.sqrt(Math.max(0, 1 - u * u)) * R * 0.45 + yy * k;
+        if(yy && Math.abs(u) > 0.9) continue; dot(X, Y, (Math.floor(i + sp + 99) & 1) ? '#3E76C8' : '#F2F4F0'); }
+      for(let yy = uy; yy < y + h * 0.3; yy += k) dot(ux, yy, '#5A3A22');
+    }else if(b === 'pump'){
+      const u = Math.abs(Math.sin(Math.PI * q * 3));
+      if(u > 0.8) for(let i = 0; i < 5; i++){ const a = Math.PI * (0.6 + i * 0.2), r = w * 0.3; dot(hand[0] + Math.cos(a) * r, hand[1] - Math.sin(a) * r, i & 1 ? '#FFFFFF' : '#D8453A'); }
+    }else if(b === 'smoke'){
+      // the pipe at his mouth, and three rings of smoke rising off it, widening
+      const px = x + w * 0.55, py = y + h * 0.3;
+      dot(px - k, py, '#5A4028'); dot(px - 2 * k, py, '#5A4028'); dot(px - 2 * k, py - k, '#7A5A3A');
+      for(let n = 0; n < 3; n++){ const u = q * 1.6 - n * 0.3; if(u < 0 || u > 1) continue;
+        const r = k * (1 + u * 2.5), X = px - 2 * k - u * w * 0.3, Y = py - k - u * h * 0.7;
+        for(let i = 0; i < 8; i++){ const a = i / 8 * Math.PI * 2; if(hr(i + n * 8, 381) < u * 0.5) continue; dot(X + Math.cos(a) * r, Y + Math.sin(a) * r * 0.6, u < 0.5 ? '#E8E4DA' : '#BFBAB0'); } }
+    }else if(b === 'pennant'){
+      // a little pole up from his hand with a pennant streaming off it
+      const top = hand[1] - h * 0.3;
+      for(let yy = top; yy <= hand[1]; yy += k) dot(hand[0], yy, '#C8B88A');
+      for(let i = 0; i < 5; i++) for(let j = 0; j <= Math.floor((5 - i) / 2); j++){ const fl = Math.round(Math.sin(T * 12 - i * 0.8) * k);
+        dot(hand[0] - (i + 1) * k, top + j * k + fl, i < 2 ? '#F0F0E8' : '#3E8A4E'); }
+    }else if(b === 'lights'){
+      // ribbons of the northern lights round him, green into violet
+      const COL = ['#57E0BE', '#7CFFB0', '#3AAE92', '#A07CFF', '#C8B0FF'];
+      for(let r = 0; r < 2; r++) for(let i = 0; i < 12; i++){ const a = i / 12 * Math.PI * 2 + T * (r ? -4 : 5), R = (Math.cos(a) > 0 ? 0.42 : 0.85) * w;
+        dot(cx + Math.cos(a) * R, cy + Math.sin(a) * h * (0.25 + 0.15 * r) - r * h * 0.15, COL[(i + r * 2) % 5]); }
+    }else if(b === 'mstars'){
+      const f = q;
+      for(let i = 0; i < 10; i++){ const a = Math.PI * (0.5 + i / 9), R = w * (0.2 + 0.7 * f); if(hr(i, 382) < f * 0.6) continue;
+        const X = cx + Math.cos(a) * R, Y = cy - Math.sin(a) * R * 0.9;
+        dot(X, Y, i & 1 ? '#E3B457' : '#C68BFF'); if(f < 0.6){ dot(X - k, Y, '#FFF2B8'); dot(X, Y - k, '#FFF2B8'); } }
+    }else if(b === 'tie'){
+      // a glint off his bow tie as he bows
+      const gx = x + w * 0.45, gy = y + h * 0.42, s = (q * 10) % 1 < 0.5;
+      dot(gx, gy, '#FFFFFF'); if(s){ dot(gx - k, gy, '#E8E8F0'); dot(gx, gy - k, '#E8E8F0'); dot(gx, gy + k, '#E8E8F0'); }
+    }else if(b === 'jacket'){
+      // his jacket's sparkle as it flares out
+      for(let i = 0; i < 6; i++){ const a = i / 6 * Math.PI * 2 + T * 8, R = w * 0.6; if(Math.cos(a) > 0.3) continue;
+        dot(cx + Math.cos(a) * R, y + h * 0.6 + Math.sin(a) * h * 0.15, i & 1 ? '#C68BFF' : '#FFFFFF'); }
+    }else if(b === 'cup'){
+      // the cup held up in both hands, glinting
+      const X = x + w * 0.3, Y = y - h * 0.22;
+      for(let j = 0; j < 3; j++) for(let i = -1; i <= 1; i++) dot(X + i * k, Y + j * k, j === 0 && i === -1 ? '#FFF2B8' : '#E3B457');
+      dot(X - 2 * k, Y, '#A8802F'); dot(X + 2 * k, Y, '#A8802F'); dot(X, Y + 3 * k, '#A8802F'); dot(X - k, Y + 4 * k, '#E3B457'); dot(X, Y + 4 * k, '#E3B457'); dot(X + k, Y + 4 * k, '#E3B457');
+      if((T * 5) % 1 < 0.4){ dot(X - 3 * k, Y - 2 * k, '#FFFFFF'); }
+    }else if(b === 'medal'){
+      // the medal on its ribbon, swung up and held, catching the light
+      const X = x + w * 0.3, Y = y - h * 0.15 + Math.round(Math.sin(T * 8) * k);
+      dot(X - k, Y - 2 * k, '#24367A'); dot(X + k, Y - 2 * k, '#B8302A'); dot(X, Y - k, '#24367A');
+      for(let j = 0; j < 3; j++) for(let i = -1; i <= 1; i++) if(Math.abs(i) + Math.abs(j - 1) < 2 || (i && j === 1) || !i) dot(X + i * k, Y + j * k, i + j < 1 ? '#FFF2B8' : '#FFD66B');
+      if((T * 4) % 1 < 0.3) dot(X - 2 * k, Y - k, '#FFFFFF');
+    }else if(b === 'falling'){
+      // a star falling from high over him on his far side to his hand, its tail behind it
+      const u = Math.min(1, q / 0.5), sx = x - w * 0.6 + (hand[0] - x + w * 0.6) * u, sy = y - h * 0.9 + (hand[1] - y + h * 0.9) * easeIO(u);
+      for(let i = 1; i < 6; i++) dot(sx - i * k * 1.2 * (1 - u * 0.5), sy - i * k * 1.4, i < 3 ? '#DDF3FF' : '#7A88C8');
+      dot(sx, sy, '#FFFFFF'); dot(sx - k, sy, '#FFE89A'); dot(sx, sy - k, '#FFE89A');
+      if(q > 0.5) for(let i = 0; i < 6; i++){ const a = i / 6 * Math.PI * 2 + T * 3; dot(hand[0] + Math.cos(a) * k * 3, hand[1] + Math.sin(a) * k * 3, i & 1 ? '#DDF3FF' : '#FFE89A'); }
     }else if(b === 'coin'){
       const u = clamp((q - 0.2) / 0.55, 0, 1), px = hand[0], py = hand[1] - Math.sin(Math.PI * u) * h * 0.8 - k;
       const face = Math.abs(Math.sin(T * 18)) > 0.4, s2 = k * 2;
@@ -18379,10 +18441,31 @@ const FAIRY_MOVES = [
   { id:'flare',  dur:1.3, only:'inferno' },
   { id:'zap',    dur:1.2, only:'stormcaller' },
   { id:'orbit',  dur:1.6, only:'void' },
-  { id:'toss',   dur:1.6, only:'midas' }
+  { id:'toss',   dur:1.6, only:'midas' },
+  // and the rest of them, each its own (the user asked): the bib flaps his
+  // towel, the classic puts up his brolly, the Sunday red pumps his fist,
+  // the tweed puffs smoke rings from his pipe, the clubhouse green waves a
+  // pennant, the aurora swirls in its lights, the mythic throws out stars,
+  // the black tie bows; the major winners lift their prize: the Maestro's
+  // jacket twirled, the Crown's cup, the Sovereign's medal and the
+  // Starfall's falling star. (Named by the caddie, as they have no effect.)
+  { id:'towel',   dur:1.5, only:'bib' },
+  { id:'brolly',  dur:1.6, only:'classic' },
+  { id:'pump',    dur:1.3, only:'sunday' },
+  { id:'smoke',   dur:1.8, only:'tweed' },
+  { id:'pennant', dur:1.6, only:'green' },
+  { id:'lights',  dur:1.6, only:'aurora' },
+  { id:'stars',   dur:1.3, only:'mythic' },
+  { id:'bow',     dur:1.4, only:'blacktie' },
+  { id:'jacket',  dur:1.4, only:'mjMasters' },
+  { id:'cup',     dur:1.6, only:'mjClaret' },
+  { id:'medal',   dur:1.5, only:'mjSovereign' },
+  { id:'falling', dur:1.5, only:'mjStarfall' }
 ];
+// what names a caddie's own trick: his look's effect, or the caddie himself
+const cadKey = d => d.fx || d.id;
 // the turns this caddie may take: his own trick, if he has one, among the rest
-const fairyMoves = () => { const fx = caddieNow().fx; return FAIRY_MOVES.filter(m => !m.only || m.only === fx); };
+const fairyMoves = () => { const fx = cadKey(caddieNow()); return FAIRY_MOVES.filter(m => !m.only || m.only === fx); };
 const easeIO = q => q < 0.5 ? 2*q*q : 1 - 2*(1-q)*(1-q);
 function fairyPose(kind, q, T, w, h){
   const P = { dx: 0, dy: 0, sx: 1, rot: 0, armL: 0, armR: 0, waveL: 0, legs: null, juggle: null };
@@ -18468,6 +18551,30 @@ function fairyPose(kind, q, T, w, h){
     P.sx = Math.cos(easeIO(q) * Math.PI * 2); P.bits = 'orbit';
   }else if(kind === 'toss'){                                    // a coin flipped up and caught
     P.armL = env; P.dy = -Math.sin(Math.PI * q) * h * 0.05; P.bits = 'coin';
+  }else if(kind === 'towel'){                                   // his towel flapped over his head
+    P.armL = env; P.waveL = Math.sin(T * 14) * env; P.bits = 'towel';
+  }else if(kind === 'brolly'){                                  // up goes his umbrella, a twirl of it, down
+    P.armL = env * 0.8; P.bits = 'brolly';
+  }else if(kind === 'pump'){                                    // three pumps of his fist, a hop on each
+    const u = Math.abs(Math.sin(Math.PI * q * 3));
+    P.armL = (0.4 + 0.6 * u) * env; P.dy = -u * h * 0.08 * env; P.bits = 'pump';
+  }else if(kind === 'smoke'){                                   // a puff on his pipe, smoke rings rising
+    P.dy = -Math.sin(Math.PI * q) * h * 0.04; P.bits = 'smoke';
+  }else if(kind === 'pennant'){                                 // a pennant waved to and fro
+    P.armL = env; P.waveL = Math.sin(T * 7) * env; P.bits = 'pennant';
+  }else if(kind === 'lights'){                                  // round once in his ribbons of light
+    P.sx = Math.cos(easeIO(q) * Math.PI * 2); P.dy = -Math.sin(Math.PI * q) * h * 0.1; P.armL = P.armR = env * 0.5; P.bits = 'lights';
+  }else if(kind === 'stars'){                                   // a jump, and stars thrown out of him
+    P.dy = -Math.sin(Math.PI * q) * h * 0.2; P.armL = P.armR = env; P.bits = 'mstars';
+  }else if(kind === 'bow'){                                     // a deep bow, held, and up
+    const u = q < 0.3 ? easeIO(q / 0.3) : q < 0.7 ? 1 : 1 - easeIO((q - 0.7) / 0.3);
+    P.rot = u * 0.6; P.dy = u * h * 0.06; P.armR = u * 0.4; P.bits = q > 0.3 && q < 0.7 ? 'tie' : null;
+  }else if(kind === 'jacket'){                                  // twice round, showing off his jacket
+    P.sx = Math.cos(easeIO(q) * Math.PI * 4); P.dy = -Math.sin(Math.PI * q) * h * 0.08; P.bits = 'jacket';
+  }else if(kind === 'cup' || kind === 'medal'){                 // his prize held up over his head
+    P.armL = P.armR = env; P.dy = -Math.sin(Math.PI * q) * h * 0.06; P.bits = kind;
+  }else if(kind === 'falling'){                                 // a star falls to his hand
+    P.armL = q > 0.45 ? env : 0; P.bits = 'falling';
   }else if(kind === 'juggle'){                                  // three balls, hand to hand
     const beat = T * 1.5;
     P.juggle = { beat, env };

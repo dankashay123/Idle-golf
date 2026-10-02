@@ -93,7 +93,7 @@ module.exports = {
         // (a caddie's own trick is tried in that caddie)
         const wear = id => { S.styleOwn['c:' + id] = 1; S.caddie = id; buildSprites(); keep = SPRITE.caddie; };
         // (a trick is its caddie look's: that look's effect names it)
-        const whose = fx => fx ? (B.CADDIES.find(cd => cd.fx === fx) || {}).id : 'bib';
+        const whose = fx => fx ? (B.CADDIES.find(cd => (cd.fx || cd.id) === fx) || {}).id : 'bib';
         for (const m of FAIRY_MOVES) {
           wear(whose(m.only));
           // (standing, in this caddie)
@@ -168,7 +168,7 @@ module.exports = {
           o.own[id] = [...seen].filter(k => (FAIRY_MOVES.find(m => m.id === k) || {}).only).sort().join();
         }
         o.ownWant = {}; FAIRY_MOVES.filter(m => m.only).forEach(m => { o.ownWant[m.only] = m.id; });
-        o.plainOwn = o.starts.some(k => (FAIRY_MOVES.find(m => m.id === k) || {}).only);
+        o.plainOwn = o.starts.some(k => { const m = FAIRY_MOVES.find(x => x.id === k) || {}; return m.only && m.only !== 'bib'; });
         wear('bib'); Scene.fairyMove = null;
         Scene.fairyMoveGo('soar'); o.plainSoar = !!Scene.fairyMove;
         Scene.fairyMove = null; Scene.fairyMoveGo('toss'); o.plainSoar = o.plainSoar || !!Scene.fairyMove;
