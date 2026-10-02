@@ -10566,29 +10566,53 @@ function starDisc(rx, ry, step){
 // A feathered wing for the Ascended (the user's picture): lavender, the
 // feathers apart from each other, not one solid shape, up and out to the
 // right of a shoulder at (0, 0). up (0..1) how high it is raised, S its reach.
-const FEATHER_PAL = ['#8A6AC8', '#B49AE6', '#E2D2FF', '#6A4AA8'];
+const FEATHER_PAL = ['#8A6AC8', '#B49AE6', '#E2D2FF', '#6A4AA8', '#4A3288', '#9A7AD8', '#C8B4F0', '#FFFFFF'];
+// (the user asked for them "a lot bigger and detailed": an arm in two
+// bones; nine long flight feathers off the hand and eight off the forearm,
+// each with a dark leading edge, a pale quill and a light tip; a row of
+// coverts over their roots and scallops of small feathers along the arm)
 function featherWing(g, S, up){
-  const a1 = 0.7 + 0.5 * up, wr = { x: Math.cos(a1) * S * 0.48, y: -Math.sin(a1) * S * 0.48 };
-  const blade = (rx, ry, a, L, wd, col, vein) => {
+  const a1 = 0.7 + 0.5 * up, el = { x: Math.cos(a1 + 0.35) * S * 0.24, y: -Math.sin(a1 + 0.35) * S * 0.24 };
+  const wr = { x: el.x + Math.cos(a1 - 0.2) * S * 0.28, y: el.y - Math.sin(a1 - 0.2) * S * 0.28 };
+  const along = u => u < 0.5 ? { x: el.x * u * 2, y: el.y * u * 2 } : { x: el.x + (wr.x - el.x) * (u - 0.5) * 2, y: el.y + (wr.y - el.y) * (u - 0.5) * 2 };
+  const blade = (rx, ry, a, L, wd, col, edge, vein, tip) => {
     const tx = rx + Math.cos(a) * L, ty = ry - Math.sin(a) * L, nx = -Math.sin(a), ny = -Math.cos(a);
-    const mx = rx + (tx - rx) * 0.45, my = ry + (ty - ry) * 0.45;
+    const mx = rx + (tx - rx) * 0.5, my = ry + (ty - ry) * 0.5;
     g.fillStyle = col;
-    g.beginPath(); g.moveTo(rx + nx * wd * 0.5, ry + ny * wd * 0.5); g.lineTo(mx + nx * wd, my + ny * wd); g.lineTo(tx, ty);
-    g.lineTo(mx - nx * wd * 0.6, my - ny * wd * 0.6); g.lineTo(rx - nx * wd * 0.5, ry - ny * wd * 0.5); g.closePath(); g.fill();
-    if(vein){ g.strokeStyle = vein; g.lineWidth = 1; g.beginPath(); g.moveTo(rx, ry); g.lineTo(rx + (tx - rx) * 0.85, ry + (ty - ry) * 0.85); g.stroke(); }
+    g.beginPath(); g.moveTo(rx + nx * wd * 0.45, ry + ny * wd * 0.45); g.lineTo(mx + nx * wd, my + ny * wd); g.lineTo(tx, ty);
+    g.lineTo(mx - nx * wd * 0.7, my - ny * wd * 0.7); g.lineTo(rx - nx * wd * 0.45, ry - ny * wd * 0.45); g.closePath(); g.fill();
+    g.lineWidth = Math.max(1, wd * 0.22); g.lineCap = 'round';
+    if(edge){ g.strokeStyle = edge; g.beginPath(); g.moveTo(rx + nx * wd * 0.45, ry + ny * wd * 0.45); g.lineTo(mx + nx * wd, my + ny * wd); g.lineTo(tx, ty); g.stroke(); }
+    if(tip){ g.fillStyle = tip; g.beginPath(); g.moveTo(rx + (tx - rx) * 0.78 + nx * wd * 0.55, ry + (ty - ry) * 0.78 + ny * wd * 0.55); g.lineTo(tx, ty);
+      g.lineTo(rx + (tx - rx) * 0.78 - nx * wd * 0.4, ry + (ty - ry) * 0.78 - ny * wd * 0.4); g.closePath(); g.fill(); }
+    if(vein){ g.strokeStyle = vein; g.lineWidth = 1; g.beginPath(); g.moveTo(rx, ry); g.lineTo(rx + (tx - rx) * 0.8, ry + (ty - ry) * 0.8); g.stroke(); }
   };
-  // the long flight feathers fanning from the wrist and along the arm, a
-  // gap between each, then shorter ones over their roots
-  for(let i = 0; i < 6; i++){
-    const u = 1 - i * 0.15, a = a1 - 0.25 - i * 0.3, L = S * (0.66 - i * 0.06);
-    blade(wr.x * u, wr.y * u, a, L, Math.max(1.6, S * 0.1), i & 1 ? '#8A6AC8' : '#B49AE6', '#E2D2FF');
+  const wd = Math.max(1.8, S * 0.075);
+  // the flight feathers off the forearm, back and down, under the rest
+  for(let i = 7; i >= 0; i--){
+    const P = along(0.35 + i * 0.08), a = a1 - 1.25 - (7 - i) * 0.1, L = S * (0.36 + i * 0.025);
+    blade(P.x, P.y, a, L, wd, i & 1 ? '#8A6AC8' : '#9A7AD8', '#4A3288', '#C8B4F0', '#B49AE6');
   }
-  for(let i = 0; i < 4; i++){
-    const u = 0.9 - i * 0.2, a = a1 - 0.7 - i * 0.3;
-    blade(wr.x * u, wr.y * u, a, S * 0.26, Math.max(1.4, S * 0.08), '#E2D2FF', null);
+  // the long ones off the hand, fanning out from the wrist
+  for(let i = 8; i >= 0; i--){
+    const u = i / 8, P = { x: wr.x - (wr.x - el.x) * u * 0.55, y: wr.y - (wr.y - el.y) * u * 0.55 };
+    const a = a1 - 0.05 - u * 1.05, L = S * (0.78 - u * 0.3);
+    blade(P.x, P.y, a, L, wd * 1.05, i & 1 ? '#9A7AD8' : '#8A6AC8', '#4A3288', '#E2D2FF', '#C8B4F0');
   }
-  g.lineCap = 'round'; g.strokeStyle = '#B49AE6'; g.lineWidth = Math.max(1.5, S * 0.09);
-  g.beginPath(); g.moveTo(0, 0); g.lineTo(wr.x, wr.y); g.stroke();
+  // the coverts over their roots
+  for(let i = 0; i < 9; i++){
+    const P = along(0.3 + i * 0.085), a = a1 - 0.95 - (8 - i) * 0.06;
+    blade(P.x, P.y, a, S * (0.2 + (i > 5 ? 0.06 : 0)), wd * 0.95, '#B49AE6', '#6A4AA8', null, '#E2D2FF');
+  }
+  // the arm, and the small feathers in scallops along it
+  g.lineCap = 'round'; g.strokeStyle = '#6A4AA8'; g.lineWidth = Math.max(2, S * 0.085);
+  g.beginPath(); g.moveTo(0, 0); g.lineTo(el.x, el.y); g.lineTo(wr.x, wr.y); g.stroke();
+  for(let i = 0; i < 8; i++){
+    const P = along(0.08 + i * 0.12), r = Math.max(1.2, S * 0.05);
+    g.fillStyle = '#E2D2FF'; g.beginPath(); g.ellipse(P.x, P.y + r * 0.6, r * 1.1, r, 0, 0, Math.PI * 2); g.fill();
+    g.fillStyle = '#B49AE6'; g.beginPath(); g.ellipse(P.x, P.y + r * 1.2, r * 0.8, r * 0.5, 0, 0, Math.PI); g.fill();
+  }
+  g.fillStyle = '#FFFFFF'; g.fillRect(Math.round(wr.x) - 1, Math.round(wr.y) - 1, 2, 2);
 }
 
 // The Ascended's hood ears: two points standing up off his hood, in his
@@ -11927,8 +11951,10 @@ const STYLEFX = {
     // hood: side on as he swings, spread either side of him from behind.
     // A slow beat, baked in twelve steps.
     wings(c, g){
-      const S = Math.max(8, Math.round(g.h * (g.minor ? 0.52 : 0.5))), ph = Math.floor(g.t * 4) % 12;
-      const up = 0.55 + 0.3 * Math.sin(ph / 12 * Math.PI * 2), view = g.back && !g.minor ? 'back' : 'side';
+      const S = Math.max(10, Math.round(g.h * (g.minor ? 0.62 : 0.82))), ph = Math.floor(g.t * 4) % 12;
+      const view = g.back && !g.minor ? 'back' : 'side', beat = Math.sin(ph / 12 * Math.PI * 2);
+      // (from behind, spread wide either side of him; side on, raised up his back)
+      const up = view === 'back' ? 0.1 + 0.2 * beat : 0.55 + 0.3 * beat;
       const W = wingPair('feather', featherWing, FEATHER_PAL, S, view, ph, up, 'rgba(40,20,70,0.45)');
       const A = wingAnchor(g);
       c.globalAlpha = 1; c.drawImage(W.cv, Math.round(A.x - W.ox), Math.round(A.y - W.oy));

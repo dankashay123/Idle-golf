@@ -511,7 +511,9 @@ module.exports = {
     if (!(as.cWings >= 10 && as.cWingsBehind >= as.cWings * 0.6)) f('the Ascended caddie\'s wings: ' + as.cWings + ' pixels, ' + as.cWingsBehind + ' of them behind him');
     if (!(as.ground >= 120) || as.groundOff) f('the Ascended disc: ' + as.ground + ' pixels, ' + as.groundOff + ' of them off the ground at his feet');
     if (!(as.glitch >= 10) || as.glitchOff) f('the Ascended glitching: ' + as.glitch + ' pixels over six frames, ' + as.glitchOff + ' of them away from him');
-    if (as.foot.l > 1.4 || as.foot.r > 1.4 || as.foot.up > 0.4 || as.foot.dn > 0.2)
+    // (his wings made "a lot bigger" at the user's asking: up to two thirds
+    // of his height over him, still no wider than the rest)
+    if (as.foot.l > 1.4 || as.foot.r > 1.4 || as.foot.up > 0.66 || as.foot.dn > 0.2)
       f('the Ascended takes too much of the screen: ' + J(as.foot) + ' (his widths either side of him, his heights above and below)');
     if (!(as.motes >= 4)) f('no motes drawn into the Ascended as he winds up: ' + as.motes + ' pixels');
     if (!(as.sparks >= 6) || as.sparksOff || !(as.waveOut >= 8)) f('the strike: sparks ' + as.sparks + ' (' + as.sparksOff + ' away from the ball), a ring ' + as.waveOut + ' pixels out past the disc');
