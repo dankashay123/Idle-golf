@@ -12,6 +12,8 @@
  *   - each is drawn, counted by its own colours in the part drawn alone:
  *     the glow-worms, the moths round the lamps (the lamp with them against
  *     the lamp without), the luna moth; none of it when the night is wet
+ *   - fox eyes at night only, two points of light, gone as he nears; the
+ *     hedgehog by day and night
  *   - the Field Guide spots each on a night hole played live, and the Guide
  *     shows a Night shelf holding them, the fireflies, the owl, the bat and
  *     the badger
@@ -90,6 +92,26 @@ module.exports = {
         if (wetG || wetM) f('in the rain: ' + wetG + ' pixels of glow-worms, ' + wetM + ' of moths');
         S.dgnRun = { id: B.DGN[0].id }; alone(G, 1); const dg = count(GLOW); alone(L, 1); const dm = count(MOTH) + count(LUNA); S.dgnRun = null;
         if (dg || dm) f('in a wager: ' + dg + ' pixels of glow-worms, ' + dm + ' of moths');
+        // ---- the fox's eyes and the hedgehog (the user picked more for the
+        // Night shelf): eyes only at night, the hedgehog by day and night;
+        // the eyes drawn as two points of light, shut now and then, gone as
+        // he comes within five yards
+        { let eyesN = 0, eyesDay = 0, hogN = 0, hogDay = 0, drawn = 0, near = 0, tried = 0;
+          for (let h = h0; h < h0 + 300; h++) { if (sigKind(h)) continue;
+            play(h, 'Fair'); if (Scene.props.some(p => p.an === 'eyes')) eyesDay++; if (Scene.props.some(p => p.an === 'hedgehog')) hogDay++;
+            play(h, 'Night Round'); const E = Scene.props.find(p => p.kind === 15 && p.an === 'eyes'); if (Scene.props.some(p => p.an === 'hedgehog')) hogN++;
+            if (!E) continue; eyesN++;
+            if (tried < 12) { tried++;
+              for (const t of [0.3, 1.7, 2.9]) { Scene.camD = Math.max(0, E.d - 9); Scene.draw(1 / 30, D); alone([E], t);
+                const d = c.getImageData(0, 0, VW, VH).data; let n = 0; for (let i = 0; i < d.length; i += 4) if (!(d[i] === 1 && d[i + 1] === 2 && d[i + 2] === 3)) n++;
+                drawn += n; Scene.camD = E.d - 4; Scene.draw(1 / 30, D); alone([E], t); const d2 = c.getImageData(0, 0, VW, VH).data;
+                for (let i = 0; i < d2.length; i += 4) if (!(d2[i] === 1 && d2[i + 1] === 2 && d2[i + 2] === 3)) near++; } } }
+          o.eyes = [eyesN, hogN, hogDay, drawn];
+          if (eyesDay) f('fox eyes by day on ' + eyesDay + ' holes');
+          if (!(eyesN >= 15)) f('fox eyes on only ' + eyesN + ' night holes of 300');
+          if (!hogN || !hogDay) f('the hedgehog on ' + hogDay + ' day and ' + hogN + ' night holes (want both)');
+          if (!(drawn >= 2 * tried)) f('the fox eyes drew ' + drawn + ' pixels over ' + tried + ' holes');
+          if (near) f('the fox eyes still there within five yards: ' + near + ' pixels'); }
         // ---- the Field Guide ---------------------------------------------------
         S.guide = {}; QUIET = false; const was = window.toast; window.toast = () => {};
         try { LUNA_FORCE = 1; play(hg, 'Night Round'); LUNA_FORCE = null; } finally { window.toast = was; QUIET = true; }
@@ -97,7 +119,7 @@ module.exports = {
         S.guide = {}; OFFLINE = true; LUNA_FORCE = 1; play(hg, 'Night Round'); LUNA_FORCE = null; OFFLINE = false;
         if (S.guide.glowworm || S.guide.moth) f('spotted away');
         const shelf = GUIDE.filter(g => g.g === 'n').map(g => g.id);
-        for (const id of ['firefly', 'glowworm', 'moth', 'luna', 'owl', 'bat', 'badger']) if (!shelf.includes(id)) f('the Night shelf has no ' + id);
+        for (const id of ['firefly', 'glowworm', 'moth', 'luna', 'owl', 'bat', 'badger', 'hedgehog', 'eyes']) if (!shelf.includes(id)) f('the Night shelf has no ' + id);
         QUIET = false; trophyRoom('guide'); QUIET = true;
         const eb = [...document.querySelectorAll('#roomBody .eyebrow')].map(e => e.textContent.trim());
         if (!eb.includes('Night')) f('the Guide shows no Night shelf: ' + eb.join(', '));
@@ -113,6 +135,7 @@ module.exports = {
         + Math.round(r.rates[2] * 100) + '% of those; none by day, wet or in the snow',
       'glow-worms clear of play, water, the path and anyone standing',
       'drawn: glow-worms ' + r.glowPx + ', moths ' + r.mothPx + ', luna ' + r.lunaPx + ' pixels; none in the rain or a wager',
-      'the Guide spots each live, on a Night shelf with the fireflies, owl, bat and badger'];
+      'fox eyes on ' + r.eyes[0] + ' of 300 night holes, none by day, ' + r.eyes[3] + ' pixels from ten yards and gone within five; the hedgehog on ' + r.eyes[2] + ' day and ' + r.eyes[1] + ' night holes',
+      'the Guide spots each live, on a Night shelf with the fireflies, owl, bat, badger, hedgehog and fox eyes'];
   }
 };

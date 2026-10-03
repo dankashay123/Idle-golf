@@ -9,6 +9,7 @@
  *     woods, not at night or in the rain; the owl at night by the woods, not
  *     by day; the game bird only on a hole with a pheasant; none of them in a
  *     wager or on a frozen course
+ *   - the Animal Sounds switch in Settings silences them all
  *   - now and then over two minutes, never all the time
  *   - quiet: each under the autumn gust and still heard, measured offline
  * Their sounds are counted through a stand-in, as `ambience` does.
@@ -57,6 +58,12 @@ module.exports = {
         o.c = {};
         SEASON_FORCE = 0; lay(hWet); o.c.wetDay = run(120, false, false); o.c.wetNight = run(120, true, false); o.c.wetRain = run(120, false, true);
         S.dgnRun = { id: B.DGN[0].id }; o.c.wager = run(120, false, false); o.c.wagerNight = run(120, true, false); delete S.dgnRun;
+        // (the Animal Sounds switch in Settings: off, none; on again, back)
+        toggleWild(); hideSheet(); o.c.off = run(120, false, false); o.c.offNight = run(120, true, false); const offFlag = S.wild; toggleWild(); hideSheet();
+        if (offFlag !== 0 || S.wild !== undefined) f('the switch set ' + offFlag + ' then ' + S.wild);
+        if (say(o.c.off) !== 'none' || say(o.c.offNight) !== 'none') f('with Animal Sounds off: ' + say(o.c.off) + ' by day, ' + say(o.c.offNight) + ' at night');
+        S.wild = 'x'; migrate(); if (S.wild !== undefined) f('a junk switch kept: ' + S.wild);
+        S.wild = 0; migrate(); const kept = S.wild; delete S.wild; if (kept !== 0) f('the switch off was not kept in the save');
         lay(hDry); o.c.dryDay = run(120, false, false); o.c.dryNight = run(120, true, false);
         if (hBare) { lay(hBare); o.c.bareDay = run(120, false, false); o.c.bareNight = run(120, true, false); }
         SEASON_FORCE = 2; lay(hWet); o.c.winterDay = run(120, false, false); o.c.winterNight = run(120, true, false);
@@ -101,7 +108,7 @@ module.exports = {
     if (r.fails.length) throw new Error(r.fails.join('\n'));
     const c = r.c, d = r.db;
     return ['by the water in two minutes: frogs ' + c.wetDay.frogs + ' by day, ' + c.wetNight.frogs + ' at night; the crow ' + c.wetDay.crow + ' by day, the owl ' + c.wetNight.owl + ' at night; a pheasant\'s call ' + c.pheasant.gameBird,
-      'none on a dry hole (frogs), with no woods (crow, owl), no pheasant (game bird), in winter or a wager',
+      'none on a dry hole (frogs), with no woods (crow, owl), no pheasant (game bird), in winter, a wager or with the switch off',
       ['frogs', 'owl', 'crow', 'gameBird'].map(k => k + ' ' + d[k].toFixed(1)).join(', ') + ' dB, under the autumn gust\'s ' + d.gust.toFixed(1) + ' (the pines ' + d.pines.toFixed(1) + ')'];
   }
 };

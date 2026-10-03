@@ -6,6 +6,8 @@
  *     every one, live or away; a birdie does not, nor an ace in a wager
  *   - the plaque stands on that hole when it is played again, on no other,
  *     and none before the first ace; none in a wager
+ *   - brass to 9 aces, silver from 10, gold from 50 (the user picked it
+ *     from the menu), its face in that colour
  *   - it says it: "1 ACE", "3 ACES", a big count in words that fit, drawn
  *     alone over a blank in its own lettering, at 320, 390, 440 and on its
  *     side, from the tee, clear of the buttons down the stage's left
@@ -54,7 +56,7 @@ module.exports = {
         { const was = S.aceAt; S.aceAt = {}; const none = view(h1); S.aceAt = was; if (none.n) f('a plaque before any ace: ' + none.n + ' pixels'); }
         { view(h1); S.dgnRun = { id: B.DGN[0].id }; alone(plaq()); const w = lit(); S.dgnRun = null; if (w.n) f('a plaque in a wager: ' + w.n + ' pixels'); }
         // ---- it says it, at any count ----
-        for (const n of [1, 3, 47, 1234]) {
+        for (const n of [1, 3, 9, 10, 47, 49, 50, 1234]) {
           S.aceAt[k0] = n; view(h1);
           const P = plaq()[0]; if (!P) { f('no plaque laid'); break; }
           // (the words picked, drawn as the board draws them)
@@ -62,12 +64,17 @@ module.exports = {
           const tl = Scene.proj(P.d, P.x - 0.5, 1.0), br = Scene.proj(P.d, P.x + 0.5, 0.4), w = Math.round(br.x - tl.x);
           // (on a stage too small for the words, a gold pip an ace: the
           // harness's stage is half a phone's)
-          const r = lit(), d = c.getImageData(0, 0, VW, VH).data; let pip = 0; for (let i = 0; i < d.length; i += 4) if (hex(d, i) === '#F2C21E') pip++;
+          // (in that count's look: brass, silver from 10, gold from 50)
+          const L = plaqueLook(n), up = c => c.toUpperCase(); lit();
+          const d = c.getImageData(0, 0, VW, VH).data; let txt = 0, face = 0; for (let i = 0; i < d.length; i += 4) { const hx = hex(d, i); if (hx === up(L.txt)) txt++; if (hx === up(L.face)) face++; }
+          const want2 = n >= 50 ? 'gold' : n >= 10 ? 'silver' : 'brass';
+          if (L !== PLAQUE_LOOK[n >= 50 ? 2 : n >= 10 ? 1 : 0]) f(n + ' aces did not take the ' + want2 + ' look');
+          if (!(face >= 4)) f(n + ' aces: ' + face + ' pixels of the ' + want2 + ' face');
           const fits = textW(String(n), 1) <= w - 4 && Math.round(br.y - tl.y) - 2 >= FHS - 1;
-          if (fits && !(r.txt - pip >= 8)) f(n + ' aces on a board ' + w + ' wide showed ' + (r.txt - pip) + ' pixels of words');
-          if (!fits && !(pip >= Math.min(5, n))) f(n + ' aces on a board too small for words showed ' + pip + ' pixels of pips');
-          if (textW(want, 1) <= w - 4 && Math.round(br.y - tl.y) - 2 >= FHS - 1 && n < 1000 && !(r.txt - pip >= textW(want, 1))) f('"' + want + '" fits a board ' + w + ' wide but showed ' + (r.txt - pip) + ' pixels of words');
-          o['n' + n] = (fits ? 'words ' : 'pips ') + (r.txt) + ' (' + w + ' wide)';
+          if (fits && !(txt >= 8)) f(n + ' aces on a board ' + w + ' wide showed ' + txt + ' pixels of words');
+          if (!fits && !(txt >= Math.min(5, n))) f(n + ' aces on a board too small for words showed ' + txt + ' pixels of pips');
+          if (textW(want, 1) <= w - 4 && Math.round(br.y - tl.y) - 2 >= FHS - 1 && n < 1000 && !(txt >= textW(want, 1))) f('"' + want + '" fits a board ' + w + ' wide but showed ' + txt + ' pixels of words');
+          o['n' + n] = want2 + (fits ? ' words ' : ' pips ') + txt + ' (' + w + ' wide)';
         }
         S.aceAt[k0] = 3;
         // ---- clear of the buttons down the left ----
@@ -103,11 +110,11 @@ module.exports = {
       await page.setViewportSize({ width: w, height: h }); await page.waitForTimeout(250);
       const r = await one();
       if (r.fails.length) throw new Error(w + 'x' + h + ': ' + r.fails.join('\n'));
-      out.push(w + 'x' + h + ' ' + r.at.n + ' pixels, ' + [r.n1, r.n3, r.n47, r.n1234].join('/'));
+      out.push(w + 'x' + h + ' ' + r.at.n + ' pixels, ' + [r.n1, r.n9, r.n10, r.n50, r.n1234].join('/'));
     }
     return ['two aces (live and away) counted on their hole, a birdie and a wager\'s ace not',
       'the plaque on that hole when played again, none elsewhere, before an ace or in a wager',
-      'it reads at every count, clear of the left buttons: ' + out.join('; '),
+      'it reads at every count, brass, silver from 10, gold from 50, clear of the left buttons: ' + out.join('; '),
       'never under the ground\'s line walking from the tee; a broken save repaired'];
   }
 };
