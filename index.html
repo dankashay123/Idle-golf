@@ -22432,14 +22432,15 @@ Object.assign(Scene, {
       this.standBlit(c, shrinkSprite(spr, w, h) || spr, X - (w >> 1), Y - h, w, h);
       return;
     }
-    // a find by the tee (layFind): a few solid pixels in the rough, a glint
+    // a find by the tee (layFind): solid pixels in the rough, drawn about
+    // three balls wide so it can be seen at all, a glint
     // on it now and then; picked up a moment after the hole starts, gone
     // with a small burst of light where it lay (half a second)
     if(p.kind === 19){
       if(S.dgnRun || !this.find || this.hole !== S.hole) return;
       const age = this.t - this.find.t0, X = Math.round(pr.x), Y = Math.round(pr.y);
       if(age >= FIND_PICK + 0.5 || pr.x < -8 || pr.x > VW + 8) return;
-      const n = Math.max(2, Math.round(B_BALL * US * pr.s * 1.7)), R = (x, y, w, hh, col) => { c.fillStyle = col; c.fillRect(X + x, Y + y, w, hh); };
+      const n = Math.max(3, Math.round(B_BALL * US * pr.s * 3)), R = (x, y, w, hh, col) => { c.fillStyle = col; c.fillRect(X + x, Y + y, w, hh); };
       if(age >= FIND_PICK){
         // (rays out from where it lay, a pixel square each, longer as it goes)
         const q = (age - FIND_PICK) / 0.5, r0 = 1 + Math.round(q * n * 2.5);
