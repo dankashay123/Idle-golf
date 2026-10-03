@@ -89,7 +89,7 @@ module.exports = {
         let n = 0; const N = 60000; for (let h = 0; h < N; h++) if (goldenHole(h)) n++;
         o.rate = (N / n).toFixed(0);
         if (Math.abs(n / N - B.GOLDEN_P) > B.GOLDEN_P * 0.2) f('Golden Hour on 1 hole in ' + o.rate);
-        let h = S.hole; while (!goldenHole(h)) h++;
+        let h = S.hole; while (!goldenHole(h) || sigKind(h)) h++;   // (never on a signature hole)
         S.hole = h; S.dawnDusk = 1; HOUR_FORCE = 14; startHole();
         const look = ch => { S.chaos = { n: ch }; Scene.newHole(h, S.tier); return Scene.golden && /\|gold$/.test(Scene.themeId); };
         if (!look('Fair')) f('a Golden Hour hole by day is not lit gold (' + Scene.themeId + ')');

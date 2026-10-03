@@ -12,7 +12,8 @@
  * its line, posts and a train on it in every view, every kind in turn; and
  * the weather on them (snow settled on them, a storm's spray) in turn, and
  * the night (the pier's lanterns, the bridge's lights, the island's lamps,
- * the fireflies by the river).
+ * the fireflies by the river). And Golden Hour's mountain of coins, painted
+ * into the ground, on gentle and steep ground, from the tee to its top.
  *
  * Every course with a canyon, stones or a sea stack is played (the home courses and the
  * others, rolling ground included): two holes of each kind, and on each the
@@ -94,7 +95,35 @@ module.exports = {
             }
           }
         }
+        // Golden Hour's mountain of coins, painted into the ground: every
+        // pixel of it above the ground's line at its own distance, from the
+        // tee to the top, and none of it cut away once he is up on it
+        o.gold = 0;
+        Scene.drawBridge = keep.bridge; Scene.drawStones = keep.stones; Scene.drawPier = keep.pier; Scene.drawDucks = keep.ducks; Scene.drawRail = keep.rail;
+        HOUR_FORCE = 14; FROST_FORCE = 0;
+        for (let h = 1, m = 0; h < 30000 && m < 4; h++) {
+          if (!goldenOn(h, 'Fair')) continue;
+          m++; S.hole = h; S.chaos = { n: 'Fair' }; Scene.newHole(h, S.tier); Scene.announce = null; Scene.balls = []; Scene.restBall = null;
+          if (m & 1) Scene.roll = 1.6;      // (and on steep ground)
+          const M = Scene.mtn, I = Scene.isle; o.holes++;
+          for (const cam of [0, M.bank * 0.3, M.bank * 0.6, M.bank - 3, M.bank, (M.bank + M.land) / 2, M.land, Scene.pinD() - B_GREEN_STAND]) {
+            Scene.camD = cam; Scene.walkTo = cam; S.yards = cam >= I.land ? 0 : S.yardsMax * (1 - cam / LEN); S.elapsed = S.parTime * 0.6; S.doneT = null; Scene.gGen++;
+            Scene.draw(0, D); o.frames++; o.gold++;
+            const MP = Scene._mtnPx, FD = Scene._fdep; let n = 0, low = 0;
+            for (let i = 0; i < VW * VH; i++) if (MP[i]) { n++; if (((i / VW) | 0) > Scene.clipAt(FD[i]) + 1) low++; }
+            if (n > 4) o.seen++;
+            if (low) o.bad.push('Golden Hour hole ' + h + ' from ' + cam.toFixed(1) + ': ' + low + ' pixels of the mountain below the ground in front');
+            if (cam >= M.land) {
+              const ck = Scene.clipAt; Scene.clipAt = () => 1e6; Scene.gGen++; Scene.draw(0, D); Scene.clipAt = ck;
+              let w = 0; for (let i = 0; i < VW * VH; i++) if (Scene._mtnPx[i]) w++;
+              if (w - n > 3) o.cut.push('Golden Hour hole ' + h + ' from ' + cam.toFixed(1) + ': ' + (w - n) + ' of the mountain\'s ' + w + ' pixels cut away');
+              o.onIt++;
+            }
+          }
+        }
+        HOUR_FORCE = null; FROST_FORCE = null;
       } finally {
+        HOUR_FORCE = null; FROST_FORCE = null;
         Scene.drawBridge = keep.bridge; Scene.drawStones = keep.stones; Scene.drawPier = keep.pier; Scene.drawDucks = keep.ducks; Scene.drawRail = keep.rail; window.step = keep.step;
         QUIET = false; OFFLINE = false;
         Object.keys(S).forEach(k => delete S[k]); Object.assign(S, JSON.parse(SNAP)); buildSprites(); startHole();
@@ -106,6 +135,7 @@ module.exports = {
     if (r.seen < r.frames * 0.4) throw new Error('the bridge, stones or pier were seen in only ' + r.seen + ' of ' + r.frames + ' frames');
     return [r.holes + ' canyon, stepping-stone, sea stack, island and railway holes over every course that has them, ' + r.frames + ' views from the tee to past the crossing',
       'the bridge, stones, pier or the life on them in view in ' + r.seen + ' of them, and never a pixel below the ground in front',
-      'from on them or at them (' + r.onIt + ' views) none of them cut away'];
+      'from on them or at them (' + r.onIt + ' views) none of them cut away',
+      'and Golden Hour\'s mountain of coins in ' + r.gold + ' of the views, from the tee to its top, likewise'];
   }
 };

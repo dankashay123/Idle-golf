@@ -18959,7 +18959,7 @@ const Scene = {
   // ground the mountain stands on cleared of what the hole laid there, piles
   // of coins (kind 20) along both sides of the fairway up to its foot, and
   // on its top sovereigns (kind 21) and a few more piles round the green.
-  layGold(){
+  layGoldHour(){
     const M = this.mtn; if(!M) return;
     const put = this.props || (this.props = []), R1 = M.R0 * 1.06 + 0.1;
     for(let i = put.length - 1; i >= 0; i--){ const q = put[i];
@@ -18977,7 +18977,8 @@ const Scene = {
     for(let i = 0, n = 0, m = 0; i < 160 && n + m < 22; i++){
       const d = M.dc - M.A + hr(this.hole * 97 + i, 739) * M.A * 2, x = (hr(this.hole * 97 + i, 740) - 0.5) * 2 * M.W;
       const gd = d - LEN, ga = Math.abs(gd) < 8.6 ? 3.05 * 1.09 * Math.sqrt(1 - (gd / 8.6) * (gd / 8.6)) : 0;
-      if(this.mtnR(d, x) > 0.9 || Math.abs(x) < ga + 0.35 || near(d, x, 0.8, [20, 21])) continue;
+      // (off the green and its collar, and off his line up onto it)
+      if(this.mtnR(d, x) > 0.9 || Math.abs(x) < ga + 0.35 || (d < LEN && Math.abs(x) < 1.6) || near(d, x, 0.8, [20, 21])) continue;
       const pile = hr(i, 741) < 0.3;
       if(pile ? m >= 6 : n >= 16) continue;
       if(pile) m++; else n++;
@@ -19933,6 +19934,7 @@ const Scene = {
     this.layCritters();
     this.layOthers();
     this.layFind();
+    this.layGoldHour();
     this.layGold();
     guideSpot(this);
     // the near bank: the last ground on his line before the water
