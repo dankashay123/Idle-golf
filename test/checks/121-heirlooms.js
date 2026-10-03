@@ -67,9 +67,14 @@ module.exports = {
             const step2 = trophyMultAt(t, top) - trophyMultAt(t, top - 1);
             if (!(Math.abs(step2 / step - 1) < 1e-6)) f(t.n + ' past ' + K + ' steps ' + fmt(step) + ' then ' + fmt(step2) + ': it still compounds');
             const pr = lv => { S.relic[t.id] = lv; return upgradeCost(t); };
-            const p30 = pr(K), p31 = pr(K + 1), pTop = pr(top - 1), pPrev = pr(top - 2); S.relic[t.id] = 0;
-            if (!(Math.abs((pTop - pPrev) - (p31 - p30)) <= 1 + 1e-6 * pTop)) f(t.n + ' price past ' + K + ' rises ' + fmt(p31 - p30) + ' then ' + fmt(pTop - pPrev) + ' a level');
-            if (!(pTop / p30 <= 1 + (top - K) * 0.2)) f(t.n + ' costs ' + fmt(pTop / p30) + ' times its Lv ' + K + ' price at the top');
+            // the price: the first levels as they always were, steeper late,
+            // a steady rise a level past the knee, and always more than it pays
+            const raw = lv => trophyPriceAt(t, lv);
+            if (Math.abs(raw(10) / Math.pow(trophyRatio(t), 10) - 1) > 1e-9) f(t.n + ' at Lv 10 costs ' + fmt(raw(10)) + ', not what it did');
+            const q1 = raw(K + 1) / raw(K), q2 = raw(top - 1) / raw(top - 2);
+            if (!(Math.abs(q1 / q2 - 1) < 1e-9)) f(t.n + ' price past ' + K + ' rises x' + q1.toFixed(3) + ' then x' + q2.toFixed(3) + ' a level');
+            if (!(q1 > trophyMultAt(t, K + 1) / trophyMultAt(t, K))) f(t.n + ' past ' + K + ' costs x' + q1.toFixed(3) + ' a level for x' + (trophyMultAt(t, K + 1) / trophyMultAt(t, K)).toFixed(3));
+            if (!(raw(K) / raw(K - 1) > trophyRatio(t))) f(t.n + ' is no steeper at Lv ' + K + ' than at Lv 10');
             o.lin = o.lin || {}; if (t.id === 'heart' || t.id === 'gilded')
               o.lin[t.id] = [K, Math.min(2 * K, top), top].map(lv => fmt(trophyMultAt(t, lv)) + '/' + fmt(pr(lv))); S.relic[t.id] = 0;
           }
@@ -93,6 +98,42 @@ module.exports = {
         if (relLv('vault') !== trTop(trophyDef('vault'))) f('the Locker read level ' + relLv('vault'));
         if (relLv('rift') !== trTop(trophyDef('rift'))) f('the Invitation read level ' + relLv('rift'));
         initState();
+
+        // ---- how long the room lasts ------------------------------------------
+        // a career that retires every ten cups on about the card it would
+        // reach, Legacy, Collector and Curator paragon full, every legacy spent
+        // on a discovery, then the cheapest raise
+        const fillAt = () => { const keepP = Object.assign({}, S.paraSpent), keepC = S.cups;
+          S.paraSpent['long.plegacy'] = 500; S.paraSpent['long.pcurate'] = 500; S.paraSpent['long.pdisc'] = 500;
+          B.TROPHY.forEach(t => S.relic[t.id] = 0);
+          let L = 0, nd = 0, fill = 0;
+          for (let N = 10; N <= 800 && !fill; N += 10) {
+            S.cups = N; L += legacyFor(Math.min(220, 80 + N), N);
+            while (nd < B.TROPHY.length && L >= discoverCostAt(nd)) { L -= discoverCostAt(nd); S.relic[B.TROPHY[nd].id] = 1; nd++; }
+            for (let it = 0; it < 100000; it++) { let best = null, bc = Infinity;
+              for (const t of B.TROPHY) { if (!S.relic[t.id] || S.relic[t.id] >= trTop(t) || t.k === '@chrono') continue;
+                const c = upgradeCost(t); if (c < bc) { bc = c; best = t; } }
+              if (!best || bc > L) break; L -= bc; S.relic[best.id]++; }
+            if (B.TROPHY.every(t => t.k === '@chrono' || S.relic[t.id] >= trTop(t))) fill = N;
+          }
+          Object.assign(S.paraSpent, keepP); S.cups = keepC; B.TROPHY.forEach(t => S.relic[t.id] = 0); return fill; };
+        o.fill = fillAt();
+        if (!(o.fill >= 270 && o.fill <= 330)) f('the room is at its tops after ' + (o.fill || 'more than 800') + ' cups, not about 300');
+        // the first three retirements of a new career (Cards 8, 15 and 22 with
+        // 1, 5 and 10 cups, no paragon): a discovery and raises from them
+        { const keepP = Object.assign({}, S.paraSpent); B.PARAGON.forEach(c => c.a.forEach(a => S.paraSpent[c.id + '.' + a.id] = 0));
+          B.TROPHY.forEach(t => S.relic[t.id] = 0);
+          let L = 0, nd = 0, raises = 0; o.early = [];
+          for (const [tier, cups] of [[7, 1], [14, 5], [21, 10]]) {
+            L += legacyFor(tier, cups); const d0 = nd, r0 = raises;
+            while (nd < B.TROPHY.length && L >= discoverCostAt(nd) && (nd < 1 || raises >= nd)) { L -= discoverCostAt(nd); S.relic[B.TROPHY[(nd * 7) % B.TROPHY.length].id] = 1; nd++; }
+            for (let it = 0; it < 1000; it++) { let best = null, bc = Infinity;
+              for (const t of B.TROPHY) { if (!S.relic[t.id] || S.relic[t.id] >= trTop(t)) continue; const c = upgradeCost(t); if (c < bc) { bc = c; best = t; } }
+              if (!best || bc > L) break; L -= bc; S.relic[best.id]++; raises++; }
+            o.early.push(legacyFor(tier, cups) + ' legacy: ' + (nd - d0) + ' found, ' + (raises - r0) + ' raised');
+          }
+          if (!(nd >= 1 && raises >= 3)) f('the first three retirements buy ' + nd + ' discoveries and ' + raises + ' raises');
+          Object.assign(S.paraSpent, keepP); B.TROPHY.forEach(t => S.relic[t.id] = 0); }
 
         // ---- the strongest golfer ---------------------------------------------
         S.lv = B.LV_MAX; S.retires = 20; S.buff = {}; S.perkOn = {}; S.member = 1;
@@ -206,6 +247,7 @@ module.exports = {
       + ' at the tops; everything maxed walls at Card ' + (r.wallMax + 1) + ' (none: ' + (r.wall0 + 1)
       + '), the room x' + r.gldRoom.toFixed(0) + ' purse; Drive Power at 2,308 reads ' + r.driveLabel
       + '; past 30 (multiplier/price at 30, 60 or top, top): Heart ' + r.lin.heart.join(' ') + ', Gilded ' + r.lin.gilded.join(' ')
+      + '; the room fills at ' + r.fill + ' cups; first retirements ' + r.early.join(', ')
       + '; the Locker kept ' + r.keptDrive + ' Drive and ' + r.keptTempo + ' Pace'];
   }
 };
