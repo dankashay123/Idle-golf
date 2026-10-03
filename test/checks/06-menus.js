@@ -246,18 +246,18 @@ module.exports = {
         S.hole = 145; endTournament(); o.after2 = S.tierMax;
       } finally { QUIET = false; }
       setView('tour');
-      o.line = (document.getElementById('tierBox').textContent.match(/Events on Card [IVXL]+\s*\d+ of \d+/) || [''])[0];
+      o.line = (document.getElementById('tierBox').textContent.match(/Events on Card \d+\s*\d+ of \d+/) || [''])[0];
       try { hideSheet(); } catch (e) {}
       return o;
     });
     if (doors.need.join() !== '2,3,4,5,5')
       throw new Error('events to open the next card read ' + doors.need.join('/') + ', not 2/3/4/5/5');
     if (doors.after1 !== 0 || doors.after2 !== 1)
-      throw new Error('Card II opened after ' + (doors.after1 ? 1 : doors.after2 ? 2 : 'more than 2')
-        + ' events on Card I, not 2');
-    // tier 0 is "Card I", so the first card to open is Card II
-    if (!/Card II\s*0 of 3/.test(doors.line))
-      throw new Error('with Card II open the Tour panel reads "' + doors.line + '", not "Card II 0 of 3"');
+      throw new Error('Card 2 opened after ' + (doors.after1 ? 1 : doors.after2 ? 2 : 'more than 2')
+        + ' events on Card 1, not 2');
+    // tier 0 is "Card 1", so the first card to open is Card 2
+    if (!/Card 2\s*0 of 3/.test(doors.line))
+      throw new Error('with Card 2 open the Tour panel reads "' + doors.line + '", not "Card 2 0 of 3"');
 
     return ['the first three cards open after 2, 3 and 4 events, then 5',
       '5 tabs, both sub navs, folds, cooldowns; pull tab gains ' + grew + 'px',

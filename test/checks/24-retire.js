@@ -59,7 +59,7 @@ module.exports = {
         QUIET = false; setView('career'); careerSub = 'leg'; renderLegacy();
         const btn = document.getElementById('retireBtn');
         if (btn) { btn.onclick(); o.sheet = document.getElementById('sheet').textContent; }
-        o.sheetWant = 'Card ' + roman(retireCard());
+        o.sheetWant = 'Card ' + cardNo(retireCard());
         hideSheet();
       } finally {
         QUIET = false;
@@ -75,7 +75,7 @@ module.exports = {
       throw new Error('landed on a card where a fresh par four takes ' + r.here.toFixed(2) + ' of par: not a birdie');
     if (r.landed < 30 && !(r.above > 0.77))
       throw new Error('the card above the landing is still a birdie (' + r.above.toFixed(2) + ' of par): it landed too low');
-    if (r.capped !== 3) throw new Error('a golfer far past their best card (Card IV) would land on Card ' + (r.capped + 1));
+    if (r.capped !== 3) throw new Error('a golfer far past their best card (Card 4) would land on Card ' + (r.capped + 1));
     if (!(r.floor >= r.chrono)) throw new Error('a Chronoglass of ' + r.chrono + ' landed below it, on Card ' + (r.floor + 1));
     if (!r.sheet || r.sheet.indexOf(r.sheetWant) < 0)
       throw new Error('the retirement sheet does not name the card it lands on (' + r.sheetWant + '): ' + (r.sheet || '(no sheet)').slice(0, 120));
@@ -106,16 +106,16 @@ module.exports = {
       initState(); migrate(); startHole(); save(); });
     await boot();
     if (moved.tier !== moved.matched || moved.max !== moved.matched || moved.fixed !== 1)
-      throw new Error('an old Card IX save loaded onto Card ' + (moved.tier + 1) + ' with Card ' + (moved.max + 1)
+      throw new Error('an old Card 9 save loaded onto Card ' + (moved.tier + 1) + ' with Card ' + (moved.max + 1)
         + ' open; its golfer matches Card ' + (moved.matched + 1));
-    if (moved.tier === 8) throw new Error('the old-save setup matches Card IX already, so it tests nothing');
+    if (moved.tier === 8) throw new Error('the old-save setup matches Card 9 already, so it tests nothing');
     if (moved.hole !== 1 + 72 * 2) throw new Error('an old save moved to hole ' + moved.hole + ', not the start of its event (' + (1 + 72 * 2) + ')');
     if (again.tier !== moved.tier || again.hole !== moved.hole + 5)
       throw new Error('a second load moved a fixed save again: Card ' + (moved.tier + 1) + ' hole ' + (moved.hole + 5)
         + ' became Card ' + (again.tier + 1) + ' hole ' + again.hole);
     if (reset.hole !== 40) throw new Error('a save written after a reset reloaded on hole ' + reset.hole + ', not 40');
 
-    return ['an old Card IX save moves once to Card ' + (moved.tier + 1) + ', the card its golfer matches; '
+    return ['an old Card 9 save moves once to Card ' + (moved.tier + 1) + ', the card its golfer matches; '
       + 'the next load and a save after a reset stay put',
       'retiring lands on Card ' + (r.landed + 1) + ' (a fresh par four at ' + r.here.toFixed(2)
       + ' of par, ' + r.above.toFixed(2) + ' on the card above), with it open',

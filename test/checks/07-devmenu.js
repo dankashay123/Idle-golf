@@ -84,7 +84,7 @@ module.exports = {
       throw new Error('"finish all" dailies: done ' + fx.daily + ', paid ' + fx.dailyPaid + ' of ' + fx.dailyWant);
     if (fx.named !== 6) throw new Error('the named set button put ' + fx.named + ' pieces of the set on, not 6');
     if (fx.trophies) throw new Error('"clear trophies" left ' + fx.trophies + ' found');
-    if (fx.tier !== 0) throw new Error('"back to Card I" left the golfer on card ' + fx.tier);
+    if (fx.tier !== 0) throw new Error('"back to Card 1" left the golfer on card ' + fx.tier);
     if (fx.honours) throw new Error('"clear all" honours left ' + fx.honours + ' done');
     if (fx.sov) throw new Error('"zero" sovereigns left ' + fx.sov);
     if (fx.feat !== 'twilight' || fx.featBack !== null)
@@ -151,7 +151,7 @@ module.exports = {
 
     return ['tap ignored, drag ignored, 1.5s hold opens it',
       'all ' + press.n + ' dev buttons pressed without an error; dailies, named sets, trophy and honours '
-      + 'resets, Card I, sovereigns and the stake override all do what they say',
+      + 'resets, Card 1, sovereigns and the stake override all do what they say',
       'and the newer ones: the major of the week, the season, the cabinet, the fairy, caddie perks, sound, the frame readout, mastery, the bond, Golden Hour and the gallery; all in folds that stay as they were left'];
   }
 };

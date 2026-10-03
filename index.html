@@ -1042,7 +1042,7 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
   <div id="crest">
     <div id="title">
       <div id="eventLine"><span id="eventName">Qualifying School</span></div>
-      <div id="sub"><span id="dayName">Thursday</span> &middot; Tour Card <span id="cardRoman">I</span></div>
+      <div id="sub"><span id="dayName">Thursday</span> &middot; Tour Card <span id="cardRoman">1</span></div>
     </div>
     <div id="purse">
       <div id="gold">0</div>
@@ -1255,6 +1255,16 @@ const B = {
   // the first hour while ahead, then one or two an hour; 3x ran away to card
   // 50 and 3.5x to card 16 in three hours.
   TIER_Y: 4, TIER_G: 2.16, Y0: 60, G0: 14, TIER_MAX: 400,
+  // Past Card TIER_K + 1 each card's holes grow TIER_Y2 rather than TIER_Y.
+  // Every multiplying heirloom has a ceiling now, so at 4x a card the deficit
+  // against the purse put a wall at Card 126 with everything maxed. The user
+  // wants it past 200 (2.4 walled at Card 279, 2.7 at 221, 3.0 at 193, 3.3
+  // at 178, with everything maxed; a career that has won about a hundred
+  // cups reaches 220, and 50,000 paragon and 300 retirements 258): the gentler step only starts where the heirlooms have
+  // done their work, so the cards a career meets first are as they were, and
+  // it is still steeper than what a card's purse and gear add to a golfer, so
+  // the ladder still has a wall.
+  TIER_K: 100, TIER_Y2: 2.7,
   // Retiring starts you on the highest card where a fresh par four would
   // still come in at this share of par time (a birdie), on the golfer you are
   // once the range resets -- never above the best card you had reached.
@@ -1275,8 +1285,6 @@ const B = {
   // hole in exactly the same time, but it now reads as a birdie rather than
   // an eagle. See HCP.
   PAR_TIME: { 3: 6.5, 4: 9.8, 5: 13 },
-  TIER_ROMAN: ['I','II','III','IV','V','VI','VII','VIII','IX','X','XI','XII','XIII','XIV','XV',
-               'XVI','XVII','XVIII','XIX','XX','XXI','XXII','XXIII','XXIV','XXV'],
 
   /* ---- the round ---- */
   ROUND: 18, DAYS: 4,
@@ -3451,9 +3459,9 @@ const B = {
     { id:'lv60',   n:'Tour Pro',         d:'Reach career level 60',       m:'lv',     v:60,    r:{k:'pow', v:0.10}, sov:130 },
     { id:'p25',    n:'Paragon',          d:'Reach paragon 25',            m:'para',   v:25,    r:{k:'spd', v:0.05}, sov:130 },
     { id:'p250',   n:'Ascendant',        d:'Reach paragon 250',           m:'para',   v:250,   r:{k:'pow', v:0.20}, sov:130 },
-    { id:'t10',    n:'Climbing',         d:'Reach Tour Card X',           m:'tier',   v:9,     r:{k:'pow', v:0.03}, sov:13 },
-    { id:'t25',    n:'Thin Air',         d:'Reach Tour Card XXV',         m:'tier',   v:24,    r:{k:'pow', v:0.06}, sov:130 },
-    { id:'t50',    n:'Mythic Air',       d:'Reach Tour Card L',           m:'tier',   v:49,    r:{k:'pow', v:0.12}, sov:130 },
+    { id:'t10',    n:'Climbing',         d:'Reach Tour Card 10',           m:'tier',   v:9,     r:{k:'pow', v:0.03}, sov:13 },
+    { id:'t25',    n:'Thin Air',         d:'Reach Tour Card 25',         m:'tier',   v:24,    r:{k:'pow', v:0.06}, sov:130 },
+    { id:'t50',    n:'Mythic Air',       d:'Reach Tour Card 50',           m:'tier',   v:49,    r:{k:'pow', v:0.12}, sov:130 },
     { id:'kit',    n:'Kitted Out',       d:'Fill all six bag slots',      m:'slots',  v:6,     r:{k:'tick', v:2}, sov:7 },
     { id:'leg',    n:'Rare Air',         d:'Find a Legendary',            m:'legend', v:1,     r:{k:'shard', v:100}, sov:7 },
     { id:'myth',   n:'Mythwrought',      d:'Find a Mythic',               m:'myth',   v:1,     r:{k:'elm', v:0.05}, sov:13 },
@@ -3588,17 +3596,20 @@ const B = {
   // gain of its own to price against. Every trophy has a ceiling as well, so
   // nothing can be walked out to nonsense.
   // TR_MAX is the most any heirloom could ever go to; each has its own top
-  // (max) well under it. Every one was free to 250 levels, and at 250 the
-  // Gilded Card paid 1e44 times the purse: the Range went free, Drive Power
-  // ran past two thousand levels and the ladder had no top (the user maxed
-  // it and it "breaks the game"). Measured on a golfer with everything else
-  // maxed, the yardage, purse, payoff, pace and wager ones each moved the
-  // highest playable card by 20 to 130 cards alone and all thirty together
-  // walked past Card 400. Now no heirloom passes about x70K (the Persimmon
-  // Heart, yardage), prize money stops at about x100 for all three together,
-  // and the ones the game already caps (pure strike, provisional, affinity,
-  // drops) stop near where their cap bites. A save above a top is put back
-  // to it on load.
+  // (max) under it. Every one was free to 250 levels of compounding, and at
+  // 250 the Gilded Card paid 1e44 times the purse: the Range went free and
+  // the ladder had no top (the user maxed it and it "breaks the game"). Now
+  // a level compounds only to TR_KNEE and adds a fixed step past it, the
+  // multipliers stop at 100 (prize money and wager winnings at 40), and a
+  // save above a top is put back to it on load. Measured on a golfer with
+  // everything maxed, prize money is about x1,000 for all three together and
+  // the highest playable card is about Card 221 (see TIER_Y2).
+  // Past TR_KNEE a level no longer compounds (the user: "don't make the
+  // upgrades after 30 be so exponential"): each one adds the same step, the
+  // gain of one compounding level taken off the level-30 figure, and costs
+  // TR_LIN of the level-30 price more than the one before, so a ladder can
+  // be walked on past 30 instead of standing still.
+  TR_KNEE: 30, TR_LIN: 0.10,
   TR_COST: 3, TR_R: 1.42, TR_MAX: 250,
   TR_TIER: { B:{ n:'Bronze', m:1.00, w:60, v:'--r1' },
              A:{ n:'Silver', m:1.65, w:30, v:'--r2' },
@@ -3616,10 +3627,10 @@ const B = {
      entirely to the talent trees. ---- */
   TROPHY: [
     // the four originals, still the biggest multipliers in the room
-    { id:'heart',  t:'S', n:'Persimmon Heart',   k:'*pow',  g:1.45, max:30, d:'Yardage on every swing' },
-    { id:'ley',    t:'S', n:'Ley Line Grip',     k:'*mst',  g:1.30, max:12, d:'Provisional chance' },
-    { id:'gilded', t:'S', n:'Gilded Card',       k:'*gld',  g:1.10, max:25, d:'Prize money' },
-    { id:'oath',   t:'A', n:'Oathstone',         k:'*elm',  g:1.40, max:10, d:'Ball affinity power' },
+    { id:'heart',  t:'S', n:'Persimmon Heart',   k:'*pow',  g:1.45, max:100, d:'Yardage on every swing' },
+    { id:'ley',    t:'S', n:'Ley Line Grip',     k:'*mst',  g:1.30, max:100, d:'Provisional chance' },
+    { id:'gilded', t:'S', n:'Gilded Card',       k:'*gld',  g:1.10, max:40, d:'Prize money' },
+    { id:'oath',   t:'A', n:'Oathstone',         k:'*elm',  g:1.40, max:100, d:'Ball affinity power' },
     // the six that change how a run is played, mechanics unchanged
     { id:'sun',    t:'A', n:'Sunstone Marker',   k:'@sun', max:10, d:'Gear luck, +9pp a level' },
     { id:'chrono', t:'S', n:'Chronoglass',       k:'@chrono', max:250, d:'Start each run one Tour Card higher' },
@@ -3629,26 +3640,26 @@ const B = {
     { id:'vault',  t:'S', n:"Founder's Locker",  k:'@vault', max:10, d:'Keep 50 levels of every Range upgrade on retiring' },
     // and twenty more, two to a stat: one you will turn up early and one worth
     // building a room around
-    { id:'hickory',t:'B', n:'Hickory Shaft',     k:'*pow', g:1.09, max:30, d:'Yardage on every swing' },
-    { id:'mythtee',t:'S', n:'Mythril Tee',       k:'*pow', g:1.26, max:30, d:'Yardage on every swing' },
-    { id:'spikes', t:'B', n:'Steel Spikes',      k:'*spd', g:1.05, max:15, d:'Swings per second' },
-    { id:'clock',  t:'A', n:'Pace Clock',        k:'*spd', g:1.15, max:15, d:'Swings per second' },
-    { id:'brassie',t:'B', n:'Brassie',           k:'*crt', g:1.05, max:30, d:'Pure strike chance' },
-    { id:'sunday', t:'S', n:'Sunday Bag',        k:'*crt', g:1.16, max:20, d:'Pure strike chance' },
-    { id:'gutta',  t:'B', n:'Gutta Percha',      k:'*cpw', g:1.07, max:15, d:'Pure strike payoff' },
-    { id:'niblick',t:'A', n:'Niblick',           k:'*cpw', g:1.18, max:15, d:'Pure strike payoff' },
-    { id:'compass',t:'B', n:'Ley Compass',       k:'*elm', g:1.08, max:20, d:'Ball affinity power' },
-    { id:'feath',  t:'A', n:'Featherie',         k:'*elm', g:1.19, max:16, d:'Ball affinity power' },
-    { id:'sock',   t:'B', n:'Wind Sock',         k:'*prc', g:1.06, max:25, d:'Affinity trigger chance' },
-    { id:'glass',  t:'A', n:'Storm Glass',       k:'*prc', g:1.14, max:20, d:'Affinity trigger chance' },
-    { id:'token',  t:'B', n:'Range Token',       k:'*gld', g:1.03, max:25, d:'Prize money' },
-    { id:'reader', t:'S', n:'Gate Receipts',     k:'*gld', g:1.06, max:25, d:'Prize money' },
-    { id:'marker', t:'B', n:'Lucky Marker',      k:'*drp', g:1.05, max:30, d:'Gear drop chance' },
-    { id:'divot',  t:'A', n:'Divot Tool',        k:'*drp', g:1.12, max:25, d:'Gear drop chance' },
-    { id:'whistle',t:'B', n:"Caddie's Ledger",   k:'*dgn', g:1.07, max:15, d:'Wager winnings' },
-    { id:'deepwdg',t:'A', n:"Gambler's Wedge",   k:'*dgn', g:1.16, max:15, d:'Wager winnings' },
-    { id:'watch',  t:'B', n:'Practice Swing',    k:'*mst', g:1.06, max:25, d:'Provisional chance' },
-    { id:'yardage',t:'A', n:'Yardage Book',      k:'*mst', g:1.15, max:20, d:'Provisional chance' }
+    { id:'hickory',t:'B', n:'Hickory Shaft',     k:'*pow', g:1.09, max:100, d:'Yardage on every swing' },
+    { id:'mythtee',t:'S', n:'Mythril Tee',       k:'*pow', g:1.26, max:100, d:'Yardage on every swing' },
+    { id:'spikes', t:'B', n:'Steel Spikes',      k:'*spd', g:1.05, max:100, d:'Swings per second' },
+    { id:'clock',  t:'A', n:'Pace Clock',        k:'*spd', g:1.15, max:100, d:'Swings per second' },
+    { id:'brassie',t:'B', n:'Brassie',           k:'*crt', g:1.05, max:100, d:'Pure strike chance' },
+    { id:'sunday', t:'S', n:'Sunday Bag',        k:'*crt', g:1.16, max:100, d:'Pure strike chance' },
+    { id:'gutta',  t:'B', n:'Gutta Percha',      k:'*cpw', g:1.07, max:100, d:'Pure strike payoff' },
+    { id:'niblick',t:'A', n:'Niblick',           k:'*cpw', g:1.18, max:100, d:'Pure strike payoff' },
+    { id:'compass',t:'B', n:'Ley Compass',       k:'*elm', g:1.08, max:100, d:'Ball affinity power' },
+    { id:'feath',  t:'A', n:'Featherie',         k:'*elm', g:1.19, max:100, d:'Ball affinity power' },
+    { id:'sock',   t:'B', n:'Wind Sock',         k:'*prc', g:1.06, max:100, d:'Affinity trigger chance' },
+    { id:'glass',  t:'A', n:'Storm Glass',       k:'*prc', g:1.14, max:100, d:'Affinity trigger chance' },
+    { id:'token',  t:'B', n:'Range Token',       k:'*gld', g:1.03, max:40, d:'Prize money' },
+    { id:'reader', t:'S', n:'Gate Receipts',     k:'*gld', g:1.06, max:40, d:'Prize money' },
+    { id:'marker', t:'B', n:'Lucky Marker',      k:'*drp', g:1.05, max:100, d:'Gear drop chance' },
+    { id:'divot',  t:'A', n:'Divot Tool',        k:'*drp', g:1.12, max:100, d:'Gear drop chance' },
+    { id:'whistle',t:'B', n:"Caddie's Ledger",   k:'*dgn', g:1.07, max:40, d:'Wager winnings' },
+    { id:'deepwdg',t:'A', n:"Gambler's Wedge",   k:'*dgn', g:1.16, max:40, d:'Wager winnings' },
+    { id:'watch',  t:'B', n:'Practice Swing',    k:'*mst', g:1.06, max:100, d:'Provisional chance' },
+    { id:'yardage',t:'A', n:'Yardage Book',      k:'*mst', g:1.15, max:100, d:'Provisional chance' }
   ],
   // A trophy's cost ladder is its own gain raised to this. Above one, so cost
   // outruns gain on every trophy in the room by construction rather than by a
@@ -4057,7 +4068,10 @@ function seeded(seed){
   let s = hash32(seed) || 1;
   return () => { s ^= s << 13; s ^= s >>> 17; s ^= s << 5; s >>>= 0; return s / 4294967296; };
 }
-const roman = t => t < B.TIER_ROMAN.length ? B.TIER_ROMAN[t] : (t+1).toString();
+// A Tour Card as it is shown: a plain number, Card 1 for the first (the user:
+// "I don't want Roman numbers ... just use numbers"). The card's id inside the
+// game still counts from 0, so saves carry over.
+const cardNo = t => String(Math.round(t || 0) + 1);
 // A number and the unit it carries do not get to sit on separate lines: "55 per
 // cent" broke after "55 per", and "+1.2% swing power" after "+1.2%". One hard
 // space, between the figure and the word it measures, and no further -- the
@@ -4734,13 +4748,19 @@ for(const t of B.TROPHY){
   if(!t.g || t.k[0] !== '*') continue;
   (TR_MULT[t.k.slice(1)] = TR_MULT[t.k.slice(1)] || []).push(t);
 }
+// What a multiplying heirloom pays at a level: its gain compounded to
+// TR_KNEE, then the same step a level past it.
+function trophyMultAt(t, lv){
+  const k = Math.min(lv, B.TR_KNEE), m = Math.pow(t.g, k);
+  return lv <= B.TR_KNEE ? m : m * (1 + (lv - B.TR_KNEE) * (t.g - 1));
+}
 function relMult(k){
   const list = TR_MULT[k];
   if(!list) return 1;
   let m = 1;
   for(const t of list){
     const n = Math.min(S.relic[t.id] || 0, trTop(t));
-    if(n) m *= Math.pow(t.g, n);
+    if(n) m *= trophyMultAt(t, n);
   }
   return m;
 }
@@ -5170,8 +5190,18 @@ const galleryHole = h => isSunday(h) && holeInRound(h) > B.ROUND - GALLERY_HOLES
 function tierProgress(tier){
   return tier === undefined ? S.tier : tier;
 }
+// How much longer a card's holes are than Card 1's: TIER_Y a card to TIER_K,
+// TIER_Y2 a card past it. cardOfLen is the inverse, in whole and part cards.
+function cardLen(tier){
+  const t = Math.max(0, tier);
+  return Math.pow(B.TIER_Y, Math.min(t, B.TIER_K)) * Math.pow(B.TIER_Y2, Math.max(0, t - B.TIER_K));
+}
+function cardOfLen(x){
+  const L = Math.log(Math.max(1e-300, x)), K = B.TIER_K * Math.log(B.TIER_Y);
+  return L <= K ? L / Math.log(B.TIER_Y) : B.TIER_K + (L - K) / Math.log(B.TIER_Y2);
+}
 function yardageFor(h, tier, ch){
-  return B.Y0 * Math.pow(B.TIER_Y, tierProgress(tier)) * (parOf(h)/4) * ch.y
+  return B.Y0 * cardLen(tierProgress(tier)) * (parOf(h)/4) * ch.y
        * (isClosing(h) ? 2.2 : 1) * (isSunday(h) ? 1.25 : 1);
 }
 function parTimeFor(h){
@@ -5206,7 +5236,7 @@ function announceCourse(){
   const fit = str => [...str.toUpperCase()].map(ch => GLYPH[ch] || ch === ' ' ? ch : ' ').join('').replace(/ +/g, ' ').trim();
   const sub = isWeekMajor(t) ? 'Major of the Week'
             : (courseSeason(cs, S.tier) ? SEASONS[courseSeason(cs, S.tier)].n + ' - ' : '')
-              + (cs.slot === 'home' ? 'Home of Tour Card ' + roman(S.tier) : 'Tour Card ' + roman(S.tier) + ' - Event ' + t);
+              + (cs.slot === 'home' ? 'Home of Tour Card ' + cardNo(S.tier) : 'Tour Card ' + cardNo(S.tier) + ' - Event ' + t);
   Scene.announce = { name: fit(cs.n), sub: fit(sub), t: 0, dur: 4.2, gold: isWeekMajor(t) };
 }
 // The season each course that turns (the home courses, and the regular stops
@@ -5872,7 +5902,7 @@ const carryFloor = D => asFloor(Math.max(1, D.dps) * B.CARRY_FLOOR_T)
 // against the ladder. Being deeper than your card expects is the thing worth
 // paying for, and that is the same achievement on every card.
 const dgnPace = tier => B.DGN_PACE_0
-  + Math.log(B.TIER_Y) / Math.log(B.DGN_WORK_STEP) * tierProgress(tier);
+  + Math.log(cardLen(tierProgress(tier))) / Math.log(B.DGN_WORK_STEP);
 
 // What one purchase in a currency's shop costs today. Every reward down here is
 // priced in these, the way the Vault is priced in holes of purse, so a run buys
@@ -7553,7 +7583,7 @@ function advanceHole(){
     const round = S.scores.reduce((t, x) => t + (x ? x.d : 0), 0);
     if(round <= B.ROUND * B.ROUND_OPEN && S.tier >= (S.tierMax || 0) && (S.tierMax || 0) < B.TIER_MAX){
       S.tierMax = (S.tierMax || 0) + 1;
-      toast('Tour Card <b>' + roman(S.tierMax) + '</b> unlocked \u00b7 too good for this one');
+      toast('Tour Card <b>' + cardNo(S.tierMax) + '</b> unlocked \u00b7 too good for this one');
       cardPay();
     }
     if(wasSunday) endTournament();
@@ -7696,7 +7726,7 @@ function endTournament(){
     + ' \u00b7 next target ' + fm(targetShown()) + '</li>'
     + (Wk ? '<li>Major: <b style="color:var(--brass)">+' + Wk.sov + sovIc() + '</b>'
         + (Wk.first ? ' \u00b7 <b style="color:var(--brass)">' + Wk.prize.n + '</b> won' : '')
-        + (Wk.beat || onTop ? '' : ' \u00b7 wins only count on Card ' + roman(S.tierMax || 0)) + '</li>' : '')
+        + (Wk.beat || onTop ? '' : ' \u00b7 wins only count on Card ' + cardNo(S.tierMax || 0)) + '</li>' : '')
     + '</ul>'
     + '<button class="act" onclick="hideSheet()">Next event</button>');
 
@@ -7708,7 +7738,7 @@ function endTournament(){
   if(S.tier >= (S.tierMax || 0) && (beat || eventsOn(S.tier) >= eventsToUnlock(S.tier))
      && (S.tierMax || 0) < B.TIER_MAX){
     S.tierMax = (S.tierMax || 0) + 1;
-    toast('Tour Card <b>' + roman(S.tierMax) + '</b> unlocked');
+    toast('Tour Card <b>' + cardNo(S.tierMax) + '</b> unlocked');
     cardPay();
   }
   S.tourScore = 0;
@@ -7783,15 +7813,15 @@ function projectedRatio(tier, wx){
 function climb(n, quiet, force){
   let to = clamp(S.tier + n, 0, B.TIER_MAX);
   if(!force && to > (S.tierMax || 0)){
-    if(!quiet) toast('Tour Card ' + roman((S.tierMax||0) + 1) + ' needs '
+    if(!quiet) toast('Tour Card ' + cardNo((S.tierMax||0) + 1) + ' needs '
       + eventsToNext() + '\u00a0more event' + (eventsToNext() === 1 ? '' : 's'));
     return;
   }
   if(to === S.tier) return;
   S.tier = to;
   if(S.tier > S.bestTier) S.bestTier = S.tier;
-  if(!quiet) toast('Tour Card <b>' + roman(S.tier) + '</b>');
-  else toast('Card <b>' + roman(S.tier) + '</b> earned on form');
+  if(!quiet) toast('Tour Card <b>' + cardNo(S.tier) + '</b>');
+  else toast('Card <b>' + cardNo(S.tier) + '</b> earned on form');
   startHole(); renderTour(); renderVitals();
 }
 
@@ -8889,15 +8919,18 @@ function legacyPreview(){
 // whole short ladder for a few hundred legacy, so no ladder is gentler than a
 // mechanic's.
 const trophyRatio = t => t.g ? Math.max(B.TR_R, Math.pow(t.g, B.TR_POW)) : B.TR_R;
+// the ladder's price at a level: compounding to TR_KNEE, then a straight line
+const trophyPriceAt = (t, lv) => lv <= B.TR_KNEE ? Math.pow(trophyRatio(t), lv)
+  : Math.pow(trophyRatio(t), B.TR_KNEE) * (1 + (lv - B.TR_KNEE) * B.TR_LIN);
 const upgradeCost = t => Math.max(1, Math.ceil(B.TR_COST * B.TR_TIER[t.t].m
-  * Math.pow(trophyRatio(t), S.relic[t.id] || 0)
+  * trophyPriceAt(t, S.relic[t.id] || 0)
   * (1 - Math.min(0.50, career().pcurate))));
 // what an heirloom does at a level, as its row and its reveal say it
 function trophyEff(t, lv){
-  if(t.g) return '\u00d7' + fmt(Math.pow(t.g, lv));
+  if(t.g) return '\u00d7' + fmt(trophyMultAt(t, lv));
   if(t.k === '@sun') return '+' + fmt(lv*B.SUN_ADD*100) + 'pp';
   if(t.k === '@ember') return '+' + fmt(lv*B.EMBER_ADD*100) + 'pp';
-  if(t.k === '@chrono') return 'retire onto Card ' + roman(Math.min(B.TIER_MAX, lv)) + ' or higher';
+  if(t.k === '@chrono') return 'retire onto Card ' + cardNo(Math.min(B.TIER_MAX, lv)) + ' or higher';
   if(t.k === '@vault'){ const kp = Math.min(500, lv*B.VAULT_UPG);
     return fmt(kp, 0) + ' levels kept' + (kp >= 500 ? ' (all)' : ''); }
   if(t.k === '@rift'){ const w = Math.max(B.RIFT_MIN_WAIT, Math.pow(B.RIFT_REGEN, lv));
@@ -8939,7 +8972,7 @@ function upgradeTrophy(id){
 }
 // The highest card where a fresh par four comes in at RETIRE_FIT of par time.
 function matchedCard(D){
-  const c = Math.floor(Math.log(Math.max(1e-9, B.RETIRE_FIT * D.dps * B.PAR_TIME[4] / B.Y0)) / Math.log(B.TIER_Y));
+  const c = Math.floor(cardOfLen(Math.max(1e-9, B.RETIRE_FIT * D.dps * B.PAR_TIME[4] / B.Y0)));
   return clamp(c, 0, B.TIER_MAX);
 }
 // A card worth paying on: no lower than one under what his bag suits (or
@@ -8953,7 +8986,7 @@ function fairCard(D){ return !((S.tier || 0) < Math.min(S.tierMax || 0, matchedC
 function cardPay(){
   if((S.tierMax || 0) <= (S.cardPaid || 0)) return;
   S.cardPaid = S.tierMax;
-  grantSov(B.FREE_CARD, 'Tour Card ' + roman(S.tierMax));
+  grantSov(B.FREE_CARD, 'Tour Card ' + cardNo(S.tierMax));
 }
 // Where a retirement puts you, worked out on the golfer you will be once the
 // range resets, not the one signing the card. The Chronoglass is a floor under
@@ -9273,7 +9306,7 @@ function offline(){
     + '</div>';
 
   const marks = [];
-  if(cards > 0) marks.push(['Tour Card', roman(S.tierMax) + (cards > 1 ? ' (+' + cards + ')' : ''), ic('chevrons')]);
+  if(cards > 0) marks.push(['Tour Card', cardNo(S.tierMax) + (cards > 1 ? ' (+' + cards + ')' : ''), ic('chevrons')]);
   if(events > 0) marks.push(['Events finished', String(events), ic('flag', '#D8453A')]);
   if(cups > 0) marks.push(['Cups won', String(cups), ic('trophy')]);
   if(levels > 0) marks.push(['Career levels', '+' + levels, ic('star')]);
@@ -25124,7 +25157,7 @@ function renderVitals(){
   const t = tournamentOf(S.hole);
   $('eventName').textContent = eventName(t);
   $('dayName').textContent = dayName(S.hole);
-  $$('cardRoman').textContent = roman(S.tier);
+  $$('cardRoman').textContent = cardNo(S.tier);
 }
 // Drawn on the same grid as everything else, then blitted as an image with
 // pixelated rendering. A smooth vector icon sitting on pixel art reads as a
@@ -26421,7 +26454,7 @@ function renderTour(){
   const target = eventTarget();
   const proj = played > 0 ? Math.round(S.tourScore / played * B.ROUND * B.DAYS) : 0;
   const fm = n => n === 0 ? 'E' : n > 0 ? '+' + n : String(n);
-  $('tierNote').textContent = 'Card ' + roman(S.tier) + ' \u00b7 Best ' + roman(S.bestTier);
+  $('tierNote').textContent = 'Card ' + cardNo(S.tier) + ' \u00b7 Best ' + cardNo(S.bestTier);
 
   // The card you are ON and the card that is your HIGHEST are two different
   // things, and this panel used to name both in one sentence while the button
@@ -26439,37 +26472,37 @@ function renderTour(){
   // (only when playing below the highest card: on it, the Climb row under
   // says the same, "5 to go", and the user found the tab cluttered)
   const unlockLine = atTop || top >= B.TIER_MAX ? ''
-    : lb('Events on Card ' + roman(top), Math.min(eventsOn(top), eventsToUnlock(top)) + ' of '
+    : lb('Events on Card ' + cardNo(top), Math.min(eventsOn(top), eventsToUnlock(top)) + ' of '
          + eventsToUnlock(top), '--flag');
 
   $('tierBox').innerHTML =
     '<div class="hint" id="cardHint"><div class="foldhead">'
-    + '<span>Playing <b>Card ' + roman(S.tier) + '</b>'
-    + (atTop ? '' : ' · Highest <b>Card ' + roman(top) + '</b>') + '</span>'
+    + '<span>Playing <b>Card ' + cardNo(S.tier) + '</b>'
+    + (atTop ? '' : ' · Highest <b>Card ' + cardNo(top) + '</b>') + '</span>'
     + '<button class="qm" aria-label="How Tour Cards work">?</button></div>'
-    + '<div class="fold" style="margin-top:6px">Each card up has holes \u00d7' + B.TIER_Y + ' longer that pay \u00d7'
+    + '<div class="fold" style="margin-top:6px">Each card up has holes \u00d7' + +(cardLen(top + 1) / cardLen(top)).toFixed(2) + ' longer that pay \u00d7'
     + B.TIER_G + ' more. Win the cup on your '
     + 'highest card to open the next at once, or play ' + eventsToUnlock(top) + ' events there. Cups only '
     + 'count on your highest card. Retiring starts you on the highest card your golfer can birdie.</div></div>'
     + unlockLine
     + (atTop || top >= B.TIER_MAX ? ''
        : '<div class="hint" style="color:var(--flag)">No unlocks below Card '
-         + roman(top) + '</div>')
+         + cardNo(top) + '</div>')
     + climbLines()
     + (maxed
-      ? '<div class="row"><div><div class="nm">Card ' + roman(S.tier) + '</div>'
+      ? '<div class="row"><div><div class="nm">Card ' + cardNo(S.tier) + '</div>'
         + '<div class="ds">The last card.</div></div></div>'
-      : '<div class="row"><div><div class="nm">Climb to Card ' + roman(nextT) + '</div>'
+      : '<div class="row"><div><div class="nm">Climb to Card ' + cardNo(nextT) + '</div>'
         + '<div class="ds">' + (cardUnlocked(nextT)
             ? 'This hole: <b style="color:var(--chalk)">' + nm(hereR)
               + '</b> now, <b style="color:var(--chalk)">' + nm(nextR) + '</b> there.'
-            : 'Win the cup on Card ' + roman(top) + ', or play ' + eventsToNext()
+            : 'Win the cup on Card ' + cardNo(top) + ', or play ' + eventsToNext()
               + '\u00a0more event' + (eventsToNext() === 1 ? '' : 's')) + '</div></div>'
         + '<button class="buy' + (cardUnlocked(nextT) ? ' ok' : ' no') + '" id="climbBtn">'
         + '<span class="lbl">Climb</span><span class="amt">'
         + (cardUnlocked(nextT) ? '+1' : eventsToNext() + '\u00a0to go') + '</span></button></div>')
     + '<div class="row"><div><div class="nm">'
-    + (S.tier > 0 ? 'Drop Back to Card ' + roman(S.tier - 1) : 'Drop Back') + '</div>'
+    + (S.tier > 0 ? 'Drop Back to Card ' + cardNo(S.tier - 1) : 'Drop Back') + '</div>'
     + '<div class="ds">' + (S.tier > 0
         ? 'Shorter holes, smaller purse.'
         : 'The first card.') + '</div></div>'
@@ -26718,7 +26751,7 @@ function renderCabinet(){
   let rows = '';
   if(S.bestRound !== undefined && (!bc.length || S.bestRound < bc[0].s)) rows += line(S.bestRound, 'Best card');
   rows += bc.slice(0, rows ? 2 : 3).map(x => { const cs = courseById(x.id);
-    return line(x.s, (cs ? cs.n : '') + ' \u00b7 Card ' + roman(x.c)); }).join('');
+    return line(x.s, (cs ? cs.n : '') + ' \u00b7 Card ' + cardNo(x.c)); }).join('');
   if(S.bestNine !== undefined) rows += line(S.bestNine, 'Best nine');
   const plaque = '<div class="plaque"><div class="ph">Best Cards</div>'
     + (rows || '<div class="pe">Finish an event to post one here.</div>') + '</div>';
@@ -26726,7 +26759,7 @@ function renderCabinet(){
   const sb = (S.seasonBest || []).filter(x => x.g === (S.retires || 0)).sort((a, b) => b.n - a.n).slice(0, 8);
   const seasons = '<div class="plaque" id="seasonBests"><div class="ph">Season Bests</div>'
     + (sb.length ? sb.map(x => { const cs = courseById(x.id);
-        return line(x.s, 'Season ' + x.n + (x.n === now + 1 ? ' (now)' : '') + (x.up ? ' \u25b2' : '') + ' \u00b7 ' + (cs ? cs.n : '') + ' \u00b7 Card ' + roman(x.c)); }).join('')
+        return line(x.s, 'Season ' + x.n + (x.n === now + 1 ? ' (now)' : '') + (x.up ? ' \u25b2' : '') + ' \u00b7 ' + (cs ? cs.n : '') + ' \u00b7 Card ' + cardNo(x.c)); }).join('')
       : '<div class="pe">Finish an event to post one here.</div>') + '</div>';
   setHTML(box, '<div class="cab"><div class="shelf">' + trophies + '</div>' + caseTrack('maj') + '<div class="plank"></div>'
     + '<div class="shelf">' + jackets + '</div><div class="plank"></div>'
@@ -26791,14 +26824,14 @@ function renderLegacy(){
     + lb('It buys', legacyBuys(P))
     + (P.ready
       ? '<div class="row"><div><div class="nm">Sign the Card</div>'
-        + '<div class="ds">Tour Card ' + roman(S.tier) + ' with ' + S.cups + ' cups banked.</div></div>'
+        + '<div class="ds">Tour Card ' + cardNo(S.tier) + ' with ' + S.cups + ' cups banked.</div></div>'
         + '<button class="buy ok" id="retireBtn"><span class="lbl">Retire</span><span class="amt">+'
         + fmt(gain) + '</span></button></div>'
       : '<div class="empty">Opens after your first event \u00b7 '
         + holesPlayed(S.hole) + ' of ' + (B.ROUND*B.DAYS) + '\u00a0holes</div>');
   if(gain > 0) $('retireBtn').onclick = () => showSheet(
     '<h3>Sign the Card?</h3><p>Bank <b>' + fmt(gain) + '</b> legacy and restart on Card '
-    + roman(retireCard()) + '.</p><p>' + legacyBuys(P).charAt(0).toUpperCase()
+    + cardNo(retireCard()) + '.</p><p>' + legacyBuys(P).charAt(0).toUpperCase()
     + legacyBuys(P).slice(1) + '.</p>'
     + '<p>Wait a card: +' + fmt(P.card) + ' \u00b7 wait a cup: +' + fmt(P.cup) + '</p>'
     + '<button class="act" onclick="hideSheet();retire()">Retire</button>'
@@ -27122,7 +27155,7 @@ const DEV = {
       + '  ·  affinity ' + fmt(D.elem) + ' (' + (1 + Math.min(D.elemDmg, B.ELEM_CAP)).toFixed(1) + 'x)<br>'
       + 'proc ' + pct(D.proc) + ' capped / ' + pct(D.procRaw) + ' raw  ·  luck ' + pct(D.drop) + '<br>'
       + 'gear pow +' + fmt(G.pow*100) + '%  ·  pierce ' + pct(C.pierce) + '  ·  cdr ' + pct(C.cdr) + '<br>'
-      + 'card ' + roman(S.tier) + ' of ' + roman(S.tierMax || 0) + ' unlocked  ·  '
+      + 'card ' + cardNo(S.tier) + ' of ' + cardNo(S.tierMax || 0) + ' unlocked  ·  '
       + eventsOn(S.tierMax || 0) + '/' + eventsToUnlock(S.tierMax || 0) + ' events on it<br>'
       + screenLine() + '<br>'
       + 'lv ' + S.lv + '  ·  paragon ' + fmt(S.para, 0) + '  ·  talents ' + talentsUsed()
@@ -27138,7 +27171,7 @@ const DEV = {
       // what auto-climb is judging, and what the audio is doing: the two
       // questions nothing else on screen can answer
       + 'climb check ' + (S.tier < B.TIER_MAX ? roundRatio(S.tier + 1).toFixed(2) + ' of par on Card '
-          + roman(S.tier + 1) + ', climbs at ' + B.CLIMB_FIT.toFixed(2) + (cardUnlocked(S.tier + 1) ? '' : ' (locked)') : 'top card') + '<br>'
+          + cardNo(S.tier + 1) + ', climbs at ' + B.CLIMB_FIT.toFixed(2) + (cardUnlocked(S.tier + 1) ? '' : ' (locked)') : 'top card') + '<br>'
       + 'audio ' + (Sfx.ctx ? Sfx.ctx.state : 'not started') + '  ·  recordings '
       + (['strike', 'putt', 'cup', 'music'].filter(k => Sfx.recs[k]).join(', ') || 'none') + (DEV._recs ? ' (off)' : '')
       + '  ·  music ' + (S.music === 0 ? 'off' : Sfx.mus.length ? 'playing ' + (Sfx.musKey === 'music2' ? 'the calm one' : 'the town theme') : 'waiting') + '</div>';
@@ -27160,7 +27193,7 @@ const DEV = {
 
     h += fold('tour', 'Tour, events and courses',
         row('Tour Card', b('+1', 'DEV.tier(1)') + b('+5', 'DEV.tier(5)') + b('-5', 'DEV.tier(-5)')
-          + b('back to Card I', 'DEV.tierSet(0)') + b('unlock +3 cards', 'DEV.cards(3)'))
+          + b('back to Card 1', 'DEV.tierSet(0)') + b('unlock +3 cards', 'DEV.cards(3)'))
       + row('Events', b('finish 1', 'DEV.event(1)') + b('finish 5', 'DEV.event(5)') + b('next event', 'DEV.nextEvent(1)') + b('next season', 'DEV.nextSeason()'))
       + row('Course records \u00b7 ' + Object.keys(S.courseBest || {}).length, b('post a course record', 'DEV.courseRec(1)') + b('clear', 'DEV.courseRec(0)'))
       + row('Major of the week', b('play it next', 'DEV.majorNext()') + b('win this one', 'DEV.majorWin(1)')
@@ -27903,7 +27936,7 @@ function saverStats(){
   const card = (S.tierMax || 0) - V.card, sov = (S.sov || 0) - V.sov, para = (S.para || 0) - V.para;
   let h = '<div class="awgrid">' + stat('purse', '+' + fmt(g), 'big') + stat('holes', fmt(holes, 0))
     + stat('clubs', String(V.clubs)) + '</div>';
-  if(card > 0) h += line('Tour Card', roman(S.tierMax));
+  if(card > 0) h += line('Tour Card', cardNo(S.tierMax));
   if(ev > 0) h += line('Events Finished', String(ev));
   if(cups > 0) h += line('Cups Won', String(cups));
   if(lv > 0) h += line('Career Levels', '+' + lv);
@@ -28143,7 +28176,7 @@ function importSheet(){
     try{ o = await readCode($('saveCode').value); }
     catch(e){ toast(e.message || 'That code would not load'); return; }
     showSheet('<h3>Replace This Save?</h3><p>Level ' + (o.lv || 1) + ' · Tour Card '
-      + roman(o.tier || 0) + ' · ' + fmt(o.gold || 0) + ' purse</p>'
+      + cardNo(o.tier || 0) + ' · ' + fmt(o.gold || 0) + ' purse</p>'
       + '<button class="act danger" id="doImport">Load it</button>'
       + '<button class="act ghost" onclick="settingsSheet()">Cancel</button>');
     $('doImport').onclick = () => loadSaveObject(o);
