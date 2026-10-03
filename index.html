@@ -4306,6 +4306,16 @@ function migrate(){
     else for(const k in S.guide){ const v = S.guide[k];
       if(!GUIDE.some(g => g.id === k) || !(v >= 1 && v < 1e9)) delete S.guide[k]; else S.guide[k] = Math.floor(v); }
   }
+  // finds by the tee and the caddie's gifts: counts; the hole last found on
+  for(const k of ['finds', 'gifts', 'findHole']) if(S[k] !== undefined){
+    if(!(S[k] >= 0 && S[k] < 1e12)) delete S[k]; else S[k] = Math.floor(S[k]); }
+  // the course records: a whole card and a real day, for a course there is
+  if(S.courseBest !== undefined){
+    if(!S.courseBest || typeof S.courseBest !== 'object' || Array.isArray(S.courseBest)) delete S.courseBest;
+    else for(const k in S.courseBest){ const R = S.courseBest[k];
+      if(!B.COURSE.some(c => c.id === k) || !R || typeof R !== 'object' || !(Math.abs(R.s) < 1e4) || !(R.d >= 0 && R.d < 1e6)) delete S.courseBest[k];
+      else S.courseBest[k] = { s: Math.round(R.s), d: Math.floor(R.d) }; }
+  }
   // a club for a slot this build does not have cannot be worn or scored
   S.bag = S.bag.filter(it => it && B.SLOTS.some(sl => sl.id === it.slot));
   S.bag.forEach(fix);
@@ -4577,7 +4587,22 @@ function bondTick(live){
     + (BOND_UNLOCK[bondLv(id) - 1] || ''), 'ach');
 }
 // what each step of the bond brings
-const BOND_UNLOCK = ['New lines', 'A salute', 'More to say', 'A jig', 'The last move, and his best lines'];
+const BOND_UNLOCK = ['New lines', 'A salute', 'More to say', 'A jig, and a gift now and then', 'The last move, and his best lines'];
+// A gift from the caddie (the user picked it from the menu): from Close on,
+// now and then after a birdie or better played live, a few sovereigns or,
+// one time in five, a sponsor ticket or two. From a hash of the hole.
+const GIFT_ODDS = [25, 15];        // one birdie in this many, at Close and at Inseparable
+function caddieGift(h, d, force){
+  if(QUIET || OFFLINE || S.dgnRun) return false;
+  const lv = bondLv(S.caddie || 'bib');
+  if(!force && (d > -1 || lv < 4 || hr(h, 710) >= 1 / GIFT_ODDS[lv >= 5 ? 1 : 0])) return false;
+  const CD = caddieNow(), tick = hr(h, 711) < 0.2 && (S.tickets || 0) < B.TICK_CAP, n = tick ? 1 + Math.floor(hr(h, 712) * 2) : 2 + Math.floor(hr(h, 712) * 4);
+  S.gifts = (S.gifts || 0) + 1;
+  if(tick){ const t0 = S.tickets || 0; grantTickets(n); const m = (S.tickets || 0) - t0;
+    toast('<span class="achk">' + CD.n + '</span>A gift \u00b7 +' + m + ' ticket' + (m === 1 ? '' : 's'), 'ach'); }
+  else{ grantSov(n, '', true); toast('<span class="achk">' + CD.n + '</span>A gift \u00b7 <span style="white-space:nowrap">+' + n + sovIc() + '</span>', 'ach'); }
+  return true;
+}
 // a hole played: a hole more on every club carried, and a word when one
 // earns a star (not while away: the card says what came of it)
 function masterTick(live){
@@ -7088,7 +7113,7 @@ function finishHole(D){
   S.scores[idx] = { d: sc.d, n: sc.n, par: parOf(S.hole) };
   S.tourScore += sc.d;
   rivalChase();
-  S.totalHoles++; masterTick(!OFFLINE); bondTick(!OFFLINE);
+  S.totalHoles++; masterTick(!OFFLINE); bondTick(!OFFLINE); caddieGift(S.hole, sc.d);
   if(!S.nine || S.nine.idx !== nineIndex(S.hole)) startNine();
   const N = S.nine;
   N.n++; N.total += sc.d;
@@ -7184,6 +7209,17 @@ function rivalChase(){
 }
 // this season's series against them, as it stands after event t
 function rivalSeries(t){ const R = S.rivalSer; return R && R.s === seasonOf(t) ? R : null; }
+// Course records (the user picked them from the menu): the best card posted
+// live on each course, and the real day it was posted, for the Cabinet.
+function courseRecPost(id, score){
+  S.courseBest = S.courseBest || {};
+  const R = S.courseBest[id];
+  if(R && R.s <= score) return false;
+  S.courseBest[id] = { s: score, d: dayNow() };
+  return true;
+}
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const dayDate = d => { const t = new Date(d * 86400000); return t.getUTCDate() + '\u00a0' + MONTHS[t.getUTCMonth()] + '\u00a0' + t.getUTCFullYear(); };
 function endTournament(){
   const t = tournamentOf(S.hole - 1);
   const score = S.tourScore, target = eventTarget();
@@ -7221,6 +7257,7 @@ function endTournament(){
     S.bestCards = S.bestCards || [];
     S.bestCards.push({ t, id: csT.id, s: score, c: S.tier });
     seasonBestPost(t, csT.id, score, S.tier);
+    courseRecPost(csT.id, score);
     S.bestCards.sort((a, b) => a.s - b.s);
     if(S.bestCards.length > 5) S.bestCards.length = 5;
   }
@@ -7424,6 +7461,23 @@ function grantSov(n, why, quiet){
   S.sov = (S.sov || 0) + n;
   if(!quiet) toast('+' + sovFmt(n) + ' ' + B.SOV + (why ? ' \u00b7 ' + why : ''));
   renderVitals();
+}
+// Finds by the tee (Scene.layFind): what can lie there, how often (w of
+// 100) and what it pays. About 2.5 sovereigns over FIND_ODDS holes.
+const FINDS = [{ id: 'ball', n: 'Lost Ball', sov: 2, w: 45 }, { id: 'peg', n: 'Tee Peg', sov: 1, w: 15 },
+  { id: 'marker', n: 'Ball Marker', sov: 2, w: 15 }, { id: 'coin', n: 'Old Coin', sov: 3, w: 20 },
+  { id: 'antique', n: 'Antique Coin', sov: 10, w: 5 }];
+const FIND_ODDS = 40, FIND_PICK = 0.9;
+let FIND_FORCE = null;             // the developer menu's: a find on this hole
+function findOf(h){
+  let r = hr(h, 704) * 100;
+  for(const F of FINDS){ if(r < F.w) return F; r -= F.w; }
+  return FINDS[0];
+}
+function payFind(h, F){
+  S.findHole = h; S.finds = (S.finds || 0) + 1;
+  grantSov(F.sov, '', true);
+  toast('<span class="achk">By the Tee</span>' + F.n + ' · <span style="white-space:nowrap">+' + F.sov + sovIc() + '</span>', 'ach');
 }
 function spendSov(n){
   if((S.sov || 0) < n){ toast('Not enough ' + B.SOV.toLowerCase()); return false; }
@@ -17561,6 +17615,35 @@ const Scene = {
     put.sort((a, b) => b.d - a.d);
     this.props = put;
   },
+  // A find by the tee (kind 19; the user picked it from the menu): on about
+  // one live hole in FIND_ODDS a lost ball, an old coin, a tee peg or a ball
+  // marker lies in the rough just off the tee box, and is picked up as he
+  // steps up (paid now, gone with a glint a moment later). From a hash,
+  // tagged extra; never away, in a wager or twice on one hole.
+  layFind(){
+    this.find = null;
+    const h = this.hole, put = this.props || [];
+    if(QUIET || OFFLINE || S.dgnRun || h !== S.hole || S.findHole === h || !S.totalHoles) return;
+    if(FIND_FORCE !== h && hr(h, 700) >= 1 / FIND_ODDS) return;
+    for(let i = 0; i < 16; i++){
+      // (on his left: the hole map stands over the right of the field)
+      const side = -1, d = 3.4 + hr(h * 3 + i, 702) * 2.2;
+      const x = side * (this.fwWidth(d) + 0.3 + hr(h * 5 + i, 703) * 0.4);
+      if(this.hitsHazard(d, x, 0.4) || this.onNbr(d, x, 0.3) || this.inPond(d, x, 0.5) || this.inFill(d, x, 0.2, 'lake') || this.inFill(d, x, 0, 'wood')
+         || (this.cart && Math.sign(x) === this.cart.sd && Math.abs(Math.abs(x) - Math.abs(this.cartX(d))) < 0.6)
+         || put.some(q => (q.kind === 0 || q.kind === 2 || q.kind === 3 || q.kind >= 10) && Math.abs(q.d - d) < 0.8 && Math.abs(q.x - x) < 0.8)) continue;
+      // (a shrub, tuft or rock where it lies is taken away, and anyone
+      // watching there steps aside)
+      for(let j = put.length - 1; j >= 0; j--){ const q = put[j]; if((q.kind === 8 || q.kind === 1) && Math.abs(q.d - d) < 0.9 && Math.abs(q.x - x) < 0.9) put.splice(j, 1); }
+      const F = findOf(h);
+      put.push({ kind: 19, d, x, sp: F.id, extra: 1 });
+      put.sort((a, b) => b.d - a.d);
+      this.props = put;
+      this.find = { id: F.id, t0: this.t || 0 };
+      payFind(h, F);
+      return;
+    }
+  },
   inFill(d, x, pad, kind){
     for(const F of this.fills || []){
       if(kind && F.kind !== kind) continue;
@@ -18679,6 +18762,7 @@ const Scene = {
     this.layDeer();
     this.decor = seasonDecor(cs, look);
     this.laySeason();
+    this.layFind();
     guideSpot(this);
     // the near bank: the last ground on his line before the water
     // Where he stops before it and where he is across: an island's near bank
@@ -21791,6 +21875,33 @@ Object.assign(Scene, {
       this.standBlit(c, shrinkSprite(spr, w, h) || spr, X - (w >> 1), Y - h, w, h);
       return;
     }
+    // a find by the tee (layFind): a few solid pixels in the rough, a glint
+    // on it now and then; picked up a moment after the hole starts, gone
+    // with a small burst of light where it lay (half a second)
+    if(p.kind === 19){
+      if(S.dgnRun || !this.find || this.hole !== S.hole) return;
+      const age = this.t - this.find.t0, X = Math.round(pr.x), Y = Math.round(pr.y);
+      if(age >= FIND_PICK + 0.5 || pr.x < -8 || pr.x > VW + 8) return;
+      const n = Math.max(2, Math.round(B_BALL * US * pr.s * 1.7)), R = (x, y, w, hh, col) => { c.fillStyle = col; c.fillRect(X + x, Y + y, w, hh); };
+      if(age >= FIND_PICK){
+        // (rays out from where it lay, a pixel square each, longer as it goes)
+        const q = (age - FIND_PICK) / 0.5, r0 = 1 + Math.round(q * n * 2.5);
+        c.fillStyle = q < 0.6 ? '#FFF6C8' : '#F2D060';
+        for(let k = 0; k < 6; k++){ const a = k * Math.PI / 3 + 0.4;
+          c.fillRect(X + Math.round(Math.cos(a) * r0), Y - n + Math.round(Math.sin(a) * r0), 1, 1); }
+        return;
+      }
+      const night = this.night;
+      if(p.sp === 'ball'){ R(-(n >> 1), -n, n, n, night ? '#B8B8B0' : '#F4F2EA'); R((n >> 1) - 1 + (n & 1), -1, 1, 1, night ? '#8A8A84' : '#C8C6BC'); }
+      else if(p.sp === 'peg'){ const hh = n + 2; R(0, -hh, 1, hh, night ? '#B89060' : '#E8B878'); R(-1, -hh, 3, 1, night ? '#B89060' : '#E8B878'); }
+      else if(p.sp === 'marker'){ R(-(n >> 1) - 1, -1, n + 2, 1, night ? '#9AA0A6' : '#D0D4D8'); R(0, -1, 1, 1, '#C83A3A'); }
+      else{ const w = n + 1, hh = Math.max(1, n - 1), col = p.sp === 'antique' ? '#C8963A' : '#D8B040';
+        R(-(w >> 1), -hh, w, hh, night ? dark(col, 0.3) : col); R(-(w >> 1), -hh, 1, 1, '#FFF0B0');
+        if(p.sp === 'antique') R((w >> 1) - 1 + (w & 1), -1, 1, 1, '#5E9A7A'); }
+      // (the glint: a white pixel over it for a moment every second or so)
+      if((this.t * 0.8 + p.d) % 1 < 0.18) R(1, -n - 1, 1, 1, '#FFFFFF');
+      return;
+    }
     // the other hole's flag, on its green: a pole and a yellow flag (the
     // hole he plays has the red), waving
     if(p.kind === 12){
@@ -24288,8 +24399,20 @@ function dailyBlock(){
 // the cabinet, its rewards, and the record under it
 function roomCase(w){
   w.innerHTML = '<div class="hint" id="cabNote"></div><div id="cabBox"></div>'
-    + '<div class="eyebrow" style="margin:12px 0 4px">Record</div><div id="statRows"></div>';
-  renderCabinet(); renderRecord();
+    + '<div class="eyebrow" style="margin:12px 0 4px">Record</div><div id="statRows"></div><div id="courseRows"></div>';
+  renderCabinet(); renderRecord(); renderCourseRecs();
+}
+// the course records, a fold of their own under the Record: each course
+// with a card posted, its best and the day
+function renderCourseRecs(){
+  const el = $('courseRows'); if(!el) return;
+  const CB = S.courseBest || {}, list = B.COURSE.filter(cs => CB[cs.id]), op = recOpen.crec;
+  const rows = list.map(cs => '<div class="lb"><span class="p"></span><span>' + cs.n + '</span><span class="s">'
+    + scoreTxt(CB[cs.id].s) + ' \u00b7 ' + dayDate(CB[cs.id].d) + '</span></div>').join('')
+    || '<div class="lb"><span class="p"></span><span style="color:var(--faint)">None yet</span><span class="s"></span></div>';
+  el.innerHTML = '<div class="rfold' + (op ? ' open' : '') + '" data-f="crec"><button class="rfh"><span>Course Records</span><span class="rfn">'
+    + list.length + '\u00a0' + (op ? '\u25b4' : '\u25be') + '</span></button><div class="rfb">' + rows + '</div></div>';
+  el.querySelector('.rfh').onclick = () => { recOpen.crec = op ? 0 : 1; renderCourseRecs(); };
 }
 // one track of the case, under the shelf it pays for
 function caseTrack(id){
@@ -26030,6 +26153,7 @@ const DEV = {
         row('Tour Card', b('+1', 'DEV.tier(1)') + b('+5', 'DEV.tier(5)') + b('-5', 'DEV.tier(-5)')
           + b('back to Card I', 'DEV.tierSet(0)') + b('unlock +3 cards', 'DEV.cards(3)'))
       + row('Events', b('finish 1', 'DEV.event(1)') + b('finish 5', 'DEV.event(5)') + b('next event', 'DEV.nextEvent(1)') + b('next season', 'DEV.nextSeason()'))
+      + row('Course records \u00b7 ' + Object.keys(S.courseBest || {}).length, b('post a course record', 'DEV.courseRec(1)') + b('clear', 'DEV.courseRec(0)'))
       + row('Major of the week', b('play it next', 'DEV.majorNext()') + b('win this one', 'DEV.majorWin(1)')
           + b('win all four', 'DEV.majorWin(4)') + b('clear wins', 'DEV.major0()'))
       + row('Courses', B.COURSE.filter(c => c.slot === 'event').map(cBtn).join(''))
@@ -26039,7 +26163,7 @@ const DEV = {
 
     h += fold('hole', 'The hole and the weather',
         row('Holes', b('skip hole', 'DEV.skip()') + b('skip round', 'DEV.skipN(18)')
-          + b('Golden Hour hole', 'DEV.golden()') + b('final-day gallery', 'DEV.gallery()'))
+          + b('Golden Hour hole', 'DEV.golden()') + b('final-day gallery', 'DEV.gallery()') + b('find by the tee next hole', 'DEV.find()'))
       + row('Conditions', b('reroll', 'DEV.chaos()') + b('fair', 'DEV.weather(0)') + b('crosswind', 'DEV.weather(1)') + b('night', 'DEV.weather(3)'))
       + row('Frost · ' + (FROST_FORCE === null ? 'by the clock' : FROST_FORCE ? 'on' : 'off'), b('on', 'DEV.frost(1)') + b('off', 'DEV.frost(0)') + b('by the clock', 'DEV.frost(null)'))
       + row('Season touches · ' + (DECOR_FORCE || 'by the season'), DECOR_KINDS.map(k => b(k, 'DEV.decor(\'' + k + '\')')).join('') + b('by the season', 'DEV.decor()'))
@@ -26063,7 +26187,7 @@ const DEV = {
       + row('Style', b('own every look', 'DEV.style()') + b('back to plain', 'DEV.style0()')));
 
     h += fold('caddie', 'The caddie',
-        row('Bond with ' + cd.n + ' · ' + bondName(bondLv(cd.id)), b('+1 step', 'DEV.bond(1)') + b('Inseparable', 'DEV.bond(9)') + b('reset', 'DEV.bond(0)'))
+        row('Bond with ' + cd.n + ' · ' + bondName(bondLv(cd.id)), b('+1 step', 'DEV.bond(1)') + b('Inseparable', 'DEV.bond(9)') + b('reset', 'DEV.bond(0)') + b('caddie gift now', 'DEV.gift()'))
       + row('Says', b('cheer', 'DEV.say(\'cheer\')') + b('sigh', 'DEV.say(\'sigh\')') + b('quip', 'DEV.say(\'quip\')'))
       // (his own trick and the bond's moves, not every caddie's: another
       // caddie's trick does nothing on this one)
@@ -26276,6 +26400,13 @@ const DEV = {
   train(kind){ Scene.train = { t0: Scene.t, dir: Math.random() < 0.5 ? -1 : 1, kind }; Scene.trainNext = Scene.t + 30; hideSheet(); },
   frost(v){ FROST_FORCE = v; Scene.newHole(S.hole, S.tier); hideSheet(); },
   decor(k){ DECOR_FORCE = k || null; Scene.newHole(S.hole, S.tier); hideSheet(); },
+  // a find by the tee on the next hole; a record a stroke better than the
+  // best on this course (or all cleared); a gift from the caddie now
+  find(){ FIND_FORCE = S.hole + 1; hideSheet(); },
+  courseRec(k){ if(!k){ delete S.courseBest; this.open(); return; }
+    const id = (Scene.course || courseFor(tournamentOf(S.hole))).id, R = (S.courseBest || {})[id];
+    courseRecPost(id, R ? R.s - 1 : -8); this.open(); },
+  gift(){ caddieGift(S.hole, -1, true); this.re(); },
   guide(k){ if(k === 2){ trophyRoom('guide'); return; } S.guide = {}; if(k) GUIDE.forEach(g => { S.guide[g.id] = 1; }); this.open(); },
   rail(){ RAIL_FORCE = S.hole; ISLE_FORCE = 0; CANYON_FORCE = 0; STONES_FORCE = 0; PIER_FORCE = 0; S.yards = S.yardsMax; this.reprice(); Scene.newHole(S.hole, S.tier); hideSheet(); },
   isle(){ ISLE_FORCE = S.hole; CANYON_FORCE = 0; STONES_FORCE = 0; PIER_FORCE = 0; RAIL_FORCE = 0; S.yards = S.yardsMax; this.reprice(); Scene.newHole(S.hole, S.tier); hideSheet(); },
