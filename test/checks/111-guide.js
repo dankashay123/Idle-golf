@@ -64,7 +64,7 @@ module.exports = {
         o.spotted = GUIDE.length - miss.length;
         // the tab: every entry, a picture each, seen and not
         S.guide = { doe: 2, robin: 7 }; trophyRoom('guide');
-        const tiles = [...document.querySelectorAll('#roomBody .gtile')];
+        const tiles = [...document.querySelectorAll('#roomBody .gtile')].filter(t => !t.closest('.hunt'));    // (the week's hunt shows three of them again first)
         if (tiles.length !== GUIDE.length) f(tiles.length + ' tiles for ' + GUIDE.length + ' entries');
         const pics = tiles.filter(t => { const i = t.querySelector('img'); return i && i.getAttribute('src').startsWith('data:image') && i.width * i.height >= 400; }).length;
         if (pics !== tiles.length) f('only ' + pics + ' of ' + tiles.length + ' tiles have a picture');

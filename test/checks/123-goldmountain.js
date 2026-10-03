@@ -159,6 +159,9 @@ module.exports = {
           if (k >= 1000) f('a frame on the Golden Hour hole from ' + cam.toFixed(1) + ' made ' + k + ' canvas calls');
         }
         // ---- the reward ----
+        // (everything in the Field Guide seen and the week's hunt paid: a
+        // first sighting at night pays sovereigns of its own)
+        S.guide = Object.fromEntries(GUIDE.map(g => [g.id, 1])); Object.assign(huntNow(), { paid: 1 });
         const fin = (hour, quiet, away) => { HOUR_FORCE = hour; S.dawnDusk = 1; S.hole = golds[0]; startHole(); S.chaos = { n: 'Fair' }; S.holeGold = 0;
           S.elapsed = S.parTime * 0.8; S.doneT = null; S.tickets = 0; S.goldPaid = null; QUIET = quiet; OFFLINE = away;
           const s0 = S.sov || 0, t0 = S.tickets; finishHole(derive()); const sv = (S.sov || 0) - s0, tk = S.tickets - t0;
