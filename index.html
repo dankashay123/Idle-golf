@@ -347,6 +347,8 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
 .gtile .gpic{display:flex;align-items:flex-end;justify-content:center;height:44px;margin-bottom:4px}
 .gtile img{image-rendering:pixelated}
 .gtile.un img{filter:brightness(0);opacity:.35}
+.gtile.tmk[role=button]{cursor:pointer}
+.gtile.tmk.on{border-color:var(--brass)}
 .gtile b{display:block;font-size:11px;font-weight:600;line-height:1.2}
 .gtile i{display:block;font-style:normal;color:var(--faint);font-size:10px;line-height:1.25;margin-top:2px}
 /* the Daily Check-In: 28 tiles, seven to a row */
@@ -4651,6 +4653,7 @@ function migrate(){
     if(!R || typeof R !== 'object' || !(R.s >= 0) || !(R.w >= 0 && R.w < 1e6) || !(R.l >= 0 && R.l < 1e6)) delete S.rivalSer;
     else{ R.s = Math.floor(R.s); R.w = Math.floor(R.w); R.l = Math.floor(R.l); } }
   // the Field Guide: a count for each thing in it, once seen
+  if(S.teeMk !== undefined && !TEE_MARKS.some(m => m.id === S.teeMk)) delete S.teeMk;
   if(S.aceAt !== undefined){
     if(!S.aceAt || typeof S.aceAt !== 'object' || Array.isArray(S.aceAt)) delete S.aceAt;
     else for(const k in S.aceAt){ const v = S.aceAt[k];
@@ -9061,7 +9064,13 @@ function fairCard(D){ return !((S.tier || 0) < Math.min(S.tierMax || 0, matchedC
 // retirement lowers the highest card, and climbing back paid every one again.
 function cardPay(){
   if((S.tierMax || 0) <= (S.cardPaid || 0)) return;
+  // (the best before this card: the card just opened is in tierMax already)
+  const was = Math.max(S.cardPaid || 0, S.bestTier || 0) + 1;
   S.cardPaid = S.tierMax;
+  // (a new pair of tee markers every 25 cards: worn at once unless others
+  // were picked, and said once)
+  const got = TEE_MARKS.filter(m => m.at > was && teeMarkOk(m)).pop();
+  if(got && !QUIET && !OFFLINE) toast('<span class="achk">Card ' + got.at + '</span>' + got.n + ' tee markers' + (S.teeMk ? ' \u00b7 in the Cabinet' : ''), 'ach');
   grantSov(B.FREE_CARD, 'Tour Card ' + cardNo(S.tierMax));
 }
 // Where a retirement puts you, worked out on the golfer you will be once the
@@ -15362,6 +15371,52 @@ function drawLyingBall(c, cx, cy, r, t){
 }
 // a ball as a lit sphere in a colour: its lit side up and to the left, its
 // shade under it, a glint (a plain square at its smallest)
+// Card milestones (the user picked them from the menu): every 25 Tour Cards
+// a new pair of tee markers, kept for good (the best card ever opened, a
+// retirement included), worn by themselves the day they come and picked in
+// the Cabinet. Card 200 is the last: a golfer with everything walls at 222.
+const TEE_MARKS = [
+  { id:'red', n:'Red', at:1, sh:'ball', col:'#D8343A' },
+  { id:'blue', n:'Blue', at:25, sh:'ball', col:'#3A7AD8' },
+  { id:'pearl', n:'Pearl', at:50, sh:'ball', col:'#E6E2D6' },
+  { id:'stone', n:'Stone', at:75, sh:'cube', col:'#9AA0A6' },
+  { id:'gold', n:'Gold', at:100, sh:'ball', col:'#F2C21E' },
+  { id:'oak', n:'Oak', at:125, sh:'log', col:'#8A5A32' },
+  { id:'crystal', n:'Crystal', at:150, sh:'gem', col:'#7AD8F0' },
+  { id:'jade', n:'Jade', at:175, sh:'gem', col:'#3FB878' },
+  { id:'crown', n:'Crown', at:200, sh:'crown', col:'#F2C21E' }
+];
+const bestCardNo = () => Math.max(S.cardPaid || 0, S.tierMax || 0, S.bestTier || 0) + 1;
+const teeMarkOk = m => bestCardNo() >= m.at;
+const teeMarkNow = () => { const m = TEE_MARKS.find(x => x.id === S.teeMk); return m && teeMarkOk(m) ? m : TEE_MARKS.filter(teeMarkOk).pop(); };
+// each shape over a square two r wide, its foot on the ground at (cx, by):
+// u across, v down, both -1 to 1; a colour or nothing
+const TEE_SHAPE = {
+  cube: (u, v, C) => Math.abs(u) > 0.9 || v < -0.75 ? null : Math.abs(u) > 0.78 || v > 0.86 ? C.e : v < -0.35 ? C.l : u > 0.3 ? C.d : C.c,
+  log: (u, v, C) => { if(Math.abs(u) > 0.82 || v < -0.8) return null;
+    if(v < -0.3){ const q = (u / 0.82) ** 2 + ((v + 0.55) / 0.25) ** 2; if(q > 1) return v < -0.55 ? null : C.d;
+      return Math.floor(Math.sqrt(q) * 3) & 1 ? '#B88A52' : '#D8B07A'; }
+    return Math.abs(u) > 0.7 ? C.e : (Math.round((u + 1) * 3) & 1) ? C.d : C.c; },
+  gem: (u, v, C) => { const a = Math.abs(u);
+    if(v < -0.85) return null;
+    if(v < -0.3){ if(a > 0.55 + (v + 0.85) * 0.8) return null; return v < -0.7 ? C.l : u < -0.2 ? '#FFFFFF' : u < 0.25 ? C.l : C.c; }
+    if(a > 0.99 - (v + 0.3) * 0.78) return null;
+    return u < -0.05 ? C.l : u < 0.35 ? C.c : C.d; },
+  crown: (u, v, C) => { const a = Math.abs(u);
+    if(v > 0.2){ if(a > 0.86 || v > 0.92) return null; if(a < 0.18 && v > 0.42 && v < 0.74) return '#D0343A'; return v < 0.34 ? C.l : u > 0.4 ? C.d : C.c; }
+    for(const pc of [-0.62, 0, 0.62]) if(Math.abs(u - pc) <= 0.06 + 0.26 * (v + 0.9) / 1.1 && v > -0.9) return v < -0.7 ? C.l : u > pc ? C.d : C.c;
+    return null; }
+};
+function drawTeeMark(c, cx, by, r, m){
+  if(!m || m.sh === 'ball'){ lbSphere(c, cx, by - r, r, m ? m.col : TEE_DECK.col); return; }
+  const n = Math.max(1, Math.round(r * 2)), x0 = Math.round(cx - n / 2), y0 = Math.round(by - n);
+  if(n <= 2){ c.fillStyle = m.col; c.fillRect(x0, y0, n, n); return; }
+  const C = m._C || (m._C = { c: m.col, l: lite(m.col, 0.4), d: dark(m.col, 0.25), e: dark(m.col, 0.5) }), F = TEE_SHAPE[m.sh];
+  for(let j = 0; j < n; j++) for(let i = 0; i < n; i++){
+    const col = F((i + 0.5) / n * 2 - 1, (j + 0.5) / n * 2 - 1, C);
+    if(col){ c.fillStyle = col; c.fillRect(x0 + i, y0 + j, 1, 1); }
+  }
+}
 function lbSphere(c, cx, cy, r, col){
   // (placed as the square it replaces was, to the nearest pixel)
   const R = Math.max(1, r), x0 = Math.round(cx - R), y0 = Math.round(cy - R), n = Math.max(1, Math.round(R * 2));
@@ -24825,7 +24880,7 @@ Object.assign(Scene, {
       const p = this.proj(TEE_DECK.mark, sx * TEE_DECK.markLat, LIFT);
       if(p.y < HORIZON + 2 || p.y > VH + 4 || p.y > this.clipAt(TEE_DECK.mark) + 1) continue;
       const r = Math.max(1.5, 0.11 * LAT * p.s);
-      lbSphere(c, p.x, p.y - r, r, TEE_DECK.col);
+      drawTeeMark(c, p.x, p.y, r, teeMarkNow());
     }
   },
 
@@ -26014,8 +26069,28 @@ function dailyBlock(){
 // the cabinet, its rewards, and the record under it
 function roomCase(w){
   w.innerHTML = '<div class="hint" id="cabNote"></div><div id="cabBox"></div>'
-    + '<div class="eyebrow" style="margin:12px 0 4px">Record</div><div id="statRows"></div><div id="courseRows"></div>';
-  renderCabinet(); renderRecord(); renderCourseRecs();
+    + '<div class="eyebrow" style="margin:12px 0 4px">Record</div><div id="statRows"></div><div id="courseRows"></div><div id="markRows"></div>';
+  renderCabinet(); renderRecord(); renderCourseRecs(); renderTeeMarks();
+}
+// the tee markers, a fold of their own: every 25 cards a pair, the ones
+// opened tapped to wear
+function teeMarkUrl(m){
+  const key = 'teemk|' + m.id;
+  if(DOMSPR[key] !== undefined) return DOMSPR[key];
+  const cv = document.createElement('canvas'); cv.width = 30; cv.height = 15;
+  const g = cv.getContext('2d'); drawTeeMark(g, 7, 14, 6, m); drawTeeMark(g, 22, 14, 6, m);
+  return DOMSPR[key] = cv.toDataURL();
+}
+function renderTeeMarks(){
+  const el = $('markRows'); if(!el) return;
+  const now = teeMarkNow(), op = recOpen.tmk, n = TEE_MARKS.filter(teeMarkOk).length;
+  const tiles = TEE_MARKS.map(m => { const ok = teeMarkOk(m), on = now && now.id === m.id;
+    return '<div class="gtile tmk' + (ok ? '' : ' un') + (on ? ' on' : '') + '" data-m="' + m.id + '"' + (ok && !on ? ' role="button"' : '') + '><span class="gpic"><img src="'
+      + teeMarkUrl(m) + '" width="60" height="30" alt=""></span><b>' + m.n + '</b><i>' + (on ? 'Worn' : ok ? 'Tap to wear' : 'Card\u00a0' + m.at) + '</i></div>'; }).join('');
+  el.innerHTML = '<div class="rfold' + (op ? ' open' : '') + '" data-f="tmk"><button class="rfh"><span>Tee Markers</span><span class="rfn">'
+    + n + '/' + TEE_MARKS.length + '\u00a0' + (op ? '\u25b4' : '\u25be') + '</span></button><div class="rfb"><div class="guide">' + tiles + '</div></div></div>';
+  el.querySelector('.rfh').onclick = () => { recOpen.tmk = op ? 0 : 1; renderTeeMarks(); };
+  el.querySelectorAll('.tmk[role=button]').forEach(t => t.onclick = () => { S.teeMk = t.dataset.m; save(); renderTeeMarks(); });
 }
 // the course records, a fold of their own under the Record: each course
 // with a card posted, its best and the day
