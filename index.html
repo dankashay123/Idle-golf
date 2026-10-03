@@ -330,6 +330,24 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
   line-height:12px;padding:0 3px}
 .gt .genh{position:absolute;bottom:-1px;left:-1px;background:#08130D;border:1px solid var(--brass-dk);color:var(--brass);
   font-family:var(--mono);font-size:9px;font-weight:700;line-height:11px;padding:0 2px}
+.gt .thumb.mast{box-shadow:0 0 0 1px #F2D38A,inset 0 0 5px rgba(242,211,138,.55)}
+.gt .thumb.mast.pu{box-shadow:0 0 0 1px #C08AF8,inset 0 0 5px rgba(163,91,242,.6)}
+.mstars{white-space:nowrap;letter-spacing:0}
+.mstars b{color:#F2C64A;font-weight:400}
+.mstars b.pu{color:#B57BFA}
+.mstars i{color:var(--faint);font-style:normal;opacity:.4}
+.gt .gmx{display:flex;align-items:center;gap:5px;margin-top:3px;font-size:10px;line-height:1}
+.gt .gmx span:last-child{font-family:var(--mono);font-size:9px;color:var(--dim);white-space:nowrap}
+.gxbar{height:3px;background:#06110B;margin-top:2px;overflow:hidden}
+.gxbar i{display:block;height:100%;background:#E3B457}
+.gxbar.pu i{background:#A35BF2}
+.gxbar.big{height:5px;margin:5px 0 4px}
+.mastbox{border:1px solid var(--line);background:var(--raise);padding:7px 9px;margin:0 0 10px}
+.masthead{display:flex;align-items:center;gap:7px;font-size:var(--f2)}
+.masthead>span:first-child{font-weight:600;color:var(--chalk)}
+.masthead .mastn{margin-left:auto;font-family:var(--mono);font-size:var(--f1);color:var(--dim)}
+.mastnx{font-size:var(--f1);color:var(--dim)}
+.mastnx b{color:var(--aurora);font-weight:600}
 .gt .gn{font-family:var(--disp);font-size:10.5px;line-height:1.12;display:-webkit-box;-webkit-line-clamp:2;
   -webkit-box-orient:vertical;overflow:hidden;word-break:break-word}
 .gt .glv{font-family:var(--mono);font-size:var(--f0);color:#6FB6F0;white-space:nowrap}
@@ -476,6 +494,9 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
 /* the caddie's timer, under his perk's row: how long to the next lift */
 .cadbar{height:3px;background:#0D1D14;margin-top:5px;overflow:hidden}
 .cadbar i{display:block;height:100%;background:var(--aurora)}
+.bondrow .bondst{margin-left:auto;color:#E8607A;font-size:11px;letter-spacing:1px;white-space:nowrap;align-self:center}
+.bondrow .bondst i{color:var(--faint);font-style:normal;opacity:.45}
+.bondbar i{background:#E8607A}
 .sub{flex:0 0 auto;padding:9px 13px;font-size:var(--f1);letter-spacing:.08em;text-transform:uppercase;
   color:var(--dim);font-weight:700;white-space:nowrap;border-bottom:2px solid transparent}
 .sub.on{color:var(--brass);border-bottom-color:var(--brass)}
@@ -537,6 +558,12 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
 .devread{font-family:var(--mono);font-size:var(--f1);line-height:1.75;color:var(--dim);
   background:#0A170F;border:1px solid var(--line);border-radius:0;padding:8px 9px;margin-bottom:12px}
 .devrow{margin-bottom:11px}
+.devfold{border-top:1px solid var(--line)}
+.devfold>summary{list-style:none;cursor:pointer;padding:10px 2px;font-size:var(--f2);font-weight:600;color:var(--brass);letter-spacing:.04em}
+.devfold>summary::-webkit-details-marker{display:none}
+.devfold>summary::after{content:'+';float:right;color:var(--faint)}
+.devfold[open]>summary::after{content:'\2212'}
+.devfold[open]{padding-bottom:6px}
 .devlbl{font-size:var(--f0);letter-spacing:.16em;text-transform:uppercase;color:var(--faint);font-weight:700}
 .devgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin-top:5px}
 .devbtn{border:1px solid var(--line);background:var(--raise);border-radius:0;padding:7px 3px;
@@ -2467,6 +2494,23 @@ const B = {
   // affix lets you aim: pay more, keep the one roll that matters.
   LOCK_MULT: 2.6, LOCK_EACH: 1.9,
   ILVL_STEP: 1.27, ENH_STEP: 0.085, ENH_MAX: 15,
+  // Club mastery (the user picked it from the menu): a club earns a star at
+  // each of these counts of holes carried, and each star lifts its own
+  // primary by MASTER_STEP. Sized off the live pace (a bag plays a hole every
+  // couple of seconds): the first star in a few minutes, the fifth in a
+  // long few days of carrying the one club. Five gold stars, then five
+  // more in purple (the user asked) over a great deal longer.
+  MASTER: [100, 400, 1200, 3000, 7500, 15000, 30000, 60000, 120000, 250000], MASTER_STEP: 0.02, MASTER_GOLD: 5,
+  // Golden Hour (the user picked it from the menu): one hole in GOLDEN_P,
+  // from a hash of the hole, played in a low gold light, and all it earns
+  // paid twice. Not at night, in the rain, on a frosty morning or in a wager.
+  GOLDEN_P: 1 / 250,
+  // The caddie bond (the user picked it from the menu): each caddie warms to
+  // him over the holes they play together, and at each step has more to say
+  // and a new move (BOND_SAY, FAIRY_MOVES' bond). The fifth in a long few
+  // days with the one caddie.
+  BOND: [{ n:'Acquainted', v:200 }, { n:'Friendly', v:1000 }, { n:'Trusted', v:3000 },
+         { n:'Close', v:8000 }, { n:'Inseparable', v:20000 }],
   ENH_SAFE: 5,            // guaranteed through +5, then a roll; failure costs nothing
   ENH_BASE: 12, ENH_R: 1.42,
   DROP_BASE: 0.09, BOSS_DROP: 1.0, BAG_CAP: 60,
@@ -3655,6 +3699,14 @@ const B = {
     home:   ['HOME SWEET HOME', 'HOME TURF!'],
     major:  ['BIG ONE TODAY', 'CROWD IS IN!']
   },
+  // the caddie bond's lines: each step's tips, mixed in with the rest, and
+  // from Trusted on his own cheers on a great hole
+  BOND_SAY: {
+    quip:  [['GOOD TO BE BACK', 'YOU AND ME, PARTNER', 'SAME AGAIN?'], [],
+            ['I KNOW THAT SWING', 'WE\'VE GOT THIS', 'READ IT TOGETHER'], [],
+            ['BEST BAG I EVER CARRIED', 'PARTNERS FOR LIFE', 'NOWHERE I\'D RATHER BE']],
+    cheer: [[], [], ['THAT\'S OUR HOLE!', 'TEAMWORK!'], [], ['TOLD YOU SO!', 'THAT\'S MY GOLFER!']]
+  },
   // Clubs: the one he swings and carries. shaft/shaft2 near and far, head
   // and its lit edge, the grip; fx for the ones that do more than colour.
   CLUBS: [
@@ -3923,6 +3975,12 @@ const clockNight = () => {
   const h = HOUR_FORCE !== null ? HOUR_FORCE : new Date().getHours() + new Date().getMinutes() / 60;
   return h >= 21 || h < 5;
 };
+// Golden Hour's hole, and whether it is lit gold as it is played (the
+// chaos is that hole's weather)
+const goldenHole = h => hr(h * 13 + 7, 977) < B.GOLDEN_P;
+const goldenOn = (h, ch) => !S.dgnRun && goldenHole(h) && !/Night|Crosswind|Marshal/.test(ch || 'Fair') && !clockNight()
+  && !frostFor(courseFor(tournamentOf(h)), S.tier);
+const GOLD_COL = ['#F7C45C', '#E8894E'];
 const DAWN_COL = { dawn: ['#F6B98E', '#E596A6'], dusk: ['#F2904A', '#C9637E'], sun: '#FFE7A8' };
 const frostFor = (cs, tier) => FROST_FORCE !== null ? !!FROST_FORCE
   : !!cs && (cs.id === 'snowline' || [1, 2].includes(courseSeason(cs, tier))) && hourNow() >= 5 && hourNow() < 11;
@@ -4215,12 +4273,20 @@ function migrate(){
     if(it.set && !setDef(it.set)) delete it.set;
     if(!(it.ilvl >= 0)) it.ilvl = 0;
     if(!(it.enh >= 0)) it.enh = 0;
+    if(it.mh !== undefined && !(it.mh >= 0 && it.mh < 1e9)) delete it.mh;
+    else if(it.mh !== undefined) it.mh = Math.floor(it.mh);
   };
   B.SLOTS.forEach(s => {
     const it = S.equip[s.id];
     if(it){ fix(it); it.slot = s.id; }   // it is worn in this slot, so it is this slot's
   });
   if(!Array.isArray(S.bag)) S.bag = [];
+  // the caddie bonds: whole holes against a caddie there is
+  if(S.bond !== undefined){
+    if(!S.bond || typeof S.bond !== 'object' || Array.isArray(S.bond)) delete S.bond;
+    else for(const k in S.bond){ const v = S.bond[k];
+      if(!B.CADDIES.some(d => d.id === k) || !(v >= 0 && v < 1e9)) delete S.bond[k]; else S.bond[k] = Math.floor(v); }
+  }
   // a club for a slot this build does not have cannot be worn or scored
   S.bag = S.bag.filter(it => it && B.SLOTS.some(sl => sl.id === it.slot));
   S.bag.forEach(fix);
@@ -4462,7 +4528,43 @@ function career(){
 
 function itemPrimary(it){
   const sl = B.SLOTS.find(s => s.id === it.slot);
-  return sl.base * B.RARITY[it.rar].m * Math.pow(B.ILVL_STEP, it.ilvl) * (1 + B.ENH_STEP*it.enh);
+  return sl.base * B.RARITY[it.rar].m * Math.pow(B.ILVL_STEP, it.ilvl) * (1 + B.ENH_STEP*it.enh)
+    * (1 + B.MASTER_STEP * masterStars(it));
+}
+// a club's stars, from the holes it has been carried
+const masterStars = it => { const n = (it && it.mh) || 0; let k = 0; while(k < B.MASTER.length && n >= B.MASTER[k]) k++; return k; };
+// the stars in five places: gold up to the fifth, then each turning purple
+// in its place, the sovereign's colour (the user asked)
+function starsHtml(k){
+  let o = '<span class="mstars">';
+  for(let i = 0; i < B.MASTER_GOLD; i++) o += k > B.MASTER_GOLD + i ? '<b class="pu">\u2605</b>' : k > i ? '<b>\u2605</b>' : '<i>\u2605</i>';
+  return o + '</span>';
+}
+// how far a club is through the star it is earning: holes in, holes the star
+// takes, and the share done (all of it at the last star)
+function masterProg(it){
+  const k = masterStars(it), n = (it && it.mh) || 0, lo = k ? B.MASTER[k - 1] : 0, hi = B.MASTER[k];
+  return hi === undefined ? { k, n, at: n - lo, of: 0, f: 1 } : { k, n, at: n - lo, of: hi - lo, f: clamp((n - lo) / (hi - lo), 0, 1), next: hi };
+}
+// the bond with a caddie: holes played together, and the step it is at
+const bondOf = id => (S.bond && S.bond[id || S.caddie || 'bib']) || 0;
+const bondLv = id => { const n = bondOf(id); let k = 0; while(k < B.BOND.length && n >= B.BOND[k].v) k++; return k; };
+const bondName = k => k ? B.BOND[k - 1].n : 'New';
+function bondTick(live){
+  const id = S.caddie || 'bib', k = bondLv(id);
+  if(!S.bond) S.bond = {};
+  S.bond[id] = (S.bond[id] || 0) + 1;
+  if(live && bondLv(id) > k) toast('<span class="achk">Caddie Bond \u00b7 ' + bondName(bondLv(id)) + '</span>'
+    + (BOND_UNLOCK[bondLv(id) - 1] || ''), 'ach');
+}
+// what each step of the bond brings
+const BOND_UNLOCK = ['New lines', 'A salute', 'More to say', 'A jig', 'The last move, and his best lines'];
+// a hole played: a hole more on every club carried, and a word when one
+// earns a star (not while away: the card says what came of it)
+function masterTick(live){
+  for(const sl of B.SLOTS){ const it = S.equip[sl.id]; if(!it) continue;
+    const k = masterStars(it); it.mh = (it.mh || 0) + 1;
+    if(live && masterStars(it) > k) toast('<span class="achk">' + sl.n + ' Mastery \u2605' + masterStars(it) + '</span>' + it.name, 'ach'); }
 }
 function affixValue(it, a){
   const def = B.AFFIX.find(x => x.id === a.k);
@@ -4721,6 +4823,10 @@ function maxAffordable(base, r, owned, cash){
    ========================================================================= */
 const isClosing = h => holeInRound(h) === B.ROUND;
 const isSunday  = h => dayIndex(h) === B.DAYS - 1;
+// the final day's last few holes, roped and lined with a crowd (not on a
+// signature hole, which is laid out round its own feature)
+const GALLERY_HOLES = 3;
+const galleryHole = h => isSunday(h) && holeInRound(h) > B.ROUND - GALLERY_HOLES && !sigKind(h);
 
 // How far up the ladder a card sits. A card is fixed: it used to grow across
 // its five events, which only made sense while every hole was stretched to the
@@ -6956,11 +7062,13 @@ function finishHole(D){
   const base = S.purse * (1 - B.SWING_SHARE) * sc.pay * (1 + D.C.pay);
   const pay = base + (base + (S.holeGold || 0)) * (walk - 1);
   S.gold += pay; Meter.add(pay);
+  // Golden Hour: all the hole earned, paid again
+  if(goldenOn(S.hole, S.chaos && S.chaos.n)){ const gx = pay + (S.holeGold || 0); S.gold += gx; Meter.add(gx); }
 
   const idx = holeInRound(S.hole) - 1;
   S.scores[idx] = { d: sc.d, n: sc.n, par: parOf(S.hole) };
   S.tourScore += sc.d;
-  S.totalHoles++;
+  S.totalHoles++; masterTick(!OFFLINE); bondTick(!OFFLINE);
   if(!S.nine || S.nine.idx !== nineIndex(S.hole)) startNine();
   const N = S.nine;
   N.n++; N.total += sc.d;
@@ -8575,7 +8683,7 @@ function offline(){
       S.chaos = chaosFor(S.hole, S.tier);
       S.stretched = S.chaos.y > 1;
       S.courseEl = courseElFor(S.hole, S.tier);
-      S.totalHoles++;
+      S.totalHoles++; masterTick(false); bondTick(false);
       addXp(B.XP_HOLE * Math.pow(1 + S.tier, B.XP_TIER) * 1.2 * (parOf(S.hole)/4) * 0.6);
       // No "while there is room": live play scraps the worst club for shards
       // when the locker overflows, and the away session gated drops on the
@@ -9343,10 +9451,11 @@ let MOON_K = [0.30, 0.30, 0.38, 0.34, 8, 12, 12, 0.10];
 function buildTheme(cs, mode){
   const key = cs.id + '|' + mode;
   if(THEME_CACHE[key]) return THEME_CACHE[key];
-  const tint = mode === 'rain' ? ['#54626A', 0.40] : mode === 'frost' ? ['#DCE8EE', 0.14] : null;
+  const tint = mode === 'rain' ? ['#54626A', 0.40] : mode === 'frost' ? ['#DCE8EE', 0.14] : mode === 'gold' ? ['#E8B030', 0.13] : null;
   const t0 = c => mode === 'night' ? moonC(c) : tint ? mixC(c, tint[0], tint[1]) : c;
-  // (a frosty morning whitens the grass more than anything else)
-  const t = t0, tg = c => mode === 'frost' ? mixC(t0(c), '#E6EFF3', 0.30) : t0(c);
+  // (a frosty morning whitens the grass more than anything else; Golden
+  // Hour's low sun gilds it)
+  const t = t0, tg = c => mode === 'frost' ? mixC(t0(c), '#E6EFF3', 0.30) : mode === 'gold' ? lite(mixC(t0(c), '#C8D038', 0.10), 0.04) : t0(c);
   return THEME_CACHE[key] = {
     id: cs.id,
     sky: skyRamp(t(cs.sky[0]), t(cs.sky[1]), 5),
@@ -9543,7 +9652,7 @@ const ROCK_ROWS = ['...3344.....', '..2334443...', '.12233443...', '11222333322.
 function courseTrees(cs, mode){
   const key = cs.id + '|' + mode;
   if(TREE_CACHE[key]) return TREE_CACHE[key];
-  const tint = mode === 'rain' ? ['#54626A', 0.40] : mode === 'frost' ? ['#DCE8EE', 0.16] : null;
+  const tint = mode === 'rain' ? ['#54626A', 0.40] : mode === 'frost' ? ['#DCE8EE', 0.16] : mode === 'gold' ? ['#E8A030', 0.15] : null;
   const t = c => mode === 'night' ? moonC(c) : tint ? mixC(c, tint[0], tint[1]) : c;
   const a = t(cs.tree[0]), b = t(cs.tree[1]);
   // Five steps, not three. Foliage generated with gaps in it needs a deep tone
@@ -17285,6 +17394,35 @@ const Scene = {
       n++;
       put.push({ kind: 1, d, x, c: Math.floor(hr(i, this.hole * 3 + 318) * 6), p: hr(i, 319) * 6.28, extra: 1 });
     }
+    // The final day's gallery (the user asked, from the menu): on the last
+    // GALLERY_HOLES holes of an event's final day, ropes down both sides of
+    // the fairway and a crowd two deep behind them, tee to green. The side
+    // gallery already standing where the ropes go steps back behind them.
+    if(galleryHole(this.hole)){
+      for(let i = put.length - 1; i >= 0; i--){ const p = put[i];
+        if(p.kind !== 1 || p.extra || p.d >= LEN - 6) continue;
+        const w = this.fwWidth(p.d); if(Math.abs(p.x) >= w + 1.4) continue;
+        p.x = Math.sign(p.x || 1) * (w + 1.45 + Math.max(0, Math.abs(p.x) - w));
+        if(Math.abs(p.x) > 6.6 || this.hitsHazard(p.d, p.x, 0.45)) put.splice(i, 1); }
+      for(const side of [-1, 1]){
+        let prev = null;
+        for(let d = 5; d < LEN - 7; d += 4.6){
+          const x = side * (this.fwWidth(d) + 0.7);
+          // (a rope stops at a hazard and starts again past it)
+          if(this.hitsHazard(d, x, 0.6) || Math.abs(x) > 6.2){ if(prev && prev.nd === undefined && prev.solo) put.splice(put.indexOf(prev), 1); prev = null; continue; }
+          const post = { kind: 2, d, x, extra: 1, solo: !prev };
+          if(prev){ prev.nd = d; prev.nx = x; post.solo = false; }
+          put.push(post); prev = post;
+        }
+        if(prev && prev.solo) put.splice(put.indexOf(prev), 1);
+        for(let i = 0; i < 150; i++){
+          const u = hr(this.hole * 83 + i * 2 + (side > 0), 341), v = hr(this.hole * 83 + i * 2 + (side > 0), 342);
+          const d = 4 + u * (LEN - 11), row = i % 2, x = side * (this.fwWidth(d) + 1.45 + row * 0.85 + v * 0.35);
+          if(Math.abs(x) > 6.6 || this.hitsHazard(d, x, 0.5) || this.onPlay(d, x, 0.4) || taken(d, x, 0.66)) continue;
+          put.push({ kind: 1, d, x, c: Math.floor(hr(i, this.hole * 5 + 343) * 6), p: hr(i, 344) * 6.28, extra: 1 });
+        }
+      }
+    }
     // trees behind the green, a backdrop for it on every course
     for(let i = 0, n = 0; i < 24 && n < 9; i++){
       const d = LEN + 14 + hr(this.hole * 53 + i, 320) * 12, x = (hr(this.hole * 53 + i, 321) - 0.5) * 16;
@@ -17979,7 +18117,8 @@ const Scene = {
     if(this.night) ctx.push(SAY.night);
     if(cs.slot === 'home') ctx.push(SAY.home);
     if(isWeekMajor(t)) ctx.push(SAY.major);
-    const list = ctx.length && Math.random() < 0.6 ? ctx[Math.random() * ctx.length | 0] : isFem() && Math.random() < 0.6 ? SAY_HER.quip : SAY.quip;
+    const bq = bondSay('quip');
+    const list = bq.length && Math.random() < 0.35 ? bq : ctx.length && Math.random() < 0.6 ? ctx[Math.random() * ctx.length | 0] : isFem() && Math.random() < 0.6 ? SAY_HER.quip : SAY.quip;
     return list[Math.random() * list.length | 0];
   },
   // The Mythic Favour going off: the caddie casts it into him, a stream of
@@ -18234,7 +18373,9 @@ const Scene = {
     if(/Crosswind/.test(ch)) this.wind = (this.wind < 0 ? -1 : 1) * (1.0 + Math.abs(this.wind) * 0.5);
     const cs = courseFor(tournamentOf(h));
     this.frost = !this.night && !this.rain && frostFor(cs, tier);
-    const mode = this.night ? 'night' : this.rain ? 'rain' : this.frost ? 'frost' : 'day';
+    this.golden = !this.night && !this.rain && !this.frost && goldenOn(h, ch);
+    if(this.golden && !QUIET && !OFFLINE && this.goldSaid !== h){ this.goldSaid = h; toast('<span class="achk">Golden Hour</span>Purse \u00d72 this hole', 'ach'); }
+    const mode = this.night ? 'night' : this.rain ? 'rain' : this.frost ? 'frost' : this.golden ? 'gold' : 'day';
     this.course = cs;
     const look = seasonLook(cs, courseSeason(cs, tier));
     this.look = look;
@@ -18530,9 +18671,10 @@ const Scene = {
     // Dithering a sky is thousands of single-pixel writes. It only depends on
     // the conditions and the frame size, so it is cached against those and not
     // rebuilt for every hole, which at a high Tour Card is several a second.
-    const dd = !this.night && !this.rain && !S.dgnRun ? dawnDusk() : null;
+    // (Golden Hour's sky: the evening's warmth at its fullest, in gold)
+    const dd = this.golden && !S.dgnRun ? { w: 1, dawn: false, gold: true } : !this.night && !this.rain && !S.dgnRun ? dawnDusk() : null;
     this.dawnDusk = dd;
-    const key = [this.themeId, this.night, this.aurora, this.rain, VW, HORIZON, dd ? dd.w + (dd.dawn ? 'a' : 'p') : ''].join('|');
+    const key = [this.themeId, this.night, this.aurora, this.rain, VW, HORIZON, dd ? dd.w + (dd.gold ? 'g' : dd.dawn ? 'a' : 'p') : ''].join('|');
     if(key === this.skyKey && this.sky) return;
     this.skyKey = key;
     const H = Math.max(2, HORIZON + 2);
@@ -18544,7 +18686,7 @@ const Scene = {
     smoothRamp(g, 0, 0, VW, H, ramp);
     // the warm band low in the sky, a row at a time over the course's own
     // sky: rose above, peach or orange at the horizon
-    const warm = dd ? DAWN_COL[dd.dawn ? 'dawn' : 'dusk'] : null;
+    const warm = dd ? dd.gold ? GOLD_COL : DAWN_COL[dd.dawn ? 'dawn' : 'dusk'] : null;
     if(dd){
       const y0 = Math.round(H * 0.28);
       for(let y = y0; y < H; y++){
@@ -18890,7 +19032,8 @@ const Scene = {
     // (the female golfer has lines of her own, said to her, mixed in with
     // the rest: the user asked for them)
     const her = (k) => isFem() && SAY_HER[k] && Math.random() < 0.6 ? SAY_HER[k] : SAY[k];
-    if(d <= -1) this.fairyReact('cheer', one(her(d <= -3 ? 'huge' : d === -2 ? 'eagle' : 'birdie')));
+    const bc = bondSay('cheer');
+    if(d <= -1) this.fairyReact('cheer', one(bc.length && Math.random() < 0.3 ? bc : her(d <= -3 ? 'huge' : d === -2 ? 'eagle' : 'birdie')));
     else if(d >= 1) this.fairyReact('sigh', one(her(d >= 2 ? 'worse' : 'bogey')));
     // and a pose of hers alone as the ball drops (herPoseOf), and on an ace
     // a celebration each of their own (his too: the user asked); for this
@@ -18966,6 +19109,11 @@ const FAIRY_MOVES = [
   { id:'loop',  dur:1.4 },
   { id:'cartwheel', dur:1.8 },
   { id:'juggle', dur:2.6 },
+  // the caddie bond's moves, his once he knows you (any caddie): a salute,
+  // a jig with a click of his heels, and a "we are not worthy" bowing down
+  { id:'salute', dur:1.6, bond:2 },
+  { id:'jig',    dur:1.6, bond:4 },
+  { id:'worthy', dur:1.8, bond:5 },
   // a trick of their own for the three dearest caddies (only: whose it is,
   // by his look's effect): the Divine rises on his ribbons, spinning fast,
   // and jade light falls from him, the Demonic stamps up a ring of fire round himself, the
@@ -19019,7 +19167,9 @@ const FAIRY_MOVES = [
 // what names a caddie's own trick: his look's effect, or the caddie himself
 const cadKey = d => d.fx || d.id;
 // the turns this caddie may take: his own trick, if he has one, among the rest
-const fairyMoves = () => { const fx = cadKey(caddieNow()); return FAIRY_MOVES.filter(m => !m.only || m.only === fx); };
+const fairyMoves = () => { const fx = cadKey(caddieNow()), b = bondLv(caddieNow().id); return FAIRY_MOVES.filter(m => (!m.only || m.only === fx) && (!m.bond || b >= m.bond)); };
+// the bond's lines this caddie has to say, every step's up to his own
+const bondSay = k => { const L = B.BOND_SAY[k], b = bondLv(caddieNow().id), o = []; for(let i = 0; i < b; i++) o.push(...L[i]); return o; };
 const easeIO = q => q < 0.5 ? 2*q*q : 1 - 2*(1-q)*(1-q);
 function fairyPose(kind, q, T, w, h){
   const P = { dx: 0, dy: 0, sx: 1, rot: 0, armL: 0, armR: 0, waveL: 0, legs: null, juggle: null };
@@ -19129,6 +19279,15 @@ function fairyPose(kind, q, T, w, h){
     P.armL = P.armR = env; P.dy = -Math.sin(Math.PI * q) * h * 0.06; P.bits = kind;
   }else if(kind === 'falling'){                                 // a star falls to his hand
     P.armL = q > 0.45 ? env : 0; P.bits = 'falling';
+  }else if(kind === 'salute'){                                  // up smartly to his brow, held, and down
+    const u = q < 0.2 ? easeIO(q / 0.2) : q < 0.75 ? 1 : 1 - easeIO((q - 0.75) / 0.25);
+    P.armL = u; P.waveL = -0.35 * u; P.dy = -u * h * 0.06; P.rot = -0.08 * u;
+  }else if(kind === 'jig'){                                     // two hops, his heels clicked at the top
+    const hop = Math.abs(Math.sin(Math.PI * q * 2));
+    P.dy = -hop * h * 0.2 * env; P.legs = hop > 0.7 ? 0 : 0.25; P.armL = P.armR = (0.3 + 0.5 * hop) * env;
+  }else if(kind === 'worthy'){                                  // bowing down twice, his arms up
+    const u = Math.abs(Math.sin(Math.PI * q * 2));
+    P.rot = u * 0.55 * env; P.dy = u * h * 0.05; P.armL = P.armR = env;
   }else if(kind === 'juggle'){                                  // three balls, hand to hand
     const beat = T * 1.5;
     P.juggle = { beat, env };
@@ -24450,7 +24609,9 @@ function gearTile(it, isWorn){
   d.style.borderLeftColor = col;
   if(!isWorn) d.style.borderColor = col + '55', d.style.borderLeftColor = col;
   const primary = (sl.p === 'elm' || it.slot === 'ball' ? 'affinity' : 'swing');
-  d.innerHTML = '<div class="thumb" style="border-color:' + col + '">'
+  const ms = masterStars(it);
+  const mp = masterProg(it);
+  d.innerHTML = '<div class="thumb' + (ms > B.MASTER_GOLD ? ' mast pu' : ms ? ' mast' : '') + '" style="border-color:' + col + '">'
       + '<img src="' + pixUrl(sl.ic, col) + '" alt="">'
       + (el ? '<span class="tel">' + svgIcon(el.ic, 'lel', elemColor(el.id)) + '</span>' : '')
       + (better ? '<span class="gup" title="Better than the one you carry">\u25B2</span>' : '')
@@ -24462,6 +24623,9 @@ function gearTile(it, isWorn){
     + '<div class="gs2">' + (affLine(it, 1) || B.RARITY[it.rar].n) + '</div>'
     + (isWorn ? '<div class="wtag">Equipped</div>' : '')
     + (it.set && setDef(it.set) ? '<div class="gs2" style="color:var(--aurora)">' + setDef(it.set).n + '</div>' : '')
+    // its mastery: the stars, the holes into the next and a bar
+    + '<div class="gmx">' + starsHtml(ms) + '<span>' + (mp.of ? fmt(mp.n, 0) + '/' + fmt(mp.next, 0) : 'Max') + '</span></div>'
+    + '<div class="gxbar' + (ms >= B.MASTER_GOLD ? ' pu' : '') + '"><i style="width:' + Math.round(mp.f * 100) + '%"></i></div>'
     + '</div>';
   d.dataset.uid = it.uid;
   d.onclick = () => itemSheet(it, isWorn);
@@ -24525,6 +24689,15 @@ function itemSheet(it, equipped){
   });
   if(el) h += '<li style="color:' + elemColor(el.id) + '">' + el.n + ': ' + el.d + '</li>';
   h += '</ul>';
+  // its mastery: the stars, the holes into the next with a bar, and what the
+  // next star lifts (the user asked)
+  { const mp = masterProg(it), ms = mp.k, pk = it.slot === 'ball' ? 'Affinity power' : 'Swing power';
+    const now = itemPrimary(it), nxt = now * (1 + B.MASTER_STEP * (ms + 1)) / (1 + B.MASTER_STEP * ms);
+    h += '<div class="mastbox"><div class="masthead"><span>Mastery</span>' + starsHtml(ms)
+      + '<span class="mastn">' + (mp.of ? nb(fmt(mp.n, 0) + ' / ' + fmt(mp.next, 0) + ' holes') : 'Mastered') + '</span></div>'
+      + '<div class="gxbar big' + (ms >= B.MASTER_GOLD ? ' pu' : '') + '"><i style="width:' + Math.round(mp.f * 100) + '%"></i></div>'
+      + '<div class="mastnx">' + (mp.of ? 'Next star: ' + pk + ' <b>+' + fmt(now * 100) + '%</b> \u2192 <b>+' + fmt(nxt * 100) + '%</b>'
+          : 'All ten stars: ' + pk + ' +' + Math.round(ms * B.MASTER_STEP * 100) + '% from mastery') + '</div></div>'; }
   // What carrying it would actually do. Directly under the stats, because it is
   // the question the sheet gets opened to answer and it used to sit below three
   // buttons about reforging.
@@ -25320,6 +25493,18 @@ function renderCadPerks(){
     + '<div class="fold" style="margin-top:6px">Each level lasts 1s longer and is 12.5% stronger, up to Lv\u00a0'
     + B.CPERK_LV_MAX + '. Its light comes down brighter too.</div></div>';
   w.querySelector('#cadHint .qm').onclick = () => { cadHintOpen = !cadHintOpen; $('cadHint').classList.toggle('open', cadHintOpen); };
+  // the bond with the caddie he has: the step it is at, the holes to the
+  // next and what it brings
+  { const CD = caddieNow(), bl = bondLv(CD.id), n = bondOf(CD.id), nx = B.BOND[bl];
+    const d = rowShell('<img class="ric" src="' + caddieUrl(CD) + '" alt="">'); d.classList.add('bondrow');
+    const body = d.children[1];
+    body.children[0].textContent = 'Bond \u00b7 ' + bondName(bl);
+    body.children[1].textContent = nx ? 'Next: ' + BOND_UNLOCK[bl] : 'Every line and move unlocked';
+    body.children[2].innerHTML = nx ? nb(fmt(n, 0) + ' / ' + fmt(nx.v, 0) + ' holes') + '<div class="cadbar bondbar"><i style="width:'
+      + Math.round(clamp((n - (bl ? B.BOND[bl - 1].v : 0)) / (nx.v - (bl ? B.BOND[bl - 1].v : 0)), 0, 1) * 100) + '%"></i></div>' : '';
+    d.children[2].outerHTML = '<div class="bondst" aria-label="Bond ' + bl + ' of ' + B.BOND.length + '">'
+      + '\u2665'.repeat(bl) + '<i>' + '\u2665'.repeat(B.BOND.length - bl) + '</i></div>';
+    w.insertBefore(d, w.firstChild); }
   for(const pk of B.CPERKS){
     const own = !!(S.cperkOwn && S.cperkOwn[pk.id]), on = S.cperk === pk.id;
     const lv = cperkLv(pk.id), top = lv >= B.CPERK_LV_MAX;
@@ -25448,7 +25633,7 @@ function tickCaddie(dt){
   }
   if(view === 'upg' && rangeSub === 'cad' && (S.cperkT * 4 | 0) !== (tickCaddie._q || 0)){
     tickCaddie._q = S.cperkT * 4 | 0;
-    const bar = document.querySelector('#cadRows .cadbar i');
+    const bar = document.querySelector('#cadRows .cadbar:not(.bondbar) i');
     if(bar) bar.style.width = Math.round(S.cperkT / B.CPERK_EVERY * 100) + '%';
   }
 }
@@ -25509,123 +25694,92 @@ const DEV = {
       + (['strike', 'putt', 'cup', 'music'].filter(k => Sfx.recs[k]).join(', ') || 'none') + (DEV._recs ? ' (off)' : '')
       + '  ·  music ' + (S.music === 0 ? 'off' : Sfx.mus.length ? 'playing ' + (Sfx.musKey === 'music2' ? 'the calm one' : 'the town theme') : 'waiting') + '</div>';
 
-    h += row('Purse', b('+1 hole', 'DEV.gold(1)') + b('+100', 'DEV.gold(100)')
-      + b('+10k', 'DEV.gold(1e4)') + b('x1000', 'DEV.mulGold(1e3)')
-      + b('x1e9', 'DEV.mulGold(1e9)') + b('zero', 'DEV.zeroGold()'));
-
-    h += row('Sovereigns', b('+100', 'DEV.sov(100)') + b('+1k', 'DEV.sov(1e3)')
-      + b('zero', 'DEV.sov0()'));
-
-    h += row('Range', b('+10 all', 'DEV.upg(10)') + b('+100 all', 'DEV.upg(100)')
-      + b('max every rung', 'DEV.maxCapped()') + b('wipe range', 'DEV.clearUpg()'));
-
-    h += row('Tour Card', b('+1', 'DEV.tier(1)') + b('+5', 'DEV.tier(5)') + b('+25', 'DEV.tier(25)')
-      + b('-5', 'DEV.tier(-5)') + b('back to Card I', 'DEV.tierSet(0)')
-      + b('unlock +3 cards', 'DEV.cards(3)') + b('finish 5 events', 'DEV.event(5)'));
-
-    // every course by name, events first, then the majors and the finale
+    // In folds, one for each part of the game (the user asked for it tidier):
+    // only the readout above is always open, and a fold stays as it was
+    // left while the menu is redrawn after a press.
+    const fold = (id, title, rows) => '<details class="devfold" data-f="' + id + '"' + (DEV._open[id] ? ' open' : '') + '>'
+      + '<summary>' + title + '</summary>' + rows + '</details>';
     const cBtn = c => b(c.n.replace(/^The /, '').split(' ')[0], 'DEV.course(' + B.COURSE.indexOf(c) + ')');
-    h += row('Course', B.COURSE.filter(c => c.slot === 'event').map(cBtn).join(''));
-    h += row('Majors and finale', B.COURSE.filter(c => c.slot === 'major' || c.slot === 'finale').map(cBtn).join(''));
-    h += row('Home courses', B.COURSE.filter(c => c.slot === 'home').map(cBtn).join(''));
-    h += row('Majors of the week', B.COURSE.filter(c => c.slot === 'weekly').map(cBtn).join(''));
 
-    h += row('Conditions', b('reroll', 'DEV.chaos()') + b('night', 'DEV.weather(3)')
-      + b('crosswind', 'DEV.weather(1)') + b('fair', 'DEV.weather(0)')
-      + b('skip hole', 'DEV.skip()') + b('skip round', 'DEV.skipN(18)'));
+    h += fold('money', 'Money and the Range',
+        row('Purse', b('+100 holes', 'DEV.gold(100)') + b('x1000', 'DEV.mulGold(1e3)') + b('x1e9', 'DEV.mulGold(1e9)') + b('zero', 'DEV.zeroGold()'))
+      + row('Sovereigns', b('+100', 'DEV.sov(100)') + b('+1k', 'DEV.sov(1e3)') + b('zero', 'DEV.sov0()'))
+      + row('Currencies', b('+1k grit', 'DEV.cur(\'grit\',1e3)') + b('+1k shards', 'DEV.cur(\'shard\',1e3)')
+          + b('+1k scrolls', 'DEV.cur(\'scroll\',1e3)') + b('+20 tickets', 'DEV.tick(20)') + b('+5k legacy', 'DEV.legacy(5e3)'))
+      + row('Range', b('+10 all', 'DEV.upg(10)') + b('+100 all', 'DEV.upg(100)') + b('max every rung', 'DEV.maxCapped()') + b('wipe', 'DEV.clearUpg()'))
+      + row('Godmode', b(S.godmode ? 'on' : 'off', 'DEV.god()')));
 
-    h += row('Major of the week', b('play it next', 'DEV.majorNext()') + b('win this one', 'DEV.majorWin(1)')
-      + b('win all four', 'DEV.majorWin(4)') + b('clear wins', 'DEV.major0()'));
+    h += fold('tour', 'Tour, events and courses',
+        row('Tour Card', b('+1', 'DEV.tier(1)') + b('+5', 'DEV.tier(5)') + b('-5', 'DEV.tier(-5)')
+          + b('back to Card I', 'DEV.tierSet(0)') + b('unlock +3 cards', 'DEV.cards(3)'))
+      + row('Events', b('finish 1', 'DEV.event(1)') + b('finish 5', 'DEV.event(5)') + b('next event', 'DEV.nextEvent(1)') + b('next season', 'DEV.nextSeason()'))
+      + row('Major of the week', b('play it next', 'DEV.majorNext()') + b('win this one', 'DEV.majorWin(1)')
+          + b('win all four', 'DEV.majorWin(4)') + b('clear wins', 'DEV.major0()'))
+      + row('Courses', B.COURSE.filter(c => c.slot === 'event').map(cBtn).join(''))
+      + row('Majors and finale', B.COURSE.filter(c => c.slot === 'major' || c.slot === 'finale').map(cBtn).join(''))
+      + row('Home courses', B.COURSE.filter(c => c.slot === 'home').map(cBtn).join(''))
+      + row('Majors of the week', B.COURSE.filter(c => c.slot === 'weekly').map(cBtn).join('')));
 
-    h += row('Season', b('next event', 'DEV.nextEvent(1)') + b('next season', 'DEV.nextSeason()')
-      + b('finish event', 'DEV.event(1)'));
+    h += fold('hole', 'The hole and the weather',
+        row('Holes', b('skip hole', 'DEV.skip()') + b('skip round', 'DEV.skipN(18)')
+          + b('Golden Hour hole', 'DEV.golden()') + b('final-day gallery', 'DEV.gallery()'))
+      + row('Conditions', b('reroll', 'DEV.chaos()') + b('fair', 'DEV.weather(0)') + b('crosswind', 'DEV.weather(1)') + b('night', 'DEV.weather(3)'))
+      + row('Frost · ' + (FROST_FORCE === null ? 'by the clock' : FROST_FORCE ? 'on' : 'off'), b('on', 'DEV.frost(1)') + b('off', 'DEV.frost(0)') + b('by the clock', 'DEV.frost(null)'))
+      + row('Home season', b('by the card', 'DEV.season(-1)') + b('as built', 'DEV.season(0)')
+          + b('autumn', 'DEV.season(1)') + b('winter', 'DEV.season(2)') + b('blossom', 'DEV.season(3)'))
+      + row('Signature hole', b('island', 'DEV.isle()') + b('canyon', 'DEV.canyon()')
+          + b('stepping stones', 'DEV.stones()') + b('sea stack', 'DEV.pier()') + b('railway', 'DEV.rail()')
+          + ['steam', 'goods', 'express', 'night'].map(k => b(k === 'night' ? 'sleeper train' : k + ' train', 'DEV.train(\'' + k + '\')')).join(''))
+      + row('Signature of the week · ' + SIG_NAME[sigWeek()] + (SIGWEEK_FORCE ? ' · forced' : ''), SIG_KINDS.map(k =>
+          b(SIG_NAME[k].toLowerCase(), 'DEV.sigWeek(\'' + k + '\')')).join('') + b('by the date', 'DEV.sigWeek()'))
+      + row('Trophy cabinet', b('fill it', 'DEV.cabinet(1)') + b('empty it', 'DEV.cabinet(0)')));
 
-    h += row('Trophy cabinet', b('fill it', 'DEV.cabinet(1)') + b('empty it', 'DEV.cabinet(0)'));
+    const dr = S.equip.driver, cd = caddieNow();
+    h += fold('gear', 'Clubs and mastery',
+        row('Drops', b('drop 1', 'DEV.gear(0)') + b('drop 10', 'DEV.gearN(10)') + b('drop 30 mixed', 'DEV.gearMix()') + b('empty locker', 'DEV.clearBag()'))
+      + row('Carried', b('Mythic set', 'DEV.set(5)') + b('Legendary set', 'DEV.set(4)') + b('+15 all', 'DEV.enhAll()'))
+      + row('Mastery · driver ' + (dr ? '★' + masterStars(dr) : 'none'), b('+1 star all carried', 'DEV.mastery(1)')
+          + b('5 stars', 'DEV.mastery(5, 1)') + b('10 stars', 'DEV.mastery(10, 1)') + b('reset', 'DEV.mastery(0, 1)'))
+      + row('Named sets', B.SETS.filter(x => x.named).map(x => b(x.mk.replace(/’s$|'s$/, ''), 'DEV.named(\'' + x.id + '\')')).join(''))
+      + row('Ball affinity', B.ELEM.map(e => b(e.n, 'DEV.ball(\'' + e.id + '\')')).join('') + b('none', 'DEV.ball(\'\')'))
+      + row('Style', b('own every look', 'DEV.style()') + b('back to plain', 'DEV.style0()')));
 
-    h += row('Sound', b('strike', 'DEV.snd(\'strike\')') + b('pure strike', 'DEV.snd(\'strike\', 1)')
-      + b('cup', 'DEV.snd(\'hole\')') + b('coin', 'DEV.snd(\'coin\')') + b('honour', 'DEV.snd(\'ach\')')
-      + ['as built', 'autumn', 'winter', 'blossom'].map((n, i) => b('chime: ' + n, 'DEV.snd(\'season\', ' + i + ')')).join('')
-      + b('event won', 'DEV.snd(\'cup\')') + b('music ' + (S.music === 0 ? 'off' : 'on'), 'DEV.music()')
-      + b('restart music', 'DEV.music(1)') + b(DEV._recs ? 'recordings off' : 'recordings on', 'DEV.synth()'));
+    h += fold('caddie', 'The caddie',
+        row('Bond with ' + cd.n + ' · ' + bondName(bondLv(cd.id)), b('+1 step', 'DEV.bond(1)') + b('Inseparable', 'DEV.bond(9)') + b('reset', 'DEV.bond(0)'))
+      + row('Says', b('cheer', 'DEV.say(\'cheer\')') + b('sigh', 'DEV.say(\'sigh\')') + b('quip', 'DEV.say(\'quip\')'))
+      // (his own trick and the bond's moves, not every caddie's: another
+      // caddie's trick does nothing on this one)
+      + row('Moves', FAIRY_MOVES.filter(m => !m.only || m.only === cadKey(cd)).map(m => b(m.id, 'DEV.move(\'' + m.id + '\')')).join(''))
+      + row('Perks', b('go off now', 'DEV.cperkNow()') + b('own all', 'DEV.cperks(1)') + b('none', 'DEV.cperks(0)')
+          + b('all Lv 5', 'DEV.cperkLv(5)') + b('all Lv 1', 'DEV.cperkLv(1)'))
+      + row('Legends', b('eagle', 'DEV.legend(-2)') + b('ace', 'DEV.legend(-4)')));
 
-    h += row('Signature hole', b('this hole an island', 'DEV.isle()') + b('this hole a canyon', 'DEV.canyon()')
-      + b('stepping stones', 'DEV.stones()') + b('sea stack', 'DEV.pier()') + b('railway', 'DEV.rail()')
-      + ['steam', 'goods', 'express', 'night'].map(k => b(k === 'night' ? 'sleeper' : k, 'DEV.train(\'' + k + '\')')).join(''));
+    h += fold('career', 'Career, honours and wagers',
+        row('Career', b('+1 level', 'DEV.lv(1)') + b('+10 levels', 'DEV.lv(10)') + b('level 60', 'DEV.lv(60)')
+          + b('+25 paragon', 'DEV.para(25)') + b('+400 paragon', 'DEV.para(400)') + b('reset career', 'DEV.career0()'))
+      + row('Honours', b('unlock all', 'DEV.ach()') + b('clear all', 'DEV.ach0()') + b('+5 cups', 'DEV.cups(5)'))
+      + row('Daily challenges', b('finish one', 'DEV.daily(1)') + b('finish all', 'DEV.daily(3)') + b('streak +1', 'DEV.streak()') + b('streak 0', 'DEV.streak0()'))
+      + row('Heirlooms', b('find 5', 'DEV.disc(5)') + b('find all', 'DEV.disc(99)') + b('+2 levels each', 'DEV.relics(2)')
+          + b('max all found', 'DEV.relics(B.TR_MAX)') + b('clear', 'DEV.relics0()') + b('force retire', 'DEV.retire()'))
+      + row('Shot book', b('learn all', 'DEV.skills()') + b('max levels', 'DEV.skillMax()') + b('no cooldowns', 'DEV.nocd()')
+          + b('fire all', 'DEV.fire()') + b('run all perks', 'DEV.perks()') + b('clear perks', 'DEV.perks0()'))
+      + row('The Wager Book', B.DGN.map(d => b(d.mode, 'DEV.depth(\'' + d.id + '\')')).join('') + b('all keys', 'DEV.keys()') + b('marks +10', 'DEV.floors(10)'))
+      + row('Stake of the day' + (FEAT_FORCE ? ' · forced' : ''), B.DGN.map(d => b(d.mode, 'DEV.feat(\'' + d.id + '\')')).join('') + b('by the date', 'DEV.feat()')));
 
-    h += row('Signature hole of the week \u00b7 ' + SIG_NAME[sigWeek()] + (SIGWEEK_FORCE ? ' \u00b7 forced' : ''), SIG_KINDS.map(k =>
-      b(SIG_NAME[k].toLowerCase(), 'DEV.sigWeek(\'' + k + '\')')).join('') + b('by the date', 'DEV.sigWeek()'))
-      + row('Frost (' + (FROST_FORCE === null ? 'by the clock' : FROST_FORCE ? 'on' : 'off') + ')', b('on', 'DEV.frost(1)') + b('off', 'DEV.frost(0)') + b('by the clock', 'DEV.frost(null)'));
-
-    h += row('Home season', b('by the card', 'DEV.season(-1)') + b('as built', 'DEV.season(0)')
-      + b('autumn', 'DEV.season(1)') + b('winter', 'DEV.season(2)') + b('blossom', 'DEV.season(3)'));
-
-    h += row('Battery saver', b('start now', 'saverNow()') + b('in 5s', 'DEV.saverSoon()'));
-
-    h += row('Legends', b('eagle', 'DEV.legend(-2)') + b('ace', 'DEV.legend(-4)'));
-
-    h += row('Fairy caddie', b('cheer', 'DEV.say(\'cheer\')') + b('sigh', 'DEV.say(\'sigh\')')
-      + b('quip', 'DEV.say(\'quip\')') + FAIRY_MOVES.map(m => b(m.id, 'DEV.move(\'' + m.id + '\')')).join('')
-      + b('perk now', 'DEV.cperkNow()')
-      + b('own all perks', 'DEV.cperks(1)') + b('no perks', 'DEV.cperks(0)')
-      + b('perks Lv 5', 'DEV.cperkLv(5)') + b('perks Lv 1', 'DEV.cperkLv(1)'));
-
-    h += row('Frame', b('frame times ' + (DEV_FPS ? 'on' : 'off'), 'DEV.fps()')
-      + b('ground by ' + (Scene.pixGround === false ? 'rects' : 'pixels'), 'DEV.ground()'));
-
-    h += row('Gear', b('drop 1', 'DEV.gear(0)') + b('drop 10', 'DEV.gearN(10)') + b('drop 30 mixed', 'DEV.gearMix()')
-      + b('Mythic set', 'DEV.set(5)') + b('Legendary set', 'DEV.set(4)')
-      + b('+15 all', 'DEV.enhAll()') + b('empty locker', 'DEV.clearBag()'));
-
-    h += row('Named sets', B.SETS.filter(x => x.named).map(x => b(x.mk.replace(/\u2019s$|'s$/, ''),
-      'DEV.named(\'' + x.id + '\')')).join(''));
-
-    h += row('Ball affinity', B.ELEM.map(e => b(e.n, 'DEV.ball(\'' + e.id + '\')')).join('')
-      + b('none', 'DEV.ball(\'\')'));
-
-    h += row('The Wager Book', B.DGN.map(d =>
-      b(d.mode, 'DEV.depth(\'' + d.id + '\')')).join('')
-      + b('all keys', 'DEV.keys()') + b('marks +10', 'DEV.floors(10)'));
-
-    h += row('Stake of the day' + (FEAT_FORCE ? ' \u00b7 forced' : ''), B.DGN.map(d =>
-      b(d.mode, 'DEV.feat(\'' + d.id + '\')')).join('') + b('by the date', 'DEV.feat()'));
-
-    h += row('Daily challenges', b('finish one', 'DEV.daily(1)') + b('finish all', 'DEV.daily(3)')
-      + b('streak +1', 'DEV.streak()') + b('streak 0', 'DEV.streak0()'));
-
-    h += row('Currencies', b('+1k grit', 'DEV.cur(\'grit\',1e3)') + b('+1k shard', 'DEV.cur(\'shard\',1e3)')
-      + b('+1k scroll', 'DEV.cur(\'scroll\',1e3)') + b('+20 tickets', 'DEV.tick(20)')
-      + b('+5k legacy', 'DEV.legacy(5e3)'));
-
-    h += row('Career', b('+1 level', 'DEV.lv(1)') + b('+10 levels', 'DEV.lv(10)')
-      + b('level 60', 'DEV.lv(60)') + b('+25 paragon', 'DEV.para(25)')
-      + b('+400 paragon', 'DEV.para(400)') + b('reset career', 'DEV.career0()'));
-
-    h += row('Shot book', b('learn all', 'DEV.skills()') + b('max levels', 'DEV.skillMax()')
-      + b('no cooldowns', 'DEV.nocd()') + b('fire all', 'DEV.fire()')
-      + b('run all perks', 'DEV.perks()') + b('clear perks', 'DEV.perks0()'));
-
-    h += row('Heirlooms', b('find 5', 'DEV.disc(5)') + b('find all', 'DEV.disc(99)')
-      + b('+2 levels each', 'DEV.relics(2)') + b('max all found', 'DEV.relics(B.TR_MAX)')
-      + b('clear trophies', 'DEV.relics0()') + b('force retire', 'DEV.retire()'));
-
-    h += row('Style', b('own every look', 'DEV.style()') + b('back to plain', 'DEV.style0()'));
-
-    h += row('Honours', b('unlock all', 'DEV.ach()') + b('clear all', 'DEV.ach0()')
-      + b('+5 cups', 'DEV.cups(5)') + b('doglegs +50', 'DEV.hon(\'dogleg\')')
-      + b('wind birdies +25', 'DEV.hon(\'windBird\')') + b('every home course', 'DEV.hon(\'homes\')')
-      + b('island birdies +25', 'DEV.hon(\'sigIsle\')') + b('canyon birdies +25', 'DEV.hon(\'sigCanyon\')')
-      + b('stone birdies +25', 'DEV.hon(\'sigStones\')') + b('sea stack birdies +25', 'DEV.hon(\'sigPier\')') + b('railway birdies +25', 'DEV.hon(\'sigRail\')') + b('a signature round', 'DEV.hon(\'sigRound\')') + b('a signature week', 'DEV.hon(\'sigWeek\')')
-      + b('an island ace', 'DEV.hon(\'isleAce\')'));
-
-    h += row('Simulate away', b('1 hour', 'DEV.away(3600)') + b('6 hours', 'DEV.away(6*3600)')
-      + b('12 hours', 'DEV.away(12*3600)') + b('3 days', 'DEV.away(3*86400)'));
-
-    h += row('Godmode', b((S.godmode ? 'ON' : 'off'), 'DEV.god()'));
+    h += fold('test', 'Away, sound and the frame',
+        row('While you were away', b('1 hour', 'DEV.away(3600)') + b('6 hours', 'DEV.away(6*3600)') + b('3 days', 'DEV.away(3*86400)'))
+      + row('Battery saver', b('start now', 'saverNow()') + b('in 5s', 'DEV.saverSoon()'))
+      + row('Sound', b('strike', 'DEV.snd(\'strike\')') + b('pure strike', 'DEV.snd(\'strike\', 1)') + b('cup', 'DEV.snd(\'hole\')')
+          + b('coin', 'DEV.snd(\'coin\')') + b('honour', 'DEV.snd(\'ach\')') + b('event won', 'DEV.snd(\'cup\')') + b('season chime', 'DEV.snd(\'season\', 0)')
+          + b('music ' + (S.music === 0 ? 'off' : 'on'), 'DEV.music()') + b('restart music', 'DEV.music(1)') + b(DEV._recs ? 'recordings off' : 'recordings on', 'DEV.synth()'))
+      + row('Frame', b('frame times ' + (DEV_FPS ? 'on' : 'off'), 'DEV.fps()') + b('ground by ' + (Scene.pixGround === false ? 'rects' : 'pixels'), 'DEV.ground()')));
 
     h += '<button class="act ghost" onclick="hideSheet()">Close</button>'
       + '<button class="act danger" onclick="wipe()">Erase save</button>';
     showSheet(h);
+    document.querySelectorAll('#sheet .devfold').forEach(d => d.ontoggle = () => { DEV._open[d.dataset.f] = d.open; });
   },
+  _open: {},
   re(){ renderAll(); this.open(); },
   gold(n){ S.gold += purseFor(S.hole, S.tier, derive().gold) * n; this.re(); },
   mulGold(n){ S.gold = Math.max(1, S.gold) * n; this.re(); },
@@ -25726,6 +25880,20 @@ const DEV = {
   skipN(n){ for(let i=0;i<n;i++){ advanceHole(); } startHole(); this.re(); },
   chaos(){ S.chaosBump = (S.chaosBump||0) + 1; startHole(); this.re(); },
   god(){ S.godmode = !S.godmode; this.re(); },
+  // the carried clubs' mastery: a star more each, or every club carried to
+  // that many stars (0 clears it)
+  mastery(n, set){ B.SLOTS.forEach(sl => { const it = S.equip[sl.id]; if(!it) return;
+    const k = set ? n : Math.min(B.MASTER.length, masterStars(it) + n);
+    if(k) it.mh = B.MASTER[k - 1]; else delete it.mh; }); this.re(); },
+  // the bond with the caddie he has: a step more, or to that step (0 clears it)
+  bond(n){ const id = caddieNow().id; S.bond = S.bond || {};
+    const k = n === 1 ? Math.min(B.BOND.length, bondLv(id) + 1) : Math.min(B.BOND.length, n);
+    if(k) S.bond[id] = B.BOND[k - 1].v; else delete S.bond[id]; renderCadPerks(); this.re(); },
+  // on to the next hole that is lit gold, or the next on the final day with
+  // the gallery out, from its tee
+  golden(){ let h = S.hole + 1; for(let k = 0; k < 5000 && !goldenOn(h, chaosFor(h, S.tier).n); k++) h++; this.jump(h); },
+  gallery(){ let h = S.hole + 1; for(let k = 0; k < 5000 && !galleryHole(h); k++) h++; this.jump(h); },
+  jump(h){ S.hole = h; S.scores = S.scores.slice(0, holeInRound(h) - 1); startHole(); hideSheet(); },
   // ---- the major of the week, the season and the cabinet ----
   // to the first hole of event t + n, with nothing of the one left behind
   nextEvent(n){ const t = tournamentOf(S.hole);

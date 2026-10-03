@@ -131,7 +131,7 @@ module.exports = {
 
         // ---- the Range's Caddie rack -----------------------------------------
         QUIET = false; setView('upg'); rangeSub = 'cad'; renderRangeNav();
-        o.rows = document.querySelectorAll('#cadRows .row').length;
+        o.rows = document.querySelectorAll('#cadRows .row:not(.bondrow)').length;
         o.navs = [...document.querySelectorAll('#rangeNav .sub')].map(b => b.textContent).join('/');
         rangeSub = 'upg'; renderRangeNav(); QUIET = true;
 

@@ -124,6 +124,20 @@ module.exports = {
         DEV.fps(); o.fpsOn = !!document.getElementById('devFps'); DEV.fps(); o.fpsOff = !document.getElementById('devFps');
         DEV.ground(); o.rects = Scene.pixGround === false; DEV.ground(); o.pixels = Scene.pixGround !== false;
         DEV.hon('homes'); o.homes = achMetric('homes');
+        // the newest: mastery, the bond, Golden Hour and the gallery
+        if (!S.equip.driver) S.equip.driver = makeItem(S.tier, 0, 1, 'driver');
+        DEV.mastery(0, 1); DEV.mastery(1); o.mastery1 = masterStars(S.equip.driver) === 1;
+        DEV.mastery(10, 1); o.mastery10 = masterStars(S.equip.driver) === 10; DEV.mastery(0, 1); o.mastery0 = masterStars(S.equip.driver) === 0;
+        DEV.bond(0); DEV.bond(1); o.bond1 = bondLv(caddieNow().id) === 1; DEV.bond(9); o.bondMax = bondLv(caddieNow().id) === B.BOND.length;
+        DEV.bond(0); o.bond0 = bondLv(caddieNow().id) === 0;
+        DEV.golden(); o.golden = goldenOn(S.hole, S.chaos && S.chaos.n) && Scene.golden;
+        DEV.gallery(); o.gallery = galleryHole(S.hole) && Scene.props.some(p => p.kind === 2 && p.extra);
+        // in folds, every button inside one, and a fold left open stays open
+        DEV.open(); const folds = [...document.querySelectorAll('#sheet details.devfold')];
+        o.folds = folds.length >= 6 && !document.querySelector('#sheet .devbtn:not(details .devbtn)');
+        folds[2].open = true; folds[2].dispatchEvent(new Event('toggle')); DEV.re();
+        o.foldKept = document.querySelectorAll('#sheet details.devfold')[2].open && !document.querySelectorAll('#sheet details.devfold')[0].open;
+        DEV._open = {};
         o.read = /climb check/.test(document.getElementById('sheet').textContent) && /audio /.test(document.getElementById('sheet').textContent);
       } finally {
         QUIET = false; hideSheet();
@@ -138,6 +152,6 @@ module.exports = {
     return ['tap ignored, drag ignored, 1.5s hold opens it',
       'all ' + press.n + ' dev buttons pressed without an error; dailies, named sets, trophy and honours '
       + 'resets, Card I, sovereigns and the stake override all do what they say',
-      'and the newer ones: the major of the week, the season, the cabinet, the fairy, caddie perks, sound, the frame readout'];
+      'and the newer ones: the major of the week, the season, the cabinet, the fairy, caddie perks, sound, the frame readout, mastery, the bond, Golden Hour and the gallery; all in folds that stay as they were left'];
   }
 };
