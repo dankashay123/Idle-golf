@@ -361,8 +361,11 @@ module.exports = {
       try {
         // a new career: nothing back-paid, nothing paid for counting from zero
         fresh(); checkAch(); o.freshPaid = S.sov || 0;
-        // 250 holes: Fairway Found once, and Steady Hand twice
-        S.totalHoles = 250; const s0 = S.sov || 0; checkAch();
+        // two and a half Steady Hands of holes: the holes honours up to there
+        // once, and Steady Hand twice
+        const N = Math.round(B.ACH_REP.find(a => a.id === 'rHoles').step * 2.5);
+        o.N = N; o.hOnce = B.ACH.filter(a => a.m === 'holes' && a.v <= N).reduce((t, a) => t + a.sov, 0);
+        S.totalHoles = N; const s0 = S.sov || 0; checkAch();
         o.at250 = (S.sov || 0) - s0;
         const s1 = S.sov; checkAch(); o.again = S.sov - s1;
         // a save from before honours paid: what it had already earned is paid
@@ -388,9 +391,9 @@ module.exports = {
       throw new Error('repeating honours read a counter the game does not keep: ' + H.repMetrics.join(', '));
     if (H.freshPaid)
       throw new Error('a brand new career was paid ' + H.freshPaid + ' sovereigns before doing anything');
-    if (H.at250 !== H.hFair + 2 * H.hSteady)
-      throw new Error('250 holes paid ' + H.at250 + ' sovereigns; Fairway Found (' + H.hFair
-        + ') and two Steady Hands (' + (2 * H.hSteady) + ') is ' + (H.hFair + 2 * H.hSteady));
+    if (H.at250 !== H.hOnce + 2 * H.hSteady)
+      throw new Error(H.N + ' holes paid ' + H.at250 + ' sovereigns; the holes honours (' + H.hOnce
+        + ') and two Steady Hands (' + (2 * H.hSteady) + ') is ' + (H.hOnce + 2 * H.hSteady));
     if (H.again) throw new Error('checking again straight after paid ' + H.again + ' more');
     if (H.backPay !== H.want)
       throw new Error('a save from before honours paid got ' + H.backPay + ' sovereigns back; what it '

@@ -562,6 +562,17 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
   border:1px solid var(--line);border-radius:0;padding:16px}
 #sheet h3{font-family:var(--disp);font-size:var(--f5);font-weight:600;margin-bottom:8px;letter-spacing:.01em}
 #sheet p{font-size:var(--f3);color:var(--dim);line-height:1.55;margin-bottom:9px}
+/* the heirloom reveal */
+.hlm{text-align:center;padding:4px 0 10px}
+.hlmF{width:96px;height:96px;margin:2px auto 10px;display:flex;align-items:center;justify-content:center;
+  border:2px solid var(--hc);background:radial-gradient(circle,color-mix(in srgb,var(--hc) 34%,transparent) 0,transparent 70%);
+  box-shadow:0 0 18px color-mix(in srgb,var(--hc) 40%,transparent)}
+.hlmI{width:64px;height:64px}
+.hlmT{font-family:var(--mono);font-size:var(--f2);letter-spacing:.14em;text-transform:uppercase;color:var(--hc)}
+#sheet .hlm h3{margin:4px 0 6px}
+.hlmD{color:var(--dim);font-size:var(--f3)}
+.hlmE{font-family:var(--mono);font-size:var(--f4);color:var(--hc);font-weight:600;margin:4px 0 10px}
+.hlmN{font-family:var(--mono);font-size:var(--f2);color:var(--dim)}
 #sheet .big{font-family:var(--mono);font-size:var(--f6);color:var(--brass);font-weight:600;margin:6px 0}
 #sheet ul{margin:0 0 10px 15px;font-size:var(--f3);color:var(--dim);line-height:1.6}
 .act{width:100%;padding:11px;border-radius:0;border:1px solid var(--brass-dk);background:var(--raise2);
@@ -3396,7 +3407,8 @@ const B = {
   // a card unlock the next; once unlocked you may move up and down it freely.
   // Retirement opens the moment you finish your first event.
   EVENTS_PER_CARD: 5, RETIRE_EVENTS: 1,
-  LEGACY_K: 0.14, LEGACY_EXP: 1.62, CUP_MULT: 1.16,
+  // (0.182 is 0.14 and 30% more: the user asked for retiring to pay more)
+  LEGACY_K: 0.182, LEGACY_EXP: 1.62, CUP_MULT: 1.16,
   /* ---- the Trophy Room ----
      Relics were a shopping list: ten rows, bought top to bottom, done. Trophies
      are found. Legacy buys a DISCOVERY from a pool of thirty, weighted by tier,
@@ -5297,7 +5309,7 @@ function checkAch(){
     if(S.achRep[a.id] === undefined){ S.achRep[a.id] = got; continue; }
     const k = got - S.achRep[a.id];
     if(k <= 0) continue;
-    if(fair === null) fair = !OFFLINE && !QUIET && fairCard();
+    if(fair === null) fair = !OFFLINE && fairCard();
     if(!fair){ S.achRep[a.id] = got; continue; }
     S.achRep[a.id] = got;
     grantSov(k * a.sov, null, true);
@@ -8696,6 +8708,19 @@ const trophyRatio = t => t.g ? Math.pow(t.g, B.TR_POW) : B.TR_R;
 const upgradeCost = t => Math.max(1, Math.ceil(B.TR_COST * B.TR_TIER[t.t].m
   * Math.pow(trophyRatio(t), S.relic[t.id] || 0)
   * (1 - Math.min(0.50, career().pcurate))));
+// what an heirloom does at a level, as its row and its reveal say it
+function trophyEff(t, lv){
+  if(t.g) return '\u00d7' + fmt(Math.pow(t.g, lv));
+  if(t.k === '@sun') return '+' + fmt(lv*B.SUN_ADD*100) + 'pp';
+  if(t.k === '@ember') return '+' + fmt(lv*B.EMBER_ADD*100) + 'pp';
+  if(t.k === '@chrono') return 'retire onto Card ' + roman(Math.min(B.TIER_MAX, lv)) + ' or higher';
+  if(t.k === '@vault'){ const kp = Math.min(500, lv*B.VAULT_UPG);
+    return fmt(kp, 0) + ' levels kept' + (kp >= 500 ? ' (all)' : ''); }
+  if(t.k === '@rift'){ const w = Math.max(B.RIFT_MIN_WAIT, Math.pow(B.RIFT_REGEN, lv));
+    return '\u2212' + Math.round((1-w)*100) + '% wait' + (w <= B.RIFT_MIN_WAIT ? ' (max)' : ''); }
+  if(t.k === '@seed') return 'start with ' + Math.min(6, lv) + ' cards of purse' + (lv >= 6 ? ' (max)' : '');
+  return '\u2014';
+}
 function discover(){
   const pool = B.TROPHY.filter(t => !found(t.id));
   if(!pool.length){ toast('Every heirloom is found'); return; }
@@ -8706,11 +8731,18 @@ function discover(){
   let x = Math.random()*tot, pick = pool[0];
   for(const t of pool){ x -= B.TR_TIER[t.t].w; if(x <= 0){ pick = t; break; } }
   S.relic[pick.id] = 1;
-  showSheet('<h3>' + pick.n + '</h3>'
-    + '<p style="color:var(' + B.TR_TIER[pick.t].v + ')">' + B.TR_TIER[pick.t].n + ' heirloom</p>'
-    + '<p>' + pick.d.charAt(0).toUpperCase() + pick.d.slice(1) + '.</p>'
-    + '<div class="big">' + trophiesFound() + ' / ' + B.TROPHY.length + '</div>'
-    + '<button class="act" onclick="hideSheet()">To the room</button>');
+  // the reveal (the user: "make the heirloom screen look better. Include
+  // which one you get and the icon and what it does"): its icon large in a
+  // frame of its tier's colour, the name, what it does at level 1
+  const col = cssVar(B.TR_TIER[pick.t].v), eff = pick.g ? '+' + Math.round((pick.g - 1) * 100) + '%' : trophyEff(pick, 1);
+  showSheet('<div class="hlm" style="--hc:' + col + '">'
+    + '<div class="hlmF">' + idIcon(TROPHY_IC, pick.id, pick.k, 'hlmI', col) + '</div>'
+    + '<div class="hlmT">' + B.TR_TIER[pick.t].n + ' Heirloom</div>'
+    + '<h3>' + pick.n + '</h3>'
+    + '<div class="hlmD">' + pick.d + '</div>'
+    + '<div class="hlmE">' + eff + '</div>'
+    + '<div class="hlmN">' + trophiesFound() + ' of ' + B.TROPHY.length + ' found</div></div>'
+    + '<button class="act" onclick="hideSheet()">To the Room</button>');
   renderLegacy(); renderVitals();
 }
 function upgradeTrophy(id){
@@ -26608,19 +26640,7 @@ function renderLegacy(){
     const col = cssVar(tier.v);
     // every figure goes through fmt, and anything the game clamps is shown
     // clamped: a trophy that reads +5.05 into a stat that stops at 1.00 is a lie
-    const M = t.g;
-    let eff;
-    if(M) eff = '\u00d7' + fmt(Math.pow(M, lv));
-    else if(t.k === '@sun') eff = '+' + fmt(lv*B.SUN_ADD*100) + 'pp';
-    else if(t.k === '@ember') eff = '+' + fmt(lv*B.EMBER_ADD*100) + 'pp';
-    else if(t.k === '@chrono') eff = 'retire onto Card ' + roman(Math.min(B.TIER_MAX, lv)) + ' or higher';
-    else if(t.k === '@vault'){ const kp = Math.min(500, lv*B.VAULT_UPG);
-      eff = fmt(kp, 0) + ' levels kept' + (kp >= 500 ? ' (all)' : ''); }
-    else if(t.k === '@rift'){ const w = Math.max(B.RIFT_MIN_WAIT, Math.pow(B.RIFT_REGEN, lv));
-      eff = '\u2212' + Math.round((1-w)*100) + '% wait' + (w <= B.RIFT_MIN_WAIT ? ' (max)' : ''); }
-    else if(t.k === '@seed') eff = 'start with ' + Math.min(6, lv) + ' cards of purse'
-      + (lv >= 6 ? ' (max)' : '');
-    else eff = '\u2014';
+    const eff = trophyEff(t, lv);
     const capped = lv >= B.TR_MAX;
 
     const d = rowShell(idIcon(TROPHY_IC, t.id, t.k, 'ric', col));
