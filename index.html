@@ -342,6 +342,13 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
 .gxbar i{display:block;height:100%;background:#E3B457}
 .gxbar.pu i{background:#A35BF2}
 .gxbar.big{height:5px;margin:5px 0 4px}
+.guide{display:grid;grid-template-columns:repeat(auto-fill,minmax(76px,1fr));gap:6px}
+.gtile{border:1px solid var(--line);background:var(--raise);padding:6px 4px 5px;text-align:center;min-width:0}
+.gtile .gpic{display:flex;align-items:flex-end;justify-content:center;height:44px;margin-bottom:4px}
+.gtile img{image-rendering:pixelated}
+.gtile.un img{filter:brightness(0);opacity:.35}
+.gtile b{display:block;font-size:11px;font-weight:600;line-height:1.2}
+.gtile i{display:block;font-style:normal;color:var(--faint);font-size:10px;line-height:1.25;margin-top:2px}
 .mastbox{border:1px solid var(--line);background:var(--raise);padding:7px 9px;margin:0 0 10px}
 .masthead{display:flex;align-items:center;gap:7px;font-size:var(--f2)}
 .masthead>span:first-child{font-weight:600;color:var(--chalk)}
@@ -2501,6 +2508,8 @@ const B = {
   // long few days of carrying the one club. Five gold stars, then five
   // more in purple (the user asked) over a great deal longer.
   MASTER: [100, 400, 1200, 3000, 7500, 15000, 30000, 60000, 120000, 250000], MASTER_STEP: 0.02, MASTER_GOLD: 5,
+  // a first sighting in the Field Guide
+  GUIDE_SOV: 3,
   // Golden Hour (the user picked it from the menu): one hole in GOLDEN_P,
   // from a hash of the hole, played in a low gold light, and all it earns
   // paid twice. Not at night, in the rain, on a frosty morning or in a wager.
@@ -3338,7 +3347,7 @@ const B = {
   RIVALS: ['Hamish Kerr', 'Ines Duarte', 'Tomas Lindqvist', 'Nell Okafor', 'Callum Reid',
            'Priya Nair', 'Rafael Soto', 'Freya Holm', 'Kwame Asante', 'Lena Vogel',
            'Owen Pryce', 'Sofia Marchetti'],
-  RIVAL_SPREAD: 0.08, RIVAL_SOV: 13, RIVAL_FORM: 0.5, RIVAL_EASE: 0.03,
+  RIVAL_SPREAD: 0.08, RIVAL_SOV: 13, RIVAL_SERIES: 39, RIVAL_FORM: 0.5, RIVAL_EASE: 0.03,
   ACH_REP: [
     { id:'rHoles', n:'Steady Hand',    d:'Every 100 holes', m:'holes',  step:100, sov:3 },
     { id:'rBird',  n:'Birdie Watch',   d:'Every 50 birdies', m:'birdie', step:50,  sov:3 },
@@ -4286,6 +4295,16 @@ function migrate(){
     if(!S.bond || typeof S.bond !== 'object' || Array.isArray(S.bond)) delete S.bond;
     else for(const k in S.bond){ const v = S.bond[k];
       if(!B.CADDIES.some(d => d.id === k) || !(v >= 0 && v < 1e9)) delete S.bond[k]; else S.bond[k] = Math.floor(v); }
+  }
+  // the season's series against the rival
+  if(S.rivalSer !== undefined){ const R = S.rivalSer;
+    if(!R || typeof R !== 'object' || !(R.s >= 0) || !(R.w >= 0 && R.w < 1e6) || !(R.l >= 0 && R.l < 1e6)) delete S.rivalSer;
+    else{ R.s = Math.floor(R.s); R.w = Math.floor(R.w); R.l = Math.floor(R.l); } }
+  // the Field Guide: a count for each thing in it, once seen
+  if(S.guide !== undefined){
+    if(!S.guide || typeof S.guide !== 'object' || Array.isArray(S.guide)) delete S.guide;
+    else for(const k in S.guide){ const v = S.guide[k];
+      if(!GUIDE.some(g => g.id === k) || !(v >= 1 && v < 1e9)) delete S.guide[k]; else S.guide[k] = Math.floor(v); }
   }
   // a club for a slot this build does not have cannot be worn or scored
   S.bag = S.bag.filter(it => it && B.SLOTS.some(sl => sl.id === it.slot));
@@ -7068,6 +7087,7 @@ function finishHole(D){
   const idx = holeInRound(S.hole) - 1;
   S.scores[idx] = { d: sc.d, n: sc.n, par: parOf(S.hole) };
   S.tourScore += sc.d;
+  rivalChase();
   S.totalHoles++; masterTick(!OFFLINE); bondTick(!OFFLINE);
   if(!S.nine || S.nine.idx !== nineIndex(S.hole)) startNine();
   const N = S.nine;
@@ -7145,11 +7165,25 @@ function rivalNow(){
   const rnd = seeded(hash32(t * 6151 + 29));
   const form = S.form !== undefined ? S.form : eventTarget();
   const f = (1 + (rnd() * 2 - 1) * B.RIVAL_SPREAD) * (1 - B.RIVAL_EASE);
-  return S.rival = { t, n: B.RIVALS[hash32(t * 131 + 7) % B.RIVALS.length],
+  // (the same golfer all season: the user asked for a rival to chase
+  // across one, the series between you kept in S.rivalSer)
+  return S.rival = { t, n: B.RIVALS[hash32(seasonOf(t) * 131 + 7) % B.RIVALS.length],
                      total: Math.round(form * f) };
 }
 // where they stand after the same number of holes you have played
 const rivalThru = (R, played) => Math.round(R.total * played / (B.ROUND * B.DAYS));
+// On the final day, a line as you go past your rival or they go past you
+// (live only; who leads is kept every hole, so the day starts quiet)
+function rivalChase(){
+  if(OFFLINE || QUIET) return;
+  const R = rivalNow(), st = Math.sign(rivalThru(R, holesPlayed(S.hole) + 1) - S.tourScore), was = R.st;
+  R.st = st;
+  if(!isSunday(S.hole) || was === undefined || was === st) return;
+  if(st > 0) toast('<span class="achk">Rival</span>Past ' + R.n, 'ach');
+  else if(was > 0) toast('<span class="achk">Rival</span>' + R.n + ' is back in front', 'ach');
+}
+// this season's series against them, as it stands after event t
+function rivalSeries(t){ const R = S.rivalSer; return R && R.s === seasonOf(t) ? R : null; }
 function endTournament(){
   const t = tournamentOf(S.hole - 1);
   const score = S.tourScore, target = eventTarget();
@@ -7197,6 +7231,14 @@ function endTournament(){
   const rivalBeat = !OFFLINE && Rv && score < Rv.total;
   if(!OFFLINE){
     if(rivalBeat){ bump('rivals'); grantSov(B.RIVAL_SOV, null, true); }
+    // the season's series: a win or a loss each event, and won outright by
+    // its last event pays RIVAL_SERIES
+    if(Rv){
+      const sn = seasonOf(t);
+      if(!S.rivalSer || S.rivalSer.s !== sn) S.rivalSer = { s: sn, w: 0, l: 0 };
+      if(rivalBeat) S.rivalSer.w++; else if(score > Rv.total) S.rivalSer.l++;
+      if(seasonOf(t + 1) !== sn && S.rivalSer.w > S.rivalSer.l){ S.rivalSer.won = 1; grantSov(B.RIVAL_SERIES, null, true); }
+    }
     S.form = S.form === undefined ? score : S.form * (1 - B.RIVAL_FORM) + score * B.RIVAL_FORM;
   }
 
@@ -7228,6 +7270,8 @@ function endTournament(){
     + (Rv && !OFFLINE ? '<li>' + Rv.n + ': ' + fm(Rv.total) + (rivalBeat
         ? ' \u2014 <b style="color:var(--brass)">beaten, +' + B.RIVAL_SOV + sovIc() + '</b>'
         : score === Rv.total ? ' \u2014 tied' : ' \u2014 lost by ' + (score - Rv.total)) + '</li>' : '')
+    + (Rv && !OFFLINE && rivalSeries(t) ? (() => { const R = rivalSeries(t), end = seasonOf(t + 1) !== R.s;
+        return '<li>Season series: ' + R.w + '\u2013' + R.l + (end ? R.won ? ' \u2014 <b style="color:var(--brass)">won, +' + B.RIVAL_SERIES + sovIc() + '</b>' : ' \u2014 lost' : '') + '</li>'; })() : '')
     + '<li>Best card: ' + fm(S.bestRound) + '</li>'
     + '<li>Prize money: ' + fmt(cash) + ' (' + share.toFixed(2) + 'x)</li>'
     + '<li>Cup points: ' + fmt(pts) + '</li>'
@@ -9944,6 +9988,10 @@ const BIRD_KIND = [
   { H:'#3B342E', B:'#5E5448', W:'#D8743A', T:'#2E2A26', e:'#101010', Y:'#C89A40', L:'#5A4A3A' },   // a robin
   { H:'#1E1A18', B:'#2A2522', W:'#2A2522', T:'#141210', e:'#E8A030', Y:'#E8A030', L:'#3A302A' }    // a blackbird
 ];
+// which of them a group on hole h is (by the hole as well: by the group
+// alone the first group was always the one kind and the second the other,
+// and the robin was never seen)
+const birdKind = (h, g) => Math.floor(hr(h * 7 + g * 3 + 1, 338) * BIRD_KIND.length);
 const GULL_COL = { K:'#5A6470', G:'#B8C2CA', W:'#EEF1F3', Y:'#E8B04A', g:'#8A949E', e:'#1A1E22' };
 const GULL_FLY = [['K.....K', '.GG.GG.', '..GWG..', '...WY..'],
                   ['.......', 'KGGWGGK', '...WY..', '.......'],
@@ -10785,6 +10833,117 @@ function deerSprite(graze, stag, winter, flip){
   const map = { b: coat[0], B: coat[1], e: coat[1], W: '#ECE4D2', d: '#2A1E16', k: '#14100C', a: '#D8C8A2' };
   const rows = (graze === 2 ? DEER_RUN : graze ? DEER_GRAZE : DEER_UP).map(r => { const q = stag ? r : r.replace(/a/g, '.'); return flip ? [...q].reverse().join('') : q; });
   return DEER_SPR[key] = makeSprite(rows, map);
+}
+
+// The season's touches on the course (the user asked for pumpkins in
+// October, then "do things for other seasons too"): pumpkins and hay bales
+// in autumn (carved, and lit at night, in Halloween's week), snowmen in
+// winter, tulips in blossom, sunflowers in summer. Solid pixels, side on.
+// o O the pumpkin and its ribs, h its shine, s stem, f a carved face;
+// w y Y t the bale's top, its straw, its shade and the twine; k hat, coal
+// and buttons, n a carrot nose, r scarf, a stick arms; g G stems and leaves,
+// b a sunflower's middle; 1 2 3 three tulips' heads.
+const DECOR_ROWS = {
+  pk: ['.....ss....',
+       '.....s.....',
+       '..OoOoOoO..',
+       '.OohoOooOO.',
+       'OoohoOoooOO',
+       'OoooOoooOOO',
+       '.OooOoooOO.',
+       '..OOOOOOO..'],
+  jack: ['.....ss....',
+         '.....s.....',
+         '..OoOoOoO..',
+         '.OffoOoffO.',
+         'OoffoOoffOO',
+         'OoooofoooOO',
+         '.OfffffffO.',
+         '..OOfOfOO..'],
+  bale: ['.wwwwwwwwwwww.',
+         'wwwwwwwwwwwwww',
+         'wwtwwwwwwwtwww',
+         'yytyyYyyyytyyy',
+         'yytyyyyyYytyyy',
+         'yYtyyyyyyytyYy',
+         'yytyyYyyyytyyy',
+         'yytyyyyyyYtyyy',
+         'YYYYYYYYYYYYYY'],
+  snowman: ['....kkk....',
+            '....kkk....',
+            '...kkkkk...',
+            '...wwwww...',
+            '...wkwkw...',
+            '...wwnnn...',
+            '...Wwwww...',
+            '..rrrrrrr..',
+            'a..wwrww..a',
+            '.awwwwkwwa.',
+            '..wwwwwwW..',
+            '.wwwwkwwwW.',
+            '.wwwwwwwwW.',
+            '.wwwwwwwwW.',
+            '..WwwwwwW..'],
+  tulip: ['.1...2...3.',
+          '111.222.333',
+          '111.222.333',
+          '.g...g...g.',
+          'Gg..Gg..Gg.',
+          '.gG..gG..gG',
+          '.g...g...g.'],
+  sunfl: ['..yyyyy..',
+          '.yybbbyy.',
+          'yybbbbbyy',
+          'yybbbbbyy',
+          '.yybbbyy.',
+          '..yyyyy..',
+          '....g....',
+          '..GGg....',
+          '.GG.g....',
+          '....gGG..',
+          '....g.GG.',
+          '....g....',
+          '...Gg....',
+          '..GGg....',
+          '....g....',
+          '....g....']
+};
+// how tall each stands, in the golfer's twelve
+const DECOR_H = { pk: 3, jack: 3, bale: 4.2, snowman: 8.5, tulip: 3.8, sunfl: 10 };
+const TULIP_COLS = [['#E0303A', '#F2C430', '#F07AB0'], ['#F2E8D8', '#C83A8A', '#F28A30'], ['#8A4AC8', '#F2D040', '#E83A4A']];
+const DECOR_SPR = {};
+function decorSprite(sp, night, lit, var_, flip){
+  const key = sp + '|' + (night ? 1 : 0) + (lit ? 1 : 0) + '|' + (var_ || 0) + (flip ? 1 : 0);
+  if(DECOR_SPR[key]) return DECOR_SPR[key];
+  const T = TULIP_COLS[(var_ || 0) % TULIP_COLS.length];
+  const map = { o: '#E8801E', O: '#B85410', h: '#F8B050', s: '#5A6A2A', f: '#3A1A08',
+    w: '#E8CC6A', y: '#D2AA48', Y: '#9A7A2E', t: '#7A5A2A',
+    k: '#1E1C22', n: '#F07A1E', r: '#C8323A', a: '#5A3A22',
+    g: '#3E7A2E', G: '#2E5E22', b: '#5A3416', 1: T[0], 2: T[1], 3: T[2] };
+  if(sp === 'snowman'){ map.w = '#F4F6F8'; map.W = '#C4D0DA'; }
+  else map.W = '#C4D0DA';
+  if(sp === 'sunfl') map.y = '#F2C21E';
+  for(const ch in map) if(night) map[ch] = moonC(map[ch]);
+  // (a carved one lit from inside after dark: its face the candle's glow)
+  if(lit){ map.f = '#FFD24A'; map.o = mixC(map.o, '#E8801E', 0.45); }
+  const rows = DECOR_ROWS[sp].map(r => flip ? [...r].reverse().join('') : r);
+  return DECOR_SPR[key] = makeSprite(rows, map);
+}
+// Which touches a course has today: by the season it is shown in, and the
+// summer's only on the courses that turn with the calendar (or a home
+// course as built) from June to August. DECOR_FORCE (the developer menu)
+// pins one; 'halloween' is autumn's with the faces carved.
+let DECOR_FORCE = null;
+const DECOR_KINDS = ['autumn', 'halloween', 'winter', 'spring', 'summer'];
+function seasonDecor(cs, look){
+  if(DECOR_FORCE) return DECOR_FORCE;
+  const sea = look && look.season;
+  if(sea === 'Autumn'){ const D = new Date(dayNow() * 86400000);
+    return D.getUTCMonth() === 9 && D.getUTCDate() >= 24 ? 'halloween' : 'autumn'; }
+  if(sea === 'Winter') return 'winter';
+  if(sea === 'Blossom') return 'spring';
+  if(!sea && cs && (cs.slot === 'home' || CAL_SEASONED.includes(cs.id)) && MONTH_SEASON[monthNow()] === 0) return 'summer';
+  return null;
 }
 
 /* ---- pixel-perfect icons from the existing vector library ----
@@ -17344,6 +17503,64 @@ const Scene = {
     put.sort((a, b) => b.d - a.d);
     this.props = put;
   },
+  // The season's touches (kind 14; see seasonDecor): a display beside the
+  // tee on one side, and a few more down the hole in the rough, clear of
+  // play, hazards, the cart path, other holes, woods and anything already
+  // standing there. From a hash, tagged extra.
+  laySeason(){
+    const put = this.props || [], dc = this.decor;
+    if(!dc) return;
+    const h = this.hole, fall = dc === 'autumn' || dc === 'halloween';
+    const free = (d, x, r, crowd) => !(Math.abs(x) > 8 || Math.abs(x) < this.fwWidth(d) + 0.9 || this.onPlay(d, x, 0.7) || this.hitsHazard(d, x, 0.8)
+      || this.onNbr(d, x, 0.4) || this.inPond(d, x, 0.8) || this.inFill(d, x, 0.25, 'lake') || this.inFill(d, x, 0.1, 'wood') || this.inBack(d, x, 0.6)
+      || (this.cart && Math.sign(x) === this.cart.sd && Math.abs(Math.abs(x) - Math.abs(this.cartX(d))) < 1.0)
+      || put.some(q => (q.kind === 0 || q.kind === 2 || q.kind === 1 && !crowd || q.kind >= 10 && q.kind !== 14) && Math.abs(q.d - d) < r && Math.abs(q.x - x) < r));
+    const add = (d, x, sp, s, more) => {
+      // (a shrub, tuft or rock where it stands is taken away, and by the tee
+      // anyone watching there steps aside)
+      for(let j = put.length - 1; j >= 0; j--){ const q = put[j]; if((q.kind === 8 || q.kind === 1 && d < 8) && Math.abs(q.d - d) < 0.9 && Math.abs(q.x - x) < 0.9) put.splice(j, 1); }
+      put.push(Object.assign({ kind: 14, d, x, sp, s, extra: 1, flip: hr(d * 31 + x * 7, 575) < 0.5 ? 1 : 0, v: Math.floor(hr(d * 17 + x, 576) * 3) }, more || {}));
+    };
+    const pk = dc === 'halloween' ? 'jack' : 'pk';
+    // a group of them at d, x, going out away from the fairway
+    const group = (d, x, n, big) => {
+      const sd = Math.sign(x) || 1;
+      if(fall){
+        if(big){ add(d, x, 'bale', 1); add(d, x, pk, 0.9, { top: 1 }); }
+        for(let i = 0, m = 0; i < 8 && m < n; i++){
+          const dd = d + [0.8, -0.8, 1.5, -1.5, 0.4, 2.1, -2.1, 2.7][i] * (big ? 1 : 0.8), xx = x + sd * (hr(h * 13 + i + d, 577) * 0.6 - 0.2);
+          if(!free(dd, xx, 0.35, big)) continue;
+          add(dd, xx, pk, 0.7 + hr(h + i + d, 578) * 0.45); m++;
+        }
+      }else{
+        const sp = dc === 'winter' ? 'snowman' : dc === 'spring' ? 'tulip' : 'sunfl';
+        const step = sp === 'tulip' ? 0.75 : 0.55;
+        for(let i = 0, m = 0; i < 6 && m < (sp === 'snowman' ? 1 : n); i++){
+          const dd = d + [0, 1, -1, 2, -2, 3][i] * step, xx = x + sd * (sp === 'sunfl' ? hr(h * 11 + i + d, 579) * 0.4 : 0);
+          if(!free(dd, xx, i ? 0.25 : 0.6, d < 8)) continue;
+          add(dd, xx, sp, sp === 'sunfl' ? 0.8 + hr(h + i + d, 580) * 0.35 : 0.9 + hr(h + i + d, 580) * 0.2); m++;
+        }
+      }
+    };
+    // beside the tee, on whichever side the cart path is not (or past it)
+    const ts = this.cart ? -this.cart.sd : hr(h, 571) < 0.5 ? -1 : 1;
+    for(let i = 0; i < 18; i++){
+      const side = i % 3 === 2 ? -ts : ts, d = 5 + hr(h * 3 + i, 572) * 2.5;
+      const x = side * (this.fwWidth(d) + (this.cart && side === this.cart.sd ? 2.9 : 1.0) + hr(h * 5 + i, 573) * 0.5);
+      if(!free(d, x, 1.0, 1)) continue;
+      group(d, x, 3, true); break;
+    }
+    // and a few down the hole
+    const want = 3 + Math.floor(hr(h, 574) * 3);
+    for(let i = 0, n = 0; i < 40 && n < want; i++){
+      const d = 10 + hr(h * 7 + i, 581) * (LEN - 6), side = hr(h * 7 + i, 582) < 0.5 ? -1 : 1;
+      const x = side * (this.fwWidth(d) + 1.2 + hr(h * 7 + i, 583) * 3);
+      if(!free(d, x, 0.9) || put.some(q => q.kind === 14 && Math.abs(q.d - d) < 7)) continue;
+      group(d, x, 1 + Math.floor(hr(h * 7 + i, 584) * 3), fall && hr(h * 7 + i, 585) < 0.3); n++;
+    }
+    put.sort((a, b) => b.d - a.d);
+    this.props = put;
+  },
   inFill(d, x, pad, kind){
     for(const F of this.fills || []){
       if(kind && F.kind !== kind) continue;
@@ -18460,6 +18677,9 @@ const Scene = {
     this.layNight();
     this.layCourse();
     this.layDeer();
+    this.decor = seasonDecor(cs, look);
+    this.laySeason();
+    guideSpot(this);
     // the near bank: the last ground on his line before the water
     // Where he stops before it and where he is across: an island's near bank
     // and its green, a canyon's two rims.
@@ -21407,7 +21627,7 @@ Object.assign(Scene, {
     const k = clamp(Math.round(pr.s * US * 1.15), 1, 3), clip = this.clipAt(fd), x = Math.round(pr.x), y = Math.round(pr.y);
     // a sparrow, a robin or a blackbird, from a hash: a head with an eye
     // and a beak, a wing over a lighter breast, a tail and two legs
-    const sp = BIRD_KIND[Math.floor(hr(p.g * 3 + 1, 338) * BIRD_KIND.length)];
+    const sp = BIRD_KIND[birdKind(this.hole, p.g)];
     const flip = p.dir < 0;
     if(u < 0){
       // on the ground: pecking (its head down) a moment in every few seconds
@@ -21554,6 +21774,20 @@ Object.assign(Scene, {
       const spr = deerSprite(graze, p.stag, this.look && this.look.season === 'Winter', p.flip);
       const X = Math.round(pr.x), Y = Math.round(pr.y);
       c.fillStyle = 'rgba(8,16,10,.26)'; this.standShadow(c, X - Math.round(w * 0.36), Y - 1, Math.round(w * 0.72), 1);
+      this.standBlit(c, shrinkSprite(spr, w, h) || spr, X - (w >> 1), Y - h, w, h);
+      return;
+    }
+    // the season's touches (laySeason): a pumpkin, a bale, a snowman, a bed
+    // of tulips or a sunflower; a carved pumpkin lit at night. Not in a wager.
+    if(p.kind === 14){
+      if(S.dgnRun) return;
+      const spr = decorSprite(p.sp, night, night && p.sp === 'jack', p.v, p.flip);
+      const h = Math.round(DECOR_H[p.sp] * p.s * US * pr.s);
+      if(h < 2) return;
+      const w = Math.max(1, Math.round(h * spr.w / spr.h));
+      if(pr.x + w < -4 || pr.x - w > VW + 4) return;
+      const X = Math.round(pr.x), Y = Math.round(pr.y) - (p.top ? Math.max(0, Math.round(DECOR_H.bale * US * pr.s) - 1) : 0);
+      if(!p.top && h > 3){ c.fillStyle = 'rgba(8,16,10,.26)'; this.standShadow(c, X - Math.round(w * 0.42), Y - 1, Math.round(w * 0.84), 1); }
       this.standBlit(c, shrinkSprite(spr, w, h) || spr, X - (w >> 1), Y - h, w, h);
       return;
     }
@@ -23872,6 +24106,88 @@ function honRows(w){
    the honours, the free sovereigns in the shop twice over with nothing to say
    they were ready, and the cabinet and the record at the foot of the Tour
    tab; the trophy now carries a dot while anything here is waiting. */
+// The Field Guide (the user picked it from the menu): the wildlife, the
+// season's touches and the course's moments, each filled in the first time
+// it is seen on a hole played live, with a few sovereigns for each. g: its
+// shelf (wildlife, seasons, the course), w: where to look, shown until then.
+const GUIDE = [
+  { id:'doe', n:'Doe', g:'w', w:'Autumn and winter woods' },
+  { id:'stag', n:'Stag', g:'w', w:'Autumn and winter woods' },
+  { id:'sparrow', n:'Sparrow', g:'w', w:'On the fairway' },
+  { id:'robin', n:'Robin', g:'w', w:'On the fairway' },
+  { id:'blackbird', n:'Blackbird', g:'w', w:'On the fairway' },
+  { id:'gull', n:'Gull', g:'w', w:'By the sea' },
+  { id:'firefly', n:'Fireflies', g:'w', w:'A dry night' },
+  { id:'pumpkin', n:'Pumpkins', g:'s', w:'Autumn' },
+  { id:'jack', n:'Jack-o’-Lantern', g:'s', w:'Late October' },
+  { id:'snowman', n:'Snowman', g:'s', w:'Winter' },
+  { id:'tulip', n:'Tulips', g:'s', w:'Blossom' },
+  { id:'sunfl', n:'Sunflowers', g:'s', w:'Summer' },
+  { id:'island', n:SIG_NAME.island, g:'c', w:'A signature hole' },
+  { id:'canyon', n:SIG_NAME.canyon, g:'c', w:'A signature hole' },
+  { id:'stones', n:SIG_NAME.stones, g:'c', w:'A signature hole' },
+  { id:'pier', n:SIG_NAME.pier, g:'c', w:'A signature hole' },
+  { id:'rail', n:SIG_NAME.rail, g:'c', w:'A signature hole' },
+  { id:'golden', n:'Golden Hour', g:'c', w:'Rare, on a fair day' },
+  { id:'frost', n:'Frosty Morning', g:'c', w:'Cold mornings' },
+  { id:'rain', n:'Rain', g:'c', w:'Stormy weather' },
+  { id:'night', n:'Night', g:'c', w:'After dark' }
+];
+const GUIDE_SHELF = [['w', 'Wildlife'], ['s', 'Seasons'], ['c', 'The Course']];
+// what the hole just laid out shows: called as each hole starts, live only
+function guideSpot(sc){
+  if(QUIET || OFFLINE || S.dgnRun || sc.hole !== S.hole) return;
+  const P = sc.props || [], got = [], dry = !sc.rain;
+  const see = id => { if(!got.includes(id)) got.push(id); };
+  if(!sc.night) for(const p of P) if(p.kind === 13) see(p.stag ? 'stag' : 'doe');
+  if(!sc.night && dry) for(const p of P) if(p.kind === 9) see(['sparrow', 'robin', 'blackbird'][birdKind(sc.hole, p.g)]);
+  if(sc.night && dry && P.some(p => p.kind === 5)) see('firefly');
+  for(const p of P) if(p.kind === 14) see(p.sp === 'pk' || p.sp === 'bale' ? 'pumpkin' : p.sp);
+  const sk = sigKind(sc.hole); if(sk){ see(sk); if(sk === 'pier') see('gull'); }
+  if(sc.golden) see('golden'); if(sc.frost) see('frost'); if(sc.rain) see('rain'); if(sc.night) see('night');
+  S.guide = S.guide || {};
+  const firsts = [];
+  for(const id of got){
+    const g = GUIDE.find(x => x.id === id); if(!g) continue;
+    if(!S.guide[id]) firsts.push(g.n);
+    S.guide[id] = (S.guide[id] || 0) + 1;
+  }
+  // (one line for all of a hole's firsts)
+  if(firsts.length){ const n = B.GUIDE_SOV * firsts.length; grantSov(n, '', true);
+    toast('<span class="achk">Field Guide</span>' + firsts.join(', ') + ' \u00b7 <span style="white-space:nowrap">+' + n + sovIc() + '</span>', 'ach'); }
+}
+// its picture: the thing itself as the course draws it
+function guideUrl(id){
+  const key = 'guide|' + id;
+  if(DOMSPR[key] !== undefined) return DOMSPR[key];
+  try{
+    const ic = { island:['island', '#5FB0C8'], canyon:['dunes', '#C8804A'], stones:['stone', '#9AA6AE'], pier:['compass', '#8AB8D0'],
+      rail:['metro', '#D0584A'], golden:['sunburst', '#F2C21E'], frost:['snow', '#CFE8F4'], rain:['stormglass', '#7AA6C8'], night:['lantern', '#F2D060'] }[id];
+    const bi = ['sparrow', 'robin', 'blackbird'].indexOf(id);
+    const sp = ic ? pixSprite(ic[0], ic[1])
+      : id === 'doe' || id === 'stag' ? deerSprite(0, id === 'stag', false, false)
+      : bi >= 0 ? makeSprite(BIRD_STAND, BIRD_KIND[bi])
+      : id === 'gull' ? makeSprite(GULL_FLY[0], GULL_COL)
+      : id === 'firefly' ? makeSprite(['..y.....', '.yYy..y.', '..y..yYy', '......y.', '...y....', '..yYy...', '...y....'], { y:'#B8E04A', Y:'#F4FFB0' })
+      : id === 'pumpkin' ? decorSprite('pk') : id === 'jack' ? decorSprite('jack', true, true) : decorSprite(id);
+    return DOMSPR[key] = sp ? sp.cv.toDataURL() + '|' + sp.w + 'x' + sp.h : '';
+  }catch(e){ return DOMSPR[key] = ''; }
+}
+function roomGuide(w){
+  const seen = S.guide || {}, n = GUIDE.filter(g => seen[g.id]).length;
+  let h = '<div class="eyebrow" style="margin:6px 0 4px">Field Guide \u00b7 ' + n + '/' + GUIDE.length + ' \u00b7 +' + B.GUIDE_SOV + sovIc() + ' each</div>';
+  for(const [k, t] of GUIDE_SHELF){
+    h += '<div class="eyebrow" style="margin:10px 0 4px">' + t + '</div><div class="guide">';
+    for(const g of GUIDE.filter(x => x.g === k)){
+      const [url, wh] = guideUrl(g.id).split('|'), [sw, sh] = (wh || '12x12').split('x').map(Number);
+      const z = Math.max(1, Math.floor(Math.min(60 / sw, 44 / sh)));
+      h += '<div class="gtile' + (seen[g.id] ? '' : ' un') + '"><span class="gpic"><img src="' + url + '" width="' + sw * z + '" height="' + sh * z + '" alt=""></span>'
+        + '<b>' + g.n + '</b><i>' + (seen[g.id] ? 'Seen ' + fmt(seen[g.id], 0) + '×' : g.w) + '</i></div>';
+    }
+    h += '</div>';
+  }
+  w.innerHTML = h;
+}
 let roomTab = 'today';
 // the trophy case: how far along each of its tracks, and what is waiting
 function caseHave(id){
@@ -23904,7 +24220,7 @@ function collect(id){
 function trophyRoom(tab){
   if(tab) roomTab = tab;
   if(QUIET) return;                 // no sheet is shown while the game plays out of sight
-  const tabs = [['today', 'Today'], ['case', 'Cabinet'], ['hon', 'Honours']];
+  const tabs = [['today', 'Today'], ['case', 'Cabinet'], ['hon', 'Honours'], ['guide', 'Guide']];
   showSheet('<h3>Trophy Room</h3><div class="shopnav">' + tabs.map(([id, t]) =>
       '<button data-room="' + id + '"' + (roomTab === id ? ' class="on"' : '') + '>' + t + '</button>').join('')
     + '</div><div id="roomBody"></div>'
@@ -23914,6 +24230,7 @@ function trophyRoom(tab){
   const w = $('roomBody');
   if(roomTab === 'today') roomToday(w);
   else if(roomTab === 'case') roomCase(w);
+  else if(roomTab === 'guide') roomGuide(w);
   else{ S.honSeen = achCount(); honRows(w); }
   sh.querySelectorAll('[data-collect]').forEach(b => b.onclick = () => { collect(b.dataset.collect); trophyRoom(); });
   renderStageBtns();
@@ -25725,6 +26042,7 @@ const DEV = {
           + b('Golden Hour hole', 'DEV.golden()') + b('final-day gallery', 'DEV.gallery()'))
       + row('Conditions', b('reroll', 'DEV.chaos()') + b('fair', 'DEV.weather(0)') + b('crosswind', 'DEV.weather(1)') + b('night', 'DEV.weather(3)'))
       + row('Frost · ' + (FROST_FORCE === null ? 'by the clock' : FROST_FORCE ? 'on' : 'off'), b('on', 'DEV.frost(1)') + b('off', 'DEV.frost(0)') + b('by the clock', 'DEV.frost(null)'))
+      + row('Season touches · ' + (DECOR_FORCE || 'by the season'), DECOR_KINDS.map(k => b(k, 'DEV.decor(\'' + k + '\')')).join('') + b('by the season', 'DEV.decor()'))
       + row('Home season', b('by the card', 'DEV.season(-1)') + b('as built', 'DEV.season(0)')
           + b('autumn', 'DEV.season(1)') + b('winter', 'DEV.season(2)') + b('blossom', 'DEV.season(3)'))
       + row('Signature hole', b('island', 'DEV.isle()') + b('canyon', 'DEV.canyon()')
@@ -25758,6 +26076,7 @@ const DEV = {
         row('Career', b('+1 level', 'DEV.lv(1)') + b('+10 levels', 'DEV.lv(10)') + b('level 60', 'DEV.lv(60)')
           + b('+25 paragon', 'DEV.para(25)') + b('+400 paragon', 'DEV.para(400)') + b('reset career', 'DEV.career0()'))
       + row('Honours', b('unlock all', 'DEV.ach()') + b('clear all', 'DEV.ach0()') + b('+5 cups', 'DEV.cups(5)'))
+      + row('Field Guide \u00b7 ' + GUIDE.filter(g => (S.guide || {})[g.id]).length + '/' + GUIDE.length, b('spot all', 'DEV.guide(1)') + b('clear', 'DEV.guide(0)') + b('open it', 'DEV.guide(2)'))
       + row('Daily challenges', b('finish one', 'DEV.daily(1)') + b('finish all', 'DEV.daily(3)') + b('streak +1', 'DEV.streak()') + b('streak 0', 'DEV.streak0()'))
       + row('Heirlooms', b('find 5', 'DEV.disc(5)') + b('find all', 'DEV.disc(99)') + b('+2 levels each', 'DEV.relics(2)')
           + b('max all found', 'DEV.relics(B.TR_MAX)') + b('clear', 'DEV.relics0()') + b('force retire', 'DEV.retire()'))
@@ -25956,6 +26275,8 @@ const DEV = {
   // a train of that kind setting off now (on a railway hole)
   train(kind){ Scene.train = { t0: Scene.t, dir: Math.random() < 0.5 ? -1 : 1, kind }; Scene.trainNext = Scene.t + 30; hideSheet(); },
   frost(v){ FROST_FORCE = v; Scene.newHole(S.hole, S.tier); hideSheet(); },
+  decor(k){ DECOR_FORCE = k || null; Scene.newHole(S.hole, S.tier); hideSheet(); },
+  guide(k){ if(k === 2){ trophyRoom('guide'); return; } S.guide = {}; if(k) GUIDE.forEach(g => { S.guide[g.id] = 1; }); this.open(); },
   rail(){ RAIL_FORCE = S.hole; ISLE_FORCE = 0; CANYON_FORCE = 0; STONES_FORCE = 0; PIER_FORCE = 0; S.yards = S.yardsMax; this.reprice(); Scene.newHole(S.hole, S.tier); hideSheet(); },
   isle(){ ISLE_FORCE = S.hole; CANYON_FORCE = 0; STONES_FORCE = 0; PIER_FORCE = 0; RAIL_FORCE = 0; S.yards = S.yardsMax; this.reprice(); Scene.newHole(S.hole, S.tier); hideSheet(); },
   // as if nobody had touched the phone for the whole wait, bar five seconds

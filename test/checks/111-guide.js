@@ -1,0 +1,73 @@
+/* The Field Guide (the user picked it from the menu): the wildlife, the
+ * season's touches and the course's moments, each filled in the first time
+ * it is seen on a hole played live, with a few sovereigns for the first.
+ *
+ *   - everything in it can be seen: holes swept over the seasons, the
+ *     weather, night and the signature holes fill every entry
+ *   - a first sighting pays once; seeing it again only counts; nothing is
+ *     spotted away, in a wager, or on a hole other than the one played
+ *   - the Guide tab shows every entry with its picture, seen or not
+ *   - a broken save is repaired
+ */
+'use strict';
+module.exports = {
+  name: 'guide',
+  async run(page) {
+    const r = await page.evaluate(() => {
+      const SNAP = JSON.stringify(S), o = { fails: [] }, f = m => { if (o.fails.length < 14) o.fails.push(m); };
+      try {
+        hideSheet(); HOUR_FORCE = 14; S.guide = {};
+        const play = (h, ch) => { S.hole = h; S.chaos = { n: ch || 'Fair' }; Scene.newHole(h, S.tier); };
+        // a first sighting pays, a second only counts
+        DECOR_FORCE = 'winter'; const sov0 = S.sov || 0; play(S.hole);
+        if (S.guide.snowman !== 1) f('a snowman on the hole was not spotted (' + S.guide.snowman + ')');
+        const paid = (S.sov || 0) - sov0, firsts = Object.keys(S.guide).length;
+        if (paid !== B.GUIDE_SOV * firsts) f('the first sightings paid ' + paid + ' for ' + firsts);
+        const sov1 = S.sov; play(S.hole);
+        if (S.guide.snowman !== 2) f('a second sighting did not count (' + S.guide.snowman + ')');
+        if (S.sov !== sov1) f('a second sighting paid ' + (S.sov - sov1));
+        // not away, not in a wager, not on another hole
+        const was = JSON.stringify(S.guide); DECOR_FORCE = 'spring';
+        OFFLINE = true; play(S.hole); OFFLINE = false;
+        S.dgnRun = { id: B.DGN[0].id }; play(S.hole); S.dgnRun = null;
+        Scene.newHole(S.hole + 1, S.tier);
+        if (JSON.stringify(S.guide) !== was) f('spotted away, in a wager or on another hole: ' + JSON.stringify(S.guide));
+        // everything can be seen
+        S.guide = {}; const h0 = S.hole;
+        for (const k of DECOR_KINDS) { DECOR_FORCE = k; SEASON_FORCE = { autumn: 1, halloween: 1, winter: 2, spring: 3, summer: 0 }[k];
+          for (let h = h0; h < h0 + 30; h++) play(h); }
+        DECOR_FORCE = null; SEASON_FORCE = -1;
+        for (let h = h0; h < h0 + 20; h++) play(h, 'Night');
+        for (let h = h0; h < h0 + 3; h++) play(h, 'Crosswind');
+        FROST_FORCE = 1; SEASON_FORCE = 2; play(h0); FROST_FORCE = null; SEASON_FORCE = -1;
+        for (const k of SIG_KINDS) { let h = h0; while (sigKind(h) !== k && h < h0 + 5000) h++; play(h); }
+        { let h = h0; while (!goldenOn(h, 'Fair') && h < h0 + 50000) h++; play(h); }
+        const miss = GUIDE.filter(g => !S.guide[g.id]).map(g => g.n);
+        if (miss.length) f('never spotted: ' + miss.join(', '));
+        o.spotted = GUIDE.length - miss.length;
+        // the tab: every entry, a picture each, seen and not
+        S.guide = { doe: 2, robin: 7 }; trophyRoom('guide');
+        const tiles = [...document.querySelectorAll('#roomBody .gtile')];
+        if (tiles.length !== GUIDE.length) f(tiles.length + ' tiles for ' + GUIDE.length + ' entries');
+        const pics = tiles.filter(t => { const i = t.querySelector('img'); return i && i.getAttribute('src').startsWith('data:image') && i.height >= 20; }).length;
+        if (pics !== tiles.length) f('only ' + pics + ' of ' + tiles.length + ' tiles have a picture');
+        const seen = tiles.filter(t => !t.classList.contains('un')).length;
+        if (seen !== 2) f(seen + ' tiles shown as seen, not 2');
+        if (!tiles.some(t => /Seen\s7/.test(t.textContent))) f('the robin\'s count is not shown');
+        hideSheet();
+        // save repair
+        S.guide = { doe: 'x', robin: -2, stag: 3.7, nope: 4 }; migrate();
+        if (JSON.stringify(S.guide) !== '{"stag":3}') f('repaired to ' + JSON.stringify(S.guide));
+        S.guide = [1]; migrate(); if (S.guide !== undefined) f('a list for the guide was kept');
+      } finally {
+        DECOR_FORCE = null; SEASON_FORCE = -1; FROST_FORCE = null; HOUR_FORCE = null; OFFLINE = false;
+        Object.keys(S).forEach(k => delete S[k]); Object.assign(S, JSON.parse(SNAP)); hideSheet(); startHole();
+      }
+      return o;
+    });
+    if (r.fails.length) throw new Error(r.fails.join('\n'));
+    return ['all ' + r.spotted + ' entries spotted over the seasons, the weather, night and the signature holes',
+      'a first sighting pays once, a second only counts; none away, in a wager or on another hole',
+      'the Guide tab: every entry with its picture, the seen ones with their count; a broken save repaired'];
+  }
+};
