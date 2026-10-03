@@ -3606,10 +3606,16 @@ const B = {
   // the highest playable card is about Card 221 (see TIER_Y2).
   // Past TR_KNEE a level no longer compounds (the user: "don't make the
   // upgrades after 30 be so exponential"): each one adds the same step, the
-  // gain of one compounding level taken off the level-30 figure, and costs
-  // TR_LIN of the level-30 price more than the one before, so a ladder can
-  // be walked on past 30 instead of standing still.
-  TR_KNEE: 30, TR_LIN: 0.10,
+  // gain of one compounding level taken off the level-30 figure.
+  // The price: a ladder's own ratio to TR_STEEP, TR_LATE more a level from
+  // there to the knee, and TR_POST a level past it. With a price that rose
+  // by a tenth of the level-30 figure past 30 the whole room was at its tops
+  // in about 110 cups and legacy had nothing left to buy; the user picked
+  // "steeper heirloom prices so the room lasts longer". Measured on a career
+  // that retires every ten cups, it now fills at about 300 cups, the first
+  // twenty levels cost what they did, and the wall past Card 200 comes at
+  // about 140 cups.
+  TR_KNEE: 30, TR_STEEP: 20, TR_LATE: 1.2, TR_POST: 1.6,
   TR_COST: 3, TR_R: 1.42, TR_MAX: 250,
   TR_TIER: { B:{ n:'Bronze', m:1.00, w:60, v:'--r1' },
              A:{ n:'Silver', m:1.65, w:30, v:'--r2' },
@@ -8920,8 +8926,11 @@ function legacyPreview(){
 // mechanic's.
 const trophyRatio = t => t.g ? Math.max(B.TR_R, Math.pow(t.g, B.TR_POW)) : B.TR_R;
 // the ladder's price at a level: compounding to TR_KNEE, then a straight line
-const trophyPriceAt = (t, lv) => lv <= B.TR_KNEE ? Math.pow(trophyRatio(t), lv)
-  : Math.pow(trophyRatio(t), B.TR_KNEE) * (1 + (lv - B.TR_KNEE) * B.TR_LIN);
+const trophyPriceAt = (t, lv) => {
+  const k = Math.min(lv, B.TR_KNEE);
+  return Math.pow(trophyRatio(t), k) * Math.pow(B.TR_LATE, Math.max(0, k - B.TR_STEEP))
+    * Math.pow(B.TR_POST, Math.max(0, lv - B.TR_KNEE));
+};
 const upgradeCost = t => Math.max(1, Math.ceil(B.TR_COST * B.TR_TIER[t.t].m
   * trophyPriceAt(t, S.relic[t.id] || 0)
   * (1 - Math.min(0.50, career().pcurate))));
