@@ -4091,6 +4091,10 @@ const nb = t => String(t).replace(/([\d][\d.,]*\s*(?:%|pp|x|\u00d7)?)\s+(?=[A-Za
 
 /* ---- the calendar ---- */
 const holeInRound  = h => ((h-1) % B.ROUND) + 1;
+// Ace plaques (the user picked them from the menu): a hole is its course
+// and its number in the round, and S.aceAt counts the aces on each
+const aceKey = h => courseFor(tournamentOf(h)).id + ':' + holeInRound(h);
+const acesOn = h => (S.aceAt || {})[aceKey(h)] || 0;
 const dayIndex     = h => Math.floor((h-1) / B.ROUND) % B.DAYS;
 const dayName      = h => B.DAY_NAMES[dayIndex(h)];
 const roundIndex   = h => Math.floor((h-1) / B.ROUND);
@@ -4647,6 +4651,11 @@ function migrate(){
     if(!R || typeof R !== 'object' || !(R.s >= 0) || !(R.w >= 0 && R.w < 1e6) || !(R.l >= 0 && R.l < 1e6)) delete S.rivalSer;
     else{ R.s = Math.floor(R.s); R.w = Math.floor(R.w); R.l = Math.floor(R.l); } }
   // the Field Guide: a count for each thing in it, once seen
+  if(S.aceAt !== undefined){
+    if(!S.aceAt || typeof S.aceAt !== 'object' || Array.isArray(S.aceAt)) delete S.aceAt;
+    else for(const k in S.aceAt){ const v = S.aceAt[k];
+      if(!/^[a-z0-9_]+:\d{1,2}$/i.test(k) || !(v >= 1 && v < 1e12)) delete S.aceAt[k]; else S.aceAt[k] = Math.floor(v); }
+  }
   if(S.guide !== undefined){
     if(!S.guide || typeof S.guide !== 'object' || Array.isArray(S.guide)) delete S.guide;
     else for(const k in S.guide){ const v = S.guide[k];
@@ -7597,7 +7606,7 @@ function finishHole(D){
   if(sc.d >= 1) N.bogey++;
   if(sc.d >= 0) N.allUnder = false;
   if(N.n >= 9) resolveNine();
-  if(sc.d === -4) S.aces++;
+  if(sc.d === -4){ S.aces++; if(!S.dgnRun){ const k = aceKey(S.hole); S.aceAt = S.aceAt || {}; S.aceAt[k] = (S.aceAt[k] || 0) + 1; } }
   if(sc.d <= -1) bump('birdie');
   if(sc.d <= -1 && Scene.windMph() >= 15) bump('windBird');
   sigScore(sc);
@@ -18611,6 +18620,22 @@ const Scene = {
   // marker lies in the rough just off the tee box, and is picked up as he
   // steps up (paid now, gone with a glint a moment later). From a hash,
   // tagged extra; never away, in a wager or twice on one hole.
+  // The ace plaque: a small board by the tee, on his left (the hole map
+  // stands over the right), always laid and drawn only once the hole has
+  // been aced. Where nothing else stands, the scenery there taken away.
+  layPlaque(){
+    const put = this.props || [];
+    // (clear of the column of buttons down the stage's left at 320)
+    for(const [d, x] of [[1.8, -2.6], [2.0, -2.6], [1.6, -2.5], [2.2, -2.8]]){
+      if(this.hitsHazard(d, x, 0.5) || this.inPond(d, x, 0.5) || this.inFill(d, x, 0.2, 'lake')
+         || put.some(q => (q.kind === 0 || q.kind === 2 || q.kind === 3 || q.kind >= 10) && Math.abs(q.d - d) < 0.8 && Math.abs(q.x - x) < 0.9)) continue;
+      for(let j = put.length - 1; j >= 0; j--){ const q = put[j]; if((q.kind === 8 || q.kind === 1 || q.kind === 5 || q.kind === 22) && Math.abs(q.d - d) < 0.9 && Math.abs(q.x - x) < 0.9) put.splice(j, 1); }
+      put.push({ kind: 24, d, x, extra: 1 });
+      put.sort((a, b) => b.d - a.d);
+      this.props = put;
+      return;
+    }
+  },
   layFind(){
     this.find = null;
     const h = this.hole, put = this.props || [];
@@ -19984,6 +20009,7 @@ const Scene = {
     this.layNightLife();
     this.layOthers();
     this.layFind();
+    this.layPlaque();
     this.layGoldHour();
     this.layGold();
     guideSpot(this);
@@ -22986,6 +23012,7 @@ Object.assign(Scene, {
     for(const p of (this.props || [])){
       this._propD = p.d;
       if(p.kind === 22 && (S.dgnRun || !night || this.rain)) continue;
+      if(p.kind === 24 && (S.dgnRun || !acesOn(this.hole))) continue;
       if(p.kind >= 4 && p.kind <= 7 && (S.dgnRun || (p.kind <= 5 ? !night : p.kind === 6 ? (this.leafy ? p.k % 4 !== 3 : !this.frost || night || this.rain) : !this.rain || this.ice))) continue;
       if(side > 0 && p.d < edge) continue;
       if(side < 0 && p.d >= edge) continue;
@@ -23429,6 +23456,9 @@ Object.assign(Scene, {
         if(blink > 0.65){ c.fillStyle = '#6E9A2A'; fillClip(c, f.x - 1, f.y, kk + 2, kk, clip); fillClip(c, f.x, f.y - 1, kk, kk + 2, clip); }
         c.fillStyle = blink > 0.8 ? '#F4FFB0' : '#B8E04A'; fillClip(c, f.x, f.y, kk, kk, clip);
       }
+
+    }else if(p.kind === 24){
+      this.drawPlaque(c, p, pr, night);
 
     }else if(p.kind === 22){
       // glow-worms: a few steady green lights low in the rough, each
@@ -23992,6 +24022,37 @@ Object.assign(Scene, {
   // Night on the signature holes (the user asked): a lamp, its flame at
   // x, y, k pixels across, and a glow of warm light round it dithered out to
   // r (solid pixels: a wash turns grey), flickering; cut at clip.
+  // The ace plaque: a dark board on two posts, a brass rim, and on it ACES
+  // and how many, or a gold pip an ace where it is too small for words
+  drawPlaque(c, p, pr, night){
+    if(pr.x < -40 || pr.x > VW + 40) return;
+    const n = acesOn(this.hole), clip = this.clipAt(p.d);
+    const tl = this.proj(p.d, p.x - 0.5, 1.0), br = this.proj(p.d, p.x + 0.5, 0.4);
+    const x0 = Math.round(tl.x), y0 = Math.round(tl.y), w = Math.max(4, Math.round(br.x - tl.x)), h = Math.max(3, Math.round(br.y - tl.y));
+    const pw = Math.max(1, Math.round(w * 0.08)), po = Math.round(w * 0.2);
+    const dk = col => night ? mixC(moonC(col), col, 0.35) : col;
+    // (its shadow, its posts, the board, its rim)
+    c.fillStyle = 'rgba(8,16,10,.30)'; fillClip(c, x0 + 1, Math.round(pr.y) - 1, w, 1, clip);
+    c.fillStyle = dk('#3A2A1C');
+    fillClip(c, x0 + po, y0 + h, pw, Math.round(pr.y) - y0 - h, clip); fillClip(c, x0 + w - po - pw, y0 + h, pw, Math.round(pr.y) - y0 - h, clip);
+    c.fillStyle = dk(PX.brass); fillClip(c, x0, y0, w, h, clip);
+    c.fillStyle = dk('#22302A'); fillClip(c, x0 + 1, y0 + 1, w - 2, h - 2, clip);
+    c.fillStyle = dk('#FFE9A8'); fillClip(c, x0 + 1, y0, w - 2, 1, clip);
+    // (one line: how many and the word, else the number alone; a gold pip
+    // an ace, up to five, where even that will not fit)
+    const num = n < 1e5 ? String(n) : fmt(n, 0);
+    let sz = 1, line = null;
+    // (the whole line at the text's size or the smallest before the number alone)
+    for(const t of [num + (n === 1 ? ' ACE' : ' ACES'), num]){ const z = [TSC, 1].find(z => textW(t, z) <= w - 4 && h - 2 >= FHS * z - z); if(z){ sz = z; line = t; break; } }
+    if(line){
+      c.save(); c.beginPath(); c.rect(0, 0, VW, Math.max(0, clip + 1)); c.clip();
+      drawText(c, line, x0 + (w >> 1), y0 + Math.max(1, (h - (FHS - 1) * sz) >> 1), dk('#FFE9A8'), sz, 'c');
+      c.restore();
+    }else{
+      const k = Math.min(5, n), ps = Math.max(1, Math.round(h / 4)), sp = ps + 1, tw = k * sp - 1;
+      if(tw <= w - 2) for(let i = 0; i < k; i++){ c.fillStyle = dk('#F2C21E'); fillClip(c, x0 + ((w - tw) >> 1) + i * sp, y0 + ((h - ps) >> 1), ps, ps, clip); }
+    }
+  },
   // Moths round a tee lamp's lantern (x, y; k its size): three pale ones
   // circling close and fluttering, and on some holes a luna moth, pale
   // green, wheeling wider and slower.
