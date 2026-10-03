@@ -14,7 +14,8 @@
  *     hole perk says so and stays until the hole; Ready Golf shows two
  *     seconds, and not at all when it did nothing (the hole already down)
  *   - nothing is shown before any perk has gone off
- *   - the line sits right of the cog, on its row, whole at 320 wide
+ *   - the line sits right of the cog (and the calendar beside it), on its
+ *     row, whole at 320 wide
  */
 'use strict';
 module.exports = {
@@ -109,9 +110,11 @@ module.exports = {
 
         // where it sits
         fire('towel'); buffTip(0);
+        // (from the last button on the cog's row: the Daily Check-In's
+        // calendar stands right of the cog, and the line comes after it)
         const s = $('setBtn').getBoundingClientRect(), first = () => $('buffTip').firstElementChild;
-        const t = first().getBoundingClientRect();
-        o.place = { gap: Math.round(t.left - s.right), mid: Math.round((t.top + t.bottom) / 2 - (s.top + s.bottom) / 2),
+        const t = first().getBoundingClientRect(), cal = $('calBtn') && $('calBtn').offsetParent ? $('calBtn').getBoundingClientRect() : s;
+        o.place = { gap: Math.round(t.left - Math.max(s.right, cal.right)), mid: Math.round((t.top + t.bottom) / 2 - (s.top + s.bottom) / 2),
           cut: first().scrollWidth > first().clientWidth + 1,
           inside: t.right <= $('stage').getBoundingClientRect().right };
 
