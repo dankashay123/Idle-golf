@@ -2721,8 +2721,12 @@ const B = {
   GUIDE_SOV: 5,
   // Golden Hour (the user picked it from the menu): one hole in GOLDEN_P,
   // from a hash of the hole, played in a low gold light, and all it earns
-  // paid twice. Not at night, in the rain, on a frosty morning or in a wager.
-  GOLDEN_P: 1 / 250,
+  // paid twice. Not at night, in the rain, on a frosty morning, in a wager
+  // or on a signature hole (it has a hole of its own: gold falling, piles of
+  // coins down the fairway and the green on a mountain of them, flown up to
+  // as an island's; the user asked). Finished live, it also pays GOLDEN_SOV
+  // sovereigns and GOLDEN_TICK sponsor tickets.
+  GOLDEN_P: 1 / 100, GOLDEN_SOV: 10, GOLDEN_TICK: 1,
   // The caddie bond (the user picked it from the menu): each caddie warms to
   // him over the holes they play together, and at each step has more to say
   // and a new move (BOND_SAY, FAIRY_MOVES' bond). The fifth in a long few
@@ -4236,7 +4240,40 @@ const clockNight = () => {
 // chaos is that hole's weather)
 const goldenHole = h => hr(h * 13 + 7, 977) < B.GOLDEN_P;
 const goldenOn = (h, ch) => !S.dgnRun && goldenHole(h) && !/Night|Crosswind|Marshal/.test(ch || 'Fair') && !clockNight()
-  && !frostFor(courseFor(tournamentOf(h)), S.tier);
+  && !frostFor(courseFor(tournamentOf(h)), S.tier) && !sigKind(h);
+// Golden Hour's mountain of coins (the user asked: "the hole is up on a
+// gold mountain made of coins. The golfer has to fly ... to the top of it to
+// putt"): a heap of N tiers of stacked coins, each a rounded square (a
+// superellipse) A along the hole by W across at the top and R0 times that at
+// the foot, Z high, its outline made uneven by the hole's own hash. The green
+// lies on its flat top. Placed at the green (dc), its foot well short of it:
+// he plays up to the foot (bank) and flies up to the top (land).
+const MTN = { A: 10.2, W: 6.4, R0: 1.75, N: 6, Z: 9 };
+// how far its outline comes out in the direction (c, s) (cos and sin)
+const mtnNoise = (M, c, s) => {
+  const c3 = 4*c*c*c - 3*c, s3 = 3*s - 4*s*s*s, c5 = 16*c*c*c*c*c - 20*c*c*c + 5*c, s5 = 16*s*s*s*s*s - 20*s*s*s + 5*s;
+  return 0.05 * (c3 * M.c1 - s3 * M.s1) + 0.035 * (c5 * M.c2 - s5 * M.s2);
+};
+function mtnOf(h){
+  const p1 = hr(h, 731) * 6.283, p2 = hr(h, 732) * 6.283;
+  const M = Object.assign({ dc: LEN, c1: Math.cos(p1), s1: Math.sin(p1), c2: Math.cos(p2), s2: Math.sin(p2) }, MTN);
+  // (its foot and its top's edge on his line, straight down the hole)
+  const nf = mtnNoise(M, -1, 0);
+  M.foot = M.dc - M.A * M.R0 * (1 + nf); M.top0 = M.dc - M.A * (1 + nf);
+  M.bank = M.foot - 1.2; M.land = M.top0 + 0.9;
+  M.d0 = M.dc - M.A * M.R0 * 1.1; M.d1 = M.dc + M.A * M.R0 * 1.1;
+  return M;
+}
+// A pile of gold coins (kind 20), along the fairway and up on the top
+const GOLD_PILE_ROWS = ['......ww......', '....wwXXw.....', '...wXXoXXx....', '..wXXXXXXXx.w.',
+  '.wXoXXXXoXXwXx', 'wXXXXXoXXXXXXx', 'XoXXXXXXXXoXXx', '.xxxxxxxxxxxx.'];
+let GOLD_PILE = null;
+const goldPileSpr = () => GOLD_PILE || (GOLD_PILE = makeSprite(GOLD_PILE_ROWS, { w: '#FFF2A8', X: '#E8BC3E', o: '#B8801E', x: '#8A5A14' }));
+// the coins' own tones, dark to light
+const MTN_GOLD = ['#4E320C', '#6E4612', '#8E5E16', '#B07A1C', '#CE9826', '#E6B838', '#F4D25A', '#FFEC9A'];
+// the props that mark where they stand (standBlit, standCover), so the
+// mountain goes back over them where it is nearer (forestOver)
+const MTN_MARKS = { 0: 1, 8: 1, 12: 1, 13: 1, 14: 1, 15: 1, 16: 1, 20: 1, 21: 1 };
 const GOLD_COL = ['#F7C45C', '#E8894E'];
 const DAWN_COL = { dawn: ['#F6B98E', '#E596A6'], dusk: ['#F2904A', '#C9637E'], sun: '#FFE7A8' };
 const frostFor = (cs, tier) => FROST_FORCE !== null ? !!FROST_FORCE
@@ -7035,7 +7072,7 @@ const Sfx = {
     const I = Scene.isle, W = Scene.water;
     if(I && (I.stones || I.hop) && W && !Scene.ice) return 'stream';
     if(I && I.pier) return 'surf';
-    if(I && I.fly && W && !Scene.ice) return 'lap';
+    if(I && I.fly && !I.gold && W && !Scene.ice) return 'lap';
     const a = this.AMB_OF[Scene.course && Scene.course.id] || null;
     return a === 'river' && Scene.ice ? null : a;
   },
@@ -7516,7 +7553,12 @@ function finishHole(D){
   const pay = base + (base + (S.holeGold || 0)) * (walk - 1);
   S.gold += pay; Meter.add(pay);
   // Golden Hour: all the hole earned, paid again
-  if(goldenOn(S.hole, S.chaos && S.chaos.n)){ const gx = pay + (S.holeGold || 0); S.gold += gx; Meter.add(gx); }
+  if(goldenOn(S.hole, S.chaos && S.chaos.n)){ const gx = pay + (S.holeGold || 0); S.gold += gx; Meter.add(gx);
+    // (and, played live, the gold at the top: sovereigns and a ticket, once
+    // a hole; never away, in a catch-up or a run made quietly)
+    if(!OFFLINE && !QUIET && S.goldPaid !== S.hole){ S.goldPaid = S.hole;
+      grantSov(B.GOLDEN_SOV, '', true); const t0 = S.tickets || 0; grantTickets(B.GOLDEN_TICK); const m = (S.tickets || 0) - t0;
+      toast('<span class="achk">Golden Hour</span><span style="white-space:nowrap">+' + B.GOLDEN_SOV + sovIc() + '</span>' + (m > 0 ? ' \u00b7 +' + m + '\u00a0ticket' + (m > 1 ? 's' : '') : ''), 'ach'); } }
 
   const idx = holeInRound(S.hole) - 1;
   S.scores[idx] = { d: sc.d, n: sc.n, par: parOf(S.hole) };
@@ -11255,6 +11297,11 @@ function buildSprites(){
     'fffffffff',
     'FFFFFFff.'
   ], fmap);
+  // Golden Hour's flag: the same cloth in gold, a lighter fold catching the
+  // light
+  const gmap2 = { f:'#F2C838', F:'#B8861C', g:'#FFEC8A' };
+  SPRITE.flagGA = makeSprite(['fffgfff..', 'ffffgfff.', 'fffffgfff', 'FFFFffff.', 'FFFFFff..'], gmap2);
+  SPRITE.flagGB = makeSprite(['ffgfff...', 'fffgfff..', 'fffffgff.', 'fffffffff', 'FFFFFFff.'], gmap2);
 }
 
 // A deer at the edge of the woods, side on, facing right (the user asked
@@ -18651,7 +18698,8 @@ const Scene = {
           + Math.sin(d*0.170 + k*1.7)*2.00
           + Math.sin(d*0.310 + k*0.6)*0.70;
     h *= clamp(d/7, 0, 1);                       // the tee is cut level
-    const g = clamp(1 - Math.abs(d - LEN)/10, 0, 1);
+    // (and level all round a mountain of coins, which stands on it)
+    const g = this.mtn ? clamp(1 - (Math.abs(d - LEN) - 22)/8, 0, 1) : clamp(1 - Math.abs(d - LEN)/10, 0, 1);
     return (h*(1 - g) + (this.greenH || 0)*g) * A;   // the green on its own shelf
   },
   // Ground height relative to what the camera is standing on, eased in over
@@ -18662,7 +18710,196 @@ const Scene = {
   // level and lets the shape develop with distance, where it is legible.
   groundH(d){
     const t = clamp((d - this.camD) / 11, 0, 1);
-    return (this.hAt(d) - (this.camH || 0)) * (t*t*(3 - 2*t));
+    // (up on a mountain of coins, the land round it is all that much below
+    // him, not eased in: see mtnS)
+    return (this.hAt(d) - (this.camH || 0)) * (t*t*(3 - 2*t)) - (this.mcam || 0);
+  },
+  // ---- Golden Hour's mountain of coins (MTN, mtnOf) ----
+  // How far out (d, lat) is, as a share of the top's outline: 1 on the top's
+  // edge, R0 at the foot.
+  mtnR(d, lat){
+    const M = this.mtn, cu = (d - M.dc) / M.A, cv = lat / M.W, q = Math.sqrt(cu*cu + cv*cv);
+    if(q < 1e-6) return 0;
+    const a = cu*cu, b = cv*cv;
+    return Math.sqrt(Math.sqrt(a*a + b*b)) / (1 + mtnNoise(M, cu / q, cv / q));
+  },
+  // the tier that far out (the top is N-1), -1 off it
+  mtnTier(r){
+    const M = this.mtn;
+    return r <= 1 ? M.N - 1 : r > M.R0 ? -1 : M.N - 1 - Math.ceil((r - 1) / (M.R0 - 1) * (M.N - 1) - 1e-9);
+  },
+  // How high anything standing at (d, lat) stands on it: the top's height
+  // on the top, and down its sides a slope through each tier's outer edge
+  // (so a ball in the air or he in flight never dips into a step).
+  mtnS(d, lat){
+    const M = this.mtn; if(!M || d < M.d0 || d > M.d1) return 0;
+    const r = this.mtnR(d, lat || 0);
+    if(r <= 1) return M.Z;
+    if(r <= M.R0) return M.Z * (M.N - (r - 1) / (M.R0 - 1) * (M.N - 1)) / M.N;
+    return r < M.R0 + 0.06 ? M.Z / M.N * (1 - (r - M.R0) / 0.06) : 0;
+  },
+  // The mountain painted into the ground's buffer, after the forest: marched
+  // near to far from him, each column of the screen keeping what is nearer,
+  // so every tier's face and top come out as they stand; hidden where the
+  // ground in front rises over it (the ground's clip line at each distance)
+  // or a tree of the forest stands nearer, and itself in front of the trees
+  // and whatever else stands beyond it (its distance goes in _fdep, as a
+  // tree's does: see forestOver, drawBehind). Its faces are coins stacked in
+  // columns, its tiers' tops coins lying, its top the green.
+  mtnPass(g, cam){
+    const M = this.mtn, T = this.theme || THEMES.day, fast = g === PixPaint;
+    if(!this._tmOn) this.treeMaskClear();
+    const MK = this._tmPx, FD = this._fdep, NN = VW * VH;
+    const MP = this._mtnPx && this._mtnPx.length === NN ? this._mtnPx : (this._mtnPx = new Uint8Array(NN));
+    MP.fill(0);
+    const top = this._mtnTop && this._mtnTop.length === VW ? this._mtnTop : (this._mtnTop = new Int16Array(VW));
+    const zc = this._mtnZc && this._mtnZc.length === VW ? this._mtnZc : (this._mtnZc = new Float32Array(VW));
+    top.fill(VH); zc.fill(-1);
+    // the colours as the buffer holds them (and by name, for the canvas)
+    const val = col => { PixPaint.fillStyle = col; return PixPaint.cur; };
+    // (hazed evenly by the haze at its foot, as a tree is, and kept out of
+    // the haze by rows: laid by rows, whatever stood behind it and was put
+    // back under it showed through it unhazed)
+    const fr = Math.max(0.6, M.foot - cam + CAM_BACK), fy = HORIZON + GROUND * K_PROJ / fr - this.groundH(M.foot) * LAT * K_PROJ / fr * 0.55;
+    const fa = Math.round(this.hazeA(fy) * 20) / 20, sky = T.sky[4], fog = col => fa > 0 ? mixC(col, sky, fa) : col;
+    const GOLD = MTN_GOLD.map(fog), GV = GOLD.map(val);
+    const cut = fog(T._cut || (T._cut = dark(T.apron, 0.18))), APR = fog(T.apron), RIM0 = fog(T._rim[0]), AR0 = fog(T._arim[0]), AR1 = fog(T._arim[1]);
+    const PX = fast ? g.px : null;
+    let n = 0, ya = VH, yb = 0, cur = null, D = 0;
+    const dot = (x, y, i, col, v) => {
+      if(FD[i] < D) return;
+      if(fast) PX[i] = v; else { if(col !== cur){ g.fillStyle = col; cur = col; } g.fillRect(x, y, 1, 1); }
+      FD[i] = D; MK[i] = 0xFF000000; MP[i] = 1; n++;
+      if(y < ya) ya = y; if(y >= yb) yb = y + 1;
+    };
+    let d = Math.max(M.d0, cam - CAM_BACK + 1.2), guard = 0;
+    while(d < M.d1 && guard++ < 4000){
+      const rel = Math.max(0.6, d - cam + CAM_BACK), s = K_PROJ / rel;
+      const k = LAT * s * 0.55, yg = HORIZON + GROUND * s - this.groundH(d) * k;
+      const cl = Math.round(this.clipAt(d)), ybase = Math.round(yg) + 1;
+      const ux = LAT * s, x0 = CX + (this.bendOff(d) - CAM_LAT) * ux, u = d - M.dc;
+      D = d;
+      // (only as far across as its foot reaches at this distance)
+      const e = Math.abs(u) / (M.A * M.R0 * 1.1), wv = e < 1 ? M.W * M.R0 * 1.1 * Math.sqrt(Math.sqrt(1 - e*e*e*e)) : 0;
+      const xa = Math.max(0, Math.floor(x0 - wv * ux)), xb = Math.min(VW - 1, Math.ceil(x0 + wv * ux));
+      const near = clamp(1 - rel / 110, 0, 1);
+      // (the green on the top: its outline as the ground's own, the cut, the
+      // collar and their rims, in the course's colours)
+      const gd = d - LEN, lobe = 1 + 0.085 * Math.sin(gd * 0.85 + this.seed);
+      const ga = Math.abs(gd) < 8.6 ? 3.05 * lobe * Math.sqrt(1 - (gd / 8.6) * (gd / 8.6)) : -1;
+      const gh = Math.abs(gd) < 7.5 ? 2.35 * lobe * Math.sqrt(1 - (gd / 7.5) * (gd / 7.5)) : -1;
+      const gt = 0.40 + near * 0.36, gC = fog(pickC(T._gr, gt)), gC2 = fog(pickC(T._gr, gt + 0.08));
+      const gV = fast ? val(gC) : 0, gV2 = fast ? val(gC2) : 0, apV = fast ? val(APR) : 0,
+            r0V = fast ? val(RIM0) : 0, cutV = fast ? val(cut) : 0, a0V = fast ? val(AR0) : 0, a1V = fast ? val(AR1) : 0;
+      // (a coin's edge, a stack's seam and a coin lying are drawn only where
+      // each is two pixels or more: finer, they would sparkle as he walked)
+      const coinPx = 0.2 * k, stackPx = ux / 2.2, cellPx = ux / 3;
+      for(let x = xa; x <= xb; x++){
+        const lat = (x + 0.5 - x0) / ux, r = this.mtnR(d, lat);
+        if(r > M.R0) continue;
+        const tk = this.mtnTier(r), z = M.Z * (tk + 1) / M.N, yt = Math.round(yg - z * k);
+        const bot = Math.min(top[x], cl, ybase);
+        if(yt >= bot) continue;
+        const z0 = zc[x], rb = z0 < 0 ? bot : Math.min(bot, Math.round(yg - z0 * k));
+        // which way this side of it faces: lit from the left, the right
+        // and the far side in shadow
+        const cu = u / M.A, cv = lat / M.W, nl = cv*cv*cv, nu = cu*cu*cu, nm = Math.sqrt(nl*nl + nu*nu) || 1;
+        const face = clamp(0.55 - 0.42 * nl / nm - (nu > 0 ? 0.25 : 0), 0, 1);
+        for(let y = Math.max(0, yt); y < bot && y < VH; y++){
+          const i = y * VW + x;
+          if(z0 !== z && y < rb){
+            // a face: coins stacked in columns, each coin's edge a line
+            const zr = (yg - y) / k;
+            let t = Math.round(1 + face * 4);
+            if(y === yt) t += 2;
+            else{
+              if(coinPx >= 2){ const f = zr / 0.2 - Math.floor(zr / 0.2); if(f > 0.72) t++; else if(f < 0.2) t--; }
+              // (each stack a column, round: lit on its left, dark on its
+              // right, a dark seam between two)
+              if(stackPx >= 3){ const f = lat * 2.2 + tk * 0.37, q = f - Math.floor(f);
+                if(q < 1 / stackPx) t -= 2; else if(stackPx >= 5 && q < 0.35) t++; else if(stackPx >= 5 && q > 0.8) t--; }
+            }
+            t = t < 0 ? 0 : t > 7 ? 7 : t;
+            dot(x, y, i, GOLD[t], GV[t]);
+            continue;
+          }
+          if(tk === M.N - 1 && ga > 0){
+            const al = Math.abs(lat);
+            if(gh > 0 && al <= gh){
+              const px2 = (gh - al) * ux;
+              if(px2 < 1){ dot(x, y, i, cut, cutV); continue; }
+              if(px2 < 2){ dot(x, y, i, RIM0, r0V); continue; }
+              if(gh * ux > 7 && al <= gh * 0.46){ dot(x, y, i, gC2, gV2); continue; }
+              dot(x, y, i, gC, gV); continue;
+            }
+            const pa = (ga - al) * ux;
+            if(pa >= 0){ dot(x, y, i, APR, apV); continue; }
+            if(pa > -1){ dot(x, y, i, AR0, a0V); continue; }
+            if(pa > -2){ dot(x, y, i, AR1, a1V); continue; }
+          }
+          // a tier's top: coins lying, catching the light here and there
+          // (round coins where they are three pixels across or more, a
+          // face, a rim and a glint of light on its far edge)
+          let t = 5;
+          if(cellPx >= 3){ const cd = d * 3, cx = lat * 3 + 500, fd = cd - Math.floor(cd), fx = cx - Math.floor(cx);
+            if(hr(Math.floor(cd) * 131 + Math.floor(cx), 733) < 0.6){ const q = (fd - 0.5) * (fd - 0.5) + (fx - 0.5) * (fx - 0.5);
+              t = q < 0.07 ? (fd > 0.62 && fx < 0.5 ? 7 : 6) : q < 0.15 ? 4 : 5; } }
+          dot(x, y, i, GOLD[t], GV[t]);
+        }
+        top[x] = Math.min(top[x], yt); zc[x] = z;
+      }
+      const step = Math.max(0.03, rel * rel / (GROUND * K_PROJ) * 0.5), q = Math.pow(2, Math.round(Math.log2(step)));
+      d = (Math.floor(d / q + 1e-6) + 1) * q;
+    }
+    if(fast && n){ if(ya < g.y0) g.y0 = ya; if(yb > g.y1) g.y1 = yb; }
+    this._mtnN = n;
+  },
+  // Golden Hour's gold, laid from a hash (never the hole's own dice): the
+  // ground the mountain stands on cleared of what the hole laid there, piles
+  // of coins (kind 20) along both sides of the fairway up to its foot, and
+  // on its top sovereigns (kind 21) and a few more piles round the green.
+  layGold(){
+    const M = this.mtn; if(!M) return;
+    const put = this.props || (this.props = []), R1 = M.R0 * 1.06 + 0.1;
+    for(let i = put.length - 1; i >= 0; i--){ const q = put[i];
+      if(this.mtnR(q.d, q.x) < R1 || (q.kind === 2 && q.nd !== undefined && this.mtnR(q.nd, q.nx) < R1)) put.splice(i, 1); }
+    // (a rope run to a post now gone stops at the last one left)
+    for(const q of put) if(q.kind === 2 && q.nd !== undefined && !put.some(o => o.kind === 2 && o.d === q.nd && o.x === q.nx)){ delete q.nd; delete q.nx; }
+    const near = (d, x, r, kinds) => put.some(q => kinds.includes(q.kind) && Math.abs(q.d - d) < r && Math.abs(q.x - x) < r);
+    for(let i = 0, n = 0; i < 90 && n < 24; i++){
+      const u = hr(this.hole * 89 + i, 734), v = hr(this.hole * 89 + i, 735), side = hr(this.hole * 89 + i, 736) < 0.5 ? -1 : 1;
+      const d = 4 + u * (M.bank - 6), x = side * (this.fwWidth(d) + 0.8 + v * 2.8);
+      if(this.hitsHazard(d, x, 0.6) || this.onPlay(d, x, 0.5) || near(d, x, 1.3, [20]) || near(d, x, 0.9, [0, 10, 11, 12])) continue;
+      for(let j = put.length - 1; j >= 0; j--){ const q = put[j]; if((q.kind === 8 || q.kind === 1) && Math.abs(q.d - d) < 0.9 && Math.abs(q.x - x) < 0.9) put.splice(j, 1); }
+      n++; put.push({ kind: 20, d, x, s: 0.75 + hr(i, 737) * 0.6, extra: 1 });
+    }
+    for(let i = 0, n = 0, m = 0; i < 160 && n + m < 22; i++){
+      const d = M.dc - M.A + hr(this.hole * 97 + i, 739) * M.A * 2, x = (hr(this.hole * 97 + i, 740) - 0.5) * 2 * M.W;
+      const gd = d - LEN, ga = Math.abs(gd) < 8.6 ? 3.05 * 1.09 * Math.sqrt(1 - (gd / 8.6) * (gd / 8.6)) : 0;
+      if(this.mtnR(d, x) > 0.9 || Math.abs(x) < ga + 0.35 || near(d, x, 0.8, [20, 21])) continue;
+      const pile = hr(i, 741) < 0.3;
+      if(pile ? m >= 6 : n >= 16) continue;
+      if(pile) m++; else n++;
+      put.push(pile ? { kind: 20, d, x, s: 0.5 + hr(i, 742) * 0.3, extra: 1, top: 1 } : { kind: 21, d, x, k: i, extra: 1 });
+    }
+    put.sort((a, b) => b.d - a.d);
+  },
+  // Golden Hour's gold falling (the user asked it "rain gold"): glints of
+  // gold dropping slowly, a short streak each at three depths and now and
+  // then a little cross of light; not rain (nothing wet, no umbrellas, no
+  // sound), and fewer strokes than the rain's
+  goldRain(){
+    const c = this.b, w = this.wind || 0, run = (8 + Math.abs(w) * 40) * (w < 0 ? -1 : 1);
+    const COL = ['#B87A14', '#D89A1E', '#E8AE24'];
+    for(let i = 0; i < 44; i++){
+      const z = i % 3, zk = [0.7, 1, 1.3][z], L = z + 2;
+      const x = Math.round((((i * 71 + this.t * run * zk + Math.sin(this.t * 1.3 + i) * 3) % (VW + 20)) + VW + 20) % (VW + 20) - 10);
+      const y = Math.round((i * 47 + this.t * (90 + (i % 4) * 14) * zk) % (VH + 8)) - 4;
+      // (a streak of gold and its bright head)
+      c.fillStyle = COL[z]; c.fillRect(x, y, 1, L);
+      c.fillStyle = '#FFF0A0'; c.fillRect(x, y + L, 1, 1);
+      if(z && (i * 7 + Math.floor(this.t * 5)) % 11 === 0){ c.fillStyle = '#FFFBE6'; c.fillRect(x - 1, y + L, 3, 1); c.fillRect(x, y + L - 1, 1, 3); }
+    }
   },
   // The lowest screen row still open at a given distance. Anything standing
   // out there whose base falls below this is behind a crest.
@@ -19459,7 +19696,7 @@ const Scene = {
     }
     return this.curveAt(d) - this._bc - this._bh * (d - this.camD);
   },
-  proj(d, lat, lift){
+  proj(d, lat, lift, flat){
     if(!isFinite(this.camD)) this.camD = 0;
     const rel = Math.max(0.6, d - this.camD + CAM_BACK);
     const s = K_PROJ / rel;
@@ -19467,7 +19704,10 @@ const Scene = {
     // terrain rather than the whole scene heaving as he walks over a rise.
     // lift stays what it was: height ABOVE the ground, which is what a ball
     // in flight wants.
-    const h = this.groundH(d) + (lift || 0);
+    // (on Golden Hour's mountain, above its coins: anything standing on it,
+    // the flag, the cup, him; flat: the ground itself at that distance, for
+    // a row of things laid across it from there)
+    const h = this.groundH(d) + (this.mtn && !flat ? this.mtnS(d, lat) : 0) + (lift || 0);
     return { x: Math.round(CX + (lat + this.bendOff(d) - CAM_LAT) * LAT * s),
              y: Math.round(HORIZON + GROUND*s - h * LAT * s * 0.55),
              s };
@@ -19495,10 +19735,12 @@ const Scene = {
     const cs = courseFor(tournamentOf(h));
     this.frost = !this.night && !this.rain && frostFor(cs, tier);
     this.golden = !this.night && !this.rain && !this.frost && goldenOn(h, ch);
+    // (Golden Hour's green is up on a mountain of coins: see mtnOf)
+    this.mtn = this.golden ? mtnOf(h) : null;
     // rare weather: a rainbow after the rain, a bank of fog (rainbowAt, fogAt)
     this.rainbow = !this.night && !this.rain && rainbowAt(h, ch, tier);
     this.fog = !this.night && !this.rain && !this.golden && !this.rainbow && !sigKind(h) && fogAt(h, ch, tier);
-    if(this.golden && !QUIET && !OFFLINE && this.goldSaid !== h){ this.goldSaid = h; toast('<span class="achk">Golden Hour</span>Purse \u00d72 this hole', 'ach'); }
+    if(this.golden && !QUIET && !OFFLINE && this.goldSaid !== h){ this.goldSaid = h; toast('<span class="achk">Golden Hour</span>Purse \u00d72 \u00b7 gold at the top', 'ach'); }
     const mode = this.night ? 'night' : this.rain ? 'rain' : this.frost ? 'frost' : this.golden ? 'gold' : 'day';
     this.course = cs;
     const look = seasonLook(cs, courseSeason(cs, tier));
@@ -19533,7 +19775,7 @@ const Scene = {
         segs.push({ a: (cr() < 0.6 ? -side : side)*(9 + cr()*7), c: LEN*(0.64 + cr()*0.10), w: LEN*(0.11 + cr()*0.05) });
       }else if(par === 3 && cr() < 0.5)
         segs.push({ a: side*(2 + cr()*3), c: LEN*0.5, w: LEN*0.3 });
-      if(sigKind(h)) segs.length = 0;   // a signature hole is played dead straight
+      if(sigKind(h) || this.mtn) segs.length = 0;   // a signature hole is played dead straight (and Golden Hour's, its mountain in view from the tee)
       this.curve = { segs, sway: 0.6 + cr()*1.2, ph: cr()*6.28 };
       this._bcD = null;
     }
@@ -19552,6 +19794,7 @@ const Scene = {
     // he walks out to it along a pier (see drawPier).
     const pier = isPier(h), isle = pier || isIsland(h);
     if(isle) this.roll = 0;                     // a lake lies on level ground
+    if(this.mtn) this.roll = 0.45;              // (and Golden Hour's gently, its mountain in view from the tee)
     // The canyon: a gorge right across the hole a little past half way, far
     // wider than the view, so it reads as a cut through the land rather than
     // a hole in it. Crossed on a rope bridge (see drawBridge).
@@ -19589,6 +19832,7 @@ const Scene = {
     this.layCritters();
     this.layOthers();
     this.layFind();
+    this.layGold();
     guideSpot(this);
     // the near bank: the last ground on his line before the water
     // Where he stops before it and where he is across: an island's near bank
@@ -19611,6 +19855,9 @@ const Scene = {
         }
       }
     }
+    // Golden Hour: he plays up to the foot of the mountain and flies up it
+    // to the green on top, as he flies over an island's water
+    if(this.mtn) this.isle = { bank: this.mtn.bank, land: this.mtn.land, fly: 1, gold: 1 };
 
     this.hills = [[], []];
     for(let L = 0; L < 2; L++)
@@ -19640,7 +19887,7 @@ const Scene = {
     const dg = R.id;
     this.nbrs = []; this.cart = null; this.pond = null; this.fills = []; this.back = null;   // (no course round a wager)
     this.curve = null; this._bcD = null;      // a wager is played dead straight
-    this.isle = null; this.heli = 0; this.crossing = 0;
+    this.isle = null; this.heli = 0; this.crossing = 0; this.mtn = null; this.mcam = 0;
     this.wind = 0;                            // and in still air
     this.themeId = dg;
     this.theme = THEMES[dg] || THEMES.day;
@@ -21937,6 +22184,8 @@ Object.assign(Scene, {
     this.groundTail(c, T, maxy);
     this._tmOn = false;
     if(this.back) this.forestPass(g, cam); else this._forOcc = null;
+    // (Golden Hour's mountain of coins, among the trees: see mtnPass)
+    if(this.mtn) this.mtnPass(g, cam); else this._mtnN = 0;
     if(g === PixPaint) PixPaint.flush(c); else c.drawImage(g.canvas, 0, 0);
     this.treeMaskOn();
     this.ripples(c, T);
@@ -22002,7 +22251,7 @@ Object.assign(Scene, {
       // rounded places: that gap went 3 pixels a unit to 4 in one step, and
       // a tree 20 units along leapt 20 pixels; every row of the far wood
       // stretched and snapped as he walked, the user saw it shake)
-      const p0 = this.proj(Rw.d, 0), U = LAT * p0.s, X00 = CX + (this.bendOff(Rw.d) - CAM_LAT) * U;
+      const p0 = this.proj(Rw.d, 0, 0, true), U = LAT * p0.s, X00 = CX + (this.bendOff(Rw.d) - CAM_LAT) * U;
       if(!(U > 0)) continue;
       // (thinning out and shrinking far off into the painted canopy, not
       // stopping in a row: that read as a line ruled across the view)
@@ -22017,6 +22266,8 @@ Object.assign(Scene, {
         const grow = (keep - t.kh) / 0.12; if(grow <= 0) continue;
         // (nor starting all at one distance near him: their feet in a row)
         if(Rw.d < cam + 1.5 + t.near) continue;
+        // (nor inside Golden Hour's mountain of coins)
+        if(this.mtn && Rw.d > this.mtn.d0 && Rw.d < this.mtn.d1 && this.mtnR(Rw.d, t.x) < this.mtn.R0 * 1.06 + 0.1) continue;
         const X = X00 + t.x * U; if(X < -12 || X > VW + 12) continue;
         const hp = Math.round(hp0 * t.sc * Math.min(1, 0.25 + grow * 0.75)); if(hp < 2) continue;
         // (the tree's own stamp kept on it while its size and fog hold)
@@ -22599,6 +22850,11 @@ Object.assign(Scene, {
       // (the scenery in the rough likewise, and off the sides of the view:
       // there are many of them, and each clip is a handful of canvas calls)
       if(p.kind === 8 && (pr.y - Math.round(p.s * 7 * pr.s * US) > cut + 1 || pr.x < -30 || pr.x > VW + 30)) continue;
+      // (beyond the foot of Golden Hour's mountain, what does not mark
+      // where it stands is drawn apart and laid down only where the
+      // mountain is not nearer: the grandstand, the clubhouse, the gallery)
+      const apart = this.mtn && this._mtnN && p.d > this.mtn.d0 && !MTN_MARKS[p.kind];
+      const one = () => apart ? this.drawBehind(p.d, 0, 0, VW, Math.min(VH, pr.y + 8), g => this.drawProp(g, T, night, p, pr)) : this.drawProp(c, T, night, p, pr);
       if(pr.y > cut + 1){
         // its feet are behind the crest: draw only what stands above it
         c.save(); c.beginPath(); c.rect(0, 0, VW, Math.max(0, cut)); c.clip();
@@ -22606,12 +22862,12 @@ Object.assign(Scene, {
         // left the ground hidden behind the crest unhazed, tree shapes of
         // bare ground behind the green)
         this._propCut = cut;
-        this.drawProp(c, T, night, p, pr);
+        one();
         this._propCut = undefined;
         c.restore();
         continue;
       }
-      this.drawProp(c, T, night, p, pr);
+      one();
     }
     this._propD = Infinity;
     if(!this._propDefer) this.forestOver(c);
@@ -22776,6 +23032,20 @@ Object.assign(Scene, {
   },
 
   drawProp(c, T, night, p, pr){
+    // Golden Hour's gold: a pile of coins (kind 20) or a sovereign (kind
+    // 21, the gem in the corner), standing as a shrub does
+    if(p.kind === 20 || p.kind === 21){
+      if(S.dgnRun || !this.mtn) return;
+      const spr = p.kind === 20 ? goldPileSpr() : pixSprite('sovg', SOV_COL);
+      const h = Math.round((p.kind === 20 ? p.s * 6 : 4) * pr.s * US);
+      if(h < 2) return;
+      const w = Math.max(1, Math.round(h * spr.w / spr.h));
+      if(pr.x + w < -4 || pr.x - w > VW + 4) return;
+      const X = Math.round(pr.x), Y = Math.round(pr.y);
+      if(h > 4){ c.fillStyle = 'rgba(70,44,8,.32)'; this.standShadow(c, X - Math.round(w * 0.42), Y - 1, Math.round(w * 0.84), 1); }
+      this.standBlit(c, shrinkSprite(spr, w, h) || spr, X - (w >> 1), Y - h, w, h);
+      return;
+    }
     // a deer at the wood's edge (layDeer): grazing, its head up now and
     // then, and watching him as he comes near; not at night, not in a wager
     if(p.kind === 13){
@@ -24413,6 +24683,7 @@ Object.assign(Scene, {
   },
 
   drawWeather(){
+    if(this.golden && this.mtn && !S.dgnRun) this.goldRain();
     if(this.fall){
       // Blossom petals sink slowly, turning; autumn leaves are blown across
       // with the wind, tumbling over. Each keeps to its own lane, at one of
@@ -24641,6 +24912,7 @@ Object.assign(Scene, {
     if(!this.b) return;
     if(!isFinite(this.camD)) this.camD = 0;
     this.camH = this.hAt(this.camD);
+    this.mcam = this.mtn && !S.dgnRun ? this.mtnS(this.camD, 0) : 0;
     const c = this.b;
 
     if(this.swingT > 0){
@@ -24794,6 +25066,8 @@ Object.assign(Scene, {
       this.crossing = I && this.camD > I.bank + 0.01 && this.camD < I.land - 0.01 && this.camD > cam0
         ? (this.camD - I.bank) / (I.land - I.bank) : 0;
       this.heli = I && I.fly ? this.crossing : 0;
+      // (up the mountain of coins with him: see mtnS)
+      this.mcam = this.mtn ? this.mtnS(this.camD, 0) : 0;
       if(was && !this.crossing) this.landT = this.t;
       if(this.camD >= this.pinD() - B_GREEN_UP && !this.upT) this.upT = this.t;
       // up on the green with the hole's ball down: he putts out (a ball left
@@ -25076,7 +25350,9 @@ Object.assign(Scene, {
     const cr = Math.max(1, Math.round(1.6*p.s*US));
     c.fillStyle = '#132215';
     c.fillRect(p.x - cr, p.y - 1, cr*2, Math.max(1, Math.round(cr*0.8)));
-    const spr = (Math.floor(this.t*3) & 1) ? SPRITE.flagA : SPRITE.flagB;
+    // (Golden Hour's flag is gold, on a gold pole: the user asked)
+    const gold = !!this.mtn && !S.dgnRun;
+    const spr = (Math.floor(this.t*3) & 1) ? (gold ? SPRITE.flagGA : SPRITE.flagA) : (gold ? SPRITE.flagGB : SPRITE.flagB);
     const fh = Math.max(2, Math.round(h*0.30)), fw = Math.max(2, Math.round(fh * spr.w / spr.h));
     const lit = this.night && !S.dgnRun;
     // at night the flag glows: a halo of its own red about it, dithered in
@@ -25089,10 +25365,13 @@ Object.assign(Scene, {
         c.fillStyle = d2 < 0.35 ? '#D0564A' : d2 < 0.6 ? '#9A3A32' : '#6A2A28'; c.fillRect(gx, gy, 1, 1);
       }
     }
-    c.fillStyle = PX.bone;
+    c.fillStyle = gold ? '#E6B838' : PX.bone;
     c.fillRect(p.x, p.y - h, pw, h);
     blit(c, spr, p.x + pw, p.y - h, fw, fh);
     if(lit){ c.fillStyle = '#FFD36A'; c.fillRect(p.x, p.y - h - pw, pw, pw); }
+    // (its finial catching the light, now and then a glint)
+    if(gold){ c.fillStyle = '#FFF4C0'; c.fillRect(p.x, p.y - h - pw, pw, pw);
+      if((this.t * 0.7) % 1 < 0.2){ c.fillRect(p.x - pw, p.y - h, pw, pw); c.fillRect(p.x + pw, p.y - h, pw, pw); c.fillRect(p.x, p.y - h - pw * 2, pw, pw); } }
   }
 });
 
