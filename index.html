@@ -4298,6 +4298,13 @@ const frostFor = (cs, tier) => FROST_FORCE !== null ? !!FROST_FORCE
 let RAINBOW_FORCE = null, FOG_FORCE = null;
 const RAINBOW_P = 1 / 60, FOG_P = 1 / 80, METEOR_GAP = 30, METEOR_DUR = 0.7;
 const RAINBOW_COL = ['#E8423A', '#F28C2E', '#F2D23A', '#4CC25A', '#3A86E0', '#7A4AC8'];
+// now and then a rainbow comes golden (the user picked "a golden version of
+// a rare weather"): six bands of gold, from the hole's hash, a Field Guide
+// entry of its own. GOLDBOW_FORCE pins it as RAINBOW_FORCE does.
+let GOLDBOW_FORCE = null;
+const GOLDBOW_P = 1 / 10;
+const GOLDBOW_COL = ['#FFDA5A', '#F6C02E', '#EDA824', '#E0921C', '#C87A16', '#A86012'];
+const goldbowAt = h => GOLDBOW_FORCE !== null ? !!GOLDBOW_FORCE : hr(h * 29 + 5, 986) < GOLDBOW_P;
 const wetCh = ch => /Crosswind|Marshal/.test(ch || '');
 const clearCh = ch => !/Night|Crosswind|Marshal|Aurora|Ley|Mythic/.test(ch || 'Fair');
 const rainbowAt = (h, ch, tier) => RAINBOW_FORCE !== null ? !!RAINBOW_FORCE
@@ -19844,6 +19851,7 @@ const Scene = {
     this.mtn = this.golden ? mtnOf(h) : null;
     // rare weather: a rainbow after the rain, a bank of fog (rainbowAt, fogAt)
     this.rainbow = !this.night && !this.rain && rainbowAt(h, ch, tier);
+    this.goldbow = this.rainbow && goldbowAt(h);
     this.fog = !this.night && !this.rain && !this.golden && !this.rainbow && !sigKind(h) && fogAt(h, ch, tier);
     if(this.golden && !QUIET && !OFFLINE && this.goldSaid !== h){ this.goldSaid = h; toast('<span class="achk">Golden Hour</span>Purse \u00d72 \u00b7 gold at the top', 'ach'); }
     const mode = this.night ? 'night' : this.rain ? 'rain' : this.frost ? 'frost' : this.golden ? 'gold' : 'day';
@@ -20004,7 +20012,7 @@ const Scene = {
     this.night = dg === 'cellar';
     this.aurora = false;
     this.rain = false;
-    this.rainbow = false; this.fog = false;   // (no rare weather in a wager)
+    this.rainbow = false; this.goldbow = false; this.fog = false;   // (no rare weather in a wager)
     const rnd = seeded(hash32(R.floor*7919 + dg.length*104729 + 13));
     this.seed = rnd() * 1000;
     this.roll = 0.42;                    // a cellar floor does not roll like links
@@ -20207,7 +20215,7 @@ const Scene = {
     const key = [this.themeId, this.night, this.aurora, this.rain, VW, HORIZON, dd ? dd.w + (dd.gold ? 'g' : dd.dawn ? 'a' : 'p') : ''].join('|');
     // (a rainbow's hole in the cache's key, not in key: the clouds are
     // seeded by key, and stay where they were)
-    const rbKey = key + (this.rainbow ? '|rb' + this.hole : '');
+    const rbKey = key + (this.rainbow ? '|rb' + this.hole + (this.goldbow ? 'g' : '') : '');
     if(rbKey === this.skyKey && this.sky) return;
     this.skyKey = rbKey;
     const H = Math.max(2, HORIZON + 2);
@@ -20297,11 +20305,11 @@ const Scene = {
     // fading out above the horizon so none of it reaches the ground (the
     // blend at the horizon copies the sky's last row down over it)
     if(this.rainbow && !this.night && !this.rain){
-      const im = g.getImageData(0, 0, VW, H), d = im.data, RB = RAINBOW_COL.map(c => [1, 3, 5].map(i => parseInt(c.slice(i, i + 2), 16)));
+      const im = g.getImageData(0, 0, VW, H), d = im.data, RB = (this.goldbow ? GOLDBOW_COL : RAINBOW_COL).map(c => [1, 3, 5].map(i => parseInt(c.slice(i, i + 2), 16)));
       const bw = Math.max(1, Math.round(VW / 170)), R = Math.round(Math.min(VW * 0.42, H * 0.94)), cx = Math.round(VW * (0.48 + hr(this.hole, 984) * 0.24)), cy = H + Math.round(R * 0.2);
       const y1 = H - 4, fade = Math.max(2, Math.round(H * 0.3));
       for(let y = Math.max(0, cy - R); y < y1; y++){
-        const a = 0.36 * Math.min(1, (y1 - y) / fade);
+        const a = (this.goldbow ? 0.62 : 0.36) * Math.min(1, (y1 - y) / fade);
         for(let x = Math.max(0, cx - R); x < Math.min(VW, cx + R); x++){
           const b = Math.floor((R - Math.hypot(x - cx, y - cy)) / bw);
           if(b < 0 || b >= RB.length) continue;
@@ -25650,7 +25658,8 @@ GUIDE.push(...GOLD_KINDS.map(an => ({ id: goldId(an), n: 'Golden ' + (an === 'st
   w: an === 'stag' ? 'Autumn and winter woods' : CRIT_WHERE[an] })));
 const GUIDE_SHELF = [['w', 'Wildlife'], ['g', 'Golden'], ['s', 'Seasons'], ['c', 'The Course']];
 // the rare weather (rainbowAt, fogAt, Scene.meteorNow)
-GUIDE.push({ id:'rainbow', n:'Rainbow', g:'c', w:'After the rain' }, { id:'fog', n:'Fog Bank', g:'c', w:'Rare, on a still day' }, { id:'meteor', n:'Shooting Star', g:'c', w:'Now and then at night' });
+GUIDE.push({ id:'rainbow', n:'Rainbow', g:'c', w:'After the rain' }, { id:'fog', n:'Fog Bank', g:'c', w:'Rare, on a still day' }, { id:'meteor', n:'Shooting Star', g:'c', w:'Now and then at night' },
+  { id:'goldbow', n:'Golden Rainbow', g:'c', w:'One rainbow in ten' });
 // what the hole just laid out shows: called as each hole starts, live only
 function guideSpot(sc){
   if(QUIET || OFFLINE || S.dgnRun || sc.hole !== S.hole) return;
@@ -25664,7 +25673,7 @@ function guideSpot(sc){
   const sk = sigKind(sc.hole); if(sk){ see(sk); if(sk === 'pier') see('gull');
     if(!sc.night){ if(sk === 'island') see('duck'); if(sk === 'canyon') see('hawk'); } if(sk === 'stones' && !sc.ice) see('fish'); }
   if(sc.golden) see('golden'); if(sc.frost) see('frost'); if(sc.rain) see('rain'); if(sc.night) see('night');
-  if(sc.rainbow) see('rainbow'); if(sc.fog) see('fog');
+  if(sc.goldbow) see('goldbow'); else if(sc.rainbow) see('rainbow'); if(sc.fog) see('fog');
   guideAdd(got);
 }
 // count what was seen, and pay for each seen the first time
@@ -25692,6 +25701,9 @@ const RARE_PIC = {
   rainbow: () => { const rows = [], K = 'roygbv';
     for(let y = 0; y < 9; y++){ let r = ''; for(let x = 0; x < 18; x++){ const b = Math.floor(8.6 - Math.hypot(x - 8.5, (y - 9.5) * 1.1)); r += b >= 0 && b < 6 ? K[b] : '.'; } rows.push(r); }
     return makeSprite(rows, { r:RAINBOW_COL[0], o:RAINBOW_COL[1], y:RAINBOW_COL[2], g:RAINBOW_COL[3], b:RAINBOW_COL[4], v:RAINBOW_COL[5] }); },
+  goldbow: () => { const rows = [], K = 'roygbv';
+    for(let y = 0; y < 9; y++){ let r = ''; for(let x = 0; x < 18; x++){ const b = Math.floor(8.6 - Math.hypot(x - 8.5, (y - 9.5) * 1.1)); r += b >= 0 && b < 6 ? K[b] : '.'; } rows.push(r); }
+    return makeSprite(rows, { r:GOLDBOW_COL[0], o:GOLDBOW_COL[1], y:GOLDBOW_COL[2], g:GOLDBOW_COL[3], b:GOLDBOW_COL[4], v:GOLDBOW_COL[5] }); },
   fog: () => makeSprite(['....t.......t.....', '...ttt..t..ttt....', '..tttttttttttttt..', 'wwwwwww...wwwwwwww', 'tttwwwwwwwwwwwtttt',
     '..ppppppp.pppp....', 'wwwwwwwwwwwwwwww..', '...pppppppppppppp.', '.wwwwwww..wwwwwww.'], { t:'#5E7A68', w:'#E6ECEE', p:'#C2CCD2' }),
   meteor: () => makeSprite(['.................W', '...............WH.', '.............HB...', '...........BB.....', '........bBB.......',
@@ -27607,7 +27619,7 @@ const DEV = {
       + row('Conditions', b('reroll', 'DEV.chaos()') + b('fair', 'DEV.weather(0)') + b('crosswind', 'DEV.weather(1)') + b('night', 'DEV.weather(3)'))
       + row('Frost · ' + (FROST_FORCE === null ? 'by the clock' : FROST_FORCE ? 'on' : 'off'), b('on', 'DEV.frost(1)') + b('off', 'DEV.frost(0)') + b('by the clock', 'DEV.frost(null)'))
       + row('Golden animal' + (GOLD_FORCE !== null ? ' \u00b7 waiting' : ''), b('this hole', 'DEV.gold(1)') + b('next hole with one', 'DEV.gold()'))
-      + row('Rare weather', b('rainbow hole', 'DEV.rare(\'rainbow\')') + b('fog hole', 'DEV.rare(\'fog\')') + b('shooting star now', 'DEV.meteor()'))
+      + row('Rare weather', b('rainbow hole', 'DEV.rare(\'rainbow\')') + b('gold rainbow', 'DEV.rare(\'goldbow\')') + b('fog hole', 'DEV.rare(\'fog\')') + b('shooting star now', 'DEV.meteor()'))
       + row('December lights · ' + (LIGHTS_FORCE === null ? 'by the date' : LIGHTS_FORCE ? 'on' : 'off'), b('on', 'DEV.lights(1)') + b('off', 'DEV.lights(0)') + b('by the date', 'DEV.lights(null)'))
       + row('Season touches · ' + (DECOR_FORCE || 'by the season'), DECOR_KINDS.map(k => b(k, 'DEV.decor(\'' + k + '\')')).join('') + b('by the season', 'DEV.decor()'))
       + row('Home season', b('by the card', 'DEV.season(-1)') + b('as built', 'DEV.season(0)')
@@ -27850,8 +27862,8 @@ const DEV = {
   // this hole with a rainbow or a bank of fog (in fair weather), or a
   // shooting star now (at night)
   rare(k){ if(S.chaos && !clearCh(S.chaos.n)) S.chaos = Object.assign({}, B.CHAOS[0]);
-    RAINBOW_FORCE = k === 'rainbow' ? 1 : 0; FOG_FORCE = k === 'fog' ? 1 : 0;
-    try{ Scene.newHole(S.hole, S.tier); } finally { RAINBOW_FORCE = FOG_FORCE = null; } hideSheet(); },
+    RAINBOW_FORCE = k === 'rainbow' || k === 'goldbow' ? 1 : 0; FOG_FORCE = k === 'fog' ? 1 : 0; GOLDBOW_FORCE = k === 'goldbow' ? 1 : 0;
+    try{ Scene.newHole(S.hole, S.tier); } finally { RAINBOW_FORCE = FOG_FORCE = GOLDBOW_FORCE = null; } hideSheet(); },
   meteor(){ if(!Scene.night){ S.chaos = Object.assign({}, B.CHAOS.find(x => x.n === 'Night Round')); Scene.newHole(S.hole, S.tier); }
     Scene.meteorT = Scene.t + 0.3; hideSheet(); },
   lights(v){ LIGHTS_FORCE = v; hideSheet(); },

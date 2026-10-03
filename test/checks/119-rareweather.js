@@ -58,14 +58,19 @@ module.exports = {
           if (n) f(n + ' holes laid with rare weather against their weather'); }
         // ---- the rainbow, in the sky only ----
         o.rb = 0; o.rbMax = 0;
+        // one rainbow in ten is golden, from the hole's hash
+        { let n = 0; for (let h = 1; h <= 20000; h++) if (goldbowAt(h)) n++; o.gb = n / 20000;
+          if (o.gb < 0.08 || o.gb > 0.12) f('a golden rainbow on ' + (o.gb * 100).toFixed(1) + '% of rainbows, not about 10%'); }
         const h0 = S.hole;
         for (const ci of [0, 3, 6]) {
           DEV.course(ci); hideSheet(); const hh = S.hole;
           for (const at of [0, 0.5]) {
             RAINBOW_FORCE = 0; play(hh); Scene.camD = LEN * at; Scene.walkTo = Scene.camD; Scene.t = 2; Scene.draw(0, D); Scene.draw(0, D); const b = grab();
             const sky0 = Scene.sky.getContext('2d').getImageData(0, 0, Scene.sky.width, Scene.sky.height).data;
-            RAINBOW_FORCE = 1; play(hh); Scene.camD = LEN * at; Scene.walkTo = Scene.camD; Scene.t = 2; Scene.draw(0, D); Scene.draw(0, D); const a = grab();
-            RAINBOW_FORCE = null;
+            // (the golden rainbow half way down: the same arc in gold)
+            RAINBOW_FORCE = 1; GOLDBOW_FORCE = at ? 1 : 0; play(hh); Scene.camD = LEN * at; Scene.walkTo = Scene.camD; Scene.t = 2; Scene.draw(0, D); Scene.draw(0, D); const a = grab();
+            if (at && !Scene.goldbow) f('the golden rainbow did not come when forced');
+            RAINBOW_FORCE = null; GOLDBOW_FORCE = null;
             // (and the sky's own picture: nothing of it in the rows by the
             // horizon, which the far hills may not cover and the blend there
             // copies down onto the ground)
@@ -219,7 +224,7 @@ module.exports = {
     await page.waitForTimeout(300);
     const s = await one();
     if (s.fails.length) throw new Error('on its side: ' + s.fails.join('\n'));
-    return [r.rates.join('; ') + '; none on a wet or night round, fog never with a rainbow or Golden Hour',
+    return [r.rates.join('; ') + '; none on a wet or night round, fog never with a rainbow or Golden Hour; ' + (r.gb * 100).toFixed(1) + '% of rainbows golden',
       'the rainbow: ' + r.rb + '/' + s.rb + ' pixels upright/on its side, all above the horizon, at most ' + r.rbMax + ' off the sky',
       'the star: ' + r.stars + ' in ten minutes, ' + r.gaps + 's apart, ' + r.starPix + ' pixels drawn alone, all in the upper sky; ' + r.starFrame + ' in the frame; none by day or in a wager',
       'the fog: its thickest row changed by ' + r.fog.join('/') + ' a pixel from the tee, a quarter and half way (a rise in front can hide it); none under the ground in front, in the upper sky or over a nearer tree (' + r.fogNear + ' pixels of them); none on a signature hole',
