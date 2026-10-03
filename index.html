@@ -4246,7 +4246,9 @@ const clockNight = () => {
 // chaos is that hole's weather)
 const goldenHole = h => hr(h * 13 + 7, 977) < B.GOLDEN_P;
 const goldenOn = (h, ch) => !S.dgnRun && goldenHole(h) && !/Night|Crosswind|Marshal/.test(ch || 'Fair') && !clockNight()
-  && !frostFor(courseFor(tournamentOf(h)), S.tier) && !sigKind(h);
+  && !frostFor(courseFor(tournamentOf(h)), S.tier) && !sigKind(h)
+  // (and never a round's last hole: the grandstand stands there)
+  && holeInRound(h) !== B.ROUND;
 // Golden Hour's mountain of coins (the user asked: "the hole is up on a
 // gold mountain made of coins. The golfer has to fly ... to the top of it to
 // putt"): a heap of N tiers of stacked coins, each a rounded square (a

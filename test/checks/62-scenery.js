@@ -35,7 +35,11 @@ module.exports = {
           const t = tournamentOf(S.hole), first = (t - 1) * B.ROUND * B.DAYS + 1;
           for (let hh = first; hh < first + 4; hh++) {
             S.hole = hh; S.chaos = Object.assign({}, B.CHAOS.find(x => x.n === 'Fair'));
-            Scene.newHole(S.hole, S.tier); Scene.announce = null; o.holes++;
+            Scene.newHole(S.hole, S.tier); Scene.announce = null;
+            // (a Golden Hour's green is on its mountain of coins, ringed with
+            // gems and coin piles instead: goldmountain holds that)
+            if (Scene.golden) continue;
+            o.holes++;
             const P = Scene.props, where = cs.id + ' hole ' + holeInRound(hh);
             const gal = P.filter(p => p.kind === 1 && p.extra && Math.abs(p.d - LEN) < 13);
             o.near.push(gal.length);
