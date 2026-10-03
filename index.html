@@ -3426,6 +3426,18 @@ const B = {
   // broken by adding another. TR_R is what a mechanic trophy pays, having no
   // gain of its own to price against. Every trophy has a ceiling as well, so
   // nothing can be walked out to nonsense.
+  // TR_MAX is the most any heirloom could ever go to; each has its own top
+  // (max) well under it. Every one was free to 250 levels, and at 250 the
+  // Gilded Card paid 1e44 times the purse: the Range went free, Drive Power
+  // ran past two thousand levels and the ladder had no top (the user maxed
+  // it and it "breaks the game"). Measured on a golfer with everything else
+  // maxed, the yardage, purse, payoff, pace and wager ones each moved the
+  // highest playable card by 20 to 130 cards alone and all thirty together
+  // walked past Card 400. Now no heirloom passes about x70K (the Persimmon
+  // Heart, yardage), prize money stops at about x100 for all three together,
+  // and the ones the game already caps (pure strike, provisional, affinity,
+  // drops) stop near where their cap bites. A save above a top is put back
+  // to it on load.
   TR_COST: 3, TR_R: 1.42, TR_MAX: 250,
   TR_TIER: { B:{ n:'Bronze', m:1.00, w:60, v:'--r1' },
              A:{ n:'Silver', m:1.65, w:30, v:'--r2' },
@@ -3443,39 +3455,39 @@ const B = {
      entirely to the talent trees. ---- */
   TROPHY: [
     // the four originals, still the biggest multipliers in the room
-    { id:'heart',  t:'S', n:'Persimmon Heart',   k:'*pow',  g:1.45, d:'Yardage on every swing' },
-    { id:'ley',    t:'S', n:'Ley Line Grip',     k:'*mst',  g:1.30, d:'Provisional chance' },
-    { id:'gilded', t:'S', n:'Gilded Card',       k:'*gld',  g:1.50, d:'Prize money' },
-    { id:'oath',   t:'A', n:'Oathstone',         k:'*elm',  g:1.40, d:'Ball affinity power' },
+    { id:'heart',  t:'S', n:'Persimmon Heart',   k:'*pow',  g:1.45, max:30, d:'Yardage on every swing' },
+    { id:'ley',    t:'S', n:'Ley Line Grip',     k:'*mst',  g:1.30, max:12, d:'Provisional chance' },
+    { id:'gilded', t:'S', n:'Gilded Card',       k:'*gld',  g:1.10, max:25, d:'Prize money' },
+    { id:'oath',   t:'A', n:'Oathstone',         k:'*elm',  g:1.40, max:10, d:'Ball affinity power' },
     // the six that change how a run is played, mechanics unchanged
-    { id:'sun',    t:'A', n:'Sunstone Marker',   k:'@sun',  d:'Gear luck, +9pp a level' },
-    { id:'chrono', t:'S', n:'Chronoglass',       k:'@chrono', d:'Start each run one Tour Card higher' },
-    { id:'seed',   t:'B', n:'Signing Bonus',     k:'@seed', d:'Start each run with a purse' },
-    { id:'rift',   t:'A', n:'Standing Invitation', k:'@rift', d:'Faster entries, deeper wagers' },
-    { id:'ember',  t:'A', n:'Mythic Ember',      k:'@ember', d:'Affinity chance, +2.5pp a level' },
-    { id:'vault',  t:'S', n:"Founder's Locker",  k:'@vault', d:'Keep 50 levels of every Range upgrade on retiring' },
+    { id:'sun',    t:'A', n:'Sunstone Marker',   k:'@sun', max:10, d:'Gear luck, +9pp a level' },
+    { id:'chrono', t:'S', n:'Chronoglass',       k:'@chrono', max:250, d:'Start each run one Tour Card higher' },
+    { id:'seed',   t:'B', n:'Signing Bonus',     k:'@seed', max:6, d:'Start each run with a purse' },
+    { id:'rift',   t:'A', n:'Standing Invitation', k:'@rift', max:10, d:'Faster entries, deeper wagers' },
+    { id:'ember',  t:'A', n:'Mythic Ember',      k:'@ember', max:20, d:'Affinity chance, +2.5pp a level' },
+    { id:'vault',  t:'S', n:"Founder's Locker",  k:'@vault', max:10, d:'Keep 50 levels of every Range upgrade on retiring' },
     // and twenty more, two to a stat: one you will turn up early and one worth
     // building a room around
-    { id:'hickory',t:'B', n:'Hickory Shaft',     k:'*pow', g:1.09, d:'Yardage on every swing' },
-    { id:'mythtee',t:'S', n:'Mythril Tee',       k:'*pow', g:1.26, d:'Yardage on every swing' },
-    { id:'spikes', t:'B', n:'Steel Spikes',      k:'*spd', g:1.05, d:'Swings per second' },
-    { id:'clock',  t:'A', n:'Pace Clock',        k:'*spd', g:1.15, d:'Swings per second' },
-    { id:'brassie',t:'B', n:'Brassie',           k:'*crt', g:1.05, d:'Pure strike chance' },
-    { id:'sunday', t:'S', n:'Sunday Bag',        k:'*crt', g:1.16, d:'Pure strike chance' },
-    { id:'gutta',  t:'B', n:'Gutta Percha',      k:'*cpw', g:1.07, d:'Pure strike payoff' },
-    { id:'niblick',t:'A', n:'Niblick',           k:'*cpw', g:1.18, d:'Pure strike payoff' },
-    { id:'compass',t:'B', n:'Ley Compass',       k:'*elm', g:1.08, d:'Ball affinity power' },
-    { id:'feath',  t:'A', n:'Featherie',         k:'*elm', g:1.19, d:'Ball affinity power' },
-    { id:'sock',   t:'B', n:'Wind Sock',         k:'*prc', g:1.06, d:'Affinity trigger chance' },
-    { id:'glass',  t:'A', n:'Storm Glass',       k:'*prc', g:1.14, d:'Affinity trigger chance' },
-    { id:'token',  t:'B', n:'Range Token',       k:'*gld', g:1.09, d:'Prize money' },
-    { id:'reader', t:'S', n:'Gate Receipts',     k:'*gld', g:1.20, d:'Prize money' },
-    { id:'marker', t:'B', n:'Lucky Marker',      k:'*drp', g:1.05, d:'Gear drop chance' },
-    { id:'divot',  t:'A', n:'Divot Tool',        k:'*drp', g:1.12, d:'Gear drop chance' },
-    { id:'whistle',t:'B', n:"Caddie's Ledger",   k:'*dgn', g:1.07, d:'Wager winnings' },
-    { id:'deepwdg',t:'A', n:"Gambler's Wedge",   k:'*dgn', g:1.16, d:'Wager winnings' },
-    { id:'watch',  t:'B', n:'Practice Swing',    k:'*mst', g:1.06, d:'Provisional chance' },
-    { id:'yardage',t:'A', n:'Yardage Book',      k:'*mst', g:1.15, d:'Provisional chance' }
+    { id:'hickory',t:'B', n:'Hickory Shaft',     k:'*pow', g:1.09, max:30, d:'Yardage on every swing' },
+    { id:'mythtee',t:'S', n:'Mythril Tee',       k:'*pow', g:1.26, max:30, d:'Yardage on every swing' },
+    { id:'spikes', t:'B', n:'Steel Spikes',      k:'*spd', g:1.05, max:15, d:'Swings per second' },
+    { id:'clock',  t:'A', n:'Pace Clock',        k:'*spd', g:1.15, max:15, d:'Swings per second' },
+    { id:'brassie',t:'B', n:'Brassie',           k:'*crt', g:1.05, max:30, d:'Pure strike chance' },
+    { id:'sunday', t:'S', n:'Sunday Bag',        k:'*crt', g:1.16, max:20, d:'Pure strike chance' },
+    { id:'gutta',  t:'B', n:'Gutta Percha',      k:'*cpw', g:1.07, max:15, d:'Pure strike payoff' },
+    { id:'niblick',t:'A', n:'Niblick',           k:'*cpw', g:1.18, max:15, d:'Pure strike payoff' },
+    { id:'compass',t:'B', n:'Ley Compass',       k:'*elm', g:1.08, max:20, d:'Ball affinity power' },
+    { id:'feath',  t:'A', n:'Featherie',         k:'*elm', g:1.19, max:16, d:'Ball affinity power' },
+    { id:'sock',   t:'B', n:'Wind Sock',         k:'*prc', g:1.06, max:25, d:'Affinity trigger chance' },
+    { id:'glass',  t:'A', n:'Storm Glass',       k:'*prc', g:1.14, max:20, d:'Affinity trigger chance' },
+    { id:'token',  t:'B', n:'Range Token',       k:'*gld', g:1.03, max:25, d:'Prize money' },
+    { id:'reader', t:'S', n:'Gate Receipts',     k:'*gld', g:1.06, max:25, d:'Prize money' },
+    { id:'marker', t:'B', n:'Lucky Marker',      k:'*drp', g:1.05, max:30, d:'Gear drop chance' },
+    { id:'divot',  t:'A', n:'Divot Tool',        k:'*drp', g:1.12, max:25, d:'Gear drop chance' },
+    { id:'whistle',t:'B', n:"Caddie's Ledger",   k:'*dgn', g:1.07, max:15, d:'Wager winnings' },
+    { id:'deepwdg',t:'A', n:"Gambler's Wedge",   k:'*dgn', g:1.16, max:15, d:'Wager winnings' },
+    { id:'watch',  t:'B', n:'Practice Swing',    k:'*mst', g:1.06, max:25, d:'Provisional chance' },
+    { id:'yardage',t:'A', n:'Yardage Book',      k:'*mst', g:1.15, max:20, d:'Provisional chance' }
   ],
   // A trophy's cost ladder is its own gain raised to this. Above one, so cost
   // outruns gain on every trophy in the room by construction rather than by a
@@ -3864,6 +3876,9 @@ function fmt(n, dp){
   const i = e - SUF.length;
   return txt + String.fromCharCode(97 + Math.floor(i/26)) + String.fromCharCode(97 + i%26);
 }
+// a multiplier: two places while it is small, the game's own units past
+// that. toFixed alone printed Drive Power as x2.055640197382958e+39.
+const fmtX = v => (Math.abs(v) < 1000 ? v.toFixed(2) : fmt(v));
 const pct = v => (v*100 < 10 ? (v*100).toFixed(1) : Math.round(v*100)) + '%';
 const pp  = v => '+' + (v*100).toFixed(1) + 'pp';
 function hms(s){
@@ -4246,7 +4261,7 @@ function initState(){
     if(!(S.dgnBest[d.id] >= 0)) S.dgnBest[d.id] = 0;
   });
   B.TROPHY.forEach(r => { if(S.relic[r.id] === undefined) S.relic[r.id] = 0;
-    else S.relic[r.id] = Math.min(B.TR_MAX, S.relic[r.id]); });
+    else S.relic[r.id] = Math.min(r.max || B.TR_MAX, S.relic[r.id]); });
   B.STATS.forEach(s => { if(S.stat[s.id] === undefined) S.stat[s.id] = 0; });
   B.TREES.forEach(t => t.t.forEach(x => { if(S.tal[x.id] === undefined) S.tal[x.id] = 0; }));
   B.PARAGON.forEach(cat => {
@@ -4521,7 +4536,12 @@ function load(){
    bag, relics, live buffs and whatever the course is doing today.
    ========================================================================= */
 const upgLv  = id => S.upg[id] || 0;
-const relLv  = id => S.relic[id] || 0;
+// an heirloom's own top level (a save from before the tops were brought in is
+// clamped on load, and anything that reads a level reads it through this too)
+const trTop = t => (t && t.max) || B.TR_MAX;
+const TR_TOP = {};
+B.TROPHY.forEach(t => { TR_TOP[t.id] = trTop(t); });
+const relLv  = id => Math.min(S.relic[id] || 0, TR_TOP[id] || B.TR_MAX);
 const capOf  = u => u.cap ? u.cap + S.retires * B.CAP_PER_LEGACY : Infinity;
 const upgMult = k => B.UPG.reduce((a,u) => u.k === k && u.g ? a * Math.pow(u.g, upgLv(u.id)) : a, 1);
 
@@ -4558,7 +4578,7 @@ function relMult(k){
   if(!list) return 1;
   let m = 1;
   for(const t of list){
-    const n = S.relic[t.id] || 0;
+    const n = Math.min(S.relic[t.id] || 0, trTop(t));
     if(n) m *= Math.pow(t.g, n);
   }
   return m;
@@ -8704,7 +8724,10 @@ function legacyPreview(){
 // Each multiplying trophy pays its own ladder, priced off its own gain, so the
 // invariant that cost has to outrun gain holds for all thirty at once instead
 // of resting on two constants staying in the right order.
-const trophyRatio = t => t.g ? Math.pow(t.g, B.TR_POW) : B.TR_R;
+// A trophy whose gain was cut (Gilded Card at 1.10) would otherwise sell its
+// whole short ladder for a few hundred legacy, so no ladder is gentler than a
+// mechanic's.
+const trophyRatio = t => t.g ? Math.max(B.TR_R, Math.pow(t.g, B.TR_POW)) : B.TR_R;
 const upgradeCost = t => Math.max(1, Math.ceil(B.TR_COST * B.TR_TIER[t.t].m
   * Math.pow(trophyRatio(t), S.relic[t.id] || 0)
   * (1 - Math.min(0.50, career().pcurate))));
@@ -8747,7 +8770,7 @@ function discover(){
 }
 function upgradeTrophy(id){
   const t = trophyDef(id); if(!t || !found(id)) return;
-  if((S.relic[id] || 0) >= B.TR_MAX){ toast('That one is as high as it goes'); return; }
+  if((S.relic[id] || 0) >= trTop(t)){ toast('That one is as high as it goes'); return; }
   const c = upgradeCost(t);
   if(S.legacy < c){ toast('Not enough legacy'); return; }
   S.legacy -= c; S.relic[id]++;
@@ -8772,14 +8795,19 @@ function cardPay(){
 }
 // Where a retirement puts you, worked out on the golfer you will be once the
 // range resets, not the one signing the card. The Chronoglass is a floor under
-// it, and the best card you have reached is a ceiling over it.
+// it, and the best card you have reached is a ceiling over both: at 250 it
+// put a fresh golfer on Card 250 whatever he had reached.
+// What the Locker keeps of a ladder: what you had, up to its levels. It used
+// to set every ladder to them, so it handed out levels never bought, and at
+// 250 it gave Drive Power (no cap) 12,500 levels on every retirement.
+const vaultKeep = (u, keep) => Math.min(capOf(u), keep, upgLv(u.id));
 function retireCard(){
   const keep = relLv('vault') * B.VAULT_UPG, saved = Object.assign({}, S.upg), buff = S.buff;
-  B.UPG.forEach(u => S.upg[u.id] = Math.min(capOf(u), keep)); S.buff = {};
+  B.UPG.forEach(u => S.upg[u.id] = vaultKeep(u, keep)); S.buff = {};
   let c = 0;
   try{ c = matchedCard(derive()); } finally { Object.assign(S.upg, saved); S.buff = buff; }
   const best = Math.max(S.bestTier || 0, S.tierMax || 0, S.tier || 0);
-  return Math.min(B.TIER_MAX, Math.max(relLv('chrono'), Math.min(c, best)));
+  return Math.min(B.TIER_MAX, Math.max(Math.min(relLv('chrono'), best), Math.min(c, best)));
 }
 // A save from before holes were fixed to their card sits on a card number from
 // the old ladder, where each card was 2.35x the last rather than 4x and every
@@ -8819,7 +8847,7 @@ function retire(){
   S.evLog = [];
   if(S.weekly && !S.weekly.done) S.weekly.t = 0;
   const keepUpg = relLv('vault') * B.VAULT_UPG;
-  B.UPG.forEach(u => S.upg[u.id] = Math.min(capOf(u), keepUpg));
+  B.UPG.forEach(u => S.upg[u.id] = vaultKeep(u, keepUpg));
   S.tierEvents = {}; S.tierMax = land;
   S.buff = {}; B.SKILL.forEach(k => S.cd[k.id] = 0); S.swCount = 0;
   // level, attributes, talents and paragon are the golfer, not the run: untouched.
@@ -25628,12 +25656,12 @@ function bulkFor(base, r, owned, cap){
 function effectLabel(u){
   const lv = upgLv(u.id);
   if(u.k === 'crt') return '+' + (lv*B.CRIT_ADD[u.id]*100).toFixed(1) + 'pp';
-  if(u.k === 'cpw') return '+' + (lv*B.CPW_ADD).toFixed(2) + 'x';
+  if(u.k === 'cpw') return '+' + fmtX(lv*B.CPW_ADD) + 'x';
   if(u.k === 'drp') return '+' + (lv*B.DROP_ADD*100).toFixed(1) + 'pp';
   if(u.k === 'prc') return '+' + (lv*B.PROC_ADD*100).toFixed(1) + 'pp';
   if(u.k === 'dgn') return '+' + Math.round(lv*B.DGN_ADD*100) + '%';
   if(u.k === 'mst') return '+' + (lv*B.MST_ADD[u.id]*100).toFixed(1) + 'pp';
-  return '\u00d7' + Math.pow(u.g, lv).toFixed(2);
+  return '\u00d7' + fmtX(Math.pow(u.g, lv));
 }
 function refreshUpg(){
   // Every rung is on show from the first minute. Hiding them made the ladder
@@ -26557,8 +26585,8 @@ function climbLines(){
   const lb = (k, v, col) => '<div class="lb"><span class="p"></span><span>' + k + '</span>'
     + '<span class="s"' + (col ? ' style="color:var(' + col + ')"' : '') + '>' + v + '</span></div>';
   const near = x => Math.abs(x - 1) < 0.02;
-  const pay = near(C.pay) ? 'unchanged' : '\u00d7' + C.pay.toFixed(2);
-  const len = near(C.len) ? 'the same' : '\u00d7' + C.len.toFixed(2) + ' longer';
+  const pay = near(C.pay) ? 'unchanged' : '\u00d7' + fmtX(C.pay);
+  const len = near(C.len) ? 'the same' : '\u00d7' + fmtX(C.len) + ' longer';
   // The number is not the answer. The answer is whether to press the button:
   // birdies or better up there, the purse keeping up, or a pay cut.
   const say = C.next.ratio <= 0.77
@@ -26641,7 +26669,7 @@ function renderLegacy(){
     // every figure goes through fmt, and anything the game clamps is shown
     // clamped: a trophy that reads +5.05 into a stat that stops at 1.00 is a lie
     const eff = trophyEff(t, lv);
-    const capped = lv >= B.TR_MAX;
+    const capped = lv >= trTop(t);
 
     const d = rowShell(idIcon(TROPHY_IC, t.id, t.k, 'ric', col));
     d.style.borderLeft = '2px solid ' + col;
@@ -26649,8 +26677,7 @@ function renderLegacy(){
     body.children[0].innerHTML = t.n
       + ' <span class="pill" style="border-color:' + col + ';color:' + col + '">' + tier.n + '</span>';
     body.children[1].textContent = t.d;
-    body.children[2].innerHTML = 'Lv <i>' + lv + '</i>'
-      + (capped ? '/' + B.TR_MAX : '') + ' \u00b7 <b>' + eff + '</b>';
+    body.children[2].innerHTML = 'Lv <i>' + lv + '</i>/' + trTop(t) + ' \u00b7 <b>' + eff + '</b>';
     const btn = d.children[2];
     btn.className = 'buy' + (capped ? ' max' : S.legacy >= c2 ? ' ok' : ' no');
     btn.children[0].textContent = capped ? 'Capped' : 'Raise';
@@ -27139,7 +27166,7 @@ const DEV = {
     this.re(); },
   legacy(n){ S.legacy += n; this.re(); },
   relics(n){ B.TROPHY.forEach(r => { if((S.relic[r.id]||0) > 0)
-    S.relic[r.id] = Math.min(B.TR_MAX, S.relic[r.id] + n); }); this.re(); },
+    S.relic[r.id] = Math.min(trTop(r), S.relic[r.id] + n); }); this.re(); },
   relics0(){ B.TROPHY.forEach(r => S.relic[r.id] = 0); this.re(); },
   disc(n){ const pool = B.TROPHY.filter(t => !found(t.id));
     for(let i = 0; i < n && i < pool.length; i++) S.relic[pool[i].id] = 1; this.re(); },
