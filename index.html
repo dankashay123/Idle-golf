@@ -349,6 +349,26 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
 .gtile.un img{filter:brightness(0);opacity:.35}
 .gtile b{display:block;font-size:11px;font-weight:600;line-height:1.2}
 .gtile i{display:block;font-style:normal;color:var(--faint);font-size:10px;line-height:1.25;margin-top:2px}
+/* the Daily Check-In: 28 tiles, seven to a row */
+.cigrid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:2px}
+.citile{position:relative;border:1px solid var(--line);background:var(--raise);padding:9px 0 3px;text-align:center;min-width:0;overflow:hidden}
+.citile img{display:block;margin:0 auto;image-rendering:pixelated}
+.citile b{display:block;font-family:var(--mono);font-size:9px;font-weight:600;line-height:1.3;margin-top:2px;white-space:nowrap;overflow:hidden;letter-spacing:-.06em}
+.citile .cid{position:absolute;left:2px;top:0;font-size:8px;line-height:1.2;color:var(--faint)}
+.citile.sov{border-color:#7B4FC0;background:#22183A}
+.citile.myth{border-color:var(--r5);background:#3A1626}
+.citile.got img,.citile.got b{opacity:.3}
+.citile.got::after{content:'\2713';position:absolute;right:2px;top:0;font-size:10px;line-height:1.2;color:var(--aurora);font-weight:700}
+.citile.now{border-color:var(--brass);box-shadow:inset 0 0 0 1px var(--brass)}
+.cinow{font-size:var(--f2);margin:10px 0 2px;text-align:center}
+.cinow .pv{display:inline-flex;align-items:center;gap:3px;white-space:nowrap}
+/* on a phone on its side: two weeks to a row, so the claim and all four
+   weeks fit on the short screen */
+@media (orientation:landscape) and (max-height:520px){
+  #sheet:has(.cigrid){max-width:640px}
+  .cigrid{grid-template-columns:repeat(14,minmax(0,1fr))}
+  .citile{padding-top:8px}
+}
 .mastbox{border:1px solid var(--line);background:var(--raise);padding:7px 9px;margin:0 0 10px}
 .masthead{display:flex;align-items:center;gap:7px;font-size:var(--f2)}
 .masthead>span:first-child{font-weight:600;color:var(--chalk)}
@@ -854,13 +874,21 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
    under the row (fitHudLeft). */
 #hudLeft.inrow{flex-direction:row;flex-wrap:wrap;align-items:center;gap:8px 10px}
 #hudLeft.inrow #rRow{flex-basis:100%;min-width:0}
-#hudLeft.inrow #setRow{flex:0 0 auto;width:24px}
+#hudLeft.inrow #setRow{flex:0 0 auto;width:56px}
 #hudLeft.inrow #buffTip{left:0;top:calc(100% + 6px)}
-#buffTip{position:absolute;left:32px;top:calc(50% - .625em);max-width:calc(100vw - 90px);font-family:var(--mono);font-size:var(--f2);font-weight:600;
+#buffTip{position:absolute;left:64px;top:calc(50% - .625em);max-width:calc(100vw - 90px);font-family:var(--mono);font-size:var(--f2);font-weight:600;
   display:flex;flex-direction:column;align-items:flex-start;min-width:0;pointer-events:none}
 #buffTip .bl{display:block;max-width:100%;line-height:1.25em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
   text-shadow:0 0 2px #000,0 1px 2px #000,0 0 1px #000;transition:opacity .25s}
 #setIcon,#hudClimbIcon{display:block;width:24px;height:24px;image-rendering:pixelated;image-rendering:crisp-edges}
+/* the Daily Check-In, right of the cog, its size; the red dot while a claim waits */
+#calBtn{position:relative;width:24px;height:24px;flex:0 0 auto;margin-left:8px;pointer-events:auto;
+  background:none;border:0;padding:0;display:flex;align-items:center;justify-content:center;
+  filter:drop-shadow(0 0 1px #000) drop-shadow(0 0 1px #000) drop-shadow(0 1px 2px rgba(0,0,0,.9))}
+#calBtn:active{transform:translateY(1px)}
+#calIcon{display:block;width:24px;height:24px;image-rendering:pixelated;image-rendering:crisp-edges}
+#calDot{position:absolute;top:-4px;right:-4px;width:8px;height:8px;background:var(--r5);display:none}
+#calBtn.ready #calDot{display:block}
 /* settings sheet */
 .setrow{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;padding:9px 0;
   border-bottom:1px solid var(--line-soft)}
@@ -1040,7 +1068,7 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
     </div>
     <button id="hudClimb" aria-label="Auto-climb"><img id="hudClimbIcon" alt=""></button>
     </div>
-    <div id="setRow"><button id="setBtn" aria-label="Settings"><img id="setIcon" alt=""></button><span id="buffTip" aria-live="polite"></span></div>
+    <div id="setRow"><button id="setBtn" aria-label="Settings"><img id="setIcon" alt=""></button><button id="calBtn" aria-label="Daily Check-In"><img id="calIcon" alt=""><span id="calDot"></span></button><span id="buffTip" aria-live="polite"></span></div>
     <button id="shopBtn" aria-label="Pro shop"><img id="shopIcon" alt=""><span id="shopDot"></span></button>
     <button id="roomBtn" aria-label="Trophy Room"><img id="roomIcon" alt=""><span id="roomDot"></span></button>
     <button id="perkBtn" aria-label="Sponsor perks"><img id="perkIcon" alt=""><span id="perkDot"></span></button>
@@ -1341,6 +1369,9 @@ const B = {
     gear: ['.....XX.....','..X.XXXX.X..','.XXXXwwXXXX.','..XXw..wXX..','.XXw....wXX.','XXXw....wXXX',
            'XXXx....xXXX','.XXx....xXX.','..XXx..xXX..','.XXXXxxXXXX.','..X.XXXX.X..','.....XX.....'],
     // a door with the way out beside it: leaving a wager
+    // a page of a calendar, its rings over the top and one day ringed
+    calendar: ['..X.....X...','XXwXXXXXwXXX','XoXoooooXooX','XooooooooooX','XXXXXXXXXXXX','XwwwwwwwwwwX',
+               'XwxwxwxwxwwX','XwwwwwwwwwwX','XwxwxwoooowX','XwwwwwowwowX','XwxwxwoooowX','XXXXXXXXXXXX'],
     leave: ['XXXXXX......','XwwwwX......','XwXXwX..X...','XwXXwX..XX..','XwXXXXXXXXX.','XwXowwwwwwXX',
             'XwXXXXXXXXX.','XwXXwX..XX..','XwXXwX..X...','XwXXwX......','XwwwwX......','XXXXXX......'],
     balls3: ['............','....XXXX....','...XwwXXx...','...XwXXXx...','....xxxx....','.XXXX..XXXX.',
@@ -3539,6 +3570,26 @@ const B = {
   // is the part of the pattern worth leaving out: this one pays for turning up
   // and for climbing, which the game can check for itself.
   FREE_GIFT: 33, FREE_EVERY: 8 * 3600, FREE_CARD: 52,
+  // The Daily Check-In (the user asked): one claim a real day, 28 a month,
+  // starting again on the 1st; a missed day only puts the next claim back a
+  // day. Kept a fair share and no flood: the dailies pay about 60 to 100
+  // sovereigns a day and the free gift about 100, so the 350 here are about
+  // two days of those over a month. The Legend Bag on day 28 is the prize.
+  //   gold: minutes of purse at the current rate (the Range Session's)
+  //   grit, shard, scroll: a share of one purchase in it (shopPrice), so it
+  //     keeps its worth up the cards; 0.05 grit is about one Long Drive
+  //   keys: entries added to every wager, past the cap if it is full
+  //   tick: sponsor tickets; sov: sovereigns; bag: a bag from the shop, free
+  CHECKIN: [
+    { k:'gold', v:5 },     { k:'grit', v:0.05 },  { k:'keys', v:1 },     { k:'shard', v:0.03 },
+    { k:'bag', v:'range' }, { k:'scroll', v:0.02 }, { k:'sov', v:100 },
+    { k:'gold', v:5 },     { k:'tick', v:2 },     { k:'grit', v:0.05 },  { k:'keys', v:1 },
+    { k:'scroll', v:0.02 }, { k:'bag', v:'range' }, { k:'sov', v:100 },
+    { k:'gold', v:10 },    { k:'grit', v:0.10 },  { k:'keys', v:2 },     { k:'shard', v:0.06 },
+    { k:'bag', v:'tour' },  { k:'scroll', v:0.04 }, { k:'sov', v:150 },
+    { k:'gold', v:10 },    { k:'tick', v:3 },     { k:'grit', v:0.10 },  { k:'keys', v:2 },
+    { k:'shard', v:0.06 }, { k:'scroll', v:0.04 }, { k:'bag', v:'legend' }
+  ],
 
   /* ---- style ----
      Something to spend sovereigns on that changes nothing but the look. An
@@ -4306,6 +4357,11 @@ function migrate(){
     else for(const k in S.guide){ const v = S.guide[k];
       if(!GUIDE.some(g => g.id === k) || !(v >= 1 && v < 1e9)) delete S.guide[k]; else S.guide[k] = Math.floor(v); }
   }
+  // the Daily Check-In: the month, the claims made in it, the last day claimed
+  if(S.checkin !== undefined){ const C = S.checkin;
+    if(!C || typeof C !== 'object' || Array.isArray(C) || !(C.m >= 0 && C.m < 1e6)
+      || !(C.n >= 0 && C.n < 1e6) || !(C.last >= -1 && C.last < 1e7)) delete S.checkin;
+    else{ C.m = Math.floor(C.m); C.n = Math.min(B.CHECKIN.length, Math.floor(C.n)); C.last = Math.floor(C.last); } }
   // a club for a slot this build does not have cannot be worn or scored
   S.bag = S.bag.filter(it => it && B.SLOTS.some(sl => sl.id === it.slot));
   S.bag.forEach(fix);
@@ -5517,7 +5573,7 @@ function keyInterval(d){ const C = career();
     * (C.sharp ? 0.6 : 1) * (1 - Math.min(0.60, permAdd('teetime'))); }
 function regenKeys(dt){
   for(const d of B.DGN){
-    if(S.dgnKeys[d.id] >= d.cap){ S.dgnKeyT[d.id] = 0; continue; }
+    if(S.dgnKeys[d.id] >= entryCap(d)){ S.dgnKeyT[d.id] = 0; continue; }
     S.dgnKeyT[d.id] += dt;
     const iv = keyInterval(d);
     while(S.dgnKeyT[d.id] >= iv && S.dgnKeys[d.id] < entryCap(d)){
@@ -5638,6 +5694,95 @@ function dailyTick(){
     Sfx.play('ach');
   }
 }
+
+/* ---- the Daily Check-In ------------------------------------------------
+   A calendar of 28 (B.CHECKIN), one claim a day on the dailies' own clock
+   (dayNow, so DAY_FORCE moves it), started again in a new month. S.checkin
+   is { m: the month, n: claims made in it, last: the day of the last one }.
+   Never two claims in a day, and never one on a day before the last: a
+   clock put back opens nothing, and a month before the last one's is not
+   a new month. Its button sits right of the settings; it opens by itself
+   once a day when there is a claim waiting (after the away card). */
+const ciMonth = d => { const t = new Date(d * 86400000); return t.getUTCFullYear() * 12 + t.getUTCMonth(); };
+function checkinNow(){
+  const m = ciMonth(dayNow());
+  if(!S.checkin) S.checkin = { m, n: 0, last: -1 };
+  const C = S.checkin;
+  if(m > C.m){ C.m = m; C.n = 0; }
+  return C;
+}
+const checkinReady = () => { const C = checkinNow(), d = dayNow();
+  return ciMonth(d) === C.m && C.n < B.CHECKIN.length && d > C.last; };
+// what a day pays now: purse and the wager currencies follow where he is
+const ciRate = () => Math.max(Meter.rate(), (S.purse || 0) / Math.max(0.6, S.parTime || 1));
+function ciAmt(r){
+  if(r.k === 'gold') return Math.max(1, ciRate() * r.v * 60);
+  if(r.k === 'grit' || r.k === 'shard' || r.k === 'scroll') return Math.max(1, Math.round(shopPrice(r.k) * r.v));
+  return r.v;
+}
+const ciBag = r => B.BAGS.find(b => b.id === r.v) || B.BAGS[0];
+// [icon, colour, the tile's figure, the words for it]
+function ciLook(r){
+  const a = ciAmt(r);
+  switch(r.k){
+    case 'gold':   return ['coins', '#E3B457', fmt(a), fmt(a) + ' purse'];
+    case 'grit':   return ['grit', '#C8A070', fmt(a), fmt(a) + ' grit'];
+    case 'shard':  return ['shard', '#7FD6F2', fmt(a), fmt(a) + ' ' + plural(a, 'shards')];
+    case 'scroll': return ['scroll', '#E8DDB8', fmt(a), fmt(a) + ' ' + plural(a, 'scrolls')];
+    case 'keys':   return ['key', '#57E0BE', '+' + a, '+' + a + ' ' + plural(a, 'entries').replace(/ie$/, 'y') + ' in every wager'];
+    case 'tick':   return ['token', '#F2D75E', '+' + a, a + ' sponsor ' + plural(a, 'tickets')];
+    case 'sov':    return ['sovg', SOV_COL, String(a), '<span class="pv">' + a + sovIc() + '</span>'];
+    default: { const bg = ciBag(r); return [bg.ic, RC(Math.min(5, bg.top)), B.RARITY[bg.top].n, bg.n]; }
+  }
+}
+function checkinClaim(){
+  if(!checkinReady()) return null;
+  const C = S.checkin, r = B.CHECKIN[C.n], a = ciAmt(r), say = ciLook(r)[3];
+  C.n++; C.last = dayNow();
+  if(r.k === 'gold'){ S.gold += a; Meter.add(a); }
+  else if(r.k === 'grit') S.grit += a;
+  else if(r.k === 'shard') S.shard += a;
+  else if(r.k === 'scroll') S.scroll += a;
+  else if(r.k === 'keys'){ B.DGN.forEach(d => { S.dgnKeys[d.id] = (S.dgnKeys[d.id] || 0) + a; }); renderDgn(); }
+  else if(r.k === 'tick') S.tickets = Math.max(S.tickets || 0, Math.min(B.TICK_CAP, (S.tickets || 0) + a));
+  else if(r.k === 'sov') grantSov(a, null, true);
+  else openBag(ciBag(r), true);
+  toast('<span class="achk">Check-In · Day ' + C.n + '</span>' + say, 'ach');
+  Sfx.play('coin');
+  renderStageBtns(); renderVitals();
+  return r;
+}
+function checkinSheet(){
+  const C = checkinNow(), d = dayNow(), ready = checkinReady();
+  const mo = new Date(d * 86400000).toLocaleString('en-US', { month: 'long', timeZone: 'UTC' });
+  let h = '<h3>Daily Check-In</h3><div class="eyebrow" style="margin:0 0 6px">' + mo + ' · '
+    + C.n + '/' + B.CHECKIN.length + ' claimed</div><div class="cigrid">';
+  B.CHECKIN.forEach((r, i) => {
+    const [ic, col, fig] = ciLook(r);
+    const cls = (i < C.n ? ' got' : '') + (ready && i === C.n ? ' now' : '')
+      + (r.k === 'sov' ? ' sov' : '') + (r.k === 'bag' && ciBag(r).top >= 5 ? ' myth' : '');
+    h += '<div class="citile' + cls + '"><span class="cid">' + (i + 1) + '</span>'
+      + '<img src="' + pixUrl(ic, col) + '" width="24" height="24" alt="">'
+      + '<b' + (r.k === 'bag' ? ' style="color:' + col + '"' : '') + '>' + fig + '</b></div>';
+  });
+  h += '</div>';
+  if(ready) h += '<div class="cinow">Day ' + (C.n + 1) + ' · ' + ciLook(B.CHECKIN[C.n])[3] + '</div>'
+    + '<button class="act" id="ciClaim">Claim</button>';
+  else h += '<div class="cinow">' + (C.n >= B.CHECKIN.length ? 'All claimed · New calendar on the 1st'
+    : 'Claimed today · Next in ' + hms(featLeft())) + '</div>';
+  showSheet(h + '<button class="act ghost" onclick="hideSheet()">Close</button>');
+  const b = $('ciClaim');
+  if(b) b.onclick = () => { const r = checkinClaim(); if(r && r.k !== 'bag') checkinSheet(); };
+}
+// Opened by itself once a day while a claim waits; behind the away card or
+// the first-game sheet it waits for that to be closed (checkinAfter)
+let CHECKIN_AFTER = false, CHECKIN_POPPED = null;
+function checkinPop(){
+  if(QUIET || OFFLINE || !checkinReady() || CHECKIN_POPPED === dayNow()) return;
+  if($('veil').classList.contains('on')){ CHECKIN_AFTER = true; return; }
+  CHECKIN_POPPED = dayNow(); checkinSheet();
+}
+function checkinAfter(){ if(CHECKIN_AFTER){ CHECKIN_AFTER = false; checkinPop(); } }
 
 // A single swing resolved in full: crit, provisionals and an affinity roll.
 // This is what the Long Drive measures.
@@ -8829,7 +8974,7 @@ function offline(){
   h += '<div class="awband">Back on the tee</div>'
     + '<div class="awlist">' + line('Now playing', eventName(tournamentOf(S.hole)) + ', ' + dayName(S.hole), ic('flag', '#D8453A')) + '</div>'
     + '<div class="awfoot"><div class="awstage"><canvas id="awCv" width="160" height="' + AW_H + '"></canvas></div>'
-    + '<button class="act awplay" onclick="hideSheet()">Play on</button></div>';
+    + '<button class="act awplay" onclick="hideSheet();checkinAfter()">Play on</button></div>';
   showSheet(h);
   awayStage(g);
 }
@@ -24358,6 +24503,16 @@ function renderStageBtns(live){
     $('setIcon').src = pixUrl('gear', '#DFE9DC');
     sb.onclick = () => settingsSheet();
   }
+  // the Daily Check-In, right of the cog: its dot while a claim waits
+  const ck = $('calBtn');
+  if(ck){
+    if(!ck._built){
+      ck._built = 1;
+      $('calIcon').src = pixUrl('calendar', '#E86A5C');
+      ck.onclick = () => checkinSheet();
+    }
+    if(!live || !(now - (ck._lt || -1e9) < 250)){ ck._lt = now; ck.classList.toggle('ready', checkinReady()); }
+  }
   const cb = $('hudClimb');
   if(cb){
     if(!cb._built){
@@ -25185,7 +25340,7 @@ function renderDgn(){
     const el = document.createElement('div');
     el.className = 'dgn' + (d.id === feat.id ? ' feat' : '');
     let keyHtml = '';
-    for(let i=0;i<entryCap(d);i++) keyHtml += '<span class="key' + (i < keys ? ' on' : '') + '"></span>';
+    for(let i=0;i<Math.max(entryCap(d), keys);i++) keyHtml += '<span class="key' + (i < keys ? ' on' : '') + '"></span>';
     const nextIn = keys >= entryCap(d) ? 'full' : hms(keyInterval(d) - (S.dgnKeyT[d.id]||0));
 
     // what your bag is actually bringing to this particular contest
@@ -26078,6 +26233,7 @@ const DEV = {
       + row('Honours', b('unlock all', 'DEV.ach()') + b('clear all', 'DEV.ach0()') + b('+5 cups', 'DEV.cups(5)'))
       + row('Field Guide \u00b7 ' + GUIDE.filter(g => (S.guide || {})[g.id]).length + '/' + GUIDE.length, b('spot all', 'DEV.guide(1)') + b('clear', 'DEV.guide(0)') + b('open it', 'DEV.guide(2)'))
       + row('Daily challenges', b('finish one', 'DEV.daily(1)') + b('finish all', 'DEV.daily(3)') + b('streak +1', 'DEV.streak()') + b('streak 0', 'DEV.streak0()'))
+      + row('Check-In \u00b7 ' + checkinNow().n + '/' + B.CHECKIN.length, b('claim today', 'DEV.checkin(1)') + b('next day', 'DEV.checkin(2)') + b('reset month', 'DEV.checkin(0)'))
       + row('Heirlooms', b('find 5', 'DEV.disc(5)') + b('find all', 'DEV.disc(99)') + b('+2 levels each', 'DEV.relics(2)')
           + b('max all found', 'DEV.relics(B.TR_MAX)') + b('clear', 'DEV.relics0()') + b('force retire', 'DEV.retire()'))
       + row('Shot book', b('learn all', 'DEV.skills()') + b('max levels', 'DEV.skillMax()') + b('no cooldowns', 'DEV.nocd()')
@@ -26186,6 +26342,10 @@ const DEV = {
     else S.dailyStreak = (S.dailyStreak || 0) + 1;
     this.re(); },
   streak0(){ S.dailyStreak = 0; delete S.dailyLastAll; this.re(); },
+  // the Check-In: claim today's, open the next one now, or start the month again
+  checkin(k){ const C = checkinNow();
+    if(k === 1) checkinClaim(); else if(k === 2) C.last = Math.min(C.last, dayNow() - 1); else{ C.n = 0; C.last = -1; }
+    this.re(); },
   legacy(n){ S.legacy += n; this.re(); },
   relics(n){ B.TROPHY.forEach(r => { if((S.relic[r.id]||0) > 0)
     S.relic[r.id] = Math.min(B.TR_MAX, S.relic[r.id] + n); }); this.re(); },
@@ -27032,13 +27192,14 @@ function reallyWipe(){
 function catchUp(){
   const away = Math.max(0, Date.now()/1000 - (S.t || Date.now()/1000));
   last = 0;
-  if(away >= 60){ offline(); return; }
+  if(away >= 60){ offline(); checkinPop(); return; }
   // Under a minute the away card is not worth raising: the round just carries
   // on from where it was, at full pace, as though it had never stopped.
   Sfx.hold++;
   try{ for(let t = away; t > 1e-6; t -= B.TICK_MAX) step(Math.min(B.TICK_MAX, t), derive()); }
   finally{ Sfx.hold--; }
   S.t = Date.now()/1000;
+  checkinPop();
 }
 // The page carried no icon at all, so the tab showed the browser's blank page
 // and a home screen shortcut on a phone was a screenshot of whatever was on
@@ -27178,7 +27339,7 @@ function intro(){
     + '<ul><li>Buy upgrades on the Range.</li>'
     + '<li>Beat the clock on each hole for a better score.</li>'
     + '<li>Clubs drop as you play. The best go in your bag.</li></ul>'
-    + '<button class="act" onclick="hideSheet()">Play away</button>');
+    + '<button class="act" onclick="hideSheet();checkinAfter()">Play away</button>');
 }
 function boot(){
   const had = load();
@@ -27219,7 +27380,7 @@ function boot(){
     // the canvas has no box while it is away, so let it keep the one it had
     if(!big) Scene.resize();
   };
-  $('veil').onclick = e => { if(e.target === $('veil')) hideSheet(); };
+  $('veil').onclick = e => { if(e.target === $('veil')){ hideSheet(); checkinAfter(); } };
   // The dev menu writes straight to state with no cost, no gate and no undo,
   // and it used to open on a single tap of the most prominent text on screen.
   // One mis-tap on the course name and a save is finished. Held open instead:
@@ -27254,6 +27415,7 @@ function boot(){
   announceCourse();
 
   if(had) offline(); else intro();
+  checkinPop();                     // the Daily Check-In, after the away card
   try{ if(navigator.storage && navigator.storage.persist) navigator.storage.persist(); }catch(e){}
   for(const ev of ['pointerdown', 'touchend', 'click', 'keydown'])
     document.addEventListener(ev, () => Sfx.unlock(), { passive: true, capture: true });
