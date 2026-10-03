@@ -11336,12 +11336,14 @@ const DEER_RUN = [
 ];
 const DEER_SPR = {};
 // coat by season: a red-brown autumn coat, a greyer winter one
-function deerSprite(graze, stag, winter, flip){
-  const key = graze + '|' + (stag ? 1 : 0) + '|' + (winter ? 1 : 0) + '|' + (flip ? 1 : 0);
+// (or a golden one: see goldOf)
+function deerSprite(graze, stag, winter, flip, gold){
+  const key = graze + '|' + (stag ? 1 : 0) + '|' + (winter ? 1 : 0) + '|' + (flip ? 1 : 0) + (gold ? 'g' : '');
   if(DEER_SPR[key]) return DEER_SPR[key];
   const coat = winter ? ['#7A6452', '#56443A'] : ['#9A6236', '#6A3E20'];
   const map = { b: coat[0], B: coat[1], e: coat[1], W: '#ECE4D2', d: '#2A1E16', k: '#14100C', a: '#D8C8A2' };
   const rows = (graze === 2 ? DEER_RUN : graze ? DEER_GRAZE : DEER_UP).map(r => { const q = stag ? r : r.replace(/a/g, '.'); return flip ? [...q].reverse().join('') : q; });
+  if(gold){ const G = goldOf(rows, map, 'stag', false); return DEER_SPR[key] = makeSprite(G.rows, G.map); }
   return DEER_SPR[key] = makeSprite(rows, map);
 }
 
@@ -11680,6 +11682,79 @@ function critSprite(an, fr, night, flip){
   if(night) for(const ch in map) if(ch !== C.lit) map[ch] = moonC(map[ch]);
   const rows = R.map(r => { const q = r.padEnd(w, '.'); return flip ? [...q].reverse().join('') : q; });
   return CRIT_SPR[key] = makeSprite(rows, map);
+}
+// Golden animals (the user asked for "something new for the course or the
+// Field Guide"): now and then one of these is a golden one, the same
+// creature in gold, on about one hole in GOLD_ODDS of those it is on, and
+// spotting it fills its own entry in the Guide. Decided from a hash once the
+// hole is laid: the lay itself is untouched, the animal only flagged.
+const GOLD_KINDS = ['stag', 'fox', 'rabbit', 'squirrel', 'hedgehog', 'pheasant', 'badger', 'owl', 'swan', 'heron', 'otter', 'eagle'];
+const GOLD_ODDS = 170;
+let GOLD_FORCE = null, GOLD_AT = null;   // the developer menu's: a golden one on the first live hole from this one that has one (-1: on every hole), and the hole it went on
+// the gold: dark, its own body's tone, lighter, and the shine along its back
+const GOLD_RAMP = ['#4A2E08', '#A8701A', '#E0A828', '#F6D460'], GOLD_SHINE = '#FFF2B0';
+// (what is not the animal keeps its colour: the owl's stump; the owl's eyes
+// go dark, its yellow lost in the gold)
+const GOLD_KEEP = { owl: { s: 1 } }, GOLD_SET = { owl: { y: '#2A1A06' } };
+const goldId = an => 'g_' + an;
+// (whether that kind is golden on that hole, if it is there: from a hash)
+const goldRoll = (h, an) => hr(h * 31 + GOLD_KINDS.indexOf(an), 690) < 1 / GOLD_ODDS;
+const goldKind = p => p.kind === 15 && GOLD_KINDS.includes(p.an) ? p.an : p.kind === 13 && p.stag ? 'stag' : null;
+// a sprite's rows and colours in gold: its main colour the mid gold, darker
+// ones the darker, lighter the lighter, near black the darkest; the top pixel
+// of each column of gold catches the light (*)
+function goldOf(rows, map, an, night){
+  const L = c => { const [r, g, b] = hxToRgb(c); return r * 0.3 + g * 0.59 + b * 0.11; }, keep = GOLD_KEEP[an] || {}, set = GOLD_SET[an] || {};
+  const n = {}; for(const r of rows) for(const ch of r) if(ch !== '.' && map[ch] && !keep[ch]) n[ch] = (n[ch] || 0) + 1;
+  const main = Object.keys(n).sort((a, b) => n[b] - n[a])[0], Lm = main ? L(map[main]) : 128, gm = {}, tone = {};
+  for(const ch in map){
+    if(keep[ch]){ gm[ch] = map[ch]; continue; }
+    if(set[ch]){ gm[ch] = set[ch]; continue; }
+    const l = L(map[ch]); tone[ch] = l < 40 ? 0 : ch === main || Math.abs(l - Lm) < 12 ? 2 : l < Lm ? 1 : 3;
+    gm[ch] = GOLD_RAMP[tone[ch]];
+  }
+  gm['*'] = GOLD_SHINE;
+  const out = rows.map(r => [...r]), w = Math.max(...rows.map(r => r.length));
+  for(let x = 0; x < w; x++) for(let y = 0; y < out.length; y++){ const ch = out[y][x];
+    if(ch === undefined || ch === '.') continue;
+    // (not on a part a pixel thin, a wing or a tail: all shine, it went pale)
+    const below = y + 1 < out.length ? out[y + 1][x] : undefined;
+    if(tone[ch] >= 2 && below !== undefined && below !== '.' && tone[below] >= 1) out[y][x] = '*';
+    break; }
+  if(night) for(const ch in gm) gm[ch] = keep[ch] ? moonC(gm[ch]) : mixC(gm[ch], moonC(gm[ch]), 0.2);
+  return { rows: out.map(r => r.join('')), map: gm };
+}
+const GOLD_SPR = {};
+function goldSprite(an, fr, night, flip){
+  const key = an + '|' + fr + '|' + (night ? 1 : 0) + (flip ? 1 : 0);
+  if(GOLD_SPR[key]) return GOLD_SPR[key];
+  const C = CRIT[an], R = C.rows[Math.min(fr, C.rows.length - 1)], w = Math.max(...R.map(r => r.length));
+  const G = goldOf(R.map(r => r.padEnd(w, '.')), C.map, an, night);
+  return GOLD_SPR[key] = makeSprite(flip ? G.rows.map(r => [...r].reverse().join('')) : G.rows, G.map);
+}
+// (the flyer's rows and colours, for pxRows)
+const GOLD_FLY = {};
+function goldFly(an, fr, night){
+  const key = an + '|' + fr + '|' + (night ? 1 : 0);
+  return GOLD_FLY[key] || (GOLD_FLY[key] = goldOf(CRIT[an].rows[fr] || CRIT[an].rows[0], CRIT[an].map, an, night));
+}
+// The glint on a golden one: a white pixel on its outline, now and then a
+// second beside it, for a fifth of a second about every two; on its own top
+// pixels (inside its outline, so nothing in front of it shows it).
+function goldGlint(c, rows, x0, y0, w, h, t, k, cut, flip){
+  const u = t * 0.5 + hr(k, 691), n = Math.floor(u);
+  if(u - n > 0.1 || w < 2 || h < 2) return;
+  const sw = rows[0].length, sh = rows.length;
+  for(let i = 0; i < 6; i++){
+    const sx = Math.floor(hr(k * 7 + n, 692 + i) * sw);
+    let sy = 0; while(sy < sh && (rows[sy][sx] === '.' || rows[sy][sx] === undefined)) sy++;
+    if(sy >= sh) continue;
+    const X = x0 + Math.floor(((flip ? sw - 1 - sx : sx) + 0.5) * w / sw), Y = y0 + Math.floor((sy + 0.5) * h / sh);
+    if(cut !== undefined && Y > cut) return;
+    c.fillStyle = '#FFFFFF'; c.fillRect(X, Y, 1, 1);
+    if(h >= 9 && sy + 1 < sh && rows[sy + 1][sx] !== '.'){ const Y2 = y0 + Math.floor((sy + 1.5) * h / sh); if(Y2 > Y && (cut === undefined || Y2 <= cut)) c.fillRect(X, Y2, 1, 1); }
+    return;
+  }
 }
 // Golfers out on the other holes (the user: "it would be sweet if you could
 // always see other golfers playing on adjacent holes"): a little figure in
@@ -18436,6 +18511,23 @@ const Scene = {
     put.sort((a, b) => b.d - a.d);
     this.props = put;
   },
+  // A golden animal (see GOLD_KINDS): of each kind that can be one on the
+  // hole, about one hole in GOLD_ODDS has one of them golden. From a hash
+  // once everything is laid, so nothing laid moves: the animal is flagged.
+  layGold(){
+    const h = this.hole, P = this.props || [];
+    if(S.dgnRun) return;
+    const kinds = [...new Set(P.map(goldKind).filter(Boolean))];
+    let hit = kinds.filter(k => goldRoll(h, k));
+    // (forced: from that hole on, or on every hole (-1); the first live hole
+    // it lands on keeps it, laid again)
+    const force = GOLD_AT === h || (GOLD_FORCE !== null && h >= GOLD_FORCE);
+    // (-1, for the checks, makes every kind there golden)
+    if(GOLD_FORCE === -1 && GOLD_AT !== h) hit = kinds;
+    else if(force && kinds.length && !hit.length){ hit = [kinds[Math.floor(hr(h, 693) * kinds.length)]];
+      if(GOLD_FORCE >= 0 && h === S.hole && !QUIET && !OFFLINE){ GOLD_FORCE = null; GOLD_AT = h; } }
+    for(const k of hit){ const p = P.find(q => goldKind(q) === k); if(p) p.gold = 1; }
+  },
   // A find by the tee (kind 19; the user picked it from the menu): on about
   // one live hole in FIND_ODDS a lost ball, an old coin, a tee peg or a ball
   // marker lies in the rough just off the tee box, and is picked up as he
@@ -19589,6 +19681,7 @@ const Scene = {
     this.layCritters();
     this.layOthers();
     this.layFind();
+    this.layGold();
     guideSpot(this);
     // the near bank: the last ground on his line before the water
     // Where he stops before it and where he is across: an island's near bank
@@ -22636,8 +22729,11 @@ Object.assign(Scene, {
     if(hpx < rows.length * 0.5) return;
     const k = Math.max(1, Math.round(hpx / rows.length)), w = rows[0].length * k;
     if(g.x + w < -4 || g.x - w > VW + 4) return;
-    const map = critMap(p.an, night);
-    pxRows(c, rows, map, Math.round(g.x - w / 2), Math.round(g.y - rows.length * k), k, this.clipAt(d), dir < 0);
+    const G = p.gold ? goldFly(p.an, fr, night) : null, map = G ? G.map : critMap(p.an, night), R = G ? G.rows : rows;
+    const x0 = Math.round(g.x - w / 2), y0 = Math.round(g.y - rows.length * k);
+    pxRows(c, R, map, x0, y0, k, this.clipAt(d), dir < 0);
+    // (its glint: under the ground's line where it is, as it is)
+    if(G) goldGlint(c, R, x0, y0, w, rows.length * k, this.t, p.k, this.clipAt(d), dir < 0);
   },
   // A bird on the fairway: a dark back, a paler breast, pecking now and then.
   // Its group flies off together once a ball lies within a few paces of it
@@ -22795,21 +22891,24 @@ Object.assign(Scene, {
         const sd = Math.sign(p.x) || 1, fd = p.d + run * 1.2, fx = p.x + sd * (run * 3.4 + run * run * 1.2), hop = Math.abs(Math.sin(run * Math.PI * 2.6)) * 0.5;
         const q = this.proj(fd, fx, hop), g0 = this.proj(fd, fx), cut = this.clipAt(fd);
         if(q.x < -w - 4 || q.x > VW + w + 4) return;
-        const spr = deerSprite(2, p.stag, this.look && this.look.season === 'Winter', sd < 0);
+        const spr = deerSprite(2, p.stag, this.look && this.look.season === 'Winter', sd < 0, p.gold);
         const hh = Math.max(4, Math.round(B_GOLFER * 0.88 * US * g0.s)), ww = Math.round(hh * 26 / 22), X = Math.round(q.x), Y = Math.round(q.y);
         // (cut at the ground's line where it is now: nothing through a rise)
         c.save(); c.beginPath(); c.rect(0, 0, VW, Math.max(0, cut + 1)); c.clip();
         if(hop < 0.12){ c.fillStyle = 'rgba(8,16,10,.26)'; this.standShadow(c, X - Math.round(ww * 0.36), Math.round(g0.y) - 1, Math.round(ww * 0.72), 1); }
-        this.standBlit(c, shrinkSprite(spr, ww, hh) || spr, X - (ww >> 1), Y - hh, ww, hh);
+        const S0 = shrinkSprite(spr, ww, hh) || spr;
+        this.standBlit(c, S0, X - (ww >> 1), Y - hh, ww, hh);
+        if(p.gold) goldGlint(c, S0.rows, X - (ww >> 1), Y - hh, ww, hh, this.t, p.k);
         c.restore();
         return;
       }
       const near = p.d - this.camD < 12 && p.d - this.camD > -4;
       const graze = !near && Math.sin(this.t * 0.37 + p.k * 1.7) < 0.55;
-      const spr = deerSprite(graze, p.stag, this.look && this.look.season === 'Winter', p.flip);
-      const X = Math.round(pr.x), Y = Math.round(pr.y);
+      const spr = deerSprite(graze, p.stag, this.look && this.look.season === 'Winter', p.flip, p.gold);
+      const X = Math.round(pr.x), Y = Math.round(pr.y), S0 = shrinkSprite(spr, w, h) || spr;
       c.fillStyle = 'rgba(8,16,10,.26)'; this.standShadow(c, X - Math.round(w * 0.36), Y - 1, Math.round(w * 0.72), 1);
-      this.standBlit(c, shrinkSprite(spr, w, h) || spr, X - (w >> 1), Y - h, w, h);
+      this.standBlit(c, S0, X - (w >> 1), Y - h, w, h);
+      if(p.gold) goldGlint(c, S0.rows, X - (w >> 1), Y - h, w, h, this.t, p.k);
       return;
     }
     // the wildlife (layCritters): standing, swimming or flying; those that
@@ -22833,13 +22932,15 @@ Object.assign(Scene, {
       const hpx = Math.round(C.h * US * g.s);
       if(hpx < 3) return;
       const fr = C.rows.length > 1 ? (Math.floor(this.t * (p.an === 'crab' ? 3 : 0.7) + p.k) & 1) : 0;
-      const spr = critSprite(p.an, fr, night, flip), w = Math.max(2, Math.round(hpx * spr.w / spr.h));
+      const spr = (p.gold ? goldSprite : critSprite)(p.an, fr, night, flip), w = Math.max(2, Math.round(hpx * spr.w / spr.h));
       if(q.x + w < -4 || q.x - w > VW + 4) return;
       // (a swimmer rides the ripples a pixel up and down)
       const X = Math.round(q.x), Y = Math.round(q.y) + (C.at === 'water' || C.at === 'sea' && !C.shore ? (Math.sin(this.t * 1.7 + p.k) > 0.5 ? 1 : 0) : 0);
       c.save(); c.beginPath(); c.rect(0, 0, VW, Math.max(0, this.clipAt(d) + 1)); c.clip();
       if(hpx > 4 && C.at !== 'water' && !hop){ c.fillStyle = 'rgba(8,16,10,.24)'; this.standShadow(c, X - Math.round(w * 0.38), Math.round(g.y) - 1, Math.round(w * 0.76), 1); }
-      this.standBlit(c, shrinkSprite(spr, w, hpx) || spr, X - (w >> 1), Y - hpx, w, hpx);
+      const S0 = shrinkSprite(spr, w, hpx) || spr;
+      this.standBlit(c, S0, X - (w >> 1), Y - hpx, w, hpx);
+      if(p.gold) goldGlint(c, S0.rows, X - (w >> 1), Y - hpx, w, hpx, this.t, p.k);
       c.restore();
       return;
     }
@@ -25252,7 +25353,10 @@ GUIDE.splice(7, 0, ...Object.keys(CRIT).map(id => ({ id, n: CRIT_NAME[id], g: 'w
 // and the life the signature holes already had, and the geese
 GUIDE.splice(7, 0, { id:'duck', n:'Duck', g:'w', w:'On the island\u2019s lake' }, { id:'hawk', n:'Hawk', g:'w', w:'Over the canyon' },
   { id:'fish', n:'Fish', g:'w', w:'By the stepping stones' }, { id:'geese', n:'Geese', g:'w', w:'Autumn and winter skies' });
-const GUIDE_SHELF = [['w', 'Wildlife'], ['s', 'Seasons'], ['c', 'The Course']];
+// the golden ones (see GOLD_KINDS), on a shelf of their own
+GUIDE.push(...GOLD_KINDS.map(an => ({ id: goldId(an), n: 'Golden ' + (an === 'stag' ? 'Stag' : CRIT_NAME[an]), g: 'g',
+  w: an === 'stag' ? 'Autumn and winter woods' : CRIT_WHERE[an] })));
+const GUIDE_SHELF = [['w', 'Wildlife'], ['g', 'Golden'], ['s', 'Seasons'], ['c', 'The Course']];
 // the rare weather (rainbowAt, fogAt, Scene.meteorNow)
 GUIDE.push({ id:'rainbow', n:'Rainbow', g:'c', w:'After the rain' }, { id:'fog', n:'Fog Bank', g:'c', w:'Rare, on a still day' }, { id:'meteor', n:'Shooting Star', g:'c', w:'Now and then at night' });
 // what the hole just laid out shows: called as each hole starts, live only
@@ -25260,10 +25364,10 @@ function guideSpot(sc){
   if(QUIET || OFFLINE || S.dgnRun || sc.hole !== S.hole) return;
   const P = sc.props || [], got = [], dry = !sc.rain;
   const see = id => { if(!got.includes(id)) got.push(id); };
-  if(!sc.night) for(const p of P) if(p.kind === 13) see(p.stag ? 'stag' : 'doe');
+  if(!sc.night) for(const p of P) if(p.kind === 13) see(p.gold ? goldId('stag') : p.stag ? 'stag' : 'doe');
   if(!sc.night && dry) for(const p of P) if(p.kind === 9) see(['sparrow', 'robin', 'blackbird'][birdKind(sc.hole, p.g)]);
   if(sc.night && dry && P.some(p => p.kind === 5)) see('firefly');
-  for(const p of P) if(p.kind === 15) see(p.an);
+  for(const p of P) if(p.kind === 15) see(p.gold ? goldId(p.an) : p.an);
   for(const p of P) if(p.kind === 14) see(p.sp === 'pk' || p.sp === 'bale' ? 'pumpkin' : p.sp);
   const sk = sigKind(sc.hole); if(sk){ see(sk); if(sk === 'pier') see('gull');
     if(!sc.night){ if(sk === 'island') see('duck'); if(sk === 'canyon') see('hawk'); } if(sk === 'stones' && !sc.ice) see('fish'); }
@@ -25319,7 +25423,9 @@ function guideUrl(id){
     const ic = { island:['island', '#5FB0C8'], canyon:['dunes', '#C8804A'], stones:['stone', '#9AA6AE'], pier:['compass', '#8AB8D0'],
       rail:['metro', '#D0584A'], golden:['sunburst', '#F2C21E'], frost:['snow', '#CFE8F4'], rain:['stormglass', '#7AA6C8'], night:['lantern', '#F2D060'] }[id];
     const bi = ['sparrow', 'robin', 'blackbird'].indexOf(id);
+    const an = id.startsWith('g_') ? id.slice(2) : null;
     const sp = ic ? pixSprite(ic[0], ic[1])
+      : an ? (an === 'stag' ? deerSprite(0, true, false, false, true) : goldSprite(an, 0, false, false))
       : id === 'doe' || id === 'stag' ? deerSprite(0, id === 'stag', false, false)
       : bi >= 0 ? makeSprite(BIRD_STAND, BIRD_KIND[bi])
       : id === 'gull' ? makeSprite(GULL_FLY[0], GULL_COL)
@@ -27208,6 +27314,7 @@ const DEV = {
           + b('Golden Hour hole', 'DEV.golden()') + b('final-day gallery', 'DEV.gallery()') + b('find by the tee next hole', 'DEV.find()'))
       + row('Conditions', b('reroll', 'DEV.chaos()') + b('fair', 'DEV.weather(0)') + b('crosswind', 'DEV.weather(1)') + b('night', 'DEV.weather(3)'))
       + row('Frost · ' + (FROST_FORCE === null ? 'by the clock' : FROST_FORCE ? 'on' : 'off'), b('on', 'DEV.frost(1)') + b('off', 'DEV.frost(0)') + b('by the clock', 'DEV.frost(null)'))
+      + row('Golden animal' + (GOLD_FORCE !== null ? ' \u00b7 waiting' : ''), b('this hole', 'DEV.gold(1)') + b('next hole with one', 'DEV.gold()'))
       + row('Rare weather', b('rainbow hole', 'DEV.rare(\'rainbow\')') + b('fog hole', 'DEV.rare(\'fog\')') + b('shooting star now', 'DEV.meteor()'))
       + row('December lights · ' + (LIGHTS_FORCE === null ? 'by the date' : LIGHTS_FORCE ? 'on' : 'off'), b('on', 'DEV.lights(1)') + b('off', 'DEV.lights(0)') + b('by the date', 'DEV.lights(null)'))
       + row('Season touches · ' + (DECOR_FORCE || 'by the season'), DECOR_KINDS.map(k => b(k, 'DEV.decor(\'' + k + '\')')).join('') + b('by the season', 'DEV.decor()'))
@@ -27460,6 +27567,9 @@ const DEV = {
   // a find by the tee on the next hole; a record a stroke better than the
   // best on this course (or all cleared); a gift from the caddie now
   find(){ FIND_FORCE = S.hole + 1; hideSheet(); },
+  // a golden animal on this hole (if it has one that can be), or on the
+  // next live hole that has one
+  gold(now){ if(now){ GOLD_AT = S.hole; Scene.newHole(S.hole, S.tier); } else { GOLD_FORCE = S.hole + 1; GOLD_AT = null; } hideSheet(); },
   courseRec(k){ if(!k){ delete S.courseBest; this.open(); return; }
     const id = (Scene.course || courseFor(tournamentOf(S.hole))).id, R = (S.courseBest || {})[id];
     courseRecPost(id, R ? R.s - 1 : -8); this.open(); },

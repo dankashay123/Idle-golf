@@ -3,7 +3,8 @@
  * it is seen on a hole played live, with a few sovereigns for the first.
  *
  *   - everything in it can be seen: holes swept over the seasons, the
- *     weather, night and the signature holes fill every entry
+ *     weather, night and the signature holes fill every entry (the golden
+ *     animals forced over the same holes)
  *   - a first sighting pays once; seeing it again only counts; nothing is
  *     spotted away, in a wager, or on a hole other than the one played
  *   - the Guide tab shows every entry with its picture, seen or not
@@ -44,6 +45,13 @@ module.exports = {
         for (const k of SIG_KINDS) for (let h = h0, m = 0; m < 12 && h < h0 + 20000; h++) if (sigKind(h) === k) { play(h); m++; }
         // (and a dry course, for its lizards and hawks)
         { DEV.course(B.COURSE.findIndex(c => c.id === CRIT_DRY[0])); hideSheet(); const d0 = S.hole; for (let h = d0; h < d0 + 40; h++) play(h); }
+        // (the golden animals, forced: every kind there golden, over the
+        // same holes)
+        GOLD_FORCE = -1;
+        for (const s of [0, 1, 2, 3]) { SEASON_FORCE = s; for (let h = h0; h < h0 + 30; h++) play(h); for (let h = h0; h < h0 + 20; h++) play(h, 'Night'); }
+        SEASON_FORCE = -1;
+        { DEV.course(B.COURSE.findIndex(c => c.id === CRIT_DRY[0])); hideSheet(); const d0 = S.hole; for (let h = d0; h < d0 + 40; h++) play(h); }
+        GOLD_FORCE = null;
         { let h = h0; while (!goldenOn(h, 'Fair') && h < h0 + 50000) h++; play(h); }
         // (geese go over now and then in autumn and winter: watched a while)
         SEASON_FORCE = 1; play(h0); for (let i = 0; i < 4000 && !S.guide.geese; i++) { Scene.t += 0.5; Scene.drawFlock(); } SEASON_FORCE = -1;
@@ -70,7 +78,7 @@ module.exports = {
         S.guide = [1]; migrate(); if (S.guide !== undefined) f('a list for the guide was kept');
       } finally {
         DECOR_FORCE = null; SEASON_FORCE = -1; FROST_FORCE = null; HOUR_FORCE = null; OFFLINE = false;
-        RAINBOW_FORCE = null; FOG_FORCE = null;
+        RAINBOW_FORCE = null; FOG_FORCE = null; GOLD_FORCE = null;
         Object.keys(S).forEach(k => delete S[k]); Object.assign(S, JSON.parse(SNAP)); hideSheet(); startHole();
       }
       return o;
