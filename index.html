@@ -3666,8 +3666,9 @@ const B = {
     { id:'reader', t:'S', n:'Gate Receipts',     k:'*gld', g:1.06, max:40, d:'Prize money' },
     { id:'marker', t:'B', n:'Lucky Marker',      k:'*drp', g:1.05, max:100, d:'Gear drop chance' },
     { id:'divot',  t:'A', n:'Divot Tool',        k:'*drp', g:1.12, max:100, d:'Gear drop chance' },
-    { id:'whistle',t:'B', n:"Caddie's Ledger",   k:'*dgn', g:1.07, max:40, d:'Wager winnings' },
-    { id:'deepwdg',t:'A', n:"Gambler's Wedge",   k:'*dgn', g:1.16, max:40, d:'Wager winnings' },
+    // (the wager pair stops at 20: at 40 together they paid about x2,900 a wager; at 20 about x75)
+    { id:'whistle',t:'B', n:"Caddie's Ledger",   k:'*dgn', g:1.07, max:20, d:'Wager winnings' },
+    { id:'deepwdg',t:'A', n:"Gambler's Wedge",   k:'*dgn', g:1.16, max:20, d:'Wager winnings' },
     { id:'watch',  t:'B', n:'Practice Swing',    k:'*mst', g:1.06, max:100, d:'Provisional chance' },
     { id:'yardage',t:'A', n:'Yardage Book',      k:'*mst', g:1.15, max:100, d:'Provisional chance' }
   ],
