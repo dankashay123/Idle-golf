@@ -4305,6 +4305,12 @@ let GOLDBOW_FORCE = null;
 const GOLDBOW_P = 1 / 10;
 const GOLDBOW_COL = ['#FFDA5A', '#F6C02E', '#EDA824', '#E0921C', '#C87A16', '#A86012'];
 const goldbowAt = h => GOLDBOW_FORCE !== null ? !!GOLDBOW_FORCE : hr(h * 29 + 5, 986) < GOLDBOW_P;
+// and rarer still, a double rainbow (the user picked it from the menu): a
+// second, fainter bow outside the first, its colours the other way round,
+// one rainbow in twenty and never with a golden one
+let DBLBOW_FORCE = null;
+const DBLBOW_P = 1 / 20;
+const dblbowAt = h => DBLBOW_FORCE !== null ? !!DBLBOW_FORCE : hr(h * 31 + 7, 987) < DBLBOW_P;
 const wetCh = ch => /Crosswind|Marshal/.test(ch || '');
 const clearCh = ch => !/Night|Crosswind|Marshal|Aurora|Ley|Mythic/.test(ch || 'Fair');
 const rainbowAt = (h, ch, tier) => RAINBOW_FORCE !== null ? !!RAINBOW_FORCE
@@ -11730,6 +11736,12 @@ const CRIT_WHERE = { fox: 'Edge of the woods', rabbit: 'In the rough', squirrel:
   badger: 'Woods at night', owl: 'Woods at night', moorhen: 'On a pond', swan: 'On a lake', heron: 'At the water’s edge', frog: 'At a pond',
   turtle: 'At the water, spring and summer', otter: 'By the water', seal: 'By the sea', crab: 'On the shore', lizard: 'Dry courses', eagle: 'High over dry courses',
   bat: 'After dark', butterfly: 'Spring and summer', dragonfly: 'Over the water' };
+// night creatures (laid in layNight): how many dry nights have glow-worms
+// in the rough, moths round the tee's lamps, and a luna moth among them
+const GLOW_P = 0.55, MOTH_P = 0.6, LUNA_P = 0.12;
+let LUNA_FORCE = null;
+const LUNA_ROWS = [['g.....g', 'GGgbgGG', 'GoGbGoG', '.Gg.gG.', '..g.g..'], ['..g.g..', '.GgbgG.', '.GGbGG.', '..g.g..', '..g.g..']];
+const LUNA_COL = { g: '#6EC07E', G: '#C4F2C0', o: '#E0A050', b: '#F4F0DC' };
 // the dry courses, for the lizard and the eagle
 const CRIT_DRY = ['mesa', 'redarch', 'dunes', 'castledunes', 'emberpeak'];
 const CRIT_SPR = {}, CRIT_MAP = {};
@@ -18651,6 +18663,31 @@ const Scene = {
     if(e > 0) x += C.club ? Math.min(CLUB_X - 2.5 - x, e * 0.9) * clamp(e / 8, 0, 1) : e * e * 0.12;
     return C.sd * x;
   },
+  // Night creatures (the user picked them from the menu): glow-worms low in
+  // the rough and moths round the tee's lamps, now and then a luna moth
+  // among them, on a dry night that is not snowing. From a hash, after the
+  // course round the hole is laid (clear of its path, woods and water).
+  layNightLife(){
+    if(!this.night || this.rain || this.snow || this.ice) return;
+    const put = this.props, H = this.hole, w = this.water;
+    if(hr(H, 351) < GLOW_P){
+      const n = 2 + Math.floor(hr(H, 352) * 3);
+      for(let i = 0, m = 0; i < 30 && m < n; i++){
+        const d = 4 + hr(H * 41 + i, 353) * (LEN - 8), side = hr(H * 41 + i, 354) < 0.5 ? -1 : 1;
+        const x = side * (this.fwWidth(d) + 0.7 + hr(H * 41 + i, 355) * 1.6);
+        if(Math.abs(x) > 6.4 || this.hitsHazard(d, x, 0.7) || this.onPlay(d, x, 0.5) || this.onNbr(d, x, 0.3) || this.inFill(d, x, 0, 'lake')
+          || this.inFill(d, x, -0.05, 'wood') || this.inPond(d, x, 0.4) || (w && !w.canyon && !w.rail && Math.abs(d - w.d) < w.rd + 0.6 && Math.abs(x - w.x) < w.rx + 0.6)
+          || (this.cart && Math.sign(x) === this.cart.sd && Math.abs(Math.abs(x) - Math.abs(this.cartX(d))) < 1.1)) continue;
+        if(put.some(p => (p.kind === 1 || p.kind === 13 || p.kind === 15 || p.kind === 16) && Math.abs(p.d - d) < 1.2 && Math.abs(p.x - x) < 1)) continue;
+        m++; put.push({ kind: 22, d, x, k: i, extra: 1 });
+      }
+      put.sort((a, b) => b.d - a.d);
+    }
+    if(hr(H, 356) < MOTH_P){
+      const luna = LUNA_FORCE !== null ? !!LUNA_FORCE : hr(H, 357) < LUNA_P, at = hr(H, 358) < 0.5 ? 0 : 1;
+      for(const p of put) if(p.kind === 4){ p.moth = 1; if(luna && p.k === at) p.luna = 1; }
+    }
+  },
   layNight(){
     const put = this.props || [];
     for(const side of [-1, 1]) put.push({ kind: 4, d: 0.35, x: side * 2.05, k: side > 0 ? 1 : 0 });
@@ -19852,6 +19889,7 @@ const Scene = {
     // rare weather: a rainbow after the rain, a bank of fog (rainbowAt, fogAt)
     this.rainbow = !this.night && !this.rain && rainbowAt(h, ch, tier);
     this.goldbow = this.rainbow && goldbowAt(h);
+    this.dblbow = this.rainbow && !this.goldbow && dblbowAt(h);
     this.fog = !this.night && !this.rain && !this.golden && !this.rainbow && !sigKind(h) && fogAt(h, ch, tier);
     if(this.golden && !QUIET && !OFFLINE && this.goldSaid !== h){ this.goldSaid = h; toast('<span class="achk">Golden Hour</span>Purse \u00d72 \u00b7 gold at the top', 'ach'); }
     const mode = this.night ? 'night' : this.rain ? 'rain' : this.frost ? 'frost' : this.golden ? 'gold' : 'day';
@@ -19943,6 +19981,7 @@ const Scene = {
     this.decor = seasonDecor(cs, look);
     this.laySeason();
     this.layCritters();
+    this.layNightLife();
     this.layOthers();
     this.layFind();
     this.layGoldHour();
@@ -20012,7 +20051,7 @@ const Scene = {
     this.night = dg === 'cellar';
     this.aurora = false;
     this.rain = false;
-    this.rainbow = false; this.goldbow = false; this.fog = false;   // (no rare weather in a wager)
+    this.rainbow = false; this.goldbow = false; this.dblbow = false; this.fog = false;   // (no rare weather in a wager)
     const rnd = seeded(hash32(R.floor*7919 + dg.length*104729 + 13));
     this.seed = rnd() * 1000;
     this.roll = 0.42;                    // a cellar floor does not roll like links
@@ -20215,7 +20254,7 @@ const Scene = {
     const key = [this.themeId, this.night, this.aurora, this.rain, VW, HORIZON, dd ? dd.w + (dd.gold ? 'g' : dd.dawn ? 'a' : 'p') : ''].join('|');
     // (a rainbow's hole in the cache's key, not in key: the clouds are
     // seeded by key, and stay where they were)
-    const rbKey = key + (this.rainbow ? '|rb' + this.hole + (this.goldbow ? 'g' : '') : '');
+    const rbKey = key + (this.rainbow ? '|rb' + this.hole + (this.goldbow ? 'g' : '') + (this.dblbow ? 'd' : '') : '');
     if(rbKey === this.skyKey && this.sky) return;
     this.skyKey = rbKey;
     const H = Math.max(2, HORIZON + 2);
@@ -20308,13 +20347,19 @@ const Scene = {
       const im = g.getImageData(0, 0, VW, H), d = im.data, RB = (this.goldbow ? GOLDBOW_COL : RAINBOW_COL).map(c => [1, 3, 5].map(i => parseInt(c.slice(i, i + 2), 16)));
       const bw = Math.max(1, Math.round(VW / 170)), R = Math.round(Math.min(VW * 0.42, H * 0.94)), cx = Math.round(VW * (0.48 + hr(this.hole, 984) * 0.24)), cy = H + Math.round(R * 0.2);
       const y1 = H - 4, fade = Math.max(2, Math.round(H * 0.3));
-      for(let y = Math.max(0, cy - R); y < y1; y++){
+      // (a double's second bow: a gap of three bands out, six bands, red
+      // on its inside, at a little over half the strength)
+      const R2 = this.dblbow ? R + bw * 9 : R, top = Math.max(0, cy - R2);
+      for(let y = top; y < y1; y++){
         const a = (this.goldbow ? 0.62 : 0.36) * Math.min(1, (y1 - y) / fade);
-        for(let x = Math.max(0, cx - R); x < Math.min(VW, cx + R); x++){
-          const b = Math.floor((R - Math.hypot(x - cx, y - cy)) / bw);
-          if(b < 0 || b >= RB.length) continue;
-          const j = (y * VW + x) * 4, C = RB[b];
-          d[j] += Math.round((C[0] - d[j]) * a); d[j + 1] += Math.round((C[1] - d[j + 1]) * a); d[j + 2] += Math.round((C[2] - d[j + 2]) * a);
+        for(let x = Math.max(0, cx - R2); x < Math.min(VW, cx + R2); x++){
+          const r = Math.hypot(x - cx, y - cy);
+          let b = Math.floor((R - r) / bw), C, k = a;
+          if(b >= 0 && b < RB.length) C = RB[b];
+          else if(this.dblbow && (b = Math.floor((r - R - bw * 3) / bw)) >= 0 && b < RB.length){ C = RB[b]; k = a * 0.55; }
+          else continue;
+          const j = (y * VW + x) * 4;
+          d[j] += Math.round((C[0] - d[j]) * k); d[j + 1] += Math.round((C[1] - d[j + 1]) * k); d[j + 2] += Math.round((C[2] - d[j + 2]) * k);
         }
       }
       g.putImageData(im, 0, 0);
@@ -22940,6 +22985,7 @@ Object.assign(Scene, {
     this._fcov = this._fcov || []; if(!this._propKeep){ for(const i of this._fcov) this._pdep[i] = Infinity; this._fcov.length = 0; }
     for(const p of (this.props || [])){
       this._propD = p.d;
+      if(p.kind === 22 && (S.dgnRun || !night || this.rain)) continue;
       if(p.kind >= 4 && p.kind <= 7 && (S.dgnRun || (p.kind <= 5 ? !night : p.kind === 6 ? (this.leafy ? p.k % 4 !== 3 : !this.frost || night || this.rain) : !this.rain || this.ice))) continue;
       if(side > 0 && p.d < edge) continue;
       if(side < 0 && p.d >= edge) continue;
@@ -23368,6 +23414,7 @@ Object.assign(Scene, {
       const k = clamp(Math.round(LAT * pr.s * 0.07), 1, 3);
       c.fillStyle = '#1C1C22'; c.fillRect(pr.x - k - 1, t.y - k * 2 - 2, k * 2 + 3, 1);
       this.nightLamp(c, pr.x, t.y - k - 1, k, k * 5 + 3, VH, p.k + 3);
+      if(p.moth && !this.rain) this.drawMoths(c, pr.x, t.y - k - 1, k, p);
 
     }else if(p.kind === 5){
       // three fireflies about a spot in the rough, drifting and blinking
@@ -23381,6 +23428,19 @@ Object.assign(Scene, {
         // box at night)
         if(blink > 0.65){ c.fillStyle = '#6E9A2A'; fillClip(c, f.x - 1, f.y, kk + 2, kk, clip); fillClip(c, f.x, f.y - 1, kk, kk + 2, clip); }
         c.fillStyle = blink > 0.8 ? '#F4FFB0' : '#B8E04A'; fillClip(c, f.x, f.y, kk, kk, clip);
+      }
+
+    }else if(p.kind === 22){
+      // glow-worms: a few steady green lights low in the rough, each
+      // brightening and fading slowly (the fireflies blink and drift)
+      for(let j = 0; j < 5; j++){
+        const n = p.k * 5 + j, gd = p.d + (hr(n, 361) - 0.5) * 0.8, clip = this.clipAt(gd);
+        const g = this.proj(gd, p.x + (hr(n, 362) - 0.5) * 0.9, 0);
+        if(g.x < -3 || g.x > VW + 3 || g.s < 0.12) continue;
+        // (a low glow along the grass, not the fireflies' cross)
+        const u = 0.6 + 0.4 * Math.sin(this.t * (0.45 + hr(n, 363) * 0.4) + n * 1.9), kk = g.s > 1.6 ? 2 : 1, X = Math.round(g.x), Y = Math.round(g.y) - kk;
+        if(u > 0.45){ c.fillStyle = '#2E5E22'; fillClip(c, X - 1, Y, kk + 2, kk, clip); }
+        c.fillStyle = u > 0.85 ? '#EEFFB0' : '#A6E040'; fillClip(c, X, Y, kk, kk, clip);
       }
 
     }else if(p.kind === 8){
@@ -23932,6 +23992,30 @@ Object.assign(Scene, {
   // Night on the signature holes (the user asked): a lamp, its flame at
   // x, y, k pixels across, and a glow of warm light round it dithered out to
   // r (solid pixels: a wash turns grey), flickering; cut at clip.
+  // Moths round a tee lamp's lantern (x, y; k its size): three pale ones
+  // circling close and fluttering, and on some holes a luna moth, pale
+  // green, wheeling wider and slower.
+  drawMoths(c, x, y, k, p){
+    // (dark against the lantern's glow, which they keep to, with a pale
+    // edge to the wing: pale ones were lost in it)
+    const s = k >= 2 ? 2 : 1;
+    for(let j = 0; j < 3; j++){
+      const a = this.t * (1.9 + j * 0.6) * (j % 2 ? -1 : 1) + j * 2.1 + p.k * 1.3, rr = k * 2.4 + 2 + j * 1.3;
+      const mx = Math.round(x + Math.cos(a) * rr), my = Math.round(y + Math.sin(a * 1.4) * rr * 0.55);
+      const open = Math.sin(this.t * 31 + j * 1.7) > -0.2;
+      c.fillStyle = '#4A3C2A';
+      if(open){ c.fillRect(mx - s, my - s, s, s); c.fillRect(mx + s, my - s, s, s); c.fillStyle = '#F2E6C6'; c.fillRect(mx - s, my - s, 1, 1); c.fillRect(mx + s * 2 - 1, my - s, 1, 1); }
+      else{ c.fillRect(mx, my - s * 2, s, s); c.fillStyle = '#F2E6C6'; c.fillRect(mx, my - s * 2, 1, 1); }
+      c.fillStyle = '#241A10'; c.fillRect(mx, my - s, s, s);
+    }
+    if(p.luna){
+      const a = this.t * 0.9 + p.k * 2, rr = k * 4 + 5;
+      const lx = Math.round(x + Math.cos(a) * rr), ly = Math.round(y - 2 + Math.sin(a * 1.6) * rr * 0.45);
+      const fr = Math.sin(this.t * 14 + p.k) > -0.3 ? 0 : 1, key = 'luna' + fr;
+      const spr = this[key] || (this[key] = makeSprite(LUNA_ROWS[fr], LUNA_COL));
+      c.drawImage(spr.cv, lx - ((spr.w * s) >> 1), ly - ((spr.h * s) >> 1), spr.w * s, spr.h * s);
+    }
+  },
   nightLamp(c, x, y, k, r, clip, seed){
     const X = Math.round(x), Y = Math.round(y), fl = 0.85 + 0.15 * Math.sin(this.t * 9 + seed * 2.3);
     const R = Math.max(2, Math.round(r * fl));
@@ -25632,7 +25716,7 @@ const GUIDE = [
   { id:'robin', n:'Robin', g:'w', w:'On the fairway' },
   { id:'blackbird', n:'Blackbird', g:'w', w:'On the fairway' },
   { id:'gull', n:'Gull', g:'w', w:'By the sea' },
-  { id:'firefly', n:'Fireflies', g:'w', w:'A dry night' },
+  { id:'firefly', n:'Fireflies', g:'n', w:'A dry night' },
   { id:'pumpkin', n:'Pumpkins', g:'s', w:'Autumn' },
   { id:'jack', n:'Jack-o’-Lantern', g:'s', w:'Late October' },
   { id:'snowman', n:'Snowman', g:'s', w:'Winter' },
@@ -25656,10 +25740,15 @@ GUIDE.splice(7, 0, { id:'duck', n:'Duck', g:'w', w:'On the island\u2019s lake' }
 // the golden ones (see GOLD_KINDS), on a shelf of their own
 GUIDE.push(...GOLD_KINDS.map(an => ({ id: goldId(an), n: 'Golden ' + (an === 'stag' ? 'Stag' : CRIT_NAME[an]), g: 'g',
   w: an === 'stag' ? 'Autumn and winter woods' : CRIT_WHERE[an] })));
-const GUIDE_SHELF = [['w', 'Wildlife'], ['g', 'Golden'], ['s', 'Seasons'], ['c', 'The Course']];
+const GUIDE_SHELF = [['w', 'Wildlife'], ['n', 'Night'], ['g', 'Golden'], ['s', 'Seasons'], ['c', 'The Course']];
+// the night creatures (laid in layNight) on a shelf of their own, with the
+// animals only out after dark
+GUIDE.push({ id:'glowworm', n:'Glow-worms', g:'n', w:'A dry night, in the rough' }, { id:'moth', n:'Moths', g:'n', w:'Round the tee lamps' },
+  { id:'luna', n:'Luna Moth', g:'n', w:'Rare, by the tee lamps' });
+for(const g of GUIDE) if(['owl', 'bat', 'badger'].includes(g.id)) g.g = 'n';
 // the rare weather (rainbowAt, fogAt, Scene.meteorNow)
 GUIDE.push({ id:'rainbow', n:'Rainbow', g:'c', w:'After the rain' }, { id:'fog', n:'Fog Bank', g:'c', w:'Rare, on a still day' }, { id:'meteor', n:'Shooting Star', g:'c', w:'Now and then at night' },
-  { id:'goldbow', n:'Golden Rainbow', g:'c', w:'One rainbow in ten' });
+  { id:'goldbow', n:'Golden Rainbow', g:'c', w:'One rainbow in ten' }, { id:'dblbow', n:'Double Rainbow', g:'c', w:'One rainbow in twenty' });
 // what the hole just laid out shows: called as each hole starts, live only
 function guideSpot(sc){
   if(QUIET || OFFLINE || S.dgnRun || sc.hole !== S.hole) return;
@@ -25668,12 +25757,13 @@ function guideSpot(sc){
   if(!sc.night) for(const p of P) if(p.kind === 13) see(p.gold ? goldId('stag') : p.stag ? 'stag' : 'doe');
   if(!sc.night && dry) for(const p of P) if(p.kind === 9) see(['sparrow', 'robin', 'blackbird'][birdKind(sc.hole, p.g)]);
   if(sc.night && dry && P.some(p => p.kind === 5)) see('firefly');
+  if(sc.night && dry){ if(P.some(p => p.kind === 22)) see('glowworm'); if(P.some(p => p.kind === 4 && p.moth)) see('moth'); if(P.some(p => p.kind === 4 && p.luna)) see('luna'); }
   for(const p of P) if(p.kind === 15) see(p.gold ? goldId(p.an) : p.an);
   for(const p of P) if(p.kind === 14) see(p.sp === 'pk' || p.sp === 'bale' ? 'pumpkin' : p.sp);
   const sk = sigKind(sc.hole); if(sk){ see(sk); if(sk === 'pier') see('gull');
     if(!sc.night){ if(sk === 'island') see('duck'); if(sk === 'canyon') see('hawk'); } if(sk === 'stones' && !sc.ice) see('fish'); }
   if(sc.golden) see('golden'); if(sc.frost) see('frost'); if(sc.rain) see('rain'); if(sc.night) see('night');
-  if(sc.goldbow) see('goldbow'); else if(sc.rainbow) see('rainbow'); if(sc.fog) see('fog');
+  if(sc.goldbow) see('goldbow'); else if(sc.rainbow) see('rainbow'); if(sc.dblbow) see('dblbow'); if(sc.fog) see('fog');
   guideAdd(got);
 }
 // count what was seen, and pay for each seen the first time
@@ -25704,6 +25794,11 @@ const RARE_PIC = {
   goldbow: () => { const rows = [], K = 'roygbv';
     for(let y = 0; y < 9; y++){ let r = ''; for(let x = 0; x < 18; x++){ const b = Math.floor(8.6 - Math.hypot(x - 8.5, (y - 9.5) * 1.1)); r += b >= 0 && b < 6 ? K[b] : '.'; } rows.push(r); }
     return makeSprite(rows, { r:GOLDBOW_COL[0], o:GOLDBOW_COL[1], y:GOLDBOW_COL[2], g:GOLDBOW_COL[3], b:GOLDBOW_COL[4], v:GOLDBOW_COL[5] }); },
+  dblbow: () => { const rows = [], K = 'roygbv';
+    for(let y = 0; y < 13; y++){ let r = ''; for(let x = 0; x < 26; x++){ const q = Math.hypot(x - 12.5, (y - 13.5) * 1.1), b = Math.floor(8.6 - q), b2 = Math.floor(q - 10.6);
+      r += b >= 0 && b < 6 ? K[b] : b2 >= 0 && b2 < 6 ? K[b2].toUpperCase() : '.'; } rows.push(r); }
+    const M = {}; [...K].forEach((k, i) => { M[k] = RAINBOW_COL[i]; M[k.toUpperCase()] = mixC(RAINBOW_COL[i], '#BFD8EC', 0.45); });
+    return makeSprite(rows, M); },
   fog: () => makeSprite(['....t.......t.....', '...ttt..t..ttt....', '..tttttttttttttt..', 'wwwwwww...wwwwwwww', 'tttwwwwwwwwwwwtttt',
     '..ppppppp.pppp....', 'wwwwwwwwwwwwwwww..', '...pppppppppppppp.', '.wwwwwww..wwwwwww.'], { t:'#5E7A68', w:'#E6ECEE', p:'#C2CCD2' }),
   meteor: () => makeSprite(['.................W', '...............WH.', '.............HB...', '...........BB.....', '........bBB.......',
@@ -25717,6 +25812,9 @@ const GUIDE_PIC = {
   hawk: [['.............', '.....bwb.....', '..bbbwwwybb..', '.bb...t...bb.', 'B...........B'],
     { b: '#7A5A3A', B: '#4A3424', w: '#E8DCC8', t: '#A8603A', y: '#D8B040' }],
   fish: [['....ss....', '..sssssk..', 'tssSSSsss.', '.t.sssss..', '....s.....'], { s: '#8AA8B8', S: '#C8D8E0', k: '#101010', t: '#6A8898' }],
+  glowworm: [['..........', '.bbbbbbYy.', 'bbBbBbbYYy', '.b.b.b.yy.'], { b: '#5A4A38', B: '#7A6650', Y: '#EEFFB0', y: '#A8E048' }],
+  moth: [['ww....ww', 'wWw..wWw', 'wWWbbWWw', '.wWbbWw.', '..w..w..'], { w: '#B8A888', W: '#EDE2C4', b: '#6A5A44' }],
+  luna: [['.gg.....gg.', 'gGGg.b.gGGg', 'gGoGgbgGoGg', '.gGGgbgGGg.', '..gGgbgGg..', '...g.b.g...', '...g...g...', '..g.....g..'], { g: '#6EC07E', G: '#C4F2C0', o: '#E0A050', b: '#F4F0DC' }],
   geese: [['g.........', '.g......g.', '..g....g..', '...g..g...', '....gg....'], { g: '#5A5048' }]
 };
 function guideUrl(id){
@@ -27619,7 +27717,7 @@ const DEV = {
       + row('Conditions', b('reroll', 'DEV.chaos()') + b('fair', 'DEV.weather(0)') + b('crosswind', 'DEV.weather(1)') + b('night', 'DEV.weather(3)'))
       + row('Frost · ' + (FROST_FORCE === null ? 'by the clock' : FROST_FORCE ? 'on' : 'off'), b('on', 'DEV.frost(1)') + b('off', 'DEV.frost(0)') + b('by the clock', 'DEV.frost(null)'))
       + row('Golden animal' + (GOLD_FORCE !== null ? ' \u00b7 waiting' : ''), b('this hole', 'DEV.gold(1)') + b('next hole with one', 'DEV.gold()'))
-      + row('Rare weather', b('rainbow hole', 'DEV.rare(\'rainbow\')') + b('gold rainbow', 'DEV.rare(\'goldbow\')') + b('fog hole', 'DEV.rare(\'fog\')') + b('shooting star now', 'DEV.meteor()'))
+      + row('Rare weather', b('rainbow hole', 'DEV.rare(\'rainbow\')') + b('gold rainbow', 'DEV.rare(\'goldbow\')') + b('double rainbow', 'DEV.rare(\'dblbow\')') + b('fog hole', 'DEV.rare(\'fog\')') + b('shooting star now', 'DEV.meteor()'))
       + row('December lights · ' + (LIGHTS_FORCE === null ? 'by the date' : LIGHTS_FORCE ? 'on' : 'off'), b('on', 'DEV.lights(1)') + b('off', 'DEV.lights(0)') + b('by the date', 'DEV.lights(null)'))
       + row('Season touches · ' + (DECOR_FORCE || 'by the season'), DECOR_KINDS.map(k => b(k, 'DEV.decor(\'' + k + '\')')).join('') + b('by the season', 'DEV.decor()'))
       + row('Home season', b('by the card', 'DEV.season(-1)') + b('as built', 'DEV.season(0)')
@@ -27862,8 +27960,8 @@ const DEV = {
   // this hole with a rainbow or a bank of fog (in fair weather), or a
   // shooting star now (at night)
   rare(k){ if(S.chaos && !clearCh(S.chaos.n)) S.chaos = Object.assign({}, B.CHAOS[0]);
-    RAINBOW_FORCE = k === 'rainbow' || k === 'goldbow' ? 1 : 0; FOG_FORCE = k === 'fog' ? 1 : 0; GOLDBOW_FORCE = k === 'goldbow' ? 1 : 0;
-    try{ Scene.newHole(S.hole, S.tier); } finally { RAINBOW_FORCE = FOG_FORCE = GOLDBOW_FORCE = null; } hideSheet(); },
+    RAINBOW_FORCE = k === 'rainbow' || k === 'goldbow' || k === 'dblbow' ? 1 : 0; FOG_FORCE = k === 'fog' ? 1 : 0; GOLDBOW_FORCE = k === 'goldbow' ? 1 : 0; DBLBOW_FORCE = k === 'dblbow' ? 1 : 0;
+    try{ Scene.newHole(S.hole, S.tier); } finally { RAINBOW_FORCE = FOG_FORCE = GOLDBOW_FORCE = DBLBOW_FORCE = null; } hideSheet(); },
   meteor(){ if(!Scene.night){ S.chaos = Object.assign({}, B.CHAOS.find(x => x.n === 'Night Round')); Scene.newHole(S.hole, S.tier); }
     Scene.meteorT = Scene.t + 0.3; hideSheet(); },
   lights(v){ LIGHTS_FORCE = v; hideSheet(); },

@@ -57,7 +57,7 @@ module.exports = {
         SEASON_FORCE = 1; play(h0); for (let i = 0; i < 4000 && !S.guide.geese; i++) { Scene.t += 0.5; Scene.drawFlock(); } SEASON_FORCE = -1;
         // the rare weather: a rainbow and a fog bank as the hole is laid, a
         // shooting star as it is drawn
-        RAINBOW_FORCE = 1; GOLDBOW_FORCE = 0; play(h0); GOLDBOW_FORCE = 1; play(h0); GOLDBOW_FORCE = null; RAINBOW_FORCE = null; FOG_FORCE = 1; play(h0); FOG_FORCE = null;
+        RAINBOW_FORCE = 1; GOLDBOW_FORCE = 0; play(h0); GOLDBOW_FORCE = 1; play(h0); GOLDBOW_FORCE = 0; DBLBOW_FORCE = 1; play(h0); DBLBOW_FORCE = null; GOLDBOW_FORCE = null; RAINBOW_FORCE = null; FOG_FORCE = 1; play(h0); FOG_FORCE = null;
         play(h0, 'Night'); Scene.draw(0, derive()); Scene.meteorT = Scene.t - 0.2; Scene.drawMeteor(Scene.b); Scene.meteorT = undefined;
         const miss = GUIDE.filter(g => !S.guide[g.id]).map(g => g.n);
         if (miss.length) f('never spotted: ' + miss.join(', '));
@@ -78,7 +78,7 @@ module.exports = {
         S.guide = [1]; migrate(); if (S.guide !== undefined) f('a list for the guide was kept');
       } finally {
         DECOR_FORCE = null; SEASON_FORCE = -1; FROST_FORCE = null; HOUR_FORCE = null; OFFLINE = false;
-        RAINBOW_FORCE = null; FOG_FORCE = null; GOLD_FORCE = null; GOLDBOW_FORCE = null;
+        RAINBOW_FORCE = null; FOG_FORCE = null; GOLD_FORCE = null; GOLDBOW_FORCE = null; DBLBOW_FORCE = null; LUNA_FORCE = null;
         Object.keys(S).forEach(k => delete S[k]); Object.assign(S, JSON.parse(SNAP)); hideSheet(); startHole();
       }
       return o;

@@ -6,6 +6,8 @@
  *     day, a fog bank rarer; neither ever on a wet or night round, fog never
  *     with a rainbow or Golden Hour; laid on a hole, neither at night or in
  *     the rain even when forced; none with the player's clock making it night
+ *   - one rainbow in twenty is double (a second, fainter bow outside),
+ *     never golden as well, and takes more of the sky than a single one
  *   - the rainbow is in the sky only: the frame with it against the same
  *     frame without, every changed pixel above the horizon (none on the
  *     field, nor copied down onto it by the blend at the horizon), faint,
@@ -61,16 +63,29 @@ module.exports = {
         // one rainbow in ten is golden, from the hole's hash
         { let n = 0; for (let h = 1; h <= 20000; h++) if (goldbowAt(h)) n++; o.gb = n / 20000;
           if (o.gb < 0.08 || o.gb > 0.12) f('a golden rainbow on ' + (o.gb * 100).toFixed(1) + '% of rainbows, not about 10%'); }
+        // and one in twenty double, never golden as well
+        { let n = 0; for (let h = 1; h <= 20000; h++) if (dblbowAt(h)) n++; o.db = n / 20000;
+          if (o.db < 0.04 || o.db > 0.06) f('a double rainbow on ' + (o.db * 100).toFixed(1) + '% of rainbows, not about 5%');
+          RAINBOW_FORCE = 1; let both = 0, dbl = 0; const hs = S.hole; for (let h = hs; h < hs + 400; h++) { play(h); if (Scene.dblbow) dbl++; if (Scene.dblbow && Scene.goldbow) both++; } RAINBOW_FORCE = null;
+          if (both) f(both + ' rainbows both golden and double'); if (!dbl) f('no double rainbow in 400 rainbows'); }
         const h0 = S.hole;
         for (const ci of [0, 3, 6]) {
           DEV.course(ci); hideSheet(); const hh = S.hole;
-          for (const at of [0, 0.5]) {
+          for (const at of [0, 0.5, 0.25]) {
             RAINBOW_FORCE = 0; play(hh); Scene.camD = LEN * at; Scene.walkTo = Scene.camD; Scene.t = 2; Scene.draw(0, D); Scene.draw(0, D); const b = grab();
             const sky0 = Scene.sky.getContext('2d').getImageData(0, 0, Scene.sky.width, Scene.sky.height).data;
             // (the golden rainbow half way down: the same arc in gold)
-            RAINBOW_FORCE = 1; GOLDBOW_FORCE = at ? 1 : 0; play(hh); Scene.camD = LEN * at; Scene.walkTo = Scene.camD; Scene.t = 2; Scene.draw(0, D); Scene.draw(0, D); const a = grab();
-            if (at && !Scene.goldbow) f('the golden rainbow did not come when forced');
-            RAINBOW_FORCE = null; GOLDBOW_FORCE = null;
+            // (and the double a quarter of the way: a second, fainter bow
+            // outside the first, more of the sky than the single one)
+            const dbl = at === 0.25, view = () => { play(hh); Scene.camD = LEN * at; Scene.walkTo = Scene.camD; Scene.t = 2; Scene.draw(0, D); Scene.draw(0, D); return grab(); };
+            let one = null;
+            if (dbl) { RAINBOW_FORCE = 1; GOLDBOW_FORCE = 0; DBLBOW_FORCE = 0; one = view(); }
+            RAINBOW_FORCE = 1; GOLDBOW_FORCE = at === 0.5 ? 1 : 0; DBLBOW_FORCE = dbl ? 1 : 0; const a = view();
+            if (at === 0.5 && !Scene.goldbow) f('the golden rainbow did not come when forced');
+            if (dbl && !Scene.dblbow) f('the double rainbow did not come when forced');
+            RAINBOW_FORCE = null; GOLDBOW_FORCE = null; DBLBOW_FORCE = null;
+            if (one) { let n1 = 0, n2 = 0; for (let i = 0; i < a.length; i += 4) { if (one[i] !== b[i] || one[i + 1] !== b[i + 1] || one[i + 2] !== b[i + 2]) n1++; if (a[i] !== b[i] || a[i + 1] !== b[i + 1] || a[i + 2] !== b[i + 2]) n2++; }
+              o.dblPx = [n1, n2]; if (n2 < n1 * 1.4) f(B.COURSE[ci].id + ': the double rainbow took ' + n2 + ' pixels to the single one\'s ' + n1); }
             // (and the sky's own picture: nothing of it in the rows by the
             // horizon, which the far hills may not cover and the blend there
             // copies down onto the ground)
@@ -203,6 +218,7 @@ module.exports = {
         // ---- the developer menu ----
         {
           S.chaos = ch('Crosswind'); DEV.rare('rainbow'); if (!Scene.rainbow) f('the menu\'s rainbow hole has none');
+          DEV.rare('dblbow'); if (!Scene.rainbow || !Scene.dblbow) f('the menu\'s double rainbow hole has none');
           DEV.rare('fog'); if (!Scene.fog || Scene.rainbow) f('the menu\'s fog hole: fog ' + Scene.fog + ', rainbow ' + Scene.rainbow);
           if (RAINBOW_FORCE !== null || FOG_FORCE !== null) f('the menu left the weather forced');
           play(h0, 'Fair'); DEV.meteor(); const t = Scene.t; Scene.t = t + 0.5; const M = Scene.meteorNow(); Scene.t = t;
@@ -211,7 +227,7 @@ module.exports = {
           Scene.meteorT = undefined;
         }
       } finally {
-        window.step = keep; RAINBOW_FORCE = null; FOG_FORCE = null; LIGHTS_FORCE = null; HOUR_FORCE = null; FROST_FORCE = null; QUIET = false; OFFLINE = false;
+        window.step = keep; RAINBOW_FORCE = null; FOG_FORCE = null; GOLDBOW_FORCE = null; DBLBOW_FORCE = null; LIGHTS_FORCE = null; HOUR_FORCE = null; FROST_FORCE = null; QUIET = false; OFFLINE = false;
         Scene.meteorT = undefined; delete S.dgnRun;
         Object.keys(S).forEach(k => delete S[k]); Object.assign(S, JSON.parse(SNAP)); hideSheet(); startHole();
       }
@@ -224,8 +240,8 @@ module.exports = {
     await page.waitForTimeout(300);
     const s = await one();
     if (s.fails.length) throw new Error('on its side: ' + s.fails.join('\n'));
-    return [r.rates.join('; ') + '; none on a wet or night round, fog never with a rainbow or Golden Hour; ' + (r.gb * 100).toFixed(1) + '% of rainbows golden',
-      'the rainbow: ' + r.rb + '/' + s.rb + ' pixels upright/on its side, all above the horizon, at most ' + r.rbMax + ' off the sky',
+    return [r.rates.join('; ') + '; none on a wet or night round, fog never with a rainbow or Golden Hour; ' + (r.gb * 100).toFixed(1) + '% of rainbows golden, ' + (r.db * 100).toFixed(1) + '% double (never both)',
+      'the rainbow: ' + r.rb + '/' + s.rb + ' pixels upright/on its side, all above the horizon, at most ' + r.rbMax + ' off the sky; a double ' + r.dblPx[1] + ' to a single\'s ' + r.dblPx[0],
       'the star: ' + r.stars + ' in ten minutes, ' + r.gaps + 's apart, ' + r.starPix + ' pixels drawn alone, all in the upper sky; ' + r.starFrame + ' in the frame; none by day or in a wager',
       'the fog: its thickest row changed by ' + r.fog.join('/') + ' a pixel from the tee, a quarter and half way (a rise in front can hide it); none under the ground in front, in the upper sky or over a nearer tree (' + r.fogNear + ' pixels of them); none on a signature hole',
       'the Field Guide: the rainbow and fog as laid, the star as drawn, none by day, away or in a wager; the menu\'s buttons work'];
