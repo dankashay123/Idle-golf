@@ -28,7 +28,9 @@
  *   - the shop lists every look exactly once across its four racks (Golfer,
  *     Caddie, Clubs, Balls, picked along the top), each with its own picture
  *   - every trail and ball can be seen: one in flight has to paint at least
- *     fifteen times the pixels the plain ball does, and draw in under 0.5ms.
+ *     fifteen times the pixels the plain ball does, and cost no more than
+ *     one and a half plain golfers to draw (timed against a fixed 0.5ms,
+ *     it failed two runs in three on a busy machine).
  *     It was four times at first, and the Rubber Duck -- a small duck and a
  *     few blue dots -- passed at 10.7x while being hard to spot; with a wake
  *     under it the faintest look is 27x.
@@ -140,7 +142,29 @@ module.exports = {
               Scene.b.clearRect(0, 0, VW, VH); Scene.t = 2 + u; Scene.drawBalls(0); n += painted();
             }
             o.paint[d.id] = n / 3;
-            o.tcost[d.id] = timed(200, () => { Scene.balls.forEach(b => { b.t = b.dur * 0.3; }); Scene.t += 0.016; Scene.drawBalls(0); });
+          }
+          // Each trail's cost against the plain golfer, drawn in turn: forty
+          // frames of him, then forty of the ball, seven times over, and the
+          // middle ratio. Timed alone against a fixed 0.5ms, the trails failed
+          // two runs in three on a busy machine (a different one each time,
+          // the same code passing at 0.3ms when quiet). The plain ball is too
+          // cheap to time against: forty of it fit inside the clock's tick.
+          S.outfit = 'classic'; S.caddie = 'bib'; buildSprites(); Scene.walkOn = false;
+          Scene.fairyMove = null; Scene.fairySay = null; Scene.moveT = 999;
+          const blk = (k, fn) => { const t0 = performance.now(); for (let i = 0; i < k; i++) fn(); return (performance.now() - t0) / k; };
+          const fly = () => { Scene.balls.forEach(b => { b.t = b.dur * 0.3; }); Scene.t += 0.016; Scene.drawBalls(0); };
+          for (const d of B.TRAILS) {
+            S.trail = d.id; Scene.balls.length = 0; Scene.pendingBall = { crit: false, el: null, dmg: 5 };
+            Math.random = () => 0.5; Scene.launch(); Math.random = real;
+            for (let i = 0; i < 20; i++) fly();
+            const rs = []; let ms = Infinity;
+            for (let q = 0; q < 7; q++) {
+              const g = blk(40, () => { Scene.t += 0.016; Scene.drawGolfer(D); });
+              const v = blk(40, fly);
+              rs.push(v / g); ms = Math.min(ms, v);
+            }
+            rs.sort((a, b) => a - b);
+            o.tcost[d.id] = { x: rs[3], ms };
           }
           S.trail = 'plain'; Scene.balls.length = 0;
         }
@@ -276,17 +300,19 @@ module.exports = {
     const faint = Object.entries(r.paint).filter(([k, v]) => k !== 'plain' && !(v >= r.paint.plain * 15));
     if (faint.length) throw new Error('these trails are hard to see: ' + faint.map(([k, v]) => k + ' paints '
       + Math.round(v) + ' pixels').join(', ') + ' against ' + Math.round(r.paint.plain) + ' for the plain ball; a look has to be at least fifteen times that');
-    const tslow = Object.entries(r.tcost).filter(([, v]) => v > 0.5);
-    if (tslow.length) throw new Error('trails over 0.5ms a ball: ' + tslow.map(([k, v]) => k + ' ' + v.toFixed(2) + 'ms').join(', '));
+    // the dearest trail draws about 0.9 of the plain golfer; one made 0.4ms
+    // dearer goes past one and a half
+    const tslow = Object.entries(r.tcost).filter(([, v]) => v.x > 1.5);
+    if (tslow.length) throw new Error('trails over one and a half plain golfers a ball: ' + tslow.map(([k, v]) => k + ' ' + cost(v)).join(', '));
     const worst = Object.entries(r.cost).sort((a, b) => b[1].x - a[1].x)[0];
     const dim = Object.entries(r.paint).filter(([k]) => k !== 'plain').sort((a, b) => a[1] - b[1])[0];
-    const tw = Object.entries(r.tcost).sort((a, b) => b[1] - a[1])[0];
+    const tw = Object.entries(r.tcost).sort((a, b) => b[1].x - a[1].x)[0];
     return ['every effect skin and ball draws something its colours alone do not',
       'dearest per frame ' + worst[0] + ' at ' + cost(worst[1]) + ' (budget fifteen)',
       'every look strides when he walks, the caddie beside him; dearest walking '
         + Object.entries(r.walkCost).sort((a, b) => b[1].x - a[1].x)[0].map((v, i) => i ? cost(v) : v).join(' at '),
       'every trail and ball at least 15x the plain ball on screen (faintest ' + dim[0] + ' at '
-        + (dim[1] / r.paint.plain).toFixed(1) + 'x), dearest ' + tw[0] + ' at ' + tw[1].toFixed(2) + 'ms a ball',
+        + (dim[1] / r.paint.plain).toFixed(1) + 'x), dearest ' + tw[0] + ' at ' + cost(tw[1]) + ' a ball (budget one and a half)',
       'nothing drawn behind him: ' + behind.frames + ' frames of flight, the lowest ' + (-behind.worst) + 'px above his feet',
       '"Try it" wears a look for ten seconds, spends nothing, saves nothing, and takes it off',
       'the Style tab lists all ' + r.want + ' looks once across its racks (' + r.cats.join(', ') + '), each with its own picture',
