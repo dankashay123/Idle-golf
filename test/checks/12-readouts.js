@@ -145,6 +145,9 @@ module.exports = {
         const snap = JSON.stringify(S);
         const run = (setup, hours) => {
           Object.keys(S).forEach(k => delete S[k]); Object.assign(S, JSON.parse(snap));
+          // (everything in the Field Guide seen already: the hole he comes
+          // back to pays for a first sighting, which is not the dailies')
+          S.guide = Object.fromEntries(GUIDE.map(x => [x.id, 1]));
           setup(); const g = S.gold, sov = S.sov || 0;
           S.t = Date.now()/1000 - (hours || 12) * 3600; offline();
           try { hideSheet(); } catch (e) {}
