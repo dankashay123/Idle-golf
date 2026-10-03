@@ -8923,7 +8923,8 @@ function matchedCard(D){
 // his highest, when that is lower). The repeating honours, the rival, the
 // series, the caddie's gifts and the finds by the tee pay only here: they
 // paid the same on any card, and Card I runs about fifty events an hour.
-function fairCard(D){ return (S.tier || 0) >= Math.min(S.tierMax || 0, matchedCard(D || derive()) - 1); }
+// (written as "not below", so a stat the weather leaves unread counts as fair)
+function fairCard(D){ return !((S.tier || 0) < Math.min(S.tierMax || 0, matchedCard(D || derive()) - 1)); }
 // A Tour Card's reward, the first time that card is ever reached: a
 // retirement lowers the highest card, and climbing back paid every one again.
 function cardPay(){

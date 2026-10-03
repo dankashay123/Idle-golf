@@ -21,7 +21,8 @@ module.exports = {
         const id = caddieNow().id, at = k => { S.bond = S.bond || {}; if (k) S.bond[id] = B.BOND[k - 1].v; else delete S.bond[id]; };
         // the odds, at each step of the bond, over many holes
         const N = 6000, rate = (k, d) => { at(k); let n = 0; const keep = JSON.stringify(S);
-          for (let h = 1; h <= N; h++) if (caddieGift(h, d)) n++;
+          // (the day's cap of ten (exploits) lifted, to read the odds alone)
+          for (let h = 1; h <= N; h++){ S.giftDay = undefined; if (caddieGift(h, d)) n++; }
           Object.keys(S).forEach(x => delete S[x]); Object.assign(S, JSON.parse(keep)); return n / N; };
         o.close = rate(4, -1); o.insep = rate(5, -2);
         if (o.close < 1 / 35 || o.close > 1 / 18) f('one birdie in ' + (1 / o.close).toFixed(1) + ' at Close');
@@ -36,7 +37,7 @@ module.exports = {
         // what it gives, and the line
         { let sov = 0, tick = 0, lo = 99, hi = 0, tlo = 99, thi = 0; S.tickets = 0;
           for (let h = 1; h < 3000; h++) {
-            const s0 = S.sov || 0, t0 = S.tickets || 0, g0 = S.gifts || 0;
+            const s0 = S.sov || 0, t0 = S.tickets || 0, g0 = S.gifts || 0; S.giftDay = undefined;
             if (!caddieGift(h, -1)) continue;
             if ((S.gifts || 0) !== g0 + 1) f('a gift not counted');
             const ds = (S.sov || 0) - s0, dt = (S.tickets || 0) - t0;
@@ -59,7 +60,7 @@ module.exports = {
           S.hole = h; S.scores = []; startHole(); hideSheet();
           const i = B.SCORE.findIndex(s => s.d === -1);
           S.doneT = (B.SCORE[i].r + B.SCORE[i - 1].r) / 2 * S.parTime;
-          const g0 = S.gifts || 0; finishHole(derive());
+          const g0 = S.gifts || 0; S.giftDay = undefined; finishHole(derive());
           if ((S.gifts || 0) !== g0 + 1) f('a birdie on hole ' + h + ' gave no gift');
           S.doneT = null; }
         // the bond row on the way to Close
