@@ -29,11 +29,26 @@ you to").
   done, and screenshot it yourself.
 - **Use the game's own words.** Clubs are *scrapped* (not salvaged); the
   legacy finds are *heirlooms*; the medal on the course opens the *Trophy
-  Room*. Row titles are Title Case.
+  Room*. Row titles are Title Case. Tour Cards are plain numbers
+  ("Card 23"), never Roman numerals, anywhere.
 - **Ask when a request can be read two ways**, but act on the likely reading
-  when the user has asked for action, and say which reading you took.
+  when the user has asked for action, and say which reading you took. Where
+  a change leaves a real choice (how hard to cut a reward, which look),
+  show a short plain proposal and let him pick.
 - **End a finished task ready for "What's next?"**: the user usually asks it.
-  Answer with a short plain menu and a recommendation (ideas in `HANDOFF.md`).
+  Answer with a short plain menu and a recommendation (ideas in `HANDOFF.md`
+  §8). He turned down a photo mode, a weather forecast and fireworks:
+  don't offer them again.
+- **Getting things takes a while, "but not so long people lose
+  interest".** The target for a free player: a full Mythic set in about
+  six weeks at an hour a day. No wall below Card 200 to 250 (a golfer
+  with everything maxed walls at Card 222), and nothing game-breaking even
+  at max: every heirloom has a top. Think as a free player before changing
+  anything that pays, and simulate one.
+- **The developer menu is for a developer copy only**: this computer, a
+  file, or a phone that has once opened the game with `?dev` on its
+  address (the user's phone needs that once). Anyone else holding the
+  course name gets nothing, and old `MM1` save codes load only there.
 - **New scenery must never show through the ground or float.** The user
   looks closely and asked for "no clipping anywhere and no visual bugs".
   Screenshot every new thing on the course from several places down the
@@ -67,11 +82,14 @@ you to").
   Blossom passed its checks and looked cluttered (it has since been
   replaced by The Void, which the user wanted "bulkier" and full body).
   Then look at it at the checks' size too (about 30 pixels, rule 57).
-- **A skin from the user's pictures follows the pictures.** The Divine is
-  a celestial monk and shows no skin ("obviously no skin showing": a gold
-  mask, jade gauntlets); The Void, the Demonic and the Ascended each
-  follow theirs. When one is restyled, the whole set goes with it: the
-  caddie, driver, wake, ball, cup moment, blessing and shop tiles.
+- **A skin from the user's pictures follows the pictures**, the latest
+  one he sent. The Divine is a celestial monk and shows no skin
+  ("obviously no skin showing": a long-nosed crimson mask, a gold crown,
+  jade gauntlets); The Void, the Demonic and the Ascended (a hooded
+  star-walker with great feathered wings) each follow theirs. The Dread
+  and Psychedelic he named and described. When one is restyled, the
+  whole set goes with it: the caddie, driver, wake, ball, cup moment,
+  blessing and shop tiles.
 - **His address stance is the user's picture**: tall, legs straight and
   together, not leaning far over. Anything anchored to him moves with it
   (rule 58).
@@ -106,7 +124,7 @@ check whose name contains `<name>` (only the first name given counts).
 
 Setup: `npm install --no-save playwright@1.56.1` (it matches the Chromium
 already installed; never run `playwright install`). A full run takes about
-ten minutes, so start it in the background. Don't write a new check file or
+thirty-five minutes, so start it in the background. Don't write a new check file or
 edit `index.html` while a full run is going (it reads both as it reaches
 them): run the suite on a copy of the repo in the scratchpad if you want to
 keep working, and never `pkill -f "node test/run.js"` from a command that
@@ -120,9 +138,11 @@ Rules that have cost real time here:
 - **`chaosFor` and `courseElFor` hash on the tier.** Comparing two tiers
   silently compares two different weather sequences. Pin the weather on both
   sides of any before/after.
-- **Some regular courses follow the real month's season.** A change to
-  seasons or colours can pass today and fail in December: run the suite with
-  the month pinned to each season (`HANDOFF.md` §4, rule 20).
+- **Some regular courses follow the real month's season**, and some things
+  follow the date (December's lights, carved pumpkins from 24 October,
+  the Check-In's month). A change can pass today and fail in December: run
+  the suite with the month pinned to each season (`HANDOFF.md` §4, rules
+  20 and 70).
 - **Frost follows the player's own clock** (5 to 11 on a cold course).
   After touching it, run the suite with `HOUR_FORCE` pinned to 8 and to 15
   in a copy of the game.
@@ -153,6 +173,14 @@ Rules that have cost real time here:
   and a phone's slow frame ended holes before the putt (`HANDOFF.md` §4,
   rule 43).
 
+- **Try every reward at its top and with the clock moved.** Heirlooms
+  compounded free to 250 levels and one paid 1e44 times the purse; moving
+  the clock forward and back paid thousands of sovereigns. Play a golfer
+  with everything maxed and a clock moved both ways (`heirlooms`,
+  `exploits`; `HANDOFF.md` §4, rules 66 and 67). The harness runs on
+  localhost, a developer copy: a check of what a player sees sets
+  `DEV_OFF = true`.
+
 - **Things far off are placed by true scale and anchored to a grid**, or
   they shimmer as he walks; anything laid over the far field is cut where
   the trees stand (`HANDOFF.md` §4, rules 60 and 61). Run the suite with
@@ -168,6 +196,10 @@ bug does. Pin the clock and the date, then sweep them to find the real case
 New things on the course are laid from a hash (`Scene.layNight`, tagged
 `extra`), never from the hole's own `rnd`: changing how many numbers a hole
 draws moves its hills and everything after them. `nightholes` holds it.
+Something rare (a golden animal) is rolled from a hash once the hole is
+laid and only flags what is there (`golden`). Rewards for seeing things
+(the Field Guide, finds, the Golden Hour's sovereigns) are paid live only:
+never away, in a catch-up or in a wager.
 
 Every new check gets a negative test: break the game on purpose, watch the
 check fail, put it back. `HANDOFF.md` §4 has the harness and its gotchas;

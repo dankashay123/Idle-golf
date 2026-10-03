@@ -1,69 +1,81 @@
 # Handoff — Mythic Mulligan
 
-Last updated 2026-09-28 on `main`. Read this with
+Last updated 2026-10-03, on the session branch
+`claude/project-thread-f1ma10` (pushed to `main`). Read this with
 `CLAUDE.md`, which holds the standing rules. `test/README.md` says what each
-check is for.
+check is for, and is the most detailed record of what each feature does.
 
 ---
 
 ## 1. Where things stand
 
-- Everything is committed and pushed to `main` (mirrored on the session
-  branch `claude/notes-review-nxyd70`). Nothing is half-built and **no
-  request is waiting**: the last one (cup moments for more balls) is done.
-- `node test/run.js` has **90 checks** (about ten minutes; the newest are
-  `steady`, `treehaze`, `forestfront`, `grounded`, `sandholes` and
-  `ballrest`). Run it with the machine quiet: screenshots taken alongside
-  pushed `render`'s ground pass past its budget once. Frost follows the
-  real hour: after touching weather or colours, run it with `HOUR_FORCE`
-  pinned to 8 and to 15 in a copy (`CLAUDE.md`).
+- Everything is committed. Nothing is half-built and **no request is
+  waiting**: the last one (a golden rainbow) is done.
+- `node test/run.js` has **125 checks** (about 35 minutes now;
+  start it in the background). The newest:
+  `decor`, `guide`, `rivalseries`, `critters`, `checkin`, `teefinds`,
+  `courserecords`, `caddiegift`, `lights`, `rareweather`, `exploits`,
+  `heirlooms`, `golden`, `goldmountain`. Run it with the machine quiet.
+  Frost follows the real hour, the seasons and December's lights the real
+  month: after touching weather, colours or anything dated, run it with
+  `HOUR_FORCE` pinned to 8 and to 15 and the month pinned (§4 rule 20) in
+  a copy (`CLAUDE.md`).
 - **Only update this file and `CLAUDE.md` when the user asks.**
+- **One check is unsteady**: `skins` fails about two runs in three, alone
+  or in the full run, on its trails' budget of 0.5ms a ball (a different
+  trail each time: Ascension, Event Horizon, Soul Wake, Kaleido, Aurora at
+  0.55 to 0.69ms). The other 124 passed on 3 October. It times wall clock
+  against a fixed budget; time the trails against the plain ball, as the
+  skins already are (§4 rules 17 and 28), or make the dear ones cheaper.
+  Fix it first thing.
 - Answered, in case it comes up again: **swing speed** still matters fully
   (a hole's time is when the ball drops, and the walk is paid in that
-  time); **Fast Walker** only shortens the least time a hole can take
-  (0.9s). **Every caddie look with an effect already has a trick of its
-  own** (16 of them, `FAIRY_MOVES`): the Divine soars, the Demonic blazes.
-  I offered "a trick for the Divine and Demonic caddies" by mistake; don't
-  offer it again. **Dawn and Dusk is already built** (a setting, off by
-  default, `dawnDusk`); I offered it as new by mistake once too.
+  time); **Fast Walker** only shortens the least time a hole can take.
+  **Every caddie has a trick of its own** (`FAIRY_MOVES`; the plain ones
+  too, since 2 October): don't offer caddie tricks. **Dawn and Dusk is
+  already built** (a setting, off by default, `dawnDusk`). **Golden Hour
+  is the gold mountain hole**: one thing, one hole in 100.
 
 ### Recent work (sections in §5)
 
-- This session, newest first: **sovereigns a purple gem everywhere**
-  (the corner had a gold shield, the shop purple packs; after the user's
-  picture) and the gem beside its price, not under it; **names of our own
-  for events taken from real ones** (The Maestro and its purple Maestro
-  Jacket, the Crown Jacket, The Summit Championship, The Wisteria
-  Invitational, The Heathland Invitational, The Lagoon Open, Lantern Bay
-  Links); **the Style racks and the Honours list shorter**; **the menus
-  trimmed** (one line where there were two, nothing lost); **the ball
-  lying goes down before him** (it showed through him as he walked up)
-  and the putt in front of him as it is struck; **every ball lying is a
-  lit ball**, the dear ones with something going round them (the Divine's
-  a ribbon of jade and one of gold); **the four sets' cup moments richer**
-  at the same pace; **cup moments for every ball and wake** but the plain
-  one (the cheaper balls, the plain wakes, the Jade and Hellfire Wakes
-  playing their sets'); **the far ranges slide a little as the hole
-  bends**; **the far trees steady** as he walks (they shook); **no fog
-  through the far trees** and **no brown lines through the forest**
-  (things beyond a tree showed through it); oaks on the ground; no dots of
-  turf through sand and water; stones, fish and fireflies whole at the
-  river.
-- Before that: another hole's flag hidden behind the forest; the Divine
-  reworked as a celestial monk; the address stance after the user's
-  picture; a set wears its ball; legs as wide as the torso; the wave at
-  the train; the woods as trees; the Demonic reworked; everyone built out
-  from his own picture; Unequip; nine pin positions; an ace played from
-  the tee; the course round the hole.
-- **Turned down**: a station on the railway ("would take up too much
-  time"); **a photo mode** and **trail flourishes**. Don't offer them again.
+- **This session** (3 October), newest first: a **golden rainbow** (one
+  rainbow in ten, its own Guide entry); **the Golden Hour hole** (gold
+  falling, coin piles down the fairway, the green on a mountain of coins
+  he flies up, a gold flag, sovereigns round the green; 10 sovereigns and
+  a ticket, live only); **golden animals** (12 kinds, about one hole in 170
+  of those a kind is on); **the heirloom rebalance** (a top for each,
+  levels past 30 a fixed step, steeper prices, a wall at Card 222, the
+  wager pair to 20); **Tour Cards as plain numbers**; **44 icons
+  redrawn**; **the heirloom reveal** and retirement legacy +30%; **the
+  economy review** (slower repeating honours, fair-card pay, a Tour Card
+  paid once, the clock never running back, the developer menu and old
+  save codes only in a developer copy, checked save codes); **December
+  lights** and **rare weather** (rainbow, fog bank, shooting star); **the
+  Daily Check-In**; **finds by the tee**, **course records** and **caddie
+  gifts**; **20 animals** and **golfers on the next holes**; **the Field
+  Guide**, **season decor** and **the season's rival series**. Before
+  those, the same day: the final-day gallery, club mastery, the caddie
+  bond and the first Golden Hour (lit gold, paying twice); every sovereign
+  reward +30%; the away card's stage.
+- **The session before** (1 and 2 October; its notes were never written,
+  so they are in §5 now): the Ascended (a hooded star-walker with great
+  feathered wings), The Void, the Demonic and the Divine each redrawn after
+  new pictures; two new Mythic sets, **The Dread** and **Psychedelic**;
+  finer cloth on every skin; the great caddies' own blessings; the
+  showcases on the Sets, Golfer, Caddie, Clubs and Balls racks; a **female
+  golfer**; his and her ace celebrations and poses; night courses with a
+  moon and the Milky Way; snow footprints, ball marks and breath; geese
+  and deer; fallen leaves; the user's own shot recordings; Pace of Play;
+  the tee shot's full flight.
+- **Turned down** (don't offer again): a station on the railway, **a
+  photo mode**, trail flourishes, **a weather forecast**, **fireworks**.
 - Older requests are in §6, one line each.
-- **Heard back**: "everything looks great so far" on the far trees and
-  the scenery; "looks fantastic" on the forest. **Not yet heard back on**
-  (ask one when it fits, never as a list): the purple sovereign gem; the
-  balls lying and their ribbons; the richer cup moments; the far ranges
-  turning; the trimmed menus; the reworked Divine and Demonic; the new
-  stance; whether the second music track and the town theme fit.
+- **Heard back**: the Ascended's big wings "extremely good" (and every
+  skin was then brought up to them); the Gilded Card at its top "breaks the
+  game" (now capped). **Not yet heard back on** (ask one when it fits,
+  never as a list): the gold mountain; golden animals and the golden
+  rainbow; the heirloom prices and the wall; the Daily Check-In; the Field
+  Guide; The Dread and Psychedelic; the female golfer.
 - The user usually ends a task by asking **"What's next?"**: a short plain
   menu with a recommendation (§8), then wait for the choice.
 
@@ -73,90 +85,101 @@ check is for.
   Season, Major, Signature) to cut the scrolling; add nothing to it.
 - **The Bag tab** opens on the clubs: a slot bar held at the top, tiles two
   to a row, the sets on their own sub tab (their design, from a picture).
-
 - **Honours stay in the medal** (left column: settings, shop, medal, star).
-  They stopped me putting a trophy back on the right.
+  They stopped me putting a trophy back on the right. The Trophy Room's
+  tabs: Today, Cabinet, Honours, Guide.
 - The right side, from the bottom up: pull tab, then the hole map. The
   wind and weather words are in the readout (top left); where the left
-  column of icons will not fit under it they go in a row.
-- **Strike and cup sounds are turned right down** (strike 0.09, pure 0.12,
-  cup 0.15). Keep them subtle.
+  column of icons will not fit under it they go in a row. The Daily
+  Check-In's calendar sits right of the cog.
+- **The strike, putt and cup are the user's own recordings**, kept
+  subtle, with a Shot Sounds slider in Settings; the cup sound never runs
+  into the next hole.
 - **No more sounds except ambience** (their words: "I don't want anymore
   sounds except ambience"). The crickets and birdsong are ambience. The
   one crowd sound is the grandstand's soft cheer on an event's **last**
   putt ("fine since it's not every hole"); the old applause on every hole
-  stays gone. The Void has no sound of its own. The ambience is by the
+  stays gone. A new skin's moment is silent (the older ones keep
+  their small sounds). The ambience is by the
   course, quiet and now and then: pines, the sea, a stream by the stones,
-  and (the newest) the river at Riverbend with a wader by day, wind over
-  the Moorland and over the Dunes, the lake lapping at an island green.
+  the river at Riverbend, wind over the Moorland and the Dunes, the lake
+  lapping at an island green.
 - **The gallery's jump on an eagle or better** is silent, lasts 1.5s and
-  stops when the next hole starts (it cheered on over the next tee).
+  stops when the next hole starts.
 - **Dawn and Dusk** is off by default. On, it warms the sky by the
   player's clock and makes every hole night from 9pm to 5am (they found
   it light at midnight). It never takes away a course's own night.
 - **The wind and weather words** live inside the readout box, small, in
   the interface's sans serif (not over the map, not in pixel letters).
-- The island crossing (flying on the spinning club) was **their idea**.
-- **The caddie has no wings**: he floats, a little up and down, and now and
-  then takes a turn (spin, dance, flip, wave, loop). Their request. (That
-  is the default fairy. No caddie has wings now: the reworked Demonic's
-  has streamers and a crest, the reworked Divine's ribbons and horns.)
-- **The great-hole effects** (the four Mythic skins' moments and every other
-  skin's flourish) come **only on an albatross or an ace, last half a
-  second, and burst out from his outline close about him**. Nothing climbs
-  the sky. On a fast bag acing every hole the long ones never went away.
+- The island crossing (flying on the spinning club) was **their idea**;
+  the Golden Hour's mountain is flown up the same way.
+- **The plain caddie has no wings**: he floats, a little up and down, and
+  now and then takes a turn (spin, dance, flip, wave, loop). Their
+  request. A caddie in a set's look follows that look (the Ascended's has
+  its wings).
+- **The great-hole effects** (the Mythic skins' moments and every other
+  skin's) come **only on an albatross or an ace, last half a second, and
+  burst out from his outline close about him**. Nothing climbs the sky.
+  On a fast bag acing every hole the long ones never went away. (An ace's
+  column of light from the cup, far off, is the one thing that rises, and
+  it ends with the ace's held second.)
 - **Wings follow his profile**: side on, on his back, at address and
-  through the swing; spread from behind as he walks away. Wings are
-  feathered or membraned, never a solid shape. (No skin draws wings at
-  the moment; `wingPair` stays for one that does.)
-- **The Divine shows no skin** ("obviously no skin showing"): a gold mask,
-  jade gauntlets; `legends` fails on a pixel of him in a skin tone. Its
-  style is the user's two pictures of a celestial monk (white and crimson
-  robes, gold armour, jade, swirling jade and gold energy).
+  through the swing; spread wide from behind as he walks away; feathered
+  or membraned, never a solid shape. The Ascended's are the only wings
+  now (`featherWing` through `wingPair`), big and detailed, as asked.
+- **The Divine shows no skin** ("obviously no skin showing"): since the
+  third picture, a long-nosed crimson mask, a gold crown set with jade,
+  jade gauntlets, a great blue and gold ring behind him; `legends` fails on
+  a pixel of him in a skin tone.
 - **His address stance** is the user's picture: tall, legs straight and
   together, not bowlegged, not leaning far over (`G_ADDR_ROWS`).
 - **A set's one tap wears all five pieces**, the ball included (the ball
   has its own slot, `S.ball`).
 - The word is **scrap**, not salvage; old legacy finds are **heirlooms**.
-- **Everyone is bulkier, and it blends** (over three asks: "make the
-  skins bulkier like the void skin"; then of the dark plate it was:
-  "it just looks like a weird darker outline. I want it to blend well"):
-  every look and caddie is drawn wider from his own picture (his chest,
-  shoulders and legs stretched about his body's middle, `bulkOf`,
-  `bulkRow` in `blitShear`), arms a pixel thicker. Anything new gets it
-  for free; anything laid over him row by row (the Demonic's seams) or
-  hugging his outline (`outlineOf`) must go through `bulkRow` too. Never
-  put a plate or a darker rim behind him again.
-- **Effects are prominent, not faint**: the user found the grounds and the
-  blessing "very faint". Solid pixels, filled, doubled rings; The Void's
-  ground is a void open under him, dark, not a faint galaxy.
-- **The four sets keep one order** on every rack of the Style shop:
-  Ascended, The Void, Divine, Demonic (`SET_ORDER`). The Sets rack buys
-  and wears a set in one tap.
+- **Everyone is bulkier, and it blends**: every look and caddie is drawn
+  wider from his own picture (`bulkOf`, `bulkRow` in `blitShear`), arms a
+  pixel thicker. Never put a plate or a darker rim behind him again.
+- **Effects are prominent, not faint**: solid pixels, filled, doubled
+  rings. The great caddies' blessings are their own; every other caddie's
+  is a plain faint beam in the perk's colour (the user asked for that).
+- **The six sets keep one order** on every rack of the Style shop:
+  Psychedelic, The Dread, Ascended, The Void, Divine, Demonic
+  (`SET_ORDER`). The Sets rack buys and wears a set in one tap.
+- **The female golfer** (a box in Settings) has her own figure, lines and
+  poses; every Legendary and Mythic skin goes down her legs with no bare
+  skin.
 - **An ace is played from the tee** (their words: "the golfer doesn't
   leave the tee box and it just says ACE on the screen, with a super
   quick effect around it ... stay on the hole for 1 second"). Signature
-  holes too: no crossing, no walk, no putt. Every other hole is putted
-  out. **No score is ever still up when a new hole starts.**
-- **The course round the hole**: other holes both sides (mostly), woods,
-  lakes, a cart path running off out of sight, **nothing bare anywhere**,
-  and **no hole seen from the green** (forests, lakes with trees round
-  them). No two greens side by side. The pin moves round nine spots.
+  holes and the Golden Hour too: no crossing, no flight, no walk, no putt.
+  **No score or celebration is ever still up when a new hole starts.**
+- **The course round the hole**: other holes both sides (mostly), with
+  golfers playing them, woods, lakes, a cart path running off out of
+  sight, **nothing bare anywhere**, and **no hole seen from the green**.
+  No two greens side by side. The pin moves round nine spots.
 - **Unequip**: a worn look, caddie, club, ball or set reads UNEQUIP and
   goes back to the plain one.
 - **No names from real events** (the user: "the Masters is extremely
-  protective of their name"). The majors and tournaments, their jackets
-  and the prizes a player wins all have names of our own; the Maestro
-  Jacket is purple. Anything new gets an invented name, never one taken
-  from a real tournament, course or trophy. The ids behind them (`masters`,
+  protective of their name"). The ids behind the old names (`masters`,
   `mjMasters`, `mjClaret`, `sandbelt`) stay so saves carry over.
-- **A sovereign is a purple gem** (the user's picture: a faceted diamond,
-  lit rim, dark inner line, a mark in the middle), the same everywhere: the
-  corner, beside a price, the packs. Its figures are light purple.
+- **A sovereign is a purple gem**, the same everywhere: the corner, beside
+  a price, the packs. Its figures are light purple.
 - **The shop's "Nothing here is charged" notice stays on every tab**, in
-  one line (nothing there may look like it takes a payment).
-- **The far ranges turn only a little** with the hole ("very slightly"):
-  a few pixels at most, none on the tee.
+  one line.
+- **The far ranges turn only a little** with the hole ("very slightly").
+- **Tour Cards are plain numbers** ("Card 23"), never Roman numerals,
+  anywhere (`cardNo`; `heirlooms` fails on a Roman card).
+- **The pace of getting things**: slow for a free player "but not so long
+  people lose interest". The target: a full Mythic set in about six weeks
+  at an hour a day. **No wall below Card 200 to 250**, and **nothing
+  game-breaking even at max** (`heirlooms` plays a golfer with everything
+  maxed: he walls at Card 222).
+- **Rewards for seeing things are paid live only** (the Field Guide, tee
+  finds, golden animals, the Golden Hour's sovereigns): never away, in a
+  catch-up or in a wager, and the repeating ones only on a fair card.
+- **The developer menu** opens only in a developer copy: this computer,
+  a file, or a phone that has once opened the game with `?dev` on its
+  address. The user's own phone needs `?dev` once.
 
 ### Sound and music
 
@@ -164,9 +187,10 @@ check is for.
   context resumed).
 - Music: "Town Theme RPG" by cynicmusic (`rec-music`) by day; "Meadow
   Thoughts" by ecrivain (`rec-music2`, first two minutes) at night and in
-  wagers. Both CC0 from OpenGameArt, mono 40 kbps base64 (the file is
-  ~2.2 MB because of them). Switches: Sound, Music, Night Music; sliders
-  under Sound and Music.
+  wagers. Both CC0 from OpenGameArt, mono 40 kbps base64. The strike, putt
+  and cup (`rec-strike`, `rec-putt`, `rec-cup`) are the user's own files.
+  Switches: Sound, Music, Night Music; sliders under Sound, Music and Shot
+  Sounds (`volRec`).
 - **Sessions cannot listen to audio.** Pick by measuring (spectrograms via a
   static ffmpeg, levels through an OfflineAudioContext) and ask the user.
 
@@ -183,6 +207,17 @@ check is for.
   its unit together (the `nb()` helper puts a hard space between them).
   Anything long goes behind a `?` fold. Row titles are in Title Case, and the
   `titles` check enforces it.
+- **Show proposals, and act on the likely reading.** When a request
+  leaves a real choice (how hard to cut, which of several looks), show a
+  short plain proposal; when they have asked for action, do the likely
+  reading and say which you took. They picked from proposals all this
+  session ("steeper heirloom prices so the room lasts longer").
+- **Think as a free player** for anything that pays. They want things to
+  take a while "but not so long people lose interest" (a full Mythic set
+  in about six weeks at an hour a day), no wall below Card 200 to 250, and
+  nothing game-breaking at max. Simulate a free player before and after a
+  change (`exploits` and `heirlooms` show how), and try every reward at
+  its top and with the clock moved.
 - They sometimes change their mind. For example, they asked to rename the
   "Balls" shelf to "Auras" and then asked for it back. Do what the latest
   message says.
@@ -201,7 +236,7 @@ check is for.
 
 ## 3. The project
 
-- **The whole game is `index.html`** (about 22.6k lines, 2.7 MB with the
+- **The whole game is `index.html`** (about 28.9k lines, 3.2 MB with the
   sounds and the music): markup, CSS and one classic script. There is no
   build step.
 - Play it over http (`npm start`, then http://localhost:8080). Opening the
@@ -225,13 +260,13 @@ Line numbers are approximate and drift. Search for the name instead.
 | Stats | `derive()` |
 | Hole lifecycle | `startHole` → `finishHole` → `advanceHole` → `endTournament` |
 | Course announcement banner | `announceCourse`, `Scene.drawAnnounce` |
-| Tour Cards | `climb`, `eventsToUnlock`, `roundRatio`, `projectedRatio`, `climbLines` |
+| Tour Cards | `climb`, `eventsToUnlock`, `roundRatio`, `projectedRatio`, `climbLines`; a card's holes `cardLen`/`cardOfLen` (`B.TIER_Y` 4 a card to `TIER_K` 100, `TIER_Y2` 2.7 past it); `cardNo` writes a card as a number; `cardPay` pays a card's reward once (`S.cardPaid`) |
 | **The Bag tab** | sub tabs Gear, Sets & Affinities, Shots (`bagSub` 'gear'/'sets'/'shots', `renderBagNav`); `renderBag` (slot bar `#bagGrid`, header `#lkHead` with `#autoEqBtn` and `#scrapBtn`, tiles `#bagList`), `renderBagSets` (`#purseStrip`, `#bagPower`, `#setBox`), the tile `gearTile` (`.gt`, `data-uid`, `.gup` better, `.genh` upgrade level), the sheet's three buttons `.acts3` in `itemSheet`; sticky: `#v-bag #bagNav` and `#bagGrid` (`--bagnav`) |
 | Shop: four tabs, Offers (one-time offers, Double Purse as a wide tile, sovereign packs), Bags, Bench, Style. An old caller asking for `'buy'` gets Offers | `renderShop`, `shopCard` (`wide`), `styleDef`, `styleOwned`, `styleBuy`, `styleTry` |
-| **Trophy Room** (the medal under the shop): Today, Cabinet, Honours; the case's rewards | `trophyRoom(tab)`, `roomToday`, `dailyBlock`, `roomCase`, `honRows`, `collect(id)`, `casePending`, `caseTrack`, `B.CASE`, `S.caseGot`, `roomWaiting` |
+| **Trophy Room** (the medal under the shop): Today, Cabinet, Honours, Guide; the case's rewards | `trophyRoom(tab)`, `roomToday`, `roomGuide`, `dailyBlock`, `roomCase`, `honRows`, `collect(id)`, `casePending`, `caseTrack`, `B.CASE`, `S.caseGot`, `roomWaiting` |
 | Stage buttons (Trophy Room `#roomBtn`, perks, shop, settings, auto-climb): one renderer | `renderStageBtns` (was `renderHonBtn`); markup `#hudLeft` > `#rRow` (readout + `#hudClimb`), `#setBtn`, `#shopBtn`, `#roomBtn`, `#perkBtn`; the map alone on the right at 37% |
 | **Scrapping**: the locker's Scrap button and sheet, auto-scrap on arrival | `scrapSheet`, `scrapKeeps`, `autoScraps`, `autoScrapTop`, `scrapList`, `sparesPastTwo`, `S.autoScrap` (-1 off, else a rarity); applied in `bagAdd` (which now returns whether the club was kept) and in `offline`'s `bagAddOff` |
-| Heirlooms (Career > Legacy). **The code still calls them trophies** (`B.TROPHY`, `S.relic`, `discover`, `trophiesFound`); only the words on screen changed | `renderLegacy` |
+| Heirlooms (Career > Legacy). **The code still calls them trophies** (`B.TROPHY`, `S.relic`, `discover`, `trophiesFound`); only the words on screen changed | `renderLegacy`; each one's top `max` (`trTop`), `TR_KNEE` (30: past it a level adds a fixed step), prices `TR_STEEP`/`TR_LATE`/`TR_POST`, `TR_MAX`; the reveal sheet in `discover` (`.hlm`, `TROPHY_IC`); legacy `legacyFor` (`LEGACY_K` 0.182) |
 | The Career tab's dot for "retiring now finds an heirloom" | `retireWorth` (worked out once a second), `renderXp`, `renderCareer` |
 | Retirement | `retireCard`, `retire` |
 | Offline catch-up (`OFFLINE` flag) | `offline()` |
@@ -260,7 +295,7 @@ Line numbers are approximate and drift. Search for the name instead.
 | **A skin's ground** (drawn before the pin) | `FX.ground` (Divine, Demonic, Ascended); `golferG` (what an effect is told about him), `Scene.golferPose`, `Scene.drawGolferGround` (in the frame, before `drawFlagstick`), `Scene.golferGround`, `groundDone`; `paintGolfer`'s `noGround` |
 | **A moment on an albatross or an ace** (the three top skins, and a flourish for the other eleven) | `Scene.legendGo` (from `happyDance`), `Scene.legend` / `legendNow`, `Scene.flourish` / `flourishNow`, `LEGEND_DUR`, `FLOURISH_DUR` (0.5s), `outBack`; `outlineBurst`, `burstStreak`; `FLOURISH_PIECE`, `FLOURISH`; `Sfx.hellfire`, `ascend`, `choir`, `flourishSnd`, `LEGEND_VOL`; both cleared in `saverOn`; `DEV.legend(d)` (dev menu row Legends) |
 | **A pure strike with the three dearest drivers** | `CLUBFX.divine/demonic/ascended.pure`, `Scene.pure` (set in `Scene.launch`), `pureNow`, `PURE_DUR`; `Sfx.pureSnd` |
-| **The Divine** (a celestial monk, after the user's two pictures) | outfit `divine` (patterns `heaven` and `kneeguard`: the robe's skirt, knee guards; the mask in `skin`, jade gauntlets `hand`, the belt is the sash and his blindfold's eye pixel); `STYLEFX.divine`: `ground` (`jadeSeal`, `wave`), `back` (`ring` behind his head, `hair` side on, `ribbons` far half), `body` (`skirt` from behind, `sash`, `blindfold`, `hair` from behind, `horns` via `sleekHorns(s, view, false, 'jade')` and `HORN_COL.jade`), `front` (`beads` over his far arm, `guards` at shoulder and wrist, `ribbons` near half, `sparks`, the burst); `pose(g)` and `at(g, x, y)` place things in the sprite's own 40x58 pixels; `CLUBFX.divine` (a jade ribbon winding down the shaft); `BALLFX.tSeraph` (the **Jade Wake**: two ribbons twining) and `godlight`; `CUP_FX.godlight`; `ICON_FX.divine`, `BALL_ICON`; the caddie's `soar` drops jade light. `wingPair`/`batWing` are no longer drawn by anyone |
+| **The six great sets** (Mythic: Psychedelic, The Dread, Ascended, The Void; Divine and Demonic are top 1). Each part is a member of `STYLEFX.<id>`, drawn in `ground` (before the pin), `back`, `body` (after him, before his arms) or `front`; `pose(g)`/`at(g, x, y)` place things in the sprite's own pixels | `divine` (a celestial monk, third picture; patterns `heaven`, `kneeguard`): `ring`, `crown`, `nose` (the crimson mask), `hair`, `horns`, `blindfold`, `beads`, `skirt`, `sash`, `guards`, `ribbons`, `sparks`. `demonic` (a demon knight; `hellplate`, `hellfold`): `dais`, `cracks`, `swirl`, `streamers`, `crest`, `fangs`, `skullGuard`, `aura`, `horns`, `eyes`, `veins` (older `wings`, `tail`, `chains`, `skulls` are still defined; read `back`/`front` for what is drawn). `ascended` (a hooded star-walker; `nebula`, `darkplate`): `wings` (`featherWing` through `wingPair`, `FEATHER_PAL`), `feathers`, `cape`, `ears`, `drape`, `mantle`, `eyes`, `gauntlet`, `glitch`, `motes`. `cosmic` (The Void; `filigree`): `hood`, `robe`, `cuff`, `cloak`, `crescent`, `orb`, `pull`, `eye`, `hands`, `rocks`, `glints`. `dread` (`shroud`): `mist`, `wisps`, `halo`, `hood`, `robe`, `cloak`, `scythe`, `lantern`, `eyes`, `souls`, `nightGlow`. `psyche` (`psyswirl`): `glowPaint`, `bubbles`, `beads`, `echoes`, `mandala`, `afro`, `shades`, `orbit`. Their pieces: `FULL_SETS` (wake and ball), `CLUBFX`, `BALLFX`, `CUP_FX`/`CUP_FX2`, `BLESS_FX`, `ICON_FX`, the caddies' tricks in `FAIRY_MOVES` |
 | **A skin in flight** (over the island's lake, the canyon) | `paintHeli` runs the skin's `back`/`front`/`flourish` with a from-behind `golferG` (`g.fly`, `bot` at his boots); what lies round his feet is skipped on `g.fly` (the glows of the Inferno, Frostborn, Stormcaller, Midas, Ghost; the Disco's floor; the peel; the Demonic's pit smoke, tendrils and eruption) |
 | **Night on the ordinary holes** | `Scene.layNight` (props kind 4, a tee lamp; kind 5, a spot of three fireflies; laid from a hash after `layProps`), drawn in `drawProp` only while `night` and not in a wager; `Scene.clubhouse` (baked into the ridge in `buildRidge`, away from the landmark); the flag's halo and light in `pinBody` (`lit`) |
 | **The Mythic Favour** (caddie perk `myth`) | `B.CPERKS` entry with `myth`, `also`; `MYTH_CADDIES`, `mythOk`, `MYTH_PAL`; in `tickCaddie` (waits without a Mythic caddie; `also` buffs), `renderCadPerks` (`locked`), `cperkPick`; the cast `Scene.drawFavour` (from `drawCaddie`, `fairyCast.myth`); icon `cpmyth`; Full Staff counts only the nine ordinary perks |
@@ -272,8 +307,7 @@ Line numbers are approximate and drift. Search for the name instead.
 | **The Hole of the Week run** | `S.hotw = { wk, n }` in `sigScore`, `B.HOTW_RUN`/`HOTW_SOV`, `hotwRun`, `hotwDone`, repaired in `initState`; the Tour band's last row in `renderSigWeek` |
 | **Night on the signature holes** | `Scene.nightLamp`, `drawIsleLights` (from `drawDucks`), `drawFireflies` (from `drawStones`), the lanterns in `drawPier`, the bulbs in `drawBridge` |
 | **The Signature Week** | `S.sigWk`, `sigWeekKinds`, the tally `sigWeek`, honour `sigWk`, `B.SIG_WEEK_SOV`; counted in `sigScore`; the Record's row; the Tour tab's band (`renderSigWeek`, `#sigBox`) |
-| **The Demonic** (reworked after the user's second picture: deep red and orange) | outfit `demonic` (pattern `wraps`, the mask in `skin`, arms `arm`/`arm2`, dark gloves `hand`); `STYLEFX.demonic`: `ground` (pit, `runeRing`, `cracks`, `bubbles`, `eruption`), `back` (smoke, `tendrils`, `swirl` far half, `streamers` side on, the shadow outline, `aura` via `flameAura` with `HELL_FLAME`, embers), `front` (`streamers` from behind, `veins` over the seams, `crest`, `eyes`, `swirl` near half, `fists`, `blast`, the burst, the eruption's near half); `HELL_VEINS` are the seams' glow colours. The old `wings`, `tail`, `horns`, `chains`, `skulls` are still defined but no longer drawn; `sleekHorns` serves the Divine and the Ascended |
-| **The Demonic and the Ascended** (skins, caddies, clubs, trails, balls) | `STYLEFX.demonic`, `STYLEFX.ascended`; baked stamps `fxBake` (with `crispen`, `FXBAKE`), `batWing`, `runeRing`, `drawSkull`, `sleekHorns` (`hornLine`, `HORN_VIEWS`), `voidCape` (`CAPE_PAL`), `voidSigil`, `drawShard`; the aura's `outlineOf` (`occOf`) and `flameAura`; `veinsOf` (the lava cracks' pulse), `eyeAt` (`EYE_ADDR`, `EYE_FIN`, `EYE_CADDIE`), `wingAnchor`, `g.hand` (set in `paintGolfer`), `blitAs` (a copy of him drawn as he is drawn); patterns `wraps` (the Demonic's now; `hellcrack` unused), `voidplate`; the outfit field `hand`; `CLUBFX.demonic`/`ascended`; `BALLFX.tHellfire`, `demoneye`, `tAscension`, `ascorb`, `drawDemonEye`, `demonEye`, `drawVoidOrb`; tiles `ICON_FX`, `BALL_ICON`; the Mythic badge is `top: 2` |
+| **Helpers the great skins share** (some of them from earlier designs, now unused) | `STYLEFX.demonic`, `STYLEFX.ascended`; baked stamps `fxBake` (with `crispen`, `FXBAKE`), `batWing`, `runeRing`, `drawSkull`, `sleekHorns` (`hornLine`, `HORN_VIEWS`), `voidCape` (`CAPE_PAL`), `voidSigil`, `drawShard`; the aura's `outlineOf` (`occOf`) and `flameAura`; `veinsOf` (the lava cracks' pulse), `eyeAt` (`EYE_ADDR`, `EYE_FIN`, `EYE_CADDIE`), `wingAnchor`, `g.hand` (set in `paintGolfer`), `blitAs` (a copy of him drawn as he is drawn); patterns `wraps` (the Demonic's now; `hellcrack` unused), `voidplate`; the outfit field `hand`; `CLUBFX.demonic`/`ascended`; `BALLFX.tHellfire`, `demoneye`, `tAscension`, `ascorb`, `drawDemonEye`, `demonEye`, `drawVoidOrb`; tiles `ICON_FX`, `BALL_ICON`; the Mythic badge is `top: 2` |
 | **The trains** (four kinds) and waving | dev menu: a button per kind by "railway" (`DEV.train(kind)`); `TRAINS`, `trainKind`, the train's `kind` (none is the steam train), picked in `tickRail`; `drawTrain` (by kind), `driverWave`; `Scene.atLine`, `Scene.railWave` (his arm: `paintGolfer`'s last argument `wave`; his caddie's `wave` move); `Sfx.horn`, `Sfx.whistle(t, low, once)`, the toot in `Sfx.tick` (`tootK`) |
 | **Weather on the signature holes** | `Scene.rainRings` (from `ripples`, on the `_rips` rows); snow in `drawBridge`, `drawStones`, `drawPier`, `drawRail`, `drawTrain` (`cap`); the storm in `drawSpray` (`storm`) and the stack's `rock` (breakers); the bridge's `gust` |
 | **Railway Crossing** | `isRail`, `RAIL_FORCE`, `P_RAIL`, `Scene.tickRail`, `railAt`, `railHold`, `railLights`, `drawRail`, `drawTrain`, `RAIL_X`/`RAIL_V`/`RAIL_LEN`/`RAIL_MEET`, `railWait` in the camera code, `Sfx.whistle`/`chuff`/`ding`, `SIG_HOME_ROUND`; `DEV.rail` |
@@ -283,10 +317,9 @@ Line numbers are approximate and drift. Search for the name instead.
 | Island greens in particular | `isIsland`, `ISLE_FORCE`, `Scene.isle` (`bank`, `land`), `Scene.spot`, `Scene.heli`, `B_FLY`, `paintHeli`, `P_LAKE`, the `moat` in `newHole` and `layHazards` |
 | **Battery saver** | `saverOn`, `saverOff`, `saverDue`, `saverDraw`, `saverStats`, `saverFrame`, `saverClub`, `SAVER`, `S.saver`, `SAVER_AUTO`, `touchedAt`; the loop's switch is in `frame`/`frameBody`; markup `#saver` |
 | Golfer drawn at any size in the equipped look (the course and the saver share it) | `paintGolfer` |
-| Developer menu (hold the course name still for 1.5s) | `const DEV = {`. `DEV.course(i)` pins any course to the next event (a major of the week is set up as the major). The read panel shows the audio state and the auto-climb judgement; rows for the major of the week, the season, the cabinet, sound and music, the fairy, caddie perks, the new honours, and a frame-time readout (`DEV_FPS`) |
+| Developer menu (hold the course name still for 1.5s, only in a developer copy: `devOK()`, this computer, a file, or a phone once opened with `?dev`; checks set `DEV_OFF` to play as a player) | `const DEV = {`, grouped in folds. `DEV.course(i)` pins any course to the next event (a major of the week is set up as the major). The read panel shows the audio state and the auto-climb judgement; rows for the major of the week, the season, the cabinet, sound and music, the fairy, caddie perks, the new honours, and a frame-time readout (`DEV_FPS`) |
 | Main loop | `step()` |
-| **The Void set** (outfit/caddie `cosmic`, shown as "The Void") | club `cosmic` (Eclipse Driver), trails `horizon` (`BALLFX.tHorizon`) and `singularity`; `STYLEFX.cosmic` (`cloak`, `bulk`, `hands`, `rocks`, `hood` and `faulds` in `body`, `crescent`, `orb`, `miniOrb` for the caddie, `eye`, `pull`, `glints`, `ground`, `wave`); the `body` layer (after him, before his arms: in `paintGolfer`, the walk, `paintHeli` and the caddie); `voidHood` (`HOOD_SIDE`, `HOOD_BACK`), `voidCloak` (its `_stars`), `voidCrescent`, `voidHand` (`VHAND_ROWS`), `voidGalaxy`, `voidHole`, `voidOrb`, `voidStar`, `voidRock` (`VROCKS`), `beltOf` (`BELT_ADDR`, `BELT_FIN`), `VOID_PAL`; patterns `cosmos` and `greave` (outfit field `pantPattern`); outfit fields `bulk`, `arm`, `arm2`; `CUP_FX.singularity`; its trick `collapse` (`caddieSwirl`'s `pal`); saves with the old Spirit Blossom moved over in `initState` |
-| **Full Set and Sets** | `FULL_SETS` (was `MYTH_SETS`: the four top sets, each with `t` its wake and ball and `rim` its colour), `fullSet()`, `fullSetOf`, `S.fullSets` (repaired in `initState`), the toast in `styleBuy`, `.card.full`, the Record's Full Sets row; the score box's rim in `renderLive` (`borderColor`/`boxShadow`); `SET_ORDER`, `setRank` (the racks' tie-break), `setPieces`, `setCost`, `setBuy`, the Sets rack (`styleCat === 'sets'`, `.catnav.c5`, `.setpcs`, the `set:` act) |
+| **Full Set and Sets** | `FULL_SETS` (was `MYTH_SETS`: the six top sets, each with `t` its wake and ball and `rim` its colour), `fullSet()`, `fullSetOf`, `S.fullSets` (repaired in `initState`), the toast in `styleBuy`, `.card.full`, the Record's Full Sets row; the score box's rim in `renderLive` (`borderColor`/`boxShadow`); `SET_ORDER`, `setRank` (the racks' tie-break), `setPieces`, `setCost`, `setBuy`, the Sets rack (`styleCat === 'sets'`, `.catnav.c5`, `.setpcs`, the `set:` act) |
 | **Ambience** | `Sfx.ambOf`, `AMB_OF`, `AMB_VOL`, `Sfx.pines`, `Sfx.surf`, `Sfx.stream` (in `Sfx.tick`, `ambT`) |
 | **Umbrellas** | `drawUmbrella`, `UMB_COLS`; the gallery in `drawProp`, `standCv`'s `rain` |
 | **The caddie's blessing** | `Scene.drawBless`, `BLESS_FX` (by the caddie's `fx`), `blessBolt`, `DISCO_COLS` |
@@ -321,6 +354,20 @@ Line numbers are approximate and drift. Search for the name instead.
 | **Sovereigns** | `SOV_COL` (the gem's purple), `--sov` (its figures), `B.PX12.sovg` (the gem beside a figure), `sov1`..`sov6` (the packs), `sovIc()`, `#sovIcon`; a price in sovereigns is `.price .pv` (figure and gem kept on one line) |
 | **Event names** | on screen only: `B.COURSE` `n`/short names, the jackets `mjMasters` ("Maestro Jacket"), `mjClaret` ("Crown Jacket"), the gear suffix "of the Heath"; the ids are the old ones |
 | **The stance, legs and the wave** | `G_ADDR_ROWS` (redrawn), `SPRITE.gAddr.ax/ay`, the club's `cl` 0.64 (and `fairyBox`'s `_reach`); `bulkS` per sprite (0.8 at address, 0.5 from behind), `bulkOf` legs as wide as the chest, `drawLegsBack`'s soft crease; `SPRITE.gWave` and `waving` in `Scene.golferPose`, the raised left arm in `paintGolfer`'s walking branch |
+| **The female golfer** | `S.gender` ('f' or 'm'), `isFem()`, the Male Golfer and Female Golfer boxes in `settingsSheet`; her lines in `Scene.holed`, her poses as the ball drops and her ace celebration |
+| **Showcases** (the Sets, Golfer, Caddie, Clubs and Balls racks) | the stage `#showCv` (`SHOW_W`/`SHOW_H`) in `renderShop`; drawing it puts back what he wears on the course (`showcase`, `showitems`, `previews`) |
+| **The away card's stage** | `awayStage(gain)` (him throwing coins and notes over Play on) |
+| **Club mastery and the caddie bond** | `B.MASTER`, `MASTER_STEP`, `MASTER_GOLD`, `masterTick`; `B.BOND`, `bondTick`, `S.bond`, the bond's lines and moves |
+| **Course props by kind** (all laid from a hash, tagged `extra`) | 0 trees behind the green, 1 gallery, 4 tee lamp, 5 fireflies, 6 frost speck, 7 puddle, 8 scenery, 9 fairway birds, 10 grandstand, 11 clubhouse, 12 another green's flag, 13 deer (`layDeer`), 14 the season's decor (`laySeason`, `decorSprite`), 15 animals (`layCritters`, `CRIT`, `CRIT_NAME`, `CRIT_WHERE`), 16 golfers on the other holes (`layOthers`), 19 a find by the tee (`layFind`, `findOf`, `FIND_ODDS`, `FIND_FORCE`, `S.findHole`), 20 a pile of coins and 21 a sovereign (`layGoldHour`); drawn in `drawProp` |
+| **The Field Guide** | `GUIDE` (61 entries on four shelves, `GUIDE_SHELF`), `guideSpot` (as a hole is laid, live only), `guideSee` (the shooting star, as drawn), `guideAdd` (pays `B.GUIDE_SOV` a first sighting), `GUIDE_PIC`, `RARE_PIC`, `roomGuide`, `S.guide` |
+| **The season's rival** | `S.rivalSer` (the series), `B.RIVAL_SERIES`; the final day's line as the lead changes |
+| **Course records, caddie gifts** | `courseRecPost`, `S.courseBest` (the Cabinet's Course Records fold); `caddieGift`, `GIFT_DAY` (10), `S.giftDay` |
+| **The Daily Check-In** | `B.CHECKIN` (28 rewards), `checkinNow`, `checkinClaim`, `checkinSheet`, `CHECKIN_POPPED`, `#calBtn` right of the cog |
+| **December lights, rare weather** | `lightsOn`, `LIGHTS_FORCE`, `bulbString`, `LIGHT_COLS`; `rainbowAt` (`RAINBOW_P` and two holes after a wet round), `goldbowAt` (`GOLDBOW_P` 1/10), `fogAt` (`FOG_P`), `Scene.meteorNow` (`METEOR_GAP`), `RAINBOW_FORCE`, `GOLDBOW_FORCE`, `FOG_FORCE` |
+| **Golden animals** | `GOLD_KINDS` (12), `GOLD_ODDS` (170), `goldRoll`, `goldKind`, `goldOf` (the gold sprite), `layGold` (flags one after everything is laid), `GOLD_FORCE`/`GOLD_AT` |
+| **Golden Hour** (the gold mountain hole) | `goldenHole`, `goldenOn` (no night, rain, frost, wager, signature hole or round's last hole), `B.GOLDEN_P` (1/100), `GOLDEN_SOV` (10), `GOLDEN_TICK` (1); `MTN`, `mtnOf` (`bank`, `land`: he flies up as at an island), `layGoldHour`, `goldRain`, `GOLD_PILE_ROWS`, `MTN_GOLD`, `MTN_MARKS` |
+| **The economy's guards** | `fairCard` (written as "not below", so a stat the weather leaves unread reads fair), `matchedCard`; `featDay` never earlier than the save's stamp, and `S.t = Math.max(...)` wherever it is set; `devOK`, `DEV_OFF`; save codes `saveCode`/`readCode`/`codeSig` (`MM2` with a check; `MM1` only in a developer copy) |
+| **Icons** | `B.PX12` (12×12 drawings), `TROPHY_IC`, `idIcon`; `icons` refuses two names with one picture and a flat heirloom |
 
 ### Globals worth knowing
 
@@ -645,8 +692,230 @@ Line numbers are approximate and drift. Search for the name instead.
    map) in `drawBalls` (`mapball`).
 65. **Stopping the suite mid-run** gives a cascade of "browser closed"
    failures. They are not results; run it again whole.
+66. **Try every reward at its top and with the clock moved.** Every
+   heirloom compounded free to 250 levels and the Gilded Card paid 1e44
+   times the purse; the clock put forward a day and back paid about 2,600
+   sovereigns a time; Card 1's fifty events an hour paid its repeating
+   honours eight times over. Play a golfer with everything maxed, a save
+   at 250 everywhere and a clock moved both ways (`heirlooms`, `exploits`)
+   before calling a reward done, and simulate a free player's weeks.
+67. **A comparison with an unread number is false both ways.** The fair
+   card compares his card with what his bag suits; a stat the weather
+   leaves unread made that `NaN`, and "at or above" read `false`, so a fair
+   card paid nothing. It is written "not below" now (`fairCard`). Decide
+   which way `NaN` should fall, write the guard so, and test that weather.
+68. **A rare thing is decided after the hole is laid, and flags what is
+   there.** Golden animals roll from the hole's hash once everything is
+   laid and only mark an animal: rolling them inside the lay moved every
+   animal after it. `golden` lays each hole with every golden forced and
+   with none and wants only the flag to differ.
+69. **Pick a kind from its own hash, not its group's.** The fairway birds'
+   kind came from the group alone, so the first group was always one kind
+   and the robin was never drawn; `guide` sweeps until every entry is seen.
+70. **Anything dated follows the real date** (December's lights, the carved
+   pumpkins from 24 October, summer's sunflowers, the Check-In's month).
+   Pin it with its `*_FORCE` or fake `Date`, and sweep the months as in
+   rule 20; `checkin` walks 28 pinned days and a clock put back.
+71. **The harness is a developer copy** (localhost): the developer menu
+   and old save codes work there. A check of what a player sees sets
+   `DEV_OFF = true` first.
+72. **A long blue-sky number reaches the screen.** Drive Power printed
+   x2.055640197382958e+39; anything that can grow goes through `fmt`, and
+   `heirlooms` looks across the tabs for "e+" at a silly level.
 
 ## 5. What the last features do (for debugging them)
+
+Each feature's check in `test/README.md` says in full what it holds; these
+notes say what was asked and what to know when debugging it.
+
+### Golden Hour: the gold mountain (user asked, 1%)
+
+- "Rain gold, piles of gold along the fairway and the hole is up on a gold
+  mountain made of coins ... fly ... to the top of it to putt ... the flag
+  is golden ... sovereigns scattered around the edges of the green ...
+  reward 10 sovereigns". One hole in 100 (`goldenHole`, from the hole's
+  hash), never at night, in the rain, on a frosty morning, in a wager, on a
+  signature hole or on a round's last hole (the grandstand stands there).
+  It is the same Golden Hour as before (lit gold, all the hole earns paid
+  twice), now with its own hole; there is no other Golden Hour.
+- The mountain (`MTN`, `mtnOf`): six tiers of stacked coins, its outline
+  made uneven by the hash, the green on its flat top. He plays to its foot
+  (`bank`) and flies up (`land`) as at an island; an ace stays on the tee.
+  Piles down the fairway and on the top (kind 20), sovereigns round the
+  green off his line (kind 21), gold falling in place of rain (`goldRain`,
+  fewer canvas calls than rain). Finished live it pays 10 sovereigns and a
+  sponsor ticket once, nothing away. `goldmountain`; `sigview` covers it
+  through a hill and cut away on the top.
+
+### Golden animals, and a golden rainbow (user asked for "something new")
+
+- A stag, fox, rabbit, squirrel, hedgehog, pheasant, badger, owl, swan,
+  heron, otter or eagle is now and then golden: about one hole in 170 of
+  those its kind is on (`GOLD_ODDS`), rolled from the hash after the hole
+  is laid (rule 68). A gold recolour of its own sprite (`goldOf`), a shine
+  along its back, a white glint on its outline a fifth of a second every
+  two. Each has an entry on the Guide's Golden shelf. `golden`.
+- One rainbow in ten is golden (`goldbowAt`, six bands of gold), with its
+  own Guide entry. `rareweather`.
+
+### Heirlooms capped, and a wall past Card 200 (user: "it breaks the game")
+
+- The user maxed the Gilded Card: every heirloom ran free to 250 levels
+  and compounded, paying 1e44 times the purse; the Range went free and
+  Drive Power printed x2.055640197382958e+39.
+- Now each has a top (`max`: 100 for most multipliers, 40 for prize money,
+  20 for the wager pair, Caddie's Ledger and Gambler's Wedge; a save above
+  it is put back on load). To Lv 30 a level compounds as before; past it
+  each adds the same step (the user: not "so exponential"). Prices: as
+  they were to Lv 20, a fifth steeper each to 30, then x1.6 a level (the
+  user picked "steeper heirloom prices so the room lasts longer"): a career
+  retiring every ten cups fills the room at about 300 cups (it was 110).
+- The Founder's Locker keeps what you owned (it set levels); the
+  Chronoglass never lands past the best card reached.
+- Holes grow x4 a card to Card 101 and x2.7 past it (`TIER_Y2`), so a
+  golfer with everything maxed walls at Card 222 (the user wanted the wall
+  "more than 200-250"), and near Card 83 with no heirlooms.
+- Big multipliers go through `fmt`. Tour Cards read as numbers everywhere
+  (`cardNo`), never Roman numerals. `heirlooms` (sixteen breaks and four
+  more for the pacing).
+- The heirloom reveal: its icon large in a frame of its tier's colour, the
+  tier, the name, what it does at level 1, how many are found. Retiring
+  pays 30% more legacy (`LEGACY_K` 0.182).
+
+### The economy review (user: "see what can be improved and if anything can be abused")
+
+- Every change was reproduced in a simulated free player first, and the
+  user chose all of them. `exploits` holds them; `settings` the save codes.
+- The repeating honours pay more slowly. The repeating honours, the rival,
+  the series, the caddie's gifts and the finds pay only on a **fair card**
+  (no lower than one under what his bag suits, or his highest: Card 1
+  runs about fifty events an hour). A Tour Card's reward is paid **once**
+  ever (`S.cardPaid`; a retirement paid every card again). Honours from
+  events played away are counted, not paid, on return. Caddie gifts: ten
+  a day at most.
+- **The clock never runs back**: the save's stamp `S.t` only rises and
+  `featDay` never reads earlier than it (forward a day and back paid about
+  2,600 a time).
+- **The developer menu** only in a developer copy (`devOK`): it had
+  +1,000 sovereign buttons. **Save codes** are `MM2` with a check (a code
+  edited to 999,999 sovereigns loaded); the old `MM1` codes load only in a
+  developer copy.
+- Earlier the same day every sovereign reward had been raised 30% (bought
+  packs unchanged).
+
+### Icons redrawn (user asked)
+
+- 44 icons: every heirloom its own shaded picture, fit to be shown large
+  (a grip, a scorecard, a standing stone, a purse, a ticket, a ledger, a
+  wedge and die ...), and the Range, the Long Drive, Touch and Pace, Frost
+  and the shop's offers pictures of their thing. `icons` refuses two names
+  with one picture and a flat heirloom drawing.
+
+### December lights and rare weather (from the menu)
+
+- Coloured bulbs along the clubhouse's eaves and the grandstand's roof in
+  December only, baked into each building's picture, small by day, lit
+  with a glow and a twinkle at night; none in a wager. `lights`.
+- A rainbow in the sky on the first two fair holes after a wet round and
+  now and then on a fair day; a fog bank over the far end of a rare still
+  hole (never on a signature hole, with a rainbow or with Golden Hour); a
+  shooting star across a night sky every 20 to 40 seconds. Never at night
+  (the rainbow, the fog) or in the rain. Each is a Guide entry; the star
+  is spotted as it is drawn. `rareweather` (eleven breaks).
+
+### The Daily Check-In (user asked)
+
+- A calendar button right of the cog, a red dot while today's reward
+  waits; it opens by itself once a day when there is one (after the away
+  card), never once claimed. One claim a real day, 28 a month from the 1st:
+  purse, grit, shards, scrolls, wager entries (past a full cap), tickets,
+  bags, sovereigns at each week's end (350 a month) and a Legend Bag on
+  day 28. A clock put back opens nothing. `checkin`.
+
+### Finds by the tee, course records, caddie gifts (from the menu)
+
+- Finds: a lost ball, a tee peg, a ball marker, an old or antique coin in
+  the rough on his left just off the tee (the map covers the right), about
+  one live hole in forty, a few sovereigns, picked up with a burst. Drawn
+  about three balls wide so they show. `teefinds`.
+- Course records: an event's card posted live sets its course's record
+  with the day; a Course Records fold under the Cabinet's Record.
+  `courserecords`.
+- Caddie gifts: from Close in the bond on, after a live birdie or better,
+  about one in 25 (one in 15 at Inseparable), 2 to 5 sovereigns or a
+  ticket with a line. Fair card only, ten a day. `caddiegift`.
+
+### Animals, golfers next door, the Field Guide, decor, the rival series
+
+- Twenty animals (`CRIT`: fox, rabbit, squirrel, hedgehog, pheasant,
+  badger, owl, moorhen, swan, heron, frog, turtle, otter, seal, crab,
+  lizard, eagle, bat, butterfly, dragonfly), each where it lives and when,
+  one or two kinds on about half the holes, never more than five animals
+  (the user: "added places but not overcrowded"). Golfers on the other
+  holes: a group putting out on each other green and a pair down its
+  fairway, by day (kind 16). `critters`.
+- The Field Guide (Trophy Room > Guide): 61 entries on four shelves
+  (Wildlife, Golden, Seasons, The Course), each filled the first time it is
+  seen on a hole played live, 5 sovereigns a first sighting. `guide`.
+- Season decor: pumpkins and hay bales in autumn (carved and lit at night
+  from 24 October), snowmen in winter, tulips in blossom, sunflowers in
+  summer, by the tee and down the hole (kind 14). `decor`.
+- The rival is one golfer all season, a series between you (`RIVAL_SERIES`
+  20 sovereigns to the winner), and a line on the final day as the lead
+  changes. `rivalseries`.
+- Before these: the final day's gallery (ropes and a crowd on its last
+  three holes, `gallery`); club mastery (ten stars a club, five gold then
+  purple) and the caddie bond (five steps, lines and moves), `mastery`;
+  the away card's stage, him throwing money over Play on (`awaystage`).
+
+### The session of 1 and 2 October (its notes were not written then)
+
+- **The great skins redrawn after new pictures**: the Divine (a
+  long-nosed crimson mask, a gold crown set with jade, a great blue and
+  gold ring, a crimson skirt worked in gold, a jade blade for a driver);
+  the Ascended (a hooded star-walker: a galaxy cape, a silver mantle,
+  great feathered lavender wings the user found "extremely good", a
+  crystal staff, a dark disc under him; its horns, flame aura and shards
+  gone); The Void (dark in his hood under a gold crown, a bell of a robe,
+  hands of bone holding black holes); the Demonic (a demon knight in black
+  plate edged in gold, four horns cracked with lava, fangs, a ram's skull
+  at his shoulder, a dais with a star of fire, a serrated black blade).
+  Then every skin brought up to the wings' detail: patterns are told the
+  cloth's shade, and each plain-coloured skin has a cloth of its own. The
+  sections further down describe the earlier designs.
+- **Two new Mythic sets**, named by the user: **The Dread** (a wraith, a
+  skull in his hood, scythe, soul lantern, souls circling, a grave under
+  him; Reaper Driver, Soul Wake, Reaper Skull) and **Psychedelic** (a
+  turning spiral of six colours, a rainbow afro, mirror shades, a third
+  eye, a mandala; Kaleido Driver, Kaleido Wake, Third Eye). Both glow more
+  at night (`nightsets`). The seven Legendary skins got headwear
+  (`legendwear`) and moments of their own (`legendmoments`).
+- **Blessings**: the four great caddies' own (the Divine's ribbons and
+  lotus, the Demonic's hellfire, the Ascended's starlight, The Void's
+  black hole); every other caddie a plain faint beam. Drawn through him
+  so he shows where it lies (`blessthrough`, `blessings`).
+- **Showcases** on the Sets, Golfer, Caddie, Clubs and Balls racks, by
+  day or night (`showcase`, `previews`, `showitems`); the Trophy Room's
+  shelf of the full sets; every caddie a trick of its own.
+- **The female golfer** (Settings): a slimmer build, a pleated skirt,
+  fuller hair, her own lines and poses; the skins go down her legs
+  (`herhop`, `herown`). His and her ace celebrations, over before the next
+  hole (`acecheer`); his poses as the ball drops.
+- **On the course**: night courses with moonlit colours, a Milky Way and
+  each course its own moon; an ace's column of light rising from the cup
+  (`acebeam`); real tee boxes; full-size trains and a proper hop over the
+  stones; geese in a V and deer that bolt (`deergeese`); fallen leaves for
+  autumn frost and shaped leaves, petals and flakes, and the flag and ball
+  hidden behind nearer trees (`leaves`); footprints, ball marks and his
+  breath in the cold (`tracks`); spectators with faces who celebrate in
+  six ways; birds with heads and wingbeats; richer puddles.
+- **Play**: he walks up once the winning shot is down; the Vault played as
+  golf, floor by floor (`vault`); the tee shot flies its full length (he
+  was carried down the fairway mid-swing, `teeshot`); Swing Tempo renamed
+  **Pace of Play**; the Range's **Buy All** (`buyall`); the user's own
+  strike, putt and cup recordings and a Shot Sounds slider (`golfsounds`).
+
+### Older sections (from here down, as built at the time)
 
 ### Sovereigns, one purple gem (user sent a picture)
 
@@ -728,7 +997,7 @@ Line numbers are approximate and drift. Search for the name instead.
   flag's green and draws the flag only above it. `farflags` sweeps every
   course; negative tested.
 
-### The Divine reworked as a celestial monk (user sent two pictures)
+### The Divine reworked as a celestial monk (user sent two pictures; redrawn since after a third)
 
 - "The divine skin is a bit underwhelming. Just looks like he's wearing a
   shirt and pants with some wings ... Obviously no skin showing. Please
@@ -784,7 +1053,7 @@ Line numbers are approximate and drift. Search for the name instead.
   so it is laid once a hole and stamps with ready colours; `render`'s seam
   limit is 60 because of the stand of trees at the horizon.
 
-### The Demonic reworked (user sent a second picture)
+### The Demonic reworked (user sent a second picture; redrawn since after a third)
 
 - The picture: a hooded hunter bound in wrappings, a pale mask, blades
   swept back off the hood, swirls of colour; "change the color to a deep
@@ -957,7 +1226,7 @@ Line numbers are approximate and drift. Search for the name instead.
   shows (below the highest card), "Locked" gone, Climb on Form one line.
 
 
-### The Void (the user's picture of a dark cosmic sorcerer; then "bulkier")
+### The Void (the user's picture of a dark cosmic sorcerer; then "bulkier"; redrawn since after two more)
 
 - In place of the Spirit Blossom (found "just a shirt basically"). All of
   him changes: a hood with a tall peak over his cap (`voidHood`, in the
@@ -1008,7 +1277,7 @@ Line numbers are approximate and drift. Search for the name instead.
   putt short of the cup (into it on an ace), its height kept (`lift0`);
   one lying short is walked to and played on up to the green. `finish`.
 
-### The caddie's blessing in the caddie's look (user asked)
+### The caddie's blessing in the caddie's look (user asked; since only the four great caddies have their own)
 
 - `BLESS_FX` by the caddie's `fx`: the column's colours and what falls or
   rises in it, and what it leaves at his feet (curls of jade and gold and a gold ring for the Divine, embers
@@ -1029,7 +1298,8 @@ Line numbers are approximate and drift. Search for the name instead.
 
 ### Full Set, ambience, umbrellas (user asked, from the menu)
 
-- A Mythic set (only the Ascended and The Void are Mythic) worn whole
+- A Mythic set (then only the Ascended and The Void; The Dread and
+  Psychedelic since) worn whole
   (look, caddie, driver, its wake or its ball): its pieces rimmed in gold
   in the Style shop and badged Full Set, said once, counted in the Record
   (Full Sets, of four: the Divine and the Demonic count now). Looks only.
@@ -1507,7 +1777,7 @@ him (about 49px tall on a 320 phone, 71px on its side).
   1.3 of his width either side and 0.4 of his height above him, the most
   over six seconds. Negative tested eleven ways.
 
-### The Ascended, restyled (user sent a picture: "more like this")
+### The Ascended, restyled (user sent a picture: "more like this"; redrawn since as a hooded star-walker)
 
 - A knight of the void in the picture's own colours: dark indigo plate
   (`#393976`, `#4A4A8E`), a near black suit, magenta from `#762889` to
@@ -2053,7 +2323,7 @@ him (about 49px tall on a 320 phone, 71px on its side).
   `Scene.look` and `Scene.land` are the season's. Winter has 60% of the
   crowd and falling snow (`Scene.snow`, not in rain). A course already the
   season's tree colour takes its `alt` (Jade Pagoda: white blossom).
-- The banner reads e.g. "Winter - Home of Tour Card XXIII".
+- The banner reads e.g. "Winter - Home of Tour Card 23".
 - Sounds (`Sfx.gust`, `SEASON_VOL`, in `Sfx.tick` off `Scene.look.season`):
   autumn gusts through the leaves every 5-12s (about -55 dB, against the
   music's -45 average and a bird's -63); winter silences the birds and
@@ -2338,6 +2608,28 @@ him (about 49px tall on a 320 phone, 71px on its side).
 
 ## 6. Recent history (newest first, one line each)
 
+- A golden rainbow, one in ten. The Golden Hour hole: a mountain of
+  coins, gold rain, 10 sovereigns. Golden animals, twelve kinds.
+- Heirlooms capped and stepping past Lv 30, steeper prices, a wall at
+  Card 222, the wager pair to 20; Tour Cards as plain numbers.
+- 44 icons redrawn; the heirloom reveal; retirement legacy +30%.
+- The economy review: slower repeating honours, fair-card pay, a card's
+  reward once, the clock never back, the developer menu and old save
+  codes in a developer copy only, checked save codes.
+- December lights; rainbow, fog bank, shooting star.
+- The Daily Check-In; finds by the tee; course records; caddie gifts.
+- Twenty animals; golfers on the other holes; the Field Guide; season
+  decor; the season's rival series; the robin seen at last.
+- The final day's gallery, club mastery, the caddie bond, the first Golden
+  Hour; every sovereign reward +30%; the away card's stage.
+
+- (1 and 2 October) The Ascended, The Void, the Demonic and the Divine
+  redrawn after new pictures, every skin finer; The Dread and Psychedelic;
+  the great caddies' blessings; showcases on five racks; the female
+  golfer; ace celebrations; night moons; snow tracks and breath; geese,
+  deer, fallen leaves; the user's shot recordings; Pace of Play; Buy All;
+  the Vault played as golf; the tee shot's full flight.
+
 - Sovereigns a purple gem everywhere; the gem beside its price.
 - Names of our own for events taken from real ones (The Maestro, its
   purple jacket, and the rest).
@@ -2532,8 +2824,8 @@ him (about 49px tall on a 320 phone, 71px on its side).
 - No system ffmpeg. `pip3 download imageio-ffmpeg --no-deps`, unzip the
   wheel, and its `imageio_ffmpeg/binaries/ffmpeg-*` is a static ffmpeg with
   libmp3lame. Keep it in the scratchpad, never in the repo.
-- There is no `gh` CLI. Use the GitHub MCP tools if GitHub is ever needed.
-  Pushing straight to `main` has worked every time.
+- For GitHub, use the `gh` CLI where the session has it, or the GitHub
+  MCP tools. Pushing straight to `main` has worked every time.
 - A session may start on its own branch with the local `main` far behind
   `origin/main`: `git push origin main` then pushes that stale branch and
   is refused. Commit where you are and push with
@@ -2542,20 +2834,28 @@ him (about 49px tall on a 320 phone, 71px on its side).
 
 ## 8. What to offer next
 
-Turned down, don't offer again: the railway station, a photo mode, trail
-flourishes, a caddie trick for the Divine or Demonic (they have one).
-Don't offer anything that adds to the Tour tab, or any new sound that is
-not ambience.
+Turned down, don't offer again: the railway station, a photo mode, a
+weather forecast, fireworks, trail flourishes, caddie tricks (every caddie
+has one). Don't offer anything that adds to the Tour tab, or any new sound
+that is not ambience.
 
 The menu to offer:
-1. **Ask how the session's changes sit on the phone**: the purple gem,
-   the balls lying and their ribbons, the richer cup moments, the ranges
-   turning. Tune from their screenshots.
-2. **The Style shop racks** are still a long scroll: a filter (owned,
-   by price) or fewer tiles a row taller.
-3. **The last turf specks** where a bunker and a pond cross (a few
-   pixels in the water, under `sandholes`' limits).
-4. **A look over every course at night and in snow** for the new
-   scenery fixes (they were swept mostly by day).
+1. **Night creatures**: fireflies, glow-worms and moths at night, with a
+   shelf of their own in the Field Guide.
+2. **Animal ambience**: soft calls from what is on the hole (an owl's hoot
+   at night, frogs by water, a pheasant's call). Ambience is the one kind
+   of new sound allowed.
+3. **A Harvest Moon**: now and then a huge orange moon on an autumn night,
+   a Guide entry.
+4. **Course collections**: a small badge in the Cabinet for seeing every
+   animal a course has.
+5. **Ace plaques**: a little plaque by the tee listing your aces on that
+   hole.
+6. **A weekly Guide hunt**: three named entries to spot this week for a
+   small reward.
+7. **Card milestones**: every 25 Tour Cards, a cosmetic (a tee marker or a
+   ball colour).
+8. **A double rainbow**, rarer than the golden one.
 
-Recommend 1: much changed on screen without their eyes on it.
+Recommend 1: it builds on the Field Guide, which is new, and on the night
+courses, without touching the economy.
