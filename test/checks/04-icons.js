@@ -79,12 +79,32 @@ module.exports = {
       for (const k in B.TR_TIER)
         if (ink(cssVar(B.TR_TIER[k].v)) < 4) black.push(B.TR_TIER[k].n);
 
+      // No two ids drawn as the same picture: a copied drawing under a new
+      // name passes the rule above and still shows one picture for two things.
+      const byPic = {}, twins = [];
+      for (const id of Object.keys(seen)) if (B.PX12[id]) {
+        const p = B.PX12[id].join('/');
+        if (byPic[p]) twins.push(byPic[p] + ' = ' + id); else byPic[p] = id;
+      }
+      // Each heirloom is shown large when it is found (about 64px), so each
+      // has to be a shaded drawing, not a flat cut-out: a second tone in at
+      // least six pixels, and at least thirty pixels drawn.
+      const flat = [];
+      for (const [n, id] of lists.trophy) {
+        const rows = B.PX12[id]; if (!rows) continue;
+        const px = rows.join(''), lit = px.replace(/\./g, '').length;
+        const second = px.replace(/[.X]/g, '').length;
+        if (lit < 30 || second < 6) flat.push(n + ' (' + id + ': ' + lit + ' drawn, ' + second + ' shaded)');
+      }
       return { total, distinct: Object.keys(seen).length, missing, shared, malformed,
-               drawn: Object.keys(B.PX12).length, unresolved, black };
+               drawn: Object.keys(B.PX12).length, unresolved, black, twins, flat, heir: lists.trophy.length };
     });
     if (r.missing.length) throw new Error('icon ids with no drawing:\n      ' + r.missing.join('\n      '));
     if (r.malformed.length) throw new Error('not 12x12: ' + r.malformed.join(', '));
     if (r.shared.length) throw new Error('shared icons:\n      ' + r.shared.join('\n      '));
+    if (r.twins.length) throw new Error('two names, one picture: ' + r.twins.join(', '));
+    if (r.flat.length) throw new Error('heirloom icons drawn flat or tiny, which look like blobs '
+      + 'when found and shown large: ' + r.flat.join(', '));
     if (r.unresolved.length)
       throw new Error('these palette entries do not resolve to a colour: ' + r.unresolved.join(', ')
         + '. Handed to the canvas as written, they paint black.');
@@ -204,7 +224,8 @@ module.exports = {
         + 'or scaled by something other than a whole multiple of its 36 pixel grid');
 
     return [r.total + ' things, ' + r.distinct + ' distinct icons, ' + r.drawn
-      + ' drawn, no reuse, every tier colour reaches the canvas',
+      + ' drawn, no reuse, no two drawn alike, every tier colour reaches the canvas',
+      'all ' + r.heir + ' heirlooms shaded drawings of their own, fit to show large',
       'every sprite box square and on the 12px grid, across five screens and four shop tabs',
       'home screen icon 180x180, ' + home.colours + ' colours, every pixel square',
       'all 8 shot icons centred in their grid to within a pixel'];
