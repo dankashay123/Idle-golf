@@ -3358,7 +3358,7 @@ const B = {
     { id:'perk',   m:'perks',  v:1,   d:'Use a sponsor perk', lv:15 },
     { id:'rival',  m:'rivals', v:2,   d:'Beat your rival twice' }
   ],
-  DAILY_SOV: 10, DAILY_ALL: 26, DAILY_STREAK: 7, DAILY_STREAK_MAX: 6,
+  DAILY_SOV: 8, DAILY_ALL: 20, DAILY_STREAK: 4, DAILY_STREAK_MAX: 6,
 
   /* ---- the rival ----
      One named golfer per event, playing the same four days. Their total is
@@ -3375,18 +3375,18 @@ const B = {
   RIVALS: ['Hamish Kerr', 'Ines Duarte', 'Tomas Lindqvist', 'Nell Okafor', 'Callum Reid',
            'Priya Nair', 'Rafael Soto', 'Freya Holm', 'Kwame Asante', 'Lena Vogel',
            'Owen Pryce', 'Sofia Marchetti'],
-  RIVAL_SPREAD: 0.08, RIVAL_SOV: 13, RIVAL_SERIES: 39, RIVAL_FORM: 0.5, RIVAL_EASE: 0.03,
+  RIVAL_SPREAD: 0.08, RIVAL_SOV: 5, RIVAL_SERIES: 20, RIVAL_FORM: 0.5, RIVAL_EASE: 0.03,
   ACH_REP: [
-    { id:'rHoles', n:'Steady Hand',    d:'Every 100 holes', m:'holes',  step:100, sov:3 },
-    { id:'rBird',  n:'Birdie Watch',   d:'Every 50 birdies', m:'birdie', step:50,  sov:3 },
-    { id:'rEagle', n:'Eagle Nest',     d:'Every 50 eagles', m:'eagle',  step:50,  sov:4 },
-    { id:'rNine',  n:'Front and Back', d:'Every 3 nine goals', m:'nines',  step:3,   sov:4 },
+    { id:'rHoles', n:'Steady Hand',    d:'Every 500 holes', m:'holes',  step:500, sov:3 },
+    { id:'rBird',  n:'Birdie Watch',   d:'Every 250 birdies', m:'birdie', step:250, sov:3 },
+    { id:'rEagle', n:'Eagle Nest',     d:'Every 250 eagles', m:'eagle',  step:250, sov:4 },
+    { id:'rNine',  n:'Front and Back', d:'Every 15 nine goals', m:'nines',  step:15,  sov:4 },
     { id:'rRuns',  n:'Regular Punter', d:'Every 10 wagers', m:'runs',   step:10,  sov:4 },
     { id:'rAce',   n:'Ace Shelf',      d:'Every 50 aces', m:'ace',    step:50,  sov:5 },
-    { id:'rEvent', n:'Weekly Grind',   d:'Every event', m:'events', step:1,   sov:7 },
-    { id:'rLeg',   n:'Legendary Haul', d:'Every 3 Legendaries', m:'legend', step:3,   sov:8 },
-    { id:'rCup',   n:'Silverware',     d:'Every cup', m:'cups',   step:1,   sov:13 },
-    { id:'rMyth',  n:'Mythic Haul',    d:'Every Mythic', m:'myth',   step:1,   sov:13 },
+    { id:'rEvent', n:'Weekly Grind',   d:'Every 10 events', m:'events', step:10,  sov:7 },
+    { id:'rLeg',   n:'Legendary Haul', d:'Every 20 Legendaries', m:'legend', step:20,  sov:8 },
+    { id:'rCup',   n:'Silverware',     d:'Every cup', m:'cups',   step:1,   sov:4 },
+    { id:'rMyth',  n:'Mythic Haul',    d:'Every Mythic', m:'myth',   step:1,   sov:3 },
     // (the Cabinet's Season Bests: a season whose best card beats the last's)
     { id:'rSeason', n:'Better Season', d:'Beat last season\u2019s best', m:'seasonUp', step:1, sov:10 }
   ],
@@ -3565,7 +3565,7 @@ const B = {
   // Every shop like this has a free rail, and hiding it behind a social follow
   // is the part of the pattern worth leaving out: this one pays for turning up
   // and for climbing, which the game can check for itself.
-  FREE_GIFT: 33, FREE_EVERY: 8 * 3600, FREE_CARD: 52,
+  FREE_GIFT: 20, FREE_EVERY: 8 * 3600, FREE_CARD: 10,
   // The Daily Check-In (the user asked): one claim a real day, 28 a month,
   // starting again on the 1st; a missed day only puts the next claim back a
   // day. Kept a fair share and no flood: the dailies pay about 60 to 100
@@ -4391,6 +4391,11 @@ function migrate(){
     else for(const k in S.guide){ const v = S.guide[k];
       if(!GUIDE.some(g => g.id === k) || !(v >= 1 && v < 1e9)) delete S.guide[k]; else S.guide[k] = Math.floor(v); }
   }
+  // the highest Tour Card ever paid for (a save from before it: every card
+  // it has reached), and the caddie's gifts today
+  if(!(S.cardPaid >= 0 && S.cardPaid <= B.TIER_MAX)) S.cardPaid = Math.max(S.bestTier || 0, S.tierMax || 0);
+  else S.cardPaid = Math.floor(S.cardPaid);
+  if(S.giftDay !== undefined && !(S.giftDay && S.giftDay.d >= 0 && S.giftDay.n >= 0 && S.giftDay.n < 1e6)) delete S.giftDay;
   // the Daily Check-In: the month, the claims made in it, the last day claimed
   if(S.checkin !== undefined){ const C = S.checkin;
     if(!C || typeof C !== 'object' || Array.isArray(C) || !(C.m >= 0 && C.m < 1e6)
@@ -4463,7 +4468,7 @@ const BAK = KEY + ':bak';
 let saveN = 0, saveWarned = false;
 function save(){
   if(WIPED) return;
-  S.t = Date.now()/1000;
+  S.t = Math.max(S.t || 0, Date.now()/1000);
   try{
     const raw = JSON.stringify(S);
     localStorage.setItem(KEY, raw);
@@ -4680,12 +4685,17 @@ const BOND_UNLOCK = ['New lines', 'A salute', 'More to say', 'A jig, and a gift 
 // now and then after a birdie or better played live, a few sovereigns or,
 // one time in five, a sponsor ticket or two. From a hash of the hole.
 const GIFT_ODDS = [25, 15];        // one birdie in this many, at Close and at Inseparable
+const GIFT_DAY = 10;               // at most this many a day
 function caddieGift(h, d, force){
   if(QUIET || OFFLINE || S.dgnRun) return false;
   const lv = bondLv(S.caddie || 'bib');
   if(!force && (d > -1 || lv < 4 || hr(h, 710) >= 1 / GIFT_ODDS[lv >= 5 ? 1 : 0])) return false;
+  // (ten a day at most, and on a fair card only: see fairCard)
+  if(!force && ((S.giftDay && S.giftDay.d === dayNow() && S.giftDay.n >= GIFT_DAY) || !fairCard())) return false;
   const CD = caddieNow(), tick = hr(h, 711) < 0.2 && (S.tickets || 0) < B.TICK_CAP, n = tick ? 1 + Math.floor(hr(h, 712) * 2) : 2 + Math.floor(hr(h, 712) * 4);
   S.gifts = (S.gifts || 0) + 1;
+  if(!S.giftDay || S.giftDay.d !== dayNow()) S.giftDay = { d: dayNow(), n: 0 };
+  S.giftDay.n++;
   if(tick){ const t0 = S.tickets || 0; grantTickets(n); const m = (S.tickets || 0) - t0;
     toast('<span class="achk">' + CD.n + '</span>A gift \u00b7 +' + m + ' ticket' + (m === 1 ? '' : 's'), 'ach'); }
   else{ grantSov(n, '', true); toast('<span class="achk">' + CD.n + '</span>A gift \u00b7 <span style="white-space:nowrap">+' + n + sovIc() + '</span>', 'ach'); }
@@ -5277,11 +5287,18 @@ function checkAch(){
   // it is rather than being paid for every hundred holes it ever played: the
   // one-offs above are back-paid because there are thirty-five of them, and
   // twenty-five thousand holes is two hundred and fifty of these.
+  // They pay for play: what the caddie plays away, or play on a card well
+  // under his bag, re-bases the count without paying (the events played
+  // away paid most of a day's sovereigns, and Card I's fifty events an
+  // hour paid eight times his own card).
+  let fair = null;
   for(const a of B.ACH_REP){
     const have = achMetric(a.m), got = Math.floor(have / a.step);
     if(S.achRep[a.id] === undefined){ S.achRep[a.id] = got; continue; }
     const k = got - S.achRep[a.id];
     if(k <= 0) continue;
+    if(fair === null) fair = !OFFLINE && !QUIET && fairCard();
+    if(!fair){ S.achRep[a.id] = got; continue; }
     S.achRep[a.id] = got;
     grantSov(k * a.sov, null, true);
     toast('<span class="achk">Honours +' + fmt(k * a.sov, 0) + sovIc() + '</span>'
@@ -5690,7 +5707,9 @@ const yieldAt = (f, D, d) => shopPrice(d.cur) * (d.pay || 1)
 // comes round every fourth day whether or not you were there for the last one,
 // and a contest you are saving entries for has a date on it.
 let FEAT_FORCE = null;
-const featDay  = () => Math.floor(Date.now() / 86400000);
+// (never earlier than the last save: the clock put back does not bring back
+// a day already played, its dailies, its check-in or its week)
+const featDay  = () => Math.floor(Math.max(Date.now(), (S.t || 0) * 1000) / 86400000);
 const featOf   = day => B.DGN[((day % B.DGN.length) + B.DGN.length) % B.DGN.length];
 const featWager = () => FEAT_FORCE
   ? (B.DGN.find(d => d.id === FEAT_FORCE) || B.DGN[0]) : featOf(featDay());
@@ -7342,7 +7361,7 @@ function advanceHole(){
     if(round <= B.ROUND * B.ROUND_OPEN && S.tier >= (S.tierMax || 0) && (S.tierMax || 0) < B.TIER_MAX){
       S.tierMax = (S.tierMax || 0) + 1;
       toast('Tour Card <b>' + roman(S.tierMax) + '</b> unlocked \u00b7 too good for this one');
-      grantSov(B.FREE_CARD, 'Tour Card ' + roman(S.tierMax));
+      cardPay();
     }
     if(wasSunday) endTournament();
     S.scores = [];
@@ -7432,7 +7451,8 @@ function endTournament(){
   // The rival. A catch-up posts level par for every event it resolves, so
   // there is no card to hold against them and no form to learn from.
   const Rv = S.rival && S.rival.t === t ? S.rival : null;
-  const rivalBeat = !OFFLINE && Rv && score < Rv.total;
+  // (paid only on a fair card: see fairCard)
+  const fair = fairCard(), rivalBeat = !OFFLINE && fair && Rv && score < Rv.total;
   if(!OFFLINE){
     if(rivalBeat){ bump('rivals'); grantSov(B.RIVAL_SOV, null, true); }
     // the season's series: a win or a loss each event, and won outright by
@@ -7441,7 +7461,7 @@ function endTournament(){
       const sn = seasonOf(t);
       if(!S.rivalSer || S.rivalSer.s !== sn) S.rivalSer = { s: sn, w: 0, l: 0 };
       if(rivalBeat) S.rivalSer.w++; else if(score > Rv.total) S.rivalSer.l++;
-      if(seasonOf(t + 1) !== sn && S.rivalSer.w > S.rivalSer.l){ S.rivalSer.won = 1; grantSov(B.RIVAL_SERIES, null, true); }
+      if(seasonOf(t + 1) !== sn && fair && S.rivalSer.w > S.rivalSer.l){ S.rivalSer.won = 1; grantSov(B.RIVAL_SERIES, null, true); }
     }
     S.form = S.form === undefined ? score : S.form * (1 - B.RIVAL_FORM) + score * B.RIVAL_FORM;
   }
@@ -7496,7 +7516,7 @@ function endTournament(){
      && (S.tierMax || 0) < B.TIER_MAX){
     S.tierMax = (S.tierMax || 0) + 1;
     toast('Tour Card <b>' + roman(S.tierMax) + '</b> unlocked');
-    grantSov(B.FREE_CARD, 'Tour Card ' + roman(S.tierMax));
+    cardPay();
   }
   S.tourScore = 0;
 }function ordinal(n){
@@ -8706,6 +8726,18 @@ function matchedCard(D){
   const c = Math.floor(Math.log(Math.max(1e-9, B.RETIRE_FIT * D.dps * B.PAR_TIME[4] / B.Y0)) / Math.log(B.TIER_Y));
   return clamp(c, 0, B.TIER_MAX);
 }
+// A card worth paying on: no lower than one under what his bag suits (or
+// his highest, when that is lower). The repeating honours, the rival, the
+// series, the caddie's gifts and the finds by the tee pay only here: they
+// paid the same on any card, and Card I runs about fifty events an hour.
+function fairCard(D){ return (S.tier || 0) >= Math.min(S.tierMax || 0, matchedCard(D || derive()) - 1); }
+// A Tour Card's reward, the first time that card is ever reached: a
+// retirement lowers the highest card, and climbing back paid every one again.
+function cardPay(){
+  if((S.tierMax || 0) <= (S.cardPaid || 0)) return;
+  S.cardPaid = S.tierMax;
+  grantSov(B.FREE_CARD, 'Tour Card ' + roman(S.tierMax));
+}
 // Where a retirement puts you, worked out on the golfer you will be once the
 // range resets, not the one signing the card. The Chronoglass is a floor under
 // it, and the best card you have reached is a ceiling over it.
@@ -8873,7 +8905,9 @@ function offline(){
   // Stamped the moment the time is claimed. Otherwise it stays at the last
   // save until the next one, and a second catch-up inside that window -- a
   // reload, or a return from another tab -- pays the same absence twice.
-  S.t = Date.now()/1000;
+  // (never put back with the clock: forward a day and back again paid a
+  // day's catch-up, a gift and new dailies every time)
+  S.t = Math.max(S.t || 0, Date.now()/1000);
   if(dt < 60){ regenKeys(dt); tickShop(away); return; }
   regenKeys(dt);
 
@@ -8971,7 +9005,7 @@ function offline(){
   // "daily" about once a season. They read the whole absence, not the capped
   // part the caddie plays -- a week away is seven dailies.
   QUIET = true;
-  try{ tickShop(away); }finally{ QUIET = false; }
+  try{ tickShop(away); OFFLINE = true; checkAch(); }finally{ QUIET = false; OFFLINE = false; }
   // One sweep for the whole session rather than one per drop: the loop above
   // can land a thousand clubs and the sweep costs a derive() per candidate.
   const swapped = autoEquipSweep().length;
@@ -18156,7 +18190,7 @@ const Scene = {
     this.find = null;
     const h = this.hole, put = this.props || [];
     if(QUIET || OFFLINE || S.dgnRun || h !== S.hole || S.findHole === h || !S.totalHoles) return;
-    if(FIND_FORCE !== h && hr(h, 700) >= 1 / FIND_ODDS) return;
+    if(FIND_FORCE !== h && (hr(h, 700) >= 1 / FIND_ODDS || !fairCard())) return;
     for(let i = 0; i < 16; i++){
       // (on his left: the hole map stands over the right of the field)
       const side = -1, d = 3.4 + hr(h * 3 + i, 702) * 2.2;
@@ -27816,28 +27850,56 @@ function settingsSheet(){
 const b64 = bytes => { let t = ''; for(let i = 0; i < bytes.length; i += 0x8000)
   t += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000)); return btoa(t); };
 const unb64 = txt => Uint8Array.from(atob(txt), c => c.charCodeAt(0));
+// A code carries a check of what is in it, and one edited by hand is refused
+// (a code edited to 999,999 sovereigns loaded). The older codes without one
+// load only in a developer copy (devOK).
+// The developer menu (and the older save codes) are for a developer copy:
+// this computer, or a phone that has once opened the game with ?dev on the
+// end of its address, which it remembers. For anyone else holding the event
+// name does nothing: the menu had +1,000 sovereign buttons.
+let DEV_OFF = false;               // the checks': play as a player would
+function devOK(){
+  if(DEV_OFF) return false;
+  try{
+    if(/[?&]dev\b/.test(location.search)) localStorage.setItem(KEY + ':dev', '1');
+    return location.protocol === 'file:' || /^(localhost|127\.0\.0\.1|)$/.test(location.hostname)
+      || localStorage.getItem(KEY + ':dev') === '1';
+  }catch(e){ return false; }
+}
+function codeSig(t){
+  t = 'mulligan|' + t;
+  let a = 0x811c9dc5, b = 0x2545f491;
+  for(let i = 0; i < t.length; i++){ const c = t.charCodeAt(i);
+    a = Math.imul(a ^ c, 16777619); b = Math.imul(b ^ c, 0x5bd1e995) ^ (b >>> 13); }
+  return (a >>> 0).toString(36) + '-' + (b >>> 0).toString(36);
+}
 async function saveCode(){
-  S.t = Date.now()/1000;
-  const raw = new TextEncoder().encode(JSON.stringify(S));
+  S.t = Math.max(S.t || 0, Date.now()/1000);
+  const txt = JSON.stringify(S), raw = new TextEncoder().encode(txt), sig = '.' + codeSig(txt);
   if(window.CompressionStream){
     try{
       const z = new Uint8Array(await new Response(new Blob([raw]).stream()
         .pipeThrough(new CompressionStream('deflate-raw'))).arrayBuffer());
-      return 'MM1z.' + b64(z);
+      return 'MM2z.' + b64(z) + sig;
     }catch(e){}
   }
-  return 'MM1.' + b64(raw);
+  return 'MM2.' + b64(raw) + sig;
 }
 async function readCode(code){
   code = String(code || '').replace(/\s+/g, '');
-  let bytes;
-  if(code.indexOf('MM1z.') === 0){
+  let bytes, sig = null;
+  const m = /^MM([12])(z?)\.([^.]*)(?:\.(.+))?$/.exec(code);
+  if(!m) throw new Error('That is not a save code');
+  if(m[1] === '1' && !devOK()) throw new Error('That code is from an older version');
+  if(m[1] === '2'){ if(!m[4]) throw new Error('That code is not whole'); sig = m[4]; }
+  if(m[2]){
     if(!window.DecompressionStream) throw new Error('This browser cannot read that code');
-    bytes = new Uint8Array(await new Response(new Blob([unb64(code.slice(5))]).stream()
+    bytes = new Uint8Array(await new Response(new Blob([unb64(m[3])]).stream()
       .pipeThrough(new DecompressionStream('deflate-raw'))).arrayBuffer());
-  }else if(code.indexOf('MM1.') === 0) bytes = unb64(code.slice(4));
-  else throw new Error('That is not a save code');
-  const o = JSON.parse(new TextDecoder().decode(bytes));
+  }else bytes = unb64(m[3]);
+  const txt = new TextDecoder().decode(bytes);
+  if(sig !== null && sig !== codeSig(txt)) throw new Error('That code has been changed');
+  const o = JSON.parse(txt);
   if(!o || typeof o.ver !== 'number') throw new Error('That code has no save in it');
   return o;
 }
@@ -27947,7 +28009,7 @@ function catchUp(){
   Sfx.hold++;
   try{ for(let t = away; t > 1e-6; t -= B.TICK_MAX) step(Math.min(B.TICK_MAX, t), derive()); }
   finally{ Sfx.hold--; }
-  S.t = Date.now()/1000;
+  S.t = Math.max(S.t || 0, Date.now()/1000);
   checkinPop();
 }
 // The page carried no icon at all, so the tab showed the browser's blank page
@@ -28137,11 +28199,13 @@ function boot(){
   // cannot happen by accident and no tap ever reaches it.
   (() => {
     const el = $('eventLine');
+    devOK();                       // (remembers a ?dev on the address)
     let timer = null, sx = 0, sy = 0;
     const stop = () => { if(timer){ clearTimeout(timer); timer = null; } };
     el.addEventListener('pointerdown', e => {
       sx = e.clientX; sy = e.clientY;
       stop();
+      if(!devOK()) return;
       timer = setTimeout(() => { timer = null; DEV.open(); }, 1500);
     });
     el.addEventListener('pointermove', e => {

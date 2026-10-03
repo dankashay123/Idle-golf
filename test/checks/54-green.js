@@ -33,7 +33,9 @@ module.exports = {
     // lying past the putting spot that the day before never showed)
     await page.evaluate(() => { const RD = Date, at = new RD(2026, 8, 26, 12, 0, 0).getTime(), t0 = RD.now();
       window.__RealDate = RD;
-      window.Date = class extends RD { constructor(...a) { if (a.length) super(...a); else super(at + RD.now() - t0); } static now() { return at + RD.now() - t0; } }; });
+      window.Date = class extends RD { constructor(...a) { if (a.length) super(...a); else super(at + RD.now() - t0); } static now() { return at + RD.now() - t0; } };
+      // (the day never runs earlier than the last save, so the save's stamp goes back with it)
+      S.t = Date.now() / 1000; });
     const r = await page.evaluate(() => {
       const o = { aceHold: ACE_HOLD }, SNAP = JSON.stringify(S), mr = Math.random, raf = window.requestAnimationFrame;
       const pn = performance.now.bind(performance);

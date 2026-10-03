@@ -29,8 +29,12 @@ module.exports = {
                        equip: B.SLOTS.map(sl => S.equip[sl.id] ? S.equip[sl.id].uid : 0).join(',') };
       const z = await saveCode();
       // a plain code, the kind a browser without compression makes
-      const raw = new TextEncoder().encode(JSON.stringify(S));
-      const plain = 'MM1.' + b64(raw);
+      const txt = JSON.stringify(S), raw = new TextEncoder().encode(txt);
+      const plain = 'MM2.' + b64(raw) + '.' + codeSig(txt);
+      // the same edited by hand (the purse made huge), and an older code
+      // with no check in it as a player's copy of the game sees it
+      const edited = 'MM2.' + b64(new TextEncoder().encode(txt.replace(/"sov":\d+/, '"sov":999999'))) + '.' + codeSig(txt);
+      const old = 'MM1.' + b64(raw);
       // change everything, then load the compressed code back
       S.gold = 1; S.lv = 1; S.tier = 0; S.bag = [];
       const o = await readCode(z);
@@ -42,11 +46,13 @@ module.exports = {
       const p = await readCode(plain);
       // a bad code is refused, and nothing changes
       const g0 = S.gold; let refused = [];
-      for (const bad of ['', 'hello', 'MM1.!!!!', 'MM1.' + btoa('{"no":"ver"}'), 'MM1z.AAAA'])
+      for (const bad of ['', 'hello', 'MM1.!!!!', 'MM1.' + btoa('{"no":"ver"}'), 'MM1z.AAAA', edited, 'MM2.' + b64(raw)])
         try { await readCode(bad); } catch (e) { refused.push(e.message); }
+      DEV_OFF = true; try { await readCode(old); } catch (e) { refused.push(e.message); } finally { DEV_OFF = false; }
+      let oldDev = null; try { oldDev = (await readCode(old)).lv; } catch (e) {}
       return { before, after, keptGold: kept && kept.gold, plainGold: p.gold, plainLv: p.lv,
                zLen: z.length, plainLen: plain.length, zIs: z.slice(0, 5),
-               refused: refused.length, untouched: S.gold === g0, oldT: o.t };
+               refused: refused.length, untouched: S.gold === g0, oldT: o.t, oldDev, zSig: /^MM2z\.[^.]+\.[^.]+$/.test(z) };
     });
     const b = code.before, a = code.after;
     if (Math.abs(a.gold - b.gold) > 1e-6 * b.gold || a.lv !== b.lv || a.tier !== b.tier
@@ -57,8 +63,10 @@ module.exports = {
       throw new Error('loading a code did not keep the save it replaced');
     if (code.plainLv !== b.lv || Math.abs(code.plainGold - b.gold) > 1e-6 * b.gold)
       throw new Error('a plain (uncompressed) code did not read back the same save');
-    if (code.refused !== 5)
-      throw new Error('only ' + code.refused + ' of 5 bad codes were refused');
+    if (code.refused !== 8)
+      throw new Error('only ' + code.refused + ' of 8 bad codes were refused (an edited code, one with its check cut off, an older one outside a developer copy among them)');
+    if (!code.zSig) throw new Error('a new code does not carry its check');
+    if (code.oldDev !== b.lv) throw new Error('an older code did not load in a developer copy');
     if (!code.untouched) throw new Error('a refused code changed the save anyway');
 
     // ---- the sheet, and sound --------------------------------------------
