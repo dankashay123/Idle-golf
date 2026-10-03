@@ -4039,6 +4039,47 @@ const GOLD_COL = ['#F7C45C', '#E8894E'];
 const DAWN_COL = { dawn: ['#F6B98E', '#E596A6'], dusk: ['#F2904A', '#C9637E'], sun: '#FFE7A8' };
 const frostFor = (cs, tier) => FROST_FORCE !== null ? !!FROST_FORCE
   : !!cs && (cs.id === 'snowline' || [1, 2].includes(courseSeason(cs, tier))) && hourNow() >= 5 && hourNow() < 11;
+// Rare weather (the user picked it from the menu), each from a hash of the
+// hole, never the hole's own numbers nor the player's clock: a rainbow on the
+// first two fair holes after a wet round, and now and then on any fair day;
+// a bank of fog over the far end of a still hole; a shooting star across a
+// night's sky now and then (Scene.meteorNow). Each goes in the Field Guide
+// the first time it is seen. RAINBOW_FORCE and FOG_FORCE (the developer
+// menu, the checks) pin them on or off; neither ever comes at night or in
+// the rain.
+let RAINBOW_FORCE = null, FOG_FORCE = null;
+const RAINBOW_P = 1 / 60, FOG_P = 1 / 80, METEOR_GAP = 30, METEOR_DUR = 0.7;
+const RAINBOW_COL = ['#E8423A', '#F28C2E', '#F2D23A', '#4CC25A', '#3A86E0', '#7A4AC8'];
+const wetCh = ch => /Crosswind|Marshal/.test(ch || '');
+const clearCh = ch => !/Night|Crosswind|Marshal|Aurora|Ley|Mythic/.test(ch || 'Fair');
+const rainbowAt = (h, ch, tier) => RAINBOW_FORCE !== null ? !!RAINBOW_FORCE
+  : !S.dgnRun && clearCh(ch) && !clockNight() && !frostFor(courseFor(tournamentOf(h)), tier)
+    && (hr(h * 17 + 3, 981) < RAINBOW_P || (h > 2 && (wetCh(chaosFor(h - 1, tier).n) || wetCh(chaosFor(h - 2, tier).n))));
+const fogAt = (h, ch, tier) => FOG_FORCE !== null ? !!FOG_FORCE
+  : !S.dgnRun && clearCh(ch) && !clockNight() && !goldenHole(h) && hr(h * 23 + 11, 983) < FOG_P && !rainbowAt(h, ch, tier);
+// Holiday lights (the user picked it from the menu): strings of coloured
+// bulbs along the clubhouse's eaves and the grandstand's roof in December,
+// small dots by day and lit at night. LIGHTS_FORCE pins them on or off.
+let LIGHTS_FORCE = null;
+const lightsOn = () => LIGHTS_FORCE !== null ? !!LIGHTS_FORCE : monthNow() === 11;
+const LIGHT_COLS = ['#E8343A', '#3ACB5A', '#F2C230', '#3A7AE8', '#F27AC8'];
+// a string of them on a baked picture, from x0 to x1 with its wire along
+// row y and the bulbs hung under it; lit, each glows (a cross round it),
+// and tw 2 turns every third one down, so two pictures in turn twinkle
+function bulbString(g, x0, x1, y, k, lit, tw, seed){
+  const bs = k >= 3 ? 2 : 1, step = Math.max(3, bs * 3 + (k >> 1)), n = Math.floor((x1 - x0 - bs) / step) + 1;
+  if(n < 2 || x1 - x0 < 6) return;
+  const off = Math.round(x0 + (x1 - x0 - bs - (n - 1) * step) / 2);
+  g.fillStyle = lit ? '#10161C' : '#2A2E30'; g.fillRect(x0, y, x1 - x0, 1);
+  for(let i = 0; i < n; i++){
+    const x = off + i * step, col = LIGHT_COLS[(i + seed) % LIGHT_COLS.length];
+    const dim = lit && tw === 2 && (i + seed) % 3 === 0;
+    if(lit && !dim){ g.fillStyle = mixC(col, '#0B1118', 0.45);
+      g.fillRect(x - 1, y + 1, bs + 2, bs); g.fillRect(x, y + 1 + bs, bs, 1); }
+    g.fillStyle = !lit ? col : dim ? mixC(col, '#0B1118', 0.5) : mixC(col, '#FFFFFF', 0.35);
+    g.fillRect(x, y + 1, bs, bs);
+  }
+}
 const LOOK_CACHE = {};
 // the course as it looks in season s: its own colours turned, and its own id
 // with the season on it, so the palettes and trees built from it are kept apart
@@ -10188,9 +10229,9 @@ const GALLERY_UP = 1.5;
 const STAND_D = 13.5, STAND_W = 12, STAND_CACHE = [], STAND_CHEER = 2.4;
 // cheer: 0 seated; 1 or 2 on their feet, arms up in turn. At night lamps on
 // posts over the roof, and the seats lit under them.
-function standCv(sh, full, night, seed, cheer, frost, rain){
+function standCv(sh, full, night, seed, cheer, frost, rain, lights){
   cheer = cheer || 0;
-  const key = sh + '|' + full + '|' + (night ? 1 : 0) + '|' + seed + '|' + cheer + '|' + (frost ? 1 : 0) + '|' + (rain ? 1 : 0);
+  const key = sh + '|' + full + '|' + (night ? 1 : 0) + '|' + seed + '|' + cheer + '|' + (frost ? 1 : 0) + '|' + (rain ? 1 : 0) + '|' + (lights || 0);
   const hit = STAND_CACHE.find(e => e.key === key);
   if(hit) return hit.cv;
   const th = Math.max(2, Math.round(sh * 0.62)), R = 5, plinth = Math.max(2, Math.round(th * 0.9));
@@ -10246,6 +10287,9 @@ function standCv(sh, full, night, seed, cheer, frost, rain){
   g.fillStyle = dk('#1A2A20'); g.fillRect(0, H - plinth, W, plinth);
   g.fillStyle = dk(PX.brass); g.fillRect(0, H - plinth, W, 1);
   if(plinth > 3) g.fillRect(0, H - 2, W, 1);
+  // December's lights along the roof's edge, on the wall under it (lights:
+  // 1 or 2, the two pictures of the twinkle)
+  if(lights) bulbString(g, post + 1, W - post - 1, roof, Math.max(1, Math.round(sh / 10)), night, lights, seed);
   // three lamps on posts over the roof, lit at night
   const lw = Math.max(2, Math.round(sh * 0.45)), lh = Math.max(1, Math.round(sh * 0.16));
   for(const u of [0.12, 0.5, 0.88]){
@@ -10263,9 +10307,9 @@ function standCv(sh, full, night, seed, cheer, frost, rain){
 // sign over it, and in front a terrace with a white rail, parasols and a few
 // members at their tables. Its windows glow at night. One picture a size.
 const CLUB_D = 14.5, CLUB_X = 11, CLUB_W = 8, CLUB_CACHE = [];
-function clubhouseCv(sh, night, side, seed, lit, frost){
+function clubhouseCv(sh, night, side, seed, lit, frost, lights){
   if(lit === undefined) lit = night;
-  const key = sh + '|' + (night ? 1 : 0) + '|' + (lit ? 1 : 0) + '|' + side + '|' + seed + '|' + (frost ? 1 : 0);
+  const key = sh + '|' + (night ? 1 : 0) + '|' + (lit ? 1 : 0) + '|' + side + '|' + seed + '|' + (frost ? 1 : 0) + '|' + (lights || 0);
   const hit = CLUB_CACHE.find(e => e.key === key);
   if(hit) return hit.cv;
   const W = Math.max(10, Math.round(sh * CLUB_W / 12 * LAT / US));
@@ -10329,6 +10373,8 @@ function clubhouseCv(sh, night, side, seed, lit, frost){
   for(let x = 0; x < W; x += Math.max(2, k * 3)) g.fillRect(x, railY, 1, H - railY);
   // a lamp on the terrace at night
   if(lit){ g.fillStyle = '#FFE7A8'; g.fillRect(side > 0 ? 1 : W - 2, H - deck - Math.round(sh * 0.6), 1, 1); }
+  // December's lights under the eaves, along the wall's top
+  if(lights) bulbString(g, inW + 1, W - inW - 1, wy, k, lit, lights, seed);
   CLUB_CACHE.unshift({ key, cv });
   if(CLUB_CACHE.length > 8) CLUB_CACHE.pop();
   return cv;
@@ -19160,6 +19206,9 @@ const Scene = {
     const cs = courseFor(tournamentOf(h));
     this.frost = !this.night && !this.rain && frostFor(cs, tier);
     this.golden = !this.night && !this.rain && !this.frost && goldenOn(h, ch);
+    // rare weather: a rainbow after the rain, a bank of fog (rainbowAt, fogAt)
+    this.rainbow = !this.night && !this.rain && rainbowAt(h, ch, tier);
+    this.fog = !this.night && !this.rain && !this.golden && !this.rainbow && !sigKind(h) && fogAt(h, ch, tier);
     if(this.golden && !QUIET && !OFFLINE && this.goldSaid !== h){ this.goldSaid = h; toast('<span class="achk">Golden Hour</span>Purse \u00d72 this hole', 'ach'); }
     const mode = this.night ? 'night' : this.rain ? 'rain' : this.frost ? 'frost' : this.golden ? 'gold' : 'day';
     this.course = cs;
@@ -19313,6 +19362,7 @@ const Scene = {
     this.night = dg === 'cellar';
     this.aurora = false;
     this.rain = false;
+    this.rainbow = false; this.fog = false;   // (no rare weather in a wager)
     const rnd = seeded(hash32(R.floor*7919 + dg.length*104729 + 13));
     this.seed = rnd() * 1000;
     this.roll = 0.42;                    // a cellar floor does not roll like links
@@ -19459,6 +19509,52 @@ const Scene = {
     g.putImageData(im, 0, 0);
   },
 
+  // December's lights on the clubhouse and the stand (lightsOn): 0 none,
+  // else which of the two baked pictures, turning in turn while lit (a
+  // gentle twinkle); never in a wager
+  lightsNow(lit, p){
+    if(!lightsOn() || S.dgnRun) return 0;
+    return lit ? 1 + (Math.floor(this.t * 1.25 + p.k * 0.37) & 1) : 1;
+  },
+  // A shooting star now and then on a night hole (rare weather): one in each
+  // half minute, at a moment and a place from the hole and the clock (never
+  // Math.random), so twenty to forty seconds apart, a short streak down
+  // across the upper sky in under a second. meteorT (the developer menu)
+  // sends one now.
+  meteorNow(){
+    if(!this.night || S.dgnRun) return null;
+    const t = this.t, h = this.hole || 0;
+    let n, t0;
+    if(this.meteorT !== undefined && t >= this.meteorT && t - this.meteorT < METEOR_DUR){ n = -1; t0 = this.meteorT; }
+    else{ n = Math.floor(t / METEOR_GAP); t0 = n * METEOR_GAP + hr(h * 31 + n, 985) * METEOR_GAP / 3; }
+    const e = (t - t0) / METEOR_DUR;
+    if(!(e >= 0 && e < 1)) return null;
+    const H = HORIZON, dir = hr(h + n * 7, 986) < 0.5 ? -1 : 1;
+    // (over the right of the sky: the readout covers the left)
+    const x0 = VW * (dir > 0 ? 0.48 + hr(h * 3 + n, 987) * 0.2 : 0.76 + hr(h * 3 + n, 987) * 0.2), y0 = H * (0.04 + hr(h * 5 + n, 988) * 0.16);
+    return { n, e, x0, y0, dx: dir * VW * 0.26, dy: H * 0.26 };
+  },
+  // the streak: a white head and a tail fading through blue to the night,
+  // a pixel at a time down its line (solid, on or off), cut short as it goes
+  drawMeteor(c){
+    const M = this.meteorNow(); if(!M) return;
+    const L = Math.hypot(M.dx, M.dy), head = M.e, tail = head - 0.28 * Math.min(1, M.e / 0.15, (1 - M.e) / 0.3);
+    const steps = Math.ceil(L * (head - tail)), TC = ['#FFFFFF', '#E6ECFF', '#B4C4F0', '#7E8EC8', '#4E5C94'];
+    let drawn = 0;
+    for(let i = 0; i <= steps; i++){
+      const u = head - i / L, f = i / Math.max(1, steps);
+      if(u < tail) break;
+      const x = Math.round(M.x0 + M.dx * u), y = Math.round(M.y0 + M.dy * u);
+      if(y < 0 || y >= HORIZON * 0.5 || x < 0 || x >= VW) continue;
+      // (behind the moon, not over it)
+      if(this.moonR && Math.hypot(x - this.moonX, y - this.moonY) < this.moonR + 2) continue;
+      c.fillStyle = TC[Math.min(TC.length - 1, Math.floor(f * TC.length))]; c.fillRect(x, y, 1, f < 0.3 && VW > 300 ? 2 : 1); drawn++;
+    }
+    // seen live, it goes in the Field Guide (once a star)
+    const id = this.hole + ':' + M.n + ':' + Math.floor(this.t / METEOR_GAP);
+    if(drawn && this.hole === S.hole && this.meteorSeen !== id){ this.meteorSeen = id; guideSee('meteor'); }
+  },
+
   buildSky(){
     // Dithering a sky is thousands of single-pixel writes. It only depends on
     // the conditions and the frame size, so it is cached against those and not
@@ -19467,8 +19563,11 @@ const Scene = {
     const dd = this.golden && !S.dgnRun ? { w: 1, dawn: false, gold: true } : !this.night && !this.rain && !S.dgnRun ? dawnDusk() : null;
     this.dawnDusk = dd;
     const key = [this.themeId, this.night, this.aurora, this.rain, VW, HORIZON, dd ? dd.w + (dd.gold ? 'g' : dd.dawn ? 'a' : 'p') : ''].join('|');
-    if(key === this.skyKey && this.sky) return;
-    this.skyKey = key;
+    // (a rainbow's hole in the cache's key, not in key: the clouds are
+    // seeded by key, and stay where they were)
+    const rbKey = key + (this.rainbow ? '|rb' + this.hole : '');
+    if(rbKey === this.skyKey && this.sky) return;
+    this.skyKey = rbKey;
     const H = Math.max(2, HORIZON + 2);
     const c = document.createElement('canvas');
     c.width = Math.max(2, VW); c.height = H;
@@ -19525,8 +19624,8 @@ const Scene = {
       }
       g.globalAlpha = 1;
       const PH = [0.5, 0.66, 0.66, 0.95, 1.35, 3];
-      this.drawMoon(g, this.moonX = Math.round(VW*(0.70 + sr()*0.12)), Math.round(H*(0.18 + sr()*0.1)),
-                    Math.max(5, Math.round(VW*0.055)), PH[Math.floor(sr()*PH.length)]);
+      this.drawMoon(g, this.moonX = Math.round(VW*(0.70 + sr()*0.12)), this.moonY = Math.round(H*(0.18 + sr()*0.1)),
+                    this.moonR = Math.max(5, Math.round(VW*0.055)), PH[Math.floor(sr()*PH.length)]);
     }
     if(this.aurora){
       // Two curtains of light, each a bright edge along the top with rays
@@ -19550,6 +19649,25 @@ const Scene = {
           g.globalAlpha = 1;
         }
       }
+    }
+    // a rainbow (rainbowAt): six faint bands mixed into the sky's own
+    // colour, every pixel solid, wide and low behind the far hills, its feet
+    // fading out above the horizon so none of it reaches the ground (the
+    // blend at the horizon copies the sky's last row down over it)
+    if(this.rainbow && !this.night && !this.rain){
+      const im = g.getImageData(0, 0, VW, H), d = im.data, RB = RAINBOW_COL.map(c => [1, 3, 5].map(i => parseInt(c.slice(i, i + 2), 16)));
+      const bw = Math.max(1, Math.round(VW / 170)), R = Math.round(Math.min(VW * 0.42, H * 0.94)), cx = Math.round(VW * (0.48 + hr(this.hole, 984) * 0.24)), cy = H + Math.round(R * 0.2);
+      const y1 = H - 4, fade = Math.max(2, Math.round(H * 0.3));
+      for(let y = Math.max(0, cy - R); y < y1; y++){
+        const a = 0.36 * Math.min(1, (y1 - y) / fade);
+        for(let x = Math.max(0, cx - R); x < Math.min(VW, cx + R); x++){
+          const b = Math.floor((R - Math.hypot(x - cx, y - cy)) / bw);
+          if(b < 0 || b >= RB.length) continue;
+          const j = (y * VW + x) * 4, C = RB[b];
+          d[j] += Math.round((C[0] - d[j]) * a); d[j + 1] += Math.round((C[1] - d[j + 1]) * a); d[j + 2] += Math.round((C[2] - d[j + 2]) * a);
+        }
+      }
+      g.putImageData(im, 0, 0);
     }
     if(!this.night && !this.rain){
       // Opaque, in three flat tones. Stacked translucent circles darkened
@@ -21179,6 +21297,39 @@ Object.assign(Scene, {
     const v = clamp((y - HORIZON) / Math.max(1, deep - HORIZON), 0, 1);
     return ss(u) * (1 - ss(v)) * 0.34;
   },
+  // (the bank's lower edge, and how far off flat ground meets it: what
+  // stands beyond goes down before the mist and what is nearer after it)
+  // (it lies a little under half the hole's length ahead of him, so it
+  // lifts off the green as he comes up to it)
+  fogD(){ return this.camD + LEN * 0.45; },
+  // The mist laid over what lies in it, by rows, in the grey white of mist
+  // over the sky's own colour: down to the ground's line in front of the
+  // bank (a rise nearer than it hides it), and not over a tree of the forest
+  // nearer than it. Drawn among the scenery at that distance (see the frame),
+  // so a tree in the bank rises out of the mist and one nearer stands clear.
+  drawFog(D){
+    const c = this.b, col = mixC((this.theme || THEMES.day).sky[4], '#EEF0EE', 0.55);
+    // (its rows from the ground at that distance up over the ground beyond
+    // it, whatever the slope, and on over the far hills' feet)
+    const yB = Math.round(this.proj(D, 0).y), yH = Math.min(HORIZON, Math.round(this.proj(D + 60, 0).y), Math.round(this.proj(D + 160, 0).y));
+    const ramp = Math.max(3, Math.round((yB - yH) * 0.45)), up = Math.max(2, Math.round(VH * 0.1));
+    const top = Math.max(0, yH - up), bot = Math.min(VH, yB, Math.round(this.clipAt(D)) + 1);
+    if(bot <= top) return;
+    const fa = y => { const t = Math.min(1, y > yH ? (yB - y) / ramp : 1 - (yH - y) / up); return t <= 0 ? 0 : t * t * (3 - 2 * t) * 0.86; };
+    if(!this._fogI || this._fogI.width !== VW || this._fogI.height !== VH){
+      this._fogI = new ImageData(VW, VH); this._fogP = new Uint32Array(this._fogI.data.buffer);
+      this._fogC = document.createElement('canvas'); this._fogC.width = VW; this._fogC.height = VH; this._fogX = this._fogC.getContext('2d'); }
+    const P = this._fogP, FD = this._tmOn && this._fdep && this._fdep.length === VW * VH ? this._fdep : null;
+    const r = parseInt(col.slice(1, 3), 16), g = parseInt(col.slice(3, 5), 16), b = parseInt(col.slice(5, 7), 16);
+    P.fill(0, 0, VW * Math.min(VH, bot + 2));
+    for(let y = top; y < bot; y++){
+      const a = Math.round(fa(y) * 255); if(a <= 0) continue;
+      const v = ((a << 24) | (b << 16) | (g << 8) | r) >>> 0, o = y * VW;
+      for(let x = 0; x < VW; x++) P[o + x] = FD && FD[o + x] < D ? 0 : v;
+    }
+    this._fogX.putImageData(this._fogI, 0, 0, 0, top, VW, bot - top);
+    c.drawImage(this._fogC, 0, top, VW, bot - top, 0, top, VW, bot - top);
+  },
   // Where the trees stand this frame (the forest's, and every tree, shrub
   // and rock and the gallery drawn standing): the haze by rows and the blend
   // at the horizon are laid everywhere but there, and each of those is
@@ -22652,7 +22803,8 @@ Object.assign(Scene, {
       const sh = Math.round(12 * pr.s * US);
       if(sh < 3) return;
       // (its lights on at dusk too, with Dawn and Dusk on)
-      const dd = this.dawnDusk, cv = clubhouseCv(sh, night, p.side, p.k, night || !!(dd && !dd.dawn && dd.w >= 0.4), !!this.frost), w = cv.width;
+      const dd = this.dawnDusk, lt = night || !!(dd && !dd.dawn && dd.w >= 0.4);
+      const cv = clubhouseCv(sh, night, p.side, p.k, lt, !!this.frost, this.lightsNow(lt, p)), w = cv.width;
       if(pr.x + w / 2 < -2 || pr.x - w / 2 > VW + 2) return;
       c.drawImage(cv, Math.round(pr.x - w / 2), pr.y - cv.height);
 
@@ -22662,7 +22814,7 @@ Object.assign(Scene, {
       if(sh < 3) return;
       // (standing and waving through the cheer, two poses a quarter second each)
       const ch = this.cheerT !== undefined && this.t - this.cheerT >= 0 && this.t - this.cheerT < STAND_CHEER ? 1 + (Math.floor((this.t - this.cheerT) * 4) & 1) : 0;
-      const cv = standCv(sh, p.full, night, p.k, ch, !!this.frost, !!this.rain);
+      const cv = standCv(sh, p.full, night, p.k, ch, !!this.frost, !!this.rain, this.lightsNow(night, p));
       const w = cv.width;
       if(pr.x + w / 2 < -2 || pr.x - w / 2 > VW + 2) return;
       c.drawImage(cv, Math.round(pr.x - w / 2), pr.y - cv.height);
@@ -24411,6 +24563,7 @@ Object.assign(Scene, {
         this.swingT = this.swingDur; this.pendingBall = q;
       }
       if(this.sky) c.drawImage(this.sky, 0, 0);
+      this.drawMeteor(c);
       this.drawFlock();
       this.drawRidge();
       this.drawGround();
@@ -24440,6 +24593,10 @@ Object.assign(Scene, {
         if(AB !== null && AB < RI.bank){ band(AB, RI.bank, true, true); this.drawAceBeam(); band(-Infinity, AB, false, false); }
         else band(-Infinity, RI.bank, false, true);
       }
+      else if(this.fog){ const FD = this.fogD(), AF = AB !== null && AB > FD;
+        band(AF ? AB : FD, Infinity, true, true); if(AF){ this.drawAceBeam(); band(FD, AB, true, false); }
+        this.drawFog(FD);
+        if(AB !== null && !AF){ band(AB, FD, true, false); this.drawAceBeam(); band(-Infinity, AB, false, false); } else band(-Infinity, FD, false, false); }
       else if(AB !== null){ band(AB, Infinity, true, true); this.drawAceBeam(); band(-Infinity, AB, false, false); }
       else this.drawProps();
       this.buildHaze();
@@ -24807,6 +24964,8 @@ GUIDE.splice(7, 0, ...Object.keys(CRIT).map(id => ({ id, n: CRIT_NAME[id], g: 'w
 GUIDE.splice(7, 0, { id:'duck', n:'Duck', g:'w', w:'On the island\u2019s lake' }, { id:'hawk', n:'Hawk', g:'w', w:'Over the canyon' },
   { id:'fish', n:'Fish', g:'w', w:'By the stepping stones' }, { id:'geese', n:'Geese', g:'w', w:'Autumn and winter skies' });
 const GUIDE_SHELF = [['w', 'Wildlife'], ['s', 'Seasons'], ['c', 'The Course']];
+// the rare weather (rainbowAt, fogAt, Scene.meteorNow)
+GUIDE.push({ id:'rainbow', n:'Rainbow', g:'c', w:'After the rain' }, { id:'fog', n:'Fog Bank', g:'c', w:'Rare, on a still day' }, { id:'meteor', n:'Shooting Star', g:'c', w:'Now and then at night' });
 // what the hole just laid out shows: called as each hole starts, live only
 function guideSpot(sc){
   if(QUIET || OFFLINE || S.dgnRun || sc.hole !== S.hole) return;
@@ -24820,6 +24979,7 @@ function guideSpot(sc){
   const sk = sigKind(sc.hole); if(sk){ see(sk); if(sk === 'pier') see('gull');
     if(!sc.night){ if(sk === 'island') see('duck'); if(sk === 'canyon') see('hawk'); } if(sk === 'stones' && !sc.ice) see('fish'); }
   if(sc.golden) see('golden'); if(sc.frost) see('frost'); if(sc.rain) see('rain'); if(sc.night) see('night');
+  if(sc.rainbow) see('rainbow'); if(sc.fog) see('fog');
   guideAdd(got);
 }
 // count what was seen, and pay for each seen the first time
@@ -24835,6 +24995,23 @@ function guideAdd(got){
   if(firsts.length){ const n = B.GUIDE_SOV * firsts.length; grantSov(n, '', true);
     toast('<span class="achk">Field Guide</span>' + firsts.join(', ') + ' \u00b7 <span style="white-space:nowrap">+' + n + sovIc() + '</span>', 'ach'); }
 }
+// one seen as it is drawn, not as the hole is laid (a shooting star): live
+// only, a first sighting paid as the others are
+function guideSee(id){
+  if(QUIET || OFFLINE || S.dgnRun) return;
+  guideAdd([id]);
+}
+// the rare weather's pictures: a rainbow's arc, a fog bank's pale streaks
+// over a far tree line, a shooting star's streak
+const RARE_PIC = {
+  rainbow: () => { const rows = [], K = 'roygbv';
+    for(let y = 0; y < 9; y++){ let r = ''; for(let x = 0; x < 18; x++){ const b = Math.floor(8.6 - Math.hypot(x - 8.5, (y - 9.5) * 1.1)); r += b >= 0 && b < 6 ? K[b] : '.'; } rows.push(r); }
+    return makeSprite(rows, { r:RAINBOW_COL[0], o:RAINBOW_COL[1], y:RAINBOW_COL[2], g:RAINBOW_COL[3], b:RAINBOW_COL[4], v:RAINBOW_COL[5] }); },
+  fog: () => makeSprite(['....t.......t.....', '...ttt..t..ttt....', '..tttttttttttttt..', 'wwwwwww...wwwwwwww', 'tttwwwwwwwwwwwtttt',
+    '..ppppppp.pppp....', 'wwwwwwwwwwwwwwww..', '...pppppppppppppp.', '.wwwwwww..wwwwwww.'], { t:'#5E7A68', w:'#E6ECEE', p:'#C2CCD2' }),
+  meteor: () => makeSprite(['.................W', '...............WH.', '.............HB...', '...........BB.....', '........bBB.......',
+    '.....bbb..........', '..bbb.............', 'bb................'], { W:'#FFFFFF', H:'#E6ECFF', B:'#9FB4E8', b:'#6A7CC0' })
+};
 // its picture: the thing itself as the course draws it
 // (the signature holes' own life, drawn there in code: a picture for the Guide)
 const GUIDE_PIC = {
@@ -24849,6 +25026,7 @@ function guideUrl(id){
   const key = 'guide|' + id;
   if(DOMSPR[key] !== undefined) return DOMSPR[key];
   try{
+    if(RARE_PIC[id]){ const sp = RARE_PIC[id](); return DOMSPR[key] = sp.cv.toDataURL() + '|' + sp.w + 'x' + sp.h; }
     const ic = { island:['island', '#5FB0C8'], canyon:['dunes', '#C8804A'], stones:['stone', '#9AA6AE'], pier:['compass', '#8AB8D0'],
       rail:['metro', '#D0584A'], golden:['sunburst', '#F2C21E'], frost:['snow', '#CFE8F4'], rain:['stormglass', '#7AA6C8'], night:['lantern', '#F2D060'] }[id];
     const bi = ['sparrow', 'robin', 'blackbird'].indexOf(id);
@@ -26754,6 +26932,8 @@ const DEV = {
           + b('Golden Hour hole', 'DEV.golden()') + b('final-day gallery', 'DEV.gallery()') + b('find by the tee next hole', 'DEV.find()'))
       + row('Conditions', b('reroll', 'DEV.chaos()') + b('fair', 'DEV.weather(0)') + b('crosswind', 'DEV.weather(1)') + b('night', 'DEV.weather(3)'))
       + row('Frost · ' + (FROST_FORCE === null ? 'by the clock' : FROST_FORCE ? 'on' : 'off'), b('on', 'DEV.frost(1)') + b('off', 'DEV.frost(0)') + b('by the clock', 'DEV.frost(null)'))
+      + row('Rare weather', b('rainbow hole', 'DEV.rare(\'rainbow\')') + b('fog hole', 'DEV.rare(\'fog\')') + b('shooting star now', 'DEV.meteor()'))
+      + row('December lights · ' + (LIGHTS_FORCE === null ? 'by the date' : LIGHTS_FORCE ? 'on' : 'off'), b('on', 'DEV.lights(1)') + b('off', 'DEV.lights(0)') + b('by the date', 'DEV.lights(null)'))
       + row('Season touches · ' + (DECOR_FORCE || 'by the season'), DECOR_KINDS.map(k => b(k, 'DEV.decor(\'' + k + '\')')).join('') + b('by the season', 'DEV.decor()'))
       + row('Home season', b('by the card', 'DEV.season(-1)') + b('as built', 'DEV.season(0)')
           + b('autumn', 'DEV.season(1)') + b('winter', 'DEV.season(2)') + b('blossom', 'DEV.season(3)'))
@@ -26992,6 +27172,14 @@ const DEV = {
   // a train of that kind setting off now (on a railway hole)
   train(kind){ Scene.train = { t0: Scene.t, dir: Math.random() < 0.5 ? -1 : 1, kind }; Scene.trainNext = Scene.t + 30; hideSheet(); },
   frost(v){ FROST_FORCE = v; Scene.newHole(S.hole, S.tier); hideSheet(); },
+  // this hole with a rainbow or a bank of fog (in fair weather), or a
+  // shooting star now (at night)
+  rare(k){ if(S.chaos && !clearCh(S.chaos.n)) S.chaos = Object.assign({}, B.CHAOS[0]);
+    RAINBOW_FORCE = k === 'rainbow' ? 1 : 0; FOG_FORCE = k === 'fog' ? 1 : 0;
+    try{ Scene.newHole(S.hole, S.tier); } finally { RAINBOW_FORCE = FOG_FORCE = null; } hideSheet(); },
+  meteor(){ if(!Scene.night){ S.chaos = Object.assign({}, B.CHAOS.find(x => x.n === 'Night Round')); Scene.newHole(S.hole, S.tier); }
+    Scene.meteorT = Scene.t + 0.3; hideSheet(); },
+  lights(v){ LIGHTS_FORCE = v; hideSheet(); },
   decor(k){ DECOR_FORCE = k || null; Scene.newHole(S.hole, S.tier); hideSheet(); },
   // a find by the tee on the next hole; a record a stroke better than the
   // best on this course (or all cleared); a gift from the caddie now
