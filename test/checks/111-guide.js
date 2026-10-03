@@ -40,8 +40,13 @@ module.exports = {
         for (let h = h0; h < h0 + 20; h++) play(h, 'Night');
         for (let h = h0; h < h0 + 3; h++) play(h, 'Crosswind');
         FROST_FORCE = 1; SEASON_FORCE = 2; play(h0); FROST_FORCE = null; SEASON_FORCE = -1;
-        for (const k of SIG_KINDS) { let h = h0; while (sigKind(h) !== k && h < h0 + 5000) h++; play(h); }
+        // (every signature hole a few times: the sea's life is by the sea stack)
+        for (const k of SIG_KINDS) for (let h = h0, m = 0; m < 12 && h < h0 + 20000; h++) if (sigKind(h) === k) { play(h); m++; }
+        // (and a dry course, for its lizards and hawks)
+        { DEV.course(B.COURSE.findIndex(c => c.id === CRIT_DRY[0])); hideSheet(); const d0 = S.hole; for (let h = d0; h < d0 + 40; h++) play(h); }
         { let h = h0; while (!goldenOn(h, 'Fair') && h < h0 + 50000) h++; play(h); }
+        // (geese go over now and then in autumn and winter: watched a while)
+        SEASON_FORCE = 1; play(h0); for (let i = 0; i < 4000 && !S.guide.geese; i++) { Scene.t += 0.5; Scene.drawFlock(); } SEASON_FORCE = -1;
         const miss = GUIDE.filter(g => !S.guide[g.id]).map(g => g.n);
         if (miss.length) f('never spotted: ' + miss.join(', '));
         o.spotted = GUIDE.length - miss.length;
@@ -49,7 +54,7 @@ module.exports = {
         S.guide = { doe: 2, robin: 7 }; trophyRoom('guide');
         const tiles = [...document.querySelectorAll('#roomBody .gtile')];
         if (tiles.length !== GUIDE.length) f(tiles.length + ' tiles for ' + GUIDE.length + ' entries');
-        const pics = tiles.filter(t => { const i = t.querySelector('img'); return i && i.getAttribute('src').startsWith('data:image') && i.height >= 20; }).length;
+        const pics = tiles.filter(t => { const i = t.querySelector('img'); return i && i.getAttribute('src').startsWith('data:image') && i.width * i.height >= 400; }).length;
         if (pics !== tiles.length) f('only ' + pics + ' of ' + tiles.length + ' tiles have a picture');
         const seen = tiles.filter(t => !t.classList.contains('un')).length;
         if (seen !== 2) f(seen + ' tiles shown as seen, not 2');

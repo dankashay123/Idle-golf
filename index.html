@@ -10946,6 +10946,255 @@ function seasonDecor(cs, look){
   return null;
 }
 
+// The wildlife round the course (the user asked for twenty more animals,
+// "added places but not overcrowded", for the Field Guide): side on, facing
+// right, in solid pixels. Each: its rows (a second frame where it moves), its
+// colours, how tall it stands in the golfer's twelve (larger than life, as
+// the deer is: at true size most were a pixel or two), where it lives (wood:
+// the rough before a wood; rough; water: on a pond or a lake; bank: at the
+// water's edge; air: flying over the rough or the water; sea: by the sea
+// stack), and when (day, night; the seasons it is out in; the courses, for
+// the dry ones). Laid by Scene.layCritters.
+const CRIT = {
+  fox: { h: 6.5, at: 'wood', flee: 1, rows: [[
+    '............o.o.',
+    '............oooo',
+    '............oeoon',
+    'w.ooooooooooowww',
+    'wooooooooooooww.',
+    '.ooooooooooooo..',
+    '..k.k......k.k..',
+    '..k.k......k.k..']],
+    map: { o: '#D2662A', w: '#F2E8DA', k: '#2A1A12', e: '#141010', n: '#141010' } },
+  rabbit: { h: 5, at: 'rough', flee: 1, rows: [[
+    '......b..',
+    '......bb.',
+    '.....bbeb',
+    '..bbbbbb.',
+    'wbbbbbbb.',
+    '.bbbbbb..',
+    '..b..bb..'], [
+    '.......b.',
+    '......bb.',
+    '.....bbeb',
+    '..bbbbbb.',
+    'wbbbbbbb.',
+    '.bbbbbb..',
+    '..b..bb..']],
+    map: { b: '#9A8470', w: '#E8E0D4', e: '#141010' } },
+  squirrel: { h: 4.5, at: 'wood', flee: 1, not: ['Winter'], rows: [[
+    '.tt.....',
+    'tttt..r.',
+    'ttt..rre',
+    '.tt.rrrr',
+    '..trrrr.',
+    '...rrrr.',
+    '...r.r..']],
+    map: { r: '#A0522D', t: '#C07040', e: '#141010' } },
+  hedgehog: { h: 4, at: 'wood', not: ['Winter'], rows: [[
+    '.SsSsS....',
+    'SsSsSsS...',
+    'sSsSsSffe.',
+    'SsSsSsfffn',
+    '.f..f.....']],
+    map: { s: '#5A4636', S: '#8A7458', f: '#C8A882', e: '#141010', n: '#141010' } },
+  pheasant: { h: 5.5, at: 'rough', flee: 1, only: ['Autumn', 'Winter'], rows: [[
+    '.........gg.',
+    '........grgy',
+    '.........gg.',
+    '.........w..',
+    'tttt...bbbb.',
+    '...tbbbbbBb.',
+    '.....bbbBB..',
+    '......l..l..']],
+    map: { g: '#2E6A4A', r: '#C8302A', y: '#D8B040', w: '#F2F0E8', b: '#A8582A', B: '#6A3418', t: '#8A6A3A', l: '#5A4A3A' } },
+  badger: { h: 5, at: 'wood', night: 1, rows: [[
+    '..........ww.',
+    '.gggggggggkwk',
+    'gggggggggwwwn',
+    'ggggggggggkk.',
+    '.kk....kk....']],
+    map: { g: '#8A8A8C', k: '#1E1E20', w: '#EEEEEE', n: '#141010' } },
+  owl: { h: 6, at: 'wood', night: 1, rows: [[
+    'B....B',
+    'bBbbBb',
+    'byccyb',
+    'bcbbcb',
+    'bbBBbb',
+    'bBbbBb',
+    '.bbbb.',
+    '.y..y.',
+    'ssssss',
+    '.ssss.',
+    '.ssss.']],
+    map: { b: '#8A6A44', B: '#5A4430', c: '#D8C8A8', y: '#F2C21E', s: '#6A4A2E' }, lit: 'y' },
+  moorhen: { h: 4, at: 'water', ice: 0, rows: [[
+    '.....kk..',
+    '.....kkry',
+    '.....kk..',
+    'kkkkkkk..',
+    'wkkkkkk..',
+    '.kkkkk...']],
+    map: { k: '#2A2A30', r: '#C8302A', y: '#E8C030', w: '#F2F0E8' } },
+  swan: { h: 6, at: 'water', big: 1, ice: 0, rows: [[
+    '........ww..',
+    '........wkoo',
+    '........ww..',
+    '.........w..',
+    '.........w..',
+    '..w.....ww..',
+    '.wwwwwwwww..',
+    'wWwwwwwwwW..',
+    '.WWWWWWWW...']],
+    map: { w: '#F4F4F0', W: '#C8CCCC', o: '#E88A2A', k: '#1A1A1A' } },
+  heron: { h: 9, at: 'bank', rows: [[
+    '.....kk...',
+    '.....wwk..',
+    '....wwwyyy',
+    '.....ww...',
+    '.....w....',
+    '....ww....',
+    '...ww.....',
+    '..gggg....',
+    '.gggggg...',
+    'Ggggggg...',
+    'GGGggg....',
+    '..GGg.....',
+    '....l.....',
+    '....l.....',
+    '...l.l....',
+    '...l.l....']],
+    map: { g: '#8A949C', G: '#5A646C', w: '#E8ECEC', y: '#D8B040', k: '#1A1A1A', l: '#B8A060' } },
+  frog: { h: 3, at: 'bank', not: ['Winter'], rows: [[
+    '..e.e..',
+    '.gggggg',
+    'gGgggGg',
+    'G.y.y.G']],
+    map: { g: '#5A9A3A', G: '#3A6A2A', y: '#C8D080', e: '#101010' } },
+  turtle: { h: 3.5, at: 'bank', only: ['', 'Blossom'], rows: [[
+    '..SsS....',
+    '.SsSsS.he',
+    'sSsSsShhh',
+    '.h...h...']],
+    map: { s: '#5A6A3A', S: '#3E4A28', h: '#8A9A5A', e: '#101010' } },
+  otter: { h: 5, at: 'bank', rows: [[
+    '..........bb.',
+    '.........bbeb',
+    'BBbbbbbbbbbcn',
+    '..bbbbbbbbc..',
+    '..b..b..b....']],
+    map: { b: '#6A4A30', B: '#3E2A1C', c: '#C8B08A', e: '#101010', n: '#101010' } },
+  seal: { h: 5.5, at: 'sea', rows: [[
+    '.........gg.',
+    '........gggeg',
+    'GG...gggggggn',
+    '.GGggggwwwg..',
+    '...GGGGGGG...']],
+    map: { g: '#7A8088', G: '#5A6068', w: '#9AA0A8', e: '#101010', n: '#101010' } },
+  crab: { h: 3, at: 'sea', shore: 1, rows: [[
+    'r.e..e.r',
+    'rr.rr.rr',
+    '.rRRRRr.',
+    'r.r..r.r'], [
+    '.re..er.',
+    'rr.rr.rr',
+    '.rRRRRr.',
+    '.r.rr.r.']],
+    map: { r: '#D0502A', R: '#A0381E', e: '#101010' } },
+  lizard: { h: 3.2, at: 'rough', flee: 1, dry: 1, rows: [[
+    '........llle',
+    'LLlllllllll.',
+    '...l..l.....']],
+    map: { l: '#B09A52', L: '#7A6A36', e: '#101010' } },
+  eagle: { h: 6, at: 'air', soar: 1, dry: 1, rows: [[
+    'B...........B',
+    '.bb.......bb.',
+    '...bb.w.bb...',
+    '.....wwwy....',
+    '......t......'], [
+    '.............',
+    '.....bwb.....',
+    '..bbbwwwybb..',
+    '.bb...t...bb.',
+    'B...........B']],
+    map: { b: '#4A3222', B: '#2A1C12', w: '#F4F2EA', t: '#F4F2EA', y: '#E8B030' } },
+  bat: { h: 3.5, at: 'air', night: 1, rows: [[
+    'K...k...K',
+    'KK.kkk.KK',
+    '.KKkkkKK.',
+    '....k....'], [
+    '...k.k...',
+    '..kkkkk..',
+    '.KKKkKKK.',
+    'K.......K']],
+    map: { k: '#3A3044', K: '#5A4A6A' } },
+  butterfly: { h: 2.6, at: 'air', low: 1, not: ['Winter'], rows: [[
+    'oo.oo',
+    'yokoy',
+    '.oko.'], [
+    '..o..',
+    '.oko.',
+    '..k..']],
+    map: { o: '#F2A030', y: '#F8D060', k: '#2A1A10' } },
+  dragonfly: { h: 2.6, at: 'air', wet: 1, not: ['Winter'], rows: [[
+    '.w.w...',
+    'bbbbbbe',
+    '.w.w...'], [
+    'w.w....',
+    'bbbbbbe',
+    'w.w....']],
+    map: { b: '#2A8AC8', w: '#C8E8F4', e: '#101010' } }
+};
+const CRIT_NAME = { fox: 'Fox', rabbit: 'Rabbit', squirrel: 'Squirrel', hedgehog: 'Hedgehog', pheasant: 'Pheasant', badger: 'Badger',
+  owl: 'Owl', moorhen: 'Moorhen', swan: 'Swan', heron: 'Heron', frog: 'Frog', turtle: 'Turtle', otter: 'Otter', seal: 'Seal', crab: 'Crab',
+  lizard: 'Lizard', eagle: 'Eagle', bat: 'Bat', butterfly: 'Butterfly', dragonfly: 'Dragonfly' };
+const CRIT_WHERE = { fox: 'Edge of the woods', rabbit: 'In the rough', squirrel: 'Edge of the woods', hedgehog: 'Edge of the woods', pheasant: 'Autumn and winter rough',
+  badger: 'Woods at night', owl: 'Woods at night', moorhen: 'On a pond', swan: 'On a lake', heron: 'At the water’s edge', frog: 'At a pond',
+  turtle: 'At the water, spring and summer', otter: 'By the water', seal: 'By the sea', crab: 'On the shore', lizard: 'Dry courses', eagle: 'High over dry courses',
+  bat: 'After dark', butterfly: 'Spring and summer', dragonfly: 'Over the water' };
+// the dry courses, for the lizard and the eagle
+const CRIT_DRY = ['mesa', 'redarch', 'dunes', 'castledunes', 'emberpeak'];
+const CRIT_SPR = {}, CRIT_MAP = {};
+function critMap(an, night){
+  const key = an + (night ? '|n' : ''); if(CRIT_MAP[key]) return CRIT_MAP[key];
+  const C = CRIT[an], map = Object.assign({}, C.map);
+  if(night) for(const ch in map) if(ch !== C.lit) map[ch] = moonC(map[ch]);
+  return CRIT_MAP[key] = map;
+}
+function critSprite(an, fr, night, flip){
+  const key = an + '|' + fr + '|' + (night ? 1 : 0) + (flip ? 1 : 0);
+  if(CRIT_SPR[key]) return CRIT_SPR[key];
+  const C = CRIT[an], R = C.rows[Math.min(fr, C.rows.length - 1)], w = Math.max(...R.map(r => r.length));
+  const map = Object.assign({}, C.map);
+  // (in the moonlight with everything else, an owl's eyes still catching it)
+  if(night) for(const ch in map) if(ch !== C.lit) map[ch] = moonC(map[ch]);
+  const rows = R.map(r => { const q = r.padEnd(w, '.'); return flip ? [...q].reverse().join('') : q; });
+  return CRIT_SPR[key] = makeSprite(rows, map);
+}
+// Golfers out on the other holes (the user: "it would be sweet if you could
+// always see other golfers playing on adjacent holes"): a little figure in
+// four poses, standing, over the ball, the club back and through; c cap, h
+// skin, s shirt, p trousers, e shoes, k the club. Their colours from a hash.
+const OTHER_POSE = [
+  ['..cc...', '..hh...', '..hh...', '.ssss..', '.ssss..', '.hsss..', '..ss.k.', '..pp.k.', '..pp.k.', '..pp.k.', '..p.pk.', '..p.p..', '.ee.ee.'],
+  ['.......', '...cc..', '...hh..', '..sss..', '.ssss..', '.sss...', '..sh...', '..pk...', '..pk...', '.pp.k..', '.p.p.k.', '.p.p..k', 'ee.ee..'],
+  ['k......', '.k.cc..', '..khh..', '..hss..', '..sss..', '..sss..', '..ss...', '..pp...', '..pp...', '.p.p...', '.p.p...', '.p.p...', 'ee.ee..'],
+  ['.....k.', '..cc.k.', '..hhk..', '..sshh.', '..sss..', '..sss..', '..ss...', '..pp...', '..pp...', '..p.p..', '..p.p..', '..p..p.', '..ee.ee']
+];
+const OTHER_SHIRT = ['#E8E4DC', '#3A6AB8', '#C8443A', '#E8C040', '#4A9A5A', '#8A5AB8', '#F09A3A', '#2A3A5A'];
+const OTHER_PANTS = ['#2A2E38', '#D8CCB0', '#5A6470', '#E8E4DC', '#3A3A3A'];
+const OTHER_SKIN = ['#E8B890', '#C88A60', '#8A5A3A', '#F0C8A8'];
+const OTHER_SPR = {};
+function otherSprite(pose, c, night, flip){
+  const key = pose + '|' + c + '|' + (night ? 1 : 0) + (flip ? 1 : 0);
+  if(OTHER_SPR[key]) return OTHER_SPR[key];
+  const map = { c: OTHER_SHIRT[(c * 3 + 1) % OTHER_SHIRT.length], h: OTHER_SKIN[c % OTHER_SKIN.length], s: OTHER_SHIRT[c % OTHER_SHIRT.length],
+    p: OTHER_PANTS[c % OTHER_PANTS.length], e: '#1E1A18', k: '#B8BCC0' };
+  if(night) for(const ch in map) map[ch] = moonC(map[ch]);
+  const rows = OTHER_POSE[pose].map(r => flip ? [...r].reverse().join('') : r);
+  return OTHER_SPR[key] = makeSprite(rows, map);
+}
+
 /* ---- pixel-perfect icons from the existing vector library ----
    The paths are rasterised once at a small size and their alpha thresholded to
    fully on or fully off, which turns a smooth vector glyph into a real pixel
@@ -17561,6 +17810,123 @@ const Scene = {
     put.sort((a, b) => b.d - a.d);
     this.props = put;
   },
+  // The wildlife (kind 15; see CRIT): on about half the holes one kind, now
+  // and then two, picked from those that live in what the hole has (a wood,
+  // the rough, a pond or a lake, a river, the sea) at this time of day and
+  // year. Never many: a group only of ducks, crabs or rabbits. Clear of play,
+  // hazards, the cart path, other holes and anything standing there. From a
+  // hash, tagged extra.
+  layCritters(){
+    const put = this.props || [], h = this.hole, sea = (this.look && this.look.season) || '', night = !!this.night;
+    this.critUp = {};
+    if(S.dgnRun) return;
+    const cs = this.course, dry = !!cs && CRIT_DRY.includes(cs.id), sk = sigKind(h), woods = (this.fills || []).filter(F => F.kind === 'wood');
+    // the water there is: the hole's own (not a canyon or the railway), its
+    // pond, a lake beside it
+    const waters = [], w = this.water;
+    if(w && !w.canyon && !w.rail) waters.push({ d: w.d, x: w.x, rd: w.rd, rx: w.rx, river: !!w.river, isle: !!w.lake });
+    if(this.pond) waters.push({ d: this.pond.d, x: this.pond.x, rd: this.pond.rd, rx: this.pond.rx });
+    for(const F of this.fills || []) if(F.kind === 'lake' && F.d1 > F.d0){ const d = (F.d0 + F.d1) / 2;
+      waters.push({ d, x: F.sd * (this.fillIn(F, d) + F.w / 2), rd: (F.d1 - F.d0) * 0.4, rx: F.w * 0.5, fill: F }); }
+    const wet = (d, x) => (w && !w.canyon && !w.rail && Math.abs(d - w.d) < w.rd && Math.abs(x - w.x) < w.rx) || this.inPond(d, x, 0) || this.inFill(d, x, 0, 'lake');
+    const clear = (d, x, r) => !(Math.abs(x) > 9.5 || this.onPlay(d, x, 0.5) || this.onNbr(d, x, 0.3) || this.inFill(d, x, -0.05, 'wood') || this.inBack(d, x, 0.4)
+      || (this.cart && Math.sign(x) === this.cart.sd && Math.abs(Math.abs(x) - Math.abs(this.cartX(d))) < 0.9)
+      || put.some(q => (q.kind <= 2 || q.kind >= 10) && Math.abs(q.d - d) < r && Math.abs(q.x - x) < r));
+    const have = { wood: woods.length > 0, rough: true, water: waters.length > 0 && !this.ice, bank: waters.length > 0, sea: sk === 'pier', air: true };
+    const can = Object.keys(CRIT).filter(an => { const C = CRIT[an];
+      if(!!C.night !== night || (C.not && C.not.includes(sea)) || (C.only && !C.only.includes(sea)) || (C.dry && !dry)) return false;
+      if(this.rain && an !== 'moorhen' && an !== 'frog' && an !== 'heron') return false;
+      if(C.big && !waters.some(W => W.isle || W.fill || W.rd > 4)) return false;
+      if(C.wet && !waters.length) return false;
+      return have[C.at]; });
+    if(!can.length) return;
+    // (by the water, the water's own first: a pond with nothing on it is the
+    // pond missing something)
+    const pool = can.flatMap(an => CRIT[an].at === 'sea' ? [an, an, an, an] : ['water', 'bank'].includes(CRIT[an].at) ? [an, an] : [an]);
+    // (by the sea stack the sea's own always: a seal or crabs)
+    const first = have.sea ? (hr(h, 614) < 0.5 ? 'crab' : 'seal') : null;
+    const want = first ? 1 + (hr(h, 602) < 0.3 ? 1 : 0) : hr(h, 601) < 0.55 ? 1 + (hr(h, 602) < 0.3 ? 1 : 0) : 0;
+    const got = [];
+    for(let i = 0; i < 12 && got.length < want; i++){
+      const an = i < 3 && first && can.includes(first) && !got.length ? first : pool[Math.floor(hr(h * 13 + i, 604) * pool.length)];
+      if(got.includes(an)) continue;
+      const C = CRIT[an], n = an === 'moorhen' || an === 'crab' ? 2 + Math.floor(hr(h + i, 605) * 2) : an === 'rabbit' && hr(h + i, 605) < 0.4 ? 2 : 1;
+      let laid = 0, at = null;
+      for(let j = 0; j < 40 && laid < n; j++){
+        const u = hr(h * 17 + i * 41 + j, 606), v = hr(h * 17 + i * 41 + j, 607), sd = hr(h * 17 + i * 41 + j, 608) < 0.5 ? -1 : 1;
+        let d, x, alt = 0, r = 0;
+        const W = waters[Math.floor(v * waters.length) % Math.max(1, waters.length)];
+        if(at){ d = at.d + (u - 0.5) * 2.4; x = at.x + (v - 0.5) * 1.6; }
+        else if(C.at === 'wood'){ const F = woods[Math.floor(u * woods.length)]; const lo = Math.max(8, F.d0 + 2), hi = Math.min(LEN + 4, F.d1 - 2);
+          if(hi <= lo) continue; d = lo + v * (hi - lo); x = F.sd * (this.fillIn(F, d) - 0.35 - hr(h + j, 609) * 0.6); }
+        else if(C.at === 'rough'){ d = 8 + u * (LEN - 10); x = sd * (this.fwWidth(d) + 1.0 + v * 2.6); }
+        else if(C.at === 'water'){
+          if(W.river){ d = W.d + (u - 0.5) * W.rd * 0.8; x = sd * (this.fwWidth(d) + 2 + v * 3); }
+          else if(W.isle){ if(sk === 'island') continue; d = W.d - W.rd + 3 + u * 3; x = sd * (1.6 + v * 2.2); }
+          else { d = W.d + (u - 0.5) * W.rd * 0.7; x = W.x + (v - 0.5) * W.rx * 0.7; } }
+        else if(C.at === 'bank'){
+          if(W.river){ d = W.d - W.rd - 0.5 - u * 0.4; x = sd * (this.fwWidth(d) + 1.4 + v * 2.5); }
+          else if(W.isle){ d = W.d - W.rd - 0.6 - u * 0.5; x = sd * (1.6 + v * 2.4); }
+          // (at either end of it or along a side)
+          else if(hr(h + j, 615) < 0.5){ const end = u < 0.5 ? -1 : 1; d = W.d + end * (W.rd + 0.5 + hr(h + j, 609) * 0.4); x = W.x + (v - 0.5) * W.rx * 0.9; }
+          else { d = W.d + (u - 0.5) * W.rd * 1.2; x = W.x + sd * (W.rx + 0.5 + hr(h + j, 609) * 0.4); } }
+        else if(C.at === 'sea'){ const S0 = waters.find(q => q.isle); if(!S0) continue;
+          d = C.shore ? S0.d - S0.rd - 0.5 - u * 0.6 : S0.d - S0.rd + 2.5 + u * 2; x = sd * (C.shore ? this.fwWidth(d) + 0.6 + v * 0.8 : 1.4 + v * 2.8); }
+        else { // in the air
+          if(an === 'eagle'){ d = 22 + u * 30; x = (v - 0.5) * 6; alt = 9 + hr(h + j, 609) * 3; }
+          else if(an === 'bat'){ d = 8 + u * 26; x = sd * (this.fwWidth(d) + v * 2); alt = 2.4; }
+          else if(an === 'dragonfly'){ d = W.d + (u - 0.5) * W.rd * 0.4; x = W.x + (v - 0.5) * W.rx * 0.4; alt = 0.5; r = Math.min(1.6, W.rx * 0.4);
+            if(W.river){ x = sd * (this.fwWidth(d) + 2.5 + v * 2); } }
+          else { d = 8 + u * (LEN - 12); x = sd * (this.fwWidth(d) + 1.2 + v * 2.2); alt = 0.7; } }
+        // (where it stands: on the water for those that swim, dry ground
+        // for the rest, and clear of everything)
+        const air = C.at === 'air';
+        if(C.at === 'water' || (C.at === 'sea' && !C.shore)){ if(!wet(d, x) || wet(d + 0.8, x) !== true || put.some(q => q.kind === 15 && Math.abs(q.d - d) < 0.7 && Math.abs(q.x - x) < 0.7)) continue; }
+        else if(!air){ if(wet(d, x) || wet(d + 0.3, x) || this.hitsHazard(d, x, 0.25) || !clear(d, x, 0.7)
+          || put.some(q => q.kind === 15 && Math.abs(q.d - d) < 0.6 && Math.abs(q.x - x) < 0.6)) continue;
+          if(C.at === 'sea' && Math.abs(x) < 1.2) continue; }
+        else if(an !== 'eagle' && an !== 'dragonfly' && !clear(d, x, 0.3)) continue;
+        if(!air) for(let k = put.length - 1; k >= 0; k--){ const q = put[k]; if(q.kind === 8 && Math.abs(q.d - d) < 0.8 && Math.abs(q.x - x) < 0.8) put.splice(k, 1); }
+        const p = { kind: 15, an, d, x, alt, r, extra: 1, k: h * 7 + i * 3 + laid, flip: hr(h * 5 + i + j, 610) < 0.5 ? 1 : 0 };
+        put.push(p); at = at || p; laid++;
+      }
+      if(laid) got.push(an);
+    }
+    put.sort((a, b) => b.d - a.d);
+    this.props = put;
+  },
+  // Golfers on the other holes (kind 16; the user asked to always see them):
+  // a group on each other hole's green, putting out, and a pair down its
+  // fairway, one of them playing; by day, never in a wager. From a hash,
+  // tagged extra.
+  layOthers(){
+    const put = this.props || [], h = this.hole;
+    if(S.dgnRun || this.night) return;
+    let n = 0;
+    const ok = (d, x) => !(this.hitsHazard(d, x, 0.4) || this.inFill(d, x, 0.1, 'wood') || this.inFill(d, x, 0.2, 'lake') || this.inPond(d, x, 0.4) || this.inBack(d, x, 0.3)
+      || this.onPlay(d, x, 0.6) || put.some(q => (q.kind === 0 || q.kind === 12 || q.kind >= 10 && q.kind !== 16) && Math.abs(q.d - d) < 0.7 && Math.abs(q.x - x) < 0.7));
+    const add = (d, x, role) => { if(!ok(d, x)) return false;
+      put.push({ kind: 16, d, x, role, c: Math.floor(hr(h * 11 + n, 620) * 64), k: h * 13 + n, flip: hr(h * 7 + n, 621) < 0.5 ? 1 : 0, extra: 1 }); n++; return true; };
+    for(const N of this.nbrs || []){
+      if(!(N.gd < LEN + 100)) continue;
+      const kN = h * 3 + (N.sd > 0 ? 1 : 0);
+      // on its green: two or three, one putting
+      const gx = this.nbrX(N, N.gd), m = 2 + (hr(kN, 622) < 0.5 ? 1 : 0);
+      for(let i = 0, got = 0; i < 8 && got < m; i++){
+        const d = N.gd + (hr(kN * 5 + i, 623) - 0.5) * 2.4, x = gx + (hr(kN * 5 + i, 624) < 0.5 ? -1 : 1) * (0.9 + hr(kN * 5 + i, 625) * 1.2);
+        if(add(d, x, got ? 'stand' : 'putt')) got++;
+      }
+      // down its fairway, a pair: one playing, one waiting a little behind
+      const lo = Math.max(Math.min(N.a, N.b) + 4, 6), hi = Math.min(Math.max(N.a, N.b) - 4, LEN + 12);
+      if(hi > lo) for(let i = 0; i < 8; i++){
+        const d = lo + hr(kN * 7 + i, 626) * (hi - lo), x = this.nbrX(N, d) + (hr(kN * 7 + i, 627) - 0.5) * this.nbrW(N, d) * 0.8;
+        if(!ok(d, x) || !ok(d + (N.toward ? -1.4 : 1.4), x + 1.1)) continue;
+        add(d, x, 'swing'); add(d + (N.toward ? -1.4 : 1.4), x + 1.1, 'stand'); break;
+      }
+    }
+    put.sort((a, b) => b.d - a.d);
+    this.props = put;
+  },
   inFill(d, x, pad, kind){
     for(const F of this.fills || []){
       if(kind && F.kind !== kind) continue;
@@ -18679,6 +19045,8 @@ const Scene = {
     this.layDeer();
     this.decor = seasonDecor(cs, look);
     this.laySeason();
+    this.layCritters();
+    this.layOthers();
     guideSpot(this);
     // the near bank: the last ground on his line before the water
     // Where he stops before it and where he is across: an island's near bank
@@ -21605,6 +21973,28 @@ Object.assign(Scene, {
     if(!this._propDefer) this.forestOver(c);
   },
 
+  // A flyer of the wildlife: a hawk circling high over the hole, a bat
+  // flitting about the rough at night, a butterfly over the rough and a
+  // dragonfly darting over the water. Each pixel cut at the ground's line
+  // under it.
+  drawFlyer(c, p, night){
+    const C = CRIT[p.an], t = this.t + hr(p.k, 611) * 50;
+    let d, x, a, dir, fr;
+    if(p.an === 'eagle'){ const u = t * 0.32; d = p.d + Math.cos(u) * 3.5; x = p.x + Math.sin(u) * 3.5; a = p.alt; dir = Math.cos(u) >= 0 ? 1 : -1;
+      fr = Math.sin(t * 0.6) > 0.75 ? Math.floor(t * 5) & 1 : 0; }
+    else if(p.an === 'bat'){ d = p.d + Math.sin(t * 0.9) * 4; x = p.x + Math.sin(t * 1.7) * 2.5; a = p.alt + Math.sin(t * 2.3) * 0.6; dir = Math.cos(t * 1.7) >= 0 ? 1 : -1; fr = Math.floor(t * 9) & 1; }
+    else if(p.an === 'butterfly'){ d = p.d + Math.sin(t * 0.5) * 1.2; x = p.x + Math.sin(t * 0.8 + 1) * 1.0; a = p.alt + Math.abs(Math.sin(t * 3)) * 0.25; dir = Math.cos(t * 0.8 + 1) >= 0 ? 1 : -1; fr = Math.floor(t * 7) & 1; }
+    else { const m = Math.floor(t / 1.1), f = clamp((t / 1.1 - m) * 4, 0, 1);
+      const ax = hr(p.k * 3 + m, 612) - 0.5, ad = hr(p.k * 3 + m, 613) - 0.5, bx = hr(p.k * 3 + m + 1, 612) - 0.5, bd = hr(p.k * 3 + m + 1, 613) - 0.5;
+      d = p.d + (ad + (bd - ad) * f) * p.r * 2; x = p.x + (ax + (bx - ax) * f) * p.r * 2; a = p.alt; dir = bx >= ax ? 1 : -1; fr = Math.floor(t * 18) & 1; }
+    if(d < this.camD - 2) return;
+    const g = this.proj(d, x, a), rows = C.rows[fr] || C.rows[0], hpx = C.h * US * g.s;
+    if(hpx < rows.length * 0.5) return;
+    const k = Math.max(1, Math.round(hpx / rows.length)), w = rows[0].length * k;
+    if(g.x + w < -4 || g.x - w > VW + 4) return;
+    const map = critMap(p.an, night);
+    pxRows(c, rows, map, Math.round(g.x - w / 2), Math.round(g.y - rows.length * k), k, this.clipAt(d), dir < 0);
+  },
   // A bird on the fairway: a dark back, a paler breast, pecking now and then.
   // Its group flies off together once a ball lies within a few paces of it
   // or he walks up to it: up and out to the side on beating wings, gone in
@@ -21661,6 +22051,7 @@ Object.assign(Scene, {
       this.flock = { t0: this.t, dir: hr(n, 341) < 0.5 ? -1 : 1, y: geese ? Math.min(lo + 2 * TSC, HORIZON * 0.7 - 12 * TSC) : lo + hr(n, 342) * (hi - lo), m: geese ? 6 + Math.floor(hr(n, 343) * 4) : 5 + Math.floor(hr(n, 343) * 5),
                      v: geese ? 0.05 + hr(n, 344) * 0.02 : 0.07 + hr(n, 344) * 0.04, n, geese };
       this.flockNext = this.t + 22 + hr(n, 345) * 26;
+      if(geese && !QUIET && !OFFLINE && this.hole === S.hole) guideAdd(['geese']);
     }
     const F = this.flock;
     if(!F) return;
@@ -21775,6 +22166,52 @@ Object.assign(Scene, {
       const X = Math.round(pr.x), Y = Math.round(pr.y);
       c.fillStyle = 'rgba(8,16,10,.26)'; this.standShadow(c, X - Math.round(w * 0.36), Y - 1, Math.round(w * 0.72), 1);
       this.standBlit(c, shrinkSprite(spr, w, h) || spr, X - (w >> 1), Y - h, w, h);
+      return;
+    }
+    // the wildlife (layCritters): standing, swimming or flying; those that
+    // run off when he walks up or a ball comes down by them, outward and
+    // gone in a second. Cut at the ground's line where each is. Not in a
+    // wager.
+    if(p.kind === 15){
+      if(S.dgnRun) return;
+      const C = CRIT[p.an];
+      if(C.at === 'air'){ this.drawFlyer(c, p, night); return; }
+      let d = p.d, x = p.x, hop = 0, flip = p.flip;
+      if(C.flee){
+        const up = this.critUp || (this.critUp = {}), R0 = this.restBall;
+        if(up[p.k] === undefined && ((p.d - this.camD < 4.5 && p.d - this.camD > -3) || (R0 && Math.abs(R0.d - p.d) < 3 && Math.abs(R0.lat - p.x) < 2.5))) up[p.k] = this.t;
+        const run = up[p.k] === undefined ? -1 : this.t - up[p.k];
+        if(run > 1.1) return;
+        if(run >= 0){ const sd = Math.sign(p.x) || 1; x = p.x + sd * (run * 3 + run * run * 2); d = p.d + run * 0.5; flip = sd < 0 ? 1 : 0;
+          hop = p.an === 'rabbit' ? Math.abs(Math.sin(run * 9)) * 0.35 : 0; }
+      }
+      const g = this.proj(d, x), q = hop ? this.proj(d, x, hop) : g;
+      const hpx = Math.round(C.h * US * g.s);
+      if(hpx < 3) return;
+      const fr = C.rows.length > 1 ? (Math.floor(this.t * (p.an === 'crab' ? 3 : 0.7) + p.k) & 1) : 0;
+      const spr = critSprite(p.an, fr, night, flip), w = Math.max(2, Math.round(hpx * spr.w / spr.h));
+      if(q.x + w < -4 || q.x - w > VW + 4) return;
+      // (a swimmer rides the ripples a pixel up and down)
+      const X = Math.round(q.x), Y = Math.round(q.y) + (C.at === 'water' || C.at === 'sea' && !C.shore ? (Math.sin(this.t * 1.7 + p.k) > 0.5 ? 1 : 0) : 0);
+      c.save(); c.beginPath(); c.rect(0, 0, VW, Math.max(0, this.clipAt(d) + 1)); c.clip();
+      if(hpx > 4 && C.at !== 'water' && !hop){ c.fillStyle = 'rgba(8,16,10,.24)'; this.standShadow(c, X - Math.round(w * 0.38), Math.round(g.y) - 1, Math.round(w * 0.76), 1); }
+      this.standBlit(c, shrinkSprite(spr, w, hpx) || spr, X - (w >> 1), Y - hpx, w, hpx);
+      c.restore();
+      return;
+    }
+    // a golfer on another hole (layOthers): standing, over the ball, the
+    // club back and through, each in their own time; one on the green putts
+    if(p.kind === 16){
+      if(S.dgnRun || night) return;
+      const hpx = Math.round(B_GOLFER * US * pr.s);
+      if(hpx < 4 || pr.x < -8 || pr.x > VW + 8) return;
+      const ph = (this.t + hr(p.k, 628) * 20) % (p.role === 'putt' ? 9 : 11);
+      const pose = p.role === 'swing' ? (ph < 7 ? 0 : ph < 8.8 ? 1 : ph < 9.2 ? 2 : ph < 10.2 ? 3 : 0)
+                 : p.role === 'putt' ? (ph < 5 ? 0 : 1) : 0;
+      const spr = otherSprite(pose, p.c, false, p.flip), w = Math.max(2, Math.round(hpx * spr.w / spr.h));
+      const X = Math.round(pr.x), Y = Math.round(pr.y);
+      if(hpx > 5){ c.fillStyle = 'rgba(8,16,10,.24)'; this.standShadow(c, X - Math.round(w * 0.3), Y - 1, Math.round(w * 0.6), 1); }
+      this.standBlit(c, shrinkSprite(spr, w, hpx) || spr, X - (w >> 1), Y - hpx, w, hpx);
       return;
     }
     // the season's touches (laySeason): a pumpkin, a bale, a snowman, a bed
@@ -24133,6 +24570,11 @@ const GUIDE = [
   { id:'rain', n:'Rain', g:'c', w:'Stormy weather' },
   { id:'night', n:'Night', g:'c', w:'After dark' }
 ];
+// the wildlife round the course (see CRIT), after the first seven
+GUIDE.splice(7, 0, ...Object.keys(CRIT).map(id => ({ id, n: CRIT_NAME[id], g: 'w', w: CRIT_WHERE[id] })));
+// and the life the signature holes already had, and the geese
+GUIDE.splice(7, 0, { id:'duck', n:'Duck', g:'w', w:'On the island\u2019s lake' }, { id:'hawk', n:'Hawk', g:'w', w:'Over the canyon' },
+  { id:'fish', n:'Fish', g:'w', w:'By the stepping stones' }, { id:'geese', n:'Geese', g:'w', w:'Autumn and winter skies' });
 const GUIDE_SHELF = [['w', 'Wildlife'], ['s', 'Seasons'], ['c', 'The Course']];
 // what the hole just laid out shows: called as each hole starts, live only
 function guideSpot(sc){
@@ -24142,9 +24584,15 @@ function guideSpot(sc){
   if(!sc.night) for(const p of P) if(p.kind === 13) see(p.stag ? 'stag' : 'doe');
   if(!sc.night && dry) for(const p of P) if(p.kind === 9) see(['sparrow', 'robin', 'blackbird'][birdKind(sc.hole, p.g)]);
   if(sc.night && dry && P.some(p => p.kind === 5)) see('firefly');
+  for(const p of P) if(p.kind === 15) see(p.an);
   for(const p of P) if(p.kind === 14) see(p.sp === 'pk' || p.sp === 'bale' ? 'pumpkin' : p.sp);
-  const sk = sigKind(sc.hole); if(sk){ see(sk); if(sk === 'pier') see('gull'); }
+  const sk = sigKind(sc.hole); if(sk){ see(sk); if(sk === 'pier') see('gull');
+    if(!sc.night){ if(sk === 'island') see('duck'); if(sk === 'canyon') see('hawk'); } if(sk === 'stones' && !sc.ice) see('fish'); }
   if(sc.golden) see('golden'); if(sc.frost) see('frost'); if(sc.rain) see('rain'); if(sc.night) see('night');
+  guideAdd(got);
+}
+// count what was seen, and pay for each seen the first time
+function guideAdd(got){
   S.guide = S.guide || {};
   const firsts = [];
   for(const id of got){
@@ -24157,6 +24605,15 @@ function guideSpot(sc){
     toast('<span class="achk">Field Guide</span>' + firsts.join(', ') + ' \u00b7 <span style="white-space:nowrap">+' + n + sovIc() + '</span>', 'ach'); }
 }
 // its picture: the thing itself as the course draws it
+// (the signature holes' own life, drawn there in code: a picture for the Guide)
+const GUIDE_PIC = {
+  duck: [['......gg..', '......gegy', '......gg..', '......w...', 'dGGGGGbb..', '.GGGGGGb..'],
+    { g: '#2E7A4A', e: '#101010', y: '#E8C030', w: '#F2F0E8', b: '#7A4A2A', G: '#A8A8A0', d: '#2A2A2A' }],
+  hawk: [['.............', '.....bwb.....', '..bbbwwwybb..', '.bb...t...bb.', 'B...........B'],
+    { b: '#7A5A3A', B: '#4A3424', w: '#E8DCC8', t: '#A8603A', y: '#D8B040' }],
+  fish: [['....ss....', '..sssssk..', 'tssSSSsss.', '.t.sssss..', '....s.....'], { s: '#8AA8B8', S: '#C8D8E0', k: '#101010', t: '#6A8898' }],
+  geese: [['g.........', '.g......g.', '..g....g..', '...g..g...', '....gg....'], { g: '#5A5048' }]
+};
 function guideUrl(id){
   const key = 'guide|' + id;
   if(DOMSPR[key] !== undefined) return DOMSPR[key];
@@ -24169,6 +24626,8 @@ function guideUrl(id){
       : bi >= 0 ? makeSprite(BIRD_STAND, BIRD_KIND[bi])
       : id === 'gull' ? makeSprite(GULL_FLY[0], GULL_COL)
       : id === 'firefly' ? makeSprite(['..y.....', '.yYy..y.', '..y..yYy', '......y.', '...y....', '..yYy...', '...y....'], { y:'#B8E04A', Y:'#F4FFB0' })
+      : CRIT[id] ? critSprite(id, 0, false, false)
+      : GUIDE_PIC[id] ? makeSprite(GUIDE_PIC[id][0], GUIDE_PIC[id][1])
       : id === 'pumpkin' ? decorSprite('pk') : id === 'jack' ? decorSprite('jack', true, true) : decorSprite(id);
     return DOMSPR[key] = sp ? sp.cv.toDataURL() + '|' + sp.w + 'x' + sp.h : '';
   }catch(e){ return DOMSPR[key] = ''; }
