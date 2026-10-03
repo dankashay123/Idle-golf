@@ -348,6 +348,8 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
 .gtile img{image-rendering:pixelated}
 .gtile.un img{filter:brightness(0);opacity:.35}
 .gtile.tmk[role=button]{cursor:pointer}
+.guide.hunt{grid-template-columns:repeat(3,minmax(0,1fr))}
+.gtile.found{border-color:var(--brass)}
 .gtile.tmk.on{border-color:var(--brass)}
 .gtile b{display:block;font-size:11px;font-weight:600;line-height:1.2}
 .gtile i{display:block;font-style:normal;color:var(--faint);font-size:10px;line-height:1.25;margin-top:2px}
@@ -2721,6 +2723,8 @@ const B = {
   MASTER: [100, 400, 1200, 3000, 7500, 15000, 30000, 60000, 120000, 250000], MASTER_STEP: 0.02, MASTER_GOLD: 5,
   // a first sighting in the Field Guide
   GUIDE_SOV: 5,
+  // the Guide's weekly hunt: three to spot in a week, paid once when all are
+  HUNT_SOV: 15,
   // Golden Hour (the user picked it from the menu): one hole in GOLDEN_P,
   // from a hash of the hole, played in a low gold light, and all it earns
   // paid twice. Not at night, in the rain, on a frosty morning, in a wager
@@ -4653,6 +4657,8 @@ function migrate(){
     if(!R || typeof R !== 'object' || !(R.s >= 0) || !(R.w >= 0 && R.w < 1e6) || !(R.l >= 0 && R.l < 1e6)) delete S.rivalSer;
     else{ R.s = Math.floor(R.s); R.w = Math.floor(R.w); R.l = Math.floor(R.l); } }
   // the Field Guide: a count for each thing in it, once seen
+  if(S.hunt !== undefined && !(S.hunt && typeof S.hunt === 'object' && Number.isInteger(S.hunt.wk) && Array.isArray(S.hunt.got)
+     && S.hunt.got.every(id => typeof id === 'string') && S.hunt.got.length <= 3)) delete S.hunt;
   if(S.teeMk !== undefined && !TEE_MARKS.some(m => m.id === S.teeMk)) delete S.teeMk;
   if(S.aceAt !== undefined){
     if(!S.aceAt || typeof S.aceAt !== 'object' || Array.isArray(S.aceAt)) delete S.aceAt;
@@ -25882,6 +25888,32 @@ function guideSpot(sc){
   if(sc.goldbow) see('goldbow'); else if(sc.rainbow) see('rainbow'); if(sc.dblbow) see('dblbow'); if(sc.fog) see('fog');
   guideAdd(got);
 }
+// The weekly hunt (the user picked it from the menu): three of the Guide's
+// commoner animals to spot this week, the same for the whole week from its
+// number, one of them out at night; all three spotted live on a fair card
+// pays B.HUNT_SOV once.
+const HUNT_DAY = ['fox', 'rabbit', 'moorhen', 'heron', 'otter', 'sparrow', 'robin', 'blackbird'];
+const HUNT_NIGHT = ['badger', 'owl', 'bat', 'firefly', 'glowworm', 'moth'];
+function huntOf(wk){
+  const r = seeded(hash32(wk * 7349 + 11)), day = HUNT_DAY.slice(), pick = [];
+  for(let i = 0; i < 2; i++) pick.push(day.splice(Math.floor(r() * day.length), 1)[0]);
+  pick.push(HUNT_NIGHT[Math.floor(r() * HUNT_NIGHT.length)]);
+  return pick;
+}
+function huntNow(){
+  const wk = weekNow();
+  if(!S.hunt || S.hunt.wk !== wk) S.hunt = { wk, got: [] };
+  return S.hunt;
+}
+function huntSee(ids){
+  const H = huntNow(), want = huntOf(H.wk), fresh = ids.filter(id => want.includes(id) && !H.got.includes(id));
+  if(!fresh.length || !fairCard()) return;
+  H.got.push(...fresh);
+  const n = H.got.length;
+  if(n >= 3 && !H.paid){ H.paid = 1; grantSov(B.HUNT_SOV, '', true);
+    toast('<span class="achk">Weekly Hunt</span>All three found \u00b7 <span style="white-space:nowrap">+' + B.HUNT_SOV + sovIc() + '</span>', 'ach'); }
+  else toast('<span class="achk">Weekly Hunt</span>' + fresh.map(id => GUIDE.find(g => g.id === id).n).join(', ') + ' \u00b7 ' + n + '/3', 'ach');
+}
 // count what was seen, and pay for each seen the first time
 function guideAdd(got){
   S.guide = S.guide || {};
@@ -25894,6 +25926,7 @@ function guideAdd(got){
   // (one line for all of a hole's firsts)
   if(firsts.length){ const n = B.GUIDE_SOV * firsts.length; grantSov(n, '', true);
     toast('<span class="achk">Field Guide</span>' + firsts.join(', ') + ' \u00b7 <span style="white-space:nowrap">+' + n + sovIc() + '</span>', 'ach'); }
+  huntSee(got);
 }
 // one seen as it is drawn, not as the hole is laid (a shooting star): live
 // only, a first sighting paid as the others are
@@ -25957,6 +25990,14 @@ function guideUrl(id){
 function roomGuide(w){
   const seen = S.guide || {}, n = GUIDE.filter(g => seen[g.id]).length;
   let h = '<div class="eyebrow" style="margin:6px 0 4px">Field Guide \u00b7 ' + n + '/' + GUIDE.length + ' \u00b7 +' + B.GUIDE_SOV + sovIc() + ' each</div>';
+  // (this week's hunt first: its three, found or where to look)
+  { const H = huntNow(), want = huntOf(H.wk);
+    h += '<div class="eyebrow" style="margin:8px 0 4px">Weekly Hunt \u00b7 ' + H.got.length + '/3 \u00b7 ' + (H.paid ? 'Paid' : '+' + B.HUNT_SOV + sovIc()) + '</div><div class="guide hunt">';
+    for(const id of want){ const g = GUIDE.find(x => x.id === id), got = H.got.includes(id);
+      const [url, wh] = guideUrl(id).split('|'), [sw, sh] = (wh || '12x12').split('x').map(Number), z = Math.max(1, Math.floor(Math.min(60 / sw, 44 / sh)));
+      h += '<div class="gtile' + (got ? ' found' : '') + '"><span class="gpic"><img src="' + url + '" width="' + sw * z + '" height="' + sh * z + '" alt=""></span>'
+        + '<b>' + g.n + '</b><i>' + (got ? 'Found' : g.w) + '</i></div>'; }
+    h += '</div>'; }
   for(const [k, t] of GUIDE_SHELF){
     h += '<div class="eyebrow" style="margin:10px 0 4px">' + t + '</div><div class="guide">';
     for(const g of GUIDE.filter(x => x.g === k)){
