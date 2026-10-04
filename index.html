@@ -1019,6 +1019,8 @@ div.guide.hunt,div.guide.mhunt{grid-template-columns:repeat(3,minmax(0,1fr))}
 #loadBar{align-items:center;padding:6px 12px 0}
 #loadBar .lkn{margin-right:auto;font-size:var(--f2);color:var(--dim)}
 #loadBar .ldb{min-width:44px}
+.medals{display:inline-flex;gap:2px;vertical-align:-2px;margin-right:4px}
+.medals img{image-rendering:pixelated}
 .urow .mt .ms{color:var(--brass);font-weight:400;opacity:.8}
 .rfh{display:flex;justify-content:space-between;width:100%;padding:8px 4px;background:none;border:0;color:var(--chalk);
   font-family:var(--disp);font-size:var(--f3);cursor:pointer;min-height:32px;align-items:center}
@@ -4762,6 +4764,9 @@ function migrate(){
   if(S.fest !== undefined && !(S.fest && Number.isInteger(S.fest.wk) && festDef(S.fest.id) && Number.isFinite(S.fest.n) && S.fest.n >= 0 && Number.isInteger(S.fest.got) && S.fest.got >= 0 && S.fest.got <= FEST_AT.length)) delete S.fest;
   if(S.festMk !== undefined){ if(!S.festMk || typeof S.festMk !== 'object' || Array.isArray(S.festMk)) delete S.festMk;
     else for(const k in S.festMk) if(S.festMk[k] !== 1 || !TEE_MARKS.some(m => m.id === k && m.fest)) delete S.festMk[k]; }
+  // (wager medals: 1 to 3 for a wager)
+  if(S.wgMedal !== undefined){ if(!S.wgMedal || typeof S.wgMedal !== 'object' || Array.isArray(S.wgMedal)) delete S.wgMedal;
+    else for(const k in S.wgMedal){ const v = S.wgMedal[k]; if(!WG_MEDAL[k] || !Number.isInteger(v) || v < 1) delete S.wgMedal[k]; else S.wgMedal[k] = Math.min(3, v); } }
   // (the course dog: a breed, or none)
   if(S.dog !== undefined && S.dog !== 'none' && !DOG_BREED.some(b => b.id === S.dog)) delete S.dog;
   // (challenges: one on, with its card and its count; tiers done, 0 to 3)
@@ -7061,6 +7066,39 @@ function floorOn(R, quiet){
   if(!quiet) rollDgnEvent(R);
 }
 
+// Wager medals (the user asked for the wagers to be more fun): bronze,
+// silver and gold for a run's own score, each paid once (a ticket; 5 and
+// 10 sovereigns waiting on Today). The Long Drive's is its longest against
+// what the bag is expected to hit, so it means the same on every card.
+const WG_MEDAL = { water: [3, 5, 8], cellar: [5, 9, 14], scramble: [3, 5, 7], twilight: [8, 12, 16], vault: [3, 5, 8], sand: [1, 1.4, 2] };
+const WG_MEDAL_N = ['Bronze', 'Silver', 'Gold'], WG_MEDAL_COL = ['#C8804A', '#C8D0D8', '#E3B457'];
+function wgScore(R, D){
+  if(R.mode === 'drive'){
+    const wind = B.DRIVE_WIND[0] + (B.DRIVE_WIND[1] - B.DRIVE_WIND[0]) * 6/7;
+    const exp = D.pow * (1 + D.crit*(D.cpw-1)) * (1 + D.mst*B.MST_DMG) * (1 + D.proc*Math.min(D.elemDmg, B.ELEM_CAP)) * wind;
+    return exp > 0 ? (R.best || 0) / exp : 0;
+  }
+  return R.mode === 'floor' ? R.cleared || 0 : R.made || 0;
+}
+// the medal a run earned (0 none to 3 gold) and any new, paid
+function wgMedal(d, R, D){
+  const T = WG_MEDAL[d.id]; if(!T) return { got: 0, fresh: [] };
+  const sc = wgScore(R, D); let got = 0; while(got < 3 && sc >= T[got]) got++;
+  S.wgMedal = S.wgMedal || {}; const had = S.wgMedal[d.id] || 0, fresh = [];
+  for(let m = had; m < got; m++){
+    fresh.push(m);
+    if(m === 0) grantTickets(1, 'a bronze medal');
+    else earnSov(m === 1 ? 5 : 10, 'today', 'medal:' + d.id + ':' + m, d.n + ' \u00b7 ' + WG_MEDAL_N[m] + ' medal');
+  }
+  if(got > had) S.wgMedal[d.id] = got;
+  return { got, fresh, sc };
+}
+const wgMedalTxt = id => { const T = WG_MEDAL[id]; return !T ? '' : id === 'sand' ? T.map(t => t + '\u00d7').join(' / ') + ' your usual best'
+  : T.join(' / ') + ' ' + { water: 'greens', cellar: 'dropped', scramble: 'holes won', twilight: 'dropped', vault: 'floors' }[id]; };
+const medalPips = id => { const g = (S.wgMedal || {})[id] || 0;
+  return '<span class="medals" aria-label="' + (g ? WG_MEDAL_N[g - 1] + ' medal' : 'No medal yet') + '">'
+    + [0, 1, 2].map(m => '<img src="' + pixUrl('medal', m < g ? WG_MEDAL_COL[m] : '#3A4A40') + '" width="12" height="12" alt="">').join('') + '</span>'; };
+
 // Leaving a wager part way: what it has won so far is paid as its end would
 // pay it (the Island Green banks its pot as it stands).
 function leaveDgn(){
@@ -7068,16 +7106,20 @@ function leaveDgn(){
   const b = $('leaveBtn');
   if(b && !b.classList.contains('ask')){
     b.classList.add('ask'); setText($('leaveTxt'), 'Sure?');
-    clearTimeout(leaveDgn._t); leaveDgn._t = setTimeout(() => { b.classList.remove('ask'); setText($('leaveTxt'), 'Leave'); }, 2500);
+    clearTimeout(leaveDgn._t); leaveDgn._t = setTimeout(() => { b.classList.remove('ask'); setText($('leaveTxt'), leaveWord()); }, 2500);
     return;
   }
-  if(b){ b.classList.remove('ask'); setText($('leaveTxt'), 'Leave'); }
+  if(b){ b.classList.remove('ask'); setText($('leaveTxt'), leaveWord()); }
   if(R.mode === 'island' && !R.dead) R.banked = true;
   endDgn(B.DGN.find(x => x.id === R.id), R, derive());
 }
+// (on the Island Green leaving banks the pot as it stands: the button says
+// so, and the choice to bank or play on is there to make)
+const leaveWord = () => S.dgnRun && S.dgnRun.mode === 'island' && !S.dgnRun.dead ? 'Bank' : 'Leave';
 function renderLeave(){
   const b = $('leaveBtn'); if(!b) return;
   const on = !!S.dgnRun;
+  if(on && !b.classList.contains('ask')) setText($('leaveTxt'), leaveWord());
   if(b.hidden === on){ b.hidden = !on; $('stage').classList.toggle('wager', on); }
   // and what helps in it, just over the shot buttons
   const ws = $('wagerStat'), d = on && B.DGN.find(x => x.id === S.dgnRun.id);
@@ -7266,6 +7308,10 @@ function endDgnCore(d, R, D){
     rewards.push(['Nothing', 'walked away empty']);
   }
 
+  // the medal it earned, and what a new one paid
+  { const M = wgMedal(d, R, D);
+    if(M.got) stats.push(['Medal', '<span style="color:' + WG_MEDAL_COL[M.got - 1] + '">' + WG_MEDAL_N[M.got - 1] + '</span>' + (M.fresh.length ? ' \u00b7 new' : '')]);
+    for(const m of M.fresh) rewards.push([WG_MEDAL_N[m] + ' medal', m === 0 ? '+1 ticket' : '+' + (m === 1 ? 5 : 10) + sovIc() + ' on Today']); }
   const rowsHtml = a => a.map(([k, v]) =>
     '<div class="lb"><span class="p"></span><span>' + k + '</span><span class="s">' + v + '</span></div>').join('');
   showSheet('<h3>' + d.n + '</h3><p>' + head + '</p>'
@@ -26285,6 +26331,9 @@ Object.assign(Scene, {
     drawTextS(c, nm, RX, dy, glow, TSC, 'r');
     dy -= LH;
     drawTextS(c, 'COURSE PAUSED', RX, dy, PX.dim, TSC, 'r');
+    // (where the corner's words start: the Spotted tag goes above them, as
+    // it goes above the map on the course; it sat over the wager's name)
+    this.wgTop = dy - 8;
     dy -= 7;
     let px2 = RX;
     for(let i = 0; i < Math.min(12, R.cleared); i++){
@@ -27171,8 +27220,15 @@ function spotPlace(){
   const el = document.getElementById('spotTag'); if(!el || el.style.display === 'none') return;
   const st = document.getElementById('stage'), cv = document.getElementById('holeMap'), dr = document.getElementById('drawer');
   const SH = st ? st.clientHeight : 0, gap = 4;
-  const top = Scene.mapOn && cv ? parseFloat(cv.style.top) || 0 : SH - (dr && dr.offsetParent ? dr.offsetHeight : 0) - 8;
-  el.style.top = Math.max(0, top - el.offsetHeight - gap) + 'px';
+  const hole = document.getElementById('hole');
+  const top = S.dgnRun && Scene.wgTop > 0 && hole && hole.clientHeight ? Scene.wgTop * hole.clientHeight / VH + (hole.offsetTop || 0)
+    : Scene.mapOn && cv ? parseFloat(cv.style.top) || 0 : SH - (dr && dr.offsetParent ? dr.offsetHeight : 0) - 8;
+  // (and in a wager above the "Helped by" line, if it reaches under the tag)
+  let t2 = top;
+  const ws = S.dgnRun && document.getElementById('wagerStat');
+  if(ws && ws.offsetParent && st){ const a = ws.getBoundingClientRect(), b = st.getBoundingClientRect(), e = el.getBoundingClientRect();
+    if(a.right > b.right - e.width - b.width * 0.025) t2 = Math.min(t2, a.top - b.top); }
+  el.style.top = Math.max(0, t2 - el.offsetHeight - gap) + 'px';
 }
 // one seen as it is drawn, not as the hole is laid (a shooting star): live
 // only, a first sighting paid as the others are
@@ -28435,6 +28491,7 @@ function renderDgn(){
       + '<div class="dm" style="color:var(--brass)">Pays ' + d.cn + ' \u00b7 '
       + (P.buys < 0.1 ? 'Under <b>0.1' : 'About <b>' + fmt(P.buys, P.buys < 10 ? undefined : 0)) + '</b>\u00a0'
       + DGN_BUYS[d.cur] + ' an entry</div>'
+      + '<div class="dm">' + medalPips(d.id) + ' ' + wgMedalTxt(d.id) + '</div>'
       + '<div class="dm">' + best.charAt(0).toUpperCase() + best.slice(1) + ' \u00b7 '
       + Math.round(d.run) + 's \u00b7 ' + (nextIn === 'full' ? 'Entries full' : 'Next entry ' + nextIn) + '</div>'
       + '<div class="bar"><i style="width:' + (run ? clamp(run.t/run.dur,0,1)*100 : 0) + '%"></i></div>'
