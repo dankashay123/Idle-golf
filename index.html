@@ -1152,6 +1152,10 @@ div.guide.hunt,div.guide.mhunt{grid-template-columns:repeat(3,minmax(0,1fr))}
       <div class="hint" id="upgTax"></div>
       <div id="upgRows"></div>
       </div>
+      <div id="rangeChal" hidden>
+      <div class="band"><span class="eyebrow">Trials</span><span class="note">Nine holes &middot; par or better</span></div>
+      <div id="chalRows"></div>
+      </div>
       <div id="rangeCad" hidden>
       <div class="band"><span class="eyebrow">Caddie Perks</span><span class="note" id="cadNote"></span></div>
       <div id="cadRows"></div>
@@ -3856,6 +3860,19 @@ const B = {
   // errand is for, in the check-in's measures (gold in minutes of purse;
   // grit, shards and scrolls in shop purchases; keys an entry in every
   // wager; bag a free bag). Never sovereigns. The caddie stays on the bag.
+  // Challenge cards (the user picked them from the menu): nine holes on
+  // your best card with a handicap (k the stat, v what it is cut to);
+  // par or better over the nine keeps a small bonus for good (r, rv a tier),
+  // three tiers each, opening at Cards 25, 75 and 150 (CHAL_TIER).
+  CHAL: [
+    { id:'short', n:'Short Bag',   d:'A third of your swing power',  k:'pow',  v:0.33, r:'pow',  rv:0.02, s:'+2% swing power' },
+    { id:'legs',  n:'Heavy Legs',  d:'Half your pace',               k:'spd',  v:0.5,  r:'spd',  rv:0.02, s:'+2% pace' },
+    { id:'yips',  n:'The Yips',    d:'No pure strikes',              k:'crit', v:0,    r:'cpw',  rv:0.03, s:'+3% pure strike payoff' },
+    { id:'lost',  n:'Lost Balls',  d:'No provisional balls',         k:'mst',  v:0,    r:'gold', rv:0.02, s:'+2% prize money' },
+    { id:'cold',  n:'Cold Hands',  d:'A quarter of your affinity',   k:'elem', v:0.25, r:'elem', rv:0.03, s:'+3% affinity power' },
+    { id:'gale',  n:'Into the Gale', d:'Two thirds of your swing power and pace', k:'both', v:0.67, r:'drop', rv:0.01, s:'+1pp gear luck' }
+  ],
+  CHAL_TIER: [24, 74, 149], CHAL_HOLES: 9, CHAL_PAR: 0,
   ERRANDS: [
     { id:'hut',  n:'The Range Hut', h:1, pay:[{ k:'gold', v:4 }, { k:'grit', v:0.02 }] },
     { id:'pro',  n:'The Pro Shop',  h:4, pay:[{ k:'bag', v:'range' }, { k:'shard', v:0.03 }, { k:'gold', v:8 }] },
@@ -4741,6 +4758,10 @@ function migrate(){
   // sighting pay the hunt at once, and the Guide read 4/3)
   else if(S.hunt){ const want = huntOf(S.hunt.wk); S.hunt.got = S.hunt.got.filter((id, i, a) => want.includes(id) && a.indexOf(id) === i);
     if(S.hunt.paid !== undefined && S.hunt.paid !== 1) delete S.hunt.paid; }
+  // (challenges: one on, with its card and its count; tiers done, 0 to 3)
+  if(S.chal !== undefined && !(S.chal && chalDef(S.chal.id) && Number.isInteger(S.chal.n) && S.chal.n >= 0 && S.chal.n < B.CHAL_HOLES && Number.isFinite(S.chal.sum) && Number.isFinite(S.chal.c))) delete S.chal;
+  if(S.chalDone !== undefined){ if(!S.chalDone || typeof S.chalDone !== 'object' || Array.isArray(S.chalDone)) delete S.chalDone;
+    else for(const k in S.chalDone){ const v = S.chalDone[k]; if(!chalDef(k) || !Number.isInteger(v) || v < 1) delete S.chalDone[k]; else S.chalDone[k] = Math.min(v, B.CHAL_TIER.length); } }
   // (auto-wagers: a wager's id each)
   if(S.autoWg !== undefined){ if(!S.autoWg || typeof S.autoWg !== 'object' || Array.isArray(S.autoWg)) delete S.autoWg;
     else for(const k in S.autoWg) if(!B.DGN.some(d => d.id === k) || S.autoWg[k] !== 1) delete S.autoWg[k]; }
@@ -5262,6 +5283,9 @@ function derive(){
   const C = career();
   const G = gearStats();
   const ch = S.chaos || { y:1, g:1, s:1, c:0, p:0, dl:0 };
+  // (paused while away: a catch-up plays at full strength, and counts none
+  // of the nine)
+  const CH = OFFLINE ? null : chalOn(), cb = k => chalBonus(k);
 
   let pow = B.BASE_POWER * upgMult('pow') * (1 + G.pow) * relMult('pow') * perkMult('pow')
           * permMult('irons') * (1 + buffVal('cPow')/100);
@@ -5274,18 +5298,23 @@ function derive(){
   if(C.windy && S.stretched) pow *= 1 + C.windy;
 
   const spdRaw = B.BASE_SPEED * upgMult('spd') * (1 + G.spd) * relMult('spd') * ch.s
-    * (1 + buffVal('gale')/100) * (1 + buffVal('cSpd')/100) * perkMult('spd');
+    * (1 + buffVal('gale')/100) * (1 + buffVal('cSpd')/100) * perkMult('spd')
+    * (CH && (CH.k === 'spd' || CH.k === 'both') ? CH.v : 1) * (1 + cb('spd'));
   const spd = Math.min(B.SPEED_CAP, spdRaw);
   if(spdRaw > B.SPEED_CAP) pow *= 1 + (spdRaw/B.SPEED_CAP - 1) * B.SPEED_OVERFLOW;
 
-  const crit = Math.min(B.CRIT_CAP, (B.CRIT_BASE
+  // a challenge's handicap, and the bonuses kept from those done
+  if(CH && (CH.k === 'pow' || CH.k === 'both')) pow *= CH.v;
+  pow *= 1 + cb('pow');
+  const crit0 = Math.min(B.CRIT_CAP, (B.CRIT_BASE
     + upgEff('face')*B.CRIT_ADD.face + upgEff('simul')*B.CRIT_ADD.simul
     + G.crt + ch.c + buffVal('ace') + buffVal('cCrt')) * relMult('crt'));
-  const cpw = (B.CRIT_MULT + upgEff('sweet')*B.CPW_ADD + G.cpw) * relMult('cpw') * (1 + buffVal('cCpw')/100);
+  const crit = CH && CH.k === 'crit' ? crit0 * CH.v : crit0;
+  const cpw = (B.CRIT_MULT + upgEff('sweet')*B.CPW_ADD + G.cpw) * relMult('cpw') * (1 + buffVal('cCpw')/100) * (1 + cb('cpw'));
 
   const ball0 = S.equip.ball;
   const reson = resonance(ball0 && ball0.el);
-  const elem = upgMult('elm') * (1 + G.elm) * relMult('elm') * reson;
+  const elem = upgMult('elm') * (1 + G.elm) * relMult('elm') * reson * (CH && CH.k === 'elem' ? CH.v : 1) * (1 + cb('elem'));
   // Affinity chance is capped on the course, but the raw figure is kept: the
   // Floodlit Green reads the uncapped value, so over-investing in affinity has
   // somewhere to pay off.
@@ -5296,9 +5325,9 @@ function derive(){
   const gold = upgMult('gld') * (1 + G.gld) * relMult('gld')
     * ch.g * (1 + buffVal('windfall')/100) * (1 + buffVal('cGold')/100) * perkMult('gold')
     * permMult('sponsor') * (isMember() ? 1 + B.MEMBER_GOLD : 1)
-    * (boostOn() ? B.BOOST_MULT : 1) * (luckyOn() ? ALB_V : 1);
+    * (boostOn() ? B.BOOST_MULT : 1) * (luckyOn() ? ALB_V : 1) * (1 + cb('gold'));
   const drop = clamp((B.DROP_BASE + upgEff('marker')*B.DROP_ADD + G.drp + ch.dl
-    + relLv('sun')*B.SUN_ADD + perkAdd('drop') + permAdd('scout') + buffVal('cDrop')) * relMult('drp'), 0, 1);
+    + relLv('sun')*B.SUN_ADD + perkAdd('drop') + permAdd('scout') + buffVal('cDrop') + cb('drop')) * relMult('drp'), 0, 1);
   const dgnY = (1 + upgEff('lantern')*B.DGN_ADD + G.dgn) * relMult('dgn');
 
   // Provisional: the chance a swing plays a second ball. Whole numbers are
@@ -5307,6 +5336,7 @@ function derive(){
     + G.mst + buffVal('rally')/100 + buffVal('cMst')/100;
   mst *= relMult('mst');
   mst = clamp(mst, 0, B.MST_CAP);
+  if(CH && CH.k === 'mst') mst = 0;
 
   // Elemental contribution to expected damage, which depends entirely on what
   // ball is in the bag. This is the whole reason to care which one you carry.
@@ -6365,6 +6395,62 @@ function checkinClaim(){
   Sfx.play('coin');
   renderStageBtns(); renderVitals();
   return r;
+}
+// ---- challenge cards ----
+const chalDef = id => B.CHAL.find(c => c.id === id);
+const chalOn = () => S.chal ? chalDef(S.chal.id) || null : null;
+const chalDone = id => (S.chalDone || {})[id] || 0;
+const chalBonus = k => B.CHAL.reduce((t, c) => c.r === k ? t + chalDone(c.id) * c.rv : t, 0);
+// why one cannot start now ('' when it can)
+function chalWhy(id){
+  const t = chalDone(id);
+  if(t >= B.CHAL_TIER.length) return 'All three done';
+  if(S.chal) return 'One at a time';
+  if((S.tierMax || 0) < B.CHAL_TIER[t]) return 'Opens at Card ' + cardNo(B.CHAL_TIER[t]);
+  if(S.tier < (S.tierMax || 0)) return 'On your best card';
+  return '';
+}
+function chalStart(id){
+  if(chalWhy(id)) return false;
+  S.chal = { id, c: S.tier, n: 0, sum: 0 };
+  toast('<span class="achk">' + chalDef(id).n + '</span>Par or better over the next ' + B.CHAL_HOLES + ' holes', 'ach');
+  save(); renderVitals(); renderRangeNav();
+  return true;
+}
+function chalQuit(why){
+  const C = chalOn(); if(!C) return;
+  S.chal = null;
+  if(!QUIET) toast('<span class="achk">' + C.n + '</span>' + (why || 'Given up'));
+  renderVitals(); if(rangeSub === 'chal') renderRangeNav();
+}
+// a hole played on the challenge: its score counted; at the ninth, judged
+function chalHole(d){
+  const R = S.chal, C = chalOn(); if(!R || !C || OFFLINE) return;
+  // (gone down to an easier card: the challenge is off)
+  if(S.tier < R.c){ chalQuit('Off \u00b7 played on an easier card'); return; }
+  R.n++; R.sum += d;
+  if(R.n < B.CHAL_HOLES) return;
+  S.chal = null;
+  const won = R.sum <= B.CHAL_PAR;
+  if(won){ S.chalDone = S.chalDone || {}; S.chalDone[C.id] = chalDone(C.id) + 1; }
+  if(!QUIET) toast('<span class="achk">' + C.n + (won ? ' \u00b7 Tier ' + chalDone(C.id) : '') + '</span>'
+    + (won ? scoreTxt(R.sum) + ' \u00b7 kept for good: ' + C.s : scoreTxt(R.sum) + ' \u00b7 not this time'), 'ach');
+  renderVitals(); if(rangeSub === 'chal') renderRangeNav();
+}
+function careerChal(w){
+  let h = '<div class="hint">On your best card, with a handicap. Par or better keeps the bonus for good.</div>';
+  for(const C of B.CHAL){
+    const t = chalDone(C.id), on = S.chal && S.chal.id === C.id, why = chalWhy(C.id);
+    h += '<div class="row"><div><div class="nm">' + C.n + ' <span class="mt">' + pipRow(t, B.CHAL_TIER.length) + '</span></div>'
+      + '<div class="ds">' + C.d + '</div>'
+      + '<div class="mt">' + (on ? 'On \u00b7 ' + S.chal.n + '/' + B.CHAL_HOLES + ' \u00b7 ' + scoreTxt(S.chal.sum)
+        : t ? 'Kept: ' + C.s.replace(/\d+(\.\d+)?/, m => +(m * t).toFixed(2)) : 'Each tier: ' + C.s) + '</div></div>'
+      + '<div class="btnrow">' + (on ? '<button class="mini" data-cq="1">Give up</button>'
+        : '<button class="mini' + (why ? ' dim' : ' go') + '" data-cs="' + C.id + '"' + (why ? ' disabled' : '') + '>' + (why || 'Start \u00b7 Tier ' + (t + 1)) + '</button>') + '</div></div>';
+  }
+  w.innerHTML = h;
+  w.querySelectorAll('[data-cs]').forEach(b => b.onclick = () => chalStart(b.dataset.cs));
+  const q = w.querySelector('[data-cq]'); if(q) q.onclick = () => chalQuit();
 }
 // ---- errands ----
 // the runner: a lad in a red cap and white shirt, a satchel on its strap,
@@ -7981,6 +8067,7 @@ function holeSaid(){
 function finishHole(D){
   const ratio = holeTime() / S.parTime;
   const sc = scoreFor(ratio);
+  chalHole(sc.d);
   const said = Scene.saidHole === S.hole;
   if(!said) Sfx.play('hole', sc.d);
   // A hole that waited for him to walk up to the green (only ever while it
@@ -28647,13 +28734,15 @@ function setView(v){
 let rangeSub = 'upg';
 function renderRangeNav(){
   const n = $('rangeNav'); if(!n) return;
-  n.innerHTML = [['upg', 'Upgrades'], ['cad', 'Caddie']].map(([id, t]) =>
+  n.innerHTML = [['upg', 'Upgrades'], ['cad', 'Caddie'], ['chal', 'Trials']].map(([id, t]) =>
     '<button class="sub' + (rangeSub === id ? ' on' : '') + '" data-s="' + id + '">' + t + '</button>').join('');
   n.querySelectorAll('.sub').forEach(b =>
     b.onclick = () => { rangeSub = b.dataset.s; renderRangeNav(); $('panel').scrollTop = 0; });
   $('rangeUpg').hidden = rangeSub !== 'upg';
   $('rangeCad').hidden = rangeSub !== 'cad';
+  $('rangeChal').hidden = rangeSub !== 'chal';
   if(rangeSub === 'cad') renderCadPerks();
+  if(rangeSub === 'chal') careerChal($('chalRows'));
 }
 // The Tour tab in four (the user found it too long to scroll): the cards,
 // the season, the major of the week and the signature week.
@@ -28823,6 +28912,7 @@ function buffLines(dt){
     if(!txt) cperkShow = null;
     else out.push({ k: 'c', txt, col: pk.col || '', a });
   }
+  { const C = chalOn(); if(C) out.push({ k: 'chal', txt: C.n + ' \u00b7 ' + S.chal.n + '/' + B.CHAL_HOLES + ' \u00b7 ' + scoreTxt(S.chal.sum), col: '#E8A0A0', a: 1 }); }
   if(LUCKY.buff > 0) out.push({ k: 'alb', txt: ALB_V + '× purse for ' + buffClock(LUCKY.buff), col: '#F2E2A0', a: Math.min(1, LUCKY.buff) });
   for(const p of B.PERKS){
     const left = perkLeft(p.id);
