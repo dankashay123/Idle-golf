@@ -1021,6 +1021,10 @@ div.guide.hunt{grid-template-columns:repeat(3,minmax(0,1fr))}
 .rfn{font-family:var(--mono);font-size:var(--f0);color:var(--dim)}
 .rfold .rfb{display:none}
 .rfold.open .rfb{display:block}
+.wpics{display:flex;flex-wrap:wrap;gap:4px 6px;align-items:flex-end;padding:0 0 8px 22px}
+.wpics img{image-rendering:pixelated}
+.wpics img.dk{filter:brightness(0) invert(1) opacity(.2)}
+.wbadge{image-rendering:pixelated;vertical-align:-2px;margin-left:6px}
 .guidelist{margin:6px 0 8px 18px;font-size:var(--f1);line-height:1.5}
 #leaveBtn.ask{border-color:var(--flag);color:var(--flag)}
 #leaveIcon{display:block;width:24px;height:24px;image-rendering:pixelated;image-rendering:crisp-edges}
@@ -2772,6 +2776,9 @@ const B = {
   // a whole shelf of the Guide seen (the user picked it from the menu): once
   // for each shelf, never the Wager Book's (nothing seen in a wager pays)
   SHELF_SOV: 25,
+  // a course's every animal seen there (its collection, a badge in the
+  // Cabinet; the user picked it from the menu): once for each course
+  WILD_SOV: 10,
   // Golden Hour (the user picked it from the menu): one hole in GOLDEN_P,
   // from a hash of the hole, played in a low gold light, and all it earns
   // paid twice. Not at night, in the rain, on a frosty morning, in a wager
@@ -26331,6 +26338,7 @@ function guideSpot(sc){
   if(sc.golden) see('golden'); if(sc.frost) see('frost'); if(sc.rain) see('rain'); if(sc.night) see('night');
   if(sc.goldbow) see('goldbow'); else if(sc.rainbow) see('rainbow'); if(sc.dblbow) see('dblbow'); if(sc.fog) see('fog');
   guideAdd(got);
+  courseWildSee(sc);
 }
 // The weekly hunt (the user picked it from the menu): three of the Guide's
 // commoner animals to spot this week, the same for the whole week from its
@@ -26389,6 +26397,59 @@ function shelfCheck(){
     const pay = k === 'b' ? 0 : B.SHELF_SOV; if(pay) earnSov(pay, 'guide', 'shelf:' + k, t + ' complete');
     if(!QUIET && !OFFLINE) toast('<span class="achk">Field Guide</span>' + t + ' complete' + (pay ? ' \u00b7 <span style="white-space:nowrap">+' + pay + sovIc() + '</span>' : ''), 'ach');
   }
+}
+// Course collections: the animals each course shows as its own, the ones
+// seen there at least once in 120 holes (taken from a sweep of its holes in
+// every season, day and night; the check "wildlist" sweeps again and holds
+// each one to it). A swan or a turtle seen there more rarely is left off,
+// or a badge would be a long wait for luck.
+const COURSE_WILD = {
+  coastal: 'alligator badger bat butterfly crab eyes fox hedgehog heron otter owl pheasant rabbit squirrel',
+  sandbelt: 'alligator badger bat butterfly eyes fox hedgehog heron owl pheasant rabbit squirrel',
+  highlands: 'alligator badger bat butterfly eyes fox hedgehog heron otter owl pheasant rabbit squirrel',
+  blackwater: 'alligator badger bat eyes fox frog hedgehog heron otter owl pheasant rabbit squirrel',
+  dunes: 'alligator badger bat butterfly eagle eyes fox hedgehog lizard moorhen owl rabbit squirrel',
+  palmetto: 'alligator badger bat butterfly eyes fox frog hedgehog heron moorhen otter owl rabbit squirrel turtle',
+  ironbark: 'alligator badger bat butterfly eyes fox hedgehog moorhen owl rabbit squirrel',
+  riverbend: 'alligator badger bat butterfly eyes fox hedgehog heron otter owl pheasant rabbit squirrel',
+  mesa: 'alligator badger bat butterfly eagle eyes fox hedgehog lizard owl rabbit squirrel',
+  snowline: 'alligator badger bat butterfly eyes fox hedgehog heron moorhen otter owl rabbit squirrel turtle',
+  blossom: 'alligator badger bat butterfly eyes frog hedgehog moorhen otter owl rabbit squirrel turtle',
+  moorland: 'alligator badger bat butterfly eyes fox hedgehog owl pheasant rabbit squirrel',
+  azalea: 'alligator badger bat butterfly eyes fox frog hedgehog moorhen otter owl rabbit squirrel',
+  national: 'alligator badger bat butterfly eyes fox hedgehog moorhen owl rabbit squirrel',
+  seaside: 'alligator badger bat butterfly crab eyes fox hedgehog moorhen otter owl rabbit squirrel swan',
+  autumn: 'alligator badger bat butterfly eyes fox frog hedgehog moorhen owl rabbit squirrel',
+  oldlinks: 'alligator badger bat butterfly eyes fox hedgehog moorhen owl rabbit squirrel',
+  meridian: 'alligator badger bat butterfly eyes fox frog hedgehog moorhen owl rabbit squirrel',
+  willow: 'alligator badger bat butterfly eyes fox frog hedgehog heron otter owl pheasant rabbit squirrel',
+  harbour: 'alligator badger bat butterfly crab eyes fox hedgehog heron otter owl pheasant rabbit squirrel',
+  castledunes: 'alligator badger bat butterfly eagle eyes fox hedgehog lizard moorhen owl pheasant rabbit squirrel',
+  stonehollow: 'alligator badger bat butterfly eyes fox hedgehog heron otter owl pheasant rabbit squirrel',
+  redarch: 'alligator badger bat butterfly eagle eyes fox hedgehog lizard owl pheasant rabbit squirrel',
+  jadepagoda: 'alligator badger bat butterfly eyes fox frog hedgehog heron moorhen otter owl pheasant rabbit squirrel',
+  fjordheim: 'alligator badger bat butterfly eyes fox frog hedgehog heron otter owl pheasant rabbit squirrel',
+  emberpeak: 'alligator badger bat butterfly eagle eyes fox hedgehog lizard moorhen owl pheasant rabbit squirrel',
+  skyward: 'alligator badger bat butterfly eyes fox hedgehog heron otter owl pheasant rabbit squirrel',
+  mythicspire: 'alligator badger bat butterfly eyes fox hedgehog heron otter owl pheasant rabbit squirrel',
+  masters: 'alligator badger bat butterfly eyes fox hedgehog heron moorhen otter owl rabbit squirrel',
+  crown: 'alligator badger bat butterfly eyes fox frog hedgehog moorhen owl rabbit squirrel',
+  sovereign: 'alligator badger bat butterfly eyes fox frog hedgehog moorhen owl rabbit squirrel',
+  starfall: 'alligator badger bat butterfly eyes fox hedgehog moorhen otter owl rabbit squirrel'
+};
+const wildOf = id => (COURSE_WILD[id] || '').split(' ').filter(Boolean);
+const wildGot = id => wildOf(id).filter(an => ((S.cwild || {})[id] || {})[an]);
+// what a hole laid out live shows of its course's own (a golden one counts
+// as its kind); the course whole is paid once and said
+function courseWildSee(sc){
+  const cs = sc.course; if(!cs || !COURSE_WILD[cs.id]) return;
+  const want = wildOf(cs.id), m = (S.cwild = S.cwild || {})[cs.id] = (S.cwild[cs.id] || {});
+  for(const p of sc.props || []) if(p.kind === 15 && want.includes(p.an)) m[p.an] = 1;
+  S.cwildDone = S.cwildDone || {};
+  if(S.cwildDone[cs.id] || wildGot(cs.id).length < want.length) return;
+  S.cwildDone[cs.id] = 1;
+  earnSov(B.WILD_SOV, 'today', 'wild:' + cs.id, cs.n + ' wildlife complete');
+  if(!QUIET && !OFFLINE) toast('<span class="achk">Collection</span>' + cs.n + ' \u00b7 every animal seen \u00b7 <span style="white-space:nowrap">+' + B.WILD_SOV + sovIc() + '</span>', 'ach');
 }
 // a wager's own animal (WAGER_WILD), as its scene is laid: counted and
 // named, never paid
@@ -26669,8 +26730,8 @@ function dailyBlock(){
 // the cabinet, its rewards, and the record under it
 function roomCase(w){
   w.innerHTML = '<div class="hint" id="cabNote"></div><div id="cabBox"></div>'
-    + '<div class="eyebrow" style="margin:12px 0 4px">Record</div><div id="statRows"></div><div id="courseRows"></div><div id="markRows"></div>';
-  renderCabinet(); renderRecord(); renderCourseRecs(); renderTeeMarks();
+    + '<div class="eyebrow" style="margin:12px 0 4px">Record</div><div id="statRows"></div><div id="courseRows"></div><div id="wildRows"></div><div id="markRows"></div>';
+  renderCabinet(); renderRecord(); renderCourseRecs(); renderWild(); renderTeeMarks();
 }
 // the tee markers, a fold of their own: every 25 cards a pair, the ones
 // opened tapped to wear
@@ -26691,6 +26752,23 @@ function renderTeeMarks(){
     + n + '/' + TEE_MARKS.length + '\u00a0' + (op ? '\u25b4' : '\u25be') + '</span></button><div class="rfb"><div class="guide">' + tiles + '</div></div></div>';
   el.querySelector('.rfh').onclick = () => { recOpen.tmk = op ? 0 : 1; renderTeeMarks(); };
   el.querySelectorAll('.tmk[role=button]').forEach(t => t.onclick = () => { S.teeMk = t.dataset.m; save(); renderTeeMarks(); });
+}
+// Course Wildlife, a fold of its own: each course with an animal seen
+// there, how many of its own, a badge once whole, and its animals in a row
+// (the ones not yet seen there dark)
+function renderWild(){
+  const el = $('wildRows'); if(!el) return;
+  const op = recOpen.wild, list = B.COURSE.filter(cs => COURSE_WILD[cs.id] && wildGot(cs.id).length), done = B.COURSE.filter(cs => (S.cwildDone || {})[cs.id]).length;
+  const pic = (an, on) => { const [url, wh] = guideUrl(an).split('|'), [sw, sh] = (wh || '12x12').split('x').map(Number), z = Math.min(18 / sw, 12 / sh);
+    return url ? '<img src="' + url + '" width="' + Math.round(sw * z) + '" height="' + Math.round(sh * z) + '" alt="' + CRIT_NAME[an] + '"' + (on ? '' : ' class="dk"') + '>' : ''; };
+  const rows = list.map(cs => { const want = wildOf(cs.id), got = wildGot(cs.id), whole = (S.cwildDone || {})[cs.id];
+    return '<div class="wrow' + (whole ? ' whole' : '') + '"><div class="lb"><span class="p"></span><span>' + cs.n + (whole ? '<img class="wbadge" src="' + pixUrl('medal', '#E3B457') + '" width="14" height="14" alt="Badge">' : '') + '</span><span class="s">'
+      + (whole ? 'Complete' : got.length + '/' + want.length + ' \u00b7 +' + B.WILD_SOV + sovIc()) + '</span></div>'
+      + '<div class="wpics">' + want.map(an => pic(an, got.includes(an))).join('') + '</div></div>'; }).join('')
+    || '<div class="lb"><span class="p"></span><span style="color:var(--faint)">Spot an animal to start a course\u2019s collection</span><span class="s"></span></div>';
+  el.innerHTML = '<div class="rfold' + (op ? ' open' : '') + '" data-f="wild"><button class="rfh"><span>Course Wildlife</span><span class="rfn">'
+    + done + '/' + Object.keys(COURSE_WILD).length + '\u00a0' + (op ? '\u25b4' : '\u25be') + '</span></button><div class="rfb">' + rows + '</div></div>';
+  el.querySelector('.rfh').onclick = () => { recOpen.wild = op ? 0 : 1; renderWild(); };
 }
 // the course records, a fold of their own under the Record: each course
 // with a card posted, its best and the day
