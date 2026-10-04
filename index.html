@@ -13057,7 +13057,7 @@ const lakeShelves = T => T._lks || (T._lks = lakePal(T));
 const LILY_W = 24, LILY_H = 10, LILY_SPR = new Map(), LILY_MAX = 40;
 // a dragonfly's body and its eyes, by kind; and a pin for the checks
 const DFLY_COL = [['#2E7AD8', '#8AD0F8'], ['#3AA858', '#B8E870'], ['#C8402E', '#F4A070']];
-let DFLY_FORCE = null;
+let DFLY_FORCE = null, RFLY_FORCE = null;
 // a dragonfly from above, its head to the right: b body, h head, e the tip
 // of its tail, w wing, v a wing's vein; wings spread, then swept back
 const DFLY_PIC = [
@@ -19782,6 +19782,53 @@ const Scene = {
     this.layPonds();
     this.layLilyFrog();
     this.layDragonflies();
+    this.layReedFireflies();
+  },
+  // Is it summer here: a course with seasons by its own, the others by the
+  // real month.
+  summerHere(){
+    const cs = this.course, look = this.look || {};
+    const seasoned = !!cs && (cs.slot === 'home' || CAL_SEASONED.includes(cs.id));
+    return seasoned ? !look.season : MONTH_SEASON[monthNow()] === 0;
+  },
+  // Is this spot on open water: the hole's lake, river or pond, or the
+  // pond by the path (not the canyon's floor, not ice under the rails).
+  wetSpot(d, x){
+    const W = this.water;
+    if(W && !W.canyon && !W.rail && this.wetAt(W, d, x)) return true;
+    const P = this.pond; if(!P) return false;
+    const w = this.lobeSpan(P, d); return !!w && x > P.x - w[0] * 0.95 && x < P.x + w[1] * 0.95;
+  },
+  // A ring spreading on the water (a dragonfly dipping, the frog shifting
+  // on its pad): r across, fading as a; drawn only on water and cut at the
+  // ground's line.
+  ripple(c, d, x, r, a, night){
+    if(a <= 0.02) return;
+    const q = this.proj(d, x), clip = this.clipAt(d), n = clamp(Math.round(r * LAT * q.s * 3), 10, 48), k = q.s > 2.2 ? 2 : 1;
+    c.fillStyle = (night ? 'rgba(150,176,210,' : 'rgba(236,248,255,') + a.toFixed(2) + ')';
+    for(let i = 0; i < n; i++){
+      const t = i / n * Math.PI * 2, dd = d + Math.sin(t) * r * 0.8, xx = x + Math.cos(t) * r;
+      if(!this.wetSpot(dd, xx)) continue;
+      const p = this.proj(dd, xx); fillClip(c, Math.round(p.x), Math.round(p.y), k, 1, clip);
+    }
+  },
+  // Fireflies over the reeds on a summer night (the user picked them from
+  // the menu): two or three swarms about the reeds, each light doubled
+  // dimly in the water under it; on most holes with reeds, dry, never on
+  // ice. From a hash once the hole is laid; they count for the Guide's
+  // Fireflies.
+  layReedFireflies(){
+    if(!this.night || this.rain || this.ice) return;
+    if(!(RFLY_FORCE !== null ? !!RFLY_FORCE : this.summerHere())) return;
+    const put = this.props || [], at = put.filter(p => p.kind === 26 && p.sp === 'reed');
+    if(!at.length || (RFLY_FORCE === null && hr(this.hole * 43 + 3, 881) > 0.75)) return;
+    const n = Math.min(at.length, 2 + Math.floor(hr(this.hole * 43 + 3, 882) * 2));
+    for(let i = 0; i < n; i++){
+      const b = at[Math.floor(hr(this.hole * 43 + i, 883) * at.length)];
+      put.push({ kind: 5, d: b.d, x: b.x, k: 100 + i + (this.hole % 50) * 4, wet: 1, extra: 1 });
+    }
+    put.sort((a, b) => b.d - a.d);
+    this.props = put;
   },
   // Dragonflies over the water on a summer day (the user picked them from
   // the menu): one to three about the reeds and the pads, hovering and
@@ -19790,10 +19837,7 @@ const Scene = {
   // hash once the hole is laid; spotted, they count for the Guide's Dragonfly.
   layDragonflies(){
     if(this.night || this.rain || this.ice) return;
-    const cs = this.course, look = this.look || {};
-    const seasoned = !!cs && (cs.slot === 'home' || CAL_SEASONED.includes(cs.id));
-    const summer = DFLY_FORCE !== null ? !!DFLY_FORCE : seasoned ? !look.season : MONTH_SEASON[monthNow()] === 0;
-    if(!summer) return;
+    if(!(DFLY_FORCE !== null ? !!DFLY_FORCE : this.summerHere())) return;
     const put = this.props || [], at = put.filter(p => p.kind === 26 && (p.sp === 'lily' || p.sp === 'reed'));
     if(!at.length || (DFLY_FORCE === null && hr(this.hole * 41 + 3, 861) > 0.7)) return;
     const n = 1 + Math.floor(hr(this.hole * 41 + 3, 862) * 3);
@@ -25195,6 +25239,12 @@ Object.assign(Scene, {
         // box at night)
         if(blink > 0.65){ c.fillStyle = '#6E9A2A'; fillClip(c, f.x - 1, f.y, kk + 2, kk, clip); fillClip(c, f.x, f.y - 1, kk, kk + 2, clip); }
         c.fillStyle = blink > 0.8 ? '#F4FFB0' : '#B8E04A'; fillClip(c, f.x, f.y, kk, kk, clip);
+        // (over the reeds, its light doubled faintly in the water below)
+        if(p.wet){ const fx = p.x + Math.sin(this.t * 0.45 + n * 1.7) * 0.7;
+          if(this.wetSpot(fd, fx)){ const g = this.proj(fd, fx), y = Math.round(2 * g.y - f.y);
+            // (mirrored below the water's line, not cut at it: only when the
+            // water under it is in view)
+            if(g.y <= clip){ c.fillStyle = blink > 0.8 ? 'rgba(244,255,176,0.55)' : 'rgba(184,224,74,0.4)'; c.fillRect(Math.round(f.x), y, kk, kk); } } }
       }
 
     }else if(p.kind === 24){
@@ -25232,7 +25282,17 @@ Object.assign(Scene, {
       const t = this.t + p.k * 1.7, seg = Math.floor(t / 2.6), u = t / 2.6 - seg, e = u < 0.12 ? (u / 0.12) * (u / 0.12) * (3 - 2 * u / 0.12) : 1;
       const spot = q => [(hr(p.k * 13 + q, 871) - 0.5) * 1.4, (hr(p.k * 13 + q, 872) - 0.5) * 0.9, 0.9 + hr(p.k * 13 + q, 873) * 0.7];
       const A0 = spot(seg - 1), A1 = spot(seg), hov = Math.sin(t * 5) * 0.05;
-      const dx = A0[0] + (A1[0] - A0[0]) * e, dd = A0[1] + (A1[1] - A0[1]) * e, hh = A0[2] + (A1[2] - A0[2]) * e + hov;
+      const dx = A0[0] + (A1[0] - A0[0]) * e, dd = A0[1] + (A1[1] - A0[1]) * e;
+      // now and then it dips to touch the water, and a ring spreads from
+      // where it touched (and the last one's ring is still spreading)
+      const dips = g => hr(p.k * 13 + g, 874) < 0.4 && this.wetSpot(p.d + spot(g)[1], p.x + spot(g)[0]);
+      const dip = dips(seg) && u > 0.3 && u < 0.55 ? Math.sin(Math.PI * (u - 0.3) / 0.25) : 0;
+      const hh = (A0[2] + (A1[2] - A0[2]) * e + hov) * (1 - 0.92 * dip);
+      for(const [g, age] of [[seg, (u - 0.42) * 2.6], [seg - 1, (u + 0.58) * 2.6]]){
+        if(age < 0 || age > 1.6 || !dips(g)) continue;
+        const B = spot(g);
+        for(const lag of [0, 0.4]){ const a = age - lag; if(a > 0) this.ripple(c, p.d + B[1], p.x + B[0], 0.06 + a * 0.34, 0.8 * (1 - a / 1.6), night); }
+      }
       const q = this.proj(p.d + dd, p.x + dx); if(q.s < 0.05) return;
       const L = Math.max(4, Math.round(0.9 * LAT * q.s)), X = Math.round(q.x), Y = Math.round(q.y - hh * LAT * q.s * 0.55);
       if(X < -L - 4 || X > VW + L + 4) return;
@@ -25259,6 +25319,9 @@ Object.assign(Scene, {
       const hh = clamp(Math.round(a.y - b.y), 1, w), sg = p.k & 1 ? 1 : -1, fl = (p.k >> 1) % 4 === 0 && w >= 5;
       const C = this.lilyPal || (this.lilyPal = lilyPal(this.look, night)), P = lilySprite(C, sg, fl);
       const k = w / LILY_W, x0 = Math.round(pr.x - w / 2), y0 = Math.round(pr.y) - hh + 1;
+      // (the frog shifting on its pad now and then: a ring spreads round it)
+      if(p.frog){ const age = (this.t + hr(p.k + this.hole, 875) * 4.7) % 4.7;
+        if(age < 1.6) this.ripple(c, p.d, p.x, 0.3 * p.s + age * 0.42, 0.75 * (1 - age / 1.6), night); }
       // (the flower stands a little up off it, in its own pixels above)
       c.drawImage(P, x0 - Math.round(k), y0 - Math.max(1, Math.round(2 * hh / LILY_H)), Math.round((LILY_W + 2) * k), hh + Math.max(1, Math.round(2 * hh / LILY_H)));
       // a frog sitting on it (layLilyFrog), its throat puffing now and then
