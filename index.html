@@ -18715,7 +18715,7 @@ const Scene = {
     // (by the sea stack the sea's own always: a seal or crabs)
     const first = have.sea ? (hr(h, 614) < 0.5 ? 'crab' : 'seal') : null;
     const want = first ? 1 + (hr(h, 602) < 0.3 ? 1 : 0) : hr(h, 601) < 0.55 ? 1 + (hr(h, 602) < 0.3 ? 1 : 0) : 0;
-    const got = [], hunt = huntOf(weekNow());
+    const got = [], hunt = huntOf(huntWeek());
     for(let i = 0; i < 12 && got.length < want; i++){
       const an = i < 3 && first && can.includes(first) && !got.length ? first : pool[Math.floor(hr(h * 13 + i, 604) * pool.length)];
       if(got.includes(an)) continue;
@@ -19043,7 +19043,7 @@ const Scene = {
     // (and when a third group would be one of this week's hunt, it pecks
     // about on the grass behind the green, beyond where he or a ball by the
     // pin puts it up: the user asked for the hunt round the green)
-    if(!sigKind(this.hole) && !S.dgnRun && huntOf(weekNow()).includes(['sparrow', 'robin', 'blackbird'][birdKind(this.hole, 3)])){
+    if(!sigKind(this.hole) && !S.dgnRun && huntOf(huntWeek()).includes(['sparrow', 'robin', 'blackbird'][birdKind(this.hole, 3)])){
       const P = this.pinD(), px = this.pinX();
       for(let i = 0, n = 0; i < 24 && n < 3; i++){
         const d = P + 6.6 + hr(this.hole * 83 + i, 339) * 2.4, x = px + (hr(this.hole * 89 + i, 339) - 0.5) * 5;
@@ -26082,8 +26082,11 @@ function huntOf(wk){
   pick.push(HUNT_NIGHT[Math.floor(r() * HUNT_NIGHT.length)]);
   return pick;
 }
+// (the developer menu's: another week's hunt, on the course and in the Guide)
+let HUNTWK_FORCE = null;
+const huntWeek = () => HUNTWK_FORCE === null ? weekNow() : HUNTWK_FORCE;
 function huntNow(){
-  const wk = weekNow();
+  const wk = huntWeek();
   if(!S.hunt || S.hunt.wk !== wk) S.hunt = { wk, got: [] };
   return S.hunt;
 }
@@ -28115,7 +28118,6 @@ const DEV = {
           + b('Golden Hour hole', 'DEV.golden()') + b('final-day gallery', 'DEV.gallery()') + b('find by the tee next hole', 'DEV.find()'))
       + row('Conditions', b('reroll', 'DEV.chaos()') + b('fair', 'DEV.weather(0)') + b('crosswind', 'DEV.weather(1)') + b('night', 'DEV.weather(3)'))
       + row('Frost · ' + (FROST_FORCE === null ? 'by the clock' : FROST_FORCE ? 'on' : 'off'), b('on', 'DEV.frost(1)') + b('off', 'DEV.frost(0)') + b('by the clock', 'DEV.frost(null)'))
-      + row('Golden animal' + (GOLD_FORCE !== null ? ' \u00b7 waiting' : ''), b('this hole', 'DEV.gold(1)') + b('next hole with one', 'DEV.gold()'))
       + row('Rare weather', b('rainbow hole', 'DEV.rare(\'rainbow\')') + b('gold rainbow', 'DEV.rare(\'goldbow\')') + b('double rainbow', 'DEV.rare(\'dblbow\')') + b('fog hole', 'DEV.rare(\'fog\')') + b('shooting star now', 'DEV.meteor()'))
       + row('December lights · ' + (LIGHTS_FORCE === null ? 'by the date' : LIGHTS_FORCE ? 'on' : 'off'), b('on', 'DEV.lights(1)') + b('off', 'DEV.lights(0)') + b('by the date', 'DEV.lights(null)'))
       + row('Season touches · ' + (DECOR_FORCE || 'by the season'), DECOR_KINDS.map(k => b(k, 'DEV.decor(\'' + k + '\')')).join('') + b('by the season', 'DEV.decor()'))
@@ -28127,6 +28129,20 @@ const DEV = {
       + row('Signature of the week · ' + SIG_NAME[sigWeek()] + (SIGWEEK_FORCE ? ' · forced' : ''), SIG_KINDS.map(k =>
           b(SIG_NAME[k].toLowerCase(), 'DEV.sigWeek(\'' + k + '\')')).join('') + b('by the date', 'DEV.sigWeek()'))
       + row('Trophy cabinet', b('fill it', 'DEV.cabinet(1)') + b('empty it', 'DEV.cabinet(0)')));
+
+    const H = huntNow(), hw = huntOf(H.wk), aces = acesOn(S.hole);
+    h += fold('wild', 'Wildlife, the Guide and plaques',
+        row('Field Guide \u00b7 ' + GUIDE.filter(g => (S.guide || {})[g.id]).length + '/' + GUIDE.length + ' \u00b7 \u2605' + GUIDE.filter(g => (S.guide || {})[g.id] >= GUIDE_BADGE).length,
+          b('spot all', 'DEV.guide(1)') + b('100 each', 'DEV.guide(3)') + b('clear', 'DEV.guide(0)') + b('open it', 'DEV.guide(2)'))
+      + row('Weekly hunt \u00b7 ' + hw.map(id => GUIDE.find(g => g.id === id).n).join(', ') + ' \u00b7 ' + (H.paid ? 'done' : H.got.length + '/3')
+          + (HUNTWK_FORCE !== null ? ' \u00b7 week ' + (HUNTWK_FORCE - weekNow() >= 0 ? '+' : '') + (HUNTWK_FORCE - weekNow()) : ''),
+          b('spot one', 'DEV.hunt(1)') + b('finish it', 'DEV.hunt(3)') + b('reset', 'DEV.hunt(0)') + b('next week', 'DEV.huntWk(1)') + b('this week', 'DEV.huntWk(0)'))
+      + row('Spotted tag \u00b7 ' + (S.spotTag === 0 ? 'off' : 'on'), b('show one', 'DEV.tag(1)') + b('show three', 'DEV.tag(3)') + b(S.spotTag === 0 ? 'turn on' : 'turn off', 'DEV.tagSw()'))
+      + row('Golden animal' + (GOLD_FORCE !== null ? ' \u00b7 waiting' : ''), b('this hole', 'DEV.gold(1)') + b('next hole with one', 'DEV.gold()'))
+      + row('Luna moth \u00b7 ' + (LUNA_FORCE === null ? 'by chance' : LUNA_FORCE ? 'always' : 'never'), b('always', 'DEV.luna(1)') + b('never', 'DEV.luna(0)') + b('by chance', 'DEV.luna(null)'))
+      + row('Ace plaque \u00b7 ' + aces + ' on this hole (' + (aces >= 50 ? 'gold' : aces >= 10 ? 'silver' : 'brass') + ')', b('+1 ace', 'DEV.plaque(' + (aces + 1) + ')') + b('10 aces', 'DEV.plaque(10)') + b('50 aces', 'DEV.plaque(50)') + b('clear', 'DEV.plaque(0)'))
+      + row('Animal calls \u00b7 ' + (S.wild === 0 ? 'off' : 'on'), ['frogs', 'crow', 'owl', 'foxBark', 'gameBird'].map(k => b(k === 'foxBark' ? 'fox' : k === 'gameBird' ? 'quail' : k, 'DEV.call(\'' + k + '\')')).join('')
+          + b(S.wild === 0 ? 'turn on' : 'turn off', 'DEV.wildSw()')));
 
     const dr = S.equip.driver, cd = caddieNow();
     h += fold('gear', 'Clubs and mastery',
@@ -28152,7 +28168,6 @@ const DEV = {
         row('Career', b('+1 level', 'DEV.lv(1)') + b('+10 levels', 'DEV.lv(10)') + b('level 60', 'DEV.lv(60)')
           + b('+25 paragon', 'DEV.para(25)') + b('+400 paragon', 'DEV.para(400)') + b('reset career', 'DEV.career0()'))
       + row('Honours', b('unlock all', 'DEV.ach()') + b('clear all', 'DEV.ach0()') + b('+5 cups', 'DEV.cups(5)'))
-      + row('Field Guide \u00b7 ' + GUIDE.filter(g => (S.guide || {})[g.id]).length + '/' + GUIDE.length, b('spot all', 'DEV.guide(1)') + b('clear', 'DEV.guide(0)') + b('open it', 'DEV.guide(2)'))
       + row('Daily challenges', b('finish one', 'DEV.daily(1)') + b('finish all', 'DEV.daily(3)') + b('streak +1', 'DEV.streak()') + b('streak 0', 'DEV.streak0()'))
       + row('Check-In \u00b7 ' + checkinNow().n + '/' + B.CHECKIN.length, b('claim today', 'DEV.checkin(1)') + b('next day', 'DEV.checkin(2)') + b('reset month', 'DEV.checkin(0)'))
       + row('Heirlooms', b('find 5', 'DEV.disc(5)') + b('find all', 'DEV.disc(99)') + b('+2 levels each', 'DEV.relics(2)')
@@ -28375,7 +28390,24 @@ const DEV = {
     const id = (Scene.course || courseFor(tournamentOf(S.hole))).id, R = (S.courseBest || {})[id];
     courseRecPost(id, R ? R.s - 1 : -8); this.open(); },
   gift(){ caddieGift(S.hole, -1, true); this.re(); },
-  guide(k){ if(k === 2){ trophyRoom('guide'); return; } S.guide = {}; if(k) GUIDE.forEach(g => { S.guide[g.id] = 1; }); this.open(); },
+  guide(k){ if(k === 2){ trophyRoom('guide'); return; } S.guide = {}; if(k) GUIDE.forEach(g => { S.guide[g.id] = k === 3 ? GUIDE_BADGE : 1; }); this.open(); },
+  // the week's hunt: one more found (through the Guide, so the tag shows it),
+  // all three, none; another week's on the course and in the Guide
+  hunt(k){ const H = huntNow(), want = huntOf(H.wk);
+    if(!k){ S.hunt = { wk: H.wk, got: [] }; this.re(); return; }
+    // (straight into the hunt, so it counts on an easy card too, and the tag shows it)
+    const got = want.filter(id => !H.got.includes(id)).slice(0, k === 1 ? 1 : 3); if(!got.length) return;
+    H.got.push(...got); const paid = H.got.length >= 3 && !H.paid;
+    if(paid){ H.paid = 1; grantSov(B.HUNT_SOV, '', true); }
+    hideSheet(); renderAll(); spotShow(got, 0, { fresh: got, n: H.got.length, paid }); },
+  huntWk(n){ HUNTWK_FORCE = n ? huntWeek() + n : null; Scene.newHole(S.hole, S.tier); this.re(); },
+  tag(n){ hideSheet(); const an = GUIDE.filter(g => g.g === 'w').map(g => g.id); spotShow(an.slice(0, n), 0, null); },
+  tagSw(){ toggleSpotTag(); this.open(); },
+  luna(v){ LUNA_FORCE = v; Scene.newHole(S.hole, S.tier); hideSheet(); },
+  plaque(n){ const k = aceKey(S.hole); S.aceAt = S.aceAt || {}; if(n) S.aceAt[k] = n; else delete S.aceAt[k]; Scene.newHole(S.hole, S.tier); this.open(); },
+  // each animal's call now, whatever the hole has (the switch aside)
+  call(k){ Sfx.unlock(); const c = Sfx.init(); if(c && c.state === 'running' && Sfx[k]) Sfx[k].call(Sfx, c.currentTime + 0.02); },
+  wildSw(){ toggleWild(); this.open(); },
   rail(){ RAIL_FORCE = S.hole; ISLE_FORCE = 0; CANYON_FORCE = 0; STONES_FORCE = 0; PIER_FORCE = 0; S.yards = S.yardsMax; this.reprice(); Scene.newHole(S.hole, S.tier); hideSheet(); },
   isle(){ ISLE_FORCE = S.hole; CANYON_FORCE = 0; STONES_FORCE = 0; PIER_FORCE = 0; RAIL_FORCE = 0; S.yards = S.yardsMax; this.reprice(); Scene.newHole(S.hole, S.tier); hideSheet(); },
   // as if nobody had touched the phone for the whole wait, bar five seconds

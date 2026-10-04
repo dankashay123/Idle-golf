@@ -132,6 +132,18 @@ module.exports = {
         DEV.bond(0); o.bond0 = bondLv(caddieNow().id) === 0;
         DEV.golden(); o.golden = goldenOn(S.hole, S.chaos && S.chaos.n) && Scene.golden;
         DEV.gallery(); o.gallery = galleryHole(S.hole) && Scene.props.some(p => p.kind === 2 && p.extra);
+        // wildlife: the week's hunt, another week, a hundred each, the plaque, the switches
+        if (S.spotTag === 0) DEV.tagSw(); if (S.wild === 0) DEV.wildSw(); HUNTWK_FORCE = null; LUNA_FORCE = null;
+        DEV.hunt(0); DEV.hunt(1); o.hunt1 = huntNow().got.length === 1 && !huntNow().paid;
+        const sv = S.sov || 0; DEV.hunt(3); o.hunt3 = huntNow().paid === 1 && (S.sov || 0) - sv >= B.HUNT_SOV;
+        DEV.hunt(0); o.hunt0 = !huntNow().got.length && !huntNow().paid;
+        const w0 = huntOf(huntNow().wk).join(); DEV.huntWk(1); o.huntWk = huntNow().wk === weekNow() + 1;
+        DEV.huntWk(0); o.huntBack = HUNTWK_FORCE === null && huntNow().wk === weekNow() && huntOf(huntNow().wk).join() === w0;
+        DEV.guide(3); o.guide100 = GUIDE.every(g => S.guide[g.id] === GUIDE_BADGE); DEV.guide(0);
+        DEV.plaque(10); o.plaque10 = acesOn(S.hole) === 10; DEV.plaque(0); o.plaque0 = acesOn(S.hole) === 0;
+        DEV.tagSw(); o.tagOff = S.spotTag === 0; DEV.tagSw(); o.tagOn = S.spotTag === undefined;
+        DEV.wildSw(); o.wildOff = S.wild === 0; DEV.wildSw(); o.wildOn = S.wild === undefined;
+        DEV.luna(1); o.luna = LUNA_FORCE === 1; DEV.luna(null);
         // in folds, every button inside one, and a fold left open stays open
         DEV.open(); const folds = [...document.querySelectorAll('#sheet details.devfold')];
         o.folds = folds.length >= 6 && !document.querySelector('#sheet .devbtn:not(details .devbtn)');
@@ -152,6 +164,6 @@ module.exports = {
     return ['tap ignored, drag ignored, 1.5s hold opens it',
       'all ' + press.n + ' dev buttons pressed without an error; dailies, named sets, trophy and honours '
       + 'resets, Card 1, sovereigns and the stake override all do what they say',
-      'and the newer ones: the major of the week, the season, the cabinet, the fairy, caddie perks, sound, the frame readout, mastery, the bond, Golden Hour and the gallery; all in folds that stay as they were left'];
+      'and the newer ones: the major of the week, the season, the cabinet, the fairy, caddie perks, sound, the frame readout, mastery, the bond, Golden Hour, the gallery, the weekly hunt and its weeks, the Guide at a hundred, the ace plaque and the wildlife switches; all in folds that stay as they were left'];
   }
 };
