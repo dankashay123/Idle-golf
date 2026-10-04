@@ -4433,6 +4433,15 @@ const rainbowAt = (h, ch, tier) => RAINBOW_FORCE !== null ? !!RAINBOW_FORCE
     && (hr(h * 17 + 3, 981) < RAINBOW_P || (h > 2 && (wetCh(chaosFor(h - 1, tier).n) || wetCh(chaosFor(h - 2, tier).n))));
 const fogAt = (h, ch, tier) => FOG_FORCE !== null ? !!FOG_FORCE
   : !S.dgnRun && clearCh(ch) && !clockNight() && !goldenHole(h) && hr(h * 23 + 11, 983) < FOG_P && !rainbowAt(h, ch, tier);
+// The Harvest Moon (the user picked it from the menu): on one autumn night
+// round in four (a home course in its autumn, or a course as built from
+// September to November), a huge full moon, orange, low over the hills, in
+// place of the night's own; the whole round, from the round's number.
+let HARVEST_FORCE = null;
+const HARVEST_P = 0.25;
+const harvestAt = (h, look) => HARVEST_FORCE !== null ? !!HARVEST_FORCE
+  : !S.dgnRun && !!look && (look.season || look.slot === 'home' || CAL_SEASONED.includes(look.id)
+    ? look.season === 'Autumn' : MONTH_SEASON[monthNow()] === 1) && hr(roundIndex(h) * 13 + 5, 991) < HARVEST_P;
 // Holiday lights (the user picked it from the menu): strings of coloured
 // bulbs along the clubhouse's eaves and the grandstand's roof in December,
 // small dots by day and lit at night. LIGHTS_FORCE pins them on or off.
@@ -21057,6 +21066,7 @@ const Scene = {
     this.course = cs;
     const look = seasonLook(cs, courseSeason(cs, tier));
     this.look = look;
+    this.harvest = this.night && !this.rain && harvestAt(h, look);
     this.land = look.land;
     this.themeId = look.id + '|' + mode;
     this.theme = buildTheme(look, mode);
@@ -21289,32 +21299,33 @@ const Scene = {
   // the wrong blue, sitting a shade off whatever it was covering. Built on its
   // own layer and BITTEN out instead, so what shows through the crescent is
   // the sky itself, whatever the sky happens to be doing there.
-  drawMoon(g, mx, my, r, ph = 0.66){
+  drawMoon(g, mx, my, r, ph = 0.66, harvest){
     // A little air around it. Stacked discs one pixel apart rather than four
     // fat ones: four read as four rings drawn round the moon, which is not
-    // what a halo is.
-    const G = Math.max(4, Math.round(r*2.2));
+    // what a halo is. (The Harvest Moon's warm, and further out.)
+    const G = Math.max(4, Math.round(r*(harvest ? 1.4 : 2.2)));
     for(let i = G; i >= 1; i--){
       const t = i/G;
-      g.globalAlpha = 0.030 * (1 - t) * (1 - t);
-      pxCircle(g, mx, my, r + i, '#CFDCF2');
+      g.globalAlpha = (harvest ? 0.05 : 0.030) * (1 - t) * (1 - t);
+      pxCircle(g, mx, my, r + i, harvest ? '#F2A050' : '#CFDCF2');
     }
     g.globalAlpha = 1;
     const n = r*2 + 3, c0 = r + 1;
     const cv = document.createElement('canvas');
     cv.width = cv.height = n;
     const m = cv.getContext('2d');
-    pxCircle(m, c0, c0, r, '#DCE2D2');
+    const MC = harvest ? ['#D8782E', '#E89A48', '#F4BC6E', '#C46A2A', '#D27E38'] : ['#DCE2D2', '#EDF1E3', '#F8FAF0', '#C2CAB8', '#CED6C4'];
+    pxCircle(m, c0, c0, r, MC[0]);
     // the lit limb, and a brighter core inside it
-    pxCircle(m, c0 - Math.round(r*0.22), c0 - Math.round(r*0.20), Math.round(r*0.82), '#EDF1E3');
-    pxCircle(m, c0 - Math.round(r*0.40), c0 - Math.round(r*0.34), Math.round(r*0.46), '#F8FAF0');
+    pxCircle(m, c0 - Math.round(r*0.22), c0 - Math.round(r*0.20), Math.round(r*0.82), MC[1]);
+    pxCircle(m, c0 - Math.round(r*0.40), c0 - Math.round(r*0.34), Math.round(r*0.46), MC[2]);
     // maria: flat grey seas, not a scatter of single pixels
     const mr = seeded(0x5EA51);
     for(let i = 0; i < 6; i++){
       const a = mr()*Math.PI*2, rad = Math.sqrt(mr())*r*0.66;
       pxCircle(m, c0 + Math.round(Math.cos(a)*rad), c0 + Math.round(Math.sin(a)*rad),
                Math.max(1, Math.round(r*(0.09 + mr()*0.15))),
-               i & 1 ? '#C2CAB8' : '#CED6C4');
+               i & 1 ? MC[3] : MC[4]);
     }
     // ph: how far off the shadow sits, a thin crescent at about half its
     // width, a full moon when it misses altogether
@@ -21417,7 +21428,7 @@ const Scene = {
     const key = [this.themeId, this.night, this.aurora, this.rain, VW, HORIZON, dd ? dd.w + (dd.gold ? 'g' : dd.dawn ? 'a' : 'p') : ''].join('|');
     // (a rainbow's hole in the cache's key, not in key: the clouds are
     // seeded by key, and stay where they were)
-    const rbKey = key + (this.rainbow ? '|rb' + this.hole + (this.goldbow ? 'g' : '') + (this.dblbow ? 'd' : '') : '');
+    const rbKey = key + (this.rainbow ? '|rb' + this.hole + (this.goldbow ? 'g' : '') + (this.dblbow ? 'd' : '') : '') + (this.harvest ? '|hm' : '');
     if(rbKey === this.skyKey && this.sky) return;
     this.skyKey = rbKey;
     const H = Math.max(2, HORIZON + 2);
@@ -21476,8 +21487,12 @@ const Scene = {
       }
       g.globalAlpha = 1;
       const PH = [0.5, 0.66, 0.66, 0.95, 1.35, 3];
-      this.drawMoon(g, this.moonX = Math.round(VW*(0.70 + sr()*0.12)), this.moonY = Math.round(H*(0.18 + sr()*0.1)),
-                    this.moonR = Math.max(5, Math.round(VW*0.055)), PH[Math.floor(sr()*PH.length)]);
+      const mx = Math.round(VW*(0.70 + sr()*0.12)), my = Math.round(H*(0.18 + sr()*0.1)), ph = PH[Math.floor(sr()*PH.length)];
+      // (the Harvest Moon: low over the hills, more than twice the size,
+      // full and orange; the hills in front of its foot, as it rises)
+      if(this.harvest) this.drawMoon(g, this.moonX = Math.round(VW*0.68), this.moonY = Math.round(H*0.64),
+                    this.moonR = Math.max(10, Math.round(VW*0.13)), 3, true);
+      else this.drawMoon(g, this.moonX = mx, this.moonY = my, this.moonR = Math.max(5, Math.round(VW*0.055)), ph);
     }
     if(this.aurora){
       // Two curtains of light, each a bright edge along the top with rays
@@ -27070,7 +27085,7 @@ const WAGER_WILD_SC = 1.8;   // (drawn this much larger than on the course: easy
 let WAGER_WILD_P = 0.5;   // (1 in the developer menu and the checks: always there)
 // the night creatures (laid in layNight) on a shelf of their own, with the
 // animals only out after dark
-GUIDE.push({ id:'glowworm', n:'Glow-worms', g:'n', w:'A dry night, in the rough' }, { id:'moth', n:'Moths', g:'n', w:'Round the tee lamps' },
+GUIDE.push({ id:'harvest', n:'Harvest Moon', g:'n', w:'Autumn nights, now and then' }, { id:'glowworm', n:'Glow-worms', g:'n', w:'A dry night, in the rough' }, { id:'moth', n:'Moths', g:'n', w:'Round the tee lamps' },
   { id:'luna', n:'Luna Moth', g:'n', w:'Rare, by the tee lamps' });
 for(const g of GUIDE) if(['owl', 'bat', 'badger', 'hedgehog', 'eyes'].includes(g.id)) g.g = 'n';
 // the rare weather (rainbowAt, fogAt, Scene.meteorNow)
@@ -27090,6 +27105,7 @@ function guideSpot(sc){
   for(const p of P) if(p.kind === 14) see(p.sp === 'pk' || p.sp === 'bale' ? 'pumpkin' : p.sp);
   const sk = sigKind(sc.hole); if(sk){ see(sk); if(sk === 'pier') see('gull');
     if(!sc.night){ if(sk === 'island') see('duck'); if(sk === 'canyon') see('hawk'); } if(sk === 'stones' && !sc.ice) see('fish'); }
+  if(sc.harvest) see('harvest');
   if(sc.golden) see('golden'); if(sc.frost) see('frost'); if(sc.rain) see('rain'); if(sc.night) see('night');
   if(sc.goldbow) see('goldbow'); else if(sc.rainbow) see('rainbow'); if(sc.dblbow) see('dblbow'); if(sc.fog) see('fog');
   guideAdd(got);
@@ -27382,6 +27398,9 @@ const RARE_PIC = {
     return makeSprite(rows, M); },
   fog: () => makeSprite(['....t.......t.....', '...ttt..t..ttt....', '..tttttttttttttt..', 'wwwwwww...wwwwwwww', 'tttwwwwwwwwwwwtttt',
     '..ppppppp.pppp....', 'wwwwwwwwwwwwwwww..', '...pppppppppppppp.', '.wwwwwww..wwwwwww.'], { t:'#5E7A68', w:'#E6ECEE', p:'#C2CCD2' }),
+  harvest: () => { const rows = []; for(let y = 0; y < 13; y++){ let r = ''; for(let x = 0; x < 13; x++){ const q = Math.hypot(x - 6, y - 6);
+      r += q > 6.2 ? '.' : (x - 4) ** 2 + (y - 7) ** 2 < 3 || (x - 8) ** 2 + (y - 4) ** 2 < 2 ? 'm' : q < 3.4 && x + y < 11 ? 'l' : 'o'; } rows.push(r); }
+    return makeSprite(rows, { o: '#E89A48', l: '#F4BC6E', m: '#C46A2A' }); },
   meteor: () => makeSprite(['.................W', '...............WH.', '.............HB...', '...........BB.....', '........bBB.......',
     '.....bbb..........', '..bbb.............', 'bb................'], { W:'#FFFFFF', H:'#E6ECFF', B:'#9FB4E8', b:'#6A7CC0' })
 };
