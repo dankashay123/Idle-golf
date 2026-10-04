@@ -45,6 +45,11 @@ module.exports = {
         o.paler = paler;
         if (paler < 300) f('the mist made ' + paler + ' pixels paler');
         if (darker > paler * 0.05) f('the mist made ' + darker + ' pixels darker');
+        // a course with seasons by its own: in October, none in its summer
+        // or its blossom (the real month ruled every course)
+        { DEV.course(0); hideSheet(); let hh = S.hole; while (!isCanyon(hh)) hh++; DAY_FORCE = day(9); HOUR_FORCE = 8; FROST_FORCE = false; S.chaos = { n: 'Fair' };
+          try { for (const sn of [0, 1, 2, 3]) { SEASON_FORCE = sn; Scene.newHole(hh, S.tier); if (!!Scene.cmist !== (sn === 1 || sn === 2)) f('the home course in season ' + sn + ' (October): mist ' + !!Scene.cmist); } }
+          finally { SEASON_FORCE = -1; FROST_FORCE = null; }}
       } finally { CANYON_FORCE = 0; DAY_FORCE = keepD; HOUR_FORCE = keepH; CMIST_FORCE = null; QUIET = false; S.chaos = { n: 'Fair' }; Object.assign(S, JSON.parse(SNAP)); Scene.newHole(S.hole, S.tier); }
       return { fails, o };
     });

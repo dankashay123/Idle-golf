@@ -103,6 +103,18 @@ module.exports = {
       }
       return { fails, out };
     });
+    // its first frame on a new hole the same as the next (the depth carried
+    // from the slice before began as 0, not none: the deep walls drawn as
+    // the rim's, kept while he stood)
+    const ff = await page.evaluate(() => {
+      const SNAP = JSON.stringify(S), raf = window.requestAnimationFrame, out = [];
+      try { window.requestAnimationFrame = () => 0;
+        for (const cd of [3, 8, 14]) { QUIET = true; S.chaos = { n: 'Fair' }; DEV.canyon(); hideSheet(); Scene.announce = null; Scene.water._ofz = null; const D = derive(); Scene.camD = cd;
+          Scene.draw(0, D); const a = Scene.b.getImageData(0, 0, VW, VH).data.slice(); Scene.gGen++; Scene.draw(0, D); const b = Scene.b.getImageData(0, 0, VW, VH).data;
+          let n = 0; for (let i = 0; i < a.length; i += 4) if (a[i] !== b[i] || a[i + 1] !== b[i + 1] || a[i + 2] !== b[i + 2]) n++; out.push(n); }
+      } finally { window.requestAnimationFrame = raf; QUIET = false; CANYON_FORCE = 0; Object.assign(S, JSON.parse(SNAP)); Scene.newHole(S.hole, S.tier); }
+      return out; });
+    if (ff.some(n => n > 40)) d.fails.push('its first frame differs from the next by ' + ff.join('/') + ' pixels');
     if (process.env.CLDUMP) require('fs').writeFileSync(process.env.CLDUMP, Buffer.from(d.out.img.split(',')[1], 'base64'));
     // and walked across, the way the phone shows it: frame to frame a pixel
     // that changes and changes straight back is a flicker (the user saw the

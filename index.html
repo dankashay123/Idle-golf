@@ -4333,6 +4333,15 @@ const homeSeason = (cs, tier) => !cs || cs.slot !== 'home' ? 0
 const CAL_SEASONED = ['coastal', 'sandbelt', 'highlands', 'blackwater', 'riverbend', 'moorland'];
 const MONTH_SEASON = [2, 2, 3, 3, 3, 0, 0, 0, 1, 1, 1, 2];
 const monthNow = () => new Date(dayNow() * 86400000).getUTCMonth();
+// The season a course shows now (0 as built, the summer; 1 autumn, 2
+// winter, 3 blossom): its own where it turns, the Snowline's winter and the
+// Blossom's spring all year, the rest (desert, tropics, majors) by the real
+// month. What lives by the season (the Harvest Moon, the canyon's mist,
+// dragonflies, fireflies at the reeds) asks this.
+const lookSeason = look => !look ? 0
+  : look.season ? Math.max(0, SEASONS.findIndex(z => z && z.n === look.season))
+  : look.slot === 'home' || CAL_SEASONED.includes(look.id) ? 0
+  : look.id === 'snowline' ? 2 : look.id === 'blossom' ? 3 : MONTH_SEASON[monthNow()];
 const courseSeason = (cs, tier) => !cs ? 0 : cs.slot === 'home' ? homeSeason(cs, tier)
   : !CAL_SEASONED.includes(cs.id) ? 0 : SEASON_FORCE >= 0 ? SEASON_FORCE : MONTH_SEASON[monthNow()];
 // A frosty morning (the user asked): an autumn or winter course, or the
@@ -4444,8 +4453,7 @@ const fogAt = (h, ch, tier) => FOG_FORCE !== null ? !!FOG_FORCE
 let HARVEST_FORCE = null;
 const HARVEST_P = 0.25;
 const harvestAt = (h, look) => HARVEST_FORCE !== null ? !!HARVEST_FORCE
-  : !S.dgnRun && !!look && (look.season || look.slot === 'home' || CAL_SEASONED.includes(look.id)
-    ? look.season === 'Autumn' : MONTH_SEASON[monthNow()] === 1) && hr(roundIndex(h) * 13 + 5, 991) < HARVEST_P;
+  : !S.dgnRun && !!look && lookSeason(look) === 1 && hr(roundIndex(h) * 13 + 5, 991) < HARVEST_P;
 // Holiday lights (the user picked it from the menu): strings of coloured
 // bulbs along the clubhouse's eaves and the grandstand's roof in December,
 // small dots by day and lit at night. LIGHTS_FORCE pins them on or off.
@@ -19786,11 +19794,7 @@ const Scene = {
   },
   // Is it summer here: a course with seasons by its own, the others by the
   // real month.
-  summerHere(){
-    const cs = this.course, look = this.look || {};
-    const seasoned = !!cs && (cs.slot === 'home' || CAL_SEASONED.includes(cs.id));
-    return seasoned ? !look.season : MONTH_SEASON[monthNow()] === 0;
-  },
+  summerHere(){ return lookSeason(this.look) === 0; },
   // Is this spot on open water: the hole's lake, river or pond, or the
   // pond by the path (not the canyon's floor, not ice under the rails).
   wetSpot(d, x){
@@ -20741,7 +20745,7 @@ const Scene = {
       // (a streak two pixels wide at least: the columns that makes, to a
       // power of two)
       const SL = Math.max(0.5, Math.pow(2, Math.ceil(Math.log2(2 / Math.max(1e-3, w / NC)))));
-      const OF = hz._ofz && hz._ofz.length === VW ? hz._ofz : (hz._ofz = new Float32Array(VW)), OT = hz._ott && hz._ott.length === VW ? hz._ott : (hz._ott = new Float32Array(VW));
+      const OF = hz._ofz && hz._ofz.length === VW ? hz._ofz : (hz._ofz = new Float32Array(VW).fill(-1)), OT = hz._ott && hz._ott.length === VW ? hz._ott : (hz._ott = new Float32Array(VW));
       // (the haze's strength by row, worked out once for the frame's size)
       const HQ = this._hzRow && this._hzRow.k === VH * 10000 + HORIZON ? this._hzRow : (this._hzRow = Object.assign(Int8Array.from({ length: VH }, (_, r) => Math.round(this.hazeA(r) * 0.25 * 20)), { k: VH * 10000 + HORIZON }));
       const mist = this.cmist;
@@ -21579,10 +21583,10 @@ const Scene = {
     this.look = look;
     this.harvest = this.night && !this.rain && harvestAt(h, look);
     // mist lying in the canyon on a cold morning (the user picked it from
-    // the menu): on a frosty morning, or a dry autumn or winter one by the
-    // real month where the course has no seasons, five to eleven
+    // the menu): on a frosty morning, or a dry one in the course's autumn
+    // or winter (lookSeason), five to eleven
     this.cmist = !this.night && !this.rain && isCanyon(h) && (CMIST_FORCE !== null ? !!CMIST_FORCE
-      : this.frost || ([1, 2].includes(MONTH_SEASON[monthNow()]) && hourNow() >= 5 && hourNow() < 11));
+      : this.frost || ([1, 2].includes(lookSeason(look)) && hourNow() >= 5 && hourNow() < 11));
     this.land = look.land;
     this.themeId = look.id + '|' + mode;
     this.theme = buildTheme(look, mode);
@@ -21741,6 +21745,7 @@ const Scene = {
     this.aurora = false;
     this.rain = false;
     this.rainbow = false; this.goldbow = false; this.dblbow = false; this.fog = false;   // (no rare weather in a wager)
+    this.harvest = false; this.cmist = false;   // (nor the Harvest Moon over its cellar, nor mist)
     const rnd = seeded(hash32(R.floor*7919 + dg.length*104729 + 13));
     this.seed = rnd() * 1000;
     this.roll = 0.42;                    // a cellar floor does not roll like links
@@ -25302,8 +25307,10 @@ Object.assign(Scene, {
       // out either side, beating between spread and swept back
       const up = Math.floor(this.t * 20 + p.k) & 1, F = up ? DFLY_PIC[0] : DFLY_PIC[1], W = F[0].length, H = F.length;
       const ox = X - (W * ps >> 1), oy = Y - (H * ps >> 1), ink = { b: C[0], h: C[1], e: dark(C[0], 0.45), w: 'rgba(236,248,255,0.85)', v: 'rgba(150,190,220,0.9)' };
+      // (cut at the ground's line where a rise in front hides it)
+      const clip = this.clipAt(p.d + dd);
       for(let r = 0; r < H; r++) for(let k = 0; k < W; k++){ const ch = F[r][dir > 0 ? k : W - 1 - k]; if(ch === '.') continue;
-        c.fillStyle = ink[ch]; c.fillRect(ox + k * ps, oy + r * ps, ps, ps); }
+        c.fillStyle = ink[ch]; fillClip(c, ox + k * ps, oy + r * ps, ps, ps, clip); }
 
     }else if(p.kind === 26){
       // a lily pad lying flat on the water: an oval as the ground
@@ -27918,6 +27925,8 @@ function courseWildSee(sc){
   // (its rare visitors, noted whenever seen; the star once it is whole)
   { const rw = rareOf(cs.id), mr = (S.cwildR = S.cwildR || {})[cs.id] = (S.cwildR[cs.id] || {});
     for(const p of sc.props || []) if(p.kind === 15 && rw.includes(p.an)) mr[p.an] = 1;
+    // (the dragonflies over the reeds in summer are dragonflies too)
+    if(rw.includes('dragonfly') && (sc.props || []).some(p => p.kind === 26 && p.sp === 'dfly')) mr.dragonfly = 1;
     S.cwildStar = S.cwildStar || {};
     if(rw.length && !S.cwildStar[cs.id] && (S.cwildDone || {})[cs.id] && rareGot(cs.id).length === rw.length){
       S.cwildStar[cs.id] = 1;

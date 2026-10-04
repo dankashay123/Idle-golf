@@ -31,7 +31,16 @@ module.exports = {
         DAY_FORCE = Math.floor(Date.UTC(2026, 9, 15) / 86400000); let autumn = 0;
         for (let rd = 0; rd < 80; rd++) if (harvestAt(rd * B.ROUND + 1, plain)) autumn++;
         if (spring) f(spring + ' Harvest Moons in May'); if (!autumn) f('none in October');
+        // (the courses that are their season all year keep it: no Harvest
+        // Moon over the Snowline's snow or the Blossom's trees in October)
+        for (const id of ['snowline', 'blossom']) { let n = 0; for (let rd = 0; rd < 80; rd++) if (harvestAt(rd * B.ROUND + 1, courseById(id))) n++; if (n) f(n + ' Harvest Moons over ' + id + ' in October'); }
         DAY_FORCE = keepD;
+        // never carried into a wager from the night before it (the cellar's
+        // floodlit green showed it, the hole before's moon left set)
+        { HARVEST_FORCE = true; SEASON_FORCE = 1; S.chaos = { n: 'Night Round' }; Scene.newHole(S.hole, S.tier); const was = !!Scene.harvest; HARVEST_FORCE = null;
+          if (!was) f('no Harvest Moon forced before the wager');
+          const R = { id: (B.DGN.find(d => d.id === 'cellar') || B.DGN[0]).id, floor: 1 }, keepT = Scene.themeId;
+          try { Scene.newDepthsHole(R); if (Scene.harvest) f('the Harvest Moon carried into a wager'); } finally { Scene.dFloor = null; Scene.newHole(S.hole, S.tier); } }
         // drawn: night only, orange, big and low
         HARVEST_FORCE = true; SEASON_FORCE = 1;
         S.chaos = { n: 'Fair' }; Scene.newHole(S.hole, S.tier); if (Scene.harvest) f('a Harvest Moon by day');

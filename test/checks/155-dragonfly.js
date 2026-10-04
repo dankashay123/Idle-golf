@@ -49,6 +49,10 @@ module.exports = {
           let n = 0; for (let i = 0; i < a.length; i += 4) if (a[i] !== b[i] || a[i + 1] !== b[i + 1] || a[i + 2] !== b[i + 2]) n++;
           o.drawn = n; if (n < 14 * fl.length) f(fl.length + ' dragonflies drew ' + n + ' pixels');
         }
+        // a course whose rare visitor is the dragonfly: these tick it
+        { const id = Object.keys(COURSE_RARE).find(k => rareOf(k).includes('dragonfly')), keepR = JSON.stringify(S.cwildR || {});
+          try { S.cwildR = {}; courseWildSee({ course: courseById(id), props: [{ kind: 26, sp: 'dfly' }] });
+            if (!((S.cwildR[id] || {}).dragonfly)) f(id + ': a dragonfly seen, its rare visitor not ticked'); } finally { S.cwildR = JSON.parse(keepR); } }
         // the Guide
         // (the Guide had a dragonfly already, flitting over water: these
         // count for it, never a second entry of the same name)
