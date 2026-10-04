@@ -71,6 +71,11 @@ module.exports = {
         const seen = tiles.filter(t => !t.classList.contains('un')).length;
         if (seen !== 2) f(seen + ' tiles shown as seen, not 2');
         if (!tiles.some(t => /Seen\s7/.test(t.textContent))) f('the robin\'s count is not shown');
+        // (a hundred sightings: the tile's badge and the count in the heading)
+        hideSheet(); S.guide = { doe: 99, robin: 100, fox: 140 }; trophyRoom('guide');
+        const t100 = [...document.querySelectorAll('#roomBody .gtile.g100')].filter(t => !t.closest('.hunt'));
+        if (t100.length !== 2 || !t100.every(t => t.querySelector('em') && /^\u2605100$/.test(t.querySelector('em').textContent.trim()))) f(t100.length + ' tiles wear the badge for a hundred');
+        if (!/\u2605\s*2/.test(document.querySelector('#roomBody .eyebrow').textContent)) f('the heading reads ' + document.querySelector('#roomBody .eyebrow').textContent);
         hideSheet();
         // save repair
         S.guide = { doe: 'x', robin: -2, stag: 3.7, nope: 4 }; migrate();

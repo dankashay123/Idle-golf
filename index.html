@@ -350,6 +350,10 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
 .gtile.tmk[role=button]{cursor:pointer}
 .guide.hunt{grid-template-columns:repeat(3,minmax(0,1fr))}
 .gtile.found{border-color:var(--brass)}
+/* seen a hundred times: a gold corner and a brass edge (the user picked it) */
+.gtile{position:relative}
+.gtile.g100{border-color:var(--brass)}
+.gtile em{position:absolute;top:2px;right:3px;font-style:normal;font-size:9px;font-weight:700;color:#1A1206;background:var(--brass);padding:0 3px;border-radius:2px;line-height:1.4}
 .gtile.tmk.on{border-color:var(--brass)}
 .gtile b{display:block;font-size:11px;font-weight:600;line-height:1.2}
 .gtile i{display:block;font-style:normal;color:var(--faint);font-size:10px;line-height:1.25;margin-top:2px}
@@ -923,6 +927,10 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
    shop's offer carries, so a dot on a stage button always means "for you" */
 #roomDot{position:absolute;top:-8%;right:-8%;width:32%;height:32%;background:var(--r5);display:none}
 #roomBtn.ready #roomDot{display:block}
+/* this week's hunt not yet done (the user picked it): a small round dot of
+   its own colour at the foot of the medal, apart from the red one */
+#roomHunt{position:absolute;bottom:-4%;right:-6%;width:24%;height:24%;border-radius:50%;background:var(--aurora);box-shadow:0 0 0 1px rgba(0,0,0,.6);display:none}
+#roomBtn.hunt #roomHunt{display:block}
 /* The perks' star, last in the left column under the medal (it stood alone
    on the right, over the map, until the user asked for it here). */
 #perkBtn{position:relative;width:11%;min-width:24px;aspect-ratio:1/1;flex:0 0 auto;pointer-events:auto;
@@ -1094,7 +1102,7 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
     </div>
     <div id="setRow"><button id="setBtn" aria-label="Settings"><img id="setIcon" alt=""></button><button id="calBtn" aria-label="Daily Check-In"><img id="calIcon" alt=""><span id="calDot"></span></button><span id="buffTip" aria-live="polite"></span></div>
     <button id="shopBtn" aria-label="Pro shop"><img id="shopIcon" alt=""><span id="shopDot"></span></button>
-    <button id="roomBtn" aria-label="Trophy Room"><img id="roomIcon" alt=""><span id="roomDot"></span></button>
+    <button id="roomBtn" aria-label="Trophy Room"><img id="roomIcon" alt=""><span id="roomDot"></span><span id="roomHunt"></span></button>
     <button id="perkBtn" aria-label="Sponsor perks"><img id="perkIcon" alt=""><span id="perkDot"></span></button>
     </div>
     <div id="wagerStat" hidden></div>
@@ -4700,6 +4708,7 @@ function migrate(){
      && S.hunt.got.every(id => typeof id === 'string') && S.hunt.got.length <= 3)) delete S.hunt;
   if(S.teeMk !== undefined && !TEE_MARKS.some(m => m.id === S.teeMk)) delete S.teeMk;
   if(S.wild !== undefined && S.wild !== 0) delete S.wild;
+  if(S.spotTag !== undefined && S.spotTag !== 0) delete S.spotTag;
   if(S.aceAt !== undefined){
     if(!S.aceAt || typeof S.aceAt !== 'object' || Array.isArray(S.aceAt)) delete S.aceAt;
     else for(const k in S.aceAt){ const v = S.aceAt[k];
@@ -7616,6 +7625,12 @@ function toggleDawn(){
 function toggleMusic2(){
   S.music2 = S.music2 === 0 ? 1 : 0;
   Sfx.musicTick();
+  settingsSheet();
+}
+// the Spotted tag over the map, on unless turned off: off, what it said
+// goes back to a toast
+function toggleSpotTag(){
+  if(S.spotTag === 0) delete S.spotTag; else S.spotTag = 0;
   settingsSheet();
 }
 // the animals' calls round the course (WILD_VOL), on unless turned off
@@ -18700,7 +18715,7 @@ const Scene = {
     // (by the sea stack the sea's own always: a seal or crabs)
     const first = have.sea ? (hr(h, 614) < 0.5 ? 'crab' : 'seal') : null;
     const want = first ? 1 + (hr(h, 602) < 0.3 ? 1 : 0) : hr(h, 601) < 0.55 ? 1 + (hr(h, 602) < 0.3 ? 1 : 0) : 0;
-    const got = [];
+    const got = [], hunt = huntOf(weekNow());
     for(let i = 0; i < 12 && got.length < want; i++){
       const an = i < 3 && first && can.includes(first) && !got.length ? first : pool[Math.floor(hr(h * 13 + i, 604) * pool.length)];
       if(got.includes(an)) continue;
@@ -18711,6 +18726,12 @@ const Scene = {
         let d, x, alt = 0, r = 0;
         const W = waters[Math.floor(v * waters.length) % Math.max(1, waters.length)];
         if(at){ d = at.d + (u - 0.5) * 2.4; x = at.x + (v - 0.5) * 1.6; }
+        // (one of this week's hunt, on the ground or a bat: first tried
+        // round the back of the green, where he stands longest, beyond where
+        // it runs off as he walks up or a ball stops by it; the user asked)
+        else if(j < 24 && hunt.includes(an) && (C.at === 'wood' || C.at === 'rough' || an === 'bat')){
+          const P = this.pinD(), px = this.pinX();
+          d = an === 'bat' ? P + 1 + u * 3 : P + 3.2 + u * 3.8; x = px + sd * (2.8 + v * 2.6); alt = an === 'bat' ? 2.4 : 0; }
         else if(C.at === 'wood'){ const F = woods[Math.floor(u * woods.length)]; const lo = Math.max(8, F.d0 + 2), hi = Math.min(LEN + 4, F.d1 - 2);
           if(hi <= lo) continue; d = lo + v * (hi - lo); x = F.sd * (this.fillIn(F, d) - 0.35 - hr(h + j, 609) * 0.6); }
         else if(C.at === 'rough'){ d = 8 + u * (LEN - 10); x = sd * (this.fwWidth(d) + 1.0 + v * 2.6); }
@@ -19017,6 +19038,18 @@ const Scene = {
         if(!this.onPlay(d, x, 0) || this.hitsHazard(d, x, 0.6)
            || put.some(q => q.kind === 9 && Math.abs(q.d - d) < 1.1 && Math.abs(q.x - x) < 0.7)) continue;
         put.push({ kind: 9, d, x, g, k: this.hole * 11 + g * 7 + i, dir: hr(this.hole * 71 + i, 335) < 0.5 ? -1 : 1 });
+      }
+    }
+    // (and when a third group would be one of this week's hunt, it pecks
+    // about on the grass behind the green, beyond where he or a ball by the
+    // pin puts it up: the user asked for the hunt round the green)
+    if(!sigKind(this.hole) && !S.dgnRun && huntOf(weekNow()).includes(['sparrow', 'robin', 'blackbird'][birdKind(this.hole, 3)])){
+      const P = this.pinD(), px = this.pinX();
+      for(let i = 0, n = 0; i < 24 && n < 3; i++){
+        const d = P + 6.6 + hr(this.hole * 83 + i, 339) * 2.4, x = px + (hr(this.hole * 89 + i, 339) - 0.5) * 5;
+        if(this.hitsHazard(d, x, 0.6) || this.inBack(d, x, 0.4) || this.inPond(d, x, 0.4) || this.inFill(d, x, 0.2, 'lake') || this.inFill(d, x, 0, 'wood') || this.onNbr(d, x, 0.3)
+           || put.some(q => q.kind !== 9 ? Math.abs(q.d - d) < 0.8 && Math.abs(q.x - x) < 0.8 : Math.abs(q.d - d) < 1.1 && Math.abs(q.x - x) < 0.7)) continue;
+        put.push({ kind: 9, d, x, g: 3, k: this.hole * 11 + 21 + i, dir: hr(this.hole * 73 + i, 335) < 0.5 ? -1 : 1, extra: 1 }); n++;
       }
     }
     put.sort((a, b) => b.d - a.d);
@@ -26062,6 +26095,8 @@ function huntSee(ids){
   if(paid){ H.paid = 1; grantSov(B.HUNT_SOV, '', true); }
   return { fresh, n, paid };
 }
+// this week's hunt still to finish (the medal's round dot); none in a wager
+const huntOpen = () => !S.dgnRun && !huntNow().paid;
 // the animals on the Guide's shelves (wildlife, night, golden), for the tag
 const isAnimal = id => { const g = GUIDE.find(x => x.id === id); return !!g && 'wng'.includes(g.g); };
 // count what was seen, and pay for each seen the first time
@@ -26079,9 +26114,11 @@ function guideAdd(got){
   // anything else seen the first time (the weather, the seasons, the
   // signature holes) in one line of a toast
   const an = got.filter(isAnimal), newAn = firsts.filter(n => an.some(id => GUIDE.find(g => g.id === id).n === n));
-  const rest = firsts.filter(n => !newAn.includes(n));
+  const tagOn = S.spotTag !== 0, rest = tagOn ? firsts.filter(n => !newAn.includes(n)) : firsts;
+  if(!tagOn && hunt) toast('<span class="achk">Weekly Hunt</span>' + (hunt.paid ? 'All three found \u00b7 <span style="white-space:nowrap">+' + B.HUNT_SOV + sovIc() + '</span>'
+    : hunt.fresh.map(id => GUIDE.find(g => g.id === id).n).join(', ') + ' \u00b7 ' + hunt.n + '/3'), 'ach');
   if(rest.length) toast('<span class="achk">Field Guide</span>' + rest.join(', ') + ' \u00b7 <span style="white-space:nowrap">+' + B.GUIDE_SOV * rest.length + sovIc() + '</span>', 'ach');
-  if(an.length || hunt) spotShow(an, newAn.length, hunt);
+  if(tagOn && (an.length || hunt)) spotShow(an, newAn.length, hunt);
 }
 // The tag: "Fox Spotted!" (two named, or the first and how many more), and
 // under it what came of it: sovereigns for a first sighting, the week's hunt
@@ -26166,9 +26203,12 @@ function guideUrl(id){
     return DOMSPR[key] = sp ? sp.cv.toDataURL() + '|' + sp.w + 'x' + sp.h : '';
   }catch(e){ return DOMSPR[key] = ''; }
 }
+// an entry seen this many times wears a badge on its tile
+const GUIDE_BADGE = 100;
 function roomGuide(w){
   const seen = S.guide || {}, n = GUIDE.filter(g => seen[g.id]).length;
-  let h = '<div class="eyebrow" style="margin:6px 0 4px">Field Guide \u00b7 ' + n + '/' + GUIDE.length + ' \u00b7 +' + B.GUIDE_SOV + sovIc() + ' each</div>';
+  const n100 = GUIDE.filter(g => (seen[g.id] || 0) >= GUIDE_BADGE).length;
+  let h = '<div class="eyebrow" style="margin:6px 0 4px">Field Guide \u00b7 ' + n + '/' + GUIDE.length + (n100 ? ' \u00b7 \u2605' + n100 : '') + ' \u00b7 +' + B.GUIDE_SOV + sovIc() + ' each</div>';
   // (this week's hunt first: its three, found or where to look)
   { const H = huntNow(), want = huntOf(H.wk);
     h += '<div class="eyebrow" style="margin:8px 0 4px">Weekly Hunt \u00b7 ' + H.got.length + '/3 \u00b7 ' + (H.paid ? 'Paid' : '+' + B.HUNT_SOV + sovIc()) + '</div><div class="guide hunt">';
@@ -26182,7 +26222,9 @@ function roomGuide(w){
     for(const g of GUIDE.filter(x => x.g === k)){
       const [url, wh] = guideUrl(g.id).split('|'), [sw, sh] = (wh || '12x12').split('x').map(Number);
       const z = Math.max(1, Math.floor(Math.min(60 / sw, 44 / sh)));
-      h += '<div class="gtile' + (seen[g.id] ? '' : ' un') + '"><span class="gpic"><img src="' + url + '" width="' + sw * z + '" height="' + sh * z + '" alt=""></span>'
+      const c100 = (seen[g.id] || 0) >= GUIDE_BADGE;
+      h += '<div class="gtile' + (seen[g.id] ? '' : ' un') + (c100 ? ' g100' : '') + '"><span class="gpic"><img src="' + url + '" width="' + sw * z + '" height="' + sh * z + '" alt=""></span>'
+        + (c100 ? '<em>\u2605' + GUIDE_BADGE + '</em>' : '')
         + '<b>' + g.n + '</b><i>' + (seen[g.id] ? 'Seen ' + fmt(seen[g.id], 0) + '×' : g.w) + '</i></div>';
     }
     h += '</div>';
@@ -26357,6 +26399,7 @@ function renderStageBtns(live){
     b._lt = now;
     const nx = achNear(1)[0], wait = roomWaiting();
     b.classList.toggle('ready', wait);
+    b.classList.toggle('hunt', huntOpen());
     const lbl = 'Trophy Room' + (wait ? ' \u00b7 something to collect' : '')
       + (nx ? ' \u00b7 closest honour: ' + nx.n + ' ' + achAmt(nx, Math.min(achMetric(nx.m), nx.v))
               + ' of ' + achAmt(nx, nx.v)
@@ -28930,6 +28973,9 @@ function settingsSheet(){
     + row('Night Music', S.music === 0 || S.sound === 0 ? 'Needs Music on' : 'A calmer tune at night and in wagers',
         '<button class="mini' + (S.music2 !== 0 ? ' go' : '') + '" onclick="toggleMusic2()">'
         + (S.music2 !== 0 ? 'On' : 'Off') + '</button>')
+    + row('Spotted Tag', 'Animals named over the map',
+        '<button class="mini' + (S.spotTag !== 0 ? ' go' : '') + '" onclick="toggleSpotTag()">'
+        + (S.spotTag !== 0 ? 'On' : 'Off') + '</button>')
     + row('Animal Sounds', S.sound === 0 ? 'Needs Sound on' : 'Frogs, crows and owls',
         '<button class="mini' + (S.wild !== 0 ? ' go' : '') + '" onclick="toggleWild()">'
         + (S.wild !== 0 ? 'On' : 'Off') + '</button>')

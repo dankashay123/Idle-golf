@@ -9,6 +9,8 @@
  *     sighting that pays nothing
  *   - anything else seen the first time (the weather, a season) is a toast
  *     as before, and shows no tag; no tag quietly or away
+ *   - the Spotted Tag switch in Settings turns it off (what it said goes
+ *     back to a toast)
  *   - it stands just above the map, inside the field, at 320, 390, 440 and on
  *     its side, and is gone after a few seconds
  */
@@ -50,6 +52,12 @@ module.exports = {
         // not an animal: a toast, no tag
         reset(); guideAdd(['rain']); if (txt()) f('rain seen the first time shows a tag: "' + txt() + '"');
         if (!said.some(m => /Field Guide/.test(m) && /Rain/.test(m))) f('rain seen the first time said ' + JSON.stringify(said));
+        // the switch in Settings off: no tag, a toast as before; back on
+        toggleSpotTag(); hideSheet(); const sw = S.spotTag; S.guide[nw] = 0; delete S.guide[nw]; reset(); guideAdd([nw]);
+        if (sw !== 0 || txt()) f('with the tag off: switch ' + sw + ', tag "' + txt() + '"');
+        if (!said.some(m => /Field Guide/.test(m))) f('with the tag off a first sighting said ' + JSON.stringify(said));
+        toggleSpotTag(); hideSheet(); if (S.spotTag !== undefined) f('the switch back on left ' + S.spotTag);
+        S.spotTag = 'x'; migrate(); if (S.spotTag !== undefined) f('a junk switch kept');
         // quietly, away
         reset(); QUIET = true; guideAdd([plain]); QUIET = false; if (txt()) f('a tag while quiet');
         reset(); OFFLINE = true; guideAdd([plain]); OFFLINE = false; if (txt()) f('a tag while away');

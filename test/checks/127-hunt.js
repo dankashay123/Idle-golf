@@ -67,6 +67,29 @@ module.exports = {
             || (p.kind === 9 && ['sparrow', 'robin', 'blackbird'][birdKind(h, p.g)] === id))) { S.hole = h0; return h; } } S.hole = h0; return 0; }
         const where = {};
         for (const id of HUNT_DAY.concat(HUNT_NIGHT)) { where[id] = guideSpotAny(id, HUNT_NIGHT.includes(id)); if (!where[id]) f('no ' + id + ' in 400 ' + (HUNT_NIGHT.includes(id) ? 'night' : 'day') + ' holes'); }
+        // ---- round the green (the user: "that's where the golfer actually
+        // stays for longest"): a hunted animal on the ground, or a bat, laid
+        // behind the green beyond where it runs off as he stands to putt; a
+        // hunted bird's group pecking there too; others where they were ----
+        { const at = { near: 0, far: 0, birds: 0, other: 0 }, flee = [];
+          for (const df of [20000, 20007, 20021, 20028, 20035]) { DAY_FORCE = df; const H = huntOf(weekNow());
+            for (const night of [false, true]) for (let h = S.hole; h < S.hole + 120; h++) { if (sigKind(h)) continue; S.chaos = { n: night ? 'Night Round' : 'Fair' }; Scene.newHole(h, S.tier);
+              const P = Scene.pinD(), stand = P - B_GREEN_STAND;
+              for (const q of Scene.props) {
+                if (q.kind === 15 && (CRIT[q.an].at === 'wood' || CRIT[q.an].at === 'rough' || q.an === 'bat')) {
+                  if (H.includes(q.an)) { if (q.d > P + 0.5) at.near++; else at.far++; if (q.d > P + 0.5 && CRIT[q.an].flee && q.d - stand < 4.5) flee.push(q.an + ' ' + h); }
+                  else if (q.d > P + 3) at.other++; }
+                if (q.kind === 9 && q.g === 3) { at.birds++; if (!H.includes(['sparrow', 'robin', 'blackbird'][birdKind(h, 3)])) f('a group behind the green on hole ' + h + ' is not hunted'); if (q.d - stand < 5.5) f('the hunted birds behind the green fly as he stands to putt, hole ' + h); }
+              } } }
+          DAY_FORCE = 20000; o.green = at;
+          if (!(at.near > 4 * at.far)) f('hunted animals by the green ' + at.near + ', elsewhere ' + at.far);
+          if (!at.birds) f('no hunted birds behind the green');
+          if (flee.length) f('hunted animals by the green run off as he putts: ' + flee.slice(0, 3).join(', ')); }
+        // ---- the medal's round dot: while the hunt is not done, none in a wager ----
+        { const b = document.getElementById('roomBtn'); delete S.hunt; renderStageBtns(false); const on = b.classList.contains('hunt');
+          huntNow().paid = 1; renderStageBtns(false); const done = b.classList.contains('hunt');
+          delete S.hunt; S.dgnRun = { id: B.DGN[0].id }; renderStageBtns(false); const wager = b.classList.contains('hunt'); S.dgnRun = null; renderStageBtns(false);
+          if (!on || done || wager) f('the medal\'s hunt dot: unfinished ' + on + ', done ' + done + ', in a wager ' + wager); }
         // ---- the tab ----
         DAY_FORCE = 20000; delete S.hunt; huntNow().got = [want[0]]; QUIET = false; trophyRoom('guide');
         const tiles = [...document.querySelectorAll('#roomBody .guide.hunt .gtile')];
@@ -88,6 +111,7 @@ module.exports = {
     if (r.fails.length) throw new Error(r.fails.join('\n'));
     return ['three a week, the same all week, one at night; every one of the pool in 100 weeks',
       'counted live on a fair card only, once each; all three pay ' + 15 + ' once a week, and a new week starts again',
-      'every hunt animal laid somewhere by day or night; the Guide tab shows the three first (this week ' + r.want.join(', ') + ')'];
+      'every hunt animal laid somewhere by day or night; the Guide tab shows the three first (this week ' + r.want.join(', ') + ')',
+      'round the green: ' + r.green.near + ' hunted animals behind it (' + r.green.far + ' elsewhere), ' + r.green.birds + ' hunted birds, none running off as he putts; the medal\'s dot while the hunt is open'];
   }
 };
