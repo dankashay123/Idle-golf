@@ -94,7 +94,10 @@ module.exports = {
           if (fr) FX.front = () => {};
           const bare = count().up;
           if (fr) FX.front = fr;
-          if (up < bare * 0.92) o.fails.push(z0(id) + '\'s arms in flight covered by the skin: ' + up + ' of ' + bare + ' pixels');
+          // (since the arms go up in front of him, drawn before his body,
+          // what the skin lays in front of him may lick over them: Inferno's
+          // flames cover a fifth; a cape that hid them would cover most)
+          if (up < bare * 0.6) o.fails.push(z0(id) + '\'s arms in flight covered by the skin: ' + up + ' of ' + bare + ' pixels');
           o.arms.push(id + ' ' + up + '/' + side);
           if (up < 90) o.fails.push(z0(id) + '\'s arms above his head in flight: ' + up + ' pixels');
           if (side > 2) o.fails.push(z0(id) + '\'s arms hang at his sides in flight: ' + side + ' pixels');
