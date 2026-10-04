@@ -342,13 +342,13 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
 .gxbar i{display:block;height:100%;background:#E3B457}
 .gxbar.pu i{background:#A35BF2}
 .gxbar.big{height:5px;margin:5px 0 4px}
-.guide{display:grid;grid-template-columns:repeat(auto-fill,minmax(76px,1fr));gap:6px}
+div.guide{display:grid;grid-template-columns:repeat(auto-fill,minmax(76px,1fr));gap:6px}
 .gtile{border:1px solid var(--line);background:var(--raise);padding:6px 4px 5px;text-align:center;min-width:0}
 .gtile .gpic{display:flex;align-items:flex-end;justify-content:center;height:44px;margin-bottom:4px}
 .gtile img{image-rendering:pixelated}
 .gtile.un img{filter:brightness(0);opacity:.35}
 .gtile.tmk[role=button]{cursor:pointer}
-.guide.hunt{grid-template-columns:repeat(3,minmax(0,1fr))}
+div.guide.hunt{grid-template-columns:repeat(3,minmax(0,1fr))}
 .gtile.found{border-color:var(--brass)}
 /* seen a hundred times: a gold corner and a brass edge (the user picked it) */
 .gtile{position:relative}
@@ -6870,8 +6870,15 @@ function resolveNine(){
    ========================================================================= */
 const Meter = {
   buf: [], acc: 0,
+  // (what the corner shows: half-second lots over the last 30s, so it holds
+  // steady through a hole; over the last 90 frames it read 0 for most of
+  // each hole and leapt as the purse landed. What pays by the rate is
+  // left on the short one.)
+  slow: [], cur: { g: 0, t: 0 },
   add(g){ this.acc += g; },
   tick(dt){
+    this.cur.g += this.acc; this.cur.t += dt;
+    if(this.cur.t >= 0.5){ this.slow.push(this.cur); this.cur = { g: 0, t: 0 }; if(this.slow.length > 60) this.slow.shift(); }
     this.buf.push({ g:this.acc, t:dt }); this.acc = 0;
     if(this.buf.length > 90) this.buf.shift();
   },
@@ -6879,7 +6886,13 @@ const Meter = {
     let g = 0, t = 0;
     for(const b of this.buf){ g += b.g; t += b.t; }
     return t > 0 ? g/t : 0;
-  }
+  },
+  shown(){
+    let g = this.cur.g, t = this.cur.t;
+    for(const b of this.slow){ g += b.g; t += b.t; }
+    return t > 2 ? g/t : this.rate();
+  },
+  clear(){ this.buf.length = 0; this.acc = 0; this.slow.length = 0; this.cur = { g: 0, t: 0 }; }
 };
 // While catching up we replay thousands of holes. Every sheet and toast they
 // would have raised is swallowed: the summary at the end says what happened.
@@ -22097,7 +22110,7 @@ Object.assign(Scene, {
     const words = 0;
     const room = bottom - words - gap - Math.round(SH * 0.37);
     this.mapTopR = null;
-    if(room < W * 0.8 || S.dgnRun){ cv.style.display = 'none'; this.mapOn = false; return; }
+    if(room < W * 0.8 || S.dgnRun){ cv.style.display = 'none'; this.mapOn = false; spotPlace(); return; }
     const H = Math.min(Math.round(W * 1.7 / 2) * 2, Math.floor(room / 2) * 2);
     const top = bottom - H;
     const mw = W / 2, mh = H / 2;
@@ -22108,6 +22121,7 @@ Object.assign(Scene, {
     // and lined up with its right-hand one
     this.mapTopR = Math.floor((top - 2) / k);
     this.mapRightR = Math.floor((SW - SW * 0.025) / k);
+    spotPlace();
   },
   // Out of sight until it is placed again, so the page never shows a map
   // where the words above it no longer think it is (they fall back to the
@@ -26139,12 +26153,19 @@ function spotShow(an, nNew, hunt){
   if(hunt) bits.push(hunt.paid ? 'Hunt Done' : 'Hunt ' + hunt.n + '/3');
   el.innerHTML = title + ' Spotted!' + (bits.length ? '<b>' + bits.join(' \u00b7 ') + '</b>' : '');
   // (just above the map; at the foot of the field when there is no map)
+  el.style.display = 'block'; el.style.animation = 'none'; void el.offsetWidth; el.style.animation = '';
+  spotPlace();
+  clearTimeout(spotShow.t); spotShow.t = setTimeout(() => { el.style.display = 'none'; }, 2700);
+}
+// just over the map, or the foot of the field with no map; placed again
+// whenever the map is (the page's first hole showed it before the field
+// had its height, and it stood over the map)
+function spotPlace(){
+  const el = document.getElementById('spotTag'); if(!el || el.style.display === 'none') return;
   const st = document.getElementById('stage'), cv = document.getElementById('holeMap'), dr = document.getElementById('drawer');
   const SH = st ? st.clientHeight : 0, gap = 4;
   const top = Scene.mapOn && cv ? parseFloat(cv.style.top) || 0 : SH - (dr && dr.offsetParent ? dr.offsetHeight : 0) - 8;
-  el.style.display = 'block'; el.style.animation = 'none'; void el.offsetWidth; el.style.animation = '';
   el.style.top = Math.max(0, top - el.offsetHeight - gap) + 'px';
-  clearTimeout(spotShow.t); spotShow.t = setTimeout(() => { el.style.display = 'none'; }, 2700);
 }
 // one seen as it is drawn, not as the hole is laid (a shooting star): live
 // only, a first sighting paid as the others are
@@ -26654,7 +26675,7 @@ function renderLive(D){
   renderStageBtns(true);
   renderLeave();
   setText($('gold'), fmt(S.gold));
-  setText($('rate'), fmt(Meter.rate()) + ' purse/sec');
+  setText($('rate'), fmt(Meter.shown()) + ' purse/sec');
   setText($('sovNum'), sovFmt(S.sov));
   // The yardage, the bar and the clock used to be written here as well, into
   // three more elements the old stage HUD took with it. This runs every frame,
@@ -27482,7 +27503,7 @@ function renderRecord(){
     // the top sets worn in full
     ['Full Sets', Object.keys(S.fullSets || {}).length + '\u00a0of ' + Object.keys(FULL_SETS).length + ' worn']]],
     ['now', 'Right Now', [
-    ['Purse per Second', fmt(Meter.rate())],
+    ['Purse per Second', fmt(Meter.shown())],
     ['Total Carry', fmt(D.dps) + ' yds/s']]],
     ['courses', 'Courses', [
     // a course in each of its seasons: the home courses and the regular
@@ -29142,7 +29163,7 @@ function loadSaveObject(o){
   S.t = Date.now()/1000;            // a code carries no away time with it
   S.dgnRun = null; S.buff = {};
   Scene.dFloor = -1; Scene.skyKey = null; Scene.dBgKey = null;
-  Meter.buf.length = 0; Meter.acc = 0;
+  Meter.clear();
   if(!S.nine || S.nine.idx !== nineIndex(S.hole)) startNine();
   startHole();
   buildCard(); buildUpg(); renderAll(); setView('upg');
@@ -29179,7 +29200,7 @@ function reallyWipe(){
   initState(); migrate();
   Scene.dFloor = -1; Scene.skyKey = null; Scene.dBgKey = null;
   S.dgnRun = null; S.perkOn = {}; S.buff = {};
-  Meter.buf.length = 0; Meter.acc = 0;
+  Meter.clear();
   WIPED = false;
   startHole();
   buildCard(); buildUpg(); renderAll(); setView('upg');

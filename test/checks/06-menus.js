@@ -79,6 +79,9 @@ module.exports = {
         const helped = row && [...row.querySelectorAll('.dm')].some(e => e.textContent.startsWith('Helped by ' + d.st));
         const btn = row && row.querySelector('.guide');
         if (!btn) { out.push(d.n + ': no Guide button'); continue; }
+        // (a plain small button: the Field Guide's grid once took its class and
+        // stretched it to 96 pixels, crowding the wager's name)
+        if (getComputedStyle(btn).display === 'grid' || btn.getBoundingClientRect().width > 72) out.push(d.n + ': the Guide button is ' + Math.round(btn.getBoundingClientRect().width) + ' wide');
         btn.click(); await new Promise(r => setTimeout(r, 30));
         const sh = document.getElementById('sheet'), on = document.getElementById('veil').classList.contains('on');
         const t = sh.textContent;

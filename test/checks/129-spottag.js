@@ -12,7 +12,7 @@
  *   - the Spotted Tag switch in Settings turns it off (what it said goes
  *     back to a toast)
  *   - it stands just above the map, inside the field, at 320, 390, 440 and on
- *     its side, and is gone after a few seconds
+ *     its side, placed again with the map, and is gone after a few seconds
  */
 'use strict';
 module.exports = {
@@ -68,6 +68,10 @@ module.exports = {
         if (Scene.mapOn) { const mb = mp.getBoundingClientRect(); if (tb.bottom > mb.top + 0.5 || mb.top - tb.bottom > 12) f('the tag ends at ' + tb.bottom + ', the map starts at ' + mb.top);
           if (Math.abs(tb.right - mb.right) > 2) f('the tag\'s right edge ' + tb.right + ' is off the map\'s ' + mb.right); }
         o.at = [Math.round(tb.top - st.top), Math.round(tb.width), !!Scene.mapOn];
+        // and placed again with the map (the first hole's tag stood over it,
+        // placed before the field had its height)
+        tag.style.top = '0px'; Scene.placeMap();
+        if (Math.abs(tag.getBoundingClientRect().top - tb.top) > 0.5) f('the tag not placed again with the map: ' + tag.getBoundingClientRect().top + ', not ' + tb.top);
         // gone after a few seconds
         await new Promise(r => setTimeout(r, 2900)); if (txt()) f('the tag still up after 2.9s');
       } finally {
