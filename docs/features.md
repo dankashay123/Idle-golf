@@ -6,6 +6,53 @@ feature must do, and is usually enough on its own.
 
 ## Sections, newest first
 
+### The session of 4 October, third (the user: "do them all", then the wagers)
+
+- **The Lucky Albatross** (`albatross`): `ALB_FLY` 10s across the top of
+  the field below the readout, `ALB_GAP` 6 to 14 min of frames drawn
+  (`albTick` from the course frame only), `albRows` (drawn large: 99x36,
+  five beats, `ALB_LIFT`), a baked gold rim (`albSprite`), `albTap` from a
+  capture `pointerdown` on `#stage`, `albCatch` (feathers in `LUCKY.fx`),
+  the boost `LUCKY.buff` (`ALB_DUR` 60s of `ALB_V` 2x purse, `luckyOn`, live
+  only), its line in `buffLines`; `S.albN`; `DEV.albatross()`.
+- **Errands** (`errands`): `B.ERRANDS` (1, 4, 8 hours; check-in measures,
+  never sovereigns), `errSend`, `errLeft` (clamped, so the clock put back
+  never lengthens one), `errTick` (from `step`), `errGet`, `renderErrTab`
+  (the Range tab's dot); the runner `Scene.runnerGo`/`runnerPlace` (prop
+  kind 25, `RUNNER_ROWS`, `runnerSprite`), his path relative to `camD`. In
+  the Caddie sub tab (`.errbox`, rows `.row.err`). The caddie never leaves.
+- **Milestones** (`milestones`): `msLast`, `msNext`, `upgEff` (a level
+  counts `UPG_MS_K` 0.75, the milestone the rest: never more than before,
+  equal at every milestone and the cap), `msSay`, the row's star; `upgDead`
+  (a rung at its stat's cap reads "at the cap", Buy All passes it). The
+  wall moved from 222 to 220.
+- **Loadouts** (`loadouts`): `S.loads` (three `{u: slot->uid}`),
+  `loadSave`, `loadWear`, `wearSet`, the wagers' bag `S.loadWager`,
+  `loadForWager` (in `startDgn`), `loadAfterWager` (`endDgn` wraps
+  `endDgnCore`), `S.loadBack`; the strip `#loadBar` on Sets & Affinities
+  (the clubs stay first on Gear).
+- **Auto-wagers** (`autowager`): `AUTO_WAGER_TIER` (Card 100), `autoWager`
+  (from `finishHole`, live only, entries full, featured first), `S.autoWg`.
+- **Trials** (`trials`): `B.CHAL`, `CHAL_TIER` (Cards 25, 75, 150),
+  `chalOn`, `chalBonus` (in `derive`; the handicap `CH`, none while away),
+  `chalStart`, `chalHole` (from `finishHole`), `chalQuit`, `careerChal` on
+  Range > Trials (the Career tab's five would not fit at 320).
+- **Festivals** (`festival`): `FEST` (by `MONTH_SEASON`), on weekends of
+  even `weekNow()` (`festDow` 5 and 6), `FEST_FORCE`; twists `festTw`
+  (`spd` in `derive`, `drop`, `keys` in `regenKeys`, `alb` in `albGo`);
+  `festHole` (ribbons a stroke under par, live), `FEST_AT`/`FEST_PAY`,
+  `festBlock` on Today; tee markers with `fest` (`S.festMk`, worn only when
+  tapped: `teeMarkNow`), shapes `pumpkin`, `flake`, `bloom`, `sun`.
+- **The course dog** (`coursedog`): `DOG_SIT`, `DOG_TROT`, `DOG_BREED`
+  (`at`: courses' collections done), `dogNow`, `dogSprite`,
+  `Scene.drawDog` (before the golfer, through `drawBehind`), the hop on an
+  eagle (`dogHop`), the picker in Course Wildlife; `S.dog`.
+- **Wagers** (`medals`, `vault`): medals `WG_MEDAL`, `wgScore`, `wgMedal`
+  (in `endDgnCore`), `medalPips`; `leaveWord` (Bank on the Island Green);
+  the Vault's floor played again after a gust (`R.fN`, the scene keys a
+  floor on it); the Spotted tag above the wager's corner words
+  (`Scene.wgTop`, `spotPlace`).
+
 ### The session of 4 October, second
 
 - **Pictures freed** (the black sky and the Guide's "?" boxes on the

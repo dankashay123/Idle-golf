@@ -120,6 +120,14 @@ Line numbers are approximate and drift. Search for the name instead.
 | **Course collections, the monthly hunt** | `COURSE_WILD`, `wildOf`, `courseWildSee`, `renderWild` (the Cabinet's fold); `MHUNT_DAY`/`MHUNT_NIGHT`, `mhuntOf`, `mhuntNow`, `mhuntSee`, `monthIdx` |
 | **Kingfisher, cherry trees** | `CRIT.kingfisher` (`dart`; drawn in `drawProp` kind 15), `KING_P_RIVER`, `KING_P_POND`, `KING_FORCE`; `cherryRows`, `cherrySet`, `isCherry` (in `courseTrees`) |
 | **Picture memory** | `cvFree`, `SPECT_MAX`, `FOG_MAX`, the eviction in `courseTrees`; `DOMSPR` keeps no blank picture; `buildSky` drops an empty sky |
+| **Lucky Albatross** | `ALB_*`, `LUCKY`, `luckyOn`, `albRows`, `albSprite`, `albAt`, `albTick`, `albGo`, `albTap`, `albCatch` |
+| **Errands, the runner** | `B.ERRANDS`, `errDef`, `errLeft`, `errSend`, `errTick`, `errGet`, `renderErrTab`; `RUNNER_ROWS`, `runnerSprite`, `Scene.runnerGo`, `runnerPlace` (prop kind 25) |
+| **Milestones** | `UPG_MS_K`, `msLast`, `msNext`, `upgEff`, `msSay`, `upgDead` |
+| **Loadouts, auto-wagers** | `LOAD_N`, `loadsNow`, `loadSave`, `loadWear`, `wearSet`, `loadForWager`, `loadAfterWager`, `loadSheet`, `renderLoadBar`; `AUTO_WAGER_TIER`, `autoWager` |
+| **Trials** | `B.CHAL`, `B.CHAL_TIER`, `chalOn`, `chalBonus`, `chalWhy`, `chalStart`, `chalHole`, `chalQuit`, `careerChal` (Range > Trials) |
+| **Festivals** | `FEST`, `FEST_AT`, `FEST_PAY`, `FEST_FORCE`, `festNow`, `festTw`, `festState`, `festHole`, `festBlock` |
+| **The course dog** | `DOG_SIT`, `DOG_TROT`, `DOG_BREED`, `dogOpen`, `dogNow`, `dogSprite`, `Scene.drawDog` |
+| **Wager medals** | `WG_MEDAL`, `wgScore`, `wgMedal`, `medalPips`, `leaveWord`; the Vault's `R.fN` |
 | **The season's rival** | `S.rivalSer` (the series), `B.RIVAL_SERIES`; the final day's line as the lead changes |
 | **Course records, caddie gifts** | `courseRecPost`, `S.courseBest` (the Cabinet's Course Records fold); `caddieGift`, `GIFT_DAY` (10), `S.giftDay` |
 | **The Daily Check-In** | `B.CHECKIN` (28 rewards), `checkinNow`, `checkinClaim`, `checkinSheet`, `CHECKIN_POPPED`, `#calBtn` right of the cog |

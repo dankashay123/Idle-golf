@@ -14,22 +14,27 @@ through:
 ## 1. Where things stand
 
 - Everything is committed and **no request is waiting**. The last ones
-  (4 October, second session): the black sky and the Guide's "?" pictures
-  (the phone ran out of memory for pictures over a long session; caches
-  bounded now, rule 77), cherry trees on blossom courses, arms in front
-  when flying, course collections (a badge each in the Cabinet), the
-  kingfisher, and the monthly hunt.
-- `node test/run.js` has **139 checks**, about 35 minutes: run it in the
+  (4 October, third session; the user said "do them all" to an idle-game
+  menu): the Lucky Albatross, errands (the caddie's runner), Range
+  milestones (never stronger than before; the wall is now Card 220),
+  loadouts, auto-wagers from Card 100, Trials (Range > Trials), weekend
+  festivals, the course dog, and wager medals with Bank on the Island Green.
+  Fixed on the way: a Vault floor played again after a gust was never
+  called; the Spotted tag sat over a wager's name. Earlier the same day:
+  cherry trees, the kingfisher, course collections, the monthly hunt, and
+  the phone's picture memory (the black sky).
+- `node test/run.js` has **148 checks**, about 35 minutes: run it in the
   background, on a copy in the scratchpad, with the machine quiet. After
   weather, colours or anything dated, also run it with `HOUR_FORCE` 8 and
   15 and the month pinned (rules 20 and 70).
 - `skins` timed its trails against a fixed budget and failed now and then;
   it now times them against the plain ball. If it fails again, chase it.
 - **Not yet heard back on** (ask one when it fits, never as a list): the
+  albatross; errands; Trials; festivals; the dog; wager medals; the
   cherry trees; the kingfisher; the monthly hunt; course collections; the
   GET buttons; the redrawn celebrations; alligators; the Wager Book
   animals; the weekly hunt and its streak; the gold mountain; golden
-  animals; the heirloom prices and the wall at Card 222.
+  animals; the heirloom prices and the wall at Card 220.
 - Settled, in case it comes up: swing speed still matters fully (a hole's
   time is when the ball drops); Fast Walker only shortens a hole's least
   time; every caddie has a trick (don't offer caddie tricks); Dawn and
@@ -246,10 +251,9 @@ the Tour tab, no new sound but ambience.
    with a Guide entry.
 2. **Rare visitors** on a finished course collection: its rarer animals
    (a swan, a turtle) as a gold star on its badge.
-3. **Fox cubs** in spring: now and then a fox with two cubs at the edge
-   of the woods, their own Guide entry.
-4. **Ask what they think** of the cherry trees, the kingfisher and the
-   monthly hunt.
+3. **Fox cubs** in spring: a fox with two cubs at the edge of the woods.
+4. **Ask what they think** of the albatross, the errands, Trials and the
+   festivals (one at a time).
 
 Recommend 1: it is October, it builds on the night skies and the Field
 Guide, and costs little to draw.
