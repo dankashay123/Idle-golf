@@ -18,12 +18,14 @@ through:
   menu): the Lucky Albatross, errands (the caddie's runner), Range
   milestones (never stronger than before; the wall is now Card 220),
   loadouts, auto-wagers from Card 100, Trials (Range > Trials), weekend
-  festivals, and wager medals with Bank on the Island Green.
+  festivals, and wager medals with Bank on the Island Green. Then: a bar
+  to the next milestone on every Range row, rare visitors (a gold star),
+  fox cubs in spring, and the canyon in layered sandstone with a river.
   Fixed on the way: a Vault floor played again after a gust was never
   called; the Spotted tag sat over a wager's name. Earlier the same day:
   cherry trees, the kingfisher, course collections, the monthly hunt, and
   the phone's picture memory (the black sky).
-- `node test/run.js` has **148 checks**, about 35 minutes: run it in the
+- `node test/run.js` has **151 checks**, about 35 minutes: run it in the
   background, on a copy in the scratchpad, with the machine quiet. After
   weather, colours or anything dated, also run it with `HOUR_FORCE` 8 and
   15 and the month pinned (rules 20 and 70).
@@ -252,11 +254,10 @@ the Tour tab, no new sound but ambience.
 
 1. **A Harvest Moon**: now and then a huge orange moon on an autumn night,
    with a Guide entry.
-2. **Rare visitors** on a finished course collection: its rarer animals
-   (a swan, a turtle) as a gold star on its badge.
-3. **Fox cubs** in spring: a fox with two cubs at the edge of the woods.
-4. **Ask what they think** of the albatross, the errands, Trials and the
-   festivals (one at a time).
+2. **The island's lake and the river by the stones** given the canyon's
+   treatment: depth, reeds and lily pads.
+3. **The course dog** back on (built and checked, switched off).
+4. **Ask what they think** of the albatross and the canyon.
 
 Recommend 1: it is October, it builds on the night skies and the Field
 Guide, and costs little to draw.

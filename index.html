@@ -12978,12 +12978,38 @@ const P_ICEL = Object.assign({}, P_LAKE, { rip: 0, tone: P_ICE.tone });
 // dark. Deep enough that its near rim
 // hides the floor and what you see is the far wall, which is what a gorge
 // looks like from its edge.
+// (the user: "make the canyon look more like a canyon, instead of just a
+// solid color") Its walls in bands of sandstone, the course's own rock
+// warmed toward red and ochre, each band wavering a little along the wall
+// and broken by cracks that stay where they are (by column, from a hash);
+// lit where they face the sun, darker the deeper they go; a river at the
+// bottom, glinting.
+const CANYON_STRATA = ['#C8794A', '#A85A38', '#D89A62', '#8E4C32', '#BE6A44', '#E2AE74', '#9A5A3C', '#B87850'];
 const P_CANYON = { D: 2.4, eu: 0.10, e0: 0.30, e1: 0.30,
-  tone(T, f, ndl, near, steep){
+  tone(T, f, ndl, near, steep, i, tt){
     if(f < 0.04) return T.lip;
-    return pickC(T._cn, clamp(f * 1.05 + (HZ_LZ - ndl) * 0.5, 0, 1));
+    const C = T._cns || (T._cns = canyonPal(T));
+    // the floor: a narrow river down its middle, glinting, and gravel and
+    // dark rock either side of it
+    if(f > 0.94){
+      if(Math.abs((tt === undefined ? 0.5 : tt) - 0.5) < 0.045) return C.river[(i || 0) % 9 === 0 ? 1 : 0];
+      return C.floor[hr((i || 0) * 3 + Math.round((tt || 0) * 40), 735) < 0.3 ? 1 : 0];
+    }
+    const j = i || 0, wav = Math.sin(j * 0.19) * 0.35 + Math.sin(j * 0.053 + 1.7) * 0.4;
+    const band = Math.max(0, Math.floor(f * 12 + wav)) % CANYON_STRATA.length;
+    // light: the sun's side lit, the shade side and the deep dark
+    let k = Math.round(clamp(f * 0.72 + (HZ_LZ - ndl) * 0.8, 0, 1) * (C.n - 1));
+    if(hr(j * 7 + band, 733) < 0.1) k = Math.min(C.n - 1, k + 2);   // a crack
+    else if(hr(j * 13 + band, 734) < 0.06) k = Math.max(0, k - 1);  // a ledge catching the light
+    return C.wall[band][k];
   }
 };
+function canyonPal(T){
+  const rk = pickC(T.rk, 0.6), n = 7, wall = CANYON_STRATA.map(c => { const b = mixC(c, rk, 0.14);
+    return Array.from({ length: n }, (_, k) => k < 2 ? lite(b, 0.2 - k * 0.12) : dark(b, (k - 1) / (n - 1) * 0.7)); });
+  const w = T.wt || ['#1C4A6A', '#2A6A8A', '#3A8AA8'];
+  return { n, wall, river: [dark(pickC(w, 0.4), 0.35), lite(pickC(w, 0.6), 0.3)], floor: [dark(mixC(CANYON_STRATA[3], rk, 0.4), 0.72), dark(mixC(CANYON_STRATA[5], rk, 0.4), 0.62)] };
+}
 // A railway's bed: a level band of ballast right across the hole, in the
 // course's own rock, a shade darker on its edges where it meets the turf.
 const P_RAIL = { D: 0, eu: 0.05, e0: 0.02, e1: 0.02, rip: 0,
@@ -20271,7 +20297,7 @@ const Scene = {
       // how steeply this column is tilted at all, whichever way it faces: the
       // inside of a bowl is shaded away from the sky on both sides, not only
       // on the one turned away from the sun
-      const col = P.tone(T, fu*gv, ndl, near, Math.sqrt(gx*gx + gy*gy));
+      const col = P.tone(T, fu*gv, ndl, near, Math.sqrt(gx*gx + gy*gy), i, tt);
       if(run && rc === col && rt === t0 && rb === t1 && rx1 === x0){ rx1 = x1; continue; }
       if(run) band();
       run = true; rx0 = x0; rx1 = x1; rt = t0; rb = t1; rc = col;

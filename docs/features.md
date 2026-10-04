@@ -6,6 +6,23 @@ feature must do, and is usually enough on its own.
 
 ## Sections, newest first
 
+### The session of 4 October, fourth
+
+- **The milestone bar** (`milestones`): each Range row's third line
+  (`.msrow`: `.msbar` and `.mst`, "★400 in 32: ×5.77"), from `msLast`,
+  `msNext` and `effectLabel(u, at)`; hidden at the top or its stat's cap.
+- **Rare visitors** (`wildlist`): `COURSE_RARE` (two a course from the
+  sweep, 2 to 7 in 960 holes, not on its list), `rareOf`, `rareGot`,
+  `S.cwildR`, `S.cwildStar`, `B.WILD_STAR_SOV` (15, Today); drawn after
+  "Rare" in the fold, a gold star by the badge.
+- **Fox cubs** (`cubs`): `CRIT.cub` (`kid`: never laid alone),
+  `Scene.cubsBy` (end of `layCritters`: spring, day, dry, `CUB_P` one fox in
+  two, five animals at most), `CUB_FORCE`; a Guide entry from `CRIT`.
+- **The canyon** (`canyonlook`): `P_CANYON.tone` takes the column and the
+  share across (`hazSlice` passes `i`, `tt`): `CANYON_STRATA` in bands that
+  waver (`wav`) with cracks and ledges by hash, `canyonPal` (on `T._cns`),
+  a river along the middle of the floor and gravel either side.
+
 ### The session of 4 October, third (the user: "do them all", then the wagers)
 
 - **The Lucky Albatross** (`albatross`): `ALB_FLY` 10s across the top of
