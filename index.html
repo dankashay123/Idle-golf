@@ -4706,6 +4706,10 @@ function migrate(){
   // the Field Guide: a count for each thing in it, once seen
   if(S.hunt !== undefined && !(S.hunt && typeof S.hunt === 'object' && Number.isInteger(S.hunt.wk) && Array.isArray(S.hunt.got)
      && S.hunt.got.every(id => typeof id === 'string') && S.hunt.got.length <= 3)) delete S.hunt;
+  // (only that week's three, once each: three made-up names had one real
+  // sighting pay the hunt at once, and the Guide read 4/3)
+  else if(S.hunt){ const want = huntOf(S.hunt.wk); S.hunt.got = S.hunt.got.filter((id, i, a) => want.includes(id) && a.indexOf(id) === i);
+    if(S.hunt.paid !== undefined && S.hunt.paid !== 1) delete S.hunt.paid; }
   if(S.teeMk !== undefined && !TEE_MARKS.some(m => m.id === S.teeMk)) delete S.teeMk;
   if(S.wild !== undefined && S.wild !== 0) delete S.wild;
   if(S.spotTag !== undefined && S.spotTag !== 0) delete S.spotTag;
@@ -7475,18 +7479,17 @@ const Sfx = {
       if(this.cricketT <= 0){ this.cricketT = 5 + Math.random() * 9; this.cricket(this.ctx.currentTime + 0.02); }
     }
     // the animals (see WILD_VOL): what the hole has, never in a wager
-    const fl = Scene.fills || [], woods = fl.some(F => F.kind === 'wood'), wild = S.wild !== 0 && !S.dgnRun && !Scene.ice && !Scene.snow && !!this.ctx.createOscillator;
-    const Wa = Scene.water, wet = (Wa && !Wa.canyon && !Wa.rail) || Scene.pond || fl.some(F => F.kind === 'lake');
-    const call = (key, on, gap, fn) => {
-      if(!on){ this[key] = undefined; return; }
-      this[key] = (this[key] === undefined ? gap * (0.2 + Math.random() * 0.6) : this[key]) - dt;
-      if(this[key] <= 0){ this[key] = gap * (0.7 + Math.random() * 0.6); fn.call(this, now + 0.02); }
-    };
-    call('frogT', wild && wet && season !== 'Winter', Scene.night ? 9 : 16, this.frogs);
-    call('owlT', wild && Scene.night && !Scene.rain && (woods || (Scene.props || []).some(p => p.kind === 15 && p.an === 'owl')), 20, this.owl);
-    call('crowT', wild && !Scene.night && !Scene.rain && woods && season !== 'Winter', 28, this.crow);
-    call('foxT', wild && Scene.night && (Scene.props || []).some(p => p.kind === 15 && p.an === 'eyes'), 16, this.foxBark);
-    call('gbirdT', wild && !Scene.night && !Scene.rain && (Scene.props || []).some(p => p.kind === 15 && p.an === 'pheasant'), 14, this.gameBird);
+    // (what the hole has, worked out once a hole, not searched every frame)
+    const P = Scene.props, Hw = this._wildOf && this._wildOf.p === P && this._wildOf.f === Scene.fills ? this._wildOf : (this._wildOf = (() => {
+      const fl = Scene.fills || [], Wa = Scene.water, L = P || [], has = an => L.some(p => p.kind === 15 && p.an === an);
+      return { p: P, f: Scene.fills, woods: fl.some(F => F.kind === 'wood'), wet: !!((Wa && !Wa.canyon && !Wa.rail) || Scene.pond || fl.some(F => F.kind === 'lake')),
+        owl: has('owl'), eyes: has('eyes'), pheasant: has('pheasant') }; })());
+    const woods = Hw.woods, wet = Hw.wet, wild = S.wild !== 0 && !S.dgnRun && !Scene.ice && !Scene.snow && !!this.ctx.createOscillator;
+    this.wildCall('frogT', wild && wet && season !== 'Winter', Scene.night ? 9 : 16, this.frogs, dt, now);
+    this.wildCall('owlT', wild && Scene.night && !Scene.rain && (woods || Hw.owl), 20, this.owl, dt, now);
+    this.wildCall('crowT', wild && !Scene.night && !Scene.rain && woods && season !== 'Winter', 28, this.crow, dt, now);
+    this.wildCall('foxT', wild && Scene.night && Hw.eyes, 16, this.foxBark, dt, now);
+    this.wildCall('gbirdT', wild && !Scene.night && !Scene.rain && Hw.pheasant, 14, this.gameBird, dt, now);
     if(S.dgnRun || Scene.night || Scene.rain || season === 'Winter') return;
     this.birdT = (this.birdT || 3 + Math.random() * 6) - dt;
     if(this.birdT <= 0){
@@ -7494,6 +7497,12 @@ const Sfx = {
       const t = this.ctx.currentTime + 0.02, k = 1 + (Math.random() * 3 | 0);
       for(let i = 0; i < k; i++) this.chirp(t + i * 0.22);
     }
+  },
+  // one animal's call now and then: its own timer, gap seconds or so apart
+  wildCall(key, on, gap, fn, dt, now){
+    if(!on){ this[key] = undefined; return; }
+    this[key] = (this[key] === undefined ? gap * (0.2 + Math.random() * 0.6) : this[key]) - dt;
+    if(this[key] <= 0){ this[key] = gap * (0.7 + Math.random() * 0.6); fn.call(this, now + 0.02); }
   },
   notes(list, type, vol, gap){
     const t = this.ctx.currentTime + 0.01;
@@ -15567,27 +15576,44 @@ function drawTeeMark(c, cx, by, r, m){
   if(!m || m.sh === 'ball'){ lbSphere(c, cx, by - r, r, m ? m.col : TEE_DECK.col); return; }
   const n = Math.max(1, Math.round(r * 2)), x0 = Math.round(cx - n / 2), y0 = Math.round(by - n);
   if(n <= 2){ c.fillStyle = m.col; c.fillRect(x0, y0, n, n); return; }
-  const C = m._C || (m._C = { c: m.col, l: lite(m.col, 0.4), d: dark(m.col, 0.25), e: dark(m.col, 0.5) }), F = TEE_SHAPE[m.sh];
-  for(let j = 0; j < n; j++) for(let i = 0; i < n; i++){
-    const col = F((i + 0.5) / n * 2 - 1, (j + 0.5) / n * 2 - 1, C);
-    if(col){ c.fillStyle = col; c.fillRect(x0 + i, y0 + j, 1, 1); }
+  // (worked out a pixel at a time once for each size, then stamped: a
+  // pixel at a time every frame, twice, was dear on a phone on its side)
+  const B = m._B || (m._B = {});
+  let cv = B[n];
+  if(!cv){
+    const C = m._C || (m._C = { c: m.col, l: lite(m.col, 0.4), d: dark(m.col, 0.25), e: dark(m.col, 0.5) }), F = TEE_SHAPE[m.sh];
+    cv = B[n] = document.createElement('canvas'); cv.width = n; cv.height = n; const x = cv.getContext('2d');
+    for(let j = 0; j < n; j++) for(let i = 0; i < n; i++){
+      const col = F((i + 0.5) / n * 2 - 1, (j + 0.5) / n * 2 - 1, C);
+      if(col){ x.fillStyle = col; x.fillRect(i, j, 1, 1); }
+    }
   }
+  c.drawImage(cv, x0, y0);
 }
 function lbSphere(c, cx, cy, r, col){
   // (placed as the square it replaces was, to the nearest pixel)
   const R = Math.max(1, r), x0 = Math.round(cx - R), y0 = Math.round(cy - R), n = Math.max(1, Math.round(R * 2));
   c.globalAlpha = 1;
   if(n <= 2){ c.fillStyle = col; c.fillRect(Math.round(cx - R), Math.round(cy - R), n, n); return; }
-  const L = lite(col, 0.45), D = dark(col, col === '#050308' ? 0 : 0.28), E = dark(col, col === '#050308' ? 0 : 0.5);
-  for(let j = 0; j < n; j++) for(let i = 0; i < n; i++){
-    const u = (i + 0.5) / n * 2 - 1, v = (j + 0.5) / n * 2 - 1, q = u * u + v * v;
-    if(q > 1.05) continue;
-    const l = -(u * 0.6 + v * 0.75);
-    c.fillStyle = q > 0.72 && l < -0.1 ? E : l > 0.35 ? L : l < -0.35 ? D : col;
-    c.fillRect(x0 + i, y0 + j, 1, 1);
+  // (each colour and size worked out once, then stamped)
+  const k = col + n; let cv = LB_SPH.get(k);
+  if(!cv){
+    cv = document.createElement('canvas'); cv.width = n; cv.height = n; const x = cv.getContext('2d');
+    const L = lite(col, 0.45), D = dark(col, col === '#050308' ? 0 : 0.28), E = dark(col, col === '#050308' ? 0 : 0.5);
+    for(let j = 0; j < n; j++) for(let i = 0; i < n; i++){
+      const u = (i + 0.5) / n * 2 - 1, v = (j + 0.5) / n * 2 - 1, q = u * u + v * v;
+      if(q > 1.05) continue;
+      const l = -(u * 0.6 + v * 0.75);
+      x.fillStyle = q > 0.72 && l < -0.1 ? E : l > 0.35 ? L : l < -0.35 ? D : col;
+      x.fillRect(i, j, 1, 1);
+    }
+    if(n >= 4){ x.fillStyle = '#FFFFFF'; x.fillRect(Math.round(n * 0.25), Math.round(n * 0.2), 1, 1); }
+    if(LB_SPH.size > 400) LB_SPH.clear();
+    LB_SPH.set(k, cv);
   }
-  if(n >= 4){ c.fillStyle = '#FFFFFF'; c.fillRect(x0 + Math.round(n * 0.25), y0 + Math.round(n * 0.2), 1, 1); }
+  c.drawImage(cv, x0, y0);
 }
+const LB_SPH = new Map();
 // dots along a tilted ring about the ball, the far half (front false) or the
 // near; n dots, a trail of len of them behind a head going round at spin
 let LB_HIDE = null;
@@ -21887,7 +21913,8 @@ function paintGolfer(c, x, y, w, h, ph, t, bot, walking, walkPh, spr, arc, putt,
     // (a hand raised over his head goes behind it, the club with it: the
     // user saw the ace's club arm across his face. His head is drawn again
     // over them, and what his look wears on it.)
-    if(P.hy < sy - h*0.08) redrawHead(c, spr, x, y, w, h, shear, g, FX);
+    // (not on a see-through look: drawn twice, its head went near solid)
+    if(P.hy < sy - h*0.08 && !(FX && FX.alpha)) redrawHead(c, spr, x, y, w, h, shear, g, FX);
     c.globalAlpha = 1;
     if(FX && FX.front) FX.front(c, g);
     if(FX) femTail(c, g, outfitNow().fx);
@@ -26145,7 +26172,7 @@ function spotShow(an, nNew, hunt){
   const el = document.getElementById('spotTag'); if(!el) return;
   const nm = id => GUIDE.find(g => g.id === id).n;
   // (the new ones and the hunted ones named first)
-  const order = an.slice().sort((a, b) => (S.guide[a] === 1 ? 0 : 2) + (hunt && hunt.fresh.includes(a) ? 0 : 1) - (S.guide[b] === 1 ? 0 : 2) - (hunt && hunt.fresh.includes(b) ? 0 : 1));
+  const G = S.guide || {}, order = an.slice().sort((a, b) => (G[a] === 1 ? 0 : 2) + (hunt && hunt.fresh.includes(a) ? 0 : 1) - (G[b] === 1 ? 0 : 2) - (hunt && hunt.fresh.includes(b) ? 0 : 1));
   if(!order.length && hunt) order.push(...hunt.fresh);
   const title = order.length === 1 ? nm(order[0]) : order.length === 2 ? nm(order[0]) + ' & ' + nm(order[1]) : nm(order[0]) + ' +' + (order.length - 1);
   const sov = B.GUIDE_SOV * nNew + (hunt && hunt.paid ? B.HUNT_SOV : 0), bits = [];
@@ -29020,7 +29047,8 @@ function settingsSheet(){
         + (S.sound !== 0 ? 'On' : 'Off') + '</button>')
     // (the user's recordings: club hit, putt, ball in the cup, a level of
     // their own in case they sit loud against the music)
-    + row('Shot Sounds', S.sound === 0 ? 'Needs Sound on' : vol('volRec', false), '')
+    // (an empty place where the others have a switch, so its slider lines up with theirs)
+    + row('Shot Sounds', S.sound === 0 ? 'Needs Sound on' : vol('volRec', false), '<span class="mini" aria-hidden="true" style="visibility:hidden">On</span>')
     + row('Music', S.sound === 0 ? 'Needs Sound on' : vol('volMus', S.music === 0), '<button class="mini' + (S.music !== 0 ? ' go' : '') + '" onclick="toggleMusic()">'
         + (S.music !== 0 ? 'On' : 'Off') + '</button>')
     + row('Night Music', S.music === 0 || S.sound === 0 ? 'Needs Music on' : 'A calmer tune at night and in wagers',

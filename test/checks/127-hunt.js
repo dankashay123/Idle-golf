@@ -101,7 +101,10 @@ module.exports = {
         hideSheet(); QUIET = true;
         // ---- repair ----
         S.hunt = { wk: 'x', got: 3 }; migrate(); if (S.hunt !== undefined) f('a broken hunt kept');
-        S.hunt = { wk: 5, got: ['fox'] }; migrate(); if (!S.hunt) f('a good hunt dropped');
+        { const w5 = huntOf(5); S.hunt = { wk: 5, got: [w5[0]] }; migrate(); if (!S.hunt || S.hunt.got.join() !== w5[0]) f('a good hunt dropped');
+          // (made-up names, or one twice, had one real sighting pay at once)
+          S.hunt = { wk: 5, got: ['x', w5[1], w5[1]] }; migrate(); if (!S.hunt || S.hunt.got.join() !== w5[1]) f('a junk hunt kept ' + JSON.stringify(S.hunt));
+          S.hunt = { wk: 5, got: [], paid: 7 }; migrate(); if (S.hunt.paid !== undefined) f('a junk paid kept'); }
       } finally {
         DAY_FORCE = null; HOUR_FORCE = null; FROST_FORCE = null; OFFLINE = false; window.step = keep; delete S.dgnRun;
         Object.keys(S).forEach(k => delete S[k]); Object.assign(S, JSON.parse(SNAP)); QUIET = false; hideSheet(); startHole();

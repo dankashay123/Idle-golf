@@ -58,6 +58,9 @@ module.exports = {
         if (!said.some(m => /Field Guide/.test(m))) f('with the tag off a first sighting said ' + JSON.stringify(said));
         toggleSpotTag(); hideSheet(); if (S.spotTag !== undefined) f('the switch back on left ' + S.spotTag);
         S.spotTag = 'x'; migrate(); if (S.spotTag !== undefined) f('a junk switch kept');
+        // with nothing in the Guide yet (a new save)
+        reset(); { const g0 = S.guide; delete S.guide; try { spotShow([plain, two[0]], 0, null); } catch (e) { f('a tag with no Guide yet threw ' + e.message); } S.guide = g0; }
+        if (!/ & .* Spotted!$/.test(txt())) f('a tag with no Guide yet shows "' + txt() + '"');
         // quietly, away
         reset(); QUIET = true; guideAdd([plain]); QUIET = false; if (txt()) f('a tag while quiet');
         reset(); OFFLINE = true; guideAdd([plain]); OFFLINE = false; if (txt()) f('a tag while away');
