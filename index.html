@@ -13055,6 +13055,22 @@ const lakeShelves = T => T._lks || (T._lks = lakePal(T));
 // every frame): its oval, lit on its far half, a dark rim nearest, the
 // notch a wedge from the middle out to side sg, a flower on it or not
 const LILY_W = 24, LILY_H = 10, LILY_SPR = new Map(), LILY_MAX = 40;
+// a dragonfly's body and its eyes, by kind; and a pin for the checks
+const DFLY_COL = [['#2E7AD8', '#8AD0F8'], ['#3AA858', '#B8E870'], ['#C8402E', '#F4A070']];
+let DFLY_FORCE = null;
+// a dragonfly from above, its head to the right: b body, h head, e the tip
+// of its tail, w wing, v a wing's vein; wings spread, then swept back
+const DFLY_PIC = [
+  ['...vw.vw...',
+   '..vww.vww..',
+   'ebbbbbbbbhh',
+   '..vww.vww..',
+   '...vw.vw...'],
+  ['...........',
+   '.vwwvwww...',
+   'ebbbbbbbbhh',
+   '.vwwvwww...',
+   '...........']];
 // how often a pad has a frog on it, and a pin for the checks
 const LILYFROG_P = 0.3; let LILYFROG_FORCE = null;
 function lilySprite(C, sg, fl){
@@ -19765,6 +19781,29 @@ const Scene = {
     if(W && (W.lake || W.river) && sigKind(this.hole) !== 'pier') this.layShoreBig(W);
     this.layPonds();
     this.layLilyFrog();
+    this.layDragonflies();
+  },
+  // Dragonflies over the water on a summer day (the user picked them from
+  // the menu): one to three about the reeds and the pads, hovering and
+  // darting, on most holes with them in summer (by the course's season, or
+  // the real month where it has none); never at night or in the rain. From a
+  // hash once the hole is laid; their own Guide entry.
+  layDragonflies(){
+    if(this.night || this.rain || this.ice) return;
+    const cs = this.course, look = this.look || {};
+    const seasoned = !!cs && (cs.slot === 'home' || CAL_SEASONED.includes(cs.id));
+    const summer = DFLY_FORCE !== null ? !!DFLY_FORCE : seasoned ? !look.season : MONTH_SEASON[monthNow()] === 0;
+    if(!summer) return;
+    const put = this.props || [], at = put.filter(p => p.kind === 26 && (p.sp === 'lily' || p.sp === 'reed'));
+    if(!at.length || (DFLY_FORCE === null && hr(this.hole * 41 + 3, 861) > 0.7)) return;
+    const n = 1 + Math.floor(hr(this.hole * 41 + 3, 862) * 3);
+    for(let i = 0; i < n; i++){
+      const b = at[Math.floor(hr(this.hole * 41 + i, 863) * at.length)];
+      put.push({ kind: 26, sp: 'dfly', d: b.d + (hr(this.hole * 41 + i, 864) - 0.5) * 0.8, x: b.x + (hr(this.hole * 41 + i, 865) - 0.5) * 1.2,
+                 k: i + this.hole * 7, c: Math.floor(hr(this.hole * 41 + i, 866) * DFLY_COL.length), extra: 1 });
+    }
+    put.sort((a, b) => b.d - a.d);
+    this.props = put;
   },
   // A frog sitting on a lily pad (the user picked it from the menu): on
   // about one hole in three with pads, on one of them, from a hash rolled
@@ -25186,6 +25225,26 @@ Object.assign(Scene, {
       // every size it passes through, made in the frame, cost the frame)
       this.standBlit(c, spr, Math.round(pr.x) - (w >> 1), Math.round(pr.y) - h, w, h);
 
+    }else if(p.kind === 26 && p.sp === 'dfly'){
+      // a dragonfly: hovering a little way over the water, now and then
+      // darting off to another spot nearby; a body, its eyes, and two pairs
+      // of wings flickering pale above it
+      const t = this.t + p.k * 1.7, seg = Math.floor(t / 2.6), u = t / 2.6 - seg, e = u < 0.12 ? (u / 0.12) * (u / 0.12) * (3 - 2 * u / 0.12) : 1;
+      const spot = q => [(hr(p.k * 13 + q, 871) - 0.5) * 1.4, (hr(p.k * 13 + q, 872) - 0.5) * 0.9, 0.9 + hr(p.k * 13 + q, 873) * 0.7];
+      const A0 = spot(seg - 1), A1 = spot(seg), hov = Math.sin(t * 5) * 0.05;
+      const dx = A0[0] + (A1[0] - A0[0]) * e, dd = A0[1] + (A1[1] - A0[1]) * e, hh = A0[2] + (A1[2] - A0[2]) * e + hov;
+      const q = this.proj(p.d + dd, p.x + dx); if(q.s < 0.05) return;
+      const L = Math.max(4, Math.round(0.9 * LAT * q.s)), X = Math.round(q.x), Y = Math.round(q.y - hh * LAT * q.s * 0.55);
+      if(X < -L - 4 || X > VW + L + 4) return;
+      const dir = A1[0] >= A0[0] ? 1 : -1, C = DFLY_COL[p.c % DFLY_COL.length], ps = Math.max(1, Math.round(L / 11));
+      // drawn from a little picture of it from above, a pixel of it ps
+      // square: a long body, a bright head, and two pairs of wings spread
+      // out either side, beating between spread and swept back
+      const up = Math.floor(this.t * 20 + p.k) & 1, F = up ? DFLY_PIC[0] : DFLY_PIC[1], W = F[0].length, H = F.length;
+      const ox = X - (W * ps >> 1), oy = Y - (H * ps >> 1), ink = { b: C[0], h: C[1], e: dark(C[0], 0.45), w: 'rgba(236,248,255,0.85)', v: 'rgba(150,190,220,0.9)' };
+      for(let r = 0; r < H; r++) for(let k = 0; k < W; k++){ const ch = F[r][dir > 0 ? k : W - 1 - k]; if(ch === '.') continue;
+        c.fillStyle = ink[ch]; c.fillRect(ox + k * ps, oy + r * ps, ps, ps); }
+
     }else if(p.kind === 26){
       // a lily pad lying flat on the water: an oval as the ground
       // foreshortens it, lit on its far half, a dark rim nearest, a notch cut
@@ -27592,6 +27651,7 @@ let WAGER_WILD_P = 0.5;   // (1 in the developer menu and the checks: always the
 // the night creatures (laid in layNight) on a shelf of their own, with the
 // animals only out after dark
 GUIDE.push({ id:'lilyfrog', n:'Frog on a Lily Pad', g:'w', w:'On the pads, now and then' });
+GUIDE.push({ id:'dragonfly', n:'Dragonfly', g:'w', w:'Over the water on summer days' });
 GUIDE.push({ id:'harvest', n:'Harvest Moon', g:'n', w:'Autumn nights, now and then' }, { id:'glowworm', n:'Glow-worms', g:'n', w:'A dry night, in the rough' }, { id:'moth', n:'Moths', g:'n', w:'Round the tee lamps' },
   { id:'luna', n:'Luna Moth', g:'n', w:'Rare, by the tee lamps' });
 for(const g of GUIDE) if(['owl', 'bat', 'badger', 'hedgehog', 'eyes'].includes(g.id)) g.g = 'n';
@@ -27614,6 +27674,7 @@ function guideSpot(sc){
     if(!sc.night){ if(sk === 'island') see('duck'); if(sk === 'canyon') see('hawk'); } if(sk === 'stones' && !sc.ice) see('fish'); }
   if(sc.harvest) see('harvest');
   if(P.some(p => p.kind === 26 && p.frog)) see('lilyfrog');
+  if(P.some(p => p.kind === 26 && p.sp === 'dfly')) see('dragonfly');
   if(sc.golden) see('golden'); if(sc.frost) see('frost'); if(sc.rain) see('rain'); if(sc.night) see('night');
   if(sc.goldbow) see('goldbow'); else if(sc.rainbow) see('rainbow'); if(sc.dblbow) see('dblbow'); if(sc.fog) see('fog');
   guideAdd(got);
@@ -27915,6 +27976,8 @@ const RARE_PIC = {
 // its picture: the thing itself as the course draws it
 // (the signature holes' own life, drawn there in code: a picture for the Guide)
 const GUIDE_PIC = {
+  dragonfly: [['..ww..ww....', '.wwwwwwww...', 'bbbbbbbbbee.', '.wwwwwwww.e.', '..ww..ww....'],
+    { b: '#2E7AD8', e: '#8AD0F8', w: '#DCEEFA' }],
   lilyfrog: [['...e.e....', '..gggggg..', '.gGgggGg..', '.G.y.y.G..', 'LLLLLLLLLL', '.lLLLLLLl.', '..llllll..'],
     { g: '#5A9A3A', G: '#3A6A2A', y: '#C8D080', e: '#101010', L: '#62A048', l: '#2E5426' }],
   duck: [['......gg..', '......gegy', '......gg..', '......w...', 'dGGGGGbb..', '.GGGGGGb..'],
