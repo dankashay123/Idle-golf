@@ -164,9 +164,10 @@ module.exports = {
             const rows = new Map(); for (let i = 0; i < R.length; i += 3) { const L = rows.get(R[i]) || []; L.push([R[i + 1], R[i + 1] + R[i + 2]]); rows.set(R[i], L); }
             const wet = (x, y) => { for (let dy = -2; dy <= 2; dy++) { const L = rows.get(y + dy); if (L && L.some(([l, rr]) => x >= l && x < rr)) return true; } return false; };
             const d = diff(a, b); n += d.length; off += d.filter(([x, y]) => !wet(x, y)).length;
-            // and on water in the painted ground itself, not a bank or the
+            // and on water in the painted ground itself (its shallows and
+            // deeps as well), not a bank or the
             // grass the row runs under (the user saw drops on the grass)
-            const WS = new Set(Scene.theme._wt.map(h => { PixPaint.fillStyle = h; return PixPaint.cur; }));
+            const T0 = Scene.theme, WS = new Set((T0._lks ? T0._wt.concat(...T0._lks) : T0._wt).map(h => { PixPaint.fillStyle = h; return PixPaint.cur; }));
             // (the rings' own pixels: pale, water mixed with white; anything
             // else that moved between the two frames is not a ring)
             const pale = ([x, y]) => { const i = (y * VW + x) * 4; return a[i] + a[i + 1] + a[i + 2] > 420; };

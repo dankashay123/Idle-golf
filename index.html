@@ -11057,6 +11057,27 @@ function drawLandmark(g, L, cx, by, s, haze, hz){
 const BUSH_ROWS = ['....1221....', '..12332221..', '.1233433321.', '123344433321', '123333433221', '012233332210', '.0112222110.', '..00000000..'];
 const TUFT_ROWS = ['.3...4..3...', '.3..34..3.4.', '23.3.4.33.3.', '2332343.332.', '12232332221.', '.1122222111.'];
 const ROCK_ROWS = ['...3344.....', '..2334443...', '.12233443...', '11222333322.', '.1112222211.'];
+// a clump of reeds at the water's edge (Scene.layShore): blades and stems,
+// some with a brown bulrush head
+const REED_ROWS = [
+  '...B.......B..',
+  '...b..4....bB.',
+  '..Bb..3...Bb..',
+  '..bb..3...bb.4',
+  '..bb.4.3..bb.3',
+  '..b3.3.3..3b.3',
+  '4..3.3.3.33..3',
+  '3..3.3.233..3.',
+  '3..3.32.3..3..',
+  '.3.2.3.23..3..',
+  '.3.2.3.2.3.2..',
+  '.3.2.2.2.3.2.4',
+  '..32.2.2.2.2.3',
+  '..2.2.2.2.2.23',
+  '..2.2.2.2.212.',
+  '..1.2.1.2.21..',
+  '.112.2112.211.',
+  '..1111111111..'];
 function courseTrees(cs, mode){
   const key = cs.id + '|' + mode;
   if(TREE_CACHE[key]) return TREE_CACHE[key];
@@ -11089,7 +11110,20 @@ function courseTrees(cs, mode){
   const ch = isCherry(cs) && cherrySet();
   if(ch){ map.t = t('#5A4A44'); map.T = t('#2E2422'); }
   return TREE_CACHE[key] = { pine: makeSprite(ch ? ch.pine : PINE_ROWS, map), oak: makeSprite(ch ? ch.oak : OAK_ROWS, map),
-    bush: makeSprite(BUSH_ROWS, map), tuft: makeSprite(TUFT_ROWS, gmap), rock: makeSprite(ROCK_ROWS, rmap) };
+    bush: makeSprite(BUSH_ROWS, map), tuft: makeSprite(TUFT_ROWS, gmap), rock: makeSprite(ROCK_ROWS, rmap),
+    reed: makeSprite(REED_ROWS, reedMap(cs, t)) };
+}
+// a lily pad's rim, body and lit half, its flower (pink or white by the
+// course) and the flower's heart; yellowing in the autumn
+function lilyPal(look, night){
+  const t = c => night ? moonC(c) : c, au = look && look.season === 'Autumn';
+  const g = au ? '#8A8E3A' : '#3E8034';
+  return [t(dark(g, 0.35)), t(g), t(lite(g, 0.2)), t(hr((look && look.id || '').length, 816) < 0.5 ? '#F2A8C8' : '#F4F0E8'), t('#F2C83A')];
+}
+// reeds green in spring and summer, gold in autumn, straw in winter
+function reedMap(cs, t){
+  const g = cs.season === 'Winter' ? '#B8A272' : cs.season === 'Autumn' ? '#A89A46' : mixC('#5E8C36', cs.rough, 0.25);
+  return { 1: t(dark(g, 0.42)), 2: t(dark(g, 0.18)), 3: t(g), 4: t(lite(g, 0.22)), b: t(cs.season === 'Winter' ? '#8A6A44' : '#7A4A26'), B: t('#4A2C18') };
 }
 
 /* ---- themes ----
@@ -12926,7 +12960,7 @@ function hazSlope(t, e0, e1){
 // SHALLOWER of each column's two neighbours.
 function hazCols(P){
   if(P._fu) return P;
-  const n = HZ_N;
+  const n = P.N || HZ_N;
   P._fu = new Float32Array(n); P._fs = new Float32Array(n); P._fm = new Float32Array(n);
   for(let i = 0; i < n; i++){
     const t = (i + 0.5)/n;
@@ -12980,7 +13014,31 @@ const P_ICE = Object.assign({}, P_WATER, { rip: 0,
 // An island's lake is level with the ground round it. Sunk like a pond, a
 // lake that size put its far water lower on the screen than the green in
 // front of it, and painted the green out.
-const P_LAKE = Object.assign({}, P_WATER, { D: 0, eu: 0.08, e0: 0.035, e1: 0.03 });
+// (the user: give the island's lake and the river by the stones the
+// canyon's treatment) It has depth: a pale shallow band along every shore
+// where the bottom shows through, greener and sandier, then the water
+// darkening in steps toward the deep middle, how far from the shore by the
+// lake's own distances, not its share of them, so a narrow river and a wide
+// lake shelve alike.
+const LAKE_SHELF = [0.45, 0.95, 1.5, 2.2, 3.2];
+// (in finer columns than the other hazards, or its shelves came out in
+// steps a finger wide)
+const P_LAKE = Object.assign({}, P_WATER, { D: 0, eu: 0.08, e0: 0.035, e1: 0.03, N: 84,
+  tone(T, f, ndl, near, steep, i, tt, hz, sw){
+    if(f < 0.80 || !hz) return P_WATER.tone(T, f, ndl, near, steep);
+    const across = sw ? Math.min(i + 0.5, P_LAKE.N - i - 0.5) / P_LAKE.N * sw : 99;
+    const along = Math.min(tt, 1 - tt) * hz.rd * 2;
+    // (the island lake's own near end is behind the camera; it shelves from
+    // its sides and round the green)
+    const g = Math.min(across, along); let k = 0; while(k < LAKE_SHELF.length && g >= LAKE_SHELF[k]) k++;
+    const C = T._lks || (T._lks = lakePal(T));
+    return pickC(C[k], 0.46 + (ndl - HZ_LZ)*1.1 - steep*0.3 + near*0.16);
+  } });
+function lakePal(T){
+  const w = T._wt, bed = mixC(T._bk ? pickC(T._bk, 0.9) : '#6A5A3A', '#8A9A4A', 0.35);
+  return [w.map(c => mixC(lite(c, 0.14), bed, 0.46)), w.map(c => mixC(lite(c, 0.08), bed, 0.3)), w.map(c => mixC(c, bed, 0.16)),
+    w.map(c => mixC(c, bed, 0.06)), w.map(c => dark(c, 0.08)), w.map(c => dark(c, 0.16))];
+}
 // a river frozen over, in a winter season: level like the lake, ice like a pond
 const P_ICEL = Object.assign({}, P_LAKE, { rip: 0, tone: P_ICE.tone });
 // A canyon: deep, with walls of the course's own rock going down into the
@@ -19529,6 +19587,74 @@ const Scene = {
   // year. Never many: a group only of ducks, crabs or rabbits. Clear of play,
   // hazards, the cart path, other holes and anything standing there. From a
   // hash, tagged extra.
+  // The island's lake and the river by the stones (the user asked for the
+  // canyon's treatment: depth, reeds and lily pads). Clumps of reeds
+  // standing in the shallows along the shore, clear of the fairway, the
+  // green and his way over; lily pads lying on the still shallows, one in
+  // four in flower, none on ice or on the stones' line. From a hash, tagged
+  // extra (kind 26), so the hole's own dice are untouched.
+  wetAt(hz, d, x){
+    const sp = this.hazSpan(hz, d);
+    if(!sp) return false;
+    const P = hz.river && this.ice ? P_ICEL : P_LAKE, u = (x - (hz.x - sp.l)) / (sp.l + sp.r);
+    if(u <= 0 || u >= 1) return false;
+    const tt = (d - (hz.d - hz.rd)) / (hz.rd * 2);
+    return hazProf(u, P.eu, P.eu) * hazProf(tt, P.e0, P.e1) >= 0.8;
+  },
+  layShore(){
+    const W = this.water, h = this.hole;
+    if(S.dgnRun || !W || !(W.lake || W.river) || sigKind(h) === 'pier') return;
+    const put = this.props || [];
+    // how far in from a shore a point is, across (the lake) or along (the river)
+    const shore = (d, x) => {
+      if(!this.wetAt(W, d, x)) return -1;
+      for(let k = 0.1; k < 2; k += 0.1){
+        if(W.river ? !this.wetAt(W, d - k, x) || !this.wetAt(W, d + k, x) : !this.wetAt(W, d, x - k) || !this.wetAt(W, d, x + k)) return k;
+      }
+      return 2;
+    };
+    // where the water starts on his line (the lake's near tip, the river's near bank)
+    let d0 = W.d - W.rd; while(d0 < W.d + W.rd && !this.wetAt(W, d0, 0)) d0 += 0.1;
+    const nearGreen = (d, x, r) => Math.hypot(d - LEN, x) < r;
+    const reeds = [];
+    for(let i = 0, n = 0; i < 90 && n < 9; i++){
+      const u = hr(h * 61 + i, 801), v = hr(h * 61 + i, 802), side = hr(h * 61 + i, 803) < 0.5 ? -1 : 1;
+      let d, x;
+      if(W.river){ d = W.d + side * (W.rd - 0.35 - v * 0.3); x = (u - 0.5) * 14; }
+      else { d = d0 + 0.5 + u * (LEN + 12 - d0); const sp = this.hazSpan(W, d); if(!sp) continue;
+        x = W.x + side * (side < 0 ? sp.l : sp.r); for(let k = 0; k < 3 && !this.wetAt(W, d, x); k += 0.1) x -= side * 0.1; x -= side * (0.15 + v * 0.35); }
+      const sh = shore(d, x);
+      if(sh < 0 || sh > 0.9 || Math.abs(x) > 9 || this.onPlay(d, x, 0.7) || nearGreen(d, x, 4.6)) continue;
+      if(!W.river && d < d0 + 3 && Math.abs(x) < 3.2) continue;
+      if(reeds.some(r => Math.abs(r.d - d) < 1.4 && Math.abs(r.x - x) < 1.4)) continue;
+      n++;
+      // a clump: two to four, close together, along the shore
+      const m = 2 + Math.floor(hr(h * 61 + i, 804) * 3);
+      for(let j = 0; j < m; j++){
+        const dd = W.river ? d + (hr(i * 7 + j, 805) - 0.5) * 0.25 : d + (j - (m - 1) / 2) * 0.45,
+              xx = W.river ? x + (j - (m - 1) / 2) * 0.5 : x + (hr(i * 7 + j, 805) - 0.5) * 0.25;
+        if(!this.wetAt(W, dd, xx) || this.onPlay(dd, xx, 0.6)) continue;
+        const r = { kind: 26, sp: 'reed', d: dd, x: xx, s: 0.75 + hr(i * 7 + j, 806) * 0.5, extra: 1 };
+        reeds.push(r); put.push(r);
+      }
+    }
+    if(!this.ice){
+      for(let i = 0, n = 0; i < 120 && n < 16; i++){
+        const u = hr(h * 67 + i, 811), v = hr(h * 67 + i, 812), side = hr(h * 67 + i, 813) < 0.5 ? -1 : 1;
+        let d, x;
+        if(W.river){ d = W.d + side * (W.rd - 0.5 - v * 0.9); x = (u - 0.5) * 16; }
+        else { d = d0 + 1 + u * (LEN + 10 - d0); const sp = this.hazSpan(W, d); if(!sp) continue; x = W.x + side * ((side < 0 ? sp.l : sp.r) * (0.6 + v * 0.35)); }
+        const sh = shore(d, x);
+        if(sh < 0.2 || sh > 1.6 || Math.abs(x) > 9 || nearGreen(d, x, 4.0)) continue;
+        if(W.river ? Math.abs(x) < 1.5 : d < d0 + 2 && Math.abs(x) < 2) continue;
+        if(put.some(q => q.kind === 26 && Math.abs(q.d - d) < 0.7 && Math.abs(q.x - x) < 0.8)) continue;
+        n++;
+        put.push({ kind: 26, sp: 'lily', d, x, s: 0.8 + hr(h * 67 + i, 814) * 0.5, k: Math.floor(hr(h * 67 + i, 815) * 64), extra: 1 });
+      }
+    }
+    put.sort((a, b) => b.d - a.d);
+    this.props = put;
+  },
   layCritters(){
     const put = this.props || [], h = this.hole, sea = (this.look && this.look.season) || '', night = !!this.night;
     this.critUp = {};
@@ -20261,7 +20387,7 @@ const Scene = {
     // moment the lip stopped hiding the floor it let go across the entire
     // shape at once, and the slice that did it came out as a solid slab of
     // one colour laid over the end of the hazard.
-    const py = hz._py || (hz._py = new Float32Array(HZ_N));
+    const NC = P.N || HZ_N, py = hz._py && hz._py.length === NC ? hz._py : (hz._on = 0, hz._py = new Float32Array(NC));
     if(!hz._on){ hz._on = 1; py.fill(y + hgt); }
     hazCols(P);
     const tt  = clamp((d - (hz.d - hz.rd)) / (hz.rd*2), 0, 1);
@@ -20280,7 +20406,7 @@ const Scene = {
     const band = () => { const a = rx0 > xl ? 1 : 0, b = rx1 < xr ? 1 : 0;
       c.fillStyle = rc; c.fillRect(rx0 - a, rt, rx1 - rx0 + a + b, rb - rt); };
     const dk = P.D * gv * kz;
-    for(let i = 0; i < HZ_N; i++){
+    for(let i = 0; i < NC; i++){
       const fu  = P._fu[i];
       const top = y + fu * dk;
       const bot = py[i];
@@ -20298,7 +20424,7 @@ const Scene = {
       // and always at least one row, so a band thinner than a pixel still
       // covers the ground it is cut into
       const t1 = Math.max(t0 + 1, Math.round(bot));
-      const x0 = xl + ((w*i / HZ_N) | 0), x1 = xl + ((w*(i+1) / HZ_N) | 0);
+      const x0 = xl + ((w*i / NC) | 0), x1 = xl + ((w*(i+1) / NC) | 0);
       if(x1 <= x0) continue;
       const gx = gxk * P._fs[i], gy = gyk * fu;
       const len = Math.sqrt(gx*gx + gy*gy + 1);
@@ -20306,7 +20432,7 @@ const Scene = {
       // how steeply this column is tilted at all, whichever way it faces: the
       // inside of a bowl is shaded away from the sky on both sides, not only
       // on the one turned away from the sun
-      const col = P.tone(T, fu*gv, ndl, near, Math.sqrt(gx*gx + gy*gy), i, tt);
+      const col = P.tone(T, fu*gv, ndl, near, Math.sqrt(gx*gx + gy*gy), i, tt, hz, sp.l + sp.r);
       if(run && rc === col && rt === t0 && rb === t1 && rx1 === x0){ rx1 = x1; continue; }
       if(run) band();
       run = true; rx0 = x0; rx1 = x1; rt = t0; rb = t1; rc = col;
@@ -20369,17 +20495,19 @@ const Scene = {
   // over it, so both ways come out the same.
   waterAt(c, T){
     const PP = this.pixGround !== false && PixPaint.px && PixPaint.w === VW && PixPaint.h === VH ? PixPaint : null;
+    // (the island lake's and the river's shallows and deeps as well)
+    const WT = T._lks ? T._wt.concat(...T._lks) : T._wt;
     if(PP){
-      if(this._wtFor !== T._wt){
-        this._wtFor = T._wt; this._wtSet = new Set();
+      if(this._wtFor !== T._wt || this._lksFor !== T._lks){
+        this._wtFor = T._wt; this._lksFor = T._lks; this._wtSet = new Set();
         const was = PP.cur;
-        for(const col of T._wt){ PP.fillStyle = col; this._wtSet.add(PP.cur); }
+        for(const col of WT){ PP.fillStyle = col; this._wtSet.add(PP.cur); }
         PP.cur = was;
       }
       const WS = this._wtSet, px = PP.px;
       return (x, y) => x >= 0 && x < VW && y >= 0 && y < VH && WS.has(px[y * VW + x]);
     }
-    if(this._wtHexFor !== T._wt){ this._wtHexFor = T._wt; this._wtHex = new Set(T._wt.map(h => h.toUpperCase())); }
+    if(this._wtHexFor !== T._wt || this._lksHexFor !== T._lks){ this._wtHexFor = T._wt; this._lksHexFor = T._lks; this._wtHex = new Set(WT.map(h => h.toUpperCase())); }
     const IMG = c.getImageData(0, 0, VW, VH).data, WH = this._wtHex;
     return (x, y) => { if(x < 0 || x >= VW || y < 0 || y >= VH) return false;
       const i = (y * VW + x) * 4;
@@ -21070,7 +21198,7 @@ const Scene = {
     this.land = look.land;
     this.themeId = look.id + '|' + mode;
     this.theme = buildTheme(look, mode);
-    this.treeSpr = courseTrees(look, mode);
+    this.treeSpr = courseTrees(look, mode); this.lilyPal = null;
     this.snow = !!look.snowfall && !this.rain;
     // petals in blossom and leaves in autumn, drifting across; ponds frozen
     // in winter
@@ -21152,6 +21280,7 @@ const Scene = {
     this.decor = seasonDecor(cs, look);
     this.laySeason();
     this.layCritters();
+    this.layShore();
     this.layNightLife();
     this.layOthers();
     this.layFind();
@@ -24710,6 +24839,44 @@ Object.assign(Scene, {
         const u = 0.6 + 0.4 * Math.sin(this.t * (0.45 + hr(n, 363) * 0.4) + n * 1.9), kk = g.s > 1.6 ? 2 : 1, X = Math.round(g.x), Y = Math.round(g.y) - kk;
         if(u > 0.45){ c.fillStyle = '#2E5E22'; fillClip(c, X - 1, Y, kk + 2, kk, clip); }
         c.fillStyle = u > 0.85 ? '#EEFFB0' : '#A6E040'; fillClip(c, X, Y, kk, kk, clip);
+      }
+
+    }else if(p.kind === 26 && p.sp === 'reed'){
+      // a clump of reeds standing in the shallows (layShore)
+      const spr = (this.treeSpr || {}).reed;
+      if(!spr) return;
+      const h = Math.round(p.s * 9 * pr.s * US);
+      if(h < 3) return;
+      const w = Math.round(h * spr.w / spr.h);
+      if(pr.x + w < -4 || pr.x - w > VW + 4) return;
+      this.standBlit(c, shrinkSprite(spr, w, h) || spr, Math.round(pr.x) - (w >> 1), Math.round(pr.y) - h, w, h);
+
+    }else if(p.kind === 26){
+      // a lily pad lying flat on the water: an oval as the ground
+      // foreshortens it, lit on its far half, a dark rim nearest, a notch cut
+      // to one side; one in four with a flower on it
+      if(pr.x < -14 || pr.x > VW + 14) return;
+      const w = Math.round(p.s * 0.55 * LAT * pr.s);
+      if(w < 2) return;
+      const a = this.proj(p.d - 0.2 * p.s, p.x), b = this.proj(p.d + 0.2 * p.s, p.x);
+      const hh = clamp(Math.round(a.y - b.y), 1, w), cx = Math.round(pr.x), top = Math.round(pr.y - hh / 2);
+      const C = this.lilyPal || (this.lilyPal = lilyPal(this.look, night)), sg = p.k & 1 ? 1 : -1;
+      for(let r = 0; r < hh; r++){
+        const ny = (r + 0.5) / hh * 2 - 1, half = w / 2 * Math.sqrt(Math.max(0, 1 - ny * ny));
+        let x0 = Math.round(cx - half), x1 = Math.round(cx + half);
+        if(x1 <= x0) x1 = x0 + 1;
+        c.fillStyle = r === hh - 1 && hh > 2 ? C[0] : r < hh * 0.45 ? C[2] : C[1];
+        // the notch, a wedge from the middle out to one side
+        if(w >= 6 && ny > -0.6 && ny < 0.1){
+          const cut = cx + sg * Math.max(1, Math.round(Math.abs(ny) * w * 1.1 + w * 0.12));
+          if(sg > 0) x1 = Math.min(x1, cut); else x0 = Math.max(x0, cut + 1);
+        }
+        if(x1 > x0) c.fillRect(x0, top + r, x1 - x0, 1);
+      }
+      if((p.k >> 1) % 4 === 0 && w >= 5){
+        const fy = top + Math.max(0, (hh >> 1) - 2), fx = cx - sg * Math.max(1, w >> 2);
+        c.fillStyle = C[3]; c.fillRect(fx - 1, fy, 3, 2); c.fillRect(fx, fy - 1, 1, 1);
+        c.fillStyle = C[4]; c.fillRect(fx, fy, 1, 1);
       }
 
     }else if(p.kind === 8){
