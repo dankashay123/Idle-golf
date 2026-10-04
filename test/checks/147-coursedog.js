@@ -22,7 +22,7 @@ module.exports = {
         hideSheet(); QUIET = true; Scene.announce = null;
         const D = derive(), d0 = JSON.stringify(D);
         // ---- put aside: none drawn, none offered ----
-        if (!DOG_ON) f('the dog is off (the user asked for it on)');
+        if (DOG_ON) f('the dog is on (the user put it aside for later again)');
         { DOG_ON = false; S.dog = 'golden';
           const shot0 = () => { Scene.draw(0, D); return Scene.b.getImageData(0, 0, VW, VH).data; };
           const a = shot0(), keepDraw = Scene.drawDog; Scene.drawDog = () => {}; const b = shot0(); Scene.drawDog = keepDraw;

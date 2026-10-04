@@ -6637,8 +6637,9 @@ const DOG_BREED = [
 ];
 const DOG_SPR = {};
 // (put aside for a while, the user: "We will save that for later"; then
-// "turn on the dog as well". Off, none is drawn or offered)
-let DOG_ON = true;
+// "turn on the dog as well"; then "turn off the dog for now", again for
+// later. Off, none is drawn or offered)
+let DOG_ON = false;
 const dogOpen = br => B.COURSE.filter(cs => (S.cwildDone || {})[cs.id]).length >= br.at;
 const dogNow = () => { if(!DOG_ON || S.dog === 'none') return null; const br = DOG_BREED.find(x => x.id === (S.dog || 'golden')); return br && dogOpen(br) ? br : DOG_BREED[0]; };
 function dogSprite(br, kind, fr, night){
