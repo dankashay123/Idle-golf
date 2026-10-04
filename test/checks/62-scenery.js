@@ -67,12 +67,16 @@ module.exports = {
               Scene.draw(0, D); o.views++;
               for (const Q of P.filter(p => p.kind === 8 || p.extra)) {
                 if (Q.d < Scene.camD - 5) continue;
-                const lim = Scene.clipAt(Q.d) + 1, { n, d } = drawn([Q], Scene.t);
+                // (a dragonfly wanders half a pace either way of its spot,
+                // and its rings spread where it dipped: its line is the
+                // lowest of those it can be over)
+                const wide = Q.kind === 26 && Q.sp === 'dfly';
+                const lim = (wide ? Math.max(Scene.clipAt(Q.d - 0.5), Scene.clipAt(Q.d), Scene.clipAt(Q.d + 0.5)) : Scene.clipAt(Q.d)) + 1, { n, d } = drawn([Q], Scene.t);
                 o.pix += n;
                 for (let y = Math.max(0, Math.floor(lim) + 1); y < VH; y++) for (let x = 0; x < VW; x++) {
                   const i = (y * VW + x) * 4;
                   if (d[i] === 1 && d[i + 1] === 2 && d[i + 2] === 3) continue;
-                  f(where + ', camera at ' + Scene.camD.toFixed(1) + ': ' + (Q.kind === 8 ? Q.sp : Q.kind ? 'a spectator' : 'a tree') + ' at ' + Q.d.toFixed(1) + ' shows at row ' + y + ', under the line ' + Math.round(lim));
+                  f(where + ', camera at ' + Scene.camD.toFixed(1) + ': ' + (Q.kind === 8 ? Q.sp : Q.kind === 26 ? 'a ' + Q.sp : Q.kind === 1 ? 'a spectator' : Q.kind ? 'a prop of kind ' + Q.kind : 'a tree') + ' at ' + Q.d.toFixed(1) + ' shows at row ' + y + ', under the line ' + Math.round(lim));
                   y = VH; break;
                 }
               }
