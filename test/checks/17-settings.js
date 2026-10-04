@@ -82,7 +82,7 @@ module.exports = {
       // strike, the cup, both music tracks and the animals' calls. This waited for three and then
       // asked for exactly three, so it failed whenever the second track
       // happened to finish decoding first.
-      const want = ['strike', 'putt', 'cup', 'music', 'music2', 'frogA', 'frogB', 'frogC', 'crow', 'quail'];
+      const want = ['strike', 'putt', 'cup', 'music', 'music2', 'frogA', 'frogB', 'frogC', 'crow', 'quail', 'fox'];
       for (let i = 0; i < 80 && o.running && !want.every(k => Sfx.recs[k]); i++)
         await new Promise(r => setTimeout(r, 50));
       o.recs = Object.keys(Sfx.recs).filter(k => Sfx.recs[k]);
@@ -127,9 +127,9 @@ module.exports = {
     });
     if (!snd.open) throw new Error('the settings button did not open the settings sheet');
     if (snd.errs.length) throw new Error('playing a sound threw: ' + snd.errs.join('; '));
-    if (snd.running && snd.recs.slice().sort().join() !== 'crow,cup,frogA,frogB,frogC,music,music2,putt,quail,strike')
+    if (snd.running && snd.recs.slice().sort().join() !== 'crow,cup,fox,frogA,frogB,frogC,music,music2,putt,quail,strike')
       throw new Error('the recordings that decoded were ' + JSON.stringify(snd.recs)
-        + ', not the strike, the putt, the cup, the two music tracks and the five animal calls');
+        + ', not the strike, the putt, the cup, the two music tracks and the six animal calls');
     // and no gallery: a fast bag holes out every few seconds, and the
     // applause after each hole never stopped. A holed ball is the cup alone.
     if (snd.running && !(snd.parts.strikeRec.join() === 'strike'

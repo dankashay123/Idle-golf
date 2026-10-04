@@ -3,7 +3,8 @@
  * a crow in the woods by day, a game bird's call where a pheasant is out and
  * an owl in the woods at night.
  *
- *   - the five recordings (three frogs, the crow, the game bird) decode
+ *   - the six recordings (three frogs, the crow, the game bird, the fox)
+ *     decode; the fox barks at night only where its eyes are out
  *   - each by what the hole has: frogs on a hole with water (more often at
  *     night), none on a dry one, none in winter; the crow by day by the
  *     woods, not at night or in the rain; the owl at night by the woods, not
@@ -20,18 +21,18 @@ module.exports = {
   async run(page) {
     const r = await page.evaluate(async () => {
       const o = { fails: [] }, f = m => { if (o.fails.length < 14) o.fails.push(m); }, SNAP = JSON.stringify(S);
-      const AN = ['frogs', 'owl', 'crow', 'gameBird'], OTHER = ['pines', 'surf', 'stream', 'river', 'moor', 'drift', 'lap', 'piper', 'gull', 'chirp', 'cricket', 'gust', 'quack', 'hop', 'plop', 'hawk'];
+      const AN = ['frogs', 'owl', 'crow', 'gameBird', 'foxBark'], OTHER = ['pines', 'surf', 'stream', 'river', 'moor', 'drift', 'lap', 'piper', 'gull', 'chirp', 'cricket', 'gust', 'quack', 'hop', 'plop', 'hawk'];
       const keep = { fns: Object.fromEntries(AN.concat(OTHER).map(k => [k, Sfx[k]])), ctx: Sfx.ctx, master: Sfx.master, recs: Sfx.recs, mt: Sfx.musicTick, rnd: Math.random,
         night: Scene.night, rain: Scene.rain };
       try {
         hideSheet(); QUIET = true; HOUR_FORCE = 14; FROST_FORCE = 0; S.dawnDusk = 0;
         // ---- the recordings ----
         const AC = window.OfflineAudioContext || window.webkitOfflineAudioContext, recs = {};
-        for (const k of ['frogA', 'frogB', 'frogC', 'crow', 'quail']) {
+        for (const k of ['frogA', 'frogB', 'frogC', 'crow', 'quail', 'fox']) {
           const el = document.getElementById('rec-' + k); if (!el) { f('no ' + k + ' recording'); continue; }
           const bin = atob(el.textContent.trim()), u = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i);
           try { recs[k] = await new AC(1, 22050, 22050).decodeAudioData(u.buffer); } catch (e) { f('the ' + k + ' recording does not decode'); }
-          if (recs[k] && !(recs[k].duration > 0.3 && recs[k].duration < 2)) f('the ' + k + ' recording lasts ' + recs[k].duration.toFixed(2) + 's');
+          if (recs[k] && !(recs[k].duration > 0.2 && recs[k].duration < 2)) f('the ' + k + ' recording lasts ' + recs[k].duration.toFixed(2) + 's');
         }
         if (o.fails.length) return o;
         // ---- what plays where ----
@@ -48,7 +49,7 @@ module.exports = {
         for (const k of OTHER) Sfx[k] = () => {};
         Sfx.musicTick = () => {}; Math.random = seeded(5521);
         const run = (secs, night, rain) => { Scene.night = night; Scene.rain = rain; const n0 = Object.assign({}, n);
-          for (const k of ['frogT', 'owlT', 'crowT', 'gbirdT']) Sfx[k] = undefined;
+          for (const k of ['frogT', 'owlT', 'crowT', 'gbirdT', 'foxT']) Sfx[k] = undefined;
           for (let t = 0; t < secs; t += 0.1) Sfx.tick(0.1);
           return Object.fromEntries(AN.map(k => [k, n[k] - n0[k]])); };
         const say = c => AN.filter(k => c[k]).map(k => k + ' ' + c[k]).join(', ') || 'none';
@@ -68,6 +69,10 @@ module.exports = {
         if (hBare) { lay(hBare); o.c.bareDay = run(120, false, false); o.c.bareNight = run(120, true, false); }
         SEASON_FORCE = 2; lay(hWet); o.c.winterDay = run(120, false, false); o.c.winterNight = run(120, true, false);
         SEASON_FORCE = 1; lay(hPh); o.c.pheasant = run(120, false, false); o.c.pheasantNight = run(120, true, false);
+        // (the fox: a hole laid at night with its eyes out)
+        { SEASON_FORCE = 0; const h0 = S.hole; let hf = 0; for (let h = h0; h < h0 + 600 && !hf; h++) { if (sigKind(h)) continue; S.hole = h; S.chaos = { n: 'Night Round' }; Scene.newHole(h, S.tier); Scene.heli = 0; Scene.crossing = 0;
+            if (Scene.props.some(p => p.kind === 15 && p.an === 'eyes')) hf = h; } S.hole = h0;
+          if (!hf) f('no night hole with a fox\'s eyes'); else { o.c.fox = run(120, true, false); o.c.foxDay = run(120, false, false); } }
         Scene.night = false; Scene.rain = false;
         const C = o.c, inr = (v, a, b) => v >= a && v <= b;
         if (!inr(C.wetDay.frogs, 4, 14)) f('frogs by the water by day: ' + say(C.wetDay));
@@ -82,6 +87,8 @@ module.exports = {
         if (!inr(C.pheasant.gameBird, 4, 16) || C.pheasantNight.gameBird) f('with a pheasant out: ' + C.pheasant.gameBird + ' by day, ' + C.pheasantNight.gameBird + ' at night');
         if (say(C.winterDay) !== 'none' && (C.winterDay.frogs || C.winterDay.crow)) f('in winter by day: ' + say(C.winterDay));
         if (C.winterNight.frogs) f('frogs in winter at night: ' + C.winterNight.frogs);
+        if (C.fox && (!inr(C.fox.foxBark, 4, 14) || C.foxDay.foxBark)) f('the fox by its eyes: ' + C.fox.foxBark + ' at night, ' + C.foxDay.foxBark + ' by day');
+        if (C.wetNight.foxBark || C.dryNight.foxBark) f('a fox barking with no eyes out: ' + say(C.wetNight) + ' / ' + say(C.dryNight));
         // ---- how loud ----
         Object.assign(Sfx, keep.fns, { ctx: keep.ctx, master: keep.master, musicTick: keep.mt }); Math.random = keep.rnd; QUIET = true; SEASON_FORCE = -1;
         Sfx.recs = Object.assign({}, keep.recs, recs);
@@ -107,8 +114,8 @@ module.exports = {
     });
     if (r.fails.length) throw new Error(r.fails.join('\n'));
     const c = r.c, d = r.db;
-    return ['by the water in two minutes: frogs ' + c.wetDay.frogs + ' by day, ' + c.wetNight.frogs + ' at night; the crow ' + c.wetDay.crow + ' by day, the owl ' + c.wetNight.owl + ' at night; a pheasant\'s call ' + c.pheasant.gameBird,
+    return ['by the water in two minutes: frogs ' + c.wetDay.frogs + ' by day, ' + c.wetNight.frogs + ' at night; the crow ' + c.wetDay.crow + ' by day, the owl ' + c.wetNight.owl + ' at night; a pheasant\'s call ' + c.pheasant.gameBird + '; the fox by its eyes ' + c.fox.foxBark,
       'none on a dry hole (frogs), with no woods (crow, owl), no pheasant (game bird), in winter, a wager or with the switch off',
-      ['frogs', 'owl', 'crow', 'gameBird'].map(k => k + ' ' + d[k].toFixed(1)).join(', ') + ' dB, under the autumn gust\'s ' + d.gust.toFixed(1) + ' (the pines ' + d.pines.toFixed(1) + ')'];
+      ['frogs', 'owl', 'crow', 'gameBird', 'foxBark'].map(k => k + ' ' + d[k].toFixed(1)).join(', ') + ' dB, under the autumn gust\'s ' + d.gust.toFixed(1) + ' (the pines ' + d.pines.toFixed(1) + ')'];
   }
 };

@@ -935,6 +935,14 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
 #holeMap{position:absolute;right:2.5%;z-index:28;display:none;pointer-events:none;
   image-rendering:pixelated;image-rendering:crisp-edges;
   box-shadow:0 0 0 1px rgba(0,0,0,.55),0 2px 6px rgba(0,0,0,.45)}
+/* An animal spotted (the user asked): a small tag just above the map, its
+   name and any reward, faded in and out. Placed by spotShow(). */
+#spotTag{position:absolute;right:2.5%;z-index:29;display:none;pointer-events:none;text-align:right;
+  font-size:var(--f1);font-weight:700;letter-spacing:.04em;line-height:1.3;color:#F4ECD8;white-space:nowrap;
+  background:rgba(14,22,18,.84);border:1px solid rgba(227,180,87,.55);border-radius:3px;padding:3px 7px;
+  animation:spotIn 2.6s ease forwards}
+#spotTag b{display:block;color:var(--brass);font-weight:700}
+@keyframes spotIn{0%{opacity:0;transform:translateY(4px)}10%{opacity:1;transform:none}80%{opacity:1}100%{opacity:0}}
 /* The wind, the weather, the course's affinity, a signature hole and the
    closing hole: small, in the readout under its bar (the user asked, the
    words over the map having grown too big), each item kept whole and the
@@ -1071,6 +1079,7 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
   <div id="stage">
     <canvas id="hole" width="720" height="440"></canvas>
     <canvas id="holeMap" aria-hidden="true"></canvas>
+    <div id="spotTag" aria-live="polite"></div>
     <div id="hudLeft">
     <div id="rRow">
     <div id="readout">
@@ -1237,6 +1246,10 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
   quail    - "Quail Sound" by AntumDeluge, opengameart.org/content/quail-sound
              (CC0); the game bird's call in the rough, standing in for a
              pheasant's (no free pheasant recording was found)
+  fox      - the first bark of "Dog Barking (mono)", opengameart.org/content/
+             dog-barking-mono (CC0), played half as fast again and cut to
+             its first 0.3s: a fox's short high bark by its eyes at night
+             (no free fox recording was found)
   (the owl's hoot is made in the game, as no free owl recording was found)
 -->
 <script type="text/plain" id="rec-strike">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qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//tIxKQDx5gK+aMIICAAADSAAAAEqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq</script>
@@ -1249,6 +1262,7 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
 <script type="text/plain" id="rec-frogC">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</script>
 <script type="text/plain" id="rec-crow">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</script>
 <script type="text/plain" id="rec-quail">SUQzBAAAAAAAO1RQRTEAAAAPAAADUHJpbmNlc3NHcmFjZQBUU1NFAAAADgAAA0xhdmY2MS4xLjEwMAAAAAAAAAAAAAAA//NwwAAAAAAAAAAAAEluZm8AAAAPAAAAIQAADi4AFBQUGxsbIiIiKioqMTExOTk5QEBAR0dHT09PVlZWXV1dZWVlbGxsdHR0e3t7goKCioqKkZGRmJiYoKCgp6enrq6utra2vb29xcXFzMzM09PT29vb4uLi6enp8fHx+Pj4////AAAAAExhdmM2MS4zLgAAAAAAAAAAAAAAACQCnwAAAAAAAA4u3rglPAAAAAAAAAAAAAAAAAD/80DEABQgBsJfQBgCA+sjQBbEgtGUBAP1rBwEDkEMvlAQBCCAIeXB8HwQBAEAQAYPn8EHfygIAgCADB8Hz8EDmn///Lg+CAIAgCADB8HwfD4IAgCAIJB8HwfuBAEFAFgwsAYBIttutv/zQsQKFymqyl+HaALRaAAPzkpgNB7vUkXv1mJd/SJYLEnrQAHQmlQdgRA3i8dJU1Dkl6qBACXuyjY2RNEUr2JVJdBZuVsYlZsSiPzUSUYFX0RBxxN+xf+nvsXCpVTACgDCj3wH/4L////zQMQJFrrmhVfCqAH/WYnjxwc4NmASDQMSMIDIwnC00nC8bLR+jZtSHXoGhubHaXqos1axmy03/0X0EGQrTNjJAnU3MF//QLg5hBkMmGLiH1M//TWn//1GBMH9+no3AAoAEBtd3+H///NCxAkWWwLCXoGVY+t////0fUbg3eXz6P/IIcoIu6llu5w/KkqES/9LFQOMv/VnUnOKDwsYswSiwzEGLd2/74MC5zT0JopJemv/5Rf/OSiAU1dkM0IUk5n/OxszigDBFi5AP/3ST/////NAxAsWOuaVdqJVZ/3uiIXDEgGOtgcUKLiLqSL+gaERlZA2MrKtB4w27KXRtrXPP//4Pi29v+rVR92OMJTAWiMm//x8JY67FwskI+P//+h7U/69x6H6KOrMiQDBBAtQP/0l///8YO3/80LEDRba6n12DtsgSA1mkQ6YBan7kzKyIZoVVJnFl9EnyWTVMDA1dFSKBsZszfostG4TUC4IP/9I6z0k11IuSLO3/9zo7lnEh3Esbu6P7t6CTN//9UkSCfrEqhBAeH///ljlSv0YEBL/80DEDRXi6mw0ByEIAjqZJxZuAlFoV1PzGqXLGrVd2iIKs1ZE+tkippJpFItm61I/rU+mWABEW1P7o6PRXosmedzdm//1rMCZNFo6n//+///7ImR+06EaEGrMIB//+9bqTcMOexowb//zQsQQE/MCdD4GlQnPklV5F7HeZ7p8cKqKaUkpzOPnfoTTf6WOJiUKEAaHh9+aa2j7zWS5pCqkprf/zyw+Fqj//////81D3fPISA2aD/o06cyJpijf//54Tc4/RMKmNQodyq6jNalyhv/zQMQcE4MCVBAOyyReN4ocv7UTEDAa4wRq5pRUSFTl/dLzMgvb13X9nRVnV///0f////t/6chyJka4mGWX6o1CREAPcgTcPMzdnkb7/L+X88Hfck1rwUjUu4drXIy7by0VlFBRRmMw//NCxCkR2xJaVA5FJFR9V66f+5n/X/2////Y3///0///tRSm0jsFEszzYvXWAIwAJyFqWXV66WD/b6PNdqL/7l78sPDS8F0MDhMLGo6kM5nIMdvp/7ei/9W6/////3///83/+VdykEsW//NAxD0RYu5RuhZLICDTALhuQqqQ5dqlIK0WbVWUHXV/v/rsM6KcQABrcS/U5dKRw8ipbut0CdKR////v///5pLf9HbIwEEji4owmLRqOUwgJB8HtQeJi4AR0gjaslZPdkz5imzUklP/80LEUhGrQkgAoAuJJ///VSSLopEBygFXHDZmnEDA+a+65eTLbv///RTf27NNfOHXlhqcPiVMGkxiZw3HZy1YRRyEB6o5A6oAIZBuhAFNhU3c1meVvT0p9/uSwS4Ws0NfTTrrDwAITbT/80DEZxFTXkQAmA+M/9///9P///777r///0R907decwmyFCAQEaXMQkwIYURkHDiMkIMkWoGBKWEAS3Xp8kN31X1/0TATcUjfu3/lKNBRNlK/O3+39/l31k+/0//9Vv///6/+9lJnnP/zQsR8EjNOTZYTSwVEiIDiJg8LiSiqEHQu4+OgEcABIwCpYwBvbbW9Ge3ejV90/6ikDh4lR//5hIz0ZKGQzf9HX/3pJ7LbX9Pbv////+rNX/mVtEAUSMLixnQLFzn4WIhHGYYEyilFxP/zQMSPEPsOUN4LSyEBgB/gLpOfW7k55ZNOn/fX6opYGR6qc//LJ/5/57//3////8v7///qef////9jGNT1STQFBaIYQWm4f0e1AWYn1Fn2ePWkAIKI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</script>
+<script type="text/plain" id="rec-fox">SUQzBAAAAAAAIlRTU0UAAAAOAAADTGF2ZjYxLjEuMTAwAAAAAAAAAAAAAAD/83DAAAAAAAAAAAAASW5mbwAAAA8AAAAMAAAFnAAyMjIyMjIyMkVFRUVFRUVFWFhYWFhYWFhqampqampqamp9fX19fX19fZCQkJCQkJCQoqKioqKioqKitbW1tbW1tbXIyMjIyMjIyNra2tra2tra2u3t7e3t7e3t//////////8AAAAATGF2YzYxLjMuAAAAAAAAAAAAAAAAJAQ3AAAAAAAABZx2bWPBAAAAAAAAAAAAAAAAAP/zQMQAE7iydBdJYAAGW5R//Oc5EAJmygIAYJIoxWKBQKBQKBQSRC4EAOKE5mZv/tO269evfBwEAQBA5g+D/+XAjgQBA55T8/+H/lKAff//4Pg/o98Tg+BAQBA4q9AjDJBZfRIgsCMi//NCxAwW8VLAAZLIAF4ZccSllY8K5IiOVHaEJhlll+5GaBCWxEmUmxQsHuPu3XTQjsajZcmTv6+9P3Pvyj8MsKXX/rv///395d3lqr2ZwsV/8o60NkYoc/o267RaGYAC0o2Px+prKNWX//NAxAwW4gLaH8hAAnd1FQcGBCRctMEgsAKDgK2IF2D0aIwdHElHRHA2g6lYb25/525+amaf76Fv77HNP81V2yEDV8SD3RZqLq4rnrrlSBxr//9wf/6+9kPVqOmqdZBG425+BW9DIYv/80LECxbiAs4eSMVK5l9B4mRNAeEFkp9ZdU4ZAVGuajGMiLzW1g9iS0pbxBkX0vWWoS6LUY1gFMbZEUv/9GQdUuge6lZlW9uzsoCCSE+ExpJLzi3tQljSx3/xcIDaPAu52gf+yddpgez/80DECxbSAq1WSYcqcjSZSBGfWJpsTXDI6bwGgCyIpUREXOPLBOMvMbBUY2981rjml5hC32jiOpT7JkRwnInP+5CDYLlDMnoUv6eC2mbGGCQaPJ6jZArqYUT7/+XqOAD/81A/6aCMKf/zQsQKFrpKrXZJhwp75U14PHEWjnvJmdpGHbzq/YHtzRs2aSSxEwanTfyfJv44aifsdiqObVRMh/S5yK0JZ5HqSgz3y226zHvrsx1/8+67VhQ8RDziz7zRa//6p1E/TqbjlAH/hFCrJf/zQMQLE9oCqX5JR0KaJgquQor7TRX/5+NLgaHiy6We5VNUxd0jbjYCv+3t9gw75hQe2vVXyPHyU6cZtKyzI0zVTly//ptmuQlhxgv6V1HmQ0oe6AB8f61SC9hxYTKaTKoUotkCECWm//NCxBYTwbp4FnsKzOt33EwmgyAsFWu1XpnzHm+xDHox2JaBhZqd/o0xXZFGnQxqIhiK0qG/t5VbKrKHTqUlkytDxzRDlmeNNgkWCrRBnhg5rSqxlUDlPQyZwZDTRJ3nRdBHktq8kioH//NAxCMUAR5AADYQdCotNtZt1J6Mh6gSgBUGXYKQWqtNDTWvWzQ3wLGwVdSHYiBqJYdjjx5blu/6awWNhTlwEafZbKhkwUMCDxp/FhYXYv29D/4qKirf6xb/6xT//1C/8yLp/i9MQU3/80LELgq4TgBeCEYARTMuMTAwVVVVVVVVVVVVVVVVVVVMQU1FMy4xMDBVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVX/80DEXwAAA0gAAAAAVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVf/zQsSjAAADSAAAAABVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVQ==</script>
 <script>
 "use strict";
 /* ==================================================================   MYTHIC MULLIGAN
@@ -5023,6 +5037,20 @@ function masterTick(live){
   for(const sl of B.SLOTS){ const it = S.equip[sl.id]; if(!it) continue;
     const k = masterStars(it); it.mh = (it.mh || 0) + 1;
     if(live && masterStars(it) > k) toast('<span class="achk">' + sl.n + ' Mastery \u2605' + masterStars(it) + '</span>' + it.name, 'ach'); }
+  if(live) masterLive();
+}
+// the bag's tiles for the clubs carried brought up to date as a hole is
+// played (the user: the gear page did not move until he left it and came
+// back): their stars, holes into the next and bar, in place
+function masterLive(){
+  const list = document.getElementById('bagList'); if(!list) return;
+  for(const sl of B.SLOTS){ const it = S.equip[sl.id]; if(!it) continue;
+    const d = list.querySelector('[data-uid="' + it.uid + '"]'); if(!d) continue;
+    const ms = masterStars(it), mp = masterProg(it), mx = d.querySelector('.gmx'), bar = d.querySelector('.gxbar'), th = d.querySelector('.thumb');
+    if(mx) mx.innerHTML = starsHtml(ms) + '<span>' + (mp.of ? fmt(mp.n, 0) + '/' + fmt(mp.next, 0) : 'Max') + '</span>';
+    if(bar){ bar.classList.toggle('pu', ms >= B.MASTER_GOLD); const i = bar.querySelector('i'); if(i) i.style.width = Math.round(mp.f * 100) + '%'; }
+    if(th){ th.classList.toggle('mast', ms > 0); th.classList.toggle('pu', ms > B.MASTER_GOLD); }
+  }
 }
 function affixValue(it, a){
   const def = B.AFFIX.find(x => x.id === a.k);
@@ -6894,7 +6922,7 @@ const Sfx = {
   // decode it, the synthesised sound plays instead.
   recs: {},
   load(){
-    for(const k of ['strike', 'putt', 'cup', 'music', 'music2', 'frogA', 'frogB', 'frogC', 'crow', 'quail']){
+    for(const k of ['strike', 'putt', 'cup', 'music', 'music2', 'frogA', 'frogB', 'frogC', 'crow', 'quail', 'fox']){
       const el = document.getElementById('rec-' + k);
       if(!el || this.recs[k] !== undefined) continue;
       this.recs[k] = null;
@@ -7157,10 +7185,11 @@ const Sfx = {
   // Animals heard round the course (the user picked them from the menu, the
   // recordings from free sound packs: see the note above the sound data):
   // frogs by the water, a crow in the woods by day, a game bird's call where
-  // a pheasant is out, an owl in the woods at night. Each set by measure
-  // against the ambience above, quiet and now and then, on the effects'
-  // slider (they are ambience, not the shot sounds).
-  WILD_VOL: { frog: 0.013, crow: 0.015, bird: 0.011, owl: 0.005 },
+  // a pheasant is out, an owl in the woods at night, a fox barking where
+  // its eyes shine. Each set by measure against the ambience above, quiet
+  // and now and then, on the effects' slider (they are ambience, not the
+  // shot sounds).
+  WILD_VOL: { frog: 0.013, crow: 0.015, bird: 0.011, owl: 0.005, fox: 0.019 },
   // a frog or two croaking, each a shade higher or lower than the last
   frogs(t){
     const k = 1 + (Math.random() * 3 | 0), V = this.WILD_VOL.frog;
@@ -7175,6 +7204,11 @@ const Sfx = {
     const r = 0.95 + Math.random() * 0.1;
     this.rec('quail', t, this.WILD_VOL.bird, r, 0, this.master);
     if(Math.random() < 0.4) this.rec('quail', t + 1.3 + Math.random() * 0.4, this.WILD_VOL.bird * 0.8, r, 0, this.master);
+  },
+  // a fox's bark or two from the woods, where its eyes shine
+  foxBark(t){
+    const r = 0.95 + Math.random() * 0.12, k = Math.random() < 0.5 ? 1 : 2;
+    for(let i = 0; i < k; i++) this.rec('fox', t + i * (0.45 + Math.random() * 0.2), this.WILD_VOL.fox * (1 - i * 0.15), r, 0, this.master);
   },
   // an owl, made here (no free recording was found): a soft low hoo, a
   // pause, then a longer wavering one, as a tawny owl calls
@@ -7429,6 +7463,7 @@ const Sfx = {
     call('frogT', wild && wet && season !== 'Winter', Scene.night ? 9 : 16, this.frogs);
     call('owlT', wild && Scene.night && !Scene.rain && (woods || (Scene.props || []).some(p => p.kind === 15 && p.an === 'owl')), 20, this.owl);
     call('crowT', wild && !Scene.night && !Scene.rain && woods && season !== 'Winter', 28, this.crow);
+    call('foxT', wild && Scene.night && (Scene.props || []).some(p => p.kind === 15 && p.an === 'eyes'), 16, this.foxBark);
     call('gbirdT', wild && !Scene.night && !Scene.rain && (Scene.props || []).some(p => p.kind === 15 && p.an === 'pheasant'), 14, this.gameBird);
     if(S.dgnRun || Scene.night || Scene.rain || season === 'Winter') return;
     this.birdT = (this.birdT || 3 + Math.random() * 6) - dt;
@@ -21803,6 +21838,10 @@ function paintGolfer(c, x, y, w, h, ph, t, bot, walking, walkPh, spr, arc, putt,
     if(h > 22){ c.fillStyle = OS.hand || OS.shirt; c.fillRect(Math.round(P.hx) - 1, Math.round(P.hy) - 1, th + 1, th + 1); }
     g.hand = { x: P.hx, y: P.hy }; arc.length = 0;
     if(!P.noClub) drawClub(c, P.gx, P.gy, P.tx, P.ty, th, h, P.turn, t);
+    // (a hand raised over his head goes behind it, the club with it: the
+    // user saw the ace's club arm across his face. His head is drawn again
+    // over them, and what his look wears on it.)
+    if(P.hy < sy - h*0.08) redrawHead(c, spr, x, y, w, h, shear, g, FX);
     c.globalAlpha = 1;
     if(FX && FX.front) FX.front(c, g);
     if(FX) femTail(c, g, outfitNow().fx);
@@ -21829,6 +21868,15 @@ function paintGolfer(c, x, y, w, h, ph, t, bot, walking, walkPh, spr, arc, putt,
   const PF = CF && CF.pure ? pureNow(t) : null;
   if(PF){ c.globalAlpha = 1; CF.pure(c, g.x + g.w * 1.19, bot - 2, h, PF.f, t); }
   c.globalAlpha = 1; c.globalCompositeOperation = 'source-over';
+}
+// His head drawn again over what has just gone across it (an arm raised
+// behind it): the part of him above his collar, and his look's own on it
+function redrawHead(c, spr, x, y, w, h, shear, g, FX){
+  c.save(); c.beginPath(); c.rect(x - w * 2, y - h, w * 5, Math.ceil(h * (1 + 13 / 58))); c.clip();
+  c.globalAlpha = FX && FX.alpha ? FX.alpha : 1;
+  blitShear(c, spr, x, y, w, h, shear, g.bulk);
+  if(FX && FX.body) FX.body(c, g);
+  c.restore(); c.globalAlpha = 1; c.globalCompositeOperation = 'source-over';
 }
 // Flying: seen from behind, legs hanging, both hands up over his head holding
 // the club flat and spinning it like a rotor. Its shadow on the water below.
@@ -26008,13 +26056,14 @@ function huntNow(){
 }
 function huntSee(ids){
   const H = huntNow(), want = huntOf(H.wk), fresh = ids.filter(id => want.includes(id) && !H.got.includes(id));
-  if(!fresh.length || !fairCard()) return;
+  if(!fresh.length || !fairCard()) return null;
   H.got.push(...fresh);
-  const n = H.got.length;
-  if(n >= 3 && !H.paid){ H.paid = 1; grantSov(B.HUNT_SOV, '', true);
-    toast('<span class="achk">Weekly Hunt</span>All three found \u00b7 <span style="white-space:nowrap">+' + B.HUNT_SOV + sovIc() + '</span>', 'ach'); }
-  else toast('<span class="achk">Weekly Hunt</span>' + fresh.map(id => GUIDE.find(g => g.id === id).n).join(', ') + ' \u00b7 ' + n + '/3', 'ach');
+  const n = H.got.length, paid = n >= 3 && !H.paid;
+  if(paid){ H.paid = 1; grantSov(B.HUNT_SOV, '', true); }
+  return { fresh, n, paid };
 }
+// the animals on the Guide's shelves (wildlife, night, golden), for the tag
+const isAnimal = id => { const g = GUIDE.find(x => x.id === id); return !!g && 'wng'.includes(g.g); };
 // count what was seen, and pay for each seen the first time
 function guideAdd(got){
   S.guide = S.guide || {};
@@ -26024,10 +26073,38 @@ function guideAdd(got){
     if(!S.guide[id]) firsts.push(g.n);
     S.guide[id] = (S.guide[id] || 0) + 1;
   }
-  // (one line for all of a hole's firsts)
-  if(firsts.length){ const n = B.GUIDE_SOV * firsts.length; grantSov(n, '', true);
-    toast('<span class="achk">Field Guide</span>' + firsts.join(', ') + ' \u00b7 <span style="white-space:nowrap">+' + n + sovIc() + '</span>', 'ach'); }
-  huntSee(got);
+  if(firsts.length) grantSov(B.GUIDE_SOV * firsts.length, '', true);
+  const hunt = huntSee(got);
+  // the animals in a tag over the map, with what they paid and the hunt;
+  // anything else seen the first time (the weather, the seasons, the
+  // signature holes) in one line of a toast
+  const an = got.filter(isAnimal), newAn = firsts.filter(n => an.some(id => GUIDE.find(g => g.id === id).n === n));
+  const rest = firsts.filter(n => !newAn.includes(n));
+  if(rest.length) toast('<span class="achk">Field Guide</span>' + rest.join(', ') + ' \u00b7 <span style="white-space:nowrap">+' + B.GUIDE_SOV * rest.length + sovIc() + '</span>', 'ach');
+  if(an.length || hunt) spotShow(an, newAn.length, hunt);
+}
+// The tag: "Fox Spotted!" (two named, or the first and how many more), and
+// under it what came of it: sovereigns for a first sighting, the week's hunt
+// counted, or paid. Live only.
+function spotShow(an, nNew, hunt){
+  if(QUIET || OFFLINE || typeof document === 'undefined') return;
+  const el = document.getElementById('spotTag'); if(!el) return;
+  const nm = id => GUIDE.find(g => g.id === id).n;
+  // (the new ones and the hunted ones named first)
+  const order = an.slice().sort((a, b) => (S.guide[a] === 1 ? 0 : 2) + (hunt && hunt.fresh.includes(a) ? 0 : 1) - (S.guide[b] === 1 ? 0 : 2) - (hunt && hunt.fresh.includes(b) ? 0 : 1));
+  if(!order.length && hunt) order.push(...hunt.fresh);
+  const title = order.length === 1 ? nm(order[0]) : order.length === 2 ? nm(order[0]) + ' & ' + nm(order[1]) : nm(order[0]) + ' +' + (order.length - 1);
+  const sov = B.GUIDE_SOV * nNew + (hunt && hunt.paid ? B.HUNT_SOV : 0), bits = [];
+  if(sov) bits.push('<span style="white-space:nowrap">+' + sov + sovIc() + '</span>');
+  if(hunt) bits.push(hunt.paid ? 'Hunt Done' : 'Hunt ' + hunt.n + '/3');
+  el.innerHTML = title + ' Spotted!' + (bits.length ? '<b>' + bits.join(' \u00b7 ') + '</b>' : '');
+  // (just above the map; at the foot of the field when there is no map)
+  const st = document.getElementById('stage'), cv = document.getElementById('holeMap'), dr = document.getElementById('drawer');
+  const SH = st ? st.clientHeight : 0, gap = 4;
+  const top = Scene.mapOn && cv ? parseFloat(cv.style.top) || 0 : SH - (dr && dr.offsetParent ? dr.offsetHeight : 0) - 8;
+  el.style.display = 'block'; el.style.animation = 'none'; void el.offsetWidth; el.style.animation = '';
+  el.style.top = Math.max(0, top - el.offsetHeight - gap) + 'px';
+  clearTimeout(spotShow.t); spotShow.t = setTimeout(() => { el.style.display = 'none'; }, 2700);
 }
 // one seen as it is drawn, not as the hole is laid (a shooting star): live
 // only, a first sighting paid as the others are

@@ -54,6 +54,14 @@ module.exports = {
           f('seven stars show ' + t7.querySelectorAll('.mstars b.pu').length + ' purple and ' + t7.querySelectorAll('.mstars b:not(.pu)').length + ' gold');
         const tMax = gearTile(Object.assign({}, dr, { mh: B.MASTER[9] }), false);
         if (tMax.querySelectorAll('.mstars b.pu').length !== 5 || !/Max/.test(tMax.querySelector('.gmx').textContent)) f('ten stars read ' + tMax.querySelector('.gmx').textContent);
+        // the bag open on his clubs: a hole played moves the carried club's
+        // tile there and then (the user: it did not until he left the page)
+        { S.bagSlot = dr.slot; renderBag(); const live = () => document.querySelector('#bagList [data-uid="' + dr.uid + '"]');
+          const t0 = live() && live().querySelector('.gmx').textContent, w0 = live() && live().querySelector('.gxbar i').style.width;
+          dr.mh = B.MASTER[2] - 2; masterTick(true); const t1 = live() && live().querySelector('.gmx').textContent;
+          if (!t1 || t1 === t0 || !t1.includes(fmt(B.MASTER[2] - 1, 0) + '/')) f('a hole played left the open bag reading "' + t1 + '" (was "' + t0 + '")');
+          masterTick(true); const L2 = live(); if (!L2 || L2.querySelectorAll('.gmx .mstars b').length !== 3 || L2.querySelector('.gxbar i').style.width === w0) f('a star earned with the bag open shows ' + (L2 && L2.querySelectorAll('.gmx .mstars b').length) + ' stars');
+          masterTick(false); dr.mh = mid; }
         // the window: the stars, the holes, a bar, and what the next star lifts
         itemSheet(dr, true);
         const mb = document.querySelector('#sheet .mastbox'); o.sheet = mb ? mb.textContent : '';
