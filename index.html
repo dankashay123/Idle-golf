@@ -13110,6 +13110,17 @@ const CANYON_STRATA = ['#C8643A', '#A84A2C', '#D8844C', '#8E3C26', '#BE5A36', '#
 // deeper, the darker and the more lost in haze; at the bottom a river
 // winding between gravel banks.
 const CANYON_STEP = 4, CANYON_RIM = 0.36;
+// the canyon's morning mist (Scene.cmist), and a pin for the checks
+let CMIST_FORCE = null;
+// a colour with mist laid over it, k eighths of the way to the mist's
+function mistC(T, c, k){
+  if(k <= 0) return c;
+  const M = T._mst || (T._mst = new Map()), key = c + k;
+  let o = M.get(key); if(o) return o;
+  if(M.size > 4000) M.clear();
+  M.set(key, o = mixC(c, mixC('#EEF2F4', T.sky ? T.sky[4] : '#C8D8E0', 0.25), k / 8));
+  return o;
+}
 const P_CANYON = { D: 10, eu: 0.10, e0: 0.30, e1: 0.30, N: 480,
   // its depth down from the rim, and how fast that changes, along the hole;
   // by column (colProf), each stretch of wall reaching out a different way,
@@ -20615,7 +20626,12 @@ const Scene = {
         // (the distance haze laid over the whole field after greyed its
         // far wall to a fence; its colours are made that much stronger
         // first, so most of the haze is taken back off)
-        const col = unhaze(T, P.tone(T, fu * A[k], ndl, near, Math.sqrt(gx*gx + gy*gy), fi, tt, hz, sp.l + sp.r), this.hazeA(Math.round(top)));
+        let col = unhaze(T, P.tone(T, fu * A[k], ndl, near, Math.sqrt(gx*gx + gy*gy), fi, tt, hz, sp.l + sp.r), this.hazeA(Math.round(top)));
+        // (a cold morning's mist lying in its depths, thicker the deeper,
+        // in soft drifts along it)
+        if(this.cmist){ const fz = fu * A[k]; if(fz > 0.3){
+          const m = Math.min(1, Math.pow((fz - 0.3) / 0.6, 0.8) * (0.7 + 0.3 * Math.sin(fi * 0.06 + tt * 7 + Math.sin(fi * 0.017) * 2)));
+          col = mistC(T, col, Math.round(m * 8)); } }
         const m = Math.min(top, TP[k - 1], TP[k + 1]);
         const t0 = Math.round(m) - (m < top ? 1 : 0), t1 = Math.max(t0 + 1, Math.round(bot));
         if(run && rc === col && rt === t0 && rb === t1 && rx1 === x){ rx1 = x + 1; continue; }
@@ -21416,6 +21432,11 @@ const Scene = {
     const look = seasonLook(cs, courseSeason(cs, tier));
     this.look = look;
     this.harvest = this.night && !this.rain && harvestAt(h, look);
+    // mist lying in the canyon on a cold morning (the user picked it from
+    // the menu): on a frosty morning, or a dry autumn or winter one by the
+    // real month where the course has no seasons, five to eleven
+    this.cmist = !this.night && !this.rain && isCanyon(h) && (CMIST_FORCE !== null ? !!CMIST_FORCE
+      : this.frost || ([1, 2].includes(MONTH_SEASON[monthNow()]) && hourNow() >= 5 && hourNow() < 11));
     this.land = look.land;
     this.themeId = look.id + '|' + mode;
     this.theme = buildTheme(look, mode);
@@ -23864,7 +23885,7 @@ Object.assign(Scene, {
     // The colours count too, as the ramps themselves: a palette can be
     // recoloured in place without becoming a new palette.
     const now = [this.gGen, this.theme, this.themeId, VW, VH, cam, this.camH, this.pixGround !== false,
-                 T._fw, T._rg, T._gr, T._sd, T._sdb, T._wt, T._bk, T._cn, T._ic, this.ice, T._rim, T._arim, T.apron, T.edge, T.lip];
+                 T._fw, T._rg, T._gr, T._sd, T._sdb, T._wt, T._bk, T._cn, T._ic, this.ice, T._rim, T._arim, T.apron, T.edge, T.lip, !!this.cmist];
     let same = this.pixGround !== false && key.length === now.length;
     for(let i = 0; same && i < now.length; i++) if(key[i] !== now[i]) same = false;
     if(same){
@@ -25312,7 +25333,10 @@ Object.assign(Scene, {
   drawDog(){
     this._dogBox = null;
     const br = dogNow(); if(!br || S.dgnRun) return;
-    const G = this.golferPose(); if(G.heli || (this.isle && this.isle.hop && this.camD > this.isle.bank - 0.5 && this.camD < (this.isle.land || 0) + 0.5)) return;
+    // (not on the stones, the bridge or the pier, where it stood in the air
+    // beside him: it waits on the bank and is there again across)
+    const I = this.isle, over = I && !I.fly && !I.rail && !I.gold && this.camD > I.bank - 0.5 && this.camD < (I.land || 0) + 0.5;
+    const G = this.golferPose(); if(G.heli || over) return;
     const walking = !!G.walking, d = this.camD + 0.35, x = walking ? -0.95 : -0.8, p = this.proj(d, x);
     const kind = walking ? 'trot' : 'sit';
     const fr = walking ? Math.floor(this.walkPh * 4) & 1 : (this.t * 0.6 + 0.3) % 4 < 0.6 ? Math.floor(this.t * 8) & 1 : 0;

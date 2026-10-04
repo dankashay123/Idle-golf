@@ -68,10 +68,16 @@ module.exports = {
             if (!dogTap(...at(B0.x + B0.w / 2, B0.y + B0.h / 2))) f('a tap on the dog did nothing');
             else if (!document.querySelector('#wildRows .dogt')) f('a tap on the dog opened no breeds');
             hideSheet(); QUIET = true; } }
+        // none in the air over the gorge as he crosses the bridge (it stood
+        // beside him over the canyon), nor on the stones; back across
+        { CANYON_FORCE = S.hole; S.dog = 'golden'; Scene.newHole(S.hole, S.tier); const I = Scene.isle;
+          if (I) { Scene.camD = (I.bank + I.land) / 2; Scene.draw(0, D); if (Scene._dogBox) f('a dog drawn beside him over the gorge');
+            Scene.camD = I.land + 1.5; Scene.draw(0, D); if (!Scene._dogBox) f('no dog with him once across the bridge'); }
+          CANYON_FORCE = 0; Scene.newHole(S.hole, S.tier); }
         return { fails, sit: sit.n, walk: walk.n };
       } finally { DOG_ON = dogWas; Scene.drawDog = keep; QUIET = false; S.dgnRun = null; Scene.heli = 0; const o = JSON.parse(SNAP); for (const k of Object.keys(S)) delete S[k]; Object.assign(S, o); }
     });
     if (r.fails.length) throw new Error(r.fails.join('; '));
-    return ['put aside: none drawn or offered; switched on: sitting ' + r.sit + ' and walking ' + r.walk + ' pixels, on the ground; none with none, in a wager or in flight; breeds open by collections; the picker, and a tap on the dog opens it; repaired'];
+    return ['put aside: none drawn or offered; switched on: sitting ' + r.sit + ' and walking ' + r.walk + ' pixels, on the ground; none with none, in a wager, in flight or over the gorge; breeds open by collections; the picker, and a tap on the dog opens it; repaired'];
   }
 };
