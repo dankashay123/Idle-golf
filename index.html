@@ -26020,16 +26020,17 @@ Object.assign(Scene, {
       const d = I.bank + 0.6 + hr(i, 191) * (I.land - I.bank + 2) + Math.sin(this.t * 0.3 + i) * 0.5;
       if(d < near + 0.5) continue;
       const x = (hr(i, 192) - 0.5) * 9 + Math.sin(this.t * 0.4 + i * 1.7) * 0.8, z = 0.3 + hr(i, 193) * 0.9 + Math.sin(this.t * 0.9 + i) * 0.15;
-      const blink = Math.sin(this.t * (1.3 + hr(i, 194)) + i * 2.1);
-      if(blink < 0.2) continue;
+      // (each glowing up and fading, then dark a while: ffGlow)
+      const g = ffGlow(this.t, 500 + i);
+      if(g < 0.05) continue;
       const p = this.proj(d, x, z), k = p.s > 1.2 ? 2 : 1;
       const clip = this.camD >= I.bank - 0.3 ? Math.max(this.clipAt(d), p.y + k + 2) : this.clipAt(d);
       // (a soft glow round a bright heart: a cross of light, wider as it
       // brightens, not a square)
-      if(blink > 0.6){ c.fillStyle = '#4A6A1E'; const g = blink > 0.85 ? 2 : 1;
-        fillClip(c, p.x - g, p.y, k + g * 2, k, clip); fillClip(c, p.x, p.y - g, k, k + g * 2, clip);
-        if(g > 1){ c.fillStyle = '#6E8E2A'; fillClip(c, p.x - 1, p.y, k + 2, k, clip); fillClip(c, p.x, p.y - 1, k, k + 2, clip); } }
-      c.fillStyle = blink > 0.75 ? '#E8FF8A' : '#9ACB3A'; fillClip(c, p.x, p.y, k, k, clip);
+      if(g > 0.35){ c.fillStyle = 'rgba(74,106,30,' + ((g - 0.35) * 1.4).toFixed(2) + ')'; const w = g > 0.8 ? 2 : 1;
+        fillClip(c, p.x - w, p.y, k + w * 2, k, clip); fillClip(c, p.x, p.y - w, k, k + w * 2, clip);
+        if(w > 1){ c.fillStyle = 'rgba(110,142,42,' + ((g - 0.8) * 4).toFixed(2) + ')'; fillClip(c, p.x - 1, p.y, k + 2, k, clip); fillClip(c, p.x, p.y - 1, k, k + 2, clip); } }
+      c.fillStyle = ffCol(g, 1); fillClip(c, p.x, p.y, k, k, clip);
     }
   },
 
@@ -26059,7 +26060,7 @@ Object.assign(Scene, {
       if(foam){ c.fillStyle = foam; fillClip(c, p.x - w - 1, p.y, w * 2 + 2, 1, clip); }
     }
     this.drawFish(near);
-    if(this.night) this.drawFireflies(near);
+    if(this.night && fireflyAt(this.hole)) this.drawFireflies(near);
   },
 
   // The pier out to the sea stack: a boardwalk a hand above the water, planks

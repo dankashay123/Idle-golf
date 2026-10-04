@@ -42,12 +42,15 @@ through:
   later": `DOG_ON = false`, nothing drawn or offered); dragonflies over
   reeds and pads on summer days (they count for the Guide's
   Dragonfly, which was already there). Then ("Canyon is beautiful"):
-  fireflies over the reeds on summer nights, doubled in the water; ripples
+  fireflies over the reeds, doubled in the water; ripples
   where a dragonfly dips and round the frog's pad; a bug sweep (the Harvest
   Moon carried into a wager; the canyon's first frame; mist on a home
   course in summer; summer dragonflies not ticking a course's rare
   Dragonfly). What lives by the season asks `lookSeason`: a course's own,
   the Snowline winter and the Blossom spring all year, else the month.
+  Then: fireflies glow up and fade like real ones (`ffGlow`), on one night
+  hole in two in any season (`fireflyAt`: the rough, the reeds and the
+  stones' river alike).
   Fixed on the way: a Vault floor played again after a gust was never
   called; the Spotted tag sat over a wager's name. Earlier the same day:
   cherry trees, the kingfisher, course collections, the monthly hunt, and

@@ -215,12 +215,16 @@ module.exports = {
         // (each drawn alone after a frame of its hole, and only the lights'
         // own colours counted: the night changes much else in a frame)
         const LIGHT = ['#FFD36A', '#FFF6D0', '#E8B84A', '#E8FF8A', '#9ACB3A', '#FF8A5A', '#9FE0FF', '#B8FF8A'];
+        // (a firefly glows up and fades, so it is counted by its yellow-green
+        // at any strength; on one night hole in two, pinned on here)
+        const FLY = (d, i) => d[i + 3] > 40 && d[i + 1] > 150 && d[i + 1] >= d[i] && d[i] > d[i + 1] * 0.7 && d[i] > d[i + 2] + 40;
+        FIREFLY_FORCE = true;
         const nightly = (dev, cam) => {
           DEV[dev](); hideSheet(); chaos('Fair');
           const at = cam(Scene.isle), one = { pier: 'drawPier', canyon: 'drawBridge', isle: 'drawDucks', stones: 'drawStones' }[dev];
           const lit = () => { c.clearRect(0, 0, VW, VH); Scene[one](); const d = px(); let n = 0;
             for (let i = 0; i < d.length; i += 4) { if (!d[i + 3]) continue;
-              const hx = '#' + [d[i], d[i + 1], d[i + 2]].map(v => v.toString(16).padStart(2, '0')).join('').toUpperCase(); if (LIGHT.includes(hx)) n++; }
+              const hx = '#' + [d[i], d[i + 1], d[i + 2]].map(v => v.toString(16).padStart(2, '0')).join('').toUpperCase(); if (LIGHT.includes(hx) || FLY(d, i)) n++; }
             return n; };
           let n = 0, day = 0;
           for (let k = 0; k < 4; k++) { Scene.t = 70 + k * 0.6; frame(at, null);
@@ -250,7 +254,7 @@ module.exports = {
             return n; };
           o.sway = { calm: sway(0), gale: sway(1.6) };
         }
-      } finally {
+      } finally { FIREFLY_FORCE = null;
         Object.assign(Sfx, { whistle: keep.whistle, horn: keep.horn, chuff: keep.chuff, ding: keep.ding, tone: keep.tone, hiss: keep.hiss,
                              gull: keep.gull, chirp: keep.chirp, gust: keep.gust, quack: keep.quack, hawk: keep.hawk, plop: keep.plop, musicTick: keep.mt, ctx: keep.ctx });
         Scene.railWave = keep.wave; Scene.driverWave = keep.dw; Scene.rainRings = keep.rings; Scene.drawWeather = keep.weather; Scene._railRnd = keep.rr;

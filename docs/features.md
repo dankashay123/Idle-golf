@@ -2296,10 +2296,12 @@ him (about 49px tall on a 320 phone, 71px on its side).
   `DFLY_COL`, hovering and darting; `DFLY_FORCE`; spotted, they count for the Guide's existing `dragonfly`
   (never a second entry: `golden` fails on a shared id); a course whose
   rare visitor is the Dragonfly has it ticked by them (`courseWildSee`).
-- **Fireflies at the reeds, ripples** (`reedlife`): `layReedFireflies`
-  (summer night, dry, no ice; ~75% of holes with reeds; kind 5 with `wet`,
-  `RFLY_FORCE`), each light mirrored under it when the water there is in
-  view; `Scene.ripple` (a ring on water only, `wetSpot`) where a dragonfly
+- **Fireflies** (`reedlife`, `nightholes`): on one night hole in two, any
+  season (`fireflyAt`, `FIREFLY_P` 0.5, `FIREFLY_FORCE`), in the rough
+  (`layNight`), at the reeds (`layReedFireflies`: dry; kind 5 with `wet`,
+  `RFLY_FORCE`) and over the stones' river (`drawFireflies`); each light
+  glows up and fades (`ffGlow`: about a third of a 3 to 5.5s cycle lit,
+  `ffCol`), mirrored in the water where that water is in view; `Scene.ripple` (a ring on water only, `wetSpot`) where a dragonfly
   dips (2 in 5 of its darts) and round the frog's pad every 4.7s.
 - **lookSeason(look)**: the season a course shows (its own; the Snowline
   winter, the Blossom spring; else the month), for the Harvest Moon, the
