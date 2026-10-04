@@ -41,12 +41,18 @@ through:
   in `canyonlook`); **the dog put aside** ("we will come back to it
   later": `DOG_ON = false`, nothing drawn or offered); dragonflies over
   reeds and pads on summer days (they count for the Guide's
-  Dragonfly, which was already there).
+  Dragonfly, which was already there). Then ("Canyon is beautiful"):
+  fireflies over the reeds on summer nights, doubled in the water; ripples
+  where a dragonfly dips and round the frog's pad; a bug sweep (the Harvest
+  Moon carried into a wager; the canyon's first frame; mist on a home
+  course in summer; summer dragonflies not ticking a course's rare
+  Dragonfly). What lives by the season asks `lookSeason`: a course's own,
+  the Snowline winter and the Blossom spring all year, else the month.
   Fixed on the way: a Vault floor played again after a gust was never
   called; the Spotted tag sat over a wager's name. Earlier the same day:
   cherry trees, the kingfisher, course collections, the monthly hunt, and
   the phone's picture memory (the black sky).
-- `node test/run.js` has **155 checks**, about 35 minutes: run it in the
+- `node test/run.js` has **156 checks**, about 35 minutes: run it in the
   background, on a copy in the scratchpad, with the machine quiet. After
   weather, colours or anything dated, also run it with `HOUR_FORCE` 8 and
   15 and the month pinned (rules 20 and 70).
@@ -271,10 +277,10 @@ Turned down, don't offer: a station on the railway, a photo mode, a
 weather forecast, fireworks, trail flourishes, caddie tricks. Nothing for
 the Tour tab, no new sound but ambience.
 
-1. **Ask what they think** of the canyon on the phone now.
-2. **The dog back on** when they are ready (it is put aside, not gone).
-3. **Fireflies** over the reeds on summer nights, a Guide entry.
-4. **Ripples** where a dragonfly or the frog touches the water.
+1. **The dog back on** when they are ready (it is put aside, not gone).
+2. **A fish leaping** from the lake or a pond now and then, a ring where it lands.
+3. **Moonlight on the water**: the Harvest Moon's glints orange, not pale.
+4. **Ask how the water feels on the phone**: dragonflies, fireflies, rings.
 
-Recommend 1: the canyon's jitter was only seen on the phone; a word from
-them confirms it is gone before more is built on it.
+Recommend 3: small, and it finishes the Harvest Moon (its glints on the
+water stay the ordinary moon's pale).

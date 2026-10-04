@@ -2294,4 +2294,14 @@ him (about 49px tall on a 320 phone, 71px on its side).
   (summer by the course's season, else the month; day, dry; ~70% of such
   holes; 1 to 3), props `kind 26, sp 'dfly'`, drawn from `DFLY_PIC` in
   `DFLY_COL`, hovering and darting; `DFLY_FORCE`; spotted, they count for the Guide's existing `dragonfly`
-  (never a second entry: `golden` fails on a shared id).
+  (never a second entry: `golden` fails on a shared id); a course whose
+  rare visitor is the Dragonfly has it ticked by them (`courseWildSee`).
+- **Fireflies at the reeds, ripples** (`reedlife`): `layReedFireflies`
+  (summer night, dry, no ice; ~75% of holes with reeds; kind 5 with `wet`,
+  `RFLY_FORCE`), each light mirrored under it when the water there is in
+  view; `Scene.ripple` (a ring on water only, `wetSpot`) where a dragonfly
+  dips (2 in 5 of its darts) and round the frog's pad every 4.7s.
+- **lookSeason(look)**: the season a course shows (its own; the Snowline
+  winter, the Blossom spring; else the month), for the Harvest Moon, the
+  canyon's mist, dragonflies and the reeds' fireflies. `newDepthsHole`
+  clears `harvest` and `cmist`.
