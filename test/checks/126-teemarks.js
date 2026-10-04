@@ -20,8 +20,11 @@ module.exports = {
       const SNAP = JSON.stringify(S), o = { fails: [] }, f = m => { if (o.fails.length < 14) o.fails.push(m); }, keep = window.step, tw = window.toast;
       try {
         hideSheet(); QUIET = true; window.step = () => {};
-        if (TEE_MARKS.length !== 9 || TEE_MARKS.some((m, i) => i && m.at !== i * 25)) f('the markers do not come every 25 cards: ' + TEE_MARKS.map(m => m.at).join(','));
-        if (TEE_MARKS[TEE_MARKS.length - 1].at > 222) f('a marker past the wall at Card 222');
+        // (the card's nine; the festivals' four come from their prize tracks: festival)
+        const CARD = TEE_MARKS.filter(m => !m.fest);
+        if (CARD.length !== 9 || CARD.some((m, i) => i && m.at !== i * 25)) f('the markers do not come every 25 cards: ' + CARD.map(m => m.at).join(','));
+        if (TEE_MARKS.filter(m => m.fest).some(m => !festDef(m.fest) || festDef(m.fest).mk !== m.id)) f('a festival marker with no festival');
+        if (TEE_MARKS.filter(m => !m.fest).pop().at > 222) f('a marker past the wall at Card 222');
         // ---- open by the best card ever ----
         S.cardPaid = 0; S.tierMax = 0; S.bestTier = 0; delete S.teeMk;
         if (teeMarkNow().id !== 'red') f('a new golfer wears ' + teeMarkNow().id);
@@ -41,6 +44,7 @@ module.exports = {
         said.length = 0; OFFLINE = true; S.tierMax = 74; cardPay(); OFFLINE = false; if (said.some(m => /tee markers/.test(m))) f('said while away');
         QUIET = true; window.toast = tw;
         // ---- drawn on the tee, each its own ----
+        S.festMk = {}; TEE_MARKS.forEach(m => { if (m.fest) S.festMk[m.id] = 1; });
         const c = Scene.b, D = derive(); S.cardPaid = 300; S.chaos = { n: 'Fair' }; Scene.newHole(S.hole, S.tier); Scene.announce = null;
         Scene.camD = 0; Scene.draw(0, D);
         const pics = {};

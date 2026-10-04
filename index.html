@@ -4758,6 +4758,10 @@ function migrate(){
   // sighting pay the hunt at once, and the Guide read 4/3)
   else if(S.hunt){ const want = huntOf(S.hunt.wk); S.hunt.got = S.hunt.got.filter((id, i, a) => want.includes(id) && a.indexOf(id) === i);
     if(S.hunt.paid !== undefined && S.hunt.paid !== 1) delete S.hunt.paid; }
+  // (the festival: its week, its id, ribbons, prizes taken; tee markers won)
+  if(S.fest !== undefined && !(S.fest && Number.isInteger(S.fest.wk) && festDef(S.fest.id) && Number.isFinite(S.fest.n) && S.fest.n >= 0 && Number.isInteger(S.fest.got) && S.fest.got >= 0 && S.fest.got <= FEST_AT.length)) delete S.fest;
+  if(S.festMk !== undefined){ if(!S.festMk || typeof S.festMk !== 'object' || Array.isArray(S.festMk)) delete S.festMk;
+    else for(const k in S.festMk) if(S.festMk[k] !== 1 || !TEE_MARKS.some(m => m.id === k && m.fest)) delete S.festMk[k]; }
   // (challenges: one on, with its card and its count; tiers done, 0 to 3)
   if(S.chal !== undefined && !(S.chal && chalDef(S.chal.id) && Number.isInteger(S.chal.n) && S.chal.n >= 0 && S.chal.n < B.CHAL_HOLES && Number.isFinite(S.chal.sum) && Number.isFinite(S.chal.c))) delete S.chal;
   if(S.chalDone !== undefined){ if(!S.chalDone || typeof S.chalDone !== 'object' || Array.isArray(S.chalDone)) delete S.chalDone;
@@ -5299,7 +5303,7 @@ function derive(){
 
   const spdRaw = B.BASE_SPEED * upgMult('spd') * (1 + G.spd) * relMult('spd') * ch.s
     * (1 + buffVal('gale')/100) * (1 + buffVal('cSpd')/100) * perkMult('spd')
-    * (CH && (CH.k === 'spd' || CH.k === 'both') ? CH.v : 1) * (1 + cb('spd'));
+    * (CH && (CH.k === 'spd' || CH.k === 'both') ? CH.v : 1) * (1 + cb('spd')) * (festTw('spd') ? 1.25 : 1);
   const spd = Math.min(B.SPEED_CAP, spdRaw);
   if(spdRaw > B.SPEED_CAP) pow *= 1 + (spdRaw/B.SPEED_CAP - 1) * B.SPEED_OVERFLOW;
 
@@ -5327,7 +5331,7 @@ function derive(){
     * permMult('sponsor') * (isMember() ? 1 + B.MEMBER_GOLD : 1)
     * (boostOn() ? B.BOOST_MULT : 1) * (luckyOn() ? ALB_V : 1) * (1 + cb('gold'));
   const drop = clamp((B.DROP_BASE + upgEff('marker')*B.DROP_ADD + G.drp + ch.dl
-    + relLv('sun')*B.SUN_ADD + perkAdd('drop') + permAdd('scout') + buffVal('cDrop') + cb('drop')) * relMult('drp'), 0, 1);
+    + relLv('sun')*B.SUN_ADD + perkAdd('drop') + permAdd('scout') + buffVal('cDrop') + cb('drop') + (festTw('drop') ? 0.2 : 0)) * relMult('drp'), 0, 1);
   const dgnY = (1 + upgEff('lantern')*B.DGN_ADD + G.dgn) * relMult('dgn');
 
   // Provisional: the chance a swing plays a second ball. Whole numbers are
@@ -6214,6 +6218,7 @@ function keyInterval(d){ const C = career();
   return d.regen * Math.max(B.RIFT_MIN_WAIT, Math.pow(B.RIFT_REGEN, relLv('rift')))
     * (C.sharp ? 0.6 : 1) * (1 - Math.min(0.60, permAdd('teetime'))); }
 function regenKeys(dt){
+  if(festTw('keys')) dt *= 2;
   for(const d of B.DGN){
     if(S.dgnKeys[d.id] >= entryCap(d)){ S.dgnKeyT[d.id] = 0; continue; }
     S.dgnKeyT[d.id] += dt;
@@ -6395,6 +6400,68 @@ function checkinClaim(){
   Sfx.play('coin');
   renderStageBtns(); renderVitals();
   return r;
+}
+// ---- the weekend festival ----
+// (the user picked it from the menu) every other weekend, Saturday and
+// Sunday by the game's clock, a festival of the season (the real month):
+// one twist to how the course plays (tw), ribbons for every hole at birdie
+// or better played live (one a stroke under par), and a track of five
+// prizes ending in the festival's own tee markers. Never away or quietly.
+const FEST = [
+  { id:'mid', n:'Midsummer Open', tw:'spd', s:'+25% pace', col:'#F2B830', mk:'f_sun' },
+  { id:'harvest', n:'Harvest Festival', tw:'drop', s:'+20pp gear luck', col:'#E07A2A', mk:'f_pk' },
+  { id:'frost', n:'Frost Fair', tw:'keys', s:'Wager entries twice as fast', col:'#CFE8F4', mk:'f_flake' },
+  { id:'bloom', n:'Blossom Fete', tw:'alb', s:'The Lucky Albatross twice as often', col:'#F2A6C8', mk:'f_bloom' }
+];
+const FEST_AT = [100, 250, 500, 800, 1200];
+const FEST_PAY = [{ k:'grit', v:0.05 }, { k:'shard', v:0.05 }, { k:'sov', v:15 }, { k:'bag', v:'tour' }, { k:'sov', v:25 }];
+let FEST_FORCE = null;   // (the developer menu and the checks: a festival's id, on whatever the day)
+const festDef = id => FEST.find(f => f.id === id);
+// (Monday is 0 of the game's week, so Saturday 5 and Sunday 6)
+const festDow = () => ((dayNow() + 3) % 7 + 7) % 7;
+function festNow(){
+  if(FEST_FORCE) return festDef(FEST_FORCE);
+  if(weekNow() % 2 !== 0 || festDow() < 5) return null;
+  return FEST[MONTH_SEASON[monthNow()]];
+}
+const festTw = k => { const F = festNow(); return !!F && F.tw === k; };
+function festState(){
+  const F = festNow(); if(!F) return null;
+  const wk = weekNow();
+  if(!S.fest || S.fest.wk !== wk || S.fest.id !== F.id) S.fest = { wk, id: F.id, n: 0, got: 0 };
+  return S.fest;
+}
+// a hole played live: its ribbons, and any prize reached
+function festHole(d){
+  if(OFFLINE || QUIET || S.dgnRun || !(d < 0)) return;
+  const F = festNow(), st = festState(); if(!F || !st) return;
+  st.n += -d;
+  while(st.got < FEST_AT.length && st.n >= FEST_AT[st.got]){
+    const r = FEST_PAY[st.got]; st.got++;
+    let say;
+    if(r.k === 'sov'){ earnSov(r.v, 'today', 'fest:' + st.wk + ':' + st.got, F.n + ' prize ' + st.got); say = '+' + r.v + sovIc() + ' on Today'; }
+    else if(r.k === 'bag'){ openBag(ciBag(r), true); say = ciLook(r)[3]; }
+    else{ const a = ciAmt(r); S[r.k] += a; say = ciLook(r)[3]; }
+    if(st.got === FEST_AT.length){ S.festMk = S.festMk || {}; S.festMk[F.mk] = 1; say += ' \u00b7 the ' + F.n + ' tee markers'; }
+    toast('<span class="achk">' + F.n + ' \u00b7 Prize ' + st.got + '</span>' + say, 'ach');
+  }
+}
+function festBlock(){
+  const F = festNow();
+  if(!F){
+    // (the next one: the Saturday of the next even week)
+    const d0 = dayNow(), wk = weekNow(), dow = festDow();
+    const days = wk % 2 === 0 ? 5 - dow : 12 - dow;
+    const nx = FEST[MONTH_SEASON[new Date((d0 + days) * 86400000).getUTCMonth()]];
+    return '<div class="eyebrow" style="margin:12px 0 0">Festival</div><div class="row"><div><div class="nm">' + nx.n + '</div><div class="ds">Next festival \u00b7 Saturday, in ' + days + '\u00a0' + (days === 1 ? 'day' : 'days') + '</div></div></div>';
+  }
+  const st = festState(), left = (7 - festDow()) * 86400 - (Date.now() / 1000 % 86400);
+  const nx = st.got < FEST_AT.length ? FEST_AT[st.got] : null;
+  return '<div class="eyebrow" style="margin:12px 0 0">' + F.n + '</div>'
+    + '<div class="row"><div><div class="nm">' + F.s + '</div><div class="ds">Ends in ' + hms(Math.max(0, left)) + ' \u00b7 ribbons for birdies or better: ' + fmt(st.n, 0)
+    + (nx ? ' of ' + nx + ' for prize ' + (st.got + 1) : ' \u00b7 every prize won') + '</div>'
+    + '<div class="cadbar"><i style="width:' + Math.round(clamp(nx ? st.n / nx : 1, 0, 1) * 100) + '%"></i></div>'
+    + '<div class="mt">' + pipRow(st.got, FEST_AT.length) + ' Prize 5: tee markers</div></div></div>';
 }
 // ---- challenge cards ----
 const chalDef = id => B.CHAL.find(c => c.id === id);
@@ -8068,6 +8135,7 @@ function finishHole(D){
   const ratio = holeTime() / S.parTime;
   const sc = scoreFor(ratio);
   chalHole(sc.d);
+  festHole(sc.d);
   const said = Scene.saidHole === S.hole;
   if(!said) Sfx.play('hole', sc.d);
   // A hole that waited for him to walk up to the green (only ever while it
@@ -16063,11 +16131,17 @@ const TEE_MARKS = [
   { id:'oak', n:'Oak', at:125, sh:'log', col:'#8A5A32' },
   { id:'crystal', n:'Crystal', at:150, sh:'gem', col:'#7AD8F0' },
   { id:'jade', n:'Jade', at:175, sh:'gem', col:'#3FB878' },
-  { id:'crown', n:'Crown', at:200, sh:'crown', col:'#F2C21E' }
+  { id:'crown', n:'Crown', at:200, sh:'crown', col:'#F2C21E' },
+  // (the festivals' own, each the last prize of its track: FEST)
+  { id:'f_sun', n:'Midsummer', fest:'mid', sh:'sun', col:'#F2B830' },
+  { id:'f_pk', n:'Harvest', fest:'harvest', sh:'pumpkin', col:'#E07A2A' },
+  { id:'f_flake', n:'Frost Fair', fest:'frost', sh:'flake', col:'#CFE8F4' },
+  { id:'f_bloom', n:'Blossom', fest:'bloom', sh:'bloom', col:'#F2A6C8' }
 ];
 const bestCardNo = () => Math.max(S.cardPaid || 0, S.tierMax || 0, S.bestTier || 0) + 1;
-const teeMarkOk = m => bestCardNo() >= m.at;
-const teeMarkNow = () => { const m = TEE_MARKS.find(x => x.id === S.teeMk); return m && teeMarkOk(m) ? m : TEE_MARKS.filter(teeMarkOk).pop(); };
+const teeMarkOk = m => m.fest ? !!(S.festMk || {})[m.id] : bestCardNo() >= m.at;
+// (with none picked, the best card's: a festival's is worn only when tapped)
+const teeMarkNow = () => { const m = TEE_MARKS.find(x => x.id === S.teeMk); return m && teeMarkOk(m) ? m : TEE_MARKS.filter(x => !x.fest && teeMarkOk(x)).pop(); };
 // each shape over a square two r wide, its foot on the ground at (cx, by):
 // u across, v down, both -1 to 1; a colour or nothing
 const TEE_SHAPE = {
@@ -16081,6 +16155,21 @@ const TEE_SHAPE = {
     if(v < -0.3){ if(a > 0.55 + (v + 0.85) * 0.8) return null; return v < -0.7 ? C.l : u < -0.2 ? '#FFFFFF' : u < 0.25 ? C.l : C.c; }
     if(a > 0.99 - (v + 0.3) * 0.78) return null;
     return u < -0.05 ? C.l : u < 0.35 ? C.c : C.d; },
+  // (the festivals': a pumpkin with its stem, a snowflake, a flower, a sun)
+  pumpkin: (u, v, C) => { if(v < -0.85) return null;
+    if(v < -0.5) return Math.abs(u) < 0.14 ? '#4A7A2E' : null;
+    const q = (u / 0.95) ** 2 + ((v - 0.22) / 0.72) ** 2; if(q > 1) return null;
+    return Math.abs(u) > 0.45 && Math.abs(u) < 0.55 ? C.d : q > 0.7 ? C.d : u < -0.3 && v < 0 ? C.l : C.c; },
+  flake: (u, v, C) => { const y = v - 0.05, r = Math.hypot(u, y); if(r > 0.98) return null;
+    if(r < 0.3) return '#FFFFFF';
+    const a = Math.atan2(y, u), k = Math.abs(Math.sin(a * 3)), w = 0.42 - r * 0.12;
+    // six arms, a little barb on each
+    if(k < w) return r < 0.6 ? '#FFFFFF' : C.c;
+    return r > 0.55 && r < 0.75 && k < w + 0.35 ? C.d : null; },
+  bloom: (u, v, C) => { const y = v - 0.05, r = Math.hypot(u, y); if(r < 0.3) return '#F2D060';
+    const a = Math.atan2(y, u), pet = 0.62 + 0.33 * Math.cos(a * 5); return r < pet ? (r > pet - 0.18 ? C.d : C.c) : null; },
+  sun: (u, v, C) => { const y = v - 0.05, r = Math.hypot(u, y); if(r < 0.55) return r < 0.3 ? C.l : C.c;
+    const a = Math.atan2(y, u); return r < 0.95 && Math.abs(Math.sin(a * 4)) > 0.8 ? C.d : null; },
   crown: (u, v, C) => { const a = Math.abs(u);
     if(v > 0.2){ if(a > 0.86 || v > 0.92) return null; if(a < 0.18 && v > 0.42 && v < 0.74) return '#D0343A'; return v < 0.34 ? C.l : u > 0.4 ? C.d : C.c; }
     for(const pc of [-0.62, 0, 0.62]) if(Math.abs(u - pc) <= 0.06 + 0.26 * (v + 0.9) / 1.1 && v > -0.9) return v < -0.7 ? C.l : u > pc ? C.d : C.c;
@@ -27169,6 +27258,7 @@ function roomToday(w){
   for(const [p, t] of OWED_PLACES) if(p !== 'today' && owedSum(p))
     h += roomLine(t, '+' + sovFmt(owedSum(p)) + sovIc() + ' waiting', ' <button class="mini" data-room="' + p + '">Open</button>');
   h += dailyBlock();
+  h += festBlock();
   // this week, and today's wager: the two things that turn over on a clock
   const M = majorState(), fw = featWager();
   const say = { won: 'Won', played: 'Played', live: 'In play now', next: 'Your next event', early: 'After your first event' }[M.st];
@@ -27216,7 +27306,7 @@ function renderTeeMarks(){
   const now = teeMarkNow(), op = recOpen.tmk, n = TEE_MARKS.filter(teeMarkOk).length;
   const tiles = TEE_MARKS.map(m => { const ok = teeMarkOk(m), on = now && now.id === m.id;
     return '<div class="gtile tmk' + (ok ? '' : ' un') + (on ? ' on' : '') + '" data-m="' + m.id + '"' + (ok && !on ? ' role="button"' : '') + '><span class="gpic"><img src="'
-      + teeMarkUrl(m) + '" width="60" height="30" alt=""></span><b>' + m.n + '</b><i>' + (on ? 'Worn' : ok ? 'Tap to wear' : 'Card\u00a0' + m.at) + '</i></div>'; }).join('');
+      + teeMarkUrl(m) + '" width="60" height="30" alt=""></span><b>' + m.n + '</b><i>' + (on ? 'Worn' : ok ? 'Tap to wear' : m.fest ? festDef(m.fest).n : 'Card\u00a0' + m.at) + '</i></div>'; }).join('');
   el.innerHTML = '<div class="rfold' + (op ? ' open' : '') + '" data-f="tmk"><button class="rfh"><span>Tee Markers</span><span class="rfn">'
     + n + '/' + TEE_MARKS.length + '\u00a0' + (op ? '\u25b4' : '\u25be') + '</span></button><div class="rfb"><div class="guide">' + tiles + '</div></div></div>';
   el.querySelector('.rfh').onclick = () => { recOpen.tmk = op ? 0 : 1; renderTeeMarks(); };
@@ -28912,6 +29002,7 @@ function buffLines(dt){
     if(!txt) cperkShow = null;
     else out.push({ k: 'c', txt, col: pk.col || '', a });
   }
+  { const F = festNow(); if(F && !S.dgnRun) out.push({ k: 'fest', txt: F.n + ' \u00b7 ' + F.s, col: F.col, a: 1 }); }
   { const C = chalOn(); if(C) out.push({ k: 'chal', txt: C.n + ' \u00b7 ' + S.chal.n + '/' + B.CHAL_HOLES + ' \u00b7 ' + scoreTxt(S.chal.sum), col: '#E8A0A0', a: 1 }); }
   if(LUCKY.buff > 0) out.push({ k: 'alb', txt: ALB_V + '× purse for ' + buffClock(LUCKY.buff), col: '#F2E2A0', a: Math.min(1, LUCKY.buff) });
   for(const p of B.PERKS){
@@ -29109,7 +29200,7 @@ function albTick(c, dt){
   }
 }
 function albGo(){
-  LUCKY.wait = ALB_GAP[0] + Math.random() * (ALB_GAP[1] - ALB_GAP[0]);
+  LUCKY.wait = (ALB_GAP[0] + Math.random() * (ALB_GAP[1] - ALB_GAP[0])) * (festTw('alb') ? 0.5 : 1);
   // (along the top of the field, below the readout)
   const sp = albSprite(2), cv = document.getElementById('hole'), rr = document.getElementById('rRow');
   let top = VH * 0.18;
