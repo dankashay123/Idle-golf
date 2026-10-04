@@ -6591,32 +6591,36 @@ const DOG_SIT = [[
   '...BBBBB..BB.ff..']];
 // from behind, trotting away: ears up, the back of the head, the tail up
 // over the rump (nearer than the head), the hind legs taking turns
+// (from behind, as he walks away up the hole: the back of a round head,
+// its ears hanging either side, and a plumed tail up, wagging from one
+// side to the other with its stride; drawn first with its ears pricked up
+// like a pair of antlers)
 const DOG_TROT = [[
-  '...BB....BB...',
-  '...bbB..Bbb...',
-  '...bbbbbbbb...',
-  '....bbbbbb....',
   '.....bbbb.....',
-  '......TT......',
-  '...bbbTTbbb...',
-  '..bbbbbbbbbb..',
-  '..bbbbbbbbbb..',
-  '..bBbbbbbbBb..',
-  '...BBbbbbBB...',
+  '....bbbbbb....',
+  '...BbbbbbbB...',
+  '...BBbbbbBB.f.',
+  '...BB.bb.BB.ff',
+  '......bb...ff.',
+  '....bbbbbbff..',
+  '...bbbbbbbf...',
+  '...bbbbbbbb...',
+  '...bbbbbbbb...',
+  '...bBbbbbBb...',
   '...bb....BB...',
   '...bb....BB...',
   '...DD.........'], [
-  '...BB....BB...',
-  '...bbB..Bbb...',
-  '...bbbbbbbb...',
-  '....bbbbbb....',
   '.....bbbb.....',
-  '.......TT.....',
-  '...bbbbTTbb...',
-  '..bbbbbbbbbb..',
-  '..bbbbbbbbbb..',
-  '..bBbbbbbbBb..',
-  '...BBbbbbBB...',
+  '....bbbbbb....',
+  '...BbbbbbbB...',
+  '.f.BBbbbbBB...',
+  'ff.BB.bb.BB...',
+  '.ff...bb......',
+  '..ffbbbbbb....',
+  '...fbbbbbbb...',
+  '...bbbbbbbb...',
+  '...bbbbbbbb...',
+  '...bBbbbbBb...',
   '...BB....bb...',
   '...BB....bb...',
   '.........DD...']];
@@ -6628,9 +6632,9 @@ const DOG_BREED = [
   { id:'dalmatian', n:'Dalmatian', at:10, spots:1, map:{ b:'#F2F0EA', B:'#C8C6BE', l:'#FFFFFF', e:'#1A1A1A', n:'#1A1A1A', t:'#E06070', T:'#F2F0EA', D:'#1A1A1A', s:'#1A1A1A', f:'#F2F0EA' } }
 ];
 const DOG_SPR = {};
-// (put aside for later, the user: "Don't do the dog, sorry. We will save
-// that for later": not drawn and not offered while this is off)
-let DOG_ON = false;
+// (put aside for a while, the user: "We will save that for later"; then
+// "turn on the dog as well". Off, none is drawn or offered)
+let DOG_ON = true;
 const dogOpen = br => B.COURSE.filter(cs => (S.cwildDone || {})[cs.id]).length >= br.at;
 const dogNow = () => { if(!DOG_ON || S.dog === 'none') return null; const br = DOG_BREED.find(x => x.id === (S.dog || 'golden')); return br && dogOpen(br) ? br : DOG_BREED[0]; };
 function dogSprite(br, kind, fr, night){

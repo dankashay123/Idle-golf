@@ -1,6 +1,6 @@
-/* The course dog, put aside for later (the user: "Don't do the dog, sorry.
- * We will save that for later"): while DOG_ON is off, no dog is drawn and
- * none is offered. What follows is what it does once it is back on.
+/* The course dog, put aside for a while (the user: "We will save that for
+ * later"), then on ("turn on the dog as well"): it ships on; switched off,
+ * no dog is drawn and none is offered.
  *
  * The course dog (the user said "do them all" to the menu): a dog sits
  * behind him as he plays and trots beside him as he walks; the Golden
@@ -22,7 +22,7 @@ module.exports = {
         hideSheet(); QUIET = true; Scene.announce = null;
         const D = derive(), d0 = JSON.stringify(D);
         // ---- put aside: none drawn, none offered ----
-        if (DOG_ON) f('the dog is on (put aside for later, the user asked)');
+        if (!DOG_ON) f('the dog is off (the user asked for it on)');
         { DOG_ON = false; S.dog = 'golden';
           const shot0 = () => { Scene.draw(0, D); return Scene.b.getImageData(0, 0, VW, VH).data; };
           const a = shot0(), keepDraw = Scene.drawDog; Scene.drawDog = () => {}; const b = shot0(); Scene.drawDog = keepDraw;
