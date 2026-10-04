@@ -7096,8 +7096,8 @@ function wgMedal(d, R, D){
   if(got > had) S.wgMedal[d.id] = got;
   return { got, fresh, sc };
 }
-const wgMedalTxt = id => { const T = WG_MEDAL[id]; return !T ? '' : id === 'sand' ? T.map(t => t + '\u00d7').join(' / ') + ' your usual best'
-  : T.join(' / ') + ' ' + { water: 'greens', cellar: 'dropped', scramble: 'holes won', twilight: 'dropped', vault: 'floors' }[id]; };
+const wgMedalTxt = id => { const T = WG_MEDAL[id]; return !T ? '' : id === 'sand' ? T.map(t => t + '\u00d7').join(' / ') + '\u00a0your usual best'
+  : T.join(' / ') + '\u00a0' + { water: 'greens', cellar: 'dropped', scramble: 'holes\u00a0won', twilight: 'dropped', vault: 'floors' }[id]; };
 const medalPips = id => { const g = (S.wgMedal || {})[id] || 0;
   return '<span class="medals" aria-label="' + (g ? WG_MEDAL_N[g - 1] + ' medal' : 'No medal yet') + '">'
     + [0, 1, 2].map(m => '<img src="' + pixUrl('medal', m < g ? WG_MEDAL_COL[m] : '#3A4A40') + '" width="12" height="12" alt="">').join('') + '</span>'; };
