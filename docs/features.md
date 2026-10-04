@@ -2293,4 +2293,5 @@ him (about 49px tall on a 320 phone, 71px on its side).
 - **Dragonflies** (`dragonfly`): `layDragonflies` after the reeds and pads
   (summer by the course's season, else the month; day, dry; ~70% of such
   holes; 1 to 3), props `kind 26, sp 'dfly'`, drawn from `DFLY_PIC` in
-  `DFLY_COL`, hovering and darting; `DFLY_FORCE`; Guide `dragonfly`.
+  `DFLY_COL`, hovering and darting; `DFLY_FORCE`; spotted, they count for the Guide's existing `dragonfly`
+  (never a second entry: `golden` fails on a shared id).

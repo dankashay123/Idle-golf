@@ -19787,7 +19787,7 @@ const Scene = {
   // the menu): one to three about the reeds and the pads, hovering and
   // darting, on most holes with them in summer (by the course's season, or
   // the real month where it has none); never at night or in the rain. From a
-  // hash once the hole is laid; their own Guide entry.
+  // hash once the hole is laid; spotted, they count for the Guide's Dragonfly.
   layDragonflies(){
     if(this.night || this.rain || this.ice) return;
     const cs = this.course, look = this.look || {};
@@ -27651,7 +27651,6 @@ let WAGER_WILD_P = 0.5;   // (1 in the developer menu and the checks: always the
 // the night creatures (laid in layNight) on a shelf of their own, with the
 // animals only out after dark
 GUIDE.push({ id:'lilyfrog', n:'Frog on a Lily Pad', g:'w', w:'On the pads, now and then' });
-GUIDE.push({ id:'dragonfly', n:'Dragonfly', g:'w', w:'Over the water on summer days' });
 GUIDE.push({ id:'harvest', n:'Harvest Moon', g:'n', w:'Autumn nights, now and then' }, { id:'glowworm', n:'Glow-worms', g:'n', w:'A dry night, in the rough' }, { id:'moth', n:'Moths', g:'n', w:'Round the tee lamps' },
   { id:'luna', n:'Luna Moth', g:'n', w:'Rare, by the tee lamps' });
 for(const g of GUIDE) if(['owl', 'bat', 'badger', 'hedgehog', 'eyes'].includes(g.id)) g.g = 'n';
@@ -27976,8 +27975,6 @@ const RARE_PIC = {
 // its picture: the thing itself as the course draws it
 // (the signature holes' own life, drawn there in code: a picture for the Guide)
 const GUIDE_PIC = {
-  dragonfly: [['..ww..ww....', '.wwwwwwww...', 'bbbbbbbbbee.', '.wwwwwwww.e.', '..ww..ww....'],
-    { b: '#2E7AD8', e: '#8AD0F8', w: '#DCEEFA' }],
   lilyfrog: [['...e.e....', '..gggggg..', '.gGgggGg..', '.G.y.y.G..', 'LLLLLLLLLL', '.lLLLLLLl.', '..llllll..'],
     { g: '#5A9A3A', G: '#3A6A2A', y: '#C8D080', e: '#101010', L: '#62A048', l: '#2E5426' }],
   duck: [['......gg..', '......gegy', '......gg..', '......w...', 'dGGGGGbb..', '.GGGGGGb..'],

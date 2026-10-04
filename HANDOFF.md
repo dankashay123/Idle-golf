@@ -40,7 +40,8 @@ through:
   to the course, never by where the ground's slices fall; a flicker check
   in `canyonlook`); **the dog put aside** ("we will come back to it
   later": `DOG_ON = false`, nothing drawn or offered); dragonflies over
-  reeds and pads on summer days (a Guide entry).
+  reeds and pads on summer days (they count for the Guide's
+  Dragonfly, which was already there).
   Fixed on the way: a Vault floor played again after a gust was never
   called; the Spotted tag sat over a wager's name. Earlier the same day:
   cherry trees, the kingfisher, course collections, the monthly hunt, and

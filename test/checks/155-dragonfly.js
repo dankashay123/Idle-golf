@@ -1,13 +1,13 @@
 /* Dragonflies over the water (the user picked them from the menu): on a
  * summer day one to three hover and dart about a hole's reeds and lily
- * pads; spotted, their own Field Guide entry.
+ * pads; spotted, they count for the Field Guide's Dragonfly.
  *
  *   - summer only (a seasoned course by its season, the others by the
  *     month: pinned to July, then to November), by day, dry; never on ice
  *   - only where there are reeds or pads, close by them, three at most, on
  *     most such holes, the same each time the hole is laid
  *   - drawn, and big enough to see: a body and wings
- *   - spotted live, the Guide counts it; it has a picture */
+ *   - spotted live, the Guide's one Dragonfly counts it */
 'use strict';
 module.exports = {
   name: 'dragonfly',
@@ -50,7 +50,9 @@ module.exports = {
           o.drawn = n; if (n < 14 * fl.length) f(fl.length + ' dragonflies drew ' + n + ' pixels');
         }
         // the Guide
-        if (!GUIDE.find(g => g.id === 'dragonfly' && g.g === 'w')) f('no Guide entry on the Wildlife shelf');
+        // (the Guide had a dragonfly already, flitting over water: these
+        // count for it, never a second entry of the same name)
+        if (GUIDE.filter(g => g.id === 'dragonfly').length !== 1) f(GUIDE.filter(g => g.id === 'dragonfly').length + ' Guide entries for the dragonfly');
         if (!guideUrl('dragonfly')) f('no picture in the Guide');
         QUIET = false; S.guide = S.guide || {}; const n0 = S.guide.dragonfly || 0, tw = window.toast; window.toast = () => {};
         try { guideSpot({ hole: S.hole, props: [{ kind: 26, sp: 'dfly' }] }); } finally { window.toast = tw; }
