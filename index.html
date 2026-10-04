@@ -12995,14 +12995,30 @@ const P_WATER = {
   // all round: given a long run-in the near third of the pond came out as one
   // wide apron of mud with a ribbon of water somewhere behind it.
   D: 0.55, eu: 0.22, e0: 0.17, e1: 0.14, rip: 1,
-  tone(T, f, ndl, near, steep){
+  tone(T, f, ndl, near, steep, i, tt, hz, sw){
     if(f < 0.04) return T.lip;                       // the cut edge of the bank
     // bank: turf at the top of it, cut earth below, wet mud at the waterline,
     // and darker again on whichever side is turned out of the light
     if(f < 0.80) return pickC(T._bk, clamp(f/0.80*0.86 + (HZ_LZ - ndl)*0.6, 0, 1));
+    // (and its water shelving from the bank to the middle, as the lake's)
+    if(hz) return shelfTone(this, T, ndl, near, steep, i, tt, hz, sw);
     return pickC(T._wt, 0.46 + (ndl - HZ_LZ)*1.1 - steep*0.3 + near*0.16);
   }
 };
+// Water's depth (the user, of the island's lake, then the ponds): a pale
+// shallow band along every shore where the bottom shows through, greener
+// and sandier, then darkening in steps toward the middle, by how far it
+// is from the water's edge in the world, not its share of the width, so a
+// narrow river, a pond and a wide lake shelve alike. (From where the water
+// starts: a pond's bank is a fifth of its width.)
+function shelfTone(P, T, ndl, near, steep, i, tt, hz, sw){
+  const N = P.N || HZ_N, bank = 0.72;
+  const across = sw ? Math.min(i + 0.5, N - i - 0.5) / N * sw - bank * P.eu * sw : 99;
+  const along = Math.min(tt - bank * P.e0, 1 - bank * P.e1 - tt) * hz.rd * 2;
+  const g = Math.min(across, along); let k = 0; while(k < LAKE_SHELF.length && g >= LAKE_SHELF[k]) k++;
+  const C = T._lks || (T._lks = lakePal(T));
+  return pickC(C[k], 0.46 + (ndl - HZ_LZ)*1.1 - steep*0.3 + near*0.16);
+}
 // A pond in a winter season is frozen: the same banks, then ice where the
 // water was, and nothing moving on it.
 const P_ICE = Object.assign({}, P_WATER, { rip: 0,
@@ -13015,27 +13031,18 @@ const P_ICE = Object.assign({}, P_WATER, { rip: 0,
 // lake that size put its far water lower on the screen than the green in
 // front of it, and painted the green out.
 // (the user: give the island's lake and the river by the stones the
-// canyon's treatment) It has depth: a pale shallow band along every shore
-// where the bottom shows through, greener and sandier, then the water
-// darkening in steps toward the deep middle, how far from the shore by the
-// lake's own distances, not its share of them, so a narrow river and a wide
-// lake shelve alike.
+// canyon's treatment) It has depth: see shelfTone.
 const LAKE_SHELF = [0.45, 0.95, 1.5, 2.2, 3.2];
 // (in finer columns than the other hazards, or its shelves came out in
 // steps a finger wide)
 const P_LAKE = Object.assign({}, P_WATER, { D: 0, eu: 0.08, e0: 0.035, e1: 0.03, N: 84,
   tone(T, f, ndl, near, steep, i, tt, hz, sw){
     if(f < 0.80 || !hz) return P_WATER.tone(T, f, ndl, near, steep);
-    const across = sw ? Math.min(i + 0.5, P_LAKE.N - i - 0.5) / P_LAKE.N * sw : 99;
-    const along = Math.min(tt, 1 - tt) * hz.rd * 2;
-    // (the island lake's own near end is behind the camera; it shelves from
-    // its sides and round the green)
-    const g = Math.min(across, along); let k = 0; while(k < LAKE_SHELF.length && g >= LAKE_SHELF[k]) k++;
-    const C = T._lks || (T._lks = lakePal(T));
-    return pickC(C[k], 0.46 + (ndl - HZ_LZ)*1.1 - steep*0.3 + near*0.16);
+    return shelfTone(this, T, ndl, near, steep, i, tt, hz, sw);
   } });
+const lakeShelves = T => T._lks || (T._lks = lakePal(T));
 function lakePal(T){
-  const w = T._wt, bed = mixC(T._bk ? pickC(T._bk, 0.9) : '#6A5A3A', '#8A9A4A', 0.35);
+  const w = T._wt || expandC(T.wt, 40), bed = mixC(T._bk ? pickC(T._bk, 0.9) : '#6A5A3A', '#8A9A4A', 0.35);
   return [w.map(c => mixC(lite(c, 0.14), bed, 0.46)), w.map(c => mixC(lite(c, 0.08), bed, 0.3)), w.map(c => mixC(c, bed, 0.16)),
     w.map(c => mixC(c, bed, 0.06)), w.map(c => dark(c, 0.08)), w.map(c => dark(c, 0.16))];
 }
@@ -19522,7 +19529,7 @@ const Scene = {
   // a wood or a lake's inner edge, across, at d; and whether a point is in one
   fillIn(F, d){
     let i;
-    if(F.ring) return Math.abs(this.nbrX(F.ring, d)) - this.nbrW(F.ring, d) - 0.9;
+    if(F.ring) return this.pondClear(F, d, Math.abs(this.nbrX(F.ring, d)) - this.nbrW(F.ring, d) - 0.9, 0);
     if(F.after) i = Math.abs(this.nbrX(F.after, d)) + this.nbrW(F.after, d);
     // (behind a lake: at its far bank, and where it is not, at its near one)
     else if(F.behind){ const w = this.lakeW(F.behind, d); i = this.fillIn(F.behind, d) + (w > 0 ? w + 0.6 * Math.min(1, w) : 0); }
@@ -19532,7 +19539,15 @@ const Scene = {
       const w = F.water && this.water;
       if(w){ const t = (d - w.d) / (w.rd + 2); if(Math.abs(t) < 1) i = Math.max(i, Math.abs(w.x) + (w.rx * 1.15 + 1.2) * Math.sqrt(1 - t * t) - F.gap + 0.8); }
     }
-    return i + F.gap + 0.3 * Math.sin(d * 0.06 + F.ph);
+    // (and round the pond beyond the path, in its clearing, whichever wood
+    // it is: the wood's edge ran straight on across it, trees standing in
+    // the water)
+    return this.pondClear(F, d, i, F.gap) + F.gap + 0.3 * Math.sin(d * 0.06 + F.ph);
+  },
+  pondClear(F, d, i, gap){
+    const P = this.pond;
+    if(P && F.kind === 'wood' && Math.sign(P.x) === F.sd){ const t = (d - P.d) / (P.rd + 1.6); if(Math.abs(t) < 1) i = Math.max(i, Math.abs(P.x) + (P.rx * 1.25 + 1.4) * Math.sqrt(1 - t * t) - gap + 0.6); }
+    return i;
   },
   // a wood across another hole's strip: as wide as its fairway and the
   // rough either side
@@ -19649,15 +19664,55 @@ const Scene = {
   wetAt(hz, d, x){
     const sp = this.hazSpan(hz, d);
     if(!sp) return false;
-    const P = hz.river && this.ice ? P_ICEL : P_LAKE, u = (x - (hz.x - sp.l)) / (sp.l + sp.r);
+    const P = hz.lake || hz.river ? (hz.river && this.ice ? P_ICEL : P_LAKE) : P_WATER, u = (x - (hz.x - sp.l)) / (sp.l + sp.r);
     if(u <= 0 || u >= 1) return false;
     const tt = (d - (hz.d - hz.rd)) / (hz.rd * 2);
     return hazProf(u, P.eu, P.eu) * hazProf(tt, P.e0, P.e1) >= 0.8;
   },
   layShore(){
-    const W = this.water, h = this.hole;
-    if(S.dgnRun || !W || !(W.lake || W.river) || sigKind(h) === 'pier') return;
-    const put = this.props || [];
+    if(S.dgnRun) return;
+    const W = this.water;
+    if(W && (W.lake || W.river) && sigKind(this.hole) !== 'pier') this.layShoreBig(W);
+    this.layPonds();
+  },
+  // (then the user, of the ponds: the same) Round the hole's own pond and
+  // the one beyond the path: a few clumps of reeds at the water's edge,
+  // lily pads on its shallows, none on ice; on the hole's sunk pond they sit
+  // down on its water, not up at the grass's level.
+  layPonds(){
+    const W = this.water, h = this.hole, put = this.props || [], ponds = [];
+    if(W && !W.lake && !W.river && !W.canyon && !W.rail)
+      ponds.push({ d: W.d, rd: W.rd, x: W.x, rx: W.rx * 1.3, wet: (d, x) => this.wetAt(W, d, x), sink: P_WATER.D * 0.9, k: 1 });
+    const PP = this.pond;
+    if(PP) ponds.push({ d: PP.d, rd: PP.rd, x: PP.x, rx: PP.rx * 1.3, sink: 0, k: 2,
+      wet: (d, x) => { const w = this.lobeSpan(PP, d); return !!w && x > PP.x - w[0] * 0.95 && x < PP.x + w[1] * 0.95; } });
+    for(const P of ponds){
+      const edge = (d, side) => { let x = P.x + side * P.rx * 1.5; for(let k = 0; k < 80 && !P.wet(d, x); k++) x -= side * P.rx * 0.02; return P.wet(d, x) ? x : null; };
+      for(let i = 0, n = 0; i < 30 && n < 4; i++){
+        const q = h * 71 + P.k * 13 + i, side = hr(q, 821) < 0.5 ? -1 : 1, d = P.d + (hr(q, 822) - 0.5) * 1.7 * P.rd, e = edge(d, side);
+        if(e === null) continue;
+        const x = e - side * (0.1 + hr(q, 823) * 0.25);
+        if(!P.wet(d, x) || this.onPlay(d, x, 0.3) || put.some(r => r.kind === 26 && Math.abs(r.d - d) < 1.6 && Math.abs(r.x - x) < 1.2)) continue;
+        n++;
+        const m = 2 + Math.floor(hr(q, 824) * 2);
+        for(let j = 0; j < m; j++){ const dd = d + (j - (m - 1) / 2) * 0.4, xx = x + (hr(q * 3 + j, 825) - 0.5) * 0.2;
+          if(P.wet(dd, xx) && !this.onPlay(dd, xx, 0.3)) put.push({ kind: 26, sp: 'reed', d: dd, x: xx, s: 0.7 + hr(q * 3 + j, 826) * 0.4, sink: P.sink, extra: 1 }); }
+      }
+      if(this.ice) continue;
+      for(let i = 0, n = 0; i < 40 && n < 7; i++){
+        const q = h * 73 + P.k * 17 + i, side = hr(q, 831) < 0.5 ? -1 : 1, d = P.d + (hr(q, 832) - 0.5) * 1.6 * P.rd, e = edge(d, side);
+        if(e === null) continue;
+        const x = e - side * (0.35 + hr(q, 833) * 0.55);
+        if(!P.wet(d, x) || put.some(r => r.kind === 26 && Math.abs(r.d - d) < 0.6 && Math.abs(r.x - x) < 0.6)) continue;
+        n++;
+        put.push({ kind: 26, sp: 'lily', d, x, s: 0.7 + hr(q, 834) * 0.4, k: Math.floor(hr(q, 835) * 64), sink: P.sink, extra: 1 });
+      }
+    }
+    put.sort((a, b) => b.d - a.d);
+    this.props = put;
+  },
+  layShoreBig(W){
+    const h = this.hole, put = this.props || [];
     // how far in from a shore a point is, across (the lake) or along (the river)
     const shore = (d, x) => {
       if(!this.wetAt(W, d, x)) return -1;
@@ -24126,7 +24181,10 @@ Object.assign(Scene, {
       } else {
         const w = this.lakeW(F, d);
         if(w > 0.2){ span(sd * (i0 - 0.3), sd * (i0 + w + 0.3), pickC(T._bk, 0.5));
-          span(sd * i0, sd * (i0 + w), this.ice ? pickC(T._ic, 0.3 + near * 0.4) : pickC(T._wt, 0.25 + near * 0.45)); }
+          if(this.ice) span(sd * i0, sd * (i0 + w), pickC(T._ic, 0.3 + near * 0.4));
+          // (shelving as the hole's own water: shallows at its shores)
+          else for(let k = 0; k < 5; k++){ const e = k === 0 ? 0 : LAKE_SHELF[k - 1]; if(w <= e * 2) break;
+            span(sd * (i0 + e), sd * (i0 + w - e), pickC(lakeShelves(T)[k], 0.25 + near * 0.45)); } }
       }
     }
     // the pond: its bank, then its water (ice in the cold)
@@ -24134,7 +24192,9 @@ Object.assign(Scene, {
     if(P){
       const bk = lobe(P, P.x, 1.18), wt = lobe(P, P.x, 1);
       if(bk) span(bk[0], bk[1], pickC(T._bk, 0.5));
-      if(wt) span(wt[0], wt[1], this.ice ? pickC(T._ic, 0.3 + near * 0.4) : pickC(T._wt, 0.25 + near * 0.45));
+      if(wt && this.ice) span(wt[0], wt[1], pickC(T._ic, 0.3 + near * 0.4));
+      // (shallows round its edge, darker in rings to its middle)
+      else if(wt) for(const [k, g] of [[0, 1], [1, 0.82], [2, 0.62], [3, 0.4]]){ const q = lobe(P, P.x, g); if(q) span(q[0], q[1], pickC(lakeShelves(T)[k], 0.25 + near * 0.45)); }
     }
     for(const N of this.nbrs){
       const nx = this.nbrX(N, d);
@@ -24956,7 +25016,8 @@ Object.assign(Scene, {
       if(h < 3) return;
       const w = Math.round(h * spr.w / spr.h);
       if(pr.x + w < -4 || pr.x - w > VW + 4) return;
-      this.standBlit(c, shrinkSprite(spr, w, h) || spr, Math.round(pr.x) - (w >> 1), Math.round(pr.y) - h, w, h);
+      const sk = p.sink ? Math.round(p.sink * 0.55 * LAT * pr.s) : 0;
+      this.standBlit(c, shrinkSprite(spr, w, h) || spr, Math.round(pr.x) - (w >> 1), Math.round(pr.y) + sk - h, w, h);
 
     }else if(p.kind === 26){
       // a lily pad lying flat on the water: an oval as the ground
@@ -24966,7 +25027,7 @@ Object.assign(Scene, {
       const w = Math.round(p.s * 0.55 * LAT * pr.s);
       if(w < 2) return;
       const a = this.proj(p.d - 0.2 * p.s, p.x), b = this.proj(p.d + 0.2 * p.s, p.x);
-      const hh = clamp(Math.round(a.y - b.y), 1, w), cx = Math.round(pr.x), top = Math.round(pr.y - hh / 2);
+      const hh = clamp(Math.round(a.y - b.y), 1, w), cx = Math.round(pr.x), top = Math.round(pr.y - hh / 2 + (p.sink ? p.sink * 0.55 * LAT * pr.s : 0));
       const C = this.lilyPal || (this.lilyPal = lilyPal(this.look, night)), sg = p.k & 1 ? 1 : -1;
       for(let r = 0; r < hh; r++){
         const ny = (r + 0.5) / hh * 2 - 1, half = w / 2 * Math.sqrt(Math.max(0, 1 - ny * ny));

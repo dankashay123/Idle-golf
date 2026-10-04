@@ -53,11 +53,11 @@ module.exports = {
           }
         }
         SEASON_FORCE = -1;
-        // none on the sea stack or an ordinary hole
+        // none on the sea stack or a hole with no water
         DEV.course(0); hideSheet();
         for (let k = 0; k < 6; k++) {
           off(); Scene.newHole(S.hole + k, S.tier);
-          if (!sigKind(S.hole + k) && (Scene.props || []).some(p => p.kind === 26)) f('reeds or pads on an ordinary hole ' + (S.hole + k));
+          if (!sigKind(S.hole + k) && !Scene.water && !Scene.pond && (Scene.props || []).some(p => p.kind === 26)) f('reeds or pads on a hole with no water ' + (S.hole + k));
         }
         if (typeof DEV.pier === 'function') {
           for (let ci = 0; ci < B.COURSE.length; ci++) if (B.SIG_HOLE[B.COURSE[ci].id] === 'pier') {
@@ -115,9 +115,57 @@ module.exports = {
       }
       return { fails, out };
     });
+    // ---- the ponds (then the user: "Do 1": the same for the ponds) ----
+    const q = await page.evaluate(() => {
+      const fails = [], f = m => { if (fails.length < 12) fails.push(m); }, SNAP = JSON.stringify(S);
+      const o = { hz: 0, hzLaid: 0, path: 0, pathLaid: 0, ice: 0, woods: 0 };
+      QUIET = true;
+      try {
+        for (let ci = 0; ci < B.COURSE.length; ci++) {
+          DEV.course(ci); hideSheet();
+          for (const sn of B.COURSE[ci].slot === 'home' ? [0, 2] : [-1]) {
+            SEASON_FORCE = sn;
+            for (let k = 0; k < 24; k++) {
+              const h = S.hole + k; Scene.newHole(h, S.tier);
+              const W = Scene.water, PP = Scene.pond, id = B.COURSE[ci].id + ' s' + sn + ' h' + h;
+              const P26 = (Scene.props || []).filter(p => p.kind === 26);
+              const hzPond = W && !W.lake && !W.river && !W.canyon && !W.rail;
+              if (!hzPond && !PP) { if (!(W && (W.lake || W.river)) && P26.length) f(id + ': reeds or pads with no water'); continue; }
+              const inHz = p => hzPond && Scene.wetAt(W, p.d, p.x), inPP = p => { if (!PP) return false; const w = Scene.lobeSpan(PP, p.d); return !!w && p.x > PP.x - w[0] && p.x < PP.x + w[1]; };
+              for (const p of P26) if (!inHz(p) && !inPP(p) && !(W && (W.lake || W.river))) f(id + ': a ' + p.sp + ' on dry ground at ' + p.d.toFixed(1) + ',' + p.x.toFixed(1));
+              if (Scene.ice && P26.some(p => p.sp === 'lily')) { o.ice++; f(id + ': lily pads on ice'); }
+              if (hzPond) { o.hz++; if (P26.some(inHz)) o.hzLaid++; for (const p of P26) if (inHz(p) && p.sp === 'reed' && Scene.onPlay(p.d, p.x, 0.25)) f(id + ': reeds on the fairway'); }
+              if (PP) { o.path++; if (P26.some(inPP)) o.pathLaid++;
+                // the woods on its side clear of it all along
+                for (const F of Scene.fills) { if (F.kind !== 'wood' || Math.sign(PP.x) !== F.sd) continue;
+                  for (let d = PP.d - PP.rd * 0.9; d <= PP.d + PP.rd * 0.9; d += 0.5) { if (d < F.d0 || d > F.d1) continue;
+                    const w = Scene.lobeSpan(PP, d); if (!w) continue; const edge = Math.abs(PP.x) + (PP.x > 0 ? w[1] : w[0]);
+                    if (Scene.fillIn(F, d) < edge) { o.woods++; f(id + ': a wood\'s edge across the pond at ' + d.toFixed(1)); break; } } } }
+            }
+          }
+        }
+        SEASON_FORCE = -1;
+        if (o.hzLaid < o.hz * 0.8) f('reeds or pads on ' + o.hzLaid + ' of ' + o.hz + ' water hazards');
+        if (o.pathLaid < o.path * 0.8) f('reeds or pads on ' + o.pathLaid + ' of ' + o.path + ' ponds by the path');
+        // drawn: the path pond's shallows
+        DEV.course(0); hideSheet(); let h = S.hole; for (let k = 0; k < 200; k++) { Scene.newHole(h + k, S.tier); if (Scene.pond && !Scene.ice) break; }
+        const raf = window.requestAnimationFrame; window.requestAnimationFrame = () => 0;
+        const D = derive(); for (let k = 0; k < 2; k++) { Scene.camD = Math.max(0, Scene.pond.d - 6); Scene.draw(0, D); }
+        window.requestAnimationFrame = raf;
+        const T = Scene.theme, was = PixPaint.cur, set = L => new Set(L.map(c => { PixPaint.fillStyle = c; return PixPaint.cur; }));
+        const sh = set(lakeShelves(T)[0]), dp = set(lakeShelves(T)[3]); PixPaint.cur = was;
+        let a = 0, b = 0; for (const v of PixPaint.px) { if (sh.has(v)) a++; else if (dp.has(v)) b++; }
+        o.drawn = a + '/' + b;
+        if (a < 20 || b < 10) f('the pond by the path drawn with ' + a + ' shallow and ' + b + ' deeper pixels');
+      } finally { SEASON_FORCE = -1; QUIET = false; Object.assign(S, JSON.parse(SNAP)); Scene.newHole(S.hole, S.tier); }
+      return { fails, o };
+    });
+    r.fails.push(...q.fails);
     if (r.fails.length) throw new Error(r.fails.join('; '));
     const o = r.out;
-    return [o.holes + ' lake and river holes over every course and season: reeds on ' + o.reedHoles + ' (' + o.reeds + '), lily pads on ' + o.padHoles + ' (' + o.pads + '), none on ice, the fairway, the green or the stones\' line; laid the same each time',
+    const p = q.o;
+    return ['ponds: reeds or pads on ' + p.hzLaid + ' of ' + p.hz + ' water hazards and ' + p.pathLaid + ' of ' + p.path + ' ponds by the path, all in the water, none on ice, the woods clear of the path\'s ponds; shallows and deeper water drawn (' + p.drawn + 'px)',
+      o.holes + ' lake and river holes over every course and season: reeds on ' + o.reedHoles + ' (' + o.reeds + '), lily pads on ' + o.padHoles + ' (' + o.pads + '), none on ice, the fairway, the green or the stones\' line; laid the same each time',
       'drawn: shallows ' + o.shallow + 'px at the near bank, deep ' + o.deep + 'px beyond, shelving ' + o.prof + ' bank to bank; reeds and pads ' + o.drawn + 'px'];
   }
 };
