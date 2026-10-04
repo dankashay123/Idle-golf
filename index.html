@@ -13051,31 +13051,84 @@ const P_ICEL = Object.assign({}, P_LAKE, { rip: 0, tone: P_ICE.tone });
 // and broken by cracks that stay where they are (by column, from a hash);
 // lit where they face the sun, darker the deeper they go; a river at the
 // bottom, glinting.
-const CANYON_STRATA = ['#C8794A', '#A85A38', '#D89A62', '#8E4C32', '#BE6A44', '#E2AE74', '#9A5A3C', '#B87850'];
-const P_CANYON = { D: 2.4, eu: 0.10, e0: 0.30, e1: 0.30,
+const CANYON_STRATA = ['#C8643A', '#A84A2C', '#D8844C', '#8E3C26', '#BE5A36', '#E29A5C', '#9A4A30', '#B8643E'];
+// (the user, again, with a photograph of a gorge from its rim: "It needs
+// depth") Far deeper than it was, its walls stepped: four sheer cliffs, each
+// with a pale ledge on top where the sun lands and scrub grows, the way a
+// canyon's walls go down in terraces. Its columns as fine as a hand across
+// (it was cut in strips three yards wide, so the whole view across it was a
+// handful of flat bands); the cliffs streaked down where water ran; the
+// deeper, the darker and the more lost in haze; at the bottom a river
+// winding between gravel banks.
+const CANYON_STEP = 4, CANYON_RIM = 0.36;
+const P_CANYON = { D: 10, eu: 0.10, e0: 0.30, e1: 0.30, N: 480,
+  // its depth down from the rim, and how fast that changes, along the hole;
+  // by column (colProf), each stretch of wall reaching out a different way,
+  // spurs and bays, so its cliffs and ledges are not ruled straight across
+  reach(i){ const R = this._r || (this._r = Float32Array.from({ length: this.N }, (_, k) =>
+      0.55 + Math.sin(k * 0.13) * 0.24 + Math.sin(k * 0.37 + 2.1) * 0.14 + Math.sin(k * 0.9 + 0.7) * 0.05));
+    return R[i] || 0; },
+  colProf(t, i){ const r = this.reach(i), u = Math.min(t, 1 - t);
+    return this.prof(u * (1 + r) > 0.5 ? 0.5 : u * (1 + r)); },
+  colSlope(t, i){ const e = 0.004, a = Math.max(0, t - e), b = Math.min(1, t + e); return (this.colProf(b, i) - this.colProf(a, i)) / (b - a); },
+  prof(t){
+    const u = Math.min(t, 1 - t) / CANYON_RIM;
+    if(u >= 1) return 1;
+    // (each cliff drops sharp from its edge and eases out at its foot,
+    // the scree: eased in, the rim was flat a while on some stretches and
+    // not on others, and the far rim stood up in blocks like battlements)
+    const x = u * CANYON_STEP, k = Math.floor(x), c = Math.min(1, (x - k) / 0.55), st = 1 - (1 - c) * (1 - c);
+    return 0.85 * (k + st) / CANYON_STEP + 0.15 * u;
+  },
+  slope(t){ const e = 0.004, a = Math.max(0, t - e), b = Math.min(1, t + e); return (this.prof(b) - this.prof(a)) / (b - a); },
   tone(T, f, ndl, near, steep, i, tt){
-    if(f < 0.04) return T.lip;
+    if(f < 0.005) return T.lip;
     const C = T._cns || (T._cns = canyonPal(T));
-    // the floor: a narrow river down its middle, glinting, and gravel and
-    // dark rock either side of it
-    if(f > 0.94){
-      if(Math.abs((tt === undefined ? 0.5 : tt) - 0.5) < 0.045) return C.river[(i || 0) % 9 === 0 ? 1 : 0];
-      return C.floor[hr((i || 0) * 3 + Math.round((tt || 0) * 40), 735) < 0.3 ? 1 : 0];
+    const j = i || 0, t = tt === undefined ? 0.5 : tt;
+    // the floor: a river winding along it, gravel either side, sand and shadow
+    if(f > 0.985){
+      const rc = 0.5 + Math.sin(j * 0.09) * 0.05 + Math.sin(j * 0.31 + 1) * 0.015, r = Math.abs(t - rc);
+      if(r < 0.028) return C.river[j % 11 === 0 && r < 0.012 ? 1 : 0];
+      if(r < 0.05) return C.gravel;
+      return C.floor[hr(j * 3 + Math.round(t * 60), 735) < 0.25 ? 1 : 0];
     }
-    const j = i || 0, wav = Math.sin(j * 0.19) * 0.35 + Math.sin(j * 0.053 + 1.7) * 0.4;
-    const band = Math.max(0, Math.floor(f * 12 + wav)) % CANYON_STRATA.length;
-    // light: the sun's side lit, the shade side and the deep dark
-    let k = Math.round(clamp(f * 0.72 + (HZ_LZ - ndl) * 0.8, 0, 1) * (C.n - 1));
-    if(hr(j * 7 + band, 733) < 0.1) k = Math.min(C.n - 1, k + 2);   // a crack
-    else if(hr(j * 13 + band, 734) < 0.06) k = Math.max(0, k - 1);  // a ledge catching the light
-    return C.wall[band][k];
+    const z = Math.min(C.Z - 1, Math.floor(f * C.Z));
+    // a ledge: lit, sometimes a bush of scrub on it
+    if(steep < 1.1) return C.ledge[z][hr(j * 5 + Math.round(f * 40), 736) < 0.12 ? 2 : ndl > HZ_LZ - 0.05 ? 0 : 1];
+    const wav = Math.sin(j * 0.11) * 0.5 + Math.sin(j * 0.035 + 1.7) * 0.7;
+    const band = Math.max(0, Math.floor(f * 15 + wav)) % CANYON_STRATA.length;
+    // a cliff: the sun's side lit, streaked down where water ran
+    let l = ndl > HZ_LZ ? 0 : 1;
+    if(hr((j >> 1) * 7 + band, 733) < 0.16) l = 2;
+    return C.wall[band][z][l];
   }
 };
+// a colour that comes out as c once the haze (alpha a of the sky's
+// lightest) is laid over it, three quarters of the way
+function unhaze(T, c, a){
+  const q = Math.round(a * 0.75 * 20);
+  if(!q) return c;
+  const M = T._unh || (T._unh = new Map()), k = c + q;
+  let o = M.get(k);
+  if(o) return o;
+  const A = q / 20, h = parseInt(T.sky[4].slice(1), 16), v = parseInt(c.slice(1), 16);
+  const ch = sh => clamp(Math.round((((v >> sh) & 255) - A * ((h >> sh) & 255)) / (1 - A)), 0, 255);
+  o = '#' + ((1 << 24) | (ch(16) << 16) | (ch(8) << 8) | ch(0)).toString(16).slice(1);
+  if(M.size > 4000) M.clear();
+  M.set(k, o);
+  return o;
+}
 function canyonPal(T){
-  const rk = pickC(T.rk, 0.6), n = 7, wall = CANYON_STRATA.map(c => { const b = mixC(c, rk, 0.14);
-    return Array.from({ length: n }, (_, k) => k < 2 ? lite(b, 0.2 - k * 0.12) : dark(b, (k - 1) / (n - 1) * 0.7)); });
+  const rk = pickC(T.rk, 0.6), Z = 6, sky = T.sky ? T.sky[3] : '#9AB0C0', haze = mixC(sky, '#4A3048', 0.6);
+  // deeper: darker, and into the haze
+  const deep = (c, z) => mixC(dark(c, z * 0.12), haze, z * 0.04);
+  const wall = CANYON_STRATA.map(c => { const b = mixC(c, rk, 0.06);
+    return Array.from({ length: Z }, (_, z) => [lite(b, 0.08), dark(b, 0.22), dark(b, 0.42)].map(q => deep(q, z))); });
+  const tan = mixC('#D8945A', rk, 0.1);
+  const ledge = Array.from({ length: Z }, (_, z) => [lite(tan, 0.12), tan, mixC('#5E6A36', rk, 0.2)].map(q => deep(q, z)));
   const w = T.wt || ['#1C4A6A', '#2A6A8A', '#3A8AA8'];
-  return { n, wall, river: [dark(pickC(w, 0.4), 0.35), lite(pickC(w, 0.6), 0.3)], floor: [dark(mixC(CANYON_STRATA[3], rk, 0.4), 0.72), dark(mixC(CANYON_STRATA[5], rk, 0.4), 0.62)] };
+  return { Z, wall, ledge, river: [deep(mixC(pickC(w, 0.5), '#5A8A7A', 0.3), 4), deep(lite(pickC(w, 0.7), 0.35), 3)],
+    gravel: deep(mixC('#C8A880', rk, 0.2), 5), floor: [deep(mixC('#9A7050', rk, 0.3), 5), deep(mixC('#7A5A40', rk, 0.3), 6)] };
 }
 // A railway's bed: a level band of ballast right across the hole, in the
 // course's own rock, a shade darker on its edges where it meets the turf.
@@ -20391,8 +20444,8 @@ const Scene = {
     if(!hz._on){ hz._on = 1; py.fill(y + hgt); }
     hazCols(P);
     const tt  = clamp((d - (hz.d - hz.rd)) / (hz.rd*2), 0, 1);
-    const gv  = hazProf(tt, P.e0, P.e1);
-    const gs  = hazSlope(tt, P.e0, P.e1);
+    const gv  = P.prof ? P.prof(tt) : hazProf(tt, P.e0, P.e1);
+    const gs  = P.slope ? P.slope(tt) : hazSlope(tt, P.e0, P.e1);
     const hw  = Math.max(0.25, (sp.l + sp.r) * 0.5);
     const kz  = LAT * s * 0.55;                    // world height -> screen rows
     const gyk = P.D * gs / (hz.rd * 2);            // d(depth)/d(distance)
@@ -20406,12 +20459,65 @@ const Scene = {
     const band = () => { const a = rx0 > xl ? 1 : 0, b = rx1 < xr ? 1 : 0;
       c.fillStyle = rc; c.fillRect(rx0 - a, rt, rx1 - rx0 + a + b, rb - rt); };
     const dk = P.D * gv * kz;
+    // (a hazard whose depth goes by column: each column's own, and the
+    // tops worked out first so a column can start at its shallower
+    // neighbour's, as below)
+    const CP = P.colProf ? (hz._cg && hz._cg.length === NC ? hz._cg : (hz._cg = new Float32Array(NC))) : null;
+    const CT = CP ? (hz._ct && hz._ct.length === NC ? hz._ct : (hz._ct = new Float32Array(NC))) : null;
+    // (only the columns in view, and one either side)
+    const ia = CP ? Math.max(0, Math.floor(-xl * NC / w) - 1) : 0, ib = CP ? Math.min(NC - 1, Math.ceil((VW - xl) * NC / w) + 1) : 0;
+    if(CP) for(let i = ia; i <= ib; i++){ CP[i] = P.colProf(tt, i); CT[i] = y + P._fu[i] * P.D * CP[i] * kz; }
+    const dxw = (sp.l + sp.r) / NC;
+    // (and with columns a pixel or two wide, which slide a pixel sideways
+    // from one slice to the next, what has been painted is kept by the
+    // screen's own columns: kept by the hazard's, a sliver was left bare
+    // each time one slid, grass showing through the canyon's walls in
+    // stripes)
+    if(CP){
+      const ox = hz._ox && hz._ox.length === VW ? hz._ox : (hz._ox = new Float32Array(VW));
+      if(hz._on !== 2){ hz._on = 2; ox.fill(y + hgt); }
+      for(let i = ia + 1; i < ib; i++){
+        const x0 = Math.max(0, xl + ((w*i / NC) | 0)), x1 = Math.min(VW, xl + ((w*(i+1) / NC) | 0));
+        if(x1 <= x0) continue;
+        const fu = P._fu[i], top = CT[i];
+        const m = Math.min(top, CT[i - 1], CT[i + 1]);
+        // (where it is not yet a pixel down, at its rims, the ground shows:
+        // painted, a band of rock stood on the grass past the far rim)
+        const flat = top - y < 0.6;
+        let col = null;
+        for(let x = x0; x < x1; x++){
+          const bot = ox[x];
+          if(top >= bot - 0.2) continue;
+          ox[x] = top;
+          if(flat) continue;
+          if(!col){
+            const gx = P.D * (CP[i] * P._fs[i] / (hw * 2) + fu * (CP[i + 1] - CP[i - 1]) / (2 * dxw));
+            const gy = P.D * P.colSlope(tt, i) * fu / (hz.rd * 2);
+            const len = Math.sqrt(gx*gx + gy*gy + 1), ndl = (gx*HZ_LX + gy*HZ_LY + HZ_LZ) / len;
+            // (the distance haze laid over the whole field after greyed its
+            // far wall to a fence; its colours are made that much stronger
+            // first, so most of the haze is taken back off)
+            col = unhaze(T, P.tone(T, fu * CP[i], ndl, near, Math.sqrt(gx*gx + gy*gy), i, tt, hz, sp.l + sp.r), this.hazeA(Math.round(top)));
+          }
+          const t0 = Math.round(m) - (m < top ? 1 : 0), t1 = Math.max(t0 + 1, Math.round(bot)), col2 = col;
+          if(run && rc === col2 && rt === t0 && rb === t1 && rx1 === x){ rx1 = x + 1; continue; }
+          if(run) band();
+          run = true; rx0 = x; rx1 = x + 1; rt = t0; rb = t1; rc = col2;
+        }
+      }
+      if(run) band();
+      return;
+    }
     for(let i = 0; i < NC; i++){
       const fu  = P._fu[i];
       const top = y + fu * dk;
       const bot = py[i];
       if(top >= bot - 0.2) continue;               // this column is behind the lip
       py[i] = top;
+      // (off the side of the view: nothing to paint; the canyon runs far
+      // past both edges in columns a hand wide)
+      const x0 = xl + ((w*i / NC) | 0), x1 = xl + ((w*(i+1) / NC) | 0);
+      if(x1 <= x0 || x1 < 0 || x0 > VW) continue;
       // Start at the SHALLOWER of the two neighbours, and a row above that
       // again. The floor slopes sideways, so adjacent columns land on
       // different rows, and the step between them belongs to neither -- which
@@ -20424,15 +20530,13 @@ const Scene = {
       // and always at least one row, so a band thinner than a pixel still
       // covers the ground it is cut into
       const t1 = Math.max(t0 + 1, Math.round(bot));
-      const x0 = xl + ((w*i / NC) | 0), x1 = xl + ((w*(i+1) / NC) | 0);
-      if(x1 <= x0) continue;
       const gx = gxk * P._fs[i], gy = gyk * fu;
       const len = Math.sqrt(gx*gx + gy*gy + 1);
       const ndl = (gx*HZ_LX + gy*HZ_LY + HZ_LZ) / len;
       // how steeply this column is tilted at all, whichever way it faces: the
       // inside of a bowl is shaded away from the sky on both sides, not only
       // on the one turned away from the sun
-      const col = P.tone(T, fu*gv, ndl, near, Math.sqrt(gx*gx + gy*gy), i, tt, hz, sp.l + sp.r);
+      const col = P.tone(T, fu * gv, ndl, near, Math.sqrt(gx*gx + gy*gy), i, tt, hz, sp.l + sp.r);
       if(run && rc === col && rt === t0 && rb === t1 && rx1 === x0){ rx1 = x1; continue; }
       if(run) band();
       run = true; rx0 = x0; rx1 = x1; rt = t0; rb = t1; rc = col;
@@ -23329,7 +23433,10 @@ Object.assign(Scene, {
     const t = (d - hz.d) / hz.rd;
     if(t <= -1 || t >= 1) return null;
     const u = Math.acos(clamp(t, -1, 1)) / Math.PI;
-    const base = hz.rx * Math.sqrt(1 - t*t);
+    // (a canyon runs straight across, its rims level with each other: cut
+    // as the long oval the others are, its far rim came out bowed toward
+    // him only where the fairway runs, a slab of cliff stood on the grass)
+    const base = hz.canyon ? hz.rx : hz.rx * Math.sqrt(1 - t*t);
     return { l: base * shapeAt(hz.shape, u),
              r: base * shapeAt(hz.shape2 || hz.shape, u) };
   },
