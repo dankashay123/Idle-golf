@@ -18,7 +18,7 @@ through:
   menu): the Lucky Albatross, errands (the caddie's runner), Range
   milestones (never stronger than before; the wall is now Card 220),
   loadouts, auto-wagers from Card 100, Trials (Range > Trials), weekend
-  festivals, the course dog, and wager medals with Bank on the Island Green.
+  festivals, and wager medals with Bank on the Island Green.
   Fixed on the way: a Vault floor played again after a gust was never
   called; the Spotted tag sat over a wager's name. Earlier the same day:
   cherry trees, the kingfisher, course collections, the monthly hunt, and
@@ -30,11 +30,14 @@ through:
 - `skins` timed its trails against a fixed budget and failed now and then;
   it now times them against the plain ball. If it fails again, chase it.
 - **Not yet heard back on** (ask one when it fits, never as a list): the
-  albatross; errands; Trials; festivals; the dog; wager medals; the
+  albatross (redrawn side on, its wings beating); errands; Trials;
+  festivals; wager medals; the
   cherry trees; the kingfisher; the monthly hunt; course collections; the
   GET buttons; the redrawn celebrations; alligators; the Wager Book
   animals; the weekly hunt and its streak; the gold mountain; golden
   animals; the heirloom prices and the wall at Card 220.
+- **The course dog is put aside for later** (`DOG_ON` false): the user
+  will ask for it again; it is built and checked, just off.
 - Settled, in case it comes up: swing speed still matters fully (a hole's
   time is when the ball drops); Fast Walker only shortens a hole's least
   time; every caddie has a trick (don't offer caddie tricks); Dawn and

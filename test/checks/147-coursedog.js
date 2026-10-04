@@ -1,4 +1,8 @@
-/* The course dog (the user said "do them all" to the menu): a dog sits
+/* The course dog, put aside for later (the user: "Don't do the dog, sorry.
+ * We will save that for later"): while DOG_ON is off, no dog is drawn and
+ * none is offered. What follows is what it does once it is back on.
+ *
+ * The course dog (the user said "do them all" to the menu): a dog sits
  * behind him as he plays and trots beside him as he walks; the Golden
  * Retriever from the start, a breed more for courses' collections done,
  * picked in the Cabinet, or none. Only for its looks.
@@ -17,6 +21,15 @@ module.exports = {
       try {
         hideSheet(); QUIET = true; Scene.announce = null;
         const D = derive(), d0 = JSON.stringify(D);
+        // ---- put aside: none drawn, none offered ----
+        if (DOG_ON) f('the dog is on (put aside for later, the user asked)');
+        { DOG_ON = false; S.dog = 'golden';
+          const shot0 = () => { Scene.draw(0, D); return Scene.b.getImageData(0, 0, VW, VH).data; };
+          const a = shot0(), keepDraw = Scene.drawDog; Scene.drawDog = () => {}; const b = shot0(); Scene.drawDog = keepDraw;
+          let n = 0; for (let i = 0; i < a.length; i += 4) if (a[i] !== b[i] || a[i + 1] !== b[i + 1] || a[i + 2] !== b[i + 2]) n++;
+          if (n) f('put aside, the dog still drew ' + n + ' pixels');
+          QUIET = false; trophyRoom('case'); recOpen.wild = 1; renderWild(); if (document.querySelectorAll('#wildRows .dogt').length) f('put aside, the dog still offered'); hideSheet(); QUIET = true;
+          DOG_ON = true; }
         const shot = () => { Scene.draw(0, D); return Scene.b.getImageData(0, 0, VW, VH).data; };
         const diff = (on) => { Scene.drawDog = on ? keep : () => {}; const a = shot(); Scene.drawDog = () => {}; const b = shot(); Scene.drawDog = keep;
           let n = 0, lo = -1; for (let i = 0; i < a.length; i += 4) if (a[i] !== b[i] || a[i + 1] !== b[i + 1] || a[i + 2] !== b[i + 2]) { n++; lo = Math.max(lo, Math.floor(i / 4 / VW)); } return { n, lo }; };
@@ -46,9 +59,9 @@ module.exports = {
         // repair
         S.dog = 'wolf'; migrate(); if (S.dog !== undefined) f('a made-up breed kept');
         return { fails, sit: sit.n, walk: walk.n };
-      } finally { Scene.drawDog = keep; QUIET = false; S.dgnRun = null; Scene.heli = 0; const o = JSON.parse(SNAP); for (const k of Object.keys(S)) delete S[k]; Object.assign(S, o); }
+      } finally { DOG_ON = false; Scene.drawDog = keep; QUIET = false; S.dgnRun = null; Scene.heli = 0; const o = JSON.parse(SNAP); for (const k of Object.keys(S)) delete S[k]; Object.assign(S, o); }
     });
     if (r.fails.length) throw new Error(r.fails.join('; '));
-    return ['sitting ' + r.sit + ' and walking ' + r.walk + ' pixels, on the ground; none with none, in a wager or in flight; breeds open by collections; the picker; repaired'];
+    return ['put aside: none drawn or offered; switched on: sitting ' + r.sit + ' and walking ' + r.walk + ' pixels, on the ground; none with none, in a wager or in flight; breeds open by collections; the picker; repaired'];
   }
 };

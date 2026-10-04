@@ -6605,8 +6605,11 @@ const DOG_BREED = [
   { id:'dalmatian', n:'Dalmatian', at:10, spots:1, map:{ b:'#F2F0EA', B:'#C8C6BE', l:'#FFFFFF', e:'#1A1A1A', n:'#1A1A1A', t:'#E06070', T:'#F2F0EA', D:'#1A1A1A', s:'#1A1A1A', f:'#F2F0EA' } }
 ];
 const DOG_SPR = {};
+// (put aside for later, the user: "Don't do the dog, sorry. We will save
+// that for later": not drawn and not offered while this is off)
+let DOG_ON = false;
 const dogOpen = br => B.COURSE.filter(cs => (S.cwildDone || {})[cs.id]).length >= br.at;
-const dogNow = () => { if(S.dog === 'none') return null; const br = DOG_BREED.find(x => x.id === (S.dog || 'golden')); return br && dogOpen(br) ? br : DOG_BREED[0]; };
+const dogNow = () => { if(!DOG_ON || S.dog === 'none') return null; const br = DOG_BREED.find(x => x.id === (S.dog || 'golden')); return br && dogOpen(br) ? br : DOG_BREED[0]; };
 function dogSprite(br, kind, fr, night){
   const key = br.id + kind + fr + (night ? 'n' : '');
   if(DOG_SPR[key]) return DOG_SPR[key];
@@ -27495,13 +27498,13 @@ function renderWild(){
     || '<div class="lb"><span class="p"></span><span style="color:var(--faint)">Spot an animal to start a course\u2019s collection</span><span class="s"></span></div>';
   // (the course dog: a breed for courses done, tapped to bring, or none)
   const cur = dogNow(), dogUrl = br => { const k = 'dog|' + br.id; if(DOMSPR[k] === undefined) DOMSPR[k] = dogSprite(br, 'sit', 0, false).cv.toDataURL(); return DOMSPR[k] || ''; };
-  const dogs = '<div class="eyebrow" style="margin:6px 0 4px">Course Dog</div><div class="guide">'
+  const dogs = !DOG_ON ? '' : '<div class="eyebrow" style="margin:6px 0 4px">Course Dog</div><div class="guide">'
     + DOG_BREED.map(br => { const ok = dogOpen(br), on = cur && cur.id === br.id;
       return '<div class="gtile dogt' + (ok ? '' : ' un') + (on ? ' on' : '') + '" data-dog="' + br.id + '"' + (ok && !on ? ' role="button"' : '') + '><span class="gpic">'
         + gImg(dogUrl(br), 34, 32) + '</span><b>' + br.n + '</b><i>' + (on ? 'With him' : ok ? 'Tap to bring' : br.at + '\u00a0' + (br.at === 1 ? 'course' : 'courses')) + '</i></div>'; }).join('')
     + '<div class="gtile dogt' + (cur ? '' : ' on') + '" data-dog="none"' + (cur ? ' role="button"' : '') + '><span class="gpic"></span><b>None</b><i>' + (cur ? 'Tap for none' : 'None with him') + '</i></div></div>';
   el.innerHTML = '<div class="rfold' + (op ? ' open' : '') + '" data-f="wild"><button class="rfh"><span>Course Wildlife</span><span class="rfn">'
-    + done + '/' + Object.keys(COURSE_WILD).length + '\u00a0' + (op ? '\u25b4' : '\u25be') + '</span></button><div class="rfb">' + dogs + '<div class="eyebrow" style="margin:10px 0 4px">Collections</div>' + rows + '</div></div>';
+    + done + '/' + Object.keys(COURSE_WILD).length + '\u00a0' + (op ? '\u25b4' : '\u25be') + '</span></button><div class="rfb">' + dogs + (dogs ? '<div class="eyebrow" style="margin:10px 0 4px">Collections</div>' : '') + rows + '</div></div>';
   el.querySelector('.rfh').onclick = () => { recOpen.wild = op ? 0 : 1; renderWild(); };
   el.querySelectorAll('.dogt[role=button]').forEach(t => t.onclick = () => { S.dog = t.dataset.dog; save(); renderWild(); });
 }
@@ -29256,68 +29259,71 @@ function renderAll(){
 }
 
 // the Lucky Albatross: five beats of its wings, each with a glow baked round it
-// an albatross from a little below, wings spread, head turned the way it
-// flies (right); lift: -1 wings down, 0 a glide, 1 wings up. Drawn large,
-// feather by feather: a dark leading edge and the upper wing's coverts
-// showing over it, white beneath with the grey lines of the feathers, a
-// serrated trailing edge, black primaries splayed at the tip; a white body
-// shaded beneath, a short dark-edged tail, pink feet tucked; the head with a
-// dark brow and the great pale bill, yellow along its ridge, hooked
-function albRows(lift){
-  const W = 99, H = 36, G = Array.from({ length: H }, () => Array(W).fill('.'));
+// (side on, as it crosses the field: the user asked, its wings beating)
+// an albatross side on, flying right; a: the wing's beat, -1 full down to
+// 1 full up (0: level, seen nearly edge on)
+function albRows(a){
+  const W = 72, H = 60, G = Array.from({ length: H }, () => Array(W).fill('.'));
   const put = (x, y, ch) => { x = Math.round(x); y = Math.round(y); if(x >= 0 && x < W && y >= 0 && y < H) G[y][x] = ch; };
-  const get = (x, y) => G[Math.round(y)] && G[Math.round(y)][Math.round(x)];
-  const cx = 49, cy = 17, L = 42;
-  for(const side of [-1, 1]){
-    for(let i = 0; i <= L; i++){
-      const u = i / L;
-      const arch = (u < 0.33 ? u / 0.33 * 3 : 3 - (u - 0.33) / 0.67 * 2.2) + lift * u * u * 12;
-      const top = cy - 2 - arch, x = cx + side * (6 + i);
-      const th = Math.max(3, Math.round(9.5 - u * 6.5));
-      for(let j = 0; j < th; j++){
-        let ch;
-        if(u > 0.78){ ch = j === 0 ? 'K' : j === 1 ? 'K' : u > 0.88 ? 'K' : 'k'; }
-        else if(j === 0) ch = 'D';
-        else if(j === 1) ch = u < 0.5 ? 'd' : 'D';
-        else if(j === th - 1) ch = (i % 3 === 0) ? 'k' : 'g';
-        else if(j === th - 2 && u > 0.4) ch = 'g';
-        else ch = j === 2 && u < 0.35 ? 'w' : 'W';
-        // the lines of the underwing's feathers, every few columns
-        if(j > 2 && j < th - 1 && u < 0.78 && i % 4 === 2) ch = 'g';
-        put(x, top + j, ch);
+  const cx = 36, cy = 31;
+  // a wing: from its root along the body (r0..r1 across) out to a swept tip,
+  // up (a > 0) or down; its length shows as it rises or falls, its breadth
+  // (the chord) always. far: the far wing, behind the body, darker
+  const wing = (far) => {
+    const L = 30, rise = Math.sin(a * Math.PI / 2.4), len = L * Math.abs(rise), dir = rise >= 0 ? -1 : 1;
+    const r0 = cx - 9 + (far ? 2 : 0), r1 = cx + 4 + (far ? 2 : 0), sweep = -10 - Math.abs(rise) * 4;
+    const rootY = cy - 2 + (far ? -1 : 0);
+    const steps = Math.max(2, Math.round(len) + 3);
+    for(let i = 0; i <= steps; i++){
+      const u = i / steps;
+      // across the wing at this point: from the leading edge (front, right)
+      // to the trailing edge, narrowing to the tip
+      const y = rootY + dir * u * (len + 2);
+      const lead = r1 + sweep * u * u - u * 2, trail = r0 + sweep * u * 0.6 + u * 6;
+      const w0 = Math.min(lead, trail), w1 = Math.max(lead, trail);
+      for(let x = Math.floor(w0); x <= Math.ceil(w1); x++){
+        const v = (x - w0) / Math.max(1, w1 - w0);   // 0 trailing .. 1 leading
+        let ch = far ? (u > 0.75 ? 'K' : v > 0.75 ? 'K' : 'd') :
+          u > 0.8 ? (v > 0.3 ? 'K' : 'k') :            // the black primaries
+          v > 0.82 ? 'D' :                              // the dark leading edge
+          v < 0.14 ? 'g' : (rise > 0 ? 'W' : 'D');     // under (white) seen rising, upper (dark) falling
+        if(!far && rise <= 0 && v >= 0.14 && v <= 0.82 && u < 0.8) ch = v > 0.5 ? 'D' : 'd';
+        put(x, y, ch);
       }
-      // the trailing edge serrated by its feathers
-      if(u <= 0.78 && i % 3 === 1) put(x, top + th, 'g');
-      // the primaries at the tip, splayed as fingers
-      if(u > 0.8 && i % 2 === 0){ put(x, top + th, 'K'); if(u > 0.88) put(x + side, top + th + 1, 'K'); }
+      // the feathers at the trailing edge, a pixel each
+      if(!far && u > 0.2 && i % 2 === 0) put(trail - 1, y, u > 0.75 ? 'K' : 'g');
+    }
+    // the edge-on wing, level: a thin band along the body's top
+    if(len < 3) for(let x = r0 - 6; x <= r1 + 1; x++) put(x, rootY - 1 + (far ? 0 : 1), x < r0 - 2 ? 'K' : far ? 'd' : 'D');
+  };
+  wing(true);
+  // the body: a long white spindle, its back pale grey, shaded beneath
+  for(let x = -15; x <= 14; x++){
+    const t = (x + 0.5) / 15, half = Math.max(0, Math.round(4.6 * Math.sqrt(Math.max(0, 1 - t * t))));
+    for(let y = -half; y <= half; y++){
+      put(cx + x, cy + y, y === -half ? 'g' : y >= half - 1 ? 'g' : y < -half / 2 ? 'w' : 'W');
     }
   }
-  // the body: a white oval, lit on its upper left, grey beneath
-  for(let y = -6; y <= 8; y++) for(let x = -8; x <= 8; x++){
-    const d = (x / 8.4) ** 2 + ((y - 1) / 7.4) ** 2;
-    if(d > 1) continue;
-    put(cx + x, cy + y, d > 0.72 && x + y > 3 ? 'g' : d > 0.5 && x + y > 6 ? 'g' : x + y < -5 ? 'w' : 'W');
-  }
-  // the tail, a short fan with a dark edge; feet tucked, pink
-  for(let y = 8; y <= 12; y++) for(let x = -4; x <= 4; x++){ if(Math.abs(x) > 4 - (y - 8) * 0.6) continue; put(cx + x, cy + y, y === 12 || Math.abs(x) >= 3.5 - (y - 8) * 0.6 ? 'k' : y > 10 ? 'g' : 'W'); }
-  for(const [x, y] of [[-6, 9], [-5, 9], [-5, 10], [5, 9], [6, 9], [5, 10]]) put(cx + x, cy + y, 'p');
-  // the head, turned the way it flies, over the body's right shoulder
-  const hx = cx + 6, hy = cy - 6;
-  for(let y = -5; y <= 3; y++) for(let x = -5; x <= 5; x++){ const d = (x / 5) ** 2 + (y / 4.4) ** 2; if(d <= 1) put(hx + x, hy + y, d > 0.6 && x + y > 3 ? 'g' : x + y < -4 ? 'w' : 'W'); }
-  // the brow over a dark eye, the smudge behind it
-  for(const [x, y, ch] of [[1, -3, 'k'], [2, -3, 'k'], [3, -3, 'k'], [2, -2, 'e'], [3, -2, 'e'], [1, -2, 'g'], [0, -2, 'g']]) put(hx + x, hy + y, ch);
-  // the bill: long, pale pink, a yellow ridge, the tube of the nostril, the
-  // hook dark at its tip
-  for(let i = 0; i <= 10; i++){ const x = hx + 5 + i, y = hy - 1 + i * 0.18;
-    put(x, y - 1, i < 9 ? (i < 3 ? 'y' : 'Y') : 'h'); put(x, y, i === 4 ? 'n' : 'p'); if(i < 8) put(x, y + 1, i < 6 ? 'p' : 'q'); }
-  put(hx + 16, hy + 1, 'h'); put(hx + 16, hy + 2, 'h'); put(hx + 15, hy + 2, 'h');
+  // the tail, short and dark tipped, behind
+  for(const [x, y, ch] of [[-16, -1, 'W'], [-17, -1, 'W'], [-18, -1, 'g'], [-19, -1, 'k'], [-16, 0, 'W'], [-17, 0, 'g'], [-18, 0, 'k'], [-16, 1, 'g']]) put(cx + x, cy + y, ch);
+  // the feet tucked under the tail, pink
+  put(cx - 12, cy + 4, 'p'); put(cx - 13, cy + 4, 'p'); put(cx - 14, cy + 4, 'q');
+  // the head, round, a dark smudge over the eye; the long bill, pale pink
+  // with a yellow ridge and a dark hooked tip
+  for(let y = -4; y <= 3; y++) for(let x = -4; x <= 4; x++) if((x / 4.6) ** 2 + (y / 4) ** 2 <= 1) put(cx + 15 + x, cy - 2 + y, y > 1 ? 'g' : 'W');
+  put(cx + 16, cy - 4, 'k'); put(cx + 17, cy - 4, 'k'); put(cx + 17, cy - 3, 'e'); put(cx + 16, cy - 3, 'g');
+  for(let i = 0; i <= 10; i++){ const x = cx + 19 + i, y = cy - 3 + i * 0.22;
+    put(x, y, i < 9 ? (i < 3 ? 'y' : 'Y') : 'h'); put(x, y + 1, i === 3 ? 'n' : i < 9 ? 'p' : 'h'); if(i < 7) put(x, y + 2, 'q'); }
+  put(cx + 30, cy, 'h'); put(cx + 30, cy - 1, 'h');
+  // the near wing over it all
+  wing(false);
   return G.map(r => r.join(''));
 }
 const ALB_PAL = { W: '#F4F2EC', w: '#FFFFFF', g: '#BAC0C8', D: '#3A342E', d: '#5A5048', K: '#141210', k: '#5A5450',
   e: '#141210', y: '#F2D6A0', Y: '#E8B850', p: '#EEB0B0', q: '#D89098', n: '#C88A70', h: '#6A4A2E' };
-const ALB_LIFT = [-1, -0.4, 0, 0.6, 1], ALB_SPR = [];
+const ALB_LIFT = [-1, -0.66, -0.33, 0, 0.33, 0.66, 1], ALB_SPR = [];
 function albSprite(f, flip){
-  const key = f + (flip ? 5 : 0);
+  const key = f + (flip ? ALB_LIFT.length : 0);
   if(ALB_SPR[key]) return ALB_SPR[key];
   let rows = albRows(ALB_LIFT[f]);
   if(flip) rows = rows.map(r => [...r].reverse().join(''));
@@ -29337,7 +29343,7 @@ function albSprite(f, flip){
 // where it is now, in the frame's pixels (null when none is up)
 function albAt(){
   const A = LUCKY.a; if(!A) return null;
-  const sp = albSprite(2), span = VW + sp.w, u = Math.min(A.t, ALB_FLY) / ALB_FLY;
+  const sp = albSprite(3), span = VW + sp.w, u = Math.min(A.t, ALB_FLY) / ALB_FLY;
   let x = A.dir > 0 ? -sp.w / 2 + span * u : VW + sp.w / 2 - span * u, y = A.y + Math.sin(A.t * 0.9) * 2;
   if(A.z != null){ const z = A.t - A.z; x += A.dir * z * z * 520; y -= z * z * 220; }
   return { x, y, w: sp.w, h: sp.h };
@@ -29355,9 +29361,10 @@ function albTick(c, dt){
     const P = albAt(), z = A.z != null ? A.t - A.z : -1;
     if((z < 0 && A.t >= ALB_FLY) || z > 0.8 || !can){ LUCKY.a = null; }
     else{
-      // (a glide, its wings beating now and then; fast as it makes off)
-      const cyc = (A.t + A.ph) % 3.2, beat = z >= 0 ? Math.sin(z * 30) : cyc < 0.9 ? Math.sin(cyc / 0.9 * Math.PI * 2) : Math.sin(A.t * 1.3) * 0.15;
-      const f = Math.max(0, Math.min(4, Math.round((beat + 1) * 2))), sp = albSprite(f, A.dir < 0);
+      // (its wings beating, slow and deep, a short glide with them a little
+      // up now and then; fast as it makes off)
+      const cyc = (A.t + A.ph) % 4, beat = z >= 0 ? Math.sin(z * 34) : cyc < 3.2 ? Math.sin(cyc / 0.8 * Math.PI * 2) : 0.33;
+      const f = Math.max(0, Math.min(ALB_LIFT.length - 1, Math.round((beat + 1) * (ALB_LIFT.length - 1) / 2))), sp = albSprite(f, A.dir < 0);
       c.drawImage(sp.cv, Math.round(P.x - sp.w / 2), Math.round(P.y - sp.h / 2));
       // a glint or two about it, the gold's own
       for(let i = 0; i < 3; i++){ const q = (A.t * 1.6 + i / 3) % 1;
@@ -29379,7 +29386,7 @@ function albTick(c, dt){
 function albGo(){
   LUCKY.wait = (ALB_GAP[0] + Math.random() * (ALB_GAP[1] - ALB_GAP[0])) * (festTw('alb') ? 0.5 : 1);
   // (along the top of the field, below the readout)
-  const sp = albSprite(2), cv = document.getElementById('hole'), rr = document.getElementById('rRow');
+  const sp = albSprite(3), cv = document.getElementById('hole'), rr = document.getElementById('rRow');
   let top = VH * 0.18;
   if(cv && rr){ const a = cv.getBoundingClientRect(), b = rr.getBoundingClientRect(); if(a.height > 0) top = (b.bottom - a.top) * VH / a.height; }
   const y = Math.round(Math.min(Math.max(top + sp.h / 2 + 4, VH * 0.12), Math.max(VH * 0.2, HORIZON * 0.85)));

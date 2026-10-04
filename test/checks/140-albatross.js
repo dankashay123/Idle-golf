@@ -36,6 +36,17 @@ module.exports = {
           for (let i = 0; i < 52; i++) albTick(Scene.b, 0.1);
           if (LUCKY.a) f('still up after ' + ALB_FLY + 's');
         }
+        // ---- side on, its wings beating, facing the way it flies ----
+        { const used = new Set(), keepS = window.albSprite; window.albSprite = function (f, flip) { used.add(f + (flip ? 'L' : 'R')); return keepS.apply(this, arguments); };
+          try { LUCKY.wait = 0.01; albTick(Scene.b, 0.02); const dir = LUCKY.a.dir; for (let i = 0; i < 30; i++) albTick(Scene.b, 0.07);
+            const fr = [...used].filter(k => k.endsWith(dir < 0 ? 'L' : 'R')).length;
+            if (fr < 5) f('its wings went through ' + fr + ' positions in two seconds');
+            if ([...used].some(k => k.endsWith(dir < 0 ? 'R' : 'L') && k !== '3R' && k !== '3L')) f('it faced back the way it came');
+          } finally { window.albSprite = keepS; LUCKY.a = null; }
+          // (its bill on the side it flies to: the head's pale pink right of its middle)
+          const sp = albSprite(3, false), g = sp.cv.getContext('2d').getImageData(0, 0, sp.w, sp.h).data; let r = 0, l = 0;
+          for (let y = 0; y < sp.h / 2 + 1; y++) for (let x = 0; x < sp.w; x++) { const k = (y * sp.w + x) * 4; if (g[k] === 0xEE && g[k + 1] === 0xB0 && g[k + 2] === 0xB0) (x > sp.w / 2 ? r++ : l++); }
+          if (!(r > 3 && l === 0)) f('its bill: ' + r + ' pixels ahead, ' + l + ' behind'); }
         // ---- a tap beside it does nothing; on it, caught ----
         LUCKY.wait = 0.01; albTick(Scene.b, 0.02); albTick(Scene.b, 3);
         const cvr = document.getElementById('hole').getBoundingClientRect(), P = albAt();
@@ -64,6 +75,6 @@ module.exports = {
       return fails;
     });
     if (r.length) throw new Error(r.join('; '));
-    return ['counts down only drawn and watched; crosses below the readout in ' + 10 + 's; caught by a tap on it, once; purse doubled live only, by the cog; runs down'];
+    return ['counts down only drawn and watched; side on, its wings beating, its bill ahead; crosses below the readout in ' + 10 + 's; caught by a tap on it, once; purse doubled live only, by the cog; runs down'];
   }
 };

@@ -43,7 +43,9 @@ feature must do, and is usually enough on its own.
   `festHole` (ribbons a stroke under par, live), `FEST_AT`/`FEST_PAY`,
   `festBlock` on Today; tee markers with `fest` (`S.festMk`, worn only when
   tapped: `teeMarkNow`), shapes `pumpkin`, `flake`, `bloom`, `sun`.
-- **The course dog** (`coursedog`): `DOG_SIT`, `DOG_TROT`, `DOG_BREED`
+- **The course dog** (`coursedog`), **put aside for later** (the user:
+  "Don't do the dog, sorry. We will save that for later"): `DOG_ON` false,
+  so it is neither drawn nor offered; turn it on to bring it back: `DOG_SIT`, `DOG_TROT`, `DOG_BREED`
   (`at`: courses' collections done), `dogNow`, `dogSprite`,
   `Scene.drawDog` (before the golfer, through `drawBehind`), the hop on an
   eagle (`dogHop`), the picker in Course Wildlife; `S.dog`.
