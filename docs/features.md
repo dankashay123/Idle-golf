@@ -86,8 +86,8 @@ feature must do, and is usually enough on its own.
   `festHole` (ribbons a stroke under par, live), `FEST_AT`/`FEST_PAY`,
   `festBlock` on Today; tee markers with `fest` (`S.festMk`, worn only when
   tapped: `teeMarkNow`), shapes `pumpkin`, `flake`, `bloom`, `sun`.
-- **The course dog** (`coursedog`), on (`DOG_ON`; put aside a while, then
-  "turn on the dog as well"): `DOG_SIT`, `DOG_TROT` (from behind, tail
+- **The course dog** (`coursedog`), put aside (`DOG_ON = false`: on, then
+  "Lets turn off the dog for now please. We will come back to it later"): `DOG_SIT`, `DOG_TROT` (from behind, tail
   wagging), `DOG_BREED`
   (`at`: courses' collections done), `dogNow`, `dogSprite`,
   `Scene.drawDog` (before the golfer, through `drawBehind`), the hop on an
@@ -2285,3 +2285,12 @@ him (about 49px tall on a 320 phone, 71px on its side).
   `GUIDE_PIC`).
 - **The dog**: `dogTap` (a tap on `Scene._dogBox` opens Course Wildlife);
   not drawn over a crossing (stones, bridge, pier).
+- **The canyon steadied** (`canyonlook`, walking): drawn per screen pixel,
+  each row's depth interpolated between ground slices; rock coloured from
+  a code palette (`canyonPal`, `P_CANYON.code`) on a 1/16 grid fixed on the
+  course (extra canyon slices where the march skips); streaks at least two
+  pixels; canyon pixels kept out of the haze's tree mask (`Scene._cmk`).
+- **Dragonflies** (`dragonfly`): `layDragonflies` after the reeds and pads
+  (summer by the course's season, else the month; day, dry; ~70% of such
+  holes; 1 to 3), props `kind 26, sp 'dfly'`, drawn from `DFLY_PIC` in
+  `DFLY_COL`, hovering and darting; `DFLY_FORCE`; Guide `dragonfly`.

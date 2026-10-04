@@ -35,12 +35,17 @@ through:
   into blocks that jittered); a tap on the dog opens its breeds (they are
   in Cabinet > Course Wildlife); a frog on a lily pad now and then (a Guide
   entry); mist in the canyon on cold mornings; the dog waits on the bank
-  while he crosses.
+  while he crosses. Then ("still jitters like crazy"): the canyon steadied
+  as he walks (each row of rock coloured by its own depth on a grid fixed
+  to the course, never by where the ground's slices fall; a flicker check
+  in `canyonlook`); **the dog put aside** ("we will come back to it
+  later": `DOG_ON = false`, nothing drawn or offered); dragonflies over
+  reeds and pads on summer days (a Guide entry).
   Fixed on the way: a Vault floor played again after a gust was never
   called; the Spotted tag sat over a wager's name. Earlier the same day:
   cherry trees, the kingfisher, course collections, the monthly hunt, and
   the phone's picture memory (the black sky).
-- `node test/run.js` has **154 checks**, about 35 minutes: run it in the
+- `node test/run.js` has **155 checks**, about 35 minutes: run it in the
   background, on a copy in the scratchpad, with the machine quiet. After
   weather, colours or anything dated, also run it with `HOUR_FORCE` 8 and
   15 and the month pinned (rules 20 and 70).
@@ -265,10 +270,10 @@ Turned down, don't offer: a station on the railway, a photo mode, a
 weather forecast, fireworks, trail flourishes, caddie tricks. Nothing for
 the Tour tab, no new sound but ambience.
 
-1. **The dog fetches**: on an ace it runs out and brings the ball back.
-2. **The dog trots over the bridge** behind him instead of waiting.
-3. **Dragonflies over the ponds** on summer days, a Guide entry.
-4. **Ask what they think** of the canyon on the phone now.
+1. **Ask what they think** of the canyon on the phone now.
+2. **The dog back on** when they are ready (it is put aside, not gone).
+3. **Fireflies** over the reeds on summer nights, a Guide entry.
+4. **Ripples** where a dragonfly or the frog touches the water.
 
-Recommend 4: the canyon's jitter was only seen on the phone; a word from
+Recommend 1: the canyon's jitter was only seen on the phone; a word from
 them confirms it is gone before more is built on it.
