@@ -29,6 +29,8 @@ through:
   pond by the path laid level, with no tree of the woods in it); the
   course dog on, seen from behind with its tail wagging. The full run
   caught a frame over its drawing budget and reeds through a slope: fixed.
+  Then: the medal's green hunt dot repeated on the Guide tab and by its
+  Weekly Hunt; flying, both arms one colour; his arms a pixel thicker.
   Fixed on the way: a Vault floor played again after a gust was never
   called; the Spotted tag sat over a wager's name. Earlier the same day:
   cherry trees, the kingfisher, course collections, the monthly hunt, and

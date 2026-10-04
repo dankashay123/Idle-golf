@@ -2264,4 +2264,8 @@ him (about 49px tall on a 320 phone, 71px on its side).
 - Earlier: trails and balls made easier to see, fixes after rotating the
   phone, Title Case everywhere, cheaper Bench, rival, skins, the scoring
   rebalance, pacing.
-
+- **The hunt's dot, his arms** (`hunt`, `flyarms`): `.huntDot` on the
+  Trophy Room's Guide tab and by its Weekly Hunt while `huntOpen()`, the
+  medal's `#roomHunt` dot; swinging, his arms `ath` (a pixel over `th`
+  from 45 tall; the club keeps `th`); flying, both arms `O.skin`, `ath` from
+  `h * 0.068`.
