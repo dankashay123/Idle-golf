@@ -94,7 +94,8 @@ module.exports = {
         DEV.course(B.COURSE.findIndex(c => c.slot === 'home')); hideSheet(); Scene.announce = null;
         o.normal = play(150, true);
         // ---- a strong bag, watched ----
-        for (const u of B.UPG) S.upg[u.id] = Math.min(capOf(u), 30);
+        // (a milestone, so the Range counts in full: at 30 it counts a little less)
+        for (const u of B.UPG) S.upg[u.id] = Math.min(capOf(u), 50);
         startHole();
         o.strong = play(70, true);
         // ---- the putt, drawn: the ball seen on its way, never on him, and
