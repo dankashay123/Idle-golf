@@ -4741,6 +4741,9 @@ function migrate(){
   // sighting pay the hunt at once, and the Guide read 4/3)
   else if(S.hunt){ const want = huntOf(S.hunt.wk); S.hunt.got = S.hunt.got.filter((id, i, a) => want.includes(id) && a.indexOf(id) === i);
     if(S.hunt.paid !== undefined && S.hunt.paid !== 1) delete S.hunt.paid; }
+  // (auto-wagers: a wager's id each)
+  if(S.autoWg !== undefined){ if(!S.autoWg || typeof S.autoWg !== 'object' || Array.isArray(S.autoWg)) delete S.autoWg;
+    else for(const k in S.autoWg) if(!B.DGN.some(d => d.id === k) || S.autoWg[k] !== 1) delete S.autoWg[k]; }
   // (loadouts: three, each nothing or a club's uid for each slot)
   if(S.loads !== undefined){ if(!Array.isArray(S.loads)) delete S.loads;
     else S.loads = S.loads.slice(0, LOAD_N).map(x => x && typeof x === 'object' && x.u && typeof x.u === 'object' ? { u: Object.fromEntries(Object.entries(x.u).filter(([k, v]) => B.SLOTS.some(sl => sl.id === k) && (typeof v === 'number' || typeof v === 'string'))) } : null); }
@@ -8046,6 +8049,23 @@ function finishHole(D){
   startHole();
   announceCourse();
   renderCard(); renderTour();
+  autoWager();
+}
+// Auto-wagers (the user picked them from the menu, "only after a certain
+// tour card is reached, a high one like 100 or 150"): from Card 100 a wager
+// can play itself. It starts between holes once its entries are full, so no
+// entry is lost, the wagers' loadout on as with any wager. Live only: never
+// in a catch-up or quietly, so it saves taps and adds nothing besides.
+const AUTO_WAGER_TIER = 99;
+const autoWagerOpen = () => (S.tierMax || 0) >= AUTO_WAGER_TIER;
+function autoWager(){
+  if(QUIET || OFFLINE || S.dgnRun || !autoWagerOpen() || !S.autoWg) return null;
+  const feat = featWager(), list = B.DGN.slice().sort((a, b) => (b.id === feat.id) - (a.id === feat.id));
+  const d = list.find(x => S.autoWg[x.id] && (S.dgnKeys[x.id] || 0) >= entryCap(x));
+  if(!d) return null;
+  startDgn(d);
+  if(S.dgnRun) toast('<span class="achk">Auto-wager</span>' + d.n);
+  return d;
 }
 
 function advanceHole(){
@@ -28063,7 +28083,7 @@ function renderDgn(){
   const w = $('dgnRows'); w.innerHTML = '';
   const D = derive();
   $('dgnNote').textContent = S.dgnRun ? 'On the stage \u00b7 the round is paused'
-    : '';
+    : autoWagerOpen() ? '' : 'Auto-wagers from Card ' + cardNo(AUTO_WAGER_TIER);
   const feat = featWager();
   const fb = $('dgnFeat');
   if(fb) fb.innerHTML = '<span class="fn">' + feat.n + '</span>'
@@ -28152,6 +28172,15 @@ function renderDgn(){
       b.onclick = () => startDgn(d);
     }
     br.appendChild(b);
+    // (from Card 100: plays itself once its entries are full)
+    if(autoWagerOpen()){
+      const ab = document.createElement('button'), on = !!(S.autoWg && S.autoWg[d.id]);
+      ab.className = 'mini' + (on ? ' go' : '');
+      ab.textContent = 'Auto \u00b7 ' + (on ? 'on' : 'off');
+      ab.setAttribute('aria-label', 'Auto-play ' + d.n + ' when its entries are full: ' + (on ? 'on' : 'off'));
+      ab.onclick = () => { S.autoWg = S.autoWg || {}; if(on) delete S.autoWg[d.id]; else S.autoWg[d.id] = 1; save(); renderDgn(); };
+      br.insertBefore(ab, b);
+    }
     w.appendChild(el);
   }
 }
