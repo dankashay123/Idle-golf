@@ -2303,6 +2303,13 @@ him (about 49px tall on a 320 phone, 71px on its side).
   glows up and fades (`ffGlow`: about a third of a 3 to 5.5s cycle lit,
   `ffCol`), mirrored in the water where that water is in view; `Scene.ripple` (a ring on water only, `wetSpot`) where a dragonfly
   dips (2 in 5 of its darts) and round the frog's pad every 4.7s.
+- **Leaping fish** (`leapfish`): `layLeapFish` (`LEAP_P` 0.6 of holes,
+  `LEAP_FORCE`; one or two kind 26 `sp 'leap'` on open water with room
+  either way, not on ice, by the stones, round the sea stack or within 4.8
+  of the green), `leapAt` (its own clock: a leap on 60% of turns), drawn
+  as the stones' fish with a splash and `Scene.ripple`; the Guide's Fish
+  ("Leaping in rivers and ponds"). The Harvest Moon's path on the water is
+  orange (`ripples`).
 - **lookSeason(look)**: the season a course shows (its own; the Snowline
   winter, the Blossom spring; else the month), for the Harvest Moon, the
   canyon's mist, dragonflies and the reeds' fireflies. `newDepthsHole`

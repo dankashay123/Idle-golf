@@ -12,7 +12,7 @@ module.exports = {
   name: 'harvestmoon',
   async run(page) {
     const r = await page.evaluate(() => {
-      const fails = [], f = m => fails.push(m), keep = window.courseFor, keepD = DAY_FORCE;
+      const fails = [], f = m => fails.push(m), keep = window.courseFor, keepD = DAY_FORCE; let o_glint = null;
       try {
         QUIET = true; const home = courseById('willow'); window.courseFor = () => home;
         // a home course: autumn only
@@ -53,16 +53,25 @@ module.exports = {
         if (!(big > Scene.moonR * 1.8)) f('the Harvest Moon r ' + big + ' against ' + Scene.moonR);
         if (!(low > Scene.moonY)) f('not lower than the ordinary moon');
         if (!orange) f('its middle is ' + [...sky.slice(0, 3)] + ', not orange');
+        // its light on the water orange, not the ordinary moon's pale path
+        { const D2 = derive(), raf2 = window.requestAnimationFrame; window.requestAnimationFrame = () => 0;
+          const orange = on => { HARVEST_FORCE = on; S.chaos = { n: 'Night Round' }; DEV.stones(); hideSheet(); Scene.announce = null; Scene.skyKey = null;
+            let n = 0; for (const t of [1, 1.4, 1.8, 2.2]) { Scene.t = t; Scene.camD = Scene.isle.bank - 4; Scene.draw(0, D2); Scene.draw(0, D2);
+              const d = Scene.buf.getContext('2d').getImageData(0, 0, VW, VH).data;
+              for (let y = Math.round(VH * 0.42); y < VH; y++) for (let x = 0; x < VW; x++) { const i = (y * VW + x) * 4; if (d[i] > 150 && d[i] > d[i + 1] + 30 && d[i] > d[i + 2] + 80) n++; } }
+            return n; };
+          try { o_glint = [orange(true), orange(false)]; } finally { window.requestAnimationFrame = raf2; STONES_FORCE = 0; HARVEST_FORCE = null; S.chaos = { n: 'Fair' }; Scene.newHole(S.hole, S.tier); }
+          if (!(o_glint[0] >= o_glint[1] + 8)) f('the Harvest Moon\'s light on the water: ' + o_glint[0] + ' orange pixels against ' + o_glint[1] + ' under the ordinary moon'); }
         // the Guide
         if (!GUIDE.find(g => g.id === 'harvest' && g.g === 'n')) f('no entry on the Night shelf');
         QUIET = false; S.guide = S.guide || {}; const n0 = S.guide.harvest || 0; const tw = window.toast; window.toast = () => {};
         try { guideSpot({ hole: S.hole, props: [], harvest: true, night: true }); } finally { window.toast = tw; }
         if ((S.guide.harvest || 0) !== n0 + 1) f('spotted, the Guide counted ' + ((S.guide.harvest || 0) - n0));
         if (!guideUrl('harvest')) f('no picture in the Guide');
-        return { fails, on, rounds };
+        return { fails, on, rounds, glint: o_glint };
       } finally { window.courseFor = keep; DAY_FORCE = keepD; HARVEST_FORCE = null; SEASON_FORCE = -1; QUIET = false; S.chaos = { n: 'Fair' }; }
     });
     if (r.fails.length) throw new Error(r.fails.join('; '));
-    return ['autumn nights only, ' + r.on + ' of ' + r.rounds + ' rounds, the whole round; orange, big and low; in the Guide'];
+    return ['autumn nights only, ' + r.on + ' of ' + r.rounds + ' rounds, the whole round; orange, big and low, its light on the water orange (' + r.glint.join(' against ') + ' pixels); in the Guide'];
   }
 };

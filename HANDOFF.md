@@ -50,12 +50,14 @@ through:
   the Snowline winter and the Blossom spring all year, else the month.
   Then: fireflies glow up and fade like real ones (`ffGlow`), on one night
   hole in two in any season (`fireflyAt`: the rough, the reeds and the
-  stones' river alike).
+  stones' river alike). Then: the Harvest Moon's path on the water orange;
+  fish leaping in the lakes and ponds (a splash, a ring where they land;
+  the Guide's Fish).
   Fixed on the way: a Vault floor played again after a gust was never
   called; the Spotted tag sat over a wager's name. Earlier the same day:
   cherry trees, the kingfisher, course collections, the monthly hunt, and
   the phone's picture memory (the black sky).
-- `node test/run.js` has **156 checks**, about 35 minutes: run it in the
+- `node test/run.js` has **157 checks**, about 35 minutes: run it in the
   background, on a copy in the scratchpad, with the machine quiet. After
   weather, colours or anything dated, also run it with `HOUR_FORCE` 8 and
   15 and the month pinned (rules 20 and 70).
@@ -280,10 +282,10 @@ Turned down, don't offer: a station on the railway, a photo mode, a
 weather forecast, fireworks, trail flourishes, caddie tricks. Nothing for
 the Tour tab, no new sound but ambience.
 
-1. **The dog back on** when they are ready (it is put aside, not gone).
-2. **A fish leaping** from the lake or a pond now and then, a ring where it lands.
-3. **Moonlight on the water**: the Harvest Moon's glints orange, not pale.
-4. **Ask how the water feels on the phone**: dragonflies, fireflies, rings.
+1. **Ask how the water feels on the phone**: dragonflies, fireflies, fish.
+2. **The dog back on** when they are ready (it is put aside, not gone).
+3. **Ducklings** behind a duck on the island's lake in spring.
+4. **Steam off the ponds** on cold mornings, like the canyon's mist.
 
-Recommend 3: small, and it finishes the Harvest Moon (its glints on the
-water stay the ordinary moon's pale).
+Recommend 1: a lot has gone onto the water in a row; a word from them on
+the phone before more is added there.

@@ -13066,6 +13066,10 @@ const LILY_W = 24, LILY_H = 10, LILY_SPR = new Map(), LILY_MAX = 40;
 // a dragonfly's body and its eyes, by kind; and a pin for the checks
 const DFLY_COL = [['#2E7AD8', '#8AD0F8'], ['#3AA858', '#B8E870'], ['#C8402E', '#F4A070']];
 let DFLY_FORCE = null, RFLY_FORCE = null;
+// fish leaping in the lakes and ponds: on this share of holes with open
+// water; LEAP_FORCE pins it
+let LEAP_FORCE = null;
+const LEAP_P = 0.6;
 // Fireflies (the user: "a 50% chance to be in night holes no matter the
 // season"): one night hole in two, any season, in the rough and at the
 // reeds alike, from the hole's hash; FIREFLY_FORCE pins it. Each light glows
@@ -19800,6 +19804,37 @@ const Scene = {
     this.layLilyFrog();
     this.layDragonflies();
     this.layReedFireflies();
+    this.layLeapFish();
+  },
+  // Fish leaping in the lakes and ponds (the user picked it from the menu):
+  // on most holes with open water, one or two, each on a clock of its own:
+  // now and then it leaps out, arcs a little way and drops back in, a
+  // splash where it leaves and a ring spreading where it lands. Not on ice,
+  // by the stepping stones (their river has its own), round the sea stack
+  // or close by the green. From a hash once
+  // the hole is laid; spotted, they count for the Guide's Fish.
+  layLeapFish(){
+    if(this.ice || sigKind(this.hole) === 'stones' || sigKind(this.hole) === 'pier') return;
+    const h = this.hole, W = this.water, PP = this.pond, put = this.props || [], at = [];
+    if(LEAP_FORCE === null && hr(h * 53 + 1, 893) > LEAP_P) return;
+    // (open water: room for the leap either way of the spot)
+    const open = (d, x) => Math.hypot(d - LEN, x) > 4.8 && this.wetSpot(d, x) && this.wetSpot(d, x - 0.9) && this.wetSpot(d, x + 0.9) && this.wetSpot(d - 0.3, x) && this.wetSpot(d + 0.3, x);
+    const cand = [];
+    if(W && !W.canyon && !W.rail) for(let i = 0; i < 24; i++) cand.push([W.d + (hr(h * 53 + i, 894) - 0.5) * W.rd * 1.4, W.x + (hr(h * 53 + i, 895) - 0.5) * (W.lake || W.river ? 6 : W.rx * 1.4)]);
+    if(PP) for(let i = 0; i < 12; i++) cand.push([PP.d + (hr(h * 59 + i, 894) - 0.5) * PP.rd * 1.2, PP.x + (hr(h * 59 + i, 895) - 0.5) * PP.rx * 1.2]);
+    for(const [d, x] of cand) if(at.length < 2 && open(d, x) && !at.some(q => Math.abs(q[0] - d) < 1.5 && Math.abs(q[1] - x) < 2)) at.push([d, x]);
+    if(!at.length) return;
+    const n = 1 + (hr(h * 53 + 2, 896) < 0.5 ? 1 : 0);
+    for(let i = 0; i < Math.min(n, at.length); i++) put.push({ kind: 26, sp: 'leap', d: at[i][0], x: at[i][1], k: h * 5 + i, extra: 1 });
+    put.sort((a, b) => b.d - a.d);
+    this.props = put;
+  },
+  // where leaping fish k is at time t: its clock's turn n, how far round
+  // (u), the share of a turn in the air (J), its length (L), whether it
+  // leaps this turn and which way
+  leapAt(k, t){
+    const L = 6 + 5 * hr(k, 891), clock = t / L + hr(k, 892), n = Math.floor(clock), u = clock - n;
+    return { n, u, L, J: 0.8 / L, jumps: hr(k, n * 7 + 1) < 0.6, dir: hr(k, n * 7 + 3) < 0.5 ? -1 : 1 };
   },
   // Is it summer here: a course with seasons by its own, the others by the
   // real month.
@@ -20865,7 +20900,9 @@ const Scene = {
     // the moon's path on the water at night: broken glints straight down
     // from it, wider the nearer the water, shimmering
     if(this.night && !this.ice && this.moonX != null){
-      const M = this.moonX, hi = mixC(pickC(T._wt, 0.95), '#EEF2DC', 0.75), lo = mixC(pickC(T._wt, 0.9), '#DCE2D2', 0.4);
+      // (under the Harvest Moon, its own orange: the pale path read as the
+      // ordinary moon's under a huge orange one)
+      const hm = this.harvest, M = this.moonX, hi = mixC(pickC(T._wt, 0.95), hm ? '#FFB45A' : '#EEF2DC', hm ? 0.8 : 0.75), lo = mixC(pickC(T._wt, 0.9), hm ? '#E08A3C' : '#DCE2D2', hm ? 0.55 : 0.4);
       const f6 = Math.floor(this.t * 5);
       for(let i = 0; i < R.length; i += 3){
         const yy = R[i], xl = R[i+1], w = R[i+2];
@@ -25291,6 +25328,35 @@ Object.assign(Scene, {
       // every size it passes through, made in the frame, cost the frame)
       this.standBlit(c, spr, Math.round(pr.x) - (w >> 1), Math.round(pr.y) - h, w, h);
 
+    }else if(p.kind === 26 && p.sp === 'leap'){
+      // a fish leaping: out, a short silver arc, and back in; a splash
+      // where it leaves and a ring spreading where it lands
+      const F = this.leapAt(p.k, this.t);
+      if(!F.jumps) return;
+      const v = F.u / F.J, after = (F.u - F.J) * F.L, x1 = p.x + F.dir * 0.8, clip = this.clipAt(p.d);
+      const splash = (x, age) => {
+        if(age < 0 || age > 0.4) return;
+        const g = this.proj(p.d, x), q = 1 - age / 0.4, r = Math.max(1, Math.round((1 + age * 6) * LAT * g.s * 0.06));
+        c.fillStyle = 'rgba(234,244,246,' + (0.9 * q).toFixed(2) + ')';
+        for(let j = 0; j < 8; j++){ const an = j / 8 * Math.PI * 2; fillClip(c, Math.round(g.x + Math.cos(an) * r), Math.round(g.y + Math.sin(an) * r * 0.35), 1, 1, clip); }
+        if(age < 0.15) fillClip(c, Math.round(g.x) - 1, Math.round(g.y) - Math.max(1, r >> 1), 3, Math.max(1, r >> 1), clip);
+      };
+      if(v <= 1){
+        splash(p.x, v * 0.8);
+        this.ripple(c, p.d, p.x, 0.08 + v * 0.8 * 0.3, 0.6 * (1 - v * 0.5), night);
+        const A = w => this.proj(p.d, p.x + F.dir * 0.8 * w, Math.sin(Math.PI * w) * 0.75);
+        const h = A(v), t0 = A(Math.max(0, v - 0.15));
+        if(h.y <= clip){
+          const th = Math.max(1, Math.round(LAT * h.s * 0.07)), ln = Math.hypot(h.x - t0.x, h.y - t0.y) || 1, want = Math.max(ln, 4);
+          const tl = { x: h.x - (h.x - t0.x) / ln * want, y: h.y - (h.y - t0.y) / ln * want }, mx = (h.x + tl.x) / 2, my = (h.y + tl.y) / 2;
+          pxLineClip(c, tl.x, tl.y, mx, my, night ? '#2A3A48' : '#34495A', th, clip);
+          pxLineClip(c, mx, my, h.x, h.y, night ? '#B8C4CC' : '#E6EEF2', th, clip);
+        }
+      }else if(after < 2){
+        splash(x1, after);
+        for(const lag of [0, 0.35]){ const a = after - lag; if(a > 0) this.ripple(c, p.d, x1, 0.08 + a * 0.4, 0.8 * (1 - a / 1.6), night); }
+      }
+
     }else if(p.kind === 26 && p.sp === 'dfly'){
       // a dragonfly: hovering a little way over the water, now and then
       // darting off to another spot nearby; a body, its eyes, and two pairs
@@ -27718,7 +27784,7 @@ const GUIDE = [
 GUIDE.splice(7, 0, ...Object.keys(CRIT).map(id => ({ id, n: CRIT_NAME[id], g: 'w', w: CRIT_WHERE[id] })));
 // and the life the signature holes already had, and the geese
 GUIDE.splice(7, 0, { id:'duck', n:'Duck', g:'w', w:'On the island\u2019s lake' }, { id:'hawk', n:'Hawk', g:'w', w:'Over the canyon' },
-  { id:'fish', n:'Fish', g:'w', w:'By the stepping stones' }, { id:'geese', n:'Geese', g:'w', w:'Autumn and winter skies' });
+  { id:'fish', n:'Fish', g:'w', w:'Leaping in rivers and ponds' }, { id:'geese', n:'Geese', g:'w', w:'Autumn and winter skies' });
 // the golden ones (see GOLD_KINDS), on a shelf of their own
 GUIDE.push(...GOLD_KINDS.map(an => ({ id: goldId(an), n: 'Golden ' + (an === 'stag' ? 'Stag' : CRIT_NAME[an]), g: 'g',
   w: an === 'stag' ? 'Autumn and winter woods' : CRIT_WHERE[an] })));
@@ -27755,6 +27821,7 @@ function guideSpot(sc){
     if(!sc.night){ if(sk === 'island') see('duck'); if(sk === 'canyon') see('hawk'); } if(sk === 'stones' && !sc.ice) see('fish'); }
   if(sc.harvest) see('harvest');
   if(P.some(p => p.kind === 26 && p.frog)) see('lilyfrog');
+  if(!sc.ice && P.some(p => p.kind === 26 && p.sp === 'leap')) see('fish');
   if(P.some(p => p.kind === 26 && p.sp === 'dfly')) see('dragonfly');
   if(sc.golden) see('golden'); if(sc.frost) see('frost'); if(sc.rain) see('rain'); if(sc.night) see('night');
   if(sc.goldbow) see('goldbow'); else if(sc.rainbow) see('rainbow'); if(sc.dblbow) see('dblbow'); if(sc.fog) see('fog');
