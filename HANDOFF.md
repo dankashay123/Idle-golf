@@ -21,11 +21,14 @@ through:
   festivals, and wager medals with Bank on the Island Green. Then: a bar
   to the next milestone on every Range row, rare visitors (a gold star),
   fox cubs in spring, and the canyon in layered sandstone with a river.
+  Last: the Harvest Moon (an autumn night in four, a Guide entry) and the
+  island's lake and the stepping-stone river with depth, reeds and lily
+  pads.
   Fixed on the way: a Vault floor played again after a gust was never
   called; the Spotted tag sat over a wager's name. Earlier the same day:
   cherry trees, the kingfisher, course collections, the monthly hunt, and
   the phone's picture memory (the black sky).
-- `node test/run.js` has **150 checks**, about 35 minutes: run it in the
+- `node test/run.js` has **152 checks**, about 35 minutes: run it in the
   background, on a copy in the scratchpad, with the machine quiet. After
   weather, colours or anything dated, also run it with `HOUR_FORCE` 8 and
   15 and the month pinned (rules 20 and 70).
@@ -252,12 +255,10 @@ Turned down, don't offer: a station on the railway, a photo mode, a
 weather forecast, fireworks, trail flourishes, caddie tricks. Nothing for
 the Tour tab, no new sound but ambience.
 
-1. **A Harvest Moon**: now and then a huge orange moon on an autumn night,
-   with a Guide entry.
-2. **The island's lake and the river by the stones** given the canyon's
-   treatment: depth, reeds and lily pads.
-3. **The course dog** back on (built and checked, switched off).
-4. **Ask what they think** of the albatross and the canyon.
+1. **Ordinary ponds** given the same depth, reeds and pads as the lake.
+2. **The course dog** back on (built and checked, switched off).
+3. **A frog on a lily pad** now and then, a Guide entry (live only).
+4. **Ask what they think** of the albatross, the canyon and the water.
 
-Recommend 1: it is October, it builds on the night skies and the Field
-Guide, and costs little to draw.
+Recommend 1: the ponds are on most holes and now look flat beside the
+lake and the river.

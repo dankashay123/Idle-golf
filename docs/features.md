@@ -22,6 +22,19 @@ feature must do, and is usually enough on its own.
   share across (`hazSlice` passes `i`, `tt`): `CANYON_STRATA` in bands that
   waver (`wav`) with cracks and ledges by hash, `canyonPal` (on `T._cns`),
   a river along the middle of the floor and gravel either side.
+- **The Harvest Moon** (`harvestmoon`): `harvestAt(h, look)` (a seasoned
+  course by its look's season, any other by the real month; one round in
+  four, `HARVEST_P`, by `roundIndex`; never in a wager), `HARVEST_FORCE`;
+  `Scene.harvest` (night, dry), in `rbKey`; `buildSky` draws
+  `drawMoon(..., true)` orange, larger and lower; Guide entry `harvest`
+  (Night), `RARE_PIC.harvest`.
+- **Lake and river** (`shore`): `P_LAKE.tone` shelves by distance from the
+  shore (`LAKE_SHELF`, `lakePal` on `T._lks`; `hazSlice` passes the hazard
+  and its width; `P_LAKE.N` 84 columns); `waterAt` counts the shelves as
+  water. `Scene.layShore` (after `layCritters`, kind 26, extra, from a
+  hash; `wetAt`): reed clumps (`REED_ROWS`, `reedMap` by season) in the
+  shallows off the fairway, the green and his line; lily pads
+  (`lilyPal`), none on ice or the stones' line; not on the sea stack.
 
 ### The session of 4 October, third (the user: "do them all", then the wagers)
 
