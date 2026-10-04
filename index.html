@@ -13143,28 +13143,54 @@ const P_CANYON = { D: 10, eu: 0.10, e0: 0.30, e1: 0.30, N: 480,
     return 0.85 * (k + st) / CANYON_STEP + 0.15 * u;
   },
   slope(t){ const e = 0.004, a = Math.max(0, t - e), b = Math.min(1, t + e); return (this.prof(b) - this.prof(a)) / (b - a); },
-  tone(T, f, ndl, near, steep, i, tt){
-    if(f < 0.005) return T.lip;
-    const C = T._cns || (T._cns = canyonPal(T));
-    // (i a place across in columns, fractional: the hashes take it in
-    // steps a few to a column, so a streak or a pebble is fine up close)
-    const j = i || 0, t = tt === undefined ? 0.5 : tt, j2 = Math.floor(j * 2), j3 = Math.floor(j * 3);
-    // the floor: a river winding along it, gravel either side, sand and shadow
+  // A place on the walls or the floor as a number into its palette (C.flat),
+  // from its depth f, lit or not, and its place across (j, and what is
+  // worked out once a column: j2, j3, the strata's waver, the river's line):
+  // by depth alone, so a band or a ledge stays where it is on the rock
+  // however the ground's slices fall from one frame to the next (they fell
+  // differently each frame as he walked and the bands jumped: the user saw
+  // it jitter)
+  code(C, f, lit, j2, j3, wav, rc, t){
     if(f > 0.985){
-      const rc = 0.5 + Math.sin(j * 0.09) * 0.05 + Math.sin(j * 0.31 + 1) * 0.015, r = Math.abs(t - rc);
-      if(r < 0.028) return C.river[j2 % 11 === 0 && r < 0.012 ? 1 : 0];
-      if(r < 0.05) return C.gravel;
-      return C.floor[hr(j3 * 3 + Math.round(t * 60), 735) < 0.25 ? 1 : 0];
+      const r = Math.abs(t - rc);
+      if(r < 0.028) return C.oR + (j2 % 11 === 0 && r < 0.012 ? 1 : 0);
+      if(r < 0.05) return C.oG;
+      return C.oF + (hr(j3 * 3 + Math.round(t * 60), 735) < 0.25 ? 1 : 0);
     }
     const z = Math.min(C.Z - 1, Math.floor(f * C.Z));
-    // a ledge: lit, sometimes a bush of scrub on it
-    if(steep < 1.1) return C.ledge[z][hr(j3 * 5 + Math.round(f * 40), 736) < 0.12 ? 2 : ndl > HZ_LZ - 0.05 ? 0 : 1];
-    const wav = Math.sin(j * 0.11) * 0.5 + Math.sin(j * 0.035 + 1.7) * 0.7;
+    // a ledge: the flat at the foot of each cliff, a quarter of the way
+    // down at a time; lit, sometimes a bush of scrub on it
+    const q4 = f * 4 - Math.floor(f * 4);
+    if(f > 0.1 && f < 0.97 && q4 > 0.93) return C.oL + z * 3 + (hr(j3 * 5 + Math.round(f * 40), 736) < 0.12 ? 2 : lit ? 0 : 1);
     const band = Math.max(0, Math.floor(f * 15 + wav)) % CANYON_STRATA.length;
     // a cliff: the sun's side lit, streaked down where water ran
-    let l = ndl > HZ_LZ ? 0 : 1;
-    if(hr(j2 * 7 + band, 733) < 0.16) l = 2;
-    return C.wall[band][z][l];
+    const l = (this.streaks(j2) >> band) & 1 ? 2 : lit ? 0 : 1;
+    return (band * C.Z + z) * 3 + l;
+  },
+  // what a column across needs, once
+  // (L: how many columns a streak's width is at least, so far off a streak
+  // is never thinner than a pixel or two and does not wink in and out as he
+  // walks: in steps of two, so it holds still between them)
+  // (the strata's waver and the river's line, smooth across, from tables a
+  // column apart: worked out with sines for every pixel of every slice they
+  // cost the frame more than all the rest)
+  tab(){ if(this._tw) return;
+    const N = this.N + 2; this._tw = new Float32Array(N); this._trc = new Float32Array(N); this._tlit = new Uint8Array(N);
+    for(let k = 0; k < N; k++){ this._tw[k] = Math.sin(k * 0.11) * 0.5 + Math.sin(k * 0.035 + 1.7) * 0.7;
+      this._trc[k] = 0.5 + Math.sin(k * 0.09) * 0.05 + Math.sin(k * 0.31 + 1) * 0.015; this._tlit[k] = this.reach(k + 0.6) - this.reach(k - 0.6) <= 0.004 ? 1 : 0; } },
+  // which of the bands are streaked at place j2 across, a bit each, from a
+  // hash, kept (one hash a row was a good part of the frame)
+  streaks(j2){ const S0 = this._sk || (this._sk = new Int16Array(4096).fill(-1)), i = ((j2 % 4096) + 4096) % 4096;
+    let m = S0[i]; if(m < 0){ m = 0; for(let b = 0; b < 8; b++) if(hr(j2 * 7 + b, 733) < 0.16) m |= 1 << b; S0[i] = m; } return m; },
+  colOf(j, L){ const q = L || 0.5; return { j2: Math.floor(j / q), j3: Math.floor(j / (q * 0.67)), wav: Math.sin(j * 0.11) * 0.5 + Math.sin(j * 0.035 + 1.7) * 0.7,
+    rc: 0.5 + Math.sin(j * 0.09) * 0.05 + Math.sin(j * 0.31 + 1) * 0.015,
+    // (lit by which way the wall turns there, a spur's sunny side: the
+    // wall's own shape, not worked out again each slice)
+    lit: this.reach(j + 0.6) - this.reach(j - 0.6) <= 0.004 }; },
+  tone(T, f, ndl, near, steep, i, tt){
+    if(f < 0.005) return T.lip;
+    const C = T._cns || (T._cns = canyonPal(T)), K = this.colOf(i || 0);
+    return C.flat[this.code(C, f, ndl > HZ_LZ, K.j2, K.j3, K.wav, K.rc, tt === undefined ? 0.5 : tt)];
   }
 };
 // a colour that comes out as c once the haze (alpha a of the sky's
@@ -13191,8 +13217,13 @@ function canyonPal(T){
   const tan = mixC('#D8945A', rk, 0.1);
   const ledge = Array.from({ length: Z }, (_, z) => [lite(tan, 0.12), tan, mixC('#5E6A36', rk, 0.2)].map(q => deep(q, z)));
   const w = T.wt || ['#1C4A6A', '#2A6A8A', '#3A8AA8'];
-  return { Z, wall, ledge, river: [deep(mixC(pickC(w, 0.5), '#5A8A7A', 0.3), 4), deep(lite(pickC(w, 0.7), 0.35), 3)],
+  const C = { Z, wall, ledge, river: [deep(mixC(pickC(w, 0.5), '#5A8A7A', 0.3), 4), deep(lite(pickC(w, 0.7), 0.35), 3)],
     gravel: deep(mixC('#C8A880', rk, 0.2), 5), floor: [deep(mixC('#9A7050', rk, 0.3), 5), deep(mixC('#7A5A40', rk, 0.3), 6)] };
+  // all of them in one list, by P_CANYON.code's numbers
+  C.flat = [].concat(...wall.map(b => [].concat(...b)));
+  C.oL = C.flat.length; C.flat.push(...[].concat(...ledge));
+  C.oR = C.flat.length; C.flat.push(...C.river); C.oG = C.flat.length; C.flat.push(C.gravel); C.oF = C.flat.length; C.flat.push(...C.floor);
+  return C;
 }
 // A railway's bed: a level band of ballast right across the hole, in the
 // course's own rock, a shade darker on its edges where it meets the turf.
@@ -20597,7 +20628,17 @@ const Scene = {
     // stripes)
     if(CP){
       const ox = hz._ox && hz._ox.length === VW ? hz._ox : (hz._ox = new Float32Array(VW));
-      if(hz._on !== 2){ hz._on = 2; ox.fill(y + hgt); }
+      // (and the depth and the share along each pixel's last painted slice
+      // stood at, to shade the rows between it and the next by)
+      if(hz._on !== 2){ hz._on = 2; ox.fill(y + hgt); if(hz._ofz && hz._ofz.length === VW) hz._ofz.fill(-1);
+        // (and where it is painted, kept out of the distance haze laid over
+        // the frame after: it lays its own. The haze is left off wherever
+        // the trees' mask says, and that mask lagged a frame behind in
+        // places, so pixels of the canyon came up dark and pale in turn as
+        // he walked: the user saw it glitch)
+        const NN = VW * VH; if(!this._cmk || this._cmk.length !== NN) this._cmk = new Uint8Array(NN); else this._cmk.fill(0);
+        this._cmkOn = true; }
+      const CMK = this._cmk;
       // (by the screen's pixel, not the hazard's column: from the bridge
       // the walls beside him are so near that a column was a block a dozen
       // pixels wide, each its own shade, and the blocks snapped from one to
@@ -20612,34 +20653,55 @@ const Scene = {
         const u = (xa - 1 + k + 0.5 - xl) / w, fi = u * NC, fu = hazProf(u, P.eu, P.eu), cp = P.colProf(tt, fi);
         A[k] = cp; FU[k] = fu; TP[k] = y + fu * P.D * cp * kz;
       }
-      const dxp = 1 / (LAT * s);
+      const C = T._cns || (T._cns = canyonPal(T)), KC = T._ck || (T._ck = new Map());
+      P.tab();
+      // (a streak two pixels wide at least: the columns that makes, to a
+      // power of two)
+      const SL = Math.max(0.5, Math.pow(2, Math.ceil(Math.log2(2 / Math.max(1e-3, w / NC)))));
+      const OF = hz._ofz && hz._ofz.length === VW ? hz._ofz : (hz._ofz = new Float32Array(VW)), OT = hz._ott && hz._ott.length === VW ? hz._ott : (hz._ott = new Float32Array(VW));
+      // (the haze's strength by row, worked out once for the frame's size)
+      const HQ = this._hzRow && this._hzRow.k === VH * 10000 + HORIZON ? this._hzRow : (this._hzRow = Object.assign(Int8Array.from({ length: VH }, (_, r) => Math.round(this.hazeA(r) * 0.25 * 20)), { k: VH * 10000 + HORIZON }));
+      const mist = this.cmist;
       for(let x = xa; x < xb; x++){
         const k = x - xa + 1, top = TP[k], bot = ox[x];
         if(top >= bot - 0.2) continue;
         ox[x] = top;
+        const fz = FU[k] * A[k], fb = OF[x] < 0 ? fz : OF[x], tb = OF[x] < 0 ? tt : OT[x];
+        OF[x] = fz; OT[x] = tt;
         // (where it is not yet a pixel down, at its rims, the ground shows:
         // painted, a band of rock stood on the grass past the far rim)
         if(top - y < 0.6) continue;
-        const fu = FU[k], fi = (x + 0.5 - xl) / w * NC;
-        const gx = P.D * fu * (A[k + 1] - A[k - 1]) / (2 * dxp);
-        const gy = P.D * P.colSlope(tt, fi) * fu / (hz.rd * 2);
-        const len = Math.sqrt(gx*gx + gy*gy + 1), ndl = (gx*HZ_LX + gy*HZ_LY + HZ_LZ) / len;
-        // (the distance haze laid over the whole field after greyed its
-        // far wall to a fence; its colours are made that much stronger
-        // first, so most of the haze is taken back off)
-        let col = unhaze(T, P.tone(T, fu * A[k], ndl, near, Math.sqrt(gx*gx + gy*gy), fi, tt, hz, sp.l + sp.r), this.hazeA(Math.round(top)));
-        // (a cold morning's mist lying in its depths, thicker the deeper,
-        // in soft drifts along it)
-        if(this.cmist){ const fz = fu * A[k]; if(fz > 0.3){
-          const m = Math.min(1, Math.pow((fz - 0.3) / 0.6, 0.8) * (0.7 + 0.3 * Math.sin(fi * 0.06 + tt * 7 + Math.sin(fi * 0.017) * 2)));
-          col = mistC(T, col, Math.round(m * 8)); } }
-        const m = Math.min(top, TP[k - 1], TP[k + 1]);
-        const t0 = Math.round(m) - (m < top ? 1 : 0), t1 = Math.max(t0 + 1, Math.round(bot));
-        if(run && rc === col && rt === t0 && rb === t1 && rx1 === x){ rx1 = x + 1; continue; }
-        if(run) band();
-        run = true; rx0 = x; rx1 = x + 1; rt = t0; rb = t1; rc = col;
+        const fi = (x + 0.5 - xl) / w * NC, ki = Math.max(0, Math.min(NC, fi | 0)), kf = fi - ki;
+        const wav = P._tw[ki] * (1 - kf) + P._tw[ki + 1] * kf, rc = P._trc[ki] * (1 - kf) + P._trc[ki + 1] * kf, lit = P._tlit[ki],
+              j2 = Math.floor(fi / SL), j3 = Math.floor(fi / (SL * 0.67));
+        const m0 = Math.min(top, TP[k - 1], TP[k + 1]);
+        const t0 = Math.max(0, Math.round(m0) - (m0 < top ? 1 : 0)), t1 = Math.min(VH, Math.max(t0 + 1, Math.round(bot)));
+        // each row by its own depth, between this slice's and the last's
+        const span = Math.max(0.5, bot - top), ma = fi * 0.06 + Math.sin(fi * 0.017) * 2;
+        let run0 = t0, key = -1, col = null;
+        for(let yy = t0; yy <= t1; yy++){
+          let kk = -1;
+          if(yy < t1){
+            let fr = (yy + 0.5 - top) / span; fr = fr < 0 ? 0 : fr > 1 ? 1 : fr;
+            const f = fz + (fb - fz) * fr, t = tt + (tb - tt) * fr;
+            const code = f < 0.005 ? -1 : P.code(C, f, lit, j2, j3, wav, rc, t);
+            // (a quarter of the distance haze, its own: the whole of it
+            // greyed its far wall to a fence; and a cold morning's mist
+            // lying in its depths, in soft drifts along it)
+            const q = HQ[yy];
+            CMK[yy * VW + x] = 1;
+            const mk = mist && f > 0.3 ? Math.round(8 * Math.min(1, Math.pow((f - 0.3) / 0.6, 0.8) * (0.7 + 0.3 * Math.sin(ma + t * 7)))) : 0;
+            kk = code < 0 ? -2 : (code * 32 + q) * 16 + mk;
+          }
+          if(kk === key) continue;
+          if(key !== -1 && yy > run0){ c.fillStyle = col; c.fillRect(x, run0, 1, yy - run0); }
+          run0 = yy; key = kk;
+          if(kk >= 0){ col = KC.get(kk);
+            if(!col){ const code = Math.floor(kk / 512), q = Math.floor(kk / 16) % 32, mk = kk % 16;
+              col = mistC(T, q ? mixC(C.flat[code], T.sky[4], q / 20) : C.flat[code], mk); if(KC.size > 6000) KC.clear(); KC.set(kk, col); } }
+          else col = T.lip;
+        }
       }
-      if(run) band();
       return;
     }
     for(let i = 0; i < NC; i++){
@@ -23935,6 +23997,14 @@ Object.assign(Scene, {
         this.groundSlice(g, T, d, s, rel, y, maxy - y, clamp(slope*0.42, -0.15, 0.15));
         maxy = y;
       }
+      // (a canyon is given every step of the march, those the ground skips
+      // as well, where it rose less than a row: which steps those were
+      // changed as he walked, so its cliffs and ledges were sampled now at
+      // one distance and now at another, and their edges flickered)
+      // (only those on a grid of its own, a sixteenth apart, fixed on the
+      // course: every one of the march's was too dear a frame)
+      else if(this.water && this.water.canyon && Math.abs(d * 16 - Math.round(d * 16)) < 1e-6 && this.hazSpan(this.water, d))
+        this.hazSlice(g, T, this.water, P_CANYON, d, s, y, 0, clamp(1 - rel/110, 0, 1), Math.round(CX + (this.bendOff(d) - CAM_LAT) * LAT * s));
       prevD = d; prevH = gh;
       // (the next slice at a place fixed on the course, on a grid as fine
       // as the step, not a step on from wherever he stands: stepped on from
@@ -23953,6 +24023,8 @@ Object.assign(Scene, {
     if(this.back) this.forestPass(g, cam); else this._forOcc = null;
     // (Golden Hour's mountain of coins, among the trees: see mtnPass)
     if(this.mtn) this.mtnPass(g, cam); else this._mtnN = 0;
+    // (the canyon's pixels out of the haze: see hazSlice)
+    if(this._cmkOn){ if(!this._tmOn) this.treeMaskClear(); const MK = this._tmPx, CM = this._cmk; for(let i = 0; i < CM.length; i++) if(CM[i]) MK[i] = 0xFF000000; this._cmkOn = false; }
     if(g === PixPaint) PixPaint.flush(c); else c.drawImage(g.canvas, 0, 0);
     this.treeMaskOn();
     this.ripples(c, T);

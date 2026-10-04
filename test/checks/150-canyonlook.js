@@ -53,12 +53,16 @@ module.exports = {
     // inside it shows
     const d = await page.evaluate(() => {
       const fails = [], f = m => fails.push(m), SNAP = JSON.stringify(S), keepTone = P_CANYON.tone, keepCad = Scene.drawCaddie, raf = window.requestAnimationFrame;
-      const out = {};
+      const out = {}; let TH = null, keepC, keepK;
       try {
         QUIET = true; window.requestAnimationFrame = () => 0;
         DEV.course(0); hideSheet(); S.chaos = { n: 'Fair' }; DEV.canyon(); hideSheet(); Scene.announce = null;
         const I = Scene.isle, W = Scene.water, D = derive();
         P_CANYON.tone = (T, fz) => fz < 0.005 ? T.lip : '#FF00FF';
+        // (the canyon is painted from its palette by number: every one of
+        // them the one colour)
+        TH = Scene.theme; keepC = TH._cns; keepK = TH._ck;
+        TH._cns = Object.assign({}, keepC || canyonPal(TH)); TH._cns.flat = TH._cns.flat.map(() => '#FF00FF'); TH._ck = new Map();
         // (nothing else in the way: the caddie floats by the bridge, and the
         // scenery and the people stand where they stand)
         Scene.drawCaddie = () => {}; Scene.props = [];
@@ -94,15 +98,39 @@ module.exports = {
             if (under > 20) f(name + ': from over the gorge, ' + under + ' pixels of grass under its far rim'); }
         }
       } finally {
-        P_CANYON.tone = keepTone; Scene.drawCaddie = keepCad; window.requestAnimationFrame = raf; QUIET = false;
+        P_CANYON.tone = keepTone; if (TH) { TH._cns = keepC; TH._ck = keepK; } Scene.drawCaddie = keepCad; window.requestAnimationFrame = raf; QUIET = false;
         CANYON_FORCE = 0; Object.assign(S, JSON.parse(SNAP)); Scene.newHole(S.hole, S.tier);
       }
       return { fails, out };
     });
     if (process.env.CLDUMP) require('fs').writeFileSync(process.env.CLDUMP, Buffer.from(d.out.img.split(',')[1], 'base64'));
-    const fails = r.fails.concat(d.fails);
+    // and walked across, the way the phone shows it: frame to frame a pixel
+    // that changes and changes straight back is a flicker (the user saw the
+    // canyon "jitter like crazy" from the bridge: its bands and ledges were
+    // sampled where the ground's slices fell, which moved every frame)
+    const j = await page.evaluate(() => {
+      const fails = [], out = {}, SNAP = JSON.stringify(S), raf = window.requestAnimationFrame, keepP = Scene.props;
+      try {
+        QUIET = true; window.requestAnimationFrame = () => 0;
+        DEV.course(0); hideSheet(); S.chaos = { n: 'Fair' }; DEV.canyon(); hideSheet(); Scene.announce = null; Scene.props = [];
+        const I = Scene.isle, D = derive();
+        const shot = c => { Scene.camD = c; Scene.camH = Scene.hAt(c); Scene.draw(0, D); return Scene.buf.getContext('2d').getImageData(0, 0, VW, VH).data; };
+        for (const [name, c0] of [['rim', I.bank - 2], ['onto', I.bank + 1.5], ['mid', (I.bank + I.land) / 2]]) {
+          const F = []; for (let k = 0; k < 14; k++) F.push(shot(c0 + k * 0.02));
+          let flick = 0; const y0 = Math.floor(VH * 0.4), n = (VH - y0) * VW;
+          for (let k = 1; k < 13; k++) { const a = F[k - 1], b = F[k], c = F[k + 1];
+            for (let i = y0 * VW * 4; i < b.length; i += 4) {
+              const dab = Math.abs(a[i] - b[i]) + Math.abs(a[i + 1] - b[i + 1]) + Math.abs(a[i + 2] - b[i + 2]), dac = Math.abs(a[i] - c[i]) + Math.abs(a[i + 1] - c[i + 1]) + Math.abs(a[i + 2] - c[i + 2]);
+              if (dab > 40 && dac < 10) flick++; } }
+          const share = flick / 12 / n; out[name] = (share * 100).toFixed(2) + '%';
+          if (share > (name === 'rim' ? 0.022 : 0.015)) fails.push('walking ' + name + ', ' + (share * 100).toFixed(1) + '% of the lower view flickers a frame');
+        }
+      } finally { Scene.props = keepP; window.requestAnimationFrame = raf; QUIET = false; CANYON_FORCE = 0; Object.assign(S, JSON.parse(SNAP)); Scene.newHole(S.hole, S.tier); }
+      return { fails, out };
+    });
+    const fails = r.fails.concat(d.fails, j.fails);
     if (fails.length) throw new Error(fails.join('; '));
     return [r.out.join('; '),
-      'drawn: from the rim ' + d.out.rim.tall + ' rows tall, grass through it ' + d.out.rim.green + ' of ' + d.out.rim.all + '; stepping on ' + d.out.onto.green + ' of ' + d.out.onto.all + '; from the middle of the bridge ' + d.out.bridge.green + ', its far end ' + d.out.far.green + ' of ' + d.out.bridge.all];
+      'drawn: from the rim ' + d.out.rim.tall + ' rows tall, grass through it ' + d.out.rim.green + ' of ' + d.out.rim.all + '; stepping on ' + d.out.onto.green + ' of ' + d.out.onto.all + '; from the middle of the bridge ' + d.out.bridge.green + ', its far end ' + d.out.far.green + '; walking, flickering ' + JSON.stringify(j.out) + ' of ' + d.out.bridge.all];
   }
 };

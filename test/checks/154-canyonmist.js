@@ -35,6 +35,9 @@ module.exports = {
         // others a rise in front hides its depths)
         DEV.course(0); hideSheet(); S.chaos = { n: 'Fair' }; DEV.canyon(); hideSheet();
         const I = Scene.isle, D = derive(), raf = window.requestAnimationFrame; window.requestAnimationFrame = () => 0;
+        // (the canyon alone: what stands about it is hidden by what was drawn
+        // before, frame to frame)
+        Scene.props = [];
         const shot = on => { Scene.cmist = on; for (let k = 0; k < 2; k++) { Scene.camD = I.bank - 1.5; Scene.draw(0, D); } return Scene.buf.getContext('2d').getImageData(0, 0, VW, VH).data; };
         const a = shot(true), b = shot(false); window.requestAnimationFrame = raf;
         let paler = 0, darker = 0; const lum = (q, i) => q[i] * 0.3 + q[i + 1] * 0.59 + q[i + 2] * 0.11;
