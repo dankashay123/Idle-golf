@@ -348,7 +348,7 @@ div.guide{display:grid;grid-template-columns:repeat(auto-fill,minmax(76px,1fr));
 .gtile img{image-rendering:pixelated}
 .gtile.un img{filter:brightness(0);opacity:.35}
 .gtile.tmk[role=button]{cursor:pointer}
-div.guide.hunt{grid-template-columns:repeat(3,minmax(0,1fr))}
+div.guide.hunt,div.guide.mhunt{grid-template-columns:repeat(3,minmax(0,1fr))}
 .gtile.found{border-color:var(--brass)}
 /* seen a hundred times: a gold corner and a brass edge (the user picked it) */
 .gtile{position:relative}
@@ -2770,6 +2770,9 @@ const B = {
   GUIDE_SOV: 5,
   // the Guide's weekly hunt: three to spot in a week, paid once when all are
   HUNT_SOV: 15,
+  // the month's hunt (the user picked it from the menu): three rarer ones
+  // a calendar month, paid once when all three are spotted live
+  MHUNT_SOV: 40,
   // and for hunts done in weeks in a row (the user picked it from the menu):
   // HUNT_STREAK more for each week before this one, up to HUNT_STREAK_MAX of them
   HUNT_STREAK: 5, HUNT_STREAK_MAX: 3,
@@ -4723,6 +4726,19 @@ function migrate(){
   // sighting pay the hunt at once, and the Guide read 4/3)
   else if(S.hunt){ const want = huntOf(S.hunt.wk); S.hunt.got = S.hunt.got.filter((id, i, a) => want.includes(id) && a.indexOf(id) === i);
     if(S.hunt.paid !== undefined && S.hunt.paid !== 1) delete S.hunt.paid; }
+  // (the month's hunt the same way)
+  if(S.mhunt !== undefined && !(S.mhunt && typeof S.mhunt === 'object' && Number.isInteger(S.mhunt.mo) && Array.isArray(S.mhunt.got)
+     && S.mhunt.got.every(id => typeof id === 'string') && S.mhunt.got.length <= 3)) delete S.mhunt;
+  else if(S.mhunt){ const want = mhuntOf(S.mhunt.mo); S.mhunt.got = S.mhunt.got.filter((id, i, a) => want.includes(id) && a.indexOf(id) === i);
+    if(S.mhunt.paid !== undefined && S.mhunt.paid !== 1) delete S.mhunt.paid; }
+  // (course collections: only a course's own animals; a course done only
+  // with all of them seen there)
+  if(S.cwild !== undefined){ if(!S.cwild || typeof S.cwild !== 'object' || Array.isArray(S.cwild)) delete S.cwild;
+    else for(const id in S.cwild){ const m = S.cwild[id], want = wildOf(id);
+      if(!want.length || !m || typeof m !== 'object' || Array.isArray(m)){ delete S.cwild[id]; continue; }
+      for(const an in m) if(!want.includes(an) || m[an] !== 1) delete m[an]; } }
+  if(S.cwildDone !== undefined){ if(!S.cwildDone || typeof S.cwildDone !== 'object' || Array.isArray(S.cwildDone)) delete S.cwildDone;
+    else for(const id in S.cwildDone) if(S.cwildDone[id] !== 1 || !COURSE_WILD[id] || wildGot(id).length < wildOf(id).length) delete S.cwildDone[id]; }
   if(S.shelfDone !== undefined){ if(!S.shelfDone || typeof S.shelfDone !== 'object' || Array.isArray(S.shelfDone)) delete S.shelfDone;
     else for(const k in S.shelfDone) if(!GUIDE_SHELF.some(x => x[0] === k) || S.shelfDone[k] !== 1) delete S.shelfDone[k]; }
   // sovereigns waiting (earnSov): rows of a known place, a key and a whole
@@ -26435,6 +26451,34 @@ function huntPay(H){
   S.huntRun = { wk: H.wk, n }; earnSov(pay, 'guide', 'hunt:' + H.wk, 'The week\u2019s hunt');
   return pay;
 }
+// The monthly hunt: three of the rarer ones to spot this calendar month,
+// two by day and one at night, the same for the whole month from its
+// number; all three spotted live on a fair card pays B.MHUNT_SOV once.
+// (Each can be met in any month somewhere: a home course turns its seasons
+// by the card, not the calendar.)
+const MHUNT_DAY = ['kingfisher', 'swan', 'otter', 'heron', 'eagle', 'lizard'];
+const MHUNT_NIGHT = ['luna', 'owl', 'badger'];
+const MONTH_NAME = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+const monthIdx = () => { const D = new Date(dayNow() * 86400000); return D.getUTCFullYear() * 12 + D.getUTCMonth(); };
+function mhuntOf(mo){
+  const r = seeded(hash32(mo * 9173 + 5)), day = MHUNT_DAY.slice(), pick = [];
+  for(let i = 0; i < 2; i++) pick.push(day.splice(Math.floor(r() * day.length), 1)[0]);
+  pick.push(MHUNT_NIGHT[Math.floor(r() * MHUNT_NIGHT.length)]);
+  return pick;
+}
+function mhuntNow(){
+  const mo = monthIdx();
+  if(!S.mhunt || S.mhunt.mo !== mo) S.mhunt = { mo, got: [] };
+  return S.mhunt;
+}
+function mhuntSee(ids){
+  const H = mhuntNow(), want = mhuntOf(H.mo), fresh = [...new Set(ids.map(id => id.startsWith('g_') ? id.slice(2) : id))].filter(id => want.includes(id) && !H.got.includes(id));
+  if(!fresh.length || !fairCard()) return null;
+  H.got.push(...fresh);
+  const paid = H.got.length >= 3 && !H.paid;
+  if(paid){ H.paid = 1; earnSov(B.MHUNT_SOV, 'guide', 'mhunt:' + H.mo, MONTH_NAME[H.mo % 12] + '\u2019s hunt'); }
+  return { fresh, n: H.got.length, paid, pay: paid ? B.MHUNT_SOV : 0 };
+}
 // this week's hunt still to finish (the medal's round dot); none in a wager
 const huntOpen = () => !S.dgnRun && !huntNow().paid;
 // seen on most holes, so named in the tag only when new or hunted
@@ -26524,19 +26568,23 @@ function guideAdd(got){
     S.guide[id] = (S.guide[id] || 0) + 1;
   }
   if(firsts.length) earnSov(B.GUIDE_SOV * firsts.length, 'guide', 'guide', 'First sightings');
-  const hunt = huntSee(got);
+  const hunt = huntSee(got), mh = mhuntSee(got);
   if(firsts.length) shelfCheck();
   // the animals in a tag over the map, with what they paid and the hunt;
   // anything else seen the first time (the weather, the seasons, the
   // signature holes) in one line of a toast
   // (the everyday ones, on most holes, only when new or hunted: a fast bag
   // had the tag up every few seconds for a sparrow)
-  const an = got.filter(id => isAnimal(id) && (!TAG_EVERYDAY.includes(id) || S.guide[id] === 1 || (hunt && hunt.fresh.includes(id)))), newAn = firsts.filter(n => an.some(id => GUIDE.find(g => g.id === id).n === n));
+  const an = got.filter(id => isAnimal(id) && (!TAG_EVERYDAY.includes(id) || S.guide[id] === 1 || (hunt && hunt.fresh.includes(id)) || (mh && mh.fresh.includes(id)))), newAn = firsts.filter(n => an.some(id => GUIDE.find(g => g.id === id).n === n));
   const tagOn = S.spotTag !== 0, rest = tagOn ? firsts.filter(n => !newAn.includes(n)) : firsts;
   if(!tagOn && hunt) toast('<span class="achk">Weekly Hunt</span>' + (hunt.paid ? 'All three found \u00b7 <span style="white-space:nowrap">+' + hunt.pay + sovIc() + '</span>' + (hunt.run > 1 ? ' \u00b7 ' + hunt.run + ' weeks in a row' : '')
     : hunt.fresh.map(id => GUIDE.find(g => g.id === id).n).join(', ') + ' \u00b7 ' + hunt.n + '/3'), 'ach');
+  if(!tagOn && mh) toast('<span class="achk">Monthly Hunt</span>' + (mh.paid ? 'All three found \u00b7 <span style="white-space:nowrap">+' + mh.pay + sovIc() + '</span>'
+    : mh.fresh.map(id => GUIDE.find(g => g.id === id).n).join(', ') + ' \u00b7 ' + mh.n + '/3'), 'ach');
   if(rest.length) toast('<span class="achk">Field Guide</span>' + rest.join(', ') + ' \u00b7 <span style="white-space:nowrap">+' + B.GUIDE_SOV * rest.length + sovIc() + '</span>', 'ach');
-  if(tagOn && (an.length || hunt)) spotShow(an, newAn.length, hunt);
+  // (the month's hunt in the tag's line: its count, or done and paid)
+  const mnote = mh ? (mh.paid ? '<span style="white-space:nowrap">+' + mh.pay + sovIc() + '</span> Month Done' : 'Month ' + mh.n + '/3') : '';
+  if(tagOn && (an.length || hunt || mh)) spotShow(an.length || hunt ? an : mh.fresh, newAn.length, hunt, mnote);
 }
 // The tag: "Fox Spotted!" (two named, or the first and how many more), and
 // under it what came of it: sovereigns for a first sighting, the week's hunt
@@ -26642,6 +26690,14 @@ function roomGuide(w){
     const run = H.paid ? (S.huntRun ? S.huntRun.n : 1) : huntRunFor(H.wk) - 1;
     h += '<div class="eyebrow" style="margin:8px 0 4px">Weekly Hunt \u00b7 ' + H.got.length + '/3 \u00b7 ' + (H.paid ? 'Done' : '+' + huntPayFor(huntRunFor(H.wk)) + sovIc())
       + (run > 1 ? ' \u00b7 ' + run + '\u00a0weeks in a row' : '') + '</div><div class="guide hunt">';
+    for(const id of want){ const g = GUIDE.find(x => x.id === id), got = H.got.includes(id);
+      const [url, wh] = guideUrl(id).split('|'), [sw, sh] = (wh || '12x12').split('x').map(Number), z = Math.max(1, Math.floor(Math.min(60 / sw, 44 / sh)));
+      h += '<div class="gtile' + (got ? ' found' : '') + '"><span class="gpic"><img src="' + url + '" width="' + sw * z + '" height="' + sh * z + '" alt=""></span>'
+        + '<b>' + g.n + '</b><i>' + (got ? 'Found' : g.w) + '</i></div>'; }
+    h += '</div>'; }
+  // (and the month's, beside it)
+  { const H = mhuntNow(), want = mhuntOf(H.mo);
+    h += '<div class="eyebrow" style="margin:8px 0 4px">' + MONTH_NAME[H.mo % 12] + ' Hunt \u00b7 ' + H.got.length + '/3 \u00b7 ' + (H.paid ? 'Done' : '+' + B.MHUNT_SOV + sovIc()) + '</div><div class="guide mhunt">';
     for(const id of want){ const g = GUIDE.find(x => x.id === id), got = H.got.includes(id);
       const [url, wh] = guideUrl(id).split('|'), [sw, sh] = (wh || '12x12').split('x').map(Number), z = Math.max(1, Math.floor(Math.min(60 / sw, 44 / sh)));
       h += '<div class="gtile' + (got ? ' found' : '') + '"><span class="gpic"><img src="' + url + '" width="' + sw * z + '" height="' + sh * z + '" alt=""></span>'
