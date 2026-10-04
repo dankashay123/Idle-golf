@@ -26141,6 +26141,8 @@ function huntSee(ids){
 }
 // this week's hunt still to finish (the medal's round dot); none in a wager
 const huntOpen = () => !S.dgnRun && !huntNow().paid;
+// seen on most holes, so named in the tag only when new or hunted
+const TAG_EVERYDAY = ['sparrow', 'robin', 'blackbird', 'moth', 'glowworm', 'firefly'];
 // the animals on the Guide's shelves (wildlife, night, golden), for the tag
 const isAnimal = id => { const g = GUIDE.find(x => x.id === id); return !!g && 'wng'.includes(g.g); };
 // count what was seen, and pay for each seen the first time
@@ -26157,7 +26159,9 @@ function guideAdd(got){
   // the animals in a tag over the map, with what they paid and the hunt;
   // anything else seen the first time (the weather, the seasons, the
   // signature holes) in one line of a toast
-  const an = got.filter(isAnimal), newAn = firsts.filter(n => an.some(id => GUIDE.find(g => g.id === id).n === n));
+  // (the everyday ones, on most holes, only when new or hunted: a fast bag
+  // had the tag up every few seconds for a sparrow)
+  const an = got.filter(id => isAnimal(id) && (!TAG_EVERYDAY.includes(id) || S.guide[id] === 1 || (hunt && hunt.fresh.includes(id)))), newAn = firsts.filter(n => an.some(id => GUIDE.find(g => g.id === id).n === n));
   const tagOn = S.spotTag !== 0, rest = tagOn ? firsts.filter(n => !newAn.includes(n)) : firsts;
   if(!tagOn && hunt) toast('<span class="achk">Weekly Hunt</span>' + (hunt.paid ? 'All three found \u00b7 <span style="white-space:nowrap">+' + B.HUNT_SOV + sovIc() + '</span>'
     : hunt.fresh.map(id => GUIDE.find(g => g.id === id).n).join(', ') + ' \u00b7 ' + hunt.n + '/3'), 'ach');

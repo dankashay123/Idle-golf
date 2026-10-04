@@ -7,6 +7,9 @@
  *   - under it what came of it: the sovereigns for a first sighting, the
  *     week's hunt counted ("Hunt 2/3") or done with its pay; nothing under a
  *     sighting that pays nothing
+ *   - the everyday ones (the fairway birds, moths, glow-worms, fireflies:
+ *     on most holes) only when new or hunted; a fast bag had it up every
+ *     few seconds for a sparrow
  *   - anything else seen the first time (the weather, a season) is a toast
  *     as before, and shows no tag; no tag quietly or away
  *   - the Spotted Tag switch in Settings turns it off (what it said goes
@@ -49,6 +52,13 @@ module.exports = {
         guideAdd([want[1]]); reset(); guideAdd([want[2]]);
         if (!txt().includes('+' + B.HUNT_SOV) || !/Hunt Done$/.test(txt())) f('the hunt done shows "' + txt() + '"');
         o.hunt = txt();
+        // the everyday ones (on most holes): named only when new or hunted
+        { const ev = TAG_EVERYDAY.filter(id => !want.includes(id)), e0 = ev[0], en = GUIDE.find(g => g.id === e0).n;
+          delete S.guide[e0]; reset(); guideAdd([e0]); if (txt() !== en + ' Spotted!+' + B.GUIDE_SOV) f('a first ' + en + ' shows "' + txt() + '"');
+          reset(); guideAdd([e0]); if (txt()) f('an everyday ' + en + ' seen again shows "' + txt() + '"');
+          reset(); guideAdd([e0, plain]); if (txt() !== nm + ' Spotted!') f('an everyday ' + en + ' with a ' + nm + ' shows "' + txt() + '"');
+          o.every = ev.length; }
+        if (!TAG_EVERYDAY.every(id => GUIDE.some(g => g.id === id))) f('an everyday one not in the Guide');
         // not an animal: a toast, no tag
         reset(); guideAdd(['rain']); if (txt()) f('rain seen the first time shows a tag: "' + txt() + '"');
         if (!said.some(m => /Field Guide/.test(m) && /Rain/.test(m))) f('rain seen the first time said ' + JSON.stringify(said));
