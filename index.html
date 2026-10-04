@@ -5197,6 +5197,14 @@ function perkAdd(k){
   return a;
 }
 
+// The Lucky Albatross (the user picked it from the menu): now and then, while
+// the course is watched, an albatross glides slowly across the top of the
+// field, glowing, for ALB_FLY seconds; tapped, it bursts feathers and is off,
+// and the purse is ALB_V times for ALB_DUR seconds (by the cog). Never away.
+const ALB_FLY = 10, ALB_V = 2, ALB_DUR = 60, ALB_GAP = [360, 840];
+const LUCKY = { wait: 150 + Math.random() * 150, a: null, buff: 0, fx: [] };
+const luckyOn = () => !OFFLINE && LUCKY.buff > 0;
+
 function buffVal(id){
   const b = S.buff[id];
   return b && b.t > 0 ? b.v : 0;
@@ -5239,7 +5247,7 @@ function derive(){
   const gold = upgMult('gld') * (1 + G.gld) * relMult('gld')
     * ch.g * (1 + buffVal('windfall')/100) * (1 + buffVal('cGold')/100) * perkMult('gold')
     * permMult('sponsor') * (isMember() ? 1 + B.MEMBER_GOLD : 1)
-    * (boostOn() ? B.BOOST_MULT : 1);
+    * (boostOn() ? B.BOOST_MULT : 1) * (luckyOn() ? ALB_V : 1);
   const drop = clamp((B.DROP_BASE + upgLv('marker')*B.DROP_ADD + G.drp + ch.dl
     + relLv('sun')*B.SUN_ADD + perkAdd('drop') + permAdd('scout') + buffVal('cDrop')) * relMult('drp'), 0, 1);
   const dgnY = (1 + upgLv('lantern')*B.DGN_ADD + G.dgn) * relMult('dgn');
@@ -26023,6 +26031,7 @@ Object.assign(Scene, {
       this.drawHud(D);
       this.drawShots();
       this.drawFx(dt);
+      albTick(this.b, dt);
       if(this.announce) this.drawAnnounce(dt);
       this.drawMap();
     }
@@ -28503,6 +28512,7 @@ function buffLines(dt){
     if(!txt) cperkShow = null;
     else out.push({ k: 'c', txt, col: pk.col || '', a });
   }
+  if(LUCKY.buff > 0) out.push({ k: 'alb', txt: ALB_V + '× purse for ' + buffClock(LUCKY.buff), col: '#F2E2A0', a: Math.min(1, LUCKY.buff) });
   for(const p of B.PERKS){
     const left = perkLeft(p.id);
     if(!(p.dur > 0) || !(left > 0) || !p.s) continue;
@@ -28574,6 +28584,159 @@ function renderBagNav(){
 function renderAll(){
   renderCard(); renderVitals(); refreshUpg(); renderBag(); renderSkills();
   renderDgn(); renderTour(); renderLegacy(); renderCareer(); renderSkillsTab();
+}
+
+// the Lucky Albatross: five beats of its wings, each with a glow baked round it
+// an albatross from a little below, wings spread, head turned the way it
+// flies (right); lift: -1 wings down, 0 a glide, 1 wings up. Drawn large,
+// feather by feather: a dark leading edge and the upper wing's coverts
+// showing over it, white beneath with the grey lines of the feathers, a
+// serrated trailing edge, black primaries splayed at the tip; a white body
+// shaded beneath, a short dark-edged tail, pink feet tucked; the head with a
+// dark brow and the great pale bill, yellow along its ridge, hooked
+function albRows(lift){
+  const W = 99, H = 36, G = Array.from({ length: H }, () => Array(W).fill('.'));
+  const put = (x, y, ch) => { x = Math.round(x); y = Math.round(y); if(x >= 0 && x < W && y >= 0 && y < H) G[y][x] = ch; };
+  const get = (x, y) => G[Math.round(y)] && G[Math.round(y)][Math.round(x)];
+  const cx = 49, cy = 17, L = 42;
+  for(const side of [-1, 1]){
+    for(let i = 0; i <= L; i++){
+      const u = i / L;
+      const arch = (u < 0.33 ? u / 0.33 * 3 : 3 - (u - 0.33) / 0.67 * 2.2) + lift * u * u * 12;
+      const top = cy - 2 - arch, x = cx + side * (6 + i);
+      const th = Math.max(3, Math.round(9.5 - u * 6.5));
+      for(let j = 0; j < th; j++){
+        let ch;
+        if(u > 0.78){ ch = j === 0 ? 'K' : j === 1 ? 'K' : u > 0.88 ? 'K' : 'k'; }
+        else if(j === 0) ch = 'D';
+        else if(j === 1) ch = u < 0.5 ? 'd' : 'D';
+        else if(j === th - 1) ch = (i % 3 === 0) ? 'k' : 'g';
+        else if(j === th - 2 && u > 0.4) ch = 'g';
+        else ch = j === 2 && u < 0.35 ? 'w' : 'W';
+        // the lines of the underwing's feathers, every few columns
+        if(j > 2 && j < th - 1 && u < 0.78 && i % 4 === 2) ch = 'g';
+        put(x, top + j, ch);
+      }
+      // the trailing edge serrated by its feathers
+      if(u <= 0.78 && i % 3 === 1) put(x, top + th, 'g');
+      // the primaries at the tip, splayed as fingers
+      if(u > 0.8 && i % 2 === 0){ put(x, top + th, 'K'); if(u > 0.88) put(x + side, top + th + 1, 'K'); }
+    }
+  }
+  // the body: a white oval, lit on its upper left, grey beneath
+  for(let y = -6; y <= 8; y++) for(let x = -8; x <= 8; x++){
+    const d = (x / 8.4) ** 2 + ((y - 1) / 7.4) ** 2;
+    if(d > 1) continue;
+    put(cx + x, cy + y, d > 0.72 && x + y > 3 ? 'g' : d > 0.5 && x + y > 6 ? 'g' : x + y < -5 ? 'w' : 'W');
+  }
+  // the tail, a short fan with a dark edge; feet tucked, pink
+  for(let y = 8; y <= 12; y++) for(let x = -4; x <= 4; x++){ if(Math.abs(x) > 4 - (y - 8) * 0.6) continue; put(cx + x, cy + y, y === 12 || Math.abs(x) >= 3.5 - (y - 8) * 0.6 ? 'k' : y > 10 ? 'g' : 'W'); }
+  for(const [x, y] of [[-6, 9], [-5, 9], [-5, 10], [5, 9], [6, 9], [5, 10]]) put(cx + x, cy + y, 'p');
+  // the head, turned the way it flies, over the body's right shoulder
+  const hx = cx + 6, hy = cy - 6;
+  for(let y = -5; y <= 3; y++) for(let x = -5; x <= 5; x++){ const d = (x / 5) ** 2 + (y / 4.4) ** 2; if(d <= 1) put(hx + x, hy + y, d > 0.6 && x + y > 3 ? 'g' : x + y < -4 ? 'w' : 'W'); }
+  // the brow over a dark eye, the smudge behind it
+  for(const [x, y, ch] of [[1, -3, 'k'], [2, -3, 'k'], [3, -3, 'k'], [2, -2, 'e'], [3, -2, 'e'], [1, -2, 'g'], [0, -2, 'g']]) put(hx + x, hy + y, ch);
+  // the bill: long, pale pink, a yellow ridge, the tube of the nostril, the
+  // hook dark at its tip
+  for(let i = 0; i <= 10; i++){ const x = hx + 5 + i, y = hy - 1 + i * 0.18;
+    put(x, y - 1, i < 9 ? (i < 3 ? 'y' : 'Y') : 'h'); put(x, y, i === 4 ? 'n' : 'p'); if(i < 8) put(x, y + 1, i < 6 ? 'p' : 'q'); }
+  put(hx + 16, hy + 1, 'h'); put(hx + 16, hy + 2, 'h'); put(hx + 15, hy + 2, 'h');
+  return G.map(r => r.join(''));
+}
+const ALB_PAL = { W: '#F4F2EC', w: '#FFFFFF', g: '#BAC0C8', D: '#3A342E', d: '#5A5048', K: '#141210', k: '#5A5450',
+  e: '#141210', y: '#F2D6A0', Y: '#E8B850', p: '#EEB0B0', q: '#D89098', n: '#C88A70', h: '#6A4A2E' };
+const ALB_LIFT = [-1, -0.4, 0, 0.6, 1], ALB_SPR = [];
+function albSprite(f, flip){
+  const key = f + (flip ? 5 : 0);
+  if(ALB_SPR[key]) return ALB_SPR[key];
+  let rows = albRows(ALB_LIFT[f]);
+  if(flip) rows = rows.map(r => [...r].reverse().join(''));
+  const sp = makeSprite(rows, ALB_PAL), P = 2, cv = document.createElement('canvas');
+  cv.width = sp.w + P * 2; cv.height = sp.h + P * 2;
+  const g = cv.getContext('2d');
+  // (the glow: a pale gold rim two pixels out, solid, the inner one
+  // brighter; solid pixels, as a wash over the sky turns grey)
+  const tint = (col) => { const t = document.createElement('canvas'); t.width = sp.w; t.height = sp.h; const x = t.getContext('2d');
+    x.drawImage(sp.cv, 0, 0); x.globalCompositeOperation = 'source-in'; x.fillStyle = col; x.fillRect(0, 0, sp.w, sp.h); return t; };
+  const o2 = tint('#E8C860'), o1 = tint('#FFF4C0');
+  for(const [dx, dy] of [[-2, 0], [2, 0], [0, -2], [0, 2], [-1, -1], [1, -1], [-1, 1], [1, 1]]) g.drawImage(o2, P + dx, P + dy);
+  for(const [dx, dy] of [[-1, 0], [1, 0], [0, -1], [0, 1]]) g.drawImage(o1, P + dx, P + dy);
+  g.drawImage(sp.cv, P, P);
+  return ALB_SPR[key] = { cv, w: cv.width, h: cv.height };
+}
+// where it is now, in the frame's pixels (null when none is up)
+function albAt(){
+  const A = LUCKY.a; if(!A) return null;
+  const sp = albSprite(2), span = VW + sp.w, u = Math.min(A.t, ALB_FLY) / ALB_FLY;
+  let x = A.dir > 0 ? -sp.w / 2 + span * u : VW + sp.w / 2 - span * u, y = A.y + Math.sin(A.t * 0.9) * 2;
+  if(A.z != null){ const z = A.t - A.z; x += A.dir * z * z * 520; y -= z * z * 220; }
+  return { x, y, w: sp.w, h: sp.h };
+}
+// called with every frame drawn: someone is watching
+function albTick(c, dt){
+  const can = !QUIET && !OFFLINE && !S.dgnRun && !SAVER && !(typeof document !== 'undefined' && document.hidden);
+  if(!LUCKY.a && can){
+    LUCKY.wait -= dt;
+    if(LUCKY.wait <= 0) albGo();
+  }
+  const A = LUCKY.a;
+  if(A){
+    A.t += dt;
+    const P = albAt(), z = A.z != null ? A.t - A.z : -1;
+    if((z < 0 && A.t >= ALB_FLY) || z > 0.8 || !can){ LUCKY.a = null; }
+    else{
+      // (a glide, its wings beating now and then; fast as it makes off)
+      const cyc = (A.t + A.ph) % 3.2, beat = z >= 0 ? Math.sin(z * 30) : cyc < 0.9 ? Math.sin(cyc / 0.9 * Math.PI * 2) : Math.sin(A.t * 1.3) * 0.15;
+      const f = Math.max(0, Math.min(4, Math.round((beat + 1) * 2))), sp = albSprite(f, A.dir < 0);
+      c.drawImage(sp.cv, Math.round(P.x - sp.w / 2), Math.round(P.y - sp.h / 2));
+      // a glint or two about it, the gold's own
+      for(let i = 0; i < 3; i++){ const q = (A.t * 1.6 + i / 3) % 1;
+        c.fillStyle = q < 0.5 ? '#FFF8D8' : '#F2D060';
+        c.fillRect(Math.round(P.x - A.dir * (sp.w * 0.2 + q * 16) + (hr(i, Math.floor(A.t * 1.6 + i / 3)) - 0.5) * sp.w * 0.7), Math.round(P.y + (hr(i + 7, Math.floor(A.t * 1.6 + i / 3)) - 0.5) * 8 + q * 6), 1, 1); }
+    }
+  }
+  // the feathers of a catch: out from it, drifting down, gone in a second
+  for(let i = LUCKY.fx.length - 1; i >= 0; i--){
+    const F = LUCKY.fx[i]; F.t += dt;
+    if(F.t > F.life){ LUCKY.fx.splice(i, 1); continue; }
+    F.vx *= Math.pow(0.12, dt); F.vy = F.vy * Math.pow(0.12, dt) + 26 * dt;
+    F.x += F.vx * dt; F.y += F.vy * dt;
+    const r = Math.floor((F.t * 9 + F.k) % 4), X = Math.round(F.x), Y = Math.round(F.y);
+    c.fillStyle = F.col; c.fillRect(X, Y, r & 1 ? 1 : 2, r & 1 ? 2 : 1);
+    if(F.t < F.life * 0.6){ c.fillStyle = '#B8BEC6'; c.fillRect(X + (r & 1 ? 0 : 1), Y + (r & 1 ? 1 : 0), 1, 1); }
+  }
+}
+function albGo(){
+  LUCKY.wait = ALB_GAP[0] + Math.random() * (ALB_GAP[1] - ALB_GAP[0]);
+  // (along the top of the field, below the readout)
+  const sp = albSprite(2), cv = document.getElementById('hole'), rr = document.getElementById('rRow');
+  let top = VH * 0.18;
+  if(cv && rr){ const a = cv.getBoundingClientRect(), b = rr.getBoundingClientRect(); if(a.height > 0) top = (b.bottom - a.top) * VH / a.height; }
+  const y = Math.round(Math.min(Math.max(top + sp.h / 2 + 4, VH * 0.12), Math.max(VH * 0.2, HORIZON * 0.85)));
+  LUCKY.a = { t: 0, dir: Math.random() < 0.5 ? 1 : -1, y, ph: Math.random() * 3 };
+}
+// a tap on the field: on it (generously), it is caught
+function albTap(cx, cy){
+  const A = LUCKY.a; if(!A || A.z != null) return false;
+  const cv = document.getElementById('hole'); if(!cv) return false;
+  const r = cv.getBoundingClientRect(); if(!(r.width > 0)) return false;
+  const bx = (cx - r.left) * VW / r.width, by = (cy - r.top) * VH / r.height, P = albAt();
+  if(Math.abs(bx - P.x) > P.w / 2 + 12 || Math.abs(by - P.y) > P.h / 2 + 14) return false;
+  albCatch();
+  return true;
+}
+function albCatch(){
+  const A = LUCKY.a; if(!A || A.z != null) return;
+  A.z = A.t;
+  const P = albAt();
+  for(let i = 0; i < 18; i++){ const a = i / 18 * Math.PI * 2 + Math.random() * 0.3, v = 28 + Math.random() * 46;
+    LUCKY.fx.push({ x: P.x + Math.cos(a) * 3, y: P.y + Math.sin(a) * 2, vx: Math.cos(a) * v, vy: Math.sin(a) * v * 0.7 - 10, t: 0, life: 0.7 + Math.random() * 0.4,
+      k: i, col: i % 5 === 0 ? '#E8D8A8' : '#FFFFFF' }); }
+  LUCKY.buff = Math.max(LUCKY.buff, ALB_DUR);
+  S.albN = (S.albN || 0) + 1;
+  toast('<span class="achk">Lucky Albatross</span>' + ALB_V + '× purse for ' + ALB_DUR + 's', 'ach');
+  renderVitals();
 }
 
 /* ==================================================================   DEVELOPER MENU
@@ -28668,6 +28831,7 @@ const DEV = {
           b('spot one', 'DEV.hunt(1)') + b('finish it', 'DEV.hunt(3)') + b('reset', 'DEV.hunt(0)') + b('next week', 'DEV.huntWk(1)') + b('this week', 'DEV.huntWk(0)')
           + b('3 weeks in a row before', 'DEV.huntRun(3)') + b('no run', 'DEV.huntRun(0)'))
       + row('Spotted tag \u00b7 ' + (S.spotTag === 0 ? 'off' : 'on'), b('show one', 'DEV.tag(1)') + b('show three', 'DEV.tag(3)') + b(S.spotTag === 0 ? 'turn on' : 'turn off', 'DEV.tagSw()'))
+      + row('Lucky Albatross', b('send one now', 'DEV.albatross()'))
       + row('Wager animal \u00b7 ' + (WAGER_WILD_P >= 1 ? 'always' : 'one time in two'), b('always', 'DEV.wagerWild(1)') + b('one time in two', 'DEV.wagerWild(0.5)'))
       + row('Golden animal' + (GOLD_FORCE !== null ? ' \u00b7 waiting' : ''), b('this hole', 'DEV.gold(1)') + b('next hole with one', 'DEV.gold()'))
       + row('Luna moth \u00b7 ' + (LUNA_FORCE === null ? 'by chance' : LUNA_FORCE ? 'always' : 'never'), b('always', 'DEV.luna(1)') + b('never', 'DEV.luna(0)') + b('by chance', 'DEV.luna(null)'))
@@ -28937,6 +29101,7 @@ const DEV = {
   tag(n){ hideSheet(); const an = GUIDE.filter(g => g.g === 'w').map(g => g.id); spotShow(an.slice(0, n), 0, null); },
   tagSw(){ toggleSpotTag(); this.open(); },
   wagerWild(v){ WAGER_WILD_P = v; Scene.themeId = null; this.open(); },
+  albatross(){ LUCKY.a = null; LUCKY.wait = 0; hideSheet(); },
   luna(v){ LUNA_FORCE = v; Scene.newHole(S.hole, S.tier); hideSheet(); },
   plaque(n){ const k = aceKey(S.hole); S.aceAt = S.aceAt || {}; if(n) S.aceAt[k] = n; else delete S.aceAt[k]; Scene.newHole(S.hole, S.tier); this.open(); },
   // each animal's call now, whatever the hole has (the switch aside)
@@ -29244,6 +29409,7 @@ function step(dt, D){
     if(S.buff[k].t <= 0) delete S.buff[k];
   }
   tickPerks(dt);
+  if(LUCKY.buff > 0 && !OFFLINE){ LUCKY.buff -= dt; if(LUCKY.buff <= 0){ LUCKY.buff = 0; if(!QUIET) toast('Lucky Albatross  has worn off'); } }
   tickCaddie(dt);
   tickShop(dt);
   regenKeys(dt);
@@ -29940,6 +30106,13 @@ function boot(){
     ['pointerup', 'pointercancel', 'pointerleave'].forEach(ev => el.addEventListener(ev, stop));
     el.addEventListener('contextmenu', e => e.preventDefault());
   })();
+
+  // (a tap on the Lucky Albatross catches it; before anything under it, and
+  // never one meant for a button)
+  $('stage').addEventListener('pointerdown', e => {
+    if(e.target.closest && e.target.closest('button, a, input, select, label')) return;
+    if(albTap(e.clientX, e.clientY)){ e.stopPropagation(); e.preventDefault(); }
+  }, true);
 
   // A reload used to throw away the nine you were halfway through and start
   // the hole you were on again. The nine's counts went back to zero, so "all
