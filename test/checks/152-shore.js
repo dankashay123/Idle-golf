@@ -136,11 +136,13 @@ module.exports = {
               if (Scene.ice && P26.some(p => p.sp === 'lily')) { o.ice++; f(id + ': lily pads on ice'); }
               if (hzPond) { o.hz++; if (P26.some(inHz)) o.hzLaid++; for (const p of P26) if (inHz(p) && p.sp === 'reed' && Scene.onPlay(p.d, p.x, 0.25)) f(id + ': reeds on the fairway'); }
               if (PP) { o.path++; if (P26.some(inPP)) o.pathLaid++;
-                // the woods on its side clear of it all along
-                for (const F of Scene.fills) { if (F.kind !== 'wood' || Math.sign(PP.x) !== F.sd) continue;
-                  for (let d = PP.d - PP.rd * 0.9; d <= PP.d + PP.rd * 0.9; d += 0.5) { if (d < F.d0 || d > F.d1) continue;
-                    const w = Scene.lobeSpan(PP, d); if (!w) continue; const edge = Math.abs(PP.x) + (PP.x > 0 ? w[1] : w[0]);
-                    if (Scene.fillIn(F, d) < edge) { o.woods++; f(id + ': a wood\'s edge across the pond at ' + d.toFixed(1)); break; } } } }
+                // on level ground (laid over a rise its far end climbed the slope)
+                { let lo = 1e9, hi = -1e9; for (let t = -1; t <= 1; t += 0.1) { const g = Scene.hAt(PP.d + t * PP.rd); lo = Math.min(lo, g); hi = Math.max(hi, g); } if (hi - lo > 1.25) f(id + ': the pond by the path on a rise of ' + (hi - lo).toFixed(1)); }
+                // no tree of the woods standing in it (the woods' own trees
+                // were planted in its water)
+                const L = Scene.layForest(0.7);
+                for (const R of L.rows) for (const t of R.t) if (Scene.inPond(R.d, t.x, -0.2)) { const w = Scene.lobeSpan(PP, R.d);
+                  if (w && t.x > PP.x - w[0] && t.x < PP.x + w[1]) { o.woods++; f(id + ': a tree of the woods in the pond at ' + R.d.toFixed(1) + ',' + t.x.toFixed(1)); break; } } }
             }
           }
         }
@@ -164,7 +166,7 @@ module.exports = {
     if (r.fails.length) throw new Error(r.fails.join('; '));
     const o = r.out;
     const p = q.o;
-    return ['ponds: reeds or pads on ' + p.hzLaid + ' of ' + p.hz + ' water hazards and ' + p.pathLaid + ' of ' + p.path + ' ponds by the path, all in the water, none on ice, the woods clear of the path\'s ponds; shallows and deeper water drawn (' + p.drawn + 'px)',
+    return ['ponds: reeds or pads on ' + p.hzLaid + ' of ' + p.hz + ' water hazards and ' + p.pathLaid + ' of ' + p.path + ' ponds by the path, all in the water, none on ice, the path\'s ponds on level ground with no tree of the woods in them; shallows and deeper water drawn (' + p.drawn + 'px)',
       o.holes + ' lake and river holes over every course and season: reeds on ' + o.reedHoles + ' (' + o.reeds + '), lily pads on ' + o.padHoles + ' (' + o.pads + '), none on ice, the fairway, the green or the stones\' line; laid the same each time',
       'drawn: shallows ' + o.shallow + 'px at the near bank, deep ' + o.deep + 'px beyond, shelving ' + o.prof + ' bank to bank; reeds and pads ' + o.drawn + 'px'];
   }
