@@ -31,7 +31,7 @@ module.exports = {
           if (A.length > 5) f(A.length + ' animals' + at);
           for (const p of A) { const C = CRIT[p.an]; o.kinds[p.an] = (o.kinds[p.an] || 0) + 1;
             const w = ' (' + p.an + ' at ' + p.d.toFixed(1) + ', ' + p.x.toFixed(1) + at + ')';
-            if (!!C.night !== !!Scene.night) f('out at the wrong time' + w);
+            if (!C.both && !!C.night !== !!Scene.night) f('out at the wrong time' + w);    // (the hedgehog: day and night)
             if (C.at === 'air') continue;
             const swim = C.at === 'water' || C.at === 'sea' && !C.shore;
             if (swim && !wetAt(p.d, p.x)) f('a swimmer on dry ground' + w);
