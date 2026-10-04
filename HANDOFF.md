@@ -26,8 +26,9 @@ through:
   pads. Last (from a photograph of a gorge): the canyon three times as
   deep in stepped cliffs and ledges with spurs; the albatross's feather
   burst made real feathers; the ponds given depth, reeds and pads (and the
-  woods kept off the pond by the path: trees stood in it); the course dog
-  on, seen from behind with its tail wagging.
+  pond by the path laid level, with no tree of the woods in it); the
+  course dog on, seen from behind with its tail wagging. The full run
+  caught a frame over its drawing budget and reeds through a slope: fixed.
   Fixed on the way: a Vault floor played again after a gust was never
   called; the Spotted tag sat over a wager's name. Earlier the same day:
   cherry trees, the kingfisher, course collections, the monthly hunt, and

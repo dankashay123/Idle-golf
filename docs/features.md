@@ -39,8 +39,11 @@ feature must do, and is usually enough on its own.
   `T._lks`; `hazSlice` passes the hazard and its width; `P_LAKE.N` 84) for
   `P_LAKE` and `P_WATER`; the pond by the path and the side lakes in rings
   of the same; `waterAt` counts the shelves as water. `layPonds`: reeds and
-  pads on the water hazard (`sink`: down on its sunk water) and the path
-  pond. `pondClear` keeps every wood's edge round the path pond. `Scene.layShore` (after `layCritters`, kind 26, extra, from a
+  pads on the water hazard and the path pond, at the ground's level as
+  the ducks are (set down on a sunk pond they showed through slopes); a
+  pad is one stamp of `lilySprite` scaled; hidden ones are skipped. The
+  path pond takes the levelest of eight places (`hAt` rise 1.2 at most)
+  and `layForest` plants no tree in it. `Scene.layShore` (after `layCritters`, kind 26, extra, from a
   hash; `wetAt`): reed clumps (`REED_ROWS`, `reedMap` by season) in the
   shallows off the fairway, the green and his line; lily pads
   (`lilyPal`), none on ice or the stones' line; not on the sea stack.
