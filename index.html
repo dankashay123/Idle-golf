@@ -2766,6 +2766,9 @@ const B = {
   GUIDE_SOV: 5,
   // the Guide's weekly hunt: three to spot in a week, paid once when all are
   HUNT_SOV: 15,
+  // and for hunts done in weeks in a row (the user picked it from the menu):
+  // HUNT_STREAK more for each week before this one, up to HUNT_STREAK_MAX of them
+  HUNT_STREAK: 5, HUNT_STREAK_MAX: 3,
   // Golden Hour (the user picked it from the menu): one hole in GOLDEN_P,
   // from a hash of the hole, played in a low gold light, and all it earns
   // paid twice. Not at night, in the rain, on a frosty morning, in a wager
@@ -4710,6 +4713,9 @@ function migrate(){
   // sighting pay the hunt at once, and the Guide read 4/3)
   else if(S.hunt){ const want = huntOf(S.hunt.wk); S.hunt.got = S.hunt.got.filter((id, i, a) => want.includes(id) && a.indexOf(id) === i);
     if(S.hunt.paid !== undefined && S.hunt.paid !== 1) delete S.hunt.paid; }
+  if(S.huntRun !== undefined && !(S.huntRun && Number.isInteger(S.huntRun.wk) && Number.isInteger(S.huntRun.n) && S.huntRun.n >= 1 && S.huntRun.n < 1e5)) delete S.huntRun;
+  // (a paid hunt has its week in the run; an old save's paid hunt starts one)
+  if(S.hunt && S.hunt.paid && !(S.huntRun && S.huntRun.wk === S.hunt.wk)) S.huntRun = { wk: S.hunt.wk, n: 1 };
   if(S.teeMk !== undefined && !TEE_MARKS.some(m => m.id === S.teeMk)) delete S.teeMk;
   if(S.wild !== undefined && S.wild !== 0) delete S.wild;
   if(S.spotTag !== undefined && S.spotTag !== 0) delete S.spotTag;
@@ -26136,8 +26142,17 @@ function huntSee(ids){
   if(!fresh.length || !fairCard()) return null;
   H.got.push(...fresh);
   const n = H.got.length, paid = n >= 3 && !H.paid;
-  if(paid){ H.paid = 1; grantSov(B.HUNT_SOV, '', true); }
-  return { fresh, n, paid };
+  const pay = paid ? huntPay(H) : 0;
+  return { fresh, n, paid, pay, run: paid ? S.huntRun.n : 0 };
+}
+// The hunt's pay, and the run of weeks in a row it has been done: a week
+// missed starts it again
+const huntRunFor = wk => S.huntRun && S.huntRun.wk === wk - 1 ? S.huntRun.n + 1 : 1;
+const huntPayFor = n => B.HUNT_SOV + B.HUNT_STREAK * Math.min(n - 1, B.HUNT_STREAK_MAX);
+function huntPay(H){
+  H.paid = 1; const n = huntRunFor(H.wk), pay = huntPayFor(n);
+  S.huntRun = { wk: H.wk, n }; grantSov(pay, '', true);
+  return pay;
 }
 // this week's hunt still to finish (the medal's round dot); none in a wager
 const huntOpen = () => !S.dgnRun && !huntNow().paid;
@@ -26163,7 +26178,7 @@ function guideAdd(got){
   // had the tag up every few seconds for a sparrow)
   const an = got.filter(id => isAnimal(id) && (!TAG_EVERYDAY.includes(id) || S.guide[id] === 1 || (hunt && hunt.fresh.includes(id)))), newAn = firsts.filter(n => an.some(id => GUIDE.find(g => g.id === id).n === n));
   const tagOn = S.spotTag !== 0, rest = tagOn ? firsts.filter(n => !newAn.includes(n)) : firsts;
-  if(!tagOn && hunt) toast('<span class="achk">Weekly Hunt</span>' + (hunt.paid ? 'All three found \u00b7 <span style="white-space:nowrap">+' + B.HUNT_SOV + sovIc() + '</span>'
+  if(!tagOn && hunt) toast('<span class="achk">Weekly Hunt</span>' + (hunt.paid ? 'All three found \u00b7 <span style="white-space:nowrap">+' + hunt.pay + sovIc() + '</span>' + (hunt.run > 1 ? ' \u00b7 ' + hunt.run + ' weeks in a row' : '')
     : hunt.fresh.map(id => GUIDE.find(g => g.id === id).n).join(', ') + ' \u00b7 ' + hunt.n + '/3'), 'ach');
   if(rest.length) toast('<span class="achk">Field Guide</span>' + rest.join(', ') + ' \u00b7 <span style="white-space:nowrap">+' + B.GUIDE_SOV * rest.length + sovIc() + '</span>', 'ach');
   if(tagOn && (an.length || hunt)) spotShow(an, newAn.length, hunt);
@@ -26179,9 +26194,9 @@ function spotShow(an, nNew, hunt){
   const G = S.guide || {}, order = an.slice().sort((a, b) => (G[a] === 1 ? 0 : 2) + (hunt && hunt.fresh.includes(a) ? 0 : 1) - (G[b] === 1 ? 0 : 2) - (hunt && hunt.fresh.includes(b) ? 0 : 1));
   if(!order.length && hunt) order.push(...hunt.fresh);
   const title = order.length === 1 ? nm(order[0]) : order.length === 2 ? nm(order[0]) + ' & ' + nm(order[1]) : nm(order[0]) + ' +' + (order.length - 1);
-  const sov = B.GUIDE_SOV * nNew + (hunt && hunt.paid ? B.HUNT_SOV : 0), bits = [];
+  const sov = B.GUIDE_SOV * nNew + (hunt && hunt.paid ? hunt.pay : 0), bits = [];
   if(sov) bits.push('<span style="white-space:nowrap">+' + sov + sovIc() + '</span>');
-  if(hunt) bits.push(hunt.paid ? 'Hunt Done' : 'Hunt ' + hunt.n + '/3');
+  if(hunt) bits.push(hunt.paid ? 'Hunt Done' + (hunt.run > 1 ? '\u00a0\u00d7' + hunt.run : '') : 'Hunt ' + hunt.n + '/3');
   el.innerHTML = title + ' Spotted!' + (bits.length ? '<b>' + bits.join(' \u00b7 ') + '</b>' : '');
   // (just above the map; at the foot of the field when there is no map)
   el.style.display = 'block'; el.style.animation = 'none'; void el.offsetWidth; el.style.animation = '';
@@ -26266,7 +26281,10 @@ function roomGuide(w){
   let h = '<div class="eyebrow" style="margin:6px 0 4px">Field Guide \u00b7 ' + n + '/' + GUIDE.length + (n100 ? ' \u00b7 \u2605' + n100 : '') + ' \u00b7 +' + B.GUIDE_SOV + sovIc() + ' each</div>';
   // (this week's hunt first: its three, found or where to look)
   { const H = huntNow(), want = huntOf(H.wk);
-    h += '<div class="eyebrow" style="margin:8px 0 4px">Weekly Hunt \u00b7 ' + H.got.length + '/3 \u00b7 ' + (H.paid ? 'Paid' : '+' + B.HUNT_SOV + sovIc()) + '</div><div class="guide hunt">';
+    // (the weeks in a row so far, this one counted once it is done)
+    const run = H.paid ? (S.huntRun ? S.huntRun.n : 1) : huntRunFor(H.wk) - 1;
+    h += '<div class="eyebrow" style="margin:8px 0 4px">Weekly Hunt \u00b7 ' + H.got.length + '/3 \u00b7 ' + (H.paid ? 'Paid' : '+' + huntPayFor(huntRunFor(H.wk)) + sovIc())
+      + (run > 1 ? ' \u00b7 ' + run + '\u00a0weeks in a row' : '') + '</div><div class="guide hunt">';
     for(const id of want){ const g = GUIDE.find(x => x.id === id), got = H.got.includes(id);
       const [url, wh] = guideUrl(id).split('|'), [sw, sh] = (wh || '12x12').split('x').map(Number), z = Math.max(1, Math.floor(Math.min(60 / sw, 44 / sh)));
       h += '<div class="gtile' + (got ? ' found' : '') + '"><span class="gpic"><img src="' + url + '" width="' + sw * z + '" height="' + sh * z + '" alt=""></span>'
@@ -28188,7 +28206,8 @@ const DEV = {
           b('spot all', 'DEV.guide(1)') + b('100 each', 'DEV.guide(3)') + b('clear', 'DEV.guide(0)') + b('open it', 'DEV.guide(2)'))
       + row('Weekly hunt \u00b7 ' + hw.map(id => GUIDE.find(g => g.id === id).n).join(', ') + ' \u00b7 ' + (H.paid ? 'done' : H.got.length + '/3')
           + (HUNTWK_FORCE !== null ? ' \u00b7 week ' + (HUNTWK_FORCE - weekNow() >= 0 ? '+' : '') + (HUNTWK_FORCE - weekNow()) : ''),
-          b('spot one', 'DEV.hunt(1)') + b('finish it', 'DEV.hunt(3)') + b('reset', 'DEV.hunt(0)') + b('next week', 'DEV.huntWk(1)') + b('this week', 'DEV.huntWk(0)'))
+          b('spot one', 'DEV.hunt(1)') + b('finish it', 'DEV.hunt(3)') + b('reset', 'DEV.hunt(0)') + b('next week', 'DEV.huntWk(1)') + b('this week', 'DEV.huntWk(0)')
+          + b('3 weeks in a row before', 'DEV.huntRun(3)') + b('no run', 'DEV.huntRun(0)'))
       + row('Spotted tag \u00b7 ' + (S.spotTag === 0 ? 'off' : 'on'), b('show one', 'DEV.tag(1)') + b('show three', 'DEV.tag(3)') + b(S.spotTag === 0 ? 'turn on' : 'turn off', 'DEV.tagSw()'))
       + row('Golden animal' + (GOLD_FORCE !== null ? ' \u00b7 waiting' : ''), b('this hole', 'DEV.gold(1)') + b('next hole with one', 'DEV.gold()'))
       + row('Luna moth \u00b7 ' + (LUNA_FORCE === null ? 'by chance' : LUNA_FORCE ? 'always' : 'never'), b('always', 'DEV.luna(1)') + b('never', 'DEV.luna(0)') + b('by chance', 'DEV.luna(null)'))
@@ -28450,8 +28469,10 @@ const DEV = {
     // (straight into the hunt, so it counts on an easy card too, and the tag shows it)
     const got = want.filter(id => !H.got.includes(id)).slice(0, k === 1 ? 1 : 3); if(!got.length) return;
     H.got.push(...got); const paid = H.got.length >= 3 && !H.paid;
-    if(paid){ H.paid = 1; grantSov(B.HUNT_SOV, '', true); }
-    hideSheet(); renderAll(); spotShow(got, 0, { fresh: got, n: H.got.length, paid }); },
+    const pay = paid ? huntPay(H) : 0;
+    hideSheet(); renderAll(); spotShow(got, 0, { fresh: got, n: H.got.length, paid, pay, run: paid ? S.huntRun.n : 0 }); },
+  // a run of weeks in a row behind this one (0: none)
+  huntRun(n){ if(n) S.huntRun = { wk: huntNow().wk - 1, n }; else delete S.huntRun; this.re(); },
   huntWk(n){ HUNTWK_FORCE = n ? huntWeek() + n : null; Scene.newHole(S.hole, S.tier); this.re(); },
   tag(n){ hideSheet(); const an = GUIDE.filter(g => g.g === 'w').map(g => g.id); spotShow(an.slice(0, n), 0, null); },
   tagSw(){ toggleSpotTag(); this.open(); },

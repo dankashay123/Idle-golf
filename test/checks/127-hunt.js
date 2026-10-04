@@ -99,12 +99,29 @@ module.exports = {
           if (!tiles.every(t => { const i = t.querySelector('img'); return i && i.getAttribute('src').startsWith('data:image'); })) f('a hunt tile without its picture'); }
         const eb = document.querySelectorAll('#roomBody .eyebrow')[1]; if (!eb || !/Weekly Hunt/.test(eb.textContent) || !/1\/3/.test(eb.textContent)) f('the hunt\'s line reads ' + (eb && eb.textContent));
         hideSheet(); QUIET = true;
+        // ---- weeks in a row: each one before this adds HUNT_STREAK, up to
+        // HUNT_STREAK_MAX of them; a week missed starts again ----
+        { const pays = [], run = [], done = wk => { DAY_FORCE = 20000 + 7 * wk; delete S.hunt; const w = huntOf(weekNow()), s0 = sov(); guideAdd(w); pays.push(sov() - s0); run.push(S.huntRun.n); };
+          GUIDE.forEach(g => { S.guide[g.id] = S.guide[g.id] || 1; }); delete S.huntRun; for (const wk of [0, 1, 2, 3, 4, 5, 7, 8]) done(wk);
+          const want2 = [0, 1, 2, 3, 3, 3, 0, 1].map(k => B.HUNT_SOV + B.HUNT_STREAK * k);
+          if (pays.join() !== want2.join()) f('weeks in a row paid ' + pays.join(', ') + ', not ' + want2.join(', '));
+          if (run.join() !== '1,2,3,4,5,6,1,2') f('the run went ' + run.join(', '));
+          o.streak = pays;
+          // shown: the tag's pay and run, and the Guide's line the next week
+          DAY_FORCE = 20000 + 7 * 9; delete S.hunt; const w = huntOf(weekNow()); QUIET = false; guideAdd(w.slice(0, 2)); trophyRoom('guide');
+          const ln = document.querySelectorAll('#roomBody .eyebrow')[1].textContent; hideSheet();
+          if (!ln.includes('+' + (B.HUNT_SOV + 2 * B.HUNT_STREAK)) || !/2\u00a0weeks in a row/.test(ln)) f('the hunt\'s line with a run reads ' + ln);
+          const tg = document.getElementById('spotTag'); guideAdd([w[2]]);
+          if (!tg.textContent.includes('+' + (B.HUNT_SOV + 2 * B.HUNT_STREAK)) || !/Hunt Done\u00a0\u00d73/.test(tg.textContent)) f('the tag with a run reads ' + tg.textContent);
+          QUIET = true; tg.style.display = 'none'; }
         // ---- repair ----
         S.hunt = { wk: 'x', got: 3 }; migrate(); if (S.hunt !== undefined) f('a broken hunt kept');
         { const w5 = huntOf(5); S.hunt = { wk: 5, got: [w5[0]] }; migrate(); if (!S.hunt || S.hunt.got.join() !== w5[0]) f('a good hunt dropped');
           // (made-up names, or one twice, had one real sighting pay at once)
           S.hunt = { wk: 5, got: ['x', w5[1], w5[1]] }; migrate(); if (!S.hunt || S.hunt.got.join() !== w5[1]) f('a junk hunt kept ' + JSON.stringify(S.hunt));
           S.hunt = { wk: 5, got: [], paid: 7 }; migrate(); if (S.hunt.paid !== undefined) f('a junk paid kept'); }
+        S.huntRun = { wk: 'x', n: 2 }; migrate(); if (S.huntRun !== undefined) f('a junk run kept');
+        delete S.huntRun; S.hunt = { wk: 9, got: [], paid: 1 }; migrate(); if (!S.huntRun || S.huntRun.wk !== 9 || S.huntRun.n !== 1) f('an old save\'s paid hunt starts no run: ' + JSON.stringify(S.huntRun));
       } finally {
         DAY_FORCE = null; HOUR_FORCE = null; FROST_FORCE = null; OFFLINE = false; window.step = keep; delete S.dgnRun;
         Object.keys(S).forEach(k => delete S[k]); Object.assign(S, JSON.parse(SNAP)); QUIET = false; hideSheet(); startHole();
@@ -115,6 +132,7 @@ module.exports = {
     return ['three a week, the same all week, one at night; every one of the pool in 100 weeks',
       'counted live on a fair card only, once each; all three pay ' + 15 + ' once a week, and a new week starts again',
       'every hunt animal laid somewhere by day or night; the Guide tab shows the three first (this week ' + r.want.join(', ') + ')',
-      'round the green: ' + r.green.near + ' hunted animals behind it (' + r.green.far + ' elsewhere), ' + r.green.birds + ' hunted birds, none running off as he putts; the medal\'s dot while the hunt is open'];
+      'round the green: ' + r.green.near + ' hunted animals behind it (' + r.green.far + ' elsewhere), ' + r.green.birds + ' hunted birds, none running off as he putts; the medal\'s dot while the hunt is open',
+      'weeks in a row paid ' + r.streak.join(', ') + ' (a week missed before the last two), shown in the Guide and the tag'];
   }
 };
