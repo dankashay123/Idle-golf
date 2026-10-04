@@ -18833,6 +18833,8 @@ const Scene = {
       else if(an === 'owl'){ d = c0 + 3.6 + u * 1.2; x = sd * (this.fwWidth(d) + 0.6 + v * 0.5); }
       else if(an === 'bat'){ d = Math.min(LEN + 4, c0 + 5 + u * 6); x = sd * (this.fwWidth(Math.min(d, LEN)) + 0.5 + v * 1.5); alt = 2.4; }
       // (the Vault is walked up: farther, and it runs off as he comes)
+      // (the eagle high over the drive, ahead of him)
+      else if(an === 'eagle'){ d = c0 + 7 + u * 3; x = (v - 0.5) * 4; alt = 3.2 + u; }
       else if(R.mode === 'floor'){ d = c0 + 16 + u * 8; x = sd * (this.fwWidth(d) + 1.1 + v * 0.6); }
       else { d = Math.min(LEN + 4, c0 + 5.5 + u * 4); x = sd * (this.fwWidth(Math.min(d, LEN)) + 0.8 + v * 1.2); }
       if(C.at !== 'air' && an !== 'swan' && (this.hitsHazard(d, x, 0.3) || (Wa && Math.abs(d - Wa.d) < Wa.rd + 0.4 && Math.abs(x - Wa.x) < Wa.rx + 0.4))) continue;
@@ -26122,7 +26124,7 @@ const GUIDE_SHELF = [['w', 'Wildlife'], ['n', 'Night'], ['g', 'Golden'], ['s', '
 // The Wager Book's own wildlife (the user picked it from the menu): one
 // animal for each wager, there one time in two, on a shelf of its own.
 // Counted, never paid: nothing seen in a wager pays.
-const WAGER_WILD = { sand: ['lizard', 'Sand Lizard'], water: ['swan', 'Island Swan'], cellar: ['owl', 'Floodlight Owl'],
+const WAGER_WILD = { sand: ['eagle', 'Dune Eagle'], water: ['swan', 'Island Swan'], cellar: ['owl', 'Floodlight Owl'],
   vault: ['squirrel', 'Vault Squirrel'], scramble: ['rabbit', 'Scramble Rabbit'], twilight: ['bat', 'Twilight Bat'] };
 let WAGER_WILD_P = 0.5;   // (1 in the developer menu and the checks: always there)
 // the night creatures (laid in layNight) on a shelf of their own, with the
