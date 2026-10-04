@@ -40,7 +40,10 @@ module.exports = {
         return (dh > 25 && x[2] > 0.08 && y[2] > 0.08) || Math.abs(x[1] - y[1]) > 0.18; };
       const N = COURSE_HOME.length;
       try {
-        QUIET = true;
+        // (no frost: it follows the player's clock, and a frosty morning
+        // puts off a Golden Hour, whose hole is laid out its own way; the
+        // check failed from 5 to 11 on a golden hole)
+        QUIET = true; FROST_FORCE = 0;
         // midsummer, so the regular stops that turn with the month hold still
         DAY_FORCE = Math.floor(Date.UTC(2026, 6, 15) / 864e5);
         for (let ci = 0; ci < B.COURSE.length; ci++) {
@@ -140,7 +143,7 @@ module.exports = {
           o.iceRips = (Scene._rips || []).length;
         } else o.iceP = 'no pond';
       } finally {
-        SEASON_FORCE = -1; DAY_FORCE = null;
+        SEASON_FORCE = -1; DAY_FORCE = null; FROST_FORCE = null;
         Object.keys(S).forEach(k => delete S[k]); Object.assign(S, JSON.parse(SNAP));
         QUIET = false; OFFLINE = false; Scene.announce = null; startHole();
       }

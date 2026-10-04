@@ -1,0 +1,2139 @@
+# Features, in detail (for debugging them)
+
+Read only the section you need: `grep -n '^### ' docs/features.md`, then
+read that section. `test/README.md` holds each check's account of what its
+feature must do, and is usually enough on its own.
+
+## Sections, newest first
+
+### The session of 3 and 4 October (after the last handoff)
+
+Each has a check whose row in `test/README.md` says what it must do.
+
+- **Celebrations** (`poses`): `herPoseAt` places arms and club on the
+  finish picture's 40x58 grid (`at(col,row)`; head cols 21 to 31, rows 2
+  to 12; her ponytail to col 18; body cols 19 to 30). A raised near arm
+  goes `nearUp`, past the front of the face (`raise` swings it out on the
+  way); `farBack`/`clubBack` are drawn before the body in `paintGolfer`
+  (`PZ`, `farArm`), so what passes behind is hidden. Her ace: far hand
+  behind her head, the club spun flat over it in her near hand, stopping
+  by `CELEB_END`; her albatross arm leaves the front of her shoulder;
+  the akimbo arm is behind her. `redrawHead` is gone.
+- **Sovereigns wait for GET** (`getsov`): `earnSov(n, place, key, what)`
+  for anything earned; `S.owed` rows `{p,k,n,t}`; places `OWED_PLACES`
+  (Today, Honours, Guide, the Trophy Room's tabs); `owedBlock`, `getBtn`,
+  `getAllBtn`, `getOwed(p, k)`; Today's GET ALL (`collect()` with no id)
+  takes Today's rows, the free gift and the cabinet, and points to the
+  other tabs. `grantSov` is for purchases and the developer menu only.
+  `SOV_AUTO` (set by the harness through `window.__sovAuto`) pays at once
+  so other checks can measure pay. The check-in's button reads GET.
+- **Alligators** (`alligators`): `CRIT.alligator`, `ALLIGATOR_P`, in
+  `GOLD_KINDS` and the hunt pool from week `HUNT_GATOR_WK`.
+- **Wager animals** (the Guide's Wager Book shelf, `b`, never paid):
+  `WAGER_WILD`, `layWagerWild(R)` from `newDepthsHole`, `wagerWildSee`;
+  props tagged `wg` are drawn only in a wager. `R.floor` is undefined
+  outside floor modes (use `|0`); a bare wager scene can have `camD` NaN.
+- **A whole Guide shelf pays 25 once** (`shelfCheck`, `S.shelfDone`).
+- **The weekly hunt** (`hunt`): `huntOf`, `huntNow`, `huntSee`, a streak
+  (`huntRunFor`, `huntPayFor`, `S.huntRun`), animals laid by the green.
+- **The Spotted tag** over the map (`spottag`), the everyday kinds
+  (`TAG_EVERYDAY`) only when new or hunted; a switch in Settings.
+- **Animal calls** (`wildsounds`: frogs, crow, game bird, owl, fox
+  bark; `Sfx.wildCall`) and an Animal Sounds switch.
+- **Night creatures** (`nightlife`), **ace plaques** (`aceplaques`),
+  **tee markers every 25 cards** (`teemarks`), **a double rainbow**.
+- **Purse a second** in the corner is a 30s average (`Meter`, `rate`).
+- **Developer menu**: a Wildlife fold (`DEV.hunt`, `tag`, `wagerWild`,
+  `guide`...).
+
+
+Each feature's check in `test/README.md` says in full what it holds; these
+notes say what was asked and what to know when debugging it.
+
+### Golden Hour: the gold mountain (user asked, 1%)
+
+- "Rain gold, piles of gold along the fairway and the hole is up on a gold
+  mountain made of coins ... fly ... to the top of it to putt ... the flag
+  is golden ... sovereigns scattered around the edges of the green ...
+  reward 10 sovereigns". One hole in 100 (`goldenHole`, from the hole's
+  hash), never at night, in the rain, on a frosty morning, in a wager, on a
+  signature hole or on a round's last hole (the grandstand stands there).
+  It is the same Golden Hour as before (lit gold, all the hole earns paid
+  twice), now with its own hole; there is no other Golden Hour.
+- The mountain (`MTN`, `mtnOf`): six tiers of stacked coins, its outline
+  made uneven by the hash, the green on its flat top. He plays to its foot
+  (`bank`) and flies up (`land`) as at an island; an ace stays on the tee.
+  Piles down the fairway and on the top (kind 20), sovereigns round the
+  green off his line (kind 21), gold falling in place of rain (`goldRain`,
+  fewer canvas calls than rain). Finished live it pays 10 sovereigns and a
+  sponsor ticket once, nothing away. `goldmountain`; `sigview` covers it
+  through a hill and cut away on the top.
+
+### Golden animals, and a golden rainbow (user asked for "something new")
+
+- A stag, fox, rabbit, squirrel, hedgehog, pheasant, badger, owl, swan,
+  heron, otter or eagle is now and then golden: about one hole in 170 of
+  those its kind is on (`GOLD_ODDS`), rolled from the hash after the hole
+  is laid (rule 68). A gold recolour of its own sprite (`goldOf`), a shine
+  along its back, a white glint on its outline a fifth of a second every
+  two. Each has an entry on the Guide's Golden shelf. `golden`.
+- One rainbow in ten is golden (`goldbowAt`, six bands of gold), with its
+  own Guide entry. `rareweather`.
+
+### Heirlooms capped, and a wall past Card 200 (user: "it breaks the game")
+
+- The user maxed the Gilded Card: every heirloom ran free to 250 levels
+  and compounded, paying 1e44 times the purse; the Range went free and
+  Drive Power printed x2.055640197382958e+39.
+- Now each has a top (`max`: 100 for most multipliers, 40 for prize money,
+  20 for the wager pair, Caddie's Ledger and Gambler's Wedge; a save above
+  it is put back on load). To Lv 30 a level compounds as before; past it
+  each adds the same step (the user: not "so exponential"). Prices: as
+  they were to Lv 20, a fifth steeper each to 30, then x1.6 a level (the
+  user picked "steeper heirloom prices so the room lasts longer"): a career
+  retiring every ten cups fills the room at about 300 cups (it was 110).
+- The Founder's Locker keeps what you owned (it set levels); the
+  Chronoglass never lands past the best card reached.
+- Holes grow x4 a card to Card 101 and x2.7 past it (`TIER_Y2`), so a
+  golfer with everything maxed walls at Card 222 (the user wanted the wall
+  "more than 200-250"), and near Card 83 with no heirlooms.
+- Big multipliers go through `fmt`. Tour Cards read as numbers everywhere
+  (`cardNo`), never Roman numerals. `heirlooms` (sixteen breaks and four
+  more for the pacing).
+- The heirloom reveal: its icon large in a frame of its tier's colour, the
+  tier, the name, what it does at level 1, how many are found. Retiring
+  pays 30% more legacy (`LEGACY_K` 0.182).
+
+### The economy review (user: "see what can be improved and if anything can be abused")
+
+- Every change was reproduced in a simulated free player first, and the
+  user chose all of them. `exploits` holds them; `settings` the save codes.
+- The repeating honours pay more slowly. The repeating honours, the rival,
+  the series, the caddie's gifts and the finds pay only on a **fair card**
+  (no lower than one under what his bag suits, or his highest: Card 1
+  runs about fifty events an hour). A Tour Card's reward is paid **once**
+  ever (`S.cardPaid`; a retirement paid every card again). Honours from
+  events played away are counted, not paid, on return. Caddie gifts: ten
+  a day at most.
+- **The clock never runs back**: the save's stamp `S.t` only rises and
+  `featDay` never reads earlier than it (forward a day and back paid about
+  2,600 a time).
+- **The developer menu** only in a developer copy (`devOK`): it had
+  +1,000 sovereign buttons. **Save codes** are `MM2` with a check (a code
+  edited to 999,999 sovereigns loaded); the old `MM1` codes load only in a
+  developer copy.
+- Earlier the same day every sovereign reward had been raised 30% (bought
+  packs unchanged).
+
+### Icons redrawn (user asked)
+
+- 44 icons: every heirloom its own shaded picture, fit to be shown large
+  (a grip, a scorecard, a standing stone, a purse, a ticket, a ledger, a
+  wedge and die ...), and the Range, the Long Drive, Touch and Pace, Frost
+  and the shop's offers pictures of their thing. `icons` refuses two names
+  with one picture and a flat heirloom drawing.
+
+### December lights and rare weather (from the menu)
+
+- Coloured bulbs along the clubhouse's eaves and the grandstand's roof in
+  December only, baked into each building's picture, small by day, lit
+  with a glow and a twinkle at night; none in a wager. `lights`.
+- A rainbow in the sky on the first two fair holes after a wet round and
+  now and then on a fair day; a fog bank over the far end of a rare still
+  hole (never on a signature hole, with a rainbow or with Golden Hour); a
+  shooting star across a night sky every 20 to 40 seconds. Never at night
+  (the rainbow, the fog) or in the rain. Each is a Guide entry; the star
+  is spotted as it is drawn. `rareweather` (eleven breaks).
+
+### The Daily Check-In (user asked)
+
+- A calendar button right of the cog, a red dot while today's reward
+  waits; it opens by itself once a day when there is one (after the away
+  card), never once claimed. One claim a real day, 28 a month from the 1st:
+  purse, grit, shards, scrolls, wager entries (past a full cap), tickets,
+  bags, sovereigns at each week's end (350 a month) and a Legend Bag on
+  day 28. A clock put back opens nothing. `checkin`.
+
+### Finds by the tee, course records, caddie gifts (from the menu)
+
+- Finds: a lost ball, a tee peg, a ball marker, an old or antique coin in
+  the rough on his left just off the tee (the map covers the right), about
+  one live hole in forty, a few sovereigns, picked up with a burst. Drawn
+  about three balls wide so they show. `teefinds`.
+- Course records: an event's card posted live sets its course's record
+  with the day; a Course Records fold under the Cabinet's Record.
+  `courserecords`.
+- Caddie gifts: from Close in the bond on, after a live birdie or better,
+  about one in 25 (one in 15 at Inseparable), 2 to 5 sovereigns or a
+  ticket with a line. Fair card only, ten a day. `caddiegift`.
+
+### Animals, golfers next door, the Field Guide, decor, the rival series
+
+- Twenty animals (`CRIT`: fox, rabbit, squirrel, hedgehog, pheasant,
+  badger, owl, moorhen, swan, heron, frog, turtle, otter, seal, crab,
+  lizard, eagle, bat, butterfly, dragonfly), each where it lives and when,
+  one or two kinds on about half the holes, never more than five animals
+  (the user: "added places but not overcrowded"). Golfers on the other
+  holes: a group putting out on each other green and a pair down its
+  fairway, by day (kind 16). `critters`.
+- The Field Guide (Trophy Room > Guide): 61 entries on four shelves
+  (Wildlife, Golden, Seasons, The Course), each filled the first time it is
+  seen on a hole played live, 5 sovereigns a first sighting. `guide`.
+- Season decor: pumpkins and hay bales in autumn (carved and lit at night
+  from 24 October), snowmen in winter, tulips in blossom, sunflowers in
+  summer, by the tee and down the hole (kind 14). `decor`.
+- The rival is one golfer all season, a series between you (`RIVAL_SERIES`
+  20 sovereigns to the winner), and a line on the final day as the lead
+  changes. `rivalseries`.
+- Before these: the final day's gallery (ropes and a crowd on its last
+  three holes, `gallery`); club mastery (ten stars a club, five gold then
+  purple) and the caddie bond (five steps, lines and moves), `mastery`;
+  the away card's stage, him throwing money over Play on (`awaystage`).
+
+### The session of 1 and 2 October (its notes were not written then)
+
+- **The great skins redrawn after new pictures**: the Divine (a
+  long-nosed crimson mask, a gold crown set with jade, a great blue and
+  gold ring, a crimson skirt worked in gold, a jade blade for a driver);
+  the Ascended (a hooded star-walker: a galaxy cape, a silver mantle,
+  great feathered lavender wings the user found "extremely good", a
+  crystal staff, a dark disc under him; its horns, flame aura and shards
+  gone); The Void (dark in his hood under a gold crown, a bell of a robe,
+  hands of bone holding black holes); the Demonic (a demon knight in black
+  plate edged in gold, four horns cracked with lava, fangs, a ram's skull
+  at his shoulder, a dais with a star of fire, a serrated black blade).
+  Then every skin brought up to the wings' detail: patterns are told the
+  cloth's shade, and each plain-coloured skin has a cloth of its own. The
+  sections further down describe the earlier designs.
+- **Two new Mythic sets**, named by the user: **The Dread** (a wraith, a
+  skull in his hood, scythe, soul lantern, souls circling, a grave under
+  him; Reaper Driver, Soul Wake, Reaper Skull) and **Psychedelic** (a
+  turning spiral of six colours, a rainbow afro, mirror shades, a third
+  eye, a mandala; Kaleido Driver, Kaleido Wake, Third Eye). Both glow more
+  at night (`nightsets`). The seven Legendary skins got headwear
+  (`legendwear`) and moments of their own (`legendmoments`).
+- **Blessings**: the four great caddies' own (the Divine's ribbons and
+  lotus, the Demonic's hellfire, the Ascended's starlight, The Void's
+  black hole); every other caddie a plain faint beam. Drawn through him
+  so he shows where it lies (`blessthrough`, `blessings`).
+- **Showcases** on the Sets, Golfer, Caddie, Clubs and Balls racks, by
+  day or night (`showcase`, `previews`, `showitems`); the Trophy Room's
+  shelf of the full sets; every caddie a trick of its own.
+- **The female golfer** (Settings): a slimmer build, a pleated skirt,
+  fuller hair, her own lines and poses; the skins go down her legs
+  (`herhop`, `herown`). His and her ace celebrations, over before the next
+  hole (`acecheer`); his poses as the ball drops.
+- **On the course**: night courses with moonlit colours, a Milky Way and
+  each course its own moon; an ace's column of light rising from the cup
+  (`acebeam`); real tee boxes; full-size trains and a proper hop over the
+  stones; geese in a V and deer that bolt (`deergeese`); fallen leaves for
+  autumn frost and shaped leaves, petals and flakes, and the flag and ball
+  hidden behind nearer trees (`leaves`); footprints, ball marks and his
+  breath in the cold (`tracks`); spectators with faces who celebrate in
+  six ways; birds with heads and wingbeats; richer puddles.
+- **Play**: he walks up once the winning shot is down; the Vault played as
+  golf, floor by floor (`vault`); the tee shot flies its full length (he
+  was carried down the fairway mid-swing, `teeshot`); Swing Tempo renamed
+  **Pace of Play**; the Range's **Buy All** (`buyall`); the user's own
+  strike, putt and cup recordings and a Shot Sounds slider (`golfsounds`).
+
+### Older sections (from here down, as built at the time)
+
+### Sovereigns, one purple gem (user sent a picture)
+
+- "Sovereigns are gold on the top right. But in the shop they're purple.
+  Can you remake the sovereigns design to look more like this purple
+  one ... Also please fix the alignment in the shop for the icon." The
+  picture: a faceted purple diamond, a light rim, a dark inner line, a
+  crown and S in the middle.
+- One 12 by 12 gem (`sovg`): rim lit on top and dark below, a band, a dark
+  inner line, the face and a dark mark in the middle, in `SOV_COL`. The
+  packs are gems too (one small, larger, larger, then piles of two and
+  three, with a dark gap where one lies on another). The corner's figure
+  and the shop's "You hold" are `--sov`, a light purple (the latter was
+  pink). Drawn from a small generator (a diamond by distance from the
+  middle); the rows are pasted into `B.PX12`.
+- The wide tile's price button is a column, so its figure and gem were
+  two stacked items; `.pv` holds them on one line. Checked at 320 and 440
+  on every tab for overflow.
+
+### Names of our own (user asked)
+
+- "The Masters is extremely protective of their name ... rename it The
+  Maestro ... and have the winning jacket be renamed as well and recolor
+  it purple. If you got the name of any other major or tournament from a
+  real tournament, please change those." Every event, course and prize
+  name was checked against real ones; the ones renamed are in §1. Only
+  the words on screen changed (and the Maestro's landmark colour and the
+  jacket's shirt), so saves and checks keyed on ids hold.
+
+### Menus, racks and honours trimmed (user asked)
+
+- One line where there were two: the shop's notice (on every tab, one
+  line), one Save Code row, the Range's line only when the bag is ahead
+  of the card, the shot book's cost on its button, Attributes' count by
+  the name, the wager book's help on one line, an owned perk "Owned", a
+  sovereign price as figure and gem (no caption line), WORN once, an
+  honour's ask beside its name.
+
+### Balls lying, the putt, richer cup moments (user asked)
+
+- "When approaching a ball, it clips through the player": `drawRestBall`
+  draws it before him; the putt is drawn after him while near. Every ball
+  lying is a lit sphere (`lbSphere`, placed where the old square was, to
+  the pixel); the dear ones have rings going round (`LB_ORBIT`, far half
+  behind the ball); Godlight and the Jade Wake jade and gold ribbons
+  ("make it have those ribbons circling it too"). `ballrest` checks the
+  order, the tones and the ribbons.
+- "A damn this skin set was worth the money effect. Same speed": a second
+  layer (`CUP_FX2`) for the four sets inside the same 0.55s and box.
+
+### Cup moments for every ball and wake (the waiting request)
+
+- The cheaper balls and the plain wakes each have a small moment in their
+  own colours, inside a smaller box and fewer pixels than any dear ball's
+  (`cupfx`); the Jade and Hellfire Wakes play their sets'. The plain ball
+  has none. The Twilight Putt's odds are pinned in the check.
+
+### The far scenery (user sent screenshots)
+
+- Far trees "shake and jitter like crazy": see rule 60 and the map's rows.
+  "Fog ... in between the trees": rule 61. "Brown lines ... in the
+  trees": trees, shrubs and the gallery beyond a forest tree showed
+  through it (it is painted into the ground); `forestOver` restores the
+  tree where it is nearer (`forestfront`). Oaks had five blank rows at
+  their foot and floated (`grounded`). Snow caps striped on a slope: shaded
+  by the slope, not per column. Turf dots in sand and water: rule 63.
+  Stones, fish splashes and fireflies cut at the river's rim when he was
+  at them.
+- "The horizon ... stays in place when the player is moving corners":
+  the ranges slide with the heading, a few pixels at most (`ballrest`).
+
+### Another hole's flag behind the forest (from the menu)
+
+- The forest's trees go into the ground's buffer; the other greens' flags
+  (props kind 12) are drawn after the ground, so one beyond a tree stood
+  in front of it. `forestPass` now keeps each tree it stamps (`_forOcc`:
+  its distance, place, rows and the cut of the ground in front), and
+  `drawProp` finds, column by column, the top of any tree nearer than the
+  flag's green and draws the flag only above it. `farflags` sweeps every
+  course; negative tested.
+
+### The Divine reworked as a celestial monk (user sent two pictures; redrawn since after a third)
+
+- "The divine skin is a bit underwhelming. Just looks like he's wearing a
+  shirt and pants with some wings ... Obviously no skin showing. Please
+  fix the full set." The pictures: a celestial monk in white and crimson
+  robes, gold shoulder guards and bracers, jade beads and horns, a long
+  ponytail, jade and gold energy swirling.
+- Him: a white robe embroidered in gold (`heaven`) with a gold front edge
+  (`shirt3`), its skirt to the thigh, crimson trousers with gold knee
+  guards (`kneeguard`), a crimson sash (the belt; `sash` draws its knot
+  and flying ends), a gold mask (`skin`) under a crimson blindfold whose
+  ends stream back, silver hair (`cap`, `hair`) in a long tail bound in
+  gold, jade horns swept back, jade gauntlets (`hand`), white sleeves with
+  gold bracers, a gold guard on the shoulder (both from behind), jade
+  beads. Round him three ribbons (two jade, one gold) spiral up, a gold
+  curl at each head, drawn in and racing as he winds up and flung out as
+  he strikes; a gold ring set with jade behind his head; a jade seal with
+  gold clouds turning under him. The wings, halo, beam, rays and falling
+  feathers are gone. The moment: jade and gold bursting out, the choir.
+- The set: the driver ivory on a crimson grip, a gold head, a jade ribbon
+  winding down the shaft and a jade and gold trail; the wake renamed
+  **Jade Wake** (two ribbons twining, the ball in jade with a gold curl
+  circling it); Godlight in a jade glow with a gold cross, its cup moment
+  in jade and gold; the caddie the same look, small; his `soar` drops
+  jade light. Shop tiles show it (`ICON_FX.divine`).
+- `legends` checks no skin tone in any pose, the ribbons (either side,
+  close, narrower at the top, wider at the strike, from behind too), the
+  ring, horns, hair, blindfold, beads, sash, guards, skirt, seal, sparks,
+  the caddie's ribbons and horns; negative tested (skin left on, ribbons
+  one width). `flight` wants his ribbons either side in the air.
+
+### The ball's own slot; a set wears its ball (user asked)
+
+- "The Void set equip does not equip the ball": a wake and a ball were
+  one slot. Now `S.trail` is the wake and `S.ball` the ball; flight draws
+  the wake then the ball, the ball at rest and in the cup is the ball's.
+  `fullset` checks a set wears (and unequips) all five.
+
+### The stance, the legs, the wave (user sent pictures)
+
+- Address after the user's picture: taller, legs straight and together,
+  less bent over (`G_ADDR_ROWS` redrawn, the arm rig and a longer club to
+  match). Legs as wide as the torso on every look (`bulkOf`'s legs), the
+  crease between them a soft mid shade from the knee down; from behind he
+  is built out half as much (a white block showed at his shoulders).
+- Waving at the train: from behind, turned to it, his left arm up from
+  the shoulder, elbow out, the forearm waving (`SPRITE.gWave`).
+
+### The woods as trees (user: "what is the brown ground")
+
+- The woods and the forest behind the green were painted flat and read as
+  brown ground. `forestPass` stamps the course's own tree sprites into the
+  ground far to near (see the map). It costs about 2.5ms a ground redraw,
+  so it is laid once a hole and stamps with ready colours; `render`'s seam
+  limit is 60 because of the stand of trees at the horizon.
+
+### The Demonic reworked (user sent a second picture; redrawn since after a third)
+
+- The picture: a hooded hunter bound in wrappings, a pale mask, blades
+  swept back off the hood, swirls of colour; "change the color to a deep
+  red/orange. Crazy cool auras too." Same set, same price, same pieces.
+- Him: crimson wrappings on the slant (pattern `wraps`, its seams in
+  `HELL_VEINS` so `veins` pulses them), a bronze mask (`skin`), dark
+  gloves (`hand`), arms in the cloth (`arm`/`arm2`). `crest`: five blades
+  swept back and up off the hood side on, fanned round it from behind,
+  an edge of fire and white-hot points, a pulse running up. `streamers`:
+  three torn strips flowing back off his shoulders (from behind, over his
+  back, so drawn in `front` there), ragged ends with an ember; the caddie
+  two. `swirl`: two ribbons of fire round him, crossing, bright heads and
+  fading tails, sparks; faster as he winds up, wider on a great hole; far
+  half in `back`, near half in `front`. The hellfire aura taller (h/7),
+  the pit, cracks, fists, blast and eruption as they were.
+- `legends` checks the streamers (side on behind him, none in front; from
+  behind, out either side), the crest (swept back, over his head), the
+  ribbons (both sides, in front of his middle, close), and the caddie's
+  streamers; negative tested. At real size it read muddy until the cloth
+  was brightened, the blades raised and the ribbons drawn as solid lines:
+  look at him at 40px, not only zoomed.
+
+### Everyone built out from his own picture (user: "a weird darker outline")
+
+- The plate behind him (`bulkPlate`) is gone. `blitShear` draws each row
+  of his chest, shoulders and legs stretched about his body's middle
+  (`bulkRow`), so the width is his own clothes, shading and edge; head
+  and feet untouched. The walk, the flight and the caddie use it too; so
+  do copies of him (`blitAs`, `silhouette`) and what hugs his outline
+  (`outlineOf`: the auras were lost under the wider body until it did).
+- `bulk` checks every look and caddie: drawn built out, 2+ pixels each side
+  at the chest, every pixel there a colour of his own row, his edge its
+  own colour, head and feet unchanged; negative tested with a dark rim.
+
+### Unequip (user asked)
+
+- A worn look, caddie, club or ball reads UNEQUIP (`.price.unq`) and
+  goes back to the plain one (`STYLE_DEFAULT`); a worn set's button on
+  Sets takes all five pieces off. The plain ones read Worn. `fullset`.
+
+### Nine pin positions; no two greens side by side (user asked)
+
+- `PINS`: front, middle, back by left, middle, right (never on his line,
+  where he would stand on the cup, nor within 0.6 of the green's edge).
+  `pinFor(h)` steps round them by the hole, the day and the event.
+  Everything about the cup reads `pinD()`/`pinX()`; he stands
+  `B_GREEN_STAND` short of the pin, so from where he putts the pin always
+  looks the same distance away: the change shows on the approach. `pins`.
+- Other greens are kept `GREEN_GAP` (16) along the hole from this one and
+  from the next ring's; `course` fails on two within 15 and 14 across.
+
+### An ace from the tee (user asked)
+
+- `aceHold(D)`: once the hole is an ace, or while the yardage left at the
+  current pace would finish inside an ace's time, he stays where he is
+  (no walk, no crossing, no putt, signature holes too); the last ball goes
+  into the cup (`launch`, `drawBalls`), or drops in there and then when a
+  burn or a skill finished it. `holeWait` holds `ACE_HOLD` (1s) after the
+  drop; every other hole `CUP_HOLD` (0.6s, long enough to read the score;
+  it was 0.3). The banner is cleared in `newHole`. `aceBurst`: rays and
+  sparks round ACE for 0.45s. The readout says "In the Cup".
+- `green` plays aces on a strong bag (held on the tee a second, no walk,
+  no putt) and fails if any hole starts with the last score up.
+
+### The course round the hole (user asked, over four messages)
+
+- "Like an actual golf course ... other holes next to it, cart paths";
+  "the cart path ending abruptly is odd"; "fill the empty space ... there
+  always needs to be holes around the hole being played"; "I just don't
+  want to see any bare areas ... make the view from the greens forests,
+  lakes with trees around it, etc., instead of holes. Signature holes seem
+  to be barren."
+- Each side: the next hole (a first ring following the fairway and bowing
+  out round the green, a second ring beyond, then a wood), or a wood, or
+  a lake in a wood (the clubhouse's side a wood). A hole comes toward us
+  (tees just beside this green) or goes away (from behind); where it is
+  not, past its green or short of its tees, its strip is wood (`ring`).
+  Greens clear of hazards; none past this green. A cart path down one
+  side, round ponds and bunkers, across a river or canyon as the hole is,
+  off into the forest (to the clubhouse on the last hole). Ponds beyond
+  the path, in clearings. Trees between the rings and along every wood's
+  edge (`layWoodTrees`). Behind the green, `back`: a forest right across,
+  its edge winding, coming round nearer at the sides so the green sits in
+  a bowl of trees; now and then a lake before it with trees round it.
+  The island green and the sea stack: a wood each side, clear of the
+  water, and the forest past it.
+- Painted in the ground's own march (`courseSlice`), so a rise hides it;
+  treetops as rows of crowns where near enough. `course` checks it all
+  (bare rough, nothing past the green, clearances, the path's end never in
+  view, flags seen); `scenery` holds the shrubs and rocks (those taken out
+  of woods are laid again); negative tested.
+
+### Everyone bulkier (user asked, three times over; since replaced)
+
+- Replaced by the section above: the plate described here is gone. Kept
+  for the history of what the user asked.
+
+- First the three top skins "like the void skin", then the other eleven
+  effect skins, then the plain outfits, the Majors' jackets and the
+  start, then every caddie. `bulkPlate` draws his silhouette (`silhouette`)
+  offset behind him: the chest and shoulders two pixels broader each side
+  (`edge` outside, `dark` inside), the legs one (`legs`, or `dark`); a
+  caddie (`g.minor`) a pixel or two about the chest. The Void's own `bulk`
+  calls it.
+- The three: plate in `BULK_PLATE` (Ascended indigo edged magenta, a shade
+  off his skin or `flight` reads it as his arms; Divine gold; Demonic
+  charred), drawn **first** in `back` so wings and the Ascended's cape lie
+  over it (over them it hid a caddie's wings and the cape's root). The
+  eleven: their own clothes (`shirt3`, `shirt2`, `pant2`; the Ghost at its
+  alpha; the Stormcaller in his storm's blues). `plainBulk` for every look
+  without an effect. Clothes (`soft`) are not built out from behind:
+  there the shoulders came out as blocks, then as lines off his arms.
+- Arms: a pixel thicker for every look above 30px tall (`th`).
+- Caddies with an effect float two pixels further off (`fairyBox`): the
+  Divine caddie's plate touched his club on its soar. `bulk` checks 26
+  looks and 27 caddies; `fairy`, `caddie`, `legends`, `flight` hold the
+  rest.
+
+### Skin grounds, blessings and cup moments made prominent (user asked)
+
+- "The effect under the golfer's feet is very faint ... like a void is
+  open below him": `voidGalaxy` is now a pit (near black, darker the
+  deeper, a torn edge that shifts, stars sinking in, a violet lip lit
+  pink, a swirl round it), bigger (`sigilSize` 1.15 by 0.15). The
+  Ascended's sigil filled and doubled; the Divine's sun fuller with
+  two-pixel rays and a solid ring; the Demonic's runes a solid double
+  ring and its ground smouldering at rest (cracks close to the pit; the
+  strike still runs them out past 1.5 widths). The lesser skins' glows
+  solid and bigger. Kept inside `legends`' footprints.
+- The blessing (`drawBless`) was a scatter of dots: a beam now, solid
+  edges, a core, two ribbons winding down (the look's `ring`, or the
+  perk's own colour on a plain caddie, which `bless` needs), runes
+  sliding down, sparks; landing ring, spikes, a wave. The Mythic Favour
+  three strands and a burst of stars. It covers him more as it comes
+  down (half a second): ask how it sits.
+- The Void's cup moment was not its own: the cup opens into a void, light
+  is pulled in, it shuts on a star with a ring of gold. The Ascended's
+  opens its sigil (from a flag of 8px). Each set's wake plays its set's.
+  In the Twilight Putt too (`drawCupFx(true)` in the wager frame).
+- At night all of it was checked and needed nothing; `nightPool` was
+  widened (it lay under the bigger grounds).
+
+### Sets, and one order (user sent screenshots)
+
+- The racks sorted by rarity only, then by their own list's order, so the
+  Ascended was first on one and second on the next: `setRank` breaks the
+  tie by `SET_ORDER`. The Sets rack: each set with him in it and its four
+  other pieces; one tap buys the missing pieces (their sum) and wears it
+  (wake or ball: his own if it is the set's, else the wake). `fullset`.
+- The Divine and the Demonic count as Full Sets; a full set edges the
+  score box in its colour (a glint on him was tried and lost among the
+  skins' own sparkles).
+
+### The putt skipped again (user sent a screenshot)
+
+- An ace is by time, not strokes: on a strong bag a hole won by a second
+  shot from the fairway was an ace, and its ball was sent into the cup
+  from there; he walked up to a holed ball. (Since superseded: on any
+  ace he stays where he stood and the ball goes in; see "An ace from the
+  tee".)
+- And no shot short of the green carries past the putting spot (the least
+  carry, 0.6, left a ball nearer the cup than he putts from). `finish`.
+
+### Smaller things this session
+
+- The icons in a row had the list rows' border and padding (`row` class):
+  now `inrow`; `layout` fails on a line or pad there.
+- Ambience by the river, the moor, the dunes and the island lake (§1).
+- The Tour Card page: the events row only where it is the one place it
+  shows (below the highest card), "Locked" gone, Climb on Form one line.
+
+
+### The Void (the user's picture of a dark cosmic sorcerer; then "bulkier"; redrawn since after two more)
+
+- In place of the Spirit Blossom (found "just a shirt basically"). All of
+  him changes: a hood with a tall peak over his cap (`voidHood`, in the
+  `body` layer after him and before his arms), a gold mask for a face
+  (the outfit's skin) with one violet eye that flares like a star, a
+  black-hole orb on his chest in a heavy bronze ring with a violet point
+  under it, a gold crescent off his shoulder with an orb glowing in its
+  curve and a bronze plate over the shoulder (one each side walking
+  away), a pointed plate at his hip with a small orb, gold-banded greaves
+  (`pantPattern`), a cloak of stars to his heels, two ghostly cyan hands
+  behind him (either side walking away), rocks and two orbs circling him
+  on a tilted ring, a galaxy turning under his feet.
+- Bulkier (the user asked): `bulk` builds his outline out behind him in
+  dark plate from his own silhouette (two pixels at the chest and
+  shoulders, one at the legs), and his arms are a pixel thicker in dark
+  plate (`bulk`, `arm`, `arm2`) with gold claws.
+- On an albatross or an ace: stars, rocks and streaks from his outline for
+  half a second, silent. The caddie matches (plated, a crescent behind its
+  hood, an orb on its chest and one circling it; three orbs on it merged
+  into one pink blob); its trick `collapse`. The Eclipse Driver (a pure
+  strike opens a tiny black hole at the ball), the Event Horizon and the
+  Singularity (it draws light into the cup).
+- `void` holds it all (and the caddie, and a save that had the Blossom);
+  `legends` holds its moment and its driver with the other three.
+
+### The putt skipped (user saw the hole finish without it)
+
+- The hole's end waits in `step()` while `holeWait()` says the course is
+  being watched. That asked whether a frame had been drawn in the last
+  quarter second, and `step()` runs before the draw in each frame, so a
+  single slow frame (a new course built, a busy moment on the phone) read
+  as nobody watching and the hole ended there: with a 0.33s hitch held
+  after each win, 30 holes of 30 skipped the putt. Now it counts steps:
+  the course drawn within the last three steps. A menu over the field or
+  the saver still steps undrawn and lets the hole go. `watched` plays real
+  frames with a hitch in each hole; `green` still sees no wait unwatched.
+- While at it: the Vault carried him up the floor mid-swing when he fell
+  more than 12 behind (a slow phone); now he never moves mid-swing there
+  (he swings again only when he is up with his ball). `wagerplay` has a
+  slow-phone case.
+
+### The winning shot on the green (user saw it land short)
+
+- The swing that won the hole came while the last ball was still in the
+  air, so it was queued, and then thrown away once the hole was over: he
+  walked to the short ball, stopped, and walked on to the green. Now a
+  ball in the air when the hole is won carries on from where it is to a
+  putt short of the cup (into it on an ace), its height kept (`lift0`);
+  one lying short is walked to and played on up to the green. `finish`.
+
+### The caddie's blessing in the caddie's look (user asked; since only the four great caddies have their own)
+
+- `BLESS_FX` by the caddie's `fx`: the column's colours and what falls or
+  rises in it, and what it leaves at his feet (curls of jade and gold and a gold ring for the Divine, embers
+  and flames, a bolt and shards, stars and a black hole, coins, snow and
+  ice spikes, the Disco's colours, the Glitch slipping, wisps, bananas, a
+  camera's flash, confetti). All solid pixels now (the column was a wash
+  that went grey on the grass). Plain caddies keep the perk's colour.
+  `blessings` (the older `bless` holds when it comes and its levels).
+
+### The railway rebuilt (user sent a screenshot: rails missing)
+
+- The rails were lines stepped out from off the edge and ran out of steps
+  (rule 39). Now: a raised bed of ballast with stones laid in the world,
+  sleepers with a top and a front face (cut at their near end), boards in
+  planks at the crossing, and two rails in rows across the stage (a
+  bright top with a glint, a steel side, a shadow, a chair at each
+  sleeper); far off a single line (rule 41). `rail`.
+
+### Full Set, ambience, umbrellas (user asked, from the menu)
+
+- A Mythic set (then only the Ascended and The Void; The Dread and
+  Psychedelic since) worn whole
+  (look, caddie, driver, its wake or its ball): its pieces rimmed in gold
+  in the Style shop and badged Full Set, said once, counted in the Record
+  (Full Sets, of four: the Divine and the Demonic count now). Looks only.
+  `fullset`.
+- Ambience: wind in the pines (Highlands, Snowline, National, Fjordheim),
+  the sea (Coastal Classic, Seaside, Harbour Lights, Old Links, and round
+  the sea stack), a stream by the stepping stones (not frozen); every few
+  seconds, quieter than the autumn gust; none in a wager. `ambience`.
+- Umbrellas: most of the gallery and the grandstand's front two rows, in
+  the rain; darker at night. `umbrellas`.
+
+### Smaller fixes of the last batch
+
+- The course banner goes under the readout (it wraps to more lines at
+  320 and hid the name), and its name takes the biggest size that fits
+  along its row clear of the icons and the map, moved into the widest
+  gap if the middle is taken (on its side it ran under them). Worked out
+  once per banner in `drawAnnounce` (`A.y0`, `A.big`, `A.cx`); `banner`
+  holds it at seven sizes.
+- The gallery's jump stops on a new hole (`newHole` clears `galleryUp`).
+- A Twilight putt that counts as made ends in the cup: `puttBall` runs to
+  the pin (plus the miss) rather than the course's own line.
+- Trails a pixel thinner (`trailRibbon` takes one off any width of 3+).
+- Fast Walker's words: "The least time a hole takes, 4% shorter".
+- The Island Green wager's lake is wider and brighter, the bank softer;
+  its calls ("On the green", "In the water") are the `#callout` box in the
+  interface's type, not pixel letters on the field.
+
+### Wagers as played (user sent screenshots)
+
+- Each wager starts at its own place (`wagerSpot`): the Twilight Putt on
+  the green, putting (`wagerPutt`); the Vault walked, the camera moving
+  only between swings; no ball from the course in the Scramble.
+- A Leave button at the top right of the field asks "Sure?" once, then
+  ends the wager with what it won. "Helped by ..." stands over the shot
+  buttons. Each wager on the tab has a Guide (what it is, what helps,
+  words like "plugged lie" explained). `wagerplay` holds all of it.
+
+### The course's life (user asked, from the menu)
+
+- Birds: a flock over the hills now and then (below the readout), birds
+  on the fairway that fly off when a ball lands near. None at night or in
+  rain. A grandstand behind the round's last green, filling through the
+  week, a soft cheer on an event's last putt, lamps at night; a clubhouse
+  with a terrace beside it, lit at dusk. Frost on both roofs on a frosty
+  morning. The gallery jumps and waves on an eagle or better. Crickets on
+  a dry night. Held by `birds`, `stand`, `clubhouse`, `extras`, `pierlife`.
+
+
+
+### The Bag tab (user asked, with a picture of the look)
+
+- Opens on **Gear**: the slot bar (Driver, Irons, Wedge, Putter, Ball,
+  Glove, each with its spare count and a green count when one is better),
+  one header line (the slot, the locker against its cap, Auto-equip,
+  Scrap), then the clubs as tiles two to a row: framed in the rarity's
+  colour, name in that colour (two lines at most), "iLv 40 · Epic", the
+  swing or affinity figure and one affix, a green ▲ on the picture when it
+  beats the one carried, a +n badge when upgraded; the carried one first,
+  marked Equipped. The whole tile is the button.
+- The sub tabs and the slot bar are `position: sticky` in the panel, so
+  they stay at the top however far the clubs are scrolled.
+- **Sets & Affinities**: the purse (grit, shards, scrolls, gear luck),
+  the set bonuses and today's course affinity, as they were over the clubs.
+- The club's sheet: its stats and what carrying it would do, then
+  **Equip / Upgrade / Scrap** side by side (Upgrade is the reforge, a level
+  at a time for grit, with its chance; the carried one shows Equipped and
+  cannot be scrapped), what you hold to spend, then Re-attune and Ascend.
+  "Reforge failed" now reads "Upgrade failed".
+- Gone to make room: the "Scrap the spare" row under the list (the Scrap
+  sheet has it, as Spares) and the Locker band.
+
+### The gallery and the scenery (user sent a screenshot)
+
+- The only gallery near the green was a bank 8.5 to 17.5 beyond the pin,
+  which from the fairway reads as far off. Now up to fourteen more stand
+  beside the green just off its apron and in a row close behind it. The
+  old bank and the side gallery are unchanged: everything new comes from
+  a hash in `layNight`, never the hole's `rnd`, so the hills and all the
+  hole lays stay as they were.
+- Up to nine trees behind every green (the course's own kind), and 150
+  tries at scenery: shrubs in the trees' colours, tufts of the rough's
+  grass and rocks of the course's stone, down both sides of the rough and
+  behind the green, clear of hazards and the play. Castle Dunes and the
+  other bare courses (trees 0.15 to 0.3) were the ones that looked empty.
+- Cost: they pushed a frame from 520 to 960 canvas calls (the limit is
+  1000): no shadows on tufts and rocks, no mirroring, and scenery wholly
+  behind a crest or off the view skipped before its clip; now about 624.
+- Found on the way: on a railway hole the pin, beyond the line, was drawn
+  after it, and its top stood over a crossing post; short of the line it
+  now goes down before the railway.
+
+### Rain on the grass, and the stray ring (user sent screenshots)
+
+- The rain rings were placed on the rows the ground painter notes for a
+  hazard's water, but a row runs the hazard's whole width, banks and all,
+  and nearer slices paint their banks and the grass over its ends; so
+  drops landed on the bank and the grass. Now a ring pixel is also kept
+  only where the painted ground itself is water. A drop's first dot also
+  tested one row and painted the row above. The pond's ripple lines had
+  the same fault and now keep to the water too. Both ask `waterAt`, which
+  reads the pixel buffer, or the canvas before anything is drawn over the
+  ground when it is painted rect by rect (`battery` holds the two the same;
+  it caught the canvas read after the ripples, which read a ripple on a
+  bank as water). `sigweather` now plays a pond
+  too and counts the rings' pale pixels against the painted ground.
+- The "yellow rings": a ring swelled out from a spot off his hip on every
+  pure strike (brass), affinity and skill (green). Gone: `Scene.spark` and
+  `Scene.burst` do nothing now. Check `rings`.
+
+### The dearest skins light the grass at night (user asked, from the menu)
+
+- `nightPool`: on a night round, an ellipse three of his widths across at
+  his feet, dithered solid pixels in the skin's three colours (gold, ember,
+  magenta), breathing (the Demonic's flickers), a little bigger through
+  the swing; drawn in `golferGround` before the skin's own sun, pit or
+  sigil. Not in flight, in a wager or by day.
+
+### The Mythic caddies' tricks (user asked, from the menu)
+
+- One turn each, only for that caddie, among his others: **soar** (the
+  Divine, 1.6s: up and away on quick wingbeats, `beat` 4 eased in from his
+  own clock, feathers drifting off his far side), **blaze** (the Demonic,
+  1.3s: two stamps and a ring of fire round his feet, reaching out on his
+  far side and only to his edge on the golfer's), **blink** (the Ascended,
+  1.4s: a swirl where he stands, out 1.5 of his width, and back).
+- Found on the way: the Divine caddie's wisps, rays and rising motes
+  reached the golfer's club at the top of the backswing even standing
+  still. On the caddie they now keep to his far side and closer in, and
+  every effect caddie stands a little further off (`fairyBox`).
+
+### Weather on the ordinary holes (user asked, from the menu)
+
+- **Frost** (`frostFor`): the Snowline, or an autumn or winter course
+  (`courseSeason` 1 or 2), from 5 to 11 by the player's own clock
+  (`hourNow`), dry and not at night. The palettes are built in mode
+  `'frost'`: everything a touch paler and the grass (`tg`) paler again;
+  180 frost specks laid over the fairway and rough, one in four glinting.
+  **The checks depend on the hour now**: after touching it, run the suite
+  with `HOUR_FORCE` pinned to 8 and to 15 in a copy (as rule 20).
+- **Puddles** (props kind 7, in the rain, not on a frozen course): up to
+  a few a hole on the fairway, clear of hazards and the green; each row's
+  distance is walked out from the screen by bisection (a straight share
+  fell behind the ground's line and left rows out: rule 32 again), a dark
+  rim, a streak of sky and two rain rings spreading in it.
+- Check `weather`.
+
+### A skin flies with him (user sent a screenshot)
+
+- Over the island's lake (and the canyon, where he flies too) he was drawn
+  by `paintHeli` alone, which never asked the skin for anything: the
+  Ascended was an indigo figure with no cape, horns or aura. It now builds
+  a `golferG` seen from behind (`back: true`, as walking away, so wings
+  spread, the cape hangs down his back) with `bot` at his own boots and
+  `g.fly` set, and runs the skin's `back`, `outline`, him, `front` and any
+  flourish. The skin's `ground` (sigil, pit, sun) is not drawn in the air.
+- First tries: `bot` left at the water put every foot-glow and the
+  Inferno's flames in a column down to the water; `bot` at his boots left
+  those glows hanging under him. So each thing that lies on the ground
+  checks `g.fly` (list in the map row).
+- His arms: the walking-away picture (`gBack`) has both arms painted
+  hanging at his sides, so the raised pair drawn over it gave him four (the
+  user saw them). He flies as `SPRITE.gFly`, the same picture with the
+  hanging arms taken out below the sleeves; the raised arms are as thick
+  as those were, with his hands on the grip, and drawn after the skin's
+  front half (the Ascended's cape covered them).
+- Check `flight`.
+
+### Night on the ordinary holes (user asked, from the menu)
+
+- On a night round (`Scene.night`, not in a wager): a lamp either side of
+  the tee (post, lantern, `nightLamp` glow), eighteen spots of three
+  fireflies in the rough down both sides, a clubhouse far off with its
+  windows lit (baked in the ridge on the foothills, the side away from the
+  landmark, lifted so the treeline does not hide its lower windows), and
+  the flag with a dithered red halo behind the pin and a warm light on top.
+- Lamps and fireflies are props (kinds 4 and 5), so trees and the gallery
+  in front hide them and the hill clip applies; each firefly is also cut
+  at its own drifting distance. They come from a hash, never the hole's
+  `rnd`, so every tree and spectator stays where it was (the `nightholes`
+  check holds that). The right lamp is usually behind the hole map at
+  phone widths; that is fine.
+
+### The Mythic Favour (user asked, from the menu)
+
+- A tenth caddie perk, 600 sovereigns, only for the Divine, Demonic and
+  Ascended caddies (`MYTH_CADDIES`, by `S.caddie`): every 30s +20% power,
+  tempo and prize money for 8s (`k: 'cPow'`, `also: ['cSpd', 'cGold']`;
+  levels as the others). With a plain caddie it cannot be bought or worn;
+  worn then the caddie changed, its clock stands still and its row says
+  "Worn · waits for a Mythic caddie".
+- Its light comes down in the caddie's colour, and the caddie casts it:
+  eighteen pixels in his three colours arcing from his hands to the
+  golfer's chest over 0.42s, then a small burst there, gone by 0.8s
+  (`drawFavour`). Its word is FAVOUR.
+- Full Staff still means the nine ordinary perks.
+
+### The Hole of the Week run (user asked, from the menu)
+
+- `sigScore`: the signature hole of the week (`isSigWeek`) played in a
+  real week sets `S.hotw = { wk, n }`, once a week; the week after last
+  adds one, a gap starts at 1. From the third week running each week pays
+  `B.HOTW_SOV` (15) sovereigns with a toast. The Tour tab's Signature Week
+  band has a last row, "Hole of the Week Run": "n of 3", or "n weeks ·
+  +15" once it pays, a tick when this week's is done; its `?` says how.
+  Only played holes count (not the away catch-up), like the Signature Week.
+
+### The Signature Week on the Tour tab (user asked, from the menu)
+
+- A band "Signature Week" after the Major of the Week (`#sigNote`,
+  `#sigBox`, `renderSigWeek`, from `renderTour`): "n of 5 this week", a
+  line saying all five or not and how many weeks won, a `?` fold (Monday
+  to Sunday; the courses with a sea stack, worked out from `HOME_PIER` and
+  `B.SIG_HOLE`), and a row per kind, "\u2713 played" in green or a dash, the
+  hole of the week's row marked "pays 2\u00d7". The prize (`B.SIG_WEEK_SOV`,
+  25 sovereigns, between a major played and a major won) is paid with the
+  fifth kind (`grantSov` in `sigScore`), on top of the honour, and the
+  line says "+25" until the week is done.
+
+### A pure strike with the dearest drivers (user asked, from the menu)
+
+- `CLUBFX.divine/demonic/ascended.pure(c, x, y, h, f)`, at the ball for
+  `PURE_DUR` (0.35s; pure strikes come every second or two on a fast bag):
+  a starburst of gold light with a ring; a fireball swelling and going
+  dark with embers thrown forward; a crescent of magenta light slashed
+  through the ball with shards off it. Set in `Scene.launch` on a pure
+  strike (`Scene.pure`, `pureNow(t)`, only while that club is held), drawn
+  at the end of `paintGolfer`. `Sfx.pureSnd`: a bell, a whoomp, a slice,
+  under the strike's crack (0.004 to 0.007 at their loudest).
+
+### The moments, cut back (user asked; read with the two after)
+
+- The moment of the three top skins and the flourish of the other eleven
+  come only on an albatross or an ace (`legendGo`: `d <= -3`; `big` is an
+  ace), last half a second (`LEGEND_DUR`, `FLOURISH_DUR`), and are a burst
+  out of him from his outline (`outlineBurst(c, g, F, n, reach, piece)`:
+  points round the edge of him from `outlineOf`, thrown away from his
+  middle, fast then slowing, `reach` of his widths at most; `burstStreak`
+  a head and a tail). The user: "make it so they just quickly surround the
+  golfer for half a second... come outwards from the outline of the
+  golfer kind of like an explosion." The column of hellfire, the pillar
+  of light and the heavens opening (2.8s, from an eagle, up the sky) are
+  gone: on a fast bag acing every hole they never went away.
+- `legends` holds it: nothing on an eagle; the burst itself taken away
+  from the same frame and most of it clear of his box; all of it within
+  1.9 of his width and 0.6 of his height over him; bigger on an ace.
+
+### Night on the signature holes (user asked, from the menu)
+
+- `Scene.nightLamp(c, x, y, k, r, clip, seed)`: a flame and a dithered
+  warm glow, flickering, all solid pixels. The pier: a lantern on every
+  other post, its light rippling on the water below (cut nearer than the
+  post: it lies this side of it). The bridge: bulbs strung along both
+  ropes in four colours, twinkling in turn (cut with `clipB`). The island:
+  ten lamps on posts round the green (`drawIsleLights`, from `drawDucks`).
+  The stones: fireflies over the river and the far bank (`drawFireflies`,
+  from `drawStones`; over the near bank they fell in front of the line
+  `sigview` holds them to). All only while `Scene.night`.
+
+### The caddies' wings (user asked, from the menu; both since reworked away)
+
+- The caddie is always drawn side on (one sprite, facing right, his bag on
+  his back), so the Demonic caddie's bat wings and the Divine caddie's new
+  small feathered ones (0.8 of his height) are always side on, on his back.
+  (Walking away the golfer turns but the caddie does not.) The standing
+  rule "the caddie has no wings" is the default fairy's; the dear caddies
+  have always had their own.
+
+### The Divine, made the ultimate skin; wings as he is seen (user asked; the Divine since reworked, see above)
+
+- **Wings as he is seen** (`wingPair(key, paint, pal, S, view, ph, up,
+  shade)`, baked): view `side` at address and through the swing (his back
+  to the left): the near wing foreshortened (x 0.74) reaching back and up
+  off his back, the far one beyond it (x 0.5) darkened by `shade`, both
+  swept back 0.22; view `back` walking away and on a caddie: both spread.
+  The Demonic's bat wings (`batWing`) and the Divine's (`featherWing`) both
+  go through it; nothing else has wings. The first Divine wings, many small
+  feathers each edged in gold, read as a spiky gold fuzz: five long flight
+  feathers with sky between their tips, four shorter ones, and a solid
+  white upper wing with a gold leading edge read as wings. Its far wing is
+  shaded warm gold (a dark shade read as a brown spike).
+- **The Divine** (`STYLEFX.divine`): wings 0.62 of his height, beating;
+  lifted off his back and raised through the backswing, driven down at
+  the strike (`lift`); a sun turning under him (`sunSigil`, lit as he
+  winds up); a second halo turning the other way with six stars
+  (`halo2`); a feather coming away and drifting down now and then
+  (`feathers`, many on a great hole); the beam and rays brighter as he
+  winds up; a ring of light out over the ground and light off the ball as
+  he strikes (`wave`, `sparks`). Its moment (on an albatross or an ace):
+  light and feathers bursting out of him, a ring on the ground, the wings
+  raised, the halo flaring, and `Sfx.choir` (a short chord of paired
+  voices a shade apart and a bell; a second chord on an ace). The Divine
+  caddie has small feathered wings of his own, side on.
+
+### A flourish for the other effect skins (user asked, from the menu)
+
+- `FLOURISH_PIECE[k]` is what each of the eleven other effect skins throws
+  out of him (see the moments above): the Inferno flames, the Frostborn
+  ice and snow, the Stormcaller sparks, the Void Walker fragments of the
+  void, the Glitch red and blue pixels, Midas coins, Disco coloured
+  squares, the Ghost little ghosts, the Banana Suit bananas, Dad flashes,
+  the Clown confetti. `FLOURISH[k]` wraps it (drawn over him; the ground
+  and back layers go unused now) and is assigned to `STYLEFX[k].flourish`.
+  `Scene.flourish` / `flourishNow(g)`.
+- `Sfx.flourishSnd(t, fx)`: one small sound each, evened out by measure to
+  about the train's whistle (a loudest 100ms window of 0.005 to 0.009).
+
+### Cut away where nothing hides it (user saw the bridge)
+
+- Rule 19 keeps what is drawn over the field from showing through a hill
+  in front; the opposite went wrong. Out on the bridge each plank was cut
+  at `clipAt` of its own distance, and over the canyon that line is the
+  canyon's rim (the ground's surface, not its sunk floor), so the sagging
+  deck lost all but a slat of each plank. `drawBridge` now cuts at the
+  ground in front up to the bank (`clipB`): the canyon itself hides
+  nothing.
+- The crossing: its boards were laid by screen row with the distance
+  worked out as a straight share (too far near him, so rows were cut and
+  the boards had a gap as he stood on them); now walked out by distance.
+  Its sleepers lie flat, so they are cut at their near end, not their far
+  one (they were dashes). A rail's dark side is cut a little nearer than
+  the rail (it lost its lowest row close up).
+- `sigview` now also draws each structure with its cut and without from
+  at or on it, and allows none of it lost (470 views). A scan over five
+  courses found nothing else: the ducks lose a pixel or two under a lake's
+  rim, and from six short of the line a rise in the fairway hides the
+  train's wheels, both as they should.
+
+### The Signature Week (user asked, from the menu)
+
+- Honour **Signature Week** (`sigWk`, tally `sigWeek`): all five kinds of
+  signature hole played in one real week, Monday to Sunday (`weekNow`),
+  once a week. A home round has four (no sea stack but at Harbour Lights,
+  and some away courses), so the fifth has to be found. Counted in
+  `sigScore` into `S.sigWk = { wk, k: [kinds] }`, repaired on load;
+  `sigWeekKinds()` is this week's. The Record has a row, "3 of 5 this
+  week". Dev menu: honours row, "a signature week".
+
+### Life on the railway (user asked, from the menu)
+
+- **Four trains** (`TRAINS`: speed and length; a train with no `kind` is
+  the steam train, which is what the older checks make): the steam train
+  (11, 7.4 long), a goods (9, 12.1: a brake van, coal, logs, a tanker, a
+  tender and a black engine, grey smoke), an express (19, 11: three silver
+  coaches and a power car with a sloping nose, no smoke) and at night the
+  sleeper (the steam train in dark blue and green, windows glowing, a lamp
+  throwing light down the line ahead). By day 45% steam, 30% goods, 25%
+  express; at night 70% sleeper, 30% goods; off the rail's own seeded
+  stream. The goods is the longest wait (9.65s in `rail` against the
+  hole's 20s stop; `rail`'s worst case now forces it).
+- **Waving** (`railWave`, only while he stands at the line, `atLine`, and
+  eased in as the train reaches the fairway): his far arm leaves the club
+  and waves over his head; his caddie takes his `wave` turn once per
+  train; the driver's hand is up out of the cab within 9 of the crossing
+  (`driverWave`). A toot (`whistle(t, low, 1)` or `horn(t, 1)`) as the
+  engine passes him at the line; the express sets off with its horn, the
+  goods with a whistle a quarter lower; no chuff from the express.
+- Snow: a cap on every roof (`cap` in `drawTrain`).
+
+### Weather on the signature holes (user asked, with the railway)
+
+- **Rain rings** (`rainRings`, called from `ripples` while `rain` and not
+  `ice`): up to 70 rings spreading where drops land, sized by how far down
+  the screen their row is, on any water (the island's lake, the stones'
+  river, the sea, ordinary ponds). A ring's pixel is kept only where a
+  water row noted by the painter (`_rips`, one to a slice) lies within a
+  pixel or two and spans it. Those rows run far off the screen either
+  side, so a ring's place is taken along the part in view (the first try
+  put most out of sight, and the river had none).
+- **Snow** (`Scene.snow`, a home course's winter): the bridge's planks
+  white with a white line along each rope and a cap on each post; the
+  stepping stones' tops; the pier's planks (a greyer white, so the seams
+  still show), its rail and the stack's rocks; the crossing's boards; the
+  train's roofs.
+- **A storm** (rain, which comes with the Crosswind): the pier's spray
+  starts at 3 mph instead of 6, 1.8 times as much of it flying half as
+  high again; waves break over the stack's rocks now and then. The bridge
+  sways more and quicker from 8 mph up to 20 (`gust`), in any weather.
+- `sigview` plays every train kind and the snow and storm in turn.
+
+### A moment for the legends (user asked, from the menu; now cut back)
+
+As the ball drops (`happyDance` calls `Scene.legendGo`, so it has the
+dance's guards: none while `QUIET`, in a catch-up or a wager).
+`Scene.legend` holds when it began; every effect asks `legendNow(g)` how
+far through it is (null for the caddie). `saverOn` clears it (the saver
+has its own clock). Now only on an albatross or an ace, half a second (see
+"The moments, cut back").
+- **The Demonic**: hellfire streaks bursting out of him, the pit's
+  eruption, the ground cracked open a little past the pit, his wings
+  raised high (a baked step of their own, `ph` 12), his skulls flung out a
+  little and home again (six on an ace), the flames on his horns taller.
+- **The Ascended**: shards and magenta streaks bursting out of him, a wave
+  out from the sigil, his ring of shards bursting a little wider (six on
+  an ace), his aura at full.
+- **Sounds** (`Sfx.hellfire`, `Sfx.ascend`, and the Divine's `choir`):
+  under a second each, set by measure (a loudest 100ms window) no louder
+  than the cup: about 0.016 to 0.019 against its 0.019, `LEGEND_VOL` 0.03.
+- Dev menu: Legends, eagle / ace (wear the skin first; an eagle now does
+  nothing, which is right).
+
+### The Demonic, made the ultimate skin too (user asked, with the moment)
+
+All in `STYLEFX.demonic`, round what it had (wings, pit, runes, tail, eyes,
+veins, skulls, the eruption every 6.5s).
+- **An aura of hellfire** (`aura`, the shared `flameAura`): as the
+  Ascended's, in yellow, orange, red and a dark tip, a ninth of his height
+  (an eighteenth on the saver), low over his cap (`calm`) or it hid the
+  horns. It swells 120% at the top of the backswing.
+- **Horns** (`sleekHorns(s, view, true)`): obsidian, ribbed, lava along the
+  inside of the curve to a white-hot point; they rise and hook forward
+  (from behind, out and curling back in), 1.25 of his cap long; a flame on
+  each point and a pulse of heat running up the near one. `hornPair` is
+  gone. The first try, nearly upright, read as two posts.
+- **Two chains of fire** (`chains`): tilted rings round his hips crossing
+  each other, turning opposite ways, faster through a swing; links face on
+  (two pixels) and edge on (one) in turn, a heat running along them,
+  flames licking off the near links. Not on the saver, where they muddled
+  him.
+- **Through a swing** (`charge`, `strike`, the Ascended's): the pit glows
+  white and its runes race, his hands catch fire (`fists`), and at the
+  strike the ground cracks open out to 1.7 of the pit (`cracks`, in
+  `ground`) and fire flies off the ball (`blast`).
+- `legends` holds all of it (§ the check's header); he stays within 1.31
+  of his width either side and 0.29 of his height over him, away from the
+  pit's eruption (whose ring was always wider).
+
+### The Ascended, made the ultimate skin (user asked: "really go nuts")
+
+All in `STYLEFX.ascended`, round what the restyle gave him (cape, hair,
+eyes, core, hands, chain, bolts, embers, the imp). Everything scales with
+him (about 49px tall on a 320 phone, 71px on its side).
+- **The sigil** (`ground`, `voidSigil`, baked per size and 48 steps): a
+  pool of the void in a double ring, a six-pointed star turning one way and
+  twelve marks the other, lit points. Live over it: two lights racing round
+  the rim, the star's points twinkling, and every 4.2s a shockwave running
+  out to 1.3 of the sigil. `sigilSize`: 0.95 of his width across, 0.12 of
+  his height deep (two rows on the saver, where there are two under him).
+- **The aura** (`aura`, `outlineOf`): tongues of flame three pixels wide
+  rising off the top of his outline (helm, shoulders, back), bright at the
+  root and dark at the tip, licks breaking away, a flicker down his sides.
+  The outline is worked out each frame from the sprite's own pixels
+  (`occOf`, once per sprite) and the lean of the swing, so it follows him.
+  Drawn last in `back`, after his dark edge (before it, the edge dimmed
+  the roots). The imp has a little. The first try, his outline grown out
+  and cut by a scrolling flame texture, read as static and hid the horns.
+- **The ring of shards** (`orbit`, `drawShard`): three crystal diamonds on
+  a tilted ring round his middle (0.8 of his width), turning as they go,
+  trails behind; the far half before him (dimmer), the near half after, so
+  they pass behind and in front. Every 2.3s one may throw a bolt into his
+  chest.
+- **The horns** (`sleekHorns`, baked per size): long and swept back off the
+  helm, a solid dark body tapering to a point, a light ridge along the
+  outside of the curve, magenta along the inside to a white-hot tip; the
+  far one just behind; from behind a pair sweeping out and up. Tips twinkle
+  (solid pixels: rule 30), a glint runs up the near one, and from behind a
+  spark leaps between the tips. The first, thin ones read as antennae.
+- **Powering up** (`charge`, `strike`): on the backswing the aura grows
+  (0.8 taller), the sigil's rim lights, its lights and the ring spin a lap
+  faster, motes of light are drawn in to his chest (`motes`); at the strike
+  a bigger shockwave (1.55) runs out and sparks fly up off the ball
+  (`sparks`). Also `glyphs` rising off the sigil and a `surge` of light up
+  his armour every 5.3s. The old `flames` and his mist are gone.
+- Cost against the plain golfer: 2.4 standing, 4.2 through a swing, 5.0
+  walking (the Divine 3.0 / 4.2 / 5.2). The silhouette under the outlines
+  is now cut once while he stands at address too, which made every
+  outlined skin cheaper there.
+- `legends` holds it: the sigil at his feet and nowhere else; the aura
+  close about him and a fifth bigger at the top of the backswing (summed
+  over six frames); the ring round both sides and in front of his middle
+  over a lap; the horns' top a fifth of his helm behind their roots, and a
+  pair either side from behind; sparks near the ball and a shockwave past
+  the sigil at the strike; the frame's order (his ground, the pin, him) and
+  a putt seen over a ground laid solid for the test; and all of it within
+  1.3 of his width either side and 0.4 of his height above him, the most
+  over six seconds. Negative tested eleven ways.
+
+### The Ascended, restyled (user sent a picture: "more like this"; redrawn since as a hooded star-walker)
+
+- A knight of the void in the picture's own colours: dark indigo plate
+  (`#393976`, `#4A4A8E`), a near black suit, magenta from `#762889` to
+  `#F27CFF`, pink white `#FFE0FF`. Outfit: cap and shirt indigo (the cap a
+  shade apart so the plate pattern stays off it), pattern `voidplate`
+  (each plate's lower edge lit, a magenta stud here and there), mask and
+  arms `skin` `#2D2D5E`, magenta `belt` (eyes, belt, soles), `hair` magenta
+  (from behind), and a new outfit field **`hand`** (`#E86CF2`): the colour
+  of his hands in `paintGolfer` (was always the shirt's).
+- `STYLEFX.ascended`: a cape (`voidCape`, baked per size, pose and 12 steps:
+  behind him streaming back at address and at the finish, torn hem, folds,
+  its streaming edge lit magenta; walking away it hangs down his back, so it
+  is drawn in front of him then); horns (then `helmHorns`, since replaced
+  by `sleekHorns`: see above); hair of fire (seven strands, three pixels
+  thick at the root, streaming back and lifting at the tips; rising like
+  flames from behind); eyes lit white with lightning crackling back out of
+  them every couple of seconds; the light in his chest (`core`, pulsing);
+  spectral hands glowing (`hands`, at `g.hand`, which `paintGolfer` now
+  sets); a broken chain hanging from his wrist (`chain`); magenta lightning
+  crawling over his armour (`bolts`); magenta fire licking up round him
+  and void mist at his feet (both since replaced, by the aura and the
+  sigil); embers; a dark edge and a magenta rim. No longer floats.
+- His caddie is the picture's imp (`g.minor`): horns, a magenta flame
+  standing up between them (drawn after the horns: behind them it vanished
+  at his size), green eyes, a little heart on his chest, a curled tail with
+  a heart on the end (`tail`).
+- Ascended Driver: a reaper's driver, a dark shaft wound with chain and a
+  spark running down it, a scythe's blade curving back off the head with
+  its edge lit magenta, magenta fire off it, and a great magenta sweep for
+  its trail. Ascension Wake: magenta fire over void smoke, flames licking
+  up, lightning jumping off it. Ascended Orb (`drawVoidOrb`): a sphere of
+  the void with a burning crack and magenta fire round it. Tiles and
+  `SKIN_ACCENT` in the same colours.
+- Gone with the old look: `lightWing`, the mandala, `crownOf`, `drawOrb`,
+  `edged`, the `filigree` pattern.
+- Walking away, the sole of his lifted boot flashed the plain tan under
+  the cape. `drawLegsBack` now takes a `sole`: an outfit's own `belt`
+  colour where it has one (Demonic, Ascended, Midas), as its soles are
+  side-on; everyone else keeps the tan.
+- `legends` holds the cape (behind him, and down his back walking away),
+  horns, hair of fire back from his head, the light in his chest, the hands'
+  own magenta, the imp's horns, flame, green eyes and tail, and the soles
+  walking away (a Tour Classic keeps his tan); negative tested nine ways,
+  and three for the soles.
+
+### The Demonic and the Ascended (user asked: "go crazy with it")
+
+- Data: outfits `demonic` (3000, `top: 1`, pattern `hellcrack`, red skin,
+  the belt colour `#FF5A1E` is also his eyes and soles) and `ascended`
+  (3500, `top: 2`; pearl and gold at first, the knight of the void since:
+  see the two sections above); caddies follow from the outfits at a third
+  (1000 and 1165); clubs `demonic` (Demonic Driver, 2000) and `ascended`
+  (Ascended Driver, 2350); trails `hellfire` (Hellfire Wake, 2000) and
+  `ascension` (Ascension Wake, 2350); balls `demoneye` (Demon Eye, 1500)
+  and `ascorb` (Ascended Orb, 1750). The Ascended pieces are the Divine's
+  in proportion. `top: 2` sorts first and shows a
+  **MYTHIC** badge (was LEGENDARY for any `top`).
+- **Demonic** (`STYLEFX.demonic`): bat wings beating (12 baked steps,
+  `batWing`: arm, forearm, four fingers, scalloped skin, glowing veins,
+  claws); a pit of lava at his feet with a ring of eight runes turning
+  (`runeRing`), bubbles, brimstone smoke, embers and shadow tendrils; every
+  6.5s the pit erupts for a second (flames round it, the far half behind
+  him); a tail with a spade (in front of him when he walks away); horns
+  (`hornPair`); eyes like coals that flare; the lava cracks on his shirt
+  pulsing upward (`veinsOf`: the pattern's pixels found in each sprite,
+  poured through with `lighter`); three flaming skulls circling him; a
+  smoky outline and a red rim. His caddie (`g.minor`): wings, horns, tail,
+  eyes, cracks, a few embers.
+- **Ascended**: since restyled and made the ultimate skin: see the two
+  sections above.
+- Costs (skins check, against the plain golfer, budget fifteen): the
+  Demonic about 3.4 standing when it was made; everything outlined is
+  cheaper at address since the ultimate Ascended (the check prints the
+  dearest).
+- His arms now take the outfit's `skin`/`skin2` (`paintGolfer`,
+  `paintHeli`); they were always `PX.skin`.
+- Check `legends` (new): prices and proportions, badges, every piece with
+  an effect; the Demonic's wings either side of him, horns above his cap,
+  eyes at his eye, on him and his caddie, by taking each part away from the
+  same frame; no plain skin tone on the five skins with their own.
+  `skins` also holds the dearest trails' resting balls to their own look.
+
+### The railway among the trees (user saw it)
+
+- The frame drew the railway after every prop, so the line and its train
+  cut across the trees and spectators standing in front of it. Now, on a
+  rail hole, `drawProps(edge, side)` draws the props beyond `isle.bank`,
+  then `drawRail`, then the props this side of it, all before the haze
+  (the railway now lies under the haze like the ground).
+- `rail` compares the frame with and without the railway on all four
+  courses with one, pixel by pixel, from the tee to the line (4,700 pixels
+  of trees and gallery in front, none crossed; 1,800 beyond, all covered).
+  The words, map and rain printed over the picture are left off for it.
+- The hole's stop (`B.ISLE_HOLD`) is 20s: a ball down on the tee, the
+  longest wait for a train (one just setting off as he arrives), the
+  crossing, the walk up and the putt came to 8.05s against a stop of 8s.
+
+### The stack by the cog (user asked, with a screenshot)
+
+- The sponsor perks' icons were drawn on the field at the top left
+  (`drawPerks`, from when the stage buttons were on the right) and sat
+  behind the shop button. `drawPerks` is gone; `#buffTip` by the cog is now
+  a stack of lines (`.bl` spans keyed `c` for the caddie perk, `p:<id>` for
+  a sponsor perk): `buffLines` says what runs, `buffTip` keeps them in
+  `buffOrder` (the order they began: a new one goes under, a gone one lets
+  the rest move up), each fading over its last second. Sponsor lines are
+  brass, from each timed perk's new `s` ("5× purse", "4× power", "2×
+  tempo", "+35pp gear luck", "resonates everywhere") and `buffClock` (m:ss
+  over a minute, else seconds). The first line sits on the cog's row
+  (`top: calc(50% - .625em)`, lines 1.25em).
+- The ticket count that showed beside the icons went with them.
+- Check `bless` (the stack, its order, moving up, fading, nothing on the
+  field); `perkup` reads the caddie line as before.
+
+### He putts out (user asked, from the menu)
+
+- Once the hole's ball is down he walks up to `LEN - B_GREEN_STAND` (2.2
+  short of the cup) and putts: `Scene.putt = { t0, d0 }` starts when he is
+  up (`upT`), not swinging, no ball in the air or lying beyond him.
+  `puttArm(T)` feeds `paintGolfer` a club angle (its new last argument):
+  still 0.15s, back to 0.38s, through to 0.48s (impact `PUTT_HIT` 0.43),
+  held, back to address by 1.15s. `puttBall(T)` rolls the ball for
+  `PUTT_ROLL` (0.6s) from his feet (`teeLat`) up his right side into the
+  cup, drawn before him (it is beyond him). `Sfx.putt` (a tock, -51 dB).
+- **The pin moved right** (`PIN_X` 0.9, `Scene.pinX()`; a wager keeps it at
+  0): on his own line the cup was behind him as he putted, and on a phone
+  turned on its side it is behind his head from any distance (measured,
+  `cupgeo2.js` in the scratchpad). The map's pin mark is left at the
+  middle (under a pixel).
+- `cupT` is when the ball dropped (the putt, or an ace straight in off the
+  tee: the last shot of a hole lands in the cup when its score is an ace,
+  else a putt short: `putSpot`, and no ball ever rests nearer the cup than
+  that). The cup's sound plays at the drop (`cupHeard`); the banner, the
+  caddie's word and the happy dance (`holeSaid`) come at the drop, or for
+  an ace dropping before the hole's walk minimum, when that is up.
+  `holeWait` holds until `cupT` and 0.3s after it (and after `upT`).
+- A swing still waiting (`Scene.queued`) is dropped once the hole's ball is
+  down: it fired on the green as a full swing before the putt.
+- The plain-hole wait is about 2.0s now (was 1.15s); paid for as before.
+- Check `green` (putt, tock, drop timing, the rolling ball seen and clear of
+  him upright and on its side, the cup clear of him, no ball resting nearer
+  the cup, a deliberate hole in one); `dance` times its turn trick to the
+  drop.
+
+### A hole never ends before he reaches the green (user asked, mid-task)
+
+- Before: a hole moved on the step its ball was down, with him on average
+  about 12 short of the pin (up to 30) and, on a strong bag (holes of about
+  a second), never off the tee. Measured in frames with `greenwait2.js`
+  (scratchpad; rewrite if lost: step + draw at 60 a second with
+  `performance.now` driven by the script).
+- Now `Scene.holeWait()` (was `isleWait`, which only covered the signature
+  crossings) holds the hole's end in `step()` until he has walked up within
+  `B_GREEN_UP` (1.5) of the pin and stood there 0.25s (`Scene.upT`), after
+  any crossing. Only while the course is drawn (within the last three
+  steps: `Scene.stepN` against `drawnN`; it was `drawnAt` within 250ms, and
+  a phone's slow frame ended the hole before his putt), not
+  in `QUIET`/`OFFLINE`/a wager, not behind the saver; capped at `ISLE_HOLD`
+  (8s). Once the ball is down (`S.yards <= 0`) the camera heads straight for
+  `LEN - B_GREEN_STAND` (1.0) a little brisker (rate 6, was 4.5), whether
+  or not the last ball is still in the air.
+- The cup's sound, the banner, the caddie's word and the happy dance come as
+  the ball drops (`holeSaid`, called once from `step` when the wait begins;
+  `Scene.saidHole` stops `finishHole` repeating them). Unwatched, everything
+  happens in `finishHole` in the old order, so seeded checks see the same
+  random sequence.
+- Nothing is played on a waiting hole: `step` skips `autoCast`, the burn and
+  the swing timer while `S.doneT != null && S.yards <= 0`.
+- **The wait is paid for**: `finishHole`'s `walk` = elapsed / doneT (1 when
+  it did not wait). The hole's gold (its swings' `S.holeGold` and the
+  finish), its experience and its gear-luck roll are scaled by it, so purse
+  per second watched equals away. Measured on the same dice (the picture on
+  its own random stream, no caddie perk): 3.81 against 3.67 a second on a
+  fresh bag, 57.7 against 56.4 on a strong one; the difference is the two
+  runs drifting apart (wall-clock buffs), not the wait. What is not paid:
+  events simply take longer while watched (about 12% on a normal bag, 2.5x
+  on a strong one), so per-event things (cheques, cups) come slower.
+- Typical wait: 1.1-1.2s on a plain hole; island 2.5-3s, stones about 3s,
+  a railway up to about 5.5s (the train).
+- Check `green`. `dance` now plays its frames with `step` running.
+
+### The Railway Crossing, the fifth signature hole (user asked, my design)
+
+- Where: a home course's last par four of the front nine (hole 9 in all
+  three par layouts; `sigHole` special case: `holeInRound <= 9`); regular
+  courses `moorland`, `ironbark` (were stones and canyon) and the major
+  `oldlinks` (was stones) in `B.SIG_HOLE`. So home rounds have five
+  signature holes (`SIG_HOME_ROUND`); Signature Round needs all five.
+- `newHole`: `rail` moat `{ rail: 1, d: 0.47 LEN, rd: 0.95, rx: 40 }` drawn
+  by `P_RAIL` (level ballast in the course's rock), map colour rock, roll
+  0.5. `Scene.isle` gets `{ bank, land, rail: 1 }`; balls never rest on the
+  line (`spot`).
+- The train (`tickRail`, `railAt`, `railHold`, `railLights`): sets off
+  `RAIL_X` (34) out, runs at `RAIL_V` (11), `RAIL_LEN` 7.4 long; every
+  20-35s on its own (`trainNext`, own `seeded` stream), and one meets him
+  the first time he reaches the line on a hole (`trainMet`), setting off
+  `RAIL_MEET` (20) out so the wait is about 3.6s. He does not step onto the
+  line while a train is set off and not yet clear (`railWait` in the camera
+  code clamps him to the bank; the first version let him fall through to
+  his ordinary walk, and the check caught it).
+- `drawRail` (after `drawDucks` in the frame): sleepers, the boarded
+  crossing, far rail, far posts, the train (`drawTrain`: engine, two
+  carriages with lit windows, round smoke puffs), near rail, near posts;
+  posts carry crossed white boards and two lamps flashing while
+  `railLights`. All clipped at their own distance.
+- Sounds: `Sfx.whistle` (as it sets off, -45.7 dB), `chuff` (every 0.26s
+  while it runs, about a bird), `ding` (every 0.45s while the lamps flash,
+  under the plank). `WHISTLE_VOL`, `CHUFF_VOL`, `DING_VOL`.
+- Week rotation is now plain `wk % 5` (`sigWeekOf`); week 2960 is still the
+  island and 2961 the canyon, as before. Honour **All Aboard** (`sigRl`,
+  tally `sigRail`). Dev menu: "railway" button, "railway birdies +25".
+- Checks `rail` (new), `sigview` (plays rail holes with a train in every
+  view), `sigweek`, `honours`, `island`, `smoke` updated for five kinds.
+
+### Life on the other signature holes (user asked)
+
+- `drawDucks` (island holes only, `isle.fly`): four ducks (`DUCKS`, two
+  drakes with green heads, two hens) paddling slow rounds short of the
+  island, kept inside the lake's outline (`duckAt` clamps to 0.7 of
+  `hazSpan`), a pale wake, one tipping up now and then.
+- `drawHawk` (from `drawBridge`, so canyon only): circling over the gorge,
+  soaring with raised tips, three beats every 6.3s; not at night.
+- `drawFish` (from `drawStones`): three fish on clocks of their own
+  (`fishAt`), half their turns a leap out beside the stones and back, a
+  splash and a ring; none on ice.
+- Sounds from `Sfx.tick`: `quack` (island, not at night), `hawk` (canyon,
+  not at night), `plop` (each fish that lands, off `fishAt`). Levels
+  measured with real noise (a constant `Math.random` silences `hiss`: the
+  first measurement read the chuff at -120 dB).
+- All worked out from the clock (`hr` noise), no `Math.random`. Check
+  `wildlife`; `sigview` now also plays island holes and moves the clock
+  between views (a fish drawn through the ground was missed while it stood
+  still).
+
+### A happy dance on a great hole (user asked)
+
+- `Scene.happyDance(d)`: an ace two flips and a cartwheel, an albatross a
+  flip and a cartwheel, an eagle a cartwheel, one birdie in three a dance or
+  a spin (his own `_moveRnd` stream). The turns queue in `fairyQueue` and
+  `tickMove` starts each as the last ends; a perk going off or a wager
+  drops the rest; no turn of his own for 12s after. Called from `holeSaid`
+  (as the ball drops) or `finishHole`. Check `dance`.
+
+### Seasons Seen on the Record (user asked)
+
+- `S.seasonsGot[courseId]` is a bit a season (0 as built .. 3 blossom), set
+  in `seasonTurn` for every hole played on a course that turns, catch-ups
+  included, wagers not; `initState` repairs it and counts an old save's
+  `S.seasonSeen`. The Record row "Seasons Seen" reads "n of 64"
+  (`seasonsSeen`, `seasonsAll`). The Record's row titles went to Title
+  Case. Checked in `chime`.
+
+### Season chime (user asked, the last of four)
+
+- `S.seasonSeen[courseId]` is the season (0 as built .. 3 blossom) each
+  course that turns (home courses, `CAL_SEASONED`) was last seen in.
+  `seasonTurn()`, called in `startHole` after the new hole is laid out,
+  notes it; if it differs from what was noted, `Sfx.play('season', s)`.
+  So it chimes with the banner when a course comes up in a new season, and
+  on the next hole if the month turns part way through an event. Not the
+  first look at a course, not in a catch-up (`QUIET`/`OFFLINE`) or a
+  wager: the next live hole hears a turn passed there.
+- `Sfx.season(s)`: autumn four falling notes (D6 B5 G5 E5), winter high
+  sine bells (E7 G7 E7 B7), blossom five rising (C5..E6), as built two
+  (G5 C6). Measured offline: -36.4 to -38.2 dB, against the coin jingle's
+  -37.4 and the honour fanfare's -33.5. Dev menu Sound row plays each.
+- Junk in `S.seasonSeen` is dropped on load. Check `chime`.
+
+### Life on the pier (user asked, the third of four)
+
+- **Spray** (`drawSpray`): on a Sea Stack hole with the wind at 6 mph or
+  more, waves slap the windward posts and spray blows up and across the
+  deck: 64 drop slots, as many used as the wind allows (all at 18 mph, a
+  crosswind is 18-24). Each drop is a slot on its own clock (`hr` noise off
+  `Scene.t`), so nothing is stored and `Math.random` is never touched; drops
+  are a twentieth of a unit, streaked downwind, with a white burst at the
+  foot of the post a wave hits. Cut at their own distance's ground line.
+- **Gulls** (`drawGulls`): three wheel over the sea round the stack,
+  flapping then gliding (a pixel "v", "^" or flat, white with grey tips,
+  scaled with distance). One sits on the middle post of the pier (white
+  body, grey back, yellow beak) until the camera comes within 7 of it
+  (`Scene.gullOff`, reset per hole), then flies up and out to sea for 6s.
+- **The cry** (`Sfx.gull`): a thin "kee" and a falling "ow", once or twice,
+  every 6-15s on a Sea Stack hole, not at night. Measured offline (loudest
+  300ms): -54.9 dB against a bird's chirp at -54.3 and a gust's -46.
+- Both draw inside `drawPier`, so `sigview` holds them above the ground in
+  front (pier holes are level anyway). Check `pierlife`.
+
+### Caddie perk upgrades (user asked: "all of those", the first of four)
+
+- The perk he wears can go up a level at a time to Lv 5, on the Range's
+  Caddie rack: the worn row's button (it read "Worn") now reads "To Lv n"
+  over the price, or "Top level" with a tick; its meta line says "Worn ·
+  Lv n/5". A `?` above the rows says what a level does. Owned rows show
+  their level once past 1.
+- Each level: `CPERK_LV_T` (1s) longer and `CPERK_LV_V` (12.5%) of its own
+  strength stronger (Ready Golf and Lost Ball Scout only stronger).
+  Prices 100, 160, 250, 400 sovereigns (910 to the top). Values round to
+  whole percents (tenths of a second for Ready Golf), so Lv 5 Tempo Call is
+  +30% for 12s, Sponsor Chat +38% for 12s.
+- `cperkTxt` makes a level's words from the perk's own (`s`, `d`) by
+  swapping the numbers, so Lv 1 reads exactly as before (`bless` reads
+  those lines).
+- The blessing grows a little with the level: 6% wider, 8% brighter and
+  0.1s longer a level (`Scene.bless.lv`).
+- Honour **Head Caddie** (`headcad`, metric `cperkLv`: the highest level of
+  an owned perk): a perk at Lv 5, 2 tickets and 10 sovereigns.
+- `S.cperkLv` is repaired on load: levels 2-5 on owned, known perks only.
+- Check `perkup`.
+
+### The caddie: no wings, a float, and turns (user asked)
+
+- The wings are gone (and the sideways drift with them). He floats up and
+  down, `gh * 0.035` either way (about 2px on a phone), as before. The
+  fairy dust still falls off him.
+- **Turns**: `FAIRY_MOVES` (spin 1.0s, dance 2.6s, flip 0.9s, wave 1.8s,
+  loop 1.4s, cartwheel 1.8s, juggle 2.6s; the last two added on request:
+  over once away from the golfer with arms out and legs split, then a
+  float back; three golf balls hand to hand in arcs that rise out of his
+  hands and sink back at the end, drawn after him in `drawCaddie`). `Scene.tickMove` (called with `tickQuip` from the frame)
+  starts one 8-18s after the course is first drawn, then 12-28s after each
+  ends, never the same twice running; not while he has his say, while a
+  perk goes off (a perk going off also ends one: its arms up come first) or
+  in a wager. It draws its random numbers from its own `seeded` stream:
+  `Math.random` is the round's, and the balance checks seed it.
+- `fairyPose(kind, q, T, w, h)` gives the move as offsets and limbs: `dx`
+  (never toward the golfer), `dy`, `sx` (a spin squashes him, and mirrors
+  him below zero), `rot` (a flip rolls him), `armL`/`armR` (0..1 up; the
+  cast's arms share the code), `waveL`, `legs` (a stride phase for
+  `drawLegs`). Spin and flip draw him whole into `_fairyCv` and lay it down
+  with nearest-neighbour scaling; a roll that takes more room takes it on
+  the far side. `Scene._fairy` is the room he takes (standing box and turn
+  together), which the `caddie` check holds clear of the golfer.
+- A reaction's hop or droop sits a turn out (the word still shows).
+- Dev menu, Fairy caddie row: a button per turn. Check `fairy` (pixel for
+  pixel: none of his on the golfer's through every turn and swing stage;
+  no wings; the float; the timing; no `Math.random`).
+
+### Signature hole of the week (the menu's recommendation)
+
+- **Which kind**: `sigWeekOf(wk)` = `SIG_KINDS[(wk + floor(wk/4)) % 4]`
+  (`SIG_KINDS` is `SIG_NAME`'s order: island, canyon, stones, pier). Every
+  block of four weeks has all four, never the same two weeks running, and
+  the order slides a step each block so each major of the week (also
+  `wk % 4`) meets each kind in turn; a plain `wk % 4` paired each major with
+  the same kind for ever. `sigWeek()` reads `weekNow()` (so `DAY_FORCE`
+  moves it); `SIGWEEK_FORCE` pins it (dev menu row "Signature hole of the
+  week"). Week 2960 (from Monday 21 Sep 2026) is the island.
+- **The money**: `holePurse(h, tier, gold)` = `purseFor` x `SIG_WEEK_MULT`
+  (2) when `isSigWeek(h)`. Used for the hole (`startHole`'s `S.purse`, so
+  every swing and the finish pay double) and by the away model
+  (`roundRate`). Not in `purseFor` itself: the event's cheque, the nine-hole
+  goals and the Vault's "holes worth" are priced off it and must not move.
+  Measured over every course at five Tour Cards (geometric mean, range),
+  on an event whose course has the week's kind: island +4% (home courses,
+  two a round, +7%), sea stack +4%, stepping stones +9% (5% to 16%), canyon
+  +15% (6% to 19%: the canyon is often the round's closing hole, which pays
+  3.2x). A course without the kind gets nothing extra.
+- **Marked where it is played**: the hole map's 1px frame goes brass and a
+  7x7 sparkle (`mapStar`, gold with a pale centre and a dark edge, ebbing
+  for 0.35s every 1.8s) sits in its top left corner, clear of the green (a
+  signature hole is straight, so the green is always central). The corner's
+  words read e.g. `CANYON CARRY ×2` (a `×` glyph was added to both
+  pixel faces). The tee toasts "Hole of the Week · Canyon Carry · pays
+  2×". The Trophy Room's Today page has a This Week row: "Canyon Carry —
+  Signature Hole of the Week · pays 2×".
+- On its side the map shows as it always has, when the corner's words
+  leave it room (on a hole with a long forecast it gives way); the ×2 in
+  the words shows either way.
+- Check `sigweek`.
+
+### Fixed on the way (this session: the dailies)
+
+- The week pinned to Island Green failed `challenges`: its brand-new save
+  (one start, five minutes) found 12 Rare clubs. Over forty starts that is
+  luck (1-2 in 40, whatever the week), but the same sweep showed "Card 70
+  eagles or better" cleared in five minutes by 12 of 40 starts in every
+  week (16 to 91 eagles). The daily asks for 100 now (one start in twelve
+  still can), and the check plays twelve starts: a daily fails if more than
+  three clear it or a typical start is four fifths of the way through it.
+  Sweep script `dailyfast40.js` (scratchpad).
+
+### Fixed on the way
+
+- **The ember ball's burn** (check `ember`): each strike that took the
+  ember affinity *replaced* the burn already going (`S.burn = dmg*v/3`), so
+  at a quick tempo most of every burn was lost and a provisional's small
+  burn could wipe out a pure strike's big one. derive() (and so auto-equip,
+  the item sheet and the away model) credited every burn in full: an ember
+  ball played at about half its numbers. Burns add up now: `S.burn` is the
+  burn left to deal, spent evenly over `S.burnT` (3s from the last strike).
+  How it was found: `pacing` failed with the week pinned to the Sea Stack.
+  Over 200 seeds each, a player who plays sat 20 minutes under 40% par or
+  better in 1 (old game, 38%), 2 (no week bonus), 1 (island) and 4 (sea
+  stack, one at 0%) seeds; tracing the worst showed the gear sweep swapping
+  a storm ball for an ember one it rated higher, then doubles for half an
+  hour. Measured at that moment, same holes and numbers: the ember ball at
+  2.14x par, the storm ball it dropped at 1.39x; with burns adding up the
+  ember plays at 1.53x (what is still burning when a hole ends is lost,
+  which is fair for damage over time). After the fix, 200 seeds each:
+  island and canyon weeks no window under 40%, sea stack two (34%, 39%),
+  no bonus one (28%: a storm ball on a verdant course, the affinity dip the
+  `pacing` header already allows for). The sweep script is the `pacing`
+  player with `SIGWEEK_FORCE` set per run; about 25 minutes for 200 seeds.
+- **The weather and the purse**: `startHole` read the golfer (`derive()`,
+  whose gold carries the weather's multiplier, 0.8x to 2.3x) before drawing
+  the new hole's weather, so the first hole of every round was paid at the
+  round before's weather. The away model drew it first, so the two
+  disagreed on four holes an event. The weather is drawn first now.
+- **The `settings` check** waited for three of the four recordings and then
+  required exactly three, so it failed whenever the second music track
+  decoded first (it did on untouched code this session). It waits for all
+  four now.
+
+### Caddie blessing and the countdown (user asked)
+
+- Each caddie perk (`B.CPERKS`) has `col` (its colour) and `s` (its short
+  line). When one goes off, `tickCaddie` sets `Scene.fairyCast` (the caddie's
+  arms go up for 1.1s in `drawCaddie`) and `Scene.bless`; `Scene.drawBless`
+  drops a column of that colour on the golfer (white core, motes, a ring at
+  his feet), 1.5s in all.
+- The line right of the cog is `#buffTip` in `#setRow`, absolutely placed so
+  it never widens `#hudLeft` (the layout check caught that). `buffTip(dt)`
+  runs every step from `tickCaddie`; it reads the seconds straight off
+  `S.buff[pk.k].t`, so nothing extra is saved. The next-hole perk (Lost Ball
+  Scout) says "next hole" and stays; Ready Golf shows 2s via `cperkShow`,
+  and not at all if the hole was already down. Fades over the last second.
+- Check `bless`.
+
+### Volume sliders, calendar seasons, Sea Stack, record rows
+
+- **Volume**: `Sfx.out` (0.35) -> destination; `Sfx.master` (effects: every
+  sound but music, as before) and `Sfx.musBus` (music) feed it. `S.volFx`,
+  `S.volMus` 0..1, left out at full; gain is the square. `setVol` rewrites
+  only the % figure while dragging (a redraw drops the drag). Check `volume`.
+- **Calendar seasons**: `CAL_SEASONED` (coastal, sandbelt, highlands,
+  blackwater, riverbend, moorland) take `MONTH_SEASON[monthNow()]` (UTC month
+  of `dayNow()`, so `DAY_FORCE` moves it); `courseSeason` replaces
+  `homeSeason` at the two call sites. `SEASON_FORCE` also applies to them.
+  The suite was run with the month pinned to Jan, Apr, Jul and Oct: only
+  the "today" line of `seasons` moves. Check `seasons`.
+- **Sea Stack** (`pier`): the Coastal Classic, the Seaside Open (both
+  were island/canyon) and Harbour Lights' front nine (`HOME_PIER`; its back
+  nine keeps the island). Laid out as an island (same lake, `spot`, hold),
+  with `isle.pier = 1, fly = 0`: he walks at `B_BRIDGE`, planks knock.
+  `drawPier`: deck a hand above the water, posts and a rail (drawn in short
+  lengths, each cut at its own farther clip), and rocks round the green with
+  a gap for the pier; rocks within 2.5 of the near cut are skipped (up close
+  they filled the corners). `PIER_FORCE`, dev "sea stack". Honour Sea Legs
+  (`sigPier`). Checks `pier`, `sigview` (now covers it), `island`.
+- **Record rows**: `S.sigRec[kind] = {n, b}` from `sigScore`; `renderRecord`
+  shows one row per kind ("12 played · best Eagle", or a dash). Check
+  `honours`.
+
+### The small pixel face (user asked)
+- `GLYPH_S`: a proportional face, mostly 4 px wide with a 1 px gap (the bold
+  `GLYPH` is 6 + 2), 7 rows of caps and a descender row (`FHS` 8). Text at
+  the base size (`sc <= TSC`) uses it; anything larger keeps the bold face
+  (`faceOf`), so scores and course names on the banner stay chunky.
+  `textW`, `glyphCv`, `textCv` all go through `faceOf`; `LH` is now
+  (FHS + 2) * TSC. The weather lines come out at about 61% of their old
+  width. `font` checks it.
+
+### The corner: pull tab, map, words (user asked)
+- `placeMap` puts the map at the foot of the field on the right, its bottom
+  a small gap above the pull tab (`#drawer`), its height what is left
+  between the words above it and 37% of the stage (the toasts' corner), up
+  to its full shape; under 0.8 of its width it is not shown. Placed again
+  on every hole (`newHole` calls `mapHide`), since the lines above it
+  (`hudLines`) change; `drawHud` places it before drawing the words, so they
+  never stand on a stale map. Conversions use the canvas's exact scale.
+- `hudBase()` / `hudRight()`: the words' lowest line stands on the map's top
+  edge and lines up with its right edge; with no map they sit above the tab
+  as before. `hudRoom()` is the room right of the golfer and the ball at his
+  feet (it was 62% of the picture, which on its side ran a long forecast
+  across him); a longer two-part forecast splits onto two lines.
+- `layout` draws one real frame, requires the map on a 400 phone, and holds:
+  words above the map, map just above the tab (within 24px), right edges in
+  line, words above the tab when there is no map.
+
+### Signature holes everywhere, and their honours
+- `sigHole(h, kind, par, homeNine)` decides all three (`isIsland`,
+  `isCanyon`, `isStones` call it; `lastOfPar` finds the last hole of a par
+  in its round or nine). A home course has all three kinds, four holes a
+  round; every other course has the one kind in `B.SIG_HOLE` (islands where
+  there is water, canyons in rock and sand, stones where a river runs),
+  once a round on the round's last hole of that par. `sigKind(h)` says which,
+  `SIG_NAME` names it.
+- The round's closing hole was labelled SIGNATURE in the corner (it plays
+  harder: `S.armor`); it now reads CLOSING HOLE (CHAMPIONSHIP on Sunday),
+  and a signature hole names itself there in brass (`hudLines` counts it).
+- Honours (`sigScore`, called from `finishHole`): Signature Round (`sig4`,
+  par or better on all four of a home round's signature holes, counted in
+  `S.sigRound` as they are played; a bogey spoils it), Island Hopper (25
+  island birdies), Rope Walker (10 canyon birdies), Sure-Footed (10 stone
+  birdies), Ace on the Island. All pay tickets and sovereigns, nothing that
+  moves the balance. Dev menu: Honours row buttons for each.
+
+### Stepping Stones (the third signature hole)
+- `isStones(h)`: the last par four of each round on a home course (one a
+  round). Toast "Signature Hole · Stepping Stones"; dev menu "stepping
+  stones" (`STONES_FORCE`). The three `*_FORCE` values exclude each other.
+- A `river: 1` water band across the hole (d 0.44 LEN, rd 2.9, rx 40),
+  drawn level with `P_LAKE` (frozen in winter: `P_ICEL`), on gentler ground
+  (`roll` 0.5). `Scene.isle` has `hop: 1`, `stones` (evenly bank to bank)
+  and `hopLen`; the crossing moves at `B_HOP` (2.6/s); `drawGolfer` lifts him
+  by sin(pi x hop phase); `drawStones` draws flat rock tops with a foam line;
+  `Sfx.hop` (a knock and a splash, no splash on ice) on each stone.
+- Fixed on the way, for all three: `isleWait` now also waits while
+  `Scene.crossing` is set; the last hundredth of a step before the far side
+  used to read as neither and let the hole go. `ISLE_HOLD` is 8s.
+
+### Canyon carry (option 2b, the second signature hole)
+- `isCanyon(h)`: the last par five of each round on a home course (one a
+  round, four an event). Toast "Signature Hole · Canyon Carry". Dev menu:
+  "this hole a canyon" (`CANYON_FORCE`).
+- The gorge is the hole's `water` with `canyon: 1`: d = 0.52 LEN, rd 4.2,
+  rx 40 (wider than the view, so it cuts right across), drawn with
+  `P_CANYON` (deep, walls from `T._cn`, a ramp of the course's rock into the
+  dark). The hole is straight. `Scene.isle` holds its rims (`fly: 0`), so
+  `spot`, the camera, the hold and the checks work as for the island: the
+  crossing moves at `B_BRIDGE` (4.2/s, about 2.2s) and he walks it.
+  `Scene.crossing` is how far across; `Scene.heli` is only the island's.
+- Sounds (synthesised, levels measured through an OfflineAudioContext):
+  `Sfx.rotor` (a low whup with a thump, every 0.11s while `Scene.heli`,
+  louder at the top of the flight, about -54 dB against the strike's -48)
+  and `Sfx.plank` (a wooden knock on each bridge step off `walkPh`, a creak
+  one step in three, about -55 dB). Both from `Sfx.tick`. `canyon` checks
+  they play, through a stand-in audio context.
+- `drawBridge`: a solid deck of alternating planks with seams, sagging to the
+  middle, posts at the corners, hand-ropes that thicken nearer the camera,
+  all swaying a little; drawn after the tee, before the flag and golfer.
+
+### Home course seasons (option 3, "home course variety past Card X")
+- Ten home courses, one per card, so they repeat every ten cards. Now each
+  pass is a season: `homeSeason(cs, tier)` = floor(tier / 10) mod 4: as
+  built (I-X), Autumn (XI-XX), Winter (XXI-XXX), Blossom (XXXI-XL), round
+  again. Only home courses; the season is read from the card being played.
+- `seasonLook(cs, s)` is a copy of the course with its colours mixed toward
+  the season's (turf, rough, sand, water, rock, sky, trees) and its id
+  suffixed `~s`, so `buildTheme`/`courseTrees` cache it apart. `Scene.course`
+  stays the real course (ids, honours, cabinet and checks see no change);
+  `Scene.look` and `Scene.land` are the season's. Winter has 60% of the
+  crowd and falling snow (`Scene.snow`, not in rain). A course already the
+  season's tree colour takes its `alt` (Jade Pagoda: white blossom).
+- The banner reads e.g. "Winter - Home of Tour Card 23".
+- Sounds (`Sfx.gust`, `SEASON_VOL`, in `Sfx.tick` off `Scene.look.season`):
+  autumn gusts through the leaves every 5-12s (about -55 dB, against the
+  music's -45 average and a bird's -63); winter silences the birds and
+  breathes a thin high air every 8-16s (-64 dB), the hush; blossom sings
+  birds every 2-6s instead of 4-13s. `seasons` checks all three over five
+  simulated minutes with a fixed random.
+- Touches: autumn blows leaves across with the wind, blossom lets petals
+  sink (`Scene.fall`, `Scene.fallCols`, drawn in `drawWeather`, none in
+  rain); winter ponds are ice (`Scene.ice`, `P_ICE`, ramp `T._ic`, no
+  ripples). `seasons` checks all three.
+- Possible follow-ups: more home courses outright, or season touches beyond
+  colour (frozen ponds, leaves blowing, blossom petals falling).
+
+### Island greens (user asked; the flight was their idea)
+- `isIsland(h)`: on a home course, the last par three of each nine (two a
+  round, eight an event). The tee toasts "Signature Hole · Island Green".
+  Dev menu: "Signature hole" > this hole an island (`ISLE_FORCE`).
+- `newHole` on an island: no bend, level ground (`roll = 0`), one `lake`
+  water centred at LEN+4 (rd 30, rx 6.4) passed to `layHazards` as `moat`.
+  `Scene.isle = { bank, land }`: bank is the last dry ground on his line,
+  land is LEN-6 on the green.
+- **The lake is drawn level** (`P_LAKE`, depth 0, short banks). Sunk like a
+  pond, far water lands lower on the screen than nearer ground, and at this
+  size it painted the green out entirely. The green is drawn over the lake by
+  the ground pass (it comes after hazards), and so is the hole map now (it
+  used to draw the green first). Ripples skip the green.
+- **Where balls lie**: `Scene.spot(progress)` is the drawn distance. On an
+  island a spot inside the water snaps to the bank (first half) or the island
+  (second half). Used for the shot's length in `launch` and the camera's goal.
+  `shownYards` is unchanged: it can read a little long while a ball sits on
+  the bank, and holds the real yardage while one sits on the island early.
+- **The flight**: the camera stops at the bank, then while the goal is past
+  it moves at a steady `B_FLY` (11 units/s, about 1.9s across) instead of
+  easing. `Scene.heli` is how far across (0 when not flying);
+  `drawGolfer` draws `paintHeli` instead: from behind, legs hanging, arms up,
+  the club flat and spinning with a faint ring, a shadow on the water, and a
+  lift of sin(pi x heli). The fairy flies alongside. No sound for it yet.
+- **The hold** (after the user found he never got there): when the ball is
+  down, `S.doneT` records the hole's time, and `step` waits while
+  `Scene.isleWait()`: an island, he has not landed (plus 0.4s on the
+  green), and the course was drawn in the last 250ms. Never in `QUIET` or
+  `OFFLINE`, never behind a menu or the saver (nothing drawn), and never past
+  `B.ISLE_HOLD` (6s). The score and the readout use `holeTime()`, so waiting
+  never costs a score. On an island the old "carry a golfer far behind on
+  through his swing" jump is off: it slid him off the tee to the bank
+  mid-swing.
+- The `hazards` check allows the lake and requires water all round the
+  green; the `island` check holds the rest, including a hole finished by its
+  tee shot played in real frames (the case the first version missed: its
+  test froze the round, so the hole could never end early).
+
+### Battery saver (user asked)
+- Settings row **Battery Saver**: a button cycling Off / 1 / 2 / 5 min
+  (`S.saver`, default 2 when unset; junk repaired in `initState`) and
+  **Start**, which turns it on now (`saverNow`). Dev menu: "Battery saver"
+  row, start now or in 5s.
+- `touchedAt` is reset by any pointerdown, touchstart, keydown or wheel, and
+  by the page coming back into view. The slow tick in `frameBody` calls
+  `saverOn()` when `saverDue()`.
+- While on, `frame` schedules itself by `setTimeout` every 100ms instead of
+  `requestAnimationFrame`, and `frameBody` plays the gap out in `TICK_MAX`
+  steps (up to 1s), skips `Scene.draw`, `renderLive` and `renderVitals`, and
+  draws the saver instead. Measured: main thread busy about **3%** against
+  about 31% on the course (390x844 at 3x). The strike sound is played by the
+  scene, so the saver is silent apart from the music.
+- **Hidden page**: timers keep firing when hidden where frames stop, so the
+  saver skips stepping when `document.hidden` and leaves the time to
+  `catchUp`; otherwise the same time would be paid twice.
+- The tally is `S` now minus a snapshot taken when it came on (purse, holes,
+  events, cups, levels, Tour Card, sovereigns, paragon), so it includes a
+  catch-up paid while it was up. Clubs are counted by `saverClub` in
+  `bagAdd` and the away loop's `bagAddOff`.
+- The picture is a 96x36 canvas at a whole-number scale (`saverSize`, again
+  on resize). `paintGolfer` is the course's own golfer drawing, pulled out of
+  `Scene.drawGolfer` (138 outfit and pose combinations compared pixel for
+  pixel against the old code: identical), so outfit effects, club looks and
+  ball trails all match. The box drifts a few pixels every 30s against
+  burn-in. On its side the picture and the tally sit in two columns. The
+  golfer stands 5px in, or 13px in a look with an effect (the Demonic's
+  wings and the Ascended's sigil were cut off by the edge), and the sigil
+  is two rows deep there, the rows under his feet.
+- It wakes on **click**, not pointerdown: gone on the touch, the click after
+  it landed on the button underneath (only a touch screen shows this; the
+  check taps with one).
+- `SAVER_AUTO` is off when `navigator.webdriver` (every Playwright page), or
+  a long check would drop into the saver part way; the `saver` check turns
+  it on.
+
+### The yardage follows the ball (user asked)
+- The readout's yards come from `shownYards()`: what was left when the last
+  ball landed (`Scene.walkTo`), never less than the real `S.yards`. The sim
+  still swings `D.spd` times a second and ends and pays the hole as before;
+  only the number shown changed. Tempo still matters: carry is power x tempo.
+  `readouts` checks it holds while walking and drops on landing.
+
+### Stage buttons (moved at the user's request)
+- Left column, top to bottom: the readout with **auto-climb** to its right
+  (`#rRow`, centred on it: bottom-aligned looked dropped on the phone), then settings, the shop, and the **Trophy Room**
+  as a medal (`medal` sprite; the trophy sprite stays with the heirlooms).
+  The perks star is alone on the right at 37%, and the hole map sits under it.
+- The readout **fills its row up to the button** instead of sizing to its
+  words: its words change every second, and a button placed after a
+  word-sized box slid about. The call (`#rTag`) now ellipsizes and the unit
+  keeps to one line, or the longest late-game words ran out of the narrower
+  box on a 360 phone.
+- A container query on `#hudLeft` drops the button under the readout when the
+  column is under 200px (a stage under ~357, the 320 phones).
+- The `shop` check holds all of it, including writing the longest words into
+  the readout and requiring the button not to move.
+
+### Scrapping (auto-scrap and scrap by rarity)
+- The locker band's button is **Scrap** (was Scrap dupes; reads "Scrap ·
+  auto" and lights when auto-scrap is on). It opens `scrapSheet`: six choices
+  for auto-scrap (Off, Common … Legendary; never Mythic), then a row per
+  rarity in the locker with Scrap N and what it pays, and Spares (past the
+  best two per slot, the old Scrap dupes). Legendary and Mythic rows take a
+  second tap ("Tap again", 4s).
+- Kept by every bulk path (`scrapKeeps`): set pieces, and the single best club
+  for a slot when it beats the worn one. Not every "upgrade": with nothing
+  worn every club beats nothing, and the first version kept them all.
+- Auto-scrap runs in `bagAdd` after the auto-equip sweep and before the
+  overflow trim, on the new club only; once-a-minute toast like the full
+  locker. A drop scrapped on arrival is not announced; a wager's reward line
+  and the shop bag's reveal mark it "scrapped". Away, `bagAddOff` scraps as the
+  drops land (O(1) each via a best-score-per-slot map) and the card gets an
+  "Auto-scrapped N" line.
+- The auto-equip toggle in the locker head reads **Auto-equip on/off** (it
+  was "Auto on", beside a Scrap button with an auto of its own); the head's
+  count lost the words "in the locker" to make room.
+- Dev menu: Gear > "drop 30 mixed" (`DEV.gearMix`).
+
+### The Trophy Room, and the declutter
+- **Why.** An audit found three different "trophy" things in three places
+  (the honours on the stage, the cabinet at the foot of the Tour tab, the
+  legacy Trophy Room in Career), today's challenges at the top of the
+  honours list where nobody looks, the free sovereigns in the shop twice
+  with nothing to say they were ready, three shop tiles that sold nothing,
+  and nothing anywhere pointing at retiring.
+- **The room.** The medal on the stage (it was the trophy on the right until
+  the user asked for it under the shop) opens `trophyRoom()`: **Today**
+  (a Collect button per thing waiting and Collect all when there are two or
+  more; the free sovereigns every 8 hours; today's three challenges; this
+  week's major and the wager of the day, and the Membership's daily when a
+  member), **Cabinet** (the cabinet, with a reward line under the trophies, the
+  cups and the best cards, and the Record rows under it), **Honours** (as before, minus the challenges).
+  Nothing in it is bought or upgraded. `QUIET` shows nothing. The button
+  carries a red dot (`#roomDot`, class `ready`) while `roomWaiting()`, and a
+  tap opens Today when it does, the honours when a new one is done, else the
+  last page.
+- **The case's rewards** (`B.CASE`): three tracks, majors won (1 to 52),
+  cups won (1 to 500) and best card (25 to 288 under, a perfect card). Each
+  step waits in `casePending()` until collected, pays once, never expires.
+  `S.caseGot[track]` is the number of steps taken, clamped on load.
+  `collect('free')`, `collect('<track>')`, or `collect()` for everything.
+- **Moved.** Cabinet and Record left the Tour tab. The free sovereigns left
+  the shop (claimed only in the room now; `claimFree` is gone). The shop's
+  Buy tab merged into Offers; the three tiles that sold nothing (free gift,
+  members daily, Tour Card bounty) went, with their icons. The Career >
+  Legacy band "Trophy Room" is **Heirlooms** in every word on screen, along
+  with the honours "Find 15 heirlooms" and "The Whole Collection".
+- **Retiring.** The Career tab's dot, and a dot on its Legacy sub-tab, show
+  when `retireWorth()`: retiring is open and would find at least one more
+  heirloom.
+- Checks: `cabinet` (the rewards, the dot, the free button taking only the
+  free sovereigns, Today opening on a dot, the retire dot), `challenges`
+  (today's three by name on Today), and the room's three pages are swept by
+  `layout`, `legibility` and `titles`.
+
+### Trophy cabinet and season calendar
+- Bands on the Tour tab: Tour Card, The Card, **Season N** (`renderSeason`),
+  Major of the Week. The **cabinet** (`renderCabinet`) and the Record
+  (`renderRecord`) are in the Trophy Room's Cabinet page. They render
+  through `setHTML`, so a hole that changes nothing touches nothing.
+- Records: `S.evLog` (last 24 events: `{t, id, s, b, w, c}`, `s` null when
+  resolved away) and `S.bestCards` (best five, `{t, id, s, c}`), written in
+  `endTournament`, repaired in `initState`; retiring clears `evLog` (the
+  calendar restarts at event 1) and keeps `bestCards`.
+- `upcomingCourse(e, t)` predicts future events with `openEvent`'s rules; the
+  `cabinet` check plays each case through to the next event and compares.
+- The weekly courses carry `trophy` (12x12 sprite id) and `trophyCol`; the
+  cabinet also uses `cabJacket`, `cabCup`, `cabSlam`.
+
+### Second review and polish (fixed)
+- Fade row without a context when the picture is exactly 300 wide (frozen
+  field). `deriveStill` now also clears timed lifts, sponsor perks and
+  `S.stretched`, and `roundRatio` judges par fives with `PAR_JUDGE` (the
+  `climb` check). Music fades on `visibilitychange`; a loop not yet started
+  is stopped, not faded from 1.0. The course scene resets after every wager
+  kind. Round the Corner is counted in `oneSwing` (`roundsCorner`). The canvas
+  is sized from `getBoundingClientRect`, rounded up. Ready Golf only acts
+  while the hole is in play. Matching Pair needs a look other than
+  `classic`. `noteHome` credits a home course on a save that arrives
+  mid-event. Words on the field are baked whole (`textCv`, `TCACHE`); trees
+  wholly behind a crest are skipped. `achAmt` shows share honours as %.
+- Soak: 90 minutes of accelerated play with drawing: heap 6-7 MB flat, ~1,350
+  DOM nodes, save ~19 KB, no errors. Frame at 4x CPU slowdown ~15 ms.
+
+
+### Recorded sounds
+- Three CC0 recordings from OpenGameArt, cut and mixed with a static ffmpeg
+  (from the `imageio-ffmpeg` pip wheel; there is no system ffmpeg), saved as
+  32 kHz mono MP3 and embedded as base64 in `<script type="text/plain"
+  id="rec-…">` blocks just above the main script. An HTML comment there says
+  where each came from. The applause has since been removed at the user's
+  request; its notes stay below in case they ask for a crowd again.
+  - strike: "Thwack Sounds" thwack-01 over "Swishes Sound Pack" swish-9
+  - cup: "100 CC0 SFX" other_01 (a small ball bouncing to rest) pitched to
+    0.72, with a low-passed thwack-02 for the knock
+  - applause: "Applause in a large hall or church", its first 2.6s crossfaded
+    into its last 4.8s (the natural swell and dying away)
+- Other CC0 candidates already found, if the user wants a change: Kenney
+  "Impact Sounds" (impactMetal_light, impactGeneric_light), Kenney "Casino
+  Audio" (die-throw-2 is a good rattle), "100 CC0 SFX" (hit_01, metal_02),
+  OpenGameArt "OoOoOoOoOoOoOo" (a crowd "ooh"), "Park ambiences" (birds).
+  Freesound, Pixabay, Wikimedia and archive.org are still blocked by the
+  network policy; only OpenGameArt and Kenney are reachable.
+- `Sfx.load` decodes them once the audio context exists; `Sfx.rec(k, t, vol,
+  rate, len)` plays one and returns false if it is not ready, so every call
+  falls back to the synthesised sound. Each play varies speed by ±5%.
+- Levels were matched by rendering both through an OfflineAudioContext
+  (loudest 300ms window): strike about -39 dB, cup -40, applause -48 (par)
+  to -35 (albatross), against the old synth's chimes at about -45.
+
+### Battery pass
+- Measured on 390x844 at 3x, eight courses. At full speed the main thread
+  was busy 74% of the time and is now 29%; with the CPU slowed 4x it went
+  from 14 to 42 frames a second. What changed:
+  - `PixPaint`: the ground march (~2,600 fillRects) writes into a Uint32
+    buffer and is stamped once. `drawGround` reuses it while nothing in
+    `_gKey` has changed (camera, size, theme and its colour ramps, `gGen`,
+    which `newHole`, `newDepthsHole`, `layHazards` and `resize` bump). Pond
+    ripples are recorded during the march and drawn live by `ripples`.
+  - The page canvas is the picture's own size and the browser scales it by
+    whole pixels (`#stage > #hole` is absolutely placed; its last part-pixel
+    hangs over the stage edge and is clipped; `layout` allows exactly that).
+    The resize observer watches `#stage`, not the canvas.
+  - `drawFarFade` lifts one row into a 1-row canvas instead of drawing the
+    canvas onto itself.
+  - Live DOM numbers use `setText`/`setHTML`/`setSty`; the honours button
+    label is worked out four times a second (`renderStageBtns(true)` from the
+    frame); `renderLive(D)` reuses the frame's `derive()`.
+- The `battery` check holds all of this (pixel identity of the two ground
+  paths, fresh and reused, a canvas-call cap, the canvas size, no DOM writes
+  when nothing changed).
+
+### Fairy caddie
+- Three perks: Course Notes (`cXp`, +30% xp 8s), Club Selection (`cCpw`,
+  +20% pure strike power 8s), Ready Golf (`now:1`, 1s off `S.elapsed`,
+  never below zero). New 12x12 icons `cpnotes`, `cpclub`, `cpready`.
+- Reactions: `Scene.holed` calls `fairyReact('cheer'|'sigh', word)` for a
+  birdie or better / bogey or worse. `fairyDy` makes him hop or droop
+  (vertical only, so he never reaches the golfer). `tickQuip` (course only,
+  every 50-110s, not mid-swing) picks a line, 60% of the time a contextual one
+  when there is context (wind 12 mph+, rain, night, home course, weekly
+  major). Lines live in `B.FAIRY_SAY`; the `caddie` check holds them to 16
+  characters in the pixel font.
+
+### Auto-climb (a real stall, now fixed)
+- `roundRatio` judged the next card with this round's weather and course
+  affinity in the golfer's strength. A frost ball on a frost course read
+  four times his strength, he was climbed on it, and then took ~4x par for
+  the rest of a session. Now `deriveStill()` judges him in still air with no
+  course affinity, against `B.CLIMB_FIT = 0.90` (it used to borrow
+  `RETIRE_FIT`). Swept over 32 careers: albatross or better 19-23%, and no
+  twenty minutes below 56% par or better (was 0%). The sweep script is easy
+  to rewrite: run the `scoring` player for 8 seeds at several seed offsets
+  and several `CLIMB_FIT` values.
+
+### Honours
+- Six new ones at the end of `B.ACH`: `dogleg` (tally bumped in
+  `Scene.launch`, not in `QUIET`), `windy` (tally `windBird`, bumped in
+  `finishHole` when `Scene.windMph() >= 15`; only Crosswind rounds get
+  there), `twin`, `homes` (`S.homes`, noted in `openEvent`), `major1`,
+  `staff` (its `v` is written as 9, and the `honours` check fails if the
+  number of caddie perks changes without it).
+
+### Earlier: home courses and the Major of the Week
+- See commit `eaa4caa`. `openEvent()` picks the course at the first hole of
+  an event: the weekly major if unclaimed, else a home course on a season
+  opener or a new card, else the calendar course. `S.weekly = {wk, t, id,
+  done, won}`; majors are settled in `endTournament`. `majors` covers it.
+
+## Older requests, one line each
+
+- A golden rainbow, one in ten. The Golden Hour hole: a mountain of
+  coins, gold rain, 10 sovereigns. Golden animals, twelve kinds.
+- Heirlooms capped and stepping past Lv 30, steeper prices, a wall at
+  Card 222, the wager pair to 20; Tour Cards as plain numbers.
+- 44 icons redrawn; the heirloom reveal; retirement legacy +30%.
+- The economy review: slower repeating honours, fair-card pay, a card's
+  reward once, the clock never back, the developer menu and old save
+  codes in a developer copy only, checked save codes.
+- December lights; rainbow, fog bank, shooting star.
+- The Daily Check-In; finds by the tee; course records; caddie gifts.
+- Twenty animals; golfers on the other holes; the Field Guide; season
+  decor; the season's rival series; the robin seen at last.
+- The final day's gallery, club mastery, the caddie bond, the first Golden
+  Hour; every sovereign reward +30%; the away card's stage.
+
+- (1 and 2 October) The Ascended, The Void, the Demonic and the Divine
+  redrawn after new pictures, every skin finer; The Dread and Psychedelic;
+  the great caddies' blessings; showcases on five racks; the female
+  golfer; ace celebrations; night moons; snow tracks and breath; geese,
+  deer, fallen leaves; the user's shot recordings; Pace of Play; Buy All;
+  the Vault played as golf; the tee shot's full flight.
+
+- Sovereigns a purple gem everywhere; the gem beside its price.
+- Names of our own for events taken from real ones (The Maestro, its
+  purple jacket, and the rest).
+- The Style racks, the Honours list and the menus trimmed.
+- The ball lying drawn before him, lit balls with rings and the Divine's
+  ribbons; the sets' cup moments richer; the far ranges turning.
+- Cup moments for every ball and wake but the plain one.
+- The far trees steady; no fog or brown lines through the forest; oaks
+  on the ground; no turf dots in hazards; stones, fish, fireflies whole.
+
+- Another hole's flag hidden behind the forest's trees.
+- The Divine reworked as a celestial monk (no skin, jade and gold); its
+  driver, the Jade Wake and Godlight to match.
+- The crease between his legs softened.
+- The address stance after the user's picture; a set wears its ball too.
+- Legs as wide as the torso; the wave at the train from the shoulder.
+- The woods stood up as trees; the Demonic's driver a curved blade.
+
+- The Demonic reworked in deep red and orange after a second picture.
+- Everyone built out from his own picture (no dark plate).
+- Unequip on every worn look and set.
+- Nine pin positions; no two greens side by side.
+- An ace played from the tee: ACE, a quick burst, a second's hold; no
+  score carried to the next hole.
+- The course round the hole: other holes, woods, lakes, cart paths,
+  ponds, a forest behind every green, nothing bare; woods round the
+  island and sea stack.
+
+- Everyone and every caddie bulkier; skin grounds, blessings and cup
+  moments prominent (The Void's pit, the beam, its cup); the Sets rack
+  and one set order; cup moments in the Twilight Putt; a fairway ace is
+  putted out; no carry past the putting spot; ambience by the river, moor,
+  dunes and lake; the Tour Card page trimmed; the Divine and Demonic
+  Full Sets and the score box's rim; no line under the icons.
+
+- The putt no longer skipped on a slow frame; the Vault never slides him
+  mid-swing.
+- The Void bulkier with void orbs, its caddie to match; the railway
+  rebuilt; the caddie's blessing in its look; the winning shot on the
+  green; Full Set; ambience; umbrellas; The Void replaced the Spirit
+  Blossom.
+
+- The Spirit Blossom Mythic set (since replaced); the banner under the readout; the
+  gallery quiet on a new hole; Twilight putts in the cup; thinner trails;
+  Dawn and Dusk brings night; the Island Green's lake; small wager calls.
+- The gallery's jump, frost on the roofs, the Record in folds; wager
+  guides, Leave, "Helped by"; wagers from their own place; capitals; the
+  ball on the map; the nine's goal; words in the readout.
+- The grandstand's cheer and lamps; Better Season; Season Bests; crickets;
+  a trick for every caddie look; the clubhouse; cup moments; the
+  grandstand; birds; Dawn and Dusk; Tour sub tabs; the upgrade result on
+  the sheet; smaller gear tiles.
+
+- The Bag tab reworked: clubs as tiles two to a row under a slot bar that
+  stays at the top; Sets & Affinities its own sub tab; Equip, Upgrade and
+  Scrap together on a club's sheet.
+
+- The gallery beside and behind every green, trees behind it, shrubs,
+  tufts and rocks in the rough everywhere.
+
+- Rain rings only on water; the stray ring beside him gone; the dearest
+  skins light the grass at night; the Mythic caddies' tricks (soar, blaze,
+  blink); frost on cold mornings and puddles in the rain.
+
+- A skin flies with him over the water, his arms up on the club (not also
+  hanging at his sides); night on the ordinary holes
+  (tee lamps, fireflies, a lit clubhouse, the flag glowing); the Mythic
+  Favour caddie perk; the Hole of the Week run (15 sovereigns from the
+  third week running).
+
+- The Signature Week pays 25 sovereigns each week it is done.
+- The Signature Week on the Tour tab; a flourish on a pure strike for the
+  Divine, Demonic and Ascended drivers.
+- The moments only on an albatross or an ace, half a second, bursting out
+  of him; night on the signature holes (lanterns, string lights, lamps,
+  fireflies); the caddies' wings side on.
+- The Divine made the ultimate skin (feathered wings, a sun, a second
+  halo, the heavens opening, since cut back); wings side on as he swings
+  and spread from behind as he walks, the Demonic's too; a flourish on an
+  eagle for the eleven other effect skins (since an albatross or an ace).
+- The canyon bridge solid underfoot (it was cut to slats against the sunk
+  rim), the crossing's boards and sleepers whole; the Signature Week
+  honour and its Record row.
+- Four trains on the railway (steam, goods, express, a night sleeper), and
+  waving as one goes by; rain rings on the water, snow on the signature
+  holes, a storm at the sea stack, the bridge swaying in a gale.
+- A moment for the legends on an eagle or better (a column of hellfire, a
+  pillar of light, with sounds; since cut back), and the Demonic made the ultimate skin
+  (aura, curled horns, chains of fire, cracks at the strike).
+- The Ascended made the ultimate skin: a sigil, an aura of flame, a ring of
+  shards, sleek horns, powering up through a swing. A skin's ground goes
+  down before the pin; the saver's golfer stands clear of the edge.
+- Walking away, a lifted boot shows the outfit's own sole colour (the
+  Ascended's flashed tan).
+- The Ascended restyled after the user's picture: a knight of the void in
+  indigo and magenta, his caddie an imp; the skins check times a look
+  against the plain golfer.
+- The Demonic and Ascended sets (skin, caddie, club, trail, ball each); his
+  arms in his own skin tone.
+- The railway sits among the trees; a train no longer ends a hole early.
+- The sponsor perks' lines join the caddie's by the cog, one stack.
+- He putts out on every hole (an ace goes straight in); the pin stands a
+  little right of centre so the cup shows.
+- The eagle daily asks for 100; the dailies check plays twelve starts.
+- The Range's rows no longer say "unlocks when you have" (user asked).
+- A hole never ends before he is up on the green (while watched; the wait
+  is paid for, so watching earns what being away does).
+- The fifth signature hole: the Railway Crossing, with its train.
+- Ducks on the island lake, a hawk over the canyon, fish by the stones.
+- A happy dance on a great hole.
+- Seasons Seen on the Record; the Record's titles in Title Case.
+- A short chime when a course comes up in a new season.
+- Life on the pier: spray over the deck in the wind, wheeling gulls, one
+  on a post that flies off as he comes, and a quiet gull cry.
+- The caddie cartwheels and juggles too.
+- Caddie perk upgrades: the worn perk to Lv 5, a second longer and 12.5%
+  stronger a level; Head Caddie honour.
+- The caddie's wings gone; he floats, and now and then spins, dances,
+  flips, waves or loops.
+- Signature hole of the week (double purse, brass map frame and sparkle,
+  x2 in the corner, a Today row); ember burns add up instead of replacing
+  each other; the first hole of a round paid at its own weather; the
+  `settings` check's music race.
+- Caddie blessing and countdown; volume sliders; six regular stops turn
+  with the real month; Sea Stack, the fourth signature hole; Trophy Room
+  record rows per signature kind; canyon bridge no longer shows through a
+  hill.
+- Home course seasons: every ten cards a home course comes back in autumn,
+  winter (with snow) or blossom. The map is back a button's place below the
+  star, and the medal is outlined so it shows at night.
+- Island greens: the last par three of each nine on a home course, a level
+  lake round the green, balls never land wet, and he flies across on his
+  spinning club.
+- Battery saver: black screen with a tally and a little golfer after a
+  while untouched, a setting for the wait and a Start button; the golfer's
+  drawing shared between the course and the saver (`paintGolfer`).
+- `8433c8c`: the yardage holds while he walks and drops as each ball lands;
+  auto-climb centred on the readout.
+- `4609031`: the Trophy Room as a medal under the shop, auto-climb beside the
+  readout, and scrapping: auto-scrap by rarity and a scrap-by-rarity sheet.
+- `07ec78c`: the Trophy Room on the stage trophy (Today, Cabinet, Honours),
+  rewards in the trophy case, free sovereigns and the challenges moved into
+  it, shop Buy merged into Offers, legacy trophies renamed Heirlooms, and a
+  dot for when retiring is worth it.
+- `eba1392`: words on the field baked whole, hidden trees skipped, share
+  honours as %, the cabinet's cup and slam unlit until won.
+- `6337ec1`: fixes from the second review (frozen field at 300 wide, climb on
+  a lucky moment, music in a hidden tab, wager scene, sliver, and polish).
+- `3990143`: developer menu rows for everything added lately.
+- `8a89f2c`: trophy cabinet and season calendar on the Tour tab.
+- `42d122b` .. `65435b7`: strike and cup quieter, background music, no
+  applause, sound on the iPhone at last.
+- `b0e7b8f`: six honours for doglegs, wind, the matching pair, home
+  courses, majors and caddie perks.
+- `298b5ee`: three caddie perks, the fairy's reactions and quips; auto-climb
+  judged in still air (`CLIMB_FIT`), `pacing` on sixteen seeds.
+- `8de0110`: battery pass (pixel-painted, reused ground; picture-sized canvas;
+  change-only DOM writes). New `battery` check.
+- `42e86b4`: real recorded strike, cup and applause.
+- `eaa4caa`: home courses with landmarks and the Major of the Week. Also:
+  Blossom's far treeline now fades into the grass, and the hazards check
+  finally tests every course.
+- `48f7672`: he doesn't hit again until he reaches his ball (queued swing via
+  `walking2ball`), and a new hole drops a swing still in progress. The
+  resting ball is drawn 1.7× bigger.
+- `78de17e`: the ball lying on the grass matches the equipped ball skin.
+- `700f374`: shots land where the yardage says and he walks to them
+  (`walkTo`). Lost Ball Scout lasts until the hole ends.
+- `13be109` / `f0ccb00`: the caddie became a small fairy by his head (the
+  walking caddie was distracting). Six caddie perks at 150 sovereigns each,
+  one worn at a time, one lift every 30s; they sit on the Range's Caddie
+  rack. Fixed him gliding mid-swing.
+- `27fa8f0`: he walks away from the camera between shots with the club at
+  his side. Club skins. The Style shop is split into racks: Golfer, Caddie,
+  Clubs, Balls.
+- `a3339ca`: a course announcement banner replaced the flyover (the user
+  asked for the flyover to go).
+- `ce13e69`: a caddie look for every golfer outfit, at 1/3 of the price.
+- `729b965`: synthesised golf sounds; they follow the iPhone silent switch.
+- `ee92aa9`, `a9d6e47`, `08a4e37`: wind bow, hole map, doglegs with designed
+  corners. The ball always lands on the fairway.
+- Earlier: trails and balls made easier to see, fixes after rotating the
+  phone, Title Case everywhere, cheaper Bench, rival, skins, the scoring
+  rebalance, pacing.
+

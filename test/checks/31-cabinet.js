@@ -14,9 +14,9 @@
  *     and the best cards with the course they were posted on
  *   - the case pays for what goes in it: majors won, cups, and the best card
  *     (to 288 under, a perfect card). A reward waits at each step until it is
- *     collected in the Trophy Room, pays once, and never goes; Collect all
+ *     collected in the Trophy Room, pays once, and never goes; GET ALL
  *     takes everything waiting, the free sovereigns too, and is only offered
- *     when there are two things to take; each other Collect button takes its
+ *     when there are two things to take; each other GET button takes its
  *     own and nothing else. The trophy on the course carries a dot while
  *     anything waits and not otherwise, and opens the room on what it is for
  *   - the Career tab carries its dot when retiring now would find an
@@ -120,7 +120,7 @@ module.exports = {
         S.cups = 25; S.freeT = B.FREE_EVERY; trophyRoom('today');       // the cup step at 25 waits too
         const sov2 = S.sov || 0; document.querySelector('#roomBody [data-collect="free"]').click();
         o.freeOnly = (S.sov || 0) - sov2 + '/' + casePending().map(x => x.c.id + x.i).join(',');
-        // with one thing waiting there is no Collect all beside its own button
+        // with one thing waiting there is no GET ALL beside its own button
         o.oneAll = !!document.querySelector('#roomBody .act[data-collect=""]'); o.freeGift = B.FREE_GIFT;
         collect('cup');
         // a track collected to its end says so, and a perfect card is the last step
@@ -210,11 +210,11 @@ module.exports = {
     if (r.cupPend !== 'cup0,cup1' || !r.dotWaiting) throw new Error('five cups left ' + r.cupPend + ' waiting (want the steps at 1 and 5), dot ' + r.dotWaiting);
     if (r.opensToday !== 'today/true') throw new Error('with a reward waiting the trophy opened the room on ' + r.opensToday);
     if (r.cupPaid !== 33 || r.cupAgain || r.cupPaidAgain !== 33) throw new Error('collecting the cups paid ' + r.cupPaid + ' then ' + r.cupPaidAgain + ' (want 33 once)');
-    if (!r.collectAll || r.allPaid !== r.allWant) throw new Error('Collect all paid ' + r.allPaid + ' of ' + r.allWant + ' (the case and the free ' + 'sovereigns)');
-    if (r.afterAll !== '0/none/clear') throw new Error('after Collect all: ' + r.afterAll);
+    if (!r.collectAll || r.allPaid !== r.allWant) throw new Error('GET ALL paid ' + r.allPaid + ' of ' + r.allWant + ' (the case and the free ' + 'sovereigns)');
+    if (r.afterAll !== '0/none/clear') throw new Error('after GET ALL: ' + r.afterAll);
     if (!r.freeDot || !r.freeGone) throw new Error('with only the free sovereigns waiting the trophy\'s dot was ' + r.freeDot + ', and after collecting ' + !r.freeGone);
     if (r.freeOnly !== r.freeGift + '/cup3') throw new Error('the free sovereigns\' button paid and left ' + r.freeOnly + ' (want ' + r.freeGift + '/cup3)');
-    if (r.oneAll) throw new Error('with one thing to collect the Trophy Room still offered Collect all beside it');
+    if (r.oneAll) throw new Error('with one thing to collect the Trophy Room still offered GET ALL beside it');
     if (!r.cardDone || r.cardTop !== 288) throw new Error('the best card track ends at ' + r.cardTop + ' and reads done: ' + r.cardDone);
     if (r.caseRepair !== JSON.stringify({ cup: 8 })) throw new Error('a save with junk collected steps loaded as ' + r.caseRepair);
     if (!r.retireFinds) throw new Error('retiring here would find no heirloom, so the Career tab test measured nothing');
@@ -233,7 +233,7 @@ module.exports = {
     return ['every event logged with its course; away events post no card; the best five kept, best first',
       'the season shows six events, and what it names next is what then gets played (' + r.predict.map(x => x.split(':')[0]).join(', ') + ')',
       'the cabinet lights the majors won (x2 past one) and their jackets, holds ' + r.cups + ' cups and the best cards by course',
-      'its rewards wait at each step, pay once and never go; Collect all takes them and the free sovereigns, and the trophy\'s dot goes',
+      'its rewards wait at each step, pay once and never go; GET ALL takes them and the free sovereigns, and the trophy\'s dot goes',
       'the Career tab points at retiring when it would find an heirloom, and only then',
       'retiring clears the season and keeps the best cards; junk records load clean',
       'Season Bests: the best card of each season, newest first with its course; none from away, none of another golfer\'s; an old save starts from its log'];
