@@ -18818,7 +18818,7 @@ const Scene = {
   // the wager's own animal (WAGER_WILD), one time in two, from a hash of
   // the wager and the hole: beside the play, where it stands in that scene
   layWagerWild(R){
-    const W = R && WAGER_WILD[R.id], put = this.props || (this.props = []); if(!W) return;
+    const W = R && WAGER_WILD[R.id], put = this.props || (this.props = []); if(!W || !isFinite(this.camD)) return;
     const an = W[0], C = CRIT[an], h = hash32((R.floor | 0) * 31 + R.id.length * 977 + (R.ws | 0)) >>> 0;
     if(hr(h, 640) >= WAGER_WILD_P) return;
     const Wa = this.water;
@@ -23583,7 +23583,7 @@ Object.assign(Scene, {
     // gone in a second. Cut at the ground's line where each is. Not in a
     // wager.
     if(p.kind === 15){
-      if(S.dgnRun && !p.wg) return;
+      if(S.dgnRun ? !p.wg : p.wg) return;
       const C = CRIT[p.an];
       if(C.at === 'air'){ this.drawFlyer(c, p, night); return; }
       let d = p.d, x = p.x, hop = 0, flip = p.flip;
