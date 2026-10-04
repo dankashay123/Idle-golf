@@ -36,7 +36,7 @@ module.exports = {
         S.upg.drive = 0;
         // ---- shown, and said ----
         setView('upg'); S.upg.tempo = 368; refreshUpg();
-        const row = UPGREF.find(x => x.u.id === 'tempo'); if (!/★400/.test(row.mt.textContent)) f('Pace of Play at 368 shows ' + row.mt.textContent);
+        const row = UPGREF.find(x => x.u.id === 'tempo'); if (!/★400/.test(row.ms.textContent)) f('Pace of Play at 368 shows ' + row.ms.textContent);
         // (and its bar: filled as far as it is from the last to the next, the
         // levels to go and what the rung will be there)
         { const bar = row.ms.querySelector('.msbar i'), w = parseFloat(bar.style.width), want = Math.round((368 - 350) / 50 * 100);
