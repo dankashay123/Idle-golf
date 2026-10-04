@@ -37,6 +37,11 @@ module.exports = {
         // ---- shown, and said ----
         setView('upg'); S.upg.tempo = 368; refreshUpg();
         const row = UPGREF.find(x => x.u.id === 'tempo'); if (!/★400/.test(row.mt.textContent)) f('Pace of Play at 368 shows ' + row.mt.textContent);
+        // (and its bar: filled as far as it is from the last to the next, the
+        // levels to go and what the rung will be there)
+        { const bar = row.ms.querySelector('.msbar i'), w = parseFloat(bar.style.width), want = Math.round((368 - 350) / 50 * 100);
+          if (row.ms.hidden || Math.abs(w - want) > 1) f('Pace of Play\'s bar at 368: ' + w + '%, want ' + want + '%');
+          const tx = row.ms.textContent; if (!/\u2605400 in\u00a032/.test(tx) || !tx.includes(effectLabel(B.UPG.find(u => u.id === 'tempo'), 400))) f('its bar reads ' + tx); }
         S.upg.tempo = 399; S.gold = 1e300; S.mult = 1; said = []; buyUpg(B.UPG.find(u => u.id === 'tempo'));
         if (!said.some(h => /Milestone/.test(h) && /400/.test(h))) f('Pace of Play to 400 said ' + JSON.stringify(said));
         said = []; buyUpg(B.UPG.find(u => u.id === 'tempo')); if (said.some(h => /Milestone/.test(h))) f('a milestone said at 401');
