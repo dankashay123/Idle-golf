@@ -18,20 +18,29 @@ feature must do, and is usually enough on its own.
 - **Fox cubs** (`cubs`): `CRIT.cub` (`kid`: never laid alone),
   `Scene.cubsBy` (end of `layCritters`: spring, day, dry, `CUB_P` one fox in
   two, five animals at most), `CUB_FORCE`; a Guide entry from `CRIT`.
-- **The canyon** (`canyonlook`): `P_CANYON.tone` takes the column and the
-  share across (`hazSlice` passes `i`, `tt`): `CANYON_STRATA` in bands that
-  waver (`wav`) with cracks and ledges by hash, `canyonPal` (on `T._cns`),
-  a river along the middle of the floor and gravel either side.
+- **The canyon** (`canyonlook`; the user's photo of a gorge: "It needs
+  depth"): `P_CANYON` D 10, N 480 columns; `prof` steps (`CANYON_STEP`
+  cliffs, eased out at the foot, a ledge on each) and `colProf` by column
+  (`reach`, spurs and bays); `hazSpan` keeps a canyon's rims straight
+  (an oval bowed the far rim into a slab). `hazSlice` draws it by its own
+  path: the columns in view only, occlusion kept per screen column (`_ox`;
+  per hazard column left grass slivers), nothing under a pixel deep at the
+  rims, colours `unhaze`d against the distance haze. `tone`: ledges lit
+  with scrub, cliffs in `CANYON_STRATA` bands with streaks, darker and
+  hazier by depth (`canyonPal`, `T._cns`), a winding river on the floor.
 - **The Harvest Moon** (`harvestmoon`): `harvestAt(h, look)` (a seasoned
   course by its look's season, any other by the real month; one round in
   four, `HARVEST_P`, by `roundIndex`; never in a wager), `HARVEST_FORCE`;
   `Scene.harvest` (night, dry), in `rbKey`; `buildSky` draws
   `drawMoon(..., true)` orange, larger and lower; Guide entry `harvest`
   (Night), `RARE_PIC.harvest`.
-- **Lake and river** (`shore`): `P_LAKE.tone` shelves by distance from the
-  shore (`LAKE_SHELF`, `lakePal` on `T._lks`; `hazSlice` passes the hazard
-  and its width; `P_LAKE.N` 84 columns); `waterAt` counts the shelves as
-  water. `Scene.layShore` (after `layCritters`, kind 26, extra, from a
+- **Lake, river and ponds** (`shore`): `shelfTone` shelves water by
+  distance from where it starts (`LAKE_SHELF`, `lakePal`/`lakeShelves` on
+  `T._lks`; `hazSlice` passes the hazard and its width; `P_LAKE.N` 84) for
+  `P_LAKE` and `P_WATER`; the pond by the path and the side lakes in rings
+  of the same; `waterAt` counts the shelves as water. `layPonds`: reeds and
+  pads on the water hazard (`sink`: down on its sunk water) and the path
+  pond. `pondClear` keeps every wood's edge round the path pond. `Scene.layShore` (after `layCritters`, kind 26, extra, from a
   hash; `wetAt`): reed clumps (`REED_ROWS`, `reedMap` by season) in the
   shallows off the fairway, the green and his line; lily pads
   (`lilyPal`), none on ice or the stones' line; not on the sea stack.
@@ -42,7 +51,8 @@ feature must do, and is usually enough on its own.
   the field below the readout, `ALB_GAP` 6 to 14 min of frames drawn
   (`albTick` from the course frame only), `albRows` (drawn large: 99x36,
   five beats, `ALB_LIFT`), a baked gold rim (`albSprite`), `albTap` from a
-  capture `pointerdown` on `#stage`, `albCatch` (feathers in `LUCKY.fx`),
+  capture `pointerdown` on `#stage`, `albCatch` (40 feathers in `LUCKY.fx`,
+  drawn by `albFeather`, quill and vane, white and gold `ALB_FEATHER`),
   the boost `LUCKY.buff` (`ALB_DUR` 60s of `ALB_V` 2x purse, `luckyOn`, live
   only), its line in `buffLines`; `S.albN`; `DEV.albatross()`.
 - **Errands** (`errands`): `B.ERRANDS` (1, 4, 8 hours; check-in measures,
@@ -73,9 +83,9 @@ feature must do, and is usually enough on its own.
   `festHole` (ribbons a stroke under par, live), `FEST_AT`/`FEST_PAY`,
   `festBlock` on Today; tee markers with `fest` (`S.festMk`, worn only when
   tapped: `teeMarkNow`), shapes `pumpkin`, `flake`, `bloom`, `sun`.
-- **The course dog** (`coursedog`), **put aside for later** (the user:
-  "Don't do the dog, sorry. We will save that for later"): `DOG_ON` false,
-  so it is neither drawn nor offered; turn it on to bring it back: `DOG_SIT`, `DOG_TROT`, `DOG_BREED`
+- **The course dog** (`coursedog`), on (`DOG_ON`; put aside a while, then
+  "turn on the dog as well"): `DOG_SIT`, `DOG_TROT` (from behind, tail
+  wagging), `DOG_BREED`
   (`at`: courses' collections done), `dogNow`, `dogSprite`,
   `Scene.drawDog` (before the golfer, through `drawBehind`), the hop on an
   eagle (`dogHop`), the picker in Course Wildlife; `S.dog`.

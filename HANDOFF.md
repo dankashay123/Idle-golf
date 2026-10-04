@@ -21,9 +21,13 @@ through:
   festivals, and wager medals with Bank on the Island Green. Then: a bar
   to the next milestone on every Range row, rare visitors (a gold star),
   fox cubs in spring, and the canyon in layered sandstone with a river.
-  Last: the Harvest Moon (an autumn night in four, a Guide entry) and the
+  Then the Harvest Moon (an autumn night in four, a Guide entry) and the
   island's lake and the stepping-stone river with depth, reeds and lily
-  pads.
+  pads. Last (from a photograph of a gorge): the canyon three times as
+  deep in stepped cliffs and ledges with spurs; the albatross's feather
+  burst made real feathers; the ponds given depth, reeds and pads (and the
+  woods kept off the pond by the path: trees stood in it); the course dog
+  on, seen from behind with its tail wagging.
   Fixed on the way: a Vault floor played again after a gust was never
   called; the Spotted tag sat over a wager's name. Earlier the same day:
   cherry trees, the kingfisher, course collections, the monthly hunt, and
@@ -41,8 +45,6 @@ through:
   GET buttons; the redrawn celebrations; alligators; the Wager Book
   animals; the weekly hunt and its streak; the gold mountain; golden
   animals; the heirloom prices and the wall at Card 220.
-- **The course dog is put aside for later** (`DOG_ON` false): the user
-  will ask for it again; it is built and checked, just off.
 - Settled, in case it comes up: swing speed still matters fully (a hole's
   time is when the ball drops); Fast Walker only shortens a hole's least
   time; every caddie has a trick (don't offer caddie tricks); Dawn and
@@ -255,10 +257,11 @@ Turned down, don't offer: a station on the railway, a photo mode, a
 weather forecast, fireworks, trail flourishes, caddie tricks. Nothing for
 the Tour tab, no new sound but ambience.
 
-1. **Ordinary ponds** given the same depth, reeds and pads as the lake.
-2. **The course dog** back on (built and checked, switched off).
-3. **A frog on a lily pad** now and then, a Guide entry (live only).
-4. **Ask what they think** of the albatross, the canyon and the water.
+1. **A frog on a lily pad** now and then, a Guide entry (live only).
+2. **The dog fetches**: on an ace it runs out and brings the ball back.
+3. **Mist in the canyon** on cold mornings, lying in its depths.
+4. **Ask what they think** of the canyon, the ponds and the dog.
 
-Recommend 1: the ponds are on most holes and now look flat beside the
-lake and the river.
+Recommend 4 first: the canyon changed a great deal from their photo, and
+a word on it now saves a round of rework; then 1, which builds on the
+pads.
