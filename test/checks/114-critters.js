@@ -26,7 +26,7 @@ module.exports = {
         const look = (h, ch) => { S.hole = h; S.chaos = { n: ch || 'Fair' }; Scene.newHole(h, S.tier);
           const P = Scene.props, A = P.filter(p => p.kind === 15), at = ' on hole ' + h;
           o.holes++; if (A.length) o.with++;
-          const kinds = new Set(A.map(p => p.an));
+          const kinds = new Set(A.map(p => p.an === 'cub' ? 'fox' : p.an));   // (a fox's cubs are her own: cubs)
           if (kinds.size > 2) f(kinds.size + ' kinds' + at);
           if (A.length > 5) f(A.length + ' animals' + at);
           for (const p of A) { const C = CRIT[p.an]; o.kinds[p.an] = (o.kinds[p.an] || 0) + 1;

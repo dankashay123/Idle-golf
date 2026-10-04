@@ -12417,6 +12417,17 @@ const CRIT = {
     '..k.k......k.k..',
     '..k.k......k.k..']],
     map: { o: '#D2662A', w: '#F2E8DA', k: '#2A1A12', e: '#141010', n: '#141010' } },
+  // (the user picked them from the menu) a fox's cubs in spring: never laid
+  // on their own (kid), only beside a fox (cubsBy); big ears, a big head,
+  // a lighter coat, and they run off with her
+  cub: { h: 4, at: 'wood', flee: 1, kid: 1, rows: [[
+    '......o.o.',
+    '......ooo.',
+    '......oeon',
+    'w.oooooow.',
+    '.ooooooo..',
+    '..k.k.k.k.']],
+    map: { o: '#E08A4A', w: '#F2E8DA', k: '#3A2418', e: '#141010', n: '#141010' } },
   rabbit: { h: 5, at: 'rough', flee: 1, rows: [[
     '......b..',
     '......bb.',
@@ -12644,14 +12655,17 @@ const CRIT = {
 // how often a hole with the stones' river, or with a pond or a lake, has
 // one; never at night (not out), in the rain or in a wager
 const KING_P_RIVER = 0.5, KING_P_POND = 0.07;
+// how often a fox in spring has her cubs with her
+let CUB_P = 0.5;
+let CUB_FORCE = false;
 let KING_FORCE = false;   // (the developer menu and the checks: on every hole it can be)
 const CRIT_NAME = { fox: 'Fox', rabbit: 'Rabbit', squirrel: 'Squirrel', hedgehog: 'Hedgehog', pheasant: 'Pheasant', badger: 'Badger',
   owl: 'Owl', moorhen: 'Moorhen', swan: 'Swan', heron: 'Heron', frog: 'Frog', turtle: 'Turtle', otter: 'Otter', seal: 'Seal', crab: 'Crab',
-  lizard: 'Lizard', alligator: 'Alligator', eagle: 'Eagle', bat: 'Bat', butterfly: 'Butterfly', dragonfly: 'Dragonfly', eyes: 'Eyes in the Dark', kingfisher: 'Kingfisher' };
+  lizard: 'Lizard', alligator: 'Alligator', eagle: 'Eagle', bat: 'Bat', butterfly: 'Butterfly', dragonfly: 'Dragonfly', eyes: 'Eyes in the Dark', kingfisher: 'Kingfisher', cub: 'Fox Cubs' };
 const CRIT_WHERE = { fox: 'Edge of the woods', rabbit: 'In the rough', squirrel: 'Edge of the woods', hedgehog: 'Woods, day or night', pheasant: 'Autumn and winter rough',
   badger: 'Woods at night', owl: 'Woods at night', moorhen: 'On a pond', swan: 'On a lake', heron: 'At the water’s edge', frog: 'At a pond',
   turtle: 'At the water, spring and summer', otter: 'By the water', seal: 'By the sea', crab: 'On the shore', lizard: 'Dry courses', alligator: 'On a lake, not in winter', eagle: 'High over dry courses',
-  bat: 'After dark', butterfly: 'Spring and summer', dragonfly: 'Over the water', eyes: 'Woods at night', kingfisher: 'Rare, by the stones\u2019 river' };
+  bat: 'After dark', butterfly: 'Spring and summer', dragonfly: 'Over the water', eyes: 'Woods at night', kingfisher: 'Rare, by the stones\u2019 river', cub: 'Spring, beside a fox' };
 // night creatures (laid in layNight): how many dry nights have glow-worms
 // in the rough, moths round the tee's lamps, and a luna moth among them
 const GLOW_P = 0.55, MOTH_P = 0.6, LUNA_P = 0.12;
@@ -19502,6 +19516,7 @@ const Scene = {
       if(this.rain && an !== 'moorhen' && an !== 'frog' && an !== 'heron') return false;
       if(C.big && !waters.some(W => W.isle || W.fill || W.rd > 4)) return false;
       if(C.wet && !waters.length) return false;
+      if(C.kid) return false;
       if(C.dart && !(KING_FORCE || hr(h, 672) < (waters.some(W => W.river) ? KING_P_RIVER : KING_P_POND))) return false;
       return have[C.at]; });
     if(!can.length) return;
@@ -19570,8 +19585,29 @@ const Scene = {
       }
       if(laid) got.push(an);
     }
+    this.cubsBy(put, sea);
     put.sort((a, b) => b.d - a.d);
     this.props = put;
+  },
+  // A fox's cubs in spring (a home course in blossom, or a course as built
+  // in March to May): one fox in two, two cubs beside her on the wood's
+  // side, from the hole's own hash once everything is laid, so nothing else
+  // moves. Each runs off as she does.
+  cubsBy(put, sea){
+    const spring = sea === 'Blossom' || (!sea && MONTH_SEASON[monthNow()] === 3);
+    if(!spring || this.night || this.rain) return;
+    const h = this.hole;
+    for(const f of put.filter(q => q.kind === 15 && q.an === 'fox')){
+      if(!(CUB_FORCE || hr(h * 3 + f.k, 691) < CUB_P)) continue;
+      const sd = f.flip ? 1 : -1;
+      for(let i = 0; i < 2; i++){
+        const d = f.d + (i ? -0.55 : 0.5) + hr(f.k + i, 692) * 0.2, x = f.x + sd * (0.55 + i * 0.35);
+        // (five animals on a hole at most, the cubs among them)
+        if(put.filter(q => q.kind === 15).length >= 5) return;
+        if(this.onPlay(d, x, 0.3) || put.some(q => q !== f && (q.kind === 15 || q.kind <= 2) && Math.abs(q.d - d) < 0.4 && Math.abs(q.x - x) < 0.4)) continue;
+        put.push({ kind: 15, an: 'cub', d, x, alt: 0, r: 0, extra: 1, k: f.k * 10 + i + 1, flip: f.flip });
+      }
+    }
   },
   // the wager's own animal (WAGER_WILD), one time in two, from a hash of
   // the wager and the hole: beside the play, where it stands in that scene
