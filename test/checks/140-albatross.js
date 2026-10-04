@@ -13,7 +13,7 @@ module.exports = {
   name: 'albatross',
   async run(page) {
     const r = await page.evaluate(async () => {
-      const fails = [], f = m => fails.push(m), SNAP = JSON.stringify(S);
+      const fails = [], f = m => fails.push(m), SNAP = JSON.stringify(S), o = {};
       try {
         hideSheet();
         // ---- the wait counts down only while drawn and watched ----
@@ -59,9 +59,19 @@ module.exports = {
         if (albTap(...at(albAt().x, albAt().y))) f('caught twice');
         if ((S.albN || 0) !== s0 + 1) f('counted ' + ((S.albN || 0) - s0));
         if (!(LUCKY.fx.length >= 12)) f('feathers: ' + LUCKY.fx.length);
-        for (let i = 0; i < 12; i++) albTick(Scene.b, 0.1);
+        // the burst drawn alone a moment later: real feathers (the user saw
+        // none: they were dots a pixel or two across), spread well out
+        { const bc = document.createElement('canvas'); bc.width = VW; bc.height = VH; const bg = bc.getContext('2d');
+          const keepA = LUCKY.a, keepW = LUCKY.wait; LUCKY.a = null; LUCKY.wait = 1e9; albTick(bg, 0.25); LUCKY.a = keepA; LUCKY.wait = keepW;
+          const px = bg.getImageData(0, 0, VW, VH).data; let n = 0, x0 = VW, x1 = 0, cols = new Set();
+          for (let i = 0; i < px.length; i += 4) if (px[i + 3]) { n++; const x = (i / 4) % VW; x0 = Math.min(x0, x); x1 = Math.max(x1, x); cols.add(px[i] + ',' + px[i + 1] + ',' + px[i + 2]); }
+          o.burst = n + 'px across ' + (x1 - x0) + ' in ' + cols.size + ' colours';
+          if (n < 400) f('the feathers drew ' + n + ' pixels');
+          if (x1 - x0 < VW * 0.15) f('the feathers spread ' + (x1 - x0) + ' wide');
+          if (cols.size < 4) f('the feathers in ' + cols.size + ' colours'); }
+        for (let i = 0; i < 20; i++) albTick(Scene.b, 0.1);
         if (LUCKY.a) f('still about after being caught');
-        if (LUCKY.fx.length) f('feathers left after a second and more: ' + LUCKY.fx.length);
+        if (LUCKY.fx.length) f('feathers left after two seconds: ' + LUCKY.fx.length);
         // ---- the purse, live only; said by the cog ----
         const g1 = derive().gold; if (Math.abs(g1 / gold0 - ALB_V) > 1e-6) f('purse x' + (g1 / gold0) + ' with the boost');
         OFFLINE = true; const g2 = derive().gold; OFFLINE = false; if (Math.abs(g2 / gold0 - 1) > 1e-6) f('the boost paid away: x' + (g2 / gold0));
@@ -71,10 +81,10 @@ module.exports = {
         const D = derive(); for (let i = 0; i < ALB_DUR + 2; i++) step(1, D);
         if (LUCKY.buff) f('the boost still on after ' + (ALB_DUR + 2) + 's: ' + LUCKY.buff);
         buffTip(0); if (document.getElementById('buffTip').textContent.includes('purse for')) f('the cog still says it');
-      } finally { LUCKY.a = null; LUCKY.buff = 0; LUCKY.fx = []; QUIET = false; OFFLINE = false; S.dgnRun = null; const o = JSON.parse(SNAP); for (const k of Object.keys(S)) delete S[k]; Object.assign(S, o); }
-      return fails;
+      } finally { LUCKY.a = null; LUCKY.buff = 0; LUCKY.fx = []; QUIET = false; OFFLINE = false; S.dgnRun = null; const o0 = JSON.parse(SNAP); for (const k of Object.keys(S)) delete S[k]; Object.assign(S, o0); }
+      return { fails, o };
     });
-    if (r.length) throw new Error(r.join('; '));
-    return ['counts down only drawn and watched; side on, its wings beating, its bill ahead; crosses below the readout in ' + 10 + 's; caught by a tap on it, once; purse doubled live only, by the cog; runs down'];
+    if (r.fails.length) throw new Error(r.fails.join('; '));
+    return ['counts down only drawn and watched; side on, its wings beating, its bill ahead; crosses below the readout in ' + 10 + 's; caught by a tap on it, once, a burst of feathers (' + r.o.burst + '); purse doubled live only, by the cog; runs down'];
   }
 };

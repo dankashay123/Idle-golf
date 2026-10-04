@@ -29807,17 +29807,36 @@ function albTick(c, dt){
         c.fillRect(Math.round(P.x - A.dir * (sp.w * 0.2 + q * 16) + (hr(i, Math.floor(A.t * 1.6 + i / 3)) - 0.5) * sp.w * 0.7), Math.round(P.y + (hr(i + 7, Math.floor(A.t * 1.6 + i / 3)) - 0.5) * 8 + q * 6), 1, 1); }
     }
   }
-  // the feathers of a catch: out from it, drifting down, gone in a second
+  // the feathers of a catch (the user: "feathers burst out of it when
+  // tapped"): real feathers, a quill and its vane, white and some gold,
+  // flung out of it all round, then slowing, rocking and drifting down as
+  // a feather falls, gone in under two seconds
   for(let i = LUCKY.fx.length - 1; i >= 0; i--){
     const F = LUCKY.fx[i]; F.t += dt;
     if(F.t > F.life){ LUCKY.fx.splice(i, 1); continue; }
-    F.vx *= Math.pow(0.12, dt); F.vy = F.vy * Math.pow(0.12, dt) + 26 * dt;
-    F.x += F.vx * dt; F.y += F.vy * dt;
-    const r = Math.floor((F.t * 9 + F.k) % 4), X = Math.round(F.x), Y = Math.round(F.y);
-    c.fillStyle = F.col; c.fillRect(X, Y, r & 1 ? 1 : 2, r & 1 ? 2 : 1);
-    if(F.t < F.life * 0.6){ c.fillStyle = '#B8BEC6'; c.fillRect(X + (r & 1 ? 0 : 1), Y + (r & 1 ? 1 : 0), 1, 1); }
+    F.vx *= Math.pow(0.05, dt); F.vy = F.vy * Math.pow(0.05, dt) + 30 * dt;
+    F.x += (F.vx + Math.sin(F.t * 3.2 + F.k) * 10) * dt; F.y += F.vy * dt;
+    albFeather(c, F.x, F.y, F.a + Math.sin(F.t * 4 + F.k) * 0.7 + F.t * F.spin, F.len, F.col, F.t > F.life - 0.25);
   }
 }
+// one feather, a quill down its middle and its vane either side, wider on
+// one side, at angle a, len pixels long (last: its last moment, the vane
+// thinning to the quill)
+function albFeather(c, x, y, a, len, col, last){
+  const ca = Math.cos(a), sa = Math.sin(a), n = Math.max(3, Math.round(len));
+  for(let k = 0; k <= n; k++){
+    const t = k / n, px = x + ca * (t - 0.5) * len, py = y + sa * (t - 0.5) * len;
+    // the vane: none on the quill's bare end, widest a third of the way down
+    const wv = last || t < 0.18 ? 0 : Math.sin(Math.PI * (t - 0.18) / 0.82) * len * 0.2;
+    for(let s = -1; s <= 1; s += 2){
+      const ww = Math.round(wv * (s > 0 ? 1 : 0.7));
+      for(let q = 1; q <= ww; q++){ c.fillStyle = q === ww ? col[1] : col[0];
+        c.fillRect(Math.round(px - sa * q * s), Math.round(py + ca * q * s), 1, 1); }
+    }
+    c.fillStyle = col[2]; c.fillRect(Math.round(px), Math.round(py), 1, 1);
+  }
+}
+const ALB_FEATHER = [['#FFFFFF', '#DCE2EA', '#A8B0BA'], ['#FFF6D8', '#E8C860', '#B8902A']];
 function albGo(){
   LUCKY.wait = (ALB_GAP[0] + Math.random() * (ALB_GAP[1] - ALB_GAP[0])) * (festTw('alb') ? 0.5 : 1);
   // (along the top of the field, below the readout)
@@ -29841,9 +29860,10 @@ function albCatch(){
   const A = LUCKY.a; if(!A || A.z != null) return;
   A.z = A.t;
   const P = albAt();
-  for(let i = 0; i < 18; i++){ const a = i / 18 * Math.PI * 2 + Math.random() * 0.3, v = 28 + Math.random() * 46;
-    LUCKY.fx.push({ x: P.x + Math.cos(a) * 3, y: P.y + Math.sin(a) * 2, vx: Math.cos(a) * v, vy: Math.sin(a) * v * 0.7 - 10, t: 0, life: 0.7 + Math.random() * 0.4,
-      k: i, col: i % 5 === 0 ? '#E8D8A8' : '#FFFFFF' }); }
+  for(let i = 0; i < 40; i++){ const a = i / 40 * Math.PI * 2 + Math.random() * 0.4, v = 80 + Math.random() * 130;
+    LUCKY.fx.push({ x: P.x + Math.cos(a) * P.w * 0.2, y: P.y + Math.sin(a) * P.h * 0.15, vx: Math.cos(a) * v, vy: Math.sin(a) * v * 0.75 - 20, t: 0,
+      life: 1.2 + Math.random() * 0.5, k: i * 1.7, a: a + Math.PI / 2, spin: (Math.random() - 0.5) * 3,
+      len: Math.max(7, Math.round(VW * (0.032 + Math.random() * 0.02))), col: ALB_FEATHER[i % 4 === 0 ? 1 : 0] }); }
   LUCKY.buff = Math.max(LUCKY.buff, ALB_DUR);
   S.albN = (S.albN || 0) + 1;
   toast('<span class="achk">Lucky Albatross</span>' + ALB_V + '× purse for ' + ALB_DUR + 's', 'ach');
