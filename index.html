@@ -11819,6 +11819,15 @@ const CRIT = {
     'wWwwwwwwwW..',
     '.WWWWWWWW...']],
     map: { w: '#F4F4F0', W: '#C8CCCC', o: '#E88A2A', k: '#1A1A1A' } },
+  // (the user asked for them, "pretty common on lakes": low in the water,
+  // its eye and back above it, by day or night, never in winter)
+  alligator: { h: 4.2, at: 'water', big: 1, both: 1, not: ['Winter'], ice: 0, rows: [[
+    '...........gg......',
+    '......g.g.gEgg.....',
+    '.ggggggggggggggggt.',
+    'ggdgdgdgdggggggggg.',
+    '..ddddddddddddddd..']],
+    map: { g: '#55703A', d: '#34481F', E: '#E8D040', t: '#EDE8D0' } },
   heron: { h: 9, at: 'bank', rows: [[
     '.....kk...',
     '.....wwk..',
@@ -11925,10 +11934,10 @@ const CRIT = {
 };
 const CRIT_NAME = { fox: 'Fox', rabbit: 'Rabbit', squirrel: 'Squirrel', hedgehog: 'Hedgehog', pheasant: 'Pheasant', badger: 'Badger',
   owl: 'Owl', moorhen: 'Moorhen', swan: 'Swan', heron: 'Heron', frog: 'Frog', turtle: 'Turtle', otter: 'Otter', seal: 'Seal', crab: 'Crab',
-  lizard: 'Lizard', eagle: 'Eagle', bat: 'Bat', butterfly: 'Butterfly', dragonfly: 'Dragonfly', eyes: 'Eyes in the Dark' };
+  lizard: 'Lizard', alligator: 'Alligator', eagle: 'Eagle', bat: 'Bat', butterfly: 'Butterfly', dragonfly: 'Dragonfly', eyes: 'Eyes in the Dark' };
 const CRIT_WHERE = { fox: 'Edge of the woods', rabbit: 'In the rough', squirrel: 'Edge of the woods', hedgehog: 'Woods, day or night', pheasant: 'Autumn and winter rough',
   badger: 'Woods at night', owl: 'Woods at night', moorhen: 'On a pond', swan: 'On a lake', heron: 'At the water’s edge', frog: 'At a pond',
-  turtle: 'At the water, spring and summer', otter: 'By the water', seal: 'By the sea', crab: 'On the shore', lizard: 'Dry courses', eagle: 'High over dry courses',
+  turtle: 'At the water, spring and summer', otter: 'By the water', seal: 'By the sea', crab: 'On the shore', lizard: 'Dry courses', alligator: 'On a lake, not in winter', eagle: 'High over dry courses',
   bat: 'After dark', butterfly: 'Spring and summer', dragonfly: 'Over the water', eyes: 'Woods at night' };
 // night creatures (laid in layNight): how many dry nights have glow-worms
 // in the rough, moths round the tee's lamps, and a luna moth among them
@@ -11937,6 +11946,8 @@ let LUNA_FORCE = null;
 const LUNA_ROWS = [['g.....g', 'GGgbgGG', 'GoGbGoG', '.Gg.gG.', '..g.g..'], ['..g.g..', '.GgbgG.', '.GGbGG.', '..g.g..', '..g.g..']];
 const LUNA_COL = { g: '#6EC07E', G: '#C4F2C0', o: '#E0A050', b: '#F4F0DC' };
 // the dry courses, for the lizard and the eagle
+// how often a hole with a lake has its alligator
+const ALLIGATOR_P = 0.6;
 const CRIT_DRY = ['mesa', 'redarch', 'dunes', 'castledunes', 'emberpeak'];
 const CRIT_SPR = {}, CRIT_MAP = {};
 function critMap(an, night){
@@ -11960,7 +11971,7 @@ function critSprite(an, fr, night, flip){
 // creature in gold, on about one hole in GOLD_ODDS of those it is on, and
 // spotting it fills its own entry in the Guide. Decided from a hash once the
 // hole is laid: the lay itself is untouched, the animal only flagged.
-const GOLD_KINDS = ['stag', 'fox', 'rabbit', 'squirrel', 'hedgehog', 'pheasant', 'badger', 'owl', 'swan', 'heron', 'otter', 'eagle'];
+const GOLD_KINDS = ['stag', 'fox', 'rabbit', 'squirrel', 'hedgehog', 'pheasant', 'badger', 'owl', 'swan', 'heron', 'otter', 'eagle', 'alligator'];
 const GOLD_ODDS = 170;
 let GOLD_FORCE = null, GOLD_AT = null;   // the developer menu's: a golden one on the first live hole from this one that has one (-1: on every hole), and the hole it went on
 // the gold: dark, its own body's tone, lighter, and the shine along its back
@@ -18763,7 +18774,8 @@ const Scene = {
     // pond missing something)
     const pool = can.flatMap(an => CRIT[an].at === 'sea' ? [an, an, an, an] : ['water', 'bank'].includes(CRIT[an].at) ? [an, an] : [an]);
     // (by the sea stack the sea's own always: a seal or crabs)
-    const first = have.sea ? (hr(h, 614) < 0.5 ? 'crab' : 'seal') : null;
+    // (on a lake, an alligator more often than not)
+    const first = have.sea ? (hr(h, 614) < 0.5 ? 'crab' : 'seal') : can.includes('alligator') && hr(h, 662) < ALLIGATOR_P ? 'alligator' : null;
     const want = first ? 1 + (hr(h, 602) < 0.3 ? 1 : 0) : hr(h, 601) < 0.55 ? 1 + (hr(h, 602) < 0.3 ? 1 : 0) : 0;
     const got = [], hunt = huntOf(huntWeek());
     for(let i = 0; i < 12 && got.length < want; i++){
@@ -26164,10 +26176,13 @@ function guideSpot(sc){
 // commoner animals to spot this week, the same for the whole week from its
 // number, one of them out at night; all three spotted live on a fair card
 // pays B.HUNT_SOV once.
-const HUNT_DAY = ['fox', 'rabbit', 'moorhen', 'heron', 'otter', 'sparrow', 'robin', 'blackbird'];
+const HUNT_DAY = ['fox', 'rabbit', 'moorhen', 'heron', 'otter', 'sparrow', 'robin', 'blackbird', 'alligator'];
 const HUNT_NIGHT = ['badger', 'owl', 'bat', 'firefly', 'glowworm', 'moth'];
+// (the alligator joins from the week after it was added: the week's three
+// already set stay as they were)
+const HUNT_GATOR_WK = 2962;
 function huntOf(wk){
-  const r = seeded(hash32(wk * 7349 + 11)), day = HUNT_DAY.slice(), pick = [];
+  const r = seeded(hash32(wk * 7349 + 11)), day = HUNT_DAY.filter(id => id !== 'alligator' || wk >= HUNT_GATOR_WK), pick = [];
   for(let i = 0; i < 2; i++) pick.push(day.splice(Math.floor(r() * day.length), 1)[0]);
   pick.push(HUNT_NIGHT[Math.floor(r() * HUNT_NIGHT.length)]);
   return pick;
@@ -26181,7 +26196,8 @@ function huntNow(){
   return S.hunt;
 }
 function huntSee(ids){
-  const H = huntNow(), want = huntOf(H.wk), fresh = ids.filter(id => want.includes(id) && !H.got.includes(id));
+  // (a golden one counts as its kind)
+  const H = huntNow(), want = huntOf(H.wk), fresh = [...new Set(ids.map(id => id.startsWith('g_') ? id.slice(2) : id))].filter(id => want.includes(id) && !H.got.includes(id));
   if(!fresh.length || !fairCard()) return null;
   H.got.push(...fresh);
   const n = H.got.length, paid = n >= 3 && !H.paid;

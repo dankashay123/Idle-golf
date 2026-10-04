@@ -153,15 +153,15 @@ module.exports = {
         const keep = JSON.stringify(S.guide || {}); S.guide = { g_fox: 3, g_stag: 1 }; QUIET = false; trophyRoom('guide');
         const body = document.getElementById('roomBody'), bw = body.getBoundingClientRect();
         const heads = [...body.querySelectorAll('.eyebrow')].map(e => e.textContent);
-        const shelf = [...body.querySelectorAll('.guide')][heads.indexOf('Golden') - 1];
+        const shelf = [...body.querySelectorAll('.guide')][heads.findIndex(t => /^Golden\b/.test(t)) - 1];
         const tiles = shelf ? [...shelf.querySelectorAll('.gtile')] : [];
         const bad = tiles.filter(t => { const b = t.getBoundingClientRect(); return b.left < bw.left - 0.5 || b.right > bw.right + 0.5 || t.scrollWidth > t.clientWidth + 1
           || [...t.querySelectorAll('b, i')].some(e => e.scrollWidth > e.clientWidth + 1); }).map(t => t.querySelector('b').textContent);
         const seen = tiles.filter(t => !t.classList.contains('un')).length;
         hideSheet(); S.guide = JSON.parse(keep);
-        return { n: tiles.length, bad, seen, heads, wide: document.documentElement.scrollWidth > window.innerWidth + 1 };
+        return { n: tiles.length, kinds: GOLD_KINDS.length, bad, seen, heads, wide: document.documentElement.scrollWidth > window.innerWidth + 1 };
       });
-      if (q.n !== 12) fit.push(w + 'x' + h + ': ' + q.n + ' tiles on the golden shelf (' + q.heads.join(', ') + ')');
+      if (q.n !== q.kinds) fit.push(w + 'x' + h + ': ' + q.n + ' tiles on the golden shelf (' + q.heads.join(', ') + ')');
       if (q.bad.length) fit.push(w + 'x' + h + ': out of its tile or the page: ' + q.bad.join(', '));
       if (q.seen !== 2) fit.push(w + 'x' + h + ': ' + q.seen + ' golden tiles shown as seen, not 2');
       if (q.wide) fit.push(w + 'x' + h + ': the page scrolls sideways');

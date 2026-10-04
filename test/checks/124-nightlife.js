@@ -122,7 +122,7 @@ module.exports = {
         for (const id of ['firefly', 'glowworm', 'moth', 'luna', 'owl', 'bat', 'badger', 'hedgehog', 'eyes']) if (!shelf.includes(id)) f('the Night shelf has no ' + id);
         QUIET = false; trophyRoom('guide'); QUIET = true;
         const eb = [...document.querySelectorAll('#roomBody .eyebrow')].map(e => e.textContent.trim());
-        if (!eb.includes('Night')) f('the Guide shows no Night shelf: ' + eb.join(', '));
+        if (!eb.some(t => /^Night\b/.test(t))) f('the Guide shows no Night shelf: ' + eb.join(', '));
         hideSheet();
       } finally {
         HOUR_FORCE = null; FROST_FORCE = null; LUNA_FORCE = null; SEASON_FORCE = -1; OFFLINE = false; window.step = keep;
