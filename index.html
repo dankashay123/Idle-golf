@@ -1016,6 +1016,9 @@ div.guide.hunt,div.guide.mhunt{grid-template-columns:repeat(3,minmax(0,1fr))}
 @keyframes coIn{0%{opacity:0;margin-top:4px}12%{opacity:1;margin-top:0}80%{opacity:1}100%{opacity:0}}
 #wagerStat b{color:var(--aurora);font-weight:700}
 .rfold{border-top:1px solid var(--line)}
+#loadBar{align-items:center;padding:6px 12px 0}
+#loadBar .lkn{margin-right:auto;font-size:var(--f2);color:var(--dim)}
+#loadBar .ldb{min-width:44px}
 .urow .mt .ms{color:var(--brass);font-weight:400;opacity:.8}
 .rfh{display:flex;justify-content:space-between;width:100%;padding:8px 4px;background:none;border:0;color:var(--chalk);
   font-family:var(--disp);font-size:var(--f3);cursor:pointer;min-height:32px;align-items:center}
@@ -1163,6 +1166,7 @@ div.guide.hunt,div.guide.mhunt{grid-template-columns:repeat(3,minmax(0,1fr))}
         <div id="bagList"></div>
       </div>
       <div id="bagSets" hidden>
+        <div class="lkhead" id="loadBar"></div>
         <div id="purseStrip"></div>
         <div class="band"><span class="eyebrow">Sets &amp; Affinities</span><span class="note" id="bagPower"></span></div>
         <div id="setBox"></div>
@@ -4737,6 +4741,11 @@ function migrate(){
   // sighting pay the hunt at once, and the Guide read 4/3)
   else if(S.hunt){ const want = huntOf(S.hunt.wk); S.hunt.got = S.hunt.got.filter((id, i, a) => want.includes(id) && a.indexOf(id) === i);
     if(S.hunt.paid !== undefined && S.hunt.paid !== 1) delete S.hunt.paid; }
+  // (loadouts: three, each nothing or a club's uid for each slot)
+  if(S.loads !== undefined){ if(!Array.isArray(S.loads)) delete S.loads;
+    else S.loads = S.loads.slice(0, LOAD_N).map(x => x && typeof x === 'object' && x.u && typeof x.u === 'object' ? { u: Object.fromEntries(Object.entries(x.u).filter(([k, v]) => B.SLOTS.some(sl => sl.id === k) && (typeof v === 'number' || typeof v === 'string'))) } : null); }
+  if(S.loadWager !== undefined && !(Number.isInteger(S.loadWager) && S.loadWager >= -1 && S.loadWager < LOAD_N)) delete S.loadWager;
+  if(S.loadBack !== undefined && !(S.loadBack && S.loadBack.u && typeof S.loadBack.u === 'object')) delete S.loadBack;
   // (the runner's errand: one of the errands, a start that is a time)
   if(S.errand !== undefined && !(S.errand && typeof S.errand === 'object' && errDef(S.errand.id) && Number.isFinite(S.errand.s0))) delete S.errand;
   else if(S.errand && S.errand.s0 > Date.now() + 864e5) S.errand.s0 = Date.now();
@@ -5950,6 +5959,86 @@ function autoPick(slot){
 // cycle in here hangs the frame rather than merely equipping the wrong wedge.
 // Never during an away session: that loop drops thousands of clubs, and the
 // sweep costs a derive() per candidate. offline() runs one at the end instead.
+// Loadouts (the user picked them from the menu): three saved bags, each the
+// club in every slot, worn with one tap; one of them can be the bag for the
+// wagers, worn as one starts and the course's bag put back as it ends. A
+// club scrapped since is left as it is in its slot.
+const LOAD_N = 3;
+function loadsNow(){
+  if(!Array.isArray(S.loads) || S.loads.length !== LOAD_N) S.loads = Array.from({ length: LOAD_N }, (_, i) => (S.loads || [])[i] || null);
+  return S.loads;
+}
+const findClub = uid => Object.values(S.equip).find(x => x && x.uid === uid) || S.bag.find(x => x.uid === uid) || null;
+function loadSave(i){
+  const L = loadsNow(), u = {};
+  for(const sl of B.SLOTS) if(S.equip[sl.id]) u[sl.id] = S.equip[sl.id].uid;
+  L[i] = { u };
+  save();
+}
+// wear one: what is still there goes on (auto-equip off, or it would undo
+// it); returns how many slots changed and how many clubs were missing
+function loadWear(i, quiet){
+  const L = loadsNow()[i]; if(!L) return null;
+  const r = wearSet(L);
+  if(!quiet){
+    const wasAuto = S.autoEquip; S.autoEquip = 0;
+    toast('<b>Loadout ' + (i + 1) + '</b> worn' + (r.gone ? ' \u00b7 ' + r.gone + ' scrapped since' : '') + (wasAuto ? ' \u00b7 auto-equip off' : ''));
+    renderBag(); renderVitals(); save();
+  }
+  return r;
+}
+// a set of clubs ({ u: slot -> uid }) put on, what is still there
+function wearSet(L){
+  let moved = 0, gone = 0;
+  for(const sl of B.SLOTS){
+    const uid = L.u[sl.id]; if(uid === undefined) continue;
+    const it = findClub(uid);
+    if(!it){ gone++; continue; }
+    if(S.equip[sl.id] === it) continue;
+    const cur = S.equip[sl.id];
+    S.equip[sl.id] = it; S.bag = S.bag.filter(x => x.uid !== uid);
+    if(cur) S.bag.push(cur);
+    moved++;
+  }
+  return { moved, gone };
+}
+// the wagers' bag: on as a wager starts, the course's bag back as it ends
+function loadForWager(){
+  const k = S.loadWager; if(!(k >= 0) || !loadsNow()[k] || S.loadBack) return;
+  const u = {}; for(const sl of B.SLOTS) if(S.equip[sl.id]) u[sl.id] = S.equip[sl.id].uid;
+  S.loadBack = { u };
+  wearSet(loadsNow()[k]);
+}
+function loadAfterWager(){
+  const back = S.loadBack; if(!back) return;
+  S.loadBack = null;
+  wearSet(back);
+  if(!QUIET && !OFFLINE){ renderBag(); renderVitals(); }
+}
+function loadSheet(i){
+  const L = loadsNow()[i];
+  const rows = B.SLOTS.map(sl => { const it = L && L.u[sl.id] !== undefined ? findClub(L.u[sl.id]) : null;
+    return '<div class="lb"><span class="p"></span><span>' + sl.n + '</span><span class="s"' + (it ? ' style="color:' + RC(it.rar) + '"' : '') + '>'
+      + (it ? it.name : L && L.u[sl.id] !== undefined ? 'scrapped' : '\u2014') + '</span></div>'; }).join('');
+  showSheet('<h3>Loadout ' + (i + 1) + (S.loadWager === i ? ' \u00b7 Wagers' : '') + '</h3>'
+    + (L ? rows : '<p>Empty. Save the clubs you wear now to it.</p>')
+    + (L ? '<button class="act" id="ldWear">Wear it</button>' : '')
+    + '<button class="act ghost" id="ldSave">Save the clubs worn now</button>'
+    + (L ? '<button class="act ghost" id="ldWg">' + (S.loadWager === i ? 'Stop wearing it in wagers' : 'Wear it in wagers') + '</button>' : '')
+    + '<p class="hint" style="margin-top:6px">Worn in wagers: on as one starts, your clubs back as it ends.</p>'
+    + '<button class="act ghost" onclick="hideSheet()">Close</button>');
+  const on = (id, fn) => { const b = $(id); if(b) b.onclick = fn; };
+  on('ldWear', () => { hideSheet(); loadWear(i); });
+  on('ldSave', () => { loadSave(i); toast('<b>Loadout ' + (i + 1) + '</b> saved'); loadSheet(i); renderBag(); });
+  on('ldWg', () => { S.loadWager = S.loadWager === i ? -1 : i; save(); loadSheet(i); renderBag(); });
+}
+function renderLoadBar(){
+  const el = $('loadBar'); if(!el) return;
+  const L = loadsNow();
+  el.innerHTML = '<span class="lkn">Loadouts</span>' + L.map((x, i) => '<button class="lkauto ldb' + (x ? ' on' : '') + '" data-ld="' + i + '">'
+    + (i + 1) + (S.loadWager === i ? ' \u00b7 Wagers' : '') + '</button>').join('');
+  el.querySelectorAll('[data-ld]').forEach(b => b.onclick = () => loadSheet(+b.dataset.ld));
+}
 function autoEquipSweep(){
   const took = [];
   if(!S.autoEquip || OFFLINE) return took;
@@ -6542,6 +6631,7 @@ function wagerSpot(R){
 function startDgn(d){
   if(S.dgnRun){ toast('One wager at a time'); return; }
   if(S.dgnKeys[d.id] < 1){ toast('No entries left for ' + d.n); return; }
+  loadForWager();
   S.dgnKeys[d.id]--; bump('runs');
   const D0 = derive();
   // The Vault has to earn its way back down, so it starts where it left off.
@@ -6803,6 +6893,10 @@ function wagerGuide(id){
     + '<button class="act ghost" onclick="hideSheet()">Close</button>');
 }
 function endDgn(d, R, D){
+  // (the course's bag back once the wager is paid)
+  try{ return endDgnCore(d, R, D); } finally { loadAfterWager(); }
+}
+function endDgnCore(d, R, D){
   // (left between two floors: the one cleared counts)
   if(R.held) floorOn(R, true);
   S.dgnRun = null;
@@ -27569,6 +27663,7 @@ function renderBag(){
     d.onclick = () => { S.bagSlot = sl.id; renderBag(); };
     g.appendChild(d);
   }
+  renderLoadBar();
   // (the slot bar sits just under the sub tabs, both held at the top)
   const nav = $('bagNav'); if(nav && nav.offsetHeight) document.documentElement.style.setProperty('--bagnav', nav.offsetHeight + 'px');
   renderBagSets();
