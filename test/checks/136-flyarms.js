@@ -6,7 +6,10 @@
  * Draws the pose twice, alone at real size: once as it is, once with the
  * arms' lines left out; wherever the second has his own pixels from his
  * shoulders up, the first must be the same there (the club, spinning flat
- * over his head, is drawn last in both, so it is the same in both). */
+ * over his head, is drawn last in both, so it is the same in both).
+ * Both arms his own skin, the one colour, and four pixels thick at least at
+ * real size (the user: the far one was another colour; "not little stick
+ * arms"). */
 'use strict';
 
 module.exports = {
@@ -24,7 +27,14 @@ module.exports = {
               const h = 58, w = Math.round(h * SPRITE.gBack.w / SPRITE.gBack.h);
               const keep = window.pxLine, O = outfitNow(), arm = [O.skin || PX.skin, O.skin2 || PX.skin2];
               if (noArms) window.pxLine = function (c, a, b, x2, y2, col) { if (arm.includes(col)) return; return keep.apply(this, arguments); };
+              const used = [];
+              if (!noArms) window.pxLine = function (c, a, b, x2, y2, col, th) { if (arm.includes(col)) used.push([col, th]); return keep.apply(this, arguments); };
               try { paintHeli(g, 30 - w / 2, 40, w, h, t, 40 + h + 8); } finally { window.pxLine = keep; }
+              // (both arms the one colour, the user saw the far one darker;
+              // and thicker than sticks, the user asked)
+              if (!noArms){ const cols = new Set(used.map(u => u[0])), thin = Math.min(...used.map(u => u[1]));
+                if (used.length < 4 || cols.size !== 1) (window.__fe = window.__fe || []).push(gen + ': the arms in ' + cols.size + ' colours (' + used.length + ' lines)');
+                if (thin < 4) (window.__fe = window.__fe || []).push(gen + ': arms ' + thin + ' pixels thick at ' + h + ' tall'); }
               return { d: g.getImageData(0, 0, 60, 120).data, y0: 40, h };
             };
             const A = draw(false), N = draw(true);
@@ -42,6 +52,8 @@ module.exports = {
       } finally { S.gender = was; buildSprites(); }
       return out;
     });
+    const fe = await page.evaluate(() => { const e = window.__fe || []; window.__fe = []; return e; });
+    if (fe.length) throw new Error([...new Set(fe)].join('; '));
     for (const x of r) {
       if (x.body < 150) throw new Error('too little of him drawn to judge (' + JSON.stringify(x) + ')');
       if (x.over > 0) throw new Error('an arm crosses his head or back as he flies: ' + JSON.stringify(x) + ' ' + JSON.stringify(await page.evaluate(() => (window.__fa || []).slice(0, 8))));

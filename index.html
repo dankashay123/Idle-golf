@@ -931,6 +931,10 @@ div.guide.hunt,div.guide.mhunt{grid-template-columns:repeat(3,minmax(0,1fr))}
    its own colour at the foot of the medal, apart from the red one */
 #roomHunt{position:absolute;bottom:-4%;right:-6%;width:24%;height:24%;border-radius:50%;background:var(--aurora);box-shadow:0 0 0 1px rgba(0,0,0,.6);display:none}
 #roomBtn.hunt #roomHunt{display:block}
+/* and the same dot on the Trophy Room's Guide tab and by its Weekly Hunt,
+   so the medal's dot says where it leads (the user asked) */
+.huntDot{display:inline-block;width:.62em;height:.62em;border-radius:50%;background:var(--aurora);
+  box-shadow:0 0 0 1px rgba(0,0,0,.6);margin-left:.4em;vertical-align:.08em}
 /* The perks' star, last in the left column under the medal (it stood alone
    on the right, over the map, until the user asked for it here). */
 #perkBtn{position:relative;width:11%;min-width:24px;aspect-ratio:1/1;flex:0 0 auto;pointer-events:auto;
@@ -23147,11 +23151,15 @@ function paintGolfer(c, x, y, w, h, ph, t, bot, walking, walkPh, spr, arc, putt,
   // (every look a pixel thicker in the arm now, the plain ones too: the
   // user asked for everyone bulkier)
   const th = (h > 34 ? 2 : 1) + (h > 30 ? 1 : 0);
+  // (and his arms a pixel more again, drawn large: the user asked for them
+  // thicker, "not too much, but just so they aren't little stick arms";
+  // the club keeps th)
+  const ath = th + (h > 44 ? 1 : 0);
   // a pose's arm or club behind him goes down first, under him
   const PZ = HER_POSE ? herPoseAt(HER_POSE, sx, sy, w, h, cl, bot) : null;
-  const farArm = P => { if(P.far) for(let i = 1; i < P.far.length; i++) pxLine(c, P.far[i - 1][0], P.far[i - 1][1], P.far[i][0], P.far[i][1], OS.arm2 || OS.skin2 || PX.skin2, th);
-    else pxLine(c, sx - w*0.10, sy + 1, P.hx, P.hy, OS.arm2 || OS.skin2 || PX.skin2, th);
-    if(P.far && h > 22){ const [fx2, fy2] = P.far[P.far.length - 1]; c.fillStyle = OS.hand || OS.shirt; c.fillRect(Math.round(fx2) - 1, Math.round(fy2) - 1, th + 1, th + 1); } };
+  const farArm = P => { if(P.far) for(let i = 1; i < P.far.length; i++) pxLine(c, P.far[i - 1][0], P.far[i - 1][1], P.far[i][0], P.far[i][1], OS.arm2 || OS.skin2 || PX.skin2, ath);
+    else pxLine(c, sx - w*0.10, sy + 1, P.hx, P.hy, OS.arm2 || OS.skin2 || PX.skin2, ath);
+    if(P.far && h > 22){ const [fx2, fy2] = P.far[P.far.length - 1]; c.fillStyle = OS.hand || OS.shirt; c.fillRect(Math.round(fx2) - 1, Math.round(fy2) - 1, ath + 1, ath + 1); } };
   if(PZ && PZ.farBack) farArm(PZ);
   if(PZ && PZ.clubBack && !PZ.noClub) drawClub(c, PZ.gx, PZ.gy, PZ.tx, PZ.ty, th, h, PZ.turn, t);
   blitShear(c, spr, x, y, w, h, shear, g.bulk);
@@ -23166,8 +23174,8 @@ function paintGolfer(c, x, y, w, h, ph, t, bot, walking, walkPh, spr, arc, putt,
     const P = PZ;
     if(!P.farBack) farArm(P);
     const N = P.near || [[sx, sy], [P.hx, P.hy]];
-    for(let i = 1; i < N.length; i++) pxLine(c, N[i - 1][0], N[i - 1][1], N[i][0], N[i][1], OS.arm || OS.skin || PX.skin, th);
-    if(h > 22){ c.fillStyle = OS.hand || OS.shirt; c.fillRect(Math.round(P.hx) - 1, Math.round(P.hy) - 1, th + 1, th + 1); }
+    for(let i = 1; i < N.length; i++) pxLine(c, N[i - 1][0], N[i - 1][1], N[i][0], N[i][1], OS.arm || OS.skin || PX.skin, ath);
+    if(h > 22){ c.fillStyle = OS.hand || OS.shirt; c.fillRect(Math.round(P.hx) - 1, Math.round(P.hy) - 1, ath + 1, ath + 1); }
     g.hand = { x: P.hx, y: P.hy }; arc.length = 0;
     // (a club spun flat: a faint ring where it goes round)
     if(P.ring && h > 40){ c.globalAlpha = 0.28; c.fillStyle = PX.bone;
@@ -23183,9 +23191,9 @@ function paintGolfer(c, x, y, w, h, ph, t, bot, walking, walkPh, spr, arc, putt,
   }
   // his arms in his own skin: a red demon's are red (they were always the
   // plain tone, whatever his face was); in plate, where he wears it
-  pxLine(c, sx, sy, hx, hy, OS.arm || OS.skin || PX.skin, th);
-  pxLine(c, sx - w*0.10, sy + 1, hx, hy, OS.arm2 || OS.skin2 || PX.skin2, th);
-  if(h > 22){ c.fillStyle = OS.hand || OS.shirt; c.fillRect(Math.round(hx) - 1, Math.round(hy) - 1, th + 1, th + 1); }
+  pxLine(c, sx, sy, hx, hy, OS.arm || OS.skin || PX.skin, ath);
+  pxLine(c, sx - w*0.10, sy + 1, hx, hy, OS.arm2 || OS.skin2 || PX.skin2, ath);
+  if(h > 22){ c.fillStyle = OS.hand || OS.shirt; c.fillRect(Math.round(hx) - 1, Math.round(hy) - 1, ath + 1, ath + 1); }
   g.hand = { x: hx, y: hy };
   // the arc the head cuts through a swing, for the clubs that leave one
   if(ph > 0){ arc.push([tx, ty]); if(arc.length > 9) arc.shift(); } else arc.length = 0;
@@ -23230,10 +23238,12 @@ function paintHeli(c, x, y, w, h, t, bot){
   // from behind, his shoulders and head are nearer than they are, so they
   // are drawn first and he over them, the elbows out past his head (drawn
   // over his back they read as arms bent behind it: the user saw it)
-  const ath = Math.max(th, Math.round(h * 0.05));
+  const ath = Math.max(th, Math.round(h * 0.068));
   const ex = w * 0.17, ey = y + h * 0.07;
-  pxLine(c, x + w * 0.27, y + h * 0.30, x + ex, ey, O.skin2 || PX.skin2, ath);
-  pxLine(c, x + ex, ey, hx - ath / 2, hy + ath, O.skin2 || PX.skin2, ath);
+  // (both his own skin: the far one in the shade read as another colour
+  // from the other, the user saw)
+  pxLine(c, x + w * 0.27, y + h * 0.30, x + ex, ey, O.skin || PX.skin, ath);
+  pxLine(c, x + ex, ey, hx - ath / 2, hy + ath, O.skin || PX.skin, ath);
   pxLine(c, x + w * 0.73, y + h * 0.30, x + w - ex, ey, O.skin || PX.skin, ath);
   pxLine(c, x + w - ex, ey, hx + ath / 2, hy + ath, O.skin || PX.skin, ath);
   c.fillStyle = O.hand || O.skin || PX.skin;
@@ -27821,7 +27831,7 @@ function roomGuide(w){
   { const H = huntNow(), want = huntOf(H.wk);
     // (the weeks in a row so far, this one counted once it is done)
     const run = H.paid ? (S.huntRun ? S.huntRun.n : 1) : huntRunFor(H.wk) - 1;
-    h += '<div class="eyebrow" style="margin:8px 0 4px">Weekly Hunt \u00b7 ' + H.got.length + '/3 \u00b7 ' + (H.paid ? 'Done' : '+' + huntPayFor(huntRunFor(H.wk)) + sovIc())
+    h += '<div class="eyebrow" style="margin:8px 0 4px">Weekly Hunt' + (huntOpen() ? '<span class="huntDot"></span>' : '') + ' \u00b7 ' + H.got.length + '/3 \u00b7 ' + (H.paid ? 'Done' : '+' + huntPayFor(huntRunFor(H.wk)) + sovIc())
       + (run > 1 ? ' \u00b7 ' + run + '\u00a0weeks in a row' : '') + '</div><div class="guide hunt">';
     for(const id of want){ const g = GUIDE.find(x => x.id === id), got = H.got.includes(id);
       const [url, wh] = guideUrl(id).split('|'), [sw, sh] = (wh || '12x12').split('x').map(Number), z = Math.max(1, Math.floor(Math.min(60 / sw, 44 / sh)));
@@ -27900,7 +27910,8 @@ function trophyRoom(tab){
   if(QUIET) return;                 // no sheet is shown while the game plays out of sight
   const tabs = [['today', 'Today'], ['case', 'Cabinet'], ['hon', 'Honours'], ['guide', 'Guide']];
   showSheet('<h3>Trophy Room</h3><div class="shopnav">' + tabs.map(([id, t]) =>
-      '<button data-room="' + id + '"' + (roomTab === id ? ' class="on"' : '') + '>' + t + '</button>').join('')
+      '<button data-room="' + id + '"' + (roomTab === id ? ' class="on"' : '') + '>' + t
+      + (id === 'guide' && huntOpen() ? '<span class="huntDot" title="Weekly Hunt to finish"></span>' : '') + '</button>').join('')
     + '</div><div id="roomBody"></div>'
     + '<button class="act ghost" onclick="hideSheet()">Close</button>');
   const sh = $('sheet');

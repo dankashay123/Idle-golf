@@ -98,6 +98,14 @@ module.exports = {
           if (tiles[1].classList.contains('found')) f('one not found shown found');
           if (!tiles.every(t => { const i = t.querySelector('img'); return i && i.getAttribute('src').startsWith('data:image'); })) f('a hunt tile without its picture'); }
         const eb = document.querySelectorAll('#roomBody .eyebrow')[1]; if (!eb || !/Weekly Hunt/.test(eb.textContent) || !/1\/3/.test(eb.textContent)) f('the hunt\'s line reads ' + (eb && eb.textContent));
+        // the medal's round dot shown again on the Guide tab and by the
+        // hunt's line (the user asked, to say where the dot leads), and on
+        // neither once the hunt is done
+        { const dots = () => [!!document.querySelector('.shopnav [data-room="guide"] .huntDot'), !!(eb && eb.querySelector('.huntDot'))];
+          const d1 = dots(); if (!d1[0] || !d1[1]) f('the hunt\'s dot on the Guide tab ' + d1[0] + ', by its line ' + d1[1]);
+          const H = huntNow(), pd = H.paid; H.paid = 1; trophyRoom('case');
+          if (document.querySelector('.shopnav [data-room="guide"] .huntDot')) f('the hunt done, its dot still on the Guide tab');
+          H.paid = pd; }
         hideSheet(); QUIET = true;
         // ---- weeks in a row: each one before this adds HUNT_STREAK, up to
         // HUNT_STREAK_MAX of them; a week missed starts again ----
