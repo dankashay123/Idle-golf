@@ -21788,55 +21788,81 @@ const HER_TWIRL = 0.42, TOSS_T = 1.15;
 // On an ace each has a celebration of their own (the user asked for his
 // too), over in well under the second the ace is held, so nothing of it is
 // left for the next tee: he leaps with both arms up, the club high, lands
-// and pumps his fist twice; she twirls the club, then hops with it held up
-// high in both hands. After that the last frame is held, this hole only.
+// and pumps his fist twice; she puts a hand behind her head and spins the
+// club flat over it in the other, hopping once. After that the last frame
+// is held, this hole only.
 const celebOf = (d, fem) => fem ? herPoseOf(d) : hisPoseOf(d);
 const CELEB_END = 0.9;
 // how far off the ground the leap carries them, in heights, at T seconds
 const celebLift = (kind, T) => kind === 'hisace' ? (T > 0 && T < 0.4 ? Math.sin(Math.PI * T / 0.4) * 0.16 : 0)
   : kind === 'herace' ? (T > HER_TWIRL && T < HER_TWIRL + 0.36 ? Math.sin(Math.PI * (T - HER_TWIRL) / 0.36) * 0.14 : 0) : 0;
-// where her hand, the club's grip and head, and (on her hip) her far arm go,
-// side on, facing the target; sx, sy her near shoulder
+// where his or her hands, arms and club go, side on, facing the target; sx,
+// sy the near shoulder of the finish picture. Placed on its own 40 by 58
+// grid (at): his head is columns 21 to 31 and rows 2 to 12, her ponytail
+// out to column 18, the body columns 19 to 30. An arm raised over the head
+// goes up past the front of the face, never across it, and what passes
+// behind the body or the head (farBack, clubBack) is drawn before the body,
+// so it is hidden there (the user saw arms across faces and a club through
+// the chest: "not clipping through the body anywhere").
 function herPoseAt(P, sx, sy, w, h, cl, bot){
   const T = P.t, ease = u => u < 0 ? 0 : u > 1 ? 1 : u * u * (3 - 2 * u);
-  const hip = [[sx - w*0.10, sy + 1], [sx - w*0.30, sy + h*0.12], [sx - w*0.13, sy + h*0.235]];
+  const at = (col, row) => [sx + w * (col - 24) / 40, sy + h * (row - 15.43) / 58];
+  const mix = (A, Bq, u) => [A[0] + (Bq[0] - A[0]) * u, A[1] + (Bq[1] - A[1]) * u];
+  const path = (L, u) => L[0].map((p, i) => mix(p, L[1][i], u));
+  // the far arm's hand on her hip, the elbow out behind her
+  const hip = [at(20, 16.4), at(9.5, 22.6), at(18.5, 29)];
+  // the near arm hanging (where a raise starts from), and raised past the
+  // front of the face, the hand above the cap
+  const nearDown = [at(26, 15), at(28, 22), at(31, 28)];
+  const nearUp = [at(28.5, 14.5), at(36, 7.5), at(32.5, -3)];
+  // (a raise swings out round the front of the face, not through it)
+  const raise = (u, L0) => path([L0 || nearDown, nearUp], u).map((p, i) => i ? [p[0] + Math.sin(Math.PI * u) * w * 0.10, p[1]] : p);
+  const farDown = [at(20, 16), at(19, 23), at(20, 29)];
   if(P.kind === 'hisace'){
     // up with both arms, the club high in his near hand; down, and his far
     // fist pumped twice from over his head to his chest, then held there
-    const up = ease(T / 0.12), hx = sx + w*(0.30 - 0.22 * up), hy = sy + h*(0.24 - 0.58 * up);
+    const up = ease(T / 0.12), near = raise(up), [hx, hy] = near[2];
     const pumpU = T < 0.42 ? 0 : T < CELEB_END ? Math.abs(Math.sin((T - 0.42) / (CELEB_END - 0.42) * Math.PI * 2)) : 1;
-    const fy = sy - h*0.30 * up + (sy + h*0.10 - (sy - h*0.30)) * pumpU, fx = sx - w*(0.12 + 0.06 * pumpU);
-    const far = [[sx - w*0.10, sy + 1], [sx - w*(0.22 - 0.06 * up) , sy - h*0.06 * up + h*0.08 * pumpU], [fx, fy]];
-    return { hx, hy, gx: hx, gy: hy + h*0.04, tx: hx - w*0.06, ty: hy - cl*(0.25 + 0.6 * up), turn: 1, far };
+    const farUp = [at(20, 15), at(15, 6), at(17, -2)], farChest = [at(20, 15), at(16, 21), at(22, 20)];
+    const far = path([farDown, farUp], up).map((p, i) => mix(p, farChest[i], pumpU));
+    return { hx, hy, near, gx: hx, gy: hy + h*0.04, tx: hx - w*0.02, ty: hy - cl*(0.25 + 0.6 * up), turn: 1, far };
   }
   if(P.kind === 'herace'){
-    // the twirl, then the club up high in both hands as she hops
-    if(T < HER_TWIRL) return herPoseAt({ kind: 'twirl', t: T }, sx, sy, w, h, cl, bot);
-    const up = ease((T - HER_TWIRL) / 0.12), hx = sx + w*(0.22 - 0.14 * up), hy = sy + h*(0.20 - 0.52 * up);
-    const far = [[sx - w*0.10, sy + 1], [sx - w*(0.16 - 0.04 * up), sy - h*0.14 * up], [hx - w*0.06, hy + h*0.02]];
-    return { hx, hy, gx: hx, gy: hy + h*0.03, tx: hx + w*0.12, ty: hy - cl*(0.3 + 0.55 * up), turn: 1, far };
+    // her far hand behind her head, her near arm up past her face and the
+    // club spun flat over her head in that hand like a baton, round and
+    // round (the user: "arms behind her head but spinning the club in her
+    // right hand"), slowing to a stop as the celebration ends, the club
+    // level and pointing at the flag
+    const up = ease(T / 0.15), near = raise(up), [hx, hy] = near[2];
+    const farHead = [at(20, 15), at(14, 7), at(21.5, 5)];
+    const far = path([farDown, farHead], up);
+    const v = Math.min(1, T / CELEB_END), turns = 2 * (v * 2 - v * v);
+    const a = turns * Math.PI * 2, r = cl * 0.5, dx = Math.cos(a), dy = Math.sin(a) * 0.17;
+    return { hx, hy, near, gx: hx - dx * r, gy: hy - dy * r, tx: hx + dx * r, ty: hy + dy * r, turn: dx < 0 ? -1 : 1,
+      far, farBack: true, clubBack: up < 0.9, ring: up > 0.9 && v < 0.85 ? { x: hx, y: hy, r, k: 0.17 } : null };
   }
   if(P.kind === 'toss'){
     // (the away card: handfuls of money flung up over his head, both arms,
     // again and again; no club)
     const q = (T % TOSS_T) / TOSS_T, up = q < 0.42 ? ease(q / 0.42) : q < 0.55 ? 1 : 1 - ease((q - 0.55) / 0.45);
-    const hx = sx + w*(0.20 - 0.06 * up), hy = sy + h*(0.26 - 0.56 * up);
-    const far = [[sx - w*0.10, sy + 1], [sx - w*(0.20 + 0.04 * up), sy + h*(0.12 - 0.24 * up)], [sx - w*(0.14 + 0.04 * up), sy + h*(0.26 - 0.56 * up)]];
-    return { hx, hy, gx: hx, gy: hy, tx: hx, ty: hy, turn: 1, far, noClub: true };
+    const near = raise(up), [hx, hy] = near[2];
+    const far = path([farDown, [at(20, 15), at(15, 6), at(17, -2)]], up);
+    return { hx, hy, near, gx: hx, gy: hy, tx: hx, ty: hy, turn: 1, far, noClub: true };
   }
   if(P.kind === 'heralb'){
-    // the club pointed out at the flag, her arm straight, the other hand on
+    // the club pointed out at the flag, her arm straight out from the front
+    // of her shoulder (the user saw it across her chest), the other hand on
     // her hip: called it
-    const u = ease(T / 0.16), hx = sx + w*(0.22 + 0.30 * u), hy = sy + h*(0.20 - 0.14 * u);
-    return { hx, hy, gx: hx - w*0.04, gy: hy + h*0.01, tx: hx + cl*(0.3 + 0.62 * u), ty: hy - cl*(0.5 - 0.42 * u), turn: 1, far: u > 0.4 ? hip : null };
+    const u = ease(T / 0.16), near = path([nearDown, [at(29, 15.5), at(37, 16.5), at(45, 17)]], u), [hx, hy] = near[2];
+    return { hx, hy, near, gx: hx - w*0.03, gy: hy + h*0.005, tx: hx + cl*(0.3 + 0.62 * u), ty: hy - cl*(0.5 - 0.42 * u), turn: 1, far: path([farDown, hip], u), farBack: true };
   }
   if(P.kind === 'hisalb'){
-    // the club lifted over his head in both hands, level, and shaken once
+    // the club lifted over his head in both hands, level, and shaken once:
+    // each arm up past its side of his head
     const u = ease(T / 0.16), sh = T > 0.16 && T < 0.5 ? Math.sin((T - 0.16) * 18) * h * 0.02 : 0;
-    const hx = sx + w*(0.30 - 0.10 * u), hy = sy + h*(0.24 - 0.56 * u) + sh;
-    const fx = sx - w*(0.10 + 0.26 * u), fy = sy + h*(0.24 - 0.56 * u) - sh;
-    const far = [[sx - w*0.10, sy + 1], [sx - w*(0.16 + 0.12 * u), sy - h*0.12 * u], [fx, fy]];
-    return { hx, hy, gx: hx + w*0.04, gy: hy, tx: fx - w*0.30, ty: fy + h*0.01, turn: -1, far };
+    const near = raise(u).map((p, i) => [p[0], p[1] + (i ? sh * u : 0)]), [hx, hy] = near[2];
+    const far = path([farDown, [at(20, 15), at(14, 6), at(13, -3)]], u).map((p, i) => [p[0], p[1] - (i ? sh * u : 0)]), [fx, fy] = far[2];
+    return { hx, hy, near, gx: hx + w*0.04, gy: hy, tx: fx - w*0.28, ty: fy + h*0.01, turn: -1, far, clubBack: u < 0.9 };
   }
   if(P.kind === 'hisbird'){
     // the club down at his side, his far fist pumped once at his chest
@@ -21854,19 +21880,21 @@ function herPoseAt(P, sx, sy, w, h, cl, bot){
   if(P.kind === 'hip'){
     // leaning on it in front of her, planted, the other hand on her hip
     const hx = sx + w*0.26, hy = sy + h*0.25;
-    return { hx, hy, gx: hx, gy: hy, tx: hx + h*0.30, ty: bot - 1, turn: 1, far: hip };
+    return { hx, hy, gx: hx, gy: hy, tx: hx + h*0.30, ty: bot - 1, turn: 1, far: hip, farBack: true };
   }
-  // the twirl: round her hand about its middle one and a half turns, then
-  // over her shoulder at rest, the head behind her
-  const hx0 = sx + w*0.22, hy0 = sy + h*0.20;
+  // the twirl: the club spun round her hand out in front of her, on its
+  // edge (the part going away behind her, so it never cuts across her),
+  // one and a half turns, then over her shoulder at rest, the head behind
+  // her neck
+  const [hx0, hy0] = at(35, 27);
   if(T < HER_TWIRL){
     const a = Math.PI * 0.15 + T / HER_TWIRL * Math.PI * 3;
-    const dx = Math.sin(a), dy = Math.cos(a) * 0.9;
-    return { hx: hx0, hy: hy0, gx: hx0 - dx * cl * 0.42, gy: hy0 - dy * cl * 0.42, tx: hx0 + dx * cl * 0.58, ty: hy0 + dy * cl * 0.58, turn: dx < 0 ? -1 : 1 };
+    const dz = Math.sin(a), dx = dz * 0.2, dy = Math.cos(a);
+    return { hx: hx0, hy: hy0, near: [at(26, 15), at(30.5, 21), [hx0, hy0]], gx: hx0 - dx * cl * 0.42, gy: hy0 - dy * cl * 0.42, tx: hx0 + dx * cl * 0.58, ty: hy0 + dy * cl * 0.58, turn: dx < 0 ? -1 : 1, clubBack: dz < 0.45 };
   }
   const u = ease((T - HER_TWIRL) / 0.12);
   const hx = hx0 + (sx + w*0.10 - hx0) * u, hy = hy0 + (sy + h*0.06 - hy0) * u;
-  return { hx, hy, gx: hx + w*0.05, gy: hy + h*0.02, tx: hx - cl*0.7, ty: hy - cl*0.3, turn: -1, far: u > 0.5 ? hip : null };
+  return { hx, hy, gx: hx + w*0.05, gy: hy + h*0.02, tx: hx - cl*0.7, ty: hy - cl*0.3, turn: -1, far: u > 0.5 ? hip : null, farBack: u > 0.5, clubBack: true };
 }
 /* One golfer, at any size, in the look he is wearing: the course draws him
    through this and so does the battery saver, so the two always match. ph is
@@ -21938,35 +21966,39 @@ function paintGolfer(c, x, y, w, h, ph, t, bot, walking, walkPh, spr, arc, putt,
     c.globalAlpha = 1; c.globalCompositeOperation = 'source-over';
     return;
   }
-  blitShear(c, spr, x, y, w, h, shear, g.bulk);
-  // (what he wears over himself and under his arms: The Void's hood and plates)
-  if(FX && FX.body) FX.body(c, g);
-
   const sx = x + w*(spr.ax || 0.66), sy = y + h*(spr.ay || 0.30);
   const al = h*0.30, cl = h*0.64;   // (a touch longer: he stands taller at address now)
-  const armH = arm * 0.55;
-  let hx = sx + Math.sin(armH)*al, hy = sy + Math.cos(armH)*al*0.85;
-  let tx = hx + Math.sin(arm)*cl, ty = hy + Math.cos(arm)*cl*0.90;
   const OS = outfitNow();
   // (every look a pixel thicker in the arm now, the plain ones too: the
   // user asked for everyone bulkier)
   const th = (h > 34 ? 2 : 1) + (h > 30 ? 1 : 0);
-  // her own poses as the ball drops (herPoseOf): her arms and club placed
-  // here instead of by the swing
-  if(HER_POSE && !walking){
-    const P = herPoseAt(HER_POSE, sx, sy, w, h, cl, bot);
-    if(P.far) for(let i = 1; i < P.far.length; i++) pxLine(c, P.far[i - 1][0], P.far[i - 1][1], P.far[i][0], P.far[i][1], OS.arm2 || OS.skin2 || PX.skin2, th);
+  // a pose's arm or club behind him goes down first, under him
+  const PZ = HER_POSE ? herPoseAt(HER_POSE, sx, sy, w, h, cl, bot) : null;
+  const farArm = P => { if(P.far) for(let i = 1; i < P.far.length; i++) pxLine(c, P.far[i - 1][0], P.far[i - 1][1], P.far[i][0], P.far[i][1], OS.arm2 || OS.skin2 || PX.skin2, th);
     else pxLine(c, sx - w*0.10, sy + 1, P.hx, P.hy, OS.arm2 || OS.skin2 || PX.skin2, th);
-    if(P.far && h > 22){ const [fx2, fy2] = P.far[P.far.length - 1]; c.fillStyle = OS.hand || OS.shirt; c.fillRect(Math.round(fx2) - 1, Math.round(fy2) - 1, th + 1, th + 1); }
-    pxLine(c, sx, sy, P.hx, P.hy, OS.arm || OS.skin || PX.skin, th);
+    if(P.far && h > 22){ const [fx2, fy2] = P.far[P.far.length - 1]; c.fillStyle = OS.hand || OS.shirt; c.fillRect(Math.round(fx2) - 1, Math.round(fy2) - 1, th + 1, th + 1); } };
+  if(PZ && PZ.farBack) farArm(PZ);
+  if(PZ && PZ.clubBack && !PZ.noClub) drawClub(c, PZ.gx, PZ.gy, PZ.tx, PZ.ty, th, h, PZ.turn, t);
+  blitShear(c, spr, x, y, w, h, shear, g.bulk);
+  // (what he wears over himself and under his arms: The Void's hood and plates)
+  if(FX && FX.body) FX.body(c, g);
+  const armH = arm * 0.55;
+  let hx = sx + Math.sin(armH)*al, hy = sy + Math.cos(armH)*al*0.85;
+  let tx = hx + Math.sin(arm)*cl, ty = hy + Math.cos(arm)*cl*0.90;
+  // her own poses as the ball drops (herPoseOf), and his: arms and club
+  // placed here instead of by the swing
+  if(PZ){
+    const P = PZ;
+    if(!P.farBack) farArm(P);
+    const N = P.near || [[sx, sy], [P.hx, P.hy]];
+    for(let i = 1; i < N.length; i++) pxLine(c, N[i - 1][0], N[i - 1][1], N[i][0], N[i][1], OS.arm || OS.skin || PX.skin, th);
     if(h > 22){ c.fillStyle = OS.hand || OS.shirt; c.fillRect(Math.round(P.hx) - 1, Math.round(P.hy) - 1, th + 1, th + 1); }
     g.hand = { x: P.hx, y: P.hy }; arc.length = 0;
-    if(!P.noClub) drawClub(c, P.gx, P.gy, P.tx, P.ty, th, h, P.turn, t);
-    // (a hand raised over his head goes behind it, the club with it: the
-    // user saw the ace's club arm across his face. His head is drawn again
-    // over them, and what his look wears on it.)
-    // (not on a see-through look: drawn twice, its head went near solid)
-    if(P.hy < sy - h*0.08 && !(FX && FX.alpha)) redrawHead(c, spr, x, y, w, h, shear, g, FX);
+    // (a club spun flat: a faint ring where it goes round)
+    if(P.ring && h > 40){ c.globalAlpha = 0.28; c.fillStyle = PX.bone;
+      for(let k = 0; k < 20; k++){ const b = k / 20 * Math.PI * 2; c.fillRect(Math.round(P.ring.x + Math.cos(b) * P.ring.r), Math.round(P.ring.y + Math.sin(b) * P.ring.r * P.ring.k), 1, 1); }
+      c.globalAlpha = FX && FX.alpha ? FX.alpha : 1; }
+    if(!P.noClub && !P.clubBack) drawClub(c, P.gx, P.gy, P.tx, P.ty, th, h, P.turn, t);
     c.globalAlpha = 1;
     if(FX && FX.front) FX.front(c, g);
     if(FX) femTail(c, g, outfitNow().fx);
@@ -21993,15 +22025,6 @@ function paintGolfer(c, x, y, w, h, ph, t, bot, walking, walkPh, spr, arc, putt,
   const PF = CF && CF.pure ? pureNow(t) : null;
   if(PF){ c.globalAlpha = 1; CF.pure(c, g.x + g.w * 1.19, bot - 2, h, PF.f, t); }
   c.globalAlpha = 1; c.globalCompositeOperation = 'source-over';
-}
-// His head drawn again over what has just gone across it (an arm raised
-// behind it): the part of him above his collar, and his look's own on it
-function redrawHead(c, spr, x, y, w, h, shear, g, FX){
-  c.save(); c.beginPath(); c.rect(x - w * 2, y - h, w * 5, Math.ceil(h * (1 + 13 / 58))); c.clip();
-  c.globalAlpha = FX && FX.alpha ? FX.alpha : 1;
-  blitShear(c, spr, x, y, w, h, shear, g.bulk);
-  if(FX && FX.body) FX.body(c, g);
-  c.restore(); c.globalAlpha = 1; c.globalCompositeOperation = 'source-over';
 }
 // Flying: seen from behind, legs hanging, both hands up over his head holding
 // the club flat and spinning it like a rotor. Its shadow on the water below.
