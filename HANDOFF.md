@@ -31,11 +31,16 @@ through:
   caught a frame over its drawing budget and reeds through a slope: fixed.
   Then: the medal's green hunt dot repeated on the Guide tab and by its
   Weekly Hunt; flying, both arms one colour; his arms a pixel thicker.
+  Last: the canyon drawn by the screen's pixel (from the bridge it broke
+  into blocks that jittered); a tap on the dog opens its breeds (they are
+  in Cabinet > Course Wildlife); a frog on a lily pad now and then (a Guide
+  entry); mist in the canyon on cold mornings; the dog waits on the bank
+  while he crosses.
   Fixed on the way: a Vault floor played again after a gust was never
   called; the Spotted tag sat over a wager's name. Earlier the same day:
   cherry trees, the kingfisher, course collections, the monthly hunt, and
   the phone's picture memory (the black sky).
-- `node test/run.js` has **152 checks**, about 35 minutes: run it in the
+- `node test/run.js` has **154 checks**, about 35 minutes: run it in the
   background, on a copy in the scratchpad, with the machine quiet. After
   weather, colours or anything dated, also run it with `HOUR_FORCE` 8 and
   15 and the month pinned (rules 20 and 70).
@@ -260,11 +265,10 @@ Turned down, don't offer: a station on the railway, a photo mode, a
 weather forecast, fireworks, trail flourishes, caddie tricks. Nothing for
 the Tour tab, no new sound but ambience.
 
-1. **A frog on a lily pad** now and then, a Guide entry (live only).
-2. **The dog fetches**: on an ace it runs out and brings the ball back.
-3. **Mist in the canyon** on cold mornings, lying in its depths.
-4. **Ask what they think** of the canyon, the ponds and the dog.
+1. **The dog fetches**: on an ace it runs out and brings the ball back.
+2. **The dog trots over the bridge** behind him instead of waiting.
+3. **Dragonflies over the ponds** on summer days, a Guide entry.
+4. **Ask what they think** of the canyon on the phone now.
 
-Recommend 4 first: the canyon changed a great deal from their photo, and
-a word on it now saves a round of rework; then 1, which builds on the
-pads.
+Recommend 4: the canyon's jitter was only seen on the phone; a word from
+them confirms it is gone before more is built on it.

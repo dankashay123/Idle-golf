@@ -2269,3 +2269,19 @@ him (about 49px tall on a 320 phone, 71px on its side).
   medal's `#roomHunt` dot; swinging, his arms `ath` (a pixel over `th`
   from 45 tall; the club keeps `th`); flying, both arms `O.skin`, `ath` from
   `h * 0.068`.
+- **Canyon by the pixel** (`canyonlook`): `hazSlice`'s canyon path walks
+  the screen's pixels in view (`_cpx`, `_tpx`, `_fux`), asking `colProf`
+  at a fractional column (`reach` interpolated) and `tone` with hashes in
+  half and third columns; columns a dozen pixels wide on the bridge
+  jittered. The check looks from the rim, onto, mid and far end of the
+  bridge, and from over the gorge wants no grass under its far rim.
+- **Canyon mist** (`canyonmist`): `Scene.cmist` (canyon, day, dry; frosty,
+  or by the real month in autumn and winter, 5 to 11; `CMIST_FORCE`),
+  `mistC` over the depths from `fz` 0.3, in drifts; in the ground's reuse
+  key.
+- **A frog on a lily pad** (`lilyfrog`): `layLilyFrog` after the pads
+  (`LILYFROG_P` 0.3 of holes with pads, `LILYFROG_FORCE`), `p.frog` on a
+  pad, drawn from `critSprite('frog')`; Guide `lilyfrog` (Wildlife,
+  `GUIDE_PIC`).
+- **The dog**: `dogTap` (a tap on `Scene._dogBox` opens Course Wildlife);
+  not drawn over a crossing (stones, bridge, pier).
