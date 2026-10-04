@@ -28,17 +28,20 @@ module.exports = {
       const hex = (d, i) => '#' + [d[i], d[i + 1], d[i + 2]].map(v => v.toString(16).padStart(2, '0')).join('').toUpperCase();
       try {
         hideSheet(); QUIET = true; window.step = () => {};
+        // (a firefly glows up and fades, so it is counted by its yellow-green
+        // at any strength; and on one night hole in two: pinned on)
+        FIREFLY_FORCE = true;
         S.outfit = 'classic'; S.caddie = 'classic'; buildSprites();
         const NIGHT = B.CHAOS.find(c => /Night/.test(c.n)), DAY = B.CHAOS.find(c => c.n === 'Fair') || B.CHAOS.find(c => !/Night/.test(c.n));
         const D = derive(), c = Scene.b;
         const count = (cols, x0, y0, w, h) => {
           const d = c.getImageData(x0, y0, w, h).data; let n = 0;
-          for (let i = 0; i < d.length; i += 4) if (cols.has(hex(d, i))) n++;
+          for (let i = 0; i < d.length; i += 4) if (cols.has ? cols.has(hex(d, i)) : cols(d, i)) n++;
           return n;
         };
         const blank = () => { c.fillStyle = '#010203'; c.fillRect(0, 0, VW, VH); };
         const alone = (props, t) => { const was = Scene.props; Scene.t = t; blank(); Scene.props = props; Scene.drawProps(); Scene.props = was; };
-        const LAMP = new Set(['#FFD36A', '#FFF6D0']), FLY = new Set(['#F4FFB0', '#B8E04A']), WIN = new Set(['#FFD36A', '#F2B84A']);
+        const LAMP = new Set(['#FFD36A', '#FFF6D0']), FLY = (d, i) => d[i + 1] > 50 && d[i + 1] >= d[i] && d[i] > d[i + 1] * 0.78 && d[i] > d[i + 2] + 15, WIN = new Set(['#FFD36A', '#F2B84A']);
         const HALO = new Set(['#D0564A', '#9A3A32', '#6A2A28']);
         const look = (night) => {
           S.chaos = Object.assign({}, night ? NIGHT : DAY);
@@ -79,7 +82,7 @@ module.exports = {
           Scene.newDepthsHole(R);
           const was = S.dgnRun; S.dgnRun = { id: 'cellar' };
           Scene.camD = 0; Scene.buildRidge();
-          alone(Scene.props || [], 2); const n1 = count(new Set([...LAMP, ...FLY]), 0, 0, VW, VH);
+          alone(Scene.props || [], 2); const n1 = count((d, i) => LAMP.has(hex(d, i)) || FLY(d, i), 0, 0, VW, VH);
           blank(); Scene.camD = LEN - 12; Scene.drawFlagstick(); const n2 = count(HALO, 0, 0, VW, VH);
           S.dgnRun = was;
           if (n1 || n2) o.fails.push('in a wager: ' + n1 + ' pixels of lamps and fireflies, ' + n2 + ' of the flag\'s halo');
@@ -113,7 +116,9 @@ module.exports = {
               o.views++;
               for (const P of Scene.props.filter(p => p.kind >= 4)) {
                 if (P.d < Scene.camD - 5) continue;
-                alone([P], Scene.t);
+                // (a firefly at the reeds: its light, not its double in the
+                // water, which lies below the line by design)
+                alone([P.kind === 5 && P.wet ? Object.assign({}, P, { wet: 0 }) : P], Scene.t);
                 const lim = Math.max(Scene.clipAt(P.d - 0.5), Scene.clipAt(P.d), Scene.clipAt(P.d + 0.5)) + 1;
                 const d = c.getImageData(0, 0, VW, VH).data;
                 for (let y = Math.max(0, Math.floor(lim) + 1); y < VH; y++) for (let x = 0; x < VW; x++) {
@@ -129,7 +134,7 @@ module.exports = {
         }
         if (o.pix < 500) o.fails.push('the night\'s props showed only ' + o.pix + ' pixels over ' + o.views + ' views: too few to mean anything');
       } finally {
-        window.step = keep.step; Scene.layNight = keep.layNight;
+        FIREFLY_FORCE = null; window.step = keep.step; Scene.layNight = keep.layNight;
         Object.keys(S).forEach(k => delete S[k]); Object.assign(S, JSON.parse(SNAP));
         QUIET = false; buildSprites(); startHole();
       }

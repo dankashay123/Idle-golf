@@ -13066,6 +13066,15 @@ const LILY_W = 24, LILY_H = 10, LILY_SPR = new Map(), LILY_MAX = 40;
 // a dragonfly's body and its eyes, by kind; and a pin for the checks
 const DFLY_COL = [['#2E7AD8', '#8AD0F8'], ['#3AA858', '#B8E870'], ['#C8402E', '#F4A070']];
 let DFLY_FORCE = null, RFLY_FORCE = null;
+// Fireflies (the user: "a 50% chance to be in night holes no matter the
+// season"): one night hole in two, any season, in the rough and at the
+// reeds alike, from the hole's hash; FIREFLY_FORCE pins it. Each light glows
+// up and fades over a second or so, then is dark two or three.
+let FIREFLY_FORCE = null;
+const FIREFLY_P = 0.5;
+const fireflyAt = h => FIREFLY_FORCE !== null ? !!FIREFLY_FORCE : hr(h * 37 + 11, 886) < FIREFLY_P;
+const ffGlow = (t, n) => { const P = 3 + hr(n, 313) * 2.5, ph = ((t + hr(n, 314) * P) % P) / P; return ph < 0.38 ? Math.pow(Math.sin(Math.PI * ph / 0.38), 1.5) : 0; };
+const ffCol = (g, a) => 'rgba(' + Math.round(184 + 60 * g) + ',' + Math.round(224 + 31 * g) + ',' + Math.round(74 + 102 * g) + ',' + (Math.min(1, g * 1.5) * a).toFixed(2) + ')';
 // a dragonfly from above, its head to the right: b body, h head, e the tip
 // of its tail, w wing, v a wing's vein; wings spread, then swept back
 const DFLY_PIC = [
@@ -19816,16 +19825,16 @@ const Scene = {
       const p = this.proj(dd, xx); fillClip(c, Math.round(p.x), Math.round(p.y), k, 1, clip);
     }
   },
-  // Fireflies over the reeds on a summer night (the user picked them from
-  // the menu): two or three swarms about the reeds, each light doubled
-  // dimly in the water under it; on most holes with reeds, dry, never on
-  // ice. From a hash once the hole is laid; they count for the Guide's
-  // Fireflies.
+  // Fireflies over the reeds at night (the user picked them from the menu):
+  // two or three swarms about the reeds, each light doubled dimly in the
+  // water under it; on a night with fireflies (fireflyAt: one in two, any
+  // season), dry. From a hash once the hole is laid; they count for the
+  // Guide's Fireflies.
   layReedFireflies(){
-    if(!this.night || this.rain || this.ice) return;
-    if(!(RFLY_FORCE !== null ? !!RFLY_FORCE : this.summerHere())) return;
+    if(!this.night || this.rain) return;
+    if(!(RFLY_FORCE !== null ? !!RFLY_FORCE : fireflyAt(this.hole))) return;
     const put = this.props || [], at = put.filter(p => p.kind === 26 && p.sp === 'reed');
-    if(!at.length || (RFLY_FORCE === null && hr(this.hole * 43 + 3, 881) > 0.75)) return;
+    if(!at.length) return;
     const n = Math.min(at.length, 2 + Math.floor(hr(this.hole * 43 + 3, 882) * 2));
     for(let i = 0; i < n; i++){
       const b = at[Math.floor(hr(this.hole * 43 + i, 883) * at.length)];
@@ -20272,7 +20281,7 @@ const Scene = {
   layNight(){
     const put = this.props || [];
     for(const side of [-1, 1]) put.push({ kind: 4, d: 0.35, x: side * 2.05, k: side > 0 ? 1 : 0 });
-    for(let i = 0; i < 18; i++){
+    for(let i = 0; i < (fireflyAt(this.hole) ? 18 : 0); i++){
       const d = 3 + hr(this.hole * 37 + i, 301) * (LEN + 4), side = hr(this.hole * 37 + i, 302) < 0.5 ? -1 : 1;
       const x = side * (this.fwWidth(d) + 0.7 + hr(this.hole * 37 + i, 303) * 2.2);
       if(Math.abs(x) > 6.6) continue;
@@ -25233,23 +25242,25 @@ Object.assign(Scene, {
       if(p.moth && !this.rain) this.drawMoths(c, pr.x, t.y - k - 1, k, p);
 
     }else if(p.kind === 5){
-      // three fireflies about a spot in the rough, drifting and blinking
+      // three fireflies about a spot in the rough, drifting; each glows up
+      // and fades away again, then goes dark a while (the user: "fade in and
+      // out like real life and not be permanently lit")
       for(let j = 0; j < 3; j++){
-        const n = p.k * 3 + j, blink = Math.sin(this.t * (1.1 + hr(n, 311)) + n * 2.1);
-        if(blink < 0.25) continue;
-        const fd = p.d + Math.sin(this.t * 0.35 + n) * 0.5, clip = this.clipAt(fd);
-        const f = this.proj(fd, p.x + Math.sin(this.t * 0.45 + n * 1.7) * 0.7, 0.3 + hr(n, 312) * 0.8 + Math.sin(this.t * 0.9 + n) * 0.15);
+        const n = p.k * 3 + j, g = ffGlow(this.t, n);
+        if(g < 0.05) continue;
+        const fd = p.d + Math.sin(this.t * 0.35 + n) * 0.5, clip = this.clipAt(fd), fx = p.x + Math.sin(this.t * 0.45 + n * 1.7) * 0.7;
+        const f = this.proj(fd, fx, 0.3 + hr(n, 312) * 0.8 + Math.sin(this.t * 0.9 + n) * 0.15);
         const kk = f.s > 1.2 ? 2 : 1;
         // a glow round it in a cross, not a dark square (it read as a green
-        // box at night)
-        if(blink > 0.65){ c.fillStyle = '#6E9A2A'; fillClip(c, f.x - 1, f.y, kk + 2, kk, clip); fillClip(c, f.x, f.y - 1, kk, kk + 2, clip); }
-        c.fillStyle = blink > 0.8 ? '#F4FFB0' : '#B8E04A'; fillClip(c, f.x, f.y, kk, kk, clip);
+        // box at night), as bright as it is
+        if(g > 0.35){ c.fillStyle = 'rgba(110,154,42,' + ((g - 0.35) * 1.2).toFixed(2) + ')'; fillClip(c, f.x - 1, f.y, kk + 2, kk, clip); fillClip(c, f.x, f.y - 1, kk, kk + 2, clip); }
+        c.fillStyle = ffCol(g, 1); fillClip(c, f.x, f.y, kk, kk, clip);
         // (over the reeds, its light doubled faintly in the water below)
-        if(p.wet){ const fx = p.x + Math.sin(this.t * 0.45 + n * 1.7) * 0.7;
-          if(this.wetSpot(fd, fx)){ const g = this.proj(fd, fx), y = Math.round(2 * g.y - f.y);
-            // (mirrored below the water's line, not cut at it: only when the
-            // water under it is in view)
-            if(g.y <= clip){ c.fillStyle = blink > 0.8 ? 'rgba(244,255,176,0.55)' : 'rgba(184,224,74,0.4)'; c.fillRect(Math.round(f.x), y, kk, kk); } } }
+        if(p.wet && this.wetSpot(fd, fx)){ const w = this.proj(fd, fx), y = Math.round(2 * w.y - f.y);
+          // (mirrored below the water's line, not cut at it: shown where the
+          // water it lies on, a little nearer, is itself in view)
+          let dn = fd; while(dn > fd - 1.5 && this.proj(dn, fx).y < y) dn -= 0.1;
+          if(w.y <= clip && y <= this.clipAt(dn) && this.wetSpot(dn, fx)){ c.fillStyle = ffCol(g, 0.5); c.fillRect(Math.round(f.x), y, kk, kk); } }
       }
 
     }else if(p.kind === 24){

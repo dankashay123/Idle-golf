@@ -1,10 +1,12 @@
 /* Fireflies over the reeds and ripples on the water (the user picked both
  * from the menu).
  *
- *   - fireflies: on a summer night (pinned to July), dry, not on ice, two or
- *     three swarms at the reeds on most holes with reeds, the same each time;
- *     none by day, in November or in the rain; drawn, their lights doubled
- *     in the water; they count for the Guide's Fireflies
+ *   - fireflies: on a night with fireflies (one in two, any season: July
+ *     and November), dry, two or three swarms at the reeds, the same each
+ *     time; none by day or in the rain; drawn, their lights doubled in the
+ *     water; they count for the Guide's Fireflies
+ *   - each light glows up and fades: over a sweep of moments it is dark
+ *     part of the time, dim part and bright part (never just on)
  *   - ripples: a ring spreads where a dragonfly dips and round the frog's
  *     pad; drawn only on water (a ring set on dry ground draws nothing) */
 'use strict';
@@ -24,17 +26,29 @@ module.exports = {
             for (let k = 0; k < 24; k++) for (const ch of ['Night', 'Fair']) {
               const h = S.hole + k; S.chaos = { n: ch }; Scene.newHole(h, S.tier);
               const P = Scene.props || [], reeds = P.filter(p => p.kind === 26 && p.sp === 'reed'), ff = wetFF(), id = B.COURSE[ci].id + ' h' + h + ' ' + ch;
-              if (ff.length && (!summer || !Scene.night || Scene.rain || Scene.ice)) f(id + ': fireflies over the reeds ' + (summer ? 'by day, in the rain or on ice' : 'in November'));
+              const want = Scene.night && !Scene.rain && reeds.length > 0 && fireflyAt(h);
+              if (!!ff.length !== want) f(id + ': fireflies over the reeds ' + !!ff.length + (want ? ' on a firefly night' : (Scene.night ? ' on a night without' : ' by day') + (Scene.rain ? ' in the rain' : '')));
               if (ff.length > 3) f(id + ': ' + ff.length + ' swarms');
               for (const q of ff) if (!reeds.some(b => b.d === q.d && b.x === q.x)) f(id + ': a swarm not at the reeds');
-              if (summer && Scene.night && !Scene.rain && !Scene.ice && reeds.length) { o.reedy++; if (ff.length) o.lit++; }
+              if (Scene.night && !Scene.rain && reeds.length) { o.reedy++; if (ff.length) o.lit++; if (!summer) o.nov = (o.nov || 0) + (ff.length ? 1 : 0); }
               const again = JSON.stringify(ff.map(p => [p.d, p.x, p.k])); Scene.newHole(h, S.tier);
               if (JSON.stringify(wetFF().map(p => [p.d, p.x, p.k])) !== again) f(id + ': laid differently a second time');
             }
           }
         }
-        if (!o.reedy) f('no summer night with reeds');
-        else if (o.lit / o.reedy < 0.55 || o.lit / o.reedy > 0.95) f('fireflies at the reeds on ' + o.lit + ' of ' + o.reedy + ' summer nights');
+        if (!o.reedy) f('no night with reeds');
+        else if (o.lit / o.reedy < 0.35 || o.lit / o.reedy > 0.65) f('fireflies at the reeds on ' + o.lit + ' of ' + o.reedy + ' nights');
+        if (!o.nov) f('no fireflies at the reeds in November');
+        // and one night hole in two has them, over many holes
+        { let n = 0; for (let h = 1; h <= 4000; h++) if (fireflyAt(h)) n++; o.share = n / 4000; if (o.share < 0.45 || o.share > 0.55) f('fireflies on ' + (o.share * 100).toFixed(0) + '% of holes'); }
+        // each light fades: dark, dim and bright moments, and changing
+        // smoothly (no jump from dark to full)
+        { let dark = 0, dim = 0, bright = 0, jump = 0;
+          for (let n = 0; n < 30; n++) { let was = ffGlow(0, n); for (let t = 0; t < 30; t += 1 / 30) { const g = ffGlow(t, n); if (g < 0.05) dark++; else if (g < 0.6) dim++; else bright++; if (Math.abs(g - was) > 0.25) jump++; was = g; } }
+          const all = dark + dim + bright; o.fade = [dark, dim, bright].map(v => Math.round(v / all * 100)).join('/');
+          if (dark / all < 0.4) f('a firefly dark only ' + Math.round(dark / all * 100) + '% of the time');
+          if (dim / all < 0.08 || bright / all < 0.05) f('a firefly never fades: dark/dim/bright ' + o.fade);
+          if (jump) f(jump + ' frames where a firefly jumped in brightness'); }
         DAY_FORCE = JULY; SEASON_FORCE = 0; DEV.course(0); hideSheet();
         const D = derive(), px = () => Scene.buf.getContext('2d').getImageData(0, 0, VW, VH).data;
         const diff = (a, b) => { let n = 0; for (let i = 0; i < a.length; i += 4) if (a[i] !== b[i] || a[i + 1] !== b[i + 1] || a[i + 2] !== b[i + 2]) n++; return n; };
@@ -85,6 +99,6 @@ module.exports = {
       return { fails, o };
     });
     if (r.fails.length) throw new Error(r.fails.join('; '));
-    return ['fireflies at the reeds on ' + r.o.lit + ' of ' + r.o.reedy + ' summer nights, none by day, in November, the rain or on ice; drawn ' + r.o.ffpx + 'px, doubled in the water ' + r.o.dbl + 'px; the frog\'s ring ' + r.o.frog + 'px, the dragonflies\' dips in ' + r.o.dips + ' frames; none on dry ground'];
+    return ['fireflies at the reeds on ' + r.o.lit + ' of ' + r.o.reedy + ' nights (' + r.o.nov + ' in November), ' + Math.round(r.o.share * 100) + '% of holes, none by day or in the rain; dark/dim/bright ' + r.o.fade + '%; drawn ' + r.o.ffpx + 'px, doubled in the water ' + r.o.dbl + 'px; the frog\'s ring ' + r.o.frog + 'px, the dragonflies\' dips in ' + r.o.dips + ' frames; none on dry ground'];
   }
 };
