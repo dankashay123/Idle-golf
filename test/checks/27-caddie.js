@@ -131,7 +131,7 @@ module.exports = {
 
         // ---- the Range's Caddie rack -----------------------------------------
         QUIET = false; setView('upg'); rangeSub = 'cad'; renderRangeNav();
-        o.rows = document.querySelectorAll('#cadRows .row:not(.bondrow)').length;
+        o.rows = document.querySelectorAll('#cadRows .row:not(.bondrow):not(.err)').length;   // (the runner's errands are rows of their own)
         o.navs = [...document.querySelectorAll('#rangeNav .sub')].map(b => b.textContent).join('/');
         rangeSub = 'upg'; renderRangeNav(); QUIET = true;
 
@@ -219,7 +219,7 @@ module.exports = {
     if (!r.quip || !/^quip:/.test(r.quip)) throw new Error('no quip came round when it was due: ' + r.quip);
     if (r.badLines.length) throw new Error('lines the fairy cannot say on the field (16 at most, in the font): ' + r.badLines.join('; '));
     if (r.unowned !== null || r.unknown !== null) throw new Error('a save wearing an unowned or unknown perk loaded with ' + r.unowned + ' / ' + r.unknown);
-    if (r.rows !== r.n || r.navs !== 'Upgrades/Caddie') throw new Error('the Range shows ' + r.rows + ' perk rows of ' + r.n + ' under ' + r.navs);
+    if (r.rows !== r.n || r.navs !== 'Upgrades/Caddie/Trials') throw new Error('the Range shows ' + r.rows + ' perk rows of ' + r.n + ' under ' + r.navs);
     if (r.glide > 0.001) throw new Error('the camera moved ' + r.glide.toFixed(2) + ' units while he was still swinging');
     for (const w of r.walk) {
       if (Math.abs(w.land - w.want) > 0.01) throw new Error('a shot from ' + w.from + ' that took him to ' + w.to + ' flew to ' + w.land + (w.want !== w.to ? ', not ' + w.want + ', a putt short of the cup' : ''));

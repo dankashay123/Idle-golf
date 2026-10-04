@@ -4762,6 +4762,8 @@ function migrate(){
   if(S.fest !== undefined && !(S.fest && Number.isInteger(S.fest.wk) && festDef(S.fest.id) && Number.isFinite(S.fest.n) && S.fest.n >= 0 && Number.isInteger(S.fest.got) && S.fest.got >= 0 && S.fest.got <= FEST_AT.length)) delete S.fest;
   if(S.festMk !== undefined){ if(!S.festMk || typeof S.festMk !== 'object' || Array.isArray(S.festMk)) delete S.festMk;
     else for(const k in S.festMk) if(S.festMk[k] !== 1 || !TEE_MARKS.some(m => m.id === k && m.fest)) delete S.festMk[k]; }
+  // (the course dog: a breed, or none)
+  if(S.dog !== undefined && S.dog !== 'none' && !DOG_BREED.some(b => b.id === S.dog)) delete S.dog;
   // (challenges: one on, with its card and its count; tiers done, 0 to 3)
   if(S.chal !== undefined && !(S.chal && chalDef(S.chal.id) && Number.isInteger(S.chal.n) && S.chal.n >= 0 && S.chal.n < B.CHAL_HOLES && Number.isFinite(S.chal.sum) && Number.isFinite(S.chal.c))) delete S.chal;
   if(S.chalDone !== undefined){ if(!S.chalDone || typeof S.chalDone !== 'object' || Array.isArray(S.chalDone)) delete S.chalDone;
@@ -6518,6 +6520,94 @@ function careerChal(w){
   w.innerHTML = h;
   w.querySelectorAll('[data-cs]').forEach(b => b.onclick = () => chalStart(b.dataset.cs));
   const q = w.querySelector('[data-cq]'); if(q) q.onclick = () => chalQuit();
+}
+// ---- the course dog ----
+// (the user picked it from the menu) a dog that sits behind him as he plays
+// and trots beside him as he walks; the Golden Retriever from the start and
+// a breed more for courses' collections done (at), picked in the Cabinet's
+// Course Wildlife fold, or none. Only for its looks.
+// a dog sitting, side on, facing right (its tail wagging); trotting away
+// from behind (two steps)
+const DOG_SIT = [[
+  '...........bb....',
+  '..........bbbb...',
+  '.........bbbeb...',
+  '.........bbbbbbn.',
+  '.........bbbllll.',
+  '..........bbbtl..',
+  '.........bbbbl...',
+  '...T....bbbbbl...',
+  '...T...bbbbbbl...',
+  '....T.bbbbbbbbf..',
+  '....TbbbbbBbbbf..',
+  '.....bbbbbBBbbf..',
+  '.....bbbbBBbbbf..',
+  '....bbbbbBbbbbf..',
+  '....bbbbbbbb.ff..',
+  '...BBBBB..BB.ff..'], [
+  '...........bb....',
+  '..........bbbb...',
+  '.........bbbeb...',
+  '.........bbbbbbn.',
+  '.........bbbllll.',
+  '..........bbbtl..',
+  '.........bbbbl...',
+  '........bbbbbl...',
+  '.......bbbbbbl...',
+  '......bbbbbbbbf..',
+  '.....bbbbbBbbbf..',
+  '.....bbbbbBBbbf..',
+  '..TTTbbbbBBbbbf..',
+  '.TT.bbbbbBbbbbf..',
+  '....bbbbbbbb.ff..',
+  '...BBBBB..BB.ff..']];
+// from behind, trotting away: ears up, the back of the head, the tail up
+// over the rump (nearer than the head), the hind legs taking turns
+const DOG_TROT = [[
+  '...BB....BB...',
+  '...bbB..Bbb...',
+  '...bbbbbbbb...',
+  '....bbbbbb....',
+  '.....bbbb.....',
+  '......TT......',
+  '...bbbTTbbb...',
+  '..bbbbbbbbbb..',
+  '..bbbbbbbbbb..',
+  '..bBbbbbbbBb..',
+  '...BBbbbbBB...',
+  '...bb....BB...',
+  '...bb....BB...',
+  '...DD.........'], [
+  '...BB....BB...',
+  '...bbB..Bbb...',
+  '...bbbbbbbb...',
+  '....bbbbbb....',
+  '.....bbbb.....',
+  '.......TT.....',
+  '...bbbbTTbb...',
+  '..bbbbbbbbbb..',
+  '..bbbbbbbbbb..',
+  '..bBbbbbbbBb..',
+  '...BBbbbbBB...',
+  '...BB....bb...',
+  '...BB....bb...',
+  '.........DD...']];
+const DOG_BREED = [
+  { id:'golden', n:'Golden Retriever', at:0, map:{ b:'#D8A050', B:'#A8742E', l:'#F0CC88', e:'#2A1A10', n:'#2A1A10', t:'#E06070', T:'#C88E44', D:'#6A4A22', f:'#C8924A' } },
+  { id:'collie', n:'Border Collie', at:1, map:{ b:'#1E1C1E', B:'#0E0C0E', l:'#F2F0EA', e:'#C89040', n:'#0A0A0A', t:'#E06070', T:'#F2F0EA', D:'#F2F0EA', f:'#F2F0EA' } },
+  { id:'beagle', n:'Beagle', at:3, map:{ b:'#B87A3A', B:'#3A2A22', l:'#F4F0E6', e:'#2A1A10', n:'#1A1210', t:'#E06070', T:'#F4F0E6', D:'#F4F0E6', f:'#F4F0E6' } },
+  { id:'black', n:'Black Labrador', at:6, map:{ b:'#2A2828', B:'#141212', l:'#3A3636', e:'#C89040', n:'#0A0A0A', t:'#E06070', T:'#2A2828', D:'#141212', f:'#242222' } },
+  { id:'dalmatian', n:'Dalmatian', at:10, spots:1, map:{ b:'#F2F0EA', B:'#C8C6BE', l:'#FFFFFF', e:'#1A1A1A', n:'#1A1A1A', t:'#E06070', T:'#F2F0EA', D:'#1A1A1A', s:'#1A1A1A', f:'#F2F0EA' } }
+];
+const DOG_SPR = {};
+const dogOpen = br => B.COURSE.filter(cs => (S.cwildDone || {})[cs.id]).length >= br.at;
+const dogNow = () => { if(S.dog === 'none') return null; const br = DOG_BREED.find(x => x.id === (S.dog || 'golden')); return br && dogOpen(br) ? br : DOG_BREED[0]; };
+function dogSprite(br, kind, fr, night){
+  const key = br.id + kind + fr + (night ? 'n' : '');
+  if(DOG_SPR[key]) return DOG_SPR[key];
+  const map = {}; for(const k in br.map) map[k] = night ? moonC(br.map[k]) : br.map[k];
+  const rows = (kind === 'sit' ? DOG_SIT : DOG_TROT)[fr].map((r, y) => br.spots ? [...r].map((ch, x) => ch === 'b' && (x * 7 + y * 13) % 11 === 0 ? 's' : ch).join('') : r);
+  return DOG_SPR[key] = makeSprite(rows, map);
 }
 // ---- errands ----
 // the runner: a lad in a red cap and white shirt, a satchel on its strap,
@@ -20324,6 +20414,7 @@ const Scene = {
   happyDance(d){
     if(QUIET || OFFLINE || S.dgnRun) return;
     this.legendGo(d);
+    if(d <= -2) this.dogHop = this.t;
     // the gallery jumps and waves on an eagle or better (the user asked):
     // a second and a half, the higher the better the hole
     if(d <= -2) this.galleryUp = { t0: this.t, d };
@@ -24668,6 +24759,26 @@ Object.assign(Scene, {
 
   // Where he stands and how, this frame: for his ground, which the frame puts
   // down early (drawGolferGround), and for the rest of him. heli while he flies.
+  // the course dog: behind him and to his left, a little farther off than
+  // he is, so he is drawn over it; sitting (its tail wagging now and then),
+  // trotting from behind as he walks, a hop on an eagle or better; not
+  // while he flies or hops the stones, nor in a wager
+  drawDog(){
+    const br = dogNow(); if(!br || S.dgnRun) return;
+    const G = this.golferPose(); if(G.heli || (this.isle && this.isle.hop && this.camD > this.isle.bank - 0.5 && this.camD < (this.isle.land || 0) + 0.5)) return;
+    const walking = !!G.walking, d = this.camD + 0.35, x = walking ? -0.95 : -0.8, p = this.proj(d, x);
+    const kind = walking ? 'trot' : 'sit';
+    const fr = walking ? Math.floor(this.walkPh * 4) & 1 : (this.t * 0.6 + 0.3) % 4 < 0.6 ? Math.floor(this.t * 8) & 1 : 0;
+    const spr = dogSprite(br, kind, fr, this.night);
+    const h = Math.round(B_GOLFER * (walking ? 0.34 : 0.4) * US * p.s); if(h < 3) return;
+    const w = Math.max(2, Math.round(h * spr.w / spr.h));
+    const hop = this.dogHop != null && this.t - this.dogHop < 0.6 ? Math.round(Math.sin((this.t - this.dogHop) / 0.6 * Math.PI) * h * 0.35) : 0;
+    const X = Math.round(p.x) - (w >> 1), Y = Math.round(p.y) - h - hop - (walking && fr ? 1 : 0);
+    const cut = this.clipAt(d);
+    this.drawBehind(d, X - 2, Y - 2, X + w + 2, Math.min(Math.round(p.y) + 2, p.y > cut + 1 ? Math.max(0, cut) : VH), g => {
+      g.fillStyle = 'rgba(8,16,10,.26)'; g.fillRect(X + Math.round(w * 0.12), Math.round(p.y) - 1, Math.round(w * 0.76), 1);
+      blit(g, shrinkSprite(spr, w, h) || spr, X, Y, w, h); });
+  },
   golferPose(atCam){
     const p = this.proj(atCam === undefined ? this.camD : atCam, 0);
     const ph = this.swingT > 0 ? 1 - this.swingT/this.swingDur : 0;
@@ -26456,6 +26567,7 @@ Object.assign(Scene, {
       this.drawCupFx();
       if(!pinFirst) this.drawFlagstick();
       this.drawRestBall();
+      this.drawDog();
       this.drawGolfer(D);
       this.drawBalls(dt);
       this.drawWeather();
@@ -27325,9 +27437,17 @@ function renderWild(){
       + (whole ? 'Complete' : got.length + '/' + want.length + ' \u00b7 +' + B.WILD_SOV + sovIc()) + '</span></div>'
       + '<div class="wpics">' + want.map(an => pic(an, got.includes(an))).join('') + '</div></div>'; }).join('')
     || '<div class="lb"><span class="p"></span><span style="color:var(--faint)">Spot an animal to start a course\u2019s collection</span><span class="s"></span></div>';
+  // (the course dog: a breed for courses done, tapped to bring, or none)
+  const cur = dogNow(), dogUrl = br => { const k = 'dog|' + br.id; if(DOMSPR[k] === undefined) DOMSPR[k] = dogSprite(br, 'sit', 0, false).cv.toDataURL(); return DOMSPR[k] || ''; };
+  const dogs = '<div class="eyebrow" style="margin:6px 0 4px">Course Dog</div><div class="guide">'
+    + DOG_BREED.map(br => { const ok = dogOpen(br), on = cur && cur.id === br.id;
+      return '<div class="gtile dogt' + (ok ? '' : ' un') + (on ? ' on' : '') + '" data-dog="' + br.id + '"' + (ok && !on ? ' role="button"' : '') + '><span class="gpic">'
+        + gImg(dogUrl(br), 34, 32) + '</span><b>' + br.n + '</b><i>' + (on ? 'With him' : ok ? 'Tap to bring' : br.at + '\u00a0' + (br.at === 1 ? 'course' : 'courses')) + '</i></div>'; }).join('')
+    + '<div class="gtile dogt' + (cur ? '' : ' on') + '" data-dog="none"' + (cur ? ' role="button"' : '') + '><span class="gpic"></span><b>None</b><i>' + (cur ? 'Tap for none' : 'None with him') + '</i></div></div>';
   el.innerHTML = '<div class="rfold' + (op ? ' open' : '') + '" data-f="wild"><button class="rfh"><span>Course Wildlife</span><span class="rfn">'
-    + done + '/' + Object.keys(COURSE_WILD).length + '\u00a0' + (op ? '\u25b4' : '\u25be') + '</span></button><div class="rfb">' + rows + '</div></div>';
+    + done + '/' + Object.keys(COURSE_WILD).length + '\u00a0' + (op ? '\u25b4' : '\u25be') + '</span></button><div class="rfb">' + dogs + '<div class="eyebrow" style="margin:10px 0 4px">Collections</div>' + rows + '</div></div>';
   el.querySelector('.rfh').onclick = () => { recOpen.wild = op ? 0 : 1; renderWild(); };
+  el.querySelectorAll('.dogt[role=button]').forEach(t => t.onclick = () => { S.dog = t.dataset.dog; save(); renderWild(); });
 }
 // the course records, a fold of their own under the Record: each course
 // with a card posted, its best and the day
