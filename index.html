@@ -20915,6 +20915,9 @@ const Scene = {
       }
     }
     this.sky = c;
+    // (a phone out of memory for pictures gives a canvas that draws nothing:
+    // a sky like that, black, is not kept, so it is made again next frame)
+    try{ if(g.getImageData(0, H - 1, 1, 1).data[3] === 0) this.skyKey = null; }catch(e){ this.skyKey = null; }
   },
 
   /* ---- events from the sim ---- */
@@ -26678,6 +26681,9 @@ function guideUrl(id){
     return DOMSPR[key] = sp ? sp.cv.toDataURL() + '|' + sp.w + 'x' + sp.h : '';
   }catch(e){ return DOMSPR[key] = ''; }
 }
+// (a picture that could not be made is left out: an empty one showed as
+// a broken "?" box on the phone)
+const gImg = (url, w, h) => url && /^data:image/.test(url) ? '<img src="' + url + '" width="' + w + '" height="' + h + '" alt="">' : '';
 // an entry seen this many times wears a badge on its tile
 const GUIDE_BADGE = 100;
 function roomGuide(w){
@@ -26692,7 +26698,7 @@ function roomGuide(w){
       + (run > 1 ? ' \u00b7 ' + run + '\u00a0weeks in a row' : '') + '</div><div class="guide hunt">';
     for(const id of want){ const g = GUIDE.find(x => x.id === id), got = H.got.includes(id);
       const [url, wh] = guideUrl(id).split('|'), [sw, sh] = (wh || '12x12').split('x').map(Number), z = Math.max(1, Math.floor(Math.min(60 / sw, 44 / sh)));
-      h += '<div class="gtile' + (got ? ' found' : '') + '"><span class="gpic"><img src="' + url + '" width="' + sw * z + '" height="' + sh * z + '" alt=""></span>'
+      h += '<div class="gtile' + (got ? ' found' : '') + '"><span class="gpic">' + gImg(url, sw * z, sh * z) + '</span>'
         + '<b>' + g.n + '</b><i>' + (got ? 'Found' : g.w) + '</i></div>'; }
     h += '</div>'; }
   // (and the month's, beside it)
@@ -26700,7 +26706,7 @@ function roomGuide(w){
     h += '<div class="eyebrow" style="margin:8px 0 4px">' + MONTH_NAME[H.mo % 12] + ' Hunt \u00b7 ' + H.got.length + '/3 \u00b7 ' + (H.paid ? 'Done' : '+' + B.MHUNT_SOV + sovIc()) + '</div><div class="guide mhunt">';
     for(const id of want){ const g = GUIDE.find(x => x.id === id), got = H.got.includes(id);
       const [url, wh] = guideUrl(id).split('|'), [sw, sh] = (wh || '12x12').split('x').map(Number), z = Math.max(1, Math.floor(Math.min(60 / sw, 44 / sh)));
-      h += '<div class="gtile' + (got ? ' found' : '') + '"><span class="gpic"><img src="' + url + '" width="' + sw * z + '" height="' + sh * z + '" alt=""></span>'
+      h += '<div class="gtile' + (got ? ' found' : '') + '"><span class="gpic">' + gImg(url, sw * z, sh * z) + '</span>'
         + '<b>' + g.n + '</b><i>' + (got ? 'Found' : g.w) + '</i></div>'; }
     h += '</div>'; }
   for(const [k, t] of GUIDE_SHELF){
@@ -26712,7 +26718,7 @@ function roomGuide(w){
       const [url, wh] = guideUrl(g.id).split('|'), [sw, sh] = (wh || '12x12').split('x').map(Number);
       const z = Math.max(1, Math.floor(Math.min(60 / sw, 44 / sh)));
       const c100 = (seen[g.id] || 0) >= GUIDE_BADGE;
-      h += '<div class="gtile' + (seen[g.id] ? '' : ' un') + (c100 ? ' g100' : '') + '"><span class="gpic"><img src="' + url + '" width="' + sw * z + '" height="' + sh * z + '" alt=""></span>'
+      h += '<div class="gtile' + (seen[g.id] ? '' : ' un') + (c100 ? ' g100' : '') + '"><span class="gpic">' + gImg(url, sw * z, sh * z) + '</span>'
         + (c100 ? '<em>\u2605' + GUIDE_BADGE + '</em>' : '')
         + '<b>' + g.n + '</b><i>' + (seen[g.id] ? 'Seen ' + fmt(seen[g.id], 0) + '×' : g.w) + '</i></div>';
     }

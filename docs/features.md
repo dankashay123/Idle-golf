@@ -6,6 +6,42 @@ feature must do, and is usually enough on its own.
 
 ## Sections, newest first
 
+### The session of 4 October, second
+
+- **Pictures freed** (the black sky and the Guide's "?" boxes on the
+  phone): the canvases piled up over a long session until the phone had no
+  memory for pictures; then new ones came out blank. Bounded now: the
+  gallery's figures (`SPECT_CACHE`, `SPECT_MAX` 400, oldest freed by
+  `cvFree`), each sprite's hazed copies (`fogSprite`, `FOG_MAX` 24), the
+  courses' trees (`TREE_CACHE`, the last 7 course-and-weather sets). A
+  picture that comes out blank ("data:,") is never kept in `DOMSPR` (a
+  Proxy), and a sky with nothing in it is made again (`buildSky`). Measured
+  in Chromium: live canvas memory was 30MB after 12 courses and climbing,
+  now about 6MB and flat over 30.
+- **Cherry trees** (`cherryRows`, `cherrySet`, `isCherry`): any blossom
+  look (`fall: 'petals'`), the Blossom Invitational and Jade Pagoda as
+  built, take cherries in place of the pine and the oak; the woods'
+  canopy is round there (`pines` in the canopy pass).
+- **Flying arms** (`flyarms`): in `paintHeli` the arms go up in front of
+  him, drawn before his body with the elbows out past his head; his hands
+  on the grip are drawn again after it.
+- **Course collections** (`wildlist`): `COURSE_WILD` (each course's own
+  animals, from a sweep: seen at least 8 times in 960 holes), `wildOf`,
+  `wildGot`, `courseWildSee` (from `guideSpot`, live only), `S.cwild`,
+  `S.cwildDone`, `B.WILD_SOV` (10, on Today); the Cabinet's fold Course
+  Wildlife (`renderWild`, `.wpics`). A change to how animals are laid can
+  drop one from a course: the check sweeps again; rebuild the table from
+  the same sweep (sixty holes, each season, day and night, tier 3 to 7).
+- **The kingfisher** (`kingfisher`): `CRIT.kingfisher` (`dart`), on the
+  stones' river one hole in two (`KING_P_RIVER`), by a pond 7%
+  (`KING_P_POND`), by day, not in winter, always laid when allowed
+  (`first` in `layCritters`); it darts out and back every seven seconds
+  (`p.td`/`p.tx`, frames 1 and 2), a splash at the turn. `KING_FORCE`.
+- **The monthly hunt** (`mhunt`): `MHUNT_DAY`, `MHUNT_NIGHT`, `monthIdx`,
+  `mhuntOf`, `mhuntNow`, `mhuntSee` (from `guideAdd`), `S.mhunt`,
+  `B.MHUNT_SOV` (40, in the Guide); its row `.guide.mhunt` under the
+  week's; the tag says "Month n/3".
+
 ### The session of 3 and 4 October (after the last handoff)
 
 Each has a check whose row in `test/README.md` says what it must do.

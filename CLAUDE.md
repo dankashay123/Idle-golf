@@ -110,6 +110,8 @@ Rules that cost real time (detail in `HANDOFF.md` §4):
   (`heirlooms`, `exploits`). The harness is a developer copy: set
   `DEV_OFF = true` to see what a player sees; it also pays sovereigns at
   once (`window.__sovAuto`), which only `getsov` turns off.
+- Every cache of canvases has a bound and frees what it drops (`cvFree`):
+  the phone's memory for pictures ran out and the sky went black (77).
 - Far things by true scale on a grid; anything over the far field is cut
   where trees stand (`overTrees`).
 

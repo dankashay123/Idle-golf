@@ -1,6 +1,6 @@
 # Handoff — Mythic Mulligan
 
-Last updated 2026-10-04 (pushed to `main`). `CLAUDE.md` holds the standing
+Last updated 2026-10-04, second session (pushed to `main`). `CLAUDE.md` holds the standing
 rules and is loaded by itself; this file is what a new session needs on
 top. Read this file whole. The rest is for looking up, never for reading
 through:
@@ -13,17 +13,20 @@ through:
 
 ## 1. Where things stand
 
-- Everything is committed and **no request is waiting**. The last ones:
-  her ace and albatross poses redrawn with nothing crossing the body (his
-  and hers all checked), and sovereigns that wait for a GET tap (GET ALL
-  where a place holds more than one).
-- `node test/run.js` has **135 checks**, about 35 minutes: run it in the
+- Everything is committed and **no request is waiting**. The last ones
+  (4 October, second session): the black sky and the Guide's "?" pictures
+  (the phone ran out of memory for pictures over a long session; caches
+  bounded now, rule 77), cherry trees on blossom courses, arms in front
+  when flying, course collections (a badge each in the Cabinet), the
+  kingfisher, and the monthly hunt.
+- `node test/run.js` has **139 checks**, about 35 minutes: run it in the
   background, on a copy in the scratchpad, with the machine quiet. After
   weather, colours or anything dated, also run it with `HOUR_FORCE` 8 and
   15 and the month pinned (rules 20 and 70).
 - `skins` timed its trails against a fixed budget and failed now and then;
   it now times them against the plain ball. If it fails again, chase it.
 - **Not yet heard back on** (ask one when it fits, never as a list): the
+  cherry trees; the kingfisher; the monthly hunt; course collections; the
   GET buttons; the redrawn celebrations; alligators; the Wager Book
   animals; the weekly hunt and its streak; the gold mountain; golden
   animals; the heirloom prices and the wall at Card 222.
@@ -217,6 +220,12 @@ Numbered so `CLAUDE.md` and the checks can point at them.
 76. Frost (by the player's clock, 5 to 11) puts off a Golden Hour, whose
     hole is laid out its own way: a check comparing layouts pins
     `FROST_FORCE` (`seasons` failed on a golden hole every morning).
+77. The phone has a fixed memory for pictures (canvases), freed late: a
+    cache of canvases without a bound turns the sky black and the Guide's
+    pictures to "?" after hours of play. Bound every new cache, free what
+    it drops (`cvFree`), and measure live canvas memory across thirty
+    courses (a probe hooking `createElement('canvas')` with `WeakRef`s and
+    `gc()` under `--js-flags=--expose-gc`); it should level off.
 
 ## 5. Environment
 
@@ -235,12 +244,12 @@ the Tour tab, no new sound but ambience.
 
 1. **A Harvest Moon**: now and then a huge orange moon on an autumn night,
    with a Guide entry.
-2. **Course collections**: a badge in the Cabinet for seeing every animal
-   a course has.
-3. **A kingfisher** by the streams and stones, darting low, rare by day.
-4. **A monthly hunt**: a rarer three for a bigger reward, beside the
-   weekly one.
-5. **Ask what they think** of the GET buttons and the new celebrations.
+2. **Rare visitors** on a finished course collection: its rarer animals
+   (a swan, a turtle) as a gold star on its badge.
+3. **Fox cubs** in spring: now and then a fox with two cubs at the edge
+   of the woods, their own Guide entry.
+4. **Ask what they think** of the cherry trees, the kingfisher and the
+   monthly hunt.
 
-Recommend 1: it builds on the night skies and the Field Guide, and costs
-little to draw.
+Recommend 1: it is October, it builds on the night skies and the Field
+Guide, and costs little to draw.
