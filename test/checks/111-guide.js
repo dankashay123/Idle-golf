@@ -73,7 +73,7 @@ module.exports = {
         o.spotted = GUIDE.length - miss.length;
         // the tab: every entry, a picture each, seen and not
         S.guide = { doe: 2, robin: 7 }; trophyRoom('guide');
-        const tiles = [...document.querySelectorAll('#roomBody .gtile')].filter(t => !t.closest('.hunt'));    // (the week's hunt shows three of them again first)
+        const tiles = [...document.querySelectorAll('#roomBody .gtile')].filter(t => !t.closest('.hunt, .mhunt'));    // (the week's and the month's hunts show three of them again first)
         if (tiles.length !== GUIDE.length) f(tiles.length + ' tiles for ' + GUIDE.length + ' entries');
         const pics = tiles.filter(t => { const i = t.querySelector('img'); return i && i.getAttribute('src').startsWith('data:image') && i.width * i.height >= 400; }).length;
         if (pics !== tiles.length) f('only ' + pics + ' of ' + tiles.length + ' tiles have a picture');
@@ -82,7 +82,7 @@ module.exports = {
         if (!tiles.some(t => /Seen\s7/.test(t.textContent))) f('the robin\'s count is not shown');
         // (a hundred sightings: the tile's badge and the count in the heading)
         hideSheet(); S.guide = { doe: 99, robin: 100, fox: 140 }; trophyRoom('guide');
-        const t100 = [...document.querySelectorAll('#roomBody .gtile.g100')].filter(t => !t.closest('.hunt'));
+        const t100 = [...document.querySelectorAll('#roomBody .gtile.g100')].filter(t => !t.closest('.hunt, .mhunt'));
         if (t100.length !== 2 || !t100.every(t => t.querySelector('em') && /^\u2605100$/.test(t.querySelector('em').textContent.trim()))) f(t100.length + ' tiles wear the badge for a hundred');
         if (!/\u2605\s*2/.test(document.querySelector('#roomBody .eyebrow').textContent)) f('the heading reads ' + document.querySelector('#roomBody .eyebrow').textContent);
         hideSheet();
