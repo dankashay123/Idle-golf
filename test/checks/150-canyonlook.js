@@ -62,7 +62,7 @@ module.exports = {
         // (nothing else in the way: the caddie floats by the bridge, and the
         // scenery and the people stand where they stand)
         Scene.drawCaddie = () => {}; Scene.props = [];
-        for (const [name, cam] of [['rim', I.bank - 1.5], ['onto', I.bank + 1.2], ['bridge', (I.bank + I.land) / 2]]) {
+        for (const [name, cam] of [['rim', I.bank - 1.5], ['onto', I.bank + 1.2], ['bridge', (I.bank + I.land) / 2], ['far', I.land - 1.5]]) {
           for (let k = 0; k < 2; k++) { Scene.camD = cam; Scene.draw(0, D); }
           const px = Scene.buf.getContext('2d').getImageData(0, 0, VW, VH).data;
           const mag = (x, y) => { const i = (y * VW + x) * 4; return px[i] > 200 && px[i + 1] < 90 && px[i + 2] > 200; };
@@ -84,6 +84,14 @@ module.exports = {
           out[name] = { tall: y1 - y0, green, all }; if (name === 'bridge') out.img = Scene.buf.toDataURL();
           if (green > all * 0.004) f(name + ': ' + green + ' pixels of grass through the canyon of ' + all);
           if (name === 'rim' && y1 - y0 < VH * 0.2) f('from the rim the canyon stands ' + (y1 - y0) + ' rows of ' + VH);
+          // (from over it, nothing nearer hides it: from below its far rim
+          // to the foot of the view it is all gorge, bar the bridge; drawn
+          // as from the ground, grass lay under him as he crossed)
+          if (Scene.camD - CAM_BACK > W.d - W.rd) { let under = 0;
+            for (let y = y0 + 3; y < VH; y++) for (let x = 0; x < VW; x++) { if (Math.abs(x - pb.x) < bw * 1.6 || (x < VW * 0.3 && y > VH * 0.75)) continue;
+              const i = (y * VW + x) * 4; if (!mag(x, y) && px[i + 1] > px[i] + 15 && px[i + 1] > px[i + 2]) under++; }
+            out[name].under = under;
+            if (under > 20) f(name + ': from over the gorge, ' + under + ' pixels of grass under its far rim'); }
         }
       } finally {
         P_CANYON.tone = keepTone; Scene.drawCaddie = keepCad; window.requestAnimationFrame = raf; QUIET = false;
@@ -95,6 +103,6 @@ module.exports = {
     const fails = r.fails.concat(d.fails);
     if (fails.length) throw new Error(fails.join('; '));
     return [r.out.join('; '),
-      'drawn: from the rim ' + d.out.rim.tall + ' rows tall, grass through it ' + d.out.rim.green + ' of ' + d.out.rim.all + '; stepping on ' + d.out.onto.green + ' of ' + d.out.onto.all + '; from the middle of the bridge ' + d.out.bridge.green + ' of ' + d.out.bridge.all];
+      'drawn: from the rim ' + d.out.rim.tall + ' rows tall, grass through it ' + d.out.rim.green + ' of ' + d.out.rim.all + '; stepping on ' + d.out.onto.green + ' of ' + d.out.onto.all + '; from the middle of the bridge ' + d.out.bridge.green + ', its far end ' + d.out.far.green + ' of ' + d.out.bridge.all];
   }
 };
