@@ -86,6 +86,24 @@ module.exports = {
         if (t100.length !== 2 || !t100.every(t => t.querySelector('em') && /^\u2605100$/.test(t.querySelector('em').textContent.trim()))) f(t100.length + ' tiles wear the badge for a hundred');
         if (!/\u2605\s*2/.test(document.querySelector('#roomBody .eyebrow').textContent)) f('the heading reads ' + document.querySelector('#roomBody .eyebrow').textContent);
         hideSheet();
+        // a whole shelf: paid once, B.SHELF_SOV, on the sighting that fills
+        // it; the Wager Book's said and not paid; its line reads Complete
+        { const said = [], tw = window.toast; window.toast = m => said.push(String(m)); QUIET = false;
+          try {
+            const W = GUIDE.filter(g => g.g === 'w'), last = W[W.length - 1].id; S.guide = {}; delete S.shelfDone;
+            W.forEach(g => { if (g.id !== last) S.guide[g.id] = 1; });
+            const s0 = S.sov || 0; guideAdd([last]); const paid = (S.sov || 0) - s0;
+            if (paid !== B.GUIDE_SOV + B.SHELF_SOV || !S.shelfDone || S.shelfDone.w !== 1) f('the wildlife shelf filled paid ' + paid + ', done ' + JSON.stringify(S.shelfDone));
+            if (!said.some(m => /Wildlife complete/.test(m))) f('the shelf filled said ' + JSON.stringify(said));
+            delete S.guide[last]; const s1 = S.sov || 0; guideAdd([last]); if ((S.sov || 0) - s1 !== B.GUIDE_SOV) f('the shelf paid again: ' + ((S.sov || 0) - s1));
+            const Wb = GUIDE.filter(g => g.g === 'b'); Wb.forEach(g => { S.guide[g.id] = 1; }); delete S.guide[Wb[0].id];
+            const s2 = S.sov || 0; guideAdd([Wb[0].id]); if ((S.sov || 0) - s2 !== B.GUIDE_SOV || !S.shelfDone.b) f('the Wager Book filled paid ' + ((S.sov || 0) - s2) + ' (a first is ' + B.GUIDE_SOV + ')');
+            hideSheet(); trophyRoom('guide'); const ebs = [...document.querySelectorAll('#roomBody .eyebrow')].map(e => e.textContent);
+            if (!ebs.some(t => /^Wildlife · ✓\u00a0Complete/.test(t))) f('the wildlife line reads ' + ebs.find(t => /^Wildlife/.test(t)));
+            if (!ebs.some(t => /^Night · \d+\/\d+ · \+25/.test(t))) f('an unfilled shelf reads ' + ebs.find(t => /^Night/.test(t)));
+            hideSheet();
+            S.shelfDone = { w: 1, zz: 1, n: 'x' }; migrate(); if (JSON.stringify(S.shelfDone) !== '{"w":1}') f('a junk shelf kept: ' + JSON.stringify(S.shelfDone));
+          } finally { window.toast = tw; QUIET = true; } }
         // save repair
         S.guide = { doe: 'x', robin: -2, stag: 3.7, nope: 4 }; migrate();
         if (JSON.stringify(S.guide) !== '{"stag":3}') f('repaired to ' + JSON.stringify(S.guide));

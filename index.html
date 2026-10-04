@@ -2769,6 +2769,9 @@ const B = {
   // and for hunts done in weeks in a row (the user picked it from the menu):
   // HUNT_STREAK more for each week before this one, up to HUNT_STREAK_MAX of them
   HUNT_STREAK: 5, HUNT_STREAK_MAX: 3,
+  // a whole shelf of the Guide seen (the user picked it from the menu): once
+  // for each shelf, never the Wager Book's (nothing seen in a wager pays)
+  SHELF_SOV: 25,
   // Golden Hour (the user picked it from the menu): one hole in GOLDEN_P,
   // from a hash of the hole, played in a low gold light, and all it earns
   // paid twice. Not at night, in the rain, on a frosty morning, in a wager
@@ -4713,6 +4716,8 @@ function migrate(){
   // sighting pay the hunt at once, and the Guide read 4/3)
   else if(S.hunt){ const want = huntOf(S.hunt.wk); S.hunt.got = S.hunt.got.filter((id, i, a) => want.includes(id) && a.indexOf(id) === i);
     if(S.hunt.paid !== undefined && S.hunt.paid !== 1) delete S.hunt.paid; }
+  if(S.shelfDone !== undefined){ if(!S.shelfDone || typeof S.shelfDone !== 'object' || Array.isArray(S.shelfDone)) delete S.shelfDone;
+    else for(const k in S.shelfDone) if(!GUIDE_SHELF.some(x => x[0] === k) || S.shelfDone[k] !== 1) delete S.shelfDone[k]; }
   if(S.huntRun !== undefined && !(S.huntRun && Number.isInteger(S.huntRun.wk) && Number.isInteger(S.huntRun.n) && S.huntRun.n >= 1 && S.huntRun.n < 1e5)) delete S.huntRun;
   // (a paid hunt has its week in the run; an old save's paid hunt starts one)
   if(S.hunt && S.hunt.paid && !(S.huntRun && S.huntRun.wk === S.hunt.wk)) S.huntRun = { wk: S.hunt.wk, n: 1 };
@@ -18835,7 +18840,7 @@ const Scene = {
       // (the Vault is walked up: farther, and it runs off as he comes)
       // (the eagle high over the drive, ahead of him)
       else if(an === 'eagle'){ d = c0 + 7 + u * 3; x = (v - 0.5) * 4; alt = 3.2 + u; }
-      else if(R.mode === 'floor'){ d = c0 + 16 + u * 8; x = sd * (this.fwWidth(d) + 1.1 + v * 0.6); }
+      else if(R.mode === 'floor'){ d = c0 + 9 + u * 5; x = sd * (this.fwWidth(d) + 1.1 + v * 0.6); }
       else { d = Math.min(LEN + 4, c0 + 5.5 + u * 4); x = sd * (this.fwWidth(Math.min(d, LEN)) + 0.8 + v * 1.2); }
       if(C.at !== 'air' && an !== 'swan' && (this.hitsHazard(d, x, 0.3) || (Wa && Math.abs(d - Wa.d) < Wa.rd + 0.4 && Math.abs(x - Wa.x) < Wa.rx + 0.4))) continue;
       if(put.some(q => Math.abs(q.d - d) < 0.8 && Math.abs(q.x - x) < 0.8)) continue;
@@ -23380,7 +23385,7 @@ Object.assign(Scene, {
       const ax = hr(p.k * 3 + m, 612) - 0.5, ad = hr(p.k * 3 + m, 613) - 0.5, bx = hr(p.k * 3 + m + 1, 612) - 0.5, bd = hr(p.k * 3 + m + 1, 613) - 0.5;
       d = p.d + (ad + (bd - ad) * f) * p.r * 2; x = p.x + (ax + (bx - ax) * f) * p.r * 2; a = p.alt; dir = bx >= ax ? 1 : -1; fr = Math.floor(t * 18) & 1; }
     if(d < this.camD - 2) return;
-    const g = this.proj(d, x, a), rows = C.rows[fr] || C.rows[0], hpx = C.h * US * g.s;
+    const g = this.proj(d, x, a), rows = C.rows[fr] || C.rows[0], hpx = C.h * US * g.s * (p.wg ? WAGER_WILD_SC : 1);
     if(hpx < rows.length * 0.5) return;
     const k = Math.max(1, Math.round(hpx / rows.length)), w = rows[0].length * k;
     if(g.x + w < -4 || g.x - w > VW + 4) return;
@@ -23610,7 +23615,8 @@ Object.assign(Scene, {
         return;
       }
       const g = this.proj(d, x), q = hop ? this.proj(d, x, hop) : g;
-      const hpx = Math.round(C.h * US * g.s);
+      // (a wager's own animal drawn larger: it was easy to miss)
+      const hpx = Math.round(C.h * US * g.s * (p.wg ? WAGER_WILD_SC : 1));
       if(hpx < 3) return;
       const fr = C.rows.length > 1 ? (Math.floor(this.t * (p.an === 'crab' ? 3 : 0.7) + p.k) & 1) : 0;
       const spr = (p.gold ? goldSprite : critSprite)(p.an, fr, night && !p.lit, flip), w = Math.max(2, Math.round(hpx * spr.w / spr.h));
@@ -26126,6 +26132,7 @@ const GUIDE_SHELF = [['w', 'Wildlife'], ['n', 'Night'], ['g', 'Golden'], ['s', '
 // Counted, never paid: nothing seen in a wager pays.
 const WAGER_WILD = { sand: ['eagle', 'Dune Eagle'], water: ['swan', 'Island Swan'], cellar: ['owl', 'Floodlight Owl'],
   vault: ['squirrel', 'Vault Squirrel'], scramble: ['rabbit', 'Scramble Rabbit'], twilight: ['bat', 'Twilight Bat'] };
+const WAGER_WILD_SC = 1.8;   // (drawn this much larger than on the course: easy to miss at their size)
 let WAGER_WILD_P = 0.5;   // (1 in the developer menu and the checks: always there)
 // the night creatures (laid in layNight) on a shelf of their own, with the
 // animals only out after dark
@@ -26196,12 +26203,24 @@ const huntOpen = () => !S.dgnRun && !huntNow().paid;
 const TAG_EVERYDAY = ['sparrow', 'robin', 'blackbird', 'moth', 'glowworm', 'firefly'];
 // the animals on the Guide's shelves (wildlife, night, golden), for the tag
 const isAnimal = id => { const g = GUIDE.find(x => x.id === id); return !!g && 'wng'.includes(g.g); };
+// a shelf seen whole: paid once, said in a toast (the Wager Book's said,
+// never paid)
+const shelfFull = k => GUIDE.filter(g => g.g === k).every(g => (S.guide || {})[g.id]);
+function shelfCheck(){
+  for(const [k, t] of GUIDE_SHELF){
+    if((S.shelfDone || {})[k] || !shelfFull(k)) continue;
+    S.shelfDone = S.shelfDone || {}; S.shelfDone[k] = 1;
+    const pay = k === 'b' ? 0 : B.SHELF_SOV; if(pay) grantSov(pay, '', true);
+    if(!QUIET && !OFFLINE) toast('<span class="achk">Field Guide</span>' + t + ' complete' + (pay ? ' \u00b7 <span style="white-space:nowrap">+' + pay + sovIc() + '</span>' : ''), 'ach');
+  }
+}
 // a wager's own animal (WAGER_WILD), as its scene is laid: counted and
 // named, never paid
 function wagerWildSee(sc){
   if(QUIET || OFFLINE || !S.dgnRun) return;
   const p = (sc.props || []).find(q => q.kind === 15 && q.wg); if(!p) return;
   S.guide = S.guide || {}; S.guide[p.wg] = (S.guide[p.wg] || 0) + 1;
+  if(S.guide[p.wg] === 1) shelfCheck();
   if(S.spotTag !== 0) spotShow([p.wg], 0, null, S.guide[p.wg] === 1 ? 'New \u00b7 Wager Book' : 'Wager Book');
 }
 // count what was seen, and pay for each seen the first time
@@ -26215,6 +26234,7 @@ function guideAdd(got){
   }
   if(firsts.length) grantSov(B.GUIDE_SOV * firsts.length, '', true);
   const hunt = huntSee(got);
+  if(firsts.length) shelfCheck();
   // the animals in a tag over the map, with what they paid and the hunt;
   // anything else seen the first time (the weather, the seasons, the
   // signature holes) in one line of a toast
@@ -26338,7 +26358,9 @@ function roomGuide(w){
     h += '</div>'; }
   for(const [k, t] of GUIDE_SHELF){
     // (a wager pays nothing for what is seen in it: said on its shelf)
-    h += '<div class="eyebrow" style="margin:10px 0 4px">' + t + (k === 'b' ? ' \u00b7 not paid' : '') + '</div><div class="guide">';
+    const sh = GUIDE.filter(x => x.g === k), sn = sh.filter(x => seen[x.id]).length, full = sn === sh.length;
+    h += '<div class="eyebrow" style="margin:10px 0 4px">' + t + ' \u00b7 ' + (full ? '<span style="color:var(--brass)">\u2713\u00a0Complete</span>' : sn + '/' + sh.length)
+      + (k === 'b' ? ' \u00b7 not paid' : !full && !(S.shelfDone || {})[k] ? ' \u00b7 +' + B.SHELF_SOV + sovIc() + '\u00a0whole' : '') + '</div><div class="guide">';
     for(const g of GUIDE.filter(x => x.g === k)){
       const [url, wh] = guideUrl(g.id).split('|'), [sw, sh] = (wh || '12x12').split('x').map(Number);
       const z = Math.max(1, Math.floor(Math.min(60 / sw, 44 / sh)));
