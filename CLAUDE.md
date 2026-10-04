@@ -31,7 +31,7 @@ game as it is, short, and move detail into `docs/`.
   recommendation (`HANDOFF.md` §6). Never offer a photo mode, a weather
   forecast or fireworks.
 - **Pacing**: a free player gets a full Mythic set in about six weeks at an
-  hour a day; no wall below Card 200 to 250 (maxed walls at 222); nothing
+  hour a day; no wall below Card 200 to 250 (maxed walls at 220); nothing
   game-breaking at max, every heirloom has a top. Simulate a free player
   before changing anything that pays.
 - **Sovereigns earned wait for a GET tap** at their place (Today, Honours,

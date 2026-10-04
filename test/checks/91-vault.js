@@ -54,6 +54,21 @@ module.exports = {
           if (!h.call.includes('FLOOR ' + (h.floor + 1))) f('floor ' + (h.floor + 1) + ' called ' + JSON.stringify(h.call));
         }
         if (S.dgnRun) leaveDgn(), leaveDgn();
+        // ---- a gust pushes him back a floor: the floor played again is a
+        // fresh one, its ball dropped and called (up a floor and back in one
+        // step, its last ball stayed "in the cup" and it never was) ----
+        { const ev = B.DGN_EVENTS, ch = B.DGN_EVENT_CHANCE;
+          B.DGN_EVENTS = ev.filter(e => e.k === 'back'); B.DGN_EVENT_CHANCE = 1;
+          try {
+            seedAt(91); S.dgnKeys.vault = 3; said.length = 0; startDgn(vault); const R2 = S.dgnRun; let held = 0, wasH = false;
+            for (let i = 0; i < 60 * 60 && S.dgnRun && (held < 3 || R2.held); i++) { fake += 1000 / 60; const D = derive(); step(1 / 60, D); Scene.draw(1 / 60, D); if (R2.held && !wasH) held++; wasH = !!R2.held; }
+            const calls = said.filter(n => /^FLOOR/.test(n));
+            o.gust = calls;
+            if (held < 3) f('pushed back every floor, only ' + held + ' floors cleared');
+            else if (calls.length < held) f('pushed back: ' + held + ' floors cleared, ' + calls.length + ' called ' + JSON.stringify(calls));
+            if (S.dgnRun) leaveDgn(), leaveDgn();
+            hideSheet();
+          } finally { B.DGN_EVENTS = ev; B.DGN_EVENT_CHANCE = ch; } }
         // ---- left between two floors ----
         seedAt(78); S.dgnKeys.vault = 3; startDgn(vault); R = S.dgnRun;
         for (let i = 0; i < 60 * 60 && !R.held; i++) { fake += 1000 / 60; const D = derive(); step(1 / 60, D); Scene.draw(1 / 60, D); }

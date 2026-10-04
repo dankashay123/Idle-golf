@@ -1016,6 +1016,7 @@ div.guide.hunt,div.guide.mhunt{grid-template-columns:repeat(3,minmax(0,1fr))}
 @keyframes coIn{0%{opacity:0;margin-top:4px}12%{opacity:1;margin-top:0}80%{opacity:1}100%{opacity:0}}
 #wagerStat b{color:var(--aurora);font-weight:700}
 .rfold{border-top:1px solid var(--line)}
+.urow .mt .ms{color:var(--brass);font-weight:400;opacity:.8}
 .rfh{display:flex;justify-content:space-between;width:100%;padding:8px 4px;background:none;border:0;color:var(--chalk);
   font-family:var(--disp);font-size:var(--f3);cursor:pointer;min-height:32px;align-items:center}
 .rfn{font-family:var(--mono);font-size:var(--f0);color:var(--dim)}
@@ -4902,7 +4903,30 @@ const TR_TOP = {};
 B.TROPHY.forEach(t => { TR_TOP[t.id] = trTop(t); });
 const relLv  = id => Math.min(S.relic[id] || 0, TR_TOP[id] || B.TR_MAX);
 const capOf  = u => u.cap ? u.cap + S.retires * B.CAP_PER_LEGACY : Infinity;
-const upgMult = k => B.UPG.reduce((a,u) => u.k === k && u.g ? a * Math.pow(u.g, upgLv(u.id)) : a, 1);
+// Milestones (the user picked them from the menu): at Lv 10, 25, 50, 75,
+// 100 and every 50 after (every 25 on a rung with no cap), and at the cap,
+// a rung pays a step. Not more than it pays now: a level counts three
+// quarters (UPG_MS_K) and the milestone the quarter held back, so at every
+// milestone, and at the cap, a rung is worth just what it was; between
+// them a little less. No rung is ever stronger than it was, so the wall
+// (Card 222) and the pacing stand.
+const UPG_MS_K = 0.75;
+function msLast(u, lv){
+  const cap = capOf(u);
+  if(lv >= cap) return cap;
+  if(lv < 10) return 0; if(lv < 25) return 10; if(lv < 50) return 25; if(lv < 75) return 50; if(lv < 100) return 75;
+  const st = isFinite(cap) ? 50 : 25;
+  return 100 + Math.floor((lv - 100) / st) * st;
+}
+function msNext(u, lv){
+  const cap = capOf(u);
+  if(lv >= cap) return null;
+  const n = lv < 10 ? 10 : lv < 25 ? 25 : lv < 50 ? 50 : lv < 75 ? 75 : lv < 100 ? 100 : 100 + (Math.floor((lv - 100) / (isFinite(cap) ? 50 : 25)) + 1) * (isFinite(cap) ? 50 : 25);
+  return Math.min(n, cap);
+}
+// the level a rung's effect reads
+const upgEff = id => { const u = B.UPG.find(x => x.id === id), lv = upgLv(id); return u ? lv * UPG_MS_K + (1 - UPG_MS_K) * msLast(u, lv) : lv; };
+const upgMult = k => B.UPG.reduce((a,u) => u.k === k && u.g ? a * Math.pow(u.g, upgEff(u.id)) : a, 1);
 
 /* ==================================================================   CAREER BONUSES
    Attributes, talents and paragon all land in one table. Standard keys are
@@ -5243,9 +5267,9 @@ function derive(){
   if(spdRaw > B.SPEED_CAP) pow *= 1 + (spdRaw/B.SPEED_CAP - 1) * B.SPEED_OVERFLOW;
 
   const crit = Math.min(B.CRIT_CAP, (B.CRIT_BASE
-    + upgLv('face')*B.CRIT_ADD.face + upgLv('simul')*B.CRIT_ADD.simul
+    + upgEff('face')*B.CRIT_ADD.face + upgEff('simul')*B.CRIT_ADD.simul
     + G.crt + ch.c + buffVal('ace') + buffVal('cCrt')) * relMult('crt'));
-  const cpw = (B.CRIT_MULT + upgLv('sweet')*B.CPW_ADD + G.cpw) * relMult('cpw') * (1 + buffVal('cCpw')/100);
+  const cpw = (B.CRIT_MULT + upgEff('sweet')*B.CPW_ADD + G.cpw) * relMult('cpw') * (1 + buffVal('cCpw')/100);
 
   const ball0 = S.equip.ball;
   const reson = resonance(ball0 && ball0.el);
@@ -5253,7 +5277,7 @@ function derive(){
   // Affinity chance is capped on the course, but the raw figure is kept: the
   // Floodlit Green reads the uncapped value, so over-investing in affinity has
   // somewhere to pay off.
-  const procRaw = (B.PROC_BASE + upgLv('groove')*B.PROC_ADD
+  const procRaw = (B.PROC_BASE + upgEff('groove')*B.PROC_ADD
     + G.prc + ch.p + relLv('ember')*B.EMBER_ADD) * relMult('prc');
   const proc = Math.min(B.PROC_CAP, procRaw);
 
@@ -5261,13 +5285,13 @@ function derive(){
     * ch.g * (1 + buffVal('windfall')/100) * (1 + buffVal('cGold')/100) * perkMult('gold')
     * permMult('sponsor') * (isMember() ? 1 + B.MEMBER_GOLD : 1)
     * (boostOn() ? B.BOOST_MULT : 1) * (luckyOn() ? ALB_V : 1);
-  const drop = clamp((B.DROP_BASE + upgLv('marker')*B.DROP_ADD + G.drp + ch.dl
+  const drop = clamp((B.DROP_BASE + upgEff('marker')*B.DROP_ADD + G.drp + ch.dl
     + relLv('sun')*B.SUN_ADD + perkAdd('drop') + permAdd('scout') + buffVal('cDrop')) * relMult('drp'), 0, 1);
-  const dgnY = (1 + upgLv('lantern')*B.DGN_ADD + G.dgn) * relMult('dgn');
+  const dgnY = (1 + upgEff('lantern')*B.DGN_ADD + G.dgn) * relMult('dgn');
 
   // Provisional: the chance a swing plays a second ball. Whole numbers are
   // guaranteed extra balls, the remainder is a roll.
-  let mst = upgLv('provis')*B.MST_ADD.provis + upgLv('second')*B.MST_ADD.second
+  let mst = upgEff('provis')*B.MST_ADD.provis + upgEff('second')*B.MST_ADD.second
     + G.mst + buffVal('rally')/100 + buffVal('cMst')/100;
   mst *= relMult('mst');
   mst = clamp(mst, 0, B.MST_CAP);
@@ -6557,7 +6581,7 @@ function rollDgnEvent(R){
   else if(pick.k === 'work') { R.work *= pick.v; R.full *= pick.v; }
   else if(pick.k === 'back' && R.cleared > 0){
     R.cleared--; R.floor--;
-    R.work = floorWork(R.floor); R.full = R.work; R.fT = 0;
+    R.work = floorWork(R.floor); R.full = R.work; R.fT = 0; R.fN = (R.fN || 0) + 1;
   }
   R.evt = pick; R.evtT = 2.4; R.t0e = R.t;
   // The stage already calls it out in the middle of the screen. A toast on top
@@ -6696,7 +6720,7 @@ function tickDgn(dt, D){
 // the Vault's next floor, once the last is cleared (quiet: no turn of luck
 // rolled, as when a run ends between floors)
 function floorOn(R, quiet){
-  R.held = 0; R.floor++; R.mod = 1; R.fT = 0;
+  R.held = 0; R.floor++; R.mod = 1; R.fT = 0; R.fN = (R.fN || 0) + 1;
   R.work = floorWork(R.floor); R.full = R.work;
   if(!quiet) rollDgnEvent(R);
 }
@@ -25892,8 +25916,13 @@ Object.assign(Scene, {
       this.walkOn = false;
       this.hudWords(null);
       const R = S.dgnRun, dg = B.DGN.find(x => x.id === R.id);
-      if(R.floor !== this.dFloor || this.themeId !== R.id){
-        this.dFloor = R.floor; this.newDepthsHole(R);
+      // (each floor begun is a new one, a floor played again after a gust
+      // pushed him back as well: up a floor and back down in one step, it
+      // was the same number, and its last ball was still "in the cup", so
+      // the floor played again was never called nor its ball dropped)
+      const fk = R.floor + '|' + (R.fN || 0);
+      if(fk !== this.dFloor || this.themeId !== R.id){
+        this.dFloor = fk; this.newDepthsHole(R);
       }
       // progress through this floor's work. Reading a field that no longer
       // exists made this NaN, which propagated into the camera and flattened
@@ -27388,22 +27417,44 @@ function buildUpg(){
 // One tap for the whole range: the cheapest next level, again and again,
 // until the purse runs short. Twenty rows tapped one by one was the tedium.
 function buyAllUpg(){
-  let n = 0;
+  let n = 0; const lv0 = {}; for(const u of B.UPG) lv0[u.id] = upgLv(u.id);
+  // (what is at the cap of its stat is passed by; asked once, as a level
+  // bought can only take a stat nearer its cap)
+  let D = derive(), dead = new Set(B.UPG.filter(u => upgDead(u, D)).map(u => u.id));
   for(let guard = 0; guard < 20000; guard++){
     let best = null, bc = Infinity;
     for(const u of B.UPG){
       const lv = upgLv(u.id);
-      if(lv >= capOf(u)) continue;
+      if(lv >= capOf(u) || dead.has(u.id)) continue;
       const c = costBulk(u.base, u.r, lv, 1);
       if(c < bc){ bc = c; best = u; }
     }
     if(!best || S.gold < bc) break;
     S.gold -= bc; S.upg[best.id] = upgLv(best.id) + 1; n++;
+    if(['drp', 'crt', 'mst'].includes(best.k)){ D = derive(); if(upgDead(best, D)) dead.add(best.id); }
   }
   if(!n){ toast('Nothing in reach yet'); return; }
   Sfx.play('buy');
-  toast('<b>' + n + '</b> level' + (n > 1 ? 's' : '') + ' bought');
+  // (the milestones passed said in the same toast, not one each)
+  const ms = B.UPG.filter(u => msLast(u, upgLv(u.id)) > msLast(u, lv0[u.id]));
+  toast('<b>' + n + '</b> level' + (n > 1 ? 's' : '') + ' bought' + (ms.length ? ' \u00b7 \u2605 ' + (ms.length === 1 ? ms[0].n + ' Lv\u00a0' + msLast(ms[0], upgLv(ms[0].id)) : ms.length + ' milestones') : ''));
   refreshUpg(); renderVitals();
+}
+// A rung whose stat is already at the game's own cap (gear luck at 100%, a
+// pure strike at its cap, provisionals at three) buys nothing more: said on
+// its row, and Buy All passes it by (the user asked for the multipliers
+// looked at: Ball Marker ran past 100% by Lv 150 and was still bought).
+function upgDead(u, D){
+  D = D || derive();
+  if(u.k === 'drp') return D.drop >= 1 - 1e-9;
+  if(u.k === 'crt') return D.crit >= B.CRIT_CAP - 1e-9;
+  if(u.k === 'mst') return D.mst >= B.MST_CAP - 1e-9;
+  return false;
+}
+// a milestone passed: said, with what its rung now does
+function msSay(u, lv0){
+  const m = msLast(u, upgLv(u.id));
+  if(m > msLast(u, lv0) && m > 0 && !QUIET) toast('<span class="achk">Milestone \u00b7 Lv\u00a0' + m + '</span>' + u.n + ' \u00b7 ' + effectLabel(u), 'ach');
 }
 function bulkFor(base, r, owned, cap){
   let k = S.mult === 'Max' ? maxAffordable(base, r, owned, S.gold) : S.mult;
@@ -27411,7 +27462,7 @@ function bulkFor(base, r, owned, cap){
   return Math.max(S.mult === 'Max' ? 0 : 1, k);
 }
 function effectLabel(u){
-  const lv = upgLv(u.id);
+  const lv = upgEff(u.id);
   if(u.k === 'crt') return '+' + (lv*B.CRIT_ADD[u.id]*100).toFixed(1) + 'pp';
   if(u.k === 'cpw') return '+' + fmtX(lv*B.CPW_ADD) + 'x';
   if(u.k === 'drp') return '+' + (lv*B.DROP_ADD*100).toFixed(1) + 'pp';
@@ -27439,6 +27490,7 @@ function refreshUpg(){
   // Both are gone (the user asked): the button's price, grey until the purse
   // covers it, says all of that.
 
+  const D0 = derive();
   for(const r of UPGREF){
     const u = r.u, lv = upgLv(u.id), cap = capOf(u);
     const maxed = lv >= cap;
@@ -27447,8 +27499,9 @@ function refreshUpg(){
     // lit when the purse covers the price the button is actually asking for,
     // so it tracks the multiplier: on x10 it is ten of them, not one
     const ok = !maxed && S.gold >= c && k > 0;
+    const nx = msNext(u, lv);
     r.mt.innerHTML = 'Lv\u00a0<i>' + lv + (isFinite(cap) ? '/' + cap : '') + '</i> <b>'
-      + effectLabel(u) + '</b>';
+      + effectLabel(u) + '</b>' + (upgDead(u, D0) ? ' <span class="ms">at the cap</span>' : nx ? ' <span class="ms">\u2605' + nx + '</span>' : '');
     if(maxed){
       r.btn.className = 'buy max'; r.lbl.textContent = 'Capped'; r.amt.textContent = '\u2014';
     }else{
@@ -27469,6 +27522,7 @@ function buyUpg(u){
   const c = costBulk(u.base, u.r, lv, k);
   if(k <= 0 || S.gold < c) return;
   S.gold -= c; S.upg[u.id] = lv + k;
+  msSay(u, lv);
   Sfx.play('buy');
   refreshUpg(); renderVitals();
 }
