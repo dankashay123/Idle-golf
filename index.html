@@ -1035,6 +1035,7 @@ div.guide.hunt,div.guide.mhunt{grid-template-columns:repeat(3,minmax(0,1fr))}
 .wpics{display:flex;flex-wrap:wrap;gap:4px 6px;align-items:flex-end;padding:0 0 8px 22px}
 .wpics img{image-rendering:pixelated}
 .wpics img.dk{filter:brightness(0) invert(1) opacity(.2)}
+.wpics .wrare{font-size:var(--f0);letter-spacing:.08em;text-transform:uppercase;color:var(--brass);margin-left:6px;align-self:center}
 .wbadge{image-rendering:pixelated;vertical-align:-2px;margin-left:6px}
 .guidelist{margin:6px 0 8px 18px;font-size:var(--f1);line-height:1.5}
 #leaveBtn.ask{border-color:var(--flag);color:var(--flag)}
@@ -2798,6 +2799,8 @@ const B = {
   // a course's every animal seen there (its collection, a badge in the
   // Cabinet; the user picked it from the menu): once for each course
   WILD_SOV: 10,
+  // and its rare visitors seen too, once the course is whole: a gold star
+  WILD_STAR_SOV: 15,
   // Golden Hour (the user picked it from the menu): one hole in GOLDEN_P,
   // from a hash of the hole, played in a low gold light, and all it earns
   // paid twice. Not at night, in the rain, on a frosty morning, in a wager
@@ -4800,6 +4803,12 @@ function migrate(){
     else for(const id in S.cwild){ const m = S.cwild[id], want = wildOf(id);
       if(!want.length || !m || typeof m !== 'object' || Array.isArray(m)){ delete S.cwild[id]; continue; }
       for(const an in m) if(!want.includes(an) || m[an] !== 1) delete m[an]; } }
+  if(S.cwildR !== undefined){ if(!S.cwildR || typeof S.cwildR !== 'object' || Array.isArray(S.cwildR)) delete S.cwildR;
+    else for(const id in S.cwildR){ const m = S.cwildR[id], rw = rareOf(id);
+      if(!rw.length || !m || typeof m !== 'object' || Array.isArray(m)){ delete S.cwildR[id]; continue; }
+      for(const an in m) if(!rw.includes(an) || m[an] !== 1) delete m[an]; } }
+  if(S.cwildStar !== undefined){ if(!S.cwildStar || typeof S.cwildStar !== 'object' || Array.isArray(S.cwildStar)) delete S.cwildStar;
+    else for(const id in S.cwildStar) if(S.cwildStar[id] !== 1 || !rareOf(id).length || rareGot(id).length < rareOf(id).length) delete S.cwildStar[id]; }
   if(S.cwildDone !== undefined){ if(!S.cwildDone || typeof S.cwildDone !== 'object' || Array.isArray(S.cwildDone)) delete S.cwildDone;
     else for(const id in S.cwildDone) if(S.cwildDone[id] !== 1 || !COURSE_WILD[id] || wildGot(id).length < wildOf(id).length) delete S.cwildDone[id]; }
   if(S.shelfDone !== undefined){ if(!S.shelfDone || typeof S.shelfDone !== 'object' || Array.isArray(S.shelfDone)) delete S.shelfDone;
@@ -27149,6 +27158,46 @@ const COURSE_WILD = {
   sovereign: 'alligator badger bat butterfly eyes fox frog hedgehog moorhen owl rabbit squirrel',
   starfall: 'alligator badger bat butterfly eyes fox hedgehog moorhen otter owl rabbit squirrel'
 };
+// Rare visitors (the user picked them from the menu): two of the animals
+// seen on a course too seldom to be on its list (2 to 7 times in the same
+// sweep of 960 holes; the check "wildlist" holds each to it). Seen there
+// once its collection is whole, a gold star on its badge.
+const COURSE_RARE = {
+  coastal: 'kingfisher seal',
+  sandbelt: 'kingfisher dragonfly',
+  highlands: 'kingfisher dragonfly',
+  blackwater: 'kingfisher moorhen',
+  dunes: 'kingfisher frog',
+  palmetto: 'kingfisher swan',
+  ironbark: 'kingfisher frog',
+  riverbend: 'kingfisher swan',
+  mesa: 'moorhen frog',
+  snowline: 'kingfisher dragonfly',
+  blossom: 'kingfisher fox',
+  moorland: 'kingfisher heron',
+  azalea: 'kingfisher heron',
+  national: 'kingfisher dragonfly',
+  seaside: 'kingfisher dragonfly',
+  autumn: 'kingfisher otter',
+  oldlinks: 'kingfisher dragonfly',
+  meridian: 'kingfisher otter',
+  willow: 'kingfisher dragonfly',
+  harbour: 'kingfisher moorhen',
+  castledunes: 'kingfisher frog',
+  stonehollow: 'kingfisher frog',
+  redarch: 'kingfisher frog',
+  jadepagoda: 'kingfisher dragonfly',
+  fjordheim: 'kingfisher dragonfly',
+  emberpeak: 'kingfisher frog',
+  skyward: 'kingfisher frog',
+  mythicspire: 'kingfisher frog',
+  masters: 'kingfisher dragonfly',
+  crown: 'kingfisher dragonfly',
+  sovereign: 'kingfisher heron',
+  starfall: 'kingfisher dragonfly'
+};
+const rareOf = id => (COURSE_RARE[id] || '').split(' ').filter(Boolean);
+const rareGot = id => rareOf(id).filter(an => ((S.cwildR || {})[id] || {})[an]);
 const wildOf = id => (COURSE_WILD[id] || '').split(' ').filter(Boolean);
 const wildGot = id => wildOf(id).filter(an => ((S.cwild || {})[id] || {})[an]);
 // what a hole laid out live shows of its course's own (a golden one counts
@@ -27157,10 +27206,21 @@ function courseWildSee(sc){
   const cs = sc.course; if(!cs || !COURSE_WILD[cs.id]) return;
   const want = wildOf(cs.id), m = (S.cwild = S.cwild || {})[cs.id] = (S.cwild[cs.id] || {});
   for(const p of sc.props || []) if(p.kind === 15 && want.includes(p.an)) m[p.an] = 1;
+  // (its rare visitors, noted whenever seen; the star once it is whole)
+  { const rw = rareOf(cs.id), mr = (S.cwildR = S.cwildR || {})[cs.id] = (S.cwildR[cs.id] || {});
+    for(const p of sc.props || []) if(p.kind === 15 && rw.includes(p.an)) mr[p.an] = 1;
+    S.cwildStar = S.cwildStar || {};
+    if(rw.length && !S.cwildStar[cs.id] && (S.cwildDone || {})[cs.id] && rareGot(cs.id).length === rw.length){
+      S.cwildStar[cs.id] = 1;
+      earnSov(B.WILD_STAR_SOV, 'today', 'wildstar:' + cs.id, cs.n + ' rare visitors');
+      if(!QUIET && !OFFLINE) toast('<span class="achk">Gold Star</span>' + cs.n + ' \u00b7 its rare visitors seen \u00b7 <span style="white-space:nowrap">+' + B.WILD_STAR_SOV + sovIc() + '</span>', 'ach');
+    } }
   S.cwildDone = S.cwildDone || {};
   if(S.cwildDone[cs.id] || wildGot(cs.id).length < want.length) return;
   S.cwildDone[cs.id] = 1;
   earnSov(B.WILD_SOV, 'today', 'wild:' + cs.id, cs.n + ' wildlife complete');
+  if(rareOf(cs.id).length && !(S.cwildStar || {})[cs.id] && rareGot(cs.id).length === rareOf(cs.id).length){
+    S.cwildStar = S.cwildStar || {}; S.cwildStar[cs.id] = 1; earnSov(B.WILD_STAR_SOV, 'today', 'wildstar:' + cs.id, cs.n + ' rare visitors'); }
   if(!QUIET && !OFFLINE) toast('<span class="achk">Collection</span>' + cs.n + ' \u00b7 every animal seen \u00b7 <span style="white-space:nowrap">+' + B.WILD_SOV + sovIc() + '</span>', 'ach');
 }
 // a wager's own animal (WAGER_WILD), as its scene is laid: counted and
@@ -27497,9 +27557,12 @@ function renderWild(){
   const pic = (an, on) => { const [url, wh] = guideUrl(an).split('|'), [sw, sh] = (wh || '12x12').split('x').map(Number), z = Math.min(18 / sw, 12 / sh);
     return url ? '<img src="' + url + '" width="' + Math.round(sw * z) + '" height="' + Math.round(sh * z) + '" alt="' + CRIT_NAME[an] + '"' + (on ? '' : ' class="dk"') + '>' : ''; };
   const rows = list.map(cs => { const want = wildOf(cs.id), got = wildGot(cs.id), whole = (S.cwildDone || {})[cs.id];
-    return '<div class="wrow' + (whole ? ' whole' : '') + '"><div class="lb"><span class="p"></span><span>' + cs.n + (whole ? '<img class="wbadge" src="' + pixUrl('medal', '#E3B457') + '" width="14" height="14" alt="Badge">' : '') + '</span><span class="s">'
-      + (whole ? 'Complete' : got.length + '/' + want.length + ' \u00b7 +' + B.WILD_SOV + sovIc()) + '</span></div>'
-      + '<div class="wpics">' + want.map(an => pic(an, got.includes(an))).join('') + '</div></div>'; }).join('')
+    const rw = rareOf(cs.id), rg = rareGot(cs.id), star = (S.cwildStar || {})[cs.id];
+    return '<div class="wrow' + (whole ? ' whole' : '') + '"><div class="lb"><span class="p"></span><span>' + cs.n + (whole ? '<img class="wbadge" src="' + pixUrl('medal', '#E3B457') + '" width="14" height="14" alt="Badge">' : '')
+      + (star ? '<img class="wbadge" src="' + pixUrl('star', '#F2C21E') + '" width="14" height="14" alt="Gold star">' : '') + '</span><span class="s">'
+      + (star ? 'Gold star' : whole ? (rw.length ? 'Rare ' + rg.length + '/' + rw.length : 'Complete') : got.length + '/' + want.length + ' \u00b7 +' + B.WILD_SOV + sovIc()) + '</span></div>'
+      + '<div class="wpics">' + want.map(an => pic(an, got.includes(an))).join('')
+      + (rw.length ? '<span class="wrare">Rare</span>' + rw.map(an => pic(an, rg.includes(an))).join('') : '') + '</div></div>'; }).join('')
     || '<div class="lb"><span class="p"></span><span style="color:var(--faint)">Spot an animal to start a course\u2019s collection</span><span class="s"></span></div>';
   // (the course dog: a breed for courses done, tapped to bring, or none)
   const cur = dogNow(), dogUrl = br => { const k = 'dog|' + br.id; if(DOMSPR[k] === undefined) DOMSPR[k] = dogSprite(br, 'sit', 0, false).cv.toDataURL(); return DOMSPR[k] || ''; };

@@ -21,6 +21,8 @@ module.exports = {
               for (let i = 0; i < 60; i++) { const h = 1 + i * 7 + sea * 101 + night * 53; Scene.newHole(h, 3 + (i % 5));
                 for (const q of Scene.props || []) if (q.kind === 15) seen[q.an] = (seen[q.an] || 0) + 1; } } }
           for (const an of wildOf(cs.id)) if (!seen[an]) out.miss.push(cs.id + ':' + an);
+          // (its rare visitors too: seen there, and not on its list)
+          for (const an of rareOf(cs.id)) { if (!seen[an]) out.miss.push(cs.id + ': rare ' + an); if (wildOf(cs.id).includes(an)) out.miss.push(cs.id + ': ' + an + ' both listed and rare'); }
           if (!COURSE_WILD[cs.id]) out.miss.push(cs.id + ': no list');
           await new Promise(r => setTimeout(r, 0));
         }
@@ -49,6 +51,31 @@ module.exports = {
     if (!pay.done) throw new Error('a course seen whole was not marked done: ' + JSON.stringify(pay));
     if (pay.once !== pay.want) throw new Error('a course seen whole paid ' + pay.once + ', not ' + pay.want);
     if (pay.twice !== pay.want) throw new Error('a course seen whole paid again: ' + JSON.stringify(pay));
+
+    // ---- the gold star: its rare visitors seen once it is whole ------------
+    const star = await page.evaluate(() => {
+      const SNAP = JSON.stringify(S), fails = [];
+      try {
+        const cs = courseById('willow'), rw = rareOf('willow'), want = wildOf('willow');
+        S.cwild = { willow: {} }; S.cwildDone = {}; S.cwildR = {}; S.cwildStar = {};
+        const sov0 = S.sov || 0;
+        // a rare one seen before the course is whole: noted, no star yet
+        courseWildSee({ course: cs, props: rw.map(an => ({ kind: 15, an })) });
+        if (S.cwildStar.willow) fails.push('a star before the course was whole');
+        // whole: the badge and the star together
+        courseWildSee({ course: cs, props: want.map(an => ({ kind: 15, an })) });
+        if (!S.cwildDone.willow || !S.cwildStar.willow) fails.push('whole with its rare seen: done ' + !!S.cwildDone.willow + ', star ' + !!S.cwildStar.willow);
+        if ((S.sov || 0) - sov0 !== B.WILD_SOV + B.WILD_STAR_SOV) fails.push('paid ' + ((S.sov || 0) - sov0));
+        courseWildSee({ course: cs, props: rw.map(an => ({ kind: 15, an })) });
+        if ((S.sov || 0) - sov0 !== B.WILD_SOV + B.WILD_STAR_SOV) fails.push('the star paid twice');
+        // repair: a star without its rare seen goes
+        S.cwildR = { willow: { [rw[0]]: 1, wolf: 1 } }; migrate();
+        if (S.cwildStar.willow) fails.push('a star kept without its rare visitors');
+        if (S.cwildR.willow.wolf) fails.push('a made-up rare kept');
+      } finally { const o = JSON.parse(SNAP); for (const k of Object.keys(S)) delete S[k]; Object.assign(S, o); }
+      return fails;
+    });
+    if (star.length) throw new Error(star.join('; '));
 
     // ---- never away: guideSpot does nothing in a catch-up ------------------
     const away = await page.evaluate(() => {
