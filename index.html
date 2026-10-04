@@ -25287,6 +25287,7 @@ Object.assign(Scene, {
   // trotting from behind as he walks, a hop on an eagle or better; not
   // while he flies or hops the stones, nor in a wager
   drawDog(){
+    this._dogBox = null;
     const br = dogNow(); if(!br || S.dgnRun) return;
     const G = this.golferPose(); if(G.heli || (this.isle && this.isle.hop && this.camD > this.isle.bank - 0.5 && this.camD < (this.isle.land || 0) + 0.5)) return;
     const walking = !!G.walking, d = this.camD + 0.35, x = walking ? -0.95 : -0.8, p = this.proj(d, x);
@@ -25298,6 +25299,8 @@ Object.assign(Scene, {
     const hop = this.dogHop != null && this.t - this.dogHop < 0.6 ? Math.round(Math.sin((this.t - this.dogHop) / 0.6 * Math.PI) * h * 0.35) : 0;
     const X = Math.round(p.x) - (w >> 1), Y = Math.round(p.y) - h - hop - (walking && fr ? 1 : 0);
     const cut = this.clipAt(d);
+    // (where it is, for a tap on it: dogTap)
+    this._dogBox = { x: X, y: Y, w, h };
     this.drawBehind(d, X - 2, Y - 2, X + w + 2, Math.min(Math.round(p.y) + 2, p.y > cut + 1 ? Math.max(0, cut) : VH), g => {
       g.fillStyle = 'rgba(8,16,10,.26)'; g.fillRect(X + Math.round(w * 0.12), Math.round(p.y) - 1, Math.round(w * 0.76), 1);
       blit(g, shrinkSprite(spr, w, h) || spr, X, Y, w, h); });
@@ -29956,6 +29959,17 @@ function albGo(){
   const y = Math.round(Math.min(Math.max(top + sp.h / 2 + 4, VH * 0.12), Math.max(VH * 0.2, HORIZON * 0.85)));
   LUCKY.a = { t: 0, dir: Math.random() < 0.5 ? 1 : -1, y, ph: Math.random() * 3 };
 }
+// A tap on the dog (the user asked where to choose it): the Cabinet,
+// Course Wildlife open at the breeds
+function dogTap(cx, cy){
+  const D = Scene._dogBox, cv = document.getElementById('hole'); if(!D || !cv) return false;
+  const r = cv.getBoundingClientRect(); if(!(r.width > 0)) return false;
+  const bx = (cx - r.left) * VW / r.width, by = (cy - r.top) * VH / r.height, pad = Math.max(6, D.h * 0.4);
+  if(bx < D.x - pad || bx > D.x + D.w + pad || by < D.y - pad || by > D.y + D.h + pad) return false;
+  recOpen.wild = 1; trophyRoom('case');
+  const t = document.querySelector('#wildRows .dogt'); if(t && t.scrollIntoView) t.scrollIntoView({ block: 'center' });
+  return true;
+}
 // a tap on the field: on it (generously), it is caught
 function albTap(cx, cy){
   const A = LUCKY.a; if(!A || A.z != null) return false;
@@ -31353,7 +31367,7 @@ function boot(){
   // never one meant for a button)
   $('stage').addEventListener('pointerdown', e => {
     if(e.target.closest && e.target.closest('button, a, input, select, label')) return;
-    if(albTap(e.clientX, e.clientY)){ e.stopPropagation(); e.preventDefault(); }
+    if(albTap(e.clientX, e.clientY) || dogTap(e.clientX, e.clientY)){ e.stopPropagation(); e.preventDefault(); }
   }, true);
 
   // A reload used to throw away the nine you were halfway through and start

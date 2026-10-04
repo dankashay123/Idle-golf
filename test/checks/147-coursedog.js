@@ -17,7 +17,7 @@ module.exports = {
   name: 'coursedog',
   async run(page) {
     const r = await page.evaluate(() => {
-      const fails = [], f = m => fails.push(m), SNAP = JSON.stringify(S), keep = Scene.drawDog;
+      const fails = [], f = m => fails.push(m), SNAP = JSON.stringify(S), keep = Scene.drawDog, dogWas = DOG_ON;
       try {
         hideSheet(); QUIET = true; Scene.announce = null;
         const D = derive(), d0 = JSON.stringify(D);
@@ -58,10 +58,20 @@ module.exports = {
         hideSheet(); QUIET = true;
         // repair
         S.dog = 'wolf'; migrate(); if (S.dog !== undefined) f('a made-up breed kept');
+        // a tap on it opens its breeds (the user asked where to choose it);
+        // a tap off it does not
+        { S.dog = 'golden'; Scene.walkOn = false; Scene.draw(0, D); const B0 = Scene._dogBox, r = document.getElementById('hole').getBoundingClientRect();
+          const at = (x, y) => [r.left + x * r.width / VW, r.top + y * r.height / VH];
+          if (!B0) f('no place kept for a tap on the dog');
+          else { QUIET = false; hideSheet();
+            if (dogTap(...at(B0.x + B0.w * 3 + 40, B0.y - 60))) f('a tap well off the dog opened its breeds');
+            if (!dogTap(...at(B0.x + B0.w / 2, B0.y + B0.h / 2))) f('a tap on the dog did nothing');
+            else if (!document.querySelector('#wildRows .dogt')) f('a tap on the dog opened no breeds');
+            hideSheet(); QUIET = true; } }
         return { fails, sit: sit.n, walk: walk.n };
-      } finally { DOG_ON = false; Scene.drawDog = keep; QUIET = false; S.dgnRun = null; Scene.heli = 0; const o = JSON.parse(SNAP); for (const k of Object.keys(S)) delete S[k]; Object.assign(S, o); }
+      } finally { DOG_ON = dogWas; Scene.drawDog = keep; QUIET = false; S.dgnRun = null; Scene.heli = 0; const o = JSON.parse(SNAP); for (const k of Object.keys(S)) delete S[k]; Object.assign(S, o); }
     });
     if (r.fails.length) throw new Error(r.fails.join('; '));
-    return ['put aside: none drawn or offered; switched on: sitting ' + r.sit + ' and walking ' + r.walk + ' pixels, on the ground; none with none, in a wager or in flight; breeds open by collections; the picker; repaired'];
+    return ['put aside: none drawn or offered; switched on: sitting ' + r.sit + ' and walking ' + r.walk + ' pixels, on the ground; none with none, in a wager or in flight; breeds open by collections; the picker, and a tap on the dog opens it; repaired'];
   }
 };
