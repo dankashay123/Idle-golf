@@ -10061,9 +10061,13 @@ function shrinkSprite(spr, w, h){
   M.set(key, R); return R;
 }
 // a sprite a share of the way to a colour (the haze), made once
+const FOG_MAX = 24;
 function fogSprite(spr, col, a){
   const M = spr._fog || (spr._fog = new Map()), key = col + a;
   let R = M.get(key); if(R) return R;
+  // (a sprite keeps its last FOG_MAX hazes: one for every sky it was ever
+  // seen under was memory the phone ran out of)
+  if(M.size >= FOG_MAX){ const [k0, o0] = M.entries().next().value; M.delete(k0); cvFree(o0.cv); }
   const cv = document.createElement('canvas'); cv.width = spr.w; cv.height = spr.h;
   const g = cv.getContext('2d'); g.drawImage(spr.cv, 0, 0);
   g.globalCompositeOperation = 'source-atop'; g.globalAlpha = a; g.fillStyle = col; g.fillRect(0, 0, spr.w, spr.h);
@@ -10494,6 +10498,18 @@ const ROCK_ROWS = ['...3344.....', '..2334443...', '.12233443...', '11222333322.
 function courseTrees(cs, mode){
   const key = cs.id + '|' + mode;
   if(TREE_CACHE[key]) return TREE_CACHE[key];
+  // (only the last few courses' trees are kept: each set grows its smaller
+  // and hazed copies, and every course and weather kept for good spent the
+  // phone's memory for pictures over a long session)
+  const keys = Object.keys(TREE_CACHE);
+  for(let i = 0; i < keys.length - 7; i++){
+    for(const sp of Object.values(TREE_CACHE[keys[i]])){
+      cvFree(sp.cv);
+      if(sp._sh) for(const o of sp._sh.values()){ cvFree(o.cv); if(o._fog) for(const f of o._fog.values()) cvFree(f.cv); }
+      if(sp._fog) for(const f of sp._fog.values()) cvFree(f.cv);
+    }
+    delete TREE_CACHE[keys[i]];
+  }
   const tint = mode === 'rain' ? ['#54626A', 0.40] : mode === 'frost' ? ['#DCE8EE', 0.16] : mode === 'gold' ? ['#E8A030', 0.15] : null;
   const t = c => mode === 'night' ? moonC(c) : tint ? mixC(c, tint[0], tint[1]) : c;
   const a = t(cs.tree[0]), b = t(cs.tree[1]);
@@ -10507,7 +10523,10 @@ function courseTrees(cs, mode){
   const g0 = t(cs.rough), r0 = t(cs.rock);
   const gmap = { 1: dark(g0, 0.42), 2: dark(g0, 0.22), 3: lite(g0, 0.10), 4: lite(g0, 0.28) };
   const rmap = { 1: dark(r0, 0.40), 2: dark(r0, 0.18), 3: r0, 4: lite(r0, 0.25) };
-  return TREE_CACHE[key] = { pine: makeSprite(PINE_ROWS, map), oak: makeSprite(OAK_ROWS, map),
+  // (in flower, cherries, in place of both, their bark dark and grey)
+  const ch = isCherry(cs) && cherrySet();
+  if(ch){ map.t = t('#5A4A44'); map.T = t('#2E2422'); }
+  return TREE_CACHE[key] = { pine: makeSprite(ch ? ch.pine : PINE_ROWS, map), oak: makeSprite(ch ? ch.oak : OAK_ROWS, map),
     bush: makeSprite(BUSH_ROWS, map), tuft: makeSprite(TUFT_ROWS, gmap), rock: makeSprite(ROCK_ROWS, rmap) };
 }
 
@@ -10692,6 +10711,66 @@ const OAK_ROWS = [
   '............tttTTTTtt.............',
   '............tttTTTTtt.............'
 ];
+// A cherry in flower (the user's picture): a broad, round crown of blossom
+// in puffs, each lit on its upper left, the lower ones darker, with the
+// limbs showing through gaps low down, over a short dark trunk. Drawn from
+// a hash, once, and padded at the top to stand as tall as the pine and the
+// oak it stands in for.
+function cherryRows(seed, W, H){
+  const G = Array.from({ length: H }, () => Array(W).fill('.'));
+  const cx = W / 2, top = 1, rx = W / 2 - 1.5, base = Math.round(H * 0.66), ry = (base - top) / 2, cy = top + ry;
+  const put = (x, y, ch) => { x = Math.round(x); y = Math.round(y); if(x >= 0 && x < W && y >= 0 && y < H) G[y][x] = ch; };
+  // (a limb stays inside the crown: one past it read as a stick poking out)
+  const inC = (x, y) => y > split - 1 || Math.hypot((x - cx) / (rx - 2), (y - cy) / (ry - 1)) < 1;
+  const tw = Math.max(3, Math.round(W * 0.085)), split = base - 1;
+  for(let y = split; y < H; y++){ const w = tw + (y >= H - 2 ? 2 : y >= H - 4 ? 1 : 0);
+    for(let i = 0; i < w; i++) put(cx - w / 2 + i, y, i === 0 || i === w - 1 ? 'T' : i === 1 ? 't' : 'T'); }
+  // its roots flare at the foot
+  put(cx - tw / 2 - 2, H - 1, 'T'); put(cx + tw / 2 + 1, H - 1, 'T');
+  // limbs: spread up and out from the fork, a twig or two off each
+  const limbs = 6;
+  for(let k = 0; k < limbs; k++){
+    const sp = (k - (limbs - 1) / 2) / ((limbs - 1) / 2), a = -Math.PI / 2 + sp * 1.05 + (hr(seed + k, 41) - 0.5) * 0.18;
+    const L = ry * (1.1 + hr(seed + k, 42) * 0.4) * (1 + Math.abs(sp) * 0.5);
+    let x = cx - 0.5 + sp * 1.2, y = split + 1, th = 2;
+    for(let s = 0; s < L; s++){ const b = a + Math.sin(s * 0.45 + k * 2) * 0.15 - sp * s * 0.012; x += Math.cos(b); y += Math.sin(b) * 0.85;
+      if(!inC(x, y)) break;
+      for(let i = 0; i < th; i++) put(x + i, y, 'T'); if(s > L * 0.35) th = 1;
+      if(s > 2 && hr(seed * 7 + k * 31 + s, 43) < 0.22){ const d = hr(seed + s, 44) < 0.5 ? -1 : 1; for(let j = 1; j < 4; j++) if(inC(x + d * j, y - j * 0.8)) put(x + d * j, y - j * 0.8, 'T'); } }
+  }
+  // the crown: puffs of blossom heaped in a broad dome, each lit on its
+  // upper left and shadowed under, the lower ones darker, ragged at the
+  // edge and drooping a little at the skirt; gaps low down show the limbs
+  const P = [];
+  for(let i = 0; i < 600 && P.length < 70; i++){
+    const u = hr(seed * 13 + i, 45) * 2 - 1, v = hr(seed * 13 + i, 46) * 2 - 1;
+    if(u * u + v * v > 1) continue;
+    const r = 2.2 + hr(seed + i, 47) * 2.2;
+    P.push({ x: cx + u * (rx - r * 0.7), y: cy + v * (ry - r * 0.5), r });
+  }
+  for(let i = 0; i < 11; i++){ const u = (i + 0.5) / 11 * 2 - 1; P.push({ x: cx + u * rx * 0.9, y: base - 1 - Math.abs(u) * Math.abs(u) * 4 + hr(seed + i, 48) * 2, r: 1.5 + hr(seed + i, 49) * 1.3 }); }
+  P.sort((a, b) => (a.y + a.r) - (b.y + b.r) + (hr(a.x, 52) - 0.5) * 2);
+  for(const p of P){
+    const gx = (p.x - cx) / rx, gy = (p.y - cy) / ry;
+    const lvl = 2.2 - gy * 1.1 - gx * 0.45;
+    for(let y = Math.floor(p.y - p.r - 1); y <= p.y + p.r + 1; y++) for(let x = Math.floor(p.x - p.r - 1); x <= p.x + p.r + 1; x++){
+      if(x < 0 || x >= W || y < 0 || y >= H) continue;
+      const lx = (x + 0.5 - p.x) / p.r, ly = (y + 0.5 - p.y) / p.r * 1.1, d = Math.hypot(lx, ly);
+      const rag = (hr(x * 7 + y * 13, seed + 53) - 0.5) * 0.35;
+      if(d > 1 + rag) continue;
+      if(gy > 0.15 && d > 0.75 && hr(x * 17 + y, seed + 50) < 0.5) continue;
+      let t = lvl - (lx + ly) * 0.9 + (hr(x * 3 + y * 5, seed + 51) - 0.5) * 0.7;
+      if(d > 0.8 && lx + ly > 0.3) t -= 0.9;
+      G[y][x] = String(Math.max(0, Math.min(4, Math.round(t))));
+    }
+  }
+  return G.map(r => r.join(''));
+}
+const isCherry = cs => !!cs && (cs.fall === 'petals' || (cs.id === 'blossom' || cs.id === 'jadepagoda') && !cs.season);
+let CHERRY_ROWS = null;
+const cherrySet = () => CHERRY_ROWS || (CHERRY_ROWS = {
+  pine: [...Array(4)].map(() => '.'.repeat(36)).concat(cherryRows(5, 36, 42)),
+  oak: [...Array(4)].map(() => '.'.repeat(44)).concat(cherryRows(3, 44, 40)) });
 const TREE_DEFAULT = { 0:'#0C2011', 1:'#16391F', 2:'#1F4E29', 3:'#2C6634', 4:'#3E8244',
                        t:'#4A3A24', T:'#2E2416' };
 
@@ -10801,7 +10880,12 @@ const HAWK_FLY = [['KK.........KK', '..##.....##..', '....##H##....', '.....TtT.
                   ['.............', '....##H##....', '..##.BBB.##..', 'KK...TtT...KK', '.....TTT.....']];
 const DUCK_DRAKE = { H:'#2E6B3A', Y:'#E8B04A', T:'#3A2E24', e:'#101410', S:'#3A5AA8', W:'#F2F2EA', B:'#9A8C7A', b:'#6E6254' };
 const DUCK_HEN = { H:'#7A5A3C', Y:'#E8B04A', T:'#3A2E24', e:'#101410', S:'#3A5AA8', W:'#8A6A48', B:'#8A6A48', b:'#6A5038' };
-const SPECT_CACHE = {};
+// (each one of the gallery is a little picture; kept without end they
+// spent the phone's memory for pictures over a long session, and then the
+// sky came out black and the Guide's pictures as "?": past SPECT_MAX the
+// oldest are let go, their pixels freed at once)
+const SPECT_CACHE = new Map(), SPECT_MAX = 400;
+const cvFree = cv => { if(cv){ cv.width = 0; cv.height = 0; } };
 // The grandstand behind the round's last green: five tiers of benches
 // across twelve units under a roof on posts, two aisles, and a wall at its
 // foot in the game's green and brass. Seated fans in the gallery's
@@ -10990,7 +11074,7 @@ function spectSpr(ci, pose, night, v){
   v = Math.abs(Math.floor(v)) % 1440;
   if(typeof pose !== 'string') pose = pose ? 'clasp' : 'rest';
   const key = ci + '|' + pose + '|' + (night ? 1 : 0) + '|' + v;
-  if(SPECT_CACHE[key]) return SPECT_CACHE[key];
+  { const R = SPECT_CACHE.get(key); if(R) return R; }
   const dk = col => night ? mixC(col, '#0B1118', 0.35) : col;
   const sk = SPECT_SKIN[Math.floor(v / 5) % 4], pt = SPECT_PANT[Math.floor(v / 80) % 3];
   const body = PX.crowd[ci] || PX.crowd[0], bodyDk = PX.crowdDk[ci] || PX.crowdDk[0];
@@ -10999,7 +11083,11 @@ function spectSpr(ci, pose, night, v){
                 b:dk(body), B:dk(bodyDk), d:dk(mixC(bodyDk, '#000000', 0.3)), c:dk(mixC(body, '#F4F4EE', 0.5)),
                 p:dk(pt[0]), P:dk(pt[1]), o:dk(PX.shoe),
                 t:dk(hatC), T:dk(mixC(hatC, '#000000', 0.28)), w:dk('#F4F6EF') };
-  return SPECT_CACHE[key] = makeSprite(spectRows(v, pose), map);
+  const R = makeSprite(spectRows(v, pose), map);
+  if(SPECT_CACHE.size >= SPECT_MAX) for(const [k, o] of SPECT_CACHE){
+    SPECT_CACHE.delete(k); cvFree(o.cv); if(o._fog) for(const f of o._fog.values()) cvFree(f.cv);
+    if(SPECT_CACHE.size < SPECT_MAX * 0.75) break; }
+  SPECT_CACHE.set(key, R); return R;
 }
 // The golfer, side on: at address, and at the finish. Kept out of
 // buildSprites so the shop can paint the same figure in an outfit it is
@@ -22088,18 +22176,26 @@ function paintHeli(c, x, y, w, h, t, bot){
   c.globalAlpha = FX && FX.alpha ? FX.alpha : 1; c.globalCompositeOperation = 'source-over';
   drawLegsBack(c, x + w*0.5, y + h*(31/58), h*(26/58), w, 0.25 + Math.sin(t * 5) * 0.04,
                O.pant || '#2B3B4F', O.pant2 || O.pant || '#1C2937', O.shoe || PX.shoe, O.belt, g.bulk && Object.assign({ s: spr.bulkS }, g.bulk));
+  // both arms up in front of him to the grip, as thick as the arms the
+  // walking picture has hanging at his sides, and his hands on it: seen
+  // from behind, his shoulders and head are nearer than they are, so they
+  // are drawn first and he over them, the elbows out past his head (drawn
+  // over his back they read as arms bent behind it: the user saw it)
+  const ath = Math.max(th, Math.round(h * 0.05));
+  const ex = w * 0.17, ey = y + h * 0.07;
+  pxLine(c, x + w * 0.27, y + h * 0.30, x + ex, ey, O.skin2 || PX.skin2, ath);
+  pxLine(c, x + ex, ey, hx - ath / 2, hy + ath, O.skin2 || PX.skin2, ath);
+  pxLine(c, x + w * 0.73, y + h * 0.30, x + w - ex, ey, O.skin || PX.skin, ath);
+  pxLine(c, x + w - ex, ey, hx + ath / 2, hy + ath, O.skin || PX.skin, ath);
+  c.fillStyle = O.hand || O.skin || PX.skin;
+  c.fillRect(Math.round(hx - ath), Math.round(hy - 1), ath * 2, ath + 1);
   blitShear(c, spr, x, y, w, h, () => 0, g.bulk);
   if(FX && FX.body) FX.body(c, g);
-  // the skin's front half (a cape down his back) before the arms: they go
-  // up over it
+  // the skin's front half (a cape down his back) after him
   c.globalAlpha = 1;
   if(FX && FX.front) FX.front(c, g);
   c.globalAlpha = FX && FX.alpha ? FX.alpha : 1; c.globalCompositeOperation = 'source-over';
-  // both arms up out of his sleeves to the grip, as thick as the arms the
-  // walking picture has hanging at his sides, and his hands on it
-  const ath = Math.max(th, Math.round(h * 0.05));
-  pxLine(c, x + w * 0.27, y + h * 0.27, hx - ath / 2, hy + ath, O.skin2 || PX.skin2, ath);
-  pxLine(c, x + w * 0.70, y + h * 0.27, hx + ath / 2, hy + ath, O.skin || PX.skin, ath);
+  // (his hands on the grip are over his head, nearer than a hood or crown)
   c.fillStyle = O.hand || O.skin || PX.skin;
   c.fillRect(Math.round(hx - ath), Math.round(hy - 1), ath * 2, ath + 1);
   // the blur of the turn, then the club where it is in it, laid flat and seen
@@ -23028,7 +23124,7 @@ Object.assign(Scene, {
     // pines; far off, too small for crowns, a speckle of the same tones.
     // ok(cx, cd), where given, says whether a crown stands there.
     const CT = T._cn || (T._cn = [dark(T.tl2, 0.32), T.tl2, T.tl, lite(T.tl, 0.13), lite(T.tl, 0.26)]);
-    const pines = ((this.land && this.land.kind) || 0) === 0;
+    const pines = ((this.land && this.land.kind) || 0) === 0 && !isCherry(this.look);
     const xl = (-2 - C0) / U, xr = (VW + 2 - C0) / U;
     const canopy = (xa, xb, ok) => {
       const a = Math.max(xa, xl), b = Math.min(xb, xr); if(b <= a) return;
@@ -26106,7 +26202,10 @@ function renderVitals(){
 // Drawn on the same grid as everything else, then blitted as an image with
 // pixelated rendering. A smooth vector icon sitting on pixel art reads as a
 // sticker; this does not.
-const DOMSPR = {};
+// (a picture the phone could not make, its memory for pictures spent,
+// comes back as "data:," and showed a broken "?" box in the Guide for good:
+// one like that, or none, is never kept, so it is made again next time)
+const DOMSPR = new Proxy({}, { set(o, k, v){ if(typeof v === 'string' && v.length > 6 && !/^data:,/.test(v)) o[k] = v; else delete o[k]; return true; } });
 // Sprites are baked pixels, so they need a real colour, not a CSS variable.
 const BRASS = '#E3B457';
 function pixUrl(id, col){
