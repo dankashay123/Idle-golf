@@ -6408,7 +6408,7 @@ function startDgn(d){
   // Captured at the tee, not read at the till. A run started at 23:59 is paid
   // on the stake it was entered under, whatever the clock says when it lands.
   const R = { id:d.id, mode:d.mode, t:0, dur, dead:false, evt:null, evtT:0, next:0,
-              feat: isFeat(d) };
+              feat: isFeat(d), ws: hash32(dayNow() * 13 + (S.dgnKeys[d.id] || 0) * 7 + d.id.length) >>> 0 };
   if(d.mode === 'drive'){ R.shots = 0; R.best = 0; R.last = 0; R.wind = 1; R.next = 1.2; }
   else if(d.mode === 'island'){
     R.made = 0; R.pot = yieldAt(fc, D0, d); R.chance = 0; R.banked = false;
@@ -18815,6 +18815,32 @@ const Scene = {
     put.sort((a, b) => b.d - a.d);
     this.props = put;
   },
+  // the wager's own animal (WAGER_WILD), one time in two, from a hash of
+  // the wager and the hole: beside the play, where it stands in that scene
+  layWagerWild(R){
+    const W = R && WAGER_WILD[R.id], put = this.props || (this.props = []); if(!W) return;
+    const an = W[0], C = CRIT[an], h = hash32((R.floor | 0) * 31 + R.id.length * 977 + (R.ws | 0)) >>> 0;
+    if(hr(h, 640) >= WAGER_WILD_P) return;
+    const Wa = this.water;
+    for(let j = 0; j < 20; j++){
+      const u = hr(h + j, 641), v = hr(h + j, 642), sd = hr(h + j, 643) < 0.5 ? -1 : 1;
+      let d, x, alt = 0;
+      // (ahead of where that wager is played from, in sight)
+      const c0 = this.camD;
+      // (near enough to make out, past where it would run off)
+      if(an === 'swan'){ if(!Wa) return; d = c0 + 6 + u * 5; x = sd * (2.4 + v * 2.4); }
+      // (the owl in the floodlights' glare, lit by them)
+      else if(an === 'owl'){ d = c0 + 3.6 + u * 1.2; x = sd * (this.fwWidth(d) + 0.6 + v * 0.5); }
+      else if(an === 'bat'){ d = Math.min(LEN + 4, c0 + 5 + u * 6); x = sd * (this.fwWidth(Math.min(d, LEN)) + 0.5 + v * 1.5); alt = 2.4; }
+      // (the Vault is walked up: farther, and it runs off as he comes)
+      else if(R.mode === 'floor'){ d = c0 + 16 + u * 8; x = sd * (this.fwWidth(d) + 1.1 + v * 0.6); }
+      else { d = Math.min(LEN + 4, c0 + 5.5 + u * 4); x = sd * (this.fwWidth(Math.min(d, LEN)) + 0.8 + v * 1.2); }
+      if(C.at !== 'air' && an !== 'swan' && (this.hitsHazard(d, x, 0.3) || (Wa && Math.abs(d - Wa.d) < Wa.rd + 0.4 && Math.abs(x - Wa.x) < Wa.rx + 0.4))) continue;
+      if(put.some(q => Math.abs(q.d - d) < 0.8 && Math.abs(q.x - x) < 0.8)) continue;
+      put.push({ kind: 15, an, d, x, alt, r: 0, extra: 1, wg: 'wg_' + R.id, lit: an === 'owl' ? 1 : 0, k: h & 0xffff, flip: hr(h + j, 644) < 0.5 ? 1 : 0 });
+      put.sort((a, b) => b.d - a.d); this.props = put; return;
+    }
+  },
   // Golfers on the other holes (kind 16; the user asked to always see them):
   // a group on each other hole's green, putting out, and a pair down its
   // fairway, one of them playing; by day, never in a wager. From a hash,
@@ -20403,6 +20429,7 @@ const Scene = {
     // counted for nothing, and he stood and hit again.
     this.swingT = 0; this.pendingBall = null; this.queued = null;
     this.balls.length = 0; this.nums.length = 0; this.sparks.length = 0;
+    this.critUp = {}; this.layWagerWild(R); wagerWildSee(this);
     this.buildSky();
   },
 
@@ -23556,7 +23583,7 @@ Object.assign(Scene, {
     // gone in a second. Cut at the ground's line where each is. Not in a
     // wager.
     if(p.kind === 15){
-      if(S.dgnRun) return;
+      if(S.dgnRun && !p.wg) return;
       const C = CRIT[p.an];
       if(C.at === 'air'){ this.drawFlyer(c, p, night); return; }
       let d = p.d, x = p.x, hop = 0, flip = p.flip;
@@ -23584,7 +23611,7 @@ Object.assign(Scene, {
       const hpx = Math.round(C.h * US * g.s);
       if(hpx < 3) return;
       const fr = C.rows.length > 1 ? (Math.floor(this.t * (p.an === 'crab' ? 3 : 0.7) + p.k) & 1) : 0;
-      const spr = (p.gold ? goldSprite : critSprite)(p.an, fr, night, flip), w = Math.max(2, Math.round(hpx * spr.w / spr.h));
+      const spr = (p.gold ? goldSprite : critSprite)(p.an, fr, night && !p.lit, flip), w = Math.max(2, Math.round(hpx * spr.w / spr.h));
       if(q.x + w < -4 || q.x - w > VW + 4) return;
       // (a swimmer rides the ripples a pixel up and down)
       const X = Math.round(q.x), Y = Math.round(q.y) + (C.at === 'water' || C.at === 'sea' && !C.shore ? (Math.sin(this.t * 1.7 + p.k) > 0.5 ? 1 : 0) : 0);
@@ -26091,7 +26118,13 @@ GUIDE.splice(7, 0, { id:'duck', n:'Duck', g:'w', w:'On the island\u2019s lake' }
 // the golden ones (see GOLD_KINDS), on a shelf of their own
 GUIDE.push(...GOLD_KINDS.map(an => ({ id: goldId(an), n: 'Golden ' + (an === 'stag' ? 'Stag' : CRIT_NAME[an]), g: 'g',
   w: an === 'stag' ? 'Autumn and winter woods' : CRIT_WHERE[an] })));
-const GUIDE_SHELF = [['w', 'Wildlife'], ['n', 'Night'], ['g', 'Golden'], ['s', 'Seasons'], ['c', 'The Course']];
+const GUIDE_SHELF = [['w', 'Wildlife'], ['n', 'Night'], ['g', 'Golden'], ['s', 'Seasons'], ['c', 'The Course'], ['b', 'The Wager Book']];
+// The Wager Book's own wildlife (the user picked it from the menu): one
+// animal for each wager, there one time in two, on a shelf of its own.
+// Counted, never paid: nothing seen in a wager pays.
+const WAGER_WILD = { sand: ['lizard', 'Sand Lizard'], water: ['swan', 'Island Swan'], cellar: ['owl', 'Floodlight Owl'],
+  vault: ['squirrel', 'Vault Squirrel'], scramble: ['rabbit', 'Scramble Rabbit'], twilight: ['bat', 'Twilight Bat'] };
+let WAGER_WILD_P = 0.5;   // (1 in the developer menu and the checks: always there)
 // the night creatures (laid in layNight) on a shelf of their own, with the
 // animals only out after dark
 GUIDE.push({ id:'glowworm', n:'Glow-worms', g:'n', w:'A dry night, in the rough' }, { id:'moth', n:'Moths', g:'n', w:'Round the tee lamps' },
@@ -26100,6 +26133,7 @@ for(const g of GUIDE) if(['owl', 'bat', 'badger', 'hedgehog', 'eyes'].includes(g
 // the rare weather (rainbowAt, fogAt, Scene.meteorNow)
 GUIDE.push({ id:'rainbow', n:'Rainbow', g:'c', w:'After the rain' }, { id:'fog', n:'Fog Bank', g:'c', w:'Rare, on a still day' }, { id:'meteor', n:'Shooting Star', g:'c', w:'Now and then at night' },
   { id:'goldbow', n:'Golden Rainbow', g:'c', w:'One rainbow in ten' }, { id:'dblbow', n:'Double Rainbow', g:'c', w:'One rainbow in twenty' });
+GUIDE.push(...B.DGN.filter(d => WAGER_WILD[d.id]).map(d => ({ id: 'wg_' + d.id, n: WAGER_WILD[d.id][1], g: 'b', w: d.n })));
 // what the hole just laid out shows: called as each hole starts, live only
 function guideSpot(sc){
   if(QUIET || OFFLINE || S.dgnRun || sc.hole !== S.hole) return;
@@ -26160,6 +26194,14 @@ const huntOpen = () => !S.dgnRun && !huntNow().paid;
 const TAG_EVERYDAY = ['sparrow', 'robin', 'blackbird', 'moth', 'glowworm', 'firefly'];
 // the animals on the Guide's shelves (wildlife, night, golden), for the tag
 const isAnimal = id => { const g = GUIDE.find(x => x.id === id); return !!g && 'wng'.includes(g.g); };
+// a wager's own animal (WAGER_WILD), as its scene is laid: counted and
+// named, never paid
+function wagerWildSee(sc){
+  if(QUIET || OFFLINE || !S.dgnRun) return;
+  const p = (sc.props || []).find(q => q.kind === 15 && q.wg); if(!p) return;
+  S.guide = S.guide || {}; S.guide[p.wg] = (S.guide[p.wg] || 0) + 1;
+  if(S.spotTag !== 0) spotShow([p.wg], 0, null, S.guide[p.wg] === 1 ? 'New \u00b7 Wager Book' : 'Wager Book');
+}
 // count what was seen, and pay for each seen the first time
 function guideAdd(got){
   S.guide = S.guide || {};
@@ -26186,7 +26228,7 @@ function guideAdd(got){
 // The tag: "Fox Spotted!" (two named, or the first and how many more), and
 // under it what came of it: sovereigns for a first sighting, the week's hunt
 // counted, or paid. Live only.
-function spotShow(an, nNew, hunt){
+function spotShow(an, nNew, hunt, note){
   if(QUIET || OFFLINE || typeof document === 'undefined') return;
   const el = document.getElementById('spotTag'); if(!el) return;
   const nm = id => GUIDE.find(g => g.id === id).n;
@@ -26196,6 +26238,7 @@ function spotShow(an, nNew, hunt){
   const title = order.length === 1 ? nm(order[0]) : order.length === 2 ? nm(order[0]) + ' & ' + nm(order[1]) : nm(order[0]) + ' +' + (order.length - 1);
   const sov = B.GUIDE_SOV * nNew + (hunt && hunt.paid ? hunt.pay : 0), bits = [];
   if(sov) bits.push('<span style="white-space:nowrap">+' + sov + sovIc() + '</span>');
+  if(note) bits.push(note);
   if(hunt) bits.push(hunt.paid ? 'Hunt Done' + (hunt.run > 1 ? '\u00a0\u00d7' + hunt.run : '') : 'Hunt ' + hunt.n + '/3');
   el.innerHTML = title + ' Spotted!' + (bits.length ? '<b>' + bits.join(' \u00b7 ') + '</b>' : '');
   // (just above the map; at the foot of the field when there is no map)
@@ -26259,7 +26302,8 @@ function guideUrl(id){
     const ic = { island:['island', '#5FB0C8'], canyon:['dunes', '#C8804A'], stones:['stone', '#9AA6AE'], pier:['compass', '#8AB8D0'],
       rail:['metro', '#D0584A'], golden:['sunburst', '#F2C21E'], frost:['snow', '#CFE8F4'], rain:['stormglass', '#7AA6C8'], night:['lantern', '#F2D060'] }[id];
     const bi = ['sparrow', 'robin', 'blackbird'].indexOf(id);
-    const an = id.startsWith('g_') ? id.slice(2) : null;
+    const an = id.startsWith('g_') ? id.slice(2) : null, wg = id.startsWith('wg_') && WAGER_WILD[id.slice(3)];
+    if(wg){ const sp = critSprite(wg[0], 0, false, false); return DOMSPR[key] = sp ? sp.cv.toDataURL() + '|' + sp.w + 'x' + sp.h : ''; }
     const sp = ic ? pixSprite(ic[0], ic[1])
       : an ? (an === 'stag' ? deerSprite(0, true, false, false, true) : goldSprite(an, 0, false, false))
       : id === 'doe' || id === 'stag' ? deerSprite(0, id === 'stag', false, false)
@@ -26291,7 +26335,8 @@ function roomGuide(w){
         + '<b>' + g.n + '</b><i>' + (got ? 'Found' : g.w) + '</i></div>'; }
     h += '</div>'; }
   for(const [k, t] of GUIDE_SHELF){
-    h += '<div class="eyebrow" style="margin:10px 0 4px">' + t + '</div><div class="guide">';
+    // (a wager pays nothing for what is seen in it: said on its shelf)
+    h += '<div class="eyebrow" style="margin:10px 0 4px">' + t + (k === 'b' ? ' \u00b7 not paid' : '') + '</div><div class="guide">';
     for(const g of GUIDE.filter(x => x.g === k)){
       const [url, wh] = guideUrl(g.id).split('|'), [sw, sh] = (wh || '12x12').split('x').map(Number);
       const z = Math.max(1, Math.floor(Math.min(60 / sw, 44 / sh)));
@@ -28209,6 +28254,7 @@ const DEV = {
           b('spot one', 'DEV.hunt(1)') + b('finish it', 'DEV.hunt(3)') + b('reset', 'DEV.hunt(0)') + b('next week', 'DEV.huntWk(1)') + b('this week', 'DEV.huntWk(0)')
           + b('3 weeks in a row before', 'DEV.huntRun(3)') + b('no run', 'DEV.huntRun(0)'))
       + row('Spotted tag \u00b7 ' + (S.spotTag === 0 ? 'off' : 'on'), b('show one', 'DEV.tag(1)') + b('show three', 'DEV.tag(3)') + b(S.spotTag === 0 ? 'turn on' : 'turn off', 'DEV.tagSw()'))
+      + row('Wager animal \u00b7 ' + (WAGER_WILD_P >= 1 ? 'always' : 'one time in two'), b('always', 'DEV.wagerWild(1)') + b('one time in two', 'DEV.wagerWild(0.5)'))
       + row('Golden animal' + (GOLD_FORCE !== null ? ' \u00b7 waiting' : ''), b('this hole', 'DEV.gold(1)') + b('next hole with one', 'DEV.gold()'))
       + row('Luna moth \u00b7 ' + (LUNA_FORCE === null ? 'by chance' : LUNA_FORCE ? 'always' : 'never'), b('always', 'DEV.luna(1)') + b('never', 'DEV.luna(0)') + b('by chance', 'DEV.luna(null)'))
       + row('Ace plaque \u00b7 ' + aces + ' on this hole (' + (aces >= 50 ? 'gold' : aces >= 10 ? 'silver' : 'brass') + ')', b('+1 ace', 'DEV.plaque(' + (aces + 1) + ')') + b('10 aces', 'DEV.plaque(10)') + b('50 aces', 'DEV.plaque(50)') + b('clear', 'DEV.plaque(0)'))
@@ -28476,6 +28522,7 @@ const DEV = {
   huntWk(n){ HUNTWK_FORCE = n ? huntWeek() + n : null; Scene.newHole(S.hole, S.tier); this.re(); },
   tag(n){ hideSheet(); const an = GUIDE.filter(g => g.g === 'w').map(g => g.id); spotShow(an.slice(0, n), 0, null); },
   tagSw(){ toggleSpotTag(); this.open(); },
+  wagerWild(v){ WAGER_WILD_P = v; Scene.themeId = null; this.open(); },
   luna(v){ LUNA_FORCE = v; Scene.newHole(S.hole, S.tier); hideSheet(); },
   plaque(n){ const k = aceKey(S.hole); S.aceAt = S.aceAt || {}; if(n) S.aceAt[k] = n; else delete S.aceAt[k]; Scene.newHole(S.hole, S.tier); this.open(); },
   // each animal's call now, whatever the hole has (the switch aside)

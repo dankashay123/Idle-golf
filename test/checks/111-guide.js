@@ -59,6 +59,15 @@ module.exports = {
         // shooting star as it is drawn
         RAINBOW_FORCE = 1; GOLDBOW_FORCE = 0; play(h0); GOLDBOW_FORCE = 1; play(h0); GOLDBOW_FORCE = 0; DBLBOW_FORCE = 1; play(h0); DBLBOW_FORCE = null; GOLDBOW_FORCE = null; RAINBOW_FORCE = null; FOG_FORCE = 1; play(h0); FOG_FORCE = null;
         play(h0, 'Night'); Scene.draw(0, derive()); Scene.meteorT = Scene.t - 0.2; Scene.drawMeteor(Scene.b); Scene.meteorT = undefined;
+        // the Wager Book's own: one in each wager, there one time in two,
+        // counted and never paid
+        { const sv = S.sov || 0, there = {};
+          for (const d of B.DGN.filter(x => WAGER_WILD[x.id])) { there[d.id] = 0;
+            for (let i = 0; i < 20; i++) { S.dgnRun = null; S.dgnKeys[d.id] = i + 1; startDgn(d); Scene.newDepthsHole(S.dgnRun);
+              if (Scene.props.some(q => q.wg === 'wg_' + d.id && q.an === WAGER_WILD[d.id][0])) there[d.id]++; }
+            S.dgnRun = null; if (!(there[d.id] >= 4 && there[d.id] <= 16)) f(d.n + '\'s animal there ' + there[d.id] + ' times in 20'); }
+          if ((S.sov || 0) !== sv) f('a wager\'s animal paid ' + ((S.sov || 0) - sv));
+          o.wagerWild = there; S.dgnRun = null; startHole(); }
         const miss = GUIDE.filter(g => !S.guide[g.id]).map(g => g.n);
         if (miss.length) f('never spotted: ' + miss.join(', '));
         o.spotted = GUIDE.length - miss.length;
@@ -90,6 +99,7 @@ module.exports = {
     });
     if (r.fails.length) throw new Error(r.fails.join('\n'));
     return ['all ' + r.spotted + ' entries spotted over the seasons, the weather, night and the signature holes',
+      'each wager\'s own animal there ' + Object.values(r.wagerWild).join('/') + ' times in 20, counted and never paid',
       'a first sighting pays once, a second only counts; none away, in a wager or on another hole',
       'the Guide tab: every entry with its picture, the seen ones with their count; a broken save repaired'];
   }
