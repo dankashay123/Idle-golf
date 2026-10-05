@@ -2310,6 +2310,16 @@ him (about 49px tall on a 320 phone, 71px on its side).
   as the stones' fish with a splash and `Scene.ripple`; the Guide's Fish
   ("Leaping in rivers and ponds"). The Harvest Moon's path on the water is
   orange (`ripples`).
+- **Thunderstorms** (`skylife`): `stormAt` (`STORM_P` 1/3 of rainy holes,
+  `STORM_FORCE`), `Scene.storm`; the sky darkened before the ridge
+  (`drawBolt`), `boltNow` every `STORM_GAP` 10s, a forked bolt behind the
+  hills, `drawStormLight` (a dim over the frame, the flash), 90 streaks of
+  rain; `Sfx.thunder` (two low rumbles, `THUNDER_VOL`) 0.6 to 2s after
+  each bolt from `Sfx.tick`. Guide `storm`.
+- **Airplanes** (`skylife`): `planeNow` (one in `PLANE_P` 0.6 of each
+  `PLANE_GAP` 50s, crossing in `PLANE_DUR` 20s, `PLANE_FORCE`; not in rain
+  or a wager), `drawPlane` before the ridge: `PLANE_PIC` with a contrail by
+  day, red/green lights and a strobe at night; seen live, Guide `plane`.
 - **lookSeason(look)**: the season a course shows (its own; the Snowline
   winter, the Blossom spring; else the month), for the Harvest Moon, the
   canyon's mist, dragonflies and the reeds' fireflies. `newDepthsHole`

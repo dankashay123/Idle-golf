@@ -27,9 +27,12 @@ game as it is, short, and move detail into `docs/`.
 - **Ask when a request reads two ways**, but when he asked for action, act
   on the likely reading and say which. Where a change leaves a real choice
   (how hard to cut a reward, which look), show a short plain proposal.
-- **End ready for "What's next?"**: a short plain menu and a
-  recommendation (`HANDOFF.md` §6). Never offer a photo mode, a weather
-  forecast or fireworks.
+- **End ready for "What's next?"**: when things are finished, at least
+  five questions or suggestions and a recommendation (`HANDOFF.md` §6):
+  features, optimisation, bug passes and the like; a bug or optimisation
+  pass only when something done needs a look over, or after a few
+  commits. Never offer a photo mode, a weather forecast or fireworks;
+  don't raise the dog until he does.
 - **Pacing**: a free player gets a full Mythic set in about six weeks at an
   hour a day; no wall below Card 200 to 250 (maxed walls at 220); nothing
   game-breaking at max, every heirloom has a top. Simulate a free player

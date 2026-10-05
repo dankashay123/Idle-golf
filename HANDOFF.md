@@ -52,12 +52,15 @@ through:
   hole in two in any season (`fireflyAt`: the rough, the reeds and the
   stones' river alike). Then: the Harvest Moon's path on the water orange;
   fish leaping in the lakes and ponds (a splash, a ring where they land;
-  the Guide's Fish).
+  the Guide's Fish). Then: thunderstorms (one rainy hole in three: a dark
+  sky, heavier rain, lightning behind the hills with a flash, thunder after)
+  and airplanes crossing high now and then (a contrail by day, lights at
+  night); both on the Guide's Course shelf.
   Fixed on the way: a Vault floor played again after a gust was never
   called; the Spotted tag sat over a wager's name. Earlier the same day:
   cherry trees, the kingfisher, course collections, the monthly hunt, and
   the phone's picture memory (the black sky).
-- `node test/run.js` has **157 checks**, about 35 minutes: run it in the
+- `node test/run.js` has **158 checks**, about 35 minutes: run it in the
   background, on a copy in the scratchpad, with the machine quiet. After
   weather, colours or anything dated, also run it with `HOUR_FORCE` 8 and
   15 and the month pinned (rules 20 and 70).
@@ -75,8 +78,8 @@ through:
   time; every caddie has a trick (don't offer caddie tricks); Dawn and
   Dusk is built (a setting, off by default); Golden Hour is the gold
   mountain hole, one in 100.
-- The user ends most tasks with **"What's next?"**: a short plain menu with
-  a recommendation (§6), then wait.
+- The user ends most tasks with **"What's next?"**: at least five plain
+  questions or suggestions with a recommendation (§6), then wait.
 
 ### Things the user asked for that must stay (beyond `CLAUDE.md`)
 
@@ -282,10 +285,14 @@ Turned down, don't offer: a station on the railway, a photo mode, a
 weather forecast, fireworks, trail flourishes, caddie tricks. Nothing for
 the Tour tab, no new sound but ambience.
 
-1. **Ask how the water feels on the phone**: dragonflies, fireflies, fish.
-2. **The dog back on** when they are ready (it is put aside, not gone).
+Five at least (CLAUDE.md); don't raise the dog until he does.
+
+1. **Ask how the storms and planes feel on the phone** (the flash's
+   strength, the thunder's loudness, how often).
+2. **Hot-air balloons** drifting low over the far hills on calm mornings.
 3. **Ducklings** behind a duck on the island's lake in spring.
 4. **Steam off the ponds** on cold mornings, like the canyon's mist.
+5. **A bug and speed pass** over the last run of sky and water features
+   (about ten commits since the last sweep).
 
-Recommend 1: a lot has gone onto the water in a row; a word from them on
-the phone before more is added there.
+Recommend 1, then 5.
