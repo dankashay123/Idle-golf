@@ -4359,7 +4359,14 @@ const hourNow = () => HOUR_FORCE !== null ? HOUR_FORCE : new Date().getHours();
 // the sky warms towards the horizon from five to half past eight in the
 // morning and from five to nine in the evening, by the player's
 // own clock. Never at night or in the rain. How warm, in fifths, and which.
+// (DUSK_FORCE, the developer menu's switch: dusk at its warmest whatever
+// the clock or the setting, to see the sky and the water at it)
+let DUSK_FORCE = null;
+// where the evening sun hangs across the sky (its path down the water
+// clear of the hole map in the corner)
+const DUSK_SUN = 0.7;
 const dawnDusk = () => {
+  if(DUSK_FORCE) return { w: 1, dawn: false };
   if(S.dawnDusk !== 1) return null;
   const h = HOUR_FORCE !== null ? HOUR_FORCE : new Date().getHours() + new Date().getMinutes() / 60;
   const tent = (a, pk, b) => h <= a || h >= b ? 0 : h < pk ? (h - a) / (pk - a) : (b - h) / (b - pk);
@@ -10739,8 +10746,9 @@ function shrinkSprite(spr, w, h){
   if(!spr.rows || !spr.map || w >= spr.w || h >= spr.h) return null;
   const M = spr._sh || (spr._sh = new Map()), key = w + 'x' + h;
   let R = M.get(key); if(R) return R;
-  const cv = document.createElement('canvas'); cv.width = w; cv.height = h;
-  const g = cv.getContext('2d'), N = 4, rows = [];
+  // (no canvas of its own: one made here and never drawn on was memory the
+  // phone frees late, a shrink at a time)
+  const N = 4, rows = [];
   for(let y = 0; y < h; y++){
     let row = '', most = 0, mx = -1, mch = '.';
     for(let x = 0; x < w; x++){
@@ -11861,7 +11869,8 @@ function spectSpr(ci, pose, night, v){
                 t:dk(hatC), T:dk(mixC(hatC, '#000000', 0.28)), w:dk('#F4F6EF') };
   const R = makeSprite(spectRows(v, pose), map);
   if(SPECT_CACHE.size >= SPECT_MAX) for(const [k, o] of SPECT_CACHE){
-    SPECT_CACHE.delete(k); cvFree(o.cv); if(o._fog) for(const f of o._fog.values()) cvFree(f.cv);
+    // (and its smaller copies and their hazes: only its own hazes were freed)
+    SPECT_CACHE.delete(k); spriteFree(o);
     if(SPECT_CACHE.size < SPECT_MAX * 0.75) break; }
   SPECT_CACHE.set(key, R); return R;
 }
@@ -21208,7 +21217,7 @@ const Scene = {
     // shimmering, as the moon's does at night
     const dd = this.dawnDusk;
     if(dd && !this.night && !this.rain && !this.ice){
-      const warm = dd.gold ? GOLD_COL : DAWN_COL[dd.dawn ? 'dawn' : 'dusk'], M = Math.round(VW * (dd.dawn ? 0.2 : 0.8));
+      const warm = dd.gold ? GOLD_COL : DAWN_COL[dd.dawn ? 'dawn' : 'dusk'], M = Math.round(VW * (dd.dawn ? 0.2 : DUSK_SUN));
       const hi = mixC(warm[0], DAWN_COL.sun, 0.6), lo = warm[0], f6 = Math.floor(this.t * 5);
       const span = (x0, x1, yy) => { let run = -1;
         for(let x = Math.max(0, x0); x <= Math.min(VW, x1); x++){
@@ -22634,7 +22643,7 @@ const Scene = {
       }
       // and a low sun, east in the morning and west in the evening, just
       // over the hills (lower as it is warmer)
-      const r = Math.max(3, Math.round(VW * 0.028)), sx = Math.round(VW * (dd.dawn ? 0.2 : 0.8)), sy = Math.round(H * (0.52 + 0.12 * dd.w));
+      const r = Math.max(3, Math.round(VW * 0.028)), sx = Math.round(VW * (dd.dawn ? 0.2 : DUSK_SUN)), sy = Math.round(H * (0.52 + 0.12 * dd.w));
       pxCircle(g, sx, sy, r + 2, lerpCols([lerpCols(ramp, sy / H), warm[0]], 0.6 + 0.3 * dd.w));
       pxCircle(g, sx, sy, r, DAWN_COL.sun);
     }
@@ -31081,6 +31090,7 @@ const SCENE_PINS = [
   { id:'steam', n:'Steam off the water', w:'water', get: () => PSTEAM_FORCE === true || PSTEAM_FORCE === 1, set: v => { PSTEAM_FORCE = v ? true : null; } },
   { id:'thaw', n:'Ice thawing', w:'water', get: () => THAW_FORCE === true, set: v => { THAW_FORCE = v ? true : null; } },
   { id:'snowset', n:'Deep snow settled', w:'snowy courses', get: () => SNOWSET_FORCE === 3, set: v => { SNOWSET_FORCE = v ? 3 : null; } },
+  { id:'dusk', n:'Dusk', w:'the sky and the water', get: () => DUSK_FORCE === true, set: v => { DUSK_FORCE = v ? true : null; } },
   { id:'shimmer', n:'Heat shimmer', w:'summer afternoons', get: () => SHIMMER_FORCE === true, set: v => { SHIMMER_FORCE = v ? true : null; } },
   { id:'cshadow', n:'Cloud shadows', w:'clear days', get: () => CSHADOW_FORCE === true, set: v => { CSHADOW_FORCE = v ? true : null; } },
   { id:'wleaf', n:'Leaves on the water', w:'water', get: () => WLEAF_FORCE === true, set: v => { WLEAF_FORCE = v ? true : null; } },

@@ -18,6 +18,10 @@ module.exports = {
       const f = m => { if (o.fails.length < 12) o.fails.push(m); };
       try {
         hideSheet(); QUIET = true; window.step = () => {}; S.saver = 0;
+        // (no heat shimmer: it slides whole rows by the horizon a pixel, tree
+        // and flag together, so the trees' places read off the ground no
+        // longer match the frame; on a summer afternoon it failed here)
+        SHIMMER_FORCE = false;
         const cx = Scene.cv.getContext('2d');
         const grab = () => cx.getImageData(0, 0, VW, VH).data;
         // is (x, y) under a tree of the forest nearer than d?
@@ -64,6 +68,7 @@ module.exports = {
         if (!(o.wouldShow >= 20)) f('the sweep has only ' + o.wouldShow + ' pixels of flags behind trees to hide');
         if (!(o.shown >= 200)) f('only ' + o.shown + ' pixels of flags drawn in the open');
       } finally {
+        SHIMMER_FORCE = null;
         Scene.drawProp = keep; window.step = step0;
         Object.keys(S).forEach(k => delete S[k]); Object.assign(S, JSON.parse(SNAP));
         QUIET = false; buildSprites(); startHole();

@@ -1,6 +1,6 @@
 # Handoff — Mythic Mulligan
 
-Last updated 2026-10-04, second session (pushed to `main`). `CLAUDE.md` holds the standing
+Last updated 2026-10-06 (pushed to `main`). `CLAUDE.md` holds the standing
 rules and is loaded by itself; this file is what a new session needs on
 top. Read this file whole. The rest is for looking up, never for reading
 through:
@@ -14,71 +14,28 @@ through:
 ## 1. Where things stand
 
 - Everything is committed and **no request is waiting**. The last ones
-  (4 October, third session; the user said "do them all" to an idle-game
-  menu): the Lucky Albatross, errands (the caddie's runner), Range
-  milestones (never stronger than before; the wall is now Card 220),
-  loadouts, auto-wagers from Card 100, Trials (Range > Trials), weekend
-  festivals, and wager medals with Bank on the Island Green. Then: a bar
-  to the next milestone on every Range row, rare visitors (a gold star),
-  fox cubs in spring, and the canyon in layered sandstone with a river.
-  Then the Harvest Moon (an autumn night in four, a Guide entry) and the
-  island's lake and the stepping-stone river with depth, reeds and lily
-  pads. Last (from a photograph of a gorge): the canyon three times as
-  deep in stepped cliffs and ledges with spurs; the albatross's feather
-  burst made real feathers; the ponds given depth, reeds and pads (and the
-  pond by the path laid level, with no tree of the woods in it); the
-  course dog on, seen from behind with its tail wagging. The full run
-  caught a frame over its drawing budget and reeds through a slope: fixed.
-  Then: the medal's green hunt dot repeated on the Guide tab and by its
-  Weekly Hunt; flying, both arms one colour; his arms a pixel thicker.
-  Last: the canyon drawn by the screen's pixel (from the bridge it broke
-  into blocks that jittered); a tap on the dog opens its breeds (they are
-  in Cabinet > Course Wildlife); a frog on a lily pad now and then (a Guide
-  entry); mist in the canyon on cold mornings; the dog waits on the bank
-  while he crosses. Then ("still jitters like crazy"): the canyon steadied
-  as he walks (each row of rock coloured by its own depth on a grid fixed
-  to the course, never by where the ground's slices fall; a flicker check
-  in `canyonlook`); **the dog put aside** ("we will come back to it
-  later": `DOG_ON = false`, nothing drawn or offered); dragonflies over
-  reeds and pads on summer days (they count for the Guide's
-  Dragonfly, which was already there). Then ("Canyon is beautiful"):
-  fireflies over the reeds, doubled in the water; ripples
-  where a dragonfly dips and round the frog's pad; a bug sweep (the Harvest
-  Moon carried into a wager; the canyon's first frame; mist on a home
-  course in summer; summer dragonflies not ticking a course's rare
-  Dragonfly). What lives by the season asks `lookSeason`: a course's own,
-  the Snowline winter and the Blossom spring all year, else the month.
-  Then: fireflies glow up and fade like real ones (`ffGlow`), on one night
-  hole in two in any season (`fireflyAt`: the rough, the reeds and the
-  stones' river alike). Then: the Harvest Moon's path on the water orange;
-  fish leaping in the lakes and ponds (a splash, a ring where they land;
-  the Guide's Fish). Then: thunderstorms (one rainy hole in three: a dark
-  sky, heavier rain, lightning behind the hills with a flash, thunder after)
-  and airplanes crossing high now and then (a contrail by day, lights at
-  night); both on the Guide's Course shelf. Then: hot-air balloons low
-  over the far hills on calm mornings, ducklings behind a hen on the
-  island's lake in spring, steam off the water on cold mornings; a speed
-  pass (rain as three sliding sheets: 12 canvas calls a frame, was 300;
-  dragonflies, the plane and steam baked; heaviest frames 1,400 to 1,850
-  calls, 3 to 5ms on the computer). Then (6 October): puddles taken off
-  the fairway; the developer menu's **Scenery Switches** (an on/off
-  button for each of twenty things on the course, kept over holes and a
-  reload until switched off: how the user tests what he hasn't seen);
-  frost on the reeds and lily pads; the rainbow reflected on the water;
-  mist pooled in the hollows on autumn and frosty mornings. He asked to
-  hold off on new animals for a while. Then: the sea stack's ring of rocks
-  taken out; a bug pass (stripes in the dips' mist, ducklings, thunder,
-  the switches); pins either side of the green (they all stood right);
-  wind you can see (reeds, tufts, the flag); leaves on the water in
-  autumn; the affinity on the readout as "STORM aff" (small); the
-  thunder quieter; a tee find never under the field's buttons. Then:
-  trees swaying in a gale; cloud shadows on clear days; the ponds' last
-  ice thawing on spring mornings (he turned down dew).
-  Fixed on the way: a Vault floor played again after a gust was never
-  called; the Spotted tag sat over a wager's name. Earlier the same day:
-  cherry trees, the kingfisher, course collections, the monthly hunt, and
-  the phone's picture memory (the black sky).
-- `node test/run.js` has **162 checks**, about 35 minutes: run it in the
+  (6 October): heat shimmer on summer afternoons; snow settling on the
+  trees, bushes, rocks and roofs, deeper through a snowy round; the low
+  sun on the water at dawn and dusk (Dawn and Dusk on, or Golden Hour);
+  footprints in the frost. Then a bug and speed pass: the one dip he saw
+  on the phone (a lightning flash) is gone, and a storm frame at the tee
+  went from 1,281 canvas calls to 716 (umbrellas, snowflakes, the bolt and
+  the tee baked; one clip shared by the props behind a rise); the thunder's
+  rumble had been cut short; steam rose round an island green.
+  He reports a steady 60fps on the phone. A **Dusk** switch shows the evening
+  sky and water at any hour; canvas memory measured level over thirty
+  courses.
+- The scenery of 4 to 6 October (canyon, ponds, dragonflies, fireflies,
+  fish, storms, planes, balloons, ducklings, steam, mist, frost, the
+  rainbow's reflection, wind, leaves on the water, pins either side,
+  trees in a gale, cloud shadows, the thaw, the above) is the first
+  section of `docs/features.md`. **The dog is put aside** (`DOG_ON =
+  false`) until he raises it. He tests scenery with the developer menu's
+  **Scenery Switches** (one each, kept until switched off): give anything
+  new a switch. Earlier work: the sections under it.
+- What lives by the season asks `lookSeason`: a course's own, the Snowline
+  winter and the Blossom spring all year, else the month.
+- `node test/run.js` has **163 checks**, about 35 minutes: run it in the
   background, on a copy in the scratchpad, with the machine quiet. After
   weather, colours or anything dated, also run it with `HOUR_FORCE` 8 and
   15 and the month pinned (rules 20 and 70).
@@ -306,12 +263,15 @@ the Tour tab, no new sound but ambience.
 Five at least (CLAUDE.md); don't raise the dog until he does; no new
 animals for now (he asked to hold off).
 
-1. **Try the Scenery Switches on the phone** and say what to tune.
-2. **Heat shimmer** over the fairway on hot summer afternoons.
-3. **Snow settling** on the trees and roofs as a winter round goes on.
-4. **Sunset glow** on the water at dusk (with Dawn and Dusk on).
-5. **Footprints in frost or snow** behind him as he walks.
-6. **A speed pass on the phone**: the frame-time readout in the developer
-   menu with the new switches on.
+1. **Look at the new scenery on the phone** (switches: Heat shimmer, Deep
+   snow settled, Dusk; Frost for the footprints) and say what to tune.
+2. **Snow on the gallery's hats and umbrellas** as a snowy round goes on.
+3. **Long shadows at dawn and dusk**: trees and people casting longer
+   shadows away from the low sun.
+4. **Autumn leaves gathering** at the edges of the fairway and greens as
+   an autumn round goes on.
+5. **Puffs of breath** in the cold on frosty mornings (him and the gallery).
+6. **Stars coming out** one by one as dusk turns to night (Dawn and Dusk
+   on).
 
 Recommend 1. (Turned down: dew; no new animals for now.)

@@ -6,6 +6,159 @@ feature must do, and is usually enough on its own.
 
 ## Sections, newest first
 
+### The scenery, 4 to 6 October (the canyon on; the latest last)
+
+- **The hunt's dot, his arms** (`hunt`, `flyarms`): `.huntDot` on the
+  Trophy Room's Guide tab and by its Weekly Hunt while `huntOpen()`, the
+  medal's `#roomHunt` dot; swinging, his arms `ath` (a pixel over `th`
+  from 45 tall; the club keeps `th`); flying, both arms `O.skin`, `ath` from
+  `h * 0.068`.
+- **Canyon by the pixel** (`canyonlook`): `hazSlice`'s canyon path walks
+  the screen's pixels in view (`_cpx`, `_tpx`, `_fux`), asking `colProf`
+  at a fractional column (`reach` interpolated) and `tone` with hashes in
+  half and third columns; columns a dozen pixels wide on the bridge
+  jittered. The check looks from the rim, onto, mid and far end of the
+  bridge, and from over the gorge wants no grass under its far rim.
+- **Canyon mist** (`canyonmist`): `Scene.cmist` (canyon, day, dry; frosty,
+  or by the real month in autumn and winter, 5 to 11; `CMIST_FORCE`),
+  `mistC` over the depths from `fz` 0.3, in drifts; in the ground's reuse
+  key.
+- **A frog on a lily pad** (`lilyfrog`): `layLilyFrog` after the pads
+  (`LILYFROG_P` 0.3 of holes with pads, `LILYFROG_FORCE`), `p.frog` on a
+  pad, drawn from `critSprite('frog')`; Guide `lilyfrog` (Wildlife,
+  `GUIDE_PIC`).
+- **The dog**: `dogTap` (a tap on `Scene._dogBox` opens Course Wildlife);
+  not drawn over a crossing (stones, bridge, pier).
+- **The canyon steadied** (`canyonlook`, walking): drawn per screen pixel,
+  each row's depth interpolated between ground slices; rock coloured from
+  a code palette (`canyonPal`, `P_CANYON.code`) on a 1/16 grid fixed on the
+  course (extra canyon slices where the march skips); streaks at least two
+  pixels; canyon pixels kept out of the haze's tree mask (`Scene._cmk`).
+- **Dragonflies** (`dragonfly`): `layDragonflies` after the reeds and pads
+  (summer by the course's season, else the month; day, dry; ~70% of such
+  holes; 1 to 3), props `kind 26, sp 'dfly'`, drawn from `DFLY_PIC` in
+  `DFLY_COL`, hovering and darting; `DFLY_FORCE`; spotted, they count for the Guide's existing `dragonfly`
+  (never a second entry: `golden` fails on a shared id); a course whose
+  rare visitor is the Dragonfly has it ticked by them (`courseWildSee`).
+- **Fireflies** (`reedlife`, `nightholes`): on one night hole in two, any
+  season (`fireflyAt`, `FIREFLY_P` 0.5, `FIREFLY_FORCE`), in the rough
+  (`layNight`), at the reeds (`layReedFireflies`: dry; kind 5 with `wet`,
+  `RFLY_FORCE`) and over the stones' river (`drawFireflies`); each light
+  glows up and fades (`ffGlow`: about a third of a 3 to 5.5s cycle lit,
+  `ffCol`), mirrored in the water where that water is in view; `Scene.ripple` (a ring on water only, `wetSpot`) where a dragonfly
+  dips (2 in 5 of its darts) and round the frog's pad every 4.7s.
+- **Leaping fish** (`leapfish`): `layLeapFish` (`LEAP_P` 0.6 of holes,
+  `LEAP_FORCE`; one or two kind 26 `sp 'leap'` on open water with room
+  either way, not on ice, by the stones, round the sea stack or within 4.8
+  of the green), `leapAt` (its own clock: a leap on 60% of turns), drawn
+  as the stones' fish with a splash and `Scene.ripple`; the Guide's Fish
+  ("Leaping in rivers and ponds"). The Harvest Moon's path on the water is
+  orange (`ripples`).
+- **Thunderstorms** (`skylife`): `stormAt` (`STORM_P` 1/3 of rainy holes,
+  `STORM_FORCE`), `Scene.storm`; the sky darkened before the ridge
+  (`drawBolt`), `boltNow` every `STORM_GAP` 10s, a forked bolt behind the
+  hills, `drawStormLight` (a dim over the frame, the flash), 90 streaks of
+  rain; `Sfx.thunder` (two low rumbles, `THUNDER_VOL`) 0.6 to 2s after
+  each bolt from `Sfx.tick`. Guide `storm`.
+- **Airplanes** (`skylife`): `planeNow` (one in `PLANE_P` 0.6 of each
+  `PLANE_GAP` 50s, crossing in `PLANE_DUR` 20s, `PLANE_FORCE`; not in rain
+  or a wager), `drawPlane` before the ridge: `PLANE_PIC` with a contrail by
+  day, red/green lights and a strobe at night; seen live, Guide `plane`.
+- **Balloons, ducklings, steam** (`mornings`): `Scene.balloons` (dry, calm
+  `|wind| < 0.4`, 6 to 11 by the clock, `BALLOON_P` 0.4, `BALLOON_FORCE`),
+  `drawBalloons` before the ridge from `balloonSprite` (bounded), seen live:
+  Guide `balloon`; `Scene.ducklings` (the island in spring, `DUCKLING_P`
+  0.6, `DUCKLING_FORCE`), four in a row behind hen 1 in `drawDucks`, Guide
+  `duckling`; `Scene.psteam` (as the canyon's mist: frost, or autumn or
+  winter 5 to 11; `PSTEAM_FORCE`), `laySteam` kind 26 `sp 'steam'` on open
+  water, not ice, drawn from `steamSprite` (bounded).
+- **Scenery Switches** (`devpins`): `SCENE_PINS` (id, name, where, get,
+  set over each `*_FORCE`, `ALB_PIN`), kept in `localStorage` `KEY+':pins'`
+  (`pinsSave`, `pinsLoad` in `boot`, a developer copy only), `DEV.pin`,
+  `DEV.pinsOff`; `STORM_FORCE` true also brings rain (not at night or in a
+  wager). Puddles (kind 7) are no longer laid.
+- **Frost on reeds and pads**: `reedMap(cs, t, frost)` from `courseTrees`'
+  frost mode, `lilyPal(look, night, frost)`.
+- **The rainbow's reflection** (`rareweather`): in `ripples`, the arc
+  mirrored about the horizon on the water rows, `hexA`.
+- **Mist in the dips** (`mornings`): `Scene.lmist` (autumn or frost, 5 to
+  11, dry, day, not a signature hole; `LMIST_FORCE`), `lowPools` (hollows
+  1.5 deep within 12 paces), `drawLowMist` after the ground.
+- **Pins** (`pins`, `windleaves`): `pinFor` mirrors the nine `PINS` left
+  of his line on half the holes (hash 1021); a putt to a left pin runs on
+  before it breaks (`puttBall`); on a phone on its side it passes behind
+  him a moment (the `green` check allows two frames).
+- **Wind you can see** (`windleaves`): `Scene.leanB` (0 in a calm, with the
+  wind, swaying in a gale), `leanSprite` (rows slid, foot kept, kept on the
+  sprite and freed with the tree set), reeds and tufts; `pinBody` flies the
+  flag the wind's way (`flipSprite`) and flaps faster with it.
+- **Leaves on the water**: `layWaterLeaves` (autumn, not ice, not the sea
+  stack, away from the green; `WLEAF_FORCE`), kind 26 `sp 'wleaf'` drawn
+  from `fallSprite` flattened, drifting, kept to the water.
+- The readout says the course's element with a small "aff" after it
+  (`hudWords` takes an optional small suffix and sign); a tee find skips
+  any spot the page covers from the tee (`Scene.coveredAt`).
+- **Trees in a gale** (`galethaw`): `Scene.treeLean` (|wind| over 0.75: 1
+  or 2 downwind, swaying), stand-alone trees only (not the forest), two
+  `leanSprite` copies a tree set.
+- **Cloud shadows**: `Scene.cshadow` (clear, not fog or Golden Hour,
+  `CSHADOW_P` 0.6, `CSHADOW_FORCE`), `drawCloudShadows` after the ground,
+  three ovals drifting with the wind, rows painted once, below the horizon.
+- **The thaw**: `thawIce(look)` (spring, by the hour: 0.7 at 5 to none at
+  11; `THAW_FORCE` 0.5), `Scene.thaw`, floes from `thawGrid` (value noise
+  by the hole) on the water rows in `ripples` (`_ripD` holds each row's
+  distance).
+- **Rain** is three sheets (`rainSheet`, bounded) slid with the clock.
+- **lookSeason(look)**: the season a course shows (its own; the Snowline
+  winter, the Blossom spring; else the month), for the Harvest Moon, the
+  canyon's mist, dragonflies and the reeds' fireflies. `newDepthsHole`
+  clears `harvest` and `cmist`.
+- **Second bug pass** (6 October): the steam wisp baked from `ImageData`
+  in fixed sizes (`STEAM_SIZES`; per pixel it cost a morning frame 4,666
+  calls); `battery` counts the dearer of 8am and 2pm; `spriteFree` frees a
+  sprite's leaning, hazed, shrunk and flipped copies; `hudFresh` (the
+  readout drawn before `coveredAt` reads it); no thaw before 5am or at the
+  pier; no cloud shadows in falling snow; leaves on the water moonlit at
+  night; the dips' mist one even band a hollow, feathered top and foot
+  (`drawLowMist`; slices stacked made stripes, then a hard line); no
+  steam within 4.5 of the green (it rose round an island green).
+- **Heat shimmer** (`heatsnow`): `Scene.shimmer` (summer by `lookSeason`,
+  noon to six, dry, clear, no frost or snow; `SHIMMER_P` 0.67 by the hole;
+  `SHIMMER_FORCE`), `drawShimmer` after the haze: the rows from the
+  horizon to 22 paces ahead copied once into `SHIM_CV` (one canvas, reused)
+  and laid back a pixel either way, strongest at the horizon.
+- **Snow settling** (`heatsnow`): `Scene.snowL` (a snowy look, dry: 1 on
+  holes 1 to 6, 2 from 7, 3 from 13; `SNOWSET_FORCE`), `courseTrees(look,
+  mode, snowL)` keyed by it, `snowRows` (snow `S`/`s` on each ledge, more
+  and deeper by level, trunks bare) for pines, oaks, bushes and rocks;
+  `clubhouseCv` and `standCv` take `snowL` (the roof white from the ridge
+  down; the stand's a cap over it); the train's roof caps deeper; the
+  woods' key carries it.
+- **The low sun on the water** (`heatsnow`): in `ripples`, with
+  `Scene.dawnDusk` (Dawn and Dusk on, or Golden Hour), a warm wash on the
+  water (most far off; its stretches found once while the camera stands,
+  `_ddSp`) and a broken path of light down from the sun's side.
+- **Footprints in the frost**: `noteTrack`/`drawTracks` on a frosty
+  morning too, darker green.
+- **Speed pass** (`battery` now counts a storm and the snow at the tee,
+  warmed, under 1,000 calls: the storm was 1,281): the bolt baked once a
+  strike (`Scene._bolt`); umbrella domes baked (`UMB_CACHE`, 64, freed);
+  snowflakes two pictures (`flakeSpr`); the tee deck from one picture
+  while the camera stands (`teeDeck`, `_teeCv`, baked on the second frame
+  alike); one clip kept open over a run of props cut at the same row in
+  `drawProps` (five calls a prop, 700 a frame). Thunder's noise loops
+  (`hiss`: a second of noise started part way ran out, the rumble cut
+  short).
+- **Memory** (rule 77, measured over thirty courses in five weathers):
+  live canvas area levels off near 4.4 million pixels; the count of
+  canvases grows slowly (faded copies, `FOG_MAX` 24 a sprite and size,
+  tiny). `SPECT_CACHE` frees a dropped spectator whole (`spriteFree`: its
+  smaller copies and their hazes were left); `shrinkSprite` no longer makes
+  a canvas it never used.
+- **The Dusk switch** (`DUSK_FORCE`: `dawnDusk` at its warmest whatever the
+  clock or setting); the evening sun at `DUSK_SUN` 0.7 across (at 0.8 its
+  path on the water ran under the hole map).
+
 ### The session of 4 October, fourth
 
 - **The milestone bar** (`milestones`): each Range row's third line
@@ -2264,108 +2417,3 @@ him (about 49px tall on a 320 phone, 71px on its side).
 - Earlier: trails and balls made easier to see, fixes after rotating the
   phone, Title Case everywhere, cheaper Bench, rival, skins, the scoring
   rebalance, pacing.
-- **The hunt's dot, his arms** (`hunt`, `flyarms`): `.huntDot` on the
-  Trophy Room's Guide tab and by its Weekly Hunt while `huntOpen()`, the
-  medal's `#roomHunt` dot; swinging, his arms `ath` (a pixel over `th`
-  from 45 tall; the club keeps `th`); flying, both arms `O.skin`, `ath` from
-  `h * 0.068`.
-- **Canyon by the pixel** (`canyonlook`): `hazSlice`'s canyon path walks
-  the screen's pixels in view (`_cpx`, `_tpx`, `_fux`), asking `colProf`
-  at a fractional column (`reach` interpolated) and `tone` with hashes in
-  half and third columns; columns a dozen pixels wide on the bridge
-  jittered. The check looks from the rim, onto, mid and far end of the
-  bridge, and from over the gorge wants no grass under its far rim.
-- **Canyon mist** (`canyonmist`): `Scene.cmist` (canyon, day, dry; frosty,
-  or by the real month in autumn and winter, 5 to 11; `CMIST_FORCE`),
-  `mistC` over the depths from `fz` 0.3, in drifts; in the ground's reuse
-  key.
-- **A frog on a lily pad** (`lilyfrog`): `layLilyFrog` after the pads
-  (`LILYFROG_P` 0.3 of holes with pads, `LILYFROG_FORCE`), `p.frog` on a
-  pad, drawn from `critSprite('frog')`; Guide `lilyfrog` (Wildlife,
-  `GUIDE_PIC`).
-- **The dog**: `dogTap` (a tap on `Scene._dogBox` opens Course Wildlife);
-  not drawn over a crossing (stones, bridge, pier).
-- **The canyon steadied** (`canyonlook`, walking): drawn per screen pixel,
-  each row's depth interpolated between ground slices; rock coloured from
-  a code palette (`canyonPal`, `P_CANYON.code`) on a 1/16 grid fixed on the
-  course (extra canyon slices where the march skips); streaks at least two
-  pixels; canyon pixels kept out of the haze's tree mask (`Scene._cmk`).
-- **Dragonflies** (`dragonfly`): `layDragonflies` after the reeds and pads
-  (summer by the course's season, else the month; day, dry; ~70% of such
-  holes; 1 to 3), props `kind 26, sp 'dfly'`, drawn from `DFLY_PIC` in
-  `DFLY_COL`, hovering and darting; `DFLY_FORCE`; spotted, they count for the Guide's existing `dragonfly`
-  (never a second entry: `golden` fails on a shared id); a course whose
-  rare visitor is the Dragonfly has it ticked by them (`courseWildSee`).
-- **Fireflies** (`reedlife`, `nightholes`): on one night hole in two, any
-  season (`fireflyAt`, `FIREFLY_P` 0.5, `FIREFLY_FORCE`), in the rough
-  (`layNight`), at the reeds (`layReedFireflies`: dry; kind 5 with `wet`,
-  `RFLY_FORCE`) and over the stones' river (`drawFireflies`); each light
-  glows up and fades (`ffGlow`: about a third of a 3 to 5.5s cycle lit,
-  `ffCol`), mirrored in the water where that water is in view; `Scene.ripple` (a ring on water only, `wetSpot`) where a dragonfly
-  dips (2 in 5 of its darts) and round the frog's pad every 4.7s.
-- **Leaping fish** (`leapfish`): `layLeapFish` (`LEAP_P` 0.6 of holes,
-  `LEAP_FORCE`; one or two kind 26 `sp 'leap'` on open water with room
-  either way, not on ice, by the stones, round the sea stack or within 4.8
-  of the green), `leapAt` (its own clock: a leap on 60% of turns), drawn
-  as the stones' fish with a splash and `Scene.ripple`; the Guide's Fish
-  ("Leaping in rivers and ponds"). The Harvest Moon's path on the water is
-  orange (`ripples`).
-- **Thunderstorms** (`skylife`): `stormAt` (`STORM_P` 1/3 of rainy holes,
-  `STORM_FORCE`), `Scene.storm`; the sky darkened before the ridge
-  (`drawBolt`), `boltNow` every `STORM_GAP` 10s, a forked bolt behind the
-  hills, `drawStormLight` (a dim over the frame, the flash), 90 streaks of
-  rain; `Sfx.thunder` (two low rumbles, `THUNDER_VOL`) 0.6 to 2s after
-  each bolt from `Sfx.tick`. Guide `storm`.
-- **Airplanes** (`skylife`): `planeNow` (one in `PLANE_P` 0.6 of each
-  `PLANE_GAP` 50s, crossing in `PLANE_DUR` 20s, `PLANE_FORCE`; not in rain
-  or a wager), `drawPlane` before the ridge: `PLANE_PIC` with a contrail by
-  day, red/green lights and a strobe at night; seen live, Guide `plane`.
-- **Balloons, ducklings, steam** (`mornings`): `Scene.balloons` (dry, calm
-  `|wind| < 0.4`, 6 to 11 by the clock, `BALLOON_P` 0.4, `BALLOON_FORCE`),
-  `drawBalloons` before the ridge from `balloonSprite` (bounded), seen live:
-  Guide `balloon`; `Scene.ducklings` (the island in spring, `DUCKLING_P`
-  0.6, `DUCKLING_FORCE`), four in a row behind hen 1 in `drawDucks`, Guide
-  `duckling`; `Scene.psteam` (as the canyon's mist: frost, or autumn or
-  winter 5 to 11; `PSTEAM_FORCE`), `laySteam` kind 26 `sp 'steam'` on open
-  water, not ice, drawn from `steamSprite` (bounded).
-- **Scenery Switches** (`devpins`): `SCENE_PINS` (id, name, where, get,
-  set over each `*_FORCE`, `ALB_PIN`), kept in `localStorage` `KEY+':pins'`
-  (`pinsSave`, `pinsLoad` in `boot`, a developer copy only), `DEV.pin`,
-  `DEV.pinsOff`; `STORM_FORCE` true also brings rain (not at night or in a
-  wager). Puddles (kind 7) are no longer laid.
-- **Frost on reeds and pads**: `reedMap(cs, t, frost)` from `courseTrees`'
-  frost mode, `lilyPal(look, night, frost)`.
-- **The rainbow's reflection** (`rareweather`): in `ripples`, the arc
-  mirrored about the horizon on the water rows, `hexA`.
-- **Mist in the dips** (`mornings`): `Scene.lmist` (autumn or frost, 5 to
-  11, dry, day, not a signature hole; `LMIST_FORCE`), `lowPools` (hollows
-  1.5 deep within 12 paces), `drawLowMist` after the ground.
-- **Pins** (`pins`, `windleaves`): `pinFor` mirrors the nine `PINS` left
-  of his line on half the holes (hash 1021); a putt to a left pin runs on
-  before it breaks (`puttBall`); on a phone on its side it passes behind
-  him a moment (the `green` check allows two frames).
-- **Wind you can see** (`windleaves`): `Scene.leanB` (0 in a calm, with the
-  wind, swaying in a gale), `leanSprite` (rows slid, foot kept, kept on the
-  sprite and freed with the tree set), reeds and tufts; `pinBody` flies the
-  flag the wind's way (`flipSprite`) and flaps faster with it.
-- **Leaves on the water**: `layWaterLeaves` (autumn, not ice, not the sea
-  stack, away from the green; `WLEAF_FORCE`), kind 26 `sp 'wleaf'` drawn
-  from `fallSprite` flattened, drifting, kept to the water.
-- The readout says the course's element with a small "aff" after it
-  (`hudWords` takes an optional small suffix and sign); a tee find skips
-  any spot the page covers from the tee (`Scene.coveredAt`).
-- **Trees in a gale** (`galethaw`): `Scene.treeLean` (|wind| over 0.75: 1
-  or 2 downwind, swaying), stand-alone trees only (not the forest), two
-  `leanSprite` copies a tree set.
-- **Cloud shadows**: `Scene.cshadow` (clear, not fog or Golden Hour,
-  `CSHADOW_P` 0.6, `CSHADOW_FORCE`), `drawCloudShadows` after the ground,
-  three ovals drifting with the wind, rows painted once, below the horizon.
-- **The thaw**: `thawIce(look)` (spring, by the hour: 0.7 at 5 to none at
-  11; `THAW_FORCE` 0.5), `Scene.thaw`, floes from `thawGrid` (value noise
-  by the hole) on the water rows in `ripples` (`_ripD` holds each row's
-  distance).
-- **Rain** is three sheets (`rainSheet`, bounded) slid with the clock.
-- **lookSeason(look)**: the season a course shows (its own; the Snowline
-  winter, the Blossom spring; else the month), for the Harvest Moon, the
-  canyon's mist, dragonflies and the reeds' fireflies. `newDepthsHole`
-  clears `harvest` and `cmist`.
