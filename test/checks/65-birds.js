@@ -47,7 +47,11 @@ module.exports = {
             o.holes++;
             if (sigKind(hh)) { if (bs.length) f(where + ': birds on a signature hole'); continue; }
             if (bs.length) o.withBirds++;
-            for (const p of bs) if (!Scene.onPlay(p.d, p.x, 0) || Scene.hitsHazard(p.d, p.x, 0.3) || p.d > LEN - 10) f(where + ': a bird off the fairway, in a hazard or on the green at ' + p.d.toFixed(1) + ', ' + p.x.toFixed(1));
+            // (a week whose hunt has a bird lays a few of it behind the
+            // green, by design; the rest keep to the fairway)
+            for (const p of bs) {
+              if (p.g === 3 && p.extra) { if (p.d < Scene.pinD() + 6 || Scene.hitsHazard(p.d, p.x, 0.3)) f(where + ': a hunted bird not behind the green at ' + p.d.toFixed(1) + ', ' + p.x.toFixed(1)); continue; }
+              if (!Scene.onPlay(p.d, p.x, 0) || Scene.hitsHazard(p.d, p.x, 0.3) || p.d > LEN - 10) f(where + ': a bird off the fairway, in a hazard or on the green at ' + p.d.toFixed(1) + ', ' + p.x.toFixed(1)); }
             if (bs.length && !sample) sample = { ci, hh };
             if (cs.slot !== 'home') continue;
             for (let k = 0; k < 8; k++) {
