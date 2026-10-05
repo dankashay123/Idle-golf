@@ -11184,19 +11184,23 @@ function courseTrees(cs, mode){
   if(ch){ map.t = t('#5A4A44'); map.T = t('#2E2422'); }
   return TREE_CACHE[key] = { pine: makeSprite(ch ? ch.pine : PINE_ROWS, map), oak: makeSprite(ch ? ch.oak : OAK_ROWS, map),
     bush: makeSprite(BUSH_ROWS, map), tuft: makeSprite(TUFT_ROWS, gmap), rock: makeSprite(ROCK_ROWS, rmap),
-    reed: makeSprite(REED_ROWS, reedMap(cs, t)) };
+    reed: makeSprite(REED_ROWS, reedMap(cs, t, mode === 'frost')) };
 }
 // a lily pad's rim, body and lit half, its flower (pink or white by the
 // course) and the flower's heart; yellowing in the autumn
-function lilyPal(look, night){
+function lilyPal(look, night, frost){
   const t = c => night ? moonC(c) : c, au = look && look.season === 'Autumn';
-  const g = au ? '#8A8E3A' : '#3E8034';
-  return [t(dark(g, 0.35)), t(g), t(lite(g, 0.2)), t(hr((look && look.id || '').length, 816) < 0.5 ? '#F2A8C8' : '#F4F0E8'), t('#F2C83A')];
+  const g = au ? '#8A8E3A' : '#3E8034', F = (c, k) => frost ? mixC(c, '#E6EEF2', k) : c;
+  // (on a frosty morning, a white rime over the pad, thickest on its lit half)
+  return [t(dark(g, 0.35)), F(t(g), 0.35), F(t(lite(g, 0.2)), 0.6), t(hr((look && look.id || '').length, 816) < 0.5 ? '#F2A8C8' : '#F4F0E8'), t('#F2C83A')];
 }
-// reeds green in spring and summer, gold in autumn, straw in winter
-function reedMap(cs, t){
+// reeds green in spring and summer, gold in autumn, straw in winter; on a
+// frosty morning (the user picked it) rimed white along their lit side and
+// their heads
+function reedMap(cs, t, frost){
   const g = cs.season === 'Winter' ? '#B8A272' : cs.season === 'Autumn' ? '#A89A46' : mixC('#5E8C36', cs.rough, 0.25);
-  return { 1: t(dark(g, 0.42)), 2: t(dark(g, 0.18)), 3: t(g), 4: t(lite(g, 0.22)), b: t(cs.season === 'Winter' ? '#8A6A44' : '#7A4A26'), B: t('#4A2C18') };
+  const R = c => frost ? mixC(c, '#EEF4F8', 0.6) : c;
+  return { 1: t(dark(g, 0.42)), 2: t(dark(g, 0.18)), 3: t(frost ? mixC(g, '#DDE8EE', 0.3) : g), 4: R(t(lite(g, 0.22))), b: t(cs.season === 'Winter' ? '#8A6A44' : '#7A4A26'), B: R(t('#4A2C18')) };
 }
 
 /* ---- themes ----
@@ -25654,7 +25658,7 @@ Object.assign(Scene, {
       // hides what is below that line; and drawn once into a picture of
       // its own, kept, so a pad is one stamp a frame, not one a row)
       const hh = clamp(Math.round(a.y - b.y), 1, w), sg = p.k & 1 ? 1 : -1, fl = (p.k >> 1) % 4 === 0 && w >= 5;
-      const C = this.lilyPal || (this.lilyPal = lilyPal(this.look, night)), P = lilySprite(C, sg, fl);
+      const C = this.lilyPal || (this.lilyPal = lilyPal(this.look, night, this.frost)), P = lilySprite(C, sg, fl);
       const k = w / LILY_W, x0 = Math.round(pr.x - w / 2), y0 = Math.round(pr.y) - hh + 1;
       // (the frog shifting on its pad now and then: a ring spreads round it)
       if(p.frog){ const age = (this.t + hr(p.k + this.hole, 875) * 4.7) % 4.7;

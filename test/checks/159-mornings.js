@@ -9,7 +9,8 @@
  *     counts them
  *   - steam: on a cold morning (autumn or winter at 8, none at 15 or in
  *     summer, none on ice or in the rain), wisps laid on the water only,
- *     drawn paler over it */
+ *     drawn paler over it
+ *   - frost: on a frosty morning the reeds and the lily pads rimed paler */
 'use strict';
 module.exports = {
   name: 'mornings',
@@ -79,11 +80,22 @@ module.exports = {
             let n = 0; for (let i = 0; i < a.length; i += 4) if (a[i] + a[i + 1] + a[i + 2] > b[i] + b[i + 1] + b[i + 2] + 12) n++; best = Math.max(best, n); }
           o.spx = best; if (best < 40) f('the steam made ' + best + ' pixels paler'); }
         PSTEAM_FORCE = null; STONES_FORCE = 0;
+        // ---- frost on the reeds and the lily pads ----
+        { const lum = c => { const v = parseInt(c.slice(1), 16); return ((v >> 16) & 255) * 0.3 + ((v >> 8) & 255) * 0.59 + (v & 255) * 0.11; };
+          const sprLum = sp => { const g = sp.cv.getContext('2d'), d = g.getImageData(0, 0, sp.cv.width, sp.cv.height).data; let s2 = 0, n = 0; for (let i = 0; i < d.length; i += 4) if (d[i + 3]) { s2 += d[i] * 0.3 + d[i + 1] * 0.59 + d[i + 2] * 0.11; n++; } return s2 / n; };
+          FROST_FORCE = 1; SEASON_FORCE = 1; S.chaos = { n: 'Fair' }; DEV.stones(); hideSheet(); Scene.announce = null;
+          const L = Scene.look, id = c => c, mf = reedMap(L, id, true), md = reedMap(L, id, false), rf = lum(mf[4]) + lum(mf.B), rd = lum(md[4]) + lum(md.B);
+          shot(Scene.isle.bank - 4, 3); const pf = Scene.lilyPal && Scene.lilyPal[2];
+          FROST_FORCE = 0; Scene.newHole(S.hole, S.tier); shot(Scene.isle.bank - 4, 3); const pd = Scene.lilyPal && Scene.lilyPal[2];
+          o.frost = Math.round(rf - rd) + '/' + (pf && pd ? Math.round(lum(pf) - lum(pd)) : '?');
+          if (!(rf > rd + 60)) f('frosty reeds ' + rf.toFixed(0) + ' against ' + rd.toFixed(0));
+          if (!pf || !pd || !(lum(pf) > lum(pd) + 40)) f('frosty pads ' + pf + ' against ' + pd);
+          FROST_FORCE = null; SEASON_FORCE = -1; STONES_FORCE = 0; }
       } finally { BALLOON_FORCE = null; DUCKLING_FORCE = null; PSTEAM_FORCE = null; SEASON_FORCE = -1; HOUR_FORCE = keepH; FROST_FORCE = keepF; ISLE_FORCE = 0; STONES_FORCE = 0;
         QUIET = false; window.requestAnimationFrame = raf; Object.assign(S, JSON.parse(SNAP)); Scene.newHole(S.hole, S.tier); }
       return { fails, o };
     });
     if (r.fails.length) throw new Error(r.fails.join('; '));
-    return ['balloons on ' + r.o.balloons + ' calm mornings, none at 3pm, at night, in rain or wind, ' + r.o.bpx + 'px in the sky only; ducklings on ' + r.o.ducklings + ' spring island holes, none other seasons or at night, ' + r.o.dpx + 'px; steam on ' + r.o.steam + ' cold mornings with water, on the water only, ' + r.o.spx + 'px paler; the Guide counts balloons and ducklings'];
+    return ['balloons on ' + r.o.balloons + ' calm mornings, none at 3pm, at night, in rain or wind, ' + r.o.bpx + 'px in the sky only; ducklings on ' + r.o.ducklings + ' spring island holes, none other seasons or at night, ' + r.o.dpx + 'px; steam on ' + r.o.steam + ' cold mornings with water, on the water only, ' + r.o.spx + 'px paler; frost on the reeds and pads (+' + r.o.frost + ' paler); the Guide counts balloons and ducklings'];
   }
 };
