@@ -2,7 +2,8 @@
  * course (the user asked it "better ... higher quality": it was the pixel
  * letters scaled up).
  *
- *   - shown on the call, its word and under it the score to par (E for a
+ *   - shown on the call, its lettering painted on its canvas (it came out
+ *     blank on his iPhone when drawn in styles alone), its word and under it the score to par (E for a
  *     par, none for a call that is not a score), in its colour; gone with
  *     the banner, and on a new hole
  *   - never over the readout or its buttons: upright at 320 and 440 wide,
@@ -19,7 +20,10 @@ module.exports = {
       for (const id of ['readout', 'setRow', 'shopBtn', 'roomBtn', 'perkBtn', 'hudClimb']) { const e = document.getElementById(id); if (!e || !e.offsetParent) continue;
         const r = e.getBoundingClientRect(); if (r.width && r.right > q.left && r.left < q.right && r.bottom > q.top && r.top < q.bottom) hits.push(id); }
       el.style.animation = '';
-      return { shown: !el.hidden, w: el.querySelector('.f').textContent, s: el.querySelector('.s').textContent, cls: el.className, hits, top: q.top, h: q.height };
+      // (and its lettering painted: the call came out blank on the phone)
+      const cv = el.querySelector('canvas'), d = cv.width && cv.height ? cv.getContext('2d').getImageData(0, 0, cv.width, cv.height).data : [];
+      let ink = 0, lit = 0; for (let i = 3; i < d.length; i += 4) if (d[i] > 200) { ink++; if (d[i - 3] + d[i - 2] + d[i - 1] > 450) lit++; }
+      return { shown: !el.hidden, w: el.dataset.w || '', s: el.dataset.s || '', cls: el.className, hits, top: q.top, h: q.height, ink: ink / Math.max(1, d.length / 4), lit: lit / Math.max(1, d.length / 4) };
     });
     const call = (n, d) => page.evaluate(([n, d]) => { hideSheet(); window.step = window.step || (() => {}); Scene.announce = null; Scene.holed({ n, d }); Scene.draw(0, derive()); }, [n, d]);
     await page.evaluate(() => { window.__keepStep = window.step; window.step = () => {}; window.requestAnimationFrame = () => 0; QUIET = false; });
@@ -32,6 +36,8 @@ module.exports = {
         if (L.w.toUpperCase() !== n.toUpperCase() || L.s !== want || L.cls !== cls) f(w + 'x' + h + ': ' + n + ' shown as "' + L.w + '" "' + L.s + '" ' + L.cls);
         if (L.hits.length) f(w + 'x' + h + ': ' + n + ' over the ' + L.hits.join(', '));
         if (L.h < 20) f(w + 'x' + h + ': ' + n + ' only ' + L.h + 'px tall');
+        if (!(L.ink > 0.12) || !(L.lit > 0.03)) f(w + 'x' + h + ': ' + n + ' barely painted (' + (L.ink * 100).toFixed(1) + '% inked, ' + (L.lit * 100).toFixed(1) + '% lit)');
+        o.ink = Math.min(o.ink ?? 1, L.ink); o.lit = Math.min(o.lit ?? 1, L.lit);
       }
       o.sizes.push(w + 'x' + h);
     }
@@ -45,6 +51,6 @@ module.exports = {
     if (wager) f('the call shown in a wager');
     await page.evaluate(() => { window.step = window.__keepStep; });
     if (fails.length) throw new Error(fails.join('; '));
-    return ['the call, its figure and colour right for five calls at ' + o.sizes.join(', ') + ', never over the readout or its buttons; gone with its banner and on a new hole; none in a wager'];
+    return ['the call, its figure and colour right for five calls at ' + o.sizes.join(', ') + ', its lettering painted (least ' + (o.ink * 100).toFixed(0) + '% inked, ' + (o.lit * 100).toFixed(0) + '% lit), never over the readout or its buttons; gone with its banner and on a new hole; none in a wager'];
   }
 };

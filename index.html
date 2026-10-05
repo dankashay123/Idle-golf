@@ -1024,25 +1024,13 @@ div.guide.hunt,div.guide.mhunt{grid-template-columns:repeat(3,minmax(0,1fr))}
 /* the hole's call as the ball drops (Birdie, Par ...): crisp lettering over
    the course, filled light to its colour, outlined, a figure under it on a
    rule; in with a pop, up and away (the pixel letters scaled up were
-   blocky; the user asked for it better) */
-#holecall{position:absolute;left:50%;z-index:26;pointer-events:none;white-space:nowrap;text-align:center;
-  --c:var(--chalk);--c2:#FFFFFF;transform:translateX(-50%);animation:hcIn 1.2s cubic-bezier(.2,.8,.3,1) forwards}
+   blocky; the user asked for it better). Painted on a canvas of its own
+   (holeCall): the same lettering in styles alone (text clipped to a fill,
+   a filter on it) came out blank on his iPhone. */
+#holecall{position:absolute;left:50%;z-index:26;pointer-events:none;
+  transform:translateX(-50%);animation:hcIn 1.2s cubic-bezier(.2,.8,.3,1) forwards}
 #holecall[hidden]{display:none}
-#holecall .w{display:grid;font-family:var(--disp);font-weight:700;font-size:calc(var(--f5) * 1.5);line-height:1;letter-spacing:.06em;text-transform:uppercase}
-#holecall .w>span{grid-area:1/1}
-#holecall .o{color:transparent;-webkit-text-stroke:5px rgba(4,9,6,.82);text-shadow:0 3px 0 rgba(4,9,6,.7),0 0 14px rgba(4,9,6,.5)}
-#holecall .f{background:linear-gradient(180deg,var(--c2) 0%,var(--c2) 18%,var(--c) 58%,color-mix(in srgb,var(--c) 70%,#000) 100%);
-  -webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 0 6px color-mix(in srgb,var(--c) 45%,transparent))}
-#holecall .s{display:flex;align-items:center;justify-content:center;gap:6px;margin-top:3px;font-family:var(--mono);font-size:var(--f2);font-weight:700;
-  color:var(--c);text-shadow:0 1px 0 #000,0 0 3px #000;letter-spacing:.08em}
-#holecall .s::before,#holecall .s::after{content:"";width:22px;height:2px;background:linear-gradient(90deg,transparent,var(--c));box-shadow:0 1px 0 rgba(0,0,0,.6)}
-#holecall .s::after{transform:scaleX(-1)}
-#holecall .s:empty{display:none}
-#holecall.myth{--c:var(--myth);--c2:#FFF4FF}
-#holecall.gold{--c:var(--brass);--c2:#FFF6D6}
-#holecall.aur{--c:var(--aurora);--c2:#EFFFF9}
-#holecall.par{--c:#DDE4D6;--c2:#FFFFFF}
-#holecall.bad{--c:var(--flag);--c2:#FFE3DE}
+#holecall canvas{display:block}
 @keyframes hcIn{0%{opacity:0;transform:translateX(-50%) scale(.6)}14%{opacity:1;transform:translateX(-50%) scale(1.08)}
   24%{transform:translateX(-50%) scale(1)}78%{opacity:1;transform:translateX(-50%) translateY(0)}100%{opacity:0;transform:translateX(-50%) translateY(-10px)}}
 @keyframes coIn{0%{opacity:0;margin-top:4px}12%{opacity:1;margin-top:0}80%{opacity:1}100%{opacity:0}}
@@ -1155,7 +1143,7 @@ div.guide.hunt,div.guide.mhunt{grid-template-columns:repeat(3,minmax(0,1fr))}
     </div>
     <div id="wagerStat" hidden></div>
     <div id="callout" hidden></div>
-    <div id="holecall" hidden><div class="w"><span class="o"></span><span class="f"></span></div><div class="s"></div></div>
+    <div id="holecall" hidden><canvas></canvas></div>
     <button id="leaveBtn" hidden aria-label="Leave the wager"><img id="leaveIcon" alt=""><span id="leaveTxt">Leave</span></button>
     <div id="toasts"></div>
   </div>
@@ -19541,6 +19529,13 @@ const PixPaint = {
   }
 };
 
+// The hole's call's colours (holeCall): its colour, the light at the top of
+// its fill, the fill's foot (its colour darkened) and its glow
+const HOLECALL_COL = (() => { const o = {}, dk = h => '#' + [1, 3, 5].map(i => Math.round(parseInt(h.slice(i, i + 2), 16) * 0.7).toString(16).padStart(2, '0')).join(''),
+  gl = h => 'rgba(' + [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16)).join(',') + ',.45)';
+  for(const [k, c, c2] of [['myth', '#C68BFF', '#FFF4FF'], ['gold', '#E3B457', '#FFF6D6'], ['aur', '#57E0BE', '#EFFFF9'], ['par', '#DDE4D6', '#FFFFFF'], ['bad', '#E4574A', '#FFE3DE']])
+    o[k] = [c, c2, dk(c), gl(c)];
+  return o; })();
 const Scene = {
   cv:null, ctx:null, buf:null, b:null, scale:3,
   camD:0, dCam:0, hole:1, tier:0, t:0,
@@ -23315,10 +23310,12 @@ const Scene = {
     this._hcKey = key;
     if(!b){ el.hidden = true; return; }
     const sc = B.SCORE.find(z => z.n.toUpperCase() === String(b.n).toUpperCase());
-    el.className = b.d <= -3 ? 'myth' : b.d <= -2 ? 'gold' : b.d === -1 ? 'aur' : b.d === 0 ? 'par' : 'bad';
+    const kind = b.d <= -3 ? 'myth' : b.d <= -2 ? 'gold' : b.d === -1 ? 'aur' : b.d === 0 ? 'par' : 'bad';
+    el.className = kind;
     const n = String(b.n).toLowerCase().replace(/(^|\s)([a-z])/g, (m, a, c) => a + c.toUpperCase());
-    el.querySelector('.o').textContent = n; el.querySelector('.f').textContent = n;
-    el.querySelector('.s').textContent = sc ? (sc.d === 0 ? 'E' : sc.d > 0 ? '+' + sc.d : '\u2212' + -sc.d) : '';
+    const fig = sc ? (sc.d === 0 ? 'E' : sc.d > 0 ? '+' + sc.d : '\u2212' + -sc.d) : '';
+    el.dataset.w = n; el.dataset.s = fig;
+    this.paintHoleCall(el.querySelector('canvas'), n.toUpperCase(), fig, HOLECALL_COL[kind]);
     const k = this.cv ? (parseFloat(this.cv.style.height) || this.cv.clientHeight) / Math.max(1, VH) : 1;
     el.hidden = false;
     // (over the far end of the course, and below whatever of the readout and
@@ -23337,6 +23334,55 @@ const Scene = {
     }
     el.style.top = top + 'px';
     el.style.animation = 'none'; void el.offsetWidth; el.style.animation = '';
+  },
+  // The call's lettering: the word spaced a little, a dark outline and drop
+  // under a fill light at the top to its colour, a glow of it; the figure
+  // under it between two short rules. At the screen's own pixels.
+  paintHoleCall(cv, w, fig, col){
+    if(!cv) return;
+    const dpr = Math.min(3, Math.max(1, window.devicePixelRatio || 1));
+    const css = getComputedStyle(document.documentElement);
+    const disp = css.getPropertyValue('--disp').trim() || 'Georgia,serif', mono = css.getPropertyValue('--mono').trim() || 'monospace';
+    const fs = Math.round((parseFloat(css.getPropertyValue('--f5')) || 20) * 1.5), ss = parseFloat(css.getPropertyValue('--f2')) || 11;
+    const sp = fs * 0.06, wf = '700 ' + fs + 'px ' + disp, sf = '700 ' + ss + 'px ' + mono;
+    const c = cv.getContext('2d');
+    c.font = wf;
+    const ws = [...w].map(ch => c.measureText(ch).width), ww = ws.reduce((a, x) => a + x, 0) + sp * (ws.length - 1);
+    c.font = sf;
+    const fw = fig ? c.measureText(fig).width + 2 * (22 + 6) : 0;
+    const pad = 12, W = Math.ceil(Math.max(ww, fw) + pad * 2), y0 = pad + fs * 0.82, H = Math.ceil(pad + fs + (fig ? 3 + ss * 1.2 : 0) + pad);
+    cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
+    cv.style.width = W + 'px'; cv.style.height = H + 'px';
+    c.setTransform(dpr, 0, 0, dpr, 0, 0);
+    c.clearRect(0, 0, W, H);
+    c.font = wf; c.textBaseline = 'alphabetic'; c.textAlign = 'left'; c.lineJoin = 'round';
+    const each = fn => { let x = (W - ww) / 2; for(let i = 0; i < ws.length; i++){ fn(w[i], x); x += ws[i] + sp; } };
+    // outline and drop
+    c.shadowColor = 'rgba(4,9,6,.7)'; c.shadowOffsetY = 3; c.shadowBlur = 0;
+    c.strokeStyle = 'rgba(4,9,6,.82)'; c.lineWidth = 5;
+    each((ch, x) => c.strokeText(ch, x, y0));
+    c.shadowOffsetY = 0; c.shadowColor = 'rgba(4,9,6,.5)'; c.shadowBlur = 14;
+    each((ch, x) => c.strokeText(ch, x, y0));
+    // the fill, with its glow
+    const g = c.createLinearGradient(0, y0 - fs * 0.82, 0, y0 + fs * 0.18);
+    g.addColorStop(0, col[1]); g.addColorStop(0.18, col[1]); g.addColorStop(0.58, col[0]); g.addColorStop(1, col[2]);
+    c.fillStyle = g; c.shadowColor = col[3]; c.shadowBlur = 6;
+    each((ch, x) => c.fillText(ch, x, y0));
+    c.shadowBlur = 0; c.shadowColor = 'transparent';
+    if(fig){
+      const fy = y0 + fs * 0.18 + 3 + ss * 0.6;
+      c.font = sf; c.textAlign = 'center'; c.textBaseline = 'middle';
+      const tw = c.measureText(fig).width;
+      c.fillStyle = '#000';
+      for(const [dx, dy] of [[0, 1], [1, 0], [-1, 0], [0, -1]]) c.fillText(fig, W / 2 + dx, fy + dy);
+      c.fillStyle = col[0]; c.fillText(fig, W / 2, fy);
+      for(const s of [-1, 1]){
+        const xa = W / 2 + s * (tw / 2 + 6), xb = xa + s * 22;
+        const rg = c.createLinearGradient(xb, 0, xa, 0); rg.addColorStop(0, 'rgba(0,0,0,0)'); rg.addColorStop(1, col[0]);
+        c.fillStyle = 'rgba(0,0,0,.6)'; c.fillRect(Math.min(xa, xb), Math.round(fy), 22, 2);
+        c.fillStyle = rg; c.fillRect(Math.min(xa, xb), Math.round(fy) - 1, 22, 2);
+      }
+    }
   },
   // A wager's calls ("On the Green", "Lost Ball"), which the user found too
   // big in the pixel font: small, in the interface's type, over the horizon,

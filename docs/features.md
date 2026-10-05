@@ -119,7 +119,10 @@ feature must do, and is usually enough on its own.
   pixel letters: `#holecall` (`holeCall(b)`), the display serif filled
   light to its colour, outlined, the score to par under it on a rule, in
   with a pop; moved down below the readout and its buttons where it would
-  cross them (on its side). The ace's burst is still drawn on the canvas.
+  cross them (on its side). Painted on a small canvas of its own
+  (`paintHoleCall`): drawn in styles alone (text clipped to a gradient, a
+  filter) it came out blank on his iPhone. The ace's burst is still drawn
+  on the canvas.
   In a wager the page's own small call (`wagerCallout`). `holecall`.
 - **The thaw**: `thawIce(look)` (spring, by the hour: 0.7 at 5 to none at
   11; `THAW_FORCE` 0.5), `Scene.thaw`, floes from `thawGrid` (value noise
