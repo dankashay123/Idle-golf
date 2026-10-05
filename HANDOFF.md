@@ -294,7 +294,7 @@ Five at least (CLAUDE.md); don't raise the dog until he does.
 
 1. **Ask how the mornings look on the phone**: balloons, steam, ducklings.
 2. **Swallows** skimming low over the water on summer evenings.
-3. **A heron** standing still in the shallows by the reeds now and then.
+3. **Bats over the water** at dusk, dipping for insects.
 4. **Frost on the reeds and lily pads** on frosty mornings.
 5. **A rainbow over the water** after a storm passes (the next hole).
 6. **A bug pass** over the sky and water work once a few more go in.
