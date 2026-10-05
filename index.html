@@ -4439,6 +4439,15 @@ let PLANE_FORCE = null;
 const PLANE_GAP = 50, PLANE_DUR = 20, PLANE_P = 0.6;
 // the airliner side on, its nose to the right: b body, d belly, w wing, k tail
 const PLANE_PIC = ['.k.........', '.kkbbbbbbb.', '..dddwdddbb', '.....ww....'];
+const PLANE_SPR = {};
+function planeSprite(dir){
+  if(PLANE_SPR[dir]) return PLANE_SPR[dir];
+  const R = PLANE_PIC, W = R[0].length, col = { b: '#EEF2F6', d: '#9AA6B4', w: '#C4CCD6', k: '#5A6878' };
+  const cv = document.createElement('canvas'); cv.width = W; cv.height = R.length; const g = cv.getContext('2d');
+  for(let r = 0; r < R.length; r++) for(let k = 0; k < W; k++){ const ch = R[r][dir > 0 ? k : W - 1 - k]; if(ch === '.') continue;
+    g.fillStyle = col[ch]; g.fillRect(k, r, 1, 1); }
+  return PLANE_SPR[dir] = cv;
+}
 const RAINBOW_COL = ['#E8423A', '#F28C2E', '#F2D23A', '#4CC25A', '#3A86E0', '#7A4AC8'];
 // now and then a rainbow comes golden (the user picked "a golden version of
 // a rare weather"): six bands of gold, from the hole's hash, a Field Guide
@@ -13092,6 +13101,21 @@ const LILY_W = 24, LILY_H = 10, LILY_SPR = new Map(), LILY_MAX = 40;
 // a dragonfly's body and its eyes, by kind; and a pin for the checks
 const DFLY_COL = [['#2E7AD8', '#8AD0F8'], ['#3AA858', '#B8E870'], ['#C8402E', '#F4A070']];
 let DFLY_FORCE = null, RFLY_FORCE = null;
+// a dragonfly baked: colour ci, wings up or swept (up), facing dir, ps a
+// pixel; kept (bounded, freed as dropped)
+const DFLY_SPR = new Map(), DFLY_MAX = 48;
+function dflySprite(ci, up, dir, ps){
+  const key = ci + '|' + up + '|' + dir + '|' + ps;
+  let cv = DFLY_SPR.get(key); if(cv) return cv;
+  const F = DFLY_PIC[up ? 0 : 1], W = F[0].length, H = F.length, C = DFLY_COL[ci];
+  const ink = { b: C[0], h: C[1], e: dark(C[0], 0.45), w: 'rgba(236,248,255,0.85)', v: 'rgba(150,190,220,0.9)' };
+  cv = document.createElement('canvas'); cv.width = W * ps; cv.height = H * ps; const g = cv.getContext('2d');
+  for(let r = 0; r < H; r++) for(let k = 0; k < W; k++){ const ch = F[r][dir > 0 ? k : W - 1 - k]; if(ch === '.') continue;
+    g.fillStyle = ink[ch]; g.fillRect(k * ps, r * ps, ps, ps); }
+  if(DFLY_SPR.size >= DFLY_MAX){ const k0 = DFLY_SPR.keys().next().value; cvFree(DFLY_SPR.get(k0)); DFLY_SPR.delete(k0); }
+  DFLY_SPR.set(key, cv);
+  return cv;
+}
 // fish leaping in the lakes and ponds: on this share of holes with open
 // water; LEAP_FORCE pins it
 let LEAP_FORCE = null;
@@ -19878,7 +19902,7 @@ const Scene = {
   // ground's line.
   ripple(c, d, x, r, a, night){
     if(a <= 0.02) return;
-    const q = this.proj(d, x), clip = this.clipAt(d), n = clamp(Math.round(r * LAT * q.s * 3), 10, 48), k = q.s > 2.2 ? 2 : 1;
+    const q = this.proj(d, x), clip = this.clipAt(d), n = clamp(Math.round(r * LAT * q.s * 2.2), 8, 32), k = q.s > 2.2 ? 2 : 1;
     c.fillStyle = (night ? 'rgba(150,176,210,' : 'rgba(236,248,255,') + a.toFixed(2) + ')';
     for(let i = 0; i < n; i++){
       const t = i / n * Math.PI * 2, dd = d + Math.sin(t) * r * 0.8, xx = x + Math.cos(t) * r;
@@ -22040,14 +22064,12 @@ const Scene = {
     }else{
       // (the contrail first, under it: thin at the plane, wider and fainter
       // the further back, gone a long way behind)
-      if(P.y < HORIZON * 0.3) for(let k = 6; k < 130; k += 1){
-        const a = 0.7 * (1 - k / 130), w = k < 24 ? 1 : 2, xx = tail(k), yy = Math.round(y + P.rise * k / (VW + 28)) + (P.dir > 0 ? 0 : 0);
-        if(xx < -2 || xx > VW + 2) continue;
-        c.fillStyle = 'rgba(244,248,252,' + a.toFixed(2) + ')'; c.fillRect(xx, yy, 1, w);
+      // (in a dozen strokes of eleven pixels, each fainter than the last)
+      if(P.y < HORIZON * 0.3) for(let k = 6; k < 130; k += 11){
+        const a = 0.7 * (1 - k / 130), w = k < 24 ? 1 : 2, x0 = P.dir > 0 ? tail(k + 10) : tail(k), yy = Math.round(y + P.rise * k / (VW + 28));
+        c.fillStyle = 'rgba(244,248,252,' + a.toFixed(2) + ')'; c.fillRect(x0, yy, 11, w);
       }
-      const R = PLANE_PIC, W = R[0].length, col = { b: '#EEF2F6', d: '#9AA6B4', w: '#C4CCD6', k: '#5A6878' };
-      for(let r = 0; r < R.length; r++) for(let k = 0; k < W; k++){ const ch = R[r][P.dir > 0 ? k : W - 1 - k]; if(ch === '.') continue;
-        c.fillStyle = col[ch]; c.fillRect(x - (W >> 1) + k, y - 1 + r, 1, 1); }
+      const PS = planeSprite(P.dir); c.drawImage(PS, x - (PS.width >> 1), y - 1);
     }
     // seen live, it goes in the Field Guide (once a crossing)
     const id = this.hole + ':' + P.n;
@@ -22067,8 +22089,8 @@ const Scene = {
     // (a storm's sky: heavy slate cloud, darkest overhead, over the rain's
     // grey; the hills drawn after stand in front of it)
     if(this.storm && !S.dgnRun){ const H = HORIZON;
-      for(let y = 0; y < H; y += 2){ const k = y / H, wob = Math.sin(y * 0.37 + this.t * 0.15) * 0.04;
-        c.fillStyle = 'rgba(34,40,52,' + (0.62 - k * 0.42 + wob).toFixed(2) + ')'; c.fillRect(0, y, VW, 2); } }
+      for(let y = 0; y < H; y += 4){ const k = y / H, wob = Math.sin(y * 0.37 + this.t * 0.15) * 0.04;
+        c.fillStyle = 'rgba(34,40,52,' + (0.62 - k * 0.42 + wob).toFixed(2) + ')'; c.fillRect(0, y, VW, 4); } }
     const B = this.boltNow(); if(!B || !B.on) return;
     const seg = (x0, y0, len, k, glow) => {
       let x = x0, y = y0;
@@ -25490,12 +25512,12 @@ Object.assign(Scene, {
       // drawn from a little picture of it from above, a pixel of it ps
       // square: a long body, a bright head, and two pairs of wings spread
       // out either side, beating between spread and swept back
-      const up = Math.floor(this.t * 20 + p.k) & 1, F = up ? DFLY_PIC[0] : DFLY_PIC[1], W = F[0].length, H = F.length;
-      const ox = X - (W * ps >> 1), oy = Y - (H * ps >> 1), ink = { b: C[0], h: C[1], e: dark(C[0], 0.45), w: 'rgba(236,248,255,0.85)', v: 'rgba(150,190,220,0.9)' };
+      // (baked once a colour, beat, way round and size: one stamp a frame)
+      const up = Math.floor(this.t * 20 + p.k) & 1, D = dflySprite(p.c % DFLY_COL.length, up, dir, ps);
+      const ox = X - (D.width >> 1), oy = Y - (D.height >> 1);
       // (cut at the ground's line where a rise in front hides it)
-      const clip = this.clipAt(p.d + dd);
-      for(let r = 0; r < H; r++) for(let k = 0; k < W; k++){ const ch = F[r][dir > 0 ? k : W - 1 - k]; if(ch === '.') continue;
-        c.fillStyle = ink[ch]; fillClip(c, ox + k * ps, oy + r * ps, ps, ps, clip); }
+      const vis = Math.min(D.height, Math.floor(this.clipAt(p.d + dd)) + 1 - oy);
+      if(vis > 0) c.drawImage(D, 0, 0, D.width, vis, ox, oy, D.width, vis);
 
     }else if(p.kind === 26){
       // a lily pad lying flat on the water: an oval as the ground
