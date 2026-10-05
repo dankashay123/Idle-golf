@@ -60,12 +60,18 @@ through:
   island's lake in spring, steam off the water on cold mornings; a speed
   pass (rain as three sliding sheets: 12 canvas calls a frame, was 300;
   dragonflies, the plane and steam baked; heaviest frames 1,400 to 1,850
-  calls, 3 to 5ms on the computer).
+  calls, 3 to 5ms on the computer). Then (6 October): puddles taken off
+  the fairway; the developer menu's **Scenery Switches** (an on/off
+  button for each of twenty things on the course, kept over holes and a
+  reload until switched off: how the user tests what he hasn't seen);
+  frost on the reeds and lily pads; the rainbow reflected on the water;
+  mist pooled in the hollows on autumn and frosty mornings. He asked to
+  hold off on new animals for a while.
   Fixed on the way: a Vault floor played again after a gust was never
   called; the Spotted tag sat over a wager's name. Earlier the same day:
   cherry trees, the kingfisher, course collections, the monthly hunt, and
   the phone's picture memory (the black sky).
-- `node test/run.js` has **159 checks**, about 35 minutes: run it in the
+- `node test/run.js` has **160 checks**, about 35 minutes: run it in the
   background, on a copy in the scratchpad, with the machine quiet. After
   weather, colours or anything dated, also run it with `HOUR_FORCE` 8 and
   15 and the month pinned (rules 20 and 70).
@@ -290,13 +296,16 @@ Turned down, don't offer: a station on the railway, a photo mode, a
 weather forecast, fireworks, trail flourishes, caddie tricks. Nothing for
 the Tour tab, no new sound but ambience.
 
-Five at least (CLAUDE.md); don't raise the dog until he does.
+Five at least (CLAUDE.md); don't raise the dog until he does; no new
+animals for now (he asked to hold off).
 
-1. **Ask how the mornings look on the phone**: balloons, steam, ducklings.
-2. **Swallows** skimming low over the water on summer evenings.
-3. **Bats over the water** at dusk, dipping for insects.
-4. **Frost on the reeds and lily pads** on frosty mornings.
-5. **A rainbow over the water** after a storm passes (the next hole).
-6. **A bug pass** over the sky and water work once a few more go in.
+1. **Try the Scenery Switches on the phone** and say what to tune.
+2. **The course's affinity word** ("STORM-" on the readout) reads like the
+   weather now: rename it, or mark it as the affinity.
+3. **Wind you can see**: tall grass and flags leaning harder in a gale.
+4. **Autumn leaves drifting on the water** of the ponds and lakes.
+5. **Dew glinting on the fairway** on summer mornings.
+6. **A speed pass on the phone** with a frame-time readout in the
+   developer menu (there is one: Frame, frame times).
 
 Recommend 1.

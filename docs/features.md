@@ -2328,6 +2328,18 @@ him (about 49px tall on a 320 phone, 71px on its side).
   `duckling`; `Scene.psteam` (as the canyon's mist: frost, or autumn or
   winter 5 to 11; `PSTEAM_FORCE`), `laySteam` kind 26 `sp 'steam'` on open
   water, not ice, drawn from `steamSprite` (bounded).
+- **Scenery Switches** (`devpins`): `SCENE_PINS` (id, name, where, get,
+  set over each `*_FORCE`, `ALB_PIN`), kept in `localStorage` `KEY+':pins'`
+  (`pinsSave`, `pinsLoad` in `boot`, a developer copy only), `DEV.pin`,
+  `DEV.pinsOff`; `STORM_FORCE` true also brings rain (not at night or in a
+  wager). Puddles (kind 7) are no longer laid.
+- **Frost on reeds and pads**: `reedMap(cs, t, frost)` from `courseTrees`'
+  frost mode, `lilyPal(look, night, frost)`.
+- **The rainbow's reflection** (`rareweather`): in `ripples`, the arc
+  mirrored about the horizon on the water rows, `hexA`.
+- **Mist in the dips** (`mornings`): `Scene.lmist` (autumn or frost, 5 to
+  11, dry, day, not a signature hole; `LMIST_FORCE`), `lowPools` (hollows
+  1.5 deep within 12 paces), `drawLowMist` after the ground.
 - **Rain** is three sheets (`rainSheet`, bounded) slid with the clock.
 - **lookSeason(look)**: the season a course shows (its own; the Snowline
   winter, the Blossom spring; else the month), for the Harvest Moon, the
