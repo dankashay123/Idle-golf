@@ -73,7 +73,9 @@ module.exports = {
         S.dgnRun = { id: B.DGN[0].id }; if (goldenOn(golds[0], 'Fair')) f('Golden Hour in a wager'); S.dgnRun = null;
         // ---- never through the ground in front ----
         const blank = () => { c.fillStyle = '#010203'; c.fillRect(0, 0, VW, VH); };
-        const alone = Q => { const was = Scene.props; blank(); Scene.props = [Q]; Scene.drawProps(); Scene.props = was;
+        // (without long shadows: in Golden Hour's low sun they lie on the
+        // nearer ground, below the line by rights; dusklife holds them)
+        const alone = Q => { const was = Scene.props, ls = Scene.longShadow; blank(); Scene.props = [Q]; Scene.longShadow = () => {}; try { Scene.drawProps(); } finally { Scene.longShadow = ls; } Scene.props = was;
           return c.getImageData(0, 0, VW, VH).data; };
         o.views = 0; o.seen = 0; o.mpx = 0; o.ppx = 0; o.hidden = 0;
         for (const h of golds) for (const steep of [0, 1]) {

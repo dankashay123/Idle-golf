@@ -1,4 +1,5 @@
-/* The island's lake and the river by the stones (the user asked for the
+/* (Autumn's leaf drifts share the kind but lie on land: left out here.)
+ * The island's lake and the river by the stones (the user asked for the
  * canyon's treatment: depth, reeds and lily pads).
  *
  *   - depth: pale shallows along the shore, darker toward the middle; on the
@@ -33,7 +34,7 @@ module.exports = {
               const h = S.hole + k; off();
               if (kind === 'stones') STONES_FORCE = h; else ISLE_FORCE = h;
               Scene.newHole(h, S.tier);
-              const W = Scene.water, P = (Scene.props || []).filter(p => p.kind === 26 && p.sp !== 'dfly'), id = B.COURSE[ci].id + ' ' + kind + ' s' + sn + ' h' + h;
+              const W = Scene.water, P = (Scene.props || []).filter(p => p.kind === 26 && p.sp !== 'dfly' && p.sp !== 'gleaf'), id = B.COURSE[ci].id + ' ' + kind + ' s' + sn + ' h' + h;
               if (!W || !(kind === 'stones' ? W.river : W.lake)) { f(id + ': no water'); continue; }
               out.holes++;
               const reeds = P.filter(p => p.sp === 'reed'), pads = P.filter(p => p.sp === 'lily');
@@ -51,7 +52,7 @@ module.exports = {
               // laid again, the same
               const again = JSON.stringify(P);
               Scene.newHole(h, S.tier);
-              if (JSON.stringify((Scene.props || []).filter(p => p.kind === 26 && p.sp !== 'dfly')) !== again) f(id + ': laid differently a second time');
+              if (JSON.stringify((Scene.props || []).filter(p => p.kind === 26 && p.sp !== 'dfly' && p.sp !== 'gleaf')) !== again) f(id + ': laid differently a second time');
             }
           }
         }
@@ -60,12 +61,12 @@ module.exports = {
         DEV.course(0); hideSheet();
         for (let k = 0; k < 6; k++) {
           off(); Scene.newHole(S.hole + k, S.tier);
-          if (!sigKind(S.hole + k) && !Scene.water && !Scene.pond && (Scene.props || []).some(p => p.kind === 26)) f('reeds or pads on a hole with no water ' + (S.hole + k));
+          if (!sigKind(S.hole + k) && !Scene.water && !Scene.pond && (Scene.props || []).some(p => p.kind === 26 && p.sp !== 'gleaf')) f('reeds or pads on a hole with no water ' + (S.hole + k));
         }
         if (typeof DEV.pier === 'function') {
           for (let ci = 0; ci < B.COURSE.length; ci++) if (B.SIG_HOLE[B.COURSE[ci].id] === 'pier') {
             DEV.course(ci); hideSheet(); DEV.pier(); hideSheet();
-            if ((Scene.props || []).some(p => p.kind === 26)) f('reeds or pads round the sea stack on ' + B.COURSE[ci].id);
+            if ((Scene.props || []).some(p => p.kind === 26 && p.sp !== 'gleaf')) f('reeds or pads round the sea stack on ' + B.COURSE[ci].id);
           }
         }
         if (out.reedHoles < out.holes * 0.9) f('reeds on ' + out.reedHoles + ' of ' + out.holes + ' holes');
@@ -131,7 +132,7 @@ module.exports = {
             for (let k = 0; k < 24; k++) {
               const h = S.hole + k; Scene.newHole(h, S.tier);
               const W = Scene.water, PP = Scene.pond, id = B.COURSE[ci].id + ' s' + sn + ' h' + h;
-              const P26 = (Scene.props || []).filter(p => p.kind === 26 && p.sp !== 'dfly');
+              const P26 = (Scene.props || []).filter(p => p.kind === 26 && p.sp !== 'dfly' && p.sp !== 'gleaf');
               const hzPond = W && !W.lake && !W.river && !W.canyon && !W.rail;
               if (!hzPond && !PP) { if (!(W && (W.lake || W.river)) && P26.length) f(id + ': reeds or pads with no water'); continue; }
               const inHz = p => hzPond && Scene.wetAt(W, p.d, p.x), inPP = p => { if (!PP) return false; const w = Scene.lobeSpan(PP, p.d); return !!w && p.x > PP.x - w[0] && p.x < PP.x + w[1]; };
