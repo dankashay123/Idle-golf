@@ -66,12 +66,16 @@ through:
   reload until switched off: how the user tests what he hasn't seen);
   frost on the reeds and lily pads; the rainbow reflected on the water;
   mist pooled in the hollows on autumn and frosty mornings. He asked to
-  hold off on new animals for a while.
+  hold off on new animals for a while. Then: the sea stack's ring of rocks
+  taken out; a bug pass (stripes in the dips' mist, ducklings, thunder,
+  the switches); pins either side of the green (they all stood right);
+  wind you can see (reeds, tufts, the flag); leaves on the water in
+  autumn; "Storm Affinity -" on the readout; the thunder quieter.
   Fixed on the way: a Vault floor played again after a gust was never
   called; the Spotted tag sat over a wager's name. Earlier the same day:
   cherry trees, the kingfisher, course collections, the monthly hunt, and
   the phone's picture memory (the black sky).
-- `node test/run.js` has **160 checks**, about 35 minutes: run it in the
+- `node test/run.js` has **161 checks**, about 35 minutes: run it in the
   background, on a copy in the scratchpad, with the machine quiet. After
   weather, colours or anything dated, also run it with `HOUR_FORCE` 8 and
   15 and the month pinned (rules 20 and 70).
@@ -300,12 +304,10 @@ Five at least (CLAUDE.md); don't raise the dog until he does; no new
 animals for now (he asked to hold off).
 
 1. **Try the Scenery Switches on the phone** and say what to tune.
-2. **The course's affinity word** ("STORM-" on the readout) reads like the
-   weather now: rename it, or mark it as the affinity.
-3. **Wind you can see**: tall grass and flags leaning harder in a gale.
-4. **Autumn leaves drifting on the water** of the ponds and lakes.
-5. **Dew glinting on the fairway** on summer mornings.
-6. **A speed pass on the phone** with a frame-time readout in the
-   developer menu (there is one: Frame, frame times).
+2. **Trees swaying in a gale**, as the reeds and grass now do.
+3. **Dew glinting on the fairway** on summer mornings.
+4. **Ice on the ponds cracking and thawing** across a spring morning.
+5. **Cloud shadows** drifting across the fairway on sunny days.
+6. **A bug pass** once a few more go in.
 
 Recommend 1.

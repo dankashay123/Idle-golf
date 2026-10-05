@@ -2340,6 +2340,18 @@ him (about 49px tall on a 320 phone, 71px on its side).
 - **Mist in the dips** (`mornings`): `Scene.lmist` (autumn or frost, 5 to
   11, dry, day, not a signature hole; `LMIST_FORCE`), `lowPools` (hollows
   1.5 deep within 12 paces), `drawLowMist` after the ground.
+- **Pins** (`pins`, `windleaves`): `pinFor` mirrors the nine `PINS` left
+  of his line on half the holes (hash 1021); a putt to a left pin runs on
+  before it breaks (`puttBall`); on a phone on its side it passes behind
+  him a moment (the `green` check allows two frames).
+- **Wind you can see** (`windleaves`): `Scene.leanB` (0 in a calm, with the
+  wind, swaying in a gale), `leanSprite` (rows slid, foot kept, kept on the
+  sprite and freed with the tree set), reeds and tufts; `pinBody` flies the
+  flag the wind's way (`flipSprite`) and flaps faster with it.
+- **Leaves on the water**: `layWaterLeaves` (autumn, not ice, not the sea
+  stack, away from the green; `WLEAF_FORCE`), kind 26 `sp 'wleaf'` drawn
+  from `fallSprite` flattened, drifting, kept to the water.
+- The readout says the course's element as "Storm Affinity -".
 - **Rain** is three sheets (`rainSheet`, bounded) slid with the clock.
 - **lookSeason(look)**: the season a course shows (its own; the Snowline
   winter, the Blossom spring; else the month), for the Harvest Moon, the
