@@ -154,6 +154,8 @@ module.exports = {
         const look = (cam, age, dir) => { Scene.camD = cam; Scene.walkTo = cam; Scene.swingT = 0; Scene.trainMet = 1; Scene.trainNext = 1e9;
           Scene.train = age === null ? null : { t0: Scene.t - age, dir }; Scene.draw(0, D); };
         const bh = Scene.buildHaze; Scene.buildHaze = function () { this.haze = null; };
+        // (and no storm: its dim over the frame shifts every colour)
+        const wasStorm = Scene.storm; Scene.storm = false;
         try {
           const TRAIN = ['#8A3228', '#2E5A3A', '#6A2420'], RAILS = ['#D8E0E8', '#C8D0D8'], POSTS = ['#F2F2EA'], LIT = ['#FF3A2A'];
           look(0, null); o.tee = { rails: count(RAILS), posts: count(POSTS), train: count(TRAIN), lit: count(LIT) };
@@ -170,7 +172,7 @@ module.exports = {
           { const K = trainKind(null); look(I.bank - 0.1, (RAIL_X + K.len / 2) / K.v, -1); o.nearTrain = { train: count(TRAIN) };
             look(I.bank - 0.1, (RAIL_X - 3) / K.v, -1); o.nearTrain.lit = count(LIT); }
           look(I.bank - 0.1, 30, 1); o.gone = { train: count(TRAIN), lit: count(LIT) };
-        } finally { Scene.buildHaze = bh; Scene.hazeKey = null; }
+        } finally { Scene.buildHaze = bh; Scene.hazeKey = null; Scene.storm = wasStorm; }
 
         // ---- in its place among the trees and the gallery ----
         // Whatever stands this side of the line is drawn over it: where a tree
