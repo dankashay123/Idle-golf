@@ -80,7 +80,7 @@ module.exports = {
             const dbl = at === 0.25, view = () => { play(hh); Scene.camD = LEN * at; Scene.walkTo = Scene.camD; Scene.t = 2; Scene.draw(0, D); Scene.draw(0, D); return grab(); };
             let one = null;
             if (dbl) { RAINBOW_FORCE = 1; GOLDBOW_FORCE = 0; DBLBOW_FORCE = 0; one = view(); }
-            RAINBOW_FORCE = 1; GOLDBOW_FORCE = at === 0.5 ? 1 : 0; DBLBOW_FORCE = dbl ? 1 : 0; const a = view();
+            RAINBOW_FORCE = 1; GOLDBOW_FORCE = at === 0.5 ? 1 : 0; DBLBOW_FORCE = dbl ? 1 : 0; const a = view(), wat = Scene.waterAt(Scene.b, Scene.theme);
             if (at === 0.5 && !Scene.goldbow) f('the golden rainbow did not come when forced');
             if (dbl && !Scene.dblbow) f('the double rainbow did not come when forced');
             RAINBOW_FORCE = null; GOLDBOW_FORCE = null; DBLBOW_FORCE = null;
@@ -97,7 +97,8 @@ module.exports = {
               const dd = Math.max(Math.abs(a[i] - b[i]), Math.abs(a[i + 1] - b[i + 1]), Math.abs(a[i + 2] - b[i + 2]));
               if (!dd) continue;
               n++; o.rbMax = Math.max(o.rbMax, dd);
-              const y = Math.floor(i / 4 / VW); if (y >= HORIZON - 1) low++;
+              // (below the horizon only its reflection, on the water)
+              const y = Math.floor(i / 4 / VW); if (y >= HORIZON - 1 && !(y > HORIZON && wat((i / 4) % VW, y))) low++;
               if (y < HORIZON * 0.08) far++;
             }
             o.rb += n;
@@ -108,6 +109,14 @@ module.exports = {
           }
         }
         if (o.rbMax > 120) f('the rainbow changed a pixel by ' + o.rbMax + ': not faint');
+        // its reflection in the water: over the stepping stones' river, the
+        // arc mirrored on the water and nowhere else below the horizon
+        { DEV.stones(); hideSheet(); const view = on => { RAINBOW_FORCE = on; play(S.hole); Scene.camD = Scene.isle.bank - 4; Scene.walkTo = Scene.camD; Scene.t = 3; Scene.draw(0, D); Scene.draw(0, D); return grab(); };
+          const b = view(0), a = view(1), wat = Scene.waterAt(Scene.b, Scene.theme); RAINBOW_FORCE = null;
+          let on = 0, off = 0; for (let i = 0; i < a.length; i += 4) { const y = Math.floor(i / 4 / VW); if (y <= HORIZON) continue;
+            if (a[i] !== b[i] || a[i + 1] !== b[i + 1] || a[i + 2] !== b[i + 2]) { if (wat((i / 4) % VW, y)) on++; else off++; } }
+          o.refl = on; if (on < 12) f('the rainbow\'s reflection on the river: ' + on + ' pixels'); if (off) f(off + ' pixels of the rainbow\'s reflection off the water');
+          STONES_FORCE = 0; }
         // ---- the shooting star ----
         play(h0, 'Night Round'); Scene.meteorT = undefined;
         { const R = Math.random; Math.random = () => { throw new Error('Math.random in the star'); };
@@ -241,7 +250,7 @@ module.exports = {
     const s = await one();
     if (s.fails.length) throw new Error('on its side: ' + s.fails.join('\n'));
     return [r.rates.join('; ') + '; none on a wet or night round, fog never with a rainbow or Golden Hour; ' + (r.gb * 100).toFixed(1) + '% of rainbows golden, ' + (r.db * 100).toFixed(1) + '% double (never both)',
-      'the rainbow: ' + r.rb + '/' + s.rb + ' pixels upright/on its side, all above the horizon, at most ' + r.rbMax + ' off the sky; a double ' + r.dblPx[1] + ' to a single\'s ' + r.dblPx[0],
+      'the rainbow: ' + r.rb + '/' + s.rb + ' pixels upright/on its side, all above the horizon but its reflection on the water (' + r.refl + '/' + s.refl + ' on the river), at most ' + r.rbMax + ' off the sky; a double ' + r.dblPx[1] + ' to a single\'s ' + r.dblPx[0],
       'the star: ' + r.stars + ' in ten minutes, ' + r.gaps + 's apart, ' + r.starPix + ' pixels drawn alone, all in the upper sky; ' + r.starFrame + ' in the frame; none by day or in a wager',
       'the fog: its thickest row changed by ' + r.fog.join('/') + ' a pixel from the tee, a quarter and half way (a rise in front can hide it); none under the ground in front, in the upper sky or over a nearer tree (' + r.fogNear + ' pixels of them); none on a signature hole',
       'the Field Guide: the rainbow and fog as laid, the star as drawn, none by day, away or in a wager; the menu\'s buttons work'];
