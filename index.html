@@ -4458,6 +4458,11 @@ const DUCKLING = ['...YY.', '.yyYYo', 'yyyyy.'], DUCKLING_COL = { y:'#D8B040', Y
 // morning, or a dry one in the course's autumn or winter, five to eleven;
 // not on ice. PSTEAM_FORCE pins it.
 let PSTEAM_FORCE = null;
+// Mist pooled in the low ground (the user picked it): on an ordinary hole
+// on an autumn or frosty morning, five to eleven, dry, the hollows along the
+// hole hold a pale mist, level on top, thickest at the bottom. LMIST_FORCE
+// pins it.
+let LMIST_FORCE = null;
 // the airliner side on, its nose to the right: b body, d belly, w wing, k tail
 const PLANE_PIC = ['.k.........', '.kkbbbbbbb.', '..dddwdddbb', '.....ww....'];
 const PLANE_SPR = {};
@@ -21808,6 +21813,9 @@ const Scene = {
     // ice); balloons on a calm one; ducklings in spring on the island
     this.psteam = !this.night && !this.rain && (PSTEAM_FORCE !== null ? !!PSTEAM_FORCE
       : this.frost || ([1, 2].includes(lookSeason(look)) && hourNow() >= 5 && hourNow() < 11));
+    this.lmist = !this.night && !this.rain && !this.golden && !sigKind(h) && (LMIST_FORCE !== null ? !!LMIST_FORCE
+      : (this.frost || lookSeason(look) === 1) && hourNow() >= 5 && hourNow() < 11);
+    this._lmPools = null;
     this.balloons = !this.night && !this.rain && !S.dgnRun && (BALLOON_FORCE !== null ? !!BALLOON_FORCE
       : Math.abs(this.wind) < 0.4 && hourNow() >= 6 && hourNow() < 11 && hr(h * 31 + 9, 1003) < BALLOON_P);
     this.ducklings = !this.night && sigKind(h) === 'island' && (DUCKLING_FORCE !== null ? !!DUCKLING_FORCE
@@ -21970,7 +21978,7 @@ const Scene = {
     this.aurora = false;
     this.rain = false;
     this.rainbow = false; this.goldbow = false; this.dblbow = false; this.fog = false;   // (no rare weather in a wager)
-    this.harvest = false; this.cmist = false; this.storm = false; this.psteam = false; this.balloons = false; this.ducklings = false;   // (nor the Harvest Moon over its cellar, mist or a storm)
+    this.harvest = false; this.cmist = false; this.storm = false; this.lmist = false; this.psteam = false; this.balloons = false; this.ducklings = false;   // (nor the Harvest Moon over its cellar, mist or a storm)
     const rnd = seeded(hash32(R.floor*7919 + dg.length*104729 + 13));
     this.seed = rnd() * 1000;
     this.roll = 0.42;                    // a cellar floor does not roll like links
@@ -22216,6 +22224,40 @@ const Scene = {
       const B = balloonSprite(Math.floor(hr(q, 1013) * BALLOON_COL.length), ht);
       c.drawImage(B, Math.round(x - B.width / 2), y);
       if(this.hole === S.hole && this.balloonSeen !== this.hole && x > 0 && x < VW){ this.balloonSeen = this.hole; guideSee('balloon'); }
+    }
+  },
+  // the hollows along the hole: where the ground dips at least a unit and a
+  // half below the ground either side within a dozen paces, the mist's
+  // level (a unit over the bottom) and the stretch under it
+  lowPools(){
+    const P = [];
+    for(let d = 6; d < LEN + 8; d += 0.5){
+      const h = this.hAt(d);
+      if(!(h <= this.hAt(d - 0.5) && h < this.hAt(d + 0.5))) continue;
+      let lo = Infinity, hi = Infinity;
+      for(let e = 1; e <= 12; e += 0.5){ lo = Math.min(lo, this.hAt(d - e) - h > 1.5 ? e : Infinity); hi = Math.min(hi, this.hAt(d + e) - h > 1.5 ? e : Infinity); }
+      if(!isFinite(lo) || !isFinite(hi)) continue;
+      const L = h + 1.1;
+      let d0 = d, d1 = d; while(d0 > 2 && this.hAt(d0 - 0.25) < L) d0 -= 0.25; while(d1 < LEN + 14 && this.hAt(d1 + 0.25) < L) d1 += 0.25;
+      P.push({ d0, d1, L, b: h });
+    }
+    return P;
+  },
+  // the mist in them: slice by slice, far to near, a pale band from the
+  // ground up to the mist's level, faint, so where it is deepest it is
+  // thickest; drifting a little in strength; cut where nearer ground hides it
+  drawLowMist(){
+    if(!this.lmist || S.dgnRun) return;
+    if(!this._lmPools) this._lmPools = this.lowPools();
+    const c = this.b, near = this.camD - CAM_BACK + 0.8, col = this.frost ? '232,240,246' : '236,238,232';
+    for(const Q of this._lmPools) for(let d = Q.d1; d >= Q.d0; d -= 0.5){
+      if(d < near) break;
+      const z = Q.L - this.hAt(d); if(z <= 0.05) continue;
+      const g = this.proj(d, 0, 0), t = this.proj(d, 0, z), clip = this.clipAt(d);
+      const y0 = Math.round(t.y), y1 = Math.min(Math.round(g.y) + 1, Math.floor(clip) + 1);
+      if(y1 <= y0) continue;
+      const a = Math.min(0.2, 0.05 + z * 0.09) * (0.8 + 0.2 * Math.sin(this.t * 0.4 + d * 0.7));
+      c.fillStyle = 'rgba(' + col + ',' + a.toFixed(3) + ')'; c.fillRect(0, y0, VW, y1 - y0);
     }
   },
   // the storm's lightning now, if a bolt is down: its strike n, how long
@@ -27680,6 +27722,7 @@ Object.assign(Scene, {
       this.drawRidge();
       this.drawGround();
       this.drawFarFade();
+      this.drawLowMist();
       this.drawTracks();
       // The railway runs right across among the trees and the gallery: those
       // beyond it first, then the line and its train, then those this side of
@@ -30651,6 +30694,7 @@ function albCatch(){
 let ALB_PIN = null;
 const SCENE_PINS = [
   { id:'steam', n:'Steam off the water', w:'water', get: () => PSTEAM_FORCE === true || PSTEAM_FORCE === 1, set: v => { PSTEAM_FORCE = v ? true : null; } },
+  { id:'lmist', n:'Mist in the dips', w:'ordinary holes', get: () => LMIST_FORCE === true || LMIST_FORCE === 1, set: v => { LMIST_FORCE = v ? true : null; } },
   { id:'mist', n:'Canyon mist', w:'canyon', get: () => CMIST_FORCE === true || CMIST_FORCE === 1, set: v => { CMIST_FORCE = v ? true : null; } },
   { id:'balloon', n:'Hot-air balloons', w:'by day, dry', get: () => BALLOON_FORCE === true || BALLOON_FORCE === 1, set: v => { BALLOON_FORCE = v ? true : null; } },
   { id:'plane', n:'Airplanes', w:'not in rain', get: () => PLANE_FORCE === true || PLANE_FORCE === 1, set: v => { PLANE_FORCE = v ? true : null; } },
