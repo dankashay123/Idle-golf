@@ -59,6 +59,9 @@ module.exports = {
         // shooting star as it is drawn
         RAINBOW_FORCE = 1; GOLDBOW_FORCE = 0; play(h0); GOLDBOW_FORCE = 1; play(h0); GOLDBOW_FORCE = 0; DBLBOW_FORCE = 1; play(h0); DBLBOW_FORCE = null; GOLDBOW_FORCE = null; RAINBOW_FORCE = null; FOG_FORCE = 1; play(h0); FOG_FORCE = null;
         play(h0, 'Night'); Scene.draw(0, derive()); Scene.meteorT = Scene.t - 0.2; Scene.drawMeteor(Scene.b); Scene.meteorT = undefined;
+        // (an airplane and a balloon, seen as they are drawn)
+        PLANE_FORCE = true; play(h0); Scene.planeSeen = null; for (let i = 0; i < 40 && !S.guide.plane; i++) { Scene.t += 0.5; Scene.drawPlane(Scene.b); } PLANE_FORCE = null;
+        BALLOON_FORCE = true; play(h0); Scene.balloonSeen = null; for (let i = 0; i < 80 && !S.guide.balloon; i++) { Scene.t += 1; Scene.drawBalloons(Scene.b); } BALLOON_FORCE = null;
         // the Wager Book's own: one in each wager, there one time in two,
         // counted and never paid
         { const sv = S.sov || 0, there = {};

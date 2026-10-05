@@ -4437,6 +4437,24 @@ const stormAt = h => STORM_FORCE !== null ? !!STORM_FORCE : !S.dgnRun && hr(h * 
 // night; not in the rain. PLANE_FORCE pins one up now.
 let PLANE_FORCE = null;
 const PLANE_GAP = 50, PLANE_DUR = 20, PLANE_P = 0.6;
+// Hot-air balloons (the user picked them from the menu): on a calm, dry
+// morning (six to eleven by his clock, a light wind), on two holes in
+// five, one to three drifting slowly with the wind low over the far hills
+// (drawn before them, so the hills stand in front). BALLOON_FORCE pins it.
+let BALLOON_FORCE = null;
+const BALLOON_P = 0.4;
+const BALLOON_COL = [['#E4574A', '#F2C94A'], ['#3A7AD8', '#F4F0E4'], ['#6EC07E', '#F2A03A'], ['#C46AD8', '#F4E070'], ['#F2A03A', '#3A5AA8']];
+// Ducklings (the user picked them): in spring a line of them paddling after
+// a hen on the island's lake, on three island holes in five; DUCKLING_FORCE
+// pins them.
+let DUCKLING_FORCE = null;
+const DUCKLING_P = 0.6;
+const DUCKLING = ['...YY.', '.yyYYo', 'yyyyy.'], DUCKLING_COL = { y:'#D8B040', Y:'#F0D468', o:'#E08A30' };
+// Steam off the water on a cold morning (the user picked it, like the
+// canyon's mist): wisps rising off the ponds, lakes and rivers on a frosty
+// morning, or a dry one in the course's autumn or winter, five to eleven;
+// not on ice. PSTEAM_FORCE pins it.
+let PSTEAM_FORCE = null;
 // the airliner side on, its nose to the right: b body, d belly, w wing, k tail
 const PLANE_PIC = ['.k.........', '.kkbbbbbbb.', '..dddwdddbb', '.....ww....'];
 const PLANE_SPR = {};
@@ -13101,6 +13119,46 @@ const LILY_W = 24, LILY_H = 10, LILY_SPR = new Map(), LILY_MAX = 40;
 // a dragonfly's body and its eyes, by kind; and a pin for the checks
 const DFLY_COL = [['#2E7AD8', '#8AD0F8'], ['#3AA858', '#B8E870'], ['#C8402E', '#F4A070']];
 let DFLY_FORCE = null, RFLY_FORCE = null;
+// a wisp of steam sz across: a soft pale column, fullest low, fraying up;
+// baked once a size (bounded, freed as dropped)
+const STEAM_SPR = new Map(), STEAM_MAX = 40;
+function steamSprite(sz){
+  let cv = STEAM_SPR.get(sz); if(cv) return cv;
+  const w = Math.max(4, Math.round(sz * 1.1)), h = Math.max(4, sz);
+  cv = document.createElement('canvas'); cv.width = w; cv.height = h; const g = cv.getContext('2d');
+  for(let y = 0; y < h; y++) for(let x = 0; x < w; x++){
+    const v = y / h, cx = (x + 0.5) / w - 0.5 + Math.sin(v * 5.5) * 0.1, r = 0.3 + v * 0.18;
+    const a = Math.min(0.9, Math.max(0, 1.3 - Math.abs(cx) / r) * (0.35 + v * 0.65)) * (hr(x * 31 + y, sz) < 0.85 ? 1 : 0.5);
+    if(a > 0.05){ g.fillStyle = 'rgba(236,242,246,' + a.toFixed(2) + ')'; g.fillRect(x, y, 1, 1); }
+  }
+  if(STEAM_SPR.size >= STEAM_MAX){ const k0 = STEAM_SPR.keys().next().value; cvFree(STEAM_SPR.get(k0)); STEAM_SPR.delete(k0); }
+  STEAM_SPR.set(sz, cv);
+  return cv;
+}
+// a hot-air balloon h tall in colours ci: a round envelope in two colours
+// of gore, a dark band, ropes, a wicker basket; baked (bounded, freed)
+const BALLOON_SPR = new Map(), BALLOON_MAX = 30;
+function balloonSprite(ci, h){
+  const key = ci + '|' + h; let cv = BALLOON_SPR.get(key); if(cv) return cv;
+  const C = BALLOON_COL[ci % BALLOON_COL.length], w = Math.max(5, Math.round(h * 0.7)), eh = Math.round(h * 0.72);
+  cv = document.createElement('canvas'); cv.width = w; cv.height = h; const g = cv.getContext('2d');
+  const R = w / 2, cy = eh * 0.48;
+  for(let y = 0; y < eh; y++) for(let x = 0; x < w; x++){
+    const dx = (x + 0.5 - R) / R, dy = (y + 0.5 - cy) / (eh * 0.52), lo = y > cy ? (y - cy) / (eh - cy) : 0;
+    if(dx * dx + dy * dy > 1 && !(y > cy && Math.abs(dx) < 1 - lo * 0.62)) continue;
+    const gore = Math.floor((Math.asin(clamp(dx, -1, 1)) / Math.PI + 0.5) * 6) & 1;
+    let col = gore ? C[0] : C[1];
+    if(Math.abs(y - Math.round(eh * 0.62)) < Math.max(1, h / 16)) col = '#3A2E24';
+    if(dx > 0.35) col = dark(col, 0.25); else if(dx < -0.45) col = mixC(col, '#FFFFFF', 0.2);
+    g.fillStyle = col; g.fillRect(x, y, 1, 1);
+  }
+  const bw = Math.max(2, Math.round(w * 0.28)), bh = Math.max(1, Math.round(h * 0.12)), bx = Math.round(R - bw / 2);
+  g.fillStyle = '#5A4A38'; g.fillRect(bx, eh, 1, h - eh - bh); g.fillRect(bx + bw - 1, eh, 1, h - eh - bh);
+  g.fillStyle = '#8A6A44'; g.fillRect(bx, h - bh, bw, bh);
+  if(BALLOON_SPR.size >= BALLOON_MAX){ const k0 = BALLOON_SPR.keys().next().value; cvFree(BALLOON_SPR.get(k0)); BALLOON_SPR.delete(k0); }
+  BALLOON_SPR.set(key, cv);
+  return cv;
+}
 // a dragonfly baked: colour ci, wings up or swept (up), facing dir, ps a
 // pixel; kept (bounded, freed as dropped)
 const DFLY_SPR = new Map(), DFLY_MAX = 48;
@@ -19855,6 +19913,20 @@ const Scene = {
     this.layDragonflies();
     this.layReedFireflies();
     this.layLeapFish();
+    this.laySteam();
+  },
+  // wisps of steam off open water on a cold morning (this.psteam): a dozen
+  // spots on the water, each with a wisp rising off it on its own clock;
+  // never on ice. From a hash.
+  laySteam(){
+    if(!this.psteam || this.ice) return;
+    const h = this.hole, W = this.water, PP = this.pond, put = this.props || [], at = [];
+    const cand = [];
+    if(W && !W.canyon && !W.rail) for(let i = 0; i < 40; i++) cand.push([W.d + (hr(h * 61 + i, 1005) - 0.5) * W.rd * 1.8, W.x + (hr(h * 61 + i, 1006) - 0.5) * (W.lake || W.river ? 8 : W.rx * 1.8)]);
+    if(PP) for(let i = 0; i < 16; i++) cand.push([PP.d + (hr(h * 67 + i, 1005) - 0.5) * PP.rd * 1.6, PP.x + (hr(h * 67 + i, 1006) - 0.5) * PP.rx * 1.6]);
+    for(const [d, x] of cand) if(at.length < 18 && this.wetSpot(d, x) && !at.some(q => Math.abs(q[0] - d) < 0.7 && Math.abs(q[1] - x) < 0.9)) at.push([d, x]);
+    for(let i = 0; i < at.length; i++) put.push({ kind: 26, sp: 'steam', d: at[i][0], x: at[i][1], k: h * 17 + i, extra: 1 });
+    if(at.length){ put.sort((a, b) => b.d - a.d); this.props = put; }
   },
   // Fish leaping in the lakes and ponds (the user picked it from the menu):
   // on most holes with open water, one or two, each on a clock of its own:
@@ -21684,6 +21756,14 @@ const Scene = {
     // or winter (lookSeason), five to eleven
     this.cmist = !this.night && !this.rain && isCanyon(h) && (CMIST_FORCE !== null ? !!CMIST_FORCE
       : this.frost || ([1, 2].includes(lookSeason(look)) && hourNow() >= 5 && hourNow() < 11));
+    // steam off the water on the same cold mornings (laid in layShore, off
+    // ice); balloons on a calm one; ducklings in spring on the island
+    this.psteam = !this.night && !this.rain && (PSTEAM_FORCE !== null ? !!PSTEAM_FORCE
+      : this.frost || ([1, 2].includes(lookSeason(look)) && hourNow() >= 5 && hourNow() < 11));
+    this.balloons = !this.night && !this.rain && !S.dgnRun && (BALLOON_FORCE !== null ? !!BALLOON_FORCE
+      : Math.abs(this.wind) < 0.4 && hourNow() >= 6 && hourNow() < 11 && hr(h * 31 + 9, 1003) < BALLOON_P);
+    this.ducklings = !this.night && sigKind(h) === 'island' && (DUCKLING_FORCE !== null ? !!DUCKLING_FORCE
+      : lookSeason(look) === 3 && hr(h * 37 + 3, 1004) < DUCKLING_P);
     this.land = look.land;
     this.themeId = look.id + '|' + mode;
     this.theme = buildTheme(look, mode);
@@ -21842,7 +21922,7 @@ const Scene = {
     this.aurora = false;
     this.rain = false;
     this.rainbow = false; this.goldbow = false; this.dblbow = false; this.fog = false;   // (no rare weather in a wager)
-    this.harvest = false; this.cmist = false; this.storm = false;   // (nor the Harvest Moon over its cellar, mist or a storm)
+    this.harvest = false; this.cmist = false; this.storm = false; this.psteam = false; this.balloons = false; this.ducklings = false;   // (nor the Harvest Moon over its cellar, mist or a storm)
     const rnd = seeded(hash32(R.floor*7919 + dg.length*104729 + 13));
     this.seed = rnd() * 1000;
     this.roll = 0.42;                    // a cellar floor does not roll like links
@@ -22074,6 +22154,21 @@ const Scene = {
     // seen live, it goes in the Field Guide (once a crossing)
     const id = this.hole + ':' + P.n;
     if(this.hole === S.hole && this.planeSeen !== id && x > 0 && x < VW){ this.planeSeen = id; guideSee('plane'); }
+  },
+  // hot-air balloons low over the far hills (this.balloons): one to three,
+  // each its own size (its distance), drifting slowly with the wind and
+  // rising and sinking a little; the hills drawn after stand in front
+  drawBalloons(c){
+    if(!this.balloons || S.dgnRun) return;
+    const h = this.hole || 0, n = 1 + Math.floor(hr(h * 41 + 1, 1009) * 3), w = this.wind || 0.12;
+    for(let i = 0; i < n; i++){
+      const q = h * 43 + i, ht = Math.round(HORIZON * (0.1 + hr(q, 1010) * 0.1)), span = VW + 40;
+      const x = ((hr(q, 1011) * span + this.t * (Math.sign(w) || 1) * (0.6 + Math.abs(w) * 3) * (ht / 20)) % span + span) % span - 20;
+      const y = Math.round(HORIZON * (0.52 + hr(q, 1012) * 0.16) + Math.sin(this.t * 0.25 + i * 2) * 2) - ht;
+      const B = balloonSprite(Math.floor(hr(q, 1013) * BALLOON_COL.length), ht);
+      c.drawImage(B, Math.round(x - B.width / 2), y);
+      if(this.hole === S.hole && this.balloonSeen !== this.hole && x > 0 && x < VW){ this.balloonSeen = this.hole; guideSee('balloon'); }
+    }
   },
   // the storm's lightning now, if a bolt is down: its strike n, how long
   // since (e seconds), and where
@@ -25458,6 +25553,19 @@ Object.assign(Scene, {
       // every size it passes through, made in the frame, cost the frame)
       this.standBlit(c, spr, Math.round(pr.x) - (w >> 1), Math.round(pr.y) - h, w, h);
 
+    }else if(p.kind === 26 && p.sp === 'steam'){
+      // a wisp of steam rising off the water, swelling and fading as it
+      // climbs, leaning with the wind; one stamp, faded by its age
+      const L = 3.2 + hr(p.k, 1007) * 1.6, u = ((this.t / L + hr(p.k, 1008)) % 1);
+      const sz = clamp(Math.round(LAT * pr.s * 1.3), 4, 48), S2 = steamSprite(sz);
+      const rise = u * sz * 1.4, lean = Math.round((this.wind || 0) * u * sz * 0.8);
+      const a = Math.sin(Math.PI * u) * 0.8;
+      if(a < 0.04 || pr.x < -sz || pr.x > VW + sz) return;
+      const clip = this.clipAt(p.d), x0 = Math.round(pr.x - S2.width / 2 + lean), y0 = Math.round(pr.y - S2.height - rise);
+      const vis = Math.min(S2.height, Math.floor(clip) + 1 - y0);
+      if(vis <= 0) return;
+      c.globalAlpha = a; c.drawImage(S2, 0, 0, S2.width, vis, x0, y0, S2.width, vis); c.globalAlpha = 1;
+
     }else if(p.kind === 26 && p.sp === 'leap'){
       // a fish leaping: out, a short silver arc, and back in; a splash
       // where it leaves and a ring spreading where it lands
@@ -26483,6 +26591,13 @@ Object.assign(Scene, {
         c.globalAlpha = 1;
       }
       pxRows(c, tip ? TIP : SWIM, col, x0, y0, k, clip, !right);
+      // (in spring a line of ducklings paddling after the first hen, in a
+      // row behind her, each bobbing a little out of step)
+      if(this.ducklings && i === 1 && !tip){ const kq = Math.max(1, Math.round(k * 0.6));
+        for(let j = 0; j < 4; j++){
+          const xq = right ? x0 - (j + 1) * 6 * kq : x0 + 8 * k + j * 6 * kq, bob = Math.round(Math.sin(this.t * 3 + j * 1.3) * 0.5);
+          pxRows(c, DUCKLING, DUCKLING_COL, xq, Math.round(p.y) - 3 * kq + 1 + bob, kq, clip, !right);
+        } }
     }
   },
   // A hawk wheeling high over the canyon: a slow circle a little beyond the
@@ -27507,6 +27622,7 @@ Object.assign(Scene, {
       if(this.sky) c.drawImage(this.sky, 0, 0);
       this.drawMeteor(c);
       this.drawPlane(c);
+      this.drawBalloons(c);
       this.drawBolt(c);
       this.drawFlock();
       this.drawRidge();
@@ -27938,7 +28054,8 @@ for(const g of GUIDE) if(['owl', 'bat', 'badger', 'hedgehog', 'eyes'].includes(g
 // the rare weather (rainbowAt, fogAt, Scene.meteorNow)
 GUIDE.push({ id:'rainbow', n:'Rainbow', g:'c', w:'After the rain' }, { id:'fog', n:'Fog Bank', g:'c', w:'Rare, on a still day' }, { id:'meteor', n:'Shooting Star', g:'c', w:'Now and then at night' },
   { id:'goldbow', n:'Golden Rainbow', g:'c', w:'One rainbow in ten' }, { id:'dblbow', n:'Double Rainbow', g:'c', w:'One rainbow in twenty' },
-  { id:'storm', n:'Thunderstorm', g:'c', w:'Now and then in the rain' }, { id:'plane', n:'Airplane', g:'c', w:'High overhead, now and then' });
+  { id:'storm', n:'Thunderstorm', g:'c', w:'Now and then in the rain' }, { id:'plane', n:'Airplane', g:'c', w:'High overhead, now and then' },
+  { id:'balloon', n:'Hot-Air Balloon', g:'c', w:'Calm mornings' }, { id:'duckling', n:'Ducklings', g:'w', w:'Spring, on the island\u2019s lake' });
 GUIDE.push(...B.DGN.filter(d => WAGER_WILD[d.id]).map(d => ({ id: 'wg_' + d.id, n: WAGER_WILD[d.id][1], g: 'b', w: d.n })));
 // what the hole just laid out shows: called as each hole starts, live only
 function guideSpot(sc){
@@ -27952,6 +28069,7 @@ function guideSpot(sc){
   for(const p of P) if(p.kind === 15) see(p.gold ? goldId(p.an) : p.an);
   for(const p of P) if(p.kind === 14) see(p.sp === 'pk' || p.sp === 'bale' ? 'pumpkin' : p.sp);
   const sk = sigKind(sc.hole); if(sk){ see(sk); if(sk === 'pier') see('gull');
+    if(!sc.night && sk === 'island' && sc.ducklings) see('duckling');
     if(!sc.night){ if(sk === 'island') see('duck'); if(sk === 'canyon') see('hawk'); } if(sk === 'stones' && !sc.ice) see('fish'); }
   if(sc.harvest) see('harvest');
   if(P.some(p => p.kind === 26 && p.frog)) see('lilyfrog');
@@ -28256,6 +28374,8 @@ const RARE_PIC = {
     return makeSprite(rows, { o: '#E89A48', l: '#F4BC6E', m: '#C46A2A' }); },
   storm: () => makeSprite(['..cccccccc..', '.cCCCCCCCCc.', 'cCCCCCCCCCCc', '.cccWccccc..', '....WW......', '.....W......', '....WW......', '...WW.......', '....W.......'],
     { c:'#4A5468', C:'#6A7488', W:'#F4F6FF' }),
+  balloon: () => { const cv = balloonSprite(0, 16); return { cv, w: cv.width, h: cv.height }; },
+  duckling: () => makeSprite(['.......YY.....YY.', '.....yyYYo..yyYYo', '....yyyyy..yyyyy.'], DUCKLING_COL),
   plane: () => makeSprite(PLANE_PIC, { b:'#EEF2F6', d:'#9AA6B4', w:'#C4CCD6', k:'#5A6878' }),
   meteor: () => makeSprite(['.................W', '...............WH.', '.............HB...', '...........BB.....', '........bBB.......',
     '.....bbb..........', '..bbb.............', 'bb................'], { W:'#FFFFFF', H:'#E6ECFF', B:'#9FB4E8', b:'#6A7CC0' })
