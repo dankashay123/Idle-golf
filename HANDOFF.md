@@ -13,8 +13,13 @@ through:
 
 ## 1. Where things stand
 
-- Everything is committed and **no request is waiting**. The last ones
-  (6 October, later): snow on the gallery (fans, and umbrellas in the snow)
+- Everything is committed and **no request is waiting**. Last (from his
+  phone's screenshots): the ball lying ahead smaller; the cart path given
+  a footbridge over the stepping-stones river and the canyon, and kept
+  off the green's apron (it vanished under them); cloud shadows fixed to
+  the course (they moved with him); steam redrawn as a low soft drift (it
+  was blocks with a hard line); the storm sky smooth (it was striped).
+  Before that (6 October, later): snow on the gallery (fans, and umbrellas in the snow)
   deepening through a snowy round; long shadows at dawn and dusk; autumn
   leaves gathering at the fairway's edges and round the green; breath in
   the cold on frosty mornings; the stars coming out as dusk turns to night
@@ -38,7 +43,7 @@ through:
   new a switch. Earlier work: the sections under it.
 - What lives by the season asks `lookSeason`: a course's own, the Snowline
   winter and the Blossom spring all year, else the month.
-- `node test/run.js` has **164 checks**, about 35 minutes: run it in the
+- `node test/run.js` has **165 checks**, about 35 minutes: run it in the
   background, on a copy in the scratchpad, with the machine quiet. After
   weather, colours or anything dated, also run it with `HOUR_FORCE` 8 and
   15 and the month pinned (rules 20 and 70).

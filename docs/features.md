@@ -191,6 +191,19 @@ feature must do, and is usually enough on its own.
   hills, draws the stars high (in `rbKey`, so the clouds keep their places)
   and dims the clouds; the frame dims too. `STARS_FORCE` (switch: Stars
   coming out), `GLEAF_FORCE` (Leaves gathered).
+- **What he saw on the phone** (`pathsky`, 6 October): the ball lying
+  ahead drawn 1.15 times true (was 1.7: his head's size as he walked up);
+  cloud shadows at six places along the hole (`dc` from the hole, not the
+  camera: they travelled with him); steam a low wide drift faded at its
+  top, foot and ends (`steamSprite`: a column fullest at its foot read as
+  blocks with a hard line), lying low and drifting; the storm's sky one
+  smooth strip baked a height (`_stormSky`; four-row bands that wobbled
+  read as stripes); the cart path's footbridge where it crosses a
+  stepping-stones river or a canyon (`cartBridgeSpan`, `drawCartBridge`
+  after the ground: the path ran into the water and vanished, every such
+  hole), and `cartX` kept 0.75 clear of the green's apron (painted after
+  the path, it covered it). Leaf drifts flatter and wider. A path dipping
+  behind a rise and out again is terrain, not a fault.
 ### The session of 4 October, fourth
 
 - **The milestone bar** (`milestones`): each Range row's third line
