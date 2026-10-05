@@ -2354,6 +2354,16 @@ him (about 49px tall on a 320 phone, 71px on its side).
 - The readout says the course's element with a small "aff" after it
   (`hudWords` takes an optional small suffix and sign); a tee find skips
   any spot the page covers from the tee (`Scene.coveredAt`).
+- **Trees in a gale** (`galethaw`): `Scene.treeLean` (|wind| over 0.75: 1
+  or 2 downwind, swaying), stand-alone trees only (not the forest), two
+  `leanSprite` copies a tree set.
+- **Cloud shadows**: `Scene.cshadow` (clear, not fog or Golden Hour,
+  `CSHADOW_P` 0.6, `CSHADOW_FORCE`), `drawCloudShadows` after the ground,
+  three ovals drifting with the wind, rows painted once, below the horizon.
+- **The thaw**: `thawIce(look)` (spring, by the hour: 0.7 at 5 to none at
+  11; `THAW_FORCE` 0.5), `Scene.thaw`, floes from `thawGrid` (value noise
+  by the hole) on the water rows in `ripples` (`_ripD` holds each row's
+  distance).
 - **Rain** is three sheets (`rainSheet`, bounded) slid with the clock.
 - **lookSeason(look)**: the season a course shows (its own; the Snowline
   winter, the Blossom spring; else the month), for the Harvest Moon, the

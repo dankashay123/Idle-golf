@@ -71,12 +71,14 @@ through:
   the switches); pins either side of the green (they all stood right);
   wind you can see (reeds, tufts, the flag); leaves on the water in
   autumn; the affinity on the readout as "STORM aff" (small); the
-  thunder quieter; a tee find never under the field's buttons.
+  thunder quieter; a tee find never under the field's buttons. Then:
+  trees swaying in a gale; cloud shadows on clear days; the ponds' last
+  ice thawing on spring mornings (he turned down dew).
   Fixed on the way: a Vault floor played again after a gust was never
   called; the Spotted tag sat over a wager's name. Earlier the same day:
   cherry trees, the kingfisher, course collections, the monthly hunt, and
   the phone's picture memory (the black sky).
-- `node test/run.js` has **161 checks**, about 35 minutes: run it in the
+- `node test/run.js` has **162 checks**, about 35 minutes: run it in the
   background, on a copy in the scratchpad, with the machine quiet. After
   weather, colours or anything dated, also run it with `HOUR_FORCE` 8 and
   15 and the month pinned (rules 20 and 70).
@@ -305,10 +307,11 @@ Five at least (CLAUDE.md); don't raise the dog until he does; no new
 animals for now (he asked to hold off).
 
 1. **Try the Scenery Switches on the phone** and say what to tune.
-2. **Trees swaying in a gale**, as the reeds and grass now do.
-3. **Dew glinting on the fairway** on summer mornings.
-4. **Ice on the ponds cracking and thawing** across a spring morning.
-5. **Cloud shadows** drifting across the fairway on sunny days.
-6. **A bug pass** once a few more go in.
+2. **Heat shimmer** over the fairway on hot summer afternoons.
+3. **Snow settling** on the trees and roofs as a winter round goes on.
+4. **Sunset glow** on the water at dusk (with Dawn and Dusk on).
+5. **Footprints in frost or snow** behind him as he walks.
+6. **A speed pass on the phone**: the frame-time readout in the developer
+   menu with the new switches on.
 
-Recommend 1.
+Recommend 1. (Turned down: dew; no new animals for now.)
