@@ -49,7 +49,8 @@ module.exports = {
           Scene.draw(0, D);
           // the flag: its red about the top of the pole at the pin
           const p = Scene.proj(pd, px), h = Math.max(4, Math.round(B_FLAG * US * p.s)), c = Scene.b;
-          const a = c.getImageData(Math.round(p.x) - 2, Math.round(p.y - h) - 1, Math.round(h * 0.8) + 4, Math.round(h * 0.5) + 2).data;
+          // (either side of the pole: it flies the way the wind blows)
+          const a = c.getImageData(Math.round(p.x - h * 0.8) - 2, Math.round(p.y - h) - 1, Math.round(h * 1.6) + 4, Math.round(h * 0.5) + 2).data;
           let red = 0; for (let k = 0; k < a.length; k += 4) if (a[k] > 180 && a[k + 1] < 110 && a[k + 2] < 110) red++;
           if (red >= 3) o.flags++; else f('hole ' + (i + 1) + ': no flag at its pin (' + red + ' red pixels)');
           // the putt ends in the cup; an ace's ball goes to it

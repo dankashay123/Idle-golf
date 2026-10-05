@@ -109,7 +109,7 @@ module.exports = {
           const p = Scene.proj(Scene.camD, 0), gh = Math.round(B_GOLFER * US * p.s), gw = Math.round(gh * SPRITE.gAddr.w / SPRITE.gAddr.h);
           const body = { x0: p.x - gw * 0.42, x1: p.x + gw * 0.58, y0: p.y - gh, y1: p.y };
           const cup = Scene.proj(Scene.pinD(), Scene.pinX());
-          o.putDraw = { seen: 0, looked: 0, onHim: 0, cupHid: cup.x >= body.x0 - 1 && cup.x <= body.x1 + 1 && cup.y >= body.y0 - 1 && cup.y <= body.y1, size: VW + 'x' + VH };
+          o.putDraw = { left: Scene.pinX() < 0, seen: 0, looked: 0, onHim: 0, cupHid: cup.x >= body.x0 - 1 && cup.x <= body.x1 + 1 && cup.y >= body.y0 - 1 && cup.y <= body.y1, size: VW + 'x' + VH };
           for (let T = PUTT_HIT + 0.05; T < PUTT_HIT + PUTT_ROLL - 0.02; T += 0.05) {
             Scene.putt = { t0: Scene.t - T, d0: Scene.camD, hit: 1 };
             const q = Scene.puttBall(T), bp = Scene.proj(q.d, q.lat);
@@ -247,7 +247,10 @@ module.exports = {
       if (slow.length) f('with a ' + k + ' bag the putt dropped ' + slow.map(h => h.puttDur === null ? 'never' : h.puttDur.toFixed(2) + 's').join(', ') + ' after he addressed it, not ' + r[k].roll.toFixed(2) + 's');
     }
     for (const PD of [r.putDraw, r.putSide])
-      if (PD.seen < PD.looked - 1 || PD.onHim || PD.cupHid) f('the putt at ' + PD.size + ': the ball seen in ' + PD.seen + ' of ' + PD.looked + ' frames, on him in ' + PD.onHim + (PD.cupHid ? ', and the cup behind him' : ''));
+      // (to a pin left of his line the ball passes behind him for a moment
+      // on a phone on its side, where the cup is never above his head: as a
+      // right-handed golfer is seen from behind; never more than that)
+      if (PD.seen < PD.looked - (PD.left ? 2 : 1) || PD.onHim > (PD.left ? 2 : 0) || PD.cupHid) f('the putt at ' + PD.size + ': the ball seen in ' + PD.seen + ' of ' + PD.looked + ' frames, on him in ' + PD.onHim + (PD.cupHid ? ', and the cup behind him' : ''));
     const A = r.ace.H[0];
     if (!A || A.want > -4) f('the hole in one was not played as one: ' + JSON.stringify(A && { want: A.want, carded: A.carded }));
     else if (A.putt || !A.cup || A.said.length !== 1 || A.cups.length !== 1 || A.carded !== A.want)

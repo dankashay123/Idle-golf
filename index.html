@@ -4463,6 +4463,11 @@ let PSTEAM_FORCE = null;
 // hole hold a pale mist, level on top, thickest at the bottom. LMIST_FORCE
 // pins it.
 let LMIST_FORCE = null;
+// Autumn leaves floating on the water (the user picked them): on a course in
+// its autumn, a scatter lying flat on the ponds, lakes and rivers, turning
+// and drifting a little; none on ice. WLEAF_FORCE pins them.
+let WLEAF_FORCE = null;
+const WLEAF_COL = [['#C8602A', '#9A4A26', '#7A3418'], ['#D8A02E', '#A8782A', '#7A5420'], ['#B8402A', '#8A3020', '#5A2014']];
 // the airliner side on, its nose to the right: b body, d belly, w wing, k tail
 const PLANE_PIC = ['.k.........', '.kkbbbbbbb.', '..dddwdddbb', '.....ww....'];
 const PLANE_SPR = {};
@@ -7760,7 +7765,7 @@ const Sfx = {
     this.tone(720, t, 0.06, 'sine', V, 260);
     this.hiss(t + 0.01, 0.1, 1800, 0.9, V * 0.6, 900);
   },
-  QUACK_VOL: 0.012, HAWK_VOL: 0.012, PLOP_VOL: 0.03, THUNDER_VOL: 0.09,
+  QUACK_VOL: 0.012, HAWK_VOL: 0.012, PLOP_VOL: 0.03, THUNDER_VOL: 0.045,
   // The railway crossing: the train's whistle as it sets off (two toots, a
   // chord of two), its chuff while it runs, and the crossing's bell while
   // the lamps flash.
@@ -10667,6 +10672,28 @@ function makeSprite(rows, map){
   }
   return { cv, w, h, rows, map };
 }
+// a sprite turned to face the other way (kept on it)
+function flipSprite(spr){
+  if(spr._flip) return spr._flip;
+  const cv = document.createElement('canvas'); cv.width = spr.w; cv.height = spr.h; const g = cv.getContext('2d');
+  g.translate(spr.w, 0); g.scale(-1, 1); g.drawImage(spr.cv, 0, 0);
+  return spr._flip = { cv, w: spr.w, h: spr.h };
+}
+// A sprite leaning b pixels at its top (the wind you can see, the user
+// asked: reeds and tall grass leaning with it, harder in a gale): each row
+// slid over a little more toward the top, its foot where it was. Kept on
+// the sprite (a few at most), freed with it.
+function leanSprite(spr, b){
+  if(!b || !spr.rows) return spr;
+  const L = spr._lean || (spr._lean = new Map());
+  let o = L.get(b); if(o) return o;
+  const pad = Math.abs(b), H = spr.h, rows = spr.rows.map((row, r) => {
+    const sh = Math.round(pad * (1 - r / Math.max(1, H - 1))), off = b > 0 ? sh : pad - sh;
+    return '.'.repeat(off) + row + '.'.repeat(pad - off); });
+  o = makeSprite(rows, spr.map); o.pad = pad;
+  if(L.size >= 8){ const k0 = L.keys().next().value, q = L.get(k0); cvFree(q.cv); if(q._sh) for(const z of q._sh.values()) cvFree(z.cv); L.delete(k0); }
+  L.set(b, o); return o;
+}
 // A sprite made smaller, w by h, by what covers each of its pixels rather
 // than by one pixel picked out of it: picked, a far tree a pixel taller as
 // he walked was a different set of its pixels, and a wood of them shook
@@ -11169,6 +11196,7 @@ function courseTrees(cs, mode){
     for(const sp of Object.values(TREE_CACHE[keys[i]])){
       cvFree(sp.cv);
       if(sp._sh) for(const o of sp._sh.values()){ cvFree(o.cv); if(o._fog) for(const f of o._fog.values()) cvFree(f.cv); }
+      if(sp._lean) for(const o of sp._lean.values()){ cvFree(o.cv); if(o._sh) for(const z of o._sh.values()) cvFree(z.cv); }
       if(sp._fog) for(const f of sp._fog.values()) cvFree(f.cv);
     }
     delete TREE_CACHE[keys[i]];
@@ -13001,7 +13029,10 @@ const GREEN_GAP = 16;
 // (across, all to the right of his line: a putt to one left of it, or
 // just right of it, rolled behind his legs, where he hid it)
 const PINS = [[-3.2, 0.85], [0, 1.2], [3.2, 1.5], [0, 0.85], [3.2, 1.2], [-3.2, 1.5], [3.2, 0.85], [-3.2, 1.2], [0, 1.5]];
-const pinFor = h => PINS[(holeInRound(h) - 1 + dayIndex(h) * 4 + tournamentOf(h) * 2) % PINS.length];
+// (and left or right of his line by the hole's own hash: all nine stood on
+// the right, and the user saw every flag on the right of its green)
+const pinFor = h => { const P = PINS[(holeInRound(h) - 1 + dayIndex(h) * 4 + tournamentOf(h) * 2) % PINS.length];
+  return hr(h * 61 + 7, 1021) < 0.5 ? [P[0], -P[1]] : P; };
 // How far behind the golfer the camera sits, in world units. Small numbers put
 // you over his shoulder with the hole falling away hard; large numbers flatten
 // it into a diagram. GROUND is derived from it below, so his feet stay put.
@@ -19945,12 +19976,24 @@ const Scene = {
     this.layReedFireflies();
     this.layLeapFish();
     this.laySteam();
+    this.layWaterLeaves();
+  },
+  // leaves lying on the water in autumn: a dozen or so on open water, from a
+  // hash, each with its own turn and colour
+  layWaterLeaves(){
+    if(this.ice || sigKind(this.hole) === 'pier' || !(WLEAF_FORCE !== null ? !!WLEAF_FORCE : lookSeason(this.look) === 1)) return;
+    const h = this.hole, W = this.water, PP = this.pond, put = this.props || [], cand = [];
+    if(W && !W.canyon && !W.rail) for(let i = 0; i < 60; i++) cand.push([W.d + (hr(h * 71 + i, 1031) - 0.5) * W.rd * 1.8, W.x + (hr(h * 71 + i, 1032) - 0.5) * (W.lake || W.river ? 9 : W.rx * 1.8)]);
+    if(PP) for(let i = 0; i < 24; i++) cand.push([PP.d + (hr(h * 73 + i, 1031) - 0.5) * PP.rd * 1.6, PP.x + (hr(h * 73 + i, 1032) - 0.5) * PP.rx * 1.6]);
+    let n = 0;
+    for(const [d, x] of cand) if(n < 16 && this.wetSpot(d, x) && Math.hypot(d - LEN, x) > 4.5){ put.push({ kind: 26, sp: 'wleaf', d, x, k: h * 19 + n, extra: 1 }); n++; }
+    if(n){ put.sort((a, b) => b.d - a.d); this.props = put; }
   },
   // wisps of steam off open water on a cold morning (this.psteam): a dozen
   // spots on the water, each with a wisp rising off it on its own clock;
   // never on ice. From a hash.
   laySteam(){
-    if(!this.psteam || this.ice) return;
+    if(!this.psteam || this.ice || sigKind(this.hole) === 'pier') return;
     const h = this.hole, W = this.water, PP = this.pond, put = this.props || [], at = [];
     const cand = [];
     if(W && !W.canyon && !W.rail) for(let i = 0; i < 40; i++) cand.push([W.d + (hr(h * 61 + i, 1005) - 0.5) * W.rd * 1.8, W.x + (hr(h * 61 + i, 1006) - 0.5) * (W.lake || W.river ? 8 : W.rx * 1.8)]);
@@ -21719,6 +21762,15 @@ const Scene = {
     return lt + (this.wind || 0) * 1.3 * Math.sin(Math.PI * u) * clamp(b.dist / 18, 0.4, 1.4);
   },
   windMph(){ return Math.round(Math.abs(this.wind || 0) * 18); },
+  // how far a reed or a tuft leans at its top, in its own pixels, the way
+  // the wind blows: none in a calm, more as it rises, and in a gale each
+  // swaying on in gusts of its own
+  leanB(p){
+    const w = this.wind || 0, a = Math.abs(w);
+    if(a < 0.2 || S.dgnRun) return 0;
+    const sway = a > 0.6 ? Math.sin(this.t * 2.6 + p.d * 1.3 + p.x * 0.7) * (a - 0.4) * 1.6 : 0;
+    return clamp(Math.round(w * 2.2 + Math.sign(w) * sway), -3, 3);
+  },
   // how high a ball is a fraction u of the way: a chip stays low, a drive
   // climbs to the old full height
   ballLift(b, u){ return Math.sin(u * Math.PI) * clamp((b.lift0 || b.dist) * 0.17, 0.25, 2.6); },
@@ -22564,7 +22616,10 @@ const Scene = {
     const sm = x => x <= 0 ? 0 : x >= 1 ? 1 : x * x * (3 - 2 * x);
     // (to the cup where it is: on a wager's green the pin stands on his line)
     const P = this.putt, end = this.pinD() + (P.miss ? 1.4 : 0), to = this.pinX() + (P.miss ? P.miss : 0);
-      const k = sm(q);
+      // (to a pin on the left of his line it runs straight on first and
+      // breaks across only once it is up the green past his head: across
+      // at once it rolled over him)
+      const k = to < L0 - 0.3 ? sm(clamp((q - 0.72) / 0.28, 0, 1)) : sm(q);
     return { u, d: P.d0 + (end - P.d0) * q,
              lat: L0 + (to - L0) * k + 0.12 * Math.sin(Math.PI * q) };
   },
@@ -25652,8 +25707,21 @@ Object.assign(Scene, {
       const w = Math.round(h * spr.w / spr.h);
       if(pr.x + w < -4 || pr.x - w > VW + 4) return;
       // (stamped scaled, not shrunk a pixel at a time: a shrunk copy for
-      // every size it passes through, made in the frame, cost the frame)
-      this.standBlit(c, spr, Math.round(pr.x) - (w >> 1), Math.round(pr.y) - h, w, h);
+      // every size it passes through, made in the frame, cost the frame;
+      // leaning with the wind, its foot where it stood)
+      const L = leanSprite(spr, this.leanB(p)), lw = Math.round(w * L.w / spr.w), lx = L.pad && this.wind < 0 ? Math.round(w * L.pad / spr.w) : 0;
+      this.standBlit(c, L, Math.round(pr.x) - (w >> 1) - lx, Math.round(pr.y) - h, lw, h);
+
+    }else if(p.kind === 26 && p.sp === 'wleaf'){
+      // a fallen leaf lying flat on the water, turning slowly and drifting a
+      // little about its place (kept to the water)
+      const dx = Math.sin(this.t * 0.11 + p.k) * 0.25 + (this.wind || 0) * 0.15 * Math.sin(this.t * 0.05 + p.k * 2), dd = Math.cos(this.t * 0.09 + p.k * 1.7) * 0.12;
+      if(!this.wetSpot(p.d + dd, p.x + dx)) return;
+      const q = this.proj(p.d + dd, p.x + dx), len = clamp(Math.round(LAT * q.s * 0.22), 2, 7);
+      if(len < 2 || q.x < -8 || q.x > VW + 8) return;
+      const ang = Math.floor(((this.t * 0.6 + p.k * 5.3) % 16 + 16) % 16), F = fallSprite('l', len, ang, 3, WLEAF_COL[p.k % WLEAF_COL.length]);
+      const N = F.cv.width, hN = Math.max(1, Math.round(N * 0.55)), clip = this.clipAt(p.d + dd), y0 = Math.round(q.y - hN / 2), vis = Math.min(hN, Math.floor(clip) + 1 - y0);
+      if(vis > 0) c.drawImage(F.cv, 0, 0, N, Math.round(N * vis / hN), Math.round(q.x - N / 2), y0, N, vis);
 
     }else if(p.kind === 26 && p.sp === 'steam'){
       // a wisp of steam rising off the water, swelling and fading as it
@@ -25770,7 +25838,9 @@ Object.assign(Scene, {
       // (anchored and shrunk as the trees are: see shrinkSprite)
       const X = Math.round(pr.x), Y = Math.round(pr.y);
       if(p.sp === 'bush' && h > 4){ c.fillStyle = 'rgba(8,16,10,.26)'; this.standShadow(c, X - Math.round(w * 0.4), Y - 1, Math.round(w * 0.8), 1); }
-      this.standBlit(c, shrinkSprite(spr, w, h) || spr, X - (w >> 1), Y - h, w, h);
+      if(p.sp === 'tuft'){ const L = leanSprite(spr, this.leanB(p)), lw = Math.round(w * L.w / spr.w), lx = L.pad && this.wind < 0 ? Math.round(w * L.pad / spr.w) : 0;
+        this.standBlit(c, shrinkSprite(L, lw, h) || L, X - (w >> 1) - lx, Y - h, lw, h); }
+      else this.standBlit(c, shrinkSprite(spr, w, h) || spr, X - (w >> 1), Y - h, w, h);
 
     }else if(p.kind === 6 && this.leafy){
       // on an autumn course a fallen leaf lying here and there on the grass
@@ -27451,7 +27521,9 @@ Object.assign(Scene, {
     if(PINS_LIT) L.push(['Switches On', '#E07A5A']);
     if(S.courseEl){
       const e = B.ELEM.find(x => x.id === S.courseEl);
-      L.push([e.n + (D.reson > 1 ? '+' : D.reson < 1 ? '-' : ''), PX[S.courseEl] || PX.bone]);
+      // (said as the course's affinity: "STORM-" read as the weather once
+      // there were thunderstorms)
+      L.push([e.n + ' Affinity' + (D.reson > 1 ? ' +' : D.reson < 1 ? ' -' : ''), PX[S.courseEl] || PX.bone]);
     }
     // (and the signature hole of the week says what it pays)
     const sk = sigKind(S.hole);
@@ -27967,13 +28039,16 @@ Object.assign(Scene, {
     c.fillRect(p.x - cr, p.y - 1, cr*2, Math.max(1, Math.round(cr*0.8)));
     // (Golden Hour's flag is gold, on a gold pole: the user asked)
     const gold = !!this.mtn && !S.dgnRun;
-    const spr = (Math.floor(this.t*3) & 1) ? (gold ? SPRITE.flagGA : SPRITE.flagA) : (gold ? SPRITE.flagGB : SPRITE.flagB);
+    // (flapping the faster the harder the wind, and flying the way it blows)
+    const fr = 2 + Math.min(10, this.windMph() * 0.35), left = (this.wind || 0) < -0.15 && !S.dgnRun;
+    const spr0 = (Math.floor(this.t*fr) & 1) ? (gold ? SPRITE.flagGA : SPRITE.flagA) : (gold ? SPRITE.flagGB : SPRITE.flagB), spr = left ? flipSprite(spr0) : spr0;
     const fh = Math.max(2, Math.round(h*0.30)), fw = Math.max(2, Math.round(fh * spr.w / spr.h));
     const lit = this.night && !S.dgnRun;
     // at night the flag glows: a halo of its own red about it, dithered in
     // solid pixels and breathing a little, behind the pin; and a light on top
+    const fx = left ? p.x - fw : p.x + pw;
     if(lit){
-      const X = p.x + pw + fw / 2, Y = p.y - h + fh / 2, R = Math.max(3, Math.round(fh * (1.15 + 0.1 * Math.sin(this.t * 2.2))));
+      const X = fx + fw / 2, Y = p.y - h + fh / 2, R = Math.max(3, Math.round(fh * (1.15 + 0.1 * Math.sin(this.t * 2.2))));
       for(let yy = -R; yy <= R; yy++) for(let xx = -R; xx <= R; xx++){
         const d2 = (xx * xx + yy * yy) / (R * R), gx = Math.round(X + xx), gy = Math.round(Y + yy);
         if(d2 > 1 || ((gx + gy) & 1) || (d2 > 0.6 && (gy % 2 === 0 || (gx + gy) % 4 === 1))) continue;
@@ -27982,7 +28057,7 @@ Object.assign(Scene, {
     }
     c.fillStyle = gold ? '#E6B838' : PX.bone;
     c.fillRect(p.x, p.y - h, pw, h);
-    blit(c, spr, p.x + pw, p.y - h, fw, fh);
+    blit(c, spr, fx, p.y - h, fw, fh);
     if(lit){ c.fillStyle = '#FFD36A'; c.fillRect(p.x, p.y - h - pw, pw, pw); }
     // (its finial catching the light, now and then a glint)
     if(gold){ c.fillStyle = '#FFF4C0'; c.fillRect(p.x, p.y - h - pw, pw, pw);
@@ -30714,6 +30789,7 @@ function albCatch(){
 let ALB_PIN = null;
 const SCENE_PINS = [
   { id:'steam', n:'Steam off the water', w:'water', get: () => PSTEAM_FORCE === true || PSTEAM_FORCE === 1, set: v => { PSTEAM_FORCE = v ? true : null; } },
+  { id:'wleaf', n:'Leaves on the water', w:'water', get: () => WLEAF_FORCE === true, set: v => { WLEAF_FORCE = v ? true : null; } },
   { id:'lmist', n:'Mist in the dips', w:'ordinary holes', get: () => LMIST_FORCE === true || LMIST_FORCE === 1, set: v => { LMIST_FORCE = v ? true : null; } },
   { id:'mist', n:'Canyon mist', w:'canyon', get: () => CMIST_FORCE === true || CMIST_FORCE === 1, set: v => { CMIST_FORCE = v ? true : null; } },
   { id:'balloon', n:'Hot-air balloons', w:'by day, dry', get: () => BALLOON_FORCE === true || BALLOON_FORCE === 1, set: v => { BALLOON_FORCE = v ? true : null; } },
