@@ -77,19 +77,24 @@ module.exports = {
         }
         Scene.pixGround = true;
 
-        // a frame on the course, counted
-        DEV.course(6); hideSheet();
-        Scene.night = false; Scene.rain = false; Scene.theme = buildTheme(Scene.course, 'day');
-        const P = CanvasRenderingContext2D.prototype, orig = {};
-        let calls = 0;
-        for (const k of Object.getOwnPropertyNames(P)) {
-          const d = Object.getOwnPropertyDescriptor(P, k);
-          if (typeof d.value !== 'function') continue;
-          orig[k] = d.value; P[k] = function () { calls++; return orig[k].apply(this, arguments); };
+        // a frame on the course, counted: on a morning (its frost, mist and
+        // steam: by the clock the check came out over at five past five) and
+        // an afternoon, the dearer kept
+        o.calls = 0;
+        for (const hrs of [8, 14]) {
+          HOUR_FORCE = hrs; DEV.course(6); hideSheet();
+          Scene.night = false; Scene.rain = false; Scene.theme = buildTheme(Scene.course, 'day');
+          const P = CanvasRenderingContext2D.prototype, orig = {};
+          let calls = 0;
+          for (const k of Object.getOwnPropertyNames(P)) {
+            const d = Object.getOwnPropertyDescriptor(P, k);
+            if (typeof d.value !== 'function') continue;
+            orig[k] = d.value; P[k] = function () { calls++; return orig[k].apply(this, arguments); };
+          }
+          try { Scene.camD = 12; Scene.draw(1 / 60, derive()); calls = 0; Scene.camD = 12.5; Scene.draw(1 / 60, derive()); }
+          finally { for (const k in orig) P[k] = orig[k]; HOUR_FORCE = null; }
+          o.calls = Math.max(o.calls, calls);
         }
-        try { Scene.camD = 12; Scene.draw(1 / 60, derive()); calls = 0; Scene.camD = 12.5; Scene.draw(1 / 60, derive()); }
-        finally { for (const k in orig) P[k] = orig[k]; }
-        o.calls = calls;
 
         // words on the field are baked whole and laid down in one; the same
         // picture as setting them a letter at a time, shadow and all

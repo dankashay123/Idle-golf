@@ -30,11 +30,18 @@ module.exports = {
           if (first(L.rows[L.h - 1]) !== first(T.rows[T.h - 1])) f('a swaying tree trunk moved'); const top = T.rows.findIndex(row => first(row) >= 0); if (!(first(L.rows[top]) - first(T.rows[top]) >= 1)) f('a swaying tree crown did not move'); }
         { Scene.wind = 1.2; for (let t = 0; t < 20; t += 0.25) { Scene.t = t; Scene.camD = 10; Scene.draw(0, D); } const n = (Scene.treeSpr.oak._lean || new Map()).size + (Scene.treeSpr.pine._lean || new Map()).size;
           o.copies = n; if (n > 4) f(n + ' leaning copies of the trees kept'); }
+        // (and freed whole: a set dropped frees its leaning copies and their
+        // hazed and shrunk ones; the hazed ones were left held)
+        { const set = Scene.treeSpr, all = []; const walk = sp => { if (!sp) return; all.push(sp.cv); for (const k of ['_sh', '_fog', '_lean']) if (sp[k]) for (const o of sp[k].values()) walk(o); if (sp._flip) walk(sp._flip); };
+          for (const sp of Object.values(set)) walk(sp); const lean = all.length; for (const sp of Object.values(set)) spriteFree(sp);
+          const held = all.filter(cv => cv && cv.width > 0).length; o.freed = lean; if (held) f(held + ' of ' + lean + ' canvases held after the tree set was freed');
+          Scene.newHole(S.hole + 1, S.tier); Scene.newHole(S.hole, S.tier); }
         // ---- cloud shadows ----
         let clear = 0, on = 0;
         for (let h = 1; h <= 400; h++) for (const ch of ['Fair', 'Crosswind', 'Night Round']) { S.chaos = { n: ch }; Scene.newHole(h, S.tier);
           if (Scene.cshadow && (Scene.night || Scene.rain || Scene.fog)) { f('cloud shadows at night, in rain or fog'); break; }
           if (ch === 'Fair' && !Scene.fog && !Scene.golden) { clear++; if (Scene.cshadow) on++; } }
+        { CSHADOW_FORCE = null; const sl = B.COURSE.findIndex(c => c.id === 'snowline'); if (sl >= 0) { DEV.course(sl); hideSheet(); let n = 0; for (let h = S.hole; h < S.hole + 20; h++) { S.chaos = { n: 'Fair' }; Scene.newHole(h, S.tier); if (Scene.cshadow && Scene.snow) n++; } if (n) f(n + ' holes with cloud shadows in the snow'); DEV.course(0); hideSheet(); } }
         o.shadows = on + ' of ' + clear; if (on / clear < 0.5 || on / clear > 0.7) f('cloud shadows on ' + o.shadows + ' clear holes');
         { CSHADOW_FORCE = true; S.chaos = { n: 'Fair' }; Scene.newHole(S.hole, S.tier); Scene.announce = null; let best = 0, sky = 0, moved = 0;
           for (const t of [5, 15, 25, 35]) { const a = shot(0, t); Scene.cshadow = false; const b = shot(0, t); Scene.cshadow = true;
@@ -44,7 +51,9 @@ module.exports = {
         // ---- the thaw ----
         const ice = hrs => { HOUR_FORCE = hrs; Scene.newHole(S.hole, S.tier); return Scene.thaw; };
         for (const sn of [0, 1, 2]) { SEASON_FORCE = sn; if (ice(6) > 0) f('a thaw in season ' + sn); }
-        SEASON_FORCE = 3; const i6 = ice(6), i8 = ice(8), i11 = ice(11), i15 = ice(15);
+        SEASON_FORCE = 3; if (ice(3) > 0) f('ice floes at 3 in the morning'); if (ice(0) > 0) f('ice floes at midnight');
+        { HOUR_FORCE = 7; DEV.pier(); hideSheet(); if (Scene.thaw > 0) f('ice floes on the sea round the stack'); PIER_FORCE = 0; Scene.newHole(S.hole, S.tier); }
+        const i6 = ice(6), i8 = ice(8), i11 = ice(11), i15 = ice(15);
         o.thaw = [i6, i8, i11, i15].map(v => v.toFixed(2)).join('/'); if (!(i6 > i8 && i8 > 0 && i11 === 0 && i15 === 0)) f('the thaw by the hour ' + o.thaw);
         { HOUR_FORCE = 7; DEV.stones(); hideSheet(); Scene.announce = null; const cam = Scene.isle.bank - 4, a = shot(cam, 3), wat = Scene.waterAt(Scene.b, Scene.theme);
           const keep = Scene.thaw; Scene.thaw = 0; const b = shot(cam, 3); Scene.thaw = keep;

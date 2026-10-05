@@ -4477,7 +4477,7 @@ let CSHADOW_FORCE = null;
 // morning goes on, gone by eleven. THAW_FORCE pins it half thawed.
 let THAW_FORCE = null;
 // how much of the water is ice now: none outside a spring morning
-const thawIce = look => THAW_FORCE ? 0.5 : lookSeason(look) !== 3 ? 0 : clamp((11 - hourNow() - (HOUR_FORCE !== null ? 0 : new Date().getMinutes() / 60)) / 6, 0, 1) * 0.7;
+const thawIce = look => THAW_FORCE ? 0.5 : lookSeason(look) !== 3 || hourNow() < 5 ? 0 : clamp((11 - hourNow() - (HOUR_FORCE !== null ? 0 : new Date().getMinutes() / 60)) / 6, 0, 1) * 0.7;
 const CSHADOW_P = 0.6;
 const WLEAF_COL = [['#C8602A', '#9A4A26', '#7A3418'], ['#D8A02E', '#A8782A', '#7A5420'], ['#B8402A', '#8A3020', '#5A2014']];
 // the airliner side on, its nose to the right: b body, d belly, w wing, k tail
@@ -10684,6 +10684,15 @@ function makeSprite(rows, map){
   }
   return { cv, w, h, rows, map };
 }
+// a sprite freed with everything kept on it: its shrunk sizes, their and
+// its hazed copies, its leaning and turned copies (dropped unfreed, the
+// leaning copies' hazed ones held the phone's memory for pictures)
+function spriteFree(sp){
+  if(!sp) return;
+  cvFree(sp.cv);
+  for(const k of ['_sh', '_fog', '_lean']) if(sp[k]) for(const o of sp[k].values()) spriteFree(o);
+  if(sp._flip) spriteFree(sp._flip);
+}
 // a sprite turned to face the other way (kept on it)
 function flipSprite(spr){
   if(spr._flip) return spr._flip;
@@ -10703,7 +10712,7 @@ function leanSprite(spr, b){
     const sh = Math.round(pad * (1 - r / Math.max(1, H - 1))), off = b > 0 ? sh : pad - sh;
     return '.'.repeat(off) + row + '.'.repeat(pad - off); });
   o = makeSprite(rows, spr.map); o.pad = pad;
-  if(L.size >= 8){ const k0 = L.keys().next().value, q = L.get(k0); cvFree(q.cv); if(q._sh) for(const z of q._sh.values()) cvFree(z.cv); L.delete(k0); }
+  if(L.size >= 8){ const k0 = L.keys().next().value; spriteFree(L.get(k0)); L.delete(k0); }
   L.set(b, o); return o;
 }
 // A sprite made smaller, w by h, by what covers each of its pixels rather
@@ -11205,12 +11214,7 @@ function courseTrees(cs, mode){
   // phone's memory for pictures over a long session)
   const keys = Object.keys(TREE_CACHE);
   for(let i = 0; i < keys.length - 7; i++){
-    for(const sp of Object.values(TREE_CACHE[keys[i]])){
-      cvFree(sp.cv);
-      if(sp._sh) for(const o of sp._sh.values()){ cvFree(o.cv); if(o._fog) for(const f of o._fog.values()) cvFree(f.cv); }
-      if(sp._lean) for(const o of sp._lean.values()){ cvFree(o.cv); if(o._sh) for(const z of o._sh.values()) cvFree(z.cv); }
-      if(sp._fog) for(const f of sp._fog.values()) cvFree(f.cv);
-    }
+    for(const sp of Object.values(TREE_CACHE[keys[i]])) spriteFree(sp);
     delete TREE_CACHE[keys[i]];
   }
   const tint = mode === 'rain' ? ['#54626A', 0.40] : mode === 'frost' ? ['#DCE8EE', 0.16] : mode === 'gold' ? ['#E8A030', 0.15] : null;
@@ -13194,15 +13198,20 @@ function rainSheet(z, N, lean, W, H){
 // a wisp of steam sz across: a soft pale column, fullest low, fraying up;
 // baked once a size (bounded, freed as dropped)
 const STEAM_SPR = new Map(), STEAM_MAX = 40;
-function steamSprite(sz){
+// (in a few sizes, baked in one put: a pixel at a time, each new size as
+// he walked cost a frame two thousand canvas calls)
+const STEAM_SIZES = [4, 6, 8, 11, 15, 20, 27, 36, 48];
+function steamSprite(sz0){
+  const sz = STEAM_SIZES.find(v => v >= sz0) || 48;
   let cv = STEAM_SPR.get(sz); if(cv) return cv;
   const w = Math.max(4, Math.round(sz * 1.1)), h = Math.max(4, sz);
-  cv = document.createElement('canvas'); cv.width = w; cv.height = h; const g = cv.getContext('2d');
+  cv = document.createElement('canvas'); cv.width = w; cv.height = h; const g = cv.getContext('2d'), im = g.createImageData(w, h), D = im.data;
   for(let y = 0; y < h; y++) for(let x = 0; x < w; x++){
     const v = y / h, cx = (x + 0.5) / w - 0.5 + Math.sin(v * 5.5) * 0.1, r = 0.3 + v * 0.18;
     const a = Math.min(0.9, Math.max(0, 1.3 - Math.abs(cx) / r) * (0.35 + v * 0.65)) * (hr(x * 31 + y, sz) < 0.85 ? 1 : 0.5);
-    if(a > 0.05){ g.fillStyle = 'rgba(236,242,246,' + a.toFixed(2) + ')'; g.fillRect(x, y, 1, 1); }
+    if(a > 0.05){ const i = (y * w + x) * 4; D[i] = 236; D[i + 1] = 242; D[i + 2] = 246; D[i + 3] = Math.round(a * 255); }
   }
+  g.putImageData(im, 0, 0);
   if(STEAM_SPR.size >= STEAM_MAX){ const k0 = STEAM_SPR.keys().next().value; cvFree(STEAM_SPR.get(k0)); STEAM_SPR.delete(k0); }
   STEAM_SPR.set(sz, cv);
   return cv;
@@ -20432,7 +20441,7 @@ const Scene = {
          || put.some(q => (q.kind === 0 || q.kind === 2 || q.kind === 3 || q.kind >= 10) && Math.abs(q.d - d) < 0.8 && Math.abs(q.x - x) < 0.8)) continue;
       // (nor where the buttons down the left of the field cover it from the
       // tee: a long line in the readout sets them lower, over the rough)
-      if(i < 15 && this.coveredAt(d, x)) continue;
+      if(i < 15 && (i || this.hudFresh()) && this.coveredAt(d, x)) continue;
       // (a shrub, tuft or rock where it lies is taken away, and anyone
       // watching there steps aside)
       for(let j = put.length - 1; j >= 0; j--){ const q = put[j]; if((q.kind === 8 || q.kind === 1) && Math.abs(q.d - d) < 0.9 && Math.abs(q.x - x) < 0.9) put.splice(j, 1); }
@@ -20445,6 +20454,10 @@ const Scene = {
       return;
     }
   },
+  // the readout's words for this hole set before anything is placed by
+  // what covers the field (they were still the last hole's, a line longer
+  // or shorter); true
+  hudFresh(){ try{ this.drawHud(derive()); }catch(e){} return true; },
   // whether what is on the page covers the field at d, x as seen from the
   // tee (the stage's buttons and the readout)
   coveredAt(d, x){
@@ -21918,8 +21931,8 @@ const Scene = {
     this.lmist = !this.night && !this.rain && !this.golden && !sigKind(h) && (LMIST_FORCE !== null ? !!LMIST_FORCE
       : (this.frost || lookSeason(look) === 1) && hourNow() >= 5 && hourNow() < 11);
     this._lmPools = null;
-    this.thaw = !this.night && !this.rain ? thawIce(look) : 0;
-    this.cshadow = !this.night && !this.rain && !this.fog && !this.golden && (CSHADOW_FORCE !== null ? !!CSHADOW_FORCE : hr(h * 47 + 5, 1041) < CSHADOW_P);
+    this.thaw = !this.night && !this.rain && sigKind(h) !== 'pier' ? thawIce(look) : 0;
+    this.cshadow = !this.night && !this.rain && !this.fog && !this.golden && !look.snowfall && (CSHADOW_FORCE !== null ? !!CSHADOW_FORCE : hr(h * 47 + 5, 1041) < CSHADOW_P);
     this.balloons = !this.night && !this.rain && !S.dgnRun && (BALLOON_FORCE !== null ? !!BALLOON_FORCE
       : Math.abs(this.wind) < 0.4 && hourNow() >= 6 && hourNow() < 11 && hr(h * 31 + 9, 1003) < BALLOON_P);
     this.ducklings = !this.night && sigKind(h) === 'island' && (DUCKLING_FORCE !== null ? !!DUCKLING_FORCE
@@ -22383,12 +22396,22 @@ const Scene = {
       const q = h * 53 + i, dc = this.camD + 6 + hr(q, 1042) * 40, rd = 4 + hr(q, 1043) * 4, rx = 5 + hr(q, 1044) * 5;
       const span = 40, xc = ((hr(q, 1045) * span + this.t * dir * (0.35 + Math.abs(w) * 0.8)) % span + span) % span - span / 2;
       let low = VH;
+      // (a slice deeper than two rows, near him, laid as its true slanting
+      // shape, its near and far ends each as wide as the oval there: as one
+      // square block its ends stepped the oval's edge)
       for(let d = Math.max(near, dc - rd); d <= dc + rd; d += 0.5){
         const k = (d - dc) / rd, hw = rx * Math.sqrt(Math.max(0, 1 - k * k)); if(hw < 0.3) continue;
+        const k2 = Math.min(1, (d + 0.5 - dc) / rd), hw2 = rx * Math.sqrt(Math.max(0, 1 - k2 * k2));
         const a = this.proj(d, xc - hw), b = this.proj(d, xc + hw), f = this.proj(d + 0.5, xc);
         const y0 = Math.max(HORIZON, Math.round(f.y)), y1 = Math.min(Math.round(a.y) + 1, Math.floor(this.clipAt(d)) + 1, low);
-        const x0 = Math.max(0, Math.round(a.x)), x1 = Math.min(VW, Math.round(b.x));
-        if(y1 > y0 && x1 > x0) c.fillRect(x0, y0, x1 - x0, y1 - y0);
+        if(y1 - y0 > 2){
+          const fa = this.proj(d + 0.5, xc - hw2), fb = this.proj(d + 0.5, xc + hw2);
+          c.save(); c.beginPath(); c.rect(0, y0, VW, y1 - y0); c.clip();
+          c.beginPath(); c.moveTo(a.x, a.y + 1); c.lineTo(b.x, b.y + 1); c.lineTo(fb.x, fb.y); c.lineTo(fa.x, fa.y); c.closePath(); c.fill(); c.restore();
+        }else{
+          const x0 = Math.max(0, Math.round(a.x)), x1 = Math.min(VW, Math.round(b.x));
+          if(y1 > y0 && x1 > x0) c.fillRect(x0, y0, x1 - x0, y1 - y0);
+        }
         low = Math.min(low, Math.max(y0, HORIZON));
       }
     }
@@ -22397,7 +22420,8 @@ const Scene = {
   // looked up where a pixel of water lies
   thawGrid(){
     if(this._thawH === this.hole && this._thawG) return this._thawG;
-    const h = this.hole || 0, n = (i, j) => hr(i * 73 + j * 179 + h * 31, 1051);
+    // (each lattice value worked out once a hole, not every frame)
+    const h = this.hole || 0, M = new Map(), n = (i, j) => { const k = i * 4096 + j; let v = M.get(k); if(v === undefined){ v = hr(i * 73 + j * 179 + h * 31, 1051); M.set(k, v); } return v; };
     const sm = t => t * t * (3 - 2 * t);
     const v = (x, y) => { const i = Math.floor(x), j = Math.floor(y), u = sm(x - i), w = sm(y - j);
       return n(i, j) * (1 - u) * (1 - w) + n(i + 1, j) * u * (1 - w) + n(i, j + 1) * (1 - u) * w + n(i + 1, j + 1) * u * w; };
@@ -25808,7 +25832,7 @@ Object.assign(Scene, {
       if(!this.wetSpot(p.d + dd, p.x + dx)) return;
       const q = this.proj(p.d + dd, p.x + dx), len = clamp(Math.round(LAT * q.s * 0.22), 2, 7);
       if(len < 2 || q.x < -8 || q.x > VW + 8) return;
-      const ang = Math.floor(((this.t * 0.6 + p.k * 5.3) % 16 + 16) % 16), F = fallSprite('l', len, ang, 3, WLEAF_COL[p.k % WLEAF_COL.length]);
+      const C0 = WLEAF_COL[p.k % WLEAF_COL.length], ang = Math.floor(((this.t * 0.6 + p.k * 5.3) % 16 + 16) % 16), F = fallSprite('l', len, ang, 3, night ? C0.map(moonC) : C0);
       const N = F.cv.width, hN = Math.max(1, Math.round(N * 0.55)), clip = this.clipAt(p.d + dd), y0 = Math.round(q.y - hN / 2), vis = Math.min(hN, Math.floor(clip) + 1 - y0);
       if(vis > 0) c.drawImage(F.cv, 0, 0, N, Math.round(N * vis / hN), Math.round(q.x - N / 2), y0, N, vis);
 
