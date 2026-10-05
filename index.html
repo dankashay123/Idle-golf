@@ -27523,7 +27523,8 @@ Object.assign(Scene, {
       const e = B.ELEM.find(x => x.id === S.courseEl);
       // (said as the course's affinity: "STORM-" read as the weather once
       // there were thunderstorms)
-      L.push([e.n + ' Affinity' + (D.reson > 1 ? ' +' : D.reson < 1 ? ' -' : ''), PX[S.courseEl] || PX.bone]);
+      // (short, to keep the readout to its lines: in full it wrapped)
+      L.push([e.n + ' Aff.' + (D.reson > 1 ? ' +' : D.reson < 1 ? ' -' : ''), PX[S.courseEl] || PX.bone]);
     }
     // (and the signature hole of the week says what it pays)
     const sk = sigKind(S.hole);
