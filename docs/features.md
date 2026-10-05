@@ -162,6 +162,35 @@ feature must do, and is usually enough on its own.
   clock or setting); the evening sun at `DUSK_SUN` 0.7 across (at 0.8 its
   path on the water ran under the hole map).
 
+- **Snow on the gallery** (`dusklife`): `spectSpr(ci, pose, night, v,
+  snowL)` keyed by it, `snowTop` (white on what has nothing over it in the
+  upper half, more by level); in the snow a share of fans hold umbrellas
+  (0.2/0.32/0.45 by level), `drawUmbrella(..., snowL)` whitening the dome's
+  top rows (in `UMB_CACHE`'s key).
+- **Long shadows** (`dusklife`): `Scene._lsh` each frame from `dawnDusk`
+  (not night, rain, fog or a wager; gone with the stars mostly out, fading
+  as they come); `standBlit` lays `longShadow` (the sprite's outline
+  slanted along the ground away from the sun, baked a size and length on
+  `spr._shd`, four at most, freed by `spriteFree`) for anything 9px tall or
+  more on the frame, cut at the ground line of where it ends (`clipAt` a
+  little nearer: hidden behind a rise in front); `longBar` for him
+  (`drawGolferGround`) and the pin. Golden Hour holes have them too.
+- **Leaves at the edges** (`dusklife`): `Scene.leafL` (autumn by
+  `lookSeason`, not snowing: 1/2/3 by holes 1, 7, 13; `GLEAF_FORCE`),
+  `layEdgeLeaves` (kind 26 `sp 'gleaf'`, 10/22/36, along both fairway
+  edges and round the green's sides and back, outside the 2.6 that counts
+  as the green; never on the short grass, a hazard or water),
+  drawn as one `leafDrift` picture (`DRIFT_CACHE`, 72).
+- **Breath** (`dusklife`): `Scene.breath(c, x, y, h, k)` on a frosty morning,
+  a `puffSprite` every 2.8 to 4.4s, 0.85s long, for him (after he is drawn,
+  from `_gpose`) and fans 9px tall or more.
+- **Stars coming out** (`dusklife`): `dawnDusk().stars` (7:30 to 9pm rising,
+  5 to 6:12am falling, in twelfths; the dusk now stays on while any are
+  out: past 8:30 it had rounded to nothing and the sky went back to day);
+  `buildSky` darkens the sky toward night blue, sinks the sun behind the
+  hills, draws the stars high (in `rbKey`, so the clouds keep their places)
+  and dims the clouds; the frame dims too. `STARS_FORCE` (switch: Stars
+  coming out), `GLEAF_FORCE` (Leaves gathered).
 ### The session of 4 October, fourth
 
 - **The milestone bar** (`milestones`): each Range row's third line

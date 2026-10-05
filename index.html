@@ -4365,13 +4365,22 @@ let DUSK_FORCE = null;
 // where the evening sun hangs across the sky (its path down the water
 // clear of the hole map in the corner)
 const DUSK_SUN = 0.7;
+// And the stars coming out (the user picked it): from half past seven to
+// nine one by one, as dusk turns to night, and going out again from five
+// to a little after six; in twelfths (stars), each step a new sky.
+// STARS_FORCE, the developer menu's: half of them, at dusk.
+let STARS_FORCE = null;
 const dawnDusk = () => {
-  if(DUSK_FORCE) return { w: 1, dawn: false };
+  if(STARS_FORCE) return { w: 0.6, dawn: false, stars: 0.5 };
+  if(DUSK_FORCE) return { w: 1, dawn: false, stars: 0 };
   if(S.dawnDusk !== 1) return null;
   const h = HOUR_FORCE !== null ? HOUR_FORCE : new Date().getHours() + new Date().getMinutes() / 60;
   const tent = (a, pk, b) => h <= a || h >= b ? 0 : h < pk ? (h - a) / (pk - a) : (b - h) / (b - pk);
   const dn = tent(5, 6.25, 8.5), dk = tent(17, 19.2, 21), w = Math.round(Math.max(dn, dk) * 5) / 5;
-  return w > 0 ? { w, dawn: dn > dk } : null;
+  const st = Math.round(clamp(dn > dk ? (6.2 - h) / 1.2 : (h - 19.5) / 1.5, 0, 1) * 12) / 12;
+  // (on while any stars are out: past half eight the warmth rounded to
+  // nothing and the sky went back to day for the last half hour)
+  return w > 0 || st > 0 ? { w, dawn: dn > dk, stars: st } : null;
 };
 // And night by the player's clock, with the setting on (the user found it
 // light at midnight): from nine in the evening to five in the morning a hole
@@ -4475,6 +4484,9 @@ let LMIST_FORCE = null;
 // its autumn, a scatter lying flat on the ponds, lakes and rivers, turning
 // and drifting a little; none on ice. WLEAF_FORCE pins them.
 let WLEAF_FORCE = null;
+// Leaves gathering at the edges (the user picked it): in a course's autumn,
+// more as the round goes on (Scene.leafL 1 to 3). GLEAF_FORCE pins the level.
+let GLEAF_FORCE = null;
 // Cloud shadows (the user picked them): on a clear day, on three holes in
 // five, a few great soft shadows drifting over the course with the wind.
 // CSHADOW_FORCE pins them.
@@ -4501,6 +4513,32 @@ let THAW_FORCE = null;
 // how much of the water is ice now: none outside a spring morning
 const thawIce = look => THAW_FORCE ? 0.5 : lookSeason(look) !== 3 || hourNow() < 5 ? 0 : clamp((11 - hourNow() - (HOUR_FORCE !== null ? 0 : new Date().getMinutes() / 60)) / 6, 0, 1) * 0.7;
 const CSHADOW_P = 0.6;
+// A drift of fallen leaves (layEdgeLeaves): leaves of a size lying flat in
+// a low clump, more and wider the deeper the round; a few pictures, kept.
+const DRIFT_CACHE = new Map();
+// a puff of breath, sz across: a soft pale blob, solid pixels, kept a size
+const PUFF_SPR = [];
+function puffSprite(sz){
+  if(PUFF_SPR[sz]) return PUFF_SPR[sz];
+  const cv = document.createElement('canvas'); cv.width = cv.height = sz; const g = cv.getContext('2d'), r = sz / 2;
+  for(let y = 0; y < sz; y++) for(let x = 0; x < sz; x++){ const q = Math.hypot(x + 0.5 - r, (y + 0.5 - r) * 1.2) / r;
+    if(q > 1) continue; g.fillStyle = q < 0.55 ? 'rgba(244,248,250,0.95)' : 'rgba(232,240,246,0.6)'; g.fillRect(x, y, 1, 1); }
+  return PUFF_SPR[sz] = cv;
+}
+function leafDrift(len, v, L, night){
+  const key = len + '|' + v + '|' + L + '|' + (night ? 1 : 0);
+  let cv = DRIFT_CACHE.get(key); if(cv) return cv;
+  if(DRIFT_CACHE.size >= 72){ const [k0, c0] = DRIFT_CACHE.entries().next().value; DRIFT_CACHE.delete(k0); cvFree(c0); }
+  const n = 2 + L * 2 + (v & 1), W = Math.round(len * (2 + L * 0.8)) + 4, H = Math.round(len * (0.9 + L * 0.2)) + 3;
+  cv = document.createElement('canvas'); cv.width = W; cv.height = H; const g = cv.getContext('2d');
+  for(let i = 0; i < n; i++){
+    const C0 = WLEAF_COL[(v + i) % WLEAF_COL.length], F = fallSprite('l', len, Math.floor(hr(v * 13 + i, 1055) * 16), 3, night ? C0.map(moonC) : C0);
+    const N = F.cv.width, hN = Math.max(1, Math.round(N * 0.55));
+    const x = Math.round((W - N) / 2 + (hr(v * 17 + i, 1056) - 0.5) * (W - N)), y = Math.round((H - hN) / 2 + (hr(v * 19 + i, 1057) - 0.5) * (H - hN) * 0.8);
+    g.drawImage(F.cv, 0, 0, N, N, x, y, N, hN);
+  }
+  DRIFT_CACHE.set(key, cv); return cv;
+}
 const WLEAF_COL = [['#C8602A', '#9A4A26', '#7A3418'], ['#D8A02E', '#A8782A', '#7A5420'], ['#B8402A', '#8A3020', '#5A2014']];
 // the airliner side on, its nose to the right: b body, d belly, w wing, k tail
 const PLANE_PIC = ['.k.........', '.kkbbbbbbb.', '..dddwdddbb', '.....ww....'];
@@ -10714,7 +10752,7 @@ function makeSprite(rows, map){
 // leaning copies' hazed ones held the phone's memory for pictures)
 function spriteFree(sp){
   if(!sp) return;
-  cvFree(sp.cv);
+  cvFree(sp.cv); if(sp._shd) for(const o of sp._shd.values()) cvFree(o.cv);
   for(const k of ['_sh', '_fog', '_lean']) if(sp[k]) for(const o of sp[k].values()) spriteFree(o);
   if(sp._flip) spriteFree(sp._flip);
 }
@@ -11282,6 +11320,19 @@ function snowRows(R, L){
   }
   return out.map(r => r.join(''));
 }
+// Snow settled on a fan in a snowy round (the user picked it): white on
+// what has nothing over it in the upper half (hat, hair, shoulders, raised
+// arms), on more of it as the round goes on, two deep at the last.
+function snowTop(R, L, seed){
+  const P = [0, 0.4, 0.75, 1][L], P2 = [0, 0, 0.2, 0.6][L], H = R.length, out = R.map(r => r.split(''));
+  for(let y = 0; y < H * 0.5; y++) for(let x = 0; x < R[y].length; x++){
+    const ch = R[y][x]; if(ch === '.' || ch === 'e') continue;
+    if((y ? R[y - 1][x] : '.') !== '.' || hr(seed * 31 + x * 7 + y * 13 + L, 1050) >= P) continue;
+    out[y][x] = 'S';
+    if(y + 1 < H && R[y + 1][x] !== '.' && R[y + 1][x] !== 'e' && hr(seed * 17 + x * 11 + y, 1051) < P2) out[y + 1][x] = 'S';
+  }
+  return out.map(r => r.join(''));
+}
 // a lily pad's rim, body and lit half, its flower (pink or white by the
 // course) and the flower's heart; yellowing in the autumn
 function lilyPal(look, night, frost){
@@ -11825,7 +11876,7 @@ function clubhouseCv(sh, night, side, seed, lit, frost, lights, snowL){
 // of colour in panels, lit along its top, its ribs' tips darker, on a thin
 // shaft down to the hand. w is the spectator's width, hy the top of the head.
 const UMB_COLS = ['#C8323A', '#2A4A8A', '#E8C040', '#F2F2F2', '#6A3A8A', '#2E8A5A'];
-function drawUmbrella(c, cx, hy, w, h, ci, night){
+function drawUmbrella(c, cx, hy, w, h, ci, night, snowL){
   const col0 = UMB_COLS[ci % UMB_COLS.length], col = night ? mixC(col0, '#0B1118', 0.45) : col0;
   const dark = mixC(col, '#000000', 0.35), lite = mixC(col, '#FFFFFF', 0.35);
   const R = Math.max(2, Math.round(w * 1.1)), ch = Math.max(2, Math.round(R * 0.55)), top = Math.round(hy - ch - Math.round(h * 0.04));
@@ -11834,7 +11885,7 @@ function drawUmbrella(c, cx, hy, w, h, ci, night){
   c.fillStyle = night ? '#1E2226' : '#3A3A3A'; c.fillRect(X, top + ch, sw, Math.max(1, Math.round(hy + h * 0.4 - top - ch)));
   // (the dome baked once a size and colour: a pixel at a time, every
   // umbrella in a rainy gallery was a thousand canvas calls a frame)
-  const key = R + '|' + ch + '|' + (ci % 6) + '|' + (night ? 1 : 0);
+  const key = R + '|' + ch + '|' + (ci % 6) + '|' + (night ? 1 : 0) + '|' + (snowL || 0);
   let cv = UMB_CACHE.get(key);
   if(!cv){
     cv = document.createElement('canvas'); cv.width = R * 2 + 1; cv.height = ch + 1;
@@ -11848,6 +11899,11 @@ function drawUmbrella(c, cx, hy, w, h, ci, night){
         g.fillRect(R + x, 1 + y, 1, 1);
       }
     }
+    // (snow settled on the dome in a snowy round: its top rows white, more
+    // of them as the round goes on, never its rim)
+    if(snowL){ const sr = Math.min(ch - 1, snowL); g.fillStyle = night ? mixC('#F2F6F8', '#0B1118', 0.45) : '#F2F6F8';
+      for(let y = 0; y < sr; y++){ const u = (ch - y) / ch, hw = Math.max(1, Math.round(R * Math.sqrt(Math.max(0, 1 - u * u * 0.85))));
+        g.fillRect(R - hw, 1 + y, hw * 2 + 1, 1); } }
     g.fillStyle = dark; g.fillRect(R, 0, 1, 1);
     if(UMB_CACHE.size >= 64){ const [k0, c0] = UMB_CACHE.entries().next().value; UMB_CACHE.delete(k0); cvFree(c0); }
     UMB_CACHE.set(key, cv);
@@ -11857,11 +11913,12 @@ function drawUmbrella(c, cx, hy, w, h, ci, night){
 const UMB_CACHE = new Map();
 // pose: a name from SPECT_POSE, or 0 and 1 for the two ways of standing
 // that the grandstand used before; v: who they are (hair, skin, hat, ...)
-function spectSpr(ci, pose, night, v){
+function spectSpr(ci, pose, night, v, snowL){
   if(v === undefined) v = ci * 37;
   v = Math.abs(Math.floor(v)) % 1440;
   if(typeof pose !== 'string') pose = pose ? 'clasp' : 'rest';
-  const key = ci + '|' + pose + '|' + (night ? 1 : 0) + '|' + v;
+  snowL = snowL || 0;
+  const key = ci + '|' + pose + '|' + (night ? 1 : 0) + '|' + v + (snowL ? '|s' + snowL : '');
   { const R = SPECT_CACHE.get(key); if(R) return R; }
   const dk = col => night ? mixC(col, '#0B1118', 0.35) : col;
   const sk = SPECT_SKIN[Math.floor(v / 5) % 4], pt = SPECT_PANT[Math.floor(v / 80) % 3];
@@ -11870,8 +11927,8 @@ function spectSpr(ci, pose, night, v){
   const map = { h:dk(SPECT_HAIR[v % 5]), k:dk(sk[0]), K:dk(sk[1]), e:dk('#1A1410'),
                 b:dk(body), B:dk(bodyDk), d:dk(mixC(bodyDk, '#000000', 0.3)), c:dk(mixC(body, '#F4F4EE', 0.5)),
                 p:dk(pt[0]), P:dk(pt[1]), o:dk(PX.shoe),
-                t:dk(hatC), T:dk(mixC(hatC, '#000000', 0.28)), w:dk('#F4F6EF') };
-  const R = makeSprite(spectRows(v, pose), map);
+                t:dk(hatC), T:dk(mixC(hatC, '#000000', 0.28)), w:dk('#F4F6EF'), S:dk('#F2F6F8') };
+  const R = makeSprite(snowL ? snowTop(spectRows(v, pose), snowL, v) : spectRows(v, pose), map);
   if(SPECT_CACHE.size >= SPECT_MAX) for(const [k, o] of SPECT_CACHE){
     // (and its smaller copies and their hazes: only its own hazes were freed)
     SPECT_CACHE.delete(k); spriteFree(o);
@@ -20063,6 +20120,28 @@ const Scene = {
     this.layLeapFish();
     this.laySteam();
     this.layWaterLeaves();
+    this.layEdgeLeaves();
+  },
+  // Autumn leaves gathered along the fairway's edges and round the green
+  // (the user picked them): in a course's autumn, a few drifts on the first
+  // holes of a round, more from the 7th, many from the 13th (this.leafL),
+  // each a clump of fallen leaves lying in the rough just off the short
+  // grass; not in a hazard. From a hash.
+  layEdgeLeaves(){
+    const L = this.leafL; if(!L) return;
+    const h = this.hole, put = this.props || [], N = [0, 10, 22, 36][L];
+    let n = 0;
+    for(let i = 0; i < N * 3 && n < N; i++){
+      const u = hr(h * 83 + i, 1052), side = hr(h * 83 + i, 1053) < 0.5 ? -1 : 1, off = 0.15 + hr(h * 83 + i, 1054) * 0.7;
+      let d, x;
+      if(u < 0.72){ d = 3 + (u / 0.72) * (LEN - 12); x = side * (this.fwWidth(d) + off); }
+      // (round the green's sides and back, just off its fringe: what is
+      // within 2.6 of it counts as the green)
+      else { const q = (u - 0.72) / 0.28, a = side * (0.3 + q * 0.7) * Math.PI; d = LEN - Math.cos(a) * (7.6 + off); x = Math.sin(a) * (2.75 + off * 0.8); }
+      if(this.hitsHazard(d, x, 0.4) || this.onPlay(d, x, 0.05) || (this.wetAt && this.water && this.wetSpot(d, x))) continue;
+      put.push({ kind: 26, sp: 'gleaf', d, x, k: h * 23 + i, extra: 1 }); n++;
+    }
+    if(n){ put.sort((a, b) => b.d - a.d); this.props = put; }
   },
   // leaves lying on the water in autumn: a dozen or so on open water, from a
   // hash, each with its own turn and colour
@@ -22049,6 +22128,7 @@ const Scene = {
     // trees, bushes, rocks, the clubhouse's roof and the train's
     this.snowL = look.snowfall && !this.rain ? (SNOWSET_FORCE !== null ? SNOWSET_FORCE : Math.min(3, 1 + Math.floor((holeInRound(h) - 1) / 6))) : 0;
     this.treeSpr = courseTrees(look, mode, this.snowL); this.lilyPal = null;
+    this.leafL = S.dgnRun ? 0 : GLEAF_FORCE !== null ? GLEAF_FORCE : lookSeason(look) === 1 && !look.snowfall ? Math.min(3, 1 + Math.floor((holeInRound(h) - 1) / 6)) : 0;
     this.snow = !!look.snowfall && !this.rain;
     // petals in blossom and leaves in autumn, drifting across; ponds frozen
     // in winter
@@ -22628,7 +22708,7 @@ const Scene = {
     const key = [this.themeId, this.night, this.aurora, this.rain, VW, HORIZON, dd ? dd.w + (dd.gold ? 'g' : dd.dawn ? 'a' : 'p') : ''].join('|');
     // (a rainbow's hole in the cache's key, not in key: the clouds are
     // seeded by key, and stay where they were)
-    const rbKey = key + (this.rainbow ? '|rb' + this.hole + (this.goldbow ? 'g' : '') + (this.dblbow ? 'd' : '') : '') + (this.harvest ? '|hm' : '');
+    const rbKey = key + (this.rainbow ? '|rb' + this.hole + (this.goldbow ? 'g' : '') + (this.dblbow ? 'd' : '') : '') + (this.harvest ? '|hm' : '') + (dd && dd.stars ? '|st' + dd.stars : '');
     if(rbKey === this.skyKey && this.sky) return;
     this.skyKey = rbKey;
     const H = Math.max(2, HORIZON + 2);
@@ -22648,9 +22728,14 @@ const Scene = {
         g.fillStyle = lerpCols([lerpCols(ramp, (y + 0.5) / H), lerpCols(warm.slice().reverse(), f)], dd.w * (0.3 + 0.62 * Math.pow(f, 1.2)));
         g.fillRect(0, y, VW, 1);
       }
+      // (the sky going dark as the stars come out: night blue from the top,
+      // the warmth left lowest by the hills)
+      if(dd.stars > 0) for(let y = 0; y < H; y++){
+        g.fillStyle = 'rgba(16,24,52,' + (dd.stars * 0.55 * (1 - 0.55 * y / H)).toFixed(3) + ')'; g.fillRect(0, y, VW, 1); }
       // and a low sun, east in the morning and west in the evening, just
-      // over the hills (lower as it is warmer)
-      const r = Math.max(3, Math.round(VW * 0.028)), sx = Math.round(VW * (dd.dawn ? 0.2 : DUSK_SUN)), sy = Math.round(H * (0.52 + 0.12 * dd.w));
+      // over the hills (lower as it is warmer), and down behind them as
+      // the stars come out (it climbed again as the warmth faded)
+      const r = Math.max(3, Math.round(VW * 0.028)), sx = Math.round(VW * (dd.dawn ? 0.2 : DUSK_SUN)), sy = Math.round(H * (0.52 + 0.12 * Math.max(dd.w, dd.stars ? 1 : 0) + 0.5 * (dd.stars || 0)));
       pxCircle(g, sx, sy, r + 2, lerpCols([lerpCols(ramp, sy / H), warm[0]], 0.6 + 0.3 * dd.w));
       pxCircle(g, sx, sy, r, DAWN_COL.sun);
     }
@@ -22693,6 +22778,20 @@ const Scene = {
       if(this.harvest) this.drawMoon(g, this.moonX = Math.round(VW*0.68), this.moonY = Math.round(H*0.64),
                     this.moonR = Math.max(10, Math.round(VW*0.13)), 3, true);
       else this.drawMoon(g, this.moonX = mx, this.moonY = my, this.moonR = Math.max(5, Math.round(VW*0.055)), ph);
+    }
+    // the first stars of the evening (dd.stars): each its own moment to come
+    // out, the brightest first, high in the sky where it is darkest; never
+    // low over the warm band
+    if(dd && dd.stars > 0 && !this.night){
+      const sr = seeded(hash32(VW * 31 + HORIZON * 7 + 5));
+      for(let i = 0; i < 70; i++){
+        const x = Math.floor(sr() * VW), y = Math.floor(Math.pow(sr(), 1.6) * H * 0.62), v = sr(), at = sr() * 0.7 + (1 - v) * 0.3;
+        if(at > dd.stars) continue;
+        const k = clamp((dd.stars - at) / 0.15, 0, 1) * clamp(1.1 - y / (H * 0.62), 0.2, 1);
+        g.globalAlpha = (0.35 + 0.6 * v) * k; g.fillStyle = v > 0.8 ? '#F6F8FF' : '#D6DEEE'; g.fillRect(x, y, 1, 1);
+        if(v > 0.93){ g.globalAlpha *= 0.4; g.fillRect(x - 1, y, 3, 1); g.fillRect(x, y - 1, 1, 3); }
+      }
+      g.globalAlpha = 1;
     }
     if(this.aurora){
       // Two curtains of light, each a bright edge along the top with rays
@@ -22746,8 +22845,10 @@ const Scene = {
       // Opaque, in three flat tones. Stacked translucent circles darkened
       // wherever two overlapped, so a cloud read as a clump of discs rather
       // than one body, and whatever was behind it showed through every seam.
-      const body = lite(ramp[0], 0.80), lit = lite(ramp[0], 0.96),
-            shade = dd ? lerpCols([lite(ramp[0], 0.56), warm[1]], 0.45 * dd.w) : lite(ramp[0], 0.56);
+      // (dusky as the stars come out, with the sky)
+      const dim = col => dd && dd.stars ? mixC(col, '#4A4E6E', dd.stars * 0.6) : col;
+      const body = dim(lite(ramp[0], 0.80)), lit = dim(lite(ramp[0], 0.96)),
+            shade = dim(dd ? lerpCols([lite(ramp[0], 0.56), warm[1]], 0.45 * dd.w) : lite(ramp[0], 0.56));
       for(let i = 0; i < 5; i++){
         const cx = Math.floor(rnd()*VW), cy = Math.floor(H*0.12 + rnd()*H*0.38);
         const w = Math.round(VW*(0.10 + rnd()*0.11));
@@ -24511,6 +24612,9 @@ Object.assign(Scene, {
   // stands (from its own rows: a canvas call each was too many a frame),
   // down to the crest it stands behind
   standBlit(c, spr, x, y, w, h){
+    // (only on the frame itself, and for what is big enough to show one:
+    // a shadow for every far tree cost hundreds of calls a frame)
+    if(this._lsh && h >= 9 && c === this.b) this.longShadow(c, spr, x, y, w, h);
     const a = Math.round(this.hazeA(y + h) * 20) / 20;
     blit(c, a > 0 ? fogSprite(spr, (this.theme || THEMES.day).sky[4], a) : spr, x, y, w, h);
     if(spr.rows) this.standDepth(spr, x, y, w, h);
@@ -24526,6 +24630,63 @@ Object.assign(Scene, {
       }
     }
     this._tmDirty = true;
+  },
+  // Long shadows at dawn and dusk (the user picked them): with the sun low
+  // (Dawn and Dusk on, or Golden Hour) what stands casts its own outline
+  // along the ground away from the sun, toward him and aside, longer the
+  // lower the sun. Drawn just before it, so what stands nearer covers it.
+  // The outline is one dark picture kept on the sprite (freed with it).
+  lshGeom(h){
+    const L = this._lsh, k = 0.55 + 0.9 * L.w;
+    // (fading once the sun is down behind the hills, as the stars come out)
+    return { dx: -L.dir * h * k, dy: h * 0.22 * k, a: (0.16 + 0.12 * L.w) * L.fade };
+  },
+  longShadow(c, spr, x, y, w, h){
+    if(!spr || !spr.cv) return;
+    w = Math.max(1, Math.round(w));
+    const G = this.lshGeom(h), dx = Math.round(G.dx), dy = Math.max(1, Math.round(G.dy));
+    // (its outline laid along the ground once a size and a length, kept on
+    // the sprite, a few at most: a stamp a frame, not a transform and back)
+    const M = spr._shd || (spr._shd = new Map()), key = w + 'x' + h + '|' + dx + '|' + dy;
+    let O = M.get(key);
+    if(!O){
+      if(M.size >= 4){ const [k0, o0] = M.entries().next().value; M.delete(k0); cvFree(o0.cv); }
+      const ox = dx < 0 ? -dx : 0, cv = document.createElement('canvas'); cv.width = w + Math.abs(dx) + 1; cv.height = dy + 1;
+      const g = cv.getContext('2d'); g.imageSmoothingEnabled = false;
+      g.setTransform(1, 0, -dx / h, -dy / h, ox + dx, dy);
+      g.drawImage(spr.cv, 0, 0, spr.w, spr.h, 0, 0, w, h);
+      g.setTransform(1, 0, 0, 1, 0, 0); g.globalCompositeOperation = 'source-in'; g.fillStyle = '#0A1408'; g.fillRect(0, 0, cv.width, cv.height);
+      O = { cv, ox }; M.set(key, O);
+    }
+    // (it lies on the ground a little nearer than its foot: cut where that
+    // ground is hidden, by a rise in front; one stood over a crest)
+    const fy = Math.round(y + h), d = this._propD;
+    let vis = O.cv.height;
+    if(d < Infinity){ const k = Math.max(0.05, this.proj(d - 1, 0).y - this.proj(d, 0).y), d2 = d - dy / k;
+      vis = Math.min(vis, Math.floor(this.clipAt(d2)) + 1 - fy); }
+    if(vis <= 0) return;
+    c.globalAlpha = G.a; c.drawImage(O.cv, 0, 0, O.cv.width, vis, Math.round(x) - O.ox, fy, O.cv.width, vis); c.globalAlpha = 1;
+  },
+  // Breath in the cold (the user picked it): on a frosty morning a small
+  // pale puff from the mouth every few seconds, swelling, drifting up with
+  // the wind and fading in under a second. h: the one breathing's height,
+  // k: their own clock.
+  breath(c, x, y, h, k){
+    if(h < 9) return;
+    const P = 2.8 + hr(k, 1058) * 1.6, u = ((this.t + hr(k, 1059) * P) % P) / 0.85;
+    if(u >= 1) return;
+    const sz = clamp(Math.round(h * 0.16 * (0.6 + u * 0.6)), 2, 14), B2 = puffSprite(sz);
+    c.globalAlpha = Math.sin(Math.PI * Math.min(1, u * 1.4)) * 0.75;
+    c.drawImage(B2, Math.round(x + h * 0.06 * u + (this.wind || 0) * h * 0.12 * u - sz / 2), Math.round(y - h * 0.08 * u - sz / 2));
+    c.globalAlpha = 1;
+  },
+  // and a bar's (his, the flagstick's): rows from its foot, bw wide
+  longBar(c, fx, fy, bw, h){
+    const G = this.lshGeom(h), n = Math.max(1, Math.round(G.dy));
+    c.fillStyle = 'rgba(10,20,8,' + G.a.toFixed(3) + ')';
+    for(let i = 0; i < n; i++){ const u = (i + 0.5) / n, ww = Math.max(1, Math.round(bw * (1 - u * 0.4)));
+      const x0 = Math.round(fx + G.dx * u - ww / 2), x1 = Math.round(fx + G.dx * (i + 1) / n - ww / 2);
+      c.fillRect(Math.min(x0, x1), Math.round(fy) + i, Math.abs(x1 - x0) + ww, 1); }
   },
   // A shadow under something standing: whatever of it a nearer tree of the
   // forest covers is given back to the tree (see forestOver)
@@ -25997,6 +26158,14 @@ Object.assign(Scene, {
       const L = leanSprite(spr, this.leanB(p)), lw = Math.round(w * L.w / spr.w), lx = L.pad && this.wind < 0 ? Math.round(w * L.pad / spr.w) : 0;
       this.standBlit(c, L, Math.round(pr.x) - (w >> 1) - lx, Math.round(pr.y) - h, lw, h);
 
+    }else if(p.kind === 26 && p.sp === 'gleaf'){
+      // a drift of fallen leaves lying in the rough, one baked clump
+      const len = clamp(Math.round(LAT * pr.s * 0.2), 2, 7);
+      if(pr.x < -30 || pr.x > VW + 30) return;
+      const D2 = leafDrift(len, p.k % 6, this.leafL, night), clip = this.clipAt(p.d);
+      const y0 = Math.round(pr.y - D2.height * 0.7), vis = Math.min(D2.height, Math.floor(clip) + 1 - y0);
+      if(vis > 0) c.drawImage(D2, 0, 0, D2.width, vis, Math.round(pr.x - D2.width / 2), y0, D2.width, vis);
+
     }else if(p.kind === 26 && p.sp === 'wleaf'){
       // a fallen leaf lying flat on the water, turning slowly and drifting a
       // little about its place (kept to the water)
@@ -26271,7 +26440,7 @@ Object.assign(Scene, {
         const E = SPECT_EMOTE[Math.floor(hr(p.p * 7 + p.c, 421) * SPECT_EMOTE.length)];
         const rate = E[0] === 'clap' ? 16 : E[0] === 'head' ? 5 : 11;
         const hop = Math.abs(Math.sin((this.t - G.t0) * 9 + p.p)) * h * (G.d <= -3 ? 0.22 : 0.14) * E[2] * (1 - gq);
-        const spr2 = spectSpr(p.c, Math.sin((this.t - G.t0) * rate + p.p) > 0 ? E[0] : E[1], night, who), w2 = Math.max(1, Math.round(h * spr2.w / spr2.h));
+        const spr2 = spectSpr(p.c, Math.sin((this.t - G.t0) * rate + p.p) > 0 ? E[0] : E[1], night, who, this.snow ? this.snowL : 0), w2 = Math.max(1, Math.round(h * spr2.w / spr2.h));
         const X = Math.round(pr.x), Y = Math.round(pr.y);
         c.fillStyle = 'rgba(8,16,10,.26)'; this.standShadow(c, X - (w2 >> 1), Y - 1, w2, 1);
         this.standBlit(c, spr2, X - (w2 >> 1), Y - h - Math.round(hop), w2, h);
@@ -26280,7 +26449,7 @@ Object.assign(Scene, {
       // standing about: their own way of standing, now and then easing
       // back to arms at their sides
       const idle = SPECT_IDLE[Math.floor(hr(p.p * 5 + p.c, 422) * SPECT_IDLE.length)];
-      const spr = spectSpr(p.c, Math.sin(this.t * 0.23 + p.p * 3) > -0.6 ? idle : 'rest', night, who);
+      const spr = spectSpr(p.c, Math.sin(this.t * 0.23 + p.p * 3) > -0.6 ? idle : 'rest', night, who, this.snow ? this.snowL : 0);
       const w = Math.max(1, Math.round(h * spr.w / spr.h));
       // (its middle and its feet each rounded once, or he wobbled as the
       // camera went by)
@@ -26288,9 +26457,13 @@ Object.assign(Scene, {
       c.fillStyle = 'rgba(8,16,10,.26)';
       this.standShadow(c, X - (w >> 1), Y - 1, w, 1);
       this.standBlit(c, spr, X - (w >> 1), Y - h, w, h);
-      // in the rain most of them have an umbrella up
-      if(this.rain && h >= 5 && hr(p.p * 97 + p.c, 410) < 0.75){
-        drawUmbrella(c, pr.x + w * 0.1, pr.y - h, w, h, Math.floor(hr(p.p * 31, 411) * 6), night);
+      // (their breath in the cold of a frosty morning)
+      if(this.frost) this.breath(c, X + w * 0.2, Y - h * 0.86, h, p.p * 7 + p.c);
+      // in the rain most of them have an umbrella up; in the snow a few,
+      // more as the round goes on, white with what has settled on them
+      const sL = this.snow && !this.rain ? this.snowL || 1 : 0;
+      if(h >= 5 && (this.rain ? hr(p.p * 97 + p.c, 410) < 0.75 : sL && hr(p.p * 97 + p.c, 410) < [0, 0.2, 0.32, 0.45][sL])){
+        drawUmbrella(c, pr.x + w * 0.1, pr.y - h, w, h, Math.floor(hr(p.p * 31, 411) * 6), night, sL);
         // (behind a tree of the forest, so is the umbrella over him)
         const R = Math.max(2, Math.round(w * 1.1)), ch = Math.max(2, Math.round(R * 0.55)), ux = Math.round(pr.x + w * 0.1);
         this.standCover(ux - R, pr.y - h - ch - Math.round(h * 0.04) - 1, R * 2 + 2, ch + Math.round(h * 0.45) + 2);
@@ -26437,7 +26610,11 @@ Object.assign(Scene, {
   },
   drawGolferGround(){
     previewTick();
-    this.golferGround(this.b, this.golferPose());
+    const G = this.golferPose();
+    // (his long shadow at dawn and dusk, under whatever his skin lays)
+    if(this._lsh && !G.heli) this.longBar(this.b, G.x + G.w / 2, G.p.y, Math.max(2, Math.round(G.w * 0.32)), G.h);
+    this._gpose = G;
+    this.golferGround(this.b, G);
     this.groundDone = true;
   },
   golferGround(c, G){
@@ -28112,6 +28289,8 @@ Object.assign(Scene, {
         this.swingT = this.swingDur; this.pendingBall = q;
       }
       if(this.sky) c.drawImage(this.sky, 0, 0);
+      // (the low sun's long shadows this frame: dawnDusk as the sky has it)
+      { const L = this.dawnDusk; this._lsh = L && !this.night && !this.rain && !this.fog && !S.dgnRun && (L.stars || 0) < 0.8 ? { w: L.w, dir: L.dawn ? -1 : 1, fade: 1 - (L.stars || 0) } : null; }
       this.drawMeteor(c);
       this.drawPlane(c);
       this.drawBalloons(c);
@@ -28168,9 +28347,13 @@ Object.assign(Scene, {
       this.drawRestBall();
       this.drawDog();
       this.drawGolfer(D);
+      // (his breath in the cold of a frosty morning)
+      if(this.frost && this._gpose && !this._gpose.heli){ const G = this._gpose; this.breath(this.b, G.x + G.w * 0.62, G.y + G.h * 0.1, G.h, 0); }
       this.drawBalls(dt);
       this.drawWeather();
       this.drawStormLight(c);
+      // (the course dimming as the stars come out, toward the night)
+      { const L = this.dawnDusk; if(L && L.stars > 0 && !this.night && !S.dgnRun){ c.fillStyle = 'rgba(14,20,46,' + (L.stars * 0.3).toFixed(3) + ')'; c.fillRect(0, 0, VW, VH); } }
       this.tickQuip(dt);
       this.tickMove(dt);
       this.drawHud(D);
@@ -28196,6 +28379,8 @@ Object.assign(Scene, {
     // stands: a tree on the bend in front of the green, the wood beside
     // it, a spectator, all go over it; the user saw it through the trees)
     const h = Math.max(4, Math.round(B_FLAG * US * p.s)), R = h * 2 + 8;
+    // (its long shadow at dawn and dusk, on the green under it)
+    if(this._lsh && p.y <= cut + 1) this.longBar(c, p.x, p.y, Math.max(1, Math.round(h * 0.06)), h);
     this._pinHid = this.drawBehind(P - 0.3, p.x - R, p.y - h * 2 - 8, p.x + R, Math.min(p.y + 6, p.y > cut + 1 ? Math.max(0, cut) : VH), g => this.pinBody(g, p));
   },
   // What is drawn after the scenery but is out on the hole at a distance d
@@ -31099,6 +31284,8 @@ const SCENE_PINS = [
   { id:'steam', n:'Steam off the water', w:'water', get: () => PSTEAM_FORCE === true || PSTEAM_FORCE === 1, set: v => { PSTEAM_FORCE = v ? true : null; } },
   { id:'thaw', n:'Ice thawing', w:'water', get: () => THAW_FORCE === true, set: v => { THAW_FORCE = v ? true : null; } },
   { id:'snowset', n:'Deep snow settled', w:'snowy courses', get: () => SNOWSET_FORCE === 3, set: v => { SNOWSET_FORCE = v ? 3 : null; } },
+  { id:'gleaf', n:'Leaves gathered (deep)', w:'the fairway edges', get: () => GLEAF_FORCE === 3, set: v => { GLEAF_FORCE = v ? 3 : null; } },
+  { id:'stars', n:'Stars coming out', w:'the dusk sky', get: () => STARS_FORCE === true, set: v => { STARS_FORCE = v ? true : null; } },
   { id:'dusk', n:'Dusk', w:'the sky and the water', get: () => DUSK_FORCE === true, set: v => { DUSK_FORCE = v ? true : null; } },
   { id:'shimmer', n:'Heat shimmer', w:'summer afternoons', get: () => SHIMMER_FORCE === true, set: v => { SHIMMER_FORCE = v ? true : SHIMMER_DEF; } },
   { id:'cshadow', n:'Cloud shadows', w:'clear days', get: () => CSHADOW_FORCE === true, set: v => { CSHADOW_FORCE = v ? true : null; } },

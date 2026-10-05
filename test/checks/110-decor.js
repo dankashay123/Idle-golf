@@ -45,7 +45,9 @@ module.exports = {
         {
           const D = derive(), c = Scene.b, keep = window.step; window.step = () => {}; FROST_FORCE = 0;
           const blank = () => { c.fillStyle = '#010203'; c.fillRect(0, 0, VW, VH); };
-          const drawn = Q => { const was = Scene.props; blank(); Scene.props = [Q]; Scene.drawProps(); Scene.props = was;
+          // (without its long shadow on a Golden Hour or a dusk: that lies on the
+          // nearer ground, below the line by rights; dusklife holds it to it)
+          const drawn = Q => { const was = Scene.props, ls = Scene.longShadow; blank(); Scene.props = [Q]; Scene.longShadow = () => {}; try { Scene.drawProps(); } finally { Scene.longShadow = ls; } Scene.props = was;
             const d = c.getImageData(0, 0, VW, VH).data; let n = 0; for (let i = 0; i < d.length; i += 4) if (!(d[i] === 1 && d[i + 1] === 2 && d[i + 2] === 3)) n++; return { n, d }; };
           o.views = 0; o.pix = 0;
           for (const k of DECOR_KINDS) for (const cs of COURSE_HOME) {

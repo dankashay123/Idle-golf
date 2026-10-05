@@ -14,19 +14,20 @@ through:
 ## 1. Where things stand
 
 - Everything is committed and **no request is waiting**. The last ones
-  (6 October): heat shimmer on summer afternoons; snow settling on the
-  trees, bushes, rocks and roofs, deeper through a snowy round; the low
-  sun on the water at dawn and dusk (Dawn and Dusk on, or Golden Hour);
-  footprints in the frost. Then a bug and speed pass: the one dip he saw
-  on the phone (a lightning flash) is gone, and a storm frame at the tee
-  went from 1,281 canvas calls to 716 (umbrellas, snowflakes, the bolt and
-  the tee baked; one clip shared by the props behind a rise); the thunder's
-  rumble had been cut short; steam rose round an island green.
-  He reports a steady 60fps on the phone. A **Dusk** switch shows the evening
-  sky and water at any hour; canvas memory measured level over thirty
-  courses. Runs pinned to July 3pm and January 8am found the shimmer
-  in three checks (rule 78) and a winter line at the forest's feet
-  (softened over a third row in the snow).
+  (6 October, later): snow on the gallery (fans, and umbrellas in the snow)
+  deepening through a snowy round; long shadows at dawn and dusk; autumn
+  leaves gathering at the fairway's edges and round the green; breath in
+  the cold on frosty mornings; the stars coming out as dusk turns to night
+  (the sky darkening, the sun setting behind the hills; at dawn the other
+  way). Found on the way: past 8:30pm the dusk switched itself off and the
+  sky went back to day until night at nine (fixed). Before that the same
+  day: heat shimmer, snow settling on trees and roofs, the low sun on the
+  water, frost footprints, and a speed pass (he reports a steady 60fps).
+  New switches: Leaves gathered (deep), Stars coming out; Dusk shows the
+  long shadows; Frost the breath; Deep snow settled the gallery's snow.
+- A plain fair frame standing on the tee in autumn is about 1,100 canvas
+  calls (his figure about 220, the props 490): over `battery`'s 1,000,
+  which measures mid-fairway. Worth a look in the next speed pass.
 - The scenery of 4 to 6 October (canyon, ponds, dragonflies, fireflies,
   fish, storms, planes, balloons, ducklings, steam, mist, frost, the
   rainbow's reflection, wind, leaves on the water, pins either side,
@@ -37,7 +38,7 @@ through:
   new a switch. Earlier work: the sections under it.
 - What lives by the season asks `lookSeason`: a course's own, the Snowline
   winter and the Blossom spring all year, else the month.
-- `node test/run.js` has **163 checks**, about 35 minutes: run it in the
+- `node test/run.js` has **164 checks**, about 35 minutes: run it in the
   background, on a copy in the scratchpad, with the machine quiet. After
   weather, colours or anything dated, also run it with `HOUR_FORCE` 8 and
   15 and the month pinned (rules 20 and 70).
@@ -269,15 +270,16 @@ the Tour tab, no new sound but ambience.
 Five at least (CLAUDE.md); don't raise the dog until he does; no new
 animals for now (he asked to hold off).
 
-1. **Look at the new scenery on the phone** (switches: Heat shimmer, Deep
-   snow settled, Dusk; Frost for the footprints) and say what to tune.
-2. **Snow on the gallery's hats and umbrellas** as a snowy round goes on.
-3. **Long shadows at dawn and dusk**: trees and people casting longer
-   shadows away from the low sun.
-4. **Autumn leaves gathering** at the edges of the fairway and greens as
-   an autumn round goes on.
-5. **Puffs of breath** in the cold on frosty mornings (him and the gallery).
-6. **Stars coming out** one by one as dusk turns to night (Dawn and Dusk
-   on).
+1. **Look at the new things on the phone** (switches: Deep snow settled,
+   Dusk, Leaves gathered, Stars coming out, Frost) and say what to tune.
+2. **A speed pass on the tee**: a fair frame there is over budget (his
+   figure drawn row by row is a fifth of it).
+3. **Moonrise**: the moon coming up over the hills after the stars, with
+   Dawn and Dusk on.
+4. **Spring blossom drifting** across the fairway and settling at its
+   edges through a spring round (as the autumn leaves do).
+5. **Morning fog lifting**: on misty mornings the low mist thinning hole
+   by hole as the round goes on.
+6. **Gusts skittering leaves** across the green and fairway in autumn wind.
 
 Recommend 1. (Turned down: dew; no new animals for now.)
