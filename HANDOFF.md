@@ -70,7 +70,8 @@ through:
   taken out; a bug pass (stripes in the dips' mist, ducklings, thunder,
   the switches); pins either side of the green (they all stood right);
   wind you can see (reeds, tufts, the flag); leaves on the water in
-  autumn; "Storm Affinity -" on the readout; the thunder quieter.
+  autumn; the affinity on the readout as "STORM aff" (small); the
+  thunder quieter; a tee find never under the field's buttons.
   Fixed on the way: a Vault floor played again after a gust was never
   called; the Spotted tag sat over a wager's name. Earlier the same day:
   cherry trees, the kingfisher, course collections, the monthly hunt, and

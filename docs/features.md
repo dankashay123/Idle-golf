@@ -2351,7 +2351,9 @@ him (about 49px tall on a 320 phone, 71px on its side).
 - **Leaves on the water**: `layWaterLeaves` (autumn, not ice, not the sea
   stack, away from the green; `WLEAF_FORCE`), kind 26 `sp 'wleaf'` drawn
   from `fallSprite` flattened, drifting, kept to the water.
-- The readout says the course's element as "Storm Affinity -".
+- The readout says the course's element with a small "aff" after it
+  (`hudWords` takes an optional small suffix and sign); a tee find skips
+  any spot the page covers from the tee (`Scene.coveredAt`).
 - **Rain** is three sheets (`rainSheet`, bounded) slid with the clock.
 - **lookSeason(look)**: the season a course shows (its own; the Snowline
   winter, the Blossom spring; else the month), for the Harvest Moon, the
