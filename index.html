@@ -4387,6 +4387,9 @@ let STARS_FORCE = null;
 // over the eastern hills as the stars come out at dusk, and climbs to its
 // place in the night's first two hours. 0 just risen, 1 at its place.
 const MOONRISE_X = 0.24;
+// how far the other holes' fairways and the woods across their strips take
+// to round off at their ends (nbrQ, ringQ), in paces
+const NBR_ROUND = 1.5, RING_ROUND = 2;
 // The sky slides as the hole bends (the user: balloons, clouds and planes
 // stayed put as he turned a corner; they would stay over their own ground):
 // SKY_TURN of a true turn, built wider by SKY_TURN_M of the view each side.
@@ -19857,8 +19860,10 @@ const Scene = {
       this.nbrs.push(N);
       // and where it is not (past its green, or short of its tees), its
       // strip of ground a wood, the trees closing in behind the green
-      if(N.lo > -40) this.fills.push({ sd, kind: 'wood', ring: N, gap: 0, ph: hr(k, 534) * 6.28, d0: -40, d1: Math.min(N.lo, this.back.d0 + 40), w: 0 });
-      if(N.hi < this.back.d0 + 40) this.fills.push({ sd, kind: 'wood', ring: N, gap: 0, ph: hr(k, 534) * 6.28, d0: Math.max(N.hi, -40), d1: this.back.d0 + 40, w: 0 });
+      // (each run on under its fairway's or green's end by RING_ROUND, where
+      // it rounds off: ringQ)
+      if(N.lo > -40) this.fills.push({ sd, kind: 'wood', ring: N, gap: 0, ph: hr(k, 534) * 6.28, d0: -40, d1: Math.min(N.lo + RING_ROUND, this.back.d0 + 40), w: 0 });
+      if(N.hi < this.back.d0 + 40) this.fills.push({ sd, kind: 'wood', ring: N, gap: 0, ph: hr(k, 534) * 6.28, d0: Math.max(N.hi - RING_ROUND, -40), d1: this.back.d0 + 40, w: 0 });
       return N;
     };
     // what lies each side: the next hole mostly; a wood by the clubhouse and
@@ -20034,7 +20039,7 @@ const Scene = {
   // a wood or a lake's inner edge, across, at d; and whether a point is in one
   fillIn(F, d){
     let i;
-    if(F.ring) return Math.abs(this.nbrX(F.ring, d)) - this.nbrW(F.ring, d) - 0.9;
+    if(F.ring) return Math.abs(this.nbrX(F.ring, d)) - (this.nbrW(F.ring, d) + 0.9) * this.ringQ(F, d);
     if(F.after) i = Math.abs(this.nbrX(F.after, d)) + this.nbrW(F.after, d);
     // (behind a lake: at its far bank, and where it is not, at its near one)
     else if(F.behind){ const w = this.lakeW(F.behind, d); i = this.fillIn(F.behind, d) + (w > 0 ? w + 0.6 * Math.min(1, w) : 0); }
@@ -20048,7 +20053,20 @@ const Scene = {
   },
   // a wood across another hole's strip: as wide as its fairway and the
   // rough either side
-  ringW(F, d){ return 2 * this.nbrW(F.ring, d) + 1.8; },
+  ringW(F, d){ return (2 * this.nbrW(F.ring, d) + 1.8) * this.ringQ(F, d); },
+  // a wood across another hole's strip rounds off where it starts and ends
+  // in view, over two paces (it began in a straight line across: the user
+  // saw the other holes cut off in a hard line)
+  ringQ(F, d){
+    const e = Math.min(F.d0 > -39 ? d - F.d0 : 9, this.back && F.d1 < this.back.d0 + 39.9 ? F.d1 - d : 9);
+    if(e >= RING_ROUND) return 1; if(e <= 0) return 0;
+    const t = 1 - e / RING_ROUND; return Math.sqrt(1 - t * t); },
+  // another hole's fairway the same at its ends in view, over a pace and a
+  // half (its straight end read as a hard line)
+  nbrQ(N, d){
+    const e = Math.min(N.a > -29 ? d - N.a : 9, N.b - d);
+    if(e >= NBR_ROUND) return 1; if(e <= 0) return 0;
+    const t = 1 - e / NBR_ROUND; return Math.sqrt(1 - t * t); },
   // a lake's width at d (its ends round)
   lakeW(F, d){ if(d <= F.d0 || d >= F.d1) return 0;
     const mid = (F.d0 + F.d1) / 2, half = (F.d1 - F.d0) / 2, t = (d - mid) / half, q = Math.sqrt(Math.max(0, 1 - t * t * t * t));
@@ -25586,7 +25604,7 @@ Object.assign(Scene, {
     for(const N of this.nbrs){
       const nx = this.nbrX(N, d);
       if(d > N.a && d < N.b){
-        const W0 = this.nbrW(N, d), hw = Math.round(W0 * U), X = px(nx);
+        const W0 = this.nbrW(N, d) * this.nbrQ(N, d), hw = Math.round(W0 * U), X = px(nx);
         if(hw > 0 && X + hw > -2 && X - hw < VW + 2){
           // mown in stripes down its length (they run the way he walks, so
           // they hold still as he goes), a cut of darker rough round it
