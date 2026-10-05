@@ -149,7 +149,19 @@ module.exports = {
       }
     });
 
+    // no ring of rocks round the green (the user had it taken out: from the
+    // pier it broke into bars): the pier drawn alone over a blank, from the
+    // bank and from half way out, shows none of the stack's rock colours
+    const rocks = await page.evaluate(() => {
+      const SNAP = JSON.stringify(S), raf = window.requestAnimationFrame; let n = 0;
+      try { QUIET = true; window.requestAnimationFrame = () => 0; S.chaos = { n: 'Fair' }; DEV.pier(); hideSheet(); Scene.announce = null;
+        const I = Scene.isle, T = Scene.theme, c = Scene.b, D = derive(), RK = new Set([pickC(T.rk, 0.8), pickC(T.rk, 0.3)].map(x => x.toUpperCase()));
+        for (const cam of [I.bank + 2, I.bank + 10]) { Scene.camD = cam; Scene.draw(0, D); c.fillStyle = '#010203'; c.fillRect(0, 0, VW, VH); Scene.drawPier();
+          const d = c.getImageData(0, 0, VW, VH).data; for (let i = 0; i < d.length; i += 4) { const hx = '#' + [d[i], d[i + 1], d[i + 2]].map(v => v.toString(16).padStart(2, '0')).join('').toUpperCase(); if (RK.has(hx)) n++; } }
+      } finally { window.requestAnimationFrame = raf; PIER_FORCE = 0; QUIET = false; Object.assign(S, JSON.parse(SNAP)); Scene.newHole(S.hole, S.tier); }
+      return n; });
     const f = m => { throw new Error(m); };
+    if (rocks) f(rocks + ' pixels of rock round the sea stack\'s green');
     if (!(snd.pier.plank >= 5) || snd.pier.rotor || snd.pier.hop) f('walking the pier for 2s played ' + JSON.stringify(snd.pier));
     if (r.bad.length) f('sea stacks on the wrong holes: ' + r.bad.slice(0, 4).join('; '));
     if (r.wrongCount.length) f('sea stacks by course: ' + r.wrongCount.slice(0, 4).join('; '));

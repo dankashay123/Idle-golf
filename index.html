@@ -26468,6 +26468,7 @@ Object.assign(Scene, {
   // clip line (see Scene.clipAt).
   drawPier(){
     const I = this.isle;
+    const SEA_ROCKS = false;
     if(!I || !I.pier) return;
     const c = this.b, T = this.theme, near = this.camD - CAM_BACK + 0.7;
     const a = I.bank + 0.5, b = LEN - 8.3, hw = 0.55, up = 0.12;
@@ -26509,7 +26510,10 @@ Object.assign(Scene, {
     const n = Math.max(4, Math.round((b - a) / 0.3));
     const at = i => { const d = b - (b - a) * i / n; return { d, L: this.proj(d, -hw, up), R: this.proj(d, hw, up), G: this.proj(d, -hw, 0) }; };
     const farRocks = rk.filter(r => r.d > b), nearRocks = rk.filter(r => r.d <= b);
-    farRocks.forEach(rock);
+    // (the ring of rocks round the green the user had taken out: drawn
+    // round it they broke into bars from the pier; the rock is gone, its
+    // green lies on the sea)
+    if(SEA_ROCKS){ farRocks.forEach(rock); }
     let far = at(0);
     for(let i = 1; i <= n; i++){
       const q = at(i);
@@ -26522,7 +26526,7 @@ Object.assign(Scene, {
       }
       far = q;
     }
-    nearRocks.forEach(rock);
+    if(SEA_ROCKS) nearRocks.forEach(rock);
     // posts and rails, far to near
     const step = 2.4, posts = [];
     for(let d = b; d >= a - 0.01; d -= step) posts.push(d);
