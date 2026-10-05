@@ -9,6 +9,8 @@
  *     Lantern Bay's front nine, which closes on its sea stack instead)
  *   - no ball ever comes down in the water, and where one lies only ever moves
  *     on down the hole
+ *   - a shot with the hole still going lays up on the near bank (none but
+ *     the last comes down on the green: see greenswing)
  *   - he walks to the bank and flies the rest, at the flight's pace, and never
  *     stands or walks on the water
  *   - the green is drawn on top of its lake (a sunken pond that size painted
@@ -71,13 +73,19 @@ module.exports = {
           if (d < prev - 1e-9) o.back++;
           prev = d;
         }
-        o.bankDry = !wet(I.bank, 0); o.landDry = !wet(I.land, 0);
+        o.bank = +I.bank.toFixed(1); o.bankDry = !wet(I.bank, 0); o.landDry = !wet(I.land, 0);
 
-        // one shot from the tee onto the island, played out frame by frame
+        // a shot from the tee with the hole still going lays up on the near
+        // bank (on the green, the next would be a full swing there: the user
+        // saw one); then the hole's last, from the bank onto the island,
+        // played out frame by frame
         const D = derive(), dt = 1 / 30;
         S.yards = S.yardsMax * 0.06;
         S.elapsed = Math.max(S.elapsed, S.parTime * 0.4);   // (not an ace: on an ace he stays on the tee)
         Scene.swing(1, false, null);
+        for (let f = 0; f < 30 * 6; f++) { Scene.draw(dt, D); if (Scene.heli > 0) o.layFlew = 1; }
+        o.lay = +Scene.camD.toFixed(1);
+        S.yards = 0; Scene.swing(1, false, null);
         let flew = 0, fast = 0, stood = 0, walked = 0, t = 0, last = Scene.camD;
         for (let f = 0; f < 30 * 9; f++) {
           Scene.draw(dt, D); t += dt;
@@ -175,6 +183,7 @@ module.exports = {
     if (r.wetSpot.length) f('balls come down in the water: ' + r.wetSpot.slice(0, 4).join(', '));
     if (r.back) f('where a ball lies went back up the hole ' + r.back + ' times');
     if (!r.bankDry || !r.landDry) f('he takes off from ' + (r.bankDry ? 'dry ground' : 'the water') + ' and lands on ' + (r.landDry ? 'dry ground' : 'the water'));
+    if (r.layFlew || Math.abs(r.lay - r.bank) > 0.6) f('a shot with the hole still going took him to ' + r.lay + (r.layFlew ? ', flying' : '') + ', not the near bank at ' + r.bank);
     if (!(r.flew > 1)) f('he flew for ' + r.flew.toFixed(2) + 's crossing the water');
     if (r.fast) f('he crossed ' + r.fast + ' frames of water faster than the flight');
     if (r.stood || r.walked) f('he ' + (r.stood ? 'stood still ' + r.stood : 'walked ' + r.walked) + ' frames on the water');

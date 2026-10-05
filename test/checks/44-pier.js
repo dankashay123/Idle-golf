@@ -58,9 +58,15 @@ module.exports = {
 
         // one shot over the gorge, frame by frame
         const D = derive(), dt = 1 / 30;
+        // (with the hole still going a shot lays up on the near bank: on the
+        // stack's green, the next would be a full swing there; see
+        // greenswing. The hole's last then carries over and he walks out)
         S.yards = S.yardsMax * 0.06;
         S.elapsed = Math.max(S.elapsed, S.parTime * 0.4);   // (not an ace: on an ace he stays on the tee)
         Scene.swing(1, false, null);
+        for (let f = 0; f < 30 * 6; f++) Scene.draw(dt, D);
+        o.lay = +Scene.camD.toFixed(1); o.bank = +I.bank.toFixed(1);
+        S.yards = 0; Scene.swing(1, false, null);
         let crossed = 0, fast = 0, stood = 0, last = Scene.camD, plank = 0, looked = 0, flew = 0;
         const PL = ['#A07C56', '#8A6A48', '#5A4230'].map(h => parseInt(h.slice(1), 16));
         for (let f = 0; f < 30 * 9; f++) {
@@ -171,6 +177,7 @@ module.exports = {
     if (!r.rims) f('the pier does not run from the bank over the sea to the rock');
     if (r.wet.length) f('balls come down in the sea: ' + r.wet.slice(0, 4).join(', '));
     if (r.back) f('where a ball lies went back up the hole ' + r.back + ' times');
+    if (Math.abs(r.lay - r.bank) > 0.6) f('a shot with the hole still going took him to ' + r.lay + ', not the near bank at ' + r.bank);
     if (!(r.crossed > 1)) f('he spent ' + r.crossed.toFixed(2) + 's on the pier');
     if (r.flew) f('he flew to the sea stack: that is the island');
     if (r.fast || r.stood) f('on the pier he ' + (r.fast ? 'went faster than a walk ' + r.fast + ' frames' : 'stood still ' + r.stood + ' frames'));

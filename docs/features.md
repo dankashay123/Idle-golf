@@ -103,7 +103,24 @@ feature must do, and is usually enough on its own.
   `leanSprite` copies a tree set.
 - **Cloud shadows**: `Scene.cshadow` (clear, not fog or Golden Hour,
   `CSHADOW_P` 0.6, `CSHADOW_FORCE`), `drawCloudShadows` after the ground,
-  three ovals drifting with the wind, rows painted once, below the horizon.
+  six ovals fixed along the hole (`dc` from the hash) drifting sideways
+  with the wind, each four faint layers a little smaller each
+  (`CSHADOW_LAYERS`, `CSHADOW_COL`: soft at the edge, so the far end the
+  low view squeezes flat fades rather than cutting off; about two thirds
+  of the darkness they had, as the user asked), one Path2D a layer. The
+  tee's deck is drawn later over the ground, so `drawTee` lays the same
+  paths over its baked picture (`_csP`, `_teeSh`, source-atop).
+- **No full swing on the green** (the user saw one): any shot but a hole's
+  last comes down no further than `shotCap()` (9 short of the green's
+  middle on his line, or an island's or sea stack's near bank), and at
+  that mark with the hole going he waits (`atCap`: the swing queues); once
+  the ball is down he plays the last up to where he putts. `greenswing`.
+- **The hole's call** (Birdie, Par ...) is type over the course, not the
+  pixel letters: `#holecall` (`holeCall(b)`), the display serif filled
+  light to its colour, outlined, the score to par under it on a rule, in
+  with a pop; moved down below the readout and its buttons where it would
+  cross them (on its side). The ace's burst is still drawn on the canvas.
+  In a wager the page's own small call (`wagerCallout`). `holecall`.
 - **The thaw**: `thawIce(look)` (spring, by the hour: 0.7 at 5 to none at
   11; `THAW_FORCE` 0.5), `Scene.thaw`, floes from `thawGrid` (value noise
   by the hole) on the water rows in `ripples` (`_ripD` holds each row's

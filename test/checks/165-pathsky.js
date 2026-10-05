@@ -9,6 +9,8 @@
  *   - cloud shadows: a spot on the course is shaded or not the same from
  *     two places down the hole (laid ahead of the camera, they moved with
  *     him)
+ *     soft at the edge (the far end was cut off in a line) and over the
+ *     tee's deck too
  *   - steam: each wisp faded to nothing at its top, foot and ends; low
  *   - the storm sky: no step down it from one row to the next */
 'use strict';
@@ -51,6 +53,21 @@ module.exports = {
             for (let d = 20; d < 56; d += 0.5) for (let x = -6; x <= 6; x += 0.5) { const p = Scene.proj(d, x), X = Math.round(p.x), Y = Math.round(p.y) - 1; if (X < 0 || X >= VW || Y < 0 || Y >= VH || Y > Scene.clipAt(d) - 1) continue;
               const j = (Y * VW + X) * 4; m.set(d + ',' + x, A[j] + A[j + 1] + A[j + 2] < B1[j] + B1[j + 1] + B1[j + 2] - 4); } return m; };
           const a = flags(8), b = flags(18); let same = 0, n = 0, sh = 0; for (const [k, v] of a) if (b.has(k)) { n++; if (v === b.get(k)) same++; if (v) sh++; }
+          // (soft at the edge, in layers: the user saw the far end cut off in
+          // a line; and across the tee's deck, drawn after the ground: one
+          // went missing there)
+          { const A = shot(8, 5); Scene.cshadow = false; const B1 = shot(8, 5); Scene.cshadow = true; let n2 = 0, faint = 0, mx = 0; const dk = [];
+            for (let i = 0; i < A.length; i += 4) { const b0 = B1[i] + B1[i + 1] + B1[i + 2], v = (b0 - A[i] - A[i + 1] - A[i + 2]) / Math.max(1, b0); if (v > 0.012 && b0 > 120) { dk.push(v); mx = Math.max(mx, v); } }
+            // (by how much of its own light each pixel lost: one fill takes the same share everywhere)
+            dk.sort((p, q) => p - q); mx = dk.length ? dk[Math.floor(dk.length * 0.9)] : 0;
+            for (const v of dk) { n2++; if (v < mx * 0.6) faint++; }
+            o.soft = (faint / Math.max(1, n2)).toFixed(2); o.dark = mx.toFixed(3); if (mx > 0.075) f('cloud shadows take ' + o.dark + ' of the light (the user asked them fainter than the 0.09 they were)'); if (n2 < 200 || faint < n2 * 0.2) f('cloud shadows hard at the edge: ' + faint + ' of ' + n2 + ' shaded pixels faint (' + mx.toFixed(3) + ')'); }
+          { let best = 0, tot = 1; const TD = TEE_DECK, a = Scene.proj(TD.d1, -TD.hw * 0.8, TD.lift), b = Scene.proj((TD.d0 + TD.d1) / 2, TD.hw * 0.8, TD.lift);
+            for (let t = 0; t < 120 && best < tot * 0.8; t += 3) { const A = shot(0, t); Scene.cshadow = false; const B1 = shot(0, t); Scene.cshadow = true; let k = 0, n3 = 0;
+              const a2 = Scene.proj(TD.d1, -TD.hw * 0.8, TD.lift), b2 = Scene.proj(Math.max(TD.d0, 0.6), TD.hw * 0.8, TD.lift);
+              for (let y = Math.max(0, Math.round(a2.y) + 1); y < Math.min(VH, Math.round(b2.y)); y++) for (let x = Math.max(0, Math.round(a2.x) + 1); x < Math.min(VW, Math.round(b2.x)); x++) { n3++; const j = (y * VW + x) * 4; if (A[j] + A[j + 1] + A[j + 2] < B1[j] + B1[j + 1] + B1[j + 2] - 3) k++; }
+              if (k > best) { best = k; tot = n3; } }
+            o.tee = best; if (best < tot * 0.5) f('no cloud shadow ever over the tee\'s deck (' + best + ' pixels)'); }
           Scene.props = keepP; CSHADOW_FORCE = null; o.cs = same + ' of ' + n + ' (' + sh + ' shaded)'; if (n < 50 || sh < 10) f('cloud shadows sampled at ' + o.cs + ' ' + JSON.stringify([Scene.cshadow, hh, VW, HORIZON, Scene.camD, Scene.proj(30, 0), Scene.clipAt(30)])); if (same < n * 0.9) f('cloud shadows moved with the camera: ' + o.cs); }
         // ---- steam ----
         { let worst = 0, edge = 0; for (const sz of [6, 11, 20, 36]) { const cv = steamSprite(sz), g = cv.getContext('2d'), d = g.getImageData(0, 0, cv.width, cv.height).data, W = cv.width, H = cv.height;
@@ -70,6 +87,6 @@ module.exports = {
     if (r.fails.length) throw new Error(r.fails.join('; '));
     const o = r.o;
     return ['the ball lying ahead at most ' + o.ball + ' of what 1.3 times true allows; the path over rivers and gorges drawn: ' + o.path + ' points, never in the green\'s apron',
-      'cloud shadows the same from two places: ' + o.cs + '; steam edges at most ' + o.steam + ' of full; the storm sky\'s worst row step ' + o.sky];
+      'cloud shadows the same from two places: ' + o.cs + ', ' + o.soft + ' of their pixels the faint edge, at most ' + o.dark + ' of the light taken, ' + o.tee + 'px over the tee\'s deck; steam edges at most ' + o.steam + ' of full; the storm sky\'s worst row step ' + o.sky];
   }
 };

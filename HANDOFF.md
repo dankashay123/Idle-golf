@@ -14,7 +14,12 @@ through:
 ## 1. Where things stand
 
 - Everything is committed and **no request is waiting**. Last (from his
-  phone's screenshot): Golden Hour's mountain redrawn as a rounded, lumpy
+  phone's screenshot): cloud shadows soft at the edge (the far end looked
+  cut off in a line) and fainter, and over the tee's deck too; no full
+  swing on the green any more (shots but the last stop short of it); the
+  hole's call (Birdie, Par ...) redrawn in crisp type with a colour fill,
+  outline and the score to par under it, kept clear of the readout. Before
+  that: Golden Hour's mountain redrawn as a rounded, lumpy
   heap of coins shaded by the low sun (it was six stepped tiers, "very
   Minecraft-y"); no bunker or pond runs in under its foot any more; and
   trees behind it no longer cast shadow streaks across its face. Before
@@ -49,7 +54,7 @@ through:
   new a switch. Earlier work: the sections under it.
 - What lives by the season asks `lookSeason`: a course's own, the Snowline
   winter and the Blossom spring all year, else the month.
-- `node test/run.js` has **166 checks**, about 35 minutes: run it in the
+- `node test/run.js` has **168 checks**, about 35 minutes: run it in the
   background, on a copy in the scratchpad, with the machine quiet. After
   weather, colours or anything dated, also run it with `HOUR_FORCE` 8 and
   15 and the month pinned (rules 20 and 70).
@@ -282,15 +287,30 @@ the Tour tab, no new sound but ambience.
 Five at least (CLAUDE.md); don't raise the dog until he does; no new
 animals for now (he asked to hold off).
 
-1. **Look at the new things on the phone** (switches: Deep snow settled,
-   Stars coming out, Leaves or petals gathered, Mist in the dips, Steam)
-   and say what to tune.
-2. **Snow falling heavier** as a snowy round goes on, matching the snow
-   building up on everything.
-3. **The flag and pole wet in rain**, the flag hanging heavier and darker.
-4. **Frost melting** off the fairway through a frosty round, as the mist
-   lifts (he turned down dew; this is the frost going).
-5. **A fog bank thinning** through a foggy round.
-6. **A memory and speed check on the phone** with the new switches all on.
+Every idea offered and not yet done, so none is lost:
 
-Recommend 1. (Turned down: dew; no new animals for now.)
+1. **Look at the new things on the phone** (the soft cloud shadows, the
+   new score call, the gold mountain; switches: Deep snow settled, Stars
+   coming out, Leaves or petals gathered, Mist in the dips, Steam) and
+   say what to tune.
+2. **Look over the other special holes** (island, sea stack, canyon,
+   railway) for bunkers or decorations running under them, as the gold
+   mountain had.
+3. **A bug pass on the latest scenery**: snow on the path, the moonrise,
+   the petals, the lifting mist, the soft shadows, together, at the phone
+   sizes and on its side.
+4. **A memory and speed check on the phone** with the new switches on.
+5. **Snow falling heavier** as a snowy round goes on.
+6. **The flag and pole wet in rain**, the flag hanging heavier and darker.
+7. **Frost melting** off the fairway through a frosty round (he turned
+   down dew; this is the frost going).
+8. **A fog bank thinning** through a foggy round.
+9. **Gusts** sending a few leaves skittering across the fairway and green
+   on windy autumn days.
+10. **Glints on the gold heap**: a few coins winking as he walks up.
+11. **A gold-dusted landing**: coins sliding a little down the slope as he
+   lands on the top.
+12. **Mountain variety**: each golden hole's heap its own shape.
+13. **A speed pass at the mountain's foot**, its slowest view.
+
+Recommend 1, then 2. (Turned down: dew; no new animals for now.)
