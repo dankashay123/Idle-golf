@@ -13,7 +13,12 @@ through:
 
 ## 1. Where things stand
 
-- Everything is committed and **no request is waiting**. Last: snow on
+- Everything is committed and **no request is waiting**. Last (from his
+  phone's screenshot): Golden Hour's mountain redrawn as a rounded, lumpy
+  heap of coins shaded by the low sun (it was six stepped tiers, "very
+  Minecraft-y"); no bunker or pond runs in under its foot any more; and
+  trees behind it no longer cast shadow streaks across its face. Before
+  that: snow on
   the path through a snowy round; the moon rising over the hills at dusk
   and climbing after nine (Dawn and Dusk on); spring petals gathering at
   the edges; the morning mist thinning hole by hole; the tee's frame back
@@ -55,7 +60,8 @@ through:
   festivals; wager medals; the
   cherry trees; the kingfisher; the monthly hunt; course collections; the
   GET buttons; the redrawn celebrations; alligators; the Wager Book
-  animals; the weekly hunt and its streak; the gold mountain; golden
+  animals; the weekly hunt and its streak; the gold mountain (now a
+  rounded heap, not tiers); golden
   animals; the heirloom prices and the wall at Card 220.
 - Settled, in case it comes up: swing speed still matters fully (a hole's
   time is when the ball drops); Fast Walker only shortens a hole's least

@@ -10,6 +10,14 @@
  *     the fairway, the sovereigns and piles on its top, the gold flag; on its
  *     ground nothing of the hole's own (no tree, spectator or animal stands
  *     in it)
+ *   - nothing of the hole's under it (the user saw bunkers run in under its
+ *     foot, cut off by it): over sixty golden holes every bunker and pond,
+ *     edge by edge as drawn, clear of its foot
+ *   - a heap, not a stair (the user found its six tiers "very
+ *     Minecraft-y"): its outline against what is behind, column by column,
+ *     never flat for a few columns and then a jump, from three places on
+ *     four holes; and no long shadow of what stands behind it lies across
+ *     its face
  *   - never through the ground in front: every pixel of the mountain lies
  *     above the ground's line at its own distance, from many places down
  *     several golden holes, on their own gentle ground and on the steepest
@@ -71,6 +79,37 @@ module.exports = {
           play(g); if (Scene.mtn || Scene.props.some(p => p.kind === 20 || p.kind === 21)) f('hole ' + g + ': the mountain on an ordinary hole');
         }
         S.dgnRun = { id: B.DGN[0].id }; if (goldenOn(golds[0], 'Fair')) f('Golden Hour in a wager'); S.dgnRun = null;
+        // ---- nothing of the hole's under it ----
+        o.haz = 0; o.hazH = 0;
+        for (let h = 1, n2 = 0; h < 200000 && n2 < 60; h++) {
+          if (!goldenOn(h, 'Fair')) continue; n2++; play(h); o.hazH++;
+          const M = Scene.mtn, lim = M.R0 * 1.03;
+          for (const b of Scene.bunkers.concat(Scene.water ? [Scene.water] : [])) {
+            o.haz++;
+            for (let d = b.d - b.rd; d <= b.d + b.rd; d += 0.1) { const sp = Scene.hazSpan(b, d); if (!sp) continue;
+              const xs = [b.x - sp.l, b.x + sp.r]; if (xs.some(x => Scene.mtnR(d, x) < lim)) { f('hole ' + h + ': a ' + (b === Scene.water ? 'pond' : 'bunker') + ' at ' + b.d.toFixed(1) + ', ' + b.x.toFixed(1) + ' runs under the mountain at ' + d.toFixed(1)); break; } } }
+        }
+        if (o.haz < 120) f('only ' + o.haz + ' hazards on ' + o.hazH + ' golden holes');
+        // ---- a heap, not a stair; no shadows across it ----
+        o.stairs = 0; o.cols = 0; o.streak = 0;
+        for (const h of golds.slice(0, 4)) {
+          play(h);
+          for (const cam of [10, 20, 30]) {
+            Scene.camD = cam; Scene.walkTo = cam; Scene.gGen++; Scene.draw(0, D);
+            const MP = Scene._mtnPx, top = [];
+            for (let x = 0; x < VW; x++) { let y = 0; while (y < VH && !MP[y * VW + x]) y++; top.push(y); }
+            let run = 0;
+            for (let x = 1; x < VW; x++) { if (top[x] >= VH || top[x - 1] >= VH) { run = 0; continue; } o.cols++;
+              const dy = Math.abs(top[x] - top[x - 1]); if (dy === 0) run++; else { if (run >= 3 && dy >= 2) o.stairs++; run = 0; } }
+            // (the frame with long shadows and without, on its face below its top)
+            const A = c.getImageData(0, 0, VW, VH).data, ls = Scene.longShadow, FD = Scene._fdep.slice(), MP2 = MP.slice();
+            Scene.longShadow = () => {}; Scene.gGen++; Scene.draw(0, D); Scene.longShadow = ls; const B2 = c.getImageData(0, 0, VW, VH).data;
+            for (let i = 0; i < VW * VH; i++) if (MP2[i] && FD[i] < Scene.mtn.top0 - 0.5 && A[i * 4] + A[i * 4 + 1] + A[i * 4 + 2] < B2[i * 4] + B2[i * 4 + 1] + B2[i * 4 + 2] - 6) o.streak++;
+          }
+        }
+        if (o.cols < 600) f('the mountain\'s outline seen over only ' + o.cols + ' columns');
+        if (o.stairs > 6) f('the mountain\'s outline steps like a stair ' + o.stairs + ' times over ' + o.cols + ' columns');
+        if (o.streak > 20) f(o.streak + ' pixels of its face under a long shadow from behind it');
         // ---- never through the ground in front ----
         const blank = () => { c.fillStyle = '#010203'; c.fillRect(0, 0, VW, VH); };
         // (without long shadows: in Golden Hour's low sun they lie on the
@@ -229,7 +268,8 @@ module.exports = {
     if (!(P.heli > 0.8)) r.fails.push('he never flew up the mountain (flew ' + P.heli + ' of the way)');
     if (!P.putt || P.putt.cam < P.putt.land - 0.05 || P.putt.up !== P.putt.z) r.fails.push('he did not putt on the top: ' + JSON.stringify(P.putt));
     if (r.fails.length) throw new Error(r.fails.join('; '));
-    return ['Golden Hour on 1 hole in ' + r.rate + ' (200,000 holes), never on a signature hole; piles down the fairway/on the top/sovereigns: ' + r.laid.join(', '),
+    return ['nothing under it: ' + r.haz + ' bunkers and ponds on ' + r.hazH + ' golden holes clear of its foot; its outline over ' + r.cols + ' columns stepped ' + r.stairs + ' times; ' + r.streak + ' pixels of its face under a shadow from behind',
+      'Golden Hour on 1 hole in ' + r.rate + ' (200,000 holes), never on a signature hole; piles down the fairway/on the top/sovereigns: ' + r.laid.join(', '),
       r.views + ' views over six golden holes, gentle and steep: the mountain in ' + r.seen + ', ' + r.hidden + ' of its pixels behind a hill and none through it; the piles and sovereigns ' + r.ppx + ' pixels, none under the line',
       'on the top at every pin (' + r.top + ' views) none of it cut away and only mountain under his feet',
       'played live he flew up (' + P.heli + ') and putted on the top at ' + P.putt.cam.toFixed(1) + '; an ace stayed on the tee (' + r.ace + ')',

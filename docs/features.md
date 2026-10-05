@@ -406,8 +406,17 @@ notes say what was asked and what to know when debugging it.
   signature hole or on a round's last hole (the grandstand stands there).
   It is the same Golden Hour as before (lit gold, all the hole earns paid
   twice), now with its own hole; there is no other Golden Hour.
-- The mountain (`MTN`, `mtnOf`): six tiers of stacked coins, its outline
-  made uneven by the hash, the green on its flat top. He plays to its foot
+- The mountain (`MTN`, `mtnOf`): a heap of coins (it was six stepped
+  tiers; the user found them "very Minecraft-y"). Its height (`mtnZ`, read
+  off a table made once a hole) rounds off the flat top and flares out to
+  nothing at the foot, with lumps by direction; `mtnS` is the same surface,
+  so he and the ball stand on what is drawn. `mtnPass` paints it as a
+  height field, shaded by which way it faces (sun to the right), coins
+  lying all over it once a coin is 2.5px across, a few spilt round the
+  foot; columns already covered are skipped (about the tiers' cost). No
+  bunker or pond reaches its foot (`onMtn`, in `layHazards`), and no long
+  shadow of what stands behind it lies across its face (`longShadow` cuts
+  where the mountain is nearer). The green on its flat top. He plays to its foot
   (`bank`) and flies up (`land`) as at an island; an ace stays on the tee.
   Piles down the fairway and on the top (kind 20), sovereigns round the
   green off his line (kind 21), gold falling in place of rain (`goldRain`,
