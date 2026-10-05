@@ -4425,6 +4425,20 @@ const frostFor = (cs, tier) => FROST_FORCE !== null ? !!FROST_FORCE
 // the rain.
 let RAINBOW_FORCE = null, FOG_FORCE = null;
 const RAINBOW_P = 1 / 60, FOG_P = 1 / 80, METEOR_GAP = 30, METEOR_DUR = 0.7;
+// Thunderstorms (the user asked): one rainy hole in three, the sky darker,
+// the rain heavier, lightning forking down behind the hills every ten
+// seconds or so with a flash over everything, and the thunder rolling in a
+// moment after. STORM_FORCE pins it; stormAt says if hole h has one.
+let STORM_FORCE = null;
+const STORM_P = 1 / 3, STORM_GAP = 10;
+const stormAt = h => STORM_FORCE !== null ? !!STORM_FORCE : !S.dgnRun && hr(h * 29 + 7, 997) < STORM_P;
+// Airplanes (the user asked): now and then one crossing high over the
+// course, a contrail drawn out behind it by day, its lights blinking at
+// night; not in the rain. PLANE_FORCE pins one up now.
+let PLANE_FORCE = null;
+const PLANE_GAP = 50, PLANE_DUR = 20, PLANE_P = 0.6;
+// the airliner side on, its nose to the right: b body, d belly, w wing, k tail
+const PLANE_PIC = ['.k.........', '.kkbbbbbbb.', '..dddwdddbb', '.....ww....'];
 const RAINBOW_COL = ['#E8423A', '#F28C2E', '#F2D23A', '#4CC25A', '#3A86E0', '#7A4AC8'];
 // now and then a rainbow comes golden (the user picked "a golden version of
 // a rare weather"): six bands of gold, from the hole's hash, a Field Guide
@@ -7699,13 +7713,19 @@ const Sfx = {
     this.tone(1900, t, 0.08, 'triangle', V, 2500);
     this.tone(2500, t + 0.07, 0.7, 'sawtooth', V * 0.5, 1500);
   },
+  // Thunder far off: a low rumble of noise rolling on, a second under it.
+  thunder(t){
+    const V = this.THUNDER_VOL;
+    this.hiss(t, 2.6, 140, 0.7, V, 60, 'lowpass');
+    this.hiss(t + 0.25, 1.8, 260, 0.8, V * 0.6, 90, 'lowpass');
+  },
   // A fish dropping back into the river: a small plop and a splash.
   plop(t){
     const V = this.PLOP_VOL;
     this.tone(720, t, 0.06, 'sine', V, 260);
     this.hiss(t + 0.01, 0.1, 1800, 0.9, V * 0.6, 900);
   },
-  QUACK_VOL: 0.012, HAWK_VOL: 0.012, PLOP_VOL: 0.03,
+  QUACK_VOL: 0.012, HAWK_VOL: 0.012, PLOP_VOL: 0.03, THUNDER_VOL: 0.09,
   // The railway crossing: the train's whistle as it sets off (two toots, a
   // chord of two), its chuff while it runs, and the crossing's bell while
   // the lamps flash.
@@ -7986,6 +8006,12 @@ const Sfx = {
       this.gullT = (this.gullT === undefined ? 2 + Math.random() * 4 : this.gullT) - dt;
       if(this.gullT <= 0){ this.gullT = 6 + Math.random() * 9; this.gull(now + 0.02); }
     }else this.gullT = undefined;
+    // thunder rolling in a moment after each bolt of a storm (heard as it
+    // comes, not caught up on later)
+    if(Scene.storm && !S.dgnRun){
+      const B = Scene.boltNow();
+      if(B && this.boltN !== B.n){ if(this.boltN !== undefined && B.e < 0.3) this.thunder(now + 0.6 + hr(B.n, 988) * 1.4); this.boltN = B.n; }
+    }else this.boltN = undefined;
     // and the life on the other signature holes: the island's ducks and the
     // canyon's hawk now and then (not at night), a plop as each fish lands
     const W2 = Scene.water, live = SI2 && !S.dgnRun && W2;
@@ -21610,6 +21636,7 @@ const Scene = {
     this.night  = /Night/.test(ch) || clockNight();
     this.aurora = /Aurora|Ley|Mythic/.test(ch);
     this.rain   = /Crosswind|Marshal/.test(ch);
+    this.storm  = this.rain && stormAt(h);
     this.wind   = (rnd()*2 - 1) * 0.7;
     if(/Crosswind/.test(ch)) this.wind = (this.wind < 0 ? -1 : 1) * (1.0 + Math.abs(this.wind) * 0.5);
     const cs = courseFor(tournamentOf(h));
@@ -21791,7 +21818,7 @@ const Scene = {
     this.aurora = false;
     this.rain = false;
     this.rainbow = false; this.goldbow = false; this.dblbow = false; this.fog = false;   // (no rare weather in a wager)
-    this.harvest = false; this.cmist = false;   // (nor the Harvest Moon over its cellar, nor mist)
+    this.harvest = false; this.cmist = false; this.storm = false;   // (nor the Harvest Moon over its cellar, mist or a storm)
     const rnd = seeded(hash32(R.floor*7919 + dg.length*104729 + 13));
     this.seed = rnd() * 1000;
     this.roll = 0.42;                    // a cellar floor does not roll like links
@@ -21986,6 +22013,87 @@ const Scene = {
     if(drawn && this.hole === S.hole && this.meteorSeen !== id){ this.meteorSeen = id; guideSee('meteor'); }
   },
 
+  // the airplane up now, if one is: its turn n, how far across (e 0..1),
+  // which way, how high
+  planeNow(){
+    if(this.rain || S.dgnRun) return null;
+    const t = this.t, h = this.hole || 0, n = Math.floor(t / PLANE_GAP);
+    if(PLANE_FORCE === null && hr(h * 13 + n, 990) >= PLANE_P) return null;
+    const t0 = PLANE_FORCE ? Math.floor(t / PLANE_DUR) * PLANE_DUR : n * PLANE_GAP + hr(h * 13 + n, 991) * (PLANE_GAP - PLANE_DUR), e = (t - t0) / PLANE_DUR;
+    if(!(e >= 0 && e < 1)) return null;
+    const dir = hr(h * 17 + n, 992) < 0.5 ? -1 : 1;
+    return { n, e, dir, y: HORIZON * (0.14 + hr(h * 19 + n, 993) * 0.2), rise: (hr(h * 23 + n, 994) - 0.5) * HORIZON * 0.08 };
+  },
+  // a little airliner side on, far up: by day a pale body and its wings, a
+  // contrail drawn out and spreading behind it; at night only its lights, a
+  // red and a green at the wingtips and a white strobe
+  drawPlane(c){
+    const P = this.planeNow(); if(!P) return;
+    const x = Math.round(-14 + (VW + 28) * (P.dir > 0 ? P.e : 1 - P.e)), y = Math.round(P.y - P.rise * P.e);
+    const tail = (k) => x - P.dir * k;
+    if(this.night){
+      const bl = Math.floor(this.t * 1.6) & 1, st = (this.t * 1.2) % 1 < 0.08;
+      c.fillStyle = bl ? '#FF5A4A' : '#8A3A30'; c.fillRect(tail(2), y, 1, 1);
+      c.fillStyle = bl ? '#6AFF9A' : '#2A7A44'; c.fillRect(tail(-2), y, 1, 1);
+      c.fillStyle = 'rgba(200,210,230,0.5)'; c.fillRect(tail(1), y, 3, 1);
+      if(st){ c.fillStyle = '#FFFFFF'; c.fillRect(tail(0), y - 1, 1, 1); c.fillRect(tail(5), y, 1, 1); }
+    }else{
+      // (the contrail first, under it: thin at the plane, wider and fainter
+      // the further back, gone a long way behind)
+      if(P.y < HORIZON * 0.3) for(let k = 6; k < 130; k += 1){
+        const a = 0.7 * (1 - k / 130), w = k < 24 ? 1 : 2, xx = tail(k), yy = Math.round(y + P.rise * k / (VW + 28)) + (P.dir > 0 ? 0 : 0);
+        if(xx < -2 || xx > VW + 2) continue;
+        c.fillStyle = 'rgba(244,248,252,' + a.toFixed(2) + ')'; c.fillRect(xx, yy, 1, w);
+      }
+      const R = PLANE_PIC, W = R[0].length, col = { b: '#EEF2F6', d: '#9AA6B4', w: '#C4CCD6', k: '#5A6878' };
+      for(let r = 0; r < R.length; r++) for(let k = 0; k < W; k++){ const ch = R[r][P.dir > 0 ? k : W - 1 - k]; if(ch === '.') continue;
+        c.fillStyle = col[ch]; c.fillRect(x - (W >> 1) + k, y - 1 + r, 1, 1); }
+    }
+    // seen live, it goes in the Field Guide (once a crossing)
+    const id = this.hole + ':' + P.n;
+    if(this.hole === S.hole && this.planeSeen !== id && x > 0 && x < VW){ this.planeSeen = id; guideSee('plane'); }
+  },
+  // the storm's lightning now, if a bolt is down: its strike n, how long
+  // since (e seconds), and where
+  boltNow(){
+    if(!this.storm || S.dgnRun) return null;
+    const t = this.t, h = this.hole || 0, n = Math.floor(t / STORM_GAP), t0 = n * STORM_GAP + hr(h * 7 + n, 995) * STORM_GAP * 0.6, e = t - t0;
+    if(!(e >= 0 && e < 0.6)) return null;
+    return { n, e, x: VW * (0.12 + hr(h * 11 + n, 996) * 0.76), on: e < 0.08 || (e > 0.16 && e < 0.3) };
+  },
+  // a forked bolt from the clouds down behind the hills (drawn before them,
+  // so they stand in front of its foot), white with a pale blue glow
+  drawBolt(c){
+    // (a storm's sky: heavy slate cloud, darkest overhead, over the rain's
+    // grey; the hills drawn after stand in front of it)
+    if(this.storm && !S.dgnRun){ const H = HORIZON;
+      for(let y = 0; y < H; y += 2){ const k = y / H, wob = Math.sin(y * 0.37 + this.t * 0.15) * 0.04;
+        c.fillStyle = 'rgba(34,40,52,' + (0.62 - k * 0.42 + wob).toFixed(2) + ')'; c.fillRect(0, y, VW, 2); } }
+    const B = this.boltNow(); if(!B || !B.on) return;
+    const seg = (x0, y0, len, k, glow) => {
+      let x = x0, y = y0;
+      for(let i = 0; i < len; i++){
+        const nx = x + Math.round((hr(B.n * 31 + k * 7 + i, 998) - 0.5) * 6), ny = y + 3 + Math.floor(hr(B.n * 17 + k * 5 + i, 999) * 4);
+        pxLine(c, x, y, nx, ny, glow ? 'rgba(170,190,240,0.55)' : '#F6F8FF', 1);
+        if(glow){ pxLine(c, x + 1, y, nx + 1, ny, 'rgba(170,190,240,0.55)', 1); pxLine(c, x - 1, y, nx - 1, ny, 'rgba(170,190,240,0.55)', 1); }
+        x = nx; y = ny; if(y > HORIZON + 6) break;
+      }
+      return [x, y];
+    };
+    const steps = Math.ceil(HORIZON / 4.5) + 2, y0 = Math.round(HORIZON * 0.08);
+    seg(Math.round(B.x), y0, steps, 0, true); seg(Math.round(B.x), y0, steps, 0, false);
+    // (and a fork off it part way down)
+    const fx = Math.round(B.x + (hr(B.n, 989) - 0.5) * 8), fy = Math.round(HORIZON * 0.4);
+    seg(fx, fy, Math.ceil(steps * 0.35), 1, false);
+  },
+  // the flash over everything as a bolt strikes, and the storm's dark: drawn
+  // over the finished frame
+  drawStormLight(c){
+    if(!this.storm || S.dgnRun) return;
+    c.fillStyle = 'rgba(16,22,32,0.16)'; c.fillRect(0, 0, VW, VH);
+    const B = this.boltNow();
+    if(B && B.on){ c.fillStyle = 'rgba(232,238,255,' + (B.e < 0.08 ? 0.3 : 0.18) + ')'; c.fillRect(0, 0, VW, VH); }
+  },
   buildSky(){
     // Dithering a sky is thousands of single-pixel writes. It only depends on
     // the conditions and the frame size, so it is cached against those and not
@@ -26967,7 +27075,7 @@ Object.assign(Scene, {
     // three depths of streak, the near ones longer and brighter
     const w = this.wind || 0, run = (40 + Math.abs(w) * 300) * (w < 0 ? -1 : 1), lean = Math.abs(w) > 0.5 ? (w < 0 ? -1 : 1) : 0;
     const STREAK = [[2, 'rgba(198,222,232,.24)'], [3, 'rgba(198,222,232,.34)'], [5, 'rgba(210,230,238,.42)']];
-    for(let i = 0; i < 45; i++){
+    for(let i = 0, N = this.storm ? 90 : 45; i < N; i++){
       const z = i % 3, zk = [0.7, 1, 1.3][z], [L, col] = STREAK[z];
       const x = Math.round((((i*67 + this.t*run*zk) % (VW + 40)) + VW + 40) % (VW + 40) - 20);
       const y = Math.round((i*41 + this.t*330*zk) % (VH + 10)) - 5;
@@ -27376,6 +27484,8 @@ Object.assign(Scene, {
       }
       if(this.sky) c.drawImage(this.sky, 0, 0);
       this.drawMeteor(c);
+      this.drawPlane(c);
+      this.drawBolt(c);
       this.drawFlock();
       this.drawRidge();
       this.drawGround();
@@ -27427,6 +27537,7 @@ Object.assign(Scene, {
       this.drawGolfer(D);
       this.drawBalls(dt);
       this.drawWeather();
+      this.drawStormLight(c);
       this.tickQuip(dt);
       this.tickMove(dt);
       this.drawHud(D);
@@ -27804,7 +27915,8 @@ GUIDE.push({ id:'harvest', n:'Harvest Moon', g:'n', w:'Autumn nights, now and th
 for(const g of GUIDE) if(['owl', 'bat', 'badger', 'hedgehog', 'eyes'].includes(g.id)) g.g = 'n';
 // the rare weather (rainbowAt, fogAt, Scene.meteorNow)
 GUIDE.push({ id:'rainbow', n:'Rainbow', g:'c', w:'After the rain' }, { id:'fog', n:'Fog Bank', g:'c', w:'Rare, on a still day' }, { id:'meteor', n:'Shooting Star', g:'c', w:'Now and then at night' },
-  { id:'goldbow', n:'Golden Rainbow', g:'c', w:'One rainbow in ten' }, { id:'dblbow', n:'Double Rainbow', g:'c', w:'One rainbow in twenty' });
+  { id:'goldbow', n:'Golden Rainbow', g:'c', w:'One rainbow in ten' }, { id:'dblbow', n:'Double Rainbow', g:'c', w:'One rainbow in twenty' },
+  { id:'storm', n:'Thunderstorm', g:'c', w:'Now and then in the rain' }, { id:'plane', n:'Airplane', g:'c', w:'High overhead, now and then' });
 GUIDE.push(...B.DGN.filter(d => WAGER_WILD[d.id]).map(d => ({ id: 'wg_' + d.id, n: WAGER_WILD[d.id][1], g: 'b', w: d.n })));
 // what the hole just laid out shows: called as each hole starts, live only
 function guideSpot(sc){
@@ -27824,7 +27936,7 @@ function guideSpot(sc){
   if(!sc.ice && P.some(p => p.kind === 26 && p.sp === 'leap')) see('fish');
   if(P.some(p => p.kind === 26 && p.sp === 'dfly')) see('dragonfly');
   if(sc.golden) see('golden'); if(sc.frost) see('frost'); if(sc.rain) see('rain'); if(sc.night) see('night');
-  if(sc.goldbow) see('goldbow'); else if(sc.rainbow) see('rainbow'); if(sc.dblbow) see('dblbow'); if(sc.fog) see('fog');
+  if(sc.goldbow) see('goldbow'); else if(sc.rainbow) see('rainbow'); if(sc.dblbow) see('dblbow'); if(sc.fog) see('fog'); if(sc.storm) see('storm');
   guideAdd(got);
   courseWildSee(sc);
 }
@@ -28120,6 +28232,9 @@ const RARE_PIC = {
   harvest: () => { const rows = []; for(let y = 0; y < 13; y++){ let r = ''; for(let x = 0; x < 13; x++){ const q = Math.hypot(x - 6, y - 6);
       r += q > 6.2 ? '.' : (x - 4) ** 2 + (y - 7) ** 2 < 3 || (x - 8) ** 2 + (y - 4) ** 2 < 2 ? 'm' : q < 3.4 && x + y < 11 ? 'l' : 'o'; } rows.push(r); }
     return makeSprite(rows, { o: '#E89A48', l: '#F4BC6E', m: '#C46A2A' }); },
+  storm: () => makeSprite(['..cccccccc..', '.cCCCCCCCCc.', 'cCCCCCCCCCCc', '.cccWccccc..', '....WW......', '.....W......', '....WW......', '...WW.......', '....W.......'],
+    { c:'#4A5468', C:'#6A7488', W:'#F4F6FF' }),
+  plane: () => makeSprite(PLANE_PIC, { b:'#EEF2F6', d:'#9AA6B4', w:'#C4CCD6', k:'#5A6878' }),
   meteor: () => makeSprite(['.................W', '...............WH.', '.............HB...', '...........BB.....', '........bBB.......',
     '.....bbb..........', '..bbb.............', 'bb................'], { W:'#FFFFFF', H:'#E6ECFF', B:'#9FB4E8', b:'#6A7CC0' })
 };
