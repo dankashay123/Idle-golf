@@ -47,7 +47,7 @@ module.exports = {
         S.chaos = { n: 'Crosswind' }; Scene.newHole(S.hole, S.tier); if (Scene.harvest) f('a Harvest Moon in the rain');
         S.chaos = { n: 'Night Round' }; Scene.newHole(S.hole, S.tier); Scene.skyKey = null; Scene.buildSky();
         if (!Scene.harvest) f('no Harvest Moon forced on a night');
-        const big = Scene.moonR, low = Scene.moonY, sky = Scene.sky.getContext('2d').getImageData(Scene.moonX - 1, Scene.moonY - 1, 3, 3).data;
+        const big = Scene.moonR, low = Scene.moonY, sky = Scene.sky.getContext('2d').getImageData(Scene.moonX + (Scene.skyM || 0) - 1, Scene.moonY - 1, 3, 3).data;
         const orange = sky[0] > sky[2] + 60 && sky[0] > 180;
         HARVEST_FORCE = false; Scene.newHole(S.hole, S.tier); Scene.skyKey = null; Scene.buildSky();
         if (!(big > Scene.moonR * 1.8)) f('the Harvest Moon r ' + big + ' against ' + Scene.moonR);

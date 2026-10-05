@@ -4387,6 +4387,11 @@ let STARS_FORCE = null;
 // over the eastern hills as the stars come out at dusk, and climbs to its
 // place in the night's first two hours. 0 just risen, 1 at its place.
 const MOONRISE_X = 0.24;
+// The sky slides as the hole bends (the user: balloons, clouds and planes
+// stayed put as he turned a corner; they would stay over their own ground):
+// SKY_TURN of a true turn, built wider by SKY_TURN_M of the view each side.
+// The far ranges turn far less (drawRidge: "very slightly", as asked).
+const SKY_TURN = 0.3, SKY_TURN_M = 0.3;
 const moonRiseF = () => {
   if(S.dawnDusk !== 1 && !STARS_FORCE) return 1;
   const h = HOUR_FORCE !== null ? HOUR_FORCE : new Date().getHours() + new Date().getMinutes() / 60;
@@ -21379,7 +21384,7 @@ const Scene = {
     if(this.night && !this.ice && this.moonX != null){
       // (under the Harvest Moon, its own orange: the pale path read as the
       // ordinary moon's under a huge orange one)
-      const hm = this.harvest, M = this.moonX, hi = mixC(pickC(T._wt, 0.95), hm ? '#FFB45A' : '#EEF2DC', hm ? 0.8 : 0.75), lo = mixC(pickC(T._wt, 0.9), hm ? '#E08A3C' : '#DCE2D2', hm ? 0.55 : 0.4);
+      const hm = this.harvest, M = this.moonX + (this.skySh || 0), hi = mixC(pickC(T._wt, 0.95), hm ? '#FFB45A' : '#EEF2DC', hm ? 0.8 : 0.75), lo = mixC(pickC(T._wt, 0.9), hm ? '#E08A3C' : '#DCE2D2', hm ? 0.55 : 0.4);
       const f6 = Math.floor(this.t * 5);
       for(let i = 0; i < R.length; i += 3){
         const yy = R[i], xl = R[i+1], w = R[i+2];
@@ -21405,7 +21410,7 @@ const Scene = {
     // shimmering, as the moon's does at night
     const dd = this.dawnDusk;
     if(dd && !this.night && !this.rain && !this.ice){
-      const warm = dd.gold ? GOLD_COL : DAWN_COL[dd.dawn ? 'dawn' : 'dusk'], M = Math.round(VW * (dd.dawn ? 0.2 : DUSK_SUN));
+      const warm = dd.gold ? GOLD_COL : DAWN_COL[dd.dawn ? 'dawn' : 'dusk'], M = Math.round(VW * (dd.dawn ? 0.2 : DUSK_SUN)) + (this.skySh || 0);
       const hi = mixC(warm[0], DAWN_COL.sun, 0.6), lo = warm[0], f6 = Math.floor(this.t * 5);
       const span = (x0, x1, yy) => { let run = -1;
         for(let x = Math.max(0, x0); x <= Math.min(VW, x1); x++){
@@ -22581,10 +22586,10 @@ const Scene = {
     for(let i = 0; i <= steps; i++){
       const u = head - i / L, f = i / Math.max(1, steps);
       if(u < tail) break;
-      const x = Math.round(M.x0 + M.dx * u), y = Math.round(M.y0 + M.dy * u);
+      const x = Math.round(M.x0 + M.dx * u) + (this.skySh || 0), y = Math.round(M.y0 + M.dy * u);
       if(y < 0 || y >= HORIZON * 0.5 || x < 0 || x >= VW) continue;
       // (behind the moon, not over it)
-      if(this.moonR && Math.hypot(x - this.moonX, y - this.moonY) < this.moonR + 2) continue;
+      if(this.moonR && Math.hypot(x - this.moonX - (this.skySh || 0), y - this.moonY) < this.moonR + 2) continue;
       c.fillStyle = TC[Math.min(TC.length - 1, Math.floor(f * TC.length))]; c.fillRect(x, y, 1, f < 0.3 && VW > 300 ? 2 : 1); drawn++;
     }
     // seen live, it goes in the Field Guide (once a star)
@@ -22608,7 +22613,8 @@ const Scene = {
   // red and a green at the wingtips and a white strobe
   drawPlane(c){
     const P = this.planeNow(); if(!P) return;
-    const x = Math.round(-14 + (VW + 28) * (P.dir > 0 ? P.e : 1 - P.e)), y = Math.round(P.y - P.rise * P.e);
+    // (across the sky as it is built, slid with it as the hole bends)
+    const sm = this.skyM || 0, x = Math.round(-14 - sm + (VW + 2 * sm + 28) * (P.dir > 0 ? P.e : 1 - P.e)) + (this.skySh || 0), y = Math.round(P.y - P.rise * P.e);
     const tail = (k) => x - P.dir * k;
     if(this.night){
       const bl = Math.floor(this.t * 1.6) & 1, st = (this.t * 1.2) % 1 < 0.08;
@@ -22637,8 +22643,9 @@ const Scene = {
     if(!this.balloons || S.dgnRun) return;
     const h = this.hole || 0, n = 1 + Math.floor(hr(h * 41 + 1, 1009) * 3), w = this.wind || 0.12;
     for(let i = 0; i < n; i++){
-      const q = h * 43 + i, ht = Math.round(HORIZON * (0.1 + hr(q, 1010) * 0.1)), span = VW + 40;
-      const x = ((hr(q, 1011) * span + this.t * (Math.sign(w) || 1) * (0.6 + Math.abs(w) * 3) * (ht / 20)) % span + span) % span - 20;
+      // (over their own ground: along the sky as it is built, slid with it)
+      const sm = this.skyM || 0, q = h * 43 + i, ht = Math.round(HORIZON * (0.1 + hr(q, 1010) * 0.1)), span = VW + 2 * sm + 40;
+      const x = ((hr(q, 1011) * span + this.t * (Math.sign(w) || 1) * (0.6 + Math.abs(w) * 3) * (ht / 20)) % span + span) % span - 20 - sm + (this.skySh || 0);
       const y = Math.round(HORIZON * (0.52 + hr(q, 1012) * 0.16) + Math.sin(this.t * 0.25 + i * 2) * 2) - ht;
       const B = balloonSprite(Math.floor(hr(q, 1013) * BALLOON_COL.length), ht);
       c.drawImage(B, Math.round(x - B.width / 2), y);
@@ -22846,7 +22853,7 @@ const Scene = {
     // (Golden Hour's sky: the evening's warmth at its fullest, in gold)
     const dd = this.golden && !S.dgnRun ? { w: 1, dawn: false, gold: true } : !this.night && !this.rain && !S.dgnRun ? dawnDusk() : null;
     this.dawnDusk = dd;
-    const key = [this.themeId, this.night, this.aurora, this.rain, VW, HORIZON, dd ? dd.w + (dd.gold ? 'g' : dd.dawn ? 'a' : 'p') : ''].join('|');
+    const key = [this.themeId, this.night, this.aurora, this.rain, VW, HORIZON, 'w' + SKY_TURN_M, dd ? dd.w + (dd.gold ? 'g' : dd.dawn ? 'a' : 'p') : ''].join('|');
     // (a rainbow's hole in the cache's key, not in key: the clouds are
     // seeded by key, and stay where they were)
     const rbKey = key + (this.night && this.clockNt ? '|mr' + moonRiseF() : '') + (this.rainbow ? '|rb' + this.hole + (this.goldbow ? 'g' : '') + (this.dblbow ? 'd' : '') : '') + (this.harvest ? '|hm' : '') + (dd && dd.stars ? '|st' + dd.stars : '');
@@ -22854,11 +22861,15 @@ const Scene = {
     this.skyKey = rbKey;
     const H = Math.max(2, HORIZON + 2);
     const c = document.createElement('canvas');
-    c.width = Math.max(2, VW); c.height = H;
+    // (wider than the view by SM each side, drawn slid as the hole bends:
+    // drawSky; everything in it laid in the view's own terms, from -SM)
+    const SM = this.skyM = Math.round(VW * SKY_TURN_M), SW = VW + 2 * SM, wide = SW / VW;
+    c.width = Math.max(2, SW); c.height = H;
     const g = c.getContext('2d');
     g.imageSmoothingEnabled = false;
+    g.translate(SM, 0);
     const ramp = (this.theme || THEMES.day).sky;
-    smoothRamp(g, 0, 0, VW, H, ramp);
+    smoothRamp(g, -SM, 0, SW, H, ramp);
     // the warm band low in the sky, a row at a time over the course's own
     // sky: rose above, peach or orange at the horizon
     const warm = dd ? dd.gold ? GOLD_COL : DAWN_COL[dd.dawn ? 'dawn' : 'dusk'] : null;
@@ -22867,12 +22878,12 @@ const Scene = {
       for(let y = y0; y < H; y++){
         const f = (y - y0) / Math.max(1, H - 1 - y0);
         g.fillStyle = lerpCols([lerpCols(ramp, (y + 0.5) / H), lerpCols(warm.slice().reverse(), f)], dd.w * (0.3 + 0.62 * Math.pow(f, 1.2)));
-        g.fillRect(0, y, VW, 1);
+        g.fillRect(-SM, y, SW, 1);
       }
       // (the sky going dark as the stars come out: night blue from the top,
       // the warmth left lowest by the hills)
       if(dd.stars > 0) for(let y = 0; y < H; y++){
-        g.fillStyle = 'rgba(16,24,52,' + (dd.stars * 0.55 * (1 - 0.55 * y / H)).toFixed(3) + ')'; g.fillRect(0, y, VW, 1); }
+        g.fillStyle = 'rgba(16,24,52,' + (dd.stars * 0.55 * (1 - 0.55 * y / H)).toFixed(3) + ')'; g.fillRect(-SM, y, SW, 1); }
       // and a low sun, east in the morning and west in the evening, just
       // over the hills (lower as it is warmer), and down behind them as
       // the stars come out (it climbed again as the warmth faded)
@@ -22891,8 +22902,8 @@ const Scene = {
       // A field of one tone at one brightness reads as dust on the screen.
       // Three tiers, thinning towards the horizon where the air thickens, and
       // a few bright enough to throw a glint.
-      for(let i = 0; i < 130; i++){
-        const x = Math.floor(rnd()*VW);
+      for(let i = 0; i < Math.round(130 * wide); i++){
+        const x = Math.floor(rnd()*SW) - SM;
         const y = Math.floor(Math.pow(rnd(), 1.35) * H * 0.92);
         const v = rnd();
         g.globalAlpha = (0.30 + v*0.70) * clamp(1.15 - y/(H*0.92), 0.25, 1);
@@ -22906,8 +22917,8 @@ const Scene = {
       }
       g.globalAlpha = 1;
       // a few coloured ones: a red giant, a blue one
-      for(let i = 0; i < 6; i++){
-        const x = Math.floor(sr()*VW), y = Math.floor(sr()*H*0.6);
+      for(let i = 0; i < Math.round(6 * wide); i++){
+        const x = Math.floor(sr()*SW) - SM, y = Math.floor(sr()*H*0.6);
         g.fillStyle = i & 1 ? '#FFC9A8' : '#B4D4FF'; g.globalAlpha = 0.9; g.fillRect(x, y, 1, 1);
         g.globalAlpha = 0.3; g.fillRect(x - 1, y, 3, 1); g.fillRect(x, y - 1, 1, 3);
       }
@@ -22930,8 +22941,8 @@ const Scene = {
     // low over the warm band
     if(dd && dd.stars > 0 && !this.night){
       const sr = seeded(hash32(VW * 31 + HORIZON * 7 + 5));
-      for(let i = 0; i < 70; i++){
-        const x = Math.floor(sr() * VW), y = Math.floor(Math.pow(sr(), 1.6) * H * 0.62), v = sr(), at = sr() * 0.7 + (1 - v) * 0.3;
+      for(let i = 0; i < Math.round(70 * wide); i++){
+        const x = Math.floor(sr() * SW) - SM, y = Math.floor(Math.pow(sr(), 1.6) * H * 0.62), v = sr(), at = sr() * 0.7 + (1 - v) * 0.3;
         if(at > dd.stars) continue;
         const k = clamp((dd.stars - at) / 0.15, 0, 1) * clamp(1.1 - y / (H * 0.62), 0.2, 1);
         g.globalAlpha = (0.35 + 0.6 * v) * k; g.fillStyle = v > 0.8 ? '#F6F8FF' : '#D6DEEE'; g.fillRect(x, y, 1, 1);
@@ -22952,7 +22963,7 @@ const Scene = {
       for(let i = 0; i < 2; i++){
         const base = Math.round(H*(0.20 + i*0.17));
         const col = i ? PX.myth : PX.aur, hi = lite(col, 0.5);
-        for(let x = 0; x < VW; x++){
+        for(let x = -SM; x < VW + SM; x++){
           const yy = Math.round(base + Math.sin(x*0.045 + i*2.2)*H*0.055);
           // the rays: longer and shorter across, swaying slowly with x
           const L = Math.max(2, Math.round(H * (0.05 + 0.07 * (0.5 + 0.5 * Math.sin(x*0.21 + i*1.3) * Math.sin(x*0.057 + i)))));
@@ -22971,7 +22982,7 @@ const Scene = {
     // fading out above the horizon so none of it reaches the ground (the
     // blend at the horizon copies the sky's last row down over it)
     if(this.rainbow && !this.night && !this.rain){
-      const im = g.getImageData(0, 0, VW, H), d = im.data, RB = (this.goldbow ? GOLDBOW_COL : RAINBOW_COL).map(c => [1, 3, 5].map(i => parseInt(c.slice(i, i + 2), 16)));
+      const im = g.getImageData(0, 0, SW, H), d = im.data, RB = (this.goldbow ? GOLDBOW_COL : RAINBOW_COL).map(c => [1, 3, 5].map(i => parseInt(c.slice(i, i + 2), 16)));
       const bw = Math.max(1, Math.round(VW / 170)), R = Math.round(Math.min(VW * 0.42, H * 0.94)), cx = Math.round(VW * (0.48 + hr(this.hole, 984) * 0.24)), cy = H + Math.round(R * 0.2);
       const y1 = H - 4, fade = Math.max(2, Math.round(H * 0.3));
       // (a double's second bow: a gap of three bands out, six bands, red
@@ -22979,13 +22990,13 @@ const Scene = {
       const R2 = this.dblbow ? R + bw * 9 : R, top = Math.max(0, cy - R2);
       for(let y = top; y < y1; y++){
         const a = (this.goldbow ? 0.62 : 0.36) * Math.min(1, (y1 - y) / fade);
-        for(let x = Math.max(0, cx - R2); x < Math.min(VW, cx + R2); x++){
+        for(let x = Math.max(-SM, cx - R2); x < Math.min(VW + SM, cx + R2); x++){
           const r = Math.hypot(x - cx, y - cy);
           let b = Math.floor((R - r) / bw), C, k = a;
           if(b >= 0 && b < RB.length) C = RB[b];
           else if(this.dblbow && (b = Math.floor((r - R - bw * 3) / bw)) >= 0 && b < RB.length){ C = RB[b]; k = a * 0.55; }
           else continue;
-          const j = (y * VW + x) * 4;
+          const j = (y * SW + x + SM) * 4;
           d[j] += Math.round((C[0] - d[j]) * k); d[j + 1] += Math.round((C[1] - d[j + 1]) * k); d[j + 2] += Math.round((C[2] - d[j + 2]) * k);
         }
       }
@@ -22999,8 +23010,8 @@ const Scene = {
       const dim = col => dd && dd.stars ? mixC(col, '#4A4E6E', dd.stars * 0.6) : col;
       const body = dim(lite(ramp[0], 0.80)), lit = dim(lite(ramp[0], 0.96)),
             shade = dim(dd ? lerpCols([lite(ramp[0], 0.56), warm[1]], 0.45 * dd.w) : lite(ramp[0], 0.56));
-      for(let i = 0; i < 5; i++){
-        const cx = Math.floor(rnd()*VW), cy = Math.floor(H*0.12 + rnd()*H*0.38);
+      for(let i = 0; i < Math.round(5 * wide); i++){
+        const cx = Math.floor(rnd()*SW) - SM, cy = Math.floor(H*0.12 + rnd()*H*0.38);
         const w = Math.round(VW*(0.10 + rnd()*0.11));
         const lobes = [];
         const n = 4 + Math.floor(rnd()*3);
@@ -25797,6 +25808,20 @@ Object.assign(Scene, {
   // user: "the horizon view would move slightly ... when turning"): slid
   // against the way he faces, a fraction of what a true turn would, so the
   // far hills drift and never swing
+  // the sky, slid as the hole bends: by SKY_TURN of how far he has turned
+  // since the tee (as drawRidge measures it), within the margin it was built
+  // with; skySh is the slide, for what is drawn in the sky over it
+  drawSky(c){
+    this.skySh = 0;
+    if(!this.sky) return;
+    const M = this.skyM || 0;
+    if(M && this.curve && !S.dgnRun){
+      const turn = (this.curveAt(this.camD + 0.5) - this.curveAt(this.camD - 0.5)) - (this.curveAt(0.5) - this.curveAt(-0.5));
+      this.skySh = clamp(Math.round(-turn * LAT * K_PROJ * SKY_TURN), -M, M);
+      if(!isFinite(this.skySh)) this.skySh = 0;
+    }
+    c.drawImage(this.sky, -M + this.skySh, 0);
+  },
   drawRidge(){
     this.buildRidge();
     if(!this.ridge) return;
@@ -28477,7 +28502,7 @@ Object.assign(Scene, {
       }
       if(!isFinite(this.camD)) this.camD = 0;
       this.drawnAt = performance.now(); this.drawnN = this.stepN || 0;
-      if(this.sky) c.drawImage(this.sky, 0, 0);
+      this.drawSky(c);
       this.drawRidge();
       this.drawGround();
       this.drawFarFade();
@@ -28625,7 +28650,7 @@ Object.assign(Scene, {
         const q = this.queued; this.queued = null;
         this.swingT = this.swingDur; this.pendingBall = q;
       }
-      if(this.sky) c.drawImage(this.sky, 0, 0);
+      this.drawSky(c);
       // (the low sun's long shadows this frame: dawnDusk as the sky has it)
       { const L = this.dawnDusk; this._lsh = L && !this.night && !this.rain && !this.fog && !S.dgnRun && (L.stars || 0) < 0.8 ? { w: L.w, dir: L.dawn ? -1 : 1, fade: 1 - (L.stars || 0) } : null; }
       this.drawMeteor(c);
