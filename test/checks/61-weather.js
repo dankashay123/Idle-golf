@@ -6,15 +6,10 @@
  *     summer course, not in the afternoon. The grass pales (the fairway's
  *     middle tone lighter than the same hole's by day) and frost specks lie
  *     over it, some glinting; none on a day without frost
- *   - puddles: in the rain, on the fairway, never in a hazard or on the
- *     green, with rain rings in them (the drawn puddle changes between
- *     moments); none dry, none on a frozen course, none in a wager
- *   - a puddle is whole: drawn alone where nothing in front cuts it, no row
- *     is missing between its far end and its near (a row's distance guessed
- *     as a straight share fell behind the ground's line and left rows out)
+ *   - no puddles on the fairway (the user had them taken out)
  *   - nothing through a hill: on every home course's first four holes, the
- *     camera at eight places, a frame of the hole first, then each speck and
- *     each puddle alone over a blank; every pixel on or above the ground's
+ *     camera at eight places, a frame of the hole first, then each speck
+ *     alone over a blank; every pixel on or above the ground's
  *     line at its own distance (a puddle's, the most open over its length)
  *   - at night the Divine, the Demonic and the Ascended light the grass
  *     round his feet in their own colours, under their own ground; by day
@@ -71,45 +66,14 @@ module.exports = {
         if (dsp) f('frost specks on a day without frost: ' + dsp);
         FROST_FORCE = null;
 
-        // ---- puddles ----
-        hole(home); FROST_FORCE = 0; setup('Crosswind');
-        const pud = Scene.props.filter(p => p.kind === 7);
-        o.puddles = pud.length;
-        if (pud.length < 2) f('only ' + pud.length + ' puddles laid on a hole');
-        for (const p of pud) {
-          if (Scene.hitsHazard(p.d, p.x, 0)) f('a puddle in a hazard at ' + p.d.toFixed(1));
-          if (p.d + p.rd > LEN - 6) f('a puddle on the green at ' + p.d.toFixed(1));
-          if (Math.abs(p.x) > Scene.fwWidth(p.d)) f('a puddle off the fairway at ' + p.d.toFixed(1) + ', ' + p.x.toFixed(2));
-        }
-        // the nearest in view, drawn alone at two moments: water, and rings moving
-        const P0 = pud.find(p => p.d > 4) || pud[0];
-        Scene.camD = Math.max(0, P0.d - 7); Scene.draw(0, D);
-        alone([P0], 3.0); const a = c.getImageData(0, 0, VW, VH).data, na = count();
-        alone([P0], 3.35); const b = c.getImageData(0, 0, VW, VH).data;
-        let moved = 0; for (let i = 0; i < a.length; i += 4) if (a[i] !== b[i] || a[i + 1] !== b[i + 1] || a[i + 2] !== b[i + 2]) moved++;
-        o.pud = { n: na, rings: moved };
-        if (na < 20) f('a puddle close by drew ' + na + ' pixels');
-        if (moved < 3) f('no rain rings moving in a puddle (' + moved + ' pixels changed)');
-        // whole: no missing row where nothing cuts it
-        {
-          const near = Scene.proj(P0.d - P0.rd, P0.x), far = Scene.proj(P0.d + P0.rd, P0.x), open = Scene.clipAt(P0.d - P0.rd);
-          alone([P0], 3.0); const d = c.getImageData(0, 0, VW, VH).data; const gaps = [];
-          for (let y = far.y + 1; y < near.y; y++) {
-            if (y > open) break;
-            let any = false; for (let x = 0; x < VW && !any; x++) { const i = (y * VW + x) * 4; if (!(d[i] === 1 && d[i + 1] === 2 && d[i + 2] === 3)) any = true; }
-            if (!any) gaps.push(y);
-          }
-          if (gaps.length) f('the puddle has rows missing: ' + gaps.join(','));
-        }
-        // none dry, frozen or in a wager
-        const drawnKind = (k) => { blank(); Scene.drawProps(); return count(); };
-        setup('Fair'); Scene.camD = Math.max(0, P0.d - 7); Scene.draw(0, D); { blank(); const was = Scene.props; Scene.props = Scene.props.filter(p => p.kind === 7); Scene.drawProps(); Scene.props = was; o.dry = count(); }
-        setup('Crosswind'); Scene.camD = Math.max(0, P0.d - 7); Scene.draw(0, D); Scene.ice = true; { blank(); const was = Scene.props; Scene.props = Scene.props.filter(p => p.kind === 7); Scene.drawProps(); Scene.props = was; o.icy = count(); } Scene.ice = false;
-        S.dgnRun = { id: 'water' }; { blank(); const was = Scene.props; Scene.props = was.filter(p => p.kind === 7); Scene.drawProps(); Scene.props = was; o.wager = count(); } S.dgnRun = null;
-        if (o.dry || o.icy || o.wager) f('puddles drawn dry ' + o.dry + ', frozen ' + o.icy + ', in a wager ' + o.wager);
+        // ---- no puddles (the user: "please remove the puddles on the
+        // fairway from the game") ----
+        { let n = 0; hole(home); FROST_FORCE = 0;
+          const h0 = S.hole; for (let hh = h0; hh < h0 + 30; hh++) { S.hole = hh; setup('Crosswind'); n += Scene.props.filter(p => p.kind === 7).length; }
+          o.puddles = n; if (n) f(n + ' puddles laid over 30 rainy holes'); }
 
         // ---- nothing through a hill ----
-        for (const [chaos, kind] of [['Crosswind', 7], ['Fair', 6]]) {
+        for (const [chaos, kind] of [['Fair', 6]]) {
           FROST_FORCE = kind === 6 ? 1 : 0;
           for (let ci = 0; ci < B.COURSE.length; ci++) {
             if (B.COURSE[ci].slot !== 'home') continue;
@@ -144,7 +108,7 @@ module.exports = {
           }
         }
         FROST_FORCE = null;
-        if (o.pix < 2000) f('puddles and frost showed only ' + o.pix + ' pixels over ' + o.views + ' views');
+        if (o.pix < 1000) f('frost showed only ' + o.pix + ' pixels over ' + o.views + ' views');
 
         // ---- the dearest skins' light on the grass at night ----
         hole(home);
@@ -168,8 +132,8 @@ module.exports = {
     });
     if (r.fails.length) throw new Error(r.fails.join('; '));
     return ['frost on a cold morning, not in the afternoon, a summer course, rain or night; fairway ' + r.frost.fw + ' paler, ' + r.frost.specks + ' speck and ' + r.frost.glint + ' glint pixels, none without frost',
-      r.puddles + ' puddles on the hole, on the fairway; one close by ' + r.pud.n + ' pixels, rings moving (' + r.pud.rings + '), whole; none dry, frozen or in a wager',
-      r.views + ' views on the home courses, ' + r.pix + ' pixels of puddles and frost, none under the ground\'s line',
+      'no puddles over 30 rainy holes',
+      r.views + ' views on the home courses, ' + r.pix + ' pixels of frost, none under the ground\'s line',
       'the skins\' light on the grass, night/day: ' + Object.entries(r.glow).map(([k, v]) => k + ' ' + v).join(', ')];
   }
 };

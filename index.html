@@ -615,6 +615,9 @@ div.guide.hunt,div.guide.mhunt{grid-template-columns:repeat(3,minmax(0,1fr))}
 .devbtn{border:1px solid var(--line);background:var(--raise);border-radius:0;padding:7px 3px;
   font-size:var(--f1);color:var(--chalk);line-height:1.2}
 .devbtn:active{background:var(--raise2);border-color:var(--brass-dk);color:var(--brass)}
+.devbtn small{font-size:var(--f0);color:var(--faint)}
+.devbtn.devon{background:#24502E;border-color:#7ACB86;color:#E8FFE8;font-weight:700}
+.devbtn.devon small{color:#B8E8C0}
 
 /* ---------- toast ---------- */
 /* Pinned over the sky inside the stage. Anchored to the bottom of the app they
@@ -20519,18 +20522,12 @@ const Scene = {
       const w = hr(i, 327);
       put.push({ kind: 8, d, x, s: 0.75 + hr(i, 328) * 0.6, sp: w < 0.45 ? 'bush' : w < 0.85 ? 'tuft' : 'rock' });
     }
-    // a frosty morning's glints over the fairway and the rough, and a storm's
-    // puddles lying on the fairway (not in a hazard, not on the green)
+    // a frosty morning's glints over the fairway and the rough (the storm's
+    // puddles on the fairway the user had taken out)
     for(let i = 0; i < 180; i++){
       const d = 2 + hr(this.hole * 41 + i, 305) * (LEN + 2), x = (hr(this.hole * 41 + i, 306) - 0.5) * 2 * (this.fwWidth(d) + 2.5);
       if(Math.abs(x) > 6.6) continue;
       put.push({ kind: 6, d, x, k: i });
-    }
-    for(let i = 0; i < 24; i++){
-      const d = 5 + hr(this.hole * 43 + i, 307) * (LEN - 16), x = (hr(this.hole * 43 + i, 308) - 0.5) * 1.2 * this.fwWidth(d);
-      const rd = 0.35 + hr(i, 309) * 0.45, rx = 0.25 + hr(i, 310) * 0.35;
-      if(this.hitsHazard(d, x, 1.2) || put.some(p => p.kind === 7 && Math.abs(p.d - d) < 2.2)) continue;
-      put.push({ kind: 7, d, x, rd, rx, k: i });
     }
     // a grandstand behind the last green of the round (kind 10), full on the
     // event's final day and filling up through the week before it; not by
@@ -21746,7 +21743,7 @@ const Scene = {
     const ch = S.chaos ? S.chaos.n : 'Fair';
     this.night  = /Night/.test(ch) || clockNight();
     this.aurora = /Aurora|Ley|Mythic/.test(ch);
-    this.rain   = /Crosswind|Marshal/.test(ch);
+    this.rain   = /Crosswind|Marshal/.test(ch) || (STORM_FORCE === true && !S.dgnRun && !/Night/.test(ch));
     this.storm  = this.rain && stormAt(h);
     this.wind   = (rnd()*2 - 1) * 0.7;
     if(/Crosswind/.test(ch)) this.wind = (this.wind < 0 ? -1 : 1) * (1.0 + Math.abs(this.wind) * 0.5);
@@ -30512,6 +30509,7 @@ function albTick(c, dt){
   const can = !QUIET && !OFFLINE && !S.dgnRun && !SAVER && !(typeof document !== 'undefined' && document.hidden);
   if(!LUCKY.a && can){
     LUCKY.wait -= dt;
+    if(ALB_PIN) LUCKY.wait = Math.min(LUCKY.wait, 2);
     if(LUCKY.wait <= 0) albGo();
   }
   const A = LUCKY.a;
@@ -30609,6 +30607,39 @@ function albCatch(){
    Reached by tapping the title. Everything here writes straight to state and
    is meant for testing only: there is no cost, no gate and no undo.
    ========================================================================= */
+// Scenery switches (the user: "an on/off switch ... keep it on until I can
+// see it and test it repeatedly"): each pins one thing on, over every hole
+// it can be on (some only where it can: steam needs water, fireflies the
+// night), until switched off; kept in this copy so a reload keeps it.
+// Developer copy only.
+let ALB_PIN = null;
+const SCENE_PINS = [
+  { id:'steam', n:'Steam off the water', w:'water', get: () => PSTEAM_FORCE === true || PSTEAM_FORCE === 1, set: v => { PSTEAM_FORCE = v ? true : null; } },
+  { id:'mist', n:'Canyon mist', w:'canyon', get: () => CMIST_FORCE === true || CMIST_FORCE === 1, set: v => { CMIST_FORCE = v ? true : null; } },
+  { id:'balloon', n:'Hot-air balloons', w:'by day, dry', get: () => BALLOON_FORCE === true || BALLOON_FORCE === 1, set: v => { BALLOON_FORCE = v ? true : null; } },
+  { id:'plane', n:'Airplanes', w:'not in rain', get: () => PLANE_FORCE === true || PLANE_FORCE === 1, set: v => { PLANE_FORCE = v ? true : null; } },
+  { id:'storm', n:'Thunderstorm', w:'brings rain', get: () => STORM_FORCE === true || STORM_FORCE === 1, set: v => { STORM_FORCE = v ? true : null; } },
+  { id:'alb', n:'Lucky Albatross', w:'one after another', get: () => ALB_PIN === true || ALB_PIN === 1, set: v => { ALB_PIN = v ? true : null; } },
+  { id:'harvest', n:'Harvest Moon', w:'at night', get: () => HARVEST_FORCE === true || HARVEST_FORCE === 1, set: v => { HARVEST_FORCE = v ? true : null; } },
+  { id:'rainbow', n:'Rainbow', w:'by day, dry', get: () => RAINBOW_FORCE === true || RAINBOW_FORCE === 1, set: v => { RAINBOW_FORCE = v ? true : null; } },
+  { id:'fog', n:'Fog bank', w:'by day, dry', get: () => FOG_FORCE === true || FOG_FORCE === 1, set: v => { FOG_FORCE = v ? true : null; } },
+  { id:'frost', n:'Frost', w:'by day, dry', get: () => FROST_FORCE === true || FROST_FORCE === 1, set: v => { FROST_FORCE = v ? true : null; } },
+  { id:'firefly', n:'Fireflies', w:'at night', get: () => FIREFLY_FORCE === true || FIREFLY_FORCE === 1, set: v => { FIREFLY_FORCE = v ? true : null; } },
+  { id:'rfly', n:'Fireflies at the reeds', w:'night, reeds', get: () => RFLY_FORCE === true || RFLY_FORCE === 1, set: v => { RFLY_FORCE = v ? true : null; } },
+  { id:'dfly', n:'Dragonflies', w:'by day, reeds', get: () => DFLY_FORCE === true || DFLY_FORCE === 1, set: v => { DFLY_FORCE = v ? true : null; } },
+  { id:'leap', n:'Leaping fish', w:'open water', get: () => LEAP_FORCE === true || LEAP_FORCE === 1, set: v => { LEAP_FORCE = v ? true : null; } },
+  { id:'frog', n:'Frog on a lily pad', w:'lily pads', get: () => LILYFROG_FORCE === true || LILYFROG_FORCE === 1, set: v => { LILYFROG_FORCE = v ? true : null; } },
+  { id:'duckling', n:'Ducklings', w:'island hole', get: () => DUCKLING_FORCE === true || DUCKLING_FORCE === 1, set: v => { DUCKLING_FORCE = v ? true : null; } },
+  { id:'king', n:'Kingfisher', w:'by water', get: () => KING_FORCE === true || KING_FORCE === 1, set: v => { KING_FORCE = v ? true : false; } },
+  { id:'cub', n:'Fox cubs', w:'beside a fox', get: () => CUB_FORCE === true || CUB_FORCE === 1, set: v => { CUB_FORCE = v ? true : false; } },
+  { id:'luna', n:'Luna moth', w:'night, lamps', get: () => LUNA_FORCE === true || LUNA_FORCE === 1, set: v => { LUNA_FORCE = v ? true : null; } }
+];
+function pinsSave(){ try{ localStorage.setItem(KEY + ':pins', JSON.stringify(SCENE_PINS.filter(P => P.get()).map(P => P.id))); }catch(e){} }
+function pinsLoad(){
+  if(!devOK()) return;
+  let on = []; try{ on = JSON.parse(localStorage.getItem(KEY + ':pins') || '[]') || []; }catch(e){ on = []; }
+  for(const P of SCENE_PINS) if(Array.isArray(on) && on.includes(P.id)) P.set(true);
+}
 const DEV = {
   open(){
     const D = derive(), G = gearStats(), C = career();
@@ -30689,6 +30720,11 @@ const DEV = {
       + row('Trophy cabinet', b('fill it', 'DEV.cabinet(1)') + b('empty it', 'DEV.cabinet(0)')));
 
     const H = huntNow(), hw = huntOf(H.wk), aces = acesOn(S.hole);
+    h += fold('pins', 'Scenery Switches',
+        '<div class="devread">On stays on, every hole it can show on, until switched off.</div>'
+      + row('Tap to switch (in brackets, where it can show)', SCENE_PINS.map(P => '<button class="devbtn' + (P.get() ? ' devon' : '') + '" onclick="DEV.pin(\'' + P.id + '\')">'
+          + P.n + (P.get() ? ' ON' : '') + '<br><small>(' + P.w + ')</small></button>').join(''))
+      + row('Go To', b('all off', 'DEV.pinsOff()') + b('a hole with water', 'DEV.stones()') + b('the island', 'DEV.isle()') + b('the canyon', 'DEV.canyon()')));
     h += fold('wild', 'Wildlife, the Guide and plaques',
         row('Field Guide \u00b7 ' + GUIDE.filter(g => (S.guide || {})[g.id]).length + '/' + GUIDE.length + ' \u00b7 \u2605' + GUIDE.filter(g => (S.guide || {})[g.id] >= GUIDE_BADGE).length,
           b('spot all', 'DEV.guide(1)') + b('100 each', 'DEV.guide(3)') + b('clear', 'DEV.guide(0)') + b('open it', 'DEV.guide(2)'))
@@ -30968,6 +31004,8 @@ const DEV = {
   tagSw(){ toggleSpotTag(); this.open(); },
   wagerWild(v){ WAGER_WILD_P = v; Scene.themeId = null; this.open(); },
   albatross(){ LUCKY.a = null; LUCKY.wait = 0; hideSheet(); },
+  pin(id){ const P = SCENE_PINS.find(x => x.id === id); if(!P) return; P.set(!P.get()); pinsSave(); Scene.skyKey = null; startHole(); this.re(); },
+  pinsOff(){ for(const P of SCENE_PINS) P.set(false); pinsSave(); Scene.skyKey = null; startHole(); this.re(); },
   luna(v){ LUNA_FORCE = v; Scene.newHole(S.hole, S.tier); hideSheet(); },
   plaque(n){ const k = aceKey(S.hole); S.aceAt = S.aceAt || {}; if(n) S.aceAt[k] = n; else delete S.aceAt[k]; Scene.newHole(S.hole, S.tier); this.open(); },
   // each animal's call now, whatever the hole has (the switch aside)
@@ -31919,6 +31957,7 @@ function boot(){
   // on for a new golfer: on fixed holes, moving up when you can is the game
   if(S.autoClimb === undefined) S.autoClimb = true;
   fixHoles(had);                    // a save from before holes were fixed moves once
+  pinsLoad();                       // the developer's scenery switches, kept on
 
   Scene.init();
   setIcons();
