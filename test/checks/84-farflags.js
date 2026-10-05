@@ -68,7 +68,7 @@ module.exports = {
         if (!(o.wouldShow >= 20)) f('the sweep has only ' + o.wouldShow + ' pixels of flags behind trees to hide');
         if (!(o.shown >= 200)) f('only ' + o.shown + ' pixels of flags drawn in the open');
       } finally {
-        SHIMMER_FORCE = null;
+        SHIMMER_FORCE = SHIMMER_DEF;
         Scene.drawProp = keep; window.step = step0;
         Object.keys(S).forEach(k => delete S[k]); Object.assign(S, JSON.parse(SNAP));
         QUIET = false; buildSprites(); startHole();

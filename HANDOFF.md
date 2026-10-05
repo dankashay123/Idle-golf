@@ -24,7 +24,9 @@ through:
   rumble had been cut short; steam rose round an island green.
   He reports a steady 60fps on the phone. A **Dusk** switch shows the evening
   sky and water at any hour; canvas memory measured level over thirty
-  courses.
+  courses. Runs pinned to July 3pm and January 8am found the shimmer
+  in three checks (rule 78) and a winter line at the forest's feet
+  (softened over a third row in the snow).
 - The scenery of 4 to 6 October (canyon, ponds, dragonflies, fireflies,
   fish, storms, planes, balloons, ducklings, steam, mist, frost, the
   rainbow's reflection, wind, leaves on the water, pins either side,
@@ -244,6 +246,10 @@ Numbered so `CLAUDE.md` and the checks can point at them.
     it drops (`cvFree`), and measure live canvas memory across thirty
     courses (a probe hooking `createElement('canvas')` with `WeakRef`s and
     `gc()` under `--js-flags=--expose-gc`); it should level off.
+78. Heat shimmer slides the far rows a pixel on summer afternoons, so a
+    check measuring pixels by the horizon passed or failed by the clock:
+    the harness sets `window.__noShimmer` (`SHIMMER_DEF` false); a check
+    that wants it sets `SHIMMER_FORCE` and resets it to `SHIMMER_DEF`.
 
 ## 5. Environment
 

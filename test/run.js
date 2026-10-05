@@ -47,7 +47,7 @@ async function open(browser, url, opts) {
   page.on('console', m => { if (m.type() === 'error') errors.push('console: ' + m.text()); });
   // (sovereigns paid at once, as they were: a check measures what a thing
   // pays; the GET check turns this off to see them wait)
-  await page.addInitScript(() => { window.__sovAuto = 1; });
+  await page.addInitScript(() => { window.__sovAuto = 1; window.__noShimmer = 1; });
   await page.goto(url);
   // Scene is a top level const in a classic script, so it is a script-scope
   // binding and never lands on window. Ask for the binding itself.

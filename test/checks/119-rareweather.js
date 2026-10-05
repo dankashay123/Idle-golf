@@ -166,7 +166,9 @@ module.exports = {
         // scenery, so what stands nearer is drawn clear over it)
         {
           let hf = h0; while (sigKind(hf)) hf++;
-          const at = (fog, cam) => { FOG_FORCE = fog; play(hf); FOG_FORCE = null; Scene.camD = cam; Scene.walkTo = cam; Scene.t = 2; Scene.draw(0, D); Scene.draw(0, D); return grab(); };
+          // (no heat shimmer in either frame: on a summer afternoon the frame
+          // without fog slid its far rows a pixel and its trees read as misted)
+          const at = (fog, cam) => { FOG_FORCE = fog; SHIMMER_FORCE = false; play(hf); FOG_FORCE = null; Scene.camD = cam; Scene.walkTo = cam; Scene.t = 2; Scene.draw(0, D); Scene.draw(0, D); return grab(); };
           o.fog = [];
           for (const cam of [0, LEN * 0.25, LEN * 0.5]) {
             const a = at(1, cam), FD = Scene.fogD(), cut = Scene.clipAt(FD), FDEP = Scene._fdep && Scene._fdep.slice(), b = at(0, cam);
@@ -236,7 +238,7 @@ module.exports = {
           Scene.meteorT = undefined;
         }
       } finally {
-        window.step = keep; RAINBOW_FORCE = null; FOG_FORCE = null; GOLDBOW_FORCE = null; DBLBOW_FORCE = null; LIGHTS_FORCE = null; HOUR_FORCE = null; FROST_FORCE = null; QUIET = false; OFFLINE = false;
+        window.step = keep; SHIMMER_FORCE = SHIMMER_DEF; RAINBOW_FORCE = null; FOG_FORCE = null; GOLDBOW_FORCE = null; DBLBOW_FORCE = null; LIGHTS_FORCE = null; HOUR_FORCE = null; FROST_FORCE = null; QUIET = false; OFFLINE = false;
         Scene.meteorT = undefined; delete S.dgnRun;
         Object.keys(S).forEach(k => delete S[k]); Object.assign(S, JSON.parse(SNAP)); hideSheet(); startHole();
       }

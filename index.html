@@ -4487,7 +4487,11 @@ let SNOWSET_FORCE = null;
 // six, dry and clear, on two holes in three, the far rows by the horizon
 // waver sideways a pixel, as the air does over a long fairway in the heat.
 // SHIMMER_FORCE pins it. One scratch canvas, reused.
-let SHIMMER_FORCE = null;
+// (the checks' harness sets window.__noShimmer: it slides the far rows a
+// pixel on a summer afternoon, and a check measuring pixels there would
+// pass or fail by the clock; `heatsnow` turns it on)
+const SHIMMER_DEF = typeof window !== 'undefined' && window.__noShimmer ? false : null;
+let SHIMMER_FORCE = SHIMMER_DEF;
 const SHIMMER_P = 0.67;
 let SHIM_CV = null;
 // The ponds thawing (the user picked it): on a spring morning the water
@@ -22468,7 +22472,8 @@ const Scene = {
   // ground up to the mist's level, faint, so where it is deepest it is
   // thickest; drifting a little in strength; cut where nearer ground hides it
   drawLowMist(){
-    if(!this.lmist || S.dgnRun) return;
+    // (a morning's mist: never drawn at night, however the night came)
+    if(!this.lmist || this.night || S.dgnRun) return;
     if(!this._lmPools){
       // (dips in one hollow make one pool, its level the higher)
       const P = this.lowPools().sort((p, q) => p.d0 - q.d0), M = [];
@@ -22506,7 +22511,9 @@ const Scene = {
   // slice by slice near to far, a row painted once each, cut where nearer
   // ground hides it
   drawShimmer(){
-    if(!this.shimmer || S.dgnRun) return;
+    // (never through a fog bank, however it was set: the fog's own trees
+    // stand where the ground says)
+    if(!this.shimmer || this.fog || S.dgnRun) return;
     const c = this.b, y0 = Math.max(0, HORIZON - 3), y1 = Math.min(VH - 1, Math.round(this.proj(this.camD - CAM_BACK + 22, 0).y));
     const n = y1 - y0; if(n < 2) return;
     if(!SHIM_CV) SHIM_CV = document.createElement('canvas');
@@ -24897,7 +24904,9 @@ Object.assign(Scene, {
           // (where a rise in front cuts its foot, the last rows blend toward
           // the ground, undergrowth: cut hard, a whole forest's feet made a
           // line across the view)
-          const ft = Y >= cut - 1 && Y < Yb, row = ft ? footOf(F[y], Y === cut ? 0.55 : 0.3) : F[y];
+          // (over a third row in the snow: pale snowy trees on dark ground
+          // stood out as a line two rows could not soften)
+          const deep = this.snow, ft = Y >= cut - (deep ? 2 : 1) && Y < Yb, row = ft ? footOf(F[y], Y === cut ? 0.55 : Y === cut - 1 ? (deep ? 0.4 : 0.3) : 0.2) : F[y];
           // (the rows blended into the ground are hazed with the ground, or
           // the forest's feet were a line ruled across the view)
           // (straight into the buffers, a run at a time: a call and a loop a
@@ -31091,7 +31100,7 @@ const SCENE_PINS = [
   { id:'thaw', n:'Ice thawing', w:'water', get: () => THAW_FORCE === true, set: v => { THAW_FORCE = v ? true : null; } },
   { id:'snowset', n:'Deep snow settled', w:'snowy courses', get: () => SNOWSET_FORCE === 3, set: v => { SNOWSET_FORCE = v ? 3 : null; } },
   { id:'dusk', n:'Dusk', w:'the sky and the water', get: () => DUSK_FORCE === true, set: v => { DUSK_FORCE = v ? true : null; } },
-  { id:'shimmer', n:'Heat shimmer', w:'summer afternoons', get: () => SHIMMER_FORCE === true, set: v => { SHIMMER_FORCE = v ? true : null; } },
+  { id:'shimmer', n:'Heat shimmer', w:'summer afternoons', get: () => SHIMMER_FORCE === true, set: v => { SHIMMER_FORCE = v ? true : SHIMMER_DEF; } },
   { id:'cshadow', n:'Cloud shadows', w:'clear days', get: () => CSHADOW_FORCE === true, set: v => { CSHADOW_FORCE = v ? true : null; } },
   { id:'wleaf', n:'Leaves on the water', w:'water', get: () => WLEAF_FORCE === true, set: v => { WLEAF_FORCE = v ? true : null; } },
   { id:'lmist', n:'Mist in the dips', w:'ordinary holes', get: () => LMIST_FORCE === true || LMIST_FORCE === 1, set: v => { LMIST_FORCE = v ? true : null; } },

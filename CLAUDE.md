@@ -117,6 +117,8 @@ Rules that cost real time (detail in `HANDOFF.md` §4):
   the phone's memory for pictures ran out and the sky went black (77).
 - Far things by true scale on a grid; anything over the far field is cut
   where trees stand (`overTrees`).
+- The harness turns heat shimmer off (`window.__noShimmer`): a check
+  that wants it sets `SHIMMER_FORCE` (rule 78).
 
 Every new check gets a negative test (break the game, watch it fail, put
 it back). New things on the course are laid from a hash (`Scene.layNight`,

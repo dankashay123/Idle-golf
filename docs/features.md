@@ -155,6 +155,9 @@ feature must do, and is usually enough on its own.
   tiny). `SPECT_CACHE` frees a dropped spectator whole (`spriteFree`: its
   smaller copies and their hazes were left); `shrinkSprite` no longer makes
   a canvas it never used.
+- **The checks' harness** sets `window.__noShimmer` (`SHIMMER_DEF`); the
+  shimmer never runs through fog. The forest's feet blend over three rows
+  in the snow (`deep` in the forest pass), two otherwise.
 - **The Dusk switch** (`DUSK_FORCE`: `dawnDusk` at its warmest whatever the
   clock or setting); the evening sun at `DUSK_SUN` 0.7 across (at 0.8 its
   path on the water ran under the hole map).

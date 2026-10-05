@@ -25,7 +25,8 @@ module.exports = {
       const fair = () => { S.chaos = { n: 'Fair' }; };
       try {
         DEV.course(0); hideSheet();
-        // ---- shimmer ----
+        // ---- shimmer ---- (the harness turns it off for every other check)
+        SHIMMER_FORCE = null;
         const sh = (sn, hr0, h) => { SEASON_FORCE = sn; HOUR_FORCE = hr0; fair(); Scene.newHole(h, S.tier); return Scene.shimmer; };
         let on = 0, n = 0;
         for (let h = 1; h <= 300; h++) { const s0 = sh(0, 14, h); if (Scene.fog) { if (s0) f('shimmer in the fog'); continue; } if (lookSeason(Scene.look) !== 0) { if (s0) f('shimmer out of summer'); continue; } n++; if (s0) on++; }
@@ -42,7 +43,7 @@ module.exports = {
           for (const t of [3, 7.3, 11.9]) { const a = shot(0, t); Scene.shimmer = false; const b = shot(0, t); Scene.shimmer = true;
             let m = 0, sig = ''; for (let i = 0; i < a.length; i += 4) if (a[i] !== b[i] || a[i + 1] !== b[i + 1] || a[i + 2] !== b[i + 2]) { m++; const y = Math.floor(i / 4 / VW); if (y < HORIZON - 3 || y > y1) low++; if (m < 400) sig += i + ','; }
             if (prev !== null && sig !== prev) moved++; prev = sig; best = Math.max(best, m); }
-          SHIMMER_FORCE = null; o.spx = best;
+          SHIMMER_FORCE = SHIMMER_DEF; o.spx = best;
           if (best < 300) f('the shimmer moved ' + best + ' pixels'); if (low) f(low + ' pixels moved outside the shimmer\'s band'); if (!moved) f('the shimmer never changed'); }
         // ---- snow settling ----
         SEASON_FORCE = 2; HOUR_FORCE = 14; fair();
@@ -74,7 +75,7 @@ module.exports = {
           let dk = 0; for (let i = 0; i < a.length; i += 4) if (a[i] + a[i + 1] + a[i + 2] < b[i] + b[i + 1] + b[i + 2] - 15) dk++;
           o.prints = dk; if (dk < 4) f('frost footprints drew ' + dk + ' pixels');
           FROST_FORCE = 0; fair(); Scene.newHole(S.hole, S.tier); Scene.tracks = null; Scene.noteTrack(0, 14); if (!Scene.snow && Scene.tracks) f('tracks kept with no frost or snow'); }
-      } finally { SHIMMER_FORCE = null; SNOWSET_FORCE = null; FROST_FORCE = null; ISLE_FORCE = 0; HOUR_FORCE = keepH; SEASON_FORCE = -1; QUIET = false; window.requestAnimationFrame = raf; Object.keys(S).forEach(k => delete S[k]); Object.assign(S, JSON.parse(SNAP)); Scene.newHole(S.hole, S.tier); }
+      } finally { SHIMMER_FORCE = SHIMMER_DEF; SNOWSET_FORCE = null; FROST_FORCE = null; ISLE_FORCE = 0; HOUR_FORCE = keepH; SEASON_FORCE = -1; QUIET = false; window.requestAnimationFrame = raf; Object.keys(S).forEach(k => delete S[k]); Object.assign(S, JSON.parse(SNAP)); Scene.newHole(S.hole, S.tier); }
       return { fails, o };
     });
     if (r.fails.length) throw new Error(r.fails.join('; '));
