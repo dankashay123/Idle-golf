@@ -962,6 +962,7 @@ div.guide.hunt,div.guide.mhunt{grid-template-columns:repeat(3,minmax(0,1fr))}
    closing hole: small, in the readout under its bar (the user asked, the
    words over the map having grown too big), each item kept whole and the
    line wrapping between them. */
+.rwx .aff{font-size:.72em;letter-spacing:.04em;margin:0 .15em 0 .3em;opacity:.85}
 .rwx{font-size:var(--f0);letter-spacing:.12em;text-transform:uppercase;font-weight:700;margin-top:4px;line-height:1.35}
 .rwx[hidden]{display:none}
 .rwx span{white-space:normal}
@@ -20418,6 +20419,9 @@ const Scene = {
       if(this.hitsHazard(d, x, 0.4) || this.onNbr(d, x, 0.3) || this.inPond(d, x, 0.5) || this.inFill(d, x, 0.2, 'lake') || this.inFill(d, x, 0, 'wood')
          || (this.cart && Math.sign(x) === this.cart.sd && Math.abs(Math.abs(x) - Math.abs(this.cartX(d))) < 0.6)
          || put.some(q => (q.kind === 0 || q.kind === 2 || q.kind === 3 || q.kind >= 10) && Math.abs(q.d - d) < 0.8 && Math.abs(q.x - x) < 0.8)) continue;
+      // (nor where the buttons down the left of the field cover it from the
+      // tee: a long line in the readout sets them lower, over the rough)
+      if(i < 15 && this.coveredAt(d, x)) continue;
       // (a shrub, tuft or rock where it lies is taken away, and anyone
       // watching there steps aside)
       for(let j = put.length - 1; j >= 0; j--){ const q = put[j]; if((q.kind === 8 || q.kind === 1) && Math.abs(q.d - d) < 0.9 && Math.abs(q.x - x) < 0.9) put.splice(j, 1); }
@@ -20429,6 +20433,16 @@ const Scene = {
       payFind(h, F);
       return;
     }
+  },
+  // whether what is on the page covers the field at d, x as seen from the
+  // tee (the stage's buttons and the readout)
+  coveredAt(d, x){
+    if(typeof document === 'undefined' || !this.cv || !this.cv.getBoundingClientRect) return false;
+    const R = this.cv.getBoundingClientRect(); if(!R.width) return false;
+    const was = this.camD; this.camD = 0; const p = this.proj(d, x); this.camD = was;
+    const X = R.left + p.x / VW * R.width, Y = R.top + (p.y - 1) / VH * R.height;
+    const el = document.elementFromPoint(X, Y);
+    return !!el && el !== this.cv && !!el.closest && !!el.closest('#stage');
   },
   inFill(d, x, pad, kind){
     for(const F of this.fills || []){
@@ -27523,8 +27537,9 @@ Object.assign(Scene, {
       const e = B.ELEM.find(x => x.id === S.courseEl);
       // (said as the course's affinity: "STORM-" read as the weather once
       // there were thunderstorms)
-      // (short, to keep the readout to its lines: in full it wrapped)
-      L.push([e.n + ' Aff.' + (D.reson > 1 ? ' +' : D.reson < 1 ? ' -' : ''), PX[S.courseEl] || PX.bone]);
+      // ("aff" small between, to keep the readout to its lines: in full,
+      // "affinity" wrapped it and pushed the buttons under it down)
+      L.push([e.n, PX[S.courseEl] || PX.bone, 'aff', D.reson > 1 ? '+' : D.reson < 1 ? '-' : '']);
     }
     // (and the signature hole of the week says what it pays)
     const sk = sigKind(S.hole);
@@ -27544,7 +27559,7 @@ Object.assign(Scene, {
     this._hwKey = key;
     if(!L || !L.length){ el.hidden = true; el.innerHTML = ''; return; }
     const esc = t => t.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-    el.innerHTML = L.map(l => '<span style="color:' + l[1] + '">' + esc(l[0]) + '</span>').join('<i>\u00b7</i> ');
+    el.innerHTML = L.map(l => '<span style="color:' + l[1] + '">' + esc(l[0]) + (l[2] ? '<small class="aff">' + esc(l[2]) + '</small>' : '') + (l[3] ? esc(l[3]) : '') + '</span>').join('<i>\u00b7</i> ');
     el.hidden = false;
     fitHudLeft();
   },
