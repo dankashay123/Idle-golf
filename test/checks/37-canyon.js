@@ -61,6 +61,9 @@ module.exports = {
         Scene.swing(1, false, null);
         let crossed = 0, fast = 0, stood = 0, last = Scene.camD, plank = 0, looked = 0, flew = 0;
         const PL = ['#94633A', '#7A4E2C', '#4E321C'].map(h => parseInt(h.slice(1), 16));
+        // (no leaves, petals, snow or rain drifting across the column it
+        // samples: one falling leaf over it read as no plank)
+        const wx = { fall: Scene.fall, snow: Scene.snow, rain: Scene.rain }; Scene.fall = null; Scene.snow = false; Scene.rain = false;
         for (let f = 0; f < 30 * 9; f++) {
           Scene.draw(dt, D);
           const c = Scene.camD, v = (c - last) / dt; last = c;
@@ -82,6 +85,7 @@ module.exports = {
             }
           }
         }
+        Object.assign(Scene, wx);
         o.crossed = crossed * dt; o.fast = fast; o.stood = stood; o.flew = flew;
         o.plank = plank; o.looked = looked; o.end = +Scene.camD.toFixed(1); o.land = I.land;
 
