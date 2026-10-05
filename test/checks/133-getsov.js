@@ -22,6 +22,9 @@ module.exports = {
       try {
         SOV_AUTO = false; hideSheet(); window.toast = () => {}; S.owed = []; S.sov = 100; S.freeT = 0; S.caseGot = {};
         B.CASE.forEach(c => { S.caseGot[c.id] = c.at.length; });
+        // (today's daily challenges taken already: on some days one of them
+        // is met by what this check earns, and paid a third row on Today)
+        dailyStart(dayNow()); S.daily.done = [1, 1, 1]; S.daily.all = 1;
         const room = (tab) => { hideSheet(); trophyRoom(tab); return document.querySelector('#roomBody'); };
         const btns = (w, re) => [...w.querySelectorAll('button')].filter(b => re.test(b.textContent));
         // earned: nothing added, each in its place
