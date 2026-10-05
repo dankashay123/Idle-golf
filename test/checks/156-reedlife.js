@@ -18,6 +18,8 @@ module.exports = {
       const JULY = Math.round(Date.UTC(2026, 6, 15) / 86400000), NOV = Math.round(Date.UTC(2026, 10, 15) / 86400000);
       const raf = window.requestAnimationFrame; window.requestAnimationFrame = () => 0; QUIET = true;
       const wetFF = () => (Scene.props || []).filter(p => p.kind === 5 && p.wet);
+      // (a week whose hunt has no fireflies: in one that has, every night)
+      const keepWk = HUNTWK_FORCE; { let w = weekNow(); while (huntOf(w).includes('firefly')) w++; HUNTWK_FORCE = w; }
       try {
         for (const [day, sea, summer] of [[JULY, 0, true], [NOV, 1, false]]) {
           DAY_FORCE = day; SEASON_FORCE = sea;
@@ -39,8 +41,12 @@ module.exports = {
         if (!o.reedy) f('no night with reeds');
         else if (o.lit / o.reedy < 0.35 || o.lit / o.reedy > 0.65) f('fireflies at the reeds on ' + o.lit + ' of ' + o.reedy + ' nights');
         if (!o.nov) f('no fireflies at the reeds in November');
-        // and one night hole in two has them, over many holes
-        { let n = 0; for (let h = 1; h <= 4000; h++) if (fireflyAt(h)) n++; o.share = n / 4000; if (o.share < 0.45 || o.share > 0.55) f('fireflies on ' + (o.share * 100).toFixed(0) + '% of holes'); }
+        // and one night hole in two has them, over many holes (in a week
+        // whose hunt has no fireflies; in one that has, every night)
+        { const keepW = HUNTWK_FORCE; let wNo = weekNow(), wYes = null; for (let w = weekNow(); w < weekNow() + 200; w++) { const has = huntOf(w).includes('firefly'); if (has && wYes === null) wYes = w; if (!has && huntOf(wNo).includes('firefly')) wNo = w; }
+          try { HUNTWK_FORCE = wNo; let n = 0; for (let h = 1; h <= 4000; h++) if (fireflyAt(h)) n++; o.share = n / 4000; if (o.share < 0.45 || o.share > 0.55) f('fireflies on ' + (o.share * 100).toFixed(0) + '% of holes');
+            if (wYes !== null) { HUNTWK_FORCE = wYes; let m = 0; for (let h = 1; h <= 400; h++) if (fireflyAt(h)) m++; if (m !== 400) f('a firefly hunt week: fireflies on ' + m + ' of 400 holes'); } else f('no hunt week with the fireflies in 200 weeks'); }
+          finally { HUNTWK_FORCE = keepW; } }
         // each light fades: dark, dim and bright moments, and changing
         // smoothly (no jump from dark to full)
         { let dark = 0, dim = 0, bright = 0, jump = 0;
@@ -95,7 +101,7 @@ module.exports = {
         S.guide = S.guide || {}; QUIET = false; const n0 = S.guide.firefly || 0, tw = window.toast; window.toast = () => {};
         try { guideSpot({ hole: S.hole, night: 1, props: [{ kind: 5, wet: 1 }] }); } finally { window.toast = tw; }
         if ((S.guide.firefly || 0) !== n0 + 1) f('fireflies at the reeds: the Guide counted ' + ((S.guide.firefly || 0) - n0));
-      } finally { RFLY_FORCE = null; DFLY_FORCE = null; LILYFROG_FORCE = null; DAY_FORCE = null; SEASON_FORCE = -1; STONES_FORCE = 0; QUIET = false; window.requestAnimationFrame = raf; Object.assign(S, JSON.parse(SNAP)); Scene.newHole(S.hole, S.tier); }
+      } finally { HUNTWK_FORCE = keepWk; RFLY_FORCE = null; DFLY_FORCE = null; LILYFROG_FORCE = null; DAY_FORCE = null; SEASON_FORCE = -1; STONES_FORCE = 0; QUIET = false; window.requestAnimationFrame = raf; Object.assign(S, JSON.parse(SNAP)); Scene.newHole(S.hole, S.tier); }
       return { fails, o };
     });
     if (r.fails.length) throw new Error(r.fails.join('; '));

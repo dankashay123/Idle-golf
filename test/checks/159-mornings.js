@@ -58,7 +58,10 @@ module.exports = {
         DUCKLING_FORCE = true; S.chaos = { n: 'Night Round' }; DEV.isle(); hideSheet(); if (Scene.ducklings) f('ducklings at night');
         S.chaos = { n: 'Fair' }; DEV.isle(); hideSheet(); Scene.announce = null;
         { let best = 0; for (const t of [10, 25, 40, 55]) { const a = shot(30, t); Scene.ducklings = false; const b = shot(30, t); Scene.ducklings = true; best = Math.max(best, diff(a, b, VH).n); }
-          o.dpx = best; if (best < 12) f('the ducklings drew ' + best + ' pixels'); }
+          o.dpx = best; if (best < 12) f('the ducklings drew ' + best + ' pixels');
+          // (and while she tips up to feed, they are still there)
+          let tt = 0; while (tt < 200 && !(Scene.duckAt(1, tt) || {}).tip) tt += 0.25;
+          if (tt >= 200) f('the hen never tips up'); else { const a = shot(30, tt); Scene.ducklings = false; const b = shot(30, tt); Scene.ducklings = true; if (diff(a, b, VH).n < 6) f('the ducklings vanish while she feeds'); } }
         { S.guide = S.guide || {}; const n0 = S.guide.duckling || 0, tw = window.toast; window.toast = () => {};
           try { QUIET = false; guideSpot(Object.assign(Object.create(Scene), { hole: S.hole, props: [], ducklings: true, night: false })); QUIET = true; } finally { window.toast = tw; }
           if ((S.guide.duckling || 0) !== n0 + 1) f('ducklings seen: the Guide counted ' + ((S.guide.duckling || 0) - n0)); }
@@ -102,7 +105,17 @@ module.exports = {
             let n = 0; for (let i = 0; i < a.length; i += 4) if (a[i] + a[i + 1] + a[i + 2] > b2[i] + b2[i + 1] + b2[i + 2] + 6) { n++; if (Math.floor(i / 4 / VW) < HORIZON) sky++; }
             best = Math.max(best, n); }
           LMIST_FORCE = null; SEASON_FORCE = -1; HOUR_FORCE = keepH; FROST_FORCE = keepF;
-          o.lmpx = best; if (best < 300) f('the mist in a dip made ' + best + ' pixels paler'); if (sky) f(sky + ' pixels of the dips\' mist in the sky'); }
+          o.lmpx = best; if (best < 300) f('the mist in a dip made ' + best + ' pixels paler'); if (sky) f(sky + ' pixels of the dips\' mist in the sky');
+          // in a hollow, no stripes: down the side of the view the mist's
+          // paling changes smoothly row to row (its slices stacked into bands)
+          { LMIST_FORCE = true; SEASON_FORCE = 1; let steps = 0, looked = 0;
+            for (let h = S.hole; h < S.hole + 16; h++) { if (sigKind(h)) continue; S.chaos = { n: 'Fair' }; Scene.newHole(h, S.tier); Scene.announce = null; const P = Scene.lowPools(); if (!P.length) continue;
+              for (const cam of [P[0].d0 - 2, (P[0].d0 + P[0].d1) / 2 - 6]) { if (cam < 0) continue; looked++;
+                // (the mist alone over a flat grey, after a frame of the hole: the
+                // grass's mown bands paled by it would read as steps)
+                shot(cam, 3); const g = Scene.b; g.fillStyle = '#404040'; g.fillRect(0, 0, VW, VH); Scene.drawLowMist(); const a = g.getImageData(0, 0, VW, VH).data;
+                for (const x of [6, VW - 7]) { let prev = null; for (let y = 0; y < VH; y++) { const i = (y * VW + x) * 4, dl = a[i] + a[i + 1] + a[i + 2] - 192; if (prev !== null && dl > 0 && prev > 0 && Math.abs(dl - prev) > 6) steps++; prev = dl; } } } }
+            LMIST_FORCE = null; SEASON_FORCE = -1; o.lmsteps = steps + ' in ' + looked; if (steps > looked * 2) f('the dips\' mist in stripes: ' + steps + ' steps over ' + looked + ' views'); } }
         // ---- frost on the reeds and the lily pads ----
         { const lum = c => { const v = parseInt(c.slice(1), 16); return ((v >> 16) & 255) * 0.3 + ((v >> 8) & 255) * 0.59 + (v & 255) * 0.11; };
           const sprLum = sp => { const g = sp.cv.getContext('2d'), d = g.getImageData(0, 0, sp.cv.width, sp.cv.height).data; let s2 = 0, n = 0; for (let i = 0; i < d.length; i += 4) if (d[i + 3]) { s2 += d[i] * 0.3 + d[i + 1] * 0.59 + d[i + 2] * 0.11; n++; } return s2 / n; };

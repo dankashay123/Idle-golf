@@ -8045,7 +8045,7 @@ const Sfx = {
     // comes, not caught up on later)
     if(Scene.storm && !S.dgnRun){
       const B = Scene.boltNow();
-      if(B && this.boltN !== B.n){ if(this.boltN !== undefined && B.e < 0.3) this.thunder(now + 0.6 + hr(B.n, 988) * 1.4); this.boltN = B.n; }
+      if(B && this.boltN !== B.n){ if(B.e < 0.3) this.thunder(now + 0.6 + hr(B.n, 988) * 1.4); this.boltN = B.n; }
     }else this.boltN = undefined;
     // and the life on the other signature holes: the island's ducks and the
     // canyon's hawk now and then (not at night), a plop as each fish lands
@@ -13213,7 +13213,9 @@ const LEAP_P = 0.6;
 // up and fades over a second or so, then is dark two or three.
 let FIREFLY_FORCE = null;
 const FIREFLY_P = 0.5;
-const fireflyAt = h => FIREFLY_FORCE !== null ? !!FIREFLY_FORCE : hr(h * 37 + 11, 886) < FIREFLY_P;
+// (and every night of a week whose hunt has the fireflies in it, as the
+// hunt's birds are always somewhere)
+const fireflyAt = h => FIREFLY_FORCE !== null ? !!FIREFLY_FORCE : hr(h * 37 + 11, 886) < FIREFLY_P || (typeof huntOf === 'function' && huntOf(huntWeek()).includes('firefly'));
 const ffGlow = (t, n) => { const P = 3 + hr(n, 313) * 2.5, ph = ((t + hr(n, 314) * P) % P) / P; return ph < 0.38 ? Math.pow(Math.sin(Math.PI * ph / 0.38), 1.5) : 0; };
 const ffCol = (g, a) => 'rgba(' + Math.round(184 + 60 * g) + ',' + Math.round(224 + 31 * g) + ',' + Math.round(74 + 102 * g) + ',' + (Math.min(1, g * 1.5) * a).toFixed(2) + ')';
 // a dragonfly from above, its head to the right: b body, h head, e the tip
@@ -22177,9 +22179,9 @@ const Scene = {
   // which way, how high
   planeNow(){
     if(this.rain || S.dgnRun) return null;
-    const t = this.t, h = this.hole || 0, n = Math.floor(t / PLANE_GAP);
+    const t = this.t, h = this.hole || 0, n = PLANE_FORCE ? Math.floor(t / PLANE_DUR) : Math.floor(t / PLANE_GAP);
     if(PLANE_FORCE === null && hr(h * 13 + n, 990) >= PLANE_P) return null;
-    const t0 = PLANE_FORCE ? Math.floor(t / PLANE_DUR) * PLANE_DUR : n * PLANE_GAP + hr(h * 13 + n, 991) * (PLANE_GAP - PLANE_DUR), e = (t - t0) / PLANE_DUR;
+    const t0 = PLANE_FORCE ? n * PLANE_DUR : n * PLANE_GAP + hr(h * 13 + n, 991) * (PLANE_GAP - PLANE_DUR), e = (t - t0) / PLANE_DUR;
     if(!(e >= 0 && e < 1)) return null;
     const dir = hr(h * 17 + n, 992) < 0.5 ? -1 : 1;
     return { n, e, dir, y: HORIZON * (0.14 + hr(h * 19 + n, 993) * 0.2), rise: (hr(h * 23 + n, 994) - 0.5) * HORIZON * 0.08 };
@@ -22248,16 +22250,23 @@ const Scene = {
   // thickest; drifting a little in strength; cut where nearer ground hides it
   drawLowMist(){
     if(!this.lmist || S.dgnRun) return;
-    if(!this._lmPools) this._lmPools = this.lowPools();
-    const c = this.b, near = this.camD - CAM_BACK + 0.8, col = this.frost ? '232,240,246' : '236,238,232';
-    for(const Q of this._lmPools) for(let d = Q.d1; d >= Q.d0; d -= 0.5){
-      if(d < near) break;
+    if(!this._lmPools){
+      // (dips in one hollow make one pool, its level the higher)
+      const P = this.lowPools().sort((p, q) => p.d0 - q.d0), M = [];
+      for(const Q of P){ const L = M[M.length - 1]; if(L && Q.d0 <= L.d1){ L.d1 = Math.max(L.d1, Q.d1); L.L = Math.max(L.L, Q.L); L.b = Math.min(L.b, Q.b); } else M.push(Object.assign({}, Q)); }
+      this._lmPools = M;
+    }
+    // (near to far, each row painted once: a slice is drawn only above what
+    // the nearer ones painted, so the bands do not stack into stripes; one
+    // strength over a pool, by how deep it lies, the whole breathing slowly)
+    const c = this.b, near = this.camD - CAM_BACK + 0.8, col = this.frost ? '232,240,246' : '236,238,232', br = 0.9 + 0.1 * Math.sin(this.t * 0.4);
+    let low = VH;
+    for(const Q of this._lmPools) for(let d = Math.max(Q.d0, near); d <= Q.d1; d += 0.5){
       const z = Q.L - this.hAt(d); if(z <= 0.05) continue;
       const g = this.proj(d, 0, 0), t = this.proj(d, 0, z), clip = this.clipAt(d);
-      const y0 = Math.round(t.y), y1 = Math.min(Math.round(g.y) + 1, Math.floor(clip) + 1);
-      if(y1 <= y0) continue;
-      const a = Math.min(0.2, 0.05 + z * 0.09) * (0.8 + 0.2 * Math.sin(this.t * 0.4 + d * 0.7));
-      c.fillStyle = 'rgba(' + col + ',' + a.toFixed(3) + ')'; c.fillRect(0, y0, VW, y1 - y0);
+      const y0 = Math.round(t.y), y1 = Math.min(Math.round(g.y) + 1, Math.floor(clip) + 1, low);
+      if(y1 > y0){ const a = Math.min(0.18, 0.06 + (Q.L - Q.b) * 0.08) * br; c.fillStyle = 'rgba(' + col + ',' + a.toFixed(3) + ')'; c.fillRect(0, y0, VW, y1 - y0); }
+      low = Math.min(low, y0);
     }
   },
   // the storm's lightning now, if a bolt is down: its strike n, how long
@@ -25611,7 +25620,7 @@ Object.assign(Scene, {
         if(g > 0.35){ c.fillStyle = 'rgba(110,154,42,' + ((g - 0.35) * 1.2).toFixed(2) + ')'; fillClip(c, f.x - 1, f.y, kk + 2, kk, clip); fillClip(c, f.x, f.y - 1, kk, kk + 2, clip); }
         c.fillStyle = ffCol(g, 1); fillClip(c, f.x, f.y, kk, kk, clip);
         // (over the reeds, its light doubled faintly in the water below)
-        if(p.wet && this.wetSpot(fd, fx)){ const w = this.proj(fd, fx), y = Math.round(2 * w.y - f.y);
+        if(p.wet && !this.ice && this.wetSpot(fd, fx)){ const w = this.proj(fd, fx), y = Math.round(2 * w.y - f.y);
           // (mirrored below the water's line, not cut at it: shown where the
           // water it lies on, a little nearer, is itself in view)
           let dn = fd; while(dn > fd - 1.5 && this.proj(dn, fx).y < y) dn -= 0.1;
@@ -26688,14 +26697,20 @@ Object.assign(Scene, {
         c.globalAlpha = 1;
       }
       pxRows(c, tip ? TIP : SWIM, col, x0, y0, k, clip, !right);
-      // (in spring a line of ducklings paddling after the first hen, in a
-      // row behind her, each bobbing a little out of step)
-      if(this.ducklings && i === 1 && !tip){ const kq = Math.max(1, Math.round(k * 0.6));
-        for(let j = 0; j < 4; j++){
-          const xq = right ? x0 - (j + 1) * 6 * kq : x0 + 8 * k + j * 6 * kq, bob = Math.round(Math.sin(this.t * 3 + j * 1.3) * 0.5);
-          pxRows(c, DUCKLING, DUCKLING_COL, xq, Math.round(p.y) - 3 * kq + 1 + bob, kq, clip, !right);
-        } }
     }
+    // (in spring a line of ducklings paddling after the first hen, in a row
+    // behind her on the water, each bobbing a little out of step; they wait
+    // on while she tips up to feed, and each is placed for itself, so they
+    // keep to the water and show though she is out of view)
+    if(this.ducklings){ const U = this.duckAt(1, this.t);
+      if(U) for(let j = 0; j < 4; j++){
+        const wx = U.x - (U.right ? 1 : -1) * (0.5 + j * 0.34);
+        if(U.d < near + 1 || !this.wetSpot(U.d, wx)) continue;
+        const q = this.proj(U.d, wx, 0), cq = this.clipAt(U.d);
+        if(q.y > cq || q.x < -6 || q.x > VW + 6) continue;
+        const kq = Math.max(1, Math.round(clamp(Math.round(LAT * q.s * 0.5 / 7), 1, 3) * 0.6)), bob = Math.round(Math.sin(this.t * 3 + j * 1.3) * 0.5);
+        pxRows(c, DUCKLING, DUCKLING_COL, Math.round(q.x - 3 * kq), Math.round(q.y) - 3 * kq + 1 + bob, kq, cq, !U.right);
+      } }
   },
   // A hawk wheeling high over the canyon: a slow circle a little beyond the
   // gorge, mostly soaring on flat wings with a few beats now and then. Not
@@ -27433,6 +27448,7 @@ Object.assign(Scene, {
               mph >= 14 ? PX.brass : PX.bone]);
     }
     L.push([S.chaos ? S.chaos.n : 'Fair', 'var(--dim)']);
+    if(PINS_LIT) L.push(['Switches On', '#E07A5A']);
     if(S.courseEl){
       const e = B.ELEM.find(x => x.id === S.courseEl);
       L.push([e.n + (D.reson > 1 ? '+' : D.reson < 1 ? '-' : ''), PX[S.courseEl] || PX.bone]);
@@ -30718,11 +30734,15 @@ const SCENE_PINS = [
   { id:'cub', n:'Fox cubs', w:'beside a fox', get: () => CUB_FORCE === true || CUB_FORCE === 1, set: v => { CUB_FORCE = v ? true : false; } },
   { id:'luna', n:'Luna moth', w:'night, lamps', get: () => LUNA_FORCE === true || LUNA_FORCE === 1, set: v => { LUNA_FORCE = v ? true : null; } }
 ];
-function pinsSave(){ try{ localStorage.setItem(KEY + ':pins', JSON.stringify(SCENE_PINS.filter(P => P.get()).map(P => P.id))); }catch(e){} }
+// (whether any switch is on: the readout says so while one is, since some
+// change what pays: frost keeps Golden Hour away, a storm brings rain)
+let PINS_LIT = false;
+function pinsSave(){ PINS_LIT = SCENE_PINS.some(P => P.get()); try{ localStorage.setItem(KEY + ':pins', JSON.stringify(SCENE_PINS.filter(P => P.get()).map(P => P.id))); }catch(e){} }
 function pinsLoad(){
   if(!devOK()) return;
   let on = []; try{ on = JSON.parse(localStorage.getItem(KEY + ':pins') || '[]') || []; }catch(e){ on = []; }
   for(const P of SCENE_PINS) if(Array.isArray(on) && on.includes(P.id)) P.set(true);
+  PINS_LIT = SCENE_PINS.some(P => P.get());
 }
 const DEV = {
   open(){
@@ -30808,7 +30828,7 @@ const DEV = {
         '<div class="devread">On stays on, every hole it can show on, until switched off.</div>'
       + row('Tap to switch (in brackets, where it can show)', SCENE_PINS.map(P => '<button class="devbtn' + (P.get() ? ' devon' : '') + '" onclick="DEV.pin(\'' + P.id + '\')">'
           + P.n + (P.get() ? ' ON' : '') + '<br><small>(' + P.w + ')</small></button>').join(''))
-      + row('Go To', b('all off', 'DEV.pinsOff()') + b('a hole with water', 'DEV.stones()') + b('the island', 'DEV.isle()') + b('the canyon', 'DEV.canyon()')));
+      + row('Go To', b('all off', 'DEV.pinsOff()') + b('a hole with water', 'DEV.waterHole()') + b('the river', 'DEV.stones()') + b('the island', 'DEV.isle()') + b('the canyon', 'DEV.canyon()')));
     h += fold('wild', 'Wildlife, the Guide and plaques',
         row('Field Guide \u00b7 ' + GUIDE.filter(g => (S.guide || {})[g.id]).length + '/' + GUIDE.length + ' \u00b7 \u2605' + GUIDE.filter(g => (S.guide || {})[g.id] >= GUIDE_BADGE).length,
           b('spot all', 'DEV.guide(1)') + b('100 each', 'DEV.guide(3)') + b('clear', 'DEV.guide(0)') + b('open it', 'DEV.guide(2)'))
@@ -31088,8 +31108,19 @@ const DEV = {
   tagSw(){ toggleSpotTag(); this.open(); },
   wagerWild(v){ WAGER_WILD_P = v; Scene.themeId = null; this.open(); },
   albatross(){ LUCKY.a = null; LUCKY.wait = 0; hideSheet(); },
-  pin(id){ const P = SCENE_PINS.find(x => x.id === id); if(!P) return; P.set(!P.get()); pinsSave(); Scene.skyKey = null; startHole(); this.re(); },
-  pinsOff(){ for(const P of SCENE_PINS) P.set(false); pinsSave(); Scene.skyKey = null; startHole(); this.re(); },
+  // (the hole laid again as it is, not started over: no yards back, no fee
+  // paid again; nothing laid in a wager)
+  pin(id){ const P = SCENE_PINS.find(x => x.id === id); if(!P) return; P.set(!P.get()); pinsSave(); this.relay(); this.re(); },
+  pinsOff(){ for(const P of SCENE_PINS) P.set(false); pinsSave(); this.relay(); this.re(); },
+  relay(){ Scene.skyKey = null; if(!S.dgnRun) Scene.newHole(S.hole, S.tier); },
+  // the next ordinary hole with a pond or a lake by it (the fish, the steam,
+  // the frog and the dips' mist are on those, not on the signature holes)
+  waterHole(){
+    const h0 = S.hole;
+    for(let h = h0 + 1; h < h0 + 80; h++){ if(sigKind(h)) continue; Scene.newHole(h, S.tier);
+      const W = Scene.water; if((W && !W.canyon && !W.rail) || Scene.pond){ this.jump(h); return; } }
+    Scene.newHole(h0, S.tier); hideSheet();
+  },
   luna(v){ LUNA_FORCE = v; Scene.newHole(S.hole, S.tier); hideSheet(); },
   plaque(n){ const k = aceKey(S.hole); S.aceAt = S.aceAt || {}; if(n) S.aceAt[k] = n; else delete S.aceAt[k]; Scene.newHole(S.hole, S.tier); this.open(); },
   // each animal's call now, whatever the hole has (the switch aside)

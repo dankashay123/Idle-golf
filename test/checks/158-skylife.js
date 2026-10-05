@@ -47,7 +47,12 @@ module.exports = {
           Sfx.thunder = () => heard++; Sfx.ctx = { state: 'running', currentTime: 1 }; S.sound = 1; Sfx.boltN = undefined;
           QUIET = false; try { for (let t = t0 - 0.5; t < t0 + STORM_GAP * 2.2; t += 1 / 15) { Scene.t = t; Sfx.tick(1 / 15); } }
           finally { QUIET = true; Object.assign(Sfx, keepF); Sfx.ctx = keepC; S.sound = keepS; Sfx.boltN = undefined; }
-          o.thunder = heard; if (heard < 1) f('no thunder after the bolts'); }
+          o.thunder = heard; if (heard < 1) f('no thunder after the bolts');
+          // (and the first bolt on a hole is heard too: it went silent)
+          { let first = 0; const kf = {}; for (const k in Sfx) if (typeof Sfx[k] === 'function' && k !== 'tick' && k !== 'on') { kf[k] = Sfx[k]; Sfx[k] = () => {}; }
+            Sfx.thunder = () => first++; Sfx.ctx = { state: 'running', currentTime: 1 }; S.sound = 1; Sfx.boltN = undefined; QUIET = false;
+            try { for (let t = t0 - 0.3; t < t0 + 0.5; t += 1 / 15) { Scene.t = t; Sfx.tick(1 / 15); } } finally { QUIET = true; Object.assign(Sfx, kf); Sfx.ctx = keepC; S.sound = keepS; Sfx.boltN = undefined; }
+            if (first !== 1) f('the first bolt on a hole: thunder ' + first + ' times'); } }
         // the storm's rain in a few stamps, not a pixel at a time (it was
         // three hundred canvas calls a frame)
         { const Pr = CanvasRenderingContext2D.prototype, keep = {}; let calls = 0;
@@ -63,6 +68,10 @@ module.exports = {
         o.plane = Math.round(up / all * 100); if (up / all < 0.45 || up / all > 0.75) f('an airplane in ' + o.plane + '% of turns');
         S.chaos = { n: 'Crosswind' }; Scene.newHole(S.hole, S.tier); { let any = 0; for (let t = 0; t < 2000; t += 3) { Scene.t = t; if (Scene.planeNow()) any++; } if (any) f('an airplane in the rain'); }
         PLANE_FORCE = true;
+        // (pinned, each crossing smooth: no jump in height or side part way)
+        { S.chaos = { n: 'Fair' }; Scene.newHole(S.hole, S.tier); let jumps = 0, was = null;
+          for (let t = 0; t < 400; t += 0.25) { Scene.t = t; const P = Scene.planeNow(); if (P && was && P.n === was.n && (P.y !== was.y || P.dir !== was.dir)) jumps++; if (P && was && P.e > was.e && P.n !== was.n) jumps++; was = P; }
+          if (jumps) f('a pinned airplane jumped ' + jumps + ' times part way across'); }
         for (const ch of ['Fair', 'Night Round']) {
           S.chaos = { n: ch }; Scene.newHole(S.hole, S.tier); Scene.announce = null;
           const a = shot(PLANE_DUR * 3 + PLANE_DUR * 0.5); PLANE_FORCE = false; const b = shot(PLANE_DUR * 3 + PLANE_DUR * 0.5); PLANE_FORCE = true;

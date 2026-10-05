@@ -28,6 +28,11 @@ module.exports = {
           if (!lit) f(P.n + ' on, its button not lit');
           DEV.pin(P.id); if (P.get()) f(P.n + ' does not switch off'); }
         QUIET = true; window.toast = tw; hideSheet();
+        // a switch does not start the hole over (it put the yards back and
+        // paid a milestone's fee again)
+        { S.yards = S.yardsMax * 0.37; const y0 = S.yards, g0 = S.gold, sv0 = S.sov; QUIET = false; window.toast = () => {};
+          try { DEV.pin('steam'); DEV.pin('steam'); } finally { QUIET = true; window.toast = tw; hideSheet(); }
+          if (S.yards !== y0 || S.gold !== g0 || S.sov !== sv0) f('a switch moved the hole on: yards ' + y0 + ' to ' + S.yards + ', purse ' + g0 + ' to ' + S.gold + ', sovereigns ' + sv0 + ' to ' + S.sov); }
         // held over holes, whatever the hour and season
         HOUR_FORCE = 15; SEASON_FORCE = 0;
         DEV.pin('steam'); DEV.stones(); hideSheet();
