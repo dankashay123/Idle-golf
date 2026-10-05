@@ -2320,6 +2320,15 @@ him (about 49px tall on a 320 phone, 71px on its side).
   `PLANE_GAP` 50s, crossing in `PLANE_DUR` 20s, `PLANE_FORCE`; not in rain
   or a wager), `drawPlane` before the ridge: `PLANE_PIC` with a contrail by
   day, red/green lights and a strobe at night; seen live, Guide `plane`.
+- **Balloons, ducklings, steam** (`mornings`): `Scene.balloons` (dry, calm
+  `|wind| < 0.4`, 6 to 11 by the clock, `BALLOON_P` 0.4, `BALLOON_FORCE`),
+  `drawBalloons` before the ridge from `balloonSprite` (bounded), seen live:
+  Guide `balloon`; `Scene.ducklings` (the island in spring, `DUCKLING_P`
+  0.6, `DUCKLING_FORCE`), four in a row behind hen 1 in `drawDucks`, Guide
+  `duckling`; `Scene.psteam` (as the canyon's mist: frost, or autumn or
+  winter 5 to 11; `PSTEAM_FORCE`), `laySteam` kind 26 `sp 'steam'` on open
+  water, not ice, drawn from `steamSprite` (bounded).
+- **Rain** is three sheets (`rainSheet`, bounded) slid with the clock.
 - **lookSeason(look)**: the season a course shows (its own; the Snowline
   winter, the Blossom spring; else the month), for the Harvest Moon, the
   canyon's mist, dragonflies and the reeds' fireflies. `newDepthsHole`

@@ -55,12 +55,17 @@ through:
   the Guide's Fish). Then: thunderstorms (one rainy hole in three: a dark
   sky, heavier rain, lightning behind the hills with a flash, thunder after)
   and airplanes crossing high now and then (a contrail by day, lights at
-  night); both on the Guide's Course shelf.
+  night); both on the Guide's Course shelf. Then: hot-air balloons low
+  over the far hills on calm mornings, ducklings behind a hen on the
+  island's lake in spring, steam off the water on cold mornings; a speed
+  pass (rain as three sliding sheets: 12 canvas calls a frame, was 300;
+  dragonflies, the plane and steam baked; heaviest frames 1,400 to 1,850
+  calls, 3 to 5ms on the computer).
   Fixed on the way: a Vault floor played again after a gust was never
   called; the Spotted tag sat over a wager's name. Earlier the same day:
   cherry trees, the kingfisher, course collections, the monthly hunt, and
   the phone's picture memory (the black sky).
-- `node test/run.js` has **158 checks**, about 35 minutes: run it in the
+- `node test/run.js` has **159 checks**, about 35 minutes: run it in the
   background, on a copy in the scratchpad, with the machine quiet. After
   weather, colours or anything dated, also run it with `HOUR_FORCE` 8 and
   15 and the month pinned (rules 20 and 70).
@@ -287,12 +292,11 @@ the Tour tab, no new sound but ambience.
 
 Five at least (CLAUDE.md); don't raise the dog until he does.
 
-1. **Ask how the storms and planes feel on the phone** (the flash's
-   strength, the thunder's loudness, how often).
-2. **Hot-air balloons** drifting low over the far hills on calm mornings.
-3. **Ducklings** behind a duck on the island's lake in spring.
-4. **Steam off the ponds** on cold mornings, like the canyon's mist.
-5. **A bug and speed pass** over the last run of sky and water features
-   (about ten commits since the last sweep).
+1. **Ask how the mornings look on the phone**: balloons, steam, ducklings.
+2. **Swallows** skimming low over the water on summer evenings.
+3. **A heron** standing still in the shallows by the reeds now and then.
+4. **Frost on the reeds and lily pads** on frosty mornings.
+5. **A rainbow over the water** after a storm passes (the next hole).
+6. **A bug pass** over the sky and water work once a few more go in.
 
-Recommend 1, then 5.
+Recommend 1.
