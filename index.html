@@ -4472,6 +4472,17 @@ let WLEAF_FORCE = null;
 // five, a few great soft shadows drifting over the course with the wind.
 // CSHADOW_FORCE pins them.
 let CSHADOW_FORCE = null;
+// Snow settling (the user picked it): in a course's snowfall, deeper on the
+// trees and roofs as the round goes on (Scene.snowL, 1 to 3).
+// SNOWSET_FORCE pins the level.
+let SNOWSET_FORCE = null;
+// Heat shimmer (the user picked it): on a hot summer afternoon, noon to
+// six, dry and clear, on two holes in three, the far rows by the horizon
+// waver sideways a pixel, as the air does over a long fairway in the heat.
+// SHIMMER_FORCE pins it. One scratch canvas, reused.
+let SHIMMER_FORCE = null;
+const SHIMMER_P = 0.67;
+let SHIM_CV = null;
 // The ponds thawing (the user picked it): on a spring morning the water
 // still holds floes of thin ice, cracked at their edges, fewer as the
 // morning goes on, gone by eleven. THAW_FORCE pins it half thawed.
@@ -11206,8 +11217,8 @@ const REED_ROWS = [
   '..1.2.1.2.21..',
   '.112.2112.211.',
   '..1111111111..'];
-function courseTrees(cs, mode){
-  const key = cs.id + '|' + mode;
+function courseTrees(cs, mode, snowL){
+  const key = cs.id + '|' + mode + (snowL ? '|s' + snowL : '');
   if(TREE_CACHE[key]) return TREE_CACHE[key];
   // (only the last few courses' trees are kept: each set grows its smaller
   // and hazed copies, and every course and weather kept for good spent the
@@ -11233,9 +11244,28 @@ function courseTrees(cs, mode){
   // (in flower, cherries, in place of both, their bark dark and grey)
   const ch = isCherry(cs) && cherrySet();
   if(ch){ map.t = t('#5A4A44'); map.T = t('#2E2422'); }
-  return TREE_CACHE[key] = { pine: makeSprite(ch ? ch.pine : PINE_ROWS, map), oak: makeSprite(ch ? ch.oak : OAK_ROWS, map),
-    bush: makeSprite(BUSH_ROWS, map), tuft: makeSprite(TUFT_ROWS, gmap), rock: makeSprite(ROCK_ROWS, rmap),
+  // (snow settled on them, deeper as a snowy round goes on: snowRows)
+  const sn = R => snowL ? snowRows(R, snowL) : R;
+  if(snowL){ for(const m of [map, rmap]){ m.S = t('#F2F6F8'); m.s = t('#B6C4D0'); } }
+  return TREE_CACHE[key] = { pine: makeSprite(sn(ch ? ch.pine : PINE_ROWS), map), oak: makeSprite(sn(ch ? ch.oak : OAK_ROWS), map),
+    bush: makeSprite(sn(BUSH_ROWS), map), tuft: makeSprite(TUFT_ROWS, gmap), rock: makeSprite(sn(ROCK_ROWS), rmap),
     reed: makeSprite(REED_ROWS, reedMap(cs, t, mode === 'frost')) };
+}
+// Snow settled on a picture (the user picked it): on every ledge, a pixel
+// of the picture with nothing over it, snow lies (S, or s on the shaded
+// side), on more of them and deeper the further a snowy round has gone:
+// level 1 a dusting, 2 most ledges, 3 every ledge two deep. Trunks bare.
+function snowRows(R, L){
+  const P = [0, 0.45, 0.8, 1][L], P2 = [0, 0, 0.35, 0.8][L], leaf = ch => ch >= '0' && ch <= '4';
+  const out = R.map(r => r.split(''));
+  for(let y = 0; y < R.length; y++) for(let x = 0; x < R[y].length; x++){
+    const ch = R[y][x]; if(!leaf(ch)) continue;
+    const up = y ? R[y - 1][x] : '.';
+    if(up !== '.' || hr(x * 31 + y * 7 + L, 1047) >= P) continue;
+    const sh = ch <= '1' ? 's' : 'S'; out[y][x] = sh;
+    if(y + 1 < R.length && leaf(R[y + 1][x]) && hr(x * 17 + y * 13, 1048) < P2) out[y + 1][x] = sh;
+  }
+  return out.map(r => r.join(''));
 }
 // a lily pad's rim, body and lit half, its flower (pink or white by the
 // course) and the flower's heart; yellowing in the autumn
@@ -11619,9 +11649,9 @@ const GALLERY_UP = 1.5;
 const STAND_D = 13.5, STAND_W = 12, STAND_CACHE = [], STAND_CHEER = 2.4;
 // cheer: 0 seated; 1 or 2 on their feet, arms up in turn. At night lamps on
 // posts over the roof, and the seats lit under them.
-function standCv(sh, full, night, seed, cheer, frost, rain, lights){
+function standCv(sh, full, night, seed, cheer, frost, rain, lights, snowL){
   cheer = cheer || 0;
-  const key = sh + '|' + full + '|' + (night ? 1 : 0) + '|' + seed + '|' + cheer + '|' + (frost ? 1 : 0) + '|' + (rain ? 1 : 0) + '|' + (lights || 0);
+  const key = sh + '|' + full + '|' + (night ? 1 : 0) + '|' + seed + '|' + cheer + '|' + (frost ? 1 : 0) + '|' + (rain ? 1 : 0) + '|' + (lights || 0) + '|' + (snowL || 0);
   const hit = STAND_CACHE.find(e => e.key === key);
   if(hit) return hit.cv;
   const th = Math.max(2, Math.round(sh * 0.62)), R = 5, plinth = Math.max(2, Math.round(th * 0.9));
@@ -11674,6 +11704,11 @@ function standCv(sh, full, night, seed, cheer, frost, rain, lights){
   // frost on the roof on a cold morning, as on the grass
   if(frost){ g.fillStyle = dk('#E6F0F4'); g.fillRect(0, 0, W, Math.max(1, roof - 1));
     g.fillStyle = dk('#FFFFFF'); for(let x = 1; x < W; x += 4) if(hr(seed + x, 353) < 0.4) g.fillRect(x, 0, 1, 1); }
+  // snow settled on the roof, deeper as a snowy round goes on, its top
+  // uneven (in the lamps' room over it)
+  if(snowL){ const d = Math.max(1, Math.round(sh * 0.07 * snowL));
+    g.fillStyle = dk('#F2F6F8'); g.fillRect(0, 0, W, Math.max(1, roof - 1));
+    for(let x = 0; x < W; x++){ const hh = d - (hr(seed * 7 + x, 1049) < 0.3 ? 1 : 0); if(hh > 0) g.fillRect(x, -hh, 1, hh); } }
   g.fillStyle = dk('#1A2A20'); g.fillRect(0, H - plinth, W, plinth);
   g.fillStyle = dk(PX.brass); g.fillRect(0, H - plinth, W, 1);
   if(plinth > 3) g.fillRect(0, H - 2, W, 1);
@@ -11697,9 +11732,9 @@ function standCv(sh, full, night, seed, cheer, frost, rain, lights){
 // sign over it, and in front a terrace with a white rail, parasols and a few
 // members at their tables. Its windows glow at night. One picture a size.
 const CLUB_D = 14.5, CLUB_X = 11, CLUB_W = 8, CLUB_CACHE = [];
-function clubhouseCv(sh, night, side, seed, lit, frost, lights){
+function clubhouseCv(sh, night, side, seed, lit, frost, lights, snowL){
   if(lit === undefined) lit = night;
-  const key = sh + '|' + (night ? 1 : 0) + '|' + (lit ? 1 : 0) + '|' + side + '|' + seed + '|' + (frost ? 1 : 0) + '|' + (lights || 0);
+  const key = sh + '|' + (night ? 1 : 0) + '|' + (lit ? 1 : 0) + '|' + side + '|' + seed + '|' + (frost ? 1 : 0) + '|' + (lights || 0) + '|' + (snowL || 0);
   const hit = CLUB_CACHE.find(e => e.key === key);
   if(hit) return hit.cv;
   const W = Math.max(10, Math.round(sh * CLUB_W / 12 * LAT / US));
@@ -11718,7 +11753,9 @@ function clubhouseCv(sh, night, side, seed, lit, frost, lights){
   for(let r = 0; r < roof; r++){ const inset = Math.round(r * (W * 0.16) / roof);
     g.fillStyle = r === roof - 1 ? rl : rc; g.fillRect(inset, wy - 1 - r, W - inset * 2, 1);
     // (white with frost on a cold morning, the lower edge still showing red)
-    if(frost && r > 0){ g.fillStyle = dk(r > roof * 0.5 ? '#EEF6FA' : '#D6E4EA'); g.fillRect(inset + 1, wy - 1 - r, W - inset * 2 - 2, 1); } }
+    if(frost && r > 0){ g.fillStyle = dk(r > roof * 0.5 ? '#EEF6FA' : '#D6E4EA'); g.fillRect(inset + 1, wy - 1 - r, W - inset * 2 - 2, 1); }
+    // (snow settled on it, from the ridge down, lower as the round goes on)
+    if(snowL && r >= roof * (1 - [0, 0.4, 0.7, 1][snowL])){ g.fillStyle = dk(r === roof - 1 ? '#F4F8FA' : '#E2EAF0'); g.fillRect(inset, wy - 1 - r, W - inset * 2, 1); } }
   g.fillStyle = dk('#5A4A3E'); g.fillRect(side > 0 ? Math.round(W * 0.72) : Math.round(W * 0.2), wy - roof - chim + 1, Math.max(2, k * 2), chim + Math.round(roof * 0.5));
   // tall windows either side of the door, and the door under the sign
   const n = Math.max(2, Math.floor((W - inW * 2) / (sh * 0.62))), pitch = (W - inW * 2) / n;
@@ -21150,6 +21187,32 @@ const Scene = {
         }
       }
     }
+    // the low sun on the water (the user picked it): with Dawn and Dusk on,
+    // or in Golden Hour, the water takes the warm sky, most where it lies
+    // far off, and a broken path of light comes down it from the sun,
+    // shimmering, as the moon's does at night
+    const dd = this.dawnDusk;
+    if(dd && !this.night && !this.rain && !this.ice){
+      const warm = dd.gold ? GOLD_COL : DAWN_COL[dd.dawn ? 'dawn' : 'dusk'], M = Math.round(VW * (dd.dawn ? 0.2 : 0.8));
+      const hi = mixC(warm[0], DAWN_COL.sun, 0.6), lo = warm[0], f6 = Math.floor(this.t * 5);
+      const span = (x0, x1, yy) => { let run = -1;
+        for(let x = Math.max(0, x0); x <= Math.min(VW, x1); x++){
+          const ok = x < x1 && water(x, yy);
+          if(ok && run < 0) run = x;
+          else if(!ok && run >= 0){ c.fillRect(run, yy, x - run, 1); run = -1; } } };
+      for(let i = 0; i < R.length; i += 3){
+        const yy = R[i], xl = R[i+1], w = R[i+2], k = clamp((yy - HORIZON) / Math.max(1, VH - HORIZON), 0, 1);
+        c.fillStyle = hexA(warm[1], (0.12 + 0.2 * (1 - k)) * dd.w); span(xl, xl + w, yy);
+        const sp = 2 + k * 14;
+        if(M + sp < xl || M - sp > xl + w) continue;
+        for(let q = 0; q < 3; q++){
+          const u = hr(yy * 5 + q, f6 + q * 7 + 400);
+          if(u < 0.3) continue;
+          const len = 2 + Math.round(hr(yy, f6 + 411 + q) * (2 + k * 6)), x0 = Math.round(M + (hr(yy + q * 13, f6 + 403) * 2 - 1) * sp - len / 2);
+          c.fillStyle = u > 0.75 ? hi : lo; span(Math.max(xl, x0), Math.min(xl + w, x0 + len), yy);
+        }
+      }
+    }
     // ice floes left on the water on a spring morning (this.thaw): pale
     // floes with a darker cracked rim, lying fixed on the water where a
     // value noise over the course is under how much ice is left
@@ -21933,6 +21996,8 @@ const Scene = {
     this._lmPools = null;
     this.thaw = !this.night && !this.rain && sigKind(h) !== 'pier' ? thawIce(look) : 0;
     this.cshadow = !this.night && !this.rain && !this.fog && !this.golden && !look.snowfall && (CSHADOW_FORCE !== null ? !!CSHADOW_FORCE : hr(h * 47 + 5, 1041) < CSHADOW_P);
+    this.shimmer = !this.night && !this.rain && !this.fog && !this.frost && !look.snowfall && (SHIMMER_FORCE !== null ? !!SHIMMER_FORCE
+      : lookSeason(look) === 0 && hourNow() >= 12 && hourNow() < 18 && hr(h * 43 + 11, 1046) < SHIMMER_P);
     this.balloons = !this.night && !this.rain && !S.dgnRun && (BALLOON_FORCE !== null ? !!BALLOON_FORCE
       : Math.abs(this.wind) < 0.4 && hourNow() >= 6 && hourNow() < 11 && hr(h * 31 + 9, 1003) < BALLOON_P);
     this.ducklings = !this.night && sigKind(h) === 'island' && (DUCKLING_FORCE !== null ? !!DUCKLING_FORCE
@@ -21940,7 +22005,11 @@ const Scene = {
     this.land = look.land;
     this.themeId = look.id + '|' + mode;
     this.theme = buildTheme(look, mode);
-    this.treeSpr = courseTrees(look, mode); this.lilyPal = null;
+    // snow settling as a snowy round goes on (the user picked it): a
+    // dusting on holes 1 to 6, most ledges from 7, deep from 13; on the
+    // trees, bushes, rocks, the clubhouse's roof and the train's
+    this.snowL = look.snowfall && !this.rain ? (SNOWSET_FORCE !== null ? SNOWSET_FORCE : Math.min(3, 1 + Math.floor((holeInRound(h) - 1) / 6))) : 0;
+    this.treeSpr = courseTrees(look, mode, this.snowL); this.lilyPal = null;
     this.snow = !!look.snowfall && !this.rain;
     // petals in blossom and leaves in autumn, drifting across; ponds frozen
     // in winter
@@ -22095,7 +22164,7 @@ const Scene = {
     this.aurora = false;
     this.rain = false;
     this.rainbow = false; this.goldbow = false; this.dblbow = false; this.fog = false;   // (no rare weather in a wager)
-    this.harvest = false; this.cmist = false; this.storm = false; this.lmist = false; this.cshadow = false; this.thaw = 0; this.psteam = false; this.balloons = false; this.ducklings = false;   // (nor the Harvest Moon over its cellar, mist or a storm)
+    this.harvest = false; this.cmist = false; this.storm = false; this.lmist = false; this.cshadow = false; this.shimmer = false; this.thaw = 0; this.psteam = false; this.balloons = false; this.ducklings = false;   // (nor the Harvest Moon over its cellar, mist or a storm)
     const rnd = seeded(hash32(R.floor*7919 + dg.length*104729 + 13));
     this.seed = rnd() * 1000;
     this.roll = 0.42;                    // a cellar floor does not roll like links
@@ -22401,6 +22470,21 @@ const Scene = {
   // the course, drifting across it the way the wind blows and round again;
   // slice by slice near to far, a row painted once each, cut where nearer
   // ground hides it
+  drawShimmer(){
+    if(!this.shimmer || S.dgnRun) return;
+    const c = this.b, y0 = Math.max(0, HORIZON - 3), y1 = Math.min(VH - 1, Math.round(this.proj(this.camD - CAM_BACK + 22, 0).y));
+    const n = y1 - y0; if(n < 2) return;
+    if(!SHIM_CV) SHIM_CV = document.createElement('canvas');
+    if(SHIM_CV.width !== VW) SHIM_CV.width = VW;
+    if(SHIM_CV.height < n) SHIM_CV.height = n;
+    const g = SHIM_CV.getContext('2d'), t = this.t;
+    g.clearRect(0, 0, VW, n); g.drawImage(c.canvas, 0, y0, VW, n, 0, 0, VW, n);
+    // (strongest at the horizon, gone by the near edge of the band)
+    for(let k = 0; k < n; k++){
+      const y = y0 + k, f = 1 - k / n, s = Math.round(Math.sin(t * 3.1 + y * 1.7) * Math.sin(t * 1.3 + y * 0.45) * 1.6 * f);
+      if(s) c.drawImage(SHIM_CV, 0, k, VW, 1, s, y, VW, 1);
+    }
+  },
   drawCloudShadows(){
     if(!this.cshadow || S.dgnRun) return;
     const c = this.b, h = this.hole || 0, near = this.camD - CAM_BACK + 0.8, w = this.wind || 0.15, dir = w < 0 ? -1 : 1;
@@ -26056,7 +26140,7 @@ Object.assign(Scene, {
       if(sh < 3) return;
       // (its lights on at dusk too, with Dawn and Dusk on)
       const dd = this.dawnDusk, lt = night || !!(dd && !dd.dawn && dd.w >= 0.4);
-      const cv = clubhouseCv(sh, night, p.side, p.k, lt, !!this.frost, this.lightsNow(lt, p)), w = cv.width;
+      const cv = clubhouseCv(sh, night, p.side, p.k, lt, !!this.frost, this.lightsNow(lt, p), this.snowL), w = cv.width;
       if(pr.x + w / 2 < -2 || pr.x - w / 2 > VW + 2) return;
       c.drawImage(cv, Math.round(pr.x - w / 2), pr.y - cv.height);
 
@@ -26066,7 +26150,7 @@ Object.assign(Scene, {
       if(sh < 3) return;
       // (standing and waving through the cheer, two poses a quarter second each)
       const ch = this.cheerT !== undefined && this.t - this.cheerT >= 0 && this.t - this.cheerT < STAND_CHEER ? 1 + (Math.floor((this.t - this.cheerT) * 4) & 1) : 0;
-      const cv = standCv(sh, p.full, night, p.k, ch, !!this.frost, !!this.rain, this.lightsNow(night, p));
+      const cv = standCv(sh, p.full, night, p.k, ch, !!this.frost, !!this.rain, this.lightsNow(night, p), this.snowL);
       const w = cv.width;
       if(pr.x + w / 2 < -2 || pr.x - w / 2 > VW + 2) return;
       c.drawImage(cv, Math.round(pr.x - w / 2), pr.y - cv.height);
@@ -26223,9 +26307,11 @@ Object.assign(Scene, {
   // His footprints in the snow of a winter hole (the walk from the tee to
   // him, a print a step, left and right of his line), pressed into the
   // ground under everything standing on it, cut at the ground's line; not
-  // over water, sand or a bridge, not in a wager
+  // over water, sand or a bridge, not in a wager. And on a frosty morning
+  // (the user picked it) the same, darker green where his shoes knocked the
+  // frost off the grass.
   noteTrack(a, b){
-    if(!this.snow || S.dgnRun || this.heli) return;
+    if(!(this.snow || this.frost) || S.dgnRun || this.heli) return;
     const T = this.tracks || (this.tracks = { lo: a, hi: a });
     T.lo = Math.min(T.lo, a); T.hi = Math.max(T.hi, b);
   },
@@ -26260,9 +26346,9 @@ Object.assign(Scene, {
   drawTracks(){
     this.drawMarks();
     const T = this.tracks;
-    if(!T || !this.snow || S.dgnRun || this.heli) return;
+    if(!T || !(this.snow || this.frost) || S.dgnRun || this.heli) return;
     const c = this.b, I = this.isle, near = this.camD - CAM_BACK + ROPE_REL, hi = Math.min(T.hi, this.camD - 0.35);
-    const col = this.night ? 'rgba(40,52,70,.5)' : 'rgba(96,118,140,.42)';
+    const col = this.snow ? (this.night ? 'rgba(40,52,70,.5)' : 'rgba(96,118,140,.42)') : 'rgba(38,78,50,.38)';
     c.fillStyle = col;
     for(let i = Math.ceil(Math.max(T.lo, near) / 0.3), n = 0; i * 0.3 < hi && n < 400; i++, n++){
       const d = i * 0.3, x = (i & 1 ? 0.09 : -0.09);
@@ -27176,7 +27262,8 @@ Object.assign(Scene, {
     };
     const wheels = (x0, x1) => { for(let x = x0; x < x1 - 0.2; x += 0.55) box(x + 0.08, x + 0.42, 0.02, 0.32, '#1E1E22'); };
     // snow settled on a roof, in a winter's snowfall
-    const cap = (x0, x1, z) => { if(this.snow) box(x0, x1, z, z + 0.09, '#F2F6F8'); };
+    // (deeper as the round goes on: snowL)
+    const cap = (x0, x1, z) => { if(this.snow) box(x0, x1, z, z + 0.04 + 0.04 * (this.snowL || 1), '#F2F6F8'); };
     // a steam engine at e: cab, roof, window (the driver in it), boiler, chimney, buffer beam
     const engine = (e, P) => {
       box(e, e + 0.8, 0.3, 1.3, P.cab); box(e + 0.05, e + 0.75, 1.3, 1.4, P.roof); cap(e + 0.05, e + 0.75, 1.4);
@@ -27977,6 +28064,7 @@ Object.assign(Scene, {
       else this.drawProps();
       this.buildHaze();
       if(this.haze) this.overTrees(c, this.haze);
+      this.drawShimmer();
       this.drawTee(true);
       this.drawBridge();
       this.drawStones();
@@ -30919,6 +31007,8 @@ let ALB_PIN = null;
 const SCENE_PINS = [
   { id:'steam', n:'Steam off the water', w:'water', get: () => PSTEAM_FORCE === true || PSTEAM_FORCE === 1, set: v => { PSTEAM_FORCE = v ? true : null; } },
   { id:'thaw', n:'Ice thawing', w:'water', get: () => THAW_FORCE === true, set: v => { THAW_FORCE = v ? true : null; } },
+  { id:'snowset', n:'Deep snow settled', w:'snowy courses', get: () => SNOWSET_FORCE === 3, set: v => { SNOWSET_FORCE = v ? 3 : null; } },
+  { id:'shimmer', n:'Heat shimmer', w:'summer afternoons', get: () => SHIMMER_FORCE === true, set: v => { SHIMMER_FORCE = v ? true : null; } },
   { id:'cshadow', n:'Cloud shadows', w:'clear days', get: () => CSHADOW_FORCE === true, set: v => { CSHADOW_FORCE = v ? true : null; } },
   { id:'wleaf', n:'Leaves on the water', w:'water', get: () => WLEAF_FORCE === true, set: v => { WLEAF_FORCE = v ? true : null; } },
   { id:'lmist', n:'Mist in the dips', w:'ordinary holes', get: () => LMIST_FORCE === true || LMIST_FORCE === 1, set: v => { LMIST_FORCE = v ? true : null; } },
