@@ -13119,6 +13119,21 @@ const LILY_W = 24, LILY_H = 10, LILY_SPR = new Map(), LILY_MAX = 40;
 // a dragonfly's body and its eyes, by kind; and a pin for the checks
 const DFLY_COL = [['#2E7AD8', '#8AD0F8'], ['#3AA858', '#B8E870'], ['#C8402E', '#F4A070']];
 let DFLY_FORCE = null, RFLY_FORCE = null;
+// one depth z of the rain (of N streaks, leaning lean) as a sheet W x H,
+// each streak where it stands at time nought; it wraps round both ways
+const RAIN_SHEET = new Map(), RAIN_MAX = 12;
+const RAIN_STREAK = [[2, 'rgba(198,222,232,.24)'], [3, 'rgba(198,222,232,.34)'], [5, 'rgba(210,230,238,.42)']];
+function rainSheet(z, N, lean, W, H){
+  const key = [z, N, lean, W, H].join('|'); let cv = RAIN_SHEET.get(key); if(cv) return cv;
+  cv = document.createElement('canvas'); cv.width = W; cv.height = H; const g = cv.getContext('2d'), [L, col] = RAIN_STREAK[z];
+  g.fillStyle = col;
+  for(let i = z; i < N; i += 3){ const x = (i * 67) % W, y = (i * 41) % H;
+    for(let k = 0; k < L; k++){ const xx = x - (lean ? Math.round(k * lean * 0.5) : 0), yy = y + k;
+      g.fillRect(((xx % W) + W) % W, yy % H, 1, 1); } }
+  if(RAIN_SHEET.size >= RAIN_MAX){ const k0 = RAIN_SHEET.keys().next().value; cvFree(RAIN_SHEET.get(k0)); RAIN_SHEET.delete(k0); }
+  RAIN_SHEET.set(key, cv);
+  return cv;
+}
 // a wisp of steam sz across: a soft pale column, fullest low, fraying up;
 // baked once a size (bounded, freed as dropped)
 const STEAM_SPR = new Map(), STEAM_MAX = 40;
@@ -23267,11 +23282,14 @@ const CLUBFX = {
 // turn), tipped toward or away from you (flip -3..3: edge on at 0, its
 // paler back at a negative). A leaf has a darker midrib once it is big
 // enough to carry one, and its stalk. cols: face, back, rib. Kept by shape.
-const FALL_SPR = new Map();
+const FALL_SPR = new Map(), FALL_MAX = 2000;
 function fallSprite(kind, len, ang, flip, cols){
   const key = kind + len + '|' + ang + '|' + flip + '|' + cols[0];
   let F = FALL_SPR.get(key); if(F) return F;
-  if(FALL_SPR.size > 800) FALL_SPR.clear();
+  // (a course's season needs some 340 shapes; over many courses and
+  // seasons the store fills, and then it frees its oldest as it drops one,
+  // not all of it at once unfreed)
+  if(FALL_SPR.size >= FALL_MAX){ const k0 = FALL_SPR.keys().next().value; cvFree(FALL_SPR.get(k0).cv); FALL_SPR.delete(k0); }
   const R = Math.ceil(len / 2) + 1, N = R * 2 + 1, cv = document.createElement('canvas'); cv.width = cv.height = N;
   const g = cv.getContext('2d'), a = (ang + 0.37) / 16 * Math.PI, ca = Math.cos(a), sa = Math.sin(a), P = kind === 'p';
   const fl = flip / 3, H = len / 2, W = Math.max(0.42, Math.abs(fl)) * len * (P ? 0.42 : 0.3);
@@ -27211,13 +27229,14 @@ Object.assign(Scene, {
     // driven the way the wind is blowing, and harder the harder it blows;
     // three depths of streak, the near ones longer and brighter
     const w = this.wind || 0, run = (40 + Math.abs(w) * 300) * (w < 0 ? -1 : 1), lean = Math.abs(w) > 0.5 ? (w < 0 ? -1 : 1) : 0;
-    const STREAK = [[2, 'rgba(198,222,232,.24)'], [3, 'rgba(198,222,232,.34)'], [5, 'rgba(210,230,238,.42)']];
-    for(let i = 0, N = this.storm ? 90 : 45; i < N; i++){
-      const z = i % 3, zk = [0.7, 1, 1.3][z], [L, col] = STREAK[z];
-      const x = Math.round((((i*67 + this.t*run*zk) % (VW + 40)) + VW + 40) % (VW + 40) - 20);
-      const y = Math.round((i*41 + this.t*330*zk) % (VH + 10)) - 5;
-      c.fillStyle = col;
-      for(let k = 0; k < L; k++) c.fillRect(x - (lean ? Math.round(k * lean * 0.5) : 0), y + k, 1, 1);
+    // (each depth moves as one sheet, so each is baked once, streaks and
+    // all, and slid across in at most four stamps: drawn a pixel at a time
+    // the rain was three hundred canvas calls a frame)
+    const W = VW + 40, H = VH + 10, N = this.storm ? 90 : 45;
+    for(let z = 0; z < 3; z++){
+      const zk = [0.7, 1, 1.3][z], L = rainSheet(z, N, lean, W, H);
+      const ox = Math.round(((this.t * run * zk) % W + W) % W), oy = Math.round((this.t * 330 * zk) % H);
+      for(const dx of [ox - W, ox]) for(const dy of [oy - H, oy]) c.drawImage(L, dx - 20, dy - 5);
     }
   },
 

@@ -48,6 +48,12 @@ module.exports = {
           QUIET = false; try { for (let t = t0 - 0.5; t < t0 + STORM_GAP * 2.2; t += 1 / 15) { Scene.t = t; Sfx.tick(1 / 15); } }
           finally { QUIET = true; Object.assign(Sfx, keepF); Sfx.ctx = keepC; S.sound = keepS; Sfx.boltN = undefined; }
           o.thunder = heard; if (heard < 1) f('no thunder after the bolts'); }
+        // the storm's rain in a few stamps, not a pixel at a time (it was
+        // three hundred canvas calls a frame)
+        { const Pr = CanvasRenderingContext2D.prototype, keep = {}; let calls = 0;
+          for (const k of ['fillRect', 'drawImage', 'fill', 'rect']) { keep[k] = Pr[k]; Pr[k] = function () { calls++; return keep[k].apply(this, arguments); }; }
+          try { Scene.drawWeather(); calls = 0; Scene.t += 0.37; Scene.drawWeather(); } finally { Object.assign(Pr, keep); }
+          o.rainCalls = calls; if (calls > 40) f('the storm\'s rain took ' + calls + ' canvas calls a frame'); }
         if (!GUIDE.find(g => g.id === 'storm' && g.g === 'c')) f('no Thunderstorm on the Course shelf');
         if (!guideUrl('storm')) f('no picture for the Thunderstorm');
         // airplanes
@@ -74,6 +80,6 @@ module.exports = {
       return { fails, o };
     });
     if (r.fails.length) throw new Error(r.fails.join('; '));
-    return ['storms on ' + r.o.storm + ' rainy holes, none dry or in a wager; the sky ' + r.o.sky.join(' against ') + ', the bolt ' + r.o.bolt + 'px above the horizon only, the flash +' + r.o.flash + ', thunder ' + r.o.thunder + ' times; an airplane in ' + r.o.plane + '% of turns, none in the rain, drawn ' + r.o.Fair + 'px by day and ' + r.o['Night Round'] + ' at night, in the sky only; the Guide counts each'];
+    return ['storms on ' + r.o.storm + ' rainy holes, none dry or in a wager; the sky ' + r.o.sky.join(' against ') + ', the bolt ' + r.o.bolt + 'px above the horizon only, the flash +' + r.o.flash + ', thunder ' + r.o.thunder + ' times, its rain ' + r.o.rainCalls + ' canvas calls a frame; an airplane in ' + r.o.plane + '% of turns, none in the rain, drawn ' + r.o.Fair + 'px by day and ' + r.o['Night Round'] + ' at night, in the sky only; the Guide counts each'];
   }
 };
