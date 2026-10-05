@@ -20012,14 +20012,14 @@ const Scene = {
   },
   // wisps of steam off open water on a cold morning (this.psteam): a dozen
   // spots on the water, each with a wisp rising off it on its own clock;
-  // never on ice. From a hash.
+  // never on ice, nor round an island green (it hid the putt). From a hash.
   laySteam(){
     if(!this.psteam || this.ice || sigKind(this.hole) === 'pier') return;
     const h = this.hole, W = this.water, PP = this.pond, put = this.props || [], at = [];
     const cand = [];
     if(W && !W.canyon && !W.rail) for(let i = 0; i < 40; i++) cand.push([W.d + (hr(h * 61 + i, 1005) - 0.5) * W.rd * 1.8, W.x + (hr(h * 61 + i, 1006) - 0.5) * (W.lake || W.river ? 8 : W.rx * 1.8)]);
     if(PP) for(let i = 0; i < 16; i++) cand.push([PP.d + (hr(h * 67 + i, 1005) - 0.5) * PP.rd * 1.6, PP.x + (hr(h * 67 + i, 1006) - 0.5) * PP.rx * 1.6]);
-    for(const [d, x] of cand) if(at.length < 18 && this.wetSpot(d, x) && !at.some(q => Math.abs(q[0] - d) < 0.7 && Math.abs(q[1] - x) < 0.9)) at.push([d, x]);
+    for(const [d, x] of cand) if(at.length < 18 && Math.hypot(d - LEN, x) > 4.5 && this.wetSpot(d, x) && !at.some(q => Math.abs(q[0] - d) < 0.7 && Math.abs(q[1] - x) < 0.9)) at.push([d, x]);
     for(let i = 0; i < at.length; i++) put.push({ kind: 26, sp: 'steam', d: at[i][0], x: at[i][1], k: h * 17 + i, extra: 1 });
     if(at.length){ put.sort((a, b) => b.d - a.d); this.props = put; }
   },
@@ -22375,13 +22375,26 @@ const Scene = {
     // the nearer ones painted, so the bands do not stack into stripes; one
     // strength over a pool, by how deep it lies, the whole breathing slowly)
     const c = this.b, near = this.camD - CAM_BACK + 0.8, col = this.frost ? '232,240,246' : '236,238,232', br = 0.9 + 0.1 * Math.sin(this.t * 0.4);
-    let low = VH;
-    for(const Q of this._lmPools) for(let d = Math.max(Q.d0, near); d <= Q.d1; d += 0.5){
-      const z = Q.L - this.hAt(d); if(z <= 0.05) continue;
-      const g = this.proj(d, 0, 0), t = this.proj(d, 0, z), clip = this.clipAt(d);
-      const y0 = Math.round(t.y), y1 = Math.min(Math.round(g.y) + 1, Math.floor(clip) + 1, low);
-      if(y1 > y0){ const a = Math.min(0.18, 0.06 + (Q.L - Q.b) * 0.08) * br; c.fillStyle = 'rgba(' + col + ',' + a.toFixed(3) + ')'; c.fillRect(0, y0, VW, y1 - y0); }
-      low = Math.min(low, y0);
+    // (one even band a hollow, from where its far rim's mist stands to its
+    // near rim's ground, or the foot of the view when he stands in it,
+    // faded over a few rows top and foot: laid slice by slice its rows took
+    // the mist unevenly, and its edges read as rules across the screen)
+    for(const Q of this._lmPools){
+      if(Q.d1 < near) continue;
+      const a = Math.min(0.18, 0.06 + (Q.L - Q.b) * 0.08) * br;
+      let top = VH;
+      for(let d = Math.max(Q.d0, near); d <= Q.d1; d += 0.5){
+        const z = Q.L - this.hAt(d); if(z <= 0.05) continue;
+        top = Math.min(top, Math.round(this.proj(d, 0, z).y));
+      }
+      const foot = Q.d0 < near ? VH : Math.min(VH, Math.round(this.proj(Q.d0, 0, 0).y) + 1);
+      top = Math.max(top, HORIZON);
+      if(foot - top < 2) continue;
+      const F = Math.min(4, Math.floor((foot - top) / 3));
+      for(let k = 0; k < F; k++){ const f = (k + 1) / (F + 1);
+        c.fillStyle = 'rgba(' + col + ',' + (a * f).toFixed(3) + ')'; c.fillRect(0, top + k, VW, 1);
+        if(foot < VH){ c.fillRect(0, foot - 1 - k, VW, 1); } }
+      c.fillStyle = 'rgba(' + col + ',' + a.toFixed(3) + ')'; c.fillRect(0, top + F, VW, Math.max(0, foot - top - F - (foot < VH ? F : 0)));
     }
   },
   // three cloud shadows on the ground (this.cshadow): each an oval lying on

@@ -26,6 +26,9 @@ module.exports = {
           const home = B.COURSE[ci].slot === 'home';
           for (const sn of home ? [0, 1, 2, 3] : [-1]) {
             SEASON_FORCE = sn;
+            // (steam on every other pass, whatever the clock: it once rose
+            // round an island green, seen only on a cold morning's run)
+            PSTEAM_FORCE = ci % 2 ? true : false;
             for (let k = 0; k < 3; k++) for (const kind of ['stones', 'isle']) {
               const h = S.hole + k; off();
               if (kind === 'stones') STONES_FORCE = h; else ISLE_FORCE = h;
@@ -110,7 +113,7 @@ module.exports = {
         if (diff < 150) f('the reeds and pads drew ' + diff + ' pixels');
         window.requestAnimationFrame = raf;
       } finally {
-        off(); SEASON_FORCE = -1; QUIET = false;
+        off(); SEASON_FORCE = -1; PSTEAM_FORCE = null; QUIET = false;
         Object.assign(S, JSON.parse(SNAP)); Scene.newHole(S.hole, S.tier);
       }
       return { fails, out };

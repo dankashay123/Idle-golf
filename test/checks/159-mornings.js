@@ -114,8 +114,12 @@ module.exports = {
                 // (the mist alone over a flat grey, after a frame of the hole: the
                 // grass's mown bands paled by it would read as steps)
                 shot(cam, 3); const g = Scene.b; g.fillStyle = '#404040'; g.fillRect(0, 0, VW, VH); Scene.drawLowMist(); const a = g.getImageData(0, 0, VW, VH).data;
-                for (const x of [6, VW - 7]) { let prev = null; for (let y = 0; y < VH; y++) { const i = (y * VW + x) * 4, dl = a[i] + a[i + 1] + a[i + 2] - 192; if (prev !== null && dl > 0 && prev > 0 && Math.abs(dl - prev) > 6) steps++; prev = dl; } } } }
-            LMIST_FORCE = null; SEASON_FORCE = -1; o.lmsteps = steps + ' in ' + looked; if (steps > looked * 2) f('the dips\' mist in stripes: ' + steps + ' steps over ' + looked + ' views'); } }
+                // (stripes are the paling going up and down again row after
+                // row; a band fading in at its top and out at its foot turns
+                // once)
+                for (const x of [6, VW - 7]) { let prev = null, sg = 0; for (let y = 0; y < VH; y++) { const i = (y * VW + x) * 4, dl = a[i] + a[i + 1] + a[i + 2] - 192;
+                  if (prev !== null && Math.abs(dl - prev) > 6) { const ns = Math.sign(dl - prev); if (sg && ns !== sg) steps++; sg = ns; } prev = dl; } } } }
+            LMIST_FORCE = null; SEASON_FORCE = -1; o.lmsteps = steps + ' in ' + looked; if (steps > looked * 4) f('the dips\' mist in stripes: ' + steps + ' turns over ' + looked + ' views'); } }
         // ---- frost on the reeds and the lily pads ----
         { const lum = c => { const v = parseInt(c.slice(1), 16); return ((v >> 16) & 255) * 0.3 + ((v >> 8) & 255) * 0.59 + (v & 255) * 0.11; };
           const sprLum = sp => { const g = sp.cv.getContext('2d'), d = g.getImageData(0, 0, sp.cv.width, sp.cv.height).data; let s2 = 0, n = 0; for (let i = 0; i < d.length; i += 4) if (d[i + 3]) { s2 += d[i] * 0.3 + d[i + 1] * 0.59 + d[i + 2] * 0.11; n++; } return s2 / n; };

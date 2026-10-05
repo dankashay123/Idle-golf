@@ -74,7 +74,9 @@ module.exports = {
             if (v > B_BRIDGE * 1.05) fast++;
             if (v < 0.01) stood++;
             // under his feet: a plank of the bridge
-            if (f % 5 === 0) {
+            // (only while that step ahead is still over the gorge: past the far
+            // end it is grass, and the frame that landed there read as no plank)
+            if (f % 5 === 0 && c + 0.6 < I.land - 0.05) {
               // beside him and a step ahead, clear of his own legs; the deck
               // sags toward the middle, so a few rows down from the ground line
               const p = Scene.proj(c + 0.6, 0.55);
