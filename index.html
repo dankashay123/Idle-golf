@@ -4370,6 +4370,15 @@ const DUSK_SUN = 0.7;
 // to a little after six; in twelfths (stars), each step a new sky.
 // STARS_FORCE, the developer menu's: half of them, at dusk.
 let STARS_FORCE = null;
+// Moonrise (the user picked it): with Dawn and Dusk on, the moon comes up
+// over the eastern hills as the stars come out at dusk, and climbs to its
+// place in the night's first two hours. 0 just risen, 1 at its place.
+const MOONRISE_X = 0.24;
+const moonRiseF = () => {
+  if(S.dawnDusk !== 1 && !STARS_FORCE) return 1;
+  const h = HOUR_FORCE !== null ? HOUR_FORCE : new Date().getHours() + new Date().getMinutes() / 60;
+  return h >= 21 ? Math.round(clamp((h - 21) / 2, 0, 1) * 12) / 12 : 1;
+};
 const dawnDusk = () => {
   if(STARS_FORCE) return { w: 0.6, dawn: false, stars: 0.5 };
   if(DUSK_FORCE) return { w: 1, dawn: false, stars: 0 };
@@ -4525,8 +4534,9 @@ function puffSprite(sz){
     if(q > 1) continue; g.fillStyle = q < 0.55 ? 'rgba(244,248,250,0.95)' : 'rgba(232,240,246,0.6)'; g.fillRect(x, y, 1, 1); }
   return PUFF_SPR[sz] = cv;
 }
-function leafDrift(len, v, L, night){
-  const key = len + '|' + v + '|' + L + '|' + (night ? 1 : 0);
+const PETAL_COL = [['#F6C2D6', '#FBE0EA', '#C4628E'], ['#FFF4F8', '#FFFFFF', '#D8A8BC'], ['#EFA8C4', '#F8D2E0', '#B8507E']];
+function leafDrift(len, v, L, night, petals){
+  const key = len + '|' + v + '|' + L + '|' + (night ? 1 : 0) + (petals ? 'p' : '');
   let cv = DRIFT_CACHE.get(key); if(cv) return cv;
   if(DRIFT_CACHE.size >= 72){ const [k0, c0] = DRIFT_CACHE.entries().next().value; DRIFT_CACHE.delete(k0); cvFree(c0); }
   // (flat and spread, a scatter rather than a heap: piled high and round
@@ -4534,7 +4544,7 @@ function leafDrift(len, v, L, night){
   const n = 2 + L * 2 + (v & 1), W = Math.round(len * (3 + L)) + 4, H = Math.max(3, Math.round(len * 0.6)) + 2;
   cv = document.createElement('canvas'); cv.width = W; cv.height = H; const g = cv.getContext('2d');
   for(let i = 0; i < n; i++){
-    const C0 = WLEAF_COL[(v + i) % WLEAF_COL.length], F = fallSprite('l', len, Math.floor(hr(v * 13 + i, 1055) * 16), 3, night ? C0.map(moonC) : C0);
+    const CS = petals ? PETAL_COL : WLEAF_COL, C0 = CS[(v + i) % CS.length], F = fallSprite(petals ? 'p' : 'l', petals ? Math.max(2, len - 1) : len, Math.floor(hr(v * 13 + i, 1055) * 16), 3, night ? C0.map(moonC) : C0);
     const N = F.cv.width, hN = Math.max(1, Math.round(N * 0.4));
     const x = Math.round((W - N) / 2 + (hr(v * 17 + i, 1056) - 0.5) * (W - N)), y = Math.round((H - hN) / 2 + (hr(v * 19 + i, 1057) - 0.5) * (H - hN) * 0.8);
     g.drawImage(F.cv, 0, 0, N, N, x, y, N, hN);
@@ -22089,6 +22099,9 @@ const Scene = {
     this.greenH = (rnd()*2 - 1) * 3.4;   // uphill or downhill to the green
     const ch = S.chaos ? S.chaos.n : 'Fair';
     this.night  = /Night/.test(ch) || clockNight();
+    // (night by the player's clock alone: the moon that rose at dusk is
+    // this night's; a round built for the night keeps its own)
+    this.clockNt = !/Night/.test(ch) && clockNight();
     this.aurora = /Aurora|Ley|Mythic/.test(ch);
     this.rain   = /Crosswind|Marshal/.test(ch) || (STORM_FORCE === true && !S.dgnRun && !/Night/.test(ch));
     this.storm  = this.rain && stormAt(h);
@@ -22122,6 +22135,9 @@ const Scene = {
     this.lmist = !this.night && !this.rain && !this.golden && !sigKind(h) && (LMIST_FORCE !== null ? !!LMIST_FORCE
       : (this.frost || lookSeason(look) === 1) && hourNow() >= 5 && hourNow() < 11);
     this._lmPools = null;
+    // (the morning's mist lifting as the round goes on, the user picked it:
+    // full on the 1st, thinning hole by hole, a trace from the 13th)
+    this.mistLift = LMIST_FORCE || PSTEAM_FORCE ? 1 : clamp(1 - (holeInRound(h) - 1) / 13, 0.15, 1);
     this.thaw = !this.night && !this.rain && sigKind(h) !== 'pier' ? thawIce(look) : 0;
     this.cshadow = !this.night && !this.rain && !this.fog && !this.golden && !look.snowfall && (CSHADOW_FORCE !== null ? !!CSHADOW_FORCE : hr(h * 47 + 5, 1041) < CSHADOW_P);
     this.shimmer = !this.night && !this.rain && !this.fog && !this.frost && !look.snowfall && (SHIMMER_FORCE !== null ? !!SHIMMER_FORCE
@@ -22138,7 +22154,10 @@ const Scene = {
     // trees, bushes, rocks, the clubhouse's roof and the train's
     this.snowL = look.snowfall && !this.rain ? (SNOWSET_FORCE !== null ? SNOWSET_FORCE : Math.min(3, 1 + Math.floor((holeInRound(h) - 1) / 6))) : 0;
     this.treeSpr = courseTrees(look, mode, this.snowL); this.lilyPal = null;
-    this.leafL = S.dgnRun ? 0 : GLEAF_FORCE !== null ? GLEAF_FORCE : lookSeason(look) === 1 && !look.snowfall ? Math.min(3, 1 + Math.floor((holeInRound(h) - 1) / 6)) : 0;
+    // (and in spring the blossom's petals likewise: the user picked it)
+    const lfS = lookSeason(look);
+    this.leafP = lfS === 3;
+    this.leafL = S.dgnRun ? 0 : GLEAF_FORCE !== null ? GLEAF_FORCE : (lfS === 1 || lfS === 3) && !look.snowfall ? Math.min(3, 1 + Math.floor((holeInRound(h) - 1) / 6)) : 0;
     this.snow = !!look.snowfall && !this.rain;
     // petals in blossom and leaves in autumn, drifting across; ponds frozen
     // in winter
@@ -22580,7 +22599,7 @@ const Scene = {
     // the mist unevenly, and its edges read as rules across the screen)
     for(const Q of this._lmPools){
       if(Q.d1 < near) continue;
-      const a = Math.min(0.18, 0.06 + (Q.L - Q.b) * 0.08) * br;
+      const a = Math.min(0.18, 0.06 + (Q.L - Q.b) * 0.08) * br * (this.mistLift || 1);
       let top = VH;
       for(let d = Math.max(Q.d0, near); d <= Q.d1; d += 0.5){
         const z = Q.L - this.hAt(d); if(z <= 0.05) continue;
@@ -22620,7 +22639,10 @@ const Scene = {
   drawCloudShadows(){
     if(!this.cshadow || S.dgnRun) return;
     const c = this.b, h = this.hole || 0, near = this.camD - CAM_BACK + 0.8, w = this.wind || 0.15, dir = w < 0 ? -1 : 1;
-    c.fillStyle = 'rgba(12,22,34,0.17)';
+    // (every slice of every shadow gathered into one outline, filled once:
+    // each slice clipped and filled on its own was three hundred canvas
+    // calls a frame on the tee)
+    const P2 = new Path2D(); let any = false;
     // (each at its own place along the hole, from behind the tee to past the
     // green: laid ahead of the camera they travelled with him; the user saw)
     for(let i = 0; i < 6; i++){
@@ -22629,8 +22651,8 @@ const Scene = {
       const span = 40, xc = ((hr(q, 1045) * span + this.t * dir * (0.35 + Math.abs(w) * 0.8)) % span + span) % span - span / 2;
       let low = VH;
       // (a slice deeper than two rows, near him, laid as its true slanting
-      // shape, its near and far ends each as wide as the oval there: as one
-      // square block its ends stepped the oval's edge)
+      // shape, its near and far ends each as wide as the oval there, trimmed
+      // to the rows it may cover: as one square block its ends stepped)
       for(let d = Math.max(near, dc - rd); d <= dc + rd; d += 0.5){
         const k = (d - dc) / rd, hw = rx * Math.sqrt(Math.max(0, 1 - k * k)); if(hw < 0.3) continue;
         const k2 = Math.min(1, (d + 0.5 - dc) / rd), hw2 = rx * Math.sqrt(Math.max(0, 1 - k2 * k2));
@@ -22638,15 +22660,19 @@ const Scene = {
         const y0 = Math.max(HORIZON, Math.round(f.y)), y1 = Math.min(Math.round(a.y) + 1, Math.floor(this.clipAt(d)) + 1, low);
         if(y1 - y0 > 2){
           const fa = this.proj(d + 0.5, xc - hw2), fb = this.proj(d + 0.5, xc + hw2);
-          c.save(); c.beginPath(); c.rect(0, y0, VW, y1 - y0); c.clip();
-          c.beginPath(); c.moveTo(a.x, a.y + 1); c.lineTo(b.x, b.y + 1); c.lineTo(fb.x, fb.y); c.lineTo(fa.x, fa.y); c.closePath(); c.fill(); c.restore();
+          const yB = a.y + 1, yT = fa.y, t = y => yB === yT ? 0 : clamp((yB - y) / (yB - yT), 0, 1);
+          const xl = y => a.x + (fa.x - a.x) * t(y), xr = y => b.x + (fb.x - b.x) * t(y);
+          // (exactly the band of rows it may cover, so the slices meet)
+          const top = y0, bot = y1;
+          if(bot > top){ P2.moveTo(xl(top), top); P2.lineTo(xr(top), top); P2.lineTo(xr(bot), bot); P2.lineTo(xl(bot), bot); P2.closePath(); any = true; }
         }else{
           const x0 = Math.max(0, Math.round(a.x)), x1 = Math.min(VW, Math.round(b.x));
-          if(y1 > y0 && x1 > x0) c.fillRect(x0, y0, x1 - x0, y1 - y0);
+          if(y1 > y0 && x1 > x0){ P2.rect(x0, y0, x1 - x0, y1 - y0); any = true; }
         }
         low = Math.min(low, Math.max(y0, HORIZON));
       }
     }
+    if(any){ c.fillStyle = 'rgba(12,22,34,0.17)'; c.fill(P2); }
   },
   // the thaw's floes: a smooth noise over the course (by the hole), 0..1,
   // looked up where a pixel of water lies
@@ -22726,7 +22752,7 @@ const Scene = {
     const key = [this.themeId, this.night, this.aurora, this.rain, VW, HORIZON, dd ? dd.w + (dd.gold ? 'g' : dd.dawn ? 'a' : 'p') : ''].join('|');
     // (a rainbow's hole in the cache's key, not in key: the clouds are
     // seeded by key, and stay where they were)
-    const rbKey = key + (this.rainbow ? '|rb' + this.hole + (this.goldbow ? 'g' : '') + (this.dblbow ? 'd' : '') : '') + (this.harvest ? '|hm' : '') + (dd && dd.stars ? '|st' + dd.stars : '');
+    const rbKey = key + (this.night && this.clockNt ? '|mr' + moonRiseF() : '') + (this.rainbow ? '|rb' + this.hole + (this.goldbow ? 'g' : '') + (this.dblbow ? 'd' : '') : '') + (this.harvest ? '|hm' : '') + (dd && dd.stars ? '|st' + dd.stars : '');
     if(rbKey === this.skyKey && this.sky) return;
     this.skyKey = rbKey;
     const H = Math.max(2, HORIZON + 2);
@@ -22790,7 +22816,12 @@ const Scene = {
       }
       g.globalAlpha = 1;
       const PH = [0.5, 0.66, 0.66, 0.95, 1.35, 3];
-      const mx = Math.round(VW*(0.70 + sr()*0.12)), my = Math.round(H*(0.18 + sr()*0.1)), ph = PH[Math.floor(sr()*PH.length)];
+      let mx = Math.round(VW*(0.70 + sr()*0.12)), my = Math.round(H*(0.18 + sr()*0.1));
+      // (full on a night the clock made: the one that rose at dusk)
+      const ph0 = PH[Math.floor(sr()*PH.length)], ph = this.clockNt ? 3 : ph0;
+      // (with Dawn and Dusk on, the moon that rose over the hills at dusk
+      // climbs from there to its place over the first two hours of night)
+      { const rf = this.clockNt ? moonRiseF() : 1; if(rf < 1){ mx = Math.round(VW * MOONRISE_X + (mx - VW * MOONRISE_X) * rf); my = Math.round(H * 0.62 + (my - H * 0.62) * rf); } }
       // (the Harvest Moon: low over the hills, more than twice the size,
       // full and orange; the hills in front of its foot, as it rises)
       if(this.harvest) this.drawMoon(g, this.moonX = Math.round(VW*0.68), this.moonY = Math.round(H*0.64),
@@ -22810,6 +22841,10 @@ const Scene = {
         if(v > 0.93){ g.globalAlpha *= 0.4; g.fillRect(x - 1, y, 3, 1); g.fillRect(x, y - 1, 1, 3); }
       }
       g.globalAlpha = 1;
+      // and the moon rising over the eastern hills as they come out (the
+      // hills drawn after it stand in front of its foot)
+      if(!dd.dawn && dd.stars > 0.35){ const u = (dd.stars - 0.35) / 0.65, r = Math.max(5, Math.round(VW * 0.055));
+        this.drawMoon(g, Math.round(VW * MOONRISE_X), Math.round(H * (1.02 - 0.4 * u)), r, 3); }
     }
     if(this.aurora){
       // Two curtains of light, each a bright edge along the top with rays
@@ -24912,7 +24947,7 @@ Object.assign(Scene, {
     // The colours count too, as the ramps themselves: a palette can be
     // recoloured in place without becoming a new palette.
     const now = [this.gGen, this.theme, this.themeId, VW, VH, cam, this.camH, this.pixGround !== false,
-                 T._fw, T._rg, T._gr, T._sd, T._sdb, T._wt, T._bk, T._cn, T._ic, this.ice, T._rim, T._arim, T.apron, T.edge, T.lip, !!this.cmist];
+                 T._fw, T._rg, T._gr, T._sd, T._sdb, T._wt, T._bk, T._cn, T._ic, this.ice, T._rim, T._arim, T.apron, T.edge, T.lip, !!this.cmist, this.snow ? this.snowL : 0];
     let same = this.pixGround !== false && key.length === now.length;
     for(let i = 0; same && i < now.length; i++) if(key[i] !== now[i]) same = false;
     if(same){
@@ -25358,9 +25393,14 @@ Object.assign(Scene, {
     if(this.cart && d > -30 && d < (this.cart.club ? LEN + 15.5 : LEN + 60) && !this.inBack(d, this.cartX(d), -0.2)){
       const X = px(this.cartX(d)), pw = Math.max(1, Math.round(0.27 * U));
       if(X + pw > -2 && X - pw < VW + 2){
-        c.fillStyle = T._path[0]; c.fillRect(X - pw - 1, y, pw * 2 + 2, hgt);
-        c.fillStyle = T._path[1]; c.fillRect(X - pw, y, pw * 2, hgt);
-        if(pw > 3){ c.fillStyle = T._path[2]; c.fillRect(X - Math.round(pw * 0.4), y, Math.round(pw * 0.8), hgt); }
+        // (in a snowy round (the user picked it) snow lying on it, deeper as
+        // the round goes on, the carts' two tracks through it from the 7th)
+        const sL = this.snow ? (this.snowL || 1) : 0;
+        const P = sL ? ((T._pathSn || (T._pathSn = {}))[sL] || (T._pathSn[sL] = T._path.map(col => mixC(col, lite(pickC(T._rg, 0.85), 0.12), [0, 0.45, 0.7, 0.88][sL])))) : T._path;
+        c.fillStyle = P[0]; c.fillRect(X - pw - 1, y, pw * 2 + 2, hgt);
+        c.fillStyle = P[1]; c.fillRect(X - pw, y, pw * 2, hgt);
+        if(pw > 3){ c.fillStyle = P[2]; c.fillRect(X - Math.round(pw * 0.4), y, Math.round(pw * 0.8), hgt); }
+        if(sL >= 2 && pw >= 3){ const k = Math.max(1, Math.round(pw * 0.45)); c.fillStyle = T._path[0]; c.fillRect(X - k, y, 1, hgt); c.fillRect(X + k - 1, y, 1, hgt); }
       }
     }
     // the forest behind the green, right across (its lake first), over the
@@ -26180,7 +26220,7 @@ Object.assign(Scene, {
       // a drift of fallen leaves lying in the rough, one baked clump
       const len = clamp(Math.round(LAT * pr.s * 0.16), 2, 5);
       if(pr.x < -40 || pr.x > VW + 40) return;
-      const D2 = leafDrift(len, p.k % 6, this.leafL, night), clip = this.clipAt(p.d);
+      const D2 = leafDrift(len, p.k % 6, this.leafL, night, this.leafP), clip = this.clipAt(p.d);
       const y0 = Math.round(pr.y - D2.height * 0.7), vis = Math.min(D2.height, Math.floor(clip) + 1 - y0);
       if(vis > 0) c.drawImage(D2, 0, 0, D2.width, vis, Math.round(pr.x - D2.width / 2), y0, D2.width, vis);
 
@@ -26202,7 +26242,7 @@ Object.assign(Scene, {
       const L = 4.5 + hr(p.k, 1007) * 2.5, u = ((this.t / L + hr(p.k, 1008)) % 1);
       const sz = clamp(Math.round(LAT * pr.s * 1.1), 4, 36), S2 = steamSprite(sz);
       const rise = u * sz * 0.35 - S2.height * 0.3, lean = Math.round(((this.wind || 0) * 1.2 + 0.25) * u * sz);
-      const a = Math.sin(Math.PI * u) * 0.9;
+      const a = Math.sin(Math.PI * u) * 0.9 * (this.mistLift || 1);
       if(a < 0.04 || pr.x < -sz || pr.x > VW + sz) return;
       const clip = this.clipAt(p.d), x0 = Math.round(pr.x - S2.width / 2 + lean), y0 = Math.round(pr.y - S2.height - rise);
       const vis = Math.min(S2.height, Math.floor(clip) + 1 - y0);
@@ -27906,7 +27946,9 @@ Object.assign(Scene, {
       // with the wind, tumbling over. Each keeps to its own lane, at one of
       // three depths: far ones small and slow, near ones bigger and quicker.
       const c = this.b, w = this.wind || 0, P = this.fall === 'petals', C = this.fallPal;
-      for(let i = 0; i < 40; i++){
+      // (more of them as the round goes on: leafL)
+      const NF = 28 + 8 * (this.leafL || 1);
+      for(let i = 0; i < NF; i++){
         const z = i % 3, zk = [0.6, 1, 1.45][z];
         const sp = (P ? 9 + (i % 4) * 3 : 16 + (i % 4) * 5) * zk;
         const drift = (P ? this.t * (4 + w * 10) : this.t * (22 + Math.abs(w) * 30) * (w < 0 ? -1 : 1)) * zk;
@@ -31351,7 +31393,7 @@ const SCENE_PINS = [
   { id:'steam', n:'Steam off the water', w:'water', get: () => PSTEAM_FORCE === true || PSTEAM_FORCE === 1, set: v => { PSTEAM_FORCE = v ? true : null; } },
   { id:'thaw', n:'Ice thawing', w:'water', get: () => THAW_FORCE === true, set: v => { THAW_FORCE = v ? true : null; } },
   { id:'snowset', n:'Deep snow settled', w:'snowy courses', get: () => SNOWSET_FORCE === 3, set: v => { SNOWSET_FORCE = v ? 3 : null; } },
-  { id:'gleaf', n:'Leaves gathered (deep)', w:'the fairway edges', get: () => GLEAF_FORCE === 3, set: v => { GLEAF_FORCE = v ? 3 : null; } },
+  { id:'gleaf', n:'Leaves or petals gathered (deep)', w:'the fairway edges', get: () => GLEAF_FORCE === 3, set: v => { GLEAF_FORCE = v ? 3 : null; } },
   { id:'stars', n:'Stars coming out', w:'the dusk sky', get: () => STARS_FORCE === true, set: v => { STARS_FORCE = v ? true : null; } },
   { id:'dusk', n:'Dusk', w:'the sky and the water', get: () => DUSK_FORCE === true, set: v => { DUSK_FORCE = v ? true : null; } },
   { id:'shimmer', n:'Heat shimmer', w:'summer afternoons', get: () => SHIMMER_FORCE === true, set: v => { SHIMMER_FORCE = v ? true : SHIMMER_DEF; } },

@@ -13,7 +13,11 @@ through:
 
 ## 1. Where things stand
 
-- Everything is committed and **no request is waiting**. Last (from his
+- Everything is committed and **no request is waiting**. Last: snow on
+  the path through a snowy round; the moon rising over the hills at dusk
+  and climbing after nine (Dawn and Dusk on); spring petals gathering at
+  the edges; the morning mist thinning hole by hole; the tee's frame back
+  under budget (cloud shadows filled in one go). Before that (from his
   phone's screenshots): the ball lying ahead smaller; the cart path given
   a footbridge over the stepping-stones river and the canyon, and kept
   off the green's apron (it vanished under them); cloud shadows fixed to
@@ -30,9 +34,6 @@ through:
   water, frost footprints, and a speed pass (he reports a steady 60fps).
   New switches: Leaves gathered (deep), Stars coming out; Dusk shows the
   long shadows; Frost the breath; Deep snow settled the gallery's snow.
-- A plain fair frame standing on the tee in autumn is about 1,100 canvas
-  calls (his figure about 220, the props 490): over `battery`'s 1,000,
-  which measures mid-fairway. Worth a look in the next speed pass.
 - The scenery of 4 to 6 October (canyon, ponds, dragonflies, fireflies,
   fish, storms, planes, balloons, ducklings, steam, mist, frost, the
   rainbow's reflection, wind, leaves on the water, pins either side,
@@ -43,7 +44,7 @@ through:
   new a switch. Earlier work: the sections under it.
 - What lives by the season asks `lookSeason`: a course's own, the Snowline
   winter and the Blossom spring all year, else the month.
-- `node test/run.js` has **165 checks**, about 35 minutes: run it in the
+- `node test/run.js` has **166 checks**, about 35 minutes: run it in the
   background, on a copy in the scratchpad, with the machine quiet. After
   weather, colours or anything dated, also run it with `HOUR_FORCE` 8 and
   15 and the month pinned (rules 20 and 70).
@@ -276,15 +277,14 @@ Five at least (CLAUDE.md); don't raise the dog until he does; no new
 animals for now (he asked to hold off).
 
 1. **Look at the new things on the phone** (switches: Deep snow settled,
-   Dusk, Leaves gathered, Stars coming out, Frost) and say what to tune.
-2. **A speed pass on the tee**: a fair frame there is over budget (his
-   figure drawn row by row is a fifth of it).
-3. **Moonrise**: the moon coming up over the hills after the stars, with
-   Dawn and Dusk on.
-4. **Spring blossom drifting** across the fairway and settling at its
-   edges through a spring round (as the autumn leaves do).
-5. **Morning fog lifting**: on misty mornings the low mist thinning hole
-   by hole as the round goes on.
-6. **Gusts skittering leaves** across the green and fairway in autumn wind.
+   Stars coming out, Leaves or petals gathered, Mist in the dips, Steam)
+   and say what to tune.
+2. **Snow falling heavier** as a snowy round goes on, matching the snow
+   building up on everything.
+3. **The flag and pole wet in rain**, the flag hanging heavier and darker.
+4. **Frost melting** off the fairway through a frosty round, as the mist
+   lifts (he turned down dew; this is the frost going).
+5. **A fog bank thinning** through a foggy round.
+6. **A memory and speed check on the phone** with the new switches all on.
 
 Recommend 1. (Turned down: dew; no new animals for now.)

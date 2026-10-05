@@ -81,7 +81,8 @@ module.exports = {
           for (let ci = 0; ci < B.COURSE.length; ci++) { DEV.course(ci); hideSheet(); for (let k = 0; k < 6; k++) { GLEAF_FORCE = 3; fair(); Scene.newHole(S.hole + k, S.tier);
             for (const p of Scene.props.filter(p => p.sp === 'gleaf')) { n++; if (Scene.onPlay(p.d, p.x, 0) || Scene.hitsHazard(p.d, p.x, 0) || Scene.wetSpot(p.d, p.x)) bad++; } } }
           GLEAF_FORCE = null; DEV.course(0); hideSheet(); o.leafAll = n; if (bad) f(bad + ' of ' + n + ' leaf drifts on the short grass, a hazard or water');
-          for (const sn of [0, 2, 3]) { SEASON_FORCE = sn; fair(); Scene.newHole(S.hole, S.tier); if (Scene.leafL || Scene.props.some(p => p.sp === 'gleaf')) f('leaf drifts in season ' + sn); }
+          // (spring's drifts are petals: roundlife)
+          for (const sn of [0, 2, 3]) { SEASON_FORCE = sn; fair(); Scene.newHole(S.hole, S.tier); if (!Scene.leafP && (Scene.leafL || Scene.props.some(p => p.sp === 'gleaf'))) f('leaf drifts in season ' + sn); }
           SEASON_FORCE = 1; GLEAF_FORCE = 3; fair(); let hl = S.hole; while (sigKind(hl)) hl++; Scene.newHole(hl, S.tier); Scene.announce = null;
           const G0 = Scene.props.filter(p => p.sp === 'gleaf' && p.d > 12 && p.d < 50); const cam = G0.length ? G0[G0.length - 1].d - 7 : 12; const a = shot(cam, 2);
           const keep = Scene.props; Scene.props = keep.filter(p => p.sp !== 'gleaf'); const b = shot(cam, 2); Scene.props = keep;

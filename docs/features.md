@@ -204,6 +204,26 @@ feature must do, and is usually enough on its own.
   hole), and `cartX` kept 0.75 clear of the green's apron (painted after
   the path, it covered it). Leaf drifts flatter and wider. A path dipping
   behind a rise and out again is terrain, not a fault.
+- **Snow on the path** (`roundlife`): in a snowy round the path's tones
+  mixed toward the snowy rough by `snowL` (`T._pathSn`), two cart tracks
+  through it from the 7th; the ground's reuse key carries `snowL`. The
+  footbridges and the rope bridge were white in snow already.
+- **Moonrise** (`roundlife`): with Dawn and Dusk on, past 0.35 of the
+  stars a full moon rises over the eastern hills (`MOONRISE_X` 0.24; drawn
+  in the sky before the hills); `moonRiseF` (9 to 11pm, twelfths) carries
+  the night's moon from there to its place, in `rbKey`; the night's moon
+  full while the setting is on.
+- **Petals gathering** (`roundlife`): `Scene.leafP` in a course's spring;
+  `leafL` by the round for spring as for autumn; `leafDrift(..., petals)`
+  in `PETAL_COL`. More leaves and petals falling as the round goes on
+  (`NF` 28 + 8 a level).
+- **The mist lifting** (`roundlife`): `Scene.mistLift` (1 on the 1st,
+  0.15 from the 13th; 1 under the mist's or steam's switch) scales the
+  dips' mist and the steam.
+- **Speed at the tee**: the cloud shadows' slices gathered into one
+  `Path2D`, each slice trimmed to its band of rows, filled once (each
+  slice clipped and filled was 300 calls; the tee on a fair autumn day
+  1,139 calls, now 849). `battery` holds that tee to 850 at most.
 ### The session of 4 October, fourth
 
 - **The milestone bar** (`milestones`): each Range row's third line

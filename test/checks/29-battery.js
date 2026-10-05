@@ -99,7 +99,7 @@ module.exports = {
         // over the gallery were a pixel at a time, the tee a row at a time:
         // 2,700 calls a frame) and in the snow (its flakes a pixel at a
         // time): the leaves and flakes warmed first, the second frame alike
-        for (const [what, set] of [['storm', () => { STORM_FORCE = true; }], ['snow', () => { SEASON_FORCE = 2; }]]) {
+        for (const [what, set] of [['storm', () => { STORM_FORCE = true; }], ['snow', () => { SEASON_FORCE = 2; }], ['tee', () => { SEASON_FORCE = 1; CSHADOW_FORCE = true; }]]) {
           HOUR_FORCE = 14; DEV.course(0); hideSheet(); set(); S.chaos = { n: 'Fair' }; Scene.newHole(S.hole, S.tier); Scene.announce = null;
           const D = derive(); Scene.camD = 0; Scene.walkTo = 0;
           for (let i = 0; i < 200; i++) { Scene.t = i * 0.05; Scene.draw(0, D); }
@@ -111,7 +111,7 @@ module.exports = {
             orig[k] = d.value; P[k] = function () { calls++; return orig[k].apply(this, arguments); };
           }
           try { Scene.t = 10.03; Scene.draw(0, D); calls = 0; Scene.t = 10.07; Scene.draw(0, D); }
-          finally { for (const k in orig) P[k] = orig[k]; HOUR_FORCE = null; STORM_FORCE = null; SEASON_FORCE = -1; }
+          finally { for (const k in orig) P[k] = orig[k]; HOUR_FORCE = null; STORM_FORCE = null; SEASON_FORCE = -1; CSHADOW_FORCE = null; }
           o['calls_' + what] = calls; if (calls > o.calls) { o.calls = calls; o.callsAt = what; }
         }
         Scene.newHole(S.hole, S.tier);
@@ -157,8 +157,11 @@ module.exports = {
     if (r.bad.length)
       throw new Error('the ground painted by the pixel is not the ground painted rect by rect in '
         + r.bad.length + ' of ' + r.scenes + ' scenes: ' + r.bad.slice(0, 6).join('; '));
+    // (the tee on a fair day with cloud shadows its own, lower: each shadow's
+    // slices clipped and filled apiece put it near a thousand)
+    if (r.calls_tee > 850) throw new Error('the tee on a fair day with cloud shadows made ' + r.calls_tee + ' canvas calls (850 at most)');
     if (!(r.calls > 50 && r.calls < MAX_CALLS))
-      throw new Error('a frame on the course made ' + r.calls + ' canvas calls' + (r.callsAt ? ' (' + r.callsAt + '; storm ' + r.calls_storm + ', snow ' + r.calls_snow + ')' : '') + ' (the field is meant to go in one stamp; '
+      throw new Error('a frame on the course made ' + r.calls + ' canvas calls' + (r.callsAt ? ' (' + r.callsAt + '; storm ' + r.calls_storm + ', snow ' + r.calls_snow + ', tee ' + r.calls_tee + ')' : '') + ' (the field is meant to go in one stamp; '
         + 'under ' + MAX_CALLS + ')');
     if (r.text) throw new Error(r.text + ' of ' + r.textN + ' words baked whole differ from the same words set a letter at a time');
     const C = r.canvas;
@@ -194,7 +197,7 @@ module.exports = {
     if (r.muts.length) throw new Error('writing the live numbers again, with nothing changed, touched the page '
       + r.muts.length + ' times: ' + r.muts.slice(0, 6).join('; '));
     return [r.scenes + ' scenes: the ground painted by the pixel matches it painted rect by rect, fresh and reused',
-      'a frame makes ' + r.calls + ' canvas calls' + (r.callsAt ? ' (' + r.callsAt + ')' : '') + ', a storm at the tee ' + r.calls_storm + ', snow ' + r.calls_snow + '; the page canvas is the ' + C.w + 'x' + C.h + ' picture, shown at '
+      'a frame makes ' + r.calls + ' canvas calls' + (r.callsAt ? ' (' + r.callsAt + ')' : '') + ', a storm at the tee ' + r.calls_storm + ', snow ' + r.calls_snow + ', a fair autumn tee with cloud shadows ' + r.calls_tee + '; the page canvas is the ' + C.w + 'x' + C.h + ' picture, shown at '
         + C.scale + ' device pixels a pixel',
       'writing unchanged numbers touches the page 0 times',
       'a 300 wide picture draws, and on its side the picture covers the ' + cover.stage + 'px stage'];
