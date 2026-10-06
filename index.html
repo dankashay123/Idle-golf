@@ -4396,6 +4396,9 @@ const MOONRISE_X = 0.24;
 // how far the other holes' fairways and the woods across their strips take
 // to round off at their ends (nbrQ, ringQ), in paces
 const NBR_ROUND = 1.5, RING_ROUND = 2;
+// how far a bunker's outline keeps off a signature hole's water, canyon or
+// railway (offMoat), in paces
+const MOAT_GAP = 0.6;
 // The sky slides as the hole bends (the user: balloons, clouds and planes
 // stayed put as he turned a corner; they would stay over their own ground):
 // SKY_TURN of a true turn, built wider by SKY_TURN_M of the view each side.
@@ -19699,9 +19702,17 @@ const Scene = {
         if(Math.abs(b.x) - b.rx < B_LANE) continue;
         if(this.hitsGreen(b) || this.onMtn(b)) continue;
         if(this.hitsHazard(b.d, b.x, Math.max(b.rd, b.rx)*0.65)) continue;
+        // (and its whole outline, lobes and all, a stride clear of a
+        // signature hole's water, canyon or railway: by its middle alone
+        // they ran in to the canyon's rim and the river's bank, cut off)
+        if(this.offMoat(b, cfg.moat)) continue;
         this.bunkers.push(b); break;
       }
     }
+  },
+  offMoat(b, M){
+    if(!M) return false;
+    return Math.abs(b.d - M.d) < M.rd + b.rd * 1.25 + MOAT_GAP && Math.abs(b.x - M.x) < M.rx + b.rx * 1.25 + MOAT_GAP;
   },
   // Trees and spectators go where nothing else is: off the short grass, clear
   // of every hazard, and clear of each other.
@@ -19888,7 +19899,10 @@ const Scene = {
     // what lies each side: the next hole mostly; a wood by the clubhouse and
     // now and then; a lake now and then; never neither side a hole
     const kinds = [-1, 1].map(sd => { const roll = hr(h * 5 + (sd > 0 ? 1 : 0), 502);
-      return sd === cs ? 'wood' : roll < 0.8 ? 'hole' : roll < 0.9 ? 'wood' : 'lake'; });
+      // (no lake beside a canyon or the railway: it ran across them, cut
+      // off by the gorge, an alligator in it over the drop)
+      const dryX = this.water && (this.water.canyon || this.water.rail);
+      return sd === cs ? 'wood' : roll < 0.8 ? 'hole' : roll < 0.9 || dryX ? 'wood' : 'lake'; });
     if(kinds[0] !== 'hole' && kinds[1] !== 'hole') kinds[cs === -1 ? 1 : 0] = 'hole';
     for(const sd of [-1, 1]){
       const k = h * 5 + (sd > 0 ? 1 : 0), kind = kinds[sd > 0 ? 1 : 0];
@@ -20873,6 +20887,11 @@ const Scene = {
     for(let i = 0; i < 180; i++){
       const d = 2 + hr(this.hole * 41 + i, 305) * (LEN + 2), x = (hr(this.hole * 41 + i, 306) - 0.5) * 2 * (this.fwWidth(d) + 2.5);
       if(Math.abs(x) > 6.6) continue;
+      // (never on the water, over the canyon or on the railway, but on the
+      // island's own ground: they lay across the gorge and the river)
+      const W = this.water;
+      if(W && (W.lake ? this.wetAt(W, d, x) : Math.abs(d - W.d) < W.rd + 0.2 && Math.abs(x - W.x) < W.rx + 0.2)) continue;
+      if(this.pond && this.inPond(d, x, 0.2)) continue;
       put.push({ kind: 6, d, x, k: i });
     }
     // a grandstand behind the last green of the round (kind 10), full on the
