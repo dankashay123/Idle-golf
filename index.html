@@ -22279,6 +22279,12 @@ const Scene = {
     this.clockNt = !/Night/.test(ch) && clockNight();
     this.aurora = /Aurora|Ley|Mythic/.test(ch);
     this.rain   = /Crosswind|Marshal/.test(ch) || (STORM_FORCE === true && !S.dgnRun && !/Night/.test(ch));
+    // (a scenery switch on brings what it needs: the day, the night, dry
+    // weather; a storm's rain wins over dry. Never in a wager)
+    const PN = !S.dgnRun && typeof PIN_NEED !== 'undefined' ? PIN_NEED : {};
+    if(PN.night && !PN.day){ this.night = true; }
+    else if(PN.day && !PN.night){ this.night = false; this.clockNt = false; }
+    if(PN.dry && STORM_FORCE !== true) this.rain = false;
     this.storm  = this.rain && stormAt(h);
     this.wind   = (rnd()*2 - 1) * 0.7;
     if(/Crosswind/.test(ch)) this.wind = (this.wind < 0 ? -1 : 1) * (1.0 + Math.abs(this.wind) * 0.5);
@@ -22295,7 +22301,8 @@ const Scene = {
     if(this.golden && !QUIET && !OFFLINE && this.goldSaid !== h){ this.goldSaid = h; toast('<span class="achk">Golden Hour</span>Purse \u00d72 \u00b7 gold at the top', 'ach'); }
     const mode = this.night ? 'night' : this.rain ? 'rain' : this.frost ? 'frost' : this.golden ? 'gold' : 'day';
     this.course = cs;
-    const look = seasonLook(cs, courseSeason(cs, tier));
+    // (and snow: the winter's look, where the course's own has none)
+    const look0 = seasonLook(cs, courseSeason(cs, tier)), look = PN.snow && !look0.snowfall ? seasonLook(cs, 2) : look0;
     this.look = look;
     this.harvest = this.night && !this.rain && harvestAt(h, look);
     // mist lying in the canyon on a cold morning (the user picked it from
@@ -31746,47 +31753,52 @@ function albCatch(){
 // see it and test it repeatedly"): each pins one thing on, over every hole
 // it can be on (some only where it can: steam needs water, fireflies the
 // night), until switched off; kept in this copy so a reload keeps it.
-// Developer copy only.
-let ALB_PIN = null;
+// Developer copy only. Each brings what it needs (the user: a snowy one
+// "forces the hole to have snow on it"): need, of day, night, dry, snow on
+// every hole while it is on (pinNeeds, read in newHole; day and night both
+// asked, neither); water, the canyon or the island, the hole taken to one
+// that has it as it is switched on (DEV.pin).
+let ALB_PIN = null, PIN_NEED = {};
 const SCENE_PINS = [
-  { id:'steam', n:'Steam off the water', w:'water', get: () => PSTEAM_FORCE === true || PSTEAM_FORCE === 1, set: v => { PSTEAM_FORCE = v ? true : null; } },
-  { id:'thaw', n:'Ice thawing', w:'water', get: () => THAW_FORCE === true, set: v => { THAW_FORCE = v ? true : null; } },
-  { id:'snowset', n:'Deep snow settled', w:'snowy courses', get: () => SNOWSET_FORCE === 3, set: v => { SNOWSET_FORCE = v ? 3 : null; } },
-  { id:'gleaf', n:'Leaves or petals gathered (deep)', w:'the fairway edges', get: () => GLEAF_FORCE === 3, set: v => { GLEAF_FORCE = v ? 3 : null; } },
-  { id:'stars', n:'Stars coming out', w:'the dusk sky', get: () => STARS_FORCE === true, set: v => { STARS_FORCE = v ? true : null; } },
-  { id:'dusk', n:'Dusk', w:'the sky and the water', get: () => DUSK_FORCE === true, set: v => { DUSK_FORCE = v ? true : null; } },
-  { id:'shimmer', n:'Heat shimmer', w:'summer afternoons', get: () => SHIMMER_FORCE === true, set: v => { SHIMMER_FORCE = v ? true : SHIMMER_DEF; } },
-  { id:'cshadow', n:'Cloud shadows', w:'clear days', get: () => CSHADOW_FORCE === true, set: v => { CSHADOW_FORCE = v ? true : null; } },
-  { id:'wleaf', n:'Leaves on the water', w:'water', get: () => WLEAF_FORCE === true, set: v => { WLEAF_FORCE = v ? true : null; } },
-  { id:'lmist', n:'Mist in the dips', w:'ordinary holes', get: () => LMIST_FORCE === true || LMIST_FORCE === 1, set: v => { LMIST_FORCE = v ? true : null; } },
-  { id:'mist', n:'Canyon mist', w:'canyon', get: () => CMIST_FORCE === true || CMIST_FORCE === 1, set: v => { CMIST_FORCE = v ? true : null; } },
-  { id:'balloon', n:'Hot-air balloons', w:'by day, dry', get: () => BALLOON_FORCE === true || BALLOON_FORCE === 1, set: v => { BALLOON_FORCE = v ? true : null; } },
-  { id:'plane', n:'Airplanes', w:'not in rain', get: () => PLANE_FORCE === true || PLANE_FORCE === 1, set: v => { PLANE_FORCE = v ? true : null; } },
-  { id:'storm', n:'Thunderstorm', w:'brings rain', get: () => STORM_FORCE === true || STORM_FORCE === 1, set: v => { STORM_FORCE = v ? true : null; } },
-  { id:'alb', n:'Lucky Albatross', w:'one after another', get: () => ALB_PIN === true || ALB_PIN === 1, set: v => { ALB_PIN = v ? true : null; } },
-  { id:'harvest', n:'Harvest Moon', w:'at night', get: () => HARVEST_FORCE === true || HARVEST_FORCE === 1, set: v => { HARVEST_FORCE = v ? true : null; } },
-  { id:'rainbow', n:'Rainbow', w:'by day, dry', get: () => RAINBOW_FORCE === true || RAINBOW_FORCE === 1, set: v => { RAINBOW_FORCE = v ? true : null; } },
-  { id:'fog', n:'Fog bank', w:'by day, dry', get: () => FOG_FORCE === true || FOG_FORCE === 1, set: v => { FOG_FORCE = v ? true : null; } },
-  { id:'frost', n:'Frost', w:'by day, dry', get: () => FROST_FORCE === true || FROST_FORCE === 1, set: v => { FROST_FORCE = v ? true : null; } },
-  { id:'firefly', n:'Fireflies', w:'at night', get: () => FIREFLY_FORCE === true || FIREFLY_FORCE === 1, set: v => { FIREFLY_FORCE = v ? true : null; } },
-  { id:'rfly', n:'Fireflies at the reeds', w:'night, reeds', get: () => RFLY_FORCE === true || RFLY_FORCE === 1, set: v => { RFLY_FORCE = v ? true : null; } },
-  { id:'dfly', n:'Dragonflies', w:'by day, reeds', get: () => DFLY_FORCE === true || DFLY_FORCE === 1, set: v => { DFLY_FORCE = v ? true : null; } },
-  { id:'leap', n:'Leaping fish', w:'open water', get: () => LEAP_FORCE === true || LEAP_FORCE === 1, set: v => { LEAP_FORCE = v ? true : null; } },
-  { id:'frog', n:'Frog on a lily pad', w:'lily pads', get: () => LILYFROG_FORCE === true || LILYFROG_FORCE === 1, set: v => { LILYFROG_FORCE = v ? true : null; } },
-  { id:'duckling', n:'Ducklings', w:'island hole', get: () => DUCKLING_FORCE === true || DUCKLING_FORCE === 1, set: v => { DUCKLING_FORCE = v ? true : null; } },
-  { id:'king', n:'Kingfisher', w:'by water', get: () => KING_FORCE === true || KING_FORCE === 1, set: v => { KING_FORCE = v ? true : false; } },
-  { id:'cub', n:'Fox cubs', w:'beside a fox', get: () => CUB_FORCE === true || CUB_FORCE === 1, set: v => { CUB_FORCE = v ? true : false; } },
-  { id:'luna', n:'Luna moth', w:'night, lamps', get: () => LUNA_FORCE === true || LUNA_FORCE === 1, set: v => { LUNA_FORCE = v ? true : null; } }
+  { id:'steam', need:'day dry water', n:'Steam off the water', w:'water', get: () => PSTEAM_FORCE === true || PSTEAM_FORCE === 1, set: v => { PSTEAM_FORCE = v ? true : null; } },
+  { id:'thaw', need:'day dry water', n:'Ice thawing', w:'water', get: () => THAW_FORCE === true, set: v => { THAW_FORCE = v ? true : null; } },
+  { id:'snowset', need:'snow dry', n:'Deep snow settled', w:'snowy courses', get: () => SNOWSET_FORCE === 3, set: v => { SNOWSET_FORCE = v ? 3 : null; } },
+  { id:'gleaf', need:'', n:'Leaves or petals gathered (deep)', w:'the fairway edges', get: () => GLEAF_FORCE === 3, set: v => { GLEAF_FORCE = v ? 3 : null; } },
+  { id:'stars', need:'day dry', n:'Stars coming out', w:'the dusk sky', get: () => STARS_FORCE === true, set: v => { STARS_FORCE = v ? true : null; } },
+  { id:'dusk', need:'day dry', n:'Dusk', w:'the sky and the water', get: () => DUSK_FORCE === true, set: v => { DUSK_FORCE = v ? true : null; } },
+  { id:'shimmer', need:'day dry', n:'Heat shimmer', w:'summer afternoons', get: () => SHIMMER_FORCE === true, set: v => { SHIMMER_FORCE = v ? true : SHIMMER_DEF; } },
+  { id:'cshadow', need:'day dry', n:'Cloud shadows', w:'clear days', get: () => CSHADOW_FORCE === true, set: v => { CSHADOW_FORCE = v ? true : null; } },
+  { id:'wleaf', need:'water', n:'Leaves on the water', w:'water', get: () => WLEAF_FORCE === true, set: v => { WLEAF_FORCE = v ? true : null; } },
+  { id:'lmist', need:'day dry', n:'Mist in the dips', w:'ordinary holes', get: () => LMIST_FORCE === true || LMIST_FORCE === 1, set: v => { LMIST_FORCE = v ? true : null; } },
+  { id:'mist', need:'day dry canyon', n:'Canyon mist', w:'canyon', get: () => CMIST_FORCE === true || CMIST_FORCE === 1, set: v => { CMIST_FORCE = v ? true : null; } },
+  { id:'balloon', need:'day dry', n:'Hot-air balloons', w:'by day, dry', get: () => BALLOON_FORCE === true || BALLOON_FORCE === 1, set: v => { BALLOON_FORCE = v ? true : null; } },
+  { id:'plane', need:'dry', n:'Airplanes', w:'not in rain', get: () => PLANE_FORCE === true || PLANE_FORCE === 1, set: v => { PLANE_FORCE = v ? true : null; } },
+  { id:'storm', need:'', n:'Thunderstorm', w:'brings rain', get: () => STORM_FORCE === true || STORM_FORCE === 1, set: v => { STORM_FORCE = v ? true : null; } },
+  { id:'alb', need:'', n:'Lucky Albatross', w:'one after another', get: () => ALB_PIN === true || ALB_PIN === 1, set: v => { ALB_PIN = v ? true : null; } },
+  { id:'harvest', need:'night dry', n:'Harvest Moon', w:'at night', get: () => HARVEST_FORCE === true || HARVEST_FORCE === 1, set: v => { HARVEST_FORCE = v ? true : null; } },
+  { id:'rainbow', need:'day dry', n:'Rainbow', w:'by day, dry', get: () => RAINBOW_FORCE === true || RAINBOW_FORCE === 1, set: v => { RAINBOW_FORCE = v ? true : null; } },
+  { id:'fog', need:'day dry', n:'Fog bank', w:'by day, dry', get: () => FOG_FORCE === true || FOG_FORCE === 1, set: v => { FOG_FORCE = v ? true : null; } },
+  { id:'frost', need:'day dry', n:'Frost', w:'by day, dry', get: () => FROST_FORCE === true || FROST_FORCE === 1, set: v => { FROST_FORCE = v ? true : null; } },
+  { id:'firefly', need:'night', n:'Fireflies', w:'at night', get: () => FIREFLY_FORCE === true || FIREFLY_FORCE === 1, set: v => { FIREFLY_FORCE = v ? true : null; } },
+  { id:'rfly', need:'night water', n:'Fireflies at the reeds', w:'night, reeds', get: () => RFLY_FORCE === true || RFLY_FORCE === 1, set: v => { RFLY_FORCE = v ? true : null; } },
+  { id:'dfly', need:'day water', n:'Dragonflies', w:'by day, reeds', get: () => DFLY_FORCE === true || DFLY_FORCE === 1, set: v => { DFLY_FORCE = v ? true : null; } },
+  { id:'leap', need:'water', n:'Leaping fish', w:'open water', get: () => LEAP_FORCE === true || LEAP_FORCE === 1, set: v => { LEAP_FORCE = v ? true : null; } },
+  { id:'frog', need:'water', n:'Frog on a lily pad', w:'lily pads', get: () => LILYFROG_FORCE === true || LILYFROG_FORCE === 1, set: v => { LILYFROG_FORCE = v ? true : null; } },
+  { id:'duckling', need:'day island', n:'Ducklings', w:'island hole', get: () => DUCKLING_FORCE === true || DUCKLING_FORCE === 1, set: v => { DUCKLING_FORCE = v ? true : null; } },
+  { id:'king', need:'water', n:'Kingfisher', w:'by water', get: () => KING_FORCE === true || KING_FORCE === 1, set: v => { KING_FORCE = v ? true : false; } },
+  { id:'cub', need:'', n:'Fox cubs', w:'beside a fox', get: () => CUB_FORCE === true || CUB_FORCE === 1, set: v => { CUB_FORCE = v ? true : false; } },
+  { id:'luna', need:'night', n:'Luna moth', w:'night, lamps', get: () => LUNA_FORCE === true || LUNA_FORCE === 1, set: v => { LUNA_FORCE = v ? true : null; } }
 ];
 // (whether any switch is on: the readout says so while one is, since some
 // change what pays: frost keeps Golden Hour away, a storm brings rain)
 let PINS_LIT = false;
-function pinsSave(){ PINS_LIT = SCENE_PINS.some(P => P.get()); try{ localStorage.setItem(KEY + ':pins', JSON.stringify(SCENE_PINS.filter(P => P.get()).map(P => P.id))); }catch(e){} }
+function pinNeeds(){ const N = {}; for(const P of SCENE_PINS) if(P.get()) for(const w of (P.need || '').split(' ')) if(w) N[w] = 1; return PIN_NEED = N; }
+function pinsSave(){ pinNeeds(); PINS_LIT = SCENE_PINS.some(P => P.get()); try{ localStorage.setItem(KEY + ':pins', JSON.stringify(SCENE_PINS.filter(P => P.get()).map(P => P.id))); }catch(e){} }
 function pinsLoad(){
   if(!devOK()) return;
   let on = []; try{ on = JSON.parse(localStorage.getItem(KEY + ':pins') || '[]') || []; }catch(e){ on = []; }
   for(const P of SCENE_PINS) if(Array.isArray(on) && on.includes(P.id)) P.set(true);
-  PINS_LIT = SCENE_PINS.some(P => P.get());
+  PINS_LIT = SCENE_PINS.some(P => P.get()); pinNeeds();
 }
 const DEV = {
   open(){
@@ -32154,7 +32166,14 @@ const DEV = {
   albatross(){ LUCKY.a = null; LUCKY.wait = 0; hideSheet(); },
   // (the hole laid again as it is, not started over: no yards back, no fee
   // paid again; nothing laid in a wager)
-  pin(id){ const P = SCENE_PINS.find(x => x.id === id); if(!P) return; P.set(!P.get()); pinsSave(); this.relay(); this.re(); },
+  pin(id){ const P = SCENE_PINS.find(x => x.id === id); if(!P) return; P.set(!P.get()); pinsSave();
+    // (switched on where it cannot show, taken to where it can: the canyon
+    // and the island made of this hole, water the next hole with some)
+    const need = P.get() && !S.dgnRun ? (P.need || '') : '', W = Scene.water;
+    if(/canyon/.test(need) && !(W && W.canyon)) this.canyon();
+    else if(/island/.test(need) && sigKind(S.hole) !== 'island') this.isle();
+    else if(/water/.test(need) && !((W && !W.canyon && !W.rail) || Scene.pond)) this.waterHole();
+    this.relay(); this.re(); },
   pinsOff(){ for(const P of SCENE_PINS) P.set(false); pinsSave(); this.relay(); this.re(); },
   relay(){ Scene.skyKey = null; if(!S.dgnRun) Scene.newHole(S.hole, S.tier); },
   // the next ordinary hole with a pond or a lake by it (the fish, the steam,

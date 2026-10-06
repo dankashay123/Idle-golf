@@ -8,6 +8,8 @@
  *   - on holds over holes: steam pinned shows on the water at 3pm in summer
  *     (when it never would), balloons at 3pm, a storm brings its rain, the
  *     Lucky Albatross comes again at once
+ *   - each brings what it needs: the night, the day, dry weather, snow;
+ *     water, the canyon or the island, the hole taken to one that has it
  *   - kept: a reload (the switches read back) keeps them, and only in a
  *     developer copy; "all off" clears them */
 'use strict';
@@ -28,6 +30,28 @@ module.exports = {
           if (!lit) f(P.n + ' on, its button not lit');
           DEV.pin(P.id); if (P.get()) f(P.n + ' does not switch off'); }
         QUIET = true; window.toast = tw; hideSheet();
+        // each brings what it needs (the user: a snowy one "forces the hole
+        // to have snow on it"): in the rain at noon, the night for a night
+        // one, the day and dry for a day one, snow for the snow; water, the
+        // canyon or the island, the hole taken to one that has it
+        { const keepC = S.chaos; o.need = 0;
+          for (const P of SCENE_PINS) { if (!P.need) continue;
+            HOUR_FORCE = /night/.test(P.need) ? 12 : 23; S.chaos = { n: 'Crosswind' }; Scene.newHole(S.hole, S.tier);
+            QUIET = false; window.toast = () => {}; DEV.pin(P.id); QUIET = true; window.toast = tw; hideSheet();
+            const W = Scene.water, bad = [];
+            if (/night/.test(P.need) && !Scene.night) bad.push('not night');
+            if (/day/.test(P.need) && Scene.night) bad.push('night');
+            if (/dry/.test(P.need) && Scene.rain) bad.push('rain');
+            if (/snow/.test(P.need) && !Scene.snow) bad.push('no snow');
+            if (/water/.test(P.need) && !((W && !W.canyon && !W.rail) || Scene.pond)) bad.push('no water');
+            if (/canyon/.test(P.need) && !(W && W.canyon)) bad.push('no canyon');
+            if (/island/.test(P.need) && sigKind(S.hole) !== 'island') bad.push('no island');
+            if (bad.length) f(P.n + ' on: ' + bad.join(', ')); else o.need++;
+            QUIET = false; window.toast = () => {}; DEV.pin(P.id); QUIET = true; window.toast = tw; hideSheet();
+            CANYON_FORCE = 0; ISLE_FORCE = 0; }
+          // (and off, the hole its own again: rain at noon in a Crosswind)
+          HOUR_FORCE = 12; S.chaos = { n: 'Crosswind' }; Scene.newHole(S.hole, S.tier); if (!Scene.rain) f('all off, the Crosswind still dry');
+          S.chaos = keepC; HOUR_FORCE = keepH; Scene.newHole(S.hole, S.tier); }
         // a switch does not start the hole over (it put the yards back and
         // paid a milestone's fee again)
         { S.yards = S.yardsMax * 0.37; const y0 = S.yards, g0 = S.gold, sv0 = S.sov; QUIET = false; window.toast = () => {};
@@ -60,6 +84,6 @@ module.exports = {
       return { fails, o };
     });
     if (r.fails.length) throw new Error(r.fails.join('; '));
-    return [r.o.n + ' switches, each on (lit) and off; held over holes at any hour (steam, balloons), a storm brings rain, the albatross comes again; kept over a reload in a developer copy only; all off clears them'];
+    return [r.o.n + ' switches, each on (lit) and off; ' + r.o.need + ' bringing what they need; held over holes at any hour (steam, balloons), a storm brings rain, the albatross comes again; kept over a reload in a developer copy only; all off clears them'];
   }
 };
