@@ -67,7 +67,7 @@ module.exports = {
         // the members' allowance waits too; a pack is paid at once
         S.member = 1; S.memberT = 86400 - 1; tickShop(2);
         if (owedSum('today') !== B.MEMBER_DAILY) f('the allowance waits ' + owedSum('today'));
-        const s4 = S.sov, pk = B.SOV_PACKS[0]; if (pk) { buyPack(pk); if (S.sov - s4 !== pk.c) f('a pack paid ' + (S.sov - s4) + ' at once, not ' + pk.c); }
+        const s4 = S.sov, pk = B.SOV_PACKS[0]; S.firstPack = 1; if (pk) { buyPack(pk); if (S.sov - s4 !== pk.c) f('a pack paid ' + (S.sov - s4) + ' at once, not ' + pk.c); }
         o.rows = { hon: a.n, today: 'find, card, allowance', guide: 'first sighting, hunt' };
         // save repair
         S.owed = [{ p: 'today', k: 'x', n: 3.7, t: 'ok' }, { p: 'nowhere', k: 'y', n: 2 }, { p: 'hon', k: 'x', n: 5 }, { p: 'guide', k: 'z', n: -1 }, null, { p: 'guide', k: 'w', n: 1e12 }];

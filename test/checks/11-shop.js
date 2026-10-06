@@ -120,11 +120,13 @@ module.exports = {
       }
 
       // 3. a pack grants and takes nothing
-      S.sov = 0; S.gold = 12345; S.sovSpent = 0;
+      // (the first pack ever bought pays double, once: the user chose it)
+      S.sov = 0; S.gold = 12345; S.sovSpent = 0; delete S.firstPack; S.packsTaken = {};
       const goldBefore = S.gold;
+      buyPack(B.SOV_PACKS[3]); const first = S.sov; S.sov = 0;
       buyPack(B.SOV_PACKS[3]);
       out.pack = { got: S.sov, want: B.SOV_PACKS[3].c, goldMoved: S.gold !== goldBefore,
-                   spent: S.sovSpent };
+                   spent: S.sovSpent, first };
 
       // and the ladder is a ladder: every pack is better value than the last
       const rate = p => p.c / p.usd;
@@ -192,6 +194,8 @@ module.exports = {
         throw new Error('the ' + sub + ' tab still draws ' + t.rows + ' list rows');
     }
 
+    if (r.pack.first !== r.pack.want * 2)
+      throw new Error('the first pack granted ' + r.pack.first + ', not double ' + r.pack.want);
     if (r.pack.got !== r.pack.want)
       throw new Error('a pack granted ' + r.pack.got + ' of ' + r.pack.want);
     if (r.pack.goldMoved || r.pack.spent)

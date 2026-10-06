@@ -3666,20 +3666,23 @@ const B = {
   RIVALS: ['Hamish Kerr', 'Ines Duarte', 'Tomas Lindqvist', 'Nell Okafor', 'Callum Reid',
            'Priya Nair', 'Rafael Soto', 'Freya Holm', 'Kwame Asante', 'Lena Vogel',
            'Owen Pryce', 'Sofia Marchetti'],
-  RIVAL_SPREAD: 0.08, RIVAL_SOV: 5, RIVAL_SERIES: 20, RIVAL_FORM: 0.5, RIVAL_EASE: 0.03,
+  // (3 and 12, and the repeating honours each half as often: the user
+  // asked a free player take about ten weeks to a Mythic set, not six, so
+  // buying is the quicker way)
+  RIVAL_SPREAD: 0.08, RIVAL_SOV: 3, RIVAL_SERIES: 12, RIVAL_FORM: 0.5, RIVAL_EASE: 0.03,
   ACH_REP: [
-    { id:'rHoles', n:'Steady Hand',    d:'Every 500 holes', m:'holes',  step:500, sov:3 },
-    { id:'rBird',  n:'Birdie Watch',   d:'Every 250 birdies', m:'birdie', step:250, sov:3 },
-    { id:'rEagle', n:'Eagle Nest',     d:'Every 250 eagles', m:'eagle',  step:250, sov:4 },
-    { id:'rNine',  n:'Front and Back', d:'Every 15 nine goals', m:'nines',  step:15,  sov:4 },
-    { id:'rRuns',  n:'Regular Punter', d:'Every 10 wagers', m:'runs',   step:10,  sov:4 },
-    { id:'rAce',   n:'Ace Shelf',      d:'Every 50 aces', m:'ace',    step:50,  sov:5 },
-    { id:'rEvent', n:'Weekly Grind',   d:'Every 10 events', m:'events', step:10,  sov:7 },
-    { id:'rLeg',   n:'Legendary Haul', d:'Every 20 Legendaries', m:'legend', step:20,  sov:8 },
-    { id:'rCup',   n:'Silverware',     d:'Every cup', m:'cups',   step:1,   sov:4 },
-    { id:'rMyth',  n:'Mythic Haul',    d:'Every Mythic', m:'myth',   step:1,   sov:3 },
+    { id:'rHoles', n:'Steady Hand',    d:'Every 1000 holes', m:'holes',  step:1000, sov:3 },
+    { id:'rBird',  n:'Birdie Watch',   d:'Every 500 birdies', m:'birdie', step:500, sov:3 },
+    { id:'rEagle', n:'Eagle Nest',     d:'Every 500 eagles', m:'eagle',  step:500, sov:4 },
+    { id:'rNine',  n:'Front and Back', d:'Every 30 nine goals', m:'nines',  step:30,  sov:4 },
+    { id:'rRuns',  n:'Regular Punter', d:'Every 20 wagers', m:'runs',   step:20,  sov:4 },
+    { id:'rAce',   n:'Ace Shelf',      d:'Every 100 aces', m:'ace',    step:100,  sov:5 },
+    { id:'rEvent', n:'Weekly Grind',   d:'Every 20 events', m:'events', step:20,  sov:7 },
+    { id:'rLeg',   n:'Legendary Haul', d:'Every 40 Legendaries', m:'legend', step:40,  sov:8 },
+    { id:'rCup',   n:'Silverware',     d:'Every 2 cups', m:'cups',   step:2,   sov:4 },
+    { id:'rMyth',  n:'Mythic Haul',    d:'Every 2 Mythics', m:'myth',   step:2,   sov:3 },
     // (the Cabinet's Season Bests: a season whose best card beats the last's)
-    { id:'rSeason', n:'Better Season', d:'Beat last season\u2019s best', m:'seasonUp', step:1, sov:10 }
+    { id:'rSeason', n:'Better Season', d:'Beat last season\u2019s best', m:'seasonUp', step:1, sov:5 }
   ],
 
   /* ---- retirement ---- */
@@ -3874,7 +3877,7 @@ const B = {
 
   /* ---- the offers rail ---- */
   STARTER_C: 600, STARTER_USD: 4.99,
-  MEMBER_USD: 9.99, MEMBER_DAILY: 60, MEMBER_GOLD: 0.25, MEMBER_KEYS: 1,
+  MEMBER_USD: 4.99, MEMBER_DAYS: 30, MEMBER_DAILY: 60, MEMBER_GOLD: 0.25, MEMBER_KEYS: 1,
   BOOST_C: 200, BOOST_HOURS: 24, BOOST_MULT: 2,
   // Every shop like this has a free rail, and hiding it behind a social follow
   // is the part of the pattern worth leaving out: this one pays for turning up
@@ -3945,6 +3948,10 @@ const B = {
     // skins: more than a colour
     { id:'blacktie', n:'Black Tie',      cost:450,
       cap:'#15151A', cap2:'#0A0A0D', shirt:'#24242A', shirt2:'#18181D', shirt3:'#0E0E11', pant:'#1A1A1F', pant2:'#101013' },
+    // shop only (the user chose looks sold only for money, never for
+    // sovereigns): usd, and no cost in sovereigns at all
+    { id:'founder', n:'Founder\u2019s Blazer', cost:0, usd:4.99, shop:1,
+      cap:'#E3B457', cap2:'#A8802F', shirt:'#1E2A4E', shirt2:'#162040', shirt3:'#0E1630', pant:'#E8E2D0', pant2:'#C8C0A8' },
     // funny ones
     { id:'banana',  n:'Banana Suit',     cost:500, fx:'banana', cat:'fun', pattern:'banana', pantPattern:'banana',
       cap:'#F6D84A', cap2:'#C9A92A', shirt:'#F6D84A', shirt2:'#E0BC2E', shirt3:'#B8961E', pant:'#F2D040', pant2:'#D8B42A', shoe:'#8A6A20' },
@@ -4106,6 +4113,7 @@ const B = {
     { id:'steel',     n:'Tour Steel',     cost:0,    shaft:'#CBD2D7', shaft2:'#8C959C', head:'#5E666C', head2:'#AEB6BC', grip:'#20242A' },
     { id:'graphite',  n:'Graphite',       cost:120,  shaft:'#4A5058', shaft2:'#2E3238', head:'#1C1F23', head2:'#6A727C', grip:'#B8292F' },
     { id:'persimmon', n:'Persimmon',      cost:200,  shaft:'#CBD2D7', shaft2:'#8C959C', head:'#8A4F22', head2:'#C07A3A', grip:'#6A4A2A', big:1 },
+    { id:'founder',   n:'Founder\u2019s Gold', cost:0, usd:2.99, shop:1, shaft:'#1E2A4E', shaft2:'#10162A', head:'#E3B457', head2:'#FFF0B8', grip:'#0E1630' },
     { id:'rose',      n:'Rose Gold',      cost:350,  shaft:'#E8A48C', shaft2:'#B97A64', head:'#D98B70', head2:'#FFD0BC', grip:'#3A2A26' },
     { id:'candy',     n:'Candy Cane',     cost:400,  fx:'candy',    cat:'fun', shaft:'#FFFFFF', shaft2:'#E8E8E8', head:'#E4302A', head2:'#FFFFFF', grip:'#2E8B3A' },
     { id:'baguette',  n:'Baguette',       cost:450,  fx:'baguette', cat:'fun', shaft:'#D9A45A', shaft2:'#B98434', head:'#C88A3A', head2:'#F2D08A' },
@@ -4797,7 +4805,8 @@ function initState(){
   if(!(S.pity >= 0)) S.pity = 0;
   if(!S.perm) S.perm = {};
   if(!S.packsTaken) S.packsTaken = {};
-  if(!(S.member >= 0)) S.member = 0;
+  if(![0, 1, 2].includes(S.member)) S.member = S.member > 0 ? 1 : 0;
+  if(S.member === 2 && !(S.memberEnd > 0 && isFinite(S.memberEnd))) S.member = 0;
   if(!(S.memberT >= 0)) S.memberT = 0;
   if(!(S.starter >= 0)) S.starter = 0;
   if(!(S.boostT >= 0)) S.boostT = 0;
@@ -8896,7 +8905,12 @@ const bagCap = () => B.BAG_CAP + permAdd('locker');
 const entryCap = d => d.cap + (isMember() ? B.MEMBER_KEYS : 0);
 // What the Tour Van takes off a Range price.
 const vanOff = () => 1 - Math.min(0.60, permAdd('van'));
-const isMember = () => !!S.member;
+// (Club Membership is by the month now, the user chose it: S.member 2 runs
+// to S.memberEnd on the real clock, which never goes back; 1 is one bought
+// "for good" before, kept as it was)
+const memberNow = () => Math.max(Date.now(), (S.t || 0) * 1000);
+const isMember = () => S.member === 1 || (S.member === 2 && memberNow() < (S.memberEnd || 0));
+const memberDaysLeft = () => S.member === 2 ? Math.max(0, Math.ceil(((S.memberEnd || 0) - memberNow()) / 86400000)) : Infinity;
 // Sovereign counts top out in the tens of thousands and are a price you are
 // comparing against another price, so they are written out in full rather
 // than run through the K/M shortener the purse uses.
@@ -8970,9 +8984,13 @@ function spendSov(n){
 
 // A pack. In a shipping build this is where the store call would go; here the
 // press IS the purchase, which is the whole of the difference.
+// (the first pack ever bought pays double: the user wanted a reason to buy)
+const firstPackOn = () => !S.firstPack && !Object.values(S.packsTaken || {}).some(n => n > 0);
 function buyPack(pk){
+  const twice = firstPackOn();
   S.packsTaken[pk.id] = (S.packsTaken[pk.id] || 0) + 1;
-  grantSov(pk.c, pk.n + ' \u00b7 nothing charged');
+  S.firstPack = 1;
+  grantSov(pk.c * (twice ? 2 : 1), pk.n + (twice ? ' \u00b7 doubled, your first' : '') + ' \u00b7 nothing charged');
   renderShop();
 }
 
@@ -9026,10 +9044,12 @@ function buyStarter(){
   renderShop();
 }
 function buyMember(){
-  if(isMember()){ toast('You are already a member'); return; }
-  S.member = 1; S.memberT = 0;
-  grantSov(B.MEMBER_DAILY, 'first day of membership');
-  toast('<b>Club Membership</b> active');
+  if(S.member === 1){ toast('You are a member for good'); return; }
+  const was = isMember();
+  S.memberEnd = Math.max(was ? S.memberEnd || 0 : 0, memberNow()) + B.MEMBER_DAYS * 86400000;
+  S.member = 2;
+  if(!was){ S.memberT = 0; grantSov(B.MEMBER_DAILY, 'first day of membership'); }
+  toast('<b>Club Membership</b> \u00b7 ' + memberDaysLeft() + ' days');
   renderShop(); renderAll();
 }
 function buyBoost(){
@@ -9066,15 +9086,17 @@ function openShop(sub){ if(sub) shopSub = sub === 'buy' ? 'offers' : sub; render
 // Caddies: the plain bib, and one to match every outfit and skin the golfer
 // can wear, at a third of its price. A matching caddie carries the outfit's
 // colours, its pattern and its effect, so the Divine caddie glows too.
+// a shop-only outfit's caddie, for money too
+const SHOP_CADDIE_USD = 1.99;
 B.CADDIES = [{ id:'bib', n:'Caddie Bib', cost:0,
   cap:'#2E6B3A', cap2:'#1F4A28', shirt:'#E8ECE4', shirt2:'#BFC7BC', shirt3:'#9AA39A',
   pant:'#3A3F4A', pant2:'#2A2E36', shoe:'#1E1A16', bag:'#B23A3A', bag2:'#8A2A2A' }]
   .concat(B.OUTFITS.map(o => Object.assign({}, o, { n: o.n + ' Caddie', of: o.id,
-    cost: Math.round(o.cost / 3 / 5) * 5 })));
+    cost: Math.round(o.cost / 3 / 5) * 5, usd: o.usd ? SHOP_CADDIE_USD : undefined })));
 const styleDef = (k, id) => (k === 'o' ? B.OUTFITS : k === 'c' ? B.CADDIES : k === 'k' ? B.CLUBS : B.TRAILS).find(x => x.id === id);
 // A major's jacket costs nothing and is not free: it is won.
 const styleOwned = (k, id) => { const d = styleDef(k, id);
-  return !!d && ((d.cost === 0 && !d.major) || !!(S.styleOwn && S.styleOwn[k + ':' + id])); };
+  return !!d && ((d.cost === 0 && !d.major && !d.usd) || !!(S.styleOwn && S.styleOwn[k + ':' + id])); };
 // "Try it": a look worn for ten seconds without buying it. Never saved.
 let PREVIEW = null;
 // the set (or skin) on the shop's showcase, while its stage is drawn (and only then)
@@ -9205,9 +9227,11 @@ function styleBuy(k, id){
     return;
   }
   if(!styleOwned(k, id)){
-    if(!spendSov(d.cost)) return;
+    // (a look sold only for money: bought here, nothing charged in this build)
+    if(d.usd){ S.styleOwn[k + ':' + id] = 1; toast('<b>' + d.n + '</b> is yours \u00b7 nothing charged'); }
+    else{ if(!spendSov(d.cost)) return;
     S.styleOwn[k + ':' + id] = 1;
-    toast('<b>' + d.n + '</b> is yours');
+    toast('<b>' + d.n + '</b> is yours'); }
     Sfx.play('buy');
   }
   styleSet(k, id);
@@ -9782,11 +9806,11 @@ function renderShop(){
       // (worn, it can be taken off, back to the plain one: not the plain one)
       const off = worn && d.id !== STYLE_DEFAULT[k];
       // (the badge says worn only when the button does not: WORN twice over)
-      return shopCard({ img, full, art: k === 'o' && SHOW_SKINS.includes(d.id) ? d.id : k === 'c' || k === 'k' || k === 't' ? k + ':' + d.id : '', on: worn || !!d.top || (!!won && own), badge: full ? 'FULL SET' : off ? 'WORN' : d.top ? (d.top > 1 ? 'MYTHIC' : 'LEGENDARY') : won && own ? 'CHAMPION' : '', head: d.n,
+      return shopCard({ img, full, art: k === 'o' && SHOW_SKINS.includes(d.id) ? d.id : k === 'c' || k === 'k' || k === 't' ? k + ':' + d.id : '', on: worn || !!d.top || (!!won && own), badge: full ? 'FULL SET' : off ? 'WORN' : d.usd && !own ? 'SHOP ONLY' : d.top ? (d.top > 1 ? 'MYTHIC' : 'LEGENDARY') : won && own ? 'CHAMPION' : '', head: d.n,
         sub: own ? '' : '<button class="mini try" data-try="' + k + '.' + d.id + '">Try it</button>',
-        price: off ? 'UNEQUIP' : worn ? 'WORN' : own ? 'WEAR' : won ? 'WIN IT' : sovFmt(d.cost),
-        note: worn || own ? '' : won ? won.short : B.SOV.toLowerCase(),
-        cls: off ? 'unq' : worn ? 'max' : own || (!won && (S.sov || 0) >= d.cost) ? '' : 'no', act: 'style:' + k + '.' + d.id });
+        price: off ? 'UNEQUIP' : worn ? 'WORN' : own ? 'WEAR' : won ? 'WIN IT' : d.usd ? '$' + d.usd.toFixed(2) : sovFmt(d.cost),
+        note: worn || own ? '' : won ? won.short : d.usd ? 'free' : B.SOV.toLowerCase(),
+        cls: off ? 'unq' : worn ? 'max' : own || d.usd || (!won && (S.sov || 0) >= d.cost) ? '' : 'no', act: 'style:' + k + '.' + d.id });
     };
     const shelf = (title, k, list, url) => list.length
       ? ribbon(title) + '<div class="sgrid c3">'
@@ -9813,24 +9837,24 @@ function renderShop(){
     }
     else if(styleCat === 'golfer'){
       if(!SHOW || !SHOW_SKINS.includes(SHOW.set)) showStart(SHOW_SKINS.includes(S.outfit) ? S.outfit : SHOW_SKINS[0]);
-      h += showStageHtml() + shelf('Skins', 'o', B.OUTFITS.filter(o => o.cat === 'skin'), outfitUrl)
+      h += showStageHtml() + shelf('Shop Only', 'o', B.OUTFITS.filter(o => o.usd), outfitUrl) + shelf('Skins', 'o', B.OUTFITS.filter(o => o.cat === 'skin'), outfitUrl)
         // the funny ones and the plain shirts are all outfits: one shelf, the
         // funny ones first
-        + shelf('Outfits', 'o', B.OUTFITS.filter(o => o.cat === 'fun').concat(B.OUTFITS.filter(o => !o.cat)), outfitUrl)
+        + shelf('Outfits', 'o', B.OUTFITS.filter(o => o.cat === 'fun').concat(B.OUTFITS.filter(o => !o.cat && !o.usd)), outfitUrl)
         + shelf('Major Winners', 'o', B.OUTFITS.filter(o => o.cat === 'major'), outfitUrl);
     }
     else if(styleCat === 'caddie'){
       // over them the stage, a caddie on its own on it
       if(!SHOW || !SHOW.set.startsWith('c:')) showStart('c:' + caddieNow().id);
       // in the same order as the golfer's looks: skins, then the rest
-      h += showStageHtml() + shelf('Caddie Skins', 'c', B.CADDIES.filter(d => d.cat === 'skin'), caddieUrl)
-        + shelf('Caddie Outfits', 'c', B.CADDIES.filter(d => d.cat !== 'skin' && d.cat !== 'major'), caddieUrl)
+      h += showStageHtml() + shelf('Shop Only', 'c', B.CADDIES.filter(d => d.usd), caddieUrl) + shelf('Caddie Skins', 'c', B.CADDIES.filter(d => d.cat === 'skin'), caddieUrl)
+        + shelf('Caddie Outfits', 'c', B.CADDIES.filter(d => d.cat !== 'skin' && d.cat !== 'major' && !d.usd), caddieUrl)
         + shelf('Major Winners', 'c', B.CADDIES.filter(d => d.cat === 'major'), caddieUrl);
     }
     else if(styleCat === 'clubs'){
       // over them the stage, the plain golfer swinging the club on show
       if(!SHOW || !SHOW.set.startsWith('k:')) showStart(clubNow().id === STYLE_DEFAULT.k ? showClubs()[0] : 'k:' + clubNow().id);
-      h += showStageHtml() + shelf('Clubs', 'k', B.CLUBS.filter(d => d.cat !== 'fun'), clubUrl)
+      h += showStageHtml() + shelf('Shop Only', 'k', B.CLUBS.filter(d => d.usd), clubUrl) + shelf('Clubs', 'k', B.CLUBS.filter(d => d.cat !== 'fun' && !d.usd), clubUrl)
         + shelf('Just for Fun', 'k', B.CLUBS.filter(d => d.cat === 'fun'), clubUrl);
     }
     else{
@@ -9852,15 +9876,16 @@ function renderShop(){
               + 'Double Purse.',
           price: S.starter ? 'TAKEN' : '$' + B.STARTER_USD.toFixed(2),
           note: S.starter ? 'done' : 'free', cls: S.starter ? 'max' : '', act:'starter:1' })
-      + shopCard({ ic:'member', col:'#E3B457', on: !isMember(), badge: isMember() ? 'MEMBER' : '',
+      + shopCard({ ic:'member', col:'#E3B457', on: !isMember(), badge: S.member === 1 ? 'MEMBER' : isMember() ? nb(memberDaysLeft() + ' days') : '',
           head:'Club Membership',
           sub: isMember()
             ? '+' + Math.round(B.MEMBER_GOLD*100) + '% purse, +' + B.MEMBER_KEYS
               + ' entry, ' + B.MEMBER_DAILY + ' a day.<br><b>Next in ' + hms(86400 - (S.memberT||0)) + '</b>'
+              + (S.member === 2 ? '<br>Buying again adds ' + nb(B.MEMBER_DAYS + ' days') + '.' : '')
             : '+' + Math.round(B.MEMBER_GOLD*100) + '% purse, +' + B.MEMBER_KEYS
-              + ' wager entry, ' + B.MEMBER_DAILY + ' a day. For good.',
-          price: isMember() ? 'ACTIVE' : '$' + B.MEMBER_USD.toFixed(2),
-          note: isMember() ? 'joined' : 'free', cls: isMember() ? 'max' : '', act:'member:1' })
+              + ' wager entry, ' + B.MEMBER_DAILY + ' a day, for ' + nb(B.MEMBER_DAYS + ' days') + '.',
+          price: S.member === 1 ? 'FOR GOOD' : '$' + B.MEMBER_USD.toFixed(2) + (isMember() ? '' : ' a month'),
+          note: S.member === 1 ? 'joined' : 'free', cls: S.member === 1 ? 'max' : '', act:'member:1' })
       + '</div>'
       + ribbon('Boosts') + '<div class="sgrid c2">'
       + shopCard({ ic:'boost', col:'#F2D75E', on: boostOn(), badge: boostOn() ? 'ON' : '',
@@ -9874,12 +9899,13 @@ function renderShop(){
   if(shopSub === 'offers'){
     // the sovereign packs, and a pointer to the free ones
     const rate = B.SOV_PACKS[0].c / B.SOV_PACKS[0].usd;
-    h += ribbon(B.SOV) + '<div class="sgrid c3">' + B.SOV_PACKS.map(pk => {
+    const twice = firstPackOn();
+    h += ribbon(B.SOV) + (twice ? '<div class="shopnote"><b>Your first pack pays double.</b></div>' : '') + '<div class="sgrid c3">' + B.SOV_PACKS.map(pk => {
       const bonus = Math.round((pk.c / (pk.usd * rate) - 1) * 100);
       const taken = S.packsTaken[pk.id] || 0;
-      return shopCard({ ic: pk.ic, col: SOV_COL, on: bonus >= 40,
-        badge: bonus > 0 ? '+' + bonus + '%' : '',
-        head: sovFmt(pk.c),
+      return shopCard({ ic: pk.ic, col: SOV_COL, on: bonus >= 40 || twice,
+        badge: twice ? '\u00d72' : bonus > 0 ? '+' + bonus + '%' : '',
+        head: sovFmt(pk.c * (twice ? 2 : 1)),
         sub: pk.n + (taken ? '<br><b>taken ' + taken + '\u00d7</b>' : ''),
         price: '$' + pk.usd.toFixed(2), note: 'free', act: 'pack:' + pk.id });
     }).join('') + '</div>';
