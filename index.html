@@ -4488,6 +4488,8 @@ const RAINBOW_P = 1 / 60, FOG_P = 1 / 80, METEOR_GAP = 30, METEOR_DUR = 0.7;
 // seconds or so with a flash over everything, and the thunder rolling in a
 // moment after. STORM_FORCE pins it; stormAt says if hole h has one.
 let STORM_FORCE = null;
+// the flag wet in the rain (pinBody): WETFLAG_FORCE pins it, rain or not
+let WETFLAG_FORCE = null;
 const STORM_P = 1 / 3, STORM_GAP = 10;
 const stormAt = h => STORM_FORCE !== null ? !!STORM_FORCE : !S.dgnRun && hr(h * 29 + 7, 997) < STORM_P;
 // Airplanes (the user asked): now and then one crossing high over the
@@ -12532,6 +12534,11 @@ function buildSprites(){
   const gmap2 = { f:'#F2C838', F:'#B8861C', g:'#FFEC8A' };
   SPRITE.flagGA = makeSprite(['fffgfff..', 'ffffgfff.', 'fffffgfff', 'FFFFffff.', 'FFFFFff..'], gmap2);
   SPRITE.flagGB = makeSprite(['ffgfff...', 'fffgfff..', 'fffffgff.', 'fffffffff', 'FFFFFFff.'], gmap2);
+  // the flag wet in the rain (the user picked it): darker, soaked through, a
+  // row deeper and sagging at its free end, a sheen of wet along its fold
+  const wmap = { f:'#A02E26', F:'#6A1A16', s:'#D66A5E' };
+  SPRITE.flagWA = makeSprite(['fff......', 'ffffff...', 'ffffffff.', 'Ffffffffs', 'FFFFfffff', '.FFFFFff.'], wmap);
+  SPRITE.flagWB = makeSprite(['ff.......', 'fffff....', 'fffffff..', 'FFffffffs', 'FFFFFffff', '.FFFFFFf.'], wmap);
 }
 
 // A deer at the edge of the woods, side on, facing right (the user asked
@@ -22284,7 +22291,8 @@ const Scene = {
     const PN = !S.dgnRun && typeof PIN_NEED !== 'undefined' ? PIN_NEED : {};
     if(PN.night && !PN.day){ this.night = true; }
     else if(PN.day && !PN.night){ this.night = false; this.clockNt = false; }
-    if(PN.dry && STORM_FORCE !== true) this.rain = false;
+    if(PN.dry && STORM_FORCE !== true && !PN.rain) this.rain = false;
+    if(PN.rain && !PN.dry) this.rain = true;
     this.storm  = this.rain && stormAt(h);
     this.wind   = (rnd()*2 - 1) * 0.7;
     if(/Crosswind/.test(ch)) this.wind = (this.wind < 0 ? -1 : 1) * (1.0 + Math.abs(this.wind) * 0.5);
@@ -29008,9 +29016,12 @@ Object.assign(Scene, {
     // (Golden Hour's flag is gold, on a gold pole: the user asked)
     const gold = !!this.mtn && !S.dgnRun;
     // (flapping the faster the harder the wind, and flying the way it blows)
-    const fr = 2 + Math.min(10, this.windMph() * 0.35), left = (this.wind || 0) < -0.15 && !S.dgnRun;
-    const spr0 = (Math.floor(this.t*fr) & 1) ? (gold ? SPRITE.flagGA : SPRITE.flagA) : (gold ? SPRITE.flagGB : SPRITE.flagB), spr = left ? flipSprite(spr0) : spr0;
-    const fh = Math.max(2, Math.round(h*0.30)), fw = Math.max(2, Math.round(fh * spr.w / spr.h));
+    // (wet in the rain: heavier, so flapping at a third the pace, and
+    // hanging a row deeper; WETFLAG_FORCE, the developer menu's switch)
+    const wet = !gold && !S.dgnRun && (WETFLAG_FORCE !== null ? !!WETFLAG_FORCE : !!this.rain);
+    const fr = (2 + Math.min(10, this.windMph() * 0.35)) * (wet ? 0.34 : 1), left = (this.wind || 0) < -0.15 && !S.dgnRun;
+    const spr0 = (Math.floor(this.t*fr) & 1) ? (gold ? SPRITE.flagGA : wet ? SPRITE.flagWA : SPRITE.flagA) : (gold ? SPRITE.flagGB : wet ? SPRITE.flagWB : SPRITE.flagB), spr = left ? flipSprite(spr0) : spr0;
+    const fh = Math.max(2, Math.round(h * (wet ? 0.36 : 0.30))), fw = Math.max(2, Math.round(fh * spr.w / spr.h));
     const lit = this.night && !S.dgnRun;
     // at night the flag glows: a halo of its own red about it, dithered in
     // solid pixels and breathing a little, behind the pin; and a light on top
@@ -29023,9 +29034,16 @@ Object.assign(Scene, {
         c.fillStyle = d2 < 0.35 ? '#D0564A' : d2 < 0.6 ? '#9A3A32' : '#6A2A28'; c.fillRect(gx, gy, 1, 1);
       }
     }
-    c.fillStyle = gold ? '#E6B838' : PX.bone;
+    c.fillStyle = gold ? '#E6B838' : wet ? '#BFC4BC' : PX.bone;
     c.fillRect(p.x, p.y - h, pw, h);
+    // (a wet pole glistens: one bright run down its lit side, under the
+    // flag; a broken line of them read as a striped pole)
+    if(wet && h >= 12){ c.fillStyle = '#FBFDFC'; c.fillRect(p.x, p.y - h + fh + 1, 1, Math.max(2, Math.round(h * 0.22))); }
     blit(c, spr, fx, p.y - h, fw, fh);
+    // (and now and then a drop falls from its sodden end)
+    if(wet){ const u = (this.t * 0.8) % 1;
+      if(u < 0.35){ const tx = left ? fx + 1 : fx + fw - 2, ty = p.y - h + fh + Math.round(u / 0.35 * Math.max(4, h * 0.4));
+        c.fillStyle = 'rgba(214,232,244,0.9)'; c.fillRect(tx, ty, 1, Math.max(1, Math.round(fh / 5))); } }
     if(lit){ c.fillStyle = '#FFD36A'; c.fillRect(p.x, p.y - h - pw, pw, pw); }
     // (its finial catching the light, now and then a glint)
     if(gold){ c.fillStyle = '#FFF4C0'; c.fillRect(p.x, p.y - h - pw, pw, pw);
@@ -31773,6 +31791,7 @@ const SCENE_PINS = [
   { id:'mist', need:'day dry canyon', n:'Canyon mist', w:'canyon', get: () => CMIST_FORCE === true || CMIST_FORCE === 1, set: v => { CMIST_FORCE = v ? true : null; } },
   { id:'balloon', need:'day dry', n:'Hot-air balloons', w:'by day, dry', get: () => BALLOON_FORCE === true || BALLOON_FORCE === 1, set: v => { BALLOON_FORCE = v ? true : null; } },
   { id:'plane', need:'dry', n:'Airplanes', w:'not in rain', get: () => PLANE_FORCE === true || PLANE_FORCE === 1, set: v => { PLANE_FORCE = v ? true : null; } },
+  { id:'wetflag', need:'rain', n:'Wet flag', w:'the pin', get: () => WETFLAG_FORCE === true, set: v => { WETFLAG_FORCE = v ? true : null; } },
   { id:'storm', need:'', n:'Thunderstorm', w:'brings rain', get: () => STORM_FORCE === true || STORM_FORCE === 1, set: v => { STORM_FORCE = v ? true : null; } },
   { id:'alb', need:'', n:'Lucky Albatross', w:'one after another', get: () => ALB_PIN === true || ALB_PIN === 1, set: v => { ALB_PIN = v ? true : null; } },
   { id:'harvest', need:'night dry', n:'Harvest Moon', w:'at night', get: () => HARVEST_FORCE === true || HARVEST_FORCE === 1, set: v => { HARVEST_FORCE = v ? true : null; } },

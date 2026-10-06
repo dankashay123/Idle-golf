@@ -36,12 +36,13 @@ module.exports = {
         // canyon or the island, the hole taken to one that has it
         { const keepC = S.chaos; o.need = 0;
           for (const P of SCENE_PINS) { if (!P.need) continue;
-            HOUR_FORCE = /night/.test(P.need) ? 12 : 23; S.chaos = { n: 'Crosswind' }; Scene.newHole(S.hole, S.tier);
+            HOUR_FORCE = /night/.test(P.need) ? 12 : 23; S.chaos = { n: /rain/.test(P.need) ? 'Fair' : 'Crosswind' }; Scene.newHole(S.hole, S.tier);
             QUIET = false; window.toast = () => {}; DEV.pin(P.id); QUIET = true; window.toast = tw; hideSheet();
             const W = Scene.water, bad = [];
             if (/night/.test(P.need) && !Scene.night) bad.push('not night');
             if (/day/.test(P.need) && Scene.night) bad.push('night');
             if (/dry/.test(P.need) && Scene.rain) bad.push('rain');
+            if (/rain/.test(P.need) && !Scene.rain) bad.push('no rain');
             if (/snow/.test(P.need) && !Scene.snow) bad.push('no snow');
             if (/water/.test(P.need) && !((W && !W.canyon && !W.rail) || Scene.pond)) bad.push('no water');
             if (/canyon/.test(P.need) && !(W && W.canyon)) bad.push('no canyon');

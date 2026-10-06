@@ -86,6 +86,7 @@ Line numbers are approximate and drift. Search for the name instead.
 | **The words in the readout** | `#rWx` (wind, weather, affinity), `Scene.hudWords`, `fitHudLeft` (the `inrow` class for the icons: it was `row`, which is also the list rows' class, and drew their border under the icons) |
 | **Tour sub tabs** | `tourSub` ('card', 'season', 'maj', 'sig'), `renderTourNav`, `#tourNav` |
 | **Scenery Switches bring their needs** | `SCENE_PINS` (`need`: day, night, dry, snow, water, canyon, island), `pinNeeds` / `PIN_NEED` (from `pinsSave`/`pinsLoad`), read in `newHole` (night, rain, the winter look); `DEV.pin` takes the hole to the canyon, the island or the next with water. `devpins` |
+| **The wet flag** | `pinBody` (`wet`: `SPRITE.flagWA`/`flagWB`, a third the flap, a row deeper, the pole darker with one sheen, a drop), `WETFLAG_FORCE`, the Wet flag switch (`need: 'rain'`). `wetflag` |
 | **Dawn and Dusk** | `S.dawnDusk`, `dawnDusk()` (its warmth by the hour), `clockNight()` (9pm to 5am, in `newHole`), the row in `settingsSheet`; `buildSky`'s key carries it |
 | **Birds** | `Scene.drawFlock` (below the readout's bottom), the fairway birds (props kind 9, laid in `layNight`) |
 | **Grandstand and clubhouse** | props kind 10 `standCv(sh, full, night, seed, cheer, frost)` and kind 11 `clubhouseCv(sh, night, side, seed, lit, frost)`, laid in `layNight` behind the round's last green; `Scene.galleryUp` (the jump on an eagle, `GALLERY_UP`), the last putt's cheer |
