@@ -285,7 +285,8 @@ weather forecast, fireworks, trail flourishes, caddie tricks. Nothing for
 the Tour tab, no new sound but ambience.
 
 Five at least (CLAUDE.md); don't raise the dog until he does; no new
-animals for now (he asked to hold off).
+animals for now (he asked to hold off). **No scenery work at all until he
+brings it up again** (he asked to stop, 6 October): offer other things.
 
 Every idea offered and not yet done, so none is lost:
 
