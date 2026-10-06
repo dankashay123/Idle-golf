@@ -21564,10 +21564,12 @@ const Scene = {
         const e = clamp((Math.min(d - w0, w1 - d) - 0.3) / 2.6, 0, 1), fe = f * (0.15 + 0.85 * e);
         const o0 = this.proj(d, 0).x, kx = this.proj(d, 1).x - o0;
         if(!(Math.abs(kx) > 0.01)) return;
-        let run = -1, cur = 0;
+        let run = -1, cur = 0, nv = null;
         for(let x = Math.max(0, x0); x <= Math.min(VW, x1); x++){
           let v = 0;
-          if(x < Math.min(VW, x1) && water(x, yy)){ const n = G((x - o0) / kx, d); v = n < fe - 0.05 ? 1 : n < fe ? 2 : 0; }
+          // (the floes' noise worked out every other pixel, the one between
+          // taking its neighbour's: per pixel it was the frame's dearest part)
+          if(x < Math.min(VW, x1) && water(x, yy)){ if(!(x & 1) || nv === null) nv = G((x - o0) / kx, d); v = nv < fe - 0.05 ? 1 : nv < fe ? 2 : 0; } else nv = null;
           if(v !== cur){ if(cur && run >= 0){ c.fillStyle = cur === 1 ? 'rgba(228,238,246,0.86)' : 'rgba(150,176,198,0.92)'; c.fillRect(run, yy, x - run, 1); } cur = v; run = v ? x : -1; }
         }
       };
