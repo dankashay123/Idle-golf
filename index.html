@@ -23527,6 +23527,11 @@ const Scene = {
     el.style.top = top + 'px';
     this.holeCallAnim(el, b.t);
   },
+  overHide(){
+    if(typeof document === 'undefined') return;
+    for(const id of ['holecall', 'annCall']){ const e = document.getElementById(id); if(e && !e.hidden) e.hidden = true; }
+    this._hcKey = 0;
+  },
   holeCallAnim(el, t){
     const u = clamp(t / 1.2, 0, 1), ease = v => 1 - Math.pow(1 - v, 3);
     let op = 1, sc = 1, dy = 0;
@@ -32608,6 +32613,10 @@ function addPara(cat, a, n){
 function step(dt, D){
   // (counted, so the hole's wait can ask whether the course is being drawn)
   Scene.stepN = (Scene.stepN || 0) + 1;
+  // (the hole's call and the course's name are on the page, over the
+  // course: with the course not drawn, the saver on or the round played out
+  // of sight, they are hidden, not left up where they were)
+  if(Scene.stepN - (Scene.drawnN || 0) > 3) Scene.overHide();
   // These run on wall time wherever you are: buff timers, perk timers, keys
   // coming back, the income meter.
   for(const k in S.buff){

@@ -53,6 +53,13 @@ module.exports = {
       try { Scene.holed({ n: 'Birdie', d: -1 }); Scene.drawNums ? 0 : 0; const b = Scene.banner; Scene.banner = b; try { Scene.draw(0, derive()); } catch (e) {} return !document.getElementById('holecall').hidden; } finally { S.dgnRun = keep; Scene.banner = null; Scene.newHole(S.hole, S.tier); } });
     if (wager) f('the call shown in a wager');
     await page.evaluate(() => { window.step = window.__keepStep; });
+    // not left up with the course not drawn (the saver, the round played out
+    // of sight): the course's name the same
+    { const left = await page.evaluate(() => { Scene.newHole(S.hole, S.tier); Scene.holed({ n: 'Birdie', d: -1 }); Scene.draw(0, derive()); Scene.draw(0.4, derive());
+        Scene.announce = { name: 'X', sub: 'Y', label: 'X', subLabel: 'Y', t: 1, dur: 4.2 }; Scene.draw(0, derive());
+        const q = QUIET; QUIET = true; try { for (let i = 0; i < 8; i++) step(0.05, derive()); } finally { QUIET = q; }
+        const a = !document.getElementById('holecall').hidden, b = !document.getElementById('annCall').hidden; Scene.announce = null; Scene.banner = null; return [a, b]; });
+      if (left[0]) f('the call left up with the course not drawn'); if (left[1]) f('the course\'s name left up with the course not drawn'); }
     // the hole held after the ball drops while the call is up, in and out
     // (at 0.6s the next hole cleared it a moment after it came in)
     { const hold = await page.evaluate(() => CUP_HOLD); if (!(hold >= 1.2)) f('the hole held ' + hold + 's after the drop, the call is up 1.2s'); }
