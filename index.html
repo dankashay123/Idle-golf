@@ -19975,7 +19975,8 @@ const Scene = {
     }
     // (and no frost speck in the pond: laid before it, by layNight, they
     // asked the last hole's pond)
-    if(this.pond && this.props) this.props = this.props.filter(q => !(q.kind === 6 && this.inPond(q.d, q.x, 0.2)));
+    // (in place: what is laid after holds the same list)
+    if(this.pond && this.props) for(let i = this.props.length - 1; i >= 0; i--){ const q = this.props[i]; if(q.kind === 6 && this.inPond(q.d, q.x, 0.2)) this.props.splice(i, 1); }
     // nothing that stands (a tree, a shrub, the gallery) on another hole, in
     // a pond or a lake; no tree or shrub on the path
     const onPath = (d, x) => Math.abs(x - this.cartX(d)) < 0.8 && d > -30 && d < LEN + 60;

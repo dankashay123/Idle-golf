@@ -221,7 +221,9 @@ module.exports = {
       // winning shot to come down and walk up at his own pace, stopping
       // before he putts, that is about a second more than it was (2.6, 3.2).
       const plain = H.filter(h => !h.sig), mw = avg(plain.map(h => h.wait));
-      if (!(mw < (k === 'normal' ? 3.8 : 4.2))) f('with a ' + k + ' bag the wait on a plain hole after the ball was down was ' + mw.toFixed(2) + 's on average: '
+      // (0.6s more than it was: the hole held after the drop while its call is
+      // up, 1.2s, so the call is seen at all; the user saw it missing)
+      if (!(mw < (k === 'normal' ? 4.4 : 4.8))) f('with a ' + k + ' bag the wait on a plain hole after the ball was down was ' + mw.toFixed(2) + 's on average: '
         + H.map(h => (h.sig ? h.sig + ' ' : '') + h.wait.toFixed(2)).join(', '));
       const bad = H.filter(h => h.carded !== h.want);
       if (bad.length) f('with a ' + k + ' bag ' + bad.length + ' holes were not carded from when the ball was down');
