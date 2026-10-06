@@ -37,7 +37,7 @@ module.exports = {
         document.querySelector('[data-show="-1"]').click(); document.querySelector('[data-show="-1"]').click();
         if (SHOW.set !== SET_ORDER[(SET_ORDER.indexOf(s0) - 1 + SET_ORDER.length) % SET_ORDER.length]) f('the back arrow put on ' + SHOW.set);
         const art = [...document.querySelectorAll('.cart[data-art]')];
-        if (art.length !== SET_ORDER.length) f(art.length + ' set pictures can be tapped');
+        if (art.length !== SET_ORDER.length + 1) f(art.length + ' set pictures can be tapped (the six and the Tour Pass\'s)');
         art[2].click();
         if (SHOW.set !== SET_ORDER[2] || name() !== FULL_SETS[SET_ORDER[2]].n) f('a tap on ' + SET_ORDER[2] + "'s picture put on " + SHOW.set);
         // each set played through its round

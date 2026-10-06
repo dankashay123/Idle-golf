@@ -36,7 +36,7 @@ module.exports = {
           return c.getImageData(0, 0, CW, CH).data;
         };
         const inHim = i => { const p = i / 4, x = p % CW, y = Math.floor(p / CW); return x >= X + 4 && x < X + W - 4 && y >= Y && y < Y + H; };
-        for (const id of ['bib', 'divine', 'demonic', 'ascended', 'cosmic', 'dread', 'psyche']) for (const q of [0.45, 0.9]) {
+        for (const id of ['bib', 'divine', 'demonic', 'ascended', 'cosmic', 'dread', 'psyche', 'cyber']) for (const q of [0.45, 0.9]) {
           const A = draw(id, false, q), Bm = draw(id, true, q);
           let off = 0, on = 0, him = 0, cov = 0, low = 0;
           for (let i = 0; i < A.length; i += 4) {
@@ -92,7 +92,8 @@ module.exports = {
           if (SHOW.list.indexOf(SHOW.set) !== (SHOW.list.indexOf(s0) + 1) % SHOW.list.length || document.getElementById('showN').textContent !== styleDef('c', SHOW.set.slice(2)).n)
             f('the next arrow put on ' + SHOW.set);
           const art = [...document.querySelectorAll('.cart[data-art]')];
-          if (art.length !== B.CADDIES.length) f(art.length + ' caddie pictures can be tapped');
+          const want = B.CADDIES.filter(d => !(d.pass && !styleOwned('c', d.id))).length;   // (a month's Tour Pass caddie only once his)
+          if (art.length !== want) f(art.length + ' caddie pictures can be tapped, not ' + want);
           else { art[5].click(); if (SHOW.set !== art[5].dataset.art) f('a tap on a caddie put on ' + SHOW.set); }
           let tricks = 0, bless = 0;
           for (const id of SHOW.list) {

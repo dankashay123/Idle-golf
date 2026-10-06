@@ -38,7 +38,7 @@ module.exports = {
           const after = c.getImageData(0, 0, CW, CH).data.some((v, i) => i % 4 === 3 && v) || !!Scene.bless;
           return { cols, soft, wide, after };
         };
-        const LEG = ['divine', 'demonic', 'ascended', 'cosmic', 'dread', 'psyche'];
+        const LEG = ['divine', 'demonic', 'ascended', 'cosmic', 'dread', 'psyche', 'cyber'];
         const looks = B.CADDIES.filter(x => x.fx).map(x => x.id), legs = looks.filter(id => LEG.includes(B.CADDIES.find(x => x.id === id).fx));
         const plain = shoot('bib'), total = R => [...R.cols.values()].reduce((a, b) => a + b, 0), key = R => [...R.cols.entries()].sort().join(';');
         o.plainPerk = plain.cols.get(PERK) || 0; o.plainN = total(plain);

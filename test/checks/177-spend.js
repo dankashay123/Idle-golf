@@ -5,8 +5,8 @@
  *     (30 each, 30 for all three), the Check-In (20) and every 10 holes
  *     played live (none away); 150 a tier, 30 tiers; the free row taken as
  *     reached, the paid row only once bought and then back to tier one;
- *     each reward once; the month's own look only from the paid row's last
- *     tier, never sold for sovereigns; a new month a new pass; the shop's
+ *     each reward once; the month's own look only from the paid row's tier
+ *     20, never sold for sovereigns (its top the Cyber-Drive: 178-cyber); a new month a new pass; the shop's
  *     dot while one waits; a broken pass repaired
  *   - Club Membership by the month: 30 days, again adds 30, then over; one
  *     bought for good before stays
@@ -36,12 +36,12 @@ module.exports = {
         const sv = S.sov || 0; passGive('f', 5); if ((S.sov || 0) - sv !== 10) f('tier 5 free paid ' + ((S.sov || 0) - sv));
         if (passGive('f', 5)) f('a reward taken twice');
         passBuy(); if (!passCan('p', 1) || !passCan('p', 4)) f('bought, the paid row not back to tier one');
-        // the look: only the paid row's last tier
+        // the look: only the paid row's tier 20
         const mo = passMonth(), id = 'pass' + mo;
         if (styleOwned('o', id)) f('the month\'s look owned before it was earned');
         const sv2 = S.sov = 99999; styleBuy('o', id); if (styleOwned('o', id) || S.sov !== sv2) f('the month\'s look bought for sovereigns');
         P.pts = PASS.TIERS * PASS.PER; for (let t = 1; t <= PASS.TIERS; t++) { passGive('f', t, true); passGive('p', t, true); }
-        if (!styleOwned('o', id) || !styleOwned('c', id)) f('tier 30 of the paid row did not give the look and its caddie');
+        if (!styleOwned('o', id) || !styleOwned('c', id)) f('the paid row did not give the look and its caddie');
         o.sov = { paid: 0 }; for (let t = 1; t <= PASS.TIERS; t++) { const rr = passReward('p', t); if (rr.k === 'sov') o.sov.paid += rr.v; }
         if (o.sov.paid < 800 || o.sov.paid > 1300) f('the paid row pays ' + o.sov.paid + ' sovereigns');
         if (passClaimable()) f('something left after taking everything');

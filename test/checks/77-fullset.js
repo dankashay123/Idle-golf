@@ -65,7 +65,7 @@ module.exports = {
           f('the score box: ' + o.edge + ' worn whole, ' + o.edgeOff + ' with a piece off');
         const want = { golfer: 'The Void:FULL SET', caddie: 'The Void Caddie:FULL SET', clubs: 'Eclipse Driver:FULL SET', balls: 'Singularity:FULL SET,Event Horizon:FULL SET' };
         for (const k in want) if (o.tiles[k] !== want[k]) f('the ' + k + ' rack rims ' + JSON.stringify(o.tiles[k]) + ' (want ' + want[k] + ')');
-        if (o.record !== '2 of 6 worn') f('the Record reads "' + o.record + '"');
+        if (o.record !== '2 of 7 worn') f('the Record reads "' + o.record + '"');
         // one order on every rack: the four sets' pieces, as the racks show them
         QUIET = false; o.orders = {};
         for (const cat of ['golfer', 'caddie', 'clubs', 'balls']) { styleCat = cat; openShop('style');

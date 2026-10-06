@@ -41,7 +41,7 @@ module.exports = {
         const diff = (a, b) => { let n = 0; for (let i = 0; i < a.length; i += 4) if (a[i] !== b[i] || a[i + 1] !== b[i + 1] || a[i + 2] !== b[i + 2] || a[i + 3] !== b[i + 3]) n++; return n; };
         // (and the Legendary skins, given a night after them: no caddie of
         // their own drawn here)
-        for (const s of ['dread', 'psyche', 'inferno', 'frost', 'storm', 'void', 'glitch', 'midas', 'disco']) for (const pose of FULL_SETS[s] ? [0, 0.3, 0.8, -1] : [0, 0.3, 0.8]) {
+        for (const s of ['dread', 'psyche', 'cyber', 'inferno', 'frost', 'storm', 'void', 'glitch', 'midas', 'disco']) for (const pose of FULL_SETS[s] ? [0, 0.3, 0.8, -1] : [0, 0.3, 0.8]) {
           const day = draw(s, pose, false, null), night = draw(s, pose, true, null), vault = draw(s, pose, true, { mode: 'floor' });
           const add = diff(day.d, night.d), where = s + (pose < 0 ? ' caddie' : ' at ' + pose);
           o.adds[where] = add;

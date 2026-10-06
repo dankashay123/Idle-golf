@@ -4043,6 +4043,14 @@ const B = {
       cap:'#18161E', cap2:'#0E0C12', shirt:'#24222C', shirt2:'#18161E', shirt3:'#0E0C12', pant:'#18161E', pant2:'#0E0C12',
       skin:'#D8D2BC', skin2:'#8A836E', shoe:'#18161E', belt:'#5CF0A0', hair:'#0E0C12', hand:'#D8D2BC',
       bulk:1, arm:'#24222C', arm2:'#18161E' },
+    // Cyber-Drive (from the user's character sheet, the Tour Pass's own):
+    // a mech in dark navy plate, lime trim and pads, a helmet with a purple
+    // visor, lime shoulder plates, a battery pack on his back, cables lit
+    // green and magenta, a hammer of a driver. Never sold: passSet
+    { id:'cyber', n:'Cyber-Drive', cost:0, fx:'cyber', cat:'skin', top:2, passSet:1, pattern:'cyberplate', pantPattern:'cyberplate',
+      cap:'#2E3550', cap2:'#1E2335', shirt:'#2E3550', shirt2:'#232A40', shirt3:'#181D2E', pant:'#262D45', pant2:'#181D2E',
+      skin:'#2E3550', skin2:'#1E2335', shoe:'#141826', belt:'#C8F23A', hair:'#1E2335', hand:'#C8F23A',
+      bulk:1, arm:'#2E3550', arm2:'#1E2335' },
     // Psychedelic (the user named him): clothes in a spiral of six colours
     // that keep turning, a rainbow afro, mirror shades and a third eye, a
     // mandala behind his head and a spiral turning under his feet
@@ -4138,6 +4146,8 @@ const B = {
     { id:'cosmic',    n:'Eclipse Driver',  cost:2350, fx:'cosmic',   top:2, shaft:'#D8B060', shaft2:'#9A7432', head:'#0B0818', head2:'#B98CFF', grip:'#1C1640', glow:'#B98CFF' },
     { id:'ascended',  n:'Ascended Driver', cost:2350, fx:'ascended', top:2, shaft:'#4A4466', shaft2:'#3A3456', head:'#6A3AC8', head2:'#B070F8', grip:'#262040', glow:'#9A3AC8' },
     { id:'dread',     n:'Reaper Driver',   cost:2350, fx:'dread',    top:2, shaft:'#3E3A48', shaft2:'#24222C', head:'#6E6A78', head2:'#E8FFF2', grip:'#D8D2BC', glow:'#5CF0A0' },
+    // the Cyber-Drive's hammer (the Tour Pass's, never sold): a shaft of green light, a gunmetal canister for its head banded in lime
+    { id:'cyber',     n:'Cyber-Drive Hammer', cost:0, fx:'cyber', top:2, passSet:1, shaft:'#3AF07A', shaft2:'#1E9A4A', head:'#4A5578', head2:'#C8F23A', grip:'#141826', glow:'#3AF07A' },
     { id:'psyche',    n:'Kaleido Driver',  cost:2350, fx:'psyche',   top:2, shaft:'#FF2E88', shaft2:'#C81E6A', head:'#FFFFFF', head2:'#2EC8FF', grip:'#1A1024', glow:'#FF2E88' }
   ],
   TRAILS: [
@@ -4153,6 +4163,7 @@ const B = {
     { id:'ascension', n:'Ascension Wake', cost:2350, fx:'tAscension', cols:['#E639EB', '#F2A6F8'], top:2 },
     { id:'horizon',   n:'Event Horizon',  cost:2350, fx:'tHorizon',   cols:['#B98CFF', '#FFFFFF'], top:2 },
     { id:'soulwake',  n:'Soul Wake',      cost:2350, fx:'tSoul',      cols:['#5CF0A0', '#E8FFF2'], top:2 },
+    { id:'cyberwake', n:'Cyber Wake',     cost:0, fx:'tCyber',     cols:['#3AF07A', '#FF3AD0'], top:2, passSet:1 },
     { id:'kaleido',   n:'Kaleido Wake',   cost:2350, fx:'tKaleido',   cols:['#FF2E88', '#2EC8FF'], top:2 },
     // balls: more than a colour
     { id:'duck',     n:'Rubber Duck', cost:400,  fx:'duck',      cat:'ball', cols:['#FFD84A'] },
@@ -4166,6 +4177,7 @@ const B = {
     { id:'ascorb',   n:'Ascended Orb', cost:1750, fx:'ascorb',   cat:'ball', cols:['#E639EB'], top:2 },
     { id:'singularity', n:'Singularity', cost:1750, fx:'singularity', cat:'ball', cols:['#B98CFF'], top:2 },
     { id:'reaperskull', n:'Reaper Skull', cost:1750, fx:'skullball', cat:'ball', cols:['#5CF0A0'], top:2 },
+    { id:'cyberball', n:'Cyber Core', cost:0, fx:'cyberball', cat:'ball', cols:['#2ED8D0'], top:2, passSet:1 },
     { id:'thirdeye',  n:'Third Eye',   cost:1750, fx:'psyeye',    cat:'ball', cols:['#FF2E88'], top:2 }
   ]
 };
@@ -9107,12 +9119,15 @@ function passReward(row, t){
     if(t % 5 === 0) return { k: 'sov', v: 10 };
     return [{ k: 'grit', v: 0.05 }, { k: 'tick', v: 1 }, { k: 'shard', v: 0.03 }, { k: 'keys', v: 1 }][(t - 1) % 5] || { k: 'scroll', v: 0.02 };
   }
-  if(t === PASS.TIERS) return { k: 'look', v: passMonth() };
+  // (the last tier the Cyber-Drive set, never sold; once he has it, sovereigns)
+  if(t === PASS.TIERS) return setOwned('cyber') && !(S.pass && S.pass.got.includes('p' + t)) ? { k: 'sov', v: PASS.CYBER_SOV } : { k: 'cyber' };
+  if(t === 20) return { k: 'look', v: passMonth() };
   if(t === 15) return { k: 'bag', v: 'legend' };
   if(t === 5 || t === 25) return { k: 'boost', v: 24 };
   return { k: 'sov', v: 40 };
 }
 function passSay(r){
+  if(r.k === 'cyber') return '<span><b>Cyber-Drive</b> set</span>';
   if(r.k === 'look') return PASS_LOOK[r.v][0] + ' look';
   if(r.k === 'boost') return nb(r.v + ' hours') + ' Double Purse';
   if(r.k === 'bag') return ciBag(r).n;
@@ -9131,6 +9146,8 @@ function passGive(row, t, quiet){
   if(r.k === 'sov') grantSov(r.v, '', true);
   else if(r.k === 'boost') S.boostT = (S.boostT || 0) + r.v * 3600;
   else if(r.k === 'bag') openBag(ciBag(r), true);
+  else if(r.k === 'cyber'){ S.styleOwn = S.styleOwn || {}; for(const [k, id] of setPieces('cyber')) S.styleOwn[k + ':' + id] = 1;
+    if(!quiet) toast('<span class="achk">Tour Pass</span><b>Cyber-Drive</b> is yours: the skin, its caddie, hammer, wake and core', 'ach'); }
   else if(r.k === 'look'){ S.styleOwn = S.styleOwn || {}; S.styleOwn['o:pass' + r.v] = 1; S.styleOwn['c:pass' + r.v] = 1;
     if(!quiet) toast('<span class="achk">Tour Pass</span><b>' + PASS_LOOK[r.v][0] + '</b> is yours, and its caddie', 'ach'); }
   else{ const a = ciAmt(r);
@@ -9144,6 +9161,8 @@ function passGetAll(){ let n = 0; for(let t = 1; t <= PASS.TIERS; t++) for(const
   if(n){ Sfx.play('coin'); toast('<span class="achk">Tour Pass</span>' + n + ' ' + plural(n, 'rewards') + ' taken', 'ach'); }
   renderShop(); renderVitals(); renderStageBtns(); }
 // bought (nothing charged in this build): the paid row, back to tier one
+// a Tour Pass look tapped before it is his: to the pass
+function passTease(){ toast('Tier ' + PASS.TIERS + ' of the Tour Pass\'s paid row'); shopSub = 'pass'; renderShop(); }
 function passBuy(){ const P = passNow(); if(P.paid){ toast('The pass is yours this month'); return; }
   P.paid = 1; toast('<b>Tour Pass</b> · ' + PASS_MONTHS[passMonth()] + ' · nothing charged'); renderShop(); renderStageBtns(); }
 function passHtml(){
@@ -9156,7 +9175,7 @@ function passHtml(){
     + '<div class="shopnote">Points: ' + nb(PASS.DAILY + ' a daily challenge') + ', ' + nb(PASS.ALL + ' for all three') + ', '
     + nb(PASS.CHECKIN + ' the Check-In') + ', 1 every ' + nb(PASS.HOLES + ' holes') + ' played.</div>';
   if(!P.paid) h += '<div class="sgrid c1">' + shopCard({ ic: 'starter', col: '#C68BFF', on: true, badge: 'PAID ROW', head: 'Tour Pass',
-      sub: 'About 1,000' + sovIc() + ', two days of Double Purse, a Legend Bag and <b>' + PASS_LOOK[mo][0] + '</b>, a look only this pass gives.',
+      sub: (setOwned('cyber') ? '' : 'The <b>Cyber-Drive</b> set, never sold. ') + 'About 1,000' + sovIc() + ', two days of Double Purse, a Legend Bag and <b>' + PASS_LOOK[mo][0] + '</b>, this month\'s look.',
       price: '$' + PASS.USD.toFixed(2), note: 'free', act: 'pass:buy', wide: 1 }) + '</div>';
   if(passClaimable()) h += '<button class="act" onclick="passGetAll()">Get All</button>';
   h += '<div class="passrows"><div class="passhd"><span>#</span><span>Free</span><span>Pass</span></div>';
@@ -9187,7 +9206,7 @@ const SHOP_CADDIE_USD = 1.99;
 // dailies, the Check-In, holes played live), a free row and a paid row; the
 // paid row's last tier the month's own look, never sold. PASS_LOOK, one a
 // month, outfits (and their caddies) marked pass: the month.
-const PASS = { TIERS: 30, PER: 150, DAILY: 30, ALL: 30, CHECKIN: 20, HOLES: 10, USD: 9.99 };
+const PASS = { TIERS: 30, PER: 150, DAILY: 30, ALL: 30, CHECKIN: 20, HOLES: 10, USD: 9.99, CYBER_SOV: 300 };
 const PASS_LOOK = [
   ['Frostline', '#DCE8F2', '#9FB4C6', '#3A5A7A', '#2A4462', '#1C2E44', '#E8EEF4', '#C4CED8'],
   ['Hearth', '#8A2A22', '#5E1C16', '#E8D2B0', '#C8B08C', '#A08A68', '#4A3426', '#30221A'],
@@ -9211,7 +9230,7 @@ B.CADDIES = [{ id:'bib', n:'Caddie Bib', cost:0,
 const styleDef = (k, id) => (k === 'o' ? B.OUTFITS : k === 'c' ? B.CADDIES : k === 'k' ? B.CLUBS : B.TRAILS).find(x => x.id === id);
 // A major's jacket costs nothing and is not free: it is won.
 const styleOwned = (k, id) => { const d = styleDef(k, id);
-  return !!d && ((d.cost === 0 && !d.major && !d.usd && !d.pass) || !!(S.styleOwn && S.styleOwn[k + ':' + id])); };
+  return !!d && ((d.cost === 0 && !d.major && !d.usd && !d.pass && !d.passSet) || !!(S.styleOwn && S.styleOwn[k + ':' + id])); };
 // "Try it": a look worn for ten seconds without buying it. Never saved.
 let PREVIEW = null;
 // the set (or skin) on the shop's showcase, while its stage is drawn (and only then)
@@ -9268,7 +9287,9 @@ const FULL_SETS = { ascended: { n: 'Ascended', t: ['ascension', 'ascorb'], rim: 
   cosmic: { n: 'The Void', t: ['horizon', 'singularity'], rim: '#C9B0FF' },
   divine: { n: 'Divine', t: ['seraph', 'godlight'], rim: '#FFE38A' }, demonic: { n: 'Demonic', t: ['hellfire', 'demoneye'], rim: '#FF8A3A' },
   dread: { n: 'The Dread', t: ['soulwake', 'reaperskull'], rim: '#7CFFB2' },
-  psyche: { n: 'Psychedelic', t: ['kaleido', 'thirdeye'], rim: '#FF7AC0' } };
+  psyche: { n: 'Psychedelic', t: ['kaleido', 'thirdeye'], rim: '#FF7AC0' },
+  // (the Tour Pass's, never sold: kept off SET_ORDER and the Sets rack's prices)
+  cyber: { n: 'Cyber-Drive', t: ['cyberwake', 'cyberball'], rim: '#C8F23A', pass: 1 } };
 // the one order the four sets keep on every rack of the shop, and on Sets
 // (each rack kept its own list's order, so the Ascended was first on one
 // and second on the next: the user saw it)
@@ -9287,12 +9308,14 @@ function fullSet(){
 // A whole set at a tap (the user asked): its look, caddie, driver, wake and
 // ball; what it costs is what of it is not owned yet
 const setPieces = s => [['o', s], ['c', s], ['k', s], ['t', FULL_SETS[s].t[0]], ['t', FULL_SETS[s].t[1]]];
+const setOwned = s => setPieces(s).every(([k, id]) => styleOwned(k, id));
 const setCost = s => setPieces(s).filter(([k, id]) => !styleOwned(k, id)).reduce((a, [k, id]) => a + styleDef(k, id).cost, 0);
 // bought whole if any of it is missing, then worn whole: his wake or ball
 // stays if it is the set's, else the wake
 function setBuy(s){
   // worn whole: taken off whole, back to the plain look, caddie, club and ball
   if(fullSet() === s){ PREVIEW = null; for(const k of ['o', 'c', 'k', 't']) styleSet(k, STYLE_DEFAULT[k]); S.ball = null; buildSprites(); renderShop(); renderVitals(); return; }
+  if(FULL_SETS[s].pass && !setOwned(s)){ passTease(); return; }
   const cost = setCost(s);
   if(cost > 0){
     if(!spendSov(cost)) return;
@@ -9341,7 +9364,8 @@ function styleBuy(k, id){
     toast('Win <b>' + courseById(d.major).n + '</b> to wear it');
     return;
   }
-  if(!styleOwned(k, id) && d.pass){ toast('Tier ' + PASS.TIERS + ' of the ' + MONTHS[d.pass - 1] + ' Tour Pass'); return; }
+  if(!styleOwned(k, id) && d.pass){ toast('Tier 20 of the ' + MONTHS[d.pass - 1] + ' Tour Pass'); return; }
+  if(!styleOwned(k, id) && d.passSet){ passTease(); return; }
   if(!styleOwned(k, id)){
     // (a look sold only for money: bought here, nothing charged in this build)
     if(d.usd){ S.styleOwn[k + ':' + id] = 1; toast('<b>' + d.n + '</b> is yours \u00b7 nothing charged'); }
@@ -9377,7 +9401,7 @@ const SKIN_ACCENT = { divine:['#3FD6A8', '#F4D27A'], inferno:['#FFB43A', '#F0612
   stormcaller:['#8FD0FF', '#FFFFFF'], void:['#C68BFF', '#6E44A0'], glitch:['#FF2A6D', '#2AE0FF'],
   midas:['#FFFFFF', '#FFD86B'], disco:['#FF4FB8', '#3FE0FF'], ghost:['#EEF2FF', '#A5B0D6'],
   demonic:['#FF5A1E', '#FFD34A'], ascended:['#C070F0', '#F2A6F8'], cosmic:['#B98CFF', '#7FE6FF'],
-  dread:['#5CF0A0', '#D8D2BC'], psyche:['#FF2E88', '#2EC8FF'] };
+  dread:['#5CF0A0', '#D8D2BC'], psyche:['#FF2E88', '#2EC8FF'], cyber:['#C8F23A', '#FF3AD0'] };
 // and the dearest two a little more of themselves on their tiles: the
 // Demonic's horns and wings, the Ascended's horns, hair of fire, the light
 // in his chest and his cape; his imp's horns, flame, green eye and the heart
@@ -9415,6 +9439,14 @@ const ICON_FX = {
     P(4, 3, B); P(5, 3, G); P(6, 3, B); P(7, 3, G); P(8, 3, B); P(5, 4, K); P(7, 4, K);
     P(11, 1, I); P(10, 0, I); P(9, 0, E); P(11, 2, '#2EB872'); P(11, 3, '#3E3A48'); P(11, 4, '#3E3A48');
     P(5, 9, '#3E3A48'); P(5, 10, G); P(5, 11, '#3E3A48');
+  },
+  // Cyber-Drive: the lime crest over his helmet, its purple visor, the
+  // lime pads at his shoulders; his caddie's crest and visor
+  cyber(P, caddie){
+    const L = '#C8F23A', V = '#7A3CFF', W = '#C9A0FF';
+    if(caddie){ for(let x = 2; x <= 5; x++) P(x, 0, L); P(5, 2, V); P(6, 2, W); P(7, 2, V); return; }
+    for(let x = 3; x <= 7; x++) P(x, 0, L); P(7, 2, V); P(8, 2, W); P(9, 2, V); P(9, 1, V);
+    for(const x of [0, 1, 2, 9, 10, 11]) P(x, 4, L); P(1, 3, L); P(10, 3, L); P(5, 6, '#3AF07A'); P(6, 6, '#FF3AD0');
   },
   // Psychedelic: his rainbow afro, his mirror shades and the third eye;
   // his caddie's afro and a flower
@@ -9498,13 +9530,16 @@ function clubUrl(d){
       for(const [x, y, col] of [[8, 9, '#A49CC8'], [7, 10, '#A49CC8'], [9, 10, '#6A3AC8'], [10, 11, '#B070F8'], [9, 11, '#3A1E78'], [10, 10, '#F0D0FF'],
                                 [11, 10, '#6A3AC8'], [8, 11, '#6A3AC8'], [11, 11, '#3A1E78']]) P(x, y, col); }
     const acc = { divine:['#3FD6A8', '#F4D27A'], ice:['#FFFFFF', '#9FD6F2'], neon:['#3FFFB0', '#CFFFEA'], gold:['#FFFFFF', '#FFE39A'],
-                  demonic:['#FF5A1E', '#FFD34A'], ascended:['#E639EB', '#F2A6F8'], cosmic:['#B98CFF', '#FFFFFF'], dread:['#5CF0A0', '#E8FFF2'], psyche:['#FF2E88', '#2EC8FF'] }[d.fx === 'glint' ? 'gold' : d.fx];
+                  demonic:['#FF5A1E', '#FFD34A'], ascended:['#E639EB', '#F2A6F8'], cosmic:['#B98CFF', '#FFFFFF'], dread:['#5CF0A0', '#E8FFF2'], psyche:['#FF2E88', '#2EC8FF'], cyber:['#C8F23A', '#FF3AD0'] }[d.fx === 'glint' ? 'gold' : d.fx];
     // the Kaleido's shaft in bands of the six, a crystal for its head
     if(d.fx === 'psyche'){ pts.forEach(([x, y], i) => { if(i > 1) P(x, y, PSY[i % 6]); }); g.clearRect(7, 9, 4, 3);
       for(const [x, y, col] of [[8, 9, '#FFFFFF'], [9, 9, '#2EC8FF'], [8, 10, '#FF2E88'], [9, 10, '#FFFFFF'], [10, 10, '#FFE81E'], [9, 11, '#8A4CFF'], [10, 11, '#3AF07A']]) P(x, y, col); }
     // the Reaper's dark haft bound in bone, a scythe's blade for its head, its edge green
     if(d.fx === 'dread'){ g.clearRect(7, 9, 4, 3); P(3, 2, '#D8D2BC'); P(5, 5, '#D8D2BC'); P(7, 8, '#D8D2BC');
       for(const [x, y, col] of [[8, 9, '#6E6A78'], [9, 9, '#9A96A6'], [10, 10, '#9A96A6'], [11, 11, '#E8FFF2'], [8, 10, '#5CF0A0'], [9, 10, '#5CF0A0'], [10, 11, '#5CF0A0']]) P(x, y, col); }
+    // the Cyber-Drive's green shaft, a canister banded in lime for its head
+    if(d.fx === 'cyber'){ g.clearRect(7, 9, 4, 3);
+      for(const [x, y, col] of [[7, 9, '#C8F23A'], [8, 9, '#4A5578'], [9, 9, '#4A5578'], [10, 9, '#C8F23A'], [7, 10, '#C8F23A'], [8, 10, '#3AF07A'], [9, 10, '#262D45'], [10, 10, '#C8F23A'], [8, 11, '#141826'], [9, 11, '#141826']]) P(x, y, col); }
     // the Eclipse's gold shaft bound in indigo, and a black orb in a gold ring for its head
     if(d.fx === 'cosmic'){ pts.forEach(([x, y], i) => { if(i > 1 && i % 3 === 0) P(x, y, '#1C1640'); }); P(9, 8, '#05030C'); P(10, 9, '#05030C'); P(8, 8, '#D8B060'); P(11, 9, '#D8B060'); P(10, 10, '#B98CFF'); P(9, 7, '#FFFFFF'); }
     if(acc) [[10, 1], [1, 10], [11, 4], [4, 11]].forEach(([x, y], i) => P(x, y, acc[i & 1]));
@@ -9564,6 +9599,10 @@ const BALL_ICON = {
               map:{ W:'#FFFFFF', a:'#FF2E88', b:'#FF8A1E', c:'#FFE81E', d:'#3AF07A', e:'#2EC8FF', f:'#8A4CFF' } },
   psyeye:   { rows:['............','....KKKK....','..KKWWWWKK..','.KWWaabbWWK.','KWWfeKKcbWWK','KWWeKKKKcWWK','KWWdKKKKcWWK','.KWWddccWWK.','..KKWWWWKK..','....KKKK....','.a........e.','............'],
               map:{ K:'#1A1024', W:'#FFFFFF', a:'#FF2E88', b:'#FF8A1E', c:'#FFE81E', d:'#3AF07A', e:'#2EC8FF', f:'#8A4CFF' } },
+  tCyber:   { rows:['.........gWg','........gWWg','.......lGGl.','......mGl.s.','.....lGm....','....dGl..s..','...mGl......','..dGm...s...','.dGd........','mGd.........','Gd......s...','............'],
+              map:{ W:'#FFFFFF', g:'#E8FF9A', G:'#3AF07A', l:'#1E9A4A', d:'#0B5A2A', m:'#FF3AD0', s:'#C8F23A' } },
+  cyberball:{ rows:['............','....KKKK....','..KKTTTTKK..','.KTTwTTTTTK.','.KTwTTTTTTK.','LLLLLLLLLLLL','.KTTTTTTTTK.','.KtTTTTTTtK.','..KKttttKK..','....KKKK....','.m........m.','............'],
+              map:{ K:'#0B3A40', T:'#2ED8D0', t:'#1A9A96', w:'#FFFFFF', L:'#C8F23A', m:'#FF3AD0' } },
   skullball:{ rows:['............','...wWWWWw...','..wWWWWWWw..','..WWWWWWWW..','..WEEWWEEW..','..WEEWWEEW..','..wWWNNWWw..','...WWWWWW...','...TtTtTt...','....wwww....','.g........g.','............'],
               map:{ W:'#D8D2BC', w:'#B8B09A', E:'#5CF0A0', N:'#24222C', T:'#F2EEDC', t:'#24222C', g:'#2EB872' } },
   ascorb:   { rows:['...f..f..f..','..fMffMffM..','...MMMMMM...','..MKKKKKKM..','.MKKkkKKKKM.','.MKkKKKMKKM.','.MKKKKMWMKM.','.MKKKMKMKKM.','.MKKKKKKKKM.','..MKKKKKKM..','...MMMMMM...','............'],
@@ -9923,11 +9962,11 @@ function renderShop(){
       // (worn, it can be taken off, back to the plain one: not the plain one)
       const off = worn && d.id !== STYLE_DEFAULT[k];
       // (the badge says worn only when the button does not: WORN twice over)
-      return shopCard({ img, full, art: k === 'o' && SHOW_SKINS.includes(d.id) ? d.id : k === 'c' || k === 'k' || k === 't' ? k + ':' + d.id : '', on: worn || !!d.top || (!!won && own), badge: full ? 'FULL SET' : off ? 'WORN' : d.usd && !own ? 'SHOP ONLY' : d.top ? (d.top > 1 ? 'MYTHIC' : 'LEGENDARY') : won && own ? 'CHAMPION' : '', head: d.n,
+      return shopCard({ img, full, art: k === 'o' && SHOW_SKINS.includes(d.id) ? d.id : k === 'c' || k === 'k' || k === 't' ? k + ':' + d.id : '', on: worn || !!d.top || (!!won && own), badge: full ? 'FULL SET' : off ? 'WORN' : d.usd && !own ? 'SHOP ONLY' : d.passSet && !own ? 'TOUR PASS' : d.top ? (d.top > 1 ? 'MYTHIC' : 'LEGENDARY') : won && own ? 'CHAMPION' : '', head: d.n,
         sub: own ? '' : '<button class="mini try" data-try="' + k + '.' + d.id + '">Try it</button>',
-        price: off ? 'UNEQUIP' : worn ? 'WORN' : own ? 'WEAR' : won ? 'WIN IT' : d.usd ? '$' + d.usd.toFixed(2) : sovFmt(d.cost),
-        note: worn || own ? '' : won ? won.short : d.usd ? 'free' : B.SOV.toLowerCase(),
-        cls: off ? 'unq' : worn ? 'max' : own || d.usd || (!won && (S.sov || 0) >= d.cost) ? '' : 'no', act: 'style:' + k + '.' + d.id });
+        price: off ? 'UNEQUIP' : worn ? 'WORN' : own ? 'WEAR' : won ? 'WIN IT' : d.passSet ? 'TIER ' + PASS.TIERS : d.usd ? '$' + d.usd.toFixed(2) : sovFmt(d.cost),
+        note: worn || own ? '' : won ? won.short : d.passSet ? 'pass' : d.usd ? 'free' : B.SOV.toLowerCase(),
+        cls: off ? 'unq' : worn ? 'max' : own || d.usd || d.passSet || (!won && (S.sov || 0) >= d.cost) ? '' : 'no', act: 'style:' + k + '.' + d.id });
     };
     const shelf = (title, k, list, url) => list.length
       ? ribbon(title) + '<div class="sgrid c3">'
@@ -9942,38 +9981,36 @@ function renderShop(){
       // over them the showcase, the set on show playing on its own stage
       if(!SHOW || !FULL_SETS[SHOW.set]) showStart(FS || SET_ORDER[0]);
       h += showStageHtml()
-        + ribbon('Sets') + '<div class="sgrid c2">' + SET_ORDER.map(s => {
-        const O = styleDef('o', s), cost = setCost(s), worn = FS === s;
+        + ribbon('Sets') + '<div class="sgrid c2">' + SET_ORDER.concat(['cyber']).map(s => {
+        const O = styleDef('o', s), pass = FULL_SETS[s].pass && !setOwned(s), cost = pass ? 0 : setCost(s), worn = FS === s;
         const pcs = [caddieUrl(styleDef('c', s)), clubUrl(styleDef('k', s))].concat(FULL_SETS[s].t.map(id => trailUrl(styleDef('t', id))))
           .map(u => '<img src="' + u + '" alt="">').join('');
-        return shopCard({ img: outfitUrl(O), art: s, full: worn, on: true, badge: worn ? 'FULL SET' : O.top > 1 ? 'MYTHIC' : 'LEGENDARY',
+        return shopCard({ img: outfitUrl(O), art: s, full: worn, on: true, badge: worn ? 'FULL SET' : pass ? 'TOUR PASS' : O.top > 1 ? 'MYTHIC' : 'LEGENDARY',
           head: FULL_SETS[s].n, sub: '<div class="setpcs">' + pcs + '</div>',
-          price: worn ? 'UNEQUIP' : cost ? sovFmt(cost) : 'WEAR', note: worn || !cost ? '' : B.SOV.toLowerCase(),
+          price: worn ? 'UNEQUIP' : pass ? 'TIER ' + PASS.TIERS : cost ? sovFmt(cost) : 'WEAR', note: worn || !cost ? pass ? 'pass' : '' : B.SOV.toLowerCase(),
           cls: worn ? 'unq' : !cost || (S.sov || 0) >= cost ? '' : 'no', act: 'set:' + s });
       }).join('') + '</div>';
     }
     else if(styleCat === 'golfer'){
       if(!SHOW || !SHOW_SKINS.includes(SHOW.set)) showStart(SHOW_SKINS.includes(S.outfit) ? S.outfit : SHOW_SKINS[0]);
-      h += showStageHtml() + shelf('Shop Only', 'o', B.OUTFITS.filter(o => o.usd), outfitUrl) + shelf('Skins', 'o', B.OUTFITS.filter(o => o.cat === 'skin'), outfitUrl)
+      h += showStageHtml() + shelf('Shop Only', 'o', B.OUTFITS.filter(o => o.usd), outfitUrl) + shelf('Tour Pass', 'o', B.OUTFITS.filter(o => o.passSet || (o.pass && styleOwned('o', o.id))), outfitUrl) + shelf('Skins', 'o', B.OUTFITS.filter(o => o.cat === 'skin' && !o.passSet), outfitUrl)
         // the funny ones and the plain shirts are all outfits: one shelf, the
         // funny ones first
         + shelf('Outfits', 'o', B.OUTFITS.filter(o => o.cat === 'fun').concat(B.OUTFITS.filter(o => !o.cat && !o.usd && !o.pass)), outfitUrl)
-        + shelf('Tour Pass', 'o', B.OUTFITS.filter(o => o.pass && styleOwned('o', o.id)), outfitUrl)
         + shelf('Major Winners', 'o', B.OUTFITS.filter(o => o.cat === 'major'), outfitUrl);
     }
     else if(styleCat === 'caddie'){
       // over them the stage, a caddie on its own on it
       if(!SHOW || !SHOW.set.startsWith('c:')) showStart('c:' + caddieNow().id);
       // in the same order as the golfer's looks: skins, then the rest
-      h += showStageHtml() + shelf('Shop Only', 'c', B.CADDIES.filter(d => d.usd), caddieUrl) + shelf('Caddie Skins', 'c', B.CADDIES.filter(d => d.cat === 'skin'), caddieUrl)
+      h += showStageHtml() + shelf('Shop Only', 'c', B.CADDIES.filter(d => d.usd), caddieUrl) + shelf('Tour Pass', 'c', B.CADDIES.filter(d => d.passSet || (d.pass && styleOwned('c', d.id))), caddieUrl) + shelf('Caddie Skins', 'c', B.CADDIES.filter(d => d.cat === 'skin' && !d.passSet), caddieUrl)
         + shelf('Caddie Outfits', 'c', B.CADDIES.filter(d => d.cat !== 'skin' && d.cat !== 'major' && !d.usd && !d.pass), caddieUrl)
-        + shelf('Tour Pass', 'c', B.CADDIES.filter(d => d.pass && styleOwned('c', d.id)), caddieUrl)
         + shelf('Major Winners', 'c', B.CADDIES.filter(d => d.cat === 'major'), caddieUrl);
     }
     else if(styleCat === 'clubs'){
       // over them the stage, the plain golfer swinging the club on show
       if(!SHOW || !SHOW.set.startsWith('k:')) showStart(clubNow().id === STYLE_DEFAULT.k ? showClubs()[0] : 'k:' + clubNow().id);
-      h += showStageHtml() + shelf('Shop Only', 'k', B.CLUBS.filter(d => d.usd), clubUrl) + shelf('Clubs', 'k', B.CLUBS.filter(d => d.cat !== 'fun' && !d.usd), clubUrl)
+      h += showStageHtml() + shelf('Shop Only', 'k', B.CLUBS.filter(d => d.usd), clubUrl) + shelf('Tour Pass', 'k', B.CLUBS.filter(d => d.passSet), clubUrl) + shelf('Clubs', 'k', B.CLUBS.filter(d => d.cat !== 'fun' && !d.usd && !d.passSet), clubUrl)
         + shelf('Just for Fun', 'k', B.CLUBS.filter(d => d.cat === 'fun'), clubUrl);
     }
     else{
@@ -9981,8 +10018,8 @@ function renderShop(){
       // (on the first of them while he carries the plain ones)
       const BW = ballNow() || trailNow();
       if(!SHOW || !SHOW.set.startsWith('t:')) showStart(BW.id === STYLE_DEFAULT.t ? showTrails()[0] : 't:' + BW.id);
-      h += showStageHtml() + shelf('Balls', 't', B.TRAILS.filter(t => t.cat === 'ball'), trailUrl)
-        + shelf('Ball Trails', 't', B.TRAILS.filter(t => !t.cat), trailUrl);
+      h += showStageHtml() + shelf('Tour Pass', 't', B.TRAILS.filter(t => t.passSet), trailUrl) + shelf('Balls', 't', B.TRAILS.filter(t => t.cat === 'ball' && !t.passSet), trailUrl)
+        + shelf('Ball Trails', 't', B.TRAILS.filter(t => !t.cat && !t.passSet), trailUrl);
     }
   }
 
@@ -12500,6 +12537,15 @@ const PATTERNS = {
   // and since his second pictures, gold scrollwork worked over it
   // The Dread: black cloth hung in folds, a lit thread on the crown of each,
   // a fleck of soul-green in the weave here and there
+  // Cyber-Drive: navy plate in panels, a dark seam every few rows, a lit
+  // edge on the lightest, lime pads at the knee and a lime light here and
+  // there
+  cyberplate: (x, y, sh) => {
+    if(y === 44 || y === 45) return sh ? '#8FB21E' : '#C8F23A';
+    if(y % 7 === 0) return '#141826';
+    if(hr(x >> 1, (y >> 1) * 7 + 3) > 0.965) return '#C8F23A';
+    if(sh === 0 && x % 8 === 3) return '#4A5578';
+    return null; },
   shroud: (x, y, sh) => { const f = (x * 3 + (y >> 2)) % 7;
     if(f === 0) return '#0E0C12';
     if(f === 3 && !sh) return '#34303E';
@@ -14686,7 +14732,7 @@ function flameAura(c, g, up, P, calm){
 // him, never up the sky)
 const LEGEND_DUR = 0.5, LEGEND_BIG = 0.5;
 // the looks that have one (the newer ones silent: the user wants no more sounds)
-const LEGEND_FX = ['demonic', 'ascended', 'divine', 'cosmic', 'dread', 'psyche'];
+const LEGEND_FX = ['demonic', 'ascended', 'divine', 'cosmic', 'dread', 'psyche', 'cyber'];
 // night on the course (never the Vault's cellar): The Dread and
 // Psychedelic glow the more for it
 function nightNow(){ return !!Scene.night && !S.dgnRun; }
@@ -15963,6 +16009,126 @@ const STYLEFX = {
         dreadSoul(c, x, y, (P.x - x) / d, (ty - y) / d, 0, 1);
       }
     }
+  },
+  /* ---- Cyber-Drive: the Tour Pass's mech ----
+     After the user's character sheet: navy plate trimmed in lime, a helmet
+     with a purple visor and a module at each ear, lime pads at his
+     shoulders, a battery pack on his back with lime vents and a green cell,
+     cables of green and magenta from it to his helmet, and a calibration
+     pad under his feet, its lime ring turning. As he winds up, power runs
+     up the cables and the vents light; as he strikes, a ring of lime runs
+     out over the grass and his visor flares. On an albatross or an ace,
+     lime bits and magenta sparks burst out of him. His caddie has the
+     helmet and the shoulder pad. */
+  cyber: {
+    outline: '#C8F23A', outlineA: 0.30,
+    charge(ph){ return STYLEFX.ascended.charge(ph); },
+    strike(ph){ return STYLEFX.ascended.strike(ph); },
+    sigilSize(g){ return STYLEFX.cosmic.sigilSize(g); },
+    px(g){ return g.h / 58; },
+    pose(g){ return g.back ? 'back' : g.minor ? 'caddie' : g.spr === SPRITE.gFinish || g.spr === SPRITE.gWalk ? 'fin' : 'addr'; },
+    // a point of his sprite (40 across, 58 down) on the stage
+    at(g, x, y){ return { x: g.x + g.w * x / 40 + (g.shear && !g.back ? g.shear(y / 58) : 0), y: g.y + g.h * y / 58 }; },
+    ground(c, g){
+      if(g.minor) return;
+      const [rx, ry] = this.sigilSize(g), L = legendNow(g), st = this.strike(g.ph), q = L ? 1 : this.charge(g.ph);
+      const X = Math.round(g.cx), Y = Math.round(g.bot), step = Math.floor(g.t * 6 + (g.ph > 0 ? g.ph * 30 : 0)) % 108;
+      const P = cyberPad(Math.round(rx), Math.round(ry), step, q > 0.5 || st >= 0 ? 1 : 0);
+      c.globalAlpha = 1; c.drawImage(P.cv, Math.round(X - P.ox), Math.round(Y - P.oy));
+      // bits of light rising off it
+      if(g.h >= 30) for(let i = 0; i < 5; i++){ const u = (g.t * 0.5 + i / 5) % 1, a = hr(i + Math.floor(g.t * 0.5 + i / 5) * 5, 811) * Math.PI * 2;
+        if(u > 0.8) continue; const k = Math.max(1, Math.round(g.h / 50));
+        c.fillStyle = i % 3 === 0 ? '#FF3AD0' : u < 0.4 ? '#E8FF9A' : '#3AF07A'; c.fillRect(Math.round(X + Math.cos(a) * rx * 0.7), Math.round(Y + Math.sin(a) * ry * 0.7 - u * g.h * 0.35), k, k); }
+      if(g.h < 30) {}
+      else if(L) this.wave(c, X, Y, rx, ry, L.f, L.big ? 1.8 : 1.6);
+      else if(st >= 0) this.wave(c, X, Y, rx, ry, st, 1.55);
+      c.globalAlpha = 1;
+    },
+    // a ring of lime running out over the grass, bits of it thrown up
+    wave(c, X, Y, rx, ry, f, R){
+      const s = 1 + f * (R - 1), n = Math.max(24, Math.round((rx + ry) * s * 2));
+      for(let i = 0; i < n; i++){ if(hr(i, 812) < f * 0.7) continue; const a = i / n * Math.PI * 2;
+        const x = Math.round(X + Math.cos(a) * rx * s), y = Math.round(Y + Math.sin(a) * ry * s);
+        c.fillStyle = f < 0.35 ? '#FFFFFF' : f < 0.7 ? '#E8FF9A' : '#C8F23A'; c.fillRect(x, y, 2, 1);
+        if(i % 4 === 0 && f < 0.75){ const L = 1 + Math.round(3 * (1 - f) * hr(i, 813)); c.fillStyle = i % 8 ? '#3AF07A' : '#FF3AD0'; c.fillRect(x, y - L - 1, 1, 1); } }
+    },
+    back(c, g){
+      if(g.minor || g.back) return;
+      if(nightNow()) this.packGlow(c, g);
+      this.pack(c, g);
+      this.cables(c, g);
+    },
+    body(c, g){ this.helm(c, g); },
+    front(c, g){
+      const N = nightNow();
+      if(g.back){ this.pack(c, g); this.cables(c, g); }
+      this.pauldrons(c, g);
+      if(N) this.nightGlow(c, g);
+      this.visor(c, g);
+      const L = legendNow(g);
+      if(L) outlineBurst(c, g, L, 52, 0.95, (x, y, i, f, dx, dy) => {
+        const k = g.h >= 45 && f < 0.6 ? 2 : 1;
+        if(i % 3 === 0){ c.fillStyle = f < 0.4 ? '#E8FF9A' : '#C8F23A'; c.fillRect(Math.round(x), Math.round(y), k + 1, k + 1); }
+        else burstStreak(c, x, y, dx, dy, f < 0.4 ? '#FFFFFF' : i & 1 ? '#FF3AD0' : '#3AF07A', i & 1 ? '#A01E8A' : '#1E9A4A', 3); });
+      c.globalAlpha = 1;
+    },
+    helm(c, g){
+      const p = this.px(g), H = g.head, view = g.back ? 'back' : 'side', sh = g.shear && !g.back ? g.shear(0.1) : 0;
+      const Hm = cyberHelm(p, view);
+      c.globalAlpha = 1; c.drawImage(Hm.cv, Math.round(H.x + sh - Hm.ox), Math.round(H.y - Hm.oy));
+    },
+    // where the pack sits on his back: a point of his sprite and its lean
+    packAt(g){
+      const v = this.pose(g);
+      return v === 'back' ? { ...this.at(g, 20, 18), ang: 0, view: 'back' } : v === 'fin' ? { ...this.at(g, 16.4, 20), ang: 0.08, view: 'side' } : { ...this.at(g, 14.2, 18.4), ang: 0.59, view: 'side' };
+    },
+    pack(c, g){
+      const A = this.packAt(g), p = this.px(g), lit = this.charge(g.ph) > 0.5 || this.strike(g.ph) >= 0 || legendNow(g) ? 1 : 0;
+      const P = cyberPack(p, A.view, A.ang, lit);
+      c.globalAlpha = 1; c.drawImage(P.cv, Math.round(A.x - P.ox), Math.round(A.y - P.oy));
+    },
+    // the cables, from the top of his pack to his helmet: green and
+    // magenta, sagging; power running up them, quicker as he winds up
+    cables(c, g){
+      if(g.h < 26) return;
+      const A = this.packAt(g), p = this.px(g), H = g.head, sh = g.shear && !g.back ? g.shear(0.1) : 0, cs = Math.cos(A.ang), sn = Math.sin(A.ang);
+      const L = (lx, ly) => ({ x: A.x + (lx * cs - ly * sn) * p, y: A.y + (lx * sn + ly * cs) * p });
+      const q = this.charge(g.ph), k = Math.max(1, Math.round(p * 0.8));
+      const runs = A.view === 'back'
+        ? [[L(-4.2, -7.2), { x: H.x - 6.1 * p, y: H.y + 6.4 * p }, '#3AF07A'], [L(4.2, -7.2), { x: H.x + 6.1 * p, y: H.y + 6.4 * p }, '#FF3AD0']]
+        : [[L(-3.6, -7.2), { x: H.x + sh - 3.6 * p, y: H.y + 6.6 * p }, '#3AF07A'], [L(-5.4, -7), { x: H.x + sh - 4.2 * p, y: H.y + 5.6 * p }, '#FF3AD0']];
+      runs.forEach(([a, b, col], j) => {
+        const n = Math.max(6, Math.round(Math.hypot(b.x - a.x, b.y - a.y) / k)), sag = g.h * 0.05 * (A.view === 'back' ? 0.4 : 1);
+        const mx = (a.x + b.x) / 2 + (A.view === 'back' ? sag * (j ? 1 : -1) : -sag * (0.6 + j * 0.5)), my = (a.y + b.y) / 2 + sag * (A.view === 'back' ? 0.5 : 1.4 + j * 0.6);
+        const pul = (g.t * (1.2 + q * 4) + j * 0.5) % 1;
+        for(let i = 0; i <= n; i++){ const u = i / n, x = (1 - u) * (1 - u) * a.x + 2 * u * (1 - u) * mx + u * u * b.x, y = (1 - u) * (1 - u) * a.y + 2 * u * (1 - u) * my + u * u * b.y;
+          c.fillStyle = Math.abs(u - pul) < 0.08 ? '#FFFFFF' : col; c.fillRect(Math.round(x), Math.round(y), k, k); }
+      });
+    },
+    pauldrons(c, g){
+      const v = this.pose(g), p = this.px(g);
+      const pts = v === 'back' ? [[11, 12.2, -0.25, 1], [29, 12.2, 0.25, 0]] : v === 'caddie' ? [[24.5, 11.6, 0.15, 0]] : v === 'fin' ? [[24, 14, 0.1, 0]] : [[23.6, 14, 0.55, 0]];
+      for(const [x, y, ang, fl] of pts){ const A = this.at(g, x, y), P = cyberPaul(p, ang, fl);
+        c.globalAlpha = 1; c.drawImage(P.cv, Math.round(A.x - P.ox), Math.round(A.y - P.oy)); }
+    },
+    // the visor's light: a glint running across it, flaring and streaking
+    // back as he strikes
+    visor(c, g){
+      if(g.back) return;
+      const p = this.px(g), H = g.head, sh = g.shear ? g.shear(0.1) : 0;
+      const L = legendNow(g), q = L ? 1 : Math.max(this.charge(g.ph), this.strike(g.ph) >= 0 ? 1 : 0);
+      const u = (g.t * 0.6) % 1.6, X = H.x + sh, Y = H.y;
+      if(u < 1){ c.fillStyle = '#FFFFFF'; c.fillRect(Math.round(X + (1.4 + u * 4) * p), Math.round(Y + 4.6 * p), Math.max(1, Math.round(p)), Math.max(1, Math.round(p * 2))); }
+      if(q > 0.2 && !g.minor){ const n = Math.round(2 + q * g.w * 0.3), y0 = Math.round(Y + 5 * p);
+        for(let i = 1; i <= n; i++){ c.fillStyle = i < n * 0.4 ? '#C9A0FF' : i < n * 0.75 ? '#7A3CFF' : '#3A1A80'; c.fillRect(Math.round(X - 6.4 * p) - i, y0 - Math.round(i * 0.2), 1, Math.max(1, Math.round(p))); } }
+    },
+    // after dark the visor and the pack's vents throw their light round
+    nightGlow(c, g){
+      const p = this.px(g), H = g.head;
+      if(!g.back){ const sh = g.shear ? g.shear(0.1) : 0; STYLEFX.dread.halo(c, H.x + sh + 3.4 * p, H.y + 5.2 * p, Math.max(3, p * 4), '#3A1A80'); }
+    },
+    // and round his pack, under it
+    packGlow(c, g){ const A = this.packAt(g), p = this.px(g); STYLEFX.dread.halo(c, A.x - (A.view === 'back' ? 0 : 3 * p), A.y, Math.max(3, p * 10), '#1E9A4A'); }
   },
   /* ---- Psychedelic: a trip of a golfer ----
      The user named him. His clothes a spiral of six colours that keep
@@ -17244,6 +17410,11 @@ const LB_ORBIT = {
   skullball(c, cx, cy, r, t, front){
     lbRing(c, cx, cy, r + 3.5, (r + 3.5) * 0.4, -0.2, t * 2.6, 8, ['#E8FFF2', '#A8FFD0', '#5CF0A0', '#2EB872', '#17734A'], front, 0.3);
   },
+  // the Cyber Core's: a ring of lime going round it, a magenta spark on it
+  cyberball(c, cx, cy, r, t, front){
+    lbRing(c, cx, cy, r + 3.5, (r + 3.5) * 0.35, 0.15, t * 3, 10, ['#FFFFFF', '#E8FF9A', '#C8F23A', '#8FB21E', '#FF3AD0'], front, 0.35);
+  },
+  tCyber(c, cx, cy, r, t, front){ LB_ORBIT.cyberball(c, cx, cy, r - 0.5, t, front); },
   tSoul(c, cx, cy, r, t, front){ LB_ORBIT.skullball(c, cx, cy, r - 0.5, t, front); },
   // the Third Eye's: a ring of the six going round it, its colours turning
   psyeye(c, cx, cy, r, t, front){
@@ -17335,6 +17506,16 @@ function drawLyingBallBase(c, cx, cy, r, t, fx){
       drawGlow(c, cx, cy, r + 3, r + 2, [[0.55, '#3E2A6E', 1], [0, '#7A4ED8', 2]], Math.floor(t * 8) & 3, 0.85);
       lbSphere(c, cx, cy, r, '#FFFFFF');
       if(((t * 0.8) % 1) < 0.3) voidStar(c, cx + r + 2, cy - r - 2, 1, 1);
+      break;
+    case 'cyberball':                                // a teal core, a band of lime round it, a bit of light rising
+      lbSphere(c, cx, cy, r, '#2ED8D0');
+      if(r >= 1.5){ c.fillStyle = '#C8F23A'; c.fillRect(Math.round(cx - r), Math.round(cy), Math.max(1, Math.round(r * 2)), 1); }
+      if(((t * 0.8) % 1) < 0.6) dot(cx + Math.sin(t * 2) * 2, cy - r - 2 - ((t * 0.8) % 1) * 5, 1, Math.floor(t * 3) & 1 ? '#FF3AD0' : '#C8F23A', 1);
+      break;
+    case 'tCyber':                                   // in a green glow, a bit of lime rising off it
+      drawGlow(c, cx, cy, r + 3, r + 2, [[0.55, '#0B5A2A', 1], [0, '#3AF07A', 2]], Math.floor(t * 8) & 3, 0.85);
+      lbSphere(c, cx, cy, r, '#FFFFFF');
+      if(((t * 0.8) % 1) < 0.6) dot(cx + Math.sin(t * 3) * 1.5, cy - r - 2 - ((t * 0.8) % 1) * 6, 1, '#C8F23A', 1);
       break;
     case 'skullball':                                // a skull, its eyes lit, mist off it
       dreadSkull(c, cx, cy - 1, Math.max(2.5, r * 1.6), t);
@@ -17473,6 +17654,21 @@ const CUP_FX = {
     if(q >= 0.84){ const f = (q - 0.84) / 0.16;
       for(let i = 0; i < 24; i++){ if(hr(i, 652) < f * 0.8) continue; const a = i / 24 * Math.PI * 2, r = h * (0.15 + 0.6 * f);
         fxDot(c, x + Math.cos(a) * r - (k >> 1), y + Math.sin(a) * r * 0.34, k, i & 1 ? '#5CF0A0' : '#E8FFF2', 1); } }
+  },
+  // the Cyber-Drive's (the Cyber Core, and its wake the Cyber Wake): a
+  // calibration pad opens round the cup, its lime ring turning, bits of
+  // light rise off it and it shuts on a ring of lime and magenta
+  cyberball(c, x, y, cr, h, q, t){
+    const k = Math.max(1, Math.round(h / 16));
+    const o = q < 0.2 ? q / 0.2 : q < 0.72 ? 1 : q < 0.86 ? 1 - (q - 0.72) / 0.14 : 0;
+    if(o > 0.05 && h >= 8){ const rx = Math.max(3, Math.round(h * 0.55 * o)), ry = Math.max(1, Math.round(h * 0.18 * o));
+      const V = cyberPad(rx, ry, Math.floor(t * 20) % 108, q > 0.4 ? 1 : 0); c.globalAlpha = 1; c.drawImage(V.cv, Math.round(x - V.ox), Math.round(y - V.oy)); }
+    for(let i = 0; i < 12; i++){ const u = clamp(q * 1.6 - hr(i, 823) * 0.6, 0, 1); if(u <= 0 || u >= 1) continue;
+      const a = i / 12 * Math.PI * 2 + u * 3, r = h * (0.1 + 0.3 * u);
+      fxDot(c, x + Math.cos(a) * r - (k >> 1), y - u * h * 0.75 + Math.sin(a) * r * 0.3, k, i % 4 === 0 ? '#FF3AD0' : u < 0.5 ? '#E8FF9A' : '#3AF07A', 1); }
+    if(q >= 0.84){ const f = (q - 0.84) / 0.16;
+      for(let i = 0; i < 24; i++){ if(hr(i, 824) < f * 0.8) continue; const a = i / 24 * Math.PI * 2, r = h * (0.15 + 0.6 * f);
+        fxDot(c, x + Math.cos(a) * r - (k >> 1), y + Math.sin(a) * r * 0.34, k, i & 1 ? '#C8F23A' : '#FF3AD0', 1); } }
   },
   // Psychedelic's (the Third Eye, and its wake the Kaleido Wake): the green
   // ripples out round the cup in rings of the six, an eye opens in it and
@@ -17626,6 +17822,8 @@ const ACE_COL = {
   singularity: ['#3E2A6E', '#B98CFF', '#FFFFFF'],
   tSoul:       ['#17734A', '#5CF0A0', '#E8FFF2'],
   skullball:   ['#17734A', '#5CF0A0', '#E8FFF2'],
+  tCyber:      ['#1E9A4A', '#3AF07A', '#E8FF9A'],
+  cyberball:   ['#1A9A96', '#2ED8D0', '#E8FF9A'],
   tKaleido:    ['#4A2290', '#FF2E88', '#FFFFFF', ['#FF2E88', '#FF8A1E', '#FFE81E', '#3AF07A', '#2EC8FF', '#8A4CFF']],
   psyeye:      ['#4A2290', '#FF2E88', '#FFFFFF', ['#FF2E88', '#FF8A1E', '#FFE81E', '#3AF07A', '#2EC8FF', '#8A4CFF']]
 };
@@ -17709,6 +17907,13 @@ const ACE_EXTRA = {
     const SK = ['.WWW.', 'WWWWW', 'WEWEW', '.TTT.'];
     aceRise(A, 4, 653, (i, y) => { const ox = X + (i & 1 ? 1 : -1) * W * (1.2 + hr(i, 654) * 0.4), s = k;
       SK.forEach((row, yy) => [...row].forEach((ch, xx) => { if(ch !== '.') put(ox + (xx - 2) * s, y + yy * s, s, ch === 'E' ? '#5CF0A0' : ch === 'T' ? '#B8B09A' : '#D8D2BC'); })); }); },
+  // the Cyber-Drive's: bits of lime and magenta climbing round it, rings of lime rising beside it
+  cyberball(A){ const { X, y0, y1, W, k, t, put } = A;
+    for(let i = 0; i < 14; i++){ const y = y1 - (i + 0.5) / 14 * (y1 - y0), a = y * 0.09 - t * 7, x = X + Math.sin(a) * W * 1.05, s = Math.max(1, Math.round(W / 9));
+      put(x - s, y - s, 2 * s, i % 4 === 0 ? '#FF3AD0' : Math.cos(a) > 0 ? '#E8FF9A' : '#3AF07A', 2 * s); }
+    aceRise(A, 4, 821, (i, y) => { const ox = X + (i & 1 ? 1 : -1) * W * (1.2 + hr(i, 822) * 0.4);
+      for(let j = -3; j <= 3; j++) put(ox + j * k, y + (Math.abs(j) === 3 ? 0 : Math.abs(j) === 2 ? -k : -1.5 * k), k, '#C8F23A'); }); },
+  tCyber(A){ ACE_EXTRA.cyberball(A); },
   tSoul(A){ ACE_EXTRA.skullball(A); },
   // Psychedelic's: flowers winding up round it, eyes rising beside it
   psyeye(A){ const { X, y0, y1, W, k, t, put } = A;
@@ -17888,6 +18093,15 @@ CUP_FX2.skullball = function(c, x, y, cr, h, q, t){
     if(f < 0.4) cupStar(c, x - (k >> 1), y - k * 2, k, 2, '#FFFFFF', '#5CF0A0'); }
 };
 CUP_FX2.tSoul = CUP_FX2.skullball;
+CUP_FX2.cyberball = function(c, x, y, cr, h, q, t){
+  // a ring of lime flashing up over the cup as it shuts
+  const k = Math.max(1, Math.round(h / 16));
+  if(q > 0.7 && q < 0.98 && h >= 12){ const f = (q - 0.7) / 0.28, R = Math.max(3, h * 0.12), Y = y - h * (0.3 + f * 0.25);
+    for(let i = 0; i < 16; i++){ const a = i / 16 * Math.PI * 2 + f * 3; fxDot(c, x + Math.cos(a) * R - (k >> 1), Y + Math.sin(a) * R * 0.5, k, i % 4 === 0 ? '#FF3AD0' : '#C8F23A', 1); }
+    fxDot(c, x - k, Y - k, 2 * k, '#2ED8D0', 1);
+    if(f < 0.4) cupStar(c, x - (k >> 1), y - k * 2, k, 2, '#FFFFFF', '#3AF07A'); }
+};
+CUP_FX2.tCyber = CUP_FX2.cyberball;
 CUP_FX2.psyeye = function(c, x, y, cr, h, q, t){
   // as it shuts, streaks of every colour thrown up out of the cup
   const k = Math.max(1, Math.round(h / 16));
@@ -17901,6 +18115,7 @@ CUP_FX2.tAscension = CUP_FX2.ascorb; CUP_FX2.tHorizon = CUP_FX2.singularity;
 // each set's wake plays its set's moment too
 CUP_FX.tHorizon = CUP_FX.singularity;
 CUP_FX.tSoul = CUP_FX.skullball;
+CUP_FX.tCyber = CUP_FX.cyberball;
 CUP_FX.tKaleido = CUP_FX.psyeye;
 CUP_FX.tAscension = CUP_FX.ascorb;
 CUP_FX.tSeraph = CUP_FX.godlight;
@@ -18738,6 +18953,119 @@ function dreadSkull(c, x, y, R, t){
     c.fillStyle = ch === 'E' ? eye : ch === 't' ? '#24222C' : ch === 'T' ? '#B8B09A' : ch === 'w' ? '#B8B09A' : i + j < 3 ? '#F2EEDC' : '#D8D2BC';
     c.fillRect(X + i * s, Y + j * s, s, s); }));
 }
+// ---- Cyber-Drive ----
+// The Tour Pass's own skin, after the user's character sheet: a mech in
+// navy plate trimmed in lime, a helmet with a purple visor and a module at
+// each ear, lime pads at his shoulders, a great battery pack on his back
+// with lime vents and a cell glowing green in it, cables of green and
+// magenta from it to his helmet; a calibration pad under his feet.
+const CY_PAL = ['#0B0E18', '#141826', '#181D2E', '#1E2335', '#262D45', '#2E3550', '#4A5578', '#6E7AA0', '#A8B4D0',
+  '#C8F23A', '#8FB21E', '#E8FF9A', '#3AF07A', '#1E9A4A', '#FF3AD0', '#A01E8A', '#3A1A80', '#7A3CFF', '#C9A0FF', '#FFFFFF', '#2ED8D0'];
+// his helmet in head units (one a pixel of his sprite) about the top middle
+// of his cap: side on (facing right) and from behind
+const CYHELM_SIDE = [[4.9, 7.6], [5.1, 3], [3.6, 0.4], [0, -0.9], [-3.6, -0.4], [-5.7, 2], [-6.1, 6], [-5.1, 9], [-2, 10.4], [2, 10.2], [4.6, 9.2]];
+const CYHELM_BACK = [[0, -0.9], [-4, -0.1], [-6, 2.5], [-6.4, 6], [-5.1, 9], [-2.5, 10.3], [2.5, 10.3], [5.1, 9], [6.4, 6], [6, 2.5], [4, -0.1]];
+function cyberHelm(p, view){
+  const P = view === 'back' ? CYHELM_BACK : CYHELM_SIDE, pad = 3;
+  const x0 = -7.5, y0 = -2.5, W = 15 * p + pad * 2, H = 15 * p + pad * 2, ox = -x0 * p + pad, oy = -y0 * p + pad;
+  const cv = fxBake('cyhelm|' + p.toFixed(3) + '|' + view, W, H, g => {
+    const X = q => ox + q[0] * p, Y = q => oy + q[1] * p, lw = Math.max(1, p * 1.1);
+    const poly = (pts, col) => { g.fillStyle = col; g.beginPath(); g.moveTo(X(pts[0]), Y(pts[0])); for(const q of pts.slice(1)) g.lineTo(X(q), Y(q)); g.closePath(); g.fill(); };
+    const line = (pts, col, w) => { g.strokeStyle = col; g.lineWidth = w; g.lineJoin = 'round'; g.lineCap = 'round'; g.beginPath(); g.moveTo(X(pts[0]), Y(pts[0])); for(const q of pts.slice(1)) g.lineTo(X(q), Y(q)); g.stroke(); };
+    const disc = (q, r, col) => { g.fillStyle = col; g.beginPath(); g.arc(X(q), Y(q), Math.max(0.8, r * p), 0, Math.PI * 2); g.fill(); };
+    // its rim, dark, a pixel out all round
+    g.save(); g.translate(0, 0); poly(P.map(q => [q[0] * 1.08, (q[1] - 4.8) * 1.08 + 4.8]), '#0B0E18'); g.restore();
+    poly(P, '#2E3550');
+    g.save(); g.beginPath(); g.moveTo(X(P[0]), Y(P[0])); for(const q of P.slice(1)) g.lineTo(X(q), Y(q)); g.closePath(); g.clip();
+    // shade low and at the back, a plate line round it
+    g.fillStyle = '#1E2335'; g.fillRect(X([-8, 0]), Y([0, 7.6]), 16 * p, 4 * p);
+    if(view === 'back'){
+      g.fillStyle = '#262D45'; g.fillRect(X([-8, 0]), Y([0, 5]), 3 * p, 6 * p); g.fillRect(X([5, 0]), Y([0, 5]), 3 * p, 6 * p);
+      line([[-6, 7.3], [6, 7.3]], '#141826', Math.max(1, p * 0.6));
+    }else{
+      g.fillStyle = '#262D45'; g.fillRect(X([-8, 0]), Y([0, 1]), 3 * p, 9 * p);
+      line([[-5.5, 7.3], [1, 7.6]], '#141826', Math.max(1, p * 0.6));
+      // the visor: purple glass across his face, lit along its top
+      poly([[0.6, 3], [5.6, 3.2], [5.8, 6.6], [4.4, 7.7], [0.9, 7.1]], '#7A3CFF');
+      poly([[0.9, 5.6], [5.8, 5.4], [5.8, 6.6], [4.4, 7.7], [0.9, 7.1]], '#3A1A80');
+      line([[1.6, 3.9], [5, 4]], '#C9A0FF', Math.max(1, p * 0.7));
+      // the jaw guard's vents
+      if(p >= 1.2){ line([[1.6, 8.7], [4, 8.6]], '#141826', 1); line([[1.4, 9.5], [3.6, 9.4]], '#141826', 1); }
+    }
+    // a gleam over the top
+    line(view === 'back' ? [[-3.6, 0.6], [-1.2, -0.2]] : [[-2.6, 0.2], [1.5, 0]], '#6E7AA0', Math.max(1, p * 0.7));
+    g.restore();
+    // the lime crest over the top, and the modules at his ears
+    if(view === 'back'){
+      line([[0, -0.6], [0, 7]], '#C8F23A', lw * 1.3);
+      for(const s of [-1, 1]){ disc([s * 6.1, 5], 1.9, '#141826'); disc([s * 6.1, 5], 1.3, '#C8F23A'); disc([s * 6.1, 5], 0.6, '#1E2335'); }
+    }else{
+      line([[-5.1, 3], [-3.5, 0.3], [0, -0.6], [2.6, -0.1]], '#C8F23A', lw * 1.3);
+      disc([-2.4, 5.2], 2.4, '#141826'); disc([-2.4, 5.2], 1.8, '#C8F23A'); disc([-2.4, 5.2], 1, '#1E2335'); disc([-2.4, 5.2], 0.45, '#3AF07A');
+    }
+  }, CY_PAL);
+  return { cv, ox, oy };
+}
+// his battery pack, in pixels of his sprite: n along his back (down), out
+// from it; ang how far it leans; view 'side' or 'back'; lit as he winds up
+function cyberPack(p, view, ang, lit){
+  const S = Math.ceil(24 * p) + 6, o = S / 2;
+  const cv = fxBake('cypack|' + p.toFixed(3) + '|' + view + '|' + ang.toFixed(2) + '|' + lit, S, S, g => {
+    g.translate(o, o); g.rotate(ang); g.scale(p, p);
+    const R = (x, y, w, h, col) => { g.fillStyle = col; g.fillRect(x, y, w, h); };
+    const vent = lit ? '#E8FF9A' : '#C8F23A', cell = lit ? '#E8FF9A' : '#3AF07A';
+    if(view === 'back'){
+      // across his back: casing, a vent column each side, the cell between
+      R(-6.4, -7.4, 12.8, 14.8, '#0B0E18'); R(-5.8, -6.8, 11.6, 13.6, '#262D45');
+      R(-5.8, -6.8, 11.6, 1.6, '#4A5578'); R(-5.8, 5.2, 11.6, 1.6, '#1E2335');
+      for(const s of [-1, 1]){ R(s < 0 ? -5 : 2.4, -4.6, 2.6, 9.4, '#141826'); for(let i = 0; i < 4; i++) R(s < 0 ? -4.6 : 2.8, -4 + i * 2.3, 1.8, 1, vent); }
+      R(-1.6, -4.6, 3.2, 8.8, '#141826'); R(-1, -4, 2, 7.6, cell); R(-0.4, -3.4, 0.8, 2.4, '#FFFFFF');
+      R(-2.2, -8.6, 4.4, 1.4, '#4A5578'); R(-1.2, -8.6, 2.4, 0.8, '#FF3AD0');
+    }else{
+      // side on: its depth out from his back (to -x), its length down it
+      R(-7.2, -7.6, 7.4, 15.2, '#0B0E18'); R(-6.6, -7, 6.4, 14, '#262D45');
+      R(-6.6, -7, 6.4, 1.6, '#4A5578'); R(-6.6, 5.4, 6.4, 1.6, '#1E2335'); R(-6.6, -5.4, 1.4, 10.8, '#1E2335');
+      for(let i = 0; i < 4; i++) R(-4.6, -4.2 + i * 2.4, 3.4, 1.1, vent);
+      R(-2.8, -8.4, 2.4, 1.4, '#4A5578'); R(-2.2, -8.4, 1.2, 0.8, '#FF3AD0');
+      R(-6.2, 6.8, 2.4, 1.2, '#3AF07A');
+    }
+  }, CY_PAL);
+  return { cv, ox: o, oy: o };
+}
+// a lime pad over a shoulder: a dome of plate, its rim dark, lit on top
+function cyberPaul(p, ang, flip){
+  const S = Math.ceil(12 * p) + 6, o = S / 2;
+  const cv = fxBake('cypaul|' + p.toFixed(3) + '|' + ang.toFixed(2) + '|' + (flip ? 1 : 0), S, S, g => {
+    g.translate(o, o); g.rotate(ang); g.scale(flip ? -p : p, p);
+    const D = (rx, ry, col, dy) => { g.fillStyle = col; g.beginPath(); g.ellipse(0, dy || 0, rx, ry, 0, Math.PI, Math.PI * 2); g.lineTo(rx, 1.4 + (dy || 0)); g.lineTo(-rx, 1.4 + (dy || 0)); g.closePath(); g.fill(); };
+    D(4.6, 3.6, '#0B0E18', 0.4); D(4, 3, '#8FB21E'); D(3.6, 2.6, '#C8F23A', -0.2);
+    g.fillStyle = '#E8FF9A'; g.fillRect(-2.6, -2.6, 3, 0.9);
+    g.fillStyle = '#141826'; g.fillRect(-4, 0.4, 8, 1);
+  }, CY_PAL);
+  return { cv, ox: o, oy: o };
+}
+// a pad of lime under his feet, rounded and solid
+function cyberPad(rx, ry, step, lit){
+  const W = Math.ceil(rx * 2) + 6, H = Math.ceil(ry * 2) + 6, ox = W / 2, oy = H / 2;
+  const cv = fxBake('cypad|' + rx.toFixed(1) + '|' + ry.toFixed(1) + '|' + step + '|' + lit, W, H, g => {
+    const E = (s, col) => { g.fillStyle = col; g.beginPath(); g.ellipse(ox, oy, rx * s, ry * s, 0, 0, Math.PI * 2); g.fill(); };
+    E(1, '#0B0E18'); E(0.94, '#262D45'); E(0.84, '#141826'); E(0.62, '#1E2335'); E(0.3, '#262D45');
+    // a grid of dim cells over its inner plate
+    g.save(); g.beginPath(); g.ellipse(ox, oy, rx * 0.6, ry * 0.6, 0, 0, Math.PI * 2); g.clip();
+    g.fillStyle = '#2E3550'; for(let y = 1; y < H; y += 3) for(let x = (y % 2) * 2; x < W; x += 4) g.fillRect(x, y, 2, 1);
+    g.restore();
+    // the lime ring in segments, turning; a lit one runs round it
+    const N = 18;
+    g.lineWidth = Math.max(1.5, ry * 0.14);
+    for(let i = 0; i < N; i++){ if(i % 3 === 2) continue; const a0 = (i + step / 6) / N * Math.PI * 2, a1 = a0 + Math.PI * 2 / N * 0.8;
+      g.strokeStyle = lit || i === (step % N) ? '#E8FF9A' : '#C8F23A'; g.beginPath(); g.ellipse(ox, oy, rx * 0.73, ry * 0.73, 0, a0, a1); g.stroke(); }
+    // magenta marks at the quarters, on the rim
+    for(const a of [0, Math.PI / 2, Math.PI, Math.PI * 1.5]){ g.fillStyle = '#FF3AD0'; g.fillRect(Math.round(ox + Math.cos(a) * rx * 0.9 - 1), Math.round(oy + Math.sin(a) * ry * 0.9 - 0.5), 2, 1); }
+    // the green cell at its heart
+    g.fillStyle = lit ? '#E8FF9A' : '#3AF07A'; g.beginPath(); g.ellipse(ox, oy, rx * 0.12, ry * 0.14, 0, 0, Math.PI * 2); g.fill();
+  }, CY_PAL);
+  return { cv, ox, oy };
+}
 // ---- Psychedelic ----
 // The user named him: a trip of a golfer. His clothes a spiral of six
 // colours that keep turning through him, a great rainbow afro, round
@@ -18986,6 +19314,22 @@ const BLESS_FX = {
       blessMotes(G, 9, 0.7, true, true, (x, y, i) => dreadSoul(c, x, y, 0, -1, h >= 40 && i % 3 === 0 ? 2 : 1, 1));
       blImpact(G, 0.27, ['#2EB872', '#E8FFF2']);
       blSides(G, '#5CF0A0', '#E8FFF2');
+    } },
+  // Cyber-Drive: his calibration pad lights under him, a shaft of green
+  // light edged in lime falls on him, cables of green and magenta wind down
+  // round it and bits of lime drift up
+  cyber: { col: '#3AF07A',
+    draw(G){
+      const { c, cx, bot, half, h, t, fade, front, k } = G, top = Math.round(bot - h * 1.05);
+      const hw = Math.max(2, Math.round(half * 0.5 * (0.35 + 0.65 * fade))), stop = Math.min(front, top);
+      if(t > 0.26 && fade > 0.12){ const q = Math.min(1, (t - 0.26) / 0.3), RX = half * (0.7 + 0.45 * q), RY = Math.max(2, RX * 0.26);
+        blDisc(G, RX, RY, '#141826', true); blDisc(G, RX * 0.55, RY * 0.55, '#1E2335', false);
+        blRing(G, bot - 1, RX * 0.78, RY * 0.78, 1 + (G.up >> 1), '#C8F23A'); }
+      blShaft(G, stop, hw, ['#C8F23A', '#141826', '#E8FF9A', '#3AF07A', '#FFFFFF'], { inner: '#1E9A4A' });
+      blRibbons({ ...G, half: hw / 0.9 }, 0, Math.min(front, bot - 1), ['#3AF07A', '#1E9A4A', '#FF3AD0', '#A01E8A'], 1, 1.25, 5, '#141826');
+      blessMotes(G, 10, 0.8, true, false, (x, y, i) => { c.fillStyle = i % 3 === 0 ? '#FF3AD0' : '#C8F23A'; c.fillRect(Math.round(x), Math.round(y), h >= 40 ? 2 : 1, h >= 40 ? 2 : 1); });
+      blImpact(G, 0.27, ['#3AF07A', '#FFFFFF']);
+      blSides(G, '#C8F23A', '#FFFFFF');
     } },
   // Psychedelic: the spiral opens under him, a shaft of every colour falls
   // on him in bands that run down it, flowers drift down round him and
@@ -19510,6 +19854,46 @@ const BALLFX = {
     if(u > 0.85){ const q = (u - 0.85) / 0.15;
       for(let i = 0; i < 12; i++){ const a = i / 12 * Math.PI * 2 + b.seed;
         fxDot(c, h0.x + Math.cos(a) * (3 + q * 10), h0.y + Math.sin(a) * (1 + q * 4), 1, i & 1 ? '#D8B060' : '#B98CFF', 1 - q); } }
+    c.globalAlpha = 1;
+  },
+  /* ---- Cyber Wake (the Cyber-Drive's, after the user's sheet): a comet of
+     green light, white at the ball, edged in magenta; bits of lime and
+     magenta thrown off its sides, flickering, and a ring of lime as it
+     lands ---- */
+  tCyber(c, b, path, r, t, u){
+    const w = Math.max(2, r + 1);
+    trailRibbon(c, path, w + 5, '#0B0E18', 0.4);
+    trailRibbon(c, path, w + 3, (i, f) => f < 0.5 ? '#FF3AD0' : '#A01E8A', 0.8);
+    trailRibbon(c, path, w + 1, (i, f) => f < 0.12 ? '#FFFFFF' : f < 0.35 ? '#E8FF9A' : f < 0.7 ? '#3AF07A' : '#1E9A4A', 1);
+    // bits thrown off its sides: square, lime and magenta, flickering
+    const N = trailNormal(path);
+    for(let i = 2; i < path.length; i += 2){ const on = Math.sin(t * 12 + i * 2.3 + b.seed); if(on < 0.1) continue;
+      const side = (i & 2 ? 1 : -1) * (w / 2 + 2 + hr(i, 825 + Math.floor(t * 6)) * (3 + r * 2)), p = path[i], s2 = on > 0.75 && r > 1 ? 2 : 1;
+      c.globalAlpha = 1; c.fillStyle = i % 6 === 0 ? '#FF3AD0' : on > 0.6 ? '#E8FF9A' : '#C8F23A';
+      c.fillRect(Math.round(p.x + N.x * side), Math.round(p.y + N.y * side), s2, s2); }
+    const h0 = path[0];
+    drawGlow(c, h0.x, h0.y, r * 2 + 4, r * 2 + 4, [[0.6, '#0B5A2A', 1], [0.3, '#1E9A4A', 2], [0, '#3AF07A', 3]], Math.floor(t * 10) & 3, 0.85);
+    trailBall(c, b, h0, r);
+    if(u > 0.85){ const q = (u - 0.85) / 0.15;
+      for(let i = 0; i < 12; i++){ const a = i / 12 * Math.PI * 2 + b.seed;
+        fxDot(c, h0.x + Math.cos(a) * (2 + q * 11), h0.y + Math.sin(a) * (1 + q * 4), 1, i & 1 ? '#C8F23A' : '#FF3AD0', 1 - q); } }
+    c.globalAlpha = 1;
+  },
+  // the Cyber Core: a teal core banded in lime, a short comet of green and
+  // magenta behind it, bits of lime winding down its trail; a ring as it lands
+  cyberball(c, b, path, r, t, u){
+    trailRibbon(c, path, r + 4, '#0B0E18', 0.35);
+    const sp = b.wake ? [] : trailSpiral(path, 6, 5 + r * 3, t, 0.55, 1.6, b.seed);
+    const bit = (o, big) => { c.globalAlpha = o.z < 0 ? 0.75 : 1; c.fillStyle = o.k % 3 < 1 ? '#FF3AD0' : '#C8F23A'; c.fillRect(Math.round(o.x), Math.round(o.y), big, big); };
+    for(const o of sp) if(o.z < 0) bit(o, 1);
+    trailRibbon(c, path, Math.max(2, r + 1), i => i < 3 ? '#E8FF9A' : i < 7 ? '#3AF07A' : i < 10 ? '#FF3AD0' : '#A01E8A', 0.95);
+    for(const o of sp) if(o.z >= 0) bit(o, o.s < 0.5 && r > 1 ? 2 : 1);
+    const h0 = path[0];
+    lbSphere(c, h0.x, h0.y, Math.max(1, r + 0.5), '#2ED8D0');
+    if(r >= 1.5){ c.globalAlpha = 1; c.fillStyle = '#C8F23A'; c.fillRect(Math.round(h0.x - r - 0.5), Math.round(h0.y), Math.max(1, Math.round(r * 2 + 1)), 1); }
+    if(u > 0.85){ const q = (u - 0.85) / 0.15;
+      for(let i = 0; i < 12; i++){ const a = i / 12 * Math.PI * 2 + b.seed;
+        fxDot(c, h0.x + Math.cos(a) * (3 + q * 10), h0.y + Math.sin(a) * (1 + q * 4), 1, i & 1 ? '#2ED8D0' : '#C8F23A', 1 - q); } }
     c.globalAlpha = 1;
   },
   /* ---- Soul Wake: a river of ghost-fire, white at the ball and green down
@@ -24280,6 +24664,52 @@ const CLUBFX = {
       c.globalAlpha = 1;
     }
   },
+  // the Cyber-Drive Hammer: a shaft of green light with a white core and
+  // lime bands, a gunmetal canister for its head banded in lime with a green
+  // window; sparks off it; its swing leaves a comet of green edged in
+  // magenta, and a pure strike throws bits of lime and magenta round a ring
+  cyber: {
+    under(c, hx, hy, tx, ty, th, h, t, K){ glowLine(c, hx, hy, tx, ty, th, '#1E9A4A', 0.3 + 0.1 * Math.sin(t * 4)); },
+    shaft(c, hx, hy, tx, ty, th, h, t, K){
+      pxLine(c, hx, hy, tx, ty, '#1E9A4A', th + 1);
+      pxLine(c, hx, hy, tx, ty, K.shaft, th);
+      const P = clubPts(hx, hy, tx, ty, 12), run = Math.floor(t * 14) % 12;
+      for(let i = 1; i < 12; i++) if(i === run || i === (run + 6) % 12) fxDot(c, P[i][0], P[i][1], th, '#FFFFFF', 1);
+      for(const i of [3, 7]) fxDot(c, P[i][0] - 1, P[i][1], th + 1, '#C8F23A', 1);
+      c.globalAlpha = 1;
+    },
+    head(c, tx, ty, th, h, turn, t, K){
+      // the canister across the shaft's end, its far end lit
+      const X = Math.round(tx), Y = Math.round(ty), d = turn < 0 ? 1 : -1, L = th * 3 + 3, H = th + 3;
+      const x0 = d > 0 ? X - 1 : X - L + 2;
+      c.globalAlpha = 1;
+      c.fillStyle = '#0B0E18'; c.fillRect(x0 - 1, Y - 2, L + 2, H + 2);
+      c.fillStyle = K.head; c.fillRect(x0, Y - 1, L, H);
+      c.fillStyle = '#6E7AA0'; c.fillRect(x0, Y - 1, L, 1);
+      c.fillStyle = K.head2; c.fillRect(x0, Y - 1, 1, H); c.fillRect(x0 + L - 1, Y - 1, 1, H);
+      if(L >= 6){ c.fillStyle = Math.sin(t * 6) > 0 ? '#E8FF9A' : '#3AF07A'; c.fillRect(x0 + 2, Y, L - 4, Math.max(1, H - 2)); }
+    },
+    over(c, hx, hy, tx, ty, th, h, t){
+      const f = (t * 1.1) % 1;
+      if(f < 0.5){ fxDot(c, tx + 2 + Math.sin(t * 5) * 2, ty - 3 - f * 8, 1, f < 0.25 ? '#E8FF9A' : '#FF3AD0', 1); }
+      c.globalAlpha = 1;
+    },
+    trail(c, arc, th, t){
+      arcTrail(c, arc, th + 3, ['#0B0E18', '#141826'], 0.55);
+      arcTrail(c, arc, th + 2, ['#A01E8A', '#FF3AD0'], 0.7);
+      arcTrail(c, arc, th + 1, ['#1E9A4A', '#3AF07A'], 0.85);
+      arcTrail(c, arc, 1, ['#E8FF9A'], 0.8);
+      for(let i = 2; i < arc.length; i += 3){ if(Math.sin(t * 9 + i * 1.7) < 0.4) continue;
+        fxDot(c, arc[i][0], arc[i][1] - 3, 1, i % 2 ? '#C8F23A' : '#FF3AD0', 1); }
+      c.globalAlpha = 1;
+    },
+    pure(c, x, y, h, f){
+      const X = Math.round(x), Y = Math.round(y), k = Math.max(1, Math.round(h / 40));
+      for(let i = 0; i < 16; i++){ if(hr(i, 826) < f * 0.6) continue; const a = i / 16 * Math.PI * 2 + 0.2, R = h * (0.06 + 0.4 * f);
+        fxDot(c, X + Math.cos(a) * R - k, Y + Math.sin(a) * R * 0.6 - f * h * 0.08, 2 * k, i % 4 === 0 ? '#FF3AD0' : f < 0.4 ? '#E8FF9A' : '#3AF07A', 1); }
+      c.globalAlpha = 1;
+    }
+  },
   // the Kaleido Driver: a shaft in bands of the six that run down it, a
   // crystal head that flashes every colour, flowers drifting off it, its
   // swing leaves a rainbow, and a pure strike blooms flowers at the ball
@@ -24477,6 +24907,7 @@ const NIGHT_GLOW = {
   ascended: { col: ['#402A5E', '#7A3A96', '#C45AD8'], breathe: 1.1 },
   cosmic:   { col: ['#241A44', '#3E2A6E', '#7A4ED8'], breathe: 1.2 },
   dread:    { col: ['#0C3A26', '#17734A', '#2EB872'], breathe: 0.9 },
+  cyber:    { col: ['#141826', '#1E9A4A', '#3AF07A'], breathe: 1.4 },
   psyche:   { col: ['#4A2290', '#C81E6A', '#FF8A1E'], breathe: 2.2 },
   // (and the Legendary skins, after them: the user asked them a night too)
   inferno:     { col: ['#5A1A0A', '#B8401C', '#FF9A2A'], flicker: 1 },
@@ -24513,7 +24944,7 @@ function nightPool(c, g, NG){
 // swinging a little. Plain looks have it in their picture (femRows).
 // ([its colour, the dark edge it is drawn in, so it shows against her])
 const FEM_HAIR = { divine: ['#F4D27A', '#0E5A48'], midas: ['#FFF2B8', '#6A4A10'], void: ['#C68BFF', '#120A24'],
-  dread: ['#C8FFE0', '#0C3A26'], inferno: ['#FFD34A', '#4A1408'], demonic: ['#FF8A24', '#1A0A0A'],
+  dread: ['#C8FFE0', '#0C3A26'], cyber: ['#C8F23A', '#141826'], inferno: ['#FFD34A', '#4A1408'], demonic: ['#FF8A24', '#1A0A0A'],
   ascended: ['#F2A6F8', '#3A1A5A'], cosmic: ['#7FE6FF', '#120A24'], frostborn: ['#FFFFFF', '#3F7FB0'],
   stormcaller: ['#BFE0FF', '#1A2A4A'], glitch: ['#FF2A6D', '#0A2A2E'], disco: ['#FF4FB8', '#3A0F3A'],
   ghost: ['#EEF2FF', '#5A6488'] };
@@ -24883,6 +25314,7 @@ function paintHeli(c, x, y, w, h, t, bot){
 // and drifting the farther back they are. Each look's own; any other look
 // with an effect in its colours.
 const FLY_FX = {
+  cyber(c, x, y, u, j, t, k){ fxDot(c, x, y - u * 2, k + (j % 5 ? 0 : 1), j % 4 === 0 ? '#FF3AD0' : u < 0.35 ? '#E8FF9A' : u < 0.7 ? '#3AF07A' : '#1E9A4A', 1); },
   divine(c, x, y, u, j, t, k){ fxDot(c, x, y, k, j & 1 ? '#F4D27A' : '#7FF0C8', 1); if(u < 0.4) fxDot(c, x, y + 1, k, j & 1 ? '#E0AE3E' : '#3FD6A8', 1); },
   demonic(c, x, y, u, j, t, k){ fxDot(c, x, y - u * 3, k, u < 0.3 ? '#FFD34A' : u < 0.6 ? '#FF6A1A' : u < 0.85 ? '#C8281C' : '#3A2A2A', 1); if(u < 0.5) fxDot(c, x, y - u * 3 - 1, k, '#FF8A2A', 1); },
   ascended(c, x, y, u, j, t, k){ if(j % 4 === 0) voidStar(c, x, y, 1, 1, '#F2A6F8'); else fxDot(c, x, y, k, u < 0.4 ? '#FFE0FF' : '#E639EB', 1); },
@@ -31610,9 +32042,9 @@ function renderTourNav(){
 }
 const cperkDef = id => B.CPERKS.find(x => x.id === id);
 // the Mythic Favour: worn only with a Mythic caddie (the Divine, Demonic, Ascended or Void)
-const MYTH_CADDIES = ['divine', 'demonic', 'ascended', 'cosmic', 'dread', 'psyche'];
+const MYTH_CADDIES = ['divine', 'demonic', 'ascended', 'cosmic', 'dread', 'psyche', 'cyber'];
 const mythOk = () => MYTH_CADDIES.includes(S.caddie);
-const MYTH_PAL = { divine: ['#FFF2B8', '#3FD6A8', '#E0AE3E'], demonic: ['#FFE680', '#FF8A2A', '#E8401C'], ascended: ['#FFE0FF', '#F27CFF', '#B04ACB'], cosmic: ['#FFFFFF', '#B98CFF', '#7FE6FF'], dread: ['#E8FFF2', '#5CF0A0', '#2EB872'], psyche: ['#FFFFFF', '#FF2E88', '#2EC8FF'] };
+const MYTH_PAL = { divine: ['#FFF2B8', '#3FD6A8', '#E0AE3E'], demonic: ['#FFE680', '#FF8A2A', '#E8401C'], ascended: ['#FFE0FF', '#F27CFF', '#B04ACB'], cosmic: ['#FFFFFF', '#B98CFF', '#7FE6FF'], dread: ['#E8FFF2', '#5CF0A0', '#2EB872'], psyche: ['#FFFFFF', '#FF2E88', '#2EC8FF'], cyber: ['#E8FF9A', '#3AF07A', '#FF3AD0'] };
 // A perk's level (1 until upgraded) and what it does there: a second longer
 // and an eighth stronger each level (Ready Golf and Lost Ball Scout only
 // stronger: one acts at once, the other lasts a hole). Its words are its own

@@ -241,7 +241,9 @@ module.exports = {
           o.tries += sheet.querySelectorAll('.try[data-try]').length;
         }
         o.listed = acts.length; o.dupes = acts.length - new Set(acts).size;
-        o.want = B.OUTFITS.length + B.TRAILS.length + B.CADDIES.length + B.CLUBS.length;
+        // (a month's Tour Pass look shows only once it is his)
+        o.want = B.OUTFITS.length + B.TRAILS.length + B.CADDIES.length + B.CLUBS.length
+          - B.OUTFITS.filter(d => d.pass && !styleOwned('o', d.id)).length - B.CADDIES.filter(d => d.pass && !styleOwned('c', d.id)).length;
         o.free = B.OUTFITS.concat(B.TRAILS, B.CADDIES, B.CLUBS).filter(d => d.cost === 0).length;   // owned from the start: nothing to try
         o.noPic = imgs.filter(x => !x || x.length < 50).length;
         o.samePic = imgs.length - new Set(imgs).size;
