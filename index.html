@@ -4928,6 +4928,23 @@ function initState(){
    remapped or dropped here, before a single frame runs.
    ========================================================================= */
 function migrate(){
+  // (every part of the save of the kind a new save has it: a list where a
+  // list belongs, a table where a table does, a number where a number does;
+  // anything else, a broken or hand-edited save's, back to a new save's, the
+  // rest kept. A part of the wrong kind stopped the game outright)
+  { const D0 = defaultState(), plain = v => !!v && typeof v === 'object' && !Array.isArray(v);
+    for(const k of Object.keys(D0)){ const d = D0[k], v = S[k];
+      if(v === undefined) continue;
+      if(Array.isArray(d) ? !Array.isArray(v) : plain(d) ? !plain(v) : typeof d === 'number' ? !(typeof v === 'number' && isFinite(v)) : typeof d === 'string' ? typeof v !== 'string' : typeof d === 'boolean' ? typeof v !== 'boolean' && v !== 0 && v !== 1 : false)
+        S[k] = d; }
+    // (and the card and the hole inside the game: a card past the last read
+    // nothing for its purse, a hole before the first nothing for its course)
+    for(const k of ['tier', 'tierMax', 'bestTier']) if(typeof S[k] === 'number') S[k] = clamp(Math.floor(S[k]), 0, B.TIER_MAX);
+    if(typeof S.hole === 'number') S.hole = Math.max(1, Math.floor(S.hole));
+    // (and those made when first needed, not in a new save)
+    for(const k of ['aceAt', 'autoWg', 'bond', 'caseGot', 'chalDone', 'courseBest', 'cperkLv', 'cperkOwn', 'cwild', 'cwildDone', 'cwildR', 'cwildStar',
+      'festMk', 'guide', 'homes', 'seasonSeen', 'seasonsGot', 'shelfDone', 'sigRec', 'wgMedal']) if(S[k] !== undefined && !plain(S[k])) delete S[k];
+    for(const k of ['bestCards', 'evLog', 'owed']) if(S[k] !== undefined && !Array.isArray(S[k])) delete S[k]; }
   const okAff = new Set(B.AFFIX.map(a => a.id));
   const okEl  = new Set(B.ELEM.map(e => e.id));
   const fix = it => {
