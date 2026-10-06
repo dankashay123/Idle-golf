@@ -1031,6 +1031,11 @@ div.guide.hunt,div.guide.mhunt{grid-template-columns:repeat(3,minmax(0,1fr))}
   transform:translateX(-50%);animation:hcIn 1.2s cubic-bezier(.2,.8,.3,1) forwards}
 #holecall[hidden]{display:none}
 #holecall canvas{display:block}
+/* the course's name as play reaches it, in the same lettering, smaller,
+   over its band on the course (drawAnnounce: placed and faded there) */
+#annCall{position:absolute;z-index:26;pointer-events:none;transform:translateX(-50%)}
+#annCall[hidden]{display:none}
+#annCall canvas{display:block}
 @keyframes hcIn{0%{opacity:0;transform:translateX(-50%) scale(.6)}14%{opacity:1;transform:translateX(-50%) scale(1.08)}
   24%{transform:translateX(-50%) scale(1)}78%{opacity:1;transform:translateX(-50%) translateY(0)}100%{opacity:0;transform:translateX(-50%) translateY(-10px)}}
 @keyframes coIn{0%{opacity:0;margin-top:4px}12%{opacity:1;margin-top:0}80%{opacity:1}100%{opacity:0}}
@@ -1144,6 +1149,7 @@ div.guide.hunt,div.guide.mhunt{grid-template-columns:repeat(3,minmax(0,1fr))}
     <div id="wagerStat" hidden></div>
     <div id="callout" hidden></div>
     <div id="holecall" hidden><canvas></canvas></div>
+    <div id="annCall" hidden><canvas></canvas></div>
     <button id="leaveBtn" hidden aria-label="Leave the wager"><img id="leaveIcon" alt=""><span id="leaveTxt">Leave</span></button>
     <div id="toasts"></div>
   </div>
@@ -5719,7 +5725,8 @@ function announceCourse(){
   const sub = isWeekMajor(t) ? 'Major of the Week'
             : (courseSeason(cs, S.tier) ? SEASONS[courseSeason(cs, S.tier)].n + ' - ' : '')
               + (cs.slot === 'home' ? 'Home of Tour Card ' + cardNo(S.tier) : 'Tour Card ' + cardNo(S.tier) + ' - Event ' + t);
-  Scene.announce = { name: fit(cs.n), sub: fit(sub), t: 0, dur: 4.2, gold: isWeekMajor(t) };
+  // (and as written, for the lettering over the course: drawAnnounce)
+  Scene.announce = { name: fit(cs.n), sub: fit(sub), label: cs.n, subLabel: sub.replace(/ - /g, ' \u00b7 '), t: 0, dur: 4.2, gold: isWeekMajor(t) };
 }
 // The season each course that turns (the home courses, and the regular stops
 // that follow the month) was last seen in. Seen in another one, it chimes:
@@ -21572,58 +21579,75 @@ const Scene = {
   // The course, announced across the field when a new one begins: its name
   // large, the card small, faded in and out over a few seconds.
   drawAnnounce(dt){
-    const A = this.announce; A.t += dt;
-    if(A.t >= A.dur){ this.announce = null; return; }
+    const el = typeof document !== 'undefined' ? document.getElementById('annCall') : null;
+    const A = this.announce;
+    if(A) A.t += dt;
+    if(!A || A.t >= A.dur){ this.announce = null; if(el && !el.hidden) el.hidden = true; return; }
     const c = this.b, u = A.t / A.dur;
     const a = u < 0.12 ? u / 0.12 : u > 0.82 ? (1 - u) / 0.18 : 1;
     // Where it goes, worked out once: below the readout (on a narrow phone
-    // it wraps to more lines and hid the name), at twice the size only
-    // where that fits, and along its row clear of the icons and the map
-    // (on its side the big name ran under them)
+    // it wraps to more lines and hid the name), and along its row clear of
+    // the icons and the map (on its side the big name ran under them). The
+    // name and the line under it in the hole's call's lettering, smaller
+    // (the user asked: the pixel letters scaled up read blocky), painted on
+    // a canvas of its own over the band drawn here
+    const cv = this.cv, cr = typeof document !== 'undefined' && cv && cv.offsetParent ? cv.getBoundingClientRect() : null;
+    const k = cr ? cr.height / Math.max(1, VH) : 0;
     if(A.y0 === undefined){
-      const cv = this.cv, cr = typeof document !== 'undefined' && cv && cv.offsetParent ? cv.getBoundingClientRect() : null;
-      const k = cr ? cr.height / Math.max(1, VH) : 0, box = id => { const e = document.getElementById(id);
+      const box = id => { const e = document.getElementById(id);
         if(!e || !e.offsetParent || !k) return null; const r = e.getBoundingClientRect();
         return r.width ? { l: (r.left - cr.left) / k, r: (r.right - cr.left) / k, t: (r.top - cr.top) / k, b: (r.bottom - cr.top) / k } : null; };
       const rd = box('readout');
       A.y0 = Math.round(Math.max(VH * 0.27, rd ? rd.b + 8 * TSC : 0));
-      const obs = ['hudClimb', 'setBtn', 'shopBtn', 'roomBtn', 'perkBtn', 'holeMap'].map(box).filter(Boolean);
-      const place = sz => {
-        const w = textW(A.name, sz) + 4, t = A.y0 - 2, b2 = A.y0 + FH * sz + 2;
-        const hit = obs.filter(o => o.t < b2 && o.b > t);
-        const clear = x0 => hit.every(o => o.r <= x0 || o.l >= x0 + w) && x0 >= 2 && x0 + w <= VW - 2;
-        if(clear(CX - w / 2)) return CX;
-        // else the widest gap between them on its row
-        const edges = [0].concat(hit.map(o => o.r)).sort((x, y) => x - y);
-        let best = null;
-        for(const l of edges){ const r = Math.min(VW, ...hit.filter(o => o.l >= l).map(o => o.l));
-          if(r - l >= w + 4 && clear(l + (r - l - w) / 2) && (!best || r - l > best.g)) best = { g: r - l, c: (l + r) / 2 }; }
-        return best ? Math.round(best.c) : null;
-      };
-      // (twice the size, else half as big again where the pixels allow, else single)
-      A.big = TSC; A.cx = CX;
-      for(const sz of [TSC * 2, Math.round(TSC * 1.5), TSC]){
-        const at = textW(A.name, sz) <= VW * 0.9 ? place(sz) : null;
-        if(at !== null){ A.big = sz; A.cx = at; break; }
+      A.cx = CX; A.h = 30;
+      if(el && k){
+        const css = getComputedStyle(document.documentElement), f5 = parseFloat(css.getPropertyValue('--f5')) || 20, f1 = parseFloat(css.getPropertyValue('--f1')) || 10;
+        const ec = el.querySelector('canvas'), ids = ['hudClimb', 'setBtn', 'shopBtn', 'roomBtn', 'perkBtn', 'holeMap'],
+              obs = ids.map(id => { const q = box(id); if(q) q.id = id; return q; }).filter(Boolean);
+        // (as large as fits clear of them on its row: a size down, and
+        // another; else the smallest, in the middle, as the pixel name was)
+        // (and where none fits there, the same below the icons crossing its
+        // row, if that is still high on the course: on a narrow phone they
+        // stand in a row across it)
+        const y00 = A.y0;
+        for(const [fs, low] of [[1.1, 0], [0.9, 0], [0.75, 0], [1.1, 1], [0.9, 1], [0.75, 2]]){
+          if(low === 1 && A.y0 === y00){ const icons = obs.filter(o => o.id !== 'holeMap' && o.t < A.y0 + A.h && o.b > A.y0);
+            const yb = icons.length ? Math.round(Math.max(...icons.map(o => o.b)) + 1) : A.y0; if(yb > A.y0 && yb + A.h < VH * 0.75) A.y0 = yb; else continue; }
+          if(low === 2) A.y0 = y00;
+          this.paintHoleCall(ec, (A.label || A.name).toUpperCase(), (A.subLabel || A.sub).toUpperCase(), HOLECALL_COL.gold,
+            { fs: Math.round(f5 * fs), ss: f1, max: cr.width - 16 });
+          // (its lettering's own width, not the canvas's margin for the glow)
+          const w = (parseFloat(ec.style.width) - 16) / k, hgt = parseFloat(ec.style.height) / k;
+          A.h = hgt; A.cx = CX;
+          const t = A.y0 + 6 / k, b2 = A.y0 + hgt - 6 / k, hit = obs.filter(o => o.t < b2 && o.b > t);
+          const clear = x0 => hit.every(o => o.r <= x0 || o.l >= x0 + w) && x0 >= 0 && x0 + w <= VW;
+          if(clear(CX - w / 2)) break;
+          const edges = [0].concat(hit.map(o => o.r)).sort((x, y) => x - y);
+          let best = null;
+          for(const l of edges){ const r = Math.min(VW, ...hit.filter(o => o.l >= l).map(o => o.l));
+            if(r - l >= w && clear(l + (r - l - w) / 2) && (!best || r - l > best.g)) best = { g: r - l, c: (l + r) / 2 }; }
+          if(best){ A.cx = Math.round(best.c); break; }
+        }
       }
     }
-    const big = A.big, NX = A.cx;
-    const lh = (FH + 2) * big, y0 = A.y0, bandH = lh + LH + 10 * TSC;
+    const y0 = A.y0, bandT = y0 + 2, bandH = Math.max(8, Math.round(A.h - 4));
     c.globalAlpha = 0.72 * a; c.fillStyle = '#08120C';
-    c.fillRect(0, y0 - 5 * TSC, VW, bandH);
+    c.fillRect(0, bandT, VW, bandH);
     c.globalAlpha = a; c.fillStyle = PX.brass;
     const lw = Math.round(VW * 0.5 * Math.min(1, u / 0.25));
     const rule = A.gold ? 2 : 1;
-    c.fillRect(CX - lw, y0 - 5 * TSC, lw * 2, rule); c.fillRect(CX - lw, y0 - 5 * TSC + bandH - rule, lw * 2, rule);
+    c.fillRect(CX - lw, bandT, lw * 2, rule); c.fillRect(CX - lw, bandT + bandH - rule, lw * 2, rule);
     // a major gets glints running along its rules
     if(A.gold) for(let i = 0; i < 6; i++){
       const x = Math.round(CX - lw + ((i * 0.37 + A.t * 0.22) % 1) * lw * 2);
       c.fillStyle = '#FFF6D8';
-      c.fillRect(x, y0 - 5 * TSC + (i & 1 ? bandH - rule : 0), 2, rule);
+      c.fillRect(x, bandT + (i & 1 ? bandH - rule : 0), 2, rule);
     }
-    drawTextS(c, A.name, NX, y0, PX.brass, big, 'c');
-    drawTextS(c, A.sub, NX, y0 + lh + 2 * TSC, A.gold ? '#FFE9A8' : PX.bone, TSC, 'c');
     c.globalAlpha = 1;
+    if(el && k){
+      el.hidden = false; el.style.opacity = a.toFixed(3);
+      el.style.left = Math.round(A.cx * k) + 'px'; el.style.top = Math.round(y0 * k) + 'px';
+    }
   },
   // The caddie is a fairy now: a third of the golfer's height, floating off
   // his left shoulder at the height of his head (no wings: the user asked
@@ -23367,18 +23391,27 @@ const Scene = {
   // The call's lettering: the word spaced a little, a dark outline and drop
   // under a fill light at the top to its colour, a glow of it; the figure
   // under it between two short rules. At the screen's own pixels.
-  paintHoleCall(cv, w, fig, col){
+  // (o: fs and ss the word's and the figure's sizes in CSS pixels, max the
+  // widest it may be, the word made smaller to fit; the course's name takes
+  // it smaller: drawAnnounce)
+  paintHoleCall(cv, w, fig, col, o){
     if(!cv) return;
+    o = o || {};
     const dpr = Math.min(3, Math.max(1, window.devicePixelRatio || 1));
     const css = getComputedStyle(document.documentElement);
     const disp = css.getPropertyValue('--disp').trim() || 'Georgia,serif', mono = css.getPropertyValue('--mono').trim() || 'monospace';
-    const fs = Math.round((parseFloat(css.getPropertyValue('--f5')) || 20) * 1.5), ss = parseFloat(css.getPropertyValue('--f2')) || 11;
-    const sp = fs * 0.06, wf = '700 ' + fs + 'px ' + disp, sf = '700 ' + ss + 'px ' + mono;
+    let fs = o.fs || Math.round((parseFloat(css.getPropertyValue('--f5')) || 20) * 1.5), ss = o.ss || parseFloat(css.getPropertyValue('--f2')) || 11;
     const c = cv.getContext('2d');
-    c.font = wf;
-    const ws = [...w].map(ch => c.measureText(ch).width), ww = ws.reduce((a, x) => a + x, 0) + sp * (ws.length - 1);
-    c.font = sf;
-    const fw = fig ? c.measureText(fig).width + 2 * (22 + 6) : 0;
+    let sp, wf, sf, ws, ww, fw;
+    for(;;){
+      sp = fs * 0.06; wf = '700 ' + fs + 'px ' + disp; sf = '700 ' + ss + 'px ' + mono;
+      c.font = wf;
+      ws = [...w].map(ch => c.measureText(ch).width); ww = ws.reduce((a, x) => a + x, 0) + sp * (ws.length - 1);
+      c.font = sf;
+      fw = fig ? c.measureText(fig).width + 2 * (22 + 6) : 0;
+      if(!o.max || Math.max(ww, fw) + 24 <= o.max || fs <= 12) break;
+      fs--; if(fw + 24 > o.max && ss > 8) ss--;
+    }
     const pad = 12, W = Math.ceil(Math.max(ww, fw) + pad * 2), y0 = pad + fs * 0.82, H = Math.ceil(pad + fs + (fig ? 3 + ss * 1.2 : 0) + pad);
     cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
     cv.style.width = W + 'px'; cv.style.height = H + 'px';
@@ -28549,6 +28582,8 @@ Object.assign(Scene, {
       this.drawShots();
       this._coBan = null;
       this.drawFx(dt);
+      // (no course's name over a wager: its lettering hidden)
+      this.announce = null; this.drawAnnounce(0);
       this.wagerCallout(R);
     }else{
       if(this._coKey) this.wagerCallout(null);
@@ -28741,7 +28776,7 @@ Object.assign(Scene, {
       this.drawShots();
       this.drawFx(dt);
       albTick(this.b, dt);
-      if(this.announce) this.drawAnnounce(dt);
+      this.drawAnnounce(dt);
       this.drawMap();
     }
 
