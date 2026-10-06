@@ -764,6 +764,15 @@ div.guide.hunt,div.guide.mhunt{grid-template-columns:repeat(3,minmax(0,1fr))}
   font-size:var(--f1);color:var(--chalk);line-height:1.5}
 .freebar b{color:var(--r5)}
 .shopnote{display:block;font-size:var(--f0);color:var(--dim);line-height:1.45;margin:0 0 9px}
+/* the Tour Pass: a bar, then its tiers a row each, the free and paid rows */
+.passbar{height:6px;background:var(--line);margin:0 0 10px}.passbar i{display:block;height:100%;background:var(--sov,#C68BFF)}
+.passrows{margin:8px 0}.passhd,.passrow{display:grid;grid-template-columns:2.2em minmax(0,1fr) minmax(0,1fr);gap:6px;align-items:center}
+.passhd{font-size:var(--f0);color:var(--faint);letter-spacing:.1em;text-transform:uppercase;padding:0 0 4px;border-bottom:1px solid var(--line)}
+.passhd span:first-child{text-align:center;letter-spacing:0}
+.passrow{font-size:var(--f1);padding:5px 0;border-bottom:1px solid var(--line);color:var(--faint)}
+.passrow.on{color:var(--chalk)} .passrow .pt{font-family:var(--mono);text-align:center}
+.passrow .pc{display:flex;align-items:center;justify-content:space-between;gap:4px;min-width:0}
+.passrow .pc.lock{opacity:.55} .passrow .pc.got{opacity:.6} .passrow .pc b{color:var(--aurora)}
 /* A shop is a rack of things you are choosing between, not a list you read
    top to bottom, so the tiles carry the art and the price and nothing else. */
 .srib{display:flex;align-items:center;gap:8px;margin:12px 0 8px}
@@ -4951,7 +4960,7 @@ function migrate(){
     for(const k of ['tier', 'tierMax', 'bestTier']) if(typeof S[k] === 'number') S[k] = clamp(Math.floor(S[k]), 0, B.TIER_MAX);
     if(typeof S.hole === 'number') S.hole = Math.max(1, Math.floor(S.hole));
     // (and those made when first needed, not in a new save)
-    for(const k of ['aceAt', 'autoWg', 'bond', 'caseGot', 'chalDone', 'courseBest', 'cperkLv', 'cperkOwn', 'cwild', 'cwildDone', 'cwildR', 'cwildStar',
+    for(const k of ['pass', 'aceAt', 'autoWg', 'bond', 'caseGot', 'chalDone', 'courseBest', 'cperkLv', 'cperkOwn', 'cwild', 'cwildDone', 'cwildR', 'cwildStar',
       'festMk', 'guide', 'homes', 'seasonSeen', 'seasonsGot', 'shelfDone', 'sigRec', 'wgMedal']) if(S[k] !== undefined && !plain(S[k])) delete S[k];
     for(const k of ['bestCards', 'evLog', 'owed']) if(S[k] !== undefined && !Array.isArray(S[k])) delete S[k]; }
   const okAff = new Set(B.AFFIX.map(a => a.id));
@@ -6576,13 +6585,13 @@ function dailyTick(){
   Dy.picks.forEach((id, i) => {
     const c = dailyDef(id);
     if(Dy.done[i] || !c || dailyHave(c, i) < c.v) return;
-    Dy.done[i] = 1;
+    Dy.done[i] = 1; passAdd(PASS.DAILY);
     earnSov(B.DAILY_SOV, 'today', 'daily:' + dayNow() + ':' + i, c.d);
     toast('<span class="achk">Daily +' + B.DAILY_SOV + sovIc() + '</span>' + c.d, 'ach');
     Sfx.play('coin');
   });
   if(!Dy.all && Dy.done.every(Boolean)){
-    Dy.all = 1;
+    Dy.all = 1; passAdd(PASS.ALL);
     S.dailyStreak = (S.dailyLastAll === day - 1 ? (S.dailyStreak || 0) : 0) + 1;
     S.dailyLastAll = day;
     const bonus = B.DAILY_ALL + B.DAILY_STREAK * Math.min(B.DAILY_STREAK_MAX, S.dailyStreak);
@@ -6636,7 +6645,7 @@ function ciLook(r){
 function checkinClaim(){
   if(!checkinReady()) return null;
   const C = S.checkin, r = B.CHECKIN[C.n], a = ciAmt(r), say = ciLook(r)[3];
-  C.n++; C.last = dayNow();
+  C.n++; C.last = dayNow(); passAdd(PASS.CHECKIN);
   if(r.k === 'gold'){ S.gold += a; Meter.add(a); }
   else if(r.k === 'grit') S.grit += a;
   else if(r.k === 'shard') S.shard += a;
@@ -8559,7 +8568,9 @@ function finishHole(D){
   S.scores[idx] = { d: sc.d, n: sc.n, par: parOf(S.hole) };
   S.tourScore += sc.d;
   rivalChase();
-  S.totalHoles++; masterTick(!OFFLINE); bondTick(!OFFLINE); caddieGift(S.hole, sc.d);
+  S.totalHoles++; masterTick(!OFFLINE);
+  // (a Tour Pass point every PASS.HOLES holes played live)
+  if(!OFFLINE && !S.dgnRun){ S.passH = (S.passH || 0) + 1; if(S.passH >= PASS.HOLES){ S.passH -= PASS.HOLES; passAdd(1); } } bondTick(!OFFLINE); caddieGift(S.hole, sc.d);
   if(!S.nine || S.nine.idx !== nineIndex(S.hole)) startNine();
   const N = S.nine;
   N.n++; N.total += sc.d;
@@ -9075,6 +9086,89 @@ function tickShop(dt){
   }
 }
 
+
+/* ---- the Tour Pass ----------------------------------------------------
+   S.pass is { m: the month (ciMonth), pts, paid: 1 when bought, got: the
+   rewards taken, 'f3' or 'p3' }. A new month starts a new pass. Points come
+   from the days (passAdd): the dailies, the Check-In, holes played live. */
+const PASS_MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+function passNow(){
+  const m = ciMonth(dayNow());
+  if(!S.pass || typeof S.pass !== 'object' || S.pass.m !== m) S.pass = { m, pts: 0, paid: 0, got: [] };
+  if(!Array.isArray(S.pass.got)) S.pass.got = [];
+  if(!(S.pass.pts >= 0 && isFinite(S.pass.pts))) S.pass.pts = 0;
+  return S.pass;
+}
+const passMonth = () => new Date(dayNow() * 86400000).getUTCMonth();
+const passTier = () => Math.min(PASS.TIERS, Math.floor(passNow().pts / PASS.PER));
+// what each tier gives, free and paid
+function passReward(row, t){
+  if(row === 'f'){
+    if(t % 5 === 0) return { k: 'sov', v: 10 };
+    return [{ k: 'grit', v: 0.05 }, { k: 'tick', v: 1 }, { k: 'shard', v: 0.03 }, { k: 'keys', v: 1 }][(t - 1) % 5] || { k: 'scroll', v: 0.02 };
+  }
+  if(t === PASS.TIERS) return { k: 'look', v: passMonth() };
+  if(t === 15) return { k: 'bag', v: 'legend' };
+  if(t === 5 || t === 25) return { k: 'boost', v: 24 };
+  return { k: 'sov', v: 40 };
+}
+function passSay(r){
+  if(r.k === 'look') return PASS_LOOK[r.v][0] + ' look';
+  if(r.k === 'boost') return nb(r.v + ' hours') + ' Double Purse';
+  if(r.k === 'bag') return ciBag(r).n;
+  if(r.k === 'sov') return '<span class="pv">' + r.v + sovIc() + '</span>';
+  return ciLook(r)[3];
+}
+// points: none in a wager or a catch-up for holes (live only); the days'
+// dailies and Check-In wherever they are done
+function passAdd(n){ if(!(n > 0)) return; passNow().pts += n; }
+const passCan = (row, t) => { const P = passNow(); return t <= passTier() && (row === 'f' || P.paid) && !P.got.includes(row + t); };
+const passClaimable = () => { for(let t = 1; t <= PASS.TIERS; t++) if(passCan('f', t) || passCan('p', t)) return true; return false; };
+function passGive(row, t, quiet){
+  if(!passCan(row, t)) return false;
+  const P = passNow(), r = passReward(row, t);
+  P.got.push(row + t);
+  if(r.k === 'sov') grantSov(r.v, '', true);
+  else if(r.k === 'boost') S.boostT = (S.boostT || 0) + r.v * 3600;
+  else if(r.k === 'bag') openBag(ciBag(r), true);
+  else if(r.k === 'look'){ S.styleOwn = S.styleOwn || {}; S.styleOwn['o:pass' + r.v] = 1; S.styleOwn['c:pass' + r.v] = 1;
+    if(!quiet) toast('<span class="achk">Tour Pass</span><b>' + PASS_LOOK[r.v][0] + '</b> is yours, and its caddie', 'ach'); }
+  else{ const a = ciAmt(r);
+    if(r.k === 'grit') S.grit += a; else if(r.k === 'shard') S.shard += a; else if(r.k === 'scroll') S.scroll += a;
+    else if(r.k === 'keys'){ B.DGN.forEach(d => { S.dgnKeys[d.id] = (S.dgnKeys[d.id] || 0) + a; }); }
+    else if(r.k === 'tick') S.tickets = Math.max(S.tickets || 0, Math.min(B.TICK_CAP, (S.tickets || 0) + a)); }
+  return true;
+}
+function passGet(row, t){ if(passGive(row, t)){ Sfx.play('coin'); renderShop(); renderVitals(); renderStageBtns(); } }
+function passGetAll(){ let n = 0; for(let t = 1; t <= PASS.TIERS; t++) for(const row of ['f', 'p']) if(passGive(row, t, true)) n++;
+  if(n){ Sfx.play('coin'); toast('<span class="achk">Tour Pass</span>' + n + ' ' + plural(n, 'rewards') + ' taken', 'ach'); }
+  renderShop(); renderVitals(); renderStageBtns(); }
+// bought (nothing charged in this build): the paid row, back to tier one
+function passBuy(){ const P = passNow(); if(P.paid){ toast('The pass is yours this month'); return; }
+  P.paid = 1; toast('<b>Tour Pass</b> · ' + PASS_MONTHS[passMonth()] + ' · nothing charged'); renderShop(); renderStageBtns(); }
+function passHtml(){
+  const P = passNow(), t = passTier(), mo = passMonth(), into = P.pts - t * PASS.PER;
+  const ends = Math.max(0, (Date.UTC(new Date(dayNow() * 86400000).getUTCFullYear(), mo + 1, 1) / 86400000) - dayNow());
+  let h = ribbon('Tour Pass · ' + PASS_MONTHS[mo])
+    + '<div class="shopnote">' + nb('Tier ' + t + ' of ' + PASS.TIERS) + (t < PASS.TIERS ? ' · ' + nb(Math.floor(into) + ' of ' + PASS.PER + ' points') : '')
+    + ' · ' + nb('ends in ' + ends + (ends === 1 ? ' day' : ' days')) + '</div>'
+    + '<div class="passbar"><i style="width:' + (t >= PASS.TIERS ? 100 : Math.round(into / PASS.PER * 100)) + '%"></i></div>'
+    + '<div class="shopnote">Points: ' + nb(PASS.DAILY + ' a daily challenge') + ', ' + nb(PASS.ALL + ' for all three') + ', '
+    + nb(PASS.CHECKIN + ' the Check-In') + ', 1 every ' + nb(PASS.HOLES + ' holes') + ' played.</div>';
+  if(!P.paid) h += '<div class="sgrid c1">' + shopCard({ ic: 'starter', col: '#C68BFF', on: true, badge: 'PAID ROW', head: 'Tour Pass',
+      sub: 'About 1,000' + sovIc() + ', two days of Double Purse, a Legend Bag and <b>' + PASS_LOOK[mo][0] + '</b>, a look only this pass gives.',
+      price: '$' + PASS.USD.toFixed(2), note: 'free', act: 'pass:buy', wide: 1 }) + '</div>';
+  if(passClaimable()) h += '<button class="act" onclick="passGetAll()">Get All</button>';
+  h += '<div class="passrows"><div class="passhd"><span>#</span><span>Free</span><span>Pass</span></div>';
+  for(let i = 1; i <= PASS.TIERS; i++){
+    const cell = row => { const r = passReward(row, i), got = P.got.includes(row + i), can = passCan(row, i);
+      return '<span class="pc' + (got ? ' got' : can ? ' can' : '') + (row === 'p' && !P.paid ? ' lock' : '') + '">' + passSay(r)
+        + (got ? '<b>✓</b>' : can ? '<button class="mini" onclick="passGet(\'' + row + '\',' + i + ')">Get</button>' : '') + '</span>'; };
+    h += '<div class="passrow' + (i <= t ? ' on' : '') + '"><span class="pt">' + i + '</span>' + cell('f') + cell('p') + '</div>';
+  }
+  return h + '</div>';
+}
+
 /* ---- the shop, on screen ---- */
 let shopSub = 'offers', styleCat = 'golfer';
 // (the sovereign packs had a tab of their own, Buy, beside four tiles of
@@ -9088,6 +9182,27 @@ function openShop(sub){ if(sub) shopSub = sub === 'buy' ? 'offers' : sub; render
 // colours, its pattern and its effect, so the Divine caddie glows too.
 // a shop-only outfit's caddie, for money too
 const SHOP_CADDIE_USD = 1.99;
+// The Tour Pass (the user chose it, to give a reason to buy): a season a
+// calendar month, thirty tiers of points earned by playing the days (the
+// dailies, the Check-In, holes played live), a free row and a paid row; the
+// paid row's last tier the month's own look, never sold. PASS_LOOK, one a
+// month, outfits (and their caddies) marked pass: the month.
+const PASS = { TIERS: 30, PER: 150, DAILY: 30, ALL: 30, CHECKIN: 20, HOLES: 10, USD: 9.99 };
+const PASS_LOOK = [
+  ['Frostline', '#DCE8F2', '#9FB4C6', '#3A5A7A', '#2A4462', '#1C2E44', '#E8EEF4', '#C4CED8'],
+  ['Hearth', '#8A2A22', '#5E1C16', '#E8D2B0', '#C8B08C', '#A08A68', '#4A3426', '#30221A'],
+  ['Spring Green', '#5AA84A', '#3E7A32', '#F2F2E8', '#D2D4C4', '#AEB0A0', '#3E5A34', '#2A3E24'],
+  ['Petal', '#F2A8C4', '#C47A96', '#FFFFFF', '#E6E2E4', '#C8C2C6', '#6A4A5A', '#4A3240'],
+  ['Meadow', '#E8D24A', '#B8A22A', '#6AA84E', '#4E8A3A', '#3A6A2A', '#F2EED8', '#D2CCB0'],
+  ['Solstice', '#F28A2A', '#C4641A', '#FFF2C8', '#E8D8A0', '#C8B478', '#2A4A6A', '#1C3248'],
+  ['Links Blue', '#2A5AA8', '#1C3E7A', '#FFFFFF', '#DCE4F0', '#B4C2D8', '#E8E2D0', '#C8C0A8'],
+  ['Harvest', '#C88A2A', '#9A661A', '#7A3A1E', '#5E2A14', '#40200E', '#E8D8B0', '#C8B48A'],
+  ['Amber', '#E8A63A', '#B8801E', '#3A2A1E', '#2A1E16', '#1C140E', '#D8C8A8', '#B8A684'],
+  ['Bonfire', '#E4572A', '#B23C1A', '#2A2226', '#1E181C', '#141014', '#3A2E30', '#2A2022'],
+  ['Thistle', '#9A6AC4', '#74489E', '#E8E4EE', '#C8C2D4', '#A69EB6', '#3A3048', '#28203A'],
+  ['Evergreen', '#C42A2A', '#8E1C1C', '#1E5A3A', '#16442C', '#0E2E1E', '#F2EEE6', '#D2CCC0']];
+PASS_LOOK.forEach(([n, cap, cap2, shirt, shirt2, shirt3, pant, pant2], m) =>
+  B.OUTFITS.push({ id: 'pass' + m, n, cost: 0, pass: m + 1, cap, cap2, shirt, shirt2, shirt3, pant, pant2 }));
 B.CADDIES = [{ id:'bib', n:'Caddie Bib', cost:0,
   cap:'#2E6B3A', cap2:'#1F4A28', shirt:'#E8ECE4', shirt2:'#BFC7BC', shirt3:'#9AA39A',
   pant:'#3A3F4A', pant2:'#2A2E36', shoe:'#1E1A16', bag:'#B23A3A', bag2:'#8A2A2A' }]
@@ -9096,7 +9211,7 @@ B.CADDIES = [{ id:'bib', n:'Caddie Bib', cost:0,
 const styleDef = (k, id) => (k === 'o' ? B.OUTFITS : k === 'c' ? B.CADDIES : k === 'k' ? B.CLUBS : B.TRAILS).find(x => x.id === id);
 // A major's jacket costs nothing and is not free: it is won.
 const styleOwned = (k, id) => { const d = styleDef(k, id);
-  return !!d && ((d.cost === 0 && !d.major && !d.usd) || !!(S.styleOwn && S.styleOwn[k + ':' + id])); };
+  return !!d && ((d.cost === 0 && !d.major && !d.usd && !d.pass) || !!(S.styleOwn && S.styleOwn[k + ':' + id])); };
 // "Try it": a look worn for ten seconds without buying it. Never saved.
 let PREVIEW = null;
 // the set (or skin) on the shop's showcase, while its stage is drawn (and only then)
@@ -9226,6 +9341,7 @@ function styleBuy(k, id){
     toast('Win <b>' + courseById(d.major).n + '</b> to wear it');
     return;
   }
+  if(!styleOwned(k, id) && d.pass){ toast('Tier ' + PASS.TIERS + ' of the ' + MONTHS[d.pass - 1] + ' Tour Pass'); return; }
   if(!styleOwned(k, id)){
     // (a look sold only for money: bought here, nothing charged in this build)
     if(d.usd){ S.styleOwn[k + ':' + id] = 1; toast('<b>' + d.n + '</b> is yours \u00b7 nothing charged'); }
@@ -9757,7 +9873,7 @@ function showStageHtml(){
 }
 function renderShop(){
   if(shopSub === 'buy') shopSub = 'offers';
-  const tabs = [['offers','Offers'], ['bags','Bags'], ['perm','Bench'], ['style','Style']];
+  const tabs = [['offers','Offers'], ['pass','Pass'], ['bags','Bags'], ['perm','Bench'], ['style','Style']];
   let h = '<h3>The Pro Shop</h3>'
     + '<div class="shopnav">' + tabs.map(([id, t]) =>
         '<button data-sub="' + id + '"' + (shopSub === id ? ' class="on"' : '') + '>' + t
@@ -9767,6 +9883,7 @@ function renderShop(){
     // line, where it was two)
     + '<div class="freebar"><b>Nothing here is charged:</b> every pack is free.</div>';
 
+  if(shopSub === 'pass') h += passHtml();
   if(shopSub === 'bags'){
     h += '<div class="shopnote">' + nb('Clubs fitted ' + B.BAG_ILVL
       + ' levels above your card \u00b7 Guaranteed Mythic in ' + (B.BAG_PITY - (S.pity || 0))
@@ -9840,7 +9957,8 @@ function renderShop(){
       h += showStageHtml() + shelf('Shop Only', 'o', B.OUTFITS.filter(o => o.usd), outfitUrl) + shelf('Skins', 'o', B.OUTFITS.filter(o => o.cat === 'skin'), outfitUrl)
         // the funny ones and the plain shirts are all outfits: one shelf, the
         // funny ones first
-        + shelf('Outfits', 'o', B.OUTFITS.filter(o => o.cat === 'fun').concat(B.OUTFITS.filter(o => !o.cat && !o.usd)), outfitUrl)
+        + shelf('Outfits', 'o', B.OUTFITS.filter(o => o.cat === 'fun').concat(B.OUTFITS.filter(o => !o.cat && !o.usd && !o.pass)), outfitUrl)
+        + shelf('Tour Pass', 'o', B.OUTFITS.filter(o => o.pass && styleOwned('o', o.id)), outfitUrl)
         + shelf('Major Winners', 'o', B.OUTFITS.filter(o => o.cat === 'major'), outfitUrl);
     }
     else if(styleCat === 'caddie'){
@@ -9848,7 +9966,8 @@ function renderShop(){
       if(!SHOW || !SHOW.set.startsWith('c:')) showStart('c:' + caddieNow().id);
       // in the same order as the golfer's looks: skins, then the rest
       h += showStageHtml() + shelf('Shop Only', 'c', B.CADDIES.filter(d => d.usd), caddieUrl) + shelf('Caddie Skins', 'c', B.CADDIES.filter(d => d.cat === 'skin'), caddieUrl)
-        + shelf('Caddie Outfits', 'c', B.CADDIES.filter(d => d.cat !== 'skin' && d.cat !== 'major' && !d.usd), caddieUrl)
+        + shelf('Caddie Outfits', 'c', B.CADDIES.filter(d => d.cat !== 'skin' && d.cat !== 'major' && !d.usd && !d.pass), caddieUrl)
+        + shelf('Tour Pass', 'c', B.CADDIES.filter(d => d.pass && styleOwned('c', d.id)), caddieUrl)
         + shelf('Major Winners', 'c', B.CADDIES.filter(d => d.cat === 'major'), caddieUrl);
     }
     else if(styleCat === 'clubs'){
@@ -9938,6 +10057,7 @@ function renderShop(){
       else if(kind === 'perm') buyPerm(B.PERM.find(x => x.id === id));
       else if(kind === 'starter') buyStarter();
       else if(kind === 'member') buyMember();
+      else if(kind === 'pass') passBuy();
       else if(kind === 'boost') buyBoost();
       else if(kind === 'style'){ const [k, sid] = id.split('.'); styleBuy(k, sid); }
       else if(kind === 'set') setBuy(id);
@@ -30023,7 +30143,7 @@ function renderStageBtns(live){
       sh.onclick = () => openShop();
     }
     // the dot is for the one-time offer, not for everything in the shop
-    sh.classList.toggle('new', !S.starter);
+    sh.classList.toggle('new', !S.starter || passClaimable());
   }
   const sb = $('setBtn');
   if(sb && !sb._built){
