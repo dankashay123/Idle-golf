@@ -159,7 +159,9 @@ module.exports = {
           let n = 0, off = 0, bank = 0;
           for (let k = 0; k < 6; k++) {
             Scene.t = 60 + k * 0.23;
-            const a = frame(at, null), R = Scene._rips.slice();
+            // (every row of the water's surface, shallows and all: the rings
+            // fall over the whole of it, fixed to the course)
+            const a = frame(at, null), R = []; for (const L of Scene._iceR.values()) for (let i = 0; i < L.length; i += 4) R.push(L[i], L[i + 2], L[i + 3]);
             Scene.rainRings = () => {}; const b = frame(at, null); Scene.rainRings = keep.rings;
             const rows = new Map(); for (let i = 0; i < R.length; i += 3) { const L = rows.get(R[i]) || []; L.push([R[i + 1], R[i + 1] + R[i + 2]]); rows.set(R[i], L); }
             const wet = (x, y) => { for (let dy = -2; dy <= 2; dy++) { const L = rows.get(y + dy); if (L && L.some(([l, rr]) => x >= l && x < rr)) return true; } return false; };

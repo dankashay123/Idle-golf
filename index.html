@@ -4396,6 +4396,11 @@ const MOONRISE_X = 0.24;
 // how far the other holes' fairways and the woods across their strips take
 // to round off at their ends (nbrQ, ringQ), in paces
 const NBR_ROUND = 1.5, RING_ROUND = 2;
+// rain rings on the water (rainRings): so many a square pace, at most so
+// many a stretch of water, laid over all of it
+const RING_PER = 0.5, RING_MAX = 240, RING_MIN = 40;
+// the ripples' lines on the water (ripples), so many a pace
+const RIP_K = 1.6;
 // how far a bunker's outline keeps off a signature hole's water, canyon or
 // railway (offMoat), in paces
 const MOAT_GAP = 0.6;
@@ -21433,14 +21438,21 @@ const Scene = {
     if(!R || (!R.length && !(this._iceR && this._iceR.size))) return;
     const water = this.waterAt(c, T);
     c.fillStyle = pickC(T._wt, 0.88);
-    const ft = Math.floor(this.t*4);
-    for(let i = 0; i < R.length; i += 3){
-      const yy = R[i], xl = R[i+1], w = R[i+2];
-      if(((yy + ft) % 9) !== 0) continue;
-      const rw = Math.round(w * (0.16 + 0.15*Math.abs(Math.sin(yy*0.6 + this.t))));
+    // (each a line across the water at a place on the course, drifting
+    // slowly toward him, drawn on the one row nearest it: picked by the
+    // screen's row they slid along with him as he walked)
+    const RD = this._ripD || [];
+    let ku = null;
+    for(let i = 0, r = 0; i < R.length; i += 3, r++){
+      const yy = R[i], xl = R[i+1], w = R[i+2], d = RD[r];
+      if(d === undefined) continue;
+      const k = Math.floor(d * RIP_K + this.t * 0.6), was = ku; ku = k;
+      if(k === was || hr(k, 917) > 0.42) continue;
+      if(this._anchorLog) this._anchorLog.push({ w: 'rip', k, d });
+      const rw = Math.round(w * (0.16 + 0.15*Math.abs(Math.sin(k*0.6 + this.t))));
       // (a pixel at a time, and only on the water: the row runs the hazard's
       // whole width, and a glint was drawn over the bank)
-      const x0 = xl + ((w - rw) >> 1) + Math.round(Math.sin(yy*0.31)*w*0.14);
+      const x0 = xl + ((w - rw) >> 1) + Math.round(Math.sin(k*0.31)*w*0.14);
       let run = -1;
       for(let x = Math.max(0, x0); x <= Math.min(VW, x0 + rw); x++){
         const ok = x < x0 + rw && water(x, yy);
@@ -21612,8 +21624,15 @@ const Scene = {
   // on a clock of its own. Only ever on the water's own rows, so none spill
   // onto the bank.
   rainRings(c, T, R, water){
+    // Each drop lands at a place on the water, worked out from the course
+    // (the user saw the rings move with him: they were picked by the
+    // screen's row and column), and its ring is drawn where that place is
+    // this frame: at the row of the water's surface there (the slices'
+    // rows, this._iceR) and across by the view.
+    const IR = this._iceR;
+    if(!IR || !IR.size) return;
     const rows = new Map();
-    for(let i = 0; i < R.length; i += 3){ const a = rows.get(R[i]); if(a) a.push(R[i+1], R[i+1] + R[i+2]); else rows.set(R[i], [R[i+1], R[i+1] + R[i+2]]); }
+    for(const L of IR.values()) for(let i = 0; i < L.length; i += 4){ const a = rows.get(L[i]); if(a) a.push(L[i+2], L[i+2] + L[i+3]); else rows.set(L[i], [L[i+2], L[i+2] + L[i+3]]); }
     // (the rows are noted one to a slice of the ground, so a pixel counts as
     // on the water if a row within a pixel or two of it spans it)
     const on = (x, y) => { const a = rows.get(y); if(!a) return false; for(let k = 0; k < a.length; k += 2) if(x >= a[k] + 1 && x < a[k+1] - 1) return true; return false; };
@@ -21623,25 +21642,41 @@ const Scene = {
     // landing on the grass)
     water = water || this.waterAt(c, T);
     const wet = (x, y) => water(x, y) && (on(x, y) || (on(x, y - 1) && on(x, y + 1)) || (on(x, y - 1) && on(x, y + 2)) || (on(x, y - 2) && on(x, y + 1)));
-    const n = R.length / 3, N = Math.min(70, Math.round(n * 0.8)), c1 = mixC(pickC(T._wt, 0.95), '#FFFFFF', 0.7), c2 = mixC(pickC(T._wt, 0.9), '#FFFFFF', 0.4);
-    for(let i = 0; i < N; i++){
-      const L = 0.6 + 0.35 * hr(i, 1), clock = this.t / L + hr(i, 2), m = Math.floor(clock), u = clock - m;
-      const j = Math.floor(hr(i, m) * n) * 3, yy = R[j], xl = R[j+1], w = R[j+2];
-      // (a row can run far off the screen either side: they land on the part of it in view)
-      const x0 = Math.max(xl, 0), x1 = Math.min(xl + w, VW);
-      if(x1 - x0 < 4) continue;
-      const cx = x0 + 2 + hr(i, m + 3) * (x1 - x0 - 4), k = clamp((yy - HORIZON) / Math.max(1, VH - HORIZON), 0, 1);
-      const r = u * (2.5 + k * 8), ry = Math.max(0.5, r * 0.32);
-      c.fillStyle = u < 0.5 ? c1 : c2;
-      if(u < 0.12){ if(wet(Math.round(cx), yy - 1)) c.fillRect(Math.round(cx), yy - 1, 1, 1); continue; }
-      const pts = Math.max(6, Math.round(r * 5));
-      for(let q = 0; q < pts; q++){
-        const a = q / pts * Math.PI * 2, x = Math.round(cx + Math.cos(a) * r), y = Math.round(yy + Math.sin(a) * ry);
-        if(u > 0.75 && (q & 1)) continue;
-        if(wet(x, y)) c.fillRect(x, y, 1, 1);
+    const c1 = mixC(pickC(T._wt, 0.95), '#FFFFFF', 0.7), c2 = mixC(pickC(T._wt, 0.9), '#FFFFFF', 0.4);
+    for(const [hz, L] of IR){
+      if(L.length < 8) continue;
+      // (the water's rows by distance: the row of its surface at any d
+      // between its nearest and farthest slice in view)
+      const dLo = L[1], dHi = L[L.length - 3];
+      const rowAt = d => { let lo = 0, hi = L.length / 4 - 1; if(d < L[1] || d > L[hi * 4 + 1]) return null;
+        while(hi - lo > 1){ const m = (lo + hi) >> 1; if(L[m * 4 + 1] <= d) lo = m; else hi = m; }
+        const d0 = L[lo * 4 + 1], d1 = L[hi * 4 + 1], u = d1 > d0 ? (d - d0) / (d1 - d0) : 0; return Math.round(L[lo * 4] + (L[hi * 4] - L[lo * 4]) * u); };
+      // (as many as its water is big, laid over the whole of it, so those
+      // in view are always the same ones)
+      const x0 = Math.max(hz.x - hz.rx, -14), x1 = Math.min(hz.x + hz.rx, 14), A = 2 * hz.rd * (x1 - x0);
+      const N = Math.min(RING_MAX, Math.max(RING_MIN, Math.round(A * RING_PER))), id = Math.round(hz.d * 37 + hz.x * 11) & 0xFFFF;
+      for(let i = 0; i < N; i++){
+        const q = id * 997 + i, Lc = 0.6 + 0.35 * hr(q, 1), clock = this.t / Lc + hr(q, 2), m = Math.floor(clock), u = clock - m;
+        const d = hz.d - hz.rd + hr(q, m * 2 + 11) * 2 * hz.rd;
+        if(d < dLo || d > dHi) continue;
+        const yy = rowAt(d); if(yy === null || yy <= HORIZON) continue;
+        const lx = x0 + hr(q, m * 2 + 12) * (x1 - x0), cx = this.proj(d, lx).x;
+        if(cx < -12 || cx > VW + 12) continue;
+        if(this._anchorLog) this._anchorLog.push({ w: 'ring', q: q + ':' + m, d, x: lx });
+        const k = clamp((yy - HORIZON) / Math.max(1, VH - HORIZON), 0, 1);
+        const r = u * (2.5 + k * 8), ry = Math.max(0.5, r * 0.32);
+        c.fillStyle = u < 0.5 ? c1 : c2;
+        if(u < 0.12){ if(wet(Math.round(cx), yy - 1)) c.fillRect(Math.round(cx), yy - 1, 1, 1); continue; }
+        const pts = Math.max(6, Math.round(r * 5));
+        for(let p = 0; p < pts; p++){
+          const a = p / pts * Math.PI * 2, x = Math.round(cx + Math.cos(a) * r), y = Math.round(yy + Math.sin(a) * ry);
+          if(u > 0.75 && (p & 1)) continue;
+          if(wet(x, y)) c.fillRect(x, y, 1, 1);
+        }
       }
     }
   },
+
 
   holeLen(){ return LEN; },
 
