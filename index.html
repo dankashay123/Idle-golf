@@ -17221,7 +17221,10 @@ function drawLyingBallBase(c, cx, cy, r, t, fx){
 const CUP_FX_DUR = 0.55;
 // how long a watched hole holds once its ball is in the cup (the score shows
 // that long, and the dearest balls' moment plays out whole), and on an ace
-const CUP_HOLD = 0.6, ACE_HOLD = 1.0;
+// (the hole held after the ball drops as long as the hole's call is up,
+// in and out: at 0.6s the next hole cleared it a moment after it popped in
+// and on the phone it was never seen)
+const CUP_HOLD = 1.2, ACE_HOLD = 1.0;
 const CUP_FX = {
   godlight(c, x, y, cr, h, q, t){
     const R = h * 0.75, k = Math.max(1, Math.round(h / 16));

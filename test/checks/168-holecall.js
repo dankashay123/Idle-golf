@@ -53,6 +53,9 @@ module.exports = {
       try { Scene.holed({ n: 'Birdie', d: -1 }); Scene.drawNums ? 0 : 0; const b = Scene.banner; Scene.banner = b; try { Scene.draw(0, derive()); } catch (e) {} return !document.getElementById('holecall').hidden; } finally { S.dgnRun = keep; Scene.banner = null; Scene.newHole(S.hole, S.tier); } });
     if (wager) f('the call shown in a wager');
     await page.evaluate(() => { window.step = window.__keepStep; });
+    // the hole held after the ball drops while the call is up, in and out
+    // (at 0.6s the next hole cleared it a moment after it came in)
+    { const hold = await page.evaluate(() => CUP_HOLD); if (!(hold >= 1.2)) f('the hole held ' + hold + 's after the drop, the call is up 1.2s'); }
     if (fails.length) throw new Error(fails.join('; '));
     return ['the call, its figure and colour right for five calls at ' + o.sizes.join(', ') + ', its lettering painted (least ' + (o.ink * 100).toFixed(0) + '% inked, ' + (o.lit * 100).toFixed(0) + '% lit), never over the readout or its buttons; gone with its banner and on a new hole; none in a wager'];
   }
