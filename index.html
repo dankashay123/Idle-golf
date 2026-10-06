@@ -9537,9 +9537,10 @@ function clubUrl(d){
     // the Reaper's dark haft bound in bone, a scythe's blade for its head, its edge green
     if(d.fx === 'dread'){ g.clearRect(7, 9, 4, 3); P(3, 2, '#D8D2BC'); P(5, 5, '#D8D2BC'); P(7, 8, '#D8D2BC');
       for(const [x, y, col] of [[8, 9, '#6E6A78'], [9, 9, '#9A96A6'], [10, 10, '#9A96A6'], [11, 11, '#E8FFF2'], [8, 10, '#5CF0A0'], [9, 10, '#5CF0A0'], [10, 11, '#5CF0A0']]) P(x, y, col); }
-    // the Cyber-Drive's green shaft, a canister banded in lime for its head
+    // the Cyber-Drive's green shaft, a hammer's canister across its end, capped in lime
     if(d.fx === 'cyber'){ g.clearRect(7, 9, 4, 3);
-      for(const [x, y, col] of [[7, 9, '#C8F23A'], [8, 9, '#4A5578'], [9, 9, '#4A5578'], [10, 9, '#C8F23A'], [7, 10, '#C8F23A'], [8, 10, '#3AF07A'], [9, 10, '#262D45'], [10, 10, '#C8F23A'], [8, 11, '#141826'], [9, 11, '#141826']]) P(x, y, col); }
+      for(let y = 9; y <= 11; y++){ P(5, y, '#C8F23A'); P(10, y, '#C8F23A'); for(let x = 6; x <= 9; x++) P(x, y, y === 9 ? '#6E7AA0' : y === 11 ? '#262D45' : x === 7 || x === 8 ? '#3AF07A' : '#4A5578'); }
+      P(7, 8, '#C8F23A'); }
     // the Eclipse's gold shaft bound in indigo, and a black orb in a gold ring for its head
     if(d.fx === 'cosmic'){ pts.forEach(([x, y], i) => { if(i > 1 && i % 3 === 0) P(x, y, '#1C1640'); }); P(9, 8, '#05030C'); P(10, 9, '#05030C'); P(8, 8, '#D8B060'); P(11, 9, '#D8B060'); P(10, 10, '#B98CFF'); P(9, 7, '#FFFFFF'); }
     if(acc) [[10, 1], [1, 10], [11, 4], [4, 11]].forEach(([x, y], i) => P(x, y, acc[i & 1]));
@@ -24678,18 +24679,28 @@ const CLUBFX = {
       for(const i of [3, 7]) fxDot(c, P[i][0] - 1, P[i][1], th + 1, '#C8F23A', 1);
       c.globalAlpha = 1;
     },
-    head(c, tx, ty, th, h, turn, t, K){
-      // the canister across the shaft's end, its far end lit
-      const X = Math.round(tx), Y = Math.round(ty), d = turn < 0 ? 1 : -1, L = th * 3 + 3, H = th + 3;
-      const x0 = d > 0 ? X - 1 : X - L + 2;
+    // its head is drawn over, square across the shaft's end (see hammer)
+    head(){},
+    // a hammer's head: a gunmetal canister square across the shaft's end,
+    // the shaft meeting its middle through a lime collar, its end caps lime
+    // and a green window lit down it; turned with the shaft through the swing
+    hammer(c, hx, hy, tx, ty, th, t, K){
+      const D = Math.hypot(tx - hx, ty - hy) || 1, dx = (tx - hx) / D, dy = (ty - hy) / D, nx = -dy, ny = dx;
+      const L = th * 3 + 5, T = th + 3, cx = tx + dx * (T / 2 + 0.5), cy = ty + dy * (T / 2 + 0.5);
+      const band = (o, len, col, w) => pxLine(c, cx + dx * o - nx * len / 2 - w / 2, cy + dy * o - ny * len / 2 - w / 2, cx + dx * o + nx * len / 2 - w / 2, cy + dy * o + ny * len / 2 - w / 2, col, w);
       c.globalAlpha = 1;
-      c.fillStyle = '#0B0E18'; c.fillRect(x0 - 1, Y - 2, L + 2, H + 2);
-      c.fillStyle = K.head; c.fillRect(x0, Y - 1, L, H);
-      c.fillStyle = '#6E7AA0'; c.fillRect(x0, Y - 1, L, 1);
-      c.fillStyle = K.head2; c.fillRect(x0, Y - 1, 1, H); c.fillRect(x0 + L - 1, Y - 1, 1, H);
-      if(L >= 6){ c.fillStyle = Math.sin(t * 6) > 0 ? '#E8FF9A' : '#3AF07A'; c.fillRect(x0 + 2, Y, L - 4, Math.max(1, H - 2)); }
+      for(let o = -T / 2 - 0.5; o <= T / 2 + 0.5; o += 0.5) band(o, L + 1, '#0B0E18', 2);
+      for(let o = -T / 2 + 0.5; o <= T / 2 - 0.5; o += 0.5) band(o, L - 1, K.head, 2);
+      band(-T / 2 + 0.5, L - 3, '#6E7AA0', 1);
+      if(T >= 4) for(let o = -T / 2 + 1.5; o <= T / 2 - 1.5; o += 0.5) band(o, L - 6, Math.sin(t * 6) > 0 ? '#E8FF9A' : '#3AF07A', 1);
+      // the end caps, a pixel proud
+      for(const sg of [-1, 1]) for(let k = 0; k < 2; k++){ const ex = cx + nx * sg * (L / 2 - 0.5 - k), ey = cy + ny * sg * (L / 2 - 0.5 - k);
+        pxLine(c, ex - dx * (T / 2 + 1) - 1, ey - dy * (T / 2 + 1) - 1, ex + dx * (T / 2 + 1) - 1, ey + dy * (T / 2 + 1) - 1, K.head2, 2); }
+      // the collar where the shaft goes in
+      c.fillStyle = K.head2; c.fillRect(Math.round(tx - dx * 1.5) - 1, Math.round(ty - dy * 1.5) - 1, th + 1, th + 1);
     },
-    over(c, hx, hy, tx, ty, th, h, t){
+    over(c, hx, hy, tx, ty, th, h, t, K){
+      this.hammer(c, hx, hy, tx, ty, th, t, K || clubNow());
       const f = (t * 1.1) % 1;
       if(f < 0.5){ fxDot(c, tx + 2 + Math.sin(t * 5) * 2, ty - 3 - f * 8, 1, f < 0.25 ? '#E8FF9A' : '#FF3AD0', 1); }
       c.globalAlpha = 1;
