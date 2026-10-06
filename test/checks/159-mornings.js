@@ -7,6 +7,7 @@
  *   - ducklings: in spring on the island's lake (none in its summer, autumn
  *     or winter, none at night), a line behind a hen, drawn; the Guide
  *     counts them
+ *   - steam: its whole drift on the water (it spilt onto the bank)
  *   - steam: on a cold morning (autumn or winter at 8, none at 15 or in
  *     summer, none on ice or in the rain), wisps laid on the water only,
  *     drawn paler over it
@@ -76,6 +77,11 @@ module.exports = {
             S.chaos = { n: ch }; Scene.newHole(h, S.tier); const st = steam(), want = (sn === 1 || sn === 2) && hrs === 8 && ch === 'Fair' && !Scene.ice;
             if (st.length && !want) { f('steam in season ' + sn + ' at ' + hrs + ' in ' + ch + (Scene.ice ? ' on ice' : '')); break; }
             for (const q of st) if (!Scene.wetSpot(q.d, q.x)) { f('steam laid on dry ground at ' + q.d.toFixed(1) + ',' + q.x.toFixed(1)); break; }
+            // (and the whole of its drift over the water, as wide as it lies
+            // and leaning with the wind: it spilt onto the bank)
+            { const ln = ((Scene.wind || 0) * 1.2 + 0.25) * 1.1;
+              for (const q of st) { const fq = q.f || 1, xs = [(-STEAM_HALF + Math.min(0, ln)) * fq, (STEAM_HALF + Math.max(0, ln)) * fq];
+                if (!xs.every(u => Scene.wetSpot(q.d, q.x + u))) { f('steam over the bank at ' + q.d.toFixed(1) + ',' + q.x.toFixed(1) + ' (' + fq + ')'); break; } } }
             const W = Scene.water, open = (W && !W.canyon && !W.rail) || Scene.pond;
             if (want && open) { wet++; if (st.length) cold++; } } }
         SEASON_FORCE = -1;

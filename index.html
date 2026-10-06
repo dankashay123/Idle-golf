@@ -13365,11 +13365,16 @@ function rainSheet(z, N, lean, W, H){
 // a wisp of steam sz across: a soft pale column, fullest low, fraying up;
 // baked once a size (bounded, freed as dropped)
 const STEAM_SPR = new Map(), STEAM_MAX = 40;
+// (half its width across the hole, in the hole's units: 1.9 of a size of
+// 1.1 units, laySteam keeps it all over the water)
+const STEAM_HALF = 1.1;
 // (in a few sizes, baked in one put: a pixel at a time, each new size as
 // he walked cost a frame two thousand canvas calls)
 const STEAM_SIZES = [4, 6, 8, 11, 15, 20, 27, 36, 48];
 function steamSprite(sz0){
-  const sz = STEAM_SIZES.find(v => v >= sz0) || 48;
+  // (the size at or under the one asked: rounded up, a third wider, it
+  // reached past the water it was fitted to)
+  const sz = STEAM_SIZES.filter(v => v <= sz0).pop() || STEAM_SIZES[0];
   let cv = STEAM_SPR.get(sz); if(cv) return cv;
   // (a low, wide drift lying on the water, faded to nothing at its top,
   // its foot and its ends, so the wisps run together into one layer: a
@@ -20245,8 +20250,19 @@ const Scene = {
     const cand = [];
     if(W && !W.canyon && !W.rail) for(let i = 0; i < 40; i++) cand.push([W.d + (hr(h * 61 + i, 1005) - 0.5) * W.rd * 1.8, W.x + (hr(h * 61 + i, 1006) - 0.5) * (W.lake || W.river ? 8 : W.rx * 1.8)]);
     if(PP) for(let i = 0; i < 16; i++) cand.push([PP.d + (hr(h * 67 + i, 1005) - 0.5) * PP.rd * 1.6, PP.x + (hr(h * 67 + i, 1006) - 0.5) * PP.rx * 1.6]);
-    for(const [d, x] of cand) if(at.length < 18 && Math.hypot(d - LEN, x) > 4.5 && this.wetSpot(d, x) && !at.some(q => Math.abs(q[0] - d) < 0.7 && Math.abs(q[1] - x) < 0.9)) at.push([d, x]);
-    for(let i = 0; i < at.length; i++) put.push({ kind: 26, sp: 'steam', d: at[i][0], x: at[i][1], k: h * 17 + i, extra: 1 });
+    // (its whole drift over the water, as wide as it lies and as far as it
+    // leans with the wind, and a little way either side along the hole: by
+    // its middle alone it spilt over onto the bank; made smaller to fit a
+    // narrow pond or the river's edge, f, and none where even small spills)
+    const lean = ((this.wind || 0) * 1.2 + 0.25) * 1.1;
+    const fits = (d, x, f) => { const x0 = (-STEAM_HALF + Math.min(0, lean)) * f, x1 = (STEAM_HALF + Math.max(0, lean)) * f;
+      return [-0.6, 0, 0.6].every(e => [x0, (x0 + x1) / 2, x1, 0].every(u => this.wetSpot(d + e * Math.max(f, 0.5), x + u))); };
+    for(const [d, x] of cand){
+      if(at.length >= 18 || !(Math.hypot(d - LEN, x) > 4.5) || at.some(q => Math.abs(q[0] - d) < 0.7 && Math.abs(q[1] - x) < 0.9)) continue;
+      const f = [1, 0.8, 0.62, 0.48].find(f => fits(d, x, f));
+      if(f) at.push([d, x, f]);
+    }
+    for(let i = 0; i < at.length; i++) put.push({ kind: 26, sp: 'steam', d: at[i][0], x: at[i][1], f: at[i][2], k: h * 17 + i, extra: 1 });
     if(at.length){ put.sort((a, b) => b.d - a.d); this.props = put; }
   },
   // Fish leaping in the lakes and ponds (the user picked it from the menu):
@@ -22683,7 +22699,10 @@ const Scene = {
   // rising and sinking a little; the hills drawn after stand in front
   drawBalloons(c){
     if(!this.balloons || S.dgnRun) return;
-    const h = this.hole || 0, n = 1 + Math.floor(hr(h * 41 + 1, 1009) * 3), w = this.wind || 0.12;
+    // (as many to the view as before the sky was built wider: one to three
+    // over the view's width, more across the margins either side)
+    const h = this.hole || 0, w = this.wind || 0.12, wide = (VW + 2 * (this.skyM || 0) + 40) / (VW + 40),
+          n = Math.round((1 + Math.floor(hr(h * 41 + 1, 1009) * 3)) * wide);
     for(let i = 0; i < n; i++){
       // (over their own ground: along the sky as it is built, slid with it)
       const sm = this.skyM || 0, q = h * 43 + i, ht = Math.round(HORIZON * (0.1 + hr(q, 1010) * 0.1)), span = VW + 2 * sm + 40;
@@ -26527,7 +26546,7 @@ Object.assign(Scene, {
       // climbs, leaning with the wind; one stamp, faded by its age
       // (lying low on the water and drifting with the wind as it fades)
       const L = 4.5 + hr(p.k, 1007) * 2.5, u = ((this.t / L + hr(p.k, 1008)) % 1);
-      const sz = clamp(Math.round(LAT * pr.s * 1.1), 4, 36), S2 = steamSprite(sz);
+      const sz = clamp(Math.round(LAT * pr.s * 1.1 * (p.f || 1)), 4, 36), S2 = steamSprite(sz);
       const rise = u * sz * 0.35 - S2.height * 0.3, lean = Math.round(((this.wind || 0) * 1.2 + 0.25) * u * sz);
       const a = Math.sin(Math.PI * u) * 0.9 * (this.mistLift || 1);
       if(a < 0.04 || pr.x < -sz || pr.x > VW + sz) return;
