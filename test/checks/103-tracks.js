@@ -52,13 +52,22 @@ module.exports = {
           { const cam = 10; Scene.camD = cam; Scene.walkTo = cam; Scene.tracks = null; Scene.restBall = null; Scene.balls = [];
             const keep = Scene.drawGolfer; Scene.drawGolfer = () => {};
             Scene.marks = null; Scene.draw(0, D); const A = c.getImageData(0, 0, VW, VH).data;
-            for (let k = 0; k < 16; k++) Scene.noteMark(cam + 2 + k * 0.6, (k % 5 - 2) * 1.3);
+            // (in the snowy rough: on the cleared fairway and green none, below)
+            for (let k = 0; k < 16; k++) { const md = cam + 2 + k * 0.6; Scene.noteMark(md, (k & 1 ? 1 : -1) * (Scene.fwWidth(md) + 1 + (k % 3) * 0.8)); }
             if (Scene.marks.length !== 12) f('marks kept: ' + Scene.marks.length);
             Scene.draw(0, D); const Bd = c.getImageData(0, 0, VW, VH).data; Scene.drawGolfer = keep;
             const lim = Math.max(...Scene.marks.map(m => Scene.clipAt(m.d)));
             let n = 0, under = 0; for (let i = 0; i < A.length; i += 4) if (A[i] !== Bd[i] || A[i + 1] !== Bd[i + 1] || A[i + 2] !== Bd[i + 2]) { n++; if (((i >> 2) / VW | 0) > lim + 1) under++; }
             o.marks = (o.marks || 0) + (n ? 1 : 0); o.markHoles = (o.markHoles || 0) + 1;
-            if (under) f('hole ' + h + ': ' + under + ' mark pixels below the ground\'s line'); Scene.marks = null; }
+            if (under) f('hole ' + h + ': ' + under + ' mark pixels below the ground\'s line');
+            // (none on the fairway or green, cleared of snow: a dent there was
+            // a dark box under him, the user saw)
+            { Scene.drawGolfer = () => {}; Scene.marks = null; Scene.draw(0, D); const A2 = c.getImageData(0, 0, VW, VH).data;
+              for (let k = 0; k < 12; k++) Scene.noteMark(cam + 2 + k * 0.6, (k % 3 - 1) * 0.5);
+              Scene.draw(0, D); const B2 = c.getImageData(0, 0, VW, VH).data; Scene.drawGolfer = keep; let m2 = 0;
+              for (let i = 0; i < A2.length; i += 4) if (A2[i] !== B2[i] || A2[i + 1] !== B2[i + 1] || A2[i + 2] !== B2[i + 2]) m2++;
+              if (m2) f('hole ' + h + ': ' + m2 + ' pixels of marks on the fairway'); }
+            Scene.marks = null; }
           // a wager: none
           S.dgnRun = { id: 'x' }; Scene.marks = null; Scene.noteMark(5, 0); if (Scene.marks) f('a mark laid in a wager'); delete S.dgnRun;
           S.dgnRun = { id: 'x' }; Scene.tracks = null; Scene.noteTrack(0, 10); if (Scene.tracks) f('tracks laid in a wager'); delete S.dgnRun;

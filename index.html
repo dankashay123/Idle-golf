@@ -1028,7 +1028,7 @@ div.guide.hunt,div.guide.mhunt{grid-template-columns:repeat(3,minmax(0,1fr))}
    (holeCall): the same lettering in styles alone (text clipped to a fill,
    a filter on it) came out blank on his iPhone. */
 #holecall{position:absolute;left:50%;z-index:26;pointer-events:none;
-  transform:translateX(-50%);animation:hcIn 1.2s cubic-bezier(.2,.8,.3,1) forwards}
+  transform:translateX(-50%)}
 #holecall[hidden]{display:none}
 #holecall canvas{display:block}
 /* the course's name as play reaches it, in the same lettering, smaller,
@@ -1036,8 +1036,6 @@ div.guide.hunt,div.guide.mhunt{grid-template-columns:repeat(3,minmax(0,1fr))}
 #annCall{position:absolute;z-index:26;pointer-events:none;transform:translateX(-50%)}
 #annCall[hidden]{display:none}
 #annCall canvas{display:block}
-@keyframes hcIn{0%{opacity:0;transform:translateX(-50%) scale(.6)}14%{opacity:1;transform:translateX(-50%) scale(1.08)}
-  24%{transform:translateX(-50%) scale(1)}78%{opacity:1;transform:translateX(-50%) translateY(0)}100%{opacity:0;transform:translateX(-50%) translateY(-10px)}}
 @keyframes coIn{0%{opacity:0;margin-top:4px}12%{opacity:1;margin-top:0}80%{opacity:1}100%{opacity:0}}
 #wagerStat b{color:var(--aurora);font-weight:700}
 .rfold{border-top:1px solid var(--line)}
@@ -4396,6 +4394,8 @@ const MOONRISE_X = 0.24;
 // how far the other holes' fairways and the woods across their strips take
 // to round off at their ends (nbrQ, ringQ), in paces
 const NBR_ROUND = 1.5, RING_ROUND = 2;
+// his footprints fade out over this many paces toward the view (drawTracks)
+const TRACK_FADE = 2.5;
 // rain rings on the water (rainRings): so many a square pace, at most so
 // many a stretch of water, laid over all of it
 const RING_PER = 0.5, RING_MAX = 240, RING_MIN = 40;
@@ -23476,7 +23476,9 @@ const Scene = {
     const el = typeof document !== 'undefined' && document.getElementById('holecall');
     if(!el) return;
     const key = b ? b.id : 0;
-    if(key === this._hcKey) return;
+    // (in with a pop, up and away, by the banner's own clock, every frame:
+    // left to the page's own animation it never showed on his iPhone)
+    if(key === this._hcKey){ if(b) this.holeCallAnim(el, b.t); return; }
     this._hcKey = key;
     if(!b){ el.hidden = true; return; }
     const sc = B.SCORE.find(z => z.n.toUpperCase() === String(b.n).toUpperCase());
@@ -23503,7 +23505,16 @@ const Scene = {
         if(!moved) break; }
     }
     el.style.top = top + 'px';
-    el.style.animation = 'none'; void el.offsetWidth; el.style.animation = '';
+    this.holeCallAnim(el, b.t);
+  },
+  holeCallAnim(el, t){
+    const u = clamp(t / 1.2, 0, 1), ease = v => 1 - Math.pow(1 - v, 3);
+    let op = 1, sc = 1, dy = 0;
+    if(u < 0.14){ const v = ease(u / 0.14); op = v; sc = 0.6 + 0.48 * v; }
+    else if(u < 0.24) sc = 1.08 - 0.08 * ((u - 0.14) / 0.1);
+    else if(u > 0.78){ const v = (u - 0.78) / 0.22; op = 1 - v; dy = -10 * v; }
+    el.style.opacity = op.toFixed(3);
+    el.style.transform = 'translateX(-50%) translateY(' + dy.toFixed(1) + 'px) scale(' + sc.toFixed(3) + ')';
   },
   // The call's lettering: the word spaced a little, a dark outline and drop
   // under a fill light at the top to its colour, a glow of it; the figure
@@ -27049,14 +27060,19 @@ Object.assign(Scene, {
     if(!M || !this.snow || S.dgnRun) return;
     const c = this.b, near = this.camD - CAM_BACK + ROPE_REL;
     for(const m of M){
-      if(m.d < near || this.hitsHazard(m.d, m.lat, 0)) continue;
+      // (only where snow lies: on the cleared fairway and green a dark dent
+      // a third his height read as "a weird black box", the user saw)
+      if(m.d < near || this.hitsHazard(m.d, m.lat, 0) || this.onPlay(m.d, m.lat, 0.3)) continue;
       const q = this.proj(m.d, m.lat);
       if(q.s < 0.05 || q.x < -10 || q.x > VW + 10) continue;
-      const cl = this.clipAt(m.d), w = Math.max(3, Math.round(B_GOLFER * US * q.s * 0.3)), h = Math.max(1, Math.round(w * 0.4));
+      const fa = clamp((m.d - near) / TRACK_FADE, 0, 1); if(fa <= 0.05) continue;
+      // (a ball's dent, a few times the ball across, ringed in thrown-up snow)
+      const cl = this.clipAt(m.d), w = Math.max(2, Math.min(9, Math.round(B_GOLFER * US * q.s * 0.09))), h = Math.max(1, Math.round(w * 0.4));
       const X = Math.round(q.x - w / 2), Y = Math.round(q.y) - h;
-      // (ringed in thrown-up snow in the rough; in the turf a dent alone)
-      if(!this.onPlay(m.d, m.lat, 0)){ c.fillStyle = this.night ? 'rgba(200,214,226,.35)' : '#F4F8FA'; fillClip(c, X - 1, Y, w + 2, h, cl); }
-      c.fillStyle = this.night ? "rgba(30,40,56,.7)" : "rgba(70,90,112,.72)"; fillClip(c, X, Y, w, h, cl); if(h > 2){ c.fillStyle = this.night ? "rgba(20,28,40,.7)" : "rgba(52,68,88,.7)"; fillClip(c, X + 1, Y + 1, w - 2, h - 1, cl); }
+      c.globalAlpha = fa;
+      c.fillStyle = this.night ? 'rgba(200,214,226,.35)' : '#F4F8FA'; fillClip(c, X - 1, Y, w + 2, h, cl);
+      c.fillStyle = this.night ? "rgba(30,40,56,.6)" : "rgba(110,132,152,.6)"; fillClip(c, X + (w > 3 ? 1 : 0), Y, w - (w > 3 ? 2 : 0), h, cl);
+      c.globalAlpha = 1;
       // (the puff: a few flecks up off it and down again, under half a second)
       const u = (this.t - m.t) / 0.45;
       if(u >= 0 && u < 1){ c.fillStyle = '#F6FAFC';
@@ -27070,16 +27086,24 @@ Object.assign(Scene, {
     const T = this.tracks;
     if(!T || !(this.snow || this.frost) || S.dgnRun || this.heli) return;
     const c = this.b, I = this.isle, near = this.camD - CAM_BACK + ROPE_REL, hi = Math.min(T.hi, this.camD - 0.35);
-    const col = this.snow ? (this.night ? 'rgba(40,52,70,.5)' : 'rgba(96,118,140,.42)') : 'rgba(38,78,50,.38)';
-    c.fillStyle = col;
+    // (fading out as they come toward the view, rounded, and none on a
+    // green the snow is cleared from: near at hand a print was a dark slab
+    // under him, the user saw "a weird black box")
+    const base = this.snow ? (this.night ? [40, 52, 70, 0.5] : [96, 118, 140, 0.42]) : [38, 78, 50, 0.38];
     for(let i = Math.ceil(Math.max(T.lo, near) / 0.3), n = 0; i * 0.3 < hi && n < 400; i++, n++){
       const d = i * 0.3, x = (i & 1 ? 0.09 : -0.09);
       if(this.hitsHazard(d, x, 0) || (I && d > I.bank - 0.5 && d < (I.land || LEN - 8) + 0.5)) continue;
+      if(this.snow && Math.abs(d - LEN) < 7 && Math.abs(x) < 3) continue;
       const q = this.proj(d, x);
       if(q.s < 0.05) continue;
-      // (a print his shoe's size)
+      const fa = clamp((d - near) / TRACK_FADE, 0, 1);
+      if(fa <= 0.05) continue;
+      // (a print his shoe's size, its corners cut)
       const w = Math.max(1, Math.round(B_GOLFER * US * q.s * 0.1)), h = Math.max(1, Math.round(w * 0.5));
-      fillClip(c, Math.round(q.x - w / 2), Math.round(q.y) - h, w, h, this.clipAt(d));
+      c.fillStyle = 'rgba(' + base[0] + ',' + base[1] + ',' + base[2] + ',' + (base[3] * fa).toFixed(3) + ')';
+      const X = Math.round(q.x - w / 2), Y = Math.round(q.y) - h, clip = this.clipAt(d);
+      if(w >= 4 && h >= 2){ fillClip(c, X + 1, Y, w - 2, h, clip); fillClip(c, X, Y + 1, 1, h - 2, clip); fillClip(c, X + w - 1, Y + 1, 1, h - 2, clip); }
+      else fillClip(c, X, Y, w, h, clip);
     }
   },
   drawGolferGround(){
