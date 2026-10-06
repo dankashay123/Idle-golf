@@ -19953,6 +19953,9 @@ const Scene = {
       }
       if(best) this.pond = best.P;
     }
+    // (and no frost speck in the pond: laid before it, by layNight, they
+    // asked the last hole's pond)
+    if(this.pond && this.props) this.props = this.props.filter(q => !(q.kind === 6 && this.inPond(q.d, q.x, 0.2)));
     // nothing that stands (a tree, a shrub, the gallery) on another hole, in
     // a pond or a lake; no tree or shrub on the path
     const onPath = (d, x) => Math.abs(x - this.cartX(d)) < 0.8 && d > -30 && d < LEN + 60;
@@ -20896,7 +20899,6 @@ const Scene = {
       // island's own ground: they lay across the gorge and the river)
       const W = this.water;
       if(W && (W.lake ? this.wetAt(W, d, x) : Math.abs(d - W.d) < W.rd + 0.2 && Math.abs(x - W.x) < W.rx + 0.2)) continue;
-      if(this.pond && this.inPond(d, x, 0.2)) continue;
       put.push({ kind: 6, d, x, k: i });
     }
     // a grandstand behind the last green of the round (kind 10), full on the
@@ -25704,11 +25706,16 @@ Object.assign(Scene, {
       const S0 = 0.7;
       if(U * S0 < 2.5){
         // (far: blocks of the tones, two or three pixels, hashed)
-        const bw = Math.max(2, Math.round(U * 0.45)), r = Math.floor(d * 2.2);
-        for(let X = Math.max(-2, px(a)); X < Math.min(VW + 2, px(b)); X += bw){
-          const k = hr(Math.floor((X - C0) / bw), r * 7 + 3);
+        // (in cells across the course, not columns of the screen: laid by
+        // the screen's own columns they crawled as he walked. A cell two
+        // pixels wide at least, doubling in steps far off, as the march does)
+        const L2 = Math.max(0, Math.ceil(Math.log2(2 / Math.max(1e-3, U * 0.45)))), cw = 0.45 * Math.pow(2, L2), r = Math.floor(d * 2.2);
+        for(let j = Math.floor(a / cw); j * cw < b; j++){
+          const X0 = Math.max(-2, px(j * cw)), X1 = Math.min(VW + 2, px((j + 1) * cw));
+          if(X1 <= X0) continue;
+          const k = hr(j * 8 + L2, r * 7 + 3);
           const tone = k < 0.34 ? 1 : k < 0.7 ? 2 : k < 0.9 ? 3 : 0;
-          if(tone){ c.fillStyle = CT[tone]; c.fillRect(X, y, bw, hgt); }
+          if(tone){ c.fillStyle = CT[tone]; c.fillRect(X0, y, X1 - X0, hgt); }
         }
         return;
       }
