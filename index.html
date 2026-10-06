@@ -21398,10 +21398,13 @@ const Scene = {
     // Nothing further out can paint over them, so the picture is the same.
     // (not across an island's green, which sits on top of its lake)
     if(P.rip && w > 10 && gv > 0.9 && this._rips && !(hz.lake && Math.abs(d - LEN) < 9)) { this._rips.push(Math.round(y + P.D * gv * kz), xl, w); this._ripD.push(d); }
+    // (and every slice of water, its surface's row, for the thaw's floes,
+    // which fill the rows between: see ripples)
+    if(P.rip && this._iceR){ let L = this._iceR.get(hz); if(!L){ this._iceR.set(hz, L = []); L.P = P; } L.push(Math.round(y + P.D * gv * kz), d, xl, w); }
   },
   ripples(c, T){
     const R = this._rips;
-    if(!R || !R.length) return;
+    if(!R || (!R.length && !(this._iceR && this._iceR.size))) return;
     const water = this.waterAt(c, T);
     c.fillStyle = pickC(T._wt, 0.88);
     const ft = Math.floor(this.t*4);
@@ -21485,18 +21488,42 @@ const Scene = {
     // ice floes left on the water on a spring morning (this.thaw): pale
     // floes with a darker cracked rim, lying fixed on the water where a
     // value noise over the course is under how much ice is left
-    if(this.thaw > 0 && !this.night && !this.ice && this._ripD){
-      const G = this.thawGrid(), f = this.thaw, RD = this._ripD;
-      for(let i = 0, r = 0; i < R.length; i += 3, r++){
-        const yy = R[i], xl = R[i+1], w = R[i+2], d = RD[r];
-        if(d === undefined) continue;
+    // (on every row of the water, the distance along each row found between
+    // its slices: laid on the deep water's one row a slice, near at hand,
+    // where a slice is many rows, the floes came apart into thin lines, and
+    // they stopped in a straight line where the water shoaled)
+    if(this.thaw > 0 && !this.night && !this.ice && this._iceR){
+      const G = this.thawGrid(), f = this.thaw;
+      // (fewer toward each end of the water, so they give out ragged short
+      // of where its bank runs straight across: they ran up to it, a line)
+      const row = (yy, d, x0, x1, hz, P) => {
+        // (from where its water starts, inside the bank: its slope's share
+        // of the hazard at each end, e0 and e1)
+        const w0 = hz && P ? hz.d - hz.rd + 2 * hz.rd * (P.e0 || 0) * 0.85 : -1e9, w1 = hz && P ? hz.d + hz.rd - 2 * hz.rd * (P.e1 || 0) * 0.85 : 1e9;
+        const e = clamp((Math.min(d - w0, w1 - d) - 0.3) / 2.6, 0, 1), fe = f * (0.15 + 0.85 * e);
         const o0 = this.proj(d, 0).x, kx = this.proj(d, 1).x - o0;
-        if(!(Math.abs(kx) > 0.01)) continue;
+        if(!(Math.abs(kx) > 0.01)) return;
         let run = -1, cur = 0;
-        for(let x = xl; x <= xl + w; x++){
+        for(let x = Math.max(0, x0); x <= Math.min(VW, x1); x++){
           let v = 0;
-          if(x < xl + w && water(x, yy)){ const n = G((x - o0) / kx, d); v = n < f - 0.05 ? 1 : n < f ? 2 : 0; }
+          if(x < Math.min(VW, x1) && water(x, yy)){ const n = G((x - o0) / kx, d); v = n < fe - 0.05 ? 1 : n < fe ? 2 : 0; }
           if(v !== cur){ if(cur && run >= 0){ c.fillStyle = cur === 1 ? 'rgba(228,238,246,0.86)' : 'rgba(150,176,198,0.92)'; c.fillRect(run, yy, x - run, 1); } cur = v; run = v ? x : -1; }
+        }
+      };
+      for(const [hz, L] of this._iceR){
+        const done = new Uint8Array(VH + 1);
+        for(let i = 0; i < L.length; i += 4){
+          const y0 = L[i], d0 = L[i + 1];
+          // (down to the nearer slice's row, the distance between the two;
+          // the nearest slice down to the foot of the view)
+          const nb = i >= 4 ? L[i - 4] : VH, nd = i >= 4 ? L[i - 3] : d0;
+          const y1 = Math.min(VH, Math.max(y0 + 1, Math.min(nb, y0 + 48)));
+          const xa = Math.min(L[i + 2], i >= 4 ? L[i - 2] : L[i + 2]), xb = Math.max(L[i + 2] + L[i + 3], i >= 4 ? L[i - 2] + L[i - 1] : L[i + 2] + L[i + 3]);
+          for(let yy = Math.max(HORIZON, y0); yy < y1; yy++){
+            if(done[yy]) continue; done[yy] = 1;
+            const u = nb > y0 ? (yy - y0) / (nb - y0) : 0;
+            row(yy, d0 + (nd - d0) * u, xa, xb, hz, L.P);
+          }
         }
       }
     }
@@ -25252,7 +25279,7 @@ Object.assign(Scene, {
       return;
     }
     key.length = 0; key.push(...now);
-    this._rips = []; this._ripD = [];
+    this._rips = []; this._ripD = []; this._iceR = new Map();
     let cn = 0;
     // Every hazard is marched as its own sunk surface, with its own clip and
     // its own record of where the previous slice put it. Cleared here so the
