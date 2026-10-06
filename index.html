@@ -25301,7 +25301,13 @@ Object.assign(Scene, {
       // as the step, not a step on from wherever he stands: stepped on from
       // him, every far slice was another bit of ground each step he took,
       // and the far edge of the field and every tree cut by it jittered)
-      const q = Math.pow(2, Math.round(Math.log2(step)));
+      let q = Math.pow(2, Math.round(Math.log2(step)));
+      // (across a canyon, every sixteenth however far off: stepped as the
+      // ground is, far away it was sampled every half pace or so, and how
+      // often changed as he walked, so its walls and ledges came and went
+      // until he had crossed; the user saw it "render constantly")
+      const CW = this.water && this.water.canyon ? this.water : null;
+      if(CW && q > 1 / 16 && d + q > CW.d - CW.rd && d < CW.d + CW.rd) q = 1 / 16;
       d = (Math.floor(d / q + 1e-6) + 1) * q;
     }
     this._clipN = cn;
