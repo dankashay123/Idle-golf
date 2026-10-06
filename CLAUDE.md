@@ -33,10 +33,12 @@ game as it is, short, and move detail into `docs/`.
   pass only when something done needs a look over, or after a few
   commits. Never offer a photo mode, a weather forecast or fireworks;
   don't raise the dog until he does.
-- **Pacing**: a free player gets a full Mythic set in about six weeks at an
+- **Pacing**: a free player gets a full Mythic set in about ten weeks at an
   hour a day; no wall below Card 200 to 250 (maxed walls at 220); nothing
   game-breaking at max, every heirloom has a top. Simulate a free player
   before changing anything that pays.
+  Paying must be the quicker way (he wants people to spend): the Tour
+  Pass, monthly Membership, shop-only looks, the first pack doubled.
 - **Sovereigns earned wait for a GET tap** at their place (Today, Honours,
   the Guide), with GET ALL where there is more than one; new rewards use
   `earnSov`. Purchases pay at once. Rewards for *seeing* things are earned
