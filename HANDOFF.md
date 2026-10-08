@@ -37,7 +37,13 @@ through:
   Order: the app shell and phone fit, the developer menu off for good in
   the app, saves in the app with iCloud, real purchases (StoreKit, with
   Restore Purchases) for the packs, Starter Pack, Tour Pass, Membership and
-  Founder's items, then TestFlight and the store page. Notes for building
+  Founder's items, then TestFlight and the store page. **Sound from the moment
+  it opens** (he asked): the game already tries to start its sound at
+  once and on coming back (`Sfx.unlock()` at boot and on
+  `visibilitychange`); the app must let it, with the web view's
+  `mediaTypesRequiringUserActionForPlayback` set to none. The game asks
+  for the `ambient` audio session, so the silent switch mutes it: ask him
+  whether it should play through the switch (`playback`) instead. Notes for building
   it go in `docs/ios-app.md` once it exists.
 - The scenery of 4 to 6 October (canyon, ponds, dragonflies, fireflies,
   fish, storms, planes, balloons, ducklings, steam, mist, frost, the

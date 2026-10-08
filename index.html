@@ -33940,6 +33940,10 @@ function boot(){
   try{ if(navigator.storage && navigator.storage.persist) navigator.storage.persist(); }catch(e){}
   for(const ev of ['pointerdown', 'touchend', 'click', 'keydown'])
     document.addEventListener(ev, () => Sfx.unlock(), { passive: true, capture: true });
+  // and at once, as it opens (the user: the app's sound from the start): a
+  // browser refuses without a tap and waits for one as above; the iPhone app
+  // lets it play straight away
+  Sfx.unlock();
   // Any touch at all counts as someone there, and puts the saver's wait back
   for(const ev of ['pointerdown', 'touchstart', 'keydown', 'wheel'])
     document.addEventListener(ev, () => { touchedAt = performance.now(); }, { passive: true, capture: true });
@@ -33956,7 +33960,7 @@ function boot(){
   document.addEventListener('visibilitychange', () => {
     // the music is faded out here: a desktop or Android browser stops the
     // frames of a hidden page but not its audio, so it played on
-    if(document.hidden){ save(); Sfx.musicTick(); } else { touchedAt = performance.now(); catchUp(); }
+    if(document.hidden){ save(); Sfx.musicTick(); } else { touchedAt = performance.now(); catchUp(); Sfx.unlock(); }
   });
   window.addEventListener('pagehide', save);
   requestAnimationFrame(frame);
