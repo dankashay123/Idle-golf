@@ -309,7 +309,7 @@ module.exports = {
       out.tierY = B.TIER_Y; out.tierG = B.TIER_G;
       // and the panel says nothing at all when it is not the panel on show
       setView('upg'); renderTour();
-      out.quietOffScreen = $('tierBox').textContent.indexOf('Purse per second') < 0;
+      out.quietOffScreen = $('tierBox').textContent.indexOf('Money per second') < 0;
       setView('tour');
       return out;
     });
@@ -455,12 +455,12 @@ module.exports = {
     if (!/[1-9]/.test(r.legBefore))
       throw new Error('the screen shows no figure at all before retirement opens: "'
         + r.legBefore.slice(0, 90) + '"');
-    for (const want of ['One more Tour Card', 'One more cup', 'Legacy buys'])
+    for (const want of ['Legacy if you retire now', 'Reach the next Tour Card', 'Win another cup'])
       if (r.legBefore.indexOf(want) < 0)
         throw new Error('the retirement screen never says "' + want + '" before the first '
           + 'event, which is exactly when the decision is being made');
-    if (r.legAfter.indexOf('Legacy buys') < 0)
-      throw new Error('the retirement screen stops saying what the legacy buys once '
+    if (r.legAfter.indexOf('Legacy if you retire now') < 0)
+      throw new Error('the retirement screen stops saying what retiring now gives once '
         + 'retirement opens');
     for (let i = 1; i < r.discSteps.length; i++)
       if (!(r.discSteps[i] > r.discSteps[i - 1]))
@@ -529,7 +529,7 @@ module.exports = {
         + 'with holes four times longer above: ' + M_.text.slice(0, 160));
     const wants = { behind: /pay cut/, ahead: /can still make birdies there/ };
     for (const [k, c] of [['behind', B_], ['ahead', A_]]) {
-      if (c.text.indexOf('Purse per second') < 0)
+      if (c.text.indexOf('Money per second') < 0)
         throw new Error('the Tour screen shows no purse line in the ' + k + ' case');
       // advice you cannot follow is worse than none
       if (/played out/.test(c.text) && /Playing out this card first/.test(c.text))
