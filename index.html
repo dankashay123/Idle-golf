@@ -1003,6 +1003,8 @@ div.guide.hunt,div.guide.mhunt{grid-template-columns:repeat(3,minmax(0,1fr))}
   white-space:nowrap;overflow:hidden}
 .rwx span{overflow:hidden;text-overflow:ellipsis;justify-self:center;max-width:100%}
 .rwx[hidden]{display:grid;visibility:hidden}
+/* (a wager has its own strip and no words there: none kept for them, Leave up top) */
+#stage.wager .rwx[hidden]{display:none}
 .rwx span{white-space:nowrap}
 .rwx i{font-style:normal;color:var(--faint);padding:0 3px}
 #perkIcon{display:block;width:24px;height:24px;object-fit:contain;
