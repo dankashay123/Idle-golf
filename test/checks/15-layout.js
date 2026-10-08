@@ -190,13 +190,15 @@ module.exports = {
             o.hit.push(ks[i] + ' on ' + ks[j] + ' by ' + ox.toFixed(0) + 'x' + oy.toFixed(0));
         }
 
-        // The left column, top to bottom: settings, shop, the medal, the star.
-        // The star stood alone on the right over the map until the user asked
-        // for it under the medal. On a short stage they go in a row under the
-        // readout instead, in the same order (fitHudLeft).
-        const pm = box.perkBtn, rm = box.roomBtn, mp = box.holeMap, rowed = $('hudLeft').classList.contains('inrow');
-        if (rowed ? !(pm.left >= rm.right - 0.5) || Math.abs(pm.top - rm.top) > 1.5
-                  : !(pm.top >= rm.bottom - 0.5) || Math.abs(pm.left - rm.left) > 1.5)
+        // The left column, top to bottom: settings, the check-in, shop, the
+        // medal, the star, auto-climb. The star stood alone on the right over
+        // the map until the user asked for it under the medal.
+        // (one column down the left under the hole's bar; where the stage is
+        // too short, two columns side by side, the star heading the second)
+        const pm = box.perkBtn, rm = box.roomBtn, mp = box.holeMap, two = $('hudLeft').classList.contains('twocol');
+        const under = pm.top >= rm.bottom - 0.5 && Math.abs(pm.left - rm.left) <= 1.5, next = two && pm.left >= rm.right - 0.5;
+        const rowed = two && !under;
+        if (!under && !next)
           o.hit.push('the star is not ' + (rowed ? 'beside' : 'under') + ' the medal (star ' + pm.left.toFixed(0) + ',' + pm.top.toFixed(0)
             + ', medal ' + rm.left.toFixed(0) + ',' + rm.bottom.toFixed(0) + ')');
         // In a row, the column once took the list rows' style too: a dark

@@ -46,7 +46,8 @@ module.exports = {
     if (!(box.y >= above))
       throw new Error('the shop button overlaps the settings button above it: it starts at '
         + box.y.toFixed(0) + ' and that ends at ' + above.toFixed(0));
-    if (!(box.y - above < stage.height * 0.06))
+    // (the check-in's button between them, in the one column)
+    if (!(box.y - above < stage.height * 0.06 + 40))
       throw new Error('the shop button is ' + (box.y - above).toFixed(0)
         + 'px below the settings button, which is not underneath it');
     if (!(box.x < read.x + read.width))
@@ -67,17 +68,17 @@ module.exports = {
       return Object.keys(B.PX12).filter(k => pixUrl(k, '#E3B457') === src);
     });
     if (roomIc.join() !== 'medal') throw new Error('the Trophy Room button draws ' + (roomIc.join() || 'nothing known') + ', not the medal');
-    // Auto-climb sits to the right of the readout, level with its foot, and
-    // stays put however the words in the readout change: the readout's width
-    // used to follow its words, which change every second.
+    // Auto-climb is last in the column down the left (the user asked for the
+    // buttons in one column), under the perks' star, and stays put however the
+    // words in the hole's bar change: the bar's words change every second.
     const climb = async () => (await (await page.$('#hudClimb')).boundingBox());
-    const cb = await climb();
-    if (!(cb.x >= read.x + read.width - 0.5 && cb.x - (read.x + read.width) < 12))
-      throw new Error('the auto-climb button is not just right of the readout: readout ends at '
-        + (read.x + read.width).toFixed(1) + ', the button starts at ' + cb.x.toFixed(1));
-    if (Math.abs((cb.y + cb.height / 2) - (read.y + read.height / 2)) > 0.75)
-      throw new Error('the auto-climb button\'s middle is at ' + (cb.y + cb.height / 2).toFixed(1)
-        + ' and the readout\'s at ' + (read.y + read.height / 2).toFixed(1));
+    const cb = await climb(), pk = await (await page.$('#perkBtn')).boundingBox();
+    const col = Math.abs(cb.x - pk.x) <= 3 && cb.y >= pk.y + pk.height - 1, side = cb.x >= pk.x + pk.width && Math.abs(cb.y - pk.y) < 60;
+    if (!col && !side)
+      throw new Error('the auto-climb button is not under the perks\' star: it is at ' + cb.x.toFixed(1) + ',' + cb.y.toFixed(1)
+        + ', the star at ' + pk.x.toFixed(1) + ',' + pk.y.toFixed(1));
+    if (cb.y < read.y + read.height)
+      throw new Error('the auto-climb button is up in the hole\'s bar');
     const moved = [];
     // the longest the readout says, on the course, walking in, and in a wager
     for (const [tag, big, unit, top] of [['Albatross', '999.9bw', 'yds', 'Hole 18 \u00b7 Par 5'],

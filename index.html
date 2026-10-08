@@ -625,18 +625,18 @@ div.guide.hunt,div.guide.mhunt{grid-template-columns:repeat(3,minmax(0,1fr))}
 /* The readout, in the same type as the rest of the chrome. Drawn on the canvas
    in the pixel font it was legible but bulky, and it could not match anything
    else on screen. */
-#readout{position:relative;flex:1 1 auto;min-width:0;
-  background:rgba(6,12,9,.74);border:1px solid #1B3A2E;border-radius:0;
-  padding:4px 7px 5px;backdrop-filter:blur(2px);pointer-events:none}
+#readout{position:relative;min-width:0;
+  background:rgba(6,12,9,.74);border-bottom:1px solid #1B3A2E;border-radius:0;
+  padding:3px 10px 4px;backdrop-filter:blur(2px);pointer-events:none}
 /* nowrap and a fixed gap meant the hole label and the clock simply ran out of
    the box on a narrow phone -- measured 6px past it at 320. The clock keeps its
    width, the hole label gives way with an ellipsis. */
-.rline{display:flex;justify-content:space-between;gap:8px;font-size:var(--f0);letter-spacing:.14em;
+.rline{display:flex;justify-content:space-between;align-items:baseline;gap:8px;font-size:var(--f0);letter-spacing:.14em;
   text-transform:uppercase;color:var(--faint);font-weight:700;white-space:nowrap}
 .rline #rTop{min-width:0;overflow:hidden;text-overflow:ellipsis}
 .rline #rTopR{flex:0 0 auto}
-.rmain{display:flex;align-items:baseline;gap:3px;margin-top:2px}
-#rBig{font-family:var(--mono);font-size:var(--f4);font-weight:600;color:var(--brass);line-height:1}
+.rmain{display:flex;align-items:baseline;gap:3px;min-width:0;letter-spacing:normal}
+#rBig{font-family:var(--mono);font-size:var(--f3);font-weight:600;color:var(--brass);line-height:1}
 .ru{font-size:var(--f0);letter-spacing:.12em;text-transform:uppercase;color:var(--faint);white-space:nowrap}
 .rsp{flex:1 1 auto;min-width:8px}
 /* With the auto-climb button beside it the box is a button narrower, and late
@@ -645,14 +645,14 @@ div.guide.hunt,div.guide.mhunt{grid-template-columns:repeat(3,minmax(0,1fr))}
    The call gives way with an ellipsis, as the hole label above it does, and
    the unit keeps to one line. */
 #rTag{font-size:var(--f0);letter-spacing:.12em;text-transform:uppercase;font-weight:700;white-space:nowrap;
-  min-width:0;overflow:hidden;text-overflow:ellipsis}
-.rbar{height:2px;background:#12251C;border-radius:0;margin-top:5px;overflow:hidden}
+  min-width:0;overflow:hidden;text-overflow:ellipsis;margin-left:5px}
+.rbar{height:5px;background:#12251C;border-radius:0;margin-top:3px;overflow:hidden}
 .rbar i{display:block;height:100%;width:0;background:var(--rc,var(--brass));transition:width .12s linear}
 /* The wager strip. One readout template served all four contests, so a drive
    contest and an endurance crawl differed by the words in them and nothing
    else. Each contest fills this with its own shape: six balls on the tee, a
    ladder of greens, a rack of twenty five chips, a flight of floors. */
-.rstrip{display:flex;align-items:flex-end;gap:1px;height:10px;margin-top:5px}
+.rstrip{display:flex;align-items:flex-end;gap:1px;height:10px;margin-top:4px}
 /* a class selector beats the user agent rule for [hidden], so without this
    the strip from the last wager stayed on the readout all round */
 .rstrip[hidden]{display:none}
@@ -859,9 +859,10 @@ div.guide.hunt,div.guide.mhunt{grid-template-columns:repeat(3,minmax(0,1fr))}
 /* 29, which is what the readout carried on its own: below #toasts at 30, so a
    toast still paints over the readout rather than under it. Toasts are
    pointer-events:none, so the button underneath stays pressable either way. */
-#hudLeft{position:absolute;left:2.2%;top:2.5%;width:56%;z-index:29;
-  display:flex;flex-direction:column;align-items:flex-start;gap:12px;
-  pointer-events:none;container-type:inline-size}
+#rRow{position:absolute;left:0;right:0;top:0;z-index:29;pointer-events:none}
+#hudLeft{position:absolute;left:2.2%;top:calc(var(--rbar, 40px) + 8px);z-index:29;
+  display:flex;flex-direction:column;align-items:flex-start;gap:10px;pointer-events:none;
+  padding-right:6px}  /* (room for the buttons' dots, which stand out past their corners) */
 /* The readout with the auto-climb button beside it, centred on it (level with
    its foot, it read as dropped below the box on the phone). The
    readout's words change every second (the clock, the yards, the call), and
@@ -869,20 +870,12 @@ div.guide.hunt,div.guide.mhunt{grid-template-columns:repeat(3,minmax(0,1fr))}
    would slide about under your thumb. The readout fills the row up to the
    button instead and the button stays put. Capped, or on a tablet the box ran
    most of the way across the field. */
-#rRow{align-self:stretch;max-width:300px;display:flex;align-items:center;gap:6px;pointer-events:none}
-/* A column under 200 (a stage under about 357) is all the readout needs, so
-   there the button goes under it rather than squeezing it. */
-@container (max-width:199.5px){
-  #rRow{flex-wrap:wrap;row-gap:12px}
-  #rRow #readout{flex-basis:100%}
-  /* a narrower gap, or late on "Hole 18 · Par 5" lost its par at 320 */
-  .rline{gap:6px}
-}
+@media (max-width:360px){ .rline{gap:6px} }
 /* min-width, or on a 320 phone the button comes to 19.7px around a 24px sprite
    and the drawing hangs outside its own tap target. */
 /* Outlined in black like the settings cog: on a night course the medal's gold
    and ribbon sank into the dark hills and it could not be found. */
-#shopBtn,#roomBtn{position:relative;width:11%;min-width:24px;aspect-ratio:1/1;flex:0 0 auto;pointer-events:auto;
+#shopBtn,#roomBtn{position:relative;width:28px;height:28px;flex:0 0 auto;pointer-events:auto;
   background:none;border:0;padding:0;display:flex;align-items:center;justify-content:center;
   filter:drop-shadow(0 0 1px #000) drop-shadow(0 0 1px #000) drop-shadow(0 1px 2px rgba(0,0,0,.9))}
 /* The button is a share of the stage so the tap target grows with the screen;
@@ -891,7 +884,7 @@ div.guide.hunt,div.guide.mhunt{grid-template-columns:repeat(3,minmax(0,1fr))}
 #shopIcon,#roomIcon{display:block;width:24px;height:24px;object-fit:contain;
   image-rendering:pixelated;image-rendering:crisp-edges}
 #shopBtn:active,#setBtn:active,#hudClimb:active,#roomBtn:active{transform:translateY(1px)}
-#setBtn,#hudClimb{position:relative;width:24px;height:24px;flex:0 0 auto;pointer-events:auto;
+#setBtn,#hudClimb{position:relative;width:28px;height:28px;flex:0 0 auto;pointer-events:auto;
   background:none;border:0;padding:0;display:flex;align-items:center;justify-content:center;
   filter:drop-shadow(0 0 1px #000) drop-shadow(0 0 1px #000) drop-shadow(0 1px 2px rgba(0,0,0,.9))}
 #hudClimb.off{opacity:.55}
@@ -903,17 +896,16 @@ div.guide.hunt,div.guide.mhunt{grid-template-columns:repeat(3,minmax(0,1fr))}
    and the weather words in the readout make it longer), the four icons go
    in a row under the readout, in the same order, and the perk countdown
    under the row (fitHudLeft). */
-#hudLeft.inrow{flex-direction:row;flex-wrap:wrap;align-items:center;gap:8px 10px}
-#hudLeft.inrow #rRow{flex-basis:100%;min-width:0}
-#hudLeft.inrow #setRow{flex:0 0 auto;width:56px}
-#hudLeft.inrow #buffTip{left:0;top:calc(100% + 6px)}
-#buffTip{position:absolute;left:64px;top:calc(50% - .625em);max-width:calc(100vw - 90px);font-family:var(--mono);font-size:var(--f2);font-weight:600;
+#hudLeft.tight{gap:4px}
+#hudLeft.twocol{flex-wrap:wrap;align-content:flex-start;gap:4px 6px}
+#hudLeft.twocol #buffTip{left:72px}
+#buffTip{position:absolute;left:38px;top:calc(50% - .625em);max-width:calc(100vw - 90px);font-family:var(--mono);font-size:var(--f2);font-weight:600;
   display:flex;flex-direction:column;align-items:flex-start;min-width:0;pointer-events:none}
 #buffTip .bl{display:block;max-width:100%;line-height:1.25em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
   text-shadow:0 0 2px #000,0 1px 2px #000,0 0 1px #000;transition:opacity .25s}
 #setIcon,#hudClimbIcon{display:block;width:24px;height:24px;image-rendering:pixelated;image-rendering:crisp-edges}
 /* the Daily Check-In, right of the cog, its size; the red dot while a claim waits */
-#calBtn{position:relative;width:24px;height:24px;flex:0 0 auto;margin-left:8px;pointer-events:auto;
+#calBtn{position:relative;width:28px;height:28px;flex:0 0 auto;pointer-events:auto;
   background:none;border:0;padding:0;display:flex;align-items:center;justify-content:center;
   filter:drop-shadow(0 0 1px #000) drop-shadow(0 0 1px #000) drop-shadow(0 1px 2px rgba(0,0,0,.9))}
 #calBtn:active{transform:translateY(1px)}
@@ -949,7 +941,7 @@ div.guide.hunt,div.guide.mhunt{grid-template-columns:repeat(3,minmax(0,1fr))}
   box-shadow:0 0 0 1px rgba(0,0,0,.6);margin-left:.4em;vertical-align:.08em}
 /* The perks' star, last in the left column under the medal (it stood alone
    on the right, over the map, until the user asked for it here). */
-#perkBtn{position:relative;width:11%;min-width:24px;aspect-ratio:1/1;flex:0 0 auto;pointer-events:auto;
+#perkBtn{position:relative;width:28px;height:28px;flex:0 0 auto;pointer-events:auto;
   background:none;border:0;padding:0;display:flex;align-items:center;justify-content:center;
   filter:drop-shadow(0 0 1px #000) drop-shadow(0 0 1px #000) drop-shadow(0 1px 2px rgba(0,0,0,.9))}
 /* The hole from above, at the foot of the field on the right: just above
@@ -972,9 +964,10 @@ div.guide.hunt,div.guide.mhunt{grid-template-columns:repeat(3,minmax(0,1fr))}
    words over the map having grown too big), each item kept whole and the
    line wrapping between them. */
 .rwx .aff{font-size:.72em;letter-spacing:.04em;margin:0 .15em 0 .3em;opacity:.85}
-.rwx{font-size:var(--f0);letter-spacing:.12em;text-transform:uppercase;font-weight:700;margin-top:4px;line-height:1.35}
+.rwx{font-size:var(--f0);letter-spacing:.1em;text-transform:uppercase;font-weight:700;margin-top:3px;line-height:1.35;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .rwx[hidden]{display:none}
-.rwx span{white-space:normal}
+.rwx span{white-space:nowrap}
 .rwx i{font-style:normal;color:var(--faint);padding:0 3px}
 #perkIcon{display:block;width:24px;height:24px;object-fit:contain;
   image-rendering:pixelated;image-rendering:crisp-edges}
@@ -1015,7 +1008,7 @@ div.guide.hunt,div.guide.mhunt{grid-template-columns:repeat(3,minmax(0,1fr))}
 }
 /* Leaving a wager: top right of the field while one is played (the user
    asked), the toasts stepping down under it. A tap asks, a second leaves. */
-#leaveBtn{position:absolute;right:2.2%;top:2.5%;z-index:31;display:flex;align-items:center;gap:5px;
+#leaveBtn{position:absolute;right:2.2%;top:calc(var(--rbar, 40px) + 6px);z-index:31;display:flex;align-items:center;gap:5px;
   min-height:28px;padding:3px 8px 3px 5px;background:rgba(8,18,12,.85);border:1px solid var(--line);color:var(--chalk);
   font-size:var(--f1);letter-spacing:.08em;text-transform:uppercase;font-weight:700;pointer-events:auto;cursor:pointer}
 #leaveBtn[hidden]{display:none}
@@ -1072,8 +1065,8 @@ div.guide.hunt,div.guide.mhunt{grid-template-columns:repeat(3,minmax(0,1fr))}
 .guidelist{margin:6px 0 8px 18px;font-size:var(--f1);line-height:1.5}
 #leaveBtn.ask{border-color:var(--flag);color:var(--flag)}
 #leaveIcon{display:block;width:24px;height:24px;image-rendering:pixelated;image-rendering:crisp-edges}
-#stage.wager #toasts{top:calc(2.5% + 38px)}
-#toasts{position:absolute;right:2%;top:2%;display:flex;flex-direction:column;
+#stage.wager #toasts{top:calc(var(--rbar, 40px) + 44px)}
+#toasts{position:absolute;right:2%;top:calc(var(--rbar, 40px) + 6px);display:flex;flex-direction:column;
   align-items:flex-end;gap:3px;pointer-events:none;z-index:30;max-width:38%}
 .toast{background:rgba(8,18,12,.9);border:1px solid var(--line);border-radius:0;
   padding:3px 8px;font-size:var(--f0);line-height:1.3;text-align:right;
@@ -1219,22 +1212,26 @@ div.guide.hunt,div.guide.mhunt{grid-template-columns:repeat(3,minmax(0,1fr))}
     <canvas id="hole" width="720" height="440"></canvas>
     <canvas id="holeMap" aria-hidden="true"></canvas>
     <div id="spotTag" aria-live="polite"></div>
-    <div id="hudLeft">
+    <!-- The hole's bar across the top of the field, right under the card
+         (the user asked: more of the course in view): the hole, the yards
+         and the clock on one line, the yardage bar the whole width, the
+         wind and the rest on one line under it. -->
     <div id="rRow">
     <div id="readout">
-      <div class="rline"><span id="rTop">Hole 1 &middot; Par 4</span><span id="rTopR">0.0 / 15s</span></div>
-      <div class="rmain"><b id="rBig">0</b><span class="ru" id="rUnit">yds</span>
-        <span class="rsp"></span><span id="rTag"></span></div>
+      <div class="rline"><span id="rTop">Hole 1 &middot; Par 4</span><span class="rmain"><b id="rBig">0</b><span class="ru" id="rUnit">yds</span><span id="rTag"></span></span><span id="rTopR">0.0 / 15s</span></div>
       <div class="rbar"><i id="rFill"></i></div>
       <div class="rstrip" id="rStrip" hidden></div>
       <div class="rwx" id="rWx" hidden></div>
     </div>
-    <button id="hudClimb" aria-label="Auto-climb"><img id="hudClimbIcon" alt=""></button>
     </div>
-    <div id="setRow"><button id="setBtn" aria-label="Settings"><img id="setIcon" alt=""></button><button id="calBtn" aria-label="Daily Check-In"><img id="calIcon" alt=""><span id="calDot"></span></button><span id="buffTip" aria-live="polite"></span></div>
+    <!-- and the buttons in one column down the left under it -->
+    <div id="hudLeft">
+    <div id="setRow"><button id="setBtn" aria-label="Settings"><img id="setIcon" alt=""></button><span id="buffTip" aria-live="polite"></span></div>
+    <button id="calBtn" aria-label="Daily Check-In"><img id="calIcon" alt=""><span id="calDot"></span></button>
     <button id="shopBtn" aria-label="Pro shop"><img id="shopIcon" alt=""><span id="shopDot"></span></button>
     <button id="roomBtn" aria-label="Trophy Room"><img id="roomIcon" alt=""><span id="roomDot"></span><span id="roomHunt"></span></button>
     <button id="perkBtn" aria-label="Sponsor perks"><img id="perkIcon" alt=""><span id="perkDot"></span></button>
+    <button id="hudClimb" aria-label="Auto-climb"><img id="hudClimbIcon" alt=""></button>
     </div>
     <div id="wagerStat" hidden></div>
     <div id="callout" hidden></div>
@@ -7123,7 +7120,7 @@ function binomPot(n, q, fc, step, per){
 // The Vault is the exception and stays in its own unit: it pays the purse, so
 // holes of purse is what it is worth, and holes of purse is already the scale
 // the rest of the game is priced in.
-const DGN_BUYS = { grit:'clubs upgraded to +15', shard:'club ascensions',
+const DGN_BUYS = { grit:'full club upgrades', shard:'club ascensions',
                    scroll:'shot book levels', gold:'holes of prize money' };
 // What the rub of the green costs a Vault run, read off the event table itself
 // rather than measured once and written down: weights change, this follows.
@@ -7483,7 +7480,8 @@ function renderLeave(){
     const bottom = Math.round(st.clientHeight - (VH - sz - pad * 2 - 2 - (S.carry && S.carry.length ? LH + 2 : 0)) * k + 4);
     const key = d ? d.id + '|' + bottom : '';
     if(ws._k !== key){ ws._k = key; ws.hidden = !d;
-      if(d){ ws.innerHTML = 'Helped by <b>' + d.st + '</b>'; ws.style.bottom = bottom + 'px'; } }
+      if(d){ ws.innerHTML = 'Helped by <b>' + d.st + '</b>'; ws.style.bottom = bottom + 'px'; }
+      fitHudLeft(); }
   }
   if(!b._built){ b._built = 1; $('leaveIcon').src = pixUrl('leave', '#DFE9DC'); b.onclick = leaveDgn; }
 }
@@ -22416,7 +22414,7 @@ const Scene = {
       A.cx = CX; A.h = 30;
       if(el && k){
         const css = getComputedStyle(document.documentElement), f5 = parseFloat(css.getPropertyValue('--f5')) || 20, f1 = parseFloat(css.getPropertyValue('--f1')) || 10;
-        const ec = el.querySelector('canvas'), ids = ['hudClimb', 'setBtn', 'shopBtn', 'roomBtn', 'perkBtn', 'holeMap'],
+        const ec = el.querySelector('canvas'), ids = ['hudClimb', 'setBtn', 'calBtn', 'shopBtn', 'roomBtn', 'perkBtn', 'holeMap'],
               obs = ids.map(id => { const q = box(id); if(q) q.id = id; return q; }).filter(Boolean);
         // (as large as fits clear of them on its row: a size down, and
         // another; else the smallest, in the middle, as the pixel name was)
@@ -24206,7 +24204,7 @@ const Scene = {
     if(st){
       const R = st.getBoundingClientRect(), w = el.offsetWidth, hgt = el.offsetHeight, x0 = R.width / 2 - w / 2 - 4, x1 = R.width / 2 + w / 2 + 4;
       for(let pass = 0; pass < 4; pass++){ let moved = false;
-        for(const id of ['readout', 'setRow', 'shopBtn', 'roomBtn', 'perkBtn', 'hudClimb']){
+        for(const id of ['readout', 'setRow', 'calBtn', 'shopBtn', 'roomBtn', 'perkBtn', 'hudClimb']){
           const e = document.getElementById(id); if(!e || e.hidden || !e.offsetParent) continue;
           const q = e.getBoundingClientRect(), qx0 = q.left - R.left, qx1 = q.right - R.left, qy0 = q.top - R.top, qy1 = q.bottom - R.top;
           if(q.width && qx1 > x0 && qx0 < x1 && qy0 < top + hgt && qy1 > top){ top = Math.ceil(qy1) + 4; moved = true; } }
@@ -25571,14 +25569,38 @@ function mapStar(i){
 
 // The left column (readout, settings, shop, medal, star) as a column where
 // it clears the shot buttons at the foot of the field, else in a row.
+// the weather line under the hole's bar kept to one line (the user asked):
+// its letters a size smaller at a time until it fits the bar
+function fitWx(){
+  const el = typeof document !== 'undefined' && document.getElementById('rWx');
+  if(!el || el.hidden || !el.clientWidth) return;
+  el.style.fontSize = ''; el.style.letterSpacing = '';
+  let fs = parseFloat(getComputedStyle(el).fontSize) || 10;
+  if(el.scrollWidth > el.clientWidth + 0.5) el.style.letterSpacing = '.04em';
+  while(el.scrollWidth > el.clientWidth + 0.5 && fs > 7.5){ fs -= 0.5; el.style.fontSize = fs + 'px'; }
+  // (and where even that runs past it, the last items left off whole, never cut mid-word)
+  const items = [...el.children].filter(c => c.tagName === 'SPAN');
+  items.forEach(c => { c.style.display = ''; if(c.previousElementSibling && c.previousElementSibling.tagName === 'I') c.previousElementSibling.style.display = ''; });
+  for(let i = items.length - 1; i > 0 && el.scrollWidth > el.clientWidth + 0.5; i--){
+    items[i].style.display = 'none'; const sep = items[i].previousElementSibling; if(sep && sep.tagName === 'I') sep.style.display = 'none'; }
+}
 function fitHudLeft(){
   const hl = typeof document !== 'undefined' && document.getElementById('hudLeft'), st = hl && document.getElementById('stage');
   if(!hl || !st || !Scene.cv || !st.clientHeight) return;
-  hl.classList.remove('inrow');
+  fitWx();
+  hl.classList.remove('inrow', 'tight', 'twocol'); hl.style.maxHeight = '';
+  // (the bar's own height, which the weather line changes: what sits under it follows)
+  const rr = document.getElementById('rRow'); if(rr) st.style.setProperty('--rbar', Math.ceil(rr.offsetHeight) + 'px');
   const k = (parseFloat(Scene.cv.style.height) || st.clientHeight) / Math.max(1, VH);
   const sz = Math.max(12, Math.round(VW * 0.050 / 12) * 12), pad = Math.max(3, Math.round(sz / 6));
-  const room = st.getBoundingClientRect().top + (VH - sz - pad * 2 - 2 - LH - 4) * k;
-  if(hl.getBoundingClientRect().bottom > room) hl.classList.add('inrow');
+  let room = st.getBoundingClientRect().top + (VH - sz - pad * 2 - 2 - LH - 4) * k;
+  // (in a wager, clear of what helps in it, over the shot buttons)
+  const ws = document.getElementById('wagerStat'); if(ws && !ws.hidden && ws.offsetParent) room = Math.min(room, ws.getBoundingClientRect().top - 4);
+  // (one column down the left, as the user asked: closer together where the
+  // stage is short, and in two columns side by side only where even that
+  // reaches the shot buttons)
+  if(hl.getBoundingClientRect().bottom > room) hl.classList.add('tight');
+  if(hl.getBoundingClientRect().bottom > room){ hl.classList.add('twocol'); hl.style.maxHeight = Math.max(60, Math.floor(room - hl.getBoundingClientRect().top)) + 'px'; }
 }
 /* ---- the hole from above ----
    From the tee the rolling ground hides most of a dogleg, so a small map of
@@ -25593,7 +25615,7 @@ Object.assign(Scene, {
     // At the foot of the field on the right, just above the menu's pull tab:
     // the user asked for it there (the weather words that stood on it are in
     // the readout now). Its height is what is left under the toasts' corner
-    // (37% down, clear of the tallest pair on the shortest phone), up to its
+    // (35% of the stage under the hole's bar, clear of the tallest pair on the shortest phone), up to its
     // full shape. Where too little is left it is not shown.
     // screen pixels to a pixel of the picture, exactly: the picture is shown
     // whole pixels at a time, and its last part-pixel hangs off the stage
@@ -25603,7 +25625,9 @@ Object.assign(Scene, {
     const gap = Math.max(6, Math.round(SW * 0.02));
     const bottom = SH - tab - gap;
     const words = 0;
-    const room = bottom - words - gap - Math.round(SH * 0.37);
+    // (the toasts stand under the hole's bar now: their corner is that much lower)
+    const rr = $('rRow'), rb = rr && rr.offsetParent ? rr.offsetHeight : 0;
+    const room = bottom - words - gap - Math.round(SH * 0.35 + rb);
     this.mapTopR = null;
     if(room < W * 0.8 || S.dgnRun){ cv.style.display = 'none'; this.mapOn = false; spotPlace(); return; }
     const H = Math.min(Math.round(W * 1.7 / 2) * 2, Math.floor(room / 2) * 2);

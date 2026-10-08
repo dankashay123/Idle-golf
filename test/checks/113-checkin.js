@@ -1,12 +1,12 @@
 /* The Daily Check-In (the user asked): a calendar of 28 rewards a month, one
- * claim a day, from a button right of the settings that opens by itself once
+ * claim a day, from a button under the settings (in the column down the left) that opens by itself once
  * a day while a claim waits.
  *
  *   - 28 claims over 28 days pay exactly the table, in order
  *   - a second claim the same day pays nothing; day 29 of a month has none
  *   - a new month starts the calendar again; a clock put back opens nothing
  *   - wager entries go past the cap when they are full, and stay there
- *   - the button: right of the cog, clear of everything at 320 to 440 wide
+ *   - the button: under the cog (beside it where the column splits), clear of everything at 320 to 440 wide
  *     and on its side, its dot while a claim waits
  *   - the sheet: 28 tiles, nothing wider than the sheet at 320 wide
  *   - it opens by itself while a claim waits (after the away card), never
@@ -120,8 +120,10 @@ module.exports = {
       });
       const at = w + '×' + h;
       if (!L.cal || L.cal.w < 20) { fails.push(at + ': no check-in button'); continue; }
-      if (L.cal.l < L.set.r + 2) fails.push(at + ': the button is not right of the cog');
-      if (Math.abs((L.cal.t + L.cal.b) - (L.set.t + L.set.b)) > 3) fails.push(at + ': the button is not level with the cog');
+      // (under the cog in the column down the left, or beside it where the column splits in two)
+      const under = Math.abs(L.cal.l - L.set.l) <= 3 && L.cal.t >= L.set.b - 1 && L.cal.t - L.set.b < 16;
+      const beside = L.cal.l >= L.set.r && Math.abs((L.cal.t + L.cal.b) - (L.set.t + L.set.b)) <= 3;
+      if (!under && !beside) fails.push(at + ': the button is not under the cog, nor beside it');
       const hit = (a, b) => a.l < b.r && b.l < a.r && a.t < b.b && b.t < a.b;
       for (const [id, b] of L.others) if (b && b.w > 0 && hit(L.cal, b)) fails.push(at + ': the button overlaps ' + id);
       for (const t of L.tip) if (hit(L.cal, t)) fails.push(at + ': the perk countdown runs over the button');
