@@ -54,6 +54,8 @@ feature must do, and is usually enough on its own.
   pop-ups (toasts) at 8px; the loader's first launch always the plain look
   (`bootFeature`, `n <= 1`); flocks, geese and a bolt slid with the sky
   (`skySh`) as the hole bends, as balloons and planes were.
+  In a wager the empty line is dropped (`#stage.wager .rwx[hidden]`), so
+  Leave stays at the top.
 - **The iPhone app**: the plan and what the game does for it are in
   `docs/ios-app.md`. `inApp()` keeps the developer menu off in the app
   (it read `capacitor://localhost` as this computer) and hides the Add to

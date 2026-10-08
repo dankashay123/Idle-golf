@@ -59,7 +59,9 @@ through:
   animals; the weekly hunt and its streak; the gold mountain (now a
   rounded heap, not tiers); golden
   animals; the heirloom prices and the wall at Card 220; the Tour Pass,
-  Membership and the Founder's Collection on his phone.
+  Membership and the Founder's Collection on his phone; the hole's bar
+  and the condition by the cog, the smaller pop-ups and the loading screen
+  on his phone (all 8 October).
 - Settled, in case it comes up: swing speed still matters fully (a hole's
   time is when the ball drops); Fast Walker only shortens a hole's least
   time; every caddie has a trick (don't offer caddie tricks); Dawn and
@@ -267,6 +269,16 @@ Numbered so `CLAUDE.md` and the checks can point at them.
     check measuring pixels by the horizon passed or failed by the clock:
     the harness sets `window.__noShimmer` (`SHIMMER_DEF` false); a check
     that wants it sets `SHIMMER_FORCE` and resets it to `SHIMMER_DEF`.
+79. Josefin Sans's lines run about a fifth taller than the old font's at
+    `line-height:normal`: where room counts (the top bars, a row's date)
+    give a line height, or the course loses pixels (`rareweather` caught
+    7px on its side) and boxes break at 320.
+80. A check that counts sovereigns paid away counts only its own reward
+    (hook `earnSov` by its key): a rare club found away can earn an honour
+    by luck (`readouts` failed once in a full run on it).
+81. The hole's bar keeps its line under the yardage even when empty (so it
+    never changes size), except in a wager (`#stage.wager`), whose Leave
+    sits just under the bar (`wagerplay`).
 
 ## 5. Environment
 
