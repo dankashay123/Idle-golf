@@ -377,6 +377,11 @@ div.guide.hunt,div.guide.mhunt{grid-template-columns:repeat(3,minmax(0,1fr))}
 .citile img{display:block;margin:0 auto;image-rendering:pixelated}
 .citile b{display:block;font-family:var(--mono);font-size:9px;font-weight:600;line-height:1.3;margin-top:2px;white-space:nowrap;overflow:hidden;letter-spacing:-.06em}
 .citile .cid{position:absolute;left:2px;top:0;font-size:8px;line-height:1.2;color:var(--faint)}
+/* (the tightest labels keep Josefin's own size: brought up to the old
+   letters' height, they ran out of their tiles at 320) */
+.citile b,.gtile b,.gtile i,#courseRows .lb .s{font-size-adjust:none}
+#courseRows .lb .s{white-space:nowrap;align-self:center}
+#nineBar,#xpStrip,#crest{line-height:1.12}
 .citile.sov{border-color:#7B4FC0;background:#22183A}
 .citile.myth{border-color:var(--r5);background:#3A1626}
 .citile.got img,.citile.got b{opacity:.3}
@@ -33743,7 +33748,8 @@ function frameBody(now){
    menu, which opens by holding the course name for a second and a half. */
 const isIOS = () => /iP(hone|ad|od)/.test(navigator.userAgent)
   || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-const isStandalone = () => navigator.standalone === true
+// (the iPhone app keeps its save as an app does: never asked to add itself)
+const isStandalone = () => navigator.standalone === true || inApp()
   || (window.matchMedia && matchMedia('(display-mode: standalone)').matches);
 // him or her, from the Settings: the pictures made again, the shop's too
 function setGender(g){
@@ -33815,8 +33821,12 @@ const unb64 = txt => Uint8Array.from(atob(txt), c => c.charCodeAt(0));
 // end of its address, which it remembers. For anyone else holding the event
 // name does nothing: the menu had +1,000 sovereign buttons.
 let DEV_OFF = false;               // the checks': play as a player would
+// The iPhone app (Capacitor) serves the page from capacitor://localhost, which
+// read as this computer: in the app it is never a developer copy, ?dev or not.
+const inApp = () => { try{ return !!window.__inApp || location.protocol === 'capacitor:'
+  || !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform()); }catch(e){ return false; } };
 function devOK(){
-  if(DEV_OFF) return false;
+  if(DEV_OFF || inApp()) return false;
   try{
     if(/[?&]dev\b/.test(location.search)) localStorage.setItem(KEY + ':dev', '1');
     return location.protocol === 'file:' || /^(localhost|127\.0\.0\.1|)$/.test(location.hostname)
