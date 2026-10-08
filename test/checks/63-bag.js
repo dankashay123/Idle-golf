@@ -68,7 +68,7 @@ module.exports = {
           const hex = c => '#' + (c.match(/\d+/g) || []).slice(0, 3).map(v => (+v).toString(16).padStart(2, '0')).join('');
           if (hex(cs.borderLeftColor) !== col) { f(it.name + ': its tile is not framed in its rarity\'s colour (' + cs.borderLeftColor + ')'); break; }
           if (!nm || nm.textContent !== it.name || hex(getComputedStyle(nm).color) !== col) { f(it.name + ': its name is not shown in its rarity\'s colour'); break; }
-          if (t.textContent.indexOf('iLv ' + it.ilvl) < 0 || t.textContent.indexOf(B.RARITY[it.rar].n) < 0) { f(it.name + ': no item level or rarity on its tile'); break; }
+          if (t.textContent.indexOf('Lv ' + it.ilvl) < 0 || t.textContent.indexOf(B.RARITY[it.rar].n) < 0) { f(it.name + ': no item level or rarity on its tile'); break; }
           if (!/×\S+ (swing|affinity)/.test(t.textContent)) { f(it.name + ': no swing or affinity figure on its tile'); break; }
           const better = itemScore(it) > itemScore(S.equip.driver);
           if (!t.classList.contains('worn') && better !== !!t.querySelector('.gup')) { f(it.name + ': the better-than arrow is ' + (better ? 'missing' : 'on a worse club')); break; }

@@ -455,11 +455,11 @@ module.exports = {
     if (!/[1-9]/.test(r.legBefore))
       throw new Error('the screen shows no figure at all before retirement opens: "'
         + r.legBefore.slice(0, 90) + '"');
-    for (const want of ['One more Tour Card', 'One more cup', 'It buys'])
+    for (const want of ['One more Tour Card', 'One more cup', 'Legacy buys'])
       if (r.legBefore.indexOf(want) < 0)
         throw new Error('the retirement screen never says "' + want + '" before the first '
           + 'event, which is exactly when the decision is being made');
-    if (r.legAfter.indexOf('It buys') < 0)
+    if (r.legAfter.indexOf('Legacy buys') < 0)
       throw new Error('the retirement screen stops saying what the legacy buys once '
         + 'retirement opens');
     for (let i = 1; i < r.discSteps.length; i++)
@@ -499,7 +499,7 @@ module.exports = {
     // ---- climbing a Tour Card -----------------------------------------
     const B_ = r.behind, A_ = r.ahead, M_ = r.matched;
     // a bag ahead of its card: the Range says what that means, not "stretched 25.1Kx"
-    if (!/outdrives this card/.test(A_.rangeLine) || /stretched|\dx\b/i.test(A_.rangeLine))
+    if (!/too good for this card/.test(A_.rangeLine) || /stretched|\dx\b/i.test(A_.rangeLine))
       throw new Error('with the bag ahead of its card the Range reads "' + A_.rangeLine
         + '". A stretch of thousands of times is a real figure and tells nobody anything.');
     if (r.lockToasts !== 1 || !(r.lockShards > 0) || r.lockBag !== r.lockCap)
@@ -524,10 +524,10 @@ module.exports = {
     if (!(A_.pay > 1.05))
       throw new Error('sixty times ahead of the card, climbing pays ' + A_.pay.toFixed(2)
         + ' a second: holes this far ahead are only as quick as the walk on both cards, so it should be a gain');
-    if (/outdrives this card/.test(M_.text))
+    if (/too good for this card|can still make birdies there/.test(M_.text))
       throw new Error('a golfer carding birdies here is told their bag outdrives this card, '
         + 'with holes four times longer above: ' + M_.text.slice(0, 160));
-    const wants = { behind: /pay cut/, ahead: /outdrives this card/ };
+    const wants = { behind: /pay cut/, ahead: /can still make birdies there/ };
     for (const [k, c] of [['behind', B_], ['ahead', A_]]) {
       if (c.text.indexOf('Purse per second') < 0)
         throw new Error('the Tour screen shows no purse line in the ' + k + ' case');

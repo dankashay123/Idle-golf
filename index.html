@@ -2821,7 +2821,7 @@ const B = {
   UPG: [
     { id:'drive',   k:'pow',  cap:0,   base:20,     r:1.0800, g:1.04000, n:'Drive Power',        d:'Yardage on every swing' },
     { id:'tempo',   k:'spd',  cap:500, base:150,    r:1.0287, g:1.00439, n:'Pace of Play',       d:'Plays every hole faster' },
-    { id:'provis',  k:'mst',  cap:500, base:70,     r:1.0300, g:0,       n:'Provisional Ball',   d:'Chance to play a second ball on a swing' },
+    { id:'provis',  k:'mst',  cap:500, base:70,     r:1.0300, g:0,       n:'Provisional Ball',   d:'Chance of a second ball on a swing' },
     { id:'face',    k:'crt',  cap:500, base:1200,   r:1.0317, g:0,       n:'Face Milling',       d:'Chance of a pure strike' },
     { id:'compress',k:'pow',  cap:500, base:1.1e4,  r:1.0271, g:1.00491, n:'Ball Compression',   d:'Yardage on every swing' },
     { id:'sweet',   k:'cpw',  cap:500, base:8.0e4,  r:1.0299, g:0,       n:'Sweet Spot',         d:'Pure strike payoff' },
@@ -2832,8 +2832,8 @@ const B = {
     { id:'agent',   k:'gld',  cap:500, base:6.0e7,  r:1.0343, g:1.00587, n:'Player Agent',       d:'Prize money' },
     { id:'groove',  k:'prc',  cap:500, base:4.0e8,  r:1.0251, g:0,       n:'Groove Sharpening',  d:'Chance an affinity triggers' },
     { id:'van',     k:'pow',  cap:500, base:1.4e9,  r:1.0341, g:1.00631, n:'Tour Van',           d:'Yardage on every swing' },
-    { id:'second',  k:'mst',  cap:500, base:8.0e9,  r:1.0330, g:0,       n:'Second Serve',       d:'Chance to play a second ball on a swing' },
-    { id:'lantern', k:'dgn',  cap:500, base:8.0e10, r:1.0231, g:0,       n:"Caddie's Cut",       d:'Your take from the wager book' },
+    { id:'second',  k:'mst',  cap:500, base:8.0e9,  r:1.0330, g:0,       n:'Second Serve',       d:'Chance of a second ball on a swing' },
+    { id:'lantern', k:'dgn',  cap:500, base:8.0e10, r:1.0231, g:0,       n:"Caddie's Cut",       d:'Bigger wager prizes' },
     { id:'forged',  k:'pow',  cap:500, base:1.2e12, r:1.0348, g:1.00652, n:'Forged Blades',      d:'Yardage on every swing' },
     { id:'simul',   k:'crt',  cap:500, base:9.0e13, r:1.0370, g:0,       n:'Swing Simulator',    d:'Chance of a pure strike' },
     { id:'windbook',k:'spd',  cap:500, base:6.0e15, r:1.0290, g:1.00249, n:'Wind Book',          d:'Swings per second' },
@@ -3014,21 +3014,21 @@ const B = {
       d:'Four times swing power for five minutes' },
     { id:'coffee', n:'Caddie Coffee',     ic:'cup',    cost:4, dur:360, k:'spd',  v:2, s:'2\u00d7 pace',
       d:'Double pace for six minutes' },
-    { id:'proam',  n:'Pro-Am Day',        ic:'proam',  cost:5, dur:420, k:'drop', v:0.35, s:'+35pp gear luck',
-      d:'+35pp gear luck for seven minutes' },
+    { id:'proam',  n:'Pro-Am Day',        ic:'proam',  cost:5, dur:420, k:'drop', v:0.35, s:'+35% gear luck',
+      d:'+35% gear luck for seven minutes' },
     { id:'ley',    n:'Ley Attunement',    ic:'leyatt', cost:5, dur:480, k:'reson', v:1, s:'resonates everywhere',
-      d:'Your ball resonates on every course for eight minutes' },
+      d:'Your ball\u2019s affinity works on every course for eight minutes' },
     { id:'range',  n:'Range Session',     ic:'bucket',     cost:3, dur:0,   k:'bank', v:150,
-      d:'Bank two and a half minutes of purse at your current rate' },
+      d:'Get two and a half minutes of prize money now' },
     { id:'cart',   n:'Cart Ride',         ic:'cart',  cost:2, dur:0,   k:'holeout', v:0,
-      d:'Hole out immediately, carded as an eagle' },
+      d:'Finish this hole now as an eagle' },
     // Priced off what it refills. Six tickets bought twelve entries across four
     // wagers; with six wagers it refills eighteen, and at six tickets the runs
     // it buys could now and then earn their own next refill -- the wagers check
     // caught 0.38 tickets a run against a break-even of 0.33. Nine puts it back
     // at half a ticket an entry, where it was.
     { id:'exempt', n:'Sponsor Exemption', ic:'scroll',  cost:9, dur:0,   k:'keys', v:0,
-      d:'Refill every entry in the wager book' }
+      d:'Refill all your wager entries' }
   ],
   // where tickets come from
   TICK_EVENT: 2, TICK_WIN: 3, TICK_TOP5: 1, TICK_LEVEL: 2,
@@ -3051,19 +3051,19 @@ const B = {
     { id:'sand', st:'Swing power and pure strike', ic:'longdrive', mode:'drive', n:'The Long Drive', cur:'grit', cn:'Grit',
       regen:660, cap:4, run:16, pay:0.046, gear:0.22, floorRar:0,
       d:'Six swings, the longest counts.',
-      how:'Pace is worth nothing here. It all rides on a single strike, so power, pure strike, payoff, affinity and provisionals are the whole game.' },
+      how:'Only your longest swing counts, so swing power and pure strike matter most. Pace does nothing here.' },
     { id:'water', st:'Pure strike', ic:'island', mode:'island', n:'The Island Green', cur:'shard', cn:'Shards',
       regen:840, cap:3, run:70, pay:0.028, gear:0.40, floorRar:2,
       d:'Every green doubles the pot. Miss and you keep a quarter.',
-      how:'Make chance is 56% plus 42% of your pure strike chance, less 3.5 points for each green already hit. You pick where to bank before you go in.' },
+      how:'A higher pure strike chance makes each green easier to hit. Choose where to bank before you start.' },
     { id:'cellar', st:'Affinity chance', ic:'flood', mode:'chip', n:'The Floodlit Green', cur:'scroll', cn:'Scrolls',
       regen:1080, cap:3, run:46, pay:0.019, gear:0.20, floorRar:1,
       d:'Twenty five chips. Each one that drops is worth more than the last.',
-      how:'Runs on affinity chance, not power, and reads the raw figure rather than the capped one. A bag that rarely procs drops few chips.' },
+      how:'Depends on affinity chance, not power. Low affinity chance, few chips drop.' },
     { id:'vault', st:'Carry (power and pace)', ic:'vault', mode:'floor', n:'The Clubhouse Vault', cur:'gold', cn:'Purse',
       regen:900, cap:2, run:56, pay:1, gear:0.62, floorRar:1,
       d:'Floor after floor, each one harder than the last.',
-      how:'Straight endurance. How deep your carry drags you before the clock runs out.' },
+      how:'Clear as many floors as you can before the clock runs out. Power and pace both help.' },
     // Two more, each on a stat none of the first four is about. The Scramble
     // is provisionals: every ball you carry is another look at the hole. The
     // Twilight Putt is tempo: the quicker you swing, the more putts you get in
@@ -3071,11 +3071,11 @@ const B = {
     { id:'scramble', st:'Provisionals', ic:'balls3', mode:'scramble', n:'The Scramble', cur:'grit', cn:'Grit',
       regen:780, cap:3, run:24, pay:0.05, gear:0.30, floorRar:1,
       d:'Nine holes, every ball you carry. Hole any of them and the hole is yours.',
-      how:'Runs on provisionals: one ball plus one for every whole point of provisional chance, and a chance at one more. More balls, more holes.' },
+      how:'More provisional chance gives you more balls, and more balls win more holes.' },
     { id:'twilight', st:'Pace', ic:'dusk', mode:'twilight', n:'The Twilight Putt', cur:'scroll', cn:'Scrolls',
       regen:960, cap:3, run:30, pay:0.018, gear:0.25, floorRar:1,
       d:'Putts until the light goes. Each one that drops is worth more than the last.',
-      how:'Runs on pace: the quicker you play, the more putts you get before dark. Half of them drop, whatever the bag.' }
+      how:'Faster pace means more putts before dark. About half of them drop.' }
   ],
   DRIVE_SHOTS: 6, DRIVE_GAP: 2.0, DRIVE_WIND: [0.72, 1.38],
   ISLAND_GAP: 2.8, ISLAND_BASE: 0.56, ISLAND_CRIT: 0.42, ISLAND_DECAY: 0.035,
@@ -3278,9 +3278,9 @@ const B = {
       mile:{ at:60, n:'Off The Tee', d:'First swing of each hole hits triple' } },
     { id:'tempo',   n:'Pace',    ic:'beat',   d:'Plays every hole faster', v:'+0.30% pace',
       mile:{ at:60, n:'Quick Play', d:'A hole can end almost at once' } },
-    { id:'touch',   n:'Touch',   ic:'touch',  d:'Contact off the middle',  v:'+0.10pp pure, +0.03x payoff',
+    { id:'touch',   n:'Touch',   ic:'touch',  d:'Contact off the middle',  v:'+0.10% pure, +0.03x payoff',
       mile:{ at:60, n:'Flush', d:'Pure strikes ignore armour' } },
-    { id:'fortune', n:'Fortune', ic:'coins',  d:'What the week is worth',  v:'+0.7% purse, +0.08pp luck',
+    { id:'fortune', n:'Fortune', ic:'coins',  d:'What the week is worth',  v:'+0.7% purse, +0.08% luck',
       mile:{ at:60, n:'Appearance Fee', d:'Each hole pays 10% of its purse at the tee' } }
   ],
   STAT_V: { drive:{pow:0.012}, tempo:{spd:0.0030}, touch:{crt:0.0010, cpw:0.03},
@@ -3844,11 +3844,11 @@ const B = {
     { id:'gilded', t:'S', n:'Gilded Card',       k:'*gld',  g:1.10, max:40, d:'Prize money' },
     { id:'oath',   t:'A', n:'Oathstone',         k:'*elm',  g:1.40, max:100, d:'Ball affinity power' },
     // the six that change how a run is played, mechanics unchanged
-    { id:'sun',    t:'A', n:'Sunstone Marker',   k:'@sun', max:10, d:'Gear luck, +9pp a level' },
+    { id:'sun',    t:'A', n:'Sunstone Marker',   k:'@sun', max:10, d:'Gear luck, +9% a level' },
     { id:'chrono', t:'S', n:'Chronoglass',       k:'@chrono', max:250, d:'Start each run one Tour Card higher' },
     { id:'seed',   t:'B', n:'Signing Bonus',     k:'@seed', max:6, d:'Start each run with a purse' },
     { id:'rift',   t:'A', n:'Standing Invitation', k:'@rift', max:10, d:'Faster entries, deeper wagers' },
-    { id:'ember',  t:'A', n:'Mythic Ember',      k:'@ember', max:20, d:'Affinity chance, +2.5pp a level' },
+    { id:'ember',  t:'A', n:'Mythic Ember',      k:'@ember', max:20, d:'Affinity chance, +2.5% a level' },
     { id:'vault',  t:'S', n:"Founder's Locker",  k:'@vault', max:10, d:'Keep 50 levels of every Range upgrade on retiring' },
     // and twenty more, two to a stat: one you will turn up early and one worth
     // building a room around
@@ -3938,7 +3938,7 @@ const B = {
     { id:'champ',  ic:'bagchamp',  n:"Champion's Bag", c:900,  num:7, floor:3, top:4,
       d:'Seven clubs, Epic or better, one of them Legendary or better.' },
     { id:'legend', ic:'baglegend', n:'Legend Bag',     c:2400, num:9, floor:4, top:5,
-      d:'Nine clubs, Legendary or better, and a Mythic every single time.' }
+      d:'Nine clubs, Legendary or better, always with a Mythic.' }
   ],
   // Bags opened without a Mythic before the next one is guaranteed to be one.
   // Every shop like this has one of these; most of them do not admit it.
@@ -3956,7 +3956,7 @@ const B = {
     { id:'teetime',  ic:'teetime',  n:'Standing Tee Time', base:240, r:1.45, v:0.05,
       d:'Wager entries 5% faster, a level', s:'%' },
     { id:'scout',    ic:'scout',    n:'Club Scout',      base:220, r:1.44, v:0.04,
-      d:'+4pp gear luck, a level',                s:'pp' },
+      d:'+4% gear luck, a level',                s:'pp' },
     { id:'van',      ic:'van2',     n:'Tour Van',        base:260, r:1.46, v:0.03,
       d:'3% off every Range price, a level',      s:'%' },
     { id:'irons',    ic:'sigirons', n:'Signature Irons', base:300, r:1.50, v:1.05,
@@ -4000,7 +4000,7 @@ const B = {
     { id:'yips',  n:'The Yips',    d:'No pure strikes',              k:'crit', v:0,    r:'cpw',  rv:0.03, s:'+3% pure strike payoff' },
     { id:'lost',  n:'Lost Balls',  d:'No provisional balls',         k:'mst',  v:0,    r:'gold', rv:0.02, s:'+2% prize money' },
     { id:'cold',  n:'Cold Hands',  d:'A quarter of your affinity',   k:'elem', v:0.25, r:'elem', rv:0.03, s:'+3% affinity power' },
-    { id:'gale',  n:'Into the Gale', d:'Two thirds of your swing power and pace', k:'both', v:0.67, r:'drop', rv:0.01, s:'+1pp gear luck' }
+    { id:'gale',  n:'Into the Gale', d:'Two thirds of your swing power and pace', k:'both', v:0.67, r:'drop', rv:0.01, s:'+1% gear luck' }
   ],
   CHAL_TIER: [24, 74, 149], CHAL_HOLES: 9, CHAL_PAR: 0,
   ERRANDS: [
@@ -4305,7 +4305,7 @@ function fmt(n, dp){
 // that. toFixed alone printed Drive Power as x2.055640197382958e+39.
 const fmtX = v => (Math.abs(v) < 1000 ? v.toFixed(2) : fmt(v));
 const pct = v => (v*100 < 10 ? (v*100).toFixed(1) : Math.round(v*100)) + '%';
-const pp  = v => '+' + (v*100).toFixed(1) + 'pp';
+const pp  = v => '+' + (v*100).toFixed(1) + '%';
 function hms(s){
   s = Math.max(0, Math.round(s));
   const h = Math.floor(s/3600), m = Math.floor(s%3600/60), q = s%60;
@@ -5490,7 +5490,7 @@ function bondTick(live){
     + (BOND_UNLOCK[bondLv(id) - 1] || ''), 'ach');
 }
 // what each step of the bond brings
-const BOND_UNLOCK = ['New lines', 'A salute', 'More to say', 'A jig, and a gift now and then', 'The last move, and his best lines'];
+const BOND_UNLOCK = ['New things to say', 'A salute', 'More to say', 'A dance, and a gift now and then', 'A last dance and the best lines'];
 // A gift from the caddie (the user picked it from the menu): from Close on,
 // now and then after a birdie or better played live, a few sovereigns or,
 // one time in five, a sponsor ticket or two. From a hash of the hole.
@@ -5551,10 +5551,10 @@ function itemScore(it){
 }
 // what a set tier gives, in words
 const setEffect = t => Object.keys(t).filter(k => k !== 'n').map(k => ({
-    pow:'+' + Math.round(t[k]*100) + '% swing', crt:'+' + (t[k]*100).toFixed(0) + 'pp pure',
+    pow:'+' + Math.round(t[k]*100) + '% swing', crt:'+' + (t[k]*100).toFixed(0) + '% pure',
     cpw:'+' + t[k].toFixed(1) + 'x payoff', elm:'+' + Math.round(t[k]*100) + '% affinity',
     gld:'+' + Math.round(t[k]*100) + '% purse', spd:'+' + Math.round(t[k]*100) + '% pace',
-    mst:'+' + Math.round(t[k]*100) + 'pp provisional', drp:'+' + Math.round(t[k]*100) + 'pp gear luck',
+    mst:'+' + Math.round(t[k]*100) + '% provisional', drp:'+' + Math.round(t[k]*100) + '% gear luck',
     dgn:'+' + Math.round(t[k]*100) + '% wager haul'
   })[k]).join(', ');
 // the named sets with at least one piece anywhere, equipped or in the locker
@@ -6119,7 +6119,7 @@ function checkAch(){
     else if(r.k === 'shard'){ S.shard += r.v; got = '+' + r.v + '\u00a0' + plural(r.v, 'shards'); }
     else if(r.k === 'scroll'){ S.scroll += r.v; got = '+' + r.v + ' ' + plural(r.v, 'scrolls'); }
     else if(r.k === 'legacy'){ S.legacy += r.v; got = '+' + r.v + ' legacy'; }
-    else if(r.k === 'crt' || r.k === 'drp' || r.k === 'prc') got = '+' + (r.v*100).toFixed(1) + 'pp ' + r.k;
+    else if(r.k === 'crt' || r.k === 'drp' || r.k === 'prc') got = '+' + (r.v*100).toFixed(1) + '% ' + { crt:'pure strike chance', drp:'gear luck', prc:'affinity chance' }[r.k];
     else got = '+' + Math.round(r.v*100) + '% ' + ({ pow:'swing power', gld:'purse', spd:'pace',
       mst:'provisional chance', elm:'affinity', dgn:'wager haul' }[r.k] || r.k);
     // "Unlocked" and not "Achievement unlocked". The eyebrow is its own line,
@@ -6762,7 +6762,7 @@ function checkinClaim(){
 // prizes ending in the festival's own tee markers. Never away or quietly.
 const FEST = [
   { id:'mid', n:'Midsummer Open', tw:'spd', s:'+25% pace', col:'#F2B830', mk:'f_sun' },
-  { id:'harvest', n:'Harvest Festival', tw:'drop', s:'+20pp gear luck', col:'#E07A2A', mk:'f_pk' },
+  { id:'harvest', n:'Harvest Festival', tw:'drop', s:'+20% gear luck', col:'#E07A2A', mk:'f_pk' },
   { id:'frost', n:'Frost Fair', tw:'keys', s:'Wager entries twice as fast', col:'#CFE8F4', mk:'f_flake' },
   { id:'bloom', n:'Blossom Fete', tw:'alb', s:'The Lucky Albatross twice as often', col:'#F2A6C8', mk:'f_bloom' }
 ];
@@ -7123,8 +7123,8 @@ function binomPot(n, q, fc, step, per){
 // The Vault is the exception and stays in its own unit: it pays the purse, so
 // holes of purse is what it is worth, and holes of purse is already the scale
 // the rest of the game is priced in.
-const DGN_BUYS = { grit:'clubs to +15', shard:'ascensions',
-                   scroll:'shot book levels', gold:'holes of purse' };
+const DGN_BUYS = { grit:'clubs upgraded to +15', shard:'club ascensions',
+                   scroll:'shot book levels', gold:'holes of prize money' };
 // What the rub of the green costs a Vault run, read off the event table itself
 // rather than measured once and written down: weights change, this follows.
 // A time event moves the clock directly; a work event scales the floor you are
@@ -7492,26 +7492,26 @@ function renderLeave(){
 const DGN_GUIDE = {
   sand: ['Six swings, and only the longest counts.',
          'Each swing gets its own wind, from a headwind of \u00d70.72 to a tailwind of \u00d71.38.',
-         'Pace does nothing here: it all rides on one strike, so swing power, pure strike (its chance and its payoff), affinity and provisionals are what win it.',
+         'Only your longest swing counts, so swing power and pure strike matter most. Pace does nothing here.',
          'Pays grit, by how far the longest went.'],
   water: ['Across the water to an island green, again and again.',
           'The first green is a gimme. Each one after it multiplies the pot by 1.9, and each is a little harder to hit.',
           'Before you go in, pick where to bank. Reach it and you keep the whole pot; miss a green and you keep a quarter. Leave at any time to bank the pot as it stands.',
-          'Make chance is 56% plus 42% of your pure strike chance, less 3.5 points for each green already hit.',
+          'A higher pure strike chance makes each green easier to hit.',
           'Pays shards.'],
   cellar: ['Twenty five chips at a floodlit green. Each one that drops is worth more than the last.',
-           'It runs on affinity chance, not power, and reads the raw figure before its cap: a bag that rarely procs drops few chips.',
+           'It depends on affinity chance, not power. With a low affinity chance, few chips drop.',
            'Pays scrolls.'],
-  vault: ['Down floor after floor of the members\u2019 vault before the clock runs out. Each floor is longer than the last, and you start where you left off last time.',
-          'It runs on your carry: swing power and pace together.',
-          'Each time you clear a floor there is a 38% chance of a turn on the next one, called out on the field:',
+  vault: ['Clear floor after floor of the clubhouse vault before the clock runs out. Each floor is longer than the last, and you start where you left off.',
+          'Swing power and pace both help.',
+          'After each floor, there is a 38% chance the next one has a twist:',
           '@events',
           'Pays purse, by how deep you got.'],
   scramble: ['Nine holes, with every ball you carry. Hole any of them and the hole is yours.',
-             'You carry one ball, one more for every whole point of provisional chance, and a chance at one more on top: more balls, more holes.',
+             'More provisional chance gives you more balls, and more balls win more holes.',
              'Pays grit.'],
-  twilight: ['Putts until the light goes. About half of them drop, whatever the bag, and each one that drops is worth more than the last.',
-             'It runs on pace: the quicker you play, the more putts you get in before dark.',
+  twilight: ['Putt until it gets dark. About half of them drop, and each one that drops is worth more than the last.',
+             'Faster pace means more putts before dark.',
              'Pays scrolls.']
 };
 const DGN_EVENT_SAY = {
@@ -10096,7 +10096,7 @@ function renderShop(){
         const lv = permLv(u.id), maxed = lv >= B.PERM_MAX, c = permCost(u);
         const now = u.s === 'x' ? '\u00d7' + permMult(u.id).toFixed(2)
                   : u.s === 'h' ? '+' + permAdd(u.id) + 'h'
-                  : u.s === 'pp' ? '+' + Math.round(permAdd(u.id)*100) + 'pp'
+                  : u.s === 'pp' ? '+' + Math.round(permAdd(u.id)*100) + '%'
                   : u.s === '%' ? '+' + Math.round(permAdd(u.id)*100) + '%'
                   : '+' + permAdd(u.id);
         return shopCard({ ic: u.ic, col: '#E3B457', on: lv > 0,
@@ -10182,7 +10182,7 @@ function renderShop(){
     h += ribbon('One Time') + '<div class="sgrid c2">'
       + shopCard({ ic:'starter', col:'#7ADB86', on: !S.starter, badge: S.starter ? '' : 'BEST VALUE',
           head:'Starter Pack',
-          sub: S.starter ? 'Taken. One to a career.'
+          sub: S.starter ? 'Already bought.'
             : sovFmt(B.STARTER_C) + ' ' + B.SOV.toLowerCase() + ', a Tour Bag, a day of '
               + 'Double Purse.',
           price: S.starter ? 'TAKEN' : '$' + B.STARTER_USD.toFixed(2),
@@ -10344,8 +10344,8 @@ const upgradeCost = t => Math.max(1, Math.ceil(B.TR_COST * B.TR_TIER[t.t].m
 // what an heirloom does at a level, as its row and its reveal say it
 function trophyEff(t, lv){
   if(t.g) return '\u00d7' + fmt(trophyMultAt(t, lv));
-  if(t.k === '@sun') return '+' + fmt(lv*B.SUN_ADD*100) + 'pp';
-  if(t.k === '@ember') return '+' + fmt(lv*B.EMBER_ADD*100) + 'pp';
+  if(t.k === '@sun') return '+' + fmt(lv*B.SUN_ADD*100) + '%';
+  if(t.k === '@ember') return '+' + fmt(lv*B.EMBER_ADD*100) + '%';
   if(t.k === '@chrono') return 'retire onto Card ' + cardNo(Math.min(B.TIER_MAX, lv)) + ' or higher';
   if(t.k === '@vault'){ const kp = Math.min(500, lv*B.VAULT_UPG);
     return fmt(kp, 0) + ' levels kept' + (kp >= 500 ? ' (all)' : ''); }
@@ -31096,12 +31096,12 @@ function bulkFor(base, r, owned, cap){
 }
 function effectLabel(u, at){
   const lv = at === undefined ? upgEff(u.id) : at;
-  if(u.k === 'crt') return '+' + (lv*B.CRIT_ADD[u.id]*100).toFixed(1) + 'pp';
+  if(u.k === 'crt') return '+' + (lv*B.CRIT_ADD[u.id]*100).toFixed(1) + '%';
   if(u.k === 'cpw') return '+' + fmtX(lv*B.CPW_ADD) + 'x';
-  if(u.k === 'drp') return '+' + (lv*B.DROP_ADD*100).toFixed(1) + 'pp';
-  if(u.k === 'prc') return '+' + (lv*B.PROC_ADD*100).toFixed(1) + 'pp';
+  if(u.k === 'drp') return '+' + (lv*B.DROP_ADD*100).toFixed(1) + '%';
+  if(u.k === 'prc') return '+' + (lv*B.PROC_ADD*100).toFixed(1) + '%';
   if(u.k === 'dgn') return '+' + Math.round(lv*B.DGN_ADD*100) + '%';
-  if(u.k === 'mst') return '+' + (lv*B.MST_ADD[u.id]*100).toFixed(1) + 'pp';
+  if(u.k === 'mst') return '+' + (lv*B.MST_ADD[u.id]*100).toFixed(1) + '%';
   return '\u00d7' + fmtX(Math.pow(u.g, lv));
 }
 function refreshUpg(){
@@ -31113,8 +31113,8 @@ function refreshUpg(){
   const note = $('upgTax');
   if(note) note.innerHTML = ahead
     ? (cardUnlocked(S.tier + 1)
-        ? 'Your bag outdrives this card \u00b7 <b>climb</b> on the Tour tab'
-        : 'Your bag outdrives this card \u00b7 win its <b>cup</b> to move up')
+        ? 'Your clubs are too good for this card \u00b7 move up on the Tour tab'
+        : 'Your clubs are too good for this card \u00b7 win its cup to move up')
     : '';
   if(note) note.hidden = !ahead;
 
@@ -31141,7 +31141,7 @@ function refreshUpg(){
       r.ms.hidden = !show;
       if(show){
         setSty(r.ms.children[0].children[0], 'width', Math.round(clamp((lv - m0) / Math.max(1, nx - m0), 0, 1) * 100) + '%');
-        setHTML(r.ms.children[1], '\u2605' + nx + ' in\u00a0' + (nx - lv) + ': ' + effectLabel(u, nx));
+        setHTML(r.ms.children[1], 'Lv\u00a0' + nx + ' (' + (nx - lv) + ' more): ' + effectLabel(u, nx));
       }
     }
     if(maxed){
@@ -31173,7 +31173,7 @@ function affLine(it, max){
   const out = it.aff.filter(a => B.AFFIX.some(x => x.id === a.k)).map(a => {
     const d = B.AFFIX.find(x => x.id === a.k);
     const v = affixValue(it, a);
-    const s = d.sfx === 'pp' ? '+' + (v*100).toFixed(1) + 'pp'
+    const s = d.sfx === 'pp' ? '+' + (v*100).toFixed(1) + '%'
             : d.sfx === 'x' ? '+' + v.toFixed(2) + 'x'
             : '+' + (v*100 >= 1000 ? fmt(v*100) : (v*100).toFixed(0)) + '%';
     return d.n + ' ' + s;
@@ -31373,7 +31373,7 @@ function gearTile(it, isWorn){
       + (it.enh ? '<span class="genh">+' + it.enh + '</span>' : '')
     + '</div>'
     + '<div style="min-width:0"><div class="gn" style="color:' + col + '">' + it.name + '</div>'
-    + '<div class="ib"><span class="glv">iLv\u00a0' + it.ilvl + '</span> \u00b7 <span style="color:' + col + '">' + B.RARITY[it.rar].n + '</span></div>'
+    + '<div class="ib"><span class="glv">Lv\u00a0' + it.ilvl + '</span> \u00b7 <span style="color:' + col + '">' + B.RARITY[it.rar].n + '</span></div>'
     + '<div class="gs">\u00d7' + fmt(1 + itemPrimary(it)) + '\u00a0' + primary + '</div>'
     + '<div class="gs2">' + (affLine(it, 1) || B.RARITY[it.rar].n) + '</div>'
     + (isWorn ? '<div class="wtag">Equipped</div>' : '')
@@ -31437,7 +31437,7 @@ function itemSheet(it, equipped){
     const d = B.AFFIX.find(x => x.id === a.k); if(!d) return;
     const v = affixValue(it, a);
     h += '<li>' + (a.lock ? '<b style="color:var(--brass)">[locked]</b> ' : '') + d.n + ': '
-      + (d.sfx === 'pp' ? '+' + (v*100).toFixed(1) + 'pp'
+      + (d.sfx === 'pp' ? '+' + (v*100).toFixed(1) + '%'
         : d.sfx === 'x' ? '+' + v.toFixed(2) + 'x' : '+' + fmt(v*100) + '%')
       + ' <button class="mini" style="padding:1px 6px;margin-left:6px" onclick="doLock('
       + it.uid + ',' + i + ')">' + (a.lock ? 'Unlock' : 'Lock') + '</button></li>';
@@ -31611,12 +31611,12 @@ function renderDgn(){
   const w = $('dgnRows'); w.innerHTML = '';
   const D = derive();
   $('dgnNote').textContent = S.dgnRun ? 'On the stage \u00b7 the round is paused'
-    : autoWagerOpen() ? '' : 'Auto-wagers from Card ' + cardNo(AUTO_WAGER_TIER);
+    : autoWagerOpen() ? '' : 'Wagers play themselves from Card ' + cardNo(AUTO_WAGER_TIER);
   const feat = featWager();
   const fb = $('dgnFeat');
   if(fb) fb.innerHTML = '<span class="fn">' + feat.n + '</span>'
     + '<span class="fd">Pays ' + B.DGN_FEAT_MULT + '\u00d7 today</span>'
-    + '<span class="ft">Turns over in ' + hms(featLeft()) + '</span>';
+    + '<span class="ft">Changes in ' + hms(featLeft()) + '</span>';
   for(const d of B.DGN){
     const run = S.dgnRun && S.dgnRun.id === d.id ? S.dgnRun : null;
     const keys = S.dgnKeys[d.id] || 0;
@@ -31640,9 +31640,7 @@ function renderDgn(){
 
     let reads;
     if(d.mode === 'drive') reads = 'Best swing about ' + fmt(D.pow * D.cpw * (1 + D.mst*B.MST_DMG));
-    else if(d.mode === 'island') reads = 'Greens ' + Math.round(islandChance(D, 0)*100)
-      + '% \u2192 ' + Math.round(islandChance(D, 4)*100)
-      + '% \u2192 ' + Math.round(islandChance(D, 9)*100) + '% by the tenth';
+    else if(d.mode === 'island') reads = Math.round(islandChance(D, 0)*100) + '% to hit the first green';
     else if(d.mode === 'chip') reads = Math.round(chipChance(D)*100) + '% of chips drop';
     else if(d.mode === 'scramble'){
       const b = scrambleBalls(D);
@@ -31665,7 +31663,7 @@ function renderDgn(){
       // projection is the odds line above it, so it is not said twice
       + '<div class="dm" style="color:var(--brass)">Pays ' + d.cn + ' \u00b7 '
       + (P.buys < 0.1 ? 'Under <b>0.1' : 'About <b>' + fmt(P.buys, P.buys < 10 ? undefined : 0)) + '</b>\u00a0'
-      + DGN_BUYS[d.cur] + ' an entry</div>'
+      + DGN_BUYS[d.cur] + ' per entry</div>'
       + '<div class="dm">' + medalPips(d.id) + ' ' + wgMedalTxt(d.id) + '</div>'
       + '<div class="dm">' + best.charAt(0).toUpperCase() + best.slice(1) + ' \u00b7 '
       + Math.round(d.run) + 's \u00b7 ' + (nextIn === 'full' ? 'Entries full' : 'Next entry ' + nextIn) + '</div>'
@@ -31777,8 +31775,8 @@ function renderTour(){
         : 'The first card.') + '</div></div>'
     + '<button class="buy' + (S.tier > 0 ? '' : ' no') + '" id="dropBtn">'
     + '<span class="lbl">Drop</span><span class="amt">−1</span></button></div>'
-    + '<div class="row"><div><div class="nm">Climb on Form</div>'
-    + '<div class="ds">Climbs on its own once your bag is ready.</div></div>'
+    + '<div class="row"><div><div class="nm">Auto-Climb</div>'
+    + '<div class="ds">Moves you up when your clubs are good enough.</div></div>'
     + '<button class="buy' + (S.autoClimb ? ' ok' : '') + '" id="autoBtn"><span class="lbl">Auto</span>'
     + '<span class="amt">' + (S.autoClimb ? 'On' : 'Off') + '</span></button></div>';
   const cb = $('climbBtn'); if(cb) cb.onclick = () => climb(1);
@@ -31815,7 +31813,7 @@ function renderTour(){
           + '</b></span></div>'; })()
     + '<div class="lb"><span class="p"></span><span>Best card posted</span>'
     + '<span class="s">' + (S.bestRound === undefined ? '\u2014' : fm(S.bestRound)) + '</span></div>'
-    + '<div class="lb"><span class="p"></span><span>Purse if it holds</span>'
+    + '<div class="lb"><span class="p"></span><span>Prize if this score holds</span>'
     + '<span class="s">' + payShare(proj, target).toFixed(2) + 'x</span></div>';
 
   renderMajor();
@@ -32054,7 +32052,7 @@ function climbLines(){
   // The number is not the answer. The answer is whether to press the button:
   // birdies or better up there, the purse keeping up, or a pay cut.
   const say = C.next.ratio <= 0.77
-    ? 'Your bag outdrives this card: birdies or better up there too.'
+    ? 'Your clubs can still make birdies there.'
     : C.pay >= 1
       ? 'Longer holes, but the purse keeps up.'
       : 'A pay cut until your bag catches up.';
@@ -32090,7 +32088,7 @@ function renderLegacy(){
     + lb('Legacy on the card', fmt(P.now), '--brass')
     + lb('One more Tour Card', capped ? '\u2014' : '+' + fmt(P.card))
     + lb('One more cup', '+' + fmt(P.cup))
-    + lb('It buys', legacyBuys(P))
+    + lb('Legacy buys', legacyBuys(P))
     + (P.ready
       ? '<div class="row"><div><div class="nm">Sign the Card</div>'
         + '<div class="ds">Tour Card ' + cardNo(S.tier) + ' with ' + S.cups + ' cups banked.</div></div>'
@@ -32243,9 +32241,9 @@ function renderCadPerks(){
   $('cadNote').textContent = 'Every ' + B.CPERK_EVERY + 's \u00b7 one at a time';
   // how the upgrades work, behind the ?
   w.innerHTML = '<div class="hint' + (cadHintOpen ? ' open' : '') + '" id="cadHint"><div class="foldhead">'
-    + '<span>Upgrade the one he wears</span><button class="qm" aria-label="How caddie upgrades work">?</button></div>'
+    + '<span>Perk upgrades</span><button class="qm" aria-label="How caddie upgrades work">?</button></div>'
     + '<div class="fold" style="margin-top:6px">Each level lasts 1s longer and is 12.5% stronger, up to Lv\u00a0'
-    + B.CPERK_LV_MAX + '. Its light comes down brighter too.</div></div>';
+    + B.CPERK_LV_MAX + '.</div></div>';
   w.querySelector('#cadHint .qm').onclick = () => { cadHintOpen = !cadHintOpen; $('cadHint').classList.toggle('open', cadHintOpen); };
   // the bond with the caddie he has: the step it is at, the holes to the
   // next and what it brings
@@ -32253,7 +32251,7 @@ function renderCadPerks(){
     const d = rowShell('<img class="ric" src="' + caddieUrl(CD) + '" alt="">'); d.classList.add('bondrow');
     const body = d.children[1];
     body.children[0].textContent = 'Bond \u00b7 ' + bondName(bl);
-    body.children[1].textContent = nx ? 'Next: ' + BOND_UNLOCK[bl] : 'Every line and move unlocked';
+    body.children[1].textContent = nx ? 'Next: ' + BOND_UNLOCK[bl] : 'Everything unlocked';
     body.children[2].innerHTML = nx ? nb(fmt(n, 0) + ' / ' + fmt(nx.v, 0) + ' holes') + '<div class="cadbar bondbar"><i style="width:'
       + Math.round(clamp((n - (bl ? B.BOND[bl - 1].v : 0)) / (nx.v - (bl ? B.BOND[bl - 1].v : 0)), 0, 1) * 100) + '%"></i></div>' : '';
     d.children[2].outerHTML = '<div class="bondst" aria-label="Bond ' + bl + ' of ' + B.BOND.length + '">'
@@ -32263,7 +32261,7 @@ function renderCadPerks(){
   // caddie is gone, the skins aren't valuable")
   { const box = document.createElement('div'); box.className = 'errbox';
     const E = S.errand, D = E && errDef(E.id);
-    let h = '<div class="eyebrow" style="margin:10px 0 4px">Errands \u00b7 the caddie\u2019s runner</div>';
+    let h = '<div class="eyebrow" style="margin:10px 0 4px">Errands</div>';
     const haul = D0 => D0.pay.map(r => ciLook(r)[3]).join(' \u00b7 ');
     if(!E) h += B.ERRANDS.map(D0 => '<div class="row err"><div><div class="nm">' + D0.n + '</div><div class="ds">' + haul(D0) + '</div></div>'
       + '<button class="buy" data-err="' + D0.id + '"><span class="lbl">Send</span><span class="amt">' + D0.h + 'h</span></button></div>').join('');
@@ -32273,7 +32271,6 @@ function renderCadPerks(){
       h += '<div class="row err"><div><div class="nm">At ' + D.n.replace(/^The /, 'the ') + '</div><div class="ds">' + haul(D) + '</div>'
         + '<div class="mt">Back in ' + (hh ? hh + 'h ' : '') + (mm >= 60 ? 59 : mm) + 'm<div class="cadbar"><i style="width:' + Math.round((1 - L / (D.h * 3600e3)) * 100) + '%"></i></div></div></div>'
         + '<button class="buy no" disabled><span class="lbl">Out</span><span class="amt">' + D.h + 'h</span></button></div>'; }
-    h += '<div class="hint" style="margin:2px 0 8px">The caddie stays on the bag, perk and all.</div>';
     box.innerHTML = h;
     box.querySelectorAll('[data-err]').forEach(b => b.onclick = () => errSend(b.dataset.err));
     const g = box.querySelector('[data-errget]'); if(g) g.onclick = () => errGet();
@@ -33179,7 +33176,7 @@ function careerStats(w, C){
   }
   const r = document.createElement('div');
   r.className = 'row';
-  r.innerHTML = '<div><div class="nm">Respec Attributes</div></div>'
+  r.innerHTML = '<div><div class="nm">Reset Attributes</div></div>'
     + '<div class="btnrow"><button class="mini">Reset</button></div>';
   r.querySelector('button').onclick = () => {
     let n = 0; B.STATS.forEach(s => { n += S.stat[s.id]||0; S.stat[s.id] = 0; });
@@ -33277,7 +33274,7 @@ function achReward(a){
   if(r.k === 'shard') return '+' + r.v + '\u00a0' + plural(r.v, 'shards');
   if(r.k === 'scroll') return '+' + r.v + ' ' + plural(r.v, 'scrolls');
   if(r.k === 'legacy') return '+' + r.v + ' legacy';
-  if(r.k === 'crt' || r.k === 'drp' || r.k === 'prc') return '+' + (r.v*100).toFixed(1) + 'pp';
+  if(r.k === 'crt' || r.k === 'drp' || r.k === 'prc') return '+' + (r.v*100).toFixed(1) + '% ' + { crt:'pure strike chance', drp:'gear luck', prc:'affinity chance' }[r.k];
   const nm = { pow:'swing power', gld:'purse', spd:'pace', mst:'provisional chance',
                elm:'affinity power', dgn:'wager haul' }[r.k] || r.k;
   return '+' + Math.round(r.v*100) + '% ' + nm;
@@ -33307,7 +33304,7 @@ function careerParagon(w){
       const n = paraLv(cat.id, a.id);
       const capped = a.cap > 0 && n >= a.cap;
       const val = a.v * n;
-      const txt = a.s === 'pp' ? '+' + (val*100).toFixed(1) + 'pp'
+      const txt = a.s === 'pp' ? '+' + (val*100).toFixed(1) + '%'
                 : a.s === 'x'  ? '+' + val.toFixed(2) + 'x'
                 : a.s === 'lv' ? '+' + val.toFixed(1) + ' item levels'
                 : '+' + fmt(val*100) + '%';
@@ -33328,7 +33325,7 @@ function careerParagon(w){
   }
   const r = document.createElement('div');
   r.className = 'row';
-  r.innerHTML = '<div><div class="nm">Respec Paragon</div></div>'
+  r.innerHTML = '<div><div class="nm">Reset Paragon</div></div>'
     + '<div class="btnrow"><button class="mini">Reset</button></div>';
   r.querySelector('button').onclick = () => {
     for(const cat of B.PARAGON) for(const a of cat.a){
