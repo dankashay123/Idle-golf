@@ -23,13 +23,18 @@ module.exports = {
         hideSheet(); setView('upg');
         // the longest line the game writes there: the wind, the course's affinity, the closing hole (on a Sunday)
         const wx = document.getElementById('rWx');
-        wx.innerHTML = '<span class="w0">&lt;&lt;&lt; 18\u00a0MPH</span><span class="w1">STORM<small class="aff">AFF</small>+</span><span class="w2">CHAMPIONSHIP</span>';
+        // (four slots: the wind, the day's condition, the affinity, the closing hole; the longest of each)
+        const fillWx = (a, b2) => { wx.innerHTML = '<span>' + a + '</span><span>' + b2 + '</span><span>STORM<small class="aff">AFF</small>+</span><span>CLOSING HOLE</span>'; wx.hidden = false; Scene._hwKey = 'test'; fitHudLeft(); };
+        const mid4 = () => [...wx.children].map(c => { const q = c.getBoundingClientRect(); return q.left + q.width / 2; });
+        fillWx('1\u00a0MPH', 'FAIR'); const m0 = mid4();
+        fillWx('&lt;&lt;&lt; 18\u00a0MPH', 'CART PATH ONLY'); const m1 = mid4();
+        const moved = Math.max(...m0.map((v, i) => Math.abs(v - m1[i])));
         wx.hidden = false; Scene._hwKey = 'test'; fitHudLeft();
         const R = id => document.getElementById(id).getBoundingClientRect();
         const st = R('stage'), nb = R('nineBar'), bar = R('rRow'), fill = document.querySelector('#readout .rbar').getBoundingClientRect(), line = document.querySelector('#readout .rline').getBoundingClientRect();
         const lh = parseFloat(getComputedStyle(wx).lineHeight) || parseFloat(getComputedStyle(wx).fontSize) * 1.35;
         const shown = [...wx.children].filter(c => c.tagName === 'SPAN' && getComputedStyle(c).display !== 'none');
-        const cut = shown.some(c => c.getBoundingClientRect().right > wx.getBoundingClientRect().right + 0.5);
+        const cut = shown.some(c => c.getBoundingClientRect().right > wx.getBoundingClientRect().right + 0.5 || c.scrollWidth > c.clientWidth + 0.5);
         const btns = ['setBtn', 'calBtn', 'shopBtn', 'roomBtn', 'perkBtn', 'hudClimb'].map(id => R(id));
         const lefts = [...new Set(btns.map(b => Math.round(b.left)))];
         const toasts = R('toasts'), mid = R('stage').left + R('stage').width / 2;
@@ -38,7 +43,7 @@ module.exports = {
           document.getElementById('rTag').textContent = tag; document.getElementById('rTopR').textContent = clock; const q = document.querySelector('#readout .rmain').getBoundingClientRect(); yards.push(q.left + q.width / 2 - mid); }
         const out = { st: [st.top, st.width], nb: nb.bottom, bar: [bar.top, bar.bottom, bar.width], fill: fill.width, line: line.height, rh: R('rTop').height,
           wxh: wx.getBoundingClientRect().height, lh, cut, shown: shown.length, cols: lefts.length, btnTop: Math.min(...btns.map(b => b.top)), toastTop: toasts.top,
-          two: document.getElementById('hudLeft').classList.contains('twocol'), yards };
+          two: document.getElementById('hudLeft').classList.contains('twocol'), yards, moved };
         Scene._hwKey = null; wx.hidden = true;
         return out;
       });
@@ -49,11 +54,12 @@ module.exports = {
       if (r.line > r.rh * 1.9) f(at + 'the hole, the yards and the clock on more than one line (' + Math.round(r.line) + 'px)');
       if (r.wxh > r.lh * 1.5) f(at + 'the weather on more than one line (' + Math.round(r.wxh) + 'px, a line ' + Math.round(r.lh) + ')');
       if (r.cut) f(at + 'the weather line cut mid-word');
+      if (r.moved > 1.5) f(at + 'the slots under the bar move ' + r.moved.toFixed(1) + 'px as their words change');
       if (r.yards.some(v => Math.abs(v) > 1.5)) f(at + 'the yards off the middle by ' + r.yards.map(v => v.toFixed(1)).join('/') + 'px as the call changes');
       if (r.cols !== 1 && !(r.two && r.cols === 2)) f(at + 'the buttons in ' + r.cols + ' columns');
       if (r.btnTop < r.bar[1]) f(at + 'a button up in the bar');
       if (r.toastTop < r.bar[1]) f(at + 'the toasts over the bar');
-      o.push(W + 'x' + H + ' bar ' + Math.round(r.bar[1] - r.bar[0]) + 'px, ' + r.shown + ' of 3 items, ' + r.cols + (r.cols > 1 ? ' columns' : ' column'));
+      o.push(W + 'x' + H + ' bar ' + Math.round(r.bar[1] - r.bar[0]) + 'px, ' + r.shown + ' of 4 slots, ' + r.cols + (r.cols > 1 ? ' columns' : ' column'));
     }
     await page.setViewportSize({ width: 400, height: 860 });
     if (fails.length) throw new Error(fails.join('; '));
