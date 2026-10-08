@@ -1102,9 +1102,92 @@ div.guide.hunt,div.guide.mhunt{grid-template-columns:repeat(3,minmax(0,1fr))}
   background:none;padding:0;margin-left:6px}
 .open .qm{color:var(--brass);border-color:var(--brass-dk)}
 @media (prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+/* The loading screen (the user asked): the title in the calls' lettering
+   over the course at sunrise, his tee shot to the flag once the game is in,
+   a caddie's tip under it; gone by itself, or at a tap */
+#boot{position:fixed;inset:0;z-index:9999;overflow:hidden;background:#2B2E63;transition:opacity .45s ease}
+#boot.out{opacity:0;pointer-events:none}
+#bootCv{position:absolute;left:0;top:0;image-rendering:pixelated;image-rendering:crisp-edges}
+#bootTitle{position:absolute;left:50%;top:max(9%,calc(env(safe-area-inset-top) + 18px));transform:translateX(-50%)}
+#bootTip{position:absolute;left:16px;right:16px;bottom:calc(env(safe-area-inset-bottom) + 5%);max-width:420px;margin:0 auto;
+  padding:10px 14px;border-radius:10px;background:rgba(8,16,10,.62);color:#F4F1E6;text-align:center;
+  font-family:var(--sans);font-size:15px;line-height:1.35}
+#bootTip b{display:block;margin-bottom:3px;font-family:var(--mono);font-size:11px;font-weight:600;letter-spacing:.12em;color:#E3B457}
 </style>
 </head>
 <body>
+<div id="boot" aria-hidden="true"><canvas id="bootCv"></canvas><canvas id="bootTitle"></canvas>
+  <div id="bootTip"><b>CADDIE'S TIP</b><span id="bootTipTx"></span></div></div>
+<script>
+/* The loading screen's first frame, before the game's own script has come
+   in (the page is large): the sky at sunrise, the woods, the tee and the
+   flag, the title, a tip. The game plays his shot on it when it is ready
+   (bootGo). Not in the checks' browser unless one asks (__bootShow). */
+(function(){
+  var B = document.getElementById('boot');
+  if(navigator.webdriver && !window.__bootShow){ B.parentNode.removeChild(B); return; }
+  // plain words, and only what is true of every game (the user asked)
+  var TIPS = ['Your golfer keeps playing while you are away. Come back to collect your winnings.',
+    'Buy upgrades on the Range to hit the ball farther.',
+    'Clubs drop as you play. Keep the best ones in your Bag.',
+    'Finish a hole before its clock runs out for a better score.',
+    'Play well to unlock new Tour Cards: harder courses with bigger prizes.',
+    'Check in every day for a free reward.',
+    'Three daily challenges each day. Clear all three for a bonus.',
+    'Sovereigns, the purple gems, buy new looks in the Pro Shop.',
+    'Looks only change how your golfer looks, never how they play.',
+    'Your caddie can give your golfer a short boost when it counts.',
+    'Wagers are quick rounds with big prizes.',
+    'Everything you have won is kept in the Trophy Room.'];
+  var n = 0; try{ n = (+localStorage.getItem('mm_tip') || 0) + 1; localStorage.setItem('mm_tip', n); }catch(e){}
+  window.BOOT_TIPS = TIPS;
+  document.getElementById('bootTipTx').textContent = TIPS[n % TIPS.length];
+  // the scene at the screen's own pixel size, k screen pixels to one
+  var vw = innerWidth || 390, vh = innerHeight || 844, k = Math.max(2, Math.min(4, Math.round(Math.min(vw / 130, vh / 130))));
+  var W = Math.ceil(vw / k), H = Math.ceil(vh / k), G = Math.round(H * (vh > vw ? 0.68 : 0.74)), FX0 = Math.round(W * 0.86);
+  var cv = document.getElementById('bootCv'); cv.width = W; cv.height = H; cv.style.width = W * k + 'px'; cv.style.height = H * k + 'px';
+  var c = cv.getContext('2d'), P = function(x, y, w, h, col){ c.fillStyle = col; c.fillRect(x, y, w, h); };
+  var hr = function(a, b){ var v = Math.sin(a * 127.1 + b * 311.7) * 43758.5453; return v - Math.floor(v); };
+  // the sky in bands, dithered where they meet: night going, the dawn coming
+  var sky = ['#2B2E63', '#4F3F82', '#9A5A8E', '#E58A7A', '#F7B977'];
+  for(var y = 0; y < G; y++){ var f = y / G * (sky.length - 0.6), i = Math.min(sky.length - 1, Math.floor(f)), d = f - i;
+    for(var x = 0; x < W; x++) P(x, y, 1, 1, sky[i + (i < sky.length - 1 && d > 0.55 && ((x + y) & 1) ? 1 : 0)]); }
+  // a few thin clouds lit pink from under
+  for(var j = 0; j < 4; j++){ var cy = Math.round(G * (0.36 + 0.13 * j)), cx = Math.round(hr(j, 1) * W * 0.8), cw = Math.round(W * (0.16 + hr(j, 2) * 0.16));
+    P(cx + 4, cy - 1, cw - 10, 1, '#F7C2A8'); P(cx, cy, cw, 1, '#F2A39A'); P(cx + 2, cy + 1, cw - 4, 1, '#C9708A'); P(cx + 6, cy + 2, cw - 14, 1, '#A8607E'); }
+  // the sun on the treetops
+  var sx = Math.round(W * 0.6), sy = G - 11, R = Math.max(8, Math.round(Math.min(W, H) * 0.1));
+  for(var yy = -R; yy <= R; yy++) for(var xx = -R; xx <= R; xx++){ var q = Math.hypot(xx, yy) / R;
+    if(q <= 1) P(sx + xx, sy + yy, 1, 1, q < 0.75 ? '#FFF1C2' : '#FFD27A'); else if(q < 1.35 && ((xx + yy) & 1)) P(sx + xx, sy + yy, 1, 1, '#F9C886'); }
+  // the woods along the back, dark against it, their tops caught by the light
+  for(var x = 0; x < W; x++){ var top = Math.round(G - 3 - (6 + 3 * Math.sin(x * 0.11) + 2 * Math.sin(x * 0.27 + 1) + (hr(x >> 2, 3) > 0.6 ? 2 : 0)));
+    P(x, top, 1, G - 3 - top, '#24382E'); P(x, top, 1, 1, '#4A5A3C'); P(x, G - 3, 1, 3, '#3E6A3A'); }
+  // the tee's grass mown in stripes, the green and the flag
+  for(var y = G; y < H; y++) for(var x = 0; x < W; x++) P(x, y, 1, 1, ((x + (y - G) * 2) >> 4) & 1 ? '#53903C' : '#4A8538');
+  for(var y = G; y < G + 4; y++){ var hw = Math.round(16 * Math.sqrt(Math.max(0, 1 - Math.pow((y - G - 1.5) / 2.5, 2)))); P(FX0 - hw, y, hw * 2, 1, '#6AB04C'); }
+  P(FX0 - 1, G + 1, 3, 1, '#0A140C'); P(FX0, G - 18, 1, 19, '#C8CDD0');
+  window.__boot = { k: k, W: W, H: H, G: G, FX0: FX0, bg: (function(){ var b = document.createElement('canvas'); b.width = W; b.height = H; b.getContext('2d').drawImage(cv, 0, 0); return b; })() };
+  P(FX0 + 1, G - 18, 6, 3, '#E4574A'); P(FX0 + 1, G - 15, 4, 1, '#E4574A');
+  // the title, in the calls' lettering: a dark outline and drop, gold lit at the top
+  var tc = document.getElementById('bootTitle'), g = tc.getContext('2d'), dpr = Math.min(3, Math.max(1, devicePixelRatio || 1));
+  var disp = getComputedStyle(document.documentElement).getPropertyValue('--disp').trim() || 'Georgia,serif', fs = Math.round(Math.min(vw * 0.1, 46));
+  var word = 'MYTHIC MULLIGAN', sp = fs * 0.06, font = '700 ' + fs + 'px ' + disp; g.font = font;
+  var lines = vw < 520 ? ['MYTHIC', 'MULLIGAN'] : [word], ws = lines.map(function(L){ return L.split('').map(function(ch){ return g.measureText(ch).width; }); });
+  var ww = Math.max.apply(null, ws.map(function(a){ return a.reduce(function(s, v){ return s + v; }, 0) + sp * (a.length - 1); }));
+  var pad = 14, TW = Math.ceil(ww + pad * 2), TH = Math.ceil(pad * 2 + fs * (1 + 1.08 * (lines.length - 1)) + 4);
+  tc.width = Math.round(TW * dpr); tc.height = Math.round(TH * dpr); tc.style.width = TW + 'px'; tc.style.height = TH + 'px';
+  g.setTransform(dpr, 0, 0, dpr, 0, 0); g.font = font; g.lineJoin = 'round'; g.textBaseline = 'alphabetic';
+  var each = function(fn){ lines.forEach(function(L, li){ var a = ws[li], lw = a.reduce(function(s, v){ return s + v; }, 0) + sp * (a.length - 1), x = (TW - lw) / 2, y0 = pad + fs * 0.82 + li * fs * 1.08;
+    for(var i = 0; i < L.length; i++){ fn(L[i], x, y0); x += a[i] + sp; } }); };
+  g.shadowColor = 'rgba(4,9,6,.7)'; g.shadowOffsetY = 3; g.strokeStyle = 'rgba(4,9,6,.82)'; g.lineWidth = 5;
+  each(function(ch, x, y){ g.strokeText(ch, x, y); });
+  g.shadowOffsetY = 0; g.shadowColor = 'rgba(4,9,6,.5)'; g.shadowBlur = 14; each(function(ch, x, y){ g.strokeText(ch, x, y); });
+  g.shadowColor = 'rgba(227,180,87,.45)'; g.shadowBlur = 6;
+  each(function(ch, x, y){ var gr = g.createLinearGradient(0, y - fs * 0.82, 0, y + fs * 0.18);
+    gr.addColorStop(0, '#FFF6D6'); gr.addColorStop(0.18, '#FFF6D6'); gr.addColorStop(0.58, '#E3B457'); gr.addColorStop(1, '#9F7E3D');
+    g.fillStyle = gr; g.fillText(ch, x, y); });
+})();
+</script>
 <div id="app">
 
   <div id="crest">
@@ -9793,6 +9876,77 @@ function showDraw(cv, dt){
     for(const k of SHOW_KEYS) SPRITE[k] = keep[k];
     c.globalAlpha = 1; c.globalCompositeOperation = 'source-over';
   }
+}
+// The loading screen's tee shot (its first frame is drawn at the top of the
+// page): him at address in his own look, his caddie by him, then the swing
+// and the ball's flight to the flag, its wake if he has one; it drops in and
+// the screen fades to the game. A tap ends it. The sky stays sunrise and his
+// effects their daytime selves, whatever the course.
+const BOOT_T = { hold: 0.35, swing: 0.9, fly: 1.15, after: 0.35, fade: 0.45 };
+const bootImpact = () => BOOT_T.hold + BOOT_T.swing * 0.5;
+const bootLand = () => bootImpact() + BOOT_T.fly;
+const bootEnd = () => bootLand() + BOOT_T.after;
+// (where he stands and how tall: room left of him for his caddie, and a
+// shot across to the flag)
+function bootLayout(B){
+  const h = Math.max(28, Math.min(48, Math.round(Math.min(B.H, B.W) * 0.28))), w = Math.round(h * 40 / 58), x = Math.round(B.W * (B.H > B.W ? 0.3 : 0.24));
+  return { h, w, x, bx: Math.round(x + w * 1.19) };
+}
+function bootDraw(c, B, t){
+  const { W, G, FX0 } = B, { h, w, x, bx } = bootLayout(B), rb = Math.max(2, Math.round(h / 22)), lb = 2.1;
+  const was = { night: Scene.night, leg: Scene.legend, fl: Scene.flourish };
+  Scene.night = false; Scene.legend = null; Scene.flourish = null;
+  try{
+    c.imageSmoothingEnabled = false; c.globalAlpha = 1; c.globalCompositeOperation = 'source-over';
+    c.drawImage(B.bg, 0, 0);
+    c.fillStyle = Math.floor(t * 2) & 1 ? PX.flag : PX.flag2; c.fillRect(FX0 + 1, G - 18, 6, 3); c.fillRect(FX0 + 1, G - 15, 4, 1);
+    const u = t - BOOT_T.hold, ph = u <= 0 ? 0 : Math.min(1, u / BOOT_T.swing);
+    const O = outfitNow(), FX = STYLEFX[O.fx] || null, spr = ph > 0.6 ? SPRITE.gFinish : SPRITE.gAddr, y = G - h;
+    if(FX && FX.ground){ FX.ground(c, golferG(x, y, w, h, ph, t, G, false, spr)); c.globalAlpha = 1; c.globalCompositeOperation = 'source-over'; }
+    paintGolfer(c, x, y, w, h, ph === 1 ? 0.999 : ph, t, G, false, 0, spr, [], undefined, true);
+    const sc = B.sc || (B.sc = Object.assign(Object.create(Scene), { fairyMoveNow: () => null, fairyNow: () => null, fairyDy: () => 0, fairyCast: null }));
+    sc.t = t;
+    if(SPRITE.caddie) Scene.drawCaddie.call(sc, c, x, y, w, h);
+    c.globalAlpha = 1; c.globalCompositeOperation = 'source-over';
+    if(t < bootImpact()) drawLyingBall(c, bx + 1, G - 2, lb, t);
+    else{
+      // the flight, a high arc down onto the flag; the ball gone into the cup
+      const q = Math.min(1, (t - bootImpact()) / BOOT_T.fly), top = Math.max(Math.round(G * 0.42), Math.round(h * 1.6));
+      const at = v => ({ x: bx + (FX0 - bx) * v, y: G - rb - top * 4 * v * (1 - v) + 2 * v * v, s: 1 });
+      if(q < 1){
+        // the way it has come, dotted: the flight is the loading bar
+        for(let v = 0; v < q - 0.04; v += 0.022){ const a = at(v); fxDot(c, a.x, a.y, 1, '#FFF6E0', 0.75); }
+        const path = []; for(let k = 0; k <= 12 && q - k * 0.028 >= 0; k++) path.push(at(q - k * 0.028));
+        const b = B.ball || (B.ball = { seed: 7.3 }), BT = BALLFX[trailNow().fx], BN = ballNow(), BB = BN && BALLFX[BN.fx];
+        b.wake = !!BT;
+        if(BT) BT(c, b, path, rb, t, q);
+        c.globalAlpha = 1; c.globalCompositeOperation = 'source-over';
+        if(BB) BB(c, b, path, rb, t, q);
+        if(!BT && !BB){ for(let k = 1; k < path.length; k += 2) fxDot(c, path[k].x, path[k].y, 1, '#FFFFFF', 0.6 * (1 - k / path.length)); flightBall(c, path[0].x, path[0].y, rb, PX.white); }
+      } else {
+        // in: a little star of light off the cup
+        const f = (t - bootLand()) / BOOT_T.after;
+        if(f < 1) for(let i = 0; i < 8; i++){ const a = i / 8 * Math.PI * 2, r = 2 + f * 9;
+          fxDot(c, FX0 + Math.cos(a) * r, G + 1 + Math.sin(a) * r * 0.45 - f * 3, 1, i & 1 ? '#FFF1C2' : '#FFFFFF', 1 - f); }
+      }
+    }
+  } finally {
+    Scene.night = was.night; Scene.legend = was.leg; Scene.flourish = was.fl;
+    c.globalAlpha = 1; c.globalCompositeOperation = 'source-over';
+  }
+}
+function bootGo(){
+  const el = document.getElementById('boot'), B = window.__boot;
+  if(!el || !B) return;
+  const cv = document.getElementById('bootCv'), c = cv.getContext('2d');
+  let t = 0, last = performance.now(), done = false;
+  const out = () => { if(done) return; done = true; el.classList.add('out'); setTimeout(() => { if(el.parentNode) el.parentNode.removeChild(el); }, BOOT_T.fade * 1000 + 80); };
+  el.addEventListener('click', out);
+  const step = now => { if(done) return;
+    t += Math.min(0.05, Math.max(0, (now - last) / 1000)); last = now;
+    try{ bootDraw(c, B, t); }catch(e){ out(); return; }
+    if(t >= bootEnd()) out(); else requestAnimationFrame(step); };
+  requestAnimationFrame(step);
 }
 function showPlay(c, V, W, H, G, cup, dt){
   if(V.set.startsWith('c:')) return showCaddie(c, V, W, G);
@@ -33937,6 +34091,7 @@ function boot(){
 
   if(had) offline(); else intro();
   checkinPop();                     // the Daily Check-In, after the away card
+  bootGo();                         // the loading screen's tee shot, and away
   try{ if(navigator.storage && navigator.storage.persist) navigator.storage.persist(); }catch(e){}
   for(const ev of ['pointerdown', 'touchend', 'click', 'keydown'])
     document.addEventListener(ev, () => Sfx.unlock(), { passive: true, capture: true });
