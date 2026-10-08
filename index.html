@@ -642,7 +642,6 @@ div.guide.hunt,div.guide.mhunt{grid-template-columns:repeat(3,minmax(0,1fr))}
 .rmain{display:flex;align-items:baseline;gap:4px;justify-self:center;letter-spacing:normal}
 #rBig{font-family:var(--mono);font-size:var(--f3);font-weight:600;color:var(--brass);line-height:1;font-variant-numeric:tabular-nums}
 .ru{font-size:var(--f0);letter-spacing:.12em;text-transform:uppercase;color:var(--faint);white-space:nowrap}
-.rsp{flex:1 1 auto;min-width:8px}
 /* With the auto-climb button beside it the box is a button narrower, and late
    on, a pot of 1.23Qa with "Running hot" beside it ran 27px out of the box on
    a 360 phone and "walking in" went onto two lines and made the box taller.
@@ -3405,7 +3404,7 @@ const B = {
       { id:'scrap',   n:'Scrap Value',  k:'scrap',   v:0.00200, cap:500, s:'%',
         d:'Shards from scrapping' },
       { id:'fit',     n:'Club Fitting', k:'fit',     v:0.00600, cap:500, s:'lv',
-        d:'Item level on drops' } ] },
+        d:'Higher-level club drops' } ] },
 
     { id:'long', n:'The Long Game', v:'--verdant', a:[
       { id:'plegacy', n:'Legacy',    k:'plegacy', v:0.00200, cap:500, s:'%',
@@ -7495,7 +7494,7 @@ function renderLeave(){
 // played, what makes you better at it, and what it pays.
 const DGN_GUIDE = {
   sand: ['Six swings, and only the longest counts.',
-         'Each swing gets its own wind, from a headwind of \u00d70.72 to a tailwind of \u00d71.38.',
+         'Each swing gets its own wind, which can shorten or lengthen it.',
          'Only your longest swing counts, so swing power and pure strike matter most. Pace does nothing here.',
          'Pays grit, by how far the longest went.'],
   water: ['Across the water to an island green, again and again.',
@@ -7519,10 +7518,10 @@ const DGN_GUIDE = {
              'Pays scrolls.']
 };
 const DGN_EVENT_SAY = {
-  'LOST BALL': '5s of the clock gone', 'PLUGGED LIE': 'this floor dug at 55% of your carry',
-  'SNAPPED SHAFT': 'this floor dug at 42% of your carry', 'CASUAL WATER': 'this floor 60% longer',
+  'LOST BALL': '5s off the clock', 'PLUGGED LIE': 'this floor at 55% of your carry',
+  'SNAPPED SHAFT': 'this floor at 42% of your carry', 'CASUAL WATER': 'this floor 60% longer',
   'GUST, PUSHED BACK': 'back up a floor', 'UNPLAYABLE, DROP': '8s of the clock gone',
-  'PERFECT LIE': 'this floor dug at 180% of your carry', 'TAILWIND': '4s back on the clock',
+  'PERFECT LIE': 'this floor at 180% of your carry', 'TAILWIND': '4s back on the clock',
   'FOUND A CACHE': 'this floor 55% shorter' };
 function wagerGuide(id){
   const d = B.DGN.find(x => x.id === id); if(!d) return;
@@ -7663,7 +7662,7 @@ function endDgnCore(d, R, D){
     }
   }else{
     Scene.depthsFlash('#E4574A');
-    rewards.push(['Nothing', 'walked away empty']);
+    rewards.push(['Nothing', 'nothing won']);
   }
 
   // the medal it earned, and what a new one paid
@@ -8874,7 +8873,7 @@ function endTournament(){
   const fm = n => n === 0 ? 'E' : n > 0 ? '+' + n : String(n);
   showSheet('<h3>' + eventName(t) + '</h3>'
     + (Wk ? '<div class="eyebrow" style="color:var(--brass)">Major of the Week</div>' : '')
-    + '<p>' + (Wk && Wk.beat ? 'Champion.' : beat ? 'You beat the number.' : 'Card posted.') + '</p>'
+    + '<p>' + (Wk && Wk.beat ? 'Champion.' : beat ? 'You beat the target.' : 'Final score') + '</p>'
     + '<div class="big">' + fm(score) + '</div>'
     + '<ul><li>Target: ' + fm(Math.round(target)) + (beat ? ' \u2014 <b style="color:var(--brass)">beaten</b>'
         : ' \u2014 missed by ' + Math.ceil(score - target)) + '</li>'
@@ -9128,7 +9127,7 @@ function openBag(bg, free){
   const line = it => '<li><span style="color:' + RC(it.rar) + '">'
     + B.RARITY[it.rar].n + '</span> \u00b7 ' + it.name + (gone.has(it) ? ' \u00b7 <i>scrapped</i>' : '') + '</li>';
   showSheet('<h3>' + bg.n + '</h3>'
-    + '<p>' + (gone.size ? bg.num + ' clubs \u00b7 ' + gone.size + ' auto-scrapped.' : bg.num + ' clubs, straight into the locker.') + '</p>'
+    + '<p>' + (gone.size ? bg.num + ' clubs \u00b7 ' + gone.size + ' auto-scrapped.' : bg.num + ' clubs added to your locker.') + '</p>'
     + '<ul>' + got.map(line).join('') + '</ul>'
     + (S.pity === 0 ? '<p style="color:var(--r5)">A Mythic. The counter resets.</p>'
        : '<p>' + (B.BAG_PITY - S.pity) + '\u00a0more bags and the next one is a guaranteed Mythic.</p>')
@@ -10477,7 +10476,7 @@ function retire(){
   startHole();
   showSheet('<h3>Retired</h3>'
     + '<div class="big">+' + fmt(gain) + ' legacy</div>'
-    + '<p>Capped upgrades gain ' + B.CAP_PER_LEGACY + '\u00a0levels \u00b7 retirement '
+    + '<p>Capped upgrades can go ' + B.CAP_PER_LEGACY + '\u00a0levels higher \u00b7 retirement '
     + S.retires + '</p><button class="act" onclick="hideSheet()">Back to the tee</button>');
   renderAll();
 }
@@ -10743,7 +10742,7 @@ function offline(){
   if(autoOff > 0) marks.push(['Auto-scrapped ' + autoOff, '+' + fmt(autoOffSh, 0) + ' ' + plural(autoOffSh, 'shards'), ic('shard', '#7FD6F2')]);
   if(scrapped > 0) marks.push(['Locker full · scrapped ' + scrapped, '+' + fmt(scrapSh, 0) + ' ' + plural(scrapSh, 'shards'), ic('shard', '#7FD6F2')]);
   if(entries > 0) marks.push(['Wager entries back', '+' + entries, ic('scroll')]);
-  if(marks.length) h += '<div class="awband">What came of it</div>'
+  if(marks.length) h += '<div class="awband">Results</div>'
     + '<div class="awlist">' + marks.map(([k, v, i]) => line(k, v, i)).join('') + '</div>';
 
   if(best){
@@ -10754,8 +10753,8 @@ function offline(){
       + '<div class="awbest" style="border-color:' + RC(best.rar) + ';box-shadow:inset 0 0 18px ' + RC(best.rar) + '33">'
       + '<img src="' + pixUrl(sl.ic, RC(best.rar)) + '" alt="">'
       + '<div><div class="awbn" style="color:' + RC(best.rar) + '">' + best.name + '</div>'
-      + '<div class="awbs">' + B.RARITY[best.rar].n + ' ' + sl.n + ' · Item level ' + best.ilvl
-      + (up ? ' · <span style="color:var(--aurora)">beats what you are carrying</span>' : '')
+      + '<div class="awbs">' + B.RARITY[best.rar].n + ' ' + sl.n + ' · Lv\u00a0' + best.ilvl
+      + (up ? ' · <span style="color:var(--aurora)">better than yours</span>' : '')
       + '</div></div></div>';
   }
 
@@ -31465,7 +31464,7 @@ function itemSheet(it, equipped){
   const canEnh = it.enh < B.ENH_MAX;
   let h = '<div class="sheethead">' + svgIcon(B.SLOTS.find(s=>s.id===it.slot).ic, 'bic', RC(it.rar))
     + '<h3 style="color:' + RC(it.rar) + ';margin:0">' + it.name + (it.enh ? ' +' + it.enh : '') + '</h3></div>';
-  h += '<p>' + B.RARITY[it.rar].n + ' ' + B.SLOTS.find(s=>s.id===it.slot).n + ' \u00b7 Item level ' + it.ilvl
+  h += '<p>' + B.RARITY[it.rar].n + ' ' + B.SLOTS.find(s=>s.id===it.slot).n + ' \u00b7 Lv\u00a0' + it.ilvl
     + (it.set && setDef(it.set) ? ' \u00b7 <span style="color:var(--aurora)">' + setDef(it.set).n + ' set</span>' : '') + '</p>';
   h += '<ul><li>Primary: +' + fmt(itemPrimary(it)*100) + '% '
      + (it.slot === 'ball' ? 'affinity power' : 'swing power') + '</li>';
@@ -32133,10 +32132,10 @@ function renderLegacy(){
       : '<div class="empty">Opens after your first event \u00b7 '
         + holesPlayed(S.hole) + ' of ' + (B.ROUND*B.DAYS) + '\u00a0holes</div>');
   if(gain > 0) $('retireBtn').onclick = () => showSheet(
-    '<h3>Sign the Card?</h3><p>Bank <b>' + fmt(gain) + '</b> legacy and restart on Card '
+    '<h3>Retire?</h3><p>Get <b>' + fmt(gain) + '</b> legacy and restart on Card '
     + cardNo(retireCard()) + '.</p><p>' + legacyBuys(P).charAt(0).toUpperCase()
     + legacyBuys(P).slice(1) + '.</p>'
-    + '<p>Wait a card: +' + fmt(P.card) + ' \u00b7 wait a cup: +' + fmt(P.cup) + '</p>'
+    + '<p>One more Tour Card: +' + fmt(P.card) + ' \u00b7 one more cup: +' + fmt(P.cup) + '</p>'
     + '<button class="act" onclick="hideSheet();retire()">Retire</button>'
     + '<button class="act ghost" onclick="hideSheet()">Keep playing</button>');
 
