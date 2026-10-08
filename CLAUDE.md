@@ -122,6 +122,8 @@ Rules that cost real time (detail in `HANDOFF.md` §4):
   the phone's memory for pictures ran out and the sky went black (77).
 - Far things by true scale on a grid; anything over the far field is cut
   where trees stand (`overTrees`).
+- The sans (Josefin) runs taller lines: give a line height where room
+  counts (79). A check counting sovereigns away counts only its own (80).
 - The harness turns heat shimmer off (`window.__noShimmer`): a check
   that wants it sets `SHIMMER_FORCE` (rule 78).
 
