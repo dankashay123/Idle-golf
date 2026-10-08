@@ -23794,7 +23794,8 @@ const Scene = {
       seg(fx, fy, Math.ceil(steps * 0.35), 1, false);
       this._bolt = { key, cv, ox };
     }
-    c.drawImage(this._bolt.cv, this._bolt.ox, 0);
+    // (in the sky: slid with it as the hole bends)
+    c.drawImage(this._bolt.cv, this._bolt.ox + (this.skySh || 0), 0);
   },
   // the flash over everything as a bolt strikes, and the storm's dark: drawn
   // over the finished frame
@@ -27142,13 +27143,15 @@ Object.assign(Scene, {
     }
     const F = this.flock;
     if(!F) return;
-    const c = this.b, k = TSC, span = VW + (F.geese ? 160 : 90) * k, u = (this.t - F.t0) * F.v * VW;
+    // (in the sky, so slid with it as the hole bends: drawn by the screen they
+    // stayed put as he turned and seemed to follow him, the user saw)
+    const c = this.b, k = TSC, span = VW + (F.geese ? 160 : 90) * k, u = (this.t - F.t0) * F.v * VW, sh = this.skySh || 0;
     if(u > span){ this.flock = null; return; }
-    if(F.geese){ this.drawGeese(c, F, u, k); return; }
+    if(F.geese){ this.drawGeese(c, F, u, k, sh); return; }
     c.fillStyle = '#343A40';
     for(let i = 0; i < F.m; i++){
       const lag = i * 8 * k + hr(F.n * 13 + i, 346) * 5 * k;
-      const px = F.dir > 0 ? Math.round(-lag + u) : Math.round(VW + lag - u);
+      const px = (F.dir > 0 ? Math.round(-lag + u) : Math.round(VW + lag - u)) + sh;
       const py = Math.round(F.y + ((i & 1) ? 1 : -1) * Math.ceil(i / 2) * 1.6 * k + Math.sin(this.t * 0.9 + i) * k);
       if(px < -4 * k || px > VW + 4 * k || py < 0) continue;
       // (wings up, level, down: three frames, not two)
@@ -27164,12 +27167,12 @@ Object.assign(Scene, {
   // trailing back from it, one a little longer; each a grey-brown body, a
   // black neck and head stretched out in front with a white chin strap,
   // and slow, deep wingbeats (up, level, down), not all in step.
-  drawGeese(c, F, u, k){
+  drawGeese(c, F, u, k, sh = 0){
     const D = F.dir;
     for(let i = 0; i < F.m; i++){
       const r = Math.ceil(i / 2), side = i & 1 ? 1 : -1, arm = side > 0 ? 1 : 1.12;
       const lag = r * 9 * k * arm + hr(F.n * 17 + i, 348) * 2 * k;
-      const lead = D > 0 ? u : VW - u;
+      const lead = (D > 0 ? u : VW - u) + sh;
       const px = Math.round(lead - D * lag), py = Math.round(F.y + side * r * 1.7 * k * arm + Math.sin(this.t * 0.7 + i) * k * 0.6);
       if(px < -10 * k || px > VW + 10 * k || py < 2 * k) continue;
       const ph = Math.floor((this.t * 4.2 + hr(F.n * 5 + i, 349) * 3) % 3);

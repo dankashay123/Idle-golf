@@ -5,7 +5,8 @@
  *   - on the tee the sky is where it always was (no slide)
  *   - round a bend the sky's clouds move across by the slide, the same
  *     picture shifted, and the slide is a real one (10px or more)
- *   - balloons and an airplane move with it
+ *   - balloons, an airplane, a flock of birds and geese move with it (the
+ *     user saw birds keep to the screen as he turned, as if following him)
  *   - the sky as built always covers the whole view, at every point of 60
  *     holes, at 320 and 440 wide and on its side
  *   - never in a wager */
@@ -63,6 +64,13 @@ module.exports = {
           { const A = lead(g => Scene.drawPlane(g), 0), Bx = lead(g => Scene.drawPlane(g), 12);
             o.plane = (A.length ? Bx[0] - A[0] : 'none'); if (!A.length || Bx[0] - A[0] !== 12) f('the airplane not moved with the sky (' + o.plane + ')'); }
           PLANE_FORCE = null; BALLOON_FORCE = null;
+          // a flock and geese, moved by the slide
+          for (const geese of [false, true]) {
+            const fl = g => { const b0 = Scene.b; Scene.b = g; Scene.night = false; Scene.rain = 0; Scene.t = 50; Scene.flockNext = 1e9;
+              Scene.flock = { t0: 47, dir: 1, y: HORIZON * 0.45, m: 7, v: 0.08, n: 3, geese }; try { Scene.drawFlock(); } finally { Scene.b = b0; Scene.flock = null; } };
+            const A = lead(fl, 0), Bx = lead(fl, 12), d = A.length && Bx.length ? Bx[Bx.length - 1] - A[A.length - 1] : 'none';   // (by the leader: one at the edge comes in with the slide)
+            o[geese ? 'geese' : 'flock'] = d; if (d !== 12) f((geese ? 'the geese' : 'the flock') + ' not moved with the sky (' + d + ')');
+          }
           // not in a wager
           { Scene.newDepthsHole({ id: B.DGN[0].id, floor: 1 }); const keep = S.dgnRun; S.dgnRun = { id: B.DGN[0].id };
             try { Scene.camD = 3; Scene.drawSky(document.createElement('canvas').getContext('2d')); if (Scene.skySh) f('the sky slid in a wager'); } finally { S.dgnRun = keep; Scene.dFloor = null; } }
@@ -70,7 +78,7 @@ module.exports = {
         return { fails, o };
       });
       r.fails.forEach(m => f(w + 'x' + h + ': ' + m));
-      o.gaps.push(w + 'x' + h + ' slide ' + r.o.sh + 'px, ' + (r.o.same * 100).toFixed(0) + '% the same moved, balloons ' + r.o.ball + ', plane ' + r.o.plane);
+      o.gaps.push(w + 'x' + h + ' slide ' + r.o.sh + 'px, ' + (r.o.same * 100).toFixed(0) + '% the same moved, balloons ' + r.o.ball + ', plane ' + r.o.plane + ', birds ' + r.o.flock + ', geese ' + r.o.geese);
     }
     if (fails.length) throw new Error(fails.join('; '));
     return ['the sky slides with the bend and covers the view at every point of 60 holes: ' + o.gaps.join('; ') + '; none on the tee or in a wager'];
