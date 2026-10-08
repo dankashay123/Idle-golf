@@ -69,6 +69,8 @@ module.exports = {
                                            o.cabinet = [document.querySelectorAll('#cabBox .shelf').length, 4];   // the trophies, the jackets, the full sets, the cups and the slam
       hideSheet();
       setView('career'); await sleep(120); o.subs   = [n('careerNav'), 4];
+                                           o.legFirst = [careerSub === 'leg' ? 1 : 0, 1];   // (Career opens on Legacy, the user asked)
+      careerSub = 'stat'; renderCareer(); await sleep(60);
                                            o.attrs  = [n('careerBody'), B.STATS.length + 1 + (S.statPts ? 1 : 0)];
       setView('leg');    await sleep(120); o.relics = [n('relicRows'), -1];   // grows as you find them
       setView('upg');
