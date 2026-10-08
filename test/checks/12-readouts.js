@@ -164,7 +164,11 @@ module.exports = {
         const boost24 = run(() => { S.boostT = 24 * 3600; }).gold;
         const boost24Left = S.boostT;
         const free = (run(() => { S.freeT = 0; }, 9), freeReady());
-        const dues = run(() => { S.member = 1; S.memberT = 0; }, 3 * 24 + 1).sov;
+        // (the allowance alone: a rare club found away can earn an honour too,
+        // by the drop's luck, which failed this one run in many)
+        let dues = 0; const e0 = window.earnSov;
+        window.earnSov = function (n, p, k) { if (k === 'member') dues += n; return e0.apply(this, arguments); };
+        try { run(() => { S.member = 1; S.memberT = 0; }, 3 * 24 + 1); } finally { window.earnSov = e0; }
         out.timed = { base, hot, hotLeft, wind, boost1, boost1Left, boost24, boost24Left, free, dues,
                       daily: B.MEMBER_DAILY, dt: Math.min(12 * 3600, B.OFFLINE_CAP + permAdd('contract') * 3600),
                       boostMult: B.BOOST_MULT };
