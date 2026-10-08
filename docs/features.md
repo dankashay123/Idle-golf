@@ -12,10 +12,10 @@ feature must do, and is usually enough on its own.
   under the nine's bar; he asked, for more course in view): one line of
   the hole, the yards (held in the middle: `.rline` is a grid
   `1fr auto 1fr`, the call and clock on the right) and the clock; the
-  yardage bar the whole width; under it `#rWx`, four fixed slots that
-  never move with their words (wind, the day's condition, blank on Fair,
-  the course's affinity, the closing hole, "Final Hole" on Sunday;
-  `hudWords`), each shrunk to fit whole (`fitWx`, 7px at least). A
+  yardage bar the whole width; under it `#rWx`, three fixed slots that
+  never move with their words (wind, the course's affinity, the closing
+  hole, "Final Hole" on Sunday; `hudWords`; the condition was a fourth
+  until it moved beside the cog, below), each shrunk to fit whole (`fitWx`, 7px at least). A
   wager's progress is a row of equal steps the bar's height (`#rStrip`).
   `hudbar` holds it.
 - **The buttons in one column down the left** (`#hudLeft`: settings,
@@ -45,6 +45,15 @@ feature must do, and is usually enough on its own.
   under `navigator.webdriver` unless `window.__bootShow`. `boot` holds it.
 - **Sound on open** (`Sfx.unlock()` at boot and on coming back); a browser
   still waits for a tap, the app will not.
+- **Then, the same day (he asked)**: the bar one height always (`.rwx`
+  keeps a fixed 12px line, kept when empty with `visibility:hidden`: it
+  dropped 16px on a calm hole with no affinity); the day's condition off
+  the bar to `#condTip`, small beside the cog over the perks' lines
+  (`#sideWords` holds both; written in `renderLive`, none on a fair day or
+  in a wager); the bar's line three slots, the affinity centred; the
+  pop-ups (toasts) at 8px; the loader's first launch always the plain look
+  (`bootFeature`, `n <= 1`); flocks, geese and a bolt slid with the sky
+  (`skySh`) as the hole bends, as balloons and planes were.
 - **The iPhone app**: the plan and what the game does for it are in
   `docs/ios-app.md`. `inApp()` keeps the developer menu off in the app
   (it read `capacitor://localhost` as this computer) and hides the Add to

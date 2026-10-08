@@ -13,23 +13,16 @@ through:
 
 ## 1. Where things stand
 
-- **Waiting (asked 8 October, do these first)**, unless already ticked
-  in `docs/features.md`'s newest section:
-  1. the yardage bar changes size now and then: hold it still;
-  2. the day's course condition moved off the bar's line (its words were
-     cut): small and quiet under the bar, a little right of the settings
-     cog, never cut or too long; the affinity centred again after;
-  3. the loot pop-ups' words a little smaller;
-  4. the loading screen shows his plain look on the first launch at least;
-  5. birds and other sky things follow the camera as he turns: they keep
-     their own path instead.
+- Everything is committed and **no request is waiting**.
 - Last done (8 October; detail in `docs/features.md`'s newest section):
-  the **hole's bar** across the top of the field with the **buttons in
-  one column** on the left; **fonts** built in (Libre Caslon for names,
+  the **hole's bar** across the top of the field (one height always, the
+  affinity centred) with the **buttons in one column** on the left and the
+  day's **condition small beside the cog**; smaller pop-ups; birds in the
+  sky slide with it as he turns; **fonts** built in (Libre Caslon for names,
   Josefin Sans for everything else); **plain words** everywhere (% for
   "pp", filler cut); Career opens on **Legacy**; a simpler retirement
   page; a **loading screen** (title, tee shot, caddie's tips, a Mythic set
-  every fourth launch); **sound on open**. Before that (6 to 8 October):
+  every fourth launch, never the first); **sound on open**. Before that (6 to 8 October):
   the Tour Pass, Membership, shop-only looks, the first pack doubled, the
   **Cyber-Drive** pass set; a free player about ten weeks to a Mythic set.
 - **The iPhone app: everything is in `docs/ios-app.md`** (read it whole
@@ -80,7 +73,8 @@ through:
 - **The hole's bar** runs the field's width right under the scorecard:
   the hole, the yards held in the middle, the clock; the yardage bar the
   whole width; the wind and the rest on one line under it, each in a
-  fixed place that never moves with its words. **The buttons go in one
+  fixed place that never moves with its words, the bar one height
+  always; the day's condition small beside the cog. **The buttons go in one
   column down the left** under it: settings, check-in, shop, medal
   (Honours stay in it), star, auto-climb. The Trophy Room's tabs: Today,
   Cabinet, Honours, Guide. The right side is the pull tab, then the map.
@@ -297,8 +291,8 @@ Every idea offered and not yet done, so none is lost:
 
 1. **The iPhone app** (`docs/ios-app.md`): the shell on his Mac first,
    then saves in the app, real purchases, TestFlight and the store.
-2. **A full check run and a look on the phone** after the waiting five
-   above: the bar, the column, the loader at 320 to 440 and on its side.
+2. **A look on his phone** at the new bar, the condition by the cog and
+   the loader, at 320 to 440 and on its side.
 3. **The Cyber-Drive on the Pass tab**: the set swinging on a small stage
    at its top, so a buyer sees what the pass gives.
 4. **A new pass set every few months**, each from a character sheet he
@@ -316,4 +310,4 @@ mountain), the other special holes for bunkers under them, snow falling
 heavier, frost melting through a round, a fog bank thinning, gusts of
 leaves, glints and variety on the gold heap, a speed pass at its foot.
 
-Recommend the waiting five first, then 1 (he is setting up his Mac for it).
+Recommend 1 (he is setting up his Mac for it), then 2.
