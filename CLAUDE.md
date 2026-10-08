@@ -43,6 +43,9 @@ game as it is, short, and move detail into `docs/`.
   the Guide), with GET ALL where there is more than one; new rewards use
   `earnSov`. Purchases pay at once. Rewards for *seeing* things are earned
   live only (never away, in a catch-up or a wager).
+- **The iPhone app** (Capacitor, built on his Mac): all of it in
+  `docs/ios-app.md`. `index.html` stays the whole game; the app is never
+  a developer copy (`inApp()`).
 - **Developer menu**: a developer copy only (this computer, a file, or a
   phone that once opened the game with `?dev`). Old `MM1` codes load only
   there.

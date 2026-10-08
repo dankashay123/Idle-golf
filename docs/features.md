@@ -6,6 +6,50 @@ feature must do, and is usually enough on its own.
 
 ## Sections, newest first
 
+### The screen, the words, the loader and the app (8 October)
+
+- **The hole's bar** (`#rRow`, a full-width bar at the top of `#stage`,
+  under the nine's bar; he asked, for more course in view): one line of
+  the hole, the yards (held in the middle: `.rline` is a grid
+  `1fr auto 1fr`, the call and clock on the right) and the clock; the
+  yardage bar the whole width; under it `#rWx`, four fixed slots that
+  never move with their words (wind, the day's condition, blank on Fair,
+  the course's affinity, the closing hole, "Final Hole" on Sunday;
+  `hudWords`), each shrunk to fit whole (`fitWx`, 7px at least). A
+  wager's progress is a row of equal steps the bar's height (`#rStrip`).
+  `hudbar` holds it.
+- **The buttons in one column down the left** (`#hudLeft`: settings,
+  check-in, shop, medal, star, auto-climb), two side by side only on a
+  short stage (`fitHudLeft`, classes `tight`/`twocol`, which also sets
+  `--rbar`). Toasts and a wager's Leave sit under the bar; the map clear
+  of it (`placeMap`).
+- **Fonts, built into the file** (base64 woff2, open licence): names,
+  titles and the gold calls in **Libre Caslon** (`--disp`); every plain
+  word and number in **Josefin Sans** (`--sans` and `--mono` both),
+  even-width figures, `font-size-adjust:0.5` to the old letters' height
+  (the display font has it off). Josefin's lines run taller: the top bars
+  (`#nineBar`, `#xpStrip`, `#crest`) have `line-height:1.12` so the course
+  keeps its room (`rareweather` caught 7px lost on its side).
+- **Plain words everywhere**: "pp" shown as %, filler lines cut, golf
+  slang and game shorthand spelled out; plurals ("2 talents"). Career
+  opens on **Legacy**, now its first page; the retirement page plain (what
+  retiring resets and keeps, legacy if you retire now). The star and medal
+  flash once in 16 to 18 seconds. Snowy holes ring the green on the map.
+- **The loading screen** (`#boot`, drawn from a small script at the top of
+  `<body>` before the rest loads; `bootGo` at the end of `boot()`): the
+  title as a film's, swept by light, over a sunrise sky; his tee shot in
+  his own look with the caddie, the ball's flight to the flag as it
+  loads, the drop into the cup, a fade; a plain caddie's tip
+  (`BOOT_TIPS`); a tap ends it. Every fourth launch (`mm_tip`) he wears a
+  Mythic set whole and it says where it is got (`bootFeature`). Skipped
+  under `navigator.webdriver` unless `window.__bootShow`. `boot` holds it.
+- **Sound on open** (`Sfx.unlock()` at boot and on coming back); a browser
+  still waits for a tap, the app will not.
+- **The iPhone app**: the plan and what the game does for it are in
+  `docs/ios-app.md`. `inApp()` keeps the developer menu off in the app
+  (it read `capacitor://localhost` as this computer) and hides the Add to
+  Home Screen asks; `exploits` checks it.
+
 ### Spending, and the Cyber-Drive (6 to 8 October)
 
 - **The pace** (he chose about ten weeks to a Mythic set for a free

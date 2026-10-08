@@ -23,6 +23,22 @@ it. Nothing of the app is built yet: the first session on his Mac starts it.
 - **Sound:** starts as the app opens (he asked) and **follows the silent
   switch** (he chose to keep that).
 
+## Starting the Mac session
+
+He opens Terminal, `cd` into his clone, pulls `main` and runs `claude`.
+A first message that works:
+
+> Read HANDOFF.md and docs/ios-app.md. Then check my Mac is ready for the
+> iPhone app (Xcode, its command line tools, Node.js) and tell me in plain
+> steps anything I need to install or click. Then build the Capacitor
+> shell as the note says, ask me for the bundle ID first, and get it
+> running in the simulator and then on my iPhone.
+
+Afterwards, a game change made in a cloud session reaches the phone with:
+"pull main, rebuild the iPhone app and run it on my phone". The free
+account's install lasts 7 days; running it again from Xcode renews it and
+keeps the save.
+
 ## What the game already does for the app
 
 - **Never a developer copy in the app.** Capacitor serves the page from

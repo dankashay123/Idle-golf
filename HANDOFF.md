@@ -13,38 +13,35 @@ through:
 
 ## 1. Where things stand
 
-- Everything is committed and **no request is waiting**. Last (6 to 8
-  October): **spending** (he wants people to pay; nothing is charged in this
-  build): a free player about ten weeks to a Mythic set; the **Tour Pass**
-  (a season a month, 30 tiers, free and paid rows, on the shop's Pass tab;
-  the paid row's top is the **Cyber-Drive** set, its tier 20 the month's
-  own look); **Club Membership** by the month; **shop-only looks** (the
-  Founder's Collection); the first sovereign pack doubled. The
-  **Cyber-Drive** is from his character sheet (a navy mech trimmed in lime,
-  purple visor, battery pack and cables, a hammer driver, a green comet
-  wake edged in magenta, a teal core); he liked it, and asked only for the
-  hammer's head to be joined to its shaft (done). Before that: the hole's
-  call shown on the iPhone, sky things, rain rings and ripples fixed to the
-  course, the snow's black box, and other scenery fixes. Detail: the first
-  sections of `docs/features.md`.
-- **Next big thing: an iPhone app** (he asked). Decided: wrap `index.html`
-  unchanged with **Capacitor** into an Xcode project (no Unity, no rewrite;
-  the checks keep running on `index.html`). Name **Mythic Mulligan**; he is
-  an individual; he has a Mac and Xcode. He starts on the **free** Apple
-  account (his own iPhone through Xcode, renewed every 7 days) and pays the
-  $99 only for TestFlight and the store. Work from his Mac's Claude Code,
-  not the cloud (Xcode needs a Mac). Ask him before fixing the bundle ID.
-  Order: the app shell and phone fit, the developer menu off for good in
-  the app, saves in the app with iCloud, real purchases (StoreKit, with
-  Restore Purchases) for the packs, Starter Pack, Tour Pass, Membership and
-  Founder's items, then TestFlight and the store page. **Sound from the moment
-  it opens** (he asked): the game already tries to start its sound at
-  once and on coming back (`Sfx.unlock()` at boot and on
-  `visibilitychange`); the app must let it, with the web view's
-  `mediaTypesRequiringUserActionForPlayback` set to none. The game asks
-  for the `ambient` audio session, so the silent switch mutes it: ask him
-  whether it should play through the switch (`playback`) instead. Notes for building
-  it go in `docs/ios-app.md` once it exists.
+- **Waiting (asked 8 October, do these first)**, unless already ticked
+  in `docs/features.md`'s newest section:
+  1. the yardage bar changes size now and then: hold it still;
+  2. the day's course condition moved off the bar's line (its words were
+     cut): small and quiet under the bar, a little right of the settings
+     cog, never cut or too long; the affinity centred again after;
+  3. the loot pop-ups' words a little smaller;
+  4. the loading screen shows his plain look on the first launch at least;
+  5. birds and other sky things follow the camera as he turns: they keep
+     their own path instead.
+- Last done (8 October; detail in `docs/features.md`'s newest section):
+  the **hole's bar** across the top of the field with the **buttons in
+  one column** on the left; **fonts** built in (Libre Caslon for names,
+  Josefin Sans for everything else); **plain words** everywhere (% for
+  "pp", filler cut); Career opens on **Legacy**; a simpler retirement
+  page; a **loading screen** (title, tee shot, caddie's tips, a Mythic set
+  every fourth launch); **sound on open**. Before that (6 to 8 October):
+  the Tour Pass, Membership, shop-only looks, the first pack doubled, the
+  **Cyber-Drive** pass set; a free player about ten weeks to a Mythic set.
+- **The iPhone app: everything is in `docs/ios-app.md`** (read it whole
+  when the app comes up). In short: `index.html` wrapped unchanged with
+  **Capacitor**; built from his **Mac's Claude Code** (Xcode needs a
+  Mac), in his clone; the free Apple account first, $99 only for
+  TestFlight and the store; ask him before choosing the bundle ID; sound
+  on open and the silent switch kept. Nothing of the shell is built yet.
+  Game work can carry on in cloud sessions: the Mac pulls `main` and
+  rebuilds. The game is ready for it: the developer menu is off in the
+  app (`inApp()`), no Add to Home Screen asks there, the fonts inside the
+  file. Write how to build and run it in `docs/ios-app.md` once it exists.
 - The scenery of 4 to 6 October (canyon, ponds, dragonflies, fireflies,
   fish, storms, planes, balloons, ducklings, steam, mist, frost, the
   rainbow's reflection, wind, leaves on the water, pins either side,
@@ -55,7 +52,7 @@ through:
   new a switch. Earlier work: the sections under it.
 - What lives by the season asks `lookSeason`: a course's own, the Snowline
   winter and the Blossom spring all year, else the month.
-- `node test/run.js` has **178 checks** (all passed 8 October), about 35 minutes: run it in the
+- `node test/run.js` has **180 checks** (all passed 8 October), about 35 minutes: run it in the
   background, on a copy in the scratchpad, with the machine quiet. After
   weather, colours or anything dated, also run it with `HOUR_FORCE` 8 and
   15 and the month pinned (rules 20 and 70).
@@ -80,11 +77,17 @@ through:
 
 ### Things the user asked for that must stay (beyond `CLAUDE.md`)
 
-- **Honours stay in the medal** (left column: settings, shop, medal,
-  star). The Trophy Room's tabs: Today, Cabinet, Honours, Guide. The
-  Check-In's calendar sits right of the cog; the right side is the pull
-  tab, then the map. The wind and weather words sit small inside the
-  readout, in the interface's sans serif.
+- **The hole's bar** runs the field's width right under the scorecard:
+  the hole, the yards held in the middle, the clock; the yardage bar the
+  whole width; the wind and the rest on one line under it, each in a
+  fixed place that never moves with its words. **The buttons go in one
+  column down the left** under it: settings, check-in, shop, medal
+  (Honours stay in it), star, auto-climb. The Trophy Room's tabs: Today,
+  Cabinet, Honours, Guide. The right side is the pull tab, then the map.
+- **Fonts**: Libre Caslon for names and titles, Josefin Sans for all
+  else (both built into the file); no blocky monospace. **Plain words**
+  anyone can follow, no filler, "%" never "pp". **Career opens on
+  Legacy.**
 - **The Bag tab** opens on the clubs: slot bar held at the top, tiles two
   to a row, sets on their own sub tab.
 - **Sounds**: the strike, putt and cup are the user's own recordings,
@@ -131,7 +134,7 @@ through:
 
 ## 3. The project
 
-- **The whole game is `index.html`** (about 29k lines, 3.2 MB): markup, CSS
+- **The whole game is `index.html`** (about 34k lines, 3.6 MB, its fonts inside): markup, CSS
   and one classic script, no build step. Play it over http (`node
   test/serve.js`, port 8080); from disk it never saves.
 - Checks are Playwright scripts in `test/checks/NN-name.js`, run by
@@ -292,18 +295,20 @@ brings it up again** (he asked to stop, 6 October): offer other things.
 
 Every idea offered and not yet done, so none is lost:
 
-1. **The iPhone app** (above): the shell first, then saves, purchases,
-   TestFlight and the store.
-2. **The Cyber-Drive on the Pass tab**: the set swinging on a small stage
+1. **The iPhone app** (`docs/ios-app.md`): the shell on his Mac first,
+   then saves in the app, real purchases, TestFlight and the store.
+2. **A full check run and a look on the phone** after the waiting five
+   above: the bar, the column, the loader at 320 to 440 and on its side.
+3. **The Cyber-Drive on the Pass tab**: the set swinging on a small stage
    at its top, so a buyer sees what the pass gives.
-3. **A new pass set every few months**, each from a character sheet he
+4. **A new pass set every few months**, each from a character sheet he
    sends, built as the Cyber-Drive was.
-4. **Check paying is clearly quicker**: a pass buyer against a free player
+5. **Check paying is clearly quicker**: a pass buyer against a free player
    over the ten weeks.
-5. **A look over the shop on the phone**: the Pass tab and the new
-   shelves at 320 to 440 wide and on its side.
 6. **Her Cyber-Drive**: the female golfer in every pose in it.
 7. **A dot for a Tour Pass tier** ready to take (only when one waits).
+8. **The app icon at 1024** drawn from the home screen icon, ready for
+   the store.
 
 Held for when he raises scenery again (he asked to stop): look at the new
 things on the phone (soft cloud shadows, the score call, the gold
@@ -311,4 +316,4 @@ mountain), the other special holes for bunkers under them, snow falling
 heavier, frost melting through a round, a fog bank thinning, gusts of
 leaves, glints and variety on the gold heap, a speed pass at its foot.
 
-Recommend 1 (he is setting up his Mac for it), then 2.
+Recommend the waiting five first, then 1 (he is setting up his Mac for it).
