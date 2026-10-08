@@ -108,7 +108,8 @@ module.exports = {
         S.yards = 0; S.cperkT = B.CPERK_EVERY; tickCaddie(0); o.lines.readyDone = L();
         o.want = { tempo: hex(B.CPERKS.find(p => p.id === 'tempo').col), scout: hex(B.CPERKS.find(p => p.id === 'scout').col) };
 
-        // where it sits
+        // where it sits (on a fair day: a day's condition takes the cog's row)
+        S.chaos = Object.assign({}, B.CHAOS[0]); renderLive();
         fire('towel'); buffTip(0);
         // (from the last button on the cog's row: the Daily Check-In's
         // calendar stands right of the cog, and the line comes after it)
@@ -122,7 +123,11 @@ module.exports = {
         // (the user asked: their icons on the field sat behind the shop)
         const lines = () => [...$('buffTip').children].map(n => ({ k: n.dataset.k, txt: n.textContent, col: n.style.color, op: n.style.opacity,
           mid: Math.round((n.getBoundingClientRect().top + n.getBoundingClientRect().bottom) / 2 - (s.top + s.bottom) / 2) }));
+        // (on a fair day: the day's condition takes the cog's row, the perks under it)
         S.perkOn = { hot: 460 }; buffTip(0); o.stack = { two: lines() };
+        S.chaos = Object.assign({}, B.CHAOS.find(x => x.n === 'Cart Path Only')); renderLive();
+        { const q = $('condTip').getBoundingClientRect(), l = lines(); o.stack.cond = { mid: Math.round((q.top + q.bottom) / 2 - (s.top + s.bottom) / 2), under: l.length && l[0].mid - Math.round((q.top + q.bottom) / 2 - (s.top + s.bottom) / 2) }; }
+        S.chaos = Object.assign({}, B.CHAOS[0]); renderLive();
         // the caddie's runs out: the sponsor's moves up to the cog's row
         delete S.buff[B.CPERKS.find(p => p.id === 'towel').k]; buffTip(0); o.stack.up = lines();
         // a caddie perk goes off again: under the one already showing
@@ -162,6 +167,7 @@ module.exports = {
     const brass = hx(r.brass), rows = a => a.map(x => x.k + ' "' + x.txt + '" at ' + x.mid).join('; ');
     if (St.two.length !== 2 || St.two[0].k !== 'c' || St.two[1].k !== 'p:hot' || St.two[1].txt !== '5\u00d7 purse for 7:40' || St.two[1].col !== brass || Math.abs(St.two[0].mid) > 4 || !(St.two[1].mid > 8))
       f('a caddie perk and Hot Streak running read: ' + rows(St.two));
+    if (Math.abs(St.cond.mid) > 4 || !(St.cond.under > 6)) f('the day\'s condition not on the cog\'s row with the perks under it: ' + JSON.stringify(St.cond));
     if (St.up.length !== 1 || St.up[0].k !== 'p:hot' || Math.abs(St.up[0].mid) > 4) f('the caddie\'s line gone, the rest did not move up to the cog: ' + rows(St.up));
     if (St.again.map(x => x.k).join() !== 'p:hot,c' || St.again[1].txt !== '+20% pace for 8s') f('a caddie perk going off again did not go under the one showing: ' + rows(St.again));
     if (St.three.map(x => x.k + ' ' + x.txt).join('|') !== 'p:hot 5\u00d7 purse for 60s|c +20% pace for 8s|p:coffee 2\u00d7 pace for 5:00' && St.three.map(x => x.k + ' ' + x.txt).join('|') !== 'p:hot 5\u00d7 purse for 59s|c +20% pace for 8s|p:coffee 2\u00d7 pace for 5:00')

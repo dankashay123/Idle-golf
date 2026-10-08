@@ -922,8 +922,15 @@ div.guide.hunt,div.guide.mhunt{grid-template-columns:repeat(3,minmax(0,1fr))}
    under the row (fitHudLeft). */
 #hudLeft.tight{gap:4px}
 #hudLeft.twocol{flex-wrap:wrap;align-content:flex-start;gap:4px 6px}
-#hudLeft.twocol #buffTip{left:72px}
-#buffTip{position:absolute;left:38px;top:calc(50% - .625em);max-width:calc(100vw - 90px);font-family:var(--mono);font-size:var(--f2);font-weight:600;
+#hudLeft.twocol #sideWords{left:72px}
+/* beside the cog: the day's course condition, small and quiet (the user
+   asked, its words cut short in the hole's bar), then what is running */
+#sideWords{position:absolute;left:38px;top:calc(50% - .625em);max-width:calc(100vw - 90px);
+  display:flex;flex-direction:column;align-items:flex-start;min-width:0;pointer-events:none}
+#condTip{font-size:var(--f0);letter-spacing:.1em;text-transform:uppercase;font-weight:600;color:var(--faint);
+  white-space:nowrap;line-height:1.25em;text-shadow:0 0 2px #000,0 1px 2px #000}
+#condTip:empty{display:none}
+#buffTip{font-family:var(--mono);font-size:var(--f2);font-weight:600;max-width:100%;
   display:flex;flex-direction:column;align-items:flex-start;min-width:0;pointer-events:none}
 #buffTip .bl{display:block;max-width:100%;line-height:1.25em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
   text-shadow:0 0 2px #000,0 1px 2px #000,0 0 1px #000;transition:opacity .25s}
@@ -988,11 +995,14 @@ div.guide.hunt,div.guide.mhunt{grid-template-columns:repeat(3,minmax(0,1fr))}
    words over the map having grown too big), each item kept whole and the
    line wrapping between them. */
 .rwx .aff{font-size:.72em;letter-spacing:.04em;margin:0 .15em 0 .3em;opacity:.85}
-.rwx{display:grid;grid-template-columns:minmax(0,.78fr) minmax(0,1.2fr) minmax(0,.82fr) minmax(0,1.2fr);column-gap:4px;text-align:center;
-  font-size:var(--f0);letter-spacing:.1em;text-transform:uppercase;font-weight:700;margin-top:4px;line-height:1.35;
+/* (three slots, the affinity in the middle under the yards; one fixed height
+   whatever the words or their size, empty or not, so the bar never changes
+   size: the user saw it grow and shrink as the line came and went) */
+.rwx{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));column-gap:4px;text-align:center;
+  font-size:var(--f0);letter-spacing:.1em;text-transform:uppercase;font-weight:700;margin-top:4px;height:12px;line-height:12px;
   white-space:nowrap;overflow:hidden}
 .rwx span{overflow:hidden;text-overflow:ellipsis;justify-self:center;max-width:100%}
-.rwx[hidden]{display:none}
+.rwx[hidden]{display:grid;visibility:hidden}
 .rwx span{white-space:nowrap}
 .rwx i{font-style:normal;color:var(--faint);padding:0 3px}
 #perkIcon{display:block;width:24px;height:24px;object-fit:contain;
@@ -1291,7 +1301,7 @@ div.guide.hunt,div.guide.mhunt{grid-template-columns:repeat(3,minmax(0,1fr))}
     </div>
     <!-- and the buttons in one column down the left under it -->
     <div id="hudLeft">
-    <div id="setRow"><button id="setBtn" aria-label="Settings"><img id="setIcon" alt=""></button><span id="buffTip" aria-live="polite"></span></div>
+    <div id="setRow"><button id="setBtn" aria-label="Settings"><img id="setIcon" alt=""></button><span id="sideWords"><span id="condTip"></span><span id="buffTip" aria-live="polite"></span></span></div>
     <button id="calBtn" aria-label="Daily Check-In"><img id="calIcon" alt=""><span id="calDot"></span></button>
     <button id="shopBtn" aria-label="Pro shop"><img id="shopIcon" alt=""><span id="shopDot"></span></button>
     <button id="roomBtn" aria-label="Trophy Room"><img id="roomIcon" alt=""><span id="roomDot"></span><span id="roomHunt"></span></button>
@@ -29439,12 +29449,11 @@ Object.assign(Scene, {
       L.push([this.wind < 0 ? arrow.replace(/>/g, '<') + ' ' + mph + '\u00a0mph' : mph + '\u00a0mph ' + arrow,
               mph >= 14 ? PX.brass : PX.bone]);
     }
-    // (only what matters on the hole, the user asked: the wind, the day's
-    // condition, the course's affinity and the closing hole, each in a slot of
-    // its own across the bar, so nothing moves as the words change)
+    // (only what matters on the hole, the user asked: the wind, the course's
+    // affinity in the middle and the closing hole, each in a slot of its own
+    // across the bar, so nothing moves as the words change)
     if(!L.length) L.push(['', '']);
-    const ch = S.chaos && S.chaos.n !== 'Fair' ? S.chaos.n : '';
-    L.push([ch, ch ? 'var(--chalk)' : '']);
+    // (the day's condition is beside the cog now: condTip)
     if(S.courseEl){
       const e = B.ELEM.find(x => x.id === S.courseEl);
       // (said as the course's affinity: "STORM-" read as the weather once
@@ -29457,7 +29466,7 @@ Object.assign(Scene, {
     // the signature holes needed for themselves: it is the closing hole now,
     // and a signature hole says which one it is.
     if(S.armor > 0) L.push([isSunday(S.hole) ? 'Final Hole' : 'Closing Hole', PX.flag]);
-    if(PINS_LIT && L.length < 4) L.push(['Switches On', '#E07A5A']);
+    if(!S.armor) L.push(PINS_LIT ? ['Switches On', '#E07A5A'] : ['', '']);
     this.hudWords(L);
   },
   // The words go in the readout, written only when they change.
@@ -31080,6 +31089,8 @@ function renderLive(D){
   setText($('gold'), fmt(S.gold));
   setText($('rate'), fmt(Meter.shown()) + ' purse/sec');
   setText($('sovNum'), sovFmt(S.sov));
+  // the day's course condition beside the cog, small (none on a fair day or in a wager)
+  setText($('condTip'), !S.dgnRun && S.chaos && S.chaos.n !== 'Fair' ? S.chaos.n : '');
   // The yardage, the bar and the clock used to be written here as well, into
   // three more elements the old stage HUD took with it. This runs every frame,
   // so that was four lookups, a clamp and two string builds at sixty a second

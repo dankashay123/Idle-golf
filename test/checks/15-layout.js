@@ -231,6 +231,7 @@ module.exports = {
           }
         }
 
+        const hudLeftWide = hl => { const sw = hl.querySelector('#sideWords'); if (!sw) return false; const was = sw.style.display; sw.style.display = 'none'; const ok = hl.scrollWidth - hl.clientWidth <= 0.5; sw.style.display = was; return ok; };
         // text that runs out of its box with nothing to catch it
         for (const e of $('stage').querySelectorAll('*')) {
           if (!e.clientWidth || e.scrollWidth - e.clientWidth <= 0.5) continue;
@@ -238,6 +239,8 @@ module.exports = {
           // A badge pinned outside its own corner widens scrollWidth without
           // anything being wrong: the shop button's "new" dot sits at -8%.
           if ([...e.children].some(k => getComputedStyle(k).position === 'absolute')) continue;
+          // (the words beside the cog hang out of the button column on purpose)
+          if (e.id === 'hudLeft' && hudLeftWide(e)) continue;
           o.cut.push((e.id || e.className) + ' by ' + (e.scrollWidth - e.clientWidth));
         }
 
