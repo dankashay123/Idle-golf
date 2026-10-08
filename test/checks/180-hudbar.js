@@ -21,9 +21,9 @@ module.exports = {
       await page.waitForTimeout(250);
       const r = await page.evaluate(() => {
         hideSheet(); setView('upg');
-        // the longest weather line the game writes: wind, weather, affinity, a signature hole, the closing hole
+        // the longest line the game writes there: the wind, the course's affinity, the closing hole (on a Sunday)
         const wx = document.getElementById('rWx');
-        wx.innerHTML = ['<span>18 MPH &gt;&gt;</span>', '<span>THUNDERSTORM</span>', '<span>SPONSOR DAY</span>', '<span>EMBER<small class="aff">AFF</small></span>', '<span>ISLAND GREEN</span>', '<span>CLOSING HOLE</span>'].join('<i>·</i>');
+        wx.innerHTML = '<span class="w0">&lt;&lt;&lt; 18\u00a0MPH</span><span class="w1">STORM<small class="aff">AFF</small>+</span><span class="w2">CHAMPIONSHIP</span>';
         wx.hidden = false; Scene._hwKey = 'test'; fitHudLeft();
         const R = id => document.getElementById(id).getBoundingClientRect();
         const st = R('stage'), nb = R('nineBar'), bar = R('rRow'), fill = document.querySelector('#readout .rbar').getBoundingClientRect(), line = document.querySelector('#readout .rline').getBoundingClientRect();
@@ -32,10 +32,13 @@ module.exports = {
         const cut = shown.some(c => c.getBoundingClientRect().right > wx.getBoundingClientRect().right + 0.5);
         const btns = ['setBtn', 'calBtn', 'shopBtn', 'roomBtn', 'perkBtn', 'hudClimb'].map(id => R(id));
         const lefts = [...new Set(btns.map(b => Math.round(b.left)))];
-        const toasts = R('toasts');
+        const toasts = R('toasts'), mid = R('stage').left + R('stage').width / 2;
+        // the yards in the middle whatever the call says either side
+        const yards = []; for (const [tag, clock] of [['', '0.0 / 10s'], ['Albatross', '10.0 / 15s'], ['Par', '1.2 / 10s']]) {
+          document.getElementById('rTag').textContent = tag; document.getElementById('rTopR').textContent = clock; const q = document.querySelector('#readout .rmain').getBoundingClientRect(); yards.push(q.left + q.width / 2 - mid); }
         const out = { st: [st.top, st.width], nb: nb.bottom, bar: [bar.top, bar.bottom, bar.width], fill: fill.width, line: line.height, rh: R('rTop').height,
           wxh: wx.getBoundingClientRect().height, lh, cut, shown: shown.length, cols: lefts.length, btnTop: Math.min(...btns.map(b => b.top)), toastTop: toasts.top,
-          two: document.getElementById('hudLeft').classList.contains('twocol') };
+          two: document.getElementById('hudLeft').classList.contains('twocol'), yards };
         Scene._hwKey = null; wx.hidden = true;
         return out;
       });
@@ -46,10 +49,11 @@ module.exports = {
       if (r.line > r.rh * 1.9) f(at + 'the hole, the yards and the clock on more than one line (' + Math.round(r.line) + 'px)');
       if (r.wxh > r.lh * 1.5) f(at + 'the weather on more than one line (' + Math.round(r.wxh) + 'px, a line ' + Math.round(r.lh) + ')');
       if (r.cut) f(at + 'the weather line cut mid-word');
+      if (r.yards.some(v => Math.abs(v) > 1.5)) f(at + 'the yards off the middle by ' + r.yards.map(v => v.toFixed(1)).join('/') + 'px as the call changes');
       if (r.cols !== 1 && !(r.two && r.cols === 2)) f(at + 'the buttons in ' + r.cols + ' columns');
       if (r.btnTop < r.bar[1]) f(at + 'a button up in the bar');
       if (r.toastTop < r.bar[1]) f(at + 'the toasts over the bar');
-      o.push(W + 'x' + H + ' bar ' + Math.round(r.bar[1] - r.bar[0]) + 'px, ' + r.shown + ' of 6 weather items, ' + r.cols + (r.cols > 1 ? ' columns' : ' column'));
+      o.push(W + 'x' + H + ' bar ' + Math.round(r.bar[1] - r.bar[0]) + 'px, ' + r.shown + ' of 3 items, ' + r.cols + (r.cols > 1 ? ' columns' : ' column'));
     }
     await page.setViewportSize({ width: 400, height: 860 });
     if (fails.length) throw new Error(fails.join('; '));

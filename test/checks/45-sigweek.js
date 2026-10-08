@@ -2,8 +2,9 @@
  *
  * One kind of signature hole a real week (Monday to Sunday, like the majors
  * of the week) pays its holes double. Where it is played it is marked: a
- * brass frame and a sparkle on the hole map, "x2" after its name in the
- * corner, and the tee says so. The Trophy Room's Today page names it.
+ * brass frame and a sparkle on the hole map, and the tee says so (its name
+ * and "x2" are no longer under the hole's bar: the user asked for only the
+ * wind, the affinity and the closing hole there). The Trophy Room's Today page names it.
  *
  *   - which kind: every block of five weeks holds all five, no kind comes two
  *     weeks running, and each major of the week meets each kind; it turns on
@@ -268,10 +269,11 @@ module.exports = {
       const at = s.size + ', a ' + (x.kind || 'plain') + ' hole in ' + x.wk + ' week';
       const mine = !!x.kind && x.kind === x.wk;
       if (mine) {
-        if (x.sig !== SIG_NAME_UP(x.kind) + ' ×2') f(at + ': the corner reads ' + JSON.stringify(x.sig) + ', not ' + SIG_NAME_UP(x.kind) + ' ×2');
+        // (the line under the hole's bar no longer names it: the user asked for the wind, the affinity and the closing hole only)
+        if (x.sig) f(at + ': the line under the bar names it: ' + JSON.stringify(x.sig));
         if (!/Hole of the Week/.test(x.toast) || !/pays\s2×/i.test(x.toast)) f(at + ': the tee said ' + JSON.stringify(x.toast));
       } else {
-        if (x.kind && x.sig !== SIG_NAME_UP(x.kind)) f(at + ': the corner reads ' + JSON.stringify(x.sig));
+        if (x.sig) f(at + ': the line under the bar names it: ' + JSON.stringify(x.sig));
         if (/Week|2×/.test(x.toast)) f(at + ': the tee said ' + JSON.stringify(x.toast));
         if (x.kind && !/Signature Hole/.test(x.toast)) f(at + ': the tee did not say it is a signature hole: ' + JSON.stringify(x.toast));
       }
@@ -314,7 +316,7 @@ module.exports = {
       'priced x2 on its own holes of every course and nowhere else (' + Object.keys(d).map(k => d[k] + ' ' + k).join(', ')
         + ' hole-weeks), and played out the same card pays x' + P.ratio.toFixed(2) + ' the money',
       'the away model prices holes as they are played, the week\'s and every round\'s first; the event\'s cheque does not move',
-      'marked where it is played: brass frame and sparkle on the map (never on the green), x2 in the corner, the tee says so; '
+      'marked where it is played: brass frame and sparkle on the map (never on the green), the tee says so, nothing under the bar; '
         + maps + ' maps over ' + SIZES.length + ' sizes; Today names it'];
   }
 };

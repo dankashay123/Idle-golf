@@ -626,17 +626,21 @@ div.guide.hunt,div.guide.mhunt{grid-template-columns:repeat(3,minmax(0,1fr))}
    in the pixel font it was legible but bulky, and it could not match anything
    else on screen. */
 #readout{position:relative;min-width:0;
-  background:rgba(6,12,9,.74);border-bottom:1px solid #1B3A2E;border-radius:0;
+  background:rgba(6,12,9,.9);border-bottom:1px solid #1B3A2E;border-radius:0;
   padding:3px 10px 4px;backdrop-filter:blur(2px);pointer-events:none}
 /* nowrap and a fixed gap meant the hole label and the clock simply ran out of
    the box on a narrow phone -- measured 6px past it at 320. The clock keeps its
    width, the hole label gives way with an ellipsis. */
-.rline{display:flex;justify-content:space-between;align-items:baseline;gap:8px;font-size:var(--f0);letter-spacing:.14em;
+/* three columns, the yards always in the middle whatever the words either
+   side of them say (the user asked: they moved with the call) */
+.rline{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:baseline;column-gap:10px;font-size:var(--f0);letter-spacing:.12em;
   text-transform:uppercase;color:var(--faint);font-weight:700;white-space:nowrap}
+.rline #rTop{justify-self:start}
+.rright{justify-self:end;display:flex;align-items:baseline;gap:8px;min-width:0;max-width:100%}
 .rline #rTop{min-width:0;overflow:hidden;text-overflow:ellipsis}
-.rline #rTopR{flex:0 0 auto}
-.rmain{display:flex;align-items:baseline;gap:3px;min-width:0;letter-spacing:normal}
-#rBig{font-family:var(--mono);font-size:var(--f3);font-weight:600;color:var(--brass);line-height:1}
+.rline #rTopR{flex:0 0 auto;font-variant-numeric:tabular-nums}
+.rmain{display:flex;align-items:baseline;gap:4px;justify-self:center;letter-spacing:normal}
+#rBig{font-family:var(--mono);font-size:var(--f3);font-weight:600;color:var(--brass);line-height:1;font-variant-numeric:tabular-nums}
 .ru{font-size:var(--f0);letter-spacing:.12em;text-transform:uppercase;color:var(--faint);white-space:nowrap}
 .rsp{flex:1 1 auto;min-width:8px}
 /* With the auto-climb button beside it the box is a button narrower, and late
@@ -645,8 +649,8 @@ div.guide.hunt,div.guide.mhunt{grid-template-columns:repeat(3,minmax(0,1fr))}
    The call gives way with an ellipsis, as the hole label above it does, and
    the unit keeps to one line. */
 #rTag{font-size:var(--f0);letter-spacing:.12em;text-transform:uppercase;font-weight:700;white-space:nowrap;
-  min-width:0;overflow:hidden;text-overflow:ellipsis;margin-left:5px}
-.rbar{height:5px;background:#12251C;border-radius:0;margin-top:3px;overflow:hidden}
+  min-width:0;overflow:hidden;text-overflow:ellipsis}
+.rbar{height:5px;background:#12251C;border-radius:0;margin-top:4px;overflow:hidden;box-shadow:inset 0 0 0 1px rgba(0,0,0,.35)}
 .rbar i{display:block;height:100%;width:0;background:var(--rc,var(--brass));transition:width .12s linear}
 /* The wager strip. One readout template served all four contests, so a drive
    contest and an endurance crawl differed by the words in them and nothing
@@ -964,8 +968,10 @@ div.guide.hunt,div.guide.mhunt{grid-template-columns:repeat(3,minmax(0,1fr))}
    words over the map having grown too big), each item kept whole and the
    line wrapping between them. */
 .rwx .aff{font-size:.72em;letter-spacing:.04em;margin:0 .15em 0 .3em;opacity:.85}
-.rwx{font-size:var(--f0);letter-spacing:.1em;text-transform:uppercase;font-weight:700;margin-top:3px;line-height:1.35;
-  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rwx{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);column-gap:10px;
+  font-size:var(--f0);letter-spacing:.1em;text-transform:uppercase;font-weight:700;margin-top:4px;line-height:1.35;
+  white-space:nowrap;overflow:hidden}
+.rwx .w0{justify-self:start}.rwx .w1{justify-self:center}.rwx .w2{justify-self:end}
 .rwx[hidden]{display:none}
 .rwx span{white-space:nowrap}
 .rwx i{font-style:normal;color:var(--faint);padding:0 3px}
@@ -1218,7 +1224,7 @@ div.guide.hunt,div.guide.mhunt{grid-template-columns:repeat(3,minmax(0,1fr))}
          wind and the rest on one line under it. -->
     <div id="rRow">
     <div id="readout">
-      <div class="rline"><span id="rTop">Hole 1 &middot; Par 4</span><span class="rmain"><b id="rBig">0</b><span class="ru" id="rUnit">yds</span><span id="rTag"></span></span><span id="rTopR">0.0 / 15s</span></div>
+      <div class="rline"><span id="rTop">Hole 1 &middot; Par 4</span><span class="rmain"><b id="rBig">0</b><span class="ru" id="rUnit">yds</span></span><span class="rright"><span id="rTag"></span><span id="rTopR">0.0 / 15s</span></span></div>
       <div class="rbar"><i id="rFill"></i></div>
       <div class="rstrip" id="rStrip" hidden></div>
       <div class="rwx" id="rWx" hidden></div>
@@ -25688,6 +25694,8 @@ Object.assign(Scene, {
       g.fillRect(l, yy, Math.max(1, r - l), 1);
     };
     const step = 0.5 / k;
+    const lum = h => { const n = parseInt(String(h).slice(1, 7), 16); return 0.3 * (n >> 16) + 0.59 * ((n >> 8) & 255) + 0.11 * (n & 255); };
+    const ring = Math.abs(lum(T.gr[4]) - lum(T.apron)) < 40 || lum(T.gr[4]) > 170 ? 1.2 / kx : 0, ringCol = '#2C3A30';
     for(let d = d0; d <= d1; d += step){
       if(d > -0.5 && d < LEN + 7){ const hw = this.fwWidth(d); span(d, -hw, hw, [T.fw[4], T.fw[5]], true); }
       for(const hz of this.bunkers){ const sp = this.hazSpan(hz, d); if(sp) span(d, hz.x - sp.l, hz.x + sp.r, T.sd[4]); }
@@ -25696,6 +25704,10 @@ Object.assign(Scene, {
       // lake runs all the way round it
       const gd = d - LEN;
       if(Math.abs(gd) < 8.6){ const a = 3.05 * Math.sqrt(1 - (gd/8.6)*(gd/8.6)); span(d, -a, a, T.apron); }
+      // (ringed in a dark line where it hardly stands out from its apron: in
+      // the snow the two were near white, and the user could not find the
+      // green on the map)
+      if(ring && Math.abs(gd) < 7.5 + ring){ const a = (2.35 + ring) * Math.sqrt(Math.max(0, 1 - (gd/(7.5 + ring))*(gd/(7.5 + ring)))); span(d, -a, a, ringCol); }
       if(Math.abs(gd) < 7.5){ const a = 2.35 * Math.sqrt(1 - (gd/7.5)*(gd/7.5)); span(d, -a, a, T.gr[4]); }
     }
     // the tee
@@ -29353,8 +29365,10 @@ Object.assign(Scene, {
       L.push([this.wind < 0 ? arrow.replace(/>/g, '<') + ' ' + mph + '\u00a0mph' : mph + '\u00a0mph ' + arrow,
               mph >= 14 ? PX.brass : PX.bone]);
     }
-    L.push([S.chaos ? S.chaos.n : 'Fair', 'var(--dim)']);
-    if(PINS_LIT) L.push(['Switches On', '#E07A5A']);
+    // (only what matters on the hole, the user asked: the wind, the course's
+    // affinity and the closing hole; the day's conditions and the signature
+    // hole's name are gone from here)
+    if(!L.length) L.push(['', '']);
     if(S.courseEl){
       const e = B.ELEM.find(x => x.id === S.courseEl);
       // (said as the course's affinity: "STORM-" read as the weather once
@@ -29362,14 +29376,12 @@ Object.assign(Scene, {
       // ("aff" small between, to keep the readout to its lines: in full,
       // "affinity" wrapped it and pushed the buttons under it down)
       L.push([e.n, PX[S.courseEl] || PX.bone, 'aff', D.reson > 1 ? '+' : D.reson < 1 ? '-' : '']);
-    }
-    // (and the signature hole of the week says what it pays)
-    const sk = sigKind(S.hole);
-    if(sk) L.push([SIG_NAME[sk] + (sk === sigWeek() ? ' \u00d7' + B.SIG_WEEK_MULT : ''), PX.brass]);
+    } else L.push(['', '']);
     // The round's last hole plays harder. It was called SIGNATURE here, which
     // the signature holes needed for themselves: it is the closing hole now,
     // and a signature hole says which one it is.
     if(S.armor > 0) L.push([isSunday(S.hole) ? 'Championship' : 'Closing Hole', PX.flag]);
+    if(PINS_LIT && L.length < 3) L.push(['Switches On', '#E07A5A']);
     this.hudWords(L);
   },
   // The words go in the readout, written only when they change.
@@ -29379,9 +29391,9 @@ Object.assign(Scene, {
     const key = L ? L.map(l => l.join('|')).join('/') : 'off';
     if(key === this._hwKey) return;
     this._hwKey = key;
-    if(!L || !L.length){ el.hidden = true; el.innerHTML = ''; return; }
+    if(!L || !L.some(l => l[0])){ el.hidden = true; el.innerHTML = ''; return; }
     const esc = t => t.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-    el.innerHTML = L.map(l => '<span style="color:' + l[1] + '">' + esc(l[0]) + (l[2] ? '<small class="aff">' + esc(l[2]) + '</small>' : '') + (l[3] ? esc(l[3]) : '') + '</span>').join('<i>\u00b7</i> ');
+    el.innerHTML = L.map((l, i) => '<span class="w' + i + '" style="color:' + (l[1] || 'inherit') + '">' + esc(l[0]) + (l[2] ? '<small class="aff">' + esc(l[2]) + '</small>' : '') + (l[3] ? esc(l[3]) : '') + '</span>').join('');
     el.hidden = false;
     fitHudLeft();
   },
@@ -32285,7 +32297,9 @@ function renderCadPerks(){
   // caddie is gone, the skins aren't valuable")
   { const box = document.createElement('div'); box.className = 'errbox';
     const E = S.errand, D = E && errDef(E.id);
-    let h = '<div class="eyebrow" style="margin:10px 0 4px">Errands</div>';
+    // (a heading like the panel's others, lined up with the rows: it stood
+    // out at the left edge, the user saw)
+    let h = '<div class="band"><span class="eyebrow">Errands</span></div>';
     const haul = D0 => D0.pay.map(r => ciLook(r)[3]).join(' \u00b7 ');
     if(!E) h += B.ERRANDS.map(D0 => '<div class="row err"><div><div class="nm">' + D0.n + '</div><div class="ds">' + haul(D0) + '</div></div>'
       + '<button class="buy" data-err="' + D0.id + '"><span class="lbl">Send</span><span class="amt">' + D0.h + 'h</span></button></div>').join('');
