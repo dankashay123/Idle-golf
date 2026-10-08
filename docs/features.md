@@ -6,6 +6,42 @@ feature must do, and is usually enough on its own.
 
 ## Sections, newest first
 
+### Spending, and the Cyber-Drive (6 to 8 October)
+
+- **The pace** (he chose about ten weeks to a Mythic set for a free
+  player): the rival pays 3 a win and 12 a series (`RIVAL_SOV`,
+  `RIVAL_SERIES`), the repeating honours each half as often (`ACH_REP`
+  steps doubled); simulated over 75 days, the 9,500 set on days 37 to 58
+  or not at all (the fair card gates it). Paying must be the quicker way.
+- **The Tour Pass** (`PASS`, `passNow`, `passReward`, `passGive`,
+  `passHtml`, the shop's Pass tab): a season a calendar month, points from
+  the dailies (30 each, 30 for all three), the Check-In (20) and every 10
+  holes played live, 150 a tier, 30 tiers; a free row as reached, a paid
+  row ($9.99, nothing charged) once bought. The paid row: about 1,000
+  sovereigns, two days of Double Purse (tiers 5 and 25), a Legend Bag
+  (15), the month's look and caddie (`PASS_LOOK`, outfits `pass0`..`pass11`,
+  tier 20) and the **Cyber-Drive** set at tier 30, or `PASS.CYBER_SOV`
+  (300) once he has it. GET and GET ALL; the shop's dot while one waits.
+- **Club Membership** by the month (`S.member` 2 to `S.memberEnd`, 30
+  days, again adds 30; 1 is for good, kept); **the first pack doubled**
+  (`firstPackOn`); **shop-only looks** (`usd`: the Founder's Blazer, its
+  caddie, Founder's Gold) on Shop Only shelves.
+- **The Cyber-Drive** (`STYLEFX.cyber`; pieces `passSet`, never sold;
+  `FULL_SETS.cyber` with `pass`, off `SET_ORDER`): after his character
+  sheet. A helmet with a purple visor and ear modules (`cyberHelm`, side
+  and back), lime pauldrons (`cyberPaul`), a battery pack at his back
+  (`cyberPack`, leaning with him; over his back walking away) with cables
+  of green and magenta to his helmet, power pulsing up them as he winds
+  up; a calibration pad under him (`cyberPad`, its lime ring turning); on a
+  strike a lime ring and his visor flaring back; on an albatross or ace
+  lime bits and magenta sparks from his outline, silent. After dark the
+  visor and pack glow (the pack's under it). The hammer (`CLUBFX.cyber`):
+  a green shaft with a white pulse, its head drawn in `over` square across
+  the shaft's end (he said the first looked like a block apart from it).
+  The wake `cyberwake` (`tCyber`) and core `cyberball` in every ball table.
+  On a Tour Pass shelf on every rack and on Sets; tapping its price opens
+  the Pass tab (`passTease`). Check: `cyber`.
+
 ### The scenery, 4 to 6 October (the canyon on; the latest last)
 
 - **The hunt's dot, his arms** (`hunt`, `flyarms`): `.huntDot` on the

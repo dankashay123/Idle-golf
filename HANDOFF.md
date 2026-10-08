@@ -1,6 +1,6 @@
 # Handoff — Mythic Mulligan
 
-Last updated 2026-10-06 (pushed to `main`). `CLAUDE.md` holds the standing
+Last updated 2026-10-08 (pushed to `main`). `CLAUDE.md` holds the standing
 rules and is loaded by itself; this file is what a new session needs on
 top. Read this file whole. The rest is for looking up, never for reading
 through:
@@ -13,48 +13,43 @@ through:
 
 ## 1. Where things stand
 
-- Everything is committed and **no request is waiting**. Last (from his
-  phone's screenshot): cloud shadows soft at the edge (the far end looked
-  cut off in a line) and fainter, and over the tee's deck too; no full
-  swing on the green any more (shots but the last stop short of it); the
-  hole's call (Birdie, Par ...) redrawn in crisp type with a colour fill,
-  outline and the score to par under it, kept clear of the readout. Before
-  that: Golden Hour's mountain redrawn as a rounded, lumpy
-  heap of coins shaded by the low sun (it was six stepped tiers, "very
-  Minecraft-y"); no bunker or pond runs in under its foot any more; and
-  trees behind it no longer cast shadow streaks across its face. Before
-  that: snow on
-  the path through a snowy round; the moon rising over the hills at dusk
-  and climbing after nine (Dawn and Dusk on); spring petals gathering at
-  the edges; the morning mist thinning hole by hole; the tee's frame back
-  under budget (cloud shadows filled in one go). Before that (from his
-  phone's screenshots): the ball lying ahead smaller; the cart path given
-  a footbridge over the stepping-stones river and the canyon, and kept
-  off the green's apron (it vanished under them); cloud shadows fixed to
-  the course (they moved with him); steam redrawn as a low soft drift (it
-  was blocks with a hard line); the storm sky smooth (it was striped).
-  Before that (6 October, later): snow on the gallery (fans, and umbrellas in the snow)
-  deepening through a snowy round; long shadows at dawn and dusk; autumn
-  leaves gathering at the fairway's edges and round the green; breath in
-  the cold on frosty mornings; the stars coming out as dusk turns to night
-  (the sky darkening, the sun setting behind the hills; at dawn the other
-  way). Found on the way: past 8:30pm the dusk switched itself off and the
-  sky went back to day until night at nine (fixed). Before that the same
-  day: heat shimmer, snow settling on trees and roofs, the low sun on the
-  water, frost footprints, and a speed pass (he reports a steady 60fps).
-  New switches: Leaves gathered (deep), Stars coming out; Dusk shows the
-  long shadows; Frost the breath; Deep snow settled the gallery's snow.
+- Everything is committed and **no request is waiting**. Last (6 to 8
+  October): **spending** (he wants people to pay; nothing is charged in this
+  build): a free player about ten weeks to a Mythic set; the **Tour Pass**
+  (a season a month, 30 tiers, free and paid rows, on the shop's Pass tab;
+  the paid row's top is the **Cyber-Drive** set, its tier 20 the month's
+  own look); **Club Membership** by the month; **shop-only looks** (the
+  Founder's Collection); the first sovereign pack doubled. The
+  **Cyber-Drive** is from his character sheet (a navy mech trimmed in lime,
+  purple visor, battery pack and cables, a hammer driver, a green comet
+  wake edged in magenta, a teal core); he liked it, and asked only for the
+  hammer's head to be joined to its shaft (done). Before that: the hole's
+  call shown on the iPhone, sky things, rain rings and ripples fixed to the
+  course, the snow's black box, and other scenery fixes. Detail: the first
+  sections of `docs/features.md`.
+- **Next big thing: an iPhone app** (he asked). Decided: wrap `index.html`
+  unchanged with **Capacitor** into an Xcode project (no Unity, no rewrite;
+  the checks keep running on `index.html`). Name **Mythic Mulligan**; he is
+  an individual; he has a Mac and Xcode. He starts on the **free** Apple
+  account (his own iPhone through Xcode, renewed every 7 days) and pays the
+  $99 only for TestFlight and the store. Work from his Mac's Claude Code,
+  not the cloud (Xcode needs a Mac). Ask him before fixing the bundle ID.
+  Order: the app shell and phone fit, the developer menu off for good in
+  the app, saves in the app with iCloud, real purchases (StoreKit, with
+  Restore Purchases) for the packs, Starter Pack, Tour Pass, Membership and
+  Founder's items, then TestFlight and the store page. Notes for building
+  it go in `docs/ios-app.md` once it exists.
 - The scenery of 4 to 6 October (canyon, ponds, dragonflies, fireflies,
   fish, storms, planes, balloons, ducklings, steam, mist, frost, the
   rainbow's reflection, wind, leaves on the water, pins either side,
-  trees in a gale, cloud shadows, the thaw, the above) is the first
-  section of `docs/features.md`. **The dog is put aside** (`DOG_ON =
+  trees in a gale, cloud shadows, the thaw) is a section of
+  `docs/features.md`. **The dog is put aside** (`DOG_ON =
   false`) until he raises it. He tests scenery with the developer menu's
   **Scenery Switches** (one each, kept until switched off): give anything
   new a switch. Earlier work: the sections under it.
 - What lives by the season asks `lookSeason`: a course's own, the Snowline
   winter and the Blossom spring all year, else the month.
-- `node test/run.js` has **168 checks**, about 35 minutes: run it in the
+- `node test/run.js` has **178 checks** (all passed 8 October), about 35 minutes: run it in the
   background, on a copy in the scratchpad, with the machine quiet. After
   weather, colours or anything dated, also run it with `HOUR_FORCE` 8 and
   15 and the month pinned (rules 20 and 70).
@@ -67,7 +62,8 @@ through:
   GET buttons; the redrawn celebrations; alligators; the Wager Book
   animals; the weekly hunt and its streak; the gold mountain (now a
   rounded heap, not tiers); golden
-  animals; the heirloom prices and the wall at Card 220.
+  animals; the heirloom prices and the wall at Card 220; the Tour Pass,
+  Membership and the Founder's Collection on his phone.
 - Settled, in case it comes up: swing speed still matters fully (a hole's
   time is when the ball drops); Fast Walker only shortens a hole's least
   time; every caddie has a trick (don't offer caddie tricks); Dawn and
@@ -290,28 +286,23 @@ brings it up again** (he asked to stop, 6 October): offer other things.
 
 Every idea offered and not yet done, so none is lost:
 
-1. **Look at the new things on the phone** (the soft cloud shadows, the
-   new score call, the gold mountain; switches: Deep snow settled, Stars
-   coming out, Leaves or petals gathered, Mist in the dips, Steam) and
-   say what to tune.
-2. **Look over the other special holes** (island, sea stack, canyon,
-   railway) for bunkers or decorations running under them, as the gold
-   mountain had.
-3. **A bug pass on the latest scenery**: snow on the path, the moonrise,
-   the petals, the lifting mist, the soft shadows, together, at the phone
-   sizes and on its side.
-4. **A memory and speed check on the phone** with the new switches on.
-5. **Snow falling heavier** as a snowy round goes on.
-6. **The flag and pole wet in rain**, the flag hanging heavier and darker.
-7. **Frost melting** off the fairway through a frosty round (he turned
-   down dew; this is the frost going).
-8. **A fog bank thinning** through a foggy round.
-9. **Gusts** sending a few leaves skittering across the fairway and green
-   on windy autumn days.
-10. **Glints on the gold heap**: a few coins winking as he walks up.
-11. **A gold-dusted landing**: coins sliding a little down the slope as he
-   lands on the top.
-12. **Mountain variety**: each golden hole's heap its own shape.
-13. **A speed pass at the mountain's foot**, its slowest view.
+1. **The iPhone app** (above): the shell first, then saves, purchases,
+   TestFlight and the store.
+2. **The Cyber-Drive on the Pass tab**: the set swinging on a small stage
+   at its top, so a buyer sees what the pass gives.
+3. **A new pass set every few months**, each from a character sheet he
+   sends, built as the Cyber-Drive was.
+4. **Check paying is clearly quicker**: a pass buyer against a free player
+   over the ten weeks.
+5. **A look over the shop on the phone**: the Pass tab and the new
+   shelves at 320 to 440 wide and on its side.
+6. **Her Cyber-Drive**: the female golfer in every pose in it.
+7. **A dot for a Tour Pass tier** ready to take (only when one waits).
 
-Recommend 1, then 2. (Turned down: dew; no new animals for now.)
+Held for when he raises scenery again (he asked to stop): look at the new
+things on the phone (soft cloud shadows, the score call, the gold
+mountain), the other special holes for bunkers under them, snow falling
+heavier, frost melting through a round, a fog bank thinning, gusts of
+leaves, glints and variety on the gold heap, a speed pass at its foot.
+
+Recommend 1 (he is setting up his Mac for it), then 2.
