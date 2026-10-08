@@ -10016,6 +10016,8 @@ function bootDraw(c, B, t){
 // turn (the user asked: to show what can be won or bought)
 const BOOT_SETS = () => Object.keys(FULL_SETS).filter(s => (styleDef('o', s) || {}).top > 1);
 function bootFeature(B, n){
+  // (the first launch always in the plain look, whatever he wears: the user asked)
+  if(n <= 1){ B.set = STYLE_DEFAULT.o; return; }
   const L = BOOT_SETS(); if(!L.length || n % 4 !== 0) return;
   const s = L[Math.floor(n / 4) % L.length], F = FULL_SETS[s];
   B.set = s;

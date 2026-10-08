@@ -10,6 +10,8 @@
  *     way it came and the ball up in the sky; once in, no ball in the air;
  *     on a night course the sky the same sunrise, the night put back after
  *   - every tip short, plain and ending in a full stop
+ *   - the first launch in the plain look, even wearing a Mythic set (the
+ *     user asked); every fourth a Mythic set; the rest his own look
  *   - gone by itself within its time, and at once on a tap */
 'use strict';
 module.exports = {
@@ -60,6 +62,13 @@ module.exports = {
         if (Math.abs(n.length - a.length) > a.length * 0.15) f('on a night course the screen changed (' + n.length + ' against ' + a.length + ')');
         if (back !== true) f('the night not put back after');
         out.n = [a.length, dots, up, left];
+        // which look: the first launch plain whatever he wears, every fourth a set
+        if (B.set !== STYLE_DEFAULT.o) f('the first launch showed "' + B.set + '", not the plain look');
+        { const wore = S.outfit; S.outfit = 'divine';
+          const b1 = {}, b2 = {}, b4 = {}; bootFeature(b1, 1); bootFeature(b2, 2); bootFeature(b4, 4); S.outfit = wore;
+          if (b1.set !== STYLE_DEFAULT.o) f('a first launch wearing the Divine showed "' + b1.set + '"');
+          if (b2.set) f('the second launch showed "' + b2.set + '", not his own look');
+          if (!b4.set || !FULL_SETS[b4.set]) f('the fourth launch no Mythic set'); }
         // the tips
         for (const s of BOOT_TIPS) if (s.length > 90 || !/\.$/.test(s) || /\b(rim|tier|heirloom|sigil|wake)\b/i.test(s)) f('a tip not short and plain: ' + s);
         return out;
