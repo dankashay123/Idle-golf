@@ -36,12 +36,12 @@ module.exports = {
         S.upg.drive = 0;
         // ---- shown, and said ----
         setView('upg'); S.upg.tempo = 368; refreshUpg();
-        const row = UPGREF.find(x => x.u.id === 'tempo'); if (!/Lv\u00a0400/.test(row.ms.textContent)) f('Pace of Play at 368 shows ' + row.ms.textContent);
+        const row = UPGREF.find(x => x.u.id === 'tempo'); if (!/Level\u00a0400/.test(row.ms.textContent)) f('Pace of Play at 368 shows ' + row.ms.textContent);
         // (and its bar: filled as far as it is from the last to the next, the
         // levels to go and what the rung will be there)
         { const bar = row.ms.querySelector('.msbar i'), w = parseFloat(bar.style.width), want = Math.round((368 - 350) / 50 * 100);
           if (row.ms.hidden || Math.abs(w - want) > 1) f('Pace of Play\'s bar at 368: ' + w + '%, want ' + want + '%');
-          const tx = row.ms.textContent; if (!/32 more to Lv\u00a0400/.test(tx) || !tx.includes(effectLabel(B.UPG.find(u => u.id === 'tempo'), 400))) f('its bar reads ' + tx); }
+          const tx = row.ms.textContent; if (!/32 more to Level\u00a0400/.test(tx) || !tx.includes(effectLabel(B.UPG.find(u => u.id === 'tempo'), 400))) f('its bar reads ' + tx); }
         S.upg.tempo = 399; S.gold = 1e300; S.mult = 1; said = []; buyUpg(B.UPG.find(u => u.id === 'tempo'));
         if (!said.some(h => /Milestone/.test(h) && /400/.test(h))) f('Pace of Play to 400 said ' + JSON.stringify(said));
         said = []; buyUpg(B.UPG.find(u => u.id === 'tempo')); if (said.some(h => /Milestone/.test(h))) f('a milestone said at 401');

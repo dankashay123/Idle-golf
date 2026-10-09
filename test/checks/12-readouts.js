@@ -388,11 +388,11 @@ module.exports = {
         + (3 * T.daily) + '. It is sold as a daily, so it runs on the calendar.');
 
     // nine days away, a caddie good for twelve hours: both numbers or neither
-    const capTxt = (h => h + 'h')(Math.floor(r.awayCap / 3600));
+    const capTxt = (h => h + ' hours')(Math.floor(r.awayCap / 3600));
     if (r.awayLong.indexOf('9 days') < 0)
       throw new Error('back from nine days away and the card never says so. It reads: "'
         + r.awayLong.slice(0, 120).replace(/\s+/g, ' ') + '"');
-    if (r.awayLong.indexOf(capTxt) < 0)
+    if (r.awayLong.replace(/\u00a0/g, ' ').indexOf(capTxt) < 0)
       throw new Error('back from nine days away and the card never says how much of it the '
         + 'caddie actually played (' + capTxt + '). It reads: "'
         + r.awayLong.slice(0, 120).replace(/\s+/g, ' ') + '"');
@@ -541,8 +541,9 @@ module.exports = {
       if (/played out/.test(c.text) && /Playing out this card first/.test(c.text))
         throw new Error('the ' + k + ' case tells a player whose card is already played out '
           + 'to play it out first');
-      if (!wants[k].test(c.text))
-        throw new Error('in the ' + k + ' case the Tour screen does not say ' + wants[k]
+      // (no verdict under the numbers: the user asked for no filler)
+      if (wants[k].test(c.text))
+        throw new Error('in the ' + k + ' case the Tour screen still says ' + wants[k]
           + '. It says: ' + (c.text.match(/(The course grows[^]*?|Your bag already[^]*?|This card has grown[^]*?)(?:Card|$)/) || ['(no verdict at all)'])[0].slice(0, 140));
       if (/outdrives this card on 0% of holes/.test(c.text))
         throw new Error('the ' + k + ' case tells the player their bag outdrives the card on '

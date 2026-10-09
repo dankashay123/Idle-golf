@@ -412,7 +412,7 @@ div.guide.hunt,div.guide.mhunt{grid-template-columns:repeat(3,minmax(0,1fr))}
 .gt .wtag{font-size:9px;letter-spacing:.1em;text-transform:uppercase;font-weight:700;color:var(--brass)}
 /* the item sheet's three buttons, side by side */
 .acts3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin-top:10px}
-.acts3 .act{margin:0;padding:10px 4px;font-size:var(--f1)}
+.acts3 .act{margin:0;padding:10px 4px;font-size:var(--f1);letter-spacing:.08em}
 .enhres{text-align:center;font-weight:700;font-size:var(--f1);margin-top:8px;animation:enhFade 2.6s forwards}
 .enhres.ok{color:var(--aurora)}.enhres.no{color:var(--flag)}
 @keyframes enhFade{0%,70%{opacity:1}100%{opacity:0}}
@@ -610,6 +610,13 @@ div.guide.hunt,div.guide.mhunt{grid-template-columns:repeat(3,minmax(0,1fr))}
 .hlmN{font-family:var(--mono);font-size:var(--f2);color:var(--dim)}
 #sheet .big{font-family:var(--mono);font-size:var(--f6);color:var(--brass);font-weight:600;margin:6px 0}
 #sheet ul{margin:0 0 10px 15px;font-size:var(--f3);color:var(--dim);line-height:1.6}
+#sheet li.afx{display:flex;align-items:center;min-height:30px}
+#sheet li.afx::before{content:'\2022';margin-left:-17px;width:17px;flex:none}
+#sheet li.afx>span{flex:1;min-width:0;margin-right:8px}
+#sheet li.afx.on>span{color:var(--brass)}
+.lockb{flex:none;width:36px;height:30px;padding:0;display:grid;place-items:center;border-radius:8px;
+  background:transparent;border:1px solid var(--line);color:var(--faint)}
+li.afx.on .lockb{color:var(--brass);border-color:var(--brass);background:rgba(227,180,87,.12)}
 .act{width:100%;padding:11px;border-radius:0;border:1px solid var(--brass-dk);background:var(--raise2);
   color:var(--brass);font-size:var(--f2);letter-spacing:.14em;text-transform:uppercase;font-weight:700;margin-top:6px}
 .act.ghost{border-color:var(--line);color:var(--dim);background:transparent}
@@ -3112,7 +3119,7 @@ const B = {
     { id:'dgn', n:'Wager Haul',     sc:false, lo:0.06, hi:0.35, sfx:'%' }
   ],
   ELEM: [
-    { ic:'flame', id:'ember',   n:'Ember',   v:'--ember',   d:'Cinders burn the fairway for 65% of the strike over 3s' },
+    { ic:'flame', id:'ember',   n:'Ember',   v:'--ember',   d:'Cinders burn the fairway for 65% of the strike over 3 seconds' },
     { ic:'snow', id:'frost',   n:'Frost',   v:'--frost',   d:'Frostline: the next swing lands for 190% more' },
     { ic:'bolt', id:'storm',   n:'Storm',   v:'--storm',   d:'Chain lightning fires two more swings at 35%' },
     { ic:'leaf', id:'verdant', n:'Verdant', v:'--verdant', d:'Fairway bloom pays 190% more on the strike' },
@@ -3856,7 +3863,7 @@ const B = {
     { id:'homes',  n:'Home Tour',        d:'Play all ten home courses',   m:'homes',  v:10,    r:{k:'gld', v:0.05}, sov:6 },
     { id:'major1', n:'Major Winner',     d:'Win a major of the week',     m:'slam',   v:1,     r:{k:'tick', v:3}, sov:6 },
     { id:'staff',  n:'Full Staff',       d:'Own every caddie perk',       m:'cperks', v:9,     r:{k:'gld', v:0.04}, sov:6 },
-    { id:'headcad', n:'Head Caddie',     d:'Take a caddie perk to Lv\u00a05', m:'cperkLv', v:5,  r:{k:'tick', v:2}, sov:6 },
+    { id:'headcad', n:'Head Caddie',     d:'Take a caddie perk to Level\u00a05', m:'cperkLv', v:5,  r:{k:'tick', v:2}, sov:6 },
     // the signature holes: a home round has four (two island greens, the
     // canyon and the stepping stones), any other course one of its own
     { id:'sig4',   n:'Signature Round',  d:'Par or better on every signature hole of a home round', m:'sigRound', v:1, r:{k:'tick', v:3}, sov:6 },
@@ -4117,21 +4124,21 @@ const B = {
   PERM_MAX: 10, PERM_SOFT: 3, PERM_EASE: 0.1,
   PERM: [
     { id:'contract', ic:'contract', n:'Caddie Contract', base:180, r:1.42, v:2,
-      d:'+2 hours of play while you\u2019re away, each level',  s:'h' },
+      d:'{v} of play while you\u2019re away',  s:'h' },
     { id:'locker',   ic:'locker2',  n:'Second Locker',   base:150, r:1.38, v:12,
-      d:'+12 locker spaces, each level',      s:'' },
+      d:'{v} locker spaces',      s:'' },
     { id:'teetime',  ic:'teetime',  n:'Standing Tee Time', base:240, r:1.45, v:0.05,
-      d:'Wager entries refill 5% faster, each level', s:'%' },
+      d:'Wager entries refill {v} faster', s:'%' },
     { id:'scout',    ic:'scout',    n:'Club Scout',      base:220, r:1.44, v:0.04,
-      d:'+4% better club drops, each level',                s:'pp' },
+      d:'{v} better club drops',                s:'pp' },
     { id:'van',      ic:'van2',     n:'Tour Van',        base:260, r:1.46, v:0.03,
-      d:'3% off every Range price, each level',      s:'%' },
+      d:'{v} off every Range price',      s:'%' },
     { id:'irons',    ic:'sigirons', n:'Signature Irons', base:300, r:1.50, v:1.05,
-      d:'×1.05 swing power, each level',             s:'x' },
+      d:'{v} swing power',             s:'x' },
     { id:'sponsor',  ic:'sponsor',  n:'Title Sponsor',   base:300, r:1.50, v:1.06,
-      d:'×1.06 prize money, each level',             s:'x' },
+      d:'{v} prize money',             s:'x' },
     { id:'book',     ic:'autograph',n:'Autograph Book',  base:200, r:1.40, v:0.08,
-      d:'+8% career experience, each level',         s:'%' }
+      d:'{v} career experience',         s:'%' }
   ],
 
   /* ---- the offers rail ---- */
@@ -4325,22 +4332,22 @@ const B = {
   // Small on purpose: up for a quarter of the time, and never stacked.
   CPERK_EVERY: 30,
   CPERKS: [
-    { id:'book',   ic:'cpbook', col:'#FFB347', s:'+15% power', n:'Yardage Book',    cost:150, k:'cPow',  v:15,   t:8,  w:'POWER',  d:'+15% swing power for 8s' },
-    { id:'tempo',  ic:'cptempo', col:'#57E0BE', s:'+20% pace', n:'Pace Call',      cost:150, k:'cSpd',  v:20,   t:8,  w:'PACE',  d:'+20% pace for 8s' },
-    { id:'read',   ic:'cpread', col:'#9BE66B',  s:'+8% pure strike', n:'Green Reader',    cost:150, k:'cCrt',  v:0.08, t:8,  w:'PURE',   d:'+8% pure strike chance for 8s' },
-    { id:'towel',  ic:'cptowel', col:'#8FD3FF', s:'+25% second ball', n:'Towel Service',   cost:150, k:'cMst',  v:25,   t:8,  w:'PROV',   d:'+25% second-ball chance for 8s' },
+    { id:'book',   ic:'cpbook', col:'#FFB347', s:'+15% power', n:'Yardage Book',    cost:150, k:'cPow',  v:15,   t:8,  w:'POWER',  d:'+15% swing power for 8 seconds' },
+    { id:'tempo',  ic:'cptempo', col:'#57E0BE', s:'+20% pace', n:'Pace Call',      cost:150, k:'cSpd',  v:20,   t:8,  w:'PACE',  d:'+20% pace for 8 seconds' },
+    { id:'read',   ic:'cpread', col:'#9BE66B',  s:'+8% pure strike', n:'Green Reader',    cost:150, k:'cCrt',  v:0.08, t:8,  w:'PURE',   d:'+8% pure strike chance for 8 seconds' },
+    { id:'towel',  ic:'cptowel', col:'#8FD3FF', s:'+25% second ball', n:'Towel Service',   cost:150, k:'cMst',  v:25,   t:8,  w:'SECOND BALL',   d:'+25% second-ball chance for 8 seconds' },
     // gear luck is only read when a hole ends, so this one waits for that:
     // armed when it goes off, spent on the next hole finished
     { id:'scout',  ic:'cpscout', col:'#C68BFF', s:'+10% club luck next hole', n:'Lost Ball Scout', cost:150, k:'cDrop', v:0.10, t:1e6, w:'GEAR', next:1, d:'+10% club luck next hole' },
-    { id:'chat',   ic:'cpchat', col:'#FFD66B',  s:'+25% prize money', n:'Sponsor Chat',    cost:150, k:'cGold', v:25,   t:8,  w:'PURSE',  d:'+25% prize money for 8s' },
-    { id:'notes',  ic:'cpnotes', col:'#F28AD0', s:'+30% experience', n:'Course Notes',    cost:150, k:'cXp',   v:30,   t:8,  w:'XP',     d:'+30% experience for 8s' },
-    { id:'club',   ic:'cpclub', col:'#FF7A5C',  s:'+20% strike power', n:'Club Selection',  cost:150, k:'cCpw',  v:20,   t:8,  w:'CRACK',  d:'+20% pure strike power for 8s' },
+    { id:'chat',   ic:'cpchat', col:'#FFD66B',  s:'+25% prize money', n:'Sponsor Chat',    cost:150, k:'cGold', v:25,   t:8,  w:'PURSE',  d:'+25% prize money for 8 seconds' },
+    { id:'notes',  ic:'cpnotes', col:'#F28AD0', s:'+30% experience', n:'Course Notes',    cost:150, k:'cXp',   v:30,   t:8,  w:'EXPERIENCE',     d:'+30% experience for 8 seconds' },
+    { id:'club',   ic:'cpclub', col:'#FF7A5C',  s:'+20% strike power', n:'Club Selection',  cost:150, k:'cCpw',  v:20,   t:8,  w:'CRACK',  d:'+20% pure strike power for 8 seconds' },
     // not a lift that lasts: the clock is simply wound back, once, there and then
-    { id:'ready',  ic:'cpready', col:'#F4F6EF', s:'\u22121s hole clock', n:'Ready Golf',      cost:150, k:'clock', v:1,    t:0,  w:'-1S',    now:1, d:'1s off the hole clock' },
+    { id:'ready',  ic:'cpready', col:'#F4F6EF', s:'\u22121 second', n:'Ready Golf',      cost:150, k:'clock', v:1,    t:0,  w:'-1 SECOND',    now:1, d:'1 second off the hole clock' },
     // the Mythic one: only the three dearest caddies wear it (MYTH_CADDIES).
     // Three lifts at once, and the caddie casts it into him in his own
     // colours (Scene.drawFavour); its light comes down in them too
-    { id:'myth',   ic:'cpmyth', col:'#F27CFF',  s:'+20% power, pace, purse', n:'Mythic Favour', cost:600, k:'cPow', also:['cSpd', 'cGold'], v:20, t:8, w:'FAVOUR', myth:1, d:'+20% power, pace and prize money for 8s' }
+    { id:'myth',   ic:'cpmyth', col:'#F27CFF',  s:'+20% power, pace, purse', n:'Mythic Favour', cost:600, k:'cPow', also:['cSpd', 'cGold'], v:20, t:8, w:'FAVOUR', myth:1, d:'+20% power, pace and prize money for 8 seconds' }
   ],
   // (col: the colour of the blessing each one sends down on the golfer, and
   // of its line by the settings cog while it lasts)
@@ -4479,11 +4486,15 @@ function fmt(n, dp){
 const fmtX = v => (Math.abs(v) < 1000 ? v.toFixed(2) : fmt(v));
 const pct = v => (v*100 < 10 ? (v*100).toFixed(1) : Math.round(v*100)) + '%';
 const pp  = v => '+' + (v*100).toFixed(1) + '%';
+// (in full words, the user asked: never "7h 59m")
+const tw = (n, w) => n + '\u00a0' + w + (n === 1 ? '' : 's');
 function hms(s){
   s = Math.max(0, Math.round(s));
   const h = Math.floor(s/3600), m = Math.floor(s%3600/60), q = s%60;
-  return h ? (m ? h+'h '+m+'m' : h+'h') : m ? (q ? m+'m '+q+'s' : m+'m') : q+'s';
+  return h ? (m ? tw(h, 'hour') + ' ' + tw(m, 'minute') : tw(h, 'hour')) : m ? (q ? tw(m, 'minute') + ' ' + tw(q, 'second') : tw(m, 'minute')) : tw(q, 'second');
 }
+// days and hours, for a week's clock
+const dhTxt = s => s > 86400 ? tw(Math.floor(s / 86400), 'day') + ' ' + tw(Math.floor(s % 86400 / 3600), 'hour') : hms(s);
 function hash32(n){
   n = (n ^ 61) ^ (n >>> 16); n = n + (n << 3); n = n ^ (n >>> 4);
   n = Math.imul(n, 0x27d4eb2d); n = n ^ (n >>> 15);
@@ -4502,6 +4513,9 @@ const cardNo = t => String(Math.round(t || 0) + 1);
 // cent" broke after "55 per", and "+1.2% swing power" after "+1.2%". One hard
 // space, between the figure and the word it measures, and no further -- the
 // rest of the line wraps as it likes.
+// an attribute's line as it stands: every figure in it times the points put
+// in (the user asked: the numbers, updating, never "each")
+const statTotal = (v, n) => String(v).replace(/(\d+(?:\.\d+)?)/g, m => { const d = (m.split('.')[1] || '').length; return (parseFloat(m) * n).toFixed(d); });
 const nb = t => String(t).replace(/([\d][\d.,]*\s*(?:%|pp|x|\u00d7)?)\s+(?=[A-Za-z])/g, '$1\u00a0');
 
 /* ---- the calendar ---- */
@@ -7175,7 +7189,7 @@ function errSend(id){
   const D = errDef(id); if(!D || S.errand) return false;
   S.errand = { id, s0: Date.now() };
   Scene.runnerGo(1);
-  toast('<span class="achk">Errand</span>Your runner is off to ' + D.n.replace(/^The /, 'the ') + ' \u00b7 back in ' + D.h + 'h', 'ach');
+  toast('<span class="achk">Errand</span>Your runner is off to ' + D.n.replace(/^The /, 'the ') + ' \u00b7 back in ' + tw(D.h, 'hour'), 'ach');
   save(); renderCadPerks(); renderErrTab();
   return true;
 }
@@ -7631,7 +7645,7 @@ function wgMedal(d, R, D){
 const wgDriveExp = D => { const wind = B.DRIVE_WIND[0] + (B.DRIVE_WIND[1] - B.DRIVE_WIND[0]) * 6/7;
   return D.pow * (1 + D.crit*(D.cpw-1)) * (1 + D.mst*B.MST_DMG) * (1 + D.proc*Math.min(D.elemDmg, B.ELEM_CAP)) * wind; };
 const wgMedalTxt = (id, D) => { const T = WG_MEDAL[id]; if(!T) return '';
-  if(id === 'sand') return 'Medals: ' + (D ? T.map(t => fmt(wgDriveExp(D) * t)).join(' / ') + '\u00a0yds' : '');
+  if(id === 'sand') return 'Medals: ' + (D ? T.map(t => fmt(wgDriveExp(D) * t)).join(' / ') + '\u00a0yards' : '');
   return 'Medals: ' + T.join(' / ') + '\u00a0' + { water: 'greens', cellar: 'chips made', scramble: 'holes\u00a0won', twilight: 'putts made', vault: 'floors' }[id]; };
 const medalPips = id => { const g = (S.wgMedal || {})[id] || 0;
   return '<span class="medals" aria-label="' + (g ? WG_MEDAL_N[g - 1] + ' medal' : 'No medal yet') + '">'
@@ -7700,10 +7714,10 @@ const DGN_GUIDE = {
              'Pays scrolls.']
 };
 const DGN_EVENT_SAY = {
-  'LOST BALL': '5s off the clock', 'PLUGGED LIE': 'this floor at 55% of your carry',
+  'LOST BALL': '5 seconds off the clock', 'PLUGGED LIE': 'this floor at 55% of your carry',
   'SNAPPED SHAFT': 'this floor at 42% of your carry', 'CASUAL WATER': 'this floor 60% longer',
-  'GUST, PUSHED BACK': 'back up a floor', 'UNPLAYABLE, DROP': '8s off the clock',
-  'PERFECT LIE': 'this floor at 180% of your carry', 'TAILWIND': '4s back on the clock',
+  'GUST, PUSHED BACK': 'back up a floor', 'UNPLAYABLE, DROP': '8 seconds off the clock',
+  'PERFECT LIE': 'this floor at 180% of your carry', 'TAILWIND': '4 seconds back on the clock',
   'FOUND A CACHE': 'this floor 55% shorter' };
 function wagerGuide(id){
   const d = B.DGN.find(x => x.id === id); if(!d) return;
@@ -7714,8 +7728,8 @@ function wagerGuide(id){
     : '<p>' + t + '</p>').join('');
   showSheet('<h3>' + d.n + '</h3>'
     + '<div class="lb"><span class="p"></span><span>Helped By</span><span class="s" style="color:var(--aurora)">' + d.st + '</span></div>'
-    + '<div class="lb"><span class="p"></span><span>Entries</span><span class="s">One every ' + Math.round(keyInterval(d) / 60) + '\u00a0min, ' + entryCap(d) + ' held</span></div>'
-    + '<div class="lb"><span class="p"></span><span>Length</span><span class="s">' + Math.round(d.run) + 's</span></div>'
+    + '<div class="lb"><span class="p"></span><span>Entries</span><span class="s">One every ' + tw(Math.round(keyInterval(d) / 60), 'minute') + ', ' + entryCap(d) + ' held</span></div>'
+    + '<div class="lb"><span class="p"></span><span>Length</span><span class="s">' + tw(Math.round(d.run), 'second') + '</span></div>'
     + para + '<p style="color:var(--faint)">The round waits while you play.</p>'
     + '<button class="act ghost" onclick="hideSheet()">Close</button>');
 }
@@ -7735,8 +7749,8 @@ function endDgnCore(d, R, D){
     const avg = log.length ? log.reduce((a,b) => a+b, 0)/log.length : 0;
     fe = R.best > 0 ? asFloor(R.best * (1 + D.C.wdrive)) : -1;
     head = R.best > 0 ? '' : 'No drive found the fairway.';
-    stats.push(['Longest', fmt(R.best) + ' yds']);
-    stats.push(['Average', fmt(avg) + ' yds']);
+    stats.push(['Longest', fmt(R.best) + ' yards']);
+    stats.push(['Average', fmt(avg) + ' yards']);
 
   }else if(R.mode === 'island'){
     if(R.made > 0){
@@ -9473,7 +9487,7 @@ function passIcon(r){
 function passShort(r){
   if(r.k === 'cyber') return 'Cyber-Drive';
   if(r.k === 'look') return PASS_LOOK[r.v][0];
-  if(r.k === 'boost') return nb(r.v + 'h') + ' ×2 prize';
+  if(r.k === 'boost') return nb(r.v + ' hours') + ' ×2 prize money';
   if(r.k === 'bag') return ciBag(r).n;
   if(r.k === 'sov') return '<b>' + r.v + '</b>';
   const L = ciLook(r);
@@ -9496,7 +9510,7 @@ function passHtml(){
   const ends = Math.max(0, (Date.UTC(new Date(dayNow() * 86400000).getUTCFullYear(), mo + 1, 1) / 86400000) - dayNow());
   const sum = passSum(), cyb = setOwned('cyber');
   // (the time left in gold, to the hour on its last two days)
-  const left = passLeft(ends), endsTxt = left < 2 * 86400 ? 'Ends in ' + nb(Math.floor(left / 3600) + 'h ' + Math.floor(left % 3600 / 60) + 'm') : nb(Math.floor(left / 86400) + ' days') + ' left';
+  const left = passLeft(ends), endsTxt = left < 2 * 86400 ? 'Ends in ' + hms(left - left % 60) : nb(Math.floor(left / 86400) + ' days') + ' left';
   const chip = (img, txt, gold) => '<span class="phchip' + (gold ? ' gold' : '') + '"><img src="' + img + '" alt=""><span>' + txt + '</span></span>';
   let h = '<div class="passhero' + (P.paid ? ' paid' : '') + '">'
     + '<div class="phtop"><span class="phk">Tour Pass</span><span class="phm">' + PASS_MONTHS[mo] + '<b class="phend' + (left < 3 * 86400 ? ' soon' : '') + '">⏳ ' + endsTxt + '</b></span></div>'
@@ -9690,7 +9704,7 @@ function styleTry(k, id){
   PREVIEW = { k, id, until: Date.now() + 10000 };
   if(k === 'o' || k === 'c') buildSprites();
   hideSheet();
-  toast('Trying <b>' + d.n + '</b> \u00b7 10s');
+  toast('Trying <b>' + d.n + '</b> \u00b7 10 seconds');
 }
 // called every frame: when a try runs out, put his own clothes back on
 function previewTick(){
@@ -10382,17 +10396,18 @@ function renderShop(){
   }
 
   if(shopSub === 'perm'){
-    h += '<div class="shopnote">Ten levels each, kept through retirement.</div>'
+    h += '<div class="shopnote">Ten levels, kept through retirement.</div>'
       + ribbon('The Bench') + '<div class="sgrid c2">' + B.PERM.map(u => {
         const lv = permLv(u.id), maxed = lv >= B.PERM_MAX, c = permCost(u);
-        const now = u.s === 'x' ? '\u00d7' + permMult(u.id).toFixed(2)
-                  : u.s === 'h' ? '+' + permAdd(u.id) + 'h'
-                  : u.s === 'pp' ? '+' + Math.round(permAdd(u.id)*100) + '%'
-                  : u.s === '%' ? '+' + Math.round(permAdd(u.id)*100) + '%'
-                  : '+' + permAdd(u.id);
+        // (the figure is the total so far, or one level's before the first;
+        // the user: "just keep the numbers and have them update")
+        const n = Math.max(1, lv), now = u.s === 'x' ? '\u00d7' + Math.pow(u.v, n).toFixed(2)
+                  : u.s === 'h' ? '+' + tw(u.v * n, 'hour')
+                  : u.s === 'pp' || u.s === '%' ? (u.id === 'van' ? '' : '+') + Math.round(u.v * n * 100) + '%'
+                  : '+' + u.v * n;
         return shopCard({ ic: u.ic, col: '#E3B457', on: lv > 0,
           badge: lv ? lv + '/' + B.PERM_MAX : '',
-          head: u.n, sub: nb(u.d) + (lv ? '<br><b>now ' + now + '</b>' : ''), pips: lv,
+          head: u.n, sub: nb(u.d.replace('{v}', lv ? '<b>' + now + '</b>' : now)).replace(/<\/b> /, '</b>\u00a0'), pips: lv,
           price: maxed ? 'MAX' : sovFmt(c), note: maxed ? 'done' : B.SOV.toLowerCase(),
           cls: maxed ? 'max' : (S.sov || 0) >= c ? '' : 'no', act: 'perm:' + u.id });
       }).join('') + '</div>';
@@ -11043,7 +11058,7 @@ function offline(){
       + '<div class="awbest" style="border-color:' + RC(best.rar) + ';box-shadow:inset 0 0 18px ' + RC(best.rar) + '33">'
       + '<img src="' + pixUrl(sl.ic, RC(best.rar)) + '" alt="">'
       + '<div><div class="awbn" style="color:' + RC(best.rar) + '">' + best.name + '</div>'
-      + '<div class="awbs">' + B.RARITY[best.rar].n + ' ' + sl.n + ' · Lv\u00a0' + best.ilvl
+      + '<div class="awbs">' + B.RARITY[best.rar].n + ' ' + sl.n + ' · Level\u00a0' + best.ilvl
       + (up ? ' · <span style="color:var(--aurora)">better than yours</span>' : '')
       + '</div></div></div>';
   }
@@ -23287,7 +23302,10 @@ const Scene = {
         }
         c.globalAlpha = 1;
         if(F.myth) this.drawFavour(c, F, x, y, w, h, gx, gy, gw, gh);
-        drawTextS(c, F.word, Math.round(x + w / 2), Math.round(y - LH - q * 6 * TSC), PX.brass, TSC, 'c');
+        // (kept on the screen: the longer words, SECOND BALL and EXPERIENCE,
+        // ran off its edge over a caddie near it)
+        const fh = textW(F.word, TSC) / 2;
+        drawTextS(c, F.word, clamp(Math.round(x + w / 2), Math.ceil(fh) + 2, VW - Math.ceil(fh) - 2), Math.round(y - LH - q * 6 * TSC), PX.brass, TSC, 'c');
       }
     }
     // what he says: kept on the screen, over him, and never over a perk's word
@@ -30989,7 +31007,7 @@ function roomToday(w){
   // this week, and today's wager: the two things that turn over on a clock
   const M = majorState(), fw = featWager();
   const say = { won: 'Won', played: 'Played', live: 'In play now', next: 'Your next event', early: 'After your first event' }[M.st];
-  const wk = weekLeft() > 86400 ? Math.floor(weekLeft() / 86400) + 'd ' + Math.floor(weekLeft() % 86400 / 3600) + 'h' : hms(weekLeft());
+  const wk = dhTxt(weekLeft());
   const row2 = (nm, ds) => '<div class="row"><div><div class="nm">' + nm + '</div><div class="ds">' + ds + '</div></div></div>';
   h += '<div class="eyebrow" style="margin:12px 0 0">This Week</div>'
     + row2(M.cs.n, '<b style="color:var(--brass)">Major of the Week</b> \u00b7 ' + say + ' \u00b7 New in\u00a0' + wk)
@@ -31185,7 +31203,7 @@ function renderXp(){
     + B.PARAGON.reduce((n,c) => n + (S.paraPts[c.id]||0), 0);
   const strip = $('xpStrip');
   setCls(strip, (max ? 'para' : '') + (unspent ? ' ready' : ''));
-  setText($('xpLv'), max ? 'PARAGON ' + fmt(S.para, 0) : 'LV ' + S.lv);
+  setText($('xpLv'), max ? 'PARAGON ' + fmt(S.para, 0) : 'LEVEL ' + S.lv);
   setSty($('xpFill'), 'width', (clamp(have/need, 0, 1)*100).toFixed(1) + '%');
   const bits = [];
   // (plural past one: "75 attribute" read wrong, the user saw)
@@ -31195,7 +31213,7 @@ function renderXp(){
   if(pp2) bits.push(pp2 + ' paragon ' + plural(pp2, 'points'));
   setText($('xpNum'), unspent
     ? bits.join(' \u00b7 ')
-    : fmt(have) + ' / ' + fmt(need) + ' xp');
+    : fmt(have) + ' / ' + fmt(need) + ' experience');
   if(careerTab) careerTab.classList.toggle('alert', unspent > 0 || retireWorth());
   renderTourTab();
 }
@@ -31473,7 +31491,7 @@ function buyAllUpg(){
   Sfx.play('buy');
   // (the milestones passed said in the same toast, not one each)
   const ms = B.UPG.filter(u => msLast(u, upgLv(u.id)) > msLast(u, lv0[u.id]));
-  toast('<b>' + n + '</b> level' + (n > 1 ? 's' : '') + ' bought' + (ms.length ? ' \u00b7 \u2605 ' + (ms.length === 1 ? ms[0].n + ' Lv\u00a0' + msLast(ms[0], upgLv(ms[0].id)) : ms.length + ' milestones') : ''));
+  toast('<b>' + n + '</b> level' + (n > 1 ? 's' : '') + ' bought' + (ms.length ? ' \u00b7 \u2605 ' + (ms.length === 1 ? ms[0].n + ' Level\u00a0' + msLast(ms[0], upgLv(ms[0].id)) : ms.length + ' milestones') : ''));
   refreshUpg(); renderVitals();
 }
 // A rung whose stat is already at the game's own cap (gear luck at 100%, a
@@ -31490,7 +31508,7 @@ function upgDead(u, D){
 // a milestone passed: said, with what its rung now does
 function msSay(u, lv0){
   const m = msLast(u, upgLv(u.id));
-  if(m > msLast(u, lv0) && m > 0 && !QUIET) toast('<span class="achk">Milestone \u00b7 Lv\u00a0' + m + '</span>' + u.n + ' \u00b7 ' + effectLabel(u), 'ach');
+  if(m > msLast(u, lv0) && m > 0 && !QUIET) toast('<span class="achk">Milestone \u00b7 Level\u00a0' + m + '</span>' + u.n + ' \u00b7 ' + effectLabel(u), 'ach');
 }
 function bulkFor(base, r, owned, cap){
   let k = S.mult === 'Max' ? maxAffordable(base, r, owned, S.gold) : S.mult;
@@ -31536,7 +31554,7 @@ function refreshUpg(){
     // so it tracks the multiplier: on x10 it is ten of them, not one
     const ok = !maxed && S.gold >= c && k > 0;
     const nx = msNext(u, lv);
-    r.mt.innerHTML = 'Lv\u00a0<i>' + lv + (isFinite(cap) ? '/' + cap : '') + '</i> <b>'
+    r.mt.innerHTML = 'Level\u00a0<i>' + lv + (isFinite(cap) ? '/' + cap : '') + '</i> <b>'
       + effectLabel(u) + '</b>' + (upgDead(u, D0) ? ' <span class="ms">at the cap</span>' : '');
     // the bar to the next milestone (none at the top, or at its stat's cap)
     if(r.ms){
@@ -31544,7 +31562,7 @@ function refreshUpg(){
       r.ms.hidden = !show;
       if(show){
         setSty(r.ms.children[0].children[0], 'width', Math.round(clamp((lv - m0) / Math.max(1, nx - m0), 0, 1) * 100) + '%');
-        setHTML(r.ms.children[1], (nx - lv) + ' more to Lv\u00a0' + nx + ': ' + effectLabel(u, nx));
+        setHTML(r.ms.children[1], (nx - lv) + ' more to Level\u00a0' + nx + ': ' + effectLabel(u, nx));
       }
     }
     if(maxed){
@@ -31776,7 +31794,7 @@ function gearTile(it, isWorn){
       + (it.enh ? '<span class="genh">+' + it.enh + '</span>' : '')
     + '</div>'
     + '<div style="min-width:0"><div class="gn" style="color:' + col + '">' + it.name + '</div>'
-    + '<div class="ib"><span class="glv">Lv\u00a0' + it.ilvl + '</span> \u00b7 <span style="color:' + col + '">' + B.RARITY[it.rar].n + '</span></div>'
+    + '<div class="ib"><span class="glv">Level\u00a0' + it.ilvl + '</span> \u00b7 <span style="color:' + col + '">' + B.RARITY[it.rar].n + '</span></div>'
     + '<div class="gs">\u00d7' + fmt(1 + itemPrimary(it)) + '\u00a0' + primary + '</div>'
     + '<div class="gs2">' + (affLine(it, 1) || B.RARITY[it.rar].n) + '</div>'
     + (isWorn ? '<div class="wtag">Equipped</div>' : '')
@@ -31832,18 +31850,20 @@ function itemSheet(it, equipped){
   const canEnh = it.enh < B.ENH_MAX;
   let h = '<div class="sheethead">' + svgIcon(B.SLOTS.find(s=>s.id===it.slot).ic, 'bic', RC(it.rar))
     + '<h3 style="color:' + RC(it.rar) + ';margin:0">' + it.name + (it.enh ? ' +' + it.enh : '') + '</h3></div>';
-  h += '<p>' + B.RARITY[it.rar].n + ' ' + B.SLOTS.find(s=>s.id===it.slot).n + ' \u00b7 Lv\u00a0' + it.ilvl
+  h += '<p>' + B.RARITY[it.rar].n + ' ' + B.SLOTS.find(s=>s.id===it.slot).n + ' \u00b7 Level\u00a0' + it.ilvl
     + (it.set && setDef(it.set) ? ' \u00b7 <span style="color:var(--aurora)">' + setDef(it.set).n + ' set</span>' : '') + '</p>';
   h += '<ul><li>Primary: +' + fmt(itemPrimary(it)*100) + '% '
      + (it.slot === 'ball' ? 'affinity power' : 'swing power') + '</li>';
   it.aff.forEach((a, i) => {
     const d = B.AFFIX.find(x => x.id === a.k); if(!d) return;
     const v = affixValue(it, a);
-    h += '<li>' + (a.lock ? '<b style="color:var(--brass)">[locked]</b> ' : '') + d.n + ': '
-      + (d.sfx === 'pp' ? '+' + (v*100).toFixed(1) + '%'
+    // (a padlock to tap, open until it is: the user asked for it in place of
+    // the LOCK buttons, which ran into the figures on a narrow phone)
+    h += '<li class="afx' + (a.lock ? ' on' : '') + '"><span>' + d.n + ': '
+      + nb(d.sfx === 'pp' ? '+' + (v*100).toFixed(1) + '%'
         : d.sfx === 'x' ? '+' + v.toFixed(2) + '\u00d7' : '+' + fmt(v*100) + '%')
-      + ' <button class="mini" style="padding:1px 6px;margin-left:6px" onclick="doLock('
-      + it.uid + ',' + i + ')">' + (a.lock ? 'Unlock' : 'Lock') + '</button></li>';
+      + '</span><button class="lockb" aria-label="' + (a.lock ? 'Unlock' : 'Lock') + '" aria-pressed="' + !!a.lock
+      + '" onclick="doLock(' + it.uid + ',' + i + ')">' + padlock(a.lock) + '</button></li>';
   });
   if(el) h += '<li style="color:' + elemColor(el.id) + '">' + el.n + ': ' + el.d + '</li>';
   h += '</ul>';
@@ -31879,7 +31899,7 @@ function itemSheet(it, equipped){
     + (canEnh ? '<button class="act' + ((S.grit || 0) >= enhCost(it) ? '' : ' ghost') + '" onclick="doEnh(' + it.uid + ')">Upgrade<small>+' + (it.enh + 1)
         + ' \u00b7 ' + fmt(enhCost(it)) + '\u00a0grit \u00b7 ' + Math.round(enhChance(it)*100) + '%</small></button>'
               : '<button class="act ghost" disabled>Upgrade<small>+' + B.ENH_MAX + ', the top</small></button>')
-    + (equipped ? '<button class="act ghost" disabled>Scrap<small>in the bag</small></button>'
+    + (equipped ? '<button class="act ghost" disabled>Scrap</button>'
                 : '<button class="act danger" onclick="doSalvage(' + it.uid + ')">Scrap<small>+' + fmt(sv, 0) + '\u00a0' + plural(sv, 'shards') + '</small></button>')
     + '</div>'
     // the upgrade's result, on the sheet itself: a toast shows behind its veil
@@ -31893,7 +31913,7 @@ function itemSheet(it, equipped){
   h += '<button class="act ghost" onclick="doReroll(' + it.uid + ')">Re-attune '
     + (lk ? 'the other ' + (it.aff.length - lk) : 'affixes') + ' \u2014 '
     + fmt(rerollCost(it), 0) + '\u00a0shards</button>'
-    + (it.aff.length > 1 ? '<p style="font-size:11px;margin-top:6px">A lock keeps that roll. '
+    + (it.aff.length > 1 ? '<p style="font-size:11px;margin-top:6px">Tap a lock to keep that roll. '
       + 'Each lock costs more.</p>' : '');
   if(it.rar < B.RARITY.length-1)
     h += '<button class="act ghost" onclick="doAscend(' + it.uid + ')">Ascend to '
@@ -31907,6 +31927,12 @@ const findItem = uid => S.bag.find(x => x.uid === uid)
 let enhSaid = null;
 function doEnh(uid){ const it = findItem(uid); if(it){ enhSaid = { uid, r: enhance(it) };
   itemSheet(it, !S.bag.includes(it)); enhSaid = null; } }
+// a padlock, shut or open (its shackle lifted and swung clear)
+const padlock = shut => '<svg viewBox="0 0 20 22" width="18" height="20" aria-hidden="true">'
+  + '<path d="' + (shut ? 'M6 10V7a4 4 0 0 1 8 0v3' : 'M6 10V7a4 4 0 0 1 8 0v-1') + '" transform="' + (shut ? '' : 'translate(5 -2)')
+  + '" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/>'
+  + '<rect x="3" y="10" width="14" height="11" rx="2.5" fill="currentColor"/>'
+  + '<rect x="9" y="13.5" width="2" height="4" rx="1" fill="var(--panel)"/></svg>';
 function doLock(uid, i){ const it = findItem(uid); if(it){ toggleLock(it, i); itemSheet(it, !S.bag.includes(it)); } }
 function doReroll(uid){ const it = findItem(uid); if(it){ rerollItem(it); itemSheet(it, !S.bag.includes(it)); renderBag(); } }
 function doAscend(uid){ const it = findItem(uid); if(it){ ascendItem(it); itemSheet(it, !S.bag.includes(it)); renderBag(); } }
@@ -31963,7 +31989,7 @@ function renderSkills(){
       + svgIcon(k.ic, 'kic') + '<div class="cd" style="height:' + (1-frac)*100 + '%"></div></div>'
       + '<div><div class="nm">' + k.n + '</div>'
       + '<div class="ds">' + nb(skillLabel(k, owned ? lv : 1)) + '</div>'
-      + (owned ? '<div class="mt">Lv <i>' + lv + '</i> \u00b7 Ready every ' + k.cd + 's</div>' : '') + '</div>'
+      + (owned ? '<div class="mt">Level <i>' + lv + '</i> \u00b7 Ready every ' + tw(k.cd, 'second') + '</div>' : '') + '</div>'
       + '<div class="btnrow"></div>';
     const br = d.querySelector('.btnrow');
     if(!owned){
@@ -32034,7 +32060,7 @@ function renderDgn(){
     // reported the same scoring floor, which is how four different games came
     // to look like one game with four hats on.
     const bv = S.dgnBest ? (S.dgnBest[d.id] || 0) : 0;
-    const best = 'Best: ' + (d.mode === 'drive'  ? (bv > 0 ? fmt(bv) + '\u00a0yds' : '\u2014')
+    const best = 'Best: ' + (d.mode === 'drive'  ? (bv > 0 ? fmt(bv) + '\u00a0yards' : '\u2014')
                : d.mode === 'island' ? bv + '\u00a0green' + (bv === 1 ? '' : 's')
                : d.mode === 'chip'   ? bv + '\u00a0chips made'
                : d.mode === 'scramble' ? bv + '\u00a0holes won'
@@ -32050,7 +32076,7 @@ function renderDgn(){
       + '<div class="dm">Helped by <b style="color:var(--aurora)">' + d.st + '</b></div>'
       + '<div class="dm" style="color:var(--brass)">Pays ' + (d.cur === 'gold' ? 'Prize Money' : d.cn) + '</div>'
       + '<div class="dm">' + medalPips(d.id) + ' ' + wgMedalTxt(d.id, D) + '</div>'
-      + '<div class="dm">' + best + ' \u00b7 Length: ' + Math.round(d.run) + 's' + (nextIn === 'full' ? '' : ' \u00b7 Next entry ' + nextIn) + '</div>'
+      + '<div class="dm">' + best + ' \u00b7 Length: ' + tw(Math.round(d.run), 'second') + (nextIn === 'full' ? '' : ' \u00b7 Next entry ' + nextIn) + '</div>'
       + '<div class="bar"><i style="width:' + (run ? clamp(run.t/run.dur,0,1)*100 : 0) + '%"></i></div>'
       + '<div class="btnrow" style="margin-top:8px"></div>';
     el.querySelector('.guide').onclick = e => { e.stopPropagation(); wagerGuide(d.id); };
@@ -32143,11 +32169,8 @@ function renderTour(){
       ? '<div class="row"><div><div class="nm">Card ' + cardNo(S.tier) + '</div>'
         + '<div class="ds">The last card.</div></div></div>'
       : '<div class="row"><div><div class="nm">Climb to Card ' + cardNo(nextT) + '</div>'
-        + '<div class="ds">' + (cardUnlocked(nextT)
-            ? 'This hole: <b style="color:var(--chalk)">' + nm(hereR)
-              + '</b> here, <b style="color:var(--chalk)">' + nm(nextR) + '</b> there.'
-            : 'Win the cup on Card ' + cardNo(top) + ', or play ' + eventsToNext()
-              + '\u00a0more event' + (eventsToNext() === 1 ? '' : 's')) + '</div></div>'
+        + (cardUnlocked(nextT) ? '' : '<div class="ds">Win the cup on Card ' + cardNo(top) + ', or play ' + eventsToNext()
+              + '\u00a0more event' + (eventsToNext() === 1 ? '' : 's') + '</div>') + '</div>'
         + '<button class="buy' + (cardUnlocked(nextT) ? ' ok' : ' no') + '" id="climbBtn">'
         + '<span class="lbl">Climb</span><span class="amt">'
         + (cardUnlocked(nextT) ? '+1' : eventsToNext() + '\u00a0to go') + '</span></button></div>')
@@ -32159,7 +32182,7 @@ function renderTour(){
     + '<button class="buy' + (S.tier > 0 ? '' : ' no') + '" id="dropBtn">'
     + '<span class="lbl">Drop</span><span class="amt">−1</span></button></div>'
     + '<div class="row"><div><div class="nm">Auto-Climb</div>'
-    + '<div class="ds">Moves you up a card when your golfer can birdie it.</div></div>'
+    + '<div class="ds">Climbs by itself once the next card is unlocked and you can score well there.</div></div>'
     + '<button class="buy' + (S.autoClimb ? ' ok' : '') + '" id="autoBtn"><span class="lbl">Auto</span>'
     + '<span class="amt">' + (S.autoClimb ? 'On' : 'Off') + '</span></button></div>';
   const cb = $('climbBtn'); if(cb) cb.onclick = () => climb(1);
@@ -32223,7 +32246,7 @@ function renderRecord(){
     ['Full Sets', Object.keys(S.fullSets || {}).length + '\u00a0of ' + Object.keys(FULL_SETS).length + ' worn']]],
     ['now', 'Right Now', [
     ['Purse per Second', fmt(Meter.shown())],
-    ['Total Carry', fmt(D.dps) + ' yds/s']]],
+    ['Total Carry', fmt(D.dps) + ' yards a second']]],
     ['courses', 'Courses', [
     // a course in each of its seasons: the home courses and the regular
     // stops that turn with the month, four each
@@ -32260,7 +32283,7 @@ function renderMajor(){
                 early: 'After your first event' }[M.st];
   const left = weekLeft();
   $('majNote').textContent = 'New in ' + (left > 86400
-    ? Math.floor(left/86400) + 'd ' + Math.floor(left%86400/3600) + 'h' : hms(left));
+    ? dhTxt(left) : hms(left));
   box.innerHTML = '<div class="hint" id="majHint"><div class="foldhead">'
     + '<span><b>' + M.cs.n + '</b> \u00b7 ' + say + '</span>'
     + '<button class="qm" aria-label="How the major works">?</button></div>'
@@ -32445,8 +32468,7 @@ function climbLines(){
   return lb('Money per second if you move up', pay,
             near(C.pay) ? '' : C.pay >= 1 ? '--aurora' : '--flag')
     + lb('Hole length if you move up', len,
-         near(C.len) ? '' : '--brass')
-    + '<div class="hint">' + (locked ? 'When it unlocks: ' : '') + say + '</div>';
+         near(C.len) ? '' : '--brass');
 }
 
 /* ---- legacy ---- */
@@ -32488,7 +32510,7 @@ function renderLegacy(){
     + '<div><div class="nm">Discover an Heirloom</div>'
     + '<div class="ds">' + (n >= tot ? 'Every heirloom is found.'
         : 'A lasting boost, bought with legacy.') + '</div>'
-    + '<div class="mt">Found <i>' + n + '</i> of ' + tot + '</div></div>'
+    + '</div>'
     + '<button class="buy' + (S.legacy >= dc && n < tot ? ' ok' : ' no') + '" id="discBtn">'
     + '<span class="lbl">Discover</span><span class="amt">' + (n >= tot ? '\u2014' : fmt(dc)) + '</span></button></div>';
   if(n < tot) $('discBtn').onclick = () => discover();
@@ -32514,7 +32536,7 @@ function renderLegacy(){
     body.children[0].innerHTML = t.n
       + ' <span class="pill" style="border-color:' + col + ';color:' + col + '">' + tier.n + '</span>';
     body.children[1].textContent = t.d;
-    body.children[2].innerHTML = 'Lv <i>' + lv + '</i>/' + trTop(t) + ' \u00b7 <b>' + eff + '</b>';
+    body.children[2].innerHTML = 'Level <i>' + lv + '</i>/' + trTop(t) + ' \u00b7 <b>' + eff + '</b>';
     const btn = d.children[2];
     btn.className = 'buy' + (capped ? ' max' : S.legacy >= c2 ? ' ok' : ' no');
     btn.children[0].textContent = capped ? 'Capped' : 'Raise';
@@ -32598,7 +32620,8 @@ const cperkDur = (pk, lv) => pk.now || pk.next ? pk.t : pk.t + B.CPERK_LV_T * ((
 function cperkTxt(str, pk, lv){
   const v = cperkVal(pk, lv);
   return str.replace(/\d+(\.\d+)?/, String(pk.v < 1 ? Math.round(v * 100) : v))
-            .replace(/for \d+s/, 'for ' + cperkDur(pk, lv) + 's');
+            .replace(/for \d+(\u00a0| )seconds?/, 'for ' + tw(cperkDur(pk, lv), 'second'))
+            .replace(/(\d+(?:\.\d+)?)[ \u00a0]seconds?\b/g, (m, n) => tw(+n, 'second'));   // (Ready Golf's 1.5 seconds)
 }
 // the perk he wears, a level up, bought with sovereigns a step at a time
 function cperkUp(id){
@@ -32606,7 +32629,7 @@ function cperkUp(id){
   if(!pk || !(S.cperkOwn && S.cperkOwn[id]) || lv >= B.CPERK_LV_MAX) return false;
   if(!spendSov(B.CPERK_LV_COST[lv - 1])) return false;
   S.cperkLv = S.cperkLv || {}; S.cperkLv[id] = lv + 1;
-  toast('<b>' + pk.n + '</b> \u00b7 Lv\u00a0' + (lv + 1));
+  toast('<b>' + pk.n + '</b> \u00b7 Level\u00a0' + (lv + 1));
   Sfx.play('buy');
   checkAch();
   renderCadPerks(); renderVitals();
@@ -32615,11 +32638,11 @@ function cperkUp(id){
 let cadHintOpen = false;
 function renderCadPerks(){
   const w = $('cadRows'); if(!w) return;
-  $('cadNote').textContent = 'One perk at a time, every ' + B.CPERK_EVERY + 's';
+  $('cadNote').textContent = 'One perk at a time, every ' + tw(B.CPERK_EVERY, 'second');
   // how the upgrades work, behind the ?
   w.innerHTML = '<div class="hint' + (cadHintOpen ? ' open' : '') + '" id="cadHint"><div class="foldhead">'
     + '<span>Perk upgrades</span><button class="qm" aria-label="How caddie upgrades work">?</button></div>'
-    + '<div class="fold" style="margin-top:6px">Each level lasts 1s longer and is 12.5% stronger, up to Lv\u00a0'
+    + '<div class="fold" style="margin-top:6px">Each level lasts 1 second longer and is 12.5% stronger, up to Level\u00a0'
     + B.CPERK_LV_MAX + '.</div></div>';
   w.querySelector('#cadHint .qm').onclick = () => { cadHintOpen = !cadHintOpen; $('cadHint').classList.toggle('open', cadHintOpen); };
   // the bond with the caddie he has: the step it is at, the holes to the
@@ -32643,13 +32666,13 @@ function renderCadPerks(){
     let h = '<div class="band"><span class="eyebrow">Errands</span></div>';
     const haul = D0 => D0.pay.map(r => ciLook(r)[3]).join(' \u00b7 ');
     if(!E) h += B.ERRANDS.map(D0 => '<div class="row err"><div><div class="nm">' + D0.n + '</div><div class="ds">' + haul(D0) + '</div></div>'
-      + '<button class="buy" data-err="' + D0.id + '"><span class="lbl">Send</span><span class="amt">' + D0.h + 'h</span></button></div>').join('');
+      + '<button class="buy" data-err="' + D0.id + '"><span class="lbl">Send</span><span class="amt">' + tw(D0.h, 'hour') + '</span></button></div>').join('');
     else if(errBack()) h += '<div class="row err back"><div><div class="nm">Back from ' + D.n.replace(/^The /, 'the ') + '</div><div class="ds">' + haul(D) + '</div></div>'
       + '<button class="buy go" data-errget="1"><span class="lbl">Ready</span><span class="amt">GET</span></button></div>';
     else{ const L = errLeft(), hh = Math.floor(L / 3600e3), mm = Math.ceil((L % 3600e3) / 60e3);
       h += '<div class="row err"><div><div class="nm">At ' + D.n.replace(/^The /, 'the ') + '</div><div class="ds">' + haul(D) + '</div>'
-        + '<div class="mt">Back in ' + (hh ? hh + 'h ' : '') + (mm >= 60 ? 59 : mm) + 'm<div class="cadbar"><i style="width:' + Math.round((1 - L / (D.h * 3600e3)) * 100) + '%"></i></div></div></div>'
-        + '<button class="buy no" disabled><span class="lbl">Out</span><span class="amt">' + D.h + 'h</span></button></div>'; }
+        + '<div class="mt">Back in ' + (hh ? tw(hh, 'hour') + ' ' : '') + tw(mm >= 60 ? 59 : mm, 'minute') + '<div class="cadbar"><i style="width:' + Math.round((1 - L / (D.h * 3600e3)) * 100) + '%"></i></div></div></div>'
+        + '<button class="buy no" disabled><span class="lbl">Out</span><span class="amt">' + tw(D.h, 'hour') + '</span></button></div>'; }
     box.innerHTML = h;
     box.querySelectorAll('[data-err]').forEach(b => b.onclick = () => errSend(b.dataset.err));
     const g = box.querySelector('[data-errget]'); if(g) g.onclick = () => errGet();
@@ -32666,9 +32689,9 @@ function renderCadPerks(){
     const locked = pk.myth && !mythOk();
     if(on && locked) body.children[2].textContent = 'Worn \u00b7 waits for a Mythic caddie';
     else if(locked) body.children[2].textContent = 'Mythic caddie only';
-    else if(on) body.children[2].innerHTML = 'Worn \u00b7 Lv\u00a0' + lv + '/' + B.CPERK_LV_MAX + '<div class="cadbar"><i style="width:'
+    else if(on) body.children[2].innerHTML = 'Worn \u00b7 Level\u00a0' + lv + '/' + B.CPERK_LV_MAX + '<div class="cadbar"><i style="width:'
       + Math.round(clamp((S.cperkT || 0) / B.CPERK_EVERY, 0, 1) * 100) + '%"></i></div>';
-    else if(own && lv > 1) body.children[2].textContent = 'Lv\u00a0' + lv + '/' + B.CPERK_LV_MAX;
+    else if(own && lv > 1) body.children[2].textContent = 'Level\u00a0' + lv + '/' + B.CPERK_LV_MAX;
     if(locked && !on){
       btn.className = 'buy no';
       btn.children[0].textContent = own ? 'Wear' : 'Buy';
@@ -32678,7 +32701,7 @@ function renderCadPerks(){
       // worn, its button is the upgrade
       const cost = top ? 0 : B.CPERK_LV_COST[lv - 1];
       btn.className = 'buy' + (top ? ' ok' : (S.sov || 0) >= cost ? '' : ' no');
-      btn.children[0].textContent = top ? 'Top level' : 'To Lv\u00a0' + (lv + 1);
+      btn.children[0].textContent = top ? 'Top level' : 'To Level\u00a0' + (lv + 1);
       btn.children[1].innerHTML = top ? '\u2713' : sovFmt(cost) + sovIc();
       btn.setAttribute('aria-label', top ? pk.n + ' is at its top level'
         : 'Upgrade ' + pk.n + ' to Lv ' + (lv + 1) + ' for ' + cost + ' ' + B.SOV.toLowerCase());
@@ -32717,7 +32740,7 @@ function cperkPick(id){
 // runs, a new one goes under the others, and when one has gone the rest move
 // up.
 let cperkShow = null, buffOrder = [];
-const buffClock = t => t >= 60 ? Math.floor(t / 60) + ':' + String(Math.floor(t % 60)).padStart(2, '0') : Math.ceil(t - 1e-6) + 's';
+const buffClock = t => t >= 60 ? Math.floor(t / 60) + ':' + String(Math.floor(t % 60)).padStart(2, '0') : tw(Math.ceil(t - 1e-6), 'second');
 function buffLines(dt){
   const out = [];
   const pk = cperkShow && cperkDef(cperkShow.id);
@@ -32726,7 +32749,7 @@ function buffLines(dt){
     const b = !pk.now && S.buff[pk.k], s = cperkTxt(pk.s, pk, cperkLv(pk.id));
     if(pk.now){ cperkShow.left -= dt; if(cperkShow.left > 0){ txt = s; a = Math.min(1, cperkShow.left); } }
     else if(b && pk.next){ txt = s; a = 1; }
-    else if(b){ txt = s + ' for ' + Math.ceil(b.t - 1e-6) + 's'; a = Math.min(1, b.t); }
+    else if(b){ txt = s + ' for ' + tw(Math.ceil(b.t - 1e-6), 'second'); a = Math.min(1, b.t); }
     if(!txt) cperkShow = null;
     else out.push({ k: 'c', txt, col: pk.col || '', a });
   }
@@ -32991,7 +33014,7 @@ function albCatch(){
       len: Math.max(7, Math.round(VW * (0.032 + Math.random() * 0.02))), col: ALB_FEATHER[i % 4 === 0 ? 1 : 0] }); }
   LUCKY.buff = Math.max(LUCKY.buff, ALB_DUR);
   S.albN = (S.albN || 0) + 1;
-  toast('<span class="achk">Lucky Albatross</span>' + ALB_V + '× purse for ' + ALB_DUR + 's', 'ach');
+  toast('<span class="achk">Lucky Albatross</span>' + ALB_V + '× purse for ' + tw(ALB_DUR, 'second'), 'ach');
   renderVitals();
 }
 
@@ -33545,7 +33568,7 @@ function careerStats(w, C){
         + (on ? '' : ' \u00b7 <i>unlocks in ' + (m.at - n) + '\u00a0' + plural(m.at - n, 'points') + '</i>') + '</div></div>'
       : '';
     d.innerHTML = '<div><div class="nm">' + svgIcon(s.ic, 'tic') + s.n + ' <span class="mt">\u00b7 <i>' + n + '</i>\u00a0' + plural(n, 'points') + '</span></div>'
-      + '<div class="ds">' + nb(s.v) + ' each</div>' + bar + '</div>'
+      + '<div class="ds">' + nb(statTotal(s.v, Math.max(1, n))) + '</div>' + bar + '</div>'
       + '<div class="btnrow"><button class="mini' + (S.statPts ? ' go' : ' dim') + '">+1</button>'
       + '<button class="mini' + (S.statPts >= 10 ? ' go' : ' dim') + '">+10</button></div>';
     const bs = d.querySelectorAll('button');
@@ -34055,7 +34078,7 @@ function settingsSheet(){
     + row('Spotted Tag', 'Animals named over the map',
         '<button class="mini' + (S.spotTag !== 0 ? ' go' : '') + '" onclick="toggleSpotTag()">'
         + (S.spotTag !== 0 ? 'On' : 'Off') + '</button>')
-    + row('Animal Sounds', S.sound === 0 ? 'Needs Sound on' : 'Frogs, crows and owls',
+    + row('Animal Sounds', S.sound === 0 ? 'Needs Sound on' : '',
         '<button class="mini' + (S.wild !== 0 ? ' go' : '') + '" onclick="toggleWild()">'
         + (S.wild !== 0 ? 'On' : 'Off') + '</button>')
     // (the golfer: him or her, a box each, one ticked; the user asked for
@@ -34066,9 +34089,9 @@ function settingsSheet(){
     + row('Dawn and Dusk', 'Day and night follow your clock',
         '<button class="mini' + (S.dawnDusk === 1 ? ' go' : '') + '" onclick="toggleDawn()">'
         + (S.dawnDusk === 1 ? 'On' : 'Off') + '</button>')
-    + row('Battery Saver', saverMins() ? 'After ' + saverMins() + '\u00a0min untouched' : 'Only when started',
+    + row('Battery Saver', saverMins() ? 'After ' + tw(saverMins(), 'minute') + ' untouched' : 'Only when started',
         '<div class="setbtns"><button class="mini' + (saverMins() ? ' go' : '') + '" onclick="saverCycle()">'
-        + (saverMins() ? saverMins() + '\u00a0min' : 'Off') + '</button>'
+        + (saverMins() ? tw(saverMins(), 'minute') : 'Off') + '</button>'
         + '<button class="mini go" onclick="saverNow()">Start</button></div>')
     + row('Save Code', 'Move your save to another device',
         '<div class="setbtns"><button class="mini go" onclick="exportSheet()">Export</button>'

@@ -43,7 +43,7 @@ module.exports = {
         };
         const pct = v => v < 1 ? Math.round(v * 100) : v;
         for (const pk of B.CPERKS) {
-          o.lv1.push(cperkTxt(pk.s, pk, 1) === pk.s && cperkTxt(pk.d, pk, 1) === pk.d ? '' : pk.id);
+          const sp = t => t.replace(/\u00a0/g, ' '); o.lv1.push(sp(cperkTxt(pk.s, pk, 1)) === sp(pk.s) && sp(cperkTxt(pk.d, pk, 1)) === sp(pk.d) ? '' : pk.id);
           for (let lv = 1; lv <= B.CPERK_LV_MAX; lv++) {
             fire(pk.id, lv);
             const want = pk.v * (1 + B.CPERK_LV_V * (lv - 1));
@@ -60,7 +60,7 @@ module.exports = {
                 if (!b2 || !b || b2.v !== b.v || b2.t !== b.t) o.bad.push(pk.id + ' Lv ' + lv + ': its ' + k + ' gave ' + (b2 ? b2.v + ' for ' + b2.t : 'nothing')); }
               // and its words say the same numbers
               const words = cperkTxt(pk.d, pk, lv), num = String(pct(b ? b.v : 0));
-              if (words.indexOf(num) < 0 || (!pk.next && words.indexOf(wantT + 's') < 0))
+              if (words.indexOf(num) < 0 || (!pk.next && words.replace(/\u00a0/g, ' ').indexOf(wantT + ' second') < 0))
                 o.bad.push(pk.id + ' Lv ' + lv + ' reads "' + words + '" for ' + (b ? b.v : 0) + ' over ' + wantT + 's');
             }
           }
@@ -152,11 +152,11 @@ module.exports = {
     if (r.lv1.some(Boolean)) f('at Lv 1 these no longer read as they did: ' + r.lv1.filter(Boolean).join(', '));
     if (r.bad.length) f(r.bad.length + ' perk levels do not do what they say: ' + r.bad.slice(0, 4).join('; '));
     if (!(Math.abs(r.spd5 - 1.30) < 0.02 && Math.abs(r.spd1 - 1.20) < 0.02)) f('Pace Call moved pace by x' + r.spd1.toFixed(3) + ' at Lv 1 and x' + r.spd5.toFixed(3) + ' at Lv 5, not 1.20 and 1.30');
-    if (r.line3 !== '+25% pace for 10s') f('Pace Call at Lv 3 read "' + r.line3 + '" by the cog');
-    if (!/1\.5s hole clock/.test(r.lineReady5)) f('Ready Golf at Lv 5 read "' + r.lineReady5 + '" by the cog');
-    if (!/Worn · Lv 2\/5/.test(r.worn.mt) || r.worn.lbl !== 'To Lv 3' || r.worn.amt !== '160' || r.worn.ds !== '+23% pace for 9s')
+    if (r.line3 !== '+25% pace for 10 seconds') f('Pace Call at Lv 3 read "' + r.line3 + '" by the cog');
+    if (!/1\.5 seconds/.test(r.lineReady5)) f('Ready Golf at Lv 5 read "' + r.lineReady5 + '" by the cog');
+    if (!/Worn · Level 2\/5/.test(r.worn.mt) || r.worn.lbl !== 'To Level 3' || r.worn.amt !== '160' || r.worn.ds.replace(/\u00a0/g, ' ') !== '+23% pace for 9 seconds')
       f('the worn row reads ' + JSON.stringify(r.worn));
-    if (r.other.mt !== 'Lv 5/5' || r.other.lbl !== 'Wear' || r.other.ds !== '+38% prize money for 12s') f('an owned Lv 5 row reads ' + JSON.stringify(r.other));
+    if (r.other.mt !== 'Level 5/5' || r.other.lbl !== 'Wear' || r.other.ds.replace(/\u00a0/g, ' ') !== '+38% prize money for 12 seconds') f('an owned Lv 5 row reads ' + JSON.stringify(r.other));
     // a price in sovereigns is the purple gem beside the number, not the word
     if (r.none.lbl !== 'Buy' || r.none.amt !== '150' || !r.none.gem || !r.worn.gem) f('a perk not owned reads ' + JSON.stringify(r.none));
     if (r.clicked !== '3,160') f('the worn row\'s button did not upgrade it for its price: ' + r.clicked);
