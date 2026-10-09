@@ -43,7 +43,8 @@ module.exports = {
         P.pts = PASS.TIERS * PASS.PER; for (let t = 1; t <= PASS.TIERS; t++) { passGive('f', t, true); passGive('p', t, true); }
         if (!styleOwned('o', id) || !styleOwned('c', id)) f('the paid row did not give the look and its caddie');
         o.sov = { paid: 0 }; for (let t = 1; t <= PASS.TIERS; t++) { const rr = passReward('p', t); if (rr.k === 'sov') o.sov.paid += rr.v; }
-        if (o.sov.paid < 800 || o.sov.paid > 1300) f('the paid row pays ' + o.sov.paid + ' sovereigns');
+        // (1,500: the user raised a paid tier from 40 to 60, so the pass alone is clearly quicker)
+        if (o.sov.paid < 1300 || o.sov.paid > 1700) f('the paid row pays ' + o.sov.paid + ' sovereigns');
         if (passClaimable()) f('something left after taking everything');
         // the dot
         P.got = []; renderStageBtns(); if (!document.getElementById('shopBtn').classList.contains('new')) f('no dot on the shop with rewards waiting');

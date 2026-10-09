@@ -28,8 +28,17 @@ module.exports = {
             buy: q('.phbuy') ? q('.phbuy').textContent : '', medal: q('.phmedal b') ? q('.phmedal b').textContent : '',
             rows: sh.querySelectorAll('.phrow').length, tiles: sh.querySelectorAll('.phrow .ptile').length,
             locked: sh.querySelectorAll('.ptile.p.lock').length, gets: sh.querySelectorAll('.ptile.can .mini').length,
+            rib: !!q('.phbuy .phrib'), ends: q('.phend') ? q('.phend').textContent : '',
+            free30: passReward('f', PASS.TIERS).k + ':' + passReward('f', PASS.TIERS).v, paidSov: passReward('p', 2).v,
             dot: (openShop('offers'), !!q('.shopnav button.dot[data-sub="pass"]')) };
           openShop('pass');
+          // the medal's number in its middle
+          { const m = q('.phmedal').getBoundingClientRect(), b0 = q('.phmedal b'), rg = document.createRange(); rg.selectNodeContents(b0); const n = rg.getBoundingClientRect();
+            out.medalOff = [Math.round((n.left + n.right) / 2 - (m.left + m.right) / 2), Math.round((n.top + n.bottom) / 2 - (m.top + m.bottom) / 2)]; }
+          // the tabs stay at the top as it scrolls
+          sh.scrollTop = 1200; await new Promise(r => setTimeout(r, 50));
+          { const t = q('.shopnav').getBoundingClientRect(), b1 = sh.getBoundingClientRect(); out.navTop = Math.round(t.top - b1.top); out.scrolled = sh.scrollTop; }
+          sh.scrollTop = 0;
           // the stage plays: two frames apart differ
           const cv = document.getElementById('showCv');
           const grab = () => cv.getContext('2d').getImageData(0, 0, cv.width, cv.height).data;
@@ -69,11 +78,17 @@ module.exports = {
       if (r.locked !== 30) f(at + r.locked + ' paid tiles locked unbought');
       if (r.gets < 6) f(at + 'only ' + r.gets + ' Get buttons at tier 6');
       if (!r.dot) f(at + 'no dot on the Pass tab with tiers waiting');
+      if (!r.rib) f(at + 'no Best Value on the button');
+      if (!/left|Ends in/.test(r.ends)) f(at + 'no time left on the banner: ' + r.ends);
+      if (r.free30 !== 'bag:legend') f(at + 'the free row\'s last is ' + r.free30 + ', not a Legend Bag');
+      if (r.paidSov !== 60) f(at + 'a paid tier pays ' + r.paidSov + ', not 60');
+      if (Math.abs(r.medalOff[0]) > 2 || Math.abs(r.medalOff[1]) > 5) f(at + 'the tier off the medal\'s middle by ' + r.medalOff);
+      if (r.scrolled > 100 && Math.abs(r.navTop) > 2) f(at + 'scrolled ' + r.scrolled + 'px, the tabs ' + r.navTop + 'px off the top');
       if (r.dotNone || r.dotOffers) f(at + 'a dot on the Pass tab with nothing waiting');
       if (!(r.moved > 40)) f(at + 'the Cyber-Drive stage stood still (' + r.moved + ' pixels changed)');
       if (!r.seal || r.lockedPaid) f(at + 'bought: seal ' + r.seal + ', ' + r.lockedPaid + ' still locked');
       if (r.over.length) f(at + r.over.slice(0, 4).join('; '));
-      o.push(W + 'x' + H + ' stage ' + r.moved + 'px moved');
+      o.push(W + 'x' + H + ' stage ' + r.moved + 'px moved, medal ' + r.medalOff + ', tabs at ' + r.navTop);
     }
     if (fails.length) throw new Error(fails.join('\n'));
     return ['banner, five chips, $9.99, medal, 30 rows of two, locked till bought, the dot only while a tier waits; ' + o.join(', ')];

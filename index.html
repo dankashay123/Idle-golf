@@ -759,7 +759,8 @@ div.guide.hunt,div.guide.mhunt{grid-template-columns:repeat(3,minmax(0,1fr))}
 .awbn{font-family:var(--disp);font-size-adjust:none;font-size:var(--f3);line-height:1.2}
 .awbs{font-size:var(--f0);color:var(--faint);margin-top:2px}
 /* the pro shop */
-.shopnav{display:flex;gap:0;margin:-4px -16px 10px;border-bottom:1px solid var(--line)}
+.shopnav{display:flex;gap:0;margin:-4px -16px 10px;border-bottom:1px solid var(--line);
+  position:sticky;top:-16px;z-index:6;background:var(--panel)}
 .shopnav button{flex:1 1 0;padding:9px 2px;background:none;border:0;border-bottom:2px solid transparent;
   color:var(--dim);font-size:var(--f0);letter-spacing:.12em;text-transform:uppercase;font-weight:700}
 .shopnav button.on{color:var(--brass);border-bottom-color:var(--brass)}
@@ -800,7 +801,13 @@ div.guide.hunt,div.guide.mhunt{grid-template-columns:repeat(3,minmax(0,1fr))}
 .phtop{position:relative;display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:8px;margin:0 2px 8px}
 .phk{white-space:nowrap;font-family:var(--disp);font-size-adjust:none;font-size:var(--f4);line-height:1.1;letter-spacing:.08em;text-transform:uppercase;
   background:linear-gradient(180deg,#FFF1C2,#E3B457 55%,#A87A2A);-webkit-background-clip:text;background-clip:text;color:transparent}
-.phm{font-size:var(--f0);color:#D9C9F2;letter-spacing:.06em;text-align:right;line-height:1.3}
+.phm{display:flex;flex-direction:column;align-items:flex-end;gap:3px;font-size:var(--f0);color:#D9C9F2;letter-spacing:.06em;text-align:right;line-height:1.3}
+.phend{padding:2px 6px;border:1px solid #C9963A;background:rgba(60,40,10,.55);color:#FFE7A0;font-weight:700;letter-spacing:.04em}
+.phend.soon{border-color:var(--flag);color:#FFD0C8;background:rgba(120,30,20,.55)}
+.phrib{position:absolute;top:-10px;left:12px;padding:2px 8px;font-style:normal;
+  background:linear-gradient(180deg,#FF7A9A,#E4405F);color:#FFFFFF;font-size:var(--f0);font-weight:700;letter-spacing:.14em;text-transform:uppercase;
+  box-shadow:0 2px 6px rgba(0,0,0,.4);pointer-events:none}
+.phbuy.price{margin-top:6px}
 .phstage{position:relative;border-color:#6A4A9E;background:#05070F}
 .phtag{position:absolute;left:4px;top:4px;display:flex;flex-direction:column;padding:3px 6px;line-height:1.25;
   background:rgba(8,6,20,.78);border:1px solid #9BE15A;font-size:var(--f0);color:#C9F28A;letter-spacing:.08em;text-transform:uppercase}
@@ -823,8 +830,9 @@ div.guide.hunt,div.guide.mhunt{grid-template-columns:repeat(3,minmax(0,1fr))}
 .phprog{display:flex;align-items:center;gap:10px;margin:0 0 6px}
 .phmedal{flex:0 0 auto;width:58px;height:58px;gap:2px;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;
   background:radial-gradient(circle at 35% 30%,#FFF1C2,#E3B457 45%,#8A6A26);border:2px solid #FFE7A0;box-shadow:0 0 0 2px #4A2A6E,0 0 12px rgba(227,180,87,.5);color:#2A1606;line-height:1}
-.phmedal small{font-size:9px;letter-spacing:.12em;text-transform:uppercase;font-weight:700}
-.phmedal b{font-family:var(--mono);font-size:22px}
+.phmedal{position:relative}
+.phmedal small{position:absolute;left:0;right:0;top:8px;text-align:center;font-size:8px;letter-spacing:.12em;text-transform:uppercase;font-weight:700}
+.phmedal b{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding-top:6px;font-family:var(--mono);font-size:22px;line-height:1;font-variant-numeric:tabular-nums}
 .phbarw{flex:1;min-width:0}
 .phbarl{display:flex;justify-content:space-between;gap:6px;font-size:var(--f0);color:var(--dim);margin-bottom:4px;line-height:1.3}
 .phbar{height:10px;background:#0A1410;border:1px solid #4E3A7A;overflow:hidden}
@@ -848,8 +856,8 @@ div.guide.hunt,div.guide.mhunt{grid-template-columns:repeat(3,minmax(0,1fr))}
 .ptile .ptx{flex:1;min-width:0}
 .ptile .ptx b{font-family:var(--mono);font-size:var(--f2);color:var(--sov)}
 .ptile.p{border-color:#5A3E8E;background:linear-gradient(160deg,#24123E,#141C34)}
-.ptile.p.big{border-color:#E3B457;background:linear-gradient(160deg,#3A2410,#2A1250);box-shadow:0 0 10px rgba(227,180,87,.35)}
-.ptile.p.big img{width:34px;height:34px}
+.ptile.pbig{border-color:#E3B457;background:linear-gradient(160deg,#3A2410,#2A1250);box-shadow:0 0 10px rgba(227,180,87,.35)}
+.ptile.pbig img{width:34px;height:34px}
 .ptile.can{border-color:var(--aurora);box-shadow:0 0 0 1px var(--aurora) inset;animation:phcan 1.6s ease-in-out infinite}
 @keyframes phcan{50%{box-shadow:0 0 10px var(--aurora)}}
 .ptile.got{opacity:.5}
@@ -9358,6 +9366,8 @@ const passTier = () => Math.min(PASS.TIERS, Math.floor(passNow().pts / PASS.PER)
 // what each tier gives, free and paid
 function passReward(row, t){
   if(row === 'f'){
+    // (the free row's last a Legend Bag too, the user asked)
+    if(t === PASS.TIERS) return { k: 'bag', v: 'legend' };
     if(t % 5 === 0) return { k: 'sov', v: 10 };
     return [{ k: 'grit', v: 0.05 }, { k: 'tick', v: 1 }, { k: 'shard', v: 0.03 }, { k: 'keys', v: 1 }][(t - 1) % 5] || { k: 'scroll', v: 0.02 };
   }
@@ -9366,7 +9376,7 @@ function passReward(row, t){
   if(t === 20) return { k: 'look', v: passMonth() };
   if(t === 15) return { k: 'bag', v: 'legend' };
   if(t === 5 || t === 25) return { k: 'boost', v: 24 };
-  return { k: 'sov', v: 40 };
+  return { k: 'sov', v: PASS.SOV };
 }
 function passSay(r){
   if(r.k === 'cyber') return '<span><b>Cyber-Drive</b> set</span>';
@@ -9434,13 +9444,20 @@ function passSum(){
     if(r.k === 'sov' && i < PASS.TIERS) sov += r.v; else if(r.k === 'boost') boost += r.v; }
   return { sov, boost };
 }
+// seconds left in the month's pass: its days left, less what is gone of today
+function passLeft(ends){
+  const n = new Date(), gone = n.getHours() * 3600 + n.getMinutes() * 60 + n.getSeconds();
+  return Math.max(0, ends * 86400 - gone);
+}
 function passHtml(){
   const P = passNow(), t = passTier(), mo = passMonth(), into = P.pts - t * PASS.PER;
   const ends = Math.max(0, (Date.UTC(new Date(dayNow() * 86400000).getUTCFullYear(), mo + 1, 1) / 86400000) - dayNow());
   const sum = passSum(), cyb = setOwned('cyber');
+  // (the time left in gold, to the hour on its last two days)
+  const left = passLeft(ends), endsTxt = left < 2 * 86400 ? 'Ends in ' + nb(Math.floor(left / 3600) + 'h ' + Math.floor(left % 3600 / 60) + 'm') : nb(Math.floor(left / 86400) + ' days') + ' left';
   const chip = (img, txt, gold) => '<span class="phchip' + (gold ? ' gold' : '') + '"><img src="' + img + '" alt=""><span>' + txt + '</span></span>';
   let h = '<div class="passhero' + (P.paid ? ' paid' : '') + '">'
-    + '<div class="phtop"><span class="phk">Tour Pass</span><span class="phm">' + PASS_MONTHS[mo] + ' · ' + nb(ends + (ends === 1 ? ' day' : ' days') + ' left') + '</span></div>'
+    + '<div class="phtop"><span class="phk">Tour Pass</span><span class="phm">' + PASS_MONTHS[mo] + '<b class="phend' + (left < 3 * 86400 ? ' soon' : '') + '">⏳ ' + endsTxt + '</b></span></div>'
     + '<div class="showcase phstage"><div class="showst"><canvas id="showCv" width="' + SHOW_W + '" height="' + SHOW_H + '"></canvas>'
     + '<button class="mini" id="showNight">' + (SHOW && SHOW.night ? 'Day' : 'Night') + '</button>'
     + '<span class="phtag"><b>Cyber-Drive</b>' + (cyb ? 'yours' : 'never sold') + '</span></div></div>'
@@ -9452,7 +9469,7 @@ function passHtml(){
     + chip(pixUrl('boost', '#F2D75E'), nb(sum.boost + ' hours') + ' ×2 prize money')
     + '</div>'
     + (P.paid ? '<div class="phseal">✦ Pass unlocked ✦</div>'
-      : '<button class="price phbuy" data-do="pass:buy"><span>Unlock the Pass</span><b>$' + PASS.USD.toFixed(2) + '</b><small>nothing charged</small></button>')
+      : '<button class="price phbuy" data-do="pass:buy"><i class="phrib">Best Value</i><span>Unlock the Pass</span><b>$' + PASS.USD.toFixed(2) + '</b><small>nothing charged</small></button>')
     + '</div>';
   // the tier medal and the bar to the next
   const pct = t >= PASS.TIERS ? 100 : Math.round(into / PASS.PER * 100);
@@ -9468,8 +9485,8 @@ function passHtml(){
   h += '<div class="phtrack"><div class="phhd"><span>Free</span><span></span><span class="gold">Pass</span></div>';
   for(let i = 1; i <= PASS.TIERS; i++){
     const cell = row => { const r = passReward(row, i), got = P.got.includes(row + i), can = passCan(row, i);
-      const big = row === 'p' && ['cyber', 'look', 'bag'].includes(r.k);
-      return '<div class="ptile ' + row + (got ? ' got' : can ? ' can' : '') + (row === 'p' && !P.paid ? ' lock' : '') + (big ? ' big' : '') + '">'
+      const big = ['cyber', 'look', 'bag'].includes(r.k);
+      return '<div class="ptile ' + row + (got ? ' got' : can ? ' can' : '') + (row === 'p' && !P.paid ? ' lock' : '') + (big ? ' pbig' : '') + '">'
         + '<div class="pin"><img src="' + passIcon(r) + '" alt=""><span class="ptx">' + passShort(r) + '</span>'
         + (got ? '<i class="pok">✓</i>' : row === 'p' && !P.paid ? '<i class="plk"></i>' : '') + '</div>'
         + (can ? '<button class="mini" onclick="passGet(\'' + row + '\',' + i + ')">Get</button>' : '')
@@ -9498,7 +9515,9 @@ const SHOP_CADDIE_USD = 1.99;
 // dailies, the Check-In, holes played live), a free row and a paid row; the
 // paid row's last tier the month's own look, never sold. PASS_LOOK, one a
 // month, outfits (and their caddies) marked pass: the month.
-const PASS = { TIERS: 30, PER: 150, DAILY: 30, ALL: 30, CHECKIN: 20, HOLES: 10, USD: 9.99, CYBER_SOV: 300 };
+// (SOV a paid tier's sovereigns: 60, the user raised it from 40 so the pass
+// alone is clearly quicker)
+const PASS = { TIERS: 30, PER: 150, DAILY: 30, ALL: 30, CHECKIN: 20, HOLES: 10, USD: 9.99, CYBER_SOV: 300, SOV: 60 };
 const PASS_LOOK = [
   ['Frostline', '#DCE8F2', '#9FB4C6', '#3A5A7A', '#2A4462', '#1C2E44', '#E8EEF4', '#C4CED8'],
   ['Hearth', '#8A2A22', '#5E1C16', '#E8D2B0', '#C8B08C', '#A08A68', '#4A3426', '#30221A'],
