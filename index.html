@@ -95,7 +95,7 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
   background:linear-gradient(180deg,#0B1811,#0C1A13)}
 #eventLine{font-family:var(--disp);font-size-adjust:none;font-size:var(--f4);letter-spacing:.02em;line-height:1.1;color:var(--chalk);
   user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
-#sub{font-size:var(--f0);letter-spacing:.16em;text-transform:uppercase;color:var(--faint);margin-top:2px}
+#sub{font-size:var(--f0);letter-spacing:.16em;text-transform:uppercase;color:var(--faint);margin-top:6px}
 #gold{font-size:var(--f4)}
 #purse{text-align:right}
 #gold{font-family:var(--mono);font-size:var(--f5);font-weight:600;color:var(--brass);line-height:1}
@@ -994,6 +994,7 @@ div.guide.hunt,div.guide.mhunt{grid-template-columns:repeat(3,minmax(0,1fr))}
 #condTip{font-size:var(--f0);letter-spacing:.1em;text-transform:uppercase;font-weight:600;color:var(--faint);
   white-space:nowrap;line-height:1.25em;text-shadow:0 0 2px #000,0 1px 2px #000}
 #condTip:empty{display:none}
+#condTip b{font-weight:inherit} #condTip i{font-style:normal;color:var(--faint)}
 #buffTip{font-family:var(--mono);font-size:var(--f2);font-weight:600;max-width:100%;
   display:flex;flex-direction:column;align-items:flex-start;min-width:0;pointer-events:none}
 #buffTip .bl{display:block;max-width:100%;line-height:1.25em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
@@ -4411,6 +4412,12 @@ const $ = id => document.getElementById(id);
 // The live numbers are written every frame. Writing a value that has not
 // changed still costs the browser a fresh layout of that text, sixty times a
 // second, so these only touch the page when the value is new.
+// The day's conditions each in a colour of its own, of what it is (the user
+// asked: Glass Greens one colour, Static Air another)
+const COND_COL = { 'Crosswind': '#A8DCF5', 'Firm and Fast': '#F0B65C', 'Night Round': '#9AA6FF', 'Static Air': '#F7E35A',
+  'Ley Surge': '#C98BFF', 'Sponsor Day': '#7EE08A', 'Glass Greens': '#8FF5F0', 'Marshal Sweep': '#FF8A5C',
+  'Mythic Pin': '#FF6F96', 'Cart Path Only': '#C9CED6', 'Aurora Front': '#57E0BE', 'Fair': '#E8ECE4' };
+const condHtml = n => n ? n.split(' + ').map(x => '<b style="color:' + (COND_COL[x] || '#E8ECE4') + '">' + x + '</b>').join('<i> + </i>') : '';
 function setText(el, v){ v = String(v); if(el._tx !== v){ el._tx = v; el.textContent = v; } }
 function setHTML(el, v){ if(el._hx !== v){ el._hx = v; el.innerHTML = v; } }
 function setCls(el, v){ if(el.className !== v) el.className = v; }
@@ -31264,7 +31271,8 @@ function renderLive(D){
   setText($('rate'), fmt(Meter.shown()) + ' purse/sec');
   setText($('sovNum'), sovFmt(S.sov));
   // the day's course condition beside the cog, small (none on a fair day or in a wager)
-  setText($('condTip'), !S.dgnRun && S.chaos && S.chaos.n !== 'Fair' ? S.chaos.n : '');
+  { const cn = !S.dgnRun && S.chaos && S.chaos.n !== 'Fair' ? S.chaos.n : '', ct = $('condTip');
+    if(ct._tx !== cn){ ct._tx = cn; ct.innerHTML = condHtml(cn); } }
   // The yardage, the bar and the clock used to be written here as well, into
   // three more elements the old stage HUD took with it. This runs every frame,
   // so that was four lookups, a clamp and two string builds at sixty a second
