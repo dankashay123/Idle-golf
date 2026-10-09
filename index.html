@@ -26386,15 +26386,20 @@ Object.assign(Scene, {
     L.length = 0;
   },
   // a layer laid over the frame everywhere but where the trees stand
-  overTrees(c, layer){
+  // (y0 to y1: the rows the layer holds anything in, so only they are copied,
+  // cut and laid: the horizon's fade is a few rows and the haze a band, and
+  // each was three whole-screen copies a frame on the phone; the same picture)
+  overTrees(c, layer, y0, y1){
     const T = this._tmTmp || (this._tmTmp = document.createElement('canvas'));
     if(T.width !== VW || T.height !== VH){ T.width = VW; T.height = VH; T._c = null; }
     const g = T._c || (T._c = T.getContext('2d'));
-    g.globalCompositeOperation = 'copy'; g.drawImage(layer, 0, 0);
+    y0 = clamp(Math.floor(y0 === undefined ? 0 : y0), 0, VH); y1 = clamp(Math.ceil(y1 === undefined ? VH : y1), y0, VH);
+    const h = y1 - y0; if(h <= 0) return;
+    g.clearRect(0, y0, VW, h); g.drawImage(layer, 0, y0, VW, h, 0, y0, VW, h);
     if(this.treeMask){ if(this._tmDirty){ this.treeMask.putImageData(this._tmFI, 0, 0); this._tmDirty = false; }
-      g.globalCompositeOperation = 'destination-out'; g.drawImage(this.treeMask.canvas, 0, 0); }
+      g.globalCompositeOperation = 'destination-out'; g.drawImage(this.treeMask.canvas, 0, y0, VW, h, 0, y0, VW, h); }
     g.globalCompositeOperation = 'source-over';
-    c.drawImage(T, 0, 0);
+    c.drawImage(T, 0, y0, VW, h, 0, y0, VW, h);
   },
   buildHaze(){
     const key = this.themeId + '|' + VW + 'x' + VH;
@@ -26429,6 +26434,7 @@ Object.assign(Scene, {
     const top  = Math.max(0, HORIZON - Math.round(VH*0.18));
     const deep = HORIZON + Math.round((VH - HORIZON) * 0.55);
     const ss   = t => t*t*(3 - 2*t);
+    let y0 = VH, y1 = 0;
     for(let y = top; y < VH; y++){
       const u = clamp((y - top) / Math.max(1, HORIZON - top), 0, 1);
       const v = clamp((y - HORIZON) / Math.max(1, deep - HORIZON), 0, 1);
@@ -26436,8 +26442,10 @@ Object.assign(Scene, {
       if(a <= 0.004) continue;
       g.globalAlpha = a;
       g.fillRect(0, y, VW, 1);
+      y0 = Math.min(y0, y); y1 = y + 1;
     }
     g.globalAlpha = 1;
+    cv._y0 = y0; cv._y1 = Math.max(y0, y1);
     this.haze = cv; this.hazeKey = key;
   },
 
@@ -26479,7 +26487,7 @@ Object.assign(Scene, {
       g.drawImage(row, 0, HORIZON + i);
     }
     g.globalAlpha = 1;
-    this.overTrees(c, L);
+    this.overTrees(c, L, HORIZON, HORIZON + n);
   },
 
   drawGround(){
@@ -29920,7 +29928,7 @@ Object.assign(Scene, {
       this.sdepClear();
       this.drawProps();
       this.buildHaze();
-      if(this.haze) this.overTrees(c, this.haze);
+      if(this.haze) this.overTrees(c, this.haze, this.haze._y0, this.haze._y1);
       this.drawTee();
       // No flag on the Long Drive. It is a measured range with no hole in it,
       // and a pin at the far end was the single thing that made it read as
@@ -30109,7 +30117,7 @@ Object.assign(Scene, {
       else if(AB !== null){ band(AB, Infinity, true, true); this.drawAceBeam(); band(-Infinity, AB, false, false); }
       else this.drawProps();
       this.buildHaze();
-      if(this.haze) this.overTrees(c, this.haze);
+      if(this.haze) this.overTrees(c, this.haze, this.haze._y0, this.haze._y1);
       this.drawShimmer();
       this.drawTee(true);
       this.drawBridge();
