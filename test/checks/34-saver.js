@@ -175,9 +175,9 @@ module.exports = {
       const r = find();
       const start = [...r.querySelectorAll('button')].find(b => b.textContent === 'Start');
       start.click();
-      return { seen: seen.join(','), after: S.saver, on: !!SAVER, sheet: $('veil').classList.contains('on') };
+      return { seen: seen.join(',').replace(/\u00a0/g, ' '), after: S.saver, on: !!SAVER, sheet: $('veil').classList.contains('on') };
     });
-    if (set.seen !== '2 min,5 min,Off,1 min' || set.after !== 2) f('the setting cycled ' + set.seen + ' and ended on ' + set.after);
+    if (set.seen !== '2 minutes,5 minutes,Off,1 minute' || set.after !== 2) f('the setting cycled ' + set.seen + ' and ended on ' + set.after);
     if (!set.on || set.sheet) f('Start left the saver ' + (set.on ? 'on' : 'off') + ' and the sheet ' + (set.sheet ? 'open' : 'shut'));
 
     // ---- a save with junk in it --------------------------------------------
