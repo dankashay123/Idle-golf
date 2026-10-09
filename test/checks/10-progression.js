@@ -350,7 +350,7 @@ module.exports = {
     // ---- honours pay sovereigns, once each or every time ---------------
     const H = await page.evaluate(() => {
       const o = {};
-      o.bands = B.ACH.filter(a => [4, 6, 65].indexOf(a.sov) < 0).map(a => a.id + '=' + a.sov);
+      o.bands = B.ACH.filter(a => [2, 4, 39].indexOf(a.sov) < 0).map(a => a.id + '=' + a.sov);
       o.rep = B.ACH_REP.filter(a => !(a.step > 0) || !(a.sov >= 1 && a.sov <= 7)).map(a => a.id);
       o.repMetrics = B.ACH_REP.filter(a => !isFinite(achMetric(a.m))).map(a => a.id + ':' + a.m);
       // today's dailies are marked done, or reaching 250 holes would also pay
@@ -384,7 +384,7 @@ module.exports = {
       return o;
     });
     if (H.bands.length)
-      throw new Error('one-off honours outside the 4 / 6 / 65 sovereign bands (halved 9 October): ' + H.bands.join(', '));
+      throw new Error('one-off honours outside the 2 / 4 / 39 sovereign bands (halved 9 October, then 40% under that): ' + H.bands.join(', '));
     if (H.rep.length)
       throw new Error('repeating honours with no step or a payout outside 1-7 (halved 9 October): ' + H.rep.join(', '));
     if (H.repMetrics.length)
@@ -402,7 +402,7 @@ module.exports = {
     if (H.backAgain) throw new Error('the back pay was paid a second time: +' + H.backAgain);
 
     return ['all ' + sched.n + ' courses on the schedule, regular stops within one of each other',
-      'honours pay sovereigns: one-offs 4/6/65, ' + 'repeating 1-7 every step, back pay ' + H.backPay + ' once, nothing for counting from zero',
+      'honours pay sovereigns: one-offs 2/4/39, ' + 'repeating 1-7 every step, back pay ' + H.backPay + ' once, nothing for counting from zero',
       'paragon ' + r.cats.length + ' categories, ' + r.paraKeys.length
       + ' lines, none sold elsewhere, all wired',
       r.talents + ' talents, none sold elsewhere, all wired; '

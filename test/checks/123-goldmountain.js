@@ -212,7 +212,7 @@ module.exports = {
           QUIET = true; OFFLINE = false; return { sv, tk, again }; };
         const live = fin(14, false, false), plain = fin(23, false, false), quiet = fin(14, true, false), plainQ = fin(23, true, false), away = fin(14, false, true), plainA = fin(23, false, true);
         o.reward = 'live ' + (live.sv - plain.sv) + ' sovereigns, ' + (live.tk - plain.tk) + ' ticket';
-        if (live.sv - plain.sv !== B.GOLDEN_SOV || B.GOLDEN_SOV !== 5) f('a Golden Hour hole finished live paid ' + (live.sv - plain.sv) + ' sovereigns more than the same hole plain, not ' + B.GOLDEN_SOV);
+        if (live.sv - plain.sv !== B.GOLDEN_SOV || B.GOLDEN_SOV !== 3) f('a Golden Hour hole finished live paid ' + (live.sv - plain.sv) + ' sovereigns more than the same hole plain, not ' + B.GOLDEN_SOV);
         if (!(live.tk - plain.tk >= 1)) f('no ticket for a Golden Hour hole');
         if (live.again - plain.again !== 0) f('the hole\'s sovereigns paid a second time');
         if (quiet.sv !== plainQ.sv) f('sovereigns paid on a Golden Hour hole run quietly (' + (quiet.sv - plainQ.sv) + ')');

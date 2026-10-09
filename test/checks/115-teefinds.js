@@ -25,11 +25,12 @@ module.exports = {
           return Scene.props.find(p => p.kind === 19); };
         // how often, and what it comes to (from the hash: the same numbers
         // the holes draw)
-        let n = 0, sov = 0; const N = 40000;
+        let n = 0, sov = 0; const N = 40000; // (per FIND_ODDS holes: one find in 67, 40 before the 9 October cut)
         for (let h = 1; h <= N; h++) if (hr(h, 700) < 1 / FIND_ODDS) { n++; sov += findOf(h).sov; }
-        o.per40 = (n / N * 40).toFixed(2); o.sov40 = (sov / N * 40).toFixed(2);
-        if (n / N * 40 < 0.8 || n / N * 40 > 1.25) f(o.per40 + ' finds every forty holes');
-        if (sov / N * 40 < 0.9 || sov / N * 40 > 2) f(o.sov40 + ' sovereigns every forty holes');
+        o.per40 = (n / N * FIND_ODDS).toFixed(2); o.sov40 = (sov / N * FIND_ODDS).toFixed(2);
+        if (n / N * FIND_ODDS < 0.8 || n / N * FIND_ODDS > 1.25) f(o.per40 + ' finds every ' + FIND_ODDS + ' holes');
+        if (FIND_ODDS !== 67) f('one find in ' + FIND_ODDS + ' holes, not 67');
+        if (sov / N * FIND_ODDS < 0.9 || sov / N * FIND_ODDS > 2) f(o.sov40 + ' sovereigns every ' + FIND_ODDS + ' holes');
         const kinds = new Set(); for (let h = 1; h < 4000; h++) kinds.add(findOf(h).id);
         if (kinds.size !== FINDS.length) f('only ' + [...kinds].join(', ') + ' are ever found');
         // played live: a find on the holes the hash gives, and only there
@@ -158,7 +159,7 @@ module.exports = {
         seen.push(w + 'x' + h + ' ' + q.n);
       }
     } finally { await page.setViewportSize(vp); }
-    return [r.per40 + ' finds and ' + r.sov40 + ' sovereigns every forty holes; every kind found; live on ' + r.live + ' holes the hash gives',
+    return [r.per40 + ' finds and ' + r.sov40 + ' sovereigns every 67 holes; every kind found; live on ' + r.live + ' holes the hash gives',
       'laid on ' + r.laid + ' of ' + r.tried + ' holes asked, all in the rough on his left, clear of play, hazards, woods, water and other holes',
       'paid once; none away, in a catch-up, in a wager, before his first hole or on another hole',
       r.views + ' views, ' + r.pix + ' pixels, none under the ground\'s line; a burst within ' + r.far.toFixed(0) + ' pixels, then gone; none in a wager',
