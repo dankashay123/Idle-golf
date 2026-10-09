@@ -340,8 +340,9 @@ module.exports = {
     const a = r.away;
     if (a.tiles !== 3)
       throw new Error('the away card has ' + a.tiles + ' headline tiles, expected purse, holes, clubs');
-    if (a.bands.indexOf('Back on the tee') < 0)
-      throw new Error('the away card does not say where you are back on the tee');
+    // (no "Back on the tee, now playing": the user asked for no filler)
+    if (a.bands.indexOf('Back on the tee') >= 0)
+      throw new Error('the away card still says where you are back on the tee');
     const zero = a.lines.filter(l => /\s(0|\+0)$/.test(l.trim()));
     if (zero.length)
       throw new Error('the away card lists ' + zero.length + ' row(s) that did not happen: '
@@ -493,9 +494,10 @@ module.exports = {
         + r.honNear[0] + '"');
     if (r.honFirstName === r.honTableFirst)
       throw new Error('the list still opens on the first row of the table');
-    if (!r.honHints.some(h => h.indexOf('Closest') === 0 && h.indexOf(r.honNear[0]) > 0))
-      throw new Error('the honours sheet never names the nearest one: '
-        + JSON.stringify(r.honHints));
+    // (no "Closest:" line: the list opens on the nearest, and the user asked
+    // for no filler)
+    if (r.honHints.some(h => h.indexOf('Closest') === 0))
+      throw new Error('the honours sheet still has a Closest line: ' + JSON.stringify(r.honHints));
     if (r.honBtnLabel.indexOf(r.honNear[0]) < 0)
       throw new Error('the Trophy Room button says "' + r.honBtnLabel + '" instead of naming '
         + 'the nearest honour');
@@ -523,7 +525,7 @@ module.exports = {
       throw new Error('behind the card, climbing pays ' + B_.pay.toFixed(3) + ' where '
         + 'TIER_G/TIER_Y is ' + (r.tierG / r.tierY).toFixed(3));
     if (!(B_.pay < 1))
-      throw new Error('climbing while behind your card is not shown as a pay cut');
+      throw new Error('climbing while behind your card is not shown as less prize money');
     // far ahead: the walk sets the pace here, so longer holes are nearly free
     if (!(A_.pay > 1.05))
       throw new Error('sixty times ahead of the card, climbing pays ' + A_.pay.toFixed(2)
@@ -531,7 +533,7 @@ module.exports = {
     if (/too good for this card|can still make birdies there/.test(M_.text))
       throw new Error('a golfer carding birdies here is told their bag outdrives this card, '
         + 'with holes four times longer above: ' + M_.text.slice(0, 160));
-    const wants = { behind: /pay cut/, ahead: /can still make birdies there/ };
+    const wants = { behind: /Less prize money/, ahead: /still birdie there/ };
     for (const [k, c] of [['behind', B_], ['ahead', A_]]) {
       if (c.text.indexOf('Money per second') < 0)
         throw new Error('the Tour screen shows no purse line in the ' + k + ' case');

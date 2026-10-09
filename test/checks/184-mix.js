@@ -9,7 +9,7 @@
  *     shade quieter and measured 5dB over) */
 'use strict';
 module.exports = {
-  name: 'mix',
+  name: 'mix', alone: true,   // (its recordings decode as the page loads: on a busy machine they were late)
   async run(page) {
     const r = await page.evaluate(async () => {
       hideSheet(); Sfx.init();

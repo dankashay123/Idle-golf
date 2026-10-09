@@ -3105,10 +3105,10 @@ const B = {
     { id:'spd', n:'Pace of Play',    sc:false, lo:0.02, hi:0.09, sfx:'%' },
     { id:'crt', n:'Pure Strike',    sc:false, lo:0.006,hi:0.040, sfx:'pp' },
     { id:'cpw', n:'Strike Payoff',  sc:false, lo:0.12, hi:0.85, sfx:'x' },
-    { id:'gld', n:'Purse',          sc:false, lo:0.05, hi:0.30, sfx:'%' },
+    { id:'gld', n:'Prize Money',    sc:false, lo:0.05, hi:0.30, sfx:'%' },
     { id:'drp', n:'Club Luck',      sc:false, lo:0.03, hi:0.16, sfx:'%' },
     { id:'prc', n:'Affinity Chance',sc:false, lo:0.010,hi:0.055, sfx:'pp' },
-    { id:'mst', n:'Provisional',    sc:false, lo:0.010, hi:0.055, sfx:'pp' },
+    { id:'mst', n:'Second Ball',    sc:false, lo:0.010, hi:0.055, sfx:'pp' },
     { id:'dgn', n:'Wager Haul',     sc:false, lo:0.06, hi:0.35, sfx:'%' }
   ],
   ELEM: [
@@ -3228,7 +3228,7 @@ const B = {
     // is provisionals: every ball you carry is another look at the hole. The
     // Twilight Putt is tempo: the quicker you swing, the more putts you get in
     // before the light goes.
-    { id:'scramble', st:'Provisionals', ic:'balls3', mode:'scramble', n:'The Scramble', cur:'grit', cn:'Grit',
+    { id:'scramble', st:'Second balls', ic:'balls3', mode:'scramble', n:'The Scramble', cur:'grit', cn:'Grit',
       regen:780, cap:3, run:24, pay:0.05, gear:0.30, floorRar:1,
       d:'Nine holes, every ball you carry. Hole any of them and the hole is yours.',
       how:'More second-ball chance gives you more balls, and more balls win more holes.' },
@@ -3437,7 +3437,7 @@ const B = {
     { id:'drive',   n:'Drive',   ic:'muscle', d:'Yardage on every swing',  v:'+1.2% swing power',
       mile:{ at:60, n:'Off The Tee', d:'First swing of each hole hits triple' } },
     { id:'tempo',   n:'Pace',    ic:'beat',   d:'Plays every hole faster', v:'+0.30% pace',
-      mile:{ at:60, n:'Quick Play', d:'A hole can end almost at once' } },
+      mile:{ at:60, n:'Quick Play', d:'Holes can end early' } },
     { id:'touch',   n:'Touch',   ic:'touch',  d:'Contact off the middle',  v:'+0.10% pure strike chance, +0.03× its power',
       mile:{ at:60, n:'Flush', d:'Pure strikes ignore armour' } },
     { id:'fortune', n:'Fortune', ic:'coins',  d:'What the week is worth',  v:'+0.7% prize money, +0.08% luck',
@@ -4159,8 +4159,8 @@ const B = {
   CHAL: [
     { id:'short', n:'Short Bag',   d:'A third of your swing power',  k:'pow',  v:0.33, r:'pow',  rv:0.02, s:'+2% swing power' },
     { id:'legs',  n:'Heavy Legs',  d:'Half your pace',               k:'spd',  v:0.5,  r:'spd',  rv:0.02, s:'+2% pace' },
-    { id:'yips',  n:'The Yips',    d:'No pure strikes',              k:'crit', v:0,    r:'cpw',  rv:0.03, s:'+3% pure strike payoff' },
-    { id:'lost',  n:'Lost Balls',  d:'No provisional balls',         k:'mst',  v:0,    r:'gold', rv:0.02, s:'+2% prize money' },
+    { id:'yips',  n:'The Yips',    d:'No pure strikes',              k:'crit', v:0,    r:'cpw',  rv:0.03, s:'+3% pure strike power' },
+    { id:'lost',  n:'Lost Balls',  d:'No second balls',              k:'mst',  v:0,    r:'gold', rv:0.02, s:'+2% prize money' },
     { id:'cold',  n:'Cold Hands',  d:'A quarter of your affinity',   k:'elem', v:0.25, r:'elem', rv:0.03, s:'+3% affinity power' },
     { id:'gale',  n:'Into the Gale', d:'Two thirds of your swing power and pace', k:'both', v:0.67, r:'drop', rv:0.01, s:'+1% club luck' }
   ],
@@ -4326,7 +4326,7 @@ const B = {
     { id:'towel',  ic:'cptowel', col:'#8FD3FF', s:'+25% second ball', n:'Towel Service',   cost:150, k:'cMst',  v:25,   t:8,  w:'PROV',   d:'+25% second-ball chance for 8s' },
     // gear luck is only read when a hole ends, so this one waits for that:
     // armed when it goes off, spent on the next hole finished
-    { id:'scout',  ic:'cpscout', col:'#C68BFF', s:'+10% club luck next hole', n:'Lost Ball Scout', cost:150, k:'cDrop', v:0.10, t:1e6, w:'GEAR', next:1, d:'+10% club luck on the next hole you finish' },
+    { id:'scout',  ic:'cpscout', col:'#C68BFF', s:'+10% club luck next hole', n:'Lost Ball Scout', cost:150, k:'cDrop', v:0.10, t:1e6, w:'GEAR', next:1, d:'+10% club luck next hole' },
     { id:'chat',   ic:'cpchat', col:'#FFD66B',  s:'+25% prize money', n:'Sponsor Chat',    cost:150, k:'cGold', v:25,   t:8,  w:'PURSE',  d:'+25% prize money for 8s' },
     { id:'notes',  ic:'cpnotes', col:'#F28AD0', s:'+30% experience', n:'Course Notes',    cost:150, k:'cXp',   v:30,   t:8,  w:'XP',     d:'+30% experience for 8s' },
     { id:'club',   ic:'cpclub', col:'#FF7A5C',  s:'+20% strike power', n:'Club Selection',  cost:150, k:'cCpw',  v:20,   t:8,  w:'CRACK',  d:'+20% pure strike power for 8s' },
@@ -6291,9 +6291,9 @@ function checkAch(){
     else if(r.k === 'shard'){ S.shard += r.v; got = '+' + r.v + '\u00a0' + plural(r.v, 'shards'); }
     else if(r.k === 'scroll'){ S.scroll += r.v; got = '+' + r.v + ' ' + plural(r.v, 'scrolls'); }
     else if(r.k === 'legacy'){ S.legacy += r.v; got = '+' + r.v + ' legacy'; }
-    else if(r.k === 'crt' || r.k === 'drp' || r.k === 'prc') got = '+' + (r.v*100).toFixed(1) + '% ' + { crt:'pure strike chance', drp:'club luck', prc:'affinity chance' }[r.k];
-    else got = '+' + Math.round(r.v*100) + '% ' + ({ pow:'swing power', gld:'purse', spd:'pace',
-      mst:'second-ball chance', elm:'affinity', dgn:'wager haul' }[r.k] || r.k);
+    else if(r.k === 'crt' || r.k === 'drp' || r.k === 'prc') got = nb('+' + (r.v*100).toFixed(1) + '% ' + { crt:'pure strike chance', drp:'club luck', prc:'affinity chance' }[r.k]);
+    else got = nb('+' + Math.round(r.v*100) + '% ' + ({ pow:'swing power', gld:'prize money', spd:'pace',
+      mst:'second-ball chance', elm:'affinity', dgn:'wager haul' }[r.k] || r.k));
     // "Unlocked" and not "Achievement unlocked". The eyebrow is its own line,
     // and at the width a toast is allowed on a 320 phone the longer one wrapped
     // to two -- five lines a toast, two toasts, and the stack ran down into the
@@ -6965,7 +6965,7 @@ function festHole(d){
   while(st.got < FEST_AT.length && st.n >= FEST_AT[st.got]){
     const r = FEST_PAY[st.got]; st.got++;
     let say;
-    if(r.k === 'sov'){ earnSov(r.v, 'today', 'fest:' + st.wk + ':' + st.got, F.n + ' prize ' + st.got); say = '+' + r.v + sovIc() + ' on Today'; }
+    if(r.k === 'sov'){ earnSov(r.v, 'today', 'fest:' + st.wk + ':' + st.got, F.n + ' prize ' + st.got); say = '+' + r.v + sovIc(); }
     else if(r.k === 'bag'){ openBag(ciBag(r), true); say = ciLook(r)[3]; }
     else{ const a = ciAmt(r); S[r.k] += a; say = ciLook(r)[3]; }
     if(st.got === FEST_AT.length){ S.festMk = S.festMk || {}; S.festMk[F.mk] = 1; say += ' \u00b7 the ' + F.n + ' tee markers'; }
@@ -7031,7 +7031,7 @@ function chalHole(d){
   renderVitals(); if(rangeSub === 'chal') renderRangeNav();
 }
 function careerChal(w){
-  let h = '<div class="hint">Nine holes on your best card with a handicap. Score par or better to keep the bonus for good.</div>';
+  let h = '<div class="hint">Played with a handicap. Each win is kept for good.</div>';
   for(const C of B.CHAL){
     const t = chalDone(C.id), on = S.chal && S.chal.id === C.id, why = chalWhy(C.id);
     h += '<div class="row"><div><div class="nm">' + C.n + ' <span class="mt">' + pipRow(t, B.CHAL_TIER.length) + '</span></div>'
@@ -7298,14 +7298,6 @@ function binomPot(n, q, fc, step, per){
 // the rest of the game is priced in.
 const DGN_BUYS = { grit:'full club upgrades', shard:'club ascensions',
                    scroll:'shot book levels', gold:'holes of prize money' };
-// what a go buys, said as a person would: one thing every so many goes, or
-// about so many a go
-const DGN_ONE = { grit:'club upgrade', shard:'club ascension', scroll:'shot book level', gold:'hole of prize money' };
-function dgnBuysTxt(n, cur){
-  if(!(n > 0)) return 'a little';
-  if(n < 0.95){ const k = Math.round(1 / n); return k > 99 ? 'a little' : nb('1 ' + DGN_ONE[cur]) + ' every ' + nb(k + ' goes'); }
-  return 'about <b>' + fmt(n, n < 10 ? undefined : 0) + '</b>\u00a0' + DGN_BUYS[cur].replace('full club upgrades', 'club upgrades') + ' a go';
-}
 // What the rub of the green costs a Vault run, read off the event table itself
 // rather than measured once and written down: weights change, this follows.
 // A time event moves the clock directly; a work event scales the floor you are
@@ -7605,12 +7597,14 @@ function floorOn(R, quiet){
 // silver and gold for a run's own score, each paid once (a ticket; 5 and
 // 10 sovereigns waiting on Today). The Long Drive's is its longest against
 // what the bag is expected to hit, so it means the same on every card.
+// what a silver and a gold pay (a bronze a ticket)
+const WG_MEDAL_SOV = [0, 3, 5];
 const WG_MEDAL = { water: [3, 5, 8], cellar: [5, 9, 14], scramble: [3, 5, 7], twilight: [8, 12, 16], vault: [3, 5, 8], sand: [1, 1.4, 2] };
 const WG_MEDAL_N = ['Bronze', 'Silver', 'Gold'], WG_MEDAL_COL = ['#C8804A', '#C8D0D8', '#E3B457'];
 function wgScore(R, D){
   if(R.mode === 'drive'){
     const wind = B.DRIVE_WIND[0] + (B.DRIVE_WIND[1] - B.DRIVE_WIND[0]) * 6/7;
-    const exp = D.pow * (1 + D.crit*(D.cpw-1)) * (1 + D.mst*B.MST_DMG) * (1 + D.proc*Math.min(D.elemDmg, B.ELEM_CAP)) * wind;
+    const exp = wgDriveExp(D);
     return exp > 0 ? (R.best || 0) / exp : 0;
   }
   return R.mode === 'floor' ? R.cleared || 0 : R.made || 0;
@@ -7623,15 +7617,17 @@ function wgMedal(d, R, D){
   for(let m = had; m < got; m++){
     fresh.push(m);
     if(m === 0) grantTickets(1, 'a bronze medal');
-    else earnSov(m === 1 ? 3 : 5, 'today', 'medal:' + d.id + ':' + m, d.n + ' \u00b7 ' + WG_MEDAL_N[m] + ' medal');
+    else earnSov(WG_MEDAL_SOV[m], 'today', 'medal:' + d.id + ':' + m, d.n + ' \u00b7 ' + WG_MEDAL_N[m] + ' medal');
   }
   if(got > had) S.wgMedal[d.id] = got;
   return { got, fresh, sc };
 }
-// (in plain words, the user asked: "Medals at 1× / 1.4× / 2× your usual
-// best" read as a sum)
-const wgMedalTxt = id => { const T = WG_MEDAL[id]; return !T ? '' : id === 'sand' ? 'Medals: your usual best, then ' + T.slice(1).map(t => t + '\u00d7').join(' and ') + ' it'
-  : 'Medals: ' + T.join(' / ') + '\u00a0' + { water: 'greens', cellar: 'dropped', scramble: 'holes\u00a0won', twilight: 'dropped', vault: 'floors' }[id]; };
+// (short, the user asked: the drive's in yards, the rest in their own count)
+const wgDriveExp = D => { const wind = B.DRIVE_WIND[0] + (B.DRIVE_WIND[1] - B.DRIVE_WIND[0]) * 6/7;
+  return D.pow * (1 + D.crit*(D.cpw-1)) * (1 + D.mst*B.MST_DMG) * (1 + D.proc*Math.min(D.elemDmg, B.ELEM_CAP)) * wind; };
+const wgMedalTxt = (id, D) => { const T = WG_MEDAL[id]; if(!T) return '';
+  if(id === 'sand') return 'Medals: ' + (D ? T.map(t => fmt(wgDriveExp(D) * t)).join(' / ') + '\u00a0yds' : '');
+  return 'Medals: ' + T.join(' / ') + '\u00a0' + { water: 'greens', cellar: 'chips made', scramble: 'holes\u00a0won', twilight: 'putts made', vault: 'floors' }[id]; };
 const medalPips = id => { const g = (S.wgMedal || {})[id] || 0;
   return '<span class="medals" aria-label="' + (g ? WG_MEDAL_N[g - 1] + ' medal' : 'No medal yet') + '">'
     + [0, 1, 2].map(m => '<img src="' + pixUrl('medal', m < g ? WG_MEDAL_COL[m] : '#3A4A40') + '" width="12" height="12" alt="">').join('') + '</span>'; };
@@ -7677,7 +7673,7 @@ const DGN_GUIDE = {
   sand: ['Six swings, and only the longest counts.',
          'Each swing gets its own wind, which can shorten or lengthen it.',
          'Only your longest swing counts, so swing power and pure strike matter most. Pace does nothing here.',
-         'Pays grit, by how far the longest went.'],
+         'Pays grit.'],
   water: ['Across the water to an island green, again and again.',
           'The first green is easy. Each one after it multiplies the pot by 1.9, and each is a little harder to hit.',
           'Before you go in, pick where to bank. Reach it and you keep the whole pot; miss a green and you keep a quarter. Leave at any time to bank the pot as it stands.',
@@ -7690,7 +7686,7 @@ const DGN_GUIDE = {
           'Swing power and pace both help.',
           'After each floor, there is a 38% chance the next one has a twist:',
           '@events',
-          'Pays purse, by how deep you got.'],
+          'Pays prize money.'],
   scramble: ['Nine holes, with every ball you carry. Hole any of them and the hole is yours.',
              'More second-ball chance gives you more balls, and more balls win more holes.',
              'Pays grit.'],
@@ -7715,7 +7711,7 @@ function wagerGuide(id){
     + '<div class="lb"><span class="p"></span><span>Helped By</span><span class="s" style="color:var(--aurora)">' + d.st + '</span></div>'
     + '<div class="lb"><span class="p"></span><span>Entries</span><span class="s">One every ' + Math.round(keyInterval(d) / 60) + '\u00a0min, ' + entryCap(d) + ' held</span></div>'
     + '<div class="lb"><span class="p"></span><span>Length</span><span class="s">' + Math.round(d.run) + 's</span></div>'
-    + para + '<p style="color:var(--faint)">One wager at a time. The round waits while you play it.</p>'
+    + para + '<p style="color:var(--faint)">The round waits while you play.</p>'
     + '<button class="act ghost" onclick="hideSheet()">Close</button>');
 }
 function endDgn(d, R, D){
@@ -7735,64 +7731,43 @@ function endDgnCore(d, R, D){
     fe = R.best > 0 ? asFloor(R.best * (1 + D.C.wdrive)) : -1;
     head = R.best > 0 ? 'Longest drive of the day: ' + fmt(R.best) + ' yards.'
                       : 'Not one of them found the fairway.';
-    stats.push(['Drives hit', log.length + ' of ' + B.DRIVE_SHOTS]);
     stats.push(['Longest', fmt(R.best) + ' yds']);
     stats.push(['Average', fmt(avg) + ' yds']);
-    if(log.length) stats.push(['Shortest', fmt(Math.min.apply(null, log)) + ' yds']);
 
   }else if(R.mode === 'island'){
     if(R.made > 0){
       pot = R.pot; fe = carryFloor(D) + R.made*1.1;
-      head = R.dead
-        ? 'Wet on number ' + (R.made + 1) + '. You walked off with a quarter of the pot.'
-        : 'Banked clean on ' + R.made + '. Nerve held.';
-    }else head = 'Straight in the water off the first one.';
-    stats.push(['Greens hit', R.made + ' of ' + R.target]);
-    stats.push(['Finished', R.dead ? 'in the water' : 'banked']);
-    stats.push(['Make chance at the start', Math.round((R.startChance||0)*100) + '%']);
-    stats.push(['Make chance on the last one', Math.round((R.chance||0)*100) + '%']);
-    stats.push(['Pot', fmt(R.pot) + (R.dead && R.made ? ' after salvage' : '')]);
+      head = R.dead ? 'In the water on green ' + (R.made + 1) + ': a quarter of the pot.' : 'Banked on ' + R.made + '.';
+    }else head = 'In the water on the first.';
+    stats.push(['Greens', R.made + ' of ' + R.target]);
 
   }else if(R.mode === 'chip'){
     if(R.made > 0){
       pot = R.pot; fe = R.f0 + R.made*B.CHIP_STEP;
-      head = R.made + ' of ' + R.shot + ' chips found the bottom of the cup.';
-    }else head = 'Twenty five chips and not one of them dropped.';
-    stats.push(['Chips played', R.shot + ' of ' + B.CHIP_SHOTS]);
-    stats.push(['Dropped', String(R.made)]);
-    stats.push(['Strike rate', R.shot ? Math.round(R.made/R.shot*100) + '%' : '0%']);
-    stats.push(['Drop chance', Math.round((R.chance||0)*100) + '%']);
+      head = R.made + ' of ' + R.shot + ' chips made.';
+    }else head = 'No chips made.';
+    stats.push(['Chips made', R.made + ' of ' + R.shot]);
 
   }else if(R.mode === 'scramble'){
     if(R.made > 0){
       pot = R.pot; fe = R.f0 + R.made*B.SCRAMBLE_STEP;
       head = R.made + ' of ' + R.shot + ' holes won.';
-    }else head = 'Nine holes, every ball, and not one dropped.';
-    const balls = (R.log || []).reduce((t, h) => t + h.balls, 0);
+    }else head = 'No holes won.';
     stats.push(['Holes won', R.made + ' of ' + B.SCRAMBLE_HOLES]);
-    stats.push(['Balls played', String(balls)]);
-    stats.push(['Win chance a hole', Math.round(scrambleChance(D)*100) + '%']);
 
   }else if(R.mode === 'twilight'){
     if(R.made > 0){
       pot = R.pot; fe = R.f0 + R.made*B.TWI_STEP;
-      head = R.made + ' of ' + R.shot + ' putts dropped before dark.';
-    }else head = 'Not one dropped before the light went.';
-    stats.push(['Putts', R.shot + ' of ' + R.n]);
-    stats.push(['Dropped', String(R.made)]);
-    stats.push(['A putt every', R.gap.toFixed(1) + 's']);
+      head = R.made + ' of ' + R.shot + ' putts made.';
+    }else head = 'No putts made.';
+    stats.push(['Putts made', R.made + ' of ' + R.shot]);
 
   }else{
     const deepest = R.floor - 1;
-    if(R.cleared > 0){ fe = deepest; head = 'Down to floor ' + (deepest + 1) + ' before the clock went.'; }
-    else head = 'The clock went on the very first floor.';
+    if(R.cleared > 0){ fe = deepest; head = 'Floor ' + (deepest + 1) + ' reached.'; }
+    else head = 'Out on the first floor.';
     stats.push(['Floors cleared', String(R.cleared)]);
-    stats.push(['Deepest floor', String(R.floor + (R.cleared ? 0 : 1))]);
-    stats.push(['Carry', fmt(D.dps) + ' /s']);
-    if(R.evts && R.evts.length) stats.push(['What happened', R.evts.join(', ')]);
   }
-  // the last step can land a fraction past the clock; "46.3s of 46s" read as a bug
-  stats.push(['Time on the clock', Math.min(R.t, R.dur).toFixed(1) + 's of ' + Math.round(R.dur) + 's']);
 
   const rewards = [];
   if(fe >= 0){
@@ -7803,7 +7778,7 @@ function endDgnCore(d, R, D){
                : Math.max(0, R.floor);
     if(mine > (S.dgnBest[d.id] || 0)) S.dgnBest[d.id] = mine;
     const deeper = fe > (S.dgnFloor[d.id] || 0);
-    if(deeper){ S.dgnFloor[d.id] = Math.round(fe); rewards.push(['New best', 'yes']); }
+    if(deeper) S.dgnFloor[d.id] = Math.round(fe);
     const xp = B.XP_FLOOR * Math.pow(1 + fe, B.XP_FLOOR_P) * (1 + fe*0.2);
     addXp(xp);
     // A ticket for a new personal best, never a rate. Any per-run faucet closes
@@ -7825,36 +7800,36 @@ function endDgnCore(d, R, D){
       const holes = (B.VAULT_HOLES + pastPace(fe) * B.VAULT_PER_MARK) * featM;
       const g2 = purseFor(S.hole, S.tier, D.gold) * holes;
       S.gold += g2;
-      rewards.push(['Purse', fmt(g2) + ' (' + Math.round(holes) + ' holes worth)']);
+      rewards.push(['Prize Money', '+' + fmt(g2)]);
     }else{
       const n = Math.max(1, Math.round(yield_));
       S[d.cur] += n; rewards.push([d.cn, '+' + fmt(n, 0)]);
     }
-    if(R.feat) rewards.push(['Stake of the day', fmt(featM) + '\u00d7 on the payout']);
+    if(R.feat) rewards.push(['Wager of the day', '\u00d7' + fmt(featM)]);
     rewards.push(['Experience', '+' + fmt(xp)]);
-    if(deeper) rewards.push(['Sponsor tickets', '+' + B.TICK_DEPTH]);
+    if(deeper) rewards.push(['New best', '+' + B.TICK_DEPTH + ' ' + plural(B.TICK_DEPTH, 'tickets')]);
     // a new personal best always comes home with something
     if(deeper || Math.random() < (d.gear !== undefined ? d.gear : B.DGN_GEAR_CHANCE) + relLv('rift')*0.05){
       const floorRar = Math.max(d.floorRar || 0, Math.min(2, Math.floor(fe/8)));
       const it = dropItem(S.tier + Math.min(3, Math.floor(fe/5)), D.drop + 0.35, floorRar);
       const kept = bagAdd(it);
-      rewards.push(['Gear', B.RARITY[it.rar].n + ' ' + B.SLOTS.find(s => s.id === it.slot).n
+      rewards.push(['Club', B.RARITY[it.rar].n + ' ' + B.SLOTS.find(s => s.id === it.slot).n
         + (kept ? '' : ' \u00b7 scrapped')]);
     }
   }else{
     Scene.depthsFlash('#E4574A');
-    rewards.push(['Nothing', 'nothing won']);
+    rewards.push(['Nothing won', '']);
   }
 
   // the medal it earned, and what a new one paid
   { const M = wgMedal(d, R, D);
-    if(M.got) stats.push(['Medal', '<span style="color:' + WG_MEDAL_COL[M.got - 1] + '">' + WG_MEDAL_N[M.got - 1] + '</span>' + (M.fresh.length ? ' \u00b7 new' : '')]);
-    for(const m of M.fresh) rewards.push([WG_MEDAL_N[m] + ' medal', m === 0 ? '+1 ticket' : '+' + (m === 1 ? 5 : 10) + sovIc() + ' on Today']); }
+    if(M.got) stats.push(['Medal', '<span style="color:' + WG_MEDAL_COL[M.got - 1] + '">' + WG_MEDAL_N[M.got - 1] + '</span>']);
+    for(const m of M.fresh) rewards.push([WG_MEDAL_N[m] + ' Medal', m === 0 ? '+1 ticket' : '<span class="pv">+' + WG_MEDAL_SOV[m] + sovIc() + '</span>']); }
   const rowsHtml = a => a.map(([k, v]) =>
     '<div class="lb"><span class="p"></span><span>' + k + '</span><span class="s">' + v + '</span></div>').join('');
   showSheet('<h3>' + d.n + '</h3><p>' + head + '</p>'
     + '<div class="eyebrow" style="margin:10px 0 4px">Card</div>' + rowsHtml(stats)
-    + '<div class="eyebrow" style="margin:12px 0 4px">Paid out</div>' + rowsHtml(rewards)
+    + '<div class="eyebrow" style="margin:12px 0 4px">Won</div>' + rowsHtml(rewards)
     + '<button class="act" onclick="hideSheet()">Back to the course</button>');
   renderDgn(); renderBag();
 }
@@ -9072,17 +9047,14 @@ function endTournament(){
     + '<p>' + (Wk && Wk.beat ? 'Champion.' : beat ? 'You beat the target.' : 'Final score') + '</p>'
     + '<div class="big">' + fm(score) + '</div>'
     + '<ul><li>Target: ' + fm(Math.round(target)) + (beat ? ' \u2014 <b style="color:var(--brass)">beaten</b>'
-        : ' \u2014 missed by ' + Math.ceil(score - target)) + '</li>'
+        : ' \u2014 missed') + '</li>'
     + (Rv && !OFFLINE ? '<li>' + Rv.n + ': ' + fm(Rv.total) + (rivalBeat
         ? ' \u2014 <b style="color:var(--brass)">beaten, +' + B.RIVAL_SOV + sovIc() + '</b>'
         : score === Rv.total ? ' \u2014 tied' : ' \u2014 lost by ' + (score - Rv.total)) + '</li>' : '')
     + (Rv && !OFFLINE && rivalSeries(t) ? (() => { const R = rivalSeries(t), end = seasonOf(t + 1) !== R.s;
         return '<li>Season series: ' + R.w + '\u2013' + R.l + (end ? R.won ? ' \u2014 <b style="color:var(--brass)">won, +' + B.RIVAL_SERIES + sovIc() + '</b>' : ' \u2014 lost' : '') + '</li>'; })() : '')
-    + '<li>Best card: ' + fm(S.bestRound) + '</li>'
-    + '<li>Prize money: ' + fmt(cash) + ' (' + share.toFixed(2) + 'x)</li>'
-    + '<li>Cup points: ' + fmt(pts) + '</li>'
-    + '<li>Cups held: ' + S.cups + (beat ? ' <b style="color:var(--brass)">(new)</b>' : '')
-    + ' \u00b7 next target ' + fm(targetShown()) + '</li>'
+    + '<li>Prize money: ' + fmt(cash) + '</li>'
+    + '<li>Cups: ' + S.cups + (beat ? ' <b style="color:var(--brass)">(new)</b>' : '') + '</li>'
     + (Wk ? '<li>Major: <b style="color:var(--brass)">+' + Wk.sov + sovIc() + '</b>'
         + (Wk.first ? ' \u00b7 <b style="color:var(--brass)">' + Wk.prize.n + '</b> won' : '')
         + (Wk.beat || onTop ? '' : ' \u00b7 wins only count on Card ' + cardNo(S.tierMax || 0)) + '</li>' : '')
@@ -11037,11 +11009,10 @@ function offline(){
 
   let h = '<div class="awhead"><div class="aweye">Welcome back</div><h3>While You Were Away</h3>'
     + '<span class="awpill">' + (away > dt + 60
-        ? '<b>' + spanTxt(away) + '</b> away · the caddie played <b>' + hms(dt) + '</b>'
-        : '<b>' + hms(dt) + '</b> away') + ' at <b>'
-    + Math.round(B.OFFLINE_RATE * (1 + Math.min(1, D.C.paway)) * 100) + '% pace</b></span></div>'
+        ? 'Away <b>' + spanTxt(away) + '</b> \u00b7 <b>' + hms(dt) + '</b> played'
+        : 'Away <b>' + hms(dt) + '</b>') + '</span></div>'
     + '<div class="awgrid v2">'
-      + stat('purse earned', fmt(g), 'big', ic('coins'))
+      + stat('prize money', fmt(g), 'big', ic('coins'))
       + stat('holes', fmt(holes, 0), '', ic('flag', '#D8453A'))
       + stat('clubs', String(gear), '', ic('driver', '#C8CDD0'))
     + '</div>';
@@ -11073,8 +11044,7 @@ function offline(){
       + '</div></div></div>';
   }
 
-  h += '<div class="awband">Back on the tee</div>'
-    + '<div class="awlist">' + line('Now playing', eventName(tournamentOf(S.hole)) + ', ' + dayName(S.hole), ic('flag', '#D8453A')) + '</div>'
+  h += ''
     + '<div class="awfoot"><div class="awstage"><canvas id="awCv" width="160" height="' + AW_H + '"></canvas></div>'
     + '<button class="act awplay" onclick="hideSheet();checkinAfter()">Play on</button></div>';
   showSheet(h);
@@ -30421,8 +30391,8 @@ function honRows(w){
   const live = Object.keys(A).map(k => achReward({ r:{ k, v:A[k] } })).join(' \u00b7 ');
   const near = achNear(3);
   let h = '<div class="hint"><b>' + done + '</b> of ' + tot + ' done'
-    + (live ? ' \u00b7 earning <b style="color:var(--aurora)">' + live + '</b>' : '') + '</div>';
-  if(near.length) h += '<div class="hint">Closest: '
+    + (live ? ' \u00b7 <b style="color:var(--aurora)">' + live + '</b>' : '') + '</div>';
+  if(false && near.length) h += '<div class="hint">Closest: '
     + near.map(a => '<b>' + a.n + '</b> ' + achAmt(a, Math.min(achMetric(a.m), a.v)) + '/' + achAmt(a, a.v))
         .join(' \u00b7 ') + '.</div>';
   // The ones that come round again, one line each: how far to the next, and
@@ -31891,7 +31861,7 @@ function itemSheet(it, equipped){
       + (sw.had ? 'Instead of <b>' + sw.had.name + '</b>' : 'If you carry it') + '</div>'
       + swapLine('Carry',  sw.before.dps,  sw.after.dps,  v => fmt(v))
       + swapLine('Swing',  sw.before.pow,  sw.after.pow,  v => fmt(v))
-      + swapLine('Purse',  sw.before.gold, sw.after.gold, v => '\u00d7' + fmt(v))
+      + swapLine('Prize',  sw.before.gold, sw.after.gold, v => '\u00d7' + fmt(v))
       + (sw.gained.length ? '<div class="swset ok">Completes ' + sw.gained.join(', ') + '</div>' : '')
       + (sw.lost.length ? '<div class="swset no">Breaks ' + sw.lost.join(', ') + '</div>' : '')
       + '</div>';
@@ -32060,42 +32030,23 @@ function renderDgn(){
     // reported the same scoring floor, which is how four different games came
     // to look like one game with four hats on.
     const bv = S.dgnBest ? (S.dgnBest[d.id] || 0) : 0;
-    const best = d.mode === 'drive'  ? 'longest ' + (bv > 0 ? fmt(bv) : '\u2014')
-               : d.mode === 'island' ? 'best run ' + bv + '\u00a0green' + (bv === 1 ? '' : 's')
-               : d.mode === 'chip'   ? 'best ' + bv + ' of ' + Math.max(B.CHIP_SHOTS, bv) + ' dropped'
-               : d.mode === 'scramble' ? 'best ' + bv + ' of ' + B.SCRAMBLE_HOLES + ' holed'
-               : d.mode === 'twilight' ? 'best ' + bv + ' dropped'
-               :                       'deepest floor ' + (bv + 1);
-
-    let reads;
-    if(d.mode === 'drive') reads = 'Best swing about ' + fmt(D.pow * D.cpw * (1 + D.mst*B.MST_DMG));
-    else if(d.mode === 'island') reads = Math.round(islandChance(D, 0)*100) + '% to hit the first green';
-    else if(d.mode === 'chip') reads = Math.round(chipChance(D)*100) + '% of chips drop';
-    else if(d.mode === 'scramble'){
-      const b = scrambleBalls(D);
-      reads = (1 + b.fl + b.fr).toFixed(1) + ' balls a hole \u00b7 ' + Math.round(scrambleChance(D)*100) + '% of holes won';
-    }
-    else if(d.mode === 'twilight') reads = 'A putt every ' + twilightGap(D).toFixed(1) + 's \u00b7 '
-      + twilightPutts(D, d.run * (D.C.sharp ? 1.4 : 1)) + ' before dark';
-    else reads = fmt(D.dps) + '\u00a0yds a second';
-    const P = dgnPayout(d, D);
-    // the one note that helps a choice: how often the bank you picked is reached
-    if(d.mode === 'island') reads += ' \u00b7 ' + P.note;
+    const best = 'Best: ' + (d.mode === 'drive'  ? (bv > 0 ? fmt(bv) + '\u00a0yds' : '\u2014')
+               : d.mode === 'island' ? bv + '\u00a0green' + (bv === 1 ? '' : 's')
+               : d.mode === 'chip'   ? bv + '\u00a0chips made'
+               : d.mode === 'scramble' ? bv + '\u00a0holes won'
+               : d.mode === 'twilight' ? bv + '\u00a0putts made'
+               :                       'floor ' + (bv + 1));
 
     el.innerHTML = '<div class="dh">' + svgIcon(d.ic || STAT_IC[d.cur] || 'ball', 'ric') + '<span class="dn">' + d.n + '</span>'
       + (d.id === feat.id ? '<span class="fstar">' + B.DGN_FEAT_MULT + '\u00d7 today</span>' : '')
       + '<span class="keys">' + keyHtml + '</span>'
       + '<button class="mini guide" aria-label="How ' + d.n + ' works">Guide</button></div>'
-      // (its blurb is in the Guide: one line fewer on every card)
-      + '<div class="dm">Helped by <b style="color:var(--aurora)">' + d.st + '</b> \u00b7 ' + reads + '</div>'
-      // what one entry pays, in what the currency buys; the basis of the
-      // projection is the odds line above it, so it is not said twice
-      // (plain: "about one club upgrade every 12 goes" for "Under 0.1 full
-      // club upgrades per entry")
-      + '<div class="dm" style="color:var(--brass)">Pays ' + (d.cur === 'gold' ? 'prize money' : d.cn.toLowerCase()) + ' \u00b7 ' + dgnBuysTxt(P.buys, d.cur) + '</div>'
-      + '<div class="dm">' + medalPips(d.id) + ' ' + wgMedalTxt(d.id) + '</div>'
-      + '<div class="dm">' + best.charAt(0).toUpperCase() + best.slice(1) + ' \u00b7 '
-      + Math.round(d.run) + 's a go \u00b7 ' + (nextIn === 'full' ? 'Entries full' : 'Next entry ' + nextIn) + '</div>'
+      // (short, the user asked: what helps, what it pays, the medals, the
+      // best and how long; the rest is in the Guide)
+      + '<div class="dm">Helped by <b style="color:var(--aurora)">' + d.st + '</b></div>'
+      + '<div class="dm" style="color:var(--brass)">Pays ' + (d.cur === 'gold' ? 'Prize Money' : d.cn) + '</div>'
+      + '<div class="dm">' + medalPips(d.id) + ' ' + wgMedalTxt(d.id, D) + '</div>'
+      + '<div class="dm">' + best + ' \u00b7 Length: ' + Math.round(d.run) + 's' + (nextIn === 'full' ? '' : ' \u00b7 Next entry ' + nextIn) + '</div>'
       + '<div class="bar"><i style="width:' + (run ? clamp(run.t/run.dur,0,1)*100 : 0) + '%"></i></div>'
       + '<div class="btnrow" style="margin-top:8px"></div>';
     el.querySelector('.guide').onclick = e => { e.stopPropagation(); wagerGuide(d.id); };
@@ -32150,7 +32101,7 @@ function renderTour(){
   const target = eventTarget();
   const proj = played > 0 ? Math.round(S.tourScore / played * B.ROUND * B.DAYS) : 0;
   const fm = n => n === 0 ? 'E' : n > 0 ? '+' + n : String(n);
-  $('tierNote').textContent = 'Card ' + cardNo(S.tier) + ' \u00b7 Best ' + cardNo(S.bestTier);
+  $('tierNote').textContent = 'Card ' + cardNo(S.tier);
 
   // The card you are ON and the card that is your HIGHEST are two different
   // things, and this panel used to name both in one sentence while the button
@@ -32176,10 +32127,9 @@ function renderTour(){
     + '<span>Playing <b>Card ' + cardNo(S.tier) + '</b>'
     + (atTop ? '' : ' · Highest <b>Card ' + cardNo(top) + '</b>') + '</span>'
     + '<button class="qm" aria-label="How Tour Cards work">?</button></div>'
-    + '<div class="fold" style="margin-top:6px">Each card up has holes \u00d7' + +(cardLen(top + 1) / cardLen(top)).toFixed(2) + ' longer that pay \u00d7'
-    + B.TIER_G + ' more. Win the cup on your '
-    + 'highest card to open the next at once, or play ' + eventsToUnlock(top) + ' events there. Cups only '
-    + 'count on your highest card. Retiring starts you on the highest card your golfer can birdie.</div></div>'
+    + '<div class="fold" style="margin-top:6px">Each card up: holes \u00d7' + +(cardLen(top + 1) / cardLen(top)).toFixed(2) + ' longer, prize money \u00d7'
+    + B.TIER_G + '. To open the next card, win the cup on your highest card or play ' + eventsToUnlock(top) + ' events there. '
+    + 'Cups only count on your highest card. Retiring starts you on the highest card you can birdie.</div></div>'
     + unlockLine
     + (atTop || top >= B.TIER_MAX ? ''
        : '<div class="hint" style="color:var(--flag)">No unlocks below Card '
@@ -32190,8 +32140,8 @@ function renderTour(){
         + '<div class="ds">The last card.</div></div></div>'
       : '<div class="row"><div><div class="nm">Climb to Card ' + cardNo(nextT) + '</div>'
         + '<div class="ds">' + (cardUnlocked(nextT)
-            ? 'This hole would be <b style="color:var(--chalk)">' + nm(hereR)
-              + '</b> here, <b style="color:var(--chalk)">' + nm(nextR) + '</b> on the next card.'
+            ? 'This hole: <b style="color:var(--chalk)">' + nm(hereR)
+              + '</b> here, <b style="color:var(--chalk)">' + nm(nextR) + '</b> there.'
             : 'Win the cup on Card ' + cardNo(top) + ', or play ' + eventsToNext()
               + '\u00a0more event' + (eventsToNext() === 1 ? '' : 's')) + '</div></div>'
         + '<button class="buy' + (cardUnlocked(nextT) ? ' ok' : ' no') + '" id="climbBtn">'
@@ -32205,7 +32155,7 @@ function renderTour(){
     + '<button class="buy' + (S.tier > 0 ? '' : ' no') + '" id="dropBtn">'
     + '<span class="lbl">Drop</span><span class="amt">−1</span></button></div>'
     + '<div class="row"><div><div class="nm">Auto-Climb</div>'
-    + '<div class="ds">Moves you up when your clubs are good enough.</div></div>'
+    + '<div class="ds">Moves you up a card when your golfer can birdie it.</div></div>'
     + '<button class="buy' + (S.autoClimb ? ' ok' : '') + '" id="autoBtn"><span class="lbl">Auto</span>'
     + '<span class="amt">' + (S.autoClimb ? 'On' : 'Off') + '</span></button></div>';
   const cb = $('climbBtn'); if(cb) cb.onclick = () => climb(1);
@@ -32229,7 +32179,7 @@ function renderTour(){
     + '</div></div></div>'
     + '<div class="lb"><span class="p"></span><span>Score after ' + played + '\u00a0' + plural(played, 'holes') + '</span>'
     + '<span class="s">' + fm(S.tourScore) + '</span></div>'
-    + '<div class="lb"><span class="p"></span><span>Score if you keep this up</span>'
+    + '<div class="lb"><span class="p"></span><span>On pace for</span>'
     + '<span class="s" style="color:' + (onPace ? 'var(--aurora)' : 'var(--flag)') + '">'
     + fm(proj) + '</span></div>'
     + '<div class="lb"><span class="p"></span><span>Target</span>'
@@ -32242,7 +32192,7 @@ function renderTour(){
           + '</b></span></div>'; })()
     + '<div class="lb"><span class="p"></span><span>Your best score</span>'
     + '<span class="s">' + (S.bestRound === undefined ? '\u2014' : fm(S.bestRound)) + '</span></div>'
-    + '<div class="lb"><span class="p"></span><span>Prize if this score holds</span>'
+    + '<div class="lb"><span class="p"></span><span>Prize at this pace</span>'
     + '<span class="s">\u00d7' + payShare(proj, target).toFixed(2) + '</span></div>';
 
   renderMajor();
@@ -32310,9 +32260,8 @@ function renderMajor(){
   box.innerHTML = '<div class="hint" id="majHint"><div class="foldhead">'
     + '<span><b>' + M.cs.n + '</b> \u00b7 ' + say + '</span>'
     + '<button class="qm" aria-label="How the major works">?</button></div>'
-    + '<div class="fold" style="margin-top:6px">One a week, Monday to Sunday: it takes the first event you tee '
-    + 'off that week. Beat the target on your highest card to win its jacket, for you and your caddie. '
-    + 'Win all four for the Grand Slam.</div></div>'
+    + '<div class="fold" style="margin-top:6px">Your first event each week. Beat the target on your highest card '
+    + 'to win its jacket. Win all four for the Grand Slam.</div></div>'
     + lb('Prize', M.prize.n + (got ? ' \u00b7 yours' : '') + ' \u00b7 +' + B.WEEK_WIN_SOV + sovIc(), '--brass')
     + lb('Majors won', Object.keys(S.majorWins || {}).length + ' of ' + COURSE_WEEK.length);
   const q = box.querySelector('#majHint .qm');
@@ -32335,9 +32284,9 @@ function renderSigWeek(){
     + '<span>' + (all ? '<b style="color:var(--brass)">\u2713 All five this week</b>' : 'Play all five kinds this week \u00b7 +' + B.SIG_WEEK_SOV + sovIc())
     + (won ? ' \u00b7 won ' + won + '\u00d7' : '') + '</span>'
     + '<button class="qm" aria-label="How the Signature Week works">?</button></div>'
-    + '<div class="fold" style="margin-top:6px">Monday to Sunday. A home round has four kinds; the sea stack is at '
-    + stacks.join(', ') + '. Play the hole of the week ' + B.HOTW_RUN + ' weeks running for +' + B.HOTW_SOV
-    + ' ' + B.SOV.toLowerCase() + ', and again each week the run goes on.</div></div>'
+    + '<div class="fold" style="margin-top:6px">Monday to Sunday. Sea stacks: '
+    + stacks.join(', ') + '. Play the hole of the week ' + B.HOTW_RUN + ' weeks running: +' + B.HOTW_SOV
+    + ' ' + B.SOV.toLowerCase() + ', and again each week after.</div></div>'
     + SIG_KINDS.map(k => lb(SIG_NAME[k] + (k === wk ? ' \u00b7 Pays\u00a0' + B.SIG_WEEK_MULT + '\u00d7' : ''),
         got.includes(k) ? '\u2713 played' : '\u2014', got.includes(k) ? '--verdant' : null)).join('')
     + (() => { const n = hotwRun(), on = n >= B.HOTW_RUN;
@@ -32450,13 +32399,13 @@ function renderCabinet(){
     return line(x.s, (cs ? cs.n : '') + ' \u00b7 Card ' + cardNo(x.c)); }).join('');
   if(S.bestNine !== undefined) rows += line(S.bestNine, 'Best nine');
   const plaque = '<div class="plaque"><div class="ph">Best Cards</div>'
-    + (rows || '<div class="pe">Finish an event to post one here.</div>') + '</div>';
+    + (rows || '<div class="pe">None yet.</div>') + '</div>';
   // the best card of each of this golfer's seasons, the newest first
   const sb = (S.seasonBest || []).filter(x => x.g === (S.retires || 0)).sort((a, b) => b.n - a.n).slice(0, 8);
   const seasons = '<div class="plaque" id="seasonBests"><div class="ph">Season Bests</div>'
     + (sb.length ? sb.map(x => { const cs = courseById(x.id);
         return line(x.s, 'Season ' + x.n + (x.n === now + 1 ? ' (now)' : '') + (x.up ? ' \u25b2' : '') + ' \u00b7 ' + (cs ? cs.n : '') + ' \u00b7 Card ' + cardNo(x.c)); }).join('')
-      : '<div class="pe">Finish an event to post one here.</div>') + '</div>';
+      : '<div class="pe">None yet.</div>') + '</div>';
   setHTML(box, '<div class="cab"><div class="shelf">' + trophies + '</div>' + caseTrack('maj') + '<div class="plank"></div>'
     + '<div class="shelf">' + jackets + '</div><div class="plank"></div>'
     + '<div class="shelf three">' + sets + '</div><div class="plank"></div>'
@@ -32481,10 +32430,10 @@ function climbLines(){
   // The number is not the answer. The answer is whether to press the button:
   // birdies or better up there, the purse keeping up, or a pay cut.
   const say = C.next.ratio <= 0.77
-    ? 'Your clubs can still make birdies there.'
+    ? 'You can still birdie there.'
     : C.pay >= 1
-      ? 'Longer holes, but the purse keeps up.'
-      : 'A pay cut until your bag catches up.';
+      ? 'Longer holes, more prize money.'
+      : 'Less prize money until you catch up.';
   // Said plainly when the button underneath cannot be pressed yet: these are a
   // preview of a climb that is not offered, and reading "as cheap as climbing
   // gets" over a greyed out button is a nudge towards nothing.
@@ -32509,7 +32458,7 @@ function renderLegacy(){
   const capped = S.tier >= B.TIER_MAX;
   // (in plain words, the user asked: what retiring gives, and what more
   // playing would add)
-  $('legBox').innerHTML = '<div class="hint">Retiring starts your money and Range upgrades over. You keep your clubs, shots, level and everything else, and get legacy to spend on heirlooms.</div>'
+  $('legBox').innerHTML = '<div class="hint">Retiring resets your money and Range upgrades. You keep everything else and earn legacy for heirlooms.</div>'
     + lb('Legacy if you retire now', fmt(P.now), '--brass')
     + lb('Reach the next Tour Card', capped ? '\u2014' : '+' + fmt(P.card))
     + lb('Win another cup', '+' + fmt(P.cup))
@@ -32518,8 +32467,7 @@ function renderLegacy(){
         + '<div class="ds">From Tour Card ' + cardNo(S.tier) + ', with ' + S.cups + ' ' + plural(S.cups, 'cups') + ' won.</div></div>'
         + '<button class="buy ok" id="retireBtn"><span class="lbl">Retire</span><span class="amt">+'
         + fmt(gain) + '</span></button></div>'
-      : '<div class="empty">You can retire after your first event \u00b7 '
-        + holesPlayed(S.hole) + ' of ' + (B.ROUND*B.DAYS) + '\u00a0holes played</div>');
+      : '<div class="empty">Retire after your first event (' + holesPlayed(S.hole) + ' of ' + (B.ROUND*B.DAYS) + '\u00a0holes)</div>');
   if(gain > 0) $('retireBtn').onclick = () => showSheet(
     '<h3>Retire?</h3><p>Get <b>' + fmt(gain) + '</b> legacy and start again on Card '
     + cardNo(retireCard()) + '.</p>'
@@ -33714,7 +33662,7 @@ function careerParagon(w){
   }
   if(!atMax() && !(S.para > 0)){
     w.innerHTML = '<div class="empty">Paragon opens at level ' + B.LV_MAX
-      + '. You are ' + S.lv + '.</div>';
+      + '.</div>';
     return;
   }
   w.innerHTML = '<div class="hint">Next point: <b style="color:var(--brass)">'
@@ -34015,7 +33963,7 @@ function frame(now){
   if(SAVER) setTimeout(() => frame(performance.now()), SAVER_MS);
   else requestAnimationFrame(frame);
 }
-let vfT = 0;
+let vfT = 1;   // (so the first frame under a sheet is painted at once)
 function frameBody(now){
   now /= 1000;
   // A hidden page stops its frames, but not the saver's timer. Out of sight
@@ -34111,21 +34059,21 @@ function settingsSheet(){
     + [['m', 'Male Golfer', '<input type="checkbox" class="setchk" id="gender_m"'], ['f', 'Female Golfer', '<input type="checkbox" class="setchk" id="gender_f"']]
       .map(([g, nm, box]) => row(nm, '', box + ((S.gender === 'f') === (g === 'f') ? ' checked' : '')
         + ' aria-label="' + nm + '" onchange="setGender(\'' + g + '\')">')).join('')
-    + row('Dawn and Dusk', 'Day and night follow your clock, from the next hole',
+    + row('Dawn and Dusk', 'Day and night follow your clock',
         '<button class="mini' + (S.dawnDusk === 1 ? ' go' : '') + '" onclick="toggleDawn()">'
         + (S.dawnDusk === 1 ? 'On' : 'Off') + '</button>')
     + row('Battery Saver', saverMins() ? 'After ' + saverMins() + '\u00a0min untouched' : 'Only when started',
         '<div class="setbtns"><button class="mini' + (saverMins() ? ' go' : '') + '" onclick="saverCycle()">'
         + (saverMins() ? saverMins() + '\u00a0min' : 'Off') + '</button>'
         + '<button class="mini go" onclick="saverNow()">Start</button></div>')
-    + row('Save Code', 'Keep it, or load it on another device',
+    + row('Save Code', 'Move your save to another device',
         '<div class="setbtns"><button class="mini go" onclick="exportSheet()">Export</button>'
         + '<button class="mini" onclick="importSheet()">Import</button></div>')
     + (isIOS() && !isStandalone()
         ? row('Add to Home Screen', 'Safari clears a website’s save after 7 days away. '
             + 'From the Home Screen it never does: tap Share, then Add to Home Screen.', '')
         : '')
-    + row('Erase Save', 'Start again from nothing',
+    + row('Erase Save', 'Start over',
         '<button class="mini" onclick="wipe()">Erase</button>')
     + '<button class="act ghost" onclick="hideSheet()">Close</button>');
 }

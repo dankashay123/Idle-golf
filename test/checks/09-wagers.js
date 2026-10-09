@@ -314,7 +314,7 @@ module.exports = {
       renderDgn();
       out.nDgn = B.DGN.length;
       out.shown = Array.from(document.querySelectorAll('#dgnRows .dgn'))
-        .map(e => /a go/.test(e.textContent));   // (what a go buys, in plain words)
+        .map(e => [...e.querySelectorAll('.dm')].some(x => /^Pays [A-Z][a-z]+( [A-Z][a-z]+)?$/.test(x.textContent.trim())));   // ("Pays Grit" and nothing after it: the user asked)
 
       // ---- 4. four contests, or one contest four times ----------------------
       S.tier = 20; S.hole = 2; startHole();
@@ -509,7 +509,7 @@ module.exports = {
     }
     if (r.shown.length !== r.nDgn || r.shown.some(x => !x))
       throw new Error('only ' + r.shown.filter(Boolean).length + ' of the ' + r.nDgn + ' contests say '
-        + 'what an entry is worth');
+        + 'just what they pay');
     if (r.buysNames.length !== 4)
       throw new Error('DGN_BUYS names ' + r.buysNames.length + ' currencies, not four');
 
@@ -524,7 +524,7 @@ module.exports = {
         + JSON.stringify(r.strips));
     if (!r.stripOffCourse)
       throw new Error('the wager strip is still on the readout out on the course');
-    const bests = r.rows.map(t => (t.match(/\u00b7 ([^\u00b7]+?) \u00b7/) || [,''])[1].trim());
+    const bests = r.rows.map(t => (t.match(/Best: ([^\u00b7|]+)/) || [,''])[1].trim().replace(/^[\d.,—\u2014\s]+/, ''));
     if (new Set(bests).size !== bests.length)
       throw new Error('two contests post the same kind of best: ' + bests.join(' / ')
         + '. A best is only a best in the units the contest is played in.');

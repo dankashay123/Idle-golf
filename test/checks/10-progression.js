@@ -350,8 +350,8 @@ module.exports = {
     // ---- honours pay sovereigns, once each or every time ---------------
     const H = await page.evaluate(() => {
       const o = {};
-      o.bands = B.ACH.filter(a => [7, 13, 130].indexOf(a.sov) < 0).map(a => a.id + '=' + a.sov);
-      o.rep = B.ACH_REP.filter(a => !(a.step > 0) || !(a.sov >= 3 && a.sov <= 13)).map(a => a.id);
+      o.bands = B.ACH.filter(a => [4, 6, 65].indexOf(a.sov) < 0).map(a => a.id + '=' + a.sov);
+      o.rep = B.ACH_REP.filter(a => !(a.step > 0) || !(a.sov >= 1 && a.sov <= 7)).map(a => a.id);
       o.repMetrics = B.ACH_REP.filter(a => !isFinite(achMetric(a.m))).map(a => a.id + ':' + a.m);
       // today's dailies are marked done, or reaching 250 holes would also pay
       // a "play 300 holes" daily (at 250 holes it did not, but the next resize might) and this would be counting two things at once
@@ -384,9 +384,9 @@ module.exports = {
       return o;
     });
     if (H.bands.length)
-      throw new Error('one-off honours outside the 7 / 13 / 130 sovereign bands: ' + H.bands.join(', '));
+      throw new Error('one-off honours outside the 4 / 6 / 65 sovereign bands (halved 9 October): ' + H.bands.join(', '));
     if (H.rep.length)
-      throw new Error('repeating honours with no step or a payout outside 3-13: ' + H.rep.join(', '));
+      throw new Error('repeating honours with no step or a payout outside 1-7 (halved 9 October): ' + H.rep.join(', '));
     if (H.repMetrics.length)
       throw new Error('repeating honours read a counter the game does not keep: ' + H.repMetrics.join(', '));
     if (H.freshPaid)

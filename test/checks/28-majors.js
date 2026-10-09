@@ -185,10 +185,10 @@ module.exports = {
     if (W.slot !== 'major' || W.purse !== 1.5 && W.purse <= 1) throw new Error('the major of the week pays as ' + W.slot + ' at ' + W.purse + 'x');
     if (W.again) throw new Error('a second major in the same week');
     if (W.buy) throw new Error('a jacket was bought with sovereigns');
-    if (!(W.won.done && W.won.won && W.won.o && W.won.c && W.won.sov >= 60 && W.won.wins === 1))
+    if (!(W.won.done && W.won.won && W.won.o && W.won.c && W.won.sov >= 39 && W.won.wins === 1))
       throw new Error('won on the top card should give the jacket for both and the purse: ' + JSON.stringify(W.won));
     if (!W.nextWeek) throw new Error('next week did not bring a different major');
-    if (W.lost.o || W.lost.won || W.lost.sov < 10) throw new Error('lost: ' + JSON.stringify(W.lost));
+    if (W.lost.o || W.lost.won || W.lost.sov < 6) throw new Error('lost: ' + JSON.stringify(W.lost));
     if (W.below.o) throw new Error('a major won below the highest card gave its jacket');
     if (!W.away.held || W.away.o) throw new Error('a major resolved in a catch-up: ' + JSON.stringify(W.away));
     if (!W.retake) throw new Error('a major resolved away was not there for the next event');
@@ -196,7 +196,7 @@ module.exports = {
     if (!W.slam) throw new Error('all four majors won is not the Grand Slam');
     if (W.tab.indexOf(W.tabWant) < 0) throw new Error('the Tour tab does not name ' + W.tabWant + ': ' + W.tab.slice(0, 120));
     if (!W.ann || !/MAJOR OF THE WEEK/.test(W.ann)) throw new Error('the major was announced as ' + W.ann);
-    out.push('major: first live event of the week, once, not in a catch-up; won on top pays the jacket twice and +60, lost +10, away waits');
+    out.push('major: first live event of the week, once, not in a catch-up; won on top pays the jacket twice and +39, lost +6, away waits');
     out.push('four majors in four weeks, the Grand Slam, named on the Tour tab and announced');
 
     const R = r.repair;

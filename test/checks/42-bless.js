@@ -159,7 +159,7 @@ module.exports = {
     if (L.t4.txt !== '+20% pace for 4s' || L.t4.op !== '1') f('3.2s left read "' + L.t4.txt + '" at ' + L.t4.op);
     if (L.t1.txt !== '+20% pace for 1s' || L.t1.op !== '0.5') f('half a second left read "' + L.t1.txt + '" at ' + L.t1.op + ', not faded half way');
     if (L.t0.txt || L.t0.on) f('the buff spent, the line still read "' + L.t0.txt + '"');
-    if (L.scout.txt !== '+10% gear luck next hole' || L.scout.col !== r.want.scout || L.scout30.txt !== L.scout.txt || L.scout30.op !== '1')
+    if (L.scout.txt !== '+10% club luck next hole' || L.scout.col !== r.want.scout || L.scout30.txt !== L.scout.txt || L.scout30.op !== '1')
       f('Lost Ball Scout read "' + L.scout.txt + '" and 30s on "' + L.scout30.txt + '"');
     if (!/1s hole clock/.test(L.ready.txt) || L.ready15.op !== '0.5' || L.ready21.txt) f('Ready Golf read "' + L.ready.txt + '", then at ' + L.ready15.op + ', then "' + L.ready21.txt + '"');
     if (L.readyDone.txt) f('Ready Golf with the hole already down still said "' + L.readyDone.txt + '"');
