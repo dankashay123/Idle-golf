@@ -26673,9 +26673,14 @@ Object.assign(Scene, {
             if(Y < g.y0) g.y0 = Y; if(Y + 1 > g.y1) g.y1 = Y + 1;
             const PX = g.px, base = Y * VW, gw = Math.min(VW, g.w);
             for(let k = 0; k < row.length; k++){ const rk = row[k], a = X0 + rk[0], x0 = a < 0 ? 0 : a, x1 = Math.min(gw, a + rk[1]); if(x1 <= x0) continue;
-              const v = rk[3];
-              if((v >>> 24) === 255) PX.fill(v, base + x0, base + x1); else { g.cur = v; g.fillRect(x0, Y, x1 - x0, 1); }
-              if(!ft) MK.fill(0xFF000000, base + x0, base + x1); FD.fill(Rw.d, base + x0, base + x1); } }
+              const v = rk[3], i0 = base + x0, i1 = base + x1, dd = Rw.d;
+              // (a short run written out in one loop: three fills a run, most
+              // of them a few pixels long, were a third of every frame)
+              if((v >>> 24) === 255){
+                if(i1 - i0 < 24){ if(ft) for(let i = i0; i < i1; i++){ PX[i] = v; FD[i] = dd; } else for(let i = i0; i < i1; i++){ PX[i] = v; MK[i] = 0xFF000000; FD[i] = dd; } continue; }
+                PX.fill(v, i0, i1);
+              } else { g.cur = v; g.fillRect(x0, Y, x1 - x0, 1); }
+              if(!ft) MK.fill(0xFF000000, i0, i1); FD.fill(dd, i0, i1); } }
           else for(let k = 0; k < row.length; k++){ g.fillStyle = row[k][2]; g.fillRect(X0 + row[k][0], Y, row[k][1], 1);
             if(Y >= 0 && Y < VH) for(let x = Math.max(0, X0 + row[k][0]), e = Math.min(VW, X0 + row[k][0] + row[k][1]); x < e; x++){ if(!ft) MK[Y * VW + x] = 0xFF000000; FD[Y * VW + x] = Rw.d; } }
         }
