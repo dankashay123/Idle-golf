@@ -7,6 +7,8 @@
  *   node test/run.js            every check
  *   node test/run.js render     only checks whose name contains "render"
  *   node test/run.js --shots    also write PNGs to test/shots/
+ *   node test/run.js --jobs=1   one at a time (the default is a lane a core,
+ *                               up to four; checks that time things run alone after)
  *
  * The game is one self-contained HTML file with no build step, so the suite
  * drives the real thing in a real browser rather than importing pieces of it.
@@ -71,32 +73,51 @@ async function open(browser, url, opts) {
 
   const { srv, port } = await serve();
   const url = 'http://127.0.0.1:' + port + '/index.html';
-  const browser = await chromium.launch();
 
   const files = fs.readdirSync(CHECKS).filter(f => f.endsWith('.js')).sort();
   const checks = files.map(f => require(path.join(CHECKS, f)))
     .filter(c => !filter || c.name.includes(filter));
 
+  // Run side by side, one browser to a lane (--jobs N, or as many lanes as the
+  // machine has cores, up to four); a check that times anything (its file
+  // reads the clock, or it says alone: true) runs after, on its own, on a
+  // quiet machine, as the whole run used to (rule 44: a busy machine finds
+  // timing bugs, and a check's own clock is not one of them).
+  const jarg = process.argv.find(a => a.startsWith('--jobs'));
+  const jobs = Math.max(1, jarg ? +(jarg.split('=')[1] || 1) : Math.min(4, require('os').cpus().length));
+  const timed = c => c.alone || /performance\.now|frame time|battery/i.test(fs.readFileSync(path.join(CHECKS, files.find(f => require(path.join(CHECKS, f)) === c)), 'utf8'));
+  const shared = checks.filter(c => !timed(c)), solo = checks.filter(timed);
+
   let failed = 0;
-  for (const check of checks) {
+  const runOne = async (browser, check) => {
     const t0 = Date.now();
-    let page;
+    let page, line;
     try {
       page = await open(browser, url, check);
       const notes = await check.run(page, { url, shots: wantShots ? SHOTS : null });
       if (page.errors.length) throw new Error(page.errors.slice(0, 4).join('\n      '));
-      console.log('  PASS  ' + check.name.padEnd(12) + ' ' + String(Date.now() - t0).padStart(5) + 'ms   '
-        + (notes || []).join('\n                             '));
+      line = '  PASS  ' + check.name.padEnd(12) + ' ' + String(Date.now() - t0).padStart(5) + 'ms   '
+        + (notes || []).join('\n                             ');
     } catch (err) {
       failed++;
-      console.log('  FAIL  ' + check.name.padEnd(12) + ' ' + String(Date.now() - t0).padStart(5) + 'ms');
-      console.log('        ' + String(err.message || err).split('\n').join('\n        '));
+      line = '  FAIL  ' + check.name.padEnd(12) + ' ' + String(Date.now() - t0).padStart(5) + 'ms\n'
+        + '        ' + String(err.message || err).split('\n').join('\n        ');
     } finally {
       if (page) await page.close().catch(() => {});
     }
-  }
+    console.log(line);
+  };
+  const lanes = async (list, n) => {
+    let next = 0;
+    await Promise.all(Array.from({ length: Math.min(n, list.length) }, async () => {
+      const browser = await chromium.launch();
+      try { while (next < list.length) await runOne(browser, list[next++]); }
+      finally { await browser.close(); }
+    }));
+  };
+  await lanes(shared, jobs);
+  await lanes(solo, 1);
 
-  await browser.close();
   srv.close();
   console.log('\n' + (failed ? failed + ' of ' + checks.length + ' checks FAILED'
                              : 'all ' + checks.length + ' checks passed'));
