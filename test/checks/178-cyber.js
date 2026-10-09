@@ -47,7 +47,11 @@ module.exports = {
         const hex = h => [parseInt(h.slice(1, 3), 16), parseInt(h.slice(3, 5), 16), parseInt(h.slice(5, 7), 16)];
         const cnt = (d, h) => { const [R, G, B0] = hex(h); let n = 0; for (let i = 0; i < d.length; i += 4) if (d[i + 3] > 200 && d[i] === R && d[i + 1] === G && d[i + 2] === B0) n++; return n; };
         const poses = [['addr', 0, false, 'gAddr'], ['top', 0.45, false, 'gAddr'], ['fin', 0.92, false, 'gFinish'], ['walk', 0, true, 'gBack']];
-        for (const hgt of [30, 60, 90]) for (const [n, ph, walking, sp] of poses) {
+        // (and on her, the female golfer, her figure and her hair under it:
+        // the user asked to see her in it)
+        const HIS = {};
+        for (const gnd of ['m', 'f']) { S.gender = gnd; buildSprites();
+        for (const hgt of [30, 60, 90]) for (const [n0, ph, walking, sp] of poses) { const n = (gnd === 'f' ? 'her ' : '') + n0;
           const spr = SPRITE[sp], w = Math.max(4, Math.round(hgt * spr.w / spr.h)), W = hgt * 4, H = hgt * 2;
           const cv = document.createElement('canvas'); cv.width = W; cv.height = H; const c = cv.getContext('2d');
           paintGolfer(c, Math.round(W / 2 - w / 2), H - 10 - hgt, w, hgt, ph, 1.3, H - 10, walking, walking ? 0.3 : 0, spr, [], undefined, false);
@@ -57,7 +61,11 @@ module.exports = {
           if (lime < hgt) f(hgt + ' ' + n + ': only ' + lime + ' lime pixels');
           if (pad < hgt * 2) f(hgt + ' ' + n + ': no pad under him (' + pad + ')');
           if (hgt >= 60 && cnt(d, '#262D45') < hgt * 0.8) f(hgt + ' ' + n + ': no pack');
+          // (hers is her own figure: her hair and shape, not his picture)
+          if (hgt === 60) { const key = n0; if (gnd === 'm') HIS[key] = d; else { let df = 0; for (let i = 0; i < d.length; i += 4) if (d[i + 3] !== HIS[key][i + 3] || d[i] !== HIS[key][i]) df++; if (df < 25) f('her ' + n0 + ' is his picture (' + df + ' pixels differ)'); o.rows.push('her' + n0 + 'Δ' + df); } }
         }
+        }
+        S.gender = 'm'; buildSprites();
         // the wake and the core in every table
         for (const fx of ['tCyber', 'cyberball']) {
           for (const [nm, T] of [['flight', BALLFX], ['lying', LB_ORBIT], ['ace colours', ACE_COL], ['ace', ACE_EXTRA], ['cup', CUP_FX], ['cup flash', CUP_FX2]]) if (!T[fx]) f(fx + ' missing from ' + nm);
