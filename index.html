@@ -3209,11 +3209,11 @@ const B = {
   // different part of the build, so a bag that wins one can lose another.
   DGN: [
     { id:'sand', st:'Swing power and pure strike', ic:'longdrive', mode:'drive', n:'The Long Drive', cur:'grit', cn:'Grit',
-      regen:660, cap:4, run:16, pay:0.046, gear:0.22, floorRar:0,
+      regen:660, cap:4, run:16, pay:0.032, gear:0.22, floorRar:0,
       d:'Six swings, the longest counts.',
       how:'Only your longest swing counts, so swing power and pure strike matter most. Pace does nothing here.' },
     { id:'water', st:'Pure strike', ic:'island', mode:'island', n:'The Island Green', cur:'shard', cn:'Shards',
-      regen:840, cap:3, run:70, pay:0.028, gear:0.40, floorRar:2,
+      regen:840, cap:3, run:70, pay:0.0098, gear:0.40, floorRar:2,
       d:'Every green doubles the pot. Miss and you keep a quarter.',
       how:'A higher pure strike chance makes each green easier to hit. Choose where to bank before you start.' },
     { id:'cellar', st:'Affinity chance', ic:'flood', mode:'chip', n:'The Floodlit Green', cur:'scroll', cn:'Scrolls',
@@ -3229,7 +3229,7 @@ const B = {
     // Twilight Putt is tempo: the quicker you swing, the more putts you get in
     // before the light goes.
     { id:'scramble', st:'Second balls', ic:'balls3', mode:'scramble', n:'The Scramble', cur:'grit', cn:'Grit',
-      regen:780, cap:3, run:24, pay:0.05, gear:0.30, floorRar:1,
+      regen:780, cap:3, run:24, pay:0.035, gear:0.30, floorRar:1,
       d:'Nine holes, every ball you carry. Hole any of them and the hole is yours.',
       how:'More second-ball chance gives you more balls, and more balls win more holes.' },
     { id:'twilight', st:'Pace', ic:'dusk', mode:'twilight', n:'The Twilight Putt', cur:'scroll', cn:'Scrolls',
@@ -3268,6 +3268,11 @@ const B = {
   // longer only while that ball is still on its way, never past the most
   VAULT_PAUSE: 1.5, VAULT_PAUSE_MAX: 3.5,
   DGN_YIELD_STEP: 1.16,
+  // Gear earned slower (the user: clubs went to Mythic too easily, "I want it
+  // to have to be earned and take some time"): the Island Green's shards cut
+  // by 65% and the grit wagers' by 30% (their pay above), and the shards and
+  // grit of the Check-In, the errands and the pass's free row by 30%
+  GEAR_PAY: { grit: 0.7, shard: 0.7 },
   // CARRY_FLOOR_T is read as seconds of carry: the floor a bag can chew
   // through in that long, which is roughly where a Vault run settles. It is
   // what the Island Green and the Floodlit Green are anchored to now.
@@ -6892,7 +6897,7 @@ const checkinReady = () => { const C = checkinNow(), d = dayNow();
 const ciRate = () => Math.max(Meter.rate(), (S.purse || 0) / Math.max(0.6, S.parTime || 1));
 function ciAmt(r){
   if(r.k === 'gold') return Math.max(1, ciRate() * r.v * 60);
-  if(r.k === 'grit' || r.k === 'shard' || r.k === 'scroll') return Math.max(1, Math.round(shopPrice(r.k) * r.v));
+  if(r.k === 'grit' || r.k === 'shard' || r.k === 'scroll') return Math.max(1, Math.round(shopPrice(r.k) * r.v * (B.GEAR_PAY[r.k] || 1)));
   return r.v;
 }
 const ciBag = r => B.BAGS.find(b => b.id === r.v) || B.BAGS[0];
