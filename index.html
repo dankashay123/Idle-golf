@@ -506,7 +506,9 @@ div.guide.hunt,div.guide.mhunt{grid-template-columns:repeat(3,minmax(0,1fr))}
 .ci{text-align:center;min-width:0}
 .ci img{width:36px;height:36px;image-rendering:pixelated;image-rendering:crisp-edges;display:block;margin:0 auto 3px}
 .ci.no img{opacity:.45}
-.ci .cn{font-size:var(--f1);color:var(--chalk);line-height:1.25}
+.ci .cn{font-size:var(--f1);color:var(--chalk);line-height:1.25;overflow-wrap:anywhere;hyphens:auto}
+/* (four across at 320, a name as long as Sovereign ran into the next) */
+@media (max-width:360px){.ci .cn{font-size:var(--f0);letter-spacing:-.01em}}
 .ci .cc{font-family:var(--mono);font-size:var(--f1);color:var(--brass);margin-top:1px}
 .ci.no .cn,.ci.no .cc{color:var(--faint)}
 .cabn{display:flex;gap:8px;align-items:center;justify-content:center}
@@ -554,6 +556,8 @@ div.guide.hunt,div.guide.mhunt{grid-template-columns:repeat(3,minmax(0,1fr))}
 .sub{flex:0 0 auto;padding:9px 13px;font-size:var(--f1);letter-spacing:.08em;text-transform:uppercase;
   color:var(--dim);font-weight:700;white-space:nowrap;border-bottom:2px solid transparent}
 .sub.on{color:var(--brass);border-bottom-color:var(--brass)}
+/* (at 320 the last tab ran off the edge: Signature, Paragon) */
+@media (max-width:360px){.sub{padding:9px 5px;letter-spacing:.03em}}
 #talNav{display:grid;grid-template-columns:repeat(3,1fr);background:#0A170F;
   border-bottom:var(--hair)}
 .sub2{padding:9px 4px 8px;font-size:var(--f0);letter-spacing:.04em;color:var(--faint);
@@ -587,6 +591,8 @@ div.guide.hunt,div.guide.mhunt{grid-template-columns:repeat(3,minmax(0,1fr))}
 #veil.on{display:flex}
 #sheet{width:100%;max-width:400px;max-height:82%;overflow-y:auto;background:var(--panel);
   border:1px solid var(--line);border-radius:0;padding:16px}
+/* (on its side the sheet had a strip of the screen: taller, less round it) */
+@media (orientation:landscape) and (max-height:560px){#veil{padding:6px 18px}#sheet{max-height:100%;max-width:480px}}
 #sheet h3{font-family:var(--disp);font-size-adjust:none;font-size:var(--f5);font-weight:600;margin-bottom:8px;letter-spacing:.01em}
 #sheet p{font-size:var(--f3);color:var(--dim);line-height:1.55;margin-bottom:9px}
 /* the heirloom reveal */
@@ -773,6 +779,7 @@ div.guide.hunt,div.guide.mhunt{grid-template-columns:repeat(3,minmax(0,1fr))}
 /* five racks across (Sets the fifth): the words a little tighter to fit 320 */
 .catnav.c5{grid-template-columns:repeat(5,1fr);gap:4px}
 .catnav.c5 button{letter-spacing:.06em}
+@media (max-width:360px){.catnav.c5 button{letter-spacing:0;padding:6px 0;font-size:var(--f0)}}
 /* a set's other pieces, small, under him */
 .setpcs{display:flex;gap:4px;justify-content:center;flex-wrap:wrap}
 .setpcs img{width:24px;height:24px;image-rendering:pixelated;image-rendering:crisp-edges}
@@ -3093,7 +3100,7 @@ const B = {
     { id:'crt', n:'Pure Strike',    sc:false, lo:0.006,hi:0.040, sfx:'pp' },
     { id:'cpw', n:'Strike Payoff',  sc:false, lo:0.12, hi:0.85, sfx:'x' },
     { id:'gld', n:'Purse',          sc:false, lo:0.05, hi:0.30, sfx:'%' },
-    { id:'drp', n:'Gear Luck',      sc:false, lo:0.03, hi:0.16, sfx:'%' },
+    { id:'drp', n:'Club Luck',      sc:false, lo:0.03, hi:0.16, sfx:'%' },
     { id:'prc', n:'Affinity Chance',sc:false, lo:0.010,hi:0.055, sfx:'pp' },
     { id:'mst', n:'Provisional',    sc:false, lo:0.010, hi:0.055, sfx:'pp' },
     { id:'dgn', n:'Wager Haul',     sc:false, lo:0.06, hi:0.35, sfx:'%' }
