@@ -3899,7 +3899,7 @@ const B = {
     { id:'perk',   m:'perks',  v:1,   d:'Use a sponsor perk', lv:15 },
     { id:'rival',  m:'rivals', v:2,   d:'Beat your rival twice' }
   ],
-  DAILY_SOV: 4, DAILY_ALL: 10, DAILY_STREAK: 2, DAILY_STREAK_MAX: 6,
+  DAILY_SOV: 5, DAILY_ALL: 15, DAILY_STREAK: 2, DAILY_STREAK_MAX: 6,
 
   /* ---- the rival ----
      One named golfer per event, playing the same four days. Their total is
@@ -4134,7 +4134,7 @@ const B = {
   // Every shop like this has a free rail, and hiding it behind a social follow
   // is the part of the pattern worth leaving out: this one pays for turning up
   // and for climbing, which the game can check for itself.
-  FREE_GIFT: 10, FREE_EVERY: 8 * 3600, FREE_CARD: 5,
+  FREE_GIFT: 15, FREE_EVERY: 8 * 3600, FREE_CARD: 5,
   // The Daily Check-In (the user asked): one claim a real day, 28 a month,
   // starting again on the 1st; a missed day only puts the next claim back a
   // day. Kept a fair share and no flood: the dailies pay about 60 to 100
@@ -5665,7 +5665,7 @@ const BOND_UNLOCK = ['New things to say', 'A salute', 'More to say', 'A dance, a
 // now and then after a birdie or better played live, a few sovereigns or,
 // one time in five, a sponsor ticket or two. From a hash of the hole.
 const GIFT_ODDS = [25, 15];        // one birdie in this many, at Close and at Inseparable
-const GIFT_DAY = 5;               // at most this many a day
+const GIFT_DAY = 6;               // at most this many a day
 function caddieGift(h, d, force){
   if(QUIET || OFFLINE || S.dgnRun) return false;
   const lv = bondLv(S.caddie || 'bib');
