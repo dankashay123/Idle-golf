@@ -6394,7 +6394,7 @@ function tickPerks(dt){
   for(const id in S.perkOn){
     if(S.perkOn[id] <= 0){ delete S.perkOn[id]; continue; }
     S.perkOn[id] -= dt;
-    if(S.perkOn[id] <= 0){ delete S.perkOn[id]; toast(perkDef(id).n + '  has worn off'); }
+    if(S.perkOn[id] <= 0){ delete S.perkOn[id]; toast(perkDef(id).n + ' has worn off'); }
   }
 }
 
@@ -6468,8 +6468,8 @@ function bagAdd(it){
   // cap until the next drop lands.
   const took = autoEquipSweep();
   if(took.length){
-    toast(took.length === 1 ? 'Auto equipped <b>' + took[0].name + '</b>'
-                            : 'Auto equipped <b>' + took.length + '</b> clubs');
+    toast(took.length === 1 ? 'Auto-equipped <b>' + took[0].name + '</b>'
+                            : 'Auto-equipped <b>' + took.length + '</b> clubs');
     renderVitals();
   }
   // after the sweep, which may have put it on, or put on a better one it is
@@ -6746,7 +6746,7 @@ function rerollItem(it){
     aff.push({ k:d.id, roll: d.lo + Math.random()*(d.hi - d.lo) });
   }
   it.aff = aff;
-  toast(kept.length ? 'Re-attuned around ' + kept.length + ' locked' : 'Re-attuned');
+  toast(kept.length ? 'Re-attuned \u00b7 ' + kept.length + ' locked ' + (kept.length === 1 ? 'roll' : 'rolls') + ' kept' : 'Re-attuned');
   renderBag(); renderVitals();
 }
 function ascendCost(it){ return Math.max(1, Math.round((26 + it.ilvl*3) * Math.pow(2.35, it.rar)
@@ -7920,7 +7920,7 @@ function nineGoalTip(){
   const p = nineProgress(), r = p.goal.r;
   const pay = r.k === 'purse' ? r.v + ' holes of purse' : r.k === 'tick' ? r.v + '\u00a0' + (r.v > 1 ? 'tickets' : 'ticket')
     : fmt(r.v, 0) + '\u00a0' + (r.k === 'shard' ? 'shards' : r.k);
-  toast('<b>This nine\u2019s goal</b> \u00b7 ' + p.goal.n + ' in these nine holes \u00b7 Pays ' + pay);
+  toast('<b>This nine\u2019s goal</b> \u00b7 ' + p.goal.n + ' \u00b7 Pays ' + pay);
 }
 function resolveNine(){
   const N = S.nine; if(!N) return;
@@ -8949,7 +8949,7 @@ function advanceHole(){
     const round = S.scores.reduce((t, x) => t + (x ? x.d : 0), 0);
     if(round <= B.ROUND * B.ROUND_OPEN && S.tier >= (S.tierMax || 0) && (S.tierMax || 0) < B.TIER_MAX){
       S.tierMax = (S.tierMax || 0) + 1;
-      toast('Tour Card <b>' + cardNo(S.tierMax) + '</b> unlocked \u00b7 too good for this one');
+      toast('Tour Card <b>' + cardNo(S.tierMax) + '</b> unlocked');
       cardPay();
     }
     if(wasSunday) endTournament();
@@ -9176,7 +9176,7 @@ function projectedRatio(tier, wx){
 function climb(n, quiet, force){
   let to = clamp(S.tier + n, 0, B.TIER_MAX);
   if(!force && to > (S.tierMax || 0)){
-    if(!quiet) toast('Tour Card ' + cardNo((S.tierMax||0) + 1) + ' needs '
+    if(!quiet) toast('Win the cup on Card ' + cardNo(S.tierMax || 0) + ', or play '
       + eventsToNext() + '\u00a0more event' + (eventsToNext() === 1 ? '' : 's'));
     return;
   }
@@ -9184,7 +9184,7 @@ function climb(n, quiet, force){
   S.tier = to;
   if(S.tier > S.bestTier) S.bestTier = S.tier;
   if(!quiet) toast('Tour Card <b>' + cardNo(S.tier) + '</b>');
-  else toast('Card <b>' + cardNo(S.tier) + '</b> earned on form');
+  else toast('<span class="achk">Auto-Climb</span>Tour Card <b>' + cardNo(S.tier) + '</b>', 'ach');
   startHole(); renderTour(); renderVitals();
 }
 
@@ -9344,7 +9344,7 @@ function openBag(bg, free){
 }
 
 function buyPerm(u){
-  if(permLv(u.id) >= B.PERM_MAX){ toast(u.n + ' is at ten'); return; }
+  if(permLv(u.id) >= B.PERM_MAX){ toast(u.n + ' is at Level 10'); return; }
   if(!spendSov(permCost(u))) return;
   S.perm[u.id] = permLv(u.id) + 1;
   toast('<b>' + u.n + '</b> \u00b7 level ' + S.perm[u.id]);
@@ -11057,7 +11057,7 @@ function offline(){
   if(levels > 0) marks.push(['Career levels', '+' + levels, ic('star')]);
   if(paras > 0) marks.push(['Paragon', '+' + paras, ic('medal')]);
   if(sov > 0) marks.push([B.SOV, '+' + sovFmt(sov), ic('sovg', SOV_COL)]);
-  if(swapped > 0) marks.push(['Auto equipped', swapped + ' club' + (swapped > 1 ? 's' : ''), ic('driver', '#C8CDD0')]);
+  if(swapped > 0) marks.push(['Auto-Equipped', swapped + ' club' + (swapped > 1 ? 's' : ''), ic('driver', '#C8CDD0')]);
   if(autoOff > 0) marks.push(['Auto-scrapped ' + autoOff, '+' + fmt(autoOffSh, 0) + ' ' + plural(autoOffSh, 'shards'), ic('shard', '#7FD6F2')]);
   if(scrapped > 0) marks.push(['Locker full · scrapped ' + scrapped, '+' + fmt(scrapSh, 0) + ' ' + plural(scrapSh, 'shards'), ic('shard', '#7FD6F2')]);
   if(entries > 0) marks.push(['Wager entries back', '+' + entries, ic('scroll')]);
@@ -31680,9 +31680,9 @@ function renderBag(){
     ab.onclick = () => {
       S.autoEquip = S.autoEquip ? 0 : 1;
       const took = autoEquipSweep();
-      if(took.length) toast('Auto equipped <b>' + took.length + '</b> club'
+      if(took.length) toast('Auto-equipped <b>' + took.length + '</b> club'
         + (took.length > 1 ? 's' : ''));
-      else if(S.autoEquip) toast('Nothing better on the bench');
+      else if(S.autoEquip) toast('Nothing better in the locker');
       renderBag(); renderVitals();
     };
     hd.appendChild(ab);
@@ -33793,7 +33793,7 @@ function step(dt, D){
   }
   tickPerks(dt);
   errTick();
-  if(LUCKY.buff > 0 && !OFFLINE){ LUCKY.buff -= dt; if(LUCKY.buff <= 0){ LUCKY.buff = 0; if(!QUIET) toast('Lucky Albatross  has worn off'); } }
+  if(LUCKY.buff > 0 && !OFFLINE){ LUCKY.buff -= dt; if(LUCKY.buff <= 0){ LUCKY.buff = 0; if(!QUIET) toast('Lucky Albatross has worn off'); } }
   tickCaddie(dt);
   tickShop(dt);
   regenKeys(dt);
