@@ -4703,6 +4703,7 @@ const goldenOn = (h, ch) => !S.dgnRun && goldenHole(h) && !/Night|Crosswind|Mars
 // "very Minecraft-y"). The green lies on its flat top. Placed at the green (dc), its foot well short of it:
 // he plays up to the foot (bank) and flies up to the top (land).
 const MTN = { A: 10.2, W: 6.4, R0: 1.75, Z: 9 }, MTN_NA = 512, MTN_NT = 64;
+let MTN_STEP = 1.5, MTN_MIN = 0.06;
 // how far its outline comes out in the direction (c, s) (cos and sin)
 const mtnNoise = (M, c, s) => {
   const c3 = 4*c*c*c - 3*c, s3 = 3*s - 4*s*s*s, c5 = 16*c*c*c*c*c - 20*c*c*c + 5*c, s5 = 16*s*s*s*s*s - 20*s*s*s + 5*s;
@@ -21999,12 +22000,16 @@ const Scene = {
     ZS.fill(-1); ZP.fill(-1); let dp = -1;
     this.mtnZ(M.dc, M.W * 1.3, 1.3); const tab = M.tab, NA = MTN_NA, NT = MTN_NT;
     // the colours as the buffer holds them (and by name, for the canvas)
-    const val = col => { PixPaint.fillStyle = col; return PixPaint.cur; };
+    // (each kept by name: the green's shade was looked up afresh at every
+    // step, a colour parsed and mixed each time)
+    const VC = this._mtnVC || (this._mtnVC = new Map()), FC = this._mtnFC || (this._mtnFC = new Map());
+    if(VC.size > 256) VC.clear(); if(FC.size > 256) FC.clear();
+    const val = col => { let v = VC.get(col); if(v === undefined){ PixPaint.fillStyle = col; v = PixPaint.cur; VC.set(col, v); } return v; };
     // (hazed evenly by the haze at its foot, as a tree is, and kept out of
     // the haze by rows: laid by rows, whatever stood behind it and was put
     // back under it showed through it unhazed)
     const fr = Math.max(0.6, M.foot - cam + CAM_BACK), fy = HORIZON + GROUND * K_PROJ / fr - this.groundH(M.foot) * LAT * K_PROJ / fr * 0.55;
-    const fa = Math.round(this.hazeA(fy) * 20) / 20, sky = T.sky[4], fog = col => fa > 0 ? mixC(col, sky, fa) : col;
+    const fa = Math.round(this.hazeA(fy) * 20) / 20, sky = T.sky[4], fog = col => { if(!(fa > 0)) return col; const kk = col + sky + fa; let v = FC.get(kk); if(v === undefined) FC.set(kk, v = mixC(col, sky, fa)); return v; };
     const GOLD = MTN_GOLD.map(fog), GV = GOLD.map(val);
     const cut = fog(T._cut || (T._cut = dark(T.apron, 0.18))), APR = fog(T.apron), RIM0 = fog(T._rim[0]), AR0 = fog(T._arim[0]), AR1 = fog(T._arim[1]);
     const PX = fast ? g.px : null;
@@ -22019,8 +22024,13 @@ const Scene = {
     };
     // (a coin lying at (u, v), counted in coins: how it shows there, -9 in
     // a gap between coins; laid in rows, each row half a coin along)
+    // (the last coin's hash kept: rows down a column mostly fall in the same
+    // coin, and the hash is a sine)
+    let lRu = 1e9, lRv = 1e9, lH = 0;
     const coin = (u, v) => {
-      const rv = Math.floor(v), cu = u + (rv & 1) * 0.5, ru = Math.floor(cu), hh = hr(ru * 157 + rv * 31, 745);
+      const rv = Math.floor(v), cu = u + (rv & 1) * 0.5, ru = Math.floor(cu);
+      if(ru !== lRu || rv !== lRv){ lRu = ru; lRv = rv; lH = hr(ru * 157 + rv * 31, 745); }
+      const hh = lH;
       if(hh > 0.86) return -9;
       const fu = cu - ru - 0.5 - (hh - 0.43) * 0.16, fv = v - rv - 0.5, q = fu * fu / 0.19 + fv * fv / 0.12;
       if(q > 1.3) return -9;
@@ -22031,7 +22041,7 @@ const Scene = {
     while(d < M.d1 && guard++ < 4000){
       const rel = Math.max(0.6, d - cam + CAM_BACK), s = K_PROJ / rel;
       const k = LAT * s * 0.55, yg = HORIZON + GROUND * s - this.groundH(d) * k;
-      const cl = Math.round(this.clipAt(d)), ybase = Math.round(yg) + 1;
+      const cl = Math.round(this.clipAt(d)), ybase = Math.round(yg) + 1, kv = 1.25 / k;
       const ux = LAT * s, x0 = CX + (this.bendOff(d) - CAM_LAT) * ux;
       D = d;
       // (only as far across as its foot reaches at this distance)
@@ -22055,21 +22065,40 @@ const Scene = {
       // again)
       // (none where what is nearer already covers all it could reach)
       const ytop = Math.floor(yg - M.Z * k) - 1, cu = (d - M.dc) / M.A, a2 = cu * cu * cu * cu;
-      for(let x = Math.max(0, xa - 1), e2 = Math.min(VW - 1, xb + 1); x <= e2; x++){
-        if(Math.min(top[x], cl) <= ytop && (x === 0 || Math.min(top[x - 1], cl) <= ytop) && (x === VW - 1 || Math.min(top[x + 1], cl) <= ytop)){ RS[x] = 9; ZS[x] = -1; continue; }
-        // (mtnR and mtnZ, written out here: they are called at every column
-        // of every step)
+      // (its height at a column: mtnR and mtnZ, written out here, as they
+      // are wanted at every column of every step)
+      const colAt = x => {
         const cv = (x + 0.5 - x0) / ux / M.W, q = Math.sqrt(cu * cu + cv * cv);
         let r = 0;
         if(q > 1e-6){ const c = cu / q, sn = cv / q, b = cv * cv,
             c3 = 4*c*c*c - 3*c, s3 = 3*sn - 4*sn*sn*sn, c5 = 16*c*c*c*c*c - 20*c*c*c + 5*c, s5 = 16*sn*sn*sn*sn*sn - 20*sn*sn*sn + 5*sn;
           r = Math.sqrt(Math.sqrt(a2 + b * b)) / (1 + 0.05 * (c3 * M.c1 - s3 * M.s1) + 0.035 * (c5 * M.c2 - s5 * M.s2)); }
         RS[x] = r;
-        if(r <= 1){ ZS[x] = M.Z; continue; }
-        if(r >= M.R0){ ZS[x] = r <= M.R0 + SPILL ? 0 : -1; continue; }
+        if(r <= 1){ ZS[x] = M.Z; return; }
+        if(r >= M.R0){ ZS[x] = r <= M.R0 + SPILL ? 0 : -1; return; }
         const fa = (Math.atan2(cv, cu) + 3.1416) * NA / 6.2832, ft = (r - 1) * NT / (M.R0 - 1);
         const i = fa < 0 ? 0 : fa >= NA ? NA - 1 : fa | 0, j = ft >= NT ? NT - 1 : ft | 0, u2 = fa - i, v2 = ft - j, o = i * (NT + 1) + j;
         ZS[x] = (tab[o] * (1 - v2) + tab[o + 1] * v2) * (1 - u2) + (tab[o + NT + 1] * (1 - v2) + tab[o + NT + 2] * v2) * u2;
+      };
+      // (close up, where a column is a sliver of a coin, only every second
+      // or fourth is worked out, those between drawn on a line between them
+      // down its slope: worked out at every one, the mountain cost a frame
+      // more than all the rest of the field; the user found it lagged)
+      const SD = ux > 24 ? 4 : ux > 8 ? 2 : 1, x1 = Math.max(0, xa - 1), e2 = Math.min(VW - 1, xb + 1);
+      for(let x = x1; x <= e2; x++){
+        if(Math.min(top[x], cl) <= ytop && (x === 0 || Math.min(top[x - 1], cl) <= ytop) && (x === VW - 1 || Math.min(top[x + 1], cl) <= ytop)){ RS[x] = 9; ZS[x] = -1; continue; }
+        if(SD > 1 && (x - x1) % SD && x < e2){ RS[x] = -1; continue; }
+        colAt(x);
+      }
+      if(SD > 1) for(let x = x1 + 1; x < e2; x++){
+        if(RS[x] !== -1) continue;
+        let xb2 = x; while(xb2 < e2 && RS[xb2] === -1) xb2++;
+        const xa2 = x - 1, ra = RS[xa2], rb = RS[xb2];
+        if(ra > 1 && ra < M.R0 && rb > 1 && rb < M.R0){
+          const za = ZS[xa2], zb = ZS[xb2], w = xb2 - xa2;
+          for(let xx = x; xx < xb2; xx++){ const f = (xx - xa2) / w; RS[xx] = ra + (rb - ra) * f; ZS[xx] = za + (zb - za) * f; }
+        }else for(let xx = x; xx < xb2; xx++) colAt(xx);
+        x = xb2;
       }
       for(let x = xa; x <= xb; x++){
         const r = RS[x];
@@ -22093,7 +22122,7 @@ const Scene = {
           const nl = 1 / Math.sqrt(zx * zx + zd * zd + 1), b = (-zx * LX - zd * LD + LZ) * nl;
           tone = 0.3 + b * 7.5;
         }
-        const top1 = r <= 1 && ga > 0;
+        const top1 = r <= 1 && ga > 0, lu = lat / 0.3;
         for(let y = Math.max(0, yt); y < bot && y < VH; y++){
           const i = y * VW + x;
           if(top1){
@@ -22111,14 +22140,20 @@ const Scene = {
             if(pa > -2){ dot(x, y, i, AR1, a1V); continue; }
           }
           let tf = tone;
-          if(coins){ const c = coin(lat / 0.3, (d + (yg - y) / k * 1.25) / 0.3); tf += (c === -9 ? -1.5 : c) * cw; }
-          const t = tf < 0 ? 0 : tf > 7 ? 7 : Math.round(tf);
-          dot(x, y, i, GOLD[t], GV[t]);
+          if(coins){ const c = coin(lu, (d + (yg - y) * kv) / 0.3); tf += (c === -9 ? -1.5 : c) * cw; }
+          const t = tf < 0 ? 0 : tf > 7 ? 7 : (tf + 0.5) | 0;
+          // (the face, most of what it paints, written out: dot, inline)
+          if(fast){ if(FD[i] >= D){ PX[i] = GV[t]; FD[i] = D; MK[i] = 0xFF000000; MP[i] = 1; n++; if(y < ya) ya = y; if(y >= yb) yb = y + 1; } }
+          else dot(x, y, i, GOLD[t], GV[t]);
         }
         top[x] = Math.min(top[x], yt);
       }
       ZP.fill(-1); for(let x = xa; x <= xb; x++) ZP[x] = ZS[x]; dp = d;
-      const step = Math.max(0.03, rel * rel / (GROUND * K_PROJ) * 0.5), q = Math.pow(2, Math.round(Math.log2(step)));
+      // (a row a step, where the ground's march takes half: each step's
+      // band is filled down to what is nearer, so nothing is left open, and
+      // it halves a frame's work on the mountain; the user found it lagged
+      // walking up to it and climbing it)
+      const step = Math.max(MTN_MIN, rel * rel / (GROUND * K_PROJ) * MTN_STEP), q = Math.pow(2, Math.round(Math.log2(step)));
       d = (Math.floor(d / q + 1e-6) + 1) * q;
     }
     if(fast && n){ if(ya < g.y0) g.y0 = ya; if(yb > g.y1) g.y1 = yb; }
