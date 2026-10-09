@@ -6,6 +6,53 @@ feature must do, and is usually enough on its own.
 
 ## Sections, newest first
 
+### Polish: the pass, pace, speed and words (8 to 9 October)
+
+- **Tour Pass page** (`passHtml`): a banner with the Cyber-Drive on its own
+  stage, chips of what it holds, a gold Unlock, a tier medal (TIER and the
+  number centred as one group by their ink), a track of free and paid
+  tiles; the shop's tabs sticky; a dot on the Pass tab while a tier waits.
+  `PASS.PER` 80 points a tier, a paid tier 60 sovereigns (1,500 a month),
+  the free row ends in a Legend Bag; tiers reached and not taken by the
+  month's end are given as the new pass starts (`passSettle`).
+- **Bags** keep their own count to a Mythic (`pity`: Range 30, Tour 10,
+  Champion's 5, shown on the tile); the Legend Bag's extra Mythics rare.
+- **Pace** (by simulation, `scratchpad`'s `sim.js` pattern: an hour a day
+  through the real engine): play rewards halved, then the dailies 5 and 15
+  for all three, the free gift 15, six caddie gifts a day. Free player a
+  Mythic set about day 73 to 76; pass day 47; pass and Membership day 42.
+  **Gear slower** (`B.GEAR_PAY` 0.7 on grit and shards from the Check-In,
+  errands, the pass; the Island Green's shards cut 65%, the grit wagers'
+  30%).
+- **Speed**: the woods and the ground write short runs in a loop; where
+  things stand worked out a column at a time; the gold mountain half the
+  cost; the course under an open menu drawn ten times a second; far-tree
+  haze and shrink caches bounded (`FOG_ALL_MAX`, `SH_MAX`); sounds and the
+  icon made after the first frames.
+- **Waiting turns**: an event's result waits for an open sheet to close
+  (`sheetLater`); toasts wait for the course's name banner (`TOAST_LATER`).
+- **An ace's ball** is drawn over what stands in front of it all the way
+  into the cup (it hid behind a tree and seemed to vanish).
+- **Words** (he asked: simple, to the point, no filler, never shortened):
+  full words everywhere (`tw`, `hms`, `dhTxt`: seconds, minutes, hours,
+  Level, experience, yards) except the hole's bar and "purse/sec" (and
+  "MPH", which he is fine with); no "each" on the Bench or Attributes: the
+  figure itself, the total so far (`statTotal`, the Bench's `{v}`), one
+  level's before the first; the climb row says only what unlocks it;
+  Auto-Climb "Climbs by itself once the next card is unlocked and you can
+  score well there"; wager cards Helped By / Pays X / Medals / Best and
+  Length; the wager guide in rows (Helped By, Entries, Most Held, Length).
+- **Gear rolls** have a padlock to tap (`padlock`, `li.afx`), open until
+  tapped; no LOCK buttons.
+- **The far-off clubhouse at night** stands in the wood at the back
+  (`buildWood`), not on the hills: the skyline in front rose and fell as
+  he walked, and it slid and floated (he saw it on The Wisteria
+  Invitational). The landmarks stay on the hills: big enough that the
+  wood always hides their feet.
+- **320 wide**: the Cabinet's names no longer break mid-word; tabs fit.
+- **A new app icon** (`drawIconArt`, `docs/app-icon-1024.png`).
+- The check runner runs in lanes (`--jobs`); timing checks run alone.
+
 ### The screen, the words, the loader and the app (8 October)
 
 - **The hole's bar** (`#rRow`, a full-width bar at the top of `#stage`,

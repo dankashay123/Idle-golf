@@ -17,8 +17,11 @@ game as it is, short, and move detail into `docs/`.
 - **Fix what's broken** when you find it, then and there.
 - **Plain language** in every summary: no function names, paths or jargon;
   say what changed on screen and why it is better.
-- **Short text on screen.** Anything long goes behind a `?` fold. "%" not
-  "per cent"; keep a figure with its unit (`nb()`).
+- **Short text on screen**, straight to the point, no filler. Anything
+  long goes behind a `?` fold. "%" not "per cent"; keep a figure with its
+  unit (`nb()`). **Never a shortened word** (seconds, minutes, Level; `tw`)
+  but in the hole's bar, "purse/sec" and "MPH"; show the number itself,
+  never "each".
 - **The user plays on an iPhone.** Check anything on screen at 320 to 440
   wide and on its side, and screenshot it yourself.
 - **The game's own words**: clubs are *scrapped*; legacy finds are

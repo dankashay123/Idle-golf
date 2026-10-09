@@ -1,6 +1,6 @@
 # Handoff — Mythic Mulligan
 
-Last updated 2026-10-08 (pushed to `main`). `CLAUDE.md` holds the standing
+Last updated 2026-10-09 (pushed to `main`). `CLAUDE.md` holds the standing
 rules and is loaded by itself; this file is what a new session needs on
 top. Read this file whole. The rest is for looking up, never for reading
 through:
@@ -14,19 +14,21 @@ through:
 ## 1. Where things stand
 
 - Everything is committed and **no request is waiting**.
-- Last done (8 October; detail in `docs/features.md`'s newest section):
-  the **hole's bar** across the top of the field (one height always, the
-  affinity centred) with the **buttons in one column** on the left and the
-  day's **condition small beside the cog**; smaller pop-ups; birds in the
-  sky slide with it as he turns; **fonts** built in (Libre Caslon for names,
-  Josefin Sans for everything else); **plain words** everywhere (% for
-  "pp", filler cut); Career opens on **Legacy**; a simpler retirement
-  page; a **loading screen** (title, tee shot, caddie's tips, a Mythic set
-  every fourth launch, never the first); **sound on open**. Before that (6 to 8 October):
-  the Tour Pass, Membership, shop-only looks, the first pack doubled, the
-  **Cyber-Drive** pass set; a free player about ten weeks to a Mythic set.
+- Last done (8 to 9 October; detail in `docs/features.md`'s newest
+  section): a **polish round, no new features** (he asked: nail down
+  what is there). The Tour Pass page made to look worth paying for; bags
+  with their own Mythic counts; pace settled by simulation (free about
+  ten and a half weeks to a Mythic set, paying clearly quicker); gear
+  earned slower; frames quicker and long play bounded; an event's result
+  waits for an open sheet; an ace's ball never vanishes; the far-off
+  clubhouse at night stands in the treeline (it floated); **every word
+  plain, short and never shortened** (seconds, minutes, Level); padlocks
+  on gear rolls; the figures themselves on the Bench and Attributes.
+  Before that (8 October): the hole's bar, the button column, the fonts,
+  the loading screen, sound on open.
 - **The iPhone app: everything is in `docs/ios-app.md`** (read it whole
-  when the app comes up). In short: `index.html` wrapped unchanged with
+  when the app comes up). **Don't suggest it for now** (he asked, 8
+  October): polish what is there first. In short: `index.html` wrapped unchanged with
   **Capacitor**; built from his **Mac's Claude Code** (Xcode needs a
   Mac), in his clone; the free Apple account first, $99 only for
   TestFlight and the store; ask him before choosing the bundle ID; sound
@@ -45,7 +47,7 @@ through:
   new a switch. Earlier work: the sections under it.
 - What lives by the season asks `lookSeason`: a course's own, the Snowline
   winter and the Blossom spring all year, else the month.
-- `node test/run.js` has **180 checks** (all passed 8 October), about 35 minutes: run it in the
+- `node test/run.js` has **193 checks** (all passed 9 October), about 35 minutes: run it in the
   background, on a copy in the scratchpad, with the machine quiet. After
   weather, colours or anything dated, also run it with `HOUR_FORCE` 8 and
   15 and the month pinned (rules 20 and 70).
@@ -61,7 +63,8 @@ through:
   animals; the heirloom prices and the wall at Card 220; the Tour Pass,
   Membership and the Founder's Collection on his phone; the hole's bar
   and the condition by the cog, the smaller pop-ups and the loading screen
-  on his phone (all 8 October).
+  on his phone (all 8 October); the redesigned Tour Pass page, the gear
+  padlocks, the house in the treeline (9 October).
 - Settled, in case it comes up: swing speed still matters fully (a hole's
   time is when the ball drops); Fast Walker only shortens a hole's least
   time; every caddie has a trick (don't offer caddie tricks); Dawn and
@@ -108,6 +111,12 @@ through:
   spots. The island crossing (flying on the spinning club) was their idea.
 - **The shop's "Nothing here is charged" notice** stays on every tab in
   one line. **The far ranges turn only "very slightly".**
+- **Words**: simple and straight to the point, no filler line anywhere
+  (no "birdie here, par there", no "at once", no "entries full", nothing
+  after "Pays Grit"); **never a shortened word** (seconds, minutes, hours,
+  Level, experience, yards) except the hole's bar, "purse/sec" and "MPH";
+  never "each" where the number itself can be shown (`fullwords`).
+- **Gear rolls lock with a padlock** to tap, open until tapped.
 - **Sovereigns earned wait to be taken** at their place (Today, Honours,
   the Guide) with GET, and GET ALL where there is more than one. A
   purchase pays at once. Anything new that pays sovereigns uses `earnSov`.
@@ -301,20 +310,17 @@ brings it up again** (he asked to stop, 6 October): offer other things.
 
 Every idea offered and not yet done, so none is lost:
 
-1. **The iPhone app** (`docs/ios-app.md`): the shell on his Mac first,
-   then saves in the app, real purchases, TestFlight and the store.
-2. **A look on his phone** at the new bar, the condition by the cog and
-   the loader, at 320 to 440 and on its side.
-3. **The Cyber-Drive on the Pass tab**: the set swinging on a small stage
-   at its top, so a buyer sees what the pass gives.
-4. **A new pass set every few months**, each from a character sheet he
+1. **A look on his phone** at the redesigned Tour Pass page, the gear
+   padlocks, the Bench and Attributes figures and the house in the trees.
+2. **A bug pass on the wagers** at their top levels and with the clock
+   moved, now their pay is cut.
+3. **Battery on a long session**: an hour of real frames on a phone-sized
+   page, watching memory and frame time.
+4. **Old saves**: load the oldest kinds of save and check nothing is lost
+   or doubled since the pace changes.
+5. **A new pass set every few months**, each from a character sheet he
    sends, built as the Cyber-Drive was.
-5. **Check paying is clearly quicker**: a pass buyer against a free player
-   over the ten weeks.
-6. **Her Cyber-Drive**: the female golfer in every pose in it.
-7. **A dot for a Tour Pass tier** ready to take (only when one waits).
-8. **The app icon at 1024** drawn from the home screen icon, ready for
-   the store.
+6. **The iPhone app** (`docs/ios-app.md`), only once he brings it up again.
 
 Held for when he raises scenery again (he asked to stop): look at the new
 things on the phone (soft cloud shadows, the score call, the gold
@@ -322,4 +328,4 @@ mountain), the other special holes for bunkers under them, snow falling
 heavier, frost melting through a round, a fog bank thinning, gusts of
 leaves, glints and variety on the gold heap, a speed pass at its foot.
 
-Recommend 1 (he is setting up his Mac for it), then 2.
+Recommend 1, then 2.
