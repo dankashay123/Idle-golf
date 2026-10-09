@@ -194,7 +194,7 @@ module.exports = {
         + offC.join('; '));
 
     // The home screen icon: 180 square, an actual picture, and crisp. It is
-    // painted on a 36 grid and scaled by exactly 5, so every 5x5 block is one
+    // painted on a 60 grid and scaled by exactly 3, so every 3x3 block is one
     // colour; smoothing, or a size that is not a whole multiple, blends the
     // edges and every block stops being flat.
     const home = await page.evaluate(async () => {
@@ -205,11 +205,11 @@ module.exports = {
       const c = cv.getContext('2d'); c.drawImage(img, 0, 0);
       const d = c.getImageData(0, 0, img.width, img.height).data, W = img.width;
       const cols = new Set(); let mixed = 0;
-      for (let by = 0; by < img.height; by += 5) for (let bx = 0; bx < W; bx += 5) {
+      for (let by = 0; by < img.height; by += 3) for (let bx = 0; bx < W; bx += 3) {
         const at = (x, y) => { const i = (y * W + x) * 4; return d[i] + ',' + d[i + 1] + ',' + d[i + 2]; };
         const first = at(bx, by); cols.add(first);
         let flat = true;
-        for (let y = by; y < by + 5 && flat; y++) for (let x = bx; x < bx + 5; x++) if (at(x, y) !== first) { flat = false; break; }
+        for (let y = by; y < by + 3 && flat; y++) for (let x = bx; x < bx + 3; x++) if (at(x, y) !== first) { flat = false; break; }
         if (!flat) mixed++;
       }
       return { w: img.width, h: img.height, colours: cols.size, mixed };
@@ -220,8 +220,12 @@ module.exports = {
     if (home.colours < 12)
       throw new Error('the home screen icon has ' + home.colours + ' colours in it: that is not a picture');
     if (home.mixed)
-      throw new Error(home.mixed + ' of the icon\'s 5x5 pixel blocks are blended: it has been smoothed '
-        + 'or scaled by something other than a whole multiple of its 36 pixel grid');
+      throw new Error(home.mixed + ' of the icon\'s 3x3 pixel blocks are blended: it has been smoothed '
+        + 'or scaled by something other than a whole multiple of its 60 pixel grid');
+    // and the store's, 1024 square, beside it (the iPhone app's icon)
+    const png = require('fs').readFileSync(require('path').join(__dirname, '..', '..', 'docs', 'app-icon-1024.png'));
+    if (png.readUInt32BE(16) !== 1024 || png.readUInt32BE(20) !== 1024)
+      throw new Error('the app icon is ' + png.readUInt32BE(16) + 'x' + png.readUInt32BE(20) + ', not 1024x1024');
 
     return [r.total + ' things, ' + r.distinct + ' distinct icons, ' + r.drawn
       + ' drawn, no reuse, no two drawn alike, every tier colour reaches the canvas',

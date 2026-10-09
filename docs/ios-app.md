@@ -64,9 +64,10 @@ keeps the save.
 - **Fonts are inside the file** (Libre Caslon, Josefin Sans, base64), so
   the app needs no network for them.
 - **The page already** has `viewport-fit=cover`, `env(safe-area-inset-*)`
-  in its CSS, and a home screen icon drawn at 180x180 (`setIcons`) that can
-  be exported for the app icon (the store needs 1024x1024: draw it at that
-  size, no transparency).
+  in its CSS, and a home screen icon drawn at 180x180 (`setIcons`,
+  `drawIconArt`, a crowned winged ball on a gold tee). **The app icon is
+  `docs/app-icon-1024.png`** (1024x1024, no transparency, drawn from the
+  same art): drop it into Xcode's AppIcon set.
 
 ## Order of work
 

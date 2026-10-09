@@ -34174,91 +34174,87 @@ function catchUp(){
 }
 // The page carried no icon at all, so the tab showed the browser's blank page
 // and a home screen shortcut on a phone was a screenshot of whatever was on
-// the stage. Drawn here in the game's own pixel style: a dusk sky and a mythic
-// moon, the gold flag, and a shot arcing in to finish beside the cup. Painted
-// on a 36 pixel grid and blown up to the home screen's 180 at exactly 5x, so
-// every pixel lands square; the 32 pixel tab icon is too small for a whole
-// multiple and is smoothed down instead.
-function drawIconArt(c){  // a 36 x 36 pixel grid
-  const G = 36;
-  const px = (x, y, col) => { c.fillStyle = col; c.fillRect(x, y, 1, 1); };
-  const rect = (x, y, w, h, col) => { c.fillStyle = col; c.fillRect(x, y, w, h); };
-  // dusk sky, banded with a checker dither between bands
-  const sky = ['#0B1030', '#141640', '#221A4E', '#352058', '#4C275E', '#6A3160', '#8E4462'];
-  const bandH = 3;
-  for(let y = 0; y < 24; y++){
-    const b = Math.min(sky.length - 1, Math.floor(y / bandH));
-    for(let x = 0; x < G; x++){
-      const edge = (y % bandH === bandH - 1) && b + 1 < sky.length && ((x + y) & 1);
-      px(x, y, edge ? sky[b + 1] : sky[b]);
-    }
+// the stage. Drawn here in the game's own pixel style (the user asked for
+// one "incredible, new, eye catching", the app's too): a golf ball crowned,
+// a sovereign set in the crown, with white wings, on a golden tee, purple
+// rays behind. Painted on a 60 pixel grid and blown up to the home screen's
+// 180 at exactly 3x, so every pixel lands square; the 32 pixel tab icon is
+// too small for a whole multiple and is smoothed down instead; the store's
+// 1024 is docs/app-icon-1024.png, drawn from it.
+function drawIconArt(c){
+  const G = 60, cx = 30, cy = 30;
+  const px = (x, y, col) => { x = Math.round(x); y = Math.round(y); if(x < 0 || y < 0 || x >= G || y >= G) return; c.fillStyle = col; c.fillRect(x, y, 1, 1); };
+  // rays, darker to the corners
+  for(let y = 0; y < G; y++) for(let x = 0; x < G; x++){
+    const dx = x + 0.5 - cx, dy = y + 0.5 - (cy - 1), r = Math.hypot(dx, dy), a = Math.atan2(dy, dx);
+    const ray = Math.floor((a + Math.PI) / (Math.PI * 2) * 16) & 1;
+    const far = r > 31 ? 2 : r > 25 ? 1 : 0;
+    px(x, y, ray ? ['#5320A0', '#41187E', '#2E1160'][far] : ['#33125F', '#28104C', '#1C0A3A'][far]);
   }
-  // stars
-  for(const [x, y, col] of [[3,3,'#DFE9DC'],[9,6,'#9FA7D8'],[15,2,'#DFE9DC'],[6,11,'#9FA7D8'],[31,18,'#9FA7D8'],[2,16,'#9FA7D8'],[13,9,'#6F76B0']]) px(x, y, col);
-  // the moon, with a soft ring
-  const mx = 26.5, my = 8.5;
-  for(let y = 0; y < 20; y++) for(let x = 14; x < G; x++){
-    const d = Math.hypot(x + 0.5 - mx, y + 0.5 - my);
-    if(d <= 6.2) px(x, y, (Math.hypot(x + 0.5 - (mx - 2), y + 0.5 - (my - 2)) > 6.4) ? '#D8BE7E' : '#F4E3AE');
-    else if(d <= 7.3 && ((x + y) & 1)) px(x, y, '#5A3A72');
-  }
-  // moon craters
-  for(const [x, y] of [[28,6],[24,10],[29,11],[27,12]]) px(x, y, '#E6CC8E');
-  // far ridge of pines
-  const ridge = [21,20,21,19,20,21,20,18,19,20,21,20,19,17,18,19,20,21,20,19,20,18,19,20,21,20,19,18,19,20,21,20,19,20,21,20];
-  for(let x = 0; x < G; x++){
-    rect(x, ridge[x], 1, 24 - ridge[x], '#16233A');
-    if(x % 3 === 1) rect(x, ridge[x] - 1, 1, 1, '#16233A');
-  }
-  // near treeline
-  const near = [23,22,21,22,23,22,20,21,22,23,23,22,23,23,22,21,22,23,23,22,21,20,21,22,23,22,21,22,23,22,20,21,22,23,22,23];
-  for(let x = 0; x < G; x++) rect(x, near[x], 1, 25 - near[x], '#0C1A13');
-  // the fairway: rolling ground in mown stripes
-  for(let y = 24; y < G; y++) for(let x = 0; x < G; x++){
-    const roll = Math.round(Math.sin((x + 3) / 6) * 0.9);
-    if(y + roll < 24) continue;
-    const stripe = Math.floor((x + (y - 24) * 1.4) / 5) & 1;
-    px(x, y, stripe ? '#2E6A3A' : '#27603A');
-  }
-  // the green
-  for(let y = 23; y < 31; y++) for(let x = 3; x < 22; x++){
-    const d = ((x + 0.5 - 12) / 9) ** 2 + ((y + 0.5 - 27) / 3.4) ** 2;
-    if(d <= 1) px(x, y, d > 0.72 ? '#3F8A4B' : '#4C9E55');
-  }
-  // the cup
-  rect(11, 27, 3, 1, '#06100C');
-  rect(12, 28, 1, 1, '#06100C');
-  // pole and flag
-  rect(12, 10, 1, 17, '#DFE9DC');
-  rect(12, 10, 1, 1, '#FFFFFF');
-  const flag = [[13,10,7],[13,11,6],[13,12,5],[13,13,4],[13,14,2]];
-  for(const [x, y, w] of flag) rect(x, y, w, 1, '#E3B457');
-  for(const [x, y, w] of flag) rect(x, y, 1, 1, '#B8893A');
-  rect(14, 10, 5, 1, '#F2CD78');
-  // the shot: one clean arc, faint at the start and bright where it lands
-  let last = null;
-  for(let x = 34; x >= 17; x--){
-    const t = (34 - x) / 17;
-    const y = Math.round(31 + (25 - 31) * t - 4 * 10 * t * (1 - t));
-    const col = t < 0.35 ? '#5A3A72' : t < 0.7 ? '#8C6BC9' : '#57E0BE';
+  // a glow: a ring of light dotted out from the ball
+  for(let y = 0; y < G; y++) for(let x = 0; x < G; x++){ const r = Math.hypot(x + 0.5 - cx, y + 0.5 - cy);
+    if(r < 19 && ((x + y) & 1)) px(x, y, '#8A4BE8');
+    if(r < 17) px(x, y, '#8A4BE8');
+    if(r < 17 && ((x + y) & 1)) px(x, y, '#B07CFF'); }
+  // wings: feathers fanned up and out from either side of the ball
+  const wing = s => {
+    const rx = cx + s * 9, ry = cy + 1;
+    const F = [[-8, 20], [-22, 21], [-36, 20], [-50, 17], [-64, 13]];
+    const cap = (deg, len, wid, col, sh) => { const a = deg * Math.PI / 180, ux = Math.cos(a) * s, uy = Math.sin(a);
+      for(let t = 0; t <= len; t += 0.35){ const w = wid * (t < len - 4 ? 1 : Math.max(0.3, (len - t) / 4));
+        for(let k = -w; k <= w; k += 0.35) px(rx + ux * t - uy * k * s * 1, ry + uy * t + ux * k * s, k > w * 0.35 && sh ? sh : col); } };
+    for(const [d, l] of F) cap(d, l + 0.8, 2.6, '#22103E');          // outlines
+    for(const [d, l] of F) cap(d, l, 1.7, '#FFFFFF', '#C9BAF0');     // feathers, shaded under
+    for(const [d, l] of F) cap(d, Math.min(7, l), 2.2, '#FFD978', '#E3A63A'); // a gold band at the root
+  };
+  wing(-1); wing(1);
+  // the tee
+  const tee = ['#..........#', '#YYYYYYYYYY#', '.#YYYYYYyy#.', '..#YYYYyy#..', '...#YYyy#...', '....#Yy#....', '....#Yy#....', '....#Yy#....', '....#Yy#....', '....#Yy#....', '.....##.....'];
+  const TC = { '#': '#22103E', Y: '#FFD978', y: '#C88A2A' };
+  tee.forEach((row, j) => [...row].forEach((ch, i) => { if(TC[ch]) px(cx - 6 + i, cy + 12 + j, TC[ch]); }));
+  // the ball, dimpled, lit from the top left
+  const R = 11.5, by = cy + 1;
+  for(let y = 0; y < G; y++) for(let x = 0; x < G; x++){
+    const dx = x + 0.5 - cx, dy = y + 0.5 - by, r = Math.hypot(dx, dy);
+    if(r > R + 1.1) continue;
+    if(r > R){ px(x, y, '#22103E'); continue; }
+    const l = (-dx * 0.62 - dy * 0.78) / R;
+    let col = l > 0.6 ? '#FFFFFF' : l > 0.1 ? '#F4F0FA' : l > -0.4 ? '#DCD2EE' : '#B3A4D6';
+    const gy = Math.round(dy / 3), gx = Math.round((dx - (gy & 1) * 1.5) / 3);
+    const ddx = dx - (gx * 3 + (gy & 1) * 1.5), ddy = dy - gy * 3;
+    if(r < R - 1.2 && ddx * ddx + ddy * ddy < 0.45 && l < 0.6) col = l > -0.1 ? '#D2C8E6' : '#9886C2';
     px(x, y, col);
-    if(last !== null && Math.abs(y - last) > 1)   // no gaps where it climbs steeply
-      for(let k = Math.min(y, last) + 1; k < Math.max(y, last); k++) px(x + 1, k, col);
-    last = y;
   }
-  // the ball, just short of the cup, with a glint
-  rect(15, 25, 2, 2, '#FFFFFF');
-  px(16, 26, '#C9D3CC');
-  px(14, 24, '#F4E3AE'); px(17, 24, '#F4E3AE');
+  for(const [x, y] of [[-6, -6], [-5, -7], [-7, -5], [-4, -7], [-7, -4]]) px(cx + x, by + y, '#FFFFFF');
+  // the crown, sat on the ball, a sovereign set in it
+  const crown = [
+    '.R.......R.......R.',
+    '#Y#.....#Y#.....#Y#',
+    '#YY#...#YYY#...#YY#',
+    '#YYY#.#YYYYY#.#YYY#',
+    '#YYYY#YYYYYYY#YYYY#',
+    '#YYYYYYYYYYYYYYYYY#',
+    '#YyyyyyyyPyyyyyyyY#',
+    '#YyyyyyyPPpyyyyyyY#',
+    '#YyyyyyPPPPpyyyyyY#',
+    '#YyyyyyyPPpyyyyyyY#',
+    '#ooooooooPoooooooo#',
+    '.#################.'];
+  const CC = { '#': '#22103E', Y: '#FFD978', y: '#E9AE44', o: '#B8801E', P: '#A66BF5', p: '#E6D2FF', R: '#FF6F96' };
+  crown.forEach((row, j) => [...row].forEach((ch, i) => { if(CC[ch]) px(cx - 9 + i, by - 21 + j, CC[ch]); }));
+  // sparkles
+  const star = (x, y, col, big) => { px(x, y, '#FFFFFF'); for(const [a, b] of [[1,0],[-1,0],[0,1],[0,-1]]){ px(x + a, y + b, col); if(big) px(x + 2*a, y + 2*b, col); } };
+  star(8, 9, '#FFE7A0', 1); star(52, 10, '#E6D2FF', 1); star(51, 50, '#FFE7A0', 0); star(9, 50, '#E6D2FF', 0); px(45, 4, '#FFE7A0'); px(15, 56, '#FFE7A0'); px(4, 30, '#E6D2FF'); px(56, 29, '#FFE7A0');
 }
+const ICON_G = 60;
 function setIcons(){
-  const art = document.createElement('canvas'); art.width = art.height = 36;
+  const art = document.createElement('canvas'); art.width = art.height = ICON_G;
   const ac = art.getContext('2d'); if(!ac) return;
   drawIconArt(ac);
   for(const [rel, size] of [['icon', 32], ['apple-touch-icon', 180]]){
     const cv = document.createElement('canvas'); cv.width = cv.height = size;
     const c = cv.getContext('2d');
-    c.imageSmoothingEnabled = size % 36 !== 0;
+    c.imageSmoothingEnabled = size % ICON_G !== 0;
     c.drawImage(art, 0, 0, size, size);
     let url = '';
     try{ url = cv.toDataURL('image/png'); }catch(e){}
