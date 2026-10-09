@@ -788,15 +788,79 @@ div.guide.hunt,div.guide.mhunt{grid-template-columns:repeat(3,minmax(0,1fr))}
   font-size:var(--f1);color:var(--chalk);line-height:1.5}
 .freebar b{color:var(--r5)}
 .shopnote{display:block;font-size:var(--f0);color:var(--dim);line-height:1.45;margin:0 0 9px}
-/* the Tour Pass: a bar, then its tiers a row each, the free and paid rows */
-.passbar{height:6px;background:var(--line);margin:0 0 10px}.passbar i{display:block;height:100%;background:var(--sov,#C68BFF)}
-.passrows{margin:8px 0}.passhd,.passrow{display:grid;grid-template-columns:2.2em minmax(0,1fr) minmax(0,1fr);gap:6px;align-items:center}
-.passhd{font-size:var(--f0);color:var(--faint);letter-spacing:.1em;text-transform:uppercase;padding:0 0 4px;border-bottom:1px solid var(--line)}
-.passhd span:first-child{text-align:center;letter-spacing:0}
-.passrow{font-size:var(--f1);padding:5px 0;border-bottom:1px solid var(--line);color:var(--faint)}
-.passrow.on{color:var(--chalk)} .passrow .pt{font-family:var(--mono);text-align:center}
-.passrow .pc{display:flex;align-items:center;justify-content:space-between;gap:4px;min-width:0}
-.passrow .pc.lock{opacity:.55} .passrow .pc.got{opacity:.6} .passrow .pc b{color:var(--aurora)}
+/* the Tour Pass: a banner that looks like it costs money (the user asked),
+   a medal for the tier, the tiers a track down the middle */
+.passhero{position:relative;overflow:hidden;margin:2px 0 12px;padding:10px 10px 12px;
+  border:1px solid #E3B457;box-shadow:0 0 0 1px #4A2A6E inset,0 0 18px rgba(198,139,255,.25);
+  background:linear-gradient(165deg,#2C1250 0%,#121A3A 48%,#0B2A2C 100%)}
+.passhero::before{content:'';position:absolute;inset:0;pointer-events:none;
+  background:linear-gradient(105deg,transparent 35%,rgba(255,236,170,.16) 48%,transparent 60%);
+  background-size:260% 100%;animation:phsheen 4.5s linear infinite}
+@keyframes phsheen{from{background-position:130% 0}to{background-position:-130% 0}}
+.phtop{position:relative;display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:8px;margin:0 2px 8px}
+.phk{white-space:nowrap;font-family:var(--disp);font-size-adjust:none;font-size:var(--f4);line-height:1.1;letter-spacing:.08em;text-transform:uppercase;
+  background:linear-gradient(180deg,#FFF1C2,#E3B457 55%,#A87A2A);-webkit-background-clip:text;background-clip:text;color:transparent}
+.phm{font-size:var(--f0);color:#D9C9F2;letter-spacing:.06em;text-align:right;line-height:1.3}
+.phstage{position:relative;border-color:#6A4A9E;background:#05070F}
+.phtag{position:absolute;left:4px;top:4px;display:flex;flex-direction:column;padding:3px 6px;line-height:1.25;
+  background:rgba(8,6,20,.78);border:1px solid #9BE15A;font-size:var(--f0);color:#C9F28A;letter-spacing:.08em;text-transform:uppercase}
+.phtag b{font-family:var(--disp);font-size-adjust:none;font-size:var(--f2);letter-spacing:.04em;text-transform:none;color:#E6FFB8}
+.phchips{position:relative;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px;margin:9px 0 10px}
+.phchip{min-width:0;display:flex;align-items:center;gap:5px;padding:3px 7px 3px 3px;border:1px solid #4E3A7A;background:rgba(10,8,26,.6);
+  font-size:var(--f0);color:#E6DDF6;line-height:1.3}
+.phchip b{color:#FFFFFF}
+.phchip img{width:22px;height:22px;image-rendering:pixelated;flex:0 0 auto}
+.phchip.gold{border-color:#C9963A;background:rgba(60,40,10,.45)}
+.phchip.gold b{color:#FFE7A0}
+.phbuy.price{position:relative;display:grid;grid-template-columns:1fr auto;align-items:center;gap:0 10px;padding:10px 14px;
+  border:1px solid #FFE7A0;background:linear-gradient(180deg,#FFD978,#E3A63A 55%,#B87A1E);color:#2A1606;
+  box-shadow:0 2px 0 #6A4410,0 0 14px rgba(255,200,90,.45);text-align:left}
+.phbuy span{font-family:var(--disp);font-size-adjust:none;font-size:var(--f3);letter-spacing:.04em;font-weight:700}
+.phbuy b{grid-row:1/3;grid-column:2;font-size:var(--f4);font-family:var(--mono)}
+.phbuy.price small{font-size:var(--f0);letter-spacing:.1em;text-transform:uppercase;color:#6A4410}
+.phseal{position:relative;text-align:center;padding:7px;border:1px solid #E3B457;color:#FFE7A0;
+  font-family:var(--disp);font-size-adjust:none;font-size:var(--f2);letter-spacing:.12em;text-transform:uppercase;background:rgba(60,40,10,.45)}
+.phprog{display:flex;align-items:center;gap:10px;margin:0 0 6px}
+.phmedal{flex:0 0 auto;width:58px;height:58px;gap:2px;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  background:radial-gradient(circle at 35% 30%,#FFF1C2,#E3B457 45%,#8A6A26);border:2px solid #FFE7A0;box-shadow:0 0 0 2px #4A2A6E,0 0 12px rgba(227,180,87,.5);color:#2A1606;line-height:1}
+.phmedal small{font-size:9px;letter-spacing:.12em;text-transform:uppercase;font-weight:700}
+.phmedal b{font-family:var(--mono);font-size:22px}
+.phbarw{flex:1;min-width:0}
+.phbarl{display:flex;justify-content:space-between;gap:6px;font-size:var(--f0);color:var(--dim);margin-bottom:4px;line-height:1.3}
+.phbar{height:10px;background:#0A1410;border:1px solid #4E3A7A;overflow:hidden}
+.phbar i{display:block;height:100%;background:linear-gradient(90deg,#8A4BE8,#C68BFF 60%,#FFE7A0);box-shadow:0 0 8px #C68BFF}
+.phhow{padding:4px 0 8px;border:0}
+.phget{margin:2px 0 8px}
+.phtrack{margin:4px 0 8px}
+.phhd{display:grid;grid-template-columns:minmax(0,1fr) 30px minmax(0,1fr);gap:6px;font-size:var(--f0);letter-spacing:.14em;text-transform:uppercase;color:var(--faint);margin:0 0 4px;text-align:center}
+.phhd .gold{color:#E3B457}
+.phrow{position:relative;display:grid;grid-template-columns:minmax(0,1fr) 30px minmax(0,1fr);gap:6px;align-items:center;padding:3px 0}
+.phrow::before{content:'';position:absolute;left:50%;top:0;bottom:0;width:4px;margin-left:-2px;background:#1E2A24}
+.phrow.on::before{background:linear-gradient(180deg,#C68BFF,#8A4BE8)}
+.pnode{position:relative;z-index:1;width:28px;height:28px;border-radius:50%;margin:0 auto;display:flex;align-items:center;justify-content:center;
+  background:#0E1A14;border:2px solid #2E3E34;font-family:var(--mono);font-size:var(--f0);color:var(--faint)}
+.phrow.on .pnode{background:#2C1250;border-color:#C68BFF;color:#FFFFFF}
+.phrow.next .pnode{border-color:#E3B457;color:#FFE7A0;box-shadow:0 0 8px rgba(227,180,87,.6)}
+.ptile{position:relative;display:flex;flex-direction:column;justify-content:center;gap:4px;min-width:0;min-height:44px;padding:4px 6px;
+  border:1px solid var(--line);background:var(--raise);font-size:var(--f0);color:var(--chalk);line-height:1.25}
+.ptile .pin{display:flex;align-items:center;gap:6px;min-width:0}
+.ptile img{width:28px;height:28px;image-rendering:pixelated;flex:0 0 auto}
+.ptile .ptx{flex:1;min-width:0}
+.ptile .ptx b{font-family:var(--mono);font-size:var(--f2);color:var(--sov)}
+.ptile.p{border-color:#5A3E8E;background:linear-gradient(160deg,#24123E,#141C34)}
+.ptile.p.big{border-color:#E3B457;background:linear-gradient(160deg,#3A2410,#2A1250);box-shadow:0 0 10px rgba(227,180,87,.35)}
+.ptile.p.big img{width:34px;height:34px}
+.ptile.can{border-color:var(--aurora);box-shadow:0 0 0 1px var(--aurora) inset;animation:phcan 1.6s ease-in-out infinite}
+@keyframes phcan{50%{box-shadow:0 0 10px var(--aurora)}}
+.ptile.got{opacity:.5}
+.ptile.lock img,.ptile.lock .ptx{opacity:.6}
+.ptile .mini{width:100%;min-height:24px;padding:2px 4px;color:var(--ink);background:var(--aurora);border-color:var(--aurora);font-weight:700}
+.pok{font-style:normal;color:var(--aurora);font-weight:700}
+.plk{flex:0 0 auto;width:10px;height:12px;position:relative;margin-top:3px;background:#E3B457;border-radius:1px}
+.plk::before{content:'';position:absolute;left:2px;top:-5px;width:4px;height:5px;border:1px solid #E3B457;border-bottom:0;border-radius:3px 3px 0 0}
+/* (the Pass tab's dot, while a tier waits) */
+.shopnav button{position:relative}
+.shopnav button.dot::after{content:'';position:absolute;top:6px;right:10%;width:7px;height:7px;border-radius:50%;background:var(--flag);box-shadow:0 0 0 2px var(--panel)}
 /* A shop is a rack of things you are choosing between, not a list you read
    top to bottom, so the tiles carry the art and the price and nothing else. */
 .srib{display:flex;align-items:center;gap:8px;margin:12px 0 8px}
@@ -9335,28 +9399,78 @@ function passGetAll(){ let n = 0; for(let t = 1; t <= PASS.TIERS; t++) for(const
 function passTease(){ toast('Tier ' + PASS.TIERS + ' of the Tour Pass\'s paid row'); shopSub = 'pass'; renderShop(); }
 function passBuy(){ const P = passNow(); if(P.paid){ toast('The pass is yours this month'); return; }
   P.paid = 1; toast('<b>Tour Pass</b> · ' + PASS_MONTHS[passMonth()] + ' · nothing charged'); renderShop(); renderStageBtns(); }
+// The pass's page (the user asked it to look like it costs money, not a
+// list): a banner with the Cyber-Drive playing on a stage of its own, what
+// the paid row holds in chips and a gold button; a medal for the tier; the
+// tiers a track down the middle, the free reward left and the paid right,
+// the big ones rimmed in gold.
+function passIcon(r){
+  if(r.k === 'cyber') return outfitUrl(styleDef('o', 'cyber'));
+  if(r.k === 'look') return outfitUrl(styleDef('o', 'pass' + r.v));
+  if(r.k === 'boost') return pixUrl('boost', '#F2D75E');
+  const L = ciLook(r); return pixUrl(L[0], L[1]);
+}
+function passShort(r){
+  if(r.k === 'cyber') return 'Cyber-Drive';
+  if(r.k === 'look') return PASS_LOOK[r.v][0];
+  if(r.k === 'boost') return nb(r.v + 'h') + ' ×2 prize';
+  if(r.k === 'bag') return ciBag(r).n;
+  if(r.k === 'sov') return '<b>' + r.v + '</b>';
+  const L = ciLook(r);
+  return r.k === 'keys' ? nb('+' + ciAmt(r) + ' entry') : r.k === 'tick' ? nb(ciAmt(r) + ' ticket') : L[3];
+}
+// what the paid row holds, added up
+function passSum(){
+  let sov = 0, boost = 0;
+  for(let i = 1; i <= PASS.TIERS; i++){ const r = passReward('p', i);
+    if(r.k === 'sov' && i < PASS.TIERS) sov += r.v; else if(r.k === 'boost') boost += r.v; }
+  return { sov, boost };
+}
 function passHtml(){
   const P = passNow(), t = passTier(), mo = passMonth(), into = P.pts - t * PASS.PER;
   const ends = Math.max(0, (Date.UTC(new Date(dayNow() * 86400000).getUTCFullYear(), mo + 1, 1) / 86400000) - dayNow());
-  let h = ribbon('Tour Pass · ' + PASS_MONTHS[mo])
-    + '<div class="shopnote">' + nb('Tier ' + t + ' of ' + PASS.TIERS) + (t < PASS.TIERS ? ' · ' + nb(Math.floor(into) + ' of ' + PASS.PER + ' points') : '')
-    + ' · ' + nb('ends in ' + ends + (ends === 1 ? ' day' : ' days')) + '</div>'
-    + '<div class="passbar"><i style="width:' + (t >= PASS.TIERS ? 100 : Math.round(into / PASS.PER * 100)) + '%"></i></div>'
-    + '<div class="shopnote">Earn points: ' + nb(PASS.DAILY + ' per daily challenge') + ', ' + nb(PASS.ALL + ' more for all three') + ', '
-    + nb(PASS.CHECKIN + ' the Check-In') + ', 1 every ' + nb(PASS.HOLES + ' holes') + ' played.</div>';
-  if(!P.paid) h += '<div class="sgrid c1">' + shopCard({ ic: 'starter', col: '#C68BFF', on: true, badge: 'PAID ROW', head: 'Tour Pass',
-      sub: (setOwned('cyber') ? '' : 'The <b>Cyber-Drive</b> set, never sold. ') + 'About 1,000' + sovIc() + ', two days of Double Purse, a Legend Bag and <b>' + PASS_LOOK[mo][0] + '</b>, this month\'s look.',
-      price: '$' + PASS.USD.toFixed(2), note: 'free', act: 'pass:buy', wide: 1 }) + '</div>';
-  if(passClaimable()) h += '<button class="act" onclick="passGetAll()">Get All</button>';
-  h += '<div class="passrows"><div class="passhd"><span>#</span><span>Free</span><span>Pass</span></div>';
+  const sum = passSum(), cyb = setOwned('cyber');
+  const chip = (img, txt, gold) => '<span class="phchip' + (gold ? ' gold' : '') + '"><img src="' + img + '" alt=""><span>' + txt + '</span></span>';
+  let h = '<div class="passhero' + (P.paid ? ' paid' : '') + '">'
+    + '<div class="phtop"><span class="phk">Tour Pass</span><span class="phm">' + PASS_MONTHS[mo] + ' · ' + nb(ends + (ends === 1 ? ' day' : ' days') + ' left') + '</span></div>'
+    + '<div class="showcase phstage"><div class="showst"><canvas id="showCv" width="' + SHOW_W + '" height="' + SHOW_H + '"></canvas>'
+    + '<button class="mini" id="showNight">' + (SHOW && SHOW.night ? 'Day' : 'Night') + '</button>'
+    + '<span class="phtag"><b>Cyber-Drive</b>' + (cyb ? 'yours' : 'never sold') + '</span></div></div>'
+    + '<div class="phchips">'
+    + chip(outfitUrl(styleDef('o', 'cyber')), cyb ? '<b>' + PASS.CYBER_SOV + '</b> ' + B.SOV.toLowerCase() + ' at tier ' + PASS.TIERS : '<b>Cyber-Drive</b> set', 1)
+    + chip(outfitUrl(styleDef('o', 'pass' + mo)), '<b>' + PASS_LOOK[mo][0] + '</b> look', 1)
+    + chip(pixUrl('sovg', SOV_COL), '<b>' + sovFmt(sum.sov) + '</b> ' + B.SOV.toLowerCase())
+    + chip(pixUrl('baglegend', RC(5)), 'Legend Bag')
+    + chip(pixUrl('boost', '#F2D75E'), nb(sum.boost + ' hours') + ' ×2 prize money')
+    + '</div>'
+    + (P.paid ? '<div class="phseal">✦ Pass unlocked ✦</div>'
+      : '<button class="price phbuy" data-do="pass:buy"><span>Unlock the Pass</span><b>$' + PASS.USD.toFixed(2) + '</b><small>nothing charged</small></button>')
+    + '</div>';
+  // the tier medal and the bar to the next
+  const pct = t >= PASS.TIERS ? 100 : Math.round(into / PASS.PER * 100);
+  h += '<div class="phprog"><div class="phmedal"><small>Tier</small><b>' + t + '</b></div>'
+    + '<div class="phbarw"><div class="phbarl"><span>' + (t >= PASS.TIERS ? 'Every tier reached' : nb(Math.floor(into) + ' / ' + PASS.PER + ' points')) + '</span>'
+    + '<span>' + nb(t + ' of ' + PASS.TIERS) + '</span></div>'
+    + '<div class="phbar"><i style="width:' + pct + '%"></i></div></div></div>'
+    + '<div class="hint phhow' + (passHowOpen ? ' open' : '') + '" id="passHow"><div class="foldhead"><span>Points come from playing.</span>'
+    + '<button class="qm" aria-label="How points are earned">?</button></div>'
+    + '<div class="fold" style="margin-top:6px">' + nb(PASS.DAILY + ' a daily challenge') + ', ' + nb(PASS.ALL + ' more for all three') + ', '
+    + nb(PASS.CHECKIN + ' for the Check-In') + ', 1 every ' + nb(PASS.HOLES + ' holes') + ' played (not while away).</div></div>';
+  if(passClaimable()) h += '<button class="act phget" onclick="passGetAll()">Get All</button>';
+  h += '<div class="phtrack"><div class="phhd"><span>Free</span><span></span><span class="gold">Pass</span></div>';
   for(let i = 1; i <= PASS.TIERS; i++){
     const cell = row => { const r = passReward(row, i), got = P.got.includes(row + i), can = passCan(row, i);
-      return '<span class="pc' + (got ? ' got' : can ? ' can' : '') + (row === 'p' && !P.paid ? ' lock' : '') + '">' + passSay(r)
-        + (got ? '<b>✓</b>' : can ? '<button class="mini" onclick="passGet(\'' + row + '\',' + i + ')">Get</button>' : '') + '</span>'; };
-    h += '<div class="passrow' + (i <= t ? ' on' : '') + '"><span class="pt">' + i + '</span>' + cell('f') + cell('p') + '</div>';
+      const big = row === 'p' && ['cyber', 'look', 'bag'].includes(r.k);
+      return '<div class="ptile ' + row + (got ? ' got' : can ? ' can' : '') + (row === 'p' && !P.paid ? ' lock' : '') + (big ? ' big' : '') + '">'
+        + '<div class="pin"><img src="' + passIcon(r) + '" alt=""><span class="ptx">' + passShort(r) + '</span>'
+        + (got ? '<i class="pok">✓</i>' : row === 'p' && !P.paid ? '<i class="plk"></i>' : '') + '</div>'
+        + (can ? '<button class="mini" onclick="passGet(\'' + row + '\',' + i + ')">Get</button>' : '')
+        + '</div>'; };
+    h += '<div class="phrow' + (i <= t ? ' on' : '') + (i === t + 1 ? ' next' : '') + '">' + cell('f') + '<span class="pnode">' + i + '</span>' + cell('p') + '</div>';
   }
   return h + '</div>';
 }
+let passHowOpen = false;
 
 /* ---- the shop, on screen ---- */
 let shopSub = 'offers', styleCat = 'golfer';
@@ -9892,7 +10006,10 @@ function showSize(){
   SHOW_W = Math.max(160, Math.floor(cw * dpr / sc));
   if(cv.width !== SHOW_W) cv.width = SHOW_W;
   cv.height = SHOW_H;
-  cv.style.width = SHOW_W * sc / dpr + 'px'; cv.style.height = SHOW_H * sc / dpr + 'px';
+  // (never wider than its box: at its least width on a narrow screen it
+  // overhung the banner)
+  const k = Math.min(1, cw / (SHOW_W * sc / dpr));
+  cv.style.width = SHOW_W * sc / dpr * k + 'px'; cv.style.height = SHOW_H * sc / dpr * k + 'px';
 }
 addEventListener('resize', showSize);
 // where in the round the stage is: the part, its index and how far in
@@ -10175,7 +10292,7 @@ function renderShop(){
   const tabs = [['offers','Offers'], ['pass','Pass'], ['bags','Bags'], ['perm','Bench'], ['style','Style']];
   let h = '<h3>The Pro Shop</h3>'
     + '<div class="shopnav">' + tabs.map(([id, t]) =>
-        '<button data-sub="' + id + '"' + (shopSub === id ? ' class="on"' : '') + '>' + t
+        '<button data-sub="' + id + '"' + (shopSub === id ? ' class="on"' : id === 'pass' && passClaimable() ? ' class="dot"' : '') + '>' + t
         + '</button>').join('') + '</div>'
     + '<div class="sovline"><span>You hold</span><b>' + sovFmt(S.sov) + '\u00a0' + B.SOV + '</b></div>'
     // (on every tab, as nothing here may look like it takes a payment; a
@@ -10337,6 +10454,11 @@ function renderShop(){
     b.onclick = () => { shopSub = b.dataset.sub; renderShop(); });
   sheet.querySelectorAll('.catnav button').forEach(b =>
     b.onclick = () => { styleCat = b.dataset.cat; renderShop(); });
+  if(shopSub === 'pass'){
+    if(!SHOW || SHOW.set !== 'cyber') showStart('cyber');
+    const q = sheet.querySelector('#passHow .qm');
+    if(q) q.onclick = () => { passHowOpen = !passHowOpen; $('passHow').classList.toggle('open', passHowOpen); };
+  }
   if($('showCv')) showBind(sheet);
   sheet.querySelectorAll('.try[data-try]').forEach(b => {
     const [k, id] = b.dataset.try.split('.');
