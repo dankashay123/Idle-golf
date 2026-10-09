@@ -61,7 +61,7 @@ module.exports = {
         // ---- an old save's bag counts ----
         const old = JSON.parse(SNAP); delete old.pityB; old.pity = 9;
         Object.keys(S).forEach(k => delete S[k]); Object.assign(S, old); initState(); migrate();
-        o.oldPity = JSON.stringify(S.pityB) + ':' + ('pity' in S);
+        o.oldPity = ['range', 'tour', 'champ'].map(k => k + ':' + S.pityB[k]).join(',') + ':' + ('pity' in S);
         S.pityB = { range: 99, tour: -3, champ: 'x' }; initState(); migrate(); o.junkPity = JSON.stringify(S.pityB);
       } finally { Date.now = RN; DAY_FORCE = null; window.toast = tw; Object.keys(S).forEach(k => delete S[k]); Object.assign(S, JSON.parse(SNAP)); hideSheet(); }
       return o;
@@ -79,7 +79,7 @@ module.exports = {
     if (r.mCovered !== 3 * 60) f('membership covering 3 days away paid ' + r.mCovered);
     if (r.mGood !== 4 * 60) f('membership for good, 4 days away, paid ' + r.mGood);
     if (r.mNone) f('no membership paid ' + r.mNone);
-    if (r.oldPity !== '{"range":0,"tour":0,"champ":0}:false') f('an old save\'s bag counts: ' + r.oldPity);
+    if (r.oldPity !== 'range:0,tour:6,champ:0:false') f('an old save\'s count of 9 toward a Mythic (of 15) not carried to the Tour Bag as 6 of 10: ' + r.oldPity);
     if (r.junkPity !== '{"range":0,"tour":0,"champ":0}') f('nonsense bag counts kept: ' + r.junkPity);
     if (fl.length) throw new Error(fl.join('\n'));
     return ['last month\'s untaken pass rewards given (' + r.sovGot + ' sovereigns, its look, its bag), once; membership away pays only the days it covered (' + r.mExpired + '); old and junk bag counts mended; GET ALL takes all 60 once'];

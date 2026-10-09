@@ -5098,6 +5098,9 @@ function initState(){
   if(!(S.sovSpent >= 0)) S.sovSpent = 0;
   if(!(S.bagsOpened >= 0)) S.bagsOpened = 0;
   if(!S.pityB || typeof S.pityB !== 'object') S.pityB = {};
+  // (an older save counted every bag toward one Mythic in 15: that count is
+  // carried to the Tour Bag's own, in proportion, rather than lost)
+  if(S.pity > 0 && !(S.pityB.tour > 0)){ const T = B.BAGS.find(x => x.id === 'tour'); if(T && T.pity) S.pityB.tour = Math.min(T.pity - 1, Math.round(Math.min(S.pity, 15) / 15 * T.pity)); }
   for(const bg of B.BAGS) if(bg.pity && !(S.pityB[bg.id] >= 0 && S.pityB[bg.id] < bg.pity)) S.pityB[bg.id] = 0;
   delete S.pity;
   if(!S.perm) S.perm = {};
@@ -33986,7 +33989,15 @@ function saverNow(){ hideSheet(); saverOn(); }
 
 let last = 0, slowT = 0, saveT = 0;
 let frameErr = 0;
+// Thirty frames a second, not the screen's sixty (or a newer iPhone's 120):
+// the course is pixel art the size of the screen, and every frame redrew all
+// of it, so the phone ran hot after a while (the user felt it). Everything
+// moves by the time passed, so play is as fast as before. (0: every frame,
+// for a check that times one.)
+let FRAME_CAP_MS = 1000 / 30 - 4, frameAt = -1e9;
 function frame(now){
+  if(!SAVER && FRAME_CAP_MS > 0 && now - frameAt < FRAME_CAP_MS){ requestAnimationFrame(frame); return; }
+  frameAt = now;
   const f0 = DEV_FPS ? performance.now() : 0;
   try{ frameBody(now); }
   catch(e){
