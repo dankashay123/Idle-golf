@@ -3055,23 +3055,23 @@ const B = {
   // more in purple (the user asked) over a great deal longer.
   MASTER: [100, 400, 1200, 3000, 7500, 15000, 30000, 60000, 120000, 250000], MASTER_STEP: 0.02, MASTER_GOLD: 5,
   // a first sighting in the Field Guide
-  GUIDE_SOV: 5,
+  GUIDE_SOV: 2,
   // the Guide's weekly hunt: three to spot in a week, paid once when all are
-  HUNT_SOV: 15,
+  HUNT_SOV: 8,
   // the month's hunt (the user picked it from the menu): three rarer ones
   // a calendar month, paid once when all three are spotted live
-  MHUNT_SOV: 40,
+  MHUNT_SOV: 20,
   // and for hunts done in weeks in a row (the user picked it from the menu):
   // HUNT_STREAK more for each week before this one, up to HUNT_STREAK_MAX of them
-  HUNT_STREAK: 5, HUNT_STREAK_MAX: 3,
+  HUNT_STREAK: 2, HUNT_STREAK_MAX: 3,
   // a whole shelf of the Guide seen (the user picked it from the menu): once
   // for each shelf, never the Wager Book's (nothing seen in a wager pays)
-  SHELF_SOV: 25,
+  SHELF_SOV: 12,
   // a course's every animal seen there (its collection, a badge in the
   // Cabinet; the user picked it from the menu): once for each course
-  WILD_SOV: 10,
+  WILD_SOV: 5,
   // and its rare visitors seen too, once the course is whole: a gold star
-  WILD_STAR_SOV: 15,
+  WILD_STAR_SOV: 8,
   // Golden Hour (the user picked it from the menu): one hole in GOLDEN_P,
   // from a hash of the hole, played in a low gold light, and all it earns
   // paid twice. Not at night, in the rain, on a frosty morning, in a wager
@@ -3079,7 +3079,7 @@ const B = {
   // coins down the fairway and the green on a mountain of them, flown up to
   // as an island's; the user asked). Finished live, it also pays GOLDEN_SOV
   // sovereigns and GOLDEN_TICK sponsor tickets.
-  GOLDEN_P: 1 / 100, GOLDEN_SOV: 10, GOLDEN_TICK: 1,
+  GOLDEN_P: 1 / 100, GOLDEN_SOV: 5, GOLDEN_TICK: 1,
   // The caddie bond (the user picked it from the menu): each caddie warms to
   // him over the holes they play together, and at each step has more to say
   // and a new move (BOND_SAY, FAIRY_MOVES' bond). The fifth in a long few
@@ -3619,7 +3619,7 @@ const B = {
   SLOTS_SEASON: ['event','event','major','event','event','finale'],
   // the major of the week: what winning it pays besides the jacket, and what
   // playing it through pays
-  WEEK_WIN_SOV: 78, WEEK_PLAY_SOV: 13,
+  WEEK_WIN_SOV: 39, WEEK_PLAY_SOV: 6,
   PURSE_MAJOR: 1.5, PURSE_FINALE: 2.4,
   CUP_BASE: { event:500, major:800, finale:1200 },
 
@@ -3793,79 +3793,79 @@ const B = {
   // the Signature Week's prize, each week all five kinds are played (the
   // user asked), on top of the honour: less than a major's win, more than
   // playing one
-  SIG_WEEK_SOV: 33,
+  SIG_WEEK_SOV: 16,
   // The Hole of the Week run: the signature hole of the week played in
   // HOTW_RUN real weeks running pays HOTW_SOV sovereigns, and again each
   // week the run goes on
-  HOTW_RUN: 3, HOTW_SOV: 20,
+  HOTW_RUN: 3, HOTW_SOV: 10,
   ACH: [
-    { id:'h100',   n:'Fairway Found',    d:'Play 100 holes',              m:'holes',  v:100,   r:{k:'tick', v:2}, sov:7 },
-    { id:'h2500',  n:'Card Sharp',       d:'Play 2,500 holes',            m:'holes',  v:2500,  r:{k:'gld', v:0.05}, sov:13 },
-    { id:'h25k',   n:'Tour Veteran',     d:'Play 25,000 holes',           m:'holes',  v:25000, r:{k:'gld', v:0.10}, sov:130 },
-    { id:'bird',   n:'Birdie Hunter',    d:'Make 250 birdies or better',  m:'birdie', v:250,   r:{k:'pow', v:0.04}, sov:13 },
-    { id:'eagle',  n:'Eagle Eye',        d:'Make 500 eagles or better',   m:'eagle',  v:500,   r:{k:'pow', v:0.06}, sov:13 },
-    { id:'ace1',   n:'Hole In One',      d:'Get your first hole-in-one',         m:'ace',    v:1,     r:{k:'tick', v:3}, sov:7 },
-    { id:'ace100', n:'Ace Collector',    d:'Card 100 aces',               m:'ace',    v:100,   r:{k:'pow', v:0.08}, sov:130 },
-    { id:'snow',   n:'It Happens',       d:'Score 8 or more on a hole',              m:'snow',   v:1,     r:{k:'tick', v:1}, sov:7 },
-    { id:'cup1',   n:'First Cup',        d:'Beat an event target',        m:'cups',   v:1,     r:{k:'tick', v:3}, sov:7 },
-    { id:'cup10',  n:'The Cabinet',      d:'Hold 10 cups',                m:'cups',   v:10,    r:{k:'gld', v:0.08}, sov:13 },
-    { id:'cup50',  n:'Dynasty',          d:'Hold 50 cups',                m:'cups',   v:50,    r:{k:'gld', v:0.15}, sov:130 },
-    { id:'slam',   n:'Grand Slam',       d:'Win all four majors of the week', m:'slam', v:4, r:{k:'pow', v:0.05}, sov:130 },
-    { id:'rec',    n:'Course Record',    d:'Finish an event at -200 or better', m:'best', v:200,   r:{k:'drp', v:0.05}, sov:130 },
-    { id:'lv10',   n:'Rookie',           d:'Reach career level 10',       m:'lv',     v:10,    r:{k:'tick', v:2}, sov:7 },
-    { id:'lv60',   n:'Tour Pro',         d:'Reach career level 60',       m:'lv',     v:60,    r:{k:'pow', v:0.10}, sov:130 },
-    { id:'p25',    n:'Paragon',          d:'Reach paragon 25',            m:'para',   v:25,    r:{k:'spd', v:0.05}, sov:130 },
-    { id:'p250',   n:'Ascendant',        d:'Reach paragon 250',           m:'para',   v:250,   r:{k:'pow', v:0.20}, sov:130 },
-    { id:'t10',    n:'Climbing',         d:'Reach Tour Card 10',           m:'tier',   v:9,     r:{k:'pow', v:0.03}, sov:13 },
-    { id:'t25',    n:'Thin Air',         d:'Reach Tour Card 25',         m:'tier',   v:24,    r:{k:'pow', v:0.06}, sov:130 },
-    { id:'t50',    n:'Mythic Air',       d:'Reach Tour Card 50',           m:'tier',   v:49,    r:{k:'pow', v:0.12}, sov:130 },
-    { id:'kit',    n:'Kitted Out',       d:'Fill all six bag slots',      m:'slots',  v:6,     r:{k:'tick', v:2}, sov:7 },
-    { id:'leg',    n:'Rare Air',         d:'Find a Legendary',            m:'legend', v:1,     r:{k:'shard', v:100}, sov:7 },
-    { id:'myth',   n:'Mythwrought',      d:'Find a Mythic',               m:'myth',   v:1,     r:{k:'elm', v:0.05}, sov:13 },
-    { id:'enh',    n:'Reforged',         d:'Upgrade a club to +15',         m:'enh15',  v:1,     r:{k:'pow', v:0.06}, sov:13 },
-    { id:'set6',   n:'Matched',          d:'Wear six clubs of Rare or better', m:'set6',  v:6,     r:{k:'pow', v:0.05}, sov:13 },
-    { id:'dg25',   n:'Regular',           d:'Play 25 wagers',              m:'runs',   v:25,    r:{k:'grit', v:200}, sov:13 },
-    { id:'f25',    n:'Deep Water',       d:'Reach level 25 in any wager',      m:'floor',  v:25,    r:{k:'dgn', v:0.10}, sov:13 },
-    { id:'f60',    n:'The Abyss',        d:'Reach level 60 in any wager',      m:'floor',  v:60,    r:{k:'dgn', v:0.20}, sov:130 },
-    { id:'all4',   n:'Every Door',       d:'Reach level 10 in every wager', m:'all4',   v:1,     r:{k:'tick', v:3}, sov:13 },
-    { id:'prov1',  n:'Second Ball',      d:'Reach 50% second-ball chance',  m:'mst', v:0.50, r:{k:'pow', v:0.08}, sov:7 },
-    { id:'prov2',  n:'Both Barrels',     d:'Reach 150% second-ball chance', m:'mst', v:1.50, r:{k:'mst', v:0.10}, sov:130 },
-    { id:'kitE',   n:'Well Stocked',     d:'Wear six clubs of Epic or better',  m:'set6e', v:6,   r:{k:'pow', v:0.08}, sov:13 },
-    { id:'perk50', n:'Sponsored',        d:'Use 50 sponsor perks',        m:'perks',  v:50,    r:{k:'gld', v:0.06}, sov:13 },
-    { id:'tr15',   n:'Curator',          d:'Find 15 heirlooms',           m:'troph',  v:15,    r:{k:'pow', v:0.06}, sov:13 },
-    { id:'tr30',   n:'The Whole Collection', d:'Find every heirloom',     m:'troph',  v:30,    r:{k:'pow', v:0.25}, sov:130 },
-    { id:'ret1',   n:'Signed Off',       d:'Retire once',                 m:'retire', v:1,     r:{k:'tick', v:2}, sov:13 },
+    { id:'h100',   n:'Fairway Found',    d:'Play 100 holes',              m:'holes',  v:100,   r:{k:'tick', v:2}, sov:4 },
+    { id:'h2500',  n:'Card Sharp',       d:'Play 2,500 holes',            m:'holes',  v:2500,  r:{k:'gld', v:0.05}, sov:6 },
+    { id:'h25k',   n:'Tour Veteran',     d:'Play 25,000 holes',           m:'holes',  v:25000, r:{k:'gld', v:0.10}, sov:65 },
+    { id:'bird',   n:'Birdie Hunter',    d:'Make 250 birdies or better',  m:'birdie', v:250,   r:{k:'pow', v:0.04}, sov:6 },
+    { id:'eagle',  n:'Eagle Eye',        d:'Make 500 eagles or better',   m:'eagle',  v:500,   r:{k:'pow', v:0.06}, sov:6 },
+    { id:'ace1',   n:'Hole In One',      d:'Get your first hole-in-one',         m:'ace',    v:1,     r:{k:'tick', v:3}, sov:4 },
+    { id:'ace100', n:'Ace Collector',    d:'Card 100 aces',               m:'ace',    v:100,   r:{k:'pow', v:0.08}, sov:65 },
+    { id:'snow',   n:'It Happens',       d:'Score 8 or more on a hole',              m:'snow',   v:1,     r:{k:'tick', v:1}, sov:4 },
+    { id:'cup1',   n:'First Cup',        d:'Beat an event target',        m:'cups',   v:1,     r:{k:'tick', v:3}, sov:4 },
+    { id:'cup10',  n:'The Cabinet',      d:'Hold 10 cups',                m:'cups',   v:10,    r:{k:'gld', v:0.08}, sov:6 },
+    { id:'cup50',  n:'Dynasty',          d:'Hold 50 cups',                m:'cups',   v:50,    r:{k:'gld', v:0.15}, sov:65 },
+    { id:'slam',   n:'Grand Slam',       d:'Win all four majors of the week', m:'slam', v:4, r:{k:'pow', v:0.05}, sov:65 },
+    { id:'rec',    n:'Course Record',    d:'Finish an event at -200 or better', m:'best', v:200,   r:{k:'drp', v:0.05}, sov:65 },
+    { id:'lv10',   n:'Rookie',           d:'Reach career level 10',       m:'lv',     v:10,    r:{k:'tick', v:2}, sov:4 },
+    { id:'lv60',   n:'Tour Pro',         d:'Reach career level 60',       m:'lv',     v:60,    r:{k:'pow', v:0.10}, sov:65 },
+    { id:'p25',    n:'Paragon',          d:'Reach paragon 25',            m:'para',   v:25,    r:{k:'spd', v:0.05}, sov:65 },
+    { id:'p250',   n:'Ascendant',        d:'Reach paragon 250',           m:'para',   v:250,   r:{k:'pow', v:0.20}, sov:65 },
+    { id:'t10',    n:'Climbing',         d:'Reach Tour Card 10',           m:'tier',   v:9,     r:{k:'pow', v:0.03}, sov:6 },
+    { id:'t25',    n:'Thin Air',         d:'Reach Tour Card 25',         m:'tier',   v:24,    r:{k:'pow', v:0.06}, sov:65 },
+    { id:'t50',    n:'Mythic Air',       d:'Reach Tour Card 50',           m:'tier',   v:49,    r:{k:'pow', v:0.12}, sov:65 },
+    { id:'kit',    n:'Kitted Out',       d:'Fill all six bag slots',      m:'slots',  v:6,     r:{k:'tick', v:2}, sov:4 },
+    { id:'leg',    n:'Rare Air',         d:'Find a Legendary',            m:'legend', v:1,     r:{k:'shard', v:100}, sov:4 },
+    { id:'myth',   n:'Mythwrought',      d:'Find a Mythic',               m:'myth',   v:1,     r:{k:'elm', v:0.05}, sov:6 },
+    { id:'enh',    n:'Reforged',         d:'Upgrade a club to +15',         m:'enh15',  v:1,     r:{k:'pow', v:0.06}, sov:6 },
+    { id:'set6',   n:'Matched',          d:'Wear six clubs of Rare or better', m:'set6',  v:6,     r:{k:'pow', v:0.05}, sov:6 },
+    { id:'dg25',   n:'Regular',           d:'Play 25 wagers',              m:'runs',   v:25,    r:{k:'grit', v:200}, sov:6 },
+    { id:'f25',    n:'Deep Water',       d:'Reach level 25 in any wager',      m:'floor',  v:25,    r:{k:'dgn', v:0.10}, sov:6 },
+    { id:'f60',    n:'The Abyss',        d:'Reach level 60 in any wager',      m:'floor',  v:60,    r:{k:'dgn', v:0.20}, sov:65 },
+    { id:'all4',   n:'Every Door',       d:'Reach level 10 in every wager', m:'all4',   v:1,     r:{k:'tick', v:3}, sov:6 },
+    { id:'prov1',  n:'Second Ball',      d:'Reach 50% second-ball chance',  m:'mst', v:0.50, r:{k:'pow', v:0.08}, sov:4 },
+    { id:'prov2',  n:'Both Barrels',     d:'Reach 150% second-ball chance', m:'mst', v:1.50, r:{k:'mst', v:0.10}, sov:65 },
+    { id:'kitE',   n:'Well Stocked',     d:'Wear six clubs of Epic or better',  m:'set6e', v:6,   r:{k:'pow', v:0.08}, sov:6 },
+    { id:'perk50', n:'Sponsored',        d:'Use 50 sponsor perks',        m:'perks',  v:50,    r:{k:'gld', v:0.06}, sov:6 },
+    { id:'tr15',   n:'Curator',          d:'Find 15 heirlooms',           m:'troph',  v:15,    r:{k:'pow', v:0.06}, sov:6 },
+    { id:'tr30',   n:'The Whole Collection', d:'Find every heirloom',     m:'troph',  v:30,    r:{k:'pow', v:0.25}, sov:65 },
+    { id:'ret1',   n:'Signed Off',       d:'Retire once',                 m:'retire', v:1,     r:{k:'tick', v:2}, sov:6 },
     // the newer things on the course: doglegs, the wind, the fairy, home
     // courses and the majors of the week
     // sized off half an hour of real play: about 100 shots round a corner, and
     // 18 birdies in one crosswind round and none in the next five
-    { id:'dogleg', n:'Round the Corner', d:'Carry 250 shots round a dogleg', m:'dogleg', v:250, r:{k:'tick', v:2}, sov:13 },
-    { id:'windy',  n:'Wind Cheater',     d:'Birdie 100 holes in 15\u00a0mph of wind', m:'windBird', v:100, r:{k:'pow', v:0.03}, sov:13 },
-    { id:'twin',   n:'Matching Pair',    d:'Dress your caddie to match you', m:'twin',  v:1,     r:{k:'tick', v:2}, sov:7 },
-    { id:'homes',  n:'Home Tour',        d:'Play all ten home courses',   m:'homes',  v:10,    r:{k:'gld', v:0.05}, sov:13 },
-    { id:'major1', n:'Major Winner',     d:'Win a major of the week',     m:'slam',   v:1,     r:{k:'tick', v:3}, sov:13 },
-    { id:'staff',  n:'Full Staff',       d:'Own every caddie perk',       m:'cperks', v:9,     r:{k:'gld', v:0.04}, sov:13 },
-    { id:'headcad', n:'Head Caddie',     d:'Take a caddie perk to Lv\u00a05', m:'cperkLv', v:5,  r:{k:'tick', v:2}, sov:13 },
+    { id:'dogleg', n:'Round the Corner', d:'Carry 250 shots round a dogleg', m:'dogleg', v:250, r:{k:'tick', v:2}, sov:6 },
+    { id:'windy',  n:'Wind Cheater',     d:'Birdie 100 holes in 15\u00a0mph of wind', m:'windBird', v:100, r:{k:'pow', v:0.03}, sov:6 },
+    { id:'twin',   n:'Matching Pair',    d:'Dress your caddie to match you', m:'twin',  v:1,     r:{k:'tick', v:2}, sov:4 },
+    { id:'homes',  n:'Home Tour',        d:'Play all ten home courses',   m:'homes',  v:10,    r:{k:'gld', v:0.05}, sov:6 },
+    { id:'major1', n:'Major Winner',     d:'Win a major of the week',     m:'slam',   v:1,     r:{k:'tick', v:3}, sov:6 },
+    { id:'staff',  n:'Full Staff',       d:'Own every caddie perk',       m:'cperks', v:9,     r:{k:'gld', v:0.04}, sov:6 },
+    { id:'headcad', n:'Head Caddie',     d:'Take a caddie perk to Lv\u00a05', m:'cperkLv', v:5,  r:{k:'tick', v:2}, sov:6 },
     // the signature holes: a home round has four (two island greens, the
     // canyon and the stepping stones), any other course one of its own
-    { id:'sig4',   n:'Signature Round',  d:'Par or better on every signature hole of a home round', m:'sigRound', v:1, r:{k:'tick', v:3}, sov:13 },
+    { id:'sig4',   n:'Signature Round',  d:'Par or better on every signature hole of a home round', m:'sigRound', v:1, r:{k:'tick', v:3}, sov:6 },
     // all five kinds in one real week, Monday to Sunday: a home round has
     // four, so the sea stack has to be found as well (the user asked)
-    { id:'sigWk',  n:'Signature Week',   d:'Play all five kinds of signature hole in one week', m:'sigWeek', v:1, r:{k:'tick', v:3}, sov:13 },
-    { id:'sigIs',  n:'Island Hopper',    d:'Birdie 25 island greens',     m:'sigIsle',   v:25,  r:{k:'tick', v:2}, sov:13 },
-    { id:'sigCn',  n:'Rope Walker',      d:'Birdie 10 canyon holes',      m:'sigCanyon', v:10,  r:{k:'tick', v:2}, sov:13 },
-    { id:'sigSt',  n:'Sure-Footed',      d:'Birdie 10 stepping-stone holes', m:'sigStones', v:10, r:{k:'tick', v:2}, sov:13 },
-    { id:'sigPr',  n:'Sea Legs',         d:'Birdie 10 sea stack holes',   m:'sigPier',   v:10,  r:{k:'tick', v:2}, sov:13 },
-    { id:'sigRl',  n:'All Aboard',       d:'Birdie 10 railway crossings', m:'sigRail',   v:10,  r:{k:'tick', v:2}, sov:13 },
-    { id:'isleAce', n:'Ace on the Island', d:'Card an ace on an island green', m:'isleAce', v:1,  r:{k:'tick', v:3}, sov:13 }
+    { id:'sigWk',  n:'Signature Week',   d:'Play all five kinds of signature hole in one week', m:'sigWeek', v:1, r:{k:'tick', v:3}, sov:6 },
+    { id:'sigIs',  n:'Island Hopper',    d:'Birdie 25 island greens',     m:'sigIsle',   v:25,  r:{k:'tick', v:2}, sov:6 },
+    { id:'sigCn',  n:'Rope Walker',      d:'Birdie 10 canyon holes',      m:'sigCanyon', v:10,  r:{k:'tick', v:2}, sov:6 },
+    { id:'sigSt',  n:'Sure-Footed',      d:'Birdie 10 stepping-stone holes', m:'sigStones', v:10, r:{k:'tick', v:2}, sov:6 },
+    { id:'sigPr',  n:'Sea Legs',         d:'Birdie 10 sea stack holes',   m:'sigPier',   v:10,  r:{k:'tick', v:2}, sov:6 },
+    { id:'sigRl',  n:'All Aboard',       d:'Birdie 10 railway crossings', m:'sigRail',   v:10,  r:{k:'tick', v:2}, sov:6 },
+    { id:'isleAce', n:'Ace on the Island', d:'Card an ace on an island green', m:'isleAce', v:1,  r:{k:'tick', v:3}, sov:6 }
   ],
   // The trophy case pays for what goes in it, collected by hand in the Trophy
   // Room: once for each step reached, and nothing waiting there runs out. The
   // best card stops at 288 under, which is an ace on every hole of an event.
   CASE: [
-    { id:'maj',  n:'Majors Won', at:[1, 2, 4, 8, 12, 20, 30, 52],          sov:[39, 39, 52, 65, 78, 104, 130, 195] },
-    { id:'cup',  n:'Cups Won',   at:[1, 5, 10, 25, 50, 100, 250, 500],     sov:[13, 20, 33, 52, 78, 130, 195, 325] },
-    { id:'card', n:'Best Card',  at:[25, 50, 100, 150, 200, 240, 270, 288], sov:[7, 13, 26, 39, 52, 78, 104, 156] }
+    { id:'maj',  n:'Majors Won', at:[1, 2, 4, 8, 12, 20, 30, 52],          sov:[20, 20, 26, 32, 39, 52, 65, 98] },
+    { id:'cup',  n:'Cups Won',   at:[1, 5, 10, 25, 50, 100, 250, 500],     sov:[6, 10, 16, 26, 39, 65, 98, 162] },
+    { id:'card', n:'Best Card',  at:[25, 50, 100, 150, 200, 240, 270, 288], sov:[4, 6, 13, 20, 26, 39, 52, 78] }
   ],
   // Honours that come round again. Steps are set off how fast each thing turns
   // up late in a career, not early: a floor-bound bag cards an eagle on nearly
@@ -3895,7 +3895,7 @@ const B = {
     { id:'perk',   m:'perks',  v:1,   d:'Use a sponsor perk', lv:15 },
     { id:'rival',  m:'rivals', v:2,   d:'Beat your rival twice' }
   ],
-  DAILY_SOV: 8, DAILY_ALL: 20, DAILY_STREAK: 4, DAILY_STREAK_MAX: 6,
+  DAILY_SOV: 4, DAILY_ALL: 10, DAILY_STREAK: 2, DAILY_STREAK_MAX: 6,
 
   /* ---- the rival ----
      One named golfer per event, playing the same four days. Their total is
@@ -3915,20 +3915,20 @@ const B = {
   // (3 and 12, and the repeating honours each half as often: the user
   // asked a free player take about ten weeks to a Mythic set, not six, so
   // buying is the quicker way)
-  RIVAL_SPREAD: 0.08, RIVAL_SOV: 3, RIVAL_SERIES: 12, RIVAL_FORM: 0.5, RIVAL_EASE: 0.03,
+  RIVAL_SPREAD: 0.08, RIVAL_SOV: 2, RIVAL_SERIES: 6, RIVAL_FORM: 0.5, RIVAL_EASE: 0.03,
   ACH_REP: [
-    { id:'rHoles', n:'Steady Hand',    d:'Every 1000 holes', m:'holes',  step:1000, sov:3 },
-    { id:'rBird',  n:'Birdie Watch',   d:'Every 500 birdies', m:'birdie', step:500, sov:3 },
-    { id:'rEagle', n:'Eagle Nest',     d:'Every 500 eagles', m:'eagle',  step:500, sov:4 },
-    { id:'rNine',  n:'Front and Back', d:'Every 30 nine-hole goals', m:'nines',  step:30,  sov:4 },
-    { id:'rRuns',  n:'Regular Punter', d:'Every 20 wagers', m:'runs',   step:20,  sov:4 },
-    { id:'rAce',   n:'Ace Shelf',      d:'Every 100 aces', m:'ace',    step:100,  sov:5 },
-    { id:'rEvent', n:'Weekly Grind',   d:'Every 20 events', m:'events', step:20,  sov:7 },
-    { id:'rLeg',   n:'Legendary Haul', d:'Every 40 Legendaries', m:'legend', step:40,  sov:8 },
-    { id:'rCup',   n:'Silverware',     d:'Every 2 cups', m:'cups',   step:2,   sov:4 },
-    { id:'rMyth',  n:'Mythic Haul',    d:'Every 2 Mythics', m:'myth',   step:2,   sov:3 },
+    { id:'rHoles', n:'Steady Hand',    d:'Every 1000 holes', m:'holes',  step:1000, sov:2 },
+    { id:'rBird',  n:'Birdie Watch',   d:'Every 500 birdies', m:'birdie', step:500, sov:2 },
+    { id:'rEagle', n:'Eagle Nest',     d:'Every 500 eagles', m:'eagle',  step:500, sov:2 },
+    { id:'rNine',  n:'Front and Back', d:'Every 30 nine-hole goals', m:'nines',  step:30,  sov:2 },
+    { id:'rRuns',  n:'Regular Punter', d:'Every 20 wagers', m:'runs',   step:20,  sov:2 },
+    { id:'rAce',   n:'Ace Shelf',      d:'Every 100 aces', m:'ace',    step:100,  sov:2 },
+    { id:'rEvent', n:'Weekly Grind',   d:'Every 20 events', m:'events', step:20,  sov:4 },
+    { id:'rLeg',   n:'Legendary Haul', d:'Every 40 Legendaries', m:'legend', step:40,  sov:4 },
+    { id:'rCup',   n:'Silverware',     d:'Every 2 cups', m:'cups',   step:2,   sov:2 },
+    { id:'rMyth',  n:'Mythic Haul',    d:'Every 2 Mythics', m:'myth',   step:2,   sov:2 },
     // (the Cabinet's Season Bests: a season whose best card beats the last's)
-    { id:'rSeason', n:'Better Season', d:'Beat last season\u2019s best', m:'seasonUp', step:1, sov:5 }
+    { id:'rSeason', n:'Better Season', d:'Beat last season\u2019s best', m:'seasonUp', step:1, sov:2 }
   ],
 
   /* ---- retirement ---- */
@@ -4130,7 +4130,7 @@ const B = {
   // Every shop like this has a free rail, and hiding it behind a social follow
   // is the part of the pattern worth leaving out: this one pays for turning up
   // and for climbing, which the game can check for itself.
-  FREE_GIFT: 20, FREE_EVERY: 8 * 3600, FREE_CARD: 10,
+  FREE_GIFT: 10, FREE_EVERY: 8 * 3600, FREE_CARD: 5,
   // The Daily Check-In (the user asked): one claim a real day, 28 a month,
   // starting again on the 1st; a missed day only puts the next claim back a
   // day. Kept a fair share and no flood: the dailies pay about 60 to 100
@@ -4166,11 +4166,11 @@ const B = {
   ],
   CHECKIN: [
     { k:'gold', v:5 },     { k:'grit', v:0.05 },  { k:'keys', v:1 },     { k:'shard', v:0.03 },
-    { k:'bag', v:'range' }, { k:'scroll', v:0.02 }, { k:'sov', v:100 },
+    { k:'bag', v:'range' }, { k:'scroll', v:0.02 }, { k:'sov', v:50 },
     { k:'gold', v:5 },     { k:'tick', v:2 },     { k:'grit', v:0.05 },  { k:'keys', v:1 },
-    { k:'scroll', v:0.02 }, { k:'bag', v:'range' }, { k:'sov', v:100 },
+    { k:'scroll', v:0.02 }, { k:'bag', v:'range' }, { k:'sov', v:50 },
     { k:'gold', v:10 },    { k:'grit', v:0.10 },  { k:'keys', v:2 },     { k:'shard', v:0.06 },
-    { k:'bag', v:'tour' },  { k:'scroll', v:0.04 }, { k:'sov', v:150 },
+    { k:'bag', v:'tour' },  { k:'scroll', v:0.04 }, { k:'sov', v:75 },
     { k:'gold', v:10 },    { k:'tick', v:3 },     { k:'grit', v:0.10 },  { k:'keys', v:2 },
     { k:'shard', v:0.06 }, { k:'scroll', v:0.04 }, { k:'bag', v:'legend' }
   ],
@@ -5661,7 +5661,7 @@ const BOND_UNLOCK = ['New things to say', 'A salute', 'More to say', 'A dance, a
 // now and then after a birdie or better played live, a few sovereigns or,
 // one time in five, a sponsor ticket or two. From a hash of the hole.
 const GIFT_ODDS = [25, 15];        // one birdie in this many, at Close and at Inseparable
-const GIFT_DAY = 10;               // at most this many a day
+const GIFT_DAY = 5;               // at most this many a day
 function caddieGift(h, d, force){
   if(QUIET || OFFLINE || S.dgnRun) return false;
   const lv = bondLv(S.caddie || 'bib');
@@ -6934,7 +6934,7 @@ const FEST = [
   { id:'bloom', n:'Blossom Fete', tw:'alb', s:'The Lucky Albatross twice as often', col:'#F2A6C8', mk:'f_bloom' }
 ];
 const FEST_AT = [100, 250, 500, 800, 1200];
-const FEST_PAY = [{ k:'grit', v:0.05 }, { k:'shard', v:0.05 }, { k:'sov', v:15 }, { k:'bag', v:'tour' }, { k:'sov', v:25 }];
+const FEST_PAY = [{ k:'grit', v:0.05 }, { k:'shard', v:0.05 }, { k:'sov', v:8 }, { k:'bag', v:'tour' }, { k:'sov', v:13 }];
 let FEST_FORCE = null;   // (the developer menu and the checks: a festival's id, on whatever the day)
 const festDef = id => FEST.find(f => f.id === id);
 // (Monday is 0 of the game's week, so Saturday 5 and Sunday 6)
@@ -7609,7 +7609,7 @@ function wgMedal(d, R, D){
   for(let m = had; m < got; m++){
     fresh.push(m);
     if(m === 0) grantTickets(1, 'a bronze medal');
-    else earnSov(m === 1 ? 5 : 10, 'today', 'medal:' + d.id + ':' + m, d.n + ' \u00b7 ' + WG_MEDAL_N[m] + ' medal');
+    else earnSov(m === 1 ? 3 : 5, 'today', 'medal:' + d.id + ':' + m, d.n + ' \u00b7 ' + WG_MEDAL_N[m] + ' medal');
   }
   if(got > had) S.wgMedal[d.id] = got;
   return { got, fresh, sc };
@@ -9238,9 +9238,9 @@ function getOwed(p, k){
 }
 // Finds by the tee (Scene.layFind): what can lie there, how often (w of
 // 100) and what it pays. About 2.5 sovereigns over FIND_ODDS holes.
-const FINDS = [{ id: 'ball', n: 'Lost Ball', sov: 2, w: 45 }, { id: 'peg', n: 'Tee Peg', sov: 1, w: 15 },
-  { id: 'marker', n: 'Ball Marker', sov: 2, w: 15 }, { id: 'coin', n: 'Old Coin', sov: 3, w: 20 },
-  { id: 'antique', n: 'Antique Coin', sov: 10, w: 5 }];
+const FINDS = [{ id: 'ball', n: 'Lost Ball', sov: 1, w: 45 }, { id: 'peg', n: 'Tee Peg', sov: 1, w: 15 },
+  { id: 'marker', n: 'Ball Marker', sov: 1, w: 15 }, { id: 'coin', n: 'Old Coin', sov: 2, w: 20 },
+  { id: 'antique', n: 'Antique Coin', sov: 5, w: 5 }];
 const FIND_ODDS = 40, FIND_PICK = 0.9;
 let FIND_FORCE = null;             // the developer menu's: a find on this hole
 function findOf(h){
@@ -9403,7 +9403,7 @@ function passReward(row, t, P){
   if(row === 'f'){
     // (the free row's last a Legend Bag too, the user asked)
     if(t === PASS.TIERS) return { k: 'bag', v: 'legend' };
-    if(t % 5 === 0) return { k: 'sov', v: 10 };
+    if(t % 5 === 0) return { k: 'sov', v: 5 };
     return [{ k: 'grit', v: 0.05 }, { k: 'tick', v: 1 }, { k: 'shard', v: 0.03 }, { k: 'keys', v: 1 }][(t - 1) % 5] || { k: 'scroll', v: 0.02 };
   }
   // (the last tier the Cyber-Drive set, never sold; once he has it, sovereigns)
@@ -31519,7 +31519,7 @@ function refreshUpg(){
       r.ms.hidden = !show;
       if(show){
         setSty(r.ms.children[0].children[0], 'width', Math.round(clamp((lv - m0) / Math.max(1, nx - m0), 0, 1) * 100) + '%');
-        setHTML(r.ms.children[1], 'At Lv\u00a0' + nx + ': ' + effectLabel(u, nx));
+        setHTML(r.ms.children[1], (nx - lv) + ' more to Lv\u00a0' + nx + ': ' + effectLabel(u, nx));
       }
     }
     if(maxed){

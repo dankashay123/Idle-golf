@@ -45,10 +45,10 @@ module.exports = {
         const st = festState(); if (st.got !== 5) f('prizes at ' + st.n + ' ribbons: ' + st.got);
         if (!(S.shard > sh0)) f('the shards prize not paid');
         if ((S.sov || 0) !== sov0) f('sovereigns paid at once, not waiting');
-        if (owedSum('today') !== 40) f('waiting on Today: ' + owedSum('today'));
+        if (owedSum('today') !== 21) f('waiting on Today: ' + owedSum('today'));
         if (!teeMarkOk(TEE_MARKS.find(m => m.id === 'f_pk'))) f('the Harvest markers not won');
         if (teeMarkOk(TEE_MARKS.find(m => m.id === 'f_flake'))) f('the Frost Fair markers won with the Harvest');
-        festHole(-4); if (st.got !== 5 || owedSum('today') !== 40) f('a prize twice');
+        festHole(-4); if (st.got !== 5 || owedSum('today') !== 21) f('a prize twice');
         // ---- a new festival ----
         S.fest.wk -= 2; if (festState().n) f('a new festival kept ' + festState().n + ' ribbons');
         // ---- Today ----

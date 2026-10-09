@@ -29,7 +29,7 @@ module.exports = {
         for (let h = 1; h <= N; h++) if (hr(h, 700) < 1 / FIND_ODDS) { n++; sov += findOf(h).sov; }
         o.per40 = (n / N * 40).toFixed(2); o.sov40 = (sov / N * 40).toFixed(2);
         if (n / N * 40 < 0.8 || n / N * 40 > 1.25) f(o.per40 + ' finds every forty holes');
-        if (sov / N * 40 < 1.5 || sov / N * 40 > 3.5) f(o.sov40 + ' sovereigns every forty holes');
+        if (sov / N * 40 < 0.9 || sov / N * 40 > 2) f(o.sov40 + ' sovereigns every forty holes');
         const kinds = new Set(); for (let h = 1; h < 4000; h++) kinds.add(findOf(h).id);
         if (kinds.size !== FINDS.length) f('only ' + [...kinds].join(', ') + ' are ever found');
         // played live: a find on the holes the hash gives, and only there

@@ -103,7 +103,7 @@ module.exports = {
             const s2 = S.sov || 0; guideAdd([Wb[0].id]); if ((S.sov || 0) - s2 !== B.GUIDE_SOV || !S.shelfDone.b) f('the Wager Book filled paid ' + ((S.sov || 0) - s2) + ' (a first is ' + B.GUIDE_SOV + ')');
             hideSheet(); trophyRoom('guide'); const ebs = [...document.querySelectorAll('#roomBody .eyebrow')].map(e => e.textContent);
             if (!ebs.some(t => /^Wildlife · ✓\u00a0Complete/.test(t))) f('the wildlife line reads ' + ebs.find(t => /^Wildlife/.test(t)));
-            if (!ebs.some(t => /^Night · \d+\/\d+ · \+25/.test(t))) f('an unfilled shelf reads ' + ebs.find(t => /^Night/.test(t)));
+            if (!ebs.some(t => /^Night · \d+\/\d+ · \+12/.test(t))) f('an unfilled shelf reads ' + ebs.find(t => /^Night/.test(t)));
             hideSheet();
             S.shelfDone = { w: 1, zz: 1, n: 'x' }; migrate(); if (JSON.stringify(S.shelfDone) !== '{"w":1}') f('a junk shelf kept: ' + JSON.stringify(S.shelfDone));
           } finally { window.toast = tw; QUIET = true; } }

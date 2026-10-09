@@ -209,7 +209,7 @@ module.exports = {
     if (r.dotIdle) throw new Error('the trophy carried its dot with nothing waiting');
     if (r.cupPend !== 'cup0,cup1' || !r.dotWaiting) throw new Error('five cups left ' + r.cupPend + ' waiting (want the steps at 1 and 5), dot ' + r.dotWaiting);
     if (r.opensToday !== 'today/true') throw new Error('with a reward waiting the trophy opened the room on ' + r.opensToday);
-    if (r.cupPaid !== 33 || r.cupAgain || r.cupPaidAgain !== 33) throw new Error('collecting the cups paid ' + r.cupPaid + ' then ' + r.cupPaidAgain + ' (want 33 once)');
+    if (r.cupPaid !== 16 || r.cupAgain || r.cupPaidAgain !== 16) throw new Error('collecting the cups paid ' + r.cupPaid + ' then ' + r.cupPaidAgain + ' (want 16 once)');
     if (!r.collectAll || r.allPaid !== r.allWant) throw new Error('GET ALL paid ' + r.allPaid + ' of ' + r.allWant + ' (the case and the free ' + 'sovereigns)');
     if (r.afterAll !== '0/none/clear') throw new Error('after GET ALL: ' + r.afterAll);
     if (!r.freeDot || !r.freeGone) throw new Error('with only the free sovereigns waiting the trophy\'s dot was ' + r.freeDot + ', and after collecting ' + !r.freeGone);

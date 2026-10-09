@@ -33,7 +33,7 @@ module.exports = {
         P.pts = 5 * PASS.PER + 10; if (passTier() !== 5) f('at ' + P.pts + ' points tier ' + passTier());
         if (!passCan('f', 5) || passCan('f', 6)) f('the free row not as reached');
         if (passCan('p', 1)) f('the paid row open before it was bought');
-        const sv = S.sov || 0; passGive('f', 5); if ((S.sov || 0) - sv !== 10) f('tier 5 free paid ' + ((S.sov || 0) - sv));
+        const sv = S.sov || 0; passGive('f', 5); if ((S.sov || 0) - sv !== 5) f('tier 5 free paid ' + ((S.sov || 0) - sv));
         if (passGive('f', 5)) f('a reward taken twice');
         passBuy(); if (!passCan('p', 1) || !passCan('p', 4)) f('bought, the paid row not back to tier one');
         // the look: only the paid row's tier 20

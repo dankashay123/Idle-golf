@@ -72,7 +72,7 @@ module.exports = {
     if (!r.oldLook || r.newLook) f('last month\'s look: old ' + r.oldLook + ', new ' + r.newLook);
     if (r.bagOpened !== 1) f(r.bagOpened + ' Legend Bags opened from last month (tier 15 reached)');
     if (r.twice) f('last month\'s rewards paid twice: ' + r.twice);
-    if (r.freeOnly !== 10) f('an unbought pass\'s free row to tier 5 paid ' + r.freeOnly + ', not 10');
+    if (r.freeOnly !== 5) f('an unbought pass\'s free row to tier 5 paid ' + r.freeOnly + ', not 5');
     if (r.nothing) f('a pass with nothing waiting paid ' + r.nothing);
     if (r.allGot !== 60 || r.allTwice) f('GET ALL took ' + r.allGot + ' of 60, then ' + r.allTwice + ' more');
     if (r.mExpired !== 3 * 60) f('membership out 3.5 days into 5 away paid ' + r.mExpired + ', not 180');

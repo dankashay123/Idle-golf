@@ -20,10 +20,10 @@ module.exports = {
         const t0 = S.tickets || 0; M = wgMedal(dw, { mode: 'island', made: 5 }, D);
         if (M.got !== 2 || M.fresh.join() !== '0,1') f('5 greens: ' + JSON.stringify(M));
         if ((S.tickets || 0) !== t0 + 1) f('bronze paid ' + ((S.tickets || 0) - t0) + ' tickets');
-        if (owedSum('today') !== 5) f('silver waiting ' + owedSum('today'));
-        M = wgMedal(dw, { mode: 'island', made: 5 }, D); if (M.fresh.length || owedSum('today') !== 5) f('silver paid twice');
+        if (owedSum('today') !== 3) f('silver waiting ' + owedSum('today'));
+        M = wgMedal(dw, { mode: 'island', made: 5 }, D); if (M.fresh.length || owedSum('today') !== 3) f('silver paid twice');
         M = wgMedal(dw, { mode: 'island', made: 3 }, D); if (S.wgMedal.water !== 2) f('a lower run took a medal away');
-        M = wgMedal(dw, { mode: 'island', made: 9 }, D); if (M.got !== 3 || owedSum('today') !== 15) f('gold: ' + JSON.stringify(M) + ' waiting ' + owedSum('today'));
+        M = wgMedal(dw, { mode: 'island', made: 9 }, D); if (M.got !== 3 || owedSum('today') !== 8) f('gold: ' + JSON.stringify(M) + ' waiting ' + owedSum('today'));
         // the Long Drive: against its usual best, so the same on any card
         const ds = B.DGN.find(x => x.id === 'sand'); const e = wgScore({ mode: 'drive', best: 1 }, D);
         const g1 = wgMedal(ds, { mode: 'drive', best: 1.5 / e }, D).got; if (g1 !== 2) f('a drive 1.5x its usual best: ' + g1);
