@@ -7439,8 +7439,12 @@ function startDgn(d){
   const D0 = derive();
   // The Vault has to earn its way back down, so it starts where it left off.
   // The other two are scored against the bag instead, or they feed themselves.
-  const f0 = dgnStartFloor(d.id), fc = carryFloor(D0);
   const dur = d.run * (career().sharp ? 1.4 : 1);
+  // (no deeper than a floor this golfer clears in half the run: the Vault
+  // starts where it left off, and after a retirement, the range work gone,
+  // that was a floor he could not clear, run after run paying nothing)
+  let f0 = dgnStartFloor(d.id); const fc = carryFloor(D0);
+  if(d.mode === 'floor') while(f0 > 0 && floorWork(f0) > D0.dps * dur * 0.5) f0--;
   // Captured at the tee, not read at the till. A run started at 23:59 is paid
   // on the stake it was entered under, whatever the clock says when it lands.
   const R = { id:d.id, mode:d.mode, t:0, dur, dead:false, evt:null, evtT:0, next:0,
