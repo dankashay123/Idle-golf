@@ -402,7 +402,7 @@ module.exports = {
     if (H.backAgain) throw new Error('the back pay was paid a second time: +' + H.backAgain);
 
     return ['all ' + sched.n + ' courses on the schedule, regular stops within one of each other',
-      'honours pay sovereigns: one-offs 7/13/130, ' + 'repeating 3-13 every step, back pay ' + H.backPay + ' once, nothing for counting from zero',
+      'honours pay sovereigns: one-offs 4/6/65, ' + 'repeating 1-7 every step, back pay ' + H.backPay + ' once, nothing for counting from zero',
       'paragon ' + r.cats.length + ' categories, ' + r.paraKeys.length
       + ' lines, none sold elsewhere, all wired',
       r.talents + ' talents, none sold elsewhere, all wired; '
