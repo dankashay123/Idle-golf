@@ -33942,6 +33942,7 @@ function frame(now){
   if(SAVER) setTimeout(() => frame(performance.now()), SAVER_MS);
   else requestAnimationFrame(frame);
 }
+let vfT = 0;
 function frameBody(now){
   now /= 1000;
   // A hidden page stops its frames, but not the saver's timer. Out of sight
@@ -33964,7 +33965,13 @@ function frameBody(now){
     step(dt, D);
     // No point painting the hole while the menu is over it. The sim runs on
     // regardless; only the drawing stops.
-    if(!$('app').classList.contains('big') || (SIDEWAYS && SIDEWAYS.matches)) Scene.draw(dt, D);
+    // (and under a sheet, the field dimmed and blurred behind it, painted a
+    // frame in six: the phone redrew all of it, and blurred it again, sixty
+    // times a second for a picture nobody watches closely)
+    const under = $('veil').classList.contains('on');
+    vfT += dt;
+    if((!$('app').classList.contains('big') || (SIDEWAYS && SIDEWAYS.matches)) && (!under || vfT >= 0.1)){ const ddt = Math.min(0.25, vfT); vfT = 0; Scene.draw(ddt, D); }
+    else if(!under) vfT = 0;
     renderLive(D);
   }
   Sfx.tick(dt);
