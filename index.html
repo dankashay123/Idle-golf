@@ -29498,7 +29498,10 @@ Object.assign(Scene, {
           if(k > 0 && bd < this.camD + 0.05) break;
           const lt = this.ballLat(b, uu);
           const p = this.proj(bd, lt, this.ballLift(b, uu));
-          if(p.y > this.clipAt(bd) + 1){ if(k === 0) break; continue; }
+          // (an ace's ball is never hidden on its way in, the user asked: it
+          // went behind a nearer tree or a rise before the green and the ace
+          // played with no ball in sight)
+          if(p.y > this.clipAt(bd) + 1 && !b.cup){ if(k === 0) break; continue; }
           if(k === 0) rr = Math.max(1, Math.round(B_BALL * p.s * US));
           path.push(p);
         }
@@ -29509,7 +29512,8 @@ Object.assign(Scene, {
         // coming down beyond the trees on the corner goes behind them)
         if(path.length){ let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9; for(const q of path){ x0 = Math.min(x0, q.x); x1 = Math.max(x1, q.x); y0 = Math.min(y0, q.y); y1 = Math.max(y1, q.y); }
           const M = 28, dn = b.d0 + b.dist * Math.max(0, u - (path.length - 1) * 0.028);
-          this.drawBehind(dn - 0.3, x0 - M, y0 - M, x1 + M, y1 + M, g => { if(BT) BT(g, b, path, rr, this.t, u); g.globalAlpha = 1; g.globalCompositeOperation = 'source-over'; if(BB) BB(g, b, path, rr, this.t, u); }); }
+          const fx = g => { if(BT) BT(g, b, path, rr, this.t, u); g.globalAlpha = 1; g.globalCompositeOperation = 'source-over'; if(BB) BB(g, b, path, rr, this.t, u); };
+          if(b.cup) fx(c); else this.drawBehind(dn - 0.3, x0 - M, y0 - M, x1 + M, y1 + M, fx); }
         c.globalAlpha = 1; c.globalCompositeOperation = 'source-over';
         continue;
       }
@@ -29522,14 +29526,14 @@ Object.assign(Scene, {
         const bd = k === 0 ? Math.max(this.camD, b.d0 + b.dist*uu) : b.d0 + b.dist*uu;
         if(k > 0 && bd < this.camD + 0.05) break;   // behind him now: see above
         const p = this.proj(bd, this.ballLat(b, uu), this.ballLift(b, uu));
-        const cl = this.clipAt(bd);
+        const cl = b.cup ? VH : this.clipAt(bd);
         if(p.y > cl + 1){ if(k === 0) break; continue; }
         pts.push({ x: p.x, y: p.y, s: p.s, cl });
       }
       if(!pts.length) continue;
       // (behind a tree nearer than it, as it comes down beyond the corner)
       { const X = Math.round(pts[0].x), Y = Math.round(pts[0].y), bd = Math.max(this.camD, b.d0 + b.dist * u);
-        if(X >= 0 && X < VW && Y >= 0 && Y < VH && this.nearerAt(Y * VW + X, bd - 0.3)) continue; }
+        if(!b.cup && X >= 0 && X < VW && Y >= 0 && Y < VH && this.nearerAt(Y * VW + X, bd - 0.3)) continue; }
       const r = Math.max(1, Math.round(B_BALL * pts[0].s * US));
       // (kept slight: a wake bought from the shop has to stand out against it)
       for(let k = pts.length - 1; k > 0; k--){
