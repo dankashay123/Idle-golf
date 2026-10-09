@@ -6036,7 +6036,7 @@ function announceCourse(){
             : (courseSeason(cs, S.tier) ? SEASONS[courseSeason(cs, S.tier)].n + ' - ' : '')
               + (cs.slot === 'home' ? 'Home of Tour Card ' + cardNo(S.tier) : 'Tour Card ' + cardNo(S.tier) + ' - Event ' + t);
   // (and as written, for the lettering over the course: drawAnnounce)
-  Scene.announce = { name: fit(cs.n), sub: fit(sub), label: cs.n, subLabel: sub.replace(/ - /g, ' \u00b7 '), t: 0, dur: 4.2, gold: isWeekMajor(t) };
+  Scene.announce = { name: fit(cs.n), sub: fit(sub), label: cs.n, subLabel: sub.replace(/ - /g, ' \u00b7 '), t: 0, dur: 4.2, gold: isWeekMajor(t), w0: performance.now() };
 }
 // The season each course that turns (the home courses, and the regular stops
 // that follow the month) was last seen in. Seen in another one, it chimes:
@@ -8756,8 +8756,17 @@ function toggleSound(){
   if(S.sound){ Sfx.unlock(); setTimeout(() => Sfx.play('buy'), 60); }
   settingsSheet();
 }
+// (held while the course's name is up across the field at a new event, the
+// user saw them pile onto it; they follow it, a little apart)
+var TOAST_LATER = [];
+function toastFlush(){ TOAST_LATER.splice(0).forEach(([h, c], i) => setTimeout(() => toast(h, c), i * 700)); }
 function toast(html, cls){
   if(QUIET) return;
+  { const A = Scene.announce, left = A && A.w0 ? A.dur * 1000 - (performance.now() - A.w0) : 0;
+    // (only while it is in sight: the field drawn, not under the menu)
+    if(left > 0 && (!$('app').classList.contains('big') || (window.matchMedia && matchMedia('(orientation:landscape) and (max-height:560px)').matches))){
+      if(!TOAST_LATER.length) setTimeout(toastFlush, left + 100);
+      TOAST_LATER.push([html, cls]); if(TOAST_LATER.length > 4) TOAST_LATER.shift(); return; } }
   const el = document.createElement('div');
   el.className = 'toast' + (cls ? ' ' + cls : ''); el.innerHTML = html;
   $('toasts').appendChild(el);

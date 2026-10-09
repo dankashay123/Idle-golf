@@ -60,7 +60,7 @@ module.exports = {
         QUIET = false; hideSheet();
         const said = () => [...document.querySelectorAll('#toasts .toast')].map(e => e.textContent).filter(s => /Rival/.test(s));
         const day = (d) => { const t = 40, h0 = (t - 1) * B.ROUND * B.DAYS + d * B.ROUND + 1;
-          S.rival = { t, n: B.RIVALS[2], total: -36 }; S.hole = h0; document.getElementById('toasts').innerHTML = '';
+          S.rival = { t, n: B.RIVALS[2], total: -36 }; S.hole = h0; document.getElementById('toasts').innerHTML = ''; Scene.announce = null; // (the course's name holds pop-ups: toastwait)
           // level, then three under them, then back over
           const go = sc => { S.tourScore = sc; rivalChase(); S.hole++; };
           go(Math.round(-36 * (d * B.ROUND + 1) / 72)); go(-60); go(-61); go(0);

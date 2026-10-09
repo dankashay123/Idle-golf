@@ -49,7 +49,7 @@ module.exports = {
           o.sov = sov + ' of ' + lo + ' to ' + hi; o.tick = tick + ' of ' + tlo + ' to ' + thi;
           if (lo < 2 || hi > 5 || hi === lo) f('sovereigns from ' + lo + ' to ' + hi);
           if (!tick || tick > sov || tlo < 1 || thi > 3) f(tick + ' ticket gifts of ' + tlo + ' to ' + thi + ' (to ' + sov + ' of sovereigns)');
-          document.getElementById('toasts').innerHTML = '';
+          document.getElementById('toasts').innerHTML = ''; Scene.announce = null;   // (the course's name holds pop-ups: toastwait)
           caddieGift(1, -1, true);
           const t = document.getElementById('toasts').lastElementChild;
           o.toast = t ? t.textContent.replace(/\s+/g, ' ').trim() : '';
