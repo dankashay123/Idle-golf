@@ -558,6 +558,8 @@ div.guide.hunt,div.guide.mhunt{grid-template-columns:repeat(3,minmax(0,1fr))}
 .sub.on{color:var(--brass);border-bottom-color:var(--brass)}
 /* (at 320 the last tab ran off the edge: Signature, Paragon) */
 @media (max-width:360px){.sub{padding:9px 5px;letter-spacing:.03em}}
+/* (and on its side, where the menu is a column a third of the screen wide) */
+@media (orientation:landscape) and (max-height:560px){.sub{padding:9px 5px;letter-spacing:.03em}}
 #talNav{display:grid;grid-template-columns:repeat(3,1fr);background:#0A170F;
   border-bottom:var(--hair)}
 .sub2{padding:9px 4px 8px;font-size:var(--f0);letter-spacing:.04em;color:var(--faint);

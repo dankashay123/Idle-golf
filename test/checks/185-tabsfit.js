@@ -1,7 +1,7 @@
 /* Every row of tabs fits the screen (the user asked for a sweep of every
  * screen at phone sizes): at 320 the Tour tab's Signature, Career's Paragon
  * and the Style racks' Sets ran off the edge, cut mid-word. At 320, 360 and
- * 390 wide, on every page with tabs (each of the five tabs' own tabs, the
+ * 390 wide and on its side (740x360, 844x390: Paragon ran off there too), on every page with tabs (each of the five tabs' own tabs, the
  * shop's, the Style racks and the Trophy Room's), every tab's words lie
  * wholly inside the screen and its row; and the Cabinet's names never run
  * into the next (Sovereign and Starfall met at 320). */
@@ -10,8 +10,8 @@ module.exports = {
   name: 'tabsfit',
   async run(page) {
     const bad = [], seen = [];
-    for (const W of [320, 360, 390]) {
-      await page.setViewportSize({ width: W, height: 740 });
+    for (const [W, H] of [[320, 740], [360, 740], [390, 740], [740, 360], [844, 390]]) {
+      await page.setViewportSize({ width: W, height: H });
       await page.waitForTimeout(150);
       const r = await page.evaluate(() => {
         const out = [], n0 = { n: 0 };
@@ -36,7 +36,7 @@ module.exports = {
         hideSheet();
         return { out, n: n0.n };
       });
-      bad.push(...r.out.map(x => W + ': ' + x)); seen.push(W + ' ' + r.n);
+      bad.push(...r.out.map(x => W + 'x' + H + ': ' + x)); seen.push(W + 'x' + H + ' ' + r.n);
     }
     if (bad.length) throw new Error('tabs off the screen or cut: ' + bad.slice(0, 8).join('; '));
     return ['every tab inside its row and the screen, the Cabinet\'s names apart (' + seen.join(', ') + ' tabs)'];
