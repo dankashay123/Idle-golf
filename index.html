@@ -9341,8 +9341,13 @@ function tickShop(dt){
     S.boostT -= dt;
     if(S.boostT <= 0){ S.boostT = 0; toast('Double Purse has run out'); }
   }
-  if(!isMember()) return;
-  S.memberT = (S.memberT || 0) + dt;
+  // (only the part of dt the membership covered: one that ran out while he
+  // was away paid nothing for the days before it ended)
+  let cov = dt;
+  if(S.member === 2){ const now = memberNow(), end = S.memberEnd || 0; cov = Math.max(0, Math.min(dt, (end - (now - dt * 1000)) / 1000)); }
+  else if(S.member !== 1) return;
+  if(!(cov > 0)) return;
+  S.memberT = (S.memberT || 0) + cov;
   while(S.memberT >= 86400){
     S.memberT -= 86400;
     earnSov(B.MEMBER_DAILY, 'today', 'member', 'Members\u2019 allowance');
@@ -9357,15 +9362,34 @@ function tickShop(dt){
 const PASS_MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 function passNow(){
   const m = ciMonth(dayNow());
-  if(!S.pass || typeof S.pass !== 'object' || S.pass.m !== m) S.pass = { m, pts: 0, paid: 0, got: [] };
+  if(!S.pass || typeof S.pass !== 'object' || S.pass.m !== m){
+    const old = S.pass && typeof S.pass === 'object' && Array.isArray(S.pass.got) && S.pass.m < m ? S.pass : null;
+    S.pass = { m, pts: 0, paid: 0, got: [] };
+    if(old) passSettle(old);
+  }
   if(!Array.isArray(S.pass.got)) S.pass.got = [];
   if(!(S.pass.pts >= 0 && isFinite(S.pass.pts))) S.pass.pts = 0;
   return S.pass;
 }
 const passMonth = () => new Date(dayNow() * 86400000).getUTCMonth();
 const passTier = () => Math.min(PASS.TIERS, Math.floor(passNow().pts / PASS.PER));
-// what each tier gives, free and paid
-function passReward(row, t){
+// A month gone with rewards reached and not taken: they are his, given as
+// the new pass starts (they were lost; earned is earned)
+function passSettle(old){
+  const tier = Math.min(PASS.TIERS, Math.floor((old.pts || 0) / PASS.PER)); let n = 0;
+  const q = QUIET; QUIET = true;
+  try{ for(let t = 1; t <= tier; t++) for(const row of old.paid ? ['f', 'p'] : ['f']){
+    if(old.got.includes(row + t)) continue;
+    const r = passReward(row, t, old); old.got.push(row + t); passApply(r, true); n++; } }
+  finally{ QUIET = q; }
+  if(n && !q) toast('<span class="achk">Tour Pass</span>' + n + ' ' + plural(n, 'rewards') + ' from last month added', 'ach');
+  return n;
+}
+// what each tier gives, free and paid (P: the pass it is for, this month's
+// unless one gone is being settled)
+function passReward(row, t, P){
+  P = P || S.pass;
+  const mo = P && P.m >= 0 ? P.m % 12 : passMonth();
   if(row === 'f'){
     // (the free row's last a Legend Bag too, the user asked)
     if(t === PASS.TIERS) return { k: 'bag', v: 'legend' };
@@ -9373,8 +9397,8 @@ function passReward(row, t){
     return [{ k: 'grit', v: 0.05 }, { k: 'tick', v: 1 }, { k: 'shard', v: 0.03 }, { k: 'keys', v: 1 }][(t - 1) % 5] || { k: 'scroll', v: 0.02 };
   }
   // (the last tier the Cyber-Drive set, never sold; once he has it, sovereigns)
-  if(t === PASS.TIERS) return setOwned('cyber') && !(S.pass && S.pass.got.includes('p' + t)) ? { k: 'sov', v: PASS.CYBER_SOV } : { k: 'cyber' };
-  if(t === 20) return { k: 'look', v: passMonth() };
+  if(t === PASS.TIERS) return setOwned('cyber') && !(P && P.got.includes('p' + t)) ? { k: 'sov', v: PASS.CYBER_SOV } : { k: 'cyber' };
+  if(t === 20) return { k: 'look', v: mo };
   if(t === 15) return { k: 'bag', v: 'legend' };
   if(t === 5 || t === 25) return { k: 'boost', v: 24 };
   return { k: 'sov', v: PASS.SOV };
@@ -9396,6 +9420,10 @@ function passGive(row, t, quiet){
   if(!passCan(row, t)) return false;
   const P = passNow(), r = passReward(row, t);
   P.got.push(row + t);
+  passApply(r, quiet);
+  return true;
+}
+function passApply(r, quiet){
   if(r.k === 'sov') grantSov(r.v, '', true);
   else if(r.k === 'boost') S.boostT = (S.boostT || 0) + r.v * 3600;
   else if(r.k === 'bag') openBag(ciBag(r), true);
@@ -9407,7 +9435,6 @@ function passGive(row, t, quiet){
     if(r.k === 'grit') S.grit += a; else if(r.k === 'shard') S.shard += a; else if(r.k === 'scroll') S.scroll += a;
     else if(r.k === 'keys'){ B.DGN.forEach(d => { S.dgnKeys[d.id] = (S.dgnKeys[d.id] || 0) + a; }); }
     else if(r.k === 'tick') S.tickets = Math.max(S.tickets || 0, Math.min(B.TICK_CAP, (S.tickets || 0) + a)); }
-  return true;
 }
 function passGet(row, t){ if(passGive(row, t)){ Sfx.play('coin'); renderShop(); renderVitals(); renderStageBtns(); } }
 function passGetAll(){ let n = 0; for(let t = 1; t <= PASS.TIERS; t++) for(const row of ['f', 'p']) if(passGive(row, t, true)) n++;
