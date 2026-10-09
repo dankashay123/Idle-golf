@@ -33,8 +33,16 @@ module.exports = {
             dot: (openShop('offers'), !!q('.shopnav button.dot[data-sub="pass"]')) };
           openShop('pass');
           // the medal's number in its middle
-          { const m = q('.phmedal').getBoundingClientRect(), b0 = q('.phmedal b'), rg = document.createRange(); rg.selectNodeContents(b0); const n = rg.getBoundingClientRect();
-            out.medalOff = [Math.round((n.left + n.right) / 2 - (m.left + m.right) / 2), Math.round((n.top + n.bottom) / 2 - (m.top + m.bottom) / 2)]; }
+          // (TIER and the number as one group, the user asked: the middle of
+          // their ink, from the font's own measure of the letters, against
+          // the medal's)
+          { const m = q('.phmedal').getBoundingClientRect(), cx = document.createElement('canvas').getContext('2d');
+            const ink = el => { const rg = document.createRange(); rg.selectNodeContents(el); const r0 = rg.getBoundingClientRect(), cs = getComputedStyle(el);
+              cx.font = cs.fontWeight + ' ' + cs.fontSize + ' ' + cs.fontFamily; const t = cx.measureText(el.textContent.trim().toUpperCase());
+              const base = r0.top + (r0.height - (t.fontBoundingBoxAscent + t.fontBoundingBoxDescent)) / 2 + t.fontBoundingBoxAscent;
+              return { top: base - t.actualBoundingBoxAscent, bot: base + t.actualBoundingBoxDescent, l: r0.left, r: r0.right }; };
+            const a1 = ink(q('.phmedal small')), n = ink(q('.phmedal b'));
+            out.medalOff = [Math.round((Math.min(a1.l, n.l) + Math.max(a1.r, n.r)) / 2 - (m.left + m.right) / 2), +((a1.top + n.bot) / 2 - (m.top + m.bottom) / 2).toFixed(1)]; }
           // the tabs stay at the top as it scrolls
           sh.scrollTop = 1200; await new Promise(r => setTimeout(r, 50));
           { const t = q('.shopnav').getBoundingClientRect(), b1 = sh.getBoundingClientRect(); out.navTop = Math.round(t.top - b1.top); out.scrolled = sh.scrollTop; }
@@ -82,7 +90,7 @@ module.exports = {
       if (!/left|Ends in/.test(r.ends)) f(at + 'no time left on the banner: ' + r.ends);
       if (r.free30 !== 'bag:legend') f(at + 'the free row\'s last is ' + r.free30 + ', not a Legend Bag');
       if (r.paidSov !== 60) f(at + 'a paid tier pays ' + r.paidSov + ', not 60');
-      if (Math.abs(r.medalOff[0]) > 2 || Math.abs(r.medalOff[1]) > 5) f(at + 'the tier off the medal\'s middle by ' + r.medalOff);
+      if (Math.abs(r.medalOff[0]) > 2 || Math.abs(r.medalOff[1]) > 1.5) f(at + 'TIER and its number off the medal\'s middle by ' + r.medalOff);
       if (r.scrolled > 100 && Math.abs(r.navTop) > 2) f(at + 'scrolled ' + r.scrolled + 'px, the tabs ' + r.navTop + 'px off the top');
       if (r.dotNone || r.dotOffers) f(at + 'a dot on the Pass tab with nothing waiting');
       if (!(r.moved > 40)) f(at + 'the Cyber-Drive stage stood still (' + r.moved + ' pixels changed)');
