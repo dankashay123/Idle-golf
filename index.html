@@ -8012,7 +8012,10 @@ const Sfx = {
       this.musBus = this.ctx.createGain();
       this.musBus.connect(this.out);
       this.setVol();
-      this.load();
+      // (the recordings decoded just after the first frames: reading them
+      // out of the file held up the first picture; the synthesised sounds
+      // stand in until they are ready)
+      setTimeout(() => this.load(), 400);
     }catch(e){ this.ctx = null; }
     return this.ctx;
   },
@@ -34446,7 +34449,8 @@ function boot(){
   pinsLoad();                       // the developer's scenery switches, kept on
 
   Scene.init();
-  setIcons();
+  // (the home screen icon after the first frames: nothing on screen waits on it)
+  setTimeout(setIcons, 600);
   fitTop();
   window.addEventListener('resize', fitTop);
   // belt to the fixed body's braces: Safari settles a rotation over several
