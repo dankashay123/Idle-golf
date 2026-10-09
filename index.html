@@ -9043,7 +9043,7 @@ function endTournament(){
   }
 
   const fm = n => n === 0 ? 'E' : n > 0 ? '+' + n : String(n);
-  showSheet('<h3>' + eventName(t) + '</h3>'
+  sheetLater('<h3>' + eventName(t) + '</h3>'
     + (Wk ? '<div class="eyebrow" style="color:var(--brass)">Major of the Week</div>' : '')
     + '<p>' + (Wk && Wk.beat ? 'Champion.' : beat ? 'You beat the target.' : 'Final score') + '</p>'
     + '<div class="big">' + fm(score) + '</div>'
@@ -11121,7 +11121,13 @@ function awayDraw(cv, dt){
 
 /* ---- modal ---- */
 function showSheet(html){ if(QUIET) return; $('sheet').innerHTML = html; $('veil').classList.add('on'); }
-function hideSheet(){ $('veil').classList.remove('on'); }
+function hideSheet(){ $('veil').classList.remove('on'); if(SHEET_LATER && SHEET_LATER.length) setTimeout(sheetNext, 350); }
+// A sheet the game raises by itself (an event's result) while one he opened
+// is up (the shop, the Trophy Room, the settings) waits for that one to be
+// closed, not over it (the user asked: it closed the shop on him)
+var SHEET_LATER = [];
+function sheetLater(html){ if(QUIET) return; if($('veil').classList.contains('on')){ SHEET_LATER.push(html); if(SHEET_LATER.length > 3) SHEET_LATER.shift(); } else showSheet(html); }
+function sheetNext(){ if(!SHEET_LATER.length || $('veil').classList.contains('on') || QUIET) return; showSheet(SHEET_LATER.shift()); }
 
 /* ==================================================================   THE STAGE, IN PIXELS
 
