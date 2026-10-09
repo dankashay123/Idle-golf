@@ -8,7 +8,7 @@
  *   - nothing through a hill: alone over a blank from eight places down each
  *     home course's 18th; and in view from near the green
  *   - its windows lit at night and not by day (and at dusk with Dawn and
- *     Dusk on, not at dawn), and no far-off clubhouse on
+ *     Dusk on, not at dawn), and no far-off clubhouse in
  *     the hills that night as well (every other night hole has that one)
  *   - never over the pin; none in a wager
  */
@@ -91,11 +91,11 @@ module.exports = {
             play(first + B.ROUND - 1, true);
             if (dayLit || nightLit < 3) f('the clubhouse windows lit by day or dark at night (' + o.lit + ')');
             const farKept = Scene.clubhouse; let far = 0; Scene.clubhouse = function () { far++; return farKept.apply(this, arguments); };
-            Scene.ridgeKey = null; Scene.buildRidge(); Scene.clubhouse = farKept;
-            if (far) f('the far-off clubhouse on the hills as well, on the night of the last hole');
+            Scene.woodKey = null; Scene.buildWood(); Scene.clubhouse = farKept;
+            if (far) f('the far-off clubhouse in the wood as well, on the night of the last hole');
             // (and it is there on another night hole)
             play(first + 3, true); far = 0; Scene.clubhouse = function () { far++; return farKept.apply(this, arguments); };
-            Scene.ridgeKey = null; Scene.buildRidge(); Scene.clubhouse = farKept;
+            Scene.woodKey = null; Scene.buildWood(); Scene.clubhouse = farKept;
             if (!far) f('the far-off clubhouse is gone from the other night holes');
             play(first + B.ROUND - 1);
             S.dgnRun = { id: 'x' }; const w = drawn([Scene.props.find(p => p.kind === 11)]).n; delete S.dgnRun;

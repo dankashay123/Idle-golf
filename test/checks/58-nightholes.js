@@ -51,8 +51,17 @@ module.exports = {
           const res = {};
           alone(lamps, 1); res.lamp = count(LAMP, 0, 0, VW, VH);
           res.fly = 0; for (const t of [0.5, 1.7, 3.1, 4.4]) { alone(flies, t); res.fly += count(FLY, 0, 0, VW, VH); }
-          res.win = Scene.ridge ? (() => { const g = Scene.ridge.getContext('2d'), d = g.getImageData(0, 0, Scene.ridge.width, Scene.ridge.height).data; let n = 0, sx = 0;
-            for (let i = 0; i < d.length; i += 4) if (WIN.has(hex(d, i))) { n++; sx += (i / 4) % Scene.ridge.width; } res.winX = n ? sx / n : -1; return n; })() : 0;
+          // (the far-off clubhouse stands in the wood at the back, carried with
+          // the skyline it is on; on the hills behind, the skyline rose and fell
+          // in front of it as he walked and it floated: the user saw it. So none
+          // of its windows on the hills, and under every window of it the wood
+          // solid down to the ground's line)
+          const winIn = cv => { if (!cv) return { n: 0, x: -1, open: 0 }; const W = cv.width, H = cv.height, d = cv.getContext('2d').getImageData(0, 0, W, H).data; let n = 0, sx = 0, open = 0;
+            for (let i = 0; i < d.length; i += 4) if (WIN.has(hex(d, i))) { n++; const x = (i / 4) % W, y = Math.floor(i / 4 / W); sx += x;
+              if (cv === Scene.wood) for (let yy = y + 1; yy < Scene.woodBase; yy++) if (d[(yy * W + x) * 4 + 3] < 250) { open++; break; } }
+            return { n, x: n ? sx / n : -1, open }; };
+          const inWood = winIn(Scene.wood), onHills = winIn(Scene.ridge);
+          res.win = inWood.n; res.winX = inWood.x; res.winHills = onHills.n; res.winOpen = inWood.open;
           // the flag, from near the green, drawn alone over a blank
           Scene.camD = LEN - 6; Scene.draw(1 / 30, D); blank(); Scene.drawFlagstick();
           res.halo = count(HALO, 0, 0, VW, VH);
@@ -67,6 +76,8 @@ module.exports = {
         if (!(N.lamp >= 6)) o.fails.push('the tee\'s lamps drew ' + N.lamp + ' pixels of flame at night');
         if (!(N.fly >= 8)) o.fails.push('the fireflies drew ' + N.fly + ' pixels at night over four moments');
         if (!(N.win >= 6)) o.fails.push('the clubhouse showed ' + N.win + ' lit window pixels at night');
+        if (N.winHills) o.fails.push('the far-off clubhouse on the hills behind the wood (' + N.winHills + ' window pixels), where the skyline moves in front of it');
+        if (N.winOpen) o.fails.push('the far-off clubhouse stands on nothing under ' + N.winOpen + ' of its window pixels');
         if (!(N.halo >= 8)) o.fails.push('the flag\'s halo drew ' + N.halo + ' pixels at night');
         if (Dy.lamp || Dy.fly || Dy.win || Dy.halo) o.fails.push('by day: lamps ' + Dy.lamp + ', fireflies ' + Dy.fly + ', windows ' + Dy.win + ', halo ' + Dy.halo);
         // the clubhouse away from the landmark

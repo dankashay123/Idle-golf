@@ -35,7 +35,7 @@ module.exports = {
         if (JSON.stringify(S.upg) !== before) f('bought with an empty purse');
         refreshUpg();
         const row = UPGREF[0].el, nm = row.querySelector('.nm'), mt = row.querySelector('.nm .mt');
-        if (!mt || !/Lv/.test(mt.textContent)) f('the level is not beside the name');
+        if (!mt || !/Level/.test(mt.textContent)) f('the level is not beside the name');
         else if (Math.abs(mt.getBoundingClientRect().top - nm.firstChild.getBoundingClientRect().top) > 6) f('the level wrapped under the name at 390');
       } finally {
         QUIET = false;

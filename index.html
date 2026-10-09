@@ -27125,14 +27125,10 @@ Object.assign(Scene, {
       drawLandmark(g, T.lm, lmX, HORIZON - Math.round(VH*0.03),
                    Math.max(1, VH/215), T.sky[4], 0.22);
     }
-    // At night the clubhouse far off, its windows lit: on the foothills, on
-    // the side away from the landmark
-    // (not on the last hole, where it stands by the green itself)
-    if(this.night && !S.dgnRun && !(this.props || []).some(q => q.kind === 11)){
-      const left = lmX >= 0 ? lmX > VW / 2 : hr(this.hole, 321) < 0.5;
-      this.clubhouse(g, Math.round(VW * (left ? 0.13 + hr(this.hole, 322) * 0.07 : 0.80 + hr(this.hole, 322) * 0.07)),
-                     HORIZON - Math.round(VH * 0.045), Math.max(1, Math.round(VH / 215)), T);
-    }
+    // (the clubhouse far off at night stands in the wood at the back of the
+    // course now, see buildWood: painted here on the hills, the skyline in
+    // front rose and fell as he walked, so it slid against the trees and at
+    // times sat on top of them with nothing under it; the user saw it float)
 
     // Treeline. A wood at that distance is one dark mass with a broken top
     // edge, so it is drawn as a band with conifers standing out of it. Built
@@ -27212,13 +27208,18 @@ Object.assign(Scene, {
   // blitted to wherever the march actually ended up.
   buildWood(){
     // (and how much snow has settled: the switch changes it on the hole)
-    const key = [this.themeId, this.hole, VW, VH, this.snowL || 0].join('|');
+    // At night the clubhouse far off, its windows lit, stands in this wood,
+    // on the side away from the landmark (not on the last hole, where it
+    // stands by the green itself), so it is carried with the ground it is on
+    const house = this.night && !S.dgnRun && !(this.props || []).some(q => q.kind === 11);
+    const key = [this.themeId, this.hole, VW, VH, this.snowL || 0, house ? 1 : 0].join('|');
     if(this.woodKey === key && this.wood) return;
     this.woodKey = key;
     const T = this.theme || THEMES.day;
     const mist = Math.max(4, Math.round(VH*0.048));
     const band = Math.max(2, Math.round(VH*0.016));
-    const tall = Math.round(VH*0.055);
+    const hk = Math.max(1, Math.round(VH / 215)), lift = house ? 12 * hk + 2 : 0;   // (room over the wood for its roof)
+    const tall = Math.round(VH*0.055) + lift;
     // It stands at the back of the course, so it carries its own air. Drawn on
     // the skyline it is above most of the haze layer, and left in its own
     // colour it came out as a black wall with the ranges behind it gone.
@@ -27242,6 +27243,14 @@ Object.assign(Scene, {
     g.fillRect(0, base - band, VW, cv.height - base + band);
     for(let pass = 0; pass < 2; pass++){
       const back = pass === 0;
+      // the house, between the far trees and the near ones: on its own rise
+      // out of the wood, the near trees round its foot
+      if(!back && house){
+        const lr = T.lm ? seeded(hash32(this.hole*131 + 7))() : -1, lmX = lr >= 0 ? Math.round(VW*(0.24 + lr*0.52)) : -1;
+        const left = lmX >= 0 ? lmX > VW / 2 : hr(this.hole, 321) < 0.5;
+        this.clubhouse(g, Math.round(VW * (left ? 0.13 + hr(this.hole, 322) * 0.07 : 0.80 + hr(this.hole, 322) * 0.07)),
+                       base - band - hk, hk, T);
+      }
       const col  = back ? mixC(T.tl2, T.sky[4], 0.46) : air(T.tl);
       const foot = base - (back ? Math.round(band*0.70) : 0);
       let x = -8;

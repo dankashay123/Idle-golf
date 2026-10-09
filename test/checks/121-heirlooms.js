@@ -199,7 +199,7 @@ module.exports = {
         careerSub = 'leg'; renderCareer();
         o.rows = [...document.querySelectorAll('#relicRows .row .mt')].map(e => e.textContent);
         if (o.rows.length < B.TROPHY.length) f('only ' + o.rows.length + ' heirloom rows');
-        if (!o.rows.slice(1).every(t => /Lv \d+\/\d+/.test(t))) f('an heirloom row does not show its top: ' + o.rows.slice(1).find(t => !/Lv \d+\/\d+/.test(t)));
+        if (!o.rows.slice(1).every(t => /Level \d+\/\d+/.test(t))) f('an heirloom row does not show its top: ' + o.rows.slice(1).find(t => !/Level \d+\/\d+/.test(t)));
         setView('upg');
         if (seen.length) f('shown raw: ' + seen.slice(0, 3).join(' | '));
 
