@@ -476,6 +476,9 @@ div.guide.hunt,div.guide.mhunt{grid-template-columns:repeat(3,minmax(0,1fr))}
 .lb{display:grid;grid-template-columns:1fr auto;gap:8px;padding:6px 12px;font-size:var(--f2);
   border-bottom:1px solid #12261A}
 .lb .p{display:none}
+/* a wager guide's rows: the label on one line, its value to the right (at
+   320 wide "Helped By" went onto two) */
+.lb.wg{grid-template-columns:auto 1fr}.lb.wg>span:nth-child(2){white-space:nowrap}.lb.wg .s{text-align:right}
 .lb .s{font-family:var(--mono);font-weight:600}
 /* a repeating honour: no pip column, the name and its step, then progress */
 .lb.rep{grid-template-columns:1fr auto;padding:5px 0}
@@ -508,7 +511,7 @@ div.guide.hunt,div.guide.mhunt{grid-template-columns:repeat(3,minmax(0,1fr))}
 .ci.no img{opacity:.45}
 .ci .cn{font-size:var(--f1);color:var(--chalk);line-height:1.25;overflow-wrap:anywhere;hyphens:auto}
 /* (four across at 320, a name as long as Sovereign ran into the next) */
-@media (max-width:360px){.ci .cn{font-size:var(--f0);letter-spacing:-.01em}}
+@media (max-width:360px){.ci .cn{font-size:var(--f0);letter-spacing:-.02em}.shelf{gap:2px;padding:10px 2px 6px}}
 .ci .cc{font-family:var(--mono);font-size:var(--f1);color:var(--brass);margin-top:1px}
 .ci.no .cn,.ci.no .cc{color:var(--faint)}
 .cabn{display:flex;gap:8px;align-items:center;justify-content:center}
@@ -7727,9 +7730,10 @@ function wagerGuide(id){
         + (DGN_EVENT_SAY[e.n] || '') + '</li>').join('') + '</ul>'
     : '<p>' + t + '</p>').join('');
   showSheet('<h3>' + d.n + '</h3>'
-    + '<div class="lb"><span class="p"></span><span>Helped By</span><span class="s" style="color:var(--aurora)">' + d.st + '</span></div>'
-    + '<div class="lb"><span class="p"></span><span>Entries</span><span class="s">One every ' + tw(Math.round(keyInterval(d) / 60), 'minute') + ', ' + entryCap(d) + ' held</span></div>'
-    + '<div class="lb"><span class="p"></span><span>Length</span><span class="s">' + tw(Math.round(d.run), 'second') + '</span></div>'
+    + '<div class="lb wg"><span class="p"></span><span>Helped By</span><span class="s" style="color:var(--aurora)">' + d.st + '</span></div>'
+    + '<div class="lb wg"><span class="p"></span><span>Entries</span><span class="s">One every ' + tw(Math.round(keyInterval(d) / 60), 'minute') + '</span></div>'
+    + '<div class="lb wg"><span class="p"></span><span>Most Held</span><span class="s">' + entryCap(d) + '</span></div>'
+    + '<div class="lb wg"><span class="p"></span><span>Length</span><span class="s">' + tw(Math.round(d.run), 'second') + '</span></div>'
     + para + '<p style="color:var(--faint)">The round waits while you play.</p>'
     + '<button class="act ghost" onclick="hideSheet()">Close</button>');
 }
