@@ -20575,15 +20575,18 @@ const PixPaint = {
     if(r0 < this.y0) this.y0 = r0;
     if(r1 > this.y1) this.y1 = r1;
     const px = this.px, v = this.cur, a = v >>> 24;
-    if(a === 255){ for(let r = r0; r < r1; r++) px.fill(v, r*W + x0, r*W + x1); return; }
+    // (a short run written out: a call to fill for a few pixels cost more
+    // than the pixels)
+    if(a === 255){ if(x1 - x0 < 24) for(let r = r0; r < r1; r++){ for(let i = r*W + x0, e = r*W + x1; i < e; i++) px[i] = v; }
+      else for(let r = r0; r < r1; r++) px.fill(v, r*W + x0, r*W + x1); return; }
     if(!a) return;
-    // not opaque: laid over what is there, as the canvas would
+    // not opaque: laid over what is there, as the canvas would (the mix
+    // written out, not a function made at every pixel)
     const k = a / 255, sr = v & 255, sg = (v >> 8) & 255, sb = (v >> 16) & 255;
     for(let r = r0; r < r1; r++) for(let i = r*W + x0, e = r*W + x1; i < e; i++){
       const o = px[i], oa = (o >>> 24) / 255, na = k + oa * (1 - k);
-      const mix = (sc, oc) => Math.round((sc*k + oc*oa*(1 - k)) / na);
-      px[i] = (Math.round(na*255) << 24 | mix(sb, (o >> 16) & 255) << 16
-             | mix(sg, (o >> 8) & 255) << 8 | mix(sr, o & 255)) >>> 0;
+      px[i] = (Math.round(na*255) << 24 | Math.round((sb*k + ((o >> 16) & 255)*oa*(1 - k)) / na) << 16
+             | Math.round((sg*k + ((o >> 8) & 255)*oa*(1 - k)) / na) << 8 | Math.round((sr*k + (o & 255)*oa*(1 - k)) / na)) >>> 0;
     }
   },
   // everything painted since begin, onto the real canvas
