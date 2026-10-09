@@ -3,7 +3,7 @@
  *
  *   - the Tour Pass: a season a calendar month, points from the dailies
  *     (30 each, 30 for all three), the Check-In (20) and every 10 holes
- *     played live (none away); 150 a tier, 30 tiers; the free row taken as
+ *     played live (none away); 80 a tier (150 until the simulated player never reached the top), 30 tiers; the free row taken as
  *     reached, the paid row only once bought and then back to tier one;
  *     each reward once; the month's own look only from the paid row's tier
  *     20, never sold for sovereigns (its top the Cyber-Drive: 178-cyber); a new month a new pass; the shop's
