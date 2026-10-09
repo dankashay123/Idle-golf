@@ -4005,18 +4005,20 @@ const B = {
   // n: how many clubs. floor: the worst rarity any of them can be.
   // top: the best one is guaranteed to be at least this.
   BAGS: [
-    { id:'range',  ic:'bagrange',  n:'Range Bag',      c:90,   num:3, floor:1, top:2,
-      d:'Three clubs, Uncommon or better, one of them Rare or better.' },
-    { id:'tour',   ic:'bagtour',   n:'Tour Bag',       c:320,  num:5, floor:2, top:3,
-      d:'Five clubs, Rare or better, one of them Epic or better.' },
-    { id:'champ',  ic:'bagchamp',  n:"Champion's Bag", c:900,  num:7, floor:3, top:4,
-      d:'Seven clubs, Epic or better, one of them Legendary or better.' },
-    { id:'legend', ic:'baglegend', n:'Legend Bag',     c:2400, num:9, floor:4, top:5,
-      d:'Nine clubs, Legendary or better, always with a Mythic.' }
+    { id:'range',  ic:'bagrange',  n:'Range Bag',      c:90,   num:3, floor:1, top:2, pity:30,
+      d:'3 clubs, one Rare or better.' },
+    { id:'tour',   ic:'bagtour',   n:'Tour Bag',       c:320,  num:5, floor:2, top:3, pity:10,
+      d:'5 clubs, one Epic or better.' },
+    { id:'champ',  ic:'bagchamp',  n:"Champion's Bag", c:900,  num:7, floor:3, top:4, pity:5,
+      d:'7 clubs, one Legendary or better.' },
+    // (its other eight a Mythic only now and then, mx each: the user opened
+    // three Mythics in one, by the drop luck the other bags roll with)
+    { id:'legend', ic:'baglegend', n:'Legend Bag',     c:2400, num:9, floor:4, top:5, mx:0.03,
+      d:'9 clubs, Legendary or better, always a Mythic.' }
   ],
-  // Bags opened without a Mythic before the next one is guaranteed to be one.
-  // Every shop like this has one of these; most of them do not admit it.
-  BAG_PITY: 15,
+  // pity: each bag counts its own opened without a Mythic, and the one that
+  // makes it pity is a guaranteed Mythic (the user set them: one shared count
+  // let the cheapest bag be spammed for one)
   // Clubs out of a bag are fitted to where you are, not to where you started.
   BAG_ILVL: 2,
 
@@ -4024,21 +4026,21 @@ const B = {
   PERM_MAX: 10, PERM_SOFT: 3, PERM_EASE: 0.1,
   PERM: [
     { id:'contract', ic:'contract', n:'Caddie Contract', base:180, r:1.42, v:2,
-      d:'+2 hours of play while you\u2019re away, per level',  s:'h' },
+      d:'+2 hours of play while you\u2019re away, each level',  s:'h' },
     { id:'locker',   ic:'locker2',  n:'Second Locker',   base:150, r:1.38, v:12,
-      d:'+12 places in the locker, per level',      s:'' },
+      d:'+12 locker spaces, each level',      s:'' },
     { id:'teetime',  ic:'teetime',  n:'Standing Tee Time', base:240, r:1.45, v:0.05,
-      d:'Wager entries 5% faster, per level', s:'%' },
+      d:'Wager entries refill 5% faster, each level', s:'%' },
     { id:'scout',    ic:'scout',    n:'Club Scout',      base:220, r:1.44, v:0.04,
-      d:'+4% gear luck, per level',                s:'pp' },
+      d:'+4% better club drops, each level',                s:'pp' },
     { id:'van',      ic:'van2',     n:'Tour Van',        base:260, r:1.46, v:0.03,
-      d:'3% off every Range price, per level',      s:'%' },
+      d:'3% off every Range price, each level',      s:'%' },
     { id:'irons',    ic:'sigirons', n:'Signature Irons', base:300, r:1.50, v:1.05,
-      d:'×1.05 swing power, a level',             s:'x' },
+      d:'×1.05 swing power, each level',             s:'x' },
     { id:'sponsor',  ic:'sponsor',  n:'Title Sponsor',   base:300, r:1.50, v:1.06,
-      d:'×1.06 prize money, a level',             s:'x' },
+      d:'×1.06 prize money, each level',             s:'x' },
     { id:'book',     ic:'autograph',n:'Autograph Book',  base:200, r:1.40, v:0.08,
-      d:'+8% career experience, a level',         s:'%' }
+      d:'+8% career experience, each level',         s:'%' }
   ],
 
   /* ---- the offers rail ---- */
@@ -4939,7 +4941,7 @@ function defaultState(){ return {
   // the shop. sov is the premium currency, perm the permanent upgrades,
   // pity counts bags opened without a Mythic, and spent is a running total the
   // shop shows back to you because a shop that hides it is doing it on purpose
-  sov: 0, perm: {}, bagsOpened: 0, pity: 0, sovSpent: 0, packsTaken: {}, freeT: 0,
+  sov: 0, perm: {}, bagsOpened: 0, pityB: {}, sovSpent: 0, packsTaken: {}, freeT: 0,
   member: 0, memberT: 0, starter: 0, boostT: 0,
   dgnKeys: {}, dgnKeyT: {}, dgnFloor: {}, dgnBest: {}, dgnRun: null, islandBank: 5,
   bagSlot: 'driver', autoEquip: 0,
@@ -4980,7 +4982,9 @@ function initState(){
   if(!(S.sov >= 0)) S.sov = 0;
   if(!(S.sovSpent >= 0)) S.sovSpent = 0;
   if(!(S.bagsOpened >= 0)) S.bagsOpened = 0;
-  if(!(S.pity >= 0)) S.pity = 0;
+  if(!S.pityB || typeof S.pityB !== 'object') S.pityB = {};
+  for(const bg of B.BAGS) if(bg.pity && !(S.pityB[bg.id] >= 0 && S.pityB[bg.id] < bg.pity)) S.pityB[bg.id] = 0;
+  delete S.pity;
   if(!S.perm) S.perm = {};
   if(!S.packsTaken) S.packsTaken = {};
   if(![0, 1, 2].includes(S.member)) S.member = S.member > 0 ? 1 : 0;
@@ -6281,10 +6285,11 @@ function rollRarity(luck, floorRar){
   for(let i=(floorRar||0);i<w.length;i++){ x -= w[i]; if(x <= 0) return i; }
   return floorRar || 0;
 }
-function makeItem(ilvl, luck, floorRar, slotId){
+// (rar: a rarity already chosen, by a bag)
+function makeItem(ilvl, luck, floorRar, slotId, rar0){
   const sl = slotId ? B.SLOTS.find(s=>s.id===slotId)
                     : B.SLOTS[Math.floor(Math.random()*B.SLOTS.length)];
-  const rar = rollRarity(luck, floorRar);
+  const rar = rar0 >= 0 ? rar0 : rollRarity(luck, floorRar);
   const nAff = B.RARITY[rar].aff;
   const pool = B.AFFIX.slice();
   const aff = [];
@@ -9177,32 +9182,39 @@ function buyPack(pk){
 
 // A bag of clubs. The floor is what the worst one can be and top what the best
 // one is guaranteed to reach, so a bag is never a bag of nothing.
+// a bag's count to its Mythic: opened of pity, and how many more
+const bagPityLeft = bg => bg.pity - ((S.pityB || {})[bg.id] || 0);
 function openBag(bg, free){
   if(!free && !spendSov(bg.c)) return;
   S.bagsOpened = (S.bagsOpened || 0) + 1;
-  S.pity = (S.pity || 0) + 1;
   const D = derive();
   const top = B.RARITY.length - 1;
-  const duePity = S.pity >= B.BAG_PITY;
+  const PB = S.pityB || (S.pityB = {});
+  if(bg.pity) PB[bg.id] = (PB[bg.id] || 0) + 1;
+  const duePity = bg.pity && PB[bg.id] >= bg.pity;
   const got = [], gone = new Set();
+  let myth = false;
   for(let i = 0; i < bg.num; i++){
     // the last club in the bag is the one carrying the guarantee
     const last = i === bg.num - 1;
     let floor = bg.floor;
     if(last) floor = Math.max(floor, duePity ? top : bg.top);
-    const it = makeItem(S.tier + B.BAG_ILVL, D.drop + 0.5, floor);
-    if(it.rar >= top) S.pity = 0;
+    // (the Legend Bag's others: Legendary, a Mythic at mx)
+    const rar = bg.mx && !last ? (Math.random() < bg.mx ? top : top - 1) : -1;
+    const it = makeItem(S.tier + B.BAG_ILVL, D.drop + 0.5, floor, null, rar);
+    if(it.rar >= top) myth = true;
     if(!bagAdd(it)) gone.add(it);
     got.push(it);
   }
+  if(bg.pity && myth) PB[bg.id] = 0;
   got.sort((a, b) => b.rar - a.rar || itemScore(b) - itemScore(a));
   const line = it => '<li><span style="color:' + RC(it.rar) + '">'
     + B.RARITY[it.rar].n + '</span> \u00b7 ' + it.name + (gone.has(it) ? ' \u00b7 <i>scrapped</i>' : '') + '</li>';
   showSheet('<h3>' + bg.n + '</h3>'
     + '<p>' + (gone.size ? bg.num + ' clubs \u00b7 ' + gone.size + ' auto-scrapped.' : bg.num + ' clubs added to your locker.') + '</p>'
     + '<ul>' + got.map(line).join('') + '</ul>'
-    + (S.pity === 0 ? '<p style="color:var(--r5)">A Mythic. The counter resets.</p>'
-       : '<p>' + (B.BAG_PITY - S.pity) + '\u00a0more bags and the next one is a guaranteed Mythic.</p>')
+    + (!bg.pity ? '' : myth ? '<p style="color:var(--r5)">A Mythic. Its count starts again.</p>'
+       : '<p>' + nb(bagPityLeft(bg) + ' more') + ' and a Mythic is certain.</p>')
     + '<button class="act" onclick="hideSheet();openShop(\'bags\')">Back to the shop</button>'
     + '<button class="act ghost" onclick="hideSheet()">Done</button>');
   renderBag(); renderVitals();
@@ -9287,7 +9299,7 @@ function passReward(row, t){
 function passSay(r){
   if(r.k === 'cyber') return '<span><b>Cyber-Drive</b> set</span>';
   if(r.k === 'look') return PASS_LOOK[r.v][0] + ' look';
-  if(r.k === 'boost') return nb(r.v + ' hours') + ' Double Purse';
+  if(r.k === 'boost') return nb(r.v + ' hours') + ' double prize money';
   if(r.k === 'bag') return ciBag(r).n;
   if(r.k === 'sov') return '<span class="pv">' + r.v + sovIc() + '</span>';
   return ciLook(r)[3];
@@ -10172,13 +10184,11 @@ function renderShop(){
 
   if(shopSub === 'pass') h += passHtml();
   if(shopSub === 'bags'){
-    h += '<div class="shopnote">' + nb('Clubs ' + B.BAG_ILVL
-      + ' levels above your card \u00b7 A Mythic within ' + (B.BAG_PITY - (S.pity || 0))
-      + ' bags \u00b7 ' + sovFmt(S.bagsOpened) + ' opened') + '</div>'
+    h += '<div class="shopnote">Clubs a little stronger than your card.</div>'
       + ribbon('Bags') + '<div class="sgrid c2">' + B.BAGS.map(bg =>
         shopCard({ ic: bg.ic, col: RC(Math.min(5, bg.top)), on: bg.top >= 4,
           badge: B.RARITY[bg.top].n,
-          head: bg.n, sub: bg.d,
+          head: bg.n, sub: bg.d + (bg.pity ? '<br><b class="pity">' + nb(((S.pityB || {})[bg.id] || 0) + '/' + bg.pity) + ' until Mythic</b>' : ''),
           price: sovFmt(bg.c), note: B.SOV.toLowerCase(),
           cls: (S.sov || 0) >= bg.c ? '' : 'no', act: 'bag:' + bg.id })).join('') + '</div>';
   }
@@ -10276,18 +10286,18 @@ function renderShop(){
       + shopCard({ ic:'starter', col:'#7ADB86', on: !S.starter, badge: S.starter ? '' : 'BEST VALUE',
           head:'Starter Pack',
           sub: S.starter ? 'Already bought.'
-            : sovFmt(B.STARTER_C) + ' ' + B.SOV.toLowerCase() + ', a Tour Bag, a day of '
-              + 'Double Purse.',
+            : '<span class="pv">' + sovFmt(B.STARTER_C) + sovIc() + '</span>, a Tour Bag and '
+              + nb(B.BOOST_HOURS + ' hours') + ' of double prize money.',
           price: S.starter ? 'TAKEN' : '$' + B.STARTER_USD.toFixed(2),
           note: S.starter ? 'done' : 'free', cls: S.starter ? 'max' : '', act:'starter:1' })
       + shopCard({ ic:'member', col:'#E3B457', on: !isMember(), badge: S.member === 1 ? 'MEMBER' : isMember() ? nb(memberDaysLeft() + ' days') : '',
           head:'Club Membership',
           sub: isMember()
-            ? '+' + Math.round(B.MEMBER_GOLD*100) + '% purse, +' + B.MEMBER_KEYS
-              + ' entry, ' + B.MEMBER_DAILY + ' a day.<br><b>Next in ' + hms(86400 - (S.memberT||0)) + '</b>'
+            ? '+' + Math.round(B.MEMBER_GOLD*100) + '% prize money, +' + B.MEMBER_KEYS
+              + ' wager entry, <span class="pv">' + B.MEMBER_DAILY + sovIc() + '</span> a day.<br><b>Next in ' + hms(86400 - (S.memberT||0)) + '</b>'
               + (S.member === 2 ? '<br>Buying again adds ' + nb(B.MEMBER_DAYS + ' days') + '.' : '')
-            : '+' + Math.round(B.MEMBER_GOLD*100) + '% purse, +' + B.MEMBER_KEYS
-              + ' wager entry, ' + B.MEMBER_DAILY + ' a day, for ' + nb(B.MEMBER_DAYS + ' days') + '.',
+            : '+' + Math.round(B.MEMBER_GOLD*100) + '% prize money, +' + B.MEMBER_KEYS
+              + ' wager entry, <span class="pv">' + B.MEMBER_DAILY + sovIc() + '</span> a day, for ' + nb(B.MEMBER_DAYS + ' days') + '.',
           price: S.member === 1 ? 'FOR GOOD' : '$' + B.MEMBER_USD.toFixed(2) + (isMember() ? '' : ' a month'),
           note: S.member === 1 ? 'joined' : 'free', cls: S.member === 1 ? 'max' : '', act:'member:1' })
       + '</div>'
@@ -10295,7 +10305,7 @@ function renderShop(){
       + shopCard({ ic:'boost', col:'#F2D75E', on: boostOn(), badge: boostOn() ? 'ON' : '',
           head:'Double Purse',
           sub: boostOn() ? '<b>' + hms(S.boostT) + ' left.</b> Buying again adds to it.'
-            : nb('Everything doubled for ' + B.BOOST_HOURS + ' hours.'),
+            : 'Twice the prize money for ' + nb(B.BOOST_HOURS + ' hours') + '.',
           price: sovFmt(B.BOOST_C), note: B.SOV.toLowerCase(),
           cls: (S.sov || 0) >= B.BOOST_C ? '' : 'no', act:'boost:1', wide: 1 })
       + '</div>';

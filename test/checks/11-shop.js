@@ -134,7 +134,7 @@ module.exports = {
       out.rates = B.SOV_PACKS.map(rate);
 
       // 4. bags honour what they advertise
-      S.bag = []; S.tier = 15; S.pity = 0;
+      S.bag = []; S.tier = 15; S.pityB = {};
       const worst = {}, best = {}, counts = {};
       for (const bg of B.BAGS) {
         worst[bg.id] = 99; best[bg.id] = -1; counts[bg.id] = 0;
@@ -156,16 +156,31 @@ module.exports = {
 
       // 5. pity: open nothing but the cheapest bag and a Mythic has to turn up
       //    inside the advertised count
-      S.pity = 0; S.bag = [];
-      const top = B.RARITY.length - 1;
-      let sawAt = -1;
-      for (let n = 1; n <= B.BAG_PITY; n++) {
-        S.sov = B.BAGS[0].c; S.bag = [];
-        openBag(B.BAGS[0]);
-        try { hideSheet(); } catch (e) {}
-        if (S.bag.some(it => it.rar >= top)) { sawAt = n; break; }
+      //    (each bag its own count, the user set them: one shared count let
+      //    the cheapest bag be spammed for one)
+      const top = B.RARITY.length - 1, rg0 = () => B.BAGS.find(b => b.id === 'range');
+      out.pity = [];
+      for (const bg of B.BAGS.filter(b => b.pity)) {
+        S.pityB = {}; let sawAt = -1;
+        for (let n = 1; n <= bg.pity; n++) {
+          S.sov = bg.c; S.bag = [];
+          openBag(bg);
+          try { hideSheet(); } catch (e) {}
+          if (S.bag.some(it => it.rar >= top)) { sawAt = n; break; }
+        }
+        out.pity.push({ id: bg.id, sawAt, promised: bg.pity });
       }
-      out.pity = { sawAt, promised: B.BAG_PITY };
+      // the cheap bag's count does not carry to another: Range Bags one
+      // short of theirs, and a Tour Bag's count still starts at one
+      S.pityB = { range: rg0().pity - 1 }; const tr = B.BAGS.find(b => b.id === 'tour');
+      S.sov = tr.c; openBag(tr); try { hideSheet(); } catch (e) {}
+      out.shared = (S.pityB.tour <= 1 && S.pityB.range === rg0().pity - 1) ? 0 : 1;
+      // the Legend Bag's Mythic is one, now and then two (the user opened three)
+      const lg = B.BAGS.find(b => b.id === 'legend'); let myths = 0;
+      S.tier = 40;
+      for (let n = 0; n < 60; n++) { S.sov = lg.c; S.bag = []; openBag(lg); try { hideSheet(); } catch (e) {}
+        myths += S.bag.filter(it => it.rar >= top).length; }
+      out.legendMyth = myths / 60;
 
       // 6. the bench stops at ten
       S.perm = {}; S.sov = 1e9;
@@ -218,9 +233,12 @@ module.exports = {
         throw new Error(b.id + ' promised its best club would reach rarity ' + b.top
           + ', and one opening topped out at ' + b.leastBest);
     }
-    if (r.pity.sawAt < 0)
-      throw new Error('the shop promises a Mythic within ' + r.pity.promised
-        + ' bags and ' + r.pity.promised + ' produced none');
+    for (const p of r.pity) if (p.sawAt < 0)
+      throw new Error('the shop promises a Mythic within ' + p.promised
+        + ' ' + p.id + ' bags and ' + p.promised + ' produced none');
+    if (r.shared) throw new Error('a Tour Bag took up the Range Bags\' count to a Mythic');
+    if (!(r.legendMyth >= 1 && r.legendMyth < 1.5))
+      throw new Error('a Legend Bag gave ' + r.legendMyth.toFixed(2) + ' Mythics on average: one, now and then two');
 
     if (r.capped !== r.max)
       throw new Error('a bench line bought past its cap: ' + r.capped + ' of ' + r.max);
@@ -317,7 +335,8 @@ module.exports = {
       'tiles ' + Object.keys(r.tiles).map(k => k + ' ' + r.tiles[k].cards).join('/'),
       'packs ' + r.rates.map(x => x.toFixed(0)).join('/') + ' per dollar, rising',
       r.bags.map(b => b.id + ' ' + b.got + ' clubs >=' + b.worst).join(', '),
-      'pity paid at ' + r.pity.sawAt + ' of ' + r.pity.promised
+      'pity ' + r.pity.map(p => p.id + ' at ' + p.sawAt + ' of ' + p.promised).join(', ')
+      + ', Legend Bag ' + r.legendMyth.toFixed(2) + ' Mythics'
       + ', bench caps at ' + r.capped + ', all ' + r.permKeys.length + ' wired',
       'one place makes sovereigns, ' + faucets + ' call it'];
   }
