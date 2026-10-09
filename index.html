@@ -7734,42 +7734,41 @@ function endDgnCore(d, R, D){
     const log = R.log || [];
     const avg = log.length ? log.reduce((a,b) => a+b, 0)/log.length : 0;
     fe = R.best > 0 ? asFloor(R.best * (1 + D.C.wdrive)) : -1;
-    head = R.best > 0 ? 'Longest drive of the day: ' + fmt(R.best) + ' yards.'
-                      : 'Not one of them found the fairway.';
+    head = R.best > 0 ? '' : 'No drive found the fairway.';
     stats.push(['Longest', fmt(R.best) + ' yds']);
     stats.push(['Average', fmt(avg) + ' yds']);
 
   }else if(R.mode === 'island'){
     if(R.made > 0){
       pot = R.pot; fe = carryFloor(D) + R.made*1.1;
-      head = R.dead ? 'In the water on green ' + (R.made + 1) + ': a quarter of the pot.' : 'Banked on ' + R.made + '.';
+      head = R.dead ? 'In the water on green ' + (R.made + 1) + ': a quarter of the pot.' : '';
     }else head = 'In the water on the first.';
     stats.push(['Greens', R.made + ' of ' + R.target]);
 
   }else if(R.mode === 'chip'){
     if(R.made > 0){
       pot = R.pot; fe = R.f0 + R.made*B.CHIP_STEP;
-      head = R.made + ' of ' + R.shot + ' chips made.';
+      head = '';
     }else head = 'No chips made.';
     stats.push(['Chips made', R.made + ' of ' + R.shot]);
 
   }else if(R.mode === 'scramble'){
     if(R.made > 0){
       pot = R.pot; fe = R.f0 + R.made*B.SCRAMBLE_STEP;
-      head = R.made + ' of ' + R.shot + ' holes won.';
+      head = '';
     }else head = 'No holes won.';
     stats.push(['Holes won', R.made + ' of ' + B.SCRAMBLE_HOLES]);
 
   }else if(R.mode === 'twilight'){
     if(R.made > 0){
       pot = R.pot; fe = R.f0 + R.made*B.TWI_STEP;
-      head = R.made + ' of ' + R.shot + ' putts made.';
+      head = '';
     }else head = 'No putts made.';
     stats.push(['Putts made', R.made + ' of ' + R.shot]);
 
   }else{
     const deepest = R.floor - 1;
-    if(R.cleared > 0){ fe = deepest; head = 'Floor ' + (deepest + 1) + ' reached.'; }
+    if(R.cleared > 0){ fe = deepest; head = ''; }
     else head = 'Out on the first floor.';
     stats.push(['Floors cleared', String(R.cleared)]);
   }
@@ -7832,7 +7831,7 @@ function endDgnCore(d, R, D){
     for(const m of M.fresh) rewards.push([WG_MEDAL_N[m] + ' Medal', m === 0 ? '+1 ticket' : '<span class="pv">+' + WG_MEDAL_SOV[m] + sovIc() + '</span>']); }
   const rowsHtml = a => a.map(([k, v]) =>
     '<div class="lb"><span class="p"></span><span>' + k + '</span><span class="s">' + v + '</span></div>').join('');
-  showSheet('<h3>' + d.n + '</h3><p>' + head + '</p>'
+  showSheet('<h3>' + d.n + '</h3>' + (head ? '<p>' + head + '</p>' : '')
     + '<div class="eyebrow" style="margin:10px 0 4px">Card</div>' + rowsHtml(stats)
     + '<div class="eyebrow" style="margin:12px 0 4px">Won</div>' + rowsHtml(rewards)
     + '<button class="act" onclick="hideSheet()">Back to the course</button>');
