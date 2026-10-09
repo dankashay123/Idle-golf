@@ -314,7 +314,7 @@ module.exports = {
       renderDgn();
       out.nDgn = B.DGN.length;
       out.shown = Array.from(document.querySelectorAll('#dgnRows .dgn'))
-        .map(e => /per entry/.test(e.textContent));
+        .map(e => /a go/.test(e.textContent));   // (what a go buys, in plain words)
 
       // ---- 4. four contests, or one contest four times ----------------------
       S.tier = 20; S.hole = 2; startHole();

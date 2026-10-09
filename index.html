@@ -7296,6 +7296,14 @@ function binomPot(n, q, fc, step, per){
 // the rest of the game is priced in.
 const DGN_BUYS = { grit:'full club upgrades', shard:'club ascensions',
                    scroll:'shot book levels', gold:'holes of prize money' };
+// what a go buys, said as a person would: one thing every so many goes, or
+// about so many a go
+const DGN_ONE = { grit:'club upgrade', shard:'club ascension', scroll:'shot book level', gold:'hole of prize money' };
+function dgnBuysTxt(n, cur){
+  if(!(n > 0)) return 'a little';
+  if(n < 0.95){ const k = Math.round(1 / n); return k > 99 ? 'a little' : nb('1 ' + DGN_ONE[cur]) + ' every ' + nb(k + ' goes'); }
+  return 'about <b>' + fmt(n, n < 10 ? undefined : 0) + '</b>\u00a0' + DGN_BUYS[cur].replace('full club upgrades', 'club upgrades') + ' a go';
+}
 // What the rub of the green costs a Vault run, read off the event table itself
 // rather than measured once and written down: weights change, this follows.
 // A time event moves the clock directly; a work event scales the floor you are
@@ -7618,8 +7626,10 @@ function wgMedal(d, R, D){
   if(got > had) S.wgMedal[d.id] = got;
   return { got, fresh, sc };
 }
-const wgMedalTxt = id => { const T = WG_MEDAL[id]; return !T ? '' : id === 'sand' ? 'Medals at ' + T.map(t => t + '\u00d7').join(' / ') + '\u00a0your usual best'
-  : T.join(' / ') + '\u00a0' + { water: 'greens', cellar: 'dropped', scramble: 'holes\u00a0won', twilight: 'dropped', vault: 'floors' }[id]; };
+// (in plain words, the user asked: "Medals at 1× / 1.4× / 2× your usual
+// best" read as a sum)
+const wgMedalTxt = id => { const T = WG_MEDAL[id]; return !T ? '' : id === 'sand' ? 'Medals: your usual best, then ' + T.slice(1).map(t => t + '\u00d7').join(' and ') + ' it'
+  : 'Medals: ' + T.join(' / ') + '\u00a0' + { water: 'greens', cellar: 'dropped', scramble: 'holes\u00a0won', twilight: 'dropped', vault: 'floors' }[id]; };
 const medalPips = id => { const g = (S.wgMedal || {})[id] || 0;
   return '<span class="medals" aria-label="' + (g ? WG_MEDAL_N[g - 1] + ' medal' : 'No medal yet') + '">'
     + [0, 1, 2].map(m => '<img src="' + pixUrl('medal', m < g ? WG_MEDAL_COL[m] : '#3A4A40') + '" width="12" height="12" alt="">').join('') + '</span>'; };
@@ -32064,12 +32074,12 @@ function renderDgn(){
       + '<div class="dm">Helped by <b style="color:var(--aurora)">' + d.st + '</b> \u00b7 ' + reads + '</div>'
       // what one entry pays, in what the currency buys; the basis of the
       // projection is the odds line above it, so it is not said twice
-      + '<div class="dm" style="color:var(--brass)">Pays ' + d.cn + ' \u00b7 '
-      + (P.buys < 0.1 ? 'Under <b>0.1' : 'About <b>' + fmt(P.buys, P.buys < 10 ? undefined : 0)) + '</b>\u00a0'
-      + DGN_BUYS[d.cur] + ' a go</div>'
+      // (plain: "about one club upgrade every 12 goes" for "Under 0.1 full
+      // club upgrades per entry")
+      + '<div class="dm" style="color:var(--brass)">Pays ' + (d.cur === 'gold' ? 'prize money' : d.cn.toLowerCase()) + ' \u00b7 ' + dgnBuysTxt(P.buys, d.cur) + '</div>'
       + '<div class="dm">' + medalPips(d.id) + ' ' + wgMedalTxt(d.id) + '</div>'
       + '<div class="dm">' + best.charAt(0).toUpperCase() + best.slice(1) + ' \u00b7 '
-      + Math.round(d.run) + 's \u00b7 ' + (nextIn === 'full' ? 'Entries full' : 'Next entry ' + nextIn) + '</div>'
+      + Math.round(d.run) + 's a go \u00b7 ' + (nextIn === 'full' ? 'Entries full' : 'Next entry ' + nextIn) + '</div>'
       + '<div class="bar"><i style="width:' + (run ? clamp(run.t/run.dur,0,1)*100 : 0) + '%"></i></div>'
       + '<div class="btnrow" style="margin-top:8px"></div>';
     el.querySelector('.guide').onclick = e => { e.stopPropagation(); wagerGuide(d.id); };
