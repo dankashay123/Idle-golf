@@ -11451,7 +11451,7 @@ function makeSprite(rows, map){
 function spriteFree(sp){
   if(!sp) return;
   cvFree(sp.cv); if(sp._shd) for(const o of sp._shd.values()) cvFree(o.cv);
-  for(const k of ['_sh', '_fog', '_lean']) if(sp[k]) for(const o of sp[k].values()) spriteFree(o);
+  for(const k of ['_sh', '_fog', '_lean']) if(sp[k]) for(const o of sp[k].values()){ if(k === '_fog') FOG_ALL.delete(o); spriteFree(o); }
   if(sp._flip) spriteFree(sp._flip);
 }
 // a sprite turned to face the other way (kept on it)
@@ -11482,10 +11482,13 @@ function leanSprite(spr, b){
 // and jittered on every step (the user saw it). Each small pixel is solid
 // where most of what it covers is, in the tone most of it is (the pictures'
 // own colours, never a blend), so a tree a pixel bigger is the same tree.
+const SH_MAX = 48;
 function shrinkSprite(spr, w, h){
   if(!spr.rows || !spr.map || w >= spr.w || h >= spr.h) return null;
   const M = spr._sh || (spr._sh = new Map()), key = w + 'x' + h;
-  let R = M.get(key); if(R) return R;
+  let R = M.get(key); if(R){ M.delete(key); M.set(key, R); return R; }
+  // (a sprite keeps its last SH_MAX sizes, the one dropped freed with its hazes)
+  if(M.size >= SH_MAX){ const [k0, o0] = M.entries().next().value; M.delete(k0); spriteFree(o0); }
   // (no canvas of its own: one made here and never drawn on was memory the
   // phone frees late, a shrink at a time)
   const N = 4, rows = [];
@@ -11511,17 +11514,24 @@ function shrinkSprite(spr, w, h){
   M.set(key, R); return R;
 }
 // a sprite a share of the way to a colour (the haze), made once
-const FOG_MAX = 24;
+const FOG_MAX = 24, FOG_ALL_MAX = 3000, FOG_ALL = new Map();
+let FOG_MADE = 0;   // hazed copies made, for the checks: a working set too big for the bound shows as churn
 function fogSprite(spr, col, a){
   const M = spr._fog || (spr._fog = new Map()), key = col + a;
-  let R = M.get(key); if(R) return R;
+  let R = M.get(key); if(R){ FOG_ALL.delete(R); FOG_ALL.set(R, M); return R; }
   // (a sprite keeps its last FOG_MAX hazes: one for every sky it was ever
   // seen under was memory the phone ran out of)
-  if(M.size >= FOG_MAX){ const [k0, o0] = M.entries().next().value; M.delete(k0); cvFree(o0.cv); }
+  if(M.size >= FOG_MAX){ const [k0, o0] = M.entries().next().value; M.delete(k0); FOG_ALL.delete(o0); cvFree(o0.cv); }
+  // (and all of them together their last FOG_ALL: every shrunk size of every
+  // tree kept its own two dozen, and a long play grew by thousands of
+  // pictures a half hour without end)
+  if(FOG_ALL.size >= FOG_ALL_MAX){ const [o0, m0] = FOG_ALL.entries().next().value; FOG_ALL.delete(o0);
+    for(const [k1, v1] of m0) if(v1 === o0){ m0.delete(k1); break; } cvFree(o0.cv); }
+  FOG_MADE++;
   const cv = document.createElement('canvas'); cv.width = spr.w; cv.height = spr.h;
   const g = cv.getContext('2d'); g.drawImage(spr.cv, 0, 0);
   g.globalCompositeOperation = 'source-atop'; g.globalAlpha = a; g.fillStyle = col; g.fillRect(0, 0, spr.w, spr.h);
-  R = { cv, w: spr.w, h: spr.h }; M.set(key, R); return R;
+  R = { cv, w: spr.w, h: spr.h }; M.set(key, R); FOG_ALL.set(R, M); return R;
 }
 function blit(c, spr, x, y, w, h){
   if(!spr || w < 1 || h < 1) return;
