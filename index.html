@@ -20956,8 +20956,7 @@ const BALLFX = {
   // off its sides, flickering
   tChoir(c, b, path, r, t, u){
     const w = Math.max(2, r + 1);
-    trailRibbon(c, path, w + 5, '#221A20', 0.4);
-    trailRibbon(c, path, w + 3, (i, f) => f < 0.5 ? '#A8283A' : '#7A1828', 0.8);
+    trailRibbon(c, path, w + 3, (i, f) => f < 0.5 ? '#C8484A' : '#A8283A', 0.75);
     trailRibbon(c, path, w + 1, (i, f) => f < 0.12 ? '#FFFFFF' : f < 0.35 ? '#FFF2C0' : f < 0.7 ? '#F4D27A' : '#A8782E', 1);
     const N = trailNormal(path);
     for(let i = 2; i < path.length; i += 2){ const on = Math.sin(t * 11 + i * 2.1 + b.seed); if(on < 0.1) continue;
@@ -20965,14 +20964,13 @@ const BALLFX = {
       const X = Math.round(p.x + N.x * side), Y = Math.round(p.y + N.y * side);
       c.globalAlpha = 1; c.fillStyle = '#FF9A2A'; c.fillRect(X, Y, 1, 2); c.fillStyle = on > 0.6 ? '#FFFFFF' : '#FFF2C0'; c.fillRect(X, Y - 1, 1, 1); }
     const h0 = path[0];
-    drawGlow(c, h0.x, h0.y, r * 2 + 4, r * 2 + 4, [[0.6, '#6E4E1E', 1], [0.3, '#A8782E', 2], [0, '#F4D27A', 3]], Math.floor(t * 10) & 3, 0.85);
+    drawGlow(c, h0.x, h0.y, r * 2 + 4, r * 2 + 4, [[0.6, '#D8A848', 1], [0.3, '#F4D27A', 2], [0, '#FFF2C0', 3]], Math.floor(t * 10) & 3, 0.85);
     trailBall(c, b, h0, r);
     c.globalAlpha = 1;
   },
   // the Censer Ball: a gold core banded with embers, incense curling off
   // behind it in a thin grey ribbon, and gold motes winding round
   choirball(c, b, path, r, t, u){
-    trailRibbon(c, path, r + 4, '#221A20', 0.35);
     const sp = b.wake ? [] : trailSpiral(path, 6, 5 + r * 3, t, 0.55, 1.6, b.seed);
     const bit = (o, big) => { c.globalAlpha = o.z < 0 ? 0.75 : 1; c.fillStyle = o.k % 3 < 1 ? '#A8283A' : '#F4D27A'; c.fillRect(Math.round(o.x), Math.round(o.y), big, big); };
     for(const o of sp) if(o.z < 0) bit(o, 1);
@@ -25923,8 +25921,11 @@ const CLUBFX = {
   penitent: {
     // where the staff ends and the censer hangs from, and its size
     hang(hx, hy, tx, ty, h){
+      // (from the staff's very end, where its swing's trail is drawn; only
+      // drawn back up it as far as it points down, so at address the
+      // censer hangs just clear of the grass)
       const k = Math.max(1, Math.round(h / 36)), H = 9 * k, D = Math.hypot(tx - hx, ty - hy) || 1, dx = (tx - hx) / D, dy = (ty - hy) / D;
-      const back = Math.min(D * 0.45, H * 1.3);
+      const back = Math.min(D * 0.45, (H + 3 * k) * Math.max(0, dy));
       return { k, H, ex: tx - dx * back, ey: ty - dy * back };
     },
     under(c, hx, hy, tx, ty, th, h, t, K){ glowLine(c, hx, hy, tx, ty, th, '#A8782E', 0.25 + 0.08 * Math.sin(t * 4)); },
@@ -25970,9 +25971,9 @@ const CLUBFX = {
       c.globalAlpha = 1;
     },
     trail(c, arc, th, t){
-      arcTrail(c, arc, th + 3, ['#221A20', '#2E2A34'], 0.55);
-      arcTrail(c, arc, th + 2, ['#7A1828', '#A8283A'], 0.7);
-      arcTrail(c, arc, th + 1, ['#A8782E', '#F4D27A'], 0.85);
+      // (no dark band under it: over the sky it read as a brown smear)
+      arcTrail(c, arc, th + 2, ['#A8283A', '#C8484A'], 0.6);
+      arcTrail(c, arc, th + 1, ['#D8A848', '#F4D27A'], 0.85);
       arcTrail(c, arc, 1, ['#FFF2C0'], 0.8);
       for(let i = 2; i < arc.length; i += 3){ if(Math.sin(t * 9 + i * 1.7) < 0.4) continue;
         fxDot(c, arc[i][0], arc[i][1] - 3, 1, '#FF9A2A', 1); fxDot(c, arc[i][0], arc[i][1] - 4, 1, '#FFF2C0', 1); }
