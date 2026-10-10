@@ -15,7 +15,7 @@
  *     under him was taken for hidden) */
 'use strict';
 module.exports = {
-  name: 'canyonlook', alone: true,   // (under a full run's load it read 21 pixels of grass under the far rim one time in three, never alone; the cause not yet found)
+  name: 'canyonlook',
   async run(page) {
     const r = await page.evaluate(() => {
       const fails = [], f = m => fails.push(m), out = [];
@@ -53,7 +53,7 @@ module.exports = {
     // inside it shows
     const d = await page.evaluate(() => {
       const fails = [], f = m => fails.push(m), SNAP = JSON.stringify(S), keepTone = P_CANYON.tone, keepCad = Scene.drawCaddie, raf = window.requestAnimationFrame;
-      const out = {}; let TH = null, keepC, keepK;
+      const out = {}; let TH = null, keepC, keepK, keepShots = null;
       try {
         QUIET = true; window.requestAnimationFrame = () => 0;
         DEV.course(0); hideSheet(); S.chaos = { n: 'Fair' }; DEV.canyon(); hideSheet(); Scene.announce = null;
@@ -65,7 +65,9 @@ module.exports = {
         TH._cns = Object.assign({}, keepC || canyonPal(TH)); TH._cns.flat = TH._cns.flat.map(() => '#FF00FF'); TH._ck = new Map();
         // (nothing else in the way: the caddie floats by the bridge, and the
         // scenery and the people stand where they stand)
-        Scene.drawCaddie = () => {}; Scene.props = [];
+        // (and no shot's word: under a full run's load the clock ran on, a shot
+        // went off and its teal THUNDER read as 21 pixels of grass under the rim)
+        Scene.drawCaddie = () => {}; Scene.props = []; keepShots = Scene.drawShots; Scene.drawShots = () => {};
         for (const [name, cam] of [['rim', I.bank - 1.5], ['onto', I.bank + 1.2], ['bridge', (I.bank + I.land) / 2], ['far', I.land - 1.5]]) {
           for (let k = 0; k < 2; k++) { Scene.camD = cam; Scene.draw(0, D); }
           const px = Scene.buf.getContext('2d').getImageData(0, 0, VW, VH).data;
@@ -98,7 +100,7 @@ module.exports = {
             if (under > 20) f(name + ': from over the gorge, ' + under + ' pixels of grass under its far rim'); }
         }
       } finally {
-        P_CANYON.tone = keepTone; if (TH) { TH._cns = keepC; TH._ck = keepK; } Scene.drawCaddie = keepCad; window.requestAnimationFrame = raf; QUIET = false;
+        P_CANYON.tone = keepTone; if (TH) { TH._cns = keepC; TH._ck = keepK; } Scene.drawCaddie = keepCad; if (keepShots) Scene.drawShots = keepShots; window.requestAnimationFrame = raf; QUIET = false;
         CANYON_FORCE = 0; Object.assign(S, JSON.parse(SNAP)); Scene.newHole(S.hole, S.tier);
       }
       return { fails, out };
