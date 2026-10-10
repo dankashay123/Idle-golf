@@ -25152,6 +25152,21 @@ const Scene = {
   spark(el){},
   burst(id){},
   cast(g){ this.casts.push({ t:0, g }); if(this.casts.length > 4) this.casts.shift(); },
+  // the foot of the buttons down the left, and their right edge, in the
+  // picture's own pixels (worked out again when the screen changes size)
+  castClear(){
+    const cv = this.cv, F = this.castClear;
+    if(typeof document === 'undefined' || !cv || !cv.offsetParent) return -1;
+    const cr = cv.getBoundingClientRect();
+    if(F.cw === cr.width && F.ch === cr.height) return F.b;
+    F.cw = cr.width; F.ch = cr.height; F.b = -1; F.x = 6;
+    const col = document.getElementById('hudLeft'), k = cr.height / Math.max(1, VH);
+    if(!col || !col.offsetParent || !k) return F.b;
+    let bot = -1e9, right = -1e9;
+    for(const e of col.querySelectorAll('button')){ if(!e.offsetParent) continue; const r = e.getBoundingClientRect(); bot = Math.max(bot, r.bottom); right = Math.max(right, r.right); }
+    if(bot > -1e9){ F.b = (bot - cr.top) / k; F.x = Math.ceil((right - cr.left) / k) + 3; }
+    return F.b;
+  },
   // ACE's burst: a quick flash of rays and sparks out from round the word,
   // gone in under half a second (effects stay short and close)
   aceBurst(c, x, y, w, h, t){
@@ -30391,7 +30406,11 @@ Object.assign(Scene, {
     for(let i = this.casts.length - 1; i >= 0; i--){
       const k = this.casts[i]; k.t += dt;
       if(k.t > 1.05){ this.casts.splice(i, 1); continue; }
-      drawTextS(c, k.g, 6, VH - LH*4 - Math.round(k.t*14*TSC), PX.aur, TSC, 'l');
+      // (clear of the buttons down the left: on its side the course is
+      // short, and THUNDER rose straight across them)
+      const ky = VH - LH*4 - Math.round(k.t*14*TSC);
+      k.x = ky - LH * TSC < this.castClear() ? this.castClear.x : 6; k.y = ky;
+      drawTextS(c, k.g, k.x, ky, PX.aur, TSC, 'l');
     }
     if(this.banner){
       const b = this.banner; b.t += dt;

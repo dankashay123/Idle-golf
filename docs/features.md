@@ -6,6 +6,17 @@ feature must do, and is usually enough on its own.
 
 ## Sections, newest first
 
+### The tabs' words, and a first hour on its side (10 October)
+
+- The Range, Bag and Career read line by line: multipliers with the
+  decimals they need (`fmtX`: x686, not x685.57), trials "+2% swing power
+  a win" (never "each"), set bonuses named in full (`setEffect`), Fortune's
+  luck is club luck.
+- A first half hour played on its side (844x390): nothing off the screen,
+  no errors; a shot's name rising up the left (`casts`) crossed the
+  buttons there, and at 320 upright: it starts past them when it would
+  meet them (`castClear`, worked out once a size). Check: `castclear`.
+
 ### Sixty frames a second, thirty on Cooler (10 October)
 
 - He sent a screenshot at 29 frames, 8ms a frame: "frames are low
