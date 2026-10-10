@@ -26,8 +26,10 @@
   /* --faint was 3.4:1 on the panel and 2.5:1 on a raised button, and it is
      the colour of every caption, unit and inactive tab: hard going on a phone
      in daylight. Lifted to 4.2-5:1 against where text actually sits, and --dim
-     moved up the same step so the three shades stay three shades. */
-  --chalk:#DFE9DC; --dim:#8BA793; --faint:#6B8874;
+     moved up the same step so the three shades stay three shades. And a
+     step more (#6B8874 to #7B9883): its smallest captions, 9 and 10 pixels,
+     still read under 4.5:1 on the panels and 3:1 on the raised ones. */
+  --chalk:#DFE9DC; --dim:#8BA793; --faint:#7B9883;
   --brass:#E3B457; --brass-dk:#8A6A26;
   --flag:#E4574A; --aurora:#57E0BE; --myth:#C68BFF; --sov:#C9A2FF;
 
@@ -631,7 +633,8 @@ li.afx.on .lockb{color:var(--brass);border-color:var(--brass);background:rgba(22
 .act{width:100%;padding:11px;border-radius:0;border:1px solid var(--brass-dk);background:var(--raise2);
   color:var(--brass);font-size:var(--f2);letter-spacing:.14em;text-transform:uppercase;font-weight:700;margin-top:6px}
 .act.ghost{border-color:var(--line);color:var(--dim);background:transparent}
-.act.danger{border-color:#7A2C25;color:var(--flag)}
+.act.danger{border-color:#7A2C25;color:#FF8276}   /* (lighter than the flag's red: its small words read 2.6:1 on the button) */
+.acts3 .act.danger small{opacity:1}
 
 /* ---------- icons ---------- */
 .ic{display:block;flex:0 0 auto;image-rendering:pixelated;image-rendering:crisp-edges}
@@ -712,11 +715,11 @@ li.afx.on .lockb{color:var(--brass);border-color:var(--brass);background:rgba(22
 .mbar{height:2px;background:#12251C;overflow:hidden}
 .mbar i{display:block;height:100%;background:var(--dim)}
 .mile.on .mbar i{background:var(--brass)}
-.mtx{font-size:var(--f0);letter-spacing:.02em;color:var(--faint);margin-top:3px}
+.mtx{font-size:var(--f0);letter-spacing:.02em;color:#A2BCA9;margin-top:3px}   /* (the smallest words on the lighter box: --faint read 3.5:1) */
 .mile.on .mtx{color:var(--brass)}
 .mtx b{color:var(--chalk)}
 .mile.on .mtx b{color:var(--brass)}
-.mtx i{font-style:normal;color:var(--dim)}
+.mtx i{font-style:normal;color:#B8CFBE}
 /* what a club would do if you carried it */
 .swap{border:1px solid var(--brass-dk);background:rgba(227,180,87,.05);padding:8px 9px;margin:10px 0 4px}
 .swhead{font-size:var(--f0);letter-spacing:.1em;text-transform:uppercase;color:var(--faint);
