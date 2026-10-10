@@ -965,7 +965,7 @@ li.afx.on .lockb{color:var(--brass);border-color:var(--brass);background:rgba(22
   font-weight:700;padding:1px 4px;letter-spacing:.04em;z-index:2}
 .card .cart.hasbadge{padding-top:22px}
 /* (at 320 LEGENDARY ran past the card's left edge and read EGENDARY) */
-@media (max-width:359px){ .badge{letter-spacing:0;padding:1px 2px;font-size:8px} .card .chd{letter-spacing:0;padding:5px 2px} }
+@media (max-width:359px){ .dgn .dh{flex-wrap:wrap} .dgn .dn{flex:1 0 60%;white-space:nowrap} .glab{display:none} .badge{letter-spacing:0;padding:1px 2px;font-size:8px} .card .chd{letter-spacing:0;padding:5px 2px} }
 .sovline{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px;
   font-size:var(--f1);color:var(--dim)}
 .sovline b{font-family:var(--mono);font-size:var(--f4);color:var(--sov)}
@@ -7999,7 +7999,8 @@ function resolveNine(){
   const fm = n => n === 0 ? 'E' : n > 0 ? '+' + n : String(n);
   const name = N.idx === 0 ? 'Front nine' : 'Back nine';
   if(bits.length) toast('<b>' + name + ' ' + fm(N.total) + '</b> \u00b7 ' + bits.join(' \u00b7 '));
-  else toast(name + ' ' + fm(N.total) + ' \u00b7 ' + p.goal.n.toLowerCase() + ' missed');
+  // ("not a single bogey missed" read as a boast: the goal after the word)
+  else toast(name + ' ' + fm(N.total) + ' \u00b7 missed: ' + p.goal.n.toLowerCase());
   Scene.holed({ n: won || best ? name.toUpperCase() : fm(N.total), d: won || best ? -2 : 0 });
 }
 
@@ -9132,9 +9133,12 @@ function endTournament(){
     + '<p>' + (Wk && Wk.beat ? 'Champion.' : beat ? 'You beat the target.' : 'Final score') + '</p>'
     + '<div class="big">' + fm(score) + '</div>'
     + '<ul><li>Target: ' + fm(Math.round(target)) + (beat ? ' \u2014 <b style="color:var(--brass)">beaten</b>'
+        // (beaten on a lower card it said "missed": a cup is only won on his
+        // highest card, which is what to say)
+        : score <= target ? ' \u2014 beaten \u00b7 cups only on your highest card'
         : ' \u2014 missed') + '</li>'
     + (Rv && !OFFLINE ? '<li>' + Rv.n + ': ' + fm(Rv.total) + (rivalBeat
-        ? ' \u2014 <b style="color:var(--brass)">beaten, +' + B.RIVAL_SOV + sovIc() + '</b>'
+        ? ' \u2014 <b style="color:var(--brass)">beaten, <span style="white-space:nowrap">+' + B.RIVAL_SOV + sovIc() + '</span></b>'
         : score === Rv.total ? ' \u2014 tied' : ' \u2014 lost by ' + (score - Rv.total)) + '</li>' : '')
     + (Rv && !OFFLINE && rivalSeries(t) ? (() => { const R = rivalSeries(t), end = seasonOf(t + 1) !== R.s;
         return '<li>Season series: ' + R.w + '\u2013' + R.l + (end ? R.won ? ' \u2014 <b style="color:var(--brass)">won, +' + B.RIVAL_SERIES + sovIc() + '</b>' : ' \u2014 lost' : '') + '</li>'; })() : '')
@@ -32101,7 +32105,9 @@ function renderNine(){
   const gEl = $$('nineGoal');
   // (named as the nine's goal: "An ace 0/1" alone read as a puzzle; a tap
   // says what it is and what it pays)
-  setHTML(gEl, 'Goal: ' + p.goal.n + ' <b>' + Math.min(p.have, p.need) + '/' + p.need + '</b>');
+  // (on the narrowest phones the goal ran out under an ellipsis, its count
+  // with it: "Goal:" gives way there)
+  setHTML(gEl, '<span class="glab">Goal: </span>' + p.goal.n + ' <b>' + Math.min(p.have, p.need) + '/' + p.need + '</b>');
   if(!gEl._tap){ gEl._tap = 1; gEl.style.cursor = 'pointer'; gEl.onclick = nineGoalTip; }
   setCls(gEl, done ? 'done' : '');
   setText($$('nineScore'), (N.total === 0 ? 'E' : N.total > 0 ? '+' + N.total : N.total)

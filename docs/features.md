@@ -6,6 +6,19 @@ feature must do, and is usually enough on its own.
 
 ## Sections, newest first
 
+### A new player's first hour, at 320 (10 October)
+
+- Played a new game for 45 minutes at 320x568 as a player buying Range
+  upgrades, every pop-up recorded. Fixed: an event beaten on a card below
+  his highest said the target was "missed" (a cup is only won on the
+  highest card): it says "beaten · cups only on your highest card"; the
+  nine's toast read "not a single bogey missed" (now "missed: ..."); the
+  rival's +1 and its gem kept together; under 360 wide the hole's goal
+  drops "Goal:" so its count shows (`.glab`), and a wager's name keeps one
+  line with its entries and Guide under it. The Cabinet and the shop read
+  plainly (counts "3 / 5", holes in full, "A Mythic within 29 bags", the
+  Starter Pack's BOUGHT once).
+
 ### The Penitent, a Mythic set from his own sprite sheet (10 October)
 
 - He sent "The Penitent Choir" sheet and asked for it "as a mythic skin";
