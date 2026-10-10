@@ -493,6 +493,7 @@ div.guide.hunt,div.guide.mhunt{grid-template-columns:repeat(3,minmax(0,1fr))}
 /* a repeating honour: no pip column, the name and its step, then progress */
 .lb.rep{grid-template-columns:1fr auto;padding:5px 0}
 .lb.rep i{font-style:normal;color:var(--dim)}
+.lb.rep i.rd{display:block}
 
 /* ---------- the season, one row an event ---------- */
 .cal{display:grid;grid-template-columns:16px 1fr auto;gap:10px;align-items:center;
@@ -3839,18 +3840,18 @@ const B = {
     { id:'h25k',   n:'Tour Veteran',     d:'Play 25,000 holes',           m:'holes',  v:25000, r:{k:'gld', v:0.10}, sov:39 },
     { id:'bird',   n:'Birdie Hunter',    d:'Make 250 birdies or better',  m:'birdie', v:250,   r:{k:'pow', v:0.04}, sov:4 },
     { id:'eagle',  n:'Eagle Eye',        d:'Make 500 eagles or better',   m:'eagle',  v:500,   r:{k:'pow', v:0.06}, sov:4 },
-    { id:'ace1',   n:'Hole In One',      d:'Get your first hole-in-one',         m:'ace',    v:1,     r:{k:'tick', v:3}, sov:2 },
+    { id:'ace1',   n:'Hole in One',      d:'Card an ace',         m:'ace',    v:1,     r:{k:'tick', v:3}, sov:2 },
     { id:'ace100', n:'Ace Collector',    d:'Card 100 aces',               m:'ace',    v:100,   r:{k:'pow', v:0.08}, sov:39 },
     { id:'snow',   n:'It Happens',       d:'Score 8 or more on a hole',              m:'snow',   v:1,     r:{k:'tick', v:1}, sov:2 },
-    { id:'cup1',   n:'First Cup',        d:'Beat an event target',        m:'cups',   v:1,     r:{k:'tick', v:3}, sov:2 },
+    { id:'cup1',   n:'First Cup',        d:'Win a cup',        m:'cups',   v:1,     r:{k:'tick', v:3}, sov:2 },
     { id:'cup10',  n:'The Cabinet',      d:'Hold 10 cups',                m:'cups',   v:10,    r:{k:'gld', v:0.08}, sov:4 },
     { id:'cup50',  n:'Dynasty',          d:'Hold 50 cups',                m:'cups',   v:50,    r:{k:'gld', v:0.15}, sov:39 },
     { id:'slam',   n:'Grand Slam',       d:'Win all four majors of the week', m:'slam', v:4, r:{k:'pow', v:0.05}, sov:39 },
     { id:'rec',    n:'Course Record',    d:'Finish an event at -200 or better', m:'best', v:200,   r:{k:'drp', v:0.05}, sov:39 },
-    { id:'lv10',   n:'Rookie',           d:'Reach career level 10',       m:'lv',     v:10,    r:{k:'tick', v:2}, sov:2 },
-    { id:'lv60',   n:'Tour Pro',         d:'Reach career level 60',       m:'lv',     v:60,    r:{k:'pow', v:0.10}, sov:39 },
-    { id:'p25',    n:'Paragon',          d:'Reach paragon 25',            m:'para',   v:25,    r:{k:'spd', v:0.05}, sov:39 },
-    { id:'p250',   n:'Ascendant',        d:'Reach paragon 250',           m:'para',   v:250,   r:{k:'pow', v:0.20}, sov:39 },
+    { id:'lv10',   n:'Rookie',           d:'Reach Level 10',       m:'lv',     v:10,    r:{k:'tick', v:2}, sov:2 },
+    { id:'lv60',   n:'Tour Pro',         d:'Reach Level 60',       m:'lv',     v:60,    r:{k:'pow', v:0.10}, sov:39 },
+    { id:'p25',    n:'Paragon',          d:'Reach Paragon 25',            m:'para',   v:25,    r:{k:'spd', v:0.05}, sov:39 },
+    { id:'p250',   n:'Ascendant',        d:'Reach Paragon 250',           m:'para',   v:250,   r:{k:'pow', v:0.20}, sov:39 },
     { id:'t10',    n:'Climbing',         d:'Reach Tour Card 10',           m:'tier',   v:9,     r:{k:'pow', v:0.03}, sov:4 },
     { id:'t25',    n:'Thin Air',         d:'Reach Tour Card 25',         m:'tier',   v:24,    r:{k:'pow', v:0.06}, sov:39 },
     { id:'t50',    n:'Mythic Air',       d:'Reach Tour Card 50',           m:'tier',   v:49,    r:{k:'pow', v:0.12}, sov:39 },
@@ -3952,7 +3953,7 @@ const B = {
   // buying is the quicker way)
   RIVAL_SPREAD: 0.08, RIVAL_SOV: 1, RIVAL_SERIES: 4, RIVAL_FORM: 0.5, RIVAL_EASE: 0.03,
   ACH_REP: [
-    { id:'rHoles', n:'Steady Hand',    d:'Every 1000 holes', m:'holes',  step:1000, sov:1 },
+    { id:'rHoles', n:'Steady Hand',    d:'Every 1,000 holes', m:'holes',  step:1000, sov:1 },
     { id:'rBird',  n:'Birdie Watch',   d:'Every 500 birdies', m:'birdie', step:500, sov:1 },
     { id:'rEagle', n:'Eagle Nest',     d:'Every 500 eagles', m:'eagle',  step:500, sov:1 },
     { id:'rNine',  n:'Front and Back', d:'Every 30 nine-hole goals', m:'nines',  step:30,  sov:1 },
@@ -5625,7 +5626,9 @@ const achRatio = a => clamp(achMetric(a.m) / (a.v || 1), 0, 1);
 // An honour's progress as it is counted: provisional chance is a share, and
 // read to the nearest whole number it said "Second Ball 0/1" for 22% of 50%.
 // (a card counted as its number: "Reach Tour Card 10" read 0 / 9 on Card 1)
-const achAmt = (a, x) => a.m === 'mst' ? Math.round(x * 100) + '%' : a.m === 'tier' ? fmt(x + 1, 0) : fmt(x, 0);
+// (counts in full, as the line above them says them: 554 / 1,000, not 1.00K)
+const achCnt = x => x < 1e6 ? Math.round(x).toLocaleString('en-US') : fmt(x, 0);
+const achAmt = (a, x) => a.m === 'mst' ? Math.round(x * 100) + '%' : a.m === 'tier' ? achCnt(x + 1) : achCnt(x);
 // Decorated before the sort: achMetric('mst') calls derive(), and a comparator
 // that asks for it on every comparison turns a thirty row list into a hundred
 // and fifty derives four times a second. Measured: 0.052ms against 0.164ms for
@@ -30466,20 +30469,16 @@ function honRows(w){
   const done = achCount(), tot = B.ACH.length;
   const A = achBonus();
   const live = Object.keys(A).map(k => achReward({ r:{ k, v:A[k] } })).join(' \u00b7 ');
-  const near = achNear(3);
   let h = '<div class="hint"><b>' + done + '</b> of ' + tot + ' done'
     + (live ? ' \u00b7 <b style="color:var(--aurora)">' + live + '</b>' : '') + '</div>';
-  if(false && near.length) h += '<div class="hint">Closest: '
-    + near.map(a => '<b>' + a.n + '</b> ' + achAmt(a, Math.min(achMetric(a.m), a.v)) + '/' + achAmt(a, a.v))
-        .join(' \u00b7 ') + '.</div>';
   // The ones that come round again, one line each: how far to the next, and
   // what it pays. Not .row, so the first row in the sheet is still the nearest
   // one-off.
   h += '<div class="eyebrow" style="margin:10px 0 4px">Every time</div>'
     + B.ACH_REP.map(a => {
         const have = achMetric(a.m) % a.step;
-        return '<div class="lb rep"><span>' + a.n + ' <i>\u00b7 ' + nb(a.d) + '</i></span>'
-          + '<span class="s">' + fmt(have, 0) + '/' + fmt(a.step, 0) + ' \u00b7 +' + a.sov + sovIc() + '</span></div>';
+        return '<div class="lb rep"><span>' + a.n + '<i class="rd">' + nb(a.d) + '</i></span>'
+          + '<span class="s">' + achCnt(have) + ' / ' + achCnt(a.step) + ' \u00b7 +' + a.sov + sovIc() + '</span></div>';
       }).join('')
     + '<div class="eyebrow" style="margin:12px 0 4px">Once</div>';
   // Nearest first, then the shelf. A checklist sorted by what you have already
@@ -33731,7 +33730,7 @@ function achReward(a){
   if(r.k === 'shard') return '+' + r.v + '\u00a0' + plural(r.v, 'shards');
   if(r.k === 'scroll') return '+' + r.v + ' ' + plural(r.v, 'scrolls');
   if(r.k === 'legacy') return '+' + r.v + ' legacy';
-  if(r.k === 'crt' || r.k === 'drp' || r.k === 'prc') return '+' + (r.v*100).toFixed(1) + '% ' + { crt:'pure strike chance', drp:'club luck', prc:'affinity chance' }[r.k];
+  if(r.k === 'crt' || r.k === 'drp' || r.k === 'prc') return '+' + +(r.v*100).toFixed(1) + '% ' + { crt:'pure strike chance', drp:'club luck', prc:'affinity chance' }[r.k];
   const nm = { pow:'swing power', gld:'purse', spd:'pace', mst:'second-ball chance',
                elm:'affinity power', dgn:'wager haul' }[r.k] || r.k;
   return '+' + Math.round(r.v*100) + '% ' + nm;
