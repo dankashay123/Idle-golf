@@ -6,6 +6,14 @@ feature must do, and is usually enough on its own.
 
 ## Sections, newest first
 
+### Sixty frames a second, thirty on Cooler (10 October)
+
+- He sent a screenshot at 29 frames, 8ms a frame: "frames are low
+  constantly". The cap is sixty now (`frameCap()`: `FRAME_CAP_MS` null by
+  the setting, 0 for a check), thirty with Settings' **Frame Rate** on
+  Cooler (`S.fps` 30, `toggleFps`; any other value cleared on load). Check:
+  `framecap` (both, and the round at the clock's own speed on each).
+
 ### A new player's first hour, at 320 (10 October)
 
 - Played a new game for 45 minutes at 320x568 as a player buying Range

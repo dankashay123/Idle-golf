@@ -15,8 +15,9 @@ through:
 
 - Everything is committed and **no request is waiting**.
 - Last done (9 to 10 October; detail in `docs/features.md`'s newest
-  section), still **polish, no new features**: the course drawn **30
-  frames a second** (the phone ran hot); **old saves** from five builds
+  section), still **polish, no new features**: the course drawn **60
+  frames a second, 30 with Frame Rate on Cooler** (30 for all ran cool but
+  he found it low, 8ms a frame on his phone); **old saves** from five builds
   kept in a check; the **Vault** starts on a floor he can clear (it paid
   nothing after a retirement); the free sovereigns that grow with play
   **cut 40%** (he chose: a player who retires had a set at 6 to 9 weeks,
@@ -355,8 +356,8 @@ brings it up again** (he asked to stop, 6 October): offer other things.
 
 Every idea offered and not yet done, so none is lost:
 
-1. **A look on his phone**: does it still run warm, does 30 frames look
-   smooth (40 if not), the bigger buttons, the lighter grey, the padlocks.
+1. **A look on his phone**: does 60 frames run warm (Cooler is the 30
+   setting), the censer weapon, the candelabra, the Ascended Choir.
 2. **His own save** (done 10 October, see §1). Ask for a fresh code after
    big changes to saving.
 3. A wording pass on the **Cabinet** and the **shop**, as the Honours,

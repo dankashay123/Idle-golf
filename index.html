@@ -5397,6 +5397,7 @@ function migrate(){
   // (a paid hunt has its week in the run; an old save's paid hunt starts one)
   if(S.hunt && S.hunt.paid && !(S.huntRun && S.huntRun.wk === S.hunt.wk)) S.huntRun = { wk: S.hunt.wk, n: 1 };
   if(S.teeMk !== undefined && !TEE_MARKS.some(m => m.id === S.teeMk)) delete S.teeMk;
+  if(S.fps !== undefined && S.fps !== 30) delete S.fps;
   if(S.wild !== undefined && S.wild !== 0) delete S.wild;
   if(S.spotTag !== undefined && S.spotTag !== 0) delete S.spotTag;
   if(S.aceAt !== undefined){
@@ -34707,17 +34708,22 @@ function saverCycle(){
   save(); settingsSheet();
 }
 function saverNow(){ hideSheet(); saverOn(); }
+function toggleFps(){ if(S.fps === 30) delete S.fps; else S.fps = 30; save(); settingsSheet(); }
 
 let last = 0, slowT = 0, saveT = 0;
 let frameErr = 0;
-// Thirty frames a second, not the screen's sixty (or a newer iPhone's 120):
-// the course is pixel art the size of the screen, and every frame redrew all
-// of it, so the phone ran hot after a while (the user felt it). Everything
-// moves by the time passed, so play is as fast as before. (0: every frame,
+// Sixty frames a second at most (a newer iPhone's screen asks 120), or
+// thirty with Frame Rate set to Cooler. It was thirty for everyone: the
+// course is pixel art the size of the screen, every frame redraws all of it,
+// and the phone ran hot after a while (the user felt it); then he found
+// thirty low, at 8ms a frame. Everything moves by the time passed, so play
+// is as fast either way. (FRAME_CAP_MS: null by the setting; 0 every frame,
 // for a check that times one.)
-let FRAME_CAP_MS = 1000 / 30 - 4, frameAt = -1e9;
+let FRAME_CAP_MS = null, frameAt = -1e9;
+const frameCap = () => FRAME_CAP_MS !== null ? FRAME_CAP_MS : S.fps === 30 ? 1000 / 30 - 4 : 1000 / 60 - 4;
 function frame(now){
-  if(!SAVER && FRAME_CAP_MS > 0 && now - frameAt < FRAME_CAP_MS){ requestAnimationFrame(frame); return; }
+  const cap = frameCap();
+  if(!SAVER && cap > 0 && now - frameAt < cap){ requestAnimationFrame(frame); return; }
   frameAt = now;
   const f0 = DEV_FPS ? performance.now() : 0;
   try{ frameBody(now); }
@@ -34834,6 +34840,9 @@ function settingsSheet(){
     + row('Dawn and Dusk', 'Day and night follow your clock',
         '<button class="mini' + (S.dawnDusk === 1 ? ' go' : '') + '" onclick="toggleDawn()">'
         + (S.dawnDusk === 1 ? 'On' : 'Off') + '</button>')
+    // (sixty frames a second, or thirty to keep the phone cooler)
+    + row('Frame Rate', S.fps === 30 ? 'Cooler on the phone' : 'Smoothest',
+        '<button class="mini go" onclick="toggleFps()">' + (S.fps === 30 ? '30' : '60') + '</button>')
     + row('Battery Saver', saverMins() ? 'After ' + tw(saverMins(), 'minute') + ' untouched' : 'Only when started',
         '<div class="setbtns"><button class="mini' + (saverMins() ? ' go' : '') + '" onclick="saverCycle()">'
         + (saverMins() ? tw(saverMins(), 'minute') : 'Off') + '</button>'
