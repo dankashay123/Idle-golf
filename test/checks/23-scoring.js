@@ -33,6 +33,10 @@ module.exports = {
         for (let sd = 1; sd <= 8; sd++) {
           Object.keys(S).forEach(k => delete S[k]); Object.assign(S, defaultState()); initState(); migrate(); startHole();
           let seed = sd * 7919 + 1; Math.random = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+          // (each seed on a day of its own, the same eight days on any date: the
+          // day's course condition and the like move the mix, and one real day
+          // read 25.9% albatross on 28 October against 23.4% on the 10th)
+          DAY_FORCE = 20740 + sd * 3;
           S.autoEquip = 1; S.autoClimb = true;   // the game's own climbing, as a player gets it
           const shop = () => {
             for (let g = 0; g < 400; g++) { let best = null, bc = Infinity;
@@ -46,7 +50,7 @@ module.exports = {
           nines += Math.floor(S.totalHoles / 9); ninesWon += S.ninesWon || 0;
         }
       } finally {
-        window.scoreFor = rs; window.finishHole = rf; Math.random = real; QUIET = false;
+        window.scoreFor = rs; window.finishHole = rf; Math.random = real; QUIET = false; DAY_FORCE = null;
         Object.keys(S).forEach(k => delete S[k]); Object.assign(S, JSON.parse(SNAP)); startHole();
       }
       const sh = k => (n[k] || 0) / holes;
