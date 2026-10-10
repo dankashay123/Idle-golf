@@ -25,7 +25,8 @@ through:
   the whole suite **run on seven dates** (Jan, Apr, Jul, 28 Oct, 20 Dec at
   8am; Jan and Jul at 3pm): one real fix (a festival's row titled by its
   name), the season switch reaching every course, and the checks made to
-  hold on any date (rule 87); all dates pass. Before that (8 to 9 October): the Tour
+  hold on any date (rule 87); all dates pass. The Tour Pass and
+  Membership hold with the clock moved both ways (`passclock`). Before that (8 to 9 October): the Tour
   Pass page, bag counts, pace, slower gear, every word in full, padlocks.
 - **The iPhone app: everything is in `docs/ios-app.md`** (read it whole
   when the app comes up). **Don't suggest it for now** (he asked, 8
@@ -48,7 +49,7 @@ through:
   new a switch. Earlier work: the sections under it.
 - What lives by the season asks `lookSeason`: a course's own, the Snowline
   winter and the Blossom spring all year, else the month.
-- `node test/run.js` has **197 checks** (all passed 10 October), about 35 minutes: run it in the
+- `node test/run.js` has **198 checks** (all passed 10 October), about 35 minutes: run it in the
   background, on a copy in the scratchpad, with the machine quiet. After
   weather, colours or anything dated, also run it with `HOUR_FORCE` 8 and
   15 and the month pinned (rules 20 and 70).
@@ -318,8 +319,10 @@ Numbered so `CLAUDE.md` and the checks can point at them.
     `FEST_FORCE = false` turns festivals off for a check that reads the
     lines by the cog; a check that depends on the day (birds, the stake of
     the day, the day's condition) pins `DAY_FORCE` or `FEAT_FORCE` or
-    leaves the thing out. `canyonlook` runs alone: under load it read 21
-    pixels of grass under the far rim one time in three, cause not found.
+    leaves the thing out. A check that draws a picture clears what the
+    clock may have set going before it (`canyonlook`: under load a Thunder
+    Drive's name, rising up the left edge in teal, read as grass; found by
+    looping the check under load and saving its picture on failure).
 
 ## 5. Environment
 

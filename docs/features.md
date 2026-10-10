@@ -43,6 +43,11 @@ feature must do, and is usually enough on its own.
   pinning the day where it mattered (scoring's eight days, gear pay's stake,
   the haze check's birds, the seam check's real night, the retirement
   check's pause, the skins check's frames). All seven dates pass.
+- **The Tour Pass and Membership with the clock moved** (`passclock`):
+  the game's day and the membership's clock never go back, so a bought pass
+  is kept, the allowance paid for the days covered once, nothing twice.
+- **The canyon check's miscount under load**: a Thunder Drive's name rising
+  up the left edge read as grass; it clears those before each picture.
 
 ### Polish: the pass, pace, speed and words (8 to 9 October)
 
