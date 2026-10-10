@@ -432,6 +432,14 @@ div.guide.hunt,div.guide.mhunt{grid-template-columns:repeat(3,minmax(0,1fr))}
 .tag{font-size:var(--f0);letter-spacing:.1em;text-transform:uppercase;font-weight:700}
 .mini{border:1px solid var(--line);border-radius:0;padding:5px 9px;min-height:24px;font-size:var(--f1);
   letter-spacing:.08em;text-transform:uppercase;color:var(--dim);background:var(--raise)}
+/* Bigger tap areas, the look unchanged (the user plays on a phone, and a 24
+   pixel button is well under a fingertip): an invisible margin round each,
+   up and down where its neighbours sit beside it, never over the next one */
+.mini,.mbtn,#buyAll,.qm,#autoEqBtn,#scrapBtn,.lkauto{position:relative}
+.mini::after,.mbtn::after,#buyAll::after,#autoEqBtn::after,#scrapBtn::after,.lkauto::after{content:'';position:absolute;inset:-6px -2px}
+.qm::after{content:'';position:absolute;inset:-9px}
+#drawer::after{content:'';position:absolute;inset:-8px -4px}
+#hudLeft button::after{content:'';position:absolute;inset:-2px -3px}
 .mini.go{border-color:var(--brass-dk);color:var(--brass)}
 .mini.dim{opacity:.35}
 .btnrow{display:flex;gap:6px;flex-wrap:wrap}
