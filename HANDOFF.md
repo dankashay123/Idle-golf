@@ -28,6 +28,9 @@ through:
   hold on any date (rule 87); all dates pass. The Tour Pass and
   Membership hold with the clock moved both ways (`passclock`). Before that (8 to 9 October): the Tour
   Pass page, bag counts, pace, slower gear, every word in full, padlocks.
+  Then the Honours list read line by line (counts in full, each repeat's
+  goal under its name, plainer goals) and his save checked; he says the
+  game plays great on his phone (30 frames, buttons, grey all fine).
 - **The iPhone app: everything is in `docs/ios-app.md`** (read it whole
   when the app comes up). **Don't suggest it for now** (he asked, 8
   October): polish what is there first. In short: `index.html` wrapped unchanged with
@@ -49,9 +52,8 @@ through:
   new a switch. Earlier work: the sections under it.
 - What lives by the season asks `lookSeason`: a course's own, the Snowline
   winter and the Blossom spring all year, else the month.
-- `node test/run.js` has **198 checks**. The last full run (all passed) was
-  before 10 October's last changes to checks (`canyonlook` back with the
-  others, `passclock` new): **a full run is owed**. About 35 minutes: run it in the
+- `node test/run.js` has **198 checks** (all passed 10 October, after the
+  Honours wording pass). About 35 minutes: run it in the
   background, on a copy in the scratchpad, with the machine quiet. After
   weather, colours or anything dated, also run it with `HOUR_FORCE` 8 and
   15 and the month pinned (rules 20 and 70).
@@ -68,8 +70,8 @@ through:
   Membership and the Founder's Collection on his phone; the hole's bar
   and the condition by the cog, the smaller pop-ups and the loading screen
   on his phone (all 8 October); the redesigned Tour Pass page, the gear
-  padlocks, the house in the treeline (9 October); thirty frames a
-  second, the bigger tap areas, the lighter grey (10 October).
+  padlocks, the house in the treeline (9 October); the Honours
+  list's new wording (10 October).
 - Settled, in case it comes up: swing speed still matters fully (a hole's
   time is when the ball drops); Fast Walker only shortens a hole's least
   time; every caddie has a trick (don't offer caddie tricks); Dawn and
@@ -349,8 +351,9 @@ Every idea offered and not yet done, so none is lost:
 
 1. **A look on his phone**: does it still run warm, does 30 frames look
    smooth (40 if not), the bigger buttons, the lighter grey, the padlocks.
-2. **His own save**: he pastes his save code; load it into this build and
-   check nothing is lost or doubled.
+2. **His own save** (done 10 October: Level 60, Card 13, loads whole,
+   nothing doubled, 400 holes played on clean). Ask for a fresh code after
+   big changes to saving.
 3. **Heirlooms**: all 30 found in about 7 weeks by a player who retires a
    lot; maxing them all takes years (the hundred-level ones cost
    quintillions). He wants maxing to take much longer than finding: it
@@ -358,9 +361,6 @@ Every idea offered and not yet done, so none is lost:
 4. **A new pass set every few months**, each from a character sheet he
    sends, built as the Cyber-Drive was.
 5. **The iPhone app** (`docs/ios-app.md`), only once he brings it up again.
-6. **One full check run** on today's date (owed, see §1).
-7. **A wording pass on the Trophy Room's Honours list**: the longest list,
-   never given the line-by-line no-filler read the other screens had.
 
 Held for when he raises scenery again (he asked to stop): look at the new
 things on the phone (soft cloud shadows, the score call, the gold
@@ -368,4 +368,4 @@ mountain), the other special holes for bunkers under them, snow falling
 heavier, frost melting through a round, a fog bank thinning, gusts of
 leaves, glints and variety on the gold heap, a speed pass at its foot.
 
-Recommend 1, then 6 (I can run 6 while he plays).
+Recommend 1, then 4 when he sends a picture.
