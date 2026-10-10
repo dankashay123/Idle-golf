@@ -20,8 +20,12 @@ through:
   kept in a check; the **Vault** starts on a floor he can clear (it paid
   nothing after a retirement); the free sovereigns that grow with play
   **cut 40%** (he chose: a player who retires had a set at 6 to 9 weeks,
-  now about 10; the pass about 7); **bigger tap areas**; the faint grey a
-  step lighter; plainer pop-ups. Before that (8 to 9 October): the Tour
+  now about 10; the pass about 7, the pass and Membership about 5½);
+  **bigger tap areas**; the faint grey a step lighter; plainer pop-ups;
+  the whole suite **run on seven dates** (Jan, Apr, Jul, 28 Oct, 20 Dec at
+  8am; Jan and Jul at 3pm): one real fix (a festival's row titled by its
+  name), the season switch reaching every course, and the checks made to
+  hold on any date (rule 87); all dates pass. Before that (8 to 9 October): the Tour
   Pass page, bag counts, pace, slower gear, every word in full, padlocks.
 - **The iPhone app: everything is in `docs/ios-app.md`** (read it whole
   when the app comes up). **Don't suggest it for now** (he asked, 8
@@ -307,6 +311,15 @@ Numbered so `CLAUDE.md` and the checks can point at them.
 86. A larger tap area is an invisible `::after` round the button; it must
     not reach a neighbour (`taps`), and on the course's buttons only up
     and down (`layout` reads a wider one as overflow).
+
+87. **Checks on any date**: the harness holds the calendar's season at
+    autumn (`window.__calSeason`, `CAL_PIN` in `monthSeason`) unless a
+    check moves the date itself (`DAY_FORCE`) or says `realSeason: true`;
+    `FEST_FORCE = false` turns festivals off for a check that reads the
+    lines by the cog; a check that depends on the day (birds, the stake of
+    the day, the day's condition) pins `DAY_FORCE` or `FEAT_FORCE` or
+    leaves the thing out. `canyonlook` runs alone: under load it read 21
+    pixels of grass under the far rim one time in three, cause not found.
 
 ## 5. Environment
 

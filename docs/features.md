@@ -32,6 +32,17 @@ feature must do, and is usually enough on its own.
   red lighter; measured on every screen at 320.
 - **Pop-ups**: a locked card says what unlocks it; Auto-Climb's move says
   so; Re-attuned says what was kept; no filler.
+- **Paying, by simulation** (`test/sim.js`, a player who plays properly):
+  a Mythic set at about day 72 free, 50 with the Tour Pass, 39 with the
+  pass and Membership.
+- **Dated runs** (the suite on copies whose clock starts on 15 Jan, 15
+  Apr, 15 Jul, 28 Oct and 20 Dec at 8, and Jan and Jul at 3pm): the
+  festival's Trophy Room row titled by its name; the season switch
+  (`SEASON_FORCE`) reaching the majors, desert and tropics (`monthSeason`);
+  the harness's autumn pin (`CAL_PIN`), `FEST_FORCE = false`, and checks
+  pinning the day where it mattered (scoring's eight days, gear pay's stake,
+  the haze check's birds, the seam check's real night, the retirement
+  check's pause, the skins check's frames). All seven dates pass.
 
 ### Polish: the pass, pace, speed and words (8 to 9 October)
 
