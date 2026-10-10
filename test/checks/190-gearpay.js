@@ -10,7 +10,9 @@ module.exports = {
   name: 'gearpay',
   async run(page) {
     const r = await page.evaluate(() => {
-      const SNAP = JSON.stringify(S), o = { rows: [] };
+      // (the stake of the day pinned to the Vault: on a day the Island Green was
+      // featured it paid more, and a January run failed here)
+      const SNAP = JSON.stringify(S), o = { rows: [] }, keepFeat = FEAT_FORCE; FEAT_FORCE = 'vault';
       try {
         for (const [tier, up] of [[10, 30], [25, 60], [40, 120], [60, 200], [100, 300]]) {
           S.tier = tier; S.tierMax = tier; for (const u of B.UPG) S.upg[u.id] = Math.min(capOf(u), up);
@@ -24,7 +26,7 @@ module.exports = {
         const r1 = { k: 'grit', v: 0.05 }, r2 = { k: 'shard', v: 0.06 };
         o.ci = [ciAmt(r1) / (shopPrice('grit') * 0.05), ciAmt(r2) / (shopPrice('shard') * 0.06)];
         o.pays = Object.fromEntries(B.DGN.map(d => [d.id, d.pay]));
-      } finally { Object.keys(S).forEach(k => delete S[k]); Object.assign(S, JSON.parse(SNAP)); startHole(); }
+      } finally { FEAT_FORCE = keepFeat; Object.keys(S).forEach(k => delete S[k]); Object.assign(S, JSON.parse(SNAP)); startHole(); }
       return o;
     });
     const f = [];

@@ -53,12 +53,16 @@ module.exports = {
       // the whole width. Measured on the buffer, where one row is one row.
       window.__seam = [];
       for (let i = 0; i < B.COURSE.length; i++) {
-        DEV.course(i); hideSheet();
+        // (the course's name banner cleared: its gold rules across the frame
+        // read as a seam, on whichever date its timing caught them)
+        DEV.course(i); hideSheet(); Scene.announce = null;
         for (const mode of ['day', 'night']) {
-          Scene.night = mode === 'night'; Scene.rain = false;
-          Scene.themeId = ''; Scene.theme = buildTheme(Scene.course, mode);
-          Scene.skyKey = ''; Scene.hazeKey = ''; Scene.ridgeKey = ''; Scene.woodKey = '';
-          await sleep(320);
+          // (a real night round, as a player meets it: forcing night by hand
+          // over a day's hole mixed the two, and on a spring night read as a
+          // line no player sees)
+          S.chaos = Object.assign({}, B.CHAOS.find(x => x.n === (mode === 'night' ? 'Night Round' : 'Fair')));
+          Scene.newHole(S.hole, S.tier); Scene.rain = false;
+          Scene.announce = null; await sleep(320);
           const px = Scene.b.getImageData(0, 0, VW, VH).data;
           const avg = y => { let r = 0, g = 0, b = 0;
             for (let x = 0; x < VW; x++) { const j = (y*VW + x)*4; r += px[j]; g += px[j+1]; b += px[j+2]; }

@@ -90,13 +90,16 @@ module.exports = {
     // planted on S itself: a reload saves S on its way out, over anything
     // written straight to storage
     await page.evaluate(() => {
+      window.step = () => {};
       delete S.holesFixed;
       S.tier = 8; S.tierMax = 8; S.bestTier = 8; S.hole = 7 + 72 * 2;   // mid-way through the third event
       B.SLOTS.forEach(sl => { const it = makeItem(12, 0, 3, sl.id); it.el = null; S.equip[sl.id] = it; });
       save();
     });
     const moved = await boot();
-    await page.evaluate(() => { S.hole += 5; save(); });
+    // (play paused till the reload: a hole finished in the gap now and then
+    // and the save came back one hole on, on whichever date it fell)
+    await page.evaluate(() => { window.step = () => {}; S.hole += 5; save(); });
     const again = await boot();
     // a reset to the defaults mid-session, then a hole played, then a reload
     await page.evaluate(() => { Object.keys(S).forEach(k => delete S[k]); Object.assign(S, defaultState());

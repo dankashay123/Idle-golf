@@ -4670,6 +4670,18 @@ const homeSeason = (cs, tier) => !cs || cs.slot !== 'home' ? 0
 const CAL_SEASONED = ['coastal', 'sandbelt', 'highlands', 'blackwater', 'riverbend', 'moorland'];
 const MONTH_SEASON = [2, 2, 3, 3, 3, 0, 0, 0, 1, 1, 1, 2];
 const monthNow = () => new Date(dayNow() * 86400000).getUTCMonth();
+// the season the month gives, or the one pinned (SEASON_FORCE: the
+// developer menu's season switch, and the checks): every course that goes by
+// the month asks this, so the switch reaches the majors, the desert and the
+// tropics too (they kept the real month, and a check pinned to summer met a
+// January winter there)
+// (and the checks' own pin, CAL_PIN, from the harness: the calendar's season
+// held at autumn, as every check was written in October, unless the check
+// moves the date itself; a January run met winter on the opening course, its
+// water frozen, and ten checks of fish, frogs and leaves failed)
+const CAL_PIN = typeof window !== 'undefined' && window.__calSeason >= 0 ? window.__calSeason : -1;
+const monthSeason = () => SEASON_FORCE >= 0 ? SEASON_FORCE
+  : CAL_PIN >= 0 && DAY_FORCE === null ? CAL_PIN : MONTH_SEASON[monthNow()];
 // The season a course shows now (0 as built, the summer; 1 autumn, 2
 // winter, 3 blossom): its own where it turns, the Snowline's winter and the
 // Blossom's spring all year, the rest (desert, tropics, majors) by the real
@@ -4678,9 +4690,9 @@ const monthNow = () => new Date(dayNow() * 86400000).getUTCMonth();
 const lookSeason = look => !look ? 0
   : look.season ? Math.max(0, SEASONS.findIndex(z => z && z.n === look.season))
   : look.slot === 'home' || CAL_SEASONED.includes(look.id) ? 0
-  : look.id === 'snowline' ? 2 : look.id === 'blossom' ? 3 : MONTH_SEASON[monthNow()];
+  : look.id === 'snowline' ? 2 : look.id === 'blossom' ? 3 : monthSeason();
 const courseSeason = (cs, tier) => !cs ? 0 : cs.slot === 'home' ? homeSeason(cs, tier)
-  : !CAL_SEASONED.includes(cs.id) ? 0 : SEASON_FORCE >= 0 ? SEASON_FORCE : MONTH_SEASON[monthNow()];
+  : !CAL_SEASONED.includes(cs.id) ? 0 : monthSeason();
 // A frosty morning (the user asked): an autumn or winter course, or the
 // Snowline, from five to eleven by the player's own clock, on a dry day.
 // FROST_FORCE (the developer menu, the checks) pins it on or off; HOUR_FORCE
@@ -13463,7 +13475,7 @@ function seasonDecor(cs, look){
     return D.getUTCMonth() === 9 && D.getUTCDate() >= 24 ? 'halloween' : 'autumn'; }
   if(sea === 'Winter') return 'winter';
   if(sea === 'Blossom') return 'spring';
-  if(!sea && cs && (cs.slot === 'home' || CAL_SEASONED.includes(cs.id)) && MONTH_SEASON[monthNow()] === 0) return 'summer';
+  if(!sea && cs && (cs.slot === 'home' || CAL_SEASONED.includes(cs.id)) && monthSeason() === 0) return 'summer';
   return null;
 }
 
@@ -21647,7 +21659,7 @@ const Scene = {
   // side, from the hole's own hash once everything is laid, so nothing else
   // moves. Each runs off as she does.
   cubsBy(put, sea){
-    const spring = sea === 'Blossom' || (!sea && MONTH_SEASON[monthNow()] === 3);
+    const spring = sea === 'Blossom' || (!sea && monthSeason() === 3);
     if(!spring || this.night || this.rain) return;
     const h = this.hole;
     for(const f of put.filter(q => q.kind === 15 && q.an === 'fox')){

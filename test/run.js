@@ -48,8 +48,11 @@ async function open(browser, url, opts) {
   page.on('pageerror', e => errors.push('pageerror: ' + e.message));
   page.on('console', m => { if (m.type() === 'error') errors.push('console: ' + m.text()); });
   // (sovereigns paid at once, as they were: a check measures what a thing
-  // pays; the GET check turns this off to see them wait)
-  await page.addInitScript(() => { window.__sovAuto = 1; window.__noShimmer = 1; });
+  // pays; the GET check turns this off to see them wait. The calendar's
+  // season held at autumn, CAL_PIN, unless a check moves the date itself:
+  // the checks were written in October and met a frozen January otherwise;
+  // a check with realSeason: true reads the real month)
+  await page.addInitScript((cal) => { window.__sovAuto = 1; window.__noShimmer = 1; window.__calSeason = cal; }, opts && opts.realSeason ? -1 : 1);
   await page.goto(url);
   // Scene is a top level const in a classic script, so it is a script-scope
   // binding and never lands on window. Ask for the binding itself.

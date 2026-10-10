@@ -23,7 +23,7 @@
  */
 'use strict';
 module.exports = {
-  name: 'seasons',
+  name: 'seasons', realSeason: true,   // (it reads the real month: the harness's autumn pin off)
   async run(page) {
     const r = await page.evaluate(() => {
       const SNAP = JSON.stringify(S), o = { same: [], moved: [], faint: [], other: [], snow: [], banner: [] };
