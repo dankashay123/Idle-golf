@@ -5263,6 +5263,11 @@ function initState(){
    Saves outlive config. Anything the current build no longer defines is
    remapped or dropped here, before a single frame runs.
    ========================================================================= */
+// a reward already waiting in an older save keeps the title it was given:
+// the labels now in Title Case are renamed (a challenge's own words stay)
+const OWED_RENAME = /^(Caddie gifts|Honours already earned|All three challenges|Rival beaten|Rival series won|Members\u2019 allowance|First sightings|.+ (?:prize \d+|complete|rare visitors|wildlife complete))$/;
+const owedTitle = t => t === 'The week\u2019s hunt' ? 'Weekly Hunt' : /^\w+\u2019s hunt$/.test(t) ? t.replace(/\u2019s hunt$/, ' Hunt')
+  : OWED_RENAME.test(t) ? t.replace(/(^|\s)([a-z])/g, (m, a, c) => a + c.toUpperCase()) : t;
 function migrate(){
   // (every part of the save of the kind a new save has it: a list where a
   // list belongs, a table where a table does, a number where a number does;
@@ -5373,7 +5378,7 @@ function migrate(){
     if(!Array.isArray(S.owed)) delete S.owed;
     else{ const ks = new Set();
       S.owed = S.owed.filter(x => x && typeof x === 'object' && OWED_PLACES.some(q => q[0] === x.p) && typeof x.k === 'string' && x.k && !ks.has(x.k)
-        && Number.isFinite(x.n) && x.n >= 1 && x.n < 1e9 && (ks.add(x.k), true)).map(x => ({ p: x.p, k: x.k, n: Math.floor(x.n), t: String(x.t || '').slice(0, 80) })); } }
+        && Number.isFinite(x.n) && x.n >= 1 && x.n < 1e9 && (ks.add(x.k), true)).map(x => ({ p: x.p, k: x.k, n: Math.floor(x.n), t: owedTitle(String(x.t || '').slice(0, 80)) })); } }
   if(S.huntRun !== undefined && !(S.huntRun && Number.isInteger(S.huntRun.wk) && Number.isInteger(S.huntRun.n) && S.huntRun.n >= 1 && S.huntRun.n < 1e5)) delete S.huntRun;
   // (a paid hunt has its week in the run; an old save's paid hunt starts one)
   if(S.hunt && S.hunt.paid && !(S.huntRun && S.huntRun.wk === S.hunt.wk)) S.huntRun = { wk: S.hunt.wk, n: 1 };
@@ -5734,7 +5739,7 @@ function caddieGift(h, d, force){
   S.giftDay.n++;
   if(tick){ const t0 = S.tickets || 0; grantTickets(n); const m = (S.tickets || 0) - t0;
     toast('<span class="achk">' + CD.n + '</span>A gift \u00b7 +' + m + ' ticket' + (m === 1 ? '' : 's'), 'ach'); }
-  else{ earnSov(n, 'today', 'gift', 'Caddie gifts'); toast('<span class="achk">' + CD.n + '</span>A gift \u00b7 <span style="white-space:nowrap">+' + n + sovIc() + '</span>', 'ach'); }
+  else{ earnSov(n, 'today', 'gift', 'Caddie Gifts'); toast('<span class="achk">' + CD.n + '</span>A gift \u00b7 <span style="white-space:nowrap">+' + n + sovIc() + '</span>', 'ach'); }
   return true;
 }
 // a hole played: a hole more on every club carried, and a word when one
@@ -6332,7 +6337,7 @@ function checkAch(){
   if(!S.achSov){
     S.achSov = 1;
     const owed = B.ACH.reduce((t, a) => t + (achDone(a.id) ? a.sov || 0 : 0), 0);
-    if(owed) earnSov(owed, 'hon', 'hon:old', 'Honours already earned');
+    if(owed) earnSov(owed, 'hon', 'hon:old', 'Honours Already Earned');
   }
   for(const a of B.ACH){
     if(S.achDone[a.id]) continue;
@@ -6926,7 +6931,7 @@ function dailyTick(){
     S.dailyStreak = (S.dailyLastAll === day - 1 ? (S.dailyStreak || 0) : 0) + 1;
     S.dailyLastAll = day;
     const bonus = B.DAILY_ALL + B.DAILY_STREAK * Math.min(B.DAILY_STREAK_MAX, S.dailyStreak);
-    earnSov(bonus, 'today', 'dailyall:' + day, 'All three challenges');
+    earnSov(bonus, 'today', 'dailyall:' + day, 'All Three Challenges');
     toast('<span class="achk">All three +' + bonus + sovIc() + '</span>'
       + (S.dailyStreak > 1 ? S.dailyStreak + ' days running' : 'Done for today'), 'ach');
     Sfx.play('ach');
@@ -7029,7 +7034,7 @@ function festHole(d){
   while(st.got < FEST_AT.length && st.n >= FEST_AT[st.got]){
     const r = FEST_PAY[st.got]; st.got++;
     let say;
-    if(r.k === 'sov'){ earnSov(r.v, 'today', 'fest:' + st.wk + ':' + st.got, F.n + ' prize ' + st.got); say = '+' + r.v + sovIc(); }
+    if(r.k === 'sov'){ earnSov(r.v, 'today', 'fest:' + st.wk + ':' + st.got, F.n + ' Prize ' + st.got); say = '+' + r.v + sovIc(); }
     else if(r.k === 'bag'){ openBag(ciBag(r), true); say = ciLook(r)[3]; }
     else{ const a = ciAmt(r); S[r.k] += a; say = ciLook(r)[3]; }
     if(st.got === FEST_AT.length){ S.festMk = S.festMk || {}; S.festMk[F.mk] = 1; say += ' \u00b7 the ' + F.n + ' tee markers'; }
@@ -7051,8 +7056,7 @@ function festBlock(){
   // bonus as the title read "Wager entries twice as fast", not a title)
   const bonus = F.s.charAt(0).toUpperCase() + F.s.slice(1);
   return '<div class="eyebrow" style="margin:12px 0 0">Festival</div>'
-    + '<div class="row"><div><div class="nm">' + F.n + '</div><div class="ds">' + nb(bonus) + ' \u00b7 Ends in ' + hms(Math.max(0, left)) + '<br>Ribbons for birdies or better: ' + fmt(st.n, 0)
-    + (nx ? ' of ' + nx + ' for prize ' + (st.got + 1) : ' \u00b7 every prize won') + '</div>'
+    + '<div class="row"><div><div class="nm">' + F.n + '</div><div class="ds">' + nb(bonus) + ' \u00b7 Ends in ' + hms(Math.max(0, left)) + '<br>A ribbon for every birdie or better \u00b7 ' + (nx ? fmt(st.n, 0) + ' / ' + fmt(nx, 0) + ' to Prize ' + (st.got + 1) : 'every prize won') + '</div>'
     + '<div class="cadbar"><i style="width:' + Math.round(clamp(nx ? st.n / nx : 1, 0, 1) * 100) + '%"></i></div>'
     + '<div class="mt">' + pipRow(st.got, FEST_AT.length) + ' Prize 5: tee markers</div></div></div>';
 }
@@ -7872,7 +7876,7 @@ function endDgnCore(d, R, D){
       const n = Math.max(1, Math.round(yield_));
       S[d.cur] += n; rewards.push([d.cn, '+' + fmt(n, 0)]);
     }
-    if(R.feat) rewards.push(['Wager of the day', '\u00d7' + fmt(featM)]);
+    if(R.feat) rewards.push(['Wager of the Day', '\u00d7' + fmt(featM)]);
     rewards.push(['Experience', '+' + fmt(xp)]);
     if(deeper) rewards.push(['New best', '+' + B.TICK_DEPTH + ' ' + plural(B.TICK_DEPTH, 'tickets')]);
     // a new personal best always comes home with something
@@ -9078,14 +9082,14 @@ function endTournament(){
   // (paid only on a fair card: see fairCard)
   const fair = fairCard(), rivalBeat = !OFFLINE && fair && Rv && score < Rv.total;
   if(!OFFLINE){
-    if(rivalBeat){ bump('rivals'); earnSov(B.RIVAL_SOV, 'today', 'rival', 'Rival beaten'); }
+    if(rivalBeat){ bump('rivals'); earnSov(B.RIVAL_SOV, 'today', 'rival', 'Rival Beaten'); }
     // the season's series: a win or a loss each event, and won outright by
     // its last event pays RIVAL_SERIES
     if(Rv){
       const sn = seasonOf(t);
       if(!S.rivalSer || S.rivalSer.s !== sn) S.rivalSer = { s: sn, w: 0, l: 0 };
       if(rivalBeat) S.rivalSer.w++; else if(score > Rv.total) S.rivalSer.l++;
-      if(seasonOf(t + 1) !== sn && fair && S.rivalSer.w > S.rivalSer.l){ S.rivalSer.won = 1; earnSov(B.RIVAL_SERIES, 'today', 'rivalser', 'Rival series won'); }
+      if(seasonOf(t + 1) !== sn && fair && S.rivalSer.w > S.rivalSer.l){ S.rivalSer.won = 1; earnSov(B.RIVAL_SERIES, 'today', 'rivalser', 'Rival Series Won'); }
     }
     S.form = S.form === undefined ? score : S.form * (1 - B.RIVAL_FORM) + score * B.RIVAL_FORM;
   }
@@ -9427,7 +9431,7 @@ function tickShop(dt){
   S.memberT = (S.memberT || 0) + cov;
   while(S.memberT >= 86400){
     S.memberT -= 86400;
-    earnSov(B.MEMBER_DAILY, 'today', 'member', 'Members\u2019 allowance');
+    earnSov(B.MEMBER_DAILY, 'today', 'member', 'Members\u2019 Allowance');
   }
 }
 
@@ -30621,7 +30625,7 @@ const huntRunFor = wk => S.huntRun && S.huntRun.wk === wk - 1 ? S.huntRun.n + 1 
 const huntPayFor = n => B.HUNT_SOV + B.HUNT_STREAK * Math.min(n - 1, B.HUNT_STREAK_MAX);
 function huntPay(H){
   H.paid = 1; const n = huntRunFor(H.wk), pay = huntPayFor(n);
-  S.huntRun = { wk: H.wk, n }; earnSov(pay, 'guide', 'hunt:' + H.wk, 'The week\u2019s hunt');
+  S.huntRun = { wk: H.wk, n }; earnSov(pay, 'guide', 'hunt:' + H.wk, 'Weekly Hunt');
   return pay;
 }
 // The monthly hunt: three of the rarer ones to spot this calendar month,
@@ -30649,7 +30653,7 @@ function mhuntSee(ids){
   if(!fresh.length || !fairCard()) return null;
   H.got.push(...fresh);
   const paid = H.got.length >= 3 && !H.paid;
-  if(paid){ H.paid = 1; earnSov(B.MHUNT_SOV, 'guide', 'mhunt:' + H.mo, MONTH_NAME[H.mo % 12] + '\u2019s hunt'); }
+  if(paid){ H.paid = 1; earnSov(B.MHUNT_SOV, 'guide', 'mhunt:' + H.mo, MONTH_NAME[H.mo % 12] + ' Hunt'); }
   return { fresh, n: H.got.length, paid, pay: paid ? B.MHUNT_SOV : 0 };
 }
 // this week's hunt still to finish (the medal's round dot); none in a wager
@@ -30665,7 +30669,7 @@ function shelfCheck(){
   for(const [k, t] of GUIDE_SHELF){
     if((S.shelfDone || {})[k] || !shelfFull(k)) continue;
     S.shelfDone = S.shelfDone || {}; S.shelfDone[k] = 1;
-    const pay = k === 'b' ? 0 : B.SHELF_SOV; if(pay) earnSov(pay, 'guide', 'shelf:' + k, t + ' complete');
+    const pay = k === 'b' ? 0 : B.SHELF_SOV; if(pay) earnSov(pay, 'guide', 'shelf:' + k, t + ' Complete');
     if(!QUIET && !OFFLINE) toast('<span class="achk">Field Guide</span>' + t + ' complete' + (pay ? ' \u00b7 <span style="white-space:nowrap">+' + pay + sovIc() + '</span>' : ''), 'ach');
   }
 }
@@ -30764,15 +30768,15 @@ function courseWildSee(sc){
     S.cwildStar = S.cwildStar || {};
     if(rw.length && !S.cwildStar[cs.id] && (S.cwildDone || {})[cs.id] && rareGot(cs.id).length === rw.length){
       S.cwildStar[cs.id] = 1;
-      earnSov(B.WILD_STAR_SOV, 'today', 'wildstar:' + cs.id, cs.n + ' rare visitors');
+      earnSov(B.WILD_STAR_SOV, 'today', 'wildstar:' + cs.id, cs.n + ' Rare Visitors');
       if(!QUIET && !OFFLINE) toast('<span class="achk">Gold Star</span>' + cs.n + ' \u00b7 its rare visitors seen \u00b7 <span style="white-space:nowrap">+' + B.WILD_STAR_SOV + sovIc() + '</span>', 'ach');
     } }
   S.cwildDone = S.cwildDone || {};
   if(S.cwildDone[cs.id] || wildGot(cs.id).length < want.length) return;
   S.cwildDone[cs.id] = 1;
-  earnSov(B.WILD_SOV, 'today', 'wild:' + cs.id, cs.n + ' wildlife complete');
+  earnSov(B.WILD_SOV, 'today', 'wild:' + cs.id, cs.n + ' Wildlife Complete');
   if(rareOf(cs.id).length && !(S.cwildStar || {})[cs.id] && rareGot(cs.id).length === rareOf(cs.id).length){
-    S.cwildStar = S.cwildStar || {}; S.cwildStar[cs.id] = 1; earnSov(B.WILD_STAR_SOV, 'today', 'wildstar:' + cs.id, cs.n + ' rare visitors'); }
+    S.cwildStar = S.cwildStar || {}; S.cwildStar[cs.id] = 1; earnSov(B.WILD_STAR_SOV, 'today', 'wildstar:' + cs.id, cs.n + ' Rare Visitors'); }
   if(!QUIET && !OFFLINE) toast('<span class="achk">Collection</span>' + cs.n + ' \u00b7 every animal seen \u00b7 <span style="white-space:nowrap">+' + B.WILD_SOV + sovIc() + '</span>', 'ach');
 }
 // a wager's own animal (WAGER_WILD), as its scene is laid: counted and
@@ -30793,7 +30797,7 @@ function guideAdd(got){
     if(!S.guide[id]) firsts.push(g.n);
     S.guide[id] = (S.guide[id] || 0) + 1;
   }
-  if(firsts.length) earnSov(B.GUIDE_SOV * firsts.length, 'guide', 'guide', 'First sightings');
+  if(firsts.length) earnSov(B.GUIDE_SOV * firsts.length, 'guide', 'guide', 'First Sightings');
   const hunt = huntSee(got), mh = mhuntSee(got);
   if(firsts.length) shelfCheck();
   // the animals in a tag over the map, with what they paid and the hunt;
@@ -30929,7 +30933,7 @@ const GUIDE_BADGE = 100;
 function roomGuide(w){
   const seen = S.guide || {}, n = GUIDE.filter(g => seen[g.id]).length;
   const n100 = GUIDE.filter(g => (seen[g.id] || 0) >= GUIDE_BADGE).length;
-  let h = '<div class="eyebrow" style="margin:6px 0 4px">Field Guide \u00b7 ' + n + '/' + GUIDE.length + (n100 ? ' \u00b7 \u2605' + n100 : '') + ' \u00b7 +' + B.GUIDE_SOV + sovIc() + ' each</div>';
+  let h = '<div class="eyebrow" style="margin:6px 0 4px">Seen ' + n + '/' + GUIDE.length + (n100 ? ' \u00b7 \u2605' + n100 : '') + ' \u00b7 +' + B.GUIDE_SOV + sovIc() + ' a new one</div>';
   // (this week's hunt first: its three, found or where to look)
   { const H = huntNow(), want = huntOf(H.wk);
     // (the weeks in a row so far, this one counted once it is done)
@@ -30953,7 +30957,7 @@ function roomGuide(w){
     // (a wager pays nothing for what is seen in it: said on its shelf)
     const sh = GUIDE.filter(x => x.g === k), sn = sh.filter(x => seen[x.id]).length, full = sn === sh.length;
     h += '<div class="eyebrow" style="margin:10px 0 4px">' + t + ' \u00b7 ' + (full ? '<span style="color:var(--brass)">\u2713\u00a0Complete</span>' : sn + '/' + sh.length)
-      + (k === 'b' ? ' \u00b7 not paid' : !full && !(S.shelfDone || {})[k] ? ' \u00b7 +' + B.SHELF_SOV + sovIc() + '\u00a0whole' : '') + '</div><div class="guide">';
+      + (k === 'b' ? ' \u00b7 not paid' : !full && !(S.shelfDone || {})[k] ? ' \u00b7 +' + B.SHELF_SOV + sovIc() + '\u00a0when full' : '') + '</div><div class="guide">';
     for(const g of GUIDE.filter(x => x.g === k)){
       const [url, wh] = guideUrl(g.id).split('|'), [sw, sh] = (wh || '12x12').split('x').map(Number);
       const z = Math.max(1, Math.floor(Math.min(60 / sw, 44 / sh)));
@@ -31042,7 +31046,7 @@ function roomToday(w){
   const kinds = new Set(P.map(x => x.c.id)).size + (ready ? 1 : 0) + OW.length;
   let h = kinds > 1 ? '<button class="act" data-collect="">GET ALL \u00b7 +' + sovFmt(all) + ' ' + B.SOV + '</button>' : '';
   h += '<div class="eyebrow" style="margin:6px 0 4px">To Get</div>'
-    + roomLine('Free ' + B.SOV.toLowerCase() + ' \u00b7 Every ' + Math.round(B.FREE_EVERY / 3600) + ' hours',
+    + roomLine('Free ' + B.SOV + ' \u00b7 Every ' + Math.round(B.FREE_EVERY / 3600) + ' hours',
         ready ? '' : 'in ' + hms(B.FREE_EVERY - (S.freeT || 0)),
         ready ? collectBtn('free', B.FREE_GIFT) : '');
   const byTrack = {};
@@ -31051,7 +31055,6 @@ function roomToday(w){
     const list = byTrack[c.id]; if(!list) continue;
     h += roomLine('Cabinet \u00b7 ' + c.n, '', collectBtn(c.id, casePay(list)));
   }
-  if(!P.length) h += roomLine('Cabinet', '<span style="color:var(--faint)">nothing waiting</span>');
   for(const x of OW) h += roomLine(nb(x.t), '', getBtn('today', x.k, x.n));
   // (what waits in the other tabs, to be taken there)
   for(const [p, t] of OWED_PLACES) if(p !== 'today' && owedSum(p))
@@ -31067,8 +31070,8 @@ function roomToday(w){
     + row2(M.cs.n, '<b style="color:var(--brass)">Major of the Week</b> \u00b7 ' + say + ' \u00b7 New in\u00a0' + wk)
     + row2(SIG_NAME[sigWeek()], '<b style="color:var(--brass)">Signature Hole of the Week</b> \u00b7 Pays\u00a0'
         + B.SIG_WEEK_MULT + '\u00d7')
-    + row2(fw.n, 'Wager of the day \u00b7 Pays ' + B.DGN_FEAT_MULT + '\u00d7 \u00b7 New in\u00a0' + hms(featLeft()))
-    + (isMember() ? row2('Club Membership', '+' + B.MEMBER_DAILY + sovIc() + ' a day \u00b7 next in\u00a0' + hms(86400 - (S.memberT || 0))) : '');
+    + row2(fw.n, '<b style="color:var(--brass)">Wager of the Day</b> \u00b7 Pays ' + B.DGN_FEAT_MULT + '\u00d7 \u00b7 New in\u00a0' + hms(featLeft()))
+    + (isMember() ? row2('Club Membership', '+' + B.MEMBER_DAILY + sovIc() + ' a day \u00b7 Next in\u00a0' + hms(86400 - (S.memberT || 0))) : '');
   w.innerHTML = h;
 }
 // today's three, their bonus and the streak
@@ -31081,7 +31084,7 @@ function dailyBlock(){
     + Dy.picks.map((id, i) => {
         const c = dailyDef(id); if(!c) return '';
         return roomLine((Dy.done[i] ? '\u2713 ' : '') + nb(c.d),
-          fmt(dailyHave(c, i), 0) + '/' + fmt(c.v, 0) + ' \u00b7 +' + B.DAILY_SOV + sovIc());
+          achCnt(dailyHave(c, i)) + ' / ' + achCnt(c.v) + ' \u00b7 +' + B.DAILY_SOV + sovIc());
       }).join('')
     + roomLine('<i>' + (Dy.all ? '\u2713 All three' : 'All three') + '</i>', '+' + bonus + sovIc());
 }
