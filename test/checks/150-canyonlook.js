@@ -56,10 +56,6 @@ module.exports = {
       const out = {}; let TH = null, keepC, keepK;
       try {
         QUIET = true; window.requestAnimationFrame = () => 0;
-        // (no storm: its THUNDER in the corner, there when lightning struck, poked
-        // above the corner left out and read as 21 pixels of grass under the rim,
-        // one run in three under a full run's load)
-        STORM_FORCE = 0;
         DEV.course(0); hideSheet(); S.chaos = { n: 'Fair' }; DEV.canyon(); hideSheet(); Scene.announce = null;
         const I = Scene.isle, W = Scene.water, D = derive();
         P_CANYON.tone = (T, fz) => fz < 0.005 ? T.lip : '#FF00FF';
@@ -71,7 +67,10 @@ module.exports = {
         // scenery and the people stand where they stand)
         Scene.drawCaddie = () => {}; Scene.props = [];
         for (const [name, cam] of [['rim', I.bank - 1.5], ['onto', I.bank + 1.2], ['bridge', (I.bank + I.land) / 2], ['far', I.land - 1.5]]) {
-          for (let k = 0; k < 2; k++) { Scene.camD = cam; Scene.draw(0, D); }
+          // (no shot's name rising up the left edge: under a full run's load a
+          // Thunder Drive went off before the picture, and its teal THUNDER read
+          // as 21 pixels of grass under the far rim, one run in three)
+          for (let k = 0; k < 2; k++) { Scene.camD = cam; Scene.casts.length = 0; Scene.draw(0, D); }
           const px = Scene.buf.getContext('2d').getImageData(0, 0, VW, VH).data;
           const mag = (x, y) => { const i = (y * VW + x) * 4; return px[i] > 200 && px[i + 1] < 90 && px[i + 2] > 200; };
           // the canyon's rows: from the topmost magenta row to the lowest
@@ -102,7 +101,7 @@ module.exports = {
             if (under > 20) f(name + ': from over the gorge, ' + under + ' pixels of grass under its far rim'); }
         }
       } finally {
-        P_CANYON.tone = keepTone; if (TH) { TH._cns = keepC; TH._ck = keepK; } Scene.drawCaddie = keepCad; STORM_FORCE = null; window.requestAnimationFrame = raf; QUIET = false;
+        P_CANYON.tone = keepTone; if (TH) { TH._cns = keepC; TH._ck = keepK; } Scene.drawCaddie = keepCad; window.requestAnimationFrame = raf; QUIET = false;
         CANYON_FORCE = 0; Object.assign(S, JSON.parse(SNAP)); Scene.newHole(S.hole, S.tier);
       }
       return { fails, out };
