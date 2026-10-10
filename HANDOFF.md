@@ -57,7 +57,7 @@ through:
   new a switch. Earlier work: the sections under it.
 - What lives by the season asks `lookSeason`: a course's own, the Snowline
   winter and the Blossom spring all year, else the month.
-- `node test/run.js` has **198 checks** (all passed 10 October, after the
+- `node test/run.js` has **199 checks** (all passed 10 October, after the
   Honours wording pass). About 35 minutes: run it in the
   background, on a copy in the scratchpad, with the machine quiet. After
   weather, colours or anything dated, also run it with `HOUR_FORCE` 8 and
@@ -76,7 +76,8 @@ through:
   and the condition by the cog, the smaller pop-ups and the loading screen
   on his phone (all 8 October); the redesigned Tour Pass page, the gear
   padlocks, the house in the treeline (9 October); the Honours
-  list's new wording (10 October).
+  list's new wording (10 October); The Penitent, the Mythic skin from his
+  sprite sheet (outfit only: offer its caddie, driver, wake and ball).
 - Settled, in case it comes up: swing speed still matters fully (a hole's
   time is when the ball drops); Fast Walker only shortens a hole's least
   time; every caddie has a trick (don't offer caddie tricks); Dawn and

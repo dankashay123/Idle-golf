@@ -964,6 +964,8 @@ li.afx.on .lockb{color:var(--brass);border-color:var(--brass);background:rgba(22
 .badge{position:absolute;top:2px;right:2px;background:var(--r5);color:#120A1E;font-size:var(--f0);
   font-weight:700;padding:1px 4px;letter-spacing:.04em;z-index:2}
 .card .cart.hasbadge{padding-top:22px}
+/* (at 320 LEGENDARY ran past the card's left edge and read EGENDARY) */
+@media (max-width:359px){ .badge{letter-spacing:0;padding:1px 2px;font-size:8px} .card .chd{letter-spacing:0;padding:5px 2px} }
 .sovline{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px;
   font-size:var(--f1);color:var(--dim)}
 .sovline b{font-family:var(--mono);font-size:var(--f4);color:var(--sov)}
@@ -4326,6 +4328,14 @@ const B = {
       cap:'#2E3550', cap2:'#1E2335', shirt:'#2E3550', shirt2:'#232A40', shirt3:'#181D2E', pant:'#262D45', pant2:'#181D2E',
       skin:'#2E3550', skin2:'#1E2335', shoe:'#141826', belt:'#C8F23A', hair:'#1E2335', hand:'#C8F23A',
       bulk:1, arm:'#2E3550', arm2:'#1E2335' },
+    // The Penitent Choir (the user's own sprite sheet): veiled in ivory, his
+    // face black under it, a sunburst of gold behind his head, robes of
+    // ivory and crimson worked in gold, a censer at his waist, candles
+    // floating round him, a dais of old stone under him
+    { id:'penitent', n:'The Penitent', cost:3500, fx:'penitent', cat:'skin', top:2, pattern:'penrobe', pantPattern:'penfold',
+      cap:'#F2E4C4', cap2:'#D8C49C', shirt:'#3E3A46', shirt2:'#2E2A34', shirt3:'#221A20', pant:'#7A1828', pant2:'#4E0E18',
+      skin:'#2E2A34', skin2:'#221A20', shoe:'#2E2A34', belt:'#D8A848', hair:'#F2E4C4', hand:'#D8C49C',
+      bulk:1, arm:'#3E3A46', arm2:'#2E2A34' },
     // Psychedelic (the user named him): clothes in a spiral of six colours
     // that keep turning, a rainbow afro, mirror shades and a third eye, a
     // mandala behind his head and a spiral turning under his feet
@@ -9823,7 +9833,7 @@ const SKIN_ACCENT = { divine:['#3FD6A8', '#F4D27A'], inferno:['#FFB43A', '#F0612
   stormcaller:['#8FD0FF', '#FFFFFF'], void:['#C68BFF', '#6E44A0'], glitch:['#FF2A6D', '#2AE0FF'],
   midas:['#FFFFFF', '#FFD86B'], disco:['#FF4FB8', '#3FE0FF'], ghost:['#EEF2FF', '#A5B0D6'],
   demonic:['#FF5A1E', '#FFD34A'], ascended:['#C070F0', '#F2A6F8'], cosmic:['#B98CFF', '#7FE6FF'],
-  dread:['#5CF0A0', '#D8D2BC'], psyche:['#FF2E88', '#2EC8FF'], cyber:['#C8F23A', '#FF3AD0'] };
+  dread:['#5CF0A0', '#D8D2BC'], psyche:['#FF2E88', '#2EC8FF'], cyber:['#C8F23A', '#FF3AD0'], penitent:['#F4D27A', '#A8283A'] };
 // and the dearest two a little more of themselves on their tiles: the
 // Demonic's horns and wings, the Ascended's horns, hair of fire, the light
 // in his chest and his cape; his imp's horns, flame, green eye and the heart
@@ -9864,6 +9874,15 @@ const ICON_FX = {
   },
   // Cyber-Drive: the lime crest over his helmet, its purple visor, the
   // lime pads at his shoulders; his caddie's crest and visor
+  // The Penitent Choir: the spikes of his halo over his veil, the black of
+  // his face, a candle either side, his crimson sash and his censer
+  penitent(P, caddie){
+    if(caddie) return;
+    const G = '#D8A848', L = '#F4D27A', K = '#0A0608', R = '#A8283A', W = '#F2E4C4', F = '#FF9A2A';
+    P(3, 0, G); P(5, 0, L); P(7, 0, L); P(9, 0, G); P(2, 1, G); P(10, 1, G); P(1, 2, L); P(11, 2, L);
+    P(6, 3, K); P(7, 3, K); P(0, 6, F); P(0, 7, W); P(0, 8, W); P(11, 6, F); P(11, 7, W); P(11, 8, W);
+    P(5, 6, R); P(6, 7, R); P(3, 10, G); P(3, 11, '#A8782E');
+  },
   cyber(P, caddie){
     const L = '#C8F23A', V = '#7A3CFF', W = '#C9A0FF';
     if(caddie){ for(let x = 2; x <= 5; x++) P(x, 0, L); P(5, 2, V); P(6, 2, W); P(7, 2, V); return; }
@@ -13071,6 +13090,15 @@ const PATTERNS = {
   // Cyber-Drive: navy plate in panels, a dark seam every few rows, a lit
   // edge on the lightest, lime pads at the knee and a lime light here and
   // there
+  // The Penitent Choir: ivory robe, a sash of crimson across his chest
+  // edged in gold, gold worked at his cuffs and here and there in the cloth
+  penrobe: (x, y, sh) => { const d = (x + y * 0.8) % 14;
+    if(d >= 5 && d < 8) return d === 5 || d === 7.5 ? '#D8A848' : sh ? '#4E0E18' : '#7A1828';
+    if(d >= 4.2 && d < 5 || d >= 8 && d < 8.8) return '#D8A848';
+    if(hr(x * 5 + 1, y * 3 + 7) > 0.96) return '#F4D27A';
+    return null; },
+  penfold: (x, y, sh) => { if(y >= 52) return x & 1 ? '#A8782E' : '#D8A848';
+    const f = (x * 2 + (y >> 3)) % 6; return f === 0 ? '#4E0E18' : f === 2 && !sh ? '#A8283A' : null; },
   cyberplate: (x, y, sh) => {
     if(y === 44 || y === 45) return sh ? '#8FB21E' : '#C8F23A';
     if(y % 7 === 0) return '#141826';
@@ -15263,7 +15291,7 @@ function flameAura(c, g, up, P, calm){
 // him, never up the sky)
 const LEGEND_DUR = 0.5, LEGEND_BIG = 0.5;
 // the looks that have one (the newer ones silent: the user wants no more sounds)
-const LEGEND_FX = ['demonic', 'ascended', 'divine', 'cosmic', 'dread', 'psyche', 'cyber'];
+const LEGEND_FX = ['demonic', 'ascended', 'divine', 'cosmic', 'dread', 'psyche', 'cyber', 'penitent'];
 // night on the course (never the Vault's cellar): The Dread and
 // Psychedelic glow the more for it
 function nightNow(){ return !!Scene.night && !S.dgnRun; }
@@ -16539,6 +16567,142 @@ const STYLEFX = {
         const x = P.x + Math.cos(a) * r, y = ty + Math.sin(a) * r * 0.6, d = Math.hypot(P.x - x, ty - y) || 1;
         dreadSoul(c, x, y, (P.x - x) / d, (ty - y) / d, 0, 1);
       }
+    }
+  },
+  /* ---- The Penitent Choir ----
+     After the user's own sprite sheet: veiled in ivory, his face black
+     under it, a sunburst of gold behind his head, robes of ivory and
+     crimson worked in gold, a crimson stole streaming behind, a censer
+     swinging at his waist with incense rising, candles floating round him
+     and a dais of old stone under him ringed with candles. As he winds up
+     his halo and every flame flare; as he strikes, a ring of gold runs out
+     over the grass; on an albatross or an ace, gold light, flames and
+     crimson petals burst out of him, silent. */
+  penitent: {
+    outline: '#F4D27A', outlineA: 0.30,
+    charge(ph){ return STYLEFX.ascended.charge(ph); },
+    strike(ph){ return STYLEFX.ascended.strike(ph); },
+    sigilSize(g){ return STYLEFX.cosmic.sigilSize(g); },
+    px(g){ return g.h / 58; },
+    lit(g){ const L = legendNow(g); return L || this.charge(g.ph) > 0.5 || this.strike(g.ph) >= 0 ? 1 : 0; },
+    ground(c, g){
+      if(g.minor) return;
+      const [rx, ry] = this.sigilSize(g), L = legendNow(g), st = this.strike(g.ph), lit = this.lit(g);
+      const X = Math.round(g.cx), Y = Math.round(g.bot), step = Math.floor(g.t * 3 + (g.ph > 0 ? g.ph * 24 : 0)) % 24;
+      const D = penDais(Math.round(rx), Math.round(ry), step, lit);
+      c.globalAlpha = 1; c.drawImage(D, X - D.ox, Y - D.oy);
+      // candles round its rim, the far ones first
+      if(g.h >= 26){ const k = Math.max(1, Math.round(g.h / 52)), tall = g.h >= 50 ? 4 : 3;
+        for(const a of [Math.PI * 1.15, Math.PI * 1.5, Math.PI * 1.85, Math.PI * 0.12, Math.PI * 0.88]){
+          penCandle(c, X + Math.cos(a) * rx * 0.93, Y + Math.sin(a) * ry * 0.93, k, tall, g.t + a, lit); } }
+      if(g.h < 30) {}
+      else if(L) this.wave(c, X, Y, rx, ry, L.f, L.big ? 1.8 : 1.6);
+      else if(st >= 0) this.wave(c, X, Y, rx, ry, st, 1.55);
+      c.globalAlpha = 1;
+    },
+    // a ring of gold light running out over the grass, flames licking up
+    wave(c, X, Y, rx, ry, f, R){
+      const s = 1 + f * (R - 1), n = Math.max(24, Math.round((rx + ry) * s * 2));
+      c.globalAlpha = 1;
+      for(let i = 0; i < n; i++){ if(hr(i, 702) < f * 0.7) continue; const a = i / n * Math.PI * 2;
+        const x = Math.round(X + Math.cos(a) * rx * s), y = Math.round(Y + Math.sin(a) * ry * s);
+        c.fillStyle = f < 0.35 ? '#FFF2C0' : f < 0.7 ? '#F4D27A' : '#D8A848'; c.fillRect(x, y, 2, 1);
+        if(i % 3 === 0 && f < 0.75){ const L = 1 + Math.round(2 * (1 - f) * hr(i, 703)); c.fillStyle = '#FF9A2A'; c.fillRect(x, y - L, 1, L); c.fillStyle = '#FFF2C0'; c.fillRect(x, y - L - 1, 1, 1); } }
+    },
+    back(c, g){
+      if(g.minor) return;
+      if(!g.back){ this.stole(c, g); this.halo(c, g); }
+      this.candles(c, g, false);
+      c.globalAlpha = 1;
+    },
+    body(c, g){
+      this.robe(c, g);
+      this.hood(c, g);
+    },
+    front(c, g){
+      if(g.minor) return;
+      const N = nightNow();
+      // walking away his stole hangs down his back and his halo is between
+      // him and us
+      if(g.back){ this.stole(c, g); this.hood(c, g); this.halo(c, g); }
+      if(N) this.nightGlow(c, g);
+      this.censer(c, g);
+      this.candles(c, g, true);
+      const L = legendNow(g);
+      if(L) outlineBurst(c, g, L, 56, 0.95, (x, y, i, f, dx, dy) => {
+        const X = Math.round(x), Y = Math.round(y);
+        if(i % 4 === 0){ c.fillStyle = '#FF9A2A'; c.fillRect(X, Y, 1, 2); c.fillStyle = f < 0.5 ? '#FFFFFF' : '#FFF2C0'; c.fillRect(X, Y - 1, 1, 1); }
+        else if(i % 4 === 1){ c.fillStyle = '#A8283A'; c.fillRect(X, Y, 2, 1); c.fillStyle = '#7A1828'; c.fillRect(X + 1, Y + 1, 1, 1); }
+        else burstStreak(c, x, y, dx, dy, f < 0.4 ? '#FFF2C0' : i & 1 ? '#F4D27A' : '#D8A848', '#A8782E', 3); });
+      c.globalAlpha = 1;
+    },
+    // where his head is: side on the veil's origin, its halo behind it
+    halo(c, g){
+      const p = this.px(g), H = g.head, sh = g.shear && !g.back ? g.shear(0.1) : 0, L = legendNow(g);
+      const step = Math.floor(g.t * 8) % 24, Hl = penHalo(p * 1.35 * (L ? 1 + 0.12 * outBack(L.f, 0.2) : 1), step, this.lit(g));
+      const x = g.back ? H.x : H.x + sh - 1.5 * p, y = H.y - (g.back ? 0.5 : 1) * p + Math.sin(g.t * 1.3) * p * 0.4;
+      c.globalAlpha = 1; c.drawImage(Hl.cv, Math.round(x - Hl.ox), Math.round(y - Hl.oy));
+    },
+    hood(c, g){
+      const p = this.px(g), H = g.head, view = g.back ? 'back' : 'side';
+      const Hd = penHood(p, view), sh = g.shear && !g.back ? g.shear(0.1) : 0;
+      c.globalAlpha = 1; c.drawImage(Hd.cv, Math.round(H.x + sh - Hd.ox), Math.round(H.y - Hd.oy));
+    },
+    robe(c, g){
+      if(g.minor) return;
+      const pose = g.back ? 'back' : g.spr === SPRITE.gFinish || g.spr === SPRITE.gWalk ? 'fin' : 'addr';
+      const Rb = penRobe(Math.round(g.w), Math.round(g.h), pose, Math.floor(g.t * 4) % 12), sh = g.shear && !g.back ? g.shear(0.7) : 0;
+      c.globalAlpha = 1; c.drawImage(Rb.cv, Math.round(g.x + g.w * Rb.x / 40 + sh), Math.round(g.y + g.h * Rb.y / 58));
+    },
+    stole(c, g){
+      const pose = g.back ? 2 : g.spr === SPRITE.gFinish ? 1 : 0;
+      const C = penStole(Math.round(g.w), Math.round(g.h), pose, Math.floor(g.t * 6) % 12);
+      c.globalAlpha = 1; c.drawImage(C.cv, Math.round(g.x + (g.shear && !g.back ? g.shear(0.3) : 0) - C.ox), Math.round(g.y));
+    },
+    hip(g){ return STYLEFX.dread.hip(g); },
+    // the censer swinging on its chain from his waist: a dome of gold, a
+    // bowl pierced with the embers showing through, incense curling up
+    censer(c, g){
+      const P = this.hip(g); if(!P) return;
+      const k = Math.max(1, Math.round(g.h / 40)), q = this.charge(g.ph);
+      const sw = Math.sin(g.t * 1.9) * 0.35 + (g.ph > 0 && g.ph < 0.55 ? -0.35 * Math.sin(g.ph / 0.55 * Math.PI) : 0);
+      const L = Math.max(3, Math.round(g.h * 0.09)), bx = Math.round(P.x + Math.sin(sw) * L), by = Math.round(P.y + Math.cos(sw) * L);
+      c.globalAlpha = 1;
+      for(let i = 0; i < L; i++){ c.fillStyle = i & 1 ? '#6E4E1E' : '#D8A848'; c.fillRect(Math.round(P.x + Math.sin(sw) * i), Math.round(P.y + Math.cos(sw) * i), 1, 1); }
+      const W = 4 * k, x0 = bx - Math.floor(W / 2);
+      c.fillStyle = '#6E4E1E'; c.fillRect(x0 + k, by, W - 2 * k, k);
+      c.fillStyle = '#D8A848'; c.fillRect(x0, by + k, W, k);
+      c.fillStyle = '#A8782E'; c.fillRect(x0, by + 2 * k, W, 2 * k);
+      const fl = Math.sin(g.t * 9) > 0 || q > 0.3;
+      c.fillStyle = fl ? '#FF9A2A' : '#A8283A'; c.fillRect(x0 + k, by + 2 * k, k, k); if(W >= 4) c.fillRect(x0 + W - 2 * k, by + 2 * k, k, k);
+      c.fillStyle = '#6E4E1E'; c.fillRect(x0 + k, by + 4 * k, W - 2 * k, k);
+      if(g.h >= 50){ c.fillStyle = '#F4D27A'; c.fillRect(x0, by + k, k, k); }
+      // incense rising off it, drifting back
+      if(g.h >= 30) for(let i = 0; i < 7; i++){ const u = (g.t * 0.5 + i / 7) % 1;
+        const x = Math.round(bx - u * g.w * 0.15 + Math.sin(g.t * 2 + i * 1.7) * 1.5), y = Math.round(by - k - u * g.h * 0.14);
+        c.fillStyle = u < 0.35 ? '#F2E4C4' : u < 0.7 ? '#D8C49C' : '#B09A74';
+        if(u < 0.6){ c.fillRect(x, y, 1, 1); if(u > 0.25) c.fillRect(x + 2, y - 1, 1, 1); } }
+    },
+    // candles floating round him on a tilted ring, the far half before him
+    // and the near half after; flung out a little on a great hole
+    candles(c, g, front){
+      const L = legendNow(g), out = L ? 1 + (L.big ? 0.5 : 0.35) * outBack(L.f, 0.18) : 1, lit = this.lit(g);
+      const N = 4, rx = g.w * 0.95 * out, ry = Math.max(2, g.h * 0.08) * out, oy = g.y + g.h * 0.36, ct = Math.cos(0.16), sn = Math.sin(0.16), cx = g.cx;
+      const k = Math.max(1, Math.round(g.h / 56)), tall = g.h >= 50 ? 4 : 3;
+      const spin = g.t * 0.6 + (g.ph > 0 ? g.ph * Math.PI : 0);
+      for(let i = 0; i < N; i++){
+        const a = spin + i * Math.PI * 2 / N, bob = Math.sin(g.t * 1.5 + i * 2) * g.h * 0.025;
+        if((Math.sin(a) > 0) !== front) continue;
+        const X = Math.cos(a) * rx, Y = Math.sin(a) * ry;
+        penCandle(c, cx + X * ct - Y * sn, oy + X * sn + Y * ct + bob, k, tall, g.t + i, lit);
+      }
+    },
+    // after dark the light of his halo, his censer and his candles
+    nightGlow(c, g){
+      const p = this.px(g), H = g.head, P = this.hip(g), halo = STYLEFX.dread.halo;
+      if(P) { halo(c, P.x, P.y + g.h * 0.12, g.h * 0.1, '#6E4E1E'); halo(c, P.x, P.y + g.h * 0.12, g.h * 0.06, '#A8782E'); }
+      const x = g.back ? H.x : H.x + (g.shear ? g.shear(0.1) : 0) - 1.5 * p;
+      halo(c, x, H.y, p * 16, '#6E4E1E');
     }
   },
   /* ---- Cyber-Drive: the Tour Pass's mech ----
@@ -19496,6 +19660,211 @@ const CY_PAL = ['#0B0E18', '#141826', '#181D2E', '#1E2335', '#262D45', '#2E3550'
 // of his cap: side on (facing right) and from behind
 const CYHELM_SIDE = [[4.9, 7.6], [5.1, 3], [3.6, 0.4], [0, -0.9], [-3.6, -0.4], [-5.7, 2], [-6.1, 6], [-5.1, 9], [-2, 10.4], [2, 10.2], [4.6, 9.2]];
 const CYHELM_BACK = [[0, -0.9], [-4, -0.1], [-6, 2.5], [-6.4, 6], [-5.1, 9], [-2.5, 10.3], [2.5, 10.3], [5.1, 9], [6.4, 6], [6, 2.5], [4, -0.1]];
+// ---- The Penitent Choir (after the user's own sprite sheet) ----
+// A tall figure veiled in ivory, his face lost in black under it, a great
+// sunburst of gold spikes behind his head, robes of ivory and crimson worked
+// in gold to the ground, a crimson stole streaming behind him, a gold censer
+// swinging from his waist with incense rising off it, candles floating round
+// him and a dais of old stone under his feet ringed with candles.
+const PEN_PAL = ['#0A0608', '#140E12', '#221A20', '#2E2A34', '#3E3A46', '#55505E', '#4E0E18', '#7A1828', '#A8283A', '#C8484A',
+                 '#F2E4C4', '#D8C49C', '#B09A74', '#7E6A50', '#6E4E1E', '#A8782E', '#D8A848', '#F4D27A', '#FFF2C0', '#FFFFFF', '#FF9A2A'];
+// his veil over the hood's shape (the Dread's, fitted to his head): ivory,
+// folds down it, a gold band at his brow, the dark of his face under it
+// side on, and its tails hanging longer down his back
+function penHood(p, view){
+  const P = view === 'back' ? HOOD_BACK : HOOD_SIDE, pad = 2;
+  const xs = P.map(q => q[0]), ys = P.map(q => q[1]);
+  const x0 = Math.min(...xs) - 1, y0 = Math.min(...ys);
+  const W = (Math.max(...xs) - x0 + 1) * p + pad * 2 + 2, H = (Math.max(...ys) - y0 + 6) * p + pad * 2 + 2, ox = -x0 * p + pad, oy = -y0 * p + pad;
+  const cv = fxBake('phood|' + p.toFixed(3) + '|' + view, W, H, g => {
+    const X = q => ox + q[0] * p, Y = q => oy + q[1] * p, lw = Math.max(1, p * 0.9);
+    const line = (pts, col, w) => { g.strokeStyle = col; g.lineWidth = w; g.lineJoin = 'round'; g.beginPath(); g.moveTo(X(pts[0]), Y(pts[0])); for(const q of pts.slice(1)) g.lineTo(X(q), Y(q)); g.stroke(); };
+    // the veil's tails, longer than the hood, hanging behind
+    const tail = view === 'back' ? [[-9, 10], [-10, 18], [10, 18], [9, 10]] : [[-6, 6], [-9, 12], [-11, 18], [-5, 17], [-2, 10]];
+    g.beginPath(); g.moveTo(X(tail[0]), Y(tail[0])); for(const q of tail.slice(1)) g.lineTo(X(q), Y(q)); g.closePath();
+    g.fillStyle = '#D8C49C'; g.fill();
+    line(view === 'back' ? [[-10, 18], [10, 18]] : [[-11, 18], [-5, 17]], '#A8283A', Math.max(1, p * 1.1));
+    g.beginPath(); g.moveTo(X(P[0]), Y(P[0])); for(const q of P.slice(1)) g.lineTo(X(q), Y(q)); g.closePath();
+    g.fillStyle = '#F2E4C4'; g.fill();
+    g.save(); g.clip();
+    if(view === 'back'){
+      g.fillStyle = '#D8C49C'; g.fillRect(X([-12, 0]), Y([0, 9]), 24 * p, 6 * p);
+      line([[-3, -3], [-5, 12]], '#B09A74', lw); line([[3, -3], [5, 12]], '#B09A74', lw); line([[0, -4], [0, 12]], '#D8C49C', lw);
+    }else{
+      g.fillStyle = '#D8C49C'; g.beginPath(); g.moveTo(X([-3, -2]), Y([-3, -2])); g.lineTo(X([-12, 3]), Y([-12, 3])); g.lineTo(X([-12, 16]), Y([-12, 16])); g.lineTo(X([-5, 16]), Y([-5, 16])); g.lineTo(X([-4, 3]), Y([-4, 3])); g.closePath(); g.fill();
+      line([[4, -2.5], [1, -0.5], [-0.5, 4]], '#B09A74', lw);
+      line([[-6, 4], [-8, 12]], '#B09A74', lw);
+      // the dark of his face, deep in it, a line of his mask's nose
+      g.fillStyle = '#0A0608'; g.beginPath(); g.moveTo(X([6.4, 3]), Y([6.4, 3])); g.lineTo(X([5.4, -2]), Y([5.4, -2])); g.lineTo(X([1.8, -0.8]), Y([1.8, -0.8])); g.lineTo(X([0.4, 5]), Y([0.4, 5])); g.lineTo(X([6.4, 5]), Y([6.4, 5])); g.closePath(); g.fill();
+      g.fillStyle = '#221A20'; g.fillRect(Math.round(X([4.6, 0])), Math.round(Y([0, -0.5])), Math.max(1, Math.round(p)), Math.max(1, Math.round(p * 4)));
+    }
+    g.restore();
+    // a gold band round his brow, over the veil
+    if(view === 'back') line([[-6, -2], [0, -3], [6, -2]], '#A8782E', Math.max(1, p * 1.1));
+    else { line([[5.4, -2], [1, -3.2], [-5.5, -2]], '#A8782E', Math.max(1, p * 1.1)); if(p >= 1.3) line([[5.2, -2.4], [1.5, -3.5]], '#F4D27A', 1); }
+    // its edge in shade, its lit crown
+    if(view === 'back'){ line([[0, -6], [-4, -5], [-6, -2], [-7, 3], [-8, 9]], '#B09A74', lw); line([[0, -6], [4, -5], [6, -2]], '#FFF2C0', lw); }
+    else { line([[6, 3], [5, -2], [3, -5], [0, -6]], '#FFF2C0', lw); line([[6.2, 4.8], [1, 5.2], [-0.5, 6], [-1, 10]], '#B09A74', lw); }
+  }, PEN_PAL);
+  return { cv, ox, oy };
+}
+// the sunburst behind his head: two rings of gold, beads set round the
+// inner, spikes long and short all round the outer; a glint running round
+// it (step 0..23), the whole brighter as he winds up (lit)
+function penHalo(p, step, lit){
+  const R = 14 * p + 2, S = Math.ceil(R * 2) + 4, o = S / 2;
+  const cv = fxBake('phalo|' + p.toFixed(3) + '|' + step + '|' + lit, S, S, g => {
+    const ring = (r, w, col) => { g.strokeStyle = col; g.lineWidth = w; g.beginPath(); g.arc(o, o, r, 0, Math.PI * 2); g.stroke(); };
+    const N = 18, gl = step / 24 * Math.PI * 2;
+    for(let i = 0; i < N; i++){
+      const a = i / N * Math.PI * 2 - Math.PI / 2, L = i & 1 ? 11.2 : 13.6, w = (i & 1 ? 0.9 : 1.2) * p;
+      const near = Math.abs(Math.atan2(Math.sin(a - gl), Math.cos(a - gl))) < 0.4;
+      const ca = Math.cos(a), sa = Math.sin(a), nx = -sa, ny = ca;
+      g.fillStyle = '#6E4E1E';
+      g.beginPath(); g.moveTo(o + ca * 8.6 * p + nx * (w + 0.6), o + sa * 8.6 * p + ny * (w + 0.6)); g.lineTo(o + ca * (L + 0.6) * p, o + sa * (L + 0.6) * p);
+      g.lineTo(o + ca * 8.6 * p - nx * (w + 0.6), o + sa * 8.6 * p - ny * (w + 0.6)); g.closePath(); g.fill();
+      g.fillStyle = near || lit ? '#F4D27A' : '#D8A848';
+      g.beginPath(); g.moveTo(o + ca * 8.6 * p + nx * w, o + sa * 8.6 * p + ny * w); g.lineTo(o + ca * L * p, o + sa * L * p);
+      g.lineTo(o + ca * 8.6 * p - nx * w, o + sa * 8.6 * p - ny * w); g.closePath(); g.fill();
+      if(near && p >= 1){ g.fillStyle = '#FFF2C0'; g.fillRect(Math.round(o + ca * (L - 1) * p), Math.round(o + sa * (L - 1) * p), Math.max(1, Math.round(p)), Math.max(1, Math.round(p))); }
+    }
+    ring(9 * p, Math.max(2, 2.2 * p), '#6E4E1E'); ring(9 * p, Math.max(1, 1.3 * p), lit ? '#F4D27A' : '#D8A848');
+    ring(6.4 * p, Math.max(1, 1.2 * p), '#6E4E1E'); ring(6.4 * p, Math.max(1, 0.7 * p), '#A8782E');
+    for(let i = 0; i < 8; i++){ const a = i / 8 * Math.PI * 2 + 0.2; g.fillStyle = '#F2E4C4';
+      g.beginPath(); g.arc(o + Math.cos(a) * 7.7 * p, o + Math.sin(a) * 7.7 * p, Math.max(0.8, 0.8 * p), 0, Math.PI * 2); g.fill(); }
+  }, PEN_PAL);
+  return { cv, ox: o, oy: o };
+}
+// his robe from the waist to the ground (the Void's shape, VROBE): ivory
+// in folds, a panel of crimson down its front edged in gold, a broad gold
+// hem worked with a pattern, crimson under it at the foot
+function penRobe(w, h, pose, step){
+  const R = VROBE[pose], sx = w / 40, sy = h / 58, x0 = Math.min(R[3], R[1]) - 2, y0 = R[0];
+  const cv = fxBake('probe|' + w + '|' + h + '|' + pose + '|' + step, Math.ceil((Math.max(R[4], R[2]) - x0 + 4) * sx), Math.ceil((58 - y0 + 0.5) * sy), g => {
+    const X = x => (x - x0) * sx, Y = y => (y - y0) * sy, a = step / 12 * Math.PI * 2, hem = 57.6;
+    const path = () => { g.beginPath(); g.moveTo(X(R[1]), Y(R[0])); g.lineTo(X(R[2]), Y(R[0]));
+      g.quadraticCurveTo(X(R[2] + 0.5), Y(45), X(R[4] + 0.6 + Math.sin(a) * 0.3), Y(hem)); g.lineTo(X(R[3] - 0.6 + Math.sin(a + 1) * 0.3), Y(hem)); g.quadraticCurveTo(X(R[1] - 0.5), Y(45), X(R[1]), Y(R[0])); g.closePath(); };
+    path(); g.fillStyle = '#2E2A34'; g.fill();
+    g.save(); path(); g.clip();
+    // ivory drapes hung down its sides, over the dark of it
+    for(const [fa, fb] of pose === 'back' ? [[0, 0.22], [0.78, 1]] : [[0, 0.3]]){
+      g.fillStyle = '#F2E4C4'; g.beginPath(); g.moveTo(X(R[1] + (R[2] - R[1]) * fa), Y(R[0])); g.lineTo(X(R[1] + (R[2] - R[1]) * fb), Y(R[0]));
+      g.lineTo(X(R[3] + (R[4] - R[3]) * fb + Math.sin(a) * 0.4), Y(58)); g.lineTo(X(R[3] + (R[4] - R[3]) * fa - 1), Y(58)); g.closePath(); g.fill(); }
+    g.lineWidth = Math.max(1, sx * 0.8);
+    for(let k = 1; k < 5; k++){ const f = k / 5, xa = R[1] + (R[2] - R[1]) * f, xb = R[3] + (R[4] - R[3]) * f + Math.sin(a + k) * 0.3;
+      g.strokeStyle = f < 0.3 ? (k & 1 ? '#B09A74' : '#D8C49C') : k & 1 ? '#221A20' : '#3E3A46'; g.beginPath(); g.moveTo(X(xa), Y(R[0] + 1)); g.lineTo(X(xb), Y(58)); g.stroke(); }
+    // the crimson panel down its front, edged in gold
+    const pf = pose === 'back' ? 0.5 : 0.72, pw = (R[4] - R[3]) * 0.2;
+    const px0 = R[1] + (R[2] - R[1]) * pf, px1 = R[3] + (R[4] - R[3]) * pf;
+    g.fillStyle = '#7A1828'; g.beginPath(); g.moveTo(X(px0 - pw * 0.4), Y(R[0])); g.lineTo(X(px0 + pw * 0.4), Y(R[0])); g.lineTo(X(px1 + pw * 0.6), Y(58)); g.lineTo(X(px1 - pw * 0.6), Y(58)); g.closePath(); g.fill();
+    g.strokeStyle = '#A8283A'; g.beginPath(); g.moveTo(X(px0), Y(R[0])); g.lineTo(X(px1), Y(58)); g.stroke();
+    g.strokeStyle = '#D8A848'; g.lineWidth = Math.max(1, sx * 0.6);
+    g.beginPath(); g.moveTo(X(px0 - pw * 0.4), Y(R[0])); g.lineTo(X(px1 - pw * 0.6), Y(58)); g.stroke();
+    g.beginPath(); g.moveTo(X(px0 + pw * 0.4), Y(R[0])); g.lineTo(X(px1 + pw * 0.6), Y(58)); g.stroke();
+    // the hem: crimson at the foot, a broad band of gold over it, worked
+    g.fillStyle = '#4E0E18'; g.fillRect(0, Y(56), g.canvas.width, Y(58) - Y(56) + 1);
+    g.fillStyle = '#A8782E'; g.fillRect(0, Y(52.6), g.canvas.width, Math.max(2, Y(56) - Y(52.6)));
+    if(h >= 40){ const q = Math.max(1, Math.round(sx * 0.6)), yy = Math.round(Y(53.6));
+      for(let x = 0, i = 0; x < g.canvas.width; x += 3 * q, i++){ g.fillStyle = i % 3 === step % 3 ? '#FFF2C0' : '#F4D27A'; g.fillRect(x, yy, q, q); g.fillStyle = '#6E4E1E'; g.fillRect(x + q, yy + q, q, q); } }
+    g.restore();
+  }, PEN_PAL);
+  return { cv, x: x0, y: y0 };
+}
+// his stole of crimson from the shoulders, streaming behind side on and
+// hanging down his back from behind, its hem fringed in gold, an ivory
+// lining along one edge (ph 0..11 its ripple)
+function penStole(w, h, pose, ph){
+  const fem = isFem(), ox = Math.round(w * 0.8), key = 'pstole|' + w + '|' + h + '|' + pose + '|' + ph + (fem ? '|f' : '');
+  const cv = fxBake(key, ox + Math.ceil(w * 1.1), Math.ceil(h * 1.0), g => {
+    const X = f => ox + f * w, Y = f => f * h, a = ph / 12 * Math.PI * 2, s = Math.sin(a);
+    let outer, inner;
+    if(pose === 2){
+      const sw = 0.02 * s;
+      outer = [[0.38, 0.21], [0.36 + sw, 0.52], [0.34 + sw * 2, 0.80]];
+      inner = [[0.66 + sw * 2, 0.80], [0.64 + sw, 0.52], [0.62, 0.21]];
+    }else{
+      const flow = 0.12 + 0.05 * s, top = pose ? [[0.60, 0.24], [0.46, 0.27]] : [[0.66, 0.27], [0.46, 0.36]];
+      outer = [top[1], [top[1][0] - 0.14 - flow * 0.3, 0.46], [top[1][0] - 0.30 - flow * 0.6, 0.62], [-0.02 - flow * 0.8, 0.74], [-0.08 - flow, 0.80]];
+      inner = [[0.30, 0.84], [top[0][0] - 0.12, 0.56], top[0]];
+    }
+    const h0 = outer[outer.length - 1], h1 = inner[0];
+    const pts = outer.concat(inner);
+    const path = () => { g.beginPath(); g.moveTo(X(pts[0][0]), Y(pts[0][1])); for(const [u, v] of pts.slice(1)) g.lineTo(X(u), Y(v)); g.closePath(); };
+    path(); g.fillStyle = '#7A1828'; g.fill();
+    g.save(); path(); g.clip();
+    g.lineWidth = Math.max(1, w * 0.03);
+    for(let k = 1; k <= 3; k++){ const f = k / 4, t0 = [outer[0][0] + (inner[inner.length - 1][0] - outer[0][0]) * f, outer[0][1] + (inner[inner.length - 1][1] - outer[0][1]) * f];
+      const t1 = [h0[0] + (h1[0] - h0[0]) * f, h0[1] + (h1[1] - h0[1]) * f];
+      g.strokeStyle = '#4E0E18'; g.beginPath(); g.moveTo(X(t0[0]), Y(t0[1])); g.lineTo(X(t1[0] + 0.02 * s), Y(t1[1])); g.stroke();
+      if(k === 2){ g.strokeStyle = '#A8283A'; g.beginPath(); g.moveTo(X(t0[0]) + 1, Y(t0[1])); g.lineTo(X(t1[0] + 0.02 * s) + 1, Y(t1[1] - 0.04)); g.stroke(); } }
+    g.restore();
+    g.lineWidth = Math.max(1, w * 0.03); g.strokeStyle = '#C8484A';
+    g.beginPath(); g.moveTo(X(outer[0][0]), Y(outer[0][1])); for(const [u, v] of outer.slice(1)) g.lineTo(X(u), Y(v)); g.stroke();
+    g.lineWidth = Math.max(1, w * 0.035); g.strokeStyle = '#F2E4C4';
+    g.beginPath(); g.moveTo(X(inner[0][0]), Y(inner[0][1])); for(const [u, v] of inner.slice(1)) g.lineTo(X(u), Y(v)); g.stroke();
+    // the hem in gold, a fringe hanging off it
+    g.lineWidth = Math.max(1, w * 0.04); g.strokeStyle = '#D8A848';
+    g.beginPath(); g.moveTo(X(h0[0]), Y(h0[1])); g.lineTo(X(h1[0]), Y(h1[1])); g.stroke();
+    g.fillStyle = '#A8782E'; const n = 8;
+    for(let i = 0; i <= n; i++){ const f = i / n, u = h0[0] + (h1[0] - h0[0]) * f, v = h0[1] + (h1[1] - h0[1]) * f;
+      g.fillRect(Math.round(X(u)), Math.round(Y(v)), 1, Math.max(1, Math.round(h * 0.03 + Math.sin(a + i) * 0.8))); }
+  }, PEN_PAL);
+  return { cv, ox };
+}
+// the dais of old stone under him: blocks round its rim, a ring of gold,
+// a cloth of crimson in it and a star of gold rays turning in the middle,
+// brighter as he winds up (step 0..23)
+const PEN_DAIS = new Map();
+function penDais(rx, ry, step, lit){
+  const key = rx + '|' + ry + '|' + step + '|' + lit;
+  if(PEN_DAIS.has(key)) return PEN_DAIS.get(key);
+  const R2 = Math.ceil(rx * 1.3), RY2 = Math.ceil(ry * 1.3) + 2;
+  const cv = document.createElement('canvas'); cv.width = R2 * 2 + 3; cv.height = RY2 * 2 + 3;
+  const g = cv.getContext('2d'), X = R2 + 1, Y = RY2 + 1, P = (x, y, col) => { g.fillStyle = col; g.fillRect(Math.round(x), Math.round(y), 1, 1); };
+  const S0 = step / 24 * Math.PI * 2;
+  // its step down at the front: the stone's side, darker
+  const sd = Math.max(1, Math.round(ry * 0.22));
+  for(let yy = -RY2; yy <= RY2; yy++) for(let xx = -R2; xx <= R2; xx++){
+    const d = Math.sqrt((xx * xx) / (rx * rx * 1.21) + ((yy - sd) * (yy - sd)) / (ry * ry * 1.21));
+    if(d > 1 || yy <= 0) continue;
+    P(X + xx, Y + yy, (xx + yy) & 1 ? '#221A20' : '#2E2A34');
+  }
+  for(let yy = -RY2; yy <= RY2; yy++) for(let xx = -R2; xx <= R2; xx++){
+    const a = Math.atan2(yy / ry, xx / rx), d = Math.sqrt((xx * xx) / (rx * rx) + (yy * yy) / (ry * ry));
+    if(d > 1.1) continue;
+    const par = (xx + yy) & 1;
+    let col;
+    if(d > 0.86){ const blk = Math.floor((a + Math.PI) / (Math.PI * 2) * 22), seam = Math.abs(((a + Math.PI) / (Math.PI * 2) * 22) - blk) < 0.08;
+      col = seam || d > 1.06 ? '#221A20' : hr(blk, 701) > 0.5 ? (yy < 0 ? '#55505E' : '#3E3A46') : (yy < 0 ? '#3E3A46' : '#2E2A34'); }
+    else if(d > 0.78) col = lit ? '#F4D27A' : par ? '#A8782E' : '#D8A848';
+    else if(d > 0.72) col = '#6E4E1E';
+    else {
+      // the rays of its star, turning
+      const ra = ((a - S0) % (Math.PI / 4) + Math.PI / 4) % (Math.PI / 4), on = Math.abs(ra - Math.PI / 8) < 0.11 * (1 - d * 0.6);
+      if(d < 0.16) col = lit ? '#FFF2C0' : '#F4D27A';
+      else if(d < 0.22) col = '#A8782E';
+      else if(on && d < 0.66) col = lit ? '#F4D27A' : '#D8A848';
+      else col = par ? '#7A1828' : '#4E0E18';
+    }
+    P(X + xx, Y + yy, col);
+  }
+  cv.ox = X; cv.oy = Y;
+  if(PEN_DAIS.size > 96){ const k0 = PEN_DAIS.keys().next().value; cvFree(PEN_DAIS.get(k0)); PEN_DAIS.delete(k0); }
+  PEN_DAIS.set(key, cv);
+  return cv;
+}
+// a candle: a flame (its tip flickering), a stick of ivory with wax run
+// down it, a holder of gold; k a pixel, tall in pixels of k, bright as lit
+function penCandle(c, x, y, k, tall, t, lit){
+  const X = Math.round(x), Y = Math.round(y), fl = Math.sin(t * 11 + x * 0.7) * Math.sin(t * 6.3 + y);
+  c.fillStyle = '#A8782E'; c.fillRect(X - k, Y, 3 * k, k);
+  c.fillStyle = '#F2E4C4'; c.fillRect(X, Y - tall * k, k, tall * k);
+  c.fillStyle = '#D8C49C'; c.fillRect(X, Y - Math.ceil(tall / 2) * k, k, k);
+  const fh = (lit ? 3 : 2) + (fl > 0.4 ? 1 : 0);
+  c.fillStyle = '#FF9A2A'; c.fillRect(X, Y - (tall + fh) * k, k, (fh - 1) * k);
+  c.fillStyle = lit ? '#FFFFFF' : '#FFF2C0'; c.fillRect(X, Y - (tall + 1) * k - Math.round(fh / 2) * k, k, k);
+  if(lit || fl > 0.6){ c.fillStyle = '#F4D27A'; c.fillRect(X + (fl > 0 ? k : -k), Y - (tall + 1) * k, k, k); }
+}
 function cyberHelm(p, view){
   const P = view === 'back' ? CYHELM_BACK : CYHELM_SIDE, pad = 3;
   const x0 = -7.5, y0 = -2.5, W = 15 * p + pad * 2, H = 15 * p + pad * 2, ox = -x0 * p + pad, oy = -y0 * p + pad;
@@ -25492,6 +25861,7 @@ const NIGHT_GLOW = {
   cosmic:   { col: ['#241A44', '#3E2A6E', '#7A4ED8'], breathe: 1.2 },
   dread:    { col: ['#0C3A26', '#17734A', '#2EB872'], breathe: 0.9 },
   cyber:    { col: ['#141826', '#1E9A4A', '#3AF07A'], breathe: 1.4 },
+  penitent: { col: ['#3A2410', '#6E4E1E', '#D8A848'], flicker: 1 },
   psyche:   { col: ['#4A2290', '#C81E6A', '#FF8A1E'], breathe: 2.2 },
   // (and the Legendary skins, after them: the user asked them a night too)
   inferno:     { col: ['#5A1A0A', '#B8401C', '#FF9A2A'], flicker: 1 },
@@ -25527,7 +25897,7 @@ function nightPool(c, g, NG){
 // out from the back of her head side on, down her back from behind,
 // swinging a little. Plain looks have it in their picture (femRows).
 // ([its colour, the dark edge it is drawn in, so it shows against her])
-const FEM_HAIR = { divine: ['#F4D27A', '#0E5A48'], midas: ['#FFF2B8', '#6A4A10'], void: ['#C68BFF', '#120A24'],
+const FEM_HAIR = { penitent: ['#F2E4C4', '#7E6A50'], divine: ['#F4D27A', '#0E5A48'], midas: ['#FFF2B8', '#6A4A10'], void: ['#C68BFF', '#120A24'],
   dread: ['#C8FFE0', '#0C3A26'], cyber: ['#C8F23A', '#141826'], inferno: ['#FFD34A', '#4A1408'], demonic: ['#FF8A24', '#1A0A0A'],
   ascended: ['#F2A6F8', '#3A1A5A'], cosmic: ['#7FE6FF', '#120A24'], frostborn: ['#FFFFFF', '#3F7FB0'],
   stormcaller: ['#BFE0FF', '#1A2A4A'], glitch: ['#FF2A6D', '#0A2A2E'], disco: ['#FF4FB8', '#3A0F3A'],
@@ -25898,6 +26268,7 @@ function paintHeli(c, x, y, w, h, t, bot){
 // and drifting the farther back they are. Each look's own; any other look
 // with an effect in its colours.
 const FLY_FX = {
+  penitent(c, x, y, u, j, t, k){ fxDot(c, x, y - u * 2, k, j % 4 === 0 ? '#A8283A' : u < 0.35 ? '#FFF2C0' : u < 0.7 ? '#F4D27A' : '#A8782E', 1); },
   cyber(c, x, y, u, j, t, k){ fxDot(c, x, y - u * 2, k + (j % 5 ? 0 : 1), j % 4 === 0 ? '#FF3AD0' : u < 0.35 ? '#E8FF9A' : u < 0.7 ? '#3AF07A' : '#1E9A4A', 1); },
   divine(c, x, y, u, j, t, k){ fxDot(c, x, y, k, j & 1 ? '#F4D27A' : '#7FF0C8', 1); if(u < 0.4) fxDot(c, x, y + 1, k, j & 1 ? '#E0AE3E' : '#3FD6A8', 1); },
   demonic(c, x, y, u, j, t, k){ fxDot(c, x, y - u * 3, k, u < 0.3 ? '#FFD34A' : u < 0.6 ? '#FF6A1A' : u < 0.85 ? '#C8281C' : '#3A2A2A', 1); if(u < 0.5) fxDot(c, x, y - u * 3 - 1, k, '#FF8A2A', 1); },

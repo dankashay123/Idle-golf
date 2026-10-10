@@ -6,6 +6,30 @@ feature must do, and is usually enough on its own.
 
 ## Sections, newest first
 
+### The Penitent, a Mythic skin from his own sprite sheet (10 October)
+
+- He sent "The Penitent Choir" sheet and asked for it "as a mythic skin",
+  not a pass set: the outfit only for now (`penitent`, top 2, 3,500 on the
+  Skins rack; named **The Penitent**, as "The Penitent Choir" took two lines
+  on its tile). No caddie, driver, wake or ball yet: offer them.
+- `STYLEFX.penitent`: an ivory veil over the Dread's hood shape with the
+  face black under it and a gold brow band (`penHood`); a sunburst halo of
+  gold spikes behind his head, in front of it walking away (`penHalo`, 1.35
+  of his scale, a glint running round, bright as he winds up); a dark robe
+  to the ground with ivory drapes, a crimson panel edged in gold and a gold
+  hem (`penRobe`, VROBE's shape); a crimson stole streaming behind
+  (`penStole`); a gold censer on its chain at his hip with fine incense
+  (kept to single pixels: thicker read as loose blocks); four candles on a
+  tilted ring (`penCandle`); a stone dais with a gold ring, crimson cloth
+  and a turning star, candles round its rim (`penDais`, bounded, `cvFree`).
+  Strike: a gold ring with flames; albatross or ace: gold, flames and
+  crimson petals from his outline, silent. Patterns `penrobe`, `penfold`;
+  `SKIN_ACCENT`, `ICON_FX`, `LEGEND_FX`, `NIGHT_GLOW`, `FEM_HAIR` (ivory,
+  as a veil's tail), `FLY_FX`. Check: `penitent`; `legends` counts him a
+  legend.
+- At 320 the shop's LEGENDARY badge ran off its tile ("EGENDARY"): badges
+  and tile names tighter under 360 wide.
+
 ### Cooler, fairer, sturdier (9 to 10 October)
 
 - **Thirty frames a second** (`FRAME_CAP_MS` in `frame`): he felt the phone
