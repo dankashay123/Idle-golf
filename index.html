@@ -4148,9 +4148,9 @@ const B = {
     { id:'locker',   ic:'locker2',  n:'Second Locker',   base:150, r:1.38, v:12,
       d:'{v} locker spaces',      s:'' },
     { id:'teetime',  ic:'teetime',  n:'Standing Tee Time', base:240, r:1.45, v:0.05,
-      d:'Wager entries refill {v} faster', s:'%' },
+      d:'{v} faster wager entries', s:'%' },
     { id:'scout',    ic:'scout',    n:'Club Scout',      base:220, r:1.44, v:0.04,
-      d:'{v} better club drops',                s:'pp' },
+      d:'{v} club luck',                s:'pp' },
     { id:'van',      ic:'van2',     n:'Tour Van',        base:260, r:1.46, v:0.03,
       d:'{v} off every Range price',      s:'%' },
     { id:'irons',    ic:'sigirons', n:'Signature Irons', base:300, r:1.50, v:1.05,
@@ -10476,7 +10476,7 @@ function renderShop(){
       + ribbon('Bags') + '<div class="sgrid c2">' + B.BAGS.map(bg =>
         shopCard({ ic: bg.ic, col: RC(Math.min(5, bg.top)), on: bg.top >= 4,
           badge: B.RARITY[bg.top].n,
-          head: bg.n, sub: bg.d + (bg.pity ? '<br><b class="pity">' + nb(((S.pityB || {})[bg.id] || 0) + '/' + bg.pity) + ' until Mythic</b>' : ''),
+          head: bg.n, sub: bg.d + (bg.pity ? '<br><b class="pity">A Mythic within ' + nb((bg.pity - ((S.pityB || {})[bg.id] || 0)) + ' ' + plural(bg.pity - ((S.pityB || {})[bg.id] || 0), 'bags')) + '</b>' : ''),
           price: sovFmt(bg.c), note: B.SOV.toLowerCase(),
           cls: (S.sov || 0) >= bg.c ? '' : 'no', act: 'bag:' + bg.id })).join('') + '</div>';
   }
@@ -10574,11 +10574,11 @@ function renderShop(){
     h += ribbon('One Time') + '<div class="sgrid c2">'
       + shopCard({ ic:'starter', col:'#7ADB86', on: !S.starter, badge: S.starter ? '' : 'BEST VALUE',
           head:'Starter Pack',
-          sub: S.starter ? 'Already bought.'
+          sub: S.starter ? ''
             : '<span class="pv">' + sovFmt(B.STARTER_C) + sovIc() + '</span>, a Tour Bag and '
               + nb(B.BOOST_HOURS + ' hours') + ' of double prize money.',
-          price: S.starter ? 'TAKEN' : '$' + B.STARTER_USD.toFixed(2),
-          note: S.starter ? 'done' : 'free', cls: S.starter ? 'max' : '', act:'starter:1' })
+          price: S.starter ? 'BOUGHT' : '$' + B.STARTER_USD.toFixed(2),
+          note: S.starter ? '' : 'free', cls: S.starter ? 'max' : '', act:'starter:1' })
       + shopCard({ ic:'member', col:'#E3B457', on: !isMember(), badge: S.member === 1 ? 'MEMBER' : isMember() ? nb(memberDaysLeft() + ' days') : '',
           head:'Club Membership',
           sub: isMember()
@@ -10609,7 +10609,7 @@ function renderShop(){
       return shopCard({ ic: pk.ic, col: SOV_COL, on: bonus >= 40 || twice,
         badge: twice ? '\u00d72' : bonus > 0 ? '+' + bonus + '%' : '',
         head: sovFmt(pk.c * (twice ? 2 : 1)),
-        sub: pk.n + (taken ? '<br><b>taken ' + taken + '\u00d7</b>' : ''),
+        sub: pk.n + (taken ? '<br><b>Taken ' + taken + '\u00a0' + (taken === 1 ? 'time' : 'times') + '</b>' : ''),
         price: '$' + pk.usd.toFixed(2), note: 'free', act: 'pack:' + pk.id });
     }).join('') + '</div>';
 
@@ -31784,7 +31784,7 @@ function renderTeeMarks(){
     return '<div class="gtile tmk' + (ok ? '' : ' un') + (on ? ' on' : '') + '" data-m="' + m.id + '"' + (ok && !on ? ' role="button"' : '') + '><span class="gpic"><img src="'
       + teeMarkUrl(m) + '" width="60" height="30" alt=""></span><b>' + m.n + '</b><i>' + (on ? 'Worn' : ok ? 'Tap to wear' : m.fest ? festDef(m.fest).n : 'Card\u00a0' + m.at) + '</i></div>'; }).join('');
   el.innerHTML = '<div class="rfold' + (op ? ' open' : '') + '" data-f="tmk"><button class="rfh"><span>Tee Markers</span><span class="rfn">'
-    + n + '/' + TEE_MARKS.length + '\u00a0' + (op ? '\u25b4' : '\u25be') + '</span></button><div class="rfb"><div class="guide">' + tiles + '</div></div></div>';
+    + n + ' / ' + TEE_MARKS.length + '\u00a0' + (op ? '\u25b4' : '\u25be') + '</span></button><div class="rfb"><div class="guide">' + tiles + '</div></div></div>';
   el.querySelector('.rfh').onclick = () => { recOpen.tmk = op ? 0 : 1; renderTeeMarks(); };
   el.querySelectorAll('.tmk[role=button]').forEach(t => t.onclick = () => { S.teeMk = t.dataset.m; save(); renderTeeMarks(); });
 }
@@ -31800,7 +31800,7 @@ function renderWild(){
     const rw = rareOf(cs.id), rg = rareGot(cs.id), star = (S.cwildStar || {})[cs.id];
     return '<div class="wrow' + (whole ? ' whole' : '') + '"><div class="lb"><span class="p"></span><span>' + cs.n + (whole ? '<img class="wbadge" src="' + pixUrl('medal', '#E3B457') + '" width="14" height="14" alt="Badge">' : '')
       + (star ? '<img class="wbadge" src="' + pixUrl('star', '#F2C21E') + '" width="14" height="14" alt="Gold star">' : '') + '</span><span class="s">'
-      + (star ? 'Gold star' : whole ? (rw.length ? 'Rare ' + rg.length + '/' + rw.length : 'Complete') : got.length + '/' + want.length + ' \u00b7 +' + B.WILD_SOV + sovIc()) + '</span></div>'
+      + (star ? 'Gold star' : whole ? (rw.length ? 'Rare ' + rg.length + ' / ' + rw.length : 'Complete') : got.length + ' / ' + want.length + ' \u00b7 +' + B.WILD_SOV + sovIc()) + '</span></div>'
       + '<div class="wpics">' + want.map(an => pic(an, got.includes(an))).join('')
       + (rw.length ? '<span class="wrare">Rare</span>' + rw.map(an => pic(an, rg.includes(an))).join('') : '') + '</div></div>'; }).join('')
     || '<div class="lb"><span class="p"></span><span style="color:var(--faint)">Spot an animal to start a course\u2019s collection</span><span class="s"></span></div>';
@@ -31812,7 +31812,7 @@ function renderWild(){
         + gImg(dogUrl(br), 34, 32) + '</span><b>' + br.n + '</b><i>' + (on ? 'With him' : ok ? 'Tap to bring' : br.at + '\u00a0' + (br.at === 1 ? 'course' : 'courses')) + '</i></div>'; }).join('')
     + '<div class="gtile dogt' + (cur ? '' : ' on') + '" data-dog="none"' + (cur ? ' role="button"' : '') + '><span class="gpic"></span><b>None</b><i>' + (cur ? 'Tap for none' : 'None with him') + '</i></div></div>';
   el.innerHTML = '<div class="rfold' + (op ? ' open' : '') + '" data-f="wild"><button class="rfh"><span>Course Wildlife</span><span class="rfn">'
-    + done + '/' + Object.keys(COURSE_WILD).length + '\u00a0' + (op ? '\u25b4' : '\u25be') + '</span></button><div class="rfb">' + dogs + (dogs ? '<div class="eyebrow" style="margin:10px 0 4px">Collections</div>' : '') + rows + '</div></div>';
+    + done + ' / ' + Object.keys(COURSE_WILD).length + '\u00a0' + (op ? '\u25b4' : '\u25be') + '</span></button><div class="rfb">' + dogs + (dogs ? '<div class="eyebrow" style="margin:10px 0 4px">Collections</div>' : '') + rows + '</div></div>';
   el.querySelector('.rfh').onclick = () => { recOpen.wild = op ? 0 : 1; renderWild(); };
   el.querySelectorAll('.dogt[role=button]').forEach(t => t.onclick = () => { S.dog = t.dataset.dog; save(); renderWild(); });
 }
@@ -31835,7 +31835,7 @@ function caseTrack(id){
   if(list.length) return '<div class="ctrack"><span>' + c.n + ' \u00b7 Reward waiting</span>' + collectBtn(id, casePay(list)) + '</div>';
   if(got >= c.at.length) return '<div class="ctrack"><span>' + c.n + ' \u00b7 every reward collected</span></div>';
   const at = c.at[got], what = id === 'card' ? 'a score of -' + at : at + (id === 'maj' ? (at === 1 ? ' major' : ' majors') : at === 1 ? ' cup' : ' cups');
-  return '<div class="ctrack"><span>Next: ' + what + ' <i>(' + fmt(Math.min(have, at), 0) + '/' + at + ')</i></span>'
+  return '<div class="ctrack"><span>Next: ' + what + ' <i>\u00b7 ' + achCnt(Math.min(have, at)) + ' / ' + achCnt(at) + '</i></span>'
     + '<span class="s">+' + c.sov[got] + sovIc() + '</span></div>';
 }
 // The buttons on the stage: the Trophy Room's, the perks, the shop, the
@@ -32968,9 +32968,9 @@ function renderRecord(){
   const row = ([k,v]) => '<div class="lb"><span class="p"></span><span>' + k + '</span><span class="s">' + v + '</span></div>';
   const groups = [['career', 'Career', [
     ['Cup Points', fmt(S.points)],
-    ['Holes Played', fmt(S.totalHoles, 0)],
+    ['Holes Played', achCnt(S.totalHoles || 0)],
     ['Best Hole', scoreName(S.bestScore)],
-    ['Aces', fmt(S.aces, 0)],
+    ['Aces', achCnt(S.aces || 0)],
     ['Perks Used', fmt(S.perkUsed || 0, 0)],
     ['Retirements', fmt(S.retires, 0)],
     // the top sets worn in full
@@ -33135,7 +33135,7 @@ function renderCabinet(){
   // owned counted till then)
   const FS = fullSet(), sets = SET_ORDER.map(s => { const on = !!(S.fullSets || {})[s];
     return '<div class="ci' + (on ? '' : ' no') + '"><img src="' + outfitUrl(styleDef('o', s)) + '" alt=""><div class="cn">' + FULL_SETS[s].n
-      + '</div><div class="cc">' + (FS === s ? 'Wearing' : on ? 'Worn' : setPieces(s).filter(([k, id]) => styleOwned(k, id)).length + '/5') + '</div></div>'; }).join('');
+      + '</div><div class="cc">' + (FS === s ? 'Wearing' : on ? 'Worn' : setPieces(s).filter(([k, id]) => styleOwned(k, id)).length + ' / 5') + '</div></div>'; }).join('');
   const now = seasonOf(tournamentOf(S.hole));
   const thisSeason = (S.evLog || []).filter(x => x.b && seasonOf(x.t) === now).length;
   // lit once there is something to show, like everything else in the case
@@ -33145,7 +33145,7 @@ function renderCabinet(){
     + (thisSeason ? ' \u00b7 ' + thisSeason + ' this season' : '') + '</div></div></div>';
   const slam = '<div class="cabn' + (won ? '' : ' no') + '"><img src="'
     + pixUrl('cabSlam', !won ? DIM : won === COURSE_WEEK.length ? '#E3B457' : '#7ADB86')
-    + '" alt=""><div><div class="big">' + won + '/' + COURSE_WEEK.length + '</div>'
+    + '" alt=""><div><div class="big">' + won + ' / ' + COURSE_WEEK.length + '</div>'
     + '<div class="cn">Grand Slam</div></div></div>';
   // the best cards, with where they were posted; a best card from before the
   // cabinet kept them has no course to name, so it heads the plaque on its own
@@ -33154,7 +33154,7 @@ function renderCabinet(){
   let rows = '';
   if(S.bestRound !== undefined && (!bc.length || S.bestRound < bc[0].s)) rows += line(S.bestRound, 'Best card');
   rows += bc.slice(0, rows ? 2 : 3).map(x => { const cs = courseById(x.id);
-    return line(x.s, (cs ? cs.n : '') + ' \u00b7 Card ' + cardNo(x.c)); }).join('');
+    return line(x.s, (cs ? cs.n : '') + ' \u00b7 ' + 'Card\u00a0' + cardNo(x.c)); }).join('');
   if(S.bestNine !== undefined) rows += line(S.bestNine, 'Best nine');
   const plaque = '<div class="plaque"><div class="ph">Best Cards</div>'
     + (rows || '<div class="pe">None yet.</div>') + '</div>';
@@ -33162,7 +33162,7 @@ function renderCabinet(){
   const sb = (S.seasonBest || []).filter(x => x.g === (S.retires || 0)).sort((a, b) => b.n - a.n).slice(0, 8);
   const seasons = '<div class="plaque" id="seasonBests"><div class="ph">Season Bests</div>'
     + (sb.length ? sb.map(x => { const cs = courseById(x.id);
-        return line(x.s, 'Season ' + x.n + (x.n === now + 1 ? ' (now)' : '') + (x.up ? ' \u25b2' : '') + ' \u00b7 ' + (cs ? cs.n : '') + ' \u00b7 Card ' + cardNo(x.c)); }).join('')
+        return line(x.s, 'Season ' + x.n + (x.n === now + 1 ? ' (now)' : '') + (x.up ? ' \u25b2' : '') + ' \u00b7 ' + (cs ? cs.n : '') + ' \u00b7 ' + 'Card\u00a0' + cardNo(x.c)); }).join('')
       : '<div class="pe">None yet.</div>') + '</div>';
   setHTML(box, '<div class="cab"><div class="shelf">' + trophies + '</div>' + caseTrack('maj') + '<div class="plank"></div>'
     + '<div class="shelf">' + jackets + '</div><div class="plank"></div>'
