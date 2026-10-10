@@ -1,6 +1,6 @@
 # Handoff — Mythic Mulligan
 
-Last updated 2026-10-09 (pushed to `main`). `CLAUDE.md` holds the standing
+Last updated 2026-10-10 (pushed to `main`). `CLAUDE.md` holds the standing
 rules and is loaded by itself; this file is what a new session needs on
 top. Read this file whole. The rest is for looking up, never for reading
 through:
@@ -14,18 +14,15 @@ through:
 ## 1. Where things stand
 
 - Everything is committed and **no request is waiting**.
-- Last done (8 to 9 October; detail in `docs/features.md`'s newest
-  section): a **polish round, no new features** (he asked: nail down
-  what is there). The Tour Pass page made to look worth paying for; bags
-  with their own Mythic counts; pace settled by simulation (free about
-  ten and a half weeks to a Mythic set, paying clearly quicker); gear
-  earned slower; frames quicker and long play bounded; an event's result
-  waits for an open sheet; an ace's ball never vanishes; the far-off
-  clubhouse at night stands in the treeline (it floated); **every word
-  plain, short and never shortened** (seconds, minutes, Level); padlocks
-  on gear rolls; the figures themselves on the Bench and Attributes.
-  Before that (8 October): the hole's bar, the button column, the fonts,
-  the loading screen, sound on open.
+- Last done (9 to 10 October; detail in `docs/features.md`'s newest
+  section), still **polish, no new features**: the course drawn **30
+  frames a second** (the phone ran hot); **old saves** from five builds
+  kept in a check; the **Vault** starts on a floor he can clear (it paid
+  nothing after a retirement); the free sovereigns that grow with play
+  **cut 40%** (he chose: a player who retires had a set at 6 to 9 weeks,
+  now about 10; the pass about 7); **bigger tap areas**; the faint grey a
+  step lighter; plainer pop-ups. Before that (8 to 9 October): the Tour
+  Pass page, bag counts, pace, slower gear, every word in full, padlocks.
 - **The iPhone app: everything is in `docs/ios-app.md`** (read it whole
   when the app comes up). **Don't suggest it for now** (he asked, 8
   October): polish what is there first. In short: `index.html` wrapped unchanged with
@@ -47,7 +44,7 @@ through:
   new a switch. Earlier work: the sections under it.
 - What lives by the season asks `lookSeason`: a course's own, the Snowline
   winter and the Blossom spring all year, else the month.
-- `node test/run.js` has **193 checks** (all passed 9 October), about 35 minutes: run it in the
+- `node test/run.js` has **197 checks** (all passed 10 October), about 35 minutes: run it in the
   background, on a copy in the scratchpad, with the machine quiet. After
   weather, colours or anything dated, also run it with `HOUR_FORCE` 8 and
   15 and the month pinned (rules 20 and 70).
@@ -64,7 +61,8 @@ through:
   Membership and the Founder's Collection on his phone; the hole's bar
   and the condition by the cog, the smaller pop-ups and the loading screen
   on his phone (all 8 October); the redesigned Tour Pass page, the gear
-  padlocks, the house in the treeline (9 October).
+  padlocks, the house in the treeline (9 October); thirty frames a
+  second, the bigger tap areas, the lighter grey (10 October).
 - Settled, in case it comes up: swing speed still matters fully (a hole's
   time is when the ball drops); Fast Walker only shortens a hole's least
   time; every caddie has a trick (don't offer caddie tricks); Dawn and
@@ -289,6 +287,27 @@ Numbered so `CLAUDE.md` and the checks can point at them.
     never changes size), except in a wager (`#stage.wager`), whose Leave
     sits just under the bar (`wagerplay`).
 
+82. **Pace by a player who plays properly** (`test/sim.js`: retires when
+    the climb stalls, buys heirlooms, spends talents, upgrades clubs). The
+    old simulated player never retired and stalled at Card 40, which made
+    the climb look ten times slower than it is. Runs of one setting differ
+    by weeks (a set at day 44 to 63): compare means of several seeds, or
+    work a cut out from where each run's sovereigns came from.
+83. Time a frame on **repeated frames of one view**, never the first after
+    a new hole (that one builds its pictures), and run the old build and
+    the new **in both orders**: a "faster" change measured slower and was
+    undone (`overTrees` by rows).
+84. Screenshots of menus differ from themselves (live figures, timers,
+    animated tiles): to show a change moved nothing, compare every
+    element's box below the top bar instead.
+85. **A dated run**: a copy of the game with a few lines first in `<head>`
+    that start `Date` on a chosen day and hour (it runs on from there),
+    then the whole suite on it. Months Jan, Apr, Jul, 28 Oct, 20 Dec at 8,
+    and Jan and Jul at 15.
+86. A larger tap area is an invisible `::after` round the button; it must
+    not reach a neighbour (`taps`), and on the course's buttons only up
+    and down (`layout` reads a wider one as overflow).
+
 ## 5. Environment
 
 - Reachable for sounds: opengameart.org, kenney.nl (most other sound sites
@@ -310,17 +329,17 @@ brings it up again** (he asked to stop, 6 October): offer other things.
 
 Every idea offered and not yet done, so none is lost:
 
-1. **A look on his phone** at the redesigned Tour Pass page, the gear
-   padlocks, the Bench and Attributes figures and the house in the trees.
-2. **A bug pass on the wagers** at their top levels and with the clock
-   moved, now their pay is cut.
-3. **Battery on a long session**: an hour of real frames on a phone-sized
-   page, watching memory and frame time.
-4. **Old saves**: load the oldest kinds of save and check nothing is lost
-   or doubled since the pace changes.
-5. **A new pass set every few months**, each from a character sheet he
+1. **A look on his phone**: does it still run warm, does 30 frames look
+   smooth (40 if not), the bigger buttons, the lighter grey, the padlocks.
+2. **His own save**: he pastes his save code; load it into this build and
+   check nothing is lost or doubled.
+3. **Heirlooms**: all 30 found in about 7 weeks by a player who retires a
+   lot; maxing them all takes years (the hundred-level ones cost
+   quintillions). He wants maxing to take much longer than finding: it
+   does. Only the four small ones (tops 6 and 10) max in the first weeks.
+4. **A new pass set every few months**, each from a character sheet he
    sends, built as the Cyber-Drive was.
-6. **The iPhone app** (`docs/ios-app.md`), only once he brings it up again.
+5. **The iPhone app** (`docs/ios-app.md`), only once he brings it up again.
 
 Held for when he raises scenery again (he asked to stop): look at the new
 things on the phone (soft cloud shadows, the score call, the gold

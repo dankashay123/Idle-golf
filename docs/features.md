@@ -6,6 +6,33 @@ feature must do, and is usually enough on its own.
 
 ## Sections, newest first
 
+### Cooler, fairer, sturdier (9 to 10 October)
+
+- **Thirty frames a second** (`FRAME_CAP_MS` in `frame`): he felt the phone
+  run hot; every frame redrew the whole course at the screen's 60 or 120.
+  Everything moves by the time passed, so play is as fast (`framecap`). Not
+  in the saver (its own ten a second) and 0 for a check that times frames.
+  The row-limited haze and fade measured slower and were undone.
+- **Old saves** (`test/saves`, five builds 16 September to 6 October, each
+  played in its build): load with nothing lost or twice (`oldsaves`); the
+  old single count toward a Mythic (of 15) carried to the Tour Bag's.
+- **The Vault's start** (`vaultStart`): three below the deepest floor, but
+  no deeper than a floor he clears in half the run; the run and the card's
+  projection both (`vaultstart`). A sweep of every wager weak, mid and
+  maxed, with the clock moved a day, found nothing else.
+- **Pace** (`test/sim.js`, a player who retires, buys heirlooms, spends
+  talents and upgrades clubs): the climb about a card every two days after
+  the first month (he chose to leave it); the free sovereigns that grow
+  with play cut 40% (he chose): honours 6 to 4, 65 to 39, 4 to 2, 2 to 1;
+  the gold mountain 5 to 3; the rival 2 to 1 and its series 6 to 4; tee
+  finds one hole in 67. A set at about day 72 free, 50 with the pass.
+- **Taps**: the small buttons answer a tap 32 pixels tall or more by an
+  invisible `::after`, the look unchanged (`taps`).
+- **Readable grey**: `--faint` #6B8874 to #7B9883, `.mtx` lighter, Scrap's
+  red lighter; measured on every screen at 320.
+- **Pop-ups**: a locked card says what unlocks it; Auto-Climb's move says
+  so; Re-attuned says what was kept; no filler.
+
 ### Polish: the pass, pace, speed and words (8 to 9 October)
 
 - **Tour Pass page** (`passHtml`): a banner with the Cyber-Drive on its own
