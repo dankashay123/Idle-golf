@@ -3469,7 +3469,7 @@ const B = {
       mile:{ at:60, n:'Quick Play', d:'Holes can end early' } },
     { id:'touch',   n:'Touch',   ic:'touch',  d:'Contact off the middle',  v:'+0.10% pure strike chance, +0.03× its power',
       mile:{ at:60, n:'Flush', d:'Pure strikes ignore armour' } },
-    { id:'fortune', n:'Fortune', ic:'coins',  d:'What the week is worth',  v:'+0.7% prize money, +0.08% luck',
+    { id:'fortune', n:'Fortune', ic:'coins',  d:'What the week is worth',  v:'+0.7% prize money, +0.08% club luck',
       mile:{ at:60, n:'Appearance Fee', d:'Each hole pays 10% of its purse at the tee' } }
   ],
   STAT_V: { drive:{pow:0.012}, tempo:{spd:0.0030}, touch:{crt:0.0010, cpw:0.03},
@@ -4515,7 +4515,9 @@ function fmt(n, dp){
 }
 // a multiplier: two places while it is small, the game's own units past
 // that. toFixed alone printed Drive Power as x2.055640197382958e+39.
-const fmtX = v => (Math.abs(v) < 1000 ? v.toFixed(2) : fmt(v));
+// (\u00d7685.57 read as two decimals too many: two below ten, one below a
+// hundred, none past it)
+const fmtX = v => { const a = Math.abs(v); return a < 10 ? v.toFixed(2) : a < 100 ? v.toFixed(1) : a < 1000 ? String(Math.round(v)) : fmt(v); };
 const pct = v => (v*100 < 10 ? (v*100).toFixed(1) : Math.round(v*100)) + '%';
 const pp  = v => '+' + (v*100).toFixed(1) + '%';
 // (in full words, the user asked: never "7h 59m")
@@ -5797,10 +5799,10 @@ function itemScore(it){
 }
 // what a set tier gives, in words
 const setEffect = t => Object.keys(t).filter(k => k !== 'n').map(k => ({
-    pow:'+' + Math.round(t[k]*100) + '% swing', crt:'+' + (t[k]*100).toFixed(0) + '% pure',
-    cpw:'+' + t[k].toFixed(1) + 'x payoff', elm:'+' + Math.round(t[k]*100) + '% affinity',
+    pow:'+' + Math.round(t[k]*100) + '% swing power', crt:'+' + (t[k]*100).toFixed(0) + '% pure strike chance',
+    cpw:'+' + t[k].toFixed(1) + '\u00d7 strike payoff', elm:'+' + Math.round(t[k]*100) + '% affinity power',
     gld:'+' + Math.round(t[k]*100) + '% prize money', spd:'+' + Math.round(t[k]*100) + '% pace',
-    mst:'+' + Math.round(t[k]*100) + '% second ball', drp:'+' + Math.round(t[k]*100) + '% club luck',
+    mst:'+' + Math.round(t[k]*100) + '% second-ball chance', drp:'+' + Math.round(t[k]*100) + '% club luck',
     dgn:'+' + Math.round(t[k]*100) + '% wager haul'
   })[k]).join(', ');
 // the named sets with at least one piece anywhere, equipped or in the locker
@@ -7123,7 +7125,7 @@ function careerChal(w){
     h += '<div class="row"><div><div class="nm">' + C.n + ' <span class="mt">' + pipRow(t, B.CHAL_TIER.length) + '</span></div>'
       + '<div class="ds">' + C.d + '</div>'
       + '<div class="mt">' + (on ? 'On \u00b7 ' + S.chal.n + '/' + B.CHAL_HOLES + ' \u00b7 ' + scoreTxt(S.chal.sum)
-        : t ? 'Kept: ' + C.s.replace(/\d+(\.\d+)?/, m => +(m * t).toFixed(2)) : 'Each win: ' + C.s) + '</div></div>'
+        : t ? 'Kept: ' + C.s.replace(/\d+(\.\d+)?/, m => +(m * t).toFixed(2)) : C.s + ' a win') + '</div></div>'
       + '<div class="btnrow">' + (on ? '<button class="mini" data-cq="1">Give up</button>'
         : '<button class="mini' + (why ? ' dim' : ' go') + '" data-cs="' + C.id + '"' + (why ? ' disabled' : '') + '>' + (why || 'Start \u00b7 Tier ' + (t + 1)) + '</button>') + '</div></div>';
   }
