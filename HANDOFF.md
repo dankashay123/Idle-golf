@@ -49,7 +49,9 @@ through:
   new a switch. Earlier work: the sections under it.
 - What lives by the season asks `lookSeason`: a course's own, the Snowline
   winter and the Blossom spring all year, else the month.
-- `node test/run.js` has **198 checks** (all passed 10 October), about 35 minutes: run it in the
+- `node test/run.js` has **198 checks**. The last full run (all passed) was
+  before 10 October's last changes to checks (`canyonlook` back with the
+  others, `passclock` new): **a full run is owed**. About 35 minutes: run it in the
   background, on a copy in the scratchpad, with the machine quiet. After
   weather, colours or anything dated, also run it with `HOUR_FORCE` 8 and
   15 and the month pinned (rules 20 and 70).
@@ -356,6 +358,9 @@ Every idea offered and not yet done, so none is lost:
 4. **A new pass set every few months**, each from a character sheet he
    sends, built as the Cyber-Drive was.
 5. **The iPhone app** (`docs/ios-app.md`), only once he brings it up again.
+6. **One full check run** on today's date (owed, see §1).
+7. **A wording pass on the Trophy Room's Honours list**: the longest list,
+   never given the line-by-line no-filler read the other screens had.
 
 Held for when he raises scenery again (he asked to stop): look at the new
 things on the phone (soft cloud shadows, the score call, the gold
@@ -363,4 +368,4 @@ mountain), the other special holes for bunkers under them, snow falling
 heavier, frost melting through a round, a fog bank thinning, gusts of
 leaves, glints and variety on the gold heap, a speed pass at its foot.
 
-Recommend 1, then 2.
+Recommend 1, then 6 (I can run 6 while he plays).
