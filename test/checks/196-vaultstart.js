@@ -3,7 +3,7 @@
  * which only ever grows, so after a retirement, the range work gone, every
  * run began on a floor he could not clear and paid nothing):
  *   - a weak golfer whose deepest floor is 400 starts on a floor he clears,
- *     and the run pays prize money
+ *     and the run pays prize money; the card's projection agrees
  *   - a golfer whose start was in reach keeps it, floor for floor */
 'use strict';
 module.exports = {
@@ -18,6 +18,7 @@ module.exports = {
         // deep and weak
         S.dgnFloor.vault = 400; S.dgnKeys.vault = entryCap(d); S.dgnRun = null;
         let D = derive(); const g0 = S.gold;
+        o.proj = dgnPayout(d, D).floors; if (!(o.proj > 0)) fail('from floor 400 the Vault card projects ' + o.proj + ' floors for a run that pays');
         startDgn(d); const R = S.dgnRun;
         o.deep = R.floor; o.work = floorWork(R.floor) / (D.dps * dur());
         if (!(o.work <= 0.5)) fail('from floor 400 the Vault started on ' + R.floor + ', taking ' + o.work.toFixed(1) + ' runs to clear');
@@ -35,6 +36,6 @@ module.exports = {
       return { fails, o };
     });
     if (r.fails.length) throw new Error(r.fails.join('; '));
-    return ['from floor 400 a weak golfer starts on floor ' + r.o.deep + ' (' + Math.round(r.o.work * 100) + '% of a run to clear) and is paid; a start in reach kept (' + r.o.kept + ')'];
+    return ['from floor 400 a weak golfer starts on floor ' + r.o.deep + ' (' + Math.round(r.o.work * 100) + '% of a run to clear) and is paid, the card projecting ' + r.o.proj + ' floors; a start in reach kept (' + r.o.kept + ')'];
   }
 };

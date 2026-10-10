@@ -6782,6 +6782,15 @@ function regenKeys(dt){
     }
   }
 }
+// The Vault's first floor: where it left off, but no deeper than a floor this
+// golfer clears in half the run (after a retirement, the range work gone,
+// that was a floor he could not clear, run after run paying nothing). The
+// run and its projection on the card both start here.
+function vaultStart(d, D, dur){
+  let f = dgnStartFloor(d.id);
+  while(f > 0 && floorWork(f) > D.dps * dur * 0.5) f--;
+  return f;
+}
 const dgnStartFloor = id => Math.max(0, Math.floor((S.dgnFloor[id] - 3) + relLv('rift')*B.RIFT_FLOOR + career().dfloor));
 // Endurance takes work off the floor itself, so it is felt on every rung
 // rather than only on the one you happen to die on.
@@ -7412,7 +7421,7 @@ function dgnPayout(d, D){
   // rub of the green, which is not optional. An event fires on 38% of floors
   // and the table is weighted against you; ignoring them read 24% deep.
   const drag = dgnEventDrag();
-  let f = dgnStartFloor(d.id), t = d.run * (D.C.sharp ? 1.4 : 1), cleared = 0;
+  let t = d.run * (D.C.sharp ? 1.4 : 1), f = vaultStart(d, D, t), cleared = 0;
   while(cleared < 500){
     const need = Math.max(B.DGN_MIN_FLOOR, floorWork(f) / Math.max(1e-9, D.dps))
                * drag.mult + drag.addS;
@@ -7443,11 +7452,7 @@ function startDgn(d){
   // The Vault has to earn its way back down, so it starts where it left off.
   // The other two are scored against the bag instead, or they feed themselves.
   const dur = d.run * (career().sharp ? 1.4 : 1);
-  // (no deeper than a floor this golfer clears in half the run: the Vault
-  // starts where it left off, and after a retirement, the range work gone,
-  // that was a floor he could not clear, run after run paying nothing)
-  let f0 = dgnStartFloor(d.id); const fc = carryFloor(D0);
-  if(d.mode === 'floor') while(f0 > 0 && floorWork(f0) > D0.dps * dur * 0.5) f0--;
+  const f0 = d.mode === 'floor' ? vaultStart(d, D0, dur) : dgnStartFloor(d.id), fc = carryFloor(D0);
   // Captured at the tee, not read at the till. A run started at 23:59 is paid
   // on the stake it was entered under, whatever the clock says when it lands.
   const R = { id:d.id, mode:d.mode, t:0, dur, dead:false, evt:null, evtT:0, next:0,
