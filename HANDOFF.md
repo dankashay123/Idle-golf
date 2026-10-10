@@ -28,9 +28,14 @@ through:
   hold on any date (rule 87); all dates pass. The Tour Pass and
   Membership hold with the clock moved both ways (`passclock`). Before that (8 to 9 October): the Tour
   Pass page, bag counts, pace, slower gear, every word in full, padlocks.
-  Then the Honours list read line by line (counts in full, each repeat's
-  goal under its name, plainer goals) and his save checked; he says the
-  game plays great on his phone (30 frames, buttons, grey all fine).
+  Then the Honours list, Today and the Guide read line by line (counts in
+  full, rows to collect in Title Case, old saves' rows renamed on load);
+  his save (Level 60, Card 13; he only tests, restarting often, and his
+  sovereigns came from the shop) loads whole, a simulated week on it
+  (two seeds) climbs to Card 30 to 36 with no stall or broken number, and
+  `test/memprobe.js` on it held picture memory level over 3.3 game hours.
+  He says the game plays great on his phone. Heirlooms stay as they are:
+  maxing them all must take six months at least (it takes years).
 - **The iPhone app: everything is in `docs/ios-app.md`** (read it whole
   when the app comes up). **Don't suggest it for now** (he asked, 8
   October): polish what is there first. In short: `index.html` wrapped unchanged with
@@ -351,13 +356,10 @@ Every idea offered and not yet done, so none is lost:
 
 1. **A look on his phone**: does it still run warm, does 30 frames look
    smooth (40 if not), the bigger buttons, the lighter grey, the padlocks.
-2. **His own save** (done 10 October: Level 60, Card 13, loads whole,
-   nothing doubled, 400 holes played on clean). Ask for a fresh code after
+2. **His own save** (done 10 October, see §1). Ask for a fresh code after
    big changes to saving.
-3. **Heirlooms**: all 30 found in about 7 weeks by a player who retires a
-   lot; maxing them all takes years (the hundred-level ones cost
-   quintillions). He wants maxing to take much longer than finding: it
-   does. Only the four small ones (tops 6 and 10) max in the first weeks.
+3. A wording pass on the **Cabinet** and the **shop**, as the Honours,
+   Today and the Guide had.
 4. **A new pass set every few months**, each from a character sheet he
    sends, built as the Cyber-Drive was.
 5. **The iPhone app** (`docs/ios-app.md`), only once he brings it up again.
