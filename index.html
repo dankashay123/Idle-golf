@@ -7006,6 +7006,7 @@ const festDef = id => FEST.find(f => f.id === id);
 // (Monday is 0 of the game's week, so Saturday 5 and Sunday 6)
 const festDow = () => ((dayNow() + 3) % 7 + 7) % 7;
 function festNow(){
+  if(FEST_FORCE === false) return null;   // (none, whatever the date: for a check that measures the lines by the cog)
   if(FEST_FORCE) return festDef(FEST_FORCE);
   if(weekNow() % 2 !== 0 || festDow() < 5) return null;
   return FEST[MONTH_SEASON[monthNow()]];
@@ -7043,8 +7044,11 @@ function festBlock(){
   }
   const st = festState(), left = (7 - festDow()) * 86400 - (Date.now() / 1000 % 86400);
   const nx = st.got < FEST_AT.length ? FEST_AT[st.got] : null;
-  return '<div class="eyebrow" style="margin:12px 0 0">' + F.n + '</div>'
-    + '<div class="row"><div><div class="nm">' + nb(F.s) + '</div><div class="ds">Ends in ' + hms(Math.max(0, left)) + ' \u00b7 ribbons for birdies or better: ' + fmt(st.n, 0)
+  // (the festival's name the row's title and what it gives under it: its
+  // bonus as the title read "Wager entries twice as fast", not a title)
+  const bonus = F.s.charAt(0).toUpperCase() + F.s.slice(1);
+  return '<div class="eyebrow" style="margin:12px 0 0">Festival</div>'
+    + '<div class="row"><div><div class="nm">' + F.n + '</div><div class="ds">' + nb(bonus) + ' \u00b7 Ends in ' + hms(Math.max(0, left)) + '<br>Ribbons for birdies or better: ' + fmt(st.n, 0)
     + (nx ? ' of ' + nx + ' for prize ' + (st.got + 1) : ' \u00b7 every prize won') + '</div>'
     + '<div class="cadbar"><i style="width:' + Math.round(clamp(nx ? st.n / nx : 1, 0, 1) * 100) + '%"></i></div>'
     + '<div class="mt">' + pipRow(st.got, FEST_AT.length) + ' Prize 5: tee markers</div></div></div>';

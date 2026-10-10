@@ -21,13 +21,17 @@
 module.exports = {
   name: 'bless',
   async run(page) {
+    // (no festival, whatever the date: its line by the cog moved these)
+    await page.evaluate(() => { FEST_FORCE = false; });
     const r = await page.evaluate(() => {
       const SNAP = JSON.stringify(S), o = { bad: [], cols: {}, lines: {} };
       const keep = window.step;
       try {
         hideSheet(); window.step = () => {};
         startHole(); Scene.announce = null;
-        o.idle = { txt: $('buffTip').textContent, on: $('buffTip').classList.contains('on') };
+        // (a festival's line, there on its weekends, left out: these are the perks')
+        const mine = () => [...$('buffTip').children].filter(n => n.dataset.k !== 'fest');
+        o.idle = { txt: mine().map(n => n.textContent).join(''), on: mine().length > 0 };
         const D = derive(), c = Scene.b;
         const seen = new Set();
         const fire = id => { S.caddie = cperkDef(id).myth ? 'ascended' : 'classic'; S.cperkOwn = { [id]: 1 }; S.cperk = id; S.cperkT = B.CPERK_EVERY; S.buff = {};
@@ -121,7 +125,7 @@ module.exports = {
 
         // ---- the sponsor perks join it: a line each, in brass, stacked ----
         // (the user asked: their icons on the field sat behind the shop)
-        const lines = () => [...$('buffTip').children].map(n => ({ k: n.dataset.k, txt: n.textContent, col: n.style.color, op: n.style.opacity,
+        const lines = () => [...$('buffTip').children].filter(n => n.dataset.k !== 'fest').map(n => ({ k: n.dataset.k, txt: n.textContent, col: n.style.color, op: n.style.opacity,
           mid: Math.round((n.getBoundingClientRect().top + n.getBoundingClientRect().bottom) / 2 - (s.top + s.bottom) / 2) }));
         // (on a fair day: the day's condition takes the cog's row, the perks under it)
         S.perkOn = { hot: 460 }; buffTip(0); o.stack = { two: lines() };

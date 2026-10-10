@@ -43,8 +43,11 @@ module.exports = {
             // without the wood at the back
             Scene.buildWood = function () { this.wood = null; this.woodBase = 0; }; const W = draw(); Scene.buildWood = keep.bw;
             // without the trees, and without the haze: bare ground left unhazed
-            Scene.forestPass = function () { this._forOcc = []; }; Scene.standBlit = function () {}; Scene.buildHaze = function () { this.haze = null; }; const N = draw(); Scene.buildHaze = keep.bh; Scene.hazeKey = null;
-            Scene.forestPass = keep.fp; Scene.standBlit = keep.sb; draw();
+            // (the birds on the fairway left out too: they stand as the trees do, and
+            // on a day when one sat in this strip its pixels read as bare ground)
+            const db = Scene.drawBird;
+            Scene.forestPass = function () { this._forOcc = []; }; Scene.standBlit = function () {}; Scene.drawBird = function () {}; Scene.buildHaze = function () { this.haze = null; }; const N = draw(); Scene.buildHaze = keep.bh; Scene.hazeKey = null;
+            Scene.forestPass = keep.fp; Scene.standBlit = keep.sb; Scene.drawBird = db; draw();
             o.views++;
             let tree = 0, same = 0, stale = 0, woodBad = 0, hz = 0, hzOf = 0;
             const top = Math.max(0, HORIZON - Math.round(VH * 0.18)), deep = HORIZON + Math.round((VH - HORIZON) * 0.3);

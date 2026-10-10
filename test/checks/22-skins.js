@@ -261,14 +261,15 @@ module.exports = {
     // up: a launch set up by hand and frozen never showed it. Every point a
     // trail projects is compared with his feet, frame by frame.
     const behind = await page.evaluate(() => new Promise(done => {
-      const keep = S.trail, db = Scene.drawBalls, pj = Scene.proj;
+      // (every frame the screen gives, not the game's thirty: it counts frames)
+      const keep = S.trail, db = Scene.drawBalls, pj = Scene.proj, cap = FRAME_CAP_MS; FRAME_CAP_MS = 0;
       let inB = false, maxY = -1e9, worst = -1e9, frames = 0;
       QUIET = true; DEV.gold(8); QUIET = false; S.trail = 'seraph';
       Scene.proj = function(d, lat, lift){ const q = pj.call(this, d, lat, lift); if (inB) maxY = Math.max(maxY, q.y); return q; };
       Scene.drawBalls = function(dt){ maxY = -1e9; inB = true;
         try { return db.call(this, dt); } finally { inB = false;
           if (this.balls.length){ frames++; worst = Math.max(worst, maxY - pj.call(this, this.camD, -0.30).y); } } };
-      setTimeout(() => { Scene.drawBalls = db; Scene.proj = pj; S.trail = keep; done({ worst, frames }); }, 8000);
+      setTimeout(() => { Scene.drawBalls = db; Scene.proj = pj; S.trail = keep; FRAME_CAP_MS = cap; done({ worst, frames }); }, 8000);
     }));
     if (!(behind.frames > 60)) throw new Error('only ' + behind.frames + ' frames with a ball in the air in eight seconds');
     if (behind.worst > 1) throw new Error('a trail reached ' + behind.worst + 'px below his feet, back to the tee he had '

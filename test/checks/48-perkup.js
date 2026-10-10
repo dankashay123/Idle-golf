@@ -20,6 +20,8 @@
 module.exports = {
   name: 'perkup',
   async run(page) {
+    // (no festival, whatever the date: its line by the cog moved these)
+    await page.evaluate(() => { FEST_FORCE = false; });
     const r = await page.evaluate(() => {
       const o = {}, SNAP = JSON.stringify(S);
       hideSheet(); QUIET = false;
@@ -71,9 +73,10 @@ module.exports = {
 
         // ---- the line by the cog ----
         fire('tempo', 3); cperkShow = { id: 'tempo', left: 2 }; buffTip(0);
-        o.line3 = $('buffTip').textContent;
+        const mine = () => [...$('buffTip').children].filter(n => n.dataset.k !== 'fest').map(n => n.textContent).join('');   // (a festival's line left out)
+        o.line3 = mine();
         fire('ready', 5); cperkShow = { id: 'ready', left: 2 }; buffTip(0);
-        o.lineReady5 = $('buffTip').textContent;
+        o.lineReady5 = mine();
         cperkShow = null; S.buff = {}; buffTip(0);
 
         // ---- the rack ----
