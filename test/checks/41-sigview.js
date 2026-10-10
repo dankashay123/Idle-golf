@@ -76,7 +76,12 @@ module.exports = {
               // dashes: the user saw the bridge)
               if (cam >= I.bank - 0.3 && k !== 'island') {
                 const one = { canyon: 'drawBridge', stones: 'drawStones', pier: 'drawPier', rail: 'drawRail' }[k];
-                const solo = () => { c.clearRect(0, 0, VW, VH); Scene[one](); const d = c.getImageData(0, 0, VW, VH).data; let n = 0; for (let i = 3; i < d.length; i += 4) if (d[i]) n++; return n; };
+                // (a lantern's light on the water and its soft glow are light, not the
+                // pier: lying this side of a post, or spilling past it, they may
+                // rightly sit behind the bank he stands on; one ripple of it, 4
+                // pixels at one moment, failed a full run)
+                const LIGHT = new Set(['c8962e', '7a5a24', '9a7430', 'e8b84a']);
+                const solo = () => { c.clearRect(0, 0, VW, VH); Scene[one](); const d = c.getImageData(0, 0, VW, VH).data; let n = 0; for (let i = 3; i < d.length; i += 4) if (d[i] && !LIGHT.has([d[i - 3], d[i - 2], d[i - 1]].map(v => v.toString(16).padStart(2, '0')).join(''))) n++; return n; };
                 const cut = solo(), ck = Scene.clipAt; Scene.clipAt = () => 1e6; const whole = solo(); Scene.clipAt = ck;
                 if (whole - cut > 3) o.cut.push(cs.id + ' hole ' + holeInRound(h) + ' (' + k + ') from ' + cam.toFixed(1) + ': ' + (whole - cut) + ' of its ' + whole + ' pixels cut away');
                 o.onIt++;
