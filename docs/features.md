@@ -27,6 +27,15 @@ feature must do, and is usually enough on its own.
   ragged train on the robe; a cross on the censer.
 - **Waving to a train** every skin's head pieces sat where his head is at
   address: `golferG` now takes `CAP_BACK` for `gWave` too.
+- Then (he asked): the **Censer Driver is the censer weapon** of his sheet:
+  a gold staff ending at `hang()`, a great censer hanging off it on three
+  chains, upright and swaying (`CLUBFX.penitent.censer`), incense off it;
+  the censer at his waist is left off while he holds it. His
+  **candelabra** (`penCandelabra`): in his free hand walking away (not
+  waving), and out in his caddie's hand with a sleeve to it. The
+  **Ascended Choir** on an albatross or an ace: rays of gold and white out
+  of his halo, long and short, and a ring of light (`choir`, behind him,
+  close). His caddie's halo larger, bolder at his size.
 - `STYLEFX.penitent`: an ivory veil over the Dread's hood shape with the
   face black under it and a gold brow band (`penHood`); a sunburst halo of
   gold spikes behind his head, in front of it walking away (`penHalo`, 1.35
