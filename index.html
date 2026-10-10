@@ -4335,7 +4335,7 @@ const B = {
     { id:'penitent', n:'The Penitent', cost:3500, fx:'penitent', cat:'skin', top:2, pattern:'penrobe', pantPattern:'penfold',
       cap:'#F2E4C4', cap2:'#D8C49C', shirt:'#3E3A46', shirt2:'#2E2A34', shirt3:'#221A20', pant:'#7A1828', pant2:'#4E0E18',
       skin:'#2E2A34', skin2:'#221A20', shoe:'#2E2A34', belt:'#D8A848', hair:'#F2E4C4', hand:'#D8C49C',
-      bulk:1, arm:'#3E3A46', arm2:'#2E2A34' },
+      bulk:1, arm:'#7A1828', arm2:'#4E0E18' },
     // Psychedelic (the user named him): clothes in a spiral of six colours
     // that keep turning, a rainbow afro, mirror shades and a third eye, a
     // mandala behind his head and a spiral turning under his feet
@@ -4431,6 +4431,8 @@ const B = {
     { id:'cosmic',    n:'Eclipse Driver',  cost:2350, fx:'cosmic',   top:2, shaft:'#D8B060', shaft2:'#9A7432', head:'#0B0818', head2:'#B98CFF', grip:'#1C1640', glow:'#B98CFF' },
     { id:'ascended',  n:'Ascended Driver', cost:2350, fx:'ascended', top:2, shaft:'#4A4466', shaft2:'#3A3456', head:'#6A3AC8', head2:'#B070F8', grip:'#262040', glow:'#9A3AC8' },
     { id:'dread',     n:'Reaper Driver',   cost:2350, fx:'dread',    top:2, shaft:'#3E3A48', shaft2:'#24222C', head:'#6E6A78', head2:'#E8FFF2', grip:'#D8D2BC', glow:'#5CF0A0' },
+    // the Penitent's (his sprite sheet): a shaft of gold bound in crimson, a censer for its head, incense off it
+    { id:'penitent',  n:'Censer Driver',   cost:2350, fx:'penitent', top:2, shaft:'#D8A848', shaft2:'#A8782E', head:'#A8782E', head2:'#F4D27A', grip:'#7A1828', glow:'#F4D27A' },
     // the Cyber-Drive's hammer (the Tour Pass's, never sold): a shaft of green light, a gunmetal canister for its head banded in lime
     { id:'cyber',     n:'Cyber-Drive Hammer', cost:0, fx:'cyber', top:2, passSet:1, shaft:'#3AF07A', shaft2:'#1E9A4A', head:'#4A5578', head2:'#C8F23A', grip:'#141826', glow:'#3AF07A' },
     { id:'psyche',    n:'Kaleido Driver',  cost:2350, fx:'psyche',   top:2, shaft:'#FF2E88', shaft2:'#C81E6A', head:'#FFFFFF', head2:'#2EC8FF', grip:'#1A1024', glow:'#FF2E88' }
@@ -4448,6 +4450,7 @@ const B = {
     { id:'ascension', n:'Ascension Wake', cost:2350, fx:'tAscension', cols:['#E639EB', '#F2A6F8'], top:2 },
     { id:'horizon',   n:'Event Horizon',  cost:2350, fx:'tHorizon',   cols:['#B98CFF', '#FFFFFF'], top:2 },
     { id:'soulwake',  n:'Soul Wake',      cost:2350, fx:'tSoul',      cols:['#5CF0A0', '#E8FFF2'], top:2 },
+    { id:'choirwake', n:'Choir Wake',     cost:2350, fx:'tChoir',     cols:['#F4D27A', '#A8283A'], top:2 },
     { id:'cyberwake', n:'Cyber Wake',     cost:0, fx:'tCyber',     cols:['#3AF07A', '#FF3AD0'], top:2, passSet:1 },
     { id:'kaleido',   n:'Kaleido Wake',   cost:2350, fx:'tKaleido',   cols:['#FF2E88', '#2EC8FF'], top:2 },
     // balls: more than a colour
@@ -4462,6 +4465,7 @@ const B = {
     { id:'ascorb',   n:'Ascended Orb', cost:1750, fx:'ascorb',   cat:'ball', cols:['#E639EB'], top:2 },
     { id:'singularity', n:'Singularity', cost:1750, fx:'singularity', cat:'ball', cols:['#B98CFF'], top:2 },
     { id:'reaperskull', n:'Reaper Skull', cost:1750, fx:'skullball', cat:'ball', cols:['#5CF0A0'], top:2 },
+    { id:'choirball', n:'Censer Ball', cost:1750, fx:'choirball', cat:'ball', cols:['#D8A848'], top:2 },
     { id:'cyberball', n:'Cyber Core', cost:0, fx:'cyberball', cat:'ball', cols:['#2ED8D0'], top:2, passSet:1 },
     { id:'thirdeye',  n:'Third Eye',   cost:1750, fx:'psyeye',    cat:'ball', cols:['#FF2E88'], top:2 }
   ]
@@ -9719,13 +9723,16 @@ const FULL_SETS = { ascended: { n: 'Ascended', t: ['ascension', 'ascorb'], rim: 
   cosmic: { n: 'The Void', t: ['horizon', 'singularity'], rim: '#C9B0FF' },
   divine: { n: 'Divine', t: ['seraph', 'godlight'], rim: '#FFE38A' }, demonic: { n: 'Demonic', t: ['hellfire', 'demoneye'], rim: '#FF8A3A' },
   dread: { n: 'The Dread', t: ['soulwake', 'reaperskull'], rim: '#7CFFB2' },
+  penitent: { n: 'The Penitent', t: ['choirwake', 'choirball'], rim: '#F4D27A' },
   psyche: { n: 'Psychedelic', t: ['kaleido', 'thirdeye'], rim: '#FF7AC0' },
   // (the Tour Pass's, never sold: kept off SET_ORDER and the Sets rack's prices)
   cyber: { n: 'Cyber-Drive', t: ['cyberwake', 'cyberball'], rim: '#C8F23A', pass: 1 } };
 // the one order the four sets keep on every rack of the shop, and on Sets
 // (each rack kept its own list's order, so the Ascended was first on one
 // and second on the next: the user saw it)
-const SET_ORDER = ['psyche', 'dread', 'ascended', 'cosmic', 'divine', 'demonic'];
+// (the Penitent, the seventh, from the user's own sprite sheet: after the
+// other Mythics)
+const SET_ORDER = ['psyche', 'dread', 'ascended', 'cosmic', 'penitent', 'divine', 'demonic'];
 const setRank = (k, id) => { const i = SET_ORDER.indexOf(fullSetOf(k, id)); return i < 0 ? 99 : i; };
 function fullSetOf(k, id){ for(const s in FULL_SETS) if(k === 't' ? FULL_SETS[s].t.includes(id) : id === s) return s; return null; }
 // the top set he wears in full (never while trying one on)
@@ -9877,7 +9884,7 @@ const ICON_FX = {
   // The Penitent Choir: the spikes of his halo over his veil, the black of
   // his face, a candle either side, his crimson sash and his censer
   penitent(P, caddie){
-    if(caddie) return;
+    if(caddie){ P(2, 0, '#D8A848'); P(4, 0, '#F4D27A'); P(6, 0, '#D8A848'); P(4, 2, '#0A0608'); P(5, 2, '#0A0608'); P(2, 9, '#D8A848'); P(2, 10, '#FF9A2A'); return; }
     const G = '#D8A848', L = '#F4D27A', K = '#0A0608', R = '#A8283A', W = '#F2E4C4', F = '#FF9A2A';
     P(3, 0, G); P(5, 0, L); P(7, 0, L); P(9, 0, G); P(2, 1, G); P(10, 1, G); P(1, 2, L); P(11, 2, L);
     P(6, 3, K); P(7, 3, K); P(0, 6, F); P(0, 7, W); P(0, 8, W); P(11, 6, F); P(11, 7, W); P(11, 8, W);
@@ -9971,13 +9978,16 @@ function clubUrl(d){
       for(const [x, y, col] of [[8, 9, '#A49CC8'], [7, 10, '#A49CC8'], [9, 10, '#6A3AC8'], [10, 11, '#B070F8'], [9, 11, '#3A1E78'], [10, 10, '#F0D0FF'],
                                 [11, 10, '#6A3AC8'], [8, 11, '#6A3AC8'], [11, 11, '#3A1E78']]) P(x, y, col); }
     const acc = { divine:['#3FD6A8', '#F4D27A'], ice:['#FFFFFF', '#9FD6F2'], neon:['#3FFFB0', '#CFFFEA'], gold:['#FFFFFF', '#FFE39A'],
-                  demonic:['#FF5A1E', '#FFD34A'], ascended:['#E639EB', '#F2A6F8'], cosmic:['#B98CFF', '#FFFFFF'], dread:['#5CF0A0', '#E8FFF2'], psyche:['#FF2E88', '#2EC8FF'], cyber:['#C8F23A', '#FF3AD0'] }[d.fx === 'glint' ? 'gold' : d.fx];
+                  demonic:['#FF5A1E', '#FFD34A'], ascended:['#E639EB', '#F2A6F8'], cosmic:['#B98CFF', '#FFFFFF'], dread:['#5CF0A0', '#E8FFF2'], psyche:['#FF2E88', '#2EC8FF'], cyber:['#C8F23A', '#FF3AD0'], penitent:['#F4D27A', '#A8283A'] }[d.fx === 'glint' ? 'gold' : d.fx];
     // the Kaleido's shaft in bands of the six, a crystal for its head
     if(d.fx === 'psyche'){ pts.forEach(([x, y], i) => { if(i > 1) P(x, y, PSY[i % 6]); }); g.clearRect(7, 9, 4, 3);
       for(const [x, y, col] of [[8, 9, '#FFFFFF'], [9, 9, '#2EC8FF'], [8, 10, '#FF2E88'], [9, 10, '#FFFFFF'], [10, 10, '#FFE81E'], [9, 11, '#8A4CFF'], [10, 11, '#3AF07A']]) P(x, y, col); }
     // the Reaper's dark haft bound in bone, a scythe's blade for its head, its edge green
     if(d.fx === 'dread'){ g.clearRect(7, 9, 4, 3); P(3, 2, '#D8D2BC'); P(5, 5, '#D8D2BC'); P(7, 8, '#D8D2BC');
       for(const [x, y, col] of [[8, 9, '#6E6A78'], [9, 9, '#9A96A6'], [10, 10, '#9A96A6'], [11, 11, '#E8FFF2'], [8, 10, '#5CF0A0'], [9, 10, '#5CF0A0'], [10, 11, '#5CF0A0']]) P(x, y, col); }
+    // the Censer Driver's gold shaft bound in crimson, a censer for its head, embers in it
+    if(d.fx === 'penitent'){ pts.forEach(([x, y], i) => { if(i > 1 && i % 3 === 0) P(x, y, '#A8283A'); }); g.clearRect(7, 9, 4, 3);
+      for(const [x, y, col] of [[8, 8, '#F4D27A'], [7, 9, '#D8A848'], [8, 9, '#D8A848'], [9, 9, '#D8A848'], [7, 10, '#A8782E'], [8, 10, '#FF9A2A'], [9, 10, '#A8782E'], [8, 11, '#6E4E1E'], [10, 7, '#F2E4C4'], [11, 6, '#D8C49C']]) P(x, y, col); }
     // the Cyber-Drive's green shaft, a hammer's canister across its end, capped in lime
     if(d.fx === 'cyber'){ g.clearRect(7, 9, 4, 3);
       for(let y = 9; y <= 11; y++){ P(5, y, '#C8F23A'); P(10, y, '#C8F23A'); for(let x = 6; x <= 9; x++) P(x, y, y === 9 ? '#6E7AA0' : y === 11 ? '#262D45' : x === 7 || x === 8 ? '#3AF07A' : '#4A5578'); }
@@ -10041,6 +10051,10 @@ const BALL_ICON = {
               map:{ W:'#FFFFFF', a:'#FF2E88', b:'#FF8A1E', c:'#FFE81E', d:'#3AF07A', e:'#2EC8FF', f:'#8A4CFF' } },
   psyeye:   { rows:['............','....KKKK....','..KKWWWWKK..','.KWWaabbWWK.','KWWfeKKcbWWK','KWWeKKKKcWWK','KWWdKKKKcWWK','.KWWddccWWK.','..KKWWWWKK..','....KKKK....','.a........e.','............'],
               map:{ K:'#1A1024', W:'#FFFFFF', a:'#FF2E88', b:'#FF8A1E', c:'#FFE81E', d:'#3AF07A', e:'#2EC8FF', f:'#8A4CFF' } },
+  tChoir:   { rows:['.........gWg','........gWWg','.......lGGl.','......rGl.f.','.....lGr....','....dGl..f..','...rGl......','..dGr...f...','.dGd........','rGd.........','Gd......f...','............'],
+              map:{ W:'#FFFFFF', g:'#FFF2C0', G:'#F4D27A', l:'#D8A848', d:'#A8782E', r:'#A8283A', f:'#FF9A2A' } },
+  choirball:{ rows:['.....f......','.....F......','....dGGd....','...dGGGGd...','..dGWGGGGd..','..GGGGGGGG..','..rrRrrRrr..','..dGGGGGGd..','...dGGGGd...','....dddd....','.....dd.....','............'],
+              map:{ f:'#FF9A2A', F:'#FFF2C0', G:'#D8A848', W:'#FFF2C0', d:'#6E4E1E', r:'#A8782E', R:'#FF9A2A' } },
   tCyber:   { rows:['.........gWg','........gWWg','.......lGGl.','......mGl.s.','.....lGm....','....dGl..s..','...mGl......','..dGm...s...','.dGd........','mGd.........','Gd......s...','............'],
               map:{ W:'#FFFFFF', g:'#E8FF9A', G:'#3AF07A', l:'#1E9A4A', d:'#0B5A2A', m:'#FF3AD0', s:'#C8F23A' } },
   cyberball:{ rows:['............','....KKKK....','..KKTTTTKK..','.KTTwTTTTTK.','.KTwTTTTTTK.','LLLLLLLLLLLL','.KTTTTTTTTK.','.KtTTTTTTtK.','..KKttttKK..','....KKKK....','.m........m.','............'],
@@ -16610,21 +16624,64 @@ const STYLEFX = {
         if(i % 3 === 0 && f < 0.75){ const L = 1 + Math.round(2 * (1 - f) * hr(i, 703)); c.fillStyle = '#FF9A2A'; c.fillRect(x, y - L, 1, L); c.fillStyle = '#FFF2C0'; c.fillRect(x, y - L - 1, 1, 1); } }
     },
     back(c, g){
-      if(g.minor) return;
+      // (his caddie, the hooded acolyte from the sheet: veiled, a small halo,
+      // a censer and two candles)
+      if(g.minor){ this.halo(c, g); this.candles(c, g, false); return; }
       if(!g.back){ this.stole(c, g); this.halo(c, g); }
       this.candles(c, g, false);
       c.globalAlpha = 1;
     },
     body(c, g){
       this.robe(c, g);
+      this.regalia(c, g);
       this.hood(c, g);
     },
+    // a point of his sprite (40 across, 58 down) on the stage
+    at(g, x, y){ return { x: g.x + g.w * x / 40 + (g.shear && !g.back ? g.shear(y / 58) : 0), y: g.y + g.h * y / 58 }; },
+    // what he wears over his robe, under his arms: a gold clasp at his
+    // shoulder with a crimson tassel, a chain of gold round his neck with a
+    // sunburst on his chest, and chains hung from his belt with crosses on
+    regalia(c, g){
+      if(g.minor || g.h < 26) return;
+      const k = Math.max(1, Math.round(g.h / 50)), fin = g.spr === SPRITE.gFinish || g.spr === SPRITE.gWalk;
+      const chain = (a, b, sag, n) => { for(let i = 0; i <= n; i++){ const u = i / n, x = a.x + (b.x - a.x) * u, y = a.y + (b.y - a.y) * u + Math.sin(u * Math.PI) * sag;
+        c.fillStyle = i & 1 ? '#A8782E' : '#F4D27A'; c.fillRect(Math.round(x), Math.round(y), 1, 1); } };
+      if(g.back){
+        // from behind, the chains at his belt either side
+        for(const sx of [14, 26]){ const A = this.at(g, sx, 31.5); chain(A, { x: A.x, y: A.y + g.h * 0.1 }, 0, Math.round(g.h * 0.1));
+          c.fillStyle = '#D8A848'; c.fillRect(Math.round(A.x - k), Math.round(A.y + g.h * 0.1), 3 * k, k); c.fillRect(Math.round(A.x), Math.round(A.y + g.h * 0.1 - k), k, 3 * k); }
+        return;
+      }
+      const P = fin ? { neck: [24, 13], med: [22.5, 20.5], belt: [19, 31] } : { neck: [27, 13], med: [22.5, 19.5], belt: [12.5, 27] };
+      // the chains hung from his belt, swinging a little, a cross on each
+      for(const [dx, L] of [[0, 0.11], [2.2, 0.08]]){ const A = this.at(g, P.belt[0] + dx, P.belt[1] + 0.5), sw = Math.sin(g.t * 1.7 + dx) * g.w * 0.02;
+        const B2 = { x: A.x + sw, y: A.y + g.h * L }; chain(A, B2, 0, Math.round(g.h * L));
+        c.fillStyle = '#D8A848'; c.fillRect(Math.round(B2.x - k), Math.round(B2.y), 3 * k, k); c.fillRect(Math.round(B2.x), Math.round(B2.y - k), k, 3 * k); }
+      // the chain at his neck and the sunburst on his chest
+      const N0 = this.at(g, P.neck[0], P.neck[1]), M = this.at(g, P.med[0], P.med[1]);
+      chain(N0, M, g.h * 0.015, Math.max(4, Math.round(Math.hypot(M.x - N0.x, M.y - N0.y))));
+      { const X = Math.round(M.x), Y = Math.round(M.y), q = this.lit(g);
+        c.fillStyle = '#6E4E1E'; c.fillRect(X - k, Y - k, 3 * k, 3 * k);
+        c.fillStyle = q ? '#FFF2C0' : '#F4D27A'; c.fillRect(X, Y - 2 * k, k, 5 * k); c.fillRect(X - 2 * k, Y, 5 * k, k);
+        c.fillStyle = '#A8283A'; c.fillRect(X, Y, k, k); }
+    },
+    // a plate of gold on his shoulder where his arm joins it, a crimson
+    // tassel off it (drawn over the top of his arm, nothing across him)
+    pauldron(c, g){
+      if(g.minor || g.back || g.h < 26) return;
+      const k = Math.max(1, Math.round(g.h / 46)), spr = g.spr, S0 = this.at(g, 40 * (spr.ax || 0.66), 58 * (spr.ay || 0.30) - 0.8);
+      const X = Math.round(S0.x), Y = Math.round(S0.y);
+      c.fillStyle = '#6E4E1E'; c.fillRect(X - 2 * k, Y - k, 4 * k, 2 * k + 1);
+      c.fillStyle = '#D8A848'; c.fillRect(X - 2 * k, Y - k, 4 * k, k); c.fillStyle = this.lit(g) ? '#FFF2C0' : '#F4D27A'; c.fillRect(X - k, Y - k, k, k);
+      c.fillStyle = '#A8283A'; c.fillRect(X - k, Y + k + 1, Math.max(1, Math.round(k / 2) || 1), Math.round(g.h * 0.05));
+    },
     front(c, g){
-      if(g.minor) return;
+      if(g.minor){ this.candles(c, g, true); return; }
       const N = nightNow();
       // walking away his stole hangs down his back and his halo is between
       // him and us
       if(g.back){ this.stole(c, g); this.hood(c, g); this.halo(c, g); }
+      this.pauldron(c, g);
       if(N) this.nightGlow(c, g);
       this.censer(c, g);
       this.candles(c, g, true);
@@ -16639,7 +16696,7 @@ const STYLEFX = {
     // where his head is: side on the veil's origin, its halo behind it
     halo(c, g){
       const p = this.px(g), H = g.head, sh = g.shear && !g.back ? g.shear(0.1) : 0, L = legendNow(g);
-      const step = Math.floor(g.t * 8) % 24, Hl = penHalo(p * 1.35 * (L ? 1 + 0.12 * outBack(L.f, 0.2) : 1), step, this.lit(g));
+      const step = Math.floor(g.t * 8) % 24, Hl = penHalo(p * (g.minor ? 1.1 : 1.35) * (L ? 1 + 0.12 * outBack(L.f, 0.2) : 1), step, this.lit(g));
       const x = g.back ? H.x : H.x + sh - 1.5 * p, y = H.y - (g.back ? 0.5 : 1) * p + Math.sin(g.t * 1.3) * p * 0.4;
       c.globalAlpha = 1; c.drawImage(Hl.cv, Math.round(x - Hl.ox), Math.round(y - Hl.oy));
     },
@@ -16649,8 +16706,8 @@ const STYLEFX = {
       c.globalAlpha = 1; c.drawImage(Hd.cv, Math.round(H.x + sh - Hd.ox), Math.round(H.y - Hd.oy));
     },
     robe(c, g){
-      if(g.minor) return;
-      const pose = g.back ? 'back' : g.spr === SPRITE.gFinish || g.spr === SPRITE.gWalk ? 'fin' : 'addr';
+      // (his caddie stands as he does at the finish: its shape fits him)
+      const pose = g.minor ? 'fin' : g.back ? 'back' : g.spr === SPRITE.gFinish || g.spr === SPRITE.gWalk ? 'fin' : 'addr';
       const Rb = penRobe(Math.round(g.w), Math.round(g.h), pose, Math.floor(g.t * 4) % 12), sh = g.shear && !g.back ? g.shear(0.7) : 0;
       c.globalAlpha = 1; c.drawImage(Rb.cv, Math.round(g.x + g.w * Rb.x / 40 + sh), Math.round(g.y + g.h * Rb.y / 58));
     },
@@ -16664,12 +16721,13 @@ const STYLEFX = {
     // bowl pierced with the embers showing through, incense curling up
     censer(c, g){
       const P = this.hip(g); if(!P) return;
-      const k = Math.max(1, Math.round(g.h / 40)), q = this.charge(g.ph);
+      const k = Math.max(1, Math.round(g.h / (g.minor ? 50 : 40))), q = this.charge(g.ph);
       const sw = Math.sin(g.t * 1.9) * 0.35 + (g.ph > 0 && g.ph < 0.55 ? -0.35 * Math.sin(g.ph / 0.55 * Math.PI) : 0);
       const L = Math.max(3, Math.round(g.h * 0.09)), bx = Math.round(P.x + Math.sin(sw) * L), by = Math.round(P.y + Math.cos(sw) * L);
       c.globalAlpha = 1;
       for(let i = 0; i < L; i++){ c.fillStyle = i & 1 ? '#6E4E1E' : '#D8A848'; c.fillRect(Math.round(P.x + Math.sin(sw) * i), Math.round(P.y + Math.cos(sw) * i), 1, 1); }
       const W = 4 * k, x0 = bx - Math.floor(W / 2);
+      c.fillStyle = '#D8A848'; c.fillRect(bx, by - 2 * k, k, 2 * k); c.fillRect(bx - k, by - Math.round(1.5 * k), 3 * k, Math.max(1, Math.round(k / 2)));
       c.fillStyle = '#6E4E1E'; c.fillRect(x0 + k, by, W - 2 * k, k);
       c.fillStyle = '#D8A848'; c.fillRect(x0, by + k, W, k);
       c.fillStyle = '#A8782E'; c.fillRect(x0, by + 2 * k, W, 2 * k);
@@ -16687,7 +16745,7 @@ const STYLEFX = {
     // and the near half after; flung out a little on a great hole
     candles(c, g, front){
       const L = legendNow(g), out = L ? 1 + (L.big ? 0.5 : 0.35) * outBack(L.f, 0.18) : 1, lit = this.lit(g);
-      const N = 4, rx = g.w * 0.95 * out, ry = Math.max(2, g.h * 0.08) * out, oy = g.y + g.h * 0.36, ct = Math.cos(0.16), sn = Math.sin(0.16), cx = g.cx;
+      const N = g.minor ? 2 : 4, rx = g.w * (g.minor ? 0.75 : 0.95) * out, ry = Math.max(2, g.h * 0.08) * out, oy = g.y + g.h * (g.minor ? 0.45 : 0.36), ct = Math.cos(0.16), sn = Math.sin(0.16), cx = g.cx;
       const k = Math.max(1, Math.round(g.h / 56)), tall = g.h >= 50 ? 4 : 3;
       const spin = g.t * 0.6 + (g.ph > 0 ? g.ph * Math.PI : 0);
       for(let i = 0; i < N; i++){
@@ -18106,6 +18164,11 @@ const LB_ORBIT = {
     lbRing(c, cx, cy, r + 3.5, (r + 3.5) * 0.4, -0.2, t * 2.6, 8, ['#E8FFF2', '#A8FFD0', '#5CF0A0', '#2EB872', '#17734A'], front, 0.3);
   },
   // the Cyber Core's: a ring of lime going round it, a magenta spark on it
+  // the Censer Ball's: a ring of gold beads and a crimson stone going round it
+  choirball(c, cx, cy, r, t, front){
+    lbRing(c, cx, cy, r + 3.5, (r + 3.5) * 0.35, 0.15, t * 2.4, 12, ['#FFF2C0', '#F4D27A', '#D8A848', '#A8782E', '#A8283A'], front, 0.35);
+  },
+  tChoir(c, cx, cy, r, t, front){ LB_ORBIT.choirball(c, cx, cy, r - 0.5, t, front); },
   cyberball(c, cx, cy, r, t, front){
     lbRing(c, cx, cy, r + 3.5, (r + 3.5) * 0.35, 0.15, t * 3, 10, ['#FFFFFF', '#E8FF9A', '#C8F23A', '#8FB21E', '#FF3AD0'], front, 0.35);
   },
@@ -18201,6 +18264,16 @@ function drawLyingBallBase(c, cx, cy, r, t, fx){
       drawGlow(c, cx, cy, r + 3, r + 2, [[0.55, '#3E2A6E', 1], [0, '#7A4ED8', 2]], Math.floor(t * 8) & 3, 0.85);
       lbSphere(c, cx, cy, r, '#FFFFFF');
       if(((t * 0.8) % 1) < 0.3) voidStar(c, cx + r + 2, cy - r - 2, 1, 1);
+      break;
+    case 'choirball':                                // a gold censer of a ball, embers in its band, incense rising
+      lbSphere(c, cx, cy, r, '#D8A848');
+      if(r >= 1.5){ c.fillStyle = Math.floor(t * 6) & 1 ? '#FF9A2A' : '#A8782E'; c.fillRect(Math.round(cx - r), Math.round(cy), Math.max(1, Math.round(r * 2)), 1); }
+      if(((t * 0.7) % 1) < 0.6) dot(cx + Math.sin(t * 2) * 2, cy - r - 2 - ((t * 0.7) % 1) * 5, 1, '#F2E4C4', 1);
+      break;
+    case 'tChoir':                                   // in a glow of candlelight, a flame rising off it
+      drawGlow(c, cx, cy, r + 3, r + 2, [[0.55, '#6E4E1E', 1], [0, '#F4D27A', 2]], Math.floor(t * 8) & 3, 0.85);
+      lbSphere(c, cx, cy, r, '#FFFFFF');
+      if(((t * 0.8) % 1) < 0.6) dot(cx + Math.sin(t * 3) * 1.5, cy - r - 2 - ((t * 0.8) % 1) * 6, 1, '#FF9A2A', 1);
       break;
     case 'cyberball':                                // a teal core, a band of lime round it, a bit of light rising
       lbSphere(c, cx, cy, r, '#2ED8D0');
@@ -18353,6 +18426,21 @@ const CUP_FX = {
   // the Cyber-Drive's (the Cyber Core, and its wake the Cyber Wake): a
   // calibration pad opens round the cup, its lime ring turning, bits of
   // light rise off it and it shuts on a ring of lime and magenta
+  // the Penitent's: his dais rises round the cup, candles lit round it, and
+  // gold light and flames go up as it drops
+  choirball(c, x, y, cr, h, q, t){
+    const k = Math.max(1, Math.round(h / 16));
+    const o = q < 0.2 ? q / 0.2 : q < 0.72 ? 1 : q < 0.86 ? 1 - (q - 0.72) / 0.14 : 0;
+    if(o > 0.05 && h >= 8){ const rx = Math.max(3, Math.round(h * 0.55 * o)), ry = Math.max(1, Math.round(h * 0.18 * o));
+      const V = penDais(rx, ry, Math.floor(t * 6) % 24, q > 0.4 ? 1 : 0); c.globalAlpha = 1; c.drawImage(V, Math.round(x - V.ox), Math.round(y - V.oy));
+      if(h >= 14) for(let i = 0; i < 5; i++){ const a = Math.PI * (1.1 + i * 0.2); penCandle(c, x + Math.cos(a) * rx * 0.9, y + Math.sin(a) * ry * 0.9, 1, 3, t + i, q > 0.4); } }
+    for(let i = 0; i < 12; i++){ const u = clamp(q * 1.6 - hr(i, 833) * 0.6, 0, 1); if(u <= 0 || u >= 1) continue;
+      const a = i / 12 * Math.PI * 2 + u * 3, r = h * (0.1 + 0.3 * u);
+      fxDot(c, x + Math.cos(a) * r - (k >> 1), y - u * h * 0.75 + Math.sin(a) * r * 0.3, k, i % 4 === 0 ? '#A8283A' : u < 0.5 ? '#FFF2C0' : '#F4D27A', 1); }
+    if(q >= 0.84){ const f = (q - 0.84) / 0.16;
+      for(let i = 0; i < 24; i++){ if(hr(i, 834) < f * 0.8) continue; const a = i / 24 * Math.PI * 2, r = h * (0.15 + 0.6 * f);
+        fxDot(c, x + Math.cos(a) * r - (k >> 1), y + Math.sin(a) * r * 0.34, k, i & 1 ? '#F4D27A' : '#FF9A2A', 1); } }
+  },
   cyberball(c, x, y, cr, h, q, t){
     const k = Math.max(1, Math.round(h / 16));
     const o = q < 0.2 ? q / 0.2 : q < 0.72 ? 1 : q < 0.86 ? 1 - (q - 0.72) / 0.14 : 0;
@@ -18518,6 +18606,8 @@ const ACE_COL = {
   tSoul:       ['#17734A', '#5CF0A0', '#E8FFF2'],
   skullball:   ['#17734A', '#5CF0A0', '#E8FFF2'],
   tCyber:      ['#1E9A4A', '#3AF07A', '#E8FF9A'],
+  tChoir:      ['#A8782E', '#F4D27A', '#FFF2C0'],
+  choirball:   ['#A8782E', '#F4D27A', '#FFF2C0'],
   cyberball:   ['#1A9A96', '#2ED8D0', '#E8FF9A'],
   tKaleido:    ['#4A2290', '#FF2E88', '#FFFFFF', ['#FF2E88', '#FF8A1E', '#FFE81E', '#3AF07A', '#2EC8FF', '#8A4CFF']],
   psyeye:      ['#4A2290', '#FF2E88', '#FFFFFF', ['#FF2E88', '#FF8A1E', '#FFE81E', '#3AF07A', '#2EC8FF', '#8A4CFF']]
@@ -18603,6 +18693,13 @@ const ACE_EXTRA = {
     aceRise(A, 4, 653, (i, y) => { const ox = X + (i & 1 ? 1 : -1) * W * (1.2 + hr(i, 654) * 0.4), s = k;
       SK.forEach((row, yy) => [...row].forEach((ch, xx) => { if(ch !== '.') put(ox + (xx - 2) * s, y + yy * s, s, ch === 'E' ? '#5CF0A0' : ch === 'T' ? '#B8B09A' : '#D8D2BC'); })); }); },
   // the Cyber-Drive's: bits of lime and magenta climbing round it, rings of lime rising beside it
+  // the Penitent's: gold light winding up the column, candles rising beside it
+  choirball(A){ const { X, y0, y1, W, k, t, put } = A;
+    for(let i = 0; i < 14; i++){ const y = y1 - (i + 0.5) / 14 * (y1 - y0), a = y * 0.09 - t * 7, x = X + Math.sin(a) * W * 1.05, s = Math.max(1, Math.round(W / 9));
+      put(x - s, y - s, 2 * s, i % 4 === 0 ? '#A8283A' : Math.cos(a) > 0 ? '#FFF2C0' : '#F4D27A', 2 * s); }
+    aceRise(A, 4, 831, (i, y) => { const ox = X + (i & 1 ? 1 : -1) * W * (1.2 + hr(i, 832) * 0.4);
+      put(ox - k, y + 3 * k, 3 * k, '#A8782E', k); put(ox, y, k, '#F2E4C4', 3 * k); put(ox, y - 2 * k, k, '#FF9A2A', 2 * k); put(ox, y - 2 * k, k, '#FFF2C0', k); }); },
+  tChoir(A){ ACE_EXTRA.choirball(A); },
   cyberball(A){ const { X, y0, y1, W, k, t, put } = A;
     for(let i = 0; i < 14; i++){ const y = y1 - (i + 0.5) / 14 * (y1 - y0), a = y * 0.09 - t * 7, x = X + Math.sin(a) * W * 1.05, s = Math.max(1, Math.round(W / 9));
       put(x - s, y - s, 2 * s, i % 4 === 0 ? '#FF3AD0' : Math.cos(a) > 0 ? '#E8FF9A' : '#3AF07A', 2 * s); }
@@ -18788,6 +18885,15 @@ CUP_FX2.skullball = function(c, x, y, cr, h, q, t){
     if(f < 0.4) cupStar(c, x - (k >> 1), y - k * 2, k, 2, '#FFFFFF', '#5CF0A0'); }
 };
 CUP_FX2.tSoul = CUP_FX2.skullball;
+CUP_FX2.choirball = function(c, x, y, cr, h, q, t){
+  // a sunburst of gold flashing up over the cup as it shuts
+  const k = Math.max(1, Math.round(h / 16));
+  if(q > 0.7 && q < 0.98 && h >= 12){ const f = (q - 0.7) / 0.28, R = Math.max(3, h * 0.12), Y = y - h * (0.3 + f * 0.25);
+    for(let i = 0; i < 16; i++){ const a = i / 16 * Math.PI * 2 + f * 2, L = i & 1 ? 1 : 1.5; fxDot(c, x + Math.cos(a) * R * L - (k >> 1), Y + Math.sin(a) * R * L * 0.5, k, i % 4 === 0 ? '#A8283A' : '#F4D27A', 1); }
+    fxDot(c, x - k, Y - k, 2 * k, '#FFF2C0', 1);
+    if(f < 0.4) cupStar(c, x - (k >> 1), y - k * 2, k, 2, '#FFFFFF', '#F4D27A'); }
+};
+CUP_FX2.tChoir = CUP_FX2.choirball;
 CUP_FX2.cyberball = function(c, x, y, cr, h, q, t){
   // a ring of lime flashing up over the cup as it shuts
   const k = Math.max(1, Math.round(h / 16));
@@ -18811,6 +18917,7 @@ CUP_FX2.tAscension = CUP_FX2.ascorb; CUP_FX2.tHorizon = CUP_FX2.singularity;
 CUP_FX.tHorizon = CUP_FX.singularity;
 CUP_FX.tSoul = CUP_FX.skullball;
 CUP_FX.tCyber = CUP_FX.cyberball;
+CUP_FX.tChoir = CUP_FX.choirball;
 CUP_FX.tKaleido = CUP_FX.psyeye;
 CUP_FX.tAscension = CUP_FX.ascorb;
 CUP_FX.tSeraph = CUP_FX.godlight;
@@ -19680,10 +19787,14 @@ function penHood(p, view){
     const X = q => ox + q[0] * p, Y = q => oy + q[1] * p, lw = Math.max(1, p * 0.9);
     const line = (pts, col, w) => { g.strokeStyle = col; g.lineWidth = w; g.lineJoin = 'round'; g.beginPath(); g.moveTo(X(pts[0]), Y(pts[0])); for(const q of pts.slice(1)) g.lineTo(X(q), Y(q)); g.stroke(); };
     // the veil's tails, longer than the hood, hanging behind
-    const tail = view === 'back' ? [[-9, 10], [-10, 18], [10, 18], [9, 10]] : [[-6, 6], [-9, 12], [-11, 18], [-5, 17], [-2, 10]];
+    const tail = view === 'back' ? [[-9, 10], [-11, 22], [-4, 23.5], [4, 23.5], [11, 22], [9, 10]] : [[-6, 6], [-9, 12], [-12, 22], [-8, 23], [-4, 21], [-2, 10]];
     g.beginPath(); g.moveTo(X(tail[0]), Y(tail[0])); for(const q of tail.slice(1)) g.lineTo(X(q), Y(q)); g.closePath();
     g.fillStyle = '#D8C49C'; g.fill();
-    line(view === 'back' ? [[-10, 18], [10, 18]] : [[-11, 18], [-5, 17]], '#A8283A', Math.max(1, p * 1.1));
+    // its folds, and its hem edged in gold over crimson
+    line(view === 'back' ? [[-4, 12], [-5, 22]] : [[-6, 10], [-9, 21]], '#B09A74', Math.max(1, p * 0.8));
+    if(view === 'back') line([[4, 12], [5, 22]], '#B09A74', Math.max(1, p * 0.8));
+    line(view === 'back' ? [[-11, 22], [-4, 23.5], [4, 23.5], [11, 22]] : [[-12, 22], [-8, 23], [-4, 21]], '#A8283A', Math.max(1, p * 1.6));
+    line(view === 'back' ? [[-11, 21.4], [-4, 22.9], [4, 22.9], [11, 21.4]] : [[-12, 21.4], [-8, 22.4], [-4, 20.4]], '#D8A848', Math.max(1, p * 0.8));
     g.beginPath(); g.moveTo(X(P[0]), Y(P[0])); for(const q of P.slice(1)) g.lineTo(X(q), Y(q)); g.closePath();
     g.fillStyle = '#F2E4C4'; g.fill();
     g.save(); g.clip();
@@ -19697,6 +19808,10 @@ function penHood(p, view){
       // the dark of his face, deep in it, a line of his mask's nose
       g.fillStyle = '#0A0608'; g.beginPath(); g.moveTo(X([6.4, 3]), Y([6.4, 3])); g.lineTo(X([5.4, -2]), Y([5.4, -2])); g.lineTo(X([1.8, -0.8]), Y([1.8, -0.8])); g.lineTo(X([0.4, 5]), Y([0.4, 5])); g.lineTo(X([6.4, 5]), Y([6.4, 5])); g.closePath(); g.fill();
       g.fillStyle = '#221A20'; g.fillRect(Math.round(X([4.6, 0])), Math.round(Y([0, -0.5])), Math.max(1, Math.round(p)), Math.max(1, Math.round(p * 4)));
+      // the crimson lining round the dark of his face, and a glint of gold
+      // where his mask catches the light
+      line([[5.4, -2], [1.8, -0.8], [0.4, 5]], '#A8283A', Math.max(1, p * 0.9));
+      if(p >= 1.2){ g.fillStyle = '#A8782E'; g.fillRect(Math.round(X([3.4, 0])), Math.round(Y([0, 1])), Math.max(1, Math.round(p)), Math.max(1, Math.round(p))); }
     }
     g.restore();
     // a gold band round his brow, over the veil
@@ -19712,7 +19827,7 @@ function penHood(p, view){
 // inner, spikes long and short all round the outer; a glint running round
 // it (step 0..23), the whole brighter as he winds up (lit)
 function penHalo(p, step, lit){
-  const R = 14 * p + 2, S = Math.ceil(R * 2) + 4, o = S / 2;
+  const R = 19 * p + 2, S = Math.ceil(R * 2) + 4, o = S / 2;
   const cv = fxBake('phalo|' + p.toFixed(3) + '|' + step + '|' + lit, S, S, g => {
     const ring = (r, w, col) => { g.strokeStyle = col; g.lineWidth = w; g.beginPath(); g.arc(o, o, r, 0, Math.PI * 2); g.stroke(); };
     const N = 18, gl = step / 24 * Math.PI * 2;
@@ -19728,10 +19843,19 @@ function penHalo(p, step, lit){
       g.lineTo(o + ca * 8.6 * p - nx * w, o + sa * 8.6 * p - ny * w); g.closePath(); g.fill();
       if(near && p >= 1){ g.fillStyle = '#FFF2C0'; g.fillRect(Math.round(o + ca * (L - 1) * p), Math.round(o + sa * (L - 1) * p), Math.max(1, Math.round(p)), Math.max(1, Math.round(p))); }
     }
+    // the band between its rings, dark gold, set with ivory beads and a
+    // crimson stone at each quarter
+    ring(7.7 * p, Math.max(2, 2.6 * p), '#6E4E1E');
     ring(9 * p, Math.max(2, 2.2 * p), '#6E4E1E'); ring(9 * p, Math.max(1, 1.3 * p), lit ? '#F4D27A' : '#D8A848');
     ring(6.4 * p, Math.max(1, 1.2 * p), '#6E4E1E'); ring(6.4 * p, Math.max(1, 0.7 * p), '#A8782E');
-    for(let i = 0; i < 8; i++){ const a = i / 8 * Math.PI * 2 + 0.2; g.fillStyle = '#F2E4C4';
-      g.beginPath(); g.arc(o + Math.cos(a) * 7.7 * p, o + Math.sin(a) * 7.7 * p, Math.max(0.8, 0.8 * p), 0, Math.PI * 2); g.fill(); }
+    for(let i = 0; i < 12; i++){ const a = i / 12 * Math.PI * 2 + 0.26, q = i % 3 === 0; g.fillStyle = q ? '#A8283A' : '#F2E4C4';
+      g.beginPath(); g.arc(o + Math.cos(a) * 7.7 * p, o + Math.sin(a) * 7.7 * p, Math.max(0.8, (q ? 0.95 : 0.7) * p), 0, Math.PI * 2); g.fill(); }
+    // a jewel at the tip of each long spike, and over his head the tallest,
+    // a cross at its top
+    for(let i = 0; i < N; i += 2){ const a = i / N * Math.PI * 2 - Math.PI / 2;
+      g.fillStyle = '#F4D27A'; g.beginPath(); g.arc(o + Math.cos(a) * 13.6 * p, o + Math.sin(a) * 13.6 * p, Math.max(0.7, 0.75 * p), 0, Math.PI * 2); g.fill(); }
+    g.fillStyle = '#6E4E1E'; g.fillRect(o - 1.1 * p, o - 18.2 * p, 2.2 * p, 5.4 * p); g.fillRect(o - 2.6 * p, o - 16.9 * p, 5.2 * p, 2 * p);
+    g.fillStyle = lit ? '#FFF2C0' : '#F4D27A'; g.fillRect(o - 0.5 * p, o - 17.7 * p, 1 * p, 4.6 * p); g.fillRect(o - 2.1 * p, o - 16.4 * p, 4.2 * p, 1 * p);
   }, PEN_PAL);
   return { cv, ox: o, oy: o };
 }
@@ -19753,6 +19877,10 @@ function penRobe(w, h, pose, step){
     g.lineWidth = Math.max(1, sx * 0.8);
     for(let k = 1; k < 5; k++){ const f = k / 5, xa = R[1] + (R[2] - R[1]) * f, xb = R[3] + (R[4] - R[3]) * f + Math.sin(a + k) * 0.3;
       g.strokeStyle = f < 0.3 ? (k & 1 ? '#B09A74' : '#D8C49C') : k & 1 ? '#221A20' : '#3E3A46'; g.beginPath(); g.moveTo(X(xa), Y(R[0] + 1)); g.lineTo(X(xb), Y(58)); g.stroke(); }
+    // the drapes' hem torn into a ragged train, longer at the back
+    g.fillStyle = '#D8C49C';
+    for(let i = 0; i < 9; i++){ const xa = R[3] - 1.5 + i * 1.3, L = 1 + hr(i, 711) * 1.6 + (pose === 'back' ? 0 : (9 - i) * 0.08);
+      g.beginPath(); g.moveTo(X(xa), Y(55.5)); g.lineTo(X(xa + 1.3), Y(55.5)); g.lineTo(X(xa + 0.6 + Math.sin(a + i) * 0.3), Y(Math.min(58, 55.5 + L))); g.closePath(); g.fill(); }
     // the crimson panel down its front, edged in gold
     const pf = pose === 'back' ? 0.5 : 0.72, pw = (R[4] - R[3]) * 0.2;
     const px0 = R[1] + (R[2] - R[1]) * pf, px1 = R[3] + (R[4] - R[3]) * pf;
@@ -20218,6 +20346,22 @@ const BLESS_FX = {
   // Cyber-Drive: his calibration pad lights under him, a shaft of green
   // light edged in lime falls on him, cables of green and magenta wind down
   // round it and bits of lime drift up
+  // The Penitent: his dais lights under him, a shaft of gold light falls on
+  // him, ribbons of crimson and gold wind down round it and candle flames
+  // drift up
+  penitent: { col: '#F4D27A',
+    draw(G){
+      const { c, cx, bot, half, h, t, fade, front, k } = G, top = Math.round(bot - h * 1.05);
+      const hw = Math.max(2, Math.round(half * 0.5 * (0.35 + 0.65 * fade))), stop = Math.min(front, top);
+      if(t > 0.26 && fade > 0.12){ const q = Math.min(1, (t - 0.26) / 0.3), RX = half * (0.7 + 0.45 * q), RY = Math.max(2, RX * 0.26);
+        blDisc(G, RX, RY, '#2E2A34', true); blDisc(G, RX * 0.7, RY * 0.7, '#7A1828', false);
+        blRing(G, bot - 1, RX * 0.8, RY * 0.8, 1 + (G.up >> 1), '#D8A848'); }
+      blShaft(G, stop, hw, ['#D8A848', '#6E4E1E', '#FFF2C0', '#F4D27A', '#FFFFFF'], { inner: '#A8782E' });
+      blRibbons({ ...G, half: hw / 0.9 }, 0, Math.min(front, bot - 1), ['#F4D27A', '#A8782E', '#A8283A', '#7A1828'], 1, 1.25, 5, '#221A20');
+      blessMotes(G, 10, 0.8, true, false, (x, y, i) => { const X = Math.round(x), Y = Math.round(y); c.fillStyle = '#FF9A2A'; c.fillRect(X, Y, 1, h >= 40 ? 2 : 1); c.fillStyle = '#FFF2C0'; c.fillRect(X, Y - 1, 1, 1); });
+      blImpact(G, 0.27, ['#F4D27A', '#FFFFFF']);
+      blSides(G, '#D8A848', '#FFF2C0');
+    } },
   cyber: { col: '#3AF07A',
     draw(G){
       const { c, cx, bot, half, h, t, fade, front, k } = G, top = Math.round(bot - h * 1.05);
@@ -20760,6 +20904,37 @@ const BALLFX = {
      green light, white at the ball, edged in magenta; bits of lime and
      magenta thrown off its sides, flickering, and a ring of lime as it
      lands ---- */
+  // the Choir Wake: a ribbon of gold edged in crimson, candle flames thrown
+  // off its sides, flickering
+  tChoir(c, b, path, r, t, u){
+    const w = Math.max(2, r + 1);
+    trailRibbon(c, path, w + 5, '#221A20', 0.4);
+    trailRibbon(c, path, w + 3, (i, f) => f < 0.5 ? '#A8283A' : '#7A1828', 0.8);
+    trailRibbon(c, path, w + 1, (i, f) => f < 0.12 ? '#FFFFFF' : f < 0.35 ? '#FFF2C0' : f < 0.7 ? '#F4D27A' : '#A8782E', 1);
+    const N = trailNormal(path);
+    for(let i = 2; i < path.length; i += 2){ const on = Math.sin(t * 11 + i * 2.1 + b.seed); if(on < 0.1) continue;
+      const side = (i & 2 ? 1 : -1) * (w / 2 + 2 + hr(i, 835 + Math.floor(t * 6)) * (3 + r * 2)), p = path[i];
+      const X = Math.round(p.x + N.x * side), Y = Math.round(p.y + N.y * side);
+      c.globalAlpha = 1; c.fillStyle = '#FF9A2A'; c.fillRect(X, Y, 1, 2); c.fillStyle = on > 0.6 ? '#FFFFFF' : '#FFF2C0'; c.fillRect(X, Y - 1, 1, 1); }
+    const h0 = path[0];
+    drawGlow(c, h0.x, h0.y, r * 2 + 4, r * 2 + 4, [[0.6, '#6E4E1E', 1], [0.3, '#A8782E', 2], [0, '#F4D27A', 3]], Math.floor(t * 10) & 3, 0.85);
+    trailBall(c, b, h0, r);
+    c.globalAlpha = 1;
+  },
+  // the Censer Ball: a gold core banded with embers, incense curling off
+  // behind it in a thin grey ribbon, and gold motes winding round
+  choirball(c, b, path, r, t, u){
+    trailRibbon(c, path, r + 4, '#221A20', 0.35);
+    const sp = b.wake ? [] : trailSpiral(path, 6, 5 + r * 3, t, 0.55, 1.6, b.seed);
+    const bit = (o, big) => { c.globalAlpha = o.z < 0 ? 0.75 : 1; c.fillStyle = o.k % 3 < 1 ? '#A8283A' : '#F4D27A'; c.fillRect(Math.round(o.x), Math.round(o.y), big, big); };
+    for(const o of sp) if(o.z < 0) bit(o, 1);
+    trailRibbon(c, path, Math.max(2, r + 1), i => i < 3 ? '#FFF2C0' : i < 7 ? '#D8C49C' : i < 10 ? '#B09A74' : '#7E6A50', 0.95);
+    for(const o of sp) if(o.z >= 0) bit(o, o.s < 0.5 && r > 1 ? 2 : 1);
+    const h0 = path[0];
+    lbSphere(c, h0.x, h0.y, Math.max(1, r + 0.5), '#D8A848');
+    if(r >= 1.5){ c.globalAlpha = 1; c.fillStyle = '#FF9A2A'; c.fillRect(Math.round(h0.x - r - 0.5), Math.round(h0.y), Math.max(1, Math.round(r * 2 + 1)), 1); }
+    c.globalAlpha = 1;
+  },
   tCyber(c, b, path, r, t, u){
     const w = Math.max(2, r + 1);
     trailRibbon(c, path, w + 5, '#0B0E18', 0.4);
@@ -23449,6 +23624,13 @@ const Scene = {
     }else if(b === 'pump'){
       const u = Math.abs(Math.sin(Math.PI * q * 3));
       if(u > 0.8) for(let i = 0; i < 5; i++){ const a = Math.PI * (0.6 + i * 0.2), r = w * 0.3; dot(hand[0] + Math.cos(a) * r, hand[1] - Math.sin(a) * r, i & 1 ? '#FFFFFF' : '#D8453A'); }
+    }else if(b === 'vigil'){
+      // candles rising round him in a ring, lit, a ring of gold under him
+      for(let i = 0; i < 6; i++){ const a = i / 6 * Math.PI * 2 + T * 1.5, u = Math.min(1, q * 1.4), R = w * 0.75;
+        const X = cx + Math.cos(a) * R, Y = y + h * (1 - 0.7 * u) + Math.sin(a) * h * 0.1;
+        if(q > 0.85 && hr(i, 837) < (q - 0.85) / 0.15) continue;
+        dot(X, Y, '#F2E4C4'); dot(X, Y + k, '#F2E4C4'); dot(X, Y + 2 * k, '#A8782E'); dot(X, Y - k, Math.sin(T * 13 + i) > 0 ? '#FF9A2A' : '#FFF2C0'); }
+      for(let i = 0; i < 12; i++){ const a = i / 12 * Math.PI * 2; dot(cx + Math.cos(a) * w * 0.6, y + h + Math.sin(a) * h * 0.08, i & 1 ? '#D8A848' : '#F4D27A'); }
     }else if(b === 'smoke'){
       // the pipe at his mouth, and three rings of smoke rising off it, widening
       const px = x + w * 0.55, py = y + h * 0.3;
@@ -25159,6 +25341,9 @@ const FAIRY_MOVES = [
   { id:'haunt', dur:1.5, only:'dread' },
   // Psychedelic's: he melts into a whirl of colour and back
   { id:'trip', dur:1.5, only:'psyche' },
+  // The Penitent's: he rises a little, hands up, and candles rise lit round
+  // him in a ring and go out
+  { id:'vigil', dur:1.6, only:'penitent' },
   // and one each for the other caddies with a look of their own (the user
   // asked): slips on a peel, snaps a photo, honks up confetti, sinks and
   // pops up with a boo, twirls in the disco lights, glitches about, shivers
@@ -25293,6 +25478,8 @@ function fairyPose(kind, q, T, w, h){
   }else if(kind === 'pump'){                                    // three pumps of his fist, a hop on each
     const u = Math.abs(Math.sin(Math.PI * q * 3));
     P.armL = (0.4 + 0.6 * u) * env; P.dy = -u * h * 0.08 * env; P.bits = 'pump';
+  }else if(kind === 'vigil'){                                   // up a little, hands raised, candles rising round him
+    P.dy = -Math.sin(Math.PI * q) * h * 0.1; P.armL = P.armR = env; P.bits = 'vigil';
   }else if(kind === 'smoke'){                                   // a puff on his pipe, smoke rings rising
     P.dy = -Math.sin(Math.PI * q) * h * 0.04; P.bits = 'smoke';
   }else if(kind === 'pennant'){                                 // a pennant waved to and fro
@@ -25663,6 +25850,53 @@ const CLUBFX = {
       c.globalAlpha = 1;
     }
   },
+  // the Censer Driver: a shaft of gold bound in crimson, a censer for its
+  // head (a dome with a cross, a bowl with embers through it), incense
+  // curling off; its swing leaves an arc of gold edged in crimson with
+  // flames along it, and a pure strike throws a ring of candle flames
+  penitent: {
+    under(c, hx, hy, tx, ty, th, h, t, K){ glowLine(c, hx, hy, tx, ty, th, '#A8782E', 0.25 + 0.08 * Math.sin(t * 4)); },
+    shaft(c, hx, hy, tx, ty, th, h, t, K){
+      pxLine(c, hx, hy, tx, ty, '#6E4E1E', th + 1);
+      pxLine(c, hx, hy, tx, ty, K.shaft, th);
+      const P = clubPts(hx, hy, tx, ty, 12);
+      for(const i of [2, 3]) fxDot(c, P[i][0], P[i][1], th, K.grip, 1);
+      for(const i of [6, 9]) fxDot(c, P[i][0], P[i][1], th, '#A8283A', 1);
+      const run = Math.floor(t * 10) % 12; if(run > 3) fxDot(c, P[run][0], P[run][1], th, '#FFF2C0', 1);
+      c.globalAlpha = 1;
+    },
+    head(c, tx, ty, th, h, turn, t, K){
+      const k = Math.max(1, th - 1), W = 3 * k + 2, x0 = Math.round(tx) - (turn < 0 ? W - k : k), y0 = Math.round(ty) - k;
+      c.globalAlpha = 1;
+      c.fillStyle = '#6E4E1E'; c.fillRect(x0 - 1, y0 - 1, W + 2, 3 * k + 3);
+      c.fillStyle = '#D8A848'; c.fillRect(x0, y0, W, k);
+      c.fillStyle = '#A8782E'; c.fillRect(x0, y0 + k, W, k + 1);
+      c.fillStyle = Math.sin(t * 9) > 0 ? '#FF9A2A' : '#A8283A'; c.fillRect(x0 + k, y0 + k, Math.max(1, W - 2 * k), Math.max(1, k));
+      c.fillStyle = '#F4D27A'; c.fillRect(x0, y0, Math.max(1, k), Math.max(1, k));
+      c.fillStyle = '#D8A848'; c.fillRect(x0 + (W >> 1), y0 - 2, 1, 2);
+    },
+    over(c, hx, hy, tx, ty, th, h, t){
+      const f = (t * 0.8) % 1;
+      if(f < 0.6){ fxDot(c, tx + 1 + Math.sin(t * 3) * 2, ty - 4 - f * 9, 1, f < 0.3 ? '#F2E4C4' : '#B09A74', 1); }
+      c.globalAlpha = 1;
+    },
+    trail(c, arc, th, t){
+      arcTrail(c, arc, th + 3, ['#221A20', '#2E2A34'], 0.55);
+      arcTrail(c, arc, th + 2, ['#7A1828', '#A8283A'], 0.7);
+      arcTrail(c, arc, th + 1, ['#A8782E', '#F4D27A'], 0.85);
+      arcTrail(c, arc, 1, ['#FFF2C0'], 0.8);
+      for(let i = 2; i < arc.length; i += 3){ if(Math.sin(t * 9 + i * 1.7) < 0.4) continue;
+        fxDot(c, arc[i][0], arc[i][1] - 3, 1, '#FF9A2A', 1); fxDot(c, arc[i][0], arc[i][1] - 4, 1, '#FFF2C0', 1); }
+      c.globalAlpha = 1;
+    },
+    pure(c, x, y, h, f){
+      const X = Math.round(x), Y = Math.round(y), k = Math.max(1, Math.round(h / 40));
+      for(let i = 0; i < 16; i++){ if(hr(i, 836) < f * 0.6) continue; const a = i / 16 * Math.PI * 2 + 0.2, R = h * (0.06 + 0.4 * f);
+        const px = X + Math.cos(a) * R - k, py = Y + Math.sin(a) * R * 0.6 - f * h * 0.08;
+        fxDot(c, px, py, 2 * k, i % 4 === 0 ? '#A8283A' : f < 0.4 ? '#FFF2C0' : '#F4D27A', 1); if(i % 4 === 2) fxDot(c, px, py - 2 * k, k, '#FF9A2A', 1); }
+      c.globalAlpha = 1;
+    }
+  },
   // the Kaleido Driver: a shaft in bands of the six that run down it, a
   // crystal head that flashes every colour, flowers drifting off it, its
   // swing leaves a rainbow, and a pure strike blooms flowers at the ball
@@ -25846,7 +26080,9 @@ function drawLegsBack(c, cx, hy, len, w, ph, near, far, shoe, sole = '#B8AE9C', 
 // What a skin's effect is told about him: his box, his middle, his feet, the
 // scene clock, the swing, whether he is walking away and where his cap is.
 function golferG(x, y, w, h, ph, t, bot, walking, spr){
-  const cb = spr === SPRITE.gFinish ? CAP_FIN : spr === SPRITE.gBack || spr === SPRITE.gFly ? CAP_BACK : CAP_ADDR;
+  // (waving to a train he is his back picture too: its head, or a skin's
+  // hood and halo sat where his head is at address, off to one side)
+  const cb = spr === SPRITE.gFinish ? CAP_FIN : spr === SPRITE.gBack || spr === SPRITE.gFly || spr === SPRITE.gWave ? CAP_BACK : CAP_ADDR;
   return { x, y, w, h, cx: x + w*(walking ? 0.5 : 0.55), cy: y + h*0.53, bot: bot, t: t, ph, back: walking,
            k: Math.max(1, Math.round(h / 40)), spr, bulk: bulkOf(h, false),
            head: { x: x + w*cb.x, y: y + h*cb.y, w: w*cb.w, hh: h*cb.h } };
@@ -33032,9 +33268,9 @@ function renderTourNav(){
 }
 const cperkDef = id => B.CPERKS.find(x => x.id === id);
 // the Mythic Favour: worn only with a Mythic caddie (the Divine, Demonic, Ascended or Void)
-const MYTH_CADDIES = ['divine', 'demonic', 'ascended', 'cosmic', 'dread', 'psyche', 'cyber'];
+const MYTH_CADDIES = ['divine', 'demonic', 'ascended', 'cosmic', 'dread', 'psyche', 'cyber', 'penitent'];
 const mythOk = () => MYTH_CADDIES.includes(S.caddie);
-const MYTH_PAL = { divine: ['#FFF2B8', '#3FD6A8', '#E0AE3E'], demonic: ['#FFE680', '#FF8A2A', '#E8401C'], ascended: ['#FFE0FF', '#F27CFF', '#B04ACB'], cosmic: ['#FFFFFF', '#B98CFF', '#7FE6FF'], dread: ['#E8FFF2', '#5CF0A0', '#2EB872'], psyche: ['#FFFFFF', '#FF2E88', '#2EC8FF'], cyber: ['#E8FF9A', '#3AF07A', '#FF3AD0'] };
+const MYTH_PAL = { divine: ['#FFF2B8', '#3FD6A8', '#E0AE3E'], demonic: ['#FFE680', '#FF8A2A', '#E8401C'], ascended: ['#FFE0FF', '#F27CFF', '#B04ACB'], cosmic: ['#FFFFFF', '#B98CFF', '#7FE6FF'], dread: ['#E8FFF2', '#5CF0A0', '#2EB872'], psyche: ['#FFFFFF', '#FF2E88', '#2EC8FF'], cyber: ['#E8FF9A', '#3AF07A', '#FF3AD0'], penitent: ['#FFF2C0', '#F4D27A', '#A8283A'] };
 // A perk's level (1 until upgraded) and what it does there: a second longer
 // and an eighth stronger each level (Ready Golf and Lost Ball Scout only
 // stronger: one acts at once, the other lasts a hole). Its words are its own

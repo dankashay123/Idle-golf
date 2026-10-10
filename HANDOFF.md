@@ -76,8 +76,8 @@ through:
   and the condition by the cog, the smaller pop-ups and the loading screen
   on his phone (all 8 October); the redesigned Tour Pass page, the gear
   padlocks, the house in the treeline (9 October); the Honours
-  list's new wording (10 October); The Penitent, the Mythic skin from his
-  sprite sheet (outfit only: offer its caddie, driver, wake and ball).
+  list's new wording (10 October); The Penitent, the Mythic set from his
+  sprite sheet (more detail, the whole set, the veil on his head waving).
 - Settled, in case it comes up: swing speed still matters fully (a hole's
   time is when the ball drops); Fast Walker only shortens a hole's least
   time; every caddie has a trick (don't offer caddie tricks); Dawn and
@@ -113,8 +113,8 @@ through:
   starts.**
 - **The plain caddie has no wings**; he floats and now and then takes a
   turn. A caddie in a set's look follows it.
-- **The six sets keep one order** everywhere: Psychedelic, The Dread,
-  Ascended, The Void, Divine, Demonic (`SET_ORDER`); a set's one tap wears
+- **The seven sets keep one order** everywhere: Psychedelic, The Dread,
+  Ascended, The Void, The Penitent, Divine, Demonic (`SET_ORDER`); a set's one tap wears
   all five pieces, the ball included. Anything worn reads UNEQUIP.
 - **The female golfer** (Settings) has her own figure, lines and poses;
   every Legendary and Mythic skin goes down her legs, no bare skin. Her

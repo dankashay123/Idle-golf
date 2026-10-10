@@ -6,7 +6,16 @@
  *   - drawn alone at 30, 48 and 60 in every pose, his and hers: the gold
  *     of his halo over his head, the black of his face under his veil side
  *     on (none from behind), his crimson stole, the dais under him and a
- *     candle's flame; her picture her own, not his */
+ *     candle's flame; her picture her own, not his
+ *   - a Mythic set of five (the user: "why wouldn't it be a mythic set?"):
+ *     bought whole on Sets and worn whole it is a full set; his caddie (the
+ *     acolyte) draws his veil and halo, has a blessing and a trick of his
+ *     own and wears the Mythic Favour; the driver draws more than its
+ *     colours; the wake and the ball are in every table a ball is drawn
+ *     from, and each draws
+ *   - waving to a train his veil is on his head (the user: it "doesn't
+ *     move with his head when he is waving to a train"): it sat where his
+ *     head is at address, for every skin */
 'use strict';
 module.exports = {
   name: 'penitent',
@@ -47,10 +56,39 @@ module.exports = {
             if (flame < 4) f(nm + ': ' + flame + ' pixels of flame');
             if (hgt === 60) { if (gnd === 'm') HIS[n0] = d; else { let df = 0; for (let i = 0; i < d.length; i += 4) if (d[i + 3] !== HIS[n0][i + 3] || d[i] !== HIS[n0][i]) df++; if (df < 25) f('her ' + n0 + ' is his picture (' + df + ' pixels differ)'); } }
           } }
+        // the set
+        const pcs = setPieces('penitent');
+        if (pcs.length !== 5) f('the set has ' + pcs.length + ' pieces');
+        if (!SET_ORDER.includes('penitent')) f('not among the sets sold');
+        S.styleOwn = {}; S.sov = 99999; setBuy('penitent');
+        if (fullSet() !== 'penitent') f('bought on Sets, not worn whole (' + fullSet() + ')');
+        o.setCost = 99999 - S.sov; hideSheet();
+        if (!BLESS_FX.penitent) f('his caddie has no blessing');
+        if (!FAIRY_MOVES.some(m => m.only === 'penitent')) f('his caddie has no trick');
+        if (!MYTH_CADDIES.includes('penitent')) f('his caddie does not wear the Mythic Favour');
+        if (!CLUBFX.penitent) f('the Censer Driver draws nothing of its own');
+        for (const fx of ['tChoir', 'choirball']) {
+          for (const [nm, T] of [['flight', BALLFX], ['lying', LB_ORBIT], ['ace colours', ACE_COL], ['ace', ACE_EXTRA], ['cup', CUP_FX], ['cup flash', CUP_FX2]]) if (!T[fx]) f(fx + ' missing from ' + nm);
+          if (!BALLFX[fx] || !CUP_FX[fx]) continue;
+          const cv = document.createElement('canvas'); cv.width = 120; cv.height = 120; const c = cv.getContext('2d');
+          const path = Array.from({ length: 14 }, (_, i) => ({ x: 60 - i * 3, y: 60 + i * 2 }));
+          BALLFX[fx](c, { seed: 0.3 }, path, 2, 1.2, 0.5); const a = c.getImageData(0, 0, 120, 120).data; let n = 0; for (let i = 3; i < a.length; i += 4) if (a[i] > 200) n++;
+          if (n < 30) f(fx + ' in flight drew ' + n + ' pixels');
+          c.clearRect(0, 0, 120, 120); CUP_FX[fx](c, 60, 80, 3, 40, 0.5, 1); const b = c.getImageData(0, 0, 120, 120).data; let m = 0; for (let i = 3; i < b.length; i += 4) if (b[i] > 200) m++;
+          if (m < 30) f(fx + ' at the cup drew ' + m + ' pixels');
+        }
+        // waving to a train: his veil over his head, not off to one side
+        { S.outfit = 'penitent'; S.gender = 'm'; buildSprites(); const spr = SPRITE.gWave, hgt = 60, w = Math.round(hgt * spr.w / spr.h), W = 200, H = 120, x0 = 70;
+          const cv = document.createElement('canvas'); cv.width = W; cv.height = H; const c = cv.getContext('2d');
+          paintGolfer(c, x0, H - 10 - hgt, w, hgt, 0, 1.3, H - 10, true, 0, spr, [], undefined, true, 1);
+          const d = c.getImageData(0, 0, W, H).data; let sx = 0, n = 0;
+          for (let i = 0; i < d.length; i += 4) { const px = (i >> 2) % W, py = (i >> 2) / W | 0; if (py > H - 10 - hgt * 0.75) continue; if (d[i + 3] > 200 && d[i] === 0xF2 && d[i + 1] === 0xE4 && d[i + 2] === 0xC4) { sx += px; n++; } }
+          const mid = x0 + w * CAP_BACK.x, at = n ? sx / n : -1; o.wave = n + 'px at ' + (at - mid).toFixed(1);
+          if (n < 20 || Math.abs(at - mid) > w * 0.12) f('waving, his veil is ' + (n ? (at - mid).toFixed(1) + 'px from his head' : 'not drawn')); }
       } finally { window.toast = tw; QUIET = false; Object.keys(S).forEach(k => delete S[k]); Object.assign(S, JSON.parse(SNAP)); buildSprites(); hideSheet(); Scene.newHole(S.hole, S.tier); }
       return { fails, o };
     });
     if (r.fails.length) throw new Error(r.fails.join('; '));
-    return ['the Penitent: a Mythic at 3,500, once on the Skins rack; drawn his and hers in every pose at 30, 48 and 60 (halo/face/crimson/dais/flame ' + r.o.rows.join(' ') + ')'];
+    return ['the Penitent: a Mythic at 3,500, once on the Skins rack; a set of five, ' + r.o.setCost + ' on Sets, worn whole; its caddie\'s blessing, trick and Favour; its wake and ball in every table; waving, his veil on his head (' + r.o.wave + '); drawn his and hers in every pose at 30, 48 and 60 (halo/face/crimson/dais/flame ' + r.o.rows.join(' ') + ')'];
   }
 };

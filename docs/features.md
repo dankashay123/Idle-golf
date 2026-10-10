@@ -6,12 +6,27 @@ feature must do, and is usually enough on its own.
 
 ## Sections, newest first
 
-### The Penitent, a Mythic skin from his own sprite sheet (10 October)
+### The Penitent, a Mythic set from his own sprite sheet (10 October)
 
-- He sent "The Penitent Choir" sheet and asked for it "as a mythic skin",
-  not a pass set: the outfit only for now (`penitent`, top 2, 3,500 on the
-  Skins rack; named **The Penitent**, as "The Penitent Choir" took two lines
-  on its tile). No caddie, driver, wake or ball yet: offer them.
+- He sent "The Penitent Choir" sheet and asked for it "as a mythic skin";
+  then "why wouldn't it be a mythic set?": a full set, the seventh, after
+  the Void in `SET_ORDER` (11,115 on Sets). Named **The Penitent** ("The
+  Penitent Choir" took two lines on its tile). Pieces: outfit and caddie
+  `penitent` (the caddie is the hooded acolyte of his sheet: veil, halo,
+  robe as `fin`, two candles, no censer), the **Censer Driver**
+  (`CLUBFX.penitent`: gold shaft bound in crimson, a censer head), the
+  **Choir Wake** (`tChoir`) and **Censer Ball** (`choirball`) in every ball
+  table, `BLESS_FX.penitent`, the trick `vigil` (candles rising round
+  him), `MYTH_CADDIES`, `MYTH_PAL`; `blessings` and `fullset` count it.
+- More detail, after he said it lacked it: the halo with a dark band set
+  with beads and crimson stones, jewels on its spikes, a cross on the
+  tallest; the veil longer, its hem gold over crimson, crimson round the
+  face and a gold glint of mask; crimson sleeves (`arm`); a sunburst on a
+  chain, chains with crosses at his belt (`regalia`, in `body`, under the
+  arms); a gold plate on his shoulder (`pauldron`, over the arm's root); a
+  ragged train on the robe; a cross on the censer.
+- **Waving to a train** every skin's head pieces sat where his head is at
+  address: `golferG` now takes `CAP_BACK` for `gWave` too.
 - `STYLEFX.penitent`: an ivory veil over the Dread's hood shape with the
   face black under it and a gold brow band (`penHood`); a sunburst halo of
   gold spikes behind his head, in front of it walking away (`penHalo`, 1.35
