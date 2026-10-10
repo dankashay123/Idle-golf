@@ -439,7 +439,7 @@ div.guide.hunt,div.guide.mhunt{grid-template-columns:repeat(3,minmax(0,1fr))}
 .mini::after,.mbtn::after,#buyAll::after,#autoEqBtn::after,#scrapBtn::after,.lkauto::after{content:'';position:absolute;inset:-6px -2px}
 .qm::after{content:'';position:absolute;inset:-9px}
 #drawer::after{content:'';position:absolute;inset:-8px -4px}
-#hudLeft button::after{content:'';position:absolute;inset:-2px -3px}
+#hudLeft button::after{content:'';position:absolute;inset:-2px 0}
 .mini.go{border-color:var(--brass-dk);color:var(--brass)}
 .mini.dim{opacity:.35}
 .btnrow{display:flex;gap:6px;flex-wrap:wrap}
@@ -7029,7 +7029,7 @@ function festBlock(){
   const st = festState(), left = (7 - festDow()) * 86400 - (Date.now() / 1000 % 86400);
   const nx = st.got < FEST_AT.length ? FEST_AT[st.got] : null;
   return '<div class="eyebrow" style="margin:12px 0 0">' + F.n + '</div>'
-    + '<div class="row"><div><div class="nm">' + F.s + '</div><div class="ds">Ends in ' + hms(Math.max(0, left)) + ' \u00b7 ribbons for birdies or better: ' + fmt(st.n, 0)
+    + '<div class="row"><div><div class="nm">' + nb(F.s) + '</div><div class="ds">Ends in ' + hms(Math.max(0, left)) + ' \u00b7 ribbons for birdies or better: ' + fmt(st.n, 0)
     + (nx ? ' of ' + nx + ' for prize ' + (st.got + 1) : ' \u00b7 every prize won') + '</div>'
     + '<div class="cadbar"><i style="width:' + Math.round(clamp(nx ? st.n / nx : 1, 0, 1) * 100) + '%"></i></div>'
     + '<div class="mt">' + pipRow(st.got, FEST_AT.length) + ' Prize 5: tee markers</div></div></div>';
@@ -32789,7 +32789,7 @@ function buffLines(dt){
     if(!txt) cperkShow = null;
     else out.push({ k: 'c', txt, col: pk.col || '', a });
   }
-  { const F = festNow(); if(F && !S.dgnRun) out.push({ k: 'fest', txt: F.n + ' \u00b7 ' + F.s, col: F.col, a: 1 }); }
+  { const F = festNow(); if(F && !S.dgnRun) out.push({ k: 'fest', txt: F.n + ' \u00b7 ' + nb(F.s), col: F.col, a: 1 }); }
   { const C = chalOn(); if(C) out.push({ k: 'chal', txt: C.n + ' \u00b7 ' + S.chal.n + '/' + B.CHAL_HOLES + ' \u00b7 ' + scoreTxt(S.chal.sum), col: '#E8A0A0', a: 1 }); }
   if(LUCKY.buff > 0) out.push({ k: 'alb', txt: ALB_V + '× purse for ' + buffClock(LUCKY.buff), col: '#F2E2A0', a: Math.min(1, LUCKY.buff) });
   for(const p of B.PERKS){
