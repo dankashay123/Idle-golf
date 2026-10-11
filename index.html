@@ -5092,7 +5092,9 @@ function openEvent(){
   let id = calendarCourse(t).id;
   if(holesPlayed(S.hole) === 0){
     const wk = weekNow(), W = S.weekly;
-    const open = !W || W.wk !== wk || (!W.t && !W.done);
+    // (a week that reads earlier than the major's own, the clock put back
+    // before a save, opens no other: coming forward again it opened twice)
+    const open = !W || W.wk < wk || (W.wk === wk && !W.t && !W.done);
     if(open && !OFFLINE && !QUIET && !S.dgnRun && (S.eventsPlayed || 0) >= 1){
       id = weekMajor(wk).id;
       S.weekly = { wk, t, id, done: 0, won: 0 };
@@ -8912,10 +8914,12 @@ function sigScore(sc){
   if(sk === 'island' && sc.d === -4) bump('isleAce');
   // the Signature Week: the kinds played this real week (see sigWeekKinds)
   const wk = weekNow();
-  if(!S.sigWk || S.sigWk.wk !== wk) S.sigWk = { wk, k: [] };
-  if(!S.sigWk.k.includes(sk)){ S.sigWk.k.push(sk);
+  // (the same: a week reading earlier than the one kept is not counted, or
+  // the kept week started again and paid twice)
+  if(!S.sigWk || S.sigWk.wk < wk) S.sigWk = { wk, k: [] };
+  if(S.sigWk.wk === wk && !S.sigWk.k.includes(sk)){ S.sigWk.k.push(sk);
     if(S.sigWk.k.length === SIG_KINDS.length){ bump('sigWeek'); earnSov(B.SIG_WEEK_SOV, 'today', 'sigwk:' + wk, 'Signature Week'); if(!QUIET) toast('<span class="achk">Signature Week</span>+' + B.SIG_WEEK_SOV + sovIc(), 'ach'); } }
-  if(isSigWeek(S.hole) && (!S.hotw || S.hotw.wk !== wk)){
+  if(isSigWeek(S.hole) && (!S.hotw || S.hotw.wk < wk)){
     S.hotw = { wk, n: S.hotw && S.hotw.wk === wk - 1 ? S.hotw.n + 1 : 1 };
     if(S.hotw.n >= B.HOTW_RUN){ earnSov(B.HOTW_SOV, 'today', 'hotw:' + wk, 'Hole of the Week'); if(!QUIET) toast('<span class="achk">Hole of the Week</span>' + S.hotw.n + ' weeks running \u00b7 +' + B.HOTW_SOV + sovIc(), 'ach'); }
   }

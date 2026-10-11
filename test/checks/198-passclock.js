@@ -9,7 +9,9 @@
  *   - the clock back to the real day: nothing paid, nothing lost
  *   - on again past where it was: no second allowance for days paid
  *   - the clock back across the month before the game had saved: the
- *     bought pass kept, not swapped for a blank one of the month before */
+ *     bought pass kept, not swapped for a blank one of the month before
+ *   - the same for the week: the Signature Week not paid twice and the
+ *     week's major not opened again, the clock back a week and on again */
 'use strict';
 module.exports = {
   name: 'passclock',
@@ -46,6 +48,21 @@ module.exports = {
           off = 0; S.t = T0 / 1000; const Pb = passNow(); o.stale = { m: Pb.m - mN, paid: Pb.paid, pts: Pb.pts };
           if (Pb.m !== mN || !Pb.paid || Pb.pts !== 4 * PASS.PER) f('the clock back before a save swapped the bought pass for a blank one: ' + JSON.stringify(o.stale));
           S.t = tN; }
+        // the week's rewards the same way: the Signature Week and the week's
+        // major, the clock back a week before a save and on again
+        { const paid = () => (S.owed || []).reduce((a, x) => a + x.n, 0) + (S.sov || 0);
+          const play = kind => { let hh = S.hole; while (sigKind(hh) !== kind) hh++; const keep = S.hole; S.hole = hh; sigScore({ d: -1, n: 'Birdie' }); S.hole = keep; };
+          const qq = QUIET; QUIET = true; delete S.sigWk; const wk0 = weekNow(), tW = S.t, offW = off, s0 = paid();
+          SIG_KINDS.forEach(play); const first = paid() - s0;
+          off -= 8 * 86400000; S.t = (T0 + off) / 1000; SIG_KINDS.forEach(play);
+          off = offW; S.t = tW; SIG_KINDS.forEach(play); const twice = paid() - s0 - first;
+          S.weekly = { wk: wk0, t: 5, id: weekMajor(wk0).id, done: 1, won: 1 }; const h0 = S.hole, ev0 = S.evCourse, ep = S.eventsPlayed; S.eventsPlayed = Math.max(3, ep || 0);
+          off -= 8 * 86400000; S.t = (T0 + off) / 1000; S.hole = tournamentOf(h0) * B.ROUND * B.DAYS + 1; S.evCourse = null; QUIET = false; openEvent();
+          off = offW; S.t = tW; S.hole += B.ROUND * B.DAYS; S.evCourse = null; openEvent(); QUIET = true;
+          o.week = { first, twice, major: { wk: S.weekly.wk - wk0, done: S.weekly.done } };
+          if (!(first > 0) || twice !== 0) f('the Signature Week paid ' + first + ' and again ' + twice + ' with the clock back a week and on again');
+          if (S.weekly.wk !== wk0 || !S.weekly.done) f('the week\'s major opened again with the clock back a week and on again: ' + JSON.stringify(o.week.major));
+          S.hole = h0; S.evCourse = ev0; S.eventsPlayed = ep; QUIET = qq; }
       } finally { Date.now = RN; window.toast = tw; window.earnSov = es; QUIET = false; Object.keys(S).forEach(k => delete S[k]); Object.assign(S, JSON.parse(SNAP)); hideSheet(); }
       return { fails, o };
     });
