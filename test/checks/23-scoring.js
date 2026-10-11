@@ -7,7 +7,8 @@
  * a spread, not a spike:
  *
  *   birdie 20-45%, eagle 20-45%, par 8-30%, albatross or better 5-25%,
- *   bogey or worse under 12%, no single score over 45%, nine goals won
+ *   bogey or worse under 12%, no single score over 45%, every nine goal that
+ *   comes up five times won at least once (or its count never moves), nine goals won
  *   25-75%. Eight seeds of two hours read about 28/32/13/23/4, nines 50%,
  *   since the auto-climb judges the next card in still air (CLIMB_FIT).
  *
@@ -28,6 +29,9 @@ module.exports = {
       const n = {}; let holes = 0, nines = 0, ninesWon = 0, inHole = false;
       window.scoreFor = ratio => { const sc = rs(ratio); if (inHole){ inHole = false; n[sc.n] = (n[sc.n] || 0) + 1; holes++; } return sc; };
       window.finishHole = D => { inHole = true; try { return rf(D); } finally { inHole = false; } };
+      // each goal, how often it came up and how often it was won
+      const rn = window.resolveNine, goals = {};
+      window.resolveNine = function(){ const p = nineProgress(); const g = goals[p.goal.id] = goals[p.goal.id] || [0, 0]; g[1]++; if (p.have >= p.need) g[0]++; return rn.apply(this, arguments); };
       QUIET = true;
       try {
         for (let sd = 1; sd <= 8; sd++) {
@@ -50,14 +54,14 @@ module.exports = {
           nines += Math.floor(S.totalHoles / 9); ninesWon += S.ninesWon || 0;
         }
       } finally {
-        window.scoreFor = rs; window.finishHole = rf; Math.random = real; QUIET = false; DAY_FORCE = null;
+        window.scoreFor = rs; window.finishHole = rf; window.resolveNine = rn; Math.random = real; QUIET = false; DAY_FORCE = null;
         Object.keys(S).forEach(k => delete S[k]); Object.assign(S, JSON.parse(SNAP)); startHole();
       }
       const sh = k => (n[k] || 0) / holes;
       return { holes, birdie: sh('Birdie'), eagle: sh('Eagle'), par: sh('Par'),
                top: sh('Albatross') + sh('Ace'),
                worse: sh('Bogey') + sh('Double') + sh('Triple') + sh('Snowman'),
-               nines: ninesWon / Math.max(1, nines) };
+               nines: ninesWon / Math.max(1, nines), goals };
     });
     const pct = x => Math.round(x * 1000) / 10 + '%';
     const bad = [];
@@ -67,11 +71,13 @@ module.exports = {
     if (!(r.top >= 0.05 && r.top <= 0.25)) bad.push('albatross or better ' + pct(r.top) + ' (5-25%)');
     if (!(r.worse < 0.12)) bad.push('bogey or worse ' + pct(r.worse) + ' (under 12%)');
     if (!(r.nines >= 0.25 && r.nines <= 0.75)) bad.push('nine goals won ' + pct(r.nines) + ' (25-75%)');
+    // (a goal that came up and was never won is one whose count never moves)
+    for (const [id, [w, n]] of Object.entries(r.goals)) if (n >= 5 && !w) bad.push('the nine goal ' + id + ' came up ' + n + ' times and was never won');
     const most = Math.max(r.birdie, r.eagle, r.par, r.top, r.worse);
     if (most > 0.45) bad.push('one kind of score is ' + pct(most) + ' of all holes (45% at most)');
     if (bad.length) throw new Error('the round has lost its shape over ' + r.holes + ' holes: ' + bad.join(', '));
     return [r.holes + ' holes over 8 seeds x 2 hours: birdie ' + pct(r.birdie) + ', eagle ' + pct(r.eagle)
       + ', par ' + pct(r.par) + ', albatross or better ' + pct(r.top) + ', bogey or worse ' + pct(r.worse),
-      'nine goals won ' + pct(r.nines)];
+      'nine goals won ' + pct(r.nines) + ' (' + Object.entries(r.goals).map(([id, [w, n]]) => id + ' ' + w + '/' + n).join(', ') + ')'];
   }
 };

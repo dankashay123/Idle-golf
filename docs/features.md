@@ -6,6 +6,24 @@ feature must do, and is usually enough on its own.
 
 ## Sections, newest first
 
+### Paid parts with the clock, the first hour, on its side, new nine goals (11 October)
+
+- Tour Pass and Membership with the clock moved: held, but a month reading
+  earlier than the pass's own (the clock back before a save) swapped a
+  bought pass for a blank one; `passNow` keeps it (check `passclock`).
+  Membership: with the clock set back its days do not burn while live play
+  pays (24 hours of play a day's allowance, away time paying nothing):
+  left as it is, not worth its code.
+- First hour at 320: a course's announcement drew over the words by the
+  cog: they fade while `Scene.announce` is up (`#stage.ann`, check
+  `hudbar`); "lost by" keeps its figure (`\u00a0`).
+- On its side the Shop and Trophy Room were whole; a figure and its
+  sovereign (`.pv`) never split (check `wordbreak`).
+- Nine goals: three more, `u3` Three under or better (`k:'under'`, the
+  nine's total), `r3` and `r5` birdies in a row (`k:'run'`, `N.runBest`),
+  rewards like their bands'. The `scoring` check tallies every goal and
+  fails one that comes up and is never won.
+
 ### Retiring, the toasts' words, the words by the cog (11 October)
 
 - **Retiring twice at once paid twice.** `legacyGain` asked for

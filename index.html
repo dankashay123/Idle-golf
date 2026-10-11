@@ -3636,15 +3636,19 @@ const B = {
     { t:0, id:'b3',  n:'Three birdies or better', k:'birdie',   v:3, r:{ k:'purse', v:14 } },
     { t:0, id:'nb',  n:'Not a single bogey',      k:'nobogey',  v:1, r:{ k:'purse', v:16 } },
     { t:0, id:'e1',  n:'An eagle or better',      k:'eagle',    v:1, r:{ k:'purse', v:18 } },
+    // (three more, the user asked: the same few kept coming back)
+    { t:0, id:'u3',  n:'Three under or better',   k:'under',    v:3, r:{ k:'purse', v:15 } },
     { t:1, id:'b5',  n:'Five birdies or better',  k:'birdie',   v:5, r:{ k:'tick',  v:1 } },
     { t:1, id:'e2',  n:'Two eagles or better',    k:'eagle',    v:2, r:{ k:'purse', v:22 } },
     { t:1, id:'all', n:'Every hole under par',    k:'allunder', v:1, r:{ k:'shard', v:25 } },
     { t:1, id:'p5',  n:'An eagle on a par five',  k:'par5eagle',v:1, r:{ k:'grit',  v:120 } },
+    { t:1, id:'r3',  n:'Three birdies in a row',  k:'run',      v:3, r:{ k:'shard', v:25 } },
     // the hardest band: hard but possible now that an eagle is an event
     { t:2, id:'e4',  n:'Four eagles or better',   k:'eagle',    v:4, r:{ k:'purse', v:30 } },
     { t:2, id:'alb', n:'An albatross or better',  k:'alb',      v:1, r:{ k:'tick',  v:2 } },
     { t:2, id:'b8',  n:'Eight birdies or better', k:'birdie',   v:8, r:{ k:'grit',  v:260 } },
-    { t:2, id:'a1',  n:'An ace',                  k:'ace',      v:1, r:{ k:'tick',  v:4 } }
+    { t:2, id:'a1',  n:'An ace',                  k:'ace',      v:1, r:{ k:'tick',  v:4 } },
+    { t:2, id:'r5',  n:'Five birdies in a row',   k:'run',      v:5, r:{ k:'tick',  v:2 } }
   ],
 
   /* ---- the card ----
@@ -7993,7 +7997,7 @@ function nineGoalFor(h){
 }
 function startNine(){
   S.nine = { idx: nineIndex(S.hole), n: 0, total: 0, birdie:0, eagle:0, ace:0,
-             bogey:0, allUnder:true, par5eagle:0, alb:0, goal: nineGoalFor(S.hole).id };
+             bogey:0, allUnder:true, par5eagle:0, alb:0, run:0, runBest:0, goal: nineGoalFor(S.hole).id };
 }
 function nineProgress(){
   const N = S.nine; if(!N) return { have:0, need:1, goal:null };
@@ -8001,6 +8005,9 @@ function nineProgress(){
   let have;
   if(goal.k === 'nobogey') have = N.bogey === 0 ? 1 : 0;
   else if(goal.k === 'allunder') have = (N.allUnder && N.n === 9) ? 1 : 0;
+  // (how far under par the nine stands, and the longest run of birdies in it)
+  else if(goal.k === 'under') have = Math.max(0, -N.total);
+  else if(goal.k === 'run') have = N.runBest || 0;
   else have = N[goal.k] || 0;
   return { have, need: goal.v, goal };
 }
@@ -8968,6 +8975,7 @@ function finishHole(D){
   const N = S.nine;
   N.n++; N.total += sc.d;
   if(sc.d <= -1) N.birdie++;
+  if(sc.d <= -1){ N.run = (N.run || 0) + 1; N.runBest = Math.max(N.runBest || 0, N.run); } else N.run = 0;
   if(sc.d <= -2){ N.eagle++; if(parOf(S.hole) === 5) N.par5eagle++; }
   if(sc.d === -4) N.ace++;
   if(sc.d <= -3) N.alb = (N.alb || 0) + 1;
