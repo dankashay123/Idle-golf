@@ -6,7 +6,9 @@
  *     replaced to the locker, nothing lost or doubled; auto-equip off
  *   - a club scrapped since is passed by and said
  *   - the wagers' bag on as one starts (its pay counted with it) and the
- *     course's back as it ends, left part way too
+ *     course's back as it ends, left part way too; time away in the middle
+ *     of a wager is the course's, played with its own bag (the wager's
+ *     played it), the wager's back on after
  *   - a broken save repaired */
 'use strict';
 module.exports = {
@@ -49,6 +51,15 @@ module.exports = {
         if (S.dgnRun) f('could not leave');
         if (uids() !== before) f('the course\'s bag not back after leaving');
         if (count() !== n0) f('clubs lost or doubled through the wagers: ' + count());
+        // ---- time away in the middle of a wager: the course's time, its own bag ----
+        { const mr = Math.random, seeded = () => { let q = 11; Math.random = () => (q = (q * 16807) % 2147483647) / 2147483647; };
+          const keep = JSON.stringify(S), awayGain = wager => { Object.keys(S).forEach(k => delete S[k]); Object.assign(S, JSON.parse(keep));
+            S.dgnKeys[d.id] = 2; if (wager) startDgn(d); seeded(); const g0 = S.gold; S.t = Date.now() / 1000 - 7200; QUIET = true; offline(); QUIET = false; hideSheet(); Math.random = mr; return S.gold - g0; };
+          const plain = awayGain(false), mid = awayGain(true), onWager = uids() === B.SLOTS.map(sl => Bk[sl.id].uid).join();
+          leaveDgn(); leaveDgn(); const back = uids() === before;
+          if (!(plain > 0) || Math.abs(mid / plain - 1) > 0.02) f('two hours away paid ' + mid + ' in a wager, ' + plain + ' on the course: the wager\'s bag played the course');
+          if (!onWager) f('after time away the wager\'s bag was not on again'); if (!back) f('the course\'s bag not back at the wager\'s end after time away');
+          Object.keys(S).forEach(k => delete S[k]); Object.assign(S, JSON.parse(keep)); }
         // ---- repair ----
         S.loads = [{ u: { driver: A.driver.uid, nose: 5 } }, 'x', null, { u: {} }]; S.loadWager = 9; S.loadBack = 'y'; migrate();
         if (!Array.isArray(S.loads) || S.loads.length !== 3 || S.loads[1] !== null || S.loads[0].u.nose !== undefined || S.loads[0].u.driver !== A.driver.uid) f('loads repaired to ' + JSON.stringify(S.loads));

@@ -11062,7 +11062,23 @@ function climbPreview(){
 // hms stops at hours, which reads badly once a return is measured in days:
 // "168h 0m" is a week.
 const spanTxt = s => s >= 172800 ? Math.floor(s/86400) + ' days' : hms(s);
+// Time away in the middle of a wager is the course's time, played with the
+// course's own bag: the wager's lent bag (its loadout) was on, and two hours
+// away on a weak one paid next to nothing. It goes back on after.
 function offline(){
+  const lent = S.dgnRun && S.loadBack ? S.loadBack : null;
+  if(!lent) return offlineCore();
+  const mine = { u: {} }; for(const sl of B.SLOTS) if(S.equip[sl.id]) mine.u[sl.id] = S.equip[sl.id].uid;
+  wearSet(lent);
+  try{ return offlineCore(); }
+  finally{
+    // (the course's bag as the time away left it, better clubs put on and all,
+    // is the one the wager gives back at its end)
+    const now = { u: {} }; for(const sl of B.SLOTS) if(S.equip[sl.id]) now.u[sl.id] = S.equip[sl.id].uid;
+    S.loadBack = now; wearSet(mine);
+  }
+}
+function offlineCore(){
   // What the clock says, and what the caddie is good for. They are not the same
   // number past the cap, and the card used only the second one: come back from
   // a week away and it said "12h away", which is not where the week went.
