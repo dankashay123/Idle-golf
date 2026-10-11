@@ -22,6 +22,9 @@ module.exports = { name: 'wordbreak', async run(page) {
           if (rs.length > 1 && Math.abs(rs[0].top - rs[rs.length - 1].top) > 2) bad[m[0] + ' in "' + t.trim().slice(0, 40) + '"'] = where;
         }
       }
+      // a figure and its sovereign on one line
+      for (const e of document.querySelectorAll('.pv')) { if (!e.offsetParent) continue; const rs = [...e.getClientRects()].filter(q => q.width > 0.5);
+        if (rs.length > 1 && Math.abs(rs[0].top - rs[rs.length - 1].top) > 2) bad['figure "' + e.textContent.trim() + '" split from its sovereign'] = where; }
     };
     try { hideSheet(); } catch (e) {}
     QUIET = true; DEV.gold(20); DEV.lv(40); DEV.tierSet(8); DEV.skills(); DEV.keys(); DEV.relics(3); DEV.cards(2); QUIET = false;
