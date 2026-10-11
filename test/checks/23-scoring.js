@@ -34,6 +34,7 @@ module.exports = {
       const rn = window.resolveNine, goals = {};
       window.resolveNine = function(){ const p = nineProgress(); const g = goals[p.goal.id] = goals[p.goal.id] || [0, 0]; g[1]++; if (p.have >= p.need) g[0]++; return rn.apply(this, arguments); };
       QUIET = true;
+      const shopOnce = () => { for (let g = 0; g < 400; g++) { let best = null, bc = Infinity; for (const u of B.UPG) { const lv = upgLv(u.id); if (lv >= capOf(u)) continue; const c = costBulk(u.base, u.r, lv, 1); if (c < bc) { bc = c; best = u; } } if (!best || S.gold < bc) break; S.gold -= bc; S.upg[best.id] = upgLv(best.id) + 1; } };
       try {
         for (let sd = 1; sd <= 8; sd++) {
           Object.keys(S).forEach(k => delete S[k]); Object.assign(S, defaultState()); initState(); migrate(); startHole();
@@ -56,10 +57,11 @@ module.exports = {
         }
         // and a new player who buys nothing, held to the easiest band, so its
         // goals come up (the golfers above climb past it)
-        { const nb = window.nineBand; window.nineBand = () => 0; counting = false;
+        // (and one who buys now and then, held to the middle band)
+        for (const band of [0, 1]) { const nb = window.nineBand; window.nineBand = () => band; counting = false;
           Object.keys(S).forEach(k => delete S[k]); Object.assign(S, defaultState()); initState(); migrate(); startHole(); startNine();
-          let seed = 4242; Math.random = () => (seed = (seed * 16807) % 2147483647) / 2147483647; DAY_FORCE = 20800;
-          const n0 = holes; let t = 0; while (t < 4 * 3600) { step(B.TICK_MAX, derive()); t += B.TICK_MAX; } holes = n0; window.nineBand = nb; }
+          let seed = 4242 + band; Math.random = () => (seed = (seed * 16807) % 2147483647) / 2147483647; DAY_FORCE = 20800;
+          let t = 0, i = 0; while (t < (band ? 2 : 4) * 3600) { step(B.TICK_MAX, derive()); t += B.TICK_MAX; if (band && ++i % 2500 === 0) shopOnce(); } window.nineBand = nb; }
       } finally {
         window.scoreFor = rs; window.finishHole = rf; window.resolveNine = rn; Math.random = real; QUIET = false; DAY_FORCE = null;
         Object.keys(S).forEach(k => delete S[k]); Object.assign(S, JSON.parse(SNAP)); startHole();

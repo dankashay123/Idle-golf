@@ -3652,6 +3652,9 @@ const B = {
     { t:1, id:'all', n:'Every hole under par',    k:'allunder', v:1, r:{ k:'shard', v:25 } },
     { t:1, id:'p5',  n:'An eagle on a par five',  k:'par5eagle',v:1, r:{ k:'grit',  v:120 } },
     { t:1, id:'r3',  n:'Three birdies in a row',  k:'run',      v:3, r:{ k:'shard', v:25 } },
+    { t:1, id:'u10', n:'Ten under or better',     k:'under',    v:10, r:{ k:'purse', v:22 } },
+    { t:1, id:'r4',  n:'Four birdies in a row',   k:'run',      v:4, r:{ k:'tick',  v:1 } },
+    { t:1, id:'p3e', n:'An eagle on a par three', k:'p3e',      v:1, r:{ k:'grit',  v:120 } },
     // the hardest band: hard but possible now that an eagle is an event
     { t:2, id:'e4',  n:'Four eagles or better',   k:'eagle',    v:4, r:{ k:'purse', v:30 } },
     { t:2, id:'alb', n:'An albatross or better',  k:'alb',      v:1, r:{ k:'tick',  v:2 } },
@@ -8045,7 +8048,7 @@ function nineGoalFor(h){
 }
 function startNine(){
   S.nine = { idx: nineIndex(S.hole), n: 0, total: 0, birdie:0, eagle:0, ace:0,
-             bogey:0, allUnder:true, par5eagle:0, alb:0, run:0, runBest:0, erun:0, erunBest:0, p5b:0, p3b:0, goal: nineGoalFor(S.hole).id };
+             bogey:0, allUnder:true, par5eagle:0, alb:0, run:0, runBest:0, erun:0, erunBest:0, p5b:0, p3b:0, p3e:0, goal: nineGoalFor(S.hole).id };
 }
 function nineProgress(){
   const N = S.nine; if(!N) return { have:0, need:1, goal:null };
@@ -9028,7 +9031,7 @@ function finishHole(D){
   if(sc.d <= -1){ N.birdie++; if(parOf(S.hole) === 5) N.p5b = (N.p5b || 0) + 1; if(parOf(S.hole) === 3) N.p3b = (N.p3b || 0) + 1; }
   if(sc.d <= -1){ N.run = (N.run || 0) + 1; N.runBest = Math.max(N.runBest || 0, N.run); } else N.run = 0;
   if(sc.d <= -2){ N.erun = (N.erun || 0) + 1; N.erunBest = Math.max(N.erunBest || 0, N.erun); } else N.erun = 0;
-  if(sc.d <= -2){ N.eagle++; if(parOf(S.hole) === 5) N.par5eagle++; }
+  if(sc.d <= -2){ N.eagle++; if(parOf(S.hole) === 5) N.par5eagle++; if(parOf(S.hole) === 3) N.p3e = (N.p3e || 0) + 1; }
   if(sc.d === -4) N.ace++;
   if(sc.d <= -3) N.alb = (N.alb || 0) + 1;
   if(sc.d >= 1) N.bogey++;

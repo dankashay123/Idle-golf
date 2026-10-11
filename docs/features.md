@@ -6,6 +6,20 @@ feature must do, and is usually enough on its own.
 
 ## Sections, newest first
 
+### The bag, the Range, the conditions, middle goals (11 October)
+
+- A full locker and the bulk scrap keep the clubs a saved bag holds and set
+  pieces (`lockerSort`, `sparesPastTwo`); by score alone a saved bag's club
+  was scrapped. Check `loadouts`.
+- The Range held: Max never one too many or few, x25 to the cap, Buy All
+  within the purse (825 random cases).
+- A tap on the day's condition says what it does off its numbers
+  (`condWhat`, `condTap`); they were only named. Check `condcolours`.
+- Middle band: `u10` Ten under, `r4` Four birdies in a row, `p3e` An eagle
+  on a par three (`N.p3e`); as hard as the band's others. The `scoring`
+  check holds a game to the easiest and one to the middle band, so every
+  goal comes up.
+
 ### Climbing, the caddie, easiest goals (11 October)
 
 - No move of card from inside a wager (`climb` as `retire`); the Tour tab
