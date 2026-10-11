@@ -6,6 +6,16 @@ feature must do, and is usually enough on its own.
 
 ## Sections, newest first
 
+### Sets on a club's sheet (11 October)
+
+- He asked for gear sets shown as a game shows them (a picture). A club's
+  sheet now has `setBoxes`: its named set in full, "Old Course Heritage
+  (2/6)", the six pieces (`mk` + slot) worn ones in gold, one in the locker
+  said so, the rest grey; its bonuses, only the one in effect lit (only
+  the highest reached counts; a lower one reached shows passed); and each
+  rarity set it counts toward, shorter, its slots worn at that rarity as
+  chips. Below the swap preview. Check `setsheet`.
+
 ### The bag, the Range, the conditions, middle goals (11 October)
 
 - A full locker and the bulk scrap keep the clubs a saved bag holds and set
