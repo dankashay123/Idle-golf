@@ -234,7 +234,7 @@ module.exports = {
       S.mult = 1; DEV.clearUpg();
 
       // ---- 4. the retirement preview -----------------------------------
-      S.cups = 4; S.legacy = 400; S.eventsPlayed = 0; S.relic = {};
+      S.cups = 4; S.legacy = 400; S.eventsPlayed = 0; S.evRun = 0; S.relic = {};
       renderLegacy();
       const legTxt = () => $('legBox').textContent;
       out.legBefore = legTxt();
@@ -249,7 +249,7 @@ module.exports = {
       // legacy has to buy fewer of them the further in you are
       out.discSteps = [0, 1, 2, 3, 4].map(n => discoverCostAt(n));
       out.buys = [0, 10, 100, 1000, 100000].map(v => discoveriesFor(v));
-      S.eventsPlayed = 9; renderLegacy();
+      S.eventsPlayed = 9; S.evRun = 9; renderLegacy();
       out.legAfter = legTxt();
       out.legHasBtn = !!$('retireBtn');
 

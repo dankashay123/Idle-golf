@@ -113,7 +113,7 @@ module.exports = {
           attune:  rerollCost(it) + ascendCost(it),
           scrap:   scrapValue(it),
           fit:     makeItem(10, 0, 3, 'driver').ilvl,
-          plegacy: (S.eventsPlayed = 99, legacyGain()),
+          plegacy: (S.eventsPlayed = 99, S.evRun = 99, legacyGain()),
           pdisc:   discoverCost(),
           pcurate: upgradeCost(B.TROPHY[0]),
           tick:    (S.tickets = 0, grantTickets(4), S.tickets)

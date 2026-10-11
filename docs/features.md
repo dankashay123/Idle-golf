@@ -6,6 +6,26 @@ feature must do, and is usually enough on its own.
 
 ## Sections, newest first
 
+### Retiring, the toasts' words, the words by the cog (11 October)
+
+- **Retiring twice at once paid twice.** `legacyGain` asked for
+  `RETIRE_EVENTS` over a whole life (`eventsPlayed`), so after the first
+  event ever Retire could be signed again at once and each paid the cups
+  again. Now `S.evRun` counts this career's events (zeroed by `retire`,
+  filled from `eventsPlayed` in `initState` for an old save, so it keeps
+  its Retire; it is not in `defaultState`, or an old save would read 0).
+- Retiring started no new nine (`startNine` now): hole 1 read "Front 4/9".
+  None from inside a wager (`toast` "Finish the wager first"): the course
+  under it was re-teed, and the lent bag could set the landing card.
+- Clock both ways with every heirloom at its top: nothing paid back, one
+  pay forward, wager entries (the Invitation) to their caps; buying past a
+  top refused. Checks: `retire`.
+- A long game's toasts read through: "+3 attribute" and "best nine, 655"
+  fixed; check `toastwords` reads every toast of a new game.
+- The words by the cog (a festival's line) ran under a toast: `toastShift`
+  lowers the toasts while those words reach under their corner (the right
+  40% of the field), `--tshift`; `placeMap` makes room. Check: `hudbar`.
+
 ### The tabs' words, and a first hour on its side (10 October)
 
 - The Range, Bag and Career read line by line: multipliers with the

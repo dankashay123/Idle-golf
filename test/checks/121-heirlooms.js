@@ -212,7 +212,7 @@ module.exports = {
           if ($('cardRoman').textContent !== String(t0 + 1)) f('the header reads Tour Card ' + $('cardRoman').textContent + ' on Card ' + (t0 + 1));
           renderAll(); for (const v of ['upg', 'bag', 'dgn', 'tour']) { setView(v); rlook(v + ' on ' + (t0 + 1)); }
           for (const s2 of ['stat', 'leg']) { careerSub = s2; setView('career'); renderCareer(); rlook('career ' + s2); }
-          S.eventsPlayed = 9; careerSub = 'leg'; renderCareer();
+          S.eventsPlayed = 9; S.evRun = 9; careerSub = 'leg'; renderCareer();
           if ($('retireBtn')) { $('retireBtn').click(); rlook('retire sheet'); } else if (legacyGain() > 0) f('no retire button to open the sheet with');
           hideSheet();
         }
@@ -227,7 +227,7 @@ module.exports = {
         // ---- the Locker and the Chronoglass -------------------------------
         S.relic.vault = trTop(trophyDef('vault')); S.relic.chrono = trTop(trophyDef('chrono'));
         B.UPG.forEach(u => S.upg[u.id] = 0); S.upg.drive = 30; S.upg.tempo = 700;
-        S.tier = 20; S.tierMax = 20; S.bestTier = 20; S.eventsPlayed = 9; S.retires = 0;
+        S.tier = 20; S.tierMax = 20; S.bestTier = 20; S.eventsPlayed = 9; S.evRun = 9; S.retires = 0;
         o.land = retireCard();
         if (o.land > 20) f('the Chronoglass landed on Card ' + (o.land + 1) + ', past the best card reached (21)');
         retire(); hideSheet();

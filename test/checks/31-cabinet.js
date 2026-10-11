@@ -138,16 +138,16 @@ module.exports = {
         S.talPts = 0; S.statPts = 0; S.paraPts = {};
         // one short of the first heirloom, so this retirement is what finds it
         const relic0 = S.relic; S.relic = {};
-        S.eventsPlayed = B.RETIRE_EVENTS; S.legacy = discoverCost() - 1;
+        S.eventsPlayed = B.RETIRE_EVENTS; S.evRun = B.RETIRE_EVENTS; S.legacy = discoverCost() - 1;
         const Pv = legacyPreview(); o.retireFinds = Pv.after > Pv.held;
         o.worthOn = worth();
-        S.eventsPlayed = 0; o.worthEarly = worth();
-        S.eventsPlayed = B.RETIRE_EVENTS; S.relic = {}; B.TROPHY.forEach(t => S.relic[t.id] = 1); o.worthAll = worth();
+        S.eventsPlayed = 0; S.evRun = 0; o.worthEarly = worth();
+        S.eventsPlayed = B.RETIRE_EVENTS; S.evRun = B.RETIRE_EVENTS; S.relic = {}; B.TROPHY.forEach(t => S.relic[t.id] = 1); o.worthAll = worth();
         S.relic = relic0; S.legacy = 0; [S.talPts, S.statPts, S.paraPts] = keepPts;
 
         // ---- retiring, and a roughed-up save ------------------------------------
         const bestBefore = S.bestCards.length;
-        S.eventsPlayed = Math.max(S.eventsPlayed, B.RETIRE_EVENTS); retire(); try { hideSheet(); } catch (e) {}
+        S.eventsPlayed = Math.max(S.eventsPlayed, B.RETIRE_EVENTS); S.evRun = Math.max(S.evRun || 0, B.RETIRE_EVENTS); retire(); try { hideSheet(); } catch (e) {}
         o.retired = S.evLog.length + '/' + (S.bestCards.length === bestBefore ? 'kept' : 'lost');
         S.evLog = [{ t: 3, id: 'nowhere', s: -5 }, { t: 'x', id: W[0].id, s: 1 }, 'junk', { t: 4, id: W[0].id, s: -9, b: 1 }];
         S.bestCards = [{ t: 1, id: W[0].id, s: 'lots' }, { t: 2, id: W[1].id, s: -3 }, null];

@@ -12,6 +12,11 @@
  *     best card reached is the ceiling)
  *   - a golfer far stronger than their best card lands on their best card
  *   - the Chronoglass is a floor
+ *   - a second retirement asks an event of its own career first (the count
+ *     was a whole life's: after the first event ever, Retire could be tapped
+ *     again at once and each paid the cups again); the nine starts afresh
+ *     on hole 1 (it read "Front 4/9"); none from inside a wager; a save
+ *     from before the count keeps its Retire
  *   - retire() itself lands where retireCard() said, with that card open,
  *     and the retirement sheet names it
  *   - a save from before holes were fixed (no holesFixed in it) is moved once,
@@ -34,7 +39,7 @@ module.exports = {
         fresh();
         B.SLOTS.forEach(sl => { const it = makeItem(40, 0, 4, sl.id); it.el = null; S.equip[sl.id] = it; });
         B.UPG.forEach(u => S.upg[u.id] = Math.min(capOf(u), 300));
-        S.tier = 30; S.tierMax = 30; S.bestTier = 30; S.eventsPlayed = 3; startHole();
+        S.tier = 30; S.tierMax = 30; S.bestTier = 30; S.eventsPlayed = 3; S.evRun = 3; startHole();
         const want = retireCard();
         o.want = want;
         // what the sheet says before signing
@@ -47,7 +52,7 @@ module.exports = {
         // far stronger than the best card reached: capped at the best
         fresh();
         B.SLOTS.forEach(sl => { const it = makeItem(200, 0, 5, sl.id); it.el = null; S.equip[sl.id] = it; });
-        S.tier = 3; S.tierMax = 3; S.bestTier = 3; S.eventsPlayed = 3; startHole();
+        S.tier = 3; S.tierMax = 3; S.bestTier = 3; S.eventsPlayed = 3; S.evRun = 3; startHole();
         o.capped = retireCard();
         // the Chronoglass floor
         fresh(); S.relic.chrono = 12; S.tier = 20; S.tierMax = 20; S.bestTier = 20; startHole();
@@ -55,12 +60,29 @@ module.exports = {
         // the sheet names the card
         fresh();
         B.SLOTS.forEach(sl => { const it = makeItem(30, 0, 3, sl.id); it.el = null; S.equip[sl.id] = it; });
-        S.tier = 25; S.tierMax = 25; S.bestTier = 25; S.eventsPlayed = 3; startHole();
+        S.tier = 25; S.tierMax = 25; S.bestTier = 25; S.eventsPlayed = 3; S.evRun = 3; startHole();
         QUIET = false; setView('career'); careerSub = 'leg'; renderLegacy();
         const btn = document.getElementById('retireBtn');
         if (btn) { btn.onclick(); o.sheet = document.getElementById('sheet').textContent; }
         o.sheetWant = 'Card ' + cardNo(retireCard());
         hideSheet();
+        // twice running (the second asks an event of its own first), the
+        // nine afresh, and not from inside a wager
+        fresh();
+        B.SLOTS.forEach(sl => { const it = makeItem(30, 0, 3, sl.id); it.el = null; S.equip[sl.id] = it; });
+        S.tier = 25; S.tierMax = 25; S.bestTier = 25; S.eventsPlayed = 3; S.evRun = 3; S.cups = 4; startHole();
+        while (holeInRound(S.hole) !== 5) S.hole++; startHole(); startNine(); S.nine.n = 4; S.nine.birdie = 3;
+        const r0 = S.retires, l0 = S.legacy; retire(); hideSheet();
+        o.nine = { hir: holeInRound(S.hole), n: S.nine.n, birdie: S.nine.birdie };
+        const l1 = S.legacy; o.again = legacyGain(); retire(); hideSheet(); o.twice = { retires: S.retires - r0, second: S.legacy - l1, first: l1 - l0 };
+        fresh();
+        B.SLOTS.forEach(sl => { const it = makeItem(30, 0, 3, sl.id); it.el = null; S.equip[sl.id] = it; });
+        S.tier = 25; S.tierMax = 25; S.bestTier = 25; S.eventsPlayed = 3; S.evRun = 3; startHole();
+        const d = B.DGN[0]; S.dgnKeys[d.id] = 3; startDgn(d); const r1 = S.retires; retire(); hideSheet();
+        o.wager = { inIt: !!S.dgnRun, retired: S.retires - r1, tier: S.tier };
+        S.dgnRun = null;
+        // an old save, written before careers counted their events, keeps its Retire
+        fresh(); delete S.evRun; S.eventsPlayed = 7; initState(); o.old = S.evRun;
       } finally {
         QUIET = false;
         Object.keys(S).forEach(k => delete S[k]); Object.assign(S, JSON.parse(SNAP)); startHole();
@@ -68,6 +90,11 @@ module.exports = {
       return o;
     });
     if (!(r.gain > 0)) throw new Error('the retirement setup has nothing to bank, so it tests nothing');
+    if (!(r.twice.first > 0) || r.again !== 0 || r.twice.retires !== 1 || r.twice.second !== 0)
+      throw new Error('a second retirement at once, with no event of its own: ' + JSON.stringify(r.twice) + ', worth ' + r.again + ' (each paid the cups again)');
+    if (r.nine.hir !== 1 || r.nine.n !== 0 || r.nine.birdie !== 0) throw new Error('after retiring, the nine part way through carried on: ' + JSON.stringify(r.nine));
+    if (!r.wager.inIt || r.wager.retired !== 0 || r.wager.tier !== 25) throw new Error('retired from inside a wager: ' + JSON.stringify(r.wager));
+    if (r.old !== 7) throw new Error('a save from before careers counted their events lost its Retire (' + r.old + ')');
     if (r.landed !== r.want || r.open !== r.want)
       throw new Error('retireCard() said Card ' + (r.want + 1) + ' but retiring landed on Card ' + (r.landed + 1)
         + ' with Card ' + (r.open + 1) + ' open');
@@ -122,6 +149,7 @@ module.exports = {
       + 'the next load and a save after a reset stay put',
       'retiring lands on Card ' + (r.landed + 1) + ' (a fresh par four at ' + r.here.toFixed(2)
       + ' of par, ' + r.above.toFixed(2) + ' on the card above), with it open',
-      'capped at the best card reached, floored at the Chronoglass, named on the sheet'];
+      'capped at the best card reached, floored at the Chronoglass, named on the sheet',
+      'a second retirement asks an event of its own first (+' + r.twice.first + ', then nothing); the nine starts afresh; none from inside a wager; an old save keeps its Retire'];
   }
 };

@@ -5297,6 +5297,9 @@ function initState(){
   if(!S.tierEvents) S.tierEvents = {};
   if(S.tierMax === undefined) S.tierMax = 0;
   if(S.eventsPlayed === undefined) S.eventsPlayed = 0;
+  // (the events of this career, since the last retirement: a save from before
+  // it counted them keeps the Retire it had)
+  if(!(S.evRun >= 0)) S.evRun = S.eventsPlayed;
   if(!S.achDone) S.achDone = {};
   if(S.autoEquip === undefined) S.autoEquip = 0;
   if(!(Number.isInteger(S.autoScrap) && S.autoScrap >= -1 && S.autoScrap <= autoScrapTop())) S.autoScrap = -1;
@@ -9180,7 +9183,7 @@ function endTournament(){
     + '</ul>'
     + '<button class="act" onclick="hideSheet()">Next event</button>');
 
-  S.eventsPlayed = (S.eventsPlayed || 0) + 1;
+  S.eventsPlayed = (S.eventsPlayed || 0) + 1; S.evRun = (S.evRun || 0) + 1;
   S.tierEvents[S.tier] = eventsOn(S.tier) + 1;
   // The next card opens after enough events on your highest, or at once when
   // you win its cup: a golfer who is well ahead of the card moves up at the
@@ -10729,8 +10732,11 @@ function renderShop(){
 // bit-identical.
 const legacyFor = (tier, cups) => Math.floor(B.LEGACY_K * Math.pow(tier + 1, B.LEGACY_EXP)
   * Math.pow(B.CUP_MULT, cups) * (1 + career().plegacy));
+// (an event of this career first: counted over a whole life, after the first
+// one ever a retirement could be signed again at once, and each paid the cups
+// again, as often as it was tapped)
 function legacyGain(){
-  if((S.eventsPlayed || 0) < B.RETIRE_EVENTS) return 0;
+  if((S.evRun || 0) < B.RETIRE_EVENTS) return 0;
   return legacyFor(S.tier, S.cups);
 }
 const discoverCostAt = n => Math.max(1, Math.ceil(B.DISC_COST * Math.pow(B.DISC_R, n)
@@ -10769,7 +10775,7 @@ function legacyPreview(){
   const now = legacyFor(S.tier, S.cups);
   return {
     now,
-    ready: (S.eventsPlayed || 0) >= B.RETIRE_EVENTS,
+    ready: (S.evRun || 0) >= B.RETIRE_EVENTS,
     card: legacyFor(Math.min(B.TIER_MAX, S.tier + 1), S.cups) - now,
     cup:  legacyFor(S.tier, S.cups + 1) - now,
     held: discoveriesFor(S.legacy),
@@ -10898,9 +10904,13 @@ function fixHoles(o){
   S.hole = (tournamentOf(S.hole) - 1) * B.ROUND * B.DAYS + 1;
 }
 function retire(){
+  // (inside a wager the course is set aside: retiring there teed off the new
+  // career under a wager still being played, and the bag lent for it could
+  // set where he landed, Card 7 for a golfer who belonged on 10)
+  if(S.dgnRun){ toast('Finish the wager first'); return; }
   const gain = legacyGain();
   if(gain <= 0) return;
-  S.legacy += gain; S.retires++;
+  S.legacy += gain; S.retires++; S.evRun = 0;
 
   // The bag is yours. Clubs you found do not evaporate because you signed a
   // card; what resets is the money, the range work and the ladder.
@@ -10923,6 +10933,8 @@ function retire(){
   // level, attributes, talents and paragon are the golfer, not the run: untouched.
 
   startHole();
+  // (the nine he was part way through is not this one: "Front 4/9" on hole 1)
+  startNine();
   showSheet('<h3>Retired</h3>'
     + '<div class="big">+' + fmt(gain) + ' legacy</div>'
     + '<p>Capped upgrades can go ' + B.CAP_PER_LEGACY + '\u00a0levels higher \u00b7 retirement '
@@ -34725,7 +34737,7 @@ const DEV = {
   disc(n){ const pool = B.TROPHY.filter(t => !found(t.id));
     for(let i = 0; i < n && i < pool.length; i++) S.relic[pool[i].id] = 1; this.re(); },
   cups(n){ S.cups += n; this.re(); },
-  retire(){ S.eventsPlayed = Math.max(S.eventsPlayed||0, B.RETIRE_EVENTS); hideSheet(); retire(); },
+  retire(){ S.eventsPlayed = Math.max(S.eventsPlayed||0, B.RETIRE_EVENTS); S.evRun = Math.max(S.evRun||0, B.RETIRE_EVENTS); hideSheet(); retire(); },
   skip(){ S.scores[holeInRound(S.hole)-1] = { d:0, n:'Par', par:parOf(S.hole) };
           advanceHole(); startHole(); this.re(); },
   skipN(n){ for(let i=0;i<n;i++){ advanceHole(); } startHole(); this.re(); },
