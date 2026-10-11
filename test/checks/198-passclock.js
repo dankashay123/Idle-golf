@@ -7,7 +7,9 @@
  *   - 40 days on: a new pass; the membership's allowance for its 30 days
  *     only, paid once
  *   - the clock back to the real day: nothing paid, nothing lost
- *   - on again past where it was: no second allowance for days paid */
+ *   - on again past where it was: no second allowance for days paid
+ *   - the clock back across the month before the game had saved: the
+ *     bought pass kept, not swapped for a blank one of the month before */
 'use strict';
 module.exports = {
   name: 'passclock',
@@ -38,6 +40,12 @@ module.exports = {
         // back to the real day, then past it again
         off = 0; go(); if (wealth() !== w2) f('the clock back to the real day paid ' + (wealth() - w2));
         dues = 0; off = 40 * 86400000 + 3600e3; go(); if (dues) f('on again past it paid ' + dues + ' more allowance');
+        // this month's pass bought, then the clock back across the month before
+        // the game had saved (its stamp as old): the bought pass kept
+        { const Pn = passNow(); if (!Pn.paid) passBuy(); Pn.pts = 4 * PASS.PER; const mN = Pn.m, tN = S.t;
+          off = 0; S.t = T0 / 1000; const Pb = passNow(); o.stale = { m: Pb.m - mN, paid: Pb.paid, pts: Pb.pts };
+          if (Pb.m !== mN || !Pb.paid || Pb.pts !== 4 * PASS.PER) f('the clock back before a save swapped the bought pass for a blank one: ' + JSON.stringify(o.stale));
+          S.t = tN; }
       } finally { Date.now = RN; window.toast = tw; window.earnSov = es; QUIET = false; Object.keys(S).forEach(k => delete S[k]); Object.assign(S, JSON.parse(SNAP)); hideSheet(); }
       return { fails, o };
     });

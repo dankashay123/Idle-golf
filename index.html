@@ -9494,6 +9494,9 @@ function tickShop(dt){
 const PASS_MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 function passNow(){
   const m = ciMonth(dayNow());
+  // (a month that reads earlier than the pass's own, the clock put back
+  // before the game had saved, never swaps a bought pass for a blank one)
+  if(S.pass && typeof S.pass === 'object' && S.pass.m > m && Array.isArray(S.pass.got)) return S.pass;
   if(!S.pass || typeof S.pass !== 'object' || S.pass.m !== m){
     const old = S.pass && typeof S.pass === 'object' && Array.isArray(S.pass.got) && S.pass.m < m ? S.pass : null;
     S.pass = { m, pts: 0, paid: 0, got: [] };
