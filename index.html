@@ -6550,6 +6550,15 @@ function nameItem(it, sl){
   if(it.rar >= 2) n += ' ' + B.SUFFIX[hash32(it.uid*7919) % B.SUFFIX.length];
   return n;
 }
+// The locker in the order a full one keeps it: a club in a saved bag and a
+// set piece last to go (the weakest of the rest first), then the best first.
+// It went by score alone, and a full locker scrapped the club a saved bag
+// was built round: wearing it said the club was "scrapped since".
+function lockerSort(){
+  const kept = new Set(); for(const L of loadsNow()) if(L && L.u) for(const u of Object.values(L.u)) kept.add(u);
+  const keep = it => kept.has(it.uid) || !!it.set ? 1 : 0;
+  S.bag.sort((a, b) => keep(b) - keep(a) || itemScore(b) - itemScore(a));
+}
 let lockN = 0, lockSh = 0, lockT = -Infinity;
 let autoScrapN = 0, autoScrapSh = 0, autoScrapT = -Infinity;
 // Into the locker. Says whether he still has it: false when auto-scrap broke
@@ -6584,7 +6593,7 @@ function bagAdd(it){
     }
   }
   if(S.bag.length > bagCap()){
-    S.bag.sort((a,b) => itemScore(b) - itemScore(a));
+    lockerSort();
     const cut = S.bag.splice(bagCap());
     let sh = 0; cut.forEach(x => sh += scrapValue(x));
     S.shard += sh;
@@ -6781,12 +6790,14 @@ function scrapList(list){
   if(list.length) toast('Scrapped ' + list.length + ' for <b>' + sh + '</b> ' + plural(sh, 'shards'));
   return sh;
 }
-// everything past the best two in each slot, set pieces aside
+// everything past the best two in each slot, set pieces aside, and the
+// clubs a saved bag holds (the same reason as lockerSort)
 function sparesPastTwo(){
-  const keep = {}, out = [];
+  const keep = {}, out = [], saved = new Set();
+  for(const L of loadsNow()) if(L && L.u) for(const u of Object.values(L.u)) saved.add(u);
   S.bag.slice().sort((a,b) => itemScore(b) - itemScore(a)).forEach(it => {
     keep[it.slot] = (keep[it.slot] || 0) + 1;
-    if(keep[it.slot] > 2 && !it.set) out.push(it);
+    if(keep[it.slot] > 2 && !it.set && !saved.has(it.uid)) out.push(it);
   });
   return out;
 }
@@ -11208,7 +11219,7 @@ function offlineCore(){
   const swapped = autoEquipSweep().length;
   let scrapped = 0, scrapSh = 0;
   if(S.bag.length > bagCap()){
-    S.bag.sort((a,b) => itemScore(b) - itemScore(a));
+    lockerSort();
     const cut = S.bag.splice(bagCap());
     cut.forEach(x => scrapSh += scrapValue(x));
     S.shard += scrapSh; scrapped = cut.length;

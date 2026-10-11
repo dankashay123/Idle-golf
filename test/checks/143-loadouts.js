@@ -9,6 +9,8 @@
  *     course's back as it ends, left part way too; time away in the middle
  *     of a wager is the course's, played with its own bag (the wager's
  *     played it), the wager's back on after
+ *   - a full locker and the bulk scrap keep a club a saved bag holds (it
+ *     was scrapped by score, and the bag then said so)
  *   - a broken save repaired */
 'use strict';
 module.exports = {
@@ -60,6 +62,14 @@ module.exports = {
           if (!(plain > 0) || Math.abs(mid / plain - 1) > 0.02) f('two hours away paid ' + mid + ' in a wager, ' + plain + ' on the course: the wager\'s bag played the course');
           if (!onWager) f('after time away the wager\'s bag was not on again'); if (!back) f('the course\'s bag not back at the wager\'s end after time away');
           Object.keys(S).forEach(k => delete S[k]); Object.assign(S, JSON.parse(keep)); }
+        // ---- a full locker and the bulk scrap keep a club a saved bag holds ----
+        { const keepS = JSON.stringify(S); QUIET = true; S.autoEquip = 0; S.autoScrap = -1; S.bag = [];
+          const weak = makeItem(1, 0, 0, 'wedge'); S.bag.push(weak); loadsNow()[2] = { u: { wedge: weak.uid } };
+          while (S.bag.length < bagCap()) S.bag.push(makeItem(30, 0, 2, B.SLOTS[S.bag.length % B.SLOTS.length].id));
+          bagAdd(makeItem(40, 0, 3, 'driver'));
+          if (!S.bag.includes(weak)) f('a full locker scrapped the club a saved bag holds');
+          if (sparesPastTwo().includes(weak)) f('the bulk scrap would break up the club a saved bag holds');
+          QUIET = false; Object.keys(S).forEach(k => delete S[k]); Object.assign(S, JSON.parse(keepS)); }
         // ---- repair ----
         S.loads = [{ u: { driver: A.driver.uid, nose: 5 } }, 'x', null, { u: {} }]; S.loadWager = 9; S.loadBack = 'y'; migrate();
         if (!Array.isArray(S.loads) || S.loads.length !== 3 || S.loads[1] !== null || S.loads[0].u.nose !== undefined || S.loads[0].u.driver !== A.driver.uid) f('loads repaired to ' + JSON.stringify(S.loads));
