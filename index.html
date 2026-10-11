@@ -1083,6 +1083,10 @@ li.afx.on .lockb{color:var(--brass);border-color:var(--brass);background:rgba(22
   border:1px solid var(--line);font-family:var(--mono);font-size:var(--f0);padding:6px;resize:none;
   word-break:break-all}
 .setbtns{display:flex;gap:6px;flex-wrap:wrap}
+/* (at 320 a pair of buttons squeezed its row's words to a narrow column,
+   "Battery / Saver / After / 2 minutes / untouched": under 400 wide the
+   pair goes on a line of its own) */
+@media (max-width:400px){ .setrow:has(.setbtns){grid-template-columns:1fr;gap:6px} .setrow .setbtns{justify-content:flex-end} }
 #shopDot{position:absolute;top:-8%;right:-8%;width:32%;height:32%;background:var(--r5);display:none}
 #shopBtn.new #shopDot{display:block}
 /* something waiting to be collected in the Trophy Room: the same red dot the

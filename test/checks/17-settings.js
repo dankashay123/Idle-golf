@@ -234,6 +234,21 @@ module.exports = {
     if (!tip.shown) throw new Error('the Home Screen tip never showed on an iPhone');
     if (tip.again) throw new Error('the Home Screen tip showed twice');
 
+    // at 320 and on its side, every row's name on one line and its words in
+    // no more than three (a pair of buttons squeezed them to a narrow column)
+    const rowsAt = [];
+    for (const [W, H] of [[320, 640], [568, 320]]) {
+      await page.setViewportSize({ width: W, height: H }); await page.waitForTimeout(150);
+      const L = await page.evaluate(() => { hideSheet(); settingsSheet(); const out = [];
+        for (const row of document.querySelectorAll('#sheet .setrow')) { const nm = row.querySelector('.nm'), ds = row.querySelector('.ds'); if (!nm) continue;
+          const lh = parseFloat(getComputedStyle(nm).lineHeight) || 16, dl = ds ? parseFloat(getComputedStyle(ds).lineHeight) || 14 : 1;
+          out.push({ n: nm.textContent, nl: Math.round(nm.getBoundingClientRect().height / lh), dl: ds ? Math.round(ds.getBoundingClientRect().height / dl) : 0, long: ds ? ds.textContent.length > 60 : false }); }
+        hideSheet(); return out; });
+      for (const x of L) if (x.nl > 1 || (!x.long && x.dl > 3)) rowsAt.push(W + ': ' + x.n + ' (' + x.nl + ' and ' + x.dl + ' lines)');
+    }
+    await page.setViewportSize({ width: 400, height: 860 });
+    if (rowsAt.length) throw new Error('settings rows squeezed: ' + rowsAt.join('; '));
+
     return ['a save code round-trips (' + code.zIs + ' ' + code.zLen + ' chars, plain '
       + code.plainLen + '), bad codes refused, the replaced save kept',
       'settings opens from its button; sound ' + (snd.running ? 'plays ' + snd.onCount + ' notes, the '
@@ -241,6 +256,7 @@ module.exports = {
       + 'goes off and stays off, and is silent through a catch-up',
       'the music plays, loops by overlapping itself, and stops with music or sound off and through a catch-up',
       'a tap wakes audio the way an iPhone needs: on touchend and click, from interrupted and suspended',
-      'the Home Screen tip shows once, on an iPhone, after a real session'];
+      'the Home Screen tip shows once, on an iPhone, after a real session',
+      'at 320 and on its side every row\'s name on one line, its words in three at most'];
   }
 };
