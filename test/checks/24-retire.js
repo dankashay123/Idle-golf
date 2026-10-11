@@ -15,7 +15,8 @@
  *   - a second retirement asks an event of its own career first (the count
  *     was a whole life's: after the first event ever, Retire could be tapped
  *     again at once and each paid the cups again); the nine starts afresh
- *     on hole 1 (it read "Front 4/9"); none from inside a wager; a save
+ *     on hole 1 (it read "Front 4/9"); none from inside a wager, nor a
+ *     move of card; a save
  *     from before the count keeps its Retire
  *   - retire() itself lands where retireCard() said, with that card open,
  *     and the retirement sheet names it
@@ -80,6 +81,7 @@ module.exports = {
         S.tier = 25; S.tierMax = 25; S.bestTier = 25; S.eventsPlayed = 3; S.evRun = 3; startHole();
         const d = B.DGN[0]; S.dgnKeys[d.id] = 3; startDgn(d); const r1 = S.retires; retire(); hideSheet();
         o.wager = { inIt: !!S.dgnRun, retired: S.retires - r1, tier: S.tier };
+        { const t1 = S.tier; climb(-1); o.wager.climbed = S.tier - t1; }
         S.dgnRun = null;
         // an old save, written before careers counted their events, keeps its Retire
         fresh(); delete S.evRun; S.eventsPlayed = 7; initState(); o.old = S.evRun;
@@ -94,6 +96,7 @@ module.exports = {
       throw new Error('a second retirement at once, with no event of its own: ' + JSON.stringify(r.twice) + ', worth ' + r.again + ' (each paid the cups again)');
     if (r.nine.hir !== 1 || r.nine.n !== 0 || r.nine.birdie !== 0) throw new Error('after retiring, the nine part way through carried on: ' + JSON.stringify(r.nine));
     if (!r.wager.inIt || r.wager.retired !== 0 || r.wager.tier !== 25) throw new Error('retired from inside a wager: ' + JSON.stringify(r.wager));
+    if (r.wager.climbed !== 0) throw new Error('moved card from inside a wager: ' + JSON.stringify(r.wager));
     if (r.old !== 7) throw new Error('a save from before careers counted their events lost its Retire (' + r.old + ')');
     if (r.landed !== r.want || r.open !== r.want)
       throw new Error('retireCard() said Card ' + (r.want + 1) + ' but retiring landed on Card ' + (r.landed + 1)

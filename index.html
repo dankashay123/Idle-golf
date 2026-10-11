@@ -9294,6 +9294,9 @@ function projectedRatio(tier, wx){
   return (y / Math.max(1e-9, D.dps)) / parTimeFor(S.hole);
 }
 function climb(n, quiet, force){
+  // (as retiring: inside a wager the course is set aside, and moving card re-teed
+  // it under a wager still being played, whose pay follows the card)
+  if(S.dgnRun && !force){ if(!quiet) toast('Finish the wager first'); return; }
   let to = clamp(S.tier + n, 0, B.TIER_MAX);
   if(!force && to > (S.tierMax || 0)){
     if(!quiet) toast('Win the cup on Card ' + cardNo(S.tierMax || 0) + ', or play '
