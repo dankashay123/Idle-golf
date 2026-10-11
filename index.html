@@ -1227,8 +1227,10 @@ li.afx.on .lockb{color:var(--brass);border-color:var(--brass);background:rgba(22
 .guidelist{margin:6px 0 8px 18px;font-size:var(--f1);line-height:1.5}
 #leaveBtn.ask{border-color:var(--flag);color:var(--flag)}
 #leaveIcon{display:block;width:24px;height:24px;image-rendering:pixelated;image-rendering:crisp-edges}
-#stage.wager #toasts{top:calc(var(--rbar, 40px) + 44px)}
-#toasts{position:absolute;right:2%;top:calc(var(--rbar, 40px) + 6px);display:flex;flex-direction:column;
+#stage.wager #toasts{top:calc(var(--rbar, 40px) + 44px + var(--tshift, 0px))}
+/* (lower by --tshift while the words by the cog reach under their corner:
+   a festival's line ran under a toast at 390 wide) */
+#toasts{position:absolute;right:2%;top:calc(var(--rbar, 40px) + 6px + var(--tshift, 0px));display:flex;flex-direction:column;
   align-items:flex-end;gap:3px;pointer-events:none;z-index:30;max-width:38%}
 .toast{background:rgba(8,18,12,.9);border:1px solid var(--line);border-radius:0;
   padding:3px 7px;font-size:8px;line-height:1.3;text-align:right;
@@ -27343,6 +27345,7 @@ function fitHudLeft(){
   // reaches the shot buttons)
   if(hl.getBoundingClientRect().bottom > room) hl.classList.add('tight');
   if(hl.getBoundingClientRect().bottom > room){ hl.classList.add('twocol'); hl.style.maxHeight = Math.max(60, Math.floor(room - hl.getBoundingClientRect().top)) + 'px'; }
+  toastShift();
 }
 /* ---- the hole from above ----
    From the tee the rolling ground hides most of a dogleg, so a small map of
@@ -27369,7 +27372,7 @@ Object.assign(Scene, {
     const words = 0;
     // (the toasts stand under the hole's bar now: their corner is that much lower)
     const rr = $('rRow'), rb = rr && rr.offsetParent ? rr.offsetHeight : 0;
-    const room = bottom - words - gap - Math.round(SH * 0.35 + rb);
+    const room = bottom - words - gap - Math.round(SH * 0.35 + rb + (st._tshift || 0));
     this.mapTopR = null;
     if(room < W * 0.8 || S.dgnRun){ cv.style.display = 'none'; this.mapOn = false; spotPlace(); return; }
     const H = Math.min(Math.round(W * 1.7 / 2) * 2, Math.floor(room / 2) * 2);
@@ -34173,6 +34176,16 @@ function buffTip(dt){
   });
   const on = now.length > 0;
   if(el.classList.contains('on') !== on) el.classList.toggle('on', on);
+  toastShift();
+}
+// How far the toasts stand lower: as far as the words by the cog come down,
+// while they reach across under the toasts' corner (the right 38% of the
+// field), else not at all. The hole map makes room for it (placeMap).
+function toastShift(){
+  const st = $('stage'), sw = $('sideWords'); if(!st || !sw || !st.style || !sw.getBoundingClientRect) return;
+  const S0 = st.getBoundingClientRect(), W = sw.getBoundingClientRect(), base = S0.top + (parseFloat(st.style.getPropertyValue('--rbar')) || 40) + 6;
+  const v = W.width && W.right > S0.right - S0.width * 0.4 ? Math.max(0, Math.ceil(W.bottom + 4 - base)) : 0;
+  if(st._tshift !== v){ st._tshift = v; st.style.setProperty('--tshift', v + 'px'); if(Scene.placeMap) Scene.placeMap(); }
 }
 function tickCaddie(dt){
   buffTip(dt);

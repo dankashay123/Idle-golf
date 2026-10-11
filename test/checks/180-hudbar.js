@@ -11,7 +11,8 @@
  *     and the clock whole and apart (at 320 the clock takes the hole's place); the weather line one line
  *     high, with the longest weather the game shows, nothing cut mid-word
  *   - the six buttons below the bar, in one column at the same left (or two)
- *   - the toasts start below the bar
+ *   - the toasts start below the bar, and below the words by the cog
+ *     while those reach across under them (a festival's line ran under one)
  *   - the bar one height whether the line under it is empty, full, or its
  *     letters shrunk (the user saw it change size), the affinity's slot
  *     centred under the yards
@@ -59,6 +60,13 @@ module.exports = {
         const ct = document.getElementById('condTip'), cq = ct.getBoundingClientRect(), cog = R('setBtn');
         out.cond = { txt: ct.textContent, l: cq.left - cog.right, top: cq.top, bot: cq.bottom, cogBot: cog.bottom, cut: ct.scrollWidth > ct.clientWidth + 0.5 || cq.right > R('stage').right };
         S.chaos = keep; renderLive();
+        // a long line by the cog (a festival's) and two toasts up: no toast over the words
+        { const bt = document.getElementById('buffTip'), ln = document.createElement('span'); ln.className = 'bl'; ln.dataset.k = 'zz'; ln.textContent = 'Harvest Festival \u00b7 +20% club luck';
+          bt.appendChild(ln); bt.classList.add('on'); toastShift(); const ann = Scene.announce; Scene.announce = null;
+          toast('UNLOCKED +2 \u00b7 Matching Pair \u00b7 +2 tickets'); toast('Full Set \u00b7 The Radiant');
+          const T = [...document.querySelectorAll('#toasts .toast')].map(e => e.getBoundingClientRect()), L = [...document.querySelectorAll('#buffTip .bl, #condTip')].map(e => e.getBoundingClientRect()).filter(q => q.width);
+          out.under = { toasts: T.length, hit: T.some(a => L.some(q => a.left < q.right && q.left < a.right && a.top < q.bottom && q.top < a.bottom)) };
+          document.getElementById('toasts').innerHTML = ''; ln.remove(); Scene.announce = ann; buffTip(0); }
         Scene._hwKey = null; wx.hidden = true;
         return out;
       });
@@ -78,6 +86,7 @@ module.exports = {
       if (r.cond.txt !== 'Cart Path Only' || r.cond.cut) f(at + 'the condition beside the cog reads "' + r.cond.txt + '"' + (r.cond.cut ? ', cut' : ''));
       if (r.cond.l < 0 || r.cond.l > (r.two ? 80 : 40) || r.cond.top < r.bar[1] || r.cond.bot > r.cond.cogBot + 14) f(at + 'the condition not just right of the cog (' + JSON.stringify(r.cond) + ')');
       if (r.btnTop < r.bar[1]) f(at + 'a button up in the bar');
+      if (r.under.toasts < 2 || r.under.hit) f(at + 'a toast over the words by the cog (' + JSON.stringify(r.under) + ')');
       if (r.toastTop < r.bar[1]) f(at + 'the toasts over the bar');
       o.push(W + 'x' + H + ' bar ' + Math.round(r.bar[1] - r.bar[0]) + 'px, ' + r.shown + ' of 3 slots, ' + r.cols + (r.cols > 1 ? ' columns' : ' column'));
     }
