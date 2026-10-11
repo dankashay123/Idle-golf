@@ -5792,7 +5792,7 @@ function caddieGift(h, d, force){
   if(!force && ((S.giftDay && S.giftDay.d === dayNow() && S.giftDay.n >= GIFT_DAY) || !fairCard())) return false;
   const CD = caddieNow(), tick = hr(h, 711) < 0.2 && (S.tickets || 0) < B.TICK_CAP, n = tick ? 1 + Math.floor(hr(h, 712) * 2) : 2 + Math.floor(hr(h, 712) * 4);
   S.gifts = (S.gifts || 0) + 1;
-  if(!S.giftDay || S.giftDay.d !== dayNow()) S.giftDay = { d: dayNow(), n: 0 };
+  if(!S.giftDay || S.giftDay.d < dayNow()) S.giftDay = { d: dayNow(), n: 0 };
   S.giftDay.n++;
   if(tick){ const t0 = S.tickets || 0; grantTickets(n); const m = (S.tickets || 0) - t0;
     toast('<span class="achk">' + CD.n + '</span>A gift \u00b7 +' + m + ' ticket' + (m === 1 ? '' : 's'), 'ach'); }
@@ -6973,7 +6973,11 @@ const dailyHave = (c, i) => S.daily.done[i] ? c.v
   : Math.max(0, Math.min(c.v, achMetric(c.m) - (S.daily.base[c.m] || 0)));
 function dailyTick(){
   const day = dayNow();
-  if(!S.daily || S.daily.day !== day) dailyStart(day);
+  // (only ever forward: a day reading earlier, the clock put back before a
+  // save, started that day's dailies again and coming forward paid them twice;
+  // the Check-In, the week's rewards and the pass keep theirs the same way)
+  if(!S.daily || S.daily.day < day) dailyStart(day);
+  if(S.daily.day > day) return;
   const Dy = S.daily;
   Dy.picks.forEach((id, i) => {
     const c = dailyDef(id);
@@ -7080,7 +7084,7 @@ const festTw = k => { const F = festNow(); return !!F && F.tw === k; };
 function festState(){
   const F = festNow(); if(!F) return null;
   const wk = weekNow();
-  if(!S.fest || S.fest.wk !== wk || S.fest.id !== F.id) S.fest = { wk, id: F.id, n: 0, got: 0 };
+  if(!S.fest || S.fest.wk < wk || (S.fest.wk === wk && S.fest.id !== F.id)) S.fest = { wk, id: F.id, n: 0, got: 0 };
   return S.fest;
 }
 // a hole played live: its ribbons, and any prize reached
@@ -31969,7 +31973,8 @@ let HUNTWK_FORCE = null;
 const huntWeek = () => HUNTWK_FORCE === null ? weekNow() : HUNTWK_FORCE;
 function huntNow(){
   const wk = huntWeek();
-  if(!S.hunt || S.hunt.wk !== wk) S.hunt = { wk, got: [] };
+  // (the developer's other weeks aside, never back to an earlier week)
+  if(!S.hunt || S.hunt.wk < wk || (HUNTWK_FORCE !== null && S.hunt.wk !== wk)) S.hunt = { wk, got: [] };
   return S.hunt;
 }
 function huntSee(ids){
@@ -32007,7 +32012,7 @@ function mhuntOf(mo){
 }
 function mhuntNow(){
   const mo = monthIdx();
-  if(!S.mhunt || S.mhunt.mo !== mo) S.mhunt = { mo, got: [] };
+  if(!S.mhunt || S.mhunt.mo < mo) S.mhunt = { mo, got: [] };
   return S.mhunt;
 }
 function mhuntSee(ids){

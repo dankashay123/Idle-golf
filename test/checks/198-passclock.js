@@ -11,7 +11,8 @@
  *   - the clock back across the month before the game had saved: the
  *     bought pass kept, not swapped for a blank one of the month before
  *   - the same for the week: the Signature Week not paid twice and the
- *     week's major not opened again, the clock back a week and on again */
+ *     week's major not opened again, the clock back a week and on again;
+ *     nor the dailies and the weekly hunt paid twice */
 'use strict';
 module.exports = {
   name: 'passclock',
@@ -63,6 +64,16 @@ module.exports = {
           if (!(first > 0) || twice !== 0) f('the Signature Week paid ' + first + ' and again ' + twice + ' with the clock back a week and on again');
           if (S.weekly.wk !== wk0 || !S.weekly.done) f('the week\'s major opened again with the clock back a week and on again: ' + JSON.stringify(o.week.major));
           S.hole = h0; S.evCourse = ev0; S.eventsPlayed = ep; QUIET = qq; }
+        // and the day's: the dailies and the weekly hunt done, the clock back a
+        // week before a save and on again, nothing paid twice
+        { const paid = () => (S.owed || []).reduce((a, x) => a + x.n, 0) + (S.sov || 0), qq = QUIET, fc = window.fairCard; QUIET = false; window.fairCard = () => true;
+          const doAll = () => { dailyTick(); S.daily.picks.forEach((id, i) => { const c = dailyDef(id); S.daily.base[c.m] = achMetric(c.m) - c.v; }); dailyTick(); };
+          const huntAll = () => { const H = huntNow(); for (const id of huntOf(H.wk)) { try { huntSee([id]); } catch (e) {} } };
+          const tD = S.t, offD = off; delete S.daily; delete S.hunt; const s0 = paid(); doAll(); huntAll(); const first = paid() - s0;
+          off -= 8 * 86400000; S.t = (T0 + off) / 1000; doAll(); huntAll();
+          off = offD; S.t = tD; const s1 = paid(); doAll(); huntAll(); const twice = paid() - s1;
+          o.days = { first, twice }; if (!(first > 0) || twice !== 0) f('the dailies and the hunt paid ' + first + ', then ' + twice + ' more with the clock back a week and on again');
+          window.fairCard = fc; QUIET = qq; }
       } finally { Date.now = RN; window.toast = tw; window.earnSov = es; QUIET = false; Object.keys(S).forEach(k => delete S[k]); Object.assign(S, JSON.parse(SNAP)); hideSheet(); }
       return { fails, o };
     });
