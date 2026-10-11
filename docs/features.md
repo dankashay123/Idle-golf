@@ -6,6 +6,24 @@ feature must do, and is usually enough on its own.
 
 ## Sections, newest first
 
+### The days only forward, wagers away, Settings at 320, hardest goals (11 October)
+
+- A day, week or month reading earlier (the clock back before a save) now
+  changes nothing kept: the week's major (`openEvent`: `W.wk < wk`), the
+  Signature Week and Hole of the Week, the dailies (`dailyTick`), the
+  weekly and monthly hunts, the festival, the caddie's gift count; like the
+  pass and the Check-In. They paid twice coming forward again. Check
+  `passclock`.
+- Time away in a wager played the course with the wager's lent bag:
+  `offline()` now wears the course's bag (`S.loadBack`) round
+  `offlineCore()`, the wager's back after, `S.loadBack` refreshed. Check
+  `loadouts`.
+- Settings at 320: a pair of buttons on its own line under 400 wide
+  (`.setrow:has(.setbtns)`). Check `settings`.
+- Three more hardest-band nine goals: `u20` Twenty under, `er2` Two eagles
+  in a row (`k:'erun'`, `N.erunBest`), `e6` Six eagles; won 41-57% on a
+  strong save, between the albatross and Eight birdies.
+
 ### Paid parts with the clock, the first hour, on its side, new nine goals (11 October)
 
 - Tour Pass and Membership with the clock moved: held, but a month reading
