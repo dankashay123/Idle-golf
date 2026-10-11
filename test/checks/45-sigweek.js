@@ -217,6 +217,11 @@ module.exports = {
           for (const [kind, wkK] of cases) {
             SIGWEEK_FORCE = wkK; force(kind, hl); S.hole = hl;
             document.getElementById('toasts').innerHTML = '';
+            // (the course's name announced by the move to it holds the tee's
+            // words until it goes, which is toastwait's to check: on some
+            // days the move lands on a new event and the first hole's words
+            // were held, "the tee said \"\"")
+            Scene.announce = null;
             QUIET = false; startHole();
             const toast = [...document.getElementById('toasts').children].map(t => t.textContent).join(' | ');
             const words = [];
