@@ -23,6 +23,9 @@ module.exports = {
     await page.setViewportSize({ width: 390, height: 844 });
     const r = await page.evaluate(async () => {
       const SNAP = JSON.stringify(S), o = { fails: [] }, mr = Math.random;
+      // (the game held still: left running, a hole could end in a long run
+      // and drop or swap a club into the bag, one tile too many)
+      const raf = window.requestAnimationFrame; window.requestAnimationFrame = () => 0;
       const f = m => o.fails.push(m);
       const sleep = ms => new Promise(res => setTimeout(res, ms));
       try {
@@ -129,6 +132,7 @@ module.exports = {
         if (!e2 || !e2.disabled || !s2 || !s2.disabled) f('the carried club can still be equipped or scrapped from its sheet');
         hideSheet();
       } finally {
+        window.requestAnimationFrame = raf; requestAnimationFrame(frame);
         Math.random = mr;
         try { hideSheet(); } catch (e) {}
         Object.keys(S).forEach(k => delete S[k]); Object.assign(S, JSON.parse(SNAP));
