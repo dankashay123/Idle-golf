@@ -1054,6 +1054,8 @@ li.afx.on .lockb{color:var(--brass);border-color:var(--brass);background:rgba(22
 #condTip{font-size:var(--f0);letter-spacing:.1em;text-transform:uppercase;font-weight:600;color:var(--faint);
   white-space:nowrap;line-height:1.25em;text-shadow:0 0 2px #000,0 1px 2px #000}
 #condTip:empty{display:none}
+/* (its name tapped says what the condition does) */
+#condTip{pointer-events:auto;cursor:pointer}
 #sideWords{transition:opacity .25s}
 #stage.ann #sideWords{opacity:0}
 #condTip b{font-weight:inherit} #condTip i{font-style:normal;color:var(--faint)}
@@ -4527,6 +4529,25 @@ const $ = id => document.getElementById(id);
 const COND_COL = { 'Crosswind': '#A8DCF5', 'Firm and Fast': '#F0B65C', 'Night Round': '#9AA6FF', 'Static Air': '#F7E35A',
   'Ley Surge': '#C98BFF', 'Sponsor Day': '#7EE08A', 'Glass Greens': '#8FF5F0', 'Marshal Sweep': '#FF8A5C',
   'Mythic Pin': '#FF6F96', 'Cart Path Only': '#C9CED6', 'Aurora Front': '#57E0BE', 'Fair': '#E8ECE4' };
+// What a day's condition does, in words off its own numbers, for a tap on its
+// name by the cog (the user asked the conditions to be described where they
+// are named: they were only named)
+function condWhat(n){
+  const c = B.CHAOS.find(x => x.n === n); if(!c) return '';
+  const q = v => Math.round(Math.abs(v) * 100) + '%', bits = [];
+  if(c.y !== 1) bits.push('holes ' + q(c.y - 1) + (c.y > 1 ? ' longer' : ' shorter'));
+  if(c.g !== 1) bits.push(q(c.g - 1) + (c.g > 1 ? ' more' : ' less') + ' purse');
+  if(c.s !== 1) bits.push('swings ' + q(c.s - 1) + (c.s > 1 ? ' faster' : ' slower'));
+  if(c.c) bits.push('+' + q(c.c) + ' pure strike chance');
+  if(c.p) bits.push('+' + q(c.p) + ' affinity trigger chance');
+  if(c.dl) bits.push('+' + q(c.dl) + ' club luck');
+  // (each piece kept whole: "55%" ended a line and "more purse" began the next)
+  return '<b>' + n.replace(/ /g, '\u00a0') + '</b> \u00b7 ' + (bits.length ? bits.map(x => x.replace(/ /g, '\u00a0')).join(' \u00b7 ') : 'as it comes');
+}
+function condTap(){
+  const n = !S.dgnRun && S.chaos && S.chaos.n !== 'Fair' ? S.chaos.n : ''; if(!n) return;
+  toast(n.split(' + ').map(condWhat).filter(Boolean).join('<br>'));
+}
 const condHtml = n => n ? n.split(' + ').map(x => '<b style="color:' + (COND_COL[x] || '#E8ECE4') + '">' + x + '</b>').join('<i> + </i>') : '';
 function setText(el, v){ v = String(v); if(el._tx !== v){ el._tx = v; el.textContent = v; } }
 function setHTML(el, v){ if(el._hx !== v){ el._hx = v; el.innerHTML = v; } }
@@ -32861,7 +32882,8 @@ function renderLive(D){
   setText($('sovNum'), sovFmt(S.sov));
   // the day's course condition beside the cog, small (none on a fair day or in a wager)
   { const cn = !S.dgnRun && S.chaos && S.chaos.n !== 'Fair' ? S.chaos.n : '', ct = $('condTip');
-    if(ct._tx !== cn){ ct._tx = cn; ct.innerHTML = condHtml(cn); } }
+    if(ct._tx !== cn){ ct._tx = cn; ct.innerHTML = condHtml(cn); }
+    if(!ct._tap){ ct._tap = 1; ct.onclick = condTap; } }
   // The yardage, the bar and the clock used to be written here as well, into
   // three more elements the old stage HUD took with it. This runs every frame,
   // so that was four lookups, a clamp and two string builds at sixty a second
