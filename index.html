@@ -1051,6 +1051,8 @@ li.afx.on .lockb{color:var(--brass);border-color:var(--brass);background:rgba(22
 #condTip{font-size:var(--f0);letter-spacing:.1em;text-transform:uppercase;font-weight:600;color:var(--faint);
   white-space:nowrap;line-height:1.25em;text-shadow:0 0 2px #000,0 1px 2px #000}
 #condTip:empty{display:none}
+#sideWords{transition:opacity .25s}
+#stage.ann #sideWords{opacity:0}
 #condTip b{font-weight:inherit} #condTip i{font-style:normal;color:var(--faint)}
 #buffTip{font-family:var(--mono);font-size:var(--f2);font-weight:600;max-width:100%;
   display:flex;flex-direction:column;align-items:flex-start;min-width:0;pointer-events:none}
@@ -9172,7 +9174,7 @@ function endTournament(){
         : ' \u2014 missed') + '</li>'
     + (Rv && !OFFLINE ? '<li>' + Rv.n + ': ' + fm(Rv.total) + (rivalBeat
         ? ' \u2014 <b style="color:var(--brass)">beaten, <span style="white-space:nowrap">+' + B.RIVAL_SOV + sovIc() + '</span></b>'
-        : score === Rv.total ? ' \u2014 tied' : ' \u2014 lost by ' + (score - Rv.total)) + '</li>' : '')
+        : score === Rv.total ? ' \u2014 tied' : ' \u2014 lost by\u00a0' + (score - Rv.total)) + '</li>' : '')
     + (Rv && !OFFLINE && rivalSeries(t) ? (() => { const R = rivalSeries(t), end = seasonOf(t + 1) !== R.s;
         return '<li>Season series: ' + R.w + '\u2013' + R.l + (end ? R.won ? ' \u2014 <b style="color:var(--brass)">won, +' + B.RIVAL_SERIES + sovIc() + '</b>' : ' \u2014 lost' : '') + '</li>'; })() : '')
     + '<li>Prize money: ' + fmt(cash) + '</li>'
@@ -34192,6 +34194,10 @@ function buffTip(dt){
   });
   const on = now.length > 0;
   if(el.classList.contains('on') !== on) el.classList.toggle('on', on);
+  // (while a course is announced the words by the cog step aside: at 320 and
+  // on its side its name was drawn over them)
+  const st = $('stage'), ann = !!Scene.announce;
+  if(st && st.classList && st._ann !== ann){ st._ann = ann; st.classList.toggle('ann', ann); }
   toastShift();
 }
 // How far the toasts stand lower: as far as the words by the cog come down,

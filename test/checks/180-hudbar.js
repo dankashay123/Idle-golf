@@ -12,7 +12,9 @@
  *     high, with the longest weather the game shows, nothing cut mid-word
  *   - the six buttons below the bar, in one column at the same left (or two)
  *   - the toasts start below the bar, and below the words by the cog
- *     while those reach across under them (a festival's line ran under one)
+ *     while those reach across under them (a festival's line ran under one);
+ *     those words step aside while a course is announced (its name was drawn
+ *     over them at 320 and on its side)
  *   - the bar one height whether the line under it is empty, full, or its
  *     letters shrunk (the user saw it change size), the affinity's slot
  *     centred under the yards
@@ -67,6 +69,11 @@ module.exports = {
           const T = [...document.querySelectorAll('#toasts .toast')].map(e => e.getBoundingClientRect()), L = [...document.querySelectorAll('#buffTip .bl, #condTip')].map(e => e.getBoundingClientRect()).filter(q => q.width);
           out.under = { toasts: T.length, hit: T.some(a => L.some(q => a.left < q.right && q.left < a.right && a.top < q.bottom && q.top < a.bottom)) };
           document.getElementById('toasts').innerHTML = ''; ln.remove(); Scene.announce = ann; buffTip(0); }
+        // a course announced: the words by the cog step aside, and come back after
+        { const keepA = Scene.announce; Scene.announce = { name: 'X', sub: 'Y', label: 'X', subLabel: 'Y', t: 0, dur: 4.2, w0: performance.now() }; buffTip(0);
+          const during = document.getElementById('stage').classList.contains('ann') && getComputedStyle(document.getElementById('sideWords')).opacity !== '1' || document.getElementById('stage').classList.contains('ann');
+          Scene.announce = null; buffTip(0); const after = !document.getElementById('stage').classList.contains('ann');
+          out.annWords = { during, after }; Scene.announce = keepA; buffTip(0); }
         Scene._hwKey = null; wx.hidden = true;
         return out;
       });
@@ -87,6 +94,7 @@ module.exports = {
       if (r.cond.l < 0 || r.cond.l > (r.two ? 80 : 40) || r.cond.top < r.bar[1] || r.cond.bot > r.cond.cogBot + 14) f(at + 'the condition not just right of the cog (' + JSON.stringify(r.cond) + ')');
       if (r.btnTop < r.bar[1]) f(at + 'a button up in the bar');
       if (r.under.toasts < 2 || r.under.hit) f(at + 'a toast over the words by the cog (' + JSON.stringify(r.under) + ')');
+      if (!r.annWords.during || !r.annWords.after) f(at + 'the words by the cog under a course\'s announcement: ' + JSON.stringify(r.annWords));
       if (r.toastTop < r.bar[1]) f(at + 'the toasts over the bar');
       o.push(W + 'x' + H + ' bar ' + Math.round(r.bar[1] - r.bar[0]) + 'px, ' + r.shown + ' of 3 slots, ' + r.cols + (r.cols > 1 ? ' columns' : ' column'));
     }
