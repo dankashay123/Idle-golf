@@ -4353,9 +4353,9 @@ const B = {
     // quilted in gold over violet, peacock plumes of every colour from the
     // shoulders, faces floating round, an eye in a spiral underfoot
     { id:'radiant', n:'The Radiant', cost:3500, fx:'radiant', cat:'skin', top:2, pattern:'radlattice', pantPattern:'radlattice',
-      cap:'#F2C85A', cap2:'#C8962E', shirt:'#F4E8D0', shirt2:'#D8C8A8', shirt3:'#A8987A', pant:'#4A1A6A', pant2:'#2A1238',
-      skin:'#F2D0BC', skin2:'#D8A890', shoe:'#C8962E', belt:'#C8962E', hair:'#E0287A', hand:'#F2D0BC',
-      bulk:1, arm:'#F4E8D0', arm2:'#D8C8A8' },
+      cap:'#D5A354', cap2:'#B07C3C', shirt:'#D957B3', shirt2:'#9A50D2', shirt3:'#3B2C66', pant:'#3B2C66', pant2:'#2A1E48',
+      skin:'#F4C2B5', skin2:'#C89888', shoe:'#B07C3C', belt:'#B07C3C', hair:'#D957B3', hand:'#F4C2B5',
+      bulk:1, arm:'#EADCB3', arm2:'#B29280' },
     // Psychedelic (the user named him): clothes in a spiral of six colours
     // that keep turning, a rainbow afro, mirror shades and a third eye, a
     // mandala behind his head and a spiral turning under his feet
@@ -4454,7 +4454,7 @@ const B = {
     // the Penitent's (his sprite sheet): a shaft of gold bound in crimson, a censer for its head, incense off it
     { id:'penitent',  n:'Censer Driver',   cost:2350, fx:'penitent', top:2, shaft:'#D8A848', shaft2:'#A8782E', head:'#A8782E', head2:'#F4D27A', grip:'#7A1828', glow:'#F4D27A' },
     // the Radiant's (his picture's first attack): a staff of gold, a lance's blade at its end, ribbons of every colour off it
-    { id:'radiant',   n:'Holy Lance',      cost:2350, fx:'radiant',  top:2, shaft:'#C8962E', shaft2:'#7A5418', head:'#F2C85A', head2:'#FFF0B0', grip:'#4A1A6A', glow:'#F2C85A' },
+    { id:'radiant',   n:'Holy Lance',      cost:2350, fx:'radiant',  top:2, shaft:'#B07C3C', shaft2:'#6C574E', head:'#D5A354', head2:'#F5E8BA', grip:'#3B2C66', glow:'#D5A354' },
     // the Cyber-Drive's hammer (the Tour Pass's, never sold): a shaft of green light, a gunmetal canister for its head banded in lime
     { id:'cyber',     n:'Cyber-Drive Hammer', cost:0, fx:'cyber', top:2, passSet:1, shaft:'#3AF07A', shaft2:'#1E9A4A', head:'#4A5578', head2:'#C8F23A', grip:'#141826', glow:'#3AF07A' },
     { id:'psyche',    n:'Kaleido Driver',  cost:2350, fx:'psyche',   top:2, shaft:'#FF2E88', shaft2:'#C81E6A', head:'#FFFFFF', head2:'#2EC8FF', grip:'#1A1024', glow:'#FF2E88' }
@@ -4473,7 +4473,7 @@ const B = {
     { id:'horizon',   n:'Event Horizon',  cost:2350, fx:'tHorizon',   cols:['#B98CFF', '#FFFFFF'], top:2 },
     { id:'soulwake',  n:'Soul Wake',      cost:2350, fx:'tSoul',      cols:['#5CF0A0', '#E8FFF2'], top:2 },
     { id:'choirwake', n:'Choir Wake',     cost:2350, fx:'tChoir',     cols:['#F4D27A', '#A8283A'], top:2 },
-    { id:'bloomwake', n:'Bloom Wake',     cost:2350, fx:'tBloom',     cols:['#F078B8', '#2EB8C8'], top:2 },
+    { id:'bloomwake', n:'Bloom Wake',     cost:2350, fx:'tBloom',     cols:['#D86D80', '#4EB1BB'], top:2 },
     { id:'cyberwake', n:'Cyber Wake',     cost:0, fx:'tCyber',     cols:['#3AF07A', '#FF3AD0'], top:2, passSet:1 },
     { id:'kaleido',   n:'Kaleido Wake',   cost:2350, fx:'tKaleido',   cols:['#FF2E88', '#2EC8FF'], top:2 },
     // balls: more than a colour
@@ -4489,7 +4489,7 @@ const B = {
     { id:'singularity', n:'Singularity', cost:1750, fx:'singularity', cat:'ball', cols:['#B98CFF'], top:2 },
     { id:'reaperskull', n:'Reaper Skull', cost:1750, fx:'skullball', cat:'ball', cols:['#5CF0A0'], top:2 },
     { id:'choirball', n:'Censer Ball', cost:1750, fx:'choirball', cat:'ball', cols:['#D8A848'], top:2 },
-    { id:'peacockeye', n:'Peacock Eye', cost:1750, fx:'peaeye', cat:'ball', cols:['#2EB8C8'], top:2 },
+    { id:'peacockeye', n:'Peacock Eye', cost:1750, fx:'peaeye', cat:'ball', cols:['#4EB1BB'], top:2 },
     { id:'cyberball', n:'Cyber Core', cost:0, fx:'cyberball', cat:'ball', cols:['#2ED8D0'], top:2, passSet:1 },
     { id:'thirdeye',  n:'Third Eye',   cost:1750, fx:'psyeye',    cat:'ball', cols:['#FF2E88'], top:2 }
   ]
@@ -9755,7 +9755,7 @@ const FULL_SETS = { ascended: { n: 'Ascended', t: ['ascension', 'ascorb'], rim: 
   divine: { n: 'Divine', t: ['seraph', 'godlight'], rim: '#FFE38A' }, demonic: { n: 'Demonic', t: ['hellfire', 'demoneye'], rim: '#FF8A3A' },
   dread: { n: 'The Dread', t: ['soulwake', 'reaperskull'], rim: '#7CFFB2' },
   penitent: { n: 'The Penitent', t: ['choirwake', 'choirball'], rim: '#F4D27A' },
-  radiant: { n: 'The Radiant', t: ['bloomwake', 'peacockeye'], rim: '#F078B8' },
+  radiant: { n: 'The Radiant', t: ['bloomwake', 'peacockeye'], rim: '#D86D80' },
   psyche: { n: 'Psychedelic', t: ['kaleido', 'thirdeye'], rim: '#FF7AC0' },
   // (the Tour Pass's, never sold: kept off SET_ORDER and the Sets rack's prices)
   cyber: { n: 'Cyber-Drive', t: ['cyberwake', 'cyberball'], rim: '#C8F23A', pass: 1 } };
@@ -9767,7 +9767,7 @@ const FULL_SETS = { ascended: { n: 'Ascended', t: ['ascension', 'ascorb'], rim: 
 // (the Radiant, the eighth, from his own picture: after the Penitent)
 const SET_ORDER = ['psyche', 'dread', 'ascended', 'cosmic', 'penitent', 'radiant', 'divine', 'demonic'];
 // the Radiant's colours, in the order of a rainbow (rose first)
-const RAD_RAINBOW = ['#E0287A', '#8A3AC8', '#3A6AE0', '#2EB8C8', '#5AC83A', '#F8E040', '#F08A2A'];
+const RAD_RAINBOW = ['#D957B3', '#9A50D2', '#459ECF', '#4EB1BB', '#84B377', '#DFA94E', '#DF9141'];
 const setRank = (k, id) => { const i = SET_ORDER.indexOf(fullSetOf(k, id)); return i < 0 ? 99 : i; };
 function fullSetOf(k, id){ for(const s in FULL_SETS) if(k === 't' ? FULL_SETS[s].t.includes(id) : id === s) return s; return null; }
 // the top set he wears in full (never while trying one on)
@@ -9875,7 +9875,7 @@ const SKIN_ACCENT = { divine:['#3FD6A8', '#F4D27A'], inferno:['#FFB43A', '#F0612
   stormcaller:['#8FD0FF', '#FFFFFF'], void:['#C68BFF', '#6E44A0'], glitch:['#FF2A6D', '#2AE0FF'],
   midas:['#FFFFFF', '#FFD86B'], disco:['#FF4FB8', '#3FE0FF'], ghost:['#EEF2FF', '#A5B0D6'],
   demonic:['#FF5A1E', '#FFD34A'], ascended:['#C070F0', '#F2A6F8'], cosmic:['#B98CFF', '#7FE6FF'],
-  dread:['#5CF0A0', '#D8D2BC'], psyche:['#FF2E88', '#2EC8FF'], cyber:['#C8F23A', '#FF3AD0'], penitent:['#F4D27A', '#A8283A'], radiant:['#F078B8', '#2EB8C8'] };
+  dread:['#5CF0A0', '#D8D2BC'], psyche:['#FF2E88', '#2EC8FF'], cyber:['#C8F23A', '#FF3AD0'], penitent:['#F4D27A', '#A8283A'], radiant:['#D86D80', '#4EB1BB'] };
 // and the dearest two a little more of themselves on their tiles: the
 // Demonic's horns and wings, the Ascended's horns, hair of fire, the light
 // in his chest and his cape; his imp's horns, flame, green eye and the heart
@@ -9929,12 +9929,12 @@ const ICON_FX = {
   // gold, plumes of every colour down either side with an eye on each, his
   // violet panel; his caddie's halo and a wing
   radiant(P, caddie){
-    if(caddie){ for(let x = 2; x <= 6; x++) P(x, 0, x & 1 ? '#F2C85A' : '#C8962E'); P(0, 4, '#FFFFFF'); P(0, 5, '#FFE8F2'); P(1, 5, '#FFFFFF'); return; }
-    const G = '#C8962E', L = '#F2C85A';
-    P(3, 0, G); P(4, 0, L); P(5, 0, '#FFF0B0'); P(6, 0, L); P(7, 0, '#FFF0B0'); P(8, 0, L); P(9, 0, G); P(2, 1, G); P(10, 1, G);
+    if(caddie){ for(let x = 2; x <= 6; x++) P(x, 0, x & 1 ? '#D5A354' : '#B07C3C'); P(0, 4, '#FFFFFF'); P(0, 5, '#FFE8F2'); P(1, 5, '#FFFFFF'); return; }
+    const G = '#B07C3C', L = '#D5A354';
+    P(3, 0, G); P(4, 0, L); P(5, 0, '#F5E8BA'); P(6, 0, L); P(7, 0, '#F5E8BA'); P(8, 0, L); P(9, 0, G); P(2, 1, G); P(10, 1, G);
     P(5, 2, L); P(6, 2, L); P(7, 2, L);
     for(let y = 4; y <= 11; y++){ P(0, y, RAD_RAINBOW[y % 7]); P(11, y, RAD_RAINBOW[(y + 3) % 7]); }
-    P(0, 9, '#1A2A7A'); P(11, 9, '#1A2A7A'); P(6, 7, '#E0287A'); P(5, 8, '#8A3AC8');
+    P(0, 9, '#1A1430'); P(11, 9, '#1A1430'); P(6, 7, '#D957B3'); P(5, 8, '#9A50D2');
   },
   cyber(P, caddie){
     const L = '#C8F23A', V = '#7A3CFF', W = '#C9A0FF';
@@ -10024,7 +10024,7 @@ function clubUrl(d){
       for(const [x, y, col] of [[8, 9, '#A49CC8'], [7, 10, '#A49CC8'], [9, 10, '#6A3AC8'], [10, 11, '#B070F8'], [9, 11, '#3A1E78'], [10, 10, '#F0D0FF'],
                                 [11, 10, '#6A3AC8'], [8, 11, '#6A3AC8'], [11, 11, '#3A1E78']]) P(x, y, col); }
     const acc = { divine:['#3FD6A8', '#F4D27A'], ice:['#FFFFFF', '#9FD6F2'], neon:['#3FFFB0', '#CFFFEA'], gold:['#FFFFFF', '#FFE39A'],
-                  demonic:['#FF5A1E', '#FFD34A'], ascended:['#E639EB', '#F2A6F8'], cosmic:['#B98CFF', '#FFFFFF'], dread:['#5CF0A0', '#E8FFF2'], psyche:['#FF2E88', '#2EC8FF'], cyber:['#C8F23A', '#FF3AD0'], penitent:['#F4D27A', '#A8283A'], radiant:['#F2C85A', '#E0287A'] }[d.fx === 'glint' ? 'gold' : d.fx];
+                  demonic:['#FF5A1E', '#FFD34A'], ascended:['#E639EB', '#F2A6F8'], cosmic:['#B98CFF', '#FFFFFF'], dread:['#5CF0A0', '#E8FFF2'], psyche:['#FF2E88', '#2EC8FF'], cyber:['#C8F23A', '#FF3AD0'], penitent:['#F4D27A', '#A8283A'], radiant:['#D5A354', '#D957B3'] }[d.fx === 'glint' ? 'gold' : d.fx];
     // the Kaleido's shaft in bands of the six, a crystal for its head
     if(d.fx === 'psyche'){ pts.forEach(([x, y], i) => { if(i > 1) P(x, y, PSY[i % 6]); }); g.clearRect(7, 9, 4, 3);
       for(const [x, y, col] of [[8, 9, '#FFFFFF'], [9, 9, '#2EC8FF'], [8, 10, '#FF2E88'], [9, 10, '#FFFFFF'], [10, 10, '#FFE81E'], [9, 11, '#8A4CFF'], [10, 11, '#3AF07A']]) P(x, y, col); }
@@ -10035,9 +10035,9 @@ function clubUrl(d){
     if(d.fx === 'penitent'){ pts.forEach(([x, y], i) => { if(i > 1 && i % 3 === 0) P(x, y, '#A8283A'); }); g.clearRect(7, 8, 5, 4);
       for(const [x, y, col] of [[7, 7, '#F4D27A'], [8, 8, '#D8A848'], [8, 9, '#F4D27A'], [7, 10, '#D8A848'], [8, 10, '#D8A848'], [9, 10, '#D8A848'], [7, 11, '#A8782E'], [8, 11, '#FF9A2A'], [9, 11, '#A8782E'], [10, 9, '#F2E4C4'], [11, 8, '#D8C49C']]) P(x, y, col); }
     // the Holy Lance's gold staff, a lance's blade at its end, a rose stone and ribbons at its socket
-    if(d.fx === 'radiant'){ pts.forEach(([x, y], i) => { if(i > 1 && i % 3 === 0) P(x, y, '#F2C85A'); }); g.clearRect(7, 8, 5, 4);
-      for(const [x, y, col] of [[7, 7, '#E0287A'], [8, 8, '#C8962E'], [9, 9, '#F2C85A'], [10, 10, '#FFF0B0'], [11, 11, '#FFFFFF'], [9, 8, '#7A5418'], [8, 9, '#F2C85A'],
-                                [10, 9, '#C8962E'], [9, 10, '#C8962E'], [6, 9, '#2EB8C8'], [6, 10, '#5AC83A'], [7, 10, '#F08A2A'], [8, 6, '#F2C85A'], [6, 7, '#F2C85A']]) P(x, y, col); }
+    if(d.fx === 'radiant'){ pts.forEach(([x, y], i) => { if(i > 1 && i % 3 === 0) P(x, y, '#D5A354'); }); g.clearRect(7, 8, 5, 4);
+      for(const [x, y, col] of [[7, 7, '#D957B3'], [8, 8, '#B07C3C'], [9, 9, '#D5A354'], [10, 10, '#F5E8BA'], [11, 11, '#FFFFFF'], [9, 8, '#6C574E'], [8, 9, '#D5A354'],
+                                [10, 9, '#B07C3C'], [9, 10, '#B07C3C'], [6, 9, '#4EB1BB'], [6, 10, '#84B377'], [7, 10, '#DF9141'], [8, 6, '#D5A354'], [6, 7, '#D5A354']]) P(x, y, col); }
     // the Cyber-Drive's green shaft, a hammer's canister across its end, capped in lime
     if(d.fx === 'cyber'){ g.clearRect(7, 9, 4, 3);
       for(let y = 9; y <= 11; y++){ P(5, y, '#C8F23A'); P(10, y, '#C8F23A'); for(let x = 6; x <= 9; x++) P(x, y, y === 9 ? '#6E7AA0' : y === 11 ? '#262D45' : x === 7 || x === 8 ? '#3AF07A' : '#4A5578'); }
@@ -10106,9 +10106,9 @@ const BALL_ICON = {
   choirball:{ rows:['.....f......','.....F......','....dGGd....','...dGGGGd...','..dGWGGGGd..','..GGGGGGGG..','..rrRrrRrr..','..dGGGGGGd..','...dGGGGd...','....dddd....','.....dd.....','............'],
               map:{ f:'#FF9A2A', F:'#FFF2C0', G:'#D8A848', W:'#FFF2C0', d:'#6E4E1E', r:'#A8782E', R:'#FF9A2A' } },
   tBloom:   { rows:['.........gWg','........gWWg','.......lGGl.','......eGl.f.','.....lGe....','....dGl..f..','...eGl......','..dGe...f...','.dGd........','eGd.........','Gd......f...','............'],
-              map:{ W:'#FFFFFF', g:'#FFC0DC', G:'#F078B8', l:'#E0287A', d:'#8A3AC8', e:'#2EB8C8', f:'#F8E040' } },
+              map:{ W:'#FFFFFF', g:'#F8D8CC', G:'#D86D80', l:'#D957B3', d:'#9A50D2', e:'#4EB1BB', f:'#DFA94E' } },
   peaeye:   { rows:['............','....KKKK....','..KKggggKK..','.KggooooggK.','.KgottttogK.','KgotwnnntogK','KgotnnnntogK','.KgottttogK.','.KggooooggK.','..KKggggKK..','....KKKK....','.f........f.'],
-              map:{ K:'#2A1238', g:'#5AC83A', o:'#F08A2A', t:'#2EB8C8', n:'#1A2A7A', w:'#FFFFFF', f:'#F8E040' } },
+              map:{ K:'#2A1E48', g:'#84B377', o:'#DF9141', t:'#4EB1BB', n:'#1A1430', w:'#FFFFFF', f:'#DFA94E' } },
   tCyber:   { rows:['.........gWg','........gWWg','.......lGGl.','......mGl.s.','.....lGm....','....dGl..s..','...mGl......','..dGm...s...','.dGd........','mGd.........','Gd......s...','............'],
               map:{ W:'#FFFFFF', g:'#E8FF9A', G:'#3AF07A', l:'#1E9A4A', d:'#0B5A2A', m:'#FF3AD0', s:'#C8F23A' } },
   cyberball:{ rows:['............','....KKKK....','..KKTTTTKK..','.KTTwTTTTTK.','.KTwTTTTTTK.','LLLLLLLLLLLL','.KTTTTTTTTK.','.KtTTTTTTtK.','..KKttttKK..','....KKKK....','.m........m.','............'],
@@ -13167,9 +13167,9 @@ const PATTERNS = {
     return null; },
   penfold: (x, y, sh) => { if(y >= 52) return x & 1 ? '#A8782E' : '#D8A848';
     const f = (x * 2 + (y >> 3)) % 6; return f === 0 ? '#4E0E18' : f === 2 && !sh ? '#A8283A' : null; },
-  // The Radiant: ivory quilted in gold diamonds, a stone of some colour here
-  // and there
-  radlattice: (x, y, sh) => { if((x + y) % 5 === 0 || (x - y + 500) % 5 === 0) return sh ? '#A8987A' : '#C8962E';
+  // The Radiant: rose quilted in violet diamonds (as in his picture), a
+  // stone of some colour here and there
+  radlattice: (x, y, sh) => { if((x + y) % 5 === 0 || (x - y + 500) % 5 === 0) return sh ? '#3B2C66' : '#9A50D2';
     if(hr(x * 5 + 3, y * 3 + 9) > 0.97) return RAD_RAINBOW[(x + y) % 7]; return null; },
   cyberplate: (x, y, sh) => {
     if(y === 44 || y === 45) return sh ? '#8FB21E' : '#C8F23A';
@@ -16864,7 +16864,7 @@ const STYLEFX = {
      and plumes burst out of him, silent. His caddie is a cherub: gold curls,
      a halo, small white wings. */
   radiant: {
-    outline: '#F078B8', outlineA: 0.30,
+    outline: '#D86D80', outlineA: 0.30,
     charge(ph){ return STYLEFX.ascended.charge(ph); },
     strike(ph){ return STYLEFX.ascended.strike(ph); },
     sigilSize(g){ return STYLEFX.cosmic.sigilSize(g); },
@@ -16889,7 +16889,7 @@ const STYLEFX = {
       for(let i = 0; i < n; i++){ if(hr(i, 902) < f * 0.7) continue; const a = i / n * Math.PI * 2;
         const x = Math.round(X + Math.cos(a) * rx * s), y = Math.round(Y + Math.sin(a) * ry * s);
         c.fillStyle = f < 0.3 ? '#FFFFFF' : RAD_RAINBOW[i % 7]; c.fillRect(x, y, 2, 1);
-        if(i % 6 === 0 && f < 0.8){ c.fillStyle = '#F2C85A'; c.fillRect(x - 1, y - 2, 3, 1); c.fillStyle = '#2EB8C8'; c.fillRect(x - 1, y - 1, 3, 1); c.fillStyle = '#1A2A7A'; c.fillRect(x, y - 1, 1, 1); } }
+        if(i % 6 === 0 && f < 0.8){ c.fillStyle = '#D5A354'; c.fillRect(x - 1, y - 2, 3, 1); c.fillStyle = '#4EB1BB'; c.fillRect(x - 1, y - 1, 3, 1); c.fillStyle = '#1A1430'; c.fillRect(x, y - 1, 1, 1); } }
     },
     back(c, g){
       if(g.minor){ this.wings(c, g); return; }
@@ -16913,9 +16913,9 @@ const STYLEFX = {
       const L = legendNow(g);
       if(L) outlineBurst(c, g, L, 56, 0.95, (x, y, i, f, dx, dy) => {
         const X = Math.round(x), Y = Math.round(y);
-        if(i % 3 === 0){ c.fillStyle = RAD_RAINBOW[(i >> 2) % 7]; c.fillRect(X - 1, Y - 1, 3, 3); c.fillStyle = f < 0.5 ? '#2EB8C8' : '#1A2A7A'; c.fillRect(X, Y, 1, 1); }
+        if(i % 3 === 0){ c.fillStyle = RAD_RAINBOW[(i >> 2) % 7]; c.fillRect(X - 1, Y - 1, 3, 3); c.fillStyle = f < 0.5 ? '#4EB1BB' : '#1A1430'; c.fillRect(X, Y, 1, 1); }
         else if(i % 3 === 1) burstStreak(c, x, y, dx, dy, RAD_RAINBOW[i % 7], RAD_RAINBOW[(i + 3) % 7], 3);
-        else burstStreak(c, x, y, dx, dy, f < 0.4 ? '#FFF0B0' : '#F2C85A', '#C8962E', 2); });
+        else burstStreak(c, x, y, dx, dy, f < 0.4 ? '#F5E8BA' : '#D5A354', '#B07C3C', 2); });
       c.globalAlpha = 1;
     },
     // on an albatross or an ace his crown bursts into rays of every colour,
@@ -16923,14 +16923,14 @@ const STYLEFX = {
     rays(c, g){
       const L = legendNow(g); if(!L || g.minor) return;
       const p = this.px(g), H = g.head, x = g.back ? H.x : H.x + (g.shear && !g.back ? g.shear(0.1) : 0) - 1.5 * p, y = H.y - p;
-      const e = outBack(L.f, 0.15), R0 = 9 * p, N = 28, q = Math.max(1, Math.round(p));
+      const e = outBack(L.f, 0.15), R0 = 11 * p, N = 28, q = Math.max(1, Math.round(p));
       for(let i = 0; i < N; i++){ const a = i / N * Math.PI * 2 + L.f * 0.5, len = (i & 1 ? 11 : 20) * p * e * (L.big ? 1.2 : 1);
         const n = Math.max(2, Math.round(len)), col = RAD_RAINBOW[i % 7];
         for(let j = 0; j < n; j++){ const u = j / n, r = R0 + len * u;
-          c.fillStyle = u < 0.25 ? '#FFFFFF' : col;
-          const w = u < 0.5 && !(i & 1) && p >= 1 ? 2 : 1; c.fillRect(Math.round(x + Math.cos(a) * r), Math.round(y + Math.sin(a) * r), w, w); }
+          c.fillStyle = u < 0.15 ? '#F5E8BA' : col;
+          const w = u < 0.3 && !(i & 1) && p >= 1.5 ? 2 : 1; c.fillRect(Math.round(x + Math.cos(a) * r), Math.round(y + Math.sin(a) * r), w, w); }
         if(!(i & 1) && e > 0.6){ const ex = Math.round(x + Math.cos(a) * (R0 + len)), ey = Math.round(y + Math.sin(a) * (R0 + len));
-          c.fillStyle = '#F2C85A'; c.fillRect(ex - q, ey - q, 3 * q, 3 * q); c.fillStyle = '#2EB8C8'; c.fillRect(ex, ey - q, q, 3 * q); c.fillRect(ex - q, ey, 3 * q, q); c.fillStyle = '#1A2A7A'; c.fillRect(ex, ey, q, q); } }
+          c.fillStyle = '#D5A354'; c.fillRect(ex - q, ey - q, 3 * q, 3 * q); c.fillStyle = '#4EB1BB'; c.fillRect(ex, ey - q, q, 3 * q); c.fillRect(ex - q, ey, 3 * q, q); c.fillStyle = '#1A1430'; c.fillRect(ex, ey, q, q); } }
     },
     // the crown of gold spikes on his head, a ring set with stones behind it
     crown(c, g){
@@ -16964,13 +16964,13 @@ const STYLEFX = {
       const k = Math.max(1, Math.round(g.h / 50)), fin = g.spr === SPRITE.gFinish || g.spr === SPRITE.gWalk;
       const P = fin ? { neck: [24, 13], med: [22.5, 20.5], belt: [19, 31] } : { neck: [27, 13], med: [22.5, 19.5], belt: [12.5, 27] };
       const N0 = this.at(g, P.neck[0], P.neck[1]), M = this.at(g, P.med[0], P.med[1]), n = Math.max(4, Math.round(Math.hypot(M.x - N0.x, M.y - N0.y)));
-      for(let i = 0; i <= n; i++){ const u = i / n; c.fillStyle = i & 1 ? '#C8962E' : '#F2C85A';
+      for(let i = 0; i <= n; i++){ const u = i / n; c.fillStyle = i & 1 ? '#B07C3C' : '#D5A354';
         c.fillRect(Math.round(N0.x + (M.x - N0.x) * u), Math.round(N0.y + (M.y - N0.y) * u + Math.sin(u * Math.PI) * g.h * 0.015), 1, 1); }
       { const X = Math.round(M.x), Y = Math.round(M.y);
-        c.fillStyle = '#7A5418'; c.fillRect(X - k, Y - k, 3 * k, 3 * k); c.fillStyle = this.lit(g) ? '#7AE8F0' : '#2EB8C8'; c.fillRect(X, Y - k, k, 2 * k);
-        c.fillStyle = '#F2C85A'; c.fillRect(X - k, Y + k, 3 * k, k); }
+        c.fillStyle = '#6C574E'; c.fillRect(X - k, Y - k, 3 * k, 3 * k); c.fillStyle = this.lit(g) ? '#5AC3D5' : '#4EB1BB'; c.fillRect(X, Y - k, k, 2 * k);
+        c.fillStyle = '#D5A354'; c.fillRect(X - k, Y + k, 3 * k, k); }
       const B2 = this.at(g, P.belt[0], P.belt[1] + 1);
-      for(const [dx, dy, col] of [[0, 0, '#E0287A'], [1, 0, '#8A3AC8'], [-1, 1, '#8A3AC8'], [0, 1, '#F078B8'], [1, 1, '#E0287A'], [0, 2, '#8A3AC8'], [-1, 0, '#F078B8']]){
+      for(const [dx, dy, col] of [[0, 0, '#D957B3'], [1, 0, '#9A50D2'], [-1, 1, '#9A50D2'], [0, 1, '#D86D80'], [1, 1, '#D957B3'], [0, 2, '#9A50D2'], [-1, 0, '#D86D80']]){
         c.fillStyle = col; c.fillRect(Math.round(B2.x + dx * k), Math.round(B2.y + dy * k), k, k); }
     },
     // a plate of gold on his shoulder, an eye of teal set in it (over the
@@ -16979,9 +16979,9 @@ const STYLEFX = {
       if(g.minor || g.back || g.h < 26) return;
       const k = Math.max(1, Math.round(g.h / 46)), spr = g.spr, S0 = this.at(g, 40 * (spr.ax || 0.66), 58 * (spr.ay || 0.30) - 0.8);
       const X = Math.round(S0.x), Y = Math.round(S0.y);
-      c.fillStyle = '#7A5418'; c.fillRect(X - 2 * k, Y - k, 4 * k, 2 * k + 1);
-      c.fillStyle = '#C8962E'; c.fillRect(X - 2 * k, Y - k, 4 * k, k);
-      c.fillStyle = '#2EB8C8'; c.fillRect(X - k, Y, 2 * k, k); c.fillStyle = '#1A2A7A'; c.fillRect(X - k + (k > 1 ? 1 : 0), Y, k, k);
+      c.fillStyle = '#6C574E'; c.fillRect(X - 2 * k, Y - k, 4 * k, 2 * k + 1);
+      c.fillStyle = '#B07C3C'; c.fillRect(X - 2 * k, Y - k, 4 * k, k);
+      c.fillStyle = '#4EB1BB'; c.fillRect(X - k, Y, 2 * k, k); c.fillStyle = '#1A1430'; c.fillRect(X - k + (k > 1 ? 1 : 0), Y, k, k);
     },
     // three faces floating round him on a tilted ring, hair of every colour
     // trailing, blindfolded in gold as he is; the far half before him and
@@ -16991,7 +16991,7 @@ const STYLEFX = {
       if(g.h < 40) return;
       const L = legendNow(g), out = L ? 1 + (L.big ? 0.5 : 0.35) * outBack(L.f, 0.18) : 1, lit = this.lit(g);
       const rx = g.w * 1.05 * out, ry = Math.max(2, g.h * 0.08) * out, oy = g.y + g.h * 0.24, ct = Math.cos(0.16), sn = Math.sin(0.16), cx = g.cx;
-      const k = Math.max(1, Math.round(g.h / 56)), spin = g.t * 0.45 + (g.ph > 0 ? g.ph * Math.PI : 0);
+      const k = Math.max(1, Math.round(g.h / 38)), spin = g.t * 0.45 + (g.ph > 0 ? g.ph * Math.PI : 0);
       for(let i = 0; i < 3; i++){
         const a = spin + i * Math.PI * 2 / 3, bob = Math.sin(g.t * 1.3 + i * 2) * g.h * 0.03;
         if((Math.sin(a) > 0) !== front) continue;
@@ -17004,7 +17004,7 @@ const STYLEFX = {
       const p = this.px(g), H = g.head, sh = g.shear ? g.shear(0.05) : 0, x = H.x + sh - 0.5 * p, y = H.y - 9.5 * p + Math.sin(g.t * 2) * p * 0.5;
       const rx = Math.max(3, Math.round(5 * p)), ry = Math.max(1, Math.round(1.6 * p)), lit = this.lit(g), q = Math.max(1, Math.round(p));
       for(let i = 0; i < 32; i++){ const a = i / 32 * Math.PI * 2;
-        c.fillStyle = Math.sin(a) > 0 ? (lit ? '#FFF0B0' : '#F2C85A') : '#C8962E'; c.fillRect(Math.round(x + Math.cos(a) * rx), Math.round(y + Math.sin(a) * ry), q, q); }
+        c.fillStyle = Math.sin(a) > 0 ? (lit ? '#F5E8BA' : '#D5A354') : '#B07C3C'; c.fillRect(Math.round(x + Math.cos(a) * rx), Math.round(y + Math.sin(a) * ry), q, q); }
     },
     // the cherub's small white wings of separate feathers, rising off its
     // back side on, beating
@@ -17017,7 +17017,7 @@ const STYLEFX = {
     // after dark the light of his crown, and of the eye under him
     nightGlow(c, g){
       const p = this.px(g), H = g.head, halo = STYLEFX.dread.halo, x = g.back ? H.x : H.x + (g.shear ? g.shear(0.1) : 0) - 1.5 * p;
-      halo(c, x, H.y - 2 * p, p * 16, '#4A1A6A');
+      halo(c, x, H.y - 2 * p, p * 16, '#3B2C66');
     }
   },
   /* ---- Cyber-Drive: the Tour Pass's mech ----
@@ -18428,7 +18428,7 @@ const LB_ORBIT = {
   tChoir(c, cx, cy, r, t, front){ LB_ORBIT.choirball(c, cx, cy, r - 0.5, t, front); },
   // the Peacock Eye's: a ring of every colour going round it
   peaeye(c, cx, cy, r, t, front){
-    lbRing(c, cx, cy, r + 3.5, (r + 3.5) * 0.35, 0.15, t * 2.4, 14, ['#F8E040', '#F08A2A', '#E0287A', '#8A3AC8', '#3A6AE0', '#2EB8C8', '#5AC83A'], front, 0.3);
+    lbRing(c, cx, cy, r + 3.5, (r + 3.5) * 0.35, 0.15, t * 2.4, 14, ['#DFA94E', '#DF9141', '#D957B3', '#9A50D2', '#459ECF', '#4EB1BB', '#84B377'], front, 0.3);
   },
   tBloom(c, cx, cy, r, t, front){ LB_ORBIT.peaeye(c, cx, cy, r - 0.5, t, front); },
   cyberball(c, cx, cy, r, t, front){
@@ -18542,7 +18542,7 @@ function drawLyingBallBase(c, cx, cy, r, t, fx){
       if(((t * 0.7) % 1) < 0.6) dot(cx + Math.sin(t * 2) * 2, cy - r - 2 - ((t * 0.7) % 1) * 5, 1, RAD_RAINBOW[Math.floor(t * 3) % 7], 1);
       break;
     case 'tBloom':                                   // in a rose glow, a mote of colour rising
-      drawGlow(c, cx, cy, r + 3, r + 2, [[0.55, '#8A3AC8', 1], [0, '#F078B8', 2]], Math.floor(t * 8) & 3, 0.85);
+      drawGlow(c, cx, cy, r + 3, r + 2, [[0.55, '#9A50D2', 1], [0, '#D86D80', 2]], Math.floor(t * 8) & 3, 0.85);
       lbSphere(c, cx, cy, r, '#FFFFFF');
       if(((t * 0.8) % 1) < 0.6) dot(cx + Math.sin(t * 3) * 1.5, cy - r - 2 - ((t * 0.8) % 1) * 6, 1, RAD_RAINBOW[Math.floor(t * 4) % 7], 1);
       break;
@@ -18893,8 +18893,8 @@ const ACE_COL = {
   tCyber:      ['#1E9A4A', '#3AF07A', '#E8FF9A'],
   tChoir:      ['#A8782E', '#F4D27A', '#FFF2C0'],
   choirball:   ['#A8782E', '#F4D27A', '#FFF2C0'],
-  tBloom:      ['#8A3AC8', '#F078B8', '#FFFFFF', RAD_RAINBOW],
-  peaeye:      ['#8A3AC8', '#F078B8', '#FFFFFF', RAD_RAINBOW],
+  tBloom:      ['#9A50D2', '#D86D80', '#FFFFFF', RAD_RAINBOW],
+  peaeye:      ['#9A50D2', '#D86D80', '#FFFFFF', RAD_RAINBOW],
   cyberball:   ['#1A9A96', '#2ED8D0', '#E8FF9A'],
   tKaleido:    ['#4A2290', '#FF2E88', '#FFFFFF', ['#FF2E88', '#FF8A1E', '#FFE81E', '#3AF07A', '#2EC8FF', '#8A4CFF']],
   psyeye:      ['#4A2290', '#FF2E88', '#FFFFFF', ['#FF2E88', '#FF8A1E', '#FFE81E', '#3AF07A', '#2EC8FF', '#8A4CFF']]
@@ -18992,7 +18992,7 @@ const ACE_EXTRA = {
     for(let i = 0; i < 14; i++){ const y = y1 - (i + 0.5) / 14 * (y1 - y0), a = y * 0.09 - t * 7, x = X + Math.sin(a) * W * 1.05, s = Math.max(1, Math.round(W / 9));
       put(x - s, y - s, 2 * s, RAD_RAINBOW[i % 7], 2 * s); }
     aceRise(A, 4, 908, (i, y) => { const ox = X + (i & 1 ? 1 : -1) * W * (1.2 + hr(i, 909) * 0.4);
-      put(ox - k, y - k, 3 * k, '#F2C85A', 3 * k); put(ox - k, y, 3 * k, '#2EB8C8', k); put(ox, y - k, k, '#2EB8C8', 3 * k); put(ox, y, k, '#1A2A7A', k); }); },
+      put(ox - k, y - k, 3 * k, '#D5A354', 3 * k); put(ox - k, y, 3 * k, '#4EB1BB', k); put(ox, y - k, k, '#4EB1BB', 3 * k); put(ox, y, k, '#1A1430', k); }); },
   tBloom(A){ ACE_EXTRA.peaeye(A); },
   cyberball(A){ const { X, y0, y1, W, k, t, put } = A;
     for(let i = 0; i < 14; i++){ const y = y1 - (i + 0.5) / 14 * (y1 - y0), a = y * 0.09 - t * 7, x = X + Math.sin(a) * W * 1.05, s = Math.max(1, Math.round(W / 9));
@@ -19193,9 +19193,9 @@ CUP_FX2.peaeye = function(c, x, y, cr, h, q, t){
   const k = Math.max(1, Math.round(h / 16));
   if(q > 0.7 && q < 0.98 && h >= 12){ const f = (q - 0.7) / 0.28, R = Math.max(3, h * 0.13), Y = y - h * (0.3 + f * 0.25), s = 0.6 + f * 0.6;
     for(let i = 0; i < 10; i++){ const a = i / 10 * Math.PI * 2 + f * 1.5, px = x + Math.cos(a) * R * s, py = Y + Math.sin(a) * R * 0.55 * s;
-      fxDot(c, px - k, py - k, 2 * k + 1, RAD_RAINBOW[i % 7], 1); fxDot(c, px - (k >> 1), py - (k >> 1), k, '#1A2A7A', 1); }
-    fxDot(c, x - k, Y - k, 2 * k, '#FFC0DC', 1);
-    if(f < 0.4) cupStar(c, x - (k >> 1), y - k * 2, k, 2, '#FFFFFF', '#F078B8'); }
+      fxDot(c, px - k, py - k, 2 * k + 1, RAD_RAINBOW[i % 7], 1); fxDot(c, px - (k >> 1), py - (k >> 1), k, '#1A1430', 1); }
+    fxDot(c, x - k, Y - k, 2 * k, '#F8D8CC', 1);
+    if(f < 0.4) cupStar(c, x - (k >> 1), y - k * 2, k, 2, '#FFFFFF', '#D86D80'); }
 };
 CUP_FX2.tBloom = CUP_FX2.peaeye;
 CUP_FX2.cyberball = function(c, x, y, cr, h, q, t){
@@ -20313,9 +20313,9 @@ function penCandle(c, x, y, k, tall, t, lit){
 // of every colour in tendrils, robes of ivory quilted in gold over violet,
 // peacock plumes of every colour hung from the shoulders with an eye on
 // each, three faces floating round, an eye in a spiral of colour underfoot.
-const RAD_PAL = ['#120818', '#2A1238', '#4A1A6A', '#8A3AC8', '#B070F0', '#E0287A', '#F078B8', '#FFC0DC', '#C8284A',
-                 '#F08A2A', '#F8E040', '#5AC83A', '#2EB8C8', '#7AE8F0', '#3A6AE0', '#1A2A7A',
-                 '#F4E8D0', '#D8C8A8', '#A8987A', '#F2D0BC', '#D8A890', '#7A5418', '#C8962E', '#F2C85A', '#FFF0B0', '#FFFFFF'];
+const RAD_PAL = ['#B3B457', '#864EAF', '#0B0214', '#2A1E48', '#3B2C66', '#9A50D2', '#B080E0', '#D957B3', '#D86D80', '#F8D8CC', '#C04060',
+                 '#DF9141', '#DFA94E', '#84B377', '#4EB1BB', '#5AC3D5', '#459ECF', '#1A1430',
+                 '#EADCB3', '#B29280', '#75556B', '#F4C2B5', '#C89888', '#6C574E', '#B07C3C', '#D5A354', '#F5E8BA', '#FFFFFF'];
 // his head over the hood's shape (fitted to his head): hair of every colour
 // combed back over it and hanging in tendrils behind, his face pale side on,
 // a blindfold of gold round it, red lips; from behind the blindfold's knot.
@@ -20331,10 +20331,10 @@ function radHead(p, view, step){
     const poly = (pts, col) => { g.fillStyle = col; g.beginPath(); g.moveTo(X(pts[0]), Y(pts[0])); for(const q of pts.slice(1)) g.lineTo(X(q), Y(q)); g.closePath(); g.fill(); };
     if(view === 'cherub'){
       for(const [cx0, cy0, r] of [[4.5, -4.2, 1.8], [1.5, -5.6, 2], [-1.8, -5.6, 2], [-4.6, -4, 2], [-6, -0.8, 1.9], [-5.8, 2.4, 1.7], [-3.8, 4.2, 1.5], [5.6, -1.8, 1.3]]){
-        g.fillStyle = '#C8962E'; g.beginPath(); g.arc(X([cx0, 0]), Y([0, cy0]) + p * 0.4, r * p, 0, Math.PI * 2); g.fill();
-        g.fillStyle = '#F2C85A'; g.beginPath(); g.arc(X([cx0, 0]) - p * 0.2, Y([0, cy0]), r * p * 0.78, 0, Math.PI * 2); g.fill();
-        if(p >= 1){ g.fillStyle = '#FFF0B0'; g.fillRect(Math.round(X([cx0 - 0.6, 0])), Math.round(Y([0, cy0 - 0.7])), Math.max(1, Math.round(p * 0.7)), Math.max(1, Math.round(p * 0.7))); } }
-      g.fillStyle = '#F078B8'; g.fillRect(Math.round(X([3.6, 0])), Math.round(Y([0, 2.6])), Math.max(1, Math.round(p * 1.2)), Math.max(1, Math.round(p)));
+        g.fillStyle = '#B07C3C'; g.beginPath(); g.arc(X([cx0, 0]), Y([0, cy0]) + p * 0.4, r * p, 0, Math.PI * 2); g.fill();
+        g.fillStyle = '#D5A354'; g.beginPath(); g.arc(X([cx0, 0]) - p * 0.2, Y([0, cy0]), r * p * 0.78, 0, Math.PI * 2); g.fill();
+        if(p >= 1){ g.fillStyle = '#F5E8BA'; g.fillRect(Math.round(X([cx0 - 0.6, 0])), Math.round(Y([0, cy0 - 0.7])), Math.max(1, Math.round(p * 0.7)), Math.max(1, Math.round(p * 0.7))); } }
+      g.fillStyle = '#D86D80'; g.fillRect(Math.round(X([3.6, 0])), Math.round(Y([0, 2.6])), Math.max(1, Math.round(p * 1.2)), Math.max(1, Math.round(p)));
       return;
     }
     // the tendrils, hanging and swaying, a curl at the end of each
@@ -20342,31 +20342,31 @@ function radHead(p, view, step){
     strands.forEach(([sx, sy], i) => {
       const len = 12 + (i % 3) * 3, col = RAD_RAINBOW[(i * 2) % 7], pts = [];
       for(let j = 0; j <= 8; j++){ const u = j / 8; pts.push([sx + (view === 'back' ? sx * 0.15 * u : -2.5 * u) + Math.sin(a + i * 1.3 + u * 4) * 1.1 * u, sy + len * u]); }
-      line(pts, '#2A1238', Math.max(1, p * 2.2)); line(pts, col, Math.max(1, p * 1.5));
+      line(pts, '#2A1E48', Math.max(1, p * 2.2)); line(pts, col, Math.max(1, p * 1.5));
       line(pts.slice(0, 5), RAD_RAINBOW[(i * 2 + 1) % 7], Math.max(1, p * 0.6));
       const e = pts[8]; g.fillStyle = col; g.beginPath(); g.arc(X(e) + p * 0.6, Y(e), Math.max(0.8, p * 1.1), 0, Math.PI * 2); g.fill(); });
-    poly(P, '#E0287A');
+    poly(P, '#D957B3');
     g.save(); g.beginPath(); g.moveTo(X(P[0]), Y(P[0])); for(const q of P.slice(1)) g.lineTo(X(q), Y(q)); g.closePath(); g.clip();
     // streaks of every colour combed back through it
     for(let i = 0; i < 8; i++){ const yy = -7 + i * 2.6;
       line(view === 'back' ? [[-9 + i * 2.6, -7], [-10 + i * 2.8, 14]] : [[7, yy - 2], [0, yy], [-11, yy + 5]], RAD_RAINBOW[(i + 1) % 7], Math.max(1, p * 1.1)); }
     if(view !== 'back'){
-      poly([[6.6, 3], [5.6, -2.2], [1.8, -1], [0.6, 5.4], [6.6, 5.4]], '#F2D0BC');
-      if(p >= 1) line([[1.8, -1], [0.8, 5]], '#D8A890', lw);
-      g.fillStyle = '#C8284A'; g.fillRect(Math.round(X([5.0, 0])), Math.round(Y([0, 3.4])), Math.max(1, Math.round(p * 1.3)), Math.max(1, Math.round(p * 0.8)));
+      poly([[6.6, 3], [5.6, -2.2], [1.8, -1], [0.6, 5.4], [6.6, 5.4]], '#F4C2B5');
+      if(p >= 1) line([[1.8, -1], [0.8, 5]], '#C89888', lw);
+      g.fillStyle = '#C04060'; g.fillRect(Math.round(X([5.0, 0])), Math.round(Y([0, 3.4])), Math.max(1, Math.round(p * 1.3)), Math.max(1, Math.round(p * 0.8)));
     }
     g.restore();
     // the blindfold of gold over the eyes, round to the back of the head
     if(view === 'back'){
-      line([[-7, 0.5], [0, 1.2], [7, 0.5]], '#7A5418', Math.max(1, p * 2.4)); line([[-7, 0.2], [0, 0.9], [7, 0.2]], '#C8962E', Math.max(1, p * 1.6));
-      line([[0, 1], [-1.5, 6]], '#C8962E', Math.max(1, p)); line([[0, 1], [1.6, 5.4]], '#F2C85A', Math.max(1, p));
+      line([[-7, 0.5], [0, 1.2], [7, 0.5]], '#6C574E', Math.max(1, p * 2.4)); line([[-7, 0.2], [0, 0.9], [7, 0.2]], '#B07C3C', Math.max(1, p * 1.6));
+      line([[0, 1], [-1.5, 6]], '#B07C3C', Math.max(1, p)); line([[0, 1], [1.6, 5.4]], '#D5A354', Math.max(1, p));
     }else{
       // (small, its dark edge alone hid his face: one band of gold there)
-      if(p >= 0.9) line([[6.8, 0.8], [3, 0.6], [-6.8, 0.2]], '#7A5418', Math.max(1, p * 2.6));
-      line([[6.8, 0.5], [3, 0.3], [-6.8, -0.1]], '#C8962E', p >= 0.9 ? Math.max(1, p * 1.7) : 1);
-      if(p >= 1.1) line([[6.6, -0.1], [2.5, -0.3]], '#FFF0B0', Math.max(1, p * 0.5));
+      if(p >= 0.9) line([[6.8, 0.8], [3, 0.6], [-6.8, 0.2]], '#6C574E', Math.max(1, p * 2.6));
+      line([[6.8, 0.5], [3, 0.3], [-6.8, -0.1]], '#B07C3C', p >= 0.9 ? Math.max(1, p * 1.7) : 1);
+      if(p >= 1.1) line([[6.6, -0.1], [2.5, -0.3]], '#F5E8BA', Math.max(1, p * 0.5));
     }
-    if(view === 'back') line([[0, -6], [4, -5], [6, -2]], '#F078B8', lw); else line([[5.4, -2.4], [3, -5], [0, -6]], '#F078B8', lw);
+    if(view === 'back') line([[0, -6], [4, -5], [6, -2]], '#D86D80', lw); else line([[5.4, -2.4], [3, -5], [0, -6]], '#D86D80', lw);
   }, RAD_PAL);
   return { cv, ox, oy };
 }
@@ -20381,12 +20381,13 @@ function radCrown(p, step, lit, view){
       const u = i / (N - 1), a = -Math.PI + 0.25 + u * (Math.PI - 0.5) + lean, L = (7.5 + 9.5 * Math.pow(Math.sin(u * Math.PI), 1.4) - (i & 1 ? 2 : 0)) * p, r0 = 4.8 * p, w = (i & 1 ? 0.75 : 1.05) * p;
       const ca = Math.cos(a), sa = Math.sin(a), nx = -sa, ny = ca, near = Math.abs(Math.atan2(Math.sin(a - gl), Math.cos(a - gl))) < 0.35;
       const tri = (r1, ww, col) => { g.fillStyle = col; g.beginPath(); g.moveTo(o + ca * r0 + nx * ww, o + sa * r0 + ny * ww); g.lineTo(o + ca * r1, o + sa * r1); g.lineTo(o + ca * r0 - nx * ww, o + sa * r0 - ny * ww); g.closePath(); g.fill(); };
-      tri(r0 + L + 0.7 * p, w + 0.7, '#7A5418');
-      tri(r0 + L, w, near || lit ? '#F2C85A' : '#C8962E');
-      if(p >= 1) tri(r0 + L * 0.7, Math.max(0.4, w * 0.35), '#FFF0B0');
+      // (small, the spikes blended into their dark edge and read tan: no edge there)
+      if(p >= 1) tri(r0 + L + 0.7 * p, w + 0.7, '#6C574E');
+      tri(r0 + L, w, near || lit ? '#F5E8BA' : '#D5A354');
+      if(p >= 1) tri(r0 + L * 0.7, Math.max(0.4, w * 0.35), '#F5E8BA');
     }
-    g.strokeStyle = '#7A5418'; g.lineWidth = Math.max(2, 2.2 * p); g.beginPath(); g.arc(o, o, 5 * p, Math.PI + 0.2 + lean, Math.PI * 2 - 0.2 + lean); g.stroke();
-    g.strokeStyle = '#F2C85A'; g.lineWidth = Math.max(1, 1.2 * p); g.beginPath(); g.arc(o, o, 5 * p, Math.PI + 0.2 + lean, Math.PI * 2 - 0.2 + lean); g.stroke();
+    g.strokeStyle = '#6C574E'; g.lineWidth = Math.max(2, 2.2 * p); g.beginPath(); g.arc(o, o, 5 * p, Math.PI + 0.2 + lean, Math.PI * 2 - 0.2 + lean); g.stroke();
+    g.strokeStyle = '#D5A354'; g.lineWidth = Math.max(1, 1.2 * p); g.beginPath(); g.arc(o, o, 5 * p, Math.PI + 0.2 + lean, Math.PI * 2 - 0.2 + lean); g.stroke();
     // a stone of every colour at the root of every other spike
     for(let i = 0; i < N; i += 2){ const a = -Math.PI + 0.25 + i / (N - 1) * (Math.PI - 0.5) + lean; g.fillStyle = RAD_RAINBOW[(i >> 1) % 7];
       g.beginPath(); g.arc(o + Math.cos(a) * 5.6 * p, o + Math.sin(a) * 5.6 * p, Math.max(0.8, 0.85 * p), 0, Math.PI * 2); g.fill(); }
@@ -20403,31 +20404,38 @@ function radRobe(w, h, pose, step){
     const X = x => (x - x0) * sx, Y = y => (y - y0) * sy, a = step / 12 * Math.PI * 2, hem = 57.6, cw = g.canvas.width, chh = g.canvas.height;
     const path = () => { g.beginPath(); g.moveTo(X(R[1]), Y(R[0])); g.lineTo(X(R[2]), Y(R[0]));
       g.quadraticCurveTo(X(R[2] + 0.5), Y(45), X(R[4] + 0.6 + Math.sin(a) * 0.3), Y(hem)); g.lineTo(X(R[3] - 0.6 + Math.sin(a + 1) * 0.3), Y(hem)); g.quadraticCurveTo(X(R[1] - 0.5), Y(45), X(R[1]), Y(R[0])); g.closePath(); };
-    path(); g.fillStyle = '#F4E8D0'; g.fill();
+    path(); g.fillStyle = '#D957B3'; g.fill();
     g.save(); path(); g.clip();
     const sp = Math.max(4, 3.4 * sx);
-    g.strokeStyle = '#C8962E'; g.lineWidth = Math.max(1, sx * 0.45);
+    g.strokeStyle = '#9A50D2'; g.lineWidth = Math.max(1, sx * 0.45);
     for(let d = -chh; d < cw + chh; d += sp){ g.beginPath(); g.moveTo(d, 0); g.lineTo(d + chh, chh); g.stroke(); g.beginPath(); g.moveTo(d, 0); g.lineTo(d - chh, chh); g.stroke(); }
-    if(h >= 40){ g.fillStyle = '#F2C85A';
+    if(h >= 40){ g.fillStyle = '#D5A354';
       for(let m = 0; m * sp / 2 < chh; m++) for(let n = 0; ; n++){ const xx = -chh + n * sp + m * sp / 2; if(xx > cw) break; if(xx >= 0) g.fillRect(Math.round(xx) - 1, Math.round(m * sp / 2) - 1, 2, 2); } }
     g.lineWidth = Math.max(1, sx * 0.8);
     for(let k = 1; k < 5; k++){ const f = k / 5, xa = R[1] + (R[2] - R[1]) * f, xb = R[3] + (R[4] - R[3]) * f + Math.sin(a + k) * 0.3;
-      g.strokeStyle = k & 1 ? '#D8C8A8' : '#A8987A'; g.beginPath(); g.moveTo(X(xa), Y(R[0] + 1)); g.lineTo(X(xb), Y(58)); g.stroke(); }
+      g.strokeStyle = k & 1 ? '#864EAF' : '#3B2C66'; g.beginPath(); g.moveTo(X(xa), Y(R[0] + 1)); g.lineTo(X(xb), Y(58)); g.stroke(); }
     const pf = pose === 'back' ? 0.5 : 0.72, pw = (R[4] - R[3]) * 0.22;
     const px0 = R[1] + (R[2] - R[1]) * pf, px1 = R[3] + (R[4] - R[3]) * pf;
-    g.fillStyle = '#4A1A6A'; g.beginPath(); g.moveTo(X(px0 - pw * 0.4), Y(R[0])); g.lineTo(X(px0 + pw * 0.4), Y(R[0])); g.lineTo(X(px1 + pw * 0.6), Y(58)); g.lineTo(X(px1 - pw * 0.6), Y(58)); g.closePath(); g.fill();
-    g.strokeStyle = '#C8962E'; g.lineWidth = Math.max(1, sx * 0.6);
+    // its cream lining showing either side of the panel, as the robe opens
+    g.fillStyle = '#EADCB3'; g.beginPath(); g.moveTo(X(px0 - pw * 0.8), Y(R[0])); g.lineTo(X(px0 + pw * 0.8), Y(R[0])); g.lineTo(X(px1 + pw * 1.2), Y(58)); g.lineTo(X(px1 - pw * 1.2), Y(58)); g.closePath(); g.fill();
+    g.fillStyle = '#3B2C66'; g.beginPath(); g.moveTo(X(px0 - pw * 0.4), Y(R[0])); g.lineTo(X(px0 + pw * 0.4), Y(R[0])); g.lineTo(X(px1 + pw * 0.6), Y(58)); g.lineTo(X(px1 - pw * 0.6), Y(58)); g.closePath(); g.fill();
+    g.strokeStyle = '#B07C3C'; g.lineWidth = Math.max(1, sx * 0.6);
     g.beginPath(); g.moveTo(X(px0 - pw * 0.4), Y(R[0])); g.lineTo(X(px1 - pw * 0.6), Y(58)); g.stroke();
     g.beginPath(); g.moveTo(X(px0 + pw * 0.4), Y(R[0])); g.lineTo(X(px1 + pw * 0.6), Y(58)); g.stroke();
     for(let i = 0; i < 6; i++){ const u = 0.1 + i * 0.13, xx = px0 + (px1 - px0) * u, yy = R[0] + (58 - R[0]) * u;
-      g.fillStyle = i & 1 ? '#E0287A' : '#8A3AC8'; g.beginPath(); g.arc(X(xx), Y(yy), Math.max(0.9, sx * 0.75), 0, Math.PI * 2); g.fill(); }
-    g.fillStyle = '#7A5418'; g.fillRect(0, Y(52.4), cw, Math.max(2, Y(56.4) - Y(52.4)));
-    g.fillStyle = '#C8962E'; g.fillRect(0, Y(52.8), cw, Math.max(1, Y(55.8) - Y(52.8)));
+      g.fillStyle = i & 1 ? '#D957B3' : '#9A50D2'; g.beginPath(); g.arc(X(xx), Y(yy), Math.max(0.9, sx * 0.75), 0, Math.PI * 2); g.fill(); }
+    g.fillStyle = '#6C574E'; g.fillRect(0, Y(52.4), cw, Math.max(2, Y(56.4) - Y(52.4)));
+    g.fillStyle = '#B07C3C'; g.fillRect(0, Y(52.8), cw, Math.max(1, Y(55.8) - Y(52.8)));
     if(h >= 40){ const q = Math.max(1, Math.round(sx * 0.6)), yy = Math.round(Y(53.8));
-      for(let x = 0, i = 0; x < cw; x += 3 * q, i++){ g.fillStyle = i % 3 === step % 3 ? '#FFF0B0' : '#F2C85A'; g.fillRect(x, yy, q, q); } }
-    const fw = Math.max(1, Math.round(sx));
-    for(let x = 0, i = 0; x < cw; x += fw, i++){ g.fillStyle = RAD_RAINBOW[i % 7]; g.fillRect(x, Math.round(Y(56.4)), fw, Math.max(1, Math.round(Y(58) - Y(56.4)) + 1)); }
+      for(let x = 0, i = 0; x < cw; x += 3 * q, i++){ g.fillStyle = i % 3 === step % 3 ? '#F5E8BA' : '#D5A354'; g.fillRect(x, yy, q, q); } }
+    // and below it the tips of feathers of every colour, a dark eye in each
+    const fw = Math.max(2, Math.round(sx * 2.4));
+    for(let x = 0, i = 0; x < cw; x += fw, i++){ g.fillStyle = '#2A1E48'; g.fillRect(x, Math.round(Y(56.4)), fw, Math.max(1, Math.round(Y(58) - Y(56.4)) + 1));
+      g.fillStyle = RAD_RAINBOW[i % 7]; g.fillRect(x + 1, Math.round(Y(56.4)), Math.max(1, fw - 1), Math.max(1, Math.round(Y(58) - Y(56.4))));
+      if(h >= 40){ g.fillStyle = '#1A1430'; g.fillRect(x + (fw >> 1), Math.round(Y(57)), 1, 1); } }
     g.restore();
+    // its edge in deep violet, so it reads against the plumes and the grass
+    g.strokeStyle = '#2A1E48'; g.lineWidth = 1; path(); g.stroke();
   }, RAD_PAL);
   return { cv, x: x0, y: y0 };
 }
@@ -20436,14 +20444,14 @@ function radRobe(w, h, pose, step){
 // behind; barbs of a second colour combed along each, a pale quill, and an
 // eye near its end (gold, rose, teal, a deep blue heart); ph 0..11 a sway
 function radPlumes(w, h, pose, ph){
-  const ox = Math.round(w * 0.8), key = 'rplume|' + w + '|' + h + '|' + pose + '|' + ph;
+  const ox = Math.round(w * 0.9), key = 'rplume|' + w + '|' + h + '|' + pose + '|' + ph;
   const cv = fxBake(key, ox + Math.ceil(w * 1.2), Math.ceil(h * 1.02), g => {
     const X = f => ox + f * w, Y = f => f * h, a = ph / 12 * Math.PI * 2, s = Math.sin(a);
     let P;
     if(pose === 2) P = [[0.36, 0.22, 0.14, 0.9], [0.42, 0.21, 0.29, 0.97], [0.5, 0.2, 0.5, 1.0], [0.58, 0.21, 0.71, 0.97], [0.64, 0.22, 0.86, 0.9]];
     else { const r = pose ? [0.52, 0.25] : [0.58, 0.27];
-      P = [[r[0] - 0.08, r[1] + 0.03, -0.5 - 0.1 * s, 0.86], [r[0], r[1], -0.34 - 0.08 * s, 0.95], [r[0] - 0.03, r[1] + 0.01, -0.17 - 0.07 * s, 1.0],
-           [r[0] - 0.06, r[1] + 0.02, 0.0 - 0.05 * s, 1.0], [r[0] - 0.02, r[1], 0.16 - 0.04 * s, 0.99]]; }
+      P = [[r[0] - 0.1, r[1] + 0.04, -0.6 - 0.1 * s, 0.8], [r[0] - 0.08, r[1] + 0.03, -0.5 - 0.1 * s, 0.9], [r[0], r[1], -0.36 - 0.08 * s, 0.97], [r[0] - 0.03, r[1] + 0.01, -0.2 - 0.07 * s, 1.0],
+           [r[0] - 0.06, r[1] + 0.02, -0.04 - 0.05 * s, 1.0], [r[0] - 0.02, r[1], 0.12 - 0.04 * s, 0.99], [r[0] + 0.02, r[1], 0.26 - 0.03 * s, 0.97]]; }
     P.forEach(([rx, ry, tx, ty], i) => {
       if(pose === 2) tx += 0.02 * Math.sin(a + i);
       const L = Math.hypot((tx - rx) * w, (ty - ry) * h), dx = (tx - rx) * w / L, dy = (ty - ry) * h / L, nx = -dy, ny = dx;
@@ -20453,14 +20461,15 @@ function radPlumes(w, h, pose, ph){
       const col = RAD_RAINBOW[(i * 3 + 1) % 7], col2 = RAD_RAINBOW[(i * 3 + 2) % 7], N = 16;
       const side = sg => { const o = []; for(let j = 0; j <= N; j++){ const u = j / N, b = at(u); o.push([b[0] + nx * wid(u) * sg, b[1] + ny * wid(u) * sg]); } return o; };
       const A = side(1), B0 = side(-1).reverse();
-      g.fillStyle = col; g.beginPath(); g.moveTo(A[0][0], A[0][1]); for(const q of A.concat(B0)) g.lineTo(q[0], q[1]); g.closePath(); g.fill();
+      g.beginPath(); g.moveTo(A[0][0], A[0][1]); for(const q of A.concat(B0)) g.lineTo(q[0], q[1]); g.closePath();
+      g.fillStyle = col; g.fill(); g.strokeStyle = '#2A1E48'; g.lineWidth = Math.max(1, w * 0.025); g.stroke();
       g.strokeStyle = col2; g.lineWidth = Math.max(1, w * 0.02);
       for(let j = 2; j < N - 3; j += pose === 2 ? 4 : 2){ const u = j / N, b = at(u), b2 = at(u + 0.06);
         g.beginPath(); g.moveTo(b[0], b[1]); g.lineTo(b2[0] + nx * wid(u) * 0.9, b2[1] + ny * wid(u) * 0.9); g.stroke(); }
-      g.strokeStyle = '#FFF0B0'; g.lineWidth = Math.max(1, w * 0.018); g.beginPath(); { const b = at(0); g.moveTo(b[0], b[1]); }
+      g.strokeStyle = '#F5E8BA'; g.lineWidth = Math.max(1, w * 0.018); g.beginPath(); { const b = at(0); g.moveTo(b[0], b[1]); }
       for(let j = 1; j <= 12; j++){ const b = at(j / N); g.lineTo(b[0], b[1]); } g.stroke();
       const e = at(0.8), er = Math.max(1.4, wid(0.8) * 0.95), rot = Math.atan2(dy, dx);
-      for(const [r, c0] of [[1, '#F2C85A'], [0.78, '#E0287A'], [0.58, '#2EB8C8'], [0.36, '#1A2A7A']]){ g.fillStyle = c0; g.beginPath(); g.ellipse(e[0], e[1], er * r * 1.25, er * r, rot, 0, Math.PI * 2); g.fill(); }
+      for(const [r, c0] of [[1, '#2A1E48'], [0.86, '#B3B457'], [0.66, '#4EB1BB'], [0.42, '#1A1430']]){ g.fillStyle = c0; g.beginPath(); g.ellipse(e[0], e[1], er * r * 1.25, er * r, rot, 0, Math.PI * 2); g.fill(); }
     });
   }, RAD_PAL);
   return { cv, ox };
@@ -20481,17 +20490,17 @@ function radSigil(rx, ry, step, lit){
     if(d > 1.06) continue;
     const par = (xx + yy) & 1;
     let col;
-    if(d > 1) col = '#120818';
+    if(d > 1) col = '#0B0214';
     else if(d > 0.86){ const j = (((a + Math.PI) / (Math.PI * 2) * 10 + step / 12) % 1 + 1) % 1, e = Math.abs(j - 0.5);
-      col = e < 0.12 && d < 0.97 ? (e < 0.05 ? '#1A2A7A' : '#2EB8C8') : d > 0.96 ? '#7A5418' : lit ? '#F2C85A' : par ? '#C8962E' : '#F2C85A'; }
-    else if(d > 0.8) col = '#2A1238';
-    else if(d < 0.07) col = xx === -1 && yy <= 0 && rx > 10 ? '#FFFFFF' : '#120818';
-    else if(d < 0.14) col = lit ? '#7AE8F0' : '#2EB8C8';
-    else if(d < 0.19) col = '#3A6AE0';
+      col = e < 0.12 && d < 0.97 ? (e < 0.05 ? '#1A1430' : '#4EB1BB') : d > 0.96 ? '#6C574E' : lit ? '#D5A354' : par ? '#B07C3C' : '#D5A354'; }
+    else if(d > 0.8) col = '#2A1E48';
+    else if(d < 0.07) col = xx === -1 && yy <= 0 && rx > 10 ? '#FFFFFF' : '#0B0214';
+    else if(d < 0.14) col = lit ? '#5AC3D5' : '#4EB1BB';
+    else if(d < 0.19) col = '#459ECF';
     else if(d < 0.26) col = '#FFFFFF';
-    else if(d < 0.3) col = '#C8962E';
+    else if(d < 0.3) col = '#B07C3C';
     else { const s = (((a - S0) / (Math.PI * 2) * 3 + d * 2.4) % 1 + 1) % 1;
-      col = s < 0.5 ? RAD_RAINBOW[Math.floor(d * 9 + step / 6) % 7] : par ? '#2A1238' : '#4A1A6A'; }
+      col = s < 0.5 ? RAD_RAINBOW[Math.floor(d * 9 + step / 6) % 7] : par ? '#2A1E48' : '#3B2C66'; }
     P(X + xx, Y + yy, col);
   }
   cv.ox = X; cv.oy = Y;
@@ -20508,10 +20517,10 @@ function radVisage(c, x, y, k, t, i, lit){
   for(let j = 0; j < 4; j++){ const sx = [-3, -2, 1, 2][j], L = 3 + ((j + i) % 3);
     for(let u = 0; u < L; u++){ const wv = Math.round(Math.sin(t * 3 + j * 1.7 + u * 0.9 + i) * 0.8); R(sx + wv, 1 + u, 1, 1, u & 1 ? H2 : H1); } }
   R(-2, -3, 4, 1, H1); R(-3, -2, 6, 1, H1); R(-3, -1, 1, 3, H1); R(2, -1, 1, 3, H1); R(-1, -3, 1, 1, H2); R(1, -2, 1, 1, H2);
-  R(-2, -1, 4, 3, '#F2D0BC'); R(-1, 2, 2, 1, '#F2D0BC');
-  R(-2, -1, 4, 1, lit ? '#F2C85A' : '#C8962E');
-  R(-1, 1, 2, 1, '#C8284A');
-  R(0, -4, 1, 1, '#F2C85A');
+  R(-2, -1, 4, 3, '#EADCB3'); R(-1, 2, 2, 1, '#EADCB3');
+  R(-2, -1, 4, 1, lit ? '#D5A354' : '#B07C3C');
+  R(-1, 1, 2, 1, '#C04060');
+  R(0, -4, 1, 1, '#D5A354');
 }
 // a cherub's wing: six feathers apart from each other fanning off a short
 // arm, white and blush, each edged in rose (up 0..1 how high, S its reach)
@@ -20531,11 +20540,11 @@ function cherubWing(g, S, up){
 }
 // the Peacock Eye: a ball of teal with the eye of a plume on it
 function peaBall(c, x, y, r){
-  lbSphere(c, x, y, r, '#2EB8C8');
+  lbSphere(c, x, y, r, '#4EB1BB');
   if(r < 1.5) return;
   const X = Math.round(x), Y = Math.round(y), q = Math.max(1, Math.round(r * 0.5));
-  c.globalAlpha = 1; c.fillStyle = '#F2C85A'; c.fillRect(X - q, Y - q, 2 * q, 2 * q);
-  c.fillStyle = '#1A2A7A'; c.fillRect(X - (q > 1 ? q >> 1 : 1), Y - (q > 1 ? q >> 1 : 1), Math.max(1, q), Math.max(1, q));
+  c.globalAlpha = 1; c.fillStyle = '#D5A354'; c.fillRect(X - q, Y - q, 2 * q, 2 * q);
+  c.fillStyle = '#1A1430'; c.fillRect(X - (q > 1 ? q >> 1 : 1), Y - (q > 1 ? q >> 1 : 1), Math.max(1, q), Math.max(1, q));
 }
 function cyberHelm(p, view){
   const P = view === 'back' ? CYHELM_BACK : CYHELM_SIDE, pad = 3;
@@ -20909,19 +20918,19 @@ const BLESS_FX = {
   // The Radiant: the eye in its spiral lights under him, a shaft of rose
   // light falls on him, and the Tornado of Grace: ribbons of every colour
   // whirling down round it both ways, motes of colour drifting up
-  radiant: { col: '#F078B8',
+  radiant: { col: '#D86D80',
     draw(G){
       const { c, cx, bot, half, h, t, fade, front, k } = G, top = Math.round(bot - h * 1.05);
       const hw = Math.max(2, Math.round(half * 0.5 * (0.35 + 0.65 * fade))), stop = Math.min(front, top);
       if(t > 0.26 && fade > 0.12){ const q = Math.min(1, (t - 0.26) / 0.3), RX = half * (0.7 + 0.45 * q), RY = Math.max(2, RX * 0.26);
-        blDisc(G, RX, RY, '#2A1238', true); blDisc(G, RX * 0.7, RY * 0.7, '#4A1A6A', true); blDisc(G, RX * 0.24, RY * 0.24, '#2EB8C8', true);
-        blRing(G, bot - 1, RX * 0.8, RY * 0.8, 1 + (G.up >> 1), '#F2C85A'); }
-      blShaft(G, stop, hw, ['#F078B8', '#8A3AC8', '#FFC0DC', '#F2C85A', '#FFFFFF'], { inner: '#E0287A' });
-      blRibbons({ ...G, half: hw / 0.9 * 1.4 }, 0, Math.min(front, bot - 1), ['#E0287A', '#8A3AC8', '#2EB8C8', '#3A6AE0'], 1, 1.25, 6, '#2A1238');
-      blRibbons({ ...G, half: hw / 0.9 }, 0, Math.min(front, bot - 1), ['#F8E040', '#F08A2A', '#5AC83A', '#2EB8C8'], 1, 1.1, -5, '#2A1238');
-      blessMotes(G, 10, 0.8, true, false, (x, y, i) => { const X = Math.round(x), Y = Math.round(y); c.fillStyle = RAD_RAINBOW[i % 7]; c.fillRect(X - 1, Y, 3, 1); c.fillStyle = '#1A2A7A'; c.fillRect(X, Y, 1, 1); });
-      blImpact(G, 0.27, ['#F078B8', '#FFFFFF']);
-      blSides(G, '#F2C85A', '#FFFFFF');
+        blDisc(G, RX, RY, '#2A1E48', true); blDisc(G, RX * 0.7, RY * 0.7, '#3B2C66', true); blDisc(G, RX * 0.24, RY * 0.24, '#4EB1BB', true);
+        blRing(G, bot - 1, RX * 0.8, RY * 0.8, 1 + (G.up >> 1), '#D5A354'); }
+      blShaft(G, stop, hw, ['#D86D80', '#9A50D2', '#F8D8CC', '#D5A354', '#FFFFFF'], { inner: '#D957B3' });
+      blRibbons({ ...G, half: hw / 0.9 * 1.4 }, 0, Math.min(front, bot - 1), ['#D957B3', '#9A50D2', '#4EB1BB', '#459ECF'], 1, 1.25, 6, '#2A1E48');
+      blRibbons({ ...G, half: hw / 0.9 }, 0, Math.min(front, bot - 1), ['#DFA94E', '#DF9141', '#84B377', '#4EB1BB'], 1, 1.1, -5, '#2A1E48');
+      blessMotes(G, 10, 0.8, true, false, (x, y, i) => { const X = Math.round(x), Y = Math.round(y); c.fillStyle = RAD_RAINBOW[i % 7]; c.fillRect(X - 1, Y, 3, 1); c.fillStyle = '#1A1430'; c.fillRect(X, Y, 1, 1); });
+      blImpact(G, 0.27, ['#D86D80', '#FFFFFF']);
+      blSides(G, '#D5A354', '#FFFFFF');
     } },
   cyber: { col: '#3AF07A',
     draw(G){
@@ -21498,15 +21507,15 @@ const BALLFX = {
   // eyes thrown off its sides, flickering, a rose glow at the ball
   tBloom(c, b, path, r, t, u){
     const w = Math.max(2, r + 1);
-    trailRibbon(c, path, w + 3, (i, f) => f < 0.5 ? '#F078B8' : '#8A3AC8', 0.7);
+    trailRibbon(c, path, w + 3, (i, f) => f < 0.5 ? '#D86D80' : '#9A50D2', 0.7);
     trailRibbon(c, path, w + 1, (i, f) => f < 0.1 ? '#FFFFFF' : RAD_RAINBOW[Math.floor(i / 2 + t * 6) % 7], 1);
     const N = trailNormal(path);
     for(let i = 3; i < path.length; i += 3){ const on = Math.sin(t * 9 + i * 1.9 + b.seed); if(on < 0.2) continue;
       const side = (i & 2 ? 1 : -1) * (w / 2 + 2 + hr(i, 905 + Math.floor(t * 5)) * (3 + r * 2)), p = path[i];
       const X = Math.round(p.x + N.x * side), Y = Math.round(p.y + N.y * side);
-      c.globalAlpha = 1; c.fillStyle = '#F2C85A'; c.fillRect(X - 1, Y - 1, 3, 3); c.fillStyle = '#2EB8C8'; c.fillRect(X, Y - 1, 1, 3); c.fillRect(X - 1, Y, 3, 1); c.fillStyle = '#1A2A7A'; c.fillRect(X, Y, 1, 1); }
+      c.globalAlpha = 1; c.fillStyle = '#D5A354'; c.fillRect(X - 1, Y - 1, 3, 3); c.fillStyle = '#4EB1BB'; c.fillRect(X, Y - 1, 1, 3); c.fillRect(X - 1, Y, 3, 1); c.fillStyle = '#1A1430'; c.fillRect(X, Y, 1, 1); }
     const h0 = path[0];
-    drawGlow(c, h0.x, h0.y, r * 2 + 4, r * 2 + 4, [[0.6, '#E0287A', 1], [0.3, '#F078B8', 2], [0, '#FFC0DC', 3]], Math.floor(t * 10) & 3, 0.85);
+    drawGlow(c, h0.x, h0.y, r * 2 + 4, r * 2 + 4, [[0.6, '#D957B3', 1], [0.3, '#D86D80', 2], [0, '#F8D8CC', 3]], Math.floor(t * 10) & 3, 0.85);
     trailBall(c, b, h0, r);
     c.globalAlpha = 1;
   },
@@ -21516,7 +21525,7 @@ const BALLFX = {
     const sp = b.wake ? [] : trailSpiral(path, 7, 5 + r * 3, t, 0.55, 1.6, b.seed);
     const bit = (o, big) => { c.globalAlpha = o.z < 0 ? 0.75 : 1; c.fillStyle = RAD_RAINBOW[o.k % 7]; c.fillRect(Math.round(o.x), Math.round(o.y), big, big); };
     for(const o of sp) if(o.z < 0) bit(o, 1);
-    trailRibbon(c, path, Math.max(2, r + 1), i => i < 3 ? '#7AE8F0' : i < 7 ? '#2EB8C8' : i < 10 ? '#5AC83A' : '#3A6AE0', 0.95);
+    trailRibbon(c, path, Math.max(2, r + 1), i => i < 3 ? '#5AC3D5' : i < 7 ? '#4EB1BB' : i < 10 ? '#84B377' : '#459ECF', 0.95);
     for(const o of sp) if(o.z >= 0) bit(o, o.s < 0.5 && r > 1 ? 2 : 1);
     const h0 = path[0];
     peaBall(c, h0.x, h0.y, Math.max(1, r + 0.5));
@@ -26551,14 +26560,14 @@ const CLUBFX = {
       const k = Math.max(1, Math.round(h / 36)), D = Math.hypot(tx - hx, ty - hy) || 1, dx = (tx - hx) / D, dy = (ty - hy) / D, L = Math.min(D * 0.4, 8 * k);
       return { k, L, dx, dy, bx: tx - dx * L, by: ty - dy * L };
     },
-    under(c, hx, hy, tx, ty, th, h, t, K){ glowLine(c, hx, hy, tx, ty, th, '#F2C85A', 0.22 + 0.08 * Math.sin(t * 5)); },
+    under(c, hx, hy, tx, ty, th, h, t, K){ glowLine(c, hx, hy, tx, ty, th, '#D5A354', 0.22 + 0.08 * Math.sin(t * 5)); },
     shaft(c, hx, hy, tx, ty, th, h, t, K){
       const B2 = this.blade(hx, hy, tx, ty, h);
-      pxLine(c, hx, hy, B2.bx, B2.by, '#7A5418', th + 1);
+      pxLine(c, hx, hy, B2.bx, B2.by, '#6C574E', th + 1);
       pxLine(c, hx, hy, B2.bx, B2.by, K.shaft, th);
       const P = clubPts(hx, hy, B2.bx, B2.by, 12);
-      for(const i of [3, 6, 9]) fxDot(c, P[i][0], P[i][1], th, '#F2C85A', 1);
-      const run = Math.floor(t * 10) % 12; if(run > 2) fxDot(c, P[run][0], P[run][1], th, '#FFF0B0', 1);
+      for(const i of [3, 6, 9]) fxDot(c, P[i][0], P[i][1], th, '#D5A354', 1);
+      const run = Math.floor(t * 10) % 12; if(run > 2) fxDot(c, P[run][0], P[run][1], th, '#F5E8BA', 1);
       c.globalAlpha = 1;
     },
     head(){},
@@ -26571,23 +26580,23 @@ const CLUBFX = {
       // the blade, widest a third of the way along, to a point: its edge in
       // shade, one face lit, a light ridge down it
       for(let s = 0; s <= L; s += 0.5){ const u = s / L, wv = (u < 0.35 ? 0.6 + u / 0.35 * 1.6 : 2.2 * (1 - u) / 0.65) * k, x = bx + dx * s, y = by + dy * s;
-        for(let o = -wv; o <= wv; o += 0.5){ c.fillStyle = Math.abs(o) > wv - 0.8 ? '#7A5418' : o < 0 ? (lit ? '#FFF0B0' : '#F2C85A') : '#C8962E'; c.fillRect(Math.round(x + nx * o), Math.round(y + ny * o), 1, 1); }
-        c.fillStyle = lit ? '#FFFFFF' : '#FFF0B0'; c.fillRect(Math.round(x), Math.round(y), 1, 1); }
+        for(let o = -wv; o <= wv; o += 0.5){ c.fillStyle = Math.abs(o) > wv - 0.8 ? '#6C574E' : o < 0 ? (lit ? '#F5E8BA' : '#D5A354') : '#B07C3C'; c.fillRect(Math.round(x + nx * o), Math.round(y + ny * o), 1, 1); }
+        c.fillStyle = lit ? '#FFFFFF' : '#F5E8BA'; c.fillRect(Math.round(x), Math.round(y), 1, 1); }
       // spikes of gold round its socket, and the rose stone in it
       const back = Math.atan2(dy, dx) + Math.PI;
       for(let i = 0; i < 6; i++){ const a = back + (i - 2.5) * 0.5, r = (2 + (i & 1 ? 1 : 2)) * k;
-        for(let j = 1; j <= r; j++){ c.fillStyle = j === r ? '#FFF0B0' : '#C8962E'; c.fillRect(Math.round(bx + Math.cos(a) * j), Math.round(by + Math.sin(a) * j), 1, 1); } }
-      fxDot(c, bx - k, by - k, 2 * k + 1, '#7A5418', 1); fxDot(c, bx - k + (k > 1 ? 1 : 0), by - k + (k > 1 ? 1 : 0), 2 * k, lit ? '#F078B8' : '#E0287A', 1);
+        for(let j = 1; j <= r; j++){ c.fillStyle = j === r ? '#F5E8BA' : '#B07C3C'; c.fillRect(Math.round(bx + Math.cos(a) * j), Math.round(by + Math.sin(a) * j), 1, 1); } }
+      fxDot(c, bx - k, by - k, 2 * k + 1, '#6C574E', 1); fxDot(c, bx - k + (k > 1 ? 1 : 0), by - k + (k > 1 ? 1 : 0), 2 * k, lit ? '#D86D80' : '#D957B3', 1);
       c.globalAlpha = 1;
     },
     trail(c, arc, th, t){
-      arcTrail(c, arc, th + 2, ['#F078B8', '#E0287A'], 0.55);
-      arcTrail(c, arc, th + 1, ['#C8962E', '#F2C85A'], 0.85);
+      arcTrail(c, arc, th + 2, ['#D86D80', '#D957B3'], 0.55);
+      arcTrail(c, arc, th + 1, ['#B07C3C', '#D5A354'], 0.85);
       arcTrail(c, arc, 1, ['#FFFFFF'], 0.85);
       // light crackling along it in jags
       const F = Math.floor(t * 20);
       for(let i = 1; i < arc.length; i++){ const o = (hr(i, 910 + F) - 0.5) * 6, p = arc[i], q = arc[i - 1], dx = p[0] - q[0], dy = p[1] - q[1], L = Math.hypot(dx, dy) || 1;
-        fxDot(c, p[0] - dy / L * o, p[1] + dx / L * o, 1, i % 3 ? '#FFF0B0' : RAD_RAINBOW[i % 7], 1); }
+        fxDot(c, p[0] - dy / L * o, p[1] + dx / L * o, 1, i % 3 ? '#F5E8BA' : RAD_RAINBOW[i % 7], 1); }
       c.globalAlpha = 1;
     },
     pure(c, x, y, h, f){
@@ -26595,7 +26604,7 @@ const CLUBFX = {
       for(let i = 0; i < 8; i++){ const a = i / 8 * Math.PI * 2 + 0.3, R = h * (0.08 + 0.4 * f); let px = X, py = Y;
         for(let j = 1; j <= 5; j++){ const r = R * j / 5, jag = (hr(i * 7 + j, 911) - 0.5) * h * 0.06;
           const qx = X + Math.cos(a) * r - Math.sin(a) * jag, qy = Y + (Math.sin(a) * r + Math.cos(a) * jag) * 0.6;
-          if(j > 5 * f * 0.5) pxLine(c, px, py, qx, qy, f < 0.4 ? '#FFFFFF' : '#F2C85A', k);
+          if(j > 5 * f * 0.5) pxLine(c, px, py, qx, qy, f < 0.4 ? '#FFFFFF' : '#D5A354', k);
           px = qx; py = qy; }
         fxDot(c, px - k, py - k, 2 * k + 1, RAD_RAINBOW[i % 7], 1); }
       c.globalAlpha = 1;
@@ -26802,7 +26811,7 @@ const NIGHT_GLOW = {
   dread:    { col: ['#0C3A26', '#17734A', '#2EB872'], breathe: 0.9 },
   cyber:    { col: ['#141826', '#1E9A4A', '#3AF07A'], breathe: 1.4 },
   penitent: { col: ['#3A2410', '#6E4E1E', '#D8A848'], flicker: 1 },
-  radiant:  { col: ['#2A1238', '#8A3AC8', '#F078B8'], breathe: 1.6 },
+  radiant:  { col: ['#2A1E48', '#9A50D2', '#D86D80'], breathe: 1.6 },
   psyche:   { col: ['#4A2290', '#C81E6A', '#FF8A1E'], breathe: 2.2 },
   // (and the Legendary skins, after them: the user asked them a night too)
   inferno:     { col: ['#5A1A0A', '#B8401C', '#FF9A2A'], flicker: 1 },
@@ -26838,7 +26847,7 @@ function nightPool(c, g, NG){
 // out from the back of her head side on, down her back from behind,
 // swinging a little. Plain looks have it in their picture (femRows).
 // ([its colour, the dark edge it is drawn in, so it shows against her])
-const FEM_HAIR = { radiant: ['#E0287A', '#2A1238'], penitent: ['#F2E4C4', '#7E6A50'], divine: ['#F4D27A', '#0E5A48'], midas: ['#FFF2B8', '#6A4A10'], void: ['#C68BFF', '#120A24'],
+const FEM_HAIR = { radiant: ['#D957B3', '#2A1E48'], penitent: ['#F2E4C4', '#7E6A50'], divine: ['#F4D27A', '#0E5A48'], midas: ['#FFF2B8', '#6A4A10'], void: ['#C68BFF', '#120A24'],
   dread: ['#C8FFE0', '#0C3A26'], cyber: ['#C8F23A', '#141826'], inferno: ['#FFD34A', '#4A1408'], demonic: ['#FF8A24', '#1A0A0A'],
   ascended: ['#F2A6F8', '#3A1A5A'], cosmic: ['#7FE6FF', '#120A24'], frostborn: ['#FFFFFF', '#3F7FB0'],
   stormcaller: ['#BFE0FF', '#1A2A4A'], glitch: ['#FF2A6D', '#0A2A2E'], disco: ['#FF4FB8', '#3A0F3A'],
@@ -33988,7 +33997,7 @@ const cperkDef = id => B.CPERKS.find(x => x.id === id);
 // the Mythic Favour: worn only with a Mythic caddie (the Divine, Demonic, Ascended or Void)
 const MYTH_CADDIES = ['divine', 'demonic', 'ascended', 'cosmic', 'dread', 'psyche', 'cyber', 'penitent', 'radiant'];
 const mythOk = () => MYTH_CADDIES.includes(S.caddie);
-const MYTH_PAL = { divine: ['#FFF2B8', '#3FD6A8', '#E0AE3E'], demonic: ['#FFE680', '#FF8A2A', '#E8401C'], ascended: ['#FFE0FF', '#F27CFF', '#B04ACB'], cosmic: ['#FFFFFF', '#B98CFF', '#7FE6FF'], dread: ['#E8FFF2', '#5CF0A0', '#2EB872'], psyche: ['#FFFFFF', '#FF2E88', '#2EC8FF'], cyber: ['#E8FF9A', '#3AF07A', '#FF3AD0'], penitent: ['#FFF2C0', '#F4D27A', '#A8283A'], radiant: ['#FFFFFF', '#F078B8', '#2EB8C8'] };
+const MYTH_PAL = { divine: ['#FFF2B8', '#3FD6A8', '#E0AE3E'], demonic: ['#FFE680', '#FF8A2A', '#E8401C'], ascended: ['#FFE0FF', '#F27CFF', '#B04ACB'], cosmic: ['#FFFFFF', '#B98CFF', '#7FE6FF'], dread: ['#E8FFF2', '#5CF0A0', '#2EB872'], psyche: ['#FFFFFF', '#FF2E88', '#2EC8FF'], cyber: ['#E8FF9A', '#3AF07A', '#FF3AD0'], penitent: ['#FFF2C0', '#F4D27A', '#A8283A'], radiant: ['#FFFFFF', '#D86D80', '#4EB1BB'] };
 // A perk's level (1 until upgraded) and what it does there: a second longer
 // and an eighth stronger each level (Ready Golf and Lost Ball Scout only
 // stronger: one acts at once, the other lasts a hole). Its words are its own

@@ -64,6 +64,15 @@ feature must do, and is usually enough on its own.
   cap gold), a halo, small white wings (`cherubWing`). Its blessing is
   the Tornado of Grace (`BLESS_FX.radiant`), its trick `grace` (rings of
   every colour whirling up round it). Check: `radiant`.
+- First look was bright flat rainbow on a beige body; he asked "where are
+  the colors like in the image?" Now the picture's own palette (read off
+  its strip: soft gold, cream, peach, rose, violet, sky, teal, sage, olive,
+  amber, orange, deep violet), a rose robe and tunic quilted in violet
+  with a cream lining, every plume outlined in deep violet with an olive
+  and teal eye, seven plumes side on, feather tips at the hem, the floating
+  faces bigger (as in the picture) and in pale cream, no white glare on an
+  ace. Small, the crown's spikes and the blindfold drop their dark edges
+  (they turned tan, or hid his face).
 
 
 - He sent "The Penitent Choir" sheet and asked for it "as a mythic skin";

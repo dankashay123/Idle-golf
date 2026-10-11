@@ -42,9 +42,9 @@ module.exports = {
             const cv = document.createElement('canvas'); cv.width = W; cv.height = H; const c = cv.getContext('2d');
             paintGolfer(c, Math.round(W / 2 - w / 2), top, w, hgt, ph, 1.3, H - 10, walking, walking ? 0.3 : 0, spr, [], undefined, false);
             const d = c.getImageData(0, 0, W, H).data;
-            const hd = (x, y) => y < top + hgt * 0.12, gold = ['#C8962E', '#F2C85A', '#7A5418', '#FFF0B0'].reduce((t, h) => t + cnt(d, W, h, hd), 0);
-            const L0 = Math.round(W / 2 - w / 2), face = cnt(d, W, '#F2D0BC', (x, y) => y < top + hgt * 0.3 && x >= L0 && x < L0 + w), eyes = cnt(d, W, '#1A2A7A'), plume = cnt(d, W, '#2EB8C8');
-            const sigil = cnt(d, W, '#2A1238', (x, y) => y > H - 10 - hgt * 0.2) + cnt(d, W, '#4A1A6A', (x, y) => y > H - 10 - hgt * 0.2);
+            const hd = (x, y) => y < top + hgt * 0.12, gold = ['#B07C3C', '#D5A354', '#6C574E', '#F5E8BA'].reduce((t, h) => t + cnt(d, W, h, hd), 0);
+            const L0 = Math.round(W / 2 - w / 2), face = cnt(d, W, '#F4C2B5', (x, y) => y > top + hgt * 0.02 && y < top + hgt * 0.3 && x >= L0 && x < L0 + w), eyes = cnt(d, W, '#1A1430'), plume = cnt(d, W, '#4EB1BB');
+            const sigil = cnt(d, W, '#2A1E48', (x, y) => y > H - 10 - hgt * 0.2) + cnt(d, W, '#3B2C66', (x, y) => y > H - 10 - hgt * 0.2);
             o.rows.push(nm + ':' + gold + '/' + face + '/' + eyes + '/' + plume + '/' + sigil);
             if (gold < hgt * 0.4) f(nm + ': ' + gold + ' gold pixels of his crown over his head');
             if (walking ? face > 2 : face < Math.max(2, hgt * hgt / 600)) f(nm + ': ' + face + ' pixels of his face');
@@ -79,7 +79,7 @@ module.exports = {
           const cv = document.createElement('canvas'); cv.width = W; cv.height = H; const c = cv.getContext('2d');
           paintGolfer(c, x0, H - 10 - hgt, w, hgt, 0, 1.3, H - 10, true, 0, spr, [], undefined, true, 1);
           const d = c.getImageData(0, 0, W, H).data; let sx = 0, n = 0;
-          for (let i = 0; i < d.length; i += 4) { const px = (i >> 2) % W, py = (i >> 2) / W | 0; if (py > H - 10 - hgt * 0.85) continue; if (d[i + 3] > 200 && d[i] === 0xC8 && d[i + 1] === 0x96 && d[i + 2] === 0x2E) { sx += px; n++; } }
+          for (let i = 0; i < d.length; i += 4) { const px = (i >> 2) % W, py = (i >> 2) / W | 0; if (py > H - 10 - hgt * 0.85) continue; if (d[i + 3] > 200 && d[i] === 0xD5 && d[i + 1] === 0xA3 && d[i + 2] === 0x54) { sx += px; n++; } }
           const mid = x0 + w * CAP_BACK.x, at = n ? sx / n : -1; o.wave = n + 'px at ' + (at - mid).toFixed(1);
           if (n < 20 || Math.abs(at - mid) > w * 0.12) f('waving, his crown is ' + (n ? (at - mid).toFixed(1) + 'px from his head' : 'not drawn')); }
       } finally { window.toast = tw; QUIET = false; Object.keys(S).forEach(k => delete S[k]); Object.assign(S, JSON.parse(SNAP)); buildSprites(); hideSheet(); Scene.newHole(S.hole, S.tier); }
