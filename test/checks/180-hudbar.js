@@ -7,7 +7,8 @@
  *   - at 320x568, 390x844, 440x956 and 844x390: the bar's top within a pixel
  *     of the stage's, which starts within a pixel of the nine's bar above it;
  *     the bar and its yardage line at least 97% of the stage wide
- *   - the hole, the yards and the clock on one line; the weather line one line
+ *   - the hole, the yards and the clock on one line, the call ("Albatross")
+ *     and the clock whole and apart (at 320 the clock takes the hole's place); the weather line one line
  *     high, with the longest weather the game shows, nothing cut mid-word
  *   - the six buttons below the bar, in one column at the same left (or two)
  *   - the toasts start below the bar
@@ -47,9 +48,10 @@ module.exports = {
         const lefts = [...new Set(btns.map(b => Math.round(b.left)))];
         const toasts = R('toasts'), mid = R('stage').left + R('stage').width / 2;
         // the yards in the middle whatever the call says either side
-        const yards = []; for (const [tag, clock] of [['', '0.0 / 10s'], ['Albatross', '10.0 / 15s'], ['Par', '1.2 / 10s']]) {
-          document.getElementById('rTag').textContent = tag; document.getElementById('rTopR').textContent = clock; const q = document.querySelector('#readout .rmain').getBoundingClientRect(); yards.push(q.left + q.width / 2 - mid); }
-        const out = { st: [st.top, st.width], nb: nb.bottom, bar: [bar.top, bar.bottom, bar.width], fill: fill.width, line: line.height, rh: R('rTop').height,
+        let callCut = ''; const yards = []; for (const [tag, clock] of [['', '0.0 / 10s'], ['Albatross', '10.0 / 15s'], ['Par', '1.2 / 10s']]) {
+          document.getElementById('rTag').textContent = tag; document.getElementById('rTopR').textContent = clock; const q = document.querySelector('#readout .rmain').getBoundingClientRect(); yards.push(q.left + q.width / 2 - mid);
+          const tg = document.getElementById('rTag'), ck = document.getElementById('rTopR'); if (tg.scrollWidth > tg.clientWidth + 0.5 || ck.scrollWidth > ck.clientWidth + 0.5 || (tag && (() => { const a = ck.getBoundingClientRect(), b = tg.getBoundingClientRect(); return a.left < b.right - 0.5 && b.left < a.right - 0.5; })())) callCut = tag + ' with ' + clock; }
+        const out = { st: [st.top, st.width], nb: nb.bottom, bar: [bar.top, bar.bottom, bar.width], fill: fill.width, line: line.height, rh: Math.max(R('rTop').height, R('rTopR').height), callCut,
           wxh: wx.getBoundingClientRect().height, lh, cut, shown: shown.length, cols: lefts.length, btnTop: Math.min(...btns.map(b => b.top)), toastTop: toasts.top,
           two: document.getElementById('hudLeft').classList.contains('twocol'), yards, moved, hs, affOff: affMid - mid };
         // the condition beside the cog
@@ -69,6 +71,7 @@ module.exports = {
       if (r.cut) f(at + 'the weather line cut mid-word');
       if (r.moved > 1.5) f(at + 'the slots under the bar move ' + r.moved.toFixed(1) + 'px as their words change');
       if (r.yards.some(v => Math.abs(v) > 1.5)) f(at + 'the yards off the middle by ' + r.yards.map(v => v.toFixed(1)).join('/') + 'px as the call changes');
+      if (r.callCut) f(at + 'the call or the clock cut or crossing: ' + r.callCut);
       if (r.cols !== 1 && !(r.two && r.cols === 2)) f(at + 'the buttons in ' + r.cols + ' columns');
       if (Math.max(...r.hs) - Math.min(...r.hs) > 0.5) f(at + 'the bar changes size: ' + r.hs.map(v => v.toFixed(1)).join('/') + 'px');
       if (Math.abs(r.affOff) > 1.5) f(at + 'the affinity ' + r.affOff.toFixed(1) + 'px off the middle');

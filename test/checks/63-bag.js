@@ -7,7 +7,8 @@
  *   - the clubs are tiles, two to a row: each framed in its rarity's colour,
  *     its name in that colour, its item level and rarity, and its numbers
  *     (the swing or affinity it gives, and an affix); the one carried
- *     first and marked Equipped; a better one marked with an arrow
+ *     first and marked Equipped; a better one marked with an arrow; the
+ *     element's badge inside its box, not over the name beside it
  *   - the sub tabs and the slot bar stay at the top of the panel however far
  *     the clubs are scrolled, and a slot can be changed from there
  *   - a tap on a club opens it with Equip, Upgrade and Scrap together:
@@ -50,10 +51,17 @@ module.exports = {
         bagSub = 'sets'; renderBagNav(); renderBag();
         if (!vis('setBox') || !vis('purseStrip') || vis('bagList')) f('Sets & Affinities does not show the set rows and the purse alone');
         o.setRows = $('setBox').children.length;
+        S.bag.forEach((it, i) => { if (i % 2) it.el = B.ELEM[i % B.ELEM.length].id; });
         bagSub = 'gear'; renderBagNav(); renderBag(); await sleep(50);
 
         // ---- tiles, two to a row ----
         const tiles = [...$('bagList').querySelectorAll('.gt')];
+        // the element's badge inside its little box, never over the name beside it
+        const tels = [...$('bagList').querySelectorAll('.gt .tel')];
+        o.badges = tels.length;
+        if (!tels.length) f('no tile wears its element\'s badge');
+        for (const t of tels) { const b = t.getBoundingClientRect(), g = t.querySelector('img,svg').getBoundingClientRect();
+          if (g.width > b.width + 0.5 || g.right > b.right + 0.5 || g.bottom > b.bottom + 0.5) { f('an element badge ' + Math.round(g.width) + 'px in its ' + Math.round(b.width) + 'px box, over the name'); break; } }
         o.tiles = tiles.length;
         if (tiles.length !== 17) f(tiles.length + ' tiles for 16 spare drivers and the one carried');
         const rects = tiles.map(t => t.getBoundingClientRect());
