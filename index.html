@@ -34904,7 +34904,9 @@ const DEV = {
     hideSheet(); renderAll(); spotShow(got, 0, { fresh: got, n: H.got.length, paid, pay, run: paid ? S.huntRun.n : 0 }); },
   // a run of weeks in a row behind this one (0: none)
   huntRun(n){ if(n) S.huntRun = { wk: huntNow().wk - 1, n }; else delete S.huntRun; this.re(); },
-  huntWk(n){ HUNTWK_FORCE = n ? huntWeek() + n : null; Scene.newHole(S.hole, S.tier); this.re(); },
+  // (back to this week: the later week it showed is dropped, as a hunt never
+  // goes back to an earlier week on its own)
+  huntWk(n){ HUNTWK_FORCE = n ? huntWeek() + n : null; if(!n && S.hunt && S.hunt.wk > weekNow()) delete S.hunt; Scene.newHole(S.hole, S.tier); this.re(); },
   tag(n){ hideSheet(); const an = GUIDE.filter(g => g.g === 'w').map(g => g.id); spotShow(an.slice(0, n), 0, null); },
   tagSw(){ toggleSpotTag(); this.open(); },
   wagerWild(v){ WAGER_WILD_P = v; Scene.themeId = null; this.open(); },
