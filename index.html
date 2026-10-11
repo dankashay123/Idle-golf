@@ -6036,8 +6036,8 @@ function addXp(n){
       S.tickets = Math.min(B.TICK_CAP, (S.tickets||0) + B.TICK_LEVEL);
     }
     if(gained){
-      toast('Level <b>' + S.lv + '</b> \u00b7 +' + gained*B.LV_TALENT + ' talent, +'
-        + gained*B.LV_STAT + ' attribute');
+      // ("+3 attribute": the count's own word, in the plural past one)
+      toast('Level <b>' + S.lv + '</b> \u00b7 +' + tw(gained*B.LV_TALENT, 'talent') + ', +' + tw(gained*B.LV_STAT, 'attribute'));
       if(atMax()) toast('Level 60 \u00b7 <b>Paragon</b> begins');
       Sfx.play('level');
       if(typeof renderCareer === 'function') renderCareer();
@@ -8023,7 +8023,8 @@ function resolveNine(){
   if(best){
     S.bestNine = N.total;
     const g = hole * B.NINE_BEST_PAY * (1 + D.C.nine); S.gold += g; Meter.add(g);
-    bits.push('best nine, ' + fmt(g));
+    // ("best nine, 655" left the figure without its unit)
+    bits.push('best nine, ' + fmt(g) + ' purse');
   }
   const fm = n => n === 0 ? 'E' : n > 0 ? '+' + n : String(n);
   const name = N.idx === 0 ? 'Front nine' : 'Back nine';
