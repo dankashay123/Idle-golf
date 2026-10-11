@@ -27,7 +27,8 @@ module.exports = {
       const SNAP = JSON.stringify(S), real = Math.random;
       const rs = window.scoreFor, rf = window.finishHole;
       const n = {}; let holes = 0, nines = 0, ninesWon = 0, inHole = false;
-      window.scoreFor = ratio => { const sc = rs(ratio); if (inHole){ inHole = false; n[sc.n] = (n[sc.n] || 0) + 1; holes++; } return sc; };
+      let counting = true;
+      window.scoreFor = ratio => { const sc = rs(ratio); if (inHole && counting){ inHole = false; n[sc.n] = (n[sc.n] || 0) + 1; holes++; } return sc; };
       window.finishHole = D => { inHole = true; try { return rf(D); } finally { inHole = false; } };
       // each goal, how often it came up and how often it was won
       const rn = window.resolveNine, goals = {};
@@ -53,6 +54,12 @@ module.exports = {
           while (t < 2 * 3600) { step(B.TICK_MAX, derive()); t += B.TICK_MAX; if ((t % 20) < B.TICK_MAX) shop(); }
           nines += Math.floor(S.totalHoles / 9); ninesWon += S.ninesWon || 0;
         }
+        // and a new player who buys nothing, held to the easiest band, so its
+        // goals come up (the golfers above climb past it)
+        { const nb = window.nineBand; window.nineBand = () => 0; counting = false;
+          Object.keys(S).forEach(k => delete S[k]); Object.assign(S, defaultState()); initState(); migrate(); startHole(); startNine();
+          let seed = 4242; Math.random = () => (seed = (seed * 16807) % 2147483647) / 2147483647; DAY_FORCE = 20800;
+          const n0 = holes; let t = 0; while (t < 4 * 3600) { step(B.TICK_MAX, derive()); t += B.TICK_MAX; } holes = n0; window.nineBand = nb; }
       } finally {
         window.scoreFor = rs; window.finishHole = rf; window.resolveNine = rn; Math.random = real; QUIET = false; DAY_FORCE = null;
         Object.keys(S).forEach(k => delete S[k]); Object.assign(S, JSON.parse(SNAP)); startHole();

@@ -6,6 +6,18 @@ feature must do, and is usually enough on its own.
 
 ## Sections, newest first
 
+### Climbing, the caddie, easiest goals (11 October)
+
+- No move of card from inside a wager (`climb` as `retire`); the Tour tab
+  and card rewards otherwise held. Check `retire`.
+- The caddie held: an errand back while away paid once, never longer with
+  the clock back; perks sit out wagers and time away; the Mythic Favour
+  waits with a plainer caddie.
+- Easiest band: `r2` Two birdies in a row, `p5b` and `p3b` a birdie on a
+  par five or three (`N.p5b`, `N.p3b`). On a new game buying nothing: 26,
+  58, 27% (the old ones 11 to 44%). The `scoring` check plays such a game
+  held to the band so its goals come up.
+
 ### The days only forward, wagers away, Settings at 320, hardest goals (11 October)
 
 - A day, week or month reading earlier (the clock back before a save) now
