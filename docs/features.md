@@ -38,7 +38,33 @@ feature must do, and is usually enough on its own.
   plainly (counts "3 / 5", holes in full, "A Mythic within 29 bags", the
   Starter Pack's BOUGHT once).
 
-### The Penitent, a Mythic set from his own sprite sheet (10 October)
+### The Radiant, a Mythic set from his own picture (11 October)
+
+- He sent a boss sheet he made ("The Radiant Unmaking") and asked for it
+  copied completely, named **The Radiant**. A set of five after the
+  Penitent in `SET_ORDER` (11,115 on Sets): outfit and caddie `radiant`,
+  the **Holy Lance** (`CLUBFX.radiant`: a gold staff, a lance's blade
+  drawn back up it from its end, spikes and a rose stone at its socket,
+  ribbons of every colour; a crackling gold swing, jagged bolts on a pure
+  strike), the **Bloom Wake** `bloomwake` (`tBloom`) and the **Peacock
+  Eye** `peacockeye` (`peaeye`) in every ball table.
+- `STYLEFX.radiant`: rainbow hair over the hood shape in tendrils, a pale
+  face blindfolded in gold (`radHead`; at small sizes one gold band, so
+  the face shows); a fan of gold spikes as his crown (`radCrown`, no
+  hoop); an ivory robe quilted in gold over a violet panel with beads, a
+  rainbow fringe (`radRobe`); five peacock plumes from the shoulders
+  trailing back to the ground side on, down his back walking away, an eye
+  on each (`radPlumes`); three floating blindfolded faces (`radVisage`,
+  only from 40 tall: smaller they matched his head); an eye in a
+  spiral of every colour underfoot (`radSigil`, bounded, `cvFree`). On an
+  albatross or an ace the crown bursts into rays of every colour with
+  eyes, and eyes and plumes burst from his outline. `RAD_RAINBOW` sits by
+  `SET_ORDER` (load order: the ball tables use it).
+- The caddie is a cherub (the sheet's Seraphim Descent): gold curls (its
+  cap gold), a halo, small white wings (`cherubWing`). Its blessing is
+  the Tornado of Grace (`BLESS_FX.radiant`), its trick `grace` (rings of
+  every colour whirling up round it). Check: `radiant`.
+
 
 - He sent "The Penitent Choir" sheet and asked for it "as a mythic skin";
   then "why wouldn't it be a mythic set?": a full set, the seventh, after

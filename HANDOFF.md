@@ -58,8 +58,8 @@ through:
   new a switch. Earlier work: the sections under it.
 - What lives by the season asks `lookSeason`: a course's own, the Snowline
   winter and the Blossom spring all year, else the month.
-- `node test/run.js` has **200 checks** (all passed 10 October, after the
-  Honours wording pass). About 35 minutes: run it in the
+- `node test/run.js` has **201 checks** (all passed 11 October, after the
+  narrow-phone polish). About 35 minutes: run it in the
   background, on a copy in the scratchpad, with the machine quiet. After
   weather, colours or anything dated, also run it with `HOUR_FORCE` 8 and
   15 and the month pinned (rules 20 and 70).
@@ -78,7 +78,8 @@ through:
   on his phone (all 8 October); the redesigned Tour Pass page, the gear
   padlocks, the house in the treeline (9 October); the Honours
   list's new wording (10 October); The Penitent, the Mythic set from his
-  sprite sheet (more detail, the whole set, the veil on his head waving).
+  sprite sheet (more detail, the whole set, the veil on his head waving);
+  The Radiant, the Mythic set from his picture (11 October).
 - Settled, in case it comes up: swing speed still matters fully (a hole's
   time is when the ball drops); Fast Walker only shortens a hole's least
   time; every caddie has a trick (don't offer caddie tricks); Dawn and
@@ -114,8 +115,8 @@ through:
   starts.**
 - **The plain caddie has no wings**; he floats and now and then takes a
   turn. A caddie in a set's look follows it.
-- **The seven sets keep one order** everywhere: Psychedelic, The Dread,
-  Ascended, The Void, The Penitent, Divine, Demonic (`SET_ORDER`); a set's one tap wears
+- **The eight sets keep one order** everywhere: Psychedelic, The Dread,
+  Ascended, The Void, The Penitent, The Radiant, Divine, Demonic (`SET_ORDER`); a set's one tap wears
   all five pieces, the ball included. Anything worn reads UNEQUIP.
 - **The female golfer** (Settings) has her own figure, lines and poses;
   every Legendary and Mythic skin goes down her legs, no bare skin. Her
