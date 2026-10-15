@@ -9,7 +9,10 @@
  *   - each rarity set the club counts toward, with its count and its slots
  *     worn at that rarity lit
  *   - a plain club in no set shows none
- *   - at 320 nothing past the screen */
+ *   - at 320 nothing past the screen
+ *   - the Bag's Sets & Affinities page shows the same panels for every set
+ *     at once: each rarity set, and each named set once a piece of it has
+ *     turned up, the worn pieces lit */
 'use strict';
 module.exports = {
   name: 'setsheet',
@@ -33,6 +36,11 @@ module.exports = {
         o.chips = boxes[1] ? [...boxes[1].querySelectorAll('.sbchips span.on')].map(e => e.textContent) : null;
         o.off = [...sh.querySelectorAll('.setbox, .setbox *')].filter(e => e.getBoundingClientRect().right > innerWidth + 0.5).length;
         hideSheet(); itemSheet(plain, false); o.plain = document.querySelectorAll('#sheet .setbox').length; hideSheet();
+        setView('bag'); bagSub = 'sets'; renderBag();
+        const pg = document.getElementById('setBox');
+        o.page = [...pg.querySelectorAll('.setbox .sbh')].map(e => e.textContent);
+        o.pageLit = [...pg.querySelectorAll('.setbox .sbp li.on')].map(e => e.textContent);
+        o.pageOff = [...pg.querySelectorAll('.setbox, .setbox *')].filter(e => e.getBoundingClientRect().right > innerWidth + 0.5).length;
       } finally { window.toast = tw; QUIET = false; Object.keys(S).forEach(k => delete S[k]); Object.assign(S, JSON.parse(SNAP)); hideSheet(); renderBag(); }
       return o;
     });
@@ -44,7 +52,11 @@ module.exports = {
     if (r.heads[1] !== 'Matched Set (3/6)' || (r.chips || []).join() !== 'Driver,Irons,Putter') f('the rarity set read ' + r.heads[1] + ', its slots ' + (r.chips || []).join(', '));
     if (r.plain) f('a plain club in no set shows ' + r.plain + ' set panels');
     if (r.off) f(r.off + ' parts of the set panels past the screen at 320');
+    const want = ['Old Course Heritage (3/6)', 'Matched Set (3/6)', 'Tour Issue (0/6)', 'Mythwrought (0/6)'];
+    if (!r.page || want.some(h => !r.page.includes(h)) || r.page.length !== want.length) f('the Sets page shows ' + JSON.stringify(r.page));
+    if ((r.pageLit || []).join() !== 'Heritage Driver,Heritage Irons,Heritage Putter') f('the Sets page lights ' + (r.pageLit || []).join(', '));
+    if (r.pageOff) f(r.pageOff + ' parts of the Sets page past the screen at 320');
     if (fl.length) throw new Error(fl.join('; '));
-    return ['a set piece\'s sheet: "' + r.heads[0] + '", the worn pieces lit, two said in the locker, the bonus in effect lit; the rarity set it counts toward with its slots; none on a plain club; whole at 320'];
+    return ['a set piece\'s sheet: "' + r.heads[0] + '", the worn pieces lit, two said in the locker, the bonus in effect lit; the rarity set it counts toward with its slots; none on a plain club; whole at 320', 'the Sets page: ' + r.page.join(', ')];
   }
 };

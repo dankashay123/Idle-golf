@@ -750,9 +750,9 @@ li.afx.on .lockb{color:var(--brass);border-color:var(--brass);background:rgba(22
 .setbox .sbh{font-family:var(--disp);font-size-adjust:none;font-size:var(--f3);color:var(--brass);line-height:1.2}
 .setbox .sbd{font-size:var(--f0);color:var(--faint);letter-spacing:.04em;margin-top:1px}
 .setbox .sbp{list-style:none;margin:6px 0 2px 10px;padding:0;font-size:var(--f1);line-height:1.45}
-#sheet .setbox .sbp li{color:var(--faint);font-size:var(--f1);line-height:1.45;margin:0}
-#sheet .setbox .sbp li.on{color:var(--brass)}
-#sheet .setbox .sbp li i{font-style:normal;font-size:var(--f0);color:var(--dim);letter-spacing:.04em;white-space:nowrap}
+#sheet .setbox .sbp li,#setBox .setbox .sbp li{color:var(--faint);font-size:var(--f1);line-height:1.45;margin:0}
+#sheet .setbox .sbp li.on,#setBox .setbox .sbp li.on{color:var(--brass)}
+#sheet .setbox .sbp li i,#setBox .setbox .sbp li i{font-style:normal;font-size:var(--f0);color:var(--dim);letter-spacing:.04em;white-space:nowrap}
 .setbox .sbchips{display:flex;flex-wrap:wrap;gap:4px;margin:6px 0 2px}
 .setbox .sbchips span{font-size:var(--f0);letter-spacing:.06em;text-transform:uppercase;padding:1px 5px;border:1px solid var(--line);color:var(--faint)}
 .setbox .sbchips span.on{color:var(--brass);border-color:var(--brass-dk)}
@@ -33216,18 +33216,11 @@ function renderBagSets(){
     '<div class="row"><div><div class="nm">' + (ce ? ce.n + ' Course' : 'Neutral Course') + '</div>'
     + '<div class="ds">' + verdict + (ce ? '. ' + elemOf(B.DAMPS[ce.id]).n + ' balls are weak on this course.' : '.') + '</div></div>'
     + (ce ? svgIcon(ce.ic, 'bic', elemColor(ce.id)) : '') + '</div>'
-    // A named set gets a row once a piece of it has turned up, equipped or in
-    // the locker; before that, four rows of 0/6 would be four lines of nothing.
-    + B.SETS.filter(set => !set.named || set.id in ownedSets()).map(set => {
-        const a = activeSets().find(x => x.set.id === set.id);
-        const next = set.tiers.find(t => t.n > a.n);
-        const eff = setEffect;
-        return '<div class="row"><div><div class="nm">' + svgIcon(set.ic, 'tic', a.tier ? BRASS : '')
-          + set.n + ' <span class="pill">' + a.n + '/6</span></div>'
-          + '<div class="ds">'
-          + (a.tier ? '<b style="color:var(--aurora)">' + nb(eff(a.tier)) + '</b>' : set.d)
-          + (next ? ' \u00b7 ' + 'Wear ' + next.n + ': ' + nb(eff(next)) : '') + '</div></div></div>';
-      }).join('')
+    // A named set shows once a piece of it has turned up, equipped or in the
+    // locker; before that, four panels of 0/6 would be four of nothing. Each
+    // in full, as on a club's sheet (the user asked: every set at once, its
+    // pieces worn and not, its bonuses)
+    + B.SETS.filter(set => !set.named || set.id in ownedSets()).map(setPanel).join('')
     + (Object.keys(ownedSets()).length ? '' : '<div class="hint">Named sets drop from Rare clubs and up.</div>');
 }
 
@@ -33363,25 +33356,21 @@ function swapLine(label, a, b, fmtv, higherIsBetter){
 // its bonuses at two, four and six, the one in effect lit), and each rarity
 // set it counts toward, shorter (the slots worn at that rarity as chips).
 // Only the highest bonus reached counts: a lower one reached is shown passed.
-function setBoxes(it){
-  const tiers = (set, n) => { const best = set.tiers.filter(t => n >= t.n).pop();
+function setPanel(set){
+  const tiers = n => { const best = set.tiers.filter(t => n >= t.n).pop();
     return set.tiers.map(t => '<div class="sbt' + (t === best ? ' on' : n >= t.n ? ' past' : '') + '">(' + t.n + ') ' + setEffect(t) + '</div>').join(''); };
-  const count = set => B.SLOTS.filter(sl => inSet(S.equip[sl.id], set)).length;
-  let h = '';
+  const n = B.SLOTS.filter(sl => inSet(S.equip[sl.id], set)).length;
+  const head = '<div class="setbox"><div class="sbh">' + set.n + ' (' + n + '/' + B.SLOTS.length + ')</div>';
+  if(set.named) return head + '<div class="sbd">' + set.d + '</div><ul class="sbp">'
+    + B.SLOTS.map(sl => { const on = inSet(S.equip[sl.id], set), held = !on && S.bag.some(x => x.slot === sl.id && x.set === set.id);
+        return '<li' + (on ? ' class="on"' : '') + '>' + set.mk + ' ' + sl.n + (held ? ' <i>\u00b7 in your locker</i>' : '') + '</li>'; }).join('')
+    + '</ul>' + tiers(n) + '</div>';
+  return head + '<div class="sbd">' + set.d + ', worn</div><div class="sbchips">'
+    + B.SLOTS.map(sl => '<span' + (inSet(S.equip[sl.id], set) ? ' class="on"' : '') + '>' + sl.n + '</span>').join('') + '</div>' + tiers(n) + '</div>';
+}
+function setBoxes(it){
   const named = it.set && setDef(it.set);
-  if(named){
-    const n = count(named), mine = S.bag;
-    h += '<div class="setbox"><div class="sbh">' + named.n + ' (' + n + '/' + B.SLOTS.length + ')</div><div class="sbd">' + named.d + '</div><ul class="sbp">'
-      + B.SLOTS.map(sl => { const on = inSet(S.equip[sl.id], named), held = !on && mine.some(x => x.slot === sl.id && x.set === named.id);
-          return '<li' + (on ? ' class="on"' : '') + '>' + named.mk + ' ' + sl.n + (held ? ' <i>\u00b7 in your locker</i>' : '') + '</li>'; }).join('')
-      + '</ul>' + tiers(named, n) + '</div>';
-  }
-  for(const set of B.SETS) if(!set.named && inSet(it, set)){
-    const n = count(set);
-    h += '<div class="setbox"><div class="sbh">' + set.n + ' (' + n + '/' + B.SLOTS.length + ')</div><div class="sbd">' + set.d + ', worn</div><div class="sbchips">'
-      + B.SLOTS.map(sl => '<span' + (inSet(S.equip[sl.id], set) ? ' class="on"' : '') + '>' + sl.n + '</span>').join('') + '</div>' + tiers(set, n) + '</div>';
-  }
-  return h;
+  return (named ? setPanel(named) : '') + B.SETS.filter(set => !set.named && inSet(it, set)).map(setPanel).join('');
 }
 function itemSheet(it, equipped){
   const el = it.el ? B.ELEM.find(e => e.id === it.el) : null;

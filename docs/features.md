@@ -14,7 +14,9 @@ feature must do, and is usually enough on its own.
   said so, the rest grey; its bonuses, only the one in effect lit (only
   the highest reached counts; a lower one reached shows passed); and each
   rarity set it counts toward, shorter, its slots worn at that rarity as
-  chips. Below the swap preview. Check `setsheet`.
+  chips. Below the swap preview. The Bag's Sets & Affinities page uses
+  the same panel (`setPanel`) for every rarity set and each named set found.
+  Check `setsheet`.
 
 ### The bag, the Range, the conditions, middle goals (11 October)
 
