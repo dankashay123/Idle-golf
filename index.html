@@ -32812,7 +32812,7 @@ function renderXp(){
   // 12 paragon points" on its own: then the total)
   const said = bits.join(' \u00b7 ');
   setText($('xpNum'), unspent
-    ? (bits.length > 2 || (innerWidth < 360 && said.length > 31) ? fmt(unspent, 0) + ' points to spend' : said)
+    ? (bits.length > 2 || (innerWidth < 360 && said.length > 31) ? fmt(unspent, 0) + '\u00a0points to spend' : said)
     : fmt(have) + ' / ' + fmt(need) + ' experience');
   if(careerTab) careerTab.classList.toggle('alert', unspent > 0 || retireWorth());
   renderTourTab();
