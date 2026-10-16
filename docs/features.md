@@ -11,9 +11,15 @@ feature must do, and is usually enough on its own.
 - Honours' swing power is its own multiplier (`career().hpow`, `derive`):
   added to `pow` it went in with the clubs' (`gearStats`), which run to
   thousands of percent (+8,200% at Card 13, millions by Card 40), so
-  "+10% swing power" bought next to nothing. Drive points, the Matched
-  Set and Paragon's Swing Power are added the same way and are as lost;
-  left as they are (a proposal to him). Check `honourpay`.
+  "+10% swing power" bought next to nothing. Drive points (`spow`),
+  Paragon's Swing Power (`ppow`, capped at 200 points, ×4; a save past it
+  gets the points back in `initState`) and the Matched Set (`setpow` in
+  `gearStats`) are multipliers of their own the same way. The clubs' other
+  stats stay small (0 to 8), so the rest stay added in. Simulated (free,
+  seeds 1 and 2): a full Mythic set at days 66 and 65 (before this
+  round's pay changes, day 82 on seed 1); seed 1 earned sovereigns much
+  faster after day 56, a strong bag on a stalled card playing short holes.
+  Check `honourpay`.
 - Sunday Nerve: every Sunday hole (`isSunday` in `derive`), not the
   armoured last hole of each round (Marshal's Bane's).
 - Honour sovereigns a step up the cards, in the 2 / 4 / 39 bands: Card 10

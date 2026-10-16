@@ -4,6 +4,8 @@
  *   - an honour's "+N% swing power" is that much more power, on its own: it
  *     was added in with the clubs', which run to thousands of percent, and
  *     bought half a percent at Card 13
+ *   - the same for Drive's points, the Matched Set and Paragon's Swing Power
+ *     (capped at 200 points, a save past it given the points back)
  *   - Sunday Nerve pays on every Sunday hole and no other (it paid on the
  *     armoured last hole of each round, as Marshal's Bane does)
  *   - the climb up the cards pays a step at a time (Card 25 under Card 50,
@@ -30,6 +32,26 @@ module.exports = {
         o.hon = [sum, p1 / p0];
         if (Math.abs(p1 / p0 - (1 + sum)) > 0.001) f('every swing power honour (+' + Math.round(sum * 100) + '%) made power x' + (p1 / p0).toFixed(3) + ', not x' + (1 + sum).toFixed(2));
         S.achDone = {};
+        // ---- and every other swing power that is not the clubs': Drive's
+        // points, the Matched Set, Paragon's Swing Power (capped) ----
+        const ratio = fn => { const a = derive().pow; const undo = fn(); const b = derive().pow; undo(); return b / a; };
+        const rd = ratio(() => { const k = S.stat.drive; S.stat.drive = 60; return () => S.stat.drive = k; });
+        if (Math.abs(rd - (1 + 60 * B.STAT_V.drive.pow)) > 0.001) f('60 points of Drive made power x' + rd.toFixed(3) + ', not x' + (1 + 60 * B.STAT_V.drive.pow).toFixed(2));
+        const pa = B.PARAGON[0].a.find(a => a.id === 'pow');
+        const rp = ratio(() => { const k = S.paraSpent['core.pow']; S.paraSpent['core.pow'] = pa.cap; return () => S.paraSpent['core.pow'] = k; });
+        if (!(pa.cap > 0) || Math.abs(rp - (1 + pa.cap * pa.v)) > 0.001) f('Paragon Swing Power at its cap (' + pa.cap + ') made power x' + rp.toFixed(3));
+        const ms = B.SETS.find(x => x.id === 'matched'), top = ms.tiers[ms.tiers.length - 1];
+        // (the Card 40 bag is six Epics, the set whole; a rarer club is
+        // stronger in itself, so the set's own share is what is measured, and
+        // that it is not lost in the clubs' sum)
+        const setShare = 1 + gearStats().setpow;
+        if (gearStats().pow - career().pow > 0 && !(derive().pow > 0)) f('no power');
+        o.drive = rd; o.para = rp; o.set = setShare;
+        if (Math.abs(setShare - (1 + top.pow)) > 0.001) f('six clubs of the Matched Set give x' + setShare.toFixed(3) + ', not x' + (1 + top.pow).toFixed(2));
+        // a save past the new cap gets the points back to spend
+        { const keep = JSON.stringify(S); S.paraSpent['core.pow'] = pa.cap + 40; S.paraPts.core = 3; initState();
+          if (S.paraSpent['core.pow'] !== pa.cap || S.paraPts.core !== 43) f('a save with ' + (pa.cap + 40) + ' in Swing Power loaded with ' + S.paraSpent['core.pow'] + ' and ' + S.paraPts.core + ' to spend');
+          Object.keys(S).forEach(k => delete S[k]); Object.assign(S, JSON.parse(keep)); }
         // ---- Sunday Nerve ----
         const nerve = B.TREES.flatMap(t => t.t).find(t => t.id === 'nerve'); Object.keys(S.tal).forEach(k => S.tal[k] = 0);
         let sun = 0; while (!isSunday(sun + 1)) sun++; sun++; let mon = 1; while (isSunday(mon)) mon++;
@@ -60,7 +82,7 @@ module.exports = {
       return { fl, o };
     });
     if (r.fl.length) throw new Error(r.fl.join('; '));
-    return ['with clubs at +' + Math.round(r.o.gear * 100) + '% swing power, every swing power honour (+' + Math.round(r.o.hon[0] * 100) + '%) makes power x' + r.o.hon[1].toFixed(2) + '; Sunday Nerve x' + r.o.nerve[0].toFixed(2) + ' on Sunday, x' + r.o.nerve[1].toFixed(2) + ' otherwise',
+    return ['with clubs at +' + Math.round(r.o.gear * 100) + '% swing power, every swing power honour (+' + Math.round(r.o.hon[0] * 100) + '%) makes power x' + r.o.hon[1].toFixed(2) + '; 60 Drive points x' + r.o.drive.toFixed(2) + ', Paragon Swing Power at its cap x' + r.o.para.toFixed(2) + ', the Matched Set x' + r.o.set.toFixed(2) + '; Sunday Nerve x' + r.o.nerve[0].toFixed(2) + ' on Sunday, x' + r.o.nerve[1].toFixed(2) + ' otherwise',
       'the cards and Paragon pay a step at a time, Card 100 and 200 honours; Chronoglass to its top with ' + r.o.refund.toExponential(1) + ' legacy back for five levels past it; ' + r.o.cards + ' wager cards show their level'];
   }
 };

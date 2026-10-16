@@ -3600,7 +3600,10 @@ const B = {
      owed to a full category falls through to Core and has to land somewhere. */
   PARAGON: [
     { id:'core', n:'Core', v:'--brass', a:[
-      { id:'pow', n:'Swing Power',   k:'pow', v:0.015, cap:0, s:'%',
+      // (capped since it became a multiplier of its own: uncapped, the
+      // endless paragon would make it an endless one; points past it fall to
+      // Affinity Power, which has none)
+      { id:'pow', n:'Swing Power',   k:'pow', v:0.015, cap:200, s:'%',
         d:'Yardage on every swing' },
       { id:'elm', n:'Affinity Power',k:'elm', v:0.008, cap:0, s:'%',
         d:'Ball affinity power' } ] },
@@ -5269,7 +5272,11 @@ function initState(){
   B.PARAGON.forEach(cat => {
     if(S.paraPts[cat.id] === undefined) S.paraPts[cat.id] = 0;
     cat.a.forEach(a => { if(S.paraSpent[cat.id + '.' + a.id] === undefined)
-      S.paraSpent[cat.id + '.' + a.id] = 0; });
+      S.paraSpent[cat.id + '.' + a.id] = 0;
+      // (a cap put on later gives the points past it back to spend: Swing
+      // Power had none)
+      const k = cat.id + '.' + a.id;
+      if(a.cap > 0 && S.paraSpent[k] > a.cap){ S.paraPts[cat.id] = (+S.paraPts[cat.id] || 0) + S.paraSpent[k] - a.cap; S.paraSpent[k] = a.cap; } });
   });
   if(!S.carry.length) S.carry = ['thunder'];
   if(!S.perkOn) S.perkOn = {};
@@ -5793,11 +5800,14 @@ function career(){
               // honours' swing power, on its own: added in with the clubs' it
               // was lost (they run to thousands of percent, and "+10% swing
               // power" bought half a percent at Card 13)
-              hpow:0 };
+              hpow:0,
+              // and the same for every other swing power that is not the
+              // clubs': Drive's points, Paragon's Swing Power (sets: gearStats)
+              spow:0, ppow:0 };
   for(const s of B.STATS){
     const n = S.stat[s.id] || 0; if(!n) continue;
     const v = B.STAT_V[s.id];
-    for(const k in v) o[k] += v[k] * n;
+    for(const k in v) o[k === 'pow' ? 'spow' : k] += v[k] * n;
   }
   for(const tree of B.TREES)
     for(const t of tree.t){
@@ -5807,7 +5817,7 @@ function career(){
   for(const cat of B.PARAGON)
     for(const a of cat.a){
       const n = paraLv(cat.id, a.id); if(!n) continue;
-      o[a.k] += a.v * n;
+      o[a.k === 'pow' ? 'ppow' : a.k] += a.v * n;
     }
   const A = achBonus();
   for(const k in A){ if(k === 'pow') o.hpow += A[k]; else if(o[k] !== undefined) o[k] += A[k]; }
@@ -5933,7 +5943,7 @@ function activeSets(){
   return out;
 }
 function gearStats(){
-  const g = { pow:0, elm:0, spd:0, crt:0, cpw:0, gld:0, drp:0, prc:0, mst:0, dgn:0 };
+  const g = { pow:0, elm:0, spd:0, crt:0, cpw:0, gld:0, drp:0, prc:0, mst:0, dgn:0, setpow:0 };
   for(const sl of B.SLOTS){
     const it = S.equip[sl.id]; if(!it) continue;
     g[sl.p] += itemPrimary(it);
@@ -5941,7 +5951,7 @@ function gearStats(){
   }
   for(const s of activeSets()){
     if(!s.tier) continue;
-    for(const k in s.tier) if(k !== 'n' && g[k] !== undefined) g[k] += s.tier[k];
+    for(const k in s.tier) if(k !== 'n' && g[k === 'pow' ? 'setpow' : k] !== undefined) g[k === 'pow' ? 'setpow' : k] += s.tier[k];
   }
   const C = career();
   for(const k of ['pow','spd','crt','cpw','elm','prc','gld','drp','dgn','mst']) g[k] += C[k];
@@ -5999,7 +6009,11 @@ function derive(){
   // of the nine)
   const CH = OFFLINE ? null : chalOn(), cb = k => chalBonus(k);
 
-  let pow = B.BASE_POWER * upgMult('pow') * (1 + G.pow) * (1 + C.hpow) * relMult('pow') * perkMult('pow')
+  // (every swing power but the clubs' own is a multiplier of its own: added
+  // in with theirs, which run to thousands of percent by Card 13 and to
+  // millions by Card 40, "+130% swing power" bought a percent or two)
+  let pow = B.BASE_POWER * upgMult('pow') * (1 + G.pow) * (1 + C.hpow) * (1 + C.spow) * (1 + C.ppow) * (1 + G.setpow)
+          * relMult('pow') * perkMult('pow')
           * permMult('irons') * (1 + buffVal('cPow')/100);
   // Two talents that pay on the hole you are standing on rather than on every
   // swing everywhere. They belong here for the same reason the weather does:

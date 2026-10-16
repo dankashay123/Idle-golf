@@ -274,7 +274,7 @@ module.exports = {
         + (talUnwired.length > 1 ? ' appear' : ' appears') + ' in the tree and nowhere else '
         + 'in the game.');
     const granted = new Set([].concat(r.talKeys, r.paraKeys, r.statKeys, r.achKeys, r.gearKeys));
-    granted.add('hpow');                            // honours' swing power, kept apart from the clubs'
+    ['hpow', 'spow', 'ppow'].forEach(k => granted.add(k));   // honours', Drive's and Paragon's swing power, kept apart from the clubs'
     const ungranted = r.careerKeys.filter(k => !granted.has(k));
     if (ungranted.length)
       throw new Error('career() carries ' + ungranted.join(', ') + ', which no attribute, '
