@@ -20,7 +20,7 @@ module.exports = {
         Scene.restBall = { d: 30, lat: 0.4 };
         frame(); const p = at(30, 0.4); o.lying = white(p[0], p[1]);
         Scene.camD = 20; frame(); o.walking = white(p[0], p[1]);
-        Scene.camD = 29.6; Scene.drawBalls(0); frame(); o.reached = !Scene.restBall && !white(p[0], p[1]);
+        Scene.camD = 29.99; Scene.drawBalls(0); frame(); o.reached = !Scene.restBall && !white(p[0], p[1]);
       } finally {
         window.step = keep; Scene.restBall = null; QUIET = false;
         Object.keys(S).forEach(k => delete S[k]); Object.assign(S, JSON.parse(SNAP)); startHole();

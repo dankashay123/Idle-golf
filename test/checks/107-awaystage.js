@@ -63,7 +63,9 @@ module.exports = {
         // the loop stops once the card is closed
         window.requestAnimationFrame = raf;
         away(null, 'm');
-        await new Promise(res => setTimeout(res, 300));
+        // (waited for, not timed: in a busy full run the browser's frames came
+        // later than 0.3 seconds and the check read "never ran")
+        for (let i = 0; i < 60 && !(AWAY && AWAY.t > 0); i++) await new Promise(res => setTimeout(res, 50));
         o.ran = !!AWAY && AWAY.t > 0;
         if (!o.ran) f('the stage never ran');
         hideSheet(); await new Promise(res => setTimeout(res, 200));
