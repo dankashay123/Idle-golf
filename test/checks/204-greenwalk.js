@@ -29,13 +29,14 @@ module.exports = {
         let seed = 4242; Math.random = () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
         window.drawLyingBall = function (c, x, y) { calls.push({ x, y }); return keepDL.apply(this, arguments); };
         const play = secs => {
-          const R = { holes: 0, putts: 0, walk: 0, seen: 0, atFeet: 0, missing: 0, spotOff: 0, fw: 0, fwMiss: 0, bare: 0, offLine: 0 };
+          const R = { holes: 0, putts: 0, walk: 0, seen: 0, atFeet: 0, missing: 0, spotOff: 0, fw: 0, fwMiss: 0, bare: 0, offLine: 0, sig: 0 };
           window.finishHole = function () { R.holes++; if (Scene.putt || Scene.cupT) R.putts++; return keepFH.apply(this, arguments); };
           for (let i = 0; i < 60 * secs; i++) { fake += 1000 / 60; const D = derive(); calls = [];
             step(1 / 60, D);
             // (as the frame is drawn from: a shot lands, or is reached, part way through it)
             const RB = Scene.restBall, flying = Scene.balls.length, walk0 = Scene.walkOn, fly0 = Scene.balls.map(b => b.d0 + b.dist * Math.min(1, b.t / b.dur));
             Scene.draw(1 / 60, D);
+            if (sigKind(S.hole)) R.sig++;
             const up = !S.dgnRun && S.yardsMax > 0 && S.yards <= 0 && Scene.hole === S.hole && !Scene.cupT && !Scene.putt;
             // ---- the fairway ----
             if (!up && !S.dgnRun && flying && Scene.swingT === 0) { const me = Scene.proj(Scene.camD, 0), h = Math.max(6, Math.round(B_GOLFER * US * me.s)), bs = h > 30 ? 2 : 1;
@@ -54,7 +55,8 @@ module.exports = {
             const me = Scene.proj(Scene.camD, 0), G = Scene.gSpot;
             const h = Math.max(6, Math.round(B_GOLFER * US * me.s)), bs = h > 30 ? 2 : 1;
             // a ball at his feet, out to his side where he addresses one
-            if (Scene.camD < Scene.pinD() - B_GREEN_STAND - 0.3 && calls.some(q => Math.abs(q.y - (me.y - bs)) <= 1.5 && q.x > me.x)) {
+            // (but the ball he is a step from, lying short of the green, is at his feet)
+            if (Scene.camD < Scene.pinD() - B_GREEN_STAND - 0.3 && !(RB && RB.d - Scene.camD < 0.3) && calls.some(q => Math.abs(q.y - (me.y - bs)) <= 1.5 && q.x > me.x)) {
               R.atFeet++; f('hole ' + S.hole + ': a ball at his feet as he walks, ' + (Scene.pinD() - B_GREEN_STAND - Scene.camD).toFixed(2) + ' short of where he putts'); }
             if (!G) continue;
             R.seen++;
@@ -69,9 +71,17 @@ module.exports = {
         o.normal = play(150);
         for (const u of B.UPG) S.upg[u.id] = Math.min(capOf(u), 50);
         startHole(); o.strong = play(70);
-        for (const k of ['normal', 'strong']) { const R = o[k];
-          if (R.holes < 3) f(k + ': only ' + R.holes + ' holes played');
-          if (R.seen < R.holes * 5) f(k + ': it was seen lying on the green in only ' + R.seen + ' frames of the walk over ' + R.holes + ' holes');
+        // (and every hole one of each signature kind in turn: over the water
+        // on his club, across the canyon's bridge, the stepping stones, the
+        // sea stack, the railway; the normal bag)
+        S.upg = JSON.parse(SNAP).upg;
+        for (const kind of ['Island', 'Canyon', 'Stones', 'Pier', 'Rail']) {
+          const keep = window['is' + kind], h0 = S.hole + 1; window['is' + kind] = h => h >= h0 || keep(h);
+          try { S.hole = h0 - 1; startHole(); o['sig' + kind] = play(50); } finally { window['is' + kind] = keep; }
+        }
+        for (const k of ['normal', 'strong', 'sigIsland', 'sigCanyon', 'sigStones', 'sigPier', 'sigRail']) { const R = o[k];
+          if (R.holes < (k.startsWith('sig') ? 2 : 3)) f(k + ': only ' + R.holes + ' holes played');
+          if (!k.startsWith('sig') && R.seen < R.holes * 5) f(k + ': it was seen lying on the green in only ' + R.seen + ' frames of the walk over ' + R.holes + ' holes');
           if (R.putts < R.holes * 0.8) f(k + ': ' + R.putts + ' of ' + R.holes + ' holes putted out');
           if (k === 'normal' && R.fw < R.holes * 5) f(k + ': a shot seen lying on the fairway in only ' + R.fw + ' frames'); }
       } finally { window.finishHole = keepFH; window.drawLyingBall = keepDL; Math.random = mr; performance.now = pn; window.requestAnimationFrame = raf;
@@ -80,6 +90,7 @@ module.exports = {
     });
     if (r.fails.length) throw new Error(r.fails.join('; '));
     const s = R => R.holes + ' holes, ' + R.putts + ' putted out, ' + R.seen + ' frames walking up to it on the green, ' + R.fw + ' on the fairway';
-    return ['normal bag ' + s(r.o.normal), 'strong bag ' + s(r.o.strong) + '; never at his feet as he walks or while his shot flies, never walking with no ball in sight'];
+    const sg = ['Island', 'Canyon', 'Stones', 'Pier', 'Rail'].map(k => k + ' ' + r.o['sig' + k].holes + ' (' + r.o['sig' + k].sig + ' frames on it)').join(', ');
+    return ['normal bag ' + s(r.o.normal), 'signature holes each (holes): ' + sg, 'strong bag ' + s(r.o.strong) + '; never at his feet as he walks or while his shot flies, never walking with no ball in sight'];
   }
 };

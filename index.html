@@ -3558,7 +3558,7 @@ const B = {
         { id:'punch',    n:'Punch Shot',       req:5,  max:5, k:'windy',  v:0.11,  d:'+11% power when the weather makes a hole longer' },
         { id:'bane',     n:"Marshal's Bane",   req:5,  max:5, k:'boss',   v:0.12,  d:'+12% power on the last hole of each round, where the armour is' },
         { id:'pierce',   n:'Piercing Grooves', req:12, max:5, k:'pierce', v:0.12,  d:'Swings ignore 12% of armour' },
-        { id:'nerve',    n:'Sunday Nerve',     req:12, max:5, k:'clutch', v:0.10,  d:'+10% power on the last hole of each round' },
+        { id:'nerve',    n:'Sunday Nerve',     req:12, max:5, k:'clutch', v:0.10,  d:'+10% power on Sunday holes' },
         { id:'oneswing', n:'One Swing',        req:22, max:1, k:'onesw',  v:1,     d:'Every 12th swing goes 8\u00d7 as far' }
       ] },
     { id:'short', n:'The Short Game', ic:'wedge',
@@ -3906,11 +3906,15 @@ const B = {
     { id:'rec',    n:'Course Record',    d:'Finish an event at -200 or better', m:'best', v:200,   r:{k:'drp', v:0.05}, sov:39 },
     { id:'lv10',   n:'Rookie',           d:'Reach Level 10',       m:'lv',     v:10,    r:{k:'tick', v:2}, sov:2 },
     { id:'lv60',   n:'Tour Pro',         d:'Reach Level 60',       m:'lv',     v:60,    r:{k:'pow', v:0.10}, sov:39 },
-    { id:'p25',    n:'Paragon Rising',   d:'Reach Paragon 25',            m:'para',   v:25,    r:{k:'spd', v:0.05}, sov:39 },
+    { id:'p25',    n:'Paragon Rising',   d:'Reach Paragon 25',            m:'para',   v:25,    r:{k:'spd', v:0.05}, sov:4 },
     { id:'p250',   n:'Ascendant',        d:'Reach Paragon 250',           m:'para',   v:250,   r:{k:'pow', v:0.20}, sov:39 },
     { id:'t10',    n:'Climbing',         d:'Reach Tour Card 10',           m:'tier',   v:9,     r:{k:'pow', v:0.03}, sov:4 },
-    { id:'t25',    n:'Thin Air',         d:'Reach Tour Card 25',         m:'tier',   v:24,    r:{k:'pow', v:0.06}, sov:39 },
+    // (sovereigns in the 2 / 4 / 39 bands, a step at a time up the cards:
+    // Card 25 paid what Card 50 did, and nothing marked the climb past it)
+    { id:'t25',    n:'Thin Air',         d:'Reach Tour Card 25',         m:'tier',   v:24,    r:{k:'pow', v:0.06}, sov:4 },
     { id:'t50',    n:'Mythic Air',       d:'Reach Tour Card 50',           m:'tier',   v:49,    r:{k:'pow', v:0.12}, sov:39 },
+    { id:'t100',   n:'Above the Clouds', d:'Reach Tour Card 100',          m:'tier',   v:99,    r:{k:'tick', v:5}, sov:39 },
+    { id:'t200',   n:'Top of the Tour',  d:'Reach Tour Card 200',          m:'tier',   v:199,   r:{k:'tick', v:8}, sov:39 },
     { id:'kit',    n:'Kitted Out',       d:'Fill all six bag slots',      m:'slots',  v:6,     r:{k:'tick', v:2}, sov:2 },
     { id:'leg',    n:'Rare Air',         d:'Find a Legendary',            m:'legend', v:1,     r:{k:'shard', v:100}, sov:2 },
     { id:'myth',   n:'Mythwrought',      d:'Find a Mythic',               m:'myth',   v:1,     r:{k:'elm', v:0.05}, sov:4 },
@@ -4091,7 +4095,9 @@ const B = {
     { id:'oath',   t:'A', n:'Oathstone',         k:'*elm',  g:1.40, max:100, d:'Ball affinity power' },
     // the six that change how a run is played, mechanics unchanged
     { id:'sun',    t:'A', n:'Sunstone Marker',   k:'@sun', max:10, d:'Chance of new clubs, +9% a level' },
-    { id:'chrono', t:'S', n:'Chronoglass',       k:'@chrono', max:250, d:'Retire onto this Tour Card or higher' },
+    // (to Card 221, the highest that can be played: its last thirty levels to
+    // 250 did nothing)
+    { id:'chrono', t:'S', n:'Chronoglass',       k:'@chrono', max:220, d:'Retire onto this Tour Card or higher' },
     { id:'seed',   t:'B', n:'Signing Bonus',     k:'@seed', max:6, d:'Start each run with a purse' },
     { id:'rift',   t:'A', n:'Standing Invitation', k:'@rift', max:10, d:'Wagers: entries sooner, start further in, more clubs' },
     { id:'ember',  t:'A', n:'Mythic Ember',      k:'@ember', max:20, d:'Affinity trigger chance, +2.5% a level (55% at most)' },
@@ -5250,8 +5256,13 @@ function initState(){
     if(S.dgnFloor[d.id] === undefined) S.dgnFloor[d.id] = 0;
     if(!(S.dgnBest[d.id] >= 0)) S.dgnBest[d.id] = 0;
   });
+  // (a top lowered later gives back the legacy the levels past it cost:
+  // Chronoglass came down from 250 to 220)
   B.TROPHY.forEach(r => { if(S.relic[r.id] === undefined) S.relic[r.id] = 0;
-    else S.relic[r.id] = Math.min(r.max || B.TR_MAX, S.relic[r.id]); });
+    else { const top = r.max || B.TR_MAX;
+      // (a broken save's level runs to infinity: those get the top and nothing)
+      if(!Number.isFinite(S.relic[r.id]) || S.relic[r.id] > top + 100) S.relic[r.id] = Math.min(top, +S.relic[r.id] || 0);
+      while(S.relic[r.id] > top){ S.relic[r.id]--; S.legacy = (+S.legacy || 0) + Math.ceil(B.TR_COST * B.TR_TIER[r.t].m * trophyPriceAt(r, S.relic[r.id])); } } });
   B.STATS.forEach(s => { if(S.stat[s.id] === undefined) S.stat[s.id] = 0; });
   B.TREES.forEach(t => t.t.forEach(x => { if(S.tal[x.id] === undefined) S.tal[x.id] = 0; }));
   B.PARAGON.forEach(cat => {
@@ -5777,7 +5788,11 @@ function career(){
               pay:0, place:0, nine:0, tick:0,
               wdrive:0, wisland:0, wchip:0, wvault:0,
               reforge:0, attune:0, scrap:0, fit:0,
-              plegacy:0, pdisc:0, pcurate:0, paway:0 };
+              plegacy:0, pdisc:0, pcurate:0, paway:0,
+              // honours' swing power, on its own: added in with the clubs' it
+              // was lost (they run to thousands of percent, and "+10% swing
+              // power" bought half a percent at Card 13)
+              hpow:0 };
   for(const s of B.STATS){
     const n = S.stat[s.id] || 0; if(!n) continue;
     const v = B.STAT_V[s.id];
@@ -5794,7 +5809,7 @@ function career(){
       o[a.k] += a.v * n;
     }
   const A = achBonus();
-  for(const k in A) if(o[k] !== undefined) o[k] += A[k];
+  for(const k in A){ if(k === 'pow') o.hpow += A[k]; else if(o[k] !== undefined) o[k] += A[k]; }
   return o;
 }
 
@@ -5983,7 +5998,7 @@ function derive(){
   // of the nine)
   const CH = OFFLINE ? null : chalOn(), cb = k => chalBonus(k);
 
-  let pow = B.BASE_POWER * upgMult('pow') * (1 + G.pow) * relMult('pow') * perkMult('pow')
+  let pow = B.BASE_POWER * upgMult('pow') * (1 + G.pow) * (1 + C.hpow) * relMult('pow') * perkMult('pow')
           * permMult('irons') * (1 + buffVal('cPow')/100);
   // Two talents that pay on the hole you are standing on rather than on every
   // swing everywhere. They belong here for the same reason the weather does:
@@ -5992,6 +6007,9 @@ function derive(){
   // handicap, the away model -- sees the same golfer the course does.
   if(C.par5 && (PAR_JUDGE || parOf(S.hole)) === 5) pow *= 1 + C.par5;
   if(C.windy && S.stretched) pow *= 1 + C.windy;
+  // (Sunday Nerve: every hole of the final day. It paid on the last hole of
+  // each round, the armoured one, the same holes as Marshal's Bane)
+  if(C.clutch && isSunday(S.hole)) pow *= 1 + C.clutch;
 
   const spdRaw = B.BASE_SPEED * upgMult('spd') * (1 + G.spd) * relMult('spd') * ch.s
     * (1 + buffVal('gale')/100) * (1 + buffVal('cSpd')/100) * perkMult('spd')
@@ -6298,7 +6316,7 @@ function damage(amt, D, soft, through){
   if(S.armor > 0 && !through){
     const C = D && D.C ? D.C : career();
     const armor = S.armor * Math.max(0, 1 - C.pierce);
-    amt *= 1 + C.boss + C.clutch;
+    amt *= 1 + C.boss;
     amt = soft ? amt * B.ARMOR_IDLE : Math.max(amt * B.ARMOR_FLOOR, amt - armor);
   }
   if(amt <= 0) return 0;
@@ -33657,7 +33675,9 @@ function renderDgn(){
       + '<div class="dm">Helped by <b style="color:var(--aurora)">' + d.st + '</b></div>'
       + '<div class="dm" style="color:var(--brass)">Pays ' + (d.cur === 'gold' ? 'Prize Money' : d.cn) + '</div>'
       + '<div class="dm">' + medalPips(d.id) + ' ' + wgMedalTxt(d.id, D) + '</div>'
-      + '<div class="dm">' + best + ' \u00b7 Length: ' + tw(Math.round(d.run * (career().sharp ? 1.4 : 1)), 'second') + (nextIn === 'full' ? '' : ' \u00b7 Next entry ' + nextIn) + '</div>'
+      // (with the level it has reached, which the honours count: "Reach Level
+      // 25 in any wager" had no figure to go by)
+      + '<div class="dm">Level\u00a0' + ((S.dgnFloor[d.id] || 0) + 1) + ' \u00b7 ' + best + ' \u00b7 Length: ' + tw(Math.round(d.run * (career().sharp ? 1.4 : 1)), 'second') + (nextIn === 'full' ? '' : ' \u00b7 Next entry ' + nextIn) + '</div>'
       + '<div class="bar"><i style="width:' + (run ? clamp(run.t/run.dur,0,1)*100 : 0) + '%"></i></div>'
       + '<div class="btnrow" style="margin-top:8px"></div>';
     el.querySelector('.guide').onclick = e => { e.stopPropagation(); wagerGuide(d.id); };

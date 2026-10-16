@@ -6,6 +6,24 @@ feature must do, and is usually enough on its own.
 
 ## Sections, newest first
 
+### Honours pay what they say; Sunday Nerve; wager levels (17 October)
+
+- Honours' swing power is its own multiplier (`career().hpow`, `derive`):
+  added to `pow` it went in with the clubs' (`gearStats`), which run to
+  thousands of percent (+8,200% at Card 13, millions by Card 40), so
+  "+10% swing power" bought next to nothing. Drive points, the Matched
+  Set and Paragon's Swing Power are added the same way and are as lost;
+  left as they are (a proposal to him). Check `honourpay`.
+- Sunday Nerve: every Sunday hole (`isSunday` in `derive`), not the
+  armoured last hole of each round (Marshal's Bane's).
+- Honour sovereigns a step up the cards, in the 2 / 4 / 39 bands: Card 10
+  and 25 pay 4, Card 50 39, and new Card 100 (Above the Clouds) and 200
+  (Top of the Tour) 39 each; Paragon 25 pays 4 (Paragon 250 39).
+- Chronoglass tops at 220 (Card 221, the highest playable); a save past a
+  top gets back the legacy (in `initState`).
+- A wager's card shows its level ("Pays Grit · Level 31").
+- `greenwalk` also plays each signature hole kind.
+
 ### Words checked, the green walk, an erase (16 October)
 
 - Talents, attributes, heirlooms and honours read against the code; the
