@@ -58,7 +58,7 @@ through:
   new a switch. Earlier work: the sections under it.
 - What lives by the season asks `lookSeason`: a course's own, the Snowline
   winter and the Blossom spring all year, else the month.
-- `node test/run.js` has **206 checks** (all passed 17 October, after the
+- `node test/run.js` has **207 checks** (all passed 17 October, after the
   swing powers made multipliers). About 35 minutes: run it in the
   background, on a copy in the scratchpad, with the machine quiet. After
   weather, colours or anything dated, also run it with `HOUR_FORCE` 8 and

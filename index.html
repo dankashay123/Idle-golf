@@ -32803,8 +32803,11 @@ function renderXp(){
   if(S.statPts) bits.push(S.statPts + ' ' + plural(S.statPts, 'attributes'));
   const pp2 = B.PARAGON.reduce((n,c) => n + (S.paraPts[c.id]||0), 0);
   if(pp2) bits.push(pp2 + ' paragon ' + plural(pp2, 'points'));
+  // (all three kinds at once ran off a 320 screen, as did "177 attributes ·
+  // 12 paragon points" on its own: then the total)
+  const said = bits.join(' \u00b7 ');
   setText($('xpNum'), unspent
-    ? bits.join(' \u00b7 ')
+    ? (bits.length > 2 || (innerWidth < 360 && said.length > 31) ? fmt(unspent, 0) + ' points to spend' : said)
     : fmt(have) + ' / ' + fmt(need) + ' experience');
   if(careerTab) careerTab.classList.toggle('alert', unspent > 0 || retireWorth());
   renderTourTab();
@@ -35354,7 +35357,12 @@ function careerParagon(w){
         + (a.cap === 0 ? ' <span class="pill" style="border-color:' + col + ';color:' + col + '">no cap</span>' : '')
         + '</div>' + (a.d ? '<div class="ds">' + nb(a.d) + '</div>' : '')
         + '<div class="mt">' + nb(txt) + ' at ' + fmt(n, 0)
-        + (a.cap ? ' / ' + a.cap : '') + '\u00a0points</div></div>'
+        + (a.cap ? ' / ' + a.cap : '') + '\u00a0points'
+        // (full Swing Power says where Core's points go from there)
+        + (capped && cat.id === 'core' ? ' \u00b7 <i>full: points go to ' + cat.a.find(x => x !== a && !x.cap).n + '</i>' : '')
+        // and swing power with what it multiplies by, as it is one of its own
+        + (a.k === 'pow' && n ? ' \u00b7 \u00d7' + fmtX(1 + val) : '')
+        + '</div></div>'
         + '<div class="btnrow"><button class="mini' + (pool && !capped ? ' go' : ' dim') + '">+1</button>'
         + '<button class="mini' + (pool >= 10 && !capped ? ' go' : ' dim') + '">+10</button></div>';
       const bs = d.querySelectorAll('button');
