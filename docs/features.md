@@ -16,7 +16,11 @@ feature must do, and is usually enough on its own.
 - Finds by the tee (`layFind`) and Golden Hour's sovereigns need the
   course in sight (`Scene.watched()`): behind the saver nothing is drawn
   and holes do not wait for the walk, so they came faster unseen. The
-  simulation counts its hour as watched (`test/sim.js`).
+  simulation counts its hour as watched (`test/sim.js`). The Guide's
+  sightings as a hole starts (`guideSpot`) likewise: they pay first
+  sightings, wildlife and the hunts. The Guide's Golden Hour line says
+  its sovereigns come only while watching. The Vault's card shows its best
+  floor alone (its level is the same figure).
 - The points to spend under the level bar read as a total when the list
   will not fit (all three kinds, or a long pair under 360 wide). Full
   Paragon Swing Power says where Core's points go. Check `careerfit`.

@@ -77,7 +77,9 @@ module.exports = {
         const cards = [...document.querySelectorAll('.dgn')];
         o.cards = cards.length;
         B.DGN.forEach((d, i) => { const c = cards.find(e => e.querySelector('.dn') && e.querySelector('.dn').textContent === d.n);
-          if (!c || !new RegExp('Level\\u00a0' + (i * 3 + 5) + '\\b').test(c.textContent)) f(d.n + "'s card does not show Level " + (i * 3 + 5)); });
+          // (the Vault shows its best floor instead, the same figure)
+          const want = d.mode === 'floor' ? /Best: floor/ : new RegExp('Level\\u00a0' + (i * 3 + 5) + '\\b');
+          if (!c || !want.test(c.textContent) || (d.mode === 'floor' && /Level\u00a0/.test(c.textContent))) f(d.n + "'s card does not show " + (d.mode === 'floor' ? 'its best floor alone' : 'Level ' + (i * 3 + 5))); });
       } finally { QUIET = false; Object.keys(S).forEach(k => delete S[k]); Object.assign(S, JSON.parse(SNAP)); hideSheet(); startHole(); }
       return { fl, o };
     });

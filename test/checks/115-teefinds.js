@@ -43,8 +43,12 @@ module.exports = {
         // and none with the course out of sight (behind the screen saver
         // nothing is drawn and holes do not wait: they came faster unseen)
         { const h0 = S.hole + 1000, keepS = Scene.stepN, keepD = Scene.drawnN; let unseen = 0, want = 0;
-          try { for (let h = h0; h < h0 + 400; h++) { Scene.drawnN = 0; Scene.stepN = 50; if (hr(h, 700) < 1 / FIND_ODDS) want++; if (lay(h)) unseen++; } }
-          finally { Scene.stepN = keepS; Scene.drawnN = keepD; }
+          // (and nothing logged in the Guide as seen: it pays first sightings,
+          // wildlife and the hunts)
+          const ga = window.guideAdd; let logged = 0; window.guideAdd = ids => { logged += ids.length; };
+          try { for (let h = h0; h < h0 + 400; h++) { Scene.drawnN = 0; Scene.stepN = 50; if (hr(h, 700) < 1 / FIND_ODDS) want++; if (lay(h)) unseen++; guideSpot(Scene); } }
+          finally { Scene.stepN = keepS; Scene.drawnN = keepD; window.guideAdd = ga; }
+          if (logged) f(logged + ' sightings logged with the course out of sight');
           if (!want || unseen) f(unseen + ' finds with the course out of sight (' + want + ' holes the hash gives)'); o.unseen = want; }
         // where it lies, over many holes on every home course and a few others
         o.laid = 0; o.tried = 0;

@@ -32070,7 +32070,7 @@ const GUIDE = [
   { id:'stones', n:SIG_NAME.stones, g:'c', w:'A signature hole' },
   { id:'pier', n:SIG_NAME.pier, g:'c', w:'A signature hole' },
   { id:'rail', n:SIG_NAME.rail, g:'c', w:'A signature hole' },
-  { id:'golden', n:'Golden Hour', g:'c', w:'Rare, on a fair day' },
+  { id:'golden', n:'Golden Hour', g:'c', w:'Rare, on a fair day; its sovereigns only while you watch' },
   { id:'frost', n:'Frosty Morning', g:'c', w:'Cold mornings' },
   { id:'rain', n:'Rain', g:'c', w:'Stormy weather' },
   { id:'night', n:'Night', g:'c', w:'After dark' }
@@ -32106,6 +32106,9 @@ GUIDE.push(...B.DGN.filter(d => WAGER_WILD[d.id]).map(d => ({ id: 'wg_' + d.id, 
 // what the hole just laid out shows: called as each hole starts, live only
 function guideSpot(sc){
   if(QUIET || OFFLINE || S.dgnRun || sc.hole !== S.hole) return;
+  // (nor behind the screen saver, nothing drawn: a sighting is of something
+  // seen, and it pays first sightings, wildlife and the hunts)
+  if(sc.watched && !sc.watched()) return;
   const P = sc.props || [], got = [], dry = !sc.rain;
   const see = id => { if(!got.includes(id)) got.push(id); };
   if(!sc.night) for(const p of P) if(p.kind === 13) see(p.gold ? goldId('stag') : p.stag ? 'stag' : 'doe');
@@ -33702,7 +33705,9 @@ function renderDgn(){
       + '<div class="dm">' + medalPips(d.id) + ' ' + wgMedalTxt(d.id, D) + '</div>'
       // (with the level it has reached, which the honours count: "Reach Level
       // 25 in any wager" had no figure to go by)
-      + '<div class="dm">Level\u00a0' + ((S.dgnFloor[d.id] || 0) + 1) + ' \u00b7 ' + best + ' \u00b7 Length: ' + tw(Math.round(d.run * (career().sharp ? 1.4 : 1)), 'second') + (nextIn === 'full' ? '' : ' \u00b7 Next entry ' + nextIn) + '</div>'
+      // (the Vault's best is its floor, which is near enough its level: there
+      // the best alone)
+      + '<div class="dm">' + (/^Best: floor/.test(best) ? '' : 'Level\u00a0' + ((S.dgnFloor[d.id] || 0) + 1) + ' \u00b7 ') + best + ' \u00b7 Length: ' + tw(Math.round(d.run * (career().sharp ? 1.4 : 1)), 'second') + (nextIn === 'full' ? '' : ' \u00b7 Next entry ' + nextIn) + '</div>'
       + '<div class="bar"><i style="width:' + (run ? clamp(run.t/run.dur,0,1)*100 : 0) + '%"></i></div>'
       + '<div class="btnrow" style="margin-top:8px"></div>';
     el.querySelector('.guide').onclick = e => { e.stopPropagation(); wagerGuide(d.id); };
