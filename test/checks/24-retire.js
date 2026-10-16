@@ -142,11 +142,15 @@ module.exports = {
       throw new Error('an old Card 9 save loaded onto Card ' + (moved.tier + 1) + ' with Card ' + (moved.max + 1)
         + ' open; its golfer matches Card ' + (moved.matched + 1));
     if (moved.tier === 8) throw new Error('the old-save setup matches Card 9 already, so it tests nothing');
-    if (moved.hole !== 1 + 72 * 2) throw new Error('an old save moved to hole ' + moved.hole + ', not the start of its event (' + (1 + 72 * 2) + ')');
-    if (again.tier !== moved.tier || again.hole !== moved.hole + 5)
+    // (the game plays on once it has loaded, and on this bag a hole can end in
+    // the moment before these are read: one hole on is that, not a move; a
+    // move goes back to the start of the event)
+    const gap = (h, want) => h - want === 0 || h - want === 1;
+    if (!gap(moved.hole, 1 + 72 * 2)) throw new Error('an old save moved to hole ' + moved.hole + ', not the start of its event (' + (1 + 72 * 2) + ')');
+    if (again.tier !== moved.tier || !gap(again.hole, moved.hole + 5))
       throw new Error('a second load moved a fixed save again: Card ' + (moved.tier + 1) + ' hole ' + (moved.hole + 5)
         + ' became Card ' + (again.tier + 1) + ' hole ' + again.hole);
-    if (reset.hole !== 40) throw new Error('a save written after a reset reloaded on hole ' + reset.hole + ', not 40');
+    if (!gap(reset.hole, 40)) throw new Error('a save written after a reset reloaded on hole ' + reset.hole + ', not 40');
 
     return ['an old Card 9 save moves once to Card ' + (moved.tier + 1) + ', the card its golfer matches; '
       + 'the next load and a save after a reset stay put',

@@ -432,11 +432,12 @@ div.guide.hunt,div.guide.mhunt{grid-template-columns:repeat(3,minmax(0,1fr))}
 .thumb{position:relative;width:44px;height:44px;display:flex;align-items:center;justify-content:center;
   background:#08130D;border:1px solid var(--line)}
 .thumb img{width:36px;height:36px;image-rendering:pixelated;image-rendering:crisp-edges}
-.thumb .tel{position:absolute;bottom:-1px;right:-1px;width:13px;height:13px;background:#08130D;
+.thumb .tel{position:absolute;bottom:-1px;right:-1px;background:#08130D;
   border:1px solid var(--line);padding:1px}
 /* (the badge's picture took the thumb's own picture size, 24 to 36 pixels,
-   and spilled over the name and level beside it) */
-.thumb .tel img{width:9px;height:9px;margin:0;display:block}
+   and spilled over the name and level beside it; 12, its drawing's own
+   size, as every sprite is a whole multiple of: at 9 its pixels smeared) */
+.thumb .tel img{width:12px;height:12px;margin:0;display:block}
 .tag{font-size:var(--f0);letter-spacing:.1em;text-transform:uppercase;font-weight:700}
 .mini{border:1px solid var(--line);border-radius:0;padding:5px 9px;min-height:24px;font-size:var(--f1);
   letter-spacing:.08em;text-transform:uppercase;color:var(--dim);background:var(--raise)}

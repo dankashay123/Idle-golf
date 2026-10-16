@@ -129,6 +129,9 @@ module.exports = {
       for (const it of S.bag) spares[it.slot] = (spares[it.slot] || 0) + 1;
       const fullest = Object.keys(spares).sort((a, b) => spares[b] - spares[a])[0];
       if (fullest) S.bagSlot = fullest;
+      // and a spare there with an element, so its corner badge is always in
+      // view (drawn at 9 it failed only when a drop happened to carry one)
+      { const sp = S.bag.find(it => it.slot === fullest); if (sp) sp.el = B.ELEM[0].id; }
       const seen = {};
       const where = e => { const a = []; let n = e;
         while (n && n !== document.body) {
