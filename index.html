@@ -4101,7 +4101,7 @@ const B = {
     { id:'chrono', t:'S', n:'Chronoglass',       k:'@chrono', max:220, d:'Retire onto this Tour Card or higher' },
     { id:'seed',   t:'B', n:'Signing Bonus',     k:'@seed', max:6, d:'Start each run with a purse' },
     { id:'rift',   t:'A', n:'Standing Invitation', k:'@rift', max:10, d:'Wagers: entries sooner, start further in, more clubs' },
-    { id:'ember',  t:'A', n:'Mythic Ember',      k:'@ember', max:20, d:'Affinity trigger chance, +2.5% a level (55% at most)' },
+    { id:'ember',  t:'A', n:'Mythic Ember',      k:'@ember', max:20, d:'Affinity chance, +2.5% a level (55% at most)' },
     { id:'vault',  t:'S', n:"Founder's Locker",  k:'@vault', max:10, d:'Range upgrade levels kept on retiring, 50 a level' },
     // and twenty more, two to a stat: one you will turn up early and one worth
     // building a room around
@@ -4115,8 +4115,8 @@ const B = {
     { id:'niblick',t:'A', n:'Niblick',           k:'*cpw', g:1.18, max:100, d:'Pure strike power' },
     { id:'compass',t:'B', n:'Ley Compass',       k:'*elm', g:1.08, max:100, d:'Ball affinity power' },
     { id:'feath',  t:'A', n:'Featherie',         k:'*elm', g:1.19, max:100, d:'Ball affinity power' },
-    { id:'sock',   t:'B', n:'Wind Sock',         k:'*prc', g:1.06, max:100, d:'Affinity trigger chance' },
-    { id:'glass',  t:'A', n:'Storm Glass',       k:'*prc', g:1.14, max:100, d:'Affinity trigger chance' },
+    { id:'sock',   t:'B', n:'Wind Sock',         k:'*prc', g:1.06, max:100, d:'Affinity chance' },
+    { id:'glass',  t:'A', n:'Storm Glass',       k:'*prc', g:1.14, max:100, d:'Affinity chance' },
     { id:'token',  t:'B', n:'Range Token',       k:'*gld', g:1.03, max:40, d:'Prize money' },
     { id:'reader', t:'S', n:'Gate Receipts',     k:'*gld', g:1.06, max:40, d:'Prize money' },
     { id:'marker', t:'B', n:'Lucky Marker',      k:'*drp', g:1.05, max:100, d:'Chance of new clubs' },
@@ -4565,7 +4565,7 @@ function condWhat(n){
   if(c.g !== 1) bits.push(q(c.g - 1) + (c.g > 1 ? ' more' : ' less') + ' purse');
   if(c.s !== 1) bits.push('swings ' + q(c.s - 1) + (c.s > 1 ? ' faster' : ' slower'));
   if(c.c) bits.push('+' + q(c.c) + ' pure strike chance');
-  if(c.p) bits.push('+' + q(c.p) + ' affinity trigger chance');
+  if(c.p) bits.push('+' + q(c.p) + ' affinity chance');
   if(c.dl) bits.push('+' + q(c.dl) + ' club luck');
   // (each piece kept whole: "55%" ended a line and "more purse" began the next)
   return '<b>' + n.replace(/ /g, '\u00a0') + '</b> \u00b7 ' + (bits.length ? bits.map(x => x.replace(/ /g, '\u00a0')).join(' \u00b7 ') : 'as it comes');
@@ -31990,7 +31990,9 @@ function pixUrl(id, col){
 function honRows(w){
   const done = achCount(), tot = B.ACH.length;
   const A = achBonus();
-  const live = Object.keys(A).map(k => achReward({ r:{ k, v:A[k] } })).join(' \u00b7 ');
+  // (the swing power with what it multiplies by: it is a multiplier of its
+  // own, so "+135%" makes him 2.35 times as strong)
+  const live = Object.keys(A).map(k => achReward({ r:{ k, v:A[k] } }) + (k === 'pow' ? ' (\u00d7' + fmtX(1 + A[k]) + ')' : '')).join(' \u00b7 ');
   let h = '<div class="hint"><b>' + done + '</b> of ' + tot + ' done'
     + (live ? ' \u00b7 <b style="color:var(--aurora)">' + live + '</b>' : '') + '</div>';
   // The ones that come round again, one line each: how far to the next, and
@@ -35298,7 +35300,7 @@ function achReward(a){
   if(r.k === 'shard') return '+' + r.v + '\u00a0' + plural(r.v, 'shards');
   if(r.k === 'scroll') return '+' + r.v + ' ' + plural(r.v, 'scrolls');
   if(r.k === 'legacy') return '+' + r.v + ' legacy';
-  if(r.k === 'crt' || r.k === 'drp' || r.k === 'prc') return '+' + +(r.v*100).toFixed(1) + '% ' + { crt:'pure strike chance', drp:'club luck', prc:'affinity trigger chance' }[r.k];
+  if(r.k === 'crt' || r.k === 'drp' || r.k === 'prc') return '+' + +(r.v*100).toFixed(1) + '% ' + { crt:'pure strike chance', drp:'club luck', prc:'affinity chance' }[r.k];
   const nm = { pow:'swing power', gld:'prize money', spd:'pace', mst:'second-ball chance',
                elm:'affinity power', dgn:'wager haul' }[r.k] || r.k;
   return '+' + Math.round(r.v*100) + '% ' + nm;
