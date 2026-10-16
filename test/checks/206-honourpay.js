@@ -52,6 +52,13 @@ module.exports = {
         { const keep = JSON.stringify(S); S.paraSpent['core.pow'] = pa.cap + 40; S.paraPts.core = 3; initState();
           if (S.paraSpent['core.pow'] !== pa.cap || S.paraPts.core !== 43) f('a save with ' + (pa.cap + 40) + ' in Swing Power loaded with ' + S.paraSpent['core.pow'] + ' and ' + S.paraPts.core + ' to spend');
           Object.keys(S).forEach(k => delete S[k]); Object.assign(S, JSON.parse(keep)); }
+        // ---- the Swing sheet's lines multiply out to the swing ----
+        { const keepA = S.achDone, keepD = S.stat.drive, keepP = S.paraSpent['core.pow'];
+          S.achDone = { lv60: 1 }; S.stat.drive = 10; S.paraSpent['core.pow'] = 10;
+          const { D, parts } = powParts(); S.achDone = keepA; S.stat.drive = keepD; S.paraSpent['core.pow'] = keepP; const prod = parts.reduce((m, p) => m * p[1], B.BASE_POWER);
+          o.lines = parts.map(p => p[0]).join(', ');
+          if (Math.abs(prod / D.pow - 1) > 1e-6) f('the Swing sheet multiplies out to ' + prod + ', the swing is ' + D.pow);
+          for (const want of ['Clubs', 'Honours', 'Drive points', 'Paragon', 'Matched Set']) if (!parts.some(p => p[0] === want)) f('the Swing sheet has no ' + want + ' line (' + o.lines + ')'); }
         // ---- Sunday Nerve ----
         const nerve = B.TREES.flatMap(t => t.t).find(t => t.id === 'nerve'); Object.keys(S.tal).forEach(k => S.tal[k] = 0);
         let sun = 0; while (!isSunday(sun + 1)) sun++; sun++; let mon = 1; while (isSunday(mon)) mon++;
@@ -84,7 +91,7 @@ module.exports = {
       return { fl, o };
     });
     if (r.fl.length) throw new Error(r.fl.join('; '));
-    return ['with clubs at +' + Math.round(r.o.gear * 100) + '% swing power, every swing power honour (+' + Math.round(r.o.hon[0] * 100) + '%) makes power x' + r.o.hon[1].toFixed(2) + '; 60 Drive points x' + r.o.drive.toFixed(2) + ', Paragon Swing Power at its cap x' + r.o.para.toFixed(2) + ', the Matched Set x' + r.o.set.toFixed(2) + '; Sunday Nerve x' + r.o.nerve[0].toFixed(2) + ' on Sunday, x' + r.o.nerve[1].toFixed(2) + ' otherwise',
+    return ['with clubs at +' + Math.round(r.o.gear * 100) + '% swing power, every swing power honour (+' + Math.round(r.o.hon[0] * 100) + '%) makes power x' + r.o.hon[1].toFixed(2) + '; 60 Drive points x' + r.o.drive.toFixed(2) + ', Paragon Swing Power at its cap x' + r.o.para.toFixed(2) + ', the Matched Set x' + r.o.set.toFixed(2) + '; the Swing sheet (' + r.o.lines + ') multiplies out to the swing; Sunday Nerve x' + r.o.nerve[0].toFixed(2) + ' on Sunday, x' + r.o.nerve[1].toFixed(2) + ' otherwise',
       'the cards and Paragon pay a step at a time, Card 100 and 200 honours; Chronoglass to its top with ' + r.o.refund.toExponential(1) + ' legacy back for five levels past it; ' + r.o.cards + ' wager cards show their level'];
   }
 };

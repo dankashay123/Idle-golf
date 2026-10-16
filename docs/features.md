@@ -21,6 +21,11 @@ feature must do, and is usually enough on its own.
   sightings, wildlife and the hunts. The Guide's Golden Hour line says
   its sovereigns come only while watching. The Vault's card shows its best
   floor alone (its level is the same figure).
+- Tapping Swing on the Range's top row (a gold "?" in its corner) opens
+  what makes his swing power, one multiplier a line (`powParts`,
+  `powSheet`): Range, clubs, Matched Set, heirlooms, honours, Drive,
+  Paragon, Signature Irons, sponsor perks, caddie boost, and this hole's
+  share; lines at ×1 left out. Check `honourpay` (they multiply out).
 - The points to spend under the level bar read as a total when the list
   will not fit (all three kinds, or a long pair under 360 wide). Full
   Paragon Swing Power says where Core's points go. Check `careerfit`.

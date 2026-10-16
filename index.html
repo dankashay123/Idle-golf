@@ -202,6 +202,9 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
 #vitals{display:grid;grid-template-columns:repeat(5,1fr);border-bottom:var(--hair);background:#0A170F}
 .vital{padding:6px 4px;text-align:center;border-right:1px solid #14291C}
 .vital:last-child{border-right:0}
+/* (Swing opens what makes it: every multiplier of its own, in one place) */
+.vital.tap{cursor:pointer;position:relative}
+.vital.tap::after{content:'?';position:absolute;top:3px;right:5px;color:var(--brass);font-size:var(--f0);line-height:1}
 .vital .k{font-size:var(--f0);letter-spacing:.14em;text-transform:uppercase;color:var(--faint)}
 .vital .v{font-family:var(--mono);font-size:var(--f3);font-weight:600;margin-top:2px}
 
@@ -1491,7 +1494,7 @@ li.afx.on .lockb{color:var(--brass);border-color:var(--brass);background:rgba(22
 
     <div class="view on" id="v-upg">
       <div id="vitals">
-        <div class="vital"><div class="k">Swing</div><div class="v" id="vPower">0</div></div>
+        <div class="vital tap" id="vPowerBox" onclick="powSheet()" role="button" aria-label="What makes your swing power"><div class="k">Swing</div><div class="v" id="vPower">0</div></div>
         <div class="vital"><div class="k">Pace</div><div class="v" id="vSpeed">0/s</div></div>
         <div class="vital"><div class="k">Carry</div><div class="v" id="vDps">0</div></div>
         <div class="vital"><div class="k">Pure</div><div class="v" id="vCrit">0%</div></div>
@@ -31969,6 +31972,24 @@ function renderCard(){
 }
 
 /* ---- the always-on numbers ---- */
+// What makes his swing power, one multiplier to a line (the user asked for
+// them in one place once every swing power was made a multiplier of its own):
+// a line at x1 is left out, and what this hole adds is the rest
+function powParts(){
+  const D = derive(), C = D.C || career(), G = gearStats();
+  const parts = [['Range upgrades', upgMult('pow')], ['Clubs', 1 + G.pow], ['Matched Set', 1 + G.setpow],
+    ['Heirlooms', relMult('pow')], ['Honours', 1 + C.hpow], ['Drive points', 1 + C.spow], ['Paragon', 1 + C.ppow],
+    ['Signature Irons', permMult('irons')], ['Sponsor perks', perkMult('pow')], ['Caddie boost', 1 + buffVal('cPow') / 100]];
+  const all = parts.reduce((m, p) => m * p[1], B.BASE_POWER);
+  parts.push(['This hole', D.pow / all]);
+  return { D, parts: parts.filter(p => Math.abs(p[1] - 1) > 0.0005) };
+}
+function powSheet(){
+  const { D, parts } = powParts();
+  showSheet('<h3>Swing Power</h3><div class="hint">' + fmt(D.pow) + ' a swing. Each line multiplies it.</div>'
+    + parts.map(([n, m]) => '<div class="lb"><span class="p"></span><span>' + n + '</span><span class="s">\u00d7' + fmtX(m) + '</span></div>').join('')
+    + '<button class="act ghost" onclick="hideSheet()">Close</button>');
+}
 function renderVitals(){
   const D = derive();
   $('vPower').textContent = fmt(D.pow);
