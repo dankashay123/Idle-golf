@@ -3505,9 +3505,9 @@ const B = {
      and taking the third costs every loose point you have. ---- */
   STATS: [
     { id:'drive',   n:'Drive',   ic:'muscle', d:'Yardage on every swing',  v:'+1.2% swing power',
-      mile:{ at:60, n:'Off The Tee', d:'First swing of each hole hits triple' } },
+      mile:{ at:60, n:'Off The Tee', d:'First swing of each hole goes 3\u00d7 as far' } },
     { id:'tempo',   n:'Pace',    ic:'beat',   d:'Plays every hole faster', v:'+0.30% pace',
-      mile:{ at:60, n:'Quick Play', d:'Holes can end early' } },
+      mile:{ at:60, n:'Quick Play', d:'No least time on a hole: a fast bag finishes it at once' } },
     { id:'touch',   n:'Touch',   ic:'touch',  d:'Contact off the middle',  v:'+0.10% pure strike chance, +0.03× its power',
       mile:{ at:60, n:'Flush', d:'Pure strikes ignore armour' } },
     { id:'fortune', n:'Fortune', ic:'coins',  d:'What the week is worth',  v:'+0.7% prize money, +0.08% club luck',
@@ -3554,20 +3554,20 @@ const B = {
     { id:'long', n:'The Long Game', ic:'driver',
       t:[
         { id:'reach',    n:'Reachable in Two', req:0,  max:5, k:'par5',   v:0.22,  d:'+22% power on par 5s' },
-        { id:'shave',    n:'Loaded Face',      req:0,  max:5, k:'shave',  v:0.05,  d:'Pure strikes break 5% of a hole\'s armour' },
+        { id:'shave',    n:'Loaded Face',      req:0,  max:5, k:'shave',  v:0.05,  d:'Each pure strike breaks 5% of the armour left on the hole' },
         { id:'punch',    n:'Punch Shot',       req:5,  max:5, k:'windy',  v:0.11,  d:'+11% power when the weather makes a hole longer' },
-        { id:'bane',     n:"Marshal's Bane",   req:5,  max:5, k:'boss',   v:0.12,  d:'+12% power on armoured holes' },
+        { id:'bane',     n:"Marshal's Bane",   req:5,  max:5, k:'boss',   v:0.12,  d:'+12% power on the last hole of each round, where the armour is' },
         { id:'pierce',   n:'Piercing Grooves', req:12, max:5, k:'pierce', v:0.12,  d:'Swings ignore 12% of armour' },
-        { id:'nerve',    n:'Sunday Nerve',     req:12, max:5, k:'clutch', v:0.10,  d:'+10% power on closing holes' },
+        { id:'nerve',    n:'Sunday Nerve',     req:12, max:5, k:'clutch', v:0.10,  d:'+10% power on the last hole of each round' },
         { id:'oneswing', n:'One Swing',        req:22, max:1, k:'onesw',  v:1,     d:'Every 12th swing goes 8\u00d7 as far' }
       ] },
     { id:'short', n:'The Short Game', ic:'wedge',
       t:[
         { id:'quick',   n:'Quick Hands',    req:0,  max:5, k:'cast',     v:0.10,  d:'Your shots are 10% stronger' },
-        { id:'strike',  n:'Sweet Contact',  req:0,  max:5, k:'critproc', v:0.14,  d:'Pure strikes are 14% more likely to trigger your ball' },
+        { id:'strike',  n:'Sweet Contact',  req:0,  max:5, k:'critproc', v:0.14,  d:'+14% chance a pure strike triggers your ball (55% at most)' },
         { id:'tune',    n:'In Tune',        req:5,  max:5, k:'surge',    v:0.10,  d:'+10% ball power when your ball suits the course' },
-        { id:'leyread', n:'Ley Reader',     req:5,  max:5, k:'reson',    v:0.09,  d:'A ball that clashes with the course keeps 9% more power' },
-        { id:'rhythm',  n:'Rhythm',         req:12, max:5, k:'cdr',      v:0.06,  d:'Shots recharge 6% faster' },
+        { id:'leyread', n:'Ley Reader',     req:5,  max:5, k:'reson',    v:0.09,  d:'A ball that clashes with the course plays at +9% of its power (45% without)' },
+        { id:'rhythm',  n:'Rhythm',         req:12, max:5, k:'cdr',      v:0.06,  d:'Shots recharge in 6% less time' },
         { id:'follow',  n:'Follow Through', req:12, max:5, k:'mstcrit',  v:0.20,  d:'After a pure strike, your second ball has a 20% chance to be pure too' },
         { id:'perfect', n:'Perfect Tempo',  req:22, max:1, k:'dbl',      v:1,     d:'Your ball triggers twice' }
       ] },
@@ -3582,7 +3582,7 @@ const B = {
     { id:'walker',  n:'Fast Walker',    req:5,  max:5, k:'walk',   v:0.04,  d:'The least time a hole takes, 4% shorter' },
         { id:'delve',   n:'Head Start',     req:12, max:3, k:'dfloor', v:1,     d:'Wagers start one level further in' },
         { id:'school',  n:'Tour School',    req:12, max:5, k:'xp',     v:0.10,  d:'+10% experience' },
-        { id:'sharp',   n:'Card Sharp',     req:22, max:1, k:'sharp',  v:1,     d:'Wager entries refill 40% faster and runs last 40% longer' }
+        { id:'sharp',   n:'Card Sharp',     req:22, max:1, k:'sharp',  v:1,     d:'Wager entries refill in 40% less time and runs last 40% longer' }
       ] }
   ],
   TREE_GATES: [0, 5, 12, 22],
@@ -3898,15 +3898,15 @@ const B = {
     { id:'eagle',  n:'Eagle Eye',        d:'Make 500 eagles or better',   m:'eagle',  v:500,   r:{k:'pow', v:0.06}, sov:4 },
     { id:'ace1',   n:'Hole in One',      d:'Card an ace',         m:'ace',    v:1,     r:{k:'tick', v:3}, sov:2 },
     { id:'ace100', n:'Ace Collector',    d:'Card 100 aces',               m:'ace',    v:100,   r:{k:'pow', v:0.08}, sov:39 },
-    { id:'snow',   n:'It Happens',       d:'Score 8 or more on a hole',              m:'snow',   v:1,     r:{k:'tick', v:1}, sov:2 },
+    { id:'snow',   n:'It Happens',       d:'Score 4 over par on a hole',              m:'snow',   v:1,     r:{k:'tick', v:1}, sov:2 },
     { id:'cup1',   n:'First Cup',        d:'Win a cup',        m:'cups',   v:1,     r:{k:'tick', v:3}, sov:2 },
-    { id:'cup10',  n:'The Cabinet',      d:'Hold 10 cups',                m:'cups',   v:10,    r:{k:'gld', v:0.08}, sov:4 },
-    { id:'cup50',  n:'Dynasty',          d:'Hold 50 cups',                m:'cups',   v:50,    r:{k:'gld', v:0.15}, sov:39 },
+    { id:'cup10',  n:'Trophy Shelf',     d:'Win 10 cups',                m:'cups',   v:10,    r:{k:'gld', v:0.08}, sov:4 },
+    { id:'cup50',  n:'Dynasty',          d:'Win 50 cups',                m:'cups',   v:50,    r:{k:'gld', v:0.15}, sov:39 },
     { id:'slam',   n:'Grand Slam',       d:'Win all four majors of the week', m:'slam', v:4, r:{k:'pow', v:0.05}, sov:39 },
     { id:'rec',    n:'Course Record',    d:'Finish an event at -200 or better', m:'best', v:200,   r:{k:'drp', v:0.05}, sov:39 },
     { id:'lv10',   n:'Rookie',           d:'Reach Level 10',       m:'lv',     v:10,    r:{k:'tick', v:2}, sov:2 },
     { id:'lv60',   n:'Tour Pro',         d:'Reach Level 60',       m:'lv',     v:60,    r:{k:'pow', v:0.10}, sov:39 },
-    { id:'p25',    n:'Paragon',          d:'Reach Paragon 25',            m:'para',   v:25,    r:{k:'spd', v:0.05}, sov:39 },
+    { id:'p25',    n:'Paragon Rising',   d:'Reach Paragon 25',            m:'para',   v:25,    r:{k:'spd', v:0.05}, sov:39 },
     { id:'p250',   n:'Ascendant',        d:'Reach Paragon 250',           m:'para',   v:250,   r:{k:'pow', v:0.20}, sov:39 },
     { id:'t10',    n:'Climbing',         d:'Reach Tour Card 10',           m:'tier',   v:9,     r:{k:'pow', v:0.03}, sov:4 },
     { id:'t25',    n:'Thin Air',         d:'Reach Tour Card 25',         m:'tier',   v:24,    r:{k:'pow', v:0.06}, sov:39 },
@@ -3916,11 +3916,11 @@ const B = {
     { id:'myth',   n:'Mythwrought',      d:'Find a Mythic',               m:'myth',   v:1,     r:{k:'elm', v:0.05}, sov:4 },
     { id:'enh',    n:'Reforged',         d:'Upgrade a club to +15',         m:'enh15',  v:1,     r:{k:'pow', v:0.06}, sov:4 },
     { id:'set6',   n:'Matched',          d:'Wear six clubs of Rare or better', m:'set6',  v:6,     r:{k:'pow', v:0.05}, sov:4 },
-    { id:'dg25',   n:'Regular',           d:'Play 25 wagers',              m:'runs',   v:25,    r:{k:'grit', v:200}, sov:4 },
-    { id:'f25',    n:'Deep Water',       d:'Reach level 25 in any wager',      m:'floor',  v:25,    r:{k:'dgn', v:0.10}, sov:4 },
-    { id:'f60',    n:'The Abyss',        d:'Reach level 60 in any wager',      m:'floor',  v:60,    r:{k:'dgn', v:0.20}, sov:39 },
-    { id:'all4',   n:'Every Door',       d:'Reach level 10 in every wager', m:'all4',   v:1,     r:{k:'tick', v:3}, sov:4 },
-    { id:'prov1',  n:'Second Ball',      d:'Reach 50% second-ball chance',  m:'mst', v:0.50, r:{k:'pow', v:0.08}, sov:2 },
+    { id:'dg25',   n:'Wager Regular',     d:'Play 25 wagers',              m:'runs',   v:25,    r:{k:'grit', v:200}, sov:4 },
+    { id:'f25',    n:'Deep Water',       d:'Reach Level 25 in any wager',      m:'floor',  v:25,    r:{k:'dgn', v:0.10}, sov:4 },
+    { id:'f60',    n:'The Abyss',        d:'Reach Level 60 in any wager',      m:'floor',  v:60,    r:{k:'dgn', v:0.20}, sov:39 },
+    { id:'all4',   n:'Every Door',       d:'Reach Level 10 in every wager', m:'all4',   v:6,     r:{k:'tick', v:3}, sov:4 },
+    { id:'prov1',  n:'Extra Ball',       d:'Reach 50% second-ball chance',  m:'mst', v:0.50, r:{k:'pow', v:0.08}, sov:2 },
     { id:'prov2',  n:'Both Barrels',     d:'Reach 150% second-ball chance', m:'mst', v:1.50, r:{k:'mst', v:0.10}, sov:39 },
     { id:'kitE',   n:'Well Stocked',     d:'Wear six clubs of Epic or better',  m:'set6e', v:6,   r:{k:'pow', v:0.08}, sov:4 },
     { id:'perk50', n:'Sponsored',        d:'Use 50 sponsor perks',        m:'perks',  v:50,    r:{k:'gld', v:0.06}, sov:4 },
@@ -3932,11 +3932,11 @@ const B = {
     // sized off half an hour of real play: about 100 shots round a corner, and
     // 18 birdies in one crosswind round and none in the next five
     { id:'dogleg', n:'Round the Corner', d:'Carry 250 shots round a dogleg', m:'dogleg', v:250, r:{k:'tick', v:2}, sov:4 },
-    { id:'windy',  n:'Wind Cheater',     d:'Birdie 100 holes in 15\u00a0mph of wind', m:'windBird', v:100, r:{k:'pow', v:0.03}, sov:4 },
+    { id:'windy',  n:'Wind Cheater',     d:'Birdie 100 holes in a wind of 15 miles an hour or more', m:'windBird', v:100, r:{k:'pow', v:0.03}, sov:4 },
     { id:'twin',   n:'Matching Pair',    d:'Dress your caddie to match you', m:'twin',  v:1,     r:{k:'tick', v:2}, sov:2 },
     { id:'homes',  n:'Home Tour',        d:'Play all ten home courses',   m:'homes',  v:10,    r:{k:'gld', v:0.05}, sov:4 },
     { id:'major1', n:'Major Winner',     d:'Win a major of the week',     m:'slam',   v:1,     r:{k:'tick', v:3}, sov:4 },
-    { id:'staff',  n:'Full Staff',       d:'Own every caddie perk',       m:'cperks', v:9,     r:{k:'gld', v:0.04}, sov:4 },
+    { id:'staff',  n:'Full Staff',       d:'Own every caddie perk but Mythic Favour',       m:'cperks', v:9,     r:{k:'gld', v:0.04}, sov:4 },
     { id:'headcad', n:'Head Caddie',     d:'Take a caddie perk to Level\u00a05', m:'cperkLv', v:5,  r:{k:'tick', v:2}, sov:4 },
     // the signature holes: a home round has four (two island greens, the
     // canyon and the stepping stones), any other course one of its own
@@ -4090,12 +4090,12 @@ const B = {
     { id:'gilded', t:'S', n:'Gilded Card',       k:'*gld',  g:1.10, max:40, d:'Prize money' },
     { id:'oath',   t:'A', n:'Oathstone',         k:'*elm',  g:1.40, max:100, d:'Ball affinity power' },
     // the six that change how a run is played, mechanics unchanged
-    { id:'sun',    t:'A', n:'Sunstone Marker',   k:'@sun', max:10, d:'Gear luck, +9% a level' },
-    { id:'chrono', t:'S', n:'Chronoglass',       k:'@chrono', max:250, d:'Start each run one Tour Card higher' },
+    { id:'sun',    t:'A', n:'Sunstone Marker',   k:'@sun', max:10, d:'Chance of new clubs, +9% a level' },
+    { id:'chrono', t:'S', n:'Chronoglass',       k:'@chrono', max:250, d:'Retire onto this Tour Card or higher' },
     { id:'seed',   t:'B', n:'Signing Bonus',     k:'@seed', max:6, d:'Start each run with a purse' },
-    { id:'rift',   t:'A', n:'Standing Invitation', k:'@rift', max:10, d:'Faster entries, deeper wagers' },
-    { id:'ember',  t:'A', n:'Mythic Ember',      k:'@ember', max:20, d:'Affinity chance, +2.5% a level' },
-    { id:'vault',  t:'S', n:"Founder's Locker",  k:'@vault', max:10, d:'Keep 50 levels of every Range upgrade on retiring' },
+    { id:'rift',   t:'A', n:'Standing Invitation', k:'@rift', max:10, d:'Wagers: entries sooner, start further in, more clubs' },
+    { id:'ember',  t:'A', n:'Mythic Ember',      k:'@ember', max:20, d:'Affinity trigger chance, +2.5% a level (55% at most)' },
+    { id:'vault',  t:'S', n:"Founder's Locker",  k:'@vault', max:10, d:'Range upgrade levels kept on retiring, 50 a level' },
     // and twenty more, two to a stat: one you will turn up early and one worth
     // building a room around
     { id:'hickory',t:'B', n:'Hickory Shaft',     k:'*pow', g:1.09, max:100, d:'Yardage on every swing' },
@@ -4104,8 +4104,8 @@ const B = {
     { id:'clock',  t:'A', n:'Pace Clock',        k:'*spd', g:1.15, max:100, d:'Swings per second' },
     { id:'brassie',t:'B', n:'Brassie',           k:'*crt', g:1.05, max:100, d:'Pure strike chance' },
     { id:'sunday', t:'S', n:'Sunday Bag',        k:'*crt', g:1.16, max:100, d:'Pure strike chance' },
-    { id:'gutta',  t:'B', n:'Gutta Percha',      k:'*cpw', g:1.07, max:100, d:'Extra power on a pure strike' },
-    { id:'niblick',t:'A', n:'Niblick',           k:'*cpw', g:1.18, max:100, d:'Extra power on a pure strike' },
+    { id:'gutta',  t:'B', n:'Gutta Percha',      k:'*cpw', g:1.07, max:100, d:'Pure strike power' },
+    { id:'niblick',t:'A', n:'Niblick',           k:'*cpw', g:1.18, max:100, d:'Pure strike power' },
     { id:'compass',t:'B', n:'Ley Compass',       k:'*elm', g:1.08, max:100, d:'Ball affinity power' },
     { id:'feath',  t:'A', n:'Featherie',         k:'*elm', g:1.19, max:100, d:'Ball affinity power' },
     { id:'sock',   t:'B', n:'Wind Sock',         k:'*prc', g:1.06, max:100, d:'Affinity trigger chance' },
@@ -4634,7 +4634,8 @@ const cardNo = t => String(Math.round(t || 0) + 1);
 // rest of the line wraps as it likes.
 // an attribute's line as it stands: every figure in it times the points put
 // in (the user asked: the numbers, updating, never "each")
-const statTotal = (v, n) => String(v).replace(/(\d+(?:\.\d+)?)/g, m => { const d = (m.split('.')[1] || '').length; return (parseFloat(m) * n).toFixed(d); });
+// (no trailing noughts: sixty points of Drive read "+72.0%")
+const statTotal = (v, n) => String(v).replace(/(\d+(?:\.\d+)?)/g, m => { const d = (m.split('.')[1] || '').length; return String(+(parseFloat(m) * n).toFixed(d)); });
 const nb = t => String(t).replace(/([\d][\d.,]*\s*(?:%|pp|x|\u00d7)?)\s+(?=[A-Za-z])/g, '$1\u00a0');
 
 /* ---- the calendar ---- */
@@ -5725,7 +5726,7 @@ function achMetric(m){
     case 'slots':  return B.SLOTS.reduce((n, s) => n + (S.equip[s.id] ? 1 : 0), 0);
     case 'set6':   return B.SLOTS.reduce((n, s) => n + (S.equip[s.id] && S.equip[s.id].rar >= 2 ? 1 : 0), 0);
     case 'floor':  return B.DGN.reduce((m2, d) => Math.max(m2, (S.dgnFloor[d.id] || 0) + 1), 0);
-    case 'all4':   return B.DGN.every(d => (S.dgnFloor[d.id] || 0) + 1 >= 10) ? 1 : 0;
+    case 'all4':   return B.DGN.filter(d => (S.dgnFloor[d.id] || 0) + 1 >= 10).length;   // (of six: "2 / 6", not "0 / 1")
     default:       return tally(m);
   }
 }
@@ -5734,13 +5735,14 @@ const achCount = () => B.ACH.reduce((n, a) => n + (achDone(a.id) ? 1 : 0), 0);
 // Every row already works out have and need to draw its own progress bar, and
 // then throws the ratio away for ordering, so the one you are at 97% on sits
 // wherever it happened to be typed. It is the only ordering the list wants.
-const achRatio = a => clamp(achMetric(a.m) / (a.v || 1), 0, 1);
+// (a card counted as its number here too: Card 1 of 10 is a tenth, not none)
+const achRatio = a => a.m === 'tier' ? clamp((achMetric(a.m) + 1) / (a.v + 1), 0, 1) : clamp(achMetric(a.m) / (a.v || 1), 0, 1);
 // An honour's progress as it is counted: provisional chance is a share, and
 // read to the nearest whole number it said "Second Ball 0/1" for 22% of 50%.
 // (a card counted as its number: "Reach Tour Card 10" read 0 / 9 on Card 1)
 // (counts in full, as the line above them says them: 554 / 1,000, not 1.00K)
 const achCnt = x => x < 1e6 ? Math.round(x).toLocaleString('en-US') : fmt(x, 0);
-const achAmt = (a, x) => a.m === 'mst' ? Math.round(x * 100) + '%' : a.m === 'tier' ? achCnt(x + 1) : achCnt(x);
+const achAmt = (a, x) => a.m === 'mst' ? Math.round(x * 100) + '%' : a.m === 'tier' ? achCnt(x + 1) : a.m === 'best' && x > 0 ? '\u2212' + achCnt(x) : achCnt(x);
 // Decorated before the sort: achMetric('mst') calls derive(), and a comparator
 // that asks for it on every comparison turns a thirty row list into a hundred
 // and fifty derives four times a second. Measured: 0.052ms against 0.164ms for
@@ -6457,9 +6459,7 @@ function checkAch(){
     else if(r.k === 'shard'){ S.shard += r.v; got = '+' + r.v + '\u00a0' + plural(r.v, 'shards'); }
     else if(r.k === 'scroll'){ S.scroll += r.v; got = '+' + r.v + ' ' + plural(r.v, 'scrolls'); }
     else if(r.k === 'legacy'){ S.legacy += r.v; got = '+' + r.v + ' legacy'; }
-    else if(r.k === 'crt' || r.k === 'drp' || r.k === 'prc') got = nb('+' + (r.v*100).toFixed(1) + '% ' + { crt:'pure strike chance', drp:'club luck', prc:'affinity chance' }[r.k]);
-    else got = nb('+' + Math.round(r.v*100) + '% ' + ({ pow:'swing power', gld:'prize money', spd:'pace',
-      mst:'second-ball chance', elm:'affinity', dgn:'wager haul' }[r.k] || r.k));
+    else got = nb(achReward(a));   // (worded as the list words it)
     // "Unlocked" and not "Achievement unlocked". The eyebrow is its own line,
     // and at the width a toast is allowed on a 320 phone the longer one wrapped
     // to two -- five lines a toast, two toasts, and the stack ran down into the
@@ -7904,7 +7904,7 @@ function wagerGuide(id){
     + '<div class="lb wg"><span class="p"></span><span>Helped By</span><span class="s" style="color:var(--aurora)">' + d.st + '</span></div>'
     + '<div class="lb wg"><span class="p"></span><span>Entries</span><span class="s">One every ' + tw(Math.round(keyInterval(d) / 60), 'minute') + '</span></div>'
     + '<div class="lb wg"><span class="p"></span><span>Most Held</span><span class="s">' + entryCap(d) + '</span></div>'
-    + '<div class="lb wg"><span class="p"></span><span>Length</span><span class="s">' + tw(Math.round(d.run), 'second') + '</span></div>'
+    + '<div class="lb wg"><span class="p"></span><span>Length</span><span class="s">' + tw(Math.round(d.run * (career().sharp ? 1.4 : 1)), 'second') + '</span></div>'
     + para + '<p style="color:var(--faint)">The round waits while you play.</p>'
     + '<button class="act ghost" onclick="hideSheet()">Close</button>');
 }
@@ -10891,15 +10891,17 @@ const upgradeCost = t => Math.max(1, Math.ceil(B.TR_COST * B.TR_TIER[t.t].m
   * (1 - Math.min(0.50, career().pcurate))));
 // what an heirloom does at a level, as its row and its reveal say it
 function trophyEff(t, lv){
-  if(t.g) return '\u00d7' + fmt(trophyMultAt(t, lv));
+  // (to two places under ten: at one place a level of Range Token read
+  // "\u00d71", and raising most of the small ones changed nothing on screen)
+  if(t.g) return '\u00d7' + fmtX(trophyMultAt(t, lv));
   if(t.k === '@sun') return '+' + fmt(lv*B.SUN_ADD*100) + '%';
   if(t.k === '@ember') return '+' + fmt(lv*B.EMBER_ADD*100) + '%';
-  if(t.k === '@chrono') return 'retire onto Card ' + cardNo(Math.min(B.TIER_MAX, lv)) + ' or higher';
-  if(t.k === '@vault'){ const kp = Math.min(500, lv*B.VAULT_UPG);
-    return fmt(kp, 0) + ' levels kept' + (kp >= 500 ? ' (all)' : ''); }
+  if(t.k === '@chrono') return 'Card ' + cardNo(Math.min(B.TIER_MAX, lv)) + ', up to your best';
+  // (what it keeps is a ladder's own levels, up to this: never more)
+  if(t.k === '@vault') return 'up to ' + fmt(lv*B.VAULT_UPG, 0) + ' levels kept';
   if(t.k === '@rift'){ const w = Math.max(B.RIFT_MIN_WAIT, Math.pow(B.RIFT_REGEN, lv));
-    return '\u2212' + Math.round((1-w)*100) + '% wait' + (w <= B.RIFT_MIN_WAIT ? ' (max)' : ''); }
-  if(t.k === '@seed') return 'start with ' + Math.min(6, lv) + ' cards of purse' + (lv >= 6 ? ' (max)' : '');
+    return '\u2212' + Math.round((1-w)*100) + '% wait, +' + +(lv*B.RIFT_FLOOR).toFixed(1) + '\u00a0' + plural(2, 'levels') + ' in, +' + Math.round(lv*5) + '% clubs'; }
+  if(t.k === '@seed') return 'start with ' + fmt(B.G0 * Math.pow(B.TIER_G, Math.min(6, lv)) * 40) + ' purse';
   return '\u2014';
 }
 function discover(){
@@ -10915,7 +10917,7 @@ function discover(){
   // the reveal (the user: "make the heirloom screen look better. Include
   // which one you get and the icon and what it does"): its icon large in a
   // frame of its tier's colour, the name, what it does at level 1
-  const col = cssVar(B.TR_TIER[pick.t].v), eff = pick.g ? '+' + Math.round((pick.g - 1) * 100) + '%' : trophyEff(pick, 1);
+  const col = cssVar(B.TR_TIER[pick.t].v), eff = trophyEff(pick, 1);
   showSheet('<div class="hlm" style="--hc:' + col + '">'
     + '<div class="hlmF">' + idIcon(TROPHY_IC, pick.id, pick.k, 'hlmI', col) + '</div>'
     + '<div class="hlmT">' + B.TR_TIER[pick.t].n + ' Heirloom</div>'
@@ -31954,7 +31956,7 @@ function honRows(w){
     + B.ACH_REP.map(a => {
         const have = achMetric(a.m) % a.step;
         return '<div class="lb rep"><span>' + a.n + '<i class="rd">' + nb(a.d) + '</i></span>'
-          + '<span class="s">' + achCnt(have) + ' / ' + achCnt(a.step) + ' \u00b7 +' + a.sov + sovIc() + '</span></div>';
+          + '<span class="s">' + (a.step > 1 ? achCnt(have) + ' / ' + achCnt(a.step) + ' \u00b7 ' : '') + '+' + a.sov + sovIc() + '</span></div>';
       }).join('')
     + '<div class="eyebrow" style="margin:12px 0 4px">Once</div>';
   // Nearest first, then the shelf. A checklist sorted by what you have already
@@ -31969,7 +31971,7 @@ function honRows(w){
           : '<i>' + achAmt(a, Math.min(have, need)) + '</i> / ' + achAmt(a, need)
             + ' \u00b7 ' + achReward(a))
         + (a.sov ? ' \u00b7 +' + a.sov + sovIc() : '') + '</div></div>'
-      + (got ? '' : '<div class="hbar"><i style="width:' + clamp(have/need,0,1)*100 + '%"></i></div>')
+      + (got ? '' : '<div class="hbar"><i style="width:' + achRatio(a)*100 + '%"></i></div>')
       + '</div>';
   }
   w.innerHTML = h;
@@ -33630,7 +33632,7 @@ function renderDgn(){
       + '<div class="dm">Helped by <b style="color:var(--aurora)">' + d.st + '</b></div>'
       + '<div class="dm" style="color:var(--brass)">Pays ' + (d.cur === 'gold' ? 'Prize Money' : d.cn) + '</div>'
       + '<div class="dm">' + medalPips(d.id) + ' ' + wgMedalTxt(d.id, D) + '</div>'
-      + '<div class="dm">' + best + ' \u00b7 Length: ' + tw(Math.round(d.run), 'second') + (nextIn === 'full' ? '' : ' \u00b7 Next entry ' + nextIn) + '</div>'
+      + '<div class="dm">' + best + ' \u00b7 Length: ' + tw(Math.round(d.run * (career().sharp ? 1.4 : 1)), 'second') + (nextIn === 'full' ? '' : ' \u00b7 Next entry ' + nextIn) + '</div>'
       + '<div class="bar"><i style="width:' + (run ? clamp(run.t/run.dur,0,1)*100 : 0) + '%"></i></div>'
       + '<div class="btnrow" style="margin-top:8px"></div>';
     el.querySelector('.guide').onclick = e => { e.stopPropagation(); wagerGuide(d.id); };
@@ -34090,7 +34092,9 @@ function renderLegacy(){
     body.children[0].innerHTML = t.n
       + ' <span class="pill" style="border-color:' + col + ';color:' + col + '">' + tier.n + '</span>';
     body.children[1].textContent = t.d;
-    body.children[2].innerHTML = 'Level <i>' + lv + '</i>/' + trTop(t) + ' \u00b7 <b>' + eff + '</b>';
+    // (and what the next level gives, where it is a figure)
+    const nx = !capped && (t.g || t.k === '@sun' || t.k === '@ember') ? ' \u00b7 next ' + trophyEff(t, lv + 1) : '';
+    body.children[2].innerHTML = 'Level <i>' + lv + '</i>/' + trTop(t) + ' \u00b7 <b>' + eff + '</b>' + nx;
     const btn = d.children[2];
     btn.className = 'buy' + (capped ? ' max' : S.legacy >= c2 ? ' ok' : ' no');
     btn.children[0].textContent = capped ? 'Capped' : 'Raise';
@@ -35138,7 +35142,7 @@ function careerStats(w, C){
         + (on ? '' : ' \u00b7 <i>unlocks in ' + (m.at - n) + '\u00a0' + plural(m.at - n, 'points') + '</i>') + '</div></div>'
       : '';
     d.innerHTML = '<div><div class="nm">' + svgIcon(s.ic, 'tic') + s.n + ' <span class="mt">\u00b7 <i>' + n + '</i>\u00a0' + plural(n, 'points') + '</span></div>'
-      + '<div class="ds">' + nb(statTotal(s.v, Math.max(1, n))) + '</div>' + bar + '</div>'
+      + '<div class="ds">' + nb(statTotal(s.v, Math.max(1, n))) + (n ? '' : ' a point') + '</div>' + bar + '</div>'
       + '<div class="btnrow"><button class="mini' + (S.statPts ? ' go' : ' dim') + '">+1</button>'
       + '<button class="mini' + (S.statPts >= 10 ? ' go' : ' dim') + '">+10</button></div>';
     const bs = d.querySelectorAll('button');
@@ -35231,12 +35235,14 @@ function careerTree(w, tree){
 function talDesc(t, n){
   const v = t.v * n;
   if(t.max === 1) return 'active';
-  if(t.k === 'critproc') return '+' + (v*100).toFixed(1) + '%';
+  if(t.k === 'critproc') return '+' + Math.round(v*100) + '%';
+  if(t.k === 'reson') return 'plays at ' + Math.round((B.DAMPEN + v)*100) + '%';
+  if(t.k === 'shave') return Math.round(Math.min(0.9, v)*100) + '%';
   if(t.k === 'dfloor') return '+' + v + ' ' + plural(v, 'levels');
   // Worded as the row's own description reads, so the total never argues
   // with the line above it.
   if(t.k === 'walk') return Math.round(v*100) + '%\u00a0shorter';
-  if(t.k === 'cdr') return Math.round(v*100) + '%\u00a0faster';
+  if(t.k === 'cdr') return Math.round(Math.min(0.75, v)*100) + '%\u00a0less time';
   return '+' + Math.round(v*100) + '%';
 }
 function achReward(a){
@@ -35246,8 +35252,8 @@ function achReward(a){
   if(r.k === 'shard') return '+' + r.v + '\u00a0' + plural(r.v, 'shards');
   if(r.k === 'scroll') return '+' + r.v + ' ' + plural(r.v, 'scrolls');
   if(r.k === 'legacy') return '+' + r.v + ' legacy';
-  if(r.k === 'crt' || r.k === 'drp' || r.k === 'prc') return '+' + +(r.v*100).toFixed(1) + '% ' + { crt:'pure strike chance', drp:'club luck', prc:'affinity chance' }[r.k];
-  const nm = { pow:'swing power', gld:'purse', spd:'pace', mst:'second-ball chance',
+  if(r.k === 'crt' || r.k === 'drp' || r.k === 'prc') return '+' + +(r.v*100).toFixed(1) + '% ' + { crt:'pure strike chance', drp:'club luck', prc:'affinity trigger chance' }[r.k];
+  const nm = { pow:'swing power', gld:'prize money', spd:'pace', mst:'second-ball chance',
                elm:'affinity power', dgn:'wager haul' }[r.k] || r.k;
   return '+' + Math.round(r.v*100) + '% ' + nm;
 }

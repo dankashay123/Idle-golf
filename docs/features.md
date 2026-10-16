@@ -6,6 +6,31 @@ feature must do, and is usually enough on its own.
 
 ## Sections, newest first
 
+### Words checked, the green walk, an erase (16 October)
+
+- Talents, attributes, heirlooms and honours read against the code; the
+  words now say what it does. Rhythm and Card Sharp "less time" (they
+  multiply the wait); Sweet Contact adds to the chance, 55% at most;
+  Marshal's Bane and Sunday Nerve both work on the last hole of each round
+  (the only armoured one: `isClosing`), so they now say so; Off The Tee
+  "3× as far"; Quick Play "no least time". Attribute totals drop trailing
+  noughts, and read "a point" at none. Heirloom multipliers use `fmtX`
+  (two places under ten) and the row shows the next level; Chronoglass,
+  Founder's Locker, Signing Bonus (its real purse) and Standing Invitation
+  (wait, levels in, clubs) say what they do. Honours: renames (Trophy
+  Shelf, Paragon Rising, Wager Regular, Extra Ball; ids kept), It Happens
+  is 4 over par, cups are won, the toast words its reward with
+  `achReward`, the Card bar counts the card as its number, Every Door
+  counts to 6, Course Record shows its minus, Better Season no "0 / 1".
+  Check `wordsmatch`.
+- On the green the hole's ball comes to rest where he putts from
+  (`greenSpot`: the putting stand, his address lateral `teeLat`), rolling
+  there from where it lands (`b.settled`), and lies still (`gSpot`,
+  `greenLie`) while he walks up; it used to land 0.4 short and then ride
+  along at his feet. Checks `greenwalk`, `finish`.
+- Erasing the save (and loading a code) draws his pictures again
+  (`dressAgain`): an erased save kept the last skin's shirt. Check `save`.
+
 ### Sets on a club's sheet (11 October)
 
 - He asked for gear sets shown as a game shows them (a picture). A club's
