@@ -24921,7 +24921,7 @@ const Scene = {
       for(let i = 0; i <= 40; i++) this.hills[L].push(rnd());
 
 
-    this.camD = 0; this.restBall = null; this.walkTo = 0; this.greenBall = false;
+    this.camD = 0; this.restBall = null; this.walkTo = 0; this.greenBall = false; this.gSpot = null;
     this.train = null; this.trainMet = 0; this.trainNext = this.t + 8;
     this.upT = 0; this.saidHole = null; this.putt = null; this.cupT = 0; this.cupHeard = 0; this.aceT = 0; this.aceSwung = 0; this.herPose = null; this.tracks = null; this.marks = null;
     this.shotN = 0;                 // (the hole's shots so far: only the first is off the tee)
@@ -25006,7 +25006,7 @@ const Scene = {
 
     this.hills = [[], []];
     for(let L = 0; L < 2; L++) for(let i = 0; i <= 40; i++) this.hills[L].push(rnd());
-    this.camD = 0; this.restBall = null; this.walkTo = 0; this.greenBall = false;
+    this.camD = 0; this.restBall = null; this.walkTo = 0; this.greenBall = false; this.gSpot = null;
     // (a putt left over from the course: its ball sat at the cup through
     // the whole Scramble)
     this.putt = null; this.cupT = 0; this.cupHeard = 0; this.upT = 0; this.aceT = 0; this.aceSwung = 0; this.herPose = null; this.tracks = null; this.marks = null;
@@ -29859,14 +29859,15 @@ Object.assign(Scene, {
     if(atCam === undefined && SPRITE.caddie) this.drawCaddie(c, p.x - Math.round(w*0.42), y + (G.leap || 0), w, h);
     if(atCam === undefined) this.drawBless(c, x, y, w, h, p.y, 'front');
     // (the last steps up to his ball on the green: it lies in front of him)
-    if(walking && atCam === undefined && this.greenBall && this.hole === S.hole && !this.cupT){
-      const bs = h > 30 ? 2 : 1;
-      drawLyingBall(c, Math.round(x + w*1.19) + bs / 2, Math.round(p.y - bs), Math.max(1.5, bs * 0.8 + 0.5), this.t);
-    }
+    // (it lies where it came to rest, never carried along in front of him)
+    if(walking && atCam === undefined && this.greenBall && this.hole === S.hole && !this.cupT && this.gSpot) this.greenLie(c, this.gSpot);
     if(walking) return;
 
     // the ball waits out in front, on the ground, where he is looking
-    const bx = Math.round(x + w*1.19);
+    // (on the green, where it came to rest, so it does not shift a pixel as
+    // he arrives at it)
+    const GS = atCam === undefined && this.gSpot && this.hole === S.hole ? this.gSpot : null;
+    const bx = GS ? Math.round(this.proj(GS.d, GS.lat).x) : Math.round(x + w*1.19);
     // Where the club actually meets it, in world lateral units. The struck
     // ball used to be launched from the middle of the lane, so every shot
     // appeared out of thin air a body's width away from the face.
@@ -29874,9 +29875,18 @@ Object.assign(Scene, {
     // (not once it is rolling to the cup, or in it)
     const holed = atCam === undefined && (this.cupT || PT >= PUTT_HIT);
     if(!holed && ((this.swingT === 0 && !this.restBall && !this.walkOn) || (this.swingT > 0 && ph < 0.5))){
+      if(GS){ this.greenLie(c, GS); return; }
       const bs = h > 30 ? 2 : 1;
       drawLyingBall(c, bx + bs / 2, Math.round(p.y - bs), Math.max(1.5, bs * 0.8 + 0.5), this.t);
     }
+  },
+  // Where the hole's ball comes to rest on the green: where he stands to putt,
+  // out in front of his feet where he addresses a ball
+  greenSpot(){ return { d: this.pinD() - B_GREEN_STAND, lat: this.teeLat === undefined ? 0.42 : this.teeLat }; },
+  // and the ball lying there, the size it is at his feet when he addresses it
+  greenLie(c, G){
+    const p = this.proj(G.d, G.lat), h = Math.max(6, Math.round(B_GOLFER * US * p.s)), bs = h > 30 ? 2 : 1;
+    drawLyingBall(c, Math.round(p.x) + bs / 2, Math.round(p.y - bs), Math.max(1.5, bs * 0.8 + 0.5), this.t);
   },
 
   // A caddie perk's blessing: a column of the perk's own light comes down
@@ -30961,6 +30971,7 @@ Object.assign(Scene, {
   // to it (the user saw it clip through him)
   drawRestBall(){
     const c = this.b, R = this.restBall;
+    if(R && R.green){ const p = this.proj(R.d, R.lat); if(p.y <= this.clipAt(R.d) + 1) this.drawBehind(R.d - 0.3, p.x - 12, p.y - 12, p.x + 12, p.y + 4, g => this.greenLie(g, R)); return; }
     if(!R || R.d < this.camD + 0.6) return;                  // (reached: see drawBalls)
     const p = this.proj(R.d, R.lat);
     if(p.y <= this.clipAt(R.d) + 1 && p.s > 0.05){
@@ -30976,7 +30987,7 @@ Object.assign(Scene, {
     const c = this.b;
     const R = this.restBall;
     if(R){
-      if(R.d < this.camD + 0.6){
+      if(R.d < this.camD + (R.green ? 0.02 : 0.6)){
         this.restBall = null;                                  // he has reached it
         // (on the green with the hole's ball down: it stays in front of him
         // for the last steps up to it, until he putts, never gone a moment)
@@ -30998,12 +31009,26 @@ Object.assign(Scene, {
       if(!b.cup && !b.fin && !S.dgnRun && S.yardsMax > 0 && S.yards <= 0 && this.hole === S.hole){
         b.fin = 1;
         // (an ace goes on into the cup)
-        const ace = this.aceNow(), L = ace ? this.pinD() : this.pinD() - B_GREEN_STAND - 0.4, P = b.d0 + b.dist * Math.min(u, 1);
+        const ace = this.aceNow(), L = ace ? this.pinD() : this.pinD() - B_GREEN_STAND, P = b.d0 + b.dist * Math.min(u, 1);
         if(b.d0 + b.dist < L - 0.3 && u < 0.8){ b.lift0 = b.dist; b.dist = (L - P) / (1 - u); b.d0 = L - b.dist; if(ace){ b.cup = 1; b.lat = this.pinX(); } }
         // (nearly down when it went: an ace's ball skips on from there into
         // the cup, its own new flight, rather than landing short and gone)
         else if(ace && b.d0 + b.dist < L - 0.3){ const lt = this.ballLat(b, Math.min(u, 1));
           Object.assign(b, { d0: P, dist: L - P, t: 0, dur: 0.4 + Math.min(0.4, (L - P) * 0.012), lat0: lt, lat: this.pinX(), cup: 1, lift0: undefined }); continue; }
+      }
+      // The hole's ball comes to rest on the green just where he will stand
+      // to it, out in front of his feet as he addresses it: it rolls on there
+      // from where it came down, and lies still while he walks up to it (the
+      // user saw it ride along in front of him as he walked, and asked that he
+      // walk to it and it stay where it is)
+      if(u >= 1 && b.fin && !b.cup && !b.settled && !S.dgnRun && S.yardsMax > 0 && S.yards <= 0 && this.hole === S.hole){
+        const G = this.greenSpot(), P = b.d0 + b.dist, lt = this.ballLat(b, 1);
+        b.settled = 1;
+        if(Math.abs(G.d - P) > 0.05 || Math.abs(G.lat - lt) > 0.05){
+          Object.assign(b, { d0: P, dist: G.d - P, t: 0, dur: 0.35 + Math.min(0.35, Math.abs(G.d - P) * 0.06 + Math.abs(G.lat - lt) * 0.08),
+                             lat0: lt, lat: G.lat, lift0: 0.3 });
+          continue;
+        }
       }
       if(u >= 1){
         // it lies where it came down until he walks up to it (an ace is in
@@ -31013,7 +31038,8 @@ Object.assign(Scene, {
         const VR = S.dgnRun && S.dgnRun.mode === 'floor' ? S.dgnRun : null;
         if(VR && b.cup && !this.cupT){ Sfx.play('hole'); this.holed({ n: 'FLOOR ' + (VR.floor + 1), d: -2 }); }
         if(!S.dgnRun || VR){ if(b.cup) this.cupT = this.cupT || this.t;
-                       else{ this.restBall = { d: b.d0 + b.dist, lat: this.ballLat(b, 1) }; this.noteMark(this.restBall.d, this.restBall.lat); }
+                       else{ this.restBall = { d: b.d0 + b.dist, lat: this.ballLat(b, 1) }; this.noteMark(this.restBall.d, this.restBall.lat);
+                             if(b.settled){ this.restBall = { ...this.greenSpot(), green: 1 }; this.gSpot = { ...this.restBall }; } }
                        // (he stays put for the Vault's ball in the cup)
                        if(!(VR && b.cup)) this.walkTo = Math.max(this.walkTo || 0, b.d0 + b.dist); }
         this.balls.splice(i, 1); continue;
@@ -31498,7 +31524,7 @@ Object.assign(Scene, {
       if(this.camD >= this.pinD() - B_GREEN_UP && !this.upT) this.upT = this.t;
       // up on the green with the hole's ball down: he putts out (a ball left
       // lying beyond him is the one he putts)
-      if(up && this.upT && this.restBall && this.restBall.d > this.camD) this.restBall = null;
+      if(up && this.upT && this.restBall && !this.restBall.green && this.restBall.d > this.camD) this.restBall = null;
       // (once he has stopped: started as he still walked, the stroke ran on
       // unseen and the ball was gone from in front of him)
       if(up && !this.putt && !this.cupT && this.upT && this.swingT === 0 && !this.balls.length && !this.restBall && !this.walkOn)
@@ -35777,6 +35803,7 @@ function loadSaveObject(o){
   S.dgnRun = null; S.buff = {};
   Scene.dFloor = -1; Scene.skyKey = null; Scene.dBgKey = null;
   Meter.clear();
+  dressAgain();
   if(!S.nine || S.nine.idx !== nineIndex(S.hole)) startNine();
   startHole();
   buildCard(); buildUpg(); renderAll(); setView('upg');
@@ -35797,6 +35824,10 @@ function homeTip(){
     + '<button class="act" onclick="hideSheet()">Got it</button>');
 }
 
+// His pictures are drawn once from what he wears; an erase or a loaded code
+// changes what he wears without a trip through the shop, so they are drawn
+// again (an erased save kept the last skin's shirt on him).
+function dressAgain(){ PREVIEW = null; for(const k in SHOWSPR) delete SHOWSPR[k]; buildSprites(); }
 function wipe(){
   showSheet('<h3>Erase the Save?</h3><p>Everything goes. This cannot be undone.</p>'
     + '<button class="act danger" onclick="reallyWipe()">Erase everything</button>'
@@ -35815,6 +35846,7 @@ function reallyWipe(){
   S.dgnRun = null; S.perkOn = {}; S.buff = {};
   Meter.clear();
   WIPED = false;
+  dressAgain();
   startHole();
   buildCard(); buildUpg(); renderAll(); setView('upg');
   hideSheet();

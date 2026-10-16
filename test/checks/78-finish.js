@@ -9,8 +9,8 @@
  *     not (he stays where he is for an ace: the user asked)
  *   - with yardage still to go neither happens: a ball lands where it lands
  *   - he stays where he is while the winning shot is in the air, then walks
- *     up as after any shot, the ball lying on the green (or in front of
- *     him) every frame until he putts, and the putt only once he has
+ *     up as after any shot, the ball lying on the green where he putts
+ *     from (never carried along in front of him) every frame until he putts, and the putt only once he has
  *     stopped (the user saw him glide off the moment it was struck)
  */
 'use strict';
@@ -22,7 +22,7 @@ module.exports = {
       try {
         hideSheet(); QUIET = true; window.step = () => {};
         const D = derive(); let putSpot = 0;
-        const fresh = () => { S.hole = 4; startHole(); Scene.announce = null; putSpot = Scene.pinD() - B_GREEN_STAND - 0.4; Scene.camD = 20; Scene.walkTo = 20; Scene.balls = []; Scene.restBall = null;
+        const fresh = () => { S.hole = 4; startHole(); Scene.announce = null; putSpot = Scene.pinD() - B_GREEN_STAND; Scene.camD = 20; Scene.walkTo = 20; Scene.balls = []; Scene.restBall = null;
           Scene.swingT = 0; Scene.putt = null; Scene.cupT = 0; Scene.pendingBall = null; Scene.queued = null;
           S.doneT = S.parTime; };   // (a par: an ace goes in the cup, see below)
         const pos = b => b.d0 + b.dist * Math.min(1, b.t / b.dur);
@@ -98,6 +98,6 @@ module.exports = {
       return o;
     });
     if (r.fails.length) throw new Error(r.fails.join('; '));
-    return ['he waits for the winning shot to land, walks up (at most ' + r.walkV + '/s) with the ball in front of him and putts once stopped; a ball in the air as the hole was won carries on to ' + r.air + ' without a jump; one lying short is walked to (' + r.stopAt + ') and played on to ' + r.chip + '; an ace in the air goes in, a first shot or a second; with yardage to go, as before'];
+    return ['he waits for the winning shot to land, walks up (at most ' + r.walkV + '/s) to the ball lying where he putts from and putts once stopped; a ball in the air as the hole was won carries on to ' + r.air + ' without a jump; one lying short is walked to (' + r.stopAt + ') and played on to ' + r.chip + '; an ace in the air goes in, a first shot or a second; with yardage to go, as before'];
   }
 };

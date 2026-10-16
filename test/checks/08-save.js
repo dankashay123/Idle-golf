@@ -187,7 +187,15 @@ module.exports = {
       initState(); migrate();
 
       // erasing has to take the backup with it, or the next boot restores it
+      // and he is dressed again: an erased save kept the last skin's shirt on
+      // him (the user saw it)
+      const pix = () => Array.from(SPRITE.gAddr.cv.getContext('2d').getImageData(0, 0, SPRITE.gAddr.w, SPRITE.gAddr.h).data).join();
+      const plainPix = (() => { const o = S.outfit; S.outfit = 'classic'; buildSprites(); const v = pix(); S.outfit = o; return v; })();
+      const sk = B.OUTFITS.find(o => o.id !== 'classic' && o.shirt && o.shirt.toLowerCase() !== B.OUTFITS[0].shirt.toLowerCase());
+      S.styleOwn = Object.assign(S.styleOwn || {}, { ['o:' + sk.id]: 1 }); S.outfit = sk.id; buildSprites();
+      out.skinDiffers = pix() !== plainPix;
       reallyWipe();
+      out.plainAfterWipe = pix() === plainPix;
       out.bakAfterWipe = localStorage.getItem(BAK);
       out.mainAfterWipe = localStorage.getItem(KEY);
       out.loadAfterWipe = load();
@@ -214,6 +222,8 @@ module.exports = {
     if (bak.bakAfterWipe || bak.mainAfterWipe || bak.loadAfterWipe)
       throw new Error('erasing the save left ' + (bak.bakAfterWipe ? 'the backup' : 'the save')
         + ' behind, so the next boot brings back what the player asked to erase');
+    if (!bak.skinDiffers || !bak.plainAfterWipe)
+      throw new Error(bak.skinDiffers ? 'erasing the save left the last skin\'s look on him' : 'the skin worn before erasing looked no different from the plain one');
     if (bak.warned !== 1)
       throw new Error('a browser that refuses every save raised ' + bak.warned + ' warning(s); '
         + 'it has to say so once. Private browsing and a full disk both land here, and '
