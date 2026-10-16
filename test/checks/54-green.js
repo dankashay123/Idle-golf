@@ -83,7 +83,7 @@ module.exports = {
             if (watch) Scene.draw(dt, D);
             if (S.hole === at) camMax = Math.max(camMax, Scene.camD);
             // no ball ever lies nearer the cup than where he putts from
-            if (watch && Scene.restBall && Scene.restBall.d > Scene.pinD() - B_GREEN_STAND - 0.4 + 0.01) nearCup++;
+            if (watch && Scene.restBall && Scene.restBall.d > Scene.pinD() - B_GREEN_STAND + 0.01) nearCup++;
             if (stop && H.length >= stop) break;
           }
           window.finishHole = keep.fh; window.oneSwing = keep.os; window.fireSkill = keep.fs; Scene.holed = keep.holed; Sfx.play = keep.play;

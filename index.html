@@ -14173,7 +14173,7 @@ const trainKind = T => TRAINS[T && T.kind] || TRAINS.steam;
 // cup shows above his head), and how near that counts as up on the green (see
 // Scene.holeWait); and the putt (Scene.putt): the stroke's moment of impact
 // and how long the ball rolls, in seconds from when he addresses it
-const B_GREEN_STAND = 2.2, B_GREEN_UP = 2.7, PUTT_HIT = 0.43, PUTT_ROLL = 0.6;
+const B_ARRIVE = 1.6, B_GREEN_STAND = 2.2, B_GREEN_UP = 2.7, PUTT_HIT = 0.43, PUTT_ROLL = 0.6;
 // The pin stands a little right of the middle of the green: on his own line
 // it was behind him as he putted (on a screen turned on its side the cup is
 // behind his head from any distance), and the ball dropped out of sight.
@@ -25754,6 +25754,7 @@ const Scene = {
     // Off the face, not out of the middle of the screen: it leaves from where
     // the clubhead is and drifts across to wherever it is going.
     const lat0 = this.teeLat === undefined ? 0.42 : this.teeLat;
+    this.gSpot = null;                     // (gone from where it lay)
     // On the course a shot flies exactly as far as it took him down the hole:
     // from where he stands to where the yardage now says he is, and that is
     // where he walks to. It used to fly a flat 14 to 23 units whatever it did,
@@ -25794,7 +25795,10 @@ const Scene = {
                       t:0, dur: 0.34 + Math.min(0.32, dist * 0.016) + Math.random()*0.08,
                       el:p.el, crit:p.crit, seed: Math.random()*100,
                       lat0: lat0, cup: inCup ? 1 : 0, tee: tee ? 1 : 0,
-                      lat: inCup ? this.pinX() : p.lat !== undefined ? p.lat : -0.15 + (Math.random()-.5)*0.30 });
+                      // (on the course it comes down on his line, out where
+                      // he addresses a ball, so it lies there as he walks up
+                      // and he stands to it without it moving: the user asked)
+                      lat: inCup ? this.pinX() : p.lat !== undefined ? p.lat : !S.dgnRun ? lat0 : -0.15 + (Math.random()-.5)*0.30 });
     if(this.nums.length < 12 && p.dmg > 0){
       // Kept clear of whatever is already floating there, measured in the
       // numbers' real widths. They all rise at the same speed, so a number
@@ -29862,7 +29866,8 @@ Object.assign(Scene, {
     if(atCam === undefined) this.drawBless(c, x, y, w, h, p.y, 'front');
     // (the last steps up to his ball on the green: it lies in front of him)
     // (it lies where it came to rest, never carried along in front of him)
-    if(walking && atCam === undefined && this.greenBall && this.hole === S.hole && !this.cupT && this.gSpot) this.greenLie(c, this.gSpot);
+    // (and the frame he arrives, still in his stride, the one he has reached)
+    if(walking && atCam === undefined && this.hole === S.hole && !this.cupT && this.gSpot) this.greenLie(c, this.gSpot);
     if(walking) return;
 
     // the ball waits out in front, on the ground, where he is looking
@@ -29876,7 +29881,9 @@ Object.assign(Scene, {
     this.teeLat = (bx - p.x) / Math.max(0.001, LAT * p.s);
     // (not once it is rolling to the cup, or in it)
     const holed = atCam === undefined && (this.cupT || PT >= PUTT_HIT);
-    if(!holed && ((this.swingT === 0 && !this.restBall && !this.walkOn) || (this.swingT > 0 && ph < 0.5))){
+    // (and not while his shot is still in the air: the next was drawn at his
+    // feet the moment the last left them)
+    if(!holed && ((this.swingT === 0 && !this.restBall && !this.walkOn && (S.dgnRun || !this.balls.length)) || (this.swingT > 0 && ph < 0.5))){
       if(GS){ this.greenLie(c, GS); return; }
       const bs = h > 30 ? 2 : 1;
       drawLyingBall(c, bx + bs / 2, Math.round(p.y - bs), Math.max(1.5, bs * 0.8 + 0.5), this.t);
@@ -30974,23 +30981,33 @@ Object.assign(Scene, {
   drawRestBall(){
     const c = this.b, R = this.restBall;
     if(R && R.green){ const p = this.proj(R.d, R.lat); if(p.y <= this.clipAt(R.d) + 1) this.drawBehind(R.d - 0.3, p.x - 12, p.y - 12, p.x + 12, p.y + 4, g => this.greenLie(g, R)); return; }
-    if(!R || R.d < this.camD + 0.6) return;                  // (reached: see drawBalls)
+    // (reached: see drawBalls; on the course drawn until then, the frame it is
+    // reached included, or that frame had no ball at all)
+    if(!R || (S.dgnRun && R.d < this.camD + 0.6)) return;
     const p = this.proj(R.d, R.lat);
     if(p.y <= this.clipAt(R.d) + 1 && p.s > 0.05){
       // drawn a little larger than true, so a ball lying out there can be
       // found (at 1.7 it was the size of his head as he walked up to it;
       // the user asked for it smaller)
-      const r = Math.max(2, Math.round(B_BALL * p.s * US * 1.15));
+      let r = Math.max(2, Math.round(B_BALL * p.s * US * 1.15)), x = p.x, y = p.y - r;
+      // and over his last few steps to it down to the size of the ball he
+      // addresses, drawn as that one is, so standing to it changes nothing
+      if(!S.dgnRun){ const h = Math.max(6, Math.round(B_GOLFER * US * p.s)), bs = h > 30 ? 2 : 1, ra = Math.max(1.5, bs * 0.8 + 0.5);
+        const k = clamp((R.d - this.camD - 0.02) / 3, 0, 1);
+        x = (Math.round(p.x) + bs / 2) * (1 - k) + p.x * k; y = Math.round(p.y - bs) * (1 - k) + (p.y - r) * k; r = ra + (r - ra) * k; }
       // (not where something nearer stands in front of it)
-      this.drawBehind(R.d - 0.3, p.x - r * 4 - 4, p.y - r * 6 - 4, p.x + r * 4 + 4, p.y + r + 2, g => drawLyingBall(g, p.x, p.y - r, r, this.t));
+      const R0 = Math.ceil(r);
+      this.drawBehind(R.d - 0.3, p.x - R0 * 4 - 4, p.y - R0 * 6 - 4, p.x + R0 * 4 + 4, p.y + R0 + 2, g => drawLyingBall(g, x, y, r, this.t));
     }
   },
   drawBalls(dt){
     const c = this.b;
     const R = this.restBall;
     if(R){
-      if(R.d < this.camD + (R.green ? 0.02 : 0.6)){
+      if(R.d < this.camD + (S.dgnRun ? 0.6 : 0.02)){
         this.restBall = null;                                  // he has reached it
+        // (and the ball he addresses is that one, where it lay, to the pixel)
+        if(!S.dgnRun) this.gSpot = { d: R.d, lat: R.lat };
         // (on the green with the hole's ball down: it stays in front of him
         // for the last steps up to it, until he putts, never gone a moment)
         this.greenBall = S.yards <= 0 && this.hole === S.hole && R.d >= this.pinD() - B_GREEN_STAND - 0.9;
@@ -31483,7 +31500,11 @@ Object.assign(Scene, {
       // lying ahead: he plays the last shot up to the green from there, before
       // a step of the walk)
       if(!S.dgnRun && S.yardsMax > 0 && S.yards <= 0 && this.hole === S.hole && !this.restBall && !this.balls.length && !this.swingT && !this.putt && !this.cupT
-         && !this.greenBall && !this.aceHold(D) && Math.abs(this.camD - this.shotCap()) < 0.6){ this.swingT = this.swingDur; this.pendingBall = { crit: false, el: null, dmg: 0 }; }
+         && !this.greenBall && !this.aceHold(D)
+         // (or standing to his ball short of the green: he plays it on, rather
+         // than walking off and leaving it lying there)
+         && (Math.abs(this.camD - this.shotCap()) < 0.6
+             || (this.gSpot && this.gSpot.d < this.pinD() - B_GREEN_STAND - 0.9 && Math.abs(this.camD - this.gSpot.d) < 0.1))){ this.swingT = this.swingDur; this.pendingBall = { crit: false, el: null, dmg: 0 }; }
       const swingPh = this.swingT > 0 ? 1 - this.swingT / this.swingDur : 1;
       const at = this.shotSpot(prog);
       // once the hole's ball is down he walks up to the green, as after any
@@ -31509,7 +31530,11 @@ Object.assign(Scene, {
         // backswing, and the ball he then hit dribbled off the tee, a step
         // short of where it should have gone; the user saw both. The shot
         // flies as far as the yardage went instead, and he walks after it)
-        if(swingPh >= 0.85) this.camD += Math.max(0, goal - this.camD) * Math.min(1, dt * 4.5);
+        // (easing in, but never slower than an amble at the end, so he
+        // arrives at his ball and stops rather than creeping the last inch in
+        // his stance)
+        if(swingPh >= 0.85){ const gap = Math.max(0, goal - this.camD);
+          this.camD += Math.min(gap, Math.max(gap * Math.min(1, dt * 4.5), B_ARRIVE * dt)); }
         // he walks as far as the bank and takes off from there
         if(I && cam0 < I.bank && this.camD > I.bank) this.camD = I.bank;
         // and at a railway he stays on his side of the line while a train
@@ -33386,7 +33411,7 @@ function swapLine(label, a, b, fmtv, higherIsBetter){
 // Only the highest bonus reached counts: a lower one reached is shown passed.
 function setPanel(set){
   const tiers = n => { const best = set.tiers.filter(t => n >= t.n).pop();
-    return set.tiers.map(t => '<div class="sbt' + (t === best ? ' on' : n >= t.n ? ' past' : '') + '">(' + t.n + ') ' + setEffect(t) + '</div>').join(''); };
+    return set.tiers.map(t => '<div class="sbt' + (t === best ? ' on' : n >= t.n ? ' past' : '') + '">(' + t.n + ') ' + nb(setEffect(t)) + '</div>').join(''); };
   const n = B.SLOTS.filter(sl => inSet(S.equip[sl.id], set)).length;
   const head = '<div class="setbox"><div class="sbh">' + set.n + ' (' + n + '/' + B.SLOTS.length + ')</div>';
   if(set.named) return head + '<div class="sbd">' + set.d + '</div><ul class="sbp">'

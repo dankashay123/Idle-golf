@@ -28,6 +28,14 @@ feature must do, and is usually enough on its own.
   there from where it lands (`b.settled`), and lies still (`gSpot`,
   `greenLie`) while he walks up; it used to land 0.4 short and then ride
   along at his feet. Checks `greenwalk`, `finish`.
+- The same down the fairway (he asked): a shot comes down on his line at
+  his address lateral (`launch`, `lat0`), is drawn where it lies until the
+  frame he reaches it (0.02, not 0.6), shrinking over the last 3 units to
+  the address ball's size, and the ball he then stands to is drawn at that
+  spot (`gSpot`). He arrives at an amble (`B_ARRIVE`) rather than creeping
+  in his stance. No ball at his feet while a shot is in the air (there was
+  one, the next drawn as the last left). Standing to his ball short of the
+  green when the hole's ball goes down, he plays it on.
 - Erasing the save (and loading a code) draws his pictures again
   (`dressAgain`): an erased save kept the last skin's shirt. Check `save`.
 
