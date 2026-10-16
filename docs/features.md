@@ -6,6 +6,21 @@ feature must do, and is usually enough on its own.
 
 ## Sections, newest first
 
+### Why the climb stalls; rewards for seeing (17 October)
+
+- The simulated free player is held near Card 60 to 77 by power, not a
+  gate: the next card is open nearly every week, but its round ratio is
+  1.3 to 4.2 (it climbs at 0.9, `CLIMB_FIT`), since each card's holes are
+  4x longer. The sovereign surge one run showed did not come back on the
+  same seed (day 75 that time): runs vary.
+- Finds by the tee (`layFind`) and Golden Hour's sovereigns need the
+  course in sight (`Scene.watched()`): behind the saver nothing is drawn
+  and holes do not wait for the walk, so they came faster unseen. The
+  simulation counts its hour as watched (`test/sim.js`).
+- The points to spend under the level bar read as a total when the list
+  will not fit (all three kinds, or a long pair under 360 wide). Full
+  Paragon Swing Power says where Core's points go. Check `careerfit`.
+
 ### Honours pay what they say; Sunday Nerve; wager levels (17 October)
 
 - Honours' swing power is its own multiplier (`career().hpow`, `derive`):

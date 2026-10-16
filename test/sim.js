@@ -29,6 +29,9 @@ const { chromium } = require('playwright');
     initState(); migrate(); startHole();
     let seed = seedN * 7919 + 1; Math.random = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
     S.autoEquip = 1; S.autoClimb = true;
+    // (its hour a day is played watching: finds by the tee and Golden Hour's
+    // sovereigns are paid only with the course in sight, and this never draws)
+    Scene.watched = () => !QUIET && !OFFLINE;
     const SCALE = window.__SCALE || {}; const SRC = {}; const es = earnSov, gs = grantSov;
     window.earnSov = function(n, place, key, label){ const k = String(key || label || '?').split(':')[0]; if (SCALE[k] !== undefined) { n = Math.round(n * SCALE[k]); arguments[0] = n; } SRC[k] = (SRC[k] || 0) + (n || 0); window.__inE = 1; try { return es.apply(this, arguments); } finally { window.__inE = 0; } };
     window.grantSov = function(n, why){ if (window.__inE) return gs.apply(this, arguments); const k = 'grant:' + String(why || '').slice(0, 24); SRC[k] = (SRC[k] || 0) + (n || 0); return gs.apply(this, arguments); };

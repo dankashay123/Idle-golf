@@ -4,7 +4,8 @@
  *
  *   - about one live hole in forty, from the hole's hash, about 2.5
  *     sovereigns over forty holes; never away, in a wager, before his first
- *     hole, on another hole or twice on one hole
+ *     hole, on another hole or twice on one hole, nor with the course out
+ *     of sight
  *   - laid in the rough on his left, clear of hazards, woods, water and
  *     other holes, and on the field where it can be seen: not under the
  *     buttons or the hole map, on a phone upright or on its side
@@ -39,6 +40,12 @@ module.exports = {
             if (p && !w) f('a find on hole ' + h + ', which the hash does not give'); }
           if (seen < want * 0.85) f('found on ' + seen + ' of the ' + want + ' holes the hash gives');
           o.live = seen + ' of ' + want; }
+        // and none with the course out of sight (behind the screen saver
+        // nothing is drawn and holes do not wait: they came faster unseen)
+        { const h0 = S.hole + 1000, keepS = Scene.stepN, keepD = Scene.drawnN; let unseen = 0, want = 0;
+          try { for (let h = h0; h < h0 + 400; h++) { Scene.drawnN = 0; Scene.stepN = 50; if (hr(h, 700) < 1 / FIND_ODDS) want++; if (lay(h)) unseen++; } }
+          finally { Scene.stepN = keepS; Scene.drawnN = keepD; }
+          if (!want || unseen) f(unseen + ' finds with the course out of sight (' + want + ' holes the hash gives)'); o.unseen = want; }
         // where it lies, over many holes on every home course and a few others
         o.laid = 0; o.tried = 0;
         const courses = COURSE_HOME.concat(B.COURSE.filter(c => c.slot === 'event').slice(0, 3));
@@ -159,7 +166,7 @@ module.exports = {
         seen.push(w + 'x' + h + ' ' + q.n);
       }
     } finally { await page.setViewportSize(vp); }
-    return [r.per40 + ' finds and ' + r.sov40 + ' sovereigns every 67 holes; every kind found; live on ' + r.live + ' holes the hash gives',
+    return [r.per40 + ' finds and ' + r.sov40 + ' sovereigns every 67 holes; every kind found; live on ' + r.live + ' holes the hash gives, none of ' + r.unseen + ' unseen',
       'laid on ' + r.laid + ' of ' + r.tried + ' holes asked, all in the rough on his left, clear of play, hazards, woods, water and other holes',
       'paid once; none away, in a catch-up, in a wager, before his first hole or on another hole',
       r.views + ' views, ' + r.pix + ' pixels, none under the ground\'s line; a burst within ' + r.far.toFixed(0) + ' pixels, then gone; none in a wager',

@@ -9063,7 +9063,8 @@ function finishHole(D){
   if(goldenOn(S.hole, S.chaos && S.chaos.n)){ const gx = pay + (S.holeGold || 0); S.gold += gx; Meter.add(gx);
     // (and, played live, the gold at the top: sovereigns and a ticket, once
     // a hole; never away, in a catch-up or a run made quietly)
-    if(!OFFLINE && !QUIET && S.goldPaid !== S.hole){ S.goldPaid = S.hole;
+    // (and only with the course in sight, as finds by the tee)
+    if(!OFFLINE && !QUIET && S.goldPaid !== S.hole && Scene.watched()){ S.goldPaid = S.hole;
       earnSov(B.GOLDEN_SOV, 'today', 'gold', 'Golden Hour'); const t0 = S.tickets || 0; grantTickets(B.GOLDEN_TICK); const m = (S.tickets || 0) - t0;
       toast('<span class="achk">Golden Hour</span><span style="white-space:nowrap">+' + B.GOLDEN_SOV + sovIc() + '</span>' + (m > 0 ? ' \u00b7 +' + m + '\u00a0ticket' + (m > 1 ? 's' : '') : ''), 'ach'); } }
 
@@ -23081,6 +23082,10 @@ const Scene = {
     this.find = null;
     const h = this.hole, put = this.props || [];
     if(QUIET || OFFLINE || S.dgnRun || h !== S.hole || S.findHole === h || !S.totalHoles) return;
+    // (only with the course in sight: behind the screen saver nothing is
+    // drawn and a hole does not wait for him to walk up, so finds came
+    // faster unseen than watched; a reward for seeing is earned seeing)
+    if(!this.watched() && FIND_FORCE !== h) return;
     if(FIND_FORCE !== h && (hr(h, 700) >= 1 / FIND_ODDS || !fairCard())) return;
     for(let i = 0; i < 16; i++){
       // (on his left: the hole map stands over the right of the field)
