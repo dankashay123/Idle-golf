@@ -22449,13 +22449,18 @@ const Scene = {
   },
   nbrBunkerX(N, B){ return (Math.abs(B.dx) > 2.6 ? this.nbrGX(N) : this.nbrX(N, B.d)) + N.sd * B.dx; },
   onNbr(d, x, pad){
+    // (asked thousands of times a hole: the lane only where it runs, and its
+    // green, bunkers and tees, which never move once laid, worked out once
+    // and kept; it was half the cost of laying a hole)
     for(const N of this.nbrs || []){
-      const nx = this.nbrX(N, d), off = Math.abs(x - nx);
-      if(d > N.a && d < N.b && off < this.nbrW(N, d) + pad) return true;
-      const gu = (d - N.gd) / 6.2, gv = Math.abs(x - this.nbrGX(N)) / 2.6;
-      if(gu * gu + gv * gv < 1 + pad) return true;
-      for(const B of N.bks) if(Math.abs(d - B.d) < B.rd + pad && Math.abs(x - this.nbrBunkerX(N, B)) < B.rx * 1.25 + pad) return true;
-      for(const T0 of N.tees) if(Math.abs(d - T0.d) < 1.1 + pad && Math.abs(x - this.nbrX(N, T0.d) - N.sd * T0.dx) < 1.0 + pad) return true;
+      if(d > N.a && d < N.b && Math.abs(x - this.nbrX(N, d)) < this.nbrW(N, d) + pad) return true;
+      const gu = (d - N.gd) / 6.2;
+      if(gu * gu < 1 + pad){ if(N._gx === undefined) N._gx = this.nbrGX(N);
+        const gv = Math.abs(x - N._gx) / 2.6; if(gu * gu + gv * gv < 1 + pad) return true; }
+      for(const B of N.bks) if(Math.abs(d - B.d) < B.rd + pad){ if(B._x === undefined) B._x = this.nbrBunkerX(N, B);
+        if(Math.abs(x - B._x) < B.rx * 1.25 + pad) return true; }
+      for(const T0 of N.tees) if(Math.abs(d - T0.d) < 1.1 + pad){ if(T0._x === undefined) T0._x = this.nbrX(N, T0.d) + N.sd * T0.dx;
+        if(Math.abs(x - T0._x) < 1.0 + pad) return true; }
     }
     return false;
   },

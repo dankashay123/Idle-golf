@@ -7,6 +7,11 @@
 //
 //   node test/serve.js &   then   node test/sim.js <free|pass|member|both> <seed> [days]
 //   SCALE='{"hon":0.6}' node test/sim.js free 1 84    tries a cut by earnSov key
+//   STATE_OUT=a.json node test/sim.js free 1 42, then
+//   STATE_IN=a.json node test/sim.js free 1 84         plays it in two halves (a
+//     long run passed the two-hour limit on a background command); the
+//     second picks up from the first's save, as a reload would, so it is
+//     its own run, repeatable, not the unbroken one
 //
 // Prints one line of JSON: the day a full Mythic set is affordable
 // (reached), weekly rows (sovereigns, card, highest card, retirements,
@@ -21,7 +26,8 @@ const { chromium } = require('playwright');
   const errs = []; p.on('pageerror', e => errs.push(e.message));
   await p.addInitScript((sc) => { window.__sovAuto = 1; window.__noShimmer = 1; window.__SCALE = sc; }, JSON.parse(process.env.SCALE || '{}'));
   await p.goto('http://localhost:8080/index.html'); await p.waitForTimeout(1500);
-  const out = await p.evaluate(async ([variant, seedN, DAYS]) => {
+  const stateIn = process.env.STATE_IN ? JSON.parse(require('fs').readFileSync(process.env.STATE_IN, 'utf8')) : null;
+  const out = await p.evaluate(async ([variant, seedN, DAYS, SI]) => {
     hideSheet();
     // (and the game's own frame loop stopped: it played real frames between
     // the days, as many as the real time allowed, so a slower run played
@@ -61,13 +67,16 @@ const { chromium } = require('playwright');
     const gear = () => { for (const it of Object.values(S.equip || {})) { if (!it) continue;
         for (let g = 0; g < 30 && it.enh < B.ENH_MAX && (S.grit || 0) >= enhCost(it); g++) enhance(it);
         if (it.rar < B.RARITY.length - 1 && (S.shard || 0) >= ascendCost(it) * 1.5) ascendItem(it); } };
-    let topAt = 0, topDay = 0, retires = 0;
+    let topAt = 0, topDay = 0, retires = 0, day0 = 0;
     const heir = () => { for (let g = 0; g < 40; g++) { if (trophiesFound() < B.TROPHY.length && S.legacy >= discoverCost()) { discover(); continue; }
         let best = null, bc = Infinity; for (const t of B.TROPHY) { if (!found(t.id) || (S.relic[t.id] || 0) >= trTop(t)) continue; const c = upgradeCost(t); if (c < bc) { bc = c; best = t; } }
         if (best && S.legacy >= bc) { S.legacy -= bc; S.relic[best.id]++; } else break; } };
     const take = () => { try { collect(); } catch (e) {} if (variant === 'pass' || variant === 'both' || true) { try { for (let t = 1; t <= PASS.TIERS; t++) for (const row of ['f', 'p']) passGive(row, t, true); } catch (e) {} } };
-    const rows = []; let reached = -1, live = 0;
-    for (let day = 0; day < DAYS; day++) {
+    let rows = [], reached = -1, live = 0;
+    // (picked up from a first half: its save loaded as a reload loads one)
+    if (SI) { seed = SI.seed; Object.keys(S).forEach(k => delete S[k]); Object.assign(S, defaultState(), SI.S); initState(); migrate(); startHole();
+      ({ topAt, topDay, retires, rows, reached } = SI); Object.assign(SRC, SI.src); day0 = SI.day; }
+    for (let day = day0; day < DAYS; day++) {
       SIMT = Date.UTC(2026, 9, 1, 18, 0, 0) + day * 86400000;
       QUIET = false; OFFLINE = false;
       catchUp(); QUIET = false; OFFLINE = false;
@@ -93,8 +102,11 @@ const { chromium } = require('playwright');
       await new Promise(r => setTimeout(r, 0));
     }
     window.Date = RD; Date.now = RN;
-    return { variant, seed: seedN, set: SET, reached, rows, src: SRC };
-  }, [variant, +seedS, DAYS]);
+    return { variant, seed: seedN, set: SET, reached, rows, src: SRC,
+      state: { S: JSON.parse(JSON.stringify(S)), seed, topAt, topDay, retires, rows, reached, src: SRC, day: DAYS } };
+  }, [variant, +seedS, DAYS, stateIn]);
+  if (process.env.STATE_OUT) require('fs').writeFileSync(process.env.STATE_OUT, JSON.stringify(out.state));
+  delete out.state;
   out.errs = errs.slice(0, 3);
   console.log(JSON.stringify(out));
   await b.close();
