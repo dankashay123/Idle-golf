@@ -41,14 +41,16 @@ module.exports = {
         }
         return { sum, colours: seen.size };
       };
-      const a = grab();
-      await new Promise(r => setTimeout(r, 400));
-      return { a, b: grab() };
+      // (frames waited for, not a time: in a busy full run 400ms passed with
+      // too few drawn and it read "frozen"; frozen is thirty frames the same)
+      const a = grab(), n0 = Scene.drawnN || 0; let b = a;
+      for (let k = 0; k < 100; k++) { await new Promise(r => setTimeout(r, 50)); b = grab(); if (b.sum !== a.sum || (Scene.drawnN || 0) - n0 >= 30) break; }
+      return { a, b, frames: (Scene.drawnN || 0) - n0 };
     });
     if (px.a.colours < 20)
       throw new Error('the frame is nearly flat: ' + px.a.colours + ' distinct colours sampled');
     if (px.a.sum === px.b.sum)
-      throw new Error('the frame did not change in 400ms -- the scene is frozen');
+      throw new Error('the frame did not change over ' + px.frames + ' frames -- the scene is frozen');
 
     // ---- every screen renders its rows, counted off the data tables ---------
     const rows = await page.evaluate(async () => {
