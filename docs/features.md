@@ -21,6 +21,13 @@ feature must do, and is usually enough on its own.
   a fair wind landed a golfer on a card he could not birdie (1.35 of par).
   Now in still weather (`deriveStill(4)`), and an old save's move on load
   too. Check `retire` (it failed one run in a few).
+- Pace on the repeatable simulation, seed 1, a full Mythic set: free day
+  62 (seeds 2 and 4: 56, 71), the Tour Pass alone 42, Membership alone
+  about 43, both 34 (seed 2: 32). He chose to leave the free pace.
+- A prop's solid pixels are worked out once a size (`solidAt`, eight sizes
+  a sprite) for its depth and the tree mask, not read letter by letter
+  twice a frame. Drawing less when still was tried and taken out: in play
+  something always moves, and a skipped frame read as nobody watching.
 
 ### Why the climb stalls; rewards for seeing (17 October)
 
