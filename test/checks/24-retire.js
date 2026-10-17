@@ -33,7 +33,9 @@ module.exports = {
     const r = await page.evaluate(() => {
       const o = {}; const SNAP = JSON.stringify(S);
       const fresh = () => { Object.keys(S).forEach(k => delete S[k]); Object.assign(S, defaultState()); initState(); migrate(); };
-      const ratioOn = c => B.Y0 * Math.pow(B.TIER_Y, c) / (derive().dps * B.PAR_TIME[4]);
+      // (in still weather, as retireCard judges it: the hole it landed on had
+      // its own weather, and a slow one read 1.01 of par in a full run)
+      const ratioOn = c => B.Y0 * Math.pow(B.TIER_Y, c) / (deriveStill(4).dps * B.PAR_TIME[4]);
       QUIET = true;
       try {
         // a strong bag, a best card of 30, and a full range that will reset

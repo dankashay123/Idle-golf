@@ -11012,7 +11012,10 @@ function retireCard(){
   const keep = relLv('vault') * B.VAULT_UPG, saved = Object.assign({}, S.upg), buff = S.buff;
   B.UPG.forEach(u => S.upg[u.id] = vaultKeep(u, keep)); S.buff = {};
   let c = 0;
-  try{ c = matchedCard(derive()); } finally { Object.assign(S.upg, saved); S.buff = buff; }
+  // (in still weather: judged on the hole he stood on, a fair wind put a
+  // golfer onto a card his bag could not birdie, 1.35 of par, and a slow
+  // day put him lower than he belonged)
+  try{ c = matchedCard(deriveStill(4)); } finally { Object.assign(S.upg, saved); S.buff = buff; }
   const best = Math.max(S.bestTier || 0, S.tierMax || 0, S.tier || 0);
   return Math.min(B.TIER_MAX, Math.max(Math.min(relLv('chrono'), best), Math.min(c, best)));
 }
@@ -11028,7 +11031,7 @@ function retireCard(){
 function fixHoles(o){
   if(!o || typeof o !== 'object' || o.holesFixed) return;
   S.holesFixed = 1;
-  const c = matchedCard(derive());
+  const c = matchedCard(deriveStill(4));
   S.tier = c; S.tierMax = c; S.tierEvents = {};
   S.bestTier = Math.max(S.bestTier || 0, c);
   S.scores = []; S.tourScore = 0;
