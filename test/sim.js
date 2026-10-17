@@ -24,6 +24,10 @@ const { chromium } = require('playwright');
   const out = await p.evaluate(async ([variant, seedN, DAYS]) => {
     hideSheet();
     const RN = Date.now; let SIMT = Date.UTC(2026, 9, 1, 18, 0, 0); Date.now = () => SIMT;
+    // (the whole clock, not just Date.now: the game reads the hour and minute
+    // from new Date() for frost, night and the thaw, and the real ones drifted
+    // two runs of one seed apart -- a slower run met other hours)
+    const RD = Date; window.Date = class extends RD { constructor(...a) { if (a.length) super(...a); else super(SIMT); } static now() { return SIMT; } };
     window.toast = () => {}; window.showSheet = () => {}; window.hideSheet = () => {};
     Object.keys(S).forEach(k => delete S[k]); Object.assign(S, defaultState()); S.t = SIMT / 1000;
     initState(); migrate(); startHole();
@@ -78,7 +82,7 @@ const { chromium } = require('playwright');
       if (day % 7 === 6 || day === DAYS - 1) rows.push({ day: day + 1, sov: S.sov, card: S.tier + 1, top: Math.max(S.tierMax || 0, S.bestTier || 0) + 1, ret: retires, heir: trophiesFound() });
       await new Promise(r => setTimeout(r, 0));
     }
-    Date.now = RN;
+    window.Date = RD; Date.now = RN;
     return { variant, seed: seedN, set: SET, reached, rows, src: SRC };
   }, [variant, +seedS, DAYS]);
   out.errs = errs.slice(0, 3);
