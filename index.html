@@ -33775,7 +33775,7 @@ function renderDgn(){
       // 25 in any wager" had no figure to go by)
       // (the Vault's best is its floor, which is near enough its level: there
       // the best alone)
-      + '<div class="dm">' + (/^Best: floor/.test(best) ? '' : 'Level\u00a0' + ((S.dgnFloor[d.id] || 0) + 1) + ' \u00b7 ') + best + ' \u00b7 Length: ' + tw(Math.round(d.run * (career().sharp ? 1.4 : 1)), 'second') + (nextIn === 'full' ? '' : ' \u00b7 Next entry ' + nextIn) + '</div>'
+      + '<div class="dm">' + (/^Best: floor/.test(best) ? '' : 'Level\u00a0' + ((S.dgnFloor[d.id] || 0) + 1) + ' \u00b7 ') + best + ' \u00b7 <span style="white-space:nowrap">Length: ' + tw(Math.round(d.run * (career().sharp ? 1.4 : 1)), 'second') + '</span>' + (nextIn === 'full' ? '' : ' \u00b7 Next entry ' + nextIn) + '</div>'
       + '<div class="bar"><i style="width:' + (run ? clamp(run.t/run.dur,0,1)*100 : 0) + '%"></i></div>'
       + '<div class="btnrow" style="margin-top:8px"></div>';
     el.querySelector('.guide').onclick = e => { e.stopPropagation(); wagerGuide(d.id); };
