@@ -33,9 +33,12 @@ const { chromium } = require('playwright');
     // two runs of one seed apart -- a slower run met other hours)
     const RD = Date; window.Date = class extends RD { constructor(...a) { if (a.length) super(...a); else super(SIMT); } static now() { return SIMT; } };
     window.toast = () => {}; window.showSheet = () => {}; window.hideSheet = () => {};
-    Object.keys(S).forEach(k => delete S[k]); Object.assign(S, defaultState()); S.t = SIMT / 1000;
-    initState(); migrate(); startHole();
+    // (seeded first: the first hole and the albatross's first wait were rolled
+    // on the browser's own dice, a different run every time)
     let seed = seedN * 7919 + 1; Math.random = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+    Object.keys(S).forEach(k => delete S[k]); Object.assign(S, defaultState()); S.t = SIMT / 1000;
+    LUCKY.wait = 150 + Math.random() * 150; LUCKY.a = null; LUCKY.buff = 0;
+    initState(); migrate(); startHole();
     S.autoEquip = 1; S.autoClimb = true;
     // (its hour a day is played watching: finds by the tee and Golden Hour's
     // sovereigns are paid only with the course in sight, and this never draws)
