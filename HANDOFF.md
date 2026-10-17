@@ -307,9 +307,11 @@ Numbered so `CLAUDE.md` and the checks can point at them.
 82. **Pace by a player who plays properly** (`test/sim.js`: retires when
     the climb stalls, buys heirlooms, spends talents, upgrades clubs). The
     old simulated player never retired and stalled at Card 40, which made
-    the climb look ten times slower than it is. Runs of one setting differ
-    by weeks (a set at day 44 to 63): compare means of several seeds, or
-    work a cut out from where each run's sovereigns came from.
+    the climb look ten times slower than it is. A seed now plays the same
+    every run (17 October: the whole clock pinned, the game's frame loop
+    stopped, honours checked by the simulation, its dice seeded before the
+    first hole); seeds still differ by weeks, so compare the mean of
+    several, or work a cut out from where each run's sovereigns came from.
 83. Time a frame on **repeated frames of one view**, never the first after
     a new hole (that one builds its pictures), and run the old build and
     the new **in both orders**: a "faster" change measured slower and was
