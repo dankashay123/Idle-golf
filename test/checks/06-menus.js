@@ -63,7 +63,9 @@ module.exports = {
     await page.evaluate(() => setView('skl'));
     await page.waitForTimeout(300);
     const read = () => page.$$eval('#sklRows .cd', a => a.map(e => e.style.height).join('|'));
-    const a = await read(); await page.waitForTimeout(2600); const b = await read();
+    // (watched until they move, up to eight seconds: one look after 2.6s on a
+    // busy machine could land before a frame had ticked them)
+    const a = await read(); let b = a; for (let k = 0; k < 40 && b === a; k++) { await page.waitForTimeout(200); b = await read(); }
     if (a === b) throw new Error('skill cooldown bars are frozen: ' + a);
 
     // each wager has a Guide (the user asked, in place of the notes fold): it

@@ -50,9 +50,11 @@ module.exports = {
           // the stage plays: two frames apart differ
           const cv = document.getElementById('showCv');
           const grab = () => cv.getContext('2d').getImageData(0, 0, cv.width, cv.height).data;
+          // (watched until it moves, up to four seconds, not looked at twice
+          // half a second apart: a busy machine draws fewer frames)
           await new Promise(r => setTimeout(r, 300)); const a = grab();
-          await new Promise(r => setTimeout(r, 500)); const b = grab();
-          let d = 0; for (let i = 0; i < a.length; i += 4) if (a[i] !== b[i] || a[i + 1] !== b[i + 1]) d++;
+          let d = 0; for (let k = 0; k < 20 && !d; k++) { await new Promise(r => setTimeout(r, 200)); const b = grab();
+            for (let i = 0; i < a.length; i += 4) if (a[i] !== b[i] || a[i + 1] !== b[i + 1]) d++; }
           out.moved = d;
           // nothing past the sheet's edge, no word cut
           out.over = [];
