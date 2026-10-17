@@ -76,6 +76,9 @@ const { chromium } = require('playwright');
         step(B.TICK_MAX, derive()); SIMT += B.TICK_MAX * 1000;
         if ((t % 20) < B.TICK_MAX) shop();
         if ((t % 300) < B.TICK_MAX) { tal(); gear(); }
+        // (honours and the daily challenges are checked by the game's frame
+        // loop, stopped here: every five seconds of play instead)
+        if ((t % 5) < B.TICK_MAX) checkAch();
         if ((t % 600) < B.TICK_MAX) take();
       }
       take(); shop(); tal(); gear(); heir();
