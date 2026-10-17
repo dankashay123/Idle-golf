@@ -23,6 +23,10 @@ const { chromium } = require('playwright');
   await p.goto('http://localhost:8080/index.html'); await p.waitForTimeout(1500);
   const out = await p.evaluate(async ([variant, seedN, DAYS]) => {
     hideSheet();
+    // (and the game's own frame loop stopped: it played real frames between
+    // the days, as many as the real time allowed, so a slower run played
+    // more of them)
+    window.requestAnimationFrame = () => 0; window.frame = () => {};
     const RN = Date.now; let SIMT = Date.UTC(2026, 9, 1, 18, 0, 0); Date.now = () => SIMT;
     // (the whole clock, not just Date.now: the game reads the hour and minute
     // from new Date() for frost, night and the thaw, and the real ones drifted
