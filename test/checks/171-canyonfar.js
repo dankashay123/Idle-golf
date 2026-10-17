@@ -30,7 +30,14 @@ module.exports = {
         Scene.hazSlice = keep;
         // the cost: the quickest of several blocks at the tee, against a plain hole's
         const time = () => { let best = 1e9; for (let b = 0; b < 5; b++) { const t0 = performance.now(); for (let i = 0; i < 8; i++) { Scene.t = 3 + i * 0.01; Scene.camD = 0; Scene.draw(0, D); } best = Math.min(best, performance.now() - t0); } return best / 8; };
-        const tc = time(); S.chaos = { n: 'Fair' }; Scene.newHole(S.hole + 1, S.tier); Scene.announce = null; const tp = time();
+        // (the two in turn, four times over, the best of each: timed once
+        // each, a hiccup in a full run read 5.3ms against 2.3)
+        const hc = S.hole, ch0 = S.chaos; let tc = 1e9, tp = 1e9;
+        for (let round = 0; round < 4; round++) {
+          if (round) { S.chaos = ch0; Scene.newHole(hc, S.tier); Scene.announce = null; }
+          tc = Math.min(tc, time());
+          S.chaos = { n: 'Fair' }; Scene.newHole(hc + 1, S.tier); Scene.announce = null; tp = Math.min(tp, time());
+        }
         o.ms = [tc, tp].map(v => v.toFixed(1));
         if (tc > tp * 1.6 + 1) f('a canyon tee frame ' + tc.toFixed(1) + 'ms against a plain one\'s ' + tp.toFixed(1));
       } finally { Scene.hazSlice = keep; HOUR_FORCE = keepH; window.requestAnimationFrame = raf; Object.keys(S).forEach(k => delete S[k]); Object.assign(S, JSON.parse(SNAP)); Scene.newHole(S.hole, S.tier); }
