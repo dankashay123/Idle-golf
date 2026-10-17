@@ -6033,11 +6033,13 @@ function derive(){
     * (1 + buffVal('gale')/100) * (1 + buffVal('cSpd')/100) * perkMult('spd')
     * (CH && (CH.k === 'spd' || CH.k === 'both') ? CH.v : 1) * (1 + cb('spd')) * (festTw('spd') ? 1.25 : 1);
   const spd = Math.min(B.SPEED_CAP, spdRaw);
-  if(spdRaw > B.SPEED_CAP) pow *= 1 + (spdRaw/B.SPEED_CAP - 1) * B.SPEED_OVERFLOW;
+  // (kept for the Swing sheet, which names them: powParts)
+  const powPace = spdRaw > B.SPEED_CAP ? 1 + (spdRaw/B.SPEED_CAP - 1) * B.SPEED_OVERFLOW : 1;
+  pow *= powPace;
 
   // a challenge's handicap, and the bonuses kept from those done
-  if(CH && (CH.k === 'pow' || CH.k === 'both')) pow *= CH.v;
-  pow *= 1 + cb('pow');
+  const powTrial = (CH && (CH.k === 'pow' || CH.k === 'both') ? CH.v : 1) * (1 + cb('pow'));
+  pow *= powTrial;
   const crit0 = Math.min(B.CRIT_CAP, (B.CRIT_BASE
     + upgEff('face')*B.CRIT_ADD.face + upgEff('simul')*B.CRIT_ADD.simul
     + G.crt + ch.c + buffVal('ace') + buffVal('cCrt')) * relMult('crt'));
@@ -6104,7 +6106,7 @@ function derive(){
   const god = S.godmode ? 1e12 : 1;
   const swingDps = pow * spd * (1 + crit*(cpw-1)) * (1 + elemDmg) * (1 + mst*B.MST_DMG) * god;
   return { pow: pow*god, spd, spdRaw, crit, cpw, elem, elemEff, proc, procRaw, gold, drop, dgnY, mst,
-           elemDmg, reson, C, dps: swingDps, ball };
+           elemDmg, reson, C, dps: swingDps, ball, powPace, powTrial };
 }
 
 /* ==================================================================   LEVELS AND PARAGON
@@ -31985,13 +31987,18 @@ function powParts(){
   const parts = [['Range upgrades', upgMult('pow')], ['Clubs', 1 + G.pow], ['Matched Set', 1 + G.setpow],
     ['Heirlooms', relMult('pow')], ['Honours', 1 + C.hpow], ['Drive points', 1 + C.spow], ['Paragon', 1 + C.ppow],
     ['Signature Irons', permMult('irons')], ['Sponsor perks', perkMult('pow')], ['Caddie boost', 1 + buffVal('cPow') / 100]];
+  // (pace past its cap turns into power; a Trial's handicap, or the bonuses
+  // kept from those won; and what is left is this hole's: a par five, the
+  // weather, a Sunday)
+  parts.push(['Pace past its cap', D.powPace || 1], ['Trials', D.powTrial || 1]);
   const all = parts.reduce((m, p) => m * p[1], B.BASE_POWER);
   parts.push(['This hole', D.pow / all]);
   return { D, parts: parts.filter(p => Math.abs(p[1] - 1) > 0.0005) };
 }
 function powSheet(){
   const { D, parts } = powParts();
-  showSheet('<h3>Swing Power</h3><div class="hint">' + fmt(D.pow) + ' a swing. Each line multiplies it.</div>'
+  showSheet('<h3>Swing Power</h3><div class="hint">' + fmt(D.pow) + ' a swing. '
+    + (parts.length ? 'Each line multiplies it.' : 'Range upgrades, clubs, honours and more will multiply it.') + '</div>'
     + parts.map(([n, m]) => '<div class="lb"><span class="p"></span><span>' + n + '</span><span class="s">\u00d7' + fmtX(m) + '</span></div>').join('')
     + '<button class="act ghost" onclick="hideSheet()">Close</button>');
 }
@@ -35358,6 +35365,7 @@ function achReward(a){
                elm:'affinity power', dgn:'wager haul' }[r.k] || r.k;
   return '+' + Math.round(r.v*100) + '% ' + nm;
 }
+let paraHowOpen = false;
 function careerParagon(w){
   if(S.paraRefund > 0){
     toast('Paragon was rebuilt \u00b7 <b>' + fmt(S.paraRefund, 0)
@@ -35369,8 +35377,14 @@ function careerParagon(w){
       + '.</div>';
     return;
   }
-  w.innerHTML = '<div class="hint">Next point: <b style="color:var(--brass)">'
-    + B.PARAGON[(S.para) % B.PARAGON.length].n + '</b></div>';
+  // (with a fold that says up front how points move and where the caps are)
+  const caps = B.PARAGON.flatMap(c => c.a).filter(a => a.cap > 0), uncapped = B.PARAGON.flatMap(c => c.a).filter(a => !a.cap).map(a => a.n);
+  const low = caps.filter(a => a.cap !== 500).map(a => a.n + ' stops at ' + a.cap + '\u00a0points').join(', ');
+  w.innerHTML = '<div class="hint' + (paraHowOpen ? ' open' : '') + '" id="paraHow"><div class="foldhead"><span>Next point: <b style="color:var(--brass)">'
+    + B.PARAGON[(S.para) % B.PARAGON.length].n + '</b></span><button class="qm" aria-label="How Paragon points work">?</button></div>'
+    + '<div class="fold" style="margin-top:6px">Points come to each group in turn and stay in it. ' + uncapped.join(' and ') + ' has no cap; '
+    + (low ? low + ' and every other line at 500.' : 'every other line stops at 500\u00a0points.') + ' When a group is full, its points go to Core.</div></div>';
+  w.querySelector('#paraHow .qm').onclick = () => { paraHowOpen = !paraHowOpen; w.querySelector('#paraHow').classList.toggle('open', paraHowOpen); };
   for(const cat of B.PARAGON){
     const pool = S.paraPts[cat.id] || 0;
     const col = 'var(' + cat.v + ')';

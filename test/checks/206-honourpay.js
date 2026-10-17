@@ -59,6 +59,11 @@ module.exports = {
           o.lines = parts.map(p => p[0]).join(', ');
           if (Math.abs(prod / D.pow - 1) > 1e-6) f('the Swing sheet multiplies out to ' + prod + ', the swing is ' + D.pow);
           for (const want of ['Clubs', 'Honours', 'Drive points', 'Paragon', 'Matched Set']) if (!parts.some(p => p[0] === want)) f('the Swing sheet has no ' + want + ' line (' + o.lines + ')'); }
+        // (and on a fresh save, with nothing yet, it says what will)
+        { const keep = JSON.stringify(S); Object.keys(S).forEach(k => delete S[k]); Object.assign(S, defaultState()); initState(); migrate();
+          const q0 = QUIET; QUIET = false; powSheet(); QUIET = q0; const hh = document.querySelector('#sheet .hint'), t = hh ? hh.textContent : '(no sheet)'; hideSheet();
+          Object.keys(S).forEach(k => delete S[k]); Object.assign(S, JSON.parse(keep));
+          if (!/will multiply it/.test(t)) f('the Swing sheet on a fresh save reads "' + t + '"'); }
         // ---- Sunday Nerve ----
         const nerve = B.TREES.flatMap(t => t.t).find(t => t.id === 'nerve'); Object.keys(S.tal).forEach(k => S.tal[k] = 0);
         let sun = 0; while (!isSunday(sun + 1)) sun++; sun++; let mon = 1; while (isSunday(mon)) mon++;

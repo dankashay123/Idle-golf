@@ -25,7 +25,16 @@ feature must do, and is usually enough on its own.
   what makes his swing power, one multiplier a line (`powParts`,
   `powSheet`): Range, clubs, Matched Set, heirlooms, honours, Drive,
   Paragon, Signature Irons, sponsor perks, caddie boost, and this hole's
-  share; lines at ×1 left out. Check `honourpay` (they multiply out).
+  share; lines at ×1 left out. Pace past its cap and Trials have lines of
+  their own (`D.powPace`, `D.powTrial`); a fresh save says what will
+  multiply it. Check `honourpay` (they multiply out).
+- The Paragon page's top line has a `?` fold: points come to each group in
+  turn and stay; Affinity Power has no cap, Swing Power stops at 200 and
+  the rest at 500; a full group's points go to Core. Check `careerfit`.
+- Laying a hole: `onNbr` keeps the neighbour holes' green, bunker and tee
+  places once worked out (they never move) and skips the lane outside its
+  length; the same holes, prop for prop, about 10% quicker. The
+  simulation can run in two halves (`STATE_OUT`, `STATE_IN`).
 - The points to spend under the level bar read as a total when the list
   will not fit (all three kinds, or a long pair under 360 wide). Full
   Paragon Swing Power says where Core's points go. Check `careerfit`.

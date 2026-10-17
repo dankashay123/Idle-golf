@@ -31,7 +31,10 @@ module.exports = {
           if (off.length) f(off.length + ' parts of ' + sub + ' past the screen');
           if (sub === 'para') { const row = [...w.querySelectorAll('.row')].find(e => e.querySelector('.nm').textContent.startsWith('Swing Power'));
             o.row = row ? row.querySelector('.mt').textContent : null;
-            if (!row || !/full: points go to Affinity Power/.test(o.row) || !/×4\.00/.test(o.row)) f('full Swing Power reads "' + o.row + '"'); }
+            if (!row || !/full: points go to Affinity Power/.test(o.row) || !/×4\.00/.test(o.row)) f('full Swing Power reads "' + o.row + '"');
+            // and the page's fold says how points move and where the caps are
+            const how = w.querySelector('#paraHow'); how.querySelector('.qm').click();
+            if (!how.classList.contains('open') || !/Affinity Power has no cap; Swing Power stops at 200/.test(how.textContent)) f('the Paragon fold reads "' + how.textContent.slice(0, 160) + '"'); }
         }
       } finally { Object.keys(S).forEach(k => delete S[k]); Object.assign(S, JSON.parse(SNAP)); hideSheet(); renderXp(); setView('upg'); }
       return { fl, o };
