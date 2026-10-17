@@ -6,6 +6,22 @@ feature must do, and is usually enough on its own.
 
 ## Sections, newest first
 
+### Cooler again; retiring in still weather (17 October)
+
+- He said the phone still gets hot. Measured: a frame pushed about 500 KB
+  of pixels to the graphics chip (`putImageData`), the tree mask whole
+  twice and the trees in front of props whole once, for a few pixels. Now
+  the mask is sent whole only when the forest's mask changes (`_tmVer`),
+  else only last frame's marks undone and this frame's sent (`_tmBox`),
+  and `forestOver` sends only the rows it touches: about 150 KB a frame.
+  The hole's bar and the messages lost their background blur (redone every
+  frame over the course, under a backing nine tenths solid). Check
+  `uploads` (and the mask exact every frame).
+- Retiring chose its card with the hole's weather (`matchedCard(derive())`):
+  a fair wind landed a golfer on a card he could not birdie (1.35 of par).
+  Now in still weather (`deriveStill(4)`), and an old save's move on load
+  too. Check `retire` (it failed one run in a few).
+
 ### Why the climb stalls; rewards for seeing (17 October)
 
 - The simulated free player is held near Card 60 to 77 by power, not a
