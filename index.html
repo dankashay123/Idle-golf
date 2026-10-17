@@ -27010,17 +27010,29 @@ function nightPool(c, g, NG){
   const pulse = NG.flicker ? 0.94 + 0.06 * Math.sin(g.t * 13) * Math.sin(g.t * 7.3) : 0.95 + 0.05 * Math.sin(g.t * NG.breathe);
   // (wider than the skins' own grounds, which grew: the light shows round them)
   const rx = Math.max(6, g.w * 1.85 * pulse * (1 + 0.12 * sw)), ry = Math.max(2, g.h * 0.2 * pulse * (1 + 0.12 * sw));
-  const X = Math.round(g.cx), Y = Math.round(g.bot), R = Math.ceil(rx), RY = Math.ceil(ry);
-  for(let yy = -RY; yy <= RY; yy++) for(let xx = -R; xx <= R; xx++){
-    const d2 = (xx * xx) / (rx * rx) + (yy * yy) / (ry * ry);
-    if(d2 > 1) continue;
-    const gx = X + xx, gy = Y + yy, par = (gx + gy) & 1;
-    let col = null;
-    if(d2 < 0.25){ if(!par) col = NG.col[2]; else if(d2 < 0.12) col = NG.col[1]; }
-    else if(d2 < 0.6){ if(!par) col = NG.col[1]; }
-    else if(!par && (gy & 1)) col = NG.col[0];
-    if(col){ c.fillStyle = col; c.fillRect(gx, gy, 1, 1); }
+  // (baked, a quarter pixel of size to a picture and the dither's two ways
+  // of falling on the grid: a pixel at a time it was some three hundred
+  // calls a frame at night, a share of the phone running hot)
+  const qx = Math.round(rx * 4) / 4, qy = Math.round(ry * 4) / 4;
+  const X = Math.round(g.cx), Y = Math.round(g.bot), R = Math.ceil(qx), RY = Math.ceil(qy);
+  const P = nightPool.C || (nightPool.C = new Map()), k = qx + ',' + qy + ',' + ((X + Y) & 1) + ',' + (Y & 1) + ',' + NG.col.join();
+  let cv = P.get(k);
+  if(!cv){
+    cv = document.createElement('canvas'); cv.width = R * 2 + 1; cv.height = RY * 2 + 1; const q = cv.getContext('2d');
+    for(let yy = -RY; yy <= RY; yy++) for(let xx = -R; xx <= R; xx++){
+      const d2 = (xx * xx) / (qx * qx) + (yy * yy) / (qy * qy);
+      if(d2 > 1) continue;
+      const gx = X + xx, gy = Y + yy, par = (gx + gy) & 1;
+      let col = null;
+      if(d2 < 0.25){ if(!par) col = NG.col[2]; else if(d2 < 0.12) col = NG.col[1]; }
+      else if(d2 < 0.6){ if(!par) col = NG.col[1]; }
+      else if(!par && (gy & 1)) col = NG.col[0];
+      if(col){ q.fillStyle = col; q.fillRect(xx + R, yy + RY, 1, 1); }
+    }
+    if(P.size >= 24){ const old = P.keys().next().value; cvFree(P.get(old)); P.delete(old); }
+    P.set(k, cv);
   }
+  c.drawImage(cv, X - R, Y - RY);
 }
 // Her hair on a skin with an effect, drawn over what the skin puts on her
 // head (a hood, a mask, a crown), in the skin's own colours: a ponytail
@@ -30259,11 +30271,23 @@ Object.assign(Scene, {
   nightLamp(c, x, y, k, r, clip, seed){
     const X = Math.round(x), Y = Math.round(y), fl = 0.85 + 0.15 * Math.sin(this.t * 9 + seed * 2.3);
     const R = Math.max(2, Math.round(r * fl));
-    for(let yy = -R; yy <= R; yy++) for(let xx = -R; xx <= R; xx++){
-      const d2 = (xx * xx + yy * yy) / (R * R);
-      if(d2 > 1 || ((X + xx + Y + yy) & 1) || (d2 > 0.5 && ((xx + seed) % 3))) continue;
-      c.fillStyle = d2 < 0.3 ? '#E8B84A' : '#9A7430'; fillClip(c, X + xx, Y + yy, 1, 1, clip);
+    // (its halo baked a size, seed and way of falling on the grid at a time,
+    // and laid down cut at the same row: a pixel at a time it was some two
+    // hundred and fifty calls a frame on a night with lamps)
+    const P = this._lampC || (this._lampC = new Map()), sm = ((seed % 3) + 3) % 3, k0 = R + ',' + sm + ',' + ((X + Y) & 1);
+    let cv = P.get(k0);
+    if(!cv){
+      cv = document.createElement('canvas'); cv.width = cv.height = R * 2 + 1; const q = cv.getContext('2d');
+      for(let yy = -R; yy <= R; yy++) for(let xx = -R; xx <= R; xx++){
+        const d2 = (xx * xx + yy * yy) / (R * R);
+        if(d2 > 1 || ((X + xx + Y + yy) & 1) || (d2 > 0.5 && ((xx + sm) % 3))) continue;
+        q.fillStyle = d2 < 0.3 ? '#E8B84A' : '#9A7430'; q.fillRect(xx + R, yy + R, 1, 1);
+      }
+      if(P.size >= 32){ const old = P.keys().next().value; cvFree(P.get(old)); P.delete(old); }
+      P.set(k0, cv);
     }
+    const hc = Math.min(R * 2 + 1, Math.floor(clip) + 1 - (Y - R));
+    if(hc > 0) c.drawImage(cv, 0, 0, R * 2 + 1, hc, X - R, Y - R, R * 2 + 1, hc);
     c.fillStyle = '#FFD36A'; fillClip(c, X - k, Y - k, k * 2 + 1, k * 2 + 1, clip);
     c.fillStyle = '#FFF6D0'; fillClip(c, X - (k >> 1), Y - (k >> 1), Math.max(1, k), Math.max(1, k), clip);
   },

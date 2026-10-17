@@ -28,6 +28,12 @@ feature must do, and is usually enough on its own.
   a sprite) for its depth and the tree mask, not read letter by letter
   twice a frame. Drawing less when still was tried and taken out: in play
   something always moves, and a skipped frame read as nobody watching.
+- Night's light pools (`nightPool`, a quarter pixel of size a picture, 24
+  kept) and the course's lamps (`nightLamp`, 32 kept, cut at the same row)
+  are baked, not painted a pixel at a time: about 550 calls a frame fewer
+  at night. The lamps are exact; the pool differs on 1.3% of its pixels,
+  at its dithered edge. Next: the skins' own animated effects (psy*,
+  glowPaint, bubbles, trails), a few hundred calls a frame on a busy skin.
 
 ### Why the climb stalls; rewards for seeing (17 October)
 
