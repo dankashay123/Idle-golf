@@ -25,7 +25,12 @@ Line numbers are approximate and drift. Search for the name instead.
 | **Scrapping**: the locker's Scrap button and sheet, auto-scrap on arrival | `scrapSheet`, `scrapKeeps`, `autoScraps`, `autoScrapTop`, `scrapList`, `sparesPastTwo`, `S.autoScrap` (-1 off, else a rarity); applied in `bagAdd` (which now returns whether the club was kept) and in `offline`'s `bagAddOff` |
 | Heirlooms (Career > Legacy). **The code still calls them trophies** (`B.TROPHY`, `S.relic`, `discover`, `trophiesFound`); only the words on screen changed | `renderLegacy`; each one's top `max` (`trTop`), `TR_KNEE` (30: past it a level adds a fixed step), prices `TR_STEEP`/`TR_LATE`/`TR_POST`, `TR_MAX`; the reveal sheet in `discover` (`.hlm`, `TROPHY_IC`); legacy `legacyFor` (`LEGACY_K` 0.182) |
 | The Career tab's dot for "retiring now finds an heirloom" | `retireWorth` (worked out once a second), `renderXp`, `renderCareer` |
-| Retirement | `retireCard`, `retire` |
+| Retirement | `retireCard`, `retire` (cards judged in still weather: `deriveStill(4)`, `matchedCard`) |
+| **Swing power's multipliers** (each its own, never into the clubs' sum) | `career()` `hpow` (honours), `spow` (Drive), `ppow` (Paragon, cap 200); `gearStats()` `setpow` (Matched Set); `derive()` `powPace`, `powTrial`; the Swing sheet `powParts`, `powSheet` (tap `#vPowerBox`) |
+| **Sets on a club's sheet and the Sets page** | `setPanel(set)`, `setBoxes(it)`, `renderBagSets`, `setEffect`, `activeSets`, `ownedSets` |
+| **The ball lying on the course** (still, on his line, walked up to) | `Scene.greenSpot`, `Scene.gSpot`, `Scene.greenLie`, `drawRestBall`, `b.settled` in `drawBalls`, `B_ARRIVE`, `teeLat` |
+| **Seen only with the course in sight** | `Scene.watched()`; used by `layFind`, Golden Hour's sovereigns in `finishHole`, `guideSpot` |
+| **Pixels to the graphics chip** (the heat) | `treeMaskOn` (`_tmVer`, `_tmBox`), `overTrees`, `forestOver` (rows only), `solidAt` (a prop's solid pixels a size), `nightPool` and `Scene.nightLamp` (baked); check `uploads` |
 | Offline catch-up (`OFFLINE` flag) | `offline()` |
 | Sound: recordings `rec-strike`, `rec-cup` and `rec-music` (base64 MP3 near the top of the body; the applause was removed) with the synthesised sounds as stand-ins | `const Sfx`, `Sfx.rec`, `Sfx.load`, `Sfx.musicTick` |
 | Ground painted by the pixel, reused while the camera is still | `const PixPaint`, `drawGround` (`_gKey`, `gGen`), `ripples`, `groundTail` |

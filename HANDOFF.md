@@ -1,6 +1,6 @@
 # Handoff — Mythic Mulligan
 
-Last updated 2026-10-10 (pushed to `main`). `CLAUDE.md` holds the standing
+Last updated 2026-10-17 (pushed to `main`). `CLAUDE.md` holds the standing
 rules and is loaded by itself; this file is what a new session needs on
 top. Read this file whole. The rest is for looking up, never for reading
 through:
@@ -14,29 +14,32 @@ through:
 ## 1. Where things stand
 
 - Everything is committed and **no request is waiting**.
-- Last done (9 to 10 October; detail in `docs/features.md`'s newest
-  section), still **polish, no new features**: the course drawn **60
-  frames a second, 30 with Frame Rate on Cooler** (30 for all ran cool but
-  he found it low, 8ms a frame on his phone); **old saves** from five builds
-  kept in a check; the **Vault** starts on a floor he can clear (it paid
-  nothing after a retirement); the free sovereigns that grow with play
-  **cut 40%** (he chose: a player who retires had a set at 6 to 9 weeks,
-  now about 10; the pass about 7, the pass and Membership about 5½);
-  **bigger tap areas**; the faint grey a step lighter; plainer pop-ups;
-  the whole suite **run on seven dates** (Jan, Apr, Jul, 28 Oct, 20 Dec at
-  8am; Jan and Jul at 3pm): one real fix (a festival's row titled by its
-  name), the season switch reaching every course, and the checks made to
-  hold on any date (rule 87); all dates pass. The Tour Pass and
-  Membership hold with the clock moved both ways (`passclock`). Before that (8 to 9 October): the Tour
-  Pass page, bag counts, pace, slower gear, every word in full, padlocks.
-  Then the Honours list, Today and the Guide read line by line (counts in
-  full, rows to collect in Title Case, old saves' rows renamed on load);
-  his save (Level 60, Card 13; he only tests, restarting often, and his
-  sovereigns came from the shop) loads whole, a simulated week on it
-  (two seeds) climbs to Card 30 to 36 with no stall or broken number, and
-  `test/memprobe.js` on it held picture memory level over 3.3 game hours.
-  He says the game plays great on his phone. Heirlooms stay as they are:
-  maxing them all must take six months at least (it takes years).
+- Last done (11 to 17 October; detail in `docs/features.md`'s newest
+  sections), still polish:
+  - **Sets** shown as a game shows them: a club's sheet and the Bag's
+    Sets page list every piece, worn ones lit, the bonuses at each count.
+  - **The ball on the course lies still** where it came down, on his line,
+    and he walks up to it (fairway and green); no ball at his feet while a
+    shot flies. Erasing the save dresses him plainly again.
+  - **Words checked against what things do**: talents, attributes,
+    heirlooms (two decimals, the next level shown), honours (renames, ids
+    kept). Affinity chance one name everywhere.
+  - **Every swing power but the clubs' is a multiplier of its own**
+    (honours, Drive, the Matched Set, Paragon capped at 200): added in
+    with the clubs', which run to millions, they bought nothing. Tap
+    Swing on the Range for the multipliers line by line. Sunday Nerve on
+    Sunday holes; Card 100 and 200 honours; Chronoglass to Card 221; a
+    wager's level on its card; Paragon's `?` fold.
+  - **Rewards for seeing need the course in sight** (`Scene.watched()`):
+    finds by the tee, Golden Hour's sovereigns, the Guide's sightings.
+  - Retiring picks its card in still weather.
+  - **Heat** (he said the phone runs hot): the pixels pushed to the
+    graphics chip a frame cut to about a third (`uploads`), blur behind the
+    hole's bar gone, props' outlines and night's lamps and pools baked.
+    Default stays 60 frames (Cooler is 30). Ask how it feels.
+  - **Pace** on the now repeatable simulation: a free player has a full
+    Mythic set at day 56 to 71 (about nine weeks; he chose to leave it);
+    the Tour Pass alone 42, Membership alone 34 to 43, both 32 to 34.
 - **The iPhone app: everything is in `docs/ios-app.md`** (read it whole
   when the app comes up). **Don't suggest it for now** (he asked, 8
   October): polish what is there first. In short: `index.html` wrapped unchanged with
@@ -63,8 +66,6 @@ through:
   background, on a copy in the scratchpad, with the machine quiet. After
   weather, colours or anything dated, also run it with `HOUR_FORCE` 8 and
   15 and the month pinned (rules 20 and 70).
-- `skins` timed its trails against a fixed budget and failed now and then;
-  it now times them against the plain ball. If it fails again, chase it.
 - **Not yet heard back on** (ask one when it fits, never as a list): the
   albatross (redrawn side on, its wings beating); errands; Trials;
   festivals; wager medals; the
@@ -79,7 +80,9 @@ through:
   padlocks, the house in the treeline (9 October); the Honours
   list's new wording (10 October); The Penitent, the Mythic set from his
   sprite sheet (more detail, the whole set, the veil on his head waving);
-  The Radiant, the Mythic set from his picture (11 October).
+  The Radiant, the Mythic set from his picture (11 October); the set
+  panels, the ball lying still on the fairway and green, the Swing sheet,
+  the honours and Drive now counting, the cooler frames (12 to 17 October).
 - Settled, in case it comes up: swing speed still matters fully (a hole's
   time is when the ball drops); Fast Walker only shortens a hole's least
   time; every caddie has a trick (don't offer caddie tricks); Dawn and
@@ -132,6 +135,11 @@ through:
   Level, experience, yards) except the hole's bar, "purse/sec" and "MPH";
   never "each" where the number itself can be shown (`fullwords`).
 - **Gear rolls lock with a padlock** to tap, open until tapped.
+- **Every swing power that is not the clubs' is a multiplier of its own**
+  (`hpow`, `spow`, `ppow`, `setpow`); a new one goes the same way, and
+  into `powParts` (the Swing sheet), or it is lost in the clubs' sum.
+- **The ball lies where it came down** and he walks to it; nothing rides
+  along in front of him (`greenwalk`).
 - **Sovereigns earned wait to be taken** at their place (Today, Honours,
   the Guide) with GET, and GET ALL where there is more than one. A
   purchase pays at once. Anything new that pays sovereigns uses `earnSov`.
@@ -154,7 +162,7 @@ through:
 
 ## 3. The project
 
-- **The whole game is `index.html`** (about 34k lines, 3.6 MB, its fonts inside): markup, CSS
+- **The whole game is `index.html`** (about 36k lines, 3.8 MB, its fonts inside): markup, CSS
   and one classic script, no build step. Play it over http (`node
   test/serve.js`, port 8080); from disk it never saves.
 - Checks are Playwright scripts in `test/checks/NN-name.js`, run by
@@ -185,7 +193,7 @@ Numbered so `CLAUDE.md` and the checks can point at them.
    negative-test runner (exact replacements, each must match once,
    restore in `finally`); a clip (`recordVideo`, then ffmpeg to a GIF).
 7. Eight seeds can be lucky: try a balance check with the seed offset
-   changed. Cosmetic `Math.random` in the simulation shifts seeded runs.
+   changed. Any change to the game shifts a seeded run's dice (see 82).
 8. Patching with a split separator: use one that cannot be in code.
 9. Playwright: `npm install --no-save playwright@1.56.1`; never `playwright
    install`; never commit a lockfile.
@@ -337,6 +345,25 @@ Numbered so `CLAUDE.md` and the checks can point at them.
     clock may have set going before it (`canyonlook`: under load a Thunder
     Drive's name, rising up the left edge in teal, read as grass; found by
     looping the check under load and saving its picture on failure).
+88. **What heats the phone** is pixels pushed to the graphics chip
+    (`putImageData` onto a canvas the screen uses) and calls a frame, not
+    big copies of the small buffer: send only what changed (`_tmBox`,
+    rows), bake what is painted a pixel at a time, prove it exact (draw
+    old and new alone and compare), and count (`uploads`, `battery`).
+89. A page left running plays its own frames: a simulation or a timed
+    check stubs `requestAnimationFrame` and `window.frame`, pins the whole
+    `Date` class (the hour comes from `new Date()`), and calls what the
+    frame loop would (`checkAch`).
+90. Background commands stop at two hours: run a long simulation in
+    halves (`STATE_OUT`, `STATE_IN`), each its own background command.
+91. Never `pkill -f` a pattern the command itself contains (it killed its
+    own shell before a copy, and the suite ran an old build): kill by
+    number (`ps -eo pid,args | awk ...`).
+92. A check that judges motion watches until it moves (a few seconds);
+    one look after a fixed time fails on a busy machine.
+93. Judging a card (retiring, climbing) uses still weather
+    (`deriveStill`); `derive()` carries the hole's weather and a fair wind
+    landed a golfer too high.
 
 ## 5. Environment
 
@@ -359,15 +386,19 @@ brings it up again** (he asked to stop, 6 October): offer other things.
 
 Every idea offered and not yet done, so none is lost:
 
-1. **A look on his phone**: does 60 frames run warm (Cooler is the 30
-   setting), the censer weapon, the candelabra, the Ascended Choir.
-2. **His own save** (done 10 October, see §1). Ask for a fresh code after
-   big changes to saving.
-3. A wording pass on the **Cabinet** and the **shop**, as the Honours,
-   Today and the Guide had.
-4. **A new pass set every few months**, each from a character sheet he
+1. **Ask how hot the phone runs now** after a long session. If still
+   warm: bake the skins' own animated effects (psy*, glowPaint, bubbles,
+   trails: a few hundred canvas calls a frame on a busy skin), then every
+   skin's.
+2. A look at night on every home course by eye (the baked lamps and
+   pools).
+3. Why Membership's gain varies (9 to 19 days sooner than free) and
+   whether its daily sovereigns pace as he wants.
+4. A sweep for code and checks this session left with nothing to do.
+5. A wording pass on the **Cabinet** and the **shop**.
+6. **A new pass set every few months**, each from a character sheet he
    sends, built as the Cyber-Drive was.
-5. **The iPhone app** (`docs/ios-app.md`), only once he brings it up again.
+7. **The iPhone app** (`docs/ios-app.md`), only once he brings it up again.
 
 Held for when he raises scenery again (he asked to stop): look at the new
 things on the phone (soft cloud shadows, the score call, the gold
@@ -375,4 +406,4 @@ mountain), the other special holes for bunkers under them, snow falling
 heavier, frost melting through a round, a fog bank thinning, gusts of
 leaves, glints and variety on the gold heap, a speed pass at its foot.
 
-Recommend 1, then 4 when he sends a picture.
+Recommend 1, then 6 when he sends a picture.
