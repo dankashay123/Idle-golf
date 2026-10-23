@@ -379,6 +379,8 @@ Numbered so `CLAUDE.md` and the checks can point at them.
 Turned down, don't offer: a station on the railway, a photo mode, a
 weather forecast, fireworks, trail flourishes, caddie tricks. Nothing for
 the Tour tab, no new sound but ambience.
+**No new Tour Pass set** until he asks for one (23 October: "don't bring
+that up again until I request it").
 
 Five at least (CLAUDE.md); don't raise the dog until he does; no new
 animals for now (he asked to hold off). **No scenery work at all until he
@@ -396,8 +398,6 @@ Every idea offered and not yet done, so none is lost:
    whether its daily sovereigns pace as he wants.
 4. A sweep for code and checks this session left with nothing to do.
 5. A wording pass on the **Cabinet** and the **shop**.
-6. **A new pass set every few months**, each from a character sheet he
-   sends, built as the Cyber-Drive was.
 7. **The iPhone app** (`docs/ios-app.md`), only once he brings it up again.
 
 Held for when he raises scenery again (he asked to stop): look at the new
