@@ -4304,10 +4304,9 @@ const B = {
     // skins: more than a colour
     { id:'blacktie', n:'Black Tie',      cost:450,
       cap:'#15151A', cap2:'#0A0A0D', shirt:'#24242A', shirt2:'#18181D', shirt3:'#0E0E11', pant:'#1A1A1F', pant2:'#101013' },
-    // shop only (the user chose looks sold only for money, never for
-    // sovereigns): usd, and no cost in sovereigns at all
-    { id:'founder', n:'Founder\u2019s Blazer', cost:0, usd:4.99, shop:1,
-      cap:'#E3B457', cap2:'#A8802F', shirt:'#1E2A4E', shirt2:'#162040', shirt3:'#0E1630', pant:'#E8E2D0', pant2:'#C8C0A8' },
+    // (a look sold only for money, never for sovereigns, takes usd and no
+    // cost; the Founder's Blazer, the first, was taken out on 23 October to
+    // come back later as a far finer skin)
     // funny ones
     { id:'banana',  n:'Banana Suit',     cost:500, fx:'banana', cat:'fun', pattern:'banana', pantPattern:'banana',
       cap:'#F6D84A', cap2:'#C9A92A', shirt:'#F6D84A', shirt2:'#E0BC2E', shirt3:'#B8961E', pant:'#F2D040', pant2:'#D8B42A', shoe:'#8A6A20' },
@@ -5347,6 +5346,8 @@ function initState(){
     for(const k in was) if(S.styleOwn[k]){ S.styleOwn[was[k]] = 1; delete S.styleOwn[k]; }
     if(S.outfit === 'blossom') S.outfit = 'cosmic'; if(S.caddie === 'blossom') S.caddie = 'cosmic'; if(S.club === 'blossom') S.club = 'cosmic';
     if(S.trail === 'petalwake') S.trail = 'horizon'; if(S.trail === 'blossombud') S.trail = 'singularity'; }
+  // (the Founder's Blazer and its caddie, taken out: owned no more)
+  delete S.styleOwn['o:founder']; delete S.styleOwn['c:founder'];
   if(!styleOwned('o', S.outfit)) S.outfit = 'classic';
   if(!styleOwned('t', S.trail)) S.trail = 'plain';
   // (a ball has its own place now, beside the wake: one worn where the wake
