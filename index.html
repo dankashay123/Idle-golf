@@ -3292,7 +3292,7 @@ const B = {
       regen:1080, cap:3, run:46, pay:0.019, gear:0.20, floorRar:1,
       d:'Twenty five chips. Each one that drops is worth more than the last.',
       how:'Depends on affinity chance, not power. Low affinity chance, few chips drop.' },
-    { id:'vault', st:'Power and pace', ic:'vault', mode:'floor', n:'The Clubhouse Vault', cur:'gold', cn:'Purse',
+    { id:'vault', st:'Swing power and pace', ic:'vault', mode:'floor', n:'The Clubhouse Vault', cur:'gold', cn:'Purse',
       regen:900, cap:2, run:56, pay:1, gear:0.62, floorRar:1,
       d:'Floor after floor, each one harder than the last.',
       how:'Clear as many floors as you can before the clock runs out. Power and pace both help.' },
@@ -33122,7 +33122,7 @@ function refreshUpg(){
     const ok = !maxed && S.gold >= c && k > 0;
     const nx = msNext(u, lv);
     r.mt.innerHTML = 'Level\u00a0<i>' + lv + (isFinite(cap) ? '/' + cap : '') + '</i> <b>'
-      + effectLabel(u) + '</b>' + (upgDead(u, D0) ? ' <span class="ms">at the cap</span>' : '');
+      + effectLabel(u) + '</b>' + (!maxed && upgDead(u, D0) ? ' <span class="ms">at the cap</span>' : '');   // (a row maxed says CAPPED already)
     // the bar to the next milestone (none at the top, or at its stat's cap)
     if(r.ms){
       const show = nx && !upgDead(u, D0), m0 = msLast(u, lv);
