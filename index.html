@@ -4305,8 +4305,8 @@ const B = {
     { id:'blacktie', n:'Black Tie',      cost:450,
       cap:'#15151A', cap2:'#0A0A0D', shirt:'#24242A', shirt2:'#18181D', shirt3:'#0E0E11', pant:'#1A1A1F', pant2:'#101013' },
     // (a look sold only for money, never for sovereigns, takes usd and no
-    // cost; the Founder's Blazer, the first, was taken out on 23 October to
-    // come back later as a far finer skin)
+    // cost; the Founder's Blazer and Founder's Gold, the first, were taken
+    // out on 23 October to come back later as a far finer skin)
     // funny ones
     { id:'banana',  n:'Banana Suit',     cost:500, fx:'banana', cat:'fun', pattern:'banana', pantPattern:'banana',
       cap:'#F6D84A', cap2:'#C9A92A', shirt:'#F6D84A', shirt2:'#E0BC2E', shirt3:'#B8961E', pant:'#F2D040', pant2:'#D8B42A', shoe:'#8A6A20' },
@@ -4492,7 +4492,6 @@ const B = {
     { id:'steel',     n:'Tour Steel',     cost:0,    shaft:'#CBD2D7', shaft2:'#8C959C', head:'#5E666C', head2:'#AEB6BC', grip:'#20242A' },
     { id:'graphite',  n:'Graphite',       cost:120,  shaft:'#4A5058', shaft2:'#2E3238', head:'#1C1F23', head2:'#6A727C', grip:'#B8292F' },
     { id:'persimmon', n:'Persimmon',      cost:200,  shaft:'#CBD2D7', shaft2:'#8C959C', head:'#8A4F22', head2:'#C07A3A', grip:'#6A4A2A', big:1 },
-    { id:'founder',   n:'Founder\u2019s Gold', cost:0, usd:2.99, shop:1, shaft:'#1E2A4E', shaft2:'#10162A', head:'#E3B457', head2:'#FFF0B8', grip:'#0E1630' },
     { id:'rose',      n:'Rose Gold',      cost:350,  shaft:'#E8A48C', shaft2:'#B97A64', head:'#D98B70', head2:'#FFD0BC', grip:'#3A2A26' },
     { id:'candy',     n:'Candy Cane',     cost:400,  fx:'candy',    cat:'fun', shaft:'#FFFFFF', shaft2:'#E8E8E8', head:'#E4302A', head2:'#FFFFFF', grip:'#2E8B3A' },
     { id:'baguette',  n:'Baguette',       cost:450,  fx:'baguette', cat:'fun', shaft:'#D9A45A', shaft2:'#B98434', head:'#C88A3A', head2:'#F2D08A' },
@@ -5346,8 +5345,9 @@ function initState(){
     for(const k in was) if(S.styleOwn[k]){ S.styleOwn[was[k]] = 1; delete S.styleOwn[k]; }
     if(S.outfit === 'blossom') S.outfit = 'cosmic'; if(S.caddie === 'blossom') S.caddie = 'cosmic'; if(S.club === 'blossom') S.club = 'cosmic';
     if(S.trail === 'petalwake') S.trail = 'horizon'; if(S.trail === 'blossombud') S.trail = 'singularity'; }
-  // (the Founder's Blazer and its caddie, taken out: owned no more)
-  delete S.styleOwn['o:founder']; delete S.styleOwn['c:founder'];
+  // (the Founder's Blazer, its caddie and Founder's Gold, taken out: owned
+  // no more)
+  delete S.styleOwn['o:founder']; delete S.styleOwn['c:founder']; delete S.styleOwn['k:founder'];
   if(!styleOwned('o', S.outfit)) S.outfit = 'classic';
   if(!styleOwned('t', S.trail)) S.trail = 'plain';
   // (a ball has its own place now, beside the wake: one worn where the wake
