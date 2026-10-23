@@ -10322,6 +10322,9 @@ function showSprites(s){
   Object.assign(SPRITE, keep);
   return SHOWSPR[s] = out;
 }
+// all of them let go, and their pictures freed (rule 77): a new golfer or
+// save makes them again
+function showSprFree(){ for(const k in SHOWSPR){ for(const n of SHOW_KEYS) spriteFree(SHOWSPR[k][n]); delete SHOWSPR[k]; } }
 // the round he plays on it: a blessing and a shot, a shot, an ace, a hop,
 // and his caddie's own trick while he waits on the tee
 const SHOW_PLAN = [{ k: 'shot', bless: 1, addr: 1.5, dur: 3.4 }, { k: 'shot', addr: 0.8, dur: 3.0 },
@@ -35673,7 +35676,7 @@ const isStandalone = () => navigator.standalone === true || inApp()
 // him or her, from the Settings: the pictures made again, the shop's too
 function setGender(g){
   S.gender = g === 'f' ? 'f' : 'm';
-  for(const k in SHOWSPR) delete SHOWSPR[k];
+  showSprFree();
   buildSprites(); save();
   if($('gender_m')){ $('gender_m').checked = S.gender === 'm'; $('gender_f').checked = S.gender === 'f'; }
 }
@@ -35865,7 +35868,7 @@ function homeTip(){
 // His pictures are drawn once from what he wears; an erase or a loaded code
 // changes what he wears without a trip through the shop, so they are drawn
 // again (an erased save kept the last skin's shirt on him).
-function dressAgain(){ PREVIEW = null; for(const k in SHOWSPR) delete SHOWSPR[k]; buildSprites(); }
+function dressAgain(){ PREVIEW = null; showSprFree(); buildSprites(); }
 function wipe(){
   showSheet('<h3>Erase the Save?</h3><p>Everything goes. This cannot be undone.</p>'
     + '<button class="act danger" onclick="reallyWipe()">Erase everything</button>'
