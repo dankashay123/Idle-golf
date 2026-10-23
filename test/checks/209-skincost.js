@@ -11,7 +11,10 @@
  *     second time the same layout comes (he stands at address, holds his
  *     finish, a caddie floats), and the stamp is the strips to the pixel
  *     (the Demonic's cracks at rest round his feet the same way); one with
- *     no place yet is drawn as before, nowhere, and never throws
+ *     no place yet is drawn as before, nowhere, and never throws; one laid
+ *     see-through (an echo, a shine, the Ghost) as two pictures, the first
+ *     strip at each pixel then the second, so the overlaps blend twice as
+ *     they did: within three shades in 255 of the strips
  *   - the night's haze round the lesser skins, the Dread's and Penitent's
  *     rings of light and the Psychedelic's rings and bubbles are made once
  *     and stamped, the same pixels as painted dot by dot
@@ -19,7 +22,7 @@
  *     golfer under 70 canvas calls (it was 174), the Demonic, the dearest,
  *     under 950 (1,300), the Divine under 500 (740), the Psychedelic under
  *     200 (450)
- *   - every store of these pictures keeps a bound and frees what it lets go
+ *   - every store of these pictures keeps a bound (the tinted copies had none) and frees what it lets go
  *     (rule 77), and the skins' store lets go the one used longest ago, never
  *     one just drawn (it let go the oldest made, which could be in use) */
 'use strict';
@@ -67,7 +70,7 @@ module.exports = {
           S.styleOwn['o:' + id] = 1; S.outfit = id; buildSprites();
           for (const [walk, ph] of [[false, 0], [true, 0], [false, 0.45], [false, 0.8]]) {
             Scene.walkOn = walk; Scene.walkPh = 0.3; Scene.swingDur = 1; Scene.swingT = ph ? 1 - ph : 0; Scene.t = 4.2;
-            SHEAR_BAKE.forEach(cvFree); SHEAR_BAKE.clear(); SHEAR_SEEN.clear();
+            SHEAR_BAKE.forEach(shearFree); SHEAR_BAKE.clear(); SHEAR_SEEN.clear();
             b.clearRect(0, 0, VW, VH); Scene.drawGolfer(D); const first = pic();
             b.clearRect(0, 0, VW, VH); Scene.drawGolfer(D); const second = pic();
             const before = SHEAR_BAKE.size;
@@ -78,6 +81,25 @@ module.exports = {
           }
         }
         if (o.stamps < 8) f('a figure was stamped in ' + o.stamps + ' of 12 poses, drawn three times');
+        // a see-through copy (an echo, a shine, the Ghost) stamped as two
+        // pictures, the first strip at each pixel then the second: the same
+        // to three shades in 255 (the browser rounds a stretched strip and a
+        // copied picture a shade apart), drawn strip by strip and stamped
+        { const cv2 = document.createElement('canvas'); cv2.width = 160; cv2.height = 160; const k2 = cv2.getContext('2d'); k2.imageSmoothingEnabled = false;
+          o.seeWorst = 0; o.seePx = 0; o.seeStamped = 0;
+          for (const [h, a] of [[71, 0.55], [64, 0.35], [58, 0.75], [49, 0.55]]) for (const col of ['#FF2A6D', null]) {
+            const sp = col ? tinted(SPRITE.gAddr, col) : SPRITE.gAddr, w = Math.round(h * sp.w / sp.h), sh = t => Math.round(t * 6) - 3;
+            const pic2 = on => { SHEAR_STAMP = on; k2.globalAlpha = 1; k2.fillStyle = '#3A7A40'; k2.fillRect(0, 0, 160, 160);
+              k2.globalAlpha = a; blitShear(k2, sp, 40.4, 30, w, h, sh, bulkOf(h)); k2.globalAlpha = 1; SHEAR_STAMP = true; return k2.getImageData(0, 0, 160, 160).data; };
+            const A = pic2(false); pic2(true); pic2(true); const B3 = pic2(true);
+            const e = [...SHEAR_BAKE.values()].pop(); if (e && e.lay) o.seeStamped++;
+            for (let i = 0; i < A.length; i++) { const d = Math.abs(A[i] - B3[i]); if (d) { o.seePx++; o.seeWorst = Math.max(o.seeWorst, d); } } }
+          cvFree(cv2);
+          if (o.seeWorst > 3) f('a see-through copy stamped differs from its strips by ' + o.seeWorst + ' shades');
+          if (o.seeStamped < 6) f('a see-through copy was stamped in ' + o.seeStamped + ' of 8'); }
+        // and the tinted copies kept to their bound
+        { for (let i = 0; i < 80; i++) tinted(SPRITE.gAddr, '#' + (0x100000 + i * 997).toString(16));
+          if (TINT.size > TINT_MAX) f('the tinted copies held ' + TINT.size + ' (bound ' + TINT_MAX + ')'); }
         // a figure with no place yet (a bare scene's camera, rule 75) is drawn
         // as it always was, nowhere, and never stamped from a picture of no size
         try { for (let i = 0; i < 3; i++) blitShear(b, SPRITE.gAddr, NaN, 20, 40, 58, () => 0, null); }
@@ -167,6 +189,7 @@ module.exports = {
     if (r.fl.length) throw new Error(r.fl.join('; '));
     const o = r.o;
     return [o.lines + ' random lines the same as a square a step; a figure stamped in ' + o.stamps + ' of 12 poses, to the pixel',
+      'see-through copies stamped in ' + o.seeStamped + ' of 8, at most ' + o.seeWorst + ' shades off on ' + o.seePx + ' channel values',
       'calls a frame: plain ' + o.calls_classic + ', Demonic ' + o.calls_demonic + ', Divine ' + o.calls_divine + ', Psychedelic ' + o.calls_psyche,
       'stores: skins ' + o.fx + ', hazes ' + o.halo + ', figures ' + o.shear];
   }

@@ -398,6 +398,9 @@ module.exports = {
               Scene.walkOn = false; Scene.swingT = 0; Scene.fairyMove = null; Scene.moveT = 999;
               // (the whole of him, his ground and all, as the frame draws it)
               const whole = () => { const k = SPRITE.caddie; SPRITE.caddie = null; c.clearRect(0, 0, VW, VH); Scene.drawGolferGround(); Scene.drawGolfer(D); SPRITE.caddie = k; return px(); };
+              // (drawn first as he will be: a see-through look's strips are stamped
+              // the second time, a shade apart, skincost)
+              Scene.flourish = null; Scene.t = 10; whole(); whole(); whole();
               const at = (d, T) => {
                 Scene.flourish = null; Scene.legend = null; QUIET = false; played.length = 0;
                 Scene.t = 10 - T; Scene.happyDance(d); QUIET = true; Scene.t = 10;
