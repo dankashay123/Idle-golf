@@ -57,6 +57,9 @@ module.exports = {
         return Math.min(...t); };
       const o = {}; const SNAP = JSON.stringify(S);
       hideSheet(); QUIET = true;
+      // (timed strip by strip, as the plain golfer the budgets are counted in
+      // was: a figure seen twice is stamped in the game, skincost)
+      SHEAR_STAMP = false;
       const D = derive();
       Scene.walkOn = false;           // at address: the faces the skins draw on are on the front
       const shot = () => { const g = Scene.b.getImageData(0, 0, VW, VH).data; let h = 0;
@@ -250,6 +253,7 @@ module.exports = {
         styleCat = 'golfer';
         hideSheet();
       } finally {
+        SHEAR_STAMP = true;
         QUIET = false; PREVIEW = null;
         Object.keys(S).forEach(k => delete S[k]); Object.assign(S, JSON.parse(SNAP)); buildSprites();
       }

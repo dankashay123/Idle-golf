@@ -11832,7 +11832,9 @@ function blit(c, spr, x, y, w, h){
 // unsmoothed, as the game draws, so the stamp is what the rows make; at
 // most SHEAR_MAX, the oldest freed.)
 const SHEAR_BAKE = new Map(), SHEAR_SEEN = new Map(), SHEAR_MAX = 40;
-let SHEAR_ID = 0;
+// (a check timing looks against the plain golfer turns it off: its unit is
+// the plain golfer drawn strip by strip)
+let SHEAR_ID = 0, SHEAR_STAMP = true;
 function blitShear(c, spr, x, y, w, h, shear, bulk){
   if(!spr || w < 1 || h < 1) return;
   const rh = h / spr.h, n = spr.h, H1 = Math.max(1, Math.ceil(rh)), rows = new Array(n * 3);
@@ -11842,7 +11844,7 @@ function blitShear(c, spr, x, y, w, h, shear, bulk){
     rows[r * 3] = R[0]; rows[r * 3 + 1] = Y; rows[r * 3 + 2] = R[1];
     if(R[0] < x0) x0 = R[0]; if(R[0] + R[1] > x1) x1 = R[0] + R[1]; if(Y < y0) y0 = Y; if(Y + H1 > y1) y1 = Y + H1;
   }
-  const flat = c.globalAlpha === 1 && c.globalCompositeOperation === 'source-over' && !c.imageSmoothingEnabled && x1 > x0 && y1 > y0 && x1 - x0 < 512 && y1 - y0 < 512;
+  const flat = SHEAR_STAMP && c.globalAlpha === 1 && c.globalCompositeOperation === 'source-over' && !c.imageSmoothingEnabled && x1 > x0 && y1 > y0 && x1 - x0 < 512 && y1 - y0 < 512;
   if(flat){
     if(spr._bid === undefined) spr._bid = ++SHEAR_ID;
     let key = spr._bid + '|' + H1;
