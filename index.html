@@ -7211,7 +7211,7 @@ function festBlock(){
     const d0 = dayNow(), wk = weekNow(), dow = festDow();
     const days = wk % 2 === 0 ? 5 - dow : 12 - dow;
     const nx = FEST[MONTH_SEASON[new Date((d0 + days) * 86400000).getUTCMonth()]];
-    return '<div class="eyebrow" style="margin:12px 0 0">Festival</div><div class="row"><div><div class="nm">' + nx.n + '</div><div class="ds">Next festival \u00b7 Saturday, in ' + days + '\u00a0' + (days === 1 ? 'day' : 'days') + '</div></div></div>';
+    return '<div class="eyebrow" style="margin:12px 0 0">Festival</div><div class="row"><div><div class="nm">' + nx.n + '</div><div class="ds">' + (days === 1 ? 'Starts tomorrow' : 'Starts Saturday, in ' + days + '\u00a0days') + '</div></div></div>';
   }
   const st = festState(), left = (7 - festDow()) * 86400 - (Date.now() / 1000 % 86400);
   const nx = st.got < FEST_AT.length ? FEST_AT[st.got] : null;
@@ -14051,7 +14051,7 @@ const CRIT_NAME = { fox: 'Fox', rabbit: 'Rabbit', squirrel: 'Squirrel', hedgehog
 const CRIT_WHERE = { fox: 'Edge of the woods', rabbit: 'In the rough', squirrel: 'Edge of the woods', hedgehog: 'Woods, day or night', pheasant: 'Autumn and winter rough',
   badger: 'Woods at night', owl: 'Woods at night', moorhen: 'On a pond', swan: 'On a lake', heron: 'At the water’s edge', frog: 'At a pond',
   turtle: 'At the water, spring and summer', otter: 'By the water', seal: 'By the sea', crab: 'On the shore', lizard: 'Dry courses', alligator: 'On a lake, not in winter', eagle: 'High over dry courses',
-  bat: 'After dark', butterfly: 'Spring and summer', dragonfly: 'Over the water', eyes: 'Woods at night', kingfisher: 'Rare, by the stones\u2019 river', cub: 'Spring, beside a fox' };
+  bat: 'After dark', butterfly: 'Spring and summer', dragonfly: 'Over the water', eyes: 'Woods at night', kingfisher: 'Rare, at Stepping Stones', cub: 'Spring, beside a fox' };
 // night creatures (laid in layNight): how many dry nights have glow-worms
 // in the rough, moths round the tee's lamps, and a luna moth among them
 const GLOW_P = 0.55, MOTH_P = 0.6, LUNA_P = 0.12;
@@ -32046,7 +32046,7 @@ const WAGER_WILD_SC = 1.8;   // (drawn this much larger than on the course: easy
 let WAGER_WILD_P = 0.5;   // (1 in the developer menu and the checks: always there)
 // the night creatures (laid in layNight) on a shelf of their own, with the
 // animals only out after dark
-GUIDE.push({ id:'lilyfrog', n:'Frog on a Lily Pad', g:'w', w:'On the pads, now and then' });
+GUIDE.push({ id:'lilyfrog', n:'Frog on a Lily Pad', g:'w', w:'Now and then, on a lily pad' });
 GUIDE.push({ id:'harvest', n:'Harvest Moon', g:'n', w:'Autumn nights, now and then' }, { id:'glowworm', n:'Glow-worms', g:'n', w:'A dry night, in the rough' }, { id:'moth', n:'Moths', g:'n', w:'Round the tee lamps' },
   { id:'luna', n:'Luna Moth', g:'n', w:'Rare, by the tee lamps' });
 for(const g of GUIDE) if(['owl', 'bat', 'badger', 'hedgehog', 'eyes'].includes(g.id)) g.g = 'n';
@@ -32429,7 +32429,7 @@ const GUIDE_BADGE = 100;
 function roomGuide(w){
   const seen = S.guide || {}, n = GUIDE.filter(g => seen[g.id]).length;
   const n100 = GUIDE.filter(g => (seen[g.id] || 0) >= GUIDE_BADGE).length;
-  let h = '<div class="eyebrow" style="margin:6px 0 4px">Seen ' + n + '/' + GUIDE.length + (n100 ? ' \u00b7 \u2605' + n100 : '') + ' \u00b7 +' + B.GUIDE_SOV + sovIc() + ' a new one</div>';
+  let h = '<div class="eyebrow" style="margin:6px 0 4px">Seen ' + n + '/' + GUIDE.length + (n100 ? ' \u00b7 \u2605' + n100 : '') + ' \u00b7 +' + B.GUIDE_SOV + sovIc() + ' for a new one</div>';
   // (this week's hunt first: its three, found or where to look)
   { const H = huntNow(), want = huntOf(H.wk);
     // (the weeks in a row so far, this one counted once it is done)
@@ -32541,7 +32541,7 @@ function roomToday(w){
   let h = kinds > 1 ? '<button class="act" data-collect="">GET ALL \u00b7 +' + sovFmt(all) + ' ' + B.SOV + '</button>' : '';
   h += '<div class="eyebrow" style="margin:6px 0 4px">To Get</div>'
     + roomLine('Free ' + B.SOV + ' \u00b7 Every ' + Math.round(B.FREE_EVERY / 3600) + ' hours',
-        ready ? '' : 'in ' + hms(B.FREE_EVERY - (S.freeT || 0)),
+        ready ? '' : 'Next in ' + hms(B.FREE_EVERY - (S.freeT || 0)),
         ready ? collectBtn('free', B.FREE_GIFT) : '');
   const byTrack = {};
   for(const x of P) (byTrack[x.c.id] = byTrack[x.c.id] || []).push(x);
@@ -32557,7 +32557,7 @@ function roomToday(w){
   h += festBlock();
   // this week, and today's wager: the two things that turn over on a clock
   const M = majorState(), fw = featWager();
-  const say = { won: 'Won', played: 'Played', live: 'In play now', next: 'Your next event', early: 'After your first event' }[M.st];
+  const say = { won: 'Won', played: 'Played', live: 'In play now', next: 'Your next event', early: 'Opens after your first event' }[M.st];
   const wk = dhTxt(weekLeft());
   const row2 = (nm, ds) => '<div class="row"><div><div class="nm">' + nm + '</div><div class="ds">' + ds + '</div></div></div>';
   h += '<div class="eyebrow" style="margin:12px 0 0">This Week</div>'
@@ -33853,7 +33853,7 @@ function renderMajor(){
     + '<span class="s"' + (col ? ' style="color:var(' + col + ')"' : '') + '>' + v + '</span></div>';
   const say = { won: '<b style="color:var(--brass)">Won</b>', played: 'Played this week',
                 live: '<b style="color:var(--aurora)">In play now</b>', next: 'Your next event',
-                early: 'After your first event' }[M.st];
+                early: 'Opens after your first event' }[M.st];
   const left = weekLeft();
   $('majNote').textContent = 'New in ' + (left > 86400
     ? dhTxt(left) : hms(left));

@@ -53,7 +53,7 @@ module.exports = {
         S.fest.wk -= 2; if (festState().n) f('a new festival kept ' + festState().n + ' ribbons');
         // ---- Today ----
         trophyRoom('today'); if (!/Harvest Festival/.test(document.getElementById('roomBody').textContent)) f('Today does not say the festival');
-        FEST_FORCE = null; DAY_FORCE = day0 + 1; trophyRoom('today'); if (!/Next festival/.test(document.getElementById('roomBody').textContent)) f('Today does not say the next festival');
+        FEST_FORCE = null; DAY_FORCE = day0 + 1; trophyRoom('today'); if (!/Starts (tomorrow|Saturday, in \d+.days)/.test(document.getElementById('roomBody').textContent)) f('Today does not say the next festival');
         hideSheet();
         // ---- repair ----
         S.fest = { wk: 'x' }; S.festMk = { f_pk: 1, red: 1, nope: 1 }; migrate();
