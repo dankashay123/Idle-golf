@@ -10,7 +10,8 @@
  *   - a figure drawn strip by strip is stamped from a picture of itself the
  *     second time the same layout comes (he stands at address, holds his
  *     finish, a caddie floats), and the stamp is the strips to the pixel
- *     (the Demonic's cracks at rest round his feet the same way)
+ *     (the Demonic's cracks at rest round his feet the same way); one with
+ *     no place yet is drawn as before, nowhere, and never throws
  *   - the night's haze round the lesser skins, the Dread's and Penitent's
  *     rings of light and the Psychedelic's rings and bubbles are made once
  *     and stamped, the same pixels as painted dot by dot
@@ -77,6 +78,10 @@ module.exports = {
           }
         }
         if (o.stamps < 8) f('a figure was stamped in ' + o.stamps + ' of 12 poses, drawn three times');
+        // a figure with no place yet (a bare scene's camera, rule 75) is drawn
+        // as it always was, nowhere, and never stamped from a picture of no size
+        try { for (let i = 0; i < 3; i++) blitShear(b, SPRITE.gAddr, NaN, 20, 40, 58, () => 0, null); }
+        catch (e) { f('a figure with no place threw: ' + e.message.slice(0, 80)); }
         Scene.swingT = 0; Scene.walkOn = false;
 
         // ---- the rings and hazes, made once, as painted ----------------------
