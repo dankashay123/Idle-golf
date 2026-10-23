@@ -4202,7 +4202,7 @@ const B = {
     // (its other eight a Mythic only now and then, mx each: the user opened
     // three Mythics in one, by the drop luck the other bags roll with)
     { id:'legend', ic:'baglegend', n:'Legend Bag',     c:2400, num:9, floor:4, top:5, mx:0.03,
-      d:'9 clubs, Legendary or better, always a Mythic.' }
+      d:'9 clubs, all Legendary or better, one always Mythic.' }
   ],
   // pity: each bag counts its own opened without a Mythic, and the one that
   // makes it pity is a guaranteed Mythic (the user set them: one shared count
@@ -5692,7 +5692,6 @@ const talLv = id => S.tal[id] || 0;
 const paraLv = (c, a) => S.paraSpent[c + '.' + a] || 0;
 const treeSpent = tree => tree.t.reduce((n, x) => n + talLv(x.id), 0);
 const talentsUsed = () => B.TREES.reduce((n, t) => n + treeSpent(t), 0);
-const paraTotal = () => Object.keys(S.paraSpent).reduce((n, k) => n + S.paraSpent[k], 0);
 
 const trophyDef = id => B.TROPHY.find(t => t.id === id);
 const found = id => (S.relic[id] || 0) > 0;
@@ -8081,7 +8080,6 @@ function endDgnCore(d, R, D){
 const perfectCard = () => B.ROUND * B.DAYS * B.SCORE[0].d;   // an Ace on every hole
 const eventTarget = () => perfectCard()
   + (B.TARGET_BASE - perfectCard()) * Math.pow(B.TARGET_CLOSE, S.cups || 0);
-const targetShown = () => Math.round(eventTarget());
 // How the purse follows the card: at target you take the base, and every shot
 // under it pays more, to a ceiling.
 const payShare = (score, target) =>
@@ -9667,14 +9665,6 @@ function passReward(row, t, P){
   if(t === 5 || t === 25) return { k: 'boost', v: 24 };
   return { k: 'sov', v: PASS.SOV };
 }
-function passSay(r){
-  if(r.k === 'cyber') return '<span><b>Cyber-Drive</b> set</span>';
-  if(r.k === 'look') return PASS_LOOK[r.v][0] + ' look';
-  if(r.k === 'boost') return nb(r.v + ' hours') + ' double prize money';
-  if(r.k === 'bag') return ciBag(r).n;
-  if(r.k === 'sov') return '<span class="pv">' + r.v + sovIc() + '</span>';
-  return ciLook(r)[3];
-}
 // points: none in a wager or a catch-up for holes (live only); the days'
 // dailies and Check-In wherever they are done
 function passAdd(n){ if(!(n > 0)) return; passNow().pts += n; }
@@ -9723,7 +9713,7 @@ function passIcon(r){
 function passShort(r){
   if(r.k === 'cyber') return 'Cyber-Drive';
   if(r.k === 'look') return PASS_LOOK[r.v][0];
-  if(r.k === 'boost') return nb(r.v + ' hours') + ' ×2 prize money';
+  if(r.k === 'boost') return nb(r.v + ' hours') + ' Double Purse';
   if(r.k === 'bag') return ciBag(r).n;
   if(r.k === 'sov') return '<b>' + r.v + '</b>';
   const L = ciLook(r);
@@ -9758,7 +9748,7 @@ function passHtml(){
     + chip(outfitUrl(styleDef('o', 'pass' + mo)), '<b>' + PASS_LOOK[mo][0] + '</b> look', 1)
     + chip(pixUrl('sovg', SOV_COL), '<b>' + sovFmt(sum.sov) + '</b> ' + B.SOV.toLowerCase())
     + chip(pixUrl('baglegend', RC(5)), 'Legend Bag')
-    + chip(pixUrl('boost', '#F2D75E'), nb(sum.boost + ' hours') + ' ×2 prize money')
+    + chip(pixUrl('boost', '#F2D75E'), nb(sum.boost + ' hours') + ' of Double\u00a0Purse')
     + '</div>'
     + (P.paid ? '<div class="phseal">✦ Pass unlocked ✦</div>'
       : '<button class="price phbuy" data-do="pass:buy"><i class="phrib">Best Value</i><span>Unlock the Pass</span><b>$' + PASS.USD.toFixed(2) + '</b><small>nothing charged</small></button>')
@@ -10664,7 +10654,7 @@ function renderShop(){
 
   if(shopSub === 'pass') h += passHtml();
   if(shopSub === 'bags'){
-    h += '<div class="shopnote">Clubs a little stronger than your card.</div>'
+    h += '<div class="shopnote">Clubs a little stronger than your Tour Card.</div>'
       + ribbon('Bags') + '<div class="sgrid c2">' + B.BAGS.map(bg =>
         shopCard({ ic: bg.ic, col: RC(Math.min(5, bg.top)), on: bg.top >= 4,
           badge: B.RARITY[bg.top].n,
@@ -10674,7 +10664,7 @@ function renderShop(){
   }
 
   if(shopSub === 'perm'){
-    h += '<div class="shopnote">Ten levels, kept through retirement.</div>'
+    h += '<div class="shopnote">Ten levels each, kept when you retire.</div>'
       + ribbon('The Bench') + '<div class="sgrid c2">' + B.PERM.map(u => {
         const lv = permLv(u.id), maxed = lv >= B.PERM_MAX, c = permCost(u);
         // (the figure is the total so far, or one level's before the first;
@@ -10768,17 +10758,17 @@ function renderShop(){
           head:'Starter Pack',
           sub: S.starter ? ''
             : '<span class="pv">' + sovFmt(B.STARTER_C) + sovIc() + '</span>, a Tour Bag and '
-              + nb(B.BOOST_HOURS + ' hours') + ' of double prize money.',
+              + nb(B.BOOST_HOURS + ' hours') + ' of Double Purse.',
           price: S.starter ? 'BOUGHT' : '$' + B.STARTER_USD.toFixed(2),
           note: S.starter ? '' : 'free', cls: S.starter ? 'max' : '', act:'starter:1' })
       + shopCard({ ic:'member', col:'#E3B457', on: !isMember(), badge: S.member === 1 ? 'MEMBER' : isMember() ? nb(memberDaysLeft() + ' days') : '',
           head:'Club Membership',
           sub: isMember()
-            ? '+' + Math.round(B.MEMBER_GOLD*100) + '% prize money, +' + B.MEMBER_KEYS
-              + ' wager entry, <span class="pv">' + B.MEMBER_DAILY + sovIc() + '</span> a day.<br><b>Next in ' + hms(86400 - (S.memberT||0)) + '</b>'
+            ? '<span class="pv">' + B.MEMBER_DAILY + sovIc() + '</span> a day, +' + Math.round(B.MEMBER_GOLD*100) + '% prize money and +' + B.MEMBER_KEYS
+              + ' wager entry.<br><b>Next in ' + hms(86400 - (S.memberT||0)) + '</b>'
               + (S.member === 2 ? '<br>Buying again adds ' + nb(B.MEMBER_DAYS + ' days') + '.' : '')
-            : '+' + Math.round(B.MEMBER_GOLD*100) + '% prize money, +' + B.MEMBER_KEYS
-              + ' wager entry, <span class="pv">' + B.MEMBER_DAILY + sovIc() + '</span> a day, for ' + nb(B.MEMBER_DAYS + ' days') + '.',
+            : '<span class="pv">' + B.MEMBER_DAILY + sovIc() + '</span> a day, +' + Math.round(B.MEMBER_GOLD*100) + '% prize money and +' + B.MEMBER_KEYS
+              + ' wager entry, for ' + nb(B.MEMBER_DAYS + ' days') + '.',
           price: S.member === 1 ? 'FOR GOOD' : '$' + B.MEMBER_USD.toFixed(2) + (isMember() ? '' : ' a month'),
           note: S.member === 1 ? 'joined' : 'free', cls: S.member === 1 ? 'max' : '', act:'member:1' })
       + '</div>'
@@ -10807,7 +10797,7 @@ function renderShop(){
 
     // the free ones are collected in the Trophy Room, off the trophy on the course
     h += '<div class="shopnote" style="margin-top:10px">' + nb('Free ' + B.SOV.toLowerCase() + ' every ' + Math.round(B.FREE_EVERY / 3600)
-      + ' hours are in the Trophy Room.') + '</div>';
+      + ' hours, in the Trophy Room.') + '</div>';
   }
 
   h += '<button class="act ghost" onclick="hideSheet()">Back to the round</button>';
@@ -10881,13 +10871,6 @@ function discoveriesFor(legacy){
   let n = trophiesFound(), k = 0;
   while(n < B.TROPHY.length && legacy >= discoverCostAt(n)){ legacy -= discoverCostAt(n); n++; k++; }
   return k;
-}
-// and how far short of the next one it leaves you, so a retirement that buys
-// nothing still says what it would take.
-function discoveryGap(legacy){
-  let n = trophiesFound();
-  while(n < B.TROPHY.length && legacy >= discoverCostAt(n)){ legacy -= discoverCostAt(n); n++; }
-  return n >= B.TROPHY.length ? 0 : discoverCostAt(n) - legacy;
 }
 // The whole retirement decision on one object: what the card is worth now, what
 // each of the two things that move it would add, and what the result buys.
@@ -11709,25 +11692,6 @@ function drawTextS(c, str, x, y, col, sc, align){
    This is the signature of the era and the reason skies read as 16-bit rather
    than as a smooth fill someone posterised. */
 const BAYER = [[0,8,2,10],[12,4,14,6],[3,11,1,9],[15,7,13,5]];
-function ditherRow(c, x, y, w, colA, colB, t){
-  // t = 0 all A, 1 all B. Speckles are two pixels wide: half the work, and at
-  // this buffer size a 2px dither reads chunkier and more of the era anyway.
-  const lvl = Math.round(t * 16);
-  c.fillStyle = lvl >= 16 ? colB : colA;
-  c.fillRect(x, y, w, 1);
-  if(lvl <= 0 || lvl >= 16) return;
-  c.fillStyle = colB;
-  // The matrix column has to advance once per CELL, not once per pixel. Indexing
-  // it by the pixel while stepping two at a time only ever reached the even
-  // columns, so a row's thresholds came from {0,2} or {12,14} depending on its
-  // parity: alternate rows filled almost never and almost always, and every
-  // ramp in the game came out as hard horizontal stripes instead of a dither.
-  for(let i = 0; i < w; i += 2)
-    if(BAYER[y & 3][((x + i) >> 1) & 3] < lvl) c.fillRect(x + i, y, 2, 1);
-}
-function ditherBand(c, x, y, w, h, colA, colB){
-  for(let i = 0; i < h; i++) ditherRow(c, x, y + i, w, colA, colB, (i + 0.5) / h);
-}
 // A vertical ramp: solid bands with a dithered seam between each pair, rather
 // than dithering every row. Cheaper by more than half, and it is how the era
 // actually did skies — flat colour with a speckled join, not a smooth blend.
@@ -11742,18 +11706,6 @@ function smoothRamp(c, x, y, w, h, cols){
     const y0 = Math.round(y + h*i/steps), y1 = Math.round(y + h*(i+1)/steps);
     c.fillStyle = lerpCols(cols, (i + 0.5)/steps);
     c.fillRect(x, y0, w, Math.max(1, y1 - y0));
-  }
-}
-function ditherRamp(c, x, y, w, h, cols){
-  const n = cols.length - 1, seg = h / n;
-  for(let k = 0; k < n; k++){
-    const y0 = Math.round(y + k*seg), y1 = Math.round(y + (k+1)*seg);
-    const band = Math.max(1, y1 - y0);
-    const trans = Math.min(band, Math.max(3, Math.round(band*0.42)));
-    c.fillStyle = cols[k];
-    c.fillRect(x, y0, w, band - trans);
-    for(let i = 0; i < trans; i++)
-      ditherRow(c, x, y0 + band - trans + i, w, cols[k], cols[k+1], (i + 0.5)/trans);
   }
 }
 
@@ -11873,13 +11825,41 @@ function blit(c, spr, x, y, w, h){
 }
 // Blit row by row with a horizontal offset per row: how the golfer leans
 // through a swing without needing a separate sprite for every frame.
+// (A layout of rows seen a second time -- he stands at address, holds his
+// finish, a caddie floats -- is laid once into a picture of its own and
+// stamped after in one: it was fifty-eight copies a figure a frame, a fifth
+// of a plain frame for him and his caddie. Only fully on, laid over and
+// unsmoothed, as the game draws, so the stamp is what the rows make; at
+// most SHEAR_MAX, the oldest freed.)
+const SHEAR_BAKE = new Map(), SHEAR_SEEN = new Map(), SHEAR_MAX = 40;
+let SHEAR_ID = 0;
 function blitShear(c, spr, x, y, w, h, shear, bulk){
   if(!spr || w < 1 || h < 1) return;
-  const rh = h / spr.h;
-  for(let r = 0; r < spr.h; r++){
-    const R = bulkRow(spr, x + shear(r / (spr.h - 1)), w, bulk, r / (spr.h - 1));
-    c.drawImage(spr.cv, 0, r, spr.w, 1, R[0], Math.round(y + r*rh), R[1], Math.max(1, Math.ceil(rh)));
+  const rh = h / spr.h, n = spr.h, H1 = Math.max(1, Math.ceil(rh)), rows = new Array(n * 3);
+  let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+  for(let r = 0; r < n; r++){
+    const R = bulkRow(spr, x + shear(r / (n - 1)), w, bulk, r / (n - 1)), Y = Math.round(y + r*rh);
+    rows[r * 3] = R[0]; rows[r * 3 + 1] = Y; rows[r * 3 + 2] = R[1];
+    if(R[0] < x0) x0 = R[0]; if(R[0] + R[1] > x1) x1 = R[0] + R[1]; if(Y < y0) y0 = Y; if(Y + H1 > y1) y1 = Y + H1;
   }
+  const flat = c.globalAlpha === 1 && c.globalCompositeOperation === 'source-over' && !c.imageSmoothingEnabled && x1 - x0 < 512 && y1 - y0 < 512 && x0 === x0 && y0 === y0;
+  if(flat){
+    if(spr._bid === undefined) spr._bid = ++SHEAR_ID;
+    let key = spr._bid + '|' + H1;
+    for(let r = 0; r < n; r++) key += '|' + (rows[r * 3] - x0) + ',' + (rows[r * 3 + 1] - y0) + ',' + rows[r * 3 + 2];
+    let cv = SHEAR_BAKE.get(key);
+    if(!cv && SHEAR_SEEN.has(key)){
+      cv = document.createElement('canvas'); cv.width = x1 - x0; cv.height = y1 - y0;
+      const k = cv.getContext('2d'); k.imageSmoothingEnabled = false;
+      for(let r = 0; r < n; r++) k.drawImage(spr.cv, 0, r, spr.w, 1, rows[r * 3] - x0, rows[r * 3 + 1] - y0, rows[r * 3 + 2], H1);
+      if(SHEAR_BAKE.size >= SHEAR_MAX){ const k0 = SHEAR_BAKE.keys().next().value; cvFree(SHEAR_BAKE.get(k0)); SHEAR_BAKE.delete(k0); }
+      SHEAR_BAKE.set(key, cv);
+    }
+    if(cv){ SHEAR_BAKE.delete(key); SHEAR_BAKE.set(key, cv); c.drawImage(cv, x0, y0); return; }
+    if(SHEAR_SEEN.size >= 400) SHEAR_SEEN.delete(SHEAR_SEEN.keys().next().value);
+    SHEAR_SEEN.set(key, 1);
+  }
+  for(let r = 0; r < n; r++) c.drawImage(spr.cv, 0, r, spr.w, 1, rows[r * 3], rows[r * 3 + 1], rows[r * 3 + 2], H1);
 }
 // where a row of him goes, [x, width], built out (a row of his chest,
 // shoulders or legs stretched about the middle of his body, n pixels more
@@ -11943,6 +11923,29 @@ function pxLine(c, x0, y0, x1, y1, col, thick){
   let err = dx - dy, n = 0;
   c.fillStyle = col;
   const t = thick || 1;
+  // Laid as runs, one box for each stretch along a row (or a column, if it
+  // runs more up than across), where that paints the same pixels as a
+  // square at every step: a line one pixel thick (its squares never
+  // overlap), or a solid colour laid fully on (overlaps paint the same).
+  // A ribbon of a skin was a box a pixel; a third of the Divine's frame.
+  if(dx + dy > 0 && dx === dx && dy === dy && (t === 1 || (t === (t | 0) && c.globalAlpha === 1 && typeof col === 'string' && col.length === 7 && col[0] === '#'))){
+    const op = c.globalCompositeOperation;
+    if(op === 'source-over' || (t === 1 && op === 'lighter')){
+      const horiz = dx >= dy;
+      let a = horiz ? y0 : x0, lo = horiz ? x0 : y0, hi = lo;
+      while(n++ < 400){
+        const u = horiz ? y0 : x0, v = horiz ? x0 : y0;
+        if(u !== a){ if(horiz) c.fillRect(lo, a, hi - lo + t, t); else c.fillRect(a, lo, t, hi - lo + t); a = u; lo = hi = v; }
+        else { if(v < lo) lo = v; if(v > hi) hi = v; }
+        if(x0 === x1 && y0 === y1) break;
+        const e2 = 2*err;
+        if(e2 > -dy){ err -= dy; x0 += sx; }
+        if(e2 < dx){ err += dx; y0 += sy; }
+      }
+      if(horiz) c.fillRect(lo, a, hi - lo + t, t); else c.fillRect(a, lo, t, hi - lo + t);
+      return;
+    }
+  }
   while(n++ < 400){
     c.fillRect(x0, y0, t, t);
     if(x0 === x1 && y0 === y1) break;
@@ -13267,21 +13270,7 @@ const PATTERNS = {
     if(dx === 2 && dy === 1 || dx === -2 && dy === -1) return sh ? '#1E6A3A' : '#3EA85A';
     return null; },
   rainbow:(x, y) => ['#E4302A', '#FF9A2A', '#FFE14A', '#4FD86A', '#3F8AFF', '#B04FFF'][(x + y) % 6],
-  // the Demonic: cracks glowing through dark red, as through a crust on
-  // lava. The edges between the cells of a jittered grid: where the nearest
-  // cell's centre and the next nearest are about as near. (The pulse of
-  // light through them is drawn over the top: see veinsOf.)
-  hellcrack: (x, y) => {
-    const C = 5, gx = Math.floor(x / C), gy = Math.floor(y / C);
-    let d1 = 1e9, d2 = 1e9;
-    for(let j = -1; j <= 1; j++) for(let i = -1; i <= 1; i++){
-      const px = (gx + i + hr(gx + i, gy + j)) * C, py = (gy + j + hr(gy + j + 7, gx + i + 3)) * C;
-      const d = Math.hypot(x + 0.5 - px, y + 0.5 - py);
-      if(d < d1){ d2 = d1; d1 = d; } else if(d < d2) d2 = d;
-    }
-    const e = d2 - d1;
-    return e < 0.7 ? (hr(x + 3, y) > 0.72 ? '#FFD34A' : '#FF8A2A') : e < 1.3 && hr(y, x + 5) > 0.55 ? '#B8321A' : null;
-  },
+
   // the Demonic: bound in wrappings, strip over strip on the slant, the
   // edge of each dark, and the fire in him glowing through the seams here
   // and there (the pulse of it drawn over the top: see veinsOf)
@@ -14621,21 +14610,6 @@ const P_CANYON = { D: 10, eu: 0.10, e0: 0.30, e1: 0.30, N: 480,
     return C.flat[this.code(C, f, ndl > HZ_LZ, K.j2, K.j3, K.wav, K.rc, tt === undefined ? 0.5 : tt)];
   }
 };
-// a colour that comes out as c once the haze (alpha a of the sky's
-// lightest) is laid over it, three quarters of the way
-function unhaze(T, c, a){
-  const q = Math.round(a * 0.75 * 20);
-  if(!q) return c;
-  const M = T._unh || (T._unh = new Map()), k = c + q;
-  let o = M.get(k);
-  if(o) return o;
-  const A = q / 20, h = parseInt(T.sky[4].slice(1), 16), v = parseInt(c.slice(1), 16);
-  const ch = sh => clamp(Math.round((((v >> sh) & 255) - A * ((h >> sh) & 255)) / (1 - A)), 0, 255);
-  o = '#' + ((1 << 24) | (ch(16) << 16) | (ch(8) << 8) | ch(0)).toString(16).slice(1);
-  if(M.size > 4000) M.clear();
-  M.set(k, o);
-  return o;
-}
 function canyonPal(T){
   const rk = pickC(T.rk, 0.6), Z = 6, sky = T.sky ? T.sky[3] : '#9AB0C0', haze = mixC(sky, '#4A3048', 0.6);
   // deeper: darker, and into the haze
@@ -14840,13 +14814,15 @@ function drawGlow(c, cx, cy, rx, ry, bands, phase, a){
 const FXBAKE = new Map();
 function fxBake(key, w, h, paint, pal){
   let cv = FXBAKE.get(key);
-  if(cv) return cv;
+  // (the oldest unused let go first and freed: kept without end, a store
+  // of pictures turned the sky black on the phone, rule 77)
+  if(cv){ FXBAKE.delete(key); FXBAKE.set(key, cv); return cv; }
   cv = document.createElement('canvas');
   cv.width = Math.max(1, Math.ceil(w)); cv.height = Math.max(1, Math.ceil(h));
   const g = cv.getContext('2d');
   paint(g);
   if(pal) crispen(g, cv.width, cv.height, pal);
-  if(FXBAKE.size > 800) FXBAKE.delete(FXBAKE.keys().next().value);
+  if(FXBAKE.size > 800){ const k0 = FXBAKE.keys().next().value; cvFree(FXBAKE.get(k0)); FXBAKE.delete(k0); }
   FXBAKE.set(key, cv);
   return cv;
 }
@@ -14907,54 +14883,8 @@ function veinsOf(spr){
   return spr._veins = r1 >= 0 ? { cv, w: W, h: H, r0, r1 } : null;
 }
 
-// A demon's wing, out to the right of a shoulder at (0, 0): the arm and the
-// forearm up to the wrist, four long fingers fanning from it, the skin
-// stretched between them with its edge scalloped in toward the wrist, veins
-// glowing in the skin, and a claw at the wrist. up (0..1) is how high it is
-// raised; S its reach in pixels.
-const BAT_PAL = ['#3C0A0E', '#5E1418', '#B0301E', '#1A0608', '#E8DCC8'];
-function batWing(g, S, up){
-  const at = (o, a, L) => ({ x: o.x + Math.cos(a) * L, y: o.y - Math.sin(a) * L });
-  const sh = { x: 0, y: 0 };
-  const a1 = 0.30 + 0.60 * up, el = at(sh, a1, S * 0.28);
-  const a2 = a1 + 0.55, wr = at(el, a2, S * 0.30);
-  const fa = [a2 - 0.10, a2 - 0.72, a2 - 1.32, a2 - 1.92], fl = [0.50, 0.70, 0.62, 0.50];
-  const tip = fa.map((a, i) => at(wr, a, S * fl[i]));
-  const hip = { x: S * 0.02, y: S * 0.40 };
-  const scallop = (p, q, k) => { const m = { x: (p.x + q.x) / 2, y: (p.y + q.y) / 2 };
-    g.quadraticCurveTo(m.x + (wr.x - m.x) * k, m.y + (wr.y - m.y) * k, q.x, q.y); };
-  g.beginPath(); g.moveTo(sh.x, sh.y); g.lineTo(el.x, el.y); g.lineTo(wr.x, wr.y); g.lineTo(tip[0].x, tip[0].y);
-  for(let i = 1; i < tip.length; i++) scallop(tip[i - 1], tip[i], 0.34);
-  scallop(tip[3], hip, 0.28);
-  g.closePath();
-  g.fillStyle = '#3C0A0E'; g.fill();
-  g.lineCap = 'round'; g.lineJoin = 'round';
-  // the skin lit through, a paler band along each finger
-  g.strokeStyle = '#5E1418'; g.lineWidth = Math.max(1.6, S * 0.08);
-  for(const t of tip){ g.beginPath(); g.moveTo(wr.x, wr.y); g.lineTo(wr.x + (t.x - wr.x) * 0.82, wr.y + (t.y - wr.y) * 0.82); g.stroke(); }
-  // veins, glowing, branching out into each panel
-  g.strokeStyle = '#B0301E'; g.lineWidth = 1;
-  for(let i = 0; i < tip.length - 1; i++){
-    const m = { x: (tip[i].x + tip[i + 1].x) / 2, y: (tip[i].y + tip[i + 1].y) / 2 };
-    const v = { x: wr.x + (m.x - wr.x) * 0.62, y: wr.y + (m.y - wr.y) * 0.62 };
-    g.beginPath(); g.moveTo(wr.x + (tip[i].x - wr.x) * 0.25, wr.y + (tip[i].y - wr.y) * 0.25); g.lineTo(v.x, v.y);
-    g.lineTo(v.x + (tip[i].x - v.x) * 0.3, v.y + (tip[i].y - v.y) * 0.3); g.moveTo(v.x, v.y);
-    g.lineTo(v.x + (tip[i + 1].x - v.x) * 0.3, v.y + (tip[i + 1].y - v.y) * 0.3); g.stroke();
-  }
-  // the bones
-  g.strokeStyle = '#1A0608'; g.lineWidth = Math.max(1.5, S * 0.065);
-  g.beginPath(); g.moveTo(sh.x, sh.y); g.lineTo(el.x, el.y); g.lineTo(wr.x, wr.y); g.stroke();
-  g.lineWidth = Math.max(1, S * 0.035);
-  for(const t of tip){ g.beginPath(); g.moveTo(wr.x, wr.y); g.lineTo(t.x, t.y); g.stroke(); }
-  // a hooked claw at the wrist, and a point on each fingertip
-  const cl = at(wr, a2 + 0.45, S * 0.13), cb = at(wr, a2 - 0.4, S * 0.05);
-  g.fillStyle = '#E8DCC8';
-  g.beginPath(); g.moveTo(wr.x, wr.y); g.lineTo(cl.x, cl.y); g.lineTo(cb.x, cb.y); g.closePath(); g.fill();
-  for(const t of tip){ g.beginPath(); g.arc(t.x, t.y, Math.max(0.8, S * 0.025), 0, Math.PI * 2); g.fill(); }
-}
-
 // A pair of wings as they are seen, baked (key, the look's own; paint, one
-// wing as batWing draws it; pal, its colours). From behind
+// wing as its look draws it; pal, its colours). From behind
 // (view 'back', walking away, and on a caddie) both spread either side of
 // his back. Side on (at address and through the swing, his back to the left)
 // they rise from his back behind him: the near one foreshortened, reaching
@@ -14978,24 +14908,6 @@ function wingPair(key, paint, pal, S, view, ph, up, shade){
   return { cv, ox, oy };
 }
 
-// Eight runes on a ring round the Demonic's pit, flat on the ground, glowing;
-// step 0..15 turns them on by a sixteenth of the way to the next.
-const RUNES = [['X.X', '.X.', 'X.X'], ['XXX', 'X..', 'XXX'], ['.X.', 'XXX', '.X.'], ['X..', 'XXX', '..X'],
-               ['XX.', '.X.', '.XX'], ['X.X', 'XXX', 'X.X'], ['.XX', 'X..', '.XX'], ['X.X', 'X.X', '.X.']];
-function runeRing(rx, ry, step){
-  return fxBake('rune|' + rx + '|' + ry + '|' + step, rx * 2 + 5, ry * 2 + 5, g => {
-    const ox = rx + 2, oy = ry + 2, n = Math.max(24, Math.round(rx * 4.4));
-    // (solid and doubled: dotted, it was faint on the grass)
-    for(let i = 0; i < n; i++){ const a = i / n * Math.PI * 2;
-      g.fillStyle = '#C8281C'; g.fillRect(Math.round(ox + Math.cos(a) * rx), Math.round(oy + Math.sin(a) * ry), 1, 1);
-      g.fillStyle = '#5A0E0E'; g.fillRect(Math.round(ox + Math.cos(a) * rx), Math.round(oy + Math.sin(a) * ry) + 1, 1, 1); }
-    for(let j = 0; j < 8; j++){
-      const a = (j + step / 16) / 8 * Math.PI * 2, px = Math.round(ox + Math.cos(a) * rx), py = Math.round(oy + Math.sin(a) * ry);
-      RUNES[j].forEach((row, yy) => [...row].forEach((ch, xx) => { if(ch !== 'X') return;
-        g.fillStyle = xx === 1 && yy === 1 ? '#FFE680' : '#FF7A2A'; g.fillRect(px - 1 + xx, py - 1 + yy, 1, 1); }));
-    }
-  });
-}
 
 // The Demonic's platform (his third picture): a round dais of dark red
 // stone, a rim of blocks with a side to it, a groove round it with runes
@@ -15487,7 +15399,6 @@ function drawVoidOrb(c, cx, cy, r, t, big){
 // the licks (lick, lick2) and the flicker (side). Solid pixels: over the
 // grass a wash of light turns grey. calm, [x0, x1], is a stretch of the
 // screen where the tongues burn low (so a pair of horns there can be seen).
-const VOID_FLAME = { hot: '#F2A6F8', root: '#E639EB', mid: '#962CA8', tip: '#4A1E5C', lick: '#E639EB', lick2: '#962CA8', side: '#962CA8' };
 const HELL_FLAME = { hot: '#FFE680', root: '#FF8A2A', mid: '#E8401C', tip: '#5A0E0E', lick: '#FFB43A', lick2: '#C8281C', side: '#E8401C' };
 function flameAura(c, g, up, P, calm){
   const O = outlineOf(g), t = g.t;
@@ -15701,30 +15612,6 @@ const STYLEFX = {
         c.fillStyle = '#7A1020'; c.fillRect(Math.round(A.x) + i, Math.round(A.y + i * 0.3) + wd - 1, 1, 1);
       }
       c.fillStyle = '#E8505E'; c.fillRect(Math.round(A.x), Math.round(A.y) - 1, Math.max(1, L >> 1), 1);
-    },
-    // (the old gold ring behind his head, set with jade)
-    ringOld(c, g){
-      const hd = g.head, sh = g.shear ? g.shear(0.1) : 0, p = g.h / 58;
-      const X = hd.x + sh + (g.back ? 0 : -hd.w * 0.3), Y = hd.y + hd.hh * 0.55 + Math.sin(g.t * 1.3) * p * 0.5;
-      const R = Math.max(3, hd.w * (g.minor ? 0.85 : 1.2)), n = Math.max(20, Math.round(R * 6.5)), th = g.h >= 45 ? 2 : 1;
-      c.globalAlpha = 1;
-      for(let i = 0; i < n; i++){
-        const a = i / n * Math.PI * 2, gl = Math.cos(a - g.t * 1.8) > 0.93;
-        c.fillStyle = gl ? '#FFF2B8' : Math.sin(a) < -0.3 ? '#F4D27A' : '#D9A63A';
-        c.fillRect(Math.round(X + Math.cos(a) * R), Math.round(Y + Math.sin(a) * R), th, 1);
-      }
-      if(g.minor || g.h < 30) return;
-      for(let j = 0; j < 8; j++){
-        const a = j / 8 * Math.PI * 2 + g.t * 0.4, x = Math.round(X + Math.cos(a) * R), y = Math.round(Y + Math.sin(a) * R);
-        c.fillStyle = '#17745C'; c.fillRect(x - 1, y, 3, 1); c.fillRect(x, y - 1, 1, 3);
-        c.fillStyle = j & 1 ? '#7FF0C8' : '#3FD6A8'; c.fillRect(x, y, 1, 1);
-      }
-      // (and an inner ring, finer, turning the other way, when he is big enough)
-      if(g.h < 60) return;
-      const r2 = R * 0.72, n2 = Math.round(n * 0.72);
-      c.fillStyle = '#E0AE3E';
-      for(let i = 0; i < n2; i++){ if(i % 4 === 0) continue; const a = i / n2 * Math.PI * 2 - g.t * 0.9;
-        c.fillRect(Math.round(X + Math.cos(a) * r2), Math.round(Y + Math.sin(a) * r2), 1, 1); }
     },
     // a long tail of silver hair from the back of his head, bound in gold,
     // streaming back side on; walking away, down his back, swaying
@@ -16157,31 +16044,6 @@ const STYLEFX = {
       flameAura(c, g, g.minor ? Math.max(2, Math.round(g.h / 18)) : Math.round(g.h / (g.h < 30 ? 18 : 7) * (1 + q * 1.2)), HELL_FLAME,
                 [Math.round(hx - hd.w * 0.75), Math.round(hx + hd.w * 0.75)]);
     },
-    // Two chains of fire circling him, crossing, turning opposite ways (the
-    // far half of each goes down before him, dimmer): each link seen face on
-    // or edge on in turn, a heat running along them, flames licking up off
-    // the near links. Faster as he winds up (q).
-    chains(c, g, front, q){
-      if(g.h < 30) return;   // (on the battery saver, where he is small, they only muddled him)
-      const { cx, w, h, t } = g, rx = w * 0.74, ry = Math.max(2, h * 0.07), oy = g.y + h * 0.55;
-      const n = Math.max(24, Math.round(rx * 1.6) * 2), k = Math.floor(t * 10);
-      c.globalAlpha = 1;
-      [[0.24, 1, 0], [-0.24, -1, 1.7]].forEach(([tilt, dir, ph0], j) => {
-        const ct = Math.cos(tilt), sn = Math.sin(tilt), spin = (t * 0.8 * (1 + q * 1.5) + ph0) * dir;
-        for(let i = 0; i < n; i++){
-          const a = spin + i / n * Math.PI * 2;
-          if((Math.sin(a) > 0) !== front) continue;
-          const X = Math.cos(a) * rx, Y = Math.sin(a) * ry, px = Math.round(cx + X * ct - Y * sn), py = Math.round(oy + X * sn + Y * ct);
-          const hot = (((i / n - t * 0.35 * dir) % 1) + 1) % 1 < 0.1;
-          if(i & 1){ c.fillStyle = front ? (hot ? '#FFE680' : '#FF8A2A') : '#8A1A10'; c.fillRect(px, py - 1, 1, 2); }
-          else { c.fillStyle = front ? '#B8321A' : '#3C0A0E'; c.fillRect(px, py, 1, 1); }
-          if(front && (i & 1) && hr(i + j * 97, k) > 0.85){
-            c.fillStyle = '#FF4A1A'; c.fillRect(px, py - 3, 1, 2);
-            c.fillStyle = '#FFD34A'; c.fillRect(px, py - 2, 1, 1);
-          }
-        }
-      });
-    },
     // as he winds up, his hands catch fire
     fists(c, g, q){
       const H = g.hand; if(!H || q < 0.05) return;
@@ -16204,54 +16066,6 @@ const STYLEFX = {
         fxDot(c, bx + Math.cos(a) * v * f * g.w * 0.7, by + Math.sin(a) * v * f * g.h * 0.35 + f * f * g.h * 0.14, 1,
               f < 0.25 ? '#FFE680' : i & 1 ? '#FF8A2A' : '#E8401C', 1 - f);
       }
-      c.globalAlpha = 1;
-    },
-    // twelve steps of a slow beat, baked per size
-    // (seen as he is seen: from behind as he walks away and on his caddie,
-    // side on at address and through the swing, rising off his back)
-    wings(h, minor, t, raised, view){
-      const S = Math.max(8, Math.round(h * (minor ? 0.62 : 0.52))), ph = raised ? 12 : Math.floor(t * 6) % 12;
-      const up = raised ? 1.15 : 0.5 + 0.4 * Math.sin(ph / 12 * Math.PI * 2);
-      return wingPair('bat', batWing, BAT_PAL, S, view || 'back', ph, up);
-    },
-    // from his hips, curling back and up with a slow wave in it, a spade at the end
-    tail(c, g){
-      const { x, y, w, h, t } = g;
-      const f = g.minor ? [0.50, 0.55] : g.back ? [0.50, 0.56] : g.spr === SPRITE.gFinish ? [0.44, 0.56] : [0.33, 0.57];
-      let px = x + w * f[0] + (g.shear ? g.shear(f[1]) : 0), py = y + h * f[1];
-      const L = h * (g.minor ? 0.42 : 0.55), N = 12, side = g.back ? 1 : -1, th = Math.max(1, Math.round(h / 30));
-      let a = g.back ? Math.PI * 0.5 : Math.PI * 0.78;
-      c.globalAlpha = 1;
-      for(let i = 1; i <= N; i++){
-        a -= side * (0.09 + 0.10 * Math.sin(t * 2.3 - i * 0.5));
-        const nx = px + Math.cos(a) * L / N, ny = py + Math.sin(a) * L / N;
-        pxLine(c, px, py, nx, ny, '#2A0A0C', i < N * 0.5 ? th : 1);
-        if(i & 1){ c.fillStyle = '#7A1E16'; c.fillRect(Math.round(px), Math.round(py) - 1, 1, 1); }
-        px = nx; py = ny;
-      }
-      const SP = ['..X..', '.XXX.', 'XXRXX', '.X.X.'], x0 = Math.round(px) - 2, y0 = Math.round(py) - 2;
-      SP.forEach((row, yy) => [...row].forEach((ch, xx) => { if(ch === '.') return;
-        c.fillStyle = ch === 'R' ? '#C8281C' : '#1A0406'; c.fillRect(x0 + xx, y0 + yy, 1, 1); }));
-    },
-    // sleek horns of obsidian rising off his cap and curling forward (from
-    // behind, out and curling back in), lava along them to white-hot points,
-    // a flame burning on each point and now and then a pulse of heat
-    // running up the near one
-    horns(c, g){
-      const hd = g.head, minor = !!g.minor, view = g.back && !minor ? 'back' : 'side';
-      const s = Math.max(minor ? 4 : 7, Math.round(hd.w * (minor ? 0.75 : 1.25))), Hn = sleekHorns(s, view, true);
-      const ax = Math.round(hd.x + (view === 'side' ? hd.w * 0.06 : 0) + (g.shear ? g.shear(0.1) : 0)), ay = Math.round(hd.y + Math.max(1, hd.hh * 0.3));
-      c.globalAlpha = 1; c.drawImage(Hn.cv, ax - Hn.ox, ay - Hn.oy);
-      const L = legendNow(g);
-      Hn.L.filter(l => !l.far).forEach((l, i) => {
-        const p = l.P[l.P.length - 1], X = Math.round(ax + p.x), Y = Math.round(ay + p.y);
-        const f = Math.max(1, Math.round((minor ? 1 : 2) * (L ? 1.6 : 1) * (0.6 + 0.4 * Math.sin(g.t * 9 + i * 2.3))));
-        c.fillStyle = '#FF4A1A'; c.fillRect(X, Y - f, 1, f);
-        if(f > 1){ c.fillStyle = '#FFD34A'; c.fillRect(X, Y - 1, 1, 1); }
-      });
-      if(minor) return;
-      const u = (g.t % 2.7) / 0.5, l = Hn.L[Hn.L.length - 1];
-      if(u < 1){ const p = l.P[Math.round(u * (l.P.length - 1))]; fxDot(c, ax + p.x, ay + p.y, 1, '#FFE680', 1); }
       c.globalAlpha = 1;
     },
     // his eyes burning red in his mask, and now and then they flare
@@ -16282,22 +16096,6 @@ const STYLEFX = {
       }
       c.globalCompositeOperation = 'source-over'; c.globalAlpha = 1;
     },
-    // three skulls on fire circling him, a trail of embers behind each: the
-    // half of the circle behind him goes down before him, dimmer
-    skulls(c, g, front){
-      const { cx, cy, w, h, t } = g, s = Math.max(1, Math.round(h / 45)), L = legendNow(g), N = L && L.big ? 6 : 3;
-      // (on a great hole they scatter, spinning out and up, and come home)
-      const out = L ? outBack(L.f, 0.15) : 0, R = w * 0.92 * (1 + out * (L && L.big ? 0.55 : 0.4)), turn = L ? (1 - Math.cos(L.f * Math.PI)) * Math.PI * 2 : 0;
-      for(let i = 0; i < N; i++) for(let q = 6; q >= 0; q--){
-        const tt = t - q * 0.05, a = tt * 0.9 + turn + i * Math.PI * 2 / N, depth = Math.sin(a);
-        if((depth > 0) !== front) continue;
-        const px = cx + Math.cos(a) * R, py = cy - h * 0.12 - out * h * 0.3 + Math.sin(tt * 0.8 + i * 2.1) * h * 0.28 + depth * h * 0.05;
-        const dim = front ? 1 : 0.55;
-        if(q === 0) drawSkull(c, px, py, s, dim, Math.floor(t * 8 + i) & 1);
-        else fxDot(c, px, py, 1, q < 3 ? '#FF8A2A' : '#8A1A0E', (0.8 - q * 0.11) * dim);
-      }
-      c.globalAlpha = 1;
-    },
     bubbles(c, g, rx, ry){
       const { cx, bot, t } = g;
       for(let i = 0; i < 5; i++){
@@ -16306,23 +16104,6 @@ const STYLEFX = {
         if(f < 0.8) fxDot(c, bx - (f > 0.4 ? 1 : 0), by - (f > 0.4 ? 1 : 0), f > 0.4 ? 2 : 1, '#FFD34A', 0.9);
         else for(const [dx, dy] of [[-2, 0], [2, 0], [0, -1], [0, 1]]) fxDot(c, bx + dx, by + dy, 1, '#FF8A2A', (1 - f) * 4);
       }
-    },
-    // shadows writhing up out of the pit either side of him, fading as they
-    // rise, red at the tips
-    tendrils(c, g, rx){
-      const { cx, bot, h, t } = g;
-      for(let j = 0; j < 4; j++){
-        const side = j & 1 ? 1 : -1, bx = cx + side * rx * (0.5 + 0.35 * (j >> 1));
-        const L = h * (0.24 + 0.1 * (j >> 1)) * (0.8 + 0.2 * Math.sin(t * 1.3 + j));
-        let px = bx, py = bot;
-        for(let i = 1; i <= 8; i++){
-          const f = i / 8, nx = bx + side * (Math.sin(t * 2.1 + j * 1.9 - f * 4) * h * 0.07 * f + f * f * h * 0.08), ny = bot - f * L;
-          c.globalAlpha = 0.8 - f * 0.3;
-          pxLine(c, px, py, nx, ny, f > 0.75 ? '#E8401C' : f > 0.5 ? '#5A0E1A' : '#1C0610', f < 0.35 ? 2 : 1);
-          px = nx; py = ny;
-        }
-      }
-      c.globalAlpha = 1;
     },
     // the eruption: flames shooting up all round the pit (the far half behind
     // him, the near half in front) and a ring of fire thrown out along the ground
@@ -16636,11 +16417,18 @@ const STYLEFX = {
       }
     },
     // a ring of green light dithered round a point (his lantern, his eyes)
+    // (made once a size and stamped: it was a box a pixel, a hundred a
+    // frame on the Penitent at night. Which pixels of the checker it
+    // lights is the parity of x + y, whole part)
     halo(c, x, y, r, col){
       const R = Math.ceil(r);
       c.fillStyle = col;
-      for(let j = -R; j <= R; j++) for(let i = -R; i <= R; i++){ const d = Math.hypot(i, j) / r;
-        if(d > 1 || d < 0.45 || ((x + i + y + j) & 1)) continue; c.fillRect(Math.round(x) + i, Math.round(y) + j, 1, 1); }
+      if(!(R > 0)) return;
+      const par = Math.floor(x + y) & 1, key = 'dhalo|' + r + '|' + col + '|' + par;
+      const cv = fxBake(key, R * 2 + 1, R * 2 + 1, k => { k.fillStyle = col;
+        for(let j = -R; j <= R; j++) for(let i = -R; i <= R; i++){ const d = Math.hypot(i, j) / r;
+          if(d > 1 || d < 0.45 || ((par + i + j) & 1)) continue; k.fillRect(R + i, R + j, 1, 1); } });
+      c.drawImage(cv, Math.round(x) - R, Math.round(y) - R);
     },
     // the hands, out at either side of the lip and one behind: each rising
     // and sinking back in its own time, all reaching up as he winds up
@@ -17342,9 +17130,14 @@ const STYLEFX = {
     // round him, each lighting up and going dark in its own time
     glowPaint(c, g, X, Y, rx, ry){
       const st = Math.floor(g.t * 3);
-      for(let j = 0; j < 2; j++){ const s = 1.12 + j * 0.14, n = Math.round((rx + ry) * s * 2.2);
-        for(let i = 0; i < n; i++){ if((i + j + st) % 3 === 0) continue; const a = i / n * Math.PI * 2;
-          c.fillStyle = psyC(i * 6 / n + st - j * 2, j); c.fillRect(Math.round(X + Math.cos(a) * rx * s), Math.round(Y + Math.sin(a) * ry * s), 1, 1); } }
+      // (its two rings of dots made once a size and a step of their six
+      // colours, and stamped: a box a dot, a hundred a frame)
+      { const s6 = ((st % 6) + 6) % 6, PX = Math.ceil(rx * 1.27) + 2, PY = Math.ceil(ry * 1.27) + 2;
+        const cv = fxBake('pglow|' + rx + '|' + ry + '|' + s6, PX * 2 + 1, PY * 2 + 1, k => {
+          for(let j = 0; j < 2; j++){ const s = 1.12 + j * 0.14, n = Math.round((rx + ry) * s * 2.2);
+            for(let i = 0; i < n; i++){ if((i + j + s6) % 3 === 0) continue; const a = i / n * Math.PI * 2;
+              k.fillStyle = psyC(i * 6 / n + s6 - j * 2, j); k.fillRect(PX + Math.round(Math.cos(a) * rx * s), PY + Math.round(Math.sin(a) * ry * s), 1, 1); } } });
+        c.drawImage(cv, X - PX, Y - PY); }
       const k = Math.max(1, Math.round(g.h / 50));
       for(let i = 0; i < 16; i++){ const a = hr(i, 681) * Math.PI * 2, d = 1.5 + hr(i, 682) * 1.3;
         const on = Math.sin(g.t * (1.5 + hr(i, 683)) + i * 2.3); if(on < -0.3) continue;
@@ -17362,9 +17155,12 @@ const STYLEFX = {
         const y = Math.round(g.bot - u * g.h * 1.15), r = Math.max(1, Math.round((1 + (i % 3)) * k * Math.sin(Math.PI * Math.min(1, u * 1.2)) * (g.h >= 45 ? 1 : 0.7)));
         if(u > 0.92) continue;
         const col = psyC(i + Math.floor(g.t * 1.2), 0), rim = psyC(i + Math.floor(g.t * 1.2), 1);
-        for(let yy = -r; yy <= r; yy++) for(let xx = -r; xx <= r; xx++){ const d = xx * xx + yy * yy; if(d > r * r + r * 0.6) continue;
-          c.fillStyle = d > (r - 1) * (r - 1) + 0.5 && r > 1 ? rim : col; c.fillRect(x + xx, y + yy, 1, 1); }
-        c.fillStyle = '#FFFFFF'; c.fillRect(x - Math.floor(r / 2), y - Math.floor(r / 2), 1, 1);
+        // (each bubble made once a size and colour, and stamped)
+        const cv = fxBake('pbub|' + r + '|' + col + '|' + rim, r * 2 + 1, r * 2 + 1, k => {
+          for(let yy = -r; yy <= r; yy++) for(let xx = -r; xx <= r; xx++){ const d = xx * xx + yy * yy; if(d > r * r + r * 0.6) continue;
+            k.fillStyle = d > (r - 1) * (r - 1) + 0.5 && r > 1 ? rim : col; k.fillRect(r + xx, r + yy, 1, 1); }
+          k.fillStyle = '#FFFFFF'; k.fillRect(r - Math.floor(r / 2), r - Math.floor(r / 2), 1, 1); });
+        c.drawImage(cv, x - r, y - r);
       }
       if(g.minor || g.h < 30) return;
       const H = g.head, p = this.px(g), sh = g.shear && !g.back ? g.shear(0.1) : 0;
@@ -18302,16 +18098,31 @@ for(const k in FLOURISH_SIG){ const B0 = FLOURISH[k]; if(!B0) continue;
 // him and thinning to nothing at its edge, its middle left clear; solid
 // rings read as hoops)
 const BAYER4 = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5];
+// (made once a size and a turn of its dither and stamped after: it was
+// a box a pixel, some three hundred a frame. A haze that flickers steps its
+// size by a sixty-fourth, so it finds the ones it made)
+const NIGHT_HALO = new Map(), NIGHT_HALO_MAX = 96;
 function nightHalo(c, x, y, rx, ry, col, ph, top){
   const RX = Math.ceil(rx), RY = Math.ceil(ry), X = Math.round(x), Y = Math.round(y), mx = top || 0.42, o = ph || 0;
   c.globalAlpha = 1; c.fillStyle = col;
-  for(let j = -RY; j <= RY; j++) for(let i = -RX; i <= RX; i++){
-    const d = Math.sqrt((i * i) / (rx * rx) + (j * j) / (ry * ry));
-    if(d > 1 || d < 0.55) continue;
-    const dens = d < 0.72 ? mx * (d - 0.55) / 0.17 : mx * (1 - d) / 0.28;
-    if(BAYER4[((X + i + o) & 3) + ((Y + j) & 3) * 4] / 16 >= dens) continue;
-    c.fillRect(X + i, Y + j, 1, 1);
+  if(!(RX > 0 && RY > 0)) return;
+  const px = (X + o) & 3, py = Y & 3, key = col + '|' + mx + '|' + rx + '|' + ry + '|' + px + '|' + py;
+  let cv = NIGHT_HALO.get(key);
+  if(cv){ NIGHT_HALO.delete(key); NIGHT_HALO.set(key, cv); }
+  else {
+    cv = document.createElement('canvas'); cv.width = RX * 2 + 1; cv.height = RY * 2 + 1;
+    const k = cv.getContext('2d'); k.fillStyle = col;
+    for(let j = -RY; j <= RY; j++) for(let i = -RX; i <= RX; i++){
+      const d = Math.sqrt((i * i) / (rx * rx) + (j * j) / (ry * ry));
+      if(d > 1 || d < 0.55) continue;
+      const dens = d < 0.72 ? mx * (d - 0.55) / 0.17 : mx * (1 - d) / 0.28;
+      if(BAYER4[((px + i) & 3) + ((py + j) & 3) * 4] / 16 >= dens) continue;
+      k.fillRect(RX + i, RY + j, 1, 1);
+    }
+    if(NIGHT_HALO.size >= NIGHT_HALO_MAX){ const k0 = NIGHT_HALO.keys().next().value; cvFree(NIGHT_HALO.get(k0)); NIGHT_HALO.delete(k0); }
+    NIGHT_HALO.set(key, cv);
   }
+  c.drawImage(cv, X - RX, Y - RY);
 }
 // a star of light: its middle and four arms L long
 function nightStar(c, x, y, L, col, hot){
@@ -18322,7 +18133,7 @@ function nightStar(c, x, y, L, col, hot){
 const NIGHT_SIG = {
   // his flames light the dark round him, sparks flying up high
   inferno(c, g){
-    const { cx, cy, w, h, t, k } = g, fl = 0.92 + 0.08 * Math.sin(t * 13) * Math.sin(t * 7.3);
+    const { cx, cy, w, h, t, k } = g, fl = Math.round((0.92 + 0.08 * Math.sin(t * 13) * Math.sin(t * 7.3)) * 64) / 64;
     nightHalo(c, cx, cy, w * 0.95 * fl, h * 0.62 * fl, '#B8401C', Math.floor(t * 10));
     for(let i = 0; i < 7; i++){ const life = (t * 0.7 + hr(i, 771)) % 1;
       const x = cx + (hr(i, 772) - 0.5) * w * 1.2 + Math.sin(t * 3 + i) * k * 2, y = g.y + h * 0.2 - life * h * 0.6;
@@ -18331,7 +18142,7 @@ const NIGHT_SIG = {
   // a cold light round him, and the snow catching it
   frostborn(c, g){
     const { cx, cy, w, h, t, k } = g;
-    nightHalo(c, cx, cy, w * 0.9 * (0.95 + 0.05 * Math.sin(t)), h * 0.6, '#3F7FB0', 0);
+    nightHalo(c, cx, cy, w * 0.9 * Math.round((0.95 + 0.05 * Math.sin(t)) * 64) / 64, h * 0.6, '#3F7FB0', 0);
     for(let i = 0; i < 6; i++){ const n = Math.floor(t * 1.6) + i * 5, f = (t * 1.6) % 1;
       if(f > 0.7) continue;
       nightStar(c, cx + (hr(n, 781) - 0.5) * w * 1.8, g.y + hr(n, 782) * h, f < 0.35 ? k + 1 : k, '#BFE6FA'); }
@@ -18434,7 +18245,6 @@ function trailStar(c, x, y, core, arm, a){
   fxDot(c, x, y, 1, core, a);
   if(a > 0.6) for(const [dx, dy] of [[-1, 0], [1, 0], [0, -1], [0, 1]]) fxDot(c, x + dx, y + dy, 1, arm, a * 0.8);
 }
-const WING = [['....X', '...XX', '..XXw', 'XXXw.'], ['.....', 'XXXww', '.XXXw', '..XX.']];
 
 // The ball at rest -- teed up at his feet, or lying where it came down -- in
 // the ball he has on, not a plain white one. cx, cy its centre, r its size.
@@ -19735,8 +19545,6 @@ function voidStar(c, x, y, k, arm, col){
   for(let i = 1; i <= arm; i++){ c.fillRect(X - i * k, Y, k, k); c.fillRect(X + i * k, Y, k, k); c.fillRect(X, Y - i * k, k, k); c.fillRect(X, Y + i * k, k, k); }
   c.fillStyle = '#FFFFFF'; c.fillRect(X, Y, k, k);
 }
-// A rock of the void: a lump of dark stone lit on one side, a rim of violet
-const VROCKS = [['.aa.', 'abbd', 'bbdd', '.dd.'], ['.ab', 'abd', 'bd.'], ['ab.', 'bbd', '.dd'], ['.a.', 'abd', '.d.']];
 // a dark sphere floating, lit at its top left (the user's pictures)
 function voidSphere(c, x, y, r){
   const X = Math.round(x), Y = Math.round(y);
@@ -19744,17 +19552,9 @@ function voidSphere(c, x, y, r){
   if(r > 1){ c.fillRect(X - 1, Y - 2, 3, 5); c.fillRect(X - 2, Y - 1, 5, 3); c.fillStyle = '#3E2A6E'; c.fillRect(X - 1, Y - 1, 1, 1); }
   else{ c.fillRect(X - 1, Y - 1, 2, 2); c.fillStyle = '#3E2A6E'; c.fillRect(X - 1, Y - 1, 1, 1); }
 }
-function voidRock(c, x, y, s, lit, n){
-  const R = VROCKS[(n || 0) % VROCKS.length], X = Math.round(x), Y = Math.round(y);
-  c.globalAlpha = 1;
-  R.forEach((row, j) => [...row].forEach((ch, i) => { if(ch === '.') return;
-    c.fillStyle = ch === 'a' ? '#6A5A8A' : ch === 'b' ? '#2A2440' : '#1C1830'; c.fillRect(X + i, Y + j, 1, 1); }));
-  if(lit){ const w = R[0].length, h = R.length; c.fillStyle = '#B98CFF'; c.fillRect(X + w - 1, Y + h - 2, 1, 1); }
-}
 // The caddie's blessing in the look of the caddie who gives it (the user
 // asked): the column's colour and what comes down it, or rises in it, and
 // what it leaves round his feet. Solid pixels for the pieces.
-const DISCO_COLS = ['#FF4FB8', '#3FE0FF', '#FFE14A', '#7ADB86', '#C68BFF'];
 // A caddie perk's blessing (the user asked: "unique per skin (only mythic
 // and legendary skins). Make all other skin have a basic, faint light
 // beam"; then "make the caddy buff visual effects better and better
@@ -20823,7 +20623,6 @@ function cyberPad(rx, ry, step, lit){
 const PSY = ['#FF2E88', '#FF8A1E', '#FFE81E', '#3AF07A', '#2EC8FF', '#8A4CFF'];
 const PSYM = ['#C81E6A', '#D0661A', '#D0B814', '#22B85A', '#1E96CC', '#6A34D0'];
 const PSYD = ['#8A1248', '#904410', '#8A7A10', '#167A3C', '#146490', '#4A2290'];
-const PSY_PAL = PSY.concat(PSYM, PSYD, ['#FFFFFF', '#1A1024', '#F0C8A0', '#C89870']);
 // a hue's colour by step (it turns with the clock), in a shade
 const psyC = (i, sh) => [PSY, PSYM, PSYD][sh || 0][((Math.round(i) % 6) + 6) % 6];
 // his clothes with their colours turned on by step: each pixel of the
@@ -32669,8 +32468,6 @@ function trophyRoom(tab){
   w.querySelectorAll('[data-room]').forEach(b => b.onclick = () => trophyRoom(b.dataset.room));
   renderStageBtns();
 }
-// older callers asked for the honours on their own
-const honoursSheet = () => trophyRoom('hon');
 const roomLine = (k, v, btn) => '<div class="lb rep"><span>' + k + '</span><span class="s">' + v
   + (btn || '') + '</span></div>';
 const collectBtn = (id, n) => ' <button class="mini go" data-collect="' + id + '">GET +' + sovFmt(n) + sovIc() + '</button>';
@@ -32794,8 +32591,8 @@ function caseTrack(id){
   const c = B.CASE.find(x => x.id === id), got = (S.caseGot || {})[id] || 0, have = caseHave(id);
   const list = casePending().filter(x => x.c.id === id);
   if(list.length) return '<div class="ctrack"><span>' + c.n + ' \u00b7 Reward waiting</span>' + collectBtn(id, casePay(list)) + '</div>';
-  if(got >= c.at.length) return '<div class="ctrack"><span>' + c.n + ' \u00b7 every reward collected</span></div>';
-  const at = c.at[got], what = id === 'card' ? 'a score of -' + at : at + (id === 'maj' ? (at === 1 ? ' major' : ' majors') : at === 1 ? ' cup' : ' cups');
+  if(got >= c.at.length) return '<div class="ctrack"><span>' + c.n + ' \u00b7 All rewards collected</span></div>';
+  const at = c.at[got], what = id === 'card' ? 'a card of -' + at : at + (id === 'maj' ? (at === 1 ? ' major' : ' majors') : at === 1 ? ' cup' : ' cups');
   return '<div class="ctrack"><span>Next: ' + what + ' <i>\u00b7 ' + achCnt(Math.min(have, at)) + ' / ' + achCnt(at) + '</i></span>'
     + '<span class="s">+' + c.sov[got] + sovIc() + '</span></div>';
 }
@@ -33309,10 +33106,6 @@ function affLine(it, max){
     ? out.slice(0, max).join(' \u00b7 ') + ' \u00b7 +' + (out.length - max) + '\u00a0more'
     : out.join(' \u00b7 ');
 }
-function itemHead(it){
-  const r = B.RARITY[it.rar];
-  return '<span style="color:' + RC(it.rar) + '">' + it.name + (it.enh ? ' +' + it.enh : '') + '</span>';
-}
 function renderBag(){
   renderBagNav();
   if(!B.SLOTS.some(sl => sl.id === S.bagSlot)) S.bagSlot = B.SLOTS[0].id;
@@ -33659,7 +33452,6 @@ function doEquip(uid){ const it = findItem(uid); if(it){ equipItem(it); hideShee
 function doSalvage(uid){ const it = findItem(uid); if(it){ salvageItem(it); hideSheet(); renderBag(); } }
 
 /* ---- shot book and sponsor perks ---- */
-let sklSub = 'shots';
 function renderSkillsTab(){ renderSkills(); }
 function perksSheet(){
   showSheet('<h3>Sponsor Perks</h3><div id="perkSheet"></div>'
@@ -33750,10 +33542,6 @@ function renderSkills(){
 }
 
 /* ---- the wager book ---- */
-// Which contests have their notes folded down. Kept out here because the
-// Depths redraw on the key timer, and a class on the element is gone the next
-// time they do.
-const dgnOpen = {};
 let cardHintOpen = false, majHintOpen = false, sigHintOpen = false;
 function renderDgn(){
   const w = $('dgnRows'); w.innerHTML = '';

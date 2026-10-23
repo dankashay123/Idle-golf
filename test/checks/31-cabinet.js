@@ -125,7 +125,7 @@ module.exports = {
         collect('cup');
         // a track collected to its end says so, and a perfect card is the last step
         S.bestRound = -288; collect('card'); trophyRoom('case');
-        o.cardDone = /every reward collected/.test(document.getElementById('cabBox').textContent);
+        o.cardDone = /All rewards collected/.test(document.getElementById('cabBox').textContent);
         o.cardTop = B.CASE.find(c => c.id === 'card').at.slice(-1)[0];
         S.caseGot = { cup: 99, card: -3, nope: 2 }; initState(); o.caseRepair = JSON.stringify(S.caseGot);
         hideSheet();
