@@ -65,7 +65,7 @@ module.exports = {
         // the window: the stars, the holes, a bar, and what the next star lifts
         itemSheet(dr, true);
         const mb = document.querySelector('#sheet .mastbox'); o.sheet = mb ? mb.textContent : '';
-        const now = '+' + fmt(itemPrimary(dr) * 100) + '%', nxt = '+' + fmt(itemPrimary(dr) * (1 + B.MASTER_STEP * 3) / (1 + B.MASTER_STEP * 2) * 100) + '%';
+        const now = '\u00d7' + fmt(1 + itemPrimary(dr)), nxt = '\u00d7' + fmt(1 + itemPrimary(dr) * (1 + B.MASTER_STEP * 3) / (1 + B.MASTER_STEP * 2));
         if (!mb || !mb.querySelector('.gxbar i') || !o.sheet.includes(fmt(B.MASTER[2], 0)) || !o.sheet.includes(now) || !o.sheet.includes(nxt)) f('the window\'s mastery reads "' + o.sheet + '"');
         if (B.MASTER.length !== 10 || B.MASTER.some((v, i) => i && v <= B.MASTER[i - 1]) || B.MASTER[9] < B.MASTER[4] * 20) f('the stars are set at ' + B.MASTER.join(', '));
         hideSheet(); QUIET = true;

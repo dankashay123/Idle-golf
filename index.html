@@ -3215,7 +3215,7 @@ const B = {
   SKILL_SLOTS: 3,
   SKILL: [
     { ic:'thunder', id:'thunder', n:'Thunder Drive',   cd:14, cost:0,  g:'T', d:'One swing worth {v} normal ones', b:10,  s:3.0 },
-    { ic:'bounce', id:'chain',   n:'Chip-In Chain',   cd:19, cost:3,  g:'C', d:'{v} swings in a row',        b:6,   s:1.0 },
+    { ic:'bounce', id:'chain',   n:'Chip-In Chain',   cd:19, cost:3,  g:'C', d:'{v} swings at once',        b:6,   s:1.0 },
     { ic:'gale', id:'gale',    n:'Gale Force',      cd:30, cost:5,  g:'G', d:'+{v}% pace for 8 seconds',             b:60,  s:9.0 },
     { ic:'target', id:'ace',     n:'Ace Window',      cd:26, cost:8,  g:'A', d:'+{v}% pure strike chance for 6 seconds', b:0.22, s:0.03 },
     { ic:'bag', id:'rally',   n:'Caddie Rally',    cd:34, cost:12, g:'R', d:'+{v}% second-ball chance for 10 seconds', b:40, s:6 },
@@ -3446,13 +3446,13 @@ const B = {
     // not touch, so collecting one is a different decision from climbing
     // rarity: purse, tempo, provisionals, gear luck and the wager book.
     { id:'heritage', n:'Old Course Heritage', mk:'Heritage', ic:'shield', named:true,
-      d:'A purse set',
+      d:'A prize money set',
       tiers:[ {n:2, gld:0.15}, {n:4, gld:0.40}, {n:6, gld:1.00} ] },
     { id:'stormforge', n:'Stormforge', mk:'Stormforge', ic:'hammer', named:true,
       d:'A pace set',
       tiers:[ {n:2, spd:0.06}, {n:4, spd:0.15}, {n:6, spd:0.30} ] },
     { id:'twinline', n:'Twinline', mk:'Twinline', ic:'chevrons', named:true,
-      d:'A provisionals set',
+      d:'A second-ball set',
       tiers:[ {n:2, mst:0.10}, {n:4, mst:0.30}, {n:6, mst:0.70} ] },
     { id:'caddie', n:"Caddie's Kit", mk:"Caddie's", ic:'satchel', named:true,
       d:'A club luck and wager set',
@@ -31962,9 +31962,10 @@ function pixUrl(id, col){
 function honRows(w){
   const done = achCount(), tot = B.ACH.length;
   const A = achBonus();
-  // (the swing power with what it multiplies by: it is a multiplier of its
-  // own, so "+135%" makes him 2.35 times as strong)
-  const live = Object.keys(A).map(k => achReward({ r:{ k, v:A[k] } }) + (k === 'pow' ? ' (\u00d7' + fmtX(1 + A[k]) + ')' : '')).join(' \u00b7 ');
+  // (the swing power as what it multiplies by: it is a multiplier of its
+  // own, so the honours' +135% make him 2.35 times as strong. It read
+  // "+135% swing power (x2.35)", the one figure twice)
+  const live = Object.keys(A).map(k => k === 'pow' ? '\u00d7' + fmtX(1 + A[k]) + ' swing power' : achReward({ r:{ k, v:A[k] } })).join(' \u00b7 ');
   let h = '<div class="hint"><b>' + done + '</b> of ' + tot + ' done'
     + (live ? ' \u00b7 <b style="color:var(--aurora)">' + live + '</b>' : '') + '</div>';
   // The ones that come round again, one line each: how far to the next, and
@@ -33425,7 +33426,9 @@ function itemSheet(it, equipped){
     + '<h3 style="color:' + RC(it.rar) + ';margin:0">' + it.name + (it.enh ? ' +' + it.enh : '') + '</h3></div>';
   h += '<p>' + B.RARITY[it.rar].n + ' ' + B.SLOTS.find(s=>s.id===it.slot).n + ' \u00b7 Level\u00a0' + it.ilvl
     + (it.set && setDef(it.set) ? ' \u00b7 <span style="color:var(--aurora)">' + setDef(it.set).n + ' set</span>' : '') + '</p>';
-  h += '<ul><li>Primary: +' + fmt(itemPrimary(it)*100) + '% '
+  // (as the tile has it, \u00d7 the swing: it read "+520K%" here and
+  // "\u00d75.20K" on the tile, the same club)
+  h += '<ul><li>Primary: \u00d7' + fmt(1 + itemPrimary(it)) + ' '
      + (it.slot === 'ball' ? 'affinity power' : 'swing power') + '</li>';
   it.aff.forEach((a, i) => {
     const d = B.AFFIX.find(x => x.id === a.k); if(!d) return;
@@ -33447,7 +33450,7 @@ function itemSheet(it, equipped){
     h += '<div class="mastbox"><div class="masthead"><span>Mastery</span>' + starsHtml(ms)
       + '<span class="mastn">' + (mp.of ? nb(fmt(mp.n, 0) + ' / ' + fmt(mp.next, 0) + ' holes') : 'Mastered') + '</span></div>'
       + '<div class="gxbar big' + (ms >= B.MASTER_GOLD ? ' pu' : '') + '"><i style="width:' + Math.round(mp.f * 100) + '%"></i></div>'
-      + '<div class="mastnx">' + (mp.of ? 'Next star: ' + pk + ' <b>+' + fmt(now * 100) + '%</b> \u2192 <b>+' + fmt(nxt * 100) + '%</b>'
+      + '<div class="mastnx">' + (mp.of ? 'Next star: ' + pk + ' <b>\u00d7' + fmt(1 + now) + '</b> \u2192 <b>\u00d7' + fmt(1 + nxt) + '</b>'
           : 'All ten stars: ' + pk + ' +' + Math.round(ms * B.MASTER_STEP * 100) + '% from mastery') + '</div></div>'; }
   // What carrying it would actually do. Directly under the stats, because it is
   // the question the sheet gets opened to answer and it used to sit below three
