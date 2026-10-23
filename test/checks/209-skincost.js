@@ -10,6 +10,7 @@
  *   - a figure drawn strip by strip is stamped from a picture of itself the
  *     second time the same layout comes (he stands at address, holds his
  *     finish, a caddie floats), and the stamp is the strips to the pixel
+ *     (the Demonic's cracks at rest round his feet the same way)
  *   - the night's haze round the lesser skins, the Dread's and Penitent's
  *     rings of light and the Psychedelic's rings and bubbles are made once
  *     and stamped, the same pixels as painted dot by dot
