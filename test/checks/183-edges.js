@@ -53,6 +53,7 @@ module.exports = {
           try { tickShop(days * 86400); } finally { QUIET = q; }
           return S.sov - s0 + (S.owed || []).filter(x => x.k === 'member').reduce((a, x) => a + x.n, 0);
         };
+        o.daily = B.MEMBER_DAILY;
         o.mExpired = away(5, 2, 3.5);   // ran out 3.5 days into 5 away: 3 days paid
         o.mCovered = away(3, 2, 10);    // all 3 covered
         o.mGood = away(4, 1, 0);        // for good: 4
@@ -75,9 +76,9 @@ module.exports = {
     if (r.freeOnly !== 5) f('an unbought pass\'s free row to tier 5 paid ' + r.freeOnly + ', not 5');
     if (r.nothing) f('a pass with nothing waiting paid ' + r.nothing);
     if (r.allGot !== 60 || r.allTwice) f('GET ALL took ' + r.allGot + ' of 60, then ' + r.allTwice + ' more');
-    if (r.mExpired !== 3 * 60) f('membership out 3.5 days into 5 away paid ' + r.mExpired + ', not 180');
-    if (r.mCovered !== 3 * 60) f('membership covering 3 days away paid ' + r.mCovered);
-    if (r.mGood !== 4 * 60) f('membership for good, 4 days away, paid ' + r.mGood);
+    if (r.mExpired !== 3 * r.daily) f('membership out 3.5 days into 5 away paid ' + r.mExpired + ', not ' + 3 * r.daily);
+    if (r.mCovered !== 3 * r.daily) f('membership covering 3 days away paid ' + r.mCovered);
+    if (r.mGood !== 4 * r.daily) f('membership for good, 4 days away, paid ' + r.mGood);
     if (r.mNone) f('no membership paid ' + r.mNone);
     if (r.oldPity !== 'range:0,tour:6,champ:0:false') f('an old save\'s count of 9 toward a Mythic (of 15) not carried to the Tour Bag as 6 of 10: ' + r.oldPity);
     if (r.junkPity !== '{"range":0,"tour":0,"champ":0}') f('nonsense bag counts kept: ' + r.junkPity);
