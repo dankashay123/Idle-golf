@@ -1,6 +1,6 @@
 # Handoff — Mythic Mulligan
 
-Last updated 2026-10-17 (pushed to `main`). `CLAUDE.md` holds the standing
+Last updated 2026-10-24 (pushed to `main`). `CLAUDE.md` holds the standing
 rules and is loaded by itself; this file is what a new session needs on
 top. Read this file whole. The rest is for looking up, never for reading
 through:
@@ -14,32 +14,26 @@ through:
 ## 1. Where things stand
 
 - Everything is committed and **no request is waiting**.
-- Last done (11 to 17 October; detail in `docs/features.md`'s newest
-  sections), still polish:
-  - **Sets** shown as a game shows them: a club's sheet and the Bag's
-    Sets page list every piece, worn ones lit, the bonuses at each count.
-  - **The ball on the course lies still** where it came down, on his line,
-    and he walks up to it (fairway and green); no ball at his feet while a
-    shot flies. Erasing the save dresses him plainly again.
-  - **Words checked against what things do**: talents, attributes,
-    heirlooms (two decimals, the next level shown), honours (renames, ids
-    kept). Affinity chance one name everywhere.
-  - **Every swing power but the clubs' is a multiplier of its own**
-    (honours, Drive, the Matched Set, Paragon capped at 200): added in
-    with the clubs', which run to millions, they bought nothing. Tap
-    Swing on the Range for the multipliers line by line. Sunday Nerve on
-    Sunday holes; Card 100 and 200 honours; Chronoglass to Card 221; a
-    wager's level on its card; Paragon's `?` fold.
-  - **Rewards for seeing need the course in sight** (`Scene.watched()`):
-    finds by the tee, Golden Hour's sovereigns, the Guide's sightings.
-  - Retiring picks its card in still weather.
-  - **Heat** (he said the phone runs hot): the pixels pushed to the
-    graphics chip a frame cut to about a third (`uploads`), blur behind the
-    hole's bar gone, props' outlines and night's lamps and pools baked.
-    Default stays 60 frames (Cooler is 30). Ask how it feels.
-  - **Pace** on the now repeatable simulation: a free player has a full
-    Mythic set at day 56 to 71 (about nine weeks; he chose to leave it);
-    the Tour Pass alone 42, Membership alone 34 to 43, both 32 to 34.
+- Last done (23 and 24 October; detail in `docs/features.md`'s newest
+  section). Earlier polish (sets shown in full, the ball lying still,
+  every swing power its own multiplier, rewards for seeing, the cooler
+  frames) is in the sections under it.
+  - **The skins drawn for less, the same picture** (he asked if it cost
+    quality: none, proved frame by frame against the old game). Plain
+    golfer and caddie 174 canvas calls a frame to 41, the Demonic 1,290 to
+    740, the Divine 740 to 395; see-through copies (Glitch, Void Walker,
+    Midas, Ghost) within three shades in 255. Check `skincost`.
+  - **Stores of pictures** bounded and freed: the skins' store lets go the
+    one used longest ago; the tinted copies and the shop's set previews.
+  - **The Founder's Blazer, its caddie and Founder's Gold are gone**: the
+    $5 skin is to come back far finer, from a picture he sends.
+  - **Club Membership 80 sovereigns a day** (60). A full Mythic set, seeds
+    1 to 3: free 62/56/61, Membership alone 38/30/42, the Tour Pass alone
+    about 42, both 32/31/33. He said the time is good.
+  - **Words on every screen** gone over (shop, Cabinet, Today, Guide, Bag,
+    Honours, Range, Wager Book, Career, pop-ups); the Yardage Book
+    heirloom is the **Ball Retriever** (it shared a caddie perk's name).
+  - About thirty unused helpers taken out.
 - **The iPhone app: everything is in `docs/ios-app.md`** (read it whole
   when the app comes up). **Don't suggest it for now** (he asked, 8
   October): polish what is there first. In short: `index.html` wrapped unchanged with
@@ -61,8 +55,7 @@ through:
   new a switch. Earlier work: the sections under it.
 - What lives by the season asks `lookSeason`: a course's own, the Snowline
   winter and the Blossom spring all year, else the month.
-- `node test/run.js` has **208 checks** (all passed 17 October, after the
-  cooler frames and the night baked). About 35 minutes: run it in the
+- `node test/run.js` has **209 checks** (all passed 24 October). About 35 minutes: run it in the
   background, on a copy in the scratchpad, with the machine quiet. After
   weather, colours or anything dated, also run it with `HOUR_FORCE` 8 and
   15 and the month pinned (rules 20 and 70).
@@ -73,8 +66,8 @@ through:
   GET buttons; the redrawn celebrations; alligators; the Wager Book
   animals; the weekly hunt and its streak; the gold mountain (now a
   rounded heap, not tiers); golden
-  animals; the heirloom prices and the wall at Card 220; the Tour Pass,
-  Membership and the Founder's Collection on his phone; the hole's bar
+  animals; the heirloom prices and the wall at Card 220; the Tour Pass
+  and Membership on his phone; the hole's bar
   and the condition by the cog, the smaller pop-ups and the loading screen
   on his phone (all 8 October); the redesigned Tour Pass page, the gear
   padlocks, the house in the treeline (9 October); the Honours
@@ -82,7 +75,9 @@ through:
   sprite sheet (more detail, the whole set, the veil on his head waving);
   The Radiant, the Mythic set from his picture (11 October); the set
   panels, the ball lying still on the fairway and green, the Swing sheet,
-  the honours and Drive now counting, the cooler frames (12 to 17 October).
+  the honours and Drive now counting, the cooler frames (12 to 17 October);
+  the cheaper skins (does the phone run cooler?) and the Ball Retriever
+  (23 and 24 October).
 - Settled, in case it comes up: swing speed still matters fully (a hole's
   time is when the ball drops); Fast Walker only shortens a hole's least
   time; every caddie has a trick (don't offer caddie tricks); Dawn and
@@ -364,6 +359,20 @@ Numbered so `CLAUDE.md` and the checks can point at them.
 93. Judging a card (retiring, climbing) uses still weather
     (`deriveStill`); `derive()` carries the hole's weather and a fair wind
     landed a golfer too high.
+94. **A stamp is exact only where the strips were laid fully on**,
+    `source-over` and unsmoothed: on a smoothed canvas soft edges round
+    apart, and a see-through strip stretched rounds a shade apart from a
+    copied picture even with nothing overlapping. Prove a stamp by drawing
+    old and new in two pages and diffing every pixel (all looks, his and
+    hers, day and night, poses); a check that diffs two frames of a
+    see-through look warms him first; `skins` times with `SHEAR_STAMP` off.
+95. **A simulation on a copy**: serve a copy of the game on its own port
+    (`PORT=8082 node test/serve.js`, the copy's `sim.js` pointed at it) so
+    editing the game cannot change a run; two at a time, in halves; a run
+    that reaches the set in its first half needs no second.
+96. A text change on a button or tile: look at 320 wide before keeping it
+    (longer Shots buttons squeezed the words to a column; "Double Purse"
+    held together ran out of a Pass tile).
 
 ## 5. Environment
 
@@ -389,16 +398,12 @@ brings it up again** (he asked to stop, 6 October): offer other things.
 Every idea offered and not yet done, so none is lost:
 
 1. **Ask how hot the phone runs now** after a long session. If still
-   warm: bake the skins' own animated effects (psy*, glowPaint, bubbles,
-   trails: a few hundred canvas calls a frame on a busy skin), then every
-   skin's.
-2. A look at night on every home course by eye (the baked lamps and
-   pools).
-3. Why Membership's gain varies (9 to 19 days sooner than free) and
-   whether its daily sovereigns pace as he wants.
-4. A sweep for code and checks this session left with nothing to do.
-5. A wording pass on the **Cabinet** and the **shop**.
-7. **The iPhone app** (`docs/ios-app.md`), only once he brings it up again.
+   warm: the lesser skins' moving dots (the Disco's beams, Frostborn's
+   snow, the Inferno's flames, 60 to 100 a frame) and the trails.
+2. **The new $5 skin**, far finer than the Founder's Blazer was, when he
+   sends a picture: a full set built as the Radiant was, shop-only (`usd`).
+3. A bug sweep over this work once a few more changes are in.
+4. **The iPhone app** (`docs/ios-app.md`), only once he brings it up again.
 
 Held for when he raises scenery again (he asked to stop): look at the new
 things on the phone (soft cloud shadows, the score call, the gold
@@ -406,4 +411,4 @@ mountain), the other special holes for bunkers under them, snow falling
 heavier, frost melting through a round, a fog bank thinning, gusts of
 leaves, glints and variety on the gold heap, a speed pass at its foot.
 
-Recommend 1, then 6 when he sends a picture.
+Recommend 1, then 2 when he sends a picture.

@@ -44,7 +44,8 @@ game as it is, short, and move detail into `docs/`.
   properly (`test/sim.js`: retires, buys heirlooms, upgrades clubs; several
   seeds) before changing anything that pays.
   Paying must be the quicker way (he wants people to spend): the Tour
-  Pass, monthly Membership, shop-only looks, the first pack doubled.
+  Pass, monthly Membership (80 a day), shop-only looks (none until the
+  new $5 skin), the first pack doubled.
 - **Sovereigns earned wait for a GET tap** at their place (Today, Honours,
   the Guide), with GET ALL where there is more than one; new rewards use
   `earnSov`. Purchases pay at once. Rewards for *seeing* things are earned
@@ -135,6 +136,8 @@ Rules that cost real time (detail in `HANDOFF.md` §4):
   counts (79). A check counting sovereigns away counts only its own (80).
 - The harness turns heat shimmer off (`window.__noShimmer`): a check
   that wants it sets `SHIMMER_FORCE` (rule 78).
+- A stored picture stamped in place of drawing is exact only laid fully
+  on and unsmoothed; prove it old against new, every pixel (rule 94).
 
 Every new check gets a negative test (break the game, watch it fail, put
 it back). New things on the course are laid from a hash (`Scene.layNight`,

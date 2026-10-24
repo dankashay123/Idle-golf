@@ -6,6 +6,64 @@ feature must do, and is usually enough on its own.
 
 ## Sections, newest first
 
+### The skins for less; the Founder's looks out; words (23 to 24 October)
+
+- He asked if baking the skins' effects would cost quality: none, and it
+  is proved by drawing old and new frame by frame (every look, his and
+  hers, day and night, standing, walking, through the swing): the same
+  pixels, but the Inferno's and Frostborn's flickering night haze (its size
+  steps by a sixty-fourth, about 3 dots in 300 a frame) and see-through
+  copies (below). Check `skincost`.
+- `pxLine` lays runs, one box a stretch of row or column, where that paints
+  what a square a step did: one pixel thick at any strength or "lighter",
+  thick ones fully on. A third of the Divine's frame.
+- `blitShear`: a figure (him, his caddie, an outline) whose 58-strip
+  layout comes a second time is stamped from one picture (`SHEAR_BAKE`, 40
+  kept). Only `source-over` and unsmoothed (on a smoothed canvas soft
+  edges round apart; the game's canvases are unsmoothed). A see-through
+  copy (the Glitch's colours, Void Walker's echoes, Midas's shine, the
+  Ghost) is two pictures, the first strip at each pixel and then the
+  second, so overlaps blend twice as before: within three shades in 255,
+  as the browser rounds a stretched see-through strip a shade apart from a
+  copied picture even with no overlap. A check diffing two frames warms
+  him first (`legends`); `skins` times strip by strip (`SHEAR_STAMP` off),
+  as its plain-golfer unit was. No place yet (a bare scene's NaN camera)
+  draws as before, nowhere (`herhop` caught a zero-wide stamp).
+- Made once and stamped: the night haze round the lesser skins
+  (`nightHalo`, 96 kept), the Dread's and Penitent's rings of light, the
+  Psychedelic's rings and bubbles, the Demonic's cracks at rest
+  (`restCracks`, exact while he stands).
+- Calls a frame, him and his caddie: plain 174 to 41; Demonic 1,290 to
+  740; Divine 740 to 395; Psychedelic 450 to 124; at night standing the
+  Glitch 289 to 63, Void Walker 336 to 110, Midas 246 to 77, Ghost 164 to
+  51. A whole frame in play: plain 589 to 481, Divine 1,190 to 844,
+  Demonic 1,546 to 1,027. The Disco's beams, Frostborn's snow and the
+  Inferno's flames are 60 to 100 moving dots, left. Memory over 24
+  courses in the Demonic levels off at 46 to 54 MB.
+- Stores bounded and freed (rule 77): `FXBAKE` let go the oldest made,
+  which could be one in use, unfreed; now the one used longest ago, freed.
+  `tinted` had no bound (64 now). The shop's set previews are freed when a
+  new golfer or save makes them again (`showSprFree`).
+- The Founder's Blazer, its caddie and Founder's Gold taken out (he wants
+  a far finer $5 skin later, from a picture); a save that had them goes
+  back to the plain look. No Shop Only shelf shows while none exists.
+- Club Membership 80 sovereigns a day (60). Simulation seeds 1 to 3, a
+  full Mythic set: free 62/56/61, Membership alone 38/30/42 (43/34/47 at
+  60), the Tour Pass alone about 42, both 32/31/33. He liked the pace.
+- Words, every screen gone over: the shop (Double Purse named, the
+  Membership line led by its daily), the Cabinet ("a card of -25"), Today
+  ("Next in", "Starts tomorrow", "Opens after your first event"), the
+  Guide, the Bag (a club's primary x5.20K on its sheet as on its tile,
+  "A prize money set", "9 swings at once"), Honours ("x2.10 swing power"
+  once), the Range (CAPPED without "at the cap" too), the Wager Book,
+  Career ("Second-ball chance", Piercing Grooves "60%", "experience"),
+  pop-ups ("Not enough tickets", "Full at 200 points"). The Yardage Book
+  heirloom is the Ball Retriever (it shared the caddie perk's name; id
+  kept), drawn as a retriever. Longer buttons on the Shots page were
+  tried and put back: at 320 they squeezed the words to a column.
+- Unused code taken out: some thirty old helpers and the Demonic's old
+  wings, tail, chains, skulls and tendrils.
+
 ### Cooler again; retiring in still weather (17 October)
 
 - He said the phone still gets hot. Measured: a frame pushed about 500 KB
