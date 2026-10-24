@@ -6547,7 +6547,7 @@ function grantTickets(n, why){
 }
 function usePerk(id){
   const p = perkDef(id); if(!p) return;
-  if((S.tickets || 0) < p.cost){ toast('You are short on tickets'); return; }
+  if((S.tickets || 0) < p.cost){ toast('Not enough tickets'); return; }
   if(p.dur && perkLeft(id) > 0){ toast(p.n + ' is already going'); return; }
   S.tickets -= p.cost; S.perkUsed = (S.perkUsed || 0) + 1;
   const D = derive();
@@ -9566,12 +9566,12 @@ function buyPerm(u){
   if(permLv(u.id) >= B.PERM_MAX){ toast(u.n + ' is at Level 10'); return; }
   if(!spendSov(permCost(u))) return;
   S.perm[u.id] = permLv(u.id) + 1;
-  toast('<b>' + u.n + '</b> \u00b7 level ' + S.perm[u.id]);
+  toast('<b>' + u.n + '</b> \u00b7 Level\u00a0' + S.perm[u.id]);
   renderShop(); renderVitals(); renderAll();
 }
 
 function buyStarter(){
-  if(S.starter){ toast('You have had that one'); return; }
+  if(S.starter){ toast('You already have the Starter Pack'); return; }
   S.starter = 1;
   grantSov(B.STARTER_C, 'starter pack');
   openBag(B.BAGS[1], true);              // the bag it comes with, on the house
@@ -33055,7 +33055,7 @@ function buyAllUpg(){
     S.gold -= bc; S.upg[best.id] = upgLv(best.id) + 1; n++;
     if(['drp', 'crt', 'mst'].includes(best.k)){ D = derive(); if(upgDead(best, D)) dead.add(best.id); }
   }
-  if(!n){ toast('Nothing in reach yet'); return; }
+  if(!n){ toast('Nothing you can buy yet'); return; }
   Sfx.play('buy');
   // (the milestones passed said in the same toast, not one each)
   const ms = B.UPG.filter(u => msLast(u, upgLv(u.id)) > msLast(u, lv0[u.id]));
@@ -35189,7 +35189,7 @@ function careerStats(w, C){
 let talSub = 'long';
 function careerTalents(w){
   if(S.talRefund > 0){
-    toast('The trees were rebuilt \u00b7 <b>' + fmt(S.talRefund, 0)
+    toast('The talent trees were rebuilt \u00b7 <b>' + fmt(S.talRefund, 0)
       + '</b> points came back to spend');
     S.talRefund = 0;
   }
@@ -35361,7 +35361,7 @@ function addPara(cat, a, n){
   const k = cat.id + '.' + a.id;
   let room = a.cap > 0 ? a.cap - (S.paraSpent[k]||0) : Infinity;
   n = Math.min(n, S.paraPts[cat.id] || 0, room);
-  if(n <= 0){ toast(room <= 0 ? 'Capped at ' + a.cap : 'No ' + cat.n + ' points'); return; }
+  if(n <= 0){ toast(room <= 0 ? 'Full at ' + a.cap + '\u00a0points' : 'No ' + cat.n + ' points'); return; }
   S.paraSpent[k] = (S.paraSpent[k]||0) + n; S.paraPts[cat.id] -= n;
   renderCareer(); renderVitals();
 }
