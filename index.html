@@ -1288,6 +1288,8 @@ li.afx.on .lockb{color:var(--brass);border-color:var(--brass);background:rgba(22
 .open .fold{display:block}
 .foldhead{display:flex;align-items:flex-start;gap:6px}
 .foldhead>span{flex:1}
+.oddsbag{margin-top:8px;line-height:1.45}
+.oddsbag>div{margin-top:1px}
 .qm{flex:0 0 auto;width:24px;height:24px;border-radius:0;border:1px solid var(--line-soft);
   color:var(--faint);font-size:var(--f1);line-height:22px;text-align:center;font-weight:700;
   background:none;padding:0;margin-left:6px}
@@ -9526,6 +9528,36 @@ function buyPack(pk){
 // one is guaranteed to reach, so a bag is never a bag of nothing.
 // a bag's count to its Mythic: opened of pity, and how many more
 const bagPityLeft = bg => bg.pity - ((S.pityB || {})[bg.id] || 0);
+// The chances in a bag, worked out from the very rule that opens it
+// (rollRarity, with his club luck as it is now): the others, and the one
+// carrying the bag's promise (a Mythic outright when the bag's count is
+// due). Apple asks a game to show these before anything random is bought
+// with what money buys. [[rarity, chance], ...], the rarest last.
+function bagOdds(bg, luck){
+  const top = B.RARITY.length - 1;
+  const dist = f => { const w = B.RARITY.map((r, i) => i < f ? 0 : r.w * Math.pow(1 + luck, i)), t = w.reduce((a, b) => a + b, 0);
+    return w.map((v, i) => [i, v / t]).filter(x => x[1] > 0); };
+  const rest = bg.mx ? [[top - 1, 1 - bg.mx], [top, bg.mx]] : dist(bg.floor);
+  const due = bg.pity && ((S.pityB || {})[bg.id] || 0) + 1 >= bg.pity;
+  return { rest, last: due ? [[top, 1]] : dist(Math.max(bg.floor, bg.top)), n: bg.num - 1 };
+}
+// a chance as a person reads it: 74%, 4.6%, 0.62%, under 0.01%
+const oddsPct = p => p >= 0.9995 ? '100%' : p >= 0.1 ? Math.round(p * 100) + '%' : p >= 0.01 ? (p * 100).toFixed(1) + '%'
+  : p >= 0.0001 ? (p * 100).toFixed(2) + '%' : 'under 0.01%';
+let bagOddsOpen = false;
+function bagOddsHtml(){
+  const luck = derive().drop + 0.5;
+  const line = L => L.map(([r, p]) => '<span style="color:' + RC(r) + ';white-space:nowrap">' + B.RARITY[r].n + '\u00a0' + oddsPct(p) + '</span>').join(' \u00b7 ');
+  return '<div class="hint' + (bagOddsOpen ? ' open' : '') + '" id="bagOdds"><div class="foldhead"><span>Clubs a little stronger than your Tour Card.</span>'
+    + '<button class="qm" aria-label="The chances in each bag">?</button></div>'
+    + '<div class="fold" style="margin-top:6px"><b>The chances</b>, with your club luck now.'
+    + B.BAGS.map(bg => { const O = bagOdds(bg, luck);
+        return '<div class="oddsbag"><b>' + bg.n + '</b>'
+          + '<div>' + nb('The other ' + O.n + ' ' + plural(O.n, 'clubs')) + ': ' + line(O.rest) + '</div>'
+          + '<div>The last club: ' + line(O.last) + '</div>'
+          + (bg.pity ? '<div>' + nb('A Mythic for certain within ' + bagPityLeft(bg) + ' ' + plural(bagPityLeft(bg), 'bags')) + '.</div>' : '') + '</div>'; }).join('')
+    + '</div></div>';
+}
 function openBag(bg, free){
   if(!free && !spendSov(bg.c)) return;
   S.bagsOpened = (S.bagsOpened || 0) + 1;
@@ -10659,7 +10691,7 @@ function renderShop(){
 
   if(shopSub === 'pass') h += passHtml();
   if(shopSub === 'bags'){
-    h += '<div class="shopnote">Clubs a little stronger than your Tour Card.</div>'
+    h += bagOddsHtml()
       + ribbon('Bags') + '<div class="sgrid c2">' + B.BAGS.map(bg =>
         shopCard({ ic: bg.ic, col: RC(Math.min(5, bg.top)), on: bg.top >= 4,
           badge: B.RARITY[bg.top].n,
@@ -10813,6 +10845,10 @@ function renderShop(){
     b.onclick = () => { shopSub = b.dataset.sub; renderShop(); });
   sheet.querySelectorAll('.catnav button').forEach(b =>
     b.onclick = () => { styleCat = b.dataset.cat; renderShop(); });
+  if(shopSub === 'bags'){
+    const q = sheet.querySelector('#bagOdds .qm');
+    if(q) q.onclick = () => { bagOddsOpen = !bagOddsOpen; $('bagOdds').classList.toggle('open', bagOddsOpen); };
+  }
   if(shopSub === 'pass'){
     if(!SHOW || SHOW.set !== 'cyber') showStart('cyber');
     const q = sheet.querySelector('#passHow .qm');
