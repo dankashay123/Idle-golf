@@ -9515,12 +9515,88 @@ function spendSov(n){
 // A pack. In a shipping build this is where the store call would go; here the
 // press IS the purchase, which is the whole of the difference.
 // (the first pack ever bought pays double: the user wanted a reason to buy)
+/* ---- the till: everything sold for money goes through STORE.buy ----
+   PRODUCTS holds each thing sold for money by the id the App Store will
+   know it by. On the web, and in the app until its store is wired, nothing
+   is charged: a buy is granted at once, as it always was. In the app the
+   native side sets window.MMStore (see docs/ios-app.md):
+     products(ids)  -> Promise<[{ id, price }]>   (price as the store shows it)
+     buy(id)        -> Promise<{ ok, tx, end? }>  (tx: the transaction's id)
+     restore()      -> Promise<[{ id, tx, end? }]>
+   and calls STORE.paid(id, tx, end) for a payment that lands later (a
+   renewal, one interrupted). A transaction is granted once (S.txSeen); a
+   restore gives back what is kept (the Starter Pack's place, a look,
+   Membership's days), never sovereigns twice. */
+const PRODUCTS = {};
+const prodPack = pk => 'mm.sov.' + pk.id, PROD_STARTER = 'mm.starter', PROD_MEMBER = 'mm.member.month', PROD_PASS = 'mm.pass.month';
+const prodLook = (k, id) => 'mm.look.' + k + '.' + id;
+function buildProducts(){
+  for(const k in PRODUCTS) delete PRODUCTS[k];
+  PRODUCTS._built = 1;
+  for(const pk of B.SOV_PACKS) PRODUCTS[prodPack(pk)] = { kind: 'consumable', usd: pk.usd, n: pk.n, grant: () => packGrant(pk) };
+  PRODUCTS[PROD_STARTER] = { kind: 'once', usd: B.STARTER_USD, n: 'Starter Pack', grant: starterGrant, keep: () => { S.starter = 1; } };
+  PRODUCTS[PROD_MEMBER] = { kind: 'subscription', usd: B.MEMBER_USD, n: 'Club Membership', grant: end => memberGrant(end), keep: end => memberGrant(end, true) };
+  PRODUCTS[PROD_PASS] = { kind: 'consumable', usd: PASS.USD, n: 'Tour Pass', grant: passGrant };
+  for(const [k, list] of [['o', B.OUTFITS], ['c', B.CADDIES], ['k', B.CLUBS], ['t', B.TRAILS]])
+    for(const d of list) if(d.usd) PRODUCTS[prodLook(k, d.id)] = { kind: 'once', usd: d.usd, n: d.n, grant: () => lookGrant(k, d.id), keep: () => { S.styleOwn[k + ':' + d.id] = 1; } };
+}
+const STORE = {
+  prices: {}, busy: null,
+  // a store that takes money: the app's, once it is wired (never on the web)
+  real(){ return typeof window !== 'undefined' && !!window.MMStore && inApp(); },
+  price(id){ if(!PRODUCTS._built) buildProducts(); const P = PRODUCTS[id]; return this.prices[id] || (P ? '$' + P.usd.toFixed(2) : ''); },
+  // the line under a price: "free" while nothing is charged
+  note(){ return this.real() ? '' : 'free'; },
+  charged(){ return this.real() ? '' : ' \u00b7 nothing charged'; },
+  load(){
+    if(!this.real() || !MMStore.products) return;
+    if(!PRODUCTS._built) buildProducts();
+    Promise.resolve(MMStore.products(Object.keys(PRODUCTS).filter(k => k !== '_built'))).then(L => {
+      for(const x of L || []) if(x && PRODUCTS[x.id] && x.price) this.prices[x.id] = String(x.price);
+      if(view && $('sheet') && $('sheet').querySelector('.shopnav')) renderShop();
+    }).catch(() => {});
+  },
+  buy(id){
+    if(!PRODUCTS._built) buildProducts();
+    const P = PRODUCTS[id]; if(!P) return;
+    if(!this.real()){ P.grant(); return; }
+    if(this.busy){ toast('One purchase at a time'); return; }
+    this.busy = id;
+    Promise.resolve(MMStore.buy(id)).then(r => {
+      if(r && r.ok) this.paid(id, r.tx, r.end); else toast('Not bought');
+    }).catch(() => toast('The purchase did not go through')).finally(() => { this.busy = null; });
+  },
+  paid(id, tx, end){
+    if(!PRODUCTS._built) buildProducts();
+    const P = PRODUCTS[id]; if(!P) return false;
+    const seen = Array.isArray(S.txSeen) ? S.txSeen : (S.txSeen = []);
+    if(tx && seen.includes(String(tx))) return false;
+    if(tx){ seen.push(String(tx)); if(seen.length > 400) seen.splice(0, seen.length - 400); }
+    P.grant(end); save(); return true;
+  },
+  restore(){
+    if(!this.real() || !MMStore.restore){ toast('Nothing to restore here'); return; }
+    if(!PRODUCTS._built) buildProducts();
+    Promise.resolve(MMStore.restore()).then(L => {
+      let n = 0;
+      for(const x of L || []){ const P = x && PRODUCTS[x.id]; if(!P || !P.keep) continue; P.keep(x.end); n++; }
+      save(); renderShop(); renderAll();
+      toast(n ? 'Purchases restored' : 'Nothing to restore');
+    }).catch(() => toast('Restore did not go through'));
+  }
+};
 const firstPackOn = () => !S.firstPack && !Object.values(S.packsTaken || {}).some(n => n > 0);
-function buyPack(pk){
+function buyPack(pk){ STORE.buy(prodPack(pk)); }
+function lookGrant(k, id){
+  const d = styleDef(k, id); if(!d || styleOwned(k, id)) return;
+  S.styleOwn[k + ':' + id] = 1; toast('<b>' + d.n + '</b> is yours' + STORE.charged());
+  styleBuy(k, id);
+}
+function packGrant(pk){
   const twice = firstPackOn();
   S.packsTaken[pk.id] = (S.packsTaken[pk.id] || 0) + 1;
   S.firstPack = 1;
-  grantSov(pk.c * (twice ? 2 : 1), pk.n + (twice ? ' \u00b7 doubled, your first' : '') + ' \u00b7 nothing charged');
+  grantSov(pk.c * (twice ? 2 : 1), pk.n + (twice ? ' \u00b7 doubled, your first' : '') + STORE.charged());
   renderShop();
 }
 
@@ -9604,6 +9680,10 @@ function buyPerm(u){
 
 function buyStarter(){
   if(S.starter){ toast('You already have the Starter Pack'); return; }
+  STORE.buy(PROD_STARTER);
+}
+function starterGrant(){
+  if(S.starter) return;
   S.starter = 1;
   grantSov(B.STARTER_C, 'starter pack');
   openBag(B.BAGS[1], true);              // the bag it comes with, on the house
@@ -9612,10 +9692,18 @@ function buyStarter(){
 }
 function buyMember(){
   if(S.member === 1){ toast('You are a member for good'); return; }
+  STORE.buy(PROD_MEMBER);
+}
+// a month more (or, from the store, to the day it says it runs to; kept:
+// a restore, which gives back the days and no first-day sovereigns)
+function memberGrant(end, kept){
+  if(S.member === 1) return;
   const was = isMember();
-  S.memberEnd = Math.max(was ? S.memberEnd || 0 : 0, memberNow()) + B.MEMBER_DAYS * 86400000;
+  if(end > 0) S.memberEnd = Math.max(S.memberEnd || 0, +end);
+  else if(kept) return;
+  else S.memberEnd = Math.max(was ? S.memberEnd || 0 : 0, memberNow()) + B.MEMBER_DAYS * 86400000;
   S.member = 2;
-  if(!was){ S.memberT = 0; grantSov(B.MEMBER_DAILY, 'first day of membership'); }
+  if(!was && !kept){ S.memberT = 0; grantSov(B.MEMBER_DAILY, 'first day of membership'); }
   toast('<b>Club Membership</b> \u00b7 ' + memberDaysLeft() + ' days');
   renderShop(); renderAll();
 }
@@ -9731,8 +9819,9 @@ function passGetAll(){ let n = 0; for(let t = 1; t <= PASS.TIERS; t++) for(const
 // bought (nothing charged in this build): the paid row, back to tier one
 // a Tour Pass look tapped before it is his: to the pass
 function passTease(){ toast('Tier ' + PASS.TIERS + ' of the Tour Pass\'s paid row'); shopSub = 'pass'; renderShop(); }
-function passBuy(){ const P = passNow(); if(P.paid){ toast('The pass is yours this month'); return; }
-  P.paid = 1; toast('<b>Tour Pass</b> · ' + PASS_MONTHS[passMonth()] + ' · nothing charged'); renderShop(); renderStageBtns(); }
+function passBuy(){ const P = passNow(); if(P.paid){ toast('The pass is yours this month'); return; } STORE.buy(PROD_PASS); }
+function passGrant(){ const P = passNow(); if(P.paid) return;
+  P.paid = 1; toast('<b>Tour Pass</b> · ' + PASS_MONTHS[passMonth()] + STORE.charged()); renderShop(); renderStageBtns(); }
 // The pass's page (the user asked it to look like it costs money, not a
 // list): a banner with the Cyber-Drive playing on a stage of its own, what
 // the paid row holds in chips and a gold button; a medal for the tier; the
@@ -9785,7 +9874,7 @@ function passHtml(){
     + chip(pixUrl('boost', '#F2D75E'), nb(sum.boost + ' hours') + ' of Double\u00a0Purse')
     + '</div>'
     + (P.paid ? '<div class="phseal">✦ Pass unlocked ✦</div>'
-      : '<button class="price phbuy" data-do="pass:buy"><i class="phrib">Best Value</i><span>Unlock the Pass</span><b>$' + PASS.USD.toFixed(2) + '</b><small>nothing charged</small></button>')
+      : '<button class="price phbuy" data-do="pass:buy"><i class="phrib">Best Value</i><span>Unlock the Pass</span><b>' + STORE.price(PROD_PASS) + '</b>' + (STORE.real() ? '' : '<small>nothing charged</small>') + '</button>')
     + '</div>';
   // the tier medal and the bar to the next
   const pct = t >= PASS.TIERS ? 100 : Math.round(into / PASS.PER * 100);
@@ -10004,7 +10093,7 @@ function styleBuy(k, id){
   if(!styleOwned(k, id) && d.passSet){ passTease(); return; }
   if(!styleOwned(k, id)){
     // (a look sold only for money: bought here, nothing charged in this build)
-    if(d.usd){ S.styleOwn[k + ':' + id] = 1; toast('<b>' + d.n + '</b> is yours \u00b7 nothing charged'); }
+    if(d.usd){ STORE.buy(prodLook(k, id)); return; }
     else{ if(!spendSov(d.cost)) return;
     S.styleOwn[k + ':' + id] = 1;
     toast('<b>' + d.n + '</b> is yours'); }
@@ -10687,7 +10776,7 @@ function renderShop(){
     + '<div class="sovline"><span>You hold</span><b>' + sovFmt(S.sov) + '\u00a0' + B.SOV + '</b></div>'
     // (on every tab, as nothing here may look like it takes a payment; a
     // line, where it was two)
-    + '<div class="freebar"><b>Nothing here is charged:</b> every pack is free.</div>';
+    + (STORE.real() ? '' : '<div class="freebar"><b>Nothing here is charged:</b> every pack is free.</div>');
 
   if(shopSub === 'pass') h += passHtml();
   if(shopSub === 'bags'){
@@ -10730,8 +10819,8 @@ function renderShop(){
       // (the badge says worn only when the button does not: WORN twice over)
       return shopCard({ img, full, art: k === 'o' && SHOW_SKINS.includes(d.id) ? d.id : k === 'c' || k === 'k' || k === 't' ? k + ':' + d.id : '', on: worn || !!d.top || (!!won && own), badge: full ? 'FULL SET' : off ? 'WORN' : d.usd && !own ? 'SHOP ONLY' : d.passSet && !own ? 'TOUR PASS' : d.top ? (d.top > 1 ? 'MYTHIC' : 'LEGENDARY') : won && own ? 'CHAMPION' : '', head: d.n,
         sub: own ? '' : '<button class="mini try" data-try="' + k + '.' + d.id + '">Try it</button>',
-        price: off ? 'UNEQUIP' : worn ? 'WORN' : own ? 'WEAR' : won ? 'WIN IT' : d.passSet ? 'TIER ' + PASS.TIERS : d.usd ? '$' + d.usd.toFixed(2) : sovFmt(d.cost),
-        note: worn || own ? '' : won ? won.short : d.passSet ? 'pass' : d.usd ? 'free' : B.SOV.toLowerCase(),
+        price: off ? 'UNEQUIP' : worn ? 'WORN' : own ? 'WEAR' : won ? 'WIN IT' : d.passSet ? 'TIER ' + PASS.TIERS : d.usd ? STORE.price(prodLook(k, d.id)) : sovFmt(d.cost),
+        note: worn || own ? '' : won ? won.short : d.passSet ? 'pass' : d.usd ? STORE.note() : B.SOV.toLowerCase(),
         cls: off ? 'unq' : worn ? 'max' : own || d.usd || d.passSet || (!won && (S.sov || 0) >= d.cost) ? '' : 'no', act: 'style:' + k + '.' + d.id });
     };
     const shelf = (title, k, list, url) => list.length
@@ -10796,8 +10885,8 @@ function renderShop(){
           sub: S.starter ? ''
             : '<span class="pv">' + sovFmt(B.STARTER_C) + sovIc() + '</span>, a Tour Bag and '
               + nb(B.BOOST_HOURS + ' hours') + ' of Double Purse.',
-          price: S.starter ? 'BOUGHT' : '$' + B.STARTER_USD.toFixed(2),
-          note: S.starter ? '' : 'free', cls: S.starter ? 'max' : '', act:'starter:1' })
+          price: S.starter ? 'BOUGHT' : STORE.price(PROD_STARTER),
+          note: S.starter ? '' : STORE.note(), cls: S.starter ? 'max' : '', act:'starter:1' })
       + shopCard({ ic:'member', col:'#E3B457', on: !isMember(), badge: S.member === 1 ? 'MEMBER' : isMember() ? nb(memberDaysLeft() + ' days') : '',
           head:'Club Membership',
           sub: isMember()
@@ -10806,8 +10895,8 @@ function renderShop(){
               + (S.member === 2 ? '<br>Buying again adds ' + nb(B.MEMBER_DAYS + ' days') + '.' : '')
             : '<span class="pv">' + B.MEMBER_DAILY + sovIc() + '</span> a day, +' + Math.round(B.MEMBER_GOLD*100) + '% prize money and +' + B.MEMBER_KEYS
               + ' wager entry, for ' + nb(B.MEMBER_DAYS + ' days') + '.',
-          price: S.member === 1 ? 'FOR GOOD' : '$' + B.MEMBER_USD.toFixed(2) + (isMember() ? '' : ' a month'),
-          note: S.member === 1 ? 'joined' : 'free', cls: S.member === 1 ? 'max' : '', act:'member:1' })
+          price: S.member === 1 ? 'FOR GOOD' : STORE.price(PROD_MEMBER) + (isMember() ? '' : ' a month'),
+          note: S.member === 1 ? 'joined' : STORE.note(), cls: S.member === 1 ? 'max' : '', act:'member:1' })
       + '</div>'
       + ribbon('Boosts') + '<div class="sgrid c2">'
       + shopCard({ ic:'boost', col:'#F2D75E', on: boostOn(), badge: boostOn() ? 'ON' : '',
@@ -10829,12 +10918,16 @@ function renderShop(){
         badge: twice ? '\u00d72' : bonus > 0 ? '+' + bonus + '%' : '',
         head: sovFmt(pk.c * (twice ? 2 : 1)),
         sub: pk.n + (taken ? '<br><b>Taken ' + taken + '\u00a0' + (taken === 1 ? 'time' : 'times') + '</b>' : ''),
-        price: '$' + pk.usd.toFixed(2), note: 'free', act: 'pack:' + pk.id });
+        price: STORE.price(prodPack(pk)), note: STORE.note(), act: 'pack:' + pk.id });
     }).join('') + '</div>';
 
     // the free ones are collected in the Trophy Room, off the trophy on the course
     h += '<div class="shopnote" style="margin-top:10px">' + nb('Free ' + B.SOV.toLowerCase() + ' every ' + Math.round(B.FREE_EVERY / 3600)
-      + ' hours, in the Trophy Room.') + '</div>';
+      + ' hours, in the Trophy Room.') + '</div>'
+      // (in the app, once it takes money: what Apple asks to be said, and a
+      // way to have purchases back on a new phone)
+      + (STORE.real() ? '<div class="shopnote">Club Membership renews each month until cancelled in your Apple account.</div>'
+        + '<button class="act ghost" onclick="STORE.restore()">Restore Purchases</button>' : '');
   }
 
   h += '<button class="act ghost" onclick="hideSheet()">Back to the round</button>';
@@ -36173,6 +36266,7 @@ function boot(){
   if(had) offline(); else intro();
   checkinPop();                     // the Daily Check-In, after the away card
   bootGo();                         // the loading screen's tee shot, and away
+  STORE.load();                     // (the app's store: its prices, in his own money)
   try{ if(navigator.storage && navigator.storage.persist) navigator.storage.persist(); }catch(e){}
   for(const ev of ['pointerdown', 'touchend', 'click', 'keydown'])
     document.addEventListener(ev, () => Sfx.unlock(), { passive: true, capture: true });

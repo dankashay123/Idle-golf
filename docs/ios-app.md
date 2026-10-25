@@ -69,7 +69,36 @@ keeps the save.
   `docs/app-icon-1024.png`** (1024x1024, no transparency, drawn from the
   same art): drop it into Xcode's AppIcon set.
 
-## Order of work
+## Real purchases: what the game expects (built 25 October)
+
+Everything sold for money goes through one doorway, `STORE.buy(id)` (the
+`PRODUCTS` list). On the web, and in the app until the store is wired,
+nothing is charged and a buy is given at once. The app wires it by setting
+`window.MMStore` before the game boots (a small bridge over a StoreKit
+plugin, such as `@capgo/native-purchases` or `cordova-plugin-purchase`):
+
+- `products(ids)` resolves to `[{ id, price }]`, the price as the store
+  shows it in the player's own money; the shop shows those.
+- `buy(id)` resolves to `{ ok, tx, end? }` once Apple has the payment (`tx`
+  the transaction id; `end`, for Membership, when the month runs out, in
+  milliseconds). `ok: false` for a cancel. Nothing is given until then.
+- `restore()` resolves to `[{ id, tx, end? }]` of what he owns; the game
+  gives back the Starter Pack's place, looks and Membership's days, never
+  sovereigns.
+- Call `STORE.paid(id, tx, end)` for a payment that lands later: a
+  Membership renewal, a purchase interrupted. A `tx` is given once
+  (`S.txSeen`), so passing every transaction at launch is safe.
+
+Product ids to create in App Store Connect: `mm.sov.p1` to `mm.sov.p6`
+(consumable, the sovereign packs), `mm.starter` (non-consumable),
+`mm.member.month` (auto-renewable subscription, a month), `mm.pass.month`
+(the Tour Pass, a month: consumable or non-renewing subscription),
+`mm.look.<k>.<id>` for any look sold for money (none now). With a store in
+the app the shop drops "nothing charged", shows Restore Purchases and says
+Membership renews until cancelled. The bags' chances are shown before buying
+(Apple's rule for anything random bought with what money buys). Check
+`till` uses a stand-in store.
+
 
 1. **Check the Mac:** Xcode (opened once, signed in to his Apple ID for a
    free Personal Team), its command line tools, Node.js LTS; on the
@@ -90,9 +119,8 @@ keeps the save.
 5. **Later sessions:** saves kept by the app too (Capacitor Preferences,
    iCloud key-value backup, carrying over the web save); real purchases
    with StoreKit (sovereign packs, Starter Pack, Tour Pass monthly,
-   Membership monthly subscription, Founder's items, Restore Purchases),
-   replacing "nothing charged" (`buyPack`, `buyStarter`, `passBuy`, `buyMember`, the
-   `usd` looks); then TestFlight, the store page (privacy policy, age
+   Membership monthly subscription, Restore Purchases): the game's side is
+   built (above), the Mac wires `window.MMStore`; then TestFlight, the store page (privacy policy, age
    rating, screenshots, description) and review.
 
 Write here how to build and run it once it exists, and keep `HANDOFF.md`'s
