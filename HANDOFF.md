@@ -389,7 +389,8 @@ Turned down, don't offer: a station on the railway, a photo mode, a
 weather forecast, fireworks, trail flourishes, caddie tricks. Nothing for
 the Tour tab, no new sound but ambience.
 **No new Tour Pass set** until he asks for one (23 October: "don't bring
-that up again until I request it").
+that up again until I request it"). **Don't ask about the $5 skin**
+(25 October): he will bring it up.
 
 Five at least (CLAUDE.md); don't raise the dog until he does; no new
 animals for now (he asked to hold off). **No scenery work at all until he
@@ -400,8 +401,6 @@ Every idea offered and not yet done, so none is lost:
 1. **Ask how hot the phone runs now** after a long session. If still
    warm: the lesser skins' moving dots (the Disco's beams, Frostborn's
    snow, the Inferno's flames, 60 to 100 a frame) and the trails.
-2. **The new $5 skin**, far finer than the Founder's Blazer was, when he
-   sends a picture: a full set built as the Radiant was, shop-only (`usd`).
 3. A bug sweep over this work once a few more changes are in.
 4. **The iPhone app** (`docs/ios-app.md`), only once he brings it up again.
 
@@ -411,4 +410,4 @@ mountain), the other special holes for bunkers under them, snow falling
 heavier, frost melting through a round, a fog bank thinning, gusts of
 leaves, glints and variety on the gold heap, a speed pass at its foot.
 
-Recommend 1, then 2 when he sends a picture.
+Recommend 1.
