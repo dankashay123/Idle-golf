@@ -5610,15 +5610,50 @@ let saveN = 0, saveWarned = false;
 function save(){
   if(WIPED) return;
   S.t = Math.max(S.t || 0, Date.now()/1000);
+  S.saveSeq = (+S.saveSeq || 0) + 1;         // (which of two copies is newer, not by the clock)
+  let raw = null;
   try{
-    const raw = JSON.stringify(S);
+    raw = JSON.stringify(S);
+    vaultPut(raw);
     localStorage.setItem(KEY, raw);
     if(!(saveN++ % 5)) localStorage.setItem(BAK, raw);
   }catch(e){
+    if(raw && VAULT()) return;                // (kept by the app, all the same)
     // Private browsing and a full disk both land here, and it used to be
     // swallowed: hours of play, then nothing on the next visit and no word why.
     if(!saveWarned){ saveWarned = true; toast('This browser is not letting the game save'); }
   }
+}
+// The app's own keeping of the save (docs/ios-app.md): the iPhone can clear
+// a web view's storage when it runs short of room, so in the app every save
+// is also written through window.MMSave (the app's preferences, which it
+// never clears; its iCloud backup with them). At launch the two are
+// compared by their count of saves, and the app's, if it is ahead (the web
+// view's was cleared, or a write was lost), is taken up in place, his time
+// away played out as on any launch. Nothing changes on the web.
+const VAULT = () => { try{ return window.MMSave && inApp() ? window.MMSave : null; }catch(e){ return null; } };
+function vaultPut(raw){ const V = VAULT(); if(!V) return; try{ Promise.resolve(V.set(KEY, raw)).catch(() => {}); }catch(e){} }
+function vaultCheck(){
+  const V = VAULT(); if(!V) return Promise.resolve(false);
+  return Promise.resolve(V.get(KEY)).then(raw => {
+    let o = null; try{ o = raw ? JSON.parse(raw) : null; }catch(e){ o = null; }
+    if(!o || typeof o.ver !== 'number'){ save(); return false; }   // (nothing kept yet: keep this one)
+    if(!((+o.saveSeq || 0) > (+S.saveSeq || 0))) return false;
+    vaultRestore(o); return true;
+  }).catch(() => false);
+}
+function vaultRestore(o){
+  try{ localStorage.setItem(KEY + ':before-restore', JSON.stringify(S)); }catch(e){}
+  Object.keys(S).forEach(k => delete S[k]);
+  Object.assign(S, defaultState(), o);
+  initState(); migrate(); fixHoles(o);
+  S.dgnRun = null; S.buff = {};
+  Scene.dFloor = -1; Scene.skyKey = null; Scene.dBgKey = null;
+  Meter.clear(); dressAgain();
+  if(!S.nine || S.nine.idx !== nineIndex(S.hole)) startNine();
+  startHole(); buildCard(); buildUpg(); renderAll(); setView('upg');
+  hideSheet(); offline();
+  save();
 }
 function readSave(k){
   try{
@@ -36009,6 +36044,7 @@ function reallyWipe(){
   WIPED = true;
   // the backup too, or the next boot restores the save you just erased
   try{ localStorage.removeItem(KEY); localStorage.removeItem(BAK); }catch(e){}
+  { const V = VAULT(); if(V) try{ Promise.resolve(V.remove ? V.remove(KEY) : V.set(KEY, '')).catch(() => {}); }catch(e){} }
   // Rebuilt in place rather than reloaded: a reload in an embedded browser is
   // not guaranteed, and the old path relied on one.
   Object.keys(S).forEach(k => delete S[k]);
@@ -36267,6 +36303,7 @@ function boot(){
   checkinPop();                     // the Daily Check-In, after the away card
   bootGo();                         // the loading screen's tee shot, and away
   STORE.load();                     // (the app's store: its prices, in his own money)
+  vaultCheck();                     // (the app's own copy of the save, if it is ahead)
   try{ if(navigator.storage && navigator.storage.persist) navigator.storage.persist(); }catch(e){}
   for(const ev of ['pointerdown', 'touchend', 'click', 'keydown'])
     document.addEventListener(ev, () => Sfx.unlock(), { passive: true, capture: true });
