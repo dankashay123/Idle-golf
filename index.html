@@ -1000,9 +1000,11 @@ li.afx.on .lockb{color:var(--brass);border-color:var(--brass);background:rgba(22
 .card .cart.hasbadge{padding-top:22px}
 /* (at 320 LEGENDARY ran past the card's left edge and read EGENDARY) */
 @media (max-width:359px){ .dgn .dh{flex-wrap:wrap} .dgn .dn{flex:1 0 60%;white-space:nowrap} .glab{display:none} .badge{letter-spacing:0;padding:1px 2px;font-size:8px} .card .chd{letter-spacing:0;padding:5px 2px} }
-.sovline{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px;
+.sovline{display:flex;justify-content:flex-end;align-items:baseline;margin-bottom:10px;
   font-size:var(--f1);color:var(--dim)}
 .sovline b{font-family:var(--mono);font-size:var(--f4);color:var(--sov)}
+.sovline b.pv{line-height:1}
+.sovline .tsov{width:24px;height:24px;margin:0 0 0 6px}
 .rstrip i{flex:1 1 0;min-width:1px;height:auto !important;background:#162C22;box-shadow:inset 0 0 0 1px rgba(0,0,0,.35)}
 .rstrip i.lit{background:#2E4A3C}
 .rstrip i.on{background:var(--rc,var(--brass))}
@@ -9664,9 +9666,10 @@ function bagOddsHtml(){
     + '<div class="fold" style="margin-top:6px"><b>The chances</b>, with your club luck now.'
     + B.BAGS.map(bg => { const O = bagOdds(bg, luck);
         return '<div class="oddsbag"><b>' + bg.n + '</b>'
-          + '<div>' + nb('The other ' + O.n + ' ' + plural(O.n, 'clubs')) + ': ' + line(O.rest) + '</div>'
-          + '<div>The last club: ' + line(O.last) + '</div>'
-          + (bg.pity ? '<div>' + nb('A Mythic for certain within ' + bagPityLeft(bg) + ' ' + plural(bagPityLeft(bg), 'bags')) + '.</div>' : '') + '</div>'; }).join('')
+          + '<div>' + nb(O.n === 1 ? 'Club 1' : O.n === 2 ? 'Clubs 1 and 2, each' : 'Clubs 1 to ' + O.n + ', each') + ': ' + line(O.rest) + '</div>'
+          + '<div>' + nb('Club ' + (O.n + 1)) + ': ' + line(O.last) + '</div>'
+          + (bg.pity ? '<div>' + (bagPityLeft(bg) <= 1 ? 'Guaranteed Mythic on your next purchase.'
+              : nb('Guaranteed Mythic by your ' + ordinal(bagPityLeft(bg)) + ' purchase') + ' from now.') + '</div>' : '') + '</div>'; }).join('')
     + '</div></div>';
 }
 function openBag(bg, free){
@@ -10808,7 +10811,7 @@ function renderShop(){
     + '<div class="shopnav">' + tabs.map(([id, t]) =>
         '<button data-sub="' + id + '"' + (shopSub === id ? ' class="on"' : id === 'pass' && passClaimable() ? ' class="dot"' : '') + '>' + t
         + '</button>').join('') + '</div>'
-    + '<div class="sovline"><span>You hold</span><b>' + sovFmt(S.sov) + '\u00a0' + B.SOV + '</b></div>'
+    + '<div class="sovline"><b class="pv">' + sovFmt(S.sov) + sovIc() + '</b></div>'
     // (on every tab, as nothing here may look like it takes a payment; a
     // line, where it was two)
     + (STORE.real() ? '' : '<div class="freebar"><b>Nothing here is charged:</b> every pack is free.</div>');

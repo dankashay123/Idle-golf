@@ -28,7 +28,8 @@ module.exports = {
           for (const bg of B.BAGS) if (!txt.includes(bg.n)) f('the chances leave out the ' + bg.n);
           const O = bagOdds(B.BAGS[0], derive().drop + 0.5);
           for (const [rr] of O.rest) if (!txt.includes(B.RARITY[rr].n)) f('the chances leave out ' + B.RARITY[rr].n);
-          if (!/within \d+\s+bags/.test(txt)) f('the chances do not say when a Mythic is certain');
+          if (!/Guaranteed Mythic (by your \d+(st|nd|rd|th) purchase|on your next purchase)/.test(txt)) f('the chances do not say when a Mythic is certain');
+          if (/The other \d|The last club|for certain/.test(txt)) f('the chances still read the old vague way');
         }
         hideSheet(); QUIET = true;
         for (const bg of B.BAGS) { const O = bagOdds(bg, 0.5);
