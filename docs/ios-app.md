@@ -1,7 +1,8 @@
 # The iPhone app
 
 The plan the user decided on (8 October), and what the game already does for
-it. Nothing of the app is built yet: the first session on his Mac starts it.
+it. Nothing of the app is built yet: the first session on his Mac starts it
+(the checklist below).
 
 ## Decisions
 
@@ -30,8 +31,8 @@ A first message that works:
 
 > Read HANDOFF.md and docs/ios-app.md. Then check my Mac is ready for the
 > iPhone app (Xcode, its command line tools, Node.js) and tell me in plain
-> steps anything I need to install or click. Then build the Capacitor
-> shell as the note says, ask me for the bundle ID first, and get it
+> steps anything I need to install or click. Then follow The Mac checklist:
+> build the Capacitor shell, ask me for the bundle ID first, and get it
 > running in the simulator and then on my iPhone.
 
 Afterwards, a game change made in a cloud session reaches the phone with:
@@ -100,31 +101,19 @@ Membership renews until cancelled. The bags' chances are shown before buying
 `till` uses a stand-in store.
 
 
-1. **Check the Mac:** Xcode (opened once, signed in to his Apple ID for a
-   free Personal Team), its command line tools, Node.js LTS; on the
-   iPhone, Developer Mode on (Settings, Privacy & Security; it appears
-   after the phone has been plugged into the Mac once).
-2. **The shell:** `npm install @capacitor/core @capacitor/cli
-   @capacitor/ios`, `npx cap init "Mythic Mulligan" <bundle id>
-   --web-dir www`, a small script that copies `index.html` into `www/`
-   before `npx cap sync ios` (keep the repo's own layout as it is), `npx
-   cap add ios`. Commit the `ios/` folder and the config; `www/` is built.
-3. **Phone fit:** run in the simulator at the small and large iPhones,
-   upright and on its side; status bar and home bar clear; sound on at
-   open; the game pausing and catching up as the app leaves and returns
-   (`visibilitychange` already drives it; check it fires in the app).
-4. **On his phone:** Xcode, the phone as the run target, his Personal
-   Team for signing, then on the phone trust the developer (Settings,
-   General, VPN & Device Management).
-5. **Later sessions:** saves kept by the app too (Capacitor Preferences,
-   iCloud key-value backup, carrying over the web save); real purchases
-   with StoreKit (sovereign packs, Starter Pack, Tour Pass monthly,
-   Membership monthly subscription, Restore Purchases): the game's side is
-   built (above), the Mac wires `window.MMStore`; then TestFlight, the store page (privacy policy, age
-   rating, screenshots, description) and review.
+## The save kept by the app (built 25 October)
 
-Write here how to build and run it once it exists, and keep `HANDOFF.md`'s
-line about the app pointing at this file.
+iOS can clear a web view's storage when the phone runs short of room. In
+the app every save is also written through `window.MMSave`, which the app
+sets before the game boots:
+
+- `get(key)` resolves to the stored text or `null`; `set(key, text)` and
+  `remove(key)` resolve when done. Capacitor Preferences (UserDefaults,
+  never cleared, carried by the phone's iCloud backup) is the store.
+- At launch the game reads it before writing it. If its count of saves
+  (`S.saveSeq`) is ahead of the browser's, it is taken up in place and his
+  time away played out; if empty, it is filled. Erasing the save erases it.
+  Check `appsave` uses a stand-in.
 
 ## Vibration (built 26 October)
 
@@ -137,3 +126,63 @@ and `impact({ style: 'MEDIUM' })`), so the shell needs
 `npm install @capacitor/haptics` and `npx cap sync ios`; nothing else to
 wire. Without the plugin the switch is hidden and nothing buzzes. On the
 web only a touch phone whose browser vibrates (not Safari) buzzes.
+
+## The Mac checklist
+
+**What he does himself** (Claude on the Mac walks him through each):
+
+1. Install **Xcode** from the App Store, open it once, and sign in with his
+   Apple ID (Xcode, Settings, Accounts) to get a free Personal Team.
+2. Install **Node.js** (the LTS one from nodejs.org).
+3. Plug the iPhone into the Mac once, then turn on **Developer Mode**
+   (iPhone Settings, Privacy & Security, Developer Mode; it restarts).
+4. Choose the **bundle ID** when asked (it never changes afterwards).
+5. After the first install, on the phone: Settings, General, VPN & Device
+   Management, trust his own developer name.
+
+**What Claude on the Mac does:**
+
+1. Check the tools: `xcode-select -p`, `node -v`, `xcodebuild -version`.
+2. Make the shell in an `app/` folder of the repo, leaving the game's own
+   layout alone: `npm install @capacitor/core @capacitor/cli
+   @capacitor/ios @capacitor/preferences @capacitor/haptics`, `npx cap
+   init "Mythic Mulligan" <bundle id> --web-dir www`, `npx cap add ios`.
+3. A copy step (`npm run build`) that puts `index.html` into `www/` with
+   one line added at the top of `<head>`: `<script src="bridge.js">`, and
+   copies `bridge.js` beside it. The bridge, for now:
+
+   ```js
+   // the app's side of the game's doorways (docs/ios-app.md)
+   (function () {
+     var P = window.Capacitor && window.Capacitor.Plugins;
+     if (P && P.Preferences) window.MMSave = {
+       get: function (k) { return P.Preferences.get({ key: k }).then(function (r) { return r.value; }); },
+       set: function (k, v) { return P.Preferences.set({ key: k, value: v }); },
+       remove: function (k) { return P.Preferences.remove({ key: k }); }
+     };
+     // window.MMStore comes here once real purchases are wired (above)
+   })();
+   ```
+
+   Haptics needs nothing in the bridge: the game finds the plugin itself.
+4. Sound at once: the web view's `mediaTypesRequiringUserActionForPlayback`
+   set to none (a small `CAPBridgeViewController` subclass).
+5. The launch screen in `#20234F`; the app icon from
+   `docs/app-icon-1024.png`; upright and on its side both allowed.
+6. `npx cap sync ios`, then run in the simulator on a small and a large
+   iPhone, upright and on its side: the notch, island and home bar clear
+   (check `safeedges` says they are), sound on at open, the game pausing
+   and catching up as the app leaves and comes back.
+7. Run on his phone with his Personal Team; play a hole, close and reopen
+   the app, and see the save is there; Settings shows Vibration.
+8. Commit `app/` (with `ios/` and the config; not `www/` or
+   `node_modules/`) and write how to rebuild here.
+
+**Later, with the $99 Developer Program:** the products in App Store
+Connect (ids above), `window.MMStore` in the bridge over a StoreKit plugin,
+TestFlight, then the store page (privacy: nothing collected; age rating;
+screenshots; description) and review.
+
+Afterwards a game change reaches the phone with: "pull main, rebuild the
+iPhone app and run it on my phone". Keep `HANDOFF.md`'s line about the app
+pointing at this file.
