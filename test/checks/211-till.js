@@ -3,7 +3,7 @@
  *
  *   - on the web nothing is charged: a pack, the Starter Pack, Membership
  *     and the Tour Pass are given at once, priced in dollars, "free" under
- *     each and the shop's "Nothing here is charged" line on show
+ *     each and the shop's "Nothing here costs real money" line on show
  *   - in the app with a store (a stand-in here): prices as the store gives
  *     them, no "free" and no "nothing charged"; each buy asks the store for
  *     its own product and gives nothing until the store says it is paid; a
@@ -27,7 +27,7 @@ module.exports = {
         const fresh = () => { Object.keys(S).forEach(k => delete S[k]); Object.assign(S, JSON.parse(SNAP)); S.starter = 0; S.member = 0; S.memberEnd = 0; S.packsTaken = {}; S.firstPack = 1; S.txSeen = []; };
         fresh();
         let t = shopText('offers');
-        if (!/Nothing here is charged/.test(t)) f('on the web the shop does not say nothing is charged');
+        if (!/Nothing here costs real money/.test(t)) f('on the web the shop does not say nothing is charged');
         if (!/\$4\.99/.test(t) || !/FREE/i.test(t)) f('on the web the prices or "free" are missing');
         if (/Restore Purchases/i.test(t)) f('on the web there is a Restore Purchases button');
         let s0 = S.sov; buyPack(B.SOV_PACKS[1]); if (S.sov - s0 !== B.SOV_PACKS[1].c) f('on the web a pack gave ' + (S.sov - s0));
@@ -46,7 +46,7 @@ module.exports = {
         };
         STORE.prices = {}; STORE.load(); await tick(); await tick();
         t = shopText('offers');
-        if (/Nothing here is charged/.test(t)) f('in the app the shop still says nothing is charged');
+        if (/Nothing here costs real money/.test(t)) f('in the app the shop still says nothing is charged');
         if (!/£/.test(t)) f('in the app the prices are not the store\'s');
         if (/\$\d/.test(t)) f('in the app a price is still in dollars');
         if (!/Restore Purchases/i.test(t)) f('in the app there is no Restore Purchases');

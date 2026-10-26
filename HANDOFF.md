@@ -122,7 +122,7 @@ through:
 - **The course**: other holes both sides with golfers on them, woods,
   lakes, a cart path, nothing bare, no two greens side by side, nine pin
   spots. The island crossing (flying on the spinning club) was their idea.
-- **The shop's "Nothing here is charged" notice** stays on every tab in
+- **The shop's "Nothing here costs real money" notice** stays on every tab in
   one line. **The far ranges turn only "very slightly".**
 - **Words**: simple and straight to the point, no filler line anywhere
   (no "birdie here, par there", no "at once", no "entries full", nothing

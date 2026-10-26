@@ -4223,7 +4223,7 @@ const B = {
     { id:'locker',   ic:'locker2',  n:'Second Locker',   base:150, r:1.38, v:12,
       d:'{v} locker spaces',      s:'' },
     { id:'teetime',  ic:'teetime',  n:'Standing Tee Time', base:240, r:1.45, v:0.05,
-      d:'{v} faster wager entries', s:'%' },
+      d:'Wager entries refill {v} faster', s:'%' },
     { id:'scout',    ic:'scout',    n:'Club Scout',      base:220, r:1.44, v:0.04,
       d:'{v} club luck',                s:'pp' },
     { id:'van',      ic:'van2',     n:'Tour Van',        base:260, r:1.46, v:0.03,
@@ -10819,7 +10819,7 @@ function renderShop(){
     + '<div class="sovline"><b class="pv">' + sovFmt(S.sov) + sovIc() + '</b></div>'
     // (on every tab, as nothing here may look like it takes a payment; a
     // line, where it was two)
-    + (STORE.real() ? '' : '<div class="freebar"><b>Nothing here is charged:</b> every pack is free.</div>');
+    + (STORE.real() ? '' : '<div class="freebar"><b>Nothing here costs real money.</b></div>');
 
   if(shopSub === 'pass') h += passHtml();
   if(shopSub === 'bags'){
@@ -10922,7 +10922,7 @@ function renderShop(){
   }
 
   if(shopSub === 'offers'){
-    h += ribbon('One Time') + '<div class="sgrid c2">'
+    h += ribbon('Top Offers') + '<div class="sgrid c2">'
       + shopCard({ ic:'starter', col:'#7ADB86', on: !S.starter, badge: S.starter ? '' : 'BEST VALUE',
           head:'Starter Pack',
           sub: S.starter ? ''
