@@ -10,7 +10,8 @@
  *     cancelled buy gives nothing; a transaction paid twice gives once
  *   - Restore Purchases on the Offers tab and Membership's renewal said,
  *     only in the app with a store; a restore on a new phone gives back the
- *     Starter Pack's place and Membership's days, never sovereigns */
+ *     Starter Pack's place and Membership's days, never sovereigns; a lapsed
+ *     Membership restored gives nothing */
 'use strict';
 module.exports = {
   name: 'till',
@@ -70,6 +71,9 @@ module.exports = {
         if (!S.starter) f('a restore did not give back the Starter Pack\'s place');
         if (!isMember()) f('a restore did not give back Membership\'s days');
         if (S.sov !== s0) f('a restore gave ' + (S.sov - s0) + ' sovereigns');
+        // a lapsed Membership restored gives nothing
+        fresh(); PRODUCTS[PROD_MEMBER].keep(Date.now() - 86400000);
+        if (isMember() || S.member) f('a lapsed Membership, restored, made him a member');
       } finally {
         delete window.MMStore; delete window.__inApp; STORE.prices = {}; STORE.busy = null; DEV_OFF = false; QUIET = false;
         Object.keys(S).forEach(k => delete S[k]); Object.assign(S, JSON.parse(SNAP)); hideSheet();

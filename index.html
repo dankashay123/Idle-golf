@@ -5634,15 +5634,19 @@ function save(){
 // view's was cleared, or a write was lost), is taken up in place, his time
 // away played out as on any launch. Nothing changes on the web.
 const VAULT = () => { try{ return window.MMSave && inApp() ? window.MMSave : null; }catch(e){ return null; } };
-function vaultPut(raw){ const V = VAULT(); if(!V) return; try{ Promise.resolve(V.set(KEY, raw)).catch(() => {}); }catch(e){} }
+// (never written until it has been read at launch: a fresh game's first
+// save would otherwise land over the very copy that was to bring him back)
+let vaultRead = false;
+function vaultPut(raw){ const V = VAULT(); if(!V || !vaultRead) return; try{ Promise.resolve(V.set(KEY, raw)).catch(() => {}); }catch(e){} }
 function vaultCheck(){
   const V = VAULT(); if(!V) return Promise.resolve(false);
   return Promise.resolve(V.get(KEY)).then(raw => {
+    vaultRead = true;
     let o = null; try{ o = raw ? JSON.parse(raw) : null; }catch(e){ o = null; }
     if(!o || typeof o.ver !== 'number'){ save(); return false; }   // (nothing kept yet: keep this one)
     if(!((+o.saveSeq || 0) > (+S.saveSeq || 0))) return false;
     vaultRestore(o); return true;
-  }).catch(() => false);
+  }).catch(() => { vaultRead = true; return false; });
 }
 function vaultRestore(o){
   try{ localStorage.setItem(KEY + ':before-restore', JSON.stringify(S)); }catch(e){}
@@ -9737,6 +9741,7 @@ function buyMember(){
 function memberGrant(end, kept){
   if(S.member === 1) return;
   const was = isMember();
+  if(kept && !(end > memberNow())) return;   // (a lapsed one, restored: nothing)
   if(end > 0) S.memberEnd = Math.max(S.memberEnd || 0, +end);
   else if(kept) return;
   else S.memberEnd = Math.max(was ? S.memberEnd || 0 : 0, memberNow()) + B.MEMBER_DAYS * 86400000;

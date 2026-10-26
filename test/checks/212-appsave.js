@@ -2,6 +2,7 @@
  * when it runs short of room; the user chose to guard against it before the
  * app is built). With a stand-in for the app's storage:
  *
+ *   - before the app's copy is read at launch, a save leaves it alone
  *   - every save writes the same save there as to the browser's storage
  *   - at launch, with the browser's save gone (a fresh game started) and the
  *     app's copy ahead, the app's copy is taken up in place: his holes and
@@ -27,7 +28,12 @@ module.exports = {
         window.MMSave = stub; delete window.__inApp;
         save(); if (writes) f('on the web the save was written to the app\'s storage');
         // ---- the app: written alongside ------------------------------------
-        window.__inApp = 1;
+        window.__inApp = 1; vaultRead = false;
+        // ---- before the app's copy is read at launch, nothing is written over it
+        store.set(KEY, '{"ver":1,"saveSeq":99,"keep":1}'); writes = 0;
+        save(); await tick();
+        if (writes || JSON.parse(store.get(KEY)).keep !== 1) f('a save before the launch\'s read wrote over the app\'s copy');
+        store.clear(); await vaultCheck(); await tick();
         S.totalHoles = 4321; S.sov = 777; const tier0 = S.tier;
         save(); await tick();
         const kept = store.get(KEY);
@@ -59,7 +65,7 @@ module.exports = {
         if (a && a.totalHoles >= 4321) f('the erased save is still kept by the app');
         hideSheet();
       } finally {
-        delete window.MMSave; delete window.__inApp; QUIET = false; WIPED = false;
+        delete window.MMSave; delete window.__inApp; QUIET = false; WIPED = false; vaultRead = false;
         Object.keys(S).forEach(k => delete S[k]); Object.assign(S, JSON.parse(SNAP)); save(); hideSheet();
       }
       return { fl, o };
