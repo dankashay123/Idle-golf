@@ -5524,6 +5524,7 @@ function migrate(){
   if(S.fps !== undefined && S.fps !== 30) delete S.fps;
   if(S.wild !== undefined && S.wild !== 0) delete S.wild;
   if(S.spotTag !== undefined && S.spotTag !== 0) delete S.spotTag;
+  if(S.buzz !== undefined && S.buzz !== 0) delete S.buzz;      // (Vibration: off is 0, on is unset)
   if(S.aceAt !== undefined){
     if(!S.aceAt || typeof S.aceAt !== 'object' || Array.isArray(S.aceAt)) delete S.aceAt;
     else for(const k in S.aceAt){ const v = S.aceAt[k];
@@ -6692,7 +6693,7 @@ function bagAdd(it){
   saverClub(it);
   if(it.rar >= 2) bump('rare');
   if(it.rar >= 4) bump('legend');
-  if(it.rar >= 5) bump('myth');
+  if(it.rar >= 5){ bump('myth'); Buzz.go('light'); }
   S.bag.push(it);
   // Swap first, trim second. The club the sweep pulls out of the locker may be
   // the very one the trim was about to scrap, and the club it puts back may be
@@ -9138,6 +9139,7 @@ function finishHole(D){
   if(sc.d >= 1) N.bogey++;
   if(sc.d >= 0) N.allUnder = false;
   if(N.n >= 9) resolveNine();
+  if(sc.d <= -3 && Scene.watched()) Buzz.go('big');   // (an ace or an albatross, seen)
   if(sc.d === -4){ S.aces++; if(!S.dgnRun){ const k = aceKey(S.hole); S.aceAt = S.aceAt || {}; S.aceAt[k] = (S.aceAt[k] || 0) + 1; } }
   if(sc.d <= -1) bump('birdie');
   if(sc.d <= -1 && Scene.windMph() >= 15) bump('windBird');
@@ -11411,7 +11413,7 @@ function offlineCore(){
   S.bag.forEach(x => { bestOff[x.slot] = Math.max(bestOff[x.slot], itemScore(x)); });
   const bagAddOff = it => {
     if(it.rar >= 4) bump('legend');
-    if(it.rar >= 5) bump('myth');
+    if(it.rar >= 5){ bump('myth'); Buzz.go('light'); }
     gear++; saverClub(it);
     if(autoScraps(it, bestOff)){ const v = scrapValue(it); S.shard += v; autoOff++; autoOffSh += v; return; }
     bestOff[it.slot] = Math.max(bestOff[it.slot], itemScore(it));
@@ -35873,6 +35875,9 @@ function settingsSheet(){
     + row('Night Music', S.music === 0 || S.sound === 0 ? 'Needs Music on' : 'A calmer tune at night and in wagers',
         '<button class="mini' + (S.music2 !== 0 ? ' go' : '') + '" onclick="toggleMusic2()">'
         + (S.music2 !== 0 ? 'On' : 'Off') + '</button>')
+    + (Buzz.can() ? row('Vibration', 'On an ace, an albatross and a Mythic club',
+        '<button class="mini' + (S.buzz !== 0 ? ' go' : '') + '" onclick="toggleBuzz()">'
+        + (S.buzz !== 0 ? 'On' : 'Off') + '</button>') : '')
     + row('Spotted Tag', 'Animals named over the map',
         '<button class="mini' + (S.spotTag !== 0 ? ' go' : '') + '" onclick="toggleSpotTag()">'
         + (S.spotTag !== 0 ? 'On' : 'Off') + '</button>')
@@ -35924,6 +35929,30 @@ let DEV_OFF = false;               // the checks': play as a player would
 // read as this computer: in the app it is never a developer copy, ?dev or not.
 const inApp = () => { try{ return !!window.__inApp || location.protocol === 'capacitor:'
   || !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform()); }catch(e){ return false; } };
+// A buzz in the hand (the user chose it): an ace or an albatross, and a
+// Mythic club. In the iPhone app through Capacitor's Haptics (docs/ios-app.md);
+// on a phone whose browser can vibrate, a short one. Only live, with the
+// course in sight for a hole and never in a catch-up; off in the Settings.
+const Buzz = {
+  n: 0, last: -1e9,
+  can(){
+    try{ const H = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Haptics; if(H && inApp()) return H; }catch(e){}
+    try{ if(navigator.vibrate && navigator.maxTouchPoints > 0) return 'v'; }catch(e){}
+    return null;
+  },
+  go(kind){
+    if(S.buzz === 0 || QUIET || OFFLINE || document.hidden) return false;
+    const H = this.can(), now = Date.now(); if(!H || now - this.last < 400) return false;
+    this.last = now;
+    try{
+      if(H === 'v') navigator.vibrate(kind === 'big' ? [35, 70, 45] : 25);
+      else if(kind === 'big') H.notification({ type: 'SUCCESS' });
+      else H.impact({ style: 'MEDIUM' });
+    }catch(e){ return false; }
+    this.n++; return true;
+  }
+};
+function toggleBuzz(){ if(S.buzz === 0) delete S.buzz; else S.buzz = 0; save(); settingsSheet(); if(S.buzz !== 0) Buzz.go('light'); }
 function devOK(){
   if(DEV_OFF || inApp()) return false;
   try{

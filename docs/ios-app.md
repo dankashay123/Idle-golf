@@ -125,3 +125,15 @@ Membership renews until cancelled. The bags' chances are shown before buying
 
 Write here how to build and run it once it exists, and keep `HANDOFF.md`'s
 line about the app pointing at this file.
+
+## Vibration (built 26 October)
+
+The game buzzes on an ace or an albatross seen on the course (a success
+buzz) and on a Mythic club (a medium tap), never in a catch-up, never two
+within 0.4 seconds, and Settings has a Vibration switch (off is
+`S.buzz = 0`). In the app it calls Capacitor's Haptics plugin through
+`window.Capacitor.Plugins.Haptics` (`notification({ type: 'SUCCESS' })`
+and `impact({ style: 'MEDIUM' })`), so the shell needs
+`npm install @capacitor/haptics` and `npx cap sync ios`; nothing else to
+wire. Without the plugin the switch is hidden and nothing buzzes. On the
+web only a touch phone whose browser vibrates (not Safari) buzzes.
