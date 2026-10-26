@@ -5524,6 +5524,7 @@ function migrate(){
   if(S.fps !== undefined && S.fps !== 30) delete S.fps;
   if(S.wild !== undefined && S.wild !== 0) delete S.wild;
   if(S.spotTag !== undefined && S.spotTag !== 0) delete S.spotTag;
+  if(S.remind !== undefined && S.remind !== 1) delete S.remind;   // (Reminders: on is 1, off is unset)
   if(S.buzz !== undefined && S.buzz !== 0) delete S.buzz;      // (Vibration: off is 0, on is unset)
   if(S.aceAt !== undefined){
     if(!S.aceAt || typeof S.aceAt !== 'object' || Array.isArray(S.aceAt)) delete S.aceAt;
@@ -34524,26 +34525,31 @@ function buffTip(dt){
   const now = buffLines(dt), keys = now.map(x => x.k);
   buffOrder = buffOrder.filter(k => keys.includes(k)).concat(keys.filter(k => !buffOrder.includes(k)));
   // one line an entry, reused while it runs, in the order kept
-  const have = {};
-  for(const n of [...el.children]){ if(keys.includes(n.dataset.k)) have[n.dataset.k] = n; else n.remove(); }
+  const have = {}; let moved = false;
+  for(const n of [...el.children]){ if(keys.includes(n.dataset.k)) have[n.dataset.k] = n; else { n.remove(); moved = true; } }
   buffOrder.forEach((k, i) => {
     const L = now.find(x => x.k === k);
     let n = have[k];
     if(!n){ n = document.createElement('span'); n.className = 'bl'; n.dataset.k = k; }
-    if(el.children[i] !== n) el.insertBefore(n, el.children[i] || null);
-    if(n.textContent !== L.txt) n.textContent = L.txt;
+    if(el.children[i] !== n){ el.insertBefore(n, el.children[i] || null); moved = true; }
+    if(n.textContent !== L.txt){ if(n.textContent.length !== L.txt.length) moved = true; n.textContent = L.txt; }
     if(n.style.color !== L.col && L.col) n.style.color = L.col;
     const op = String(Math.round(L.a * 20) / 20);
     if(n.style.opacity !== op) n.style.opacity = op;
   });
   const on = now.length > 0;
-  if(el.classList.contains('on') !== on) el.classList.toggle('on', on);
+  if(el.classList.contains('on') !== on){ el.classList.toggle('on', on); moved = true; }
   // (while a course is announced the words by the cog step aside: at 320 and
   // on its side its name was drawn over them)
   const st = $('stage'), ann = !!Scene.announce;
-  if(st && st.classList && st._ann !== ann){ st._ann = ann; st.classList.toggle('ann', ann); }
-  toastShift();
+  if(st && st.classList && st._ann !== ann){ st._ann = ann; st.classList.toggle('ann', ann); moved = true; }
+  // (measured only when the lines changed, and twice a second for anything
+  // else: measured every frame, the page's layout was worked out sixty
+  // times a second, the most of any one thing outside the course)
+  buffShiftT += dt || 0;
+  if(moved || buffShiftT >= 0.5){ buffShiftT = 0; toastShift(); }
 }
+let buffShiftT = 1;
 // How far the toasts stand lower: as far as the words by the cog come down,
 // while they reach across under the toasts' corner (the right 38% of the
 // field), else not at all. The hole map makes room for it (placeMap).
@@ -35875,6 +35881,9 @@ function settingsSheet(){
     + row('Night Music', S.music === 0 || S.sound === 0 ? 'Needs Music on' : 'A calmer tune at night and in wagers',
         '<button class="mini' + (S.music2 !== 0 ? ' go' : '') + '" onclick="toggleMusic2()">'
         + (S.music2 !== 0 ? 'On' : 'Off') + '</button>')
+    + (Remind.P() ? row('Reminders', 'On your lock screen when rewards are waiting',
+        '<button class="mini' + (S.remind === 1 ? ' go' : '') + '" onclick="toggleRemind()">'
+        + (S.remind === 1 ? 'On' : 'Off') + '</button>') : '')
     + (Buzz.can() ? row('Vibration', 'On an ace, an albatross and a Mythic club',
         '<button class="mini' + (S.buzz !== 0 ? ' go' : '') + '" onclick="toggleBuzz()">'
         + (S.buzz !== 0 ? 'On' : 'Off') + '</button>') : '')
@@ -35952,6 +35961,47 @@ const Buzz = {
     this.n++; return true;
   }
 };
+// Lock-screen reminders (the user chose them, readying the iPhone app):
+// set as he leaves the app, cleared as he comes back, through Capacitor's
+// Local Notifications (docs/ios-app.md). Off until he turns them on, which
+// is when the phone asks; silent; none at night (10pm to 8am waits for 9am).
+const Remind = {
+  IDS: [101, 102, 103, 104],
+  P(){ try{ const L = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.LocalNotifications; return L && inApp() ? L : null; }catch(e){ return null; } },
+  // (a time of his own day, out of the night)
+  quiet(ms){ const d = new Date(ms), h = d.getHours();
+    if(h >= 22){ d.setDate(d.getDate() + 1); d.setHours(9, 0, 0, 0); } else if(h < 8) d.setHours(9, 0, 0, 0);
+    return d.getTime(); },
+  // what is coming, from now: [{ id, at, body }]
+  list(now){
+    const out = [], add = (id, sec, body) => { if(sec > 60) out.push({ id, at: this.quiet(now + sec * 1000), body }); };
+    if(!freeReady()) add(101, B.FREE_EVERY - (S.freeT || 0), 'Your free sovereigns are ready in the Trophy Room.');
+    if(isMember()){ const sec = 86400 - (S.memberT || 0);
+      if(S.member === 1 || (S.memberEnd || 0) >= now + sec * 1000) add(102, sec, 'Your ' + B.MEMBER_DAILY + ' Membership sovereigns are waiting.'); }
+    const cap = B.OFFLINE_CAP + permAdd('contract') * 3600;
+    add(103, cap, 'Your caddie has played all ' + tw(Math.round(cap / 3600), 'hour') + ' away. Open the game to play on.');
+    if(!checkinReady()){ const C = checkinNow(), nx = (dayNow() + 1) * 86400000;
+      if(C.n < B.CHECKIN.length || ciMonth(dayNow() + 1) > C.m) add(104, (nx - now) / 1000, 'Today\u2019s Check-In is waiting.'); }
+    return out;
+  },
+  plan(){
+    const L = this.P(); if(!L || S.remind !== 1) return false;
+    const now = Date.now(), N = this.list(now);
+    try{ Promise.resolve(L.cancel({ notifications: this.IDS.map(id => ({ id })) })).catch(() => {}).then(() =>
+      N.length ? L.schedule({ notifications: N.map(n => ({ id: n.id, title: 'Mythic Mulligan', body: n.body, schedule: { at: new Date(n.at) }, sound: 'quiet.caf' })) }) : null).catch(() => {}); }catch(e){}
+    return N;
+  },
+  clear(){ const L = this.P(); if(!L) return; try{ Promise.resolve(L.cancel({ notifications: this.IDS.map(id => ({ id })) })).catch(() => {}); }catch(e){} }
+};
+function toggleRemind(){
+  const L = Remind.P(); if(!L) return;
+  if(S.remind === 1){ delete S.remind; Remind.clear(); save(); settingsSheet(); return; }
+  Promise.resolve(L.requestPermissions ? L.requestPermissions() : { display: 'granted' }).then(r => {
+    if(r && r.display === 'granted'){ S.remind = 1; save(); toast('Reminders on'); }
+    else toast('Allow notifications for Mythic Mulligan in the iPhone\u2019s Settings');
+    if($('sheet') && /Reminders/.test($('sheet').textContent)) settingsSheet();
+  }).catch(() => toast('Reminders could not be turned on'));
+}
 function toggleBuzz(){ if(S.buzz === 0) delete S.buzz; else S.buzz = 0; save(); settingsSheet(); if(S.buzz !== 0) Buzz.go('light'); }
 function devOK(){
   if(DEV_OFF || inApp()) return false;
@@ -36364,7 +36414,7 @@ function boot(){
   document.addEventListener('visibilitychange', () => {
     // the music is faded out here: a desktop or Android browser stops the
     // frames of a hidden page but not its audio, so it played on
-    if(document.hidden){ save(); Sfx.musicTick(); } else { touchedAt = performance.now(); catchUp(); Sfx.unlock(); }
+    if(document.hidden){ save(); Sfx.musicTick(); Remind.plan(); } else { touchedAt = performance.now(); catchUp(); Sfx.unlock(); Remind.clear(); }
   });
   window.addEventListener('pagehide', save);
   requestAnimationFrame(frame);

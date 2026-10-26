@@ -127,6 +127,23 @@ and `impact({ style: 'MEDIUM' })`), so the shell needs
 wire. Without the plugin the switch is hidden and nothing buzzes. On the
 web only a touch phone whose browser vibrates (not Safari) buzzes.
 
+## Reminders (built 26 October)
+
+Off until he turns on Reminders in the Settings, which is when the phone
+asks to allow notifications (refused, it stays off). As the app goes to the
+background (`visibilitychange`) the game sets, through
+`window.Capacitor.Plugins.LocalNotifications`, ids 101 to 104: the free
+sovereigns ready, the Membership's day waiting (not past its end), his
+hours away used up (play stops there), the next day's Check-In. Anything
+due between 10pm and 8am waits for 9am. Coming back cancels them all;
+leaving again cancels before it sets. They name the sound `quiet.caf` (no
+new sounds): put a short silent `quiet.caf` in the Xcode project's bundle,
+or iOS plays its own. The shell needs `npm install
+@capacitor/local-notifications`. If the app's leaving does not fire
+`visibilitychange` in the web view, call `Remind.plan()` from Capacitor
+App's `pause` and `Remind.clear()` from `resume` in the bridge. Check
+`remind` uses a stand-in.
+
 ## The Mac checklist
 
 **What he does himself** (Claude on the Mac walks him through each):
@@ -145,7 +162,8 @@ web only a touch phone whose browser vibrates (not Safari) buzzes.
 1. Check the tools: `xcode-select -p`, `node -v`, `xcodebuild -version`.
 2. Make the shell in an `app/` folder of the repo, leaving the game's own
    layout alone: `npm install @capacitor/core @capacitor/cli
-   @capacitor/ios @capacitor/preferences @capacitor/haptics`, `npx cap
+   @capacitor/ios @capacitor/preferences @capacitor/haptics
+   @capacitor/local-notifications`, `npx cap
    init "Mythic Mulligan" <bundle id> --web-dir www`, `npx cap add ios`.
 3. A copy step (`npm run build`) that puts `index.html` into `www/` with
    one line added at the top of `<head>`: `<script src="bridge.js">`, and
@@ -164,7 +182,8 @@ web only a touch phone whose browser vibrates (not Safari) buzzes.
    })();
    ```
 
-   Haptics needs nothing in the bridge: the game finds the plugin itself.
+   Haptics and Local Notifications need nothing in the bridge: the game
+   finds the plugins itself (add the silent `quiet.caf`, above).
 4. Sound at once: the web view's `mediaTypesRequiringUserActionForPlayback`
    set to none (a small `CAPBridgeViewController` subclass).
 5. The launch screen in `#20234F`; the app icon from
@@ -174,7 +193,8 @@ web only a touch phone whose browser vibrates (not Safari) buzzes.
    (check `safeedges` says they are), sound on at open, the game pausing
    and catching up as the app leaves and comes back.
 7. Run on his phone with his Personal Team; play a hole, close and reopen
-   the app, and see the save is there; Settings shows Vibration.
+   the app, and see the save is there; Settings shows Vibration and
+   Reminders; turn Reminders on, leave the app, and see one arrive.
 8. Commit `app/` (with `ios/` and the config; not `www/` or
    `node_modules/`) and write how to rebuild here.
 
