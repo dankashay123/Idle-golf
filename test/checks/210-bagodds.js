@@ -30,6 +30,7 @@ module.exports = {
           for (const [rr] of O.rest) if (!txt.includes(B.RARITY[rr].n)) f('the chances leave out ' + B.RARITY[rr].n);
           if (!/Guaranteed Mythic (by your \d+(st|nd|rd|th) purchase|on your next purchase)/.test(txt)) f('the chances do not say when a Mythic is certain');
           if (/The other \d|The last club|for certain/.test(txt)) f('the chances still read the old vague way');
+          if (/Clubs? \d/.test(txt)) f('the chances name a club by a place the opened bag does not show (it lists them best first)');
         }
         hideSheet(); QUIET = true;
         for (const bg of B.BAGS) { const O = bagOdds(bg, 0.5);
@@ -66,6 +67,10 @@ module.exports = {
           log = []; openBag(bg, true);
           if (log[log.length - 1] !== 5) f(bg.n + ' with its count due gave a ' + B.RARITY[log[log.length - 1]].n);
         }
+        // ---- after opening, the same words ----
+        { const bg = B.BAGS.find(x => x.pity); S.pityB = { [bg.id]: 0 }; QUIET = false; window.makeItem = function () { const it = mk.apply(this, arguments); it.rar = Math.min(it.rar, 4); return it; };
+          openBag(bg, true); const t = document.getElementById('sheet').innerText; hideSheet(); QUIET = true; window.makeItem = mk;
+          if (!/Guaranteed Mythic by your \d+(st|nd|rd|th) purchase from now/.test(t) || /is certain/.test(t)) f('after opening, the count reads: ' + t.replace(/\n+/g, ' ').slice(0, 160)); }
       } finally {
         Math.random = real; window.makeItem = mk; window.derive = dv; QUIET = false; DEV_OFF = false;
         Object.keys(S).forEach(k => delete S[k]); Object.assign(S, JSON.parse(SNAP)); hideSheet();

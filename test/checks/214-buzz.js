@@ -31,6 +31,10 @@ module.exports = {
           Scene.drawnN = Scene.stepN - (unseen ? 50 : 0); OFFLINE = !!away; finishHole(D); OFFLINE = false; S.doneT = null; return calls.slice(); };
         let c = finish(-4); if (!c.includes('note SUCCESS')) f('an ace seen did not buzz (' + c + ')');
         c = finish(-3); if (!c.includes('note SUCCESS')) f('an albatross seen did not buzz (' + c + ')');
+        // (a hole that waits for him to walk up: the buzz as the ball drops, and not again when the hole moves on)
+        { later(); calls.length = 0; startHole(); hideSheet(); S.chaos = { n: 'Fair' }; const i = sid(-4); S.doneT = B.SCORE[i].r * 0.5 * S.parTime; Scene.drawnN = Scene.stepN;
+          holeSaid(); const atDrop = calls.length; later(); finishHole(D); S.doneT = null;
+          if (atDrop !== 1) f('an ace did not buzz as the ball dropped (' + atDrop + ')'); if (calls.length !== 1) f('an ace buzzed ' + calls.length + ' times'); }
         c = finish(-2); if (c.some(x => /^note/.test(x))) f('an eagle buzzed');
         c = finish(-4, true); if (c.length) f('an ace in a catch-up buzzed');
         c = finish(-4, false, true); if (c.some(x => /^note/.test(x))) f('an ace unseen buzzed');

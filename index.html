@@ -9095,6 +9095,7 @@ function holeSaid(){
   if(!Scene.cupHeard) Sfx.play('hole', sc.d);
   Scene.holed(sc);
   Scene.happyDance(sc.d);
+  if(sc.d <= -3 && Scene.watched()) Buzz.go('big');   // (as the ball drops)
   Scene.saidHole = S.hole;
 }
 function finishHole(D){
@@ -9140,7 +9141,7 @@ function finishHole(D){
   if(sc.d >= 1) N.bogey++;
   if(sc.d >= 0) N.allUnder = false;
   if(N.n >= 9) resolveNine();
-  if(sc.d <= -3 && Scene.watched()) Buzz.go('big');   // (an ace or an albatross, seen)
+  if(!said && sc.d <= -3 && Scene.watched()) Buzz.go('big');   // (an ace or an albatross, seen; holeSaid's if it was said)
   if(sc.d === -4){ S.aces++; if(!S.dgnRun){ const k = aceKey(S.hole); S.aceAt = S.aceAt || {}; S.aceAt[k] = (S.aceAt[k] || 0) + 1; } }
   if(sc.d <= -1) bump('birdie');
   if(sc.d <= -1 && Scene.windMph() >= 15) bump('windBird');
@@ -9623,7 +9624,7 @@ const STORE = {
     if(!PRODUCTS._built) buildProducts();
     Promise.resolve(MMStore.restore()).then(L => {
       let n = 0;
-      for(const x of L || []){ const P = x && PRODUCTS[x.id]; if(!P || !P.keep) continue; P.keep(x.end); n++; }
+      for(const x of L || []){ const P = x && PRODUCTS[x.id]; if(!P || !P.keep) continue; if(P.keep(x.end) !== false) n++; }
       save(); renderShop(); renderAll();
       toast(n ? 'Purchases restored' : 'Nothing to restore');
     }).catch(() => toast('Restore did not go through'));
@@ -9664,6 +9665,9 @@ function bagOdds(bg, luck){
 // a chance as a person reads it: 74%, 4.6%, 0.62%, under 0.01%
 const oddsPct = p => p >= 0.9995 ? '100%' : p >= 0.1 ? Math.round(p * 100) + '%' : p >= 0.01 ? (p * 100).toFixed(1) + '%'
   : p >= 0.0001 ? (p * 100).toFixed(2) + '%' : 'under 0.01%';
+// (the same words before buying and after opening)
+const bagPityLine = bg => bagPityLeft(bg) <= 1 ? 'Guaranteed Mythic on your next purchase.'
+  : nb('Guaranteed Mythic by your ' + ordinal(bagPityLeft(bg)) + ' purchase') + ' from now.';
 let bagOddsOpen = false;
 function bagOddsHtml(){
   const luck = derive().drop + 0.5;
@@ -9673,10 +9677,9 @@ function bagOddsHtml(){
     + '<div class="fold" style="margin-top:6px"><b>The chances</b>, with your club luck now.'
     + B.BAGS.map(bg => { const O = bagOdds(bg, luck);
         return '<div class="oddsbag"><b>' + bg.n + '</b>'
-          + '<div>' + nb(O.n === 1 ? 'Club 1' : O.n === 2 ? 'Clubs 1 and 2, each' : 'Clubs 1 to ' + O.n + ', each') + ': ' + line(O.rest) + '</div>'
-          + '<div>' + nb('Club ' + (O.n + 1)) + ': ' + line(O.last) + '</div>'
-          + (bg.pity ? '<div>' + (bagPityLeft(bg) <= 1 ? 'Guaranteed Mythic on your next purchase.'
-              : nb('Guaranteed Mythic by your ' + ordinal(bagPityLeft(bg)) + ' purchase') + ' from now.') + '</div>' : '') + '</div>'; }).join('')
+          + '<div>' + nb(tw(O.n, 'club') + (O.n > 1 ? ', each' : '')) + ': ' + line(O.rest) + '</div>'
+          + '<div>' + nb('1 club, ' + (O.last.length === 1 ? 'a ' + B.RARITY[O.last[0][0]].n : B.RARITY[O.last[0][0]].n + ' or better')) + ': ' + line(O.last) + '</div>'
+          + (bg.pity ? '<div>' + bagPityLine(bg) + '</div>' : '') + '</div>'; }).join('')
     + '</div></div>';
 }
 function openBag(bg, free){
@@ -9709,7 +9712,7 @@ function openBag(bg, free){
     + '<p>' + (gone.size ? bg.num + ' clubs \u00b7 ' + gone.size + ' auto-scrapped.' : bg.num + ' clubs added to your locker.') + '</p>'
     + '<ul>' + got.map(line).join('') + '</ul>'
     + (!bg.pity ? '' : myth ? '<p style="color:var(--r5)">A Mythic. Its count starts again.</p>'
-       : '<p>' + nb(bagPityLeft(bg) + ' more') + ' and a Mythic is certain.</p>')
+       : '<p>' + bagPityLine(bg) + '</p>')
     + '<button class="act" onclick="hideSheet();openShop(\'bags\')">Back to the shop</button>'
     + '<button class="act ghost" onclick="hideSheet()">Done</button>');
   renderBag(); renderVitals();
@@ -9744,7 +9747,7 @@ function buyMember(){
 function memberGrant(end, kept){
   if(S.member === 1) return;
   const was = isMember();
-  if(kept && !(end > memberNow())) return;   // (a lapsed one, restored: nothing)
+  if(kept && !(end > memberNow())) return false;   // (a lapsed one, restored: nothing)
   if(end > 0) S.memberEnd = Math.max(S.memberEnd || 0, +end);
   else if(kept) return;
   else S.memberEnd = Math.max(was ? S.memberEnd || 0 : 0, memberNow()) + B.MEMBER_DAYS * 86400000;

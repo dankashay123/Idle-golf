@@ -74,6 +74,10 @@ module.exports = {
         // a lapsed Membership restored gives nothing
         fresh(); PRODUCTS[PROD_MEMBER].keep(Date.now() - 86400000);
         if (isMember() || S.member) f('a lapsed Membership, restored, made him a member');
+        { fresh(); const said = []; const tw0 = window.toast; window.toast = m => said.push(m);
+          window.MMStore.restore = () => Promise.resolve([{ id: 'mm.member.month', tx: 'old9', end: Date.now() - 86400000 }]);
+          STORE.restore(); await tick(); await tick(); await tick(); window.toast = tw0;
+          if (!said.some(m => /Nothing to restore/.test(m))) f('a restore of only a lapsed Membership said: ' + said.join(' / ')); }
       } finally {
         delete window.MMStore; delete window.__inApp; STORE.prices = {}; STORE.busy = null; DEV_OFF = false; QUIET = false;
         Object.keys(S).forEach(k => delete S[k]); Object.assign(S, JSON.parse(SNAP)); hideSheet();
