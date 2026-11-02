@@ -5521,7 +5521,7 @@ function migrate(){
   // (a paid hunt has its week in the run; an old save's paid hunt starts one)
   if(S.hunt && S.hunt.paid && !(S.huntRun && S.huntRun.wk === S.hunt.wk)) S.huntRun = { wk: S.hunt.wk, n: 1 };
   if(S.teeMk !== undefined && !TEE_MARKS.some(m => m.id === S.teeMk)) delete S.teeMk;
-  if(S.fps !== undefined && S.fps !== 30) delete S.fps;
+  if(S.fps !== undefined && S.fps !== 30 && S.fps !== 60) delete S.fps;   // (Auto unset, or 30 or 60)
   if(S.wild !== undefined && S.wild !== 0) delete S.wild;
   if(S.spotTag !== undefined && S.spotTag !== 0) delete S.spotTag;
   if(S.remind !== undefined && S.remind !== 1) delete S.remind;   // (Reminders: on is 1, off is unset)
@@ -35766,7 +35766,7 @@ function saverCycle(){
   save(); settingsSheet();
 }
 function saverNow(){ hideSheet(); saverOn(); }
-function toggleFps(){ if(S.fps === 30) delete S.fps; else S.fps = 30; save(); settingsSheet(); }
+function toggleFps(){ if(S.fps === 60) S.fps = 30; else if(S.fps === 30) delete S.fps; else S.fps = 60; save(); settingsSheet(); }
 
 let last = 0, slowT = 0, saveT = 0;
 let frameErr = 0;
@@ -35778,7 +35778,12 @@ let frameErr = 0;
 // is as fast either way. (FRAME_CAP_MS: null by the setting; 0 every frame,
 // for a check that times one.)
 let FRAME_CAP_MS = null, frameAt = -1e9;
-const frameCap = () => FRAME_CAP_MS !== null ? FRAME_CAP_MS : S.fps === 30 ? 1000 / 30 - 4 : 1000 / 60 - 4;
+// Auto (the user chose it, the default): sixty while he plays, thirty once
+// the screen has gone untouched half a minute (he is watching, and the
+// phone stays cooler), sixty again at a touch; the saver after, as before.
+const FPS_IDLE_MS = 30000;
+const fpsNow = () => S.fps === 30 ? 30 : S.fps === 60 ? 60 : performance.now() - touchedAt > FPS_IDLE_MS ? 30 : 60;
+const frameCap = () => FRAME_CAP_MS !== null ? FRAME_CAP_MS : 1000 / fpsNow() - 4;
 function frame(now){
   const cap = frameCap();
   if(!SAVER && cap > 0 && now - frameAt < cap){ requestAnimationFrame(frame); return; }
@@ -35904,9 +35909,9 @@ function settingsSheet(){
     + row('Dawn and Dusk', 'Day and night follow your clock',
         '<button class="mini' + (S.dawnDusk === 1 ? ' go' : '') + '" onclick="toggleDawn()">'
         + (S.dawnDusk === 1 ? 'On' : 'Off') + '</button>')
-    // (sixty frames a second, or thirty to keep the phone cooler)
-    + row('Frame Rate', S.fps === 30 ? 'Cooler on the phone' : 'Smoothest',
-        '<button class="mini go" onclick="toggleFps()">' + (S.fps === 30 ? '30' : '60') + '</button>')
+    // (Auto: sixty while he plays, thirty while he watches; or sixty, or thirty, always)
+    + row('Frame Rate', S.fps === 30 ? 'Cooler on the phone' : S.fps === 60 ? 'Smoothest' : 'Smooth while you play, cooler while you watch',
+        '<button class="mini go" onclick="toggleFps()">' + (S.fps === 30 ? '30' : S.fps === 60 ? '60' : 'Auto') + '</button>')
     + row('Battery Saver', saverMins() ? 'After ' + tw(saverMins(), 'minute') + ' untouched' : 'Only when started',
         '<div class="setbtns"><button class="mini' + (saverMins() ? ' go' : '') + '" onclick="saverCycle()">'
         + (saverMins() ? tw(saverMins(), 'minute') : 'Off') + '</button>'
