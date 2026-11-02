@@ -200,8 +200,8 @@ App's `pause` and `Remind.clear()` from `resume` in the bridge. Check
 
 **Later, with the $99 Developer Program:** the products in App Store
 Connect (ids above), `window.MMStore` in the bridge over a StoreKit plugin,
-TestFlight, then the store page (privacy: nothing collected; age rating;
-screenshots; description) and review.
+TestFlight, then the store page and review: everything to paste (privacy,
+age rating, description, purchases, review notes) is in `docs/app-store.md`.
 
 Afterwards a game change reaches the phone with: "pull main, rebuild the
 iPhone app and run it on my phone". Keep `HANDOFF.md`'s line about the app
