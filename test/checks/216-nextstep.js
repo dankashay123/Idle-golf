@@ -11,7 +11,7 @@
  *   - on the Range, rows at their cap fold away under one line after the
  *     rows that can still be bought; a tap opens them
  *   - the call to retire at the top of the Range: when every row that has a cap is at it,
- *     or the highest card has not risen in three days and retiring finds an
+ *     or fewer than three new cards in three days and retiring finds an
  *     heirloom; never before retiring pays anything; said once in a toast */
 'use strict';
 module.exports = {
@@ -103,6 +103,12 @@ module.exports = {
         if (call()) f('the card rose just now and it says "' + call() + '"');
         S.topT = Date.now() / 1000 - 3 * 86400 - 60;
         if (!/climb has slowed/i.test(call())) f('three days without a new card: "' + call() + '"');
+        // (fewer than three new cards in three days: a card every other day is slow too)
+        { const now = Date.now() / 1000; topReset(); S.topTs = [now - 4 * 86400, now - 4 * 86400, now - 4 * 86400]; S.topT = S.topTs[0];
+          const RN2 = Date.now; Date.now = () => (now - 2.5 * 86400) * 1000; topRise(); Date.now = () => (now - 86400) * 1000; topRise(); Date.now = RN2;
+          if (!/climb has slowed/i.test(call())) f('two new cards in three days: "' + call() + '"');
+          topRise(); if (call()) f('three new cards in three days and it says "' + call() + '"');
+          S.topTs = [now - 4 * 86400, now - 4 * 86400, now - 4 * 86400]; S.topT = S.topTs[0]; call(); }
         document.getElementById('upgRetire').click(); if (view !== 'career' || careerSub !== 'leg') f('the call did not open Legacy');
         setView('upg'); S.evRun = 0; if (call()) f('retiring pays nothing yet and it says "' + call() + '"');
         // (a new highest card stamps its time)
@@ -116,6 +122,6 @@ module.exports = {
       return { fl, o };
     });
     if (r.fl.length) throw new Error(r.fl.join('; '));
-    return ['the next thing to do in one line (' + r.o.h + 'px at 320): upgrade, club, points, card, wager, heirloom, each a tap away; after retiring an heirloom to find or raise, a tree untouched, the Trials; none in a wager; ' + r.o.capped + ' capped rows folded under the rest and opened; the call to retire when all is capped or three days without a new card, once in a toast'];
+    return ['the next thing to do in one line (' + r.o.h + 'px at 320): upgrade, club, points, card, wager, heirloom, each a tap away; after retiring an heirloom to find or raise, a tree untouched, the Trials; none in a wager; ' + r.o.capped + ' capped rows folded under the rest and opened; the call to retire when all is capped or fewer than three new cards in three days, once in a toast'];
   }
 };

@@ -5420,7 +5420,8 @@ function initState(){
   if(!B.BANK_OPTS.includes(S.islandBank)) S.islandBank = 5;
   if(!S.tierEvents) S.tierEvents = {};
   if(S.tierMax === undefined) S.tierMax = 0;
-  if(!(S.topT > 0)) S.topT = Date.now() / 1000;      // when the highest card last rose (the call to retire)
+  // (the call to retire: when the highest card rose, the last three times)
+  if(!(S.topT > 0) || !Array.isArray(S.topTs) || S.topTs.length !== 3 || S.topTs.some(v => !(v > 0))) topReset();
   if(S.eventsPlayed === undefined) S.eventsPlayed = 0;
   // (the events of this career, since the last retirement: a save from before
   // it counted them keeps the Retire it had)
@@ -9270,7 +9271,7 @@ function advanceHole(){
     // quarter of all holes being albatross or better.
     const round = S.scores.reduce((t, x) => t + (x ? x.d : 0), 0);
     if(round <= B.ROUND * B.ROUND_OPEN && S.tier >= (S.tierMax || 0) && (S.tierMax || 0) < B.TIER_MAX){
-      S.tierMax = (S.tierMax || 0) + 1; S.topT = Date.now() / 1000;
+      S.tierMax = (S.tierMax || 0) + 1; topRise();
       toast('Tour Card <b>' + cardNo(S.tierMax) + '</b> unlocked');
       cardPay();
     }
@@ -9425,7 +9426,7 @@ function endTournament(){
   // pace of their game, not of the calendar.
   if(S.tier >= (S.tierMax || 0) && (beat || eventsOn(S.tier) >= eventsToUnlock(S.tier))
      && (S.tierMax || 0) < B.TIER_MAX){
-    S.tierMax = (S.tierMax || 0) + 1; S.topT = Date.now() / 1000;
+    S.tierMax = (S.tierMax || 0) + 1; topRise();
     toast('Tour Card <b>' + cardNo(S.tierMax) + '</b> unlocked');
     cardPay();
   }
@@ -11263,7 +11264,7 @@ function fixHoles(o){
   if(!o || typeof o !== 'object' || o.holesFixed) return;
   S.holesFixed = 1;
   const c = matchedCard(deriveStill(4));
-  S.tier = c; S.tierMax = c; S.topT = Date.now() / 1000; S.tierEvents = {};
+  S.tier = c; S.tierMax = c; topReset(); S.tierEvents = {};
   S.bestTier = Math.max(S.bestTier || 0, c);
   S.scores = []; S.tourScore = 0;
   S.hole = (tournamentOf(S.hole) - 1) * B.ROUND * B.DAYS + 1;
@@ -11293,7 +11294,7 @@ function retire(){
   if(S.weekly && !S.weekly.done) S.weekly.t = 0;
   const keepUpg = relLv('vault') * B.VAULT_UPG;
   B.UPG.forEach(u => S.upg[u.id] = vaultKeep(u, keepUpg));
-  S.tierEvents = {}; S.tierMax = land; S.topT = Date.now() / 1000;
+  S.tierEvents = {}; S.tierMax = land; topReset();
   S.buff = {}; B.SKILL.forEach(k => S.cd[k.id] = 0); S.swCount = 0;
   // level, attributes, talents and paragon are the golfer, not the run: untouched.
 
@@ -33494,10 +33495,17 @@ function refreshUpg(){
 }
 // The call to retire (the user: "do what you think is best"): one line at the
 // top of the Range, a tap from the Career tab's Legacy page, when retiring is
-// the best thing left to do -- every row that has a cap at it, or the highest card
-// not risen in three days while retiring would find an heirloom. Said once in
+// the best thing left to do -- every row that has a cap at it, or fewer than
+// three new cards in three days while retiring would find an heirloom. Said once in
 // a toast too, each run.
 let UPG_ALLCAP = false;
+// The climb's pace: S.topT is when the highest card rose three rises ago (or
+// when this run began), so "fewer than three new cards in three days" is one
+// comparison. (Three days with no new card at all was the first rule: a
+// simulated player gaining a card every other day in his slow second week
+// never met it.)
+function topReset(){ const t = Date.now() / 1000; S.topTs = [t, t, t]; S.topT = t; }
+function topRise(){ if(!Array.isArray(S.topTs) || S.topTs.length !== 3) topReset(); S.topTs.push(Date.now() / 1000); S.topTs.shift(); S.topT = S.topTs[0]; }
 const RETIRE_STALL = 3 * 86400;
 function retireCall(){
   if(legacyGain() <= 0) return '';
