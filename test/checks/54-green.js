@@ -36,6 +36,9 @@ module.exports = {
       window.Date = class extends RD { constructor(...a) { if (a.length) super(...a); else super(at + RD.now() - t0); } static now() { return at + RD.now() - t0; } };
       // (the day never runs earlier than the last save, so the save's stamp goes back with it)
       S.t = Date.now() / 1000; });
+    // (the bags stay as each part sets them: a club dropped into an empty
+    // slot is worn now, and the normal bag grew stronger as it played)
+    await page.evaluate(() => { fillBare = () => []; });
     const r = await page.evaluate(() => {
       const o = { aceHold: ACE_HOLD }, SNAP = JSON.stringify(S), mr = Math.random, raf = window.requestAnimationFrame;
       const pn = performance.now.bind(performance);

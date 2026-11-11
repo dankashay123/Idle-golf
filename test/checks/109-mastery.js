@@ -27,10 +27,12 @@ module.exports = {
         // ---- mastery ----
         const dr = S.equip.driver || (S.equip.driver = makeItem(S.tier, 0, 1, 'driver'));
         delete dr.mh; const p0 = itemPrimary(dr);
+        // (the clubs worn through the time away: an empty slot takes a club found there)
+        const wornAway = new Set(B.SLOTS.map(sl => S.equip[sl.id]).filter(Boolean));
         const h0 = S.totalHoles; S.t = Date.now() / 1000 - 3600; offline(); hideSheet();
         const played = S.totalHoles - h0;
         if (!(played > 0) || dr.mh !== played) f('away ' + played + ' holes gave the driver ' + dr.mh);
-        for (const sl of B.SLOTS) { const it = S.equip[sl.id]; if (it && it !== dr && it.mh !== played) f(sl.n + ' carried gained ' + it.mh + ' of ' + played); }
+        for (const sl of B.SLOTS) { const it = S.equip[sl.id]; if (it && it !== dr && wornAway.has(it) && it.mh !== played) f(sl.n + ' carried gained ' + it.mh + ' of ' + played); }
         for (const it of S.bag) if (it.mh) f('a club in the locker gained ' + it.mh + ' holes');
         const stars = [];
         for (const [n, want] of [[B.MASTER[0] - 1, 0], [B.MASTER[0], 1], [B.MASTER[2], 3], [B.MASTER[4] + 5, 5], [B.MASTER[9], 10]]) {
@@ -108,7 +110,14 @@ module.exports = {
         // paid twice: the same hole finished golden and not
         const fin = clockN => { HOUR_FORCE = clockN; S.hole = h; startHole(); S.chaos = { n: 'Fair' }; S.holeGold = 0; S.elapsed = S.parTime * 0.8; S.doneT = null;
           const g0 = S.gold; finishHole(derive()); return S.gold - g0; };
-        const plain = fin(23), gold = fin(14);
+        // (the same dice and the same clubs for both: the clubs found away are
+        // worn now, and one with a lucky roll paid the two finishes differently)
+        const fb = fillBare, rnd = Math.random; fillBare = () => [];
+        const dice = () => { let sd = 4242; Math.random = () => (sd = (sd * 16807) % 2147483647) / 2147483647; };
+        // (and the bag as this check always had it, the driver alone: what the
+        // other clubs do by night or by weather is not what is measured)
+        const worn = Object.assign({}, S.equip); B.SLOTS.forEach(sl => { if (sl.id !== 'driver') S.equip[sl.id] = null; });
+        let plain, gold; try { dice(); plain = fin(23); dice(); gold = fin(14); } finally { fillBare = fb; Math.random = rnd; Object.assign(S.equip, worn); }
         o.pay = (gold / plain).toFixed(3);
         if (!(plain > 0) || Math.abs(gold / plain - 2) > 1e-6) f('a Golden Hour hole paid x' + o.pay + ' what it would have');
       } finally {
