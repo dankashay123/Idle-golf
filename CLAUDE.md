@@ -48,14 +48,16 @@ game as it is, short, and move detail into `docs/`.
   new $5 skin), the first pack doubled.
 - **Sovereigns earned wait for a GET tap** at their place (Today, Honours,
   the Guide), with GET ALL where there is more than one; new rewards use
-  `earnSov`. Purchases pay at once. Rewards for *seeing* things are earned
+  `earnSov`. Purchases pay once paid (at once on the web). Rewards for *seeing* things are earned
   live only and with the course in sight (`Scene.watched()`: never away,
   in a catch-up, a wager or behind the saver).
 - **Every swing power but the clubs' is a multiplier of its own** (into
   the clubs' sum it is lost); a new one goes into `powParts` too.
 - **The iPhone app** (Capacitor, built on his Mac): all of it in
-  `docs/ios-app.md`. `index.html` stays the whole game; the app is never
-  a developer copy (`inApp()`).
+  `docs/ios-app.md`, the store page in `docs/app-store.md`. `index.html`
+  stays the whole game; the app is never a developer copy (`inApp()`).
+  Anything sold for money goes through `STORE.buy`; the app's own parts
+  (`MMSave`, Haptics, Reminders) show nothing on the web.
 - **Developer menu**: a developer copy only (this computer, a file, or a
   phone that once opened the game with `?dev`). Old `MM1` codes load only
   there.

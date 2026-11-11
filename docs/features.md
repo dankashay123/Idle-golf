@@ -6,6 +6,67 @@ feature must do, and is usually enough on its own.
 
 ## Sections, newest first
 
+### Ready for the iPhone app: odds, one till, the app's save, edges, vibration, reminders, Auto frames (25 October to 2 November)
+
+He asked what else would make the game ready to wrap into an iPhone app;
+everything below has its doorway for the app and changes nothing on the
+web. How the app wires each one: `docs/ios-app.md`. The store page's
+words: `docs/app-store.md`.
+
+- **The bags' chances before buying** (Apple asks it of anything random
+  bought with what money buys): behind the Bags tab's `?` (`bagOddsHtml`,
+  `bagOdds`, from `rollRarity`'s own weights at his club luck now). Per
+  bag: "2 clubs, each: ..." and "1 club, Rare or better: ..." (an opened
+  bag lists its clubs best first, so never "Club 3"), and "Guaranteed
+  Mythic by your 10th purchase from now" (or "on your next purchase"),
+  the same line after opening (`bagPityLine`). Check `bagodds` opens 2,500
+  of each at two lucks.
+- **One till** (`STORE`, `PRODUCTS`): every pack, the Starter Pack,
+  Membership, the Tour Pass and any look sold for money goes through
+  `STORE.buy(id)`. On the web, or the app before its store is wired,
+  given at once ("Nothing here costs real money", "free" under prices). In
+  the app with `window.MMStore`: the store's prices, nothing given until
+  paid, a transaction once (`S.txSeen`), Restore Purchases (the Starter
+  Pack's place, looks, Membership's days, never sovereigns; a lapsed
+  Membership gives nothing and says so). Check `till`.
+- **The save kept by the app too** (`VAULT`, `vaultPut`, `vaultCheck`,
+  `vaultRestore`; `S.saveSeq` counts saves): taken up at launch when ahead
+  of the browser's, his time away played; never written before it is read
+  at launch (`vaultRead`: a fresh game's first save would have landed
+  over the copy meant to bring him back). Check `appsave`.
+- **Screen edges**: nothing to tap or read under the notch, island or home
+  bar on an SE, a mini, a 15 and a Pro Max, upright and on its side; every
+  scrolling list ends clear. Nothing needed changing. Check `safeedges`
+  serves the game with each phone's inset sizes.
+- **Vibration** (`Buzz`, Capacitor Haptics): an ace or an albatross seen
+  (as the ball drops, `holeSaid`, once), a Mythic club (a tap); never in
+  a catch-up, never two in 0.4 seconds. Settings: Vibration (`S.buzz` 0
+  off), shown only where the phone can buzz. Check `buzz`.
+- **Lock-screen reminders** (`Remind`, Capacitor Local Notifications):
+  off until turned on in Settings, when the phone asks. Set on leaving the
+  app (ids 101 to 104): free sovereigns ready, Membership's day waiting,
+  his hours away used up, the next Check-In; 10pm to 8am waits for 9am;
+  silent (`quiet.caf`); cleared on coming back. Check `remind`.
+- **Frame Rate on Auto**, the default (`fpsNow`, `FPS_IDLE_MS`): sixty
+  while he touches, thirty after half a minute untouched, sixty at a touch;
+  60 and 30 still offered; the saver after 2 minutes as before. Heat
+  measured: menus over the course already draw it 10 a second, the full
+  menu not at all, the saver cuts the work by over 90%; the timer lines
+  under the cog no longer measured every frame (`buffShiftT`, a page
+  layout 60 times a second). The tree and fan hazes make about 70 small
+  canvases a second as the camera moves (each haze strength its own copy):
+  about 3% of a frame, left.
+- **The Pro Shop's words**: the balance a number and the gem, centred
+  (no "You hold", no "Sovereigns"); Top Offers (was One Time); "Wager
+  entries refill +5% faster"; "Nothing here costs real money" on every tab.
+- **Pace**: unchanged by all of this.
+- **Ads** (2 November, asked only): rewarded ads explained (an ad network's
+  plugin in the shell, a "watch for a free bag" button, the privacy label
+  and "No ads" line change, the videos' own sound). Three free Range Bags
+  a day would be 270 sovereigns' worth, over three times Membership's 80:
+  offered one a day, not counting toward the Mythic count, members
+  without the video; simulate before building. Not built; no answer yet.
+
 ### The skins for less; the Founder's looks out; words (23 to 24 October)
 
 - He asked if baking the skins' effects would cost quality: none, and it

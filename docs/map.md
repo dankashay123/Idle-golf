@@ -9,6 +9,11 @@ Line numbers are approximate and drift. Search for the name instead.
 
 | What | Where (search for) |
 |---|---|
+| **The bags' chances** (the Bags tab's `?`) | `bagOdds`, `oddsPct`, `bagOddsHtml`, `bagOddsOpen`, `bagPityLine`, `bagPityLeft` |
+| **The till**: everything sold for money | `PRODUCTS`, `buildProducts`, `prodPack`, `PROD_STARTER`, `PROD_MEMBER`, `PROD_PASS`, `prodLook`, `STORE` (`real`, `price`, `note`, `charged`, `load`, `buy`, `paid`, `restore`); `packGrant`, `starterGrant`, `memberGrant`, `passGrant`, `lookGrant`; `S.txSeen` |
+| **The app's copy of the save** | `VAULT`, `vaultRead`, `vaultPut`, `vaultCheck`, `vaultRestore`; `S.saveSeq` (counted in `save`) |
+| **Vibration** and **Reminders** (the app's) | `Buzz` (`can`, `go`), `toggleBuzz`, `S.buzz`; `Remind` (`P`, `quiet`, `list`, `plan`, `clear`), `toggleRemind`, `S.remind`; set and cleared in the `visibilitychange` listener at the end of `boot` |
+| **Frame Rate** (Auto, 60, 30) | `fpsNow`, `FPS_IDLE_MS`, `frameCap`, `toggleFps`, `touchedAt`, `S.fps` |
 | All tuning constants, data tables, courses, outfits, clubs, trails, caddie perks, honours | `const B = {` (~878) |
 | Calendar helpers (`holeInRound`, `tournamentOf`, `parOf`, `slotOfEvent`) | `/* ---- the calendar ---- */` |
 | **Which course an event is on** | `calendarCourse`, `courseFor`, `openEvent`, `homeFor`, `weekNow`, `weekMajor`, `isWeekMajor` (~3280–3345) |

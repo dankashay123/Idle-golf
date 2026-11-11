@@ -1,6 +1,6 @@
 # Handoff — Mythic Mulligan
 
-Last updated 2026-10-24 (pushed to `main`). `CLAUDE.md` holds the standing
+Last updated 2026-11-11 (pushed to `main`). `CLAUDE.md` holds the standing
 rules and is loaded by itself; this file is what a new session needs on
 top. Read this file whole. The rest is for looking up, never for reading
 through:
@@ -13,38 +13,40 @@ through:
 
 ## 1. Where things stand
 
-- Everything is committed and **no request is waiting**.
-- Last done (23 and 24 October; detail in `docs/features.md`'s newest
-  section). Earlier polish (sets shown in full, the ball lying still,
-  every swing power its own multiplier, rewards for seeing, the cooler
-  frames) is in the sections under it.
-  - **The skins drawn for less, the same picture** (he asked if it cost
-    quality: none, proved frame by frame against the old game). Plain
-    golfer and caddie 174 canvas calls a frame to 41, the Demonic 1,290 to
-    740, the Divine 740 to 395; see-through copies (Glitch, Void Walker,
-    Midas, Ghost) within three shades in 255. Check `skincost`.
-  - **Stores of pictures** bounded and freed: the skins' store lets go the
-    one used longest ago; the tinted copies and the shop's set previews.
-  - **The Founder's Blazer, its caddie and Founder's Gold are gone**: the
-    $5 skin is to come back far finer, from a picture he sends.
-  - **Club Membership 80 sovereigns a day** (60). A full Mythic set, seeds
-    1 to 3: free 62/56/61, Membership alone 38/30/42, the Tour Pass alone
-    about 42, both 32/31/33. He said the time is good.
-  - **Words on every screen** gone over (shop, Cabinet, Today, Guide, Bag,
-    Honours, Range, Wager Book, Career, pop-ups); the Yardage Book
-    heirloom is the **Ball Retriever** (it shared a caddie perk's name).
-  - About thirty unused helpers taken out.
+- Everything is committed. **One question is open**: on 2 November he
+  asked how ads work (rewarded ads: watch a video, open a Range Bag, three
+  a day) and how much targeted ads pay. Answered, not built. Three a day
+  is 270 sovereigns' worth, over three times Membership's 80; offered one
+  a day, not counting toward the bag's Mythic count, members without the
+  video, and asked whether to simulate those first or build the button.
+  Wait for his answer; simulate (rule 82) before anything pays.
+- Last done (25 October to 2 November; detail in `docs/features.md`'s
+  newest section): **ready for the iPhone app.**
+  - The bags' **chances shown before buying** (the Bags tab's `?`).
+  - **One till** for everything sold for money, with App Store product
+    ids; Restore Purchases in the app.
+  - **The save kept by the app too**, taken up if the browser's is lost.
+  - **Screen edges** clear on four iPhones both ways (nothing changed).
+  - **Vibration** on an ace, an albatross and a Mythic club; **lock-screen
+    Reminders** (off until turned on, silent, none at night). Both only in
+    the app, each with a Settings switch.
+  - **Frame Rate on Auto** (the default): 60 touched, 30 after half a
+    minute untouched.
+  - The Pro Shop's words (the balance a number and the gem; the bags'
+    chances in plain words; "Top Offers"), and two bug passes.
+  - **`docs/app-store.md`**: privacy (nothing collected), the age rating
+    answers (4+; he has to pick None or Mild for the Demonic-style looks),
+    the store page, the products, notes for review.
 - **The iPhone app: everything is in `docs/ios-app.md`** (read it whole
-  when the app comes up). **Don't suggest it for now** (he asked, 8
-  October): polish what is there first. In short: `index.html` wrapped unchanged with
-  **Capacitor**; built from his **Mac's Claude Code** (Xcode needs a
-  Mac), in his clone; the free Apple account first, $99 only for
-  TestFlight and the store; ask him before choosing the bundle ID; sound
-  on open and the silent switch kept. Nothing of the shell is built yet.
-  Game work can carry on in cloud sessions: the Mac pulls `main` and
-  rebuilds. The game is ready for it: the developer menu is off in the
-  app (`inApp()`), no Add to Home Screen asks there, the fonts inside the
-  file. Write how to build and run it in `docs/ios-app.md` once it exists.
+  when the app comes up), with **The Mac checklist**: what he does
+  himself, what Claude on the Mac does, the small bridge file (tried
+  against the game). `index.html` wrapped unchanged with **Capacitor**,
+  built from his **Mac's Claude Code**; the free Apple account first, $99
+  only for TestFlight and the store; ask him before choosing the bundle
+  ID. Nothing of the shell is built yet: **the Mac session is the next
+  step**, whenever he is at the Mac. Game work carries on in cloud
+  sessions; the Mac pulls `main` and rebuilds. Write how to build and run
+  it in `docs/ios-app.md` once it exists.
 - The scenery of 4 to 6 October (canyon, ponds, dragonflies, fireflies,
   fish, storms, planes, balloons, ducklings, steam, mist, frost, the
   rainbow's reflection, wind, leaves on the water, pins either side,
@@ -55,7 +57,7 @@ through:
   new a switch. Earlier work: the sections under it.
 - What lives by the season asks `lookSeason`: a course's own, the Snowline
   winter and the Blossom spring all year, else the month.
-- `node test/run.js` has **209 checks** (all passed 24 October). About 35 minutes: run it in the
+- `node test/run.js` has **215 checks** (all passed 2 November). About 35 minutes: run it in the
   background, on a copy in the scratchpad, with the machine quiet. After
   weather, colours or anything dated, also run it with `HOUR_FORCE` 8 and
   15 and the month pinned (rules 20 and 70).
@@ -77,7 +79,9 @@ through:
   panels, the ball lying still on the fairway and green, the Swing sheet,
   the honours and Drive now counting, the cooler frames (12 to 17 October);
   the cheaper skins (does the phone run cooler?) and the Ball Retriever
-  (23 and 24 October).
+  (23 and 24 October); the bags' chances in their new words, the balance
+  with its gem (26 October); Auto frames, Vibration, Reminders and their
+  wording, the App Store answers (26 October to 2 November).
 - Settled, in case it comes up: swing speed still matters fully (a hole's
   time is when the ball drops); Fast Walker only shortens a hole's least
   time; every caddie has a trick (don't offer caddie tricks); Dawn and
@@ -135,6 +139,16 @@ through:
   into `powParts` (the Swing sheet), or it is lost in the clubs' sum.
 - **The ball lies where it came down** and he walks to it; nothing rides
   along in front of him (`greenwalk`).
+- **The Pro Shop's top line** is the balance alone, a number and the gem
+  (no "You hold", no "Sovereigns"). **The bags' chances** name no club by
+  a place (an opened bag lists them best first) and say "Guaranteed
+  Mythic by your Nth purchase from now".
+- **Frame Rate is Auto by default** (60 touched, 30 after half a minute
+  untouched); 60 and 30 stay as choices.
+- **The app's doorways** stay doorways: `STORE.buy` for anything sold for
+  money, `MMSave`, Haptics, Local Notifications. On the web nothing of
+  them shows (no Vibration or Reminders rows, nothing charged). Reminders
+  stay off until he turns them on, silent, never at night.
 - **Sovereigns earned wait to be taken** at their place (Today, Honours,
   the Guide) with GET, and GET ALL where there is more than one. A
   purchase pays at once. Anything new that pays sovereigns uses `earnSov`.
@@ -374,6 +388,23 @@ Numbered so `CLAUDE.md` and the checks can point at them.
     (longer Shots buttons squeezed the words to a column; "Double Purse"
     held together ran out of a Pass tile).
 
+97. **The app's doorways are tried with stand-ins**: set
+    `window.__inApp = 1` and a stand-in `window.MMStore`, `MMSave` or
+    `Capacitor.Plugins.Haptics`/`LocalNotifications`, then delete them in
+    `finally` (`till`, `appsave`, `buzz`, `remind`). `vaultRead` is false
+    in a check's page (no vault at boot): set it where a check expects
+    writes.
+98. A button's words read in capitals in `innerText` (`text-transform`):
+    match them with `/i`.
+99. A long run started in the foreground moves to the background with a
+    30-minute limit when it outlasts its timeout, and is stopped there:
+    start the full suite with `run_in_background` and a long timeout from
+    the first.
+100. **Heat** is measured on a quiet machine (no suite running), per drawn
+    frame, old build against new on their own ports; this computer has no
+    graphics chip, so read ratios, not milliseconds. What warms a phone
+    most is frames a second; menus and the saver already cut them.
+
 ## 5. Environment
 
 - Reachable for sounds: opengameart.org, kenney.nl (most other sound sites
@@ -398,11 +429,21 @@ brings it up again** (he asked to stop, 6 October): offer other things.
 
 Every idea offered and not yet done, so none is lost:
 
-1. **Ask how hot the phone runs now** after a long session. If still
-   warm: the lesser skins' moving dots (the Disco's beams, Frostborn's
-   snow, the Inferno's flames, 60 to 100 a frame) and the trails.
-3. A bug sweep over this work once a few more changes are in.
-4. **The iPhone app** (`docs/ios-app.md`), only once he brings it up again.
+1. **The Mac session**: build the app and put it on his phone
+   (`docs/ios-app.md`, The Mac checklist).
+2. **Ads**, if he wants them: simulate the free-bag options, then build a
+   rewarded-ad button behind a doorway like the till's (question open).
+3. **Store screenshots** at 1320x2868: day, night, an ace, the bags'
+   chances, the Style tab, the Trophy Room (no developer menu showing).
+4. **Reminder wording**: read him the four lock-screen lines; a sound only
+   if he asks.
+5. **A light tap on more moments** (a major win, a Tour Pass tier) once he
+   has felt the first ones.
+6. **Ask how hot the phone runs** after a long session with Auto frames.
+   If still warm: the lesser skins' moving dots (the Disco's beams,
+   Frostborn's snow, the Inferno's flames, 60 to 100 a frame) and trails.
+7. A bug pass over Auto frames, Vibration and Reminders once he has used
+   them.
 
 Held for when he raises scenery again (he asked to stop): look at the new
 things on the phone (soft cloud shadows, the score call, the gold
@@ -410,4 +451,4 @@ mountain), the other special holes for bunkers under them, snow falling
 heavier, frost melting through a round, a fog bank thinning, gusts of
 leaves, glints and variety on the gold heap, a speed pass at its foot.
 
-Recommend 1.
+Recommend 1 (or answer the ads question first if he raises it).
