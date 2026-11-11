@@ -44,6 +44,6 @@ module.exports = {
       return { fails, o };
     });
     if (r.fails.length) throw new Error(r.fails.join('; '));
-    return ['from floor 400 a weak golfer starts on floor ' + r.o.deep + ' (' + Math.round(r.o.work * 100) + '% of a run to clear) and is paid, the card projecting ' + r.o.proj + ' floors; a strong golfer's first Vault starts on floor ' + r.o.late + ' (' + r.o.lateS.toFixed(1) + ' seconds\' work a floor)' + '; a start in reach kept (' + r.o.kept + ')'];
+    return ['from floor 400 a weak golfer starts on floor ' + r.o.deep + ' (' + Math.round(r.o.work * 100) + '% of a run to clear) and is paid, the card projecting ' + r.o.proj + ' floors; a strong golfer new to the Vault starts on floor ' + r.o.late + ' (' + r.o.lateS.toFixed(1) + ' seconds of work a floor)' + '; a start in reach kept (' + r.o.kept + ')'];
   }
 };
