@@ -33528,7 +33528,8 @@ function refreshUpg(){
 // The call to retire (the user: "do what you think is best"): one line at the
 // top of the Range, a tap from the Career tab's Legacy page, when retiring is
 // the best thing left to do -- every row that has a cap at it, or fewer than
-// three new cards in three days while retiring would find an heirloom. Said once in
+// three new cards in three days while retiring would find an heirloom or
+// raise one. Said once in
 // a toast too, each run.
 let UPG_ALLCAP = false;
 // The climb's pace: S.topT is when the highest card rose three rises ago (or
@@ -33543,7 +33544,15 @@ function retireCall(){
   if(legacyGain() <= 0) return '';
   const gain = '+' + fmt(legacyGain()) + '\u00a0legacy';
   if(UPG_ALLCAP) return 'Every cap reached \u00b7 retire for ' + gain;
-  if(retireWorth() && Date.now() / 1000 - (S.topT || 0) >= RETIRE_STALL) return 'The climb has slowed \u00b7 retiring finds an heirloom';
+  if(Date.now() / 1000 - (S.topT || 0) >= RETIRE_STALL){
+    if(retireWorth()) return 'The climb has slowed \u00b7 retiring finds an heirloom';
+    // (and with every heirloom found, when the legacy would raise one: a
+    // simulated player who retired only when told sat at Card 58 for five
+    // weeks once there was none left to find)
+    const after = S.legacy + legacyGain();
+    if(B.TROPHY.some(t => found(t.id) && (S.relic[t.id] || 0) < trTop(t) && after >= upgradeCost(t) && S.legacy < upgradeCost(t)))
+      return 'The climb has slowed \u00b7 retire for ' + gain;
+  }
   return '';
 }
 function renderRetireCall(){

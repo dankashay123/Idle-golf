@@ -109,6 +109,14 @@ module.exports = {
           if (!/climb has slowed/i.test(call())) f('two new cards in three days: "' + call() + '"');
           topRise(); if (call()) f('three new cards in three days and it says "' + call() + '"');
           S.topTs = [now - 4 * 86400, now - 4 * 86400, now - 4 * 86400]; S.topT = S.topTs[0]; call(); }
+        // (every heirloom found: the call when the legacy would raise one)
+        { const keepR = JSON.stringify(S.relic), keepL = S.legacy; B.TROPHY.forEach(t => { S.relic[t.id] = Math.max(1, S.relic[t.id] || 0); }); retireWorth._t = -1e9;
+          if (retireWorth()) f('with every heirloom found retiring still "finds" one');
+          const cheap = Math.min(...B.TROPHY.filter(t => (S.relic[t.id] || 0) < trTop(t)).map(t => upgradeCost(t)));
+          S.legacy = Math.max(0, cheap - legacyGain());
+          if (S.legacy < cheap) { if (!/climb has slowed . retire for \+/i.test(call())) f('every heirloom found, a raise in reach by retiring: "' + call() + '"'); }
+          S.legacy = 1e60; if (/climb has slowed/i.test(call())) f('every raise in reach without retiring and it says "' + call() + '"');
+          S.relic = JSON.parse(keepR); S.legacy = keepL; retireWorth._t = -1e9; call(); }
         document.getElementById('upgRetire').click(); if (view !== 'career' || careerSub !== 'leg') f('the call did not open Legacy');
         setView('upg'); S.evRun = 0; if (call()) f('retiring pays nothing yet and it says "' + call() + '"');
         // (a new highest card stamps its time)
