@@ -163,6 +163,15 @@ module.exports = {
             // fall over the whole of it, fixed to the course)
             const a = frame(at, null), R = []; for (const L of Scene._iceR.values()) for (let i = 0; i < L.length; i += 4) R.push(L[i], L[i + 2], L[i + 3]);
             Scene.rainRings = () => {}; const b = frame(at, null); Scene.rainRings = keep.rings;
+            // (laid in two strokes, the same picture to the pixel as a fill
+            // for every pixel, which was some four hundred a frame)
+            { const fr0 = c.fillRect, fl0 = c.fill; let nRect = 0, nFill = 0, inR = 0;
+              c.fillRect = function () { if (inR) nRect++; return fr0.apply(this, arguments); }; c.fill = function () { if (inR) nFill++; return fl0.apply(this, arguments); };
+              Scene.rainRings = function () { inR = 1; try { return keep.rings.apply(this, arguments); } finally { inR = 0; } };
+              RING_BATCH = false; const old = frame(at, null); const oldRect = nRect; nRect = 0; nFill = 0;
+              RING_BATCH = true; const neu = frame(at, null);
+              delete c.fillRect; delete c.fill; Scene.rainRings = keep.rings;
+              o.ringDiff = (o.ringDiff || 0) + diff(old, neu).length + diff(a, neu).length; o.ringOld = (o.ringOld || 0) + oldRect; o.ringNew = Math.max(o.ringNew || 0, nRect + nFill); o.ringFrames = (o.ringFrames || 0) + 1; }
             const rows = new Map(); for (let i = 0; i < R.length; i += 3) { const L = rows.get(R[i]) || []; L.push([R[i + 1], R[i + 1] + R[i + 2]]); rows.set(R[i], L); }
             const wet = (x, y) => { for (let dy = -2; dy <= 2; dy++) { const L = rows.get(y + dy); if (L && L.some(([l, rr]) => x >= l && x < rr)) return true; } return false; };
             const d = diff(a, b); n += d.length; off += d.filter(([x, y]) => !wet(x, y)).length;
@@ -290,6 +299,7 @@ module.exports = {
     if (s.away['whistle-toot'] || s.away['horn-toot']) f('a toot with him not at the line: ' + J(s.away));
     for (const k in r.rain) { const R = r.rain[k];
       if (!R.rain || !(R.n >= 300) || R.off || R.bank) f('rain rings on the ' + k + ': ' + J(R) + ' (on the water only)'); }
+    if (r.ringDiff || !(r.ringOld > 100) || r.ringNew > 2) f('rain rings in two strokes: ' + r.ringDiff + ' pixels unlike a fill for every pixel, ' + r.ringNew + ' canvas calls at most (' + Math.round(r.ringOld / r.ringFrames) + ' before)');
     if (r.dryRings || r.iceRings) f('rain rings out of the rain ' + r.dryRings + ', or on ice ' + r.iceRings);
     for (const k in r.snow) if (!(r.snow[k] >= 30)) f('snow on the ' + k + ': ' + r.snow[k] + ' pixels');
     for (const k in r.lights) if (!(r.lights[k].n >= 20) || r.lights[k].day) f('night on the ' + k + ': ' + J(r.lights[k]) + ' pixels of light at night and by day (lanterns, lights, lamps or fireflies, only at night)');
@@ -299,7 +309,7 @@ module.exports = {
       'each drawn (' + J(r.drawn) + '), each unlike the others (the nearest ' + Math.min(...r.unlike.map(([, n]) => n)) + ' pixels apart); the sleeper\'s lamp ' + r.lamp + 'px, snow on the roofs ' + r.trainSnow + 'px',
       'he waves (' + r.wave.arm + 'px, his arm up over his head), his caddie once, the driver from his cab near the crossing; none far off or away from the line',
       'the express\'s horn, the goods\' lower whistle, a toot passing him, no toot when he is elsewhere',
-      'rain rings on the water: ' + Object.entries(r.rain).map(([k, v]) => k + ' ' + v.n).join(', ') + ', none off it, none dry or on ice',
+      'rain rings on the water: ' + Object.entries(r.rain).map(([k, v]) => k + ' ' + v.n).join(', ') + ', none off it, none dry or on ice; laid in ' + r.ringNew + ' strokes a frame, the same to the pixel as ' + Math.round(r.ringOld / r.ringFrames) + ' fills',
       'at night the pier\'s lanterns, the bridge\'s lights, the island\'s lamps and fireflies (' + Object.entries(r.lights).map(([k, v]) => k + ' ' + v.n).join(', ') + 'px, none by day); snow on the bridge ' + r.snow.bridge + ', stones ' + r.snow.stones + ', pier ' + r.snow.pier + 'px; storm spray ' + r.spray.storm + ' against ' + r.spray.wind + ' at ' + r.spray.mph + ' mph; the bridge swaying ' + r.sway.gale + ' against ' + r.sway.calm];
   }
 };

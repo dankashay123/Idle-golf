@@ -4876,6 +4876,7 @@ const NBR_ROUND = 1.5, RING_ROUND = 2;
 const TRACK_FADE = 2.5;
 // rain rings on the water (rainRings): so many a square pace, at most so
 // many a stretch of water, laid over all of it
+let RING_BATCH = true;
 const RING_PER = 0.5, RING_MAX = 240, RING_MIN = 40;
 // the ripples' lines on the water (ripples), so many a pace
 const RIP_K = 1.6;
@@ -24181,6 +24182,13 @@ const Scene = {
     water = water || this.waterAt(c, T);
     const wet = (x, y) => water(x, y) && (on(x, y) || (on(x, y - 1) && on(x, y + 1)) || (on(x, y - 1) && on(x, y + 2)) || (on(x, y - 2) && on(x, y + 1)));
     const c1 = mixC(pickC(T._wt, 0.95), '#FFFFFF', 0.7), c2 = mixC(pickC(T._wt, 0.9), '#FFFFFF', 0.4);
+    // (every ring's pixels noted, the later over the earlier as they were
+    // drawn, then laid in two strokes, one a colour: they were some four
+    // hundred separate fills a frame in the rain, half of all the frame sent
+    // to the canvas; RING_BATCH off draws them the old way, for the check)
+    const PX = RING_BATCH ? (this._ringPx || (this._ringPx = new Map())) : null;
+    if(PX) PX.clear();
+    const dot = (x, y, bright) => { if(PX) PX.set(y * 4096 + x + 2048, bright); else { c.fillStyle = bright ? c1 : c2; c.fillRect(x, y, 1, 1); } };
     for(const [hz, L] of IR){
       if(L.length < 8) continue;
       // (the water's rows by distance: the row of its surface at any d
@@ -24203,14 +24211,21 @@ const Scene = {
         if(this._anchorLog) this._anchorLog.push({ w: 'ring', q: q + ':' + m, d, x: lx });
         const k = clamp((yy - HORIZON) / Math.max(1, VH - HORIZON), 0, 1);
         const r = u * (2.5 + k * 8), ry = Math.max(0.5, r * 0.32);
-        c.fillStyle = u < 0.5 ? c1 : c2;
-        if(u < 0.12){ if(wet(Math.round(cx), yy - 1)) c.fillRect(Math.round(cx), yy - 1, 1, 1); continue; }
+        const bright = u < 0.5;
+        if(u < 0.12){ if(wet(Math.round(cx), yy - 1)) dot(Math.round(cx), yy - 1, bright); continue; }
         const pts = Math.max(6, Math.round(r * 5));
         for(let p = 0; p < pts; p++){
           const a = p / pts * Math.PI * 2, x = Math.round(cx + Math.cos(a) * r), y = Math.round(yy + Math.sin(a) * ry);
           if(u > 0.75 && (p & 1)) continue;
-          if(wet(x, y)) c.fillRect(x, y, 1, 1);
+          if(wet(x, y)) dot(x, y, bright);
         }
+      }
+    }
+    if(PX && PX.size){
+      for(const want of [true, false]){
+        let any = false;
+        for(const [k, b] of PX){ if(b !== want) continue; if(!any){ c.beginPath(); any = true; } c.rect((k % 4096) - 2048, Math.floor(k / 4096), 1, 1); }
+        if(any){ c.fillStyle = want ? c1 : c2; c.fill(); }
       }
     }
   },
@@ -32816,7 +32831,7 @@ function dailyBlock(){
   // capitals ran the line onto a second one on every phone)
   return '<div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin:12px 0 4px"><span class="eyebrow" style="white-space:nowrap">Challenges</span>'
       + '<span style="font-size:var(--f1);color:var(--faint);text-align:right">New in ' + hms(featLeft())
-      + (st ? ' \u00b7 ' + st + '-day streak' : '') + '</span></div>'
+      + (st ? '<br>' + st + '-day streak' : '') + '</span></div>'
     + Dy.picks.map((id, i) => {
         const c = dailyDef(id); if(!c) return '';
         return roomLine((Dy.done[i] ? '\u2713 ' : '') + nb(c.d),
