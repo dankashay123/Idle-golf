@@ -1290,6 +1290,25 @@ li.afx.on .lockb{color:var(--brass);border-color:var(--brass);background:rgba(22
 
 .empty{padding:26px 16px;text-align:center;color:var(--faint);font-size:var(--f3);line-height:1.6}
 .hint{padding:9px 12px;font-size:var(--f1);color:var(--faint);line-height:1.5;border-bottom:1px solid #12261A}
+/* What to do next (the user asked): one short line over the menu for a new
+   player, a tap takes him there; gone for good at the first retirement. */
+#nextLine{display:flex;justify-content:space-between;align-items:center;gap:10px;width:100%;padding:8px 12px;text-align:left;
+  font-size:var(--f1);line-height:1.3;color:var(--chalk);background:#122A1D;border-bottom:1px solid var(--aurora)}
+#nextLine[hidden]{display:none}
+#nextLine b{flex:none;font-size:var(--f0);letter-spacing:.14em;text-transform:uppercase;color:var(--aurora);font-weight:700}
+#upgRetire{display:flex;justify-content:space-between;align-items:center;gap:10px;width:100%;text-align:left;color:var(--brass);background:#16120A}
+#upgRetire[hidden]{display:none}
+#upgRetire b{flex:none;font-size:var(--f0);letter-spacing:.14em;text-transform:uppercase;border:1px solid var(--brass-dk);padding:3px 8px}
+#upgRows{display:flex;flex-direction:column}
+#upgRows .urow.capped{order:2;display:none}
+#upgRows.showcap .urow.capped{display:flex}
+#upgCapFold{order:1;display:flex;justify-content:space-between;align-items:center;gap:10px;width:100%;padding:10px 12px;text-align:left;
+  color:var(--dim);font-size:var(--f1);border-bottom:1px solid #12261A;background:#0A170F}
+#upgCapFold[hidden]{display:none}
+#upgCapFold b{color:var(--chalk);font-weight:600;margin-right:8px}
+#upgCapFold i{font-style:normal;color:var(--faint)}
+#upgCapFold .pm::before{content:"+";color:var(--brass)}
+#upgCapFold.open .pm::before{content:"\2212"}
 /* Detail that is worth having but not worth reading every time. Folded away
    behind a tap rather than deleted: the screens were three paragraphs deep
    before you got to anything you could press. */
@@ -1505,6 +1524,7 @@ li.afx.on .lockb{color:var(--brass);border-color:var(--brass);background:rgba(22
   </div>
 
   <div id="panel">
+    <button id="nextLine" hidden></button>
 
     <div class="view on" id="v-upg">
       <div id="vitals">
@@ -1518,6 +1538,7 @@ li.afx.on .lockb{color:var(--brass);border-color:var(--brass);background:rgba(22
       <div id="rangeUpg">
       <div class="band"><div id="multBar"></div><button class="mbtn all" id="buyAll">Buy All</button></div>
       <div class="hint" id="upgTax"></div>
+      <button class="hint" id="upgRetire" hidden onclick="setView('leg')"></button>
       <div id="upgRows"></div>
       </div>
       <div id="rangeChal" hidden>
@@ -5396,6 +5417,7 @@ function initState(){
   if(!B.BANK_OPTS.includes(S.islandBank)) S.islandBank = 5;
   if(!S.tierEvents) S.tierEvents = {};
   if(S.tierMax === undefined) S.tierMax = 0;
+  if(!(S.topT > 0)) S.topT = Date.now() / 1000;      // when the highest card last rose (the call to retire)
   if(S.eventsPlayed === undefined) S.eventsPlayed = 0;
   // (the events of this career, since the last retirement: a save from before
   // it counted them keeps the Retire it had)
@@ -9240,7 +9262,7 @@ function advanceHole(){
     // quarter of all holes being albatross or better.
     const round = S.scores.reduce((t, x) => t + (x ? x.d : 0), 0);
     if(round <= B.ROUND * B.ROUND_OPEN && S.tier >= (S.tierMax || 0) && (S.tierMax || 0) < B.TIER_MAX){
-      S.tierMax = (S.tierMax || 0) + 1;
+      S.tierMax = (S.tierMax || 0) + 1; S.topT = Date.now() / 1000;
       toast('Tour Card <b>' + cardNo(S.tierMax) + '</b> unlocked');
       cardPay();
     }
@@ -9395,7 +9417,7 @@ function endTournament(){
   // pace of their game, not of the calendar.
   if(S.tier >= (S.tierMax || 0) && (beat || eventsOn(S.tier) >= eventsToUnlock(S.tier))
      && (S.tierMax || 0) < B.TIER_MAX){
-    S.tierMax = (S.tierMax || 0) + 1;
+    S.tierMax = (S.tierMax || 0) + 1; S.topT = Date.now() / 1000;
     toast('Tour Card <b>' + cardNo(S.tierMax) + '</b> unlocked');
     cardPay();
   }
@@ -11233,7 +11255,7 @@ function fixHoles(o){
   if(!o || typeof o !== 'object' || o.holesFixed) return;
   S.holesFixed = 1;
   const c = matchedCard(deriveStill(4));
-  S.tier = c; S.tierMax = c; S.tierEvents = {};
+  S.tier = c; S.tierMax = c; S.topT = Date.now() / 1000; S.tierEvents = {};
   S.bestTier = Math.max(S.bestTier || 0, c);
   S.scores = []; S.tourScore = 0;
   S.hole = (tournamentOf(S.hole) - 1) * B.ROUND * B.DAYS + 1;
@@ -11263,7 +11285,7 @@ function retire(){
   if(S.weekly && !S.weekly.done) S.weekly.t = 0;
   const keepUpg = relLv('vault') * B.VAULT_UPG;
   B.UPG.forEach(u => S.upg[u.id] = vaultKeep(u, keepUpg));
-  S.tierEvents = {}; S.tierMax = land;
+  S.tierEvents = {}; S.tierMax = land; S.topT = Date.now() / 1000;
   S.buff = {}; B.SKILL.forEach(k => S.cd[k.id] = 0); S.swCount = 0;
   // level, attributes, talents and paragon are the golfer, not the run: untouched.
 
@@ -33171,8 +33193,44 @@ function renderNine(){
   setCls(gEl, (done ? 'done' : '') + (gEl._tight ? ' tight' : ''));
   setText(scEl, scTx(!gEl._nobest));
 }
+// What to do next: the first of these that is true, in the order a new player
+// meets them. Looked at once a second.
+const NEXT_STEPS = [
+  { id: 'upg', go: 'Range', on: () => !B.UPG.some(u => upgLv(u.id) > 0) && B.UPG.some(u => S.gold >= costBulk(u.base, u.r, 0, 1)),
+    t: 'Buy your first upgrade', tap: () => setView('upg'), here: () => false },
+  { id: 'bag', go: 'Bag', on: () => !!S.bagNew && !S.autoEquip,
+    t: 'A better club is waiting', tap: () => setView('bag'), here: () => view === 'bag' },
+  { id: 'pts', go: 'Career', on: () => (S.statPts || 0) + (S.talPts || 0) > 0,
+    t: () => 'Spend your ' + ((S.statPts || 0) + (S.talPts || 0) === 1 ? 'point' : 'points'),
+    tap: () => $('xpStrip').onclick(), here: () => view === 'career' && careerSub !== 'leg' },
+  { id: 'card', go: 'Tour', on: () => !S.autoClimb && S.tier < (S.tierMax || 0),
+    t: () => 'Tour Card ' + cardNo(S.tier + 1) + ' is open', tap: () => setView('tour'), here: () => view === 'tour' },
+  { id: 'sov', go: 'Trophy Room', on: () => (S.owed || []).length > 0 && !(S.sovSpent > 0) && !(S.sov > 0),
+    t: 'Sovereigns are waiting', tap: () => trophyRoom('today'), here: () => false },
+  { id: 'dgn', go: 'Wagers', on: () => !(S.tally && S.tally.runs) && !S.dgnRun && (S.totalHoles || 0) >= 36 && B.DGN.some(d => (S.dgnKeys[d.id] || 0) >= 1),
+    t: 'Try a wager for a big prize', tap: () => setView('dgn'), here: () => view === 'dgn' },
+  { id: 'ret', go: 'Career', on: () => legacyGain() > 0 && retireWorth(),
+    t: 'Retiring finds your first heirloom', tap: () => setView('leg'), here: () => view === 'career' && careerSub === 'leg' }
+];
+function nextStep(){
+  if((S.retires || 0) > 0 || trophiesFound() > 0) return null;
+  for(const st of NEXT_STEPS) if(st.on() && !st.here()) return st;
+  return null;
+}
+function renderNext(force){
+  const el = $$('nextLine'); if(!el) return;
+  const now = performance.now();
+  if(!force && now - (renderNext._t || -1e9) < 1000) return;
+  renderNext._t = now;
+  const st = nextStep();
+  if(el.hidden !== !st) el.hidden = !st;
+  if(!st) return;
+  setHTML(el, '<span>' + (typeof st.t === 'function' ? st.t() : st.t) + '</span><b>' + st.go + '</b>');
+  el.onclick = () => { st.tap(); renderNext(true); };
+}
 function renderLive(D){
   renderXp();
+  renderNext();
   renderNine();
   renderReadout(D || derive());
   renderStageBtns(true);
@@ -33235,6 +33293,7 @@ function rowShell(ic){
     + '<button class="buy"><span class="lbl"></span><span class="amt"></span></button>';
   return d;
 }
+let UPG_CAP_OPEN = false;
 function buildUpg(){
   const w = $('upgRows'); w.innerHTML = ''; UPGREF = [];
   for(const u of B.UPG){
@@ -33254,6 +33313,12 @@ function buildUpg(){
     UPGREF.push({ u, el:d, mt:body.children[0].children[1], btn,
                   lbl:btn.children[0], amt:btn.children[1], ms:body.children[2] });
   }
+  // (rows at their cap fold away under one line, after what can still be
+  // bought: two weeks in the Range was a wall of greyed rows)
+  const cf = document.createElement('button'); cf.id = 'upgCapFold'; cf.hidden = true;
+  cf.innerHTML = '<span><b id="upgCapN"></b><i>Each retirement raises them ' + B.CAP_PER_LEGACY + '\u00a0levels</i></span><span class="pm"></span>';
+  cf.onclick = () => { UPG_CAP_OPEN = !UPG_CAP_OPEN; refreshUpg(); };
+  w.appendChild(cf);
   const mb = $('multBar'); mb.innerHTML = '';
   MULTS.forEach(m => {
     const b = document.createElement('button');
@@ -33341,6 +33406,7 @@ function refreshUpg(){
   // covers it, says all of that.
 
   const D0 = derive();
+  let nCap = 0;
   for(const r of UPGREF){
     const u = r.u, lv = upgLv(u.id), cap = capOf(u);
     const maxed = lv >= cap;
@@ -33361,6 +33427,8 @@ function refreshUpg(){
         setHTML(r.ms.children[1], (nx - lv) + ' more to Level\u00a0' + nx + ': ' + effectLabel(u, nx));
       }
     }
+    setCls(r.el, 'row urow' + (maxed ? ' capped' : ''));
+    if(maxed) nCap++;
     if(maxed){
       r.btn.className = 'buy max'; r.lbl.textContent = 'Capped'; r.amt.textContent = '\u2014';
     }else{
@@ -33372,6 +33440,40 @@ function refreshUpg(){
       r.lbl.textContent = '\u00d7' + Math.max(1, k);
       r.amt.textContent = fmt(c);
     }
+  }
+  const cf = $('upgCapFold');
+  if(cf){
+    cf.hidden = !nCap;
+    setText($('upgCapN'), nCap + ' Capped');
+    setCls(cf, UPG_CAP_OPEN ? 'open' : '');
+    setCls($('upgRows'), UPG_CAP_OPEN ? 'showcap' : '');
+  }
+  // (every row that has a cap: Drive Power has none)
+  UPG_ALLCAP = nCap > 0 && nCap === UPGREF.filter(r => isFinite(capOf(r.u))).length;
+  renderRetireCall();
+}
+// The call to retire (the user: "do what you think is best"): one line at the
+// top of the Range, a tap from the Career tab's Legacy page, when retiring is
+// the best thing left to do -- every row that has a cap at it, or the highest card
+// not risen in three days while retiring would find an heirloom. Said once in
+// a toast too, each run.
+let UPG_ALLCAP = false;
+const RETIRE_STALL = 3 * 86400;
+function retireCall(){
+  if(legacyGain() <= 0) return '';
+  const gain = '+' + fmt(legacyGain()) + '\u00a0legacy';
+  if(UPG_ALLCAP) return 'Every cap reached \u00b7 retire for ' + gain;
+  if(retireWorth() && Date.now() / 1000 - (S.topT || 0) >= RETIRE_STALL) return 'The climb has slowed \u00b7 retiring finds an heirloom';
+  return '';
+}
+function renderRetireCall(){
+  const el = $('upgRetire'); if(!el) return;
+  const tx = retireCall();
+  el.hidden = !tx;
+  if(tx) setHTML(el, '<span>' + tx + '</span><b>Career</b>');
+  if(tx && !QUIET && !OFFLINE && S.retireSaid !== (S.retires || 0) + 1){
+    S.retireSaid = (S.retires || 0) + 1;
+    toast(tx);
   }
 }
 function buyUpg(u){

@@ -57,7 +57,7 @@ module.exports = {
       const sleep = ms => new Promise(r => setTimeout(r, ms));
       const n = id => $(id).children.length;
       const o = {};
-      setView('upg');    await sleep(120); o.upg    = [n('upgRows'),   B.UPG.length];
+      setView('upg');    await sleep(120); o.upg    = [document.querySelectorAll('#upgRows .urow').length, B.UPG.length];   // (the fold for capped rows is not one)
       setView('bag');    await sleep(120); o.slots  = [n('bagGrid'),   B.SLOTS.length];
                                            // the course, the rarity sets, the named sets you hold a piece
                                            // of, and a hint line until you hold one
