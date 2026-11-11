@@ -200,6 +200,8 @@ module.exports = {
     // painted on a 60 grid and scaled by exactly 3, so every 3x3 block is one
     // colour; smoothing, or a size that is not a whole multiple, blends the
     // edges and every block stops being flat.
+    // (it is set a little after the game starts: wait for it, a quick run got here first)
+    await page.waitForFunction(() => !!document.querySelector('link[rel="apple-touch-icon"]'), null, { timeout: 5000 }).catch(() => {});
     const home = await page.evaluate(async () => {
       const l = [...document.querySelectorAll('link[rel="apple-touch-icon"]')].pop();
       if (!l) return null;
