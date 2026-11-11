@@ -29,7 +29,21 @@ module.exports = {
       S.bag = []; B.SLOTS.forEach(s => S.equip[s.id] = null);
       S.autoEquip = 0;
       for (let i = 0; i < 30; i++) bagAdd(makeItem(S.tier, 0.4, 1));
-      out.offEquipped = B.SLOTS.filter(s => !!S.equip[s.id]).length;
+      // (off: a slot with nothing in it takes its first club -- a new player's
+      // clubs lay unworn otherwise -- and nothing worn is ever swapped)
+      out.offBare = B.SLOTS.filter(s => !S.equip[s.id] && S.bag.some(x => x.slot === s.id)).length;
+      const worn0 = B.SLOTS.map(s => S.equip[s.id] && S.equip[s.id].uid);
+      for (let i = 0; i < 30; i++) bagAdd(makeItem(S.tier, 0.4, 1));
+      out.offEquipped = B.SLOTS.filter((s, i) => worn0[i] && S.equip[s.id].uid !== worn0[i]).length;
+      // (and a better club left waiting puts a dot on the Bag tab until the
+      // bag is opened)
+      const bagTab = document.querySelector('.tab[data-v="bag"]');
+      setView('upg'); S.bagNew = 0; renderBagTab();
+      out.dotBefore = bagTab.classList.contains('alert');
+      const wornA = ids();
+      bagAdd(makeItem(S.tier + 20, 0.95, 5));
+      out.dot = bagTab.classList.contains('alert'); out.dotSwapped = ids() !== wornA;
+      setView('bag'); out.dotAfter = bagTab.classList.contains('alert'); setView('upg');
       out.offSwept = autoEquipSweep().length;
 
       // ---- 2. on, and it never loses a club ---------------------------
@@ -223,7 +237,9 @@ module.exports = {
     });
 
     const f = m => { throw new Error(m); };
-    if (r.offEquipped !== 0) f('auto-equip was off and still equipped ' + r.offEquipped);
+    if (r.offBare !== 0) f('a slot stayed empty with a club for it in the bag: ' + r.offBare);
+    if (r.offEquipped !== 0) f('auto-equip was off and still swapped ' + r.offEquipped);
+    if (r.dotBefore || !r.dot || r.dotAfter || r.dotSwapped) f('the Bag tab\'s dot for a better club waiting: before ' + r.dotBefore + ', after the drop ' + r.dot + ', once opened ' + r.dotAfter + ', swapped ' + r.dotSwapped);
     if (r.offSwept !== 0) f('the sweep ran with the toggle off, taking ' + r.offSwept);
     if (!(r.firstSweep > 0)) f('the first sweep of a full locker took nothing');
     if (!r.heldSame) f('the sweep changed how many clubs are held');

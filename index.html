@@ -118,9 +118,11 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
 #xpStrip.para #xpFill{background:linear-gradient(90deg,#8E4FD0,var(--myth))}
 #xpNum{font-family:var(--mono);font-size:var(--f0);color:var(--faint);white-space:nowrap}
 /* Points waiting are the only reason to press this, so they get a chip rather
-   than another run of small grey text alongside everything else. */
-#xpStrip.ready #xpNum{color:var(--brass);border:1px solid var(--brass-dk);
-  padding:2px 7px;background:#16120A;font-weight:600;letter-spacing:.04em}
+   than another run of small grey text alongside everything else. (Its edge
+   a shadow, which takes no room: a border made the strip 4px taller and the
+   whole course jumped down when the first points came.) */
+#xpStrip.ready #xpNum{color:var(--brass);box-shadow:0 0 0 2px #16120A,0 0 0 3px var(--brass-dk);
+  padding:0 5px;margin-right:3px;background:#16120A;font-weight:600;letter-spacing:.04em}
 
 /* ---------- scorecard strip ---------- */
 #card{display:grid;grid-template-columns:repeat(18,1fr);background:#0A170F}
@@ -1543,7 +1545,7 @@ li.afx.on .lockb{color:var(--brass);border-color:var(--brass);background:rgba(22
     </div>
 
     <div class="view" id="v-dgn">
-      <div class="band"><span class="eyebrow">The Wager Book</span><span class="note" id="dgnNote"></span></div>
+      <div class="band"><span class="eyebrow" style="white-space:nowrap">The Wager Book</span><span class="note" id="dgnNote"></span></div>
       <div class="featbar" id="dgnFeat"></div>
       <div id="dgnRows"></div>
     </div>
@@ -6700,6 +6702,10 @@ function bagAdd(it){
   // the very one the trim was about to scrap, and the club it puts back may be
   // the worst thing in there. The other order leaves the locker one over its
   // cap until the next drop lands.
+  // (a slot with nothing in it takes the club, Auto-Equip on or off: a new
+  // player's first clubs lay in the bag unworn until he found the Bag tab)
+  const bare = OFFLINE ? [] : fillBare();
+  if(bare.length){ toast('Equipped <b>' + bare[0].name + '</b>'); renderVitals(); if(view === 'bag') renderBag(); }
   const took = autoEquipSweep();
   if(took.length){
     toast(took.length === 1 ? 'Auto-equipped <b>' + took[0].name + '</b>'
@@ -6733,7 +6739,28 @@ function bagAdd(it){
       lockN = 0; lockSh = 0; lockT = now;
     }
   }
+  // (a better club left waiting, Auto-Equip off: a dot on the Bag tab until
+  // the bag is opened)
+  if(held && !OFFLINE && !S.autoEquip && S.bag.includes(it) && view !== 'bag'){
+    const cur = S.equip[it.slot];
+    if(!cur || itemScore(it) > itemScore(cur)){ S.bagNew = 1; renderBagTab(); }
+  }
   return held;
+}
+// Every empty slot takes the best club lying in the bag for it.
+function fillBare(){
+  const took = [];
+  for(const sl of B.SLOTS){
+    if(S.equip[sl.id]) continue;
+    let best = null;
+    for(const it of S.bag) if(it.slot === sl.id && (!best || itemScore(it) > itemScore(best))) best = it;
+    if(!best) continue;
+    S.equip[sl.id] = best; S.bag = S.bag.filter(x => x.uid !== best.uid); took.push(best);
+  }
+  return took;
+}
+function renderBagTab(){
+  const t = document.querySelector('.tab[data-v="bag"]'); if(t) t.classList.toggle('alert', !!S.bagNew && !S.autoEquip);
 }
 function equipItem(it){
   const cur = S.equip[it.slot];
@@ -11469,7 +11496,7 @@ function offlineCore(){
   try{ tickShop(away); OFFLINE = true; checkAch(); }finally{ QUIET = false; OFFLINE = false; }
   // One sweep for the whole session rather than one per drop: the loop above
   // can land a thousand clubs and the sweep costs a derive() per candidate.
-  const swapped = autoEquipSweep().length;
+  const swapped = fillBare().length + autoEquipSweep().length;
   let scrapped = 0, scrapSh = 0;
   if(S.bag.length > bagCap()){
     lockerSort();
@@ -11521,6 +11548,8 @@ function offlineCore(){
   if(autoOff > 0) marks.push(['Auto-scrapped ' + autoOff, '+' + fmt(autoOffSh, 0) + ' ' + plural(autoOffSh, 'shards'), ic('shard', '#7FD6F2')]);
   if(scrapped > 0) marks.push(['Locker full · scrapped ' + scrapped, '+' + fmt(scrapSh, 0) + ' ' + plural(scrapSh, 'shards'), ic('shard', '#7FD6F2')]);
   if(entries > 0) marks.push(['Wager entries back', '+' + entries, ic('scroll')]);
+  // (nothing at all to show for the time away: no card of zeroes)
+  if(!(g > 0) && !holes && !gear && !marks.length && !best) return;
   if(marks.length) h += '<div class="awband">Results</div>'
     + '<div class="awlist">' + marks.map(([k, v, i]) => line(k, v, i)).join('') + '</div>';
 
@@ -32756,8 +32785,11 @@ function dailyBlock(){
   if(!S.daily) return '';
   const Dy = S.daily, st = dailyStreak();
   const bonus = B.DAILY_ALL + B.DAILY_STREAK * Math.min(B.DAILY_STREAK_MAX, st + (Dy.all ? 0 : 1));
-  return '<div class="eyebrow" style="margin:12px 0 4px">Challenges \u00b7 New in ' + hms(featLeft())
-      + (st ? ' \u00b7 ' + st + '-day streak' : '') + '</div>'
+  // (the heading alone, the time left beside it in plain letters: spaced
+  // capitals ran the line onto a second one on every phone)
+  return '<div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin:12px 0 4px"><span class="eyebrow" style="white-space:nowrap">Challenges</span>'
+      + '<span style="font-size:var(--f1);color:var(--faint);text-align:right">New in ' + hms(featLeft())
+      + (st ? ' \u00b7 ' + st + '-day streak' : '') + '</span></div>'
     + Dy.picks.map((id, i) => {
         const c = dailyDef(id); if(!c) return '';
         return roomLine((Dy.done[i] ? '\u2713 ' : '') + nb(c.d),
@@ -34319,7 +34351,7 @@ function setView(v){
   view = v;
   document.querySelectorAll('.tab').forEach(t => t.classList.toggle('on', t.dataset.v === v));
   document.querySelectorAll('.view').forEach(e => e.classList.toggle('on', e.id === 'v-' + v));
-  if(v === 'bag'){ renderBag(); renderSkillsTab(); }
+  if(v === 'bag'){ S.bagNew = 0; renderBagTab(); renderBag(); renderSkillsTab(); }
   if(v === 'upg') renderRangeNav();
   if(v === 'dgn') renderDgn();
   // Looking at it is what clears the flash on the tab.
@@ -36395,6 +36427,8 @@ function boot(){
   announceCourse();
 
   if(had) offline(); else intro();
+  if(fillBare().length) renderVitals();
+  renderBagTab();
   checkinPop();                     // the Daily Check-In, after the away card
   bootGo();                         // the loading screen's tee shot, and away
   STORE.load();                     // (the app's store: its prices, in his own money)
