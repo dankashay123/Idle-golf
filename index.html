@@ -97,7 +97,8 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
   background:linear-gradient(180deg,#0B1811,#0C1A13)}
 #eventLine{font-family:var(--disp);font-size-adjust:none;font-size:var(--f4);letter-spacing:.02em;line-height:1.1;color:var(--chalk);
   user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
-#sub{font-size:var(--f0);letter-spacing:.16em;text-transform:uppercase;color:var(--faint);margin-top:6px}
+#sub{font-size:var(--f0);letter-spacing:.16em;text-transform:uppercase;color:var(--faint);margin-top:6px;white-space:nowrap}
+@media (max-width:359px){ #sub{letter-spacing:.06em} }
 #gold{font-size:var(--f4)}
 #purse{text-align:right}
 #gold{font-family:var(--mono);font-size:var(--f5);font-weight:600;color:var(--brass);line-height:1}
@@ -150,6 +151,7 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
 #nineGoal b{color:var(--aurora);font-weight:600;flex:none}
 #nineGoal{pointer-events:auto}
 #nineGoal.done{color:var(--aurora)}
+#nineGoal.tight .glab{display:none}
 #nineScore{font-family:var(--mono);color:var(--brass);white-space:nowrap}
 
 /* the pull tab: a notch on the corner of the menu, and the one thing in the
@@ -706,7 +708,7 @@ li.afx.on .lockb{color:var(--brass);border-color:var(--brass);background:rgba(22
 .rline #rTop{min-width:0;overflow:hidden;text-overflow:ellipsis}
 .rline #rTopR{flex:0 0 auto;font-variant-numeric:tabular-nums}
 .rmain{display:flex;align-items:baseline;gap:4px;justify-self:center;letter-spacing:normal}
-#rBig{font-family:var(--mono);font-size:var(--f3);font-weight:600;color:var(--brass);line-height:1;font-variant-numeric:tabular-nums}
+#rBig{text-transform:none;font-family:var(--mono);font-size:var(--f3);font-weight:600;color:var(--brass);line-height:1;font-variant-numeric:tabular-nums}
 .ru{font-size:var(--f0);letter-spacing:.12em;text-transform:uppercase;color:var(--faint);white-space:nowrap}
 /* With the auto-climb button beside it the box is a button narrower, and late
    on, a pot of 1.23Qa with "Running hot" beside it ran 27px out of the box on
@@ -1041,6 +1043,9 @@ li.afx.on .lockb{color:var(--brass);border-color:var(--brass);background:rgba(22
    would slide about under your thumb. The readout fills the row up to the
    button instead and the button stays put. Capped, or on a tablet the box ran
    most of the way across the field. */
+/* ("Albatross" lost its end to an ellipsis beside "walking" and a clock past
+   ten seconds on every phone under 414 wide) */
+@media (max-width:413px){ #rTag{letter-spacing:.05em} .rright{gap:5px} }
 @media (max-width:380px){ .rline,#rTag{letter-spacing:.03em} }
 @media (max-width:359px){ #readout.hl #rTop{display:none} #readout.hl .rright{display:contents}
   #readout.hl .rmain,#readout.hl #rTag,#readout.hl #rTopR{grid-row:1} #readout.hl .rmain{grid-column:2}
@@ -33089,7 +33094,8 @@ function renderReadout(D){
     top = 'Hole ' + holeInRound(S.hole) + ' \u00b7 Par ' + parOf(S.hole);
     topR = holeTime().toFixed(1) + ' / ' + Math.round(S.parTime) + 's';
     const ly = shownYards();
-    big = ly <= 0 ? '\u2014' : fmt(ly);
+    // (no dash before "walking": the word alone, and the call beside it whole)
+    big = ly <= 0 ? '\u200b' : fmt(ly);
     unit = ly <= 0 ? (Scene.aceHold() ? 'in the cup' : 'walking') : 'yds';
     frac = clamp(ly/S.yardsMax, 0, 1);
     tag = sc.n;
@@ -33148,10 +33154,22 @@ function renderNine(){
   // with it: "Goal:" gives way there)
   // (and a long goal gives way before its count does)
   setHTML(gEl, '<span class="gname"><span class="glab">Goal: </span>' + p.goal.n + '</span><b>' + Math.min(p.have, p.need) + '/' + p.need + '</b>');
+  // (and where the goal still runs out, a long one beside a best score,
+  // "Goal:" gives way on any phone: measured only when the words change)
+  const scEl = $$('nineScore'), bar = $$('nineBar');
+  const scTx = best => (N.total === 0 ? 'E' : N.total > 0 ? '+' + N.total : N.total)
+    + (best && S.bestNine !== undefined ? '  best ' + (S.bestNine === 0 ? 'E' : S.bestNine) : '');
+  // (measured with everything on the line as it will be, and again once the
+  // fonts are in: the first look came before either)
+  const gKey = gEl._hx + '|' + scTx(1) + '|' + innerWidth + '|' + (document.fonts ? document.fonts.status : '');
+  if(gEl._fitK !== gKey){ gEl._fitK = gKey; gEl.className = ''; gEl._nobest = 0; setText(scEl, scTx(1));
+    const gn = gEl.firstChild, over = () => gn && gn.scrollWidth > gn.clientWidth + 1;
+    gEl._tight = over() ? 1 : 0;
+    // (then the best score, which the Record keeps: the goal is read whole)
+    if(gEl._tight){ gEl.className = 'tight'; if(over()) gEl._nobest = 1; } }
   if(!gEl._tap){ gEl._tap = 1; gEl.style.cursor = 'pointer'; gEl.onclick = nineGoalTip; }
-  setCls(gEl, done ? 'done' : '');
-  setText($$('nineScore'), (N.total === 0 ? 'E' : N.total > 0 ? '+' + N.total : N.total)
-    + (S.bestNine !== undefined ? '  best ' + (S.bestNine === 0 ? 'E' : S.bestNine) : ''));
+  setCls(gEl, (done ? 'done' : '') + (gEl._tight ? ' tight' : ''));
+  setText(scEl, scTx(!gEl._nobest));
 }
 function renderLive(D){
   renderXp();
