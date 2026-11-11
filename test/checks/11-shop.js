@@ -136,6 +136,8 @@ module.exports = {
       // 4. bags honour what they advertise
       S.bag = []; S.tier = 15; S.pityB = {};
       const worst = {}, best = {}, counts = {};
+      // (counted in the bag: a club worn into an empty slot would leave it)
+      const fillBare0 = fillBare; fillBare = () => [];
       for (const bg of B.BAGS) {
         worst[bg.id] = 99; best[bg.id] = -1; counts[bg.id] = 0;
         for (let n = 0; n < 40; n++) {
@@ -151,6 +153,7 @@ module.exports = {
           best[bg.id] = best[bg.id] < 0 ? hi : Math.min(best[bg.id], hi);
         }
       }
+      fillBare = fillBare0;
       out.bags = B.BAGS.map(bg => ({ id: bg.id, num: bg.num, got: counts[bg.id],
         floor: bg.floor, worst: worst[bg.id], top: bg.top, leastBest: best[bg.id] }));
 
