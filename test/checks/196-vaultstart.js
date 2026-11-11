@@ -31,11 +31,19 @@ module.exports = {
         const want = dgnStartFloor('vault'); if (!(want >= 5)) fail('the strong golfer\'s start floor only ' + want); startDgn(d); o.kept = S.dgnRun.floor + '/' + want;
         if (S.dgnRun.floor !== want) fail('a start floor in reach (' + want + ') became ' + S.dgnRun.floor);
         let t2 = 0; while (S.dgnRun && t2 < d.run * 2) { step(0.05, derive()); t2 += 0.05; } hideSheet();
+        // far stronger than his best floor (a first Vault, late): he starts
+        // where a floor is about a second and a half's work, not at floor 1
+        // (each floor cleared in an instant stood through its pause, the
+        // clock stopped: ten minutes to play 56 seconds)
+        S.dgnFloor.vault = 0; S.dgnKeys.vault = entryCap(d); S.dgnRun = null; D = derive();
+        startDgn(d); o.late = S.dgnRun.floor; o.lateS = floorWork(S.dgnRun.floor) / D.dps;
+        if (!(o.late > 5) || !(floorWork(o.late) <= D.dps * 1.5) || !(floorWork(o.late + 1) > D.dps * 1.5)) fail('a strong golfer\'s first Vault started on floor ' + o.late + ', ' + o.lateS.toFixed(2) + ' seconds\' work');
+        S.dgnRun = null; hideSheet();
         function fail(m) { fails.push(m); }
       } finally { QUIET = false; window.toast = tw; Object.keys(S).forEach(k => delete S[k]); Object.assign(S, JSON.parse(SNAP)); hideSheet(); }
       return { fails, o };
     });
     if (r.fails.length) throw new Error(r.fails.join('; '));
-    return ['from floor 400 a weak golfer starts on floor ' + r.o.deep + ' (' + Math.round(r.o.work * 100) + '% of a run to clear) and is paid, the card projecting ' + r.o.proj + ' floors; a start in reach kept (' + r.o.kept + ')'];
+    return ['from floor 400 a weak golfer starts on floor ' + r.o.deep + ' (' + Math.round(r.o.work * 100) + '% of a run to clear) and is paid, the card projecting ' + r.o.proj + ' floors; a strong golfer's first Vault starts on floor ' + r.o.late + ' (' + r.o.lateS.toFixed(1) + ' seconds\' work a floor)' + '; a start in reach kept (' + r.o.kept + ')'];
   }
 };

@@ -5,7 +5,9 @@
  *     doing, in order: the first upgrade once he can pay for it, a better
  *     club waiting, points to spend, an open Tour Card (Auto-Climb off), a
  *     wager never tried, the first heirloom; a tap goes there; nothing after
- *     the first retirement or the first heirloom
+ *     the first retirement or the first heirloom but what can be missed
+ *     for days: an heirloom to discover or raise, a talent tree untouched,
+ *     the Trials opening; nothing at all in a wager
  *   - on the Range, rows at their cap fold away under one line after the
  *     rows that can still be bought; a tap opens them
  *   - the call to retire at the top of the Range: when every row that has a cap is at it,
@@ -46,11 +48,28 @@ module.exports = {
         o.worth = retireWorth(); if (!o.worth) f('the setup did not make retiring worth it');
         if (!/first heirloom/i.test(line())) f('retiring worth it: "' + line() + '"');
         document.getElementById('nextLine').click(); if (view !== 'career' || careerSub !== 'leg') f('the heirloom line did not open Legacy');
-        setView('upg'); S.retires = 1; if (line()) f('after a retirement the line says "' + line() + '"');
+        setView('upg'); S.retires = 1; S.legacy = 0; if (line()) f('after a retirement with nothing to do the line says "' + line() + '"');
+        // ---- and after the first retirement: what can be missed for days ----
+        S.statPts = 5; S.gold = 1e9; S.bagNew = 1; if (line()) f('after a retirement the first-hour lines came back: "' + line() + '"');
+        S.statPts = 0; S.bagNew = 0;
+        S.legacy = discoverCost(); if (!/discover an heirloom/i.test(line())) f('an heirloom in reach: "' + line() + '"');
+        document.getElementById('nextLine').click(); if (view !== 'career' || careerSub !== 'leg') f('the heirloom line did not open Legacy');
+        if (line()) f('on the Legacy page the line still says "' + line() + '"');
+        setView('upg'); discover(); S.legacy = 0; if (line()) f('an heirloom found, no legacy left: "' + line() + '"');
+        { B.TROPHY.forEach(t => { S.relic[t.id] = Math.max(1, S.relic[t.id] || 0); }); const t = B.TROPHY.reduce((a, t) => upgradeCost(t) < upgradeCost(a) ? t : a); S.legacy = upgradeCost(t); if (!/can be raised/i.test(line())) f('an heirloom to raise: "' + line() + '"'); S.legacy = 0; }
+        S.talPts = 1; { const tr = B.TREES[0]; if (!new RegExp(tr.n + ' has no talents yet', 'i').test(line())) f('an untouched tree: "' + line() + '"');
+          document.getElementById('nextLine').click(); if (view !== 'career' || careerSub !== 'tal') f('the talent line did not open Talents');
+          setView('upg'); B.TREES.forEach(x => { S.tal[x.t.find(t => !t.req).id] = 1; }); if (/talents yet/i.test(line())) f('every tree begun and the line still names one'); }
+        S.talPts = 0; S.tierMax = B.CHAL_TIER[0]; S.chalDone = {}; delete S.chal;
+        if (!/Trials are open/i.test(line())) f('the Trials open: "' + line() + '"');
+        document.getElementById('nextLine').click(); if (view !== 'upg' || rangeSub !== 'chal') f('the Trials line did not open the Trials');
+        rangeSub = 'upg'; renderRangeNav(); S.chalDone = { [B.CHAL[0].id]: 1 }; if (/Trials/i.test(line())) f('a Trial won and the line still says so');
+        S.chalDone = {}; S.dgnRun = { id: 'sand' }; if (line()) f('in a wager the line says "' + line() + '"'); S.dgnRun = null;
+        S.tierMax = 0; S.retires = 1;
         // (one line, inside the screen)
-        S.retires = 0; S.statPts = 3; S.talPts = 2; S.tally.runs = 1; line();
+        S.retires = 0; B.TROPHY.forEach(t => { S.relic[t.id] = 0; }); S.statPts = 3; S.talPts = 2; S.tally.runs = 1; line();
         { const e = document.getElementById('nextLine'), b = e.getBoundingClientRect(); o.h = Math.round(b.height);
-          if (b.height > 40 || e.scrollWidth > e.clientWidth + 1) f('the line is ' + Math.round(b.height) + 'px tall or runs out at 320'); }
+          if (!(b.height > 10) || b.height > 40 || e.scrollWidth > e.clientWidth + 1) f('the line is ' + Math.round(b.height) + 'px tall or runs out at 320'); }
 
         // ---- the Range's capped rows ----
         fresh(); S.gold = 0; S.retires = 0;
@@ -97,6 +116,6 @@ module.exports = {
       return { fl, o };
     });
     if (r.fl.length) throw new Error(r.fl.join('; '));
-    return ['the next thing to do in one line (' + r.o.h + 'px at 320): upgrade, club, points, card, wager, heirloom, each a tap away, none after retiring; ' + r.o.capped + ' capped rows folded under the rest and opened; the call to retire when all is capped or three days without a new card, once in a toast'];
+    return ['the next thing to do in one line (' + r.o.h + 'px at 320): upgrade, club, points, card, wager, heirloom, each a tap away; after retiring an heirloom to find or raise, a tree untouched, the Trials; none in a wager; ' + r.o.capped + ' capped rows folded under the rest and opened; the call to retire when all is capped or three days without a new card, once in a toast'];
   }
 };

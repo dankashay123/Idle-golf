@@ -1291,7 +1291,9 @@ li.afx.on .lockb{color:var(--brass);border-color:var(--brass);background:rgba(22
 .empty{padding:26px 16px;text-align:center;color:var(--faint);font-size:var(--f3);line-height:1.6}
 .hint{padding:9px 12px;font-size:var(--f1);color:var(--faint);line-height:1.5;border-bottom:1px solid #12261A}
 /* What to do next (the user asked): one short line over the menu for a new
-   player, a tap takes him there; gone for good at the first retirement. */
+   player, a tap takes him there; after the first retirement only what can be
+   missed for days (an heirloom to find or raise, a talent tree untouched,
+   the Trials opening). */
 #nextLine{display:flex;justify-content:space-between;align-items:center;gap:10px;width:100%;padding:8px 12px;text-align:left;
   font-size:var(--f1);line-height:1.3;color:var(--chalk);background:#122A1D;border-bottom:1px solid var(--aurora)}
 #nextLine[hidden]{display:none}
@@ -7079,6 +7081,11 @@ function regenKeys(dt){
 // run and its projection on the card both start here.
 function vaultStart(d, D, dur){
   let f = dgnStartFloor(d.id);
+  // (a golfer far stronger than his best floor starts where a floor is a
+  // second and a half's work: a first Vault two weeks in began at floor 1,
+  // cleared each floor in an instant and stood through its pause, with the
+  // clock stopped, some 140 times -- ten minutes to play 56 seconds)
+  for(let g = 0; g < 4000 && floorWork(f + 1) <= D.dps * 1.5; g++) f++;
   while(f > 0 && floorWork(f) > D.dps * dur * 0.5) f--;
   return f;
 }
@@ -33227,9 +33234,27 @@ const NEXT_STEPS = [
   { id: 'ret', go: 'Career', on: () => legacyGain() > 0 && retireWorth(),
     t: 'Retiring finds your first heirloom', tap: () => setView('leg'), here: () => view === 'career' && careerSub === 'leg' }
 ];
+// And after the first retirement (the user asked for the same help later):
+// only what a player can miss for days, never what a dot already says.
+const talTreeBare = () => (S.talPts || 0) > 0 ? B.TREES.find(tr => !tr.t.some(t => (S.tal[t.id] || 0) > 0) && tr.t.some(t => !t.req)) : null;
+const heirRaise = () => B.TROPHY.some(t => found(t.id) && (S.relic[t.id] || 0) < trTop(t) && S.legacy >= upgradeCost(t));
+const LATER_STEPS = [
+  { id: 'disc', go: 'Career', on: () => trophiesFound() < B.TROPHY.length && S.legacy >= discoverCost(),
+    t: 'You can discover an heirloom', tap: () => setView('leg'), here: () => view === 'career' && careerSub === 'leg' },
+  { id: 'raise', go: 'Career', on: () => heirRaise(),
+    t: 'An heirloom can be raised', tap: () => setView('leg'), here: () => view === 'career' && careerSub === 'leg' },
+  { id: 'tree', go: 'Career', on: () => !!talTreeBare(),
+    t: () => talTreeBare().n + ' has no talents yet', tap: () => { setView('career'); careerSub = 'tal'; renderCareer(); },
+    here: () => view === 'career' && careerSub === 'tal' },
+  { id: 'trial', go: 'Range', on: () => (S.tierMax || 0) >= B.CHAL_TIER[0] && !S.chal && !Object.keys(S.chalDone || {}).length,
+    t: 'Trials are open', tap: () => { setView('upg'); rangeSub = 'chal'; renderRangeNav(); },
+    here: () => view === 'upg' && rangeSub === 'chal' }
+];
 function nextStep(){
-  if((S.retires || 0) > 0 || trophiesFound() > 0) return null;
-  for(const st of NEXT_STEPS) if(st.on() && !st.here()) return st;
+  // (never in a wager: the course is set aside, and nothing can be done about it there)
+  if(S.dgnRun) return null;
+  const L = (S.retires || 0) > 0 || trophiesFound() > 0 ? LATER_STEPS : NEXT_STEPS;
+  for(const st of L) if(st.on() && !st.here()) return st;
   return null;
 }
 function renderNext(force){
