@@ -42,8 +42,10 @@ control". Checks `nextstep`, `suffix`, `narrow` and the ones named below.
   with every heirloom found nothing called and he sat at Card 58 for five
   weeks; "every cap reached" alone called daily from week five (46
   retirements, the full set on day 51, Card 219 in ten weeks). As it is:
-  the set on day 52, 46 and 68 for seeds 1 to 3, 13, 13 and 12
-  retirements; income more than doubles past Card 100 (honours, finds and
+  the set on day 52, 46 and 68 for seeds 1 to 3 (13, 13 and 12
+  retirements, Card 121, 122 and 99 in ten weeks) against 62, 45 and 67
+  by the rule before (3 to 5 retirements, Card 76 to 87): the set comes
+  about three days sooner on the mean and he climbs much further; income more than doubles past Card 100 (honours, finds and
   Golden Hour all pay by the hole, and he plays far more of them).
 - **A strong golfer's first Vault** starts where a floor is about a second
   and a half of work (`vaultStart`): from floor 1 it was ten minutes of

@@ -36,8 +36,9 @@ game as it is, short, and move detail into `docs/`.
   pass only when something done needs a look over, or after a few
   commits. Never offer a photo mode, a weather forecast or fireworks;
   don't raise the dog until he does.
-- **Pacing**: a free player gets a full Mythic set in about ten weeks (nine
-  to ten on the simulation, retiring when the game calls for it) at an
+- **Pacing**: a free player gets a full Mythic set in about ten weeks (eight
+  on the simulation's mean, day 46 to 68 by the seed, retiring when the
+  game calls for it; 45 to 67 by the rule before) at an
   hour a day; no wall below Card 200 to 250 (maxed walls at 220); nothing
   game-breaking at max, every heirloom has a top, and maxing them all
   takes far longer than finding them. Simulate a free player who plays
