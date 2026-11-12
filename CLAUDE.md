@@ -36,8 +36,8 @@ game as it is, short, and move detail into `docs/`.
   pass only when something done needs a look over, or after a few
   commits. Never offer a photo mode, a weather forecast or fireworks;
   don't raise the dog until he does.
-- **Pacing**: a free player gets a full Mythic set in about ten weeks (nine on
-  the simulation now; he chose to leave it) at an
+- **Pacing**: a free player gets a full Mythic set in about ten weeks (nine
+  to ten on the simulation, retiring when the game calls for it) at an
   hour a day; no wall below Card 200 to 250 (maxed walls at 220); nothing
   game-breaking at max, every heirloom has a top, and maxing them all
   takes far longer than finding them. Simulate a free player who plays
@@ -51,6 +51,9 @@ game as it is, short, and move detail into `docs/`.
   `earnSov`. Purchases pay once paid (at once on the web). Rewards for *seeing* things are earned
   live only and with the course in sight (`Scene.watched()`: never away,
   in a catch-up, a wager or behind the saver).
+- **Empty slots fill themselves; a worn club is never swapped** unless
+  Auto-Equip is on. **The call to retire** comes only when the climb has
+  slowed (the caps alone called daily: a set in seven weeks).
 - **Every swing power but the clubs' is a multiplier of its own** (into
   the clubs' sum it is lost); a new one goes into `powParts` too.
 - **The iPhone app** (Capacitor, built on his Mac): all of it in

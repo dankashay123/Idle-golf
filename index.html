@@ -6787,6 +6787,7 @@ function bagAdd(it){
   return held;
 }
 // Every empty slot takes the best club lying in the bag for it.
+const BAG_TOLD = 3;
 function fillBare(){
   const took = [];
   for(const sl of B.SLOTS){
@@ -33262,7 +33263,9 @@ function renderNine(){
 const NEXT_STEPS = [
   { id: 'upg', go: 'Range', on: () => !B.UPG.some(u => upgLv(u.id) > 0) && B.UPG.some(u => S.gold >= costBulk(u.base, u.r, 0, 1)),
     t: 'Buy your first upgrade', tap: () => setView('upg'), here: () => false },
-  { id: 'bag', go: 'Bag', on: () => !!S.bagNew && !S.autoEquip,
+  // (said BAG_TOLD times, then left to the Bag tab's dot: in a first hour a
+  // better club drops about every forty seconds, and the line never left)
+  { id: 'bag', go: 'Bag', on: () => !!S.bagNew && !S.autoEquip && (S.bagTold || 0) < BAG_TOLD,
     t: 'A better club is waiting', tap: () => setView('bag'), here: () => view === 'bag' },
   { id: 'pts', go: 'Career', on: () => (S.statPts || 0) + (S.talPts || 0) > 0,
     t: () => 'Spend your ' + ((S.statPts || 0) + (S.talPts || 0) === 1 ? 'point' : 'points'),
@@ -34573,7 +34576,7 @@ function setView(v){
   view = v;
   document.querySelectorAll('.tab').forEach(t => t.classList.toggle('on', t.dataset.v === v));
   document.querySelectorAll('.view').forEach(e => e.classList.toggle('on', e.id === 'v-' + v));
-  if(v === 'bag'){ S.bagNew = 0; renderBagTab(); renderBag(); renderSkillsTab(); }
+  if(v === 'bag'){ if(S.bagNew && !S.autoEquip) S.bagTold = Math.min(BAG_TOLD, (S.bagTold || 0) + 1); S.bagNew = 0; renderBagTab(); renderBag(); renderSkillsTab(); }
   if(v === 'upg') renderRangeNav();
   if(v === 'dgn') renderDgn();
   // Looking at it is what clears the flash on the tab.

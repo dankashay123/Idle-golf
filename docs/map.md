@@ -9,6 +9,10 @@ Line numbers are approximate and drift. Search for the name instead.
 
 | What | Where (search for) |
 |---|---|
+| **The next thing to do** (the line over the menu) | `#nextLine`, `NEXT_STEPS`, `LATER_STEPS`, `nextStep`, `renderNext`, `talTreeBare`, `heirRaise` |
+| **The call to retire**, the Range's capped rows | `retireCall`, `renderRetireCall`, `#upgRetire`, `UPG_ALLCAP`, `RETIRE_STALL`, `topRise`, `topReset`, `S.topTs`/`S.topT`, `S.retireSaid`; `#upgCapFold`, `UPG_CAP_OPEN` |
+| **Empty slots filled**, the Bag tab's dot | `fillBare`, `S.bagNew`, `renderBagTab` |
+| **A number's small suffix** on the course | `lowS`, `GLYPH_S` (keys from `\uE061`), `glyphRows` |
 | **The bags' chances** (the Bags tab's `?`) | `bagOdds`, `oddsPct`, `bagOddsHtml`, `bagOddsOpen`, `bagPityLine`, `bagPityLeft` |
 | **The till**: everything sold for money | `PRODUCTS`, `buildProducts`, `prodPack`, `PROD_STARTER`, `PROD_MEMBER`, `PROD_PASS`, `prodLook`, `STORE` (`real`, `price`, `note`, `charged`, `load`, `buy`, `paid`, `restore`); `packGrant`, `starterGrant`, `memberGrant`, `passGrant`, `lookGrant`; `S.txSeen` |
 | **The app's copy of the save** | `VAULT`, `vaultRead`, `vaultPut`, `vaultCheck`, `vaultRestore`; `S.saveSeq` (counted in `save`) |

@@ -6,6 +6,72 @@ feature must do, and is usually enough on its own.
 
 ## Sections, newest first
 
+### A polish pass on the game itself: what next, the call to retire, small screens (11 to 12 November)
+
+He asked to leave the app aside, review the game and make it "incredible
+and polished", then picked from what was offered and gave "full creative
+control". Checks `nextstep`, `suffix`, `narrow` and the ones named below.
+
+- **Empty slots fill themselves** (`fillBare`, from `bagAdd`, the away's
+  end and launch): the best club in the bag by `itemScore` into any empty
+  slot, said in a toast. **A worn club is never swapped** unless Auto-Equip
+  is on (his words). With it off, a better club waiting puts a dot on the
+  Bag tab (`S.bagNew`, cleared on opening it). Checks that count a bag's
+  clubs stub `fillBare` (`shop`, `green`, `mastery`).
+- **The next thing to do**, one line over the menu, a tap takes him there
+  (`#nextLine`, `NEXT_STEPS`, `nextStep`, `renderNext`, at most once a
+  second). A new player: first upgrade, a better club, points to spend,
+  the next Tour Card, sovereigns waiting, a wager, retiring. The
+  better-club line is said three times (`BAG_TOLD`, `S.bagTold`), then
+  left to the Bag tab's dot: with Auto-Equip off a better club drops
+  about every forty seconds in a first hour. After the
+  first retirement or heirloom (`LATER_STEPS`) only what can be missed
+  for days: an heirloom to discover, one to raise, a talent tree with
+  nothing in it, the Trials opening. Never during a wager.
+- **The Range's capped rows fold** under one line, "N Capped · Each
+  retirement raises them 25 levels" (`#upgCapFold`, `UPG_CAP_OPEN`).
+- **The call to retire** (`retireCall`, `#upgRetire` at the top of the
+  Range, once in a toast each run, `S.retireSaid`): only when **the climb
+  has slowed**, fewer than three new highest cards in three days
+  (`topRise`, `topReset`, `S.topTs`, `S.topT`, `RETIRE_STALL`), and then
+  when every row that has a cap is at it ("Every cap reached"), or
+  retiring would find an heirloom, or the legacy would raise one. The
+  rules it went through, each from a simulated player who retires only
+  when told (`test/sim.js` now does; `RETIRE=old` is the rule before):
+  three days with no new card at all never fired in a slow second week;
+  with every heirloom found nothing called and he sat at Card 58 for five
+  weeks; "every cap reached" alone called daily from week five (46
+  retirements, the full set on day 51, Card 219 in ten weeks). As it is:
+  the set on day 52, 46 and 68 for seeds 1 to 3, 13, 13 and 12
+  retirements; income more than doubles past Card 100 (honours, finds and
+  Golden Hour all pay by the hole, and he plays far more of them).
+- **A strong golfer's first Vault** starts where a floor is about a second
+  and a half of work (`vaultStart`): from floor 1 it was ten minutes of
+  pauses. Check `vaultstart`.
+- **Rain rings** are laid in two strokes a frame, not some 400 to 590
+  fills (`rainRings`, `RING_BATCH`; off draws the old way for the check),
+  the same to the pixel (`sigweather`). A rainy frame late in the game
+  was about 980 canvas calls against 460 in clear weather.
+- **A shot's number over his head** writes its suffix small with a sliver
+  of room (`lowS`, small letters in `GLYPH_S` under private keys): the
+  lettering is all capitals and "3.88Oc" read "3.880C". Check `suffix`.
+- **Top bars and small things**: no away card of zeroes; the experience
+  strip no longer jumps when the first points come; a finished hole reads
+  no figure before "walking"; a long nine goal gives way in order (its
+  label, then the best score); the challenges' time beside their heading
+  and the streak on its own line.
+- **At 320 wide** (a new player's first hour played there, check
+  `narrow`): the Wager Book's note on one line; the day's featured wager
+  with its name, pay and time each unbroken (the time drops under); Free
+  Sovereigns named on one line with "Every 8 hours · Next in ..." under
+  it; a sheet's headings drawn closer so "Seen 2/82 ..." is one line.
+- **Looked over and found sound** (nothing changed): all 43 looks on him
+  and on her at three moments, 32 courses, the five signature holes by
+  day and night, twelve kinds of weather, the six wagers by hand, 44
+  caddies, trails and balls, on its side; autumn, winter, blossom and
+  frost on the ten home courses; Dawn and Dusk at five hours on four
+  courses.
+
 ### Ready for the iPhone app: odds, one till, the app's save, edges, vibration, reminders, Auto frames (25 October to 2 November)
 
 He asked what else would make the game ready to wrap into an iPhone app;

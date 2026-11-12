@@ -36,6 +36,11 @@ module.exports = {
         if (S.equip.driver !== worn) f('a better club was worn over the one carried, Auto-Equip off');
         if (!/better club/i.test(line())) f('a better club waiting: "' + line() + '"');
         document.getElementById('nextLine').click(); if (view !== 'bag') f('the club line did not open the Bag');
+        // (said three times, then left to the Bag tab's dot: a better club drops every forty seconds)
+        { for (let k = 2; k <= 3; k++) { setView('upg'); bagAdd(makeItem(30 + k * 10, 0.95, 5, 'driver')); if (!/better club/i.test(line())) f('a better club, time ' + k + ': "' + line() + '"'); setView('bag'); }
+          setView('upg'); bagAdd(makeItem(80, 0.95, 5, 'driver')); if (/better club/i.test(line())) f('told three times and the line says it a fourth');
+          if (!document.querySelector('.tab[data-v="bag"]').classList.contains('alert')) f('no dot on the Bag tab for the fourth');
+          setView('bag'); setView('upg'); }
         S.statPts = 2; S.talPts = 0; if (!/Spend your points/i.test(line())) f('points to spend: "' + line() + '"');
         S.statPts = 1; if (!/Spend your point\b/i.test(line())) f('one point: "' + line() + '"');
         document.getElementById('nextLine').click(); if (view !== 'career') f('the points line did not open Career');

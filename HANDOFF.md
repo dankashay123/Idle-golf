@@ -1,6 +1,6 @@
 # Handoff — Mythic Mulligan
 
-Last updated 2026-11-11 (pushed to `main`). `CLAUDE.md` holds the standing
+Last updated 2026-11-12 (pushed to `main`). `CLAUDE.md` holds the standing
 rules and is loaded by itself; this file is what a new session needs on
 top. Read this file whole. The rest is for looking up, never for reading
 through:
@@ -20,8 +20,23 @@ through:
   a day, not counting toward the bag's Mythic count, members without the
   video, and asked whether to simulate those first or build the button.
   Wait for his answer; simulate (rule 82) before anything pays.
-- Last done (25 October to 2 November; detail in `docs/features.md`'s
-  newest section): **ready for the iPhone app.**
+- **He is back on the game itself** (11 November: "ignoring the turning it
+  into an iPhone app phase for now"), and on 12 November gave "full
+  creative control": decide, do it, say what was decided. The ads
+  question waits ("ignore the ads part for now"): don't raise it.
+- Last done (11 to 12 November; `docs/features.md`'s newest section): **a
+  polish pass.**
+  - **Empty slots fill themselves**; a worn club is never swapped unless
+    Auto-Equip is on (his words); a dot on the Bag tab for a better club.
+  - **The next thing to do** in one line over the menu, for a new player
+    and, after the first retirement, for what can be missed for days.
+  - **The Range's capped rows fold away**; **a call to retire** when the
+    climb has slowed and there is something to retire for.
+  - A strong golfer's first Vault starts at his level; rain rings in two
+    strokes; a shot's suffix in small letters; three rows at 320 wide.
+  - Every look on him and her, the courses, weather, seasons, frost, Dawn
+    and Dusk and the wagers looked over: nothing else wrong.
+- Before that (25 October to 2 November): **ready for the iPhone app.**
   - The bags' **chances shown before buying** (the Bags tab's `?`).
   - **One till** for everything sold for money, with App Store product
     ids; Restore Purchases in the app.
@@ -57,7 +72,7 @@ through:
   new a switch. Earlier work: the sections under it.
 - What lives by the season asks `lookSeason`: a course's own, the Snowline
   winter and the Blossom spring all year, else the month.
-- `node test/run.js` has **215 checks** (all passed 2 November). About 35 minutes: run it in the
+- `node test/run.js` has **218 checks** (all passed 12 November). About 35 minutes: run it in the
   background, on a copy in the scratchpad, with the machine quiet. After
   weather, colours or anything dated, also run it with `HOUR_FORCE` 8 and
   15 and the month pinned (rules 20 and 70).
@@ -322,7 +337,11 @@ Numbered so `CLAUDE.md` and the checks can point at them.
     sits just under the bar (`wagerplay`).
 
 82. **Pace by a player who plays properly** (`test/sim.js`: retires when
-    the climb stalls, buys heirlooms, spends talents, upgrades clubs). The
+    the game calls for it, `retireCall`, so a change to the call is a
+    change to the pace: simulate it; `RETIRE=old` is the rule before;
+    buys heirlooms, spends talents, upgrades clubs). Three runs at once
+    on this machine did not replay a seed (seed 3's first week differed
+    from its run alone): one or two at a time, as rule 95 says. The
     old simulated player never retired and stalled at Card 40, which made
     the climb look ten times slower than it is. A seed now plays the same
     every run (17 October: the whole clock pinned, the game's frame loop
@@ -416,6 +435,9 @@ Numbered so `CLAUDE.md` and the checks can point at them.
 
 ## 6. What to offer next
 
+He is on the game itself for now: offer game things first, the Mac
+session only as one of the list. Don't raise ads until he does.
+
 Turned down, don't offer: a station on the railway, a photo mode, a
 weather forecast, fireworks, trail flourishes, caddie tricks. Nothing for
 the Tour tab, no new sound but ambience.
@@ -451,4 +473,14 @@ mountain), the other special holes for bunkers under them, snow falling
 heavier, frost melting through a round, a fog bank thinning, gusts of
 leaves, glints and variety on the gold heap, a speed pass at its foot.
 
-Recommend 1 (or answer the ads question first if he raises it).
+8. **Ask how the new help reads on his phone**: the line over the menu,
+   the call to retire, the folded Range.
+9. **Auto-Equip for a new player**: off by default, and a better club
+   drops about every forty seconds in the first hour (88 in one played
+   through). He chose "don't auto equip anything for slots that are
+   already filled unless the player presses auto equip"; ask whether the
+   first-hour guide should point at the Auto-Equip button once.
+10. **Heat, the rest**: trees (about 110 drawn a frame) and the gallery
+    are what is left after the rain rings.
+
+Recommend 8, then 1 when he is at the Mac.
