@@ -241,6 +241,11 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
   position:sticky;top:0;z-index:3}
 .band .eyebrow{color:var(--dim)}
 .band .note{font-size:var(--f1);color:var(--faint);font-family:var(--mono)}
+/* (at 320 the Wager Book's note broke after "Card": one line, the heading drawn closer) */
+#dgnNote{white-space:nowrap}
+@media (max-width:380px){ .band .eyebrow{letter-spacing:.1em} }
+/* (and a sheet's own headings: "Seen 2/82 · +2 for a new one" broke in two at 320) */
+@media (max-width:359px){ #sheet .eyebrow{letter-spacing:.11em} }
 
 /* Flex, not a two column grid: rows carry an icon now, and some carry two
    buttons, so the shape is icon / body / action rather than a fixed pair. */
@@ -472,7 +477,10 @@ div.guide.hunt,div.guide.mhunt{grid-template-columns:repeat(3,minmax(0,1fr))}
 .glyph.lock{color:var(--faint);border-style:dashed}
 
 /* ---------- dungeons ---------- */
-.featbar{display:flex;align-items:baseline;gap:8px;padding:7px 12px;
+/* (at 320 the three stood in three narrow columns, the name on three lines:
+   each is one line now, and the time drops under when there is no room) */
+.featbar span{white-space:nowrap}
+.featbar{display:flex;flex-wrap:wrap;align-items:baseline;gap:0 8px;padding:7px 12px;
   border-bottom:1px solid #12261A;background:rgba(227,180,87,.06);
   border-left:2px solid var(--brass-dk)}
 .featbar .fn{font-family:var(--disp);font-size-adjust:none;font-size:var(--f2);color:var(--brass)}
@@ -32834,8 +32842,9 @@ function roomToday(w){
   const kinds = new Set(P.map(x => x.c.id)).size + (ready ? 1 : 0) + OW.length;
   let h = kinds > 1 ? '<button class="act" data-collect="">GET ALL \u00b7 +' + sovFmt(all) + ' ' + B.SOV + '</button>' : '';
   h += '<div class="eyebrow" style="margin:6px 0 4px">To Get</div>'
-    + roomLine('Free ' + B.SOV + ' \u00b7 Every ' + Math.round(B.FREE_EVERY / 3600) + ' hours',
-        ready ? '' : 'Next in ' + hms(B.FREE_EVERY - (S.freeT || 0)),
+    // (at 320 the name ran to four lines beside its time: both under it now, the time never broken)
+    + roomLine('Free ' + B.SOV + '<i class="rd">Every ' + Math.round(B.FREE_EVERY / 3600) + ' hours'
+        + (ready ? '' : ' \u00b7 Next\u00a0in\u00a0' + hms(B.FREE_EVERY - (S.freeT || 0)).replace(/ /g, '\u00a0')) + '</i>', '',
         ready ? collectBtn('free', B.FREE_GIFT) : '');
   const byTrack = {};
   for(const x of P) (byTrack[x.c.id] = byTrack[x.c.id] || []).push(x);
@@ -33543,8 +33552,12 @@ const RETIRE_STALL = 3 * 86400;
 function retireCall(){
   if(legacyGain() <= 0) return '';
   const gain = '+' + fmt(legacyGain()) + '\u00a0legacy';
-  if(UPG_ALLCAP) return 'Every cap reached \u00b7 retire for ' + gain;
+  // (every cap reached is no reason alone: a simulated player who retired the
+  // day the caps were met retired daily from week five, had the full set in
+  // seven weeks, not nine, and stood at Card 219 in ten. While new cards still
+  // come there is nothing to retire for.)
   if(Date.now() / 1000 - (S.topT || 0) >= RETIRE_STALL){
+    if(UPG_ALLCAP) return 'Every cap reached \u00b7 retire for ' + gain;
     if(retireWorth()) return 'The climb has slowed \u00b7 retiring finds an heirloom';
     // (and with every heirloom found, when the legacy would raise one: a
     // simulated player who retired only when told sat at Card 58 for five

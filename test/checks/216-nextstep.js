@@ -96,10 +96,13 @@ module.exports = {
         B.UPG.forEach(u => { if (isFinite(capOf(u))) S.upg[u.id] = capOf(u); });
         if (call()) f('everything capped before retiring pays, and it says "' + call() + '"');
         S.evRun = B.RETIRE_EVENTS; S.tier = 20; S.tierMax = 20; S.topT = Date.now() / 1000; retireWorth._t = -1e9;
+        // (while new cards still come the caps alone are no reason: he retired daily)
+        if (call()) f('everything capped and the card rose just now, and it says "' + call() + '"');
+        S.topT = Date.now() / 1000 - 3 * 86400 - 60;
         { if (!/Every cap reached/i.test(call()) || !/legacy/i.test(call())) f('everything capped: "' + call() + '"');
           if (said.filter(x => /cap reached/i.test(x)).length !== 1) f('the call was toasted ' + said.filter(x => /cap reached/i.test(x)).length + ' times');
           call(); call(); if (said.filter(x => /cap reached/i.test(x)).length !== 1) f('the call was toasted again'); }
-        B.UPG.forEach(u => { S.upg[u.id] = 0; }); S.retireSaid = 0; said.length = 0;
+        B.UPG.forEach(u => { S.upg[u.id] = 0; }); S.retireSaid = 0; said.length = 0; S.topT = Date.now() / 1000;
         if (call()) f('the card rose just now and it says "' + call() + '"');
         S.topT = Date.now() / 1000 - 3 * 86400 - 60;
         if (!/climb has slowed/i.test(call())) f('three days without a new card: "' + call() + '"');

@@ -1,7 +1,8 @@
 // A simulated player, an hour a day through the real game, to set the pace
 // before changing anything that pays (CLAUDE.md). It plays as a real player
 // does: buys the cheapest Range upgrade, spends attribute and talent points,
-// upgrades and ascends the clubs it wears, retires when the climb stalls and
+// upgrades and ascends the clubs it wears, retires when the game calls for
+// it (`retireCall`; RETIRE=old for the rule from before the call) and
 // buys and levels heirlooms with the legacy. (The old one never retired and
 // stalled at Card 40; a real player climbs a card every two days or so.)
 //
@@ -27,7 +28,7 @@ const { chromium } = require('playwright');
   await p.addInitScript((sc) => { window.__sovAuto = 1; window.__noShimmer = 1; window.__SCALE = sc; }, JSON.parse(process.env.SCALE || '{}'));
   await p.goto('http://localhost:8080/index.html'); await p.waitForTimeout(1500);
   const stateIn = process.env.STATE_IN ? JSON.parse(require('fs').readFileSync(process.env.STATE_IN, 'utf8')) : null;
-  const out = await p.evaluate(async ([variant, seedN, DAYS, SI]) => {
+  const out = await p.evaluate(async ([variant, seedN, DAYS, SI, OLDRET]) => {
     hideSheet();
     // (and the game's own frame loop stopped: it played real frames between
     // the days, as many as the real time allowed, so a slower run played
@@ -39,6 +40,10 @@ const { chromium } = require('playwright');
     // two runs of one seed apart -- a slower run met other hours)
     const RD = Date; window.Date = class extends RD { constructor(...a) { if (a.length) super(...a); else super(SIMT); } static now() { return SIMT; } };
     window.toast = () => {}; window.showSheet = () => {}; window.hideSheet = () => {};
+    // (and the "Spotted!" tag: this is one long call, so no timer ever fires
+    // to take a tag down; they piled up and a day late in a run took two
+    // minutes, not half of one)
+    spotShow = () => {};
     // (seeded first: the first hole and the albatross's first wait were rolled
     // on the browser's own dice, a different run every time)
     let seed = seedN * 7919 + 1; Math.random = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
@@ -95,7 +100,12 @@ const { chromium } = require('playwright');
       }
       take(); shop(); tal(); gear(); heir();
       if ((S.tierMax || 0) > topAt) { topAt = S.tierMax; topDay = day; }
-      if (day - topDay >= 3 && legacyGain() > 0) { const P = legacyPreview(); if (P.after > P.held || day - topDay >= 6) { retire(); retires++; heir(); topAt = S.tierMax || 0; topDay = day; } }
+      // (he retires when the game calls for it, its own rule: `retireCall`.
+      // RETIRE=old in the environment is the rule from before the call: three
+      // days with no new card and an heirloom to find, or six days.)
+      if (OLDRET) { if (day - topDay >= 3 && legacyGain() > 0) { const P = legacyPreview(); if (P.after > P.held || day - topDay >= 6) { retire(); retires++; heir(); topAt = S.tierMax || 0; topDay = day; } } }
+      else { UPG_ALLCAP = B.UPG.filter(u => isFinite(capOf(u))).every(u => upgLv(u.id) >= capOf(u)); retireWorth._t = -1e9;
+        if (retireCall()) { retire(); retires++; heir(); topAt = S.tierMax || 0; topDay = day; } }
       S.t = SIMT / 1000;
       if (reached < 0 && S.sov >= SET) reached = day + 1;
       if (day % 7 === 6 || day === DAYS - 1) rows.push({ day: day + 1, sov: S.sov, card: S.tier + 1, top: Math.max(S.tierMax || 0, S.bestTier || 0) + 1, ret: retires, heir: trophiesFound() });
@@ -104,7 +114,7 @@ const { chromium } = require('playwright');
     window.Date = RD; Date.now = RN;
     return { variant, seed: seedN, set: SET, reached, rows, src: SRC,
       state: { S: JSON.parse(JSON.stringify(S)), seed, topAt, topDay, retires, rows, reached, src: SRC, day: DAYS } };
-  }, [variant, +seedS, DAYS, stateIn]);
+  }, [variant, +seedS, DAYS, stateIn, process.env.RETIRE === 'old']);
   if (process.env.STATE_OUT) require('fs').writeFileSync(process.env.STATE_OUT, JSON.stringify(out.state));
   delete out.state;
   out.errs = errs.slice(0, 3);
