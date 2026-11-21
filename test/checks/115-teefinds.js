@@ -5,7 +5,7 @@
  *   - about one live hole in forty, from the hole's hash, about 2.5
  *     sovereigns over forty holes; never away, in a wager, before his first
  *     hole, on another hole or twice on one hole, nor with the course out
- *     of sight
+ *     of sight (spaced by minutes of play: check playgap)
  *   - laid in the rough on his left, clear of hazards, woods, water and
  *     other holes, and on the field where it can be seen: not under the
  *     buttons or the hole map, on a phone upright or on its side
@@ -22,7 +22,7 @@ module.exports = {
       const SNAP = JSON.stringify(S), o = { fails: [] }, f = m => { if (o.fails.length < 14) o.fails.push(m); };
       try {
         hideSheet(); HOUR_FORCE = 14; S.totalHoles = Math.max(5, S.totalHoles || 0);
-        const lay = (h, force) => { S.hole = h; S.chaos = { n: 'Fair' }; S.findHole = 0; FIND_FORCE = force ? h : null; Scene.newHole(h, S.tier); FIND_FORCE = null;
+        const lay = (h, force) => { S.hole = h; S.chaos = { n: 'Fair' }; S.findHole = 0; delete S.findT; FIND_FORCE = force ? h : null; Scene.newHole(h, S.tier); FIND_FORCE = null;
           return Scene.props.find(p => p.kind === 19); };
         // how often, and what it comes to (from the hash: the same numbers
         // the holes draw)
@@ -85,7 +85,7 @@ module.exports = {
           none('in a catch-up', () => { QUIET = true; }, () => { QUIET = false; });
           none('in a wager', () => { S.dgnRun = { id: B.DGN[0].id }; }, () => { S.dgnRun = null; });
           const th = S.totalHoles; none('before his first hole', () => { S.totalHoles = 0; }, () => { S.totalHoles = th; });
-          { const s2 = S.sov; S.hole = h + 7; S.findHole = 0; FIND_FORCE = h + 8; Scene.newHole(h + 8, S.tier); FIND_FORCE = null;
+          { const s2 = S.sov; S.hole = h + 7; S.findHole = 0; delete S.findT; FIND_FORCE = h + 8; Scene.newHole(h + 8, S.tier); FIND_FORCE = null;
             if (S.sov !== s2 || Scene.props.some(p => p.kind === 19)) f('a find on a hole he is not playing'); }
         }
         // drawn: alone over a blank, it shows; never under the ground's line
@@ -152,7 +152,7 @@ module.exports = {
               DEV.course(B.COURSE.indexOf(cs)); hideSheet();
               const t = tournamentOf(S.hole), first = (t - 1) * B.ROUND * B.DAYS + 1;
               for (let hh = first; hh < first + 6; hh++) {
-                S.hole = hh; S.chaos = { n: 'Fair' }; S.findHole = 0; FIND_FORCE = hh; Scene.newHole(hh, S.tier); FIND_FORCE = null; Scene.camD = 0;
+                S.hole = hh; S.chaos = { n: 'Fair' }; S.findHole = 0; delete S.findT; FIND_FORCE = hh; Scene.newHole(hh, S.tier); FIND_FORCE = null; Scene.camD = 0;
                 const p = Scene.props.find(x => x.kind === 19); if (!p) continue; out.n++;
                 const pr = Scene.proj(p.d, p.x), R = cv.getBoundingClientRect();
                 const X = R.left + pr.x / VW * R.width, Y = R.top + (pr.y - 1) / VH * R.height;

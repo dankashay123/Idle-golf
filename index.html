@@ -241,8 +241,10 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
   position:sticky;top:0;z-index:3}
 .band .eyebrow{color:var(--dim)}
 .band .note{font-size:var(--f1);color:var(--faint);font-family:var(--mono)}
-/* (at 320 the Wager Book's note broke after "Card": one line, the heading drawn closer) */
-#dgnNote{white-space:nowrap}
+/* (at 320 the Wager Book's note broke after "Card": the card kept with its
+   number and the heading drawn closer; the note may wrap, as it must in a
+   wager: "On the stage · the round is paused" ran off the screen held to one line) */
+#dgnNote{text-align:right}
 @media (max-width:380px){ .band .eyebrow{letter-spacing:.1em} }
 /* (and a sheet's own headings: "Seen 2/82 · +2 for a new one" broke in two at 320) */
 @media (max-width:359px){ #sheet .eyebrow{letter-spacing:.11em} }
@@ -340,6 +342,8 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
 .lkhead .lkauto{border:1px solid var(--line);border-radius:0;background:transparent;
   color:var(--faint);font-size:var(--f0);letter-spacing:.09em;text-transform:uppercase;
   padding:3px 7px;min-height:24px;cursor:pointer;flex:0 0 auto}
+.lkhead .lkauto.hint{border-color:var(--brass);color:var(--brass);animation:autoHint .9s ease-in-out 3}
+@keyframes autoHint{50%{background:rgba(227,180,87,.22);box-shadow:0 0 0 2px rgba(227,180,87,.35)}}
 .lkhead .lkauto.on{border-color:var(--brass-dk);color:var(--brass);background:rgba(227,180,87,.09)}
 
 /* The Bag tab (the user asked): its sub tabs and the slot bar stay at the
@@ -5448,6 +5452,18 @@ const OWED_RENAME = /^(Caddie gifts|Honours already earned|All three challenges|
 const owedTitle = t => t === 'The week\u2019s hunt' ? 'Weekly Hunt' : /^\w+\u2019s hunt$/.test(t) ? t.replace(/\u2019s hunt$/, ' Hunt')
   : OWED_RENAME.test(t) ? t.replace(/(^|\s)([a-z])/g, (m, a, c) => a + c.toUpperCase()) : t;
 function migrate(){
+  // (what pays by the hole, spaced by live play: a broken clock or a mark
+  // past it held finds, Golden Hour or an honour back for good)
+  if(!(S.playT >= 0 && S.playT < 1e12)) S.playT = 0;
+  for(const k of ['findT', 'goldT']) if(S[k] !== undefined && !(S[k] >= 0 && S[k] <= S.playT)) delete S[k];
+  if(S.achRepT !== undefined){ if(!S.achRepT || typeof S.achRepT !== 'object' || Array.isArray(S.achRepT)) delete S.achRepT;
+    else for(const k in S.achRepT) if(!(S.achRepT[k] >= 0 && S.achRepT[k] <= S.playT)) delete S.achRepT[k]; }
+  // (the first hour's line over the menu: what it has said)
+  if(![0, 1].includes(S.bagNew)) S.bagNew = 0;
+  if(!(S.bagTold >= 0 && S.bagTold <= BAG_TOLD)) delete S.bagTold;
+  if(S.autoTold !== undefined && S.autoTold !== 1) delete S.autoTold;
+  if(S.retireSaid !== undefined && !(S.retireSaid >= 0 && S.retireSaid < 1e9)) delete S.retireSaid;
+  if(S.stepSeen !== undefined && (!S.stepSeen || typeof S.stepSeen !== 'object' || Array.isArray(S.stepSeen))) delete S.stepSeen;
   // (every part of the save of the kind a new save has it: a list where a
   // list belongs, a table where a table does, a number where a number does;
   // anything else, a broken or hand-edited save's, back to a new save's, the
@@ -6613,11 +6629,15 @@ function checkAch(){
   for(const a of B.ACH_REP){
     const have = achMetric(a.m), got = Math.floor(have / a.step);
     if(S.achRep[a.id] === undefined){ S.achRep[a.id] = got; continue; }
-    const k = got - S.achRep[a.id];
+    let k = got - S.achRep[a.id];
     if(k <= 0) continue;
     if(fair === null) fair = !OFFLINE && fairCard();
     if(!fair){ S.achRep[a.id] = got; continue; }
     S.achRep[a.id] = got;
+    // (one at a time, spaced by live play: the count goes on from here)
+    S.achRepT = S.achRepT || {};
+    if(!playGap('hon', S.achRepT[a.id])) continue;
+    S.achRepT[a.id] = S.playT || 0; k = 1;
     earnSov(k * a.sov, 'hon', 'hon:' + a.id, a.n);
     toast('<span class="achk">Honours +' + fmt(k * a.sov, 0) + sovIc() + '</span>'
       + a.n + (k > 1 ? ' \u00d7' + fmt(k, 0) : ''), 'ach');
@@ -6788,6 +6808,8 @@ function bagAdd(it){
 }
 // Every empty slot takes the best club lying in the bag for it.
 const BAG_TOLD = 3;
+const autoHintDue = () => !!S.bagNew && !S.autoEquip && (S.bagTold || 0) >= BAG_TOLD && !S.autoTold;
+let AUTO_HINT = -1e9;
 function fillBare(){
   const took = [];
   for(const sl of B.SLOTS){
@@ -9190,7 +9212,7 @@ function finishHole(D){
     // (and, played live, the gold at the top: sovereigns and a ticket, once
     // a hole; never away, in a catch-up or a run made quietly)
     // (and only with the course in sight, as finds by the tee)
-    if(!OFFLINE && !QUIET && S.goldPaid !== S.hole && Scene.watched()){ S.goldPaid = S.hole;
+    if(!OFFLINE && !QUIET && S.goldPaid !== S.hole && Scene.watched() && playGap('gold', S.goldT)){ S.goldPaid = S.hole; S.goldT = S.playT || 0;
       earnSov(B.GOLDEN_SOV, 'today', 'gold', 'Golden Hour'); const t0 = S.tickets || 0; grantTickets(B.GOLDEN_TICK); const m = (S.tickets || 0) - t0;
       toast('<span class="achk">Golden Hour</span><span style="white-space:nowrap">+' + B.GOLDEN_SOV + sovIc() + '</span>' + (m > 0 ? ' \u00b7 +' + m + '\u00a0ticket' + (m > 1 ? 's' : '') : ''), 'ach'); } }
 
@@ -9612,6 +9634,14 @@ const FINDS = [{ id: 'ball', n: 'Lost Ball', sov: 1, w: 45 }, { id: 'peg', n: 'T
   { id: 'marker', n: 'Ball Marker', sov: 1, w: 15 }, { id: 'coin', n: 'Old Coin', sov: 2, w: 20 },
   { id: 'antique', n: 'Antique Coin', sov: 5, w: 5 }];
 const FIND_ODDS = 67, FIND_PICK = 0.9;   // (one live hole in 67: 40 before the user cut the free sovereigns that grow with play by 40%)
+// What pays by the hole, spaced by live play: late on a hole is an ace
+// from the tee in about a second, against ten at Card 67, and finds by the
+// tee, Golden Hour's sovereigns and the repeating honours came eight times
+// as often (the user asked for the full set at nine to ten weeks; three
+// simulated players had it in eight). At most one of each kind in these
+// many seconds of play; at the pace of the middle cards nothing changes.
+const PLAY_GAP = { find: 240, gold: 420, hon: 600 };
+const playGap = (k, at) => (S.playT || 0) - (at === undefined ? -1e9 : at) >= PLAY_GAP[k];
 let FIND_FORCE = null;             // the developer menu's: a find on this hole
 function findOf(h){
   let r = hr(h, 704) * 100;
@@ -9619,7 +9649,7 @@ function findOf(h){
   return FINDS[0];
 }
 function payFind(h, F){
-  S.findHole = h; S.finds = (S.finds || 0) + 1;
+  S.findHole = h; S.finds = (S.finds || 0) + 1; S.findT = S.playT || 0;
   earnSov(F.sov, 'today', 'finds', 'By the Tee');
   toast('<span class="achk">By the Tee</span>' + F.n + ' · <span style="white-space:nowrap">+' + F.sov + sovIc() + '</span>', 'ach');
 }
@@ -23251,7 +23281,7 @@ const Scene = {
     // drawn and a hole does not wait for him to walk up, so finds came
     // faster unseen than watched; a reward for seeing is earned seeing)
     if(!this.watched() && FIND_FORCE !== h) return;
-    if(FIND_FORCE !== h && (hr(h, 700) >= 1 / FIND_ODDS || !fairCard())) return;
+    if(FIND_FORCE !== h && (hr(h, 700) >= 1 / FIND_ODDS || !fairCard() || !playGap('find', S.findT))) return;
     for(let i = 0; i < 16; i++){
       // (on his left: the hole map stands over the right of the field)
       const side = -1, d = 3.4 + hr(h * 3 + i, 702) * 2.2;
@@ -28083,11 +28113,14 @@ Object.assign(Scene, {
   // twice a frame, it was a good share of drawing the crowd
   solidAt(spr, w, h){
     const C = spr._sol || (spr._sol = new Map()), k = w * 4096 + h;
-    let M = C.get(k); if(M) return M;
+    let M = C.get(k); if(M){ C.delete(k); C.set(k, M); return M; }
     M = new Uint8Array(w * h);
     for(let yy = 0; yy < h; yy++){ const row = spr.rows[Math.floor(yy * spr.h / h)];
       for(let xx = 0; xx < w; xx++){ const cc = row.charCodeAt(Math.floor(xx * spr.w / w)); if(!(cc === 46 || cc === 32 || cc !== cc)) M[yy * w + xx] = 1; } }
-    if(C.size >= 8) C.delete(C.keys().next().value);
+    // (as many sizes as the shrunk pictures keep, SH_MAX, the least lately
+    // used dropped: eight, and the woods' hundred trees at a dozen sizes each
+    // built some eighteen outlines again every frame)
+    if(C.size >= SH_MAX) C.delete(C.keys().next().value);
     C.set(k, M); return M;
   },
   standDepth(spr, x, y, w, h){
@@ -32273,7 +32306,9 @@ function honRows(w){
   // The ones that come round again, one line each: how far to the next, and
   // what it pays. Not .row, so the first row in the sheet is still the nearest
   // one-off.
-  h += '<div class="eyebrow" style="margin:10px 0 4px">Every time</div>'
+  // (and how often at most: one of each in PLAY_GAP.hon seconds of play)
+  h += '<div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin:10px 0 4px"><span class="eyebrow">Every time</span>'
+    + '<span id="honGap" style="font-size:var(--f1);color:var(--faint);white-space:nowrap">' + Math.round(PLAY_GAP.hon / 60) + ' minutes apart at most</span></div>'
     + B.ACH_REP.map(a => {
         const have = achMetric(a.m) % a.step;
         return '<div class="lb rep"><span>' + a.n + '<i class="rd">' + nb(a.d) + '</i></span>'
@@ -33267,6 +33302,11 @@ const NEXT_STEPS = [
   // better club drops about every forty seconds, and the line never left)
   { id: 'bag', go: 'Bag', on: () => !!S.bagNew && !S.autoEquip && (S.bagTold || 0) < BAG_TOLD,
     t: 'A better club is waiting', tap: () => setView('bag'), here: () => view === 'bag' },
+  // (and then, once, the button that does it for him: the user chose to keep
+  // Auto-Equip off until a player presses it, and a better club drops about
+  // every forty seconds in a first hour; opening the Bag from here lights it)
+  { id: 'auto', go: 'Bag', on: () => autoHintDue(),
+    t: 'Auto-Equip wears better clubs for you', tap: () => setView('bag'), here: () => view === 'bag' },
   { id: 'pts', go: 'Career', on: () => (S.statPts || 0) + (S.talPts || 0) > 0,
     t: () => 'Spend your ' + ((S.statPts || 0) + (S.talPts || 0) === 1 ? 'point' : 'points'),
     tap: () => $('xpStrip').onclick(), here: () => view === 'career' && careerSub !== 'leg' },
@@ -33288,10 +33328,12 @@ const LATER_STEPS = [
     t: 'You can discover an heirloom', tap: () => setView('leg'), here: () => view === 'career' && careerSub === 'leg' },
   { id: 'raise', go: 'Career', on: () => heirRaise(),
     t: 'An heirloom can be raised', tap: () => setView('leg'), here: () => view === 'career' && careerSub === 'leg' },
-  { id: 'tree', go: 'Career', on: () => !!talTreeBare(),
+  // (these two go once he has been there: a tree left bare or the Trials
+  // left alone may be his choice, and the line stayed over the menu for weeks)
+  { id: 'tree', go: 'Career', once: 1, on: () => !!talTreeBare(),
     t: () => talTreeBare().n + ' has no talents yet', tap: () => { setView('career'); careerSub = 'tal'; renderCareer(); },
     here: () => view === 'career' && careerSub === 'tal' },
-  { id: 'trial', go: 'Range', on: () => (S.tierMax || 0) >= B.CHAL_TIER[0] && !S.chal && !Object.keys(S.chalDone || {}).length,
+  { id: 'trial', go: 'Range', once: 1, on: () => (S.tierMax || 0) >= B.CHAL_TIER[0] && !S.chal && !Object.keys(S.chalDone || {}).length,
     t: 'Trials are open', tap: () => { setView('upg'); rangeSub = 'chal'; renderRangeNav(); },
     here: () => view === 'upg' && rangeSub === 'chal' }
 ];
@@ -33299,7 +33341,12 @@ function nextStep(){
   // (never in a wager: the course is set aside, and nothing can be done about it there)
   if(S.dgnRun) return null;
   const L = (S.retires || 0) > 0 || trophiesFound() > 0 ? LATER_STEPS : NEXT_STEPS;
-  for(const st of L) if(st.on() && !st.here()) return st;
+  for(const st of L){
+    if(st.once && S.stepSeen && S.stepSeen[st.id]) continue;
+    if(!st.on()) continue;
+    if(st.here()){ if(st.once) (S.stepSeen = S.stepSeen || {})[st.id] = 1; continue; }
+    return st;
+  }
   return null;
 }
 function renderNext(force){
@@ -33648,7 +33695,7 @@ function renderBag(){
     hd.innerHTML = '<span class="lkn">' + sl.n + '</span>'
       + '<span class="lkc"><b>' + S.bag.length + '</b> / ' + bagCap() + '</span>';
     const ab = document.createElement('button');
-    ab.className = 'lkauto' + (S.autoEquip ? ' on' : '');
+    ab.className = 'lkauto' + (S.autoEquip ? ' on' : '') + (!S.autoEquip && performance.now() - AUTO_HINT < 4000 ? ' hint' : '');
     ab.id = 'autoEqBtn';
     ab.textContent = 'Auto-equip ' + (S.autoEquip ? 'on' : 'off');
     ab.title = 'Equips a club that drops when it is better on the carry or the '
@@ -34051,7 +34098,7 @@ function renderDgn(){
   const w = $('dgnRows'); w.innerHTML = '';
   const D = derive();
   $('dgnNote').textContent = S.dgnRun ? 'On the stage \u00b7 the round is paused'
-    : autoWagerOpen() ? '' : 'Auto-play from Card ' + cardNo(AUTO_WAGER_TIER);
+    : autoWagerOpen() ? '' : 'Auto-play from Card\u00a0' + cardNo(AUTO_WAGER_TIER);
   const feat = featWager();
   const fb = $('dgnFeat');
   if(fb) fb.innerHTML = '<span class="fn">' + feat.n + '</span>'
@@ -34576,7 +34623,8 @@ function setView(v){
   view = v;
   document.querySelectorAll('.tab').forEach(t => t.classList.toggle('on', t.dataset.v === v));
   document.querySelectorAll('.view').forEach(e => e.classList.toggle('on', e.id === 'v-' + v));
-  if(v === 'bag'){ if(S.bagNew && !S.autoEquip) S.bagTold = Math.min(BAG_TOLD, (S.bagTold || 0) + 1); S.bagNew = 0; renderBagTab(); renderBag(); renderSkillsTab(); }
+  if(v === 'bag'){ if(autoHintDue()){ S.autoTold = 1; AUTO_HINT = performance.now(); }
+    if(S.bagNew && !S.autoEquip) S.bagTold = Math.min(BAG_TOLD, (S.bagTold || 0) + 1); S.bagNew = 0; renderBagTab(); renderBag(); renderSkillsTab(); }
   if(v === 'upg') renderRangeNav();
   if(v === 'dgn') renderDgn();
   // Looking at it is what clears the flash on the tab.
@@ -34584,6 +34632,9 @@ function setView(v){
   if(v === 'tour'){ if(cardWaiting()) tourSub = 'card'; S.cardSeen = S.tierMax || 0; renderTour(); renderTourTab(); }
   if(v === 'career'){ renderLegacy(); renderCareer(); }
   $('panel').scrollTop = 0;
+  // (the Auto-Equip button lit from the line over the menu sits under the
+  // slots, below the fold at 320: brought up)
+  if(v === 'bag' && performance.now() - AUTO_HINT < 100){ const ab = $('autoEqBtn'); if(ab && ab.scrollIntoView) ab.scrollIntoView({ block: 'nearest' }); }
 }
 // Gear or shots: both are what you carry onto the hole.
 // The Range has two racks: the upgrades, and the caddie's perks.
@@ -35811,6 +35862,9 @@ function addPara(cat, a, n){
 function step(dt, D){
   // (counted, so the hole's wait can ask whether the course is being drawn)
   Scene.stepN = (Scene.stepN || 0) + 1;
+  // Seconds of live play (never away or in a catch-up): what pays by the
+  // hole is spaced on it (PLAY_GAP)
+  if(!OFFLINE && !QUIET) S.playT = (S.playT || 0) + dt;
   // (the hole's call and the course's name are on the page, over the
   // course: with the course not drawn, the saver on or the round played out
   // of sight, they are hidden, not left up where they were)

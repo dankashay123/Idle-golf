@@ -7,7 +7,8 @@
  *     wager never tried, the first heirloom; a tap goes there; nothing after
  *     the first retirement or the first heirloom but what can be missed
  *     for days: an heirloom to discover or raise, a talent tree untouched,
- *     the Trials opening; nothing at all in a wager
+ *     the Trials opening (those two gone once their page is seen); nothing
+ *     at all in a wager
  *   - on the Range, rows at their cap fold away under one line after the
  *     rows that can still be bought; a tap opens them
  *   - the call to retire at the top of the Range: when every row that has a cap is at it,
@@ -17,7 +18,7 @@
 module.exports = {
   name: 'nextstep',
   async run(page) {
-    await page.setViewportSize({ width: 320, height: 640 });
+    await page.setViewportSize({ width: 320, height: 568 });
     const r = await page.evaluate(() => {
       const SNAP = JSON.stringify(S), fl = [], f = m => fl.push(m), o = {}, RN = Date.now, toast0 = toast;
       const fresh = () => { Object.keys(S).forEach(k => delete S[k]); Object.assign(S, defaultState()); S.t = Date.now() / 1000; initState(); migrate(); startHole(); S.owed = []; renderAll(); setView('upg'); };
@@ -38,9 +39,15 @@ module.exports = {
         document.getElementById('nextLine').click(); if (view !== 'bag') f('the club line did not open the Bag');
         // (said three times, then left to the Bag tab's dot: a better club drops every forty seconds)
         { for (let k = 2; k <= 3; k++) { setView('upg'); bagAdd(makeItem(30 + k * 10, 0.95, 5, 'driver')); if (!/better club/i.test(line())) f('a better club, time ' + k + ': "' + line() + '"'); setView('bag'); }
-          setView('upg'); bagAdd(makeItem(80, 0.95, 5, 'driver')); if (/better club/i.test(line())) f('told three times and the line says it a fourth');
+          setView('upg'); bagAdd(makeItem(80, 0.95, 5, 'driver')); if (/better club is waiting/i.test(line())) f('told three times and the line says it a fourth');
           if (!document.querySelector('.tab[data-v="bag"]').classList.contains('alert')) f('no dot on the Bag tab for the fourth');
-          setView('bag'); setView('upg'); }
+          // (then once, the button that does it: Auto-Equip, lit when the Bag opens)
+          if (!/Auto-Equip wears better clubs/i.test(line())) f('after three, the Auto-Equip line: "' + line() + '"');
+          document.getElementById('nextLine').click(); if (view !== 'bag') f('the Auto-Equip line did not open the Bag');
+          { const ab = document.getElementById('autoEqBtn'); if (!ab || !ab.classList.contains('hint')) f('the Auto-Equip button not lit'); else if (ab.getBoundingClientRect().bottom > innerHeight || ab.getBoundingClientRect().top < 0) f('the lit button out of sight (' + Math.round(ab.getBoundingClientRect().top) + ' of ' + innerHeight + ')'); o.autoBtn = ab ? Math.round(ab.getBoundingClientRect().width) : 0; }
+          setView('upg'); bagAdd(makeItem(90, 0.95, 5, 'driver')); if (/Auto-Equip/i.test(line())) f('the Auto-Equip line said twice');
+          setView('bag'); if (document.getElementById('autoEqBtn').classList.contains('hint') && performance.now() - AUTO_HINT > 4000) f('lit again');
+          setView('upg'); }
         S.statPts = 2; S.talPts = 0; if (!/Spend your points/i.test(line())) f('points to spend: "' + line() + '"');
         S.statPts = 1; if (!/Spend your point\b/i.test(line())) f('one point: "' + line() + '"');
         document.getElementById('nextLine').click(); if (view !== 'career') f('the points line did not open Career');
@@ -64,11 +71,13 @@ module.exports = {
         { B.TROPHY.forEach(t => { S.relic[t.id] = Math.max(1, S.relic[t.id] || 0); }); const t = B.TROPHY.reduce((a, t) => upgradeCost(t) < upgradeCost(a) ? t : a); S.legacy = upgradeCost(t); if (!/can be raised/i.test(line())) f('an heirloom to raise: "' + line() + '"'); S.legacy = 0; }
         S.talPts = 1; { const tr = B.TREES[0]; if (!new RegExp(tr.n + ' has no talents yet', 'i').test(line())) f('an untouched tree: "' + line() + '"');
           document.getElementById('nextLine').click(); if (view !== 'career' || careerSub !== 'tal') f('the talent line did not open Talents');
-          setView('upg'); B.TREES.forEach(x => { S.tal[x.t.find(t => !t.req).id] = 1; }); if (/talents yet/i.test(line())) f('every tree begun and the line still names one'); }
+          line(); setView('upg'); if (/talents yet/i.test(line())) f('Talents seen, the tree left bare, and the line still names it');
+          B.TREES.forEach(x => { S.tal[x.t.find(t => !t.req).id] = 1; }); if (/talents yet/i.test(line())) f('every tree begun and the line still names one'); }
         S.talPts = 0; S.tierMax = B.CHAL_TIER[0]; S.chalDone = {}; delete S.chal;
         if (!/Trials are open/i.test(line())) f('the Trials open: "' + line() + '"');
         document.getElementById('nextLine').click(); if (view !== 'upg' || rangeSub !== 'chal') f('the Trials line did not open the Trials');
-        rangeSub = 'upg'; renderRangeNav(); S.chalDone = { [B.CHAL[0].id]: 1 }; if (/Trials/i.test(line())) f('a Trial won and the line still says so');
+        line(); rangeSub = 'upg'; renderRangeNav(); if (/Trials/i.test(line())) f('the Trials seen, none played, and the line still says they are open');
+        delete S.stepSeen; S.chalDone = { [B.CHAL[0].id]: 1 }; if (/Trials/i.test(line())) f('a Trial won and the line still says so');
         S.chalDone = {}; S.dgnRun = { id: 'sand' }; if (line()) f('in a wager the line says "' + line() + '"'); S.dgnRun = null;
         S.tierMax = 0; S.retires = 1;
         // (one line, inside the screen)
@@ -137,6 +146,7 @@ module.exports = {
       }
       return { fl, o };
     });
+    await page.setViewportSize({ width: 400, height: 860 });   // (the harness's own)
     if (r.fl.length) throw new Error(r.fl.join('; '));
     return ['the next thing to do in one line (' + r.o.h + 'px at 320): upgrade, club, points, card, wager, heirloom, each a tap away; after retiring an heirloom to find or raise, a tree untouched, the Trials; none in a wager; ' + r.o.capped + ' capped rows folded under the rest and opened; the call to retire when all is capped or fewer than three new cards in three days, once in a toast'];
   }

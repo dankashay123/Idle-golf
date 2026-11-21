@@ -1,7 +1,8 @@
 /* The smallest iPhone, 320 wide (found playing a new player's first hour
  * there): three rows broke into narrow columns.
  *
- *   - the Wager Book's note beside its heading is one line
+ *   - the Wager Book's note beside its heading is one line (in a wager its
+ *     longer note wraps, on the screen)
  *   - the day's featured wager: its name, what it pays and when it changes
  *     are each one line (the time drops under when there is no room)
  *   - the Trophy Room's free sovereigns: the name is one line, with how often
@@ -23,6 +24,10 @@ module.exports = {
         if (!/Auto-play from Card/.test(note.innerText)) f('the note reads "' + note.innerText + '"');
         if (lines(note) !== 1) f('the Wager Book\'s note is on ' + lines(note) + ' lines');
         if (note.getBoundingClientRect().right > innerWidth) f('the note runs off the screen');
+        // (and in a wager, its longer note wraps, on the screen)
+        { S.dgnRun = { id: B.DGN[0].id }; renderDgn(); const r1 = note.getBoundingClientRect();
+          if (r1.right > innerWidth || r1.left < 0) f('in a wager the note runs off the screen (' + Math.round(r1.left) + ' to ' + Math.round(r1.right) + ')');
+          o.wag = lines(note); delete S.dgnRun; renderDgn(); }
         const fb = document.getElementById('dgnFeat');
         for (const sp of fb.children) { if (lines(sp) !== 1) f('"' + sp.innerText + '" is on ' + lines(sp) + ' lines');
           if (sp.getBoundingClientRect().right > innerWidth - 4 || sp.getBoundingClientRect().left < 4) f('"' + sp.innerText + '" runs off the screen'); }
@@ -47,7 +52,7 @@ module.exports = {
       } finally { hideSheet(); Object.keys(S).forEach(k => delete S[k]); Object.assign(S, JSON.parse(SNAP)); setView('upg'); renderAll(); }
       return { fl, o };
     });
-    await page.setViewportSize({ width: 390, height: 844 });
+    await page.setViewportSize({ width: 400, height: 860 });   // (the harness's own)
     if (r.fl.length) throw new Error(r.fl.join('; '));
     return ['at 320 wide: the Wager Book\'s note on one line, the featured wager\'s three parts unbroken (' + r.o.featH + 'px), free sovereigns named on one line with their time under it, the Guide\'s heading on one line'];
   }

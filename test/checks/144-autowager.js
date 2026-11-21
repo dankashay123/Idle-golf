@@ -34,7 +34,7 @@ module.exports = {
         if (btns.length !== B.DGN.length) f(btns.length + ' auto switches');
         else { btns[0].click(); if (!S.autoWg[B.DGN[0].id]) f('the switch did not turn it on'); }
         S.tierMax = 0; renderDgn(); if ([...document.querySelectorAll('#dgnRows button')].some(b => /^Auto/.test(b.textContent))) f('the switch shown below Card 100');
-        if (!/Card 100/.test(document.getElementById('dgnNote').textContent)) f('the tab does not say when they open');
+        if (!/Card\s100/.test(document.getElementById('dgnNote').textContent)) f('the tab does not say when they open');
         // repair
         S.autoWg = { sand: 1, nope: 1, water: 'x' }; migrate(); if (JSON.stringify(S.autoWg) !== '{"sand":1}') f('repaired to ' + JSON.stringify(S.autoWg));
       } finally { window.toast = tw; S.dgnRun = null; QUIET = false; OFFLINE = false; const o = JSON.parse(SNAP); for (const k of Object.keys(S)) delete S[k]; Object.assign(S, o); renderDgn(); }
