@@ -307,6 +307,15 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
 
 /* ---------- currency strip ---------- */
 #purseStrip{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:#12261A}
+#lifeGrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1px;background:#12261A;border-bottom:var(--hair)}
+#lifeGrid .cur{padding:9px 4px}
+#lifeGrid .k{white-space:nowrap;letter-spacing:.08em}
+/* (five pages since Lifetime: shared across the width, all in sight at 320) */
+#careerNav .sub{flex:1 1 auto;padding-left:4px;padding-right:4px;text-align:center}
+/* (drawn closer only where they do not fit: a narrow phone, or the side
+   column on its side; set by renderCareer from the menu's own width) */
+#careerNav.tight .sub{letter-spacing:0;padding-left:2px;padding-right:2px}
+#careerNav.tighter .sub{font-size:var(--f0)}
 .cur{background:#0A170F;padding:7px 6px;text-align:center}
 .cur .k{font-size:var(--f0);letter-spacing:.12em;text-transform:uppercase;color:var(--faint)}
 .cur .v{font-family:var(--mono);font-size:var(--f3);font-weight:600;margin-top:2px}
@@ -333,6 +342,10 @@ button{font:inherit;color:inherit;background:none;border:0;touch-action:manipula
 .slot .sct.up{background:var(--aurora);border-color:var(--aurora);color:#04150F}
 /* top left, out of the way of the label along the bottom */
 .slot .sel{position:absolute;top:1px;left:1px;width:12px;height:12px}
+.rmk{position:absolute;display:block;box-sizing:content-box;padding:1px;background-color:#08130D;background-origin:content-box;
+  background-clip:padding-box;background-size:100% 100%;background-repeat:no-repeat;image-rendering:pixelated;pointer-events:none}
+.rmk.rmt{top:-1px;right:-1px}
+.rmk.rms{top:17px;left:calc(50% + 5px)}   /* (on the picture's corner, clear of the name under it) */
 
 /* the locker header: how full it is, and what the tab is showing */
 .lkhead{display:flex;align-items:baseline;gap:8px;padding:8px 12px 6px}
@@ -32306,9 +32319,7 @@ function honRows(w){
   // The ones that come round again, one line each: how far to the next, and
   // what it pays. Not .row, so the first row in the sheet is still the nearest
   // one-off.
-  // (and how often at most: one of each in PLAY_GAP.hon seconds of play)
-  h += '<div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin:10px 0 4px"><span class="eyebrow">Every time</span>'
-    + '<span id="honGap" style="font-size:var(--f1);color:var(--faint);white-space:nowrap">' + Math.round(PLAY_GAP.hon / 60) + ' minutes apart at most</span></div>'
+  h += '<div class="eyebrow" style="margin:10px 0 4px">Every time</div>'
     + B.ACH_REP.map(a => {
         const have = achMetric(a.m) % a.step;
         return '<div class="lb rep"><span>' + a.n + '<i class="rd">' + nb(a.d) + '</i></span>'
@@ -33674,7 +33685,8 @@ function renderBag(){
     d.innerHTML = svgIcon(sl.ic, 'sic', it ? RC(it.rar) : '')
       + '<span class="sk">' + sl.n + '</span>'
       + (spare.length ? '<span class="sct' + (up ? ' up' : '') + '">' + spare.length + '</span>' : '')
-      + (el ? svgIcon(el.ic, 'sel', elemColor(el.id)) : '');
+      + (el ? svgIcon(el.ic, 'sel', elemColor(el.id)) : '')
+      + (it ? rarMark(it.rar, 'rms') : '');
     d.onclick = () => { S.bagSlot = sl.id; renderBag(); };
     g.appendChild(d);
   }
@@ -33813,6 +33825,29 @@ function scrapSheet(){
 // framed art in its rarity's colour, the name in that colour with its
 // level beside it, the rarity and item level, and its numbers. A tap opens
 // it: equip, upgrade, scrap and the rest are in there.
+// A club's rarity as a shape as well as a colour (the user picked it: for
+// eyes that do not tell the colours apart, and at a glance on a small
+// screen): none for Common, then a dot, a diamond, a hollow square, a star
+// and a sparkle, in pixels, on a dark ground
+const RAR_SHAPE = [null,
+  ['.###.', '#####', '#####', '#####', '.###.'],
+  ['..#..', '.###.', '#####', '.###.', '..#..'],
+  ['#####', '#...#', '#...#', '#...#', '#####'],
+  ['...#...', '...#...', '#######', '.#####.', '..###..', '.##.##.', '##...##'],
+  ['...#...', '...#...', '..###..', '#######', '..###..', '...#...', '...#...']];
+// (one element and a picture made once a rarity: drawn as a little picture
+// of its own in every tile, opening a few thousand bags took ten minutes)
+let RAR_CSS = false;
+function rarMark(r, cls){
+  if(!RAR_SHAPE[r]) return '';
+  if(!RAR_CSS){ RAR_CSS = true; let css = '';
+    RAR_SHAPE.forEach((R, i) => { if(!R) return; const w = R[0].length, n = R.length; let rc = '';
+      R.forEach((row, y) => { for(let x = 0; x < w; x++) if(row[x] === '#') rc += '<rect x="' + x + '" y="' + y + '" width="1" height="1"/>'; });
+      const svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + w + ' ' + n + '" shape-rendering="crispEdges" fill="' + RC(i) + '">' + rc + '</svg>';
+      css += '.rmk.r' + i + '{width:' + w * 2 + 'px;height:' + n * 2 + 'px;background-image:url("data:image/svg+xml,' + encodeURIComponent(svg) + '")}\n'; });
+    const st = document.createElement('style'); st.textContent = css; document.head.appendChild(st); }
+  return '<i class="rmk ' + cls + ' r' + r + '" data-r="' + r + '"></i>';
+}
 function gearTile(it, isWorn){
   const cur = S.equip[it.slot];
   const better = !isWorn && (!cur || itemScore(it) > itemScore(cur));
@@ -33831,6 +33866,7 @@ function gearTile(it, isWorn){
       + (el ? '<span class="tel">' + svgIcon(el.ic, 'lel', elemColor(el.id)) + '</span>' : '')
       + (better ? '<span class="gup" title="Better than the one you carry">\u25B2</span>' : '')
       + (it.enh ? '<span class="genh">+' + it.enh + '</span>' : '')
+      + rarMark(it.rar, 'rmt')
     + '</div>'
     + '<div style="min-width:0"><div class="gn" style="color:' + col + '">' + it.name + '</div>'
     + '<div class="ib"><span class="glv">Level\u00a0' + it.ilvl + '</span> \u00b7 <span style="color:' + col + '">' + B.RARITY[it.rar].n + '</span></div>'
@@ -35627,19 +35663,44 @@ function renderCareer(){
     + '<div class="bar"><i style="width:' + clamp(have/need,0,1)*100 + '%;background:'
     + (max ? 'var(--myth)' : 'var(--brass)') + '"></i></div>';
 
-  const subs = [['leg','Legacy'], ['stat','Attributes'], ['tal','Talents'], ['para','Paragon']];
+  const subs = [['leg','Legacy'], ['stat','Attributes'], ['tal','Talents'], ['para','Paragon'], ['life','Lifetime']];
   $('careerNav').innerHTML = subs.map(([id,n]) =>
     '<button class="sub' + (careerSub === id ? ' on' : '') + (id === 'leg' && retireWorth() ? ' hot' : '')
     + '" data-s="' + id + '">' + n + '</button>').join('');
   $('careerNav').querySelectorAll('.sub').forEach(b =>
     b.onclick = () => { careerSub = b.dataset.s; renderCareer(); });
+  // (measured once a width, and only with Career shown: measured on every
+  // render it made the whole page lay out again each time, and opening a
+  // few thousand bags took ten minutes, not one and a half)
+  { const nv = $('careerNav'), wk = view === 'career' ? innerWidth + 'x' + innerHeight : null;
+    if(wk && nv._fitW !== wk){ nv._fitW = wk; nv.classList.remove('tight', 'tighter');
+      if(nv.clientWidth && nv.scrollWidth > nv.clientWidth){ nv.classList.add('tight'); if(nv.scrollWidth > nv.clientWidth) nv.classList.add('tighter'); } }
+    else if(nv._fitC) nv.className = nv._fitC;
+    nv._fitC = nv.className; }
 
   const w = $('careerBody'); w.innerHTML = '';
   $('legWrap').hidden = careerSub !== 'leg';
   if(careerSub === 'leg') return;
   if(careerSub === 'stat') return careerStats(w, C);
   if(careerSub === 'para') return careerParagon(w);
+  if(careerSub === 'life') return careerLife(w);
   careerTalents(w);
+}
+// The whole career in numbers (the user picked it): what the game already
+// counts, a number and a word each, nothing more
+function lifeTiles(){
+  const sum = o => Object.values(o || {}).reduce((t, v) => t + (v > 0 ? v : 0), 0);
+  const t = [['Holes', S.totalHoles || 0], ['Aces', S.aces || 0], ['Eagles', tally('eagle')],
+    ['Birdies', tally('birdie')], ['Events', S.eventsPlayed || 0], ['Cups', S.cups || 0],
+    ['Majors', sum(S.majorWins)], ['Rivals', tally('rivals')], ['Wagers', tally('runs')],
+    ['Retirements', S.retires || 0], ['Heirlooms', trophiesFound()], ['Highest Card', cardNo((S.bestTier || 0) + 1)],
+    ['Legendaries', tally('legend')], ['Mythics', tally('myth')]];
+  if(S.bestRound !== undefined) t.splice(4, 0, ['Best Round', S.bestRound > 0 ? '+' + S.bestRound : S.bestRound === 0 ? 'E' : String(S.bestRound)]);
+  return t;
+}
+function careerLife(w){
+  w.innerHTML = '<div id="lifeGrid">' + lifeTiles().map(([k, v]) =>
+    '<div class="cur"><div class="k">' + k + '</div><div class="v">' + (typeof v === 'number' ? fmt(v, 0) : v) + '</div></div>').join('') + '</div>';
 }
 function careerStats(w, C){
   w.innerHTML = S.statPts ? '<div class="hint"><b style="color:var(--brass)">' + S.statPts

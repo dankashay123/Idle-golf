@@ -60,11 +60,6 @@ module.exports = {
           S.playT += PLAY_GAP.hon - 1; S.achRep.rHoles = base - 1; checkAch(); if ((S.sov || 0) !== s1) f('a Steady Hand ' + (PLAY_GAP.hon - 1) + ' seconds of play later paid');
           S.playT += 2; S.achRep.rHoles = base - 1; checkAch(); if ((S.sov || 0) - s1 !== rep.sov) f('a Steady Hand ' + (PLAY_GAP.hon + 1) + ' seconds of play later paid ' + ((S.sov || 0) - s1));
           QUIET = true; }
-        // ---- the Honours list says so, one line ----
-        { QUIET = false; trophyRoom('hon'); const e = document.getElementById('honGap');
-          if (!e || e.innerText.trim() !== Math.round(PLAY_GAP.hon / 60) + ' minutes apart at most') f('the Honours list: "' + (e ? e.innerText : '') + '"');
-          else if (e.getBoundingClientRect().height > parseFloat(getComputedStyle(e).fontSize) * 1.9) f('the Honours note on more than one line');
-          hideSheet(); }
         // ---- a broken save is repaired ----
         { S.playT = 'x'; S.findT = 5; S.goldT = -3; S.achRepT = { rHoles: 1e15, rAce: 0 }; migrate();
           if (S.playT !== 0) f('a broken play clock repaired to ' + S.playT);

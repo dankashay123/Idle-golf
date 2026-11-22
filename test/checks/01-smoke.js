@@ -70,7 +70,7 @@ module.exports = {
       trophyRoom('case'); await sleep(60);   o.record = [document.querySelectorAll('#statRows .lb').length, 9 + 1 + 5 + 1];   // Seasons Seen, the Signature Week, a row for each kind of signature hole, and the Mythic Sets
                                            o.cabinet = [document.querySelectorAll('#cabBox .shelf').length, 4];   // the trophies, the jackets, the full sets, the cups and the slam
       hideSheet();
-      setView('career'); await sleep(120); o.subs   = [n('careerNav'), 4];
+      setView('career'); await sleep(120); o.subs   = [n('careerNav'), 5];
                                            o.legFirst = [careerSub === 'leg' ? 1 : 0, 1];   // (Career opens on Legacy, the user asked)
       careerSub = 'stat'; renderCareer(); await sleep(60);
                                            o.attrs  = [n('careerBody'), B.STATS.length + 1 + (S.statPts ? 1 : 0)];
