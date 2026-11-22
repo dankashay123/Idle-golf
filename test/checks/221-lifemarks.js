@@ -40,7 +40,7 @@ module.exports = {
         for (const c of cards) { const it = [S.equip.driver, ...S.bag].find(x => x.uid === +c.dataset.uid || String(x.uid) === c.dataset.uid); if (!it) continue;
           const m = c.querySelector('.rmk'); if (!it.rar) { if (m) f('a Common club carries a shape'); continue; }
           if (!m || +m.dataset.r !== it.rar) { f('a ' + B.RARITY[it.rar].n + ' club without its shape'); continue; }
-          shapes.add(getComputedStyle(m).backgroundImage); }
+          shapes.add(decodeURIComponent(getComputedStyle(m).backgroundImage).replace(/fill="[^"]*"/, '')); }
         o.shapes = shapes.size; if (shapes.size !== 5) f(shapes.size + ' shapes for the five rarities above Common');
         for (const t of document.querySelectorAll('#bagGrid .slot')) { const m = t.querySelector('.rmk'), k = t.querySelector('.sk'); if (!m) continue;
           const a = m.getBoundingClientRect(), b = k.getBoundingClientRect();
